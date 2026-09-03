@@ -2,6 +2,7 @@ import { ArrowLeft, Eye, EyeOff, Lock, Mail } from 'lucide-react'
 import { useState } from 'react'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { Button } from '../components/ui/Button'
+import { MobileStatusBar } from '../components/ui/MobileStatusBar'
 import { SegmentedControl } from '../components/ui/SegmentedControl'
 import { TextField } from '../components/ui/TextField'
 
@@ -20,8 +21,12 @@ export function SignInPage() {
   }
 
   return (
-    <div className="flex min-h-full items-center justify-center bg-background-default px-24 py-48">
-      <div className="w-full max-w-[402px]">
+    <div className="flex min-h-full flex-col items-center bg-background-default lg:justify-center lg:px-24 lg:py-48">
+      <div className="w-full max-w-[402px] lg:mx-auto">
+        <div className="lg:hidden">
+          <MobileStatusBar />
+        </div>
+        <div className="px-24 pt-16 lg:px-0 lg:pt-0">
         <div className="relative flex h-44 items-center justify-center">
           <button
             type="button"
@@ -80,6 +85,7 @@ export function SignInPage() {
           <Button variant="secondary" className="w-full">
             <AppleMark />
           </Button>
+        </div>
         </div>
       </div>
     </div>

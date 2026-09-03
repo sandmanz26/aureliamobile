@@ -1,4 +1,5 @@
-import { Bookmark, Repeat2, Share2 } from 'lucide-react'
+import { Bookmark, Menu, Repeat2, Share2 } from 'lucide-react'
+import { useDrawer } from '../layouts/DrawerContext'
 
 interface SessionCard {
   title: string
@@ -46,10 +47,22 @@ const stats = [
 ]
 
 export function ProfilePage() {
+  const { openDrawer } = useDrawer()
+
   return (
-    <div className="mx-auto max-w-[720px] px-24 py-24">
+    <div className="mx-auto max-w-[720px] px-20 py-16 lg:px-24 lg:py-24">
       <header className="flex items-center justify-between">
-        <h1 className="text-style-title-large text-text-primary">Profile</h1>
+        <div className="flex items-center gap-12">
+          <button
+            type="button"
+            aria-label="Open menu"
+            onClick={openDrawer}
+            className="flex size-44 items-center justify-center rounded-full text-icon-default lg:hidden"
+          >
+            <Menu size={24} />
+          </button>
+          <h1 className="text-style-title-large text-text-primary">Profile</h1>
+        </div>
         <div className="flex items-center gap-12">
           <div className="flex h-44 items-center gap-8 rounded-full bg-surface-default px-16 shadow-sm">
             <span className="size-16 rounded-full bg-brand-default" />
