@@ -1,4 +1,4 @@
-import { Bell, Compass, HelpCircle, ListMusic, Plus, User, UserPlus, Waves, X } from 'lucide-react'
+import { Bell, Compass, HelpCircle, Home, ListMusic, Plus, User, UserPlus, Waves, X } from 'lucide-react'
 import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
@@ -26,6 +26,7 @@ function SidebarContent({ onNavigate, showBell = true }: { onNavigate?: () => vo
       </div>
 
       <nav className="flex flex-col gap-4" onClick={onNavigate}>
+        <NavItem to="/home" icon={<Home size={20} />} label="Home" />
         <NavItem to="/profile" icon={<User size={20} />} label="Profile" />
         <NavItem to="/explore" icon={<Compass size={20} />} label="Explore" />
         <NavItem to="/sessions" icon={<ListMusic size={20} />} label="Sessions" />

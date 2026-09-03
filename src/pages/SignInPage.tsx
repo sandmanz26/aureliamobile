@@ -1,5 +1,6 @@
 import { ArrowLeft, Eye, EyeOff, Lock, Mail } from 'lucide-react'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { Button } from '../components/ui/Button'
 import { MobileStatusBar } from '../components/ui/MobileStatusBar'
@@ -9,6 +10,7 @@ import { TextField } from '../components/ui/TextField'
 const TABS = ['Sign In', 'Sign Up'] as const
 
 export function SignInPage() {
+  const navigate = useNavigate()
   const [tab, setTab] = useState<(typeof TABS)[number]>('Sign In')
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -16,8 +18,12 @@ export function SignInPage() {
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
     setSubmitting(true)
-    // TODO: wire up to real auth once a backend exists.
-    window.setTimeout(() => setSubmitting(false), 600)
+    // Dummy login — no backend yet, so any submit just "signs in" after a
+    // beat and lands on the home page.
+    window.setTimeout(() => {
+      setSubmitting(false)
+      navigate('/home')
+    }, 500)
   }
 
   return (
