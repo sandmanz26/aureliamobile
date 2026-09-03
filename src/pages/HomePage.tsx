@@ -18,8 +18,8 @@ import { FeatureCard } from '../components/ui/FeatureCard'
 import { useDrawer } from '../layouts/DrawerContext'
 
 const quickStartCards = [
-  { title: 'Affirmations', subtitle: 'Personalized daily affirmations', gradient: 'linear-gradient(160deg, var(--color-danger-400), var(--color-warning-300))' },
-  { title: 'Sleep Meditation', subtitle: 'Personalized sound', gradient: 'linear-gradient(160deg, var(--color-neutral-700), var(--color-neutral-400))' },
+  { title: 'Affirmations', subtitle: 'Personalized exprience.', gradient: 'linear-gradient(160deg, var(--color-danger-400), var(--color-warning-300))' },
+  { title: 'Guided Breath Work', subtitle: 'Personalized exprience.', gradient: 'linear-gradient(160deg, var(--color-neutral-700), var(--color-neutral-400))' },
 ]
 
 const communityCards = [
@@ -65,7 +65,7 @@ export function HomePage() {
   const [activeChip, setActiveChip] = useState('All')
 
   return (
-    <div className="pb-48">
+    <div className="pb-48" style={{ background: 'linear-gradient(180deg, #ffffff, #fff1db 60%, #ffffff)' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-20 py-16 lg:px-24">
         <button
@@ -78,21 +78,26 @@ export function HomePage() {
         </button>
         <span className="hidden lg:block" />
         <div className="flex h-44 items-center gap-8 rounded-full bg-surface-default px-16 shadow-sm">
-          <span className="size-16 rounded-full bg-brand-default" />
+          <span
+            className="flex size-16 items-center justify-center rounded-full"
+            style={{ background: 'linear-gradient(160deg, #ffe682, #ff881b)' }}
+          >
+            <Coins size={10} className="text-text-inverse" />
+          </span>
           <span className="text-style-label">1,323</span>
         </div>
       </div>
 
       <div className="mx-auto max-w-[720px] px-20 lg:px-24">
         {/* Hero */}
-        <section className="pt-8 text-center">
+        <section className="relative pt-8 text-center">
           <div
-            className="mx-auto mb-16 size-64 rounded-full opacity-60 blur-2xl"
-            style={{ background: 'linear-gradient(160deg, #ca7272, var(--color-border-subtle))' }}
+            className="pointer-events-none absolute -right-32 -top-16 size-[252px] rounded-full opacity-70 blur-2xl"
+            style={{ background: 'var(--color-primary-200)' }}
           />
-          <h1 className="text-style-headline text-text-primary">Create the space you imagine.</h1>
+          <h1 className="relative text-style-title-large text-text-primary">Create the space you imagine.</h1>
 
-          <div className="mt-24 flex h-56 items-center gap-12 rounded-full border border-border-default bg-surface-default px-20">
+          <div className="relative mt-24 flex h-56 items-center gap-12 rounded-full border border-border-default bg-surface-default px-20">
             <span className="text-style-body flex-1 text-left text-text-secondary">Ask Aurelia..</span>
             <span className="flex size-32 items-center justify-center rounded-full bg-background-elevated text-icon-default">
               <Mic size={16} />
@@ -109,24 +114,33 @@ export function HomePage() {
 
         {/* Ongoing Live Sessions */}
         <section className="mt-40">
-          <h2 className="text-style-title text-text-primary">Ongoing Live Sessions</h2>
+          <h2 className="text-style-body text-text-primary" style={{ color: '#3c2405' }}>
+            Ongoing Live Sessions
+          </h2>
           <div
-            className="relative mt-16 flex h-[320px] flex-col justify-end overflow-hidden rounded-24 p-16"
-            style={{
-              background: 'radial-gradient(circle at 30% 20%, var(--color-primary-400), var(--color-primary-700))',
-              backgroundImage:
-                'radial-gradient(circle, rgba(255,255,255,0.35) 1px, transparent 1px), radial-gradient(circle at 30% 20%, var(--color-primary-400), var(--color-primary-700))',
-              backgroundSize: '18px 18px, 100% 100%',
-            }}
+            className="relative mt-16 flex h-[320px] flex-col justify-center gap-32 overflow-hidden rounded-24 px-20 py-40"
+            style={{ background: 'linear-gradient(160deg, #f2f2f2, #ff881b)' }}
           >
-            <div className="flex gap-8">
+            <span
+              className="pointer-events-none absolute -bottom-[130px] -left-5 h-[254px] w-full rounded-full opacity-75 blur-3xl"
+              style={{ background: '#ff881b' }}
+            />
+            <span
+              className="pointer-events-none absolute -left-40 top-20 h-[238px] w-[323px] rounded-full opacity-75 blur-3xl"
+              style={{ background: '#ffe682' }}
+            />
+            <span
+              className="pointer-events-none absolute right-0 top-0 h-[180px] w-[270px] translate-x-1/3 -translate-y-1/4 rounded-full opacity-75 blur-3xl"
+              style={{ background: '#ffe682' }}
+            />
+            <div className="relative z-10 flex gap-12">
               {[
                 { label: 'People', value: '87k' },
                 { label: 'Today', value: '20k' },
                 { label: 'Now', value: '50' },
               ].map((stat) => (
                 <div key={stat.label} className="flex-1 rounded-16 bg-surface-default/25 py-12 text-center backdrop-blur-sm">
-                  <p className="text-style-title text-text-inverse">{stat.value}</p>
+                  <p className="text-style-title-large text-text-inverse">{stat.value}</p>
                   <p className="text-style-caption text-text-inverse">{stat.label}</p>
                 </div>
               ))}
@@ -159,21 +173,24 @@ export function HomePage() {
 
       {/* Dark generative wellness banner — full bleed */}
       <section className="mt-48 bg-text-primary px-20 py-48 text-center text-text-inverse lg:px-24">
-        <span className="inline-block rounded-full border border-text-inverse/30 px-16 py-6 text-style-caption">
+        <span
+          className="inline-block bg-clip-text text-style-caption font-medium text-transparent"
+          style={{ backgroundImage: 'linear-gradient(90deg, #ffe682, #ff881b)' }}
+        >
           Generative Wellness Care
         </span>
-        <h2 className="mx-auto mt-16 max-w-[320px] text-style-headline">Your Personal Mindfulness Guide</h2>
+        <h2 className="mx-auto mt-16 max-w-[320px] text-style-headline font-normal">Your Personal Mindfulness Guide</h2>
         <p className="mx-auto mt-12 max-w-[360px] text-style-body">
           Everything you need to reflect, restore, and reset, all in one adaptive app.
         </p>
 
-        <div className="mx-auto mt-32 flex max-w-[280px] items-center justify-center gap-16">
+        <div className="mx-auto mt-32 flex items-center justify-center">
           <div
-            className="h-[180px] w-[110px] -rotate-6 rounded-24"
+            className="z-10 h-[220px] w-[138px] -rotate-6 rounded-24 shadow-xl"
             style={{ background: 'linear-gradient(160deg, var(--color-neutral-950), var(--color-info-900))' }}
           />
           <div
-            className="h-[180px] w-[110px] rotate-6 rounded-24"
+            className="-ml-32 h-[220px] w-[138px] rotate-6 rounded-24 shadow-xl"
             style={{ background: 'linear-gradient(160deg, var(--color-primary-500), var(--color-primary-200))' }}
           />
         </div>
