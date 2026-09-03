@@ -1,0 +1,78 @@
+{
+  "$description": "Raw snapshot of Figma variables from 'Aurelia AI' file (fileKey 2QV1yuYjiwYrhSsxODi7LZ). Regenerate by reconnecting the Figma Desktop Bridge, re-running the variable export, and overwriting this file, then `npm run build:tokens`. Nothing downstream should be hand-edited.",
+  "$sourceFile": "https://www.figma.com/design/2QV1yuYjiwYrhSsxODi7LZ/Aurelia-AI",
+  "collections": {
+    "Aurelia Brand": {
+      "gold": { "50": "#FFFBEB", "100": "#FFF3C4", "200": "#FFE58A", "300": "#FFDA5C", "400": "#FFD242", "500": "#F2B705", "600": "#D69E02", "700": "#A67C01", "800": "#7A5C01", "900": "#524001", "950": "#2E2400" },
+      "espresso": { "50": "#FAFAFA", "100": "#F2F1EF", "200": "#E4E1DC", "300": "#CBC4B8", "400": "#7B7B7B", "500": "#6B6255", "600": "#574E42", "700": "#453D33", "800": "#322B22", "900": "#3C2405", "950": "#241503" },
+      "red": { "50": "#FEF2F2", "100": "#FEE2E2", "200": "#FECACA", "300": "#FCA5A5", "400": "#F87171", "500": "#D93C3D", "600": "#B91C1C", "700": "#991B1B", "800": "#7F1D1D", "900": "#601818", "950": "#3D0F0F" },
+      "amber": { "50": "#FFFBEB", "100": "#FEF0C7", "200": "#FDDE8A", "300": "#FBC750", "400": "#F8B32E", "500": "#F5A623", "600": "#D4890F", "700": "#A96A0C", "800": "#7D4E09", "900": "#533405", "950": "#2E1D03" },
+      "blue": { "50": "#EFF6FF", "100": "#DBEAFE", "200": "#BFDBFE", "300": "#93C5FD", "400": "#609DF7", "500": "#4285F4", "600": "#2563EB", "700": "#1D4ED8", "800": "#1E40AF", "900": "#1E3A8A", "950": "#17275C" },
+      "green": { "50": "#F0FDF4", "100": "#DCFCE7", "200": "#BBF7D0", "300": "#86EFAC", "400": "#4ADE80", "500": "#34A853", "600": "#16A34A", "700": "#15803D", "800": "#166534", "900": "#14532D", "950": "#052E16" },
+      "white": "#FFFFFF",
+      "black": "#000000"
+    },
+    "Aurelia Primitives": {
+      "primary": { "50": "#FFFBEB", "100": "#FFF3C4", "200": "#FFE58A", "300": "#FFDA5C", "400": "#FFD242", "500": "#F2B705", "600": "#D69E02", "700": "#A67C01", "800": "#7A5C01", "900": "#524001", "950": "#2E2400" },
+      "neutral": { "50": "#FAFAFA", "100": "#F2F1EF", "200": "#E4E1DC", "300": "#CBC4B8", "400": "#7B7B7B", "500": "#6B6255", "600": "#574E42", "700": "#453D33", "800": "#322B22", "900": "#3C2405", "950": "#241503" },
+      "danger": { "50": "#FEF2F2", "100": "#FEE2E2", "200": "#FECACA", "300": "#FCA5A5", "400": "#F87171", "500": "#D93C3D", "600": "#B91C1C", "700": "#991B1B", "800": "#7F1D1D", "900": "#601818", "950": "#3D0F0F" },
+      "warning": { "50": "#FFFBEB", "100": "#FEF0C7", "200": "#FDDE8A", "300": "#FBC750", "400": "#F8B32E", "500": "#F5A623", "600": "#D4890F", "700": "#A96A0C", "800": "#7D4E09", "900": "#533405", "950": "#2E1D03" },
+      "info": { "50": "#EFF6FF", "100": "#DBEAFE", "200": "#BFDBFE", "300": "#93C5FD", "400": "#609DF7", "500": "#4285F4", "600": "#2563EB", "700": "#1D4ED8", "800": "#1E40AF", "900": "#1E3A8A", "950": "#17275C" },
+      "success": { "50": "#F0FDF4", "100": "#DCFCE7", "200": "#BBF7D0", "300": "#86EFAC", "400": "#4ADE80", "500": "#34A853", "600": "#16A34A", "700": "#15803D", "800": "#166534", "900": "#14532D", "950": "#052E16" },
+      "base": { "white": "#FFFFFF", "black": "#000000" }
+    },
+    "Aurelia Semantic": {
+      "background": { "default": "#FAFAFA", "elevated": "#F2F1EF" },
+      "surface": { "default": "#FFFFFF", "sunken": "#FAFAFA" },
+      "border": { "default": "#CBC4B8", "subtle": "#E4E1DC" },
+      "text": { "primary": "#3C2405", "secondary": "#7B7B7B", "inverse": "#FFFFFF", "on-brand": "#3C2405", "strong": "#000000", "brand": "#D69E02" },
+      "brand": { "default": "#FFD242", "emphasis": "#D69E02" },
+      "interactive": { "primary": "#3C2405", "primary-text": "#3C2405" },
+      "feedback": { "success": "#34A853", "warning": "#F5A623", "error": "#D93C3D", "info": "#4285F4" },
+      "icon": { "default": "#3C2405", "strong": "#000000", "secondary": "#7B7B7B", "inverse": "#FFFFFF" },
+      "button": {
+        "primary": { "background": "#3C2405", "background-pressed": "#322B22", "foreground": "#FFFFFF" },
+        "secondary": { "background": "#FFFFFF", "foreground": "#3C2405", "border": "#CBC4B8" },
+        "disabled": { "background": "#E4E1DC", "foreground": "#7B7B7B" },
+        "ghost": { "foreground": "#D69E02" }
+      }
+    },
+    "Aurelia Numbers": {
+      "spacing": { "2": 2, "4": 4, "6": 6, "8": 8, "10": 10, "12": 12, "14": 14, "16": 16, "20": 20, "24": 24, "28": 28, "32": 32, "40": 40, "48": 48, "56": 56, "64": 64, "80": 80, "96": 96, "112": 112, "128": 128 },
+      "radius": { "0": 0, "2": 2, "4": 4, "8": 8, "12": 12, "16": 16, "24": 24, "32": 32, "full": 999 },
+      "size": { "16": 16, "20": 20, "24": 24, "32": 32, "40": 40, "48": 48, "56": 56, "64": 64, "80": 80, "96": 96, "128": 128 },
+      "padding": { "xs": 8, "sm": 12, "md": 16, "lg": 24, "xl": 32 },
+      "margin": { "xs": 8, "sm": 12, "md": 16, "lg": 24, "xl": 32 }
+    },
+    "Aurelia Typography": {
+      "font-family": { "base": "SF Pro" },
+      "font-weight": { "light": 300, "regular": 400, "medium": 500, "semibold": 600 },
+      "letter-spacing": { "tight": -0.2, "normal": 0, "wide": 0.2 },
+      "scale": {
+        "10": { "fontSize": 10, "lineHeight": 14 },
+        "12": { "fontSize": 12, "lineHeight": 16 },
+        "14": { "fontSize": 14, "lineHeight": 20 },
+        "16": { "fontSize": 16, "lineHeight": 24 },
+        "18": { "fontSize": 18, "lineHeight": 24 },
+        "20": { "fontSize": 20, "lineHeight": 28 },
+        "24": { "fontSize": 24, "lineHeight": 32 },
+        "28": { "fontSize": 28, "lineHeight": 36 },
+        "32": { "fontSize": 32, "lineHeight": 40 },
+        "36": { "fontSize": 36, "lineHeight": 44 },
+        "40": { "fontSize": 40, "lineHeight": 48 },
+        "48": { "fontSize": 48, "lineHeight": 56 }
+      },
+      "textStyles": {
+        "display": { "size": "48", "weight": "semibold" },
+        "headline": { "size": "32", "weight": "semibold" },
+        "title-large": { "size": "24", "weight": "semibold" },
+        "title": { "size": "20", "weight": "medium" },
+        "body-large": { "size": "18", "weight": "regular" },
+        "body": { "size": "16", "weight": "regular" },
+        "body-small": { "size": "14", "weight": "regular" },
+        "label": { "size": "12", "weight": "medium" },
+        "caption": { "size": "10", "weight": "regular" }
+      }
+    }
+  }
+}

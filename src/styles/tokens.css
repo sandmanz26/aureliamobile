@@ -1,0 +1,307 @@
+/**
+ * GENERATED FILE — do not edit by hand.
+ * Source: design-tokens/figma-export.json
+ * Regenerate: npm run build:tokens
+ *
+ * Variable names mirror the Figma variable paths 1:1 (slashes -> hyphens)
+ * so a designer renaming/adding a Figma variable maps directly to a
+ * predictable CSS custom property here — no manual code changes needed
+ * beyond re-running this script.
+ */
+@import "tailwindcss";
+
+@theme {
+  /* Aurelia Brand — raw hue ramps */
+  --color-gold-50: #FFFBEB;
+  --color-gold-100: #FFF3C4;
+  --color-gold-200: #FFE58A;
+  --color-gold-300: #FFDA5C;
+  --color-gold-400: #FFD242;
+  --color-gold-500: #F2B705;
+  --color-gold-600: #D69E02;
+  --color-gold-700: #A67C01;
+  --color-gold-800: #7A5C01;
+  --color-gold-900: #524001;
+  --color-gold-950: #2E2400;
+  --color-espresso-50: #FAFAFA;
+  --color-espresso-100: #F2F1EF;
+  --color-espresso-200: #E4E1DC;
+  --color-espresso-300: #CBC4B8;
+  --color-espresso-400: #7B7B7B;
+  --color-espresso-500: #6B6255;
+  --color-espresso-600: #574E42;
+  --color-espresso-700: #453D33;
+  --color-espresso-800: #322B22;
+  --color-espresso-900: #3C2405;
+  --color-espresso-950: #241503;
+  --color-red-50: #FEF2F2;
+  --color-red-100: #FEE2E2;
+  --color-red-200: #FECACA;
+  --color-red-300: #FCA5A5;
+  --color-red-400: #F87171;
+  --color-red-500: #D93C3D;
+  --color-red-600: #B91C1C;
+  --color-red-700: #991B1B;
+  --color-red-800: #7F1D1D;
+  --color-red-900: #601818;
+  --color-red-950: #3D0F0F;
+  --color-amber-50: #FFFBEB;
+  --color-amber-100: #FEF0C7;
+  --color-amber-200: #FDDE8A;
+  --color-amber-300: #FBC750;
+  --color-amber-400: #F8B32E;
+  --color-amber-500: #F5A623;
+  --color-amber-600: #D4890F;
+  --color-amber-700: #A96A0C;
+  --color-amber-800: #7D4E09;
+  --color-amber-900: #533405;
+  --color-amber-950: #2E1D03;
+  --color-blue-50: #EFF6FF;
+  --color-blue-100: #DBEAFE;
+  --color-blue-200: #BFDBFE;
+  --color-blue-300: #93C5FD;
+  --color-blue-400: #609DF7;
+  --color-blue-500: #4285F4;
+  --color-blue-600: #2563EB;
+  --color-blue-700: #1D4ED8;
+  --color-blue-800: #1E40AF;
+  --color-blue-900: #1E3A8A;
+  --color-blue-950: #17275C;
+  --color-green-50: #F0FDF4;
+  --color-green-100: #DCFCE7;
+  --color-green-200: #BBF7D0;
+  --color-green-300: #86EFAC;
+  --color-green-400: #4ADE80;
+  --color-green-500: #34A853;
+  --color-green-600: #16A34A;
+  --color-green-700: #15803D;
+  --color-green-800: #166534;
+  --color-green-900: #14532D;
+  --color-green-950: #052E16;
+  --color-white: #FFFFFF;
+  --color-black: #000000;
+
+  /* Aurelia Primitives — role ramps (primary/neutral/danger/warning/info/success) */
+  --color-primary-50: #FFFBEB;
+  --color-primary-100: #FFF3C4;
+  --color-primary-200: #FFE58A;
+  --color-primary-300: #FFDA5C;
+  --color-primary-400: #FFD242;
+  --color-primary-500: #F2B705;
+  --color-primary-600: #D69E02;
+  --color-primary-700: #A67C01;
+  --color-primary-800: #7A5C01;
+  --color-primary-900: #524001;
+  --color-primary-950: #2E2400;
+  --color-neutral-50: #FAFAFA;
+  --color-neutral-100: #F2F1EF;
+  --color-neutral-200: #E4E1DC;
+  --color-neutral-300: #CBC4B8;
+  --color-neutral-400: #7B7B7B;
+  --color-neutral-500: #6B6255;
+  --color-neutral-600: #574E42;
+  --color-neutral-700: #453D33;
+  --color-neutral-800: #322B22;
+  --color-neutral-900: #3C2405;
+  --color-neutral-950: #241503;
+  --color-danger-50: #FEF2F2;
+  --color-danger-100: #FEE2E2;
+  --color-danger-200: #FECACA;
+  --color-danger-300: #FCA5A5;
+  --color-danger-400: #F87171;
+  --color-danger-500: #D93C3D;
+  --color-danger-600: #B91C1C;
+  --color-danger-700: #991B1B;
+  --color-danger-800: #7F1D1D;
+  --color-danger-900: #601818;
+  --color-danger-950: #3D0F0F;
+  --color-warning-50: #FFFBEB;
+  --color-warning-100: #FEF0C7;
+  --color-warning-200: #FDDE8A;
+  --color-warning-300: #FBC750;
+  --color-warning-400: #F8B32E;
+  --color-warning-500: #F5A623;
+  --color-warning-600: #D4890F;
+  --color-warning-700: #A96A0C;
+  --color-warning-800: #7D4E09;
+  --color-warning-900: #533405;
+  --color-warning-950: #2E1D03;
+  --color-info-50: #EFF6FF;
+  --color-info-100: #DBEAFE;
+  --color-info-200: #BFDBFE;
+  --color-info-300: #93C5FD;
+  --color-info-400: #609DF7;
+  --color-info-500: #4285F4;
+  --color-info-600: #2563EB;
+  --color-info-700: #1D4ED8;
+  --color-info-800: #1E40AF;
+  --color-info-900: #1E3A8A;
+  --color-info-950: #17275C;
+  --color-success-50: #F0FDF4;
+  --color-success-100: #DCFCE7;
+  --color-success-200: #BBF7D0;
+  --color-success-300: #86EFAC;
+  --color-success-400: #4ADE80;
+  --color-success-500: #34A853;
+  --color-success-600: #16A34A;
+  --color-success-700: #15803D;
+  --color-success-800: #166534;
+  --color-success-900: #14532D;
+  --color-success-950: #052E16;
+  --color-base-white: #FFFFFF;
+  --color-base-black: #000000;
+
+  /* Aurelia Semantic — role-based tokens consumed by components */
+  --color-background-default: #FAFAFA;
+  --color-background-elevated: #F2F1EF;
+  --color-surface-default: #FFFFFF;
+  --color-surface-sunken: #FAFAFA;
+  --color-border-default: #CBC4B8;
+  --color-border-subtle: #E4E1DC;
+  --color-text-primary: #3C2405;
+  --color-text-secondary: #7B7B7B;
+  --color-text-inverse: #FFFFFF;
+  --color-text-on-brand: #3C2405;
+  --color-text-strong: #000000;
+  --color-text-brand: #D69E02;
+  --color-brand-default: #FFD242;
+  --color-brand-emphasis: #D69E02;
+  --color-interactive-primary: #3C2405;
+  --color-interactive-primary-text: #3C2405;
+  --color-feedback-success: #34A853;
+  --color-feedback-warning: #F5A623;
+  --color-feedback-error: #D93C3D;
+  --color-feedback-info: #4285F4;
+  --color-icon-default: #3C2405;
+  --color-icon-strong: #000000;
+  --color-icon-secondary: #7B7B7B;
+  --color-icon-inverse: #FFFFFF;
+  --color-button-primary-background: #3C2405;
+  --color-button-primary-background-pressed: #322B22;
+  --color-button-primary-foreground: #FFFFFF;
+  --color-button-secondary-background: #FFFFFF;
+  --color-button-secondary-foreground: #3C2405;
+  --color-button-secondary-border: #CBC4B8;
+  --color-button-disabled-background: #E4E1DC;
+  --color-button-disabled-foreground: #7B7B7B;
+  --color-button-ghost-foreground: #D69E02;
+
+  /* Aurelia Numbers — spacing base unit set to 1px so p-2/m-16/gap-24 etc.
+     map 1:1 to Figma spacing/2, spacing/16, spacing/24 ... */
+  --spacing: 1px;
+
+  /* radius scale */
+  --radius-0: 0px;
+  --radius-2: 2px;
+  --radius-4: 4px;
+  --radius-8: 8px;
+  --radius-12: 12px;
+  --radius-16: 16px;
+  --radius-24: 24px;
+  --radius-32: 32px;
+  --radius-full: 9999px;
+
+  /* size scale (icons/avatars/touch targets) */
+  --size-16: 16px;
+  --size-20: 20px;
+  --size-24: 24px;
+  --size-32: 32px;
+  --size-40: 40px;
+  --size-48: 48px;
+  --size-56: 56px;
+  --size-64: 64px;
+  --size-80: 80px;
+  --size-96: 96px;
+  --size-128: 128px;
+
+  /* Aurelia Typography */
+  --font-sans: "SF Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --tracking-tight: -0.2px;
+  --tracking-normal: 0px;
+  --tracking-wide: 0.2px;
+  --text-10: 10px;
+  --text-10--line-height: 14px;
+  --text-12: 12px;
+  --text-12--line-height: 16px;
+  --text-14: 14px;
+  --text-14--line-height: 20px;
+  --text-16: 16px;
+  --text-16--line-height: 24px;
+  --text-18: 18px;
+  --text-18--line-height: 24px;
+  --text-20: 20px;
+  --text-20--line-height: 28px;
+  --text-24: 24px;
+  --text-24--line-height: 32px;
+  --text-28: 28px;
+  --text-28--line-height: 36px;
+  --text-32: 32px;
+  --text-32--line-height: 40px;
+  --text-36: 36px;
+  --text-36--line-height: 44px;
+  --text-40: 40px;
+  --text-40--line-height: 48px;
+  --text-48: 48px;
+  --text-48--line-height: 56px;
+}
+
+/* Named type-scale utilities mirroring the Aurelia/* Figma text styles.
+   Usage: className="text-style-title-large" */
+.text-style-display {
+  font-family: var(--font-sans);
+  font-size: var(--text-48);
+  line-height: var(--text-48--line-height);
+  font-weight: var(--font-weight-semibold);
+}
+.text-style-headline {
+  font-family: var(--font-sans);
+  font-size: var(--text-32);
+  line-height: var(--text-32--line-height);
+  font-weight: var(--font-weight-semibold);
+}
+.text-style-title-large {
+  font-family: var(--font-sans);
+  font-size: var(--text-24);
+  line-height: var(--text-24--line-height);
+  font-weight: var(--font-weight-semibold);
+}
+.text-style-title {
+  font-family: var(--font-sans);
+  font-size: var(--text-20);
+  line-height: var(--text-20--line-height);
+  font-weight: var(--font-weight-medium);
+}
+.text-style-body-large {
+  font-family: var(--font-sans);
+  font-size: var(--text-18);
+  line-height: var(--text-18--line-height);
+  font-weight: var(--font-weight-regular);
+}
+.text-style-body {
+  font-family: var(--font-sans);
+  font-size: var(--text-16);
+  line-height: var(--text-16--line-height);
+  font-weight: var(--font-weight-regular);
+}
+.text-style-body-small {
+  font-family: var(--font-sans);
+  font-size: var(--text-14);
+  line-height: var(--text-14--line-height);
+  font-weight: var(--font-weight-regular);
+}
+.text-style-label {
+  font-family: var(--font-sans);
+  font-size: var(--text-12);
+  line-height: var(--text-12--line-height);
+  font-weight: var(--font-weight-medium);
+}
+.text-style-caption {
+  font-family: var(--font-sans);
+  font-size: var(--text-10);
+  line-height: var(--text-10--line-height);
+  font-weight: var(--font-weight-regular);
+}
