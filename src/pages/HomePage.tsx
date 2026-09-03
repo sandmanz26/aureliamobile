@@ -12,6 +12,7 @@ import {
   Wind,
 } from 'lucide-react'
 import { useState } from 'react'
+import liveSessionsMap from '../assets/live-sessions-map.png'
 import { Chip } from '../components/ui/Chip'
 import { CommunityCard } from '../components/ui/CommunityCard'
 import { FeatureCard } from '../components/ui/FeatureCard'
@@ -118,21 +119,9 @@ export function HomePage() {
             Ongoing Live Sessions
           </h2>
           <div
-            className="relative mt-16 flex h-[320px] flex-col justify-center gap-32 overflow-hidden rounded-24 px-20 py-40"
-            style={{ background: 'linear-gradient(160deg, #f2f2f2, #ff881b)' }}
+            className="relative mt-16 flex h-[320px] flex-col justify-center gap-32 overflow-hidden rounded-24 bg-cover bg-center px-20 py-40"
+            style={{ backgroundImage: `url(${liveSessionsMap})` }}
           >
-            <span
-              className="pointer-events-none absolute -bottom-[130px] -left-5 h-[254px] w-full rounded-full opacity-75 blur-3xl"
-              style={{ background: '#ff881b' }}
-            />
-            <span
-              className="pointer-events-none absolute -left-40 top-20 h-[238px] w-[323px] rounded-full opacity-75 blur-3xl"
-              style={{ background: '#ffe682' }}
-            />
-            <span
-              className="pointer-events-none absolute right-0 top-0 h-[180px] w-[270px] translate-x-1/3 -translate-y-1/4 rounded-full opacity-75 blur-3xl"
-              style={{ background: '#ffe682' }}
-            />
             <div className="relative z-10 flex gap-12">
               {[
                 { label: 'People', value: '87k' },
