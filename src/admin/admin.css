@@ -1,0 +1,84 @@
+/* Admin CMS theme.
+   Surfaces and ink stay close to the Aurelia app so the panel reads as the
+   same product, but the density is admin-grade. Series colors come from the
+   validated categorical palette (see the dataviz palette reference) — Aurelia's
+   own ramps are all one warm hue family and cannot separate under CVD. */
+
+@theme {
+  /* Surfaces & ink */
+  --color-adm-bg: #f7f7f5;
+  --color-adm-surface: #ffffff;
+  --color-adm-hover: #f4f3f0;
+  --color-adm-line: #e4e2dc;
+  --color-adm-ink: #1c1a17;
+  --color-adm-ink-2: #52514e;
+  --color-adm-muted: #8a8880;
+  --color-adm-accent: #3c2405;
+  --color-adm-sidebar: #241503;
+
+  /* Categorical series (validated: adjacent ΔE 9.1 CVD / 22.9 normal on #fff) */
+  --color-adm-s1: #2a78d6;
+  --color-adm-s2: #eb6834;
+  --color-adm-s3: #1baf7a;
+  --color-adm-s4: #eda100;
+
+  /* Status — reserved, never reused as a series */
+  --color-adm-good: #0ca30c;
+  --color-adm-warning: #fab219;
+  --color-adm-serious: #ec835a;
+  --color-adm-critical: #d03b3b;
+
+  /* Chart chrome */
+  --color-adm-grid: #ebe9e3;
+  --color-adm-axis: #c3c2b7;
+
+  /* Type sizes used across the dense admin surfaces */
+  --text-11: 11px;
+  --text-12: 12px;
+  --text-13: 13px;
+  --text-15: 15px;
+  --text-19: 19px;
+  --text-26: 26px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-adm-bg: #131211;
+    --color-adm-surface: #1c1b19;
+    --color-adm-hover: #26241f;
+    --color-adm-line: #302e29;
+    --color-adm-ink: #f5f4f0;
+    --color-adm-ink-2: #c3c2b7;
+    --color-adm-muted: #8a8880;
+    --color-adm-accent: #ffd242;
+    --color-adm-sidebar: #0e0d0c;
+
+    --color-adm-s1: #3987e5;
+    --color-adm-s2: #d95926;
+    --color-adm-s3: #199e70;
+    --color-adm-s4: #c98500;
+
+    --color-adm-grid: #2c2b28;
+    --color-adm-axis: #3a3833;
+  }
+}
+
+:root[data-theme='dark'] {
+  --color-adm-bg: #131211;
+  --color-adm-surface: #1c1b19;
+  --color-adm-hover: #26241f;
+  --color-adm-line: #302e29;
+  --color-adm-ink: #f5f4f0;
+  --color-adm-ink-2: #c3c2b7;
+  --color-adm-muted: #8a8880;
+  --color-adm-accent: #ffd242;
+  --color-adm-sidebar: #0e0d0c;
+
+  --color-adm-s1: #3987e5;
+  --color-adm-s2: #d95926;
+  --color-adm-s3: #199e70;
+  --color-adm-s4: #c98500;
+
+  --color-adm-grid: #2c2b28;
+  --color-adm-axis: #3a3833;
+}

@@ -1,4 +1,14 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { AdminLayout } from './admin/AdminLayout'
+import { AiMonitoring } from './admin/pages/AiMonitoring'
+import { AuditPage } from './admin/pages/AuditPage'
+import { CoinsPage } from './admin/pages/CoinsPage'
+import { DashboardPage } from './admin/pages/DashboardPage'
+import { ModerationPage } from './admin/pages/ModerationPage'
+import { RolesPage } from './admin/pages/RolesPage'
+import { SessionsPage } from './admin/pages/SessionsPage'
+import { SettingsPage } from './admin/pages/SettingsPage'
+import { UsersPage } from './admin/pages/UsersPage'
 import { FeatureFlagsProvider } from './demo/FeatureFlags'
 import { ModuleGuard } from './demo/ModuleGuard'
 import { AppLayout } from './layouts/AppLayout'
@@ -15,6 +25,19 @@ export default function App() {
       <Routes>
         {/* Unlisted presenter console — see src/demo/modules.ts */}
         <Route path="/__demo" element={<DemoControlPage />} />
+
+        {/* Super-admin CMS — its own shell, outside the consumer app layout */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<DashboardPage />} />
+          <Route path="users" element={<UsersPage />} />
+          <Route path="roles" element={<RolesPage />} />
+          <Route path="sessions" element={<SessionsPage />} />
+          <Route path="moderation" element={<ModerationPage />} />
+          <Route path="ai" element={<AiMonitoring />} />
+          <Route path="coins" element={<CoinsPage />} />
+          <Route path="audit" element={<AuditPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+        </Route>
 
         <Route path="/login" element={<SignInPage />} />
         <Route element={<AppLayout />}>
