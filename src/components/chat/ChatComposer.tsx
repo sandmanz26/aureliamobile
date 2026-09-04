@@ -5,11 +5,13 @@ interface ChatComposerProps {
   onSend: (text: string) => void
   onVoice: () => void
   disabled?: boolean
+  /** Voice input is switched off in the /__demo console. */
+  canVoice?: boolean
 }
 
 // Figma "Container" — 356x59, radius 70, surface/default on a 0.5px
 // #e4e4e4 hairline. Plus / field / voice orb / send.
-export function ChatComposer({ onSend, onVoice, disabled }: ChatComposerProps) {
+export function ChatComposer({ onSend, onVoice, disabled, canVoice = true }: ChatComposerProps) {
   const [value, setValue] = useState('')
 
   function submit(event: React.FormEvent) {
@@ -42,7 +44,8 @@ export function ChatComposer({ onSend, onVoice, disabled }: ChatComposerProps) {
           type="button"
           aria-label="Voice input"
           onClick={onVoice}
-          className="relative flex size-35 items-center justify-center rounded-full border-[1.5px] border-icon-strong"
+          disabled={!canVoice}
+          className="relative flex size-35 items-center justify-center rounded-full border-[1.5px] border-icon-strong disabled:cursor-not-allowed disabled:opacity-40"
         >
           <span className="absolute size-[21px] rounded-full bg-brand-default" />
           <span className="absolute size-[18px] rounded-full bg-primary-200" />

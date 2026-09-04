@@ -10,6 +10,7 @@ import { PublishSheet } from '../components/chat/PublishSheet'
 import type { Recommendation } from '../components/chat/RecommendationCard'
 import { RecommendationCard } from '../components/chat/RecommendationCard'
 import { SessionProgressCard } from '../components/chat/SessionProgressCard'
+import { useFeatureFlags } from '../demo/FeatureFlags'
 import { useDrawer } from '../layouts/DrawerContext'
 
 interface Message {
@@ -64,6 +65,7 @@ type SessionState = 'idle' | 'updating' | 'generating' | 'ready'
 export function ChatPage() {
   const navigate = useNavigate()
   const { openDrawer } = useDrawer()
+  const { isEnabled } = useFeatureFlags()
 
   const [messages, setMessages] = useState<Message[]>(OPENING_MESSAGES)
   const [typing, setTyping] = useState(false)
@@ -135,11 +137,13 @@ export function ChatPage() {
     }, 1600)
   }
 
-  const showRecommendations = sessionState === 'idle' || sessionState === 'updating'
+  const showRecommendations =
+    isEnabled('chat.recommendations') && (sessionState === 'idle' || sessionState === 'updating')
 
   return (
     <div className="flex h-[calc(100vh-54px)] flex-col bg-background-default lg:h-screen">
-      <ChatHeader points="1,323" onMenu={openDrawer} onPublish={() => setPublishState('publishing')} />
+      <ChatHeader points="1,323" onMenu={openDrawer} onPublish={() => isEnabled('chat.publish') && setPublishState('publishing')}
+        canPublish={isEnabled('chat.publish')} />
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-20">
         <div className="mx-auto flex max-w-[402px] flex-col gap-16 pb-16 lg:max-w-[720px]">
@@ -241,7 +245,8 @@ export function ChatPage() {
 
           <div className="px-20">
             <div className="mx-auto max-w-[402px] lg:max-w-[720px]">
-              <ChatComposer onSend={sendMessage} onVoice={() => setListening(true)} disabled={typing} />
+              <ChatComposer onSend={sendMessage} onVoice={() => isEnabled('chat.voice') && setListening(true)}
+                canVoice={isEnabled('chat.voice')} disabled={typing} />
             </div>
           </div>
         </div>

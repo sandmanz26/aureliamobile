@@ -5,6 +5,8 @@ interface ChatHeaderProps {
   points: string
   onMenu: () => void
   onPublish: () => void
+  /** Publish is switched off in the /__demo console. */
+  canPublish?: boolean
 }
 
 const MENU_ITEMS = ['Insights', 'Settings', 'Publish'] as const
@@ -12,7 +14,7 @@ const MENU_ITEMS = ['Insights', 'Settings', 'Publish'] as const
 // Figma "Top Header" — 44px circular surface buttons either side of a
 // 96x44 points pill. The trailing "more" button opens the dropdown
 // (Figma node "dropdown", 140x175).
-export function ChatHeader({ points, onMenu, onPublish }: ChatHeaderProps) {
+export function ChatHeader({ points, onMenu, onPublish, canPublish = true }: ChatHeaderProps) {
   const [open, setOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -68,7 +70,7 @@ export function ChatHeader({ points, onMenu, onPublish }: ChatHeaderProps) {
 
           {open && (
             <div className="absolute right-0 top-[52px] z-20 w-140 overflow-hidden rounded-16 bg-surface-default py-8 shadow-lg">
-              {MENU_ITEMS.map((item) => (
+              {MENU_ITEMS.filter((item) => item !== 'Publish' || canPublish).map((item) => (
                 <button
                   key={item}
                   type="button"

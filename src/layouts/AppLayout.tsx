@@ -2,6 +2,7 @@ import { Bell, Compass, HelpCircle, Home, ListMusic, MessageCircle, Plus, User, 
 import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
+import { useFeatureFlags } from '../demo/FeatureFlags'
 import { Button } from '../components/ui/Button'
 import { MobileStatusBar } from '../components/ui/MobileStatusBar'
 import { NavItem } from '../components/ui/NavItem'
@@ -14,6 +15,8 @@ const recentSessions = [
 ]
 
 function SidebarContent({ onNavigate, showBell = true }: { onNavigate?: () => void; showBell?: boolean }) {
+  const { isEnabled } = useFeatureFlags()
+
   return (
     <div className="flex h-full flex-col gap-24 overflow-y-auto px-24 py-24">
       <div className="flex items-center justify-between">
@@ -26,12 +29,12 @@ function SidebarContent({ onNavigate, showBell = true }: { onNavigate?: () => vo
       </div>
 
       <nav className="flex flex-col gap-4" onClick={onNavigate}>
-        <NavItem to="/home" icon={<Home size={20} />} label="Home" />
-        <NavItem to="/chat" icon={<MessageCircle size={20} />} label="Chat" />
-        <NavItem to="/profile" icon={<User size={20} />} label="Profile" />
-        <NavItem to="/explore" icon={<Compass size={20} />} label="Explore" />
-        <NavItem to="/sessions" icon={<ListMusic size={20} />} label="Sessions" />
-        <NavItem to="/wellness" icon={<Waves size={20} />} label="My wellness" />
+        <NavItem to="/home" icon={<Home size={20} />} label="Home" disabled={!isEnabled('home')} />
+        <NavItem to="/chat" icon={<MessageCircle size={20} />} label="Chat" disabled={!isEnabled('chat')} />
+        <NavItem to="/profile" icon={<User size={20} />} label="Profile" disabled={!isEnabled('profile')} />
+        <NavItem to="/explore" icon={<Compass size={20} />} label="Explore" disabled={!isEnabled('explore')} />
+        <NavItem to="/sessions" icon={<ListMusic size={20} />} label="Sessions" disabled={!isEnabled('sessions')} />
+        <NavItem to="/wellness" icon={<Waves size={20} />} label="My wellness" disabled={!isEnabled('wellness')} />
       </nav>
 
       <div className="flex flex-col gap-12">

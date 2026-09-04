@@ -16,6 +16,7 @@ import liveSessionsMap from '../assets/live-sessions-map.png'
 import { Chip } from '../components/ui/Chip'
 import { CommunityCard } from '../components/ui/CommunityCard'
 import { FeatureCard } from '../components/ui/FeatureCard'
+import { useFeatureFlags } from '../demo/FeatureFlags'
 import { useDrawer } from '../layouts/DrawerContext'
 
 const quickStartCards = [
@@ -63,6 +64,7 @@ const features = [
 
 export function HomePage() {
   const { openDrawer } = useDrawer()
+  const { isEnabled } = useFeatureFlags()
   const [activeChip, setActiveChip] = useState('All')
 
   return (
@@ -114,6 +116,7 @@ export function HomePage() {
         </section>
 
         {/* Ongoing Live Sessions */}
+        {isEnabled('home.liveSessions') && (
         <section className="mt-40">
           <h2 className="text-style-body text-text-primary" style={{ color: '#3c2405' }}>
             Ongoing Live Sessions
@@ -136,8 +139,10 @@ export function HomePage() {
             </div>
           </div>
         </section>
+        )}
 
         {/* Quick Start */}
+        {isEnabled('home.quickStart') && (
         <section className="mt-40">
           <h2 className="text-style-title text-text-primary">Quick Start</h2>
           <div className="mt-16 flex gap-12 overflow-x-auto pb-4">
@@ -158,9 +163,11 @@ export function HomePage() {
             ))}
           </div>
         </section>
+        )}
       </div>
 
       {/* Dark generative wellness banner — full bleed */}
+      {isEnabled('home.promo') && (
       <section className="mt-48 bg-text-primary px-20 py-48 text-center text-text-inverse lg:px-24">
         <span
           className="inline-block bg-clip-text text-style-caption font-medium text-transparent"
@@ -196,9 +203,11 @@ export function HomePage() {
           Start your Journey
         </button>
       </section>
+      )}
 
       <div className="mx-auto max-w-[720px] px-20 lg:px-24">
         {/* Recreate from Community */}
+        {isEnabled('home.community') && (
         <section className="mt-48">
           <h2 className="text-style-title text-text-primary">Recreate from Community</h2>
           <div className="mt-16 flex gap-8 overflow-x-auto pb-4">
@@ -212,8 +221,10 @@ export function HomePage() {
             ))}
           </div>
         </section>
+        )}
 
         {/* Adaptive Wellness feature grid */}
+        {isEnabled('home.adaptive') && (
         <section className="mt-48">
           <span className="inline-block rounded-full bg-background-elevated px-16 py-6 text-style-caption text-text-primary">
             Adaptive Wellness
@@ -231,6 +242,7 @@ export function HomePage() {
             ))}
           </div>
         </section>
+        )}
 
         {/* Ready to restore CTA */}
         <section
