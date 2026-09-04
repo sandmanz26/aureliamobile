@@ -3,8 +3,14 @@ import { AdminLayout } from './admin/AdminLayout'
 import { AiMonitoring } from './admin/pages/AiMonitoring'
 import { AuditPage } from './admin/pages/AuditPage'
 import { CoinsPage } from './admin/pages/CoinsPage'
+import { CompliancePage } from './admin/pages/CompliancePage'
 import { DashboardPage } from './admin/pages/DashboardPage'
+import { ExperimentsPage } from './admin/pages/ExperimentsPage'
 import { ModerationPage } from './admin/pages/ModerationPage'
+import { NotificationsPage } from './admin/pages/NotificationsPage'
+import { PaymentsPage } from './admin/pages/PaymentsPage'
+import { PricingPage } from './admin/pages/PricingPage'
+import { RevenuePage } from './admin/pages/RevenuePage'
 import { RolesPage } from './admin/pages/RolesPage'
 import { SessionsPage } from './admin/pages/SessionsPage'
 import { SettingsPage } from './admin/pages/SettingsPage'
@@ -34,7 +40,13 @@ export default function App() {
           <Route path="sessions" element={<SessionsPage />} />
           <Route path="moderation" element={<ModerationPage />} />
           <Route path="ai" element={<AiMonitoring />} />
+          <Route path="revenue" element={<RevenuePage />} />
+          <Route path="pricing" element={<PricingPage />} />
+          <Route path="payments" element={<PaymentsPage />} />
           <Route path="coins" element={<CoinsPage />} />
+          <Route path="experiments" element={<ExperimentsPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="compliance" element={<CompliancePage />} />
           <Route path="audit" element={<AuditPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>

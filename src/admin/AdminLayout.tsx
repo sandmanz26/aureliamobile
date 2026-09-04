@@ -1,13 +1,19 @@
 import {
   Activity,
+  Bell,
   Coins,
+  CreditCard,
   FileText,
+  FlaskConical,
   LayoutDashboard,
   Menu,
+  Scale,
   ScrollText,
   Settings,
   ShieldAlert,
   ShieldCheck,
+  Tag,
+  TrendingUp,
   Users,
   X,
 } from 'lucide-react'
@@ -35,12 +41,25 @@ const NAV = [
     items: [{ to: '/admin/ai', label: 'AI monitoring', icon: Activity }],
   },
   {
-    section: 'Economy',
-    items: [{ to: '/admin/coins', label: 'Coins & rewards', icon: Coins }],
+    section: 'Revenue',
+    items: [
+      { to: '/admin/revenue', label: 'Revenue', icon: TrendingUp },
+      { to: '/admin/pricing', label: 'Pricing', icon: Tag },
+      { to: '/admin/payments', label: 'Payments', icon: CreditCard },
+      { to: '/admin/coins', label: 'Coins & rewards', icon: Coins },
+    ],
+  },
+  {
+    section: 'Growth',
+    items: [
+      { to: '/admin/experiments', label: 'Experiments', icon: FlaskConical },
+      { to: '/admin/notifications', label: 'Notifications', icon: Bell },
+    ],
   },
   {
     section: 'Platform',
     items: [
+      { to: '/admin/compliance', label: 'Compliance', icon: Scale },
       { to: '/admin/audit', label: 'Audit log', icon: ScrollText },
       { to: '/admin/settings', label: 'Settings', icon: Settings },
     ],

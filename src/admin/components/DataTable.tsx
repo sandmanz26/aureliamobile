@@ -179,12 +179,12 @@ export function DataTable<T extends Record<string, unknown>>({
         <table className="w-full border-collapse text-13">
           <thead>
             <tr className="border-b border-adm-line">
-              {columns.map((column) => {
+              {columns.map((column, columnIndex) => {
                 const sortable = column.sortable !== false
                 const isSorted = sortKey === column.key
                 return (
                   <th
-                    key={column.key}
+                    key={`${column.key}-${columnIndex}`}
                     style={{ width: column.width }}
                     className={`whitespace-nowrap px-12 py-10 text-11 font-semibold uppercase tracking-wider text-adm-muted ${
                       column.numeric ? 'text-right' : 'text-left'
@@ -217,9 +217,9 @@ export function DataTable<T extends Record<string, unknown>>({
           <tbody>
             {visible.map((row, index) => (
               <tr key={index} className="border-b border-adm-line last:border-0 hover:bg-adm-hover">
-                {columns.map((column) => (
+                {columns.map((column, columnIndex) => (
                   <td
-                    key={column.key}
+                    key={`${column.key}-${columnIndex}`}
                     className={`px-12 py-10 align-middle text-adm-ink ${
                       column.numeric ? 'text-right tabular-nums' : ''
                     }`}
