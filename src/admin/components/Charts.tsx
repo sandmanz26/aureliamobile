@@ -7,6 +7,21 @@ import { useState } from 'react'
 
 const PAD = { top: 12, right: 12, bottom: 26, left: 44 }
 
+/* Charts are driven by dynamic key names, so rows are read through these two
+   guarded accessors. Callers pass their own interfaces — requiring an index
+   signature would force every data type in the admin to become a type alias. */
+type ChartRow = object
+
+function num(row: ChartRow, key: string): number {
+  const value = (row as Record<string, unknown>)[key]
+  return typeof value === 'number' ? value : 0
+}
+
+function str(row: ChartRow, key: string): string {
+  const value = (row as Record<string, unknown>)[key]
+  return typeof value === 'string' ? value : String(value ?? '')
+}
+
 function niceMax(value: number) {
   const magnitude = Math.pow(10, Math.floor(Math.log10(value)))
   return Math.ceil(value / magnitude) * magnitude
@@ -23,7 +38,7 @@ export interface Series {
 }
 
 interface LineChartProps {
-  data: Record<string, number | string>[]
+  data: ChartRow[]
   xKey: string
   series: Series[]
   height?: number
@@ -38,7 +53,7 @@ export function LineChart({ data, xKey, series, height = 220, format = (v) => St
   const innerW = width - PAD.left - PAD.right
   const innerH = height - PAD.top - PAD.bottom
 
-  const max = niceMax(Math.max(...data.flatMap((row) => series.map((s) => Number(row[s.key]) || 0))) * 1.1)
+  const max = niceMax(Math.max(...data.flatMap((row) => series.map((s) => num(row, s.key)))) * 1.1)
   const x = (i: number) => PAD.left + (i / Math.max(1, data.length - 1)) * innerW
   const y = (value: number) => PAD.top + innerH - (value / max) * innerH
 
@@ -65,7 +80,7 @@ export function LineChart({ data, xKey, series, height = 220, format = (v) => St
         {data.map((row, i) =>
           i % Math.ceil(data.length / 7) === 0 ? (
             <text key={i} x={x(i)} y={height - 8} textAnchor="middle" fontSize="10" fill="var(--color-adm-muted)">
-              {shortDate(String(row[xKey]))}
+              {shortDate(str(row, xKey))}
             </text>
           ) : null,
         )}
@@ -78,7 +93,7 @@ export function LineChart({ data, xKey, series, height = 220, format = (v) => St
             strokeWidth="2"
             strokeLinejoin="round"
             strokeLinecap="round"
-            points={data.map((row, i) => `${x(i)},${y(Number(row[s.key]) || 0)}`).join(' ')}
+            points={data.map((row, i) => `${x(i)},${y(num(row, s.key))}`).join(' ')}
           />
         ))}
 
@@ -89,7 +104,7 @@ export function LineChart({ data, xKey, series, height = 220, format = (v) => St
               <circle
                 key={s.key}
                 cx={x(hover)}
-                cy={y(Number(data[hover][s.key]) || 0)}
+                cy={y(num(data[hover], s.key))}
                 r="4"
                 fill={s.color}
                 stroke="var(--color-adm-surface)"
@@ -124,13 +139,13 @@ export function LineChart({ data, xKey, series, height = 220, format = (v) => St
           className="pointer-events-none absolute top-8 rounded-8 border border-adm-line bg-adm-surface px-10 py-8 text-12 shadow-lg"
           style={{ left: `${(x(hover) / width) * 100}%`, transform: 'translateX(-50%)' }}
         >
-          <p className="mb-4 font-medium text-adm-ink">{shortDate(String(data[hover][xKey]))}</p>
+          <p className="mb-4 font-medium text-adm-ink">{shortDate(str(data[hover], xKey))}</p>
           {series.map((s) => (
             <p key={s.key} className="flex items-center gap-6 whitespace-nowrap text-adm-ink-2">
               <span className="size-8 shrink-0 rounded-2" style={{ background: s.color }} />
               {s.label}
               <span className="ml-auto pl-8 font-medium tabular-nums text-adm-ink">
-                {format(Number(data[hover][s.key]) || 0)}
+                {format(num(data[hover], s.key))}
               </span>
             </p>
           ))}
@@ -185,14 +200,14 @@ export function StackedBars({
   height = 200,
   format = (v) => String(v),
 }: {
-  data: Record<string, number | string>[]
+  data: ChartRow[]
   xKey: string
   series: Series[]
   height?: number
   format?: (value: number) => string
 }) {
   const [hover, setHover] = useState<number | null>(null)
-  const totals = data.map((row) => series.reduce((sum, s) => sum + (Number(row[s.key]) || 0), 0))
+  const totals = data.map((row) => series.reduce((sum, s) => sum + num(row, s.key), 0))
   const max = niceMax(Math.max(...totals) * 1.08)
 
   return (
@@ -206,7 +221,7 @@ export function StackedBars({
             onMouseLeave={() => setHover(null)}
           >
             {[...series].reverse().map((s) => {
-              const value = Number(row[s.key]) || 0
+              const value = num(row, s.key)
               return (
                 <div
                   key={s.key}
@@ -224,8 +239,8 @@ export function StackedBars({
       </div>
 
       <div className="mt-6 flex justify-between text-10 text-adm-muted">
-        <span>{shortDate(String(data[0][xKey]))}</span>
-        <span>{shortDate(String(data[data.length - 1][xKey]))}</span>
+        <span>{shortDate(str(data[0], xKey))}</span>
+        <span>{shortDate(str(data[data.length - 1], xKey))}</span>
       </div>
 
       {hover !== null && (
@@ -233,13 +248,13 @@ export function StackedBars({
           className="pointer-events-none absolute -top-4 z-10 rounded-8 border border-adm-line bg-adm-surface px-10 py-8 text-12 shadow-lg"
           style={{ left: `${((hover + 0.5) / data.length) * 100}%`, transform: 'translateX(-50%)' }}
         >
-          <p className="mb-4 font-medium text-adm-ink">{shortDate(String(data[hover][xKey]))}</p>
+          <p className="mb-4 font-medium text-adm-ink">{shortDate(str(data[hover], xKey))}</p>
           {series.map((s) => (
             <p key={s.key} className="flex items-center gap-6 whitespace-nowrap text-adm-ink-2">
               <span className="size-8 shrink-0 rounded-2" style={{ background: s.color }} />
               {s.label}
               <span className="ml-auto pl-8 font-medium tabular-nums text-adm-ink">
-                {format(Number(data[hover][s.key]) || 0)}
+                {format(num(data[hover], s.key))}
               </span>
             </p>
           ))}

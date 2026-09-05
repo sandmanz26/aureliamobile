@@ -2,9 +2,12 @@ import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Download, Search, X } fr
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 
+/** A column addresses a string-named property of the row. */
+export type ColumnKey<T> = keyof T & string
+
 export interface Column<T> {
   /** Key into the row; also the CSV header. */
-  key: keyof T & string
+  key: ColumnKey<T>
   header: string
   /** Custom cell rendering. Sorting and export still use the raw value. */
   render?: (row: T) => ReactNode
@@ -15,7 +18,7 @@ export interface Column<T> {
 }
 
 export interface FilterDef<T> {
-  key: keyof T & string
+  key: ColumnKey<T>
   label: string
   options: string[]
 }
@@ -24,7 +27,7 @@ interface DataTableProps<T> {
   rows: T[]
   columns: Column<T>[]
   /** Columns searched by the free-text box. Defaults to every column. */
-  searchKeys?: (keyof T & string)[]
+  searchKeys?: ColumnKey<T>[]
   filters?: FilterDef<T>[]
   /** Base name for the exported CSV file. */
   exportName: string
@@ -39,7 +42,7 @@ function toCsvValue(value: unknown): string {
   return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
 }
 
-export function DataTable<T extends Record<string, unknown>>({
+export function DataTable<T>({
   rows,
   columns,
   searchKeys,
@@ -49,8 +52,8 @@ export function DataTable<T extends Record<string, unknown>>({
   emptyMessage = 'No rows match these filters.',
 }: DataTableProps<T>) {
   const [query, setQuery] = useState('')
-  const [active, setActive] = useState<Record<string, string>>({})
-  const [sortKey, setSortKey] = useState<string | null>(null)
+  const [active, setActive] = useState<Partial<Record<ColumnKey<T>, string>>>({})
+  const [sortKey, setSortKey] = useState<ColumnKey<T> | null>(null)
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [page, setPage] = useState(0)
 
@@ -59,7 +62,8 @@ export function DataTable<T extends Record<string, unknown>>({
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase()
     return rows.filter((row) => {
-      for (const [key, value] of Object.entries(active)) {
+      for (const key of Object.keys(active) as ColumnKey<T>[]) {
+        const value = active[key]
         if (value && String(row[key]) !== value) return false
       }
       if (!needle) return true
@@ -85,7 +89,7 @@ export function DataTable<T extends Record<string, unknown>>({
   const safePage = Math.min(page, pageCount - 1)
   const visible = sorted.slice(safePage * pageSize, safePage * pageSize + pageSize)
 
-  function toggleSort(key: string) {
+  function toggleSort(key: ColumnKey<T>) {
     if (sortKey === key) {
       setSortDir((dir) => (dir === 'asc' ? 'desc' : 'asc'))
     } else {

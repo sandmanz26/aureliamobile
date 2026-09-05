@@ -17,10 +17,19 @@ import {
   Users,
   X,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 
-const NAV = [
+interface NavItem {
+  to: string
+  label: string
+  icon: LucideIcon
+  /** Only the index route needs exact matching. */
+  end?: boolean
+}
+
+const NAV: { section: string; items: NavItem[] }[] = [
   { section: 'Overview', items: [{ to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true }] },
   {
     section: 'People',
