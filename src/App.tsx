@@ -20,11 +20,13 @@ import { UsersPage } from './admin/pages/UsersPage'
 import { FeatureFlagsProvider } from './demo/FeatureFlags'
 import { ModuleGuard } from './demo/ModuleGuard'
 import { AppLayout } from './layouts/AppLayout'
+import { ChallengeDetailPage } from './pages/ChallengeDetailPage'
 import { ChatPage } from './pages/ChatPage'
 import { DemoControlPage } from './pages/DemoControlPage'
 import { HomePage } from './pages/HomePage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { ProfilePage } from './pages/ProfilePage'
+import { SeeAllPage } from './pages/SeeAllPage'
 import { SessionsPage } from './pages/SessionsPage'
 import { RecreatePage } from './pages/RecreatePage'
 import { SessionDetailPage } from './pages/SessionDetailPage'
@@ -170,6 +172,26 @@ export default function App() {
                 <RequireAuth>
                   <ModuleGuard module="recreate">
                     <RecreatePage />
+                  </ModuleGuard>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/see-all/:shelf"
+              element={
+                <RequireAuth>
+                  <ModuleGuard module="seeAll">
+                    <SeeAllPage />
+                  </ModuleGuard>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/challenge/:slug"
+              element={
+                <RequireAuth>
+                  <ModuleGuard module="challenge">
+                    <ChallengeDetailPage />
                   </ModuleGuard>
                 </RequireAuth>
               }

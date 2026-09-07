@@ -196,7 +196,7 @@ export function SessionsPage() {
 
         {isEnabled('sessions.community') && (
           <section className="mt-32">
-            <SectionHeader title="Recreate from Community" />
+            <SectionHeader title="Recreate from Community" seeAllTo="/see-all/community" />
             <div className="-mx-20 mt-16 flex gap-8 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
               {chips.map((chip) => (
                 <Chip key={chip} label={chip} active={chip === activeChip} onClick={() => setActiveChip(chip)} />
@@ -233,14 +233,20 @@ export function SessionsPage() {
             <SectionHeader title="Monthly Challenge!" />
             <div className="relative mt-16 flex aspect-[362/240] w-full flex-col justify-end overflow-hidden rounded-24 p-16 text-text-inverse">
               <CoverImage
-                photo="mindDance"
-                gradient="linear-gradient(160deg, var(--color-espresso-950), var(--color-espresso-700))"
+                photo="neural"
+                gradient="linear-gradient(160deg, var(--color-espresso-950), var(--color-warning-700))"
                 width={760}
                 height={520}
               />
+              {/* The whole card opens the challenge; Join sits above it. */}
               <Link
-                to="/wellness"
-                className="text-style-label absolute right-16 top-16 flex h-32 items-center gap-6 whitespace-nowrap rounded-full bg-surface-default/90 px-12 text-text-primary"
+                to="/challenge/nervous-system-reset"
+                aria-label="Open the 30-Day Nervous System Reset challenge"
+                className="absolute inset-0 z-10"
+              />
+              <Link
+                to="/challenge/nervous-system-reset"
+                className="text-style-label absolute right-16 top-16 z-20 flex h-32 items-center gap-6 whitespace-nowrap rounded-full bg-surface-default/90 px-12 text-text-primary"
               >
                 Join
                 <ArrowRight size={13} />
@@ -267,14 +273,14 @@ export function SessionsPage() {
 
         {isEnabled('sessions.picked') && (
           <section className="mt-32">
-            <SectionHeader title="Picked for You" seeAllTo="/explore" />
+            <SectionHeader title="Picked for You" seeAllTo="/see-all/picked" />
             <SessionShelf shelf="picked" />
           </section>
         )}
 
         {isEnabled('sessions.impact') && (
           <section className="mt-32">
-            <SectionHeader title="Sessions with Biggest Impact" seeAllTo="/explore" />
+            <SectionHeader title="Sessions with Biggest Impact" seeAllTo="/see-all/impact" />
             <SessionShelf shelf="impact" />
           </section>
         )}

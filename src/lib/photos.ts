@@ -40,6 +40,22 @@ export const COVER_PHOTOS = {
   creatorDaniel: '1552374196-c4e7ffc6e126',
   creatorSophia: '1494790108377-be9c29b29330',
   creatorMaya: '1438761681033-6461ffad8d80',
+  creatorNoah: '1633332755192-727a05c4013d',
+  creatorAria: '1544005313-94ddf0286df2',
+  creatorTheo: '1531427186611-ecfd6d936c79',
+  creatorAmara: '1531123897727-8f129e1688ce',
+  creatorJonas: '1519345182560-3f2917c472ef',
+  creatorLily: '1487412720507-e7ab37603c6f',
+  creatorChloe: '1517841905240-472988babdf9',
+  creatorNina: '1524504388940-b1c1722653e1',
+  creatorLucas: '1500648767791-00dcc994a43e',
+  creatorMia: '1502823403499-6ccfcf4fb453',
+  // Covers for the Picked for You grid.
+  waves: '1439405326854-014607f694d7',          // open ocean swell
+  rain: '1428592953211-077101b2021b',           // rain on glass, bokeh
+  stones: '1507525428034-b723cf961d3e',         // balanced stones
+  meadow: '1444927714506-8492d94b4e3d',         // white flowers in grass
+  neural: '1559757148-5c350d0d3c56',            // filament network, the challenge hero
 } as const
 
 export type CoverKey = keyof typeof COVER_PHOTOS

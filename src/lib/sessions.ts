@@ -31,6 +31,8 @@ export interface SessionRecord {
   /** The longer pitch on the detail page. */
   summary: string
   author: string
+  /** Creator portrait, so a card can credit by face as well as name. */
+  authorPhoto: CoverKey
   authorRole: string
   plays: string
   recreated: string
@@ -68,7 +70,7 @@ export const SESSIONS: SessionRecord[] = [
     summary:
       'A slow descent built around cetacean song pitched down two octaves, laid over a tide that breathes at six cycles a minute. Written for the hour after work, when the body is still braced for something that is no longer coming.',
     author: 'Adam Nilson',
-    authorRole: 'Community creator · 34 published sessions',
+    authorPhoto: 'avatar',    authorRole: 'Community creator · 34 published sessions',
     plays: '18.5k',
     recreated: '1.5k',
     minutes: 22,
@@ -124,7 +126,7 @@ export const SESSIONS: SessionRecord[] = [
     summary:
       'A short, bright session that climbs rather than settles. Warm pads and a rising affirmation cadence, built for the flat stretch of a morning when nothing is wrong and nothing is moving either.',
     author: 'Sara Trezeguat',
-    authorRole: 'Community creator · 12 published sessions',
+    authorPhoto: 'creatorSophia',    authorRole: 'Community creator · 12 published sessions',
     plays: '18.5k',
     recreated: '1.5k',
     minutes: 9,
@@ -175,7 +177,7 @@ export const SESSIONS: SessionRecord[] = [
     summary:
       'Movement without moving. A shifting rhythmic bed that keeps attention busy enough to stop it circling, for the kind of stress that will not sit still long enough to be meditated away.',
     author: 'Lily Ahmad',
-    authorRole: 'Community creator · 7 published sessions',
+    authorPhoto: 'creatorLily',    authorRole: 'Community creator · 7 published sessions',
     plays: '18.5k',
     recreated: '1.5k',
     minutes: 15,
@@ -222,11 +224,11 @@ export const SESSIONS: SessionRecord[] = [
     title: 'Cosmic Flow',
     photo: 'cosmic',
     gradient: 'linear-gradient(160deg, var(--color-primary-950), var(--color-info-700))',
-    description: 'This helped Daniel release tension and reset her mind in just 10 minutes.',
+    description: 'This helped Daniel release tension and reset their mind in just 10 minutes.',
     summary:
       'Ten minutes of very slow harmonic drift, with no beat to hold onto and nothing to follow. Written for the gap between two things you did not want to do — short enough to fit, long enough to change the register you are in.',
     author: 'Emma Carter',
-    authorRole: 'Community creator · 21 published sessions',
+    authorPhoto: 'creatorAria',    authorRole: 'Community creator · 21 published sessions',
     plays: '18.5k',
     recreated: '1.5k',
     minutes: 10,
@@ -277,7 +279,7 @@ export const SESSIONS: SessionRecord[] = [
     summary:
       'A single tone, held and re-struck, with everything else kept out of the way. The claim attached to 528 Hz is folklore; what is measurable is that a steady pitch with nothing competing gives attention one place to sit.',
     author: 'Sofia Martinez',
-    authorRole: 'Community creator · 9 published sessions',
+    authorPhoto: 'creatorAmara',    authorRole: 'Community creator · 9 published sessions',
     plays: '18.5k',
     recreated: '1.5k',
     minutes: 12,
@@ -328,7 +330,7 @@ export const SESSIONS: SessionRecord[] = [
     summary:
       'A long, low session that stays close to the ground — earth-toned texture, a very slow breath cue, and no melody at all. Built to be played lying down, at the point in the evening where the day has not finished letting go.',
     author: 'Daniel Brooks',
-    authorRole: 'Community creator · 41 published sessions',
+    authorPhoto: 'creatorDaniel',    authorRole: 'Community creator · 41 published sessions',
     plays: '18.5k',
     recreated: '1.5k',
     minutes: 28,
@@ -382,7 +384,7 @@ export const SESSIONS: SessionRecord[] = [
     summary:
       'A morning session that does not try to wake you up quickly. Warm low strings under a slowly rising tone, ending on the note the day is meant to start on.',
     author: 'Noah Williams',
-    authorRole: 'Community creator · 16 published sessions',
+    authorPhoto: 'creatorNoah',    authorRole: 'Community creator · 16 published sessions',
     plays: '18.5k',
     recreated: '1.5k',
     minutes: 14,
@@ -423,6 +425,310 @@ export const SESSIONS: SessionRecord[] = [
       'Not a treatment for any medical condition.',
     ],
     shelves: ['impact'],
+  },
+  {
+    slug: 'ocean-breath',
+    title: 'Ocean Breath',
+    photo: 'waves',
+    gradient: 'linear-gradient(160deg, var(--color-info-950), var(--color-info-600))',
+    description: 'This helped Maya feel calmer and more grounded within minutes.',
+    summary:
+      'Breath paced to a swell rather than a metronome — the inhale rises with the water and the exhale goes out with it. Six cycles a minute, which is roughly where the nervous system settles on its own.',
+    author: 'Maya Chen',
+    authorPhoto: 'creatorMaya',    authorRole: 'Community creator · 18 published sessions',
+    plays: '18.5k',
+    recreated: '1.5k',
+    minutes: 11,
+    category: 'Calm',
+    intent: 'Slow the breath without making the listener count anything.',
+    outcome: [
+      { label: 'Felt calmer', value: '+52%', note: 'self-reported, straight after' },
+      { label: 'Breath rate', value: '−4 /min', note: 'median across 2.8k listeners' },
+      { label: 'Finished it', value: '86%', note: 'played to the end' },
+    ],
+    layers: [
+      { id: 'swell', name: 'Ocean swell', detail: 'Field recording, 6 cycles / minute', level: 74 },
+      { id: 'pad', name: 'Low pad', detail: 'Follows the swell, never leads it', level: 46 },
+      { id: 'voice', name: 'Guidance', detail: 'Female, 6 cues total', level: 38 },
+    ],
+    chapters: [
+      { label: 'Find it', minutes: 3, detail: 'The swell alone, until its rhythm is obvious.' },
+      { label: 'Follow it', minutes: 5, detail: 'Breath cues land on the rise and the fall.' },
+      { label: 'Keep it', minutes: 3, detail: 'Cues stop; the swell carries the pace.' },
+    ],
+    personalization: [
+      { label: 'Adapts to', value: 'Resting heart rate, stress check-in' },
+      { label: 'Voice', value: 'Female · unhurried' },
+      { label: 'Ends', value: 'Fade to silence' },
+      { label: 'Best time', value: 'Any time you are holding your breath' },
+    ],
+    commonChanges: [
+      { change: 'Made it longer', share: '40%' },
+      { change: 'Removed the guidance', share: '31%' },
+      { change: 'Slowed the pace', share: '17%' },
+    ],
+    lineage: [
+      { title: 'Tide bed', author: 'Aurelia', note: 'Starter template' },
+      { title: 'Ocean Breath', author: 'Maya Chen', note: 'Timed the breath cues to the swell' },
+    ],
+    safety: [
+      'Paced breathing can cause light-headedness — stop if you feel dizzy.',
+      'Not a treatment for any medical condition.',
+    ],
+    shelves: ['picked'],
+  },
+  {
+    slug: 'rainy-mind',
+    title: 'Rainy Mind',
+    photo: 'rain',
+    gradient: 'linear-gradient(160deg, var(--color-info-800), var(--color-warning-400))',
+    description: 'This helped Chloe reduce racing thoughts by 62% in 20 minutes.',
+    summary:
+      'Rain against a window, recorded from inside, with the room left in. For the kind of racing thought that needs something to happen nearby rather than silence to fill.',
+    author: 'Chloe Anderson',
+    authorPhoto: 'creatorChloe',    authorRole: 'Community creator · 24 published sessions',
+    plays: '18.5k',
+    recreated: '1.5k',
+    minutes: 20,
+    category: 'Calm',
+    intent: 'Give a racing mind company instead of an empty room.',
+    outcome: [
+      { label: 'Racing thoughts', value: '−62%', note: 'self-reported, 20 minutes' },
+      { label: 'Repeat rate', value: '69%', note: 'played again within a week' },
+      { label: 'Finished it', value: '64%', note: 'played to the end' },
+    ],
+    layers: [
+      { id: 'rain', name: 'Rain on glass', detail: 'Recorded from inside, room included', level: 76 },
+      { id: 'traffic', name: 'Distant traffic', detail: 'Far off, occasional', level: 32 },
+      { id: 'hum', name: 'Room hum', detail: 'Keeps it from sounding like a loop', level: 28 },
+    ],
+    chapters: [
+      { label: 'Inside', minutes: 5, detail: 'Rain arrives and steadies.' },
+      { label: 'Stay', minutes: 11, detail: 'Nothing changes on purpose.' },
+      { label: 'Easing', minutes: 4, detail: 'The rain thins out and stops.' },
+    ],
+    personalization: [
+      { label: 'Adapts to', value: 'Time of day, session history' },
+      { label: 'Voice', value: 'None — ambient' },
+      { label: 'Ends', value: 'Fade to silence' },
+      { label: 'Best time', value: 'Working, or trying to' },
+    ],
+    commonChanges: [
+      { change: 'Made it longer', share: '55%' },
+      { change: 'Dropped the traffic', share: '20%' },
+      { change: 'Added a guiding voice', share: '10%' },
+    ],
+    lineage: [
+      { title: 'Room tone', author: 'Aurelia', note: 'Starter template' },
+      { title: 'Rainy Mind', author: 'Chloe Anderson', note: 'Recorded the rain from indoors' },
+    ],
+    safety: [
+      'Field recordings licensed for redistribution inside Aurelia sessions only.',
+      'Not a treatment for anxiety or any medical condition.',
+    ],
+    shelves: ['picked'],
+  },
+  {
+    slug: 'inner-balance',
+    title: 'Inner Balance',
+    photo: 'stones',
+    gradient: 'linear-gradient(160deg, var(--color-neutral-500), var(--color-neutral-200))',
+    description: 'This helped Daniel feel 47% more grounded after a stressful week.',
+    summary:
+      'A session with a centre of gravity: one low tone that never moves, and everything else arranged around it. Written for the end of a week that got away from you.',
+    author: 'Daniel Kim',
+    authorPhoto: 'creatorEthan',    authorRole: 'Community creator · 31 published sessions',
+    plays: '18.5k',
+    recreated: '1.5k',
+    minutes: 18,
+    category: 'Meditations',
+    intent: 'Give a scattered week one fixed point to reorganise around.',
+    outcome: [
+      { label: 'Felt grounded', value: '+47%', note: 'self-reported, after one week' },
+      { label: 'Weekly use', value: '3.1×', note: 'median sessions per week' },
+      { label: 'Finished it', value: '79%', note: 'played to the end' },
+    ],
+    layers: [
+      { id: 'centre', name: 'Centre tone', detail: '110 Hz, held throughout', level: 70 },
+      { id: 'stones', name: 'Struck stone', detail: 'Sparse, irregular', level: 44 },
+      { id: 'air', name: 'Open air', detail: 'Wide, no reflections', level: 30 },
+    ],
+    chapters: [
+      { label: 'Set it down', minutes: 5, detail: 'The centre tone enters and stays.' },
+      { label: 'Around it', minutes: 9, detail: 'Stone strikes come and go; the tone does not move.' },
+      { label: 'Stand up', minutes: 4, detail: 'Everything else clears, the tone last.' },
+    ],
+    personalization: [
+      { label: 'Adapts to', value: 'Stress check-in, day of week' },
+      { label: 'Voice', value: 'None — instrumental' },
+      { label: 'Ends', value: 'Fade to silence' },
+      { label: 'Best time', value: 'End of the week' },
+    ],
+    commonChanges: [
+      { change: 'Added a guiding voice', share: '36%' },
+      { change: 'Made it longer', share: '24%' },
+      { change: 'Dropped the stone strikes', share: '15%' },
+    ],
+    lineage: [
+      { title: 'Single tone', author: 'Aurelia', note: 'Starter template' },
+      { title: 'Inner Balance', author: 'Daniel Kim', note: 'Built the stone layer around the centre' },
+    ],
+    safety: [
+      'Contains sustained low frequency — keep the volume moderate on headphones.',
+      'Not a treatment for any medical condition.',
+    ],
+    shelves: ['picked', 'impact'],
+  },
+  {
+    slug: 'golden-hour',
+    title: 'Golden Hour',
+    photo: 'glow',
+    gradient: 'linear-gradient(160deg, var(--color-warning-700), var(--color-warning-300))',
+    description: 'This helped Nina release 54% more tension in one session.',
+    summary:
+      'Warm, slow and short, built for the hour when the light goes orange and the day is technically still going. A body scan without the instruction to scan anything.',
+    author: 'Nina Harper',
+    authorPhoto: 'creatorNina',    authorRole: 'Community creator · 14 published sessions',
+    plays: '18.5k',
+    recreated: '1.5k',
+    minutes: 13,
+    category: 'Calm',
+    intent: 'Let the body put the day down before the evening starts.',
+    outcome: [
+      { label: 'Tension', value: '−54%', note: 'self-reported, one session' },
+      { label: 'Held for', value: '2.7 h', note: 'median before returning to baseline' },
+      { label: 'Finished it', value: '83%', note: 'played to the end' },
+    ],
+    layers: [
+      { id: 'warm', name: 'Warm bed', detail: 'Tape-saturated pad', level: 68 },
+      { id: 'voice', name: 'Guidance', detail: 'Female, low, 12 cues', level: 52 },
+      { id: 'room', name: 'Late room', detail: 'Evening air, very quiet', level: 26 },
+    ],
+    chapters: [
+      { label: 'Arrive', minutes: 3, detail: 'Pad only, brightening slowly.' },
+      { label: 'Let down', minutes: 7, detail: 'Cues move from shoulders to jaw to hands.' },
+      { label: 'Stay warm', minutes: 3, detail: 'No more cues; the pad holds.' },
+    ],
+    personalization: [
+      { label: 'Adapts to', value: 'Time of day, tension check-in' },
+      { label: 'Voice', value: 'Female · low' },
+      { label: 'Ends', value: 'Fade to silence' },
+      { label: 'Best time', value: 'Late afternoon' },
+    ],
+    commonChanges: [
+      { change: 'Made it longer', share: '33%' },
+      { change: 'Swapped to a male voice', share: '21%' },
+      { change: 'Removed the guidance', share: '16%' },
+    ],
+    lineage: [
+      { title: 'Warm bed', author: 'Aurelia', note: 'Starter template' },
+      { title: 'Golden Hour', author: 'Nina Harper', note: 'Wrote the release cue set' },
+    ],
+    safety: ['Not a treatment for any medical condition.'],
+    shelves: ['picked'],
+  },
+  {
+    slug: 'quiet-space',
+    title: 'Quiet Space',
+    photo: 'meadow',
+    gradient: 'linear-gradient(160deg, var(--color-success-800), var(--color-success-400))',
+    description: 'This helped Lucas quiet his thoughts by 71% before bed.',
+    summary:
+      'A field at dusk with almost nothing in it — a little wind, one bird a long way off, and a lot of space. The quietest session in the catalogue, and deliberately so.',
+    author: 'Lucas Martin',
+    authorPhoto: 'creatorLucas',    authorRole: 'Community creator · 26 published sessions',
+    plays: '18.5k',
+    recreated: '1.5k',
+    minutes: 24,
+    category: 'Sleep',
+    intent: 'Empty the last half hour of the day out.',
+    outcome: [
+      { label: 'Mental noise', value: '−71%', note: 'self-reported, before bed' },
+      { label: 'Time to sleep', value: '−9 min', note: 'median across 3.4k listeners' },
+      { label: 'Finished it', value: '38%', note: 'most listeners fall asleep first' },
+    ],
+    layers: [
+      { id: 'wind', name: 'Grass and wind', detail: 'Low, continuous, no gusts', level: 58 },
+      { id: 'bird', name: 'Distant bird', detail: 'Once or twice a minute at most', level: 24 },
+      { id: 'space', name: 'Open space', detail: 'The room the rest sits in', level: 34 },
+    ],
+    chapters: [
+      { label: 'Step out', minutes: 6, detail: 'Wind only.' },
+      { label: 'Stand still', minutes: 12, detail: 'Almost nothing happens, on purpose.' },
+      { label: 'Dark', minutes: 6, detail: 'Everything thins until it is gone.' },
+    ],
+    personalization: [
+      { label: 'Adapts to', value: 'Bedtime, sleep score' },
+      { label: 'Voice', value: 'None — ambient' },
+      { label: 'Ends', value: 'Fade to silence, no chime' },
+      { label: 'Best time', value: 'Last thing' },
+    ],
+    commonChanges: [
+      { change: 'Made it longer', share: '49%' },
+      { change: 'Dropped the bird', share: '22%' },
+      { change: 'Added a guiding voice', share: '9%' },
+    ],
+    lineage: [
+      { title: 'Open field', author: 'Aurelia', note: 'Starter template' },
+      { title: 'Quiet Space', author: 'Lucas Martin', note: 'Took almost everything out' },
+    ],
+    safety: [
+      'Designed to be played while falling asleep — do not use while driving.',
+      'Not a treatment for insomnia or any medical condition.',
+    ],
+    shelves: ['picked', 'impact'],
+  },
+  {
+    slug: 'dream-drift',
+    title: 'Dream Drift',
+    photo: 'underwater',
+    gradient: 'linear-gradient(160deg, var(--color-info-900), var(--color-info-400))',
+    description: 'This helped Mia unwind 65% faster and ease into sleep.',
+    summary:
+      'Weightlessness, as a sound. Slow suspended tones with no floor and no edges, for the stretch between lying down and letting go.',
+    author: 'Mia Parker',
+    authorPhoto: 'creatorMia',    authorRole: 'Community creator · 11 published sessions',
+    plays: '18.5k',
+    recreated: '1.5k',
+    minutes: 26,
+    category: 'Sleep',
+    intent: 'Shorten the gap between lying down and actually going under.',
+    outcome: [
+      { label: 'Unwound faster', value: '+65%', note: 'self-reported, first two weeks' },
+      { label: 'Time to sleep', value: '−13 min', note: 'median across 5.1k listeners' },
+      { label: 'Finished it', value: '31%', note: 'most listeners fall asleep first' },
+    ],
+    layers: [
+      { id: 'suspend', name: 'Suspended tones', detail: 'No root note, no resolution', level: 66 },
+      { id: 'depth', name: 'Depth', detail: 'Sub content, felt not heard', level: 38 },
+      { id: 'drift', name: 'Slow drift', detail: 'The mix moves ear to ear over minutes', level: 30 },
+    ],
+    chapters: [
+      { label: 'Float', minutes: 8, detail: 'Tones enter without a beginning.' },
+      { label: 'Drift', minutes: 12, detail: 'The mix moves so slowly it is hard to notice.' },
+      { label: 'Under', minutes: 6, detail: 'Everything sinks below hearing.' },
+    ],
+    personalization: [
+      { label: 'Adapts to', value: 'Bedtime, sleep score' },
+      { label: 'Voice', value: 'None — instrumental' },
+      { label: 'Ends', value: 'Fade to silence, no chime' },
+      { label: 'Best time', value: 'In bed, lights out' },
+    ],
+    commonChanges: [
+      { change: 'Made it longer', share: '58%' },
+      { change: 'Raised the depth', share: '18%' },
+      { change: 'Removed the drift', share: '11%' },
+    ],
+    lineage: [
+      { title: 'Suspended', author: 'Aurelia', note: 'Starter template' },
+      { title: 'Dream Drift', author: 'Mia Parker', note: 'Added the slow stereo drift' },
+    ],
+    safety: [
+      'Designed to be played while falling asleep — do not use while driving.',
+      'Contains sustained low frequency — keep the volume moderate on headphones.',
+      'Not a treatment for any medical condition.',
+    ],
+    shelves: ['picked'],
   },
 ]
 

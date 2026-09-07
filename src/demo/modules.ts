@@ -104,6 +104,22 @@ export const DEMO_MODULES: DemoModule[] = [
     built: true,
   },
   {
+    id: 'seeAll',
+    kind: 'consumer',
+    label: 'See All',
+    description: 'A whole shelf as a two-column grid — Picked for You, Biggest Impact, Community.',
+    route: '/see-all/picked',
+    built: true,
+  },
+  {
+    id: 'challenge',
+    kind: 'consumer',
+    label: 'Challenge detail',
+    description: 'A running challenge — podium, leaderboard, its sessions, and Join.',
+    route: '/challenge/nervous-system-reset',
+    built: true,
+  },
+  {
     id: 'invite',
     kind: 'consumer',
     label: 'Invite a Friend',
