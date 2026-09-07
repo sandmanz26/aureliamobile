@@ -1,6 +1,7 @@
 import { ExternalLink, RotateCcw } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useFeatureFlags } from '../demo/FeatureFlags'
+import type { ModuleKind } from '../demo/modules'
 import { DEMO_MODULES } from '../demo/modules'
 
 function Toggle({
@@ -48,9 +49,13 @@ export function DemoControlPage() {
           <div>
             <p className="text-style-caption uppercase tracking-widest text-text-secondary">Presenter console</p>
             <h1 className="text-style-headline mt-4 text-text-primary">Demo scope</h1>
-            <p className="text-style-body-small mt-8 max-w-[520px] text-text-secondary">
-              Choose what the client can reach. A module that is off stays visible in the navigation but cannot be
-              clicked or opened by URL. {activeCount} of {DEMO_MODULES.length} modules active.
+            <p className="text-style-body-small mt-8 max-w-[560px] text-text-secondary">
+              Choose what the client can reach in today’s walkthrough. A module that is off stays visible in the
+              navigation but cannot be clicked or opened by URL. {activeCount} of {DEMO_MODULES.length} modules active.
+            </p>
+            <p className="text-style-caption mt-8 max-w-[560px] text-text-secondary">
+              This console is a presentation aid — it is not part of the product and would not ship. The back office
+              below <em>is</em> part of the product: it is a feature being demonstrated, not a control over the demo.
             </p>
           </div>
 
@@ -78,20 +83,38 @@ export function DemoControlPage() {
               Reset
             </button>
             <Link
+              to="/admin"
+              className="text-style-label flex items-center gap-6 rounded-full border border-border-subtle px-16 py-8 text-text-primary hover:bg-background-elevated"
+            >
+              Open back office
+              <ExternalLink size={14} />
+            </Link>
+            <Link
               to="/home"
               className="text-style-label flex items-center gap-6 rounded-full bg-brand-default px-16 py-8 text-text-strong"
             >
-              Open demo
+              Open app
               <ExternalLink size={14} />
             </Link>
           </div>
         </header>
 
-        <div className="mt-24 flex flex-col gap-12">
-          {DEMO_MODULES.map((mod) => {
+        {(['consumer', 'admin'] as ModuleKind[]).map((kind) => (
+        <section key={kind} className="mt-24 flex flex-col gap-12">
+          <div className="flex items-baseline gap-8">
+            <h2 className="text-style-body font-semibold text-text-primary">
+              {kind === 'consumer' ? 'Consumer app' : 'Back office'}
+            </h2>
+            <span className="text-style-caption text-text-secondary">
+              {kind === 'consumer'
+                ? 'What an end user sees.'
+                : 'The operator admin at /admin — a product feature, shown like any other screen.'}
+            </span>
+          </div>
+          {DEMO_MODULES.filter((m) => m.kind === kind).map((mod) => {
             const on = flags[mod.id] !== false
             return (
-              <section
+              <div
                 key={mod.id}
                 className={`rounded-16 border border-border-subtle bg-surface-default p-20 transition-opacity ${
                   on ? '' : 'opacity-60'
@@ -142,10 +165,11 @@ export function DemoControlPage() {
                     })}
                   </div>
                 )}
-              </section>
+              </div>
             )
           })}
-        </div>
+        </section>
+        ))}
 
         <p className="text-style-caption mt-24 text-text-secondary">
           This page is unlisted — reachable only at <code>/__demo</code>. It is a presentation aid, not access control:

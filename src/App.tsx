@@ -34,21 +34,81 @@ export default function App() {
 
         {/* Super-admin CMS — its own shell, outside the consumer app layout */}
         <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<DashboardPage />} />
-          <Route path="users" element={<UsersPage />} />
-          <Route path="roles" element={<RolesPage />} />
-          <Route path="sessions" element={<SessionsPage />} />
-          <Route path="moderation" element={<ModerationPage />} />
-          <Route path="ai" element={<AiMonitoring />} />
-          <Route path="revenue" element={<RevenuePage />} />
-          <Route path="pricing" element={<PricingPage />} />
-          <Route path="payments" element={<PaymentsPage />} />
-          <Route path="coins" element={<CoinsPage />} />
-          <Route path="experiments" element={<ExperimentsPage />} />
-          <Route path="notifications" element={<NotificationsPage />} />
-          <Route path="compliance" element={<CompliancePage />} />
-          <Route path="audit" element={<AuditPage />} />
-          <Route path="settings" element={<SettingsPage />} />
+          <Route index element={
+            <ModuleGuard module="admin">
+              <DashboardPage />
+            </ModuleGuard>
+          } />
+          <Route path="users" element={
+            <ModuleGuard module="adminUsers">
+              <UsersPage />
+            </ModuleGuard>
+          } />
+          <Route path="roles" element={
+            <ModuleGuard module="adminRoles">
+              <RolesPage />
+            </ModuleGuard>
+          } />
+          <Route path="sessions" element={
+            <ModuleGuard module="adminSessions">
+              <SessionsPage />
+            </ModuleGuard>
+          } />
+          <Route path="moderation" element={
+            <ModuleGuard module="adminModeration">
+              <ModerationPage />
+            </ModuleGuard>
+          } />
+          <Route path="ai" element={
+            <ModuleGuard module="adminAi">
+              <AiMonitoring />
+            </ModuleGuard>
+          } />
+          <Route path="revenue" element={
+            <ModuleGuard module="adminRevenue">
+              <RevenuePage />
+            </ModuleGuard>
+          } />
+          <Route path="pricing" element={
+            <ModuleGuard module="adminPricing">
+              <PricingPage />
+            </ModuleGuard>
+          } />
+          <Route path="payments" element={
+            <ModuleGuard module="adminPayments">
+              <PaymentsPage />
+            </ModuleGuard>
+          } />
+          <Route path="coins" element={
+            <ModuleGuard module="adminCoins">
+              <CoinsPage />
+            </ModuleGuard>
+          } />
+          <Route path="experiments" element={
+            <ModuleGuard module="adminExperiments">
+              <ExperimentsPage />
+            </ModuleGuard>
+          } />
+          <Route path="notifications" element={
+            <ModuleGuard module="adminNotifications">
+              <NotificationsPage />
+            </ModuleGuard>
+          } />
+          <Route path="compliance" element={
+            <ModuleGuard module="adminCompliance">
+              <CompliancePage />
+            </ModuleGuard>
+          } />
+          <Route path="audit" element={
+            <ModuleGuard module="adminAudit">
+              <AuditPage />
+            </ModuleGuard>
+          } />
+          <Route path="settings" element={
+            <ModuleGuard module="adminSettings">
+              <SettingsPage />
+            </ModuleGuard>
+          } />
         </Route>
 
         <Route path="/login" element={<SignInPage />} />

@@ -20,6 +20,7 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
+import { useFeatureFlags } from '../demo/FeatureFlags'
 
 interface NavItem {
   to: string
@@ -27,58 +28,66 @@ interface NavItem {
   icon: LucideIcon
   /** Only the index route needs exact matching. */
   end?: boolean
+  /** Flag id in the /__demo registry — lets a walkthrough hide this module. */
+  flag: string
 }
 
 const NAV: { section: string; items: NavItem[] }[] = [
-  { section: 'Overview', items: [{ to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true }] },
+  { section: 'Overview', items: [{ to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true, flag: 'admin' }] },
   {
     section: 'People',
     items: [
-      { to: '/admin/users', label: 'Users', icon: Users },
-      { to: '/admin/roles', label: 'Roles & permissions', icon: ShieldCheck },
+      { to: '/admin/users', label: 'Users', icon: Users, flag: 'adminUsers' },
+      { to: '/admin/roles', label: 'Roles & permissions', icon: ShieldCheck, flag: 'adminRoles' },
     ],
   },
   {
     section: 'Content',
     items: [
-      { to: '/admin/sessions', label: 'Sessions', icon: FileText },
-      { to: '/admin/moderation', label: 'Moderation', icon: ShieldAlert },
+      { to: '/admin/sessions', label: 'Sessions', icon: FileText, flag: 'adminSessions' },
+      { to: '/admin/moderation', label: 'Moderation', icon: ShieldAlert, flag: 'adminModeration' },
     ],
   },
   {
     section: 'Intelligence',
-    items: [{ to: '/admin/ai', label: 'AI monitoring', icon: Activity }],
+    items: [{ to: '/admin/ai', label: 'AI monitoring', icon: Activity, flag: 'adminAi' }],
   },
   {
     section: 'Revenue',
     items: [
-      { to: '/admin/revenue', label: 'Revenue', icon: TrendingUp },
-      { to: '/admin/pricing', label: 'Pricing', icon: Tag },
-      { to: '/admin/payments', label: 'Payments', icon: CreditCard },
-      { to: '/admin/coins', label: 'Coins & rewards', icon: Coins },
+      { to: '/admin/revenue', label: 'Revenue', icon: TrendingUp, flag: 'adminRevenue' },
+      { to: '/admin/pricing', label: 'Pricing', icon: Tag, flag: 'adminPricing' },
+      { to: '/admin/payments', label: 'Payments', icon: CreditCard, flag: 'adminPayments' },
+      { to: '/admin/coins', label: 'Coins & rewards', icon: Coins, flag: 'adminCoins' },
     ],
   },
   {
     section: 'Growth',
     items: [
-      { to: '/admin/experiments', label: 'Experiments', icon: FlaskConical },
-      { to: '/admin/notifications', label: 'Notifications', icon: Bell },
+      { to: '/admin/experiments', label: 'Experiments', icon: FlaskConical, flag: 'adminExperiments' },
+      { to: '/admin/notifications', label: 'Notifications', icon: Bell, flag: 'adminNotifications' },
     ],
   },
   {
     section: 'Platform',
     items: [
-      { to: '/admin/compliance', label: 'Compliance', icon: Scale },
-      { to: '/admin/audit', label: 'Audit log', icon: ScrollText },
-      { to: '/admin/settings', label: 'Settings', icon: Settings },
+      { to: '/admin/compliance', label: 'Compliance', icon: Scale, flag: 'adminCompliance' },
+      { to: '/admin/audit', label: 'Audit log', icon: ScrollText, flag: 'adminAudit' },
+      { to: '/admin/settings', label: 'Settings', icon: Settings, flag: 'adminSettings' },
     ],
   },
 ]
 
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+  const { isEnabled } = useFeatureFlags()
+  const groups = NAV.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => isEnabled(item.flag)),
+  })).filter((group) => group.items.length > 0)
+
   return (
     <nav className="flex flex-col gap-18 px-12 py-16" onClick={onNavigate}>
-      {NAV.map((group) => (
+      {groups.map((group) => (
         <div key={group.section} className="flex flex-col gap-2">
           <p className="px-10 pb-4 text-10 font-semibold uppercase tracking-widest text-white/35">{group.section}</p>
           {group.items.map((item) => {
