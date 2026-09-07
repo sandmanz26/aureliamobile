@@ -20,6 +20,7 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
+import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 
 interface NavItem {
@@ -121,12 +122,7 @@ export function AdminLayout() {
     <div className="flex min-h-screen bg-adm-bg">
       <aside className="hidden w-[232px] shrink-0 flex-col bg-adm-sidebar lg:flex">
         <div className="flex h-56 items-center gap-8 border-b border-white/8 px-20">
-          <span
-            className="flex size-22 items-center justify-center rounded-full text-11 font-bold text-adm-sidebar"
-            style={{ background: 'linear-gradient(160deg, #ffe682, #ff881b)' }}
-          >
-            A
-          </span>
+          <AureliaLogo iconSize={22} markOnly />
           <span className="text-13 font-semibold text-white">Aurelia Admin</span>
         </div>
         <div className="flex-1 overflow-y-auto">
