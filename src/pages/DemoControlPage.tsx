@@ -1,4 +1,4 @@
-import { ExternalLink, RotateCcw } from 'lucide-react'
+import { CloudOff, CloudUpload, ExternalLink, RotateCcw, Undo2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import type { ModuleKind } from '../demo/modules'
@@ -38,7 +38,8 @@ function Toggle({
 // in localStorage and syncs across tabs, so this can stay open on a second
 // screen while the demo runs.
 export function DemoControlPage() {
-  const { flags, isEnabled, setFlag, setAll, reset } = useFeatureFlags()
+  const { flags, isEnabled, setFlag, setAll, reset, publish, revertToPublished, sync, dirty, publishing, lastPublishedAt } =
+    useFeatureFlags()
 
   const activeCount = DEMO_MODULES.filter((mod) => isEnabled(mod.id)).length
 
@@ -57,9 +58,58 @@ export function DemoControlPage() {
               This console is a presentation aid — it is not part of the product and would not ship. The back office
               below <em>is</em> part of the product: it is a feature being demonstrated, not a control over the demo.
             </p>
+
+            <div className="text-style-caption mt-12 flex flex-wrap items-center gap-x-10 gap-y-4">
+              {sync === 'loading' && <span className="text-text-secondary">Checking shared config…</span>}
+              {sync === 'synced' && (
+                <>
+                  <span className="inline-flex items-center gap-4 text-success-600">
+                    <span className="size-6 rounded-full bg-success-600" />
+                    Shared config connected
+                  </span>
+                  <span className="text-text-secondary">
+                    {dirty
+                      ? 'You have unpublished changes — only this browser sees them.'
+                      : 'Everyone opening the site sees this scope.'}
+                  </span>
+                  {lastPublishedAt && (
+                    <span className="text-text-secondary">
+                      Last published {new Date(lastPublishedAt).toLocaleTimeString()}
+                    </span>
+                  )}
+                </>
+              )}
+              {sync === 'local-only' && (
+                <span className="inline-flex items-center gap-4 text-text-secondary">
+                  <CloudOff size={13} />
+                  This browser only — connect a KV store in Vercel to share the scope across devices.
+                </span>
+              )}
+              {sync === 'error' && <span className="text-danger-600">Publish failed — changes stayed local.</span>}
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-8">
+            {dirty && (
+              <button
+                type="button"
+                onClick={revertToPublished}
+                className="text-style-label flex items-center gap-6 rounded-full border border-border-subtle px-16 py-8 text-text-primary hover:bg-background-elevated"
+              >
+                <Undo2 size={14} />
+                Discard changes
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => void publish()}
+              disabled={publishing || sync === 'local-only'}
+              title={sync === 'local-only' ? 'No shared store connected — see the note below' : undefined}
+              className="text-style-label flex items-center gap-6 rounded-full bg-icon-strong px-16 py-8 text-text-inverse disabled:opacity-40"
+            >
+              <CloudUpload size={14} />
+              {publishing ? 'Publishing…' : dirty ? 'Publish for everyone' : 'Published'}
+            </button>
             <button
               type="button"
               onClick={() => setAll(true)}
@@ -173,7 +223,8 @@ export function DemoControlPage() {
 
         <p className="text-style-caption mt-24 text-text-secondary">
           This page is unlisted — reachable only at <code>/__demo</code>. It is a presentation aid, not access control:
-          anyone who knows the URL can change the scope.
+          the endpoint behind Publish is unauthenticated, so anyone who knows this URL can change what the demo shows.
+          Fine for a walkthrough; put it behind auth before it guards anything that matters.
         </p>
       </div>
     </div>
