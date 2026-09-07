@@ -23,6 +23,8 @@ import { DemoControlPage } from './pages/DemoControlPage'
 import { HomePage } from './pages/HomePage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { ProfilePage } from './pages/ProfilePage'
+import { RecreatePage } from './pages/RecreatePage'
+import { SessionDetailPage } from './pages/SessionDetailPage'
 import { SignInPage } from './pages/SignInPage'
 
 export default function App() {
@@ -134,6 +136,22 @@ export default function App() {
             element={
               <ModuleGuard module="profile">
                 <ProfilePage />
+              </ModuleGuard>
+            }
+          />
+          <Route
+            path="/session/:slug"
+            element={
+              <ModuleGuard module="sessionDetail">
+                <SessionDetailPage />
+              </ModuleGuard>
+            }
+          />
+          <Route
+            path="/recreate/:slug"
+            element={
+              <ModuleGuard module="recreate">
+                <RecreatePage />
               </ModuleGuard>
             }
           />

@@ -67,9 +67,29 @@ export const DEMO_MODULES: DemoModule[] = [
     built: true,
     features: [
       { id: 'recommendations', label: 'Recommendation cards', description: 'Tunable cards with Add/Remove and Apply.' },
-      { id: 'voice', label: 'Voice input', description: 'Listening state with stop / mic / volume.' },
+      { id: 'voice', label: 'Voice input', description: 'Record, transcribe, review, then send as a voice note.' },
       { id: 'publish', label: 'Publish flow', description: 'More-menu publish, publishing sheet, and confirmation.' },
     ],
+  },
+  {
+    id: 'sessionDetail',
+    kind: 'consumer',
+    label: 'Session detail',
+    description: 'A community session in full — structure, sound layers, lineage and safety.',
+    route: '/session/dolphins-frequency',
+    built: true,
+    features: [
+      { id: 'lineage', label: 'Lineage', description: 'Where the session was forked from.' },
+      { id: 'changes', label: 'What people changed', description: 'The edits made most often by recreators.' },
+    ],
+  },
+  {
+    id: 'recreate',
+    kind: 'consumer',
+    label: 'Recreate',
+    description: 'Forking someone else’s session — state the differences, hand the brief to chat.',
+    route: '/recreate/dolphins-frequency',
+    built: true,
   },
   {
     id: 'profile',

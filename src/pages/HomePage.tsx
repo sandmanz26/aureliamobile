@@ -20,6 +20,7 @@ import { CommunityCard } from '../components/ui/CommunityCard'
 import { FeatureCard } from '../components/ui/FeatureCard'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import type { CoverKey } from '../lib/photos'
+import { SESSIONS } from '../lib/sessions'
 import { useDrawer } from '../layouts/DrawerContext'
 
 const quickStartCards: { title: string; subtitle: string; gradient: string; photo: CoverKey }[] = [
@@ -27,35 +28,18 @@ const quickStartCards: { title: string; subtitle: string; gradient: string; phot
   { title: 'Guided Breath Work', subtitle: 'Personalized exprience.', photo: 'breathwork', gradient: 'linear-gradient(160deg, var(--color-neutral-700), var(--color-neutral-400))' },
 ]
 
-const communityCards = [
-  {
-    title: 'Dolphins frequency',
-    photo: 'dolphins' as CoverKey,
-    description: 'This helped Adam reduce stress by 43% in less that a week.',
-    author: 'Adam Nilson',
-    plays: '18.5k',
-    recreated: '1.5k',
-    gradient: 'linear-gradient(160deg, var(--color-info-800), var(--color-info-400))',
-  },
-  {
-    title: 'Raise your Vibration',
-    photo: 'vibration' as CoverKey,
-    description: 'This helped Sara improve her mood within few minutes.',
-    author: 'Sara Trezeguat',
-    plays: '18.5k',
-    recreated: '1.5k',
-    gradient: 'linear-gradient(160deg, var(--color-warning-300), var(--color-danger-200))',
-  },
-  {
-    title: 'Mind Dance',
-    photo: 'mindDance' as CoverKey,
-    description: 'This helped Lily reduce stress by 43% in less that a week.',
-    author: 'Lily Ahmad',
-    plays: '18.5k',
-    recreated: '1.5k',
-    gradient: 'linear-gradient(160deg, var(--color-primary-700), var(--color-primary-300))',
-  },
-]
+// Community cards read straight from the session catalogue, so a card, its
+// detail page and the fork it produces can never describe different things.
+const communityCards = SESSIONS.map((session) => ({
+  slug: session.slug,
+  title: session.title,
+  photo: session.photo,
+  description: session.description,
+  author: session.author,
+  plays: session.plays,
+  recreated: session.recreated,
+  gradient: session.gradient,
+}))
 
 const chips = ['All', 'Meditations (12.5k)', 'Music (8.3k)', 'Energy (3.1k)', 'Sleep (13.4k)', 'Calm (22.3k)']
 
@@ -285,7 +269,7 @@ export function HomePage() {
           </div>
           <div className="mt-16 flex gap-12 overflow-x-auto pb-4">
             {communityCards.map((card) => (
-              <CommunityCard key={card.title} {...card} />
+              <CommunityCard key={card.slug} {...card} />
             ))}
           </div>
         </section>

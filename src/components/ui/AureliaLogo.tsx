@@ -1,3 +1,5 @@
+import { useId } from 'react'
+
 interface AureliaLogoProps {
   /** Height of the mark in px; the wordmark scales from it. */
   iconSize?: number
@@ -5,8 +7,6 @@ interface AureliaLogoProps {
   markOnly?: boolean
   className?: string
 }
-
-const GRADIENT_ID = 'aurelia-mark-gradient'
 
 /**
  * The Aurelia brand mark: a gold-to-orange spiral that opens at the lower left.
@@ -17,6 +17,13 @@ const GRADIENT_ID = 'aurelia-mark-gradient'
  * updates with it.
  */
 export function AureliaLogo({ iconSize = 40, markOnly = false, className = '' }: AureliaLogoProps) {
+  // Unique per instance: a shared id makes every mark on the page point at the
+  // first <defs> in the document, and if that one sits in a hidden subtree
+  // (the desktop sidebar on a phone viewport) the rest paint with no stroke.
+  // Colons stripped: React's ids contain them, and they are awkward inside a
+  // url(#…) fragment reference.
+  const gradientId = `aurelia-mark${useId().replace(/:/g, '')}`
+
   return (
     <span className={`inline-flex items-center gap-10 ${className}`}>
       <svg
@@ -29,7 +36,7 @@ export function AureliaLogo({ iconSize = 40, markOnly = false, className = '' }:
         className="shrink-0"
       >
         <defs>
-          <linearGradient id={GRADIENT_ID} x1="10" y1="8" x2="54" y2="58" gradientUnits="userSpaceOnUse">
+          <linearGradient id={gradientId} x1="10" y1="8" x2="54" y2="58" gradientUnits="userSpaceOnUse">
             <stop stopColor="#FFD86B" />
             <stop offset="0.55" stopColor="#FCA22B" />
             <stop offset="1" stopColor="#F2801A" />
@@ -39,7 +46,7 @@ export function AureliaLogo({ iconSize = 40, markOnly = false, className = '' }:
         {/* One continuous stroke spiralling inward — the open end sits lower-left. */}
         <path
           d="M18 46 A 24 24 0 1 1 46 50 A 13 13 0 1 1 32 20"
-          stroke={`url(#${GRADIENT_ID})`}
+          stroke={`url(#${gradientId})`}
           strokeWidth="9.5"
           strokeLinecap="round"
           fill="none"
