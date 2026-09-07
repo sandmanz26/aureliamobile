@@ -126,8 +126,11 @@ export function HomePage() {
           <h2 className="text-style-body text-text-primary" style={{ color: '#3c2405' }}>
             Ongoing Live Sessions
           </h2>
+          {/* Figma "Frame 45": 362x320, padding 40/20/20/20, stats pinned under
+              the map. The card holds the source image's aspect ratio so the
+              dot-map is never stretched, and caps its width on desktop. */}
           <div
-            className="relative mt-16 flex h-[320px] flex-col justify-center gap-32 overflow-hidden rounded-24 bg-cover bg-center px-20 py-40"
+            className="relative mx-auto mt-16 flex aspect-[362/320] w-full max-w-[440px] flex-col justify-end overflow-hidden rounded-24 bg-cover bg-center px-20 pb-20 pt-40"
             style={{ backgroundImage: `url(${liveSessionsMap})` }}
           >
             <div className="relative z-10 flex gap-12">
