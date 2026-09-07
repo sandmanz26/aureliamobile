@@ -98,10 +98,16 @@ function SidebarContent({ onNavigate, showBell = true }: { onNavigate?: () => vo
             Sign in
           </button>
         )}
-        <button type="button" className="flex items-center gap-12 rounded-12 px-12 py-14 text-style-body text-text-primary hover:bg-background-elevated">
-          <UserPlus size={20} className="text-icon-default" />
-          Invite a Friend
-        </button>
+        {isEnabled('invite') && (
+          <button
+            type="button"
+            onClick={() => gate(() => navigate('/invite'))}
+            className="text-style-body flex items-center gap-12 rounded-12 px-12 py-14 text-text-primary hover:bg-background-elevated"
+          >
+            <UserPlus size={20} className="text-icon-default" />
+            Invite a Friend
+          </button>
+        )}
         <button type="button" className="flex items-center gap-12 rounded-12 px-12 py-14 text-style-body text-text-primary hover:bg-background-elevated">
           <HelpCircle size={20} className="text-icon-default" />
           Help

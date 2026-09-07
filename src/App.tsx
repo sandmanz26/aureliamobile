@@ -27,7 +27,11 @@ import { PlaceholderPage } from './pages/PlaceholderPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { RecreatePage } from './pages/RecreatePage'
 import { SessionDetailPage } from './pages/SessionDetailPage'
-import { SignInPage } from './pages/SignInPage'
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
+import { SignInPage } from './pages/auth/SignInPage'
+import { SignUpPage } from './pages/auth/SignUpPage'
+import { InvitePage } from './pages/InvitePage'
 
 export default function App() {
   return (
@@ -117,6 +121,9 @@ export default function App() {
           </Route>
 
           <Route path="/login" element={<SignInPage />} />
+          <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route element={<AppLayout />}>
             <Route
               path="/home"
@@ -162,6 +169,16 @@ export default function App() {
                 <RequireAuth>
                   <ModuleGuard module="recreate">
                     <RecreatePage />
+                  </ModuleGuard>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/invite"
+              element={
+                <RequireAuth>
+                  <ModuleGuard module="invite">
+                    <InvitePage />
                   </ModuleGuard>
                 </RequireAuth>
               }

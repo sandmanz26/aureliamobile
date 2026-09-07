@@ -39,9 +39,13 @@ export const DEMO_MODULES: DemoModule[] = [
     id: 'auth',
     kind: 'consumer',
     label: 'Authentication',
-    description: 'Sign in / sign up screen and the dummy login that enters the app.',
+    description: 'Sign in, sign up, and the full password-reset path.',
     route: '/login',
     built: true,
+    features: [
+      { id: 'signUp', label: 'Sign up', description: 'Account creation with password strength and consent.' },
+      { id: 'passwordReset', label: 'Password reset', description: 'Request link, confirmation, and the reset form.' },
+    ],
   },
   {
     id: 'home',
@@ -102,6 +106,14 @@ export const DEMO_MODULES: DemoModule[] = [
     label: 'Profile',
     description: 'User profile, stats and account surface.',
     route: '/profile',
+    built: true,
+  },
+  {
+    id: 'invite',
+    kind: 'consumer',
+    label: 'Invite a Friend',
+    description: 'Referral screen — the link, what it is worth, and one-tap copy.',
+    route: '/invite',
     built: true,
   },
   {
