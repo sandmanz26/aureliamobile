@@ -1,4 +1,5 @@
 import {
+  ArrowRight,
   ArrowUp,
   Coins,
   Menu,
@@ -66,6 +67,22 @@ const features = [
   { icon: <Coins size={20} />, title: 'Daily Coins', description: 'Earn daily rewards' },
   { icon: <Users size={20} />, title: 'Community Mix', description: 'Shared Practices' },
 ]
+
+/** Translucent circle with a downward triangle, centred on each promo card. */
+function PlayGlyph() {
+  return (
+    <span className="absolute left-1/2 top-1/2 flex size-44 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/25 backdrop-blur-sm">
+      <span
+        className="size-0"
+        style={{
+          borderLeft: '9px solid transparent',
+          borderRight: '9px solid transparent',
+          borderTop: '13px solid rgba(255,255,255,0.95)',
+        }}
+      />
+    </span>
+  )
+}
 
 export function HomePage() {
   const { openDrawer } = useDrawer()
@@ -174,52 +191,85 @@ export function HomePage() {
         )}
       </div>
 
-      {/* Dark generative wellness banner — full bleed */}
+      {/* Dark generative wellness banner — full bleed.
+          Figma frame 402x800, padding 40/20, counterAlign MIN (left-aligned),
+          content SPACE_BETWEEN with the card pair bleeding past both edges. */}
       {isEnabled('home.promo') && (
-      <section className="mt-48 bg-text-primary px-20 py-48 text-center text-text-inverse lg:px-24">
+      <section className="relative mt-48 overflow-hidden bg-[#1B1006] px-20 py-40 text-text-inverse lg:px-24">
+        {/* The two warm ellipses behind the content (Figma "Ellipse 6/7"). */}
         <span
-          className="inline-block bg-clip-text text-style-caption font-medium text-transparent"
-          style={{ backgroundImage: 'linear-gradient(90deg, #ffe682, #ff881b)' }}
-        >
-          Generative Wellness Care
-        </span>
-        <h2 className="mx-auto mt-16 max-w-[320px] text-style-headline font-normal">Your Personal Mindfulness Guide</h2>
-        <p className="mx-auto mt-12 max-w-[360px] text-style-body">
-          Everything you need to reflect, restore, and reset, all in one adaptive app.
-        </p>
+          className="pointer-events-none absolute -left-1/3 top-1/3 h-[276px] w-[565px] rounded-full opacity-50 blur-3xl"
+          style={{ background: '#ff881b' }}
+        />
+        <span
+          className="pointer-events-none absolute -right-1/4 bottom-0 h-[326px] w-[557px] rounded-full opacity-35 blur-3xl"
+          style={{ background: '#ff881b' }}
+        />
 
-        <div className="mx-auto mt-32 flex items-center justify-center">
-          <div className="relative z-10 h-[220px] w-[138px] -rotate-6 overflow-hidden rounded-24 shadow-xl">
-            <CoverImage
-              photo="calm"
-              gradient="linear-gradient(160deg, var(--color-neutral-950), var(--color-info-900))"
-              width={280}
-              height={440}
-              scrim={false}
-            />
-          </div>
-          <div className="relative -ml-32 h-[220px] w-[138px] rotate-6 overflow-hidden rounded-24 shadow-xl">
-            <CoverImage
-              photo="forest"
-              gradient="linear-gradient(160deg, var(--color-primary-500), var(--color-primary-200))"
-              width={280}
-              height={440}
-              scrim={false}
-            />
+        <div className="relative mx-auto flex max-w-[362px] flex-col gap-24 lg:max-w-[720px]">
+          <div className="flex flex-col gap-24">
+            <span
+              className="text-style-label w-fit rounded-full px-12 py-8"
+              style={{
+                border: '1px solid rgba(255,136,27,0.55)',
+                background:
+                  'linear-gradient(90deg, #ffe682, #ff881b) text',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                color: 'transparent',
+                backgroundImage: 'linear-gradient(90deg, #ffe682, #ff881b)',
+              }}
+            >
+              Generative Wellness Care
+            </span>
+
+            <div className="flex flex-col gap-8">
+              <h2 className="text-style-headline font-normal leading-[1.2]">
+                Your Personal
+                <br />
+                Mindfulness Guide
+              </h2>
+              <p className="text-style-body">
+                Everything you need to reflect, restore, and reset, all in one adaptive app.
+              </p>
+            </div>
           </div>
         </div>
 
-        <p className="mx-auto mt-32 max-w-[360px] text-style-body-small opacity-90">
-          Chat with Aurelia to instantly create custom meditations, soundscapes, and breathwork tailored to how you
-          feel right now.
-        </p>
+        {/* Card pair — 180x286 each, bleeding past the section edges. */}
+        <div className="relative -mx-20 my-32 flex h-[320px] items-center justify-start gap-[55px] overflow-hidden lg:-mx-24 lg:justify-center">
+          <div className="relative -ml-[59px] h-[286px] w-[180px] shrink-0 -rotate-12 overflow-hidden rounded-24 shadow-2xl lg:ml-0">
+            <CoverImage
+              photo="underwater"
+              gradient="linear-gradient(160deg, var(--color-info-900), var(--color-neutral-950))"
+              width={360}
+              height={572}
+              scrim={false}
+            />
+            <PlayGlyph />
+          </div>
+          <div
+            className="relative h-[286px] w-[180px] shrink-0 rotate-[10deg] overflow-hidden rounded-24 shadow-2xl"
+            style={{ background: 'linear-gradient(165deg, #FFD9A8 0%, #FFB25E 45%, #F97B14 100%)' }}
+          >
+            <PlayGlyph />
+          </div>
+        </div>
 
-        <button
-          type="button"
-          className="mt-24 rounded-full bg-surface-default px-24 py-14 text-style-body font-semibold text-text-primary"
-        >
-          Start your Journey
-        </button>
+        <div className="relative mx-auto flex max-w-[362px] flex-col gap-24 lg:max-w-[720px]">
+          <p className="text-style-body-small text-text-inverse/80">
+            Chat with Aurelia to instantly create custom meditations, soundscapes, and breathwork tailored to how you
+            feel right now.
+          </p>
+
+          <button
+            type="button"
+            className="text-style-body flex w-fit items-center gap-12 rounded-full border border-text-inverse/20 bg-text-inverse/8 px-20 py-12 font-medium text-text-inverse backdrop-blur-sm transition-colors hover:bg-text-inverse/15"
+          >
+            Start your Journey
+            <ArrowRight size={18} />
+          </button>
+        </div>
       </section>
       )}
 

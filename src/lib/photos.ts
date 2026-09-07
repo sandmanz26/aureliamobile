@@ -30,6 +30,8 @@ export const COVER_PHOTOS = {
   mountains: '1506905925346-21bda4d32df4',      // dawn ridgeline
   water: '1518241353330-0f7941c2d9b5',          // rippled surface
   avatar: '1500648767791-00dcc994a43e',         // portrait, for the demo profile
+  underwater: '1544551763-46a013bb70d5',        // figure suspended underwater
+  glow: '1470252649378-9c29740c9fa8',           // warm dusk light
 } as const
 
 export type CoverKey = keyof typeof COVER_PHOTOS
