@@ -64,6 +64,29 @@ class AppTextStyles {
         color: AppColors.textSecondary,
       );
 
+  /// 10px — the smallest text in the system: card meta, stat labels, hints.
+  static TextStyle get caption => _base(
+        fontSize: 11,
+        fontWeight: FontWeight.w400,
+        lineHeight: AppLineHeight.snug,
+        color: AppColors.textSecondary,
+      );
+
+  /// Uppercase section label — the accordion rows on Session detail and the
+  /// small headings on Recreate.
+  static TextStyle get overline => _base(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        lineHeight: AppLineHeight.snug,
+        letterSpacing: 1.4,
+      );
+
+  static TextStyle get titleLg => _base(
+        fontSize: 24,
+        fontWeight: FontWeight.w600,
+        lineHeight: AppLineHeight.tight,
+      );
+
   static TextStyle get label => _base(
         fontSize: 14,
         fontWeight: FontWeight.w600,

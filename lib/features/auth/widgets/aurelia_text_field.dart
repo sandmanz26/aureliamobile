@@ -12,6 +12,7 @@ class AureliaTextField extends StatelessWidget {
     this.obscureText = false,
     this.trailing,
     this.keyboardType,
+    this.onChanged,
   });
 
   final String hintText;
@@ -20,6 +21,7 @@ class AureliaTextField extends StatelessWidget {
   final bool obscureText;
   final Widget? trailing;
   final TextInputType? keyboardType;
+  final ValueChanged<String>? onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +29,7 @@ class AureliaTextField extends StatelessWidget {
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
+      onChanged: onChanged,
       style: Theme.of(context).textTheme.bodyLarge,
       decoration: InputDecoration(
         hintText: hintText,

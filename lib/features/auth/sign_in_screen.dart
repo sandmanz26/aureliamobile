@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
+import '../../core/auth/auth_scope.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
-import 'widgets/aurelia_logo.dart';
+import 'auth_shell.dart';
 import 'widgets/aurelia_text_field.dart';
-import 'widgets/auth_tab_toggle.dart';
-import 'widgets/social_login_button.dart';
+
+/// Where the sign-in wall sends someone, and where to continue afterwards.
+class AuthRedirect {
+  const AuthRedirect({this.route, this.arguments});
+
+  final String? route;
+  final Object? arguments;
+}
 
 class SignInScreen extends StatefulWidget {
-  const SignInScreen({super.key});
+  const SignInScreen({super.key, this.redirect});
+
+  final AuthRedirect? redirect;
 
   @override
   State<SignInScreen> createState() => _SignInScreenState();
@@ -18,9 +27,8 @@ class _SignInScreenState extends State<SignInScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  AuthTab _tab = AuthTab.signIn;
   bool _obscurePassword = true;
-  bool _isSubmitting = false;
+  bool _submitting = false;
 
   @override
   void dispose() {
@@ -29,175 +37,90 @@ class _SignInScreenState extends State<SignInScreen> {
     super.dispose();
   }
 
-  Future<void> _handleSignIn() async {
-    if (_isSubmitting) return;
-    setState(() => _isSubmitting = true);
-    // TODO: wire up to the real auth use case.
-    await Future<void>.delayed(const Duration(milliseconds: 600));
-    if (mounted) setState(() => _isSubmitting = false);
+  /// Signs in and continues to whatever the user was trying to open — never
+  /// back to a generic landing.
+  void _complete() {
+    AuthScope.of(context).signIn();
+    final navigator = Navigator.of(context);
+    final route = widget.redirect?.route;
+    if (route != null) {
+      navigator.pushReplacementNamed(route, arguments: widget.redirect?.arguments);
+    } else if (navigator.canPop()) {
+      navigator.pop();
+    } else {
+      navigator.pushReplacementNamed('/home');
+    }
+  }
+
+  Future<void> _submit() async {
+    if (_submitting) return;
+    setState(() => _submitting = true);
+    // Dummy login — no backend yet, so any submit signs in after a beat.
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
+    setState(() => _submitting = false);
+    _complete();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _Header(
-                tab: _tab,
-                onTabChanged: (tab) => setState(() => _tab = tab),
-              ),
-              const SizedBox(height: AppSpacing.s10),
-              const Center(child: AureliaLogo()),
-              const SizedBox(height: AppSpacing.s10),
-              AureliaTextField(
-                controller: _emailController,
-                hintText: 'Email',
-                leadingIcon: Icons.mail_outline,
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: AppSpacing.s4),
-              AureliaTextField(
-                controller: _passwordController,
-                hintText: 'Password',
-                leadingIcon: Icons.lock_outline,
-                obscureText: _obscurePassword,
-                trailing: IconButton(
-                  icon: Icon(
-                    _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                    color: AppColors.iconSecondary,
-                    size: 20,
-                  ),
-                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                ),
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {},
-                  child: const Text('Forgot Password?'),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.s2),
-              ElevatedButton(
-                onPressed: _isSubmitting ? null : _handleSignIn,
-                child: _isSubmitting
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          valueColor: AlwaysStoppedAnimation(AppColors.buttonPrimaryForeground),
-                        ),
-                      )
-                    : const Text('Sign In'),
-              ),
-              const SizedBox(height: AppSpacing.s6),
-              Row(
-                children: [
-                  const Expanded(child: Divider()),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s3),
-                    child: Text('Or continue using', style: AppTextStyles.bodySm),
-                  ),
-                  const Expanded(child: Divider()),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.s6),
-              Row(
-                children: [
-                  Expanded(
-                    child: SocialLoginButton(
-                      icon: const _GoogleMark(),
-                      onPressed: () {},
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.s3),
-                  Expanded(
-                    child: SocialLoginButton(
-                      icon: Icon(Icons.apple, color: AppColors.iconDefault, size: 22),
-                      onPressed: () {},
-                    ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-            ],
+    return AuthShell(
+      header: const AuthTabs(signInSelected: true),
+      children: [
+        AureliaTextField(
+          controller: _emailController,
+          hintText: 'Email',
+          leadingIcon: Icons.mail_outline,
+          keyboardType: TextInputType.emailAddress,
+        ),
+        const SizedBox(height: AppSpacing.s4),
+        AureliaTextField(
+          controller: _passwordController,
+          hintText: 'Password',
+          leadingIcon: Icons.lock_outline,
+          obscureText: _obscurePassword,
+          trailing: IconButton(
+            tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+            icon: Icon(
+              _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+              color: AppColors.iconSecondary,
+              size: 20,
+            ),
+            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _Header extends StatelessWidget {
-  const _Header({required this.tab, required this.onTabChanged});
-
-  final AuthTab tab;
-  final ValueChanged<AuthTab> onTabChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 44,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: _CircleIconButton(
-              icon: Icons.arrow_back,
-              onPressed: () => Navigator.of(context).maybePop(),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: () => Navigator.of(context).pushNamed('/forgot-password'),
+            child: const Text('Forgot Password?'),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s2),
+        ElevatedButton(
+          onPressed: _submitting ? null : _submit,
+          child: Text(_submitting ? 'Signing in…' : 'Sign In'),
+        ),
+        SocialSignIn(onUse: _complete),
+        const SizedBox(height: AppSpacing.s6),
+        Center(
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(text: 'New here? ', style: AppTextStyles.bodySm),
+                WidgetSpan(
+                  alignment: PlaceholderAlignment.middle,
+                  child: GestureDetector(
+                    onTap: () => Navigator.of(context).pushReplacementNamed('/signup'),
+                    child: Text('Create an account',
+                        style: AppTextStyles.link),
+                  ),
+                ),
+              ],
             ),
           ),
-          AuthTabToggle(selected: tab, onChanged: onTabChanged),
-        ],
-      ),
-    );
-  }
-}
-
-class _CircleIconButton extends StatelessWidget {
-  const _CircleIconButton({required this.icon, required this.onPressed});
-
-  final IconData icon;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onPressed,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.s3),
-          child: Icon(icon, size: 20, color: AppColors.iconDefault),
         ),
-      ),
-    );
-  }
-}
-
-/// Simple "G" placeholder for the Google mark until the real brand asset is
-/// wired in (third-party logos aren't tokenized).
-class _GoogleMark extends StatelessWidget {
-  const _GoogleMark();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Text(
-      'G',
-      style: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.w700,
-        color: Color(0xFF4285F4),
-      ),
+      ],
     );
   }
 }
