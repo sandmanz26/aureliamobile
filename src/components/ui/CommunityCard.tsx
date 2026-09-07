@@ -1,4 +1,6 @@
 import { Bookmark, PlayCircle, Repeat2 } from 'lucide-react'
+import type { CoverKey } from '../../lib/photos'
+import { CoverImage } from './CoverImage'
 
 interface CommunityCardProps {
   title: string
@@ -7,15 +9,16 @@ interface CommunityCardProps {
   plays: string
   recreated: string
   gradient: string
+  photo: CoverKey
 }
 
-export function CommunityCard({ title, description, author, plays, recreated, gradient }: CommunityCardProps) {
+export function CommunityCard({ title, description, author, plays, recreated, gradient, photo }: CommunityCardProps) {
   return (
     <article
       className="relative flex h-[230px] w-[260px] shrink-0 flex-col justify-between overflow-hidden rounded-16 p-12 text-text-inverse"
-      style={{ background: gradient }}
     >
-      <div className="flex items-center justify-between">
+      <CoverImage photo={photo} gradient={gradient} width={520} height={460} />
+      <div className="relative flex items-center justify-between">
         <button
           type="button"
           aria-label="Save"
@@ -31,7 +34,7 @@ export function CommunityCard({ title, description, author, plays, recreated, gr
           Recreate
         </button>
       </div>
-      <div>
+      <div className="relative">
         <p className="text-style-body font-semibold">{title}</p>
         <p className="mt-4 text-style-body-small line-clamp-2 opacity-90">{description}</p>
         <div className="mt-8 flex items-center justify-between text-style-caption opacity-90">

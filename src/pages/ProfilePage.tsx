@@ -1,4 +1,7 @@
 import { Bookmark, Menu, Repeat2, Share2 } from 'lucide-react'
+import { CoverImage } from '../components/ui/CoverImage'
+import { PhotoCircle } from '../components/ui/PhotoCircle'
+import type { CoverKey } from '../lib/photos'
 import { useDrawer } from '../layouts/DrawerContext'
 
 interface SessionCard {
@@ -7,11 +10,13 @@ interface SessionCard {
   plays: string
   recreated: string
   gradient: string
+  photo: CoverKey
 }
 
 const cards: SessionCard[] = [
   {
     title: 'Dolphins frequency',
+    photo: 'dolphins' as CoverKey,
     description: 'This helped Adam reduce stress by 43% in less that a week.',
     plays: '18.5k',
     recreated: '1.5k',
@@ -19,6 +24,7 @@ const cards: SessionCard[] = [
   },
   {
     title: 'Soft Reset',
+    photo: 'calm' as CoverKey,
     description: 'This helped Adam feel more relaxed, with 91% less tension.',
     plays: '18.5k',
     recreated: '1.5k',
@@ -26,6 +32,7 @@ const cards: SessionCard[] = [
   },
   {
     title: 'Deep Space',
+    photo: 'mindDance' as CoverKey,
     description: 'This helped Adam quiet thoughts by 38% in less than a week.',
     plays: '12.1k',
     recreated: '980',
@@ -33,6 +40,7 @@ const cards: SessionCard[] = [
   },
   {
     title: 'Clear Skies',
+    photo: 'mountains' as CoverKey,
     description: 'This helped Adam boost focus by 46% in less than a week.',
     plays: '9.8k',
     recreated: '640',
@@ -80,7 +88,13 @@ export function ProfilePage() {
 
       <div className="mt-24 flex flex-col items-center gap-16">
         <div className="size-96 rounded-full bg-gradient-to-br from-gold-300 to-gold-600 p-2">
-          <div className="size-full rounded-full bg-surface-default" />
+          <PhotoCircle
+            photo="avatar"
+            size={92}
+            gradient="var(--color-background-elevated)"
+            alt="Adam Nilson"
+            className="size-full"
+          />
         </div>
         <div className="text-center">
           <p className="text-style-title text-text-strong">Adam Nilson</p>
@@ -102,9 +116,9 @@ export function ProfilePage() {
           <article
             key={card.title}
             className="relative flex h-[230px] flex-col justify-between overflow-hidden rounded-16 p-12 text-text-inverse"
-            style={{ background: card.gradient }}
           >
-            <div className="flex items-center justify-between">
+            <CoverImage photo={card.photo} gradient={card.gradient} width={520} height={460} />
+            <div className="relative flex items-center justify-between">
               <button
                 type="button"
                 aria-label="Save"
