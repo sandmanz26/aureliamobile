@@ -1,24 +1,23 @@
 import { ArrowRight, Coins, Menu } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import liveSessionsMap from '../../assets/live-sessions-map.png'
-import { Chip } from '../../components/ui/Chip'
-import { CommunityCard } from '../../components/ui/CommunityCard'
-import { CoverImage } from '../../components/ui/CoverImage'
-import { PhotoCircle } from '../../components/ui/PhotoCircle'
-import { useFeatureFlags } from '../../demo/FeatureFlags'
-import { useDrawer } from '../../layouts/DrawerContext'
-import type { CoverKey } from '../../lib/photos'
-import { sessionsOnShelf } from '../../lib/sessions'
+import liveSessionsMap from '../assets/live-sessions-map.png'
+import { Chip } from '../components/ui/Chip'
+import { CommunityCard } from '../components/ui/CommunityCard'
+import { CoverImage } from '../components/ui/CoverImage'
+import { PhotoCircle } from '../components/ui/PhotoCircle'
+import { useFeatureFlags } from '../demo/FeatureFlags'
+import { useDrawer } from '../layouts/DrawerContext'
+import type { CoverKey } from '../lib/photos'
+import { sessionsOnShelf } from '../lib/sessions'
 
 /**
- * Home once you are signed in.
+ * Sessions — the browse surface behind the Sessions nav item.
  *
- * The visitor's version of this page is a pitch — it argues for the product.
- * This one assumes the argument is won and gets out of the way: no marketing
- * banner, no feature grid, no "Ready to restore?". What replaces them is
- * everything that only makes sense once there is an account behind it — what
- * the community made, who to follow, what is picked for you.
+ * Home argues for the product; this page is what you use once you are in it.
+ * No marketing: a banner for the one thing to press today, then shelves —
+ * quick starts, what is live now, what the community made, who to follow, the
+ * running challenge, and two ranked shelves.
  */
 const quickStartCards: { title: string; subtitle: string; gradient: string; photo: CoverKey; to: string }[] = [
   {
@@ -87,7 +86,7 @@ function SessionShelf({ shelf }: { shelf: 'community' | 'picked' | 'impact' }) {
   )
 }
 
-export function MemberHome() {
+export function SessionsPage() {
   const { openDrawer } = useDrawer()
   const { isEnabled } = useFeatureFlags()
   const [activeChip, setActiveChip] = useState('All')
@@ -119,6 +118,7 @@ export function MemberHome() {
 
       <div className="mx-auto max-w-[720px] px-20 lg:px-24">
         {/* Hero banner — the one thing the app wants you to press today. */}
+        {isEnabled('sessions.hero') && (
         <Link
           to="/chat"
           aria-label="Play today’s session"
@@ -142,8 +142,9 @@ export function MemberHome() {
             />
           </span>
         </Link>
+        )}
 
-        {isEnabled('home.quickStart') && (
+        {isEnabled('sessions.quickStart') && (
           <section className="mt-32">
             <SectionHeader title="Quick Start" />
             <div className="-mx-20 mt-16 flex gap-12 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
@@ -167,7 +168,7 @@ export function MemberHome() {
           </section>
         )}
 
-        {isEnabled('home.liveSessions') && (
+        {isEnabled('sessions.liveSessions') && (
           <section className="mt-32">
             <SectionHeader title="Ongoing Live Sessions" />
             <div
@@ -193,7 +194,7 @@ export function MemberHome() {
           </section>
         )}
 
-        {isEnabled('home.community') && (
+        {isEnabled('sessions.community') && (
           <section className="mt-32">
             <SectionHeader title="Recreate from Community" />
             <div className="-mx-20 mt-16 flex gap-8 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
@@ -205,7 +206,7 @@ export function MemberHome() {
           </section>
         )}
 
-        {isEnabled('home.creators') && (
+        {isEnabled('sessions.creators') && (
           <section className="mt-32">
             <SectionHeader title="Trusted Creators" />
             <div className="-mx-20 mt-16 flex gap-20 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
@@ -227,7 +228,7 @@ export function MemberHome() {
           </section>
         )}
 
-        {isEnabled('home.challenge') && (
+        {isEnabled('sessions.challenge') && (
           <section className="mt-32">
             <SectionHeader title="Monthly Challenge!" />
             <div className="relative mt-16 flex aspect-[362/240] w-full flex-col justify-end overflow-hidden rounded-24 p-16 text-text-inverse">
@@ -264,14 +265,14 @@ export function MemberHome() {
           </section>
         )}
 
-        {isEnabled('home.picked') && (
+        {isEnabled('sessions.picked') && (
           <section className="mt-32">
             <SectionHeader title="Picked for You" seeAllTo="/explore" />
             <SessionShelf shelf="picked" />
           </section>
         )}
 
-        {isEnabled('home.impact') && (
+        {isEnabled('sessions.impact') && (
           <section className="mt-32">
             <SectionHeader title="Sessions with Biggest Impact" seeAllTo="/explore" />
             <SessionShelf shelf="impact" />

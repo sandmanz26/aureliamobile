@@ -14,7 +14,7 @@ import { PaymentsPage } from './admin/pages/PaymentsPage'
 import { PricingPage } from './admin/pages/PricingPage'
 import { RevenuePage } from './admin/pages/RevenuePage'
 import { RolesPage } from './admin/pages/RolesPage'
-import { SessionsPage } from './admin/pages/SessionsPage'
+import { SessionsPage as AdminSessionsPage } from './admin/pages/SessionsPage'
 import { SettingsPage } from './admin/pages/SettingsPage'
 import { UsersPage } from './admin/pages/UsersPage'
 import { FeatureFlagsProvider } from './demo/FeatureFlags'
@@ -25,6 +25,7 @@ import { DemoControlPage } from './pages/DemoControlPage'
 import { HomePage } from './pages/HomePage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { ProfilePage } from './pages/ProfilePage'
+import { SessionsPage } from './pages/SessionsPage'
 import { RecreatePage } from './pages/RecreatePage'
 import { SessionDetailPage } from './pages/SessionDetailPage'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
@@ -60,7 +61,7 @@ export default function App() {
             } />
             <Route path="sessions" element={
               <ModuleGuard module="adminSessions">
-                <SessionsPage />
+                <AdminSessionsPage />
               </ModuleGuard>
             } />
             <Route path="moderation" element={
@@ -198,7 +199,7 @@ export default function App() {
               element={
                 <RequireAuth>
                   <ModuleGuard module="sessions">
-                    <PlaceholderPage title="Sessions" description="Your library of created and saved sessions." />
+                    <SessionsPage />
                   </ModuleGuard>
                 </RequireAuth>
               }

@@ -51,8 +51,7 @@ export const DEMO_MODULES: DemoModule[] = [
     id: 'home',
     kind: 'consumer',
     label: 'Home',
-    description:
-      'Two pages on one route: the open visitor pitch, and the signed-in Explore feed. Sub-features below belong to whichever page shows them.',
+    description: 'The landing screen — the same page signed in or out. Hero prompt, live sessions, and the pitch.',
     route: '/home',
     built: true,
     features: [
@@ -61,10 +60,6 @@ export const DEMO_MODULES: DemoModule[] = [
       { id: 'promo', label: 'Generative Wellness banner', description: 'Dark full-bleed brand section.' },
       { id: 'community', label: 'Recreate from Community', description: 'Category chips and community session cards.' },
       { id: 'adaptive', label: 'Adaptive Wellness grid', description: 'Six-tile capability grid and closing CTA.' },
-      { id: 'creators', label: 'Trusted Creators', description: 'Signed-in only — the creator row.' },
-      { id: 'challenge', label: 'Monthly Challenge', description: 'Signed-in only — the 30-day challenge card.' },
-      { id: 'picked', label: 'Picked for You', description: 'Signed-in only — the personalized shelf.' },
-      { id: 'impact', label: 'Sessions with Biggest Impact', description: 'Signed-in only — the outcome-ranked shelf.' },
     ],
   },
   {
@@ -128,9 +123,19 @@ export const DEMO_MODULES: DemoModule[] = [
     id: 'sessions',
     kind: 'consumer',
     label: 'Sessions',
-    description: 'The user’s own library of created and saved sessions.',
+    description: 'The browse surface — today’s banner, quick starts, live activity and four ranked shelves.',
     route: '/sessions',
-    built: false,
+    built: true,
+    features: [
+      { id: 'hero', label: 'Hero banner', description: 'The one session to press today.' },
+      { id: 'quickStart', label: 'Quick Start', description: 'Affirmations / Sleep Meditation shortcuts.' },
+      { id: 'liveSessions', label: 'Ongoing Live Sessions', description: 'Global activity card with the world map.' },
+      { id: 'community', label: 'Recreate from Community', description: 'Category chips and community session cards.' },
+      { id: 'creators', label: 'Trusted Creators', description: 'The creator row.' },
+      { id: 'challenge', label: 'Monthly Challenge', description: 'The 30-day challenge card.' },
+      { id: 'picked', label: 'Picked for You', description: 'The personalized shelf.' },
+      { id: 'impact', label: 'Sessions with Biggest Impact', description: 'The outcome-ranked shelf.' },
+    ],
   },
   {
     id: 'wellness',
