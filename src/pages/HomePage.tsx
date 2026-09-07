@@ -14,19 +14,22 @@ import {
 import { useState } from 'react'
 import liveSessionsMap from '../assets/live-sessions-map.png'
 import { Chip } from '../components/ui/Chip'
+import { CoverImage } from '../components/ui/CoverImage'
 import { CommunityCard } from '../components/ui/CommunityCard'
 import { FeatureCard } from '../components/ui/FeatureCard'
 import { useFeatureFlags } from '../demo/FeatureFlags'
+import type { CoverKey } from '../lib/photos'
 import { useDrawer } from '../layouts/DrawerContext'
 
-const quickStartCards = [
-  { title: 'Affirmations', subtitle: 'Personalized exprience.', gradient: 'linear-gradient(160deg, var(--color-danger-400), var(--color-warning-300))' },
-  { title: 'Guided Breath Work', subtitle: 'Personalized exprience.', gradient: 'linear-gradient(160deg, var(--color-neutral-700), var(--color-neutral-400))' },
+const quickStartCards: { title: string; subtitle: string; gradient: string; photo: CoverKey }[] = [
+  { title: 'Affirmations', subtitle: 'Personalized exprience.', photo: 'affirmations', gradient: 'linear-gradient(160deg, var(--color-danger-400), var(--color-warning-300))' },
+  { title: 'Guided Breath Work', subtitle: 'Personalized exprience.', photo: 'breathwork', gradient: 'linear-gradient(160deg, var(--color-neutral-700), var(--color-neutral-400))' },
 ]
 
 const communityCards = [
   {
     title: 'Dolphins frequency',
+    photo: 'dolphins' as CoverKey,
     description: 'This helped Adam reduce stress by 43% in less that a week.',
     author: 'Adam Nilson',
     plays: '18.5k',
@@ -35,6 +38,7 @@ const communityCards = [
   },
   {
     title: 'Raise your Vibration',
+    photo: 'vibration' as CoverKey,
     description: 'This helped Sara improve her mood within few minutes.',
     author: 'Sara Trezeguat',
     plays: '18.5k',
@@ -43,6 +47,7 @@ const communityCards = [
   },
   {
     title: 'Mind Dance',
+    photo: 'mindDance' as CoverKey,
     description: 'This helped Lily reduce stress by 43% in less that a week.',
     author: 'Lily Ahmad',
     plays: '18.5k',
@@ -150,13 +155,13 @@ export function HomePage() {
               <div
                 key={card.title}
                 className="relative h-[160px] w-[160px] shrink-0 overflow-hidden rounded-16 p-12 text-text-inverse"
-                style={{ background: card.gradient }}
               >
-                <button className="flex h-24 items-center gap-4 rounded-full bg-surface-default/90 px-8 text-style-caption text-text-primary">
+                <CoverImage photo={card.photo} gradient={card.gradient} width={320} height={320} />
+                <button className="relative flex h-24 items-center gap-4 rounded-full bg-surface-default/90 px-8 text-style-caption text-text-primary">
                   <Sparkles size={10} /> Create
                 </button>
                 <div className="absolute bottom-12 left-12 right-12">
-                  <p className="text-style-body-small font-semibold">{card.title}</p>
+                  <p className="text-style-body-small font-semibold drop-shadow">{card.title}</p>
                   <p className="text-style-caption opacity-90">{card.subtitle}</p>
                 </div>
               </div>
@@ -181,14 +186,24 @@ export function HomePage() {
         </p>
 
         <div className="mx-auto mt-32 flex items-center justify-center">
-          <div
-            className="z-10 h-[220px] w-[138px] -rotate-6 rounded-24 shadow-xl"
-            style={{ background: 'linear-gradient(160deg, var(--color-neutral-950), var(--color-info-900))' }}
-          />
-          <div
-            className="-ml-32 h-[220px] w-[138px] rotate-6 rounded-24 shadow-xl"
-            style={{ background: 'linear-gradient(160deg, var(--color-primary-500), var(--color-primary-200))' }}
-          />
+          <div className="relative z-10 h-[220px] w-[138px] -rotate-6 overflow-hidden rounded-24 shadow-xl">
+            <CoverImage
+              photo="calm"
+              gradient="linear-gradient(160deg, var(--color-neutral-950), var(--color-info-900))"
+              width={280}
+              height={440}
+              scrim={false}
+            />
+          </div>
+          <div className="relative -ml-32 h-[220px] w-[138px] rotate-6 overflow-hidden rounded-24 shadow-xl">
+            <CoverImage
+              photo="forest"
+              gradient="linear-gradient(160deg, var(--color-primary-500), var(--color-primary-200))"
+              width={280}
+              height={440}
+              scrim={false}
+            />
+          </div>
         </div>
 
         <p className="mx-auto mt-32 max-w-[360px] text-style-body-small opacity-90">

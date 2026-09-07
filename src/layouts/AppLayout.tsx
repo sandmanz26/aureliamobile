@@ -3,15 +3,17 @@ import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { useFeatureFlags } from '../demo/FeatureFlags'
+import type { CoverKey } from '../lib/photos'
 import { Button } from '../components/ui/Button'
 import { MobileStatusBar } from '../components/ui/MobileStatusBar'
 import { NavItem } from '../components/ui/NavItem'
+import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { DrawerContext } from './DrawerContext'
 
-const recentSessions = [
-  { title: 'Sleep Meditation', author: 'Adam Nilson' },
-  { title: 'Morning Mindfulness', author: 'Adam Nilson' },
-  { title: 'Stress relief techniques', author: 'Marcus Lee' },
+const recentSessions: { title: string; author: string; photo: CoverKey }[] = [
+  { title: 'Sleep Meditation', author: 'Adam Nilson', photo: 'sleep' },
+  { title: 'Morning Mindfulness', author: 'Adam Nilson', photo: 'morning' },
+  { title: 'Stress relief techniques', author: 'Marcus Lee', photo: 'stress' },
 ]
 
 function SidebarContent({ onNavigate, showBell = true }: { onNavigate?: () => void; showBell?: boolean }) {
@@ -42,9 +44,10 @@ function SidebarContent({ onNavigate, showBell = true }: { onNavigate?: () => vo
         <div className="flex flex-col gap-16">
           {recentSessions.map((session) => (
             <div key={session.title} className="flex items-center gap-12 px-12">
-              <div
-                className="size-40 shrink-0 rounded-full"
-                style={{ background: 'conic-gradient(from 180deg, var(--color-blue-300), var(--color-gold-300), var(--color-blue-300))' }}
+              <PhotoCircle
+                photo={session.photo}
+                size={40}
+                gradient="conic-gradient(from 180deg, var(--color-blue-300), var(--color-gold-300), var(--color-blue-300))"
               />
               <div className="min-w-0">
                 <p className="text-style-label truncate">{session.title}</p>
