@@ -22,3 +22,16 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Flutter app leftovers. The mobile_app branch shares this working tree, so its
+# files stay on disk after switching back here. android/ and ios/ are tracked
+# *on that branch* — ignoring them here only stops them being committed to the
+# web branches by accident, it does not untrack them there.
+/.dart_tool/
+/.flutter-plugins
+/.flutter-plugins-dependencies
+/android/
+/ios/
+/build/
+/web/
+*.iml
