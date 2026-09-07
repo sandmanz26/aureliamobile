@@ -1,6 +1,7 @@
 import { ArrowLeft, Eye, EyeOff, Lock, Mail } from 'lucide-react'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../auth/AuthContext'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { Button } from '../components/ui/Button'
 import { MobileStatusBar } from '../components/ui/MobileStatusBar'
@@ -11,6 +12,10 @@ const TABS = ['Sign In', 'Sign Up'] as const
 
 export function SignInPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const { signIn } = useAuth()
+  // Where the visitor was headed when they hit the sign-in wall.
+  const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? '/home'
   const [tab, setTab] = useState<(typeof TABS)[number]>('Sign In')
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -18,12 +23,18 @@ export function SignInPage() {
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
     setSubmitting(true)
-    // Dummy login — no backend yet, so any submit just "signs in" after a
-    // beat and lands on the home page.
+    // Dummy login — no backend yet, so any submit just "signs in" after a beat
+    // and returns to whatever the visitor was trying to open.
     window.setTimeout(() => {
       setSubmitting(false)
-      navigate('/home')
+      signIn()
+      navigate(from, { replace: true })
     }, 500)
+  }
+
+  function handleSocial() {
+    signIn()
+    navigate(from, { replace: true })
   }
 
   return (
@@ -37,6 +48,7 @@ export function SignInPage() {
           <button
             type="button"
             aria-label="Back"
+            onClick={() => navigate('/home')}
             className="absolute left-0 flex size-44 items-center justify-center rounded-full bg-surface-default text-icon-default"
           >
             <ArrowLeft size={20} />
@@ -85,10 +97,10 @@ export function SignInPage() {
         </div>
 
         <div className="mt-24 grid grid-cols-2 gap-12">
-          <Button variant="secondary" className="w-full">
+          <Button variant="secondary" className="w-full" onClick={handleSocial} aria-label="Continue with Google">
             <GoogleMark />
           </Button>
-          <Button variant="secondary" className="w-full">
+          <Button variant="secondary" className="w-full" onClick={handleSocial} aria-label="Continue with Apple">
             <AppleMark />
           </Button>
         </div>

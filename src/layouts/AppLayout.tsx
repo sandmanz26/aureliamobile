@@ -1,6 +1,8 @@
-import { Bell, Compass, HelpCircle, Home, ListMusic, MessageCircle, Plus, User, UserPlus, Waves, X } from 'lucide-react'
+import { Bell, Compass, HelpCircle, Home, ListMusic, LogIn, LogOut, MessageCircle, Plus, User, UserPlus, Waves, X } from 'lucide-react'
 import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
+import { useAuth } from '../auth/AuthContext'
+import { useSignInGate } from '../auth/useSignInGate'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import type { CoverKey } from '../lib/photos'
@@ -18,6 +20,9 @@ const recentSessions: { title: string; author: string; photo: CoverKey }[] = [
 
 function SidebarContent({ onNavigate, showBell = true }: { onNavigate?: () => void; showBell?: boolean }) {
   const { isEnabled } = useFeatureFlags()
+  const { signedIn, signOut } = useAuth()
+  const gate = useSignInGate()
+  const navigate = useNavigate()
 
   return (
     <div className="flex h-full flex-col gap-24 overflow-y-auto px-24 py-24">
@@ -39,6 +44,7 @@ function SidebarContent({ onNavigate, showBell = true }: { onNavigate?: () => vo
         <NavItem to="/wellness" icon={<Waves size={20} />} label="My wellness" disabled={!isEnabled('wellness')} />
       </nav>
 
+      {signedIn && (
       <div className="flex flex-col gap-12">
         <p className="text-style-body-small px-12">Latest</p>
         <div className="flex flex-col gap-16">
@@ -57,10 +63,12 @@ function SidebarContent({ onNavigate, showBell = true }: { onNavigate?: () => vo
           ))}
         </div>
       </div>
+      )}
 
       <Button
         variant="primary"
         icon={<Plus size={18} />}
+        onClick={() => gate(() => navigate('/chat'))}
         className="w-full"
         style={{ background: 'linear-gradient(90deg, var(--color-gold-600), var(--color-gold-300))' }}
       >
@@ -68,6 +76,28 @@ function SidebarContent({ onNavigate, showBell = true }: { onNavigate?: () => vo
       </Button>
 
       <div className="mt-auto flex flex-col gap-4 border-t border-border-subtle pt-16">
+        {signedIn ? (
+          <button
+            type="button"
+            onClick={() => {
+              signOut()
+              navigate('/home')
+            }}
+            className="text-style-body flex items-center gap-12 rounded-12 px-12 py-14 text-text-primary hover:bg-background-elevated"
+          >
+            <LogOut size={20} className="text-icon-default" />
+            Sign out
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => navigate('/login')}
+            className="text-style-body flex items-center gap-12 rounded-12 px-12 py-14 text-text-primary hover:bg-background-elevated"
+          >
+            <LogIn size={20} className="text-icon-default" />
+            Sign in
+          </button>
+        )}
         <button type="button" className="flex items-center gap-12 rounded-12 px-12 py-14 text-style-body text-text-primary hover:bg-background-elevated">
           <UserPlus size={20} className="text-icon-default" />
           Invite a Friend

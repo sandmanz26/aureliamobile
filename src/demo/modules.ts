@@ -47,7 +47,8 @@ export const DEMO_MODULES: DemoModule[] = [
     id: 'home',
     kind: 'consumer',
     label: 'Home',
-    description: 'The landing screen after login — hero prompt, live sessions, and discovery.',
+    description:
+      'Two pages on one route: the open visitor pitch, and the signed-in Explore feed. Sub-features below belong to whichever page shows them.',
     route: '/home',
     built: true,
     features: [
@@ -56,6 +57,10 @@ export const DEMO_MODULES: DemoModule[] = [
       { id: 'promo', label: 'Generative Wellness banner', description: 'Dark full-bleed brand section.' },
       { id: 'community', label: 'Recreate from Community', description: 'Category chips and community session cards.' },
       { id: 'adaptive', label: 'Adaptive Wellness grid', description: 'Six-tile capability grid and closing CTA.' },
+      { id: 'creators', label: 'Trusted Creators', description: 'Signed-in only — the creator row.' },
+      { id: 'challenge', label: 'Monthly Challenge', description: 'Signed-in only — the 30-day challenge card.' },
+      { id: 'picked', label: 'Picked for You', description: 'Signed-in only — the personalized shelf.' },
+      { id: 'impact', label: 'Sessions with Biggest Impact', description: 'Signed-in only — the outcome-ranked shelf.' },
     ],
   },
   {

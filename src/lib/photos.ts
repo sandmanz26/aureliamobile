@@ -32,6 +32,14 @@ export const COVER_PHOTOS = {
   avatar: '1500648767791-00dcc994a43e',         // portrait, for the demo profile
   underwater: '1544551763-46a013bb70d5',        // figure suspended underwater
   glow: '1470252649378-9c29740c9fa8',           // warm dusk light
+  cosmic: '1462331940025-496dfbfc7564',         // galaxy, for Cosmic Flow
+  bloom: '1490750967868-88aa4486c946',          // wildflower field, the Explore hero
+  // Creator portraits. Circular, so a failed load leaves a gradient disc that
+  // still reads as an avatar rather than a hole in the row.
+  creatorEthan: '1507003211169-0a1dd7228f2d',
+  creatorDaniel: '1552374196-c4e7ffc6e126',
+  creatorSophia: '1494790108377-be9c29b29330',
+  creatorMaya: '1438761681033-6461ffad8d80',
 } as const
 
 export type CoverKey = keyof typeof COVER_PHOTOS

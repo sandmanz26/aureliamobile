@@ -13,6 +13,11 @@ interface CommunityCardProps {
   recreated: string
   gradient: string
   photo: CoverKey
+  /**
+   * Runs before either link navigates. Returning false cancels it — that is how
+   * the visitor-facing home sends someone to sign in instead of into a session.
+   */
+  guard?: () => boolean
 }
 
 // The whole card opens the session; Recreate and Save sit above that overlay so
@@ -26,11 +31,21 @@ export function CommunityCard({
   recreated,
   gradient,
   photo,
+  guard,
 }: CommunityCardProps) {
+  function handleClick(event: React.MouseEvent) {
+    if (guard && !guard()) event.preventDefault()
+  }
+
   return (
     <article className="relative flex h-[230px] w-[260px] shrink-0 flex-col justify-between overflow-hidden rounded-16 p-12 text-text-inverse">
       <CoverImage photo={photo} gradient={gradient} width={520} height={460} />
-      <Link to={`/session/${slug}`} aria-label={`Open ${title}`} className="absolute inset-0 z-10" />
+      <Link
+        to={`/session/${slug}`}
+        aria-label={`Open ${title}`}
+        onClick={handleClick}
+        className="absolute inset-0 z-10"
+      />
 
       <div className="relative z-20 flex items-center justify-between">
         <button
@@ -42,7 +57,8 @@ export function CommunityCard({
         </button>
         <Link
           to={`/recreate/${slug}`}
-          className="text-style-label flex h-32 items-center gap-4 rounded-full bg-surface-default/90 px-12 text-text-primary"
+          onClick={handleClick}
+          className="text-style-label flex h-32 items-center gap-4 whitespace-nowrap rounded-full bg-surface-default/90 px-12 text-text-primary"
         >
           <Repeat2 size={14} />
           Recreate
