@@ -25,9 +25,16 @@ import type { CoverKey } from '../lib/photos'
 import { SESSIONS } from '../lib/sessions'
 import { useDrawer } from '../layouts/DrawerContext'
 
+// A one-tap way in for each of the things Aurelia actually makes, so the rail
+// doubles as the answer to "what can I even ask for?".
 const quickStartCards: { title: string; subtitle: string; gradient: string; photo: CoverKey }[] = [
   { title: 'Affirmations', subtitle: 'Personalized exprience.', photo: 'affirmations', gradient: 'linear-gradient(160deg, var(--color-danger-400), var(--color-warning-300))' },
   { title: 'Guided Breath Work', subtitle: 'Personalized exprience.', photo: 'breathwork', gradient: 'linear-gradient(160deg, var(--color-neutral-700), var(--color-neutral-400))' },
+  { title: 'Sleep Meditation', subtitle: 'Wind down for the night.', photo: 'sleep', gradient: 'linear-gradient(160deg, var(--color-info-950), var(--color-info-600))' },
+  { title: 'Focus Sound', subtitle: 'Stay with one thing.', photo: 'rain', gradient: 'linear-gradient(160deg, var(--color-neutral-800), var(--color-info-500))' },
+  { title: 'Morning Reset', subtitle: 'Start the day settled.', photo: 'morning', gradient: 'linear-gradient(160deg, var(--color-warning-700), var(--color-warning-300))' },
+  { title: 'Stress Relief', subtitle: 'Come down a notch.', photo: 'stress', gradient: 'linear-gradient(160deg, var(--color-success-900), var(--color-success-500))' },
+  { title: 'Deep Calm', subtitle: 'Nothing asked of you.', photo: 'calm', gradient: 'linear-gradient(160deg, var(--color-info-900), var(--color-neutral-950))' },
 ]
 
 // Community cards read straight from the session catalogue, so a card, its

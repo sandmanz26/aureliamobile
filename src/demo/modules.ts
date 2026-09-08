@@ -120,6 +120,22 @@ export const DEMO_MODULES: DemoModule[] = [
     built: true,
   },
   {
+    id: 'notifications',
+    kind: 'consumer',
+    label: 'Notifications',
+    description: 'Activity feed — who played or recreated your sessions, grouped by age.',
+    route: '/notifications',
+    built: true,
+  },
+  {
+    id: 'help',
+    kind: 'consumer',
+    label: 'Help',
+    description: 'The FAQ. Open without an account, since being locked out is a reason to read it.',
+    route: '/help',
+    built: true,
+  },
+  {
     id: 'invite',
     kind: 'consumer',
     label: 'Invite a Friend',

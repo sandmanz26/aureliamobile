@@ -8,9 +8,11 @@ interface NavItemProps {
   label: string
   /** Turned off in the /__demo console: still listed, but inert. */
   disabled?: boolean
+  /** Matches only the exact path — for a parent route with children below it. */
+  end?: boolean
 }
 
-export function NavItem({ to, icon, label, disabled }: NavItemProps) {
+export function NavItem({ to, icon, label, disabled, end }: NavItemProps) {
   if (disabled) {
     return (
       <span
@@ -29,8 +31,9 @@ export function NavItem({ to, icon, label, disabled }: NavItemProps) {
   return (
     <NavLink
       to={to}
+      end={end}
       className={({ isActive }) =>
-        `flex items-center gap-12 rounded-12 px-12 py-14 text-style-body transition-colors ${
+        `u-press flex items-center gap-12 rounded-12 px-12 py-14 text-style-body ${
           isActive ? 'text-text-primary' : 'text-text-primary hover:bg-background-elevated'
         }`
       }

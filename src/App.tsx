@@ -9,7 +9,7 @@ import { CompliancePage } from './admin/pages/CompliancePage'
 import { DashboardPage } from './admin/pages/DashboardPage'
 import { ExperimentsPage } from './admin/pages/ExperimentsPage'
 import { ModerationPage } from './admin/pages/ModerationPage'
-import { NotificationsPage } from './admin/pages/NotificationsPage'
+import { NotificationsPage as AdminNotificationsPage } from './admin/pages/NotificationsPage'
 import { PaymentsPage } from './admin/pages/PaymentsPage'
 import { PricingPage } from './admin/pages/PricingPage'
 import { RevenuePage } from './admin/pages/RevenuePage'
@@ -23,7 +23,9 @@ import { AppLayout } from './layouts/AppLayout'
 import { ChallengeDetailPage } from './pages/ChallengeDetailPage'
 import { ChatPage } from './pages/ChatPage'
 import { DemoControlPage } from './pages/DemoControlPage'
+import { HelpPage } from './pages/HelpPage'
 import { HomePage } from './pages/HomePage'
+import { NotificationsPage } from './pages/NotificationsPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { SeeAllPage } from './pages/SeeAllPage'
@@ -103,7 +105,7 @@ export default function App() {
             } />
             <Route path="notifications" element={
               <ModuleGuard module="adminNotifications">
-                <NotificationsPage />
+                <AdminNotificationsPage />
               </ModuleGuard>
             } />
             <Route path="compliance" element={
@@ -174,6 +176,25 @@ export default function App() {
                     <RecreatePage />
                   </ModuleGuard>
                 </RequireAuth>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <RequireAuth>
+                  <ModuleGuard module="notifications">
+                    <NotificationsPage />
+                  </ModuleGuard>
+                </RequireAuth>
+              }
+            />
+            {/* Help is open: someone locked out of their account still needs it. */}
+            <Route
+              path="/help"
+              element={
+                <ModuleGuard module="help">
+                  <HelpPage />
+                </ModuleGuard>
               }
             />
             <Route

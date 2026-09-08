@@ -1,4 +1,4 @@
-import { Bell, Compass, HelpCircle, Home, ListMusic, LogIn, LogOut, MessageCircle, Plus, User, UserPlus, Waves, X } from 'lucide-react'
+import { Bell, Compass, HelpCircle, ListMusic, LogIn, LogOut, MessageCircle, Plus, User, UserPlus, Waves, X } from 'lucide-react'
 import { useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
@@ -18,7 +18,7 @@ const recentSessions: { title: string; author: string; photo: CoverKey }[] = [
   { title: 'Stress relief techniques', author: 'Marcus Lee', photo: 'stress' },
 ]
 
-function SidebarContent({ onNavigate, showBell = true }: { onNavigate?: () => void; showBell?: boolean }) {
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { isEnabled } = useFeatureFlags()
   const { signedIn, signOut } = useAuth()
   const gate = useSignInGate()
@@ -28,17 +28,43 @@ function SidebarContent({ onNavigate, showBell = true }: { onNavigate?: () => vo
     <div className="flex h-full flex-col gap-24 overflow-y-auto px-24 py-24">
       <div className="flex items-center justify-between">
         <AureliaLogo iconSize={30} />
-        {showBell && (
-          <button type="button" aria-label="Notifications" className="text-icon-default">
+        {isEnabled('notifications') && (
+          <button
+            type="button"
+            aria-label="Notifications"
+            onClick={() => {
+              onNavigate?.()
+              gate('/notifications')
+            }}
+            className="u-press relative text-icon-default"
+          >
             <Bell size={22} />
+            {/* Unread marker. A real build drives this from the feed. */}
+            <span className="absolute -right-1 -top-1 size-8 rounded-full bg-feedback-error ring-2 ring-surface-default" />
           </button>
         )}
       </div>
 
       <nav className="flex flex-col gap-4" onClick={onNavigate}>
-        <NavItem to="/home" icon={<Home size={20} />} label="Home" disabled={!isEnabled('home')} />
+        {/* Signed in, the account itself is the first item and wears the user's
+            face; signed out, the same slot is the way in. */}
+        {signedIn ? (
+          <NavItem
+            to="/profile"
+            icon={
+              <PhotoCircle
+                photo="avatar"
+                size={20}
+                gradient="conic-gradient(from 180deg, var(--color-blue-300), var(--color-gold-300), var(--color-blue-300))"
+              />
+            }
+            label="Profile"
+            disabled={!isEnabled('profile')}
+          />
+        ) : (
+          <NavItem to="/login" icon={<User size={20} />} label="Sign In" disabled={!isEnabled('auth')} />
+        )}
         <NavItem to="/chat" icon={<MessageCircle size={20} />} label="Chat" disabled={!isEnabled('chat')} />
-        <NavItem to="/profile" icon={<User size={20} />} label="Profile" disabled={!isEnabled('profile')} />
         <NavItem to="/explore" icon={<Compass size={20} />} label="Explore" disabled={!isEnabled('explore')} />
         <NavItem to="/sessions" icon={<ListMusic size={20} />} label="Sessions" disabled={!isEnabled('sessions')} />
         <NavItem to="/wellness" icon={<Waves size={20} />} label="My wellness" disabled={!isEnabled('wellness')} />
@@ -108,10 +134,19 @@ function SidebarContent({ onNavigate, showBell = true }: { onNavigate?: () => vo
             Invite a Friend
           </button>
         )}
-        <button type="button" className="flex items-center gap-12 rounded-12 px-12 py-14 text-style-body text-text-primary hover:bg-background-elevated">
-          <HelpCircle size={20} className="text-icon-default" />
-          Help
-        </button>
+        {isEnabled('help') && (
+          <button
+            type="button"
+            onClick={() => {
+              onNavigate?.()
+              navigate('/help')
+            }}
+            className="text-style-body u-press flex items-center gap-12 rounded-12 px-12 py-14 text-text-primary hover:bg-background-elevated"
+          >
+            <HelpCircle size={20} className="text-icon-default" />
+            Help
+          </button>
+        )}
       </div>
     </div>
   )
@@ -147,7 +182,7 @@ export function AppLayout() {
                 <X size={16} />
               </button>
               <div className="flex-1 overflow-hidden">
-                <SidebarContent onNavigate={() => setDrawerOpen(false)} showBell={false} />
+                <SidebarContent onNavigate={() => setDrawerOpen(false)} />
               </div>
             </div>
           </div>
