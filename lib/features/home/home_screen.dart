@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../core/auth/auth_scope.dart';
 import '../../core/data/sessions.dart';
@@ -488,12 +489,15 @@ class _GenerativeWellnessBanner extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: const Color(0xFF1B1006),
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppPadding.lg, vertical: AppSpacing.s10),
+      // Only vertical padding here: the card pair below has to reach the
+      // screen edges, so the horizontal inset is applied per child instead.
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+            child: Container(
             padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.s3, vertical: AppSpacing.s2),
             decoration: BoxDecoration(
@@ -507,26 +511,36 @@ class _GenerativeWellnessBanner extends StatelessWidget {
               child: Text(
                 'Generative Wellness Care',
                 style: AppTextStyles.label.copyWith(color: AppColors.textInverse),
+                ),
               ),
             ),
           ),
           const SizedBox(height: AppSpacing.s6),
-          Text(
-            'Your Personal\nMindfulness Guide',
-            style: AppTextStyles.headlineLg.copyWith(
-              color: AppColors.textInverse,
-              fontWeight: FontWeight.w400,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+            child: Text(
+              'Your Personal\nMindfulness Guide',
+              style: AppTextStyles.headlineLg.copyWith(
+                color: AppColors.textInverse,
+                fontWeight: FontWeight.w400,
+              ),
             ),
           ),
           const SizedBox(height: AppSpacing.s2),
-          Text(
-            'Everything you need to reflect, restore, and reset, all in one adaptive app.',
-            style: AppTextStyles.bodyLg.copyWith(color: AppColors.textInverse),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+            child: Text(
+              'Everything you need to reflect, restore, and reset, all in one adaptive app.',
+              style: AppTextStyles.bodyLg.copyWith(color: AppColors.textInverse),
+            ),
           ),
           const SizedBox(height: AppSpacing.s8),
-          // The pair deliberately bleeds past both edges, as on the web. The
-          // overflow is clipped rather than laid out, so a narrow phone shows
-          // the same composition instead of a layout error.
+          // The left card sits flush against the left edge of the screen with
+          // all four corners visible; the pair bleeds past the *right* edge.
+          // The 24 of left padding is tied to the rotation, not eyeballed: at
+          // -10deg a 180x286 card measures 227 across once turned, putting its
+          // corner 23.5 left of its layout box. Transform.rotate does not
+          // affect layout, so the overflow is clipped rather than laid out.
           SizedBox(
             height: 300,
             child: ClipRect(
@@ -536,19 +550,17 @@ class _GenerativeWellnessBanner extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Transform.translate(
-                      offset: const Offset(-40, 0),
-                      child: Transform.rotate(
-                        angle: -0.21,
-                        child: const _PromoCard(
-                          photo: 'underwater',
-                          gradient: [AppPrimitives.info900, AppPrimitives.neutral950],
-                        ),
+                    const SizedBox(width: 24),
+                    Transform.rotate(
+                      angle: -10 * math.pi / 180,
+                      child: const _PromoCard(
+                        photo: 'underwater',
+                        gradient: [AppPrimitives.info900, AppPrimitives.neutral950],
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.s5),
+                    const SizedBox(width: 7),
                     Transform.rotate(
-                      angle: 0.17,
+                      angle: 12 * math.pi / 180,
                       child: const _PromoCard(
                         photo: 'glow',
                         gradient: [Color(0xFFFFD9A8), Color(0xFFF97B14)],
@@ -560,23 +572,29 @@ class _GenerativeWellnessBanner extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.s8),
-          Text(
-            'Chat with Aurelia to instantly create custom meditations, soundscapes, '
-            'and breathwork tailored to how you feel right now.',
-            style: AppTextStyles.bodySm.copyWith(color: const Color(0xCCFFFFFF)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+            child: Text(
+              'Chat with Aurelia to instantly create custom meditations, soundscapes, '
+              'and breathwork tailored to how you feel right now.',
+              style: AppTextStyles.bodySm.copyWith(color: const Color(0xCCFFFFFF)),
+            ),
           ),
           const SizedBox(height: AppSpacing.s6),
-          OutlinedButton.icon(
-            onPressed: onStart,
-            style: OutlinedButton.styleFrom(
-              backgroundColor: const Color(0x14FFFFFF),
-              foregroundColor: AppColors.textInverse,
-              side: const BorderSide(color: Color(0x33FFFFFF)),
-              minimumSize: const Size(0, 52),
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+            child: OutlinedButton.icon(
+              onPressed: onStart,
+              style: OutlinedButton.styleFrom(
+                backgroundColor: const Color(0x14FFFFFF),
+                foregroundColor: AppColors.textInverse,
+                side: const BorderSide(color: Color(0x33FFFFFF)),
+                minimumSize: const Size(0, 52),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+              ),
+              icon: const Text('Start your Journey'),
+              label: const Icon(Icons.arrow_forward, size: 18),
             ),
-            icon: const Text('Start your Journey'),
-            label: const Icon(Icons.arrow_forward, size: 18),
           ),
         ],
       ),
@@ -610,17 +628,36 @@ class _PromoCard extends StatelessWidget {
             Container(
               width: 44,
               height: 44,
+              alignment: Alignment.center,
               decoration: const BoxDecoration(
                 color: Color(0x40FFFFFF),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.play_arrow, color: Color(0xF2FFFFFF)),
+              // A downward triangle, as in the frame — not Material's
+              // right-pointing play arrow.
+              child: CustomPaint(size: const Size(18, 13), painter: _DownTrianglePainter()),
             ),
           ],
         ),
       ),
     );
   }
+}
+
+/// The downward triangle inside each promo card's play button.
+class _DownTrianglePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width, 0)
+      ..lineTo(size.width / 2, size.height)
+      ..close();
+    canvas.drawPath(path, Paint()..color = const Color(0xF2FFFFFF));
+  }
+
+  @override
+  bool shouldRepaint(covariant _DownTrianglePainter oldDelegate) => false;
 }
 
 class _FeatureTile extends StatelessWidget {
