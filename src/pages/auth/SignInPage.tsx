@@ -10,14 +10,15 @@ export function SignInPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { signIn } = useAuth()
-  // Where the visitor was headed when they hit the sign-in wall.
-  const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? '/home'
+  // Where the visitor was headed when they hit the sign-in wall, and whatever
+  // that destination needed to know — a chat that should open listening, say.
+  const from = (location.state as { from?: { pathname: string; state?: unknown } } | null)?.from
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   function complete() {
     signIn()
-    navigate(from, { replace: true })
+    navigate(from?.pathname ?? '/home', { replace: true, state: from?.state })
   }
 
   function handleSubmit(event: React.FormEvent) {

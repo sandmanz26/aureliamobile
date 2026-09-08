@@ -286,7 +286,7 @@ export function RecreatePage() {
           <button
             type="button"
             onClick={handOffToChat}
-            className="text-style-body flex h-52 w-full items-center justify-center gap-8 rounded-full bg-button-primary-background font-semibold text-button-primary-foreground"
+            className="text-style-body u-press flex h-52 w-full items-center justify-center gap-8 rounded-full bg-button-primary-background font-semibold text-button-primary-foreground"
           >
             <Sparkles size={18} />
             Create my version

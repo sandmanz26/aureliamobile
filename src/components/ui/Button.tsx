@@ -22,7 +22,7 @@ const variantClasses: Record<Variant, string> = {
 export function Button({ variant = 'primary', icon, children, className = '', ...props }: ButtonProps) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-8 rounded-full px-24 py-14 text-style-body font-semibold transition-colors disabled:cursor-not-allowed ${variantClasses[variant]} ${className}`}
+      className={`u-press inline-flex items-center justify-center gap-8 rounded-full px-24 py-14 text-style-body font-semibold disabled:cursor-not-allowed ${variantClasses[variant]} ${className}`}
       {...props}
     >
       {icon}

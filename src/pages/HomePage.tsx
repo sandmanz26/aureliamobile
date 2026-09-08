@@ -137,17 +137,17 @@ export function HomePage() {
           <div className="relative mt-24 flex h-56 items-center gap-12 rounded-full border border-border-default bg-surface-default px-20">
             <input
               placeholder="Ask Aurelia.."
-              onFocus={() => gate()}
+              onFocus={() => gate('/chat')}
               onMouseDown={(event) => {
                 event.preventDefault()
-                gate()
+                gate('/chat')
               }}
               className="text-style-body min-w-0 flex-1 bg-transparent text-left text-text-primary outline-none placeholder:text-text-secondary"
             />
             <button
               type="button"
               aria-label="Voice input"
-              onClick={() => gate()}
+              onClick={() => gate('/chat', { startVoice: true })}
               className="flex size-32 items-center justify-center rounded-full bg-background-elevated text-icon-default"
             >
               <Mic size={16} />
@@ -155,7 +155,7 @@ export function HomePage() {
             <button
               type="button"
               aria-label="Send"
-              onClick={() => gate()}
+              onClick={() => gate('/chat')}
               className="flex size-32 items-center justify-center rounded-full bg-icon-default text-icon-inverse"
             >
               <ArrowUp size={16} />
@@ -205,7 +205,7 @@ export function HomePage() {
                 <CoverImage photo={card.photo} gradient={card.gradient} width={320} height={320} />
                 <button
                   type="button"
-                  onClick={() => gate()}
+                  onClick={() => gate('/chat')}
                   className="text-style-caption relative flex h-24 items-center gap-4 whitespace-nowrap rounded-full bg-surface-default/90 px-8 text-text-primary"
                 >
                   <Sparkles size={10} /> Create
@@ -299,7 +299,7 @@ export function HomePage() {
 
           <button
             type="button"
-            onClick={() => gate()}
+            onClick={() => gate('/chat')}
             className="text-style-body flex w-fit items-center gap-12 rounded-full border border-text-inverse/20 bg-text-inverse/8 px-20 py-12 font-medium text-text-inverse backdrop-blur-sm transition-colors hover:bg-text-inverse/15"
           >
             Start your Journey
@@ -357,7 +357,7 @@ export function HomePage() {
           <p className="mt-8 text-style-body-small opacity-90">Free to start, no credit card required!</p>
           <button
             type="button"
-            onClick={() => gate()}
+            onClick={() => gate('/chat')}
             className="text-style-body mt-24 inline-flex items-center gap-8 rounded-full bg-surface-default px-24 py-14 font-semibold text-text-primary"
           >
             <Repeat2 size={16} />

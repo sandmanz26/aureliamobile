@@ -1,6 +1,6 @@
 import { Bell, Compass, HelpCircle, Home, ListMusic, LogIn, LogOut, MessageCircle, Plus, User, UserPlus, Waves, X } from 'lucide-react'
 import { useState } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useSignInGate } from '../auth/useSignInGate'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
@@ -68,7 +68,7 @@ function SidebarContent({ onNavigate, showBell = true }: { onNavigate?: () => vo
       <Button
         variant="primary"
         icon={<Plus size={18} />}
-        onClick={() => gate(() => navigate('/chat'))}
+        onClick={() => gate('/chat')}
         className="w-full"
         style={{ background: 'linear-gradient(90deg, var(--color-gold-600), var(--color-gold-300))' }}
       >
@@ -101,7 +101,7 @@ function SidebarContent({ onNavigate, showBell = true }: { onNavigate?: () => vo
         {isEnabled('invite') && (
           <button
             type="button"
-            onClick={() => gate(() => navigate('/invite'))}
+            onClick={() => gate('/invite')}
             className="text-style-body flex items-center gap-12 rounded-12 px-12 py-14 text-text-primary hover:bg-background-elevated"
           >
             <UserPlus size={20} className="text-icon-default" />
@@ -119,6 +119,7 @@ function SidebarContent({ onNavigate, showBell = true }: { onNavigate?: () => vo
 
 export function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const location = useLocation()
 
   return (
     <DrawerContext.Provider value={{ openDrawer: () => setDrawerOpen(true) }}>
@@ -131,8 +132,11 @@ export function AppLayout() {
         {/* Mobile: hamburger-triggered drawer, faithful to the Figma "Menu" screen */}
         {drawerOpen && (
           <div className="fixed inset-0 z-50 flex lg:hidden">
-            <div className="absolute inset-0 bg-icon-strong/50" onClick={() => setDrawerOpen(false)} />
-            <div className="relative flex h-full w-[313px] max-w-[85vw] flex-col bg-surface-default shadow-xl">
+            <div
+              className="u-fade absolute inset-0 bg-icon-strong/50"
+              onClick={() => setDrawerOpen(false)}
+            />
+            <div className="u-drawer relative flex h-full w-[313px] max-w-[85vw] flex-col bg-surface-default shadow-xl">
               <MobileStatusBar />
               <button
                 type="button"
@@ -156,7 +160,11 @@ export function AppLayout() {
             <MobileStatusBar />
           </div>
 
-          <Outlet />
+          {/* Keyed on the path so the entrance replays on every navigation —
+              without it React reuses the node and the animation runs once. */}
+          <div key={location.pathname} className="u-page">
+            <Outlet />
+          </div>
         </div>
       </div>
     </DrawerContext.Provider>

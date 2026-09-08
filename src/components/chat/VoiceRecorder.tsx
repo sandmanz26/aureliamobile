@@ -65,7 +65,7 @@ export function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) {
 
   if (phase === 'review') {
     return (
-      <div className="flex flex-col gap-12 px-20 pb-16 pt-8">
+      <div className="u-pop flex flex-col gap-12 px-20 pb-16 pt-8">
         <div className="flex flex-col gap-8 rounded-16 border border-border-subtle bg-surface-default p-16">
           <div className="flex items-center justify-between">
             <span className="text-style-caption text-text-secondary">Transcript · {formatDuration(elapsed)}</span>

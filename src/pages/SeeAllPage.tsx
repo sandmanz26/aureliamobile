@@ -37,7 +37,7 @@ export function SeeAllPage() {
           type="button"
           aria-label="Back"
           onClick={() => navigate(-1)}
-          className="flex size-40 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-sm"
+          className="u-press flex size-40 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-sm"
         >
           <ArrowLeft size={20} />
         </button>
@@ -54,7 +54,9 @@ export function SeeAllPage() {
       </header>
 
       <div className="mx-auto w-full max-w-[402px] px-20 pb-40 lg:max-w-[900px] lg:px-24">
-        <div className="grid grid-cols-2 gap-12 lg:grid-cols-4">
+        {/* Cards deal in rather than all appearing at once — the delay is capped
+            in motion.css so a long grid never leaves its last rows waiting. */}
+        <div className="u-stagger grid grid-cols-2 gap-12 lg:grid-cols-4">
           {sessions.map((session) => (
             <SessionGridCard key={session.slug} session={session} />
           ))}

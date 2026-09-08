@@ -108,7 +108,7 @@ export function ChallengeDetailPage() {
               type="button"
               aria-label="Back"
               onClick={() => navigate(-1)}
-              className="flex size-40 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-sm"
+              className="u-press flex size-40 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-sm"
             >
               <ArrowLeft size={20} />
             </button>
@@ -196,7 +196,7 @@ export function ChallengeDetailPage() {
         <div className="mx-auto w-full max-w-[402px] lg:max-w-[720px]">
           <button
             type="button"
-            className="text-style-body flex h-56 w-full items-center justify-center rounded-full bg-button-primary-background font-semibold text-button-primary-foreground"
+            className="text-style-body u-press flex h-56 w-full items-center justify-center rounded-full bg-button-primary-background font-semibold text-button-primary-foreground"
           >
             Join Challenge
           </button>

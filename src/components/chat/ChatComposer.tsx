@@ -45,7 +45,7 @@ export function ChatComposer({ onSend, onVoice, disabled, canVoice = true }: Cha
           aria-label="Voice input"
           onClick={onVoice}
           disabled={!canVoice}
-          className="relative flex size-35 items-center justify-center rounded-full border-[1.5px] border-icon-strong disabled:cursor-not-allowed disabled:opacity-40"
+          className="u-press relative flex size-35 items-center justify-center rounded-full border-[1.5px] border-icon-strong disabled:cursor-not-allowed disabled:opacity-40"
         >
           <span className="absolute size-[21px] rounded-full bg-brand-default" />
           <span className="absolute size-[18px] rounded-full bg-primary-200" />
@@ -60,7 +60,7 @@ export function ChatComposer({ onSend, onVoice, disabled, canVoice = true }: Cha
           type="submit"
           aria-label="Send"
           disabled={disabled}
-          className="flex size-35 items-center justify-center rounded-full bg-icon-strong text-icon-inverse disabled:opacity-40"
+          className="u-press flex size-35 items-center justify-center rounded-full bg-icon-strong text-icon-inverse disabled:opacity-40"
         >
           <ArrowUp size={19} />
         </button>

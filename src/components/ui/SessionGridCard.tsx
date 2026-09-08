@@ -21,7 +21,7 @@ export function SessionGridCard({
 }) {
   return (
     <article
-      className={`relative flex w-full flex-col justify-between overflow-hidden rounded-16 p-10 text-text-inverse ${className}`}
+      className={`u-lift relative flex w-full flex-col justify-between overflow-hidden rounded-16 p-10 text-text-inverse ${className}`}
     >
       <CoverImage photo={session.photo} gradient={session.gradient} width={420} height={520} />
       <Link to={`/session/${session.slug}`} aria-label={`Open ${session.title}`} className="absolute inset-0 z-10" />

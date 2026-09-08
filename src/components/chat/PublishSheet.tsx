@@ -12,8 +12,8 @@ export function PublishSheet({ state, onCancel, onView }: PublishSheetProps) {
   const publishing = state === 'publishing'
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-icon-strong/40">
-      <div className="flex w-full max-w-[402px] flex-col items-center gap-32 rounded-t-24 bg-surface-default px-20 pb-24 pt-40">
+    <div className="u-fade fixed inset-0 z-50 flex items-end justify-center bg-icon-strong/40">
+      <div className="u-sheet flex w-full max-w-[402px] flex-col items-center gap-32 rounded-t-24 bg-surface-default px-20 pb-24 pt-40">
         {publishing ? (
           <span
             className="size-64 animate-spin rounded-full"
@@ -45,7 +45,7 @@ export function PublishSheet({ state, onCancel, onView }: PublishSheetProps) {
           <button
             type="button"
             onClick={onCancel}
-            className="text-style-body-small w-full rounded-full py-14 text-center text-text-primary hover:bg-background-elevated"
+            className="text-style-body-small u-press w-full rounded-full py-14 text-center text-text-primary hover:bg-background-elevated"
           >
             Cancel
           </button>
@@ -53,7 +53,7 @@ export function PublishSheet({ state, onCancel, onView }: PublishSheetProps) {
           <button
             type="button"
             onClick={onView}
-            className="text-style-body w-full rounded-full bg-brand-default py-14 text-center text-text-strong"
+            className="text-style-body u-press w-full rounded-full bg-brand-default py-14 text-center text-text-strong"
           >
             View Session
           </button>

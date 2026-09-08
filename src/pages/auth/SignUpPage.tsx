@@ -23,7 +23,7 @@ export function SignUpPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { signIn } = useAuth()
-  const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? '/home'
+  const from = (location.state as { from?: { pathname: string; state?: unknown } } | null)?.from
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -41,7 +41,7 @@ export function SignUpPage() {
 
   function complete() {
     signIn()
-    navigate(from, { replace: true })
+    navigate(from?.pathname ?? '/home', { replace: true, state: from?.state })
   }
 
   function handleSubmit(event: React.FormEvent) {

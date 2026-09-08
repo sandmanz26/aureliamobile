@@ -270,7 +270,7 @@ export function SessionDetailPage() {
           <div className="mt-16 flex items-center gap-8">
             <button
               type="button"
-              className="text-style-body flex h-52 flex-1 items-center justify-center gap-8 rounded-full bg-button-primary-background font-semibold text-button-primary-foreground"
+              className="text-style-body u-press flex h-52 flex-1 items-center justify-center gap-8 rounded-full bg-button-primary-background font-semibold text-button-primary-foreground"
             >
               <Play size={18} fill="currentColor" />
               Play session

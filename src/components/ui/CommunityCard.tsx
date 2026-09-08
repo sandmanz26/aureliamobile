@@ -38,7 +38,7 @@ export function CommunityCard({
   }
 
   return (
-    <article className="relative flex h-[230px] w-[260px] shrink-0 flex-col justify-between overflow-hidden rounded-16 p-12 text-text-inverse">
+    <article className="u-lift relative flex h-[230px] w-[260px] shrink-0 flex-col justify-between overflow-hidden rounded-16 p-12 text-text-inverse">
       <CoverImage photo={photo} gradient={gradient} width={520} height={460} />
       <Link
         to={`/session/${slug}`}

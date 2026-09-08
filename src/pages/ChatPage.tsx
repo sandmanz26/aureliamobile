@@ -129,14 +129,17 @@ export function ChatPage() {
   const { openDrawer } = useDrawer()
   const { isEnabled } = useFeatureFlags()
 
-  const brief = (location.state as { recreate?: RecreateBrief } | null)?.recreate
+  const routeState = location.state as { recreate?: RecreateBrief; startVoice?: boolean } | null
+  const brief = routeState?.recreate
 
   const [messages, setMessages] = useState<Message[]>(OPENING_MESSAGES)
   const [typing, setTyping] = useState(false)
   const [applied, setApplied] = useState<string[]>(RECOMMENDATIONS.map((r) => r.id))
   const [sessionState, setSessionState] = useState<SessionState>('idle')
   const [progress, setProgress] = useState(0)
-  const [listening, setListening] = useState(false)
+  // Arriving from Home's mic opens the recorder straight away, so the tap that
+  // said "talk to Aurelia" lands on a live mic rather than an idle composer.
+  const [listening, setListening] = useState(() => routeState?.startVoice === true)
   const [publishState, setPublishState] = useState<'publishing' | 'published' | null>(null)
 
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -283,7 +286,7 @@ export function ChatPage() {
 
             if (message.from === 'aurelia') {
               return (
-                <div key={message.id} className={`flex gap-10 pr-40 ${startsRun ? 'mt-12' : 'mt-2'}`}>
+                <div key={message.id} className={`u-message flex gap-10 pr-40 ${startsRun ? 'mt-12' : 'mt-2'}`}>
                   <span className="w-24 shrink-0">
                     {startsRun && <AureliaLogo iconSize={24} markOnly />}
                   </span>
@@ -301,7 +304,7 @@ export function ChatPage() {
             }
 
             return (
-              <div key={message.id} className={`flex flex-col items-end ${startsRun ? 'mt-12' : 'mt-2'}`}>
+              <div key={message.id} className={`u-message flex flex-col items-end ${startsRun ? 'mt-12' : 'mt-2'}`}>
                 {message.voice ? (
                   <VoiceMessage durationMs={message.voice.durationMs} transcript={message.text} />
                 ) : (
@@ -320,7 +323,7 @@ export function ChatPage() {
           })}
 
           {showRecommendations && (
-            <div className="-mx-20 mt-12 flex gap-11 overflow-x-auto px-20 pb-4">
+            <div className="u-message -mx-20 mt-12 flex gap-11 overflow-x-auto px-20 pb-4">
               {RECOMMENDATIONS.map((recommendation) => (
                 <RecommendationCard
                   key={recommendation.id}
@@ -333,7 +336,7 @@ export function ChatPage() {
           )}
 
           {(sessionState === 'generating' || sessionState === 'ready') && (
-            <div className="mt-12">
+            <div className="u-message mt-12">
               <SessionProgressCard
                 title="Sleep meditation v1.2"
                 status={sessionState === 'ready' ? 'Ready to play' : 'Creating your new session..'}
@@ -343,7 +346,7 @@ export function ChatPage() {
           )}
 
           {typing && (
-            <div className="mt-12 flex items-center gap-10">
+            <div className="u-message mt-12 flex items-center gap-10">
               <span className="w-24 shrink-0">
                 <AureliaLogo iconSize={24} markOnly />
               </span>

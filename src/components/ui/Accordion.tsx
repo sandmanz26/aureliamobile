@@ -43,7 +43,7 @@ export function Accordion({ sections, defaultOpen = [] }: AccordionProps) {
               onClick={() => toggle(section.id)}
               aria-expanded={expanded}
               aria-controls={`section-${section.id}`}
-              className="flex w-full items-center gap-12 py-16 text-left"
+              className="u-press flex w-full items-center gap-12 py-16 text-left"
             >
               <span className="text-style-label flex-1 uppercase tracking-[0.12em] text-text-primary">
                 {section.label}
@@ -54,11 +54,16 @@ export function Accordion({ sections, defaultOpen = [] }: AccordionProps) {
                 className={`shrink-0 text-icon-secondary transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
               />
             </button>
-            {expanded && (
-              <div id={`section-${section.id}`} className="pb-20">
-                {section.content}
+            {/* Kept mounted and collapsed rather than unmounted, so opening and
+                closing both animate and the content keeps its own state. */}
+            <div id={`section-${section.id}`} className="u-collapse" data-open={expanded}>
+              {/* inert while collapsed: the content stays mounted so both
+                  directions animate, but it must not be tabbable or read out
+                  while it is a zero-height row. */}
+              <div inert={!expanded}>
+                <div className="pb-20">{section.content}</div>
               </div>
-            )}
+            </div>
           </div>
         )
       })}
