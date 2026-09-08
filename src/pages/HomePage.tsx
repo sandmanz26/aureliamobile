@@ -266,9 +266,14 @@ export function HomePage() {
           </div>
         </div>
 
-        {/* Card pair — 180x286 each, bleeding past the section edges. */}
-        <div className="relative -mx-20 my-32 flex h-[320px] items-center justify-start gap-[55px] overflow-hidden lg:-mx-24 lg:justify-center">
-          <div className="relative -ml-[59px] h-[286px] w-[180px] shrink-0 -rotate-12 overflow-hidden rounded-24 shadow-2xl lg:ml-0">
+        {/* Card pair — 180x286 each. In the Figma frame the left card sits flush
+            against the left edge of the screen with all four corners visible,
+            and the pair bleeds past the *right* edge instead. The left padding
+            is what the rotated corner needs to clear the edge, so it is tied to
+            the rotation: at -10deg a 180x286 card is 227 wide once turned,
+            which puts its corner 23.5px left of the layout box. */}
+        <div className="relative -mx-20 my-32 flex h-[320px] items-center justify-start gap-[7px] overflow-hidden pl-24 lg:-mx-24 lg:justify-center lg:pl-0">
+          <div className="relative h-[286px] w-[180px] shrink-0 -rotate-[10deg] overflow-hidden rounded-24 shadow-2xl">
             <CoverImage
               photo="underwater"
               gradient="linear-gradient(160deg, var(--color-info-900), var(--color-neutral-950))"
@@ -279,7 +284,7 @@ export function HomePage() {
             <PlayGlyph />
           </div>
           <div
-            className="relative h-[286px] w-[180px] shrink-0 rotate-[10deg] overflow-hidden rounded-24 shadow-2xl"
+            className="relative h-[286px] w-[180px] shrink-0 rotate-[12deg] overflow-hidden rounded-24 shadow-2xl"
             style={{ background: 'linear-gradient(165deg, #FFD9A8 0%, #FFB25E 45%, #F97B14 100%)' }}
           >
             <PlayGlyph />
