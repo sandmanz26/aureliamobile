@@ -1,9 +1,16 @@
-/// Typography scale. Font family is a placeholder (Inter) pending
-/// confirmation from the Figma file's text styles.
+/// Typography scale.
+///
+/// No font package: the family is left unset so each platform uses its own UI
+/// face — San Francisco on iOS and macOS, Roboto on Android. That matches the
+/// web app, whose `--font-sans` is the same system stack, and it removes a
+/// runtime font download along with a dependency that has to keep pace with
+/// every Flutter release.
+///
+/// If the brand ever settles on a specific face, bundle it under `fonts:` in
+/// pubspec.yaml and name it in [_base] — one line, one place.
 library;
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 import 'app_spacing.dart';
 
@@ -17,7 +24,7 @@ class AppTextStyles {
     Color color = AppColors.textPrimary,
     double? letterSpacing,
   }) {
-    return GoogleFonts.inter(
+    return TextStyle(
       fontSize: fontSize,
       fontWeight: fontWeight,
       height: lineHeight,
