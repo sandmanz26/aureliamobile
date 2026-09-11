@@ -61,16 +61,19 @@ const features = [
   { icon: <Users size={20} />, title: 'Community Mix', description: 'Shared Practices' },
 ]
 
-/** Translucent circle with a downward triangle, centred on each promo card. */
+/** Translucent circle with a play triangle, centred on each promo card. */
 function PlayGlyph() {
   return (
     <span className="absolute left-1/2 top-1/2 flex size-44 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/25 backdrop-blur-sm">
+      {/* Points right: this is a play control, and a downward triangle reads as
+          expand. The 2px nudge is optical — a triangle centred by its bounding
+          box looks left of centre inside a circle. */}
       <span
-        className="size-0"
+        className="ml-[2px] size-0"
         style={{
-          borderLeft: '9px solid transparent',
-          borderRight: '9px solid transparent',
-          borderTop: '13px solid rgba(255,255,255,0.95)',
+          borderTop: '9px solid transparent',
+          borderBottom: '9px solid transparent',
+          borderLeft: '13px solid rgba(255,255,255,0.95)',
         }}
       />
     </span>
@@ -290,10 +293,14 @@ export function HomePage() {
             />
             <PlayGlyph />
           </div>
-          <div
-            className="relative h-[286px] w-[180px] shrink-0 rotate-[12deg] overflow-hidden rounded-24 shadow-2xl"
-            style={{ background: 'linear-gradient(165deg, #FFD9A8 0%, #FFB25E 45%, #F97B14 100%)' }}
-          >
+          <div className="relative h-[286px] w-[180px] shrink-0 rotate-[12deg] overflow-hidden rounded-24 shadow-2xl">
+            <CoverImage
+              photo="glow"
+              gradient="linear-gradient(165deg, #FFD9A8 0%, #FFB25E 45%, #F97B14 100%)"
+              width={360}
+              height={572}
+              scrim={false}
+            />
             <PlayGlyph />
           </div>
         </div>
