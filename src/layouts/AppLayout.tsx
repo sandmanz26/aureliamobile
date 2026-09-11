@@ -192,8 +192,15 @@ export function AppLayout() {
 
         <div className="min-w-0 flex-1">
           {/* Universal mobile-frame chrome — each page renders its own header row
-              (with the menu button, via useDrawer()) right below this. */}
-          <div className="lg:hidden">
+              (with the menu button, via useDrawer()) right below this.
+
+              Sticky, because a phone's real status bar never scrolls away. It
+              stays in flow, so nothing shifts; it only detaches once the page
+              moves under it. Translucent rather than solid: pages top out on
+              different backgrounds (Home and Sessions each open on their own
+              gradient), and a blur reads correctly over all of them where one
+              fixed colour would band against most. */}
+          <div className="sticky top-0 z-40 bg-background-default/80 backdrop-blur-md lg:hidden">
             <MobileStatusBar />
           </div>
 

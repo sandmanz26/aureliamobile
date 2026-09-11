@@ -25,7 +25,7 @@ export function AuthShell({ header, backTo, children }: AuthShellProps) {
   return (
     <div className="flex min-h-full flex-col items-center bg-background-default lg:justify-center lg:px-24 lg:py-48">
       <div className="w-full max-w-[402px] lg:mx-auto">
-        <div className="lg:hidden">
+        <div className="sticky top-0 z-40 bg-background-default/80 backdrop-blur-md lg:hidden">
           <MobileStatusBar />
         </div>
         <div className="px-24 pt-16 lg:px-0 lg:pt-0">
