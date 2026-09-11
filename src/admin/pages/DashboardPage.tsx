@@ -58,7 +58,7 @@ export function DashboardPage() {
           title="Needs attention"
           description="Queues that are past target or trending the wrong way."
           actions={
-            <Link to="/admin/moderation" className="flex items-center gap-4 text-12 font-medium text-adm-ink hover:underline">
+            <Link to="/admin/moderation" className="u-tap flex items-center gap-4 text-12 font-medium text-adm-ink hover:underline">
               Moderation <ArrowRight size={13} />
             </Link>
           }
@@ -87,7 +87,7 @@ export function DashboardPage() {
           title="Recent admin activity"
           description="Latest privileged actions."
           actions={
-            <Link to="/admin/audit" className="flex items-center gap-4 text-12 font-medium text-adm-ink hover:underline">
+            <Link to="/admin/audit" className="u-tap flex items-center gap-4 text-12 font-medium text-adm-ink hover:underline">
               Audit log <ArrowRight size={13} />
             </Link>
           }

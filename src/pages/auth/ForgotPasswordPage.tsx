@@ -86,7 +86,7 @@ export function ForgotPasswordPage() {
 
       <Link
         to="/login"
-        className="text-style-body-small mt-24 flex items-center justify-center gap-8 text-text-secondary"
+        className="u-tap text-style-body-small mt-24 flex items-center justify-center gap-8 text-text-secondary"
       >
         <ArrowLeft size={15} />
         Back to sign in

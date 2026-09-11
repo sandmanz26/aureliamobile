@@ -10,7 +10,7 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
       aria-checked={checked}
       aria-label={label}
       onClick={() => onChange(!checked)}
-      className={`relative h-22 w-40 shrink-0 rounded-full transition-colors ${checked ? 'bg-adm-good' : 'bg-adm-line'}`}
+      className={`u-tap relative h-22 w-40 shrink-0 rounded-full transition-colors ${checked ? 'bg-adm-good' : 'bg-adm-line'}`}
     >
       <span
         className={`absolute top-2 size-18 rounded-full bg-white shadow-sm transition-all ${checked ? 'left-20' : 'left-2'}`}
