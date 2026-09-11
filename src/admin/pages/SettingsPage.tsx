@@ -32,11 +32,15 @@ function Row({ title, description, children }: { title: string; description: str
 }
 
 export function SettingsPage() {
+  // Mirrors what the consumer app actually ships today. A flag panel that
+  // disagrees with the product is worse than no panel: an operator reads it to
+  // decide what is live, and acts on what it says.
   const [flags, setFlags] = useState({
     community: true,
     voice: true,
-    challenges: false,
-    wearables: false,
+    challenges: true,
+    wearables: true,
+    sessionSettings: false,
   })
   const [model, setModel] = useState('claude-opus-5')
   const [budget, setBudget] = useState('12000')
@@ -83,11 +87,21 @@ export function SettingsPage() {
           <Row title="Voice input" description="Microphone capture in the chat cockpit.">
             <Toggle checked={flags.voice} onChange={(v) => setFlags({ ...flags, voice: v })} label="Voice input" />
           </Row>
-          <Row title="Challenges" description="Group challenges and leaderboards. Not built yet.">
+          <Row title="Challenges" description="Group challenges and leaderboards, with the podium and standings.">
             <Toggle checked={flags.challenges} onChange={(v) => setFlags({ ...flags, challenges: v })} label="Challenges" />
           </Row>
-          <Row title="Wearable sync" description="Sleep and HRV import. Not built yet.">
+          <Row title="Wearable sync" description="Sleep and HRV import, switched per source on My Wellness.">
             <Toggle checked={flags.wearables} onChange={(v) => setFlags({ ...flags, wearables: v })} label="Wearable sync" />
+          </Row>
+          <Row
+            title="Session settings"
+            description="Script / Visual / Sound editing behind the chat ⋯ menu. Built and working, held dark until it has been rehearsed — off is the intended state."
+          >
+            <Toggle
+              checked={flags.sessionSettings}
+              onChange={(v) => setFlags({ ...flags, sessionSettings: v })}
+              label="Session settings"
+            />
           </Row>
         </Panel>
       </div>
