@@ -2,6 +2,7 @@ import { Bell, Compass, HelpCircle, ListMusic, LogIn, LogOut, MessageCircle, Plu
 import { useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { useHiddenScrollbars } from '../hooks/useHiddenScrollbars'
 import { useSignInGate } from '../auth/useSignInGate'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { useFeatureFlags } from '../demo/FeatureFlags'
@@ -155,6 +156,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 export function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const location = useLocation()
+  useHiddenScrollbars()
 
   return (
     <DrawerContext.Provider value={{ openDrawer: () => setDrawerOpen(true) }}>

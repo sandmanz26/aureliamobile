@@ -2,6 +2,7 @@ import { ArrowLeft } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AureliaLogo } from '../../components/ui/AureliaLogo'
+import { useHiddenScrollbars } from '../../hooks/useHiddenScrollbars'
 import { MobileStatusBar } from '../../components/ui/MobileStatusBar'
 
 interface AuthShellProps {
@@ -19,6 +20,7 @@ interface AuthShellProps {
  */
 export function AuthShell({ header, backTo, children }: AuthShellProps) {
   const navigate = useNavigate()
+  useHiddenScrollbars()
 
   return (
     <div className="flex min-h-full flex-col items-center bg-background-default lg:justify-center lg:px-24 lg:py-48">

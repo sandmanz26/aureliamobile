@@ -6,6 +6,21 @@
   box-sizing: border-box;
 }
 
+/* Scrollbars, hidden for the screens that opt in via useHiddenScrollbars().
+   Applied to <html>, so it reaches the document scroll and every inner
+   scroller — the horizontal shelves, the chat thread, the drawer. */
+.u-no-scrollbars,
+.u-no-scrollbars * {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* legacy Edge */
+}
+.u-no-scrollbars::-webkit-scrollbar,
+.u-no-scrollbars *::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none; /* WebKit, Chromium */
+}
+
 html,
 body,
 #root {
