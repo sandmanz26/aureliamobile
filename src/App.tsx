@@ -27,6 +27,7 @@ import { HelpPage } from './pages/HelpPage'
 import { HomePage } from './pages/HomePage'
 import { NotificationsPage } from './pages/NotificationsPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
+import { WellnessPage } from './pages/WellnessPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { SeeAllPage } from './pages/SeeAllPage'
 import { SessionsPage } from './pages/SessionsPage'
@@ -252,10 +253,7 @@ export default function App() {
               element={
                 <RequireAuth>
                   <ModuleGuard module="wellness">
-                    <PlaceholderPage
-                      title="My wellness"
-                      description="Progress tracking — chapters, mood baseline and social impact."
-                    />
+                    <WellnessPage />
                   </ModuleGuard>
                 </RequireAuth>
               }

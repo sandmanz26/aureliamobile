@@ -173,9 +173,9 @@ export const DEMO_MODULES: DemoModule[] = [
     id: 'wellness',
     kind: 'consumer',
     label: 'My wellness',
-    description: 'Progress tracking — chapters, mood baseline and social impact.',
+    description: 'The signal sources Aurelia may read — six switches, grouped by what they tell it, with the summary derived from them.',
     route: '/wellness',
-    built: false,
+    built: true,
   },
 
   /* --- Back office (the product's own admin, shown as a feature) --- */
