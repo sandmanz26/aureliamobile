@@ -20,6 +20,8 @@ export interface DemoFeature {
   id: string
   label: string
   description: string
+  /** Built, but off until someone switches it on. See `unreleased` below. */
+  unreleased?: boolean
 }
 
 export interface DemoModule {
@@ -31,6 +33,15 @@ export interface DemoModule {
   route?: string
   /** false = designed in Figma but no screen built yet. */
   built: boolean
+  /**
+   * Built and working, but deliberately switched off by default.
+   *
+   * Distinct from `built: false`, which means there is nothing to switch on.
+   * This is for work that has landed while a walkthrough is being given from
+   * the same branch: it must not appear in a demo nobody has rehearsed, so it
+   * ships dark and someone turns it on here when they are ready for it.
+   */
+  unreleased?: boolean
   features?: DemoFeature[]
 }
 
@@ -170,6 +181,16 @@ export const DEMO_MODULES: DemoModule[] = [
     ],
   },
   {
+    id: 'sessionSettings',
+    kind: 'consumer',
+    label: 'Session settings',
+    description:
+      'Script, Visual and Sound tabs behind the chat’s ⋯ menu — add or drop styles on a session. Built but switched off: turn it on here when it has been rehearsed.',
+    route: '/session-settings',
+    built: true,
+    unreleased: true,
+  },
+  {
     id: 'wellness',
     kind: 'consumer',
     label: 'My wellness',
@@ -198,13 +219,17 @@ export const DEMO_MODULES: DemoModule[] = [
 
 export type FlagState = Record<string, boolean>
 
-/** Everything that is built is on by default; unbuilt modules stay off. */
+/**
+ * Everything built is on by default. Two things stay off: modules with no
+ * screen behind them, and anything marked `unreleased` — built, but not yet
+ * meant to be seen.
+ */
 export function defaultFlags(): FlagState {
   const flags: FlagState = {}
   for (const mod of DEMO_MODULES) {
-    flags[mod.id] = mod.built
+    flags[mod.id] = mod.built && !mod.unreleased
     for (const feature of mod.features ?? []) {
-      flags[`${mod.id}.${feature.id}`] = true
+      flags[`${mod.id}.${feature.id}`] = !feature.unreleased
     }
   }
   return flags

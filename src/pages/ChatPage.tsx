@@ -266,8 +266,14 @@ export function ChatPage() {
 
   return (
     <div className="flex h-[calc(100vh-54px)] flex-col bg-background-default lg:h-screen">
-      <ChatHeader points="1,323" onMenu={openDrawer} onPublish={() => isEnabled('chat.publish') && setPublishState('publishing')}
-        canPublish={isEnabled('chat.publish')} />
+      <ChatHeader
+        points="1,323"
+        onMenu={openDrawer}
+        onPublish={() => isEnabled('chat.publish') && setPublishState('publishing')}
+        canPublish={isEnabled('chat.publish')}
+        richMenu={isEnabled('sessionSettings')}
+        onSettings={() => navigate('/session-settings')}
+      />
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-20">
         <div className="mx-auto flex max-w-[402px] flex-col gap-4 pb-16 lg:max-w-[720px]">

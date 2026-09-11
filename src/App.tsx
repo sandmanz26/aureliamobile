@@ -27,6 +27,7 @@ import { HelpPage } from './pages/HelpPage'
 import { HomePage } from './pages/HomePage'
 import { NotificationsPage } from './pages/NotificationsPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
+import { SessionSettingsPage } from './pages/SessionSettingsPage'
 import { WellnessPage } from './pages/WellnessPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { SeeAllPage } from './pages/SeeAllPage'
@@ -244,6 +245,16 @@ export default function App() {
                 <RequireAuth>
                   <ModuleGuard module="sessions">
                     <SessionsPage />
+                  </ModuleGuard>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/session-settings"
+              element={
+                <RequireAuth>
+                  <ModuleGuard module="sessionSettings">
+                    <SessionSettingsPage />
                   </ModuleGuard>
                 </RequireAuth>
               }
