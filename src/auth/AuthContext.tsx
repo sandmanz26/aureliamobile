@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { createContext, useContext, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 
 /**
@@ -9,9 +9,15 @@ import type { ReactNode } from 'react'
  * The moment they try to *do* something (ask Aurelia, open a session, recreate,
  * press a CTA) they are asked to sign in, and land back where they were headed.
  *
- * There is no backend yet, so "signed in" is a flag in localStorage. Everything
- * that reads it goes through this context, so swapping in a real session token
- * is one file.
+ * Deliberately not persisted: every visit starts signed out, so the first thing
+ * anyone opening the app sees is the case for it, not a session someone left
+ * behind. Signing in holds for as long as the page is open — enough to walk the
+ * whole product — and a reload returns to the front door.
+ *
+ * There is no backend yet. When there is one, this is the file that gains a
+ * real session token, and persistence becomes the token's lifetime rather than
+ * a flag: a returning user should not be signed out by a refresh once their
+ * account holds anything worth coming back to.
  */
 interface AuthValue {
   signedIn: boolean
@@ -21,32 +27,12 @@ interface AuthValue {
 
 const AuthContext = createContext<AuthValue | null>(null)
 
-const STORAGE_KEY = 'aurelia.auth.signedIn'
-
-function readStored() {
-  try {
-    return window.localStorage.getItem(STORAGE_KEY) === 'true'
-  } catch {
-    // Private mode — the visitor simply starts signed out.
-    return false
-  }
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [signedIn, setSignedIn] = useState(readStored)
-
-  const write = useCallback((next: boolean) => {
-    setSignedIn(next)
-    try {
-      window.localStorage.setItem(STORAGE_KEY, String(next))
-    } catch {
-      // Non-fatal: the flag still holds for this tab's lifetime.
-    }
-  }, [])
+  const [signedIn, setSignedIn] = useState(false)
 
   const value = useMemo<AuthValue>(
-    () => ({ signedIn, signIn: () => write(true), signOut: () => write(false) }),
-    [signedIn, write],
+    () => ({ signedIn, signIn: () => setSignedIn(true), signOut: () => setSignedIn(false) }),
+    [signedIn],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

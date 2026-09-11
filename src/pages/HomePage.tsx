@@ -5,7 +5,6 @@ import {
   Menu,
   Mic,
   Music,
-  Repeat2,
   Sparkles,
   TrendingUp,
   Users,
@@ -19,6 +18,7 @@ import liveSessionsMap from '../assets/live-sessions-map.png'
 import { Chip } from '../components/ui/Chip'
 import { CoverImage } from '../components/ui/CoverImage'
 import { CommunityCard } from '../components/ui/CommunityCard'
+import { CommunityNetwork } from '../components/ui/CommunityNetwork'
 import { FeatureCard } from '../components/ui/FeatureCard'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import type { CoverKey } from '../lib/photos'
@@ -376,21 +376,26 @@ export function HomePage() {
         </section>
         )}
 
-        {/* Ready to restore CTA */}
-        <section
-          className="mt-48 rounded-24 px-24 py-40 text-center text-text-inverse"
-          style={{ background: 'linear-gradient(160deg, #3C2405, #FF881B)' }}
-        >
-          <h2 className="text-style-headline">Ready to restore?</h2>
-          <p className="mt-8 text-style-body-small opacity-90">Free to start, no credit card required!</p>
-          <button
-            type="button"
-            onClick={() => gate('/chat')}
-            className="text-style-body mt-24 inline-flex items-center gap-8 rounded-full bg-surface-default px-24 py-14 font-semibold text-text-primary"
+        {/* Closing CTA. The network sits above the card and bleeds to both
+            page edges — it is the argument the card then states in words, so
+            it is wider than the content column on purpose. */}
+        <section className="mt-48">
+          <CommunityNetwork className="-mx-20 -mb-24 w-[calc(100%+40px)] lg:-mx-24 lg:w-[calc(100%+48px)]" />
+
+          <div
+            className="relative rounded-24 px-24 py-40 text-center text-text-inverse"
+            style={{ background: 'linear-gradient(180deg, #3C2405, #FF881B)' }}
           >
-            <Repeat2 size={16} />
-            Get Started
-          </button>
+            <h2 className="text-style-headline text-balance">Casual Intelligence for Global Community</h2>
+            <p className="text-style-body-small mt-8 opacity-90">Free to start, no credit card required!</p>
+            <button
+              type="button"
+              onClick={() => gate('/chat')}
+              className="u-press text-style-body mt-24 inline-flex items-center rounded-full border border-text-inverse/35 bg-text-inverse/12 px-28 py-14 font-medium text-text-inverse backdrop-blur-sm transition-colors hover:bg-text-inverse/20"
+            >
+              Get Started
+            </button>
+          </div>
         </section>
       </div>
     </div>
