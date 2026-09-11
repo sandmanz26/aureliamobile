@@ -21,7 +21,10 @@ export function SessionGridCard({
 }) {
   return (
     <article
-      className={`u-lift relative flex w-full flex-col justify-between overflow-hidden rounded-16 p-10 text-text-inverse ${className}`}
+      // min-h: the ratio alone starves the card on a 320px screen — two grid
+      // columns leave it 167px tall for 188px of content, and the card clips
+      // its own stats row. The floor wins there; the ratio wins everywhere else.
+      className={`u-lift @container relative flex min-h-[192px] w-full flex-col justify-between overflow-hidden rounded-16 p-10 text-text-inverse ${className}`}
     >
       <CoverImage photo={session.photo} gradient={session.gradient} width={420} height={520} />
       <Link to={`/session/${session.slug}`} aria-label={`Open ${session.title}`} className="absolute inset-0 z-10" />
@@ -34,12 +37,17 @@ export function SessionGridCard({
         >
           <Play size={14} fill="currentColor" />
         </Link>
+        {/* Below ~152px of card the word does not fit beside Play, and a
+            truncated "Rec…" reads as broken where the glyph alone reads as a
+            button. Keyed on the card, not the viewport, so the challenge
+            shelf's wider cards keep the label at any screen size. */}
         <Link
           to={`/recreate/${session.slug}`}
-          className="text-style-label flex h-30 items-center gap-4 whitespace-nowrap rounded-full bg-surface-default/95 px-11 text-text-primary"
+          aria-label={`Recreate ${session.title}`}
+          className="text-style-label flex h-30 shrink-0 items-center gap-4 whitespace-nowrap rounded-full bg-surface-default/95 px-11 text-text-primary"
         >
-          <Repeat2 size={13} />
-          Recreate
+          <Repeat2 size={13} className="shrink-0" />
+          <span className="hidden @min-[130px]:inline">Recreate</span>
         </Link>
       </div>
 

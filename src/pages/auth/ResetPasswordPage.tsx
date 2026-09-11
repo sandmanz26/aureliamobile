@@ -89,7 +89,7 @@ export function ResetPasswordPage() {
               type="button"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
               onClick={() => setShowPassword((v) => !v)}
-              className="flex items-center"
+              className="u-tap flex items-center"
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>

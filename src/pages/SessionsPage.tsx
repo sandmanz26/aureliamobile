@@ -56,7 +56,7 @@ function SectionHeader({ title, seeAllTo }: { title: string; seeAllTo?: string }
     <div className="flex items-baseline justify-between gap-16">
       <h2 className="text-style-title text-text-primary">{title}</h2>
       {seeAllTo && (
-        <Link to={seeAllTo} className="text-style-label shrink-0 whitespace-nowrap text-text-brand">
+        <Link to={seeAllTo} className="u-tap text-style-label shrink-0 whitespace-nowrap text-text-brand">
           See All
         </Link>
       )}

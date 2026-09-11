@@ -199,7 +199,7 @@ export function DataTable<T>({
                         type="button"
                         onClick={() => toggleSort(column.key)}
                         aria-sort={isSorted ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
-                        className={`inline-flex items-center gap-4 hover:text-adm-ink ${
+                        className={`u-tap inline-flex items-center gap-4 hover:text-adm-ink ${
                           column.numeric ? 'flex-row-reverse' : ''
                         } ${isSorted ? 'text-adm-ink' : ''}`}
                       >

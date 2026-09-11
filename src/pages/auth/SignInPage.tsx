@@ -46,7 +46,7 @@ export function SignInPage() {
               type="button"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
               onClick={() => setShowPassword((v) => !v)}
-              className="flex items-center"
+              className="u-tap flex items-center"
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
@@ -57,7 +57,7 @@ export function SignInPage() {
           <Link
             to="/forgot-password"
             state={location.state}
-            className="text-style-label text-text-brand"
+            className="u-tap text-style-label text-text-brand"
           >
             Forgot Password?
           </Link>
@@ -72,7 +72,7 @@ export function SignInPage() {
 
       <p className="text-style-body-small mt-24 text-center text-text-secondary">
         New here?{' '}
-        <Link to="/signup" state={location.state} className="font-medium text-text-brand">
+        <Link to="/signup" state={location.state} className="u-tap font-medium text-text-brand">
           Create an account
         </Link>
       </p>

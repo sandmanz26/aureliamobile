@@ -36,12 +36,12 @@ function TrendMark({ direction }: { direction: 'up' | 'down' }) {
 function DaysPill({ days, dark = false }: { days: number; dark?: boolean }) {
   return (
     <span
-      className={`text-style-label inline-flex h-26 shrink-0 items-center gap-4 whitespace-nowrap rounded-full px-10 ${
+      className={`text-style-label inline-flex h-26 min-w-0 max-w-full items-center gap-4 whitespace-nowrap rounded-full px-10 ${
         dark ? 'bg-surface-default text-text-primary' : 'border border-border-subtle bg-surface-default text-text-primary'
       }`}
     >
-      <Zap size={12} className="text-brand-emphasis" />
-      {days} days
+      <Zap size={12} className="shrink-0 text-brand-emphasis" />
+      <span className="truncate">{days} days</span>
     </span>
   )
 }
@@ -67,7 +67,7 @@ function Podium({ top }: { top: Contender[] }) {
       style={{ background: 'linear-gradient(170deg, #ffe6a8, #ff9a1f)' }}
     >
       {columns.map(({ contender, height, size, label }) => (
-        <div key={contender.rank} className={`flex flex-1 flex-col items-center ${label}`}>
+        <div key={contender.rank} className={`flex min-w-0 flex-1 flex-col items-center ${label}`}>
           <span className="text-style-body-small font-semibold text-text-primary">{contender.rank}</span>
           <span className="mt-6 rounded-full bg-surface-default p-3 shadow-md">
             <PhotoCircle photo={contender.photo} size={size} gradient={AVATAR_RING} alt={contender.name} />

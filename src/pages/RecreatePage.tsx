@@ -162,7 +162,7 @@ export function RecreatePage() {
               value={minutes}
               onChange={(event) => setMinutes(Number(event.target.value))}
               aria-label="Session length in minutes"
-              className="mt-12 h-4 w-full cursor-pointer appearance-none rounded-full bg-background-elevated accent-brand-emphasis"
+              className="u-slider mt-12"
             />
             <div className="text-style-caption mt-6 flex justify-between text-text-secondary">
               <span>3 min</span>

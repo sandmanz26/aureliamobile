@@ -115,26 +115,31 @@ export function ProfilePage() {
         {cards.map((card) => (
           <article
             key={card.title}
-            className="relative flex h-[230px] flex-col justify-between overflow-hidden rounded-16 p-12 text-text-inverse"
+            className="@container relative flex h-[230px] flex-col justify-between overflow-hidden rounded-16 p-12 text-text-inverse"
           >
             <CoverImage photo={card.photo} gradient={card.gradient} width={520} height={460} />
             <div className="relative flex items-center justify-between">
               <button
                 type="button"
                 aria-label="Save"
-                className="flex size-32 items-center justify-center rounded-full bg-surface-default/90 text-icon-default"
+                className="flex size-32 shrink-0 items-center justify-center rounded-full bg-surface-default/90 text-icon-default"
               >
                 <Bookmark size={16} />
               </button>
               <button
                 type="button"
-                className="flex h-32 items-center gap-4 rounded-full bg-surface-default/90 px-12 text-style-label text-text-primary"
+                aria-label={`Recreate ${card.title}`}
+                className="flex h-32 shrink-0 items-center gap-4 rounded-full bg-surface-default/90 px-12 text-style-label text-text-primary"
               >
-                <Repeat2 size={14} />
-                Recreate
+                <Repeat2 size={14} className="shrink-0" />
+                <span className="hidden @min-[124px]:inline">Recreate</span>
               </button>
             </div>
-            <div>
+            {/* relative: the cover is absolutely positioned, so anything in normal
+                flow paints behind it. The lines below only looked fine because
+                opacity-90 promotes them; the title, with no opacity, was
+                painted under the image and never showed. */}
+            <div className="relative">
               <p className="text-style-body-small font-semibold">{card.title}</p>
               <p className="mt-4 text-style-caption line-clamp-2 opacity-90">{card.description}</p>
               <div className="mt-8 flex items-center gap-12 text-style-caption opacity-90">

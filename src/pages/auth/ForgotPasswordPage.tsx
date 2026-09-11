@@ -55,7 +55,7 @@ export function ForgotPasswordPage() {
           <button
             type="button"
             onClick={() => setSent(false)}
-            className="text-style-body-small text-text-brand"
+            className="u-tap text-style-body-small text-text-brand"
           >
             Use a different email
           </button>

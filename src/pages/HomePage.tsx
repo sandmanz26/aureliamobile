@@ -102,7 +102,13 @@ export function HomePage() {
   const [category, setCategory] = useState<CategoryFilter>('All')
 
   return (
-    <div className="pb-48" style={{ background: 'linear-gradient(180deg, #ffffff, #fff1db 60%, #ffffff)' }}>
+    // overflow-x-hidden: the decorative glows are deliberately larger than the
+    // viewport and bleed past its right edge. Without the clip the document
+    // itself scrolls sideways by a few pixels on every phone width.
+    <div
+      className="overflow-x-hidden pb-48"
+      style={{ background: 'linear-gradient(180deg, #ffffff, #fff1db 60%, #ffffff)' }}
+    >
       {/* Header */}
       <div className="flex items-center justify-between px-20 py-16 lg:px-24">
         <button

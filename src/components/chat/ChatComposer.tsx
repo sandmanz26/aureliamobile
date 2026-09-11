@@ -27,7 +27,13 @@ export function ChatComposer({ onSend, onVoice, disabled, canVoice = true }: Cha
       onSubmit={submit}
       className="flex h-[59px] items-center gap-14 rounded-full border-[0.5px] border-border-subtle bg-surface-default py-12 pl-19 pr-12"
     >
-      <button type="button" aria-label="Add attachment" className="shrink-0 text-icon-strong">
+      {/* Padding pulled back by an equal negative margin: a 40x40 touch target
+          around a 16px glyph, with the row spacing unchanged. */}
+      <button
+        type="button"
+        aria-label="Add attachment"
+        className="-m-12 flex shrink-0 items-center justify-center p-12 text-icon-strong"
+      >
         <Plus size={16} />
       </button>
 
