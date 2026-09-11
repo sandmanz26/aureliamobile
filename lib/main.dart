@@ -5,13 +5,18 @@ import 'features/auth/forgot_password_screen.dart';
 import 'features/auth/reset_password_screen.dart';
 import 'features/auth/sign_in_screen.dart';
 import 'features/auth/sign_up_screen.dart';
+import 'features/challenge/challenge_detail_screen.dart';
 import 'features/chat/chat_screen.dart';
+import 'features/help/help_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/invite/invite_screen.dart';
+import 'features/notifications/notifications_screen.dart';
 import 'features/profile/profile_screen.dart';
 import 'features/recreate/recreate_screen.dart';
+import 'features/see_all/see_all_screen.dart';
 import 'features/session_detail/session_detail_screen.dart';
 import 'features/sessions/sessions_screen.dart';
+import 'core/data/sessions.dart' show Shelf;
 import 'features/shell/placeholder_screen.dart';
 
 void main() {
@@ -42,6 +47,9 @@ class _AureliaAppState extends State<AureliaApp> {
     '/session',
     '/recreate',
     '/invite',
+    '/notifications',
+    '/see-all',
+    '/challenge',
     '/explore',
     '/sessions',
     '/wellness',
@@ -82,14 +90,27 @@ class _AureliaAppState extends State<AureliaApp> {
         case '/sessions':
           return const SessionsScreen();
         case '/chat':
-          final brief = settings.arguments;
-          return ChatScreen(brief: brief is RecreateBrief ? brief : null);
+          final args = settings.arguments;
+          if (args is ChatArgs) {
+            return ChatScreen(brief: args.brief, startVoice: args.startVoice);
+          }
+          return ChatScreen(brief: args is RecreateBrief ? args : null);
         case '/session':
           return SessionDetailScreen(slug: settings.arguments as String? ?? '');
         case '/recreate':
           return RecreateScreen(slug: settings.arguments as String? ?? '');
         case '/invite':
           return const InviteScreen();
+        case '/notifications':
+          return const NotificationsScreen();
+        case '/see-all':
+          final shelf = settings.arguments;
+          return SeeAllScreen(shelf: shelf is Shelf ? shelf : Shelf.picked);
+        case '/challenge':
+          return ChallengeDetailScreen(slug: settings.arguments as String? ?? '');
+        // Help is open: someone locked out of their account still needs it.
+        case '/help':
+          return const HelpScreen();
         case '/profile':
           return const ProfileScreen();
         case '/explore':

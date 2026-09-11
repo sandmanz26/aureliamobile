@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:aurelia_mobile/core/data/sessions.dart' show Shelf;
+import 'package:aurelia_mobile/core/widgets/section_header.dart';
+import 'package:aurelia_mobile/core/widgets/session_grid_card.dart';
 import 'package:aurelia_mobile/main.dart';
 
 /// Pumps the app and settles. Network images resolve to the gradient floor in
@@ -26,6 +29,17 @@ Future<void> _boot(WidgetTester tester) async {
   addTearDown(() => FlutterError.onError = reportError);
 
   await tester.pumpWidget(const AureliaApp());
+  await tester.pumpAndSettle();
+}
+
+/// Signs in through the real form, so the tests exercise the same wall a user
+/// meets rather than reaching past it.
+Future<void> _signIn(WidgetTester tester) async {
+  final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+  navigator.pushNamed('/login');
+  await tester.pumpAndSettle();
+  await tester.tap(find.widgetWithText(ElevatedButton, 'Sign In'));
+  await tester.pump(const Duration(milliseconds: 700));
   await tester.pumpAndSettle();
 }
 
@@ -154,6 +168,7 @@ void main() {
     testWidgets('voice produces a reviewable transcript, then a real message',
         (tester) async {
       await _boot(tester);
+      await _signIn(tester);
       final navigator = tester.state<NavigatorState>(find.byType(Navigator));
 
       navigator.pushNamed('/login');
@@ -183,6 +198,80 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.textContaining('keep the ocean sound'), findsOneWidget);
+    });
+  });
+
+  group('Drawer', () {
+    testWidgets('drops Home and leads with the account', (tester) async {
+      await _boot(tester);
+      await tester.tap(find.byTooltip('Open menu').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Home'), findsNothing);
+      // Signed out, the first row is the way in.
+      expect(find.text('Sign In'), findsWidgets);
+      expect(find.text('Sessions'), findsWidgets);
+      expect(find.text('Help'), findsOneWidget);
+    });
+  });
+
+  group('New screens', () {
+    testWidgets('See All renders a whole shelf as a grid', (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+      navigator.pushNamed('/see-all', arguments: Shelf.picked);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Picked for You'), findsOneWidget);
+      // Eight sessions sit on that shelf.
+      expect(find.byType(SessionGridCard), findsNWidgets(8));
+    });
+
+    testWidgets('Notifications group by age and the chips narrow them',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+      navigator.pushNamed('/notifications');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Today'), findsWidgets);
+      expect(find.textContaining('Aria Moon', findRichText: true), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(PillChip, 'Yesterday'));
+      await tester.pumpAndSettle();
+      // Today's rows are gone once the filter narrows to yesterday.
+      expect(find.textContaining('Aria Moon', findRichText: true), findsNothing);
+      expect(find.textContaining('Jonas Webber', findRichText: true), findsOneWidget);
+    });
+
+    testWidgets('Challenge detail shows the podium and the ranked rows',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+      navigator.pushNamed('/challenge', arguments: 'nervous-system-reset');
+      await tester.pumpAndSettle();
+
+      expect(find.text('30-Day Nervous System Reset'), findsOneWidget);
+      expect(find.text('Aria Moon'), findsOneWidget);
+      expect(find.text('Joined 2026.2.23'), findsOneWidget);
+      expect(find.text('Join Challenge'), findsOneWidget);
+    });
+
+    testWidgets('Help opens without an account and expands an answer',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+      navigator.pushNamed('/help');
+      await tester.pumpAndSettle();
+
+      expect(find.text('What is Aurelia AI?'), findsOneWidget);
+      await tester.tap(find.text('How do I create a new session?'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('follow the prompts'), findsOneWidget);
     });
   });
 

@@ -24,9 +24,7 @@ class AppDrawer extends StatelessWidget {
   ];
 
   static const _nav = [
-    ('/home', Icons.home_outlined, 'Home'),
     ('/chat', Icons.chat_bubble_outline, 'Chat'),
-    ('/profile', Icons.person_outline, 'Profile'),
     ('/explore', Icons.explore_outlined, 'Explore'),
     ('/sessions', Icons.library_music_outlined, 'Sessions'),
     ('/wellness', Icons.waves_outlined, 'My wellness'),
@@ -56,7 +54,36 @@ class AppDrawer extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const AureliaLogo(iconSize: 30),
-                  Icon(Icons.notifications_none, color: AppColors.iconDefault, size: 22),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      requireSignIn(context,
+                          destination: '/notifications',
+                          then: () => Navigator.of(context)
+                              .pushNamed('/notifications'));
+                    },
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        const Icon(Icons.notifications_none,
+                            color: AppColors.iconDefault, size: 22),
+                        // Unread marker. A real build drives this from the feed.
+                        Positioned(
+                          right: -1,
+                          top: -1,
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: AppColors.feedbackError,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.surface, width: 2),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: AppSpacing.s6),
@@ -64,6 +91,24 @@ class AppDrawer extends StatelessWidget {
                 child: ListView(
                   padding: EdgeInsets.zero,
                   children: [
+                    if (auth.signedIn)
+                      _NavItem(
+                        icon: Icons.person_outline,
+                        avatar: 'avatar',
+                        label: 'Profile',
+                        active: current == '/profile',
+                        onTap: () => _go(context, '/profile'),
+                      )
+                    else
+                      _NavItem(
+                        icon: Icons.person_outline,
+                        label: 'Sign In',
+                        active: false,
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).pushNamed('/login');
+                        },
+                      ),
                     for (final (route, icon, label) in _nav)
                       _NavItem(
                         icon: icon,
@@ -141,6 +186,15 @@ class AppDrawer extends StatelessWidget {
                 },
               ),
               _NavItem(
+                icon: Icons.help_outline,
+                label: 'Help',
+                active: current == '/help',
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pushNamed('/help');
+                },
+              ),
+              _NavItem(
                 icon: auth.signedIn ? Icons.logout : Icons.login,
                 label: auth.signedIn ? 'Sign out' : 'Sign in',
                 active: false,
@@ -168,9 +222,14 @@ class _NavItem extends StatelessWidget {
     required this.label,
     required this.active,
     required this.onTap,
+    this.avatar,
   });
 
   final IconData icon;
+
+  /// Photo key to show in place of the icon — the Profile row wears the
+  /// user's own face, as on web.
+  final String? avatar;
   final String label;
   final bool active;
   final VoidCallback onTap;
@@ -188,12 +247,24 @@ class _NavItem extends StatelessWidget {
               horizontal: AppSpacing.s3, vertical: AppSpacing.s3),
           child: Row(
             children: [
-              Icon(icon, size: 20, color: AppColors.iconDefault),
+              if (avatar != null)
+                PhotoCircle(
+                  photo: avatar!,
+                  size: 20,
+                  gradient: const [AppPrimitives.primary300, AppPrimitives.info300],
+                )
+              else
+                Icon(icon, size: 20, color: AppColors.iconDefault),
               const SizedBox(width: AppSpacing.s3),
-              Text(
-                label,
-                style: AppTextStyles.bodyLg.copyWith(
-                  fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+              // Expanded, not bare: the drawer is a fixed 313 wide and a long
+              // label — or a larger system text size — otherwise overflows the
+              // row rather than wrapping.
+              Expanded(
+                child: Text(
+                  label,
+                  style: AppTextStyles.bodyLg.copyWith(
+                    fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+                  ),
                 ),
               ),
             ],

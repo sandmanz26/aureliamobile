@@ -9,6 +9,7 @@ import '../../core/widgets/aurelia_logo.dart';
 import '../../core/widgets/community_card.dart';
 import '../../core/widgets/cover_image.dart';
 import '../../core/widgets/section_header.dart';
+import '../chat/chat_screen.dart' show ChatArgs;
 import '../shell/app_drawer.dart';
 
 /// Home — the same screen signed in or out.
@@ -37,11 +38,23 @@ class _HomeScreenState extends State<HomeScreen> {
     'Calm (22.3k)',
   ];
 
+  /// A one-tap way in for each of the things Aurelia actually makes, so the
+  /// rail doubles as the answer to "what can I even ask for?".
   static const _quickStart = [
     ('Affirmations', 'Personalized exprience.', 'affirmations',
         [AppPrimitives.danger400, AppPrimitives.warning300]),
     ('Guided Breath Work', 'Personalized exprience.', 'breathwork',
         [AppPrimitives.neutral700, AppPrimitives.neutral400]),
+    ('Sleep Meditation', 'Wind down for the night.', 'sleep',
+        [AppPrimitives.info950, AppPrimitives.info600]),
+    ('Focus Sound', 'Stay with one thing.', 'rain',
+        [AppPrimitives.neutral800, AppPrimitives.info500]),
+    ('Morning Reset', 'Start the day settled.', 'morning',
+        [AppPrimitives.warning700, AppPrimitives.warning300]),
+    ('Stress Relief', 'Come down a notch.', 'stress',
+        [AppPrimitives.success900, AppPrimitives.success500]),
+    ('Deep Calm', 'Nothing asked of you.', 'calm',
+        [AppPrimitives.info900, AppPrimitives.neutral950]),
   ];
 
   static const _features = [
@@ -63,6 +76,10 @@ class _HomeScreenState extends State<HomeScreen> {
       then: () => Navigator.of(context).pushNamed(destination, arguments: arguments),
     );
   }
+
+  /// The mic means "talk to Aurelia", so it should land on a live mic rather
+  /// than an idle composer.
+  void _gateVoice() => _gate('/chat', arguments: const ChatArgs(startVoice: true));
 
   @override
   Widget build(BuildContext context) {
@@ -129,7 +146,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: AppTextStyles.titleLg,
                     ),
                     const SizedBox(height: AppSpacing.s6),
-                    _AskAureliaField(onTap: () => _gate('/chat')),
+                    _AskAureliaField(
+                      onTap: () => _gate('/chat'),
+                      onVoice: _gateVoice,
+                    ),
                   ],
                 ),
               ),
@@ -309,9 +329,10 @@ class _HomeScreenState extends State<HomeScreen> {
 /// The prompt field. Tapping it is the moment a visitor commits, so that is
 /// where the sign-in ask lands — not on page load.
 class _AskAureliaField extends StatelessWidget {
-  const _AskAureliaField({required this.onTap});
+  const _AskAureliaField({required this.onTap, required this.onVoice});
 
   final VoidCallback onTap;
+  final VoidCallback onVoice;
 
   @override
   Widget build(BuildContext context) {
@@ -328,14 +349,18 @@ class _AskAureliaField extends StatelessWidget {
         child: Row(
           children: [
             Expanded(child: Text('Ask Aurelia..', style: AppTextStyles.bodyMd)),
-            Container(
-              width: 32,
-              height: 32,
-              decoration: const BoxDecoration(
-                color: AppColors.backgroundElevated,
-                shape: BoxShape.circle,
+            GestureDetector(
+              onTap: onVoice,
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: const BoxDecoration(
+                  color: AppColors.backgroundElevated,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.mic_none,
+                    size: 16, color: AppColors.iconDefault),
               ),
-              child: const Icon(Icons.mic_none, size: 16, color: AppColors.iconDefault),
             ),
             const SizedBox(width: AppSpacing.s2),
             Container(

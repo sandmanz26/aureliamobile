@@ -187,7 +187,11 @@ class _SessionsScreenState extends State<SessionsScreen> {
               const SizedBox(height: AppSpacing.s8),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
-                child: SectionHeader(title: 'Recreate from Community'),
+                child: SectionHeader(
+                  title: 'Recreate from Community',
+                  onSeeAll: () => Navigator.of(context)
+                      .pushNamed('/see-all', arguments: Shelf.community),
+                ),
               ),
               const SizedBox(height: AppSpacing.s4),
               SizedBox(
@@ -266,8 +270,8 @@ class _SessionsScreenState extends State<SessionsScreen> {
                     child: Stack(
                       children: [
                         const CoverImage(
-                          photo: 'mindDance',
-                          gradient: [AppPrimitives.neutral950, AppPrimitives.neutral700],
+                          photo: 'neural',
+                          gradient: [AppPrimitives.neutral950, AppPrimitives.warning700],
                           width: 760,
                           height: 520,
                         ),
@@ -283,8 +287,9 @@ class _SessionsScreenState extends State<SessionsScreen> {
                                   borderRadius: BorderRadius.circular(AppRadius.full),
                                   child: InkWell(
                                     borderRadius: BorderRadius.circular(AppRadius.full),
-                                    onTap: () =>
-                                        Navigator.of(context).pushNamed('/wellness'),
+                                    onTap: () => Navigator.of(context).pushNamed(
+                                        '/challenge',
+                                        arguments: 'nervous-system-reset'),
                                     child: Padding(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: AppSpacing.s3, vertical: 7),
@@ -354,7 +359,8 @@ class _SessionsScreenState extends State<SessionsScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
                 child: SectionHeader(
                   title: 'Picked for You',
-                  onSeeAll: () => Navigator.of(context).pushNamed('/explore'),
+                  onSeeAll: () => Navigator.of(context)
+                      .pushNamed('/see-all', arguments: Shelf.picked),
                 ),
               ),
               const SizedBox(height: AppSpacing.s4),
@@ -365,7 +371,8 @@ class _SessionsScreenState extends State<SessionsScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
                 child: SectionHeader(
                   title: 'Sessions with Biggest Impact',
-                  onSeeAll: () => Navigator.of(context).pushNamed('/explore'),
+                  onSeeAll: () => Navigator.of(context)
+                      .pushNamed('/see-all', arguments: Shelf.impact),
                 ),
               ),
               const SizedBox(height: AppSpacing.s4),

@@ -23,6 +23,16 @@ class RecreateBrief {
   final List<String> changes;
 }
 
+/// What a route can hand the cockpit on arrival.
+class ChatArgs {
+  const ChatArgs({this.brief, this.startVoice = false});
+
+  final RecreateBrief? brief;
+
+  /// Opens the recorder immediately — set by Home's mic.
+  final bool startVoice;
+}
+
 /// Delivery state, as a messaging app shows it: one tick sent, two ticks read.
 enum DeliveryStatus { sending, sent, read }
 
@@ -51,9 +61,10 @@ class _Message {
 /// one avatar and one timestamp per run, delivery ticks, a typing indicator,
 /// and voice that produces a real message instead of ending silently.
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key, this.brief});
+  const ChatScreen({super.key, this.brief, this.startVoice = false});
 
   final RecreateBrief? brief;
+  final bool startVoice;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -69,7 +80,7 @@ class _ChatScreenState extends State<ChatScreen> {
   late final List<_Message> _messages;
   int _nextId = 5;
   bool _typing = false;
-  bool _listening = false;
+  late bool _listening = widget.startVoice;
 
   @override
   void initState() {
