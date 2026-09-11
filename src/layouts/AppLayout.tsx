@@ -1,6 +1,6 @@
 import { Bell, Compass, HelpCircle, ListMusic, LogIn, LogOut, MessageCircle, Plus, User, UserPlus, Waves, X } from 'lucide-react'
 import { useState } from 'react'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useHiddenScrollbars } from '../hooks/useHiddenScrollbars'
 import { useSignInGate } from '../auth/useSignInGate'
@@ -28,7 +28,13 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col gap-24 overflow-y-auto px-24 py-24">
       <div className="flex items-center justify-between">
-        <AureliaLogo iconSize={30} />
+        {/* The mark goes home, as a brand mark in app chrome is expected to.
+            It closes the drawer on the way, so the destination is not left
+            sitting behind the panel that took you there. Home is open to
+            everyone, so this needs no gate. */}
+        <Link to="/home" aria-label="Aurelia home" onClick={onNavigate} className="u-press">
+          <AureliaLogo iconSize={30} />
+        </Link>
         {isEnabled('notifications') && (
           <button
             type="button"
