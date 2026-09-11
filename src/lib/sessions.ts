@@ -37,7 +37,7 @@ export interface SessionRecord {
   plays: string
   recreated: string
   minutes: number
-  category: string
+  category: Category
   /** What the session is meant to shift, in the creator's words. */
   intent: string
   outcome: { label: string; value: string; note: string }[]
@@ -59,6 +59,35 @@ export interface SessionRecord {
  * lists on the page) means a session added here shows up wherever it belongs.
  */
 export type Shelf = 'community' | 'picked' | 'impact'
+
+/**
+ * The chip row above the community shelf. Closed rather than free text, so a
+ * typo in a session's category can't quietly create a chip nothing matches.
+ */
+export type Category = 'Meditations' | 'Music' | 'Energy' | 'Sleep' | 'Calm'
+
+/**
+ * Chips in the order the design shows them. `libraryCount` is the size of the
+ * whole catalogue behind a chip — the sessions below are a sample of it, not
+ * all of it, which is why the counts don't match the card count.
+ */
+export const CATEGORIES: { name: Category; libraryCount: string }[] = [
+  { name: 'Meditations', libraryCount: '12.5k' },
+  { name: 'Music', libraryCount: '8.3k' },
+  { name: 'Energy', libraryCount: '3.1k' },
+  { name: 'Sleep', libraryCount: '13.4k' },
+  { name: 'Calm', libraryCount: '22.3k' },
+]
+
+/** What a chip reads as: "All", or "Music (8.3k)". */
+export type CategoryFilter = Category | 'All'
+
+export function categoryLabel(filter: CategoryFilter) {
+  const category = CATEGORIES.find((entry) => entry.name === filter)
+  return category ? `${category.name} (${category.libraryCount})` : 'All'
+}
+
+export const CATEGORY_FILTERS: CategoryFilter[] = ['All', ...CATEGORIES.map((entry) => entry.name)]
 
 export const SESSIONS: SessionRecord[] = [
   {
@@ -319,7 +348,7 @@ export const SESSIONS: SessionRecord[] = [
       'Specific frequencies are not proven to have specific healing effects. This session is presented as music, not medicine.',
       'Not a treatment for any medical condition.',
     ],
-    shelves: ['picked'],
+    shelves: ['community', 'picked'],
   },
   {
     slug: 'deep-grounding',
@@ -373,7 +402,7 @@ export const SESSIONS: SessionRecord[] = [
       'Sleep figures come from listeners’ own wearables and are not a clinical measurement.',
       'Not a treatment for insomnia or any medical condition.',
     ],
-    shelves: ['impact'],
+    shelves: ['community', 'impact'],
   },
   {
     slug: 'inner-frequency',
@@ -424,7 +453,7 @@ export const SESSIONS: SessionRecord[] = [
       'Field recordings licensed for redistribution inside Aurelia sessions only.',
       'Not a treatment for any medical condition.',
     ],
-    shelves: ['impact'],
+    shelves: ['community', 'impact'],
   },
   {
     slug: 'ocean-breath',
@@ -526,7 +555,7 @@ export const SESSIONS: SessionRecord[] = [
       'Field recordings licensed for redistribution inside Aurelia sessions only.',
       'Not a treatment for anxiety or any medical condition.',
     ],
-    shelves: ['picked'],
+    shelves: ['community', 'picked'],
   },
   {
     slug: 'inner-balance',
@@ -676,7 +705,7 @@ export const SESSIONS: SessionRecord[] = [
       'Designed to be played while falling asleep — do not use while driving.',
       'Not a treatment for insomnia or any medical condition.',
     ],
-    shelves: ['picked', 'impact'],
+    shelves: ['community', 'picked', 'impact'],
   },
   {
     slug: 'dream-drift',
@@ -728,7 +757,425 @@ export const SESSIONS: SessionRecord[] = [
       'Contains sustained low frequency — keep the volume moderate on headphones.',
       'Not a treatment for any medical condition.',
     ],
-    shelves: ['picked'],
+    shelves: ['community', 'picked'],
+  },
+  // Eight sessions added so every chip above the community shelf has real
+  // cards behind it — Music, Energy and Meditations were one or two deep,
+  // which made the filter look broken rather than empty.
+  {
+    slug: 'slow-piano-drift',
+    title: 'Slow Piano Drift',
+    photo: 'morning',
+    gradient: 'linear-gradient(160deg, var(--color-neutral-800), var(--color-info-400))',
+    description: 'This helped Theo work through a long afternoon without stalling.',
+    summary:
+      'Felt piano recorded close enough to hear the hammers, with the reverb tail left long and the tempo below anything you would tap a foot to. Written as something to work under, not to listen to.',
+    author: 'Theo Lindqvist',
+    authorPhoto: 'creatorTheo',
+    authorRole: 'Community creator · 41 published sessions',
+    plays: '73.2k',
+    recreated: '6.1k',
+    minutes: 32,
+    category: 'Music',
+    intent: 'Fill a room quietly enough that attention stays on the work, not the music.',
+    outcome: [
+      { label: 'Stayed on task', value: '+28%', note: 'self-reported, 4.1k listeners' },
+      { label: 'Replayed it', value: '61%', note: 'played more than once in a week' },
+      { label: 'Skipped early', value: '9%', note: 'stopped in the first 3 minutes' },
+    ],
+    layers: [
+      { id: 'piano', name: 'Felt piano', detail: 'Close mic, sustain left down', level: 70 },
+      { id: 'tail', name: 'Reverb tail', detail: '6 second decay, no early reflections', level: 44 },
+      { id: 'room', name: 'Room noise', detail: 'The recording room, kept in on purpose', level: 22 },
+    ],
+    chapters: [
+      { label: 'Open', minutes: 6, detail: 'Single notes, a long way apart.' },
+      { label: 'Settle', minutes: 18, detail: 'Phrases repeat without resolving.' },
+      { label: 'Thin out', minutes: 8, detail: 'Notes drop away until only the tail is left.' },
+    ],
+    personalization: [
+      { label: 'Adapts to', value: 'Focus block length, time of day' },
+      { label: 'Voice', value: 'None — instrumental' },
+      { label: 'Ends', value: 'Fade to silence' },
+      { label: 'Best time', value: 'Deep work, afternoon' },
+    ],
+    commonChanges: [
+      { change: 'Made it longer', share: '54%' },
+      { change: 'Removed the room noise', share: '23%' },
+      { change: 'Shortened the reverb', share: '14%' },
+    ],
+    lineage: [
+      { title: 'Keys bed', author: 'Aurelia', note: 'Starter template' },
+      { title: 'Slow Piano Drift', author: 'Theo Lindqvist', note: 'Recorded the piano and kept the room in' },
+    ],
+    safety: ['Background music, not a focus treatment.', 'Not a treatment for any medical condition.'],
+    shelves: ['community', 'picked'],
+  },
+  {
+    slug: '432-hz-strings',
+    title: '432 Hz Strings',
+    photo: 'mountains',
+    gradient: 'linear-gradient(160deg, var(--color-espresso-900), var(--color-warning-400))',
+    description: 'This helped Amara unwind after teaching without going straight to sleep.',
+    summary:
+      'A string quartet bowed at the edge of audible, tuned to A=432 and recorded in one take. The bowing never stops, so the sound has no seams to catch on.',
+    author: 'Amara Osei',
+    authorPhoto: 'creatorAmara',
+    authorRole: 'Community creator · 23 published sessions',
+    plays: '48.7k',
+    recreated: '3.4k',
+    minutes: 18,
+    category: 'Music',
+    intent: 'Give the evening a shape without the sedative pull of a sleep track.',
+    outcome: [
+      { label: 'Felt settled', value: '+47%', note: 'self-reported, straight after' },
+      { label: 'Finished it', value: '81%', note: 'played to the end' },
+      { label: 'Recreated it', value: '3.4k', note: 'forks published' },
+    ],
+    layers: [
+      { id: 'strings', name: 'Bowed quartet', detail: 'One take, A=432, no edits', level: 76 },
+      { id: 'sub', name: 'Sub drone', detail: 'Root note, an octave and a half down', level: 34 },
+      { id: 'air', name: 'Hall air', detail: 'The room the quartet sat in', level: 26 },
+    ],
+    chapters: [
+      { label: 'Draw', minutes: 5, detail: 'One chord, bowed slowly into place.' },
+      { label: 'Hold', minutes: 9, detail: 'The chord moves a step at a time.' },
+      { label: 'Release', minutes: 4, detail: 'Bows lift, the drone stays a moment longer.' },
+    ],
+    personalization: [
+      { label: 'Adapts to', value: 'Evening check-in, stress level' },
+      { label: 'Voice', value: 'None — instrumental' },
+      { label: 'Ends', value: 'Fade to silence' },
+      { label: 'Best time', value: 'Early evening' },
+    ],
+    commonChanges: [
+      { change: 'Lowered the sub drone', share: '36%' },
+      { change: 'Made it longer', share: '29%' },
+      { change: 'Added rain over it', share: '15%' },
+    ],
+    lineage: [
+      { title: 'Single tone', author: 'Aurelia', note: 'Starter template' },
+      { title: 'Long bow', author: 'Sofia Martinez', note: 'Swapped the synth for strings' },
+      { title: '432 Hz Strings', author: 'Amara Osei', note: 'Recorded a live quartet in one take' },
+    ],
+    safety: [
+      'Tuning claims are not medically established — this is music, not therapy.',
+      'Not a treatment for any medical condition.',
+    ],
+    shelves: ['community'],
+  },
+  {
+    slug: 'bowl-bath',
+    title: 'Bowl Bath',
+    photo: 'calm',
+    gradient: 'linear-gradient(160deg, var(--color-info-800), var(--color-neutral-300))',
+    description: 'This helped Jonas end the day without reaching for his phone.',
+    summary:
+      'Seven singing bowls struck in an order that never repeats, recorded far enough back that the strikes arrive softened. Long gaps are the point — the silence between bowls is most of the session.',
+    author: 'Jonas Weber',
+    authorPhoto: 'creatorJonas',
+    authorRole: 'Community creator · 16 published sessions',
+    plays: '31.9k',
+    recreated: '2.7k',
+    minutes: 25,
+    category: 'Music',
+    intent: 'Hold attention with sound sparse enough that the mind stops looking for the next thing.',
+    outcome: [
+      { label: 'Phone put down', value: '+38%', note: 'self-reported, 1.9k listeners' },
+      { label: 'Felt calmer', value: '+44%', note: 'self-reported, straight after' },
+      { label: 'Finished it', value: '72%', note: 'played to the end' },
+    ],
+    layers: [
+      { id: 'bowls', name: 'Seven bowls', detail: 'Struck once each, never in the same order', level: 68 },
+      { id: 'decay', name: 'Decay tail', detail: 'Left to run out entirely before the next strike', level: 52 },
+      { id: 'floor', name: 'Room floor', detail: 'Wooden room, barely there', level: 18 },
+    ],
+    chapters: [
+      { label: 'First strike', minutes: 6, detail: 'One bowl at a time, gaps getting longer.' },
+      { label: 'Between', minutes: 13, detail: 'More silence than sound.' },
+      { label: 'Last', minutes: 6, detail: 'A single bowl, left to run out.' },
+    ],
+    personalization: [
+      { label: 'Adapts to', value: 'Bedtime, evening check-in' },
+      { label: 'Voice', value: 'None — instrumental' },
+      { label: 'Ends', value: 'Last decay, then silence' },
+      { label: 'Best time', value: 'The hour before bed' },
+    ],
+    commonChanges: [
+      { change: 'Shortened the gaps', share: '41%' },
+      { change: 'Made it longer', share: '26%' },
+      { change: 'Added a low drone', share: '19%' },
+    ],
+    lineage: [
+      { title: 'Single tone', author: 'Aurelia', note: 'Starter template' },
+      { title: 'Bowl Bath', author: 'Jonas Weber', note: 'Recorded seven bowls and kept the silence' },
+    ],
+    safety: [
+      'Sudden strikes can startle — keep the volume moderate on headphones.',
+      'Not a treatment for any medical condition.',
+    ],
+    shelves: ['community', 'impact'],
+  },
+  {
+    slug: 'morning-spark',
+    title: 'Morning Spark',
+    photo: 'affirmations',
+    gradient: 'linear-gradient(160deg, var(--color-warning-600), var(--color-gold-300))',
+    description: 'This helped Aria start the day awake instead of anxious.',
+    summary:
+      'Eight minutes that climb: a pulse that speeds up by a few beats a minute, and a short affirmation set written in the second person, present tense. Meant for before the first message of the day.',
+    author: 'Aria Moon',
+    authorPhoto: 'creatorAria',
+    authorRole: 'Community creator · 29 published sessions',
+    plays: '88.4k',
+    recreated: '11.2k',
+    minutes: 8,
+    category: 'Energy',
+    intent: 'Lift the first ten minutes of the day without tipping it into urgency.',
+    outcome: [
+      { label: 'Woke up easier', value: '+35%', note: 'self-reported, 6.4k listeners' },
+      { label: 'Used it again', value: '68%', note: 'played 3+ mornings in a week' },
+      { label: 'Finished it', value: '91%', note: 'played to the end' },
+    ],
+    layers: [
+      { id: 'pulse', name: 'Rising pulse', detail: '52 → 68 bpm across the session', level: 64 },
+      { id: 'voice', name: 'Affirmations', detail: 'Female, 9 lines, present tense', level: 58 },
+      { id: 'bells', name: 'Bright bells', detail: 'Marks each new line', level: 30 },
+    ],
+    chapters: [
+      { label: 'Wake', minutes: 2, detail: 'Pulse alone, slow.' },
+      { label: 'Speak', minutes: 4, detail: 'Affirmations land on the pulse.' },
+      { label: 'Go', minutes: 2, detail: 'Voice stops, the pulse finishes on its own.' },
+    ],
+    personalization: [
+      { label: 'Adapts to', value: 'Wake time, sleep score' },
+      { label: 'Voice', value: 'Female · warm' },
+      { label: 'Ends', value: 'Single bell' },
+      { label: 'Best time', value: 'First thing, before your phone' },
+    ],
+    commonChanges: [
+      { change: 'Rewrote the affirmations', share: '47%' },
+      { change: 'Removed the bells', share: '22%' },
+      { change: 'Slowed the pulse', share: '16%' },
+    ],
+    lineage: [
+      { title: 'Bright open', author: 'Aurelia', note: 'Starter template' },
+      { title: 'Morning Spark', author: 'Aria Moon', note: 'Wrote the affirmation set and the rising pulse' },
+    ],
+    safety: [
+      'Affirmations are written by the creator, not a clinician.',
+      'Not a treatment for any medical condition.',
+    ],
+    shelves: ['community', 'picked'],
+  },
+  {
+    slug: 'cold-start',
+    title: 'Cold Start',
+    photo: 'breathwork',
+    gradient: 'linear-gradient(160deg, var(--color-info-700), var(--color-gold-200))',
+    description: 'This helped Lucas get moving on the days he did not want to.',
+    summary:
+      'Six minutes of paced breath at a deliberately quick tempo, cued over a rhythm that never lets the count drift. Built for the gap between deciding to start and actually starting.',
+    author: 'Lucas Ferrari',
+    authorPhoto: 'creatorLucas',
+    authorRole: 'Community creator · 12 published sessions',
+    plays: '26.3k',
+    recreated: '5.6k',
+    minutes: 6,
+    category: 'Energy',
+    intent: 'Raise alertness fast, without caffeine and without a long run-up.',
+    outcome: [
+      { label: 'Felt more alert', value: '+41%', note: 'self-reported, straight after' },
+      { label: 'Started the task', value: '+33%', note: 'self-reported, 2.2k listeners' },
+      { label: 'Finished it', value: '88%', note: 'played to the end' },
+    ],
+    layers: [
+      { id: 'count', name: 'Breath count', detail: 'Male voice, 4-in 4-out, no pause', level: 62 },
+      { id: 'rhythm', name: 'Rhythm', detail: '96 bpm, dry, no reverb', level: 56 },
+      { id: 'lift', name: 'Lift', detail: 'Chord rises once per round', level: 38 },
+    ],
+    chapters: [
+      { label: 'Set', minutes: 1, detail: 'Rhythm alone, so the pace is obvious.' },
+      { label: 'Rounds', minutes: 4, detail: 'Four rounds, each a little quicker.' },
+      { label: 'Stop', minutes: 1, detail: 'Everything cuts; you are left standing.' },
+    ],
+    personalization: [
+      { label: 'Adapts to', value: 'Energy check-in, time of day' },
+      { label: 'Voice', value: 'Male · direct' },
+      { label: 'Ends', value: 'Hard stop, no fade' },
+      { label: 'Best time', value: 'Mid-morning, or before training' },
+    ],
+    commonChanges: [
+      { change: 'Slowed the pace', share: '38%' },
+      { change: 'Removed the voice', share: '27%' },
+      { change: 'Added a fourth round', share: '13%' },
+    ],
+    lineage: [
+      { title: 'Bright open', author: 'Aurelia', note: 'Starter template' },
+      { title: 'Cold Start', author: 'Lucas Ferrari', note: 'Wrote the rounds and the hard stop' },
+    ],
+    safety: [
+      'Quick paced breathing can cause light-headedness — sit down and stop if you feel dizzy.',
+      'Skip this one if you are pregnant or have a heart or respiratory condition.',
+      'Not a treatment for any medical condition.',
+    ],
+    shelves: ['community'],
+  },
+  {
+    slug: 'body-scan-slowly',
+    title: 'Body Scan, Slowly',
+    photo: 'stress',
+    gradient: 'linear-gradient(160deg, var(--color-success-900), var(--color-success-500))',
+    description: 'This helped Mia notice tension she had been carrying all day.',
+    summary:
+      'A body scan given at half the usual pace, with long silences where most recordings keep talking. Twenty-eight minutes from the scalp down, and no instruction to relax anything.',
+    author: 'Mia Ortiz',
+    authorPhoto: 'creatorMia',
+    authorRole: 'Community creator · 31 published sessions',
+    plays: '57.6k',
+    recreated: '4.2k',
+    minutes: 28,
+    category: 'Meditations',
+    intent: 'Notice what the body is doing, without asking it to do anything else.',
+    outcome: [
+      { label: 'Noticed tension', value: '+58%', note: 'self-reported, 3.7k listeners' },
+      { label: 'Felt calmer', value: '+39%', note: 'self-reported, straight after' },
+      { label: 'Finished it', value: '64%', note: 'played to the end' },
+    ],
+    layers: [
+      { id: 'voice', name: 'Guidance', detail: 'Female, slow, long gaps between cues', level: 66 },
+      { id: 'bed', name: 'Warm bed', detail: 'One sustained chord, barely moving', level: 30 },
+      { id: 'silence', name: 'Silence', detail: 'Roughly a third of the session', level: 0 },
+    ],
+    chapters: [
+      { label: 'Arrive', minutes: 4, detail: 'Weight, contact, nothing to change.' },
+      { label: 'Down', minutes: 18, detail: 'Scalp to feet, one region at a time.' },
+      { label: 'Whole', minutes: 6, detail: 'The body as one thing, then quiet.' },
+    ],
+    personalization: [
+      { label: 'Adapts to', value: 'Stress check-in, time available' },
+      { label: 'Voice', value: 'Female · slow' },
+      { label: 'Ends', value: 'Silence, no chime' },
+      { label: 'Best time', value: 'End of the working day' },
+    ],
+    commonChanges: [
+      { change: 'Made it shorter', share: '44%' },
+      { change: 'Added a closing chime', share: '25%' },
+      { change: 'Swapped the voice', share: '18%' },
+    ],
+    lineage: [
+      { title: 'Guided bed', author: 'Aurelia', note: 'Starter template' },
+      { title: 'Body Scan, Slowly', author: 'Mia Ortiz', note: 'Halved the pace and kept the silences' },
+    ],
+    safety: [
+      'Body scans can surface discomfort — stop if anything feels distressing.',
+      'Not a treatment for any medical condition.',
+    ],
+    shelves: ['community', 'impact'],
+  },
+  {
+    slug: 'noting-practice',
+    title: 'Noting Practice',
+    photo: 'bloom',
+    gradient: 'linear-gradient(160deg, var(--color-warning-700), var(--color-gold-200))',
+    description: 'This helped Ethan stop arguing with his own thoughts.',
+    summary:
+      'The plainest practice in the catalogue: name what is happening in one word, let it go, wait for the next one. A bell every ninety seconds, and nothing else.',
+    author: 'Ethan Miller',
+    authorPhoto: 'creatorEthan',
+    authorRole: 'Community creator · 52 published sessions',
+    plays: '112k',
+    recreated: '14.6k',
+    minutes: 15,
+    category: 'Meditations',
+    intent: 'Give a restless mind one job small enough to actually do.',
+    outcome: [
+      { label: 'Less rumination', value: '−31%', note: 'self-reported, 8.9k listeners' },
+      { label: 'Practised again', value: '73%', note: 'returned within a week' },
+      { label: 'Finished it', value: '84%', note: 'played to the end' },
+    ],
+    layers: [
+      { id: 'bell', name: 'Bell', detail: 'Every 90 seconds, same pitch', level: 48 },
+      { id: 'voice', name: 'Guidance', detail: 'Male, 5 cues in total', level: 44 },
+      { id: 'room', name: 'Room', detail: 'Quiet room tone, nothing added', level: 14 },
+    ],
+    chapters: [
+      { label: 'How', minutes: 3, detail: 'One word, then let it go. That is the whole instruction.' },
+      { label: 'Practice', minutes: 10, detail: 'Bells only; you do the noting.' },
+      { label: 'Close', minutes: 2, detail: 'A last cue, then the room.' },
+    ],
+    personalization: [
+      { label: 'Adapts to', value: 'Practice history, time available' },
+      { label: 'Voice', value: 'Male · plain' },
+      { label: 'Ends', value: 'Single bell' },
+      { label: 'Best time', value: 'Any time your head is loud' },
+    ],
+    commonChanges: [
+      { change: 'Made it longer', share: '49%' },
+      { change: 'Removed the bells', share: '21%' },
+      { change: 'Added a background bed', share: '17%' },
+    ],
+    lineage: [
+      { title: 'Bare bell', author: 'Aurelia', note: 'Starter template' },
+      { title: 'Noting Practice', author: 'Ethan Miller', note: 'Cut everything except the bell and five cues' },
+    ],
+    safety: [
+      'Sitting with difficult thoughts is not right for everyone — stop if it feels distressing.',
+      'Not a treatment for any medical condition.',
+    ],
+    shelves: ['community', 'picked', 'impact'],
+  },
+  {
+    slug: 'night-rain-sleep',
+    title: 'Night Rain Sleep',
+    photo: 'sleep',
+    gradient: 'linear-gradient(160deg, var(--color-espresso-950), var(--color-info-700))',
+    description: 'This helped Sophia fall asleep without the room feeling empty.',
+    summary:
+      'Steady rain on a flat roof, recorded for six hours and cut to the least eventful fifty minutes of it. No thunder, no wind, nothing that resolves — the point is that nothing happens.',
+    author: 'Sophia Reynolds',
+    authorPhoto: 'creatorSophia',
+    authorRole: 'Community creator · 27 published sessions',
+    plays: '204k',
+    recreated: '7.3k',
+    minutes: 50,
+    category: 'Sleep',
+    intent: 'Cover the silence a quiet bedroom leaves, without giving the ear anything to follow.',
+    outcome: [
+      { label: 'Fell asleep faster', value: '−14 min', note: 'median, 11.4k listeners' },
+      { label: 'Woke less', value: '−22%', note: 'self-reported night wakings' },
+      { label: 'Played to sleep', value: '79%', note: 'still playing at the end' },
+    ],
+    layers: [
+      { id: 'rain', name: 'Roof rain', detail: 'Flat roof, steady, no gusts', level: 78 },
+      { id: 'gutter', name: 'Gutter', detail: 'Water running, far off', level: 34 },
+      { id: 'sub', name: 'Low bed', detail: 'Fills under the rain so it is not thin', level: 24 },
+    ],
+    chapters: [
+      { label: 'Settle', minutes: 10, detail: 'Rain comes up from nothing.' },
+      { label: 'Steady', minutes: 32, detail: 'Unchanging, on purpose.' },
+      { label: 'Thin', minutes: 8, detail: 'Rain eases; the low bed goes last.' },
+    ],
+    personalization: [
+      { label: 'Adapts to', value: 'Bedtime, sleep score' },
+      { label: 'Voice', value: 'None — field recording' },
+      { label: 'Ends', value: 'Fade to silence, no chime' },
+      { label: 'Best time', value: 'In bed, lights out' },
+    ],
+    commonChanges: [
+      { change: 'Looped it all night', share: '62%' },
+      { change: 'Removed the low bed', share: '19%' },
+      { change: 'Added distant thunder', share: '12%' },
+    ],
+    lineage: [
+      { title: 'Room tone', author: 'Aurelia', note: 'Starter template' },
+      { title: 'Night Rain Sleep', author: 'Sophia Reynolds', note: 'Recorded six hours and kept the dullest fifty minutes' },
+    ],
+    safety: [
+      'Designed to be played while falling asleep — do not use while driving.',
+      'Not a treatment for any medical condition.',
+    ],
+    shelves: ['community'],
   },
 ]
 
@@ -736,8 +1183,16 @@ export function findSession(slug: string | undefined) {
   return SESSIONS.find((session) => session.slug === slug)
 }
 
-export function sessionsOnShelf(shelf: Shelf) {
-  return SESSIONS.filter((session) => session.shelves.includes(shelf))
+export function sessionsOnShelf(shelf: Shelf, category: CategoryFilter = 'All') {
+  return SESSIONS.filter(
+    (session) =>
+      session.shelves.includes(shelf) && (category === 'All' || session.category === category),
+  )
+}
+
+/** The same filter over the whole catalogue, for surfaces that aren't a shelf. */
+export function sessionsInCategory(category: CategoryFilter = 'All') {
+  return category === 'All' ? SESSIONS : SESSIONS.filter((session) => session.category === category)
 }
 
 export function totalMinutes(session: SessionRecord) {

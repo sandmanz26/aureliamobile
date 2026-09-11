@@ -22,7 +22,8 @@ import { CommunityCard } from '../components/ui/CommunityCard'
 import { FeatureCard } from '../components/ui/FeatureCard'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import type { CoverKey } from '../lib/photos'
-import { SESSIONS } from '../lib/sessions'
+import type { CategoryFilter } from '../lib/sessions'
+import { CATEGORY_FILTERS, categoryLabel, sessionsInCategory } from '../lib/sessions'
 import { useDrawer } from '../layouts/DrawerContext'
 
 // A one-tap way in for each of the things Aurelia actually makes, so the rail
@@ -39,18 +40,20 @@ const quickStartCards: { title: string; subtitle: string; gradient: string; phot
 
 // Community cards read straight from the session catalogue, so a card, its
 // detail page and the fork it produces can never describe different things.
-const communityCards = SESSIONS.map((session) => ({
-  slug: session.slug,
-  title: session.title,
-  photo: session.photo,
-  description: session.description,
-  author: session.author,
-  plays: session.plays,
-  recreated: session.recreated,
-  gradient: session.gradient,
-}))
-
-const chips = ['All', 'Meditations (12.5k)', 'Music (8.3k)', 'Energy (3.1k)', 'Sleep (13.4k)', 'Calm (22.3k)']
+// The chip above the rail narrows the same list, which is the only thing that
+// makes the chips worth pressing.
+function communityCards(category: CategoryFilter) {
+  return sessionsInCategory(category).map((session) => ({
+    slug: session.slug,
+    title: session.title,
+    photo: session.photo,
+    description: session.description,
+    author: session.author,
+    plays: session.plays,
+    recreated: session.recreated,
+    gradient: session.gradient,
+  }))
+}
 
 const features = [
   { icon: <TrendingUp size={20} />, title: 'Mood Progress', description: 'Tracks baseline shifts' },
@@ -96,7 +99,7 @@ export function HomePage() {
   const { isEnabled } = useFeatureFlags()
   const { signedIn } = useAuth()
   const gate = useSignInGate()
-  const [activeChip, setActiveChip] = useState('All')
+  const [category, setCategory] = useState<CategoryFilter>('All')
 
   return (
     <div className="pb-48" style={{ background: 'linear-gradient(180deg, #ffffff, #fff1db 60%, #ffffff)' }}>
@@ -329,12 +332,17 @@ export function HomePage() {
         <section className="mt-48">
           <h2 className="text-style-title text-text-primary">Recreate from Community</h2>
           <div className="mt-16 flex gap-8 overflow-x-auto pb-4">
-            {chips.map((chip) => (
-              <Chip key={chip} label={chip} active={chip === activeChip} onClick={() => setActiveChip(chip)} />
+            {CATEGORY_FILTERS.map((filter) => (
+              <Chip
+                key={filter}
+                label={categoryLabel(filter)}
+                active={filter === category}
+                onClick={() => setCategory(filter)}
+              />
             ))}
           </div>
-          <div className="mt-16 flex gap-12 overflow-x-auto pb-4">
-            {communityCards.map((card) => (
+          <div key={category} className="u-fade mt-16 flex gap-12 overflow-x-auto pb-4">
+            {communityCards(category).map((card) => (
               <CommunityCard key={card.slug} {...card} guard={gate} />
             ))}
           </div>

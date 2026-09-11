@@ -9,7 +9,8 @@ import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import { useDrawer } from '../layouts/DrawerContext'
 import type { CoverKey } from '../lib/photos'
-import { sessionsOnShelf } from '../lib/sessions'
+import type { CategoryFilter, Shelf } from '../lib/sessions'
+import { CATEGORY_FILTERS, categoryLabel, sessionsOnShelf } from '../lib/sessions'
 
 /**
  * Sessions — the browse surface behind the Sessions nav item.
@@ -35,8 +36,6 @@ const quickStartCards: { title: string; subtitle: string; gradient: string; phot
     to: '/chat',
   },
 ]
-
-const chips = ['All', 'Meditations (12.5k)', 'Music (8.3k)', 'Energy (3.1k)', 'Sleep (13.4k)', 'Calm (22.3k)']
 
 const creators: { name: string; photo: CoverKey; sessions: string }[] = [
   { name: 'Ethan Miller', photo: 'creatorEthan', sessions: '52 sessions' },
@@ -65,11 +64,30 @@ function SectionHeader({ title, seeAllTo }: { title: string; seeAllTo?: string }
   )
 }
 
-/** Horizontal shelf of community cards, used by three sections. */
-function SessionShelf({ shelf }: { shelf: 'community' | 'picked' | 'impact' }) {
+/**
+ * Horizontal shelf of community cards, used by three sections.
+ *
+ * `category` is what the chip row sets. Keying the rail on it restarts the
+ * entrance animation, so a filter change reads as the list being replaced
+ * rather than cards silently swapping underneath the chips.
+ */
+function SessionShelf({ shelf, category = 'All' }: { shelf: Shelf; category?: CategoryFilter }) {
+  const sessions = sessionsOnShelf(shelf, category)
+
+  if (sessions.length === 0) {
+    return (
+      <p className="text-style-body-small mt-16 text-text-secondary">
+        Nothing in {categoryLabel(category)} yet — try another category.
+      </p>
+    )
+  }
+
   return (
-    <div className="-mx-20 mt-16 flex gap-12 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
-      {sessionsOnShelf(shelf).map((session) => (
+    <div
+      key={category}
+      className="u-fade -mx-20 mt-16 flex gap-12 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24"
+    >
+      {sessions.map((session) => (
         <CommunityCard
           key={session.slug}
           slug={session.slug}
@@ -89,7 +107,7 @@ function SessionShelf({ shelf }: { shelf: 'community' | 'picked' | 'impact' }) {
 export function SessionsPage() {
   const { openDrawer } = useDrawer()
   const { isEnabled } = useFeatureFlags()
-  const [activeChip, setActiveChip] = useState('All')
+  const [category, setCategory] = useState<CategoryFilter>('All')
 
   return (
     <div className="pb-48" style={{ background: 'linear-gradient(180deg, #ffffff, #fff6e6 40%, #ffffff)' }}>
@@ -198,11 +216,16 @@ export function SessionsPage() {
           <section className="mt-32">
             <SectionHeader title="Recreate from Community" seeAllTo="/see-all/community" />
             <div className="-mx-20 mt-16 flex gap-8 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
-              {chips.map((chip) => (
-                <Chip key={chip} label={chip} active={chip === activeChip} onClick={() => setActiveChip(chip)} />
+              {CATEGORY_FILTERS.map((filter) => (
+                <Chip
+                  key={filter}
+                  label={categoryLabel(filter)}
+                  active={filter === category}
+                  onClick={() => setCategory(filter)}
+                />
               ))}
             </div>
-            <SessionShelf shelf="community" />
+            <SessionShelf shelf="community" category={category} />
           </section>
         )}
 
