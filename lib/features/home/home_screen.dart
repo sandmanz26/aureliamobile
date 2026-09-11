@@ -633,9 +633,9 @@ class _PromoCard extends StatelessWidget {
                 color: Color(0x40FFFFFF),
                 shape: BoxShape.circle,
               ),
-              // A downward triangle, as in the frame — not Material's
-              // right-pointing play arrow.
-              child: CustomPaint(size: const Size(18, 13), painter: _DownTrianglePainter()),
+              // Drawn rather than Material's icon so it matches the web glyph
+              // exactly. Points right: this is a play control.
+              child: CustomPaint(size: const Size(13, 18), painter: _PlayTrianglePainter()),
             ),
           ],
         ),
@@ -644,20 +644,20 @@ class _PromoCard extends StatelessWidget {
   }
 }
 
-/// The downward triangle inside each promo card's play button.
-class _DownTrianglePainter extends CustomPainter {
+/// The play triangle inside each promo card's button.
+class _PlayTrianglePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final path = Path()
       ..moveTo(0, 0)
-      ..lineTo(size.width, 0)
-      ..lineTo(size.width / 2, size.height)
+      ..lineTo(size.width, size.height / 2)
+      ..lineTo(0, size.height)
       ..close();
     canvas.drawPath(path, Paint()..color = const Color(0xF2FFFFFF));
   }
 
   @override
-  bool shouldRepaint(covariant _DownTrianglePainter oldDelegate) => false;
+  bool shouldRepaint(covariant _PlayTrianglePainter oldDelegate) => false;
 }
 
 class _FeatureTile extends StatelessWidget {
