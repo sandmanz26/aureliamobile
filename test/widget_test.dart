@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:aurelia_mobile/core/data/sessions.dart' show Shelf;
+import 'package:aurelia_mobile/core/data/sessions.dart' show Shelf, sessionsOnShelf;
 import 'package:aurelia_mobile/core/widgets/section_header.dart';
 import 'package:aurelia_mobile/core/widgets/session_grid_card.dart';
 import 'package:aurelia_mobile/main.dart';
@@ -224,8 +224,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Picked for You'), findsOneWidget);
-      // Eight sessions sit on that shelf.
-      expect(find.byType(SessionGridCard), findsNWidgets(8));
+      // Counted from the catalogue, not typed in — adding a session to the
+      // shelf should not break a test about the grid.
+      expect(find.byType(SessionGridCard),
+          findsNWidgets(sessionsOnShelf(Shelf.picked).length));
     });
 
     testWidgets('Notifications group by age and the chips narrow them',
@@ -255,8 +257,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('30-Day Nervous System Reset'), findsOneWidget);
+      // The board ranks sessions, each credited to whoever made that version.
+      expect(find.text('Dolphins frequency'), findsWidgets);
       expect(find.text('Aria Moon'), findsOneWidget);
-      expect(find.text('Joined 2026.2.23'), findsOneWidget);
+      expect(find.text('12,687'), findsOneWidget);
+      expect(find.text('by Amara Osei'), findsOneWidget);
       expect(find.text('Join Challenge'), findsOneWidget);
     });
 

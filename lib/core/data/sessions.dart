@@ -13,6 +13,31 @@ import '../theme/app_colors.dart';
 /// Which shelves on the Sessions screen a session appears on.
 enum Shelf { community, picked, impact }
 
+/// The chip row above the community shelf. Closed, like the web's union, so a
+/// typo in a session's category cannot quietly create a chip nothing matches.
+class SessionCategory {
+  const SessionCategory(this.name, this.libraryCount);
+
+  final String name;
+
+  /// The size of the whole catalogue behind the chip — the shelf below it is a
+  /// sample of that, not all of it, which is why the counts do not match.
+  final String libraryCount;
+
+  String get label => '$name ($libraryCount)';
+}
+
+const kCategories = <SessionCategory>[
+  SessionCategory('Meditations', '12.5k'),
+  SessionCategory('Music', '8.3k'),
+  SessionCategory('Energy', '3.1k'),
+  SessionCategory('Sleep', '13.4k'),
+  SessionCategory('Calm', '22.3k'),
+];
+
+/// "All" is the unfiltered state; every other entry is a category name.
+const kAllCategories = 'All';
+
 class SoundLayer {
   const SoundLayer({
     required this.id,
@@ -381,7 +406,7 @@ const kSessions = <SessionRecord>[
       'Specific frequencies are not proven to have specific healing effects. This session is presented as music, not medicine.',
       'Not a treatment for any medical condition.',
     ],
-    shelves: [Shelf.picked],
+    shelves: [Shelf.community, Shelf.picked],
   ),
   SessionRecord(
     slug: 'deep-grounding',
@@ -435,7 +460,7 @@ const kSessions = <SessionRecord>[
       'Sleep figures come from listeners’ own wearables and are not a clinical measurement.',
       'Not a treatment for insomnia or any medical condition.',
     ],
-    shelves: [Shelf.impact],
+    shelves: [Shelf.community, Shelf.impact],
   ),
   SessionRecord(
     slug: 'inner-frequency',
@@ -486,7 +511,7 @@ const kSessions = <SessionRecord>[
       'Field recordings licensed for redistribution inside Aurelia sessions only.',
       'Not a treatment for any medical condition.',
     ],
-    shelves: [Shelf.impact],
+    shelves: [Shelf.community, Shelf.impact],
   ),
   SessionRecord(
     slug: 'ocean-breath',
@@ -588,7 +613,7 @@ const kSessions = <SessionRecord>[
       'Field recordings licensed for redistribution inside Aurelia sessions only.',
       'Not a treatment for anxiety or any medical condition.',
     ],
-    shelves: [Shelf.picked],
+    shelves: [Shelf.community, Shelf.picked],
   ),
   SessionRecord(
     slug: 'inner-balance',
@@ -687,7 +712,6 @@ const kSessions = <SessionRecord>[
       LineageStep(title: 'Golden Hour', author: 'Nina Harper', note: 'Wrote the release cue set'),
     ],
     safety: [
-      'Not a treatment for any medical condition.',
     ],
     shelves: [Shelf.community, Shelf.picked],
   ),
@@ -740,7 +764,7 @@ const kSessions = <SessionRecord>[
       'Designed to be played while falling asleep — do not use while driving.',
       'Not a treatment for insomnia or any medical condition.',
     ],
-    shelves: [Shelf.picked, Shelf.impact],
+    shelves: [Shelf.community, Shelf.picked, Shelf.impact],
   ),
   SessionRecord(
     slug: 'dream-drift',
@@ -792,8 +816,416 @@ const kSessions = <SessionRecord>[
       'Contains sustained low frequency — keep the volume moderate on headphones.',
       'Not a treatment for any medical condition.',
     ],
-    shelves: [Shelf.picked],
-  )
+    shelves: [Shelf.community, Shelf.picked],
+  ),
+  SessionRecord(
+    slug: 'slow-piano-drift',
+    title: 'Slow Piano Drift',
+    photo: 'morning',
+    gradient: [AppPrimitives.neutral800, AppPrimitives.info400],
+    description: 'This helped Theo work through a long afternoon without stalling.',
+    summary: 'Felt piano recorded close enough to hear the hammers, with the reverb tail left long and the tempo below anything you would tap a foot to. Written as something to work under, not to listen to.',
+    author: 'Theo Lindqvist',
+    authorPhoto: 'creatorTheo',
+    authorRole: 'Community creator · 41 published sessions',
+    plays: '73.2k',
+    recreated: '6.1k',
+    minutes: 32,
+    category: 'Music',
+    intent: 'Fill a room quietly enough that attention stays on the work, not the music.',
+    outcome: [
+      Outcome(label: 'Stayed on task', value: '+28%', note: 'self-reported, 4.1k listeners'),
+      Outcome(label: 'Replayed it', value: '61%', note: 'played more than once in a week'),
+      Outcome(label: 'Skipped early', value: '9%', note: 'stopped in the first 3 minutes'),
+    ],
+    layers: [
+      SoundLayer(id: 'piano', name: 'Felt piano', detail: 'Close mic, sustain left down', level: 70),
+      SoundLayer(id: 'tail', name: 'Reverb tail', detail: '6 second decay, no early reflections', level: 44),
+      SoundLayer(id: 'room', name: 'Room noise', detail: 'The recording room, kept in on purpose', level: 22),
+    ],
+    chapters: [
+      Chapter(label: 'Open', minutes: 6, detail: 'Single notes, a long way apart.'),
+      Chapter(label: 'Settle', minutes: 18, detail: 'Phrases repeat without resolving.'),
+      Chapter(label: 'Thin out', minutes: 8, detail: 'Notes drop away until only the tail is left.'),
+    ],
+    personalization: [
+      LabelValue('Adapts to', 'Focus block length, time of day'),
+      LabelValue('Voice', 'None — instrumental'),
+      LabelValue('Ends', 'Fade to silence'),
+      LabelValue('Best time', 'Deep work, afternoon'),
+    ],
+    commonChanges: [
+      LabelValue('Made it longer', '54%'),
+      LabelValue('Removed the room noise', '23%'),
+      LabelValue('Shortened the reverb', '14%'),
+    ],
+    lineage: [
+      LineageStep(title: 'Keys bed', author: 'Aurelia', note: 'Starter template'),
+      LineageStep(title: 'Slow Piano Drift', author: 'Theo Lindqvist', note: 'Recorded the piano and kept the room in'),
+    ],
+    safety: [
+    ],
+    shelves: [Shelf.community, Shelf.picked],
+  ),
+  SessionRecord(
+    slug: '432-hz-strings',
+    title: '432 Hz Strings',
+    photo: 'mountains',
+    gradient: [AppPrimitives.primary900, AppPrimitives.warning400],
+    description: 'This helped Amara unwind after teaching without going straight to sleep.',
+    summary: 'A string quartet bowed at the edge of audible, tuned to A=432 and recorded in one take. The bowing never stops, so the sound has no seams to catch on.',
+    author: 'Amara Osei',
+    authorPhoto: 'creatorAmara',
+    authorRole: 'Community creator · 23 published sessions',
+    plays: '48.7k',
+    recreated: '3.4k',
+    minutes: 18,
+    category: 'Music',
+    intent: 'Give the evening a shape without the sedative pull of a sleep track.',
+    outcome: [
+      Outcome(label: 'Felt settled', value: '+47%', note: 'self-reported, straight after'),
+      Outcome(label: 'Finished it', value: '81%', note: 'played to the end'),
+      Outcome(label: 'Recreated it', value: '3.4k', note: 'forks published'),
+    ],
+    layers: [
+      SoundLayer(id: 'strings', name: 'Bowed quartet', detail: 'One take, A=432, no edits', level: 76),
+      SoundLayer(id: 'sub', name: 'Sub drone', detail: 'Root note, an octave and a half down', level: 34),
+      SoundLayer(id: 'air', name: 'Hall air', detail: 'The room the quartet sat in', level: 26),
+    ],
+    chapters: [
+      Chapter(label: 'Draw', minutes: 5, detail: 'One chord, bowed slowly into place.'),
+      Chapter(label: 'Hold', minutes: 9, detail: 'The chord moves a step at a time.'),
+      Chapter(label: 'Release', minutes: 4, detail: 'Bows lift, the drone stays a moment longer.'),
+    ],
+    personalization: [
+      LabelValue('Adapts to', 'Evening check-in, stress level'),
+      LabelValue('Voice', 'None — instrumental'),
+      LabelValue('Ends', 'Fade to silence'),
+      LabelValue('Best time', 'Early evening'),
+    ],
+    commonChanges: [
+      LabelValue('Lowered the sub drone', '36%'),
+      LabelValue('Made it longer', '29%'),
+      LabelValue('Added rain over it', '15%'),
+    ],
+    lineage: [
+      LineageStep(title: 'Single tone', author: 'Aurelia', note: 'Starter template'),
+      LineageStep(title: 'Long bow', author: 'Sofia Martinez', note: 'Swapped the synth for strings'),
+      LineageStep(title: '432 Hz Strings', author: 'Amara Osei', note: 'Recorded a live quartet in one take'),
+    ],
+    safety: [
+      'Tuning claims are not medically established — this is music, not therapy.',
+      'Not a treatment for any medical condition.',
+    ],
+    shelves: [Shelf.community],
+  ),
+  SessionRecord(
+    slug: 'bowl-bath',
+    title: 'Bowl Bath',
+    photo: 'calm',
+    gradient: [AppPrimitives.info800, AppPrimitives.neutral300],
+    description: 'This helped Jonas end the day without reaching for his phone.',
+    summary: 'Seven singing bowls struck in an order that never repeats, recorded far enough back that the strikes arrive softened. Long gaps are the point — the silence between bowls is most of the session.',
+    author: 'Jonas Weber',
+    authorPhoto: 'creatorJonas',
+    authorRole: 'Community creator · 16 published sessions',
+    plays: '31.9k',
+    recreated: '2.7k',
+    minutes: 25,
+    category: 'Music',
+    intent: 'Hold attention with sound sparse enough that the mind stops looking for the next thing.',
+    outcome: [
+      Outcome(label: 'Phone put down', value: '+38%', note: 'self-reported, 1.9k listeners'),
+      Outcome(label: 'Felt calmer', value: '+44%', note: 'self-reported, straight after'),
+      Outcome(label: 'Finished it', value: '72%', note: 'played to the end'),
+    ],
+    layers: [
+      SoundLayer(id: 'bowls', name: 'Seven bowls', detail: 'Struck once each, never in the same order', level: 68),
+      SoundLayer(id: 'decay', name: 'Decay tail', detail: 'Left to run out entirely before the next strike', level: 52),
+      SoundLayer(id: 'floor', name: 'Room floor', detail: 'Wooden room, barely there', level: 18),
+    ],
+    chapters: [
+      Chapter(label: 'First strike', minutes: 6, detail: 'One bowl at a time, gaps getting longer.'),
+      Chapter(label: 'Between', minutes: 13, detail: 'More silence than sound.'),
+      Chapter(label: 'Last', minutes: 6, detail: 'A single bowl, left to run out.'),
+    ],
+    personalization: [
+      LabelValue('Adapts to', 'Bedtime, evening check-in'),
+      LabelValue('Voice', 'None — instrumental'),
+      LabelValue('Ends', 'Last decay, then silence'),
+      LabelValue('Best time', 'The hour before bed'),
+    ],
+    commonChanges: [
+      LabelValue('Shortened the gaps', '41%'),
+      LabelValue('Made it longer', '26%'),
+      LabelValue('Added a low drone', '19%'),
+    ],
+    lineage: [
+      LineageStep(title: 'Single tone', author: 'Aurelia', note: 'Starter template'),
+      LineageStep(title: 'Bowl Bath', author: 'Jonas Weber', note: 'Recorded seven bowls and kept the silence'),
+    ],
+    safety: [
+      'Sudden strikes can startle — keep the volume moderate on headphones.',
+      'Not a treatment for any medical condition.',
+    ],
+    shelves: [Shelf.community, Shelf.impact],
+  ),
+  SessionRecord(
+    slug: 'morning-spark',
+    title: 'Morning Spark',
+    photo: 'affirmations',
+    gradient: [AppPrimitives.warning600, AppPrimitives.primary300],
+    description: 'This helped Aria start the day awake instead of anxious.',
+    summary: 'Eight minutes that climb: a pulse that speeds up by a few beats a minute, and a short affirmation set written in the second person, present tense. Meant for before the first message of the day.',
+    author: 'Aria Moon',
+    authorPhoto: 'creatorAria',
+    authorRole: 'Community creator · 29 published sessions',
+    plays: '88.4k',
+    recreated: '11.2k',
+    minutes: 8,
+    category: 'Energy',
+    intent: 'Lift the first ten minutes of the day without tipping it into urgency.',
+    outcome: [
+      Outcome(label: 'Woke up easier', value: '+35%', note: 'self-reported, 6.4k listeners'),
+      Outcome(label: 'Used it again', value: '68%', note: 'played 3+ mornings in a week'),
+      Outcome(label: 'Finished it', value: '91%', note: 'played to the end'),
+    ],
+    layers: [
+      SoundLayer(id: 'pulse', name: 'Rising pulse', detail: '52 → 68 bpm across the session', level: 64),
+      SoundLayer(id: 'voice', name: 'Affirmations', detail: 'Female, 9 lines, present tense', level: 58),
+      SoundLayer(id: 'bells', name: 'Bright bells', detail: 'Marks each new line', level: 30),
+    ],
+    chapters: [
+      Chapter(label: 'Wake', minutes: 2, detail: 'Pulse alone, slow.'),
+      Chapter(label: 'Speak', minutes: 4, detail: 'Affirmations land on the pulse.'),
+      Chapter(label: 'Go', minutes: 2, detail: 'Voice stops, the pulse finishes on its own.'),
+    ],
+    personalization: [
+      LabelValue('Adapts to', 'Wake time, sleep score'),
+      LabelValue('Voice', 'Female · warm'),
+      LabelValue('Ends', 'Single bell'),
+      LabelValue('Best time', 'First thing, before your phone'),
+    ],
+    commonChanges: [
+      LabelValue('Rewrote the affirmations', '47%'),
+      LabelValue('Removed the bells', '22%'),
+      LabelValue('Slowed the pulse', '16%'),
+    ],
+    lineage: [
+      LineageStep(title: 'Bright open', author: 'Aurelia', note: 'Starter template'),
+      LineageStep(title: 'Morning Spark', author: 'Aria Moon', note: 'Wrote the affirmation set and the rising pulse'),
+    ],
+    safety: [
+      'Affirmations are written by the creator, not a clinician.',
+      'Not a treatment for any medical condition.',
+    ],
+    shelves: [Shelf.community, Shelf.picked],
+  ),
+  SessionRecord(
+    slug: 'cold-start',
+    title: 'Cold Start',
+    photo: 'breathwork',
+    gradient: [AppPrimitives.info700, AppPrimitives.primary200],
+    description: 'This helped Lucas get moving on the days he did not want to.',
+    summary: 'Six minutes of paced breath at a deliberately quick tempo, cued over a rhythm that never lets the count drift. Built for the gap between deciding to start and actually starting.',
+    author: 'Lucas Ferrari',
+    authorPhoto: 'creatorLucas',
+    authorRole: 'Community creator · 12 published sessions',
+    plays: '26.3k',
+    recreated: '5.6k',
+    minutes: 6,
+    category: 'Energy',
+    intent: 'Raise alertness fast, without caffeine and without a long run-up.',
+    outcome: [
+      Outcome(label: 'Felt more alert', value: '+41%', note: 'self-reported, straight after'),
+      Outcome(label: 'Started the task', value: '+33%', note: 'self-reported, 2.2k listeners'),
+      Outcome(label: 'Finished it', value: '88%', note: 'played to the end'),
+    ],
+    layers: [
+      SoundLayer(id: 'count', name: 'Breath count', detail: 'Male voice, 4-in 4-out, no pause', level: 62),
+      SoundLayer(id: 'rhythm', name: 'Rhythm', detail: '96 bpm, dry, no reverb', level: 56),
+      SoundLayer(id: 'lift', name: 'Lift', detail: 'Chord rises once per round', level: 38),
+    ],
+    chapters: [
+      Chapter(label: 'Set', minutes: 1, detail: 'Rhythm alone, so the pace is obvious.'),
+      Chapter(label: 'Rounds', minutes: 4, detail: 'Four rounds, each a little quicker.'),
+      Chapter(label: 'Stop', minutes: 1, detail: 'Everything cuts; you are left standing.'),
+    ],
+    personalization: [
+      LabelValue('Adapts to', 'Energy check-in, time of day'),
+      LabelValue('Voice', 'Male · direct'),
+      LabelValue('Ends', 'Hard stop, no fade'),
+      LabelValue('Best time', 'Mid-morning, or before training'),
+    ],
+    commonChanges: [
+      LabelValue('Slowed the pace', '38%'),
+      LabelValue('Removed the voice', '27%'),
+      LabelValue('Added a fourth round', '13%'),
+    ],
+    lineage: [
+      LineageStep(title: 'Bright open', author: 'Aurelia', note: 'Starter template'),
+      LineageStep(title: 'Cold Start', author: 'Lucas Ferrari', note: 'Wrote the rounds and the hard stop'),
+    ],
+    safety: [
+      'Quick paced breathing can cause light-headedness — sit down and stop if you feel dizzy.',
+      'Skip this one if you are pregnant or have a heart or respiratory condition.',
+      'Not a treatment for any medical condition.',
+    ],
+    shelves: [Shelf.community],
+  ),
+  SessionRecord(
+    slug: 'body-scan-slowly',
+    title: 'Body Scan, Slowly',
+    photo: 'stress',
+    gradient: [AppPrimitives.success900, AppPrimitives.success500],
+    description: 'This helped Mia notice tension she had been carrying all day.',
+    summary: 'A body scan given at half the usual pace, with long silences where most recordings keep talking. Twenty-eight minutes from the scalp down, and no instruction to relax anything.',
+    author: 'Mia Ortiz',
+    authorPhoto: 'creatorMia',
+    authorRole: 'Community creator · 31 published sessions',
+    plays: '57.6k',
+    recreated: '4.2k',
+    minutes: 28,
+    category: 'Meditations',
+    intent: 'Notice what the body is doing, without asking it to do anything else.',
+    outcome: [
+      Outcome(label: 'Noticed tension', value: '+58%', note: 'self-reported, 3.7k listeners'),
+      Outcome(label: 'Felt calmer', value: '+39%', note: 'self-reported, straight after'),
+      Outcome(label: 'Finished it', value: '64%', note: 'played to the end'),
+    ],
+    layers: [
+      SoundLayer(id: 'voice', name: 'Guidance', detail: 'Female, slow, long gaps between cues', level: 66),
+      SoundLayer(id: 'bed', name: 'Warm bed', detail: 'One sustained chord, barely moving', level: 30),
+      SoundLayer(id: 'silence', name: 'Silence', detail: 'Roughly a third of the session', level: 0),
+    ],
+    chapters: [
+      Chapter(label: 'Arrive', minutes: 4, detail: 'Weight, contact, nothing to change.'),
+      Chapter(label: 'Down', minutes: 18, detail: 'Scalp to feet, one region at a time.'),
+      Chapter(label: 'Whole', minutes: 6, detail: 'The body as one thing, then quiet.'),
+    ],
+    personalization: [
+      LabelValue('Adapts to', 'Stress check-in, time available'),
+      LabelValue('Voice', 'Female · slow'),
+      LabelValue('Ends', 'Silence, no chime'),
+      LabelValue('Best time', 'End of the working day'),
+    ],
+    commonChanges: [
+      LabelValue('Made it shorter', '44%'),
+      LabelValue('Added a closing chime', '25%'),
+      LabelValue('Swapped the voice', '18%'),
+    ],
+    lineage: [
+      LineageStep(title: 'Guided bed', author: 'Aurelia', note: 'Starter template'),
+      LineageStep(title: 'Body Scan, Slowly', author: 'Mia Ortiz', note: 'Halved the pace and kept the silences'),
+    ],
+    safety: [
+      'Body scans can surface discomfort — stop if anything feels distressing.',
+      'Not a treatment for any medical condition.',
+    ],
+    shelves: [Shelf.community, Shelf.impact],
+  ),
+  SessionRecord(
+    slug: 'noting-practice',
+    title: 'Noting Practice',
+    photo: 'bloom',
+    gradient: [AppPrimitives.warning700, AppPrimitives.primary200],
+    description: 'This helped Ethan stop arguing with his own thoughts.',
+    summary: 'The plainest practice in the catalogue: name what is happening in one word, let it go, wait for the next one. A bell every ninety seconds, and nothing else.',
+    author: 'Ethan Miller',
+    authorPhoto: 'creatorEthan',
+    authorRole: 'Community creator · 52 published sessions',
+    plays: '112k',
+    recreated: '14.6k',
+    minutes: 15,
+    category: 'Meditations',
+    intent: 'Give a restless mind one job small enough to actually do.',
+    outcome: [
+      Outcome(label: 'Less rumination', value: '−31%', note: 'self-reported, 8.9k listeners'),
+      Outcome(label: 'Practised again', value: '73%', note: 'returned within a week'),
+      Outcome(label: 'Finished it', value: '84%', note: 'played to the end'),
+    ],
+    layers: [
+      SoundLayer(id: 'bell', name: 'Bell', detail: 'Every 90 seconds, same pitch', level: 48),
+      SoundLayer(id: 'voice', name: 'Guidance', detail: 'Male, 5 cues in total', level: 44),
+      SoundLayer(id: 'room', name: 'Room', detail: 'Quiet room tone, nothing added', level: 14),
+    ],
+    chapters: [
+      Chapter(label: 'How', minutes: 3, detail: 'One word, then let it go. That is the whole instruction.'),
+      Chapter(label: 'Practice', minutes: 10, detail: 'Bells only; you do the noting.'),
+      Chapter(label: 'Close', minutes: 2, detail: 'A last cue, then the room.'),
+    ],
+    personalization: [
+      LabelValue('Adapts to', 'Practice history, time available'),
+      LabelValue('Voice', 'Male · plain'),
+      LabelValue('Ends', 'Single bell'),
+      LabelValue('Best time', 'Any time your head is loud'),
+    ],
+    commonChanges: [
+      LabelValue('Made it longer', '49%'),
+      LabelValue('Removed the bells', '21%'),
+      LabelValue('Added a background bed', '17%'),
+    ],
+    lineage: [
+      LineageStep(title: 'Bare bell', author: 'Aurelia', note: 'Starter template'),
+      LineageStep(title: 'Noting Practice', author: 'Ethan Miller', note: 'Cut everything except the bell and five cues'),
+    ],
+    safety: [
+      'Sitting with difficult thoughts is not right for everyone — stop if it feels distressing.',
+      'Not a treatment for any medical condition.',
+    ],
+    shelves: [Shelf.community, Shelf.picked, Shelf.impact],
+  ),
+  SessionRecord(
+    slug: 'night-rain-sleep',
+    title: 'Night Rain Sleep',
+    photo: 'sleep',
+    gradient: [AppPrimitives.primary950, AppPrimitives.info700],
+    description: 'This helped Sophia fall asleep without the room feeling empty.',
+    summary: 'Steady rain on a flat roof, recorded for six hours and cut to the least eventful fifty minutes of it. No thunder, no wind, nothing that resolves — the point is that nothing happens.',
+    author: 'Sophia Reynolds',
+    authorPhoto: 'creatorSophia',
+    authorRole: 'Community creator · 27 published sessions',
+    plays: '204k',
+    recreated: '7.3k',
+    minutes: 50,
+    category: 'Sleep',
+    intent: 'Cover the silence a quiet bedroom leaves, without giving the ear anything to follow.',
+    outcome: [
+      Outcome(label: 'Fell asleep faster', value: '−14 min', note: 'median, 11.4k listeners'),
+      Outcome(label: 'Woke less', value: '−22%', note: 'self-reported night wakings'),
+      Outcome(label: 'Played to sleep', value: '79%', note: 'still playing at the end'),
+    ],
+    layers: [
+      SoundLayer(id: 'rain', name: 'Roof rain', detail: 'Flat roof, steady, no gusts', level: 78),
+      SoundLayer(id: 'gutter', name: 'Gutter', detail: 'Water running, far off', level: 34),
+      SoundLayer(id: 'sub', name: 'Low bed', detail: 'Fills under the rain so it is not thin', level: 24),
+    ],
+    chapters: [
+      Chapter(label: 'Settle', minutes: 10, detail: 'Rain comes up from nothing.'),
+      Chapter(label: 'Steady', minutes: 32, detail: 'Unchanging, on purpose.'),
+      Chapter(label: 'Thin', minutes: 8, detail: 'Rain eases; the low bed goes last.'),
+    ],
+    personalization: [
+      LabelValue('Adapts to', 'Bedtime, sleep score'),
+      LabelValue('Voice', 'None — field recording'),
+      LabelValue('Ends', 'Fade to silence, no chime'),
+      LabelValue('Best time', 'In bed, lights out'),
+    ],
+    commonChanges: [
+      LabelValue('Looped it all night', '62%'),
+      LabelValue('Removed the low bed', '19%'),
+      LabelValue('Added distant thunder', '12%'),
+    ],
+    lineage: [
+      LineageStep(title: 'Room tone', author: 'Aurelia', note: 'Starter template'),
+      LineageStep(title: 'Night Rain Sleep', author: 'Sophia Reynolds', note: 'Recorded six hours and kept the dullest fifty minutes'),
+    ],
+    safety: [
+      'Designed to be played while falling asleep — do not use while driving.',
+      'Not a treatment for any medical condition.',
+    ],
+    shelves: [Shelf.community],
+  ),
 ];
 
 SessionRecord? findSession(String? slug) {
@@ -803,5 +1235,13 @@ SessionRecord? findSession(String? slug) {
   return null;
 }
 
-List<SessionRecord> sessionsOnShelf(Shelf shelf) =>
-    kSessions.where((session) => session.shelves.contains(shelf)).toList();
+List<SessionRecord> sessionsOnShelf(Shelf shelf, [String category = kAllCategories]) => kSessions
+    .where((session) =>
+        session.shelves.contains(shelf) &&
+        (category == kAllCategories || session.category == category))
+    .toList();
+
+/// The same filter over the whole catalogue, for surfaces that are not a shelf.
+List<SessionRecord> sessionsInCategory([String category = kAllCategories]) => category == kAllCategories
+    ? kSessions
+    : kSessions.where((session) => session.category == category).toList();

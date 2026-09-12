@@ -10,26 +10,32 @@ import '../theme/app_colors.dart';
 
 enum Trend { up, down }
 
+/// One entry on a challenge leaderboard.
+///
+/// The board ranks *sessions made for the challenge*, not the people in it, so
+/// what competes is the work and the creator is credited beside it. The session
+/// is a slug into the catalogue, so a title or cover can never drift from the
+/// session it names; the creator lives on the entry because a challenge entry
+/// is someone's own take on that session, not its original.
 class Contender {
   const Contender({
     required this.rank,
-    required this.name,
-    required this.photo,
-    required this.days,
-    required this.joined,
+    required this.sessionSlug,
+    required this.creator,
+    required this.creatorPhoto,
+    required this.plays,
     required this.trend,
   });
 
   final int rank;
-  final String name;
-  final String photo;
+  final String sessionSlug;
+  final String creator;
+  final String creatorPhoto;
 
-  /// Days completed — what the leaderboard is actually ranked by.
-  final int days;
+  /// Plays — what the board is ranked by.
+  final String plays;
 
-  final String joined;
-
-  /// Movement since the last update; null for the podium, which has no arrow.
+  /// Movement since the last update; null on the podium, which has no arrow.
   final Trend? trend;
 }
 
@@ -82,54 +88,12 @@ const kChallenges = <ChallengeRecord>[
     minutesPerDay: 8,
     yourDay: 6,
     leaderboard: [
-    Contender(
-      rank: 1,
-      name: 'Aria Moon',
-      photo: 'creatorAria',
-      days: 27,
-      joined: '2026.1.14',
-      trend: null,
-    ),
-    Contender(
-      rank: 2,
-      name: 'Maya Rivers',
-      photo: 'creatorMaya',
-      days: 21,
-      joined: '2026.1.19',
-      trend: null,
-    ),
-    Contender(
-      rank: 3,
-      name: 'Theo Waves',
-      photo: 'creatorTheo',
-      days: 19,
-      joined: '2026.2.02',
-      trend: null,
-    ),
-    Contender(
-      rank: 4,
-      name: 'Amara Osei',
-      photo: 'creatorAmara',
-      days: 27,
-      joined: '2026.2.23',
-      trend: Trend.up,
-    ),
-    Contender(
-      rank: 5,
-      name: 'Jonas Weber',
-      photo: 'creatorJonas',
-      days: 21,
-      joined: '2026.6.21',
-      trend: Trend.down,
-    ),
-    Contender(
-      rank: 6,
-      name: 'Adam Nilson',
-      photo: 'avatar',
-      days: 19,
-      joined: '2026.12.10',
-      trend: Trend.up,
-    ),
+      Contender(rank: 1, sessionSlug: 'dolphins-frequency', creator: 'Aria Moon', creatorPhoto: 'creatorAria', plays: '12,687', trend: null),
+      Contender(rank: 2, sessionSlug: 'deep-grounding', creator: 'Maya Rivers', creatorPhoto: 'creatorMaya', plays: '11,234', trend: null),
+      Contender(rank: 3, sessionSlug: 'cosmic-flow', creator: 'Theo Waves', creatorPhoto: 'creatorTheo', plays: '10,052', trend: null),
+      Contender(rank: 4, sessionSlug: 'ocean-breath', creator: 'Amara Osei', creatorPhoto: 'creatorAmara', plays: '9,564', trend: Trend.up),
+      Contender(rank: 5, sessionSlug: 'golden-hour', creator: 'Jonas Weber', creatorPhoto: 'creatorJonas', plays: '9,123', trend: Trend.down),
+      Contender(rank: 6, sessionSlug: 'dream-drift', creator: 'Adam Nilson', creatorPhoto: 'avatar', plays: '8,761', trend: Trend.up),
     ],
     sessionSlugs: ['mind-dance', 'inner-balance'],
   ),

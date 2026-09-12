@@ -12,10 +12,42 @@ import '../../core/widgets/session_grid_card.dart';
 const _avatarRing = [AppPrimitives.primary300, AppPrimitives.info300];
 
 /// Days completed, in the pill the design puts under every name.
-class _DaysPill extends StatelessWidget {
-  const _DaysPill({required this.days, this.bordered = true});
+/// A session cover as a disc, with the play mark the design puts over it.
+class _CoverDisc extends StatelessWidget {
+  const _CoverDisc({required this.photo, required this.size});
 
-  final int days;
+  final String photo;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          PhotoCircle(photo: photo, size: size, gradient: _avatarRing),
+          Container(
+            width: size * 0.42,
+            height: size * 0.42,
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.35),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.play_arrow_rounded,
+                size: size * 0.28, color: AppColors.textInverse),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlaysPill extends StatelessWidget {
+  const _PlaysPill({required this.plays, this.bordered = true});
+
+  final String plays;
   final bool bordered;
 
   @override
@@ -31,10 +63,10 @@ class _DaysPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.bolt, size: 12, color: AppColors.brandEmphasis),
+          const Icon(Icons.play_arrow_rounded, size: 13),
           const SizedBox(width: 4),
           Flexible(
-            child: Text('$days days',
+            child: Text(plays,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.label),
@@ -144,16 +176,20 @@ class _Podium extends StatelessWidget {
                         color: AppColors.surface,
                         shape: BoxShape.circle,
                       ),
-                      child: PhotoCircle(
-                        photo: contender.photo,
+                      child: _CoverDisc(
+                        photo: findSession(contender.sessionSlug)?.photo ?? 'calm',
                         size: avatar,
-                        gradient: _avatarRing,
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.s2),
+                    // The count sits on the cover's edge, as the design overlaps it.
+                    Transform.translate(
+                      offset: const Offset(0, -13),
+                      child: _PlaysPill(plays: contender.plays, bordered: false),
+                    ),
                     Text(
-                      contender.name,
-                      maxLines: 1,
+                      findSession(contender.sessionSlug)?.title ?? '',
+                      maxLines: 2,
+                      textAlign: TextAlign.center,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.bodySm.copyWith(
                         color: AppColors.textPrimary,
@@ -161,7 +197,22 @@ class _Podium extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    _DaysPill(days: contender.days, bordered: false),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        PhotoCircle(
+                            photo: contender.creatorPhoto, size: 16, gradient: _avatarRing),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(contender.creator,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.caption
+                                  .copyWith(color: AppColors.textPrimary)),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: AppSpacing.s3),
                     Container(
                       height: barHeight,
@@ -265,7 +316,10 @@ class ChallengeDetailScreen extends StatelessWidget {
                     ),
                     padding: const EdgeInsets.fromLTRB(
                         AppPadding.lg, AppSpacing.s6, AppPadding.lg, AppSpacing.s6),
-                    child: Column(
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Wrap(
@@ -295,13 +349,44 @@ class ChallengeDetailScreen extends StatelessWidget {
                         ],
                       ],
                     ),
+                    // Sits on the seam, as in the design. Labelled rather than a
+                    // bare glyph: "what do I get for this" is the first thing a
+                    // challenge has to answer.
+                    Positioned(
+                      top: -46,
+                      left: 0,
+                      child: Container(
+                        height: 44,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF3C2405).withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.emoji_events_outlined,
+                                size: 16, color: AppColors.textInverse),
+                            const SizedBox(width: 8),
+                            Text('Rewards',
+                                style: AppTextStyles.label
+                                    .copyWith(color: AppColors.textInverse)),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.arrow_forward,
+                                size: 15, color: AppColors.textInverse),
+                          ],
+                        ),
+                      ),
+                    ),
+                      ],
+                    ),
                   ),
                 ),
                 if (sessions.isNotEmpty)
                   Transform.translate(
                     offset: const Offset(0, -24),
                     child: SizedBox(
-                      height: 230,
+                      height: 351,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         padding:
@@ -310,10 +395,10 @@ class ChallengeDetailScreen extends StatelessWidget {
                         separatorBuilder: (_, __) =>
                             const SizedBox(width: AppSpacing.s3),
                         itemBuilder: (context, index) => SizedBox(
-                          width: 260,
+                          width: 234,
                           child: SessionGridCard(
                             session: sessions[index],
-                            aspectRatio: 260 / 230,
+                            aspectRatio: 234 / 351,
                             onOpen: () => Navigator.of(context).pushNamed(
                                 '/session',
                                 arguments: sessions[index].slug),
@@ -410,14 +495,15 @@ class _RankedRow extends StatelessWidget {
             child: Text('${contender.rank}', style: AppTextStyles.bodySm),
           ),
           const SizedBox(width: AppSpacing.s2 + 2),
-          PhotoCircle(photo: contender.photo, size: 40, gradient: _avatarRing),
+          _CoverDisc(
+              photo: findSession(contender.sessionSlug)?.photo ?? 'calm', size: 40),
           const SizedBox(width: AppSpacing.s3),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  contender.name,
+                  findSession(contender.sessionSlug)?.title ?? '',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.bodySm.copyWith(
@@ -425,11 +511,14 @@ class _RankedRow extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                Text('Joined ${contender.joined}', style: AppTextStyles.caption),
+                Text('by ${contender.creator}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.caption),
               ],
             ),
           ),
-          _DaysPill(days: contender.days),
+          _PlaysPill(plays: contender.plays),
           if (contender.trend != null) ...[
             const SizedBox(width: AppSpacing.s2),
             _TrendMark(trend: contender.trend!),

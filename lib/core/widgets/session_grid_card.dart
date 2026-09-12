@@ -103,14 +103,21 @@ class SessionGridCard extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 6),
+                        // The counts vary in length, so they flex rather than
+                        // sit at their natural width — a five-character play
+                        // count overflowed this row on a narrow grid cell.
                         Row(
                           children: [
                             const Icon(Icons.play_arrow,
                                 size: 11, color: Color(0xE6FFFFFF)),
                             const SizedBox(width: 3),
-                            Text(session.plays,
-                                style: AppTextStyles.caption
-                                    .copyWith(color: const Color(0xE6FFFFFF))),
+                            Flexible(
+                              child: Text(session.plays,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTextStyles.caption
+                                      .copyWith(color: const Color(0xE6FFFFFF))),
+                            ),
                             const SizedBox(width: AppSpacing.s2),
                             Text('|',
                                 style: AppTextStyles.caption
@@ -118,9 +125,13 @@ class SessionGridCard extends StatelessWidget {
                             const SizedBox(width: AppSpacing.s2),
                             const Icon(Icons.repeat, size: 11, color: Color(0xE6FFFFFF)),
                             const SizedBox(width: 3),
-                            Text(session.recreated,
-                                style: AppTextStyles.caption
-                                    .copyWith(color: const Color(0xE6FFFFFF))),
+                            Flexible(
+                              child: Text(session.recreated,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTextStyles.caption
+                                      .copyWith(color: const Color(0xE6FFFFFF))),
+                            ),
                           ],
                         ),
                       ],
