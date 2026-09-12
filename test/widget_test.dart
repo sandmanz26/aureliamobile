@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aurelia_mobile/core/data/sessions.dart' show Shelf, sessionsOnShelf;
+import 'package:aurelia_mobile/core/widgets/aurelia_logo.dart';
 import 'package:aurelia_mobile/core/widgets/section_header.dart';
 import 'package:aurelia_mobile/core/widgets/session_grid_card.dart';
 import 'package:aurelia_mobile/main.dart';
@@ -228,6 +229,29 @@ void main() {
       // shelf should not break a test about the grid.
       expect(find.byType(SessionGridCard),
           findsNWidgets(sessionsOnShelf(Shelf.picked).length));
+    });
+
+    testWidgets('Drawer items share one left column', (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      await tester.tap(find.byTooltip('Open menu').first);
+      await tester.pumpAndSettle();
+
+      // The mark, every nav icon, the Latest label and the two links below the
+      // rule all sit on the same left edge — the thing the design aligns on.
+      double leftOf(Finder f) => tester.getTopLeft(f.first).dx;
+      final markLeft = leftOf(find.byType(AureliaLogo));
+      for (final label in ['Profile', 'Chat', 'Sessions', 'Latest', 'Invite a Friend', 'Help']) {
+        final row = find.ancestor(
+          of: find.text(label),
+          matching: find.byType(Row),
+        );
+        final left = leftOf(row.evaluate().isEmpty ? find.text(label) : row);
+        expect(left, closeTo(markLeft, 1),
+            reason: '"$label" should start on the drawer\'s left column');
+      }
+      // Sign out left the drawer with the design; nothing below the rule but these two.
+      expect(find.text('Sign out'), findsNothing);
     });
 
     testWidgets('Notifications group by age and the chips narrow them',

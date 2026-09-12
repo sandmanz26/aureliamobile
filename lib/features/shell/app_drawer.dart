@@ -45,12 +45,17 @@ class AppDrawer extends StatelessWidget {
       width: 313,
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+          // AppPadding.lg - AppSpacing.s3: the rows carry 12 of their own, so
+          // the drawer carries the rest. Icons, the mark, the label, the button
+          // and the links below the rule all land on the same left edge.
+          padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg - AppSpacing.s3),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: AppSpacing.s6),
-              Row(
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s3),
+                child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const AureliaLogo(iconSize: 30),
@@ -85,6 +90,7 @@ class AppDrawer extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
               ),
               const SizedBox(height: AppSpacing.s6),
               Expanded(
@@ -156,7 +162,16 @@ class AppDrawer extends StatelessWidget {
                         ),
                     ],
                     const SizedBox(height: AppSpacing.s2),
-                    ElevatedButton.icon(
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s3),
+                      child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppRadius.full),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFF0A032), Color(0xFFFFCC66)],
+                        ),
+                      ),
+                      child: ElevatedButton.icon(
                       onPressed: () {
                         Navigator.of(context).pop();
                         requireSignIn(context,
@@ -164,11 +179,14 @@ class AppDrawer extends StatelessWidget {
                             then: () => Navigator.of(context).pushNamed('/chat'));
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.brandEmphasis,
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
                         foregroundColor: AppColors.textInverse,
                       ),
                       icon: const Icon(Icons.add, size: 18),
                       label: const Text('New session'),
+                    ),
+                    ),
                     ),
                   ],
                 ),
@@ -192,19 +210,6 @@ class AppDrawer extends StatelessWidget {
                 onTap: () {
                   Navigator.of(context).pop();
                   Navigator.of(context).pushNamed('/help');
-                },
-              ),
-              _NavItem(
-                icon: auth.signedIn ? Icons.logout : Icons.login,
-                label: auth.signedIn ? 'Sign out' : 'Sign in',
-                active: false,
-                onTap: () {
-                  Navigator.of(context).pop();
-                  if (auth.signedIn) {
-                    auth.signOut();
-                  } else {
-                    Navigator.of(context).pushNamed('/login');
-                  }
                 },
               ),
               const SizedBox(height: AppSpacing.s3),

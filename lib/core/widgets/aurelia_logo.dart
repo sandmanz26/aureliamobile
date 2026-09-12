@@ -3,12 +3,11 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
-/// The Aurelia brand mark: a gold-to-orange spiral that opens at the lower left.
+/// The Aurelia brand mark: a gold-to-orange tile with a sweep and a dot.
 ///
-/// Drawn to match the web app's SVG path exactly — one continuous stroke
-/// spiralling inward, painted with the same three-stop gradient. This is the
-/// only place the mark is drawn, so replacing it with a designer's vector later
-/// is one edit and every placement updates with it.
+/// Traced from the supplied logo artwork, to match the web app's drawing of it
+/// shape for shape. This is the only place the mark is drawn, so replacing it
+/// with a designer's vector later is one edit and every placement updates.
 class AureliaLogo extends StatelessWidget {
   const AureliaLogo({super.key, this.iconSize = 40, this.markOnly = false});
 
@@ -25,7 +24,7 @@ class AureliaLogo extends StatelessWidget {
         SizedBox(
           width: iconSize,
           height: iconSize,
-          child: CustomPaint(painter: _SpiralMarkPainter()),
+          child: CustomPaint(painter: _TileMarkPainter()),
         ),
         if (!markOnly) ...[
           const SizedBox(width: AppSpacing.s2),
@@ -50,7 +49,7 @@ class AureliaLogo extends StatelessWidget {
   }
 }
 
-class _SpiralMarkPainter extends CustomPainter {
+class _TileMarkPainter extends CustomPainter {
   /// The web mark is authored in a 64x64 box; everything below is in that space
   /// and scaled to whatever size the widget was given.
   static const _viewBox = 64.0;
@@ -61,27 +60,39 @@ class _SpiralMarkPainter extends CustomPainter {
     canvas.save();
     canvas.scale(scale);
 
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 9.5
-      ..strokeCap = StrokeCap.round
-      ..shader = const LinearGradient(
-        colors: [Color(0xFFFFD86B), Color(0xFFFCA22B), Color(0xFFF2801A)],
-        stops: [0, 0.55, 1],
-      ).createShader(const Rect.fromLTWH(10, 8, 44, 50));
+    final tile = RRect.fromRectAndRadius(
+      const Rect.fromLTWH(2, 2, 60, 60),
+      const Radius.circular(17),
+    );
+    canvas.drawRRect(
+      tile,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFFFCB63), Color(0xFFF9A331), Color(0xFFEF7C14)],
+          stops: [0, 0.5, 1],
+        ).createShader(const Rect.fromLTWH(6, 4, 52, 56)),
+    );
 
-    // Outer sweep, then the tighter inner turn — the same two arcs as the SVG.
-    final path = Path()
-      ..moveTo(18, 46)
-      ..arcToPoint(const Offset(46, 50), radius: const Radius.circular(24), largeArc: true)
-      ..arcToPoint(const Offset(32, 20), radius: const Radius.circular(13), largeArc: true);
+    final white = Paint()..color = Colors.white;
 
-    canvas.drawPath(path, paint);
+    // The sweep: wide at the upper right, tapering to a point at the lower left.
+    final sweep = Path()
+      ..moveTo(56, 9)
+      ..cubicTo(42, 15, 27, 26, 10, 47)
+      ..cubicTo(25, 34, 40, 26, 58, 20)
+      ..close();
+    canvas.drawPath(sweep, white);
+
+    // The dot it sweeps around.
+    canvas.drawCircle(const Offset(33, 41), 8.5, white);
+
     canvas.restore();
   }
 
   @override
-  bool shouldRepaint(covariant _SpiralMarkPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 /// The coin balance pill in the app bars.
