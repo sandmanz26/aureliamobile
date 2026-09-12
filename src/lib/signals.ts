@@ -17,7 +17,13 @@ export interface SignalSource {
   icon: LucideIcon
   /** Whether it is connected out of the box, before the visitor touches anything. */
   defaultOn: boolean
-  /** What Aurelia actually reads from it — shown on the row, so consent is informed. */
+  /**
+   * What Aurelia actually reads from it.
+   *
+   * Not rendered — the design's rows are a single line. Kept because it is the
+   * content the consent story needs somewhere (see the PRD's My Wellness
+   * section), and because whatever the integration pulls has to match it.
+   */
   reads: string
 }
 

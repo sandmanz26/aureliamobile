@@ -53,7 +53,11 @@ function Switch({ on, onChange, label }: { on: boolean; onChange: (next: boolean
 function Meter({ label, connected, total }: { label: string; connected: number; total: number }) {
   const share = total === 0 ? 0 : connected / total
   return (
-    <div className="flex items-center gap-10">
+    <div
+      className="flex items-center gap-10"
+      role="img"
+      aria-label={`${label}: ${connected} of ${total} connected`}
+    >
       <span className="text-style-body-small w-[84px] shrink-0 text-text-secondary">{label}</span>
       <span className="h-8 min-w-0 flex-1 overflow-hidden rounded-full" style={{ background: '#FBE7D2' }}>
         <span
@@ -65,9 +69,6 @@ function Meter({ label, connected, total }: { label: string; connected: number; 
             background: 'linear-gradient(90deg, #FFB25E, #FF881B)',
           }}
         />
-      </span>
-      <span className="text-style-caption w-[30px] shrink-0 text-right tabular-nums text-text-secondary">
-        {connected}/{total}
       </span>
     </div>
   )
@@ -150,11 +151,8 @@ export function WellnessPage() {
                     >
                       <Icon size={17} />
                     </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="text-style-body block truncate text-text-primary">{source.name}</span>
-                      {/* What it reads, on the row: consent means nothing if the
-                          thing being consented to is a page away. */}
-                      <span className="text-style-caption block truncate text-text-secondary">{source.reads}</span>
+                    <span className="text-style-body min-w-0 flex-1 truncate text-text-primary">
+                      {source.name}
                     </span>
                     <Switch
                       on={on}
@@ -181,7 +179,9 @@ export function WellnessPage() {
             !
           </span>
           <span className="min-w-0 flex-1">
-            <span className="text-style-body block text-text-primary">Don’t see your favorite device or app?</span>
+            <span className="text-style-body-small block font-medium text-text-primary">
+              Don’t see your favorite device or app?
+            </span>
             <span className="text-style-caption block text-text-secondary">Tell us what you’d like to see next!</span>
           </span>
           <ChevronRight size={18} className="shrink-0 text-icon-secondary" />
@@ -246,7 +246,7 @@ function RequestSheet({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={onClose}
-              className="text-style-body u-press w-full rounded-full bg-icon-strong py-16 text-center font-semibold text-text-inverse"
+              className="text-style-body u-press w-full rounded-full bg-icon-default py-16 text-center font-semibold text-text-inverse"
             >
               Done
             </button>
@@ -254,7 +254,7 @@ function RequestSheet({ onClose }: { onClose: () => void }) {
         ) : (
           <>
             <div className="flex flex-col gap-8 text-center">
-              <h2 className="text-style-title text-balance text-text-primary">
+              <h2 className="text-style-title mx-auto max-w-[250px] text-balance text-text-primary">
                 Don’t see your favorite device or app?
               </h2>
               <p className="text-style-body-small text-text-secondary">Tell us what you’d like to see next!</p>
@@ -272,7 +272,7 @@ function RequestSheet({ onClose }: { onClose: () => void }) {
               <button
                 type="submit"
                 disabled={!value.trim()}
-                className="text-style-body u-press w-full rounded-full bg-icon-strong py-16 text-center font-semibold text-text-inverse disabled:opacity-40"
+                className="text-style-body u-press w-full rounded-full bg-icon-default py-16 text-center font-semibold text-text-inverse disabled:opacity-40"
               >
                 Send
               </button>
