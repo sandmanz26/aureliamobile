@@ -18,6 +18,7 @@ import liveSessionsMap from '../assets/live-sessions-map.png'
 import { Chip } from '../components/ui/Chip'
 import { CoverImage } from '../components/ui/CoverImage'
 import { CommunityCard } from '../components/ui/CommunityCard'
+import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { CommunityNetwork } from '../components/ui/CommunityNetwork'
 import { FeatureCard } from '../components/ui/FeatureCard'
 import { useFeatureFlags } from '../demo/FeatureFlags'
@@ -144,16 +145,38 @@ export function HomePage() {
 
       <div className="mx-auto max-w-[720px] px-20 lg:px-24">
         {/* Hero */}
-        <section className="relative pt-8 text-center">
+        <section className="relative pt-24 text-center">
           <div
-            className="pointer-events-none absolute -right-32 -top-16 size-[252px] rounded-full opacity-70 blur-2xl"
+            className="pointer-events-none absolute -right-40 -top-24 size-[280px] rounded-full opacity-35 blur-3xl"
             style={{ background: 'var(--color-primary-200)' }}
           />
-          <h1 className="relative text-style-title-large text-text-primary">Create the space you imagine.</h1>
 
-          {/* Typing is the moment the visitor commits — so that is where the
+          {/* The mark opens the page, above the claim it belongs to. */}
+          <AureliaLogo iconSize={64} markOnly className="relative" />
+
+          <h1
+            className="text-style-headline relative mt-20 text-text-primary"
+            style={{ fontSize: 28, lineHeight: 1.25 }}
+          >
+            Create the{' '}
+            {/* "space" is the product's whole promise, so the sentence points
+                at it — italic and in the brand gold, the way the design does. */}
+            <em className="italic" style={{ color: '#E9A93A' }}>
+              space
+            </em>{' '}
+            you imagine.
+          </h1>
+
+          {/* A composer, not a search field: it is sized for a sentence about
+              how you want to feel, and the actions sit under what you typed
+              rather than crowding the end of the line.
+
+              Typing is the moment the visitor commits — so that is where the
               sign-in ask lands, not on page load. */}
-          <div className="relative mt-24 flex h-56 items-center gap-12 rounded-full border border-border-default bg-surface-default px-20">
+          <div
+            className="relative mt-24 rounded-24 border-[1.5px] bg-surface-default px-16 pb-10 pt-14 text-left"
+            style={{ borderColor: '#EFA63C' }}
+          >
             <input
               placeholder="Ask Aurelia.."
               onFocus={() => gate('/chat')}
@@ -161,24 +184,26 @@ export function HomePage() {
                 event.preventDefault()
                 gate('/chat')
               }}
-              className="text-style-body min-w-0 flex-1 bg-transparent text-left text-text-primary outline-none placeholder:text-text-secondary"
+              className="text-style-body h-24 w-full bg-transparent text-left text-text-primary outline-none placeholder:text-text-secondary"
             />
-            <button
-              type="button"
-              aria-label="Voice input"
-              onClick={() => gate('/chat', { startVoice: true })}
-              className="flex size-32 items-center justify-center rounded-full bg-background-elevated text-icon-default"
-            >
-              <Mic size={16} />
-            </button>
-            <button
-              type="button"
-              aria-label="Send"
-              onClick={() => gate('/chat')}
-              className="flex size-32 items-center justify-center rounded-full bg-icon-default text-icon-inverse"
-            >
-              <ArrowUp size={16} />
-            </button>
+            <div className="mt-12 flex items-center justify-end gap-10">
+              <button
+                type="button"
+                aria-label="Voice input"
+                onClick={() => gate('/chat', { startVoice: true })}
+                className="u-press flex size-36 items-center justify-center rounded-full bg-background-elevated text-icon-default"
+              >
+                <Mic size={17} />
+              </button>
+              <button
+                type="button"
+                aria-label="Send"
+                onClick={() => gate('/chat')}
+                className="u-press flex size-40 items-center justify-center rounded-full bg-icon-default text-icon-inverse"
+              >
+                <ArrowUp size={18} />
+              </button>
+            </div>
           </div>
         </section>
 

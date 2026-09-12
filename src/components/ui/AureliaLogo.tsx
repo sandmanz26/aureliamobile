@@ -9,12 +9,13 @@ interface AureliaLogoProps {
 }
 
 /**
- * The Aurelia brand mark: a gold-to-orange spiral that opens at the lower left.
+ * The Aurelia brand mark: a gold-to-orange tile with a sweep and a dot.
  *
- * Redrawn from the supplied logo artwork. If the original vector exists (Figma,
- * or a designer's .svg), drop it in and replace the <path> below — this is the
- * only file that draws the mark, so the swap is one edit and every placement
- * updates with it.
+ * Traced from the supplied logo artwork, so the curve is an approximation of
+ * it rather than the artwork itself. If the original vector exists (Figma, or a
+ * designer's .svg), drop it in and replace the shapes below — this is the only
+ * file that draws the mark, so the swap is one edit and every placement, hero
+ * and sidebar and account screens alike, updates with it.
  */
 export function AureliaLogo({ iconSize = 40, markOnly = false, className = '' }: AureliaLogoProps) {
   // Unique per instance: a shared id makes every mark on the page point at the
@@ -36,21 +37,21 @@ export function AureliaLogo({ iconSize = 40, markOnly = false, className = '' }:
         className="shrink-0"
       >
         <defs>
-          <linearGradient id={gradientId} x1="10" y1="8" x2="54" y2="58" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#FFD86B" />
-            <stop offset="0.55" stopColor="#FCA22B" />
-            <stop offset="1" stopColor="#F2801A" />
+          <linearGradient id={gradientId} x1="6" y1="4" x2="58" y2="60" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#FFCB63" />
+            <stop offset="0.5" stopColor="#F9A331" />
+            <stop offset="1" stopColor="#EF7C14" />
           </linearGradient>
         </defs>
 
-        {/* One continuous stroke spiralling inward — the open end sits lower-left. */}
+        {/* A rounded tile carrying two cut-outs: a tapered sweep from the upper
+            right down to the lower left, and the dot it sweeps around. */}
+        <rect x="2" y="2" width="60" height="60" rx="17" fill={`url(#${gradientId})`} />
         <path
-          d="M18 46 A 24 24 0 1 1 46 50 A 13 13 0 1 1 32 20"
-          stroke={`url(#${gradientId})`}
-          strokeWidth="9.5"
-          strokeLinecap="round"
-          fill="none"
+          d="M56 9C42 15 27 26 10 47c15-13 30-21 48-27z"
+          fill="#FFFFFF"
         />
+        <circle cx="33" cy="41" r="8.5" fill="#FFFFFF" />
       </svg>
 
       {!markOnly && (
