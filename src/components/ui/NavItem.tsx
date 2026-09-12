@@ -18,9 +18,8 @@ export function NavItem({ to, icon, label, disabled, end }: NavItemProps) {
       <span
         aria-disabled="true"
         title="Not part of this walkthrough"
-        className="text-style-body pointer-events-none flex cursor-not-allowed items-center gap-12 rounded-12 px-12 py-14 text-text-secondary opacity-45 select-none"
+        className="text-style-body pointer-events-none -mx-12 flex cursor-not-allowed items-center gap-12 rounded-12 px-12 py-14 text-text-secondary opacity-45 select-none"
       >
-        <span className="size-6 rounded-full bg-transparent" />
         <span className="text-icon-default">{icon}</span>
         <span className="flex-1">{label}</span>
         <Lock size={14} className="text-icon-default" />
@@ -33,14 +32,16 @@ export function NavItem({ to, icon, label, disabled, end }: NavItemProps) {
       to={to}
       end={end}
       className={({ isActive }) =>
-        `u-press flex items-center gap-12 rounded-12 px-12 py-14 text-style-body ${
+        `u-press relative -mx-12 flex items-center gap-12 rounded-12 px-12 py-14 text-style-body ${
           isActive ? 'text-text-primary' : 'text-text-primary hover:bg-background-elevated'
         }`
       }
     >
       {({ isActive }) => (
         <>
-          <span className={`size-6 rounded-full ${isActive ? 'bg-brand-default' : 'bg-transparent'}`} />
+          {isActive && (
+            <span className="absolute left-2 size-6 rounded-full bg-brand-default" aria-hidden="true" />
+          )}
           <span className="text-icon-default">{icon}</span>
           <span>{label}</span>
         </>

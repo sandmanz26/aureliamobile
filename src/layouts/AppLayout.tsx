@@ -1,5 +1,5 @@
-import { Bell, Compass, HelpCircle, ListMusic, LogIn, LogOut, MessageCircle, Plus, User, UserPlus, Waves, X } from 'lucide-react'
-import { useState } from 'react'
+import { Bell, Compass, HelpCircle, ListMusic, MessageCircle, Plus, User, UserPlus, Waves } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useHiddenScrollbars } from '../hooks/useHiddenScrollbars'
@@ -21,7 +21,7 @@ const recentSessions: { title: string; author: string; photo: CoverKey }[] = [
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { isEnabled } = useFeatureFlags()
-  const { signedIn, signOut } = useAuth()
+  const { signedIn } = useAuth()
   const gate = useSignInGate()
   const navigate = useNavigate()
 
@@ -79,10 +79,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       {signedIn && (
       <div className="flex flex-col gap-12">
-        <p className="text-style-body-small px-12">Latest</p>
+        <p className="text-style-body-small">Latest</p>
         <div className="flex flex-col gap-16">
           {recentSessions.map((session) => (
-            <div key={session.title} className="flex items-center gap-12 px-12">
+            <div key={session.title} className="flex items-center gap-12">
               <PhotoCircle
                 photo={session.photo}
                 size={40}
@@ -103,39 +103,17 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         icon={<Plus size={18} />}
         onClick={() => gate('/chat')}
         className="w-full"
-        style={{ background: 'linear-gradient(90deg, var(--color-gold-600), var(--color-gold-300))' }}
+        style={{ background: 'linear-gradient(90deg, #F0A032, #FFCC66)' }}
       >
         New session
       </Button>
 
       <div className="mt-auto flex flex-col gap-4 border-t border-border-subtle pt-16">
-        {signedIn ? (
-          <button
-            type="button"
-            onClick={() => {
-              signOut()
-              navigate('/home')
-            }}
-            className="text-style-body flex items-center gap-12 rounded-12 px-12 py-14 text-text-primary hover:bg-background-elevated"
-          >
-            <LogOut size={20} className="text-icon-default" />
-            Sign out
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => navigate('/login')}
-            className="text-style-body flex items-center gap-12 rounded-12 px-12 py-14 text-text-primary hover:bg-background-elevated"
-          >
-            <LogIn size={20} className="text-icon-default" />
-            Sign in
-          </button>
-        )}
         {isEnabled('invite') && (
           <button
             type="button"
             onClick={() => gate('/invite')}
-            className="text-style-body flex items-center gap-12 rounded-12 px-12 py-14 text-text-primary hover:bg-background-elevated"
+            className="text-style-body u-press -mx-12 flex items-center gap-12 rounded-12 px-12 py-14 text-text-primary hover:bg-background-elevated"
           >
             <UserPlus size={20} className="text-icon-default" />
             Invite a Friend
@@ -148,7 +126,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               onNavigate?.()
               navigate('/help')
             }}
-            className="text-style-body u-press flex items-center gap-12 rounded-12 px-12 py-14 text-text-primary hover:bg-background-elevated"
+            className="text-style-body u-press -mx-12 flex items-center gap-12 rounded-12 px-12 py-14 text-text-primary hover:bg-background-elevated"
           >
             <HelpCircle size={20} className="text-icon-default" />
             Help
@@ -161,6 +139,17 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
+
+  // The drawer has no close button by design, so Escape has to be a real way
+  // out — the backdrop alone is not one for a keyboard.
+  useEffect(() => {
+    if (!drawerOpen) return
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') setDrawerOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [drawerOpen])
   const location = useLocation()
   useHiddenScrollbars()
 
@@ -181,14 +170,6 @@ export function AppLayout() {
             />
             <div className="u-drawer relative flex h-full w-[313px] max-w-[85vw] flex-col bg-surface-default shadow-xl">
               <MobileStatusBar />
-              <button
-                type="button"
-                aria-label="Close menu"
-                onClick={() => setDrawerOpen(false)}
-                className="absolute right-24 top-[70px] flex size-32 items-center justify-center rounded-full bg-background-elevated text-icon-default"
-              >
-                <X size={16} />
-              </button>
               <div className="flex-1 overflow-hidden">
                 <SidebarContent onNavigate={() => setDrawerOpen(false)} />
               </div>
