@@ -17,7 +17,7 @@ import 'features/see_all/see_all_screen.dart';
 import 'features/session_detail/session_detail_screen.dart';
 import 'features/sessions/sessions_screen.dart';
 import 'core/data/sessions.dart' show Shelf;
-import 'features/shell/placeholder_screen.dart';
+import 'features/wellness/wellness_screen.dart';
 
 void main() {
   runApp(const AureliaApp());
@@ -114,18 +114,12 @@ class _AureliaAppState extends State<AureliaApp> {
         case '/profile':
           return const ProfileScreen();
         case '/explore':
-          return const PlaceholderScreen(
-            route: '/explore',
-            title: 'Explore',
-            description: 'Browse and search the wider session catalogue.',
-          );
+          // The design's "Explore" is this browse surface, and the screen has
+          // been titled that all along — one screen behind both routes rather
+          // than a second near-identical one to keep in step.
+          return const SessionsScreen();
         case '/wellness':
-          return const PlaceholderScreen(
-            route: '/wellness',
-            title: 'My wellness',
-            description:
-                'Progress tracking — chapters, mood baseline and social impact.',
-          );
+          return const WellnessScreen();
         default:
           return const HomeScreen();
       }

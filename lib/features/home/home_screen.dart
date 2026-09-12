@@ -485,7 +485,7 @@ class QuickStartCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        width: 160,
+        width: 236,
         height: 160,
         child: ClipRRect(
           borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -497,14 +497,40 @@ class QuickStartCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s2, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xE6FFFFFF),
-                        borderRadius: BorderRadius.circular(AppRadius.full),
-                      ),
-                      child: Text('Create', style: AppTextStyles.caption
-                          .copyWith(color: AppColors.textPrimary)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Glass over the photo, as the design has it.
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.25),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.play_arrow_rounded,
+                              size: 18, color: AppColors.textInverse),
+                        ),
+                        Container(
+                          height: 30,
+                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s3),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: const Color(0xE6FFFFFF),
+                            borderRadius: BorderRadius.circular(AppRadius.full),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.auto_awesome,
+                                  size: 13, color: AppColors.textPrimary),
+                              const SizedBox(width: 6),
+                              Text('Create', style: AppTextStyles.label
+                                  .copyWith(color: AppColors.textPrimary)),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                     const Spacer(),
                     Text(

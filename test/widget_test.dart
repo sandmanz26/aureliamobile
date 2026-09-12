@@ -255,6 +255,35 @@ void main() {
       expect(find.text('Sign out'), findsNothing);
     });
 
+    testWidgets('My Wellness derives its summary from the switches',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+      navigator.pushNamed('/wellness');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Active Signals'), findsOneWidget);
+      expect(find.text('Apple Watch'), findsOneWidget);
+      // Four of six connected out of the box.
+      expect(find.text('4'), findsOneWidget);
+      expect(find.text('/ 6 Sources'), findsOneWidget);
+
+      // Turning one on moves the count — the summary is computed, not written.
+      await tester.tap(find.byKey(const ValueKey('switch-oura-ring')));
+      await tester.pumpAndSettle();
+      expect(find.text('5'), findsOneWidget);
+
+      // The request sheet confirms rather than closing on a dead submit.
+      await tester.tap(find.text('Don’t see your favorite device or app?'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, 'Garmin');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Send'));
+      await tester.pumpAndSettle();
+      expect(find.text('Thanks — that’s logged.'), findsOneWidget);
+    });
+
     testWidgets('Notifications group by age and the chips narrow them',
         (tester) async {
       await _boot(tester);
