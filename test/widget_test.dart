@@ -239,14 +239,15 @@ void main() {
 
       // The mark, every nav icon, the Latest label and the two links below the
       // rule all sit on the same left edge — the thing the design aligns on.
+      // Scoped to the Drawer: the screen behind it has a mark of its own.
+      Finder inDrawer(Finder f) =>
+          find.descendant(of: find.byType(Drawer), matching: f);
       double leftOf(Finder f) => tester.getTopLeft(f.first).dx;
-      final markLeft = leftOf(find.byType(AureliaLogo));
+      final markLeft = leftOf(inDrawer(find.byType(AureliaLogo)));
       for (final label in ['Profile', 'Chat', 'Sessions', 'Latest', 'Invite a Friend', 'Help']) {
-        final row = find.ancestor(
-          of: find.text(label),
-          matching: find.byType(Row),
-        );
-        final left = leftOf(row.evaluate().isEmpty ? find.text(label) : row);
+        final text = inDrawer(find.text(label));
+        final row = find.ancestor(of: text, matching: find.byType(Row));
+        final left = leftOf(row.evaluate().isEmpty ? text : row);
         expect(left, closeTo(markLeft, 1),
             reason: '"$label" should start on the drawer\'s left column');
       }

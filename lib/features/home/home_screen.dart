@@ -6,7 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/aurelia_logo.dart';
-import '../../core/widgets/community_card.dart';
+import '../../core/widgets/session_grid_card.dart';
 import '../../core/widgets/cover_image.dart';
 import '../../core/widgets/section_header.dart';
 import '../chat/chat_screen.dart' show ChatArgs;
@@ -29,14 +29,25 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String _chip = 'All';
 
-  static const _chips = [
-    'All',
-    'Meditations (12.5k)',
-    'Music (8.3k)',
-    'Energy (3.1k)',
-    'Sleep (13.4k)',
-    'Calm (22.3k)',
+  /// "All" plus every category, with its library count — built from the
+  /// catalogue rather than typed out, so a chip cannot name a category that
+  /// does not exist.
+  static final _chips = <String>[
+    kAllCategories,
+    for (final category in kCategories) category.label,
   ];
+
+  /// The category a chip stands for; null for "All".
+  static String? _categoryFor(String chip) {
+    for (final category in kCategories) {
+      if (category.label == chip) return category.name;
+    }
+    return null;
+  }
+
+  /// What the community rail shows under the active chip.
+  List<SessionRecord> get _communitySessions =>
+      sessionsInCategory(_categoryFor(_chip) ?? kAllCategories);
 
   /// A one-tap way in for each of the things Aurelia actually makes, so the
   /// rail doubles as the answer to "what can I even ask for?".
@@ -140,10 +151,22 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
                 child: Column(
                   children: [
-                    Text(
-                      'Create the space you imagine.',
+                    const AureliaLogo(iconSize: 64, markOnly: true),
+                    const SizedBox(height: AppSpacing.s5),
+                    Text.rich(
+                      TextSpan(children: [
+                        const TextSpan(text: 'Create the '),
+                        TextSpan(
+                          text: 'space',
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: const Color(0xFFE9A93A),
+                          ),
+                        ),
+                        const TextSpan(text: ' you imagine.'),
+                      ]),
                       textAlign: TextAlign.center,
-                      style: AppTextStyles.titleLg,
+                      style: AppTextStyles.headlineMd.copyWith(fontSize: 28, height: 1.25),
                     ),
                     const SizedBox(height: AppSpacing.s6),
                     _AskAureliaField(
@@ -216,18 +239,24 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: AppSpacing.s4),
               SizedBox(
-                height: 230,
+                height: 303,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
-                  itemCount: sessionsOnShelf(Shelf.community).length,
+                  itemCount: _communitySessions.length,
                   separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.s3),
                   itemBuilder: (context, index) {
-                    final session = sessionsOnShelf(Shelf.community)[index];
-                    return CommunityCard(
-                      session: session,
-                      onOpen: () => _gate('/session', arguments: session.slug),
-                      onRecreate: () => _gate('/recreate', arguments: session.slug),
+                    final session = _communitySessions[index];
+                    // The same card the See All grid uses, so the two cannot
+                    // drift apart the way a separate community card did.
+                    return SizedBox(
+                      width: 228,
+                      child: SessionGridCard(
+                        session: session,
+                        aspectRatio: 228 / 303,
+                        onOpen: () => _gate('/session', arguments: session.slug),
+                        onRecreate: () => _gate('/recreate', arguments: session.slug),
+                      ),
                     );
                   },
                 ),
@@ -293,7 +322,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     children: [
                       Text(
-                        'Ready to restore?',
+                        'Casual Intelligence for Global Community',
                         style: AppTextStyles.headlineMd
                             .copyWith(color: AppColors.textInverse),
                       ),
@@ -585,7 +614,7 @@ class _GenerativeWellnessBanner extends StatelessWidget {
                     ),
                     const SizedBox(width: 7),
                     Transform.rotate(
-                      angle: 12 * math.pi / 180,
+                      angle: -12 * math.pi / 180,
                       child: const _PromoCard(
                         photo: 'glow',
                         gradient: [Color(0xFFFFD9A8), Color(0xFFF97B14)],
