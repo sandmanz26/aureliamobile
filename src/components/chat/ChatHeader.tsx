@@ -103,7 +103,7 @@ export function ChatHeader({
           )}
 
           {open && richMenu && (
-            <div className="absolute right-0 top-[52px] z-20 w-[186px] rounded-20 bg-surface-default p-12 shadow-lg">
+            <div className="absolute right-0 top-[52px] z-20 w-[186px] rounded-24 bg-surface-default p-12 shadow-lg">
               {[
                 { label: 'Insights', icon: TrendingUp, run: onInsights },
                 { label: 'Settings', icon: SlidersHorizontal, run: onSettings },

@@ -179,7 +179,7 @@ export function DataTable<T>({
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-10 border border-adm-line bg-adm-surface">
+      <div className="overflow-x-auto rounded-12 border border-adm-line bg-adm-surface">
         <table className="w-full border-collapse text-13">
           <thead>
             <tr className="border-b border-adm-line">
@@ -256,7 +256,7 @@ export function DataTable<T>({
             aria-label="Previous page"
             disabled={safePage === 0}
             onClick={() => setPage(safePage - 1)}
-            className="flex size-28 items-center justify-center rounded-6 border border-adm-line disabled:opacity-35 enabled:hover:bg-adm-hover"
+            className="flex size-28 items-center justify-center rounded-8 border border-adm-line disabled:opacity-35 enabled:hover:bg-adm-hover"
           >
             <ChevronLeft size={14} />
           </button>
@@ -268,7 +268,7 @@ export function DataTable<T>({
             aria-label="Next page"
             disabled={safePage >= pageCount - 1}
             onClick={() => setPage(safePage + 1)}
-            className="flex size-28 items-center justify-center rounded-6 border border-adm-line disabled:opacity-35 enabled:hover:bg-adm-hover"
+            className="flex size-28 items-center justify-center rounded-8 border border-adm-line disabled:opacity-35 enabled:hover:bg-adm-hover"
           >
             <ChevronRight size={14} />
           </button>

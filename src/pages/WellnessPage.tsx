@@ -36,13 +36,13 @@ function Switch({ on, onChange, label }: { on: boolean; onChange: (next: boolean
       aria-checked={on}
       aria-label={label}
       onClick={() => onChange(!on)}
-      className={`u-press relative h-30 w-52 shrink-0 rounded-full transition-colors ${
+      className={`u-press relative h-24 w-40 shrink-0 rounded-full transition-colors ${
         on ? 'bg-icon-strong' : 'bg-background-elevated'
       }`}
     >
       <span
-        className={`absolute top-3 size-24 rounded-full bg-surface-default shadow-sm transition-all ${
-          on ? 'left-25' : 'left-3'
+        className={`absolute top-2 size-20 rounded-full bg-surface-default shadow-sm transition-all ${
+          on ? 'left-18' : 'left-2'
         }`}
       />
     </button>
@@ -59,7 +59,7 @@ function Meter({ label, connected, total }: { label: string; connected: number; 
       aria-label={`${label}: ${connected} of ${total} connected`}
     >
       <span className="text-style-body-small w-[84px] shrink-0 text-text-secondary">{label}</span>
-      <span className="h-8 min-w-0 flex-1 overflow-hidden rounded-full" style={{ background: '#FBE7D2' }}>
+      <span className="h-6 min-w-0 flex-1 overflow-hidden rounded-full" style={{ background: '#FBE7D2' }}>
         <span
           className="block h-full rounded-full transition-[width] duration-300"
           style={{
@@ -111,7 +111,7 @@ export function WellnessPage() {
 
       <div className="mx-auto w-full max-w-[402px] px-20 lg:max-w-[720px] lg:px-24">
         {/* Summary. Everything here is derived from the switches below. */}
-        <section className="rounded-20 bg-surface-default p-20 shadow-sm">
+        <section className="rounded-24 bg-surface-default p-16 shadow-sm">
           <div className="flex flex-col gap-16 min-[380px]:flex-row min-[380px]:items-center min-[380px]:gap-16">
             <div className="shrink-0">
               <h2 className="text-style-body font-semibold text-text-primary">Active Signals</h2>
@@ -120,7 +120,7 @@ export function WellnessPage() {
                 <span className="text-style-body-small ml-6 text-text-secondary">/ {total} Sources</span>
               </p>
             </div>
-            <div className="flex min-w-0 flex-1 flex-col gap-8">
+            <div className="flex min-w-0 flex-1 flex-col gap-6">
               {SIGNAL_GROUPS.map((group) => (
                 <Meter
                   key={group}
@@ -143,13 +143,13 @@ export function WellnessPage() {
                 return (
                   <div
                     key={source.id}
-                    className="flex items-center gap-12 rounded-16 bg-surface-default p-12 shadow-sm"
+                    className="flex items-center gap-12 rounded-24 bg-surface-default p-13 shadow-sm"
                   >
                     <span
-                      className="flex size-36 shrink-0 items-center justify-center rounded-full text-icon-strong"
+                      className="flex size-32 shrink-0 items-center justify-center rounded-full text-icon-strong"
                       style={{ background: '#FDF0E2' }}
                     >
-                      <Icon size={17} />
+                      <Icon size={16} />
                     </span>
                     <span className="text-style-body min-w-0 flex-1 truncate text-text-primary">
                       {source.name}
@@ -169,11 +169,11 @@ export function WellnessPage() {
         <button
           type="button"
           onClick={() => setRequestOpen(true)}
-          className="u-press mt-24 flex w-full items-center gap-12 rounded-16 bg-surface-default p-12 text-left shadow-sm"
+          className="u-press mt-24 flex w-full items-center gap-12 rounded-24 bg-surface-default p-13 text-left shadow-sm"
         >
           <span
             aria-hidden="true"
-            className="text-style-label flex size-36 shrink-0 items-center justify-center rounded-full font-bold text-text-inverse"
+            className="text-style-label flex size-32 shrink-0 items-center justify-center rounded-full font-bold text-text-inverse"
             style={{ background: '#FF881B' }}
           >
             !

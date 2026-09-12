@@ -44,7 +44,7 @@ export function RolesPage() {
 
       <div className="grid gap-12 md:grid-cols-3 xl:grid-cols-5">
         {ROLES.map((role) => (
-          <div key={role.id} className="flex flex-col gap-6 rounded-10 border border-adm-line bg-adm-surface p-14">
+          <div key={role.id} className="flex flex-col gap-6 rounded-12 border border-adm-line bg-adm-surface p-14">
             <div className="flex items-baseline justify-between gap-8">
               <h3 className="text-13 font-semibold text-adm-ink">{role.name}</h3>
               <span className="text-12 tabular-nums text-adm-muted">{role.members}</span>
@@ -115,7 +115,7 @@ export function RolesPage() {
                               onClick={() => toggle(role.id, permission.id)}
                               aria-label={`${granted ? 'Revoke' : 'Grant'} ${permission.label} for ${role.name}`}
                               aria-pressed={granted}
-                              className={`inline-flex size-22 items-center justify-center rounded-6 transition-colors ${
+                              className={`inline-flex size-22 items-center justify-center rounded-8 transition-colors ${
                                 granted ? 'bg-adm-good/15 text-adm-good' : 'bg-adm-hover text-adm-muted'
                               } ${locked ? 'cursor-not-allowed opacity-60' : 'hover:ring-1 hover:ring-adm-line'}`}
                             >

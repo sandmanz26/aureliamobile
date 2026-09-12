@@ -74,7 +74,7 @@ export function PricingPage() {
 
       <div className="grid gap-12 md:grid-cols-2 xl:grid-cols-4">
         {PLANS.map((plan) => (
-          <div key={plan.id} className="flex flex-col gap-8 rounded-10 border border-adm-line bg-adm-surface p-16">
+          <div key={plan.id} className="flex flex-col gap-8 rounded-12 border border-adm-line bg-adm-surface p-16">
             <div className="flex items-start justify-between gap-8">
               <div>
                 <h3 className="text-15 font-semibold text-adm-ink">{plan.name}</h3>

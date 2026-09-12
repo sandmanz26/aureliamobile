@@ -78,7 +78,7 @@ export function AiMonitoring() {
                 key={option}
                 type="button"
                 onClick={() => setRange(option)}
-                className={`rounded-6 px-12 py-6 text-12 font-medium transition-colors ${
+                className={`rounded-8 px-12 py-6 text-12 font-medium transition-colors ${
                   range === option ? 'bg-adm-ink text-adm-surface' : 'text-adm-ink-2 hover:bg-adm-hover'
                 }`}
               >
@@ -99,7 +99,7 @@ export function AiMonitoring() {
       </div>
 
       {avgP95 > 2900 && (
-        <div className="flex items-start gap-10 rounded-10 border border-adm-serious/40 bg-adm-serious/10 p-14">
+        <div className="flex items-start gap-10 rounded-12 border border-adm-serious/40 bg-adm-serious/10 p-14">
           <AlertTriangle size={16} className="mt-1 shrink-0 text-adm-serious" />
           <div>
             <p className="text-13 font-medium text-adm-ink">p95 latency above the 2.9s objective</p>

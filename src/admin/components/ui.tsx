@@ -55,7 +55,7 @@ export function StatCard({ label, value, delta, inverse, hint }: StatCardProps) 
   const rising = (delta ?? 0) >= 0
   const good = inverse ? !rising : rising
   return (
-    <div className="flex flex-col gap-6 rounded-10 border border-adm-line bg-adm-surface p-14">
+    <div className="flex flex-col gap-6 rounded-12 border border-adm-line bg-adm-surface p-14">
       <span className="text-11 font-medium uppercase tracking-wider text-adm-muted">{label}</span>
       <span className="text-26 font-semibold tabular-nums leading-none text-adm-ink">{value}</span>
       <div className="flex items-center gap-6 text-12">
@@ -89,7 +89,7 @@ export function Panel({
     // min-width:auto lets a wide child (a chart with a min-width, a table)
     // push the whole column past the viewport instead of scrolling inside
     // its own container.
-    <section className="flex min-w-0 flex-col gap-14 rounded-10 border border-adm-line bg-adm-surface p-16">
+    <section className="flex min-w-0 flex-col gap-14 rounded-12 border border-adm-line bg-adm-surface p-16">
       <div className="flex flex-wrap items-start justify-between gap-8">
         <div>
           <h2 className="text-15 font-semibold text-adm-ink">{title}</h2>

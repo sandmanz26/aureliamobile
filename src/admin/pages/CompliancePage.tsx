@@ -53,7 +53,7 @@ export function CompliancePage() {
       />
 
       {overdue.length > 0 && (
-        <div className="flex items-start gap-10 rounded-10 border border-adm-critical/40 bg-adm-critical/8 p-14">
+        <div className="flex items-start gap-10 rounded-12 border border-adm-critical/40 bg-adm-critical/8 p-14">
           <ShieldAlert size={16} className="mt-1 shrink-0 text-adm-critical" />
           <div>
             <p className="text-13 font-medium text-adm-ink">
