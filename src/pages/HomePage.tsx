@@ -92,7 +92,7 @@ export function HomePage() {
     // itself scrolls sideways by a few pixels on every phone width.
     <div
       className="overflow-x-hidden pb-48"
-      style={{ background: 'linear-gradient(180deg, #ffffff, #fff1db 60%, #ffffff)' }}
+      style={{ background: '#FFFFFF' }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-20 py-16 lg:px-24">
@@ -127,7 +127,10 @@ export function HomePage() {
         )}
       </div>
 
-      <div className="mx-auto max-w-[720px] px-20 lg:px-24">
+      {/* The warm wash is the opening act — hero, live sessions, quick start —
+          and it ends where the dark banner begins. */}
+      <div style={{ background: 'linear-gradient(180deg, #FFFDF6 0%, #FFF1DB 55%, #FFF9EF 100%)' }}>
+      <div className="mx-auto max-w-[720px] px-20 pb-40 lg:px-24">
         {/* Hero */}
         <section className="relative pt-24 text-center">
           <div
@@ -224,7 +227,7 @@ export function HomePage() {
         {isEnabled('home.quickStart') && (
         <section className="mt-40">
           <h2 className="text-style-title text-text-primary">Quick Start</h2>
-          <div className="mt-16 flex gap-12 overflow-x-auto pb-4">
+          <div className="-mx-20 mt-16 flex gap-12 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
             {quickStartCards.map((card) => (
               <div
                 key={card.title}
@@ -239,7 +242,7 @@ export function HomePage() {
                     type="button"
                     aria-label={`Play ${card.title}`}
                     onClick={() => gate('/chat')}
-                    className="u-press flex size-32 shrink-0 items-center justify-center rounded-full bg-surface-default/85 text-icon-strong backdrop-blur-sm"
+                    className="u-press flex size-32 shrink-0 items-center justify-center rounded-full bg-white/25 text-text-inverse backdrop-blur-sm"
                   >
                     <Play size={14} fill="currentColor" />
                   </button>
@@ -261,6 +264,7 @@ export function HomePage() {
           </div>
         </section>
         )}
+      </div>
       </div>
 
       {/* Dark generative wellness banner — full bleed.
@@ -308,29 +312,47 @@ export function HomePage() {
           </div>
         </div>
 
-        {/* Card pair — 180x286 each. In the Figma frame the left card sits flush
-            against the left edge of the screen with all four corners visible,
-            and the pair bleeds past the *right* edge instead. The left padding
-            is what the rotated corner needs to clear the edge, so it is tied to
-            the rotation: at -10deg a 180x286 card is 227 wide once turned,
-            which puts its corner 23.5px left of the layout box. */}
-        <div className="relative -mx-20 my-32 flex h-[320px] items-center justify-start gap-[7px] overflow-hidden pl-24 lg:-mx-24 lg:justify-center lg:pl-0">
-          <div className="relative h-[286px] w-[180px] shrink-0 -rotate-[10deg] overflow-hidden rounded-24 shadow-2xl">
+        {/* Card pair. The width is one number and everything else is derived
+            from it, so the pair grows with the screen instead of sitting at
+            phone size on a wide one — at 402px it lands on the Figma's 180px,
+            and it stops at 280 so it never dominates a desktop window.
+
+            The two derived numbers, both tied to the -10deg rotation: a card is
+            1.589 times as tall as it is wide, and once turned it measures
+            1.26 times its width, which puts each corner 0.13 widths outside the
+            layout box. That overhang is the left padding — it is what lets the
+            left card sit flush to the screen edge with all four corners visible
+            while the pair bleeds past the right edge. */}
+        <div
+          className="relative -mx-20 my-32 flex items-center justify-start gap-[7px] overflow-hidden lg:-mx-24 lg:justify-center lg:pl-0"
+          style={{
+            height: 'calc(var(--promo-card) * 1.78)',
+            paddingLeft: 'calc(var(--promo-card) * 0.13)',
+            ['--promo-card' as string]: 'clamp(150px, 45vw, 280px)',
+          }}
+        >
+          <div
+            className="relative aspect-[180/286] shrink-0 -rotate-[10deg] overflow-hidden rounded-24 shadow-2xl"
+            style={{ width: 'var(--promo-card)' }}
+          >
             <CoverImage
               photo="underwater"
               gradient="linear-gradient(160deg, var(--color-info-900), var(--color-neutral-950))"
-              width={360}
-              height={572}
+              width={560}
+              height={890}
               scrim={false}
             />
             <PlayGlyph />
           </div>
-          <div className="relative h-[286px] w-[180px] shrink-0 -rotate-[12deg] overflow-hidden rounded-24 shadow-2xl">
+          <div
+            className="relative aspect-[180/286] shrink-0 -rotate-[12deg] overflow-hidden rounded-24 shadow-2xl"
+            style={{ width: 'var(--promo-card)' }}
+          >
             <CoverImage
               photo="glow"
               gradient="linear-gradient(165deg, #FFD9A8 0%, #FFB25E 45%, #F97B14 100%)"
-              width={360}
-              height={572}
+              width={560}
+              height={890}
               scrim={false}
             />
             <PlayGlyph />
@@ -360,7 +382,7 @@ export function HomePage() {
         {isEnabled('home.community') && (
         <section className="mt-48">
           <h2 className="text-style-title text-text-primary">Recreate from Community</h2>
-          <div className="mt-16 flex gap-8 overflow-x-auto pb-4">
+          <div className="-mx-20 mt-16 flex gap-8 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
             {CATEGORY_FILTERS.map((filter) => (
               <Chip
                 key={filter}
@@ -370,7 +392,10 @@ export function HomePage() {
               />
             ))}
           </div>
-          <div key={category} className="u-fade mt-16 flex gap-12 overflow-x-auto pb-4">
+          <div
+            key={category}
+            className="u-fade -mx-20 mt-16 flex gap-12 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24"
+          >
             {sessionsInCategory(category).map((session) => (
               <SessionGridCard
                 key={session.slug}
