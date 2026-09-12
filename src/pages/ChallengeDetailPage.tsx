@@ -181,7 +181,7 @@ export function ChallengeDetailPage() {
                 <div className="-mx-20 mt-16 flex gap-12 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
                   {sessions.map((session) => (
                     <div key={session.slug} className="w-[260px] shrink-0">
-                      <SessionGridCard session={session} className="aspect-[260/230]" />
+                      <SessionGridCard session={session} className="aspect-[260/230] w-full" />
                     </div>
                   ))}
                 </div>

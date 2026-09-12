@@ -5,6 +5,7 @@ import {
   Menu,
   Mic,
   Music,
+  Play,
   Sparkles,
   TrendingUp,
   Users,
@@ -17,10 +18,10 @@ import { useSignInGate } from '../auth/useSignInGate'
 import liveSessionsMap from '../assets/live-sessions-map.png'
 import { Chip } from '../components/ui/Chip'
 import { CoverImage } from '../components/ui/CoverImage'
-import { CommunityCard } from '../components/ui/CommunityCard'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { CommunityNetwork } from '../components/ui/CommunityNetwork'
 import { FeatureCard } from '../components/ui/FeatureCard'
+import { SessionGridCard } from '../components/ui/SessionGridCard'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import type { CoverKey } from '../lib/photos'
 import type { CategoryFilter } from '../lib/sessions'
@@ -38,23 +39,6 @@ const quickStartCards: { title: string; subtitle: string; gradient: string; phot
   { title: 'Stress Relief', subtitle: 'Come down a notch.', photo: 'stress', gradient: 'linear-gradient(160deg, var(--color-success-900), var(--color-success-500))' },
   { title: 'Deep Calm', subtitle: 'Nothing asked of you.', photo: 'calm', gradient: 'linear-gradient(160deg, var(--color-info-900), var(--color-neutral-950))' },
 ]
-
-// Community cards read straight from the session catalogue, so a card, its
-// detail page and the fork it produces can never describe different things.
-// The chip above the rail narrows the same list, which is the only thing that
-// makes the chips worth pressing.
-function communityCards(category: CategoryFilter) {
-  return sessionsInCategory(category).map((session) => ({
-    slug: session.slug,
-    title: session.title,
-    photo: session.photo,
-    description: session.description,
-    author: session.author,
-    plays: session.plays,
-    recreated: session.recreated,
-    gradient: session.gradient,
-  }))
-}
 
 const features = [
   { icon: <TrendingUp size={20} />, title: 'Mood Progress', description: 'Tracks baseline shifts' },
@@ -244,16 +228,30 @@ export function HomePage() {
             {quickStartCards.map((card) => (
               <div
                 key={card.title}
-                className="relative h-[160px] w-[160px] shrink-0 overflow-hidden rounded-16 p-12 text-text-inverse"
+                className="relative h-[160px] w-[236px] shrink-0 overflow-hidden rounded-16 p-12 text-text-inverse"
               >
-                <CoverImage photo={card.photo} gradient={card.gradient} width={320} height={320} />
-                <button
-                  type="button"
-                  onClick={() => gate('/chat')}
-                  className="text-style-caption relative flex h-24 items-center gap-4 whitespace-nowrap rounded-full bg-surface-default/90 px-8 text-text-primary"
-                >
-                  <Sparkles size={10} /> Create
-                </button>
+                <CoverImage photo={card.photo} gradient={card.gradient} width={480} height={320} />
+
+                {/* Two ways in, and they are different: play the starter as it
+                    is, or open chat and make your own from it. */}
+                <div className="relative flex items-center justify-between gap-8">
+                  <button
+                    type="button"
+                    aria-label={`Play ${card.title}`}
+                    onClick={() => gate('/chat')}
+                    className="u-press flex size-32 shrink-0 items-center justify-center rounded-full bg-surface-default/85 text-icon-strong backdrop-blur-sm"
+                  >
+                    <Play size={14} fill="currentColor" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => gate('/chat')}
+                    className="text-style-label u-press flex h-30 items-center gap-6 whitespace-nowrap rounded-full bg-surface-default/90 px-12 text-text-primary"
+                  >
+                    <Sparkles size={13} /> Create
+                  </button>
+                </div>
+
                 <div className="absolute bottom-12 left-12 right-12">
                   <p className="text-style-body-small font-semibold drop-shadow">{card.title}</p>
                   <p className="text-style-caption opacity-90">{card.subtitle}</p>
@@ -327,7 +325,7 @@ export function HomePage() {
             />
             <PlayGlyph />
           </div>
-          <div className="relative h-[286px] w-[180px] shrink-0 rotate-[12deg] overflow-hidden rounded-24 shadow-2xl">
+          <div className="relative h-[286px] w-[180px] shrink-0 -rotate-[12deg] overflow-hidden rounded-24 shadow-2xl">
             <CoverImage
               photo="glow"
               gradient="linear-gradient(165deg, #FFD9A8 0%, #FFB25E 45%, #F97B14 100%)"
@@ -373,8 +371,13 @@ export function HomePage() {
             ))}
           </div>
           <div key={category} className="u-fade mt-16 flex gap-12 overflow-x-auto pb-4">
-            {communityCards(category).map((card) => (
-              <CommunityCard key={card.slug} {...card} guard={gate} />
+            {sessionsInCategory(category).map((session) => (
+              <SessionGridCard
+                key={session.slug}
+                session={session}
+                guard={gate}
+                className="aspect-[228/303] w-[228px] shrink-0"
+              />
             ))}
           </div>
         </section>

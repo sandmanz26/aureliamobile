@@ -3,9 +3,9 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import liveSessionsMap from '../assets/live-sessions-map.png'
 import { Chip } from '../components/ui/Chip'
-import { CommunityCard } from '../components/ui/CommunityCard'
 import { CoverImage } from '../components/ui/CoverImage'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
+import { SessionGridCard } from '../components/ui/SessionGridCard'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import { useDrawer } from '../layouts/DrawerContext'
 import type { CoverKey } from '../lib/photos'
@@ -88,16 +88,10 @@ function SessionShelf({ shelf, category = 'All' }: { shelf: Shelf; category?: Ca
       className="u-fade -mx-20 mt-16 flex gap-12 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24"
     >
       {sessions.map((session) => (
-        <CommunityCard
+        <SessionGridCard
           key={session.slug}
-          slug={session.slug}
-          title={session.title}
-          description={session.description}
-          author={session.author}
-          plays={session.plays}
-          recreated={session.recreated}
-          gradient={session.gradient}
-          photo={session.photo}
+          session={session}
+          className="aspect-[228/303] w-[228px] shrink-0"
         />
       ))}
     </div>
