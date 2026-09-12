@@ -158,9 +158,9 @@ export const DEMO_MODULES: DemoModule[] = [
     id: 'explore',
     kind: 'consumer',
     label: 'Explore',
-    description: 'Browse and search the wider session catalogue.',
+    description: 'The browse surface — the same screen Sessions opens, which the design calls Explore.',
     route: '/explore',
-    built: false,
+    built: true,
   },
   {
     id: 'sessions',

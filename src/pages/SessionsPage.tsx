@@ -1,4 +1,4 @@
-import { ArrowRight, Coins, Menu } from 'lucide-react'
+import { ArrowRight, Bookmark, Clock, Coins, Menu, Play, Users } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import liveSessionsMap from '../assets/live-sessions-map.png'
@@ -10,7 +10,7 @@ import { useFeatureFlags } from '../demo/FeatureFlags'
 import { useDrawer } from '../layouts/DrawerContext'
 import type { CoverKey } from '../lib/photos'
 import type { CategoryFilter, Shelf } from '../lib/sessions'
-import { CATEGORY_FILTERS, categoryLabel, sessionsOnShelf } from '../lib/sessions'
+import { CATEGORY_FILTERS, categoryLabel, findSession, sessionsOnShelf } from '../lib/sessions'
 
 /**
  * Sessions — the browse surface behind the Sessions nav item.
@@ -44,23 +44,83 @@ const creators: { name: string; photo: CoverKey; sessions: string }[] = [
   { name: 'Maya Bennett', photo: 'creatorMaya', sessions: '19 sessions' },
 ]
 
-const challengeStats = [
-  { label: 'Your day', value: '6 of 30' },
-  { label: 'Joined', value: '12.4k' },
-  { label: 'Per day', value: '8 min' },
+/**
+ * Sessions in progress. The only shelf that carries a progress bar, because it
+ * is the only one where "how far in am I" is the reason you came back — the
+ * rest are things you have not started.
+ */
+const AVATAR_RING = 'conic-gradient(from 200deg, var(--color-gold-300), var(--color-blue-300), var(--color-gold-300))'
+
+const recentlyPlayed: { slug: string; minutes: number; progress: number }[] = [
+  { slug: 'inner-frequency', minutes: 5, progress: 0.62 },
+  { slug: 'quiet-space', minutes: 9, progress: 0.28 },
+  { slug: 'rainy-mind', minutes: 14, progress: 0.81 },
 ]
 
-/** Section heading, optionally with a "See All" on the right. */
-function SectionHeader({ title, seeAllTo }: { title: string; seeAllTo?: string }) {
+/** The three facts the design puts on the challenge card. */
+const challengeStats = [
+  { icon: Coins, label: '250 pts' },
+  { icon: Users, label: '2.3k joined' },
+  { icon: Clock, label: '30 days' },
+]
+
+/** Section heading, optionally with a link on the right. */
+function SectionHeader({
+  title,
+  seeAllTo,
+  action = 'See All',
+}: {
+  title: string
+  seeAllTo?: string
+  action?: string
+}) {
   return (
     <div className="flex items-baseline justify-between gap-16">
       <h2 className="text-style-title text-text-primary">{title}</h2>
       {seeAllTo && (
         <Link to={seeAllTo} className="u-tap text-style-label shrink-0 whitespace-nowrap text-text-brand">
-          See All
+          {action}
         </Link>
       )}
     </div>
+  )
+}
+
+/** A session you are part-way through. */
+function RecentCard({ slug, minutes, progress }: { slug: string; minutes: number; progress: number }) {
+  const session = findSession(slug)
+  if (!session) return null
+  return (
+    <article className="relative h-[150px] w-[236px] shrink-0 overflow-hidden rounded-16 p-12 text-text-inverse">
+      <CoverImage photo={session.photo} gradient={session.gradient} width={480} height={300} />
+      <Link
+        to={`/session/${session.slug}`}
+        aria-label={`Resume ${session.title}`}
+        className="absolute inset-0 z-10"
+      />
+      <span className="relative flex size-32 items-center justify-center rounded-full bg-white/25 text-text-inverse backdrop-blur-sm">
+        <Play size={14} fill="currentColor" />
+      </span>
+      <div className="absolute bottom-14 left-12 right-12">
+        <p className="text-style-body-small truncate font-semibold drop-shadow">{session.title}</p>
+        <div className="mt-4 flex items-center justify-between gap-8">
+          <span className="flex min-w-0 items-center gap-6">
+            <PhotoCircle photo={session.authorPhoto} size={16} gradient={AVATAR_RING} alt="" />
+            <span className="text-style-caption truncate opacity-90">{session.author}</span>
+          </span>
+          <span className="text-style-caption flex shrink-0 items-center gap-4 opacity-90">
+            <Clock size={11} /> {minutes} mins
+          </span>
+        </div>
+      </div>
+      {/* How far in you are, pinned to the card's bottom edge. */}
+      <span className="absolute bottom-0 left-0 right-0 h-4 bg-white/25">
+        <span
+          className="block h-full rounded-r-full"
+          style={{ width: `${Math.round(progress * 100)}%`, background: '#FF881B' }}
+        />
+      </span>
+    </article>
   )
 }
 
@@ -117,6 +177,7 @@ export function SessionsPage() {
           </button>
           <h1 className="text-style-title-large text-text-primary">Explore</h1>
         </div>
+        <div className="flex shrink-0 items-center gap-8">
         <div className="flex h-40 shrink-0 items-center gap-8 rounded-full bg-surface-default px-14 shadow-sm">
           <span
             className="flex size-16 items-center justify-center rounded-full"
@@ -125,6 +186,14 @@ export function SessionsPage() {
             <Coins size={10} className="text-text-inverse" />
           </span>
           <span className="text-style-label">1,323</span>
+        </div>
+        <button
+          type="button"
+          aria-label="Saved sessions"
+          className="u-press flex size-40 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-sm"
+        >
+          <Bookmark size={18} />
+        </button>
         </div>
       </div>
 
@@ -206,9 +275,18 @@ export function SessionsPage() {
           </section>
         )}
 
+        <section className="mt-32">
+          <SectionHeader title="Recently Played" seeAllTo="/see-all/picked" />
+          <div className="-mx-20 mt-16 flex gap-12 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
+            {recentlyPlayed.map((item) => (
+              <RecentCard key={item.slug} {...item} />
+            ))}
+          </div>
+        </section>
+
         {isEnabled('sessions.community') && (
           <section className="mt-32">
-            <SectionHeader title="Recreate from Community" seeAllTo="/see-all/community" />
+            <SectionHeader title="Recreate from Community" seeAllTo="/see-all/community" action="All Categories" />
             <div className="-mx-20 mt-16 flex gap-8 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
               {CATEGORY_FILTERS.map((filter) => (
                 <Chip
@@ -273,16 +351,19 @@ export function SessionsPage() {
               <p className="text-style-body-small relative mt-4 opacity-90">
                 Slow down and build a calmer daily rhythm.
               </p>
-              <div className="relative mt-14 flex gap-8">
-                {challengeStats.map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="flex-1 rounded-12 bg-surface-default/20 py-8 text-center backdrop-blur-sm"
-                  >
-                    <p className="text-style-label tabular-nums">{stat.value}</p>
-                    <p className="text-style-caption opacity-80">{stat.label}</p>
-                  </div>
-                ))}
+              <div className="relative mt-14 flex flex-wrap gap-8">
+                {challengeStats.map((stat) => {
+                  const Icon = stat.icon
+                  return (
+                    <span
+                      key={stat.label}
+                      className="text-style-caption inline-flex h-28 items-center gap-6 whitespace-nowrap rounded-full bg-surface-default/20 px-12 backdrop-blur-sm"
+                    >
+                      <Icon size={12} />
+                      {stat.label}
+                    </span>
+                  )
+                })}
               </div>
             </div>
           </section>

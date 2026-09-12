@@ -1,8 +1,9 @@
-import { ArrowLeft, BarChart3, Clock, Coins, Share2, Users, Zap } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Clock, Coins, Play, Share2, Trophy, Users } from 'lucide-react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { CoverImage } from '../components/ui/CoverImage'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { SessionGridCard } from '../components/ui/SessionGridCard'
+import type { CoverKey } from '../lib/photos'
 import type { Contender } from '../lib/challenges'
 import { findChallenge } from '../lib/challenges'
 import { findSession } from '../lib/sessions'
@@ -32,16 +33,36 @@ function TrendMark({ direction }: { direction: 'up' | 'down' }) {
   )
 }
 
-/** Days completed, in the pill the design puts under every name. */
-function DaysPill({ days, dark = false }: { days: number; dark?: boolean }) {
+/** Plays, in the pill the design puts under each podium cover and on each row. */
+function PlaysPill({ plays, dark = false }: { plays: string; dark?: boolean }) {
   return (
     <span
       className={`text-style-label inline-flex h-26 min-w-0 max-w-full items-center gap-4 whitespace-nowrap rounded-full px-10 ${
-        dark ? 'bg-surface-default text-text-primary' : 'border border-border-subtle bg-surface-default text-text-primary'
+        dark ? 'bg-surface-default text-text-primary shadow-sm' : 'border border-border-subtle bg-surface-default text-text-primary'
       }`}
     >
-      <Zap size={12} className="shrink-0 text-brand-emphasis" />
-      <span className="truncate">{days} days</span>
+      <Play size={11} className="shrink-0" fill="currentColor" />
+      <span className="tabular-nums">{plays}</span>
+    </span>
+  )
+}
+
+/** A session cover as a disc, with the play mark the design puts over it. */
+function CoverDisc({ photo, size, alt }: { photo: CoverKey; size: number; alt: string }) {
+  return (
+    <span
+      className="relative block shrink-0 overflow-hidden rounded-full"
+      style={{ width: size, height: size }}
+    >
+      <PhotoCircle photo={photo} size={size} gradient={AVATAR_RING} alt={alt} />
+      <span className="absolute inset-0 flex items-center justify-center">
+        <span
+          className="flex items-center justify-center rounded-full bg-black/35 text-text-inverse backdrop-blur-sm"
+          style={{ width: size * 0.42, height: size * 0.42 }}
+        >
+          <Play size={Math.round(size * 0.2)} fill="currentColor" />
+        </span>
+      </span>
     </span>
   )
 }
@@ -49,39 +70,48 @@ function DaysPill({ days, dark = false }: { days: number; dark?: boolean }) {
 /**
  * The top three, drawn as a podium.
  *
- * Column height encodes rank, not days — the bars are the standings, and the
- * exact figure sits on each pill next to the name. Order is 2 / 1 / 3 so the
+ * Column height encodes rank, not plays — the bars are the standings, and the
+ * exact figure sits on the pill under each cover. Order is 2 / 1 / 3 so the
  * winner is centre, which is what a podium means.
  */
 function Podium({ top }: { top: Contender[] }) {
   const [first, second, third] = top
   const columns = [
-    { contender: second, height: 'h-[86px]', size: 64, label: 'mt-8' },
+    { contender: second, height: 'h-[86px]', size: 64, label: 'mt-16' },
     { contender: first, height: 'h-[118px]', size: 76, label: 'mt-0' },
-    { contender: third, height: 'h-[62px]', size: 58, label: 'mt-16' },
+    { contender: third, height: 'h-[62px]', size: 58, label: 'mt-24' },
   ].filter((column) => column.contender)
 
   return (
     <div
-      className="relative flex items-end justify-center gap-10 overflow-hidden rounded-24 px-14 pt-20"
+      className="relative flex items-end justify-center gap-8 overflow-hidden rounded-24 px-12 pt-16"
       style={{ background: 'linear-gradient(170deg, #ffe6a8, #ff9a1f)' }}
     >
-      {columns.map(({ contender, height, size, label }) => (
-        <div key={contender.rank} className={`flex min-w-0 flex-1 flex-col items-center ${label}`}>
-          <span className="text-style-body-small font-semibold text-text-primary">{contender.rank}</span>
-          <span className="mt-6 rounded-full bg-surface-default p-3 shadow-md">
-            <PhotoCircle photo={contender.photo} size={size} gradient={AVATAR_RING} alt={contender.name} />
-          </span>
-          <span className="text-style-body-small mt-8 max-w-full truncate font-medium text-text-primary">
-            {contender.name}
-          </span>
-          <span className="mt-6">
-            <DaysPill days={contender.days} dark />
-          </span>
-          {/* The column itself — deliberately unlabelled; the pill above carries the number. */}
-          <span className={`mt-10 w-full rounded-t-16 bg-white/35 ${height}`} />
-        </div>
-      ))}
+      {columns.map(({ contender, height, size, label }) => {
+        const session = findSession(contender.sessionSlug)
+        if (!session) return null
+        return (
+          <div key={contender.rank} className={`flex min-w-0 flex-1 flex-col items-center ${label}`}>
+            <span className="text-style-body-small font-semibold text-text-primary">{contender.rank}</span>
+            <span className="relative mt-6 rounded-full bg-surface-default p-3 shadow-md">
+              <CoverDisc photo={session.photo} size={size} alt={session.title} />
+            </span>
+            {/* The count sits on the cover's edge, as the design overlaps it. */}
+            <span className="-mt-13 relative z-10">
+              <PlaysPill plays={contender.plays} dark />
+            </span>
+            <span className="text-style-body-small mt-8 line-clamp-2 max-w-full text-center font-medium text-text-primary">
+              {session.title}
+            </span>
+            <span className="mt-6 flex min-w-0 max-w-full items-center gap-4">
+              <PhotoCircle photo={contender.creatorPhoto} size={16} gradient={AVATAR_RING} alt="" />
+              <span className="text-style-caption truncate text-text-primary">{contender.creator}</span>
+            </span>
+            {/* The column itself — deliberately unlabelled; the pill carries the number. */}
+            <span className={`mt-10 w-full rounded-t-16 bg-white/35 ${height}`} />
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -134,10 +164,17 @@ export function ChallengeDetailPage() {
         </div>
 
         <div className="relative -mt-24 rounded-t-24 bg-background-default pt-24">
-          {/* Sits on the seam, as in the design — the standings live below it. */}
-          <span className="absolute -top-20 left-20 flex size-40 items-center justify-center rounded-full bg-espresso-800 text-text-inverse shadow-md">
-            <BarChart3 size={18} />
-          </span>
+          {/* Sits on the seam, as in the design. It is a labelled way in rather
+              than a bare glyph — "what do I get for this" is the first thing a
+              challenge has to answer, and an unlabelled chart icon does not. */}
+          <button
+            type="button"
+            className="text-style-label u-press absolute -top-22 left-20 flex h-44 items-center gap-8 rounded-full bg-espresso-800/85 px-16 text-text-inverse shadow-md backdrop-blur-sm"
+          >
+            <Trophy size={16} />
+            Rewards
+            <ArrowRight size={15} />
+          </button>
 
           <div className="mx-auto w-full max-w-[402px] px-20 pb-140 lg:max-w-[720px] lg:px-24">
             <div className="flex flex-wrap gap-8">
@@ -159,20 +196,24 @@ export function ChallengeDetailPage() {
             </div>
 
             <div className="mt-8 flex flex-col divide-y divide-border-subtle">
-              {ranked.map((contender) => (
-                <div key={contender.rank} className="flex items-center gap-10 py-14">
-                  <span className="text-style-body-small w-14 shrink-0 tabular-nums text-text-secondary">
-                    {contender.rank}
-                  </span>
-                  <PhotoCircle photo={contender.photo} size={40} gradient={AVATAR_RING} alt={contender.name} />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-style-body-small truncate font-medium text-text-primary">{contender.name}</p>
-                    <p className="text-style-caption text-text-secondary">Joined {contender.joined}</p>
+              {ranked.map((contender) => {
+                const session = findSession(contender.sessionSlug)
+                if (!session) return null
+                return (
+                  <div key={contender.rank} className="flex items-center gap-10 py-14">
+                    <span className="text-style-body-small w-14 shrink-0 tabular-nums text-text-secondary">
+                      {contender.rank}
+                    </span>
+                    <CoverDisc photo={session.photo} size={40} alt={session.title} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-style-body-small truncate font-medium text-text-primary">{session.title}</p>
+                      <p className="text-style-caption truncate text-text-secondary">by {contender.creator}</p>
+                    </div>
+                    <PlaysPill plays={contender.plays} />
+                    {contender.trend && <TrendMark direction={contender.trend} />}
                   </div>
-                  <DaysPill days={contender.days} />
-                  {contender.trend && <TrendMark direction={contender.trend} />}
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             {sessions.length > 0 && (
@@ -180,8 +221,8 @@ export function ChallengeDetailPage() {
                 <h2 className="text-style-title text-text-primary">Created Session</h2>
                 <div className="-mx-20 mt-16 flex gap-12 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
                   {sessions.map((session) => (
-                    <div key={session.slug} className="w-[260px] shrink-0">
-                      <SessionGridCard session={session} className="aspect-[260/230] w-full" />
+                    <div key={session.slug} className="w-[234px] shrink-0">
+                      <SessionGridCard session={session} className="aspect-[234/351] w-full" />
                     </div>
                   ))}
                 </div>

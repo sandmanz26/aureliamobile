@@ -6,15 +6,23 @@
 
 import type { CoverKey } from './photos'
 
+/**
+ * One entry on a challenge leaderboard.
+ *
+ * The board ranks *sessions made for the challenge*, not the people in it —
+ * so what competes is the work, and the creator is credited beside it. The
+ * session is a slug into the catalogue, so a title or cover can never drift
+ * from the session it names; the creator lives on the entry because a
+ * challenge entry is someone's own take on that session, not its original.
+ */
 export interface Contender {
   rank: number
-  name: string
-  photo: CoverKey
-  /** Days completed — what the leaderboard is actually ranked by. */
-  days: number
-  /** ISO-ish date shown under the name on the ranked rows. */
-  joined: string
-  /** Movement since the last update; null for the podium, which has no arrow. */
+  sessionSlug: string
+  creator: string
+  creatorPhoto: CoverKey
+  /** Plays — what the board is ranked by. */
+  plays: string
+  /** Movement since the last update; null on the podium, which has no arrow. */
   trend: 'up' | 'down' | null
 }
 
@@ -49,12 +57,12 @@ export const CHALLENGES: ChallengeRecord[] = [
     minutesPerDay: 8,
     yourDay: 6,
     leaderboard: [
-      { rank: 1, name: 'Aria Moon', photo: 'creatorAria', days: 27, joined: '2026.1.14', trend: null },
-      { rank: 2, name: 'Maya Rivers', photo: 'creatorMaya', days: 21, joined: '2026.1.19', trend: null },
-      { rank: 3, name: 'Theo Waves', photo: 'creatorTheo', days: 19, joined: '2026.2.02', trend: null },
-      { rank: 4, name: 'Amara Osei', photo: 'creatorAmara', days: 27, joined: '2026.2.23', trend: 'up' },
-      { rank: 5, name: 'Jonas Weber', photo: 'creatorJonas', days: 21, joined: '2026.6.21', trend: 'down' },
-      { rank: 6, name: 'Adam Nilson', photo: 'avatar', days: 19, joined: '2026.12.10', trend: 'up' },
+      { rank: 1, sessionSlug: 'dolphins-frequency', creator: 'Aria Moon', creatorPhoto: 'creatorAria', plays: '12,687', trend: null },
+      { rank: 2, sessionSlug: 'deep-grounding', creator: 'Maya Rivers', creatorPhoto: 'creatorMaya', plays: '11,234', trend: null },
+      { rank: 3, sessionSlug: 'cosmic-flow', creator: 'Theo Waves', creatorPhoto: 'creatorTheo', plays: '10,052', trend: null },
+      { rank: 4, sessionSlug: 'ocean-breath', creator: 'Amara Osei', creatorPhoto: 'creatorAmara', plays: '9,564', trend: 'up' },
+      { rank: 5, sessionSlug: 'golden-hour', creator: 'Jonas Weber', creatorPhoto: 'creatorJonas', plays: '9,123', trend: 'down' },
+      { rank: 6, sessionSlug: 'dream-drift', creator: 'Adam Nilson', creatorPhoto: 'avatar', plays: '8,761', trend: 'up' },
     ],
     sessionSlugs: ['mind-dance', 'inner-balance'],
   },
