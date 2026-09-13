@@ -260,7 +260,10 @@ class _SessionsScreenState extends State<SessionsScreen> {
               ),
               const SizedBox(height: AppSpacing.s4),
               SizedBox(
-                height: 40,
+                // 32, which is what a chip measures: 12px label on a 16 line
+                // over 8 of padding. A taller rail hands the chips a tight
+                // height and stretches them past the web's.
+                height: 32,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),

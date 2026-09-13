@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/aurelia_logo.dart';
+import '../shell/app_drawer.dart';
 
 /// My Wellness — what Aurelia is allowed to read about you.
 ///
@@ -33,10 +34,25 @@ class _WellnessScreenState extends State<WellnessScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      // The drawer, not a back arrow: this screen is a nav destination, and
+      // the web keeps the menu button on it for that reason. It was the one
+      // screen here that sent you back to wherever you came from instead.
+      drawer: const AppDrawer(current: '/wellness'),
       appBar: AppBar(
         backgroundColor: AppColors.background,
         surfaceTintColor: Colors.transparent,
-        titleSpacing: 0,
+        titleSpacing: AppSpacing.s3,
+        leadingWidth: AppPadding.page + 40,
+        leading: Builder(
+          builder: (context) => Padding(
+            padding: const EdgeInsets.only(left: AppPadding.page),
+            child: CircleSurfaceButton(
+              icon: Icons.menu,
+              tooltip: 'Open menu',
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            ),
+          ),
+        ),
         title: Text('My Wellness', style: AppTextStyles.titleLg),
         actions: const [CoinPill(), SizedBox(width: AppPadding.page)],
       ),

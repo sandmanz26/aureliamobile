@@ -296,7 +296,7 @@ class ChallengeDetailScreen extends StatelessWidget {
                                   const CoinPill(),
                                   const SizedBox(width: AppSpacing.s2),
                                   CircleSurfaceButton(
-                                    icon: Icons.ios_share,
+                                    icon: Icons.share_outlined,
                                     tooltip: 'Share challenge',
                                     onPressed: () {},
                                   ),

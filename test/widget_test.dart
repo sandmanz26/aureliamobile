@@ -239,6 +239,42 @@ void main() {
       expect(find.textContaining('keep the ocean sound'), findsOneWidget);
     });
 
+    testWidgets('the recommendations can be dropped, then applied',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/chat');
+      await tester.pumpAndSettle();
+
+      // All three arrive applied — Aurelia proposed them, so the user's job
+      // is to take away what they do not want.
+      expect(find.text('Increase Yellow'), findsOneWidget);
+      expect(find.text('Apply new changes (3)'), findsOneWidget);
+
+      // Tapped by its label: OutlinedButton.icon builds a private subclass,
+      // so widgetWithText(OutlinedButton, ...) matches nothing.
+      await tester.tap(find.text('Remove').first);
+      await tester.pumpAndSettle();
+      expect(find.text('Apply new changes (2)'), findsOneWidget);
+      // The card stays, offering the change back.
+      expect(find.text('Add'), findsOneWidget);
+
+      await tester.tap(find.text('Apply new changes (2)'));
+      await tester.pump();
+      expect(find.text('Updating..'), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1500));
+      // The cards give way to the session being rebuilt.
+      expect(find.text('Increase Yellow'), findsNothing);
+      expect(find.text('Creating your new session..'), findsOneWidget);
+
+      // The percentage climbs on its own, and finishes.
+      await tester.pump(const Duration(seconds: 6));
+      expect(find.text('Ready to play'), findsOneWidget);
+    });
+
     testWidgets('publishing runs from the header menu through to a tick',
         (tester) async {
       await _boot(tester);

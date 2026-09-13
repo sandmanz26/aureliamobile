@@ -59,7 +59,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ),
             ),
             SizedBox(
-              height: 40,
+              // 32 — a chip's own height. A taller rail hands it a tight
+              // height and stretches it, as this one did.
+              height: 32,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),

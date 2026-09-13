@@ -92,7 +92,7 @@ class ProfileScreen extends StatelessWidget {
                 const CoinPill(),
                 const SizedBox(width: AppSpacing.s3),
                 CircleSurfaceButton(
-                  icon: Icons.ios_share,
+                  icon: Icons.share_outlined,
                   tooltip: 'Share profile',
                   size: 44,
                   onPressed: () {},

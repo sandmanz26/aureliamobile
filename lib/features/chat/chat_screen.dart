@@ -76,8 +76,59 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
+/// Where a session is in its rebuild — the three cards below only make sense
+/// while nothing is being generated, and the progress card only while it is.
+enum SessionState { idle, updating, generating, ready }
+
+/// One of the three adjustments Aurelia proposes after its diagnosis.
+class _Recommendation {
+  const _Recommendation({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.improveScore,
+    required this.orb,
+  });
+
+  final String id;
+  final String title;
+  final String description;
+  final String improveScore;
+  final String orb;
+}
+
+const _recommendations = <_Recommendation>[
+  _Recommendation(
+    id: 'yellow',
+    title: 'Increase Yellow',
+    description: 'Helps bring joy, aligned with your goal',
+    improveScore: '12%',
+    orb: 'assets/images/orb-increase-yellow.png',
+  ),
+  _Recommendation(
+    id: 'movement',
+    title: 'Less movement',
+    description: 'Reduced movement helps your nervous system to calm down',
+    improveScore: '12%',
+    orb: 'assets/images/orb-less-movement.png',
+  ),
+  _Recommendation(
+    id: 'frequency',
+    title: '432Hz',
+    description: 'Your body responds positively to this frequency.',
+    improveScore: '12%',
+    orb: 'assets/images/orb-432hz.png',
+  ),
+];
+
 class _ChatScreenState extends State<ChatScreen> {
   static const _suggestions = ['Add more white noise', 'Make it longer', 'Female voice'];
+
+  /// Every recommendation starts applied — Aurelia proposed them, and the
+  /// user's job is to take away what they do not want, not to opt in to each.
+  final _applied = _recommendations.map((r) => r.id).toSet();
+  SessionState _session = SessionState.idle;
+  int _progress = 0;
 
   final _scrollController = ScrollController();
   final _composer = TextEditingController();
@@ -288,6 +339,46 @@ class _ChatScreenState extends State<ChatScreen> {
     ).whenComplete(timer.cancel);
   }
 
+  bool get _showApplyChip =>
+      _applied.isNotEmpty &&
+      (_session == SessionState.idle || _session == SessionState.updating);
+
+  void _toggleRecommendation(String id) {
+    setState(() => _applied.contains(id) ? _applied.remove(id) : _applied.add(id));
+  }
+
+  /// Applying is not instant and does not pretend to be: a beat of "Updating..",
+  /// then Aurelia says something, then the percentage climbs on its own card.
+  void _applyChanges() {
+    if (_applied.isEmpty || _session == SessionState.updating) return;
+    setState(() => _session = SessionState.updating);
+    _timers.add(Timer(const Duration(milliseconds: 1400), () {
+      if (!mounted) return;
+      setState(() {
+        _progress = 0;
+        _session = SessionState.generating;
+        _messages.add(_Message(
+          id: _nextId++,
+          fromAurelia: true,
+          at: DateTime.now(),
+          text: 'Sure, here it is:',
+        ));
+      });
+      _scrollToEnd();
+      _timers.add(Timer.periodic(const Duration(milliseconds: 45), (timer) {
+        if (!mounted) return timer.cancel();
+        setState(() {
+          if (_progress >= 100) {
+            timer.cancel();
+            _session = SessionState.ready;
+          } else {
+            _progress++;
+          }
+        });
+      }));
+    }));
+  }
+
   String _clock(DateTime at) {
     final hour = at.hour % 12 == 0 ? 12 : at.hour % 12;
     final period = at.hour < 12 ? 'AM' : 'PM';
@@ -347,6 +438,41 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                   for (var i = 0; i < _messages.length; i++) _bubble(i),
+                  // The cards are the recommendation: they belong in the
+                  // thread, under the message that proposes them, and they go
+                  // away once a rebuild is under way.
+                  if (_session == SessionState.idle ||
+                      _session == SessionState.updating) ...[
+                    const SizedBox(height: AppSpacing.s3),
+                    SizedBox(
+                      height: 245,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: AppPadding.page),
+                        itemCount: _recommendations.length,
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(width: 11),
+                        itemBuilder: (context, index) => _RecommendationCard(
+                          recommendation: _recommendations[index],
+                          applied: _applied.contains(_recommendations[index].id),
+                          onToggle: () =>
+                              _toggleRecommendation(_recommendations[index].id),
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (_session == SessionState.generating ||
+                      _session == SessionState.ready) ...[
+                    const SizedBox(height: AppSpacing.s3),
+                    _SessionProgressCard(
+                      title: 'Sleep meditation v1.2',
+                      status: _session == SessionState.ready
+                          ? 'Ready to play'
+                          : 'Creating your new session..',
+                      progress: _session == SessionState.ready ? null : _progress,
+                    ),
+                  ],
                   if (_typing) _typingIndicator(),
                   const SizedBox(height: AppSpacing.s4),
                 ],
@@ -366,18 +492,44 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
-                  itemCount: _suggestions.length,
+                  // The apply chip leads the rail whenever something is
+                  // waiting to be applied, then steps out of the way.
+                  itemCount: _suggestions.length + (_showApplyChip ? 1 : 0),
                   separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.s2),
-                  itemBuilder: (context, index) => OutlinedButton.icon(
-                    onPressed: () => _send(text: _suggestions[index]),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, 40),
-                      side: const BorderSide(color: AppColors.borderSubtle),
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
-                    ),
-                    icon: const Icon(Icons.auto_awesome, size: 13),
-                    label: Text(_suggestions[index], style: AppTextStyles.label),
-                  ),
+                  itemBuilder: (context, index) {
+                    if (_showApplyChip && index == 0) {
+                      final updating = _session == SessionState.updating;
+                      return OutlinedButton.icon(
+                        onPressed: updating ? null : _applyChanges,
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(0, 40),
+                          side: const BorderSide(color: AppColors.borderSubtle),
+                          foregroundColor: AppColors.textStrong,
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
+                        ),
+                        icon: const Icon(Icons.auto_awesome, size: 13),
+                        label: Text(
+                          updating
+                              ? 'Updating..'
+                              : 'Apply new changes (${_applied.length})',
+                          style: AppTextStyles.label,
+                        ),
+                      );
+                    }
+                    final suggestion =
+                        _suggestions[index - (_showApplyChip ? 1 : 0)];
+                    return OutlinedButton.icon(
+                      onPressed: () => _send(text: suggestion),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 40),
+                        side: const BorderSide(color: AppColors.borderSubtle),
+                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
+                      ),
+                      icon: const Icon(Icons.auto_awesome, size: 13),
+                      label: Text(suggestion, style: AppTextStyles.label),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: AppSpacing.s2),
@@ -774,6 +926,218 @@ class _PublishSheet extends StatelessWidget {
                 child: const Text('Cancel'),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Figma "Frame 45/46/47" — 173x245, on a gradient hairline border, 16px
+/// padding, 12px gap. The orb is a 73px circle with a play affordance
+/// overlapping its lower right.
+class _RecommendationCard extends StatelessWidget {
+  const _RecommendationCard({
+    required this.recommendation,
+    required this.applied,
+    required this.onToggle,
+  });
+
+  final _Recommendation recommendation;
+  final bool applied;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 173,
+      padding: const EdgeInsets.all(1),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        // A gradient hairline: the border is the gradient and the card paints
+        // its own surface on top, which is what the web's double background
+        // does with background-clip.
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFFFE682), Color(0xFFFF881B)],
+        ),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(AppPadding.md),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(19),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 77,
+              height: 77,
+              child: Stack(
+                children: [
+                  ClipOval(
+                    child: Image.asset(
+                      recommendation.orb,
+                      width: 73,
+                      height: 73,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      alignment: Alignment.center,
+                      decoration: const BoxDecoration(
+                        color: AppColors.surface,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                              color: Color(0x14000000),
+                              blurRadius: 8,
+                              offset: Offset(0, 2)),
+                        ],
+                      ),
+                      child: const Icon(Icons.play_arrow_rounded,
+                          size: 16, color: AppColors.iconStrong),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s3),
+            Text(
+              recommendation.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.bodySm.copyWith(color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: 2),
+            Expanded(
+              child: Text(
+                recommendation.description,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.caption.copyWith(color: AppColors.textPrimary),
+              ),
+            ),
+            Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    'Improve Score',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.caption
+                        .copyWith(color: AppColors.textPrimary),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s2),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s2, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFBED),
+                    borderRadius: BorderRadius.circular(AppRadius.full),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.arrow_upward,
+                          size: 12, color: AppPrimitives.success600),
+                      Text(
+                        recommendation.improveScore,
+                        style: AppTextStyles.caption
+                            .copyWith(color: AppColors.textPrimary),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.s3),
+            OutlinedButton.icon(
+              onPressed: onToggle,
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(0, 36),
+                side: const BorderSide(color: AppColors.borderSubtle),
+                foregroundColor: AppColors.textPrimary,
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s3),
+              ),
+              icon: Icon(applied ? Icons.delete_outline : Icons.add,
+                  size: 12, color: AppColors.iconDefault),
+              label: Text(applied ? 'Remove' : 'Add', style: AppTextStyles.label),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Figma "Frame 10" inside the generating state — a 70px pill carrying the
+/// session being rebuilt, its status, and the percentage while it climbs.
+class _SessionProgressCard extends StatelessWidget {
+  const _SessionProgressCard({
+    required this.title,
+    required this.status,
+    required this.progress,
+  });
+
+  final String title;
+  final String status;
+  final int? progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: AppPadding.page),
+      padding: const EdgeInsets.fromLTRB(14, AppSpacing.s3, 23, AppSpacing.s3),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 45,
+            height: 45,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                ClipOval(
+                  child: Image.asset('assets/images/session-thumb.png',
+                      width: 45, height: 45, fit: BoxFit.cover),
+                ),
+                const Icon(Icons.play_arrow_rounded,
+                    size: 22, color: AppColors.iconInverse),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.bodySm
+                        .copyWith(color: AppColors.textPrimary)),
+                Text(status,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.caption),
+              ],
+            ),
+          ),
+          if (progress != null)
+            Text('$progress%', style: AppTextStyles.caption),
+          const Icon(Icons.chevron_right, size: 19, color: AppColors.iconDefault),
         ],
       ),
     );

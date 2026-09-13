@@ -4,6 +4,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/cover_image.dart';
+import '../shell/app_drawer.dart';
 import '../../core/widgets/photo_circle.dart';
 
 /// Session detail — cover, creator, the one action the screen exists for, then
@@ -38,6 +39,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      drawer: const AppDrawer(current: '/sessions'),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.only(bottom: AppSpacing.s10),
@@ -61,9 +63,19 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
                   ),
                   IconButton(
                     onPressed: () {},
-                    icon: const Icon(Icons.ios_share),
+                    icon: const Icon(Icons.share_outlined),
                     color: AppColors.iconDefault,
                     tooltip: 'Share',
+                  ),
+                  // The web keeps the drawer reachable from here; without it
+                  // this screen was the one dead end in the navigation.
+                  Builder(
+                    builder: (context) => IconButton(
+                      onPressed: () => Scaffold.of(context).openDrawer(),
+                      icon: const Icon(Icons.menu),
+                      color: AppColors.iconDefault,
+                      tooltip: 'Open menu',
+                    ),
                   ),
                 ],
               ),
