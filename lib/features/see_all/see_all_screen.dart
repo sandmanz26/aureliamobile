@@ -32,7 +32,8 @@ class SeeAllScreen extends StatelessWidget {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(AppPadding.md),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppPadding.page, vertical: AppPadding.md),
               child: Row(
                 children: [
                   CircleSurfaceButton(
@@ -61,7 +62,7 @@ class SeeAllScreen extends StatelessWidget {
                     )
                   : GridView.builder(
                       padding: const EdgeInsets.fromLTRB(
-                          AppPadding.lg, 0, AppPadding.lg, AppSpacing.s10),
+                          AppPadding.page, 0, AppPadding.page, AppSpacing.s10),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,

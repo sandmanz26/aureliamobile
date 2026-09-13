@@ -69,7 +69,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+              padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

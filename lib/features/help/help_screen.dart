@@ -54,7 +54,7 @@ class _HelpScreenState extends State<HelpScreen> {
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(
-                    AppPadding.lg, 0, AppPadding.lg, AppSpacing.s10),
+                    AppPadding.page, 0, AppPadding.page, AppSpacing.s10),
                 children: [
                   for (final topic in kHelpTopics) ...[
                     _TopicCard(

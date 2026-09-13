@@ -107,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(
-                    AppPadding.md, AppPadding.md, AppPadding.md, 0),
+                    AppPadding.page, AppPadding.md, AppPadding.page, 0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -122,19 +122,30 @@ class _HomeScreenState extends State<HomeScreen> {
                     if (signedIn)
                       const CoinPill()
                     else
-                      // A visitor has no coin balance — offer the account instead.
-                      TextButton(
-                        onPressed: () => _gate('/home'),
-                        style: TextButton.styleFrom(
-                          backgroundColor: AppColors.surface,
-                          foregroundColor: AppColors.textPrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.full),
-                          ),
+                      // A visitor has no coin balance — offer the account
+                      // instead, in the pill the balance would have occupied.
+                      // It carries the same shadow: the header is white, so
+                      // without one the pill reads as bare text.
+                      GestureDetector(
+                        onTap: () => _gate('/home'),
+                        child: Container(
+                          height: 44,
+                          alignment: Alignment.center,
                           padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.s5, vertical: AppSpacing.s2),
+                              horizontal: AppSpacing.s5),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.full),
+                            boxShadow: const [
+                              BoxShadow(
+                                  color: Color(0x14000000),
+                                  blurRadius: 8,
+                                  offset: Offset(0, 2)),
+                            ],
+                          ),
+                          child: Text('Sign in', style: AppTextStyles.label),
                         ),
-                        child: Text('Sign in', style: AppTextStyles.label),
                       ),
                   ],
                 ),
@@ -162,7 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                   // Hero — the prompt is the product, so it comes first.
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                    padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                     child: Column(
                       children: [
                         const AureliaLogo(iconSize: 64, markOnly: true),
@@ -196,18 +207,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: AppSpacing.s10),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
-                    child: SectionHeader(title: 'Ongoing Live Sessions'),
+                    padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
+                    // Body weight, not a section title: on the web this one
+                    // heading is set smaller than the others on purpose, so
+                    // the live card below it carries the section.
+                    child: Text(
+                      'Ongoing Live Sessions',
+                      style: AppTextStyles.bodyMd
+                          .copyWith(color: AppColors.textPrimary),
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.s4),
                   const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                    padding: EdgeInsets.symmetric(horizontal: AppPadding.page),
                     child: LiveSessionsCard(),
                   ),
 
                   const SizedBox(height: AppSpacing.s10),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                    padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                     child: SectionHeader(title: 'Quick Start'),
                   ),
                   const SizedBox(height: AppSpacing.s4),
@@ -215,7 +233,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     height: 160,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                      padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                       itemCount: _quickStart.length,
                       separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.s3),
                       itemBuilder: (context, index) {
@@ -239,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: AppSpacing.s12),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                 child: SectionHeader(title: 'Recreate from Community'),
               ),
               const SizedBox(height: AppSpacing.s4),
@@ -247,7 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 40,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                  padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                   itemCount: _chips.length,
                   separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.s2),
                   itemBuilder: (context, index) => PillChip(
@@ -262,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 303,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                  padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                   itemCount: _communitySessions.length,
                   separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.s3),
                   itemBuilder: (context, index) {
@@ -284,7 +302,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: AppSpacing.s12),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -348,11 +366,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                        padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                         child: Container(
                           key: const ValueKey('home-cta'),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: AppPadding.lg, vertical: AppSpacing.s10),
+                              horizontal: AppPadding.page, vertical: AppSpacing.s10),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(AppRadius.xl2),
                             gradient: const LinearGradient(
@@ -671,7 +689,7 @@ class _GenerativeWellnessBanner extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+            padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
             child: Container(
             padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.s3, vertical: AppSpacing.s2),
@@ -692,18 +710,16 @@ class _GenerativeWellnessBanner extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s6),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+            padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
             child: Text(
               'Your Personal\nMindfulness Guide',
-              style: AppTextStyles.headlineLg.copyWith(
-                color: AppColors.textInverse,
-                fontWeight: FontWeight.w400,
-              ),
+              style: AppTextStyles.headlineMd
+                  .copyWith(color: AppColors.textInverse),
             ),
           ),
           const SizedBox(height: AppSpacing.s2),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+            padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
             child: Text(
               'Everything you need to reflect, restore, and reset, all in one adaptive app.',
               style: AppTextStyles.bodyLg.copyWith(color: AppColors.textInverse),
@@ -750,7 +766,7 @@ class _GenerativeWellnessBanner extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s8),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+            padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
             child: Text(
               'Chat with Aurelia to instantly create custom meditations, soundscapes, '
               'and breathwork tailored to how you feel right now.',
@@ -759,7 +775,7 @@ class _GenerativeWellnessBanner extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s6),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+            padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
             child: OutlinedButton.icon(
               onPressed: onStart,
               style: OutlinedButton.styleFrom(

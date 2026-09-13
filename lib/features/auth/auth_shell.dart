@@ -21,7 +21,7 @@ class AuthShell extends StatelessWidget {
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(
-              AppPadding.lg, AppSpacing.s4, AppPadding.lg, AppSpacing.s10),
+              AppPadding.page, AppSpacing.s4, AppPadding.page, AppSpacing.s10),
           children: [
             SizedBox(
               height: 44,

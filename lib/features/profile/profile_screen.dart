@@ -75,7 +75,7 @@ class ProfileScreen extends StatelessWidget {
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(
-              AppPadding.md, AppPadding.md, AppPadding.md, AppSpacing.s10),
+              AppPadding.page, AppPadding.md, AppPadding.page, AppSpacing.s10),
           children: [
             Row(
               children: [

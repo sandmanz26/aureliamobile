@@ -38,11 +38,11 @@ class _WellnessScreenState extends State<WellnessScreen> {
         surfaceTintColor: Colors.transparent,
         titleSpacing: 0,
         title: Text('My Wellness', style: AppTextStyles.titleLg),
-        actions: const [CoinPill(), SizedBox(width: AppPadding.lg)],
+        actions: const [CoinPill(), SizedBox(width: AppPadding.page)],
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
-            AppPadding.lg, 0, AppPadding.lg, AppSpacing.s12),
+            AppPadding.page, 0, AppPadding.page, AppSpacing.s12),
         children: [
           // Summary. Everything here is derived from the switches below.
           Container(

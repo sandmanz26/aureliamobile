@@ -123,7 +123,7 @@ class _RecreateScreenState extends State<RecreateScreen> {
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(
-              AppPadding.lg, 0, AppPadding.lg, AppSpacing.s6),
+              AppPadding.page, 0, AppPadding.page, AppSpacing.s6),
           children: [
             // The original, fixed — everything below is stated against it.
             Container(
@@ -425,7 +425,7 @@ class _RecreateScreenState extends State<RecreateScreen> {
       bottomNavigationBar: SafeArea(
         child: Container(
           padding: const EdgeInsets.fromLTRB(
-              AppPadding.lg, AppSpacing.s3, AppPadding.lg, AppSpacing.s3),
+              AppPadding.page, AppSpacing.s3, AppPadding.page, AppSpacing.s3),
           decoration: const BoxDecoration(
             color: AppColors.background,
             border: Border(top: BorderSide(color: AppColors.borderSubtle)),

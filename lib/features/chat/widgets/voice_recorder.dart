@@ -100,7 +100,7 @@ class _VoiceRecorderState extends State<VoiceRecorder> {
     final canSend = _transcriptController.text.trim().isNotEmpty;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          AppPadding.lg, AppSpacing.s2, AppPadding.lg, AppSpacing.s4),
+          AppPadding.page, AppSpacing.s2, AppPadding.page, AppSpacing.s4),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -180,7 +180,7 @@ class _VoiceRecorderState extends State<VoiceRecorder> {
     final busy = _phase == _Phase.transcribing;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          AppPadding.lg, AppSpacing.s3, AppPadding.lg, AppSpacing.s6),
+          AppPadding.page, AppSpacing.s3, AppPadding.page, AppSpacing.s6),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

@@ -76,7 +76,7 @@ void main() {
       final card = tester.getRect(find.byKey(const ValueKey('home-cta')));
       expect(drawing.left, 0);
       expect(drawing.width, 420);
-      expect(card.left, 24);
+      expect(card.left, 20);
       expect(drawing.bottom - card.top, closeTo(24, 0.5));
       expect(find.text('Get Started'), findsOneWidget);
     });

@@ -41,7 +41,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(AppPadding.md),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppPadding.page, vertical: AppPadding.md),
               child: Row(
                 children: [
                   CircleSurfaceButton(
@@ -61,7 +62,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               height: 40,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                 itemCount: kNotificationFilters.length,
                 separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.s2),
                 itemBuilder: (context, index) {
@@ -82,7 +83,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     )
                   : ListView(
                       padding: const EdgeInsets.fromLTRB(
-                          AppPadding.lg, AppSpacing.s4, AppPadding.lg, AppSpacing.s10),
+                          AppPadding.page, AppSpacing.s4, AppPadding.page, AppSpacing.s10),
                       children: [
                         for (final (bucket, items) in groups) ...[
                           Text(kBucketTitles[bucket]!,

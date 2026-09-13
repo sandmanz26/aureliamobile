@@ -49,6 +49,10 @@ class AppLineHeight {
 class AppPadding {
   AppPadding._();
 
+  /// The page gutter. Every consumer screen on the web is `px-20` at phone
+  /// width, so this is 20 rather than a step on the 4/8/16/24 scale.
+  static const page = AppSpacing.s5;
+
   static const xs = AppSpacing.s2;
   static const sm = AppSpacing.s3;
   static const md = AppSpacing.s4;

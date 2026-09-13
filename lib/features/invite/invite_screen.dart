@@ -66,12 +66,12 @@ class _InviteScreenState extends State<InviteScreen> {
             ),
             const SizedBox(height: AppSpacing.s4),
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: AppPadding.lg),
+              padding: EdgeInsets.symmetric(horizontal: AppPadding.page),
               child: _InviteConstellation(reward: _reward),
             ),
             const SizedBox(height: AppSpacing.s10),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+              padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
               child: Column(
                 children: [
                   Text('Invite Friends, Get Points!',

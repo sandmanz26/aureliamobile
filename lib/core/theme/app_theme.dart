@@ -20,7 +20,7 @@ class AppTheme {
         error: AppColors.feedbackError,
       ),
       textTheme: TextTheme(
-        headlineMedium: AppTextStyles.headlineLg,
+        headlineMedium: AppTextStyles.headlineMd,
         headlineSmall: AppTextStyles.headlineMd,
         titleMedium: AppTextStyles.titleMd,
         bodyLarge: AppTextStyles.bodyLg,
@@ -33,7 +33,7 @@ class AppTheme {
         fillColor: AppColors.surface,
         hintStyle: AppTextStyles.bodyLg.copyWith(color: AppColors.textSecondary),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppPadding.lg,
+          horizontal: AppPadding.page,
           vertical: AppPadding.md,
         ),
         border: OutlineInputBorder(

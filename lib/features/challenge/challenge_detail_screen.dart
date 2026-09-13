@@ -282,7 +282,8 @@ class ChallengeDetailScreen extends StatelessWidget {
                           SafeArea(
                             bottom: false,
                             child: Padding(
-                              padding: const EdgeInsets.all(AppPadding.md),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: AppPadding.page, vertical: AppPadding.md),
                               child: Row(
                                 children: [
                                   CircleSurfaceButton(
@@ -318,7 +319,7 @@ class ChallengeDetailScreen extends StatelessWidget {
                       ),
                     ),
                     padding: const EdgeInsets.fromLTRB(
-                        AppPadding.lg, AppSpacing.s6, AppPadding.lg, AppSpacing.s6),
+                        AppPadding.page, AppSpacing.s6, AppPadding.page, AppSpacing.s6),
                     child: Stack(
                       clipBehavior: Clip.none,
                       children: [
@@ -393,7 +394,7 @@ class ChallengeDetailScreen extends StatelessWidget {
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         padding:
-                            const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                            const EdgeInsets.symmetric(horizontal: AppPadding.page),
                         itemCount: sessions.length,
                         separatorBuilder: (_, __) =>
                             const SizedBox(width: AppSpacing.s3),
@@ -420,7 +421,7 @@ class ChallengeDetailScreen extends StatelessWidget {
           SafeArea(
             child: Container(
               padding: const EdgeInsets.fromLTRB(
-                  AppPadding.lg, AppSpacing.s3, AppPadding.lg, AppSpacing.s3),
+                  AppPadding.page, AppSpacing.s3, AppPadding.page, AppSpacing.s3),
               decoration: const BoxDecoration(
                 color: AppColors.background,
                 border: Border(top: BorderSide(color: AppColors.borderSubtle)),

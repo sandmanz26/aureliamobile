@@ -69,7 +69,7 @@ class _SessionsScreenState extends State<SessionsScreen> {
         sessionsOnShelf(shelf, filtered ? _categoryFor(_chip) : kAllCategories);
     if (sessions.isEmpty) {
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+        padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
         child: Text('Nothing in $_chip yet — try another category.',
             style: AppTextStyles.bodySm),
       );
@@ -78,7 +78,7 @@ class _SessionsScreenState extends State<SessionsScreen> {
       height: 303,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+        padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
         itemCount: sessions.length,
         separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.s3),
         // The same card the See All grid uses, at the design's 228x303.
@@ -116,7 +116,7 @@ class _SessionsScreenState extends State<SessionsScreen> {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(
-                    AppPadding.md, AppPadding.md, AppPadding.md, 0),
+                    AppPadding.page, AppPadding.md, AppPadding.page, 0),
                 child: Row(
                   children: [
                     Builder(
@@ -142,7 +142,7 @@ class _SessionsScreenState extends State<SessionsScreen> {
 
               // The one thing the app wants you to press today.
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                 child: GestureDetector(
                   onTap: () => Navigator.of(context).pushNamed('/chat'),
                   child: AspectRatio(
@@ -178,7 +178,7 @@ class _SessionsScreenState extends State<SessionsScreen> {
 
               const SizedBox(height: AppSpacing.s8),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                 child: SectionHeader(title: 'Quick Start'),
               ),
               const SizedBox(height: AppSpacing.s4),
@@ -186,7 +186,7 @@ class _SessionsScreenState extends State<SessionsScreen> {
                 height: 160,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                  padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                   itemCount: _quickStart.length,
                   separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.s3),
                   itemBuilder: (context, index) {
@@ -204,12 +204,12 @@ class _SessionsScreenState extends State<SessionsScreen> {
 
               const SizedBox(height: AppSpacing.s8),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                 child: SectionHeader(title: 'Ongoing Live Sessions'),
               ),
               const SizedBox(height: AppSpacing.s4),
               const Padding(
-                padding: EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                padding: EdgeInsets.symmetric(horizontal: AppPadding.page),
                 child: LiveSessionsCard(),
               ),
 
@@ -218,7 +218,7 @@ class _SessionsScreenState extends State<SessionsScreen> {
               // came back — the rest are things you have not started.
               const SizedBox(height: AppSpacing.s8),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                 child: SectionHeader(
                   title: 'Recently Played',
                   onSeeAll: () => Navigator.of(context)
@@ -230,7 +230,7 @@ class _SessionsScreenState extends State<SessionsScreen> {
                 height: 150,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                  padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                   itemCount: _recentlyPlayed.length,
                   separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.s3),
                   itemBuilder: (context, index) {
@@ -250,7 +250,7 @@ class _SessionsScreenState extends State<SessionsScreen> {
 
               const SizedBox(height: AppSpacing.s8),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                 child: SectionHeader(
                   title: 'Recreate from Community',
                   action: 'All Categories',
@@ -263,7 +263,7 @@ class _SessionsScreenState extends State<SessionsScreen> {
                 height: 40,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                  padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                   itemCount: _chips.length,
                   separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.s2),
                   itemBuilder: (context, index) => PillChip(
@@ -278,7 +278,7 @@ class _SessionsScreenState extends State<SessionsScreen> {
 
               const SizedBox(height: AppSpacing.s8),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                 child: SectionHeader(title: 'Trusted Creators'),
               ),
               const SizedBox(height: AppSpacing.s4),
@@ -286,7 +286,7 @@ class _SessionsScreenState extends State<SessionsScreen> {
                 height: 116,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                  padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                   itemCount: _creators.length,
                   separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.s5),
                   itemBuilder: (context, index) {
@@ -322,12 +322,12 @@ class _SessionsScreenState extends State<SessionsScreen> {
 
               const SizedBox(height: AppSpacing.s8),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                 child: SectionHeader(title: 'Monthly Challenge!'),
               ),
               const SizedBox(height: AppSpacing.s4),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                 child: AspectRatio(
                   aspectRatio: 362 / 240,
                   child: ClipRRect(
@@ -425,7 +425,7 @@ class _SessionsScreenState extends State<SessionsScreen> {
 
               const SizedBox(height: AppSpacing.s8),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                 child: SectionHeader(
                   title: 'Picked for You',
                   onSeeAll: () => Navigator.of(context)
@@ -437,7 +437,7 @@ class _SessionsScreenState extends State<SessionsScreen> {
 
               const SizedBox(height: AppSpacing.s8),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                 child: SectionHeader(
                   title: 'Sessions with Biggest Impact',
                   onSeeAll: () => Navigator.of(context)

@@ -12,7 +12,6 @@ library;
 
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
-import 'app_spacing.dart';
 
 class AppTextStyles {
   AppTextStyles._();
@@ -33,84 +32,93 @@ class AppTextStyles {
     );
   }
 
-  static TextStyle get headlineLg => _base(
-        fontSize: 28,
-        fontWeight: FontWeight.w700,
-        lineHeight: AppLineHeight.tight,
-      );
+  /// Every step below is the web app's `--text-*` scale, which is the Figma
+  /// scale: size, weight and line height all come across unchanged, so a
+  /// heading set as a title on one platform is the same heading on the other.
+  /// Line heights are given as multipliers of the size, since Flutter's
+  /// `height` is a ratio where CSS states the pixels: 40/32, 28/20 and so on.
 
+  /// 32/40 — the banner and closing-CTA headlines.
   static TextStyle get headlineMd => _base(
-        fontSize: 22,
-        fontWeight: FontWeight.w700,
-        lineHeight: AppLineHeight.tight,
-      );
-
-  static TextStyle get titleMd => _base(
-        fontSize: 17,
+        fontSize: 32,
         fontWeight: FontWeight.w600,
-        lineHeight: AppLineHeight.snug,
+        lineHeight: 40 / 32,
       );
 
-  static TextStyle get bodyLg => _base(
-        fontSize: 16,
-        fontWeight: FontWeight.w400,
-        lineHeight: AppLineHeight.normal,
-      );
-
-  static TextStyle get bodyMd => _base(
-        fontSize: 15,
-        fontWeight: FontWeight.w400,
-        lineHeight: AppLineHeight.normal,
-        color: AppColors.textSecondary,
-      );
-
-  static TextStyle get bodySm => _base(
-        fontSize: 13,
-        fontWeight: FontWeight.w400,
-        lineHeight: AppLineHeight.normal,
-        color: AppColors.textSecondary,
-      );
-
-  /// 10px — the smallest text in the system: card meta, stat labels, hints.
-  static TextStyle get caption => _base(
-        fontSize: 11,
-        fontWeight: FontWeight.w400,
-        lineHeight: AppLineHeight.snug,
-        color: AppColors.textSecondary,
-      );
-
-  /// Uppercase section label — the accordion rows on Session detail and the
-  /// small headings on Recreate.
-  static TextStyle get overline => _base(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        lineHeight: AppLineHeight.snug,
-        letterSpacing: 1.4,
-      );
-
+  /// 24/32 — screen titles.
   static TextStyle get titleLg => _base(
         fontSize: 24,
         fontWeight: FontWeight.w600,
-        lineHeight: AppLineHeight.tight,
+        lineHeight: 32 / 24,
       );
 
-  static TextStyle get label => _base(
+  /// 20/28 — section headings.
+  static TextStyle get titleMd => _base(
+        fontSize: 20,
+        fontWeight: FontWeight.w500,
+        lineHeight: 28 / 20,
+      );
+
+  /// 16/24 — running text.
+  static TextStyle get bodyLg => _base(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        lineHeight: 24 / 16,
+      );
+
+  /// 16/24, secondary — running text that is not the point of the screen.
+  static TextStyle get bodyMd => _base(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        lineHeight: 24 / 16,
+        color: AppColors.textSecondary,
+      );
+
+  /// 14/20 — the workhorse: card copy, list rows, sheet bodies.
+  static TextStyle get bodySm => _base(
         fontSize: 14,
-        fontWeight: FontWeight.w600,
-        lineHeight: AppLineHeight.snug,
+        fontWeight: FontWeight.w400,
+        lineHeight: 20 / 14,
+        color: AppColors.textSecondary,
       );
 
+  /// 10/14 — the smallest text in the system: card meta, stat labels, hints.
+  static TextStyle get caption => _base(
+        fontSize: 10,
+        fontWeight: FontWeight.w400,
+        lineHeight: 14 / 10,
+        color: AppColors.textSecondary,
+      );
+
+  /// 12/16 — buttons, chips, counts and anything that names a control.
+  static TextStyle get label => _base(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        lineHeight: 16 / 12,
+      );
+
+  /// The label, tracked out and set in caps — the accordion rows on Session
+  /// detail and the small headings on Recreate.
+  static TextStyle get overline => _base(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        lineHeight: 16 / 12,
+        letterSpacing: 1.4,
+      );
+
+  /// The primary button: body size, semibold, on the button's own foreground.
   static TextStyle get buttonLg => _base(
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        lineHeight: AppLineHeight.snug,
+        lineHeight: 24 / 16,
         color: AppColors.buttonPrimaryForeground,
       );
 
+  /// A link in running text, and the "See All" beside a section heading.
   static TextStyle get link => _base(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        lineHeight: AppLineHeight.snug,
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        lineHeight: 16 / 12,
         color: AppColors.textBrand,
       );
 }

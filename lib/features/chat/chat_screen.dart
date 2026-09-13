@@ -303,7 +303,8 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(AppPadding.md),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppPadding.page, vertical: AppPadding.md),
               child: Row(
                 children: [
                   Builder(
@@ -331,7 +332,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Expanded(
               child: ListView(
                 controller: _scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                 children: [
                   Center(
                     child: Container(
@@ -364,7 +365,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 height: 40,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                  padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                   itemCount: _suggestions.length,
                   separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.s2),
                   itemBuilder: (context, index) => OutlinedButton.icon(
@@ -382,7 +383,7 @@ class _ChatScreenState extends State<ChatScreen> {
               const SizedBox(height: AppSpacing.s2),
               Padding(
                 padding: const EdgeInsets.fromLTRB(
-                    AppPadding.lg, 0, AppPadding.lg, AppSpacing.s2),
+                    AppPadding.page, 0, AppPadding.page, AppSpacing.s2),
                 child: _composerBar(),
               ),
             ],
@@ -705,7 +706,7 @@ class _PublishSheet extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(
-          AppPadding.lg, AppSpacing.s10, AppPadding.lg, AppSpacing.s6),
+          AppPadding.page, AppSpacing.s10, AppPadding.page, AppSpacing.s6),
       decoration: const BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl2)),
