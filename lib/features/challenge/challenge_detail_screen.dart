@@ -87,13 +87,16 @@ class _TrendMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      size: const Size(10, 7),
-      painter: _TrianglePainter(
-        up: trend == Trend.up,
-        color: trend == Trend.up
-            ? AppColors.feedbackSuccess
-            : AppColors.feedbackError,
+    final up = trend == Trend.up;
+    return Semantics(
+      label: up ? 'Moved up' : 'Moved down',
+      image: true,
+      child: CustomPaint(
+        size: const Size(10, 7),
+        painter: _TrianglePainter(
+          up: up,
+          color: up ? AppColors.feedbackSuccess : AppColors.feedbackError,
+        ),
       ),
     );
   }

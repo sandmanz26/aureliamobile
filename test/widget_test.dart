@@ -356,6 +356,23 @@ void main() {
       expect(find.text('Thanks — that’s logged.'), findsOneWidget);
     });
 
+    testWidgets('Profile shows what this account published', (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/profile');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Adam Nilson'), findsOneWidget);
+      expect(find.text('Dubai, UAE'), findsOneWidget);
+      // The counts are this profile's, not the shelf's.
+      expect(find.text('18,513'), findsOneWidget);
+      expect(find.text('Dolphins frequency'), findsOneWidget);
+      // Every card offers the recreate the profile is there to invite.
+      expect(find.text('Recreate'), findsNWidgets(4));
+    });
+
     testWidgets('Notifications group by age and the chips narrow them',
         (tester) async {
       await _boot(tester);

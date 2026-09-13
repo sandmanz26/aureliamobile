@@ -223,13 +223,17 @@ class _RecreateScreenState extends State<RecreateScreen> {
                     style: AppTextStyles.bodySm.copyWith(color: AppColors.textPrimary)),
               ],
             ),
-            Slider(
-              value: _minutes,
-              min: 3,
-              max: 60,
-              divisions: 57,
-              activeColor: AppColors.brandEmphasis,
-              onChanged: (value) => setState(() => _minutes = value),
+            Semantics(
+              label: 'Session length in minutes',
+              child: Slider(
+                value: _minutes,
+                min: 3,
+                max: 60,
+                divisions: 57,
+                activeColor: AppColors.brandEmphasis,
+                semanticFormatterCallback: (value) => '${value.round()} minutes',
+                onChanged: (value) => setState(() => _minutes = value),
+              ),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

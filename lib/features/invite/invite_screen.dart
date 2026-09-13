@@ -95,32 +95,39 @@ class _InviteScreenState extends State<InviteScreen> {
                     child: Row(
                       children: [
                         Expanded(
-                          child: Text(
-                            _inviteLink,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTextStyles.bodyMd,
+                          child: Semantics(
+                            label: 'Your invite link',
+                            readOnly: true,
+                            child: Text(
+                              _inviteLink,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.bodyMd,
+                            ),
                           ),
                         ),
                         GestureDetector(
                           onTap: _copy,
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: _copied ? AppColors.feedbackSuccess : null,
-                              gradient: _copied
-                                  ? null
-                                  : const LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [Color(0xFFFFA83B), Color(0xFFF2801A)],
-                                    ),
+                          child: Tooltip(
+                            message: _copied ? 'Link copied' : 'Copy invite link',
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: _copied ? AppColors.feedbackSuccess : null,
+                                gradient: _copied
+                                    ? null
+                                    : const LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [Color(0xFFFFA83B), Color(0xFFF2801A)],
+                                      ),
+                              ),
+                              child: Icon(_copied ? Icons.check : Icons.copy,
+                                  size: 18, color: AppColors.iconInverse),
                             ),
-                            child: Icon(_copied ? Icons.check : Icons.copy,
-                                size: 18, color: AppColors.iconInverse),
                           ),
                         ),
                       ],
