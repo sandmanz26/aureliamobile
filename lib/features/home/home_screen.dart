@@ -317,8 +317,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(AppRadius.xl2),
                     gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
                       colors: [Color(0xFF3C2405), Color(0xFFFF881B)],
                     ),
                   ),
@@ -326,6 +326,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Text(
                         'Casual Intelligence for Global Community',
+                        textAlign: TextAlign.center,
                         style: AppTextStyles.headlineMd
                             .copyWith(color: AppColors.textInverse),
                       ),
@@ -336,15 +337,20 @@ class _HomeScreenState extends State<HomeScreen> {
                             .copyWith(color: const Color(0xE6FFFFFF)),
                       ),
                       const SizedBox(height: AppSpacing.s6),
-                      ElevatedButton.icon(
+                      OutlinedButton(
                         onPressed: () => _gate('/chat'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.surface,
-                          foregroundColor: AppColors.textPrimary,
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: Colors.white.withValues(alpha: 0.12),
+                          foregroundColor: AppColors.textInverse,
+                          side: BorderSide(
+                              color: Colors.white.withValues(alpha: 0.35)),
                           minimumSize: const Size(0, 52),
+                          padding: const EdgeInsets.symmetric(horizontal: 28),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.full),
+                          ),
                         ),
-                        icon: const Icon(Icons.repeat, size: 16),
-                        label: const Text('Get Started'),
+                        child: const Text('Get Started'),
                       ),
                     ],
                   ),
@@ -663,12 +669,14 @@ class _GenerativeWellnessBanner extends StatelessWidget {
           const SizedBox(height: AppSpacing.s8),
           // The left card sits flush against the left edge of the screen with
           // all four corners visible; the pair bleeds past the *right* edge.
-          // The 24 of left padding is tied to the rotation, not eyeballed: at
-          // -10deg a 180x286 card measures 227 across once turned, putting its
-          // corner 23.5 left of its layout box. Transform.rotate does not
-          // affect layout, so the overflow is clipped rather than laid out.
+          // Both numbers here are derived from the card width, not eyeballed:
+          // a card turned -10deg measures 1.26 times its width, so each corner
+          // hangs 0.13 widths outside its box — that overhang is the left
+          // padding, and it is what lets the left card sit flush to the screen
+          // edge with all four corners visible. The band is 1.78 widths tall.
+          // Transform.rotate does not affect layout, so the rest is clipped.
           SizedBox(
-            height: 300,
+            height: promoCardWidth(context) * 1.78,
             child: ClipRect(
               child: OverflowBox(
                 maxWidth: double.infinity,
@@ -676,7 +684,7 @@ class _GenerativeWellnessBanner extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const SizedBox(width: 24),
+                    SizedBox(width: promoCardWidth(context) * 0.13),
                     Transform.rotate(
                       angle: -10 * math.pi / 180,
                       child: const _PromoCard(
@@ -728,6 +736,13 @@ class _GenerativeWellnessBanner extends StatelessWidget {
   }
 }
 
+/// The pair's one number. At a 402pt screen this lands on the Figma's 180, and
+/// it stops at 280 so the cards scale without taking over a tablet.
+double promoCardWidth(BuildContext context) =>
+    MediaQuery.of(context).size.width.clamp(0, 622) * 0.45 < 150
+        ? 150
+        : (MediaQuery.of(context).size.width * 0.45).clamp(150, 280);
+
 class _PromoCard extends StatelessWidget {
   const _PromoCard({required this.photo, required this.gradient});
 
@@ -736,9 +751,11 @@ class _PromoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final width = promoCardWidth(context);
     return SizedBox(
-      width: 180,
-      height: 286,
+      width: width,
+      // A card is 1.589 times as tall as it is wide — 180:286.
+      height: width * 286 / 180,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.xl2),
         child: Stack(

@@ -4,7 +4,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/aurelia_logo.dart';
-import '../../core/widgets/community_card.dart';
+import '../../core/widgets/session_grid_card.dart';
 import '../../core/widgets/cover_image.dart';
 import '../../core/widgets/photo_circle.dart';
 import '../../core/widgets/section_header.dart';
@@ -23,16 +23,26 @@ class SessionsScreen extends StatefulWidget {
 }
 
 class _SessionsScreenState extends State<SessionsScreen> {
-  String _chip = 'All';
+  String _chip = kAllCategories;
 
-  static const _chips = [
-    'All',
-    'Meditations (12.5k)',
-    'Music (8.3k)',
-    'Energy (3.1k)',
-    'Sleep (13.4k)',
-    'Calm (22.3k)',
+  /// Sessions part-way through, with how far in they are.
+  static const _recentlyPlayed = <(String, int, double)>[
+    ('inner-frequency', 5, 0.62),
+    ('quiet-space', 9, 0.28),
+    ('rainy-mind', 14, 0.81),
   ];
+
+  static final _chips = <String>[
+    kAllCategories,
+    for (final category in kCategories) category.label,
+  ];
+
+  static String _categoryFor(String chip) {
+    for (final category in kCategories) {
+      if (category.label == chip) return category.name;
+    }
+    return kAllCategories;
+  }
 
   static const _quickStart = [
     ('Affirmations', 'Personalized exprience.', 'affirmations',
@@ -49,26 +59,39 @@ class _SessionsScreenState extends State<SessionsScreen> {
   ];
 
   static const _challengeStats = [
-    ('6 of 30', 'Your day'),
-    ('12.4k', 'Joined'),
-    ('8 min', 'Per day'),
+    (Icons.monetization_on_outlined, '250 pts'),
+    (Icons.group_outlined, '2.3k joined'),
+    (Icons.schedule, '30 days'),
   ];
 
-  Widget _shelf(Shelf shelf) {
-    final sessions = sessionsOnShelf(shelf);
+  Widget _shelf(Shelf shelf, {bool filtered = false}) {
+    final sessions =
+        sessionsOnShelf(shelf, filtered ? _categoryFor(_chip) : kAllCategories);
+    if (sessions.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+        child: Text('Nothing in $_chip yet — try another category.',
+            style: AppTextStyles.bodySm),
+      );
+    }
     return SizedBox(
-      height: 230,
+      height: 303,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
         itemCount: sessions.length,
         separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.s3),
-        itemBuilder: (context, index) => CommunityCard(
-          session: sessions[index],
-          onOpen: () =>
-              Navigator.of(context).pushNamed('/session', arguments: sessions[index].slug),
-          onRecreate: () =>
-              Navigator.of(context).pushNamed('/recreate', arguments: sessions[index].slug),
+        // The same card the See All grid uses, at the design's 228x303.
+        itemBuilder: (context, index) => SizedBox(
+          width: 228,
+          child: SessionGridCard(
+            session: sessions[index],
+            aspectRatio: 228 / 303,
+            onOpen: () =>
+                Navigator.of(context).pushNamed('/session', arguments: sessions[index].slug),
+            onRecreate: () =>
+                Navigator.of(context).pushNamed('/recreate', arguments: sessions[index].slug),
+          ),
         ),
       ),
     );
@@ -106,6 +129,12 @@ class _SessionsScreenState extends State<SessionsScreen> {
                     const SizedBox(width: AppSpacing.s3),
                     Expanded(child: Text('Explore', style: AppTextStyles.titleLg)),
                     const CoinPill(),
+                    const SizedBox(width: AppSpacing.s2),
+                    CircleSurfaceButton(
+                      icon: Icons.bookmark_border,
+                      tooltip: 'Saved sessions',
+                      onPressed: () {},
+                    ),
                   ],
                 ),
               ),
@@ -184,11 +213,47 @@ class _SessionsScreenState extends State<SessionsScreen> {
                 child: LiveSessionsCard(),
               ),
 
+              // Sessions in progress. The only shelf with a progress bar,
+              // because it is the only one where "how far in am I" is why you
+              // came back — the rest are things you have not started.
+              const SizedBox(height: AppSpacing.s8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                child: SectionHeader(
+                  title: 'Recently Played',
+                  onSeeAll: () => Navigator.of(context)
+                      .pushNamed('/see-all', arguments: Shelf.picked),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.s4),
+              SizedBox(
+                height: 150,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
+                  itemCount: _recentlyPlayed.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.s3),
+                  itemBuilder: (context, index) {
+                    final (slug, minutes, progress) = _recentlyPlayed[index];
+                    final session = findSession(slug);
+                    if (session == null) return const SizedBox.shrink();
+                    return _RecentCard(
+                      session: session,
+                      minutes: minutes,
+                      progress: progress,
+                      onTap: () => Navigator.of(context)
+                          .pushNamed('/session', arguments: session.slug),
+                    );
+                  },
+                ),
+              ),
+
               const SizedBox(height: AppSpacing.s8),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppPadding.lg),
                 child: SectionHeader(
                   title: 'Recreate from Community',
+                  action: 'All Categories',
                   onSeeAll: () => Navigator.of(context)
                       .pushNamed('/see-all', arguments: Shelf.community),
                 ),
@@ -209,7 +274,7 @@ class _SessionsScreenState extends State<SessionsScreen> {
                 ),
               ),
               const SizedBox(height: AppSpacing.s4),
-              _shelf(Shelf.community),
+              _shelf(Shelf.community, filtered: true),
 
               const SizedBox(height: AppSpacing.s8),
               Padding(
@@ -319,28 +384,32 @@ class _SessionsScreenState extends State<SessionsScreen> {
                                     .copyWith(color: const Color(0xE6FFFFFF)),
                               ),
                               const SizedBox(height: AppSpacing.s3),
-                              Row(
+                              // Three facts as pills, as the design sets them.
+                              Wrap(
+                                spacing: AppSpacing.s2,
+                                runSpacing: AppSpacing.s2,
                                 children: [
-                                  for (final (value, label) in _challengeStats)
-                                    Expanded(
-                                      child: Container(
-                                        margin: const EdgeInsets.only(right: AppSpacing.s2),
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: AppSpacing.s2),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0x33FFFFFF),
-                                          borderRadius: BorderRadius.circular(AppRadius.lg),
-                                        ),
-                                        child: Column(
-                                          children: [
-                                            Text(value,
-                                                style: AppTextStyles.label.copyWith(
-                                                    color: AppColors.textInverse)),
-                                            Text(label,
-                                                style: AppTextStyles.caption.copyWith(
-                                                    color: const Color(0xCCFFFFFF))),
-                                          ],
-                                        ),
+                                  for (final (icon, label) in _challengeStats)
+                                    Container(
+                                      height: 28,
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: AppSpacing.s3),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0x33FFFFFF),
+                                        borderRadius:
+                                            BorderRadius.circular(AppRadius.full),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(icon,
+                                              size: 12,
+                                              color: AppColors.textInverse),
+                                          const SizedBox(width: 6),
+                                          Text(label,
+                                              style: AppTextStyles.caption.copyWith(
+                                                  color: AppColors.textInverse)),
+                                        ],
                                       ),
                                     ),
                                 ],
@@ -377,6 +446,117 @@ class _SessionsScreenState extends State<SessionsScreen> {
               ),
               const SizedBox(height: AppSpacing.s4),
               _shelf(Shelf.impact),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A session you are part-way through.
+class _RecentCard extends StatelessWidget {
+  const _RecentCard({
+    required this.session,
+    required this.minutes,
+    required this.progress,
+    required this.onTap,
+  });
+
+  final SessionRecord session;
+  final int minutes;
+  final double progress;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 236,
+        height: 150,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          child: Stack(
+            children: [
+              CoverImage(
+                  photo: session.photo,
+                  gradient: session.gradient,
+                  width: 480,
+                  height: 300),
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.s3),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.25),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.play_arrow_rounded,
+                          size: 18, color: AppColors.textInverse),
+                    ),
+                    const Spacer(),
+                    Text(
+                      session.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.bodySm.copyWith(
+                        color: AppColors.textInverse,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        PhotoCircle(
+                          photo: session.authorPhoto,
+                          size: 16,
+                          gradient: const [
+                            AppPrimitives.primary300,
+                            AppPrimitives.info300,
+                          ],
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            session.author,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.caption
+                                .copyWith(color: const Color(0xE6FFFFFF)),
+                          ),
+                        ),
+                        const Icon(Icons.schedule,
+                            size: 11, color: Color(0xE6FFFFFF)),
+                        const SizedBox(width: 4),
+                        Text('$minutes mins',
+                            style: AppTextStyles.caption
+                                .copyWith(color: const Color(0xE6FFFFFF))),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                  ],
+                ),
+              ),
+              // How far in you are, pinned to the card's bottom edge.
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  height: 4,
+                  color: Colors.white.withValues(alpha: 0.25),
+                  alignment: Alignment.centerLeft,
+                  child: FractionallySizedBox(
+                    widthFactor: progress,
+                    child: Container(color: const Color(0xFFFF881B)),
+                  ),
+                ),
+              ),
             ],
           ),
         ),

@@ -2,12 +2,20 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 
-/// Section heading, optionally with a "See All" on the right.
+/// Section heading, optionally with a link on the right.
 class SectionHeader extends StatelessWidget {
-  const SectionHeader({super.key, required this.title, this.onSeeAll});
+  const SectionHeader({
+    super.key,
+    required this.title,
+    this.onSeeAll,
+    this.action = 'See All',
+  });
 
   final String title;
   final VoidCallback? onSeeAll;
+
+  /// The link's words — the community shelf says "All Categories".
+  final String action;
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +28,7 @@ class SectionHeader extends StatelessWidget {
           GestureDetector(
             onTap: onSeeAll,
             child: Text(
-              'See All',
+              action,
               style: AppTextStyles.label.copyWith(color: AppColors.textBrand),
             ),
           ),
