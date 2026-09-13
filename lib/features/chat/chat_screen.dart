@@ -25,12 +25,15 @@ class RecreateBrief {
 
 /// What a route can hand the cockpit on arrival.
 class ChatArgs {
-  const ChatArgs({this.brief, this.startVoice = false});
+  const ChatArgs({this.brief, this.startVoice = false, this.ask});
 
   final RecreateBrief? brief;
 
   /// Opens the recorder immediately — set by Home's mic.
   final bool startVoice;
+
+  /// What the visitor typed on Home before they were sent here.
+  final String? ask;
 }
 
 /// Delivery state, as a messaging app shows it: one tick sent, two ticks read.
@@ -61,10 +64,13 @@ class _Message {
 /// one avatar and one timestamp per run, delivery ticks, a typing indicator,
 /// and voice that produces a real message instead of ending silently.
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key, this.brief, this.startVoice = false});
+  const ChatScreen({super.key, this.brief, this.startVoice = false, this.ask});
 
   final RecreateBrief? brief;
   final bool startVoice;
+
+  /// What the visitor typed on Home before they were sent here.
+  final String? ask;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -115,6 +121,34 @@ class _ChatScreenState extends State<ChatScreen> {
         text: 'Based on the diagnosis and your feedback, this is what I’d would recommend:',
       ),
     ];
+
+    // What was typed on Home arrives as the first thing said here, so the
+    // visitor does not have to write it again — including after a detour
+    // through sign-in.
+    final ask = widget.ask?.trim();
+    if (ask != null && ask.isNotEmpty) {
+      _messages.add(_Message(
+        id: _nextId++,
+        fromAurelia: false,
+        at: DateTime.now(),
+        status: DeliveryStatus.read,
+        text: ask,
+      ));
+      _typing = true;
+      _after(const Duration(milliseconds: 1400), () {
+        setState(() {
+          _typing = false;
+          _messages.add(_Message(
+            id: _nextId++,
+            fromAurelia: true,
+            at: DateTime.now(),
+            text: 'Good place to start. Give me a moment and I’ll shape '
+                'something around that.',
+          ));
+        });
+        _scrollToEnd();
+      });
+    }
 
     final brief = widget.brief;
     if (brief != null) {

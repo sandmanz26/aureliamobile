@@ -58,13 +58,28 @@ void main() {
       expect(find.text('Sign in'), findsOneWidget);
     });
 
-    testWidgets('tapping the prompt sends a visitor to sign in', (tester) async {
+    testWidgets('a visitor types first, and the ask survives sign-in',
+        (tester) async {
       await _boot(tester);
 
-      await tester.tap(find.text('Ask Aurelia..'));
+      // Typing must not bounce anyone to sign-in — that is the whole point.
+      await tester.enterText(find.byType(TextField).first, 'help me sleep better');
+      await tester.pumpAndSettle();
+      expect(find.text('Or continue using'), findsNothing);
+
+      // Sending is the commit, so that is where the account is asked for.
+      await tester.testTextInput.receiveAction(TextInputAction.send);
+      await tester.pumpAndSettle();
+      expect(find.text('Or continue using'), findsOneWidget);
+
+      // Sign in on the screen the gate put up — pushing a fresh /login would
+      // throw away the destination it remembered.
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Sign In'));
+      await tester.pump(const Duration(milliseconds: 700));
       await tester.pumpAndSettle();
 
-      expect(find.text('Or continue using'), findsOneWidget);
+      // What was typed is waiting in the thread on the other side of it.
+      expect(find.text('help me sleep better'), findsOneWidget);
     });
   });
 

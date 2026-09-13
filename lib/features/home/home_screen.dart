@@ -170,7 +170,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: AppSpacing.s6),
                     _AskAureliaField(
-                      onTap: () => _gate('/chat'),
+                      // An empty send still opens chat — nothing to carry, but
+                      // the tap plainly meant "take me there".
+                      onSubmit: (text) => _gate('/chat',
+                          arguments: text.isEmpty ? null : ChatArgs(ask: text)),
                       onVoice: _gateVoice,
                     ),
                   ],
@@ -357,52 +360,95 @@ class _HomeScreenState extends State<HomeScreen> {
 
 /// The prompt field. Tapping it is the moment a visitor commits, so that is
 /// where the sign-in ask lands — not on page load.
-class _AskAureliaField extends StatelessWidget {
-  const _AskAureliaField({required this.onTap, required this.onVoice});
+/// A composer, not a search field: sized for a sentence about how you want to
+/// feel, with the actions under what you typed rather than crowding the end of
+/// the line.
+///
+/// A visitor can type here without an account. The ask lands on send, not on
+/// the first keystroke: someone who has just written what they want is far
+/// likelier to finish signing up than someone stopped before saying anything,
+/// and what they typed travels with them so it never has to be written twice.
+class _AskAureliaField extends StatefulWidget {
+  const _AskAureliaField({required this.onSubmit, required this.onVoice});
 
-  final VoidCallback onTap;
+  final ValueChanged<String> onSubmit;
   final VoidCallback onVoice;
 
   @override
+  State<_AskAureliaField> createState() => _AskAureliaFieldState();
+}
+
+class _AskAureliaFieldState extends State<_AskAureliaField> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() => widget.onSubmit(_controller.text.trim());
+
+  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 56,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          border: Border.all(color: AppColors.border),
-          borderRadius: BorderRadius.circular(AppRadius.full),
-        ),
-        child: Row(
-          children: [
-            Expanded(child: Text('Ask Aurelia..', style: AppTextStyles.bodyMd)),
-            GestureDetector(
-              onTap: onVoice,
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: const BoxDecoration(
-                  color: AppColors.backgroundElevated,
-                  shape: BoxShape.circle,
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.s4, AppSpacing.s4 - 2, AppSpacing.s4, 10),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border.all(color: const Color(0xFFEFA63C), width: 1.5),
+        borderRadius: BorderRadius.circular(AppRadius.xl2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextField(
+            controller: _controller,
+            textInputAction: TextInputAction.send,
+            onSubmitted: (_) => _submit(),
+            style: AppTextStyles.bodyMd.copyWith(color: AppColors.textPrimary),
+            decoration: InputDecoration(
+              isDense: true,
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.zero,
+              hintText: 'Ask Aurelia..',
+              hintStyle: AppTextStyles.bodyMd,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s3),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              GestureDetector(
+                onTap: widget.onVoice,
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: const BoxDecoration(
+                    color: AppColors.backgroundElevated,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.mic_none,
+                      size: 17, color: AppColors.iconDefault),
                 ),
-                child: const Icon(Icons.mic_none,
-                    size: 16, color: AppColors.iconDefault),
               ),
-            ),
-            const SizedBox(width: AppSpacing.s2),
-            Container(
-              width: 32,
-              height: 32,
-              decoration: const BoxDecoration(
-                color: AppColors.iconDefault,
-                shape: BoxShape.circle,
+              const SizedBox(width: 10),
+              GestureDetector(
+                onTap: _submit,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
+                    color: AppColors.iconDefault,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.arrow_upward,
+                      size: 18, color: AppColors.iconInverse),
+                ),
               ),
-              child: const Icon(Icons.arrow_upward, size: 16, color: AppColors.iconInverse),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }
