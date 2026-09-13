@@ -712,6 +712,7 @@ const kSessions = <SessionRecord>[
       LineageStep(title: 'Golden Hour', author: 'Nina Harper', note: 'Wrote the release cue set'),
     ],
     safety: [
+      'Not a treatment for any medical condition.',
     ],
     shelves: [Shelf.community, Shelf.picked],
   ),
@@ -864,6 +865,8 @@ const kSessions = <SessionRecord>[
       LineageStep(title: 'Slow Piano Drift', author: 'Theo Lindqvist', note: 'Recorded the piano and kept the room in'),
     ],
     safety: [
+      'Background music, not a focus treatment.',
+      'Not a treatment for any medical condition.',
     ],
     shelves: [Shelf.community, Shelf.picked],
   ),
