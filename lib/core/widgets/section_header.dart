@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
 import '../theme/app_text_styles.dart';
 
 /// Section heading, optionally with a link on the right.
@@ -58,7 +59,7 @@ class PillChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: selected ? AppColors.iconDefault : AppColors.backgroundElevated,
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AppRadius.full),
         ),
         child: Text(
           label,

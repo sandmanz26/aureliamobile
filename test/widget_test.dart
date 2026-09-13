@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aurelia_mobile/core/data/sessions.dart' show Shelf, sessionsOnShelf;
 import 'package:aurelia_mobile/core/widgets/aurelia_logo.dart';
+import 'package:aurelia_mobile/core/widgets/community_network.dart';
 import 'package:aurelia_mobile/core/widgets/section_header.dart';
 import 'package:aurelia_mobile/core/widgets/session_grid_card.dart';
 import 'package:aurelia_mobile/main.dart';
@@ -56,6 +57,28 @@ void main() {
       expect(find.text('Recreate from Community'), findsOneWidget);
       // A visitor has no balance, so the header offers the account instead.
       expect(find.text('Sign in'), findsOneWidget);
+    });
+
+    testWidgets('the closing CTA sits inside the community network',
+        (tester) async {
+      await _boot(tester);
+
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('home-cta')),
+        600,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      // The drawing is the argument the card then states in words, so it is
+      // wider than the content column and the card overlaps its foot.
+      final drawing = tester.getRect(find.byType(CommunityNetwork));
+      final card = tester.getRect(find.byKey(const ValueKey('home-cta')));
+      expect(drawing.left, 0);
+      expect(drawing.width, 420);
+      expect(card.left, 24);
+      expect(drawing.bottom - card.top, closeTo(24, 0.5));
+      expect(find.text('Get Started'), findsOneWidget);
     });
 
     testWidgets('a visitor types first, and the ask survives sign-in',
@@ -214,6 +237,40 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.textContaining('keep the ocean sound'), findsOneWidget);
+    });
+
+    testWidgets('publishing runs from the header menu through to a tick',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/chat');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('More options'));
+      await tester.pumpAndSettle();
+      // Insights and Settings are in the menu but inert until those ship.
+      expect(find.text('Insights'), findsOneWidget);
+      expect(find.text('Settings'), findsOneWidget);
+
+      // Pumped frame by frame, not settled: the spinner never stops, so
+      // pumpAndSettle would run the fake clock straight past the 2.2s wait.
+      await tester.tap(find.text('Publish'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('Publishing your Session…'), findsOneWidget);
+      expect(find.text('Cancel'), findsOneWidget);
+
+      // The sheet swaps its spinner for the tick in place, rather than
+      // replacing itself with a second sheet.
+      await tester.pump(const Duration(milliseconds: 2400));
+      expect(find.text('Session Published!'), findsOneWidget);
+      expect(find.text('View Session'), findsOneWidget);
+
+      await tester.tap(find.text('View Session'));
+      await tester.pumpAndSettle();
+      expect(find.text('Create the space you imagine.'), findsOneWidget);
     });
   });
 

@@ -33,6 +33,7 @@ class ProfileScreen extends StatelessWidget {
                     builder: (context) => CircleSurfaceButton(
                       icon: Icons.menu,
                       tooltip: 'Open menu',
+                      size: 44,
                       onPressed: () => Scaffold.of(context).openDrawer(),
                     ),
                   ),

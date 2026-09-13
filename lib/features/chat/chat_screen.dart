@@ -255,6 +255,39 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  /// Publishing is a bottom sheet, not a page: the session is still on screen
+  /// behind it, and the sheet swaps its spinner for a tick in place.
+  void _publish() {
+    var published = false;
+    late StateSetter refresh;
+    final timer = Timer(const Duration(milliseconds: 2200), () {
+      published = true;
+      refresh(() {});
+    });
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: AppColors.iconStrong.withValues(alpha: 0.4),
+      isDismissible: false,
+      enableDrag: false,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          refresh = setSheetState;
+          return _PublishSheet(
+            published: published,
+            onCancel: () => Navigator.of(sheetContext).pop(),
+            onView: () {
+              Navigator.of(sheetContext).pop();
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/home', (route) => route.isFirst);
+            },
+          );
+        },
+      ),
+    ).whenComplete(timer.cancel);
+  }
+
   String _clock(DateTime at) {
     final hour = at.hour % 12 == 0 ? 12 : at.hour % 12;
     final period = at.hour < 12 ? 'AM' : 'PM';
@@ -277,17 +310,21 @@ class _ChatScreenState extends State<ChatScreen> {
                     builder: (context) => CircleSurfaceButton(
                       icon: Icons.menu,
                       tooltip: 'Open menu',
+                      size: 44,
                       onPressed: () => Scaffold.of(context).openDrawer(),
                     ),
                   ),
                   const Spacer(),
-                  const CoinPill(),
-                  const SizedBox(width: AppSpacing.s2),
                   CircleSurfaceButton(
-                    icon: Icons.more_horiz,
-                    tooltip: 'More',
+                    icon: Icons.play_arrow_rounded,
+                    tooltip: 'Play session',
+                    size: 44,
                     onPressed: () {},
                   ),
+                  const SizedBox(width: AppSpacing.s2),
+                  const CoinPill.ringed(),
+                  const SizedBox(width: AppSpacing.s2),
+                  _ChatMenuButton(onPublish: _publish),
                 ],
               ),
             ),
@@ -599,6 +636,145 @@ class _TypingDotsState extends State<_TypingDots> with SingleTickerProviderState
           ],
         );
       },
+    );
+  }
+}
+
+/// The chat header's ⋯ button and its dropdown (Figma node "dropdown",
+/// 140x175). Settings and Insights are inert until those screens ship.
+class _ChatMenuButton extends StatelessWidget {
+  const _ChatMenuButton({required this.onPublish});
+
+  final VoidCallback onPublish;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<String>(
+      tooltip: 'More options',
+      offset: const Offset(0, 52),
+      color: AppColors.surface,
+      elevation: 8,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints.tightFor(width: 140),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+      ),
+      onSelected: (item) {
+        if (item == 'Publish') onPublish();
+      },
+      itemBuilder: (context) => [
+        for (final item in ['Insights', 'Settings', 'Publish'])
+          PopupMenuItem(
+            value: item,
+            height: 44,
+            padding: const EdgeInsets.symmetric(horizontal: AppPadding.md),
+            child: Text(item, style: AppTextStyles.bodySm),
+          ),
+      ],
+      child: Container(
+        width: 44,
+        height: 44,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          shape: BoxShape.circle,
+          boxShadow: const [
+            BoxShadow(color: Color(0x14000000), blurRadius: 8, offset: Offset(0, 2)),
+          ],
+        ),
+        child: const Icon(Icons.more_horiz, size: 20, color: AppColors.iconStrong),
+      ),
+    );
+  }
+}
+
+/// Figma "Section" 402x292 — the publishing / published bottom sheet.
+class _PublishSheet extends StatelessWidget {
+  const _PublishSheet({
+    required this.published,
+    required this.onCancel,
+    required this.onView,
+  });
+
+  final bool published;
+  final VoidCallback onCancel;
+  final VoidCallback onView;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(
+          AppPadding.lg, AppSpacing.s10, AppPadding.lg, AppSpacing.s6),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl2)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (published)
+            Container(
+              width: 64,
+              height: 64,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFFF881B), Color(0xFFFFD242), Colors.white],
+                ),
+              ),
+              child: const Icon(Icons.check_rounded,
+                  size: 32, color: AppColors.textInverse),
+            )
+          else
+            const SizedBox(
+              width: 64,
+              height: 64,
+              child: CircularProgressIndicator(
+                strokeWidth: 6,
+                color: Color(0xFFFF881B),
+                backgroundColor: Color(0x1AFF881B),
+              ),
+            ),
+          const SizedBox(height: AppSpacing.s8),
+          Text(
+            published ? 'Session Published!' : 'Publishing your Session…',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.titleMd,
+          ),
+          const SizedBox(height: AppSpacing.s2),
+          Text(
+            published
+                ? 'Your session is now ready to view.'
+                : 'Hang tight! This’ll only take a moment.',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.bodySm.copyWith(
+              fontWeight: FontWeight.w300,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          if (published)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: onView,
+                child: const Text('View Session'),
+              ),
+            )
+          else
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: onCancel,
+                child: const Text('Cancel'),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

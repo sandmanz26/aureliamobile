@@ -96,16 +96,24 @@ class _TileMarkPainter extends CustomPainter {
 }
 
 /// The coin balance pill in the app bars.
+///
+/// Two shapes, as in Figma: the app bars carry a 16px coin with the currency
+/// glyph, and the chat header carries a larger coin drawn as a ring. Both sit
+/// in the same 44px pill so the header trio lines up.
 class CoinPill extends StatelessWidget {
-  const CoinPill({super.key, this.amount = '1,323'});
+  const CoinPill({super.key, this.amount = '1,323'}) : ringed = false;
+
+  /// The chat header's variant — a 20px coin drawn as a ring.
+  const CoinPill.ringed({super.key, this.amount = '1,323'}) : ringed = true;
 
   final String amount;
+  final bool ringed;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s3),
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.full),
@@ -117,8 +125,9 @@ class CoinPill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 16,
-            height: 16,
+            width: ringed ? 20 : 16,
+            height: ringed ? 20 : 16,
+            alignment: Alignment.center,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
@@ -127,15 +136,24 @@ class CoinPill extends StatelessWidget {
                 colors: [Color(0xFFFFE682), Color(0xFFFF881B)],
               ),
             ),
-            child: const Icon(Icons.monetization_on_outlined,
-                size: 10, color: AppColors.textInverse),
+            child: ringed
+                ? Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.textInverse, width: 2),
+                    ),
+                  )
+                : const Icon(Icons.monetization_on_outlined,
+                    size: 10, color: AppColors.textInverse),
           ),
           const SizedBox(width: AppSpacing.s2),
           Text(
             amount,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
+            style: TextStyle(
+              fontSize: ringed ? 14 : 12,
+              fontWeight: ringed ? FontWeight.w400 : FontWeight.w500,
               color: AppColors.textPrimary,
             ),
           ),
