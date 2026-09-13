@@ -85,6 +85,15 @@ export function HomePage() {
   const { signedIn } = useAuth()
   const gate = useSignInGate()
   const [category, setCategory] = useState<CategoryFilter>('All')
+  const [ask, setAsk] = useState('')
+
+  function askAurelia(event: React.FormEvent) {
+    event.preventDefault()
+    const text = ask.trim()
+    // An empty send still opens chat — there is nothing to carry, but the tap
+    // clearly meant "take me there".
+    gate('/chat', text ? { ask: text } : undefined)
+  }
 
   return (
     // overflow-x-hidden: the decorative glows are deliberately larger than the
@@ -158,39 +167,41 @@ export function HomePage() {
               how you want to feel, and the actions sit under what you typed
               rather than crowding the end of the line.
 
-              Typing is the moment the visitor commits — so that is where the
-              sign-in ask lands, not on page load. */}
+              A visitor can type here without an account. The sign-in ask lands
+              on send, not on the first keystroke: someone who has just written
+              what they want is far more likely to finish signing up than
+              someone stopped before saying anything, and what they typed
+              travels with them so they never have to write it twice. */}
           <div
             className="relative mt-24 rounded-24 border-[1.5px] bg-surface-default px-16 pb-10 pt-14 text-left"
             style={{ borderColor: '#EFA63C' }}
           >
-            <input
-              placeholder="Ask Aurelia.."
-              onFocus={() => gate('/chat')}
-              onMouseDown={(event) => {
-                event.preventDefault()
-                gate('/chat')
-              }}
-              className="text-style-body h-24 w-full bg-transparent text-left text-text-primary outline-none placeholder:text-text-secondary"
-            />
-            <div className="mt-12 flex items-center justify-end gap-10">
-              <button
-                type="button"
-                aria-label="Voice input"
-                onClick={() => gate('/chat', { startVoice: true })}
-                className="u-press flex size-36 items-center justify-center rounded-full bg-background-elevated text-icon-default"
-              >
-                <Mic size={17} />
-              </button>
-              <button
-                type="button"
-                aria-label="Send"
-                onClick={() => gate('/chat')}
-                className="u-press flex size-40 items-center justify-center rounded-full bg-icon-default text-icon-inverse"
-              >
-                <ArrowUp size={18} />
-              </button>
-            </div>
+            <form onSubmit={askAurelia}>
+              <input
+                value={ask}
+                onChange={(event) => setAsk(event.target.value)}
+                placeholder="Ask Aurelia.."
+                aria-label="Ask Aurelia"
+                className="text-style-body h-24 w-full bg-transparent text-left text-text-primary outline-none placeholder:text-text-secondary"
+              />
+              <div className="mt-12 flex items-center justify-end gap-10">
+                <button
+                  type="button"
+                  aria-label="Voice input"
+                  onClick={() => gate('/chat', { startVoice: true })}
+                  className="u-press flex size-36 items-center justify-center rounded-full bg-background-elevated text-icon-default"
+                >
+                  <Mic size={17} />
+                </button>
+                <button
+                  type="submit"
+                  aria-label="Send"
+                  className="u-press flex size-40 items-center justify-center rounded-full bg-icon-default text-icon-inverse"
+                >
+                  <ArrowUp size={18} />
+                </button>
+              </div>
+            </form>
           </div>
         </section>
 

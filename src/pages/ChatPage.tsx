@@ -129,8 +129,12 @@ export function ChatPage() {
   const { openDrawer } = useDrawer()
   const { isEnabled } = useFeatureFlags()
 
-  const routeState = location.state as { recreate?: RecreateBrief; startVoice?: boolean } | null
+  const routeState = location.state as
+    | { recreate?: RecreateBrief; startVoice?: boolean; ask?: string }
+    | null
   const brief = routeState?.recreate
+  /** What the visitor typed on Home before they were sent here. */
+  const ask = routeState?.ask
 
   const [messages, setMessages] = useState<Message[]>(OPENING_MESSAGES)
   const [typing, setTyping] = useState(false)
@@ -145,6 +149,7 @@ export function ChatPage() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const nextId = useRef(OPENING_MESSAGES.length + 1)
   const briefHandled = useRef(false)
+  const askHandled = useRef(false)
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
@@ -182,6 +187,31 @@ export function ChatPage() {
     }, 1600)
     return () => window.clearTimeout(timer)
   }, [brief])
+
+  // What was typed on Home arrives as the first thing said here, so the visitor
+  // does not have to write it again — including after a detour through sign-in.
+  useEffect(() => {
+    if (!ask || askHandled.current) return
+    askHandled.current = true
+    setMessages((current) => [
+      ...current,
+      { id: nextId.current++, from: 'user', at: Date.now(), status: 'read', text: ask },
+    ])
+    setTyping(true)
+    const timer = window.setTimeout(() => {
+      setTyping(false)
+      setMessages((current) => [
+        ...current,
+        {
+          id: nextId.current++,
+          from: 'aurelia',
+          at: Date.now(),
+          text: 'Good place to start. Give me a moment and I’ll shape something around that.',
+        },
+      ])
+    }, 1400)
+    return () => window.clearTimeout(timer)
+  }, [ask])
 
   // Drives the "Creating your new session.." percentage up to 100.
   useEffect(() => {
