@@ -8,7 +8,7 @@ import '../../core/widgets/session_grid_card.dart';
 import '../../core/widgets/cover_image.dart';
 import '../../core/widgets/photo_circle.dart';
 import '../../core/widgets/section_header.dart';
-import '../home/home_screen.dart' show LiveSessionsCard, QuickStartCard;
+import '../home/home_screen.dart' show LiveSessionsCard;
 import '../shell/app_drawer.dart';
 
 /// Sessions — the browse surface behind the Sessions nav item.
@@ -191,7 +191,7 @@ class _SessionsScreenState extends State<SessionsScreen> {
                   separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.s3),
                   itemBuilder: (context, index) {
                     final (title, subtitle, photo, gradient) = _quickStart[index];
-                    return QuickStartCard(
+                    return _ExploreQuickStartCard(
                       title: title,
                       subtitle: subtitle,
                       photo: photo,
@@ -555,6 +555,98 @@ class _RecentCard extends StatelessWidget {
                     widthFactor: progress,
                     child: Container(color: const Color(0xFFFF881B)),
                   ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Explore's Quick Start card — a 160 square with a small Create pill, not
+/// Home's wider card with a play button on it. The two screens deliberately
+/// show the same seven prompts in different shapes, so this is its own widget
+/// rather than a variant flag on the Home one.
+class _ExploreQuickStartCard extends StatelessWidget {
+  const _ExploreQuickStartCard({
+    required this.title,
+    required this.subtitle,
+    required this.photo,
+    required this.gradient,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final String photo;
+  final List<Color> gradient;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 160,
+        height: 160,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              CoverImage(
+                photo: photo,
+                gradient: gradient,
+                width: 320,
+                height: 320,
+              ),
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.s3),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      height: 24,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.s2),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(AppRadius.full),
+                      ),
+                      // Center with widthFactor 1, not Container.alignment:
+                      // an alignment on the Container makes it take the whole
+                      // width it is offered, and the pill has to hug its word.
+                      child: Center(
+                        widthFactor: 1,
+                        child: Text('Create', style: AppTextStyles.caption),
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.bodySm.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textInverse,
+                          ),
+                        ),
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.caption
+                              .copyWith(color: const Color(0xE6FFFFFF)),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],
