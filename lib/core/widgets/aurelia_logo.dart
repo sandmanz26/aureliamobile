@@ -1,6 +1,6 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import 'svg_path.dart';
 import '../theme/app_spacing.dart';
 
 /// The Aurelia brand mark: a gold-to-orange tile with a sweep and a dot.
@@ -202,19 +202,55 @@ class CircleSurfaceButton extends StatelessWidget {
   }
 }
 
-/// Kept for the sign-in screen's Google button — a real brand asset would
-/// replace this, but third-party marks are not part of the token system.
+/// The Google mark on the sign-in screen's continue button — the same four
+/// paths the web draws, in the same 20x20 box, so the two builds show the
+/// same brand asset rather than a letter standing in for one.
 class GoogleMark extends StatelessWidget {
-  const GoogleMark({super.key});
+  const GoogleMark({super.key, this.size = 20});
+
+  final double size;
 
   @override
   Widget build(BuildContext context) {
-    return Transform.rotate(
-      angle: math.pi / 8,
-      child: const Text(
-        'G',
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF4285F4)),
-      ),
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(painter: _GooglePainter()),
     );
   }
+}
+
+class _GooglePainter extends CustomPainter {
+  /// path data, colour — lifted from the web component unchanged.
+  static const _paths = <(String, int)>[
+    (
+      'M19.6 10.23c0-.68-.06-1.36-.18-2H10v3.79h5.4a4.62 4.62 0 0 1-2 3.03v2.5h3.23c1.9-1.75 2.97-4.33 2.97-7.32Z',
+      0xFF4285F4,
+    ),
+    (
+      'M10 20c2.7 0 4.96-.89 6.62-2.42l-3.23-2.5c-.9.6-2.05.96-3.4.96-2.6 0-4.8-1.76-5.6-4.12H1.06v2.58A10 10 0 0 0 10 20Z',
+      0xFF34A853,
+    ),
+    (
+      'M4.4 11.92a6 6 0 0 1 0-3.84V5.5H1.06a10 10 0 0 0 0 9l3.34-2.58Z',
+      0xFFFBBC05,
+    ),
+    (
+      'M10 3.96c1.47 0 2.79.5 3.82 1.5l2.87-2.87A9.6 9.6 0 0 0 10 0 10 10 0 0 0 1.06 5.5l3.34 2.58C5.2 5.72 7.4 3.96 10 3.96Z',
+      0xFFEA4335,
+    ),
+  ];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(size.width / 20);
+    for (final (data, colour) in _paths) {
+      canvas.drawPath(parseSvgPath(data), Paint()..color = Color(colour));
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_GooglePainter oldDelegate) => false;
 }

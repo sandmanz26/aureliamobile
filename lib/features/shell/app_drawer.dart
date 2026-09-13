@@ -97,31 +97,39 @@ class AppDrawer extends StatelessWidget {
                 child: ListView(
                   padding: EdgeInsets.zero,
                   children: [
-                    if (auth.signedIn)
-                      _NavItem(
-                        icon: Icons.person_outline,
-                        avatar: 'avatar',
-                        label: 'Profile',
-                        active: current == '/profile',
-                        onTap: () => _go(context, '/profile'),
-                      )
-                    else
-                      _NavItem(
-                        icon: Icons.person_outline,
-                        label: 'Sign In',
-                        active: false,
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          Navigator.of(context).pushNamed('/login');
-                        },
-                      ),
-                    for (final (route, icon, label) in _nav)
-                      _NavItem(
-                        icon: icon,
-                        label: label,
-                        active: route == current,
-                        onTap: () => _go(context, route),
-                      ),
+                    // One column so the 4px between rows lands between them
+                    // and not after the last, as the web's `gap-4` does.
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      spacing: AppSpacing.s1,
+                      children: [
+                        if (auth.signedIn)
+                          _NavItem(
+                            icon: Icons.person_outline,
+                            avatar: 'avatar',
+                            label: 'Profile',
+                            active: current == '/profile',
+                            onTap: () => _go(context, '/profile'),
+                          )
+                        else
+                          _NavItem(
+                            icon: Icons.person_outline,
+                            label: 'Sign In',
+                            active: false,
+                            onTap: () {
+                              Navigator.of(context).pop();
+                              Navigator.of(context).pushNamed('/login');
+                            },
+                          ),
+                        for (final (route, icon, label) in _nav)
+                          _NavItem(
+                            icon: icon,
+                            label: label,
+                            active: route == current,
+                            onTap: () => _go(context, route),
+                          ),
+                      ],
+                    ),
                     const SizedBox(height: AppSpacing.s6),
                     if (auth.signedIn) ...[
                       Padding(
@@ -248,8 +256,10 @@ class _NavItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.lg),
         onTap: onTap,
         child: Padding(
+          // 14 vertical, not a step on the spacing scale: it is what the
+          // web's rows carry, and it sets the drawer's whole rhythm.
           padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.s3, vertical: AppSpacing.s3),
+              horizontal: AppSpacing.s3, vertical: 14),
           child: Row(
             children: [
               if (avatar != null)

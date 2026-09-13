@@ -82,7 +82,7 @@ class _SignInScreenState extends State<SignInScreen> {
           trailing: IconButton(
             tooltip: _obscurePassword ? 'Show password' : 'Hide password',
             icon: Icon(
-              _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+              _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
               color: AppColors.iconSecondary,
               size: 20,
             ),
