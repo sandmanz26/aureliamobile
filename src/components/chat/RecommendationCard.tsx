@@ -35,8 +35,10 @@ export function RecommendationCard({ recommendation, applied, onToggle }: Recomm
           orb is the preview, and a corner badge read as a second control. */}
       <div className="relative w-fit">
         <img src={orb} alt="" className="size-[73px] rounded-full object-cover" />
-        <span className="absolute inset-0 flex items-center justify-center text-white/75">
-          <Play size={22} fill="currentColor" />
+        <span className="absolute inset-0 flex items-center justify-center">
+          <span className="flex size-32 items-center justify-center rounded-full bg-white/30">
+            <Play size={12} fill="currentColor" className="text-white" />
+          </span>
         </span>
       </div>
 

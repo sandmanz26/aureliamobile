@@ -8,9 +8,14 @@ interface RecommendationDeckProps {
   onOpen?: () => void
 }
 
-/** Figma: a 124px square card, each one further right and a little more
- *  upright than the one in front of it. */
-const CARD = 124
+/**
+ * Figma: a card wide enough that the front one reads in full — "Increase
+ * yellow" on one line and its description on two, with neither ellipsised.
+ * That is what sets the width: at 124 the title fitted in 98px of 98 and the
+ * description wanted one pixel more than it had, so both clipped.
+ */
+const CARD_W = 148
+const CARD_H = 132
 const TILT = [-7, -5.5, -4]
 /**
  * How far each card steps right. 78 is the Figma value — enough that the cards
@@ -19,9 +24,10 @@ const TILT = [-7, -5.5, -4]
  * not scroll sideways: 214 is what the rotated front card and the column's
  * own gutters take, so the rest is what the two steps have to share.
  */
-const STEP = 'clamp(40px, (100vw - 214px) / 2, 78px)'
-/** The rotated front card's footprint: 124·cos7 + 124·sin7, rounded. */
-const FRONT = 140
+const STEP = 'clamp(40px, (100vw - 237px) / 2, 78px)'
+/** The rotated front card's footprint: w·cos7 + h·sin7, and h·cos7 + w·sin7. */
+const FRONT = 163
+const ROTATED_H = 149
 
 /**
  * The collapsed form of a recommendation set — a fanned stack with the count
@@ -49,7 +55,7 @@ export function RecommendationDeck({ recommendations, count, onOpen }: Recommend
         : {})}
       style={{
         width: `calc(${STEP} * ${cards.length - 1} + ${FRONT}px)`,
-        height: CARD + 16,
+        height: ROTATED_H + 14,
       }}
       className={`relative block shrink-0 text-left ${onOpen ? 'u-press' : ''}`}
     >
@@ -59,8 +65,8 @@ export function RecommendationDeck({ recommendations, count, onOpen }: Recommend
           className="absolute top-8 flex flex-col overflow-hidden rounded-16 border border-brand-emphasis/45 bg-surface-default p-12 shadow-sm"
           style={{
             left: `calc(${STEP} * ${index})`,
-            width: CARD,
-            height: CARD,
+            width: CARD_W,
+            height: CARD_H,
             rotate: `${TILT[index] ?? 0}deg`,
             zIndex: cards.length - index,
           }}
@@ -79,7 +85,7 @@ export function RecommendationDeck({ recommendations, count, onOpen }: Recommend
           how many changes it holds without being opened. */}
       <span
         className="text-style-label absolute z-10 flex size-28 items-center justify-center rounded-full bg-brand-default text-text-strong shadow-sm"
-        style={{ left: CARD - 14, top: -6 }}
+        style={{ left: CARD_W - 16, top: -6 }}
         aria-hidden="true"
       >
         {count}
