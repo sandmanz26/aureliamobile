@@ -32,6 +32,7 @@ import { WellnessPage } from './pages/WellnessPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { SeeAllPage } from './pages/SeeAllPage'
 import { SessionsPage } from './pages/SessionsPage'
+import { PlayerPage } from './pages/PlayerPage'
 import { RecreatePage } from './pages/RecreatePage'
 import { SessionDetailPage } from './pages/SessionDetailPage'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
@@ -132,6 +133,19 @@ export default function App() {
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          {/* Full-bleed, outside AppLayout: the art runs to the top edge and the
+              screen carries its own back/share header, so the shell's status
+              band and drawer would both sit on top of the cover. */}
+          <Route
+            path="/play/:slug"
+            element={
+              <RequireAuth>
+                <ModuleGuard module="player">
+                  <PlayerPage />
+                </ModuleGuard>
+              </RequireAuth>
+            }
+          />
           <Route element={<AppLayout />}>
             <Route
               path="/home"

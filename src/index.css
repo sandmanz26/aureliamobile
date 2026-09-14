@@ -36,6 +36,20 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* --------------------------------------------------------------- player ---
+   The line the session is speaking, over the cover art. The one place the app
+   uses a serif: Goudy Bookletter 1911 in the frame, which is a Google face and
+   the only webfont here — everything else rides the system stack. The fallback
+   is a real old-style serif rather than a generic, because the cue is set large
+   and centred and a grotesque in its place reads as a different screen. */
+.text-player-cue {
+  font-family: 'Goudy Bookletter 1911', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia,
+    serif;
+  font-size: 21px;
+  line-height: 28.5px;
+  font-weight: 400;
+}
+
 /* ---------------------------------------------------------------- touch ---
    Two things a mouse forgives and a thumb does not. */
 

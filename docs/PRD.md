@@ -169,6 +169,23 @@ material. Flag for confirmation with product and business:
   stays credited, and the coin split follows the lineage on every play. Lineage
   is a chain, not a single parent.
 
+### Playback
+
+- **The artwork is the screen, not a header on it.** Play opens a full-bleed
+  cover with the transport floating over it and no app chrome — no drawer, no
+  status band. Anything that frames the art turns a session into a page about a
+  session.
+- **The session speaks on screen.** The line being spoken sits under the art in
+  the one serif the product uses. It is there for the same reason a lyric sheet
+  is: it lets someone follow when they cannot, or will not, listen closely.
+- **What you would read lives beneath what you hear.** The sheet carries the
+  author, the title, the summary and the session's attributes, and it slides up
+  over the art rather than replacing it — leaving playback is not a condition of
+  reading about it.
+- **The summary opens in place.** Read More expands the clamped text where it
+  is. Sending someone to another screen to finish a paragraph costs them their
+  place in the session.
+
 ### Challenges
 
 - A challenge is **not a session**: it is a time-boxed streak people join, with

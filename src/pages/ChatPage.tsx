@@ -449,6 +449,7 @@ export function ChatPage() {
                 title="Sleep meditation v1.2"
                 status={sessionState === 'ready' ? 'Ready to play' : 'Creating your new session..'}
                 progress={sessionState === 'ready' ? null : progress}
+                to={sessionState === 'ready' ? '/play/dolphins-frequency' : undefined}
               />
             </div>
           )}

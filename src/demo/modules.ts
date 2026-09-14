@@ -87,6 +87,18 @@ export const DEMO_MODULES: DemoModule[] = [
     ],
   },
   {
+    id: 'player',
+    kind: 'consumer',
+    label: 'Player',
+    description: 'Playback itself — cover full-bleed, transport over the art, and the session sheet beneath.',
+    route: '/play/dolphins-frequency',
+    built: true,
+    features: [
+      { id: 'cue', label: 'Spoken cue', description: 'The line the session is on, under the art.' },
+      { id: 'readMore', label: 'Read more', description: 'The clamped summary opens in place.' },
+    ],
+  },
+  {
     id: 'sessionDetail',
     kind: 'consumer',
     label: 'Session detail',
