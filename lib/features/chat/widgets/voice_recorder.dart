@@ -38,8 +38,11 @@ class _VoiceRecorderState extends State<VoiceRecorder> {
   final _transcriptController = TextEditingController();
 
   _Phase _phase = _Phase.recording;
-  Duration _elapsed = Duration.zero;
-  List<double> _levels = List.filled(_barCount, 0.15);
+  /// Both tick nine times a second while the mic is open, and both are read
+  /// by one small widget each. Notifiers rather than state, so the ticking
+  /// rebuilds the meter and the clock and not the sheet around them.
+  final _elapsed = ValueNotifier<Duration>(Duration.zero);
+  final _levels = ValueNotifier<List<double>>(List.filled(_barCount, 0.15));
   Timer? _ticker;
   Timer? _transcribeTimer;
 
@@ -54,22 +57,25 @@ class _VoiceRecorderState extends State<VoiceRecorder> {
     _ticker?.cancel();
     _transcribeTimer?.cancel();
     _transcriptController.dispose();
+    _elapsed.dispose();
+    _levels.dispose();
     super.dispose();
   }
 
   void _startRecording() {
     _ticker?.cancel();
+    _elapsed.value = Duration.zero;
+    _levels.value = List.filled(_barCount, 0.15);
     setState(() {
       _phase = _Phase.recording;
-      _elapsed = Duration.zero;
-      _levels = List.filled(_barCount, 0.15);
       _transcriptController.clear();
     });
     _ticker = Timer.periodic(const Duration(milliseconds: 110), (_) {
-      setState(() {
-        _elapsed += const Duration(milliseconds: 110);
-        _levels = [..._levels.skip(1), 0.25 + _random.nextDouble() * 0.75];
-      });
+      _elapsed.value += const Duration(milliseconds: 110);
+      _levels.value = [
+        ..._levels.value.skip(1),
+        0.25 + _random.nextDouble() * 0.75,
+      ];
     });
   }
 
@@ -85,8 +91,8 @@ class _VoiceRecorderState extends State<VoiceRecorder> {
     });
   }
 
-  String get _duration {
-    final total = _elapsed.inSeconds;
+  static String _format(Duration elapsed) {
+    final total = elapsed.inSeconds;
     return '${total ~/ 60}:${(total % 60).toString().padLeft(2, '0')}';
   }
 
@@ -117,7 +123,8 @@ class _VoiceRecorderState extends State<VoiceRecorder> {
                 Row(
                   children: [
                     Expanded(
-                      child: Text('Transcript · $_duration', style: AppTextStyles.caption),
+                      child: Text('Transcript · ${_format(_elapsed.value)}',
+                          style: AppTextStyles.caption),
                     ),
                     GestureDetector(
                       onTap: widget.onCancel,
@@ -162,7 +169,8 @@ class _VoiceRecorderState extends State<VoiceRecorder> {
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: canSend
-                      ? () => widget.onSend(_transcriptController.text.trim(), _elapsed)
+                      ? () => widget.onSend(
+                          _transcriptController.text.trim(), _elapsed.value)
                       : null,
                   style: ElevatedButton.styleFrom(minimumSize: const Size(0, 44)),
                   icon: const Icon(Icons.check, size: 16),
@@ -202,18 +210,24 @@ class _VoiceRecorderState extends State<VoiceRecorder> {
                 style: AppTextStyles.bodySm.copyWith(color: AppColors.textStrong),
               ),
               const SizedBox(width: AppSpacing.s2),
-              Text(_duration, style: AppTextStyles.bodySm),
+              ValueListenableBuilder<Duration>(
+                valueListenable: _elapsed,
+                builder: (context, elapsed, _) =>
+                    Text(_format(elapsed), style: AppTextStyles.bodySm),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.s4),
           // Live level meter — the thing that makes it read as actually recording.
           SizedBox(
             height: 40,
-            child: Row(
+            child: ValueListenableBuilder<List<double>>(
+              valueListenable: _levels,
+              builder: (context, levels, _) => Row(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                for (final level in _levels)
+                for (final level in levels)
                   Container(
                     width: 3,
                     height: 40 * (busy ? 0.2 : level),
@@ -224,6 +238,7 @@ class _VoiceRecorderState extends State<VoiceRecorder> {
                     ),
                   ),
               ],
+              ),
             ),
           ),
           const SizedBox(height: AppSpacing.s4),

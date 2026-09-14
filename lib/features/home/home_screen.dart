@@ -179,16 +179,16 @@ class _HomeScreenState extends State<HomeScreen> {
                         const AureliaLogo(iconSize: 64, markOnly: true),
                         const SizedBox(height: AppSpacing.s5),
                         Text.rich(
-                          TextSpan(children: [
-                            const TextSpan(text: 'Create the '),
+                          const TextSpan(children: [
+                            TextSpan(text: 'Create the '),
                             TextSpan(
                               text: 'space',
                               style: TextStyle(
                                 fontStyle: FontStyle.italic,
-                                color: const Color(0xFFE9A93A),
+                                color: Color(0xFFE9A93A),
                               ),
                             ),
-                            const TextSpan(text: ' you imagine.'),
+                            TextSpan(text: ' you imagine.'),
                           ]),
                           textAlign: TextAlign.center,
                           style: AppTextStyles.headlineMd.copyWith(fontSize: 28, height: 1.25),
@@ -224,8 +224,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
 
                   const SizedBox(height: AppSpacing.s10),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: AppPadding.page),
                     child: SectionHeader(title: 'Quick Start'),
                   ),
                   const SizedBox(height: AppSpacing.s4),
@@ -256,8 +256,8 @@ class _HomeScreenState extends State<HomeScreen> {
               _GenerativeWellnessBanner(onStart: () => _gate('/chat')),
 
               const SizedBox(height: AppSpacing.s12),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppPadding.page),
                 child: SectionHeader(title: 'Recreate from Community'),
               ),
               const SizedBox(height: AppSpacing.s4),

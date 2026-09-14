@@ -1,6 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Flutter's template declares this only in the debug manifest, so
+         `flutter run` has network and a release build silently does not —
+         every cover photo falls back to its gradient and nothing says why.
+         The app loads its artwork over the network, so it belongs here. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
-        android:label="aurelia_mobile"
+        android:label="Aurelia"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

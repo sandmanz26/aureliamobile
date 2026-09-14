@@ -177,8 +177,8 @@ class _SessionsScreenState extends State<SessionsScreen> {
               ),
 
               const SizedBox(height: AppSpacing.s8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppPadding.page),
                 child: SectionHeader(title: 'Quick Start'),
               ),
               const SizedBox(height: AppSpacing.s4),
@@ -203,8 +203,8 @@ class _SessionsScreenState extends State<SessionsScreen> {
               ),
 
               const SizedBox(height: AppSpacing.s8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppPadding.page),
                 child: SectionHeader(title: 'Ongoing Live Sessions'),
               ),
               const SizedBox(height: AppSpacing.s4),
@@ -280,8 +280,8 @@ class _SessionsScreenState extends State<SessionsScreen> {
               _shelf(Shelf.community, filtered: true),
 
               const SizedBox(height: AppSpacing.s8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppPadding.page),
                 child: SectionHeader(title: 'Trusted Creators'),
               ),
               const SizedBox(height: AppSpacing.s4),
@@ -324,8 +324,8 @@ class _SessionsScreenState extends State<SessionsScreen> {
               ),
 
               const SizedBox(height: AppSpacing.s8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppPadding.page),
                 child: SectionHeader(title: 'Monthly Challenge!'),
               ),
               const SizedBox(height: AppSpacing.s4),

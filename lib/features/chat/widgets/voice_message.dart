@@ -23,7 +23,9 @@ class _VoiceMessageState extends State<VoiceMessage> {
   static const _barCount = 26;
 
   bool _playing = false;
-  double _progress = 0;
+  /// Sixteen ticks a second while a clip plays, read only by the bars. A
+  /// notifier keeps the bubble, its avatar and its timestamp out of that.
+  final _progress = ValueNotifier<double>(0);
   Timer? _timer;
   late final List<double> _bars = _waveform();
 
@@ -40,6 +42,7 @@ class _VoiceMessageState extends State<VoiceMessage> {
   @override
   void dispose() {
     _timer?.cancel();
+    _progress.dispose();
     super.dispose();
   }
 
@@ -52,14 +55,15 @@ class _VoiceMessageState extends State<VoiceMessage> {
     final step = 60 / widget.duration.inMilliseconds.clamp(1, 1 << 30);
     setState(() => _playing = true);
     _timer = Timer.periodic(const Duration(milliseconds: 60), (timer) {
-      setState(() {
-        _progress += step;
-        if (_progress >= 1) {
-          _progress = 0;
-          _playing = false;
-          timer.cancel();
-        }
-      });
+      final next = _progress.value + step;
+      if (next >= 1) {
+        _progress.value = 0;
+        timer.cancel();
+        // Reaching the end is the one tick the bubble itself cares about.
+        setState(() => _playing = false);
+      } else {
+        _progress.value = next;
+      }
     });
   }
 
@@ -101,23 +105,28 @@ class _VoiceMessageState extends State<VoiceMessage> {
               Expanded(
                 child: SizedBox(
                   height: 24,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      for (var i = 0; i < _bars.length; i++)
-                        Expanded(
-                          child: Container(
-                            height: 24 * _bars[i],
-                            margin: const EdgeInsets.symmetric(horizontal: 1),
-                            decoration: BoxDecoration(
-                              color: AppColors.iconStrong.withValues(
-                                alpha: i / _bars.length <= _progress ? 0.95 : 0.35,
+                  child: ValueListenableBuilder<double>(
+                    valueListenable: _progress,
+                    builder: (context, progress, _) => Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        for (var i = 0; i < _bars.length; i++)
+                          Expanded(
+                            child: Container(
+                              height: 24 * _bars[i],
+                              margin: const EdgeInsets.symmetric(horizontal: 1),
+                              decoration: BoxDecoration(
+                                color: AppColors.iconStrong.withValues(
+                                  alpha:
+                                      i / _bars.length <= progress ? 0.95 : 0.35,
+                                ),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.full),
                               ),
-                              borderRadius: BorderRadius.circular(AppRadius.full),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

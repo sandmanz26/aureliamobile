@@ -21,8 +21,21 @@ linter:
   # `// ignore_for_file: name_of_lint` syntax on the line or in the file
   # producing the lint.
   rules:
-    # avoid_print: false  # Uncomment to disable the `avoid_print` rule
-    # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+    # Const widgets are built once and skipped on every rebuild after that.
+    # In a UI this declarative, that is the single largest, cheapest win
+    # available, and it is only reliable if the analyzer enforces it.
+    - prefer_const_constructors
+    - prefer_const_constructors_in_immutables
+    - prefer_const_declarations
+    - prefer_const_literals_to_create_immutables
+
+    # A Container with nothing but a child is a widget and a layout pass for
+    # nothing; SizedBox for spacing says what it is and costs less.
+    - avoid_unnecessary_containers
+    - sized_box_for_whitespace
+
+    # Catches the class of bug where an async gap outlives the widget.
+    - use_build_context_synchronously
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

@@ -128,7 +128,10 @@ class _ChatScreenState extends State<ChatScreen> {
   /// user's job is to take away what they do not want, not to opt in to each.
   final _applied = _recommendations.map((r) => r.id).toSet();
   SessionState _session = SessionState.idle;
-  int _progress = 0;
+  /// The rebuild rate here is 22 a second. Held in a notifier rather than in
+  /// state so only the progress card listens: a setState would rebuild every
+  /// message, the deck and the composer for a number two digits wide.
+  final _progress = ValueNotifier<int>(0);
 
   final _scrollController = ScrollController();
   final _composer = TextEditingController();
@@ -240,6 +243,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
     _scrollController.dispose();
     _composer.dispose();
+    _progress.dispose();
     super.dispose();
   }
 
@@ -354,8 +358,8 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() => _session = SessionState.updating);
     _timers.add(Timer(const Duration(milliseconds: 1400), () {
       if (!mounted) return;
+      _progress.value = 0;
       setState(() {
-        _progress = 0;
         _session = SessionState.generating;
         _messages.add(_Message(
           id: _nextId++,
@@ -367,14 +371,13 @@ class _ChatScreenState extends State<ChatScreen> {
       _scrollToEnd();
       _timers.add(Timer.periodic(const Duration(milliseconds: 45), (timer) {
         if (!mounted) return timer.cancel();
-        setState(() {
-          if (_progress >= 100) {
-            timer.cancel();
-            _session = SessionState.ready;
-          } else {
-            _progress++;
-          }
-        });
+        if (_progress.value >= 100) {
+          timer.cancel();
+          // Only the last tick touches the screen's own state.
+          setState(() => _session = SessionState.ready);
+        } else {
+          _progress.value++;
+        }
       }));
     }));
   }
@@ -465,12 +468,16 @@ class _ChatScreenState extends State<ChatScreen> {
                   if (_session == SessionState.generating ||
                       _session == SessionState.ready) ...[
                     const SizedBox(height: AppSpacing.s3),
-                    _SessionProgressCard(
-                      title: 'Sleep meditation v1.2',
-                      status: _session == SessionState.ready
-                          ? 'Ready to play'
-                          : 'Creating your new session..',
-                      progress: _session == SessionState.ready ? null : _progress,
+                    ValueListenableBuilder<int>(
+                      valueListenable: _progress,
+                      builder: (context, progress, _) => _SessionProgressCard(
+                        title: 'Sleep meditation v1.2',
+                        status: _session == SessionState.ready
+                            ? 'Ready to play'
+                            : 'Creating your new session..',
+                        progress:
+                            _session == SessionState.ready ? null : progress,
+                      ),
                     ),
                   ],
                   if (_typing) _typingIndicator(),
@@ -828,10 +835,10 @@ class _ChatMenuButton extends StatelessWidget {
         width: 44,
         height: 44,
         alignment: Alignment.center,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: AppColors.surface,
           shape: BoxShape.circle,
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(color: Color(0x14000000), blurRadius: 8, offset: Offset(0, 2)),
           ],
         ),
