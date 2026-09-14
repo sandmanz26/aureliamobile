@@ -101,7 +101,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <Button
         variant="primary"
         icon={<Plus size={18} />}
-        onClick={() => gate('/chat')}
+        onClick={() => {
+          onNavigate?.()
+          gate('/chat', { fresh: true })
+        }}
         className="w-full"
         style={{ background: 'linear-gradient(90deg, #F0A032, #FFCC66)' }}
       >

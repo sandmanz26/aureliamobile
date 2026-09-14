@@ -6,6 +6,7 @@ import orbIncreaseYellow from '../assets/orb-increase-yellow.png'
 import orbLessMovement from '../assets/orb-less-movement.png'
 import { AddSheet } from '../components/chat/AddSheet'
 import { ChatComposer } from '../components/chat/ChatComposer'
+import { EmptyThread, EmptyThreadPrompts } from '../components/chat/EmptyThread'
 import { ChatHeader } from '../components/chat/ChatHeader'
 import { PublishSheet } from '../components/chat/PublishSheet'
 import type { Recommendation } from '../components/chat/RecommendationCard'
@@ -88,6 +89,14 @@ const RECOMMENDATIONS: Recommendation[] = [
 
 const SUGGESTIONS = ['Add more white noise', 'Make it longer', 'Female voice']
 
+/** Openers for a session with nothing in it yet — the hardest part of a blank
+ *  chat is the first sentence, so the screen offers a few. */
+const OPENERS = [
+  'Good morning, how did I sleep?',
+  'Create a meditation for tonight',
+  'Something for a restless afternoon',
+]
+
 type SessionState = 'idle' | 'updating' | 'generating' | 'ready'
 
 /** A brief handed over from the Recreate screen. */
@@ -136,13 +145,17 @@ export function ChatPage() {
   const { isEnabled } = useFeatureFlags()
 
   const routeState = location.state as
-    | { recreate?: RecreateBrief; startVoice?: boolean; ask?: string }
+    | { recreate?: RecreateBrief; startVoice?: boolean; ask?: string; fresh?: boolean }
     | null
   const brief = routeState?.recreate
   /** What the visitor typed on Home before they were sent here. */
   const ask = routeState?.ask
 
-  const [messages, setMessages] = useState<Message[]>(OPENING_MESSAGES)
+  // "New session" opens an empty thread; everything else continues the demo
+  // conversation the screens are written against.
+  const [messages, setMessages] = useState<Message[]>(
+    routeState?.fresh ? [] : OPENING_MESSAGES,
+  )
   const [typing, setTyping] = useState(false)
   const [applied, setApplied] = useState<string[]>(RECOMMENDATIONS.map((r) => r.id))
   const [sessionState, setSessionState] = useState<SessionState>('idle')
@@ -157,10 +170,28 @@ export function ChatPage() {
   const [addOpen, setAddOpen] = useState(false)
   const [addPicks, setAddPicks] = useState<string[]>([])
 
+  const empty = messages.length === 0
+
   const scrollRef = useRef<HTMLDivElement>(null)
   const nextId = useRef(OPENING_MESSAGES.length + 1)
   const briefHandled = useRef(false)
   const askHandled = useRef(false)
+  const freshHandled = useRef<string | null>(null)
+
+  // Starting a new session from /chat does not remount the page, so the state
+  // initialiser above never runs again and the old thread would stay put.
+  // Keyed on the navigation rather than a boolean, so pressing New session
+  // twice clears it twice.
+  useEffect(() => {
+    if (!routeState?.fresh || freshHandled.current === location.key) return
+    freshHandled.current = location.key
+    setMessages([])
+    setTyping(false)
+    setSessionState('idle')
+    setProgress(0)
+    setDeckOpen(false)
+    setApplied(RECOMMENDATIONS.map((r) => r.id))
+  }, [location.key, routeState?.fresh])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
@@ -319,6 +350,7 @@ export function ChatPage() {
     <div className="flex h-[calc(100vh-54px)] flex-col bg-background-default lg:h-screen">
       <ChatHeader
         points="1,323"
+        canPlay={!empty}
         onMenu={openDrawer}
         onPublish={() => isEnabled('chat.publish') && setPublishState('publishing')}
         canPublish={isEnabled('chat.publish')}
@@ -326,10 +358,14 @@ export function ChatPage() {
       />
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-20">
-        <div className="mx-auto flex max-w-[402px] flex-col gap-4 pb-16 lg:max-w-[720px]">
-          <p className="text-style-caption mx-auto my-8 rounded-full bg-background-elevated px-12 py-4 text-text-secondary">
-            Today
-          </p>
+        <div className="mx-auto flex min-h-full max-w-[402px] flex-col gap-4 pb-16 lg:max-w-[720px]">
+          {empty && <EmptyThread name="Adam" />}
+
+          {!empty && (
+            <p className="text-style-caption mx-auto my-8 rounded-full bg-background-elevated px-12 py-4 text-text-secondary">
+              Today
+            </p>
+          )}
 
           {messages.map((message, index) => {
             const previous = messages[index - 1]
@@ -436,7 +472,7 @@ export function ChatPage() {
       ) : (
         <div className="flex flex-col gap-8 pb-8 pt-8">
           <div className="flex gap-8 overflow-x-auto px-20 pb-4">
-            {applied.length > 0 && showRecommendations && canApply && (
+            {!empty && applied.length > 0 && showRecommendations && canApply && (
               <button
                 type="button"
                 onClick={() => applyChanges()}
@@ -447,17 +483,19 @@ export function ChatPage() {
                 {sessionState === 'updating' ? 'Updating..' : `Apply new changes (${applied.length})`}
               </button>
             )}
-            {SUGGESTIONS.map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                onClick={() => sendMessage(suggestion)}
-                className="text-style-label flex h-40 shrink-0 items-center gap-6 whitespace-nowrap rounded-full border border-border-subtle bg-surface-default px-14 text-text-primary"
-              >
-                <Sparkles size={13} />
-                {suggestion}
-              </button>
-            ))}
+            {empty && <EmptyThreadPrompts prompts={OPENERS} onPrompt={sendMessage} />}
+            {!empty &&
+              SUGGESTIONS.map((suggestion) => (
+                <button
+                  key={suggestion}
+                  type="button"
+                  onClick={() => sendMessage(suggestion)}
+                  className="text-style-label flex h-40 shrink-0 items-center gap-6 whitespace-nowrap rounded-full border border-border-subtle bg-surface-default px-14 text-text-primary"
+                >
+                  <Sparkles size={13} />
+                  {suggestion}
+                </button>
+              ))}
           </div>
 
           <div className="px-20">

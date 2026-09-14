@@ -185,10 +185,9 @@ export const DEMO_MODULES: DemoModule[] = [
     kind: 'consumer',
     label: 'Session settings',
     description:
-      'Script, Visual and Sound tabs — add or drop styles on a session. The chat’s ⋯ menu keeps its Settings row either way; this is what the row leads to. Built but switched off: turn it on here when it has been rehearsed.',
+      'Script, Visual and Sound tabs — add or drop styles on a session. Reached from the Settings row in the chat’s ⋯ menu.',
     route: '/session-settings',
     built: true,
-    unreleased: true,
   },
   {
     id: 'wellness',

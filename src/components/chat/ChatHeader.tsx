@@ -7,6 +7,8 @@ interface ChatHeaderProps {
   onPublish: () => void
   /** Publish is switched off in the /__demo console. */
   canPublish?: boolean
+  /** A session with nothing in it has nothing to play, so the button goes. */
+  canPlay?: boolean
   /**
    * Where Settings goes. Left out while the Session settings screen is still
    * switched off — the row stays, as it always has, and closes the menu.
@@ -23,6 +25,7 @@ export function ChatHeader({
   onMenu,
   onPublish,
   canPublish = true,
+  canPlay = true,
   onSettings,
   onInsights,
 }: ChatHeaderProps) {
@@ -50,13 +53,15 @@ export function ChatHeader({
       </button>
 
       <div className="flex items-center gap-8">
-        <button
-          type="button"
-          aria-label="Play session"
-          className="flex size-44 items-center justify-center rounded-full bg-surface-default text-icon-strong"
-        >
-          <Play size={20} />
-        </button>
+        {canPlay && (
+          <button
+            type="button"
+            aria-label="Play session"
+            className="flex size-44 items-center justify-center rounded-full bg-surface-default text-icon-strong"
+          >
+            <Play size={20} />
+          </button>
+        )}
 
         <div className="flex h-44 items-center gap-8 rounded-[25px] bg-surface-default px-16">
           <span

@@ -1,4 +1,4 @@
-import { Check, Mic, RotateCcw, Square, Trash2 } from 'lucide-react'
+import { Check, MicOff, RotateCcw, Trash2, Volume2, VolumeX } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 /**
@@ -33,18 +33,20 @@ export function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) {
   const [elapsed, setElapsed] = useState(0)
   const [levels, setLevels] = useState<number[]>(() => Array(BAR_COUNT).fill(0.15))
   const [transcript, setTranscript] = useState('')
+  const [speaker, setSpeaker] = useState(true)
+  const [muted, setMuted] = useState(false)
   const startedAt = useRef(Date.now())
 
   // Timer + animated levels. A real build feeds these from an AnalyserNode;
   // the shape of the component does not change when that is swapped in.
   useEffect(() => {
-    if (phase !== 'recording') return
+    if (phase !== 'recording' || muted) return
     const timer = window.setInterval(() => {
       setElapsed(Date.now() - startedAt.current)
       setLevels((current) => [...current.slice(1), 0.25 + Math.random() * 0.75])
     }, 110)
     return () => window.clearInterval(timer)
-  }, [phase])
+  }, [phase, muted])
 
   useEffect(() => {
     if (phase !== 'transcribing') return
@@ -111,48 +113,80 @@ export function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) {
   }
 
   const busy = phase === 'transcribing'
+  const live = !busy && !muted
 
   return (
-    <div className="relative flex flex-col items-center gap-16 overflow-hidden px-20 pb-24 pt-12">
-      <span className="pointer-events-none absolute -bottom-24 left-1/2 size-[241px] -translate-x-1/2 rounded-full bg-brand-default opacity-30 blur-3xl" />
-      <span className="pointer-events-none absolute -bottom-16 left-1/2 size-[201px] -translate-x-1/2 rounded-full bg-primary-200 opacity-40 blur-3xl" />
+    <div className="relative flex flex-col items-center gap-20 px-20 pb-24 pt-48">
+      {/* The warm wash is the whole signal that the mic is open — it rises off
+          the bottom edge rather than sitting in a box, so the screen itself
+          changes state rather than growing a control panel. */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 top-0"
+        style={{
+          background:
+            'linear-gradient(180deg, rgba(255,216,107,0) 0%, rgba(255,216,107,0.35) 55%, rgba(255,203,71,0.75) 100%)',
+        }}
+      />
 
-      <div className="relative flex items-center gap-10">
-        {!busy && <span className="size-8 animate-pulse rounded-full bg-danger-500" />}
-        <p className="text-style-body-small text-text-strong">{busy ? 'Transcribing…' : 'Listening..'}</p>
-        <span className="text-style-body-small tabular-nums text-text-secondary">{formatDuration(elapsed)}</span>
-      </div>
+      <p className="text-style-body-small relative text-text-secondary" role="status">
+        {busy ? 'Transcribing…' : muted ? 'Paused' : 'Listening..'}
+      </p>
 
-      {/* Live level meter — the thing that makes it read as actually recording. */}
-      <div className="relative flex h-40 items-center gap-[3px]" aria-hidden="true">
-        {levels.map((level, index) => (
-          <span
-            key={index}
-            className="w-[3px] rounded-full bg-icon-strong transition-[height] duration-100"
-            style={{ height: `${(busy ? 0.2 : level) * 100}%`, opacity: busy ? 0.35 : 0.85 }}
-          />
-        ))}
-      </div>
+      <div className="relative flex w-full items-center justify-between gap-12">
+        <div className="flex items-center gap-12">
+          <button
+            type="button"
+            aria-label={speaker ? 'Mute Aurelia’s voice' : 'Unmute Aurelia’s voice'}
+            aria-pressed={!speaker}
+            onClick={() => setSpeaker((value) => !value)}
+            className="u-press flex size-64 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-sm"
+          >
+            {speaker ? <Volume2 size={22} /> : <VolumeX size={22} />}
+          </button>
 
-      <div className="relative flex items-center gap-8">
+          <button
+            type="button"
+            aria-label={muted ? 'Unmute your microphone' : 'Mute your microphone'}
+            aria-pressed={muted}
+            onClick={() => setMuted((value) => !value)}
+            className={`u-press flex size-64 items-center justify-center rounded-full shadow-sm ${
+              muted ? 'bg-icon-strong text-icon-inverse' : 'bg-surface-default text-icon-strong'
+            }`}
+          >
+            <MicOff size={22} />
+          </button>
+        </div>
+
         <button
           type="button"
           onClick={() => setPhase('transcribing')}
           disabled={busy}
-          className="text-style-body-small flex h-56 items-center gap-10 rounded-full bg-surface-default px-18 text-text-primary disabled:opacity-50"
+          className="text-style-body u-press flex h-64 items-center gap-12 rounded-full bg-surface-default px-28 text-text-primary shadow-sm disabled:opacity-50"
         >
-          <Square size={16} fill="currentColor" />
+          {/* The bars keep moving while the mic is open: without them the
+              screen says it is listening and shows nothing that is. */}
+          <span className="flex h-16 items-end gap-[2px]" aria-hidden="true">
+            {levels.slice(-5).map((level, index) => (
+              <span
+                key={index}
+                className="w-[3px] rounded-full bg-icon-strong transition-[height] duration-100"
+                style={{ height: `${(live ? level : 0.2) * 100}%`, opacity: live ? 0.9 : 0.4 }}
+              />
+            ))}
+          </span>
           Stop
         </button>
-        <button
-          type="button"
-          aria-label="Cancel recording"
-          onClick={onCancel}
-          className="flex h-56 w-57 items-center justify-center rounded-full bg-surface-default text-icon-strong"
-        >
-          <Mic size={19} />
-        </button>
       </div>
+
+      {/* The way out, without ending up with a clip you did not want. */}
+      <button
+        type="button"
+        onClick={onCancel}
+        className="text-style-caption relative text-text-secondary underline-offset-2 hover:underline"
+      >
+        Cancel
+      </button>
     </div>
   )
 }

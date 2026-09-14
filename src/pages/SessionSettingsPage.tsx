@@ -1,4 +1,4 @@
-import { ArrowLeft, AudioLines, Image as ImageIcon, Minus, Plus, Settings2, Type } from 'lucide-react'
+import { ArrowLeft, AudioLines, ChevronDown, Image as ImageIcon, Minus, Plus, Settings2, Type } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import orb432hz from '../assets/orb-432hz.png'
@@ -104,9 +104,10 @@ function StyleGrid({
               type="button"
               aria-expanded={open}
               onClick={() => setExpanded(open ? null : style.id)}
-              className="text-style-caption u-tap mt-6 w-fit text-text-secondary underline-offset-2 hover:underline"
+              className="text-style-caption u-tap mt-6 flex w-fit items-center gap-2 text-text-secondary"
             >
               {open ? 'Less' : 'More'}
+              <ChevronDown size={12} className={open ? 'rotate-180' : ''} />
             </button>
             <button
               type="button"
@@ -200,7 +201,7 @@ export function SessionSettingsPage() {
 
           {(tab === 'visual' || tab === 'sound') && (
             <>
-              <h2 className="text-style-body-small text-text-secondary">Current style</h2>
+              <h2 className="text-style-body-small text-text-primary">Current style</h2>
               {applied.length === 0 ? (
                 <p className="text-style-body-small mt-12 text-text-secondary">
                   Nothing applied — the session uses the default {kind === 'sound' ? 'mix' : 'look'}.
@@ -217,7 +218,7 @@ export function SessionSettingsPage() {
                 </div>
               )}
 
-              <h2 className="text-style-body-small mt-20 text-text-secondary">Explore new styles</h2>
+              <h2 className="text-style-body-small mt-20 text-text-primary">Explore new styles</h2>
               <StyleGrid
                 kind={kind}
                 added={added}
