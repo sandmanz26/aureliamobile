@@ -87,6 +87,17 @@ export const DEMO_MODULES: DemoModule[] = [
     ],
   },
   {
+    id: 'settings',
+    kind: 'consumer',
+    label: 'Settings',
+    description: 'Connected accounts, coin redemption, account deletion — and the only way out of an account.',
+    route: '/settings',
+    built: true,
+    features: [
+      { id: 'accounts', label: 'Connected accounts', description: 'Google accounts and the switch on each.' },
+    ],
+  },
+  {
     id: 'player',
     kind: 'consumer',
     label: 'Player',

@@ -4,6 +4,7 @@ import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-route
 import { RecommendationCard } from '../components/chat/RecommendationCard'
 import { RECOMMENDATIONS } from '../chat/ChatSessionContext'
 import { useAudioPlayer } from '../audio/AudioPlayerContext'
+import { CoinPill } from '../components/ui/CoinPill'
 import { CoverImage } from '../components/ui/CoverImage'
 import { MobileStatusBar } from '../components/ui/MobileStatusBar'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
@@ -142,15 +143,7 @@ export function PlayerPage() {
             <span className="flex-1" />
             {/* Same coin as the cockpit header wears — one mark for the
                 currency, not a lookalike per screen. */}
-            <span className="text-style-body-small flex h-44 items-center gap-8 rounded-full bg-surface-default px-16 text-text-primary">
-              <span
-                className="flex size-20 items-center justify-center rounded-full"
-                style={{ background: 'linear-gradient(160deg, #ffe682, #ff881b)' }}
-              >
-                <span className="size-8 rounded-full border-2 border-text-inverse" />
-              </span>
-              1,323
-            </span>
+            <CoinPill points="1,323" />
             <button
               type="button"
               aria-label="Share"

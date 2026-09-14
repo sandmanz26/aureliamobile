@@ -221,6 +221,13 @@ material. Flag for confirmation with product and business:
   around the same published work. The entry point is carried, not inferred — a
   session just built in the cockpit has no catalogue author to read it from.
 
+- **Settings is where an account ends.** Connected accounts, coin redemption,
+  account deletion and sign-out. Sign-out had been unreachable from anywhere in
+  the UI since it left the drawer, which left reloading the page as the only
+  way out of an account.
+- **Only your own profile has a gear.** There is nothing of a stranger's to
+  configure, so the control is not shown rather than shown and refused.
+
 ### Challenges
 
 - A challenge is **not a session**: it is a time-boxed streak people join, with

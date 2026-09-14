@@ -1,6 +1,7 @@
-import { ArrowLeft, Bookmark, Menu, Repeat2, Share2 } from 'lucide-react'
-import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft, Menu, Play, Settings, Share2, Shuffle } from 'lucide-react'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { CoverImage } from '../components/ui/CoverImage'
+import { CoinPill } from '../components/ui/CoinPill'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import type { CoverKey } from '../lib/photos'
 import { findPerson } from '../lib/people'
@@ -105,7 +106,7 @@ export function ProfilePage() {
               type="button"
               aria-label="Open menu"
               onClick={openDrawer}
-              className="flex size-44 items-center justify-center rounded-full text-icon-default lg:hidden"
+              className="flex size-44 items-center justify-center rounded-full bg-surface-default text-icon-default shadow-sm lg:hidden"
             >
               <Menu size={24} />
             </button>
@@ -125,10 +126,7 @@ export function ProfilePage() {
         </div>
         <div className="flex shrink-0 items-center gap-12">
           {own ? (
-            <div className="flex h-44 items-center gap-8 rounded-full bg-surface-default px-16 shadow-sm">
-              <span className="size-16 rounded-full bg-brand-default" />
-              <span className="text-style-label">1,323</span>
-            </div>
+            <CoinPill points="1,323" className="shadow-sm" />
           ) : (
             <button
               type="button"
@@ -144,26 +142,34 @@ export function ProfilePage() {
           >
             <Share2 size={18} />
           </button>
+          {/* Only on your own profile: there is nothing of a stranger's to
+              configure. */}
+          {own && (
+            <Link
+              to="/settings"
+              aria-label="Settings"
+              className="u-press flex size-44 items-center justify-center rounded-full bg-surface-default text-icon-default shadow-sm"
+            >
+              <Settings size={18} />
+            </Link>
+          )}
         </div>
       </header>
 
       <div className="mt-24 flex flex-col items-center gap-16">
-        <div className="size-96 rounded-full bg-gradient-to-br from-gold-300 to-gold-600 p-2">
-          <PhotoCircle
-            photo={person.photo}
-            size={92}
-            gradient="var(--color-background-elevated)"
-            alt={person.name}
-            className="size-full"
-          />
-        </div>
+        <PhotoCircle
+          photo={person.photo}
+          size={98}
+          gradient="var(--color-background-elevated)"
+          alt={person.name}
+        />
         <div className="text-center">
           <p className="text-style-title text-text-strong">{person.name}</p>
           <p className="text-style-label">{own ? 'Dubai, UAE' : person.role}</p>
         </div>
       </div>
 
-      <div className="mt-24 grid grid-cols-3 divide-x divide-border-subtle rounded-16 bg-surface-default py-16">
+      <div className="mt-24 grid grid-cols-3 divide-x divide-border-subtle py-16">
         {shownStats.map((stat) => (
           <div key={stat.label} className="flex flex-col items-center gap-4">
             <p className="text-style-title text-text-strong">{stat.value}</p>
@@ -180,19 +186,15 @@ export function ProfilePage() {
           >
             <CoverImage photo={card.photo} gradient={card.gradient} width={520} height={460} />
             <div className="relative flex items-center justify-between">
-              <button
-                type="button"
-                aria-label="Save"
-                className="flex size-32 shrink-0 items-center justify-center rounded-full bg-surface-default/90 text-icon-default"
-              >
-                <Bookmark size={16} />
-              </button>
+              <span className="flex size-32 shrink-0 items-center justify-center rounded-full bg-white/25 text-text-inverse backdrop-blur-sm">
+                <Play size={14} fill="currentColor" />
+              </span>
               <button
                 type="button"
                 aria-label={`Recreate ${card.title}`}
                 className="flex h-32 shrink-0 items-center gap-4 rounded-full bg-surface-default/90 px-12 text-style-label text-text-primary"
               >
-                <Repeat2 size={14} className="shrink-0" />
+                <Shuffle size={14} className="shrink-0" />
                 <span className="hidden @min-[124px]:inline">Recreate</span>
               </button>
             </div>
@@ -203,9 +205,16 @@ export function ProfilePage() {
             <div className="relative">
               <p className="text-style-body-small font-semibold">{card.title}</p>
               <p className="mt-4 text-style-caption line-clamp-2 opacity-90">{card.description}</p>
-              <div className="mt-8 flex items-center gap-12 text-style-caption opacity-90">
-                <span>▶ {card.plays}</span>
-                <span>⟳ {card.recreated}</span>
+              <div className="text-style-caption mt-8 flex items-center gap-10 opacity-90">
+                <span className="flex items-center gap-4">
+                  <Play size={11} />
+                  {card.plays}
+                </span>
+                <span aria-hidden="true" className="h-12 w-px bg-current opacity-50" />
+                <span className="flex items-center gap-4">
+                  <Shuffle size={11} />
+                  {card.recreated}
+                </span>
               </div>
             </div>
           </article>

@@ -169,7 +169,8 @@ the whole tree to double quotes and semicolons and bury the next diff.
 - No backend. Both clients are frontend-only.
 - No automated tests. The responsive and interaction checks in this project's
   history were one-off Playwright scripts, not a suite.
-- Sign-out is unreachable from anywhere in the UI since it left the drawer.
+- ~~Sign-out is unreachable from anywhere in the UI.~~ Fixed: it lives on
+  `/settings`, reached by the gear on your own profile.
 
 ---
 

@@ -37,6 +37,7 @@ import { SessionsPage } from './pages/SessionsPage'
 import { PlayerPage } from './pages/PlayerPage'
 import { RecreatePage } from './pages/RecreatePage'
 import { SessionDetailPage } from './pages/SessionDetailPage'
+import { AccountSettingsPage } from './pages/AccountSettingsPage'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
 import { SignInPage } from './pages/auth/SignInPage'
@@ -177,6 +178,16 @@ export default function App() {
                 <RequireAuth>
                   <ModuleGuard module="profile">
                     <ProfilePage />
+                  </ModuleGuard>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <RequireAuth>
+                  <ModuleGuard module="settings">
+                    <AccountSettingsPage />
                   </ModuleGuard>
                 </RequireAuth>
               }

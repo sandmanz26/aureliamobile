@@ -1,6 +1,7 @@
 import { Menu, MoreHorizontal, Play, Send, SlidersHorizontal, TrendingUp } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { CoinPill } from '../ui/CoinPill'
 
 interface ChatHeaderProps {
   points: string
@@ -68,15 +69,7 @@ export function ChatHeader({
           </Link>
         )}
 
-        <div className="flex h-44 items-center gap-8 rounded-[25px] bg-surface-default px-16">
-          <span
-            className="flex size-20 items-center justify-center rounded-full"
-            style={{ background: 'linear-gradient(160deg, #ffe682, #ff881b)' }}
-          >
-            <span className="size-8 rounded-full border-2 border-text-inverse" />
-          </span>
-          <span className="text-style-body-small text-text-primary">{points}</span>
-        </div>
+        <CoinPill points={points} />
 
         <div className="relative" ref={menuRef}>
           <button
