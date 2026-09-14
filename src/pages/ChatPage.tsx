@@ -1,15 +1,13 @@
 import { Check, CheckCheck, WandSparkles } from 'lucide-react'
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import orb432hz from '../assets/orb-432hz.png'
-import orbIncreaseYellow from '../assets/orb-increase-yellow.png'
-import orbLessMovement from '../assets/orb-less-movement.png'
 import { AddSheet } from '../components/chat/AddSheet'
 import { ChatComposer } from '../components/chat/ChatComposer'
 import { EmptyThread, EmptyThreadPrompts } from '../components/chat/EmptyThread'
 import { ChatHeader } from '../components/chat/ChatHeader'
 import { PublishSheet } from '../components/chat/PublishSheet'
-import type { Recommendation } from '../components/chat/RecommendationCard'
+import { RECOMMENDATIONS, useChatSession } from '../chat/ChatSessionContext'
+import type { Message, Status } from '../chat/ChatSessionContext'
 import { RecommendationCard } from '../components/chat/RecommendationCard'
 import { RecommendationDeck } from '../components/chat/RecommendationDeck'
 import { SessionProgressCard } from '../components/chat/SessionProgressCard'
@@ -18,77 +16,6 @@ import { VoiceRecorder } from '../components/chat/VoiceRecorder'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import { useDrawer } from '../layouts/DrawerContext'
-
-/** Delivery state, as a messaging app shows it: one tick sent, two ticks read. */
-type Status = 'sending' | 'sent' | 'read'
-
-interface Message {
-  id: number
-  from: 'aurelia' | 'user'
-  text: string
-  /** Epoch ms — drives the timestamps and the grouping windows. */
-  at: number
-  /** Voice notes render as a player with the transcript under it. */
-  voice?: { durationMs: number }
-  status?: Status
-  /** Cards Aurelia handed over with this message. They belong to it, not to
-   *  the end of the thread: everything said afterwards comes after them. */
-  attachment?: 'recommendations'
-}
-
-/** The thread opens mid-conversation, so the first messages are backdated. */
-const START = Date.now() - 9 * 60_000
-
-const OPENING_MESSAGES: Message[] = [
-  {
-    id: 1,
-    from: 'aurelia',
-    at: START,
-    text: 'Good morning, Adam.\n\nLooks like you had a good sleep last night, score improved by 7% due to increased REM sleep.',
-  },
-  { id: 2, from: 'aurelia', at: START + 4_000, text: 'How did you find the sleep meditation we created?' },
-  {
-    id: 3,
-    from: 'user',
-    at: START + 96_000,
-    text: 'It was good, but it was to short, I had to repeat it multiple times.',
-    status: 'read',
-  },
-  {
-    id: 4,
-    from: 'aurelia',
-    at: START + 104_000,
-    text: 'Based on the diagnosis and your feedback, this is what I’d would recommend:',
-    attachment: 'recommendations',
-  },
-]
-
-const RECOMMENDATIONS: Recommendation[] = [
-  {
-    id: 'yellow',
-    title: 'Increase yellow',
-    description: 'Helps bring joy, aligned with your goal',
-    improveScore: '12%',
-    orb: orbIncreaseYellow,
-    preview: 'dolphins-frequency',
-  },
-  {
-    id: 'movement',
-    title: 'Less movement',
-    description: 'Reduced movement helps your nervous system to calm down',
-    improveScore: '12%',
-    orb: orbLessMovement,
-    preview: 'deep-grounding',
-  },
-  {
-    id: 'frequency',
-    title: '432Hz',
-    description: 'Your body responds positively to this frequency.',
-    improveScore: '12%',
-    orb: orb432hz,
-    preview: '528-hz-reset',
-  },
-]
 
 const SUGGESTIONS = ['Add more white noise', 'Make it longer', 'Female voice']
 
@@ -100,7 +27,6 @@ const OPENERS = [
   'Something for a restless afternoon',
 ]
 
-type SessionState = 'idle' | 'updating' | 'generating' | 'ready'
 
 /** A brief handed over from the Recreate screen. */
 interface RecreateBrief {
@@ -156,27 +82,28 @@ export function ChatPage() {
 
   // "New session" opens an empty thread; everything else continues the demo
   // conversation the screens are written against.
-  const [messages, setMessages] = useState<Message[]>(
-    routeState?.fresh ? [] : OPENING_MESSAGES,
-  )
+  // Held above the router, so walking off to play the session and coming back
+  // returns to the thread rather than a fresh one.
+  const {
+    messages, setMessages,
+    applied, setApplied,
+    sessionState, setSessionState,
+    progress, setProgress,
+    deckOpen, setDeckOpen,
+    nextMessageId,
+    reset,
+  } = useChatSession()
   const [typing, setTyping] = useState(false)
-  const [applied, setApplied] = useState<string[]>(RECOMMENDATIONS.map((r) => r.id))
-  const [sessionState, setSessionState] = useState<SessionState>('idle')
-  const [progress, setProgress] = useState(0)
   // Arriving from Home's mic opens the recorder straight away, so the tap that
   // said "talk to Aurelia" lands on a live mic rather than an idle composer.
   const [listening, setListening] = useState(() => routeState?.startVoice === true)
   const [publishState, setPublishState] = useState<'publishing' | 'published' | null>(null)
-  // The set arrives folded: three full cards is most of a phone screen, and
-  // the reader opens it when they want to weigh the changes one by one.
-  const [deckOpen, setDeckOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
   const [addPicks, setAddPicks] = useState<string[]>([])
 
   const empty = messages.length === 0
 
   const scrollRef = useRef<HTMLDivElement>(null)
-  const nextId = useRef(OPENING_MESSAGES.length + 1)
   const briefHandled = useRef(false)
   const askHandled = useRef(false)
   const freshHandled = useRef<string | null>(null)
@@ -188,13 +115,9 @@ export function ChatPage() {
   useEffect(() => {
     if (!routeState?.fresh || freshHandled.current === location.key) return
     freshHandled.current = location.key
-    setMessages([])
     setTyping(false)
-    setSessionState('idle')
-    setProgress(0)
-    setDeckOpen(false)
-    setApplied(RECOMMENDATIONS.map((r) => r.id))
-  }, [location.key, routeState?.fresh])
+    reset()
+  }, [location.key, routeState?.fresh, reset])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
@@ -210,7 +133,7 @@ export function ChatPage() {
     setMessages((current) => [
       ...current,
       {
-        id: nextId.current++,
+        id: nextMessageId(),
         from: 'user',
         at: now,
         status: 'read',
@@ -223,7 +146,7 @@ export function ChatPage() {
       setMessages((current) => [
         ...current,
         {
-          id: nextId.current++,
+          id: nextMessageId(),
           from: 'aurelia',
           at: Date.now(),
           text: `Got it — forking ${brief.author}’s session and keeping them credited in the lineage. Apply the recommendations below and I’ll build your version.`,
@@ -231,7 +154,7 @@ export function ChatPage() {
       ])
     }, 1600)
     return () => window.clearTimeout(timer)
-  }, [brief])
+  }, [brief, setMessages, nextMessageId])
 
   // What was typed on Home arrives as the first thing said here, so the visitor
   // does not have to write it again — including after a detour through sign-in.
@@ -240,7 +163,7 @@ export function ChatPage() {
     askHandled.current = true
     setMessages((current) => [
       ...current,
-      { id: nextId.current++, from: 'user', at: Date.now(), status: 'read', text: ask },
+      { id: nextMessageId(), from: 'user', at: Date.now(), status: 'read', text: ask },
     ])
     setTyping(true)
     const timer = window.setTimeout(() => {
@@ -248,7 +171,7 @@ export function ChatPage() {
       setMessages((current) => [
         ...current,
         {
-          id: nextId.current++,
+          id: nextMessageId(),
           from: 'aurelia',
           at: Date.now(),
           text: 'Good place to start. Give me a moment and I’ll shape something around that.',
@@ -256,7 +179,7 @@ export function ChatPage() {
       ])
     }, 1400)
     return () => window.clearTimeout(timer)
-  }, [ask])
+  }, [ask, setMessages, nextMessageId])
 
   // Drives the "Creating your new session.." percentage up to 100.
   useEffect(() => {
@@ -272,7 +195,7 @@ export function ChatPage() {
       })
     }, 45)
     return () => window.clearInterval(timer)
-  }, [sessionState])
+  }, [sessionState, setSessionState, setProgress])
 
   useEffect(() => {
     if (publishState !== 'publishing') return
@@ -291,7 +214,7 @@ export function ChatPage() {
     // transcript to explain why reads as the app acting on its own.
     setMessages((current) => [
       ...current,
-      { id: nextId.current++, from: 'user', at: Date.now(), text: label, status: 'read' },
+      { id: nextMessageId(), from: 'user', at: Date.now(), text: label, status: 'read' },
     ])
     setDeckOpen(false)
     window.setTimeout(() => {
@@ -299,7 +222,7 @@ export function ChatPage() {
       setSessionState('generating')
       setMessages((current) => [
         ...current,
-        { id: nextId.current++, from: 'aurelia', at: Date.now(), text: 'Sure, here it is:' },
+        { id: nextMessageId(), from: 'aurelia', at: Date.now(), text: 'Sure, here it is:' },
       ])
     }, 1400)
   }
@@ -309,7 +232,7 @@ export function ChatPage() {
    * a reply — the rhythm a chat app has, rather than a bubble that just appears.
    */
   function pushUserMessage(message: Omit<Message, 'id' | 'at' | 'status'>) {
-    const id = nextId.current++
+    const id = nextMessageId()
     setMessages((current) => [...current, { ...message, id, at: Date.now(), status: 'sending' }])
 
     const setStatus = (status: Status) =>
@@ -325,7 +248,7 @@ export function ChatPage() {
       setMessages((current) => [
         ...current,
         {
-          id: nextId.current++,
+          id: nextMessageId(),
           from: 'aurelia',
           at: Date.now(),
           text: 'Got it — I’ve noted that for the next revision of your session.',

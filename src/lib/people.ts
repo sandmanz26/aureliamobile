@@ -66,7 +66,19 @@ export function findPerson(slug: string | undefined): Person | undefined {
   return PEOPLE.get(slug)
 }
 
+/**
+ * How a screen was reached, when that changes whose work it is showing.
+ *
+ * The author answers "whose session is this" for anything in the catalogue.
+ * It cannot answer it for a session the user has just built in the cockpit —
+ * that one has no catalogue entry and borrows a slug to play against — so the
+ * entry point says so directly rather than being guessed at.
+ */
+export type ProfileOrigin = 'own' | 'community'
+
 /** Where a creator's name should link, from anywhere in the app. */
-export function profilePath(author: string) {
+export function profilePath(author: string, origin?: ProfileOrigin) {
+  if (origin === 'own') return '/profile'
+  if (origin === 'community') return `/profile/${personSlug(author)}`
   return author === CURRENT_USER ? '/profile' : `/profile/${personSlug(author)}`
 }

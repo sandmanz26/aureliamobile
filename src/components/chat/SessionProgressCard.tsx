@@ -20,7 +20,12 @@ export function SessionProgressCard({ title, status, progress, to }: SessionProg
   return (
     <div className="flex w-full items-center gap-10 rounded-full bg-surface-default py-10 pl-12 pr-23">
       {to ? (
-        <Link to={to} aria-label={`Play ${title}`} className="u-press relative shrink-0">
+        <Link
+          to={to}
+          state={{ origin: 'own' }}
+          aria-label={`Play ${title}`}
+          className="u-press relative shrink-0"
+        >
           <img src={sessionThumb} alt="" className="size-54 rounded-full object-cover" />
           <span className="absolute inset-0 flex items-center justify-center text-text-inverse">
             <Play size={22} fill="currentColor" />

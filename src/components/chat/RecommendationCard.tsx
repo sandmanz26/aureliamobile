@@ -47,7 +47,12 @@ export function RecommendationCard({ recommendation, applied, onToggle }: Recomm
           orb is the preview, and a corner badge read as a second control. It
           plays, rather than decorating — the disc is the only thing on this
           card that looks like a control and did nothing. */}
-      <Link to={`/play/${preview}`} aria-label={`Play ${title}`} className="u-press relative w-fit">
+      <Link
+        to={`/play/${preview}`}
+        state={{ origin: 'own' }}
+        aria-label={`Play ${title}`}
+        className="u-press relative w-fit"
+      >
         <img src={orb} alt="" className="size-[73px] rounded-full object-cover" />
         <span className="absolute inset-0 flex items-center justify-center">
           <span className="flex size-32 items-center justify-center rounded-full bg-white/20 backdrop-blur-[16px]">

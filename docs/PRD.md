@@ -199,11 +199,17 @@ material. Flag for confirmation with product and business:
   confirmation is green rather than brand-coloured, and the action after it
   opens what was just published rather than the shelf it will appear on.
 
+- **A session being built survives leaving the screen.** Generating one,
+  applying changes and going off to hear it are three steps of one task. The
+  thread is held above the router, so coming back finds the session still there
+  and ready to publish rather than a fresh conversation. New session is still
+  the only thing that clears it. A reload starts over, like the rest of a visit.
 - **A creator's name is a way in.** Tapping the byline — on the player sheet or
   a session's detail — opens that person. Which profile depends on the entry
   point, not on a mode: your own session opens yours, someone else's opens
   theirs, and the difference is chrome (drawer and coins vs. back and Follow)
-  around the same published work.
+  around the same published work. The entry point is carried, not inferred — a
+  session just built in the cockpit has no catalogue author to read it from.
 
 ### Challenges
 

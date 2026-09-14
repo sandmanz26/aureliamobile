@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, ChevronRight, Pause, Play, Share2 } from 'lucide-react'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { CoverImage } from '../components/ui/CoverImage'
 import { MobileStatusBar } from '../components/ui/MobileStatusBar'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { profilePath } from '../lib/people'
+import type { ProfileOrigin } from '../lib/people'
 import { findSession, totalMinutes } from '../lib/sessions'
 
 /** Lines the session speaks, which the hero shows one at a time under the art.
@@ -39,7 +40,11 @@ function clock(seconds: number) {
 export function PlayerPage() {
   const { slug } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const session = findSession(slug)
+  // Who this session belongs to, as the screen that opened the player knows
+  // it. Absent — a pasted URL, a refresh — the author decides.
+  const origin = (location.state as { origin?: ProfileOrigin } | null)?.origin
 
   // The bed is the session, for now: 10s of it. Reading the length off the
   // element rather than the catalogue keeps the bar honest — a scrubber that
@@ -223,7 +228,7 @@ export function PlayerPage() {
                 session is yours, theirs when it is not. The entry point
                 decides, so the same row serves both without a flag. */}
             <Link
-              to={profilePath(session.author)}
+              to={profilePath(session.author, origin)}
               aria-label={`Open ${session.author}'s profile`}
               className="u-press flex min-w-0 items-center gap-8"
             >

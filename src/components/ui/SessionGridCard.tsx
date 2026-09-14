@@ -44,6 +44,7 @@ export function SessionGridCard({
       <div className="relative z-20 flex items-start justify-between gap-8">
         <Link
           to={`/play/${session.slug}`}
+          state={{ origin: 'community' }}
           aria-label={`Play ${session.title}`}
           onClick={handleClick}
           className="flex size-32 shrink-0 items-center justify-center rounded-full bg-black/45 backdrop-blur-sm"

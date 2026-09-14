@@ -95,6 +95,7 @@ function RecentCard({ slug, minutes, progress }: { slug: string; minutes: number
       <CoverImage photo={session.photo} gradient={session.gradient} width={480} height={300} />
       <Link
         to={`/play/${session.slug}`}
+        state={{ origin: 'community' }}
         aria-label={`Resume ${session.title}`}
         className="absolute inset-0 z-10"
       />

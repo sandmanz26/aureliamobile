@@ -60,6 +60,7 @@ export function ChatHeader({
         {canPlay && (
           <Link
             to={playTo}
+            state={{ origin: 'own' }}
             aria-label="Play session"
             className="u-press flex size-44 items-center justify-center rounded-full bg-surface-default text-icon-strong"
           >

@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AdminLayout } from './admin/AdminLayout'
 import { AuthProvider } from './auth/AuthContext'
+import { ChatSessionProvider } from './chat/ChatSessionContext'
 import { RequireAuth } from './auth/RequireAuth'
 import { AiMonitoring } from './admin/pages/AiMonitoring'
 import { AuditPage } from './admin/pages/AuditPage'
@@ -46,6 +47,9 @@ export default function App() {
     <FeatureFlagsProvider>
       <SiteLock>
       <AuthProvider>
+        {/* Above the router on purpose: a session being built has to survive
+            leaving /chat to play it and coming back. */}
+        <ChatSessionProvider>
         <Routes>
           {/* Unlisted presenter console — see src/demo/modules.ts */}
           <Route path="/__demo" element={<DemoControlPage />} />
@@ -302,6 +306,7 @@ export default function App() {
           {/* Home is the front door now — a visitor can read it without an account. */}
           <Route path="/" element={<Navigate to="/home" replace />} />
         </Routes>
+        </ChatSessionProvider>
       </AuthProvider>
       </SiteLock>
     </FeatureFlagsProvider>
