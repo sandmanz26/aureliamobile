@@ -348,32 +348,6 @@ class _SessionsScreenState extends State<SessionsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Align(
-                                alignment: Alignment.topRight,
-                                child: Material(
-                                  color: const Color(0xE6FFFFFF),
-                                  borderRadius: BorderRadius.circular(AppRadius.full),
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(AppRadius.full),
-                                    onTap: () => Navigator.of(context).pushNamed(
-                                        '/challenge',
-                                        arguments: 'nervous-system-reset'),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: AppSpacing.s3, vertical: 7),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text('Join', style: AppTextStyles.label),
-                                          const SizedBox(width: 4),
-                                          const Icon(Icons.arrow_forward,
-                                              size: 13, color: AppColors.textPrimary),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
                               const Spacer(),
                               Text(
                                 '30-Day Nervous System Reset',
@@ -418,6 +392,50 @@ class _SessionsScreenState extends State<SessionsScreen> {
                                 ],
                               ),
                             ],
+                          ),
+                        ),
+                        // The whole card opens the challenge, as on the web.
+                        // It sits above the copy because a Text takes the hit
+                        // test itself and would otherwise swallow the tap.
+                        Positioned.fill(
+                          child: Semantics(
+                            button: true,
+                            label:
+                                'Open the 30-Day Nervous System Reset challenge',
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () => Navigator.of(context).pushNamed(
+                                  '/challenge',
+                                  arguments: 'nervous-system-reset'),
+                            ),
+                          ),
+                        ),
+                        // Join is last, so it keeps its own corner.
+                        Positioned(
+                          top: AppPadding.md,
+                          right: AppPadding.md,
+                          child: Material(
+                            color: const Color(0xE6FFFFFF),
+                            borderRadius: BorderRadius.circular(AppRadius.full),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(AppRadius.full),
+                              onTap: () => Navigator.of(context).pushNamed(
+                                  '/challenge',
+                                  arguments: 'nervous-system-reset'),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: AppSpacing.s3, vertical: 7),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text('Join', style: AppTextStyles.label),
+                                    const SizedBox(width: 4),
+                                    const Icon(Icons.arrow_forward,
+                                        size: 13, color: AppColors.textPrimary),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ],

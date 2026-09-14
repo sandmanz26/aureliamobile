@@ -5,6 +5,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/cover_image.dart';
 import '../chat/chat_screen.dart' show RecreateBrief;
+import '../shell/app_drawer.dart';
 
 /// Recreate — forking someone else's session.
 ///
@@ -109,6 +110,7 @@ class _RecreateScreenState extends State<RecreateScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      drawer: const AppDrawer(current: '/sessions'),
       appBar: AppBar(
         backgroundColor: AppColors.background,
         surfaceTintColor: Colors.transparent,
@@ -119,6 +121,18 @@ class _RecreateScreenState extends State<RecreateScreen> {
           icon: const Icon(Icons.arrow_back),
           color: AppColors.iconDefault,
         ),
+        // The web keeps the drawer reachable from here too.
+        actions: [
+          Builder(
+            builder: (context) => IconButton(
+              onPressed: () => Scaffold.of(context).openDrawer(),
+              icon: const Icon(Icons.menu),
+              color: AppColors.iconDefault,
+              tooltip: 'Open menu',
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s2),
+        ],
       ),
       body: SafeArea(
         child: ListView(
@@ -225,14 +239,30 @@ class _RecreateScreenState extends State<RecreateScreen> {
             ),
             Semantics(
               label: 'Session length in minutes',
-              child: Slider(
-                value: _minutes,
-                min: 3,
-                max: 60,
-                divisions: 57,
-                activeColor: AppColors.brandEmphasis,
-                semanticFormatterCallback: (value) => '${value.round()} minutes',
-                onChanged: (value) => setState(() => _minutes = value),
+              // A 4px track with no filled portion and a 20px thumb, as the
+              // web draws it: the number above the slider states the value,
+              // so the track does not need to colour it in as well.
+              child: SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  trackHeight: 4,
+                  activeTrackColor: AppColors.backgroundElevated,
+                  inactiveTrackColor: AppColors.backgroundElevated,
+                  thumbColor: AppColors.brandEmphasis,
+                  overlayColor: AppColors.brandEmphasis.withValues(alpha: 0.12),
+                  thumbShape:
+                      const RoundSliderThumbShape(enabledThumbRadius: 10),
+                  overlayShape:
+                      const RoundSliderOverlayShape(overlayRadius: 20),
+                  trackShape: const RoundedRectSliderTrackShape(),
+                ),
+                child: Slider(
+                  value: _minutes,
+                  min: 3,
+                  max: 60,
+                  divisions: 57,
+                  semanticFormatterCallback: (value) => '${value.round()} minutes',
+                  onChanged: (value) => setState(() => _minutes = value),
+                ),
               ),
             ),
             Row(
@@ -293,22 +323,19 @@ class _RecreateScreenState extends State<RecreateScreen> {
                 children: [
                   for (var i = 0; i < session.layers.length; i++) ...[
                     if (i > 0) const Divider(height: 1),
-                    CheckboxListTile(
-                      value: _layers.contains(session.layers[i].id),
-                      onChanged: (value) => setState(() {
-                        if (value == true) {
-                          _layers.add(session.layers[i].id);
-                        } else {
-                          _layers.remove(session.layers[i].id);
-                        }
+                    // A round check badge, not a checkbox: kept layers read
+                    // as ticked off rather than as a form to fill in, which is
+                    // how the web draws them.
+                    _LayerRow(
+                      name: session.layers[i].name,
+                      detail: session.layers[i].detail,
+                      kept: _layers.contains(session.layers[i].id),
+                      onToggle: () => setState(() {
+                        final id = session.layers[i].id;
+                        _layers.contains(id)
+                            ? _layers.remove(id)
+                            : _layers.add(id);
                       }),
-                      controlAffinity: ListTileControlAffinity.leading,
-                      activeColor: AppColors.brandEmphasis,
-                      title: Text(session.layers[i].name,
-                          style: AppTextStyles.bodySm
-                              .copyWith(color: AppColors.textPrimary)),
-                      subtitle: Text(session.layers[i].detail,
-                          style: AppTextStyles.caption),
                     ),
                   ],
                 ],
@@ -478,7 +505,6 @@ class _ChoicePill extends StatelessWidget {
       onTap: onTap,
       child: Container(
         height: 40,
-        alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
         decoration: BoxDecoration(
           color: selected ? AppColors.brandDefault : AppColors.surface,
@@ -487,10 +513,79 @@ class _ChoicePill extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(AppRadius.full),
         ),
-        child: Text(
-          label,
-          style: AppTextStyles.label.copyWith(
-            color: selected ? AppColors.textStrong : AppColors.textPrimary,
+        // Center rather than Container.alignment: an alignment makes the
+        // Container take every pixel the Wrap offers, which put the four
+        // voice options on four full-width rows instead of flowing.
+        child: Center(
+          widthFactor: expand ? null : 1,
+          child: Text(
+            label,
+            style: AppTextStyles.label.copyWith(
+              color: selected ? AppColors.textStrong : AppColors.textPrimary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One sound layer in "Keep these layers" — a 22px round check, then the
+/// layer's name over what it actually is.
+class _LayerRow extends StatelessWidget {
+  const _LayerRow({
+    required this.name,
+    required this.detail,
+    required this.kept,
+    required this.onToggle,
+  });
+
+  final String name;
+  final String detail;
+  final bool kept;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: kept,
+      child: InkWell(
+        onTap: onToggle,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                width: 22,
+                height: 22,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: kept ? AppColors.brandEmphasis : null,
+                  border: kept
+                      ? null
+                      : Border.all(color: AppColors.border),
+                ),
+                child: kept
+                    ? const Icon(Icons.check,
+                        size: 13, color: AppColors.textInverse)
+                    : null,
+              ),
+              const SizedBox(width: AppSpacing.s3),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(name,
+                        style: AppTextStyles.bodySm
+                            .copyWith(color: AppColors.textPrimary)),
+                    Text(detail, style: AppTextStyles.caption),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
