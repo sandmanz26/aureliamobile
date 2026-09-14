@@ -45,7 +45,7 @@
       "margin": { "xs": 8, "sm": 12, "md": 16, "lg": 24, "xl": 32 }
     },
     "Aurelia Typography": {
-      "font-family": { "base": "SF Pro" },
+      "font-family": { "base": "Mulish" },
       "font-weight": { "light": 300, "regular": 400, "medium": 500, "semibold": 600 },
       "letter-spacing": { "tight": -0.2, "normal": 0, "wide": 0.2 },
       "scale": {

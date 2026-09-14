@@ -71,6 +71,18 @@ When the design changes, re-export the variables into `figma-export.json` and
 run `npm run build:tokens`. Editing `tokens.css` by hand means the next export
 silently reverts you.
 
+`figma-export.json` was audited against the live variables (251 across five
+collections) and matched everywhere except one entry — spacing, radius, size,
+padding/margin, the 12-step type scale with its line-heights, the weights, the
+letter-spacing and all 33 semantic colours were already identical. The
+exception was `font-family/base`, which the export had as "SF Pro" where the
+variable says **Mulish**; that is fixed and the app now loads Mulish.
+
+**`radius/20` and `radius/48` are not variables — in Figma either.** Several
+frames use them as raw values, so `rounded-[20px]` and `rounded-tl-[48px]` are
+correct rather than a workaround. Do not "fix" them by inventing tokens; that
+is a design decision, not a sync gap.
+
 **Two Tailwind v4 traps this codebase has actually hit:**
 
 - **`--spacing: 1px`**, so numeric utilities map 1:1 to pixels — `p-16` is 16px,
