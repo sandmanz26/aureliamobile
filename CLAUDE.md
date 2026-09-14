@@ -1,0 +1,158 @@
+# Aurelia — web client
+
+Context for anyone (human or AI) reading this code for the first time. It covers
+what is here, the decisions that are not obvious from the source, and the things
+that will mislead you if nobody tells you.
+
+**This branch is the React app.** The repository keeps one app per branch:
+
+| Branch | What is on it |
+| --- | --- |
+| `web_app` | This app — the consumer web client *and* the admin CMS |
+| `admin_cms` | **Deliberately identical** to `web_app` |
+| `mobile_app` | The Flutter app |
+
+`admin_cms` exists as a name for a workstream, not as different code. Keep them
+identical: commit on `web_app`, then `git checkout admin_cms && git merge
+--ff-only web_app`, and push both. A divergence between them is a mistake, not
+a feature.
+
+---
+
+## Running it
+
+```bash
+npm install
+npm run dev          # vite, port 5173
+npm run typecheck    # tsc -b
+npm run lint         # oxlint
+npm run build        # tsc -b && vite build
+```
+
+React 19, Vite, TypeScript, Tailwind CSS v4. No test runner is configured —
+verification here is typecheck, lint, and driving the real app in a browser.
+
+**`npm run typecheck` runs `tsc -b`, not `tsc --noEmit`.** The root `tsconfig`
+has `"files": []` and delegates to project references, so `tsc --noEmit` checks
+nothing and passes on a broken tree. Use the script.
+
+---
+
+## Layout
+
+```
+src/
+  pages/        one file per consumer screen (15)
+  admin/pages/  one file per admin module (15)
+  components/
+    chat/       the cockpit's own parts
+    ui/         everything shared
+  layouts/      AppLayout (drawer + shell), AdminLayout
+  lib/          the catalogue and its helpers — no network, no database
+  auth/         AuthContext + useSignInGate
+  demo/         the /__demo feature-flag console
+  styles/       tokens.css — GENERATED, see below
+```
+
+---
+
+## Design tokens are generated — do not edit `tokens.css`
+
+```
+design-tokens/figma-export.json     <- snapshot of the Figma variables (source of truth)
+        |  npm run build:tokens
+        v
+src/styles/tokens.css               <- GENERATED
+        v
+  Tailwind utilities (bg-surface-default, text-text-primary, p-16, rounded-12, …)
+```
+
+When the design changes, re-export the variables into `figma-export.json` and
+run `npm run build:tokens`. Editing `tokens.css` by hand means the next export
+silently reverts you.
+
+**Two Tailwind v4 traps this codebase has actually hit:**
+
+- **`--spacing: 1px`**, so numeric utilities map 1:1 to pixels — `p-16` is 16px,
+  not 4rem. Read every number here as px.
+- **The radius scale is closed**: 0/2/4/8/12/16/24/32/full. `rounded-6`,
+  `rounded-10` and `rounded-20` are not classes; they render **square, silently**.
+  Eleven elements were doing exactly that before anyone noticed.
+- **v4 orders utilities by its own layers, not by string order**, so a `w-full`
+  baked into a component beats a caller's `w-[228px]`. If a width is ignored,
+  this is why.
+- **`rotate-*` sets the standalone CSS `rotate` property**, not `transform`. A
+  probe reading `transform` will report no rotation on an element that is
+  plainly rotated.
+
+---
+
+## The things that will mislead you
+
+**Everything is mock data and it is meant to look real.** `src/lib/` holds 21
+sessions, a challenge, a notification feed and six signal sources. The figures
+in them — play counts, "−43% stress" — are invented. They are deliberately
+specific because a demo full of "Lorem" cannot be reasoned about, but nothing
+here came from a measurement.
+
+**Cover art is hotlinked from Unsplash at runtime.** Every card layers a photo
+over a token gradient, and the gradient is the floor, not a fallback. **A page
+rendering as flat gradients has no network; it is not broken.**
+
+**Sign-in does not persist, on purpose.** `AuthContext` holds a bool in state
+with no localStorage. Every load starts signed out so the app opens on the case
+for itself. Right while the data is mock, wrong once an account holds history —
+a setting with an expiry date, not the session model.
+
+**`/__demo` is a feature-flag console, and flags persist in localStorage.** If a
+screen or a control is missing and the code plainly renders it, check the flags
+before debugging the component. `src/demo/modules.ts` is the registry; `built:
+false` means there is nothing behind it, `unreleased: true` means built but
+switched off.
+
+**This app is the reference implementation for the Flutter client.** Where the
+two disagree, this one is right and the other changes. If you alter a shared
+shape — the type scale, the 20px page gutter, a brand vector — the mobile app
+has to follow, and the vectors are shared as the same SVG path strings rather
+than re-traced.
+
+---
+
+## Conventions worth keeping
+
+**`.u-tap` widens a small target with a pseudo-element**, so an audit that
+measures element boxes will report a 16px link as too small when it is not.
+Verify by clicking above the box, not by reading its height.
+
+**Absolutely positioned covers paint over normal-flow content.** `CoverImage`
+fills its parent, so anything meant to sit on top needs `relative`. A card title
+once vanished this way while its siblings looked fine, because `opacity-90`
+happened to promote them.
+
+**Grid and flex children default to `min-width: auto`.** A wide child (a chart,
+a table) will stretch its column rather than scroll inside it. `min-w-0` on the
+item is the fix; `/admin/revenue` overflowed 250px for exactly this reason.
+
+**Do not run Prettier on this repo.** There is no config, so it would reformat
+the whole tree to double quotes and semicolons and bury the next diff.
+
+---
+
+## Known gaps
+
+- **`/admin` has no authentication at all.** Every module is reachable by URL.
+  This is the P0 in `docs/PRD.md` and it is in the code, not just the document.
+- No backend. Both clients are frontend-only.
+- No automated tests. The responsive and interaction checks in this project's
+  history were one-off Playwright scripts, not a suite.
+- Sign-out is unreachable from anywhere in the UI since it left the drawer.
+
+---
+
+## Where the product decisions live
+
+Behaviour that looks arbitrary in the source usually is not — the reasoning is
+in `docs/PRD.md`. Two examples: the sign-in ask lands on send rather than on the
+first keystroke, and the password-reset confirmation must not reveal whether an
+address is registered. If you are about to change one of those, read the entry
+first.
