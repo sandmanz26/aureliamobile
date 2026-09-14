@@ -199,6 +199,12 @@ material. Flag for confirmation with product and business:
   confirmation is green rather than brand-coloured, and the action after it
   opens what was just published rather than the shelf it will appear on.
 
+- **A creator's name is a way in.** Tapping the byline — on the player sheet or
+  a session's detail — opens that person. Which profile depends on the entry
+  point, not on a mode: your own session opens yours, someone else's opens
+  theirs, and the difference is chrome (drawer and coins vs. back and Follow)
+  around the same published work.
+
 ### Challenges
 
 - A challenge is **not a session**: it is a time-boxed streak people join, with

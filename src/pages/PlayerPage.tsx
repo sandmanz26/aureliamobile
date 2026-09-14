@@ -4,6 +4,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { CoverImage } from '../components/ui/CoverImage'
 import { MobileStatusBar } from '../components/ui/MobileStatusBar'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
+import { profilePath } from '../lib/people'
 import { findSession, totalMinutes } from '../lib/sessions'
 
 /** Lines the session speaks, which the hero shows one at a time under the art.
@@ -40,7 +41,12 @@ export function PlayerPage() {
   const navigate = useNavigate()
   const session = findSession(slug)
 
-  const duration = (session ? totalMinutes(session) : 12) * 60
+  // The bed is the session, for now: 10s of it. Reading the length off the
+  // element rather than the catalogue keeps the bar honest — a scrubber that
+  // says 22:00 over ten seconds of audio is the kind of lie a demo gets caught
+  // on. DEFAULT_DURATION only covers the frames before metadata arrives.
+  const DEFAULT_DURATION = 10
+  const [duration, setDuration] = useState(DEFAULT_DURATION)
   const [elapsed, setElapsed] = useState(0)
   // Starts paused, and not as a design choice: a browser refuses audio that
   // starts without a gesture, so a screen that opened mid-play would show a
@@ -65,25 +71,20 @@ export function PlayerPage() {
       .catch(() => setPlaying(false))
   }
 
-  // The clock that drives the scrubber and the cue. Kept separate from the
-  // audio element because the bed is an 8s loop under a session measured in
-  // minutes — currentTime would reset the bar every eight seconds.
+  // The bar is the element's own position now that the two are the same
+  // length, so there is no second clock to drift against it.
   useEffect(() => {
     if (!playing) return
-    let last = performance.now()
-    const tick = (now: number) => {
-      const delta = (now - last) / 1000
-      last = now
-      setElapsed((current) => (current + delta >= duration ? 0 : current + delta))
+    const tick = () => {
+      const element = audio.current
+      if (element) setElapsed(element.currentTime)
       raf.current = requestAnimationFrame(tick)
     }
-    // The bed is an 8s loop under a session measured in minutes, so the clock
-    // is wall time rather than the element's currentTime.
     raf.current = requestAnimationFrame(tick)
     return () => {
       if (raf.current !== null) cancelAnimationFrame(raf.current)
     }
-  }, [playing, duration])
+  }, [playing])
 
   if (!session) return <Navigate to="/home" replace />
 
@@ -114,7 +115,16 @@ export function PlayerPage() {
           />
         </div>
 
-        <audio ref={audio} src="/audio/session-bed.wav" loop preload="auto" />
+        <audio
+          ref={audio}
+          src="/audio/session-bed.wav"
+          loop
+          preload="auto"
+          onLoadedMetadata={(event) => {
+            const value = event.currentTarget.duration
+            if (Number.isFinite(value) && value > 0) setDuration(value)
+          }}
+        />
 
         {/* ------------------------------------------------------------ hero */}
         <section className="relative flex h-[705px] flex-col text-text-inverse">
@@ -209,7 +219,14 @@ export function PlayerPage() {
           <span className="mx-auto block h-5 w-36 rounded-full bg-[#7f7f7f]/40" />
 
           <div className="mt-20 flex items-center gap-12">
-            <Link to={`/session/${session.slug}`} className="flex min-w-0 items-center gap-8">
+            {/* The byline goes to whoever made this — your own profile when the
+                session is yours, theirs when it is not. The entry point
+                decides, so the same row serves both without a flag. */}
+            <Link
+              to={profilePath(session.author)}
+              aria-label={`Open ${session.author}'s profile`}
+              className="u-press flex min-w-0 items-center gap-8"
+            >
               <PhotoCircle photo={session.authorPhoto} size={24} gradient={session.gradient} />
               <span className="text-style-body-small truncate font-medium text-text-primary">{session.author}</span>
               <ChevronRight size={16} className="shrink-0 text-icon-default" />

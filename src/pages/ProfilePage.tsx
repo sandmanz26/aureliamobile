@@ -1,7 +1,9 @@
-import { Bookmark, Menu, Repeat2, Share2 } from 'lucide-react'
+import { ArrowLeft, Bookmark, Menu, Repeat2, Share2 } from 'lucide-react'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { CoverImage } from '../components/ui/CoverImage'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import type { CoverKey } from '../lib/photos'
+import { findPerson } from '../lib/people'
 import { useDrawer } from '../layouts/DrawerContext'
 
 interface SessionCard {
@@ -54,31 +56,90 @@ const stats = [
   { label: 'Recreated', value: '1,528' },
 ]
 
+/**
+ * One page for two readings of the same screen. /profile is the signed-in
+ * user's; /profile/:person is somebody else's, reached by tapping a creator
+ * anywhere their name appears — the player sheet, a session's byline.
+ *
+ * What changes between them is only the chrome around the same content: your
+ * own profile opens the drawer and offers your coin balance, a stranger's
+ * offers a way back and a way to follow. The published work below is theirs in
+ * both cases, which is the point of the screen.
+ */
 export function ProfilePage() {
   const { openDrawer } = useDrawer()
+  const { person: personSlugParam } = useParams()
+  const navigate = useNavigate()
+  const person = findPerson(personSlugParam)
+
+  if (!person) return <Navigate to="/profile" replace />
+  const own = person.isSelf
+
+  // The signed-in profile keeps its designed figures and shelf. Anyone else's
+  // is assembled from what they have actually published — showing Adam's work
+  // under a stranger's name is worse than showing them three sessions.
+  const shownStats = own
+    ? stats
+    : [
+        { label: person.sessions.length === 1 ? 'Post' : 'Posts', value: String(person.sessions.length) },
+        { label: 'Played', value: person.sessions[0]?.plays ?? '—' },
+        { label: 'Recreated', value: person.sessions[0]?.recreated ?? '—' },
+      ]
+  const shownCards: SessionCard[] = own
+    ? cards
+    : person.sessions.map((session) => ({
+        title: session.title,
+        photo: session.photo,
+        description: session.description,
+        plays: session.plays,
+        recreated: session.recreated,
+        gradient: session.gradient,
+      }))
 
   return (
     <div className="mx-auto max-w-[720px] px-20 py-16 lg:px-24 lg:py-24">
       <header className="flex items-center justify-between">
-        <div className="flex items-center gap-12">
-          <button
-            type="button"
-            aria-label="Open menu"
-            onClick={openDrawer}
-            className="flex size-44 items-center justify-center rounded-full text-icon-default lg:hidden"
-          >
-            <Menu size={24} />
-          </button>
-          <h1 className="text-style-title-large text-text-primary">Profile</h1>
+        <div className="flex min-w-0 items-center gap-12">
+          {own ? (
+            <button
+              type="button"
+              aria-label="Open menu"
+              onClick={openDrawer}
+              className="flex size-44 items-center justify-center rounded-full text-icon-default lg:hidden"
+            >
+              <Menu size={24} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              aria-label="Back"
+              onClick={() => navigate(-1)}
+              className="flex size-44 shrink-0 items-center justify-center rounded-full text-icon-default"
+            >
+              <ArrowLeft size={24} />
+            </button>
+          )}
+          <h1 className="text-style-title-large truncate text-text-primary">
+            {own ? 'Profile' : person.name}
+          </h1>
         </div>
-        <div className="flex items-center gap-12">
-          <div className="flex h-44 items-center gap-8 rounded-full bg-surface-default px-16 shadow-sm">
-            <span className="size-16 rounded-full bg-brand-default" />
-            <span className="text-style-label">1,323</span>
-          </div>
+        <div className="flex shrink-0 items-center gap-12">
+          {own ? (
+            <div className="flex h-44 items-center gap-8 rounded-full bg-surface-default px-16 shadow-sm">
+              <span className="size-16 rounded-full bg-brand-default" />
+              <span className="text-style-label">1,323</span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="text-style-label h-44 rounded-full border border-border-default px-16 text-text-primary"
+            >
+              Follow
+            </button>
+          )}
           <button
             type="button"
-            aria-label="Share profile"
+            aria-label={own ? 'Share profile' : `Share ${person.name}`}
             className="flex size-44 items-center justify-center rounded-full bg-surface-default text-icon-default shadow-sm"
           >
             <Share2 size={18} />
@@ -89,21 +150,21 @@ export function ProfilePage() {
       <div className="mt-24 flex flex-col items-center gap-16">
         <div className="size-96 rounded-full bg-gradient-to-br from-gold-300 to-gold-600 p-2">
           <PhotoCircle
-            photo="avatar"
+            photo={person.photo}
             size={92}
             gradient="var(--color-background-elevated)"
-            alt="Adam Nilson"
+            alt={person.name}
             className="size-full"
           />
         </div>
         <div className="text-center">
-          <p className="text-style-title text-text-strong">Adam Nilson</p>
-          <p className="text-style-label">Dubai, UAE</p>
+          <p className="text-style-title text-text-strong">{person.name}</p>
+          <p className="text-style-label">{own ? 'Dubai, UAE' : person.role}</p>
         </div>
       </div>
 
       <div className="mt-24 grid grid-cols-3 divide-x divide-border-subtle rounded-16 bg-surface-default py-16">
-        {stats.map((stat) => (
+        {shownStats.map((stat) => (
           <div key={stat.label} className="flex flex-col items-center gap-4">
             <p className="text-style-title text-text-strong">{stat.value}</p>
             <p className="text-style-label">{stat.label}</p>
@@ -112,7 +173,7 @@ export function ProfilePage() {
       </div>
 
       <div className="mt-24 grid grid-cols-2 gap-12">
-        {cards.map((card) => (
+        {shownCards.map((card) => (
           <article
             key={card.title}
             className="@container relative flex h-[230px] flex-col justify-between overflow-hidden rounded-16 p-12 text-text-inverse"

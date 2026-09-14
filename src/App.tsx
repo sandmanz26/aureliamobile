@@ -176,6 +176,16 @@ export default function App() {
               }
             />
             <Route
+              path="/profile/:person"
+              element={
+                <RequireAuth>
+                  <ModuleGuard module="profile">
+                    <ProfilePage />
+                  </ModuleGuard>
+                </RequireAuth>
+              }
+            />
+            <Route
               path="/session/:slug"
               element={
                 <RequireAuth>

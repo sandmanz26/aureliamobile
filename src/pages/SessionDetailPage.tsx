@@ -17,6 +17,7 @@ import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import { useDrawer } from '../layouts/DrawerContext'
 import type { SessionRecord } from '../lib/sessions'
+import { profilePath } from '../lib/people'
 import { findSession, totalMinutes } from '../lib/sessions'
 
 /** Label / value pair, the unit the detail sections are built from. */
@@ -250,15 +251,17 @@ export function SessionDetailPage() {
           </div>
 
           <div className="mt-16 flex items-center gap-12">
-            <PhotoCircle
-              photo="avatar"
-              size={40}
-              gradient="conic-gradient(from 180deg, var(--color-blue-300), var(--color-gold-300), var(--color-blue-300))"
-            />
-            <div className="min-w-0 flex-1">
-              <p className="text-style-body-small font-medium text-text-primary">{session.author}</p>
-              <p className="text-style-caption truncate text-text-secondary">{session.authorRole}</p>
-            </div>
+            <Link to={profilePath(session.author)} className="u-press flex min-w-0 flex-1 items-center gap-12">
+              <PhotoCircle
+                photo={session.authorPhoto}
+                size={40}
+                gradient="conic-gradient(from 180deg, var(--color-blue-300), var(--color-gold-300), var(--color-blue-300))"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-style-body-small font-medium text-text-primary">{session.author}</p>
+                <p className="text-style-caption truncate text-text-secondary">{session.authorRole}</p>
+              </div>
+            </Link>
             <button
               type="button"
               className="text-style-label h-32 rounded-full border border-border-default px-14 text-text-primary"
