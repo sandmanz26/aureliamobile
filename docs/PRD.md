@@ -182,6 +182,12 @@ material. Flag for confirmation with product and business:
 - **The session speaks on screen.** The line being spoken sits under the art in
   the one serif the product uses. It is there for the same reason a lyric sheet
   is: it lets someone follow when they cannot, or will not, listen closely.
+- **Starting a session is not a decision to leave the conversation.** Playback
+  outlives the player screen: walking back to the cockpit keeps the audio
+  running and parks the session in a card under the header, which carries the
+  transport so it can be paused without going anywhere. The header's own play
+  glyph stands down while that card is there — two controls for one thing is
+  worse than none.
 - **The sheet has two resting places.** Sitting under the transport, and pulled
   up to just below the status bar. The grabber is the control — it drags, and a
   tap snaps — because a handle that does nothing teaches people the sheet does

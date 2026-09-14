@@ -5,7 +5,9 @@ import { AddSheet } from '../components/chat/AddSheet'
 import { ChatComposer } from '../components/chat/ChatComposer'
 import { EmptyThread, EmptyThreadPrompts } from '../components/chat/EmptyThread'
 import { ChatHeader } from '../components/chat/ChatHeader'
+import { MiniPlayer } from '../components/chat/MiniPlayer'
 import { PublishSheet } from '../components/chat/PublishSheet'
+import { useAudioPlayer } from '../audio/AudioPlayerContext'
 import { RECOMMENDATIONS, useChatSession } from '../chat/ChatSessionContext'
 import type { Message, Status } from '../chat/ChatSessionContext'
 import { RecommendationCard } from '../components/chat/RecommendationCard'
@@ -94,6 +96,7 @@ export function ChatPage() {
     reset,
   } = useChatSession()
   const [typing, setTyping] = useState(false)
+  const { track } = useAudioPlayer()
   // Arriving from Home's mic opens the recorder straight away, so the tap that
   // said "talk to Aurelia" lands on a live mic rather than an idle composer.
   const [listening, setListening] = useState(() => routeState?.startVoice === true)
@@ -276,12 +279,23 @@ export function ChatPage() {
     <div className="flex h-[calc(100vh-54px)] flex-col bg-background-default lg:h-screen">
       <ChatHeader
         points="1,323"
-        canPlay={!empty}
+        /* Once a session is on the deck the card below carries the transport,
+           so a second play glyph in the header would be two controls for one
+           thing. */
+        canPlay={!empty && !track}
         onMenu={openDrawer}
         onPublish={() => isEnabled('chat.publish') && setPublishState('publishing')}
         canPublish={isEnabled('chat.publish')}
         onSettings={isEnabled('sessionSettings') ? () => navigate('/session-settings') : undefined}
       />
+
+      {track && (
+        <div className="px-20 pb-12">
+          <div className="mx-auto w-full max-w-[402px] lg:max-w-[720px]">
+            <MiniPlayer />
+          </div>
+        </div>
+      )}
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-20">
         <div className="mx-auto flex min-h-full max-w-[402px] flex-col gap-4 pb-16 lg:max-w-[720px]">

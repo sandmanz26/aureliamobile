@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AdminLayout } from './admin/AdminLayout'
+import { AudioPlayerProvider } from './audio/AudioPlayerContext'
 import { AuthProvider } from './auth/AuthContext'
 import { ChatSessionProvider } from './chat/ChatSessionContext'
 import { RequireAuth } from './auth/RequireAuth'
@@ -49,6 +50,7 @@ export default function App() {
       <AuthProvider>
         {/* Above the router on purpose: a session being built has to survive
             leaving /chat to play it and coming back. */}
+        <AudioPlayerProvider>
         <ChatSessionProvider>
         <Routes>
           {/* Unlisted presenter console — see src/demo/modules.ts */}
@@ -307,6 +309,7 @@ export default function App() {
           <Route path="/" element={<Navigate to="/home" replace />} />
         </Routes>
         </ChatSessionProvider>
+        </AudioPlayerProvider>
       </AuthProvider>
       </SiteLock>
     </FeatureFlagsProvider>

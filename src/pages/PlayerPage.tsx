@@ -3,6 +3,7 @@ import { ArrowLeft, ChevronRight, Pause, Play, Share2, Shuffle } from 'lucide-re
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { RecommendationCard } from '../components/chat/RecommendationCard'
 import { RECOMMENDATIONS } from '../chat/ChatSessionContext'
+import { useAudioPlayer } from '../audio/AudioPlayerContext'
 import { CoverImage } from '../components/ui/CoverImage'
 import { MobileStatusBar } from '../components/ui/MobileStatusBar'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
@@ -51,17 +52,9 @@ export function PlayerPage() {
   // it. Absent — a pasted URL, a refresh — the author decides.
   const origin = (location.state as { origin?: ProfileOrigin } | null)?.origin
 
-  // The bed is the session, for now: 10s of it. Reading the length off the
-  // element rather than the catalogue keeps the bar honest — a scrubber that
-  // says 22:00 over ten seconds of audio is the kind of lie a demo gets caught
-  // on. DEFAULT_DURATION only covers the frames before metadata arrives.
-  const DEFAULT_DURATION = 10
-  const [duration, setDuration] = useState(DEFAULT_DURATION)
-  const [elapsed, setElapsed] = useState(0)
-  // Starts paused, and not as a design choice: a browser refuses audio that
-  // starts without a gesture, so a screen that opened mid-play would show a
-  // pause glyph over silence.
-  const [playing, setPlaying] = useState(false)
+  // Playback lives above the router. This screen is a view onto it, so
+  // walking back to the cockpit leaves the session running.
+  const { playing, elapsed, duration, load, toggle } = useAudioPlayer()
   const [expanded, setExpanded] = useState(false)
   // The sheet has two resting places, as the frame does: sitting under the
   // transport, and pulled up to just below the status bar. It rides the
@@ -78,38 +71,19 @@ export function PlayerPage() {
     const top = element.getBoundingClientRect().top + window.scrollY
     window.scrollTo({ top: up ? Math.max(0, top - SHEET_TOP) : 0, behavior: 'smooth' })
   }, [])
-  const raf = useRef<number | null>(null)
-  const audio = useRef<HTMLAudioElement>(null)
 
-  function toggle() {
-    const element = audio.current
-    if (!element) return
-    if (playing) {
-      element.pause()
-      setPlaying(false)
-      return
-    }
-    element.volume = 0.7
-    void element
-      .play()
-      .then(() => setPlaying(true))
-      .catch(() => setPlaying(false))
-  }
-
-  // The bar is the element's own position now that the two are the same
-  // length, so there is no second clock to drift against it.
+  // Put this session on the deck. load() no-ops when it is already there, so
+  // arriving back from the cockpit does not restart what is playing.
   useEffect(() => {
-    if (!playing) return
-    const tick = () => {
-      const element = audio.current
-      if (element) setElapsed(element.currentTime)
-      raf.current = requestAnimationFrame(tick)
-    }
-    raf.current = requestAnimationFrame(tick)
-    return () => {
-      if (raf.current !== null) cancelAnimationFrame(raf.current)
-    }
-  }, [playing])
+    if (!session) return
+    load({
+      slug: session.slug,
+      title: session.title,
+      author: session.author,
+      photo: session.photo,
+      gradient: session.gradient,
+    })
+  }, [session, load])
 
   if (!session) return <Navigate to="/home" replace />
 
@@ -145,16 +119,6 @@ export function PlayerPage() {
           />
         </div>
 
-        <audio
-          ref={audio}
-          src="/audio/session-bed.wav"
-          loop
-          preload="auto"
-          onLoadedMetadata={(event) => {
-            const value = event.currentTarget.duration
-            if (Number.isFinite(value) && value > 0) setDuration(value)
-          }}
-        />
 
         {/* ------------------------------------------------------------ hero */}
         <section className="relative flex h-[705px] flex-col text-text-inverse">
@@ -369,7 +333,7 @@ export function PlayerPage() {
 
           <section className="mt-24">
             <h2 className="text-style-body text-text-primary">Details</h2>
-            <div className="mt-16 flex flex-col gap-20 rounded-20 border border-border-subtle bg-surface-default p-20">
+            <div className="mt-16 flex flex-col gap-20 rounded-[20px] border border-border-subtle bg-surface-default p-20">
               <div>
                 <p className="text-style-label text-text-secondary">Creator’s intent</p>
                 <p className="text-style-body-small mt-6 text-text-primary">{session.intent}</p>
