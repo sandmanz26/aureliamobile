@@ -66,7 +66,7 @@ const OPENING_MESSAGES: Message[] = [
 const RECOMMENDATIONS: Recommendation[] = [
   {
     id: 'yellow',
-    title: 'Increase Yellow',
+    title: 'Increase yellow',
     description: 'Helps bring joy, aligned with your goal',
     improveScore: '12%',
     orb: orbIncreaseYellow,

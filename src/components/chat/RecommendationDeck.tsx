@@ -9,36 +9,33 @@ interface RecommendationDeckProps {
 }
 
 /**
- * Figma: a card wide enough that the front one reads in full — "Increase
- * yellow" on one line and its description on two, with neither ellipsised.
- * That is what sets the width: at 124 the title fitted in 98px of 98 and the
- * description wanted one pixel more than it had, so both clipped.
+ * Figma: 144 x 150, so the card is very slightly taller than wide rather than
+ * square. The width is load-bearing — with the 12px padding it leaves 120px of
+ * text, which is what breaks "Helps bring joy, aligned with your goal" after
+ * "joy," the way the design does. Widen the card and the description rewraps.
  */
-const CARD_W = 148
-const CARD_H = 142
-const TILT = [-7, -5.5, -4]
+const CARD_W = 144
+const CARD_H = 150
 /**
- * How far each card steps right. 78 is the Figma value — enough that the cards
+ * The fan is gentle — the cards read as a neat cascade, not a splay. Each also
+ * sits lower than the one in front of it, which is what keeps the three
+ * distinguishable at this small a tilt.
+ */
+const TILT = [-5, -4, -3]
+const DROP = [0, 14, 19]
+/**
+ * How far each card steps right. 80 is the Figma value — enough that the cards
  * behind show part of their own orb rather than a sliver of edge. It narrows
  * on a small screen because the deck sits in the message column, which does
- * not scroll sideways: 214 is what the rotated front card and the column's
- * own gutters take, so the rest is what the two steps have to share.
+ * not scroll sideways: 231 is what the tilted front card and the column's own
+ * gutters take, so the rest is what the two steps have to share.
  */
-const STEP = 'clamp(40px, (100vw - 238px) / 2, 78px)'
-/** The rotated front card's footprint: w·cos7 + h·sin7, and h·cos7 + w·sin7. */
-const FRONT = 164
-const ROTATED_H = 159
+const STEP = 'clamp(40px, (100vw - 231px) / 2, 80px)'
+/** The tilted front card's footprint: w·cos5 + h·sin5. */
+const FRONT = 157
+/** Room above the cards for the count, which overlaps the front card's corner. */
+const HEAD = 25
 
-/**
- * The collapsed form of a recommendation set — a fanned stack with the count
- * on it, which opens into the full rail.
- *
- * Aurelia proposes three changes at once, and three full cards is most of a
- * phone screen. Collapsed, the set reads as one thing the message is handing
- * over; the reader opens it when they want to weigh the individual changes,
- * and it folds back once they are applied so the thread stays readable as
- * history rather than as a control panel.
- */
 export function RecommendationDeck({ recommendations, count, onOpen }: RecommendationDeckProps) {
   // Front card first in the DOM for the reader; painted last via z-index.
   const cards = recommendations.slice(0, 3)
@@ -55,16 +52,17 @@ export function RecommendationDeck({ recommendations, count, onOpen }: Recommend
         : {})}
       style={{
         width: `calc(${STEP} * ${cards.length - 1} + ${FRONT}px)`,
-        height: ROTATED_H + 14,
+        height: HEAD + (DROP.at(-1) ?? 0) + CARD_H + 4,
       }}
       className={`relative block shrink-0 text-left ${onOpen ? 'u-press' : ''}`}
     >
       {cards.map((recommendation, index) => (
         <span
           key={recommendation.id}
-          className="absolute top-8 flex flex-col overflow-hidden rounded-24 border border-brand-emphasis/45 bg-surface-default p-12"
+          className="absolute flex flex-col overflow-hidden rounded-24 border border-brand-emphasis/45 bg-surface-default p-12"
           style={{
             left: `calc(${STEP} * ${index})`,
+            top: HEAD + (DROP[index] ?? 0),
             width: CARD_W,
             height: CARD_H,
             rotate: `${TILT[index] ?? 0}deg`,
@@ -72,21 +70,22 @@ export function RecommendationDeck({ recommendations, count, onOpen }: Recommend
             boxShadow: '0 6px 18px rgba(60, 36, 5, 0.10)',
           }}
         >
-          <img src={recommendation.orb} alt="" className="size-52 shrink-0 rounded-full object-cover" />
-          <span className="text-style-body-small mt-8 line-clamp-1 text-text-primary">
+          <img src={recommendation.orb} alt="" className="size-42 shrink-0 rounded-full object-cover" />
+          <span className="text-style-body mt-12 line-clamp-1 text-text-primary">
             {recommendation.title}
           </span>
-          <span className="text-style-caption mt-2 line-clamp-2 text-text-secondary">
+          <span className="text-style-label font-normal mt-4 line-clamp-2 text-text-secondary">
             {recommendation.description}
           </span>
         </span>
       ))}
 
-      {/* The count rides the front card's top-right corner, so the stack says
-          how many changes it holds without being opened. */}
+      {/* The count overlaps the front card's tilted top-right corner, so the
+          stack says how many changes it holds without being opened. Placed off
+          that corner rather than off the card's box, which the tilt has moved. */}
       <span
         className="text-style-label absolute z-10 flex size-28 items-center justify-center rounded-full bg-brand-default text-text-strong shadow-sm"
-        style={{ left: CARD_W - 16, top: -6 }}
+        style={{ left: 114, top: 0 }}
         aria-hidden="true"
       >
         {count}
