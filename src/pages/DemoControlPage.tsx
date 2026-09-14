@@ -259,7 +259,7 @@ function SiteLockCard() {
             </h2>
             <p className="text-style-body-small mt-2 text-text-secondary">
               {locked
-                ? 'Everyone hits a password before they see anything, this console included.'
+                ? 'Everyone hits a password before they see the app. This console stays open, so you cannot shut yourself out of it.'
                 : 'Anyone with the link walks straight in.'}{' '}
               The password is{' '}
               <code className="rounded-4 bg-background-elevated px-6 py-1">{SITE_PASSWORD}</code>.

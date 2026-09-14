@@ -1,29 +1,38 @@
 import { Lock } from 'lucide-react'
 import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { AureliaLogo } from './ui/AureliaLogo'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import { SITE_LOCK_FLAG } from '../demo/modules'
 import { SITE_PASSWORD, hasUnlocked, rememberUnlock } from '../demo/siteLock'
 
+/** The presenter console is exempt — see the note in [SiteLock]. */
+const EXEMPT = '/__demo'
+
 /**
- * A shared password in front of the whole site, including /__demo.
- *
- * One door rather than two: an exempt route would be a documented way around
- * the lock, and the console behind it is exactly what somebody bypassing the
- * lock would want. If the password is ever lost it is recoverable from the
- * source, which is the trade this makes.
+ * A shared password in front of the site.
  *
  * What it is for: unfinished work invites feedback on things that are already
  * known and already scheduled, and that feedback costs more to answer than it
  * is worth. What it is not: security. See `demo/siteLock.ts`.
+ *
+ * The presenter console at /__demo is deliberately outside the lock, so the
+ * console that owns the switch is always reachable and nobody can shut
+ * themselves out of it. The cost is real and worth stating: anyone who knows
+ * that URL can open the
+ * console and turn the lock off. It is one more reason this is a courtesy and
+ * not a control — but it does mean the lock stops people who wander in, not
+ * people who have been told where to look.
  */
 export function SiteLock({ children }: { children: React.ReactNode }) {
   const { isEnabled } = useFeatureFlags()
+  const { pathname } = useLocation()
   // Read once, so unlocking re-renders through state rather than through a
   // storage read on every parent render.
   const [unlocked, setUnlocked] = useState(hasUnlocked)
 
-  if (!isEnabled(SITE_LOCK_FLAG) || unlocked) return <>{children}</>
+  const exempt = pathname.replace(/\/+$/, '') === EXEMPT
+  if (exempt || !isEnabled(SITE_LOCK_FLAG) || unlocked) return <>{children}</>
 
   return <LockScreen onUnlock={() => setUnlocked(true)} />
 }

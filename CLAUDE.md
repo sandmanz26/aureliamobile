@@ -121,11 +121,11 @@ before debugging the component. `src/demo/modules.ts` is the registry; `built:
 false` means there is nothing behind it, `unreleased: true` means built but
 switched off.
 
-**A shared password sits in front of the whole site, including `/__demo`.**
-One door, so there is no route that walks around it. It defaults **on** and has
-to: a gate that fails open on a first load or an unreachable flag store is not a
-gate. Switch it in the `/__demo` console — but read the next paragraph before
-trusting it.
+**A shared password sits in front of the site, but not in front of `/__demo`.**
+The console that owns the switch stays open so nobody can shut themselves out of
+it — which also means that URL is a way around the lock for anyone who knows it.
+The lock defaults **on** and has to: a gate that fails open on a first load or an
+unreachable flag store is not a gate.
 
 **The lock is not security, and nothing behind it should depend on it being
 one.** The check runs in the browser and the password is inlined into the
