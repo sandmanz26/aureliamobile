@@ -175,6 +175,10 @@ material. Flag for confirmation with product and business:
   cover with the transport floating over it and no app chrome — no drawer, no
   status band. Anything that frames the art turns a session into a page about a
   session.
+- **Play makes sound.** The transport drives an audio bed, not just a moving
+  bar — a play button that animates a scrubber and plays nothing is the one
+  thing a listener will test first. The bed is a mock, and it starts paused
+  because a browser will not let audio begin without a gesture.
 - **The session speaks on screen.** The line being spoken sits under the art in
   the one serif the product uses. It is there for the same reason a lyric sheet
   is: it lets someone follow when they cannot, or will not, listen closely.
@@ -189,6 +193,11 @@ material. Flag for confirmation with product and business:
 - **The summary opens in place.** Read More expands the clamped text where it
   is. Sending someone to another screen to finish a paragraph costs them their
   place in the session.
+
+- **Publishing confirms in green, and hands over the session.** Success is the
+  one moment the app reports an outcome rather than its own identity, so the
+  confirmation is green rather than brand-coloured, and the action after it
+  opens what was just published rather than the shelf it will appear on.
 
 ### Challenges
 

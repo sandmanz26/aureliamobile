@@ -7,7 +7,7 @@ import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { findSession, totalMinutes } from '../lib/sessions'
 
 /** Lines the session speaks, which the hero shows one at a time under the art.
- *  Mock, like everything in lib/ — there is no audio behind this screen. */
+ *  Mock, like everything in lib/ — as is the bed they play over. */
 const CUES = [
   'Now take a deep breath in',
   'Hold it — and let the shoulders drop',
@@ -42,12 +42,32 @@ export function PlayerPage() {
 
   const duration = (session ? totalMinutes(session) : 12) * 60
   const [elapsed, setElapsed] = useState(0)
-  const [playing, setPlaying] = useState(true)
+  // Starts paused, and not as a design choice: a browser refuses audio that
+  // starts without a gesture, so a screen that opened mid-play would show a
+  // pause glyph over silence.
+  const [playing, setPlaying] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const raf = useRef<number | null>(null)
+  const audio = useRef<HTMLAudioElement>(null)
 
-  // The transport has to move for the screen to read as a player at all. It is
-  // a clock, not audio — nothing is being decoded.
+  function toggle() {
+    const element = audio.current
+    if (!element) return
+    if (playing) {
+      element.pause()
+      setPlaying(false)
+      return
+    }
+    element.volume = 0.7
+    void element
+      .play()
+      .then(() => setPlaying(true))
+      .catch(() => setPlaying(false))
+  }
+
+  // The clock that drives the scrubber and the cue. Kept separate from the
+  // audio element because the bed is an 8s loop under a session measured in
+  // minutes — currentTime would reset the bar every eight seconds.
   useEffect(() => {
     if (!playing) return
     let last = performance.now()
@@ -57,6 +77,8 @@ export function PlayerPage() {
       setElapsed((current) => (current + delta >= duration ? 0 : current + delta))
       raf.current = requestAnimationFrame(tick)
     }
+    // The bed is an 8s loop under a session measured in minutes, so the clock
+    // is wall time rather than the element's currentTime.
     raf.current = requestAnimationFrame(tick)
     return () => {
       if (raf.current !== null) cancelAnimationFrame(raf.current)
@@ -76,17 +98,26 @@ export function PlayerPage() {
 
   return (
     <div className="min-h-dvh bg-surface-default">
-      <div className="mx-auto w-full max-w-[402px] lg:max-w-[560px]">
-        {/* ------------------------------------------------------------ hero */}
-        <section className="relative flex h-[705px] flex-col overflow-hidden text-text-inverse">
+      <div className="relative mx-auto w-full max-w-[402px] lg:max-w-[560px]">
+        {/* The cover runs the full 874 of the frame, not just the 705 of the
+            hero. The sheet's rounded top corners are only legible because the
+            art carries on behind them — over a white page they cut white out
+            of white and the radius reads as square. */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[874px] overflow-hidden">
           <CoverImage
             photo={session.photo}
             gradient={session.gradient}
             width={804}
-            height={1410}
+            height={1750}
             scrim={false}
             className="absolute inset-0"
           />
+        </div>
+
+        <audio ref={audio} src="/audio/session-bed.wav" loop preload="auto" />
+
+        {/* ------------------------------------------------------------ hero */}
+        <section className="relative flex h-[705px] flex-col text-text-inverse">
 
           {/* The frame carries the iOS status bar over the art, not on a band
               above it. Same lg:hidden rule AppLayout uses, so a desktop window
@@ -130,7 +161,7 @@ export function PlayerPage() {
           <div className="relative flex flex-1 items-center justify-center">
             <button
               type="button"
-              onClick={() => setPlaying((current) => !current)}
+              onClick={toggle}
               aria-label={playing ? 'Pause' : 'Play'}
               className="u-press flex size-96 items-center justify-center rounded-full bg-white/20 backdrop-blur-[16px]"
             >

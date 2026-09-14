@@ -542,8 +542,11 @@ export function ChatPage() {
           state={publishState}
           onCancel={() => setPublishState(null)}
           onView={() => {
+            // "ready to view" means the session, not the shelf it will appear
+            // on. Landing on Home makes the user go and find what they just
+            // made.
             setPublishState(null)
-            navigate('/home')
+            navigate('/session/dolphins-frequency')
           }}
         />
       )}
