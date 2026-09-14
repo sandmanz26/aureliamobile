@@ -1,4 +1,4 @@
-import { Check, CheckCheck, Sparkles } from 'lucide-react'
+import { Check, CheckCheck, WandSparkles } from 'lucide-react'
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import orb432hz from '../assets/orb-432hz.png'
@@ -479,7 +479,7 @@ export function ChatPage() {
                 disabled={sessionState === 'updating'}
                 className="text-style-label flex h-40 shrink-0 items-center gap-6 whitespace-nowrap rounded-full border border-border-subtle bg-surface-default px-14 text-text-strong disabled:opacity-70"
               >
-                <Sparkles size={13} />
+                <WandSparkles size={13} />
                 {sessionState === 'updating' ? 'Updating..' : `Apply new changes (${applied.length})`}
               </button>
             )}
@@ -492,7 +492,7 @@ export function ChatPage() {
                   onClick={() => sendMessage(suggestion)}
                   className="text-style-label flex h-40 shrink-0 items-center gap-6 whitespace-nowrap rounded-full border border-border-subtle bg-surface-default px-14 text-text-primary"
                 >
-                  <Sparkles size={13} />
+                  <WandSparkles size={13} />
                   {suggestion}
                 </button>
               ))}

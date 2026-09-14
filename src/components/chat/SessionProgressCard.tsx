@@ -7,16 +7,18 @@ interface SessionProgressCardProps {
   progress: number | null
 }
 
-// Figma "Frame 10" inside the generating state — 362x70 pill, radius 100,
-// surface/default, 45px round thumbnail with a play glyph, and the
-// percentage + chevron trailing.
+// Figma "Frame 10" inside the generating state — a radius-100 pill 74 tall,
+// surface/default, with a 54px round thumbnail carrying the play glyph and
+// the percentage + chevron trailing. The thumbnail is the pill's measure: it
+// sits in a 10px inset, so growing one without the other reads as a different
+// component. It was 45 in a 70 pill, which made the artwork look inset.
 export function SessionProgressCard({ title, status, progress }: SessionProgressCardProps) {
   return (
-    <div className="flex w-full items-center gap-10 rounded-full bg-surface-default py-12 pl-14 pr-23">
+    <div className="flex w-full items-center gap-10 rounded-full bg-surface-default py-10 pl-12 pr-23">
       <div className="relative shrink-0">
-        <img src={sessionThumb} alt="" className="size-45 rounded-full object-cover" />
+        <img src={sessionThumb} alt="" className="size-54 rounded-full object-cover" />
         <span className="absolute inset-0 flex items-center justify-center text-text-inverse">
-          <Play size={18} fill="currentColor" />
+          <Play size={22} fill="currentColor" />
         </span>
       </div>
 
