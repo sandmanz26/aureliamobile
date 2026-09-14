@@ -64,7 +64,7 @@ export function RecommendationDeck({ recommendations, count, onOpen }: Recommend
       {cards.map((recommendation, index) => (
         <span
           key={recommendation.id}
-          className="absolute flex flex-col overflow-hidden rounded-24 border border-brand-emphasis/45 bg-surface-default p-12"
+          className="absolute flex flex-col overflow-hidden rounded-24 rounded-tl-32 border border-brand-emphasis/45 bg-surface-default p-12"
           style={{
             left: `calc(${STEP} * ${index} + ${LEAD}px)`,
             top: HEAD + (DROP[index] ?? 0),
