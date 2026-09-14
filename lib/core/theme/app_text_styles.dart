@@ -1,13 +1,14 @@
 /// Typography scale.
 ///
-/// No font package: the family is left unset so each platform uses its own UI
-/// face — San Francisco on iOS and macOS, Roboto on Android. That matches the
-/// web app, whose `--font-sans` is the same system stack, and it removes a
-/// runtime font download along with a dependency that has to keep pace with
-/// every Flutter release.
+/// **The face is Mulish**, bundled under `fonts:` in pubspec.yaml rather than
+/// downloaded at runtime. It is the `font-family/base` variable in Figma, and
+/// for a while neither client used it: the web's token export carried "SF Pro"
+/// and this file left the family unset, so both platforms quietly rendered the
+/// system UI face and agreed with each other about the wrong thing. Naming it
+/// in one place here is what keeps that from coming back.
 ///
-/// If the brand ever settles on a specific face, bundle it under `fonts:` in
-/// pubspec.yaml and name it in [_base] — one line, one place.
+/// One style leaves it — [playerCue], the line the player speaks, which the
+/// design sets in a serif.
 library;
 
 import 'package:flutter/material.dart';
@@ -16,14 +17,19 @@ import 'app_colors.dart';
 class AppTextStyles {
   AppTextStyles._();
 
+  /// The app's face. Named once; every style below goes through [_base].
+  static const fontFamily = 'Mulish';
+
   static TextStyle _base({
     required double fontSize,
     required FontWeight fontWeight,
     required double lineHeight,
     Color color = AppColors.textPrimary,
     double? letterSpacing,
+    String family = fontFamily,
   }) {
     return TextStyle(
+      fontFamily: family,
       fontSize: fontSize,
       fontWeight: fontWeight,
       height: lineHeight,
@@ -120,5 +126,16 @@ class AppTextStyles {
         fontWeight: FontWeight.w500,
         lineHeight: 16 / 12,
         color: AppColors.textBrand,
+      );
+
+  /// 21/28.5 — the player's spoken cue, and the only style in the system that
+  /// is not Mulish. The design sets it in a serif, which is what separates a
+  /// line the session says to you from the interface around it.
+  static TextStyle get playerCue => _base(
+        fontSize: 21,
+        fontWeight: FontWeight.w400,
+        lineHeight: 28.5 / 21,
+        color: AppColors.textInverse,
+        family: 'Goudy Bookletter 1911',
       );
 }

@@ -50,11 +50,11 @@ material. Flag for confirmation with product and business:
 | Home | Hero ask, live sessions, quick start, community shelf, closing CTA | Core |
 | The cockpit | Chat and its states | Core |
 | Session setup | Session settings: Script, Visual, Sound | Support |
-| Sessions | Browse shelves, Session Detail, Recreate | Core |
-| Playback | Player, publishing sheet | Core |
-| Discovery | Explore, See All | Core |
+| Sessions | Sessions list, Session Detail, Recreate | Core |
+| Playback | Player, mini player, publishing sheet | Core |
+| Discovery | Explore, All Categories, See All | Core |
 | Community | Challenge, Challenge Detail, Leaderboard | Support |
-| Account | Profile, Invite a Friend, Notifications, My Wellness, Help | Core |
+| Account | Profile (own and others'), Settings, Invite a Friend, Notifications, My Wellness, Help | Core |
 | Admin | 15 modules, web only | Internal |
 
 ---
@@ -216,9 +216,35 @@ codebases stay in step without a third document arbitrating every pixel.
 - **Shared assets, not re-made ones.** Brand and illustration vectors move as the
   same SVG path strings; raster assets are the same files in both trees.
 
+- **One face.** Mulish, which is the `font-family/base` variable in Figma. Both
+  clients spent a while quietly agreeing with each other about the wrong thing:
+  the web's token export carried "SF Pro" and the Flutter app left the family
+  unset, so each rendered its platform's system UI face. Named in one place per
+  client now.
+
 Two differences are intended: the web renders a simulated phone status bar
 because it is viewed in a browser, and platform chrome — drawer scrim, keyboard,
 text selection — follows each platform's own conventions.
+
+### One difference is not a design decision — it needs one
+
+**The Flutter client's player has no sound.** Every audio package for Flutter
+ships native code, and this app's single dependency and one-command build on a
+fresh machine is what that buys; the web plays a ten-second mock bed with no
+such cost. So on mobile the clock runs, the bar fills, the mini player behaves
+exactly as designed, and nothing is audible.
+
+That is the right trade while the catalogue is mock — there is no real audio to
+play — and the wrong one the moment a session is a real file. The seam is one
+method on `PlaybackController`; the decision to spend a native plugin on it is
+a product call, not an engineering one.
+
+**Both clients now hold playback and the cockpit thread above their router.**
+A session being built has to survive leaving the cockpit to play it, and a
+session that is playing has to survive walking back to the cockpit. Owned by
+their screens, each tore down the other — on the web the thread was lost on
+navigation, and on mobile the same bug was one screen away from being written
+twice.
 
 ---
 
@@ -261,7 +287,8 @@ before engineering meets them in QA.
   and spending are otherwise unspecified.
 - Referral reward on sign-up alone is trivially farmable with disposable email.
   It needs an activation trigger, a per-account cap and a self-referral check.
-- Sign-out is currently unreachable from anywhere on either platform.
+- Account deletion exists as a row in Settings and does nothing. It is the one
+  control there that must not ship inert.
 
 **P2**
 

@@ -4,7 +4,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/cover_image.dart';
-import '../chat/chat_screen.dart' show RecreateBrief;
+import '../chat/chat_session_controller.dart' show RecreateBrief;
 import '../shell/app_drawer.dart';
 
 /// Recreate — forking someone else's session.

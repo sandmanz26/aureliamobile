@@ -1,0 +1,338 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import '../../core/data/recommendations.dart';
+
+/// Delivery state, as a messaging app shows it: one tick sent, two ticks read.
+enum DeliveryStatus { sending, sent, read }
+
+/// Where a session is in its rebuild — the cards below only make sense while
+/// nothing is being generated, and the progress card only while it is.
+enum SessionState { idle, updating, generating, ready }
+
+class ChatMessage {
+  ChatMessage({
+    required this.id,
+    required this.fromAurelia,
+    required this.text,
+    required this.at,
+    this.voiceDuration,
+    this.status,
+  });
+
+  final int id;
+  final bool fromAurelia;
+  final String text;
+  final DateTime at;
+
+  /// Set when the message is a voice note rather than typed text.
+  final Duration? voiceDuration;
+
+  DeliveryStatus? status;
+}
+
+/// A brief handed over from the Recreate screen.
+class RecreateBrief {
+  const RecreateBrief({
+    required this.title,
+    required this.author,
+    required this.minutes,
+    required this.changes,
+  });
+
+  final String title;
+  final String author;
+  final int minutes;
+  final List<String> changes;
+}
+
+/// What a route can hand the cockpit on arrival.
+class ChatArgs {
+  const ChatArgs({this.brief, this.startVoice = false, this.ask});
+
+  final RecreateBrief? brief;
+
+  /// Opens the recorder immediately — set by Home's mic.
+  final bool startVoice;
+
+  /// What the visitor typed on Home before they were sent here.
+  final String? ask;
+}
+
+/// The cockpit thread, held above the navigator — the mobile mirror of the web
+/// app's `ChatSessionContext`.
+///
+/// A session being built is not screen state. Generating one, applying changes
+/// and then going off to play it are three steps of the same task, and for a
+/// while the second was thrown away by the third: the chat screen was popped
+/// on navigation, its `State` went with it, and coming back handed the user a
+/// fresh conversation with nothing to publish.
+///
+/// The timers live here too, not on the screen. A generation that stops
+/// because someone opened the player is the same bug wearing a different hat.
+///
+/// In memory rather than storage, which matches how the rest of the app treats
+/// a visit: it survives moving around the product, and a relaunch starts over.
+/// When there is a backend this is what a draft session persists into.
+class ChatSessionController extends ChangeNotifier {
+  ChatSessionController() {
+    _seedOpening();
+  }
+
+  final messages = <ChatMessage>[];
+
+  /// Every recommendation starts applied — Aurelia proposed them, and the
+  /// user's job is to take away what they do not want, not to opt in to each.
+  final applied = kRecommendations.map((r) => r.id).toSet();
+
+  /// The rebuild rate here is 22 a second. Held in a notifier rather than on
+  /// the controller so only the progress card listens: notifying everything
+  /// would rebuild every message, the deck and the composer for a number two
+  /// digits wide.
+  final progress = ValueNotifier<int>(0);
+
+  SessionState _session = SessionState.idle;
+  bool _typing = false;
+  bool _deckOpen = false;
+  int _nextId = 1;
+
+  /// Seeds already taken, so re-entering the cockpit does not say the same
+  /// opening line twice.
+  final _seeded = <String>{};
+
+  final _timers = <Timer>[];
+  bool _disposed = false;
+
+  SessionState get session => _session;
+  bool get typing => _typing;
+  bool get deckOpen => _deckOpen;
+
+  /// True while the set can still be changed and applied.
+  bool get canApply =>
+      _session == SessionState.idle || _session == SessionState.updating;
+
+  void openDeck() {
+    if (_deckOpen || !canApply) return;
+    _deckOpen = true;
+    notifyListeners();
+  }
+
+  void toggleRecommendation(String id) {
+    applied.contains(id) ? applied.remove(id) : applied.add(id);
+    notifyListeners();
+  }
+
+  void _seedOpening() {
+    // The thread opens mid-conversation, so the first messages are backdated.
+    final start = DateTime.now().subtract(const Duration(minutes: 9));
+    messages.addAll([
+      ChatMessage(
+        id: _nextId++,
+        fromAurelia: true,
+        at: start,
+        text: 'Good morning, Adam.\n\nLooks like you had a good sleep last night, '
+            'score improved by 7% due to increased REM sleep.',
+      ),
+      ChatMessage(
+        id: _nextId++,
+        fromAurelia: true,
+        at: start.add(const Duration(seconds: 4)),
+        text: 'How did you find the sleep meditation we created?',
+      ),
+      ChatMessage(
+        id: _nextId++,
+        fromAurelia: false,
+        at: start.add(const Duration(seconds: 96)),
+        text: 'It was good, but it was to short, I had to repeat it multiple times.',
+        status: DeliveryStatus.read,
+      ),
+      ChatMessage(
+        id: _nextId++,
+        fromAurelia: true,
+        at: start.add(const Duration(seconds: 104)),
+        text: 'Based on the diagnosis and your feedback, this is what I’d '
+            'would recommend:',
+      ),
+    ]);
+  }
+
+  /// What was typed on Home arrives as the first thing said here, so the
+  /// visitor does not have to write it again — including after a detour
+  /// through sign-in. Seeded once: coming back from the player must not
+  /// re-ask the question.
+  void seedAsk(String? ask) {
+    final text = ask?.trim();
+    if (text == null || text.isEmpty || !_seeded.add('ask:$text')) return;
+    messages.add(ChatMessage(
+      id: _nextId++,
+      fromAurelia: false,
+      at: DateTime.now(),
+      status: DeliveryStatus.read,
+      text: text,
+    ));
+    _typing = true;
+    notifyListeners();
+    _after(const Duration(milliseconds: 1400), () {
+      _typing = false;
+      _say('Good place to start. Give me a moment and I’ll shape '
+          'something around that.');
+    });
+  }
+
+  /// A hand-off from Recreate opens the thread with the fork already stated,
+  /// so the user lands mid-conversation rather than at a blank prompt.
+  void seedBrief(RecreateBrief? brief) {
+    if (brief == null || !_seeded.add('brief:${brief.title}/${brief.author}')) {
+      return;
+    }
+    final lines = brief.changes.isEmpty
+        ? '• Keep it as it is'
+        : brief.changes.map((line) => '• $line').join('\n');
+    messages.add(ChatMessage(
+      id: _nextId++,
+      fromAurelia: false,
+      at: DateTime.now(),
+      status: DeliveryStatus.read,
+      text: 'Recreate “${brief.title}” by ${brief.author}, '
+          'at ${brief.minutes} minutes.\n$lines',
+    ));
+    _typing = true;
+    notifyListeners();
+    _after(const Duration(milliseconds: 1600), () {
+      _typing = false;
+      _say('Got it — forking ${brief.author}’s session and keeping them '
+          'credited in the lineage. Tell me anything else you want changed '
+          'and I’ll build your version.');
+    });
+  }
+
+  /// Sends, then walks the message through sending → sent → read and brings
+  /// back a reply — the rhythm a chat app has, rather than a bubble that just
+  /// appears.
+  void send({required String text, Duration? voiceDuration}) {
+    final id = _nextId++;
+    messages.add(ChatMessage(
+      id: id,
+      fromAurelia: false,
+      text: text,
+      at: DateTime.now(),
+      voiceDuration: voiceDuration,
+      status: DeliveryStatus.sending,
+    ));
+    notifyListeners();
+
+    void setStatus(DeliveryStatus status) {
+      for (final message in messages) {
+        if (message.id == id) message.status = status;
+      }
+      notifyListeners();
+    }
+
+    _after(const Duration(milliseconds: 400), () => setStatus(DeliveryStatus.sent));
+    _after(const Duration(milliseconds: 900), () {
+      setStatus(DeliveryStatus.read);
+      _typing = true;
+      notifyListeners();
+    });
+    _after(const Duration(milliseconds: 2400), () {
+      _typing = false;
+      _say('Got it — I’ve noted that for the next revision of your session.');
+    });
+  }
+
+  /// Applying is not instant and does not pretend to be: a beat of
+  /// "Updating..", then Aurelia says something, then the percentage climbs on
+  /// its own card.
+  void applyChanges() {
+    if (applied.isEmpty || _session == SessionState.updating) return;
+    _session = SessionState.updating;
+    notifyListeners();
+
+    _after(const Duration(milliseconds: 1400), () {
+      progress.value = 0;
+      _session = SessionState.generating;
+      _say('Sure, here it is:');
+
+      _timers.add(Timer.periodic(const Duration(milliseconds: 45), (timer) {
+        if (_disposed) return timer.cancel();
+        if (progress.value >= 100) {
+          timer.cancel();
+          // Only the last tick notifies; the rest ride the ValueNotifier.
+          _session = SessionState.ready;
+          notifyListeners();
+        } else {
+          progress.value++;
+        }
+      }));
+    });
+  }
+
+  /// Back to a thread with nothing in it — what "New session" means.
+  void reset() {
+    for (final timer in _timers) {
+      timer.cancel();
+    }
+    _timers.clear();
+    messages.clear();
+    applied
+      ..clear()
+      ..addAll(kRecommendations.map((r) => r.id));
+    _session = SessionState.idle;
+    _typing = false;
+    _deckOpen = false;
+    _seeded.clear();
+    _nextId = 1;
+    progress.value = 0;
+    _seedOpening();
+    notifyListeners();
+  }
+
+  void _say(String text) {
+    messages.add(ChatMessage(
+      id: _nextId++,
+      fromAurelia: true,
+      at: DateTime.now(),
+      text: text,
+    ));
+    notifyListeners();
+  }
+
+  /// Schedules work that must not fire after the controller is gone. It may
+  /// fire while no chat screen is mounted — that is the point.
+  void _after(Duration delay, VoidCallback action) {
+    _timers.add(Timer(delay, () {
+      if (!_disposed) action();
+    }));
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    for (final timer in _timers) {
+      timer.cancel();
+    }
+    progress.dispose();
+    super.dispose();
+  }
+}
+
+class ChatSessionScope extends InheritedNotifier<ChatSessionController> {
+  const ChatSessionScope({
+    super.key,
+    required ChatSessionController super.notifier,
+    required super.child,
+  });
+
+  static ChatSessionController of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<ChatSessionScope>();
+    assert(scope?.notifier != null, 'ChatSessionScope is missing above this widget');
+    return scope!.notifier!;
+  }
+
+  /// The controller without subscribing — for a handler that calls into it and
+  /// does not want to rebuild when it does.
+  static ChatSessionController read(BuildContext context) {
+    final scope = context.getInheritedWidgetOfExactType<ChatSessionScope>();
+    assert(scope?.notifier != null, 'ChatSessionScope is missing above this widget');
+    return scope!.notifier!;
+  }
+}

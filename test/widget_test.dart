@@ -6,6 +6,9 @@ import 'package:aurelia_mobile/core/widgets/aurelia_logo.dart';
 import 'package:aurelia_mobile/core/widgets/community_network.dart';
 import 'package:aurelia_mobile/core/widgets/section_header.dart';
 import 'package:aurelia_mobile/core/widgets/session_grid_card.dart';
+import 'package:aurelia_mobile/features/chat/widgets/mini_player.dart';
+import 'package:aurelia_mobile/features/chat/widgets/recommendation_deck.dart';
+import 'package:aurelia_mobile/features/player/player_screen.dart';
 import 'package:aurelia_mobile/main.dart';
 
 /// Pumps the app and settles. Network images resolve to the gradient floor in
@@ -123,8 +126,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Lands on Sessions, not Home.
-      expect(find.text('Trusted Creators'), findsOneWidget);
-      expect(find.text('Monthly Challenge!'), findsOneWidget);
+      expect(find.text('Sessions'), findsOneWidget);
+      expect(find.text('Created by you'), findsOneWidget);
     });
 
     testWidgets('reaches sign up and the password reset path', (tester) async {
@@ -249,9 +252,15 @@ void main() {
       await tester.pumpAndSettle();
 
       // All three arrive applied — Aurelia proposed them, so the user's job
-      // is to take away what they do not want.
-      expect(find.text('Increase Yellow'), findsOneWidget);
+      // is to take away what they do not want. They arrive folded into a deck,
+      // which carries the count.
       expect(find.text('Apply new changes (3)'), findsOneWidget);
+      expect(find.byType(RecommendationDeck), findsOneWidget);
+
+      // Opening the deck lays the three cards out with their controls.
+      await tester.tap(find.byType(RecommendationDeck));
+      await tester.pumpAndSettle();
+      expect(find.text('Increase yellow'), findsOneWidget);
 
       // Tapped by its label: OutlinedButton.icon builds a private subclass,
       // so widgetWithText(OutlinedButton, ...) matches nothing.
@@ -267,7 +276,7 @@ void main() {
 
       await tester.pump(const Duration(milliseconds: 1500));
       // The cards give way to the session being rebuilt.
-      expect(find.text('Increase Yellow'), findsNothing);
+      expect(find.text('Increase yellow'), findsNothing);
       expect(find.text('Creating your new session..'), findsOneWidget);
 
       // The percentage climbs on its own, and finishes.
@@ -352,7 +361,7 @@ void main() {
           find.descendant(of: find.byType(Drawer), matching: f);
       double leftOf(Finder f) => tester.getTopLeft(f.first).dx;
       final markLeft = leftOf(inDrawer(find.byType(AureliaLogo)));
-      for (final label in ['Profile', 'Chat', 'Sessions', 'Latest', 'Invite a Friend', 'Help']) {
+      for (final label in ['Profile', 'Explore', 'Sessions', 'Latest', 'Invite a Friend', 'Help']) {
         final text = inDrawer(find.text(label));
         final row = find.ancestor(of: text, matching: find.byType(Row));
         final left = leftOf(row.evaluate().isEmpty ? text : row);
@@ -476,6 +485,192 @@ void main() {
       expect(find.text('Invite Friends, Get Points!'), findsOneWidget);
       expect(find.text('+500'), findsOneWidget);
       expect(find.text('https://www.aurelia.ai/inviteafriend'), findsOneWidget);
+    });
+  });
+
+  group('Player', () {
+    testWidgets('plays a session, and keeps playing when you go back',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/chat');
+      await tester.pumpAndSettle();
+      // Nothing is on the deck yet, so the cockpit has no mini player.
+      expect(find.byType(MiniPlayer), findsNothing);
+
+      await tester.tap(find.byTooltip('Play session'));
+      await tester.pumpAndSettle();
+      expect(find.byType(PlayerScreen), findsOneWidget);
+      expect(find.text('Dolphins frequency'), findsWidgets);
+
+      // The clock is stopped until the transport is pressed.
+      expect(find.text('0:00'), findsOneWidget);
+      await tester.tap(find.byTooltip('Play'));
+      await tester.pump(const Duration(milliseconds: 1200));
+      expect(find.text('0:01'), findsOneWidget);
+
+      // Walking back leaves the session running, and the cockpit picks it up:
+      // this is the whole reason playback lives above the navigator.
+      navigator.pop();
+      await tester.pumpAndSettle();
+      expect(find.byType(MiniPlayer), findsOneWidget);
+      expect(find.byTooltip('Pause Dolphins frequency'), findsOneWidget);
+      // And the header's own play glyph steps aside rather than offering a
+      // second control for the same thing.
+      expect(find.byTooltip('Play session'), findsNothing);
+    });
+
+    testWidgets('the sheet carries the credit, the mix and a way to fork it',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/play',
+          arguments: const PlayRequest(slug: 'dolphins-frequency'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Adam Nilson'), findsOneWidget);
+      expect(find.text('Details'), findsOneWidget);
+      expect(find.text('Cetacean song'), findsOneWidget);
+      expect(find.text('Recreate your own version'), findsOneWidget);
+      // The cards here fork a session rather than adding to a set, so they
+      // carry Recreate and not Add.
+      expect(find.text('Recreate'), findsWidgets);
+      expect(find.text('Add'), findsNothing);
+    });
+  });
+
+  group('Sessions and Explore are two screens', () {
+    testWidgets('Sessions lists what is published and narrows to your own',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/sessions');
+      await tester.pumpAndSettle();
+      expect(find.text('Sessions'), findsOneWidget);
+      // Explore's shelves are not here — that was the bug this split fixed.
+      expect(find.text('Trusted Creators'), findsNothing);
+
+      final all = find.text('Dolphins frequency');
+      expect(all, findsOneWidget);
+
+      await tester.tap(find.text('Created by you'));
+      await tester.pumpAndSettle();
+      // Adam's own work stays; a session by anyone else goes.
+      expect(find.text('Dolphins frequency'), findsOneWidget);
+      expect(find.text('Trusted Creators'), findsNothing);
+    });
+
+    testWidgets('Explore is still the browse surface', (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/explore');
+      await tester.pumpAndSettle();
+      expect(find.text('Explore'), findsWidgets);
+      expect(find.text('Trusted Creators'), findsOneWidget);
+    });
+
+    testWidgets('All Categories opens the whole list and filters the shelf',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/explore');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('All Categories'));
+      await tester.pumpAndSettle();
+      // The sheet lists bare names; the chips carry the library count.
+      expect(find.text('Meditations'), findsOneWidget);
+      expect(find.text('Meditations (12.5k)'), findsWidgets);
+
+      await tester.tap(find.text('Meditations').last);
+      await tester.pumpAndSettle();
+      expect(find.text('All Categories'), findsOneWidget);
+    });
+  });
+
+  group('Settings', () {
+    testWidgets('is reached by the gear on your own profile, and signs you out',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/profile');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Settings'));
+      await tester.pumpAndSettle();
+      expect(find.text('Connected Accounts'), findsOneWidget);
+      expect(find.text('Log Out'), findsOneWidget);
+
+      await tester.tap(find.text('Log Out'));
+      await tester.pumpAndSettle();
+
+      // Back on Home, and the wall is up again — which is the only proof that
+      // signing out did anything.
+      navigator.pushNamed('/profile');
+      await tester.pumpAndSettle();
+      expect(find.text('Or continue using'), findsOneWidget);
+    });
+
+    testWidgets('a stranger gets no gear, and their own published work',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/profile', arguments: 'maya-chen');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Maya Chen'), findsWidgets);
+      expect(find.text('Follow'), findsOneWidget);
+      // There is nothing of a stranger's to configure, and no coin balance of
+      // theirs to show.
+      expect(find.byTooltip('Settings'), findsNothing);
+    });
+  });
+
+  group('The cockpit survives leaving it', () {
+    testWidgets('an applied set is still there when you come back',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/chat');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(RecommendationDeck));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Remove').first);
+      await tester.pumpAndSettle();
+      expect(find.text('Apply new changes (2)'), findsOneWidget);
+
+      await tester.tap(find.text('Apply new changes (2)'));
+      await tester.pump(const Duration(milliseconds: 1500));
+      await tester.pump(const Duration(seconds: 6));
+      expect(find.text('Ready to play'), findsOneWidget);
+
+      // Off to play it, then back. Before the thread moved above the
+      // navigator this returned a fresh conversation with nothing to publish.
+      await tester.tap(find.byTooltip('Play Sleep meditation v1.2'));
+      await tester.pumpAndSettle();
+      expect(find.byType(PlayerScreen), findsOneWidget);
+
+      navigator.pop();
+      await tester.pumpAndSettle();
+      expect(find.text('Ready to play'), findsOneWidget);
+      expect(find.text('Apply new changes (2)'), findsNothing);
     });
   });
 }

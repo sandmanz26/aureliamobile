@@ -23,8 +23,9 @@ class AppDrawer extends StatelessWidget {
     ('Stress relief techniques', 'Marcus Lee', 'stress'),
   ];
 
+  // No Chat entry: there is none anywhere in the design. The cockpit is
+  // reached by "New session" below, and by a session that is already running.
   static const _nav = [
-    ('/chat', Icons.chat_bubble_outline, 'Chat'),
     ('/explore', Icons.explore_outlined, 'Explore'),
     ('/sessions', Icons.library_music_outlined, 'Sessions'),
     ('/wellness', Icons.waves_outlined, 'My wellness'),

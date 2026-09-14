@@ -4,6 +4,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/aurelia_logo.dart';
+import '../../core/widgets/category_sheet.dart';
 import '../../core/widgets/session_grid_card.dart';
 import '../../core/widgets/cover_image.dart';
 import '../../core/widgets/photo_circle.dart';
@@ -11,18 +12,22 @@ import '../../core/widgets/section_header.dart';
 import '../home/home_screen.dart' show LiveSessionsCard;
 import '../shell/app_drawer.dart';
 
-/// Sessions — the browse surface behind the Sessions nav item.
+/// Explore — the browse surface behind the Explore nav item.
 ///
-/// Home argues for the product; this screen is what you use once you are in it.
-/// No marketing: a banner for the one thing to press today, then shelves.
-class SessionsScreen extends StatefulWidget {
-  const SessionsScreen({super.key});
+/// Home argues for the product; this screen is what you use once you are in
+/// it. No marketing: a banner for the one thing to press today, then shelves.
+///
+/// Sessions is a different screen ([SessionListScreen]) with a different
+/// frame. The two shared this one for a while, which is how Explore's shelves
+/// ended up under the Sessions title.
+class ExploreScreen extends StatefulWidget {
+  const ExploreScreen({super.key});
 
   @override
-  State<SessionsScreen> createState() => _SessionsScreenState();
+  State<ExploreScreen> createState() => _ExploreScreenState();
 }
 
-class _SessionsScreenState extends State<SessionsScreen> {
+class _ExploreScreenState extends State<ExploreScreen> {
   String _chip = kAllCategories;
 
   /// Sessions part-way through, with how far in they are.
@@ -40,6 +45,15 @@ class _SessionsScreenState extends State<SessionsScreen> {
   static String _categoryFor(String chip) {
     for (final category in kCategories) {
       if (category.label == chip) return category.name;
+    }
+    return kAllCategories;
+  }
+
+  /// The inverse: the sheet returns a bare category name, the chips carry the
+  /// library count with it.
+  static String _chipFor(String category) {
+    for (final chip in _chips) {
+      if (_categoryFor(chip) == category) return chip;
     }
     return kAllCategories;
   }
@@ -100,7 +114,7 @@ class _SessionsScreenState extends State<SessionsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const AppDrawer(current: '/sessions'),
+      drawer: const AppDrawer(current: '/explore'),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -254,8 +268,14 @@ class _SessionsScreenState extends State<SessionsScreen> {
                 child: SectionHeader(
                   title: 'Recreate from Community',
                   action: 'All Categories',
-                  onSeeAll: () => Navigator.of(context)
-                      .pushNamed('/see-all', arguments: Shelf.community),
+                  // The chip rail only shows what fits, so this opens the whole
+                  // list rather than a second shelf of the same sessions.
+                  onSeeAll: () async {
+                    final picked =
+                        await showCategorySheet(context, _categoryFor(_chip));
+                    if (picked == null || !context.mounted) return;
+                    setState(() => _chip = _chipFor(picked));
+                  },
                 ),
               ),
               const SizedBox(height: AppSpacing.s4),

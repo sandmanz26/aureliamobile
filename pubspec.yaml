@@ -64,6 +64,26 @@ flutter:
   assets:
     - assets/images/
 
+  # Mulish is the web app's `font-family/base` Figma variable, and therefore
+  # the app's face on both platforms. Goudy Bookletter 1911 is the one place
+  # the design leaves it: the player's spoken cue, which is set in a serif.
+  # Latin subsets straight from Google Fonts, the same cut the web loads.
+  fonts:
+    - family: Mulish
+      fonts:
+        - asset: assets/fonts/Mulish-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Mulish-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Mulish-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Mulish-SemiBold.ttf
+          weight: 600
+    - family: Goudy Bookletter 1911
+      fonts:
+        - asset: assets/fonts/GoudyBookletter1911-Regular.ttf
+          weight: 400
+
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

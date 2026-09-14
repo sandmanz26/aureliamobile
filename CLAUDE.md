@@ -22,7 +22,7 @@ that goes wrong. `git checkout mobile_app`.
 
 ```bash
 flutter pub get
-flutter test        # 25 tests, a few seconds — run this before debugging a device
+flutter test        # 33 tests, a few seconds — run this before debugging a device
 flutter run
 ```
 
@@ -30,6 +30,9 @@ Flutter 3.27.1 / Dart 3.6. One dependency, `cupertino_icons`, and **no native
 plugins** — so there is no CocoaPods step for iOS and no Gradle plugin
 resolution to break on Android. Keep it that way if you can; it is the reason
 a new machine can build this in one command.
+
+That rule has one visible cost, and it is worth knowing before you file a bug:
+**the player makes no sound.** See `core/audio/playback_controller.dart`.
 
 Device setup, emulators and signing are in the [device runbook](https://claude.ai/code/artifact/16e2c84d-6b64-4fdc-aace-a8e85e9d1cc3).
 
@@ -40,20 +43,35 @@ Device setup, emulators and signing are in the [device runbook](https://claude.a
 ```
 lib/
   core/
+    audio/     PlaybackController — what is on the deck, and its clock
     auth/      AuthScope — an InheritedWidget holding one bool
     data/      The entire catalogue, as const Dart. No network, no database.
     theme/     Colours, type, spacing, radius. Mirrors the web's tokens 1:1.
     widgets/   Anything used by more than one screen
   features/
-    <name>/<name>_screen.dart      one directory per screen, 16 in total
+    chat/      The cockpit, plus the thread it draws (chat_session_controller)
+    <name>/<name>_screen.dart      one directory per screen, 18 in total
 main.dart    routes, as a switch on settings.name
 ```
 
-There is no state-management package. Screens hold their own `State`; the one
-piece of cross-screen state (signed in or not) is an `InheritedWidget`. At this
-size that is not a shortcut to be corrected later — it is less code than any
-library would add, and the seams are where you would put one when there is a
-real backend.
+There is no state-management package. Screens hold their own `State`, and the
+three pieces that outlive a screen are `InheritedNotifier`s stacked above
+`MaterialApp` in `main.dart`:
+
+| Scope | Holds | Why it cannot live on a screen |
+| --- | --- | --- |
+| `AuthScope` | signed in or not | Every guarded route asks |
+| `PlaybackScope` | the session on the deck, and its clock | Starting a session is not a decision to stay on the player |
+| `ChatSessionScope` | the cockpit thread, the applied set, the rebuild | Going off to play what you just built must not throw it away |
+
+The last two are the same bug in two directions, and each would have torn down
+the other. At this size that is not a shortcut to be corrected later — it is
+less code than any library would add, and the seams are where you would put one
+when there is a real backend.
+
+**The timers for a rebuild live on `ChatSessionController`, not on the screen.**
+A generation that stops because someone opened the player is the same bug
+wearing a different hat.
 
 ---
 
@@ -79,12 +97,29 @@ expiry date, not the session model.
 
 **The web app is the reference implementation.** Where the two disagree, the web
 is right and this changes. Not because it matters more, but because a single
-reference is the only way two codebases stay in step. Three things follow:
-the type scale mirrors the web's `--text-*` steps exactly; the page gutter is
-20 (`AppPadding.page`), which is what every consumer screen on the web carries
-at phone width; and brand/illustration vectors move across as the same SVG path
+reference is the only way two codebases stay in step. Four things follow: the
+type scale mirrors the web's `--text-*` steps exactly; the face is **Mulish**,
+bundled under `assets/fonts/` because it is the `font-family/base` variable in
+Figma (leaving the family unset looked like parity and was not — it rendered
+each platform's system UI face on both clients); the page gutter is 20
+(`AppPadding.page`), which is what every consumer screen on the web carries at
+phone width; and brand/illustration vectors move across as the same SVG path
 strings, parsed at runtime by `core/widgets/svg_path.dart`, rather than being
 re-traced by hand.
+
+**The player is silent, and that is a decision.** `PlaybackController` holds a
+track, a play/pause flag and a clock that ticks — everything the player screen
+and the mini player read. What it does not hold is an audio element, because
+there is no way to get one without a native plugin and the no-plugins rule
+above is what keeps the build to one command. Point `_tick` at a real engine
+and every screen over it is already correct. Until then: **an app whose player
+shows a moving bar and plays nothing is not broken.**
+
+**Explore and Sessions are two screens.** `explore_screen.dart` is the browse
+surface with the shelves; `session_list_screen.dart` is the Sessions frame, a
+list of 68px rows. They shared one screen for a while, which is how Explore's
+shelves ended up under the Sessions title. And there is no Chat entry anywhere
+in the design — the cockpit is reached by "New session" in the drawer.
 
 **`AppRadius` is a closed scale** — 0/2/4/8/12/16/24/32/full. A literal that is
 not on it is almost always a mistake. The web had eleven elements silently
@@ -116,9 +151,10 @@ of what it finds.
 **Text is a hit-test target.** A `Text` inside a `Stack` will swallow a tap
 meant for a full-card overlay beneath it. Put the overlay above the copy.
 
-**The tests are behavioural, not golden.** 25 of them, driving real screens
+**The tests are behavioural, not golden.** 33 of them, driving real screens
 through real taps: the sign-in gate remembers where you were going, the
-recommendation set can be dropped and applied, notifications group by age. They
+recommendation set can be dropped and applied, a session keeps playing when you
+walk back to the cockpit, notifications group by age. They
 also catch overflow, because a `RenderFlex` overflow fails the test — which is
 how the 420px surface found three layout bugs the eye did not.
 
@@ -139,6 +175,10 @@ None of these matter at demo size. All of them will matter with a backend.
   sections make `.builder` awkward, but the first frame pays for the whole page.
 - `/admin` has no authentication at all. It is on the web branches, not this
   one, but it is the same product and the same P0.
+- `Timer.periodic` at 16Hz drives the playback clock whenever a session is
+  playing, and it keeps running with the app in the background. A real engine
+  would report its own position and this goes away; until then it is a battery
+  cost nobody has measured.
 
 ---
 

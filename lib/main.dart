@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'core/audio/playback_controller.dart';
 import 'core/auth/auth_scope.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/forgot_password_screen.dart';
@@ -7,15 +8,19 @@ import 'features/auth/sign_in_screen.dart';
 import 'features/auth/sign_up_screen.dart';
 import 'features/challenge/challenge_detail_screen.dart';
 import 'features/chat/chat_screen.dart';
+import 'features/chat/chat_session_controller.dart';
 import 'features/help/help_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/invite/invite_screen.dart';
 import 'features/notifications/notifications_screen.dart';
+import 'features/player/player_screen.dart';
 import 'features/profile/profile_screen.dart';
 import 'features/recreate/recreate_screen.dart';
 import 'features/see_all/see_all_screen.dart';
 import 'features/session_detail/session_detail_screen.dart';
-import 'features/sessions/sessions_screen.dart';
+import 'features/sessions/explore_screen.dart';
+import 'features/sessions/session_list_screen.dart';
+import 'features/settings/account_settings_screen.dart';
 import 'core/data/sessions.dart' show Shelf;
 import 'features/wellness/wellness_screen.dart';
 
@@ -33,9 +38,19 @@ class AureliaApp extends StatefulWidget {
 class _AureliaAppState extends State<AureliaApp> {
   final _auth = AuthController();
 
+  /// Both of these sit above the navigator on purpose.
+  ///
+  /// A session being built has to survive leaving the cockpit to play it, and
+  /// a session that is playing has to survive walking back to the cockpit.
+  /// Owned by their screens, each would be torn down by the other.
+  final _playback = PlaybackController();
+  final _chat = ChatSessionController();
+
   @override
   void dispose() {
     _auth.dispose();
+    _playback.dispose();
+    _chat.dispose();
     super.dispose();
   }
 
@@ -53,6 +68,8 @@ class _AureliaAppState extends State<AureliaApp> {
     '/explore',
     '/sessions',
     '/wellness',
+    '/play',
+    '/settings',
   };
 
   Route<dynamic>? _onGenerateRoute(RouteSettings settings) {
@@ -88,13 +105,21 @@ class _AureliaAppState extends State<AureliaApp> {
         case '/reset-password':
           return const ResetPasswordScreen();
         case '/sessions':
-          return const SessionsScreen();
+          return const SessionListScreen();
+        case '/explore':
+          return const ExploreScreen();
         case '/chat':
           final args = settings.arguments;
           if (args is ChatArgs) {
             return ChatScreen(brief: args.brief, startVoice: args.startVoice, ask: args.ask);
           }
           return ChatScreen(brief: args is RecreateBrief ? args : null);
+        case '/play':
+          final args = settings.arguments;
+          if (args is PlayRequest) {
+            return PlayerScreen(slug: args.slug, origin: args.origin);
+          }
+          return PlayerScreen(slug: args as String? ?? '');
         case '/session':
           return SessionDetailScreen(slug: settings.arguments as String? ?? '');
         case '/recreate':
@@ -112,12 +137,11 @@ class _AureliaAppState extends State<AureliaApp> {
         case '/help':
           return const HelpScreen();
         case '/profile':
-          return const ProfileScreen();
-        case '/explore':
-          // The design's "Explore" is this browse surface, and the screen has
-          // been titled that all along — one screen behind both routes rather
-          // than a second near-identical one to keep in step.
-          return const SessionsScreen();
+          // Null is your own profile; a slug is somebody else's. See
+          // [profileArgument] for who decides which.
+          return ProfileScreen(person: settings.arguments as String?);
+        case '/settings':
+          return const AccountSettingsScreen();
         case '/wellness':
           return const WellnessScreen();
         default:
@@ -132,12 +156,18 @@ class _AureliaAppState extends State<AureliaApp> {
   Widget build(BuildContext context) {
     return AuthScope(
       notifier: _auth,
-      child: MaterialApp(
-        title: 'Aurelia',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
-        initialRoute: '/home',
-        onGenerateRoute: _onGenerateRoute,
+      child: PlaybackScope(
+        notifier: _playback,
+        child: ChatSessionScope(
+          notifier: _chat,
+          child: MaterialApp(
+            title: 'Aurelia',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light,
+            initialRoute: '/home',
+            onGenerateRoute: _onGenerateRoute,
+          ),
+        ),
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/data/people.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
@@ -63,15 +64,55 @@ const _cards = <_Published>[
 
 const _stats = [('6', 'Posts'), ('18,513', 'Played'), ('1,528', 'Recreated')];
 
-/// Profile — who you are on Aurelia, and what you have published.
+/// One screen for two readings of the same thing. `/profile` with no argument
+/// is the signed-in user's; with a person slug it is somebody else's, reached
+/// by tapping a creator anywhere their name appears — the player sheet, a
+/// session's byline.
+///
+/// What changes between them is only the chrome around the same content: your
+/// own profile opens the drawer, offers your coin balance and the gear; a
+/// stranger's offers a way back and a way to follow. The published work below
+/// is theirs in both cases, which is the point of the screen.
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen({super.key, this.person});
+
+  /// Whose profile. Null is your own — see [findPerson].
+  final String? person;
 
   @override
   Widget build(BuildContext context) {
+    final subject = findPerson(person) ?? findPerson(null)!;
+    final own = subject.isSelf;
+
+    // The signed-in profile keeps its designed figures and shelf. Anyone
+    // else's is assembled from what they have actually published — showing
+    // Adam's work under a stranger's name is worse than showing them three
+    // sessions.
+    final stats = own
+        ? _stats
+        : [
+            ('${subject.sessions.length}',
+                subject.sessions.length == 1 ? 'Post' : 'Posts'),
+            (subject.sessions.first.plays, 'Played'),
+            (subject.sessions.first.recreated, 'Recreated'),
+          ];
+    final cards = own
+        ? _cards
+        : [
+            for (final session in subject.sessions)
+              _Published(
+                title: session.title,
+                photo: session.photo,
+                description: session.description,
+                plays: session.plays,
+                recreated: session.recreated,
+                gradient: session.gradient,
+              ),
+          ];
+
     return Scaffold(
       backgroundColor: AppColors.background,
-      drawer: const AppDrawer(current: '/profile'),
+      drawer: own ? const AppDrawer(current: '/profile') : null,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(
@@ -79,24 +120,62 @@ class ProfileScreen extends StatelessWidget {
           children: [
             Row(
               children: [
-                Builder(
-                  builder: (context) => CircleSurfaceButton(
-                    icon: Icons.menu,
-                    tooltip: 'Open menu',
+                if (own)
+                  Builder(
+                    builder: (context) => CircleSurfaceButton(
+                      icon: Icons.menu,
+                      tooltip: 'Open menu',
+                      size: 44,
+                      onPressed: () => Scaffold.of(context).openDrawer(),
+                    ),
+                  )
+                else
+                  CircleSurfaceButton(
+                    icon: Icons.arrow_back,
+                    tooltip: 'Back',
                     size: 44,
-                    onPressed: () => Scaffold.of(context).openDrawer(),
+                    onPressed: () => Navigator.of(context).maybePop(),
                   ),
-                ),
                 const SizedBox(width: AppSpacing.s3),
-                Expanded(child: Text('Profile', style: AppTextStyles.titleLg)),
-                const CoinPill(),
+                Expanded(
+                  child: Text(own ? 'Profile' : subject.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.titleLg),
+                ),
+                if (own)
+                  const CoinPill()
+                else
+                  OutlinedButton(
+                    onPressed: () {},
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 44),
+                      shape: const StadiumBorder(),
+                      side: const BorderSide(color: AppColors.border),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: AppPadding.md),
+                    ),
+                    child: Text('Follow', style: AppTextStyles.label),
+                  ),
                 const SizedBox(width: AppSpacing.s3),
                 CircleSurfaceButton(
                   icon: Icons.share_outlined,
-                  tooltip: 'Share profile',
+                  tooltip: own ? 'Share profile' : 'Share ${subject.name}',
                   size: 44,
                   onPressed: () {},
                 ),
+                // Only on your own profile: there is nothing of a stranger's
+                // to configure. This is also the only way into Settings, and
+                // therefore the only way to sign out.
+                if (own) ...[
+                  const SizedBox(width: AppSpacing.s3),
+                  CircleSurfaceButton(
+                    icon: Icons.settings_outlined,
+                    tooltip: 'Settings',
+                    size: 44,
+                    onPressed: () => Navigator.of(context).pushNamed('/settings'),
+                  ),
+                ],
               ],
             ),
 
@@ -114,16 +193,22 @@ class ProfileScreen extends StatelessWidget {
                     colors: [AppPrimitives.primary300, AppPrimitives.primary600],
                   ),
                 ),
-                child: const PhotoCircle(
-                  photo: 'avatar',
+                child: PhotoCircle(
+                  photo: subject.photo,
                   size: 92,
-                  gradient: [AppColors.backgroundElevated, AppColors.backgroundElevated],
+                  gradient: const [
+                    AppColors.backgroundElevated,
+                    AppColors.backgroundElevated
+                  ],
                 ),
               ),
             ),
             const SizedBox(height: AppSpacing.s4),
-            Center(child: Text('Adam Nilson', style: AppTextStyles.titleMd)),
-            Center(child: Text('Dubai, UAE', style: AppTextStyles.label)),
+            Center(child: Text(subject.name, style: AppTextStyles.titleMd)),
+            Center(
+              child: Text(own ? 'Dubai, UAE' : subject.role,
+                  textAlign: TextAlign.center, style: AppTextStyles.label),
+            ),
 
             const SizedBox(height: AppSpacing.s6),
             Container(
@@ -134,7 +219,7 @@ class ProfileScreen extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  for (final (value, label) in _stats) ...[
+                  for (final (value, label) in stats) ...[
                     Expanded(
                       child: Column(
                         children: [
@@ -144,7 +229,7 @@ class ProfileScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (label != _stats.last.$2)
+                    if (label != stats.last.$2)
                       const SizedBox(
                         height: 36,
                         child: VerticalDivider(
@@ -162,7 +247,7 @@ class ProfileScreen extends StatelessWidget {
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: _cards.length,
+              itemCount: cards.length,
               // 230 tall whatever the screen width, as on the web: the cards
               // hold four lines of text, so they cannot scale with the column.
               gridDelegate:
@@ -173,7 +258,7 @@ class ProfileScreen extends StatelessWidget {
                 mainAxisExtent: 230,
               ),
               itemBuilder: (context, index) =>
-                  _PublishedCard(card: _cards[index]),
+                  _PublishedCard(card: cards[index]),
             ),
           ],
         ),
@@ -212,8 +297,8 @@ class _PublishedCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       _GlassCircle(
-                        icon: Icons.bookmark_border,
-                        tooltip: 'Save ${card.title}',
+                        icon: Icons.play_arrow_rounded,
+                        tooltip: 'Play ${card.title}',
                       ),
                       // Flexible so the pill gives way rather than pushing
                       // past the card edge when the label runs long.

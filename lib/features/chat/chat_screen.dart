@@ -1,68 +1,30 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../core/audio/playback_controller.dart';
+import '../../core/data/people.dart';
+import '../../core/data/recommendations.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/aurelia_logo.dart';
+import '../player/player_screen.dart';
 import '../shell/app_drawer.dart';
+import 'chat_session_controller.dart';
+import 'widgets/mini_player.dart';
+import 'widgets/recommendation_card.dart';
+import 'widgets/recommendation_deck.dart';
 import 'widgets/voice_message.dart';
 import 'widgets/voice_recorder.dart';
-
-/// A brief handed over from the Recreate screen.
-class RecreateBrief {
-  const RecreateBrief({
-    required this.title,
-    required this.author,
-    required this.minutes,
-    required this.changes,
-  });
-
-  final String title;
-  final String author;
-  final int minutes;
-  final List<String> changes;
-}
-
-/// What a route can hand the cockpit on arrival.
-class ChatArgs {
-  const ChatArgs({this.brief, this.startVoice = false, this.ask});
-
-  final RecreateBrief? brief;
-
-  /// Opens the recorder immediately — set by Home's mic.
-  final bool startVoice;
-
-  /// What the visitor typed on Home before they were sent here.
-  final String? ask;
-}
-
-/// Delivery state, as a messaging app shows it: one tick sent, two ticks read.
-enum DeliveryStatus { sending, sent, read }
-
-class _Message {
-  _Message({
-    required this.id,
-    required this.fromAurelia,
-    required this.text,
-    required this.at,
-    this.voiceDuration,
-    this.status,
-  });
-
-  final int id;
-  final bool fromAurelia;
-  final String text;
-  final DateTime at;
-
-  /// Set when the message is a voice note rather than typed text.
-  final Duration? voiceDuration;
-
-  DeliveryStatus? status;
-}
 
 /// The cockpit. Reads like a messaging app: runs grouped by sender and time,
 /// one avatar and one timestamp per run, delivery ticks, a typing indicator,
 /// and voice that produces a real message instead of ending silently.
+///
+/// The thread itself is not here — it lives in [ChatSessionController], above
+/// the navigator, so a session being built survives going off to play it. This
+/// screen draws that state and sends events into it; everything it holds of
+/// its own is about the screen (scroll position, the composer, whether the
+/// recorder is open).
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key, this.brief, this.startVoice = false, this.ask});
 
@@ -76,182 +38,59 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-/// Where a session is in its rebuild — the three cards below only make sense
-/// while nothing is being generated, and the progress card only while it is.
-enum SessionState { idle, updating, generating, ready }
-
-/// One of the three adjustments Aurelia proposes after its diagnosis.
-class _Recommendation {
-  const _Recommendation({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.improveScore,
-    required this.orb,
-  });
-
-  final String id;
-  final String title;
-  final String description;
-  final String improveScore;
-  final String orb;
-}
-
-const _recommendations = <_Recommendation>[
-  _Recommendation(
-    id: 'yellow',
-    title: 'Increase Yellow',
-    description: 'Helps bring joy, aligned with your goal',
-    improveScore: '12%',
-    orb: 'assets/images/orb-increase-yellow.png',
-  ),
-  _Recommendation(
-    id: 'movement',
-    title: 'Less movement',
-    description: 'Reduced movement helps your nervous system to calm down',
-    improveScore: '12%',
-    orb: 'assets/images/orb-less-movement.png',
-  ),
-  _Recommendation(
-    id: 'frequency',
-    title: '432Hz',
-    description: 'Your body responds positively to this frequency.',
-    improveScore: '12%',
-    orb: 'assets/images/orb-432hz.png',
-  ),
-];
-
 class _ChatScreenState extends State<ChatScreen> {
   static const _suggestions = ['Add more white noise', 'Make it longer', 'Female voice'];
 
-  /// Every recommendation starts applied — Aurelia proposed them, and the
-  /// user's job is to take away what they do not want, not to opt in to each.
-  final _applied = _recommendations.map((r) => r.id).toSet();
-  SessionState _session = SessionState.idle;
-  /// The rebuild rate here is 22 a second. Held in a notifier rather than in
-  /// state so only the progress card listens: a setState would rebuild every
-  /// message, the deck and the composer for a number two digits wide.
-  final _progress = ValueNotifier<int>(0);
-
   final _scrollController = ScrollController();
   final _composer = TextEditingController();
-  final _timers = <Timer>[];
-
-  late final List<_Message> _messages;
-  int _nextId = 5;
-  bool _typing = false;
   late bool _listening = widget.startVoice;
+
+  ChatSessionController? _chat;
+  int _lastMessageCount = 0;
 
   @override
   void initState() {
     super.initState();
-    // The thread opens mid-conversation, so the first messages are backdated.
-    final start = DateTime.now().subtract(const Duration(minutes: 9));
-    _messages = [
-      _Message(
-        id: 1,
-        fromAurelia: true,
-        at: start,
-        text: 'Good morning, Adam.\n\nLooks like you had a good sleep last night, '
-            'score improved by 7% due to increased REM sleep.',
-      ),
-      _Message(
-        id: 2,
-        fromAurelia: true,
-        at: start.add(const Duration(seconds: 4)),
-        text: 'How did you find the sleep meditation we created?',
-      ),
-      _Message(
-        id: 3,
-        fromAurelia: false,
-        at: start.add(const Duration(seconds: 96)),
-        text: 'It was good, but it was to short, I had to repeat it multiple times.',
-        status: DeliveryStatus.read,
-      ),
-      _Message(
-        id: 4,
-        fromAurelia: true,
-        at: start.add(const Duration(seconds: 104)),
-        text: 'Based on the diagnosis and your feedback, this is what I’d would recommend:',
-      ),
-    ];
+    // Seeding runs after the first frame because it reaches the controller
+    // through the scope. Both seeds are idempotent, so arriving back here from
+    // the player does not replay the opening.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final chat = ChatSessionScope.read(context);
+      chat.seedAsk(widget.ask);
+      chat.seedBrief(widget.brief);
+      _scrollToEnd();
+    });
+  }
 
-    // What was typed on Home arrives as the first thing said here, so the
-    // visitor does not have to write it again — including after a detour
-    // through sign-in.
-    final ask = widget.ask?.trim();
-    if (ask != null && ask.isNotEmpty) {
-      _messages.add(_Message(
-        id: _nextId++,
-        fromAurelia: false,
-        at: DateTime.now(),
-        status: DeliveryStatus.read,
-        text: ask,
-      ));
-      _typing = true;
-      _after(const Duration(milliseconds: 1400), () {
-        setState(() {
-          _typing = false;
-          _messages.add(_Message(
-            id: _nextId++,
-            fromAurelia: true,
-            at: DateTime.now(),
-            text: 'Good place to start. Give me a moment and I’ll shape '
-                'something around that.',
-          ));
-        });
-        _scrollToEnd();
-      });
-    }
-
-    final brief = widget.brief;
-    if (brief != null) {
-      // A hand-off from Recreate opens the thread with the fork already stated,
-      // so the user lands mid-conversation rather than at a blank prompt.
-      final lines = brief.changes.isEmpty
-          ? '• Keep it as it is'
-          : brief.changes.map((line) => '• $line').join('\n');
-      _messages.add(_Message(
-        id: _nextId++,
-        fromAurelia: false,
-        at: DateTime.now(),
-        status: DeliveryStatus.read,
-        text: 'Recreate “${brief.title}” by ${brief.author}, at ${brief.minutes} minutes.\n$lines',
-      ));
-      _typing = true;
-      _after(const Duration(milliseconds: 1600), () {
-        setState(() {
-          _typing = false;
-          _messages.add(_Message(
-            id: _nextId++,
-            fromAurelia: true,
-            at: DateTime.now(),
-            text: 'Got it — forking ${brief.author}’s session and keeping them '
-                'credited in the lineage. Tell me anything else you want changed '
-                'and I’ll build your version.',
-          ));
-        });
-        _scrollToEnd();
-      });
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // The thread grows while this screen is not looking — a reply lands on a
+    // timer the controller owns — so the scroll follows the message count
+    // rather than the send that caused it.
+    final chat = ChatSessionScope.of(context);
+    if (!identical(chat, _chat)) {
+      _chat?.removeListener(_followThread);
+      _chat = chat..addListener(_followThread);
+      _lastMessageCount = chat.messages.length;
     }
   }
 
   @override
   void dispose() {
-    for (final timer in _timers) {
-      timer.cancel();
-    }
+    _chat?.removeListener(_followThread);
     _scrollController.dispose();
     _composer.dispose();
-    _progress.dispose();
     super.dispose();
   }
 
-  /// Schedules work that must not fire after the screen is gone.
-  void _after(Duration delay, VoidCallback action) {
-    _timers.add(Timer(delay, () {
-      if (mounted) action();
-    }));
+  void _followThread() {
+    final chat = _chat;
+    if (chat == null) return;
+    if (chat.messages.length == _lastMessageCount) return;
+    _lastMessageCount = chat.messages.length;
+    _scrollToEnd();
   }
 
   void _scrollToEnd() {
@@ -262,51 +101,6 @@ class _ChatScreenState extends State<ChatScreen> {
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOut,
       );
-    });
-  }
-
-  /// Sends, then walks the message through sending → sent → read and brings
-  /// back a reply — the rhythm a chat app has, rather than a bubble that just
-  /// appears.
-  void _send({required String text, Duration? voiceDuration}) {
-    final id = _nextId++;
-    setState(() {
-      _messages.add(_Message(
-        id: id,
-        fromAurelia: false,
-        text: text,
-        at: DateTime.now(),
-        voiceDuration: voiceDuration,
-        status: DeliveryStatus.sending,
-      ));
-    });
-    _scrollToEnd();
-
-    void setStatus(DeliveryStatus status) {
-      setState(() {
-        for (final message in _messages) {
-          if (message.id == id) message.status = status;
-        }
-      });
-    }
-
-    _after(const Duration(milliseconds: 400), () => setStatus(DeliveryStatus.sent));
-    _after(const Duration(milliseconds: 900), () {
-      setStatus(DeliveryStatus.read);
-      setState(() => _typing = true);
-      _scrollToEnd();
-    });
-    _after(const Duration(milliseconds: 2400), () {
-      setState(() {
-        _typing = false;
-        _messages.add(_Message(
-          id: _nextId++,
-          fromAurelia: true,
-          at: DateTime.now(),
-          text: 'Got it — I’ve noted that for the next revision of your session.',
-        ));
-      });
-      _scrollToEnd();
     });
   }
 
@@ -343,43 +137,18 @@ class _ChatScreenState extends State<ChatScreen> {
     ).whenComplete(timer.cancel);
   }
 
-  bool get _showApplyChip =>
-      _applied.isNotEmpty &&
-      (_session == SessionState.idle || _session == SessionState.updating);
-
-  void _toggleRecommendation(String id) {
-    setState(() => _applied.contains(id) ? _applied.remove(id) : _applied.add(id));
-  }
-
-  /// Applying is not instant and does not pretend to be: a beat of "Updating..",
-  /// then Aurelia says something, then the percentage climbs on its own card.
-  void _applyChanges() {
-    if (_applied.isEmpty || _session == SessionState.updating) return;
-    setState(() => _session = SessionState.updating);
-    _timers.add(Timer(const Duration(milliseconds: 1400), () {
-      if (!mounted) return;
-      _progress.value = 0;
-      setState(() {
-        _session = SessionState.generating;
-        _messages.add(_Message(
-          id: _nextId++,
-          fromAurelia: true,
-          at: DateTime.now(),
-          text: 'Sure, here it is:',
-        ));
-      });
-      _scrollToEnd();
-      _timers.add(Timer.periodic(const Duration(milliseconds: 45), (timer) {
-        if (!mounted) return timer.cancel();
-        if (_progress.value >= 100) {
-          timer.cancel();
-          // Only the last tick touches the screen's own state.
-          setState(() => _session = SessionState.ready);
-        } else {
-          _progress.value++;
-        }
-      }));
-    }));
+  /// The session this cockpit is building. It has no catalogue entry of its
+  /// own yet, so it plays against the one it was recreated from — and the
+  /// entry point says the result is the user's own work, which is what keeps
+  /// the player's byline honest.
+  void _playSession() {
+    Navigator.of(context).pushNamed(
+      '/play',
+      arguments: const PlayRequest(
+        slug: 'dolphins-frequency',
+        origin: ProfileOrigin.own,
+      ),
+    );
   }
 
   String _clock(DateTime at) {
@@ -390,6 +159,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final chat = ChatSessionScope.of(context);
+    final playback = PlaybackScope.of(context);
+    final showApplyChip = chat.applied.isNotEmpty && chat.canApply;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(current: '/chat'),
@@ -410,19 +183,34 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                   const Spacer(),
-                  CircleSurfaceButton(
-                    icon: Icons.play_arrow_rounded,
-                    tooltip: 'Play session',
-                    size: 44,
-                    onPressed: () {},
-                  ),
-                  const SizedBox(width: AppSpacing.s2),
+                  // Once a session is on the deck the card below carries the
+                  // transport, so a second play glyph here would be two
+                  // controls for one thing.
+                  if (playback.track == null) ...[
+                    CircleSurfaceButton(
+                      icon: Icons.play_arrow_rounded,
+                      tooltip: 'Play session',
+                      size: 44,
+                      onPressed: _playSession,
+                    ),
+                    const SizedBox(width: AppSpacing.s2),
+                  ],
                   const CoinPill.ringed(),
                   const SizedBox(width: AppSpacing.s2),
                   _ChatMenuButton(onPublish: _publish),
                 ],
               ),
             ),
+
+            // The running session, parked above the thread. It stays while you
+            // carry on talking, which is what starting one is for.
+            if (playback.track != null)
+              const Padding(
+                padding: EdgeInsets.fromLTRB(
+                    AppPadding.page, 0, AppPadding.page, AppSpacing.s3),
+                child: MiniPlayer(),
+              ),
+
             Expanded(
               child: ListView(
                 controller: _scrollController,
@@ -440,47 +228,63 @@ class _ChatScreenState extends State<ChatScreen> {
                       child: Text('Today', style: AppTextStyles.caption),
                     ),
                   ),
-                  for (var i = 0; i < _messages.length; i++) _bubble(i),
-                  // The cards are the recommendation: they belong in the
-                  // thread, under the message that proposes them, and they go
-                  // away once a rebuild is under way.
-                  if (_session == SessionState.idle ||
-                      _session == SessionState.updating) ...[
+                  for (var i = 0; i < chat.messages.length; i++) _bubble(chat, i),
+                  // The recommendations belong in the thread, under the message
+                  // that proposes them, and they go away once a rebuild is
+                  // under way. Folded by default: three cards laid open take
+                  // the screen the conversation is happening in.
+                  if (chat.canApply) ...[
                     const SizedBox(height: AppSpacing.s3),
-                    SizedBox(
-                      height: 245,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: AppPadding.page),
-                        itemCount: _recommendations.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(width: 11),
-                        itemBuilder: (context, index) => _RecommendationCard(
-                          recommendation: _recommendations[index],
-                          applied: _applied.contains(_recommendations[index].id),
-                          onToggle: () =>
-                              _toggleRecommendation(_recommendations[index].id),
+                    if (chat.deckOpen)
+                      SizedBox(
+                        height: 246,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          clipBehavior: Clip.none,
+                          itemCount: kRecommendations.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 11),
+                          itemBuilder: (context, index) => RecommendationCard(
+                            recommendation: kRecommendations[index],
+                            applied:
+                                chat.applied.contains(kRecommendations[index].id),
+                            onToggle: () => chat
+                                .toggleRecommendation(kRecommendations[index].id),
+                          ),
+                        ),
+                      )
+                    else
+                      // 32 = the avatar column plus its gap, so the deck lines
+                      // up under the words that hand it over.
+                      Padding(
+                        padding: const EdgeInsets.only(left: 32),
+                        child: RecommendationDeck(
+                          recommendations: kRecommendations,
+                          count: chat.applied.isEmpty
+                              ? kRecommendations.length
+                              : chat.applied.length,
+                          onOpen: chat.openDeck,
                         ),
                       ),
-                    ),
                   ],
-                  if (_session == SessionState.generating ||
-                      _session == SessionState.ready) ...[
+                  if (chat.session == SessionState.generating ||
+                      chat.session == SessionState.ready) ...[
                     const SizedBox(height: AppSpacing.s3),
                     ValueListenableBuilder<int>(
-                      valueListenable: _progress,
+                      valueListenable: chat.progress,
                       builder: (context, progress, _) => _SessionProgressCard(
                         title: 'Sleep meditation v1.2',
-                        status: _session == SessionState.ready
+                        status: chat.session == SessionState.ready
                             ? 'Ready to play'
                             : 'Creating your new session..',
                         progress:
-                            _session == SessionState.ready ? null : progress,
+                            chat.session == SessionState.ready ? null : progress,
+                        onPlay: chat.session == SessionState.ready
+                            ? _playSession
+                            : null,
                       ),
                     ),
                   ],
-                  if (_typing) _typingIndicator(),
+                  if (chat.typing) _typingIndicator(),
                   const SizedBox(height: AppSpacing.s4),
                 ],
               ),
@@ -489,7 +293,7 @@ class _ChatScreenState extends State<ChatScreen> {
               VoiceRecorder(
                 onSend: (transcript, duration) {
                   setState(() => _listening = false);
-                  _send(text: transcript, voiceDuration: duration);
+                  chat.send(text: transcript, voiceDuration: duration);
                 },
                 onCancel: () => setState(() => _listening = false),
               )
@@ -501,13 +305,13 @@ class _ChatScreenState extends State<ChatScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                   // The apply chip leads the rail whenever something is
                   // waiting to be applied, then steps out of the way.
-                  itemCount: _suggestions.length + (_showApplyChip ? 1 : 0),
+                  itemCount: _suggestions.length + (showApplyChip ? 1 : 0),
                   separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.s2),
                   itemBuilder: (context, index) {
-                    if (_showApplyChip && index == 0) {
-                      final updating = _session == SessionState.updating;
+                    if (showApplyChip && index == 0) {
+                      final updating = chat.session == SessionState.updating;
                       return OutlinedButton.icon(
-                        onPressed: updating ? null : _applyChanges,
+                        onPressed: updating ? null : chat.applyChanges,
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size(0, 40),
                           side: const BorderSide(color: AppColors.borderSubtle),
@@ -519,15 +323,15 @@ class _ChatScreenState extends State<ChatScreen> {
                         label: Text(
                           updating
                               ? 'Updating..'
-                              : 'Apply new changes (${_applied.length})',
+                              : 'Apply new changes (${chat.applied.length})',
                           style: AppTextStyles.label,
                         ),
                       );
                     }
                     final suggestion =
-                        _suggestions[index - (_showApplyChip ? 1 : 0)];
+                        _suggestions[index - (showApplyChip ? 1 : 0)];
                     return OutlinedButton.icon(
-                      onPressed: () => _send(text: suggestion),
+                      onPressed: () => chat.send(text: suggestion),
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(0, 40),
                         side: const BorderSide(color: AppColors.borderSubtle),
@@ -543,7 +347,7 @@ class _ChatScreenState extends State<ChatScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(
                     AppPadding.page, 0, AppPadding.page, AppSpacing.s2),
-                child: _composerBar(),
+                child: _composerBar(chat),
               ),
             ],
           ],
@@ -552,10 +356,11 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _bubble(int index) {
-    final message = _messages[index];
-    final previous = index > 0 ? _messages[index - 1] : null;
-    final next = index < _messages.length - 1 ? _messages[index + 1] : null;
+  Widget _bubble(ChatSessionController chat, int index) {
+    final message = chat.messages[index];
+    final previous = index > 0 ? chat.messages[index - 1] : null;
+    final next =
+        index < chat.messages.length - 1 ? chat.messages[index + 1] : null;
 
     // A run is consecutive messages from the same sender inside two minutes:
     // only its first bubble gets the avatar, only its last gets the timestamp.
@@ -663,7 +468,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _composerBar() {
+  Widget _composerBar(ChatSessionController chat) {
     return Container(
       height: 59,
       padding: const EdgeInsets.fromLTRB(19, 0, AppSpacing.s3, 0),
@@ -682,7 +487,7 @@ class _ChatScreenState extends State<ChatScreen> {
               textInputAction: TextInputAction.send,
               onSubmitted: (value) {
                 if (value.trim().isEmpty) return;
-                _send(text: value.trim());
+                chat.send(text: value.trim());
                 _composer.clear();
               },
               style: AppTextStyles.bodyLg,
@@ -714,7 +519,7 @@ class _ChatScreenState extends State<ChatScreen> {
           IconButton(
             onPressed: () {
               if (_composer.text.trim().isEmpty) return;
-              _send(text: _composer.text.trim());
+              chat.send(text: _composer.text.trim());
               _composer.clear();
             },
             tooltip: 'Send',
@@ -939,152 +744,6 @@ class _PublishSheet extends StatelessWidget {
   }
 }
 
-/// Figma "Frame 45/46/47" — 173x245, on a gradient hairline border, 16px
-/// padding, 12px gap. The orb is a 73px circle with a play affordance
-/// overlapping its lower right.
-class _RecommendationCard extends StatelessWidget {
-  const _RecommendationCard({
-    required this.recommendation,
-    required this.applied,
-    required this.onToggle,
-  });
-
-  final _Recommendation recommendation;
-  final bool applied;
-  final VoidCallback onToggle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 173,
-      padding: const EdgeInsets.all(1),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        // A gradient hairline: the border is the gradient and the card paints
-        // its own surface on top, which is what the web's double background
-        // does with background-clip.
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFFFE682), Color(0xFFFF881B)],
-        ),
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(AppPadding.md),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(19),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 77,
-              height: 77,
-              child: Stack(
-                children: [
-                  ClipOval(
-                    child: Image.asset(
-                      recommendation.orb,
-                      width: 73,
-                      height: 73,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      alignment: Alignment.center,
-                      decoration: const BoxDecoration(
-                        color: AppColors.surface,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                              color: Color(0x14000000),
-                              blurRadius: 8,
-                              offset: Offset(0, 2)),
-                        ],
-                      ),
-                      child: const Icon(Icons.play_arrow_rounded,
-                          size: 16, color: AppColors.iconStrong),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.s3),
-            Text(
-              recommendation.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.bodySm.copyWith(color: AppColors.textPrimary),
-            ),
-            const SizedBox(height: 2),
-            Expanded(
-              child: Text(
-                recommendation.description,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.caption.copyWith(color: AppColors.textPrimary),
-              ),
-            ),
-            Row(
-              children: [
-                Flexible(
-                  child: Text(
-                    'Improve Score',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.caption
-                        .copyWith(color: AppColors.textPrimary),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.s2),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.s2, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFECFBED),
-                    borderRadius: BorderRadius.circular(AppRadius.full),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.arrow_upward,
-                          size: 12, color: AppPrimitives.success600),
-                      Text(
-                        recommendation.improveScore,
-                        style: AppTextStyles.caption
-                            .copyWith(color: AppColors.textPrimary),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.s3),
-            OutlinedButton.icon(
-              onPressed: onToggle,
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(0, 36),
-                side: const BorderSide(color: AppColors.borderSubtle),
-                foregroundColor: AppColors.textPrimary,
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s3),
-              ),
-              icon: Icon(applied ? Icons.delete_outline : Icons.add,
-                  size: 12, color: AppColors.iconDefault),
-              label: Text(applied ? 'Remove' : 'Add', style: AppTextStyles.label),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// Figma "Frame 10" inside the generating state — a 70px pill carrying the
 /// session being rebuilt, its status, and the percentage while it climbs.
 class _SessionProgressCard extends StatelessWidget {
@@ -1092,11 +751,16 @@ class _SessionProgressCard extends StatelessWidget {
     required this.title,
     required this.status,
     required this.progress,
+    this.onPlay,
   });
 
   final String title;
   final String status;
   final int? progress;
+
+  /// Set once the rebuild is finished. Until then the disc is a thumbnail,
+  /// not a control — "Ready to play" is the moment it becomes one.
+  final VoidCallback? onPlay;
 
   @override
   Widget build(BuildContext context) {
@@ -1109,19 +773,26 @@ class _SessionProgressCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          SizedBox(
-            width: 45,
-            height: 45,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                ClipOval(
-                  child: Image.asset('assets/images/session-thumb.png',
-                      width: 45, height: 45, fit: BoxFit.cover),
+          Tooltip(
+            message: onPlay == null ? '' : 'Play $title',
+            child: InkWell(
+              onTap: onPlay,
+              customBorder: const CircleBorder(),
+              child: SizedBox(
+                width: 45,
+                height: 45,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    ClipOval(
+                      child: Image.asset('assets/images/session-thumb.png',
+                          width: 45, height: 45, fit: BoxFit.cover),
+                    ),
+                    const Icon(Icons.play_arrow_rounded,
+                        size: 22, color: AppColors.iconInverse),
+                  ],
                 ),
-                const Icon(Icons.play_arrow_rounded,
-                    size: 22, color: AppColors.iconInverse),
-              ],
+              ),
             ),
           ),
           const SizedBox(width: 10),

@@ -9,6 +9,10 @@ class AppTheme {
   static ThemeData get light {
     return ThemeData(
       useMaterial3: true,
+      // Named here as well as in AppTextStyles: the styles cover what this
+      // app writes, and this covers what Material writes for it — a dialog
+      // title, a snack bar, a text field's own label.
+      fontFamily: AppTextStyles.fontFamily,
       scaffoldBackgroundColor: AppColors.background,
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.brandDefault,

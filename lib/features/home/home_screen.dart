@@ -10,7 +10,7 @@ import '../../core/widgets/session_grid_card.dart';
 import '../../core/widgets/community_network.dart';
 import '../../core/widgets/cover_image.dart';
 import '../../core/widgets/section_header.dart';
-import '../chat/chat_screen.dart' show ChatArgs;
+import '../chat/chat_session_controller.dart' show ChatArgs;
 import '../shell/app_drawer.dart';
 
 /// Home — the same screen signed in or out.
