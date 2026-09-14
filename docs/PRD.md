@@ -293,9 +293,32 @@ codebases stay in step without a third document arbitrating every pixel.
 - **Shared assets, not re-made ones.** Brand and illustration vectors move as the
   same SVG path strings; raster assets are the same files in both trees.
 
+- **One face.** Mulish, which is the `font-family/base` variable in Figma. Both
+  clients spent a while quietly agreeing with each other about the wrong thing:
+  this app's token export carried "SF Pro" and the Flutter app left the family
+  unset, so each rendered its platform's system UI face.
+
 Two differences are intended: the web renders a simulated phone status bar
 because it is viewed in a browser, and platform chrome — drawer scrim, keyboard,
 text selection — follows each platform's own conventions.
+
+### One difference is not a design decision — it needs one
+
+**The Flutter client's player has no sound.** Every audio package for Flutter
+ships native code, and that app's single dependency and one-command build on a
+fresh machine is what that buys; this client plays a ten-second mock bed at no
+such cost. So on mobile the clock runs, the bar fills, the mini player behaves
+exactly as designed, and nothing is audible.
+
+That is the right trade while the catalogue is mock — there is no real audio to
+play — and the wrong one the moment a session is a real file. The seam is one
+method on `PlaybackController`; the decision to spend a native plugin on it is
+a product call, not an engineering one.
+
+**Both clients hold playback and the cockpit thread above their router.** A
+session being built has to survive leaving the cockpit to play it, and a session
+that is playing has to survive walking back to the cockpit. Owned by their
+screens, each tore down the other.
 
 ### Variable coverage in the Figma file
 
