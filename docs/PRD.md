@@ -297,6 +297,70 @@ Two differences are intended: the web renders a simulated phone status bar
 because it is viewed in a browser, and platform chrome — drawer scrim, keyboard,
 text selection — follows each platform's own conventions.
 
+### Variable coverage in the Figma file
+
+The design file is the upstream of `design-tokens/figma-export.json`, so a frame
+that paints a raw hex is a token the code can never inherit. The file was
+audited against its live variables — 251 across five collections — at two
+levels.
+
+**The export is in sync.** Every variable matched the snapshot except
+`font-family/base`, which the export carried as "SF Pro" where the variable says
+**Mulish**. Fixed; regeneration touched two lines of `tokens.css`, which is the
+proof nothing else had drifted. `radius/20` and `radius/48` are genuinely not
+variables — several frames use them as raw values by decision, so the code's
+`rounded-[20px]` and `rounded-tl-[48px]` are correct.
+
+**The frames are not.** Measured across a representative screen (247 nodes):
+
+| Property | Bound to a variable |
+| --- | --- |
+| Fill | 84% (68 of 81) |
+| Type style | 81% (29 of 36) |
+| Radius | 0% (0 of 78) |
+| Spacing | 4% (16 of 359) |
+| Stroke | 0% (0 of 25) |
+
+Colour is close to done; geometry has effectively never been bound. Rolled up to
+components, **10 of 59 fail on colour and 50 of 59 fail on geometry.**
+
+**The ten colour failures are marked in the file.** Each carries a `_notClear`
+suffix on its name so the gap is visible in the layer panel and the assets
+panel, rather than living only in this document. Six nodes cover the ten,
+because a component inside a component set takes its name from its variant
+properties — renaming the child would rewrite `Size=Default` into
+`Size=Default_notClear` and break every instance, so variant members are marked
+on their parent set instead:
+
+| Node | Kind | Name |
+| --- | --- | --- |
+| `16478:12871` | Component set | `Home_notClear` |
+| `16480:15513` | Component set | `Button_notClear` |
+| `16538:21522` | Component set | `TabItems_notClear` |
+| `16538:21547` | Component | `Tab Set_notClear` |
+| `16538:21548` | Component | `Homepage/Banner_notClear` |
+| `16541:21631` | Component set | `Button_notClear` |
+
+The suffix is a to-do marker, not a permanent name. It comes off when the
+component's fills are bound — which for several of them is blocked on the
+decisions below.
+
+**Three decisions block the rest of the colour work:**
+
+- **`#FF881B`** is used as an accent 35 times across 16 files and has no
+  variable anywhere — not in Semantic, not under `primary/`, not under `amber/`.
+  It needs one before any of those uses can bind.
+- **`#D6D6D6` and `#E0E0E0`** are used as strokes and have no variable. The
+  existing `border/*` values are near misses, not matches, so this is a choice
+  between adding two variables and moving the frames onto the existing ones.
+- **The radius scale** would need 20, 5, 40, 25 and 60 added to be able to
+  describe what the frames actually draw. Binding radius is not possible until
+  that set is agreed.
+
+Spacing is a different shape of problem: 343 unbound values, but nearly all of
+them already sit on the scale. That one is mechanical once someone decides to
+spend the time.
+
 ---
 
 ## 07 · States that do not exist yet
@@ -338,7 +402,8 @@ before engineering meets them in QA.
   and spending are otherwise unspecified.
 - Referral reward on sign-up alone is trivially farmable with disposable email.
   It needs an activation trigger, a per-account cap and a self-referral check.
-- Sign-out is currently unreachable from anywhere on either platform.
+- Sign-out is unreachable on mobile. On web it now lives on `/settings`,
+  reached by the gear on your own profile.
 
 **P2**
 
