@@ -4,6 +4,8 @@ import { useState } from 'react'
 interface ChatComposerProps {
   onSend: (text: string) => void
   onVoice: () => void
+  /** Opens the sheet of things Aurelia can add to the session. */
+  onAdd?: () => void
   disabled?: boolean
   /** Voice input is switched off in the /__demo console. */
   canVoice?: boolean
@@ -11,7 +13,7 @@ interface ChatComposerProps {
 
 // Figma "Container" — 356x59, radius 70, surface/default on a 0.5px
 // #e4e4e4 hairline. Plus / field / voice orb / send.
-export function ChatComposer({ onSend, onVoice, disabled, canVoice = true }: ChatComposerProps) {
+export function ChatComposer({ onSend, onVoice, onAdd, disabled, canVoice = true }: ChatComposerProps) {
   const [value, setValue] = useState('')
 
   function submit(event: React.FormEvent) {
@@ -31,7 +33,8 @@ export function ChatComposer({ onSend, onVoice, disabled, canVoice = true }: Cha
           around a 16px glyph, with the row spacing unchanged. */}
       <button
         type="button"
-        aria-label="Add attachment"
+        aria-label="Add to this session"
+        onClick={onAdd}
         className="-m-12 flex shrink-0 items-center justify-center p-12 text-icon-strong"
       >
         <Plus size={16} />

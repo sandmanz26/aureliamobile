@@ -1,14 +1,16 @@
 import { Check, CheckCheck, Sparkles } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import orb432hz from '../assets/orb-432hz.png'
 import orbIncreaseYellow from '../assets/orb-increase-yellow.png'
 import orbLessMovement from '../assets/orb-less-movement.png'
+import { AddSheet } from '../components/chat/AddSheet'
 import { ChatComposer } from '../components/chat/ChatComposer'
 import { ChatHeader } from '../components/chat/ChatHeader'
 import { PublishSheet } from '../components/chat/PublishSheet'
 import type { Recommendation } from '../components/chat/RecommendationCard'
 import { RecommendationCard } from '../components/chat/RecommendationCard'
+import { RecommendationDeck } from '../components/chat/RecommendationDeck'
 import { SessionProgressCard } from '../components/chat/SessionProgressCard'
 import { VoiceMessage } from '../components/chat/VoiceMessage'
 import { VoiceRecorder } from '../components/chat/VoiceRecorder'
@@ -28,6 +30,9 @@ interface Message {
   /** Voice notes render as a player with the transcript under it. */
   voice?: { durationMs: number }
   status?: Status
+  /** Cards Aurelia handed over with this message. They belong to it, not to
+   *  the end of the thread: everything said afterwards comes after them. */
+  attachment?: 'recommendations'
 }
 
 /** The thread opens mid-conversation, so the first messages are backdated. */
@@ -53,6 +58,7 @@ const OPENING_MESSAGES: Message[] = [
     from: 'aurelia',
     at: START + 104_000,
     text: 'Based on the diagnosis and your feedback, this is what I’d would recommend:',
+    attachment: 'recommendations',
   },
 ]
 
@@ -145,6 +151,11 @@ export function ChatPage() {
   // said "talk to Aurelia" lands on a live mic rather than an idle composer.
   const [listening, setListening] = useState(() => routeState?.startVoice === true)
   const [publishState, setPublishState] = useState<'publishing' | 'published' | null>(null)
+  // The set arrives folded: three full cards is most of a phone screen, and
+  // the reader opens it when they want to weigh the changes one by one.
+  const [deckOpen, setDeckOpen] = useState(false)
+  const [addOpen, setAddOpen] = useState(false)
+  const [addPicks, setAddPicks] = useState<string[]>([])
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const nextId = useRef(OPENING_MESSAGES.length + 1)
@@ -153,7 +164,7 @@ export function ChatPage() {
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
-  }, [messages, typing, sessionState, progress])
+  }, [messages, typing, sessionState, progress, deckOpen])
 
   // A hand-off from /recreate opens the thread with the fork already stated,
   // so the user lands mid-conversation rather than at a blank prompt.
@@ -239,9 +250,16 @@ export function ChatPage() {
     setApplied((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]))
   }
 
-  function applyChanges() {
-    if (!applied.length) return
+  function applyChanges(label = 'Apply new changes') {
     setSessionState('updating')
+    // The request goes into the thread as the user's own line. Applying is a
+    // thing they asked for, and a session that changes with nothing in the
+    // transcript to explain why reads as the app acting on its own.
+    setMessages((current) => [
+      ...current,
+      { id: nextId.current++, from: 'user', at: Date.now(), text: label, status: 'read' },
+    ])
+    setDeckOpen(false)
     window.setTimeout(() => {
       setProgress(0)
       setSessionState('generating')
@@ -291,8 +309,11 @@ export function ChatPage() {
     pushUserMessage({ from: 'user', text: transcript, voice: { durationMs } })
   }
 
-  const showRecommendations =
-    isEnabled('chat.recommendations') && (sessionState === 'idle' || sessionState === 'updating')
+  // The set stays in the thread once applied — it is what was asked for, and
+  // a transcript that drops the request but keeps the answer reads as a gap.
+  // Only the acting on it stops.
+  const showRecommendations = isEnabled('chat.recommendations')
+  const canApply = sessionState === 'idle' || sessionState === 'updating'
 
   return (
     <div className="flex h-[calc(100vh-54px)] flex-col bg-background-default lg:h-screen">
@@ -301,8 +322,7 @@ export function ChatPage() {
         onMenu={openDrawer}
         onPublish={() => isEnabled('chat.publish') && setPublishState('publishing')}
         canPublish={isEnabled('chat.publish')}
-        richMenu={isEnabled('sessionSettings')}
-        onSettings={() => navigate('/session-settings')}
+        onSettings={isEnabled('sessionSettings') ? () => navigate('/session-settings') : undefined}
       />
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-20">
@@ -320,9 +340,36 @@ export function ChatPage() {
             const startsRun = !previous || previous.from !== message.from || message.at - previous.at > 120_000
             const endsRun = !next || next.from !== message.from || next.at - message.at > 120_000
 
+            const attachment =
+              message.attachment === 'recommendations' && showRecommendations ? (
+                deckOpen && canApply ? (
+                  <div className="u-message -mx-20 mt-12 flex gap-11 overflow-x-auto px-20 pb-4">
+                    {RECOMMENDATIONS.map((recommendation) => (
+                      <RecommendationCard
+                        key={recommendation.id}
+                        recommendation={recommendation}
+                        applied={applied.includes(recommendation.id)}
+                        onToggle={() => toggleRecommendation(recommendation.id)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  // 34 = the avatar column plus its gap, so the deck lines up
+                  // under the words that hand it over.
+                  <div className="u-message mt-12 pl-34">
+                    <RecommendationDeck
+                      recommendations={RECOMMENDATIONS}
+                      count={applied.length || RECOMMENDATIONS.length}
+                      onOpen={canApply ? () => setDeckOpen(true) : undefined}
+                    />
+                  </div>
+                )
+              ) : null
+
             if (message.from === 'aurelia') {
               return (
-                <div key={message.id} className={`u-message flex gap-10 pr-40 ${startsRun ? 'mt-12' : 'mt-2'}`}>
+                <Fragment key={message.id}>
+                <div className={`u-message flex gap-10 pr-40 ${startsRun ? 'mt-12' : 'mt-2'}`}>
                   <span className="w-24 shrink-0">
                     {startsRun && <AureliaLogo iconSize={24} markOnly />}
                   </span>
@@ -336,6 +383,8 @@ export function ChatPage() {
                     )}
                   </div>
                 </div>
+                {attachment}
+                </Fragment>
               )
             }
 
@@ -357,19 +406,6 @@ export function ChatPage() {
               </div>
             )
           })}
-
-          {showRecommendations && (
-            <div className="u-message -mx-20 mt-12 flex gap-11 overflow-x-auto px-20 pb-4">
-              {RECOMMENDATIONS.map((recommendation) => (
-                <RecommendationCard
-                  key={recommendation.id}
-                  recommendation={recommendation}
-                  applied={applied.includes(recommendation.id)}
-                  onToggle={() => toggleRecommendation(recommendation.id)}
-                />
-              ))}
-            </div>
-          )}
 
           {(sessionState === 'generating' || sessionState === 'ready') && (
             <div className="u-message mt-12">
@@ -400,10 +436,10 @@ export function ChatPage() {
       ) : (
         <div className="flex flex-col gap-8 pb-8 pt-8">
           <div className="flex gap-8 overflow-x-auto px-20 pb-4">
-            {applied.length > 0 && showRecommendations && (
+            {applied.length > 0 && showRecommendations && canApply && (
               <button
                 type="button"
-                onClick={applyChanges}
+                onClick={() => applyChanges()}
                 disabled={sessionState === 'updating'}
                 className="text-style-label flex h-40 shrink-0 items-center gap-6 whitespace-nowrap rounded-full border border-border-subtle bg-surface-default px-14 text-text-strong disabled:opacity-70"
               >
@@ -426,11 +462,37 @@ export function ChatPage() {
 
           <div className="px-20">
             <div className="mx-auto max-w-[402px] lg:max-w-[720px]">
-              <ChatComposer onSend={sendMessage} onVoice={() => isEnabled('chat.voice') && setListening(true)}
-                canVoice={isEnabled('chat.voice')} disabled={typing} />
+              <ChatComposer
+                onSend={sendMessage}
+                onVoice={() => isEnabled('chat.voice') && setListening(true)}
+                onAdd={() => setAddOpen(true)}
+                canVoice={isEnabled('chat.voice')}
+                disabled={typing}
+              />
             </div>
           </div>
         </div>
+      )}
+
+      {addOpen && (
+        <AddSheet
+          added={addPicks}
+          onToggle={(id) =>
+            setAddPicks((current) =>
+              current.includes(id) ? current.filter((x) => x !== id) : [...current, id],
+            )
+          }
+          onApply={() => {
+            setAddOpen(false)
+            setAddPicks([])
+            // Same path the chip takes — the sheet is another way to ask for
+            // the same thing, so it must not grow a second way of doing it.
+            applyChanges(
+              addPicks.length === 1 ? 'Apply 1 change' : `Apply ${addPicks.length} changes`,
+            )
+          }}
+          onClose={() => setAddOpen(false)}
+        />
       )}
 
       {publishState && (

@@ -8,11 +8,9 @@ interface ChatHeaderProps {
   /** Publish is switched off in the /__demo console. */
   canPublish?: boolean
   /**
-   * The redesigned menu — icons, and Publish as the action rather than a third
-   * list row. Off by default with the Session settings module it leads to, so a
-   * walkthrough given from this branch keeps the menu it was rehearsed with.
+   * Where Settings goes. Left out while the Session settings screen is still
+   * switched off — the row stays, as it always has, and closes the menu.
    */
-  richMenu?: boolean
   onSettings?: () => void
   onInsights?: () => void
 }
@@ -25,7 +23,6 @@ export function ChatHeader({
   onMenu,
   onPublish,
   canPublish = true,
-  richMenu = false,
   onSettings,
   onInsights,
 }: ChatHeaderProps) {
@@ -82,27 +79,7 @@ export function ChatHeader({
             <MoreHorizontal size={20} />
           </button>
 
-          {open && !richMenu && (
-            <div className="absolute right-0 top-[52px] z-20 w-140 overflow-hidden rounded-16 bg-surface-default py-8 shadow-lg">
-              {(['Insights', 'Settings', 'Publish'] as const)
-                .filter((item) => item !== 'Publish' || canPublish)
-                .map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => {
-                      setOpen(false)
-                      if (item === 'Publish') onPublish()
-                    }}
-                    className="text-style-body-small block w-full px-16 py-12 text-left text-text-primary hover:bg-background-elevated"
-                  >
-                    {item}
-                  </button>
-                ))}
-            </div>
-          )}
-
-          {open && richMenu && (
+          {open && (
             <div className="absolute right-0 top-[52px] z-20 w-[186px] rounded-24 bg-surface-default p-12 shadow-lg">
               {[
                 { label: 'Insights', icon: TrendingUp, run: onInsights },

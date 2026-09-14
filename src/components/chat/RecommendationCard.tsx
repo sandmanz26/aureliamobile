@@ -31,10 +31,12 @@ export function RecommendationCard({ recommendation, applied, onToggle }: Recomm
         backgroundClip: 'padding-box, border-box',
       }}
     >
+      {/* The play glyph sits on the orb rather than in a badge beside it: the
+          orb is the preview, and a corner badge read as a second control. */}
       <div className="relative w-fit">
         <img src={orb} alt="" className="size-[73px] rounded-full object-cover" />
-        <span className="absolute -bottom-2 -right-2 flex size-32 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-sm">
-          <Play size={12} fill="currentColor" />
+        <span className="absolute inset-0 flex items-center justify-center text-white/90">
+          <Play size={26} fill="currentColor" />
         </span>
       </div>
 
