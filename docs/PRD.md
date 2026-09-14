@@ -228,6 +228,16 @@ material. Flag for confirmation with product and business:
 - **Only your own profile has a gear.** There is nothing of a stranger's to
   configure, so the control is not shown rather than shown and refused.
 
+- **Sessions has two scopes.** "All" is the shelf of everything worth opening;
+  "Created by you" is the plain list of what you have published — artwork, who
+  made it, how long, and what it moved. The outcome pill carries the session's
+  own headline figure and the arrow follows its sign: a fall in stress and a
+  rise in focus are both good news and would otherwise point the same way.
+- **All Categories is a sheet, not a page.** The shelf's chip row shows what
+  fits; the sheet is the whole list with the one in force marked rather than
+  merely tinted, and picking closes it — a filter sheet that stays open hides
+  the thing it just changed.
+
 ### Challenges
 
 - A challenge is **not a session**: it is a time-boxed streak people join, with

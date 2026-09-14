@@ -157,6 +157,14 @@ happened to promote them.
 a table) will stretch its column rather than scroll inside it. `min-w-0` on the
 item is the fix; `/admin/revenue` overflowed 250px for exactly this reason.
 
+**Sheets and modals must render through a portal.** `.u-page` animates with a
+transform, and a transformed ancestor becomes the containing block for
+`position: fixed` — so a `fixed inset-0` overlay inside a routed page is pinned
+to the *page box*, not the viewport. On a viewport-height screen like the
+cockpit this is invisible; on a long scrolling page the sheet lands at the
+bottom of the document. Measured at `y=1710` in an 874px viewport before
+`createPortal` was added.
+
 **Do not run Prettier on this repo.** There is no config, so it would reformat
 the whole tree to double quotes and semicolons and bury the next diff.
 

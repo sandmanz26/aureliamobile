@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import { Check } from 'lucide-react'
 
 interface PublishSheetProps {
@@ -16,7 +17,7 @@ interface PublishSheetProps {
 export function PublishSheet({ state, onCancel, onView }: PublishSheetProps) {
   const publishing = state === 'publishing'
 
-  return (
+  return createPortal(
     <div className="u-fade fixed inset-0 z-50 flex items-end justify-center bg-icon-strong/40">
       <div className="u-sheet flex w-full max-w-[402px] flex-col items-center gap-32 rounded-t-24 bg-surface-default px-20 pb-24 pt-40">
         {publishing ? (
@@ -61,6 +62,7 @@ export function PublishSheet({ state, onCancel, onView }: PublishSheetProps) {
           </button>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

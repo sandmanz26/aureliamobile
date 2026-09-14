@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import { ArrowUp, Check, Image, Music, Plus, Sparkles, X } from 'lucide-react'
 import { useEffect } from 'react'
 import orb432hz from '../../assets/orb-432hz.png'
@@ -77,7 +78,7 @@ export function AddSheet({ added, onToggle, onApply, onClose }: AddSheetProps) {
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  return (
+  return createPortal(
     <div
       className="u-fade fixed inset-0 z-50 flex items-end justify-center bg-icon-strong/40"
       onClick={onClose}
@@ -114,7 +115,8 @@ export function AddSheet({ added, onToggle, onApply, onClose }: AddSheetProps) {
           </span>
         </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

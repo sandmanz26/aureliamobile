@@ -1,4 +1,4 @@
-import { ArrowRight, Bookmark, Clock, Coins, Menu, Play, Users } from 'lucide-react'
+import { ArrowRight, Bookmark, Clock, Coins, Menu, Play, TrendingDown, TrendingUp, Users } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import liveSessionsMap from '../assets/live-sessions-map.png'
@@ -9,8 +9,12 @@ import { SessionGridCard } from '../components/ui/SessionGridCard'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import { useDrawer } from '../layouts/DrawerContext'
 import type { CoverKey } from '../lib/photos'
-import type { CategoryFilter, Shelf } from '../lib/sessions'
-import { CATEGORY_FILTERS, categoryLabel, findSession, sessionsOnShelf } from '../lib/sessions'
+import type { CategoryFilter, SessionRecord, Shelf } from '../lib/sessions'
+import { CATEGORY_FILTERS, categoryLabel, findSession, sessionsOnShelf, totalMinutes } from '../lib/sessions'
+import { SESSIONS } from '../lib/sessions'
+import { CURRENT_USER } from '../lib/people'
+import { CategorySheet } from '../components/ui/CategorySheet'
+import { CoinPill } from '../components/ui/CoinPill'
 
 /**
  * Sessions — the browse surface behind the Sessions nav item.
@@ -69,18 +73,32 @@ function SectionHeader({
   title,
   seeAllTo,
   action = 'See All',
+  onAction,
 }: {
   title: string
   seeAllTo?: string
   action?: string
+  /** Handles the action in place, for the ones that open a sheet rather than
+   *  navigate. Wins over seeAllTo when both are given. */
+  onAction?: () => void
 }) {
   return (
     <div className="flex items-baseline justify-between gap-16">
       <h2 className="text-style-title text-text-primary">{title}</h2>
-      {seeAllTo && (
-        <Link to={seeAllTo} className="u-tap text-style-label shrink-0 whitespace-nowrap text-text-brand">
+      {onAction ? (
+        <button
+          type="button"
+          onClick={onAction}
+          className="u-tap text-style-label shrink-0 whitespace-nowrap text-text-brand"
+        >
           {action}
-        </Link>
+        </button>
+      ) : (
+        seeAllTo && (
+          <Link to={seeAllTo} className="u-tap text-style-label shrink-0 whitespace-nowrap text-text-brand">
+            {action}
+          </Link>
+        )
       )}
     </div>
   )
@@ -159,10 +177,67 @@ function SessionShelf({ shelf, category = 'All' }: { shelf: Shelf; category?: Ca
   )
 }
 
+/**
+ * Figma 16523:14684 — a published session as one line: the artwork you press,
+ * who made it and how long, and what it moved.
+ *
+ * The pill carries the session's own headline outcome rather than a bare
+ * percentage, and the arrow follows its sign — a fall in stress and a rise in
+ * focus are both good news and would otherwise point the same way.
+ */
+function SessionRow({ session }: { session: SessionRecord }) {
+  const outcome = session.outcome[0]
+  const down = outcome?.value.trim().startsWith('−') || outcome?.value.trim().startsWith('-')
+
+  return (
+    <article className="flex items-center gap-16 rounded-24 bg-surface-default p-16 shadow-sm">
+      <Link
+        to={`/play/${session.slug}`}
+        state={{ origin: 'own' }}
+        aria-label={`Play ${session.title}`}
+        className="u-press relative shrink-0"
+      >
+        <PhotoCircle photo={session.photo} size={56} gradient={session.gradient} alt="" />
+        <span className="absolute inset-0 flex items-center justify-center text-text-inverse">
+          <Play size={16} fill="currentColor" />
+        </span>
+      </Link>
+
+      <Link to={`/session/${session.slug}`} className="min-w-0 flex-1">
+        <p className="text-style-body-large truncate text-text-primary">{session.title}</p>
+        <p className="text-style-body-small mt-2 flex items-center gap-8 text-text-secondary">
+          <span className="truncate">{session.author}</span>
+          <span aria-hidden="true" className="h-12 w-px shrink-0 bg-border-default" />
+          <span className="shrink-0">{totalMinutes(session)} min</span>
+        </p>
+      </Link>
+
+      {outcome && (
+        <span
+          title={outcome.label}
+          className="text-style-body-small flex shrink-0 items-center gap-4 rounded-full bg-[#ecfbed] px-10 py-6 text-text-primary"
+        >
+          {down ? (
+            <TrendingDown size={14} className="text-success-600" />
+          ) : (
+            <TrendingUp size={14} className="text-success-600" />
+          )}
+          {outcome.value}
+        </span>
+      )}
+    </article>
+  )
+}
+
 export function SessionsPage() {
   const { openDrawer } = useDrawer()
   const { isEnabled } = useFeatureFlags()
   const [category, setCategory] = useState<CategoryFilter>('All')
+  // The frame's two scopes. "All" is the shelf of everything worth opening;
+  // "Created by you" is the plain list of what you have published.
+  const [scope, setScope] = useState<'all' | 'mine'>('all')
+  const [categoriesOpen, setCategoriesOpen] = useState(false)
+  const mine = SESSIONS.filter((session) => session.author === CURRENT_USER)
 
   return (
     <div className="pb-48" style={{ background: 'linear-gradient(180deg, #ffffff, #fff6e6 40%, #ffffff)' }}>
@@ -176,18 +251,10 @@ export function SessionsPage() {
           >
             <Menu size={20} />
           </button>
-          <h1 className="text-style-title-large text-text-primary">Explore</h1>
+          <h1 className="text-style-title-large text-text-primary">Sessions</h1>
         </div>
         <div className="flex shrink-0 items-center gap-8">
-        <div className="flex h-40 shrink-0 items-center gap-8 rounded-full bg-surface-default px-14 shadow-sm">
-          <span
-            className="flex size-16 items-center justify-center rounded-full"
-            style={{ background: 'linear-gradient(160deg, #ffe682, #ff881b)' }}
-          >
-            <Coins size={10} className="text-text-inverse" />
-          </span>
-          <span className="text-style-label">1,323</span>
-        </div>
+        <CoinPill points="1,323" className="shadow-sm" />
         <button
           type="button"
           aria-label="Saved sessions"
@@ -199,6 +266,40 @@ export function SessionsPage() {
       </div>
 
       <div className="mx-auto max-w-[720px] px-20 lg:px-24">
+        <div className="mb-24 flex gap-12">
+          {([
+            ['all', 'All'],
+            ['mine', 'Created by you'],
+          ] as const).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setScope(value)}
+              aria-pressed={scope === value}
+              className={`text-style-body h-44 rounded-full px-20 transition-colors ${
+                scope === value
+                  ? 'bg-icon-strong text-text-inverse'
+                  : 'border border-border-default bg-surface-default text-text-primary'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {scope === 'mine' ? (
+          <div className="flex flex-col gap-16">
+            {mine.map((session) => (
+              <SessionRow key={session.slug} session={session} />
+            ))}
+            {mine.length === 0 && (
+              <p className="text-style-body-small py-40 text-center text-text-secondary">
+                Nothing published yet — a session you make in the cockpit lands here.
+              </p>
+            )}
+          </div>
+        ) : (
+          <>
         {/* Hero banner — the one thing the app wants you to press today. */}
         {isEnabled('sessions.hero') && (
         <Link
@@ -287,7 +388,12 @@ export function SessionsPage() {
 
         {isEnabled('sessions.community') && (
           <section className="mt-32">
-            <SectionHeader title="Recreate from Community" seeAllTo="/see-all/community" action="All Categories" />
+            <SectionHeader
+              title="Recreate from Community"
+              seeAllTo="/see-all/community"
+              action="All Categories"
+              onAction={() => setCategoriesOpen(true)}
+            />
             <div className="-mx-20 mt-16 flex gap-8 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
               {CATEGORY_FILTERS.map((filter) => (
                 <Chip
@@ -383,7 +489,17 @@ export function SessionsPage() {
             <SessionShelf shelf="impact" />
           </section>
         )}
+          </>
+        )}
       </div>
+
+      {categoriesOpen && (
+        <CategorySheet
+          selected={category}
+          onSelect={setCategory}
+          onClose={() => setCategoriesOpen(false)}
+        />
+      )}
     </div>
   )
 }
