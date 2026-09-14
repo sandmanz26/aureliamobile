@@ -33,6 +33,7 @@ import { SessionSettingsPage } from './pages/SessionSettingsPage'
 import { WellnessPage } from './pages/WellnessPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { SeeAllPage } from './pages/SeeAllPage'
+import { ExplorePage } from './pages/ExplorePage'
 import { SessionsPage } from './pages/SessionsPage'
 import { PlayerPage } from './pages/PlayerPage'
 import { RecreatePage } from './pages/RecreatePage'
@@ -275,12 +276,8 @@ export default function App() {
               path="/explore"
               element={
                 <RequireAuth>
-                  {/* Explore and Sessions are the same screen: the design's
-                      "Explore" is this browse surface, and the page has always
-                      been titled that. One component behind both routes rather
-                      than a second near-identical page to keep in step. */}
                   <ModuleGuard module="explore">
-                    <SessionsPage />
+                    <ExplorePage />
                   </ModuleGuard>
                 </RequireAuth>
               }

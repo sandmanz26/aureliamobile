@@ -1,4 +1,4 @@
-import { Bell, Compass, HelpCircle, ListMusic, MessageCircle, Plus, User, UserPlus, Waves } from 'lucide-react'
+import { Bell, Compass, HelpCircle, ListMusic, Plus, User, UserPlus, Waves } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
@@ -71,7 +71,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         ) : (
           <NavItem to="/login" icon={<User size={20} />} label="Sign In" disabled={!isEnabled('auth')} />
         )}
-        <NavItem to="/chat" icon={<MessageCircle size={20} />} label="Chat" disabled={!isEnabled('chat')} />
+        {/* No Chat entry: the design's drawer goes Profile / Explore / Sessions
+            / My wellness, and the cockpit is reached by "New session" below
+            rather than by being a destination of its own. */}
         <NavItem to="/explore" icon={<Compass size={20} />} label="Explore" disabled={!isEnabled('explore')} />
         <NavItem to="/sessions" icon={<ListMusic size={20} />} label="Sessions" disabled={!isEnabled('sessions')} />
         <NavItem to="/wellness" icon={<Waves size={20} />} label="My wellness" disabled={!isEnabled('wellness')} />

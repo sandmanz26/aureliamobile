@@ -221,6 +221,11 @@ material. Flag for confirmation with product and business:
   around the same published work. The entry point is carried, not inferred — a
   session just built in the cockpit has no catalogue author to read it from.
 
+- **The cockpit is not a destination.** The drawer goes Profile, Explore,
+  Sessions, My wellness — there is no Chat entry. You reach the cockpit by
+  starting a session ("New session"), by the card of one already playing, or by
+  a recommendation that wants changing. Naming it in the nav invites people to
+  open an empty conversation and wonder what it is for.
 - **Settings is where an account ends.** Connected accounts, coin redemption,
   account deletion and sign-out. Sign-out had been unreachable from anywhere in
   the UI since it left the drawer, which left reloading the page as the only
@@ -228,8 +233,11 @@ material. Flag for confirmation with product and business:
 - **Only your own profile has a gear.** There is nothing of a stranger's to
   configure, so the control is not shown rather than shown and refused.
 
-- **Sessions has two scopes.** "All" is the shelf of everything worth opening;
-  "Created by you" is the plain list of what you have published — artwork, who
+- **Explore and Sessions are two screens, not one.** Explore is the browse
+  surface — shelves, community, creators. Sessions is the plain list of what
+  there is to play, with two scopes: everything, and what you made.
+- **Sessions has two scopes.** "All" is the whole catalogue as a list;
+  "Created by you" is what you have published — artwork, who
   made it, how long, and what it moved. The outcome pill carries the session's
   own headline figure and the arrow follows its sign: a fall in stress and a
   rise in focus are both good news and would otherwise point the same way.
