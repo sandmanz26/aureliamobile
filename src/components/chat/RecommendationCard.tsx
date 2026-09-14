@@ -1,4 +1,4 @@
-import { ArrowUp, Play, Plus, Trash2 } from 'lucide-react'
+import { ArrowUp, Play, Plus, Shuffle, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 export interface Recommendation {
@@ -15,6 +15,13 @@ interface RecommendationCardProps {
   recommendation: Recommendation
   applied: boolean
   onToggle: () => void
+  /**
+   * Which card this is. In the cockpit it is a change you add to or remove
+   * from the set being built (173x246, with the score it would move). On the
+   * player it is a starting point you fork, so the score and the toggle go and
+   * a Recreate takes their place — the frame's 173x214.
+   */
+  variant?: 'toggle' | 'recreate'
 }
 
 // Figma "Frame 45" (16523:9513), read from the file rather than a screenshot:
@@ -29,8 +36,14 @@ interface RecommendationCardProps {
 //
 // The orb is a 73px circular image the play glyph sits on, rather than a badge
 // beside it.
-export function RecommendationCard({ recommendation, applied, onToggle }: RecommendationCardProps) {
+export function RecommendationCard({
+  recommendation,
+  applied,
+  onToggle,
+  variant = 'toggle',
+}: RecommendationCardProps) {
   const { title, description, improveScore, orb, preview } = recommendation
+  const recreate = variant === 'recreate'
 
   return (
     <article
@@ -69,22 +82,34 @@ export function RecommendationCard({ recommendation, applied, onToggle }: Recomm
         <p className="text-style-caption font-light! text-text-primary">{description}</p>
       </div>
 
-      <div className="flex items-center gap-8">
-        <span className="text-style-caption text-text-primary">Improve Score</span>
-        <span className="flex items-center gap-4 rounded-full bg-[#ecfbed] px-8 py-4 text-style-caption text-text-primary">
-          <ArrowUp size={12} className="text-success-600" />
-          {improveScore}
-        </span>
-      </div>
+      {!recreate && (
+        <div className="flex items-center gap-8">
+          <span className="text-style-caption text-text-primary">Improve Score</span>
+          <span className="flex items-center gap-4 rounded-full bg-[#ecfbed] px-8 py-4 text-style-caption text-text-primary">
+            <ArrowUp size={12} className="text-success-600" />
+            {improveScore}
+          </span>
+        </div>
+      )}
 
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex h-32 w-fit items-center gap-4 rounded-full border border-border-subtle pl-12 pr-14 text-style-label text-text-primary transition-colors hover:bg-background-elevated"
-      >
-        {applied ? <Trash2 size={12} className="text-icon-default" /> : <Plus size={12} className="text-icon-default" />}
-        {applied ? 'Remove' : 'Add'}
-      </button>
+      {recreate ? (
+        <Link
+          to={`/recreate/${preview}`}
+          className="u-press mt-auto flex h-32 w-fit items-center gap-4 rounded-full border border-border-subtle pl-12 pr-14 text-style-label text-text-primary"
+        >
+          <Shuffle size={12} className="text-icon-default" />
+          Recreate
+        </Link>
+      ) : (
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex h-32 w-fit items-center gap-4 rounded-full border border-border-subtle pl-12 pr-14 text-style-label text-text-primary transition-colors hover:bg-background-elevated"
+        >
+          {applied ? <Trash2 size={12} className="text-icon-default" /> : <Plus size={12} className="text-icon-default" />}
+          {applied ? 'Remove' : 'Add'}
+        </button>
+      )}
     </article>
   )
 }

@@ -1,15 +1,20 @@
-import { useEffect, useRef, useState } from 'react'
-import { ArrowLeft, ChevronRight, Pause, Play, Share2 } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { ArrowLeft, ChevronRight, Pause, Play, Share2, Shuffle } from 'lucide-react'
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { RecommendationCard } from '../components/chat/RecommendationCard'
+import { RECOMMENDATIONS } from '../chat/ChatSessionContext'
 import { CoverImage } from '../components/ui/CoverImage'
 import { MobileStatusBar } from '../components/ui/MobileStatusBar'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { profilePath } from '../lib/people'
 import type { ProfileOrigin } from '../lib/people'
-import { findSession, totalMinutes } from '../lib/sessions'
+import { findSession } from '../lib/sessions'
 
 /** Lines the session speaks, which the hero shows one at a time under the art.
  *  Mock, like everything in lib/ — as is the bed they play over. */
+/** Where the pulled-up sheet rests: clear of the status bar, as the frame has it. */
+const SHEET_TOP = 54
+
 const CUES = [
   'Now take a deep breath in',
   'Hold it — and let the shoulders drop',
@@ -58,6 +63,21 @@ export function PlayerPage() {
   // pause glyph over silence.
   const [playing, setPlaying] = useState(false)
   const [expanded, setExpanded] = useState(false)
+  // The sheet has two resting places, as the frame does: sitting under the
+  // transport, and pulled up to just below the status bar. It rides the
+  // document scroll rather than becoming a fixed panel, so the snap works at
+  // any window height and free scrolling still does what it did.
+  const [sheetUp, setSheetUp] = useState(false)
+  const sheet = useRef<HTMLElement>(null)
+  const drag = useRef<{ y: number; scroll: number } | null>(null)
+
+  const snap = useCallback((up: boolean) => {
+    const element = sheet.current
+    if (!element) return
+    setSheetUp(up)
+    const top = element.getBoundingClientRect().top + window.scrollY
+    window.scrollTo({ top: up ? Math.max(0, top - SHEET_TOP) : 0, behavior: 'smooth' })
+  }, [])
   const raf = useRef<number | null>(null)
   const audio = useRef<HTMLAudioElement>(null)
 
@@ -95,12 +115,17 @@ export function PlayerPage() {
 
   const progress = Math.min(1, elapsed / duration)
   const cue = CUES[Math.floor((elapsed / duration) * CUES.length) % CUES.length]
-  const chips = [
-    session.category,
-    `${totalMinutes(session)} min`,
-    ...session.layers.slice(0, 3).map((layer) => layer.name),
-    ...session.personalization.slice(0, 2).map((item) => item.value),
-  ]
+  // Hashtags, as the frame has them. Derived rather than stored: adding a tags
+  // field would mean editing 21 catalogue entries to say what the category and
+  // the mix already say.
+  const tags = [
+    session.slug.replace(/-/g, ''),
+    session.category.toLowerCase(),
+    ...session.layers.map((layer) => layer.name.toLowerCase().replace(/[^a-z0-9]/g, '')),
+    ...session.personalization.map((item) => item.label.toLowerCase().replace(/[^a-z0-9]/g, '')),
+  ].filter((tag, index, all) => tag && all.indexOf(tag) === index)
+  const SHOWN_TAGS = 6
+  const overflow = tags.length - SHOWN_TAGS
 
   return (
     <div className="min-h-dvh bg-surface-default">
@@ -220,13 +245,40 @@ export function PlayerPage() {
         </section>
 
         {/* ----------------------------------------------------------- sheet */}
-        <section className="relative rounded-t-24 bg-surface-default px-20 pb-24 pt-16">
-          <span className="mx-auto block h-5 w-36 rounded-full bg-[#7f7f7f]/40" />
+        <section
+          ref={sheet}
+          className="relative rounded-t-24 bg-surface-default px-20 pb-40 pt-16"
+        >
+          {/* The grabber is the control, not an ornament: it drags, and a tap
+              snaps. Free scrolling still works either way. */}
+          <button
+            type="button"
+            aria-label={sheetUp ? 'Collapse details' : 'Expand details'}
+            aria-expanded={sheetUp}
+            onClick={() => snap(!sheetUp)}
+            onPointerDown={(event) => {
+              drag.current = { y: event.clientY, scroll: window.scrollY }
+              event.currentTarget.setPointerCapture(event.pointerId)
+            }}
+            onPointerMove={(event) => {
+              if (!drag.current) return
+              window.scrollTo({ top: Math.max(0, drag.current.scroll + (drag.current.y - event.clientY)) })
+            }}
+            onPointerUp={(event) => {
+              const start = drag.current
+              drag.current = null
+              if (!start) return
+              const moved = start.y - event.clientY
+              // A real drag decides by direction; anything smaller is a tap and
+              // falls through to onClick.
+              if (Math.abs(moved) > 12) snap(moved > 0)
+            }}
+            className="-mx-20 flex w-[calc(100%+40px)] cursor-grab touch-none justify-center py-4 active:cursor-grabbing"
+          >
+            <span className="block h-5 w-36 rounded-full bg-[#7f7f7f]/40" />
+          </button>
 
-          <div className="mt-20 flex items-center gap-12">
-            {/* The byline goes to whoever made this — your own profile when the
-                session is yours, theirs when it is not. The entry point
-                decides, so the same row serves both without a flag. */}
+          <div className="mt-16 flex items-center gap-12">
             <Link
               to={profilePath(session.author, origin)}
               aria-label={`Open ${session.author}'s profile`}
@@ -236,20 +288,17 @@ export function PlayerPage() {
               <span className="text-style-body-small truncate font-medium text-text-primary">{session.author}</span>
               <ChevronRight size={16} className="shrink-0 text-icon-default" />
             </Link>
-            <span className="text-style-caption ml-auto shrink-0 text-text-secondary">
-              {session.plays} plays
-            </span>
           </div>
 
           <div className="mt-20 flex flex-col gap-8">
             <h1 className="text-style-title text-text-primary">{session.title}</h1>
 
-            {/* Clamped to the frame's three lines, with the frame's fade over the
-                cut. Expanding drops both, so "Read More" is a real disclosure
-                rather than a link to somewhere else. */}
+            {/* Clamped to the frame's lines, with the frame's fade over the cut.
+                Expanding drops both, so "Read More" is a real disclosure rather
+                than a link to somewhere else. */}
             <div className="relative">
               <p
-                className={`text-style-body-small font-light! text-text-secondary ${expanded ? '' : 'line-clamp-3'}`}
+                className={`text-style-body-small font-light! text-text-secondary ${expanded ? '' : 'line-clamp-4'}`}
               >
                 {session.summary}
               </p>
@@ -267,16 +316,84 @@ export function PlayerPage() {
             </button>
           </div>
 
+          {/* Hashtags: orange on a tenth of orange, with the frame's hairline. */}
           <div className="mt-20 flex flex-wrap gap-8">
-            {chips.map((chip) => (
+            {tags.slice(0, SHOWN_TAGS).map((tag) => (
               <span
-                key={chip}
-                className="text-style-label flex h-30 items-center rounded-full bg-[#ff881b]/10 px-8 text-text-primary"
+                key={tag}
+                className="text-style-label flex h-30 items-center rounded-full border border-[#ff881b] bg-[#ff881b]/10 px-8 text-[#ff881b]"
               >
-                {chip}
+                #{tag}
               </span>
             ))}
+            {overflow > 0 && (
+              <span className="text-style-label flex h-30 items-center rounded-full border border-[#ff881b] bg-[#ff881b]/10 px-8 text-[#ff881b]">
+                +{overflow}
+              </span>
+            )}
           </div>
+
+          {/* What the session has done, as two figures rather than a sentence. */}
+          <div className="mt-24 grid grid-cols-2 gap-16">
+            {[
+              { value: session.plays, label: 'Played', icon: <Play size={14} /> },
+              { value: session.recreated, label: 'Recreated', icon: <Shuffle size={14} /> },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                className="flex flex-col items-center gap-4 rounded-16 border border-border-subtle bg-surface-default p-16"
+              >
+                <p className="text-style-title tabular-nums text-text-primary">{stat.value}</p>
+                <p className="text-style-body-small flex items-center gap-6 text-text-secondary">
+                  {stat.icon}
+                  {stat.label}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <section className="mt-24">
+            <h2 className="text-style-body text-text-primary">Recreate your own version</h2>
+            <div className="-mx-20 mt-16 flex gap-11 overflow-x-auto px-20 pb-4">
+              {RECOMMENDATIONS.map((recommendation) => (
+                <RecommendationCard
+                  key={recommendation.id}
+                  recommendation={recommendation}
+                  applied={false}
+                  onToggle={() => {}}
+                  variant="recreate"
+                />
+              ))}
+            </div>
+          </section>
+
+          <section className="mt-24">
+            <h2 className="text-style-body text-text-primary">Details</h2>
+            <div className="mt-16 flex flex-col gap-20 rounded-20 border border-border-subtle bg-surface-default p-20">
+              <div>
+                <p className="text-style-label text-text-secondary">Creator’s intent</p>
+                <p className="text-style-body-small mt-6 text-text-primary">{session.intent}</p>
+              </div>
+              <div className="flex flex-col gap-10">
+                <p className="text-style-label text-text-secondary">In the mix</p>
+                {session.layers.map((layer) => (
+                  <div key={layer.id} className="flex items-baseline justify-between gap-16">
+                    <span className="text-style-body-small text-text-primary">{layer.name}</span>
+                    <span className="text-style-caption tabular-nums text-text-secondary">{layer.level}%</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-col gap-10">
+                <p className="text-style-label text-text-secondary">Set for you</p>
+                {session.personalization.map((item) => (
+                  <div key={item.label} className="flex items-baseline justify-between gap-16">
+                    <span className="text-style-body-small text-text-primary">{item.label}</span>
+                    <span className="text-style-caption text-right text-text-secondary">{item.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
         </section>
       </div>
     </div>

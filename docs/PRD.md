@@ -182,6 +182,10 @@ material. Flag for confirmation with product and business:
 - **The session speaks on screen.** The line being spoken sits under the art in
   the one serif the product uses. It is there for the same reason a lyric sheet
   is: it lets someone follow when they cannot, or will not, listen closely.
+- **The sheet has two resting places.** Sitting under the transport, and pulled
+  up to just below the status bar. The grabber is the control — it drags, and a
+  tap snaps — because a handle that does nothing teaches people the sheet does
+  not move. Free scrolling still works either way.
 - **What you would read lives beneath what you hear.** The sheet carries the
   author, the title, the summary and the session's attributes, and it slides up
   over the art rather than replacing it — leaving playback is not a condition of
