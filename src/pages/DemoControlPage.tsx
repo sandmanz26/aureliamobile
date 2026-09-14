@@ -1,8 +1,9 @@
-import { CloudOff, CloudUpload, ExternalLink, RotateCcw, Undo2 } from 'lucide-react'
+import { CloudOff, CloudUpload, ExternalLink, Lock, RotateCcw, Undo2, Unlock } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import type { ModuleKind } from '../demo/modules'
-import { DEMO_MODULES } from '../demo/modules'
+import { DEMO_MODULES, SITE_LOCK_FLAG } from '../demo/modules'
+import { SITE_PASSWORD, forgetUnlock, rememberUnlock } from '../demo/siteLock'
 
 function Toggle({
   checked,
@@ -149,6 +150,8 @@ export function DemoControlPage() {
           </div>
         </header>
 
+        <SiteLockCard />
+
         {(['consumer', 'admin'] as ModuleKind[]).map((kind) => (
         <section key={kind} className="mt-24 flex flex-col gap-12">
           <div className="flex items-baseline gap-8">
@@ -228,5 +231,71 @@ export function DemoControlPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+/**
+ * The one switch here that changes what a stranger sees, so it gets its own
+ * card rather than a row among thirty module toggles.
+ */
+function SiteLockCard() {
+  const { flags, setFlag, dirty } = useFeatureFlags()
+  const locked = flags[SITE_LOCK_FLAG] !== false
+
+  return (
+    <section className="mt-24 rounded-16 border border-border-subtle bg-surface-default p-16">
+      <div className="flex flex-wrap items-start justify-between gap-16">
+        <div className="flex min-w-0 gap-12">
+          <span
+            className={`flex size-36 shrink-0 items-center justify-center rounded-full ${
+              locked ? 'bg-brand-default text-text-strong' : 'bg-background-elevated text-icon-default'
+            }`}
+          >
+            {locked ? <Lock size={17} /> : <Unlock size={17} />}
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-style-body font-semibold text-text-primary">
+              Password in front of the site
+            </h2>
+            <p className="text-style-body-small mt-2 text-text-secondary">
+              {locked
+                ? 'Everyone hits a password before they see anything, this console included.'
+                : 'Anyone with the link walks straight in.'}{' '}
+              The password is{' '}
+              <code className="rounded-4 bg-background-elevated px-6 py-1">{SITE_PASSWORD}</code>.
+            </p>
+          </div>
+        </div>
+
+        <Toggle
+          checked={locked}
+          onChange={(next) => {
+            // Switching the lock on would otherwise eject whoever just did it
+            // straight to the password screen. They are in this console, so
+            // they have the password; remember them and let them carry on.
+            if (next) rememberUnlock()
+            setFlag(SITE_LOCK_FLAG, next)
+          }}
+          label="Password in front of the site"
+        />
+      </div>
+
+      <p className="text-style-caption mt-12 text-text-secondary">
+        {dirty
+          ? 'Changed here but not published — visitors still get the last published setting. Press Publish for everyone above.'
+          : 'This is not security. The check runs in the browser and the password ships in the JavaScript, so treat it as a “do not wander in”, never as protection.'}
+      </p>
+
+      <button
+        type="button"
+        onClick={() => {
+          forgetUnlock()
+          window.location.reload()
+        }}
+        className="text-style-label mt-12 rounded-full border border-border-subtle px-16 py-8 text-text-primary hover:bg-background-elevated"
+      >
+        Forget this browser
+      </button>
+    </section>
   )
 }

@@ -104,11 +104,35 @@ with no localStorage. Every load starts signed out so the app opens on the case
 for itself. Right while the data is mock, wrong once an account holds history —
 a setting with an expiry date, not the session model.
 
+**Flag changes are local until you Publish.** `/__demo` keeps a local draft in
+localStorage *and* a published set in Upstash KV via `/api/config`. Toggling
+something — the site lock included — changes only your browser until you press
+Publish for everyone. Without `KV_REST_API_URL` + `KV_REST_API_TOKEN` the
+endpoint reports `configured: false`, Publish is disabled, and every visitor
+falls back to the defaults compiled into `modules.ts`.
+
+**`/api/config` is unauthenticated.** Anyone who finds it can POST a new flag
+set, the site lock included. Narrow by design — it only stores booleans — but
+it is another reason the lock is a courtesy and not a control.
+
 **`/__demo` is a feature-flag console, and flags persist in localStorage.** If a
 screen or a control is missing and the code plainly renders it, check the flags
 before debugging the component. `src/demo/modules.ts` is the registry; `built:
 false` means there is nothing behind it, `unreleased: true` means built but
 switched off.
+
+**A shared password sits in front of the whole site, including `/__demo`.**
+One door, so there is no route that walks around it. It defaults **on** and has
+to: a gate that fails open on a first load or an unreachable flag store is not a
+gate. Switch it in the `/__demo` console — but read the next paragraph before
+trusting it.
+
+**The lock is not security, and nothing behind it should depend on it being
+one.** The check runs in the browser and the password is inlined into the
+JavaScript bundle, so anyone willing to open devtools can read it or skip the
+gate. It exists to stop strangers wandering into unfinished work and filing
+feedback on things already known and already scheduled. `VITE_SITE_PASSWORD`
+overrides the default and keeps it out of git — not out of the bundle.
 
 **This app is the reference implementation for the Flutter client.** Where the
 two disagree, this one is right and the other changes. If you alter a shared

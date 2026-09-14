@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { FlagState } from './modules'
-import { STORAGE_KEY, defaultFlags } from './modules'
+import { SITE_LOCK_FLAG, STORAGE_KEY, defaultFlags } from './modules'
 
 /**
  * Two layers of state, deliberately separate:
@@ -129,8 +129,13 @@ export function FeatureFlagsProvider({ children }: { children: ReactNode }) {
       },
       setFlag: (id, next) => commit({ ...flags, [id]: next }),
       setAll: (next) => {
-        const all: FlagState = {}
-        for (const key of Object.keys(defaultFlags())) all[key] = next
+        // The site lock is not a module and is not what "disable all" means:
+        // that reads as "hide every screen from the walkthrough", not "let the
+        // world in". It keeps whatever it was set to.
+        const all: FlagState = { [SITE_LOCK_FLAG]: flags[SITE_LOCK_FLAG] !== false }
+        for (const key of Object.keys(defaultFlags())) {
+          if (key !== SITE_LOCK_FLAG) all[key] = next
+        }
         commit(all)
       },
       reset: () => commit(defaultFlags()),

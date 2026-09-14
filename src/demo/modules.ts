@@ -224,7 +224,7 @@ export type FlagState = Record<string, boolean>
  * meant to be seen.
  */
 export function defaultFlags(): FlagState {
-  const flags: FlagState = {}
+  const flags: FlagState = { [SITE_LOCK_FLAG]: true }
   for (const mod of DEMO_MODULES) {
     flags[mod.id] = mod.built && !mod.unreleased
     for (const feature of mod.features ?? []) {
@@ -235,3 +235,16 @@ export function defaultFlags(): FlagState {
 }
 
 export const STORAGE_KEY = 'aurelia.demo.flags'
+
+/**
+ * The password gate in front of the whole site.
+ *
+ * Kept out of DEMO_MODULES on purpose: every entry there answers "what can the
+ * client reach during the walkthrough", and this one answers "who can reach
+ * the walkthrough at all". It rides in the same flag state so Publish carries
+ * it, and the console gives it its own control rather than a row among thirty.
+ *
+ * It defaults to ON, and it has to: a gate that fails open — first load, KV
+ * unreachable, a flag fetch that never resolves — is not a gate.
+ */
+export const SITE_LOCK_FLAG = 'siteLock'

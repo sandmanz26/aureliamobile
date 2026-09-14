@@ -17,6 +17,7 @@ import { RolesPage } from './admin/pages/RolesPage'
 import { SessionsPage as AdminSessionsPage } from './admin/pages/SessionsPage'
 import { SettingsPage } from './admin/pages/SettingsPage'
 import { UsersPage } from './admin/pages/UsersPage'
+import { SiteLock } from './components/SiteLock'
 import { FeatureFlagsProvider } from './demo/FeatureFlags'
 import { ModuleGuard } from './demo/ModuleGuard'
 import { AppLayout } from './layouts/AppLayout'
@@ -42,6 +43,7 @@ import { InvitePage } from './pages/InvitePage'
 export default function App() {
   return (
     <FeatureFlagsProvider>
+      <SiteLock>
       <AuthProvider>
         <Routes>
           {/* Unlisted presenter console — see src/demo/modules.ts */}
@@ -277,6 +279,7 @@ export default function App() {
           <Route path="/" element={<Navigate to="/home" replace />} />
         </Routes>
       </AuthProvider>
+      </SiteLock>
     </FeatureFlagsProvider>
   )
 }
