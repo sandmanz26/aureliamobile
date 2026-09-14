@@ -8,6 +8,21 @@ interface RecommendationDeckProps {
   onOpen?: () => void
 }
 
+/** Figma: a 124px square card, each one further right and a little more
+ *  upright than the one in front of it. */
+const CARD = 124
+const TILT = [-7, -5.5, -4]
+/**
+ * How far each card steps right. 78 is the Figma value — enough that the cards
+ * behind show part of their own orb rather than a sliver of edge. It narrows
+ * on a small screen because the deck sits in the message column, which does
+ * not scroll sideways: 214 is what the rotated front card and the column's
+ * own gutters take, so the rest is what the two steps have to share.
+ */
+const STEP = 'clamp(40px, (100vw - 214px) / 2, 78px)'
+/** The rotated front card's footprint: 124·cos7 + 124·sin7, rounded. */
+const FRONT = 140
+
 /**
  * The collapsed form of a recommendation set — a fanned stack with the count
  * on it, which opens into the full rail.
@@ -32,37 +47,39 @@ export function RecommendationDeck({ recommendations, count, onOpen }: Recommend
             'aria-label': `Open ${count} recommended ${count === 1 ? 'change' : 'changes'}`,
           }
         : {})}
-      className={`relative block h-[172px] w-[268px] shrink-0 text-left ${onOpen ? 'u-press' : ''}`}
+      style={{
+        width: `calc(${STEP} * ${cards.length - 1} + ${FRONT}px)`,
+        height: CARD + 16,
+      }}
+      className={`relative block shrink-0 text-left ${onOpen ? 'u-press' : ''}`}
     >
-      {cards.map((recommendation, index) => {
-        // Each card behind the front one sits further right and turns back
-        // towards upright, so the stack reads as a deck rather than a blur.
-        const rotate = [-7, -3, 1][index] ?? 0
-        return (
-          <span
-            key={recommendation.id}
-            className="absolute top-0 flex h-[160px] w-[152px] flex-col justify-end gap-2 overflow-hidden rounded-[18px] border border-brand-emphasis/45 bg-surface-default p-14 shadow-sm"
-            style={{ left: index * 44, rotate: `${rotate}deg`, zIndex: cards.length - index }}
-          >
-            <img
-              src={recommendation.orb}
-              alt=""
-              className="absolute left-14 top-14 size-[42px] rounded-full object-cover"
-            />
-            <span className="text-style-body-small mt-auto line-clamp-1 font-medium text-text-primary">
-              {recommendation.title}
-            </span>
-            <span className="text-style-caption line-clamp-2 text-text-secondary">
-              {recommendation.description}
-            </span>
+      {cards.map((recommendation, index) => (
+        <span
+          key={recommendation.id}
+          className="absolute top-8 flex flex-col overflow-hidden rounded-16 border border-brand-emphasis/45 bg-surface-default p-12 shadow-sm"
+          style={{
+            left: `calc(${STEP} * ${index})`,
+            width: CARD,
+            height: CARD,
+            rotate: `${TILT[index] ?? 0}deg`,
+            zIndex: cards.length - index,
+          }}
+        >
+          <img src={recommendation.orb} alt="" className="size-42 shrink-0 rounded-full object-cover" />
+          <span className="text-style-body-small mt-8 line-clamp-1 text-text-primary">
+            {recommendation.title}
           </span>
-        )
-      })}
+          <span className="text-style-caption mt-2 line-clamp-2 text-text-secondary">
+            {recommendation.description}
+          </span>
+        </span>
+      ))}
 
       {/* The count rides the front card's top-right corner, so the stack says
           how many changes it holds without being opened. */}
       <span
-        className="text-style-label absolute left-[104px] top-[-10px] z-10 flex size-30 items-center justify-center rounded-full bg-brand-default text-text-strong shadow-sm"
+        className="text-style-label absolute z-10 flex size-28 items-center justify-center rounded-full bg-brand-default text-text-strong shadow-sm"
+        style={{ left: CARD - 14, top: -6 }}
         aria-hidden="true"
       >
         {count}
