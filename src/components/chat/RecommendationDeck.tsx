@@ -15,7 +15,7 @@ interface RecommendationDeckProps {
  * description wanted one pixel more than it had, so both clipped.
  */
 const CARD_W = 148
-const CARD_H = 132
+const CARD_H = 142
 const TILT = [-7, -5.5, -4]
 /**
  * How far each card steps right. 78 is the Figma value — enough that the cards
@@ -24,10 +24,10 @@ const TILT = [-7, -5.5, -4]
  * not scroll sideways: 214 is what the rotated front card and the column's
  * own gutters take, so the rest is what the two steps have to share.
  */
-const STEP = 'clamp(40px, (100vw - 237px) / 2, 78px)'
+const STEP = 'clamp(40px, (100vw - 238px) / 2, 78px)'
 /** The rotated front card's footprint: w·cos7 + h·sin7, and h·cos7 + w·sin7. */
-const FRONT = 163
-const ROTATED_H = 149
+const FRONT = 164
+const ROTATED_H = 159
 
 /**
  * The collapsed form of a recommendation set — a fanned stack with the count
@@ -62,16 +62,17 @@ export function RecommendationDeck({ recommendations, count, onOpen }: Recommend
       {cards.map((recommendation, index) => (
         <span
           key={recommendation.id}
-          className="absolute top-8 flex flex-col overflow-hidden rounded-16 border border-brand-emphasis/45 bg-surface-default p-12 shadow-sm"
+          className="absolute top-8 flex flex-col overflow-hidden rounded-24 border border-brand-emphasis/45 bg-surface-default p-12"
           style={{
             left: `calc(${STEP} * ${index})`,
             width: CARD_W,
             height: CARD_H,
             rotate: `${TILT[index] ?? 0}deg`,
             zIndex: cards.length - index,
+            boxShadow: '0 6px 18px rgba(60, 36, 5, 0.10)',
           }}
         >
-          <img src={recommendation.orb} alt="" className="size-42 shrink-0 rounded-full object-cover" />
+          <img src={recommendation.orb} alt="" className="size-52 shrink-0 rounded-full object-cover" />
           <span className="text-style-body-small mt-8 line-clamp-1 text-text-primary">
             {recommendation.title}
           </span>
