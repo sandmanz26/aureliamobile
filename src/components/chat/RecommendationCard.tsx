@@ -1,4 +1,5 @@
 import { ArrowUp, Play, Plus, Trash2 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 export interface Recommendation {
   id: string
@@ -6,6 +7,8 @@ export interface Recommendation {
   description: string
   improveScore: string
   orb: string
+  /** The session this change previews against, for the play glyph on the orb. */
+  preview: string
 }
 
 interface RecommendationCardProps {
@@ -27,7 +30,7 @@ interface RecommendationCardProps {
 // The orb is a 73px circular image the play glyph sits on, rather than a badge
 // beside it.
 export function RecommendationCard({ recommendation, applied, onToggle }: RecommendationCardProps) {
-  const { title, description, improveScore, orb } = recommendation
+  const { title, description, improveScore, orb, preview } = recommendation
 
   return (
     <article
@@ -41,15 +44,17 @@ export function RecommendationCard({ recommendation, applied, onToggle }: Recomm
       }}
     >
       {/* The play glyph sits on the orb rather than in a badge beside it: the
-          orb is the preview, and a corner badge read as a second control. */}
-      <div className="relative w-fit">
+          orb is the preview, and a corner badge read as a second control. It
+          plays, rather than decorating — the disc is the only thing on this
+          card that looks like a control and did nothing. */}
+      <Link to={`/play/${preview}`} aria-label={`Play ${title}`} className="u-press relative w-fit">
         <img src={orb} alt="" className="size-[73px] rounded-full object-cover" />
         <span className="absolute inset-0 flex items-center justify-center">
           <span className="flex size-32 items-center justify-center rounded-full bg-white/20 backdrop-blur-[16px]">
             <Play size={16} fill="currentColor" className="text-white" />
           </span>
         </span>
-      </div>
+      </Link>
 
       <div className="flex flex-col gap-2">
         <p className="text-style-body-small text-text-primary">{title}</p>

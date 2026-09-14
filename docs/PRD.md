@@ -182,6 +182,10 @@ material. Flag for confirmation with product and business:
   author, the title, the summary and the session's attributes, and it slides up
   over the art rather than replacing it — leaving playback is not a condition of
   reading about it.
+- **Every control that says Play, plays.** A glyph labelled Play that opens a
+  detail page or the cockpit instead is a broken promise, and the app shipped
+  several. The session card, the sessions shelf's Resume and the cockpit
+  header's play all land on playback.
 - **The summary opens in place.** Read More expands the clamped text where it
   is. Sending someone to another screen to finish a paragraph costs them their
   place in the session.

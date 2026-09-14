@@ -1,5 +1,6 @@
 import { Menu, MoreHorizontal, Play, Send, SlidersHorizontal, TrendingUp } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 interface ChatHeaderProps {
   points: string
@@ -9,6 +10,8 @@ interface ChatHeaderProps {
   canPublish?: boolean
   /** A session with nothing in it has nothing to play, so the button goes. */
   canPlay?: boolean
+  /** Where the header's play glyph goes. It was a button with no handler. */
+  playTo?: string
   /**
    * Where Settings goes. Left out while the Session settings screen is still
    * switched off — the row stays, as it always has, and closes the menu.
@@ -26,6 +29,7 @@ export function ChatHeader({
   onPublish,
   canPublish = true,
   canPlay = true,
+  playTo = '/play/dolphins-frequency',
   onSettings,
   onInsights,
 }: ChatHeaderProps) {
@@ -54,13 +58,13 @@ export function ChatHeader({
 
       <div className="flex items-center gap-8">
         {canPlay && (
-          <button
-            type="button"
+          <Link
+            to={playTo}
             aria-label="Play session"
-            className="flex size-44 items-center justify-center rounded-full bg-surface-default text-icon-strong"
+            className="u-press flex size-44 items-center justify-center rounded-full bg-surface-default text-icon-strong"
           >
             <Play size={20} />
-          </button>
+          </Link>
         )}
 
         <div className="flex h-44 items-center gap-8 rounded-[25px] bg-surface-default px-16">

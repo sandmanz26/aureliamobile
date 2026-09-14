@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, ChevronRight, Pause, Play, Share2 } from 'lucide-react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { CoverImage } from '../components/ui/CoverImage'
+import { MobileStatusBar } from '../components/ui/MobileStatusBar'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { findSession, totalMinutes } from '../lib/sessions'
 
@@ -87,6 +88,13 @@ export function PlayerPage() {
             className="absolute inset-0"
           />
 
+          {/* The frame carries the iOS status bar over the art, not on a band
+              above it. Same lg:hidden rule AppLayout uses, so a desktop window
+              does not show a phone's clock. */}
+          <div className="relative lg:hidden">
+            <MobileStatusBar />
+          </div>
+
           <header className="relative flex items-center gap-16 px-20 py-12">
             <button
               type="button"
@@ -97,9 +105,14 @@ export function PlayerPage() {
               <ArrowLeft size={20} />
             </button>
             <span className="flex-1" />
-            <span className="text-style-body-small flex h-44 items-center gap-8 rounded-full bg-surface-default px-16 font-medium text-text-primary">
-              <span className="flex size-20 items-center justify-center rounded-full bg-brand-emphasis text-[10px] text-text-inverse">
-                ◎
+            {/* Same coin as the cockpit header wears — one mark for the
+                currency, not a lookalike per screen. */}
+            <span className="text-style-body-small flex h-44 items-center gap-8 rounded-full bg-surface-default px-16 text-text-primary">
+              <span
+                className="flex size-20 items-center justify-center rounded-full"
+                style={{ background: 'linear-gradient(160deg, #ffe682, #ff881b)' }}
+              >
+                <span className="size-8 rounded-full border-2 border-text-inverse" />
               </span>
               1,323
             </span>

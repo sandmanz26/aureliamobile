@@ -70,6 +70,7 @@ const RECOMMENDATIONS: Recommendation[] = [
     description: 'Helps bring joy, aligned with your goal',
     improveScore: '12%',
     orb: orbIncreaseYellow,
+    preview: 'dolphins-frequency',
   },
   {
     id: 'movement',
@@ -77,6 +78,7 @@ const RECOMMENDATIONS: Recommendation[] = [
     description: 'Reduced movement helps your nervous system to calm down',
     improveScore: '12%',
     orb: orbLessMovement,
+    preview: 'deep-grounding',
   },
   {
     id: 'frequency',
@@ -84,6 +86,7 @@ const RECOMMENDATIONS: Recommendation[] = [
     description: 'Your body responds positively to this frequency.',
     improveScore: '12%',
     orb: orb432hz,
+    preview: '528-hz-reset',
   },
 ]
 
