@@ -9,6 +9,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/aurelia_logo.dart';
 import '../player/player_screen.dart';
+import '../progress/progress_screen.dart';
 import '../shell/app_drawer.dart';
 import 'chat_session_controller.dart';
 import 'widgets/mini_player.dart';
@@ -162,14 +163,28 @@ class _ChatScreenState extends State<ChatScreen> {
   /// own yet, so it plays against the one it was recreated from — and the
   /// entry point says the result is the user's own work, which is what keeps
   /// the player's byline honest.
+  /// The transport plays the session the cockpit is about. It used to play one
+  /// fixed session whichever thread was open, which nobody could see until
+  /// rows started opening their own.
   void _playSession() {
+    final open = ChatSessionScope.read(context).sessionSlug;
     Navigator.of(context).pushNamed(
       '/play',
-      arguments: const PlayRequest(
-        slug: 'dolphins-frequency',
+      arguments: PlayRequest(
+        slug: open ?? 'dolphins-frequency',
         origin: ProfileOrigin.own,
       ),
     );
+  }
+
+  /// Insights opens what this session has done since it was made. A thread
+  /// with no session behind it has nothing to show, so the row is inert there
+  /// rather than absent — the frame draws it either way.
+  void _openProgress() {
+    final open = ChatSessionScope.read(context).sessionSlug;
+    if (open == null) return;
+    Navigator.of(context)
+        .pushNamed('/progress', arguments: ProgressRequest(slug: open));
   }
 
   String _clock(DateTime at) {
@@ -218,7 +233,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   ],
                   const CoinPill.ringed(),
                   const SizedBox(width: AppSpacing.s2),
-                  _ChatMenuButton(onPublish: _publish),
+                  _ChatMenuButton(
+                      onPublish: _publish, onInsights: _openProgress),
                 ],
               ),
             ),
@@ -627,11 +643,12 @@ class _TypingDotsState extends State<_TypingDots> with SingleTickerProviderState
 }
 
 /// The chat header's ⋯ button and its dropdown (Figma node "dropdown",
-/// 140x175). Settings and Insights are inert until those screens ship.
+/// 140x175). Settings is inert until that screen ships.
 class _ChatMenuButton extends StatelessWidget {
-  const _ChatMenuButton({required this.onPublish});
+  const _ChatMenuButton({required this.onPublish, required this.onInsights});
 
   final VoidCallback onPublish;
+  final VoidCallback onInsights;
 
   @override
   Widget build(BuildContext context) {
@@ -647,6 +664,7 @@ class _ChatMenuButton extends StatelessWidget {
       ),
       onSelected: (item) {
         if (item == 'Publish') onPublish();
+        if (item == 'Insights') onInsights();
       },
       itemBuilder: (context) => [
         for (final item in ['Insights', 'Settings', 'Publish'])

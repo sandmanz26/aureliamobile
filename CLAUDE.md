@@ -113,7 +113,7 @@ lib/
     widgets/   Anything used by more than one screen
   features/
     chat/      The cockpit, plus the thread it draws (chat_session_controller)
-    <name>/<name>_screen.dart      one directory per screen, 18 in total
+    <name>/<name>_screen.dart      one directory per screen, 19 in total
 main.dart    routes, as a switch on settings.name
 ```
 
@@ -170,6 +170,12 @@ phone width; and brand/illustration vectors move across as the same SVG path
 strings, parsed at runtime by `core/widgets/svg_path.dart`, rather than being
 re-traced by hand.
 
+**Every face is Mulish, the player's cue included.** That cue was the one style
+in the system still set in a serif, which the design used to separate a line
+the session speaks from the interface around it. The separation is now carried
+by Light at 21/28.5, matching the web, and the serif is gone from `pubspec.yaml`
+and from `assets/fonts/`.
+
 **The player is silent, and that is a decision.** `PlaybackController` holds a
 track, a play/pause flag and a clock that ticks — everything the player screen
 and the mini player read. What it does not hold is an audio element, because
@@ -192,6 +198,43 @@ asked for on top of the design — see `docs/PRD.md` for why each shows when it
 does. `isRecreated` is not a stored flag: every session opens on an Aurelia
 starter template, so a two-step lineage is an original and a third step means a
 person stood between, which is what recreating is.
+
+**A session row opens that session's thread, already made.** The cockpit is
+one controller above the navigator, so the thread it holds has to be told which
+session it is about: `openSession()` replaces the messages with that session's
+opening and lays the deck open rather than folding it, because an existing
+session's changes are what you came to look at. It no-ops on the session
+already open — going off to play it and coming back returns the thread as you
+left it, the same bargain `load()` makes on the playback controller.
+
+That is also why **"New session" passes `fresh: true`**. The controller
+outlives the screen by design, so without it the drawer would reopen whichever
+session was last in the cockpit.
+
+**The catalogue has drafts, and they are reachable in exactly one place.**
+`kPublishedSessions` is what every public surface reads — shelves, categories,
+the creator index. `kSessions` is the whole thing, and the only surface that
+reads it is Sessions under "Created by you". A draft has no plays, no earnings
+and no community, so Progress shows zeroes and says why rather than borrowing
+figures, and a draft must never swell anyone's published-session count.
+
+**Progress is three tabs over one shell** (`features/progress/`), reached by
+Insights in the cockpit's ⋯. Every size on it is read off the Figma frames'
+*leaf* nodes, not their depth-4 summaries: the summaries stop before the text
+nodes, so type is the one thing a shallow read cannot give you, and it is what
+reads wrong first. Two places where the frame and this app differ on purpose:
+
+- A lineage row's caret points down in Figma because the row is a disclosure
+  in the prototype with nothing behind it. Here the row opens that session, so
+  the caret points the way it goes.
+- The objective card's hairline is a gradient ring. Figma draws strokes INSIDE,
+  overlaying the padding box; a Flutter ring is real layout on every edge, so a
+  pixel comes off the vertical padding to keep the card at the frame's 68.
+
+**A version card's play glyph plays that cut**, at
+`PlayRequest(slug:, versionId:)`. The deck key becomes `slug#version`, and that
+matters: the deck refuses to reload the track already on it, so without a
+distinct key pressing play on v1.2 would carry on playing v1.3.
 
 **`AppRadius` is a closed scale** — 0/2/4/8/12/16/24/32/full. A literal that is
 not on it is almost always a mistake. The web had eleven elements silently

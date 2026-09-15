@@ -13,6 +13,7 @@ import 'features/help/help_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/invite/invite_screen.dart';
 import 'features/notifications/notifications_screen.dart';
+import 'features/progress/progress_screen.dart';
 import 'features/player/player_screen.dart';
 import 'features/profile/profile_screen.dart';
 import 'features/recreate/recreate_screen.dart';
@@ -123,7 +124,11 @@ class _AureliaAppState extends State<AureliaApp> {
         case '/play':
           final args = settings.arguments;
           if (args is PlayRequest) {
-            return PlayerScreen(slug: args.slug, origin: args.origin);
+            return PlayerScreen(
+              slug: args.slug,
+              origin: args.origin,
+              versionId: args.versionId,
+            );
           }
           return PlayerScreen(slug: args as String? ?? '');
         case '/session':
@@ -150,6 +155,12 @@ class _AureliaAppState extends State<AureliaApp> {
           return const AccountSettingsScreen();
         case '/wellness':
           return const WellnessScreen();
+        case '/progress':
+          final args = settings.arguments;
+          if (args is ProgressRequest) {
+            return ProgressScreen(slug: args.slug, tab: args.tab);
+          }
+          return ProgressScreen(slug: args as String? ?? '');
         default:
           return const HomeScreen();
       }

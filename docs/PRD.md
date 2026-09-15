@@ -266,13 +266,69 @@ field:
   costs the author its width on a 10px line.
 
 A draft shows no label rather than saying "Draft" — the absence is the state.
-Nothing can be a draft yet, because the cockpit cannot save one; the flag is
-the seam for when it can.
+The catalogue now carries two, so all three cockpit states exist in the mock
+data: a session you have not started, one you made and have not published, and
+one that is out. The cockpit still cannot *save* a draft; the flag and the two
+records are the seam for when it can.
+
+**A draft is yours, and shows only where it is yours.** Shelves, categories and
+the creator index all read the published set, so "Created by you" on Sessions is
+the one surface a draft appears on. A draft also has no plays, no earnings and
+no community, so Progress prints zeroes and says why rather than borrowing
+figures from somewhere — and it must never swell a creator's published-session
+count.
 
 **The row has two tap targets.** The play disc opens the player; the rest of
 the row opens that session's conversation. That is the frame's own prototype
 rather than an invention — its transition lands on 16523:8166, which is a
 cockpit thread, not a detail page.
+
+The thread it opens is *already made*: Aurelia's lines name the session, its
+length and what people report, and the recommendation deck is laid open rather
+than folded, because an existing session's changes are what you came to look
+at. A draft gets its own opening — nobody has played it, so there is nothing to
+report back and the question becomes "anything you want to change before it
+goes out?". Reopening the session you are already in does nothing, which is
+what makes going off to play it and coming back feel like returning rather than
+reloading.
+
+### Progress — what a session has done since it was made
+
+Insights in the cockpit's ⋯ opens Progress (Figma 16523:19484, 19606, 19752):
+three tabs over one shell, because that is how the frames are drawn — the
+header and the chip row are identical across all three and only the body
+changes.
+
+| Tab | What it answers |
+| --- | --- |
+| **Chapters** | What this session is aiming at, and every earlier cut of it. The objective sits under a gradient hairline because it is what every figure on the other two tabs is measured against — and it is the only thing on the screen you can edit. |
+| **Social Impact** | What it earned, how often it was played, how often it was forked; then who did what with it, and the chain it belongs to. |
+| **Insights** | Patterns Aurelia claims to have noticed. Worded as tendencies — "tends to", "may be" — because nothing here is a measurement and the copy should not imply one. |
+
+The objective is not the session's `intent`. That is the creator's sentence
+about what the mix is for and it runs long; the objective is the listener's own
+goal, short enough to sit on one line beside an edit button, as the frame has
+it.
+
+**A version card's play glyph plays that cut**, not the session. Hearing what a
+change did is the reason the card carries a figure for that change at all, so
+the glyph could not stay inert. The cut goes on the deck under its own key —
+the deck refuses to reload the track already on it, which is what stops the
+cockpit's transport restarting a session you walked away from, so without a
+distinct key pressing play on v1.2 would have gone on playing v1.3. Only what
+the cut states overrides: a version is the same session by the same person, so
+the author and everything else on the player stay the session's.
+
+Two readings the frames do not settle, and what both clients do instead:
+
+- **A lineage row's caret points down in Figma**, because the row is a
+  disclosure in the prototype with nothing behind it. Here the row opens that
+  session, so the caret points the way it goes. Change it back when there is
+  something to disclose.
+- **The frames are set in Sofia Pro; the `font-family/base` variable says
+  Mulish**, and both clients follow the variable. Every size and line-height on
+  these screens is the frame's; only the face differs, and that difference is
+  still open.
 
 ---
 

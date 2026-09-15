@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/audio/playback_controller.dart';
 import '../../core/data/people.dart';
 import '../../core/data/recommendations.dart';
+import '../../core/data/progress.dart';
 import '../../core/data/sessions.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
@@ -19,10 +20,14 @@ import '../chat/widgets/recommendation_card.dart';
 /// byline to guess from the author's name.
 @immutable
 class PlayRequest {
-  const PlayRequest({required this.slug, this.origin});
+  const PlayRequest({required this.slug, this.origin, this.versionId});
 
   final String slug;
   final ProfileOrigin? origin;
+
+  /// Which cut of it. Progress's version cards ask for one by id; everything
+  /// else asks for the session, which is the version that is current.
+  final String? versionId;
 }
 
 /// Lines the session speaks, shown one at a time under the art. Mock, like
@@ -56,10 +61,18 @@ String _clock(Duration value) {
 /// cockpit leaves the session running, which is the whole point of starting
 /// one.
 class PlayerScreen extends StatefulWidget {
-  const PlayerScreen({super.key, required this.slug, this.origin});
+  const PlayerScreen({
+    super.key,
+    required this.slug,
+    this.origin,
+    this.versionId,
+  });
 
   final String slug;
   final ProfileOrigin? origin;
+
+  /// Which cut of the session to play. Null is the session as it stands.
+  final String? versionId;
 
   @override
   State<PlayerScreen> createState() => _PlayerScreenState();
@@ -79,12 +92,18 @@ class _PlayerScreenState extends State<PlayerScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final session = findSession(widget.slug);
       if (session == null || !mounted) return;
+      final version = findVersion(session, widget.versionId);
       PlaybackScope.read(context).load(Track(
-        slug: session.slug,
-        title: session.title,
+        // A cut is its own recording, so it gets its own key. Without that the
+        // deck would see the session it is already playing and keep playing
+        // it — press play on v1.2 and you would go on hearing v1.3.
+        slug: version == null ? session.slug : '${session.slug}#${version.id}',
+        title: version?.title ?? session.title,
+        // A version belongs to the same person and sits under the same art
+        // unless it changed it, so only what the version states overrides.
         author: session.author,
-        photo: session.photo,
-        gradient: session.gradient,
+        photo: version?.photo ?? session.photo,
+        gradient: version?.gradient ?? session.gradient,
       ));
     });
   }
@@ -112,6 +131,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   Widget build(BuildContext context) {
     final session = findSession(widget.slug);
+    final version = session == null ? null : findVersion(session, widget.versionId);
     if (session == null) {
       // A pasted or stale slug: back to somewhere real rather than an empty
       // player.
@@ -142,8 +162,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   child: Stack(
                     children: [
                       CoverImage(
-                        photo: session.photo,
-                        gradient: session.gradient,
+                        photo: version?.photo ?? session.photo,
+                        gradient: version?.gradient ?? session.gradient,
                         width: 804,
                         height: 1750,
                         scrim: false,
@@ -159,6 +179,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     ),
                     _Sheet(
                       session: session,
+                      version: version,
                       origin: widget.origin,
                       expanded: _expanded,
                       sheetUp: _sheetUp,
@@ -340,6 +361,7 @@ class _Hero extends StatelessWidget {
 class _Sheet extends StatelessWidget {
   const _Sheet({
     required this.session,
+    required this.version,
     required this.origin,
     required this.expanded,
     required this.sheetUp,
@@ -348,6 +370,7 @@ class _Sheet extends StatelessWidget {
   });
 
   final SessionRecord session;
+  final Version? version;
   final ProfileOrigin? origin;
   final bool expanded;
   final bool sheetUp;
@@ -440,7 +463,7 @@ class _Sheet extends StatelessWidget {
           ),
 
           const SizedBox(height: AppPadding.page),
-          Text(session.title, style: AppTextStyles.titleLg),
+          Text(version?.title ?? session.title, style: AppTextStyles.titleLg),
           const SizedBox(height: AppSpacing.s2),
           // Clamped to the frame's lines. Expanding drops the clamp, so "Read
           // More" is a real disclosure rather than a link to somewhere else.

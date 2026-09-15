@@ -7,10 +7,13 @@ import 'package:aurelia_mobile/core/widgets/community_network.dart';
 import 'package:aurelia_mobile/core/widgets/photo_circle.dart';
 import 'package:aurelia_mobile/core/widgets/section_header.dart';
 import 'package:aurelia_mobile/core/widgets/session_grid_card.dart';
+import 'package:aurelia_mobile/core/data/progress.dart' show ProgressTab;
+import 'package:aurelia_mobile/features/chat/chat_session_controller.dart' show ChatArgs;
 import 'package:aurelia_mobile/features/chat/widgets/mini_player.dart';
 import 'package:aurelia_mobile/features/chat/widgets/recommendation_deck.dart';
 import 'package:aurelia_mobile/features/chat/widgets/recommendation_card.dart';
 import 'package:aurelia_mobile/features/player/player_screen.dart';
+import 'package:aurelia_mobile/features/progress/progress_screen.dart';
 import 'package:aurelia_mobile/main.dart';
 
 /// Pumps the app and settles. Network images resolve to the gradient floor in
@@ -740,6 +743,100 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Ready to play'), findsOneWidget);
       expect(find.text('Apply new changes (2)'), findsNothing);
+    });
+  });
+
+  group('Progress', () {
+    testWidgets('Insights in the cockpit opens the session it is about',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      // From a session's own thread, not a blank cockpit: Progress is about
+      // one session, so a thread with nothing behind it has nothing to show.
+      navigator.pushNamed('/chat',
+          arguments: const ChatArgs(slug: 'dolphins-frequency'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('More options'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Insights').last);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ProgressScreen), findsOneWidget);
+      // Chapters is the tab it opens on: the objective, then the cuts.
+      expect(find.text('Objective'), findsOneWidget);
+      expect(find.text('Lower my stress'), findsOneWidget);
+      expect(find.text('Version History'), findsOneWidget);
+      expect(find.text('Dolphins frequency v1.3'), findsOneWidget);
+    });
+
+    testWidgets('the three tabs are three bodies over one shell',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/progress',
+          arguments: const ProgressRequest(slug: 'dolphins-frequency'));
+      await tester.pumpAndSettle();
+
+      // The header and the chip row do not change with the tab; only the body
+      // does, which is how the three frames are drawn.
+      await tester.tap(find.text('Social Impact'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sessions'), findsOneWidget);
+      expect(find.text('Earnings'), findsOneWidget);
+      // The figures agree with the row that opened it.
+      expect(find.text('124k'), findsOneWidget);
+      expect(find.text('Lineage Tree'), findsOneWidget);
+
+      // The chip row scrolls, and has to: the test font is square-per-em, so
+      // every label here is far wider than Mulish sets it and the third chip
+      // lands off a 420-wide surface. On a device the three fit the frame's
+      // 362 with room to spare.
+      await tester.ensureVisible(find.text('Insights'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Insights'));
+      await tester.pumpAndSettle();
+      expect(find.text('Less coffee, better sleep'), findsOneWidget);
+      expect(find.text('Earnings'), findsNothing);
+    });
+
+    testWidgets('a draft has nothing to show on Social Impact', (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/progress',
+          arguments: const ProgressRequest(
+              slug: 'evening-unwind-v3', tab: ProgressTab.social));
+      await tester.pumpAndSettle();
+
+      // Zeroes rather than borrowed figures, and it says why rather than
+      // printing an empty list: nobody can play a session that is not out.
+      expect(find.text('0'), findsNWidgets(3));
+      expect(find.textContaining('this one is not published'), findsOneWidget);
+      expect(find.textContaining('See All'), findsOneWidget);
+    });
+
+    testWidgets('a version card plays that cut, not the session',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/progress',
+          arguments: const ProgressRequest(slug: 'dolphins-frequency'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Play Dolphins frequency v1.2'));
+      await tester.pumpAndSettle();
+
+      // The player shows the cut, not the session it is a cut of.
+      expect(find.byType(PlayerScreen), findsOneWidget);
+      expect(find.text('Dolphins frequency v1.2'), findsOneWidget);
     });
   });
 }
