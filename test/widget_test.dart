@@ -9,6 +9,7 @@ import 'package:aurelia_mobile/core/widgets/section_header.dart';
 import 'package:aurelia_mobile/core/widgets/session_grid_card.dart';
 import 'package:aurelia_mobile/features/chat/widgets/mini_player.dart';
 import 'package:aurelia_mobile/features/chat/widgets/recommendation_deck.dart';
+import 'package:aurelia_mobile/features/chat/widgets/recommendation_card.dart';
 import 'package:aurelia_mobile/features/player/player_screen.dart';
 import 'package:aurelia_mobile/main.dart';
 
@@ -576,11 +577,40 @@ void main() {
       await tester.pumpAndSettle();
 
       // ...and the rest of the row opens that session's conversation, which is
-      // where the frame's own prototype goes.
+      // where the frame's own prototype goes. Not a blank cockpit: the thread
+      // opens already about this session, and its deck is laid open rather
+      // than folded, because the changes are what you came to look at.
       await tester.tap(find.text('Dolphins frequency'));
       await tester.pumpAndSettle();
-      expect(find.text('Aurelia'), findsWidgets);
-      expect(find.byType(RecommendationDeck), findsOneWidget);
+      expect(find.byType(RecommendationDeck), findsNothing);
+      expect(find.byType(RecommendationCard), findsWidgets);
+      expect(
+          find.textContaining('“Dolphins frequency” is built and running'),
+          findsOneWidget);
+    });
+
+    testWidgets('a draft opens on the cockpit state a draft is in',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      // Drafts live only under "Created by you" — that is the whole reason the
+      // filter is worth a tap.
+      navigator.pushNamed('/sessions');
+      await tester.pumpAndSettle();
+      expect(find.text('Evening Unwind v3'), findsNothing);
+      await tester.tap(find.text('Created by you'));
+      await tester.pumpAndSettle();
+      expect(find.text('Evening Unwind v3'), findsOneWidget);
+
+      await tester.tap(find.text('Evening Unwind v3'));
+      await tester.pumpAndSettle();
+      // Nobody has played it, so Aurelia has nothing to report back — which is
+      // the difference between a draft and a session that is out.
+      expect(find.textContaining('still yours only'), findsOneWidget);
+      expect(find.textContaining('Anything you want to change before it goes out?'),
+          findsOneWidget);
     });
 
     testWidgets('Sessions lists what is published and narrows to your own',

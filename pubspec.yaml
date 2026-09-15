@@ -79,10 +79,6 @@ flutter:
           weight: 500
         - asset: assets/fonts/Mulish-SemiBold.ttf
           weight: 600
-    - family: Goudy Bookletter 1911
-      fonts:
-        - asset: assets/fonts/GoudyBookletter1911-Regular.ttf
-          weight: 400
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

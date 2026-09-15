@@ -110,8 +110,17 @@ class _WellnessScreenState extends State<WellnessScreen> {
           ),
           for (final group in SignalGroup.values) ...[
             const SizedBox(height: AppSpacing.s6),
-            Text(group.label, style: AppTextStyles.bodySm),
-            const SizedBox(height: AppSpacing.s2),
+            // 14/14 Light in #9A9A9A — a quieter grey than the secondary ink
+            // token, and flush with the cards under it, as the frame has it.
+            Text(
+              group.label,
+              style: AppTextStyles.bodyMd.copyWith(
+                fontWeight: FontWeight.w300,
+                height: 1,
+                color: const Color(0xFF9A9A9A),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s3),
             for (final source in sourcesInGroup(group)) ...[
               _SourceRow(
                 source: source,
@@ -119,7 +128,7 @@ class _WellnessScreenState extends State<WellnessScreen> {
                 onChanged: (next) =>
                     setState(() => _connections[source.id] = next),
               ),
-              const SizedBox(height: AppSpacing.s2 + 2),
+              const SizedBox(height: AppSpacing.s3),
             ],
           ],
           const SizedBox(height: AppSpacing.s4),
@@ -197,11 +206,15 @@ class _SourceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 362x56 in the frame: radius 20, 16 either side. The height is held so a
+    // long source name cannot grow the row past its neighbours.
     return Container(
-      padding: const EdgeInsets.all(13),
+      height: 56,
+      padding: const EdgeInsets.symmetric(horizontal: AppPadding.md),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.xl2),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         children: [
@@ -209,7 +222,7 @@ class _SourceRow extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: const BoxDecoration(
-              color: Color(0xFFFDF0E2),
+              color: Color(0xFFFFF1DB),
               shape: BoxShape.circle,
             ),
             child: Icon(source.icon, size: 16, color: AppColors.iconStrong),
@@ -252,12 +265,16 @@ class _Switch extends StatelessWidget {
       label: '${on ? 'Disconnect' : 'Connect'} $label',
       child: GestureDetector(
         onTap: () => onChanged(!on),
+        // 40x22 with an 18 knob inset 2, so 2 of track shows all the way
+        // round it. Off is the frame's own #E5E5E5, not the elevated
+        // background token — that token is warm and read as a third state
+        // beside the white knob.
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
           width: 40,
-          height: 24,
+          height: 22,
           decoration: BoxDecoration(
-            color: on ? AppColors.iconStrong : AppColors.backgroundElevated,
+            color: on ? AppColors.textPrimary : const Color(0xFFE5E5E5),
             borderRadius: BorderRadius.circular(AppRadius.full),
           ),
           child: AnimatedAlign(
@@ -265,8 +282,8 @@ class _Switch extends StatelessWidget {
             alignment: on ? Alignment.centerRight : Alignment.centerLeft,
             child: Container(
               margin: const EdgeInsets.all(2),
-              width: 20,
-              height: 20,
+              width: 18,
+              height: 18,
               decoration: const BoxDecoration(
                 color: AppColors.surface,
                 shape: BoxShape.circle,

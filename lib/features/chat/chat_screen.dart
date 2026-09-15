@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/audio/playback_controller.dart';
 import '../../core/data/people.dart';
 import '../../core/data/recommendations.dart';
+import '../../core/data/sessions.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
@@ -26,13 +27,26 @@ import 'widgets/voice_recorder.dart';
 /// its own is about the screen (scroll position, the composer, whether the
 /// recorder is open).
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key, this.brief, this.startVoice = false, this.ask});
+  const ChatScreen({
+    super.key,
+    this.brief,
+    this.startVoice = false,
+    this.ask,
+    this.slug,
+    this.fresh = false,
+  });
 
   final RecreateBrief? brief;
   final bool startVoice;
 
   /// What the visitor typed on Home before they were sent here.
   final String? ask;
+
+  /// An existing session this thread is about. Null is a new one.
+  final String? slug;
+
+  /// Start from an empty thread — what "New session" means.
+  final bool fresh;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -57,6 +71,13 @@ class _ChatScreenState extends State<ChatScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final chat = ChatSessionScope.read(context);
+      // Before everything else: the controller outlives this screen, so
+      // without it "New session" would reopen the session you last had here.
+      if (widget.fresh) chat.reset();
+      // Before the seeds: a session's own opening replaces the thread, so a
+      // brief or an ask seeded first would be wiped by it.
+      final session = findSession(widget.slug);
+      if (session != null) chat.openSession(session);
       chat.seedAsk(widget.ask);
       chat.seedBrief(widget.brief);
       _scrollToEnd();

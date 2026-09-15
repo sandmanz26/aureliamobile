@@ -5,6 +5,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/aurelia_logo.dart';
 import '../../core/widgets/photo_circle.dart';
+import '../chat/chat_session_controller.dart';
 
 /// The navigation drawer — the mobile counterpart of the web sidebar.
 ///
@@ -185,7 +186,12 @@ class AppDrawer extends StatelessWidget {
                         Navigator.of(context).pop();
                         requireSignIn(context,
                             destination: '/chat',
-                            then: () => Navigator.of(context).pushNamed('/chat'));
+                            then: () => Navigator.of(context).pushNamed(
+                                  '/chat',
+                                  // Fresh, or this would reopen whichever
+                                  // session was last in the cockpit.
+                                  arguments: const ChatArgs(fresh: true),
+                                ));
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,

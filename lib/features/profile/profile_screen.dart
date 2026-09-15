@@ -114,72 +114,82 @@ class ProfileScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       drawer: own ? const AppDrawer(current: '/profile') : null,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-              AppPadding.page, AppPadding.md, AppPadding.page, AppSpacing.s10),
+        // A Column, not a ListView: the header sits outside the scroller so
+        // it stays put. Back, Settings and the coin count are all things a
+        // long profile must not carry out of reach — the web pins this same
+        // header for the same reason.
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                if (own)
-                  Builder(
-                    builder: (context) => CircleSurfaceButton(
-                      icon: Icons.menu,
-                      tooltip: 'Open menu',
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppPadding.page, AppPadding.md, AppPadding.page, 0),
+              child: Row(
+                children: [
+                  if (own)
+                    Builder(
+                      builder: (context) => CircleSurfaceButton(
+                        icon: Icons.menu,
+                        tooltip: 'Open menu',
+                        size: 44,
+                        onPressed: () => Scaffold.of(context).openDrawer(),
+                      ),
+                    )
+                  else
+                    CircleSurfaceButton(
+                      icon: Icons.arrow_back,
+                      tooltip: 'Back',
                       size: 44,
-                      onPressed: () => Scaffold.of(context).openDrawer(),
+                      onPressed: () => Navigator.of(context).maybePop(),
                     ),
-                  )
-                else
-                  CircleSurfaceButton(
-                    icon: Icons.arrow_back,
-                    tooltip: 'Back',
-                    size: 44,
-                    onPressed: () => Navigator.of(context).maybePop(),
+                  const SizedBox(width: AppSpacing.s3),
+                  Expanded(
+                    child: Text(own ? 'Profile' : subject.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.titleLg),
                   ),
-                const SizedBox(width: AppSpacing.s3),
-                Expanded(
-                  child: Text(own ? 'Profile' : subject.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.titleLg),
-                ),
-                if (own)
-                  const CoinPill()
-                else
-                  OutlinedButton(
-                    onPressed: () {},
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, 44),
-                      shape: const StadiumBorder(),
-                      side: const BorderSide(color: AppColors.border),
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: AppPadding.md),
+                  if (own)
+                    const CoinPill()
+                  else
+                    OutlinedButton(
+                      onPressed: () {},
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 44),
+                        shape: const StadiumBorder(),
+                        side: const BorderSide(color: AppColors.border),
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: AppPadding.md),
+                      ),
+                      child: Text('Follow', style: AppTextStyles.label),
                     ),
-                    child: Text('Follow', style: AppTextStyles.label),
-                  ),
-                const SizedBox(width: AppSpacing.s3),
-                CircleSurfaceButton(
-                  icon: Icons.share_outlined,
-                  tooltip: own ? 'Share profile' : 'Share ${subject.name}',
-                  size: 44,
-                  onPressed: () {},
-                ),
-                // Only on your own profile: there is nothing of a stranger's
-                // to configure. This is also the only way into Settings, and
-                // therefore the only way to sign out.
-                if (own) ...[
                   const SizedBox(width: AppSpacing.s3),
                   CircleSurfaceButton(
-                    icon: Icons.settings_outlined,
-                    tooltip: 'Settings',
+                    icon: Icons.share_outlined,
+                    tooltip: own ? 'Share profile' : 'Share ${subject.name}',
                     size: 44,
-                    onPressed: () => Navigator.of(context).pushNamed('/settings'),
+                    onPressed: () {},
                   ),
+                  // Only on your own profile: there is nothing of a stranger's
+                  // to configure. This is also the only way into Settings, and
+                  // therefore the only way to sign out.
+                  if (own) ...[
+                    const SizedBox(width: AppSpacing.s3),
+                    CircleSurfaceButton(
+                      icon: Icons.settings_outlined,
+                      tooltip: 'Settings',
+                      size: 44,
+                      onPressed: () => Navigator.of(context).pushNamed('/settings'),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-
-            const SizedBox(height: AppSpacing.s6),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(AppPadding.page,
+                    AppSpacing.s6, AppPadding.page, AppSpacing.s10),
+                children: [
             // The avatar sits in a 2px gold ring, so it reads as a portrait
             // rather than as another round photo in a page full of them.
             Center(
@@ -259,6 +269,9 @@ class ProfileScreen extends StatelessWidget {
               ),
               itemBuilder: (context, index) =>
                   _PublishedCard(card: cards[index]),
+            ),
+                ],
+              ),
             ),
           ],
         ),

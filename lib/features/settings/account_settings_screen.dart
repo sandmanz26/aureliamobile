@@ -26,25 +26,36 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-              AppPadding.page, AppPadding.md, AppPadding.page, AppSpacing.s10),
+        // A Column, not a ListView: the header sits outside the scroller so it
+        // stays put. Back and the coin count are both things a long page must
+        // not carry out of reach — the web pins this same header for the same
+        // reason.
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                CircleSurfaceButton(
-                  icon: Icons.arrow_back,
-                  tooltip: 'Back',
-                  size: 44,
-                  onPressed: () => Navigator.of(context).maybePop(),
-                ),
-                const SizedBox(width: AppSpacing.s3),
-                Expanded(child: Text('Settings', style: AppTextStyles.titleLg)),
-                const CoinPill(),
-              ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppPadding.page, AppPadding.md, AppPadding.page, 0),
+              child: Row(
+                children: [
+                  CircleSurfaceButton(
+                    icon: Icons.arrow_back,
+                    tooltip: 'Back',
+                    size: 44,
+                    onPressed: () => Navigator.of(context).maybePop(),
+                  ),
+                  const SizedBox(width: AppSpacing.s3),
+                  Expanded(
+                      child: Text('Settings', style: AppTextStyles.titleLg)),
+                  const CoinPill(),
+                ],
+              ),
             ),
-
-            const SizedBox(height: AppSpacing.s8),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(AppPadding.page,
+                    AppSpacing.s8, AppPadding.page, AppSpacing.s10),
+                children: [
             InkWell(
               onTap: () => setState(() => _accountsOpen = !_accountsOpen),
               child: Padding(
@@ -167,6 +178,9 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                 Navigator.of(context)
                     .pushNamedAndRemoveUntil('/home', (route) => false);
               },
+            ),
+                ],
+              ),
             ),
           ],
         ),

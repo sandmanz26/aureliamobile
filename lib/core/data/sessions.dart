@@ -1276,7 +1276,109 @@ const kSessions = <SessionRecord>[
     ],
     shelves: [Shelf.community],
   ),
+
+  // Two drafts, so all three cockpit states exist in the mock data: a session
+  // you have not started, one you made and have not published, and one that is
+  // out. They sit on no shelf and in no category listing — a draft is yours,
+  // and "Created by you" on the Sessions screen is the only place it shows.
+  //
+  // Their figures are zero because nothing has happened to them yet. The row's
+  // figure pill is absent for exactly that reason rather than by styling.
+  SessionRecord(
+    slug: 'evening-unwind-v3',
+    seconds: 40,
+    title: 'Evening Unwind v3',
+    photo: 'glow',
+    gradient: [AppPrimitives.warning300, AppPrimitives.neutral900],
+    description: 'A third pass at the hour after work — slower, and with the guidance pulled right back.',
+    summary: 'Built from the Dolphins frequency mix with the tempo dropped again and the voice reduced to three cues. Not out yet: the last five minutes still resolve too brightly for something meant to be listened to in the dark.',
+    author: 'Adam Nilson',
+    authorPhoto: 'avatar',
+    authorRole: 'Community creator · 34 published sessions',
+    plays: '0',
+    recreated: '0',
+    minutes: 18,
+    category: 'Calm',
+    intent: 'Finish the working day without falling asleep in a chair.',
+    outcome: [],
+    layers: [
+      SoundLayer(id: 'pads', name: 'Warm pads', detail: 'Two octaves below the original', level: 64),
+      SoundLayer(id: 'tide', name: 'Tide bed', detail: 'Breathes at 5 cycles / minute', level: 51),
+      SoundLayer(id: 'voice', name: 'Guidance', detail: 'Female, three cues only', level: 28),
+    ],
+    chapters: [
+      Chapter(label: 'Arrival', minutes: 4, detail: 'Pads only, nothing asked.'),
+      Chapter(label: 'Settle', minutes: 9, detail: 'Tide enters; the three cues land here.'),
+      Chapter(label: 'Close', minutes: 5, detail: 'Still resolving too brightly — the reason this is a draft.'),
+    ],
+    personalization: [
+      LabelValue('Adapts to', 'Resting heart rate'),
+      LabelValue('Voice', 'Female · unhurried'),
+      LabelValue('Ends', 'Fade to silence, no chime'),
+      LabelValue('Best time', 'Early evening'),
+    ],
+    commonChanges: [],
+    lineage: [
+      LineageStep(title: 'Ocean floor', author: 'Aurelia', note: 'Starter template'),
+      LineageStep(title: 'Deep blue, slower', author: 'Marcus Lee', note: 'Halved the tempo'),
+      LineageStep(title: 'Evening Unwind v3', author: 'Adam Nilson', note: 'Dropped the tempo again and cut the guidance to three cues'),
+    ],
+    safety: [
+      'Not a treatment for any medical condition, and not a substitute for care.',
+      'Do not listen while driving — the descent is designed to lower alertness.',
+    ],
+    shelves: [],
+    published: false,
+  ),
+  SessionRecord(
+    slug: 'monday-reset',
+    seconds: 5,
+    title: 'Monday Reset',
+    photo: 'morning',
+    gradient: [AppPrimitives.primary200, AppPrimitives.info200],
+    description: 'Ten minutes to start the week on, written from scratch rather than forked.',
+    summary: 'A short climb with no guidance at all — breath pacing carried entirely by the bed. Held back because it has only been tested on one Monday.',
+    author: 'Adam Nilson',
+    authorPhoto: 'avatar',
+    authorRole: 'Community creator · 34 published sessions',
+    plays: '0',
+    recreated: '0',
+    minutes: 10,
+    category: 'Energy',
+    intent: 'Get moving without the jolt of a stimulant track.',
+    outcome: [],
+    layers: [
+      SoundLayer(id: 'bed', name: 'Rising bed', detail: 'Climbs a fifth across the session', level: 70),
+      SoundLayer(id: 'air', name: 'Air', detail: 'Breath pacing, no words', level: 42),
+    ],
+    chapters: [
+      Chapter(label: 'Open', minutes: 3, detail: 'Bed alone, low.'),
+      Chapter(label: 'Climb', minutes: 7, detail: 'The fifth arrives across the last four minutes.'),
+    ],
+    personalization: [
+      LabelValue('Adapts to', 'Sleep score'),
+      LabelValue('Voice', 'None'),
+      LabelValue('Ends', 'Stops on the beat'),
+      LabelValue('Best time', 'Morning'),
+    ],
+    commonChanges: [],
+    lineage: [
+      LineageStep(title: 'Bright open', author: 'Aurelia', note: 'Starter template'),
+      LineageStep(title: 'Monday Reset', author: 'Adam Nilson', note: 'Wrote the climb and dropped the guidance'),
+    ],
+    safety: ['Not a treatment for any medical condition.'],
+    shelves: [],
+    published: false,
+  ),
 ];
+
+/// The catalogue as everyone else sees it.
+///
+/// Every public surface goes through this: shelves, categories, the creator
+/// index. A draft is yours and only shows where it is yours — the Sessions
+/// screen under "Created by you".
+final kPublishedSessions =
+    kSessions.where((session) => session.published).toList(growable: false);
 
 SessionRecord? findSession(String? slug) {
   for (final session in kSessions) {
@@ -1285,7 +1387,7 @@ SessionRecord? findSession(String? slug) {
   return null;
 }
 
-List<SessionRecord> sessionsOnShelf(Shelf shelf, [String category = kAllCategories]) => kSessions
+List<SessionRecord> sessionsOnShelf(Shelf shelf, [String category = kAllCategories]) => kPublishedSessions
     .where((session) =>
         session.shelves.contains(shelf) &&
         (category == kAllCategories || session.category == category))
@@ -1293,5 +1395,5 @@ List<SessionRecord> sessionsOnShelf(Shelf shelf, [String category = kAllCategori
 
 /// The same filter over the whole catalogue, for surfaces that are not a shelf.
 List<SessionRecord> sessionsInCategory([String category = kAllCategories]) => category == kAllCategories
-    ? kSessions
-    : kSessions.where((session) => session.category == category).toList();
+    ? kPublishedSessions
+    : kPublishedSessions.where((session) => session.category == category).toList();

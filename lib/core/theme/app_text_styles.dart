@@ -7,8 +7,6 @@
 /// system UI face and agreed with each other about the wrong thing. Naming it
 /// in one place here is what keeps that from coming back.
 ///
-/// One style leaves it — [playerCue], the line the player speaks, which the
-/// design sets in a serif.
 library;
 
 import 'package:flutter/material.dart';
@@ -128,14 +126,16 @@ class AppTextStyles {
         color: AppColors.textBrand,
       );
 
-  /// 21/28.5 — the player's spoken cue, and the only style in the system that
-  /// is not Mulish. The design sets it in a serif, which is what separates a
-  /// line the session says to you from the interface around it.
+  /// 21/28.5 — the player's spoken cue.
+  ///
+  /// It used to be the one style in the system that was not Mulish: the design
+  /// set it in a serif to separate a line the session says to you from the
+  /// interface around it. Every face is now Mulish, so the separation is
+  /// carried by Light at 21 instead — which is what the web does.
   static TextStyle get playerCue => _base(
         fontSize: 21,
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w300,
         lineHeight: 28.5 / 21,
         color: AppColors.textInverse,
-        family: 'Goudy Bookletter 1911',
       );
 }

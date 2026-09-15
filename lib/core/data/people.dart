@@ -39,12 +39,14 @@ String personSlug(String name) => name
 
 final kCurrentUserSlug = personSlug(kCurrentUser);
 
-/// Everyone who has published something, keyed by slug. Built from [kSessions]
-/// rather than kept as its own list — a creator with no sessions has no
-/// profile to show, and a second list would drift from the first.
+/// Everyone who has published something, keyed by slug. Built from
+/// [kPublishedSessions] rather than kept as its own list — a creator with no
+/// sessions has no profile to show, and a second list would drift from the
+/// first. Published, not the whole catalogue: a draft is not something you
+/// have published, so it must not swell your count or appear on your profile.
 final Map<String, Person> _people = () {
   final people = <String, Person>{};
-  for (final session in kSessions) {
+  for (final session in kPublishedSessions) {
     final slug = personSlug(session.author);
     final existing = people[slug];
     if (existing != null) {

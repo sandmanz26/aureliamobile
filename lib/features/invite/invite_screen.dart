@@ -44,8 +44,10 @@ class _InviteScreenState extends State<InviteScreen> {
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(current: '/invite'),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.only(bottom: AppSpacing.s10),
+        // A Column, not a ListView: the header sits outside the scroller so
+        // it stays put, as the web pins the same one.
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
               padding: const EdgeInsets.all(AppPadding.md),
@@ -64,7 +66,10 @@ class _InviteScreenState extends State<InviteScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: AppSpacing.s4),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.only(top: AppSpacing.s4, bottom: AppSpacing.s10),
+                children: [
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: AppPadding.page),
               child: _InviteConstellation(reward: _reward),
@@ -143,6 +148,9 @@ class _InviteScreenState extends State<InviteScreen> {
                           .copyWith(color: AppColors.feedbackSuccess),
                     ),
                   ),
+                ],
+              ),
+            ),
                 ],
               ),
             ),

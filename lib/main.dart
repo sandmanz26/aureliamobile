@@ -111,7 +111,13 @@ class _AureliaAppState extends State<AureliaApp> {
         case '/chat':
           final args = settings.arguments;
           if (args is ChatArgs) {
-            return ChatScreen(brief: args.brief, startVoice: args.startVoice, ask: args.ask);
+            return ChatScreen(
+              brief: args.brief,
+              startVoice: args.startVoice,
+              ask: args.ask,
+              slug: args.slug,
+              fresh: args.fresh,
+            );
           }
           return ChatScreen(brief: args is RecreateBrief ? args : null);
         case '/play':

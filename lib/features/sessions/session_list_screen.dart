@@ -8,6 +8,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/aurelia_logo.dart';
 import '../../core/widgets/photo_circle.dart';
+import '../chat/chat_session_controller.dart';
 import '../player/player_screen.dart';
 import '../shell/app_drawer.dart';
 
@@ -40,9 +41,12 @@ class _SessionListScreenState extends State<SessionListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // "All" is the catalogue as everyone else sees it; a draft belongs to you
+    // and shows only where it is yours. That is what makes the filter worth a
+    // tap rather than a narrowing of the same list.
     final shown = _mineOnly
         ? kSessions.where((s) => s.author == kCurrentUser).toList()
-        : kSessions;
+        : kPublishedSessions;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -252,7 +256,12 @@ class _SessionRow extends StatelessWidget {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () => Navigator.of(context).pushNamed('/chat'),
+                // The container opens this session's own thread, already
+                // made — not a blank cockpit. The disc above plays it.
+                onTap: () => Navigator.of(context).pushNamed(
+                  '/chat',
+                  arguments: ChatArgs(slug: session.slug),
+                ),
                 child: const SizedBox.expand(),
               ),
             ),

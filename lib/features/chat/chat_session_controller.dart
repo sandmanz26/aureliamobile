@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/data/recommendations.dart';
+import '../../core/data/sessions.dart';
 
 /// Delivery state, as a messaging app shows it: one tick sent, two ticks read.
 enum DeliveryStatus { sending, sent, read }
@@ -47,7 +48,13 @@ class RecreateBrief {
 
 /// What a route can hand the cockpit on arrival.
 class ChatArgs {
-  const ChatArgs({this.brief, this.startVoice = false, this.ask});
+  const ChatArgs({
+    this.brief,
+    this.startVoice = false,
+    this.ask,
+    this.slug,
+    this.fresh = false,
+  });
 
   final RecreateBrief? brief;
 
@@ -56,6 +63,14 @@ class ChatArgs {
 
   /// What the visitor typed on Home before they were sent here.
   final String? ask;
+
+  /// An existing session to open the thread on. Null is a new one.
+  final String? slug;
+
+  /// Clear the thread first — what "New session" means. Without it the
+  /// cockpit would reopen on whatever session you last had in it, because the
+  /// controller outlives the screen on purpose.
+  final bool fresh;
 }
 
 /// The cockpit thread, held above the navigator — the mobile mirror of the web
@@ -95,6 +110,9 @@ class ChatSessionController extends ChangeNotifier {
   bool _deckOpen = false;
   int _nextId = 1;
 
+  /// Which session the thread is about. Null is a new one.
+  String? _sessionSlug;
+
   /// Seeds already taken, so re-entering the cockpit does not say the same
   /// opening line twice.
   final _seeded = <String>{};
@@ -105,6 +123,7 @@ class ChatSessionController extends ChangeNotifier {
   SessionState get session => _session;
   bool get typing => _typing;
   bool get deckOpen => _deckOpen;
+  String? get sessionSlug => _sessionSlug;
 
   /// True while the set can still be changed and applied.
   bool get canApply =>
@@ -153,6 +172,86 @@ class ChatSessionController extends ChangeNotifier {
             'would recommend:',
       ),
     ]);
+  }
+
+  /// The opening exchange for a session that already exists, rather than the
+  /// one Aurelia says when there is nothing yet.
+  ///
+  /// Only Aurelia's lines carry the session; the rest of the exchange is the
+  /// demo's own texture and stays put.
+  List<ChatMessage> _messagesForSession(SessionRecord session) {
+    final start = DateTime.now().subtract(const Duration(minutes: 9));
+    final draft = !session.published;
+    final outcome = session.outcome.isEmpty ? null : session.outcome.first;
+
+    final opening = draft
+        ? 'Good morning, Adam.\n\n“${session.title}” is built — '
+            '${session.totalMinutes} minutes, ${session.layers.length} layers — '
+            'and still yours only. Nobody has played it, so there is nothing to '
+            'report back yet.'
+        : 'Good morning, Adam.\n\n“${session.title}” is built and running — '
+            '${session.totalMinutes} minutes, by ${session.author}'
+            '${outcome == null ? '.' : ', and people report ${outcome.label.toLowerCase()} ${outcome.value}.'}';
+
+    var id = 1;
+    return [
+      ChatMessage(id: id++, fromAurelia: true, at: start, text: opening),
+      ChatMessage(
+        id: id++,
+        fromAurelia: true,
+        at: start.add(const Duration(seconds: 4)),
+        text: draft
+            ? 'Anything you want to change before it goes out?'
+            : 'How did you find ${session.title}?',
+      ),
+      ChatMessage(
+        id: id++,
+        fromAurelia: false,
+        at: start.add(const Duration(seconds: 96)),
+        status: DeliveryStatus.read,
+        text: draft
+            ? 'The ending is still too bright. Everything before it is right.'
+            : 'It was good, but it was to short, I had to repeat it multiple times.',
+      ),
+      ChatMessage(
+        id: id++,
+        fromAurelia: true,
+        at: start.add(const Duration(seconds: 104)),
+        text: 'Based on the diagnosis and your feedback, this is what I’d '
+            'would recommend:',
+      ),
+    ];
+  }
+
+  /// Opens an existing session's conversation, already made.
+  ///
+  /// Opening the session you are already in is a no-op, and that is the whole
+  /// point: you go off to play it, or to its creator's profile, and coming
+  /// back returns the thread exactly as you left it rather than rebuilding it
+  /// under you. Same bargain as `load()` on the playback controller.
+  void openSession(SessionRecord session) {
+    if (_sessionSlug == session.slug) return;
+    for (final timer in _timers) {
+      timer.cancel();
+    }
+    _timers.clear();
+    _sessionSlug = session.slug;
+    final opening = _messagesForSession(session);
+    messages
+      ..clear()
+      ..addAll(opening);
+    applied
+      ..clear()
+      ..addAll(kRecommendations.map((r) => r.id));
+    _session = SessionState.idle;
+    _typing = false;
+    // Laid open, not folded. A folded deck is Aurelia handing over a proposal;
+    // this session exists, so its changes are what you came to look at.
+    _deckOpen = true;
+    _seeded.clear();
+    _nextId = opening.length + 1;
+    progress.value = 0;
+    notifyListeners();
   }
 
   /// What was typed on Home arrives as the first thing said here, so the
@@ -279,6 +378,7 @@ class ChatSessionController extends ChangeNotifier {
     _session = SessionState.idle;
     _typing = false;
     _deckOpen = false;
+    _sessionSlug = null;
     _seeded.clear();
     _nextId = 1;
     progress.value = 0;
