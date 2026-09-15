@@ -17,6 +17,10 @@ import { findSession } from '../lib/sessions'
 /** Where the pulled-up sheet rests: clear of the status bar, as the frame has it. */
 const SHEET_TOP = 54
 
+/** How much of the sheet shows before it is pulled. The frame is 402x874 with
+ *  a 705 hero, so this is its own number. */
+const SHEET_PEEK = 169
+
 const CUES = [
   'Now take a deep breath in',
   'Hold it — and let the shoulders drop',
@@ -37,12 +41,17 @@ function clock(seconds: number) {
  * floating on top, and a white sheet (radius 24 on its top corners only) that
  * carries everything you would read rather than hear.
  *
- * Hero geometry is the frame's, expressed as flow rather than the frame's
- * absolute offsets so it survives a viewport that is not 402x874: the header
- * is its own band, the pause button centres in what is left above the caption
- * (which lands it at y=321 in a 402x874 frame, the frame's own number), and
- * the caption and scrubber sit on the floor with the frame's 40px between them
- * and 85px beneath.
+ * **The art bleeds to the window, the content does not.** They were one box
+ * for a while, capped at the frame's 402, which left a white strip down either
+ * side of the photograph on any phone wider than that — and every current
+ * phone is.
+ *
+ * **The sheet is dragged, not scrolled.** It used to ride the document scroll,
+ * which meant the art scrolled away with it and a flick past the bottom of the
+ * page left the player half off-screen. It is now a panel pinned to the
+ * viewport with two rests — peeking, and pulled up to just under the status
+ * bar — that you drag by the grabber and that scrolls its own content once it
+ * is up.
  */
 export function PlayerPage() {
   const { slug } = useParams()
@@ -57,21 +66,38 @@ export function PlayerPage() {
   // walking back to the cockpit leaves the session running.
   const { playing, elapsed, duration, load, toggle } = useAudioPlayer()
   const [expanded, setExpanded] = useState(false)
-  // The sheet has two resting places, as the frame does: sitting under the
-  // transport, and pulled up to just below the status bar. It rides the
-  // document scroll rather than becoming a fixed panel, so the snap works at
-  // any window height and free scrolling still does what it did.
-  const [sheetUp, setSheetUp] = useState(false)
-  const sheet = useRef<HTMLElement>(null)
-  const drag = useRef<{ y: number; scroll: number } | null>(null)
 
-  const snap = useCallback((up: boolean) => {
-    const element = sheet.current
-    if (!element) return
-    setSheetUp(up)
-    const top = element.getBoundingClientRect().top + window.scrollY
-    window.scrollTo({ top: up ? Math.max(0, top - SHEET_TOP) : 0, behavior: 'smooth' })
+  // How far the sheet is pushed down from its pulled-up rest. 0 is up; the
+  // collapsed rest is whatever leaves SHEET_PEEK showing, which depends on the
+  // window rather than on the frame's 874.
+  const [collapsedY, setCollapsedY] = useState(0)
+  const [offset, setOffset] = useState<number | null>(null)
+  const [dragging, setDragging] = useState(false)
+  const drag = useRef<{ pointer: number; offset: number } | null>(null)
+  const scroller = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const measure = () => {
+      const rest = Math.max(0, window.innerHeight - SHEET_TOP - SHEET_PEEK)
+      setCollapsedY(rest)
+      // Until the first measurement the sheet has no rest to sit at, so it
+      // starts collapsed rather than flashing open.
+      setOffset((current) => (current === null ? rest : Math.min(current, rest)))
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
   }, [])
+
+  const up = offset !== null && offset < collapsedY / 2
+
+  const snap = useCallback(
+    (next: boolean) => {
+      setOffset(next ? 0 : collapsedY)
+      if (!next) scroller.current?.scrollTo({ top: 0 })
+    },
+    [collapsedY],
+  )
 
   // Put this session on the deck. load() no-ops when it is already there, so
   // arriving back from the cockpit does not restart what is playing.
@@ -103,139 +129,161 @@ export function PlayerPage() {
   const overflow = tags.length - SHOWN_TAGS
 
   return (
-    <div className="min-h-dvh bg-surface-default">
-      <div className="relative mx-auto w-full max-w-[402px] lg:max-w-[560px]">
-        {/* The cover runs the full 874 of the frame, not just the 705 of the
-            hero. The sheet's rounded top corners are only legible because the
-            art carries on behind them — over a white page they cut white out
-            of white and the radius reads as square. */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[874px] overflow-hidden">
-          <CoverImage
-            photo={session.photo}
-            gradient={session.gradient}
-            width={804}
-            height={1750}
-            scrim={false}
-            className="absolute inset-0"
-          />
+    // h-dvh and clipped: the art is the screen and nothing behind it scrolls.
+    // The sheet does its own moving on top.
+    <div className="relative h-dvh overflow-hidden bg-black">
+      {/* Full-bleed to the window, not to the frame's 402. Capped, it left a
+          white strip down either side of the photograph on every phone wider
+          than that. */}
+      <div className="pointer-events-none absolute inset-0">
+        <CoverImage
+          photo={session.photo}
+          gradient={session.gradient}
+          width={1024}
+          height={2048}
+          scrim={false}
+          className="absolute inset-0"
+        />
+      </div>
+
+      {/* ------------------------------------------------------------ hero */}
+      <section
+        className="relative mx-auto flex h-full w-full max-w-[402px] flex-col text-text-inverse lg:max-w-[560px]"
+        style={{ paddingBottom: SHEET_PEEK }}
+      >
+        {/* The frame carries the iOS status bar over the art, not on a band
+            above it. Same lg:hidden rule AppLayout uses, so a desktop window
+            does not show a phone's clock. */}
+        <div className="relative lg:hidden">
+          <MobileStatusBar />
         </div>
 
-
-        {/* ------------------------------------------------------------ hero */}
-        <section className="relative flex h-[705px] flex-col text-text-inverse">
-
-          {/* The frame carries the iOS status bar over the art, not on a band
-              above it. Same lg:hidden rule AppLayout uses, so a desktop window
-              does not show a phone's clock. */}
-          <div className="relative lg:hidden">
-            <MobileStatusBar />
-          </div>
-
-          <header className="relative flex items-center gap-16 px-20 py-12">
-            <button
-              type="button"
-              aria-label="Back"
-              onClick={() => navigate(-1)}
-              className="u-press flex size-44 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-strong"
-            >
-              <ArrowLeft size={20} />
-            </button>
-            <span className="flex-1" />
-            {/* Same coin as the cockpit header wears — one mark for the
-                currency, not a lookalike per screen. */}
-            <CoinPill points="1,323" />
-            <button
-              type="button"
-              aria-label="Share"
-              className="u-press flex size-44 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-strong"
-            >
-              <Share2 size={18} />
-            </button>
-          </header>
-
-          {/* Centres at y=321 in the frame's 402x874 — the frame's own position
-              for the 96px disc, arrived at by flow rather than a magic number. */}
-          <div className="relative flex flex-1 items-center justify-center">
-            <button
-              type="button"
-              onClick={toggle}
-              aria-label={playing ? 'Pause' : 'Play'}
-              className="u-press flex size-96 items-center justify-center rounded-full bg-white/20 backdrop-blur-[16px]"
-            >
-              {playing ? (
-                <Pause size={48} fill="currentColor" strokeWidth={0} />
-              ) : (
-                <Play size={48} fill="currentColor" strokeWidth={0} className="ml-4" />
-              )}
-            </button>
-          </div>
-
-          <div className="relative px-20 pb-[85px]">
-            <p className="text-player-cue text-center">{cue}</p>
-
-            <div className="mt-40">
-              {/* The knob rides the fill, so the bar needs room for its overhang
-                  at both ends: 14 either side, which is its own radius. */}
-              <div className="relative mx-14 h-7">
-                <span className="absolute inset-0 rounded-full bg-black/40" />
-                <span
-                  className="absolute inset-y-0 left-0 rounded-full"
-                  style={{
-                    width: `${progress * 100}%`,
-                    background: 'linear-gradient(90deg, #ae4b46, #ffc500)',
-                  }}
-                />
-                <span
-                  className="absolute top-1/2 size-28 -translate-x-1/2 -translate-y-1/2 rounded-full bg-surface-default"
-                  style={{ left: `${progress * 100}%` }}
-                />
-              </div>
-              {/* The frame puts the times 4px under the track, which works there
-                  because its knob sits mid-bar. At 0% and at the end the knob
-                  is over a label, so they clear its 14px radius instead. */}
-              <div className="mt-12 flex items-center justify-between text-[8px] tabular-nums">
-                <span>{clock(elapsed)}</span>
-                <span>{clock(duration)}</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ----------------------------------------------------------- sheet */}
-        <section
-          ref={sheet}
-          className="relative rounded-t-24 bg-surface-default px-20 pb-40 pt-16"
-        >
-          {/* The grabber is the control, not an ornament: it drags, and a tap
-              snaps. Free scrolling still works either way. */}
+        <header className="relative flex items-center gap-16 px-20 py-12">
           <button
             type="button"
-            aria-label={sheetUp ? 'Collapse details' : 'Expand details'}
-            aria-expanded={sheetUp}
-            onClick={() => snap(!sheetUp)}
-            onPointerDown={(event) => {
-              drag.current = { y: event.clientY, scroll: window.scrollY }
-              event.currentTarget.setPointerCapture(event.pointerId)
-            }}
-            onPointerMove={(event) => {
-              if (!drag.current) return
-              window.scrollTo({ top: Math.max(0, drag.current.scroll + (drag.current.y - event.clientY)) })
-            }}
-            onPointerUp={(event) => {
-              const start = drag.current
-              drag.current = null
-              if (!start) return
-              const moved = start.y - event.clientY
-              // A real drag decides by direction; anything smaller is a tap and
-              // falls through to onClick.
-              if (Math.abs(moved) > 12) snap(moved > 0)
-            }}
-            className="-mx-20 flex w-[calc(100%+40px)] cursor-grab touch-none justify-center py-4 active:cursor-grabbing"
+            aria-label="Back"
+            onClick={() => navigate(-1)}
+            className="u-press flex size-44 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-strong"
           >
-            <span className="block h-5 w-36 rounded-full bg-[#7f7f7f]/40" />
+            <ArrowLeft size={20} />
           </button>
+          <span className="flex-1" />
+          {/* Same coin as the cockpit header wears — one mark for the
+              currency, not a lookalike per screen. */}
+          <CoinPill points="1,323" />
+          <button
+            type="button"
+            aria-label="Share"
+            className="u-press flex size-44 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-strong"
+          >
+            <Share2 size={18} />
+          </button>
+        </header>
 
-          <div className="mt-16 flex items-center gap-12">
+        {/* Centres in what is left above the caption — the frame's own y=321
+            for the 96px disc in a 402x874, arrived at by flow. */}
+        <div className="relative flex flex-1 items-center justify-center">
+          <button
+            type="button"
+            onClick={toggle}
+            aria-label={playing ? 'Pause' : 'Play'}
+            className="u-press flex size-96 items-center justify-center rounded-full bg-white/20 backdrop-blur-[16px]"
+          >
+            {playing ? (
+              <Pause size={48} fill="currentColor" strokeWidth={0} />
+            ) : (
+              <Play size={48} fill="currentColor" strokeWidth={0} className="ml-4" />
+            )}
+          </button>
+        </div>
+
+        <div className="relative px-20 pb-24">
+          <p className="text-player-cue text-center">{cue}</p>
+
+          <div className="mt-40">
+            {/* The knob rides the fill, so the bar needs room for its overhang
+                at both ends: 14 either side, which is its own radius. */}
+            <div className="relative mx-14 h-7">
+              <span className="absolute inset-0 rounded-full bg-black/40" />
+              <span
+                className="absolute inset-y-0 left-0 rounded-full"
+                style={{
+                  width: `${progress * 100}%`,
+                  background: 'linear-gradient(90deg, #ae4b46, #ffc500)',
+                }}
+              />
+              <span
+                className="absolute top-1/2 size-28 -translate-x-1/2 -translate-y-1/2 rounded-full bg-surface-default"
+                style={{ left: `${progress * 100}%` }}
+              />
+            </div>
+            {/* The frame puts the times 4px under the track, which works there
+                because its knob sits mid-bar. At 0% and at the end the knob is
+                over a label, so they clear its 14px radius instead. */}
+            <div className="mt-12 flex items-center justify-between text-[8px] tabular-nums">
+              <span>{clock(elapsed)}</span>
+              <span>{clock(duration)}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ----------------------------------------------------------- sheet */}
+      <aside
+        aria-label="Session details"
+        /* Full width on a phone, capped only once there is a window to centre
+           it in. Capped at the frame's 402 it left a sliver of cover art down
+           either side of a white panel, which reads as a mistake rather than
+           as the art showing through. */
+        className="fixed inset-x-0 z-20 mx-auto flex w-full flex-col overflow-hidden rounded-t-24 bg-surface-default lg:max-w-[560px]"
+        style={{
+          top: SHEET_TOP,
+          height: `calc(100dvh - ${SHEET_TOP}px)`,
+          transform: `translateY(${offset ?? 9999}px)`,
+          // No easing mid-drag, or the sheet lags the finger by a frame.
+          transition: dragging ? 'none' : 'transform 260ms cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
+      >
+        {/* The grabber is the control, not an ornament: it drags, and a tap
+            snaps to the other rest. */}
+        <button
+          type="button"
+          aria-label={up ? 'Collapse details' : 'Expand details'}
+          aria-expanded={up}
+          onPointerDown={(event) => {
+            drag.current = { pointer: event.clientY, offset: offset ?? collapsedY }
+            setDragging(true)
+            event.currentTarget.setPointerCapture(event.pointerId)
+          }}
+          onPointerMove={(event) => {
+            const start = drag.current
+            if (!start) return
+            const next = start.offset + (event.clientY - start.pointer)
+            setOffset(Math.min(collapsedY, Math.max(0, next)))
+          }}
+          onPointerUp={(event) => {
+            const start = drag.current
+            drag.current = null
+            setDragging(false)
+            if (!start) return
+            const moved = start.pointer - event.clientY
+            // A real drag decides by direction; anything smaller is a tap and
+            // toggles.
+            if (Math.abs(moved) > 12) snap(moved > 0)
+            else snap(!up)
+          }}
+          className="flex shrink-0 cursor-grab touch-none justify-center py-8 active:cursor-grabbing"
+        >
+          <span className="block h-5 w-36 rounded-full bg-[#7f7f7f]/40" />
+        </button>
+
+        {/* Scrolls only once the sheet is up. Collapsed, a flick should move
+            the sheet rather than its contents. */}
+        <div
+          ref={scroller}
+          className={`min-h-0 flex-1 px-20 pb-40 ${up ? 'overflow-y-auto' : 'overflow-hidden'}`}
+        >
+          <div className="flex items-center gap-12">
             <Link
               to={profilePath(session.author, origin)}
               aria-label={`Open ${session.author}'s profile`}
@@ -351,8 +399,8 @@ export function PlayerPage() {
               </div>
             </div>
           </section>
-        </section>
-      </div>
+        </div>
+      </aside>
     </div>
   )
 }

@@ -49,7 +49,7 @@ export function AccountSettingsPage() {
 
   return (
     <div className="mx-auto max-w-[720px] px-20 py-16 lg:px-24 lg:py-24">
-      <header className="flex items-center justify-between gap-12">
+      <header className="u-sticky-top flex items-center justify-between gap-12">
         <div className="flex min-w-0 items-center gap-12">
           <button
             type="button"

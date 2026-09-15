@@ -99,7 +99,7 @@ export function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-[720px] px-20 py-16 lg:px-24 lg:py-24">
-      <header className="flex items-center justify-between">
+      <header className="u-sticky-top flex items-center justify-between">
         <div className="flex min-w-0 items-center gap-12">
           {own ? (
             <button

@@ -139,7 +139,7 @@ export function SessionSettingsPage() {
 
   return (
     <div className="min-h-[calc(100vh-54px)] bg-background-default pb-48 lg:min-h-screen">
-      <header className="flex items-center gap-12 px-20 py-16 lg:px-24">
+      <header className="u-sticky-top flex items-center gap-12 px-20 py-16 lg:px-24">
         <button
           type="button"
           aria-label="Back"

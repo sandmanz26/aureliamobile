@@ -10,11 +10,12 @@ interface RecommendationDeckProps {
 
 /**
  * Figma: 156 x 150. The width is not a pixel-fit — do not tighten it to the
- * exact width of the longest line. --font-sans resolves to SF Pro on the
- * designer's machine and to whatever generic sans a headless Linux Chromium
- * has, and those differ by ~5%: at 144 the description measured 116 into 120
- * here and ellipsised on a Mac. 156 leaves the text column 132px, which is
- * slack in either font.
+ * exact width of the longest line. The app is on Mulish now, but Mulish is a
+ * webfont: before it arrives, and on any machine where the request fails, the
+ * text is measured in whatever the fallback stack lands on, and those differ
+ * by around 5%. At 144 the description measured 116 into 120 on one machine
+ * and ellipsised on another. 156 leaves the text column 132px, which is slack
+ * in either.
  */
 const CARD_W = 156
 const CARD_H = 150

@@ -27,7 +27,18 @@ function SpiralMark({ size = 64 }: { size?: number }) {
   )
 }
 
-/** The switch on every source row. */
+/** The card shadow every surface in this design shares (Figma effect 16520:822). */
+const CARD_SHADOW = 'shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)]'
+
+/**
+ * The switch on every source row — Figma ".switch" (16523:14071).
+ *
+ * 40x22 with 2 of padding all round, which leaves an 18px knob. The on state
+ * is the ink token rather than black: `bg-icon-strong` is #000 and read as a
+ * harder, colder switch than the frame's #3C2405. Off is #E5E5E5, a step
+ * darker than `background-elevated`, so a disconnected source still reads as a
+ * control rather than as empty space.
+ */
 function Switch({ on, onChange, label }: { on: boolean; onChange: (next: boolean) => void; label: string }) {
   return (
     <button
@@ -36,13 +47,13 @@ function Switch({ on, onChange, label }: { on: boolean; onChange: (next: boolean
       aria-checked={on}
       aria-label={label}
       onClick={() => onChange(!on)}
-      className={`u-press relative h-24 w-40 shrink-0 rounded-full transition-colors ${
-        on ? 'bg-icon-strong' : 'bg-background-elevated'
+      className={`u-press relative h-22 w-40 shrink-0 rounded-full transition-colors ${
+        on ? 'bg-text-primary' : 'bg-[#e5e5e5]'
       }`}
     >
       <span
-        className={`absolute top-2 size-20 rounded-full bg-surface-default shadow-sm transition-all ${
-          on ? 'left-18' : 'left-2'
+        className={`absolute top-2 size-18 rounded-full bg-surface-default transition-all ${
+          on ? 'left-20' : 'left-2'
         }`}
       />
     </button>
@@ -86,7 +97,7 @@ export function WellnessPage() {
 
   return (
     <div className="bg-background-default pb-48">
-      <div className="flex items-center justify-between gap-12 px-20 py-16 lg:px-24">
+      <header className="u-sticky-top flex items-center justify-between gap-12 px-20 py-16 lg:px-24">
         <div className="flex min-w-0 items-center gap-8">
           <button
             type="button"
@@ -107,7 +118,7 @@ export function WellnessPage() {
           </span>
           <span className="text-style-label">1,323</span>
         </div>
-      </div>
+      </header>
 
       <div className="mx-auto w-full max-w-[402px] px-20 lg:max-w-[720px] lg:px-24">
         {/* Summary. Everything here is derived from the switches below. */}
@@ -135,19 +146,25 @@ export function WellnessPage() {
 
         {SIGNAL_GROUPS.map((group) => (
           <section key={group} className="mt-24">
-            <h2 className="text-style-body-small px-4 text-text-secondary">{group}</h2>
-            <div className="mt-8 flex flex-col gap-10">
+            {/* 14/14 Light in #9A9A9A — a quieter grey than the secondary ink
+                token, and no side inset: the frame lines the label up with the
+                cards under it. */}
+            <h2 className="text-[14px] font-light! leading-[14px] text-[#9a9a9a]">{group}</h2>
+            <div className="mt-12 flex flex-col gap-12">
               {sourcesInGroup(group).map((source) => {
                 const Icon = source.icon
                 const on = connections[source.id]
                 return (
                   <div
                     key={source.id}
-                    className="flex items-center gap-12 rounded-24 bg-surface-default p-13 shadow-sm"
+                    /* 362x56 in the frame: radius 20, 16 either side, 12 top
+                       and bottom. The height is held so a long source name
+                       cannot grow the row past its neighbours. */
+                    className={`flex h-56 items-center gap-12 overflow-hidden rounded-[20px] bg-surface-default px-16 ${CARD_SHADOW}`}
                   >
                     <span
                       className="flex size-32 shrink-0 items-center justify-center rounded-full text-icon-strong"
-                      style={{ background: '#FDF0E2' }}
+                      style={{ background: '#FFF1DB' }}
                     >
                       <Icon size={16} />
                     </span>
@@ -169,7 +186,7 @@ export function WellnessPage() {
         <button
           type="button"
           onClick={() => setRequestOpen(true)}
-          className="u-press mt-24 flex w-full items-center gap-12 rounded-24 bg-surface-default p-13 text-left shadow-sm"
+          className={`u-press mt-24 flex w-full items-center gap-12 rounded-[20px] bg-surface-default px-16 py-18 text-left ${CARD_SHADOW}`}
         >
           <span
             aria-hidden="true"

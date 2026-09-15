@@ -37,17 +37,20 @@ body {
 }
 
 /* --------------------------------------------------------------- player ---
-   The line the session is speaking, over the cover art. The one place the app
-   uses a serif: Goudy Bookletter 1911 in the frame, which is a Google face and
-   the only webfont here — everything else rides the system stack. The fallback
-   is a real old-style serif rather than a generic, because the cue is set large
-   and centred and a grotesque in its place reads as a different screen. */
+   The line the session is speaking, over the cover art.
+
+   It was the one place the app used a serif — Goudy Bookletter 1911, which is
+   what the frame sets. It is Mulish now, because the app runs on one face by
+   decision and a single screen's exception is not worth a second webfont. The
+   size and leading are still the frame's; only the family moved.
+
+   Light rather than regular: at 21px over a photograph, Mulish at 400 reads as
+   interface copy where the serif read as something being said. */
 .text-player-cue {
-  font-family: 'Goudy Bookletter 1911', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia,
-    serif;
+  font-family: var(--font-sans);
   font-size: 21px;
   line-height: 28.5px;
-  font-weight: 400;
+  font-weight: 300;
 }
 
 /* ---------------------------------------------------------------- touch ---
@@ -103,4 +106,34 @@ body {
   border-radius: 999px;
   background: var(--color-brand-emphasis);
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+}
+
+/* ---------------------------------------------------------- sticky top ---
+   The frame pins the whole 122px top band: the status bar at 54 and the
+   page's own header at 68 under it. `layoutPositioning: ABSOLUTE` on the
+   Top Header, with the body carrying a matching 122 of padding, in every
+   consumer frame.
+
+   AppLayout already sticks the status bar; this is the half that belongs to
+   the page, which is why it is a class the page applies rather than a
+   wrapper the layout imposes — the headers differ too much per screen to
+   share a component without flattening them.
+
+   Translucent with a blur, for the same reason the status band is: pages top
+   out on different backgrounds (Home and Explore each open on their own
+   gradient) and one fixed colour would band against most of them. */
+.u-sticky-top {
+  position: sticky;
+  top: 54px;
+  z-index: 30;
+  background: color-mix(in oklab, var(--color-background-default) 80%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+/* The simulated status bar is phone-only, so on a desktop window the page
+   header is the first thing that sticks. */
+@media (min-width: 1024px) {
+  .u-sticky-top {
+    top: 0;
+  }
 }
