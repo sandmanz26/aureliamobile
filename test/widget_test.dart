@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:aurelia_mobile/core/data/sessions.dart' show Shelf, sessionsOnShelf;
 import 'package:aurelia_mobile/core/widgets/aurelia_logo.dart';
 import 'package:aurelia_mobile/core/widgets/community_network.dart';
+import 'package:aurelia_mobile/core/widgets/photo_circle.dart';
 import 'package:aurelia_mobile/core/widgets/section_header.dart';
 import 'package:aurelia_mobile/core/widgets/session_grid_card.dart';
 import 'package:aurelia_mobile/features/chat/widgets/mini_player.dart';
@@ -544,6 +545,44 @@ void main() {
   });
 
   group('Sessions and Explore are two screens', () {
+    testWidgets('a session row carries its markers and two tap targets',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/sessions');
+      await tester.pumpAndSettle();
+
+      // The frame's duration format, m:ss rather than "22 min".
+      expect(find.text('22:22'), findsOneWidget);
+      // Published is stated; a draft would say nothing at all.
+      expect(find.text('Published'), findsWidgets);
+      // Dolphins frequency passed through Marcus Lee before Adam, which is
+      // what recreated means — the other rows came straight off a template.
+      expect(find.byTooltip('Recreated from Marcus Lee'), findsOneWidget);
+
+      // The disc sits exactly on its artwork. It is asserted rather than
+      // eyeballed because it silently did not: the row's Stack sized itself to
+      // the 35px Row inside it, so the Positioned disc landed 16.5px low.
+      expect(tester.getRect(find.byTooltip('Play Dolphins frequency')),
+          tester.getRect(find.byType(PhotoCircle).first));
+
+      // The play disc opens the player...
+      await tester.tap(find.byTooltip('Play Dolphins frequency'));
+      await tester.pumpAndSettle();
+      expect(find.byType(PlayerScreen), findsOneWidget);
+      navigator.pop();
+      await tester.pumpAndSettle();
+
+      // ...and the rest of the row opens that session's conversation, which is
+      // where the frame's own prototype goes.
+      await tester.tap(find.text('Dolphins frequency'));
+      await tester.pumpAndSettle();
+      expect(find.text('Aurelia'), findsWidgets);
+      expect(find.byType(RecommendationDeck), findsOneWidget);
+    });
+
     testWidgets('Sessions lists what is published and narrows to your own',
         (tester) async {
       await _boot(tester);

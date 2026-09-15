@@ -110,6 +110,8 @@ class SessionRecord {
     required this.lineage,
     required this.safety,
     required this.shelves,
+    this.published = true,
+    this.seconds = 0,
   });
 
   final String slug;
@@ -143,13 +145,38 @@ class SessionRecord {
   final List<String> safety;
   final List<Shelf> shelves;
 
+  /// Whether this session is out in the world. Everything in the catalogue is,
+  /// which is why it defaults to true — a draft is a session you built in the
+  /// cockpit and have not pressed Publish on, and it only shows up under
+  /// "Created by you".
+  final bool published;
+
+  /// The seconds part of the run time. Mock, like the minutes beside it: the
+  /// design shows durations as m:ss and there is no measurement behind either
+  /// number.
+  final int seconds;
+
   int get totalMinutes =>
       chapters.fold(0, (sum, chapter) => sum + chapter.minutes);
+
+  /// The frame's duration format — 12:22, not "12 min".
+  String get durationLabel =>
+      '$totalMinutes:${seconds.toString().padLeft(2, '0')}';
+
+  /// Whether this session is somebody else's work, forked and changed.
+  ///
+  /// Every session opens on an Aurelia starter template, so a two-step lineage
+  /// is an original: template, then this author. A third step means a person
+  /// stood between them — which is exactly what recreating is, clone and
+  /// modify, and the only honest way to tell the two apart from the data we
+  /// hold.
+  bool get isRecreated => lineage.length > 2;
 }
 
 const kSessions = <SessionRecord>[
   SessionRecord(
     slug: 'dolphins-frequency',
+    seconds: 22,
     title: 'Dolphins frequency',
     photo: 'dolphins',
     gradient: [AppPrimitives.info800, AppPrimitives.info400],
@@ -206,6 +233,7 @@ const kSessions = <SessionRecord>[
   ),
   SessionRecord(
     slug: 'raise-your-vibration',
+    seconds: 35,
     title: 'Raise your Vibration',
     photo: 'vibration',
     gradient: [AppPrimitives.warning300, AppPrimitives.danger200],
@@ -257,6 +285,7 @@ const kSessions = <SessionRecord>[
   ),
   SessionRecord(
     slug: 'mind-dance',
+    seconds: 8,
     title: 'Mind Dance',
     photo: 'mindDance',
     gradient: [AppPrimitives.primary700, AppPrimitives.primary300],
@@ -308,6 +337,7 @@ const kSessions = <SessionRecord>[
   ),
   SessionRecord(
     slug: 'cosmic-flow',
+    seconds: 47,
     title: 'Cosmic Flow',
     photo: 'cosmic',
     gradient: [AppPrimitives.primary950, AppPrimitives.info700],
@@ -359,6 +389,7 @@ const kSessions = <SessionRecord>[
   ),
   SessionRecord(
     slug: '528-hz-reset',
+    seconds: 12,
     title: '528 Hz Reset',
     photo: 'water',
     gradient: [AppPrimitives.neutral600, AppPrimitives.warning200],
@@ -410,6 +441,7 @@ const kSessions = <SessionRecord>[
   ),
   SessionRecord(
     slug: 'deep-grounding',
+    seconds: 5,
     title: 'Deep Grounding',
     photo: 'forest',
     gradient: [AppPrimitives.success900, AppPrimitives.success500],
@@ -464,6 +496,7 @@ const kSessions = <SessionRecord>[
   ),
   SessionRecord(
     slug: 'inner-frequency',
+    seconds: 40,
     title: 'Inner Frequency',
     photo: 'glow',
     gradient: [AppPrimitives.danger600, AppPrimitives.warning400],
@@ -515,6 +548,7 @@ const kSessions = <SessionRecord>[
   ),
   SessionRecord(
     slug: 'ocean-breath',
+    seconds: 18,
     title: 'Ocean Breath',
     photo: 'waves',
     gradient: [AppPrimitives.info950, AppPrimitives.info600],
@@ -566,6 +600,7 @@ const kSessions = <SessionRecord>[
   ),
   SessionRecord(
     slug: 'rainy-mind',
+    seconds: 52,
     title: 'Rainy Mind',
     photo: 'rain',
     gradient: [AppPrimitives.info800, AppPrimitives.warning400],
@@ -617,6 +652,7 @@ const kSessions = <SessionRecord>[
   ),
   SessionRecord(
     slug: 'inner-balance',
+    seconds: 27,
     title: 'Inner Balance',
     photo: 'stones',
     gradient: [AppPrimitives.neutral500, AppPrimitives.neutral200],
@@ -668,6 +704,7 @@ const kSessions = <SessionRecord>[
   ),
   SessionRecord(
     slug: 'golden-hour',
+    seconds: 9,
     title: 'Golden Hour',
     photo: 'glow',
     gradient: [AppPrimitives.warning700, AppPrimitives.warning300],
@@ -718,6 +755,7 @@ const kSessions = <SessionRecord>[
   ),
   SessionRecord(
     slug: 'quiet-space',
+    seconds: 44,
     title: 'Quiet Space',
     photo: 'meadow',
     gradient: [AppPrimitives.success800, AppPrimitives.success400],
@@ -769,6 +807,7 @@ const kSessions = <SessionRecord>[
   ),
   SessionRecord(
     slug: 'dream-drift',
+    seconds: 31,
     title: 'Dream Drift',
     photo: 'underwater',
     gradient: [AppPrimitives.info900, AppPrimitives.info400],
@@ -821,6 +860,7 @@ const kSessions = <SessionRecord>[
   ),
   SessionRecord(
     slug: 'slow-piano-drift',
+    seconds: 16,
     title: 'Slow Piano Drift',
     photo: 'morning',
     gradient: [AppPrimitives.neutral800, AppPrimitives.info400],
@@ -872,6 +912,7 @@ const kSessions = <SessionRecord>[
   ),
   SessionRecord(
     slug: '432-hz-strings',
+    seconds: 58,
     title: '432 Hz Strings',
     photo: 'mountains',
     gradient: [AppPrimitives.primary900, AppPrimitives.warning400],
@@ -924,6 +965,7 @@ const kSessions = <SessionRecord>[
   ),
   SessionRecord(
     slug: 'bowl-bath',
+    seconds: 23,
     title: 'Bowl Bath',
     photo: 'calm',
     gradient: [AppPrimitives.info800, AppPrimitives.neutral300],
@@ -975,6 +1017,7 @@ const kSessions = <SessionRecord>[
   ),
   SessionRecord(
     slug: 'morning-spark',
+    seconds: 7,
     title: 'Morning Spark',
     photo: 'affirmations',
     gradient: [AppPrimitives.warning600, AppPrimitives.primary300],
@@ -1026,6 +1069,7 @@ const kSessions = <SessionRecord>[
   ),
   SessionRecord(
     slug: 'cold-start',
+    seconds: 39,
     title: 'Cold Start',
     photo: 'breathwork',
     gradient: [AppPrimitives.info700, AppPrimitives.primary200],
@@ -1078,6 +1122,7 @@ const kSessions = <SessionRecord>[
   ),
   SessionRecord(
     slug: 'body-scan-slowly',
+    seconds: 14,
     title: 'Body Scan, Slowly',
     photo: 'stress',
     gradient: [AppPrimitives.success900, AppPrimitives.success500],
@@ -1129,6 +1174,7 @@ const kSessions = <SessionRecord>[
   ),
   SessionRecord(
     slug: 'noting-practice',
+    seconds: 50,
     title: 'Noting Practice',
     photo: 'bloom',
     gradient: [AppPrimitives.warning700, AppPrimitives.primary200],
@@ -1180,6 +1226,7 @@ const kSessions = <SessionRecord>[
   ),
   SessionRecord(
     slug: 'night-rain-sleep',
+    seconds: 33,
     title: 'Night Rain Sleep',
     photo: 'sleep',
     gradient: [AppPrimitives.primary950, AppPrimitives.info700],

@@ -23,7 +23,7 @@ that goes wrong. `git checkout mobile_app`.
 ```bash
 flutter pub get     # after any pubspec change — the fonts live there now
 flutter analyze     # must come back "No issues found!"
-flutter test        # 33 tests, ~15s
+flutter test        # 34 tests, ~15s
 flutter run         # onto whatever single device is attached
 ```
 
@@ -182,7 +182,16 @@ shows a moving bar and plays nothing is not broken.**
 surface with the shelves; `session_list_screen.dart` is the Sessions frame, a
 list of 68px rows. They shared one screen for a while, which is how Explore's
 shelves ended up under the Sessions title. And there is no Chat entry anywhere
-in the design — the cockpit is reached by "New session" in the drawer.
+in the design — the cockpit is reached by "New session" in the drawer, and by a
+session row, which is where the frame's own prototype points.
+
+**A session row has two tap targets and two markers, and only the sizes come
+from the frame.** The play disc opens the player; the rest of the row opens
+that session's conversation. The recreated glyph and the Published label were
+asked for on top of the design — see `docs/PRD.md` for why each shows when it
+does. `isRecreated` is not a stored flag: every session opens on an Aurelia
+starter template, so a two-step lineage is an original and a third step means a
+person stood between, which is what recreating is.
 
 **`AppRadius` is a closed scale** — 0/2/4/8/12/16/24/32/full. A literal that is
 not on it is almost always a mistake. The web had eleven elements silently
@@ -212,14 +221,25 @@ needs them. Any new animation should follow that shape.
 of what it finds.
 
 **Text is a hit-test target.** A `Text` inside a `Stack` will swallow a tap
-meant for a full-card overlay beneath it. Put the overlay above the copy.
+meant for a full-card overlay beneath it. Put the overlay above the copy. The
+Sessions row is the worked example: the card-wide tap that opens the
+conversation sits *over* the title and byline, and the play disc sits over that
+again, so the smaller target wins inside the larger one.
 
-**The tests are behavioural, not golden.** 33 of them, driving real screens
+**A `Stack` sizes to its tallest non-positioned child, not to its parent.** So
+a `Positioned` inside it is measured from that child's box, which is rarely the
+box you drew on paper. The Sessions row's content is 35 tall inside a 68 card,
+and the play disc landed exactly 16.5px — half the difference — below its own
+artwork, looking like a nudge rather than a layout bug. `SizedBox.expand`
+around the content fixes it. Assert the two rects are equal rather than
+trusting the eye; at that size the error reads as a design choice.
+
+**The tests are behavioural, not golden.** 34 of them, driving real screens
 through real taps: the sign-in gate remembers where you were going, the
 recommendation set can be dropped and applied, a session keeps playing when you
 walk back to the cockpit, notifications group by age. They also catch overflow,
 because a `RenderFlex` overflow fails the test — which is how the 420px surface
-found four layout bugs the eye did not.
+found five layout bugs the eye did not.
 
 ---
 

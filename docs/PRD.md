@@ -246,6 +246,34 @@ their screens, each tore down the other — on the web the thread was lost on
 navigation, and on mobile the same bug was one screen away from being written
 twice.
 
+### A session row states two things the catalogue never had
+
+Sessions (Figma 16523:14684) lists one session per 68px row. Two markers were
+added to it that the frame does not carry, and each needed a rule rather than a
+field:
+
+- **Recreated.** Derived, not stored. Every session opens on an Aurelia starter
+  template, so a lineage of two steps is an original — template, then its
+  author — and a third step means a person stood between them. That is exactly
+  what recreating is: clone and modify. Three of the twenty-one qualify, which
+  is what makes the glyph worth showing at all.
+- **Published.** A flag, defaulting to true because everything in the
+  catalogue is out in the world. It is shown **only on your own sessions**, and
+  that is a judgement call worth overruling if it is wrong: the label exists to
+  separate a session you have put out from one still sitting in the cockpit,
+  and that distinction only has two sides for the person who made it. On a
+  stranger's row it would be a badge every row wears, which says nothing and
+  costs the author its width on a 10px line.
+
+A draft shows no label rather than saying "Draft" — the absence is the state.
+Nothing can be a draft yet, because the cockpit cannot save one; the flag is
+the seam for when it can.
+
+**The row has two tap targets.** The play disc opens the player; the rest of
+the row opens that session's conversation. That is the frame's own prototype
+rather than an invention — its transition lands on 16523:8166, which is a
+cockpit thread, not a detail page.
+
 ---
 
 ## 07 · States that do not exist yet
@@ -264,6 +292,7 @@ before engineering meets them in QA.
 | Auth | Reset link expired or used | Reachable by design; must be caught before the form renders |
 | Home | Day-0 user with no personalisation | Quick Start and Live Sessions show fixed content |
 | Sessions | Not enough history for "Picked for You" | Needs an honest fallback, not an empty rail |
+| Sessions | A draft session in the list | The Published label has an off state nothing can reach yet |
 | Challenge | Streak broken; fewer than three participants | The mechanic turns on day count and the podium assumes three |
 | Player | Playback failure; session withdrawn after being linked | Detail pages are shareable, so dead slugs are reachable |
 | Profile | Zero stats; delete-account confirmation | Delete is missing entirely, not just its state |
