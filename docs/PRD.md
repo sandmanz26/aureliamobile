@@ -412,6 +412,23 @@ the row opens that session's conversation. That is the frame's own prototype
 rather than an invention — its transition lands on 16523:8166, which is a
 cockpit thread, not a detail page.
 
+**And it opens that session's conversation, already made.** A row is a
+finished thing, so the thread behind it is the one that produced it: Aurelia's
+lines name the session, its changes are laid open rather than folded, and the
+apply chip is there to change them. `/chat` is a new session and `/chat/:slug`
+is an existing one; the folded deck belongs to the first, because a fold is
+Aurelia handing over a proposal and these changes are already in the thing.
+
+Two rules make it feel like one place rather than a reload:
+
+- **Re-opening the session you are already in does nothing.** Go off to play
+  it, or to its creator's profile, and coming back returns the thread exactly
+  as you left it — a removed change stays removed. Same bargain the player
+  makes with a track that is already on the deck.
+- **The cockpit's transport plays the session the cockpit is about.** It used
+  to play one fixed session whichever thread was open, which nobody could see
+  until rows opened their own.
+
 Both clients carry all of this. The row was read off the node rather than the
 render, which corrected five sizes on each: the title is 14/19 not 16, the
 byline and run time are 10/12 in #525252, the gap between them is 4, the

@@ -88,7 +88,9 @@ function SessionRow({ session }: { session: SessionRecord }) {
         </span>
       </Link>
 
-      <Link to="/chat" className="flex min-w-0 flex-1 flex-col justify-center gap-4">
+      {/* Its own conversation, not the cockpit in general: this session exists,
+          so opening it lands in the thread that made it, already built. */}
+      <Link to={`/chat/${session.slug}`} className="flex min-w-0 flex-1 flex-col justify-center gap-4">
         <p className="truncate text-[14px] leading-[19px] text-text-primary">{session.title}</p>
         <MetaLine session={session} />
       </Link>

@@ -4,6 +4,8 @@ import orb432hz from '../assets/orb-432hz.png'
 import orbIncreaseYellow from '../assets/orb-increase-yellow.png'
 import orbLessMovement from '../assets/orb-less-movement.png'
 import type { Recommendation } from '../components/chat/RecommendationCard'
+import type { SessionRecord } from '../lib/sessions'
+import { totalMinutes } from '../lib/sessions'
 
 /** Delivery state, as a messaging app shows it: one tick sent, two ticks read. */
 export type Status = 'sending' | 'sent' | 'read'
@@ -76,6 +78,54 @@ export const RECOMMENDATIONS: Recommendation[] = [
   },
 ]
 
+/**
+ * The thread for a session that has already been made.
+ *
+ * A row in Sessions is not a prompt, it is a finished thing: opening one has
+ * to land you in the conversation that produced it, about that session, with
+ * its changes already on the table. The generic opening thread is for "New
+ * session" and nothing else — before this, every row opened the same
+ * conversation about a sleep meditation, whichever session you tapped.
+ *
+ * Only Aurelia's lines carry the session; the rest of the exchange is the
+ * demo's own texture and stays put.
+ */
+export function messagesForSession(session: SessionRecord): Message[] {
+  const start = Date.now() - 9 * 60_000
+  const outcome = session.outcome[0]
+  return [
+    {
+      id: 1,
+      from: 'aurelia',
+      at: start,
+      text:
+        `Good morning, Adam.\n\n“${session.title}” is built and running — ` +
+        `${totalMinutes(session)} minutes, by ${session.author}` +
+        (outcome ? `, and people report ${outcome.label.toLowerCase()} ${outcome.value}.` : '.'),
+    },
+    {
+      id: 2,
+      from: 'aurelia',
+      at: start + 4_000,
+      text: `How did you find ${session.title}?`,
+    },
+    {
+      id: 3,
+      from: 'user',
+      at: start + 96_000,
+      text: 'It was good, but it was to short, I had to repeat it multiple times.',
+      status: 'read',
+    },
+    {
+      id: 4,
+      from: 'aurelia',
+      at: start + 104_000,
+      text: 'Based on the diagnosis and your feedback, this is what I’d would recommend:',
+      attachment: 'recommendations',
+    },
+  ]
+}
+
 export type SessionState = 'idle' | 'updating' | 'generating' | 'ready'
 
 interface ChatSessionValue {
@@ -89,6 +139,10 @@ interface ChatSessionValue {
   setProgress: Dispatch<SetStateAction<number>>
   deckOpen: boolean
   setDeckOpen: Dispatch<SetStateAction<boolean>>
+  /** Which session the thread is about. Null is a new one. */
+  sessionSlug: string | null
+  /** Open an existing session's conversation, already made. */
+  openSession: (session: SessionRecord) => void
   /** Next message id. A function rather than the ref itself: handing out a
    *  ref invites callers to mutate a hook's return value. */
   nextMessageId: () => number
@@ -117,8 +171,32 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
   const [sessionState, setSessionState] = useState<SessionState>('idle')
   const [progress, setProgress] = useState(0)
   const [deckOpen, setDeckOpen] = useState(false)
+  const [sessionSlug, setSessionSlug] = useState<string | null>(null)
   const nextId = useRef(OPENING_MESSAGES.length + 1)
   const nextMessageId = useCallback(() => nextId.current++, [])
+
+  /**
+   * Opening the session you are already in is a no-op, and that is the whole
+   * point: you go off to play it, or to its creator's profile, and coming back
+   * returns the thread exactly as you left it rather than rebuilding it under
+   * you. Same bargain as `load()` on the audio player.
+   */
+  const openSession = useCallback((session: SessionRecord) => {
+    setSessionSlug((current) => {
+      if (current === session.slug) return current
+      const opening = messagesForSession(session)
+      setMessages(opening)
+      setApplied(RECOMMENDATIONS.map((item) => item.id))
+      setSessionState('idle')
+      setProgress(0)
+      // Laid open, not folded. A folded deck is Aurelia handing over a
+      // proposal; this session exists, so its changes are what you came to
+      // look at.
+      setDeckOpen(true)
+      nextId.current = opening.length + 1
+      return session.slug
+    })
+  }, [])
 
   const reset = useCallback(() => {
     setMessages([])
@@ -126,6 +204,7 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
     setSessionState('idle')
     setProgress(0)
     setDeckOpen(false)
+    setSessionSlug(null)
     nextId.current = OPENING_MESSAGES.length + 1
   }, [])
 
@@ -136,10 +215,11 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
       sessionState, setSessionState,
       progress, setProgress,
       deckOpen, setDeckOpen,
+      sessionSlug, openSession,
       nextMessageId,
       reset,
     }),
-    [messages, applied, sessionState, progress, deckOpen, nextMessageId, reset],
+    [messages, applied, sessionState, progress, deckOpen, sessionSlug, openSession, nextMessageId, reset],
   )
 
   return <ChatSessionContext.Provider value={value}>{children}</ChatSessionContext.Provider>

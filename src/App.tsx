@@ -163,8 +163,20 @@ export default function App() {
                 </ModuleGuard>
               }
             />
+            {/* /chat is a new session; /chat/:slug is the conversation that
+                made an existing one, which is what a row in Sessions opens. */}
             <Route
               path="/chat"
+              element={
+                <RequireAuth>
+                  <ModuleGuard module="chat">
+                    <ChatPage />
+                  </ModuleGuard>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/chat/:slug"
               element={
                 <RequireAuth>
                   <ModuleGuard module="chat">

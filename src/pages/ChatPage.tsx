@@ -1,6 +1,6 @@
 import { Check, CheckCheck, WandSparkles } from 'lucide-react'
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { AddSheet } from '../components/chat/AddSheet'
 import { ChatComposer } from '../components/chat/ChatComposer'
 import { EmptyThread, EmptyThreadPrompts } from '../components/chat/EmptyThread'
@@ -18,6 +18,7 @@ import { VoiceRecorder } from '../components/chat/VoiceRecorder'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import { useDrawer } from '../layouts/DrawerContext'
+import { findSession } from '../lib/sessions'
 
 const SUGGESTIONS = ['Add more white noise', 'Make it longer', 'Female voice']
 
@@ -72,6 +73,8 @@ function StatusTicks({ status }: { status: Status }) {
 export function ChatPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  // /chat/:slug is an existing session's conversation; bare /chat is a new one.
+  const { slug } = useParams()
   const { openDrawer } = useDrawer()
   const { isEnabled } = useFeatureFlags()
 
@@ -92,6 +95,7 @@ export function ChatPage() {
     sessionState, setSessionState,
     progress, setProgress,
     deckOpen, setDeckOpen,
+    sessionSlug, openSession,
     nextMessageId,
     reset,
   } = useChatSession()
@@ -121,6 +125,18 @@ export function ChatPage() {
     setTyping(false)
     reset()
   }, [location.key, routeState?.fresh, reset])
+
+  // Point the thread at the session in the URL. openSession no-ops when it is
+  // already on that one, which is what makes going off to play it and coming
+  // back feel like returning rather than reloading.
+  const opened = findSession(slug)
+  useEffect(() => {
+    if (!opened || opened.slug === sessionSlug) return
+    // Only on a real change of session: a stale "Aurelia is typing" from the
+    // thread you just left has nothing to do with the one you just opened.
+    setTyping(false)
+    openSession(opened)
+  }, [opened, sessionSlug, openSession])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
@@ -283,6 +299,12 @@ export function ChatPage() {
            so a second play glyph in the header would be two controls for one
            thing. */
         canPlay={!empty && !track}
+        /* The cockpit is about a session now, so its transport plays that one.
+           Hardcoded, it played Dolphins frequency whichever session you had
+           open — which the moment rows opened their own threads became plainly
+           the wrong track. A thread with no session behind it is one being
+           built, and borrows a slug to play against. */
+        playTo={sessionSlug ? `/play/${sessionSlug}` : undefined}
         onMenu={openDrawer}
         onPublish={() => isEnabled('chat.publish') && setPublishState('publishing')}
         canPublish={isEnabled('chat.publish')}
