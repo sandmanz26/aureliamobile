@@ -478,6 +478,33 @@ hairline is black at a fifth, and the figure's pill is 9 before the arrow and
 12 after with the number in black. Duration is m:ss, so a session carries
 seconds — mock, like the minutes beside it.
 
+**Every size on all three tabs is read off the leaf node, not the depth-4
+summary and not the render.** That matters because the summary stops before
+the text nodes, so type is the one thing a shallow read cannot give you, and
+it is the thing that reads wrong first. What the pass corrected:
+
+| Where | Was | Is |
+| --- | --- | --- |
+| Stat tile padding | 16 all round | 20 left/right, 10 top/bottom |
+| Stat figure | Semibold 28/32 | Regular 22/25, in black rather than the ink token |
+| Stat label | body-small | 12/19 in #9A9A9A, 3 under the figure |
+| Earnings coin | a lucide glyph inside a 48 gradient disc | the frame's own 40px gradient coin |
+| Community row | one 20-gap list | 7 above and below its copy, ruled after every row in #F0F0F0 |
+| Lineage row | 40 avatar, body/body-small | 35 avatar, 13/19 over 10/15, 10 apart |
+| Lineage card shadow | the shared 0 5 24 4 at 5% | its own 0 4 14 at 8% |
+| Insight cards | 16 apart, glyph inside the heading | 12 apart, glyph a 20px sibling 12 from a title/body/date column at 8 |
+| Insight body | body-small | Light 300 12/19 in #525252 |
+
+Two readings the frames do not settle, and what this app does instead:
+
+- **A lineage row's caret points down in Figma** because the prototype treats
+  it as a disclosure with nothing behind it. Here the row opens that session,
+  so the caret points the way the row goes. Change it back when there is
+  something to disclose.
+- **The frames are set in Sofia Pro; the `font-family/base` variable says
+  Mulish**, and the app follows the variable. Every size and line-height above
+  is the frame's; only the face differs, and that difference is still open.
+
 ---
 
 ## 07 · States that do not exist yet

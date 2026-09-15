@@ -1,16 +1,17 @@
-import { useState } from 'react'
+import { Fragment, useId, useState } from 'react'
 import {
   ArrowLeft,
   ArrowUp,
   ChevronDown,
   ChevronRight,
   ChevronUp,
-  Coins,
+  Clock,
   Library,
   MoreHorizontal,
   Pencil,
   Play,
   Sparkles,
+  Target,
   Users,
 } from 'lucide-react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -46,7 +47,7 @@ function Tab({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`flex h-35 shrink-0 items-center gap-8 rounded-full border px-12 text-[12px] leading-none transition-colors ${
+      className={`flex h-35 shrink-0 items-center gap-8 rounded-full border px-12 text-[12px] leading-[19px] transition-colors ${
         active
           ? 'border-text-primary bg-text-primary text-text-inverse'
           : 'border-[#d6d6d6] bg-transparent text-text-primary'
@@ -58,7 +59,35 @@ function Tab({
   )
 }
 
-/** A stat tile — 174 tall in the frame, and the figure is the point of it. */
+/**
+ * The coin, as the frame draws it: a 40px disc on a #FFE682 -> #FF881B
+ * diagonal, not a lucide glyph inside a coloured circle. It appears at 40 in
+ * the earnings tile and at 20 on a community row.
+ */
+function Coin({ size = 40 }: { size?: number }) {
+  const id = useId()
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true" className="shrink-0">
+      <defs>
+        <linearGradient id={id} x1="0.8" y1="0.8" x2="39.2" y2="39.2" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#FFE682" />
+          <stop offset="1" stopColor="#FF881B" />
+        </linearGradient>
+      </defs>
+      <circle cx="20" cy="20" r="20" fill={`url(#${id})`} />
+      <circle cx="20" cy="20" r="13.5" fill="none" stroke="#fff" strokeOpacity="0.45" strokeWidth="2" />
+    </svg>
+  )
+}
+
+/**
+ * A figure and its name — Figma "Highlight/Assessment" (16523:19649, 19661).
+ *
+ * 20 left and right, 10 top and bottom — not 16 all round — and the figure is
+ * Regular 22/25 in plain black, not the bold 28 it had been read as. The
+ * earnings tile is the tall one and the only one carrying the coin, 10 above
+ * the figure; the figure and its label sit 3 apart.
+ */
 function Stat({
   value,
   label,
@@ -72,26 +101,23 @@ function Stat({
 }) {
   return (
     <div
-      className={`flex flex-col items-center justify-center gap-4 rounded-[20px] bg-surface-default p-16 ${CARD_SHADOW} ${className}`}
+      className={`flex flex-col items-center justify-center gap-10 rounded-[20px] bg-surface-default px-20 py-10 ${CARD_SHADOW} ${className}`}
     >
-      {coin && (
-        <span
-          aria-hidden="true"
-          className="mb-12 flex size-48 items-center justify-center rounded-full"
-          style={{ background: 'linear-gradient(160deg, #ffe682, #ff881b)' }}
-        >
-          <Coins size={22} className="text-text-inverse" />
-        </span>
-      )}
-      <p className="text-[28px] leading-[32px] font-semibold tabular-nums text-text-primary">{value}</p>
-      <p className="text-style-body-small text-text-secondary">{label}</p>
+      {coin && <Coin />}
+      <span className="flex flex-col items-center gap-3">
+        <span className="text-[22px] leading-[25px] tabular-nums text-black">{value}</span>
+        <span className="text-[12px] leading-[19px] text-[#9a9a9a]">{label}</span>
+      </span>
     </div>
   )
 }
 
 /**
- * One cut of the session. The art carries the transport and the figure it
- * moved; the body below opens to the chapter that changed.
+ * One cut of the session — Figma "card" (16523:19540).
+ *
+ * Every number below is off the node rather than eyeballed: the art is 120
+ * tall under a fifth of black, the two controls sit on a 32px row inset 16
+ * from the card, and the body is 16 all round with 12 between its blocks.
  */
 function VersionCard({ version, open, onToggle }: { version: Version; open: boolean; onToggle: () => void }) {
   return (
@@ -101,47 +127,69 @@ function VersionCard({ version, open, onToggle }: { version: Version; open: bool
         {/* The frame darkens the art by a fifth so the two controls on it read
             at any cover. */}
         <span aria-hidden="true" className="absolute inset-0 bg-black/20" />
-        <div className="absolute inset-x-16 top-16 flex items-center justify-between gap-12">
-          <span className="flex size-32 items-center justify-center rounded-full bg-white/25 text-text-inverse backdrop-blur-sm">
-            <Play size={14} fill="currentColor" strokeWidth={0} />
-          </span>
-          <span className="flex h-32 items-center gap-4 rounded-full bg-[#ecfbed] px-12 text-[12px] leading-none text-text-primary">
-            <ArrowUp size={14} className="text-success-600" />
-            {version.delta}
+
+        {/* 330x32 inset 16, 12 between the two. */}
+        <div className="absolute inset-x-16 top-16 flex h-32 items-center justify-between gap-12">
+          <button
+            type="button"
+            aria-label={`Play ${version.title}`}
+            className="u-press flex size-32 items-center justify-center rounded-full bg-white/20 text-text-inverse backdrop-blur-[10px]"
+          >
+            <Play size={16} fill="currentColor" strokeWidth={0} />
+          </button>
+          {/* 8 all round, 4 to the figure, and the figure is green — not the
+              ink token, which is what it was read as before. */}
+          <span className="flex h-32 items-center gap-4 rounded-full bg-[#ecfbed] px-8">
+            <ArrowUp size={16} className="text-[#0cba65]" />
+            <span className="text-[14px] font-medium leading-[19px] text-[#0cba65]">{version.delta}</span>
           </span>
         </div>
       </div>
 
-      <div className="flex flex-col gap-12 p-16">
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={open}
-          className="flex w-full items-center justify-between gap-12 text-left"
-        >
-          <span className="text-style-body text-text-primary">{version.title}</span>
-          {open ? (
-            <ChevronUp size={20} className="shrink-0 text-icon-default" />
-          ) : (
-            <ChevronDown size={20} className="shrink-0 text-icon-default" />
+      {/* 12 between blocks when the chapter is showing, 16 when it is not —
+          the frame draws the two states as separate cards and they differ. */}
+      <div className={`flex flex-col p-16 ${open ? 'gap-12' : 'gap-16'}`}>
+        <div className="flex flex-col gap-8">
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-expanded={open}
+            className="flex w-full items-center gap-8 text-left"
+          >
+            <span className="min-w-0 flex-1 truncate text-[14px] leading-[21px] text-text-primary">
+              {version.title}
+            </span>
+            {open ? (
+              <ChevronUp size={16} className="shrink-0 text-icon-strong" />
+            ) : (
+              <ChevronDown size={16} className="shrink-0 text-icon-strong" />
+            )}
+          </button>
+
+          {open && (
+            /* The rule is the frame's own: a 1px #D6D6D6 hairline the full
+               height of the block, 4 in from the card's text column and 12
+               from the copy, marking the chapter as a quotation rather than
+               more card text. */
+            <div className="flex gap-12 pl-4">
+              <span aria-hidden="true" className="w-px shrink-0 self-stretch bg-[#d6d6d6]" />
+              <div className="flex min-w-0 flex-1 flex-col justify-center gap-8">
+                <p className="text-[12px] font-medium leading-[19px] text-text-primary">{version.chapter}</p>
+                <p className="text-[12px] font-light! leading-[18px] text-[#525252]">{version.detail}</p>
+              </div>
+            </div>
           )}
-        </button>
+        </div>
 
-        {open && (
-          /* The rule down the left is the frame's: it marks the chapter as a
-             quotation from the session rather than more card copy. */
-          <div className="flex flex-col gap-8 border-l border-border-subtle pl-16">
-            <p className="text-style-body-small font-semibold text-text-primary">{version.chapter}</p>
-            <p className="text-style-body-small text-text-secondary">{version.detail}</p>
-          </div>
-        )}
-
-        <div className="flex items-center justify-between gap-12">
-          <span className="flex min-w-0 items-center gap-8">
-            <PhotoCircle photo={version.authorPhoto} size={24} gradient={version.gradient} />
-            <span className="text-style-body-small truncate text-text-primary">{version.author}</span>
+        <div className="flex items-center gap-8">
+          <span className="flex min-w-0 flex-1 items-center gap-8">
+            <PhotoCircle photo={version.authorPhoto} size={16} gradient={version.gradient} />
+            <span className="truncate text-[10px] leading-[10px] text-text-primary">{version.author}</span>
           </span>
-          <span className="text-style-body-small shrink-0 text-text-secondary">{version.minutes}</span>
+          <span className="flex shrink-0 items-center gap-4">
+            <Clock size={10} className="text-icon-strong" />
+            <span className="text-[10px] font-light! leading-[10px] text-text-primary">{version.minutes}</span>
+          </span>
         </div>
       </div>
     </article>
@@ -210,11 +258,12 @@ export function ProgressPage() {
 
           {tab === 'chapters' && (
             <>
-              {/* The objective is the one card on this screen with a gradient
-                  hairline: it is what every figure below is measured against,
-                  and the only thing here you can edit. */}
+              {/* Figma "Frame 10" (16523:19525) — 362x68, 16 all round, 12
+                  between blocks, and the one card on this screen with a
+                  gradient hairline: it is what every figure on the other two
+                  tabs is measured against, and the only thing here you edit. */}
               <section
-                className={`flex items-center gap-12 rounded-[20px] bg-surface-default p-16 ${CARD_SHADOW}`}
+                className={`flex h-68 items-center gap-12 rounded-[20px] bg-surface-default p-16 ${CARD_SHADOW}`}
                 style={{
                   border: '1px solid transparent',
                   backgroundImage:
@@ -228,16 +277,16 @@ export function ProgressPage() {
                   className="flex size-36 shrink-0 items-center justify-center rounded-full text-icon-strong"
                   style={{ background: '#FFF1DB' }}
                 >
-                  <Sparkles size={18} />
+                  <Target size={20} strokeWidth={1.5} />
                 </span>
-                <span className="flex min-w-0 flex-1 flex-col gap-4">
-                  <span className="text-style-body-small text-text-secondary">Objective</span>
-                  <span className="text-style-body truncate text-text-primary">{progress.objective}</span>
+                <span className="flex min-w-0 flex-1 flex-col justify-center gap-4">
+                  <span className="text-[12px] font-light! leading-[12px] text-[#525252]">Objective</span>
+                  <span className="truncate text-[14px] leading-[19px] text-text-primary">{progress.objective}</span>
                 </span>
                 <button
                   type="button"
                   aria-label="Edit objective"
-                  className="u-press shrink-0 text-icon-default"
+                  className="u-press shrink-0 text-icon-strong"
                 >
                   <Pencil size={16} />
                 </button>
@@ -259,95 +308,129 @@ export function ProgressPage() {
 
           {tab === 'social' && (
             <div className="flex flex-col gap-16">
-              {/* 174 tall: one wide tile beside two stacked, as the frame has
+              {/* 174 tall: one 180-wide tile beside two 81s, as the frame has
                   it — earnings is the figure the other two explain. */}
               <div className="flex h-174 gap-12">
                 <Stat value={progress.earnings} label="Earnings" coin className="w-[180px] shrink-0" />
                 <div className="flex min-w-0 flex-1 flex-col gap-12">
-                  <Stat value={progress.timesPlayed} label="Times played" className="flex-1" />
-                  <Stat value={progress.recreated} label="Recreated" className="flex-1" />
+                  <Stat value={progress.timesPlayed} label="Times played" className="h-81" />
+                  <Stat value={progress.recreated} label="Recreated" className="h-81" />
                 </div>
               </div>
 
+              {/* Figma "Highlight/Assessment" (16523:19679) — 20 all round, 20
+                  between the list and See All, 8 inside the list, and each row
+                  carries 7 above and below its own copy. */}
               <section className={`flex flex-col gap-20 rounded-[20px] bg-surface-default p-20 ${CARD_SHADOW}`}>
-                <h2 className="text-style-title text-text-primary">Community</h2>
-                {progress.community.length === 0 ? (
-                  <p className="text-style-body-small text-text-secondary">
-                    Nothing yet — this one is not published, so nobody can play it but you.
-                  </p>
-                ) : (
-                  <>
-                    {progress.community.map((event) => (
-                      <div
-                        key={event.id}
-                        className="flex items-start justify-between gap-16 border-b border-border-subtle pb-20 last:border-0 last:pb-0"
-                      >
-                        <span className="min-w-0 flex-1">
-                          <span className="text-style-body text-text-primary">
-                            <span className="underline">{event.person}</span> {event.did}
+                <div className="flex flex-col gap-8">
+                  <h2 className="text-[14px] leading-[19px] text-text-primary">Community</h2>
+                  {progress.community.length === 0 ? (
+                    <p className="text-[12px] font-light! leading-[19px] text-[#525252]">
+                      Nothing yet — this one is not published, so nobody can play it but you.
+                    </p>
+                  ) : (
+                    progress.community.map((event) => (
+                      <Fragment key={event.id}>
+                        {/* items-start: the coin sits on the first line of a
+                            message that runs to two. */}
+                        <div className="flex items-start gap-20 py-7">
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-[12px] leading-[19px] text-text-primary">
+                              <span className="underline">{event.person}</span> {event.did}
+                            </span>
+                            <span className="block text-[10px] leading-[19px] text-[#828282]">{event.when}</span>
                           </span>
-                          <span className="text-style-body-small mt-4 block text-text-secondary">{event.when}</span>
-                        </span>
-                        <span className="flex shrink-0 items-center gap-6">
-                          <span
-                            aria-hidden="true"
-                            className="flex size-20 items-center justify-center rounded-full"
-                            style={{ background: 'linear-gradient(160deg, #ffe682, #ff881b)' }}
-                          >
-                            <Coins size={11} className="text-text-inverse" />
+                          <span className="flex h-20 shrink-0 items-center gap-3">
+                            <Coin size={20} />
+                            <span className="text-[14px] leading-[14px] text-text-primary">{event.coins}</span>
                           </span>
-                          <span className="text-style-body text-text-primary">{event.coins}</span>
-                        </span>
-                      </div>
-                    ))}
-                    <button type="button" className="text-style-body u-press w-fit text-text-primary">
-                      See All ({progress.communityTotal})
-                    </button>
-                  </>
+                        </div>
+                        {/* The frame rules under every row here, the last one
+                            included — and at #F0F0F0, lighter than the #D6D6D6
+                            the lineage card uses. */}
+                        <span aria-hidden="true" className="h-px shrink-0 bg-[#f0f0f0]" />
+                      </Fragment>
+                    ))
+                  )}
+                </div>
+                {progress.community.length > 0 && (
+                  <button type="button" className="u-press w-fit text-[12px] leading-[18px] text-[#525252]">
+                    See All ({progress.communityTotal})
+                  </button>
                 )}
               </section>
 
-              <section className={`flex flex-col gap-20 rounded-[20px] bg-surface-default p-20 ${CARD_SHADOW}`}>
-                <h2 className="text-style-title text-text-primary">Lineage Tree</h2>
-                {progress.lineage.map((entry) => (
-                  <Link
-                    key={entry.id}
-                    to={`/session/${session.slug}`}
-                    className="u-press flex items-center gap-12 border-b border-border-subtle pb-20 last:border-0 last:pb-0"
-                  >
-                    <PhotoCircle photo={entry.authorPhoto} size={40} gradient={session.gradient} />
-                    <span className="min-w-0 flex-1">
-                      <span className="text-style-body block truncate text-text-primary">{entry.title}</span>
-                      <span className="text-style-body-small block truncate text-text-secondary">
-                        Created by {entry.author}, {entry.date}
-                      </span>
-                    </span>
-                    <ChevronRight size={20} className="shrink-0 text-icon-default" />
-                  </Link>
-                ))}
-                <button type="button" className="text-style-body u-press w-fit text-text-primary">
+              {/* Figma "Highlight/Assessment" (16523:19712). Its shadow is not
+                  the one every other card here shares: 0 4 14 at 8%, tighter
+                  and darker, which is why it is spelled out. */}
+              <section className="flex flex-col gap-20 rounded-[20px] bg-surface-default p-20 shadow-[0_4px_14px_rgba(0,0,0,0.08)]">
+                <h2 className="text-[14px] leading-[19px] text-text-primary">Lineage Tree</h2>
+                <div className="flex flex-col gap-8">
+                  {progress.lineage.map((entry, index) => (
+                    <Fragment key={entry.id}>
+                      {/* The 8 of padding falls between the row and the rule,
+                          so the first row carries it below, the last above and
+                          the ones between on both sides. */}
+                      <Link
+                        to={`/session/${session.slug}`}
+                        className={`u-press flex items-center gap-10 ${
+                          index === 0
+                            ? 'pb-8'
+                            : index === progress.lineage.length - 1
+                              ? 'pt-8'
+                              : 'py-8'
+                        }`}
+                      >
+                        <PhotoCircle photo={entry.authorPhoto} size={35} gradient={session.gradient} />
+                        <span className="flex min-w-0 flex-1 flex-col gap-4">
+                          <span className="truncate text-[13px] leading-[19px] text-text-primary">{entry.title}</span>
+                          <span className="truncate text-[10px] leading-[15px] text-[#525252]">
+                            Created by {entry.author}, {entry.date}
+                          </span>
+                        </span>
+                        {/* The frame draws a 16px caret in a 24 box. It points
+                            down there because the row is a disclosure in the
+                            prototype; here the row opens the session, so it
+                            points the way it goes. */}
+                        <span className="flex size-24 shrink-0 items-center justify-center text-icon-strong">
+                          <ChevronRight size={16} />
+                        </span>
+                      </Link>
+                      {index < progress.lineage.length - 1 && (
+                        <span aria-hidden="true" className="h-px shrink-0 bg-[#d6d6d6]" />
+                      )}
+                    </Fragment>
+                  ))}
+                </div>
+                <button type="button" className="u-press w-fit text-[12px] leading-[18px] text-[#525252]">
                   See All ({progress.lineageTotal})
                 </button>
               </section>
             </div>
           )}
 
+          {/* Figma "Frame 97" (16523:19792) — 12 between cards, not 16, and
+              each is 16 all round with the glyph 12 from a column that runs
+              title, body, date at 8 apart. */}
           {tab === 'insights' && (
-            <div className="flex flex-col gap-16">
+            <div className="flex flex-col gap-12">
               {progress.insights.map((insight) => (
                 <article
                   key={insight.id}
-                  className={`flex flex-col gap-8 rounded-[20px] bg-surface-default p-16 ${CARD_SHADOW}`}
+                  className={`flex gap-12 rounded-[20px] bg-surface-default p-16 ${CARD_SHADOW}`}
                 >
-                  {/* items-start, not centre: a title that wraps to two lines
-                      would otherwise float the glyph into the gap between
-                      them. mt-2 puts it on the first line's optical centre. */}
-                  <h2 className="flex items-start gap-12 text-style-title text-text-primary">
-                    <Sparkles size={20} className="mt-2 shrink-0 text-icon-strong" />
-                    {insight.title}
-                  </h2>
-                  <p className="text-style-body-small text-text-secondary">{insight.body}</p>
-                  <p className="text-style-body-small text-text-secondary/70">{insight.date}</p>
+                  <Sparkles
+                    size={20}
+                    fill="currentColor"
+                    strokeWidth={0}
+                    aria-hidden="true"
+                    className="shrink-0 text-text-primary"
+                  />
+                  <div className="flex min-w-0 flex-1 flex-col gap-8">
+                    <h2 className="text-[14px] leading-[19px] text-text-primary">{insight.title}</h2>
+                    <p className="text-[12px] font-light! leading-[19px] text-[#525252]">{insight.body}</p>
+                    <span className="text-[10px] leading-[15px] text-[#9a9a9a]">{insight.date}</span>
+                  </div>
                 </article>
               ))}
             </div>
