@@ -119,7 +119,18 @@ function Stat({
  * tall under a fifth of black, the two controls sit on a 32px row inset 16
  * from the card, and the body is 16 all round with 12 between its blocks.
  */
-function VersionCard({ version, open, onToggle }: { version: Version; open: boolean; onToggle: () => void }) {
+function VersionCard({
+  version,
+  playTo,
+  open,
+  onToggle,
+}: {
+  version: Version
+  /** The player, asked for this cut rather than for the session. */
+  playTo: string
+  open: boolean
+  onToggle: () => void
+}) {
   return (
     <article className={`overflow-hidden rounded-[20px] bg-surface-default ${CARD_SHADOW}`}>
       <div className="relative h-120">
@@ -130,13 +141,17 @@ function VersionCard({ version, open, onToggle }: { version: Version; open: bool
 
         {/* 330x32 inset 16, 12 between the two. */}
         <div className="absolute inset-x-16 top-16 flex h-32 items-center justify-between gap-12">
-          <button
-            type="button"
+          {/* The glyph plays this cut, not the session: each version is its
+              own recording, and hearing what a change did is the reason the
+              card carries a figure for it at all. */}
+          <Link
+            to={playTo}
+            state={{ origin: 'own' }}
             aria-label={`Play ${version.title}`}
             className="u-press flex size-32 items-center justify-center rounded-full bg-white/20 text-text-inverse backdrop-blur-[10px]"
           >
             <Play size={16} fill="currentColor" strokeWidth={0} />
-          </button>
+          </Link>
           {/* 8 all round, 4 to the figure, and the figure is green — not the
               ink token, which is what it was read as before. */}
           <span className="flex h-32 items-center gap-4 rounded-full bg-[#ecfbed] px-8">
@@ -298,6 +313,7 @@ export function ProgressPage() {
                   <VersionCard
                     key={version.id}
                     version={version}
+                    playTo={`/play/${session.slug}?v=${version.id}`}
                     open={openVersion === version.id}
                     onToggle={() => setOpenVersion((current) => (current === version.id ? null : version.id))}
                   />

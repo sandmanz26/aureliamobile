@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ArrowLeft, ChevronRight, Pause, Play, Share2, Shuffle } from 'lucide-react'
-import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { RecommendationCard } from '../components/chat/RecommendationCard'
 import { RECOMMENDATIONS } from '../chat/ChatSessionContext'
 import { useAudioPlayer } from '../audio/AudioPlayerContext'
@@ -8,6 +8,7 @@ import { CoinPill } from '../components/ui/CoinPill'
 import { CoverImage } from '../components/ui/CoverImage'
 import { MobileStatusBar } from '../components/ui/MobileStatusBar'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
+import { findVersion } from '../lib/progress'
 import { profilePath } from '../lib/people'
 import type { ProfileOrigin } from '../lib/people'
 import { findSession } from '../lib/sessions'
@@ -57,7 +58,12 @@ export function PlayerPage() {
   const { slug } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
+  const [params] = useSearchParams()
   const session = findSession(slug)
+  // Which cut of it. Progress's version cards ask for one by id; everything
+  // else asks for the session, which is the version that is current.
+  const versionId = params.get('v')
+  const version = session ? findVersion(session, versionId) : undefined
   // Who this session belongs to, as the screen that opened the player knows
   // it. Absent — a pasted URL, a refresh — the author decides.
   const origin = (location.state as { origin?: ProfileOrigin } | null)?.origin
@@ -104,13 +110,18 @@ export function PlayerPage() {
   useEffect(() => {
     if (!session) return
     load({
-      slug: session.slug,
-      title: session.title,
+      // A cut is its own recording, so it gets its own key. Without that the
+      // deck would see the session it is already playing and keep playing it —
+      // press play on v1.2 and you would go on hearing v1.3.
+      slug: version ? `${session.slug}#${version.id}` : session.slug,
+      title: version?.title ?? session.title,
+      // A version belongs to the same person and sits under the same art
+      // unless it changed it, so only what the version states overrides.
       author: session.author,
-      photo: session.photo,
-      gradient: session.gradient,
+      photo: version?.photo ?? session.photo,
+      gradient: version?.gradient ?? session.gradient,
     })
-  }, [session, load])
+  }, [session, version, load])
 
   if (!session) return <Navigate to="/home" replace />
 
@@ -137,8 +148,8 @@ export function PlayerPage() {
           than that. */}
       <div className="pointer-events-none absolute inset-0">
         <CoverImage
-          photo={session.photo}
-          gradient={session.gradient}
+          photo={version?.photo ?? session.photo}
+          gradient={version?.gradient ?? session.gradient}
           width={1024}
           height={2048}
           scrim={false}
@@ -296,7 +307,7 @@ export function PlayerPage() {
           </div>
 
           <div className="mt-20 flex flex-col gap-8">
-            <h1 className="text-style-title text-text-primary">{session.title}</h1>
+            <h1 className="text-style-title text-text-primary">{version?.title ?? session.title}</h1>
 
             {/* Clamped to the frame's lines, with the frame's fade over the cut.
                 Expanding drops both, so "Read More" is a real disclosure rather

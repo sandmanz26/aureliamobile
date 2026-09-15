@@ -461,6 +461,19 @@ about what the mix is for and it runs long; the objective is the listener's own
 goal, short enough to sit on one line beside an edit button, as the frame has
 it.
 
+**A version card's play glyph plays that cut.** It opens the player at
+`/play/:slug?v=<version>`, which shows the version's own title and art and puts
+it on the deck under its own key — `slug#version`. The key matters: the deck
+refuses to reload the track already on it, which is what keeps the cockpit's
+transport from restarting a session you walked away from, and without a
+distinct key pressing play on v1.2 would simply carry on playing v1.3. Hearing
+what a change did is the reason the card carries a figure for that change at
+all, so the glyph could not stay inert.
+
+A version is the same session by the same person: only what the cut states —
+its title, its art — overrides. The author, the recommendations and everything
+else on the player stay the session's.
+
 Two rules make it feel like one place rather than a reload:
 
 - **Re-opening the session you are already in does nothing.** Go off to play

@@ -83,6 +83,17 @@ const OBJECTIVES: Record<string, string> = {
   Meditations: 'Build a daily practice',
 }
 
+/**
+ * One cut of a session, by the id its card carries — what the player is asked
+ * for when you press play on a version rather than on the session itself.
+ *
+ * Undefined when nothing is asked for, which is the session as it stands.
+ */
+export function findVersion(session: SessionRecord, id: string | null | undefined): Version | undefined {
+  if (!id) return undefined
+  return progressFor(session).versions.find((version) => version.id === id)
+}
+
 export function progressFor(session: SessionRecord): Progress {
   const minutes = totalMinutes(session)
   const clock = `${minutes}:${String(session.seconds ?? 0).padStart(2, '0')} mins`
