@@ -21,20 +21,83 @@ that goes wrong. `git checkout mobile_app`.
 ## Running it
 
 ```bash
-flutter pub get
-flutter test        # 33 tests, a few seconds — run this before debugging a device
-flutter run
+flutter pub get     # after any pubspec change — the fonts live there now
+flutter analyze     # must come back "No issues found!"
+flutter test        # 33 tests, ~15s
+flutter run         # onto whatever single device is attached
 ```
 
-Flutter 3.27.1 / Dart 3.6. One dependency, `cupertino_icons`, and **no native
-plugins** — so there is no CocoaPods step for iOS and no Gradle plugin
-resolution to break on Android. Keep it that way if you can; it is the reason
-a new machine can build this in one command.
+Flutter **3.27.1 / Dart 3.6.0**. Newer stable channels move the goalposts under
+this app — `--web-renderer` is already gone in this one — so match the version
+before concluding something is broken.
 
-That rule has one visible cost, and it is worth knowing before you file a bug:
-**the player makes no sound.** See `core/audio/playback_controller.dart`.
+One dependency, `cupertino_icons`, and **no native plugins** — so there is no
+CocoaPods step for iOS and no Gradle plugin resolution to break on Android.
+Keep it that way if you can; it is the reason a new machine can build this in
+one command. That rule has one visible cost, worth knowing before you file a
+bug: **the player makes no sound.** See `core/audio/playback_controller.dart`.
+
+### Verifying a change
+
+`analyze` and `test` are the whole loop — there is no golden-image suite and no
+integration driver. Run both before you commit; `dart fix --apply` clears most
+of what `analyze` finds on its own.
+
+Run them **before** reaching for a device. The tests drive the real screens on
+a 420px surface, and a `RenderFlex` overflow fails them, so most layout bugs
+surface in fifteen seconds rather than after a two-minute install. That is how
+the player's statistic tile was caught overflowing by a quarter of a pixel.
+
+### Picking a device
+
+```bash
+flutter devices                 # what is actually attached
+flutter emulators               # what could be started
+flutter emulators --launch <id>
+flutter run -d <device-id>      # needed the moment more than one is attached
+```
+
+`flutter run` with nothing attached but a desktop target will happily build the
+desktop app, which is not what this is. Check `flutter devices` first if the
+window that opens looks wrong.
 
 Device setup, emulators and signing are in the [device runbook](https://claude.ai/code/artifact/16e2c84d-6b64-4fdc-aace-a8e85e9d1cc3).
+
+### In a browser
+
+A CI box or a container usually has no emulator, and the web target is the
+quickest way to *look* at a screen there:
+
+```bash
+flutter run -d chrome           # needs CHROME_EXECUTABLE set if chrome is not on PATH
+
+# or build it once and serve the folder
+flutter build web
+(cd build/web && python3 -m http.server 8099)
+```
+
+Treat it as a preview, not a platform: this app ships to phones, and the web
+build exists to see pixels, not to be correct.
+
+**If the page renders blank, that is the trap and not your change.** Flutter
+fetches the CanvasKit engine from `gstatic.com` at run time, even though the
+build has already written a copy into `build/web/canvaskit/`, and when that
+request fails the page stays white with nothing in the UI to say so — the only
+sign is a failed request in the browser console. `web/flutter_bootstrap.js`
+exists to point the loader at the copy we ship, which makes the web build
+self-contained. If you ever see a blank page again, check that file survived.
+
+Two things that legitimately fail offline and are *not* this: Unsplash cover
+art, which falls back to its gradient by design, and a Roboto fetch Flutter
+makes for its own fallback face, which nothing in this app uses.
+
+### If `flutter` is not found
+
+In a fresh container the SDK is usually installed but not on `PATH`:
+
+```bash
+export PATH="/opt/flutter/bin:$PATH"     # or wherever `find / -name flutter -type d` lands
+```
 
 ---
 
@@ -154,9 +217,9 @@ meant for a full-card overlay beneath it. Put the overlay above the copy.
 **The tests are behavioural, not golden.** 33 of them, driving real screens
 through real taps: the sign-in gate remembers where you were going, the
 recommendation set can be dropped and applied, a session keeps playing when you
-walk back to the cockpit, notifications group by age. They
-also catch overflow, because a `RenderFlex` overflow fails the test — which is
-how the 420px surface found three layout bugs the eye did not.
+walk back to the cockpit, notifications group by age. They also catch overflow,
+because a `RenderFlex` overflow fails the test — which is how the 420px surface
+found four layout bugs the eye did not.
 
 ---
 
