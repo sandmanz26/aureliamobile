@@ -438,6 +438,29 @@ have happened. The figure pill on its row is absent for that reason rather
 than by styling, and a creator's "34 published sessions" counts only what is
 out.
 
+### Progress — what a session has done since it was made
+
+Insights in the cockpit's menu opens `/progress/:slug` (Figma 16523:19484,
+19606, 19752): three tabs over one shell, which is how the frames are drawn —
+header and chip row identical across all three, only the body changes. The tab
+is in the query string rather than in state, so a link can open any of them and
+coming back from a lineage entry returns to the tab you left.
+
+| Tab | What it answers |
+| --- | --- |
+| **Chapters** | What this session is aiming at, and every earlier cut of it. The objective sits under a gradient hairline because it is what every figure on the other two tabs is measured against — and it is the only thing on the screen you can edit. |
+| **Social Impact** | What it earned, how often it was played, how often it was forked; then who did what with it, and the chain it belongs to. |
+| **Insights** | Patterns Aurelia claims to have noticed. Worded as tendencies — "tends to", "may be" — because nothing here is a measurement and the copy should not imply one. |
+
+**A draft has nothing to show on Social Impact**, and says so rather than
+printing zeroes: no earnings, no plays, no community. That falls out of the
+same rule as the rest — nobody can play a session that is not published.
+
+The objective is not the session's `intent`. That is the creator's sentence
+about what the mix is for and it runs long; the objective is the listener's own
+goal, short enough to sit on one line beside an edit button, as the frame has
+it.
+
 Two rules make it feel like one place rather than a reload:
 
 - **Re-opening the session you are already in does nothing.** Go off to play

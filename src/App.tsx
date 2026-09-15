@@ -25,6 +25,7 @@ import { ModuleGuard } from './demo/ModuleGuard'
 import { AppLayout } from './layouts/AppLayout'
 import { ChallengeDetailPage } from './pages/ChallengeDetailPage'
 import { ChatPage } from './pages/ChatPage'
+import { ProgressPage } from './pages/ProgressPage'
 import { DemoControlPage } from './pages/DemoControlPage'
 import { HelpPage } from './pages/HelpPage'
 import { HomePage } from './pages/HomePage'
@@ -181,6 +182,18 @@ export default function App() {
                 <RequireAuth>
                   <ModuleGuard module="chat">
                     <ChatPage />
+                  </ModuleGuard>
+                </RequireAuth>
+              }
+            />
+            {/* What a session has done since it was made — Insights in the
+                cockpit's menu. The tab lives in the query string. */}
+            <Route
+              path="/progress/:slug"
+              element={
+                <RequireAuth>
+                  <ModuleGuard module="chat">
+                    <ProgressPage />
                   </ModuleGuard>
                 </RequireAuth>
               }

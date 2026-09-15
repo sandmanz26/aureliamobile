@@ -305,6 +305,9 @@ export function ChatPage() {
            the wrong track. A thread with no session behind it is one being
            built, and borrows a slug to play against. */
         playTo={sessionSlug ? `/play/${sessionSlug}` : undefined}
+        /* Insights opens Progress for this session. A thread with nothing
+           behind it has no progress to show, so the item stays inert there. */
+        onInsights={sessionSlug ? () => navigate(`/progress/${sessionSlug}`) : undefined}
         onMenu={openDrawer}
         onPublish={() => isEnabled('chat.publish') && setPublishState('publishing')}
         canPublish={isEnabled('chat.publish')}
