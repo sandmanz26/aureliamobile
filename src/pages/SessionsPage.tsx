@@ -6,7 +6,7 @@ import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { useDrawer } from '../layouts/DrawerContext'
 import { CURRENT_USER } from '../lib/people'
 import type { SessionRecord } from '../lib/sessions'
-import { SESSIONS, durationLabel, isRecreated } from '../lib/sessions'
+import { PUBLISHED_SESSIONS, SESSIONS, durationLabel, isRecreated } from '../lib/sessions'
 
 /** The card shadow every surface in this design shares (Figma effect 16520:822). */
 const CARD_SHADOW = 'shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)]'
@@ -153,7 +153,13 @@ function ScopeChip({
 export function SessionsPage() {
   const { openDrawer } = useDrawer()
   const [scope, setScope] = useState<'all' | 'mine'>('all')
-  const shown = scope === 'mine' ? SESSIONS.filter((s) => s.author === CURRENT_USER) : SESSIONS
+  // "All" is the catalogue as everyone else sees it; a draft belongs to you
+  // and shows only where it is yours. That is what makes the filter worth a
+  // tap rather than a narrowing of the same list.
+  const shown =
+    scope === 'mine'
+      ? SESSIONS.filter((s) => s.author === CURRENT_USER)
+      : PUBLISHED_SESSIONS
 
   return (
     <div className="pb-40">

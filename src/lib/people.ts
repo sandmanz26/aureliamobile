@@ -1,6 +1,6 @@
 import type { CoverKey } from './photos'
 import type { SessionRecord } from './sessions'
-import { SESSIONS } from './sessions'
+import { PUBLISHED_SESSIONS } from './sessions'
 
 /**
  * Who is signed in. One string, in one place: "is this mine?" was being
@@ -33,13 +33,15 @@ export function personSlug(name: string) {
 export const CURRENT_USER_SLUG = personSlug(CURRENT_USER)
 
 /**
- * Everyone who has published something, keyed by slug. Built from SESSIONS
+ * Everyone who has published something, keyed by slug. Built from the
+ * published catalogue — a draft is not published work, and a creator's role
+ * line counts published sessions
  * rather than kept as its own list — a creator with no sessions has no profile
  * to show, and a second list would drift from the first.
  */
 function collect() {
   const people = new Map<string, Person>()
-  for (const session of SESSIONS) {
+  for (const session of PUBLISHED_SESSIONS) {
     const slug = personSlug(session.author)
     const existing = people.get(slug)
     if (existing) {

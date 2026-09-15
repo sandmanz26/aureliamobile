@@ -83,9 +83,18 @@ export const RECOMMENDATIONS: Recommendation[] = [
  *
  * A row in Sessions is not a prompt, it is a finished thing: opening one has
  * to land you in the conversation that produced it, about that session, with
- * its changes already on the table. The generic opening thread is for "New
- * session" and nothing else — before this, every row opened the same
- * conversation about a sleep meditation, whichever session you tapped.
+ * its changes already on the table.
+ *
+ * There are three ways into the cockpit and they are not the same room:
+ *
+ * - **A new session** — `/chat` with no slug. An empty thread; the prompts do
+ *   the talking. `reset()` puts it here.
+ * - **A session you have made and not published** — a draft. It exists, you
+ *   can play it, and nobody else can. There are no figures to report because
+ *   nobody has played it, so Aurelia talks about what is still wrong with it
+ *   instead, and publishing is the obvious next move.
+ * - **A session that is out** — published. Now there are figures, and the
+ *   conversation is about changing something that people are already using.
  *
  * Only Aurelia's lines carry the session; the rest of the exchange is the
  * demo's own texture and stays put.
@@ -93,27 +102,33 @@ export const RECOMMENDATIONS: Recommendation[] = [
 export function messagesForSession(session: SessionRecord): Message[] {
   const start = Date.now() - 9 * 60_000
   const outcome = session.outcome[0]
+  const draft = session.published === false
+
+  const opening = draft
+    ? `Good morning, Adam.\n\n“${session.title}” is built — ${totalMinutes(session)} minutes, ` +
+      `${session.layers.length} layers — and still yours only. Nobody has played it, ` +
+      `so there is nothing to report back yet.`
+    : `Good morning, Adam.\n\n“${session.title}” is built and running — ` +
+      `${totalMinutes(session)} minutes, by ${session.author}` +
+      (outcome ? `, and people report ${outcome.label.toLowerCase()} ${outcome.value}.` : '.')
+
   return [
-    {
-      id: 1,
-      from: 'aurelia',
-      at: start,
-      text:
-        `Good morning, Adam.\n\n“${session.title}” is built and running — ` +
-        `${totalMinutes(session)} minutes, by ${session.author}` +
-        (outcome ? `, and people report ${outcome.label.toLowerCase()} ${outcome.value}.` : '.'),
-    },
+    { id: 1, from: 'aurelia', at: start, text: opening },
     {
       id: 2,
       from: 'aurelia',
       at: start + 4_000,
-      text: `How did you find ${session.title}?`,
+      text: draft
+        ? 'Anything you want to change before it goes out?'
+        : `How did you find ${session.title}?`,
     },
     {
       id: 3,
       from: 'user',
       at: start + 96_000,
-      text: 'It was good, but it was to short, I had to repeat it multiple times.',
+      text: draft
+        ? 'The ending is still too bright. Everything before it is right.'
+        : 'It was good, but it was to short, I had to repeat it multiple times.',
       status: 'read',
     },
     {

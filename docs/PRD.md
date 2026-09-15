@@ -404,8 +404,6 @@ field:
   costs the author its width on a 10px line.
 
 A draft shows no label rather than saying "Draft" — the absence is the state.
-Nothing can be a draft yet, because the cockpit cannot save one; the flag is
-the seam for when it can.
 
 **The row has two tap targets.** The play disc opens the player; the rest of
 the row opens that session's conversation. That is the frame's own prototype
@@ -418,6 +416,27 @@ lines name the session, its changes are laid open rather than folded, and the
 apply chip is there to change them. `/chat` is a new session and `/chat/:slug`
 is an existing one; the folded deck belongs to the first, because a fold is
 Aurelia handing over a proposal and these changes are already in the thing.
+
+### Three ways into the cockpit, and they are not the same room
+
+The mock catalogue now carries drafts, so all three states are reachable:
+
+| Opening | Route | What the thread is |
+| --- | --- | --- |
+| A new session | `/chat` | Empty. The prompts do the talking. |
+| One you made and have not published | `/chat/:slug` | It exists and only you can play it. There are no figures, because nobody has played it, so Aurelia talks about what is still wrong with it and publishing is the obvious next move. |
+| One that is out | `/chat/:slug` | Now there are figures, and the conversation is about changing something people are already using. |
+
+**A draft is yours and shows only where it is yours.** Every public surface —
+shelves, categories, the creator index, and the Sessions screen's "All" —
+reads the published catalogue. "Created by you" is the one place a draft
+appears, which is what makes that filter worth a tap rather than a narrowing
+of the same list.
+
+A draft also carries no plays, no recreations and no outcome, because none
+have happened. The figure pill on its row is absent for that reason rather
+than by styling, and a creator's "34 published sessions" counts only what is
+out.
 
 Two rules make it feel like one place rather than a reload:
 
@@ -454,7 +473,6 @@ before engineering meets them in QA.
 | Auth | Reset link expired or used | Reachable by design; must be caught before the form renders |
 | Home | Day-0 user with no personalisation | Quick Start and Live Sessions show fixed content |
 | Sessions | Not enough history for "Picked for You" | Needs an honest fallback, not an empty rail |
-| Sessions | A draft session in the list | The Published label has an off state nothing can reach yet |
 | Challenge | Streak broken; fewer than three participants | The mechanic turns on day count and the podium assumes three |
 | Player | Playback failure; session withdrawn after being linked | Detail pages are shareable, so dead slugs are reachable |
 | Profile | Zero stats; delete-account confirmation | Delete is missing entirely, not just its state |

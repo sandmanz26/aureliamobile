@@ -1210,14 +1210,126 @@ export const SESSIONS: SessionRecord[] = [
     ],
     shelves: ['community'],
   },
+
+  // ------------------------------------------------------------- drafts ---
+  // Built and not published. Everything above is out in the world, which left
+  // the published flag with no off state anything could reach — so "Published"
+  // was a badge on every row and the cockpit had one thread to show. These two
+  // are what a session looks like before you press Publish.
+  //
+  // Note what they do NOT carry: no shelves, no plays, no recreations, and no
+  // outcome. Nobody has played them, so there is nothing to report, and the
+  // row's figure pill is absent for exactly that reason rather than by styling.
+  {
+    slug: 'evening-unwind-v3',
+    seconds: 40,
+    title: 'Evening Unwind v3',
+    photo: 'glow',
+    gradient: 'linear-gradient(160deg, var(--color-warning-300), var(--color-espresso-900))',
+    description: 'A third pass at the hour after work — slower, and with the guidance pulled right back.',
+    summary:
+      'Built from the Dolphins frequency mix with the tempo dropped again and the voice reduced to three cues. Not out yet: the last five minutes still resolve too brightly for something meant to be listened to in the dark.',
+    author: 'Adam Nilson',
+    authorPhoto: 'avatar',
+    authorRole: 'Community creator · 34 published sessions',
+    plays: '0',
+    recreated: '0',
+    minutes: 18,
+    category: 'Calm',
+    intent: 'Finish the working day without falling asleep in a chair.',
+    outcome: [],
+    layers: [
+      { id: 'pads', name: 'Warm pads', detail: 'Two octaves below the original', level: 64 },
+      { id: 'tide', name: 'Tide bed', detail: 'Breathes at 5 cycles / minute', level: 51 },
+      { id: 'voice', name: 'Guidance', detail: 'Female, three cues only', level: 28 },
+    ],
+    chapters: [
+      { label: 'Arrival', minutes: 4, detail: 'Pads only, nothing asked.' },
+      { label: 'Settle', minutes: 9, detail: 'Tide enters; the three cues land here.' },
+      { label: 'Close', minutes: 5, detail: 'Still resolving too brightly — the reason this is a draft.' },
+    ],
+    personalization: [
+      { label: 'Adapts to', value: 'Resting heart rate' },
+      { label: 'Voice', value: 'Female · unhurried' },
+      { label: 'Ends', value: 'Fade to silence, no chime' },
+      { label: 'Best time', value: 'Early evening' },
+    ],
+    commonChanges: [],
+    lineage: [
+      { title: 'Ocean floor', author: 'Aurelia', note: 'Starter template' },
+      { title: 'Deep blue, slower', author: 'Marcus Lee', note: 'Halved the tempo' },
+      { title: 'Evening Unwind v3', author: 'Adam Nilson', note: 'Dropped the tempo again and cut the guidance to three cues' },
+    ],
+    safety: [
+      'Not a treatment for any medical condition, and not a substitute for care.',
+      'Do not listen while driving — the descent is designed to lower alertness.',
+    ],
+    shelves: [],
+    published: false,
+  },
+  {
+    slug: 'monday-reset',
+    seconds: 5,
+    title: 'Monday Reset',
+    photo: 'morning',
+    gradient: 'linear-gradient(160deg, var(--color-primary-200), var(--color-info-200))',
+    description: 'Ten minutes to start the week on, written from scratch rather than forked.',
+    summary:
+      'A short climb with no guidance at all — breath pacing carried entirely by the bed. Held back because it has only been tested on one Monday.',
+    author: 'Adam Nilson',
+    authorPhoto: 'avatar',
+    authorRole: 'Community creator · 34 published sessions',
+    plays: '0',
+    recreated: '0',
+    minutes: 10,
+    category: 'Energy',
+    intent: 'Get moving without the jolt of a stimulant track.',
+    outcome: [],
+    layers: [
+      { id: 'bed', name: 'Rising bed', detail: 'Climbs a fifth across the session', level: 70 },
+      { id: 'air', name: 'Air', detail: 'Breath pacing, no words', level: 42 },
+    ],
+    chapters: [
+      { label: 'Open', minutes: 3, detail: 'Bed alone, low.' },
+      { label: 'Climb', minutes: 7, detail: 'The fifth arrives across the last four minutes.' },
+    ],
+    personalization: [
+      { label: 'Adapts to', value: 'Sleep score' },
+      { label: 'Voice', value: 'None' },
+      { label: 'Ends', value: 'Stops on the beat' },
+      { label: 'Best time', value: 'Morning' },
+    ],
+    commonChanges: [],
+    lineage: [
+      { title: 'Bright open', author: 'Aurelia', note: 'Starter template' },
+      { title: 'Monday Reset', author: 'Adam Nilson', note: 'Wrote the climb and dropped the guidance' },
+    ],
+    safety: ['Not a treatment for any medical condition.'],
+    shelves: [],
+    published: false,
+  },
 ]
+
+/** Out in the world. A draft is built and has not been published. */
+export function isPublished(session: SessionRecord) {
+  return session.published !== false
+}
+
+/**
+ * The catalogue as everyone else sees it.
+ *
+ * Every public surface goes through this: shelves, categories, the creator
+ * index. A draft is yours and only shows where it is yours — the Sessions
+ * screen under "Created by you".
+ */
+export const PUBLISHED_SESSIONS = SESSIONS.filter(isPublished)
 
 export function findSession(slug: string | undefined) {
   return SESSIONS.find((session) => session.slug === slug)
 }
 
 export function sessionsOnShelf(shelf: Shelf, category: CategoryFilter = 'All') {
-  return SESSIONS.filter(
+  return PUBLISHED_SESSIONS.filter(
     (session) =>
       session.shelves.includes(shelf) && (category === 'All' || session.category === category),
   )
@@ -1225,7 +1337,9 @@ export function sessionsOnShelf(shelf: Shelf, category: CategoryFilter = 'All') 
 
 /** The same filter over the whole catalogue, for surfaces that aren't a shelf. */
 export function sessionsInCategory(category: CategoryFilter = 'All') {
-  return category === 'All' ? SESSIONS : SESSIONS.filter((session) => session.category === category)
+  return category === 'All'
+    ? PUBLISHED_SESSIONS
+    : PUBLISHED_SESSIONS.filter((session) => session.category === category)
 }
 
 export function totalMinutes(session: SessionRecord) {
