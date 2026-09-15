@@ -51,6 +51,18 @@ export interface SessionRecord {
   safety: string[]
   /** Which shelves on the signed-in home this session appears on. */
   shelves: Shelf[]
+  /**
+   * Whether this session is out in the world. Everything in the catalogue is,
+   * which is why it is optional and treated as true — a draft is a session
+   * built in the cockpit that nobody has pressed Publish on.
+   */
+  published?: boolean
+  /**
+   * The seconds part of the run time. Mock, like the minutes beside it: the
+   * design shows durations as m:ss and there is no measurement behind either
+   * number.
+   */
+  seconds?: number
 }
 
 /**
@@ -92,6 +104,7 @@ export const CATEGORY_FILTERS: CategoryFilter[] = ['All', ...CATEGORIES.map((ent
 export const SESSIONS: SessionRecord[] = [
   {
     slug: 'dolphins-frequency',
+    seconds: 22,
     title: 'Dolphins frequency',
     photo: 'dolphins',
     gradient: 'linear-gradient(160deg, var(--color-info-800), var(--color-info-400))',
@@ -148,6 +161,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'raise-your-vibration',
+    seconds: 35,
     title: 'Raise your Vibration',
     photo: 'vibration',
     gradient: 'linear-gradient(160deg, var(--color-warning-300), var(--color-danger-200))',
@@ -199,6 +213,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'mind-dance',
+    seconds: 8,
     title: 'Mind Dance',
     photo: 'mindDance',
     gradient: 'linear-gradient(160deg, var(--color-primary-700), var(--color-primary-300))',
@@ -250,6 +265,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'cosmic-flow',
+    seconds: 47,
     title: 'Cosmic Flow',
     photo: 'cosmic',
     gradient: 'linear-gradient(160deg, var(--color-primary-950), var(--color-info-700))',
@@ -301,6 +317,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: '528-hz-reset',
+    seconds: 12,
     title: '528 Hz Reset',
     photo: 'water',
     gradient: 'linear-gradient(160deg, var(--color-neutral-600), var(--color-warning-200))',
@@ -352,6 +369,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'deep-grounding',
+    seconds: 5,
     title: 'Deep Grounding',
     photo: 'forest',
     gradient: 'linear-gradient(160deg, var(--color-success-900), var(--color-success-500))',
@@ -406,6 +424,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'inner-frequency',
+    seconds: 40,
     title: 'Inner Frequency',
     photo: 'glow',
     gradient: 'linear-gradient(160deg, var(--color-danger-600), var(--color-warning-400))',
@@ -457,6 +476,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'ocean-breath',
+    seconds: 18,
     title: 'Ocean Breath',
     photo: 'waves',
     gradient: 'linear-gradient(160deg, var(--color-info-950), var(--color-info-600))',
@@ -508,6 +528,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'rainy-mind',
+    seconds: 52,
     title: 'Rainy Mind',
     photo: 'rain',
     gradient: 'linear-gradient(160deg, var(--color-info-800), var(--color-warning-400))',
@@ -559,6 +580,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'inner-balance',
+    seconds: 27,
     title: 'Inner Balance',
     photo: 'stones',
     gradient: 'linear-gradient(160deg, var(--color-neutral-500), var(--color-neutral-200))',
@@ -610,6 +632,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'golden-hour',
+    seconds: 9,
     title: 'Golden Hour',
     photo: 'glow',
     gradient: 'linear-gradient(160deg, var(--color-warning-700), var(--color-warning-300))',
@@ -658,6 +681,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'quiet-space',
+    seconds: 44,
     title: 'Quiet Space',
     photo: 'meadow',
     gradient: 'linear-gradient(160deg, var(--color-success-800), var(--color-success-400))',
@@ -709,6 +733,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'dream-drift',
+    seconds: 31,
     title: 'Dream Drift',
     photo: 'underwater',
     gradient: 'linear-gradient(160deg, var(--color-info-900), var(--color-info-400))',
@@ -764,6 +789,7 @@ export const SESSIONS: SessionRecord[] = [
   // which made the filter look broken rather than empty.
   {
     slug: 'slow-piano-drift',
+    seconds: 16,
     title: 'Slow Piano Drift',
     photo: 'morning',
     gradient: 'linear-gradient(160deg, var(--color-neutral-800), var(--color-info-400))',
@@ -813,6 +839,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: '432-hz-strings',
+    seconds: 58,
     title: '432 Hz Strings',
     photo: 'mountains',
     gradient: 'linear-gradient(160deg, var(--color-espresso-900), var(--color-warning-400))',
@@ -866,6 +893,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'bowl-bath',
+    seconds: 23,
     title: 'Bowl Bath',
     photo: 'calm',
     gradient: 'linear-gradient(160deg, var(--color-info-800), var(--color-neutral-300))',
@@ -918,6 +946,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'morning-spark',
+    seconds: 7,
     title: 'Morning Spark',
     photo: 'affirmations',
     gradient: 'linear-gradient(160deg, var(--color-warning-600), var(--color-gold-300))',
@@ -970,6 +999,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'cold-start',
+    seconds: 39,
     title: 'Cold Start',
     photo: 'breathwork',
     gradient: 'linear-gradient(160deg, var(--color-info-700), var(--color-gold-200))',
@@ -1023,6 +1053,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'body-scan-slowly',
+    seconds: 14,
     title: 'Body Scan, Slowly',
     photo: 'stress',
     gradient: 'linear-gradient(160deg, var(--color-success-900), var(--color-success-500))',
@@ -1075,6 +1106,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'noting-practice',
+    seconds: 50,
     title: 'Noting Practice',
     photo: 'bloom',
     gradient: 'linear-gradient(160deg, var(--color-warning-700), var(--color-gold-200))',
@@ -1127,6 +1159,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'night-rain-sleep',
+    seconds: 33,
     title: 'Night Rain Sleep',
     photo: 'sleep',
     gradient: 'linear-gradient(160deg, var(--color-espresso-950), var(--color-info-700))',
@@ -1197,4 +1230,21 @@ export function sessionsInCategory(category: CategoryFilter = 'All') {
 
 export function totalMinutes(session: SessionRecord) {
   return session.chapters.reduce((sum, chapter) => sum + chapter.minutes, 0)
+}
+
+/** The frame's duration format — 12:22, not "12 min". */
+export function durationLabel(session: SessionRecord) {
+  return `${totalMinutes(session)}:${String(session.seconds ?? 0).padStart(2, '0')}`
+}
+
+/**
+ * Whether this session is somebody else's work, forked and changed.
+ *
+ * Every session opens on an Aurelia starter template, so a two-step lineage is
+ * an original: template, then this author. A third step means a person stood
+ * between them — which is exactly what recreating is, clone and modify, and
+ * the only honest way to tell the two apart from the data we hold.
+ */
+export function isRecreated(session: SessionRecord) {
+  return session.lineage.length > 2
 }
