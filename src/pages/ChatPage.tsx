@@ -12,6 +12,7 @@ import { RECOMMENDATIONS, useChatSession } from '../chat/ChatSessionContext'
 import type { Message, Status } from '../chat/ChatSessionContext'
 import { AttachedSession } from '../components/chat/AttachedSession'
 import { draftTitleFor, findQuickStart } from '../lib/quickStart'
+import { replyTo } from '../lib/replies'
 import { RecommendationCard } from '../components/chat/RecommendationCard'
 import { RecommendationDeck } from '../components/chat/RecommendationDeck'
 import { SessionProgressCard } from '../components/chat/SessionProgressCard'
@@ -321,21 +322,23 @@ export function ChatPage() {
     window.setTimeout(() => {
       setTyping(false)
       setMessages((current) => {
-        // The first answer in a thread that has nothing proposed yet gets the
-        // recommendations with it. Without that, a session started from Quick
-        // Start offered "Apply new changes (3)" over a deck nobody had handed
-        // over — three changes to nothing.
+        // What was said decides what comes back. One reply for every input is
+        // what makes a demo feel like a demo — the screen is plainly not
+        // reading you, so you stop typing anything real into it.
+        const reply = replyTo(message.text)
+        // The deck comes over once, with the first reply that is a proposal.
+        // Without that, a thread started from Quick Start offered "Apply new
+        // changes (3)" over a deck nobody had handed over.
         const proposed = current.some((item) => item.attachment === 'recommendations')
+        const hands = !proposed && (reply.proposes || current.length <= 3)
         return [
           ...current,
           {
             id: nextMessageId(),
             from: 'aurelia',
             at: Date.now(),
-            text: proposed
-              ? 'Got it — I’ve noted that for the next revision of your session.'
-              : 'Got it. Here is what I would put in it:',
-            ...(proposed ? {} : { attachment: 'recommendations' as const }),
+            text: hands ? `${reply.text}\n\nHere is what I would put in it:` : reply.text,
+            ...(hands ? { attachment: 'recommendations' as const } : {}),
           },
         ]
       })
