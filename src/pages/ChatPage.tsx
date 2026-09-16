@@ -10,6 +10,7 @@ import { PublishSheet } from '../components/chat/PublishSheet'
 import { useAudioPlayer } from '../audio/AudioPlayerContext'
 import { RECOMMENDATIONS, useChatSession } from '../chat/ChatSessionContext'
 import type { Message, Status } from '../chat/ChatSessionContext'
+import { AttachedSession } from '../components/chat/AttachedSession'
 import { RecommendationCard } from '../components/chat/RecommendationCard'
 import { RecommendationDeck } from '../components/chat/RecommendationDeck'
 import { SessionProgressCard } from '../components/chat/SessionProgressCard'
@@ -157,6 +158,9 @@ export function ChatPage() {
         at: now,
         status: 'read',
         text: `Recreate “${brief.title}” by ${brief.author}, at ${brief.minutes} minutes.\n${lines}`,
+        // Attached, not just named: you can see what you are forking and play
+        // it without leaving the thread.
+        attachment: { session: brief.slug },
       },
     ])
     setTyping(true)
@@ -341,8 +345,17 @@ export function ChatPage() {
             const startsRun = !previous || previous.from !== message.from || message.at - previous.at > 120_000
             const endsRun = !next || next.from !== message.from || next.at - message.at > 120_000
 
+            const attached = message.attachment
             const attachment =
-              message.attachment === 'recommendations' && showRecommendations ? (
+              typeof attached === 'object' ? (
+                <div
+                  className={`u-message mt-8 flex ${
+                    message.from === 'user' ? 'justify-end' : 'pl-34'
+                  }`}
+                >
+                  <AttachedSession slug={attached.session} />
+                </div>
+              ) : attached === 'recommendations' && showRecommendations ? (
                 deckOpen && canApply ? (
                   <div className="u-message -mx-20 mt-12 flex gap-11 overflow-x-auto px-20 pb-4">
                     {RECOMMENDATIONS.map((recommendation) => (
@@ -398,6 +411,7 @@ export function ChatPage() {
                     {message.text}
                   </p>
                 )}
+                {attachment}
                 {endsRun && (
                   <span className="mt-4 flex items-center gap-4">
                     <span className="text-style-caption text-text-secondary">{clockTime(message.at)}</span>

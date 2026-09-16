@@ -19,9 +19,16 @@ export interface Message {
   /** Voice notes render as a player with the transcript under it. */
   voice?: { durationMs: number }
   status?: Status
-  /** Cards Aurelia handed over with this message. They belong to it, not to
-   *  the end of the thread: everything said afterwards comes after them. */
-  attachment?: 'recommendations'
+  /**
+   * Something that came with this message rather than after it. It belongs to
+   * the message, not to the end of the thread, so everything said afterwards
+   * comes after it.
+   *
+   * `recommendations` is Aurelia's deck. A `{ session }` is the original a
+   * fork is being made from — attached by the profile's Recreate, so the
+   * cockpit opens showing the thing it is about instead of only naming it.
+   */
+  attachment?: 'recommendations' | { session: string }
 }
 
 /** The thread opens mid-conversation, so the first messages are backdated. */

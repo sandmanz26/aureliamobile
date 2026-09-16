@@ -5,57 +5,51 @@ import { CoinPill } from '../components/ui/CoinPill'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import type { CoverKey } from '../lib/photos'
 import { findPerson } from '../lib/people'
+import type { SessionRecord } from '../lib/sessions'
+import { totalMinutes } from '../lib/sessions'
 import { useDrawer } from '../layouts/DrawerContext'
 
 interface SessionCard {
+  /** The session behind it. Both controls on the card need one. */
+  slug: string
   title: string
   description: string
+  author: string
+  minutes: number
   plays: string
   recreated: string
   gradient: string
   photo: CoverKey
 }
 
-const cards: SessionCard[] = [
-  {
-    title: 'Dolphins frequency',
-    photo: 'dolphins' as CoverKey,
-    description: 'This helped Adam reduce stress by 43% in less that a week.',
-    plays: '18.5k',
-    recreated: '1.5k',
-    gradient: 'linear-gradient(160deg, var(--color-blue-800), var(--color-blue-400))',
-  },
-  {
-    title: 'Soft Reset',
-    photo: 'calm' as CoverKey,
-    description: 'This helped Adam feel more relaxed, with 91% less tension.',
-    plays: '18.5k',
-    recreated: '1.5k',
-    gradient: 'linear-gradient(160deg, var(--color-amber-300), var(--color-red-200))',
-  },
-  {
-    title: 'Deep Space',
-    photo: 'mindDance' as CoverKey,
-    description: 'This helped Adam quiet thoughts by 38% in less than a week.',
-    plays: '12.1k',
-    recreated: '980',
-    gradient: 'linear-gradient(160deg, var(--color-neutral-950), var(--color-neutral-700))',
-  },
-  {
-    title: 'Clear Skies',
-    photo: 'mountains' as CoverKey,
-    description: 'This helped Adam boost focus by 46% in less than a week.',
-    plays: '9.8k',
-    recreated: '640',
-    gradient: 'linear-gradient(160deg, var(--color-blue-200), var(--color-neutral-100))',
-  },
-]
-
+/**
+ * The figures the design carries for the signed-in profile.
+ *
+ * Kept rather than summed, because summing the catalogue gives a different and
+ * less useful number: one session alone has 124k plays. "6 Posts" is the one
+ * that does reconcile — four published sessions plus the two drafts, which is
+ * everything Adam has made.
+ */
 const stats = [
   { label: 'Posts', value: '6' },
   { label: 'Played', value: '18,513' },
   { label: 'Recreated', value: '1,528' },
 ]
+
+/** A catalogue session, as this screen's card wants it. */
+function toCard(session: SessionRecord): SessionCard {
+  return {
+    slug: session.slug,
+    title: session.title,
+    photo: session.photo,
+    description: session.description,
+    author: session.author,
+    minutes: totalMinutes(session),
+    plays: session.plays,
+    recreated: session.recreated,
+    gradient: session.gradient,
+  }
+}
 
 /**
  * One page for two readings of the same screen. /profile is the signed-in
@@ -86,16 +80,34 @@ export function ProfilePage() {
         { label: 'Played', value: person.sessions[0]?.plays ?? '—' },
         { label: 'Recreated', value: person.sessions[0]?.recreated ?? '—' },
       ]
-  const shownCards: SessionCard[] = own
-    ? cards
-    : person.sessions.map((session) => ({
-        title: session.title,
-        photo: session.photo,
-        description: session.description,
-        plays: session.plays,
-        recreated: session.recreated,
-        gradient: session.gradient,
-      }))
+  // Both branches read the catalogue now. The signed-in profile used to draw a
+  // hardcoded shelf of four, three of whose titles matched no session — which
+  // is why neither control on a card could go anywhere.
+  const shownCards: SessionCard[] = person.sessions.map(toCard)
+
+  /**
+   * Straight into the cockpit with the session already attached, rather than
+   * via /recreate.
+   *
+   * That screen is where you state changes against an original; from a profile
+   * card there are none to state yet, so it would be a form to skip. The brief
+   * is the same shape either way, and an empty `changes` is what the cockpit
+   * reads as "keep it as it is" — so the thread opens on the fork, and the
+   * first thing you say is the first change.
+   */
+  function recreate(card: SessionCard) {
+    navigate('/chat', {
+      state: {
+        recreate: {
+          slug: card.slug,
+          title: card.title,
+          author: card.author,
+          minutes: card.minutes,
+          changes: [],
+        },
+      },
+    })
+  }
 
   return (
     <div className="mx-auto max-w-[720px] px-20 py-16 lg:px-24 lg:py-24">
@@ -186,13 +198,22 @@ export function ProfilePage() {
           >
             <CoverImage photo={card.photo} gradient={card.gradient} width={520} height={460} />
             <div className="relative flex items-center justify-between">
-              <span className="flex size-32 shrink-0 items-center justify-center rounded-full bg-white/25 text-text-inverse backdrop-blur-sm">
+              {/* Both of these were inert: the glyph was a span and the button
+                  had no handler. They are the only two things a profile card
+                  is for — hear it, or make your own of it. */}
+              <Link
+                to={`/play/${card.slug}`}
+                state={{ origin: own ? 'own' : 'community' }}
+                aria-label={`Play ${card.title}`}
+                className="u-press flex size-32 shrink-0 items-center justify-center rounded-full bg-white/25 text-text-inverse backdrop-blur-sm"
+              >
                 <Play size={14} fill="currentColor" />
-              </span>
+              </Link>
               <button
                 type="button"
                 aria-label={`Recreate ${card.title}`}
-                className="flex h-32 shrink-0 items-center gap-4 rounded-full bg-surface-default/90 px-12 text-style-label text-text-primary"
+                onClick={() => recreate(card)}
+                className="u-press flex h-32 shrink-0 items-center gap-4 rounded-full bg-surface-default/90 px-12 text-style-label text-text-primary"
               >
                 <Shuffle size={14} className="shrink-0" />
                 <span className="hidden @min-[124px]:inline">Recreate</span>

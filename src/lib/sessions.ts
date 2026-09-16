@@ -1211,6 +1211,157 @@ export const SESSIONS: SessionRecord[] = [
     shelves: ['community'],
   },
 
+  // Adam's other three published sessions.
+  //
+  // They exist because the profile screen was drawing its shelf from a
+  // hardcoded list beside the catalogue: four cards with titles that matched
+  // no session, so neither the play glyph nor Recreate on them could point
+  // anywhere. A card that names a session has to *be* a session.
+  {
+    slug: 'soft-reset',
+    seconds: 18,
+    title: 'Soft Reset',
+    photo: 'calm',
+    gradient: 'linear-gradient(160deg, var(--color-amber-300), var(--color-red-200))',
+    description: 'This helped Adam feel more relaxed, with 91% less tension.',
+    summary:
+      'Fifteen minutes to put a day down without lying down for it. Built to be played at a desk, so nothing in it asks you to close your eyes.',
+    author: 'Adam Nilson',
+    authorPhoto: 'avatar',
+    authorRole: 'Community creator · 34 published sessions',
+    plays: '18.5k',
+    recreated: '1.5k',
+    minutes: 15,
+    category: 'Calm',
+    intent: 'Break a day in half without ending it.',
+    outcome: [
+      { label: 'Tension', value: '\u221291%', note: 'self-reported, one session' },
+      { label: 'Finished it', value: '88%', note: 'played to the end' },
+    ],
+    layers: [
+      { id: 'pad', name: 'Soft pad', detail: 'No attack, no top end', level: 66 },
+      { id: 'breath', name: 'Breath pacing', detail: '5 cycles / minute, no words', level: 44 },
+    ],
+    chapters: [
+      { label: 'Put it down', minutes: 6, detail: 'Pad alone, widening.' },
+      { label: 'Even out', minutes: 6, detail: 'Breath pacing arrives underneath.' },
+      { label: 'Back to it', minutes: 3, detail: 'Brightens deliberately \u2014 this one returns you to the day.' },
+    ],
+    personalization: [
+      { label: 'Adapts to', value: 'Time of day' },
+      { label: 'Voice', value: 'None' },
+      { label: 'Ends', value: 'Brightens, no chime' },
+      { label: 'Best time', value: 'Mid-afternoon' },
+    ],
+    commonChanges: [
+      { change: 'Made it shorter', share: '41%' },
+      { change: 'Added guidance', share: '19%' },
+    ],
+    lineage: [
+      { title: 'Soft pad', author: 'Aurelia', note: 'Starter template' },
+      { title: 'Soft Reset', author: 'Adam Nilson', note: 'Wrote the return and cut the guidance' },
+    ],
+    safety: ['Not a treatment for any medical condition.'],
+    shelves: ['community', 'picked'],
+  },
+  {
+    slug: 'deep-space',
+    seconds: 3,
+    title: 'Deep Space',
+    photo: 'mindDance',
+    gradient: 'linear-gradient(160deg, var(--color-neutral-950), var(--color-neutral-700))',
+    description: 'This helped Adam quiet thoughts by 38% in less than a week.',
+    summary:
+      'Very low, very wide and almost empty. Written for the kind of thinking that will not stop because it has nothing to push against \u2014 so this gives it nothing.',
+    author: 'Adam Nilson',
+    authorPhoto: 'avatar',
+    authorRole: 'Community creator · 34 published sessions',
+    plays: '12.1k',
+    recreated: '980',
+    minutes: 26,
+    category: 'Meditations',
+    intent: 'Give a busy mind nothing to argue with.',
+    outcome: [
+      { label: 'Racing thoughts', value: '\u221238%', note: 'self-reported, first week' },
+      { label: 'Finished it', value: '64%', note: 'played to the last chapter' },
+    ],
+    layers: [
+      { id: 'sub', name: 'Sub drone', detail: '38 Hz, felt more than heard', level: 58 },
+      { id: 'air', name: 'Upper air', detail: 'Two octaves of nothing much', level: 31 },
+    ],
+    chapters: [
+      { label: 'Leave', minutes: 8, detail: 'The drone arrives from below.' },
+      { label: 'Drift', minutes: 14, detail: 'Nothing changes. That is the chapter.' },
+      { label: 'Return', minutes: 4, detail: 'The air thins out first, then the drone.' },
+    ],
+    personalization: [
+      { label: 'Adapts to', value: 'Nothing \u2014 this one is fixed' },
+      { label: 'Voice', value: 'None' },
+      { label: 'Ends', value: 'Fade to silence' },
+      { label: 'Best time', value: 'Late night' },
+    ],
+    commonChanges: [
+      { change: 'Made it longer', share: '52%' },
+      { change: 'Raised the sub', share: '22%' },
+    ],
+    lineage: [
+      { title: 'Room tone', author: 'Aurelia', note: 'Starter template' },
+      { title: 'Deep Space', author: 'Adam Nilson', note: 'Dropped everything except the drone' },
+    ],
+    safety: [
+      'Not a treatment for any medical condition.',
+      'Contains sustained low frequencies \u2014 not for headphones with a sub boost.',
+    ],
+    shelves: ['community'],
+  },
+  {
+    slug: 'clear-skies',
+    seconds: 51,
+    title: 'Clear Skies',
+    photo: 'mountains',
+    gradient: 'linear-gradient(160deg, var(--color-blue-200), var(--color-neutral-100))',
+    description: 'This helped Adam boost focus by 46% in less than a week.',
+    summary:
+      'Bright, dry and rhythmic, with no low end at all. The only session here written to be played while you are working rather than instead of it.',
+    author: 'Adam Nilson',
+    authorPhoto: 'avatar',
+    authorRole: 'Community creator · 34 published sessions',
+    plays: '9.8k',
+    recreated: '640',
+    minutes: 42,
+    category: 'Music',
+    intent: 'Hold attention on something else for a long stretch.',
+    outcome: [
+      { label: 'Focus', value: '+46%', note: 'self-reported, first week' },
+      { label: 'Played to the end', value: '71%', note: 'the longest session here' },
+    ],
+    layers: [
+      { id: 'pulse', name: 'Dry pulse', detail: '68 bpm, no swing', level: 62 },
+      { id: 'strings', name: 'High strings', detail: 'Nothing below 400 Hz', level: 47 },
+    ],
+    chapters: [
+      { label: 'Start', minutes: 4, detail: 'Pulse only, quiet.' },
+      { label: 'Work', minutes: 34, detail: 'Strings come and go; the pulse never changes.' },
+      { label: 'Stop', minutes: 4, detail: 'Thins to the pulse, then stops on the beat.' },
+    ],
+    personalization: [
+      { label: 'Adapts to', value: 'Calendar \u2014 lengthens to fill a block' },
+      { label: 'Voice', value: 'None' },
+      { label: 'Ends', value: 'Stops on the beat' },
+      { label: 'Best time', value: 'Morning' },
+    ],
+    commonChanges: [
+      { change: 'Made it longer', share: '61%' },
+      { change: 'Removed the strings', share: '24%' },
+    ],
+    lineage: [
+      { title: 'Bright open', author: 'Aurelia', note: 'Starter template' },
+      { title: 'Clear Skies', author: 'Adam Nilson', note: 'Wrote the pulse and stripped the low end' },
+    ],
+    safety: ['Not a treatment for any medical condition.'],
+    shelves: ['community', 'impact'],
+  },
+
   // ------------------------------------------------------------- drafts ---
   // Built and not published. Everything above is out in the world, which left
   // the published flag with no off state anything could reach — so "Published"

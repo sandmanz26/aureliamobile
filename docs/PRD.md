@@ -438,6 +438,41 @@ have happened. The figure pill on its row is absent for that reason rather
 than by styling, and a creator's "34 published sessions" counts only what is
 out.
 
+### A profile card is a session, and both of its controls do something
+
+The profile's shelf was a hardcoded list of four beside the catalogue, and
+three of those titles — Soft Reset, Deep Space, Clear Skies — matched no
+session. That is why neither control on a card could go anywhere: the play
+glyph was a `<span>` and Recreate was a button with no handler. A card that
+names a session has to *be* a session, so the three now exist in the catalogue
+as Adam's, and both branches of the screen read from it.
+
+- **Play** opens the player on that session.
+- **Recreate** goes straight to the cockpit with the session attached, not via
+  `/recreate`. That screen is where you state changes against an original;
+  from a profile card there are none to state yet, so it would be a form to
+  skip. The brief is the same shape either way, and an empty change list is
+  what the cockpit already reads as "keep it as it is".
+
+**Attached, not just named.** The fork used to arrive as a sentence — *Recreate
+"X" by Y, at N minutes* — which names the session but does not show it, and
+gives you no way to hear the thing you are about to change. The message now
+carries the session itself: cover, title, author, run time, and a play control.
+It hangs off that message rather than the end of the thread, so everything said
+afterwards comes after it.
+
+**One number changed on screen, and it was wrong before.** The Dolphins
+frequency card showed 18.5k plays on the profile and 124k everywhere else,
+because the two were different sources. It reads the catalogue now, so a
+session's figures no longer depend on which screen you are looking at. The
+frame carries the old figure; the catalogue is the one that also feeds Sessions
+and Progress.
+
+**"6 Posts" is the one designed figure that reconciles** — four published
+sessions plus the two drafts, which is everything Adam has made. Played and
+Recreated stay as designed, because summing the catalogue gives a much larger
+number: one session alone has 124k plays.
+
 ### Progress — what a session has done since it was made
 
 Insights in the cockpit's menu opens `/progress/:slug` (Figma 16523:19484,
