@@ -6,18 +6,14 @@ import { useHiddenScrollbars } from '../hooks/useHiddenScrollbars'
 import { useSignInGate } from '../auth/useSignInGate'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { useFeatureFlags } from '../demo/FeatureFlags'
-import type { CoverKey } from '../lib/photos'
 import { Button } from '../components/ui/Button'
 import { MobileStatusBar } from '../components/ui/MobileStatusBar'
 import { NavItem } from '../components/ui/NavItem'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
+import { recentSessions } from '../lib/sessions'
 import { DrawerContext } from './DrawerContext'
 
-const recentSessions: { title: string; author: string; photo: CoverKey }[] = [
-  { title: 'Sleep Meditation', author: 'Adam Nilson', photo: 'sleep' },
-  { title: 'Morning Mindfulness', author: 'Adam Nilson', photo: 'morning' },
-  { title: 'Stress relief techniques', author: 'Marcus Lee', photo: 'stress' },
-]
+const LATEST = recentSessions()
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { isEnabled } = useFeatureFlags()
@@ -83,8 +79,16 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <div className="flex flex-col gap-12">
         <p className="text-style-body-small">Latest</p>
         <div className="flex flex-col gap-16">
-          {recentSessions.map((session) => (
-            <div key={session.title} className="flex items-center gap-12">
+          {/* Real sessions, and each one opens its own thread. These were three
+              inert divs naming sessions that did not exist — on the one shelf
+              whose whole job is taking you back to a conversation. */}
+          {LATEST.map((session) => (
+            <Link
+              key={session.slug}
+              to={`/chat/${session.slug}`}
+              onClick={onNavigate}
+              className="u-press flex items-center gap-12"
+            >
               <PhotoCircle
                 photo={session.photo}
                 size={40}
@@ -94,7 +98,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 <p className="text-style-label truncate">{session.title}</p>
                 <p className="text-style-caption truncate">{session.author}</p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

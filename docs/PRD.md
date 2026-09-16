@@ -470,6 +470,28 @@ conversation on the way to theirs.
 on a wellness product more than most: Aurelia talks about sleep and stress in
 specific figures, and not one of them is a measurement.
 
+### Four doors into the cockpit
+
+The chat is never a destination of its own — there is no Chat entry anywhere in
+the design. It is reached four ways, and each has to arrive somewhere coherent.
+
+| Door | Where from | What the thread opens on |
+| --- | --- | --- |
+| **New session** | the drawer's button | the demo conversation |
+| **Recreate** | a profile card, or `/recreate` | the fork, with the original attached |
+| **Latest** | the drawer's recent list | that session's own thread |
+| **Session / Quick Start** | a Sessions row, or an Explore card | that session, or that kind of session |
+
+**Latest was the one that led nowhere.** Three inert rows naming Sleep
+Meditation, Morning Mindfulness and Stress relief techniques — none of which
+was a session — on the one shelf whose whole job is taking you back to a
+conversation. It reads the catalogue now and each row opens `/chat/:slug`,
+which is the same door a Sessions row uses.
+
+There is no history to sort by, so the three are a fixed set rather than a
+computed one; they stand in for the three the design named — a sleep one, a
+morning one, and the one about stress.
+
 ### Every way into the cockpit starts its own session, and says so
 
 Quick Start had two cards and both linked to a bare `/chat`, so whichever you

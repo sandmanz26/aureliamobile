@@ -1475,6 +1475,27 @@ export function isPublished(session: SessionRecord) {
  */
 export const PUBLISHED_SESSIONS = SESSIONS.filter(isPublished)
 
+/**
+ * The threads you were last in — the drawer's "Latest".
+ *
+ * There are no timestamps in the catalogue and no history to read, so this is
+ * a fixed set rather than a computed one. What matters is that every entry is
+ * a real session: the drawer used to list three titles — Sleep Meditation,
+ * Morning Mindfulness, Stress relief techniques — that matched nothing, so the
+ * one shelf whose whole job is "take me back to that conversation" could not
+ * take you anywhere.
+ *
+ * The three kept here stand in for those three: a sleep one, a morning one,
+ * and the one about stress.
+ */
+const RECENT_SLUGS = ['night-rain-sleep', 'morning-spark', 'dolphins-frequency']
+
+export function recentSessions(): SessionRecord[] {
+  return RECENT_SLUGS.map((slug) => findSession(slug)).filter(
+    (session): session is SessionRecord => session !== undefined,
+  )
+}
+
 export function findSession(slug: string | undefined) {
   return SESSIONS.find((session) => session.slug === slug)
 }
