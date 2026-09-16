@@ -527,6 +527,44 @@ nothing proposed used to still offer "Apply new changes (3)" — three changes t
 nothing. Aurelia now hands the deck over with her reply to your first message,
 so the chip always refers to something on screen.
 
+### Coming back from the player is returning, not starting over
+
+Going off to play what you have just built and pressing Back was the one path
+that threw the work away. New session, apply the changes, watch it reach 100%,
+press play, press Back — and the cockpit was the opening conversation again,
+offering "Apply new changes (3)" as though nothing had happened. The only thing
+left on screen was the mini player at the top, naming a session that, according
+to the thread, had never been made.
+
+**A door opens once, and the history entry has to say so.** Each entry point
+writes its instruction into the history entry — `{ fresh }`, `{ start }`,
+`{ recreate }`, `{ ask }` — and a history entry is not consumed by being used.
+Back pops to that same entry and hands the cockpit the same instruction again.
+The guards against that lived on the page, so leaving for the player destroyed
+them on the way out. The entry is now replaced with a stateless one as soon as
+it has been played out: the history says "the cockpit", which is what it is
+once you have arrived, and Back has nothing left to re-run. Pressing New
+session again is a fresh navigation and still starts over.
+
+**A borrowed recording keeps the name of the thing you made.** Nothing is
+really generated, so a session you build plays a catalogue session standing in
+for it. That is a sound mock — the stand-in is the same kind of session, picked
+for it — but four of the six have an author of their own, and announcing them
+is the point at which the mock shows: you watch "Sleep meditation v1.2" reach
+100%, press play, and the deck reports "Night Rain Sleep by Sophia Reynolds".
+The screen that knows what it built now says so, and the player and the mini
+player believe it. The recording is borrowed; the name on it is not.
+
+The rename is scoped to a draft. A thread about a session that already exists
+is making a new cut of *that* session, which is still its author's — claiming
+it credited the wrong person and, because the name also keys the cut, left one
+session on the deck under the previous draft's title.
+
+**The card reports the state, not the invitation.** "Ready to play" over a
+session that is already loaded and audible asks you to do the thing you just
+did. Once what the thread built is the thing on the deck, the card reads
+*Playing now* or *Paused* instead.
+
 ### A profile card is a session, and both of its controls do something
 
 The profile's shelf was a hardcoded list of four beside the catalogue, and

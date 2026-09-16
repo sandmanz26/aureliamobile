@@ -26,11 +26,11 @@ export function MiniPlayer() {
        the card 76. */
     <div className="relative h-68 overflow-hidden rounded-[20px] bg-surface-default shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)]">
       <div className="flex h-full items-center gap-12 px-16 pb-4">
-        <Link to={`/play/${track.slug}`} state={{ origin: 'own' }} className="u-press shrink-0">
+        <Link to={track.href} state={{ origin: 'own' }} className="u-press shrink-0">
           <PhotoCircle photo={track.photo} size={32} gradient={track.gradient} alt="" />
         </Link>
 
-        <Link to={`/play/${track.slug}`} state={{ origin: 'own' }} className="min-w-0 flex-1">
+        <Link to={track.href} state={{ origin: 'own' }} className="min-w-0 flex-1">
           <p className="text-style-body truncate text-text-primary">{track.title}</p>
           <p className="text-style-label truncate font-normal! text-text-secondary">{track.author}</p>
         </Link>

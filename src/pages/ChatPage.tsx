@@ -21,6 +21,7 @@ import { VoiceRecorder } from '../components/chat/VoiceRecorder'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import { useDrawer } from '../layouts/DrawerContext'
+import { CURRENT_USER } from '../lib/people'
 import { findSession } from '../lib/sessions'
 
 const SUGGESTIONS = ['Add more white noise', 'Make it longer', 'Female voice']
@@ -113,7 +114,7 @@ export function ChatPage() {
     reset,
   } = useChatSession()
   const [typing, setTyping] = useState(false)
-  const { track } = useAudioPlayer()
+  const { track, playing } = useAudioPlayer()
   // Arriving from Home's mic opens the recorder straight away, so the tap that
   // said "talk to Aurelia" lands on a live mic rather than an idle composer.
   const [listening, setListening] = useState(() => routeState?.startVoice === true)
@@ -133,12 +134,23 @@ export function ChatPage() {
   // initialiser above never runs again and the old thread would stay put.
   // Keyed on the navigation rather than a boolean, so pressing New session
   // twice clears it twice.
+  //
+  // A door only opens once. `fresh` is written into a history entry, and the
+  // Back button pops straight back to that entry — so without the spend-effect
+  // at the bottom of this block, walking off to the player and pressing back
+  // re-read `fresh: true`, called reset() a second time, and threw away the
+  // session that had just been generated. The refs here cannot stop that on
+  // their own: leaving for the player unmounts this page, so on the way back
+  // they are blank again.
   useEffect(() => {
     if (!routeState?.fresh || freshHandled.current === location.key) return
     freshHandled.current = location.key
+    // A card or a fork writes its own opening; letting the blank one land
+    // first would show somebody else's conversation on the way to theirs.
+    if (routeState.start || routeState.recreate) return
     setTyping(false)
     reset()
-  }, [location.key, routeState?.fresh, reset])
+  }, [location.key, routeState?.fresh, routeState?.start, routeState?.recreate, reset])
 
   // Point the thread at the session in the URL. openSession no-ops when it is
   // already on that one, which is what makes going off to play it and coming
@@ -214,7 +226,7 @@ export function ChatPage() {
     // for the original — which is at least the right session.
     setDraft({ title: `${brief.title} v2`, slug: brief.slug })
     setTyping(true)
-    const timer = window.setTimeout(() => {
+    window.setTimeout(() => {
       setTyping(false)
       setMessages((current) => [
         ...current,
@@ -226,7 +238,10 @@ export function ChatPage() {
         },
       ])
     }, 1600)
-    return () => window.clearTimeout(timer)
+    // Deliberately not cleared on unmount. The thread lives above the router —
+    // that is what it is for — so a reply in flight should still land if you
+    // step away for a moment, and clearing it here would also cancel it when
+    // the spend-effect below strips this navigation's state.
   }, [brief, location.key, reset, setMessages, nextMessageId, setDraft])
 
   // What was typed on Home arrives as the first thing said here, so the visitor
@@ -239,7 +254,7 @@ export function ChatPage() {
       { id: nextMessageId(), from: 'user', at: Date.now(), status: 'read', text: ask },
     ])
     setTyping(true)
-    const timer = window.setTimeout(() => {
+    window.setTimeout(() => {
       setTyping(false)
       setMessages((current) => [
         ...current,
@@ -251,8 +266,29 @@ export function ChatPage() {
         },
       ])
     }, 1400)
-    return () => window.clearTimeout(timer)
+    // Uncleared for the same reason as the fork's reply above.
   }, [ask, setMessages, nextMessageId])
+
+  /**
+   * A door's state is spent once it has been played out.
+   *
+   * Every entry point writes its instruction into the history entry —
+   * `{ fresh }`, `{ start }`, `{ recreate }`, `{ ask }` — and a history entry
+   * is not a one-shot: pressing Back from the player pops to the very same
+   * entry, remounts this page, and hands it the same instruction again. The
+   * guards above are per-mount refs, so by then they are blank, and the door
+   * opened a second time: "New session" reset the thread and the session the
+   * user had just generated was gone, leaving only the mini player at the top
+   * as evidence that anything had been made at all.
+   *
+   * Replacing the entry with a stateless one is the fix rather than a
+   * longer-lived guard, because it makes the history itself honest — the entry
+   * now says "the cockpit", which is what it is once you have arrived.
+   */
+  useEffect(() => {
+    if (!routeState) return
+    navigate(`${location.pathname}${location.search}`, { replace: true, state: null })
+  }, [routeState, navigate, location.pathname, location.search])
 
   // Drives the "Creating your new session.." percentage up to 100.
   useEffect(() => {
@@ -357,6 +393,19 @@ export function ChatPage() {
   const showRecommendations = isEnabled('chat.recommendations')
   const canApply = sessionState === 'idle' || sessionState === 'updating'
 
+  /**
+   * Whether what this thread built is the thing on the deck.
+   *
+   * It decides what the progress card says once you come back from the player.
+   * "Ready to play" is an invitation, and reading it over a session that is
+   * already loaded — and audible — asks you to do the thing you just did, which
+   * is the moment the screen stops keeping up with you. Compared on the href
+   * rather than the slug because a draft borrows its recording and is keyed
+   * apart from it.
+   */
+  const onDeck = track?.href === `/play/${draft.slug}`
+  const readyStatus = !onDeck ? 'Ready to play' : playing ? 'Playing now' : 'Paused'
+
   return (
     <div className="flex h-[calc(100vh-54px)] flex-col bg-background-default lg:h-screen">
       <ChatHeader
@@ -371,6 +420,15 @@ export function ChatPage() {
            draft holds what it stands in for — which is a session of the kind
            you asked for, rather than whichever one the literal named. */
         playTo={`/play/${sessionSlug ?? draft.slug}`}
+        /* Once the draft exists it is yours, so the deck announces it rather
+           than the catalogue session lending it a recording. Before that there
+           is nothing to name: the transport is previewing the kind of session
+           you asked for, and it should say whose it actually is. */
+        playAs={
+          !sessionSlug && sessionState === 'ready'
+            ? { title: draft.title, author: CURRENT_USER }
+            : undefined
+        }
         /* Insights opens Progress for this session. A thread with nothing
            behind it has no progress to show, so the item stays inert there. */
         onInsights={sessionSlug ? () => navigate(`/progress/${sessionSlug}`) : undefined}
@@ -488,9 +546,16 @@ export function ChatPage() {
             <div className="u-message mt-12">
               <SessionProgressCard
                 title={draft.title}
-                status={sessionState === 'ready' ? 'Ready to play' : 'Creating your new session..'}
+                status={sessionState === 'ready' ? readyStatus : 'Creating your new session..'}
                 progress={sessionState === 'ready' ? null : progress}
                 to={sessionState === 'ready' ? `/play/${draft.slug}` : undefined}
+                /* Only a draft is renamed. A thread about a session that
+                   already exists is making a new cut of that session, which is
+                   still its author's — overriding here credited Adam for
+                   Sophia's session, and, because the override also keys the
+                   cut, left her session on the deck under the previous draft's
+                   name. */
+                by={sessionSlug ? undefined : CURRENT_USER}
               />
             </div>
           )}

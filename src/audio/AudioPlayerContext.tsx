@@ -3,7 +3,16 @@ import type { ReactNode } from 'react'
 import type { CoverKey } from '../lib/photos'
 
 export interface Track {
+  /**
+   * Identity, not a route. A cut of a session — a version, or a draft playing
+   * under its own name — is its own recording and needs its own key, or
+   * loading it would find the session already on the deck and keep playing
+   * the wrong one. Use [href] to link back to it.
+   */
   slug: string
+  /** Where this cut is played. The mini player used to link to `/play/{slug}`,
+   *  which for a keyed cut is not a URL that resolves to it. */
+  href: string
   title: string
   author: string
   photo: CoverKey

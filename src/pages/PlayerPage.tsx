@@ -12,6 +12,7 @@ import { findVersion } from '../lib/progress'
 import { profilePath } from '../lib/people'
 import type { ProfileOrigin } from '../lib/people'
 import { findSession } from '../lib/sessions'
+import type { Named } from '../lib/named'
 
 /** Lines the session speaks, which the hero shows one at a time under the art.
  *  Mock, like everything in lib/ — as is the bed they play over. */
@@ -66,7 +67,17 @@ export function PlayerPage() {
   const version = session ? findVersion(session, versionId) : undefined
   // Who this session belongs to, as the screen that opened the player knows
   // it. Absent — a pasted URL, a refresh — the author decides.
-  const origin = (location.state as { origin?: ProfileOrigin } | null)?.origin
+  //
+  // `as` is what the screen that sent you here calls the thing it is playing.
+  // Nothing is really generated, so a session you just built plays a catalogue
+  // session standing in for it — and without this the player and the mini
+  // player announced the stand-in: you asked for a sleep meditation, watched
+  // "Sleep meditation v1.2" reach 100%, pressed play, and were handed "Night
+  // Rain Sleep by Sophia Reynolds". The stand-in is a mock; whose session this
+  // is, is not.
+  const handoff = location.state as { origin?: ProfileOrigin; as?: Named } | null
+  const origin = handoff?.origin
+  const named = handoff?.as
 
   // Playback lives above the router. This screen is a view onto it, so
   // walking back to the cockpit leaves the session running.
@@ -112,16 +123,23 @@ export function PlayerPage() {
     load({
       // A cut is its own recording, so it gets its own key. Without that the
       // deck would see the session it is already playing and keep playing it —
-      // press play on v1.2 and you would go on hearing v1.3.
-      slug: version ? `${session.slug}#${version.id}` : session.slug,
-      title: version?.title ?? session.title,
+      // press play on v1.2 and you would go on hearing v1.3. A draft borrowing
+      // this session is a cut by the same argument: leaving it on the bare slug
+      // meant opening the real session afterwards kept the draft's name.
+      slug: version
+        ? `${session.slug}#${version.id}`
+        : named
+          ? `${session.slug}#draft`
+          : session.slug,
+      href: `${location.pathname}${location.search}`,
+      title: named?.title ?? version?.title ?? session.title,
       // A version belongs to the same person and sits under the same art
       // unless it changed it, so only what the version states overrides.
-      author: session.author,
+      author: named?.author ?? session.author,
       photo: version?.photo ?? session.photo,
       gradient: version?.gradient ?? session.gradient,
     })
-  }, [session, version, load])
+  }, [session, version, named, load, location.pathname, location.search])
 
   if (!session) return <Navigate to="/home" replace />
 
@@ -307,7 +325,7 @@ export function PlayerPage() {
           </div>
 
           <div className="mt-20 flex flex-col gap-8">
-            <h1 className="text-style-title text-text-primary">{version?.title ?? session.title}</h1>
+            <h1 className="text-style-title text-text-primary">{named?.title ?? version?.title ?? session.title}</h1>
 
             {/* Clamped to the frame's lines, with the frame's fade over the cut.
                 Expanding drops both, so "Read More" is a real disclosure rather

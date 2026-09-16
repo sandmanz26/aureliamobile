@@ -9,6 +9,10 @@ interface SessionProgressCardProps {
   /** Where the artwork plays to. Left out while the session is still being
    *  made — there is nothing to play yet. */
   to?: string
+  /** Who the finished thing belongs to. The card already carries its name, and
+   *  the two travel together so the player announces what was built rather
+   *  than the catalogue session standing in for it. */
+  by?: string
 }
 
 // Figma "Frame 10" inside the generating state — a radius-100 pill 74 tall,
@@ -16,13 +20,13 @@ interface SessionProgressCardProps {
 // the percentage + chevron trailing. The thumbnail is the pill's measure: it
 // sits in a 10px inset, so growing one without the other reads as a different
 // component. It was 45 in a 70 pill, which made the artwork look inset.
-export function SessionProgressCard({ title, status, progress, to }: SessionProgressCardProps) {
+export function SessionProgressCard({ title, status, progress, to, by }: SessionProgressCardProps) {
   return (
     <div className="flex w-full items-center gap-10 rounded-full bg-surface-default py-10 pl-12 pr-23">
       {to ? (
         <Link
           to={to}
-          state={{ origin: 'own' }}
+          state={{ origin: 'own', ...(by ? { as: { title, author: by } } : {}) }}
           aria-label={`Play ${title}`}
           className="u-press relative shrink-0"
         >

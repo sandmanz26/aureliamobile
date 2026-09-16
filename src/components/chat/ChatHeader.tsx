@@ -13,6 +13,9 @@ interface ChatHeaderProps {
   canPlay?: boolean
   /** Where the header's play glyph goes. It was a button with no handler. */
   playTo?: string
+  /** What the thing at [playTo] is really called, when a catalogue session is
+   *  only standing in for it. */
+  playAs?: { title: string; author: string }
   /**
    * Where Settings goes. Left out while the Session settings screen is still
    * switched off — the row stays, as it always has, and closes the menu.
@@ -31,6 +34,7 @@ export function ChatHeader({
   canPublish = true,
   canPlay = true,
   playTo = '/play/dolphins-frequency',
+  playAs,
   onSettings,
   onInsights,
 }: ChatHeaderProps) {
@@ -61,7 +65,7 @@ export function ChatHeader({
         {canPlay && (
           <Link
             to={playTo}
-            state={{ origin: 'own' }}
+            state={{ origin: 'own', ...(playAs ? { as: playAs } : {}) }}
             aria-label="Play session"
             className="u-press flex size-44 items-center justify-center rounded-full bg-surface-default text-icon-strong"
           >
