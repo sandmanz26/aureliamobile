@@ -150,6 +150,36 @@ export function messagesForSession(session: SessionRecord): Message[] {
 
 export type SessionState = 'idle' | 'updating' | 'generating' | 'ready'
 
+/**
+ * What this thread is building.
+ *
+ * The cockpit used to name one session in three places regardless of what you
+ * had asked for — the progress card said "Sleep meditation v1.2", Ready to
+ * play opened dolphins-frequency, and Publish viewed it. So every entry point
+ * led to the same session: you tapped Affirmations and got a sleep meditation.
+ * Whatever puts you in the thread sets this instead.
+ */
+export interface Draft {
+  /** As the progress card names it while it is being built. */
+  title: string
+  /**
+   * The catalogue session it stands in for. Nothing is really generated, so
+   * "Ready to play" has to open *something* — and it has to be something of
+   * the same kind, or the mismatch just moves one screen later.
+   */
+  slug: string
+}
+
+/**
+ * The blank cockpit's draft. It matches [OPENING_MESSAGES], which are about a
+ * sleep meditation — those two have to agree, and they are the only pair here
+ * that is allowed to be a literal.
+ */
+export const DEFAULT_DRAFT: Draft = {
+  title: 'Sleep meditation v1.2',
+  slug: 'dolphins-frequency',
+}
+
 interface ChatSessionValue {
   messages: Message[]
   setMessages: Dispatch<SetStateAction<Message[]>>
@@ -163,6 +193,9 @@ interface ChatSessionValue {
   setDeckOpen: Dispatch<SetStateAction<boolean>>
   /** Which session the thread is about. Null is a new one. */
   sessionSlug: string | null
+  /** What it is building, and where that goes when it is built. */
+  draft: Draft
+  setDraft: Dispatch<SetStateAction<Draft>>
   /** Open an existing session's conversation, already made. */
   openSession: (session: SessionRecord) => void
   /** Next message id. A function rather than the ref itself: handing out a
@@ -194,6 +227,7 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
   const [progress, setProgress] = useState(0)
   const [deckOpen, setDeckOpen] = useState(false)
   const [sessionSlug, setSessionSlug] = useState<string | null>(null)
+  const [draft, setDraft] = useState<Draft>(DEFAULT_DRAFT)
   const nextId = useRef(OPENING_MESSAGES.length + 1)
   const nextMessageId = useCallback(() => nextId.current++, [])
 
@@ -215,6 +249,9 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
       // proposal; this session exists, so its changes are what you came to
       // look at.
       setDeckOpen(true)
+      // What the cockpit is working on *is* this session now, so the progress
+      // card and Ready to play follow it rather than a literal.
+      setDraft({ title: session.title, slug: session.slug })
       nextId.current = opening.length + 1
       return session.slug
     })
@@ -227,6 +264,7 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
     setProgress(0)
     setDeckOpen(false)
     setSessionSlug(null)
+    setDraft(DEFAULT_DRAFT)
     nextId.current = OPENING_MESSAGES.length + 1
   }, [])
 
@@ -238,10 +276,11 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
       progress, setProgress,
       deckOpen, setDeckOpen,
       sessionSlug, openSession,
+      draft, setDraft,
       nextMessageId,
       reset,
     }),
-    [messages, applied, sessionState, progress, deckOpen, sessionSlug, openSession, nextMessageId, reset],
+    [messages, applied, sessionState, progress, deckOpen, sessionSlug, openSession, draft, nextMessageId, reset],
   )
 
   return <ChatSessionContext.Provider value={value}>{children}</ChatSessionContext.Provider>

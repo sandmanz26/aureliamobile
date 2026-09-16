@@ -9,6 +9,7 @@ import { SessionGridCard } from '../components/ui/SessionGridCard'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import { useDrawer } from '../layouts/DrawerContext'
 import type { CoverKey } from '../lib/photos'
+import { QUICK_STARTS } from '../lib/quickStart'
 import type { CategoryFilter, Shelf } from '../lib/sessions'
 import { CATEGORY_FILTERS, categoryLabel, findSession, sessionsOnShelf } from '../lib/sessions'
 import { CategorySheet } from '../components/ui/CategorySheet'
@@ -22,23 +23,6 @@ import { CoinPill } from '../components/ui/CoinPill'
  * quick starts, what is live now, what the community made, who to follow, the
  * running challenge, and two ranked shelves.
  */
-const quickStartCards: { title: string; subtitle: string; gradient: string; photo: CoverKey; to: string }[] = [
-  {
-    title: 'Affirmations',
-    subtitle: 'Personalized exprience.',
-    photo: 'affirmations',
-    gradient: 'linear-gradient(160deg, var(--color-danger-400), var(--color-warning-300))',
-    to: '/chat',
-  },
-  {
-    title: 'Sleep Meditation',
-    subtitle: 'Personalized exprience.',
-    photo: 'sleep',
-    gradient: 'linear-gradient(160deg, var(--color-neutral-700), var(--color-neutral-400))',
-    to: '/chat',
-  },
-]
-
 const creators: { name: string; photo: CoverKey; sessions: string }[] = [
   { name: 'Ethan Miller', photo: 'creatorEthan', sessions: '52 sessions' },
   { name: 'Daniel Carter', photo: 'creatorDaniel', sessions: '38 sessions' },
@@ -239,11 +223,16 @@ export function ExplorePage() {
           <section className="mt-32">
             <SectionHeader title="Quick Start" />
             <div className="-mx-20 mt-16 flex gap-12 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
-              {quickStartCards.map((card) => (
+              {QUICK_STARTS.map((card) => (
                 <Link
-                  key={card.title}
-                  to={card.to}
-                  className="relative h-[160px] w-[160px] shrink-0 overflow-hidden rounded-16 p-12 text-text-inverse"
+                  key={card.id}
+                  to="/chat"
+                  // The card's own id, so the cockpit opens on this kind of
+                  // session rather than on whatever was last in it. `fresh` is
+                  // implied by `start` — the chat page clears before seeding —
+                  // but stating both keeps the intent readable at the link.
+                  state={{ start: card.id, fresh: true }}
+                  className="u-press relative h-[160px] w-[160px] shrink-0 overflow-hidden rounded-16 p-12 text-text-inverse"
                 >
                   <CoverImage photo={card.photo} gradient={card.gradient} width={320} height={320} />
                   <span className="text-style-caption relative flex h-24 w-fit items-center gap-4 whitespace-nowrap rounded-full bg-surface-default/90 px-8 text-text-primary">

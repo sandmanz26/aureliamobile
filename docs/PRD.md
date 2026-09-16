@@ -438,6 +438,41 @@ have happened. The figure pill on its row is absent for that reason rather
 than by styling, and a creator's "34 published sessions" counts only what is
 out.
 
+### Every way into the cockpit starts its own session, and says so
+
+Quick Start had two cards and both linked to a bare `/chat`, so whichever you
+pressed you landed in the same demo thread — tap Affirmations, and Aurelia asks
+how you found the sleep meditation. There are six now, each a real kind of
+session with its own opening line, and pressing Create clears the thread before
+seeding it.
+
+**The cockpit knows what it is building.** It used to name one session in three
+places regardless of what you had asked for: the progress card read "Sleep
+meditation v1.2", Ready to play opened `dolphins-frequency`, Publish viewed it,
+and the header's transport fell back to it. That is a `draft` now — a title and
+the catalogue session it stands in for — and every entry point sets it:
+
+| You came in by | The draft becomes |
+| --- | --- |
+| New session | the default, which matches the demo thread's own copy |
+| A Quick Start card | *Card* v1.0, standing in for a session of that kind |
+| Recreate | *Original* v2, standing in for the original |
+| A session row | that session |
+
+Nothing is really generated, so "Ready to play" has to open *something* — and
+it has to be something of the same kind. Opening a sleep session after asking
+for a focus session is the same mismatch one screen later.
+
+**Starting is not continuing.** Quick Start and Recreate both clear the thread
+first. Without that you could start Affirmations, walk to a profile, fork a
+sleep session, and end up with one thread claiming to be both. Each is keyed on
+the navigation rather than a flag, so pressing Create twice starts twice.
+
+**The first answer brings the recommendations with it.** A thread that has had
+nothing proposed used to still offer "Apply new changes (3)" — three changes to
+nothing. Aurelia now hands the deck over with her reply to your first message,
+so the chip always refers to something on screen.
+
 ### A profile card is a session, and both of its controls do something
 
 The profile's shelf was a hardcoded list of four beside the catalogue, and

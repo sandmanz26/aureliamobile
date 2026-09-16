@@ -11,6 +11,7 @@ import { useAudioPlayer } from '../audio/AudioPlayerContext'
 import { RECOMMENDATIONS, useChatSession } from '../chat/ChatSessionContext'
 import type { Message, Status } from '../chat/ChatSessionContext'
 import { AttachedSession } from '../components/chat/AttachedSession'
+import { draftTitleFor, findQuickStart } from '../lib/quickStart'
 import { RecommendationCard } from '../components/chat/RecommendationCard'
 import { RecommendationDeck } from '../components/chat/RecommendationDeck'
 import { SessionProgressCard } from '../components/chat/SessionProgressCard'
@@ -80,7 +81,14 @@ export function ChatPage() {
   const { isEnabled } = useFeatureFlags()
 
   const routeState = location.state as
-    | { recreate?: RecreateBrief; startVoice?: boolean; ask?: string; fresh?: boolean }
+    | {
+        recreate?: RecreateBrief
+        startVoice?: boolean
+        ask?: string
+        fresh?: boolean
+        /** A Quick Start card's id — Explore's "Create". */
+        start?: string
+      }
     | null
   const brief = routeState?.recreate
   /** What the visitor typed on Home before they were sent here. */
@@ -97,6 +105,7 @@ export function ChatPage() {
     progress, setProgress,
     deckOpen, setDeckOpen,
     sessionSlug, openSession,
+    draft, setDraft,
     nextMessageId,
     reset,
   } = useChatSession()
@@ -112,7 +121,8 @@ export function ChatPage() {
   const empty = messages.length === 0
 
   const scrollRef = useRef<HTMLDivElement>(null)
-  const briefHandled = useRef(false)
+  const briefHandled = useRef<string | null>(null)
+  const startHandled = useRef<string | null>(null)
   const askHandled = useRef(false)
   const freshHandled = useRef<string | null>(null)
 
@@ -143,17 +153,56 @@ export function ChatPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, typing, sessionState, progress, deckOpen])
 
-  // A hand-off from /recreate opens the thread with the fork already stated,
-  // so the user lands mid-conversation rather than at a blank prompt.
+  /**
+   * A Quick Start card opens the cockpit on that kind of session.
+   *
+   * It clears the thread first — pressing Create is starting something, not
+   * continuing whatever was open — and then says Aurelia's line for *this*
+   * card. Keyed on the navigation rather than a boolean, so pressing Create
+   * twice starts twice; and the draft is set here, which is what stops the
+   * progress card and Ready to play naming a different session.
+   */
   useEffect(() => {
-    if (!brief || briefHandled.current) return
-    briefHandled.current = true
+    const card = findQuickStart(routeState?.start)
+    if (!card || startHandled.current === location.key) return
+    startHandled.current = location.key
+
+    reset()
+    setTyping(false)
+    setDraft({ title: draftTitleFor(card), slug: card.plays })
+
+    const now = Date.now()
+    let id = 1
+    setMessages([
+      { id: id++, from: 'aurelia', at: now, text: card.opening },
+      { id: id++, from: 'aurelia', at: now + 1_200, text: card.ask },
+    ])
+  }, [location.key, routeState?.start, reset, setMessages, setDraft])
+
+  /**
+   * A hand-off from Recreate opens the thread with the fork already stated, so
+   * the user lands mid-conversation rather than at a blank prompt.
+   *
+   * It clears first, and that is the point: forking somebody's session is
+   * starting a new one, not adding a line to whatever was open. Without the
+   * reset you could quick-start Affirmations, go to a profile, recreate a
+   * sleep session, and end up with one thread claiming to be both.
+   *
+   * Keyed on the navigation like the others, so recreating twice forks twice.
+   */
+  useEffect(() => {
+    if (!brief || briefHandled.current === location.key) return
+    briefHandled.current = location.key
+
+    reset()
+    setTyping(false)
+
     const now = Date.now()
     const lines = brief.changes.length ? brief.changes.map((line) => `• ${line}`).join('\n') : '• Keep it as it is'
-    setMessages((current) => [
-      ...current,
+    let id = 1
+    setMessages([
       {
-        id: nextMessageId(),
+        id: id++,
         from: 'user',
         at: now,
         status: 'read',
@@ -163,6 +212,9 @@ export function ChatPage() {
         attachment: { session: brief.slug },
       },
     ])
+    // A fork is a v2 of somebody else's, and until it is built it stands in
+    // for the original — which is at least the right session.
+    setDraft({ title: `${brief.title} v2`, slug: brief.slug })
     setTyping(true)
     const timer = window.setTimeout(() => {
       setTyping(false)
@@ -177,7 +229,7 @@ export function ChatPage() {
       ])
     }, 1600)
     return () => window.clearTimeout(timer)
-  }, [brief, setMessages, nextMessageId])
+  }, [brief, location.key, reset, setMessages, nextMessageId, setDraft])
 
   // What was typed on Home arrives as the first thing said here, so the visitor
   // does not have to write it again — including after a detour through sign-in.
@@ -268,15 +320,25 @@ export function ChatPage() {
     }, 900)
     window.setTimeout(() => {
       setTyping(false)
-      setMessages((current) => [
-        ...current,
-        {
-          id: nextMessageId(),
-          from: 'aurelia',
-          at: Date.now(),
-          text: 'Got it — I’ve noted that for the next revision of your session.',
-        },
-      ])
+      setMessages((current) => {
+        // The first answer in a thread that has nothing proposed yet gets the
+        // recommendations with it. Without that, a session started from Quick
+        // Start offered "Apply new changes (3)" over a deck nobody had handed
+        // over — three changes to nothing.
+        const proposed = current.some((item) => item.attachment === 'recommendations')
+        return [
+          ...current,
+          {
+            id: nextMessageId(),
+            from: 'aurelia',
+            at: Date.now(),
+            text: proposed
+              ? 'Got it — I’ve noted that for the next revision of your session.'
+              : 'Got it. Here is what I would put in it:',
+            ...(proposed ? {} : { attachment: 'recommendations' as const }),
+          },
+        ]
+      })
     }, 2400)
   }
 
@@ -303,12 +365,12 @@ export function ChatPage() {
            so a second play glyph in the header would be two controls for one
            thing. */
         canPlay={!empty && !track}
-        /* The cockpit is about a session now, so its transport plays that one.
+        /* The cockpit is about a session, so its transport plays that one.
            Hardcoded, it played Dolphins frequency whichever session you had
-           open — which the moment rows opened their own threads became plainly
-           the wrong track. A thread with no session behind it is one being
-           built, and borrows a slug to play against. */
-        playTo={sessionSlug ? `/play/${sessionSlug}` : undefined}
+           open. A thread with no session behind it is one being built, and the
+           draft holds what it stands in for — which is a session of the kind
+           you asked for, rather than whichever one the literal named. */
+        playTo={`/play/${sessionSlug ?? draft.slug}`}
         /* Insights opens Progress for this session. A thread with nothing
            behind it has no progress to show, so the item stays inert there. */
         onInsights={sessionSlug ? () => navigate(`/progress/${sessionSlug}`) : undefined}
@@ -425,10 +487,10 @@ export function ChatPage() {
           {(sessionState === 'generating' || sessionState === 'ready') && (
             <div className="u-message mt-12">
               <SessionProgressCard
-                title="Sleep meditation v1.2"
+                title={draft.title}
                 status={sessionState === 'ready' ? 'Ready to play' : 'Creating your new session..'}
                 progress={sessionState === 'ready' ? null : progress}
-                to={sessionState === 'ready' ? '/play/dolphins-frequency' : undefined}
+                to={sessionState === 'ready' ? `/play/${draft.slug}` : undefined}
               />
             </div>
           )}
@@ -522,7 +584,7 @@ export function ChatPage() {
             // on. Landing on Home makes the user go and find what they just
             // made.
             setPublishState(null)
-            navigate('/session/dolphins-frequency')
+            navigate(`/session/${draft.slug}`)
           }}
         />
       )}
