@@ -7,6 +7,10 @@ import 'package:aurelia_mobile/core/widgets/community_network.dart';
 import 'package:aurelia_mobile/core/widgets/photo_circle.dart';
 import 'package:aurelia_mobile/core/widgets/section_header.dart';
 import 'package:aurelia_mobile/core/widgets/session_grid_card.dart';
+import 'package:aurelia_mobile/core/audio/audio_engine.dart';
+import 'package:aurelia_mobile/core/audio/voice_capture.dart';
+import 'package:aurelia_mobile/core/auth/auth_scope.dart';
+import 'package:aurelia_mobile/core/auth/sso.dart';
 import 'package:aurelia_mobile/core/data/progress.dart' show ProgressTab;
 import 'package:aurelia_mobile/features/chat/chat_session_controller.dart' show ChatArgs;
 import 'package:aurelia_mobile/features/chat/widgets/mini_player.dart';
@@ -19,7 +23,8 @@ import 'package:aurelia_mobile/main.dart';
 /// Pumps the app and settles. Network images resolve to the gradient floor in
 /// tests (the test HTTP client returns 400), which is the same path a blocked
 /// network takes on a device — so these tests also prove the fallback works.
-Future<void> _boot(WidgetTester tester) async {
+Future<void> _boot(WidgetTester tester,
+    {VoiceCapture? voiceCapture, SsoProvider? sso}) async {
   // A tall phone-shaped surface: these screens are long scrolls, and the
   // default 800x600 test window leaves most of each one unbuilt.
   tester.view.physicalSize = const Size(420, 3200);
@@ -38,7 +43,18 @@ Future<void> _boot(WidgetTester tester) async {
   };
   addTearDown(() => FlutterError.onError = reportError);
 
-  await tester.pumpWidget(const AureliaApp());
+  // A silent engine, not the real one: a test binding has no platform
+  // channels, so constructing the just_audio player here would fail before the
+  // first frame. It keeps a real clock, so everything these tests assert about
+  // playback — the bar moving, pausing holding it, a new track resetting it —
+  // is still the behaviour the screens depend on.
+  await tester.pumpWidget(AureliaApp(
+    audioEngine: SilentAudioEngine(),
+    voiceCapture: voiceCapture ?? SilentVoiceCapture(),
+    // No delay: the dummy's 900ms is there so a person sees the spinner, and
+    // a test that waits it out is 900ms slower for nothing.
+    sso: sso ?? DummySsoProvider(delay: Duration.zero),
+  ));
   await tester.pumpAndSettle();
 }
 
@@ -743,6 +759,124 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Ready to play'), findsOneWidget);
       expect(find.text('Apply new changes (2)'), findsNothing);
+    });
+  });
+
+  group('SSO', () {
+    testWidgets('the two buttons are two providers, not one handler',
+        (tester) async {
+      await _boot(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+      navigator.pushNamed('/login');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Continue with Apple'));
+      await tester.pumpAndSettle();
+
+      // Signed in, and the app knows which door you came through — Apple's
+      // relay address, not a real one, because that is what Apple hands over
+      // when someone chooses "Hide My Email".
+      final auth = AuthScope.of(tester.element(find.byType(Navigator)));
+      expect(auth.signedIn, isTrue);
+      expect(auth.provider, SsoProviderId.apple);
+      expect(auth.account?.email, contains('privaterelay.appleid.com'));
+    });
+
+    testWidgets('Google is its own path', (tester) async {
+      await _boot(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+      navigator.pushNamed('/login');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Continue with Google'));
+      await tester.pumpAndSettle();
+
+      final auth = AuthScope.of(tester.element(find.byType(Navigator)));
+      expect(auth.provider, SsoProviderId.google);
+      expect(auth.account?.email, 'adam.nilson@gmail.com');
+    });
+
+    testWidgets('a cancelled sheet leaves you where you were, quietly',
+        (tester) async {
+      await _boot(tester,
+          sso: DummySsoProvider(
+              delay: Duration.zero, failWith: SsoFailure.cancelled));
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+      navigator.pushNamed('/login');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Continue with Google'));
+      await tester.pumpAndSettle();
+
+      // Still on the form, still signed out, and no banner: the user dismissed
+      // the sheet themselves and being told about it reads as a telling-off.
+      expect(AuthScope.of(tester.element(find.byType(Navigator))).signedIn, isFalse);
+      expect(find.byType(SnackBar), findsNothing);
+      expect(find.byTooltip('Continue with Google'), findsOneWidget);
+    });
+
+    testWidgets('a failure says which provider and what to do', (tester) async {
+      await _boot(tester,
+          sso: DummySsoProvider(
+              delay: Duration.zero, failWith: SsoFailure.network));
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+      navigator.pushNamed('/login');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Continue with Apple'));
+      await tester.pumpAndSettle();
+
+      expect(AuthScope.of(tester.element(find.byType(Navigator))).signedIn, isFalse);
+      expect(find.textContaining('Could not reach Apple'), findsOneWidget);
+      // And the buttons come back, rather than staying spinning on a failure.
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+    });
+  });
+
+  group('Voice', () {
+    testWidgets('a refused microphone is a state, not a dead sheet',
+        (tester) async {
+      // The real device throws this when the person says no; the silent
+      // capture is how the test reaches that branch without one.
+      await _boot(tester,
+          voiceCapture:
+              SilentVoiceCapture(failWith: VoiceCaptureError.permissionDenied));
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/chat');
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Voice input'));
+      await tester.pumpAndSettle();
+
+      // Not "Listening.." over a mic that is shut: it says what is wrong and
+      // offers both remedies.
+      expect(find.text('Listening..'), findsNothing);
+      expect(find.text('Aurelia cannot hear you'), findsOneWidget);
+      expect(find.text('Try again'), findsOneWidget);
+
+      // Typing instead closes the recorder and leaves the composer.
+      await tester.tap(find.text('Type instead'));
+      await tester.pumpAndSettle();
+      expect(find.text('Aurelia cannot hear you'), findsNothing);
+      expect(find.text('Type here'), findsOneWidget);
+    });
+
+    testWidgets('a busy microphone says something different', (tester) async {
+      await _boot(tester,
+          voiceCapture:
+              SilentVoiceCapture(failWith: VoiceCaptureError.unavailable));
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/chat');
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Voice input'));
+      await tester.pumpAndSettle();
+
+      // Two failures, two remedies — "something went wrong" would leave the
+      // user with nothing to do.
+      expect(find.text('The microphone is busy'), findsOneWidget);
     });
   });
 

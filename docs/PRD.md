@@ -332,6 +332,34 @@ Two readings the frames do not settle, and what both clients do instead:
 
 ---
 
+### Media, voice and sign-in are wired; three things behind them are not
+
+The Flutter client now plays sound, records from the microphone, and treats
+Google and Apple as two different doors. What sits behind each is worth stating
+plainly, because each is a different kind of "not finished".
+
+| Surface | Real | Still mock |
+| --- | --- | --- |
+| Session playback | the audio engine, the clock, the clip length | every session plays the same ten-second bed |
+| Voice memo | the mic, the level meter, the file, playback | the transcript is a fixed sample string |
+| Google / Apple | the two paths, loading, cancel, failure, which provider | no SDK; a dummy returns a fixed account |
+
+**A cancelled sign-in gets no message.** The user dismissed the sheet
+themselves; a banner about it reads as a telling-off. A network failure and a
+rejection each get their own sentence, because they have different remedies.
+
+**Apple's email is not an identifier.** It is sent once, on first
+authorisation, and may be a private relay address that stops working if the
+user disconnects the app. Accounts key off the provider's stable id. The dummy
+returns a relay address on purpose so nobody writes code assuming otherwise.
+
+**A signed-in state is still a client-side claim.** The id token is what a
+backend would verify, and there is no backend to verify it — the same
+limitation the email-and-password path already has. `docs/SSO.md` has what
+turning any of this on actually requires.
+
+---
+
 ## 07 · States that do not exist yet
 
 Every frame shows the happy path fully populated. That is normal for a design

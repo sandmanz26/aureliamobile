@@ -35,6 +35,19 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
+  # The three below are the app's only native plugins, and they are the reason
+  # `flutter run` on a fresh machine now needs CocoaPods on iOS and a Gradle
+  # plugin resolution on Android. That cost was taken deliberately: a wellness
+  # app whose player is silent and whose mic does nothing is not demoable.
+  # Nothing else may join them without the same argument.
+  #
+  # Versions are pinned to what Dart 3.6 / Flutter 3.27.1 accepts — just_audio
+  # 0.11+, record 7+ and path_provider 2.1.6+ all require a newer SDK, so a
+  # blind `pub upgrade --major-versions` will break the build.
+  just_audio: ^0.10.0
+  record: ^6.0.0
+  path_provider: ^2.1.5
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -63,11 +76,14 @@ flutter:
   # session thumbnail on the generating card.
   assets:
     - assets/images/
+    # The same ten-second bed the web app plays, byte for byte, so the two
+    # clients sound alike rather than merely look alike.
+    - assets/audio/session-bed.wav
 
   # Mulish is the web app's `font-family/base` Figma variable, and therefore
-  # the app's face on both platforms. Goudy Bookletter 1911 is the one place
-  # the design leaves it: the player's spoken cue, which is set in a serif.
-  # Latin subsets straight from Google Fonts, the same cut the web loads.
+  # the app's face on both platforms — every style, the player's spoken cue
+  # included. A Latin subset straight from Google Fonts, the same cut the web
+  # loads.
   fonts:
     - family: Mulish
       fonts:

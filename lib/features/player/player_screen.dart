@@ -276,7 +276,10 @@ class _Hero extends StatelessWidget {
               child: ValueListenableBuilder<Duration>(
                 valueListenable: playback.elapsed,
                 builder: (context, elapsed, _) {
-                  const duration = PlaybackController.duration;
+                  // The engine's own measurement, not the constant: the bed
+                  // is ten seconds today but a session with its own file will
+                  // not be, and this bar must not have to be told.
+                  final duration = playback.length;
                   final progress = (elapsed.inMilliseconds / duration.inMilliseconds)
                       .clamp(0.0, 1.0);
                   final cue = _cues[(progress * _cues.length).floor() % _cues.length];

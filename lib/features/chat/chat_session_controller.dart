@@ -17,6 +17,7 @@ class ChatMessage {
     required this.text,
     required this.at,
     this.voiceDuration,
+    this.voicePath,
     this.status,
   });
 
@@ -27,6 +28,11 @@ class ChatMessage {
 
   /// Set when the message is a voice note rather than typed text.
   final Duration? voiceDuration;
+
+  /// Where that note's audio is on disk. Empty when the capture produced no
+  /// file — a simulator with no mic, or the silent capture the tests use — in
+  /// which case the bubble draws and scrubs but stays quiet.
+  final String? voicePath;
 
   DeliveryStatus? status;
 }
@@ -307,7 +313,7 @@ class ChatSessionController extends ChangeNotifier {
   /// Sends, then walks the message through sending → sent → read and brings
   /// back a reply — the rhythm a chat app has, rather than a bubble that just
   /// appears.
-  void send({required String text, Duration? voiceDuration}) {
+  void send({required String text, Duration? voiceDuration, String? voicePath}) {
     final id = _nextId++;
     messages.add(ChatMessage(
       id: id,
@@ -315,6 +321,7 @@ class ChatSessionController extends ChangeNotifier {
       text: text,
       at: DateTime.now(),
       voiceDuration: voiceDuration,
+      voicePath: voicePath,
       status: DeliveryStatus.sending,
     ));
     notifyListeners();

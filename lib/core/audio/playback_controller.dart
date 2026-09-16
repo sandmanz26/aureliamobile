@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'audio_engine.dart';
 
 /// What is on the deck: enough of a session to draw the player and the mini
 /// player without either of them going back to the catalogue.
@@ -34,21 +35,43 @@ class Track {
 /// In memory rather than storage, like the rest of a visit — a relaunch is a
 /// new silence.
 ///
-/// **There is no sound yet, and that is a dependency decision, not an
-/// oversight.** Every audio package for Flutter ships native code, and this
-/// app's one-command build on a fresh machine is the thing that buys. The
-/// seam is [_tick]: point it at a real engine and every screen above it is
-/// already correct, because none of them reads anything but this controller.
+/// **This used to make no sound.** The clock was a `Timer` counting on its
+/// own, because every audio package for Flutter ships native code and the
+/// one-command build on a fresh machine was worth more than the noise. It is
+/// not worth more than a demoable product, so there is a real engine now —
+/// but it arrives through [AudioEngine], and this class still knows nothing
+/// about which one. That is what keeps the widget tests plugin-free.
 class PlaybackController extends ChangeNotifier {
-  /// The length of the bed the web app plays. Ten seconds, looping — long
-  /// enough to read as running, short enough to watch the bar come round.
+  PlaybackController({AudioEngine? engine, this.asset = defaultAsset})
+      : _engine = engine ?? JustAudioEngine() {
+    _positions = _engine.positionStream.listen((position) {
+      // The engine is the clock. Reading it rather than counting our own ticks
+      // is what stops the bar drifting from the sound when a load stalls or
+      // someone scrubs.
+      elapsed.value = position;
+    });
+  }
+
+  /// The bed every session plays over, and the same bytes the web app serves
+  /// at `/audio/session-bed.wav`. Mock, like the catalogue it plays under.
+  static const defaultAsset = 'assets/audio/session-bed.wav';
+
+  /// The bed's length, and the fallback when the engine cannot report one —
+  /// a zero here would divide by zero in every progress bar above.
   static const duration = Duration(seconds: 10);
 
-  static const _interval = Duration(milliseconds: 60);
+  final AudioEngine _engine;
+  final String asset;
+
+  late final StreamSubscription<Duration> _positions;
 
   Track? _track;
   bool _playing = false;
-  Timer? _timer;
+  Duration _length = duration;
+
+  /// How long the clip on the deck actually runs, as the engine measured it.
+  /// The screens divide by this, so it must never be zero.
+  Duration get length => _length.inMilliseconds == 0 ? duration : _length;
 
   /// The clock, kept off [notifyListeners] on purpose: it moves 16 times a
   /// second and only the progress bar and the two timestamps care. Read it
@@ -67,8 +90,21 @@ class PlaybackController extends ChangeNotifier {
   void load(Track next) {
     if (_track?.slug == next.slug) return;
     _track = next;
+    _playing = false;
     elapsed.value = Duration.zero;
     notifyListeners();
+
+    // Every session plays the same bed today, so the engine is only reloaded
+    // to rewind it. When a session carries its own file this takes `next`.
+    unawaited(_engine.load(asset).then((measured) {
+      if (measured != null && measured > Duration.zero) {
+        _length = measured;
+        notifyListeners();
+      }
+    }).catchError((_) {
+      // A bed that will not load is not worth a broken screen: the bar stays
+      // at zero and the button still works. Nothing above reads an error.
+    }));
   }
 
   void toggle() {
@@ -77,38 +113,29 @@ class PlaybackController extends ChangeNotifier {
   }
 
   void stop() {
-    _timer?.cancel();
-    _timer = null;
     _playing = false;
     _track = null;
     elapsed.value = Duration.zero;
+    unawaited(_engine.stop());
     notifyListeners();
   }
 
   void _play() {
     _playing = true;
-    _timer?.cancel();
-    _timer = Timer.periodic(_interval, (_) => _tick());
     notifyListeners();
+    unawaited(_engine.play());
   }
 
   void _pause() {
-    _timer?.cancel();
-    _timer = null;
     _playing = false;
     notifyListeners();
-  }
-
-  /// One step of the clock. The bed loops, so the end is a wrap rather than a
-  /// stop — the session runs until someone pauses it.
-  void _tick() {
-    final next = elapsed.value + _interval;
-    elapsed.value = next >= duration ? next - duration : next;
+    unawaited(_engine.pause());
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    unawaited(_positions.cancel());
+    unawaited(_engine.dispose());
     elapsed.dispose();
     super.dispose();
   }

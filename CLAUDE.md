@@ -23,7 +23,7 @@ that goes wrong. `git checkout mobile_app`.
 ```bash
 flutter pub get     # after any pubspec change — the fonts live there now
 flutter analyze     # must come back "No issues found!"
-flutter test        # 39 tests, ~20s
+flutter test        # 49 tests, ~25s
 flutter run         # onto whatever single device is attached
 ```
 
@@ -31,11 +31,28 @@ Flutter **3.27.1 / Dart 3.6.0**. Newer stable channels move the goalposts under
 this app — `--web-renderer` is already gone in this one — so match the version
 before concluding something is broken.
 
-One dependency, `cupertino_icons`, and **no native plugins** — so there is no
-CocoaPods step for iOS and no Gradle plugin resolution to break on Android.
-Keep it that way if you can; it is the reason a new machine can build this in
-one command. That rule has one visible cost, worth knowing before you file a
-bug: **the player makes no sound.** See `core/audio/playback_controller.dart`.
+**There are three native plugins, and the no-plugins rule is over.** It held
+for months and it bought a real thing — `flutter run` on a fresh machine with
+no CocoaPods step and no Gradle plugin resolution. It did not survive the
+first product requirement that needed a device: a wellness app whose player is
+silent and whose microphone does nothing is not demoable.
+
+| Plugin | For | Pinned because |
+| --- | --- | --- |
+| `just_audio` ^0.10.0 | the session bed and voice-note playback | 0.11+ needs a newer SDK than 3.6 |
+| `record` ^6.0.0 | the cockpit's voice memo | 7.x needs Dart 3.12 |
+| `path_provider` ^2.1.5 | where a recording is written | 2.1.6+ needs Dart 3.10 |
+
+A blind `flutter pub upgrade --major-versions` breaks the build on all three.
+Nothing else may join them without the same argument being made again.
+
+**Both plugins sit behind a seam, and that is not decoration.** `AudioEngine`
+and `VoiceCapture` (in `core/audio/`) are the only files that import them.
+Every widget test installs `SilentAudioEngine` and `SilentVoiceCapture`, which
+keep real clocks and real streams — so the tests still assert that the bar
+moves, that pause holds it and that a refused mic shows its own screen, without
+a platform channel anywhere near them. `AureliaApp` takes both as constructor
+arguments for exactly that.
 
 ### Verifying a change
 
@@ -176,13 +193,47 @@ the session speaks from the interface around it. The separation is now carried
 by Light at 21/28.5, matching the web, and the serif is gone from `pubspec.yaml`
 and from `assets/fonts/`.
 
-**The player is silent, and that is a decision.** `PlaybackController` holds a
-track, a play/pause flag and a clock that ticks — everything the player screen
-and the mini player read. What it does not hold is an audio element, because
-there is no way to get one without a native plugin and the no-plugins rule
-above is what keeps the build to one command. Point `_tick` at a real engine
-and every screen over it is already correct. Until then: **an app whose player
-shows a moving bar and plays nothing is not broken.**
+**The clock comes from the engine, not from a timer.** `PlaybackController`
+used to count its own ticks; it now subscribes to `AudioEngine.positionStream`,
+so a stall or a seek cannot put the bar out of step with the sound. It also
+reads the clip's real length off the engine — `playback.length`, not the
+`duration` constant — because the bed is ten seconds today and a session with
+its own file will not be. `length` never returns zero, because every progress
+bar above divides by it.
+
+**The session bed is `assets/audio/session-bed.wav`**, byte for byte the same
+file the web app serves at `/audio/session-bed.wav`, so the two clients sound
+alike rather than merely looking alike.
+
+**The microphone is real; the transcription is not.** `VoiceCapture` opens the
+device, the level meter is drawn from actual amplitude, and the clip is written
+to disk and played back in the thread. The words under it are still a fixed
+sample string — there is no speech service behind them, and wiring one in
+replaces `_transcribe` in `voice_recorder.dart` and nothing else.
+
+**Two things about recording that cost a build each, so they are written down:**
+
+- **The web has no filesystem.** `getTemporaryDirectory()` throws there, so the
+  browser gets no path and `record` hands back a `blob:` URL from `stop()`
+  instead. `AudioEngine.loadFile` checks the scheme, because nothing above it
+  should have to know which platform it is on.
+- **Browsers have no AAC encoder.** MediaRecorder writes Opus in WebM, so
+  asking for `aacLc` fails the whole recording. The encoder is negotiated
+  through `isEncoderSupported` rather than assumed — some Android builds are
+  missing one too.
+
+Both of those first showed up as a recorder stuck on "Listening.." with a dead
+clock, which reads as working. Every failure in `VoiceCapture.start` is a typed
+`VoiceCaptureException` now, and the widget catches anything that escapes
+anyway, because a visible error beats a convincing freeze.
+
+**Sign-in with Google or Apple is a seam with a dummy behind it.** The two
+buttons used to call one handler and sign you straight in. They are two
+providers now, with a spinner on the pressed one, both disabled while either
+runs, and three distinct failures — a cancel says nothing, because the user
+dismissed the sheet themselves. `AuthController.account` records which door
+you came through. Nothing talks to Google or Apple yet: `docs/SSO.md` has the
+client IDs, entitlements and backend verification that turning it on needs.
 
 **Explore and Sessions are two screens.** `explore_screen.dart` is the browse
 surface with the shelves; `session_list_screen.dart` is the Sessions frame, a
@@ -277,7 +328,7 @@ artwork, looking like a nudge rather than a layout bug. `SizedBox.expand`
 around the content fixes it. Assert the two rects are equal rather than
 trusting the eye; at that size the error reads as a design choice.
 
-**The tests are behavioural, not golden.** 34 of them, driving real screens
+**The tests are behavioural, not golden.** 49 of them, driving real screens
 through real taps: the sign-in gate remembers where you were going, the
 recommendation set can be dropped and applied, a session keeps playing when you
 walk back to the cockpit, notifications group by age. They also catch overflow,

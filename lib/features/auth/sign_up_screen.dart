@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/auth/auth_scope.dart';
+import '../../core/auth/sso.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
@@ -22,9 +23,13 @@ import 'widgets/aurelia_text_field.dart';
 }
 
 class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({super.key, this.redirect});
+  const SignUpScreen({super.key, this.redirect, this.sso});
 
   final AuthRedirect? redirect;
+
+  /// Who signs you in through the Google and Apple buttons. Null is the dummy
+  /// provider — there is no real SDK wired up yet, see `docs/SSO.md`.
+  final SsoProvider? sso;
 
   @override
   State<SignUpScreen> createState() => _SignUpScreenState();
@@ -197,7 +202,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           onPressed: _submitting || !_accepted ? null : _submit,
           child: Text(_submitting ? 'Creating account…' : 'Create account'),
         ),
-        SocialSignIn(onUse: _complete),
+        SocialSignIn(onUse: _complete, provider: widget.sso),
         const SizedBox(height: AppSpacing.s6),
         Center(
           child: Text.rich(

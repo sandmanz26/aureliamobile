@@ -5,6 +5,12 @@
          The app loads its artwork over the network, so it belongs here. -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
+    <!-- The cockpit's voice memo. `record` asks for this at runtime through
+         hasPermission(); without the declaration here that call can only ever
+         return false, and the recorder would show "Aurelia cannot hear you"
+         on a device that is perfectly capable of hearing. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+
     <application
         android:label="Aurelia"
         android:name="${applicationName}"

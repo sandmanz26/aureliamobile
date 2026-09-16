@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/auth/auth_scope.dart';
+import '../../core/auth/sso.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
@@ -129,10 +131,57 @@ class _Segment extends StatelessWidget {
 }
 
 /// "Or continue using" rule plus the two social buttons, identical on both forms.
-class SocialSignIn extends StatelessWidget {
-  const SocialSignIn({super.key, required this.onUse});
+///
+/// The two buttons used to call one handler and sign you in on the spot. They
+/// are two paths now, each going through an [SsoProvider]: the pressed one
+/// shows a spinner, both are disabled while either runs, and the three ways it
+/// can fail are three different outcomes rather than nothing happening.
+class SocialSignIn extends StatefulWidget {
+  const SocialSignIn({super.key, required this.onUse, this.provider});
 
+  /// Called once an account has come back and [AuthController] holds it.
   final VoidCallback onUse;
+
+  /// Who does the signing in. Null is [DummySsoProvider] — there is no real
+  /// SDK wired up yet; see `docs/SSO.md`.
+  final SsoProvider? provider;
+
+  @override
+  State<SocialSignIn> createState() => _SocialSignInState();
+}
+
+class _SocialSignInState extends State<SocialSignIn> {
+  late final SsoProvider _sso = widget.provider ?? DummySsoProvider();
+
+  /// Which button is mid-flight, so it alone shows the spinner.
+  SsoProviderId? _busy;
+
+  Future<void> _start(SsoProviderId provider) async {
+    if (_busy != null) return;
+    setState(() => _busy = provider);
+
+    try {
+      final account = await _sso.signIn(provider);
+      if (!mounted) return;
+      AuthScope.of(context).signInWith(account);
+      widget.onUse();
+    } on SsoException catch (error) {
+      if (!mounted) return;
+      setState(() => _busy = null);
+      // A cancel gets no banner: the user dismissed the sheet themselves and
+      // being told about it reads as a telling-off.
+      if (error.failure == SsoFailure.cancelled) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(switch (error.failure) {
+          SsoFailure.network =>
+            'Could not reach ${provider.label}. Check your connection and try again.',
+          SsoFailure.rejected =>
+            '${provider.label} could not sign you in. Try email instead.',
+          SsoFailure.cancelled => '',
+        }),
+      ));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -153,21 +202,63 @@ class SocialSignIn extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: OutlinedButton(
-                onPressed: onUse,
+              child: _SocialButton(
+                provider: SsoProviderId.google,
+                busy: _busy == SsoProviderId.google,
+                // Both go dead while either runs: two provider sheets at once
+                // is a state neither SDK defines.
+                enabled: _busy == null,
+                onPressed: () => _start(SsoProviderId.google),
                 child: const GoogleMark(),
               ),
             ),
             const SizedBox(width: AppSpacing.s3),
             Expanded(
-              child: OutlinedButton(
-                onPressed: onUse,
+              child: _SocialButton(
+                provider: SsoProviderId.apple,
+                busy: _busy == SsoProviderId.apple,
+                enabled: _busy == null,
+                onPressed: () => _start(SsoProviderId.apple),
                 child: const Icon(Icons.apple, size: 22, color: AppColors.iconDefault),
               ),
             ),
           ],
         ),
       ],
+    );
+  }
+}
+
+class _SocialButton extends StatelessWidget {
+  const _SocialButton({
+    required this.provider,
+    required this.busy,
+    required this.enabled,
+    required this.onPressed,
+    required this.child,
+  });
+
+  final SsoProviderId provider;
+  final bool busy;
+  final bool enabled;
+  final VoidCallback onPressed;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Continue with ${provider.label}',
+      child: OutlinedButton(
+        onPressed: enabled ? onPressed : null,
+        child: busy
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: AppColors.iconDefault),
+              )
+            : child,
+      ),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/auth/auth_scope.dart';
+import '../../core/auth/sso.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
@@ -15,9 +16,13 @@ class AuthRedirect {
 }
 
 class SignInScreen extends StatefulWidget {
-  const SignInScreen({super.key, this.redirect});
+  const SignInScreen({super.key, this.redirect, this.sso});
 
   final AuthRedirect? redirect;
+
+  /// Who signs you in through the Google and Apple buttons. Null is the dummy
+  /// provider — there is no real SDK wired up yet, see `docs/SSO.md`.
+  final SsoProvider? sso;
 
   @override
   State<SignInScreen> createState() => _SignInScreenState();
@@ -101,7 +106,7 @@ class _SignInScreenState extends State<SignInScreen> {
           onPressed: _submitting ? null : _submit,
           child: Text(_submitting ? 'Signing in…' : 'Sign In'),
         ),
-        SocialSignIn(onUse: _complete),
+        SocialSignIn(onUse: _complete, provider: widget.sso),
         const SizedBox(height: AppSpacing.s6),
         Center(
           child: Text.rich(

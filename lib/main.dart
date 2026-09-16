@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'core/audio/audio_engine.dart';
+import 'core/audio/voice_capture.dart';
 import 'core/audio/playback_controller.dart';
 import 'core/auth/auth_scope.dart';
+import 'core/auth/sso.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/forgot_password_screen.dart';
 import 'features/auth/reset_password_screen.dart';
@@ -30,7 +33,23 @@ void main() {
 }
 
 class AureliaApp extends StatefulWidget {
-  const AureliaApp({super.key});
+  const AureliaApp({super.key, this.audioEngine, this.voiceCapture, this.sso});
+
+  /// The engine playback runs on. Null is the real one.
+  ///
+  /// It exists so the widget tests can hand in [SilentAudioEngine]: a test
+  /// binding has no platform channels, so constructing the just_audio player
+  /// there would fail before the first frame. Nothing else passes it.
+  final AudioEngine? audioEngine;
+
+  /// The microphone the cockpit's recorder opens. Null is the device's, and
+  /// it is here for the same reason [audioEngine] is.
+  final VoiceCapture? voiceCapture;
+
+  /// Who signs you in through the Google and Apple buttons. Null is the dummy
+  /// provider; the tests pass one that fails, to reach the branches a working
+  /// provider never takes.
+  final SsoProvider? sso;
 
   @override
   State<AureliaApp> createState() => _AureliaAppState();
@@ -44,7 +63,7 @@ class _AureliaAppState extends State<AureliaApp> {
   /// A session being built has to survive leaving the cockpit to play it, and
   /// a session that is playing has to survive walking back to the cockpit.
   /// Owned by their screens, each would be torn down by the other.
-  final _playback = PlaybackController();
+  late final _playback = PlaybackController(engine: widget.audioEngine);
   final _chat = ChatSessionController();
 
   @override
@@ -83,6 +102,7 @@ class _AureliaAppState extends State<AureliaApp> {
         settings: settings,
         builder: (_) => SignInScreen(
           redirect: AuthRedirect(route: name, arguments: settings.arguments),
+          sso: widget.sso,
         ),
       );
     }
@@ -98,9 +118,10 @@ class _AureliaAppState extends State<AureliaApp> {
                     arguments: redirect['arguments'],
                   )
                 : null,
+            sso: widget.sso,
           );
         case '/signup':
-          return const SignUpScreen();
+          return SignUpScreen(sso: widget.sso);
         case '/forgot-password':
           return const ForgotPasswordScreen();
         case '/reset-password':
@@ -118,9 +139,13 @@ class _AureliaAppState extends State<AureliaApp> {
               ask: args.ask,
               slug: args.slug,
               fresh: args.fresh,
+              voiceCapture: widget.voiceCapture,
             );
           }
-          return ChatScreen(brief: args is RecreateBrief ? args : null);
+          return ChatScreen(
+            brief: args is RecreateBrief ? args : null,
+            voiceCapture: widget.voiceCapture,
+          );
         case '/play':
           final args = settings.arguments;
           if (args is PlayRequest) {

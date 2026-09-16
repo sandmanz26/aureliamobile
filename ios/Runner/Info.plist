@@ -2,6 +2,11 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- The cockpit's voice memo. iOS kills the app outright if this string
+	     is missing when the mic is opened — it is not a warning, it is a
+	     crash, and it only happens on a device. -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Aurelia uses the microphone so you can describe a session out loud instead of typing it.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

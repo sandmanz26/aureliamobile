@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/audio/playback_controller.dart';
 import '../../core/data/people.dart';
+import '../../core/audio/voice_capture.dart';
 import '../../core/data/recommendations.dart';
 import '../../core/data/sessions.dart';
 import '../../core/theme/app_colors.dart';
@@ -35,6 +36,7 @@ class ChatScreen extends StatefulWidget {
     this.ask,
     this.slug,
     this.fresh = false,
+    this.voiceCapture,
   });
 
   final RecreateBrief? brief;
@@ -48,6 +50,10 @@ class ChatScreen extends StatefulWidget {
 
   /// Start from an empty thread — what "New session" means.
   final bool fresh;
+
+  /// The microphone the recorder opens. Null is the device's; the tests pass
+  /// a silent one, because a test binding has no platform channels.
+  final VoiceCapture? voiceCapture;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -328,9 +334,13 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             if (_listening)
               VoiceRecorder(
-                onSend: (transcript, duration) {
+                capture: widget.voiceCapture,
+                onSend: (transcript, duration, path) {
                   setState(() => _listening = false);
-                  chat.send(text: transcript, voiceDuration: duration);
+                  chat.send(
+                      text: transcript,
+                      voiceDuration: duration,
+                      voicePath: path);
                 },
                 onCancel: () => setState(() => _listening = false),
               )
@@ -445,7 +455,10 @@ class _ChatScreenState extends State<ChatScreen> {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (message.voiceDuration != null)
-            VoiceMessage(duration: message.voiceDuration!, transcript: message.text)
+            VoiceMessage(
+                duration: message.voiceDuration!,
+                transcript: message.text,
+                path: message.voicePath)
           else
             Container(
               constraints: const BoxConstraints(maxWidth: 283),

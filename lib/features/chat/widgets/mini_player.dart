@@ -110,7 +110,7 @@ class MiniPlayer extends StatelessWidget {
               valueListenable: playback.elapsed,
               builder: (context, elapsed, _) {
                 final progress = (elapsed.inMilliseconds /
-                        PlaybackController.duration.inMilliseconds)
+                        playback.length.inMilliseconds)
                     .clamp(0.0, 1.0);
                 return Stack(
                   children: [

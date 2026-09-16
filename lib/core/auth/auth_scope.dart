@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'sso.dart';
 
 /// Who is using the app — the mobile mirror of the web app's AuthContext.
 ///
@@ -12,8 +13,18 @@ import 'package:flutter/material.dart';
 /// file.
 class AuthController extends ChangeNotifier {
   bool _signedIn = false;
+  SsoAccount? _account;
 
   bool get signedIn => _signedIn;
+
+  /// The provider account, when that is how you got in. Null after an
+  /// email-and-password sign-in, which is most of the app's paths today.
+  SsoAccount? get account => _account;
+
+  /// Which button you came in through, for the one place it is worth saying:
+  /// "you already have an account, with Google" when somebody returns through
+  /// the other one.
+  SsoProviderId? get provider => _account?.provider;
 
   void signIn() {
     if (_signedIn) return;
@@ -21,9 +32,17 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// The same, carrying what the provider handed back.
+  void signInWith(SsoAccount account) {
+    _account = account;
+    _signedIn = true;
+    notifyListeners();
+  }
+
   void signOut() {
     if (!_signedIn) return;
     _signedIn = false;
+    _account = null;
     notifyListeners();
   }
 }
