@@ -70,11 +70,18 @@ class _WellnessScreenState extends State<WellnessScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Column(
+                // Flexible, so the figure column gives way rather than the
+                // meters beside it: the meter labels share one width so the
+                // bars line up, which means that width cannot be the thing
+                // that yields when the card is narrow.
+                Flexible(
+                  child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text('Active Signals',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: AppTextStyles.bodyMd
                             .copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 4),
@@ -84,10 +91,16 @@ class _WellnessScreenState extends State<WellnessScreen> {
                       children: [
                         Text('$active', style: AppTextStyles.headlineMd),
                         const SizedBox(width: 6),
-                        Text('/ $total Sources', style: AppTextStyles.bodySm),
+                        Flexible(
+                          child: Text('/ $total Sources',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.bodySm),
+                        ),
                       ],
                     ),
                   ],
+                ),
                 ),
                 const SizedBox(width: AppSpacing.s4),
                 Expanded(
@@ -166,7 +179,12 @@ class _Meter extends StatelessWidget {
       label: '$label: $connected of $total connected',
       child: Row(
         children: [
-          SizedBox(width: 84, child: Text(label, style: AppTextStyles.bodySm)),
+          // 96, not the 84 this column used to be: "Atmospheric" at 14 is
+          // wider than 84 in Mulish, and the two clients failed at it
+          // differently — CSS will not break a single word, so the web
+          // overflowed the column silently, while Flutter wrapped mid-word.
+          // Widening it is the fix on both.
+          SizedBox(width: 96, child: Text(label, style: AppTextStyles.bodySm)),
           const SizedBox(width: 10),
           Expanded(
             child: ClipRRect(
