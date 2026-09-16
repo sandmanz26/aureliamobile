@@ -1,4 +1,4 @@
-import { ArrowRight, Bookmark, Clock, Coins, Menu, Play, Users } from 'lucide-react'
+import { ArrowRight, Clock, Coins, ListFilter, Menu, Play, Users } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import liveSessionsMap from '../assets/live-sessions-map.png'
@@ -8,8 +8,8 @@ import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { SessionGridCard } from '../components/ui/SessionGridCard'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import { useDrawer } from '../layouts/DrawerContext'
-import type { CoverKey } from '../lib/photos'
 import { QUICK_STARTS } from '../lib/quickStart'
+import { trustedCreators } from '../lib/people'
 import type { CategoryFilter, Shelf } from '../lib/sessions'
 import { CATEGORY_FILTERS, categoryLabel, findSession, sessionsOnShelf } from '../lib/sessions'
 import { CategorySheet } from '../components/ui/CategorySheet'
@@ -23,12 +23,8 @@ import { CoinPill } from '../components/ui/CoinPill'
  * quick starts, what is live now, what the community made, who to follow, the
  * running challenge, and two ranked shelves.
  */
-const creators: { name: string; photo: CoverKey; sessions: string }[] = [
-  { name: 'Ethan Miller', photo: 'creatorEthan', sessions: '52 sessions' },
-  { name: 'Daniel Carter', photo: 'creatorDaniel', sessions: '38 sessions' },
-  { name: 'Sophia Reynolds', photo: 'creatorSophia', sessions: '27 sessions' },
-  { name: 'Maya Bennett', photo: 'creatorMaya', sessions: '19 sessions' },
-]
+
+const TRUSTED_CREATORS = trustedCreators()
 
 /**
  * Sessions in progress. The only shelf that carries a progress bar, because it
@@ -181,12 +177,27 @@ export function ExplorePage() {
         </div>
         <div className="flex shrink-0 items-center gap-8">
         <CoinPill points="1,323" className="shadow-sm" />
+        {/* A filter, not a bookmark. It opens the category sheet this screen
+            already has, so the header control and the chip row below it are
+            two ways to the same thing rather than two different promises. The
+            dot marks a filter that is on — a header that looks identical
+            whether or not the shelf is narrowed is how people lose track of
+            why a shelf looks empty. */}
         <button
           type="button"
-          aria-label="Saved sessions"
-          className="u-press flex size-40 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-sm"
+          aria-label={
+            category === 'All' ? 'Filter by category' : `Filtered by ${categoryLabel(category)}. Change filter`
+          }
+          onClick={() => setCategoriesOpen(true)}
+          className="u-press relative flex size-40 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-sm"
         >
-          <Bookmark size={18} />
+          <ListFilter size={18} />
+          {category !== 'All' && (
+            <span
+              aria-hidden="true"
+              className="absolute right-8 top-8 size-8 rounded-full border-2 border-surface-default bg-brand-emphasis"
+            />
+          )}
         </button>
         </div>
       </div>
@@ -309,8 +320,15 @@ export function ExplorePage() {
           <section className="mt-32">
             <SectionHeader title="Trusted Creators" />
             <div className="-mx-20 mt-16 flex gap-20 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
-              {creators.map((creator) => (
-                <div key={creator.name} className="flex w-[84px] shrink-0 flex-col items-center gap-8 text-center">
+              {/* Real people, counted rather than claimed. The shelf used to name
+                  four, two of whom were in no session at all — so tapping them
+                  could only ever go nowhere. */}
+              {TRUSTED_CREATORS.map((creator) => (
+                <Link
+                  key={creator.slug}
+                  to={`/profile/${creator.slug}`}
+                  className="u-press flex w-[84px] shrink-0 flex-col items-center gap-8 text-center"
+                >
                   <PhotoCircle
                     photo={creator.photo}
                     size={72}
@@ -319,9 +337,11 @@ export function ExplorePage() {
                   />
                   <span className="min-w-0">
                     <span className="text-style-caption block truncate text-text-primary">{creator.name}</span>
-                    <span className="text-style-caption block truncate text-text-secondary">{creator.sessions}</span>
+                    <span className="text-style-caption block truncate text-text-secondary">
+                      {creator.sessions.length === 1 ? '1 session' : `${creator.sessions.length} sessions`}
+                    </span>
                   </span>
-                </div>
+                </Link>
               ))}
             </div>
           </section>

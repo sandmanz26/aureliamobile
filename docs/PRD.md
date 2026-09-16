@@ -438,6 +438,38 @@ have happened. The figure pill on its row is absent for that reason rather
 than by styling, and a creator's "34 published sessions" counts only what is
 out.
 
+### Explore's header filters, and its creators are real people
+
+The trailing header control was a bookmark that did nothing. It is a filter
+now, and it opens the category sheet this screen already had — so the header
+control and the chip row below it are two ways to the same thing rather than
+two different promises. It carries a dot when a category is in force: a header
+that looks identical whether or not the shelf is narrowed is how somebody
+loses track of why a shelf looks empty.
+
+**Trusted Creators is built from the catalogue.** It used to name four people
+of whom two, Daniel Carter and Maya Bennett, appeared in no session at all —
+so tapping them could only ever go nowhere, and the counts beside them were
+invented rather than counted. It now lists real creators, most published
+first, each linking to their profile, and leaves the signed-in user out: a
+shelf of creators to discover that leads with yourself is not one.
+
+### New session opens the conversation, not a blank page
+
+It used to empty the thread. A cockpit with an empty scroll is a worse first
+screen than one already mid-conversation — and it left the default draft
+naming a session, "Sleep meditation v1.2", that no message on screen mentioned.
+New session now opens the demo exchange those two were always written against.
+
+`reset()` takes the opening the thread should start on, so the entry points
+that write their own — a Quick Start card, a Recreate — hand it over rather
+than clearing and then setting. The thread never renders somebody else's
+conversation on the way to theirs.
+
+**The composer carries the accuracy caveat**, as the frame has it. It belongs
+on a wellness product more than most: Aurelia talks about sleep and stress in
+specific figures, and not one of them is a measurement.
+
 ### Every way into the cockpit starts its own session, and says so
 
 Quick Start had two cards and both linked to a bare `/chat`, so whichever you

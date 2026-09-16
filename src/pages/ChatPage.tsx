@@ -95,8 +95,10 @@ export function ChatPage() {
   /** What the visitor typed on Home before they were sent here. */
   const ask = routeState?.ask
 
-  // "New session" opens an empty thread; everything else continues the demo
-  // conversation the screens are written against.
+  // "New session" opens the demo conversation the screens are written
+  // against, and so does a first visit. The empty-thread guard below is still
+  // here because a thread with nothing in it is a state the screen has to
+  // survive, but nothing reaches it today.
   // Held above the router, so walking off to play the session and coming back
   // returns to the thread rather than a fresh one.
   const {
@@ -168,17 +170,15 @@ export function ChatPage() {
     if (!card || startHandled.current === location.key) return
     startHandled.current = location.key
 
-    reset()
-    setTyping(false)
-    setDraft({ title: draftTitleFor(card), slug: card.plays })
-
     const now = Date.now()
-    let id = 1
-    setMessages([
-      { id: id++, from: 'aurelia', at: now, text: card.opening },
-      { id: id++, from: 'aurelia', at: now + 1_200, text: card.ask },
+    reset([
+      { id: 1, from: 'aurelia', at: now, text: card.opening },
+      { id: 2, from: 'aurelia', at: now + 1_200, text: card.ask },
     ])
-  }, [location.key, routeState?.start, reset, setMessages, setDraft])
+    setTyping(false)
+    // After reset, which puts the draft back to the default.
+    setDraft({ title: draftTitleFor(card), slug: card.plays })
+  }, [location.key, routeState?.start, reset, setDraft])
 
   /**
    * A hand-off from Recreate opens the thread with the fork already stated, so
@@ -195,15 +195,11 @@ export function ChatPage() {
     if (!brief || briefHandled.current === location.key) return
     briefHandled.current = location.key
 
-    reset()
-    setTyping(false)
-
     const now = Date.now()
     const lines = brief.changes.length ? brief.changes.map((line) => `• ${line}`).join('\n') : '• Keep it as it is'
-    let id = 1
-    setMessages([
+    reset([
       {
-        id: id++,
+        id: 1,
         from: 'user',
         at: now,
         status: 'read',
@@ -213,6 +209,7 @@ export function ChatPage() {
         attachment: { session: brief.slug },
       },
     ])
+    setTyping(false)
     // A fork is a v2 of somebody else's, and until it is built it stands in
     // for the original — which is at least the right session.
     setDraft({ title: `${brief.title} v2`, slug: brief.slug })
@@ -542,6 +539,13 @@ export function ChatPage() {
                 </button>
               ))}
           </div>
+
+          {/* The accuracy caveat, as the frame has it. It belongs on a wellness
+              product more than most: Aurelia talks about sleep and stress in
+              specific figures, and none of them are a measurement. */}
+          <p className="text-style-caption px-20 text-center text-text-secondary">
+            Aurelia AI can make mistakes. Check important info.
+          </p>
 
           <div className="px-20">
             <div className="mx-auto max-w-[402px] lg:max-w-[720px]">

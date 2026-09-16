@@ -62,6 +62,24 @@ function collect() {
 
 const PEOPLE = collect()
 
+/**
+ * Other people's creators, most published first — Explore's "Trusted Creators".
+ *
+ * Built from the catalogue rather than listed by hand. The shelf used to name
+ * four people of whom two, Daniel Carter and Maya Bennett, were in no session
+ * at all: tapping them could only ever go nowhere, and the session counts
+ * beside them were invented rather than counted.
+ *
+ * You are left out. A shelf of creators to discover that leads with yourself
+ * is not a shelf of creators to discover.
+ */
+export function trustedCreators(limit = 8): Person[] {
+  return [...PEOPLE.values()]
+    .filter((person) => !person.isSelf)
+    .sort((a, b) => b.sessions.length - a.sessions.length || a.name.localeCompare(b.name))
+    .slice(0, limit)
+}
+
 /** Undefined resolves to the signed-in user, so /profile keeps working. */
 export function findPerson(slug: string | undefined): Person | undefined {
   if (!slug) return PEOPLE.get(CURRENT_USER_SLUG)

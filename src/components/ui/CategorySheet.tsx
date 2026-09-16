@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, X } from 'lucide-react'
 import type { CategoryFilter } from '../../lib/sessions'
@@ -19,6 +20,17 @@ export function CategorySheet({
   onSelect: (category: CategoryFilter) => void
   onClose: () => void
 }) {
+  // Escape closes it. The backdrop and the X already did, but neither is
+  // reachable from a keyboard, and the header's filter button made this sheet
+  // a main route rather than a corner of one screen.
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
   return createPortal(
     <div className="u-fade fixed inset-0 z-50 flex items-end justify-center bg-icon-strong/40" onClick={onClose}>
       <div

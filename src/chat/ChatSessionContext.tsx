@@ -201,8 +201,8 @@ interface ChatSessionValue {
   /** Next message id. A function rather than the ref itself: handing out a
    *  ref invites callers to mutate a hook's return value. */
   nextMessageId: () => number
-  /** Back to a thread with nothing in it — what "New session" means. */
-  reset: () => void
+  /** Back to a starting thread — the demo conversation unless given one. */
+  reset: (opening?: Message[]) => void
 }
 
 const ChatSessionContext = createContext<ChatSessionValue | null>(null)
@@ -257,15 +257,27 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
-  const reset = useCallback(() => {
-    setMessages([])
+  /**
+   * Put the thread back to a starting state.
+   *
+   * With nothing passed it opens on the demo conversation, which is what "New
+   * session" means: a cockpit with an empty scroll is a worse first screen
+   * than one already mid-conversation, and [DEFAULT_DRAFT] names the session
+   * those messages are about — the two have to agree.
+   *
+   * The entry points that write their own opening — a Quick Start card, a
+   * Recreate — pass it here rather than clearing and then setting, so the
+   * thread never renders somebody else's conversation on the way to theirs.
+   */
+  const reset = useCallback((opening: Message[] = OPENING_MESSAGES) => {
+    setMessages(opening)
     setApplied(RECOMMENDATIONS.map((item) => item.id))
     setSessionState('idle')
     setProgress(0)
     setDeckOpen(false)
     setSessionSlug(null)
     setDraft(DEFAULT_DRAFT)
-    nextId.current = OPENING_MESSAGES.length + 1
+    nextId.current = opening.length + 1
   }, [])
 
   const value = useMemo<ChatSessionValue>(
