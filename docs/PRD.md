@@ -565,6 +565,32 @@ session that is already loaded and audible asks you to do the thing you just
 did. Once what the thread built is the thing on the deck, the card reads
 *Playing now* or *Paused* instead.
 
+### The folded deck reads as three cards because the two behind show their orb
+
+Figma "Frame 74" (16523:8076). Three cards of the same size — 135 x 133 — all
+tilted the same 12°, stepping 59 to the right and a little down. Not a fan: a
+spread of angles reads as a splay.
+
+The thing that makes it a deck rather than one card with paper behind it is
+that you can see *which* changes are waiting, and that comes down to one detail
+that is easy to miss. At a step of 59, the second card's orb lands at 101–152
+in the front card's own coordinates, and the front card ends at 135 — so if the
+cards behind place their orb where the front card does, every pixel of it sits
+behind and all you get is a white edge. Our first build did exactly that.
+
+**Figma's trick is that cards two and three are not the front card repeated.**
+They centre their content, which moves the orb — and only the orb, because the
+text block is stretched and stays where it is — from x=12 to x=42. Those 30px
+are what push it past the card in front, so about 17px of each orb shows. The
+front card keeps the asymmetric 36px top-left corner; the two behind are a flat
+20, since their corner never shows.
+
+The deck also runs the full width of the message column rather than being
+indented under Aurelia's avatar, and the front card leads 4px into the gutter,
+both as the frame has it. That is not only fidelity: indented, the steps had to
+tighten on a narrow screen, and tightening the step is precisely what puts the
+orbs back into hiding.
+
 ### A profile card is a session, and both of its controls do something
 
 The profile's shelf was a hardcoded list of four beside the catalogue, and

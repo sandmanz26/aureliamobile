@@ -488,9 +488,12 @@ export function ChatPage() {
                     ))}
                   </div>
                 ) : (
-                  // 34 = the avatar column plus its gap, so the deck lines up
-                  // under the words that hand it over.
-                  <div className="u-message mt-12 pl-34">
+                  // Not indented under the avatar: the frame runs the deck the
+                  // full width of the message column and lets the front card
+                  // lead 4px into the gutter. It needs the room — indented,
+                  // the steps had to tighten on a narrow screen and the whole
+                  // point of the deck, the orbs behind, went back into hiding.
+                  <div className="u-message -ml-4 mt-12">
                     <RecommendationDeck
                       recommendations={RECOMMENDATIONS}
                       count={applied.length || RECOMMENDATIONS.length}
