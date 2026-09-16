@@ -69,7 +69,12 @@ function Meter({ label, connected, total }: { label: string; connected: number; 
       role="img"
       aria-label={`${label}: ${connected} of ${total} connected`}
     >
-      <span className="text-style-body-small w-[84px] shrink-0 text-text-secondary">{label}</span>
+      {/* 96, not 84: "Atmospheric" at 14 is wider than 84 in Mulish, and the
+          two clients failed at it differently — CSS will not break a single
+          word, so this column overflowed silently here while Flutter wrapped
+          it mid-word. The width is shared across the three labels so the bars
+          line up, which is why it cannot simply hug its content. */}
+      <span className="text-style-body-small w-[96px] shrink-0 text-text-secondary">{label}</span>
       <span className="h-6 min-w-0 flex-1 overflow-hidden rounded-full" style={{ background: '#FBE7D2' }}>
         <span
           className="block h-full rounded-full transition-[width] duration-300"
