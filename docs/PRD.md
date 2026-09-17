@@ -565,6 +565,68 @@ session that is already loaded and audible asks you to do the thing you just
 did. Once what the thread built is the thing on the deck, the card reads
 *Playing now* or *Paused* instead.
 
+### A change to a built session makes a new version of it
+
+Asking for a female voice on a session that exists used to change nothing. The
+message went in, Aurelia said "a female voice, unhurried — I will keep the cue
+count low", and the card underneath went on reading *Sleep meditation v1.2 ·
+Ready to play*: the cut from before, unchanged. The app was claiming to have
+done something it had not, and the only record of the request was the
+transcript, which does not play.
+
+**A request that changes the mix is the request.** It does not also need to be
+applied — the deck and its Apply chip are how a *proposal* becomes a build, and
+a direct instruction is not a proposal. So the eleven replies that agree to
+change something (length, voice, the layers, the levels) now start a build, and
+the card goes back to *Creating your new session..* and comes out as the next
+version.
+
+Two cases deliberately do not build:
+
+- **A thread with nothing made yet.** There the deck is the proposal and Apply
+  is what builds it, so a change asked for beforehand is noted rather than
+  acted on — which is what the fallback reply has always said in as many words.
+- **Anything that is not a change.** A brief ("I can't sleep") proposes; an
+  answer about last night's sleep reports. Neither touches the session.
+
+### Every cut is kept, and you can go back to one
+
+Generating is not a state the session passes through on its way back to the
+same thing. Every build is a new version, the one before it still exists, and
+until now nothing held them: try a female voice, dislike it, and there was no
+way back.
+
+**Version history** sits in the cockpit's ⋯ menu, above Settings — it is about
+the session in front of you, and it is the way out of a change you regret. Each
+row is a cut, named as the progress card named it, with the request that
+produced it underneath; that request is the only thing that tells two versions
+apart once they are both just a name and a time.
+
+- **A build is recorded when it starts, not when it finishes.** The row for the
+  one in flight reads *Creating — 40%* and offers no way back to it, which is
+  more use than hiding it. Recording on completion would mean carrying the
+  request across a screen the user can walk away from mid-build.
+- **Reverting moves the pointer; it does not delete what came after.** Losing
+  three cuts because you wanted to hear the second one again is a worse surprise
+  than a history that keeps growing. The later versions stay, and you can come
+  forward.
+- **The next build numbers from the newest, not the current one.** Revert to
+  v1.2 with a v1.4 in the list and the next change is v1.5, not a second v1.3.
+  History stays a list rather than a tree, which is the right shape for a demo
+  and the only one a single card can point at honestly.
+- **Reverting says so in the thread**, for the same reason applying does: a
+  session that changes with nothing in the transcript to explain why reads as
+  the app acting on its own.
+
+Where the history starts depends on the door, and it has to agree with the
+opening line:
+
+| You came in by | History starts |
+| --- | --- |
+| New session | at *Sleep meditation v1.2* — the demo thread's first line says it exists |
+| A session row | at that session, published or not; the next build is its v2 |
+| Quick Start, Recreate | empty. Nothing has been made, so the first build *is* v1.0 rather than the thing after it |
+
 ### The folded deck reads as three cards because the two behind show their orb
 
 Figma "Frame 74" (16523:8076). Three cards of the same size — 135 x 133 — all

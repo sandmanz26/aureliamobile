@@ -25,6 +25,20 @@ export interface Reply {
    * are actually a proposal do; an answer to "how did I sleep" is not.
    */
   proposes?: boolean
+  /**
+   * Whether Aurelia is agreeing to change the session itself.
+   *
+   * These are the ones that have to produce a new cut. Saying "adding white
+   * noise underneath" over a card that still reads *Ready to play* on the
+   * version from before is the app claiming to have done something it did not
+   * do — and the thread is the only record of the request, so there was
+   * nothing to go back to either.
+   *
+   * A brief ("I can't sleep") is not one of these: it proposes, and the deck
+   * is what gets applied. Nor is the fallback, which says in as many words
+   * that it is noting the request for the *next* revision.
+   */
+  changes?: boolean
 }
 
 interface Rule {
@@ -41,6 +55,7 @@ const RULES: Rule[] = [
     test: /\b(shorter|less time|too long|cut it down|quicker|brief)\b/,
     reply: {
       text: 'Shorter it is. I will take it down and lose the middle chapter rather than speeding anything up — a rushed session is worse than a short one.',
+          changes: true,
     },
   },
   {
@@ -48,6 +63,7 @@ const RULES: Rule[] = [
     test: /\b(longer|extend|more time|too short|stretch)\b/,
     reply: {
       text: 'I can stretch it. Most of the added time goes into the middle, where nothing is asked of you — that is the part people actually want more of.',
+          changes: true,
     },
   },
   {
@@ -55,6 +71,7 @@ const RULES: Rule[] = [
     test: /\b(\d{1,3})\s?(min|mins|minute|minutes|hour|hours|h)\b/,
     reply: {
       text: 'Noted — I will build it to that length and keep the chapters in proportion rather than padding the end.',
+          changes: true,
     },
   },
 
@@ -64,6 +81,7 @@ const RULES: Rule[] = [
     test: /\b(no voice|without voice|no guidance|no words|instrumental|don'?t speak|no talking)\b/,
     reply: {
       text: 'No voice, then. The breath pacing carries it instead — it is slower to settle into, but nobody ever gets pulled out of it by a word they did not expect.',
+          changes: true,
     },
   },
   {
@@ -71,6 +89,7 @@ const RULES: Rule[] = [
     test: /\b(female|woman|she)\b.*\bvoice\b|\bvoice\b.*\b(female|woman)\b|\bfemale voice\b/,
     reply: {
       text: 'A female voice, unhurried. I will keep the cue count low — nine or so across the whole thing, which is what the sessions people finish tend to have.',
+          changes: true,
     },
   },
   {
@@ -78,6 +97,7 @@ const RULES: Rule[] = [
     test: /\b(male|man)\b.*\bvoice\b|\bvoice\b.*\b(male|man)\b|\bmale voice\b/,
     reply: {
       text: 'A male voice it is — low and slow, and I will pull it further back in the mix than the female cut, because it sits heavier against a quiet bed.',
+          changes: true,
     },
   },
 
@@ -87,6 +107,7 @@ const RULES: Rule[] = [
     test: /\b(white noise|static|hiss|fan)\b/,
     reply: {
       text: 'Adding white noise underneath. I will keep it below the bed so it masks the room without becoming the thing you are listening to.',
+          changes: true,
     },
   },
   {
@@ -94,6 +115,7 @@ const RULES: Rule[] = [
     test: /\b(rain|storm|thunder|drizzle)\b/,
     reply: {
       text: 'Rain going in. Steady rather than heavy — the recordings with thunder in them wake people at the wrong moment.',
+          changes: true,
     },
   },
   {
@@ -101,6 +123,7 @@ const RULES: Rule[] = [
     test: /\b(ocean|sea|waves|tide|water)\b/,
     reply: {
       text: 'An ocean bed, breathing at about six cycles a minute. That is slow enough that your own breath tends to follow it without being told to.',
+          changes: true,
     },
   },
   {
@@ -108,6 +131,7 @@ const RULES: Rule[] = [
     test: /\b(louder|turn it up|raise|more volume)\b/,
     reply: {
       text: 'I will bring that layer up. Everything else stays where it is, so the balance you already liked does not move with it.',
+          changes: true,
     },
   },
   {
@@ -115,6 +139,7 @@ const RULES: Rule[] = [
     test: /\b(quieter|softer|turn it down|lower|too loud)\b/,
     reply: {
       text: 'Bringing it down. If it ends up too far back I would rather remove the layer than leave it just audible — half-there is the worst setting.',
+          changes: true,
     },
   },
 

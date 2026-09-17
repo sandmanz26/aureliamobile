@@ -16,6 +16,7 @@ import { replyTo } from '../lib/replies'
 import { RecommendationCard } from '../components/chat/RecommendationCard'
 import { RecommendationDeck } from '../components/chat/RecommendationDeck'
 import { SessionProgressCard } from '../components/chat/SessionProgressCard'
+import { VersionHistorySheet } from '../components/chat/VersionHistorySheet'
 import { VoiceMessage } from '../components/chat/VoiceMessage'
 import { VoiceRecorder } from '../components/chat/VoiceRecorder'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
@@ -110,6 +111,7 @@ export function ChatPage() {
     deckOpen, setDeckOpen,
     sessionSlug, openSession,
     draft, setDraft,
+    versions, currentVersionId, addVersion, revertTo,
     nextMessageId,
     reset,
   } = useChatSession()
@@ -121,6 +123,14 @@ export function ChatPage() {
   const [publishState, setPublishState] = useState<'publishing' | 'published' | null>(null)
   const [addOpen, setAddOpen] = useState(false)
   const [addPicks, setAddPicks] = useState<string[]>([])
+  const [historyOpen, setHistoryOpen] = useState(false)
+
+  // Read by the reply timers below, which fire long after the render that
+  // scheduled them and would otherwise decide on a stale state.
+  const stateRef = useRef(sessionState)
+  useEffect(() => {
+    stateRef.current = sessionState
+  }, [sessionState])
 
   const empty = messages.length === 0
 
@@ -327,13 +337,27 @@ export function ChatPage() {
     ])
     setDeckOpen(false)
     window.setTimeout(() => {
-      setProgress(0)
-      setSessionState('generating')
+      build(label)
       setMessages((current) => [
         ...current,
         { id: nextMessageId(), from: 'aurelia', at: Date.now(), text: 'Sure, here it is:' },
       ])
     }, 1400)
+  }
+
+  /**
+   * Start a new cut.
+   *
+   * The version is recorded here, at the start, rather than when the bar
+   * reaches 100 — the build is a thing that is happening, and recording it on
+   * completion would mean carrying the request across a screen the user can
+   * walk away from mid-build. The history shows the newest row as *Creating*
+   * while this runs.
+   */
+  function build(change: string) {
+    setProgress(0)
+    setSessionState('generating')
+    addVersion(change)
   }
 
   /**
@@ -354,11 +378,22 @@ export function ChatPage() {
     }, 900)
     window.setTimeout(() => {
       setTyping(false)
+      // What was said decides what comes back. One reply for every input is
+      // what makes a demo feel like a demo — the screen is plainly not reading
+      // you, so you stop typing anything real into it.
+      const reply = replyTo(message.text)
+      // Asking for a change to a session that exists *is* the request — it does
+      // not also need to be applied. Aurelia says she is adding the white
+      // noise, so a card still reading "Ready to play" on the cut from before
+      // is the app claiming to have done something it has not. A thread with
+      // nothing built yet is a different case: there the deck is the proposal
+      // and Apply is what builds it.
+      //
+      // Outside the updater below, and that is not a style choice: an updater
+      // is expected to be pure and React runs it twice to check, so a build
+      // started from inside one records the version twice.
+      if (reply.changes && stateRef.current === 'ready') build(message.text)
       setMessages((current) => {
-        // What was said decides what comes back. One reply for every input is
-        // what makes a demo feel like a demo — the screen is plainly not
-        // reading you, so you stop typing anything real into it.
-        const reply = replyTo(message.text)
         // The deck comes over once, with the first reply that is a proposal.
         // Without that, a thread started from Quick Start offered "Apply new
         // changes (3)" over a deck nobody had handed over.
@@ -432,6 +467,7 @@ export function ChatPage() {
         /* Insights opens Progress for this session. A thread with nothing
            behind it has no progress to show, so the item stays inert there. */
         onInsights={sessionSlug ? () => navigate(`/progress/${sessionSlug}`) : undefined}
+        onVersions={versions.length ? () => setHistoryOpen(true) : undefined}
         onMenu={openDrawer}
         onPublish={() => isEnabled('chat.publish') && setPublishState('publishing')}
         canPublish={isEnabled('chat.publish')}
@@ -647,6 +683,45 @@ export function ChatPage() {
             )
           }}
           onClose={() => setAddOpen(false)}
+        />
+      )}
+
+      {historyOpen && (
+        <VersionHistorySheet
+          versions={versions}
+          currentId={currentVersionId}
+          building={sessionState === 'generating'}
+          progress={progress}
+          onRevert={(id) => {
+            setHistoryOpen(false)
+            revertTo(id)
+            const version = versions.find((item) => item.id === id)
+            if (!version) return
+            // Going back is a change like any other, and the transcript is
+            // where this session's changes are accounted for. Without the
+            // line, the card quietly renames itself and nothing says why.
+            setMessages((current) => [
+              ...current,
+              {
+                id: nextMessageId(),
+                from: 'user',
+                at: Date.now(),
+                status: 'read',
+                text: `Go back to ${version.label}`,
+              },
+              {
+                id: nextMessageId(),
+                from: 'aurelia',
+                at: Date.now() + 1,
+                text: `Back on ${version.label}. The later cuts are still in the history, so you can come forward again — nothing is lost by trying one.`,
+              },
+            ])
+            // The cut you reverted to is finished, so the card plays it rather
+            // than offering to build it.
+            setProgress(100)
+            setSessionState('ready')
+          }}
+          onClose={() => setHistoryOpen(false)}
         />
       )}
 

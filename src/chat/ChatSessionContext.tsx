@@ -180,6 +180,41 @@ export const DEFAULT_DRAFT: Draft = {
   slug: 'dolphins-frequency',
 }
 
+/**
+ * One cut of the draft, and what produced it.
+ *
+ * Generating is not a state the session passes through on its way back to the
+ * same thing: every build is a new version of it, and the one before still
+ * exists. Without somewhere to keep them, asking for a female voice and then
+ * regretting it left nothing to go back to — and the thread, which is the only
+ * record, does not play.
+ */
+export interface DraftVersion {
+  id: string
+  /** As the progress card and the history name it. */
+  label: string
+  /** What produced it, in the user's own words. */
+  change: string
+  at: number
+  /** The catalogue session this cut stands in for. */
+  slug: string
+}
+
+/** The label the next build takes. Bumps the minor where there is one —
+ *  v1.2 to v1.3 — the major where there is not, and starts a v2 where the
+ *  name carries no version at all, which is what a published session's does. */
+export function nextVersionLabel(label: string) {
+  const match = /\s+v(\d+)(?:\.(\d+))?$/i.exec(label)
+  if (!match) return `${label} v2`
+  const base = label.slice(0, match.index)
+  const major = Number(match[1])
+  if (match[2] === undefined) return `${base} v${major + 1}`
+  return `${base} v${major}.${Number(match[2]) + 1}`
+}
+
+/** How far back the thread's opening exchange is backdated. */
+const BACKDATED = 9 * 60_000
+
 interface ChatSessionValue {
   messages: Message[]
   setMessages: Dispatch<SetStateAction<Message[]>>
@@ -196,6 +231,16 @@ interface ChatSessionValue {
   /** What it is building, and where that goes when it is built. */
   draft: Draft
   setDraft: Dispatch<SetStateAction<Draft>>
+  /** Every cut this thread has made, oldest first. */
+  versions: DraftVersion[]
+  /** Which of them the card, the transport and Publish are pointed at. Not
+   *  always the newest — reverting moves it back without deleting anything. */
+  currentVersionId: string | null
+  /** Start a new cut. Called when a build starts rather than when it finishes,
+   *  so the history can show the one being made. */
+  addVersion: (change: string) => void
+  /** Point the draft back at an earlier cut. */
+  revertTo: (id: string) => void
   /** Open an existing session's conversation, already made. */
   openSession: (session: SessionRecord) => void
   /** Next message id. A function rather than the ref itself: handing out a
@@ -206,6 +251,23 @@ interface ChatSessionValue {
 }
 
 const ChatSessionContext = createContext<ChatSessionValue | null>(null)
+
+/**
+ * The version the demo thread opens with.
+ *
+ * [OPENING_MESSAGES] say "the sleep meditation we created", so one already
+ * exists — history that started empty would contradict the first line of the
+ * conversation. [DEFAULT_DRAFT] names it, and these two have to agree.
+ */
+function demoBaseline(): DraftVersion {
+  return {
+    id: 'v0',
+    label: DEFAULT_DRAFT.title,
+    change: 'The cut you have been listening to',
+    at: Date.now() - BACKDATED,
+    slug: DEFAULT_DRAFT.slug,
+  }
+}
 
 /**
  * The cockpit thread, held above the router.
@@ -228,8 +290,43 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
   const [deckOpen, setDeckOpen] = useState(false)
   const [sessionSlug, setSessionSlug] = useState<string | null>(null)
   const [draft, setDraft] = useState<Draft>(DEFAULT_DRAFT)
+  const [versions, setVersions] = useState<DraftVersion[]>(() => [demoBaseline()])
+  const [currentVersionId, setCurrentVersionId] = useState<string | null>('v0')
   const nextId = useRef(OPENING_MESSAGES.length + 1)
+  const nextVersionNo = useRef(1)
   const nextMessageId = useCallback(() => nextId.current++, [])
+
+  /**
+   * Records the cut a build is making.
+   *
+   * The label comes off the newest version rather than the current one: revert
+   * to v1.2 with a v1.4 in the list and the next change is v1.5, not a second
+   * v1.3. History stays a list rather than a tree, which is the right shape for
+   * a demo and the only one a single card can point at honestly.
+   *
+   * With nothing in the list the draft's own name is the first cut — a Quick
+   * Start arrives as v1.0 and that *is* the version, not the thing before it.
+   */
+  const addVersion = useCallback(
+    (change: string) => {
+      const label = versions.length ? nextVersionLabel(versions[versions.length - 1].label) : draft.title
+      const id = `v${nextVersionNo.current++}`
+      setVersions((list) => [...list, { id, label, change, at: Date.now(), slug: draft.slug }])
+      setCurrentVersionId(id)
+      setDraft((current) => ({ ...current, title: label }))
+    },
+    [versions, draft],
+  )
+
+  const revertTo = useCallback(
+    (id: string) => {
+      const version = versions.find((item) => item.id === id)
+      if (!version) return
+      setCurrentVersionId(id)
+      setDraft({ title: version.label, slug: version.slug })
+    },
+    [versions],
+  )
 
   /**
    * Opening the session you are already in is a no-op, and that is the whole
@@ -252,6 +349,19 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
       // What the cockpit is working on *is* this session now, so the progress
       // card and Ready to play follow it rather than a literal.
       setDraft({ title: session.title, slug: session.slug })
+      // A session you can open is a cut that already exists, so history starts
+      // with it rather than empty; the next build is its v2.
+      setVersions([
+        {
+          id: 'v0',
+          label: session.title,
+          change: session.published === false ? 'Built, not published yet' : 'The published cut',
+          at: Date.now() - BACKDATED,
+          slug: session.slug,
+        },
+      ])
+      setCurrentVersionId('v0')
+      nextVersionNo.current = 1
       nextId.current = opening.length + 1
       return session.slug
     })
@@ -277,6 +387,13 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
     setDeckOpen(false)
     setSessionSlug(null)
     setDraft(DEFAULT_DRAFT)
+    // A door that writes its own opening is starting something that does not
+    // exist yet, so it has no history; the demo thread's does, because its
+    // first line says so.
+    const own = opening !== OPENING_MESSAGES
+    setVersions(own ? [] : [demoBaseline()])
+    setCurrentVersionId(own ? null : 'v0')
+    nextVersionNo.current = 1
     nextId.current = opening.length + 1
   }, [])
 
@@ -289,10 +406,14 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
       deckOpen, setDeckOpen,
       sessionSlug, openSession,
       draft, setDraft,
+      versions, currentVersionId, addVersion, revertTo,
       nextMessageId,
       reset,
     }),
-    [messages, applied, sessionState, progress, deckOpen, sessionSlug, openSession, draft, nextMessageId, reset],
+    [
+      messages, applied, sessionState, progress, deckOpen, sessionSlug, openSession, draft,
+      versions, currentVersionId, addVersion, revertTo, nextMessageId, reset,
+    ],
   )
 
   return <ChatSessionContext.Provider value={value}>{children}</ChatSessionContext.Provider>
