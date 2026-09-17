@@ -16,7 +16,6 @@ import { replyTo } from '../lib/replies'
 import { RecommendationCard } from '../components/chat/RecommendationCard'
 import { RecommendationDeck } from '../components/chat/RecommendationDeck'
 import { SessionProgressCard } from '../components/chat/SessionProgressCard'
-import { VersionHistorySheet } from '../components/chat/VersionHistorySheet'
 import { VoiceMessage } from '../components/chat/VoiceMessage'
 import { VoiceRecorder } from '../components/chat/VoiceRecorder'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
@@ -91,6 +90,8 @@ export function ChatPage() {
         fresh?: boolean
         /** A Quick Start card's id — Explore's "Create". */
         start?: string
+        /** A cut picked in the Insights > Chapters list, to go back to. */
+        revert?: { id: string; label: string; slug: string }
       }
     | null
   const brief = routeState?.recreate
@@ -111,7 +112,7 @@ export function ChatPage() {
     deckOpen, setDeckOpen,
     sessionSlug, openSession,
     draft, setDraft,
-    versions, currentVersionId, addVersion, revertTo,
+    addVersion, pointAt,
     nextMessageId,
     reset,
   } = useChatSession()
@@ -126,7 +127,6 @@ export function ChatPage() {
   const [publishState, setPublishState] = useState<'publishing' | 'published' | null>(null)
   const [addOpen, setAddOpen] = useState(false)
   const [addPicks, setAddPicks] = useState<string[]>([])
-  const [historyOpen, setHistoryOpen] = useState(false)
 
   // Read by the reply timers below, which fire long after the render that
   // scheduled them and would otherwise decide on a stale state.
@@ -204,6 +204,43 @@ export function ChatPage() {
     // After reset, which puts the draft back to the default.
     setDraft({ title: draftTitleFor(card), slug: card.plays })
   }, [location.key, routeState?.start, reset, setDraft])
+
+  /**
+   * Going back to an earlier cut, chosen in Insights > Chapters.
+   *
+   * Chapters is the version history now — the cockpit's menu no longer carries
+   * a second one — so the revert happens there and is handed here through the
+   * route. The work lands in the conversation because that is where this
+   * session's changes are accounted for: without the two lines, the card
+   * quietly renames itself and nothing says why.
+   */
+  useEffect(() => {
+    const cut = routeState?.revert
+    if (!cut) return
+    pointAt(cut)
+    setMessages((current) => [
+      ...current,
+      {
+        id: nextMessageId(),
+        from: 'user',
+        at: Date.now(),
+        status: 'read',
+        text: `Go back to ${cut.label}`,
+      },
+      {
+        id: nextMessageId(),
+        from: 'aurelia',
+        at: Date.now() + 1,
+        text: `Back on ${cut.label}. The later cuts are still in the history, so you can come forward again — nothing is lost by trying one.`,
+      },
+    ])
+    // The cut you reverted to is finished, so the card plays it rather than
+    // offering to build it.
+    setProgress(100)
+    setSessionState('ready')
+    // location.key, not the object: Back returns to this entry with the same
+    // state, and without it the revert would replay on every visit.
+  }, [location.key, routeState?.revert, pointAt, setMessages, nextMessageId, setProgress, setSessionState])
 
   /**
    * A hand-off from Recreate opens the thread with the fork already stated, so
@@ -477,7 +514,6 @@ export function ChatPage() {
            and a menu item that silently bounces you elsewhere is worse than
            one that is plainly unavailable. */
         onInsights={insightsSlug ? () => navigate(`/progress/${insightsSlug}`) : undefined}
-        onVersions={versions.length ? () => setHistoryOpen(true) : undefined}
         onMenu={openDrawer}
         onPublish={() => isEnabled('chat.publish') && setPublishState('publishing')}
         canPublish={isEnabled('chat.publish')}
@@ -693,45 +729,6 @@ export function ChatPage() {
             )
           }}
           onClose={() => setAddOpen(false)}
-        />
-      )}
-
-      {historyOpen && (
-        <VersionHistorySheet
-          versions={versions}
-          currentId={currentVersionId}
-          building={sessionState === 'generating'}
-          progress={progress}
-          onRevert={(id) => {
-            setHistoryOpen(false)
-            revertTo(id)
-            const version = versions.find((item) => item.id === id)
-            if (!version) return
-            // Going back is a change like any other, and the transcript is
-            // where this session's changes are accounted for. Without the
-            // line, the card quietly renames itself and nothing says why.
-            setMessages((current) => [
-              ...current,
-              {
-                id: nextMessageId(),
-                from: 'user',
-                at: Date.now(),
-                status: 'read',
-                text: `Go back to ${version.label}`,
-              },
-              {
-                id: nextMessageId(),
-                from: 'aurelia',
-                at: Date.now() + 1,
-                text: `Back on ${version.label}. The later cuts are still in the history, so you can come forward again — nothing is lost by trying one.`,
-              },
-            ])
-            // The cut you reverted to is finished, so the card plays it rather
-            // than offering to build it.
-            setProgress(100)
-            setSessionState('ready')
-          }}
-          onClose={() => setHistoryOpen(false)}
         />
       )}
 

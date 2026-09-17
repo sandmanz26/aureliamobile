@@ -9,6 +9,7 @@ import {
   Library,
   Pencil,
   Play,
+  RotateCcw,
   Sparkles,
   Target,
   Users,
@@ -20,6 +21,7 @@ import { progressFor, writeObjective } from '../lib/progress'
 import { ObjectiveSheet } from '../components/ui/ObjectiveSheet'
 import type { ProgressTab, Version } from '../lib/progress'
 import { findSession } from '../lib/sessions'
+import { useChatSession } from '../chat/ChatSessionContext'
 
 /** The card shadow every surface in this design shares (Figma effect 16520:822). */
 const CARD_SHADOW = 'shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)]'
@@ -124,12 +126,18 @@ function VersionCard({
   playTo,
   open,
   onToggle,
+  onRevert,
+  current,
 }: {
   version: Version
   /** The player, asked for this cut rather than for the session. */
   playTo: string
   open: boolean
   onToggle: () => void
+  /** Point the conversation back at this cut. */
+  onRevert: () => void
+  /** The one the session is already on — there is nothing to go back to. */
+  current: boolean
 }) {
   return (
     <article className={`overflow-hidden rounded-[20px] bg-surface-default ${CARD_SHADOW}`}>
@@ -206,6 +214,27 @@ function VersionCard({
             <span className="text-[10px] font-light! leading-[10px] text-text-primary">{version.minutes}</span>
           </span>
         </div>
+
+        {/* Not in the frame — Chapters is the version history there, and a
+            history you cannot act on is a changelog. The control lives inside
+            the open card rather than on every row: going back is deliberate,
+            and a list of buttons invites a mis-tap on the one thing here that
+            changes what the session is. */}
+        {open &&
+          (current ? (
+            <p className="text-[12px] font-light! leading-[19px] text-[#9a9a9a]">
+              This is the cut the session is on.
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={onRevert}
+              className="u-press flex h-40 items-center justify-center gap-8 rounded-[40px] border border-[#d6d6d6] text-[14px] leading-[19px] text-text-primary"
+            >
+              <RotateCcw size={16} className="text-icon-strong" />
+              Revert to this version
+            </button>
+          ))}
       </div>
     </article>
   )
@@ -223,6 +252,9 @@ function VersionCard({
 export function ProgressPage() {
   const { slug } = useParams()
   const navigate = useNavigate()
+  // Which cut the conversation is pointed at, so the list can say so rather
+  // than offering to revert to the one you are already on.
+  const { currentVersionId } = useChatSession()
   const [params, setParams] = useSearchParams()
   const session = findSession(slug)
   const [openVersion, setOpenVersion] = useState<string | null>('v3')
@@ -311,13 +343,21 @@ export function ProgressPage() {
 
               <section className="flex flex-col gap-16">
                 <h2 className="text-[14px] font-light! leading-[14px] text-[#9a9a9a]">Version History</h2>
-                {progress.versions.map((version) => (
+                {progress.versions.map((version, index) => (
                   <VersionCard
                     key={version.id}
                     version={version}
                     playTo={`/play/${session.slug}?v=${version.id}`}
                     open={openVersion === version.id}
                     onToggle={() => setOpenVersion((current) => (current === version.id ? null : version.id))}
+                    /* Nothing has been reverted yet means the newest cut is the
+                       one in play — which is what the cockpit shows too. */
+                    current={currentVersionId ? currentVersionId === version.id : index === 0}
+                    onRevert={() =>
+                      navigate(`/chat/${session.slug}`, {
+                        state: { revert: { id: version.id, label: version.title, slug: session.slug } },
+                      })
+                    }
                   />
                 ))}
               </section>
@@ -437,13 +477,10 @@ export function ProgressPage() {
                   key={insight.id}
                   className={`flex gap-12 rounded-[20px] bg-surface-default p-16 ${CARD_SHADOW}`}
                 >
-                  <Sparkles
-                    size={20}
-                    fill="currentColor"
-                    strokeWidth={0}
-                    aria-hidden="true"
-                    className="shrink-0 text-text-primary"
-                  />
+                  {/* Outline in the frame (`vuesax/outline/star`), not a
+                      filled glyph — it sits beside body copy, and a solid mark
+                      at 20 outweighs the sentence it introduces. */}
+                  <Sparkles size={20} aria-hidden="true" className="shrink-0 text-text-primary" />
                   <div className="flex min-w-0 flex-1 flex-col gap-8">
                     <h2 className="text-[14px] leading-[19px] text-text-primary">{insight.title}</h2>
                     <p className="text-[12px] font-light! leading-[19px] text-[#525252]">{insight.body}</p>

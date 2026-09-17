@@ -429,6 +429,48 @@ still shows Latest. The app gates that on being signed in, which is the right
 call — there is no history to show someone who has none — so the frame is the
 one that is wrong there.
 
+### Chapters is the version history, and it is the only one
+
+`16669:12055` is a section of five Insights frames. Reading it settled a
+question the app had been answering twice: **the Chapters tab is headed
+"Version History" in the frame itself.** The cockpit's ... menu carried a
+second one.
+
+Two lists, one name, and they did not even hold the same thing. The menu's
+sheet listed `ChatSessionContext.versions` — the cuts *this thread* had built,
+alive only while the conversation is open. Chapters lists `progress.versions` —
+the catalogue's cuts, which are also what `/play/:slug?v=` asks for. A user
+choosing "Version history" and a user opening Chapters saw different sets and
+had no way to know why.
+
+The menu row is gone. Chapters is the history, and it now carries the action
+that made the sheet worth opening:
+
+- **Revert lives in the open card**, not on every row. Going back is
+  deliberate, and a column of buttons invites a mis-tap on the one control here
+  that changes what the session *is*.
+- The cut the session is already on says so instead of offering to revert to
+  itself. Nothing is reverted yet means the newest is the one in play, which is
+  what the cockpit shows too.
+- Reverting hands the cut to the conversation through the route, and the
+  conversation records it in two lines. That was the sheet's behaviour and it
+  is the right one: the transcript is where this session's changes are
+  accounted for, so without it the card quietly renames itself and nothing says
+  why.
+
+`pointAt` is new on the chat context because `revertTo` looks a cut up in the
+thread's own `versions` by id, and Chapters' ids are the catalogue's. It takes
+the label and slug directly.
+
+**The Insights tab was already right** — 14/19 title, Light 12/19 body on
+`#525252`, 10/15 date on `#9A9A9A`, cards at radius 20 with 16 of padding. Only
+the glyph changed: the frame draws `vuesax/outline/star`, and ours was filled.
+A solid mark at 20 outweighs the sentence it introduces.
+
+One thing in the frame deliberately not copied: the date sits in a **42-wide
+fixed box**, so "2026.6.21" wraps onto two lines. That is a box too small for
+its content, not a design decision, and reproducing it would ship a typo.
+
 ### Credits is a screen, and the coin finally reaches it
 
 `16659:41283` is a **section** holding three frames — `Profile`,

@@ -1,4 +1,4 @@
-import { History, Menu, MoreHorizontal, Play, Send, SlidersHorizontal, TrendingUp } from 'lucide-react'
+import { Menu, MoreHorizontal, Play, Send, SlidersHorizontal, TrendingUp } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CoinPill } from '../ui/CoinPill'
@@ -24,7 +24,6 @@ interface ChatHeaderProps {
   onInsights?: () => void
   /** Opens the list of cuts this thread has made. Left out when it has made
    *  none — a history of nothing is a row that does nothing. */
-  onVersions?: () => void
 }
 
 // Figma "Top Header" — 44px circular surface buttons either side of a
@@ -40,7 +39,6 @@ export function ChatHeader({
   playAs,
   onSettings,
   onInsights,
-  onVersions,
 }: ChatHeaderProps) {
   const [open, setOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -93,10 +91,12 @@ export function ChatHeader({
           {open && (
             <div className="absolute right-0 top-[52px] z-20 w-[186px] rounded-24 bg-surface-default p-12 shadow-lg">
               {[
+                // No Version history row. The frame's Chapters tab is headed
+                // "Version History" and lists the same cuts, so the menu was
+                // offering a second door to one room — and the two lists did
+                // not even agree, since the sheet held this thread's builds
+                // while Chapters holds the catalogue's. Insights is the door.
                 { label: 'Insights', icon: TrendingUp, run: onInsights },
-                // Above Settings: it is about the session in front of you, and
-                // it is the way back out of a change you regret.
-                ...(onVersions ? [{ label: 'Version history', icon: History, run: onVersions }] : []),
                 { label: 'Settings', icon: SlidersHorizontal, run: onSettings },
               ].map((item) => {
                 const Icon = item.icon

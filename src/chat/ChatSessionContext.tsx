@@ -239,8 +239,14 @@ interface ChatSessionValue {
   /** Start a new cut. Called when a build starts rather than when it finishes,
    *  so the history can show the one being made. */
   addVersion: (change: string) => void
-  /** Point the draft back at an earlier cut. */
+  /** Point the draft back at an earlier cut of this thread's own making. */
   revertTo: (id: string) => void
+  /**
+   * Point the draft at a named cut from anywhere — the Chapters tab lists the
+   * catalogue's versions, which are not this thread's `versions` and carry
+   * their own ids, so it cannot go through `revertTo`.
+   */
+  pointAt: (cut: { id: string; label: string; slug: string }) => void
   /** Open an existing session's conversation, already made. */
   openSession: (session: SessionRecord) => void
   /** Next message id. A function rather than the ref itself: handing out a
@@ -318,14 +324,18 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
     [versions, draft],
   )
 
+  const pointAt = useCallback((cut: { id: string; label: string; slug: string }) => {
+    setCurrentVersionId(cut.id)
+    setDraft({ title: cut.label, slug: cut.slug })
+  }, [])
+
   const revertTo = useCallback(
     (id: string) => {
       const version = versions.find((item) => item.id === id)
       if (!version) return
-      setCurrentVersionId(id)
-      setDraft({ title: version.label, slug: version.slug })
+      pointAt({ id, label: version.label, slug: version.slug })
     },
-    [versions],
+    [versions, pointAt],
   )
 
   /**
@@ -406,13 +416,13 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
       deckOpen, setDeckOpen,
       sessionSlug, openSession,
       draft, setDraft,
-      versions, currentVersionId, addVersion, revertTo,
+      versions, currentVersionId, addVersion, revertTo, pointAt,
       nextMessageId,
       reset,
     }),
     [
       messages, applied, sessionState, progress, deckOpen, sessionSlug, openSession, draft,
-      versions, currentVersionId, addVersion, revertTo, nextMessageId, reset,
+      versions, currentVersionId, addVersion, revertTo, pointAt, nextMessageId, reset,
     ],
   )
 
