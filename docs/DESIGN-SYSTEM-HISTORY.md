@@ -177,8 +177,11 @@ Found by sweeping section `16596:9091`. Each needs a decision, not a bind.
 | `#FF881B` | 12 | New session gradient, glow ellipses, card washes | **The brand orange.** A literal in both codebases until it becomes a token |
 | `#FFE682` | 3+ | The other end of every brand gradient | Near `gold/200` `#FFE58A` but not equal |
 | `#818181` @94% | 15 | the `playlist-02` icon | Near `neutral/400` `#7B7B7B` but not equal |
-| `#D6D6D6` | 6 | tab borders | |
+| `#D6D6D6` | 6+ | tab borders, the Objective sheet's input and Cancel button | |
 | `#E0E0E0` | 2 | Profile Card stat border | |
+| `#331B04` | many | **every text and chip on the Insight frames** | Not `text/primary` `#3C2405`. Two dark browns doing one job |
+| `#525252` | many | secondary body copy on Insights | Not `text/secondary` `#7B7B7B` |
+| `#626262` | 1 | the Objective sheet's placeholder | |
 
 **Radius 20 / 36 / 48 / 60 are raw in Figma too** — the recommendation card's
 `[36,20,20,20]`, the New session button's 60. A design decision, not a sync gap;

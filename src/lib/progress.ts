@@ -94,6 +94,25 @@ export function findVersion(session: SessionRecord, id: string | null | undefine
   return progressFor(session).versions.find((version) => version.id === id)
 }
 
+/**
+ * Objectives the listener has written, by session slug.
+ *
+ * In memory rather than storage, like every other thing this demo remembers: it
+ * survives moving around the product and a reload starts over. Module scope
+ * rather than a context because one string per session does not need one — but
+ * it does need to outlive the screen, or editing your goal and stepping back
+ * would silently undo it.
+ */
+const written = new Map<string, string>()
+
+export function objectiveFor(session: SessionRecord): string {
+  return written.get(session.slug) ?? OBJECTIVES[session.category] ?? 'Feel better day to day'
+}
+
+export function writeObjective(slug: string, objective: string) {
+  written.set(slug, objective)
+}
+
 export function progressFor(session: SessionRecord): Progress {
   const minutes = totalMinutes(session)
   const clock = `${minutes}:${String(session.seconds ?? 0).padStart(2, '0')} mins`
@@ -103,7 +122,7 @@ export function progressFor(session: SessionRecord): Progress {
     // Not session.intent: that is the creator's sentence about what the mix is
     // for, and it runs long. The objective is the listener's own goal, short
     // enough to sit on one line beside an edit button — as the frame has it.
-    objective: OBJECTIVES[session.category] ?? 'Feel better day to day',
+    objective: objectiveFor(session),
 
     versions: [
       {

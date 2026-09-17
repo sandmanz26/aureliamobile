@@ -7,7 +7,6 @@ import {
   ChevronUp,
   Clock,
   Library,
-  MoreHorizontal,
   Pencil,
   Play,
   Sparkles,
@@ -17,7 +16,8 @@ import {
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { CoverImage } from '../components/ui/CoverImage'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
-import { progressFor } from '../lib/progress'
+import { progressFor, writeObjective } from '../lib/progress'
+import { ObjectiveSheet } from '../components/ui/ObjectiveSheet'
 import type { ProgressTab, Version } from '../lib/progress'
 import { findSession } from '../lib/sessions'
 
@@ -226,10 +226,15 @@ export function ProgressPage() {
   const [params, setParams] = useSearchParams()
   const session = findSession(slug)
   const [openVersion, setOpenVersion] = useState<string | null>('v3')
+  const [editing, setEditing] = useState(false)
+  // Bumped on save so the card re-reads the objective, which lives in lib/
+  // rather than here — the screen is not where a goal should be kept.
+  const [saved, setSaved] = useState(0)
 
   if (!session) return <Navigate to="/sessions" replace />
 
   const tab = (params.get('tab') as ProgressTab) ?? 'chapters'
+  void saved
   const progress = progressFor(session)
 
   return (
@@ -247,15 +252,11 @@ export function ProgressPage() {
             >
               <ArrowLeft size={20} />
             </button>
-            <h1 className="truncate text-[24px] font-normal! leading-[24px] text-text-primary">Sessions</h1>
+            {/* "Insights" in the frame, and it is what the ... menu that
+                opens this screen calls it. It said "Sessions", which is a
+                different screen. */}
+            <h1 className="truncate text-[24px] font-normal! leading-[24px] text-text-primary">Insights</h1>
           </div>
-          <button
-            type="button"
-            aria-label="More options"
-            className={`flex size-44 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-strong ${CARD_SHADOW}`}
-          >
-            <MoreHorizontal size={20} />
-          </button>
         </header>
 
         <div className="flex flex-col gap-32 p-20">
@@ -301,6 +302,7 @@ export function ProgressPage() {
                 <button
                   type="button"
                   aria-label="Edit objective"
+                  onClick={() => setEditing(true)}
                   className="u-press shrink-0 text-icon-strong"
                 >
                   <Pencil size={16} />
@@ -453,6 +455,17 @@ export function ProgressPage() {
           )}
         </div>
       </div>
+
+      {editing && (
+        <ObjectiveSheet
+          objective={progress.objective}
+          onSave={(next) => {
+            writeObjective(session.slug, next)
+            setSaved((n) => n + 1)
+          }}
+          onClose={() => setEditing(false)}
+        />
+      )}
     </div>
   )
 }
