@@ -22,10 +22,12 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     /* Figma "Menu" (16651:12647) — 313 wide on surface/default, 16 side
-       padding, 24 at the bottom, and 20 between blocks. The frame's 66 at the
-       top is measured from the phone's status bar, which the drawer already
-       renders above this; on desktop there is none, so it keeps its own. */
-    <div className="flex h-full flex-col gap-20 overflow-y-auto px-16 pb-24 pt-12 lg:pt-24">
+       padding, 24 at the bottom, and 20 between blocks. The 66 at the top is
+       the frame's, measured from the top of the phone — the drawer used to
+       reach it as a 54 status bar plus 12, which put a second clock inside the
+       panel. Same position, one clock. Desktop has no phone chrome above it,
+       so it keeps its own 24. */
+    <div className="flex h-full flex-col gap-20 overflow-y-auto px-16 pb-24 pt-66 lg:pt-24">
       <div className="flex items-center justify-between px-20 pb-16">
         {/* The mark goes home, as a brand mark in app chrome is expected to.
             It closes the drawer on the way, so the destination is not left
@@ -201,8 +203,11 @@ export function AppLayout() {
               className="u-fade absolute inset-0 bg-icon-strong/20"
               onClick={() => setDrawerOpen(false)}
             />
+            {/* No status bar in here. The phone's is already on screen behind
+                the drawer; drawing a second one inside the panel stacked two
+                clocks up the left edge. The frame's 66 of top padding is
+                measured from the phone's bar, not from a bar of its own. */}
             <div className="u-drawer relative flex h-full w-[313px] max-w-[85vw] flex-col bg-surface-default shadow-xl">
-              <MobileStatusBar />
               <div className="flex-1 overflow-hidden">
                 <SidebarContent onNavigate={() => setDrawerOpen(false)} />
               </div>

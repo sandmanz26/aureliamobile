@@ -429,6 +429,55 @@ still shows Latest. The app gates that on being signed in, which is the right
 call — there is no history to show someone who has none — so the frame is the
 one that is wrong there.
 
+### The notification row is one disc, not two
+
+`16659:42262`. Built from the frame after its variables were bound, and three
+things had drifted far enough to make it a different screen rather than an
+imprecise one.
+
+**Every row carried a second 40 circle** on the right — the session's cover with
+a play badge — where the frame has one, on the left. Two discs per row turned a
+list you scan into a list you read, and the second one made a promise the row
+did not keep: it looked like a play control and navigated to the session page.
+
+**The faces wore the brand's conic ring.** That ring means *session* everywhere
+else in the product; on a person it says the wrong thing. The frame's are plain
+photographs, so these are now too — over a neutral gradient, because the
+gradient is the load floor rather than decoration.
+
+**Only one of the frame's three row types existed.** The frame has three
+components, and the feed modelled one:
+
+| Kind | Mark | Reads |
+| --- | --- | --- |
+| `person` | their face | **Name** in semibold, then what they did |
+| `account` | a sparkle on `#FFF1DB` | one sentence, no name |
+| `challenge` | a white mark on `interactive/primary` | one sentence, no name |
+
+The two new kinds carry no session, so their rows are not links. A row that
+cannot go anywhere should not look like one that can.
+
+**The filter chip is an outline, not a fill.** `Tab Set_notClear` draws an
+unselected chip as a `#D6D6D6` stroke over nothing. It was rendering as
+`background-elevated`, which gave the row five solid blocks and left the
+selected chip competing with them instead of standing out of them. That fix is
+in the shared `Chip`, so it lands on Explore, Sessions, Home and Session
+settings too.
+
+Measured against the frame in the browser: rows pitch at 52 (a 40 mark and a 12
+gap), the mark sits at the 20 page gutter, the title is Title Large Regular
+24/32 on `text/primary`, group headings are Body Small on `text/secondary`, and
+the header is `surface/default` — which needed `bg-surface-default!`, because
+`.u-sticky-top` paints `background-default` from outside Tailwind's utility
+layer and wins on class order alone.
+
+**One deliberate departure.** The frame repeats "listens to your session" on
+every row, which is a designer duplicating a component rather than a statement
+that the feed has one verb. The catalogue keeps its five actions — recreated,
+saved, started following, joined the challenge — because a feed that says one
+thing fifteen times cannot be reasoned about, which is the same reason nothing
+here is Lorem.
+
 ### Notifications, and the file was fixed before the app was
 
 `16659:42262`. The rule the whole Figma-alignment pass runs on: where the frame
@@ -460,6 +509,14 @@ invented — see the open table in `DESIGN-SYSTEM-HISTORY.md`.
 What the app changed with it: the title is `Title Large Regular`, not the
 Semibold `Title Large`; the points figure is Body Small 14, not Label 12; the
 back arrow is `icon/default`, not `icon/strong`; the age stamp is Light.
+
+### The drawer does not draw its own status bar
+
+The mobile drawer rendered a `MobileStatusBar` at the top of the panel, and the
+page behind it renders one too — so opening the menu stacked two clocks up the
+left edge. The frame's 66 of top padding is measured from the top of the phone,
+not from a bar of the drawer's own. The panel now reaches that 66 as padding.
+Same position, one clock.
 
 ### Variable coverage in the Figma file
 

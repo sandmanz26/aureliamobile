@@ -1,25 +1,38 @@
 // The notification feed.
 //
-// Every row is somebody doing something to a session of yours, so each carries
+// Most rows are somebody doing something to a session of yours, so those carry
 // both the person and the session — the feed is the clearest place the
-// community loop is visible from.
+// community loop is visible from. Two kinds speak for the product instead and
+// carry neither.
 
 import type { CoverKey } from './photos'
 
 export type NotificationBucket = 'today' | 'yesterday' | 'week' | 'month'
 
+/**
+ * Not every notification is somebody doing something.
+ *
+ * The frame carries three row components, not one: a person (their face, and
+ * their name in bold), an account notice (a sparkle on pale gold), and a
+ * community notice (a white mark on the dark brown). The feed only modelled
+ * the first, so the other two could not be rendered at all.
+ */
+export type NotificationKind = 'person' | 'account' | 'challenge'
+
 export interface NotificationRecord {
   id: string
-  actor: string
-  actorPhoto: CoverKey
-  /** What they did, as it reads after the name. */
+  kind: NotificationKind
+  /** The person, on a `person` row. The other two kinds speak for the product. */
+  actor?: string
+  actorPhoto?: CoverKey
+  /** What they did, as it reads after the name — or the whole line, without one. */
   action: string
   /** Compact age — "1s", "2m", "3h", "2d". */
   age: string
   bucket: NotificationBucket
   /** The session it happened to, so the row can be opened. */
-  sessionSlug: string
-  sessionPhoto: CoverKey
+  sessionSlug?: string
+  sessionPhoto?: CoverKey
 }
 
 /** Chips across the top. `all` is a view, not a bucket. */
@@ -49,7 +62,15 @@ export const FILTER_BUCKETS: Record<'all' | NotificationBucket, NotificationBuck
 
 export const NOTIFICATIONS: NotificationRecord[] = [
   {
+    id: 'n0',
+    kind: 'account',
+    action: 'You have now upgraded to Aurelia AI Plus',
+    age: '1s',
+    bucket: 'today',
+  },
+  {
     id: 'n1',
+    kind: 'person',
     actor: 'Aria Moon',
     actorPhoto: 'creatorAria',
     action: 'listens to your session',
@@ -60,6 +81,7 @@ export const NOTIFICATIONS: NotificationRecord[] = [
   },
   {
     id: 'n2',
+    kind: 'person',
     actor: 'Maya Rivers',
     actorPhoto: 'creatorMaya',
     action: 'recreated your session',
@@ -70,6 +92,7 @@ export const NOTIFICATIONS: NotificationRecord[] = [
   },
   {
     id: 'n3',
+    kind: 'person',
     actor: 'Theo Waves',
     actorPhoto: 'creatorTheo',
     action: 'saved your session',
@@ -80,6 +103,7 @@ export const NOTIFICATIONS: NotificationRecord[] = [
   },
   {
     id: 'n4',
+    kind: 'person',
     actor: 'Nina Harper',
     actorPhoto: 'creatorNina',
     action: 'started following you',
@@ -90,6 +114,7 @@ export const NOTIFICATIONS: NotificationRecord[] = [
   },
   {
     id: 'n5',
+    kind: 'person',
     actor: 'Chloe Anderson',
     actorPhoto: 'creatorChloe',
     action: 'listens to your session',
@@ -99,7 +124,15 @@ export const NOTIFICATIONS: NotificationRecord[] = [
     sessionPhoto: 'rain',
   },
   {
+    id: 'n5b',
+    kind: 'challenge',
+    action: 'A new monthly challenge has been added!',
+    age: '1h',
+    bucket: 'today',
+  },
+  {
     id: 'n6',
+    kind: 'person',
     actor: 'Jonas Webber',
     actorPhoto: 'creatorJonas',
     action: 'joined the challenge with you',
@@ -110,6 +143,7 @@ export const NOTIFICATIONS: NotificationRecord[] = [
   },
   {
     id: 'n7',
+    kind: 'person',
     actor: 'Lucas Martin',
     actorPhoto: 'creatorLucas',
     action: 'recreated your session',
@@ -120,6 +154,7 @@ export const NOTIFICATIONS: NotificationRecord[] = [
   },
   {
     id: 'n8',
+    kind: 'person',
     actor: 'Amara Osei',
     actorPhoto: 'creatorAmara',
     action: 'listens to your session',
@@ -130,6 +165,7 @@ export const NOTIFICATIONS: NotificationRecord[] = [
   },
   {
     id: 'n9',
+    kind: 'person',
     actor: 'Sara Trezeguat',
     actorPhoto: 'creatorSophia',
     action: 'saved your session',
@@ -140,6 +176,7 @@ export const NOTIFICATIONS: NotificationRecord[] = [
   },
   {
     id: 'n10',
+    kind: 'person',
     actor: 'Adam Nilson',
     actorPhoto: 'avatar',
     action: 'recreated your session',
@@ -150,6 +187,7 @@ export const NOTIFICATIONS: NotificationRecord[] = [
   },
   {
     id: 'n11',
+    kind: 'person',
     actor: 'Mia Parker',
     actorPhoto: 'creatorMia',
     action: 'started following you',
@@ -160,6 +198,7 @@ export const NOTIFICATIONS: NotificationRecord[] = [
   },
   {
     id: 'n12',
+    kind: 'person',
     actor: 'Daniel Kim',
     actorPhoto: 'creatorEthan',
     action: 'listens to your session',
@@ -170,6 +209,7 @@ export const NOTIFICATIONS: NotificationRecord[] = [
   },
   {
     id: 'n13',
+    kind: 'person',
     actor: 'Emma Carter',
     actorPhoto: 'creatorAria',
     action: 'recreated your session',
@@ -180,6 +220,7 @@ export const NOTIFICATIONS: NotificationRecord[] = [
   },
   {
     id: 'n14',
+    kind: 'person',
     actor: 'Sofia Martinez',
     actorPhoto: 'creatorAmara',
     action: 'saved your session',
@@ -190,6 +231,7 @@ export const NOTIFICATIONS: NotificationRecord[] = [
   },
   {
     id: 'n15',
+    kind: 'person',
     actor: 'Daniel Brooks',
     actorPhoto: 'creatorDaniel',
     action: 'started following you',
