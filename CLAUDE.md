@@ -78,6 +78,16 @@ letter-spacing and all 33 semantic colours were already identical. The
 exception was `font-family/base`, which the export had as "SF Pro" where the
 variable says **Mulish**; that is fixed and the app now loads Mulish.
 
+**The Figma text styles are on Mulish too, and there are sixteen of them.** All
+13 `Aurelia/*` styles used to hard-set SF Pro and bind only size and
+line-height, so the family variable governed nothing; they now bind
+`fontFamily` and `fontWeight` as well. Three were added — `Label Regular`,
+`Title Large Regular`, `Headline Regular` — because the library had those
+*sizes* but not those *weights*. The snapshot had only 9 of them; it now carries
+all 16 and `tokens.css` emits a class for each. The four Light variants are
+still composed in code as `text-style-caption font-light!` where that reads
+better; the named classes are additive, not a replacement.
+
 **`radius/20` and `radius/48` are not variables — in Figma either.** Several
 frames use them as raw values, so `rounded-[20px]` and `rounded-tl-[48px]` are
 correct rather than a workaround. Do not "fix" them by inventing tokens; that

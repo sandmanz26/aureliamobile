@@ -368,6 +368,39 @@ The suffix is a to-do marker, not a permanent name. It comes off when the
 component's fills are bound — which for several of them is blocked on the
 decisions below.
 
+**The component library is now on Mulish, and so are its styles.** `Set of
+Component` (16596:9091) was audited node by node: 96 text nodes, of which 67
+were on a text style and 29 were not. The split was exact — every styled node
+was SF Pro, every unstyled one Sofia Pro or Mulish. And the 67 were not as bound
+as they looked: all 13 `Aurelia/*` styles hard-set **SF Pro** and bound only
+`fontSize` and `lineHeight`, so `font-family/base` saying Mulish changed nothing
+in the file. Three families in one library, and the variable governing none of
+them.
+
+All 13 styles now resolve to Mulish and bind `fontFamily` and `fontWeight` as
+well, so the family is the variable's to change. Every text node follows: 96 of
+96 on a style, 96 of 96 on Mulish, and every solid text fill on a semantic
+colour variable — none of which needed a token that did not already exist.
+
+**The scale grew by three, not because a size was missing but because a weight
+was.** Nine nodes could not be bound: button labels and an eyebrow at 12
+Regular, the Home stat figures at 24 Regular, the banner headline at 32 Regular.
+The sizes all had variables; what the library lacked was a *style* at those
+sizes in Regular — it had 12 Medium and 12 Light, and 24 and 32 only in
+Semibold. Adding `Label Regular`, `Title Large Regular` and `Headline Regular`
+was the right call over restyling nine nodes to a heavier weight, because the
+alternative changes the design to fit the system rather than the other way
+round.
+
+The snapshot was 9 text styles behind a library of 13 even before that, so it
+now carries all 16 and `tokens.css` emits a class for each. The four Light
+variants were previously composed in code as `text-style-caption font-light!`;
+that still works, and the named classes are additive.
+
+Two things the sweep did **not** cover, and they are the next pass: every fill
+and stroke on a non-text node in that section, and the nine `_notClear` markers,
+which cannot come off on the strength of text alone.
+
 **Three decisions block the rest of the colour work:**
 
 - **`#FF881B`** is used as an accent 35 times across 16 files and has no

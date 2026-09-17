@@ -263,11 +263,23 @@
   line-height: var(--text-32--line-height);
   font-weight: var(--font-weight-semibold);
 }
+.text-style-headline-regular {
+  font-family: var(--font-sans);
+  font-size: var(--text-32);
+  line-height: var(--text-32--line-height);
+  font-weight: var(--font-weight-regular);
+}
 .text-style-title-large {
   font-family: var(--font-sans);
   font-size: var(--text-24);
   line-height: var(--text-24--line-height);
   font-weight: var(--font-weight-semibold);
+}
+.text-style-title-large-regular {
+  font-family: var(--font-sans);
+  font-size: var(--text-24);
+  line-height: var(--text-24--line-height);
+  font-weight: var(--font-weight-regular);
 }
 .text-style-title {
   font-family: var(--font-sans);
@@ -287,11 +299,23 @@
   line-height: var(--text-16--line-height);
   font-weight: var(--font-weight-regular);
 }
+.text-style-body-light {
+  font-family: var(--font-sans);
+  font-size: var(--text-16);
+  line-height: var(--text-16--line-height);
+  font-weight: var(--font-weight-light);
+}
 .text-style-body-small {
   font-family: var(--font-sans);
   font-size: var(--text-14);
   line-height: var(--text-14--line-height);
   font-weight: var(--font-weight-regular);
+}
+.text-style-body-small-light {
+  font-family: var(--font-sans);
+  font-size: var(--text-14);
+  line-height: var(--text-14--line-height);
+  font-weight: var(--font-weight-light);
 }
 .text-style-label {
   font-family: var(--font-sans);
@@ -299,9 +323,27 @@
   line-height: var(--text-12--line-height);
   font-weight: var(--font-weight-medium);
 }
+.text-style-label-regular {
+  font-family: var(--font-sans);
+  font-size: var(--text-12);
+  line-height: var(--text-12--line-height);
+  font-weight: var(--font-weight-regular);
+}
+.text-style-label-light {
+  font-family: var(--font-sans);
+  font-size: var(--text-12);
+  line-height: var(--text-12--line-height);
+  font-weight: var(--font-weight-light);
+}
 .text-style-caption {
   font-family: var(--font-sans);
   font-size: var(--text-10);
   line-height: var(--text-10--line-height);
   font-weight: var(--font-weight-regular);
+}
+.text-style-caption-light {
+  font-family: var(--font-sans);
+  font-size: var(--text-10);
+  line-height: var(--text-10--line-height);
+  font-weight: var(--font-weight-light);
 }

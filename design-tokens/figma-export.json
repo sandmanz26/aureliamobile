@@ -65,13 +65,20 @@
       "textStyles": {
         "display": { "size": "48", "weight": "semibold" },
         "headline": { "size": "32", "weight": "semibold" },
+        "headline-regular": { "size": "32", "weight": "regular" },
         "title-large": { "size": "24", "weight": "semibold" },
+        "title-large-regular": { "size": "24", "weight": "regular" },
         "title": { "size": "20", "weight": "medium" },
         "body-large": { "size": "18", "weight": "regular" },
         "body": { "size": "16", "weight": "regular" },
+        "body-light": { "size": "16", "weight": "light" },
         "body-small": { "size": "14", "weight": "regular" },
+        "body-small-light": { "size": "14", "weight": "light" },
         "label": { "size": "12", "weight": "medium" },
-        "caption": { "size": "10", "weight": "regular" }
+        "label-regular": { "size": "12", "weight": "regular" },
+        "label-light": { "size": "12", "weight": "light" },
+        "caption": { "size": "10", "weight": "regular" },
+        "caption-light": { "size": "10", "weight": "light" }
       }
     }
   }
