@@ -320,6 +320,49 @@ session being built has to survive leaving the cockpit to play it, and a session
 that is playing has to survive walking back to the cockpit. Owned by their
 screens, each tore down the other.
 
+### Home, read line by line against the frame
+
+Every text node in 16653:14937 carries a named `Aurelia/*` style, so the frame
+answers the type question outright — and the page was wrong in fourteen places.
+Most were a weight rather than a size, which is why it read as *nearly* right.
+
+| | Was | The frame |
+| --- | --- | --- |
+| Hero claim | Headline forced to 28/1.25 | **Title Large** 24/32 |
+| Points pill | Label 12 medium | **Body Small** 14/20 |
+| "Ask Aurelia.." | Body | **Body Light** 16/24 |
+| Section headings | Title 20 medium | **Body** 16/24 |
+| Live stat figures | Title Large — semibold | **Title Large Regular** 24/32 |
+| Live stat labels | Caption 10 | **Label Light** 12/16 |
+| Quick Start title | Body Small semibold | **Body Small** — regular |
+| Quick Start subtitle | Caption | **Caption Light** |
+| Community card title | Body semibold | **Body** — regular |
+| Community card body | Body Small 14/20 | **Label Light** 12/16 |
+| Community card stats | Caption | **Caption Light** |
+| Banner eyebrow | Caption 10 | **Label Regular** 12/16 |
+| Banner sub-copy | Body Small | **Body Small Light** |
+| Both 32px headlines | Headline — semibold | **Headline Regular** |
+
+**The two 32px headlines are the Tailwind v4 layer trap, caught in the wild.**
+They carried `text-style-headline font-normal`, and `font-normal` lost to
+`.text-style-headline`, which sets the weight itself and sits outside the
+utility layer. They rendered at 600 while the class said otherwise. There is a
+real class for it now, which is what `Headline Regular` was added for.
+
+Five of these fixes use classes that did not exist before the type scale went to
+sixteen styles. The library gap and the page's drift were the same problem.
+
+**The footer card was nearly twice its height** because its headline was 32
+semibold where the frame says **24 regular at 120%**. At 32 it needed three
+lines. The italic on "Free to start, no credit card required!" was missing
+entirely — the only italic on the page.
+
+**The illustration above it is not a full-bleed band.** It is `Frame 34`, the
+last row of the strength grid, 362 x 164 inside the content column, and the
+frame runs the footer card flush off its bottom edge. It was full-bleed with a
+24px overlap, which read as a band under the page and left the card sitting in a
+gap.
+
 ### The hero is white, and the warmth is one blurred circle
 
 Figma 16653:14937. The deployed hero read as a wash of yellow where the frame

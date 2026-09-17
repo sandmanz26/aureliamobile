@@ -59,7 +59,7 @@ export function SessionGridCard({
           to={`/recreate/${session.slug}`}
           aria-label={`Recreate ${session.title}`}
           onClick={handleClick}
-          className="text-style-label flex h-30 shrink-0 items-center gap-4 whitespace-nowrap rounded-full bg-surface-default/95 px-11 text-text-primary"
+          className="text-style-label-regular flex h-30 shrink-0 items-center gap-4 whitespace-nowrap rounded-full bg-surface-default/95 px-11 text-text-primary"
         >
           <Repeat2 size={13} className="shrink-0" />
           <span className="hidden @min-[130px]:inline">Recreate</span>
@@ -68,8 +68,8 @@ export function SessionGridCard({
 
       <div className="pointer-events-none relative flex flex-col gap-6">
         <div>
-          <p className="text-style-body font-semibold">{session.title}</p>
-          <p className="text-style-body-small mt-2 line-clamp-2 opacity-90">{session.description}</p>
+          <p className="text-style-body">{session.title}</p>
+          <p className="text-style-label-light mt-2 line-clamp-2">{session.description}</p>
         </div>
 
         {/* Credit and counts share a row once the card is wide enough for both,
@@ -85,7 +85,7 @@ export function SessionGridCard({
           <span className="text-style-caption truncate">{session.author}</span>
         </div>
 
-        <div className="text-style-caption flex shrink-0 items-center gap-8 opacity-90">
+        <div className="text-style-caption-light flex shrink-0 items-center gap-8">
           <span className="inline-flex items-center gap-3">
             <Play size={11} /> {session.plays}
           </span>

@@ -122,7 +122,7 @@ export function HomePage() {
             >
               <Coins size={10} className="text-text-inverse" />
             </span>
-            <span className="text-style-label">1,323</span>
+            <span className="text-style-body-small">1,323</span>
           </div>
         ) : (
           /* A visitor has no coin balance yet — the header offers the account instead. */
@@ -165,10 +165,7 @@ export function HomePage() {
           {/* The mark opens the page, above the claim it belongs to. */}
           <AureliaLogo iconSize={64} markOnly className="relative" />
 
-          <h1
-            className="text-style-headline relative mt-20 text-text-primary"
-            style={{ fontSize: 28, lineHeight: 1.25 }}
-          >
+          <h1 className="text-style-title-large relative mt-20 text-text-primary">
             Create the{' '}
             {/* "space" is the product's whole promise, so the sentence points
                 at it — italic and in the brand gold, the way the design does. */}
@@ -197,7 +194,7 @@ export function HomePage() {
                 onChange={(event) => setAsk(event.target.value)}
                 placeholder="Ask Aurelia.."
                 aria-label="Ask Aurelia"
-                className="text-style-body h-24 w-full bg-transparent text-left text-text-primary outline-none placeholder:text-text-secondary"
+                className="text-style-body-light h-24 w-full bg-transparent text-left text-text-primary outline-none placeholder:text-text-secondary"
               />
               <div className="mt-12 flex items-center justify-end gap-10">
                 <button
@@ -223,9 +220,7 @@ export function HomePage() {
         {/* Ongoing Live Sessions */}
         {isEnabled('home.liveSessions') && (
         <section className="mt-40">
-          <h2 className="text-style-body text-text-primary" style={{ color: '#3c2405' }}>
-            Ongoing Live Sessions
-          </h2>
+          <h2 className="text-style-body text-text-primary">Ongoing Live Sessions</h2>
           {/* Figma "Frame 45": 362x320, padding 40/20/20/20, stats pinned under
               the map. The card holds the source image's aspect ratio so the
               dot-map is never stretched, and caps its width on desktop. */}
@@ -240,8 +235,8 @@ export function HomePage() {
                 { label: 'Now', value: '50' },
               ].map((stat) => (
                 <div key={stat.label} className="flex-1 rounded-16 bg-surface-default/25 py-12 text-center backdrop-blur-sm">
-                  <p className="text-style-title-large text-text-inverse">{stat.value}</p>
-                  <p className="text-style-caption text-text-inverse">{stat.label}</p>
+                  <p className="text-style-title-large-regular text-text-inverse">{stat.value}</p>
+                  <p className="text-style-label-light text-text-inverse">{stat.label}</p>
                 </div>
               ))}
             </div>
@@ -252,7 +247,7 @@ export function HomePage() {
         {/* Quick Start */}
         {isEnabled('home.quickStart') && (
         <section className="mt-40">
-          <h2 className="text-style-title text-text-primary">Quick Start</h2>
+          <h2 className="text-style-body text-text-primary">Quick Start</h2>
           <div className="-mx-20 mt-16 flex gap-12 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
             {quickStartCards.map((card) => (
               <div
@@ -282,8 +277,8 @@ export function HomePage() {
                 </div>
 
                 <div className="absolute bottom-12 left-12 right-12">
-                  <p className="text-style-body-small font-semibold drop-shadow">{card.title}</p>
-                  <p className="text-style-caption opacity-90">{card.subtitle}</p>
+                  <p className="text-style-body-small drop-shadow">{card.title}</p>
+                  <p className="text-style-caption-light">{card.subtitle}</p>
                 </div>
               </div>
             ))}
@@ -311,7 +306,7 @@ export function HomePage() {
         <div className="relative mx-auto flex max-w-[362px] flex-col gap-24 lg:max-w-[720px]">
           <div className="flex flex-col gap-24">
             <span
-              className="text-style-label w-fit rounded-full px-12 py-8"
+              className="text-style-label-regular w-fit rounded-full px-12 py-8"
               style={{
                 border: '1px solid rgba(255,136,27,0.55)',
                 background:
@@ -326,7 +321,7 @@ export function HomePage() {
             </span>
 
             <div className="flex flex-col gap-8">
-              <h2 className="text-style-headline font-normal leading-[1.2]">
+              <h2 className="text-style-headline-regular">
                 Your Personal
                 <br />
                 Mindfulness Guide
@@ -386,7 +381,7 @@ export function HomePage() {
         </div>
 
         <div className="relative mx-auto flex max-w-[362px] flex-col gap-24 lg:max-w-[720px]">
-          <p className="text-style-body-small text-text-inverse/80">
+          <p className="text-style-body-small-light text-text-inverse/80">
             Chat with Aurelia to instantly create custom meditations, soundscapes, and breathwork tailored to how you
             feel right now.
           </p>
@@ -406,8 +401,8 @@ export function HomePage() {
       <div className="mx-auto max-w-[720px] px-20 lg:px-24">
         {/* Recreate from Community */}
         {isEnabled('home.community') && (
-        <section className="mt-48">
-          <h2 className="text-style-title text-text-primary">Recreate from Community</h2>
+        <section className="mt-24">
+          <h2 className="text-style-body text-text-primary">Recreate from Community</h2>
           <div className="-mx-20 mt-16 flex gap-8 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
             {CATEGORY_FILTERS.map((filter) => (
               <Chip
@@ -440,7 +435,7 @@ export function HomePage() {
           <span className="inline-block rounded-full bg-background-elevated px-16 py-6 text-style-caption text-text-primary">
             Adaptive Wellness
           </span>
-          <h2 className="mt-16 text-style-headline text-text-primary">
+          <h2 className="mt-16 text-style-headline-regular text-text-primary">
             Aurelia learns your state, and gets better with you.
           </h2>
           <p className="mt-12 text-style-body">
@@ -458,19 +453,38 @@ export function HomePage() {
         {/* Closing CTA. The network sits above the card and bleeds to both
             page edges — it is the argument the card then states in words, so
             it is wider than the content column on purpose. */}
-        <section className="mt-48">
-          <CommunityNetwork className="-mx-20 -mb-24 w-[calc(100%+40px)] lg:-mx-24 lg:w-[calc(100%+48px)]" />
+        <section className="mt-24">
+          {/* Figma "Frame 34" — the last row of the strength grid, 362 x 164,
+              inside the content column. It was full-bleed with a 24 overlap,
+              which made it read as a band under the page rather than the last
+              card in the list, and left the footer sitting in a gap. The frame
+              runs the card flush off the illustration's bottom edge. */}
+          <CommunityNetwork className="w-full" />
 
+          {/* Figma "Frame 45" in the last Section — 223 tall, radius 20, 40
+              above and below, 20 at the sides, 32 between the words and the
+              button and 4 between the two lines of words.
+
+              The headline is **24 Regular at 120%**, not the 32 semibold this
+              was using: that is what made it three lines tall and the card
+              nearly twice its height. `text-balance` goes with it — the frame
+              breaks after "for", and balancing fought that. */}
           <div
-            className="relative rounded-24 px-24 py-40 text-center text-text-inverse"
+            className="relative flex flex-col items-center gap-32 rounded-[20px] px-20 py-40 text-center text-text-inverse"
             style={{ background: 'linear-gradient(180deg, #3C2405, #FF881B)' }}
           >
-            <h2 className="text-style-headline text-balance">Casual Intelligence for Global Community</h2>
-            <p className="text-style-body-small mt-8 opacity-90">Free to start, no credit card required!</p>
+            <div className="flex flex-col gap-4">
+              <h2 className="text-[24px] leading-[29px]">Casual Intelligence for Global Community</h2>
+              {/* Light *italic* at 14/21 in the frame — the italic is the only
+                  one on the page and it was missing entirely. */}
+              <p className="text-[14px] font-light italic leading-[21px]">
+                Free to start, no credit card required!
+              </p>
+            </div>
             <button
               type="button"
               onClick={() => gate('/chat')}
-              className="u-press text-style-body mt-24 inline-flex items-center rounded-full border border-text-inverse/35 bg-text-inverse/12 px-28 py-14 font-medium text-text-inverse backdrop-blur-sm transition-colors hover:bg-text-inverse/20"
+              className="u-press text-style-body inline-flex h-44 items-center rounded-[40px] border border-text-inverse/35 bg-text-inverse/12 px-20 text-text-inverse backdrop-blur-sm transition-colors hover:bg-text-inverse/20"
             >
               Get Started
             </button>
