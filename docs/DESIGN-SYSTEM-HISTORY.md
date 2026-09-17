@@ -232,10 +232,17 @@ Found by sweeping section `16596:9091`. Each needs a decision, not a bind.
 | `#626262` | 1 | the Objective sheet's placeholder | |
 | `#FFF1DB` | 3+ | the sparkle badge on Notifications, the Published pill on a session card | A pale gold wash; nearest is `gold/100` `#FFF3C4` |
 | `#ECFBED` | 1 | the trend pill on a session card | A pale green; nearest is `success/50` `#F0FDF4` but not equal |
+| `#F0F0F0` | 5 | the rules between Credits history rows | Lighter than `border/subtle` `#E4E1DC` |
 
 **Radius 20 / 36 / 48 / 60 are raw in Figma too** — the recommendation card's
 `[36,20,20,20]`, the New session button's 60. A design decision, not a sync gap;
 do not invent tokens for them.
+
+**The brand gradient is a paint style, and the code has a different one.**
+`16658:17634` resolves to **`#FF8514` → `#FFE270`**. Both codebases write
+`#FF881B` → `#FFE682` in thirteen places. Neither pair is a variable, the
+difference is small, and changing it touches every coin and every CTA — so it
+is recorded here and left alone until someone decides which is right.
 
 **Strokes: 0 of 76 bound** in that section. Colour binding is nearly done on
 fills and has never been started on strokes.

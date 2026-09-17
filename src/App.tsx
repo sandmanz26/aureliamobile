@@ -45,7 +45,7 @@ import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
 import { SignInPage } from './pages/auth/SignInPage'
 import { SignUpPage } from './pages/auth/SignUpPage'
 import { InvitePage } from './pages/InvitePage'
-import { PlaceholderPage } from './pages/PlaceholderPage'
+import { CreditsPage } from './pages/CreditsPage'
 
 export default function App() {
   return (
@@ -328,19 +328,15 @@ export default function App() {
                 </RequireAuth>
               }
             />
-            {/* The coin balance is on nine screens and led nowhere from any of
-                them. It points here now. The ledger behind it is not designed
-                yet — the Points pill carries no prototype link in any frame —
-                so this says so rather than opening a blank page, which is what
-                a route-less destination would have done. */}
+            {/* Where the coin balance goes, on all nine screens that draw it.
+                Figma "Profile/Credits" (16658:29260) — and the design says so
+                too: the coin pill in the Settings header transitions to this
+                frame. */}
             <Route
               path="/credits"
               element={
                 <RequireAuth>
-                  <PlaceholderPage
-                    title="Credits"
-                    description="What you have earned, and what you spent it on. Play a session, recreate one, or invite a friend and the balance moves here."
-                  />
+                  <CreditsPage />
                 </RequireAuth>
               }
             />

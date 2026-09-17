@@ -429,6 +429,55 @@ still shows Latest. The app gates that on being signed in, which is the right
 call — there is no history to show someone who has none — so the frame is the
 one that is wrong there.
 
+### Credits is a screen, and the coin finally reaches it
+
+`16659:41283` is a **section** holding three frames — `Profile`,
+`Profile/Settings` and `Profile/Credits` — not the Insights screen it was taken
+for. The mistake cost three rounds, so it is worth naming the check that would
+have caught it: read the node before claiming it is built. A section's name
+tells you nothing about its children.
+
+The section also answers a question left open earlier. `Profile/Settings` has a
+**prototype transition from its coin pill to `Profile/Credits`**
+(`transitionNodeID: 16658:29260`). The design did say where the balance goes;
+it was on the Settings header, not on a Points pill.
+
+**Credits** (`16658:29260`) — three cards on a 20 gutter, 20 apart, each radius
+20 with the shared shadow:
+
+| Card | Holds |
+| --- | --- |
+| 64 tall | "Total Credits" and the figure, coin at 32 |
+| 170 tall | the invite pitch and the referral link in a pill |
+| grows | "History" — who joined, when, and +500 each |
+
+Two details the frame is specific about. The link field's hairline is the brand
+**gradient** at half a pixel, which a `border` cannot take — it is a 1px
+gradient background with the white field inset over it. And each history row
+names the person in **Regular with an underline** while the rest of the line is
+Light: the frame marks the subject of the sentence typographically rather than
+with a colour.
+
+There is no coin pill in this header. The frame hides its own Trailing, which
+is right — the balance is the subject of the screen, so putting it in the
+chrome would state it twice.
+
+**Settings** (`16658:20631`) was close but wrong in five ways:
+
+- a **hamburger** where the frame has a back button — and back is correct, since
+  the screen is opened by the gear on your own profile
+- a **toggle** on the connected account where the frame draws a tick. The toggle
+  was invented, and nothing behind it honoured switching an account off. A
+  control that does not work is worse than no control
+- "Coin Redemption" where the product and this very screen say **Credit**
+- rows at 20/16 on `border/subtle`; the frame's are **56 tall, 12 to the label,
+  on `#D6D6D6`**
+- the account card at radius 16 with a 44 disc; the frame's is **20 with 32**,
+  and the add-account chip is a **48 pill at radius 40** with a 14 label
+
+Credit Redemption now opens Credits, which is the only row on that list that
+had a destination and did not use it.
+
 ### Insights follows the same session Play does
 
 The cockpit's menu had Insights disabled on a new thread while Play, two lines

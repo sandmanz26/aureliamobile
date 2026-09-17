@@ -1,11 +1,10 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import { ChevronUp, CircleDollarSign, LogOut, Menu, Plus, User, UserX } from 'lucide-react'
+import { ArrowLeft, Check, ChevronUp, CircleDollarSign, LogOut, Plus, User, UserX } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { GoogleMark } from './auth/AuthShell'
 import { useAuth } from '../auth/AuthContext'
 import { CoinPill } from '../components/ui/CoinPill'
-import { useDrawer } from '../layouts/DrawerContext'
 
 /** One tappable line in the list under the accounts block. */
 function Row({
@@ -23,7 +22,7 @@ function Row({
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center gap-16 border-t border-border-subtle py-20 text-left ${
+      className={`u-press flex h-56 w-full items-center gap-12 border-t border-[#D6D6D6] text-left ${
         tone === 'danger' ? 'text-danger-600' : 'text-text-primary'
       }`}
     >
@@ -41,25 +40,25 @@ function Row({
  * was to reload the page.
  */
 export function AccountSettingsPage() {
-  const { openDrawer } = useDrawer()
   const { signOut } = useAuth()
   const navigate = useNavigate()
   const [accountsOpen, setAccountsOpen] = useState(true)
-  const [connected, setConnected] = useState(true)
 
   return (
     <div className="mx-auto max-w-[720px] px-20 py-16 lg:px-24 lg:py-24">
       <header className="u-sticky-top flex items-center justify-between gap-12">
-        <div className="flex min-w-0 items-center gap-12">
+        <div className="flex min-w-0 items-center gap-20">
+          {/* Back, not the drawer: this screen is opened by the gear on your
+              own profile, so the way out is the way you came. */}
           <button
             type="button"
-            aria-label="Open menu"
-            onClick={openDrawer}
-            className="flex size-44 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-default shadow-sm lg:hidden"
+            aria-label="Back"
+            onClick={() => navigate(-1)}
+            className="u-press flex size-44 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-default shadow-sm"
           >
-            <Menu size={24} />
+            <ArrowLeft size={20} />
           </button>
-          <h1 className="text-style-title-large truncate text-text-primary">Settings</h1>
+          <h1 className="text-style-title-large-regular truncate text-text-primary">Settings</h1>
         </div>
         <CoinPill points="1,323" className="shadow-sm" />
       </header>
@@ -80,9 +79,9 @@ export function AccountSettingsPage() {
         </button>
 
         {accountsOpen && (
-          <div className="mt-16 flex flex-col gap-16">
-            <div className="flex items-center gap-16 rounded-16 bg-surface-default p-16 shadow-sm">
-              <span className="flex size-44 shrink-0 items-center justify-center rounded-full bg-[#fdf1e3]">
+          <div className="mt-20 flex flex-col gap-12">
+            <div className="flex items-center gap-12 rounded-[20px] bg-surface-default p-16 shadow-sm">
+              <span className="flex size-32 shrink-0 items-center justify-center rounded-full bg-[#FFF1DB]">
                 <GoogleMark />
               </span>
               <span className="min-w-0 flex-1">
@@ -91,39 +90,33 @@ export function AccountSettingsPage() {
                   adamnilson@gmail.com
                 </span>
               </span>
-              {/* The account stays listed when switched off — disconnecting is a
-                  separate, heavier thing than pausing the sign-in. */}
-              <button
-                type="button"
-                role="switch"
-                aria-checked={connected}
-                aria-label="Use this account"
-                onClick={() => setConnected((on) => !on)}
-                className={`relative h-28 w-52 shrink-0 rounded-full transition-colors ${
-                  connected ? 'bg-icon-strong' : 'bg-border-default'
-                }`}
-              >
-                <span
-                  className={`absolute top-2 size-24 rounded-full bg-surface-default transition-all ${
-                    connected ? 'left-26' : 'left-2'
-                  }`}
-                />
-              </button>
+              {/* A tick, not a switch. The frame draws `tick-square`: the row
+                  states that this account is the one you are signed in with,
+                  and offers no way to pause it. Disconnecting is Account
+                  Deletion's business, and inventing a toggle here put a control
+                  in front of the user that nothing behind it honoured. */}
+              <Check size={24} className="shrink-0 text-icon-default" aria-label="Signed in with this account" />
             </div>
 
             <button
               type="button"
-              className="u-press flex items-center justify-center gap-12 rounded-16 bg-surface-default p-20 shadow-sm"
+              className="u-press flex h-48 items-center justify-center gap-8 rounded-[40px] bg-surface-default shadow-sm"
             >
               <Plus size={20} className="text-icon-default" />
-              <span className="text-style-body text-text-primary">Add another Google account</span>
+              <span className="text-[14px] leading-[18px] text-icon-strong">Add another Google account</span>
             </button>
           </div>
         )}
       </section>
 
       <div className="mt-32">
-        <Row icon={<CircleDollarSign size={24} />} label="Coin Redemption" />
+        {/* "Credit Redemption" in the frame, not "Coin". The product calls the
+            currency credits everywhere else — including the screen this opens. */}
+        <Row
+          icon={<CircleDollarSign size={24} />}
+          label="Credit Redemption"
+          onClick={() => navigate('/credits')}
+        />
         <Row icon={<UserX size={24} />} label="Account Deletion" />
         <Row
           icon={<LogOut size={24} />}

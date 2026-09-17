@@ -17,6 +17,30 @@ import { useSignInGate } from '../../auth/useSignInGate'
  * Gated: what you have and how you spent it is account-shaped, so a visitor is
  * sent to sign in with `/credits` remembered rather than shown an empty ledger.
  */
+
+/**
+ * The coin itself, at whatever size the surface needs — Figma `icon-token`.
+ *
+ * The Credits screen draws it at 32 beside the balance and at 20 on every
+ * ledger row, so it stopped being the pill's private detail. The inner ring
+ * scales with the disc rather than staying 8, or it reads as a different coin
+ * at 32.
+ */
+export function CoinMark({ size = 20 }: { size?: number }) {
+  return (
+    <span
+      className="flex shrink-0 items-center justify-center rounded-full"
+      style={{ width: size, height: size, background: 'linear-gradient(160deg, #ffe682, #ff881b)' }}
+      aria-hidden="true"
+    >
+      <span
+        className="rounded-full border-text-inverse"
+        style={{ width: size * 0.4, height: size * 0.4, borderWidth: Math.max(2, Math.round(size * 0.1)) }}
+      />
+    </span>
+  )
+}
+
 export function CoinPill({
   points,
   className = '',
@@ -31,12 +55,7 @@ export function CoinPill({
 
   const face = (
     <>
-      <span
-        className="flex size-20 items-center justify-center rounded-full"
-        style={{ background: 'linear-gradient(160deg, #ffe682, #ff881b)' }}
-      >
-        <span className="size-8 rounded-full border-2 border-text-inverse" />
-      </span>
+      <CoinMark size={20} />
       <span className="text-style-body-small text-text-primary">{points}</span>
     </>
   )
