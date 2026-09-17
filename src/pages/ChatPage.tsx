@@ -92,6 +92,8 @@ export function ChatPage() {
         start?: string
         /** A cut picked in the Insights > Chapters list, to go back to. */
         revert?: { id: string; label: string; slug: string }
+        /** "Publish Now" on the empty Social Impact tab. */
+        publish?: boolean
       }
     | null
   const brief = routeState?.recreate
@@ -204,6 +206,19 @@ export function ChatPage() {
     // After reset, which puts the draft back to the default.
     setDraft({ title: draftTitleFor(card), slug: card.plays })
   }, [location.key, routeState?.start, reset, setDraft])
+
+  /**
+   * "Publish Now", pressed on the empty Social Impact tab.
+   *
+   * That tab is empty precisely because the session is unpublished, so the one
+   * action it offers has to reach the sheet that fixes it — and Publish lives
+   * in the cockpit, not in Insights.
+   */
+  useEffect(() => {
+    if (!routeState?.publish) return
+    if (!isEnabled('chat.publish')) return
+    setPublishState('publishing')
+  }, [location.key, routeState?.publish, isEnabled])
 
   /**
    * Going back to an earlier cut, chosen in Insights > Chapters.

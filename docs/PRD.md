@@ -429,6 +429,42 @@ still shows Latest. The app gates that on being signed in, which is the right
 call — there is no history to show someone who has none — so the frame is the
 one that is wrong there.
 
+### The cockpit header announced the wrong session
+
+Recreating "Soft Reset" left the sticky card at the top of the thread reading
+"Sleep meditation v1.5" — a session the conversation had nothing to do with.
+
+The card is `MiniPlayer`, and it is driven by the **audio player's** loaded
+track, not by the thread. That is right for a transport and wrong for a header:
+it sits inside the cockpit and names "the session running in this
+conversation", so a track loaded before the thread existed kept sitting there,
+over a conversation plainly about something else.
+
+`reset()` already clears the messages, the draft and the versions on the
+grounds that "forking somebody's session is starting a new one, not adding a
+line to whatever was open". The loaded track belongs to that list. It is
+cleared there rather than at the three doors that call `reset()`, so a fourth
+door cannot forget, and in `openSession` for the same reason.
+
+The cost is deliberate: audio stops when you start a different conversation.
+Carrying it silently under a header that names the wrong session is worse.
+
+### Social Impact has an empty state, and it is a prompt
+
+`16658:28332`. A session nobody can reach has no social impact to report, and
+the three cards would all read zero — which says "broken" rather than "not yet".
+
+The frame replaces the whole tab with one block: a 64 mark in the brand
+gradient, "See Your Social Impact", two lines of explanation, and the single
+action that would change the answer. 32 above and below, 32 to the button, 24
+inside the block, 8 between the lines; the button hugs its label at 48 tall and
+radius 40 rather than filling the column, because it is an offer and not the
+screen's primary action.
+
+It shows when `published === false`, which is exactly the condition the CTA
+addresses. Publish Now hands off to the cockpit — Publish lives there, not in
+Insights — and opens the sheet on arrival.
+
 ### Chapters is the version history, and it is the only one
 
 `16669:12055` is a section of five Insights frames. Reading it settled a

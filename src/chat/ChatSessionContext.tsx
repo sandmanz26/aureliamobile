@@ -6,6 +6,7 @@ import orbLessMovement from '../assets/orb-less-movement.png'
 import type { Recommendation } from '../components/chat/RecommendationCard'
 import type { SessionRecord } from '../lib/sessions'
 import { totalMinutes } from '../lib/sessions'
+import { useAudioPlayer } from '../audio/AudioPlayerContext'
 
 /** Delivery state, as a messaging app shows it: one tick sent, two ticks read. */
 export type Status = 'sending' | 'sent' | 'read'
@@ -289,6 +290,7 @@ function demoBaseline(): DraftVersion {
  * When there is a backend this is what a draft session persists into.
  */
 export function ChatSessionProvider({ children }: { children: ReactNode }) {
+  const { stop } = useAudioPlayer()
   const [messages, setMessages] = useState<Message[]>(OPENING_MESSAGES)
   const [applied, setApplied] = useState<string[]>(RECOMMENDATIONS.map((item) => item.id))
   const [sessionState, setSessionState] = useState<SessionState>('idle')
@@ -347,6 +349,9 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
   const openSession = useCallback((session: SessionRecord) => {
     setSessionSlug((current) => {
       if (current === session.slug) return current
+      // Same reason as reset(): the header must not keep announcing the
+      // session you were on before this one.
+      stop()
       const opening = messagesForSession(session)
       setMessages(opening)
       setApplied(RECOMMENDATIONS.map((item) => item.id))
@@ -375,7 +380,7 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
       nextId.current = opening.length + 1
       return session.slug
     })
-  }, [])
+  }, [stop])
 
   /**
    * Put the thread back to a starting state.
@@ -390,6 +395,14 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
    * thread never renders somebody else's conversation on the way to theirs.
    */
   const reset = useCallback((opening: Message[] = OPENING_MESSAGES) => {
+    // The cockpit's mini player names "the session running in this
+    // conversation", and it is driven by the audio player rather than by the
+    // thread — so a track loaded before this thread existed kept sitting in
+    // the header. Recreate "Soft Reset" while Sleep meditation was loaded and
+    // the sticky card read Sleep meditation, over a thread plainly about
+    // something else. Clearing it here rather than at the three doors that
+    // call reset(), so a fourth door cannot forget.
+    stop()
     setMessages(opening)
     setApplied(RECOMMENDATIONS.map((item) => item.id))
     setSessionState('idle')
@@ -405,7 +418,7 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
     setCurrentVersionId(own ? null : 'v0')
     nextVersionNo.current = 1
     nextId.current = opening.length + 1
-  }, [])
+  }, [stop])
 
   const value = useMemo<ChatSessionValue>(
     () => ({

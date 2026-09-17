@@ -10,6 +10,7 @@ import {
   Pencil,
   Play,
   RotateCcw,
+  Send,
   Sparkles,
   Target,
   Users,
@@ -265,6 +266,11 @@ export function ProgressPage() {
 
   if (!session) return <Navigate to="/sessions" replace />
 
+  // Social Impact has nothing to report until the world can reach the session.
+  // The frame draws that as its own screen, ending in the one action that
+  // would change it, rather than three cards all reading zero.
+  const unpublished = session.published === false
+
   const tab = (params.get('tab') as ProgressTab) ?? 'chapters'
   void saved
   const progress = progressFor(session)
@@ -364,7 +370,51 @@ export function ProgressPage() {
             </>
           )}
 
-          {tab === 'social' && (
+          {tab === 'social' && unpublished && (
+            /* Figma "Social Impact/Empty" (16658:28332) — 32 above and below,
+               32 between the block and the button, 24 inside it, 8 between the
+               two lines.
+
+               A session nobody can reach has no social impact to report, and
+               the three cards would all read zero. The frame answers that with
+               the one thing that would change it, so the tab is a prompt rather
+               than an empty dashboard. */
+            <div className="flex flex-1 flex-col items-center justify-center gap-32 py-32">
+              <div className="flex flex-col items-center gap-24">
+                <svg width="0" height="0" aria-hidden="true" className="absolute">
+                  <defs>
+                    <linearGradient id="social-empty-mark" x1="0" y1="1" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#ff881b" />
+                      <stop offset="100%" stopColor="#ffe682" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <Users size={64} strokeWidth={1.5} stroke="url(#social-empty-mark)" aria-hidden="true" />
+                <div className="flex flex-col items-center gap-8 text-center">
+                  <h2 className="text-[20px] font-semibold leading-[25px] text-text-primary">
+                    See Your Social Impact
+                  </h2>
+                  <p className="max-w-[320px] text-[14px] font-light! leading-[21px] text-[#525252]">
+                    See how your Session reaches, inspires and grows through the community.
+                  </p>
+                </div>
+              </div>
+
+              {/* The frame's button is 162 x 48 at radius 40 — hugging its
+                  label rather than filling the column, because it is an offer
+                  and not the screen's primary action. */}
+              <button
+                type="button"
+                onClick={() => navigate(`/chat/${session.slug}`, { state: { publish: true } })}
+                className="u-press flex h-48 items-center gap-8 rounded-[40px] bg-interactive-primary px-20 text-[16px] leading-[19px] text-text-inverse"
+              >
+                <Send size={20} />
+                Publish Now
+              </button>
+            </div>
+          )}
+
+          {tab === 'social' && !unpublished && (
             <div className="flex flex-col gap-16">
               {/* 174 tall: one 180-wide tile beside two 81s, as the frame has
                   it — earnings is the figure the other two explain. */}
