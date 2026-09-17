@@ -320,6 +320,46 @@ session being built has to survive leaving the cockpit to play it, and a session
 that is playing has to survive walking back to the cockpit. Owned by their
 screens, each tore down the other.
 
+### The sidebar, measured against the frame
+
+Figma 16651:12647 — the drawer in both states, signed out and signed in. It is
+the first screen taken back to the file now that the library is on variables and
+Mulish, and it came back with more drift than expected, most of it in the two
+things that carry a brand: typography and colour.
+
+| | Was | The frame |
+| --- | --- | --- |
+| New session gradient | `#F0A032 → #FFCC66` | **`#FF881B → #FFE682`** |
+| Latest row title | `Label` — 12 medium | **`Body Small`** — 14 regular |
+| Latest row author | Caption, no colour | Caption on **`text/secondary`** |
+| "Latest" heading | no colour, inherited | **`text/secondary`** |
+| Divider | `border/subtle` #E4E1DC | **`border/default`** #CBC4B8 |
+| Drawer scrim | black 50% | **black 20%** |
+| Nav icons | 20 | **24** |
+| Latest disc | 40 | **32** |
+| Row | `-mx-12 px-12 py-14`, 4 between | **281 x 56, 16/20 padding, flush** |
+| Shell | 24 all round, 24 between | **16 sides, 24 bottom, 20 between** |
+
+**The gradient was the one that mattered.** Two oranges that are not the brand's
+read as a different button, and the pair it carried was flatter than the frame's
+— which runs a saturated orange into the light gold rather than a mid-orange
+into a pale one. Direction was already right; only the stops were wrong.
+
+**The New session button is written out rather than built from `Button`.** Its
+height, its 60 radius and its regular weight are all its own, and overriding
+three of `Button`'s utilities would leave the winner to Tailwind v4's layer
+order rather than to the class string — the trap this codebase has already hit
+twice.
+
+**A row is 56 tall because the type makes it so**: 16 + 24 + 16, where 24 is
+`Aurelia/Body`'s line-height. Rows stack flush, so the spacing between items is
+the row's own padding rather than a gutter, which is why the gap came out.
+
+One thing the frame has that the code does not follow: the signed-out variant
+still shows Latest. The app gates that on being signed in, which is the right
+call — there is no history to show someone who has none — so the frame is the
+one that is wrong there.
+
 ### Variable coverage in the Figma file
 
 The design file is the upstream of `design-tokens/figma-export.json`, so a frame

@@ -12,13 +12,19 @@ interface NavItemProps {
   end?: boolean
 }
 
+/**
+ * Figma "Menu List Item" (inside 16651:12647) — 281 x 56, 16/20 padding, 12
+ * between the icon and the label, and the icon is **24**, not 20. The label is
+ * `Aurelia/Body` on `text/primary`: 16/24 regular, which is what makes the row
+ * 56 tall (16 + 24 + 16).
+ */
 export function NavItem({ to, icon, label, disabled, end }: NavItemProps) {
   if (disabled) {
     return (
       <span
         aria-disabled="true"
         title="Not part of this walkthrough"
-        className="text-style-body pointer-events-none -mx-12 flex cursor-not-allowed items-center gap-12 rounded-12 px-12 py-14 text-text-secondary opacity-45 select-none"
+        className="text-style-body pointer-events-none flex cursor-not-allowed items-center gap-12 rounded-12 px-20 py-16 text-text-secondary opacity-45 select-none"
       >
         <span className="text-icon-default">{icon}</span>
         <span className="flex-1">{label}</span>
@@ -32,7 +38,7 @@ export function NavItem({ to, icon, label, disabled, end }: NavItemProps) {
       to={to}
       end={end}
       className={({ isActive }) =>
-        `u-press relative -mx-12 flex items-center gap-12 rounded-12 px-12 py-14 text-style-body ${
+        `u-press relative flex items-center gap-12 rounded-12 px-20 py-16 text-style-body ${
           isActive ? 'text-text-primary' : 'text-text-primary hover:bg-background-elevated'
         }`
       }
