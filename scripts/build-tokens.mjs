@@ -88,6 +88,28 @@ for (const [name, val] of Object.entries(c['Aurelia Numbers'].size)) {
 }
 lines.push('');
 
+// The named padding/margin aliases. These are the only Figma variables that had
+// no representation here at all: `spacing/16` is reachable as `p-16` because
+// --spacing is 1px, but `padding/md` is a *name* for 16 and the name is the
+// point — it is what a frame is bound to in the file.
+//
+// Deliberately NOT emitted as `--spacing-*`. That is a live Tailwind v4 theme
+// namespace: defining `--spacing-16` makes `p-16` resolve to it while `p-13`
+// still falls back to `calc(var(--spacing) * 13)`. Both give the same pixels
+// here, so it would buy nothing and quietly split one scale into two
+// resolution paths. `--padding-*` and `--margin-*` are not namespaces, so they
+// are plain tokens and change no utility.
+lines.push('  /* named padding aliases — padding/md etc. in Figma */');
+for (const [name, val] of Object.entries(c['Aurelia Numbers'].padding)) {
+  lines.push(`  --padding-${name}: ${val}px;`);
+}
+lines.push('');
+lines.push('  /* named margin aliases — margin/lg etc. in Figma */');
+for (const [name, val] of Object.entries(c['Aurelia Numbers'].margin)) {
+  lines.push(`  --margin-${name}: ${val}px;`);
+}
+lines.push('');
+
 // ---- Typography ----
 lines.push('  /* Aurelia Typography */');
 lines.push(`  --font-sans: "${c['Aurelia Typography']['font-family'].base}", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;`);

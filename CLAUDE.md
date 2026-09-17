@@ -88,6 +88,13 @@ all 16 and `tokens.css` emits a class for each. The four Light variants are
 still composed in code as `text-style-caption font-light!` where that reads
 better; the named classes are additive, not a replacement.
 
+**Every change to a variable, a token or the type scale is logged in
+`docs/DESIGN-SYSTEM-HISTORY.md`** — what changed, why, and the standing
+decisions behind the odd-looking ones. Read it before touching the pipeline, and
+append to it after. It also lists the colours that have no variable yet
+(`#FF881B`, the brand orange, among them) so they are not rediscovered a fourth
+time.
+
 **`radius/20` and `radius/48` are not variables — in Figma either.** Several
 frames use them as raw values, so `rounded-[20px]` and `rounded-tl-[48px]` are
 correct rather than a workaround. Do not "fix" them by inventing tokens; that
