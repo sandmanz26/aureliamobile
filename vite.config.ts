@@ -25,11 +25,23 @@ function buildId() {
   }
 }
 
+/** Which branch produced this bundle — the other half of "is this the build I pushed?". */
+function buildBranch() {
+  const fromCi = process.env.VERCEL_GIT_COMMIT_REF
+  if (fromCi) return fromCi
+  try {
+    return execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim()
+  } catch {
+    return 'unknown'
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   define: {
     __BUILD_ID__: JSON.stringify(buildId()),
+    __BUILD_BRANCH__: JSON.stringify(buildBranch()),
     __BUILT_AT__: JSON.stringify(new Date().toISOString()),
   },
 })

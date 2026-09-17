@@ -6,12 +6,10 @@
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "headers": [
     {
-      "comment": "Vite fingerprints everything under /assets, so those files never change meaning. Cache them forever — this is the half that makes the next rule cheap.",
       "source": "/assets/(.*)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     },
     {
-      "comment": "index.html names which fingerprinted bundle to load, so a cached copy pins the whole app to an old build. It must be revalidated on every load; it is 2KB, so this costs nothing.",
       "source": "/(.*)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
     }

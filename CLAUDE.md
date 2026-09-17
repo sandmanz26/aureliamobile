@@ -200,11 +200,17 @@ the whole tree to double quotes and semicolons and bury the next diff.
 ---
 
 **"I pushed that and I cannot see it" is usually the deploy, not the code.**
-`/__demo` prints the commit the running bundle was built from — compare it with
-the head of `web_app` before debugging a component. `vercel.json` now sends
-`index.html` with `must-revalidate` and `/assets/*` as `immutable`, so a browser
-can no longer pin itself to an old build; if the stamp is still behind after a
-reload, the deployment is, and no amount of cache clearing will help.
+`/__demo` opens with a **This build** panel — commit, branch, and when it was
+built — so the question is answerable from the page. If the commit is behind the
+branch you pushed, the *deployment* is behind and clearing a cache will not
+help. If it matches and a screen still looks old, it is the browser.
+
+`vercel.json` sends `index.html` with `must-revalidate` and `/assets/*` as
+`immutable`, so a browser can no longer pin itself to an old build. **That file
+takes no comments of any kind** — Vercel validates it against a strict schema
+and rejects unknown keys, so a `"comment"` field inside a `headers` entry fails
+the build with `should NOT have additional property`. It has happened once.
+Explain the config here instead.
 
 ---
 
