@@ -182,8 +182,15 @@ export function AppLayout() {
   return (
     <DrawerContext.Provider value={{ openDrawer: () => setDrawerOpen(true) }}>
       <div className="flex min-h-full bg-background-default">
-        {/* Desktop: persistent sidebar (lg and up) */}
-        <aside className="hidden w-[313px] shrink-0 border-r border-border-subtle bg-surface-default lg:block">
+        {/* Desktop: persistent sidebar (lg and up).
+            Pinned to the viewport, and that is load-bearing rather than
+            decoration. As a plain flex child it stretched to the *document* —
+            3965px on Home — and `mt-auto` then put Invite a Friend and Help at
+            the bottom of that, some 3800px down a 900px screen. They were
+            rendered and reachable only by scrolling the whole page. A sidebar
+            is chrome: it is the height of the window and scrolls its own
+            content. */}
+        <aside className="hidden w-[313px] shrink-0 border-r border-border-subtle bg-surface-default lg:sticky lg:top-0 lg:block lg:h-screen">
           <SidebarContent />
         </aside>
 
