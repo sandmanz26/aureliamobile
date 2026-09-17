@@ -51,6 +51,13 @@ export function DemoControlPage() {
           <div>
             <p className="text-style-caption uppercase tracking-widest text-text-secondary">Presenter console</p>
             <h1 className="text-style-headline mt-4 text-text-primary">Demo scope</h1>
+            {/* Which commit is on screen. "I pushed that and I don't see it" has
+                been answered wrongly more than once — usually a stale deploy or
+                a browser holding an old index.html. Compare this against the
+                head of web_app and the question is settled in one glance. */}
+            <p className="text-style-caption mt-8 font-mono text-text-secondary">
+              build {__BUILD_ID__} &middot; {new Date(__BUILT_AT__).toLocaleString()}
+            </p>
             <p className="text-style-body-small mt-8 max-w-[560px] text-text-secondary">
               Choose what the client can reach in today’s walkthrough. A module that is off stays visible in the
               navigation but cannot be clicked or opened by URL. {activeCount} of {DEMO_MODULES.length} modules active.

@@ -199,6 +199,15 @@ the whole tree to double quotes and semicolons and bury the next diff.
 
 ---
 
+**"I pushed that and I cannot see it" is usually the deploy, not the code.**
+`/__demo` prints the commit the running bundle was built from — compare it with
+the head of `web_app` before debugging a component. `vercel.json` now sends
+`index.html` with `must-revalidate` and `/assets/*` as `immutable`, so a browser
+can no longer pin itself to an old build; if the stamp is still behind after a
+reload, the deployment is, and no amount of cache clearing will help.
+
+---
+
 ## Known gaps
 
 - **`/admin` has no authentication at all.** Every module is reachable by URL.
