@@ -136,15 +136,30 @@ export function HomePage() {
         )}
       </div>
 
-      {/* The warm wash is the opening act — hero, live sessions, quick start —
-          and it ends where the dark banner begins. */}
-      <div style={{ background: 'linear-gradient(180deg, #FFFDF6 0%, #FFF1DB 55%, #FFF9EF 100%)' }}>
+      {/* White, and that is the frame's own answer rather than an absence of
+          one. Figma's page (16653:14937) carries a single vertical gradient
+          over its whole 3787px: #FFFFFF held until 77% of the way down, easing
+          to #FFF1DB only at the very bottom — which is under the dark banner
+          and never really seen. Everything from the hero to Quick Start sits in
+          the white part.
+
+          This was a three-stop wash reaching #FFF1DB at 55% of *this block*, so
+          the cream landed on the hero instead of a thousand pixels below it and
+          the whole opening read yellow. The only warmth up here is the glow. */}
+      <div style={{ background: '#FFFFFF' }}>
       <div className="mx-auto max-w-[720px] px-20 pb-40 lg:px-24">
         {/* Hero */}
         <section className="relative pt-24 text-center">
+          {/* Figma "Ellipse 6" — a 252 circle of #FFE682 at 60%, under a 224
+              layer blur, its left edge on the page's centre line and its top at
+              76, which puts it behind the header rather than below it. The
+              circle is small and the blur is what makes it a wash: it was a 280
+              disc at 35% under a 64px blur, which is a tighter, harder spot in
+              a different place. */}
           <div
-            className="pointer-events-none absolute -right-40 -top-24 size-[280px] rounded-full opacity-35 blur-3xl"
-            style={{ background: 'var(--color-primary-200)' }}
+            aria-hidden="true"
+            className="pointer-events-none absolute -top-64 left-1/2 size-252 rounded-full"
+            style={{ background: '#FFE682', opacity: 0.6, filter: 'blur(80px)' }}
           />
 
           {/* The mark opens the page, above the claim it belongs to. */}

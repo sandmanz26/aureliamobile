@@ -320,6 +320,32 @@ session being built has to survive leaving the cockpit to play it, and a session
 that is playing has to survive walking back to the cockpit. Owned by their
 screens, each tore down the other.
 
+### The hero is white, and the warmth is one blurred circle
+
+Figma 16653:14937. The deployed hero read as a wash of yellow where the frame
+is almost white, and the cause was not the glow — it was the page under it.
+
+**The frame's page gradient is a decoy.** "Start" is 3787px tall and carries one
+vertical gradient: `#FFFFFF` held all the way to **77%** of that height, easing
+to `#FFF1DB` only in the last quarter — which is under the dark banner and never
+really seen. Everything from the hero to Quick Start sits in the white part. The
+code had `#FFFDF6 → #FFF1DB 55% → #FFF9EF` scoped to *that block*, so the cream
+that belongs a thousand pixels down landed on the hero, and the opening read
+yellow before the glow was even drawn.
+
+**The warmth is one circle, and it is small.** Figma "Ellipse 6": a **252 × 252**
+circle of `#FFE682` at **60%**, under a 224 layer blur, at **x=201, y=66** — its
+left edge on the page's centre line, its top behind the header rather than below
+it. The code had a 280 disc of `primary/200` at 35% under a 64px blur, pinned to
+the right. Smaller and more opaque under a much wider blur is not the same
+effect as bigger and fainter under a tight one: the first is a wash, the second
+is a spot.
+
+The circle is now positioned and sized to the frame's own numbers — measured
+back at x=201, y=66, 252 × 252. Only the blur is a judgement: Figma's layer-blur
+radius has no exact CSS equivalent, so 224 became `blur(80px)`, tuned against a
+render of the frame rather than converted by a formula.
+
 ### The sidebar, measured against the frame
 
 Figma 16651:12647 — the drawer in both states, signed out and signed in. It is
