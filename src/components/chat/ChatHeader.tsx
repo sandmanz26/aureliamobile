@@ -100,15 +100,24 @@ export function ChatHeader({
                 { label: 'Settings', icon: SlidersHorizontal, run: onSettings },
               ].map((item) => {
                 const Icon = item.icon
+                // A row with no handler used to render exactly like a live one:
+                // it highlighted, it closed the menu, and it did nothing. That
+                // is what an unbuilt feature looks like, and Insights was read
+                // as unbuilt for precisely this reason — it only has a
+                // destination once the session has been saved and has a slug.
+                // Say so instead of failing silently.
+                const ready = Boolean(item.run)
                 return (
                   <button
                     key={item.label}
                     type="button"
+                    disabled={!ready}
+                    title={ready ? undefined : 'Available once this session is saved'}
                     onClick={() => {
                       setOpen(false)
                       item.run?.()
                     }}
-                    className="text-style-body u-press flex w-full items-center gap-12 rounded-12 px-8 py-10 text-left text-text-primary hover:bg-background-elevated"
+                    className="text-style-body u-press flex w-full items-center gap-12 rounded-12 px-8 py-10 text-left text-text-primary hover:bg-background-elevated disabled:pointer-events-none disabled:opacity-40"
                   >
                     <Icon size={19} className="shrink-0 text-icon-strong" />
                     {item.label}
