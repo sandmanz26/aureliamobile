@@ -147,7 +147,11 @@ export function HomePage() {
           the cream landed on the hero instead of a thousand pixels below it and
           the whole opening read yellow. The only warmth up here is the glow. */}
       <div style={{ background: '#FFFFFF' }}>
-      <div className="mx-auto max-w-[720px] px-20 pb-40 lg:px-24">
+      {/* No bottom padding. This column is not the last block on the page —
+          the full-bleed banner follows it and brings its own top margin. When
+          both set the gap, the gap is their sum and neither number matches the
+          frame. One rule, one gap. */}
+      <div className="mx-auto max-w-[720px] px-20 lg:px-24">
         {/* Hero */}
         <section className="relative pt-24 text-center">
           {/* Figma "Ellipse 6" — a 252 circle of #FFE682 at 60%, under a 224
@@ -248,7 +252,7 @@ export function HomePage() {
         {isEnabled('home.quickStart') && (
         <section className="mt-40">
           <h2 className="text-style-body text-text-primary">Quick Start</h2>
-          <div className="-mx-20 mt-16 flex gap-12 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
+          <div className="-mx-20 mt-16 flex gap-16 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
             {quickStartCards.map((card) => (
               <div
                 key={card.title}
@@ -292,7 +296,7 @@ export function HomePage() {
           Figma frame 402x800, padding 40/20, counterAlign MIN (left-aligned),
           content SPACE_BETWEEN with the card pair bleeding past both edges. */}
       {isEnabled('home.promo') && (
-      <section className="relative mt-48 overflow-hidden bg-[#1B1006] px-20 py-40 text-text-inverse lg:px-24">
+      <section className="relative mt-16 overflow-hidden bg-[#1B1006] px-20 py-40 text-text-inverse lg:px-24">
         {/* The two warm ellipses behind the content (Figma "Ellipse 6/7"). */}
         <span
           className="pointer-events-none absolute -left-1/3 top-1/3 h-[276px] w-[565px] rounded-full opacity-50 blur-3xl"

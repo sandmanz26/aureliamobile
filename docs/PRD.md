@@ -429,6 +429,30 @@ still shows Latest. The app gates that on being signed in, which is the right
 call — there is no history to show someone who has none — so the frame is the
 one that is wrong there.
 
+### A gap set in three places is the sum of three numbers
+
+Home put **92px** between the Quick Start cards and the dark banner where the
+frame puts 20. Nothing in the code said 92. Three rules each set part of it and
+none of them knew about the others:
+
+| Rule | On | px |
+| --- | --- | --- |
+| `pb-4` | the card scroller | 4 |
+| `pb-40` | the content column | 40 |
+| `mt-48` | the banner | 48 |
+
+The content column's `pb-40` was written when that column was the last block on
+the page. The full-bleed banner was added below it later with its own `mt-48`,
+and nobody removed the padding underneath — so the page grew a gap more than
+four times the frame's, in a place where no single number was wrong.
+
+The column no longer sets a bottom gap at all. Every section on Home now owns
+its own top margin and nothing else contributes: 40, 40, 16, 24, 48, 24, checked
+in the browser. **One rule, one gap** — a gap nobody can point at in the source
+is a gap nobody can fix against a frame.
+
+The Quick Start cards also sit 16 apart in the frame, not 12.
+
 ### The notification row is one disc, not two
 
 `16659:42262`. Built from the frame after its variables were bound, and three

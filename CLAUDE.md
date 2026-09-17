@@ -182,6 +182,13 @@ fills its parent, so anything meant to sit on top needs `relative`. A card title
 once vanished this way while its siblings looked fine, because `opacity-90`
 happened to promote them.
 
+**One rule per gap.** A section's spacing belongs to the section's own
+`mt-*`, not to a parent's `pb-*` as well. Home had 92px between Quick Start and
+the banner because a scroller's `pb-4`, a column's `pb-40` and the banner's
+`mt-48` all set the same gap — and 92 appeared nowhere in the source, so there
+was nothing to correct against the frame. If a gap will not match Figma, check
+whether it is being set twice before changing the number you can see.
+
 **Grid and flex children default to `min-width: auto`.** A wide child (a chart,
 a table) will stretch its column rather than scroll inside it. `min-w-0` on the
 item is the fix; `/admin/revenue` overflowed 250px for exactly this reason.
