@@ -429,6 +429,27 @@ still shows Latest. The app gates that on being signed in, which is the right
 call — there is no history to show someone who has none — so the frame is the
 one that is wrong there.
 
+### Insights follows the same session Play does
+
+The cockpit's menu had Insights disabled on a new thread while Play, two lines
+above it in the same component, worked fine. Both are about the same session,
+so that was a contradiction rather than a rule.
+
+`playTo` resolves `sessionSlug ?? draft.slug`. Insights was gated on
+`sessionSlug` alone, which is only set once a thread belongs to a saved
+session — so on a session you had just built, with three versions behind it and
+Version history live beside it, Insights was greyed out. It now resolves the
+same pair.
+
+That is safe because **every draft slug is a catalogue session**: the blank
+cockpit's default, a quick start's `plays`, a recreate's source, or a version's
+own. `findSession` is still the guard, because Progress redirects to
+`/sessions` on a slug it cannot find, and a menu item that silently bounces you
+somewhere else is worse than one that is plainly unavailable.
+
+Driven in the browser from a new session: enabled, and the click lands on
+`/progress/dolphins-frequency`.
+
 ### A session card you can act on, and a coin that goes somewhere
 
 `16662:42395` replaces the 68-tall single line (`16523:14716`) the Sessions

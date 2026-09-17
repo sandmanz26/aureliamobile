@@ -117,6 +117,9 @@ export function ChatPage() {
   } = useChatSession()
   const [typing, setTyping] = useState(false)
   const { track, playing } = useAudioPlayer()
+  // The session Insights should open: this thread's if it has one, otherwise
+  // the one the draft stands in for — the same fallback `playTo` uses.
+  const insightsSlug = findSession(sessionSlug ?? draft.slug)?.slug
   // Arriving from Home's mic opens the recorder straight away, so the tap that
   // said "talk to Aurelia" lands on a live mic rather than an idle composer.
   const [listening, setListening] = useState(() => routeState?.startVoice === true)
@@ -464,9 +467,16 @@ export function ChatPage() {
             ? { title: draft.title, author: CURRENT_USER }
             : undefined
         }
-        /* Insights opens Progress for this session. A thread with nothing
-           behind it has no progress to show, so the item stays inert there. */
-        onInsights={sessionSlug ? () => navigate(`/progress/${sessionSlug}`) : undefined}
+        /* Insights opens Progress for the same session `playTo` plays.
+           Gating this on `sessionSlug` alone left it dead on a new thread, and
+           it disagreed with the line above, where the draft's own slug is good
+           enough to play. Every draft slug is a catalogue session — the
+           default, a quick start's `plays`, a recreate's source, or a
+           version's — so it resolves. `findSession` is still the guard,
+           because Progress redirects to /sessions on a slug it cannot find,
+           and a menu item that silently bounces you elsewhere is worse than
+           one that is plainly unavailable. */
+        onInsights={insightsSlug ? () => navigate(`/progress/${insightsSlug}`) : undefined}
         onVersions={versions.length ? () => setHistoryOpen(true) : undefined}
         onMenu={openDrawer}
         onPublish={() => isEnabled('chat.publish') && setPublishState('publishing')}
