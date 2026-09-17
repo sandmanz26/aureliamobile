@@ -32,11 +32,11 @@ export function NotificationsPage() {
           type="button"
           aria-label="Back"
           onClick={() => navigate(-1)}
-          className="u-press flex size-40 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-sm"
+          className="u-press flex size-40 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-default shadow-sm"
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-style-title-large flex-1 truncate text-text-primary">Notifications</h1>
+        <h1 className="text-style-title-large-regular flex-1 truncate text-text-primary">Notifications</h1>
         <div className="flex h-40 shrink-0 items-center gap-8 rounded-full bg-surface-default px-14 shadow-sm">
           <span
             className="flex size-16 items-center justify-center rounded-full"
@@ -44,7 +44,7 @@ export function NotificationsPage() {
           >
             <Coins size={10} className="text-text-inverse" />
           </span>
-          <span className="text-style-label">1,323</span>
+          <span className="text-style-body-small text-text-primary">1,323</span>
         </div>
       </header>
 
@@ -75,7 +75,7 @@ export function NotificationsPage() {
                     <span className="font-semibold text-text-primary">{item.actor}</span> {item.action}
                     {/* The age sits apart from the sentence — it is a stamp on
                         the row, not the last word of it. */}
-                    <span className="ml-8 whitespace-nowrap">{item.age}</span>
+                    <span className="ml-8 font-light whitespace-nowrap">{item.age}</span>
                   </p>
                   <span className="relative flex size-40 shrink-0 items-center justify-center">
                     <PhotoCircle

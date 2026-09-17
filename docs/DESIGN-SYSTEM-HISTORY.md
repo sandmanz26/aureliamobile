@@ -42,6 +42,54 @@ The collections:
 
 ## Log
 
+### 2026-09-17 — Notifications (`16659:42262`) bound at the source
+
+The frame carried **13 text nodes with no style at all and 26 raw fills**. Fixed
+in the file first, per the rule that the design is the source and the app
+follows it — and fixed on the **main components** rather than per instance, so
+the three notification variants (`16659:42062` sparkle, `16659:42061` play,
+`16659:42060` challenge) and `Tab Set_notClear` (`16538:21547`) carry it
+everywhere they are used, not only here.
+
+**Styles applied to 7 nodes** that had been set by hand at the right size and
+weight but bound to nothing:
+
+| Node | Was | Now |
+| --- | --- | --- |
+| the `1s` / `1h` stamps (×4) | Mulish Light 14, AUTO leading | `Aurelia/Body Small Light` 14/20 |
+| Today / Yesterday / Last 7 days | Mulish Regular 14, AUTO leading | `Aurelia/Body Small` 14/20 |
+| the `1,323` points figure | Mulish Regular 14, AUTO leading | `Aurelia/Body Small` 14/20 |
+
+AUTO leading on Mulish 14 resolves near 17.6, so those rows all gained ~2px of
+line box. That is the scale asserting itself and is the point of binding them.
+
+**Two value-changing replacements.** Everything else was an exact match sitting
+unbound; these two were a *different colour* doing a job a token already owns:
+
+| Was | Now | Δ |
+| --- | --- | --- |
+| `#331B04` — the title, every row's message, four chip labels, the back arrow, the challenge badge | `text/primary` / `icon/default` / `interactive/primary` → **`#3C2405`** | imperceptible; two dark browns, one job |
+| `#9A9A9A` — every group heading and every age stamp | `text/secondary` → **`#7B7B7B`** | **visible**: the greys darken |
+
+`#9A9A9A` sits between `neutral/300` `#CBC4B8` and `neutral/400` `#7B7B7B` with
+no slot of its own. Inventing a variable for one screen's grey would grow the
+palette to fit a drift; binding it to the role it was already playing is the
+cheaper correction. The timestamps read slightly heavier as a result.
+
+**Exact matches, now bound (13):** `#FFFFFF` → `surface/default` on the back
+button's disc and the points pill, `icon/inverse` on the sparkle, leaderboard
+and play marks; `#000000` → `icon/strong` on `menu-01`.
+
+**Still without a variable** — reported, not invented:
+
+| Colour | Where |
+| --- | --- |
+| `#FFF1DB` | the sparkle badge behind the upgrade notice |
+| `#D6D6D6` | the outline on all five inactive filter chips |
+
+The iOS status bar and home indicator were left alone throughout: `#0E0E0E` at
+98% is Apple's chrome, not ours.
+
 ### 2026-09-17 — Named padding and margin aliases reach the CSS
 
 The full 251-variable audit against the live file found **no drift at all**:
@@ -182,6 +230,7 @@ Found by sweeping section `16596:9091`. Each needs a decision, not a bind.
 | `#331B04` | many | **every text and chip on the Insight frames** | Not `text/primary` `#3C2405`. Two dark browns doing one job |
 | `#525252` | many | secondary body copy on Insights | Not `text/secondary` `#7B7B7B` |
 | `#626262` | 1 | the Objective sheet's placeholder | |
+| `#FFF1DB` | 1 | the sparkle badge on Notifications | A pale gold wash; nearest is `gold/100` `#FFF3C4` |
 
 **Radius 20 / 36 / 48 / 60 are raw in Figma too** — the recommendation card's
 `[36,20,20,20]`, the New session button's 60. A design decision, not a sync gap;

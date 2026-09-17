@@ -429,6 +429,38 @@ still shows Latest. The app gates that on being signed in, which is the right
 call — there is no history to show someone who has none — so the frame is the
 one that is wrong there.
 
+### Notifications, and the file was fixed before the app was
+
+`16659:42262`. The rule the whole Figma-alignment pass runs on: where the frame
+and the app disagree the frame wins, but where the frame disagrees with its own
+variables, **the frame is corrected first** — otherwise the app inherits a drift
+and the next export reintroduces it.
+
+The screen carried 13 text nodes on no style and 26 raw fills. All of it was
+bound in the file, on the three notification **main components** and the shared
+tab set rather than on this frame's instances, so every screen using them moved
+together. The full account is in `DESIGN-SYSTEM-HISTORY.md`; two calls are
+product decisions rather than bookkeeping:
+
+- **`#331B04` is not a second ink.** The title, every row's message, the chip
+  labels, the back arrow and the challenge badge were painted in it;
+  `text/primary` is `#3C2405`. Two dark browns doing one job, and the difference
+  is invisible at any size the app renders. Bound to the role, not preserved.
+- **`#9A9A9A` is `text/secondary`, and that darkens it.** The group headings and
+  every age stamp used it. It falls between `neutral/300` and `neutral/400` with
+  no slot of its own, so the choice was to add a variable for one screen's grey
+  or to bind it to the role it was already playing. The role won, and the
+  timestamps read a little heavier now. Worth knowing before someone files it as
+  a regression.
+
+`#FFF1DB` (the sparkle badge) and `#D6D6D6` (the outline on every inactive
+filter chip) still have no variable anywhere in the file. They are reported, not
+invented — see the open table in `DESIGN-SYSTEM-HISTORY.md`.
+
+What the app changed with it: the title is `Title Large Regular`, not the
+Semibold `Title Large`; the points figure is Body Small 14, not Label 12; the
+back arrow is `icon/default`, not `icon/strong`; the age stamp is Light.
+
 ### Variable coverage in the Figma file
 
 The design file is the upstream of `design-tokens/figma-export.json`, so a frame
