@@ -27,6 +27,7 @@ import type { CoverKey } from '../lib/photos'
 import type { CategoryFilter } from '../lib/sessions'
 import { CATEGORY_FILTERS, categoryLabel, sessionsInCategory } from '../lib/sessions'
 import { useDrawer } from '../layouts/DrawerContext'
+import { CoinPill } from '../components/ui/CoinPill'
 
 // A one-tap way in for each of the things Aurelia actually makes, so the rail
 // doubles as the answer to "what can I even ask for?".
@@ -115,15 +116,7 @@ export function HomePage() {
         </button>
         <span className="hidden lg:block" />
         {signedIn ? (
-          <div className="flex h-44 items-center gap-8 rounded-full bg-surface-default px-16 shadow-sm">
-            <span
-              className="flex size-16 items-center justify-center rounded-full"
-              style={{ background: 'linear-gradient(160deg, #ffe682, #ff881b)' }}
-            >
-              <Coins size={10} className="text-text-inverse" />
-            </span>
-            <span className="text-style-body-small">1,323</span>
-          </div>
+          <CoinPill points="1,323" className="shadow-sm" />
         ) : (
           /* A visitor has no coin balance yet — the header offers the account instead. */
           <button

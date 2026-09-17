@@ -45,6 +45,7 @@ import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
 import { SignInPage } from './pages/auth/SignInPage'
 import { SignUpPage } from './pages/auth/SignUpPage'
 import { InvitePage } from './pages/InvitePage'
+import { PlaceholderPage } from './pages/PlaceholderPage'
 
 export default function App() {
   return (
@@ -324,6 +325,22 @@ export default function App() {
                   <ModuleGuard module="sessionSettings">
                     <SessionSettingsPage />
                   </ModuleGuard>
+                </RequireAuth>
+              }
+            />
+            {/* The coin balance is on nine screens and led nowhere from any of
+                them. It points here now. The ledger behind it is not designed
+                yet — the Points pill carries no prototype link in any frame —
+                so this says so rather than opening a blank page, which is what
+                a route-less destination would have done. */}
+            <Route
+              path="/credits"
+              element={
+                <RequireAuth>
+                  <PlaceholderPage
+                    title="Credits"
+                    description="What you have earned, and what you spent it on. Play a session, recreate one, or invite a friend and the balance moves here."
+                  />
                 </RequireAuth>
               }
             />

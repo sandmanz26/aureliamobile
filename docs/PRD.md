@@ -429,6 +429,58 @@ still shows Latest. The app gates that on being signed in, which is the right
 call — there is no history to show someone who has none — so the frame is the
 one that is wrong there.
 
+### A session card you can act on, and a coin that goes somewhere
+
+`16662:42395` replaces the 68-tall single line (`16523:14716`) the Sessions
+screen carried. The redesign is not a resize — the card grew a second row and
+two controls, and that changes what the screen is *for*. It was a list of
+sessions to play. It is now a list of sessions you **own and manage**.
+
+| | Was | Now |
+| --- | --- | --- |
+| Card | 362 x 68, one row | 362 x **108**, two rows, 16 between |
+| Row 1 | disc, title, meta, trend pill | disc, title, meta, **edit + delete** |
+| Row 2 | — | trend pill `#ECFBED`, **status pill** |
+| Published | third item on the byline | its own pill — `#FFF1DB`, or neutral when not |
+| New Session | only in the drawer | **pinned footer**, 52 tall, radius 40 |
+
+**The card is 108 because the frame holds its text block at 32**, rather than
+letting it size to content. The title's box is 16 with 20 of leading and the
+meta's is 12 with 14, so each line overflows its own box by a pixel or two —
+exactly how Figma draws it. Sized to content it comes out 114, and nothing
+looks wrong, which is why that kind of drift survives a visual check. Measured
+in the browser both ways.
+
+Three tap targets on one row, because a 362-wide card with one destination
+wastes the row: the disc plays, the text opens that session's conversation, the
+icons act on the session. Delete asks first and really removes the row —
+in this browser, until reload, which is the same contract as everything else
+this demo remembers.
+
+**Published moved off the byline.** A state badge and a byline are not the same
+kind of fact; run together they read as one sentence. It also used to show only
+on your own rows — a judgement call that the frame settles by giving the state
+a pill with two values.
+
+### The coin balance led nowhere, from nine screens
+
+It was drawn in **thirteen** places. Seven used `CoinPill`; six were hand-rolled
+copies that had drifted from it and from each other — 40 tall against 44, a 16
+coin against 20, a `Coins` glyph against the ringed dot, Label 12 against Body
+Small 14. All thirteen were a `<div>`. None of them did anything.
+
+A balance is the most obviously tappable thing in a header — it is a number
+about *you* — so tapping it and getting nothing reads as a broken app rather
+than a missing feature. All thirteen are now the one component, and it is a
+button that opens `/credits`, gated because what you have and how you spent it
+is account-shaped.
+
+**The ledger itself is not designed.** The Points pill carries no prototype link
+in any frame read so far, so `/credits` renders the placeholder the app already
+had for this — it says the screen is not built rather than opening blank, which
+is what a route-less destination did. `PlaceholderPage` had been dead code since
+it was written; this is its first use.
+
 ### A gap set in three places is the sum of three numbers
 
 Home put **92px** between the Quick Start cards and the dark banner where the

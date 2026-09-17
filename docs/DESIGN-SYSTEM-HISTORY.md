@@ -230,7 +230,8 @@ Found by sweeping section `16596:9091`. Each needs a decision, not a bind.
 | `#331B04` | many | **every text and chip on the Insight frames** | Not `text/primary` `#3C2405`. Two dark browns doing one job |
 | `#525252` | many | secondary body copy on Insights | Not `text/secondary` `#7B7B7B` |
 | `#626262` | 1 | the Objective sheet's placeholder | |
-| `#FFF1DB` | 1 | the sparkle badge on Notifications | A pale gold wash; nearest is `gold/100` `#FFF3C4` |
+| `#FFF1DB` | 3+ | the sparkle badge on Notifications, the Published pill on a session card | A pale gold wash; nearest is `gold/100` `#FFF3C4` |
+| `#ECFBED` | 1 | the trend pill on a session card | A pale green; nearest is `success/50` `#F0FDF4` but not equal |
 
 **Radius 20 / 36 / 48 / 60 are raw in Figma too** — the recommendation card's
 `[36,20,20,20]`, the New session button's 60. A design decision, not a sync gap;

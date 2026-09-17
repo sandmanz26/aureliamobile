@@ -1,7 +1,8 @@
-import { ChevronDown, Coins, Menu } from 'lucide-react'
+import { ChevronDown, Menu } from 'lucide-react'
 import { useState } from 'react'
 import { HELP_TOPICS } from '../lib/help'
 import { useDrawer } from '../layouts/DrawerContext'
+import { CoinPill } from '../components/ui/CoinPill'
 
 /**
  * Help — the FAQ, as a stack of cards rather than the hairline accordion used
@@ -39,15 +40,7 @@ export function HelpPage() {
           </button>
           <h1 className="text-style-title-large truncate text-text-primary">Help</h1>
         </div>
-        <div className="flex h-40 shrink-0 items-center gap-8 rounded-full bg-surface-default px-14 shadow-sm">
-          <span
-            className="flex size-16 items-center justify-center rounded-full"
-            style={{ background: 'linear-gradient(160deg, #ffe682, #ff881b)' }}
-          >
-            <Coins size={10} className="text-text-inverse" />
-          </span>
-          <span className="text-style-label">1,323</span>
-        </div>
+        <CoinPill points="1,323" className="shadow-sm" />
       </header>
 
       <div className="mx-auto w-full max-w-[402px] px-20 pb-40 lg:max-w-[720px] lg:px-24">

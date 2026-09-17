@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Clock, Coins, Play, Share2, Trophy, Users } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Clock, Play, Share2, Trophy, Users } from 'lucide-react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { CoverImage } from '../components/ui/CoverImage'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
@@ -7,6 +7,7 @@ import type { CoverKey } from '../lib/photos'
 import type { Contender } from '../lib/challenges'
 import { findChallenge } from '../lib/challenges'
 import { findSession } from '../lib/sessions'
+import { CoinPill } from '../components/ui/CoinPill'
 
 const AVATAR_RING = 'conic-gradient(from 200deg, var(--color-gold-300), var(--color-blue-300), var(--color-gold-300))'
 
@@ -143,15 +144,7 @@ export function ChallengeDetailPage() {
               <ArrowLeft size={20} />
             </button>
             <div className="flex items-center gap-8">
-              <div className="flex h-40 items-center gap-8 rounded-full bg-surface-default px-14 shadow-sm">
-                <span
-                  className="flex size-16 items-center justify-center rounded-full"
-                  style={{ background: 'linear-gradient(160deg, #ffe682, #ff881b)' }}
-                >
-                  <Coins size={10} className="text-text-inverse" />
-                </span>
-                <span className="text-style-label">1,323</span>
-              </div>
+              <CoinPill points="1,323" className="shadow-sm" />
               <button
                 type="button"
                 aria-label="Share challenge"

@@ -1,8 +1,9 @@
-import { ArrowLeft, Coins } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { SessionGridCard } from '../components/ui/SessionGridCard'
 import type { Shelf } from '../lib/sessions'
 import { sessionsOnShelf } from '../lib/sessions'
+import { CoinPill } from '../components/ui/CoinPill'
 
 /**
  * The full contents of one shelf, as a two-column grid.
@@ -42,15 +43,7 @@ export function SeeAllPage() {
           <ArrowLeft size={20} />
         </button>
         <h1 className="text-style-title-large flex-1 truncate text-text-primary">{SHELF_TITLES[shelf]}</h1>
-        <div className="flex h-40 shrink-0 items-center gap-8 rounded-full bg-surface-default px-14 shadow-sm">
-          <span
-            className="flex size-16 items-center justify-center rounded-full"
-            style={{ background: 'linear-gradient(160deg, #ffe682, #ff881b)' }}
-          >
-            <Coins size={10} className="text-text-inverse" />
-          </span>
-          <span className="text-style-label">1,323</span>
-        </div>
+        <CoinPill points="1,323" className="shadow-sm" />
       </header>
 
       <div className="mx-auto w-full max-w-[402px] px-20 pb-40 lg:max-w-[900px] lg:px-24">

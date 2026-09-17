@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { useDrawer } from '../layouts/DrawerContext'
 import type { CoverKey } from '../lib/photos'
+import { CoinPill } from '../components/ui/CoinPill'
 
 /**
  * Invite a Friend.
@@ -130,15 +131,7 @@ export function InvitePage() {
           </button>
           <h1 className="text-style-title-large text-text-primary">Invite a Friend</h1>
         </div>
-        <div className="flex h-40 shrink-0 items-center gap-8 rounded-full bg-surface-default px-14 shadow-sm">
-          <span
-            className="flex size-16 items-center justify-center rounded-full"
-            style={{ background: 'linear-gradient(160deg, #ffe682, #ff881b)' }}
-          >
-            <Coins size={10} className="text-text-inverse" />
-          </span>
-          <span className="text-style-label">1,323</span>
-        </div>
+        <CoinPill points="1,323" className="shadow-sm" />
       </header>
 
       <div className="mx-auto w-full max-w-[402px] px-20 lg:max-w-[560px] lg:px-24">

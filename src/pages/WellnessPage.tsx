@@ -1,8 +1,9 @@
-import { ChevronRight, Coins, Menu, X } from 'lucide-react'
+import { ChevronRight, Menu, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useDrawer } from '../layouts/DrawerContext'
 import type { SignalGroup } from '../lib/signals'
 import { SIGNAL_GROUPS, defaultConnections, sourcesInGroup } from '../lib/signals'
+import { CoinPill } from '../components/ui/CoinPill'
 
 /**
  * My Wellness — what Aurelia is allowed to read about you.
@@ -114,15 +115,7 @@ export function WellnessPage() {
           </button>
           <h1 className="text-style-title-large truncate text-text-primary">My Wellness</h1>
         </div>
-        <div className="flex h-40 shrink-0 items-center gap-8 rounded-full bg-surface-default px-14 shadow-sm">
-          <span
-            className="flex size-16 items-center justify-center rounded-full"
-            style={{ background: 'linear-gradient(160deg, #ffe682, #ff881b)' }}
-          >
-            <Coins size={10} className="text-text-inverse" />
-          </span>
-          <span className="text-style-label">1,323</span>
-        </div>
+        <CoinPill points="1,323" className="shadow-sm" />
       </header>
 
       <div className="mx-auto w-full max-w-[402px] px-20 lg:max-w-[720px] lg:px-24">
