@@ -7,6 +7,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/aurelia_logo.dart';
 import '../../core/widgets/cover_image.dart';
+import '../../core/widgets/objective_sheet.dart';
 import '../../core/widgets/photo_circle.dart';
 import '../chat/chat_session_controller.dart';
 import '../player/player_screen.dart';
@@ -179,6 +180,15 @@ class _ProgressScreenState extends State<ProgressScreen> {
                       openVersion: _openVersion,
                       onToggle: (id) => setState(
                           () => _openVersion = _openVersion == id ? null : id),
+                      onEditObjective: () async {
+                        final next = await showObjectiveSheet(
+                            context, progress.objective);
+                        if (next == null || !context.mounted) return;
+                        // Written to lib/, not held here: the screen is not
+                        // where a goal should be kept.
+                        writeObjective(session.slug, next);
+                        setState(() {});
+                      },
                     )
                   else if (_tab == ProgressTab.social)
                     _SocialImpact(session: session, progress: progress)
@@ -241,12 +251,16 @@ class _Chapters extends StatelessWidget {
     required this.progress,
     required this.openVersion,
     required this.onToggle,
+    required this.onEditObjective,
   });
 
   final SessionRecord session;
   final Progress progress;
   final String? openVersion;
   final ValueChanged<String> onToggle;
+
+  /// The one editable thing on this screen, and the pencil did nothing.
+  final VoidCallback onEditObjective;
 
   @override
   Widget build(BuildContext context) {
@@ -312,7 +326,7 @@ class _Chapters extends StatelessWidget {
                 Tooltip(
                   message: 'Edit objective',
                   child: InkWell(
-                    onTap: () {},
+                    onTap: () => onEditObjective(),
                     child:
                         const Icon(Icons.edit_outlined, size: 16, color: _ink),
                   ),

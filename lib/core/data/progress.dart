@@ -120,6 +120,21 @@ class Progress {
 /// Not `session.intent`: that is the creator's sentence about what the mix is
 /// for and it runs long. The objective is the listener's own goal, short
 /// enough to sit on one line beside an edit button, as the frame has it.
+/// Objectives written in this run.
+///
+/// The pencil on the Objective card had no handler at all — the one editable
+/// thing on the Insights screen, and it did nothing. In memory like everything
+/// else this demo remembers.
+final _written = <String, String>{};
+
+String objectiveFor(SessionRecord session) =>
+    _written[session.slug] ??
+    _objectives[session.category] ??
+    'Feel better day to day';
+
+void writeObjective(String slug, String objective) =>
+    _written[slug] = objective;
+
 const _objectives = <String, String>{
   'Sleep': 'Improve my sleep',
   'Calm': 'Lower my stress',
@@ -143,7 +158,7 @@ Progress progressFor(SessionRecord session) {
   final draft = !isPublished(session);
 
   return Progress(
-    objective: _objectives[session.category] ?? 'Feel better day to day',
+    objective: objectiveFor(session),
     versions: [
       Version(
         id: 'v3',

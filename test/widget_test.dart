@@ -1360,6 +1360,28 @@ void main() {
       expect(find.textContaining('See All'), findsOneWidget);
     });
 
+    testWidgets('the Objective is editable, and the pencil opens the sheet',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/progress',
+          arguments: const ProgressRequest(slug: 'dolphins-frequency'));
+      await tester.pumpAndSettle();
+
+      // The one editable thing on this screen, and the pencil did nothing.
+      await tester.tap(find.byTooltip('Edit objective'));
+      await tester.pumpAndSettle();
+      expect(find.text('Write your Objective'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField).last, 'Sleep through');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sleep through'), findsOneWidget);
+    });
+
     testWidgets('a version card plays that cut, not the session',
         (tester) async {
       await _boot(tester);
