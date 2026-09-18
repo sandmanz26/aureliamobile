@@ -30,6 +30,10 @@ abstract class AudioEngine {
 
   Future<void> seek(Duration position);
 
+  /// Silence without stopping. A muted session is still running — the clock,
+  /// the cues and the art carry on — so this is a volume, not a transport.
+  Future<void> setMuted(bool muted);
+
   /// Where the clip actually is, as the engine reports it. The screens read
   /// this rather than counting their own ticks, so a stall or a seek cannot
   /// put the bar and the sound out of step.
@@ -83,6 +87,13 @@ class JustAudioEngine implements AudioEngine {
 
   @override
   Future<void> seek(Duration position) => _player.seek(position);
+
+  @override
+  Future<void> setMuted(bool muted) => _player.setVolume(muted ? 0 : _volume);
+
+  /// Loud enough to sit under a room, quiet enough not to announce itself —
+  /// the web player's own 0.7.
+  static const _volume = 0.7;
 
   @override
   Stream<Duration> get positionStream => _player.positionStream;
@@ -158,6 +169,13 @@ class SilentAudioEngine implements AudioEngine {
     _position = position;
     _emit();
   }
+
+  /// Recorded rather than ignored: a test asserts the switch reaches the
+  /// engine, which is the half of muting that a screen cannot show.
+  @override
+  Future<void> setMuted(bool muted) async => this.muted = muted;
+
+  bool muted = false;
 
   @override
   Stream<Duration> get positionStream => _positions.stream;

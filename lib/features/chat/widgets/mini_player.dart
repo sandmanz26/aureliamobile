@@ -16,6 +16,13 @@ import '../../player/player_screen.dart';
 ///
 /// Renders nothing when there is no session loaded, which is what keeps it out
 /// of the header until the first play.
+///
+/// **The sound switch is not in the frame.** It is here because silence is
+/// global and this is where you are when you notice you need it: the card is
+/// on screen precisely when a session is running and you are doing something
+/// else. Reachable only from the full player the switch would be two taps
+/// away at the moment it is wanted — and, worse, a muted session playing here
+/// would have nothing on it to say why it is silent.
 class MiniPlayer extends StatelessWidget {
   const MiniPlayer({super.key});
 
@@ -80,6 +87,20 @@ class MiniPlayer extends StatelessWidget {
                       ],
                     ),
                   ),
+                ),
+                const SizedBox(width: AppSpacing.s3),
+                IconButton(
+                  onPressed: playback.toggleMuted,
+                  tooltip:
+                      playback.muted ? 'Turn sound on' : 'Turn sound off',
+                  iconSize: 18,
+                  constraints:
+                      const BoxConstraints.tightFor(width: 32, height: 32),
+                  padding: EdgeInsets.zero,
+                  color: AppColors.iconDefault,
+                  icon: Icon(playback.muted
+                      ? Icons.volume_off_rounded
+                      : Icons.volume_up_rounded),
                 ),
                 const SizedBox(width: AppSpacing.s3),
                 IconButton(

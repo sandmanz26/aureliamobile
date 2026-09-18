@@ -45,6 +45,9 @@ const _cues = <String>[
 /// survive a device that is not 874 tall.
 const _sheetPeek = 169.0;
 
+/// How far the skip buttons move the playhead.
+const _skip = Duration(seconds: 15);
+
 String _clock(Duration value) {
   final m = value.inMinutes;
   final s = value.inSeconds % 60;
@@ -197,6 +200,108 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 }
 
+/// Back 15 / forward 15, flanking the play disc.
+///
+/// Not in the frame, which draws the disc alone. It is here because the bar
+/// above it is draggable now and a drag is the wrong instrument for "say that
+/// last bit again": on a ten-minute session fifteen seconds is under three
+/// pixels of track.
+class _SkipButton extends StatelessWidget {
+  const _SkipButton({required this.seconds, required this.onPressed});
+
+  final int seconds;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final back = seconds < 0;
+    return Tooltip(
+      message: back ? 'Back ${-seconds} seconds' : 'Forward $seconds seconds',
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        child: Container(
+          width: 44,
+          height: 44,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.15),
+            shape: BoxShape.circle,
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Icon(back ? Icons.rotate_left_rounded : Icons.rotate_right_rounded,
+                  size: 28, color: AppColors.iconInverse),
+              // The number sits in the glyph's own gap, which is what that gap
+              // is for.
+              Text('${seconds.abs()}',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    height: 1,
+                    color: AppColors.textInverse,
+                  )),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The scrubber's track: the frame's rest colour under the frame's warm fill.
+///
+/// A [Slider] paints its active track in one flat colour, and this one is a
+/// gradient — so the track shape is the whole of the customisation and the
+/// rest of the control is stock, which is the point. `BaseSliderTrackShape`
+/// gives the rect, insetting by the overlay radius: with that set to the
+/// thumb's 14 the track starts exactly where the frame puts it.
+class _ScrubberTrack extends SliderTrackShape with BaseSliderTrackShape {
+  const _ScrubberTrack();
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset offset, {
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required Animation<double> enableAnimation,
+    required Offset thumbCenter,
+    Offset? secondaryOffset,
+    bool isEnabled = false,
+    bool isDiscrete = false,
+    required TextDirection textDirection,
+  }) {
+    final rect = getPreferredRect(
+      parentBox: parentBox,
+      offset: offset,
+      sliderTheme: sliderTheme,
+      isEnabled: isEnabled,
+      isDiscrete: isDiscrete,
+    );
+    if (rect.isEmpty) return;
+
+    final canvas = context.canvas;
+    final radius = Radius.circular(rect.height / 2);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, radius),
+      Paint()..color = Colors.black.withValues(alpha: 0.4),
+    );
+
+    final end = thumbCenter.dx.clamp(rect.left, rect.right);
+    if (end <= rect.left) return;
+    final active = Rect.fromLTRB(rect.left, rect.top, end, rect.bottom);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(active, radius),
+      Paint()
+        ..shader = const LinearGradient(
+          colors: [Color(0xFFAE4B46), Color(0xFFFFC500)],
+        ).createShader(active),
+    );
+  }
+}
+
 /// Art, transport, cue and scrubber — everything you hear rather than read.
 class _Hero extends StatelessWidget {
   const _Hero({required this.session});
@@ -229,6 +334,19 @@ class _Hero extends StatelessWidget {
                   // currency, not a lookalike per screen.
                   const CoinPill(),
                   const SizedBox(width: AppSpacing.s2),
+                  // Sound off without stopping the session: you open one in a
+                  // room where you cannot make noise and still want the clock,
+                  // the cues and the art.
+                  CircleSurfaceButton(
+                    icon: playback.muted
+                        ? Icons.volume_off_rounded
+                        : Icons.volume_up_rounded,
+                    tooltip:
+                        playback.muted ? 'Turn sound on' : 'Turn sound off',
+                    size: 44,
+                    onPressed: playback.toggleMuted,
+                  ),
+                  const SizedBox(width: AppSpacing.s2),
                   CircleSurfaceButton(
                     icon: Icons.ios_share,
                     tooltip: 'Share',
@@ -244,28 +362,45 @@ class _Hero extends StatelessWidget {
             // by a magic number.
             Expanded(
               child: Center(
-                child: Tooltip(
-                  message: playback.playing ? 'Pause' : 'Play',
-                  child: InkWell(
-                    onTap: playback.toggle,
-                    customBorder: const CircleBorder(),
-                    child: Container(
-                      width: 96,
-                      height: 96,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        playback.playing
-                            ? Icons.pause_rounded
-                            : Icons.play_arrow_rounded,
-                        size: 48,
-                        color: AppColors.iconInverse,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _SkipButton(
+                      seconds: -_skip.inSeconds,
+                      onPressed: () =>
+                          playback.seek(playback.elapsed.value - _skip),
+                    ),
+                    const SizedBox(width: AppSpacing.s6),
+                    Tooltip(
+                      message: playback.playing ? 'Pause' : 'Play',
+                      child: InkWell(
+                        onTap: playback.toggle,
+                        customBorder: const CircleBorder(),
+                        child: Container(
+                          width: 96,
+                          height: 96,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            playback.playing
+                                ? Icons.pause_rounded
+                                : Icons.play_arrow_rounded,
+                            size: 48,
+                            color: AppColors.iconInverse,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                    const SizedBox(width: AppSpacing.s6),
+                    _SkipButton(
+                      seconds: _skip.inSeconds,
+                      onPressed: () =>
+                          playback.seek(playback.elapsed.value + _skip),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -282,7 +417,11 @@ class _Hero extends StatelessWidget {
                   final duration = playback.length;
                   final progress = (elapsed.inMilliseconds / duration.inMilliseconds)
                       .clamp(0.0, 1.0);
-                  final cue = _cues[(progress * _cues.length).floor() % _cues.length];
+                  // Clamped rather than wrapped: `% length` is 0 at both
+                  // ends, so the session used to end by telling you to
+                  // breathe in.
+                  final cue = _cues[
+                      (progress * _cues.length).floor().clamp(0, _cues.length - 1)];
 
                   return Column(
                     children: [
@@ -290,49 +429,46 @@ class _Hero extends StatelessWidget {
                           textAlign: TextAlign.center,
                           style: AppTextStyles.playerCue),
                       const SizedBox(height: AppSpacing.s10),
-                      // The knob rides the fill, so the bar needs room for its
-                      // overhang at both ends: 14 either side, its own radius.
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        child: SizedBox(
-                          height: 28,
-                          child: LayoutBuilder(
-                            builder: (context, bar) => Stack(
-                              alignment: Alignment.centerLeft,
-                              clipBehavior: Clip.none,
-                              children: [
-                                Container(
-                                  height: 7,
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.4),
-                                    borderRadius:
-                                        BorderRadius.circular(AppRadius.full),
-                                  ),
-                                ),
-                                Container(
-                                  height: 7,
-                                  width: bar.maxWidth * progress,
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [Color(0xFFAE4B46), Color(0xFFFFC500)],
-                                    ),
-                                    borderRadius:
-                                        BorderRadius.circular(AppRadius.full),
-                                  ),
-                                ),
-                                Positioned(
-                                  left: bar.maxWidth * progress - 14,
-                                  child: Container(
-                                    width: 28,
-                                    height: 28,
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.surface,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                      // A real Slider, not three painted boxes.
+                      //
+                      // The boxes drew the shape of a control over a clock —
+                      // the knob's position was `elapsed / duration`, so it
+                      // moved when the audio moved and never the other way
+                      // round. This is the first thing a listener reaches for:
+                      // a session is a spoken thing, and missing a line means
+                      // wanting the last twenty seconds back. Drag, tap to
+                      // jump, and the value a screen reader announces all come
+                      // with the widget.
+                      //
+                      // The frame's look is kept in the theme: the 7px track
+                      // on black at 40%, the warm fill, the 28px white knob —
+                      // and the overlay is sized to the thumb so the track
+                      // insets by the frame's own 14 either side.
+                      SizedBox(
+                        height: 28,
+                        child: SliderTheme(
+                          data: SliderThemeData(
+                            trackHeight: 7,
+                            trackShape: const _ScrubberTrack(),
+                            thumbColor: AppColors.surface,
+                            thumbShape: const RoundSliderThumbShape(
+                                enabledThumbRadius: 14,
+                                elevation: 0,
+                                pressedElevation: 0),
+                            overlayShape:
+                                const RoundSliderOverlayShape(overlayRadius: 14),
+                            overlayColor: Colors.white.withValues(alpha: 0.12),
+                          ),
+                          child: Slider(
+                            value: elapsed.inMilliseconds
+                                .clamp(0, duration.inMilliseconds)
+                                .toDouble(),
+                            max: duration.inMilliseconds.toDouble(),
+                            onChanged: (value) => playback
+                                .seek(Duration(milliseconds: value.round())),
+                            semanticFormatterCallback: (value) =>
+                                '${_clock(Duration(milliseconds: value.round()))} '
+                                'of ${_clock(duration)}',
                           ),
                         ),
                       ),

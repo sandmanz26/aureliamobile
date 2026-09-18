@@ -24,7 +24,7 @@ import 'package:aurelia_mobile/main.dart';
 /// tests (the test HTTP client returns 400), which is the same path a blocked
 /// network takes on a device — so these tests also prove the fallback works.
 Future<void> _boot(WidgetTester tester,
-    {VoiceCapture? voiceCapture, SsoProvider? sso}) async {
+    {VoiceCapture? voiceCapture, SsoProvider? sso, AudioEngine? audioEngine}) async {
   // A tall phone-shaped surface: these screens are long scrolls, and the
   // default 800x600 test window leaves most of each one unbuilt.
   tester.view.physicalSize = const Size(420, 3200);
@@ -49,7 +49,7 @@ Future<void> _boot(WidgetTester tester,
   // playback — the bar moving, pausing holding it, a new track resetting it —
   // is still the behaviour the screens depend on.
   await tester.pumpWidget(AureliaApp(
-    audioEngine: SilentAudioEngine(),
+    audioEngine: audioEngine ?? SilentAudioEngine(),
     voiceCapture: voiceCapture ?? SilentVoiceCapture(),
     // No delay: the dummy's 900ms is there so a person sees the spinner, and
     // a test that waits it out is 900ms slower for nothing.
@@ -561,6 +561,78 @@ void main() {
       // carry Recreate and not Add.
       expect(find.text('Recreate'), findsWidgets);
       expect(find.text('Add'), findsNothing);
+    });
+
+    testWidgets('the bar can be dragged, and it moves the sound with it',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/play',
+          arguments: const PlayRequest(slug: 'dolphins-frequency'));
+      await tester.pumpAndSettle();
+
+      final slider = find.byType(Slider);
+      expect(slider, findsOneWidget);
+      expect(find.text('0:00'), findsOneWidget);
+
+      // Dragged to about three quarters. The bar used to be three painted
+      // boxes reading a clock — there was nothing here to drag at all.
+      final box = tester.getRect(slider);
+      await tester.tapAt(Offset(box.left + box.width * 0.75, box.center.dy));
+      await tester.pumpAndSettle();
+      expect(find.text('0:07'), findsOneWidget);
+
+      // And a drag carries it, which is the thing that was missing: the bar
+      // used to be three painted boxes reading a clock.
+      await tester.drag(slider, Offset(-box.width * 0.25, 0));
+      await tester.pumpAndSettle();
+      expect(find.text('0:02'), findsOneWidget);
+
+      // Forward 15 on a ten-second bed clamps rather than running off the end.
+      await tester.tap(find.byTooltip('Forward 15 seconds'));
+      await tester.pumpAndSettle();
+      expect(find.text('0:10'), findsWidgets);
+
+      await tester.tap(find.byTooltip('Back 15 seconds'));
+      await tester.pumpAndSettle();
+      expect(find.text('0:00'), findsOneWidget);
+    });
+
+    testWidgets('sound can be turned off without stopping the session',
+        (tester) async {
+      final engine = SilentAudioEngine();
+      await _boot(tester, audioEngine: engine);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      // Into the player from the cockpit, because popping has to land back on
+      // the card that carries the other half of this switch.
+      navigator.pushNamed('/chat');
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Play session'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Play'));
+      await tester.pump(const Duration(milliseconds: 600));
+
+      await tester.tap(find.byTooltip('Turn sound off'));
+      await tester.pumpAndSettle();
+      // Muting is not pausing: the switch reaches the engine and the session
+      // goes on running.
+      expect(engine.muted, isTrue);
+      expect(find.byTooltip('Pause'), findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(find.text('0:00'), findsNothing);
+
+      // The same switch, not a second one: the cockpit's card shows it off.
+      navigator.pop();
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Turn sound on'), findsOneWidget);
+      await tester.tap(find.byTooltip('Turn sound on'));
+      await tester.pumpAndSettle();
+      expect(engine.muted, isFalse);
     });
   });
 

@@ -83,6 +83,17 @@ class PlaybackController extends ChangeNotifier {
   Track? get track => _track;
   bool get playing => _playing;
 
+  /// Whether the bed is silenced. A preference, not a property of the track —
+  /// which is why it survives [load] and [stop] and is applied to whatever is
+  /// on the deck next.
+  ///
+  /// **It does not survive a relaunch, and the web's does.** There the switch
+  /// is one localStorage line; here the only key-value store is a fourth
+  /// native plugin, and the rule this app is built on (see CLAUDE.md) is that
+  /// a plugin has to earn its place. Remembering a mute does not, yet.
+  bool get muted => _muted;
+  bool _muted = false;
+
   /// Put a session on the deck without starting it.
   ///
   /// Re-loading the session already there would restart it, and returning to
@@ -90,6 +101,10 @@ class PlaybackController extends ChangeNotifier {
   void load(Track next) {
     if (_track?.slug == next.slug) return;
     _track = next;
+    // Paused on the engine, not only in the field: `setAsset` on a playing
+    // player goes on playing, so a screen that said Play while the previous
+    // session was still audible is exactly what this stops.
+    if (_playing) unawaited(_engine.pause());
     _playing = false;
     elapsed.value = Duration.zero;
     notifyListeners();
@@ -112,6 +127,32 @@ class PlaybackController extends ChangeNotifier {
     _playing ? _pause() : _play();
   }
 
+  /// Move the playhead.
+  ///
+  /// Clamped here rather than at every call site, so a skip button can hand it
+  /// `elapsed + 15s` past the end without checking. The notifier is set as
+  /// well as the engine: paused, nothing is reading the clock, so the bar
+  /// would not move until the next play.
+  void seek(Duration to) {
+    if (_track == null) return;
+    final target = to < Duration.zero
+        ? Duration.zero
+        : (to > length ? length : to);
+    elapsed.value = target;
+    unawaited(_engine.seek(target));
+  }
+
+  /// Silence, without stopping the session.
+  ///
+  /// Muting is not pausing and the difference is the point: you open a session
+  /// in a room where you cannot make noise and still want the clock, the cues
+  /// and the art.
+  void toggleMuted() {
+    _muted = !_muted;
+    notifyListeners();
+    unawaited(_engine.setMuted(_muted));
+  }
+
   void stop() {
     _playing = false;
     _track = null;
@@ -123,6 +164,9 @@ class PlaybackController extends ChangeNotifier {
   void _play() {
     _playing = true;
     notifyListeners();
+    // Re-applied on every play: the engine is reloaded whenever a new session
+    // goes on the deck, and a fresh source comes back at full volume.
+    unawaited(_engine.setMuted(_muted));
     unawaited(_engine.play());
   }
 
