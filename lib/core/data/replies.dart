@@ -1,0 +1,260 @@
+/// What Aurelia says back.
+///
+/// Every message used to get the same sentence — "Got it — I've noted that for
+/// the next revision of your session." — whether you asked for a female voice,
+/// said you could not sleep, or typed nothing but "hello". One reply for every
+/// input is the thing that makes a demo feel like a demo: the screen is
+/// clearly not reading you, so you stop writing anything real into it.
+///
+/// This is still mock. There is no model behind it and it does not understand
+/// anything: it matches keywords, in order, and returns a written line. What
+/// it buys is that the conversation survives being poked at, which is the
+/// whole point of a demo somebody else is going to drive.
+///
+/// **Order matters.** The first rule that matches wins, so the specific ones
+/// come before the general ones — "make it shorter" must not be caught by the
+/// rule that answers "make it".
+///
+/// **Both apostrophes, everywhere one appears.** A phone keyboard types the
+/// curly one by default, so a rule that only knows `don't` does not fire for
+/// most of the people using this client.
+library;
+
+class Reply {
+  const Reply(this.text, {this.proposes = false, this.changes = false, this.prompts});
+
+  /// What Aurelia says.
+  final String text;
+
+  /// Whether this reply hands over the recommendation deck. Only the ones that
+  /// are actually a proposal do; an answer to "how did I sleep" is not.
+  final bool proposes;
+
+  /// Whether Aurelia is agreeing to change the session itself.
+  ///
+  /// These are the ones that have to produce a new cut. Saying "adding white
+  /// noise underneath" over a card that still reads *Ready to play* on the
+  /// version from before is the app claiming to have done something it did not
+  /// do — and the thread is the only record of the request, so there was
+  /// nothing to go back to either.
+  final bool changes;
+
+  /// Questions offered instead of an answer.
+  ///
+  /// For the one case where the user has told us they have nothing to say. A
+  /// blank "noted" there is the worst possible reply: it accepts an answer
+  /// that was not one and moves on, leaving them exactly as stuck. Handing
+  /// back smaller questions is the only useful move — and they are tappable,
+  /// so being stuck costs a tap rather than a sentence.
+  final List<String>? prompts;
+}
+
+class _Rule {
+  const _Rule(this.id, this.test, this.reply);
+
+  final String id;
+
+  /// Matched against the message, lower-cased.
+  final RegExp test;
+  final Reply reply;
+}
+
+final _rules = <_Rule>[
+  // ------------------------------------------------------------ no answer --
+  // First, deliberately. "I don't know" contains words other rules would
+  // happily match, and a bare "?" would fall through to the fallback, which
+  // answers a question that was never asked.
+  _Rule(
+    'dont-know',
+    // `?` is anchored — "what should I do?" is a question, not a shrug. The
+    // rest are not, so "idk what to change" still lands here.
+    RegExp(r"^\?+$|^\s*(idk|dunno|no idea|not sure)\b|i\s*(don['’]?t|do not)\s*know"),
+    const Reply(
+      'It’s alright. Here are few suggestions to help you understand better:',
+      prompts: [
+        'What did you like most about the meditation?',
+        'Would you prefer a longer or shorter meditation next time?',
+        'What kind of sounds help you relax before bed?',
+        'How do you usually wind down before going to sleep?',
+        'Is there anything that makes it harder for you to fall asleep?',
+      ],
+    ),
+  ),
+
+  // --------------------------------------------------------------- length --
+  _Rule(
+    'shorter',
+    RegExp(r'\b(shorter|less time|too long|cut it down|quicker|brief)\b'),
+    const Reply(
+      'Shorter it is. I will take it down and lose the middle chapter rather than speeding anything up — a rushed session is worse than a short one.',
+      changes: true,
+    ),
+  ),
+  _Rule(
+    'longer',
+    RegExp(r'\b(longer|extend|more time|too short|stretch)\b'),
+    const Reply(
+      'I can stretch it. Most of the added time goes into the middle, where nothing is asked of you — that is the part people actually want more of.',
+      changes: true,
+    ),
+  ),
+  _Rule(
+    'duration',
+    RegExp(r'\b(\d{1,3})\s?(min|mins|minute|minutes|hour|hours|h)\b'),
+    const Reply(
+      'Noted — I will build it to that length and keep the chapters in proportion rather than padding the end.',
+      changes: true,
+    ),
+  ),
+
+  // ---------------------------------------------------------------- voice --
+  _Rule(
+    'no-voice',
+    RegExp(r"\b(no voice|without voice|no guidance|no words|instrumental|don['’]?t speak|no talking)\b"),
+    const Reply(
+      'No voice, then. The breath pacing carries it instead — it is slower to settle into, but nobody ever gets pulled out of it by a word they did not expect.',
+      changes: true,
+    ),
+  ),
+  _Rule(
+    'female-voice',
+    RegExp(r'\b(female|woman|she)\b.*\bvoice\b|\bvoice\b.*\b(female|woman)\b|\bfemale voice\b'),
+    const Reply(
+      'A female voice, unhurried. I will keep the cue count low — nine or so across the whole thing, which is what the sessions people finish tend to have.',
+      changes: true,
+    ),
+  ),
+  _Rule(
+    'male-voice',
+    RegExp(r'\b(male|man)\b.*\bvoice\b|\bvoice\b.*\b(male|man)\b|\bmale voice\b'),
+    const Reply(
+      'A male voice it is — low and slow, and I will pull it further back in the mix than the female cut, because it sits heavier against a quiet bed.',
+      changes: true,
+    ),
+  ),
+
+  // --------------------------------------------------------------- layers --
+  _Rule(
+    'white-noise',
+    RegExp(r'\b(white noise|static|hiss|fan)\b'),
+    const Reply(
+      'Adding white noise underneath. I will keep it below the bed so it masks the room without becoming the thing you are listening to.',
+      changes: true,
+    ),
+  ),
+  _Rule(
+    'rain',
+    RegExp(r'\b(rain|storm|thunder|drizzle)\b'),
+    const Reply(
+      'Rain going in. Steady rather than heavy — the recordings with thunder in them wake people at the wrong moment.',
+      changes: true,
+    ),
+  ),
+  _Rule(
+    'ocean',
+    RegExp(r'\b(ocean|sea|waves|tide|water)\b'),
+    const Reply(
+      'An ocean bed, breathing at about six cycles a minute. That is slow enough that your own breath tends to follow it without being told to.',
+      changes: true,
+    ),
+  ),
+  _Rule(
+    'louder',
+    RegExp(r'\b(louder|turn it up|raise|more volume)\b'),
+    const Reply(
+      'I will bring that layer up. Everything else stays where it is, so the balance you already liked does not move with it.',
+      changes: true,
+    ),
+  ),
+  _Rule(
+    'quieter',
+    RegExp(r'\b(quieter|softer|turn it down|lower|too loud)\b'),
+    const Reply(
+      'Bringing it down. If it ends up too far back I would rather remove the layer than leave it just audible — half-there is the worst setting.',
+      changes: true,
+    ),
+  ),
+
+  // -------------------------------------------------------------- the ask --
+  _Rule(
+    'cannot-sleep',
+    RegExp(r"\b(can['’]?t sleep|cannot sleep|insomnia|awake|wake up|restless|tossing)\b"),
+    const Reply(
+      'That is the pattern I would build against. Something that descends slowly and ends without a chime, so nothing at the end gives you a reason to check the time.',
+      proposes: true,
+    ),
+  ),
+  _Rule(
+    'stress',
+    RegExp(r'\b(stress|stressed|anxious|anxiety|tense|wound up|overwhelmed|panic)\b'),
+    const Reply(
+      'Then the useful hour is the one right after it, while the body is still braced for something that is no longer coming. I will build for that rather than for bedtime.',
+      proposes: true,
+    ),
+  ),
+  _Rule(
+    'tired',
+    RegExp(r'\b(tired|exhausted|drained|worn out|no energy)\b'),
+    const Reply(
+      'Worn out rather than wound up, then — those want different things. This one should let you put the day down without ending it, so it brightens at the close instead of fading.',
+      proposes: true,
+    ),
+  ),
+  _Rule(
+    'focus',
+    RegExp(r'\b(focus|concentrate|work|study|deadline|distracted)\b'),
+    const Reply(
+      'For focus the rule is that it has to be uninteresting. No melody you could follow, nothing that changes on a timescale you would notice.',
+      proposes: true,
+    ),
+  ),
+  _Rule(
+    'morning',
+    RegExp(r'\b(morning|wake|start the day|get going)\b'),
+    const Reply(
+      'A climb rather than a jolt. The fast ones wake you up and then drop you an hour later, which is the complaint people come back with.',
+      proposes: true,
+    ),
+  ),
+
+  // ------------------------------------------------------------- the data --
+  _Rule(
+    'how-did-i-sleep',
+    RegExp(r'\b(how did i sleep|my sleep|sleep score|slept)\b'),
+    const Reply(
+      'Six hours forty last night, which is about your week. The light sleep is sitting high — that is usually what a late finish looks like rather than anything to worry about.',
+    ),
+  ),
+  _Rule(
+    'greeting',
+    RegExp(r'^\s*(hi|hey|hello|good morning|good evening|morning|yo)\b'),
+    const Reply(
+      'Morning, Adam. Tell me what kind of session you want and I will put one together — or say how you are feeling and I will pick the kind.',
+    ),
+  ),
+  _Rule(
+    'thanks',
+    RegExp(r'\b(thanks|thank you|nice|great|perfect|love it)\b'),
+    const Reply(
+      'Good. I will keep this one as the baseline, so the next version is measured against it rather than starting over.',
+    ),
+  ),
+];
+
+/// The reply when nothing matched.
+///
+/// It says what it actually did — took the note — rather than pretending to
+/// have understood, because a confident non-answer is worse than a plain one.
+const kFallbackReply =
+    Reply('Got it — I’ve noted that for the next revision of your session.');
+
+Reply replyTo(String message) {
+  final text = message.toLowerCase();
+  for (final rule in _rules) {
+    if (rule.test.hasMatch(text)) return rule.reply;
+  }
+  return kFallbackReply;
+}
+
+/// Exposed so a test can enumerate what the demo can answer.
+List<String> get kReplyRuleIds => _rules.map((rule) => rule.id).toList();

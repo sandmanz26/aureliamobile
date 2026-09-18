@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/data/recommendations.dart';
+import '../../core/data/replies.dart';
 import '../../core/data/sessions.dart';
 
 /// Delivery state, as a messaging app shows it: one tick sent, two ticks read.
@@ -19,6 +20,7 @@ class ChatMessage {
     this.voiceDuration,
     this.voicePath,
     this.attachedSlug,
+    this.prompts,
     this.status,
   });
 
@@ -34,6 +36,10 @@ class ChatMessage {
   /// file — a simulator with no mic, or the silent capture the tests use — in
   /// which case the bubble draws and scrubs but stays quiet.
   final String? voicePath;
+
+  /// Questions offered under this message, each one tappable — for the case
+  /// where the user has said they have nothing to say. See [Reply.prompts].
+  final List<String>? prompts;
 
   /// A session shown under this message. Set by a Recreate hand-off, which
   /// used to arrive as a sentence — it named the session but did not show it,
@@ -367,7 +373,21 @@ class ChatSessionController extends ChangeNotifier {
     });
     _after(const Duration(milliseconds: 2400), () {
       _typing = false;
-      _say('Got it — I’ve noted that for the next revision of your session.');
+      // Aurelia answers what was said. Every message used to get the same
+      // sentence, whatever it was — which is the thing that makes a demo feel
+      // like one: the screen is clearly not reading you, so you stop writing
+      // anything real into it.
+      final reply = replyTo(text);
+      // The deck comes over once, with the first reply that is a proposal —
+      // and never under a set of questions, which are the alternative to
+      // handing anything over.
+      final hands = reply.prompts == null && reply.proposes && canApply;
+      _say(
+        hands ? '${reply.text}\n\nHere is what I would put in it:' : reply.text,
+        prompts: reply.prompts,
+      );
+      if (hands) _deckOpen = true;
+      notifyListeners();
     });
   }
 
@@ -419,12 +439,13 @@ class ChatSessionController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _say(String text) {
+  void _say(String text, {List<String>? prompts}) {
     messages.add(ChatMessage(
       id: _nextId++,
       fromAurelia: true,
       at: DateTime.now(),
       text: text,
+      prompts: prompts,
     ));
     notifyListeners();
   }

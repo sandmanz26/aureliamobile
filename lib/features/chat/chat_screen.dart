@@ -437,6 +437,25 @@ class _ChatScreenState extends State<ChatScreen> {
                   if (startsRun) Text('Aurelia', style: AppTextStyles.caption),
                   Text(message.text,
                       style: AppTextStyles.bodySm.copyWith(color: AppColors.textPrimary)),
+                  // Questions handed back instead of an answer, each one a
+                  // tap. Being stuck should cost a tap rather than a sentence.
+                  if (message.prompts != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.s2),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (final prompt in message.prompts!)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: AppSpacing.s2),
+                              child: _PromptCard(
+                                prompt: prompt,
+                                onTap: () => chat.send(text: prompt),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                   if (endsRun)
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
@@ -877,6 +896,39 @@ class _SessionProgressCard extends StatelessWidget {
             Text('$progress%', style: AppTextStyles.caption),
           const Icon(Icons.chevron_right, size: 19, color: AppColors.iconDefault),
         ],
+      ),
+    );
+  }
+}
+
+/// One of the questions Aurelia offers when you say you do not know.
+///
+/// Full width and stacked rather than a chip row: they are sentences, and a
+/// horizontal scroller would hide the ones you have not read.
+class _PromptCard extends StatelessWidget {
+  const _PromptCard({required this.prompt, required this.onTap});
+
+  final String prompt;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: AppPadding.md, vertical: 14),
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.borderSubtle),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(prompt,
+              style: const TextStyle(
+                  fontSize: 14, height: 20 / 14, color: AppColors.textPrimary)),
+        ),
       ),
     );
   }

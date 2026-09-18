@@ -12,6 +12,7 @@ import 'package:aurelia_mobile/core/audio/voice_capture.dart';
 import 'package:aurelia_mobile/core/auth/auth_scope.dart';
 import 'package:aurelia_mobile/core/auth/sso.dart';
 import 'package:aurelia_mobile/core/data/progress.dart' show ProgressTab;
+import 'package:aurelia_mobile/core/data/replies.dart';
 import 'package:aurelia_mobile/features/chat/chat_session_controller.dart' show ChatArgs;
 import 'package:aurelia_mobile/features/chat/widgets/mini_player.dart';
 import 'package:aurelia_mobile/features/chat/widgets/recommendation_deck.dart';
@@ -258,6 +259,53 @@ void main() {
   });
 
   group('Chat', () {
+    test('Aurelia answers what was said, not one sentence for everything', () {
+      // The specific rules come before the general ones, and this is the case
+      // that proves the order: "shorter" must not be caught by anything above
+      // it, and "?" must not fall through to a fallback that answers a
+      // question nobody asked.
+      expect(replyTo('make it shorter').changes, isTrue);
+      expect(replyTo('I can’t sleep').proposes, isTrue);
+      expect(replyTo('a female voice please').text, contains('female voice'));
+      expect(replyTo('how did I sleep?').text, contains('Six hours forty'));
+      // Nothing matched is still an honest answer rather than a confident
+      // non-answer.
+      expect(replyTo('xyzzy'), same(kFallbackReply));
+
+      // The shrug, three ways, and one near-miss that must not land here.
+      for (final said in ['idk', "I don't know.", '?', 'idk what to change']) {
+        expect(replyTo(said).prompts, hasLength(5), reason: said);
+      }
+      expect(replyTo('make it shorter?').prompts, isNull);
+    });
+
+    testWidgets('"I don’t know" gets questions back, and they are tappable',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/chat');
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).last, 'idk');
+      await tester.testTextInput.receiveAction(TextInputAction.send);
+      await tester.pump(const Duration(milliseconds: 2500));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Here are few suggestions'), findsOneWidget);
+      expect(find.text('What did you like most about the meditation?'),
+          findsOneWidget);
+
+      // Tapping one sends it, which is the point: being stuck costs a tap
+      // rather than a sentence.
+      await tester.tap(find.text('What kind of sounds help you relax before bed?'));
+      await tester.pump(const Duration(milliseconds: 2500));
+      await tester.pumpAndSettle();
+      expect(find.text('What kind of sounds help you relax before bed?'),
+          findsWidgets);
+    });
+
     testWidgets('voice produces a reviewable transcript, then a real message',
         (tester) async {
       await _boot(tester);

@@ -23,7 +23,7 @@ that goes wrong. `git checkout mobile_app`.
 ```bash
 flutter pub get     # after any pubspec change — the fonts live there now
 flutter analyze     # must come back "No issues found!"
-flutter test        # 52 tests, ~25s
+flutter test        # 54 tests, ~25s
 flutter run         # onto whatever single device is attached
 ```
 
