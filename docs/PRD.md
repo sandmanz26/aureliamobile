@@ -458,6 +458,16 @@ rather than a set of published slugs: pulling a session that *shipped*
 published means recording `false` over the catalogue, which a set cannot
 express.
 
+**And it reports itself.** Taking something down was quiet — a menu closing and
+a button changing label, which is easy to miss and easier to doubt. It now ends
+on the same bottom sheet publishing uses, in a third state.
+
+The three states do not share a colour. Publishing is the brand ring, success
+is green, and unpublishing is the neutral surface: it is a reversal, not a
+failure, and a warning colour would make the user feel caught out for using a
+control the app offered them. The copy carries the part that actually matters —
+that nothing was lost and it can go back up whenever they like.
+
 `publishedVersionId` is the cut that is live. Compared against
 `currentVersionId` — which `addVersion` moves on every build — it settles all
 three without a catalogue lookup, and that matters: a brand-new session stands

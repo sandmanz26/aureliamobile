@@ -141,7 +141,7 @@ export function ChatPage() {
   // Arriving from Home's mic opens the recorder straight away, so the tap that
   // said "talk to Aurelia" lands on a live mic rather than an idle composer.
   const [listening, setListening] = useState(() => routeState?.startVoice === true)
-  const [publishState, setPublishState] = useState<'publishing' | 'published' | null>(null)
+  const [publishState, setPublishState] = useState<'publishing' | 'published' | 'unpublished' | null>(null)
   const [addOpen, setAddOpen] = useState(false)
   const [addPicks, setAddPicks] = useState<string[]>([])
 
@@ -566,6 +566,11 @@ export function ChatPage() {
                 const slug = sessionSlug ?? draft.slug
                 if (slug) unpublishSession(slug)
                 markUnpublished()
+                // Taking something down is quiet — the menu closes and a
+                // button changes label, which is easy to miss and easy to
+                // doubt. The sheet says what happened and, more usefully,
+                // that nothing was lost.
+                setPublishState('unpublished')
               }
         }
         onPublish={() => isEnabled('chat.publish') && setPublishState('publishing')}
@@ -789,6 +794,7 @@ export function ChatPage() {
         <PublishSheet
           state={publishState}
           onCancel={() => setPublishState(null)}
+          onDone={() => setPublishState(null)}
           onView={() => {
             // "ready to view" means the session, not the shelf it will appear
             // on. Landing on Home makes the user go and find what they just
