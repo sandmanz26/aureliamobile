@@ -3,6 +3,7 @@ import { Fragment, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { AddSheet } from '../components/chat/AddSheet'
 import { ChatComposer } from '../components/chat/ChatComposer'
+import { FreeLimitNotice } from '../components/chat/FreeLimitNotice'
 import { EmptyThread, EmptyThreadPrompts } from '../components/chat/EmptyThread'
 import { ChatHeader } from '../components/chat/ChatHeader'
 import { MiniPlayer } from '../components/chat/MiniPlayer'
@@ -28,6 +29,16 @@ const SUGGESTIONS = ['Add more white noise', 'Make it longer', 'Female voice']
 
 /** Openers for a session with nothing in it yet — the hardest part of a blank
  *  chat is the first sentence, so the screen offers a few. */
+/** Sends the free plan allows in one thread before it pauses. */
+const FREE_SENDS = 3
+/** How long until the allowance comes back. */
+const FREE_RESET_MINUTES = 30
+
+/** "9:55 PM" — the card names a clock time, not a countdown. */
+function formatResetTime(at: Date) {
+  return at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+}
+
 const OPENERS = [
   'Good morning, how did I sleep?',
   'Create a meditation for tonight',
@@ -123,6 +134,18 @@ export function ChatPage() {
   const { track, playing } = useAudioPlayer()
   // The session Insights should open: this thread's if it has one, otherwise
   // the one the draft stands in for — the same fallback `playTo` uses.
+  /**
+   * The free plan's allowance, spent after three sends in a thread.
+   *
+   * Counted from the transcript rather than kept as a flag, so it survives
+   * leaving the screen and coming back the same way the thread does, and so
+   * reverting or starting over cannot leave a counter stranded.
+   *
+   * Messages a door writes on your behalf — a Recreate brief, a Quick Start —
+   * are not sends. You did not spend anything to arrive somewhere.
+   */
+  const sends = messages.filter((message) => message.from === 'user' && !message.attachment).length
+  const limited = isEnabled('chat.freeLimit') && sends >= FREE_SENDS
   const insightsSlug = findSession(sessionSlug ?? draft.slug)?.slug
   /**
    * Publish / Republish / nothing.
@@ -142,6 +165,9 @@ export function ChatPage() {
   // said "talk to Aurelia" lands on a live mic rather than an idle composer.
   const [listening, setListening] = useState(() => routeState?.startVoice === true)
   const [publishState, setPublishState] = useState<'publishing' | 'published' | 'unpublished' | null>(null)
+  // Stamped when the limit trips rather than derived on every render, or the
+  // card would quietly promise a later time each time React re-rendered it.
+  const [resetAt, setResetAt] = useState<string | null>(null)
   const [addOpen, setAddOpen] = useState(false)
   const [addPicks, setAddPicks] = useState<string[]>([])
 
@@ -228,6 +254,14 @@ export function ChatPage() {
     // After reset, which puts the draft back to the default.
     setDraft({ title: draftTitleFor(card), slug: card.plays })
   }, [location.key, routeState?.start, reset, setDraft])
+
+  useEffect(() => {
+    if (!limited) {
+      setResetAt(null)
+      return
+    }
+    setResetAt((current) => current ?? formatResetTime(new Date(Date.now() + FREE_RESET_MINUTES * 60_000)))
+  }, [limited])
 
   /**
    * "Publish Now", pressed on the empty Social Impact tab.
@@ -729,7 +763,10 @@ export function ChatPage() {
       ) : (
         <div className="flex flex-col gap-8 pb-8 pt-8">
           <div className="flex gap-8 overflow-x-auto px-20 pb-4">
-            {!empty && applied.length > 0 && showRecommendations && canApply && (
+            {/* Not while paused: applying changes starts a build, which is the
+                one thing the limit exists to stop. Leaving it live would make
+                the notice a suggestion rather than a limit. */}
+            {!empty && !limited && applied.length > 0 && showRecommendations && canApply && (
               <button
                 type="button"
                 onClick={() => applyChanges()}
@@ -740,8 +777,9 @@ export function ChatPage() {
                 {sessionState === 'updating' ? 'Updating..' : `Apply new changes (${applied.length})`}
               </button>
             )}
-            {empty && <EmptyThreadPrompts prompts={OPENERS} onPrompt={sendMessage} />}
+            {empty && !limited && <EmptyThreadPrompts prompts={OPENERS} onPrompt={sendMessage} />}
             {!empty &&
+              !limited &&
               SUGGESTIONS.map((suggestion) => (
                 <button
                   key={suggestion}
@@ -754,6 +792,18 @@ export function ChatPage() {
                 </button>
               ))}
           </div>
+
+          {limited && resetAt && (
+            <div className="px-20">
+              <div className="mx-auto max-w-[402px] lg:max-w-[720px]">
+                <FreeLimitNotice
+                  resetAt={resetAt}
+                  onNewSession={() => navigate('/chat', { state: { fresh: true } })}
+                  onUpgrade={() => navigate('/upgrade')}
+                />
+              </div>
+            </div>
+          )}
 
           {/* The accuracy caveat, as the frame has it. It belongs on a wellness
               product more than most: Aurelia talks about sleep and stress in
@@ -772,7 +822,7 @@ export function ChatPage() {
                 onVoice={() => isEnabled('chat.voice') && setListening(true)}
                 onAdd={() => setAddOpen(true)}
                 canVoice={isEnabled('chat.voice')}
-                disabled={typing}
+                disabled={typing || limited}
               />
             </div>
           </div>

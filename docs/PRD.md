@@ -568,6 +568,39 @@ The order the design implies is now the order the app walks:
 | Before | the empty state, ending in Publish Now | Not Published |
 | After | earnings, Community, Lineage Tree | Published |
 
+### The free limit, and what it is allowed to stop
+
+Three sends in a thread and the cockpit pauses. The frame gives that a notice
+above the composer and a dead composer under it, with two ways out.
+
+**Counted from the transcript, not kept as a flag.** `messages.filter(from ===
+'user')` survives leaving the screen and coming back the same way the thread
+does, and no counter can be left stranded by a revert or a reset. Messages a
+door writes on your behalf — a Recreate brief, a Quick Start — carry an
+attachment and are not counted: you did not spend anything to arrive somewhere.
+
+**The reset time is stamped once**, when the limit trips, rather than derived
+on render — otherwise the card would quietly promise a later time on every
+re-render, which is the sort of thing nobody notices and everybody distrusts.
+
+**Two ways out, and the order is the argument.** New Session is first and solid
+because it costs nothing and is what most people want; Upgrade is second and
+outlined, because the screen is already interrupting them and a filled paywall
+button on top of an interruption reads as a toll gate.
+
+**What the pause actually stops.** The composer and its send, the openers, the
+suggestions — and *Apply new changes*, which is the one that matters: it starts
+a build, which is exactly what the limit exists to prevent. Left live, the
+notice would have been a suggestion rather than a limit.
+
+`/upgrade` is a route, not a sheet: it is the only thing being asked, and a
+sheet would keep the stopped composer in view behind it. Monthly and Annual are
+one segmented control rather than two buttons, because they are one choice with
+two positions.
+
+Behind `chat.freeLimit`, which resolves like the other dotted sub-flags —
+defaulted on, gated by the `chat` module, switchable from `/__demo`.
+
 ### A new session opens empty
 
 `16658:28872`. New session opened on the **demo conversation** — the one about

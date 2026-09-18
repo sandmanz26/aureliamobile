@@ -46,6 +46,7 @@ import { SignInPage } from './pages/auth/SignInPage'
 import { SignUpPage } from './pages/auth/SignUpPage'
 import { InvitePage } from './pages/InvitePage'
 import { CreditsPage } from './pages/CreditsPage'
+import { UpgradePage } from './pages/UpgradePage'
 
 export default function App() {
   return (
@@ -332,6 +333,19 @@ export default function App() {
                 Figma "Profile/Credits" (16658:29260) — and the design says so
                 too: the coin pill in the Settings header transitions to this
                 frame. */}
+            {/* The paywall the cockpit's free limit offers. Its own route
+                rather than a sheet: it is the only thing being asked, and a
+                sheet would keep the stopped composer in view behind it. */}
+            <Route
+              path="/upgrade"
+              element={
+                <RequireAuth>
+                  <ModuleGuard module="chat">
+                    <UpgradePage />
+                  </ModuleGuard>
+                </RequireAuth>
+              }
+            />
             <Route
               path="/credits"
               element={
