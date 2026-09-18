@@ -115,6 +115,7 @@ export function ChatPage() {
     sessionSlug, openSession,
     draft, setDraft,
     addVersion, pointAt,
+    currentVersionId, publishedVersionId, markPublished,
     nextMessageId,
     reset,
   } = useChatSession()
@@ -123,6 +124,20 @@ export function ChatPage() {
   // The session Insights should open: this thread's if it has one, otherwise
   // the one the draft stands in for — the same fallback `playTo` uses.
   const insightsSlug = findSession(sessionSlug ?? draft.slug)?.slug
+  /**
+   * Publish / Republish / nothing.
+   *
+   * Entirely this thread's own question, which is why it is not a catalogue
+   * lookup: a brand-new session stands in for a published catalogue session
+   * while it is being built, and asking the catalogue would hide Publish on
+   * the one session that most needs it.
+   */
+  const publishLabel: 'Publish' | 'Republish' | null =
+    publishedVersionId === null
+      ? 'Publish'
+      : publishedVersionId === currentVersionId
+        ? null
+        : 'Republish'
   // Arriving from Home's mic opens the recorder straight away, so the tap that
   // said "talk to Aurelia" lands on a live mic rather than an idle composer.
   const [listening, setListening] = useState(() => routeState?.startVoice === true)
@@ -380,9 +395,12 @@ export function ChatPage() {
       // stop calling the session a draft.
       const slug = sessionSlug ?? draft.slug
       if (slug) publishSession(slug)
+      // What is live is now what is current, so the button goes quiet until
+      // the next build moves the thread on.
+      markPublished()
     }, 2200)
     return () => window.clearTimeout(timer)
-  }, [publishState, sessionSlug, draft.slug])
+  }, [publishState, sessionSlug, draft.slug, markPublished])
 
   function toggleRecommendation(id: string) {
     setApplied((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]))
@@ -537,6 +555,7 @@ export function ChatPage() {
            one that is plainly unavailable. */
         onInsights={insightsSlug ? () => navigate(`/progress/${insightsSlug}`) : undefined}
         onMenu={openDrawer}
+        publishLabel={publishLabel}
         onPublish={() => isEnabled('chat.publish') && setPublishState('publishing')}
         canPublish={isEnabled('chat.publish')}
         onSettings={isEnabled('sessionSettings') ? () => navigate('/session-settings') : undefined}

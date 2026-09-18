@@ -7,6 +7,14 @@ interface ChatHeaderProps {
   points: string
   onMenu: () => void
   onPublish: () => void
+  /**
+   * What the button should say, or null to leave it out.
+   *
+   * A session that is already out in the world with nothing changed since has
+   * nothing to publish, and offering it anyway makes the one control here that
+   * changes the world a no-op.
+   */
+  publishLabel?: 'Publish' | 'Republish' | null
   /** Publish is switched off in the /__demo console. */
   canPublish?: boolean
   /** A session with nothing in it has nothing to play, so the button goes. */
@@ -33,6 +41,7 @@ export function ChatHeader({
   points,
   onMenu,
   onPublish,
+  publishLabel = 'Publish',
   canPublish = true,
   canPlay = true,
   playTo = '/play/dolphins-frequency',
@@ -127,7 +136,7 @@ export function ChatHeader({
 
               {/* Publish is the one thing here that changes the world, so it is
                   the button and not a third row of the list. */}
-              {canPublish && (
+              {canPublish && publishLabel && (
                 <button
                   type="button"
                   onClick={() => {
@@ -138,7 +147,7 @@ export function ChatHeader({
                   style={{ background: 'linear-gradient(120deg, #1F5F86, #2E8BA8)' }}
                 >
                   <Send size={17} />
-                  Publish
+                  {publishLabel}
                 </button>
               )}
             </div>

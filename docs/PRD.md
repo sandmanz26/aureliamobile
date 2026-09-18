@@ -429,6 +429,35 @@ still shows Latest. The app gates that on being signed in, which is the right
 call — there is no history to show someone who has none — so the frame is the
 one that is wrong there.
 
+### Publish, Republish, or nothing
+
+The cockpit's menu offered **Publish** on every session, including one already
+out in the world with nothing changed since. That makes the one control here
+that changes the world a no-op — and it is the loudest thing in the menu.
+
+Three states, and the thread answers for itself:
+
+| Thread | Button |
+| --- | --- |
+| never published | **Publish** |
+| published, nothing built since | *nothing* |
+| published, and moved on since | **Republish** |
+
+`publishedVersionId` is the cut that is live. Compared against
+`currentVersionId` — which `addVersion` moves on every build — it settles all
+three without a catalogue lookup, and that matters: a brand-new session stands
+in for a published catalogue session while it is being built, so asking the
+catalogue would hide Publish on the one session that most needs it.
+
+It is seeded per thread. `openSession` gives a published session its live cut
+(`v0`, the baseline it sets), so Publish stays hidden until something is built;
+a draft gets null, so it offers Publish. `reset()` gives a new thread null.
+Finishing the sheet sets it to the current cut, which is what takes the button
+away again.
+
+Driven in the browser through the whole cycle: new session offers Publish,
+falls silent once published, and offers Republish after the next build.
+
 ### The cockpit header announced the wrong session
 
 Recreating "Soft Reset" left the sticky card at the top of the thread reading

@@ -5,7 +5,7 @@ import orbIncreaseYellow from '../assets/orb-increase-yellow.png'
 import orbLessMovement from '../assets/orb-less-movement.png'
 import type { Recommendation } from '../components/chat/RecommendationCard'
 import type { SessionRecord } from '../lib/sessions'
-import { totalMinutes } from '../lib/sessions'
+import { isPublished, totalMinutes } from '../lib/sessions'
 import { useAudioPlayer } from '../audio/AudioPlayerContext'
 
 /** Delivery state, as a messaging app shows it: one tick sent, two ticks read. */
@@ -240,6 +240,16 @@ interface ChatSessionValue {
   /** Start a new cut. Called when a build starts rather than when it finishes,
    *  so the history can show the one being made. */
   addVersion: (change: string) => void
+  /**
+   * The cut that is live, or null if this thread has never published.
+   *
+   * Compared against `currentVersionId` it answers the only question the
+   * Publish control needs: nothing published yet, published and unchanged, or
+   * published and moved on since.
+   */
+  publishedVersionId: string | null
+  /** Called when the publish sheet finishes: what is live is what is current. */
+  markPublished: () => void
   /** Point the draft back at an earlier cut of this thread's own making. */
   revertTo: (id: string) => void
   /**
@@ -292,6 +302,9 @@ function demoBaseline(): DraftVersion {
 export function ChatSessionProvider({ children }: { children: ReactNode }) {
   const { stop } = useAudioPlayer()
   const [messages, setMessages] = useState<Message[]>(OPENING_MESSAGES)
+  // What is live. Seeded per thread: a catalogue session that is already out
+  // in the world opens on the cut people can hear, a draft on nothing.
+  const [publishedVersionId, setPublishedVersionId] = useState<string | null>(null)
   const [applied, setApplied] = useState<string[]>(RECOMMENDATIONS.map((item) => item.id))
   const [sessionState, setSessionState] = useState<SessionState>('idle')
   const [progress, setProgress] = useState(0)
@@ -326,6 +339,10 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
     [versions, draft],
   )
 
+  const markPublished = useCallback(() => {
+    setPublishedVersionId((current) => currentVersionId ?? current)
+  }, [currentVersionId])
+
   const pointAt = useCallback((cut: { id: string; label: string; slug: string }) => {
     setCurrentVersionId(cut.id)
     setDraft({ title: cut.label, slug: cut.slug })
@@ -352,6 +369,10 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
       // Same reason as reset(): the header must not keep announcing the
       // session you were on before this one.
       stop()
+      // 'v0' is the baseline this sets below. A published session opens with
+      // that cut live, so Publish stays hidden until something is built; a
+      // draft opens with nothing live, so it offers Publish.
+      setPublishedVersionId(isPublished(session) ? 'v0' : null)
       const opening = messagesForSession(session)
       setMessages(opening)
       setApplied(RECOMMENDATIONS.map((item) => item.id))
@@ -403,6 +424,7 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
     // something else. Clearing it here rather than at the three doors that
     // call reset(), so a fourth door cannot forget.
     stop()
+    setPublishedVersionId(null)
     setMessages(opening)
     setApplied(RECOMMENDATIONS.map((item) => item.id))
     setSessionState('idle')
@@ -429,13 +451,13 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
       deckOpen, setDeckOpen,
       sessionSlug, openSession,
       draft, setDraft,
-      versions, currentVersionId, addVersion, revertTo, pointAt,
+      versions, currentVersionId, publishedVersionId, markPublished, addVersion, revertTo, pointAt,
       nextMessageId,
       reset,
     }),
     [
       messages, applied, sessionState, progress, deckOpen, sessionSlug, openSession, draft,
-      versions, currentVersionId, addVersion, revertTo, pointAt, nextMessageId, reset,
+      versions, currentVersionId, publishedVersionId, markPublished, addVersion, revertTo, pointAt, nextMessageId, reset,
     ],
   )
 
