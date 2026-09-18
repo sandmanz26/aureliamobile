@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../auth/auth_scope.dart';
 import 'svg_path.dart';
 import '../theme/app_spacing.dart';
 
@@ -95,23 +96,77 @@ class _TileMarkPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// The coin balance pill in the app bars.
+/// The coin itself, at whatever size the surface needs — Figma `icon-token`.
 ///
-/// Two shapes, as in Figma: the app bars carry a 16px coin with the currency
-/// glyph, and the chat header carries a larger coin drawn as a ring. Both sit
-/// in the same 44px pill so the header trio lines up.
-class CoinPill extends StatelessWidget {
-  const CoinPill({super.key, this.amount = '1,323'}) : ringed = false;
+/// The Credits screen draws it at 32 beside the balance and at 20 on every
+/// ledger row, so it stopped being the pill's private detail. The inner ring
+/// scales with the disc rather than staying 8, or it reads as a different coin
+/// at 32.
+class CoinMark extends StatelessWidget {
+  const CoinMark({super.key, this.size = 20});
 
-  /// The chat header's variant — a 20px coin drawn as a ring.
-  const CoinPill.ringed({super.key, this.amount = '1,323'}) : ringed = true;
-
-  final String amount;
-  final bool ringed;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFFFE682), Color(0xFFFF881B)],
+        ),
+      ),
+      child: Container(
+        width: size * 0.4,
+        height: size * 0.4,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: AppColors.textInverse,
+            width: size * 0.1 < 2 ? 2 : size * 0.1,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The coin balance, as one object — and a control, not a label.
+///
+/// It was drawn in two shapes, on the argument that the app bars carry a 16px
+/// coin with a currency glyph and the chat header a 20px ring. They are the
+/// same currency, and a currency that looks different depending on which
+/// screen you are on does not read as one currency. One coin now, the ring,
+/// at 20.
+///
+/// And none of the ten places it appears did anything when tapped. A balance
+/// is the most obviously tappable thing in a header — it is a number about
+/// *you* — so tapping it and getting nothing reads as a broken app rather than
+/// a missing feature. It opens the credits screen.
+///
+/// Gated: what you have and how you spent it is account-shaped, so a visitor
+/// is sent to sign in with `/credits` remembered rather than shown an empty
+/// ledger.
+class CoinPill extends StatelessWidget {
+  const CoinPill({super.key, this.amount = '1,323', this.interactive = true});
+
+  /// Kept so the chat header reads the same as it did; both shapes are the
+  /// ring now.
+  const CoinPill.ringed({super.key, this.amount = '1,323', this.interactive = true});
+
+  final String amount;
+
+  /// Off only where the pill sits inside something already tappable.
+  final bool interactive;
+
+  @override
+  Widget build(BuildContext context) {
+    final face = Container(
       height: 44,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
       decoration: BoxDecoration(
@@ -124,40 +179,32 @@ class CoinPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: ringed ? 20 : 16,
-            height: ringed ? 20 : 16,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFFFFE682), Color(0xFFFF881B)],
-              ),
-            ),
-            child: ringed
-                ? Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.textInverse, width: 2),
-                    ),
-                  )
-                : const Icon(Icons.monetization_on_outlined,
-                    size: 10, color: AppColors.textInverse),
-          ),
+          const CoinMark(size: 20),
           const SizedBox(width: AppSpacing.s2),
           Text(
             amount,
-            style: TextStyle(
-              fontSize: ringed ? 14 : 12,
-              fontWeight: ringed ? FontWeight.w400 : FontWeight.w500,
-              color: AppColors.textPrimary,
-            ),
+            style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
           ),
         ],
+      ),
+    );
+
+    if (!interactive) return face;
+    return Tooltip(
+      message: '$amount credits',
+      child: Material(
+        color: Colors.transparent,
+        shape: const StadiumBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          customBorder: const StadiumBorder(),
+          onTap: () => requireSignIn(
+            context,
+            destination: '/credits',
+            then: () => Navigator.of(context).pushNamed('/credits'),
+          ),
+          child: face,
+        ),
       ),
     );
   }

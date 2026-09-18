@@ -47,6 +47,7 @@ class ChallengeRecord {
     required this.photo,
     required this.gradient,
     required this.joined,
+    required this.points,
     required this.endsInDays,
     required this.totalDays,
     required this.minutesPerDay,
@@ -61,6 +62,10 @@ class ChallengeRecord {
   final String photo;
   final List<Color> gradient;
   final String joined;
+
+  /// What finishing it is worth, in coins. Explore had this hard-coded, which
+  /// is why every challenge on that shelf offered the same number.
+  final int points;
   final int endsInDays;
   final int totalDays;
   final int minutesPerDay;
@@ -83,6 +88,7 @@ const kChallenges = <ChallengeRecord>[
     photo: 'neural',
     gradient: [AppPrimitives.neutral950, AppPrimitives.warning700],
     joined: '2.3k',
+    points: 250,
     endsInDays: 18,
     totalDays: 30,
     minutesPerDay: 8,
@@ -96,6 +102,28 @@ const kChallenges = <ChallengeRecord>[
       Contender(rank: 6, sessionSlug: 'dream-drift', creator: 'Adam Nilson', creatorPhoto: 'avatar', plays: '8,761', trend: Trend.up),
     ],
     sessionSlugs: ['mind-dance', 'inner-balance'],
+  ),
+  ChallengeRecord(
+    /// Just opened, and deliberately empty.
+    ///
+    /// Every other list in this catalogue is populated, which makes the app
+    /// pleasant to demo and useless for judging what a challenge looks like on
+    /// day one — nobody has joined, nothing has been made for it, and there is
+    /// no board to rank. That is the state a real challenge spends its first
+    /// hours in, and the one the product has to be honest in.
+    slug: 'morning-light',
+    title: '14-Day Morning Light',
+    summary: 'Start earlier, and let the day settle itself.',
+    photo: 'morning',
+    gradient: [AppPrimitives.neutral900, AppPrimitives.warning500],
+    joined: '0',
+    points: 150,
+    endsInDays: 14,
+    totalDays: 14,
+    minutesPerDay: 6,
+    yourDay: null,
+    leaderboard: [],
+    sessionSlugs: [],
   ),
 ];
 

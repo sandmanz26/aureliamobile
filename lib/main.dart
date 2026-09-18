@@ -10,6 +10,7 @@ import 'features/auth/reset_password_screen.dart';
 import 'features/auth/sign_in_screen.dart';
 import 'features/auth/sign_up_screen.dart';
 import 'features/challenge/challenge_detail_screen.dart';
+import 'features/credits/credits_screen.dart';
 import 'features/chat/chat_screen.dart';
 import 'features/chat/chat_session_controller.dart';
 import 'features/help/help_screen.dart';
@@ -171,6 +172,8 @@ class _AureliaAppState extends State<AureliaApp> {
             brief: forked == null ? null : briefFor(forked),
             voiceCapture: widget.voiceCapture,
           );
+        case '/credits':
+          return const CreditsScreen();
         case '/invite':
           return const InviteScreen();
         case '/notifications':

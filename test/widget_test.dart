@@ -18,6 +18,7 @@ import 'package:aurelia_mobile/features/chat/widgets/mini_player.dart';
 import 'package:aurelia_mobile/features/chat/widgets/recommendation_deck.dart';
 import 'package:aurelia_mobile/features/chat/widgets/recommendation_card.dart';
 import 'package:aurelia_mobile/features/chat/widgets/attached_session.dart';
+import 'package:aurelia_mobile/features/credits/credits_screen.dart';
 import 'package:aurelia_mobile/features/chat/widgets/empty_thread.dart';
 import 'package:aurelia_mobile/features/chat/widgets/free_limit_notice.dart';
 import 'package:aurelia_mobile/features/upgrade/upgrade_screen.dart';
@@ -606,6 +607,55 @@ void main() {
       await tester.tap(find.byTooltip('Recreate Clear Skies'));
       await tester.pumpAndSettle();
       expect(find.text('Recreate “Clear Skies” by Adam Nilson.'), findsOneWidget);
+    });
+
+    testWidgets('the coin opens the ledger, from anywhere it is drawn',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/explore');
+      await tester.pumpAndSettle();
+
+      // A balance is the most obviously tappable thing in a header — it is a
+      // number about *you*. It was drawn in ten places and did nothing in all
+      // of them.
+      await tester.tap(find.byTooltip('1,323 credits').first);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CreditsScreen), findsOneWidget);
+      expect(find.text('Total Credits'), findsOneWidget);
+      expect(find.text('Invite Friends, Get Credits!'), findsOneWidget);
+      expect(find.textContaining('Aria Moon'), findsOneWidget);
+      expect(find.text('+500'), findsNWidgets(5));
+      // The frame hides its own Trailing: the balance is the subject of the
+      // screen, so repeating it in the chrome would state it twice.
+      expect(find.byType(CoinPill), findsNothing);
+    });
+
+    testWidgets('Explore carries two challenges, and the second is empty',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/explore');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Monthly Challenges!'), findsOneWidget);
+      expect(find.text('30-Day Nervous System Reset'), findsOneWidget);
+      expect(find.text('250 pts'), findsOneWidget);
+
+      // The second one is the state a real challenge spends its first hours
+      // in: nobody has joined, and the points figure is its own rather than
+      // the hard-coded 250 every card used to show.
+      final shelf = find.byType(ListView).at(0);
+      await tester.drag(shelf, const Offset(-400, 0));
+      await tester.pumpAndSettle();
+      expect(find.text('14-Day Morning Light'), findsOneWidget);
+      expect(find.text('150 pts'), findsOneWidget);
+      expect(find.text('Be the first'), findsOneWidget);
     });
 
     testWidgets('Notifications group by age and the chips narrow them',

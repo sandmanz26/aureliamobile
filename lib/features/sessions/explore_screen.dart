@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/data/challenges.dart';
 import '../../core/data/sessions.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
@@ -72,11 +73,124 @@ class _ExploreScreenState extends State<ExploreScreen> {
     ('Maya Bennett', 'creatorMaya', '19 sessions'),
   ];
 
-  static const _challengeStats = [
-    (Icons.monetization_on_outlined, '250 pts'),
-    (Icons.group_outlined, '2.3k joined'),
-    (Icons.schedule, '30 days'),
-  ];
+  /// Read off the record rather than written here. The points figure used to
+  /// be hard-coded, so every challenge on this shelf offered the same number.
+  static List<(IconData, String)> _challengeStats(ChallengeRecord challenge) => [
+        (Icons.monetization_on_outlined, '${challenge.points} pts'),
+        (
+          Icons.group_outlined,
+          challenge.joined == '0'
+              ? 'Be the first'
+              : '${challenge.joined} joined'
+        ),
+        (Icons.schedule, '${challenge.totalDays} days'),
+      ];
+
+  Widget _challengeCard(ChallengeRecord challenge) {
+    return SizedBox(
+      width: 362,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.xl2),
+        child: Stack(
+          children: [
+            CoverImage(
+              photo: challenge.photo,
+              gradient: challenge.gradient,
+              width: 760,
+              height: 520,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(AppPadding.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Spacer(),
+                  Text(challenge.title,
+                      style: AppTextStyles.titleMd
+                          .copyWith(color: AppColors.textInverse)),
+                  const SizedBox(height: 4),
+                  Text(challenge.summary,
+                      style: AppTextStyles.bodySm
+                          .copyWith(color: const Color(0xE6FFFFFF))),
+                  const SizedBox(height: AppSpacing.s3),
+                  // Three facts as pills, as the design sets them.
+                  Wrap(
+                    spacing: AppSpacing.s2,
+                    runSpacing: AppSpacing.s2,
+                    children: [
+                      for (final (icon, label) in _challengeStats(challenge))
+                        Container(
+                          height: 28,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.s3),
+                          decoration: BoxDecoration(
+                            color: const Color(0x33FFFFFF),
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.full),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(icon,
+                                  size: 12, color: AppColors.textInverse),
+                              const SizedBox(width: 6),
+                              Text(label,
+                                  style: AppTextStyles.caption
+                                      .copyWith(color: AppColors.textInverse)),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // The whole card opens the challenge, as on the web. It sits above
+            // the copy because a Text takes the hit test itself and would
+            // otherwise swallow the tap.
+            Positioned.fill(
+              child: Semantics(
+                button: true,
+                label: 'Open the ${challenge.title} challenge',
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => Navigator.of(context)
+                      .pushNamed('/challenge', arguments: challenge.slug),
+                ),
+              ),
+            ),
+            // Join is last, so it keeps its own corner.
+            Positioned(
+              top: AppPadding.md,
+              right: AppPadding.md,
+              child: Material(
+                color: const Color(0xE6FFFFFF),
+                borderRadius: BorderRadius.circular(AppRadius.full),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(AppRadius.full),
+                  onTap: () => Navigator.of(context)
+                      .pushNamed('/challenge', arguments: challenge.slug),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.s3, vertical: 7),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Join', style: AppTextStyles.label),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.arrow_forward,
+                            size: 13, color: AppColors.textPrimary),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _shelf(Shelf shelf, {bool filtered = false}) {
     final sessions =
@@ -344,123 +458,28 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ),
 
               const SizedBox(height: AppSpacing.s8),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: AppPadding.page),
-                child: SectionHeader(title: 'Monthly Challenge!'),
-              ),
-              const SizedBox(height: AppSpacing.s4),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
-                child: AspectRatio(
-                  aspectRatio: 362 / 240,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(AppRadius.xl2),
-                    child: Stack(
-                      children: [
-                        const CoverImage(
-                          photo: 'neural',
-                          gradient: [AppPrimitives.neutral950, AppPrimitives.warning700],
-                          width: 760,
-                          height: 520,
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(AppPadding.md),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Spacer(),
-                              Text(
-                                '30-Day Nervous System Reset',
-                                style: AppTextStyles.titleMd
-                                    .copyWith(color: AppColors.textInverse),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Slow down and build a calmer daily rhythm.',
-                                style: AppTextStyles.bodySm
-                                    .copyWith(color: const Color(0xE6FFFFFF)),
-                              ),
-                              const SizedBox(height: AppSpacing.s3),
-                              // Three facts as pills, as the design sets them.
-                              Wrap(
-                                spacing: AppSpacing.s2,
-                                runSpacing: AppSpacing.s2,
-                                children: [
-                                  for (final (icon, label) in _challengeStats)
-                                    Container(
-                                      height: 28,
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: AppSpacing.s3),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0x33FFFFFF),
-                                        borderRadius:
-                                            BorderRadius.circular(AppRadius.full),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(icon,
-                                              size: 12,
-                                              color: AppColors.textInverse),
-                                          const SizedBox(width: 6),
-                                          Text(label,
-                                              style: AppTextStyles.caption.copyWith(
-                                                  color: AppColors.textInverse)),
-                                        ],
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        // The whole card opens the challenge, as on the web.
-                        // It sits above the copy because a Text takes the hit
-                        // test itself and would otherwise swallow the tap.
-                        Positioned.fill(
-                          child: Semantics(
-                            button: true,
-                            label:
-                                'Open the 30-Day Nervous System Reset challenge',
-                            child: GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: () => Navigator.of(context).pushNamed(
-                                  '/challenge',
-                                  arguments: 'nervous-system-reset'),
-                            ),
-                          ),
-                        ),
-                        // Join is last, so it keeps its own corner.
-                        Positioned(
-                          top: AppPadding.md,
-                          right: AppPadding.md,
-                          child: Material(
-                            color: const Color(0xE6FFFFFF),
-                            borderRadius: BorderRadius.circular(AppRadius.full),
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(AppRadius.full),
-                              onTap: () => Navigator.of(context).pushNamed(
-                                  '/challenge',
-                                  arguments: 'nervous-system-reset'),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: AppSpacing.s3, vertical: 7),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text('Join', style: AppTextStyles.label),
-                                    const SizedBox(width: 4),
-                                    const Icon(Icons.arrow_forward,
-                                        size: 13, color: AppColors.textPrimary),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                child: SectionHeader(
+                    title: kChallenges.length > 1
+                        ? 'Monthly Challenges!'
+                        : 'Monthly Challenge!'),
+              ),
+              const SizedBox(height: AppSpacing.s4),
+              // A shelf, because there is more than one now. Same idiom as
+              // every other row on this page: the card keeps the frame's 362
+              // and the next one peeks, which is what says the row scrolls.
+              SizedBox(
+                height: 240,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppPadding.page),
+                  itemCount: kChallenges.length,
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(width: AppSpacing.s3),
+                  itemBuilder: (context, index) =>
+                      _challengeCard(kChallenges[index]),
                 ),
               ),
 
