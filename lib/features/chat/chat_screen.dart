@@ -837,9 +837,18 @@ class _ChatMenuButton extends StatelessWidget {
         ])
           PopupMenuItem(
             value: item,
+            // Dimmed and unselectable while the screen behind it does not
+            // exist. A row that closes the menu and does nothing is what an
+            // unbuilt feature looks like — the same reading a *working* row
+            // gets when its screen is simply quiet.
+            enabled: item != 'Settings',
             height: 44,
             padding: const EdgeInsets.symmetric(horizontal: AppPadding.md),
-            child: Text(item, style: AppTextStyles.bodySm),
+            child: Text(item,
+                style: AppTextStyles.bodySm.copyWith(
+                    color: item == 'Settings'
+                        ? AppColors.textSecondary.withValues(alpha: 0.5)
+                        : AppColors.textPrimary)),
           ),
       ],
       child: Container(
