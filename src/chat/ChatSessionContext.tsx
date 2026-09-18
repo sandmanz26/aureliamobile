@@ -30,6 +30,14 @@ export interface Message {
    * cockpit opens showing the thing it is about instead of only naming it.
    */
   attachment?: 'recommendations' | { session: string }
+  /**
+   * Questions offered under this message, each a tap away from being sent.
+   *
+   * Separate from `attachment` because it is not one thing but a list, and
+   * because tapping one sends it as your next message rather than opening
+   * anything.
+   */
+  prompts?: string[]
 }
 
 /** The thread opens mid-conversation, so the first messages are backdated. */

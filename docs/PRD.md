@@ -568,6 +568,33 @@ The order the design implies is now the order the app walks:
 | Before | the empty state, ending in Publish Now | Not Published |
 | After | earnings, Community, Lineage Tree | Published |
 
+### "I don't know" is an answer the cockpit has to handle
+
+Typing `idk`, `I don't know` or a bare `?` used to reach the fallback — *"Got
+it, I've noted that for the next revision"*. That is the worst reply available
+there: it accepts an answer that was not one, files it, and leaves the person
+exactly as stuck, while claiming to have understood.
+
+Aurelia now hands back smaller questions instead, each one a tap away from
+being sent. Being stuck costs a tap rather than a sentence, which is the point
+— the reason someone types "idk" is that composing the answer is the hard part.
+
+**The rule is first in the list, deliberately.** "I don't know" contains words
+other rules would happily match, and a bare "?" would otherwise fall through to
+a reply answering a question nobody asked.
+
+**`?` is anchored; the rest are not.** `"make it shorter?"` is a question, not a
+shrug, and must not trigger it — while `"idk what to change"` should. Verified
+both ways.
+
+The prompts and the recommendation deck are mutually exclusive on a message:
+the deck is a proposal, and the prompts exist precisely because there is
+nothing to propose yet.
+
+They stack full width rather than scrolling in a rail. They are read one after
+another, and the longest runs to two lines, which a rail would either clip or
+leave ragged.
+
 ### The free limit, and what it is allowed to stop
 
 Three sends in a thread and the cockpit pauses. The frame gives that a notice

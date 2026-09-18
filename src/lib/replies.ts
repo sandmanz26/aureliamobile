@@ -39,6 +39,16 @@ export interface Reply {
    * that it is noting the request for the *next* revision.
    */
   changes?: boolean
+  /**
+   * Questions offered instead of an answer.
+   *
+   * For the one case where the user has told us they have nothing to say. A
+   * blank "noted" there is the worst possible reply: it accepts an answer that
+   * was not one and moves on, leaving them exactly as stuck. Handing back
+   * smaller questions is the only useful move — and they are tappable, so
+   * being stuck costs a tap rather than a sentence.
+   */
+  prompts?: string[]
 }
 
 interface Rule {
@@ -49,6 +59,27 @@ interface Rule {
 }
 
 const RULES: Rule[] = [
+  // ------------------------------------------------------------- no answer --
+  // First, deliberately. "I don't know" contains words other rules would
+  // happily match, and a bare "?" would fall through to the fallback, which
+  // answers a question that was never asked.
+  {
+    id: 'dont-know',
+    // `?` is anchored — "what should I do?" is a question, not a shrug. The
+    // rest are not, so "idk what to change" still lands here.
+    test: /^\?+$|^\s*(idk|dunno|no idea|not sure)\b|i\s*(don'?t|do not)\s*know/,
+    reply: {
+      text: 'It’s alright. Here are few suggestions to help you understand better:',
+      prompts: [
+        'What did you like most about the meditation?',
+        'Would you prefer a longer or shorter meditation next time?',
+        'What kind of sounds help you relax before bed?',
+        'How do you usually wind down before going to sleep?',
+        'Is there anything that makes it harder for you to fall asleep?',
+      ],
+    },
+  },
+
   // ---------------------------------------------------------------- length --
   {
     id: 'shorter',

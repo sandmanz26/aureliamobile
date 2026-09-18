@@ -519,7 +519,9 @@ export function ChatPage() {
         // Without that, a thread started from Quick Start offered "Apply new
         // changes (3)" over a deck nobody had handed over.
         const proposed = current.some((item) => item.attachment === 'recommendations')
-        const hands = !proposed && (reply.proposes || current.length <= 3)
+        // Never both: the deck is a proposal, and the prompts exist precisely
+        // because there is nothing to propose yet.
+        const hands = !reply.prompts && !proposed && (reply.proposes || current.length <= 3)
         return [
           ...current,
           {
@@ -528,6 +530,7 @@ export function ChatPage() {
             at: Date.now(),
             text: hands ? `${reply.text}\n\nHere is what I would put in it:` : reply.text,
             ...(hands ? { attachment: 'recommendations' as const } : {}),
+            ...(reply.prompts ? { prompts: reply.prompts } : {}),
           },
         ]
       })
@@ -646,6 +649,24 @@ export function ChatPage() {
             const startsRun = !previous || previous.from !== message.from || message.at - previous.at > 120_000
             const endsRun = !next || next.from !== message.from || next.at - message.at > 120_000
 
+            // Stacked full width, not a scrolling rail: these are read one
+            // after another and the longest runs to two lines, which a rail
+            // would either clip or leave ragged.
+            const promptList = message.prompts?.length ? (
+              <div className="u-message mt-8 flex flex-col gap-8 pl-34">
+                {message.prompts.map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    onClick={() => sendMessage(prompt)}
+                    className="u-press rounded-[20px] border border-border-subtle bg-surface-default px-16 py-14 text-left text-[14px] leading-[20px] text-text-primary"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            ) : null
+
             const attached = message.attachment
             const attachment =
               typeof attached === 'object' ? (
@@ -701,6 +722,7 @@ export function ChatPage() {
                     )}
                   </div>
                 </div>
+                {promptList}
                 {attachment}
                 </Fragment>
               )
