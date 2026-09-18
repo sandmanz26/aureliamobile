@@ -22,7 +22,7 @@ import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import { useDrawer } from '../layouts/DrawerContext'
 import { CURRENT_USER } from '../lib/people'
-import { findSession, publishSession } from '../lib/sessions'
+import { findSession, publishSession, unpublishSession } from '../lib/sessions'
 
 const SUGGESTIONS = ['Add more white noise', 'Make it longer', 'Female voice']
 
@@ -115,7 +115,7 @@ export function ChatPage() {
     sessionSlug, openSession,
     draft, setDraft,
     addVersion, pointAt,
-    currentVersionId, publishedVersionId, markPublished,
+    currentVersionId, publishedVersionId, markPublished, markUnpublished,
     nextMessageId,
     reset,
   } = useChatSession()
@@ -556,6 +556,18 @@ export function ChatPage() {
         onInsights={insightsSlug ? () => navigate(`/progress/${insightsSlug}`) : undefined}
         onMenu={openDrawer}
         publishLabel={publishLabel}
+        /* Only where something of this thread is actually live. A session that
+           has never been published has nothing to take down, and offering it
+           would be a third button that does nothing. */
+        onUnpublish={
+          publishedVersionId === null
+            ? undefined
+            : () => {
+                const slug = sessionSlug ?? draft.slug
+                if (slug) unpublishSession(slug)
+                markUnpublished()
+              }
+        }
         onPublish={() => isEnabled('chat.publish') && setPublishState('publishing')}
         canPublish={isEnabled('chat.publish')}
         onSettings={isEnabled('sessionSettings') ? () => navigate('/session-settings') : undefined}

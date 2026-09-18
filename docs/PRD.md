@@ -437,11 +437,26 @@ that changes the world a no-op — and it is the loudest thing in the menu.
 
 Three states, and the thread answers for itself:
 
-| Thread | Button |
+| Thread | Buttons |
 | --- | --- |
 | never published | **Publish** |
-| published, nothing built since | *nothing* |
-| published, and moved on since | **Republish** |
+| published, nothing built since | **Unpublish** |
+| published, and moved on since | **Republish** + **Unpublish** |
+
+**Unpublish is outlined, not filled.** Taking something down is a real action
+but not the one being encouraged, and two solid buttons stacked would argue
+with each other. It only appears where something of this thread is actually
+live — a session that has never been published has nothing to take down, and
+the control would do nothing.
+
+**Publish is brown now**, not the blue gradient it carried. Blue appears
+nowhere else in this product, so the loudest control in the app was also the
+only thing wearing another brand.
+
+Unpublishing needed the publish record to become a `Map<string, boolean>`
+rather than a set of published slugs: pulling a session that *shipped*
+published means recording `false` over the catalogue, which a set cannot
+express.
 
 `publishedVersionId` is the cut that is live. Compared against
 `currentVersionId` — which `addVersion` moves on every build — it settles all

@@ -250,6 +250,8 @@ interface ChatSessionValue {
   publishedVersionId: string | null
   /** Called when the publish sheet finishes: what is live is what is current. */
   markPublished: () => void
+  /** Taken down. Nothing is live, so the thread offers Publish again. */
+  markUnpublished: () => void
   /** Point the draft back at an earlier cut of this thread's own making. */
   revertTo: (id: string) => void
   /**
@@ -342,6 +344,10 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
   const markPublished = useCallback(() => {
     setPublishedVersionId((current) => currentVersionId ?? current)
   }, [currentVersionId])
+
+  const markUnpublished = useCallback(() => {
+    setPublishedVersionId(null)
+  }, [])
 
   const pointAt = useCallback((cut: { id: string; label: string; slug: string }) => {
     setCurrentVersionId(cut.id)
@@ -451,13 +457,13 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
       deckOpen, setDeckOpen,
       sessionSlug, openSession,
       draft, setDraft,
-      versions, currentVersionId, publishedVersionId, markPublished, addVersion, revertTo, pointAt,
+      versions, currentVersionId, publishedVersionId, markPublished, markUnpublished, addVersion, revertTo, pointAt,
       nextMessageId,
       reset,
     }),
     [
       messages, applied, sessionState, progress, deckOpen, sessionSlug, openSession, draft,
-      versions, currentVersionId, publishedVersionId, markPublished, addVersion, revertTo, pointAt, nextMessageId, reset,
+      versions, currentVersionId, publishedVersionId, markPublished, markUnpublished, addVersion, revertTo, pointAt, nextMessageId, reset,
     ],
   )
 

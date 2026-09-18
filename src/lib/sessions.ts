@@ -1473,15 +1473,26 @@ export const SESSIONS: SessionRecord[] = [
  * In memory like everything else this demo remembers: it survives moving around
  * the product, and a reload starts over.
  */
-const publishedHere = new Set<string>()
+const publishedHere = new Map<string, boolean>()
 
 export function publishSession(slug: string) {
-  publishedHere.add(slug)
+  publishedHere.set(slug, true)
+}
+
+/**
+ * Taken back out of the world.
+ *
+ * A map rather than a set of the published, because this has to answer for a
+ * catalogue session too: pulling one that shipped published means recording
+ * `false` over it, which a set of slugs cannot express.
+ */
+export function unpublishSession(slug: string) {
+  publishedHere.set(slug, false)
 }
 
 /** Out in the world. A draft is built and has not been published. */
 export function isPublished(session: SessionRecord) {
-  return session.published !== false || publishedHere.has(session.slug)
+  return publishedHere.get(session.slug) ?? session.published !== false
 }
 
 /**

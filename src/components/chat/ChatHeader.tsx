@@ -1,4 +1,4 @@
-import { Menu, MoreHorizontal, Play, Send, SlidersHorizontal, TrendingUp } from 'lucide-react'
+import { CircleX, Menu, MoreHorizontal, Play, Send, SlidersHorizontal, TrendingUp } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CoinPill } from '../ui/CoinPill'
@@ -15,6 +15,8 @@ interface ChatHeaderProps {
    * changes the world a no-op.
    */
   publishLabel?: 'Publish' | 'Republish' | null
+  /** Take it back down. Absent when nothing of this thread is live. */
+  onUnpublish?: () => void
   /** Publish is switched off in the /__demo console. */
   canPublish?: boolean
   /** A session with nothing in it has nothing to play, so the button goes. */
@@ -41,6 +43,7 @@ export function ChatHeader({
   points,
   onMenu,
   onPublish,
+  onUnpublish,
   publishLabel = 'Publish',
   canPublish = true,
   canPlay = true,
@@ -143,11 +146,30 @@ export function ChatHeader({
                     setOpen(false)
                     onPublish()
                   }}
-                  className="text-style-body u-press mt-8 flex h-44 w-full items-center justify-center gap-8 rounded-full font-medium text-text-inverse"
-                  style={{ background: 'linear-gradient(120deg, #1F5F86, #2E8BA8)' }}
+                  /* Brown, not the blue gradient it carried. Blue appears
+                     nowhere else in this product, so the loudest control in
+                     the app was also the only thing wearing another brand. */
+                  className="text-style-body u-press mt-8 flex h-44 w-full items-center justify-center gap-8 rounded-full bg-interactive-primary font-medium text-text-inverse"
                 >
                   <Send size={17} />
                   {publishLabel}
+                </button>
+              )}
+
+              {/* Outlined, not filled: taking something down is a real action
+                  but not the one being encouraged, and two solid buttons
+                  stacked would argue with each other. */}
+              {canPublish && onUnpublish && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false)
+                    onUnpublish()
+                  }}
+                  className="text-style-body u-press mt-8 flex h-44 w-full items-center justify-center gap-8 rounded-full border border-[#d6d6d6] text-text-primary"
+                >
+                  <CircleX size={17} />
+                  Unpublish
                 </button>
               )}
             </div>
