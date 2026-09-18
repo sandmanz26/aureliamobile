@@ -1,5 +1,7 @@
 import { ArrowUp, Play, Plus, Shuffle, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useRecreateTarget } from '../../chat/recreate'
+import { findSession } from '../../lib/sessions'
 
 export interface Recommendation {
   id: string
@@ -44,6 +46,9 @@ export function RecommendationCard({
 }: RecommendationCardProps) {
   const { title, description, improveScore, orb, preview } = recommendation
   const recreate = variant === 'recreate'
+  // `preview` is the session this card plays, and it is the one a Recreate
+  // forks — the card has no other session to offer.
+  const recreateTarget = useRecreateTarget(findSession(preview))
 
   return (
     <article
@@ -94,7 +99,8 @@ export function RecommendationCard({
 
       {recreate ? (
         <Link
-          to={`/recreate/${preview}`}
+          to={recreateTarget.to}
+          state={recreateTarget.state}
           className="u-press mt-auto flex h-32 w-fit items-center gap-4 rounded-full border border-border-subtle pl-12 pr-14 text-style-label text-text-primary"
         >
           <Shuffle size={12} className="text-icon-default" />

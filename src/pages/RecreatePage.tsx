@@ -2,8 +2,37 @@ import { ArrowLeft, Check, Coins, Menu, Repeat2, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { CoverImage } from '../components/ui/CoverImage'
+import { briefFor } from '../chat/recreate'
+import { useFeatureFlags } from '../demo/FeatureFlags'
 import { useDrawer } from '../layouts/DrawerContext'
 import { findSession } from '../lib/sessions'
+
+/**
+ * The route, which is not always this screen.
+ *
+ * `/recreate/:slug` is still a real URL — bookmarked, pasted, opened from
+ * /__demo — and with the form switched off it should not answer with the
+ * walkthrough's lock page, which says the wrong thing: Recreate has not been
+ * taken out of scope, only out of the way. It forwards to the cockpit with the
+ * same brief the cards hand over, so every route to a fork ends in one place.
+ */
+export function RecreateRoute() {
+  const { slug } = useParams()
+  const { isEnabled } = useFeatureFlags()
+  const session = findSession(slug)
+
+  if (isEnabled('recreate.screen')) return <RecreatePage />
+  if (!session) return <Navigate to="/home" replace />
+  return <Navigate to="/chat" replace state={{ recreate: briefFor(session) }} />
+}
+
+const VOICES = ['Same as original', 'Female · warm', 'Male · low', 'No voice'] as const
+const PACES = ['Slower', 'Same', 'Faster'] as const
+
+interface Change {
+  label: string
+  value: string
+}
 
 /**
  * Recreate — forking someone else's session.
@@ -16,15 +45,15 @@ import { findSession } from '../lib/sessions'
  *
  * Attribution is not optional here and is not a toggle: a fork keeps its
  * lineage, and the original creator is credited and paid coins on every play.
+ *
+ * **It is off by default now** — `recreate.screen` in /__demo. Its own footer
+ * gave the argument: "Opens in chat so you can keep tuning it out loud." It is
+ * a form you fill in to reach a conversation that takes the same answers, and
+ * every control on it is a sentence Aurelia already understands. So Recreate
+ * goes straight there and the fork is stated in words. The screen stays in the
+ * tree, one switch away, because a slider is a better instrument than a
+ * sentence for "how long" and that argument may yet win.
  */
-const VOICES = ['Same as original', 'Female · warm', 'Male · low', 'No voice'] as const
-const PACES = ['Slower', 'Same', 'Faster'] as const
-
-interface Change {
-  label: string
-  value: string
-}
-
 export function RecreatePage() {
   const { slug } = useParams()
   const navigate = useNavigate()

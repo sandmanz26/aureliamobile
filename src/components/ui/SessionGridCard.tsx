@@ -1,5 +1,6 @@
 import { Play, Repeat2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useRecreateTarget } from '../../chat/recreate'
 import type { SessionRecord } from '../../lib/sessions'
 import { CoverImage } from './CoverImage'
 import { PhotoCircle } from './PhotoCircle'
@@ -22,6 +23,8 @@ export function SessionGridCard({
   className?: string
   guard?: () => boolean
 }) {
+  const recreate = useRecreateTarget(session)
+
   function handleClick(event: React.MouseEvent) {
     if (guard && !guard()) event.preventDefault()
   }
@@ -56,7 +59,8 @@ export function SessionGridCard({
             button. Keyed on the card, not the viewport, so the challenge
             shelf's wider cards keep the label at any screen size. */}
         <Link
-          to={`/recreate/${session.slug}`}
+          to={recreate.to}
+          state={recreate.state}
           aria-label={`Recreate ${session.title}`}
           onClick={handleClick}
           className="text-style-label-regular flex h-30 shrink-0 items-center gap-4 whitespace-nowrap rounded-full bg-surface-default/95 px-11 text-text-primary"

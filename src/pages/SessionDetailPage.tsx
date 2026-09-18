@@ -14,6 +14,7 @@ import { Accordion } from '../components/ui/Accordion'
 import type { AccordionSection } from '../components/ui/Accordion'
 import { CoverImage } from '../components/ui/CoverImage'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
+import { useRecreateTarget } from '../chat/recreate'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import { useDrawer } from '../layouts/DrawerContext'
 import type { SessionRecord } from '../lib/sessions'
@@ -201,6 +202,8 @@ export function SessionDetailPage() {
   const { openDrawer } = useDrawer()
   const { isEnabled } = useFeatureFlags()
   const session = findSession(slug)
+  // Before the early return: a hook cannot sit behind one.
+  const recreate = useRecreateTarget(session)
 
   // An unknown slug is a bad link, not an error state worth a screen.
   if (!session) return <Navigate to="/home" replace />
@@ -279,7 +282,8 @@ export function SessionDetailPage() {
               Play session
             </Link>
             <Link
-              to={`/recreate/${session.slug}`}
+              to={recreate.to}
+              state={recreate.state}
               className="text-style-body flex h-52 items-center justify-center gap-8 rounded-full border border-border-default px-20 font-semibold text-text-primary"
             >
               <Repeat2 size={18} />
@@ -297,7 +301,8 @@ export function SessionDetailPage() {
           </div>
 
           <Link
-            to={`/recreate/${session.slug}`}
+            to={recreate.to}
+            state={recreate.state}
             className="mt-24 flex items-center gap-12 rounded-16 border border-border-subtle bg-surface-default p-16"
           >
             <span className="flex size-40 shrink-0 items-center justify-center rounded-full bg-brand-default text-icon-strong">

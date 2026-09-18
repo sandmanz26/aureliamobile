@@ -160,11 +160,15 @@ material. Flag for confirmation with product and business:
 - **Outcome figures ("−43% stress") are self-reported by listeners and must be
   labelled as such on the screen.** Presenting them unqualified next to a
   wellness claim is a regulatory problem, not a copy preference.
-- **Recreate is a diff, not a new-session form.** The original is pinned, presets
-  are edits real recreators made (with their share), and every control states a
-  change against the original. Sound layers are *ticked off* rather than
-  checkbox-ed, because the question is which of the original's layers you are
-  keeping.
+- **Recreate opens the conversation, not a form.** Pressing Recreate anywhere
+  lands in the cockpit with the fork already attached and Aurelia asking what
+  should be different. The screen that used to stand between the two is built
+  and kept, switched off — see §06.
+- **Recreate is a diff, not a new-session form.** When the screen is on: the
+  original is pinned, presets are edits real recreators made (with their
+  share), and every control states a change against the original. Sound layers
+  are *ticked off* rather than checkbox-ed, because the question is which of
+  the original's layers you are keeping.
 - **Attribution is not a toggle.** A fork keeps its lineage, the original creator
   stays credited, and the coin split follows the lineage on every play. Lineage
   is a chain, not a single parent.
@@ -316,6 +320,50 @@ codebases stay in step without a third document arbitrating every pixel.
 Two differences are intended: the web renders a simulated phone status bar
 because it is viewed in a browser, and platform chrome — drawer scrim, keyboard,
 text selection — follows each platform's own conventions.
+
+### Recreate goes straight to the conversation
+
+The Recreate screen's own footer made the case against it: *"Opens in chat so
+you can keep tuning it out loud."* It is a form you fill in to reach a
+conversation that takes the same answers — every control on it is a sentence
+Aurelia already understands, and the summary at the bottom was literally the
+brief being handed over. Two screens for one question, and the second one can
+also answer follow-ups.
+
+So Recreate now lands in the cockpit with the fork attached and the question
+asked in words — the screen's own heading, kept:
+
+> Got it — forking Daniel Brooks's session, and they stay credited in the
+> lineage. Tell me what should be different; anything you leave alone stays as
+> Daniel Brooks made it.
+
+**The opening line changes with the brief, and that is not cosmetic.** Through
+the form, a fork that changed nothing sent "• Keep it as it is", which is a
+thing the user actually said. Sent on behalf of someone who never saw the form,
+it is the app answering its own question. With no changes stated the line is
+`Recreate "Deep Grounding" by Daniel Brooks.` and stops.
+
+**Not deleted — switched off.** `recreate.screen` in /__demo, and it is a
+*feature* of the Recreate module rather than the module itself: Recreate the
+action stays on, only the form is out of the way. The argument for keeping the
+code is that a slider is a better instrument than a sentence for "how long",
+and that may yet win.
+
+Three things this had to get right:
+
+- **One switch, four call sites.** The session grid card, the recommendation
+  card and both controls on session detail go through `useRecreateTarget`. A
+  Recreate that behaved differently depending on which card you pressed would
+  be worse than either answer.
+- **`/recreate/:slug` still resolves.** Bookmarked, pasted, opened from the
+  console — it forwards to the cockpit with the same brief rather than showing
+  the walkthrough's lock page, which says the wrong thing: Recreate has not
+  been taken out of scope, only out of the way.
+- **A new flag key, not a flipped default.** Both the published set and the
+  local draft merge *over* the compiled defaults, so changing `recreate` to
+  default-off would have done nothing for anyone whose flags were published
+  while it was on. A key that has never existed is off for everybody the moment
+  it ships, with nothing to press.
 
 ### The transport was a read-out with a knob drawn on it
 

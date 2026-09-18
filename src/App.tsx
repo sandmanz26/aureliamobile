@@ -37,7 +37,7 @@ import { SeeAllPage } from './pages/SeeAllPage'
 import { ExplorePage } from './pages/ExplorePage'
 import { SessionsPage } from './pages/SessionsPage'
 import { PlayerPage } from './pages/PlayerPage'
-import { RecreatePage } from './pages/RecreatePage'
+import { RecreateRoute } from './pages/RecreatePage'
 import { SessionDetailPage } from './pages/SessionDetailPage'
 import { AccountSettingsPage } from './pages/AccountSettingsPage'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
@@ -245,7 +245,7 @@ export default function App() {
               element={
                 <RequireAuth>
                   <ModuleGuard module="recreate">
-                    <RecreatePage />
+                    <RecreateRoute />
                   </ModuleGuard>
                 </RequireAuth>
               }

@@ -37,9 +37,15 @@ export interface DemoModule {
    * Built and working, but deliberately switched off by default.
    *
    * Distinct from `built: false`, which means there is nothing to switch on.
-   * This is for work that has landed while a walkthrough is being given from
-   * the same branch: it must not appear in a demo nobody has rehearsed, so it
-   * ships dark and someone turns it on here when they are ready for it.
+   * Two cases: work that has landed while a walkthrough is being given from
+   * the same branch — it must not appear in a demo nobody has rehearsed, so it
+   * ships dark — and a screen that has been taken out of the flow but not out
+   * of the tree, where the switch is how you get it back.
+   *
+   * A new key is off for everyone the moment it exists, which is the reason to
+   * add one rather than flip an existing default: both the published set and
+   * the local draft merge *over* these defaults, so a key that has been
+   * published as `true` stays true until someone presses Publish again.
    */
   unreleased?: boolean
   features?: DemoFeature[]
@@ -128,6 +134,15 @@ export const DEMO_MODULES: DemoModule[] = [
     description: 'Forking someone else’s session — state the differences, hand the brief to chat.',
     route: '/recreate/dolphins-frequency',
     built: true,
+    features: [
+      {
+        id: 'screen',
+        label: 'The Recreate form',
+        description:
+          'Off: Recreate opens the cockpit with the fork attached and asks what should be different. On: the form states it first — length, voice, pace, layers.',
+        unreleased: true,
+      },
+    ],
   },
   {
     id: 'profile',

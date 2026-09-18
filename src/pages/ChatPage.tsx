@@ -11,6 +11,7 @@ import { PublishSheet } from '../components/chat/PublishSheet'
 import { useAudioPlayer } from '../audio/AudioPlayerContext'
 import { RECOMMENDATIONS, useChatSession } from '../chat/ChatSessionContext'
 import type { Message, Status } from '../chat/ChatSessionContext'
+import type { RecreateBrief } from '../chat/recreate'
 import { AttachedSession } from '../components/chat/AttachedSession'
 import { draftTitleFor, findQuickStart } from '../lib/quickStart'
 import { replyTo } from '../lib/replies'
@@ -45,15 +46,6 @@ const OPENERS = [
   'Something for a restless afternoon',
 ]
 
-
-/** A brief handed over from the Recreate screen. */
-interface RecreateBrief {
-  slug: string
-  title: string
-  author: string
-  minutes: number
-  changes: string[]
-}
 
 function clockTime(at: number) {
   return new Date(at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -329,14 +321,22 @@ export function ChatPage() {
     briefHandled.current = location.key
 
     const now = Date.now()
-    const lines = brief.changes.length ? brief.changes.map((line) => `• ${line}`).join('\n') : '• Keep it as it is'
+    // With the Recreate form skipped, nothing has been asked for yet — so the
+    // opening line states the fork and stops. "Keep it as it is" belongs to
+    // someone who went through the form and changed nothing; putting those
+    // words in the mouth of someone who never saw it is the app answering its
+    // own question.
+    const stated = brief.changes.length > 0
+    const lines = stated ? `\n${brief.changes.map((line) => `• ${line}`).join('\n')}` : ''
     reset([
       {
         id: 1,
         from: 'user',
         at: now,
         status: 'read',
-        text: `Recreate “${brief.title}” by ${brief.author}, at ${brief.minutes} minutes.\n${lines}`,
+        text: stated
+          ? `Recreate “${brief.title}” by ${brief.author}, at ${brief.minutes} minutes.${lines}`
+          : `Recreate “${brief.title}” by ${brief.author}.`,
         // Attached, not just named: you can see what you are forking and play
         // it without leaving the thread.
         attachment: { session: brief.slug },
@@ -355,7 +355,12 @@ export function ChatPage() {
           id: nextMessageId(),
           from: 'aurelia',
           at: Date.now(),
-          text: `Got it — forking ${brief.author}’s session and keeping them credited in the lineage. Apply the recommendations below and I’ll build your version.`,
+          // The question the Recreate screen used to ask in a heading, asked
+          // here instead — it is the one thing that screen was for, and it
+          // survives it.
+          text: stated
+            ? `Got it — forking ${brief.author}’s session and keeping them credited in the lineage. Apply the recommendations below and I’ll build your version.`
+            : `Got it — forking ${brief.author}’s session, and they stay credited in the lineage. Tell me what should be different; anything you leave alone stays as ${brief.author} made it.`,
         },
       ])
     }, 1600)
