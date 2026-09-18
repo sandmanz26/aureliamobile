@@ -914,10 +914,13 @@ void main() {
       await tester.pump(const Duration(milliseconds: 1500));
       await tester.pump(const Duration(seconds: 6));
       expect(find.text('Ready to play'), findsOneWidget);
+      // A change makes a new cut, and the card says which one it is holding:
+      // v1.2 with white noise added is not v1.2.
+      expect(find.text('Sleep meditation v1.3'), findsOneWidget);
 
       // Off to play it, then back. Before the thread moved above the
       // navigator this returned a fresh conversation with nothing to publish.
-      await tester.tap(find.byTooltip('Play Sleep meditation v1.2'));
+      await tester.tap(find.byTooltip('Play Sleep meditation v1.3'));
       await tester.pumpAndSettle();
       expect(find.byType(PlayerScreen), findsOneWidget);
 
@@ -925,6 +928,117 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Ready to play'), findsOneWidget);
       expect(find.text('Apply new changes (2)'), findsNothing);
+    });
+  });
+
+  group('Publishing', () {
+    testWidgets('a draft offers Publish, and publishing takes', (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      // A draft: nothing is live, so the only thing the menu offers is
+      // Publish. There is nothing to take down.
+      navigator.pushNamed('/chat',
+          arguments: const ChatArgs(slug: 'evening-unwind-v3'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('More options'));
+      await tester.pumpAndSettle();
+      expect(find.text('Publish'), findsOneWidget);
+      expect(find.text('Republish'), findsNothing);
+      expect(find.text('Unpublish'), findsNothing);
+
+      await tester.tap(find.text('Publish'));
+      // Pumped rather than settled: the sheet's spinner never stops, so
+      // pumpAndSettle has nothing to settle to.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(find.text('Publishing your Session…'), findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 2400));
+      expect(find.text('Session Published!'), findsOneWidget);
+      await tester.tap(find.text('View Session'));
+      await tester.pumpAndSettle();
+
+      // And it took: the session is out in the world now, which the Sessions
+      // list reads off the same record. Pressing Publish used to move a sheet
+      // and nothing else.
+      navigator.pushNamed('/chat',
+          arguments: const ChatArgs(slug: 'evening-unwind-v3'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('More options'));
+      await tester.pumpAndSettle();
+      // Published and unchanged since — so there is nothing to offer. A button
+      // that would do nothing is worse than no button.
+      expect(find.text('Publish'), findsNothing);
+      expect(find.text('Republish'), findsNothing);
+      expect(find.text('Unpublish'), findsOneWidget);
+
+      await tester.tap(find.text('Unpublish'));
+      await tester.pumpAndSettle();
+      expect(find.text('Session Unpublished'), findsOneWidget);
+      await tester.tap(find.text('Done'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('More options'));
+      await tester.pumpAndSettle();
+      expect(find.text('Publish'), findsOneWidget);
+      expect(find.text('Unpublish'), findsNothing);
+    });
+
+    testWidgets('a change to a published session offers Republish',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/chat',
+          arguments: const ChatArgs(slug: 'dolphins-frequency'));
+      await tester.pumpAndSettle();
+
+      // Out in the world and unchanged: nothing to offer.
+      await tester.tap(find.byTooltip('More options'));
+      await tester.pumpAndSettle();
+      expect(find.text('Republish'), findsNothing);
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Apply new changes (3)'));
+      await tester.pump(const Duration(milliseconds: 1500));
+      await tester.pump(const Duration(seconds: 6));
+
+      // Moved on since it was published, so now there is.
+      await tester.tap(find.byTooltip('More options'));
+      await tester.pumpAndSettle();
+      expect(find.text('Republish'), findsOneWidget);
+      expect(find.text('Publish'), findsNothing);
+    });
+
+    testWidgets('Chapters reverts, and the thread says so', (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/chat',
+          arguments: const ChatArgs(slug: 'dolphins-frequency'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('More options'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Insights'));
+      await tester.pumpAndSettle();
+
+      final revert = find.byTooltip(RegExp('^Revert to '));
+      expect(revert, findsWidgets);
+      final label = (tester.widget<Tooltip>(revert.first).message ?? '')
+          .replaceFirst('Revert to ', '');
+      await tester.tap(revert.first);
+      await tester.pumpAndSettle();
+
+      // Back in the cockpit, and the revert is in the conversation rather than
+      // a card quietly renaming itself.
+      expect(find.text('Go back to $label.'), findsOneWidget);
+      expect(find.textContaining('The later cuts are still in the history'),
+          findsOneWidget);
+      expect(find.text(label), findsWidgets);
     });
   });
 

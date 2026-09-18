@@ -1525,6 +1525,32 @@ const kSessions = <SessionRecord>[
 /// Every public surface goes through this: shelves, categories, the creator
 /// index. A draft is yours and only shows where it is yours — the Sessions
 /// screen under "Created by you".
+/// Sessions published in this run, since the catalogue is a module constant.
+///
+/// `published: false` is a draft's *starting* state, not a permanent fact — the
+/// whole point of the Publish sheet is to change it. There was nowhere to
+/// record that, so pressing Publish moved a sheet and nothing else: Social
+/// Impact stayed on its empty state for good, and the Sessions list went on
+/// calling a published session "Not Published".
+///
+/// In memory like everything else this demo remembers: it survives moving
+/// around the product, and a relaunch starts over.
+final _publishedHere = <String, bool>{};
+
+void publishSession(String slug) => _publishedHere[slug] = true;
+
+/// Taken back out of the world.
+///
+/// A map rather than a set of the published, because this has to answer for a
+/// catalogue session too: pulling one that shipped published means recording
+/// `false` over it, which a set of slugs cannot express.
+void unpublishSession(String slug) => _publishedHere[slug] = false;
+
+/// Whether a session is out in the world — what it shipped as, unless this run
+/// has changed it.
+bool isPublished(SessionRecord session) =>
+    _publishedHere[session.slug] ?? session.published;
+
 final kPublishedSessions =
     kSessions.where((session) => session.published).toList(growable: false);
 

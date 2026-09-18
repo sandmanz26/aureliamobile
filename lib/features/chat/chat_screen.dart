@@ -136,10 +136,15 @@ class _ChatScreenState extends State<ChatScreen> {
   /// Publishing is a bottom sheet, not a page: the session is still on screen
   /// behind it, and the sheet swaps its spinner for a tick in place.
   void _publish() {
-    var published = false;
+    final chat = ChatSessionScope.read(context);
+    var state = _PublishState.publishing;
     late StateSetter refresh;
     final timer = Timer(const Duration(milliseconds: 2200), () {
-      published = true;
+      // The record, not just the sheet. Pressing Publish used to move a sheet
+      // and nothing else: Social Impact stayed empty for good and the Sessions
+      // list went on calling a published session "Not Published".
+      chat.markPublished();
+      state = _PublishState.published;
       refresh(() {});
     });
 
@@ -153,7 +158,7 @@ class _ChatScreenState extends State<ChatScreen> {
         builder: (context, setSheetState) {
           refresh = setSheetState;
           return _PublishSheet(
-            published: published,
+            state: state,
             onCancel: () => Navigator.of(sheetContext).pop(),
             onView: () {
               Navigator.of(sheetContext).pop();
@@ -164,6 +169,25 @@ class _ChatScreenState extends State<ChatScreen> {
         },
       ),
     ).whenComplete(timer.cancel);
+  }
+
+  /// Taking it back down says so, in the same place publishing did.
+  ///
+  /// Unpublishing is the one action here with no visible consequence on this
+  /// screen — the thread does not change, the card does not change — so
+  /// without a word for it you cannot tell whether it worked.
+  void _unpublish() {
+    ChatSessionScope.read(context).markUnpublished();
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: AppColors.iconStrong.withValues(alpha: 0.4),
+      builder: (sheetContext) => _PublishSheet(
+        state: _PublishState.unpublished,
+        onCancel: () => Navigator.of(sheetContext).pop(),
+        onView: () => Navigator.of(sheetContext).pop(),
+      ),
+    );
   }
 
   /// The session this cockpit is building. It has no catalogue entry of its
@@ -241,7 +265,12 @@ class _ChatScreenState extends State<ChatScreen> {
                   const CoinPill.ringed(),
                   const SizedBox(width: AppSpacing.s2),
                   _ChatMenuButton(
-                      onPublish: _publish, onInsights: _openProgress),
+                    publishLabel: chat.publishLabel,
+                    onPublish: _publish,
+                    onUnpublish:
+                        chat.publishedVersionId == null ? null : _unpublish,
+                    onInsights: _openProgress,
+                  ),
                 ],
               ),
             ),
@@ -316,7 +345,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ValueListenableBuilder<int>(
                       valueListenable: chat.progress,
                       builder: (context, progress, _) => _SessionProgressCard(
-                        title: 'Sleep meditation v1.2',
+                        title: chat.draft.title,
                         status: chat.session == SessionState.ready
                             ? 'Ready to play'
                             : 'Creating your new session..',
@@ -685,9 +714,20 @@ class _TypingDotsState extends State<_TypingDots> with SingleTickerProviderState
 /// The chat header's ⋯ button and its dropdown (Figma node "dropdown",
 /// 140x175). Settings is inert until that screen ships.
 class _ChatMenuButton extends StatelessWidget {
-  const _ChatMenuButton({required this.onPublish, required this.onInsights});
+  const _ChatMenuButton({
+    required this.publishLabel,
+    required this.onPublish,
+    required this.onUnpublish,
+    required this.onInsights,
+  });
 
+  /// "Publish", "Republish", or null when what is live is already what you
+  /// are looking at — a button that would do nothing is worse than no button.
+  final String? publishLabel;
   final VoidCallback onPublish;
+
+  /// Null until something is live. There is nothing to take down otherwise.
+  final VoidCallback? onUnpublish;
   final VoidCallback onInsights;
 
   @override
@@ -703,11 +743,19 @@ class _ChatMenuButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       onSelected: (item) {
-        if (item == 'Publish') onPublish();
-        if (item == 'Insights') onInsights();
+        if (item == 'Insights') return onInsights();
+        if (item == 'Unpublish') return onUnpublish?.call();
+        if (item == 'Publish' || item == 'Republish') return onPublish();
+        // Settings is inert until that screen ships — and falling through to
+        // Publish rather than doing nothing would be the worse failure.
       },
       itemBuilder: (context) => [
-        for (final item in ['Insights', 'Settings', 'Publish'])
+        for (final item in [
+          'Insights',
+          'Settings',
+          if (publishLabel != null) publishLabel!,
+          if (onUnpublish != null) 'Unpublish',
+        ])
           PopupMenuItem(
             value: item,
             height: 44,
@@ -732,15 +780,17 @@ class _ChatMenuButton extends StatelessWidget {
   }
 }
 
-/// Figma "Section" 402x292 — the publishing / published bottom sheet.
+enum _PublishState { publishing, published, unpublished }
+
+/// Figma "Section" 402x292 — the publishing / published / unpublished sheet.
 class _PublishSheet extends StatelessWidget {
   const _PublishSheet({
-    required this.published,
+    required this.state,
     required this.onCancel,
     required this.onView,
   });
 
-  final bool published;
+  final _PublishState state;
   final VoidCallback onCancel;
   final VoidCallback onView;
 
@@ -757,7 +807,7 @@ class _PublishSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (published)
+          if (state == _PublishState.published)
             Container(
               width: 64,
               height: 64,
@@ -773,6 +823,20 @@ class _PublishSheet extends StatelessWidget {
               child: const Icon(Icons.check_rounded,
                   size: 32, color: AppColors.textInverse),
             )
+          // Neutral, not the brand's warm disc: taking a session down is a
+          // reversal, not a failure and not an achievement.
+          else if (state == _PublishState.unpublished)
+            Container(
+              width: 64,
+              height: 64,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.backgroundElevated,
+              ),
+              child: const Icon(Icons.cancel_outlined,
+                  size: 32, color: AppColors.iconStrong),
+            )
           else
             const SizedBox(
               width: 64,
@@ -785,15 +849,23 @@ class _PublishSheet extends StatelessWidget {
             ),
           const SizedBox(height: AppSpacing.s8),
           Text(
-            published ? 'Session Published!' : 'Publishing your Session…',
+            switch (state) {
+              _PublishState.published => 'Session Published!',
+              _PublishState.unpublished => 'Session Unpublished',
+              _PublishState.publishing => 'Publishing your Session…',
+            },
             textAlign: TextAlign.center,
             style: AppTextStyles.titleMd,
           ),
           const SizedBox(height: AppSpacing.s2),
           Text(
-            published
-                ? 'Your session is now ready to view.'
-                : 'Hang tight! This’ll only take a moment.',
+            switch (state) {
+              _PublishState.published => 'Your session is now ready to view.',
+              _PublishState.unpublished =>
+                'It is out of the community feed and nobody new can play it. '
+                    'Yours to publish again whenever you want.',
+              _PublishState.publishing => 'Hang tight! This’ll only take a moment.',
+            },
             textAlign: TextAlign.center,
             style: AppTextStyles.bodySm.copyWith(
               fontWeight: FontWeight.w300,
@@ -801,12 +873,20 @@ class _PublishSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.s8),
-          if (published)
+          if (state == _PublishState.published)
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: onView,
                 child: const Text('View Session'),
+              ),
+            )
+          else if (state == _PublishState.unpublished)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: onView,
+                child: const Text('Done'),
               ),
             )
           else

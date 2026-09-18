@@ -140,7 +140,7 @@ Progress progressFor(SessionRecord session) {
   final clock = '${session.durationLabel} mins';
   // A draft has earned nothing and been played by nobody, which is the whole
   // difference between it and a session that is out.
-  final draft = !session.published;
+  final draft = !isPublished(session);
 
   return Progress(
     objective: _objectives[session.category] ?? 'Feel better day to day',

@@ -377,7 +377,7 @@ class _MetaLine extends StatelessWidget {
         Text(session.durationLabel, style: _style),
         // A draft says nothing rather than saying "Draft" — the absence is the
         // state, which is what was asked for.
-        if (mine && session.published) ...[
+        if (mine && isPublished(session)) ...[
           const _MetaDivider(),
           const Text('Published', style: _style),
         ],

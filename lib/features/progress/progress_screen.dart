@@ -8,6 +8,7 @@ import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/aurelia_logo.dart';
 import '../../core/widgets/cover_image.dart';
 import '../../core/widgets/photo_circle.dart';
+import '../chat/chat_session_controller.dart';
 import '../player/player_screen.dart';
 
 /// The card shadow every surface in this design shares (Figma effect
@@ -334,6 +335,18 @@ class _Chapters extends StatelessWidget {
               arguments:
                   PlayRequest(slug: session.slug, versionId: version.id),
             ),
+            // Chapters is the version history — the cockpit's menu no longer
+            // carries a second one — so going back to a cut happens here, and
+            // the work lands in the conversation because that is where this
+            // session's changes are accounted for.
+            onRevert: () {
+              final chat = ChatSessionScope.read(context)
+                ..pointAt(
+                    id: version.id, label: version.title, slug: session.slug)
+                ..sayReverted(version.title);
+              assert(chat.currentVersionId == version.id);
+              Navigator.of(context).pop();
+            },
           ),
         ],
       ],
@@ -351,12 +364,16 @@ class _VersionCard extends StatelessWidget {
     required this.open,
     required this.onToggle,
     required this.onPlay,
+    required this.onRevert,
   });
 
   final Version version;
   final bool open;
   final VoidCallback onToggle;
   final VoidCallback onPlay;
+
+  /// Point the draft back at this cut and say so in the thread.
+  final VoidCallback onRevert;
 
   @override
   Widget build(BuildContext context) {
@@ -417,6 +434,45 @@ class _VersionCard extends StatelessWidget {
                           ),
                         ),
                       ),
+                      const Spacer(),
+                      // Revert sits beside the figure it would undo, on the
+                      // art rather than in the body: it acts on the cut, and
+                      // the body is about what the cut did.
+                      Tooltip(
+                        message: 'Revert to ${version.title}',
+                        child: InkWell(
+                          onTap: onRevert,
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                          child: ClipRRect(
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.full),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                              child: Container(
+                                height: 32,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: AppSpacing.s2 + 2),
+                                alignment: Alignment.center,
+                                color: const Color(0x33FFFFFF),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.history,
+                                        size: 14,
+                                        color: AppColors.textInverse),
+                                    const SizedBox(width: AppSpacing.s1),
+                                    Text('Revert',
+                                        style: _type(12, 12,
+                                            weight: FontWeight.w500,
+                                            color: AppColors.textInverse)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.s2),
                       // 8 all round, 4 to the figure, and the figure is green —
                       // not the ink token, which is what it was read as before.
                       Container(

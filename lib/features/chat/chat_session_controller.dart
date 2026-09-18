@@ -98,6 +98,63 @@ class ChatArgs {
   final bool fresh;
 }
 
+/// What the cockpit is building, and where that goes when it is built.
+@immutable
+class Draft {
+  const Draft({required this.title, required this.slug});
+
+  final String title;
+
+  /// The catalogue session this cut plays against. Nothing is really
+  /// generated, so a session you just built borrows one to be heard.
+  final String slug;
+}
+
+/// One cut this thread has made.
+@immutable
+class DraftVersion {
+  const DraftVersion({
+    required this.id,
+    required this.label,
+    required this.change,
+    required this.at,
+    required this.slug,
+  });
+
+  final String id;
+
+  /// As the progress card and the history name it.
+  final String label;
+
+  /// What produced it, in the user's own words.
+  final String change;
+  final DateTime at;
+
+  /// The catalogue session this cut stands in for.
+  final String slug;
+}
+
+/// The label the next build takes.
+///
+/// Bumps the minor where there is one — v1.2 to v1.3 — the major where there
+/// is not, and starts a v2 where the name carries no version at all, which is
+/// what a published session's does.
+String nextVersionLabel(String label) {
+  final match = RegExp(r'\s+v(\d+)(?:\.(\d+))?$', caseSensitive: false)
+      .firstMatch(label);
+  if (match == null) return '$label v2';
+  final base = label.substring(0, match.start);
+  final major = int.parse(match.group(1)!);
+  final minor = match.group(2);
+  if (minor == null) return '$base v${major + 1}';
+  return '$base v$major.${int.parse(minor) + 1}';
+}
+
+/// What the demo thread opens on. The opening lines say "the sleep meditation
+/// we created", so one already exists — a history that started empty would
+/// contradict the first line of the conversation.
+const kDefaultDraft = Draft(title: 'Sleep meditation v1.2', slug: 'night-rain-sleep');
+
 /// The cockpit thread, held above the navigator — the mobile mirror of the web
 /// app's `ChatSessionContext`.
 ///
@@ -138,11 +195,57 @@ class ChatSessionController extends ChangeNotifier {
   /// Which session the thread is about. Null is a new one.
   String? _sessionSlug;
 
+  Draft _draft = kDefaultDraft;
+
+  /// What the cockpit is building. The progress card, the transport and
+  /// Publish all point at this rather than at a fixed string.
+  Draft get draft => _draft;
+
+  set draft(Draft next) {
+    _draft = next;
+    notifyListeners();
+  }
+
+  /// Every cut this thread has made, oldest first.
+  final versions = <DraftVersion>[
+    DraftVersion(
+      id: 'v0',
+      label: kDefaultDraft.title,
+      change: 'The cut you have been listening to',
+      at: _backdated,
+      slug: kDefaultDraft.slug,
+    ),
+  ];
+
+  /// Which of them the card, the transport and Publish are pointed at. Not
+  /// always the newest — reverting moves it back without deleting anything.
+  String? _currentVersionId = 'v0';
+  String? get currentVersionId => _currentVersionId;
+
+  /// The cut that is live, or null if this thread has never published.
+  ///
+  /// Compared against [currentVersionId] it answers the only question the
+  /// Publish control needs: nothing published yet, published and unchanged, or
+  /// published and moved on since.
+  String? _publishedVersionId;
+  String? get publishedVersionId => _publishedVersionId;
+
+  /// What the menu should offer, or null when there is nothing to offer —
+  /// what is live is already what you are looking at.
+  String? get publishLabel => _publishedVersionId == null
+      ? 'Publish'
+      : (_publishedVersionId == _currentVersionId ? null : 'Republish');
+
+  int _nextVersionNo = 1;
+
   /// Seeds already taken, so re-entering the cockpit does not say the same
   /// opening line twice.
   final _seeded = <String>{};
 
   final _timers = <Timer>[];
+
+  /// How far back the thread's opening exchange is backdated.
+  static final _backdated = DateTime.now().subtract(const Duration(minutes: 9));
   bool _disposed = false;
 
   SessionState get session => _session;
@@ -153,6 +256,94 @@ class ChatSessionController extends ChangeNotifier {
   /// True while the set can still be changed and applied.
   bool get canApply =>
       _session == SessionState.idle || _session == SessionState.updating;
+
+  /// Records the cut a build is making.
+  ///
+  /// Called when a build starts rather than when it finishes, so the history
+  /// can show the one being made.
+  ///
+  /// The label comes off the newest version rather than the current one:
+  /// revert to v1.2 with a v1.4 in the list and the next change is v1.5, not a
+  /// second v1.3. History stays a list rather than a tree, which is the right
+  /// shape for a demo and the only one a single card can point at honestly.
+  void addVersion(String change) {
+    final label =
+        versions.isEmpty ? _draft.title : nextVersionLabel(versions.last.label);
+    final id = 'v${_nextVersionNo++}';
+    versions.add(DraftVersion(
+      id: id,
+      label: label,
+      change: change,
+      at: DateTime.now(),
+      slug: _draft.slug,
+    ));
+    _currentVersionId = id;
+    _draft = Draft(title: label, slug: _draft.slug);
+    notifyListeners();
+  }
+
+  /// Called when the publish sheet finishes: what is live is what is current.
+  void markPublished() {
+    _publishedVersionId = _currentVersionId ?? _publishedVersionId;
+    if (_sessionSlug != null) publishSession(_sessionSlug!);
+    notifyListeners();
+  }
+
+  /// Taken down. Nothing is live, so the thread offers Publish again.
+  void markUnpublished() {
+    _publishedVersionId = null;
+    if (_sessionSlug != null) unpublishSession(_sessionSlug!);
+    notifyListeners();
+  }
+
+  /// Point the draft at a named cut from anywhere.
+  ///
+  /// The Chapters tab lists the catalogue's versions, which are not this
+  /// thread's [versions] and carry their own ids — so it cannot go through
+  /// [revertTo].
+  void pointAt({required String id, required String label, required String slug}) {
+    _currentVersionId = id;
+    _draft = Draft(title: label, slug: slug);
+    notifyListeners();
+  }
+
+  /// Point the draft back at an earlier cut of this thread's own making.
+  void revertTo(String id) {
+    for (final version in versions) {
+      if (version.id != id) continue;
+      pointAt(id: id, label: version.label, slug: version.slug);
+      return;
+    }
+  }
+
+  /// Says, in the thread, that the draft has gone back to an earlier cut.
+  ///
+  /// The work lands in the conversation because that is where this session's
+  /// changes are accounted for: without the two lines the card quietly renames
+  /// itself and nothing says why.
+  void sayReverted(String label) {
+    messages.addAll([
+      ChatMessage(
+        id: _nextId++,
+        fromAurelia: false,
+        at: DateTime.now(),
+        status: DeliveryStatus.read,
+        text: 'Go back to $label.',
+      ),
+      ChatMessage(
+        id: _nextId++,
+        fromAurelia: true,
+        at: DateTime.now().add(const Duration(milliseconds: 1)),
+        text: 'Back on $label. The later cuts are still in the history, so you '
+            'can come forward again — nothing is lost by trying one.',
+      ),
+    ]);
+    // The cut you reverted to is finished, so the card plays it rather than
+    // offering to build it.
+    progress.value = 100;
+    _session = SessionState.ready;
+    notifyListeners();
+  }
 
   void openDeck() {
     if (_deckOpen || !canApply) return;
@@ -206,7 +397,7 @@ class ChatSessionController extends ChangeNotifier {
   /// demo's own texture and stays put.
   List<ChatMessage> _messagesForSession(SessionRecord session) {
     final start = DateTime.now().subtract(const Duration(minutes: 9));
-    final draft = !session.published;
+    final draft = !isPublished(session);
     final outcome = session.outcome.isEmpty ? null : session.outcome.first;
 
     final opening = draft
@@ -270,6 +461,21 @@ class ChatSessionController extends ChangeNotifier {
       ..addAll(kRecommendations.map((r) => r.id));
     _session = SessionState.idle;
     _typing = false;
+    // Seeded per thread: a session already out in the world opens on the cut
+    // people can hear, a draft on nothing.
+    _draft = Draft(title: session.title, slug: session.slug);
+    versions
+      ..clear()
+      ..add(DraftVersion(
+        id: 'v0',
+        label: session.title,
+        change: 'The cut you have been listening to',
+        at: DateTime.now().subtract(const Duration(minutes: 9)),
+        slug: session.slug,
+      ));
+    _currentVersionId = 'v0';
+    _publishedVersionId = isPublished(session) ? 'v0' : null;
+    _nextVersionNo = 1;
     // Laid open, not folded. A folded deck is Aurelia handing over a proposal;
     // this session exists, so its changes are what you came to look at.
     _deckOpen = true;
@@ -326,6 +532,9 @@ class ChatSessionController extends ChangeNotifier {
               '${brief.changes.map((line) => '• $line').join('\n')}'
           : 'Recreate “${brief.title}” by ${brief.author}.',
     ));
+    // A fork is a v2 of somebody else's, and until it is built it stands in
+    // for the original — which is at least the right session.
+    _draft = Draft(title: '${brief.title} v2', slug: brief.slug);
     _typing = true;
     notifyListeners();
     _after(const Duration(milliseconds: 1600), () {
@@ -397,6 +606,12 @@ class ChatSessionController extends ChangeNotifier {
   void applyChanges() {
     if (applied.isEmpty || _session == SessionState.updating) return;
     _session = SessionState.updating;
+    // A change makes a new cut, and it is recorded here rather than when the
+    // percentage lands: the history has to be able to show the one being made.
+    addVersion(kRecommendations
+        .where((r) => applied.contains(r.id))
+        .map((r) => r.title)
+        .join(', '));
     notifyListeners();
 
     _after(const Duration(milliseconds: 1400), () {
@@ -432,6 +647,19 @@ class ChatSessionController extends ChangeNotifier {
     _typing = false;
     _deckOpen = false;
     _sessionSlug = null;
+    _draft = kDefaultDraft;
+    versions
+      ..clear()
+      ..add(DraftVersion(
+        id: 'v0',
+        label: kDefaultDraft.title,
+        change: 'The cut you have been listening to',
+        at: DateTime.now().subtract(const Duration(minutes: 9)),
+        slug: kDefaultDraft.slug,
+      ));
+    _currentVersionId = 'v0';
+    _publishedVersionId = null;
+    _nextVersionNo = 1;
     _seeded.clear();
     _nextId = 1;
     progress.value = 0;
