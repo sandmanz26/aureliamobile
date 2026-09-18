@@ -14,6 +14,8 @@ import type { CategoryFilter, Shelf } from '../lib/sessions'
 import { CATEGORY_FILTERS, categoryLabel, findSession, sessionsOnShelf } from '../lib/sessions'
 import { CategorySheet } from '../components/ui/CategorySheet'
 import { CoinPill } from '../components/ui/CoinPill'
+import { CHALLENGES } from '../lib/challenges'
+import type { ChallengeRecord } from '../lib/challenges'
 
 /**
  * Sessions — the browse surface behind the Sessions nav item.
@@ -39,12 +41,23 @@ const recentlyPlayed: { slug: string; minutes: number; progress: number }[] = [
   { slug: 'rainy-mind', minutes: 14, progress: 0.81 },
 ]
 
-/** The three facts the design puts on the challenge card. */
-const challengeStats = [
-  { icon: Coins, label: '250 pts' },
-  { icon: Users, label: '2.3k joined' },
-  { icon: Clock, label: '30 days' },
-]
+/**
+ * The three facts the design puts on the challenge card, read off the
+ * challenge rather than written out.
+ *
+ * All three were hard-coded — "250 pts", "2.3k joined", "30 days" — beside a
+ * hard-coded title, summary, cover and slug. The card described one challenge
+ * because it *was* one challenge, so a second could not appear and the first
+ * could never be wrong in an interesting way.
+ */
+function challengeStats(challenge: ChallengeRecord) {
+  return [
+    { icon: Coins, label: `${challenge.points} pts` },
+    // "0 joined" is a fact worth printing on a challenge that just opened.
+    { icon: Users, label: `${challenge.joined} joined` },
+    { icon: Clock, label: `${challenge.totalDays} days` },
+  ]
+}
 
 /** Section heading, optionally with a link on the right. */
 function SectionHeader({
@@ -349,46 +362,49 @@ export function ExplorePage() {
 
         {isEnabled('sessions.challenge') && (
           <section className="mt-32">
-            <SectionHeader title="Monthly Challenge!" />
-            <div className="relative mt-16 flex aspect-[362/240] w-full flex-col justify-end overflow-hidden rounded-24 p-16 text-text-inverse">
-              <CoverImage
-                photo="neural"
-                gradient="linear-gradient(160deg, var(--color-espresso-950), var(--color-warning-700))"
-                width={760}
-                height={520}
-              />
-              {/* The whole card opens the challenge; Join sits above it. */}
-              <Link
-                to="/challenge/nervous-system-reset"
-                aria-label="Open the 30-Day Nervous System Reset challenge"
-                className="absolute inset-0 z-10"
-              />
-              <Link
-                to="/challenge/nervous-system-reset"
-                className="text-style-label absolute right-16 top-16 z-20 flex h-32 items-center gap-6 whitespace-nowrap rounded-full bg-surface-default/90 px-12 text-text-primary"
-              >
-                Join
-                <ArrowRight size={13} />
-              </Link>
+            <SectionHeader title={CHALLENGES.length > 1 ? 'Monthly Challenges!' : 'Monthly Challenge!'} />
+            {/* A shelf, because there is more than one now. Same idiom as every
+                other row on this page: the card keeps the frame's 362 and the
+                next one peeks, which is what says the row scrolls. */}
+            <div className="-mx-20 mt-16 flex gap-12 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
+              {CHALLENGES.map((challenge) => (
+                <div
+                  key={challenge.slug}
+                  className="relative flex aspect-[362/240] w-[362px] shrink-0 flex-col justify-end overflow-hidden rounded-24 p-16 text-text-inverse"
+                >
+                  <CoverImage photo={challenge.photo} gradient={challenge.gradient} width={760} height={520} />
+                  {/* The whole card opens the challenge; Join sits above it. */}
+                  <Link
+                    to={`/challenge/${challenge.slug}`}
+                    aria-label={`Open the ${challenge.title} challenge`}
+                    className="absolute inset-0 z-10"
+                  />
+                  <Link
+                    to={`/challenge/${challenge.slug}`}
+                    className="text-style-label absolute right-16 top-16 z-20 flex h-32 items-center gap-6 whitespace-nowrap rounded-full bg-surface-default/90 px-12 text-text-primary"
+                  >
+                    Join
+                    <ArrowRight size={13} />
+                  </Link>
 
-              <p className="text-style-title relative">30-Day Nervous System Reset</p>
-              <p className="text-style-body-small relative mt-4 opacity-90">
-                Slow down and build a calmer daily rhythm.
-              </p>
-              <div className="relative mt-14 flex flex-wrap gap-8">
-                {challengeStats.map((stat) => {
-                  const Icon = stat.icon
-                  return (
-                    <span
-                      key={stat.label}
-                      className="text-style-caption inline-flex h-28 items-center gap-6 whitespace-nowrap rounded-full bg-surface-default/20 px-12 backdrop-blur-sm"
-                    >
-                      <Icon size={12} />
-                      {stat.label}
-                    </span>
-                  )
-                })}
-              </div>
+                  <p className="text-style-title relative">{challenge.title}</p>
+                  <p className="text-style-body-small relative mt-4 opacity-90">{challenge.summary}</p>
+                  <div className="relative mt-14 flex flex-wrap gap-8">
+                    {challengeStats(challenge).map((stat) => {
+                      const Icon = stat.icon
+                      return (
+                        <span
+                          key={stat.label}
+                          className="text-style-caption inline-flex h-28 items-center gap-6 whitespace-nowrap rounded-full bg-surface-default/20 px-12 backdrop-blur-sm"
+                        >
+                          <Icon size={12} />
+                          {stat.label}
+                        </span>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
         )}

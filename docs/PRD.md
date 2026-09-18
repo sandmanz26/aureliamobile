@@ -429,6 +429,37 @@ still shows Latest. The app gates that on being signed in, which is the right
 call — there is no history to show someone who has none — so the frame is the
 one that is wrong there.
 
+### Two challenges, and the second one is empty on purpose
+
+Explore carried one challenge, and carried it as **markup**: the slug, title,
+summary, cover, gradient and all three stat pills were written into the page.
+`CHALLENGES` existed and the card ignored it. So a second challenge could not
+appear, and the card could never be wrong in a way anyone would notice.
+
+The card now reads its challenge, and the section is a shelf — the same idiom
+as every other row on Explore, card at the frame's 362 with the next one
+peeking, which is what says the row scrolls. The heading takes a plural when
+there is more than one.
+
+**`14-Day Morning Light` is deliberately empty**: nobody joined, nothing made
+for it, no board. Every other list in this catalogue is populated, which makes
+the app pleasant to demo and useless for judging what a challenge looks like on
+day one — and day one is the state a real challenge spends its first hours in.
+
+Two empty states came out of it, both of which were holes rather than choices:
+
+- **The podium** would have rendered its gradient block with nothing standing
+  on it — a trophy plinth for nobody, because `Podium` filters missing
+  contenders and an empty list filters to nothing. It is replaced by a plain
+  statement of what is true and what would change it.
+- **Created Session** was hidden entirely when empty (`sessions.length > 0`).
+  An absent heading reads as a screen still loading; an empty one reads as a
+  challenge nobody has made anything for yet, which is the invitation. It is
+  shown with a line under it now.
+
+`points` moved onto the record with them — "250 pts" had been hard-coded beside
+a hard-coded everything else.
+
 ### Publish, Republish, or nothing
 
 The cockpit's menu offered **Publish** on every session, including one already

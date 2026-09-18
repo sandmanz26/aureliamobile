@@ -184,9 +184,25 @@ export function ChallengeDetailPage() {
             <h1 className="text-style-title-large mt-16 text-text-primary">{challenge.title}</h1>
             <p className="text-style-body mt-8 text-text-secondary">{challenge.summary}</p>
 
-            <div className="mt-24">
-              <Podium top={podium} />
-            </div>
+            {/* A challenge that has just opened has no board, and `Podium`
+                would render its gradient block with nothing standing on it —
+                a trophy plinth for nobody. The empty state says what is
+                actually true and what would change it. */}
+            {podium.length === 0 ? (
+              <div className="mt-24 flex flex-col items-center gap-8 rounded-24 border border-border-subtle px-20 py-32 text-center">
+                <span className="flex size-56 items-center justify-center rounded-full bg-background-elevated">
+                  <Trophy size={24} className="text-icon-secondary" />
+                </span>
+                <h2 className="text-style-body mt-8 text-text-primary">No one on the board yet</h2>
+                <p className="text-style-body-small max-w-[280px] font-light! text-text-secondary">
+                  This one just opened. Join it, make a session for it, and yours is the first name here.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-24">
+                <Podium top={podium} />
+              </div>
+            )}
 
             <div className="mt-8 flex flex-col divide-y divide-border-subtle">
               {ranked.map((contender) => {
@@ -209,7 +225,18 @@ export function ChallengeDetailPage() {
               })}
             </div>
 
-            {sessions.length > 0 && (
+            {sessions.length === 0 ? (
+              <section className="mt-32">
+                <h2 className="text-style-title text-text-primary">Created Session</h2>
+                {/* Shown rather than hidden: an absent heading reads as a
+                    screen still loading, where an empty one reads as a
+                    challenge nobody has made anything for yet — which is the
+                    invitation. */}
+                <p className="text-style-body-small mt-16 font-light! text-text-secondary">
+                  Nothing made for this one yet. A session you build and publish while you are in it lands here.
+                </p>
+              </section>
+            ) : (
               <section className="mt-32">
                 <h2 className="text-style-title text-text-primary">Created Session</h2>
                 <div className="-mx-20 mt-16 flex gap-12 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">

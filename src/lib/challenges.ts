@@ -33,6 +33,8 @@ export interface ChallengeRecord {
   photo: CoverKey
   gradient: string
   joined: string
+  /** What finishing it is worth, in coins. Explore had this hard-coded. */
+  points: number
   endsInDays: number
   totalDays: number
   minutesPerDay: number
@@ -52,6 +54,7 @@ export const CHALLENGES: ChallengeRecord[] = [
     photo: 'neural',
     gradient: 'linear-gradient(160deg, var(--color-espresso-950), var(--color-warning-700))',
     joined: '2.3k',
+    points: 250,
     endsInDays: 18,
     totalDays: 30,
     minutesPerDay: 8,
@@ -65,6 +68,30 @@ export const CHALLENGES: ChallengeRecord[] = [
       { rank: 6, sessionSlug: 'dream-drift', creator: 'Adam Nilson', creatorPhoto: 'avatar', plays: '8,761', trend: 'up' },
     ],
     sessionSlugs: ['mind-dance', 'inner-balance'],
+  },
+  {
+    /**
+     * Just opened, and deliberately empty.
+     *
+     * Every other list in this catalogue is populated, which makes the app
+     * pleasant to demo and useless for judging what a challenge looks like on
+     * day one — nobody has joined, nothing has been made for it, and there is
+     * no board to rank. That is the state a real challenge spends its first
+     * hours in, and the one the product has to be honest in.
+     */
+    slug: 'morning-light',
+    title: '14-Day Morning Light',
+    summary: 'Start earlier, and let the day settle itself.',
+    photo: 'morning',
+    gradient: 'linear-gradient(160deg, var(--color-espresso-900), var(--color-warning-500))',
+    joined: '0',
+    points: 150,
+    endsInDays: 14,
+    totalDays: 14,
+    minutesPerDay: 6,
+    yourDay: null,
+    leaderboard: [],
+    sessionSlugs: [],
   },
 ]
 
