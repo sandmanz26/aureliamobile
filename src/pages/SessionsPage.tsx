@@ -7,7 +7,7 @@ import { useSignInGate } from '../auth/useSignInGate'
 import { useDrawer } from '../layouts/DrawerContext'
 import { CURRENT_USER } from '../lib/people'
 import type { SessionRecord } from '../lib/sessions'
-import { PUBLISHED_SESSIONS, SESSIONS, durationLabel, isRecreated } from '../lib/sessions'
+import { PUBLISHED_SESSIONS, SESSIONS, durationLabel, isPublished, isRecreated } from '../lib/sessions'
 
 /** The card shadow every surface in this design shares (Figma effect 16520:822). */
 const CARD_SHADOW = 'shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)]'
@@ -67,7 +67,7 @@ function Pill({ className, children }: { className: string; children: React.Reac
 function SessionRow({ session, onDelete }: { session: SessionRecord; onDelete: (slug: string) => void }) {
   const outcome = session.outcome[0]
   const down = outcome?.value.trim().startsWith('−') || outcome?.value.trim().startsWith('-')
-  const published = session.published !== false
+  const published = isPublished(session)
 
   return (
     <article className={`flex flex-col gap-16 overflow-hidden rounded-[20px] bg-surface-default px-16 py-18 ${CARD_SHADOW}`}>

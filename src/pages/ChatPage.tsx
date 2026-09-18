@@ -22,7 +22,7 @@ import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import { useDrawer } from '../layouts/DrawerContext'
 import { CURRENT_USER } from '../lib/people'
-import { findSession } from '../lib/sessions'
+import { findSession, publishSession } from '../lib/sessions'
 
 const SUGGESTIONS = ['Add more white noise', 'Make it longer', 'Female voice']
 
@@ -373,9 +373,16 @@ export function ChatPage() {
 
   useEffect(() => {
     if (publishState !== 'publishing') return
-    const timer = window.setTimeout(() => setPublishState('published'), 2200)
+    const timer = window.setTimeout(() => {
+      setPublishState('published')
+      // Record it, or the sheet is the only thing that ever knew. Social
+      // Impact reads this to leave its empty state, and the Sessions list to
+      // stop calling the session a draft.
+      const slug = sessionSlug ?? draft.slug
+      if (slug) publishSession(slug)
+    }, 2200)
     return () => window.clearTimeout(timer)
-  }, [publishState])
+  }, [publishState, sessionSlug, draft.slug])
 
   function toggleRecommendation(id: string) {
     setApplied((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]))

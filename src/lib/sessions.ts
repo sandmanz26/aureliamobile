@@ -1461,9 +1461,27 @@ export const SESSIONS: SessionRecord[] = [
   },
 ]
 
+/**
+ * Sessions published in this browser, since the catalogue is a module constant.
+ *
+ * `published: false` is a draft's *starting* state, not a permanent fact — the
+ * whole point of the Publish sheet is to change it. There was nowhere to record
+ * that, so pressing Publish moved a sheet and nothing else: Social Impact stayed
+ * on its empty state for good, and the Sessions list went on calling a published
+ * session "Not Published".
+ *
+ * In memory like everything else this demo remembers: it survives moving around
+ * the product, and a reload starts over.
+ */
+const publishedHere = new Set<string>()
+
+export function publishSession(slug: string) {
+  publishedHere.add(slug)
+}
+
 /** Out in the world. A draft is built and has not been published. */
 export function isPublished(session: SessionRecord) {
-  return session.published !== false
+  return session.published !== false || publishedHere.has(session.slug)
 }
 
 /**

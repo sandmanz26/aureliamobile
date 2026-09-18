@@ -21,7 +21,7 @@ import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { progressFor, writeObjective } from '../lib/progress'
 import { ObjectiveSheet } from '../components/ui/ObjectiveSheet'
 import type { ProgressTab, Version } from '../lib/progress'
-import { findSession } from '../lib/sessions'
+import { findSession, isPublished } from '../lib/sessions'
 import { useChatSession } from '../chat/ChatSessionContext'
 
 /** The card shadow every surface in this design shares (Figma effect 16520:822). */
@@ -269,7 +269,7 @@ export function ProgressPage() {
   // Social Impact has nothing to report until the world can reach the session.
   // The frame draws that as its own screen, ending in the one action that
   // would change it, rather than three cards all reading zero.
-  const unpublished = session.published === false
+  const unpublished = !isPublished(session)
 
   const tab = (params.get('tab') as ProgressTab) ?? 'chapters'
   void saved

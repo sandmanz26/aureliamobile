@@ -461,9 +461,27 @@ inside the block, 8 between the lines; the button hugs its label at 48 tall and
 radius 40 rather than filling the column, because it is an offer and not the
 screen's primary action.
 
-It shows when `published === false`, which is exactly the condition the CTA
-addresses. Publish Now hands off to the cockpit — Publish lives there, not in
-Insights — and opens the sheet on arrival.
+It shows when the session is not published, which is exactly the condition the
+CTA addresses. Publish Now hands off to the cockpit — Publish lives there, not
+in Insights — and opens the sheet on arrival.
+
+**And pressing Publish now actually publishes.** The sheet ran
+`publishing → published` and never touched the session record, so the empty
+state was a dead end: the one action it offered could not change the answer it
+was reporting. `published: false` is a draft's *starting* state, not a permanent
+fact.
+
+`publishSession(slug)` records it and `isPublished(session)` reads it — the
+function that already existed for this question, extended rather than
+duplicated, so every surface agrees. In memory like everything else this demo
+remembers.
+
+The order the design implies is now the order the app walks:
+
+| | Social Impact | Sessions list |
+| --- | --- | --- |
+| Before | the empty state, ending in Publish Now | Not Published |
+| After | earnings, Community, Lineage Tree | Published |
 
 ### Chapters is the version history, and it is the only one
 
