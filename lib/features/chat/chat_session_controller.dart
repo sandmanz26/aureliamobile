@@ -634,6 +634,14 @@ class ChatSessionController extends ChangeNotifier {
   }
 
   /// Back to a thread with nothing in it — what "New session" means.
+  ///
+  /// Empty, per Figma 16658:28872: the orb, the greeting and the openers, with
+  /// nothing above the composer. It used to open on the demo conversation, on
+  /// the grounds that a blank scroll is a worse first screen than one already
+  /// mid-conversation. The frame disagrees, and it is right: that conversation
+  /// was about a session the user had not made, so "New session" opened on
+  /// somebody else's and the first thing the screen did was misrepresent
+  /// itself.
   void reset() {
     for (final timer in _timers) {
       timer.cancel();
@@ -663,7 +671,6 @@ class ChatSessionController extends ChangeNotifier {
     _seeded.clear();
     _nextId = 1;
     progress.value = 0;
-    _seedOpening();
     notifyListeners();
   }
 

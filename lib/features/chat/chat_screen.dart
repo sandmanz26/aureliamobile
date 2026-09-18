@@ -13,7 +13,10 @@ import '../player/player_screen.dart';
 import '../progress/progress_screen.dart';
 import '../shell/app_drawer.dart';
 import 'chat_session_controller.dart';
+import '../upgrade/upgrade_screen.dart';
 import 'widgets/attached_session.dart';
+import 'widgets/empty_thread.dart';
+import 'widgets/free_limit_notice.dart';
 import 'widgets/mini_player.dart';
 import 'widgets/recommendation_card.dart';
 import 'widgets/recommendation_deck.dart';
@@ -62,6 +65,26 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   static const _suggestions = ['Add more white noise', 'Make it longer', 'Female voice'];
+
+  /// Openers for a session with nothing in it yet — the hardest part of a
+  /// blank chat is the first sentence, so the screen offers a few.
+  static const _openers = [
+    'Good morning, how did I sleep?',
+    'Create a meditation for tonight',
+    'Something for a restless afternoon',
+  ];
+
+  /// Sends the free plan allows in one thread before it pauses.
+  static const _freeSends = 3;
+
+  /// How long until the allowance comes back.
+  static const _freeResetMinutes = 30;
+
+  /// When the allowance comes back, fixed at the moment the limit trips.
+  ///
+  /// Recomputed on every build it would tick forward as you looked at it,
+  /// which reads as the product moving the goalposts.
+  String? _resetAt;
 
   final _scrollController = ScrollController();
   final _composer = TextEditingController();
@@ -229,6 +252,19 @@ class _ChatScreenState extends State<ChatScreen> {
     final chat = ChatSessionScope.of(context);
     final playback = PlaybackScope.of(context);
     final showApplyChip = chat.applied.isNotEmpty && chat.canApply;
+    final empty = chat.messages.isEmpty;
+    // Attachments do not count: a forked session arrives as a message the user
+    // did not type, and charging them for it would be the app billing itself.
+    final sends = chat.messages
+        .where((m) => !m.fromAurelia && m.attachedSlug == null)
+        .length;
+    final limited = sends >= _freeSends;
+    if (limited) {
+      _resetAt ??= _clock(
+          DateTime.now().add(const Duration(minutes: _freeResetMinutes)));
+    } else {
+      _resetAt = null;
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -289,18 +325,21 @@ class _ChatScreenState extends State<ChatScreen> {
                 controller: _scrollController,
                 padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
                 children: [
-                  Center(
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: AppSpacing.s2),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.s3, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.backgroundElevated,
-                        borderRadius: BorderRadius.circular(AppRadius.full),
+                  if (empty)
+                    const EmptyThread(name: 'Adam')
+                  else
+                    Center(
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: AppSpacing.s2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.s3, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.backgroundElevated,
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                        ),
+                        child: Text('Today', style: AppTextStyles.caption),
                       ),
-                      child: Text('Today', style: AppTextStyles.caption),
                     ),
-                  ),
                   for (var i = 0; i < chat.messages.length; i++) _bubble(chat, i),
                   // The recommendations belong in the thread, under the message
                   // that proposes them, and they go away once a rebuild is
@@ -375,6 +414,46 @@ class _ChatScreenState extends State<ChatScreen> {
                 onCancel: () => setState(() => _listening = false),
               )
             else ...[
+              if (limited)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                      AppPadding.page, 0, AppPadding.page, AppSpacing.s3),
+                  child: FreeLimitNotice(
+                    resetAt: _resetAt!,
+                    onNewSession: () {
+                      chat.reset();
+                      setState(() => _resetAt = null);
+                    },
+                    onUpgrade: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                          builder: (_) => const UpgradeScreen()),
+                    ),
+                  ),
+                ),
+              if (empty && !limited)
+                SizedBox(
+                  height: 44,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppPadding.page),
+                    itemCount: _openers.length,
+                    separatorBuilder: (_, __) =>
+                        const SizedBox(width: AppSpacing.s2),
+                    itemBuilder: (context, index) => OutlinedButton(
+                      onPressed: () => chat.send(text: _openers[index]),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 44),
+                        side: const BorderSide(color: AppColors.borderSubtle),
+                        foregroundColor: AppColors.textPrimary,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: AppPadding.page),
+                      ),
+                      child: Text(_openers[index], style: AppTextStyles.bodySm),
+                    ),
+                  ),
+                )
+              else if (!limited)
               SizedBox(
                 height: 40,
                 child: ListView.separated(

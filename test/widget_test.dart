@@ -18,6 +18,9 @@ import 'package:aurelia_mobile/features/chat/widgets/mini_player.dart';
 import 'package:aurelia_mobile/features/chat/widgets/recommendation_deck.dart';
 import 'package:aurelia_mobile/features/chat/widgets/recommendation_card.dart';
 import 'package:aurelia_mobile/features/chat/widgets/attached_session.dart';
+import 'package:aurelia_mobile/features/chat/widgets/empty_thread.dart';
+import 'package:aurelia_mobile/features/chat/widgets/free_limit_notice.dart';
+import 'package:aurelia_mobile/features/upgrade/upgrade_screen.dart';
 import 'package:aurelia_mobile/features/player/player_screen.dart';
 import 'package:aurelia_mobile/features/recreate/recreate_screen.dart';
 import 'package:aurelia_mobile/features/progress/progress_screen.dart';
@@ -268,6 +271,12 @@ void main() {
       expect(replyTo('I can’t sleep').proposes, isTrue);
       expect(replyTo('a female voice please').text, contains('female voice'));
       expect(replyTo('how did I sleep?').text, contains('Six hours forty'));
+      // The opener this app offers on an empty thread. Under the `morning`
+      // rule it came back with a proposal for a wake-up session — an answer to
+      // a question nobody asked, to a question the product had put in their
+      // mouth.
+      expect(replyTo('Good morning, how did I sleep?').text,
+          contains('Six hours forty'));
       // Nothing matched is still an honest answer rather than a confident
       // non-answer.
       expect(replyTo('xyzzy'), same(kFallbackReply));
@@ -304,6 +313,72 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('What kind of sounds help you relax before bed?'),
           findsWidgets);
+    });
+
+    testWidgets('a new session opens empty, and the openers start it',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/chat', arguments: const ChatArgs(fresh: true));
+      await tester.pumpAndSettle();
+
+      // Nothing above the composer. It used to open on the demo conversation,
+      // which was about a session the user had not made — so "New session"
+      // opened on somebody else's.
+      expect(find.byType(EmptyThread), findsOneWidget);
+      expect(find.text('Hello Adam, What are you creating today?'),
+          findsOneWidget);
+      expect(find.text('Today'), findsNothing);
+
+      // The openers are there because the hardest part of a blank chat is the
+      // first sentence.
+      await tester.tap(find.text('Good morning, how did I sleep?'));
+      await tester.pump(const Duration(milliseconds: 2500));
+      await tester.pumpAndSettle();
+      expect(find.byType(EmptyThread), findsNothing);
+      expect(find.text('Good morning, how did I sleep?'), findsOneWidget);
+      // And Aurelia answers that, rather than filing a note about it.
+      expect(find.textContaining('Six hours forty'), findsOneWidget);
+    });
+
+    testWidgets('the free limit trips after three sends', (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/chat', arguments: const ChatArgs(fresh: true));
+      await tester.pumpAndSettle();
+
+      for (final said in ['one', 'two', 'three']) {
+        await tester.enterText(find.byType(TextField).last, said);
+        await tester.testTextInput.receiveAction(TextInputAction.send);
+        await tester.pump(const Duration(milliseconds: 2500));
+        await tester.pumpAndSettle();
+      }
+
+      // Above the composer, not in the thread: it is the product speaking
+      // about itself, and in the transcript it would scroll away.
+      expect(find.byType(FreeLimitNotice), findsOneWidget);
+      expect(find.textContaining('Session paused until'), findsOneWidget);
+
+      // Upgrade is the second way out, and it is a screen rather than a sheet.
+      await tester.tap(find.text('Upgrade'));
+      await tester.pumpAndSettle();
+      expect(find.byType(UpgradeScreen), findsOneWidget);
+      expect(find.text('\$10'), findsOneWidget);
+      await tester.tap(find.text('Annual'));
+      await tester.pumpAndSettle();
+      expect(find.text('\$100'), findsOneWidget);
+      await tester.tap(find.byTooltip('Close'));
+      await tester.pumpAndSettle();
+
+      // The first one costs nothing, and it clears the limit.
+      await tester.tap(find.text('New Session'));
+      await tester.pumpAndSettle();
+      expect(find.byType(FreeLimitNotice), findsNothing);
+      expect(find.byType(EmptyThread), findsOneWidget);
     });
 
     testWidgets('voice produces a reviewable transcript, then a real message',

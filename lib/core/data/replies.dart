@@ -81,6 +81,19 @@ final _rules = <_Rule>[
     ),
   ),
 
+  // ------------------------------------------------------------- the data --
+  // Above the briefs, not below them. "Good morning, how did I sleep?" is one
+  // of the openers this app offers on an empty thread, and under the `morning`
+  // rule it came back with a proposal for a wake-up session — an answer to a
+  // question nobody asked, to a question the product had put in their mouth.
+  _Rule(
+    'how-did-i-sleep',
+    RegExp(r'\b(how did i sleep|my sleep|sleep score|slept)\b'),
+    const Reply(
+      'Six hours forty last night, which is about your week. The light sleep is sitting high — that is usually what a late finish looks like rather than anything to worry about.',
+    ),
+  ),
+
   // --------------------------------------------------------------- length --
   _Rule(
     'shorter',
@@ -217,14 +230,7 @@ final _rules = <_Rule>[
     ),
   ),
 
-  // ------------------------------------------------------------- the data --
-  _Rule(
-    'how-did-i-sleep',
-    RegExp(r'\b(how did i sleep|my sleep|sleep score|slept)\b'),
-    const Reply(
-      'Six hours forty last night, which is about your week. The light sleep is sitting high — that is usually what a late finish looks like rather than anything to worry about.',
-    ),
-  ),
+  // -------------------------------------------------------- the pleasantries --
   _Rule(
     'greeting',
     RegExp(r'^\s*(hi|hey|hello|good morning|good evening|morning|yo)\b'),
