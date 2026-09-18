@@ -422,28 +422,51 @@ private window or blocked storage just means the app starts audible.
 
 ### One difference is not a design decision — it needs one
 
-**The Flutter client's player has no sound.** Every audio package for Flutter
-ships native code, and that app's single dependency and one-command build on a
-fresh machine is what that buys; this client plays a ten-second mock bed at no
-such cost. So on mobile the clock runs, the bar fills, the mini player behaves
-exactly as designed, and nothing is audible.
+**~~The Flutter client's player has no sound.~~** It does now. The no-plugins
+rule held for months and bought a real thing — `flutter run` on a fresh machine
+with no CocoaPods step — and it did not survive the first product requirement
+that needed a device: a wellness app whose player is silent and whose
+microphone does nothing is not demoable. Three plugins, each behind a seam
+(`AudioEngine`, `VoiceCapture`), so the widget tests still run without a
+platform channel anywhere near them.
 
-That is the right trade while the catalogue is mock — there is no real audio to
-play — and the wrong one the moment a session is a real file. The seam is one
-method on `PlaybackController`; the decision to spend a native plugin on it is
-a product call, not an engineering one.
+**One difference remains, and it is small: mute does not survive a relaunch on
+mobile.** On the web the switch is one `localStorage` line. On Flutter the only
+key-value store is a fourth native plugin, and the rule that app is built on is
+that a plugin has to earn its place. Remembering a mute does not, yet.
 
 **Both clients hold playback and the cockpit thread above their router.** A
 session being built has to survive leaving the cockpit to play it, and a session
 that is playing has to survive walking back to the cockpit. Owned by their
 screens, each tore down the other.
 
-**The scrub, the ±15s buttons and the sound switch are web-only so far.** They
-are behaviour rather than a shared shape, so nothing is out of step yet — but
-the reference has moved and the Flutter client has to follow. The scrub and the
-skips are pure controller work there and cost nothing; the sound switch is the
-awkward one, because a client with no audio has nothing to mute. It should ship
-with the audio, not before it, or it is a control that visibly does nothing.
+### What the two clients now share, and what they do not
+
+Everything in §06 above is on both clients unless this section says otherwise.
+The Flutter app was ~38 commits behind and has been brought up: the draggable
+scrubber and the ±15s buttons, the sound switch, Recreate opening the
+conversation with the fork attached, the reply engine and the "I don't know"
+questions, versions and Chapters' revert, Publish / Republish / Unpublish,
+Credits and a coin that reaches it, the second challenge, the empty new
+session, the free limit and Upgrade, the sixteen type styles, the deck's orbs,
+and the Objective sheet.
+
+Three differences are deliberate, and all three are platform rather than
+design:
+
+- **Mute does not persist on mobile** — see above.
+- **The Recreate form's switch is a constant, not a flag.** The web has the
+  `/__demo` console to hold feature flags; the Flutter client has no such
+  console, so `recreateFormEnabled` in `recreate_handoff.dart` is where that
+  screen is turned back on.
+- **The web renders a simulated phone status bar**, because it is viewed in a
+  browser.
+
+Two things are known to be behind on mobile and are not yet ported: **Home's
+line-by-line frame pass** (the fourteen weight and size corrections in the
+section above) and the **notification row's** own frame pass. Both are visual
+rather than behavioural, and both are measured against nodes that are already
+written down here.
 
 ### Home, read line by line against the frame
 
@@ -1539,6 +1562,34 @@ Two readings the frames do not settle, and what this app does instead:
 - **The frames are set in Sofia Pro; the `font-family/base` variable says
   Mulish**, and the app follows the variable. Every size and line-height above
   is the frame's; only the face differs, and that difference is still open.
+
+---
+
+### Media, voice and sign-in are wired; three things behind them are not
+
+The Flutter client now plays sound, records from the microphone, and treats
+Google and Apple as two different doors. What sits behind each is worth stating
+plainly, because each is a different kind of "not finished".
+
+| Surface | Real | Still mock |
+| --- | --- | --- |
+| Session playback | the audio engine, the clock, the clip length | every session plays the same ten-second bed |
+| Voice memo | the mic, the level meter, the file, playback | the transcript is a fixed sample string |
+| Google / Apple | the two paths, loading, cancel, failure, which provider | no SDK; a dummy returns a fixed account |
+
+**A cancelled sign-in gets no message.** The user dismissed the sheet
+themselves; a banner about it reads as a telling-off. A network failure and a
+rejection each get their own sentence, because they have different remedies.
+
+**Apple's email is not an identifier.** It is sent once, on first
+authorisation, and may be a private relay address that stops working if the
+user disconnects the app. Accounts key off the provider's stable id. The dummy
+returns a relay address on purpose so nobody writes code assuming otherwise.
+
+**A signed-in state is still a client-side claim.** The id token is what a
+backend would verify, and there is no backend to verify it — the same
+limitation the email-and-password path already has. `docs/SSO.md` has what
+turning any of this on actually requires.
 
 ---
 

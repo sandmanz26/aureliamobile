@@ -15,6 +15,11 @@
  * **Order matters.** The first rule that matches wins, so the specific ones
  * come before the general ones — "make it shorter" must not be caught by the
  * rule that answers "make it".
+ *
+ * **Both apostrophes, everywhere one appears.** A phone keyboard types the
+ * curly one by default, so a rule that only knows `don't` does not fire for
+ * most of the people using the mobile client — and the two clients run the
+ * same rule set.
  */
 
 export interface Reply {
@@ -67,7 +72,7 @@ const RULES: Rule[] = [
     id: 'dont-know',
     // `?` is anchored — "what should I do?" is a question, not a shrug. The
     // rest are not, so "idk what to change" still lands here.
-    test: /^\?+$|^\s*(idk|dunno|no idea|not sure)\b|i\s*(don'?t|do not)\s*know/,
+    test: /^\?+$|^\s*(idk|dunno|no idea|not sure)\b|i\s*(don['’]?t|do not)\s*know/,
     reply: {
       text: 'It’s alright. Here are few suggestions to help you understand better:',
       prompts: [
@@ -77,6 +82,19 @@ const RULES: Rule[] = [
         'How do you usually wind down before going to sleep?',
         'Is there anything that makes it harder for you to fall asleep?',
       ],
+    },
+  },
+
+  // ------------------------------------------------------------- the data --
+  // Above the briefs, not below them. "Good morning, how did I sleep?" is one
+  // of the openers this app offers on an empty thread, and under the `morning`
+  // rule it came back with a proposal for a wake-up session — an answer to a
+  // question nobody asked, to a question the product had put in their mouth.
+  {
+    id: 'how-did-i-sleep',
+    test: /\b(how did i sleep|my sleep|sleep score|slept)\b/,
+    reply: {
+      text: 'Six hours forty last night, which is about your week. The light sleep is sitting high — that is usually what a late finish looks like rather than anything to worry about.',
     },
   },
 
@@ -109,7 +127,7 @@ const RULES: Rule[] = [
   // ----------------------------------------------------------------- voice --
   {
     id: 'no-voice',
-    test: /\b(no voice|without voice|no guidance|no words|instrumental|don'?t speak|no talking)\b/,
+    test: /\b(no voice|without voice|no guidance|no words|instrumental|don['’]?t speak|no talking)\b/,
     reply: {
       text: 'No voice, then. The breath pacing carries it instead — it is slower to settle into, but nobody ever gets pulled out of it by a word they did not expect.',
           changes: true,
@@ -177,7 +195,7 @@ const RULES: Rule[] = [
   // -------------------------------------------------------------- the ask --
   {
     id: 'cannot-sleep',
-    test: /\b(can'?t sleep|cannot sleep|insomnia|awake|wake up|restless|tossing)\b/,
+    test: /\b(can['’]?t sleep|cannot sleep|insomnia|awake|wake up|restless|tossing)\b/,
     reply: {
       text: 'That is the pattern I would build against. Something that descends slowly and ends without a chime, so nothing at the end gives you a reason to check the time.',
       proposes: true,
@@ -216,14 +234,7 @@ const RULES: Rule[] = [
     },
   },
 
-  // ------------------------------------------------------------ the data --
-  {
-    id: 'how-did-i-sleep',
-    test: /\b(how did i sleep|my sleep|sleep score|slept)\b/,
-    reply: {
-      text: 'Six hours forty last night, which is about your week. The light sleep is sitting high — that is usually what a late finish looks like rather than anything to worry about.',
-    },
-  },
+  // ------------------------------------------------------ the pleasantries --
   {
     id: 'greeting',
     test: /^\s*(hi|hey|hello|good morning|good evening|morning|yo)\b/,
