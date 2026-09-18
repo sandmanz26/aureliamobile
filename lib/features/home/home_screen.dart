@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../core/auth/auth_scope.dart';
@@ -477,9 +478,22 @@ class _AskAureliaFieldState extends State<_AskAureliaField> {
             textInputAction: TextInputAction.send,
             onSubmitted: (_) => _submit(),
             style: AppTextStyles.bodyMd.copyWith(color: AppColors.textPrimary),
+            // Every border, not just `border`, and `filled: false`.
+            //
+            // The app's `inputDecorationTheme` paints a filled stadium for the
+            // auth fields, and `enabledBorder`/`focusedBorder` are separate
+            // properties that do not fall back to `border`. Setting only
+            // `border: none` left the theme's pill drawn *inside* this card —
+            // a second box around the text, which is not what the web has.
             decoration: InputDecoration(
               isDense: true,
+              filled: false,
               border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              disabledBorder: InputBorder.none,
+              errorBorder: InputBorder.none,
+              focusedErrorBorder: InputBorder.none,
               contentPadding: EdgeInsets.zero,
               hintText: 'Ask Aurelia..',
               hintStyle: AppTextStyles.bodyMd,
@@ -524,9 +538,14 @@ class _AskAureliaFieldState extends State<_AskAureliaField> {
   }
 }
 
-/// The world-map activity card. The map itself is an exported asset on web; on
-/// mobile it is drawn as a warm gradient until that asset is added to the
-/// bundle, with the three counters in the same place either way.
+/// Figma "Frame 45" — 362x320, padding 40/20/20/20, the counters pinned under
+/// the map.
+///
+/// **The map is the card.** It is the same `live-sessions-map.png` the web
+/// serves, and it was the one asset of the five that never made it into this
+/// bundle — so this drew a warm gradient instead and read as an empty orange
+/// box. The card holds the source image's aspect ratio so the dot-map is never
+/// stretched.
 class LiveSessionsCard extends StatelessWidget {
   const LiveSessionsCard({super.key});
 
@@ -535,14 +554,14 @@ class LiveSessionsCard extends StatelessWidget {
     return AspectRatio(
       aspectRatio: 362 / 320,
       child: Container(
+        clipBehavior: Clip.antiAlias,
         padding: const EdgeInsets.fromLTRB(
-            AppPadding.md, AppSpacing.s10, AppPadding.md, AppPadding.md),
+            AppPadding.page, AppSpacing.s10, AppPadding.page, AppPadding.page),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.xl2),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFFFFE1A8), Color(0xFFFF9A1F)],
+          image: const DecorationImage(
+            image: AssetImage('assets/images/live-sessions-map.png'),
+            fit: BoxFit.cover,
           ),
         ),
         child: Column(
@@ -550,27 +569,39 @@ class LiveSessionsCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                for (final (value, label) in [('87k', 'People'), ('20k', 'Today'), ('50', 'Now')])
+                for (final (index, (value, label)) in [
+                  ('87k', 'People'),
+                  ('20k', 'Today'),
+                  ('50', 'Now'),
+                ].indexed) ...[
+                  if (index > 0) const SizedBox(width: AppSpacing.s3),
                   Expanded(
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 6),
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s3),
-                      decoration: BoxDecoration(
-                        color: const Color(0x40FFFFFF),
-                        borderRadius: BorderRadius.circular(AppRadius.xl),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(value,
-                              style: AppTextStyles.titleLg
-                                  .copyWith(color: AppColors.textInverse)),
-                          Text(label,
-                              style: AppTextStyles.caption
-                                  .copyWith(color: AppColors.textInverse)),
-                        ],
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: AppSpacing.s3),
+                          color: const Color(0x40FFFFFF),
+                          child: Column(
+                            children: [
+                              // 24/32 Regular and 12/16 Light, as the web sets
+                              // them — not the scale's Semibold title and its
+                              // 10px caption, which is what these were.
+                              Text(value,
+                                  style: AppTextStyles.titleLgRegular
+                                      .copyWith(color: AppColors.textInverse)),
+                              Text(label,
+                                  style: AppTextStyles.labelLight
+                                      .copyWith(color: AppColors.textInverse)),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
+                ],
               ],
             ),
           ],
