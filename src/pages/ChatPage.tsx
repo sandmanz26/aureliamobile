@@ -179,7 +179,14 @@ export function ChatPage() {
     // first would show somebody else's conversation on the way to theirs.
     if (routeState.start || routeState.recreate) return
     setTyping(false)
-    reset()
+    // Empty, per Figma 16658:28872 — the orb, the greeting and the openers,
+    // with nothing above the composer. It used to open on the demo
+    // conversation on the grounds that a blank scroll is a worse first screen
+    // than one already mid-conversation. The frame disagrees, and it is right:
+    // that conversation was about a session the user had not made, so "New
+    // session" opened on somebody else's, and the first thing the screen did
+    // was misrepresent itself.
+    reset([])
   }, [location.key, routeState?.fresh, routeState?.start, routeState?.recreate, reset])
 
   // Point the thread at the session in the URL. openSession no-ops when it is
@@ -751,7 +758,10 @@ export function ChatPage() {
           {/* The accuracy caveat, as the frame has it. It belongs on a wellness
               product more than most: Aurelia talks about sleep and stress in
               specific figures, and none of them are a measurement. */}
-          <p className="text-style-caption px-20 text-center text-text-secondary">
+          {/* 12 Light at 19 on #9D9D9D — the frame's, not Caption's 10/14 on
+              text/secondary. A disclaimer set smaller than the smallest thing
+              around it reads as fine print somebody hopes you will skip. */}
+          <p className="px-20 text-center text-[12px] font-light leading-[19px] text-[#9D9D9D]">
             Aurelia AI can make mistakes. Check important info.
           </p>
 

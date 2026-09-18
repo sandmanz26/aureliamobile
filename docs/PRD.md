@@ -568,6 +568,35 @@ The order the design implies is now the order the app walks:
 | Before | the empty state, ending in Publish Now | Not Published |
 | After | earnings, Community, Lineage Tree | Published |
 
+### A new session opens empty
+
+`16658:28872`. New session opened on the **demo conversation** — the one about
+"the sleep meditation we created", which the user had not created. So the first
+thing the screen did was misrepresent itself, and `EmptyThread` — which existed,
+and was already close to this frame — was unreachable from the button whose
+whole job is to reach it.
+
+The rationale in the code was that "a cockpit with an empty scroll is a worse
+first screen than one already mid-conversation". The frame disagrees, and it is
+right: the frame's empty screen is not blank, it is an orb, a question and three
+openers. It says what the field is for without pretending work has happened.
+
+Two things were wrong in `EmptyThread` itself, and both had been invisible:
+
+- **The greeting rendered 32 Semibold where the frame says 24 Regular.** It
+  already carried `font-normal`, which is a no-op against `.text-style-*` —
+  that sits outside Tailwind's utility layer and needs `!`. So the weight had
+  been "fixed" in the source and never in the browser. Written out now, because
+  the frame's leading is 115% rather than the scale's 32.
+- **The orb was one blurred circle where the frame has three layers**: a 160
+  radial wash at half opacity, with a 52 gold disc and a 64 orange disc blurred
+  inside it and offset from each other. That offset is the effect — one centred
+  blur reads as a dot, these read as light with a direction in it.
+
+The disclaimer went with them: 12 Light at 19 on `#9D9D9D`, not Caption's 10/14
+on `text/secondary`. A disclaimer set smaller than everything around it reads as
+fine print somebody hopes you will skip.
+
 ### Chapters is the version history, and it is the only one
 
 `16669:12055` is a section of five Insights frames. Reading it settled a
