@@ -140,7 +140,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         {isEnabled('invite') && (
           <button
             type="button"
-            onClick={() => gate('/invite')}
+            onClick={() => {
+              onNavigate?.()
+              gate('/invite')
+            }}
             className="text-style-body u-press flex items-center gap-12 rounded-12 px-20 py-16 text-text-primary hover:bg-background-elevated"
           >
             <UserPlus size={24} className="text-icon-default" />
