@@ -1,4 +1,4 @@
-import { Pause, Play } from 'lucide-react'
+import { Pause, Play, Volume2, VolumeX } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAudioPlayer } from '../../audio/AudioPlayerContext'
 import { PhotoCircle } from '../ui/PhotoCircle'
@@ -13,9 +13,16 @@ import { PhotoCircle } from '../ui/PhotoCircle'
  *
  * Renders nothing when there is no session loaded, which is what keeps it out
  * of the header until the first play.
+ *
+ * **The sound switch is not in the frame.** It is here because silence is
+ * global and this is where you are when you notice you need it: the card is on
+ * screen precisely when a session is running and you are doing something else.
+ * Reachable only from the full player, the switch would be two taps away at
+ * the moment it is wanted, and — worse — a muted session playing here would
+ * have nothing on it to say why it is silent.
  */
 export function MiniPlayer() {
-  const { track, playing, elapsed, duration, toggle } = useAudioPlayer()
+  const { track, playing, elapsed, duration, muted, toggle, toggleMuted } = useAudioPlayer()
   if (!track) return null
 
   const progress = duration > 0 ? Math.min(1, elapsed / duration) : 0
@@ -34,6 +41,16 @@ export function MiniPlayer() {
           <p className="text-style-body truncate text-text-primary">{track.title}</p>
           <p className="text-style-label truncate font-normal! text-text-secondary">{track.author}</p>
         </Link>
+
+        <button
+          type="button"
+          onClick={toggleMuted}
+          aria-label={muted ? 'Turn sound on' : 'Turn sound off'}
+          aria-pressed={muted}
+          className="u-press flex size-32 shrink-0 items-center justify-center text-icon-default"
+        >
+          {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+        </button>
 
         <button
           type="button"

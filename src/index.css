@@ -108,6 +108,66 @@ body {
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
 }
 
+/* The player's scrubber.
+   A native range input rather than three painted spans: the spans could not be
+   dragged at all — the bar was a read-out of a clock, which is the one thing a
+   player's bar must not be — and rebuilding drag, keyboard and a screen
+   reader's value around a div is rebuilding this element badly.
+
+   The visuals are the frame's: a 7px track on black at 40%, the warm fill, and
+   a 28px white knob. The control is 28 tall so the knob is grabbable; the page
+   lays out a 7px strip and positions this over it, so nothing moves. */
+.u-scrubber {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 28px;
+  background: transparent;
+  cursor: pointer;
+}
+.u-scrubber::-webkit-slider-runnable-track {
+  height: 7px;
+  border-radius: 999px;
+  background-color: rgb(0 0 0 / 0.4);
+  background-image: linear-gradient(90deg, #ae4b46, #ffc500);
+  background-repeat: no-repeat;
+  background-size: var(--fill, 0%) 100%;
+}
+.u-scrubber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 28px;
+  width: 28px;
+  /* Centres the knob on a 7px track inside a 28px control. */
+  margin-top: -10.5px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+}
+.u-scrubber::-moz-range-track {
+  height: 7px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.4);
+}
+.u-scrubber::-moz-range-progress {
+  height: 7px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ae4b46, #ffc500);
+}
+.u-scrubber::-moz-range-thumb {
+  height: 28px;
+  width: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+}
+/* Over a photograph, so the ring is white rather than the browser's. */
+.u-scrubber:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 6px;
+  border-radius: 999px;
+}
+
 /* ---------------------------------------------------------- sticky top ---
    The frame pins the whole 122px top band: the status bar at 54 and the
    page's own header at 68 under it. `layoutPositioning: ABSOLUTE` on the

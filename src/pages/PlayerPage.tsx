@@ -1,5 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowLeft, ChevronRight, Pause, Play, Share2, Shuffle } from 'lucide-react'
+import type { CSSProperties } from 'react'
+import {
+  ArrowLeft,
+  ChevronRight,
+  Pause,
+  Play,
+  RotateCcw,
+  RotateCw,
+  Share2,
+  Shuffle,
+  Volume2,
+  VolumeX,
+} from 'lucide-react'
 import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { RecommendationCard } from '../components/chat/RecommendationCard'
 import { RECOMMENDATIONS } from '../chat/ChatSessionContext'
@@ -34,6 +46,34 @@ function clock(seconds: number) {
   const m = Math.floor(seconds / 60)
   const s = Math.floor(seconds % 60)
   return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+/** How far the skip buttons move the playhead, and the arrow keys half of it. */
+const SKIP = 15
+const NUDGE = 5
+
+/**
+ * Back 15 / forward 15, flanking the play disc.
+ *
+ * Not in the frame, which draws the disc alone. It is here because the bar
+ * above it is now draggable and a drag is the wrong instrument for "say that
+ * last bit again": on a ten-minute session fifteen seconds is under three
+ * pixels of track, which no thumb can land on.
+ */
+function SkipButton({ seconds, onPress }: { seconds: number; onPress: () => void }) {
+  const back = seconds < 0
+  return (
+    <button
+      type="button"
+      onClick={onPress}
+      aria-label={back ? `Back ${-seconds} seconds` : `Forward ${seconds} seconds`}
+      className="u-press relative flex size-44 shrink-0 items-center justify-center rounded-full bg-white/15 backdrop-blur-[12px]"
+    >
+      {back ? <RotateCcw size={26} strokeWidth={1.5} /> : <RotateCw size={26} strokeWidth={1.5} />}
+      {/* The number sits in the glyph's own gap, which is what that gap is for. */}
+      <span className="absolute text-[10px] font-semibold tabular-nums">{Math.abs(seconds)}</span>
+    </button>
+  )
 }
 
 /**
@@ -81,7 +121,7 @@ export function PlayerPage() {
 
   // Playback lives above the router. This screen is a view onto it, so
   // walking back to the cockpit leaves the session running.
-  const { playing, elapsed, duration, load, toggle } = useAudioPlayer()
+  const { playing, elapsed, duration, muted, load, toggle, seek, toggleMuted } = useAudioPlayer()
   const [expanded, setExpanded] = useState(false)
 
   // How far the sheet is pushed down from its pulled-up rest. 0 is up; the
@@ -143,8 +183,14 @@ export function PlayerPage() {
 
   if (!session) return <Navigate to="/home" replace />
 
-  const progress = Math.min(1, elapsed / duration)
-  const cue = CUES[Math.floor((elapsed / duration) * CUES.length) % CUES.length]
+  // Guarded: before the bed's metadata lands duration is its placeholder, and a
+  // zero there would hand the range input max={0} and NaN for the fill.
+  const shown = Math.min(elapsed, duration)
+  const progress = duration > 0 ? Math.min(1, shown / duration) : 0
+  // A quarter of the session each. Clamped rather than wrapped: the old modulo
+  // put the first line back on screen at 100%, so the session ended by telling
+  // you to breathe in.
+  const cue = CUES[Math.min(CUES.length - 1, Math.floor(progress * CUES.length))]
   // Hashtags, as the frame has them. Derived rather than stored: adding a tags
   // field would mean editing 21 catalogue entries to say what the category and
   // the mix already say.
@@ -187,7 +233,9 @@ export function PlayerPage() {
           <MobileStatusBar />
         </div>
 
-        <header className="relative flex items-center gap-16 px-20 py-12">
+        {/* gap-12 rather than the frame's 16: the sound switch is a fourth
+            control in a row the frame drew with three. */}
+        <header className="relative flex items-center gap-12 px-20 py-12">
           <button
             type="button"
             aria-label="Back"
@@ -200,6 +248,17 @@ export function PlayerPage() {
           {/* Same coin as the cockpit header wears — one mark for the
               currency, not a lookalike per screen. */}
           <CoinPill points="1,323" />
+          {/* Sound off, and it stays off across a reload — the reason you
+              silenced it is usually the room you are in, not this session. */}
+          <button
+            type="button"
+            aria-label={muted ? 'Turn sound on' : 'Turn sound off'}
+            aria-pressed={muted}
+            onClick={toggleMuted}
+            className="u-press flex size-44 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-strong"
+          >
+            {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+          </button>
           <button
             type="button"
             aria-label="Share"
@@ -211,12 +270,13 @@ export function PlayerPage() {
 
         {/* Centres in what is left above the caption — the frame's own y=321
             for the 96px disc in a 402x874, arrived at by flow. */}
-        <div className="relative flex flex-1 items-center justify-center">
+        <div className="relative flex flex-1 items-center justify-center gap-24">
+          <SkipButton seconds={-SKIP} onPress={() => seek(elapsed - SKIP)} />
           <button
             type="button"
             onClick={toggle}
             aria-label={playing ? 'Pause' : 'Play'}
-            className="u-press flex size-96 items-center justify-center rounded-full bg-white/20 backdrop-blur-[16px]"
+            className="u-press flex size-96 shrink-0 items-center justify-center rounded-full bg-white/20 backdrop-blur-[16px]"
           >
             {playing ? (
               <Pause size={48} fill="currentColor" strokeWidth={0} />
@@ -224,33 +284,51 @@ export function PlayerPage() {
               <Play size={48} fill="currentColor" strokeWidth={0} className="ml-4" />
             )}
           </button>
+          <SkipButton seconds={SKIP} onPress={() => seek(elapsed + SKIP)} />
         </div>
 
         <div className="relative px-20 pb-24">
           <p className="text-player-cue text-center">{cue}</p>
 
           <div className="mt-40">
-            {/* The knob rides the fill, so the bar needs room for its overhang
-                at both ends: 14 either side, which is its own radius. */}
+            {/* 14 either side is the knob's radius: the control keeps its knob
+                inside the track, so the track has to start where the knob can. */}
             <div className="relative mx-14 h-7">
-              <span className="absolute inset-0 rounded-full bg-black/40" />
-              <span
-                className="absolute inset-y-0 left-0 rounded-full"
-                style={{
-                  width: `${progress * 100}%`,
-                  background: 'linear-gradient(90deg, #ae4b46, #ffc500)',
+              {/* Laid out as the 7px strip the frame draws, with the 28px
+                  control centred over it — so the times below stay where they
+                  are while the thing you grab is 28 tall. */}
+              <input
+                type="range"
+                className="u-scrubber absolute top-1/2 left-0 -translate-y-1/2"
+                aria-label="Seek"
+                aria-valuetext={`${clock(shown)} of ${clock(duration)}`}
+                min={0}
+                max={duration}
+                step={0.01}
+                value={shown}
+                onChange={(event) => seek(Number(event.target.value))}
+                onKeyDown={(event) => {
+                  // The element's own arrow step is one `step` — a hundredth of
+                  // a second, which is not a seek. Media keys move in seconds.
+                  const by =
+                    event.key === 'ArrowLeft' || event.key === 'ArrowDown'
+                      ? -NUDGE
+                      : event.key === 'ArrowRight' || event.key === 'ArrowUp'
+                        ? NUDGE
+                        : 0
+                  if (by) {
+                    event.preventDefault()
+                    seek(elapsed + by)
+                  }
                 }}
-              />
-              <span
-                className="absolute top-1/2 size-28 -translate-x-1/2 -translate-y-1/2 rounded-full bg-surface-default"
-                style={{ left: `${progress * 100}%` }}
+                style={{ '--fill': `${progress * 100}%` } as CSSProperties}
               />
             </div>
             {/* The frame puts the times 4px under the track, which works there
                 because its knob sits mid-bar. At 0% and at the end the knob is
                 over a label, so they clear its 14px radius instead. */}
             <div className="mt-12 flex items-center justify-between text-[8px] tabular-nums">
-              <span>{clock(elapsed)}</span>
+              <span>{clock(shown)}</span>
               <span>{clock(duration)}</span>
             </div>
           </div>

@@ -203,6 +203,21 @@ material. Flag for confirmation with product and business:
 - **The summary opens in place.** Read More expands the clamped text where it
   is. Sending someone to another screen to finish a paragraph costs them their
   place in the session.
+- **The bar is a control, not a read-out.** You can drag it, tap anywhere on it
+  to jump there, and arrow it five seconds at a time from the keyboard. A
+  progress bar you cannot move is the one thing every listener tries first, and
+  it is also the only way to hear a line again.
+- **Fifteen seconds has its own button.** Back 15 and forward 15 flank the play
+  disc, because "say that again" is not a drag: on a ten-minute session fifteen
+  seconds is under three pixels of track.
+- **Sound can be turned off without stopping the session.** Muting is not
+  pausing — you open a session in a room where you cannot make noise and still
+  want the cues, the clock and the art. The switch is on the player and on the
+  card in the cockpit, and it is the same switch: one silence for the app, not
+  one per screen.
+- **Silence survives a reload, and it is the only thing that does.** Everything
+  else here forgets on purpose. Mute does not, because the reason you turned it
+  off is the room you are in, and you are still in it after a refresh.
 
 - **Publishing confirms in green, and hands over the session.** Success is the
   one moment the app reports an outcome rather than its own identity, so the
@@ -302,6 +317,61 @@ Two differences are intended: the web renders a simulated phone status bar
 because it is viewed in a browser, and platform chrome — drawer scrim, keyboard,
 text selection — follows each platform's own conventions.
 
+### The transport was a read-out with a knob drawn on it
+
+The bar under the art had a track, a warm fill and a 28px white knob, and none
+of it could be touched. Three absolutely positioned `<span>`s painted the shape
+of a scrubber over a clock: the knob's `left` was `elapsed / duration`, so it
+moved when the audio moved and never the other way round.
+
+That is the first thing a listener reaches for, and it is not a nicety. A
+session is a spoken thing; missing a line means you want the last twenty
+seconds back, and without a scrub the only way to get them is to start over.
+
+It is a native `<input type="range">` now, not a div with pointer handlers.
+Drag, tap-to-jump, keyboard, focus and the value a screen reader announces all
+come with the element; rebuilding them around a div is rebuilding this control
+badly. The frame's look is kept in `.u-scrubber` — the 7px track on black at
+40%, the warm fill, the 28px white knob — and the page lays out the same 7px
+strip with the 28px control centred over it, so the thing you can grab is 28
+tall while the times below it did not move.
+
+Three things came with that pass:
+
+| | Was | Now |
+| --- | --- | --- |
+| Arrow keys | one `step` — a hundredth of a second | ±5s, which is what a media control does |
+| ±15s | — | two buttons flanking the disc |
+| The cue at 100% | wrapped to "Now take a deep breath in" | holds on the last line |
+
+The cue was a real bug and an odd one to read: `Math.floor(progress * 4) % 4`
+is 0 at both ends, so a session ended by telling you to breathe in.
+
+**And loading a second session kept the first one's playhead.** `load()` set
+`elapsed` to 0 but never touched the element, so the clock read the element back
+and overwrote the zero on the next frame. Opening a fresh session while one was
+running dropped you seven seconds into it. The element is reset on the track's
+identity now, which is where the reset belonged.
+
+### Mute is not pause, and it is one switch
+
+*"just in case saya mau buka tapi tidak mau berisik."*
+
+There was no way to silence the app short of pausing it, and pausing is a
+different intention: it stops the session. Muting keeps the session running —
+the clock, the cues, the art — and takes the sound out of the room.
+
+It is held on the player context rather than per screen, so the switch on the
+full player and the one on the cockpit card are the same switch. The card's is
+not in the frame, and it is there for a reason: that card is on screen
+*precisely* when a session is running and you are doing something else, which
+is when you notice you need silence. Without it the switch is two taps away at
+the moment it is wanted — and a muted session playing in the cockpit would have
+had nothing on it to say why it was silent.
+
+It persists, alone among everything here. `localStorage`, best-effort: a
+private window or blocked storage just means the app starts audible.
+
 ### One difference is not a design decision — it needs one
 
 **The Flutter client's player has no sound.** Every audio package for Flutter
@@ -319,6 +389,13 @@ a product call, not an engineering one.
 session being built has to survive leaving the cockpit to play it, and a session
 that is playing has to survive walking back to the cockpit. Owned by their
 screens, each tore down the other.
+
+**The scrub, the ±15s buttons and the sound switch are web-only so far.** They
+are behaviour rather than a shared shape, so nothing is out of step yet — but
+the reference has moved and the Flutter client has to follow. The scrub and the
+skips are pure controller work there and cost nothing; the sound switch is the
+awkward one, because a client with no audio has nothing to mute. It should ship
+with the audio, not before it, or it is a control that visibly does nothing.
 
 ### Home, read line by line against the frame
 
