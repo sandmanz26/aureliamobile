@@ -46,6 +46,18 @@ silent and whose microphone does nothing is not demoable.
 A blind `flutter pub upgrade --major-versions` breaks the build on all three.
 Nothing else may join them without the same argument being made again.
 
+**The Android build runs Gradle 8.7 and Kotlin 1.9.25, above Flutter 3.27.1's
+own template.** That template ships Gradle 8.3 and Kotlin 1.8.22, neither of
+which runs on **Java 21** — which is what a current Android Studio installs.
+A fresh Mac cloned this and got `Gradle build failed due to Java/Gradle
+incompatibility` before it got a single frame. Gradle gained Java 21 in 8.5 and
+the Kotlin plugin in 1.9.20; 8.7 is the top of the window Flutter 3.27.1's own
+`gradle_utils.dart` pairs with AGP 8.1, so this is the edge of what the pinned
+Flutter tests rather than past it. AGP stays at 8.1.0.
+
+If a future Flutter bump moves the template, take its numbers rather than
+keeping these.
+
 **Both plugins sit behind a seam, and that is not decoration.** `AudioEngine`
 and `VoiceCapture` (in `core/audio/`) are the only files that import them.
 Every widget test installs `SilentAudioEngine` and `SilentVoiceCapture`, which
