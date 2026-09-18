@@ -1151,7 +1151,15 @@ void main() {
       await tester.tap(find.text('Insights'));
       await tester.pumpAndSettle();
 
-      final revert = find.byTooltip(RegExp('^Revert to '));
+      // A predicate rather than `find.byTooltip`, because this is the one
+      // place that reads the match back as a Tooltip. From Flutter 3.47
+      // `byTooltip` also matches a tooltip carried on Semantics, so `.first`
+      // is not guaranteed to be the Tooltip widget and the cast below threw.
+      final revert = find.byWidgetPredicate(
+        (widget) =>
+            widget is Tooltip &&
+            (widget.message ?? '').startsWith('Revert to '),
+      );
       expect(revert, findsWidgets);
       final label = (tester.widget<Tooltip>(revert.first).message ?? '')
           .replaceFirst('Revert to ', '');
