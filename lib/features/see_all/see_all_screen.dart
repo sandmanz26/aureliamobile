@@ -5,6 +5,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/aurelia_logo.dart';
 import '../../core/widgets/session_grid_card.dart';
+import '../recreate/recreate_handoff.dart';
 
 /// The full contents of one shelf, as a two-column grid.
 ///
@@ -75,8 +76,8 @@ class SeeAllScreen extends StatelessWidget {
                         session: sessions[index],
                         onOpen: () => Navigator.of(context)
                             .pushNamed('/session', arguments: sessions[index].slug),
-                        onRecreate: () => Navigator.of(context)
-                            .pushNamed('/recreate', arguments: sessions[index].slug),
+                        onRecreate: () =>
+                            openRecreate(context, sessions[index]),
                       ),
                     ),
             ),

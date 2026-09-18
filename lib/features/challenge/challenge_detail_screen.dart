@@ -8,6 +8,7 @@ import '../../core/widgets/aurelia_logo.dart';
 import '../../core/widgets/cover_image.dart';
 import '../../core/widgets/photo_circle.dart';
 import '../../core/widgets/session_grid_card.dart';
+import '../recreate/recreate_handoff.dart';
 
 const _avatarRing = [AppPrimitives.primary300, AppPrimitives.info300];
 
@@ -406,9 +407,8 @@ class ChallengeDetailScreen extends StatelessWidget {
                             onOpen: () => Navigator.of(context).pushNamed(
                                 '/session',
                                 arguments: sessions[index].slug),
-                            onRecreate: () => Navigator.of(context).pushNamed(
-                                '/recreate',
-                                arguments: sessions[index].slug),
+                            onRecreate: () =>
+                                openRecreate(context, sessions[index]),
                           ),
                         ),
                       ),

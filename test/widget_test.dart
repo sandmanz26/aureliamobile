@@ -16,7 +16,9 @@ import 'package:aurelia_mobile/features/chat/chat_session_controller.dart' show 
 import 'package:aurelia_mobile/features/chat/widgets/mini_player.dart';
 import 'package:aurelia_mobile/features/chat/widgets/recommendation_deck.dart';
 import 'package:aurelia_mobile/features/chat/widgets/recommendation_card.dart';
+import 'package:aurelia_mobile/features/chat/widgets/attached_session.dart';
 import 'package:aurelia_mobile/features/player/player_screen.dart';
+import 'package:aurelia_mobile/features/recreate/recreate_screen.dart';
 import 'package:aurelia_mobile/features/progress/progress_screen.dart';
 import 'package:aurelia_mobile/main.dart';
 
@@ -203,17 +205,45 @@ void main() {
   });
 
   group('Recreate', () {
-    testWidgets('lists only what differs from the original', (tester) async {
+    testWidgets('opens the conversation with the fork attached', (tester) async {
       await _boot(tester);
+      await _signIn(tester);
       final navigator = tester.state<NavigatorState>(find.byType(Navigator));
 
-      navigator.pushNamed('/login');
-      await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Sign In'));
-      await tester.pump(const Duration(milliseconds: 700));
-      await tester.pumpAndSettle();
-
+      // The route still resolves — the form is switched off, not removed —
+      // and it lands in the cockpit rather than on a dead end.
       navigator.pushNamed('/recreate', arguments: 'dolphins-frequency');
+      await tester.pumpAndSettle();
+      expect(find.byType(RecreateScreen), findsNothing);
+
+      // Nothing has been asked for yet, so the opening line states the fork
+      // and stops: "Keep it as it is" belongs to someone who went through the
+      // form and changed nothing.
+      expect(find.text('Recreate “Dolphins frequency” by Adam Nilson.'),
+          findsOneWidget);
+      // Attached, not just named — you can see and hear what you are about to
+      // change without leaving the thread.
+      expect(find.byType(AttachedSession), findsOneWidget);
+      expect(find.byTooltip('Play Dolphins frequency'), findsOneWidget);
+
+      // And the question that screen used to ask in a heading is asked here.
+      await tester.pump(const Duration(milliseconds: 1700));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Tell me what should be different'),
+          findsOneWidget);
+    });
+
+    testWidgets('the form is still there, and lists only what differs',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      // Pushed directly rather than by route: `recreateFormEnabled` is off, so
+      // /recreate forwards. The screen is kept — a slider is a better
+      // instrument than a sentence for "how long" — so it stays tested.
+      navigator.push(MaterialPageRoute<void>(
+          builder: (_) => const RecreateScreen(slug: 'dolphins-frequency')));
       await tester.pumpAndSettle();
 
       // Nothing changed yet.
@@ -435,8 +465,24 @@ void main() {
       // The counts are this profile's, not the shelf's.
       expect(find.text('18,513'), findsOneWidget);
       expect(find.text('Dolphins frequency'), findsOneWidget);
-      // Every card offers the recreate the profile is there to invite.
+      // Four cards, and all four are sessions now — the shelf used to be a
+      // hardcoded list of titles the catalogue did not have, which is why
+      // neither control on a card could go anywhere.
+      expect(find.text('Soft Reset'), findsOneWidget);
+      expect(find.text('Deep Space'), findsOneWidget);
+      expect(find.text('Clear Skies'), findsOneWidget);
       expect(find.text('Recreate'), findsNWidgets(4));
+
+      // And both of them do something.
+      await tester.tap(find.byTooltip('Play Soft Reset'));
+      await tester.pumpAndSettle();
+      expect(find.byType(PlayerScreen), findsOneWidget);
+      navigator.pop();
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Recreate Clear Skies'));
+      await tester.pumpAndSettle();
+      expect(find.text('Recreate “Clear Skies” by Adam Nilson.'), findsOneWidget);
     });
 
     testWidgets('Notifications group by age and the chips narrow them',

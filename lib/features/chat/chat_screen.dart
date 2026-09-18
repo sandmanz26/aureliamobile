@@ -13,6 +13,7 @@ import '../player/player_screen.dart';
 import '../progress/progress_screen.dart';
 import '../shell/app_drawer.dart';
 import 'chat_session_controller.dart';
+import 'widgets/attached_session.dart';
 import 'widgets/mini_player.dart';
 import 'widgets/recommendation_card.dart';
 import 'widgets/recommendation_deck.dart';
@@ -470,6 +471,13 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
               child: Text(message.text,
                   style: AppTextStyles.bodySm.copyWith(color: AppColors.textStrong)),
+            ),
+          // Under the message that carries it, not at the end of the thread,
+          // so everything said afterwards comes after it.
+          if (message.attachedSlug != null)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.s2),
+              child: AttachedSession(slug: message.attachedSlug!),
             ),
           if (endsRun)
             Padding(

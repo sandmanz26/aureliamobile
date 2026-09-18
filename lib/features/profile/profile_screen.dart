@@ -1,67 +1,22 @@
 import 'package:flutter/material.dart';
 import '../../core/data/people.dart';
+import '../../core/data/sessions.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/aurelia_logo.dart';
 import '../../core/widgets/cover_image.dart';
 import '../../core/widgets/photo_circle.dart';
+import '../player/player_screen.dart';
+import '../recreate/recreate_handoff.dart';
 import '../shell/app_drawer.dart';
 
-/// One of the four sessions the demo profile has published.
-class _Published {
-  const _Published({
-    required this.title,
-    required this.photo,
-    required this.description,
-    required this.plays,
-    required this.recreated,
-    required this.gradient,
-  });
-
-  final String title;
-  final String photo;
-  final String description;
-  final String plays;
-  final String recreated;
-  final List<Color> gradient;
-}
-
-const _cards = <_Published>[
-  _Published(
-    title: 'Dolphins frequency',
-    photo: 'dolphins',
-    description: 'This helped Adam reduce stress by 43% in less that a week.',
-    plays: '18.5k',
-    recreated: '1.5k',
-    gradient: [AppPrimitives.info800, AppPrimitives.info400],
-  ),
-  _Published(
-    title: 'Soft Reset',
-    photo: 'calm',
-    description: 'This helped Adam feel more relaxed, with 91% less tension.',
-    plays: '18.5k',
-    recreated: '1.5k',
-    gradient: [AppPrimitives.warning300, AppPrimitives.danger200],
-  ),
-  _Published(
-    title: 'Deep Space',
-    photo: 'mindDance',
-    description: 'This helped Adam quiet thoughts by 38% in less than a week.',
-    plays: '12.1k',
-    recreated: '980',
-    gradient: [AppPrimitives.neutral950, AppPrimitives.neutral700],
-  ),
-  _Published(
-    title: 'Clear Skies',
-    photo: 'mountains',
-    description: 'This helped Adam boost focus by 46% in less than a week.',
-    plays: '9.8k',
-    recreated: '640',
-    gradient: [AppPrimitives.info200, AppPrimitives.neutral100],
-  ),
-];
-
+/// The figures the design carries for the signed-in profile.
+///
+/// Kept rather than summed, because summing the catalogue gives a different
+/// and less useful number: one session alone has 124k plays. "6 Posts" is the
+/// one that does reconcile — four published sessions plus the two drafts,
+/// which is everything Adam has made.
 const _stats = [('6', 'Posts'), ('18,513', 'Played'), ('1,528', 'Recreated')];
 
 /// One screen for two readings of the same thing. `/profile` with no argument
@@ -96,19 +51,10 @@ class ProfileScreen extends StatelessWidget {
             (subject.sessions.first.plays, 'Played'),
             (subject.sessions.first.recreated, 'Recreated'),
           ];
-    final cards = own
-        ? _cards
-        : [
-            for (final session in subject.sessions)
-              _Published(
-                title: session.title,
-                photo: session.photo,
-                description: session.description,
-                plays: session.plays,
-                recreated: session.recreated,
-                gradient: session.gradient,
-              ),
-          ];
+    // Both branches read the catalogue now. The signed-in profile used to
+    // draw a hardcoded shelf of four, three of whose titles matched no
+    // session — which is why neither control on a card could go anywhere.
+    final cards = subject.sessions;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -283,7 +229,7 @@ class ProfileScreen extends StatelessWidget {
 class _PublishedCard extends StatelessWidget {
   const _PublishedCard({required this.card});
 
-  final _Published card;
+  final SessionRecord card;
 
   @override
   Widget build(BuildContext context) {
@@ -312,12 +258,18 @@ class _PublishedCard extends StatelessWidget {
                       _GlassCircle(
                         icon: Icons.play_arrow_rounded,
                         tooltip: 'Play ${card.title}',
+                        onTap: () => Navigator.of(context).pushNamed(
+                          '/play',
+                          arguments: PlayRequest(
+                              slug: card.slug, origin: ProfileOrigin.own),
+                        ),
                       ),
                       // Flexible so the pill gives way rather than pushing
                       // past the card edge when the label runs long.
                       Flexible(
                         child: _RecreatePill(
                           title: card.title,
+                          onTap: () => openRecreate(context, card),
                           // The label is dropped rather than truncated once
                           // the card is too narrow to hold it, as on the web.
                           showLabel: constraints.maxWidth >= 124,
@@ -382,17 +334,42 @@ class _PublishedCard extends StatelessWidget {
   }
 }
 
+/// A control that looks like one. Both of these sat on the card doing
+/// nothing, which reads as a broken app rather than a missing feature — and
+/// the shelf they sat on was hardcoded, so there was no session for either of
+/// them to act on.
+class _Tappable extends StatelessWidget {
+  const _Tappable({required this.onTap, required this.child});
+
+  final VoidCallback onTap;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      shape: const StadiumBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(onTap: onTap, child: child),
+    );
+  }
+}
+
 class _GlassCircle extends StatelessWidget {
-  const _GlassCircle({required this.icon, required this.tooltip});
+  const _GlassCircle(
+      {required this.icon, required this.tooltip, required this.onTap});
 
   final IconData icon;
   final String tooltip;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip,
-      child: Container(
+      child: _Tappable(
+        onTap: onTap,
+        child: Container(
         width: 32,
         height: 32,
         alignment: Alignment.center,
@@ -402,21 +379,26 @@ class _GlassCircle extends StatelessWidget {
         ),
         child: Icon(icon, size: 16, color: AppColors.iconDefault),
       ),
+      ),
     );
   }
 }
 
 class _RecreatePill extends StatelessWidget {
-  const _RecreatePill({required this.title, required this.showLabel});
+  const _RecreatePill(
+      {required this.title, required this.showLabel, required this.onTap});
 
   final String title;
   final bool showLabel;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Tooltip(
       message: 'Recreate $title',
-      child: Container(
+      child: _Tappable(
+        onTap: onTap,
+        child: Container(
         height: 32,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s3),
         decoration: BoxDecoration(
@@ -440,6 +422,7 @@ class _RecreatePill extends StatelessWidget {
             ],
           ],
         ),
+      ),
       ),
     );
   }

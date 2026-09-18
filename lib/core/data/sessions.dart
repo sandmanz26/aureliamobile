@@ -1277,6 +1277,154 @@ const kSessions = <SessionRecord>[
     shelves: [Shelf.community],
   ),
 
+  // ---------------------------------------------------- the profile shelf ---
+  // Three more of Adam's, and they exist for a reason: the profile screen was
+  // drawing its shelf from a hardcoded list beside the catalogue — four cards
+  // with titles that matched no session, so neither the play glyph nor
+  // Recreate on them could point anywhere. A card that names a session has to
+  // *be* a session.
+  SessionRecord(
+    slug: 'soft-reset',
+    seconds: 18,
+    title: 'Soft Reset',
+    photo: 'calm',
+    gradient: [AppPrimitives.warning300, AppPrimitives.danger200],
+    description: 'This helped Adam feel more relaxed, with 91% less tension.',
+    summary: 'Fifteen minutes to put a day down without lying down for it. Built to be played at a desk, so nothing in it asks you to close your eyes.',
+    author: 'Adam Nilson',
+    authorPhoto: 'avatar',
+    authorRole: 'Community creator · 34 published sessions',
+    plays: '18.5k',
+    recreated: '1.5k',
+    minutes: 15,
+    category: 'Calm',
+    intent: 'Break a day in half without ending it.',
+    outcome: [
+      Outcome(label: 'Tension', value: '−91%', note: 'self-reported, one session'),
+      Outcome(label: 'Finished it', value: '88%', note: 'played to the end'),
+    ],
+    layers: [
+      SoundLayer(id: 'pad', name: 'Soft pad', detail: 'No attack, no top end', level: 66),
+      SoundLayer(id: 'breath', name: 'Breath pacing', detail: '5 cycles / minute, no words', level: 44),
+    ],
+    chapters: [
+      Chapter(label: 'Put it down', minutes: 6, detail: 'Pad alone, widening.'),
+      Chapter(label: 'Even out', minutes: 6, detail: 'Breath pacing arrives underneath.'),
+      Chapter(label: 'Back to it', minutes: 3, detail: 'Brightens deliberately — this one returns you to the day.'),
+    ],
+    personalization: [
+      LabelValue('Adapts to', 'Time of day'),
+      LabelValue('Voice', 'None'),
+      LabelValue('Ends', 'Brightens, no chime'),
+      LabelValue('Best time', 'Mid-afternoon'),
+    ],
+    commonChanges: [
+      LabelValue('Made it shorter', '41%'),
+      LabelValue('Added guidance', '19%'),
+    ],
+    lineage: [
+      LineageStep(title: 'Soft pad', author: 'Aurelia', note: 'Starter template'),
+      LineageStep(title: 'Soft Reset', author: 'Adam Nilson', note: 'Wrote the return and cut the guidance'),
+    ],
+    safety: ['Not a treatment for any medical condition.'],
+    shelves: [Shelf.community, Shelf.picked],
+  ),
+  SessionRecord(
+    slug: 'deep-space',
+    seconds: 3,
+    title: 'Deep Space',
+    photo: 'mindDance',
+    gradient: [AppPrimitives.neutral950, AppPrimitives.neutral700],
+    description: 'This helped Adam quiet thoughts by 38% in less than a week.',
+    summary: 'Very low, very wide and almost empty. Written for the kind of thinking that will not stop because it has nothing to push against — so this gives it nothing.',
+    author: 'Adam Nilson',
+    authorPhoto: 'avatar',
+    authorRole: 'Community creator · 34 published sessions',
+    plays: '12.1k',
+    recreated: '980',
+    minutes: 26,
+    category: 'Meditations',
+    intent: 'Give a busy mind nothing to argue with.',
+    outcome: [
+      Outcome(label: 'Racing thoughts', value: '−38%', note: 'self-reported, first week'),
+      Outcome(label: 'Finished it', value: '64%', note: 'played to the last chapter'),
+    ],
+    layers: [
+      SoundLayer(id: 'sub', name: 'Sub drone', detail: '38 Hz, felt more than heard', level: 58),
+      SoundLayer(id: 'air', name: 'Upper air', detail: 'Two octaves of nothing much', level: 31),
+    ],
+    chapters: [
+      Chapter(label: 'Leave', minutes: 8, detail: 'The drone arrives from below.'),
+      Chapter(label: 'Drift', minutes: 14, detail: 'Nothing changes. That is the chapter.'),
+      Chapter(label: 'Return', minutes: 4, detail: 'The air thins out first, then the drone.'),
+    ],
+    personalization: [
+      LabelValue('Adapts to', 'Nothing — this one is fixed'),
+      LabelValue('Voice', 'None'),
+      LabelValue('Ends', 'Fade to silence'),
+      LabelValue('Best time', 'Late night'),
+    ],
+    commonChanges: [
+      LabelValue('Made it longer', '52%'),
+      LabelValue('Raised the sub', '22%'),
+    ],
+    lineage: [
+      LineageStep(title: 'Room tone', author: 'Aurelia', note: 'Starter template'),
+      LineageStep(title: 'Deep Space', author: 'Adam Nilson', note: 'Dropped everything except the drone'),
+    ],
+    safety: [
+      'Not a treatment for any medical condition.',
+      'Contains sustained low frequencies — not for headphones with a sub boost.',
+    ],
+    shelves: [Shelf.community],
+  ),
+  SessionRecord(
+    slug: 'clear-skies',
+    seconds: 51,
+    title: 'Clear Skies',
+    photo: 'mountains',
+    gradient: [AppPrimitives.info200, AppPrimitives.neutral100],
+    description: 'This helped Adam boost focus by 46% in less than a week.',
+    summary: 'Bright, dry and rhythmic, with no low end at all. The only session here written to be played while you are working rather than instead of it.',
+    author: 'Adam Nilson',
+    authorPhoto: 'avatar',
+    authorRole: 'Community creator · 34 published sessions',
+    plays: '9.8k',
+    recreated: '640',
+    minutes: 42,
+    category: 'Music',
+    intent: 'Hold attention on something else for a long stretch.',
+    outcome: [
+      Outcome(label: 'Focus', value: '+46%', note: 'self-reported, first week'),
+      Outcome(label: 'Played to the end', value: '71%', note: 'the longest session here'),
+    ],
+    layers: [
+      SoundLayer(id: 'pulse', name: 'Dry pulse', detail: '68 bpm, no swing', level: 62),
+      SoundLayer(id: 'strings', name: 'High strings', detail: 'Nothing below 400 Hz', level: 47),
+    ],
+    chapters: [
+      Chapter(label: 'Start', minutes: 4, detail: 'Pulse only, quiet.'),
+      Chapter(label: 'Work', minutes: 34, detail: 'Strings come and go; the pulse never changes.'),
+      Chapter(label: 'Stop', minutes: 4, detail: 'Thins to the pulse, then stops on the beat.'),
+    ],
+    personalization: [
+      LabelValue('Adapts to', 'Calendar — lengthens to fill a block'),
+      LabelValue('Voice', 'None'),
+      LabelValue('Ends', 'Stops on the beat'),
+      LabelValue('Best time', 'Morning'),
+    ],
+    commonChanges: [
+      LabelValue('Made it longer', '61%'),
+      LabelValue('Removed the strings', '24%'),
+    ],
+    lineage: [
+      LineageStep(title: 'Bright open', author: 'Aurelia', note: 'Starter template'),
+      LineageStep(title: 'Clear Skies', author: 'Adam Nilson', note: 'Wrote the pulse and stripped the low end'),
+    ],
+    safety: ['Not a treatment for any medical condition.'],
+    shelves: [Shelf.community, Shelf.impact],
+  ),
+
   // Two drafts, so all three cockpit states exist in the mock data: a session
   // you have not started, one you made and have not published, and one that is
   // out. They sit on no shelf and in no category listing — a draft is yours,

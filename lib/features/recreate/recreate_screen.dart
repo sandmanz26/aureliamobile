@@ -464,6 +464,7 @@ class _RecreateScreenState extends State<RecreateScreen> {
                 onPressed: () => Navigator.of(context).pushNamed(
                   '/chat',
                   arguments: RecreateBrief(
+                    slug: session.slug,
                     title: session.title,
                     author: session.author,
                     minutes: _minutes.round(),

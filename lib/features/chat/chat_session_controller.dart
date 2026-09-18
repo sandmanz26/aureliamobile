@@ -18,6 +18,7 @@ class ChatMessage {
     required this.at,
     this.voiceDuration,
     this.voicePath,
+    this.attachedSlug,
     this.status,
   });
 
@@ -34,21 +35,33 @@ class ChatMessage {
   /// which case the bubble draws and scrubs but stays quiet.
   final String? voicePath;
 
+  /// A session shown under this message. Set by a Recreate hand-off, which
+  /// used to arrive as a sentence — it named the session but did not show it,
+  /// and gave you no way to hear the thing you were about to change.
+  final String? attachedSlug;
+
   DeliveryStatus? status;
 }
 
-/// A brief handed over from the Recreate screen.
+/// A brief handed over when a session is forked.
 class RecreateBrief {
   const RecreateBrief({
+    required this.slug,
     required this.title,
     required this.author,
     required this.minutes,
     required this.changes,
   });
 
+  /// The session being forked. Carried so the thread can attach it rather
+  /// than only naming it — you can see what you are about to change, and
+  /// hear it, without leaving the conversation.
+  final String slug;
   final String title;
   final String author;
   final int minutes;
+
+  /// What should be different. Empty means the brief was never stated.
   final List<String> changes;
 }
 
@@ -289,24 +302,37 @@ class ChatSessionController extends ChangeNotifier {
     if (brief == null || !_seeded.add('brief:${brief.title}/${brief.author}')) {
       return;
     }
-    final lines = brief.changes.isEmpty
-        ? '• Keep it as it is'
-        : brief.changes.map((line) => '• $line').join('\n');
+    // With the Recreate form skipped, nothing has been asked for yet — so the
+    // opening line states the fork and stops. "Keep it as it is" belongs to
+    // someone who went through the form and changed nothing; putting those
+    // words in the mouth of someone who never saw it is the app answering its
+    // own question.
+    final stated = brief.changes.isNotEmpty;
     messages.add(ChatMessage(
       id: _nextId++,
       fromAurelia: false,
       at: DateTime.now(),
       status: DeliveryStatus.read,
-      text: 'Recreate “${brief.title}” by ${brief.author}, '
-          'at ${brief.minutes} minutes.\n$lines',
+      attachedSlug: brief.slug,
+      text: stated
+          ? 'Recreate “${brief.title}” by ${brief.author}, '
+              'at ${brief.minutes} minutes.\n'
+              '${brief.changes.map((line) => '• $line').join('\n')}'
+          : 'Recreate “${brief.title}” by ${brief.author}.',
     ));
     _typing = true;
     notifyListeners();
     _after(const Duration(milliseconds: 1600), () {
       _typing = false;
-      _say('Got it — forking ${brief.author}’s session and keeping them '
-          'credited in the lineage. Tell me anything else you want changed '
-          'and I’ll build your version.');
+      // The question the Recreate screen used to ask in a heading, asked here
+      // instead — it is the one thing that screen was for, and it survives it.
+      _say(stated
+          ? 'Got it — forking ${brief.author}’s session and keeping them '
+              'credited in the lineage. Tell me anything else you want changed '
+              'and I’ll build your version.'
+          : 'Got it — forking ${brief.author}’s session, and they stay '
+              'credited in the lineage. Tell me what should be different; '
+              'anything you leave alone stays as ${brief.author} made it.');
     });
   }
 

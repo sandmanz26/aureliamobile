@@ -19,13 +19,14 @@ import 'features/notifications/notifications_screen.dart';
 import 'features/progress/progress_screen.dart';
 import 'features/player/player_screen.dart';
 import 'features/profile/profile_screen.dart';
+import 'features/recreate/recreate_handoff.dart';
 import 'features/recreate/recreate_screen.dart';
 import 'features/see_all/see_all_screen.dart';
 import 'features/session_detail/session_detail_screen.dart';
 import 'features/sessions/explore_screen.dart';
 import 'features/sessions/session_list_screen.dart';
 import 'features/settings/account_settings_screen.dart';
-import 'core/data/sessions.dart' show Shelf;
+import 'core/data/sessions.dart' show Shelf, findSession;
 import 'features/wellness/wellness_screen.dart';
 
 void main() {
@@ -159,7 +160,17 @@ class _AureliaAppState extends State<AureliaApp> {
         case '/session':
           return SessionDetailScreen(slug: settings.arguments as String? ?? '');
         case '/recreate':
-          return RecreateScreen(slug: settings.arguments as String? ?? '');
+          // Still a real route — the form is only switched off, not removed,
+          // and a deep link to it should not answer with a dead end. It
+          // forwards to the cockpit with the same brief the cards hand over,
+          // so every route to a fork ends in one place.
+          final slug = settings.arguments as String? ?? '';
+          if (recreateFormEnabled) return RecreateScreen(slug: slug);
+          final forked = findSession(slug);
+          return ChatScreen(
+            brief: forked == null ? null : briefFor(forked),
+            voiceCapture: widget.voiceCapture,
+          );
         case '/invite':
           return const InviteScreen();
         case '/notifications':

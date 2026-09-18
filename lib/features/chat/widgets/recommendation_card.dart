@@ -5,6 +5,8 @@ import '../../../core/data/recommendations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../recreate/recreate_handoff.dart';
+import '../../../core/data/sessions.dart';
 
 /// Which card this is.
 ///
@@ -142,8 +144,13 @@ class RecommendationCard extends StatelessWidget {
               widthFactor: 1,
               child: recreate
                   ? OutlinedButton.icon(
-                      onPressed: () => Navigator.of(context)
-                          .pushNamed('/recreate', arguments: recommendation.preview),
+                      // `preview` is the session this card plays, and it is
+                      // the one a Recreate forks — the card has no other
+                      // session to offer.
+                      onPressed: () {
+                        final session = findSession(recommendation.preview);
+                        if (session != null) openRecreate(context, session);
+                      },
                       style: _pill,
                       icon: const Icon(Icons.shuffle,
                           size: 12, color: AppColors.iconDefault),

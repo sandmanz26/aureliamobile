@@ -6,6 +6,7 @@ import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/cover_image.dart';
 import '../shell/app_drawer.dart';
 import '../../core/widgets/photo_circle.dart';
+import '../recreate/recreate_handoff.dart';
 
 /// Session detail — cover, creator, the one action the screen exists for, then
 /// everything else behind uppercase collapsible rows.
@@ -176,8 +177,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
                       ),
                       const SizedBox(width: AppSpacing.s2),
                       OutlinedButton.icon(
-                        onPressed: () => Navigator.of(context)
-                            .pushNamed('/recreate', arguments: session.slug),
+                        onPressed: () => openRecreate(context, session),
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size(0, 52),
                           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
@@ -218,8 +218,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
                     borderRadius: BorderRadius.circular(AppRadius.xl),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(AppRadius.xl),
-                      onTap: () => Navigator.of(context)
-                          .pushNamed('/recreate', arguments: session.slug),
+                      onTap: () => openRecreate(context, session),
                       child: Padding(
                         padding: const EdgeInsets.all(AppPadding.md),
                         child: Row(
