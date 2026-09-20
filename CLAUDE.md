@@ -42,7 +42,7 @@ nothing and passes on a broken tree. Use the script.
 
 ```
 src/
-  pages/        one file per consumer screen (15)
+  pages/        one file per consumer screen (22)
   admin/pages/  one file per admin module (15)
   components/
     chat/       the cockpit's own parts
@@ -118,8 +118,8 @@ is a design decision, not a sync gap.
 
 ## The things that will mislead you
 
-**Everything is mock data and it is meant to look real.** `src/lib/` holds 21
-sessions, a challenge, a notification feed and six signal sources. The figures
+**Everything is mock data and it is meant to look real.** `src/lib/` holds 26
+sessions, two challenges, a notification feed and six signal sources. The figures
 in them — play counts, "−43% stress" — are invented. They are deliberately
 specific because a demo full of "Lorem" cannot be reasoned about, but nothing
 here came from a measurement.
@@ -230,6 +230,25 @@ Explain the config here instead.
   history were one-off Playwright scripts, not a suite.
 - ~~Sign-out is unreachable from anywhere in the UI.~~ Fixed: it lives on
   `/settings`, reached by the gear on your own profile.
+
+---
+
+## The other documents
+
+`CLAUDE.md` is the short, authoritative version for engineering conventions on
+this branch. Four longer documents sit beside it in `docs/`, each written for
+one reader and kept identical on all three branches:
+
+| File | For | What it holds |
+| --- | --- | --- |
+| `docs/FOR-BACKEND.md` | a backend engineer | Every data shape the clients already model, the endpoints they imply, what is mock, and the six decisions the backend is blocked on. |
+| `docs/FOR-MOBILE.md` | a mobile engineer | The Flutter client at length: toolchain, running on an emulator and a real iPhone, the architecture and why, and every trap with the symptom it produces. |
+| `docs/FOR-PRODUCT.md` | a product manager | What works, what only looks like it works, the decisions already made and their reasons, the undesigned states, and the open questions. |
+| `docs/FOR-AI-AGENT.md` | an automated agent | Orientation for a cold start: the four facts that invalidate the obvious approach, the standing rules, and how to verify honestly. |
+
+`docs/PRD.md` remains the requirements document and
+`docs/DESIGN-SYSTEM-HISTORY.md` the token log. Update the relevant one in the
+same commit as the change.
 
 ---
 
