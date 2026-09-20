@@ -56,7 +56,7 @@ git show web_app:src/assets/live-sessions-map.png > assets/images/live-sessions-
 
 ### 1.3 Everything is mock, and it is meant to look real
 
-27 sessions, 2 challenges, a notification feed, 6 signal sources — all
+26 sessions, 2 challenges, a notification feed, 6 signal sources — all
 compile-time constants in `src/lib/*.ts` and `lib/core/data/*.dart`. Every
 figure ("18.5k plays", "−43% stress") is invented and deliberately specific.
 

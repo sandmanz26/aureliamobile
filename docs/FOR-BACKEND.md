@@ -19,7 +19,7 @@ not invent one.
 | Fact | Consequence for you |
 | --- | --- |
 | One app per git branch | `web_app` = React client + admin CMS · `admin_cms` = identical copy · `mobile_app` = Flutter. There is no `main`/`master` with everything in it. |
-| All data is `const` in the bundle | `src/lib/*.ts` (web) and `lib/core/data/*.dart` (Flutter) are the entire "database". 27 sessions, 2 challenges, a notification feed, 6 signal sources. |
+| All data is `const` in the bundle | `src/lib/*.ts` (web) and `lib/core/data/*.dart` (Flutter) are the entire "database". 26 sessions, 2 challenges, a notification feed, 6 signal sources. |
 | Every figure is invented | "18.5k plays", "−43% stress", "1,323 credits" came from nobody's measurement. They are deliberately specific so a demo can be reasoned about. Do not treat them as seed data with meaning. |
 | The two clients must agree | The web app is the reference implementation. Any API you design is consumed by both, and a field that only one can use is a bug in the design. |
 | Exactly one server endpoint exists | `api/config.ts` on `web_app` — the demo feature-flag store. It is not part of the product. See §8. |
@@ -97,7 +97,7 @@ them over — each has a reason for being derived.
 | --- | --- | --- |
 | `isRecreated` | `lineage.length > 2` | Every session starts from an Aurelia starter template. Two steps = an original; a third means a person stood between. A stored flag would drift from the chain it describes. |
 | `totalMinutes` | `sum(chapters.minutes)` | One source for a duration. |
-| tags on the player | slug + category + layer names + personalization labels | Adding a `tags` field would mean editing 27 entries to say what the other fields already say. |
+| tags on the player | slug + category + layer names + personalization labels | Adding a `tags` field would mean editing 26 entries to say what the other fields already say. |
 
 ### 1.3 Person
 
@@ -353,7 +353,7 @@ Notifications, Audit, Settings.
 
 | Looks real | Actually |
 | --- | --- |
-| 27 sessions with full structure | compile-time constants |
+| 26 sessions with full structure | compile-time constants |
 | Play counts, recreations, outcomes | invented, deliberately specific |
 | Audio playback | one 10-second bed, looped, for every session |
 | Voice memo | **the mic is real**; the transcript is a fixed sample string |

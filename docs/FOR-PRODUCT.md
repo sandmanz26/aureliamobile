@@ -135,7 +135,7 @@ something that does not exist.
 
 | Looks real | Actually |
 | --- | --- |
-| 27 sessions with full structure, mixes, chapters, lineage | hand-written constants in the app bundle |
+| 26 sessions with full structure, mixes, chapters, lineage | hand-written constants in the app bundle |
 | "18.5k plays", "−43% stress", "1,323 credits" | **invented**, deliberately specific because a demo full of Lorem cannot be reasoned about |
 | Playing a session | one 10-second audio bed, looped, identical for every session |
 | Aurelia's replies | ~20 keyword rules matched in order. No model. |

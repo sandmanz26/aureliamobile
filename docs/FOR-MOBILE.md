@@ -391,8 +391,8 @@ a device remains the only way to catch that class.
 None matter at demo size. All matter with a backend.
 
 - `sessionsOnShelf` / `sessionsInCategory` scan the whole catalogue and
-  allocate a new list on every call, **including inside `build`**. Fine at 27
-  records; wants an index at 27,000.
+  allocate a new list on every call, **including inside `build`**. Fine at 26
+  records; wants an index at 26,000.
 - `Image.network` has an in-memory cache only — no disk cache.
 - Page-level `ListView(children: [...])` builds every section eagerly.
 - `/admin` has no authentication. It is on the web branches, but it is the same
