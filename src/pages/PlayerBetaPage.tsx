@@ -29,6 +29,49 @@ interface Card {
   gradient: string
 }
 
+/** A record's groove texture — fine concentric rings rather than a flat
+ *  disc, so it reads as a physical object and not a dark circle. */
+const VINYL_GROOVES =
+  'repeating-radial-gradient(circle at 50% 50%, #232323 0px, #232323 2px, #171717 2px, #171717 3px)'
+
+/** The label at the centre. Aurelia's own CTA gradient — the coloured thing
+ *  on an otherwise black record is the one place this composition is the
+ *  product's, not a generic sleeve-and-disc illustration. */
+const LABEL_GRADIENT = 'linear-gradient(135deg, #FF881B, #FFE682)'
+
+/**
+ * The sleeve leaning in front of its own record — the concept a reference
+ * clip showed for browsing an album's cuts, redrawn on this app's cover art
+ * and brand gradient rather than a literal copy of that clip's photography.
+ * The disc is decoration with one job: say "this is something you put on,"
+ * not "this is Side A of a vinyl release" — nothing here claims a track list
+ * or a runtime the record itself would have to honour.
+ */
+function DiscAndSleeve({ photo, gradient }: { photo: CoverKey; gradient: string }) {
+  return (
+    <div className="relative aspect-square w-[62%] shrink-0">
+      <div
+        className="absolute right-0 top-1/2 size-[84%] -translate-y-1/2 rounded-full shadow-[0_10px_24px_rgba(0,0,0,0.35)]"
+        style={{ background: VINYL_GROOVES }}
+      >
+        <span
+          className="absolute inset-0 m-auto size-[36%] rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.15)]"
+          style={{ background: LABEL_GRADIENT }}
+        />
+        <span className="absolute inset-0 m-auto size-[7%] rounded-full bg-background-elevated" />
+      </div>
+
+      {/* Narrower than the disc behind it, and specifically so — wide enough
+          to cover most of it but not the label, which is the one part of a
+          record that has to stay readable for the composition to say
+          "record" rather than "dark circle." */}
+      <div className="absolute left-0 top-1/2 size-[52%] -translate-y-1/2 -rotate-6 overflow-hidden rounded-8 shadow-[0_10px_22px_rgba(0,0,0,0.3)]">
+        <CoverImage photo={photo} gradient={gradient} width={480} height={480} scrim={false} />
+      </div>
+    </div>
+  )
+}
+
 export function PlayerBetaPage() {
   const { slug } = useParams()
   const [search] = useSearchParams()
@@ -232,12 +275,12 @@ export function PlayerBetaPage() {
               // — it now only does that for a visit that did not come from
               // this page, which this one plainly did.
               state={{ skipBeta: true }}
-              className="relative h-[300px] w-[80%] shrink-0 snap-center overflow-hidden rounded-24 shadow-[0_5px_24px_4px_rgba(0,0,0,0.08)]"
+              className="relative flex h-[300px] w-[80%] shrink-0 snap-center items-center justify-center overflow-hidden rounded-24 bg-background-elevated shadow-[0_5px_24px_4px_rgba(0,0,0,0.08)]"
             >
-              <CoverImage photo={c.photo} gradient={c.gradient} width={640} height={640} />
-              <span className="text-style-caption absolute left-16 top-16 rounded-full bg-black/35 px-10 py-4 text-text-inverse backdrop-blur">
+              <span className="text-style-caption absolute left-16 top-16 z-10 rounded-full bg-surface-default px-10 py-4 text-text-primary shadow-sm">
                 {c.eyebrow}
               </span>
+              <DiscAndSleeve photo={c.photo} gradient={c.gradient} />
             </Link>
           ))}
         </div>
