@@ -1,11 +1,10 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import { ArrowLeft, Check, ChevronUp, CircleDollarSign, FlaskConical, LogOut, Plus, User, UserX } from 'lucide-react'
+import { ArrowLeft, Check, ChevronUp, CircleDollarSign, LogOut, Plus, User, UserX } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { GoogleMark } from './auth/AuthShell'
 import { useAuth } from '../auth/AuthContext'
 import { CoinPill } from '../components/ui/CoinPill'
-import { usePlayerBeta } from '../lib/playerBeta'
 
 /** One tappable line in the list under the accounts block. */
 function Row({
@@ -33,30 +32,6 @@ function Row({
   )
 }
 
-/** Same switch as My Wellness's source rows (Figma ".switch", 16523:14071) —
- *  not exported from there, so redrawn here rather than reached across pages
- *  for one shared control. */
-function Switch({ on, onChange, label }: { on: boolean; onChange: (next: boolean) => void; label: string }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={on}
-      aria-label={label}
-      onClick={() => onChange(!on)}
-      className={`u-press relative h-22 w-40 shrink-0 rounded-full transition-colors ${
-        on ? 'bg-text-primary' : 'bg-[#e5e5e5]'
-      }`}
-    >
-      <span
-        className={`absolute top-2 size-18 rounded-full bg-surface-default transition-all ${
-          on ? 'left-20' : 'left-2'
-        }`}
-      />
-    </button>
-  )
-}
-
 /**
  * Figma 16523:13934 — what the gear on the profile opens.
  *
@@ -68,8 +43,6 @@ export function AccountSettingsPage() {
   const { signOut } = useAuth()
   const navigate = useNavigate()
   const [accountsOpen, setAccountsOpen] = useState(true)
-
-  const [playerBeta, setPlayerBeta] = usePlayerBeta()
 
   return (
     <div className="mx-auto max-w-[720px] px-20 py-16 lg:px-24 lg:py-24">
@@ -153,25 +126,6 @@ export function AccountSettingsPage() {
             navigate('/home')
           }}
         />
-      </div>
-
-      {/* Not in the frame — a real opt-in rather than a walkthrough switch, so
-          it lives where a visitor's own preferences do rather than in
-          /__demo. Off by default, on until turned off again, per browser. */}
-      <div className="mt-32">
-        <h2 className="text-style-caption uppercase tracking-widest text-text-secondary">Experimental</h2>
-        <div className="mt-12 flex items-center gap-12 rounded-[20px] bg-surface-default p-16 shadow-sm">
-          <span className="flex size-40 shrink-0 items-center justify-center rounded-full bg-[#FFF1DB] text-[#FF881B]">
-            <FlaskConical size={20} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="text-style-body block text-text-primary">Player Beta</span>
-            <span className="text-style-body-small block text-text-secondary">
-              Swipe between a session and its earlier cuts from a single card.
-            </span>
-          </span>
-          <Switch on={playerBeta} onChange={setPlayerBeta} label="Player Beta" />
-        </div>
       </div>
     </div>
   )

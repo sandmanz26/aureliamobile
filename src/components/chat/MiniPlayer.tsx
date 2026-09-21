@@ -1,7 +1,8 @@
 import { Pause, Play, Volume2, VolumeX } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAudioPlayer } from '../../audio/AudioPlayerContext'
-import { playerHref, usePlayerBeta } from '../../lib/playerBeta'
+import { useFeatureFlags } from '../../demo/FeatureFlags'
+import { playerHref } from '../../lib/playerBeta'
 import { PhotoCircle } from '../ui/PhotoCircle'
 
 /**
@@ -24,13 +25,13 @@ import { PhotoCircle } from '../ui/PhotoCircle'
  */
 export function MiniPlayer() {
   const { track, playing, elapsed, duration, muted, toggle, toggleMuted } = useAudioPlayer()
-  const [betaEnabled] = usePlayerBeta()
+  const { isEnabled } = useFeatureFlags()
   if (!track) return null
 
   const progress = duration > 0 ? Math.min(1, elapsed / duration) : 0
-  // Opted in from Settings, this bar opens the swipeable version card instead
-  // of the plain player — the same track, a different door.
-  const href = playerHref(track.href, betaEnabled)
+  // On in /__demo, this bar opens the swipeable version card instead of the
+  // plain player — the same track, a different door.
+  const href = playerHref(track.href, isEnabled('player.beta'))
 
   return (
     /* h-68 is the frame's, held rather than left to the content: PhotoCircle

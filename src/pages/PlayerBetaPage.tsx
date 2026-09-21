@@ -6,10 +6,10 @@ import { useAudioPlayer } from '../audio/AudioPlayerContext'
 import { CoverImage } from '../components/ui/CoverImage'
 import { MobileStatusBar } from '../components/ui/MobileStatusBar'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
+import { useFeatureFlags } from '../demo/FeatureFlags'
 import { progressFor } from '../lib/progress'
 import { findSession } from '../lib/sessions'
 import type { CoverKey } from '../lib/photos'
-import { usePlayerBeta } from '../lib/playerBeta'
 
 /** One swipeable card: the session as it stands, or one earlier cut of it. */
 interface Card {
@@ -33,7 +33,7 @@ export function PlayerBetaPage() {
   const { slug } = useParams()
   const [search] = useSearchParams()
   const navigate = useNavigate()
-  const [betaEnabled] = usePlayerBeta()
+  const { isEnabled } = useFeatureFlags()
   const { track, playing, load, toggle } = useAudioPlayer()
 
   const session = findSession(slug)
@@ -47,9 +47,9 @@ export function PlayerBetaPage() {
   const dragMoved = useRef(false)
 
   // Not part of the product yet, so a direct link or a stale bookmark from
-  // before the switch was turned off lands back on the real player rather
+  // before the flag was turned off lands back on the real player rather
   // than a page nobody chose to see.
-  if (!betaEnabled) {
+  if (!isEnabled('player.beta')) {
     return <Navigate to={`/play/${slug}${search.toString() ? `?${search.toString()}` : ''}`} replace />
   }
   if (!session) return <Navigate to="/home" replace />

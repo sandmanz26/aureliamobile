@@ -113,6 +113,13 @@ export const DEMO_MODULES: DemoModule[] = [
     features: [
       { id: 'cue', label: 'Spoken cue', description: 'The line the session is on, under the art.' },
       { id: 'readMore', label: 'Read more', description: 'The clamped summary opens in place.' },
+      {
+        id: 'beta',
+        label: 'Player Beta',
+        description:
+          'A second player: the session and its earlier cuts as swipeable cards, reached from the mini player and the attached-session card in chat. On, it stands in for the plain player everywhere those two lead; off, both lead to the plain player as usual.',
+        unreleased: true,
+      },
     ],
   },
   {

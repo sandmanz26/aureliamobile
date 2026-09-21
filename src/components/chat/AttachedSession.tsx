@@ -2,7 +2,8 @@ import { Clock, Play } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { CoverImage } from '../ui/CoverImage'
 import { durationLabel, findSession } from '../../lib/sessions'
-import { usePlayerBeta } from '../../lib/playerBeta'
+import { useFeatureFlags } from '../../demo/FeatureFlags'
+import { playerHref } from '../../lib/playerBeta'
 
 /**
  * The original a fork is being made from, shown in the thread.
@@ -18,7 +19,7 @@ import { usePlayerBeta } from '../../lib/playerBeta'
  */
 export function AttachedSession({ slug }: { slug: string }) {
   const session = findSession(slug)
-  const [betaEnabled] = usePlayerBeta()
+  const { isEnabled } = useFeatureFlags()
   // A slug that resolves to nothing is not worth a broken card: the message
   // above still says what is being recreated.
   if (!session) return null
@@ -28,7 +29,7 @@ export function AttachedSession({ slug }: { slug: string }) {
       <span className="relative size-56 shrink-0 overflow-hidden rounded-12">
         <CoverImage photo={session.photo} gradient={session.gradient} width={160} height={160} scrim={false} />
         <Link
-          to={betaEnabled ? `/player-beta/${session.slug}` : `/play/${session.slug}`}
+          to={playerHref(`/play/${session.slug}`, isEnabled('player.beta'))}
           state={{ origin: 'community' }}
           aria-label={`Play ${session.title}`}
           className="u-press absolute inset-0 flex items-center justify-center bg-black/25 text-text-inverse"

@@ -265,31 +265,34 @@ material. Flag for confirmation with product and business:
   merely tinted, and picking closes it — a filter sheet that stays open hides
   the thing it just changed.
 
-### Player Beta — a second door onto a session, opted into
+### Player Beta — a second player, switched on for a walkthrough
 
 An experimental screen, reached from the cockpit: the session that is
 loaded, or the one attached to a Recreate message, swipes between its
 current cut and the cuts behind it — one card, one info block, one
 control bar, rather than the plain player's single fixed view.
 
-- **It is a visitor's own preference, not a presenter's.** Everything in
-  `/__demo` decides what a *walkthrough* shows. This is the opposite: an
-  opt-in a person switches on for themselves from Settings, off by
-  default, remembered on their device. It has no business going through
-  `/api/config` — a beta someone turned on for themselves must not become
-  everyone's default the next time somebody presses Publish.
+- **It is a `/__demo` flag** (`player.beta`, under the Player module),
+  off by default. It started as a visitor's own Settings preference and
+  was moved into `/__demo` on request — the console decides who sees it
+  during a walkthrough, same as everything else there.
 - **It reuses the version history that already exists**, rather than
   inventing a second one: the same cuts Progress's Chapters tab lists.
   Swiping a card is browsing that history with a cover in front of it,
   not a new data model.
 - **Two doors, both already in the cockpit.** The mini player card and
   the attached-session card under a Recreate message both open the plain
-  player normally; with the beta on, both open this instead. Nothing
+  player normally; with the flag on, both open this instead. Nothing
   about starting or continuing playback changes — the audio deck is the
   same one either way.
-- **A direct link is not a way around the switch.** Reaching the URL with
-  the preference off sends a visitor back to the plain player rather than
-  showing them a page they never opted into.
+- **`/play/...` itself redirects to the beta page when the flag is on**,
+  not only the two doors above — reaching it any other way (typed,
+  refreshed, an old bookmark) would otherwise show the plain player
+  regardless of the flag. The beta page's own "open full player" link is
+  the one exception, so tapping into a card for the real scrubber does
+  not immediately bounce back to the card it came from.
+- **A direct link is not a way around the flag.** Reaching either URL
+  with it off lands on the plain player.
 - **Not on mobile.** Web only for now, per the usual rule that new web
   surfaces are not ported until asked for.
 
