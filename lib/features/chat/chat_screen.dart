@@ -544,7 +544,11 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   if (startsRun) Text('Aurelia', style: AppTextStyles.caption),
                   Text(message.text,
-                      style: AppTextStyles.bodySm.copyWith(color: AppColors.textPrimary)),
+                      // TESTING: bodySm (14px) -> bodyLg (16px), comparing
+                      // readability against ChatGPT/WhatsApp's message size.
+                      // Not a Figma-backed change — revert to bodySm if this
+                      // doesn't stick.
+                      style: AppTextStyles.bodyLg.copyWith(color: AppColors.textPrimary)),
                   // Questions handed back instead of an answer, each one a
                   // tap. Being stuck should cost a tap rather than a sentence.
                   if (message.prompts != null)
@@ -597,7 +601,9 @@ class _ChatScreenState extends State<ChatScreen> {
                 borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
               child: Text(message.text,
-                  style: AppTextStyles.bodySm.copyWith(color: AppColors.textStrong)),
+                  // TESTING: bodySm (14px) -> bodyLg (16px) — see the note on
+                  // the other bubble above.
+                  style: AppTextStyles.bodyLg.copyWith(color: AppColors.textStrong)),
             ),
           // Under the message that carries it, not at the end of the thread,
           // so everything said afterwards comes after it.
