@@ -36,12 +36,25 @@ function buildBranch() {
   }
 }
 
+/**
+ * Production or staging?
+ *
+ * Once two deployments exist, "is this the build I pushed?" is only half the
+ * question — the other half is which site you are looking at, and the two are
+ * identical from a screenshot. Vercel answers it: `production` for the branch
+ * the project deploys to its production domain, `preview` for every other.
+ */
+function buildEnv() {
+  return process.env.VERCEL_ENV ?? 'local'
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   define: {
     __BUILD_ID__: JSON.stringify(buildId()),
     __BUILD_BRANCH__: JSON.stringify(buildBranch()),
+    __BUILD_ENV__: JSON.stringify(buildEnv()),
     __BUILT_AT__: JSON.stringify(new Date().toISOString()),
   },
 })

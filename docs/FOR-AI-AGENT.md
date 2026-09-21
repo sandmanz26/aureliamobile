@@ -19,6 +19,7 @@ this project's history came from one of the four facts in §1.
 | --- | --- | --- |
 | `web_app` | React 19 + Vite + TypeScript + Tailwind v4. The consumer client **and** the admin CMS. | `npm` |
 | `admin_cms` | **Byte-identical to `web_app`.** A name for a workstream, not different code. | `npm` |
+| `web_prod` | The production cut of the web client. **Allowed to be behind `web_app`.** | `npm` |
 | `mobile_app` | Flutter 3.47.3 / Dart 3.13.3. | `flutter` |
 
 ```bash
@@ -38,6 +39,19 @@ git checkout admin_cms && git merge --ff-only web_app && git push -u origin admi
 ```
 
 A divergence between them is a mistake, not a feature.
+
+**`web_prod` is not kept in step, and that is the point.** It is the production
+deployment's branch, it fast-forwards to `web_app`, and it moves **only when
+the product owner asks for a release**:
+
+```bash
+git checkout web_prod && git merge --ff-only web_app && git push -u origin web_prod
+git checkout web_app
+```
+
+Work being finished is not a reason to run that. Somebody asking for it is the
+only reason. Never commit directly on `web_prod`: the next `--ff-only` will
+refuse, and if it does refuse, stop and say so rather than forcing it.
 
 ### 1.2 The web app is the reference implementation
 
@@ -84,6 +98,7 @@ a real revert.
 | **`vercel.json` takes no comments of any kind.** | Vercel validates against a strict schema; a `"comment"` key inside a `headers` entry fails the build. This happened once. |
 | **Do not run Prettier on `web_app`.** | There is no config, so it would reformat the tree to double quotes and semicolons and bury the next diff. |
 | **Never push to a branch you were not told to.** | |
+| **Never push `web_prod` unless the product owner asks in that turn.** | It is the live site. Standing instruction, given explicitly: production moves on request, not on judgement. |
 | **Do not open a pull request unless asked.** | |
 | **Read the node before claiming a Figma frame is implemented.** | Claiming otherwise happened three times in a row once, and was wrong each time. |
 
@@ -301,6 +316,9 @@ there is a backend.
   this container has no Android SDK" belongs in the commit, not only in chat.
 - Web changes go to `web_app`, then `admin_cms` by `--ff-only`, then **both**
   are pushed.
+- `web_prod` is not part of that. It is pushed only when a release was asked
+  for, by `--ff-only` from `web_app`, and never as a side effect of finishing
+  something.
 - `docs/PRD.md` must stay identical on all three branches.
 - Never push to a branch you were not told to. Never open a PR unasked.
 

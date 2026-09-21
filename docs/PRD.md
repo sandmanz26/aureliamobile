@@ -1593,7 +1593,81 @@ turning any of this on actually requires.
 
 ---
 
-## 07 · States that do not exist yet
+## 07 · Staging and production
+
+Until now the web client had one deployment, and "live" and "what we are
+working on" were the same URL. That is fine while nobody outside the team has
+the link and stops being fine the moment somebody does, because every push is
+then a release whether or not it was meant to be one.
+
+### 7.1 · Two branches, two sites
+
+`web_app` is the working branch and stays the working branch: everything lands
+there first, `admin_cms` is fast-forwarded to match it, and both are pushed
+together. **`web_prod` is the production cut.** It only ever fast-forwards to
+`web_app`, and only when the product owner asks.
+
+That last clause is the requirement, not a convention. A change being finished,
+tested and obviously correct is not a reason to move `web_prod`; somebody
+deciding to release it is. An agent working in this repository does not make
+that call.
+
+The cost of the split is that a fix is live on staging and not in production
+until somebody says so, and the gap is invisible from the code. The **This
+build** panel is what closes it — see 7.3.
+
+### 7.2 · The two sites do not share a feature-flag set
+
+`/__demo` publishes a scope to Upstash KV through `/api/config`, and one store
+sits behind every deployment of the project. Under a single key, rehearsing a
+walkthrough on staging would change what the public site shows mid-demo — a
+failure with no warning and no undo short of republishing.
+
+So the key is scoped per environment. Production writes `aurelia:demo:config`,
+unchanged, so every scope published before the split stayed exactly where it
+was. Every other deployment appends its branch: `aurelia:demo:config:web_app`.
+
+**The consequence is that the two sets never sync.** Publishing a scope on
+staging does nothing to production, and the only way to move one to the other
+is to open `/__demo` on the other site and publish it there. This is the right
+default — a staging console that could reach production is the thing being
+prevented — but it is a step somebody has to remember, so the console prints
+the key it is about to write.
+
+The endpoint is still unauthenticated, and scoping the key does not change
+that: anyone who finds `/api/config` on either site can POST a flag set to it,
+site lock included.
+
+### 7.3 · The build panel answers "which site am I on?"
+
+Two deployments of the same commit are indistinguishable from a screenshot, and
+the two questions they produce — "is this live yet?" and "am I looking at
+staging?" — have identical symptoms. `/__demo` opens with the **This build**
+panel, and **Environment** is now its first row: `Production`, `Staging` or
+`Local`, read from `VERCEL_ENV` when the bundle is built, not guessed from the
+hostname.
+
+Set `VITE_PRODUCTION_URL` and `VITE_STAGING_URL` on both Vercel projects and
+each panel carries a link to the other, so moving between them is one click
+rather than a URL somebody has to have kept. Both are optional: unset, the link
+is absent, which is the correct rendering for a project with one deployment.
+
+### 7.4 · What this does not solve
+
+- **The password gate is still one shared password**, and it is still inlined
+  into the bundle on both sites. Production being public-facing makes that more
+  pointed, not less — see §09.
+- **There is no promotion record.** `web_prod` fast-forwarding to `web_app` is
+  the only evidence a release happened; there are no tags, no changelog, and
+  nothing in the app that names which release it is beyond the commit.
+- **Data is not split, because there is no data.** Both sites run the same mock
+  catalogue out of `src/lib/`. The moment a backend exists, "staging and
+  production share a database" becomes the next version of the problem 7.2
+  solves, and it will need solving again at that layer.
+
+---
+
+## 08 · States that do not exist yet
 
 Every frame shows the happy path fully populated. That is normal for a design
 file, but the cockpit *is* the product, so its failure modes need specifying
@@ -1616,7 +1690,7 @@ before engineering meets them in QA.
 
 ---
 
-## 08 · Open gaps
+## 09 · Open gaps
 
 **P0**
 
@@ -1645,7 +1719,7 @@ before engineering meets them in QA.
 
 ---
 
-## 09 · Open questions
+## 10 · Open questions
 
 1. What is the real session lifetime? The current "signed out every launch" is a
    demo setting, not an answer.

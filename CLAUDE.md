@@ -8,14 +8,31 @@ that will mislead you if nobody tells you.
 
 | Branch | What is on it |
 | --- | --- |
-| `web_app` | This app — the consumer web client *and* the admin CMS |
+| `web_app` | This app — the consumer web client *and* the admin CMS. **Work happens here.** |
 | `admin_cms` | **Deliberately identical** to `web_app` |
+| `web_prod` | The production cut — `web_app` as of the last time someone asked to ship |
 | `mobile_app` | The Flutter app |
 
 `admin_cms` exists as a name for a workstream, not as different code. Keep them
 identical: commit on `web_app`, then `git checkout admin_cms && git merge
 --ff-only web_app`, and push both. A divergence between them is a mistake, not
 a feature.
+
+**`web_prod` is different in kind: it is allowed to be behind.** `web_app` is
+the staging branch and every commit lands there first; `web_prod` moves only
+when somebody asks for it, by fast-forward:
+
+```bash
+git checkout web_prod && git merge --ff-only web_app && git push -u origin web_prod
+git checkout web_app
+```
+
+Never commit on `web_prod` directly — a commit there is a divergence that the
+next fast-forward will refuse, and the fix is a merge nobody wanted. If
+`--ff-only` fails, that has already happened; stop and say so rather than
+forcing it. **Do not push it because the work looks finished.** Standing
+instruction from the product owner: production moves on request, not on
+judgement.
 
 ---
 
@@ -144,6 +161,18 @@ falls back to the defaults compiled into `modules.ts`.
 set, the site lock included. Narrow by design — it only stores booleans — but
 it is another reason the lock is a courtesy and not a control.
 
+**Staging and production keep separate flag sets, and that took work.** One
+Upstash store sits behind every deployment of the project, so the original
+single key `aurelia:demo:config` would have meant pressing Publish on staging
+changed what the public site shows — the opposite of why staging exists.
+`api/config.ts` now derives its key from `VERCEL_ENV`: production keeps the
+bare key (so everything published before the split stayed put) and every other
+deployment appends its branch, `aurelia:demo:config:web_app`. `/__demo` prints
+the key the server reported next to the sync indicator, so which one Publish is
+about to write is never a guess. **The two flag sets do not sync** — publishing
+a scope on staging and expecting production to follow is the mistake this
+design makes possible; do it twice, deliberately.
+
 **`/__demo` is a feature-flag console, and flags persist in localStorage.** If a
 screen or a control is missing and the code plainly renders it, check the flags
 before debugging the component. `src/demo/modules.ts` is the registry; `built:
@@ -207,10 +236,18 @@ the whole tree to double quotes and semicolons and bury the next diff.
 ---
 
 **"I pushed that and I cannot see it" is usually the deploy, not the code.**
-`/__demo` opens with a **This build** panel — commit, branch, and when it was
-built — so the question is answerable from the page. If the commit is behind the
-branch you pushed, the *deployment* is behind and clearing a cache will not
-help. If it matches and a screen still looks old, it is the browser.
+`/__demo` opens with a **This build** panel — environment, commit, branch, and
+when it was built — so the question is answerable from the page. If the commit
+is behind the branch you pushed, the *deployment* is behind and clearing a cache
+will not help. If it matches and a screen still looks old, it is the browser.
+
+Since there are two sites, the panel leads with **Environment** — `Production`,
+`Staging` or `Local`, read from `VERCEL_ENV` at build time — because the two are
+identical from a screenshot and "it is not live yet" and "you are looking at
+staging" have the same symptom. Set `VITE_PRODUCTION_URL` and
+`VITE_STAGING_URL` on both Vercel projects and each panel grows a link to the
+other; leave them unset and the link is simply absent, which is right for a
+project with one deployment.
 
 `vercel.json` sends `index.html` with `must-revalidate` and `/assets/*` as
 `immutable`, so a browser can no longer pin itself to an old build. **That file

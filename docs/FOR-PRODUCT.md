@@ -167,6 +167,12 @@ shown. 17 consumer modules, 15 admin modules.
 - Toggling changes **only your browser** until you press **Publish**.
 - Publish writes to a shared store (Upstash KV via `/api/config`), so every
   visitor sees the same scope.
+- **Publish reaches the site you are on, and no further.** Staging and
+  production keep separate flag sets on purpose — rehearsing a walkthrough on
+  staging must not change the public site mid-demo. The console prints which
+  set it is about to write, next to the green "shared config connected" dot.
+  To move a scope from one to the other, open `/__demo` on the other site and
+  publish it there; nothing syncs by itself.
 - Without the KV env vars the endpoint reports `configured: false`, Publish is
   disabled, and everyone falls back to compiled defaults.
 - `built: false` means there is nothing behind the switch. `unreleased: true`
@@ -299,6 +305,12 @@ Useful to know when you ask for something.
   `docs/DESIGN-SYSTEM-HISTORY.md`.
 - **The PRD is updated with the code**, in the same commit, and is kept
   identical on all three branches.
+- **There are two web sites now: staging and production.** Every change lands
+  on staging first. Production moves only when you ask for it — "this is
+  finished" does not release it, and nobody will release it on your behalf.
+  `/__demo` opens with a panel naming which site you are looking at, which
+  commit it was built from and when, because the two are otherwise identical
+  from a screenshot.
 - **Verification is running the real app**, not just tests. Two bugs in one
   pass — a missing asset and a theme border bleeding through — survived 62
   green tests and a clean analyzer because neither can see a screen.

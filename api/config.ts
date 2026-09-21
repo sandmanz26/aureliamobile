@@ -10,8 +10,35 @@
 // If those env vars are absent the endpoint reports `configured: false` rather
 // than failing: the client then falls back to its local copy, so an
 // unconfigured deployment behaves exactly as it did before this existed.
+//
+// One store, several deployments
+// ------------------------------
+// Staging and production are two Vercel deployments of the same project
+// pointed at the same Upstash store. Under a single key they would share one
+// flag set, so pressing Publish while rehearsing on staging would change what
+// the public site shows — the opposite of why staging exists. The key is
+// therefore scoped per environment.
+//
+// Production keeps the bare key so every flag set published before this split
+// stays where it was; everything else gets its branch name appended.
 
-const KEY = 'aurelia:demo:config'
+const BASE_KEY = 'aurelia:demo:config'
+
+/** production | preview | development on Vercel; absent anywhere else. */
+const ENVIRONMENT = process.env.VERCEL_ENV ?? ''
+
+function keyFor() {
+  // No VERCEL_ENV means this is not a Vercel deployment at all (a local
+  // `vercel dev`, or some other host). Treat it as production: that is how
+  // this endpoint behaved before the split, and there is nothing to collide
+  // with.
+  if (!ENVIRONMENT || ENVIRONMENT === 'production') return BASE_KEY
+  const ref = process.env.VERCEL_GIT_COMMIT_REF
+  const suffix = (ref || ENVIRONMENT).replace(/[^a-zA-Z0-9._-]+/g, '-')
+  return `${BASE_KEY}:${suffix}`
+}
+
+const KEY = keyFor()
 
 const URL_BASE = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL
 const TOKEN = process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN
@@ -43,7 +70,7 @@ export default async function handler(req: Req, res: Res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0')
 
   if (!URL_BASE || !TOKEN) {
-    res.status(200).json({ configured: false, flags: null })
+    res.status(200).json({ configured: false, scope: KEY, environment: ENVIRONMENT || 'unknown', flags: null })
     return
   }
 
@@ -52,6 +79,8 @@ export default async function handler(req: Req, res: Res) {
       const stored = await redis(['GET', KEY])
       res.status(200).json({
         configured: true,
+        scope: KEY,
+        environment: ENVIRONMENT || 'unknown',
         flags: typeof stored === 'string' ? JSON.parse(stored) : null,
       })
       return
@@ -75,7 +104,13 @@ export default async function handler(req: Req, res: Res) {
       }
 
       await redis(['SET', KEY, JSON.stringify(clean)])
-      res.status(200).json({ configured: true, flags: clean, savedAt: new Date().toISOString() })
+      res.status(200).json({
+        configured: true,
+        scope: KEY,
+        environment: ENVIRONMENT || 'unknown',
+        flags: clean,
+        savedAt: new Date().toISOString(),
+      })
       return
     }
 

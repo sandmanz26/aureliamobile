@@ -30,6 +30,12 @@ interface FeatureFlagsValue {
   dirty: boolean
   publishing: boolean
   lastPublishedAt: string | null
+  /**
+   * The KV key this deployment reads and writes, as the server reports it.
+   * Staging and production are scoped apart, and the only way to be sure which
+   * one Publish is about to change is to have the server say so.
+   */
+  scope: string | null
 }
 
 const FeatureFlagsContext = createContext<FeatureFlagsValue | null>(null)
@@ -66,6 +72,7 @@ export function FeatureFlagsProvider({ children }: { children: ReactNode }) {
   const [sync, setSync] = useState<SyncState>('loading')
   const [publishing, setPublishing] = useState(false)
   const [lastPublishedAt, setLastPublishedAt] = useState<string | null>(null)
+  const [scope, setScope] = useState<string | null>(null)
   // A viewer follows the server; the presenter (who has edited) does not get
   // their draft yanked out from under them by a poll.
   const dirtyRef = useRef(false)
@@ -81,7 +88,12 @@ export function FeatureFlagsProvider({ children }: { children: ReactNode }) {
     try {
       const response = await fetch('/api/config', { cache: 'no-store' })
       if (!response.ok) throw new Error(String(response.status))
-      const data = (await response.json()) as { configured: boolean; flags: FlagState | null }
+      const data = (await response.json()) as {
+        configured: boolean
+        flags: FlagState | null
+        scope?: string
+      }
+      setScope(data.scope ?? null)
       if (!data.configured) {
         setSync('local-only')
         return
@@ -152,9 +164,11 @@ export function FeatureFlagsProvider({ children }: { children: ReactNode }) {
             configured?: boolean
             flags?: FlagState
             savedAt?: string
+            scope?: string
             error?: string
           }
           if (!response.ok) throw new Error(data.error ?? String(response.status))
+          if (data.scope) setScope(data.scope)
           if (!data.configured) {
             setSync('local-only')
             return
@@ -172,8 +186,9 @@ export function FeatureFlagsProvider({ children }: { children: ReactNode }) {
       dirty,
       publishing,
       lastPublishedAt,
+      scope,
     }
-  }, [flags, published, sync, dirty, publishing, lastPublishedAt])
+  }, [flags, published, sync, dirty, publishing, lastPublishedAt, scope])
 
   return <FeatureFlagsContext.Provider value={value}>{children}</FeatureFlagsContext.Provider>
 }

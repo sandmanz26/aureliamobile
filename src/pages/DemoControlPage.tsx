@@ -40,8 +40,20 @@ function Toggle({
 // in localStorage and syncs across tabs, so this can stay open on a second
 // screen while the demo runs.
 export function DemoControlPage() {
-  const { flags, isEnabled, setFlag, setAll, reset, publish, revertToPublished, sync, dirty, publishing, lastPublishedAt } =
-    useFeatureFlags()
+  const {
+    flags,
+    isEnabled,
+    setFlag,
+    setAll,
+    reset,
+    publish,
+    revertToPublished,
+    sync,
+    dirty,
+    publishing,
+    lastPublishedAt,
+    scope,
+  } = useFeatureFlags()
 
   const activeCount = DEMO_MODULES.filter((mod) => isEnabled(mod.id)).length
 
@@ -80,6 +92,11 @@ export function DemoControlPage() {
                       Last published {new Date(lastPublishedAt).toLocaleTimeString()}
                     </span>
                   )}
+                  {/* Staging and production keep separate flag sets, so
+                      "everyone" means everyone on *this* site. Name the key
+                      the server is actually writing rather than leave it to
+                      be inferred from the URL. */}
+                  {scope && <span className="font-mono text-text-secondary">{scope}</span>}
                 </>
               )}
               {sync === 'local-only' && (
