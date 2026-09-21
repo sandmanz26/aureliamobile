@@ -12,6 +12,13 @@ const BENEFITS = [
     title: 'More room to explore',
     body: 'Keep creating, reflecting, and discovering with Aurelia AI.',
   },
+  // Requested by Daniel: the value here is publicity, not a feature — a
+  // published session getting picked up for the community to regenerate is
+  // the thing worth naming, not the mechanism behind it.
+  {
+    title: 'Priority placement in Explore',
+    body: 'Your sessions get prioritized in Explore for the community to regenerate — so you earn more publicity and recognition.',
+  },
 ]
 
 /** Annual is the same plan billed yearly, at two months off. */

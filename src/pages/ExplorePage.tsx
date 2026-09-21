@@ -14,8 +14,10 @@ import type { CategoryFilter, Shelf } from '../lib/sessions'
 import { CATEGORY_FILTERS, categoryLabel, findSession, sessionsOnShelf } from '../lib/sessions'
 import { CategorySheet } from '../components/ui/CategorySheet'
 import { CoinPill } from '../components/ui/CoinPill'
+import { FlipWord } from '../components/ui/FlipWord'
 import { CHALLENGES } from '../lib/challenges'
 import type { ChallengeRecord } from '../lib/challenges'
+import type { ReactNode } from 'react'
 
 /**
  * Sessions — the browse surface behind the Sessions nav item.
@@ -66,7 +68,8 @@ function SectionHeader({
   action = 'See All',
   onAction,
 }: {
-  title: string
+  /** A string for most sections; a node for the one that carries FlipWord. */
+  title: ReactNode
   seeAllTo?: string
   action?: string
   /** Handles the action in place, for the ones that open a sheet rather than
@@ -331,7 +334,13 @@ export function ExplorePage() {
 
         {isEnabled('sessions.creators') && (
           <section className="mt-32">
-            <SectionHeader title="Trusted Creators" />
+            <SectionHeader
+              title={
+                <>
+                  Trusted <FlipWord words={['Creators', 'Guides', 'Storytellers', 'Voices']} />
+                </>
+              }
+            />
             <div className="-mx-20 mt-16 flex gap-20 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
               {/* Real people, counted rather than claimed. The shelf used to name
                   four, two of whom were in no session at all — so tapping them
