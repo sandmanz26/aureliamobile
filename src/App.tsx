@@ -36,6 +36,7 @@ import { ProfilePage } from './pages/ProfilePage'
 import { SeeAllPage } from './pages/SeeAllPage'
 import { ExplorePage } from './pages/ExplorePage'
 import { SessionsPage } from './pages/SessionsPage'
+import { PlayerBetaPage } from './pages/PlayerBetaPage'
 import { PlayerPage } from './pages/PlayerPage'
 import { RecreateRoute } from './pages/RecreatePage'
 import { SessionDetailPage } from './pages/SessionDetailPage'
@@ -153,6 +154,20 @@ export default function App() {
               <RequireAuth>
                 <ModuleGuard module="player">
                   <PlayerPage />
+                </ModuleGuard>
+              </RequireAuth>
+            }
+          />
+          {/* Same guard as /play — this is a different door onto the same
+              session, opted into from Settings rather than a demo flag. The
+              page itself sends a visitor back to /play if they reach it with
+              the beta off. */}
+          <Route
+            path="/player-beta/:slug"
+            element={
+              <RequireAuth>
+                <ModuleGuard module="player">
+                  <PlayerBetaPage />
                 </ModuleGuard>
               </RequireAuth>
             }

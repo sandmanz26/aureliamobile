@@ -1,6 +1,7 @@
 import { Pause, Play, Volume2, VolumeX } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAudioPlayer } from '../../audio/AudioPlayerContext'
+import { playerHref, usePlayerBeta } from '../../lib/playerBeta'
 import { PhotoCircle } from '../ui/PhotoCircle'
 
 /**
@@ -23,9 +24,13 @@ import { PhotoCircle } from '../ui/PhotoCircle'
  */
 export function MiniPlayer() {
   const { track, playing, elapsed, duration, muted, toggle, toggleMuted } = useAudioPlayer()
+  const [betaEnabled] = usePlayerBeta()
   if (!track) return null
 
   const progress = duration > 0 ? Math.min(1, elapsed / duration) : 0
+  // Opted in from Settings, this bar opens the swipeable version card instead
+  // of the plain player — the same track, a different door.
+  const href = playerHref(track.href, betaEnabled)
 
   return (
     /* h-68 is the frame's, held rather than left to the content: PhotoCircle
@@ -33,11 +38,11 @@ export function MiniPlayer() {
        the card 76. */
     <div className="relative h-68 overflow-hidden rounded-[20px] bg-surface-default shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)]">
       <div className="flex h-full items-center gap-12 px-16 pb-4">
-        <Link to={track.href} state={{ origin: 'own' }} className="u-press shrink-0">
+        <Link to={href} state={{ origin: 'own' }} className="u-press shrink-0">
           <PhotoCircle photo={track.photo} size={32} gradient={track.gradient} alt="" />
         </Link>
 
-        <Link to={track.href} state={{ origin: 'own' }} className="min-w-0 flex-1">
+        <Link to={href} state={{ origin: 'own' }} className="min-w-0 flex-1">
           <p className="text-style-body truncate text-text-primary">{track.title}</p>
           <p className="text-style-label truncate font-normal! text-text-secondary">{track.author}</p>
         </Link>

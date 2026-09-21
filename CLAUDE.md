@@ -180,6 +180,16 @@ about to write is never a guess. **The two flag sets do not sync** — publishin
 a scope on staging and expecting production to follow is the mistake this
 design makes possible; do it twice, deliberately.
 
+**`/player-beta/:slug` is a real user preference, not a presenter's switch —
+keep it out of `/__demo`.** It is the one opt-in a visitor makes for
+themselves: off by default, flipped from Settings (`AccountSettingsPage`, the
+"Experimental" section), remembered in `localStorage` under
+`aurelia.playerBeta` via `src/lib/playerBeta.ts`. If a screen never shows this
+route and you go looking for what links to it, check the mini player and the
+attached-session card in chat — both redirect there instead of `/play/...`
+only while the switch is on. A direct link with the switch off bounces back to
+`/play/...`, which is intentional, not a bug in the route guard.
+
 **`/__demo` is a feature-flag console, and flags persist in localStorage.** If a
 screen or a control is missing and the code plainly renders it, check the flags
 before debugging the component. `src/demo/modules.ts` is the registry; `built:
