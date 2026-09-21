@@ -25,6 +25,7 @@ import { profilePath } from '../lib/people'
 import type { ProfileOrigin } from '../lib/people'
 import { findSession } from '../lib/sessions'
 import type { Named } from '../lib/named'
+import { usePlayerBeta } from '../lib/playerBeta'
 
 /** Lines the session speaks, which the hero shows one at a time under the art.
  *  Mock, like everything in lib/ — as is the bed they play over. */
@@ -122,6 +123,7 @@ export function PlayerPage() {
   // Playback lives above the router. This screen is a view onto it, so
   // walking back to the cockpit leaves the session running.
   const { playing, elapsed, duration, muted, load, toggle, seek, toggleMuted } = useAudioPlayer()
+  const [betaEnabled] = usePlayerBeta()
   const [expanded, setExpanded] = useState(false)
 
   // How far the sheet is pushed down from its pulled-up rest. 0 is up; the
@@ -182,6 +184,17 @@ export function PlayerPage() {
   }, [session, version, named, load, location.pathname, location.search])
 
   if (!session) return <Navigate to="/home" replace />
+
+  // The beta's own cards link back here for full transport — that link
+  // carries `skipBeta` precisely so this does not send it straight back
+  // where it came from. Reached any other way (typed, refreshed, an old
+  // bookmark, the header's own play glyph) with the switch on, this is the
+  // plain player nobody chose over the swipeable one — land on the one the
+  // switch actually promises.
+  const skipBeta = (location.state as { skipBeta?: boolean } | null)?.skipBeta
+  if (betaEnabled && !skipBeta) {
+    return <Navigate to={`/player-beta/${session.slug}${location.search}`} replace />
+  }
 
   // Guarded: before the bed's metadata lands duration is its placeholder, and a
   // zero there would hand the range input max={0} and NaN for the fill.

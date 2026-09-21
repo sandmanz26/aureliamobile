@@ -228,6 +228,10 @@ export function PlayerBetaPage() {
             <Link
               key={c.id}
               to={`/play/${session.slug}${c.id === 'current' ? '' : `?v=${c.id}`}`}
+              // The full player would otherwise send this straight back here
+              // — it now only does that for a visit that did not come from
+              // this page, which this one plainly did.
+              state={{ skipBeta: true }}
               className="relative h-[300px] w-[80%] shrink-0 snap-center overflow-hidden rounded-24 shadow-[0_5px_24px_4px_rgba(0,0,0,0.08)]"
             >
               <CoverImage photo={c.photo} gradient={c.gradient} width={640} height={640} />
