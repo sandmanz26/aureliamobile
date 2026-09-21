@@ -21,6 +21,7 @@ import type { LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
+import { BuildBadge } from '../components/ui/BuildBadge'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 
 interface NavItem {
@@ -131,6 +132,9 @@ export function AdminLayout() {
         <div className="border-t border-white/8 px-20 py-12">
           <p className="text-12 font-medium text-white">Werner S.</p>
           <p className="text-11 text-white/45">Super Admin</p>
+          <div className="mt-10">
+            <BuildBadge dark />
+          </div>
         </div>
       </aside>
 

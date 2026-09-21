@@ -23,9 +23,16 @@ the staging branch and every commit lands there first; `web_prod` moves only
 when somebody asks for it, by fast-forward:
 
 ```bash
+# On web_app first, if the release gets a new number:
+#   bump "version" in package.json, commit, push web_app + admin_cms
 git checkout web_prod && git merge --ff-only web_app && git push -u origin web_prod
 git checkout web_app
 ```
+
+`package.json`'s `version` is the release name and nothing bumps it for you.
+It is shown throughout the app beside the commit precisely because it is the
+one fact here a human maintains: the version is what a release was *called*,
+the short SHA is what it *is*. If they disagree, believe the SHA.
 
 Never commit on `web_prod` directly — a commit there is a divergence that the
 next fast-forward will refuse, and the fix is a merge nobody wanted. If
@@ -248,6 +255,21 @@ staging" have the same symptom. Set `VITE_PRODUCTION_URL` and
 `VITE_STAGING_URL` on both Vercel projects and each panel grows a link to the
 other; leave them unset and the link is simply absent, which is right for a
 project with one deployment.
+
+**The same answer is in the app, not only in the console.** `BuildBadge` —
+`Staging · 0.1.0 · d135f24` — sits at the foot of the consumer drawer, at the
+foot of the admin sidebar, and in the `/__demo` header. All of it comes from
+`src/lib/build.ts`, the one place that reads the injected constants; nothing is
+inferred from the hostname, because a custom domain, a branch alias and a
+preview URL all resolve to the same deployment and guessing from any of them is
+how a badge ends up confidently wrong.
+
+**The badge does not link to `/__demo`, and must not.** That console sits
+outside the password so nobody can shut themselves out of the switch, which
+makes its URL a way around the gate — linking it from the drawer would hand
+that to every visitor. Staging gets the loud brand chip and production a quiet
+grey one: production is the normal state of affairs, and being on the rehearsal
+copy without noticing is the mistake worth interrupting for.
 
 `vercel.json` sends `index.html` with `must-revalidate` and `/assets/*` as
 `immutable`, so a browser can no longer pin itself to an old build. **That file

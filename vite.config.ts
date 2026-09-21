@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
@@ -48,6 +49,22 @@ function buildEnv() {
   return process.env.VERCEL_ENV ?? 'local'
 }
 
+/**
+ * The release name, as opposed to the commit.
+ *
+ * `package.json`'s version, bumped by hand when `web_prod` is moved. It is the
+ * one fact here that a human maintains and can therefore be wrong, which is why
+ * it is never shown without the commit beside it: the version is what a release
+ * was called, the commit is what it actually is.
+ */
+function appVersion() {
+  try {
+    return (JSON.parse(readFileSync('./package.json', 'utf8')) as { version?: string }).version ?? '0.0.0'
+  } catch {
+    return '0.0.0'
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
@@ -55,6 +72,7 @@ export default defineConfig({
     __BUILD_ID__: JSON.stringify(buildId()),
     __BUILD_BRANCH__: JSON.stringify(buildBranch()),
     __BUILD_ENV__: JSON.stringify(buildEnv()),
+    __APP_VERSION__: JSON.stringify(appVersion()),
     __BUILT_AT__: JSON.stringify(new Date().toISOString()),
   },
 })

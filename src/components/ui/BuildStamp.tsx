@@ -1,5 +1,6 @@
 import { ExternalLink } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { BUILD, peerSite } from '../../lib/build'
 
 /**
  * What is actually running, stated on the page.
@@ -19,28 +20,6 @@ import { useEffect, useState } from 'react'
  * different hat.
  */
 
-/** What Vercel calls the deployment, said the way a human would say it. */
-const ENVIRONMENTS: Record<string, { label: string; tone: string }> = {
-  production: { label: 'Production', tone: 'bg-brand-default text-text-strong' },
-  preview: { label: 'Staging', tone: 'bg-background-elevated text-text-primary' },
-  local: { label: 'Local', tone: 'bg-background-elevated text-text-secondary' },
-}
-
-/**
- * The other deployment, if there is one.
- *
- * Both sites carry both URLs and each links to the one it is not, so a single
- * shared pair of env vars configures them. Neither is required: with the vars
- * unset the link is simply absent, which is correct for a project with one
- * deployment.
- */
-function peer(environment: string) {
-  const production = import.meta.env.VITE_PRODUCTION_URL?.trim()
-  const staging = import.meta.env.VITE_STAGING_URL?.trim()
-  if (environment === 'production') return staging ? { label: 'Open staging', href: staging } : null
-  return production ? { label: 'Open production', href: production } : null
-}
-
 function ago(iso: string, now: number) {
   const seconds = Math.max(0, Math.round((now - new Date(iso).getTime()) / 1000))
   if (seconds < 60) return `${seconds}s ago`
@@ -53,15 +32,16 @@ function ago(iso: string, now: number) {
 
 export function BuildStamp() {
   const [now, setNow] = useState(() => Date.now())
-  const environment = ENVIRONMENTS[__BUILD_ENV__] ?? { label: __BUILD_ENV__, tone: 'bg-background-elevated text-text-secondary' }
-  const other = peer(__BUILD_ENV__)
+  const other = peerSite()
+  const tone =
+    BUILD.environment === 'preview' ? 'bg-brand-default text-text-strong' : 'bg-background-elevated text-text-secondary'
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 30_000)
     return () => clearInterval(id)
   }, [])
 
-  const built = new Date(__BUILT_AT__)
+  const built = new Date(BUILD.builtAt)
   const valid = !Number.isNaN(built.getTime())
 
   return (
@@ -81,20 +61,25 @@ export function BuildStamp() {
       <dl className="mt-12 grid grid-cols-[auto_1fr] gap-x-16 gap-y-8">
         <dt className="text-style-body-small text-text-secondary">Environment</dt>
         <dd>
-          <span className={`text-style-caption rounded-full px-10 py-2 ${environment.tone}`}>{environment.label}</span>
+          <span className={`text-style-caption rounded-full px-10 py-2 ${tone}`}>{BUILD.label}</span>
         </dd>
 
+        {/* The version is the only line here a human maintains, so it never
+            appears without the commit under it. */}
+        <dt className="text-style-body-small text-text-secondary">Version</dt>
+        <dd className="text-style-body-small font-mono text-text-primary">{BUILD.version}</dd>
+
         <dt className="text-style-body-small text-text-secondary">Commit</dt>
-        <dd className="text-style-body-small font-mono text-text-primary">{__BUILD_ID__}</dd>
+        <dd className="text-style-body-small font-mono text-text-primary">{BUILD.commit}</dd>
 
         <dt className="text-style-body-small text-text-secondary">Branch</dt>
-        <dd className="text-style-body-small font-mono text-text-primary">{__BUILD_BRANCH__}</dd>
+        <dd className="text-style-body-small font-mono text-text-primary">{BUILD.branch}</dd>
 
         <dt className="text-style-body-small text-text-secondary">Built</dt>
         <dd className="text-style-body-small text-text-primary">
           {valid ? (
             <>
-              {built.toLocaleString()} <span className="text-text-secondary">· {ago(__BUILT_AT__, now)}</span>
+              {built.toLocaleString()} <span className="text-text-secondary">· {ago(BUILD.builtAt, now)}</span>
             </>
           ) : (
             'unknown'

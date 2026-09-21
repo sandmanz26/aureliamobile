@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext'
 import { useHiddenScrollbars } from '../hooks/useHiddenScrollbars'
 import { useSignInGate } from '../auth/useSignInGate'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
+import { BuildBadge } from '../components/ui/BuildBadge'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import { MobileStatusBar } from '../components/ui/MobileStatusBar'
 import { NavItem } from '../components/ui/NavItem'
@@ -163,6 +164,11 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             Help
           </button>
         )}
+        {/* Which site and which build, where it is always in view. Not a
+            navigation item and deliberately not a link — see BuildBadge. */}
+        <div className="px-20 pt-12">
+          <BuildBadge />
+        </div>
       </div>
     </div>
   )

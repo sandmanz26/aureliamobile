@@ -45,6 +45,8 @@ deployment's branch, it fast-forwards to `web_app`, and it moves **only when
 the product owner asks for a release**:
 
 ```bash
+# If the release is to get a new number, bump "version" in package.json on
+# web_app FIRST and push web_app + admin_cms; the bundle reads it at build time.
 git checkout web_prod && git merge --ff-only web_app && git push -u origin web_prod
 git checkout web_app
 ```

@@ -1638,7 +1638,7 @@ The endpoint is still unauthenticated, and scoping the key does not change
 that: anyone who finds `/api/config` on either site can POST a flag set to it,
 site lock included.
 
-### 7.3 · The build panel answers "which site am I on?"
+### 7.3 · The app says which site it is, on every screen
 
 Two deployments of the same commit are indistinguishable from a screenshot, and
 the two questions they produce — "is this live yet?" and "am I looking at
@@ -1652,14 +1652,43 @@ each panel carries a link to the other, so moving between them is one click
 rather than a URL somebody has to have kept. Both are optional: unset, the link
 is absent, which is the correct rendering for a project with one deployment.
 
+The console is not enough on its own, because most of the time nobody is
+looking at it. A small badge — `Staging · 0.1.0 · d135f24` — sits at the foot
+of the consumer drawer and at the foot of the admin sidebar, so the answer is
+in view on whatever screen the question comes up on. It is a label, not a
+control: it does not link to `/__demo`, because that console is deliberately
+outside the password and a link to it from the drawer would hand every visitor
+a way around the gate.
+
+Staging is the loud one — the brand chip — and production is quiet grey.
+Production is the normal state of affairs and does not need a banner; being on
+the rehearsal copy without realising is the mistake worth interrupting for.
+
+### 7.3.1 · Two identifiers, and only one of them can lie
+
+The badge and the panel both carry a **version** and a **commit**, and they are
+not the same kind of fact:
+
+- **Version** is `package.json`'s `version` — the name a release was given. A
+  person bumps it when `web_prod` moves. Nothing enforces that, so it can be
+  stale.
+- **Commit** is the short SHA the bundle was built from. It cannot be stale;
+  it is what is running.
+
+They are always shown together for that reason. The version is what a release
+was *called*; the commit is what it *is*. Where they disagree, the commit wins
+and somebody forgot to bump.
+
 ### 7.4 · What this does not solve
 
 - **The password gate is still one shared password**, and it is still inlined
   into the bundle on both sites. Production being public-facing makes that more
   pointed, not less — see §09.
 - **There is no promotion record.** `web_prod` fast-forwarding to `web_app` is
-  the only evidence a release happened; there are no tags, no changelog, and
-  nothing in the app that names which release it is beyond the commit.
+  the only evidence a release happened. `package.json`'s version gives a release
+  a name, but nothing bumps it, tags it, or writes a changelog entry — the
+  discipline is entirely human, which is exactly why the commit is printed next
+  to it everywhere the version appears.
 - **Data is not split, because there is no data.** Both sites run the same mock
   catalogue out of `src/lib/`. The moment a backend exists, "staging and
   production share a database" becomes the next version of the problem 7.2

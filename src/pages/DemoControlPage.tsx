@@ -4,6 +4,7 @@ import { useFeatureFlags } from '../demo/FeatureFlags'
 import type { ModuleKind } from '../demo/modules'
 import { DEMO_MODULES, SITE_LOCK_FLAG } from '../demo/modules'
 import { SITE_PASSWORD, forgetUnlock, rememberUnlock } from '../demo/siteLock'
+import { BuildBadge } from '../components/ui/BuildBadge'
 import { BuildStamp } from '../components/ui/BuildStamp'
 
 function Toggle({
@@ -62,7 +63,12 @@ export function DemoControlPage() {
       <div className="mx-auto max-w-[860px]">
         <header className="flex flex-wrap items-end justify-between gap-16 border-b border-border-subtle pb-24">
           <div>
-            <p className="text-style-caption uppercase tracking-widest text-text-secondary">Presenter console</p>
+            {/* Ahead of the panel below, because the first thing to know about
+                this console is which site's scope it publishes. */}
+            <div className="flex flex-wrap items-center gap-10">
+              <p className="text-style-caption uppercase tracking-widest text-text-secondary">Presenter console</p>
+              <BuildBadge />
+            </div>
             <h1 className="text-style-headline mt-4 text-text-primary">Demo scope</h1>
 
             <p className="text-style-body-small mt-8 max-w-[560px] text-text-secondary">

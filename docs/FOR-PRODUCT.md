@@ -310,7 +310,13 @@ Useful to know when you ask for something.
   finished" does not release it, and nobody will release it on your behalf.
   `/__demo` opens with a panel naming which site you are looking at, which
   commit it was built from and when, because the two are otherwise identical
-  from a screenshot.
+  from a screenshot. A small badge carries the same thing — `Staging · 0.1.0 ·
+  d135f24` — at the foot of the app drawer and the admin sidebar, so you can
+  answer it from any screen without opening the console.
+- **The version number is a name, the commit is the truth.** `0.1.0` is bumped
+  by hand when a release is cut and nothing enforces it; the short SHA beside
+  it is what is actually running. If you ever see them disagree, believe the
+  SHA and tell us the version was missed.
 - **Verification is running the real app**, not just tests. Two bugs in one
   pass — a missing asset and a theme border bleeding through — survived 62
   green tests and a clean analyzer because neither can see a screen.

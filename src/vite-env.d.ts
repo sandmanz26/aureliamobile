@@ -7,6 +7,8 @@ declare const __BUILT_AT__: string
 declare const __BUILD_BRANCH__: string
 /** Injected by `vite.config.ts` — `production`, `preview`, or `local`. */
 declare const __BUILD_ENV__: string
+/** Injected by `vite.config.ts` — `package.json`'s version at build time. */
+declare const __APP_VERSION__: string
 
 interface ImportMetaEnv {
   /**
