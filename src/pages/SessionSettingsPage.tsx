@@ -326,10 +326,13 @@ export function SessionSettingsPage() {
           transform, which makes it the containing block for a `fixed`
           descendant, so an un-portalled bar would pin itself to the bottom
           of the scrollable page box instead of the viewport (the same trap
-          documented for sheets and modals). */}
+          documented for sheets and modals). `left-0` alone would centre it
+          against the full window, sidebar included — `lg:left-[313px]`
+          keeps it centred on the content column beside the 313px desktop
+          sidebar instead. */}
       {pendingCount > 0 &&
         createPortal(
-          <div className="fixed inset-x-0 bottom-20 z-30 flex justify-center px-20 lg:bottom-24">
+          <div className="fixed inset-x-0 bottom-20 z-30 flex justify-center px-20 lg:bottom-24 lg:left-[313px]">
             <button
               type="button"
               onClick={applyPendingChanges}

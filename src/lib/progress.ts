@@ -10,7 +10,7 @@
  */
 import type { CoverKey } from './photos'
 import type { SessionRecord } from './sessions'
-import { totalMinutes } from './sessions'
+import { lineageDate, totalMinutes } from './sessions'
 
 export type ProgressTab = 'chapters' | 'social' | 'insights'
 
@@ -182,7 +182,7 @@ export function progressFor(session: SessionRecord): Progress {
       title: step.title,
       author: step.author,
       authorPhoto: index === session.lineage.length - 1 ? session.authorPhoto : 'avatar',
-      date: ['2026.2.23', '2026.6.21', '2026.12.10'][index] ?? '2026.6.21',
+      date: lineageDate(index),
     })),
     lineageTotal: 10,
 

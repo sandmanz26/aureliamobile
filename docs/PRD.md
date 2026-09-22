@@ -157,9 +157,21 @@ material. Flag for confirmation with product and business:
 
 - Each shelf has a See All rendering the whole shelf as a two-column grid. One
   screen serves every shelf, so a shelf added later gets its See All free.
+- **Session Detail is a browsing screen, not the editor.** Checked against
+  Figma and rebuilt to match: cover with Back/Share/Play floating on it,
+  author, title, a collapsing description, hashtags, Played/Recreated, a row
+  of preset "Recreate your own version" cards, and Details → Lineage Tree.
+  The outcome figures, sound layers, chapters, personalization and safety
+  copy that used to live here in a seven-section accordion are not shown on
+  this screen any more — Session settings already covers the editable half of
+  that (Visual/Sound), and nothing else on Detail read the rest.
 - **Outcome figures ("−43% stress") are self-reported by listeners and must be
-  labelled as such on the screen.** Presenting them unqualified next to a
-  wellness claim is a regulatory problem, not a copy preference.
+  labelled as such wherever they are shown.** Presenting them unqualified next
+  to a wellness claim is a regulatory problem, not a copy preference. Session
+  Detail no longer shows them at all — they still surface on a Sessions row
+  and in the cockpit's own opening line, neither of which currently carries
+  the label this bullet requires; unchanged by this pass, but worth fixing
+  where they do appear rather than assuming Detail was the only place.
 - **Recreate opens the conversation, not a form.** Pressing Recreate anywhere
   lands in the cockpit with the fork already attached and Aurelia asking what
   should be different. The screen that used to stand between the two is built

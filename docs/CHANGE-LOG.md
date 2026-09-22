@@ -31,6 +31,45 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-22 — Session Detail redrawn against Figma
+**Lands on:** `web_app` / `admin_cms`
+**Not on:** `web_prod` (staging-only per standing instruction, awaiting a
+promotion ask); `mobile_app` (no Flutter equivalent built).
+
+Session Detail was checked against the current Figma frame end to end and
+turned out to have drifted a long way: the seven-section accordion
+(Overview, Session structure, Sound layers, Personalization, What people
+changed, Lineage, Safety & licensing) is gone from this screen, replaced
+with what the frame actually shows — a full-bleed cover with Back/Share/Play
+floating on it instead of a separate header bar, the author row, title,
+a collapsing description ("Read More"), hashtag chips, two Played/Recreated
+stat boxes, a "Recreate your own version" row of preset cards (reusing the
+same enhancement catalogue Session settings and the chat Add sheet already
+draw from — Increase yellow, Less movement, 432 Hz, Male voice over — each
+one forking straight into chat with that change already stated), and a
+"Details → Lineage Tree" card built from the exact same row Progress's own
+Lineage Tree already draws (`16523:19712`), down to reusing its dates. The
+deeper data (layers, chapters, personalization, safety) isn't shown here
+any more but is not gone from the app — Session settings already covers the
+editable half of it, and nothing else on this page read it.
+
+Two things added to the data model to support it: `SessionRecord.tags`
+(hashtags, authored per session, not derived) and `lineageDate()` in
+`sessions.ts` — Progress's own lineage dates were already fixed/reused
+regardless of session, so this pulls that fact into one shared function
+instead of leaving it duplicated the next time a screen needs a lineage
+row.
+
+Also fixed, caught while building this: the same `.u-page`-transform
+containing-block trap documented above for the Apply changes button, this
+time on the new sticky Recreate bar — plus a second bug the first fix
+hadn't hit yet, since neither screen had been checked at desktop width
+before now. A portalled `fixed inset-x-0` bar centers on the *whole*
+window, sidebar included, once escaped to `document.body` — wrong on the
+desktop layout's persistent 313px sidebar, where the bar needs to center on
+the content column beside it instead. Both this page's bar and Session
+settings' Apply changes button now carry `lg:left-[313px]`.
+
 ### 2026-09-22 — Session settings: queue style changes, then Apply
 **Lands on:** `web_app` / `admin_cms`
 **Not on:** `web_prod` (staging-only per explicit request, awaiting a

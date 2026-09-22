@@ -38,6 +38,9 @@ export interface SessionRecord {
   recreated: string
   minutes: number
   category: Category
+  /** Topic hashtags, as they read on the detail page — lowercase, no separator
+   *  on a compound word, matching how the catalogue's own slugs are written. */
+  tags: string[]
   /** What the session is meant to shift, in the creator's words. */
   intent: string
   outcome: { label: string; value: string; note: string }[]
@@ -104,6 +107,7 @@ export const CATEGORY_FILTERS: CategoryFilter[] = ['All', ...CATEGORIES.map((ent
 export const SESSIONS: SessionRecord[] = [
   {
     slug: 'dolphins-frequency',
+    tags: ['dolphinfrequency', 'breathwork', 'meditation', 'selfreflection', 'spirituality', 'beginner', 'calm', 'oceansounds', 'stressrelief', 'eveningwinddown', 'cetaceansong'],
     seconds: 22,
     title: 'Dolphins frequency',
     photo: 'dolphins',
@@ -161,6 +165,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'raise-your-vibration',
+    tags: ['raiseyourvibration', 'energy', 'mood', 'affirmations', 'morning', 'uplifting'],
     seconds: 35,
     title: 'Raise your Vibration',
     photo: 'vibration',
@@ -213,6 +218,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'mind-dance',
+    tags: ['minddance', 'meditation', 'rumination', 'rhythmic', 'instrumental', 'restlessmind'],
     seconds: 8,
     title: 'Mind Dance',
     photo: 'mindDance',
@@ -265,6 +271,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'cosmic-flow',
+    tags: ['cosmicflow', 'calm', 'harmonicdrift', 'tensionrelief', 'shortbreak', 'ambient'],
     seconds: 47,
     title: 'Cosmic Flow',
     photo: 'cosmic',
@@ -317,6 +324,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: '528-hz-reset',
+    tags: ['528hzreset', 'music', 'tone', 'focus', 'mentalclarity', 'soundbath'],
     seconds: 12,
     title: '528 Hz Reset',
     photo: 'water',
@@ -369,6 +377,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'deep-grounding',
+    tags: ['deepgrounding', 'sleep', 'grounding', 'deeprest', 'earthtones', 'bedtime'],
     seconds: 5,
     title: 'Deep Grounding',
     photo: 'forest',
@@ -424,6 +433,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'inner-frequency',
+    tags: ['innerfrequency', 'energy', 'morningritual', 'calmstart', 'risingtone', 'birdsong'],
     seconds: 40,
     title: 'Inner Frequency',
     photo: 'glow',
@@ -476,6 +486,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'ocean-breath',
+    tags: ['oceanbreath', 'calm', 'breathwork', 'pacedbreathing', 'oceansounds', 'nervoussystem'],
     seconds: 18,
     title: 'Ocean Breath',
     photo: 'waves',
@@ -528,6 +539,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'rainy-mind',
+    tags: ['rainymind', 'calm', 'rain', 'racingthoughts', 'ambient', 'focus'],
     seconds: 52,
     title: 'Rainy Mind',
     photo: 'rain',
@@ -580,6 +592,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'inner-balance',
+    tags: ['innerbalance', 'meditation', 'grounding', 'stressrelief', 'centeringtone', 'endofweek'],
     seconds: 27,
     title: 'Inner Balance',
     photo: 'stones',
@@ -632,6 +645,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'golden-hour',
+    tags: ['goldenhour', 'calm', 'bodyscan', 'tensionrelief', 'eveningwinddown', 'warmth'],
     seconds: 9,
     title: 'Golden Hour',
     photo: 'glow',
@@ -681,6 +695,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'quiet-space',
+    tags: ['quietspace', 'sleep', 'ambient', 'stillness', 'minimal', 'bedtime'],
     seconds: 44,
     title: 'Quiet Space',
     photo: 'meadow',
@@ -733,6 +748,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'dream-drift',
+    tags: ['dreamdrift', 'sleep', 'weightlessness', 'suspendedtones', 'fallasleep', 'deeprest'],
     seconds: 31,
     title: 'Dream Drift',
     photo: 'underwater',
@@ -789,6 +805,7 @@ export const SESSIONS: SessionRecord[] = [
   // which made the filter look broken rather than empty.
   {
     slug: 'slow-piano-drift',
+    tags: ['slowpianodrift', 'music', 'piano', 'focus', 'deepwork', 'instrumental'],
     seconds: 16,
     title: 'Slow Piano Drift',
     photo: 'morning',
@@ -839,6 +856,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: '432-hz-strings',
+    tags: ['432hzstrings', 'music', 'strings', 'evening', 'instrumental', 'unwind'],
     seconds: 58,
     title: '432 Hz Strings',
     photo: 'mountains',
@@ -893,6 +911,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'bowl-bath',
+    tags: ['bowlbath', 'music', 'singingbowls', 'soundbath', 'stillness', 'evening'],
     seconds: 23,
     title: 'Bowl Bath',
     photo: 'calm',
@@ -946,6 +965,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'morning-spark',
+    tags: ['morningspark', 'energy', 'affirmations', 'wakeup', 'motivation', 'risingpulse'],
     seconds: 7,
     title: 'Morning Spark',
     photo: 'affirmations',
@@ -999,6 +1019,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'cold-start',
+    tags: ['coldstart', 'energy', 'breathwork', 'alertness', 'quickboost', 'pacedbreathing'],
     seconds: 39,
     title: 'Cold Start',
     photo: 'breathwork',
@@ -1053,6 +1074,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'body-scan-slowly',
+    tags: ['bodyscanslowly', 'meditation', 'bodyscan', 'tensionrelief', 'mindfulness', 'slowpractice'],
     seconds: 14,
     title: 'Body Scan, Slowly',
     photo: 'stress',
@@ -1106,6 +1128,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'noting-practice',
+    tags: ['notingpractice', 'meditation', 'mindfulness', 'rumination', 'beginner', 'restlessmind'],
     seconds: 50,
     title: 'Noting Practice',
     photo: 'bloom',
@@ -1159,6 +1182,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'night-rain-sleep',
+    tags: ['nightrainsleep', 'sleep', 'rain', 'ambient', 'fallasleep', 'bedtime'],
     seconds: 33,
     title: 'Night Rain Sleep',
     photo: 'sleep',
@@ -1219,6 +1243,7 @@ export const SESSIONS: SessionRecord[] = [
   // anywhere. A card that names a session has to *be* a session.
   {
     slug: 'soft-reset',
+    tags: ['softreset', 'calm', 'deskbreak', 'tensionrelief', 'breathwork', 'midday'],
     seconds: 18,
     title: 'Soft Reset',
     photo: 'calm',
@@ -1266,6 +1291,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'deep-space',
+    tags: ['deepspace', 'meditation', 'drone', 'racingthoughts', 'latenight', 'minimal'],
     seconds: 3,
     title: 'Deep Space',
     photo: 'mindDance',
@@ -1316,6 +1342,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'clear-skies',
+    tags: ['clearskies', 'music', 'focus', 'deepwork', 'instrumental', 'morning'],
     seconds: 51,
     title: 'Clear Skies',
     photo: 'mountains',
@@ -1373,6 +1400,7 @@ export const SESSIONS: SessionRecord[] = [
   // row's figure pill is absent for exactly that reason rather than by styling.
   {
     slug: 'evening-unwind-v3',
+    tags: ['eveningunwind', 'calm', 'draft', 'breathwork', 'eveningwinddown', 'worktoreset'],
     seconds: 40,
     title: 'Evening Unwind v3',
     photo: 'glow',
@@ -1420,6 +1448,7 @@ export const SESSIONS: SessionRecord[] = [
   },
   {
     slug: 'monday-reset',
+    tags: ['mondayreset', 'energy', 'draft', 'morningritual', 'breathwork', 'freshstart'],
     seconds: 5,
     title: 'Monday Reset',
     photo: 'morning',
@@ -1545,6 +1574,19 @@ export function sessionsInCategory(category: CategoryFilter = 'All') {
 
 export function totalMinutes(session: SessionRecord) {
   return session.chapters.reduce((sum, chapter) => sum + chapter.minutes, 0)
+}
+
+/**
+ * The date on a lineage row, e.g. "Created by Adam Nilson, 2026.2.23".
+ *
+ * There is no real timestamp behind a lineage step, on any session — the
+ * catalogue only says the order forks happened in, not when. The three fixed
+ * dates were already invented once for Progress's own Lineage Tree; kept
+ * here as the one place both readings draw from, rather than re-invented per
+ * session.
+ */
+export function lineageDate(index: number) {
+  return ['2026.2.23', '2026.6.21', '2026.12.10'][index] ?? '2026.6.21'
 }
 
 /** The frame's duration format — 12:22, not "12 min". */
