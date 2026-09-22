@@ -323,6 +323,16 @@ one reader and kept identical on all three branches:
 `docs/DESIGN-SYSTEM-HISTORY.md` the token log. Update the relevant one in the
 same commit as the change.
 
+**`docs/CHANGE-LOG.md` is a fifth, and it is not optional.** Every change, on
+any of the four branches, gets an entry — what changed and which branch(es)
+it actually reached, in the same commit. `web_prod` moves only on request and
+is expected to run behind; `web_app` and `mobile_app` do not diverge from
+each other for long without a reason, and this is the file that says whether
+one currently does. Skipping it is how "did mobile get the thing web has"
+turns back into a question nobody can answer without diffing four branches by
+hand — which is exactly how `mobile_app`'s `PRD.md` was found to have quietly
+drifted two sections behind.
+
 ---
 
 ## Where the product decisions live
