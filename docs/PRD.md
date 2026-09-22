@@ -265,6 +265,37 @@ material. Flag for confirmation with product and business:
   merely tinted, and picking closes it — a filter sheet that stays open hides
   the thing it just changed.
 
+### Player Beta — a second player, switched on for a walkthrough
+
+An experimental screen, reached from the cockpit: the session that is
+loaded, or the one attached to a Recreate message, swipes between its
+current cut and the cuts behind it — one card, one info block, one
+control bar, rather than the plain player's single fixed view.
+
+- **It is a `/__demo` flag** (`player.beta`, under the Player module),
+  off by default. It started as a visitor's own Settings preference and
+  was moved into `/__demo` on request — the console decides who sees it
+  during a walkthrough, same as everything else there.
+- **It reuses the version history that already exists**, rather than
+  inventing a second one: the same cuts Progress's Chapters tab lists.
+  Swiping a card is browsing that history with a cover in front of it,
+  not a new data model.
+- **Two doors, both already in the cockpit.** The mini player card and
+  the attached-session card under a Recreate message both open the plain
+  player normally; with the flag on, both open this instead. Nothing
+  about starting or continuing playback changes — the audio deck is the
+  same one either way.
+- **`/play/...` itself redirects to the beta page when the flag is on**,
+  not only the two doors above — reaching it any other way (typed,
+  refreshed, an old bookmark) would otherwise show the plain player
+  regardless of the flag. The beta page's own "open full player" link is
+  the one exception, so tapping into a card for the real scrubber does
+  not immediately bounce back to the card it came from.
+- **A direct link is not a way around the flag.** Reaching either URL
+  with it off lands on the plain player.
+- **Not on mobile.** Web only for now, per the usual rule that new web
+  surfaces are not ported until asked for.
+
 ### Challenges
 
 - A challenge is **not a session**: it is a time-boxed streak people join, with
@@ -1602,7 +1633,110 @@ turning any of this on actually requires.
 
 ---
 
-## 07 · States that do not exist yet
+## 07 · Staging and production
+
+Until now the web client had one deployment, and "live" and "what we are
+working on" were the same URL. That is fine while nobody outside the team has
+the link and stops being fine the moment somebody does, because every push is
+then a release whether or not it was meant to be one.
+
+### 7.1 · Two branches, two sites
+
+`web_app` is the working branch and stays the working branch: everything lands
+there first, `admin_cms` is fast-forwarded to match it, and both are pushed
+together. **`web_prod` is the production cut.** It only ever fast-forwards to
+`web_app`, and only when the product owner asks.
+
+That last clause is the requirement, not a convention. A change being finished,
+tested and obviously correct is not a reason to move `web_prod`; somebody
+deciding to release it is. An agent working in this repository does not make
+that call.
+
+The cost of the split is that a fix is live on staging and not in production
+until somebody says so, and the gap is invisible from the code. The **This
+build** panel is what closes it — see 7.3.
+
+### 7.2 · The two sites do not share a feature-flag set
+
+`/__demo` publishes a scope to Upstash KV through `/api/config`, and one store
+sits behind every deployment of the project. Under a single key, rehearsing a
+walkthrough on staging would change what the public site shows mid-demo — a
+failure with no warning and no undo short of republishing.
+
+So the key is scoped per environment. Production writes `aurelia:demo:config`,
+unchanged, so every scope published before the split stayed exactly where it
+was. Every other deployment appends its branch: `aurelia:demo:config:web_app`.
+
+**The consequence is that the two sets never sync.** Publishing a scope on
+staging does nothing to production, and the only way to move one to the other
+is to open `/__demo` on the other site and publish it there. This is the right
+default — a staging console that could reach production is the thing being
+prevented — but it is a step somebody has to remember, so the console prints
+the key it is about to write.
+
+The endpoint is still unauthenticated, and scoping the key does not change
+that: anyone who finds `/api/config` on either site can POST a flag set to it,
+site lock included.
+
+### 7.3 · The app says which site it is, on every screen
+
+Two deployments of the same commit are indistinguishable from a screenshot, and
+the two questions they produce — "is this live yet?" and "am I looking at
+staging?" — have identical symptoms. `/__demo` opens with the **This build**
+panel, and **Environment** is now its first row: `Production`, `Staging` or
+`Local`, read from `VERCEL_ENV` when the bundle is built, not guessed from the
+hostname.
+
+Set `VITE_PRODUCTION_URL` and `VITE_STAGING_URL` on both Vercel projects and
+each panel carries a link to the other, so moving between them is one click
+rather than a URL somebody has to have kept. Both are optional: unset, the link
+is absent, which is the correct rendering for a project with one deployment.
+
+The console is not enough on its own, because most of the time nobody is
+looking at it. A small badge — `Staging · 0.1.0 · d135f24` — sits at the foot
+of the consumer drawer and at the foot of the admin sidebar, so the answer is
+in view on whatever screen the question comes up on. It is a label, not a
+control: it does not link to `/__demo`, because that console is deliberately
+outside the password and a link to it from the drawer would hand every visitor
+a way around the gate.
+
+Staging is the loud one — the brand chip — and production is quiet grey.
+Production is the normal state of affairs and does not need a banner; being on
+the rehearsal copy without realising is the mistake worth interrupting for.
+
+### 7.3.1 · Two identifiers, and only one of them can lie
+
+The badge and the panel both carry a **version** and a **commit**, and they are
+not the same kind of fact:
+
+- **Version** is `package.json`'s `version` — the name a release was given. A
+  person bumps it when `web_prod` moves. Nothing enforces that, so it can be
+  stale.
+- **Commit** is the short SHA the bundle was built from. It cannot be stale;
+  it is what is running.
+
+They are always shown together for that reason. The version is what a release
+was *called*; the commit is what it *is*. Where they disagree, the commit wins
+and somebody forgot to bump.
+
+### 7.4 · What this does not solve
+
+- **The password gate is still one shared password**, and it is still inlined
+  into the bundle on both sites. Production being public-facing makes that more
+  pointed, not less — see §09.
+- **There is no promotion record.** `web_prod` fast-forwarding to `web_app` is
+  the only evidence a release happened. `package.json`'s version gives a release
+  a name, but nothing bumps it, tags it, or writes a changelog entry — the
+  discipline is entirely human, which is exactly why the commit is printed next
+  to it everywhere the version appears.
+- **Data is not split, because there is no data.** Both sites run the same mock
+  catalogue out of `src/lib/`. The moment a backend exists, "staging and
+  production share a database" becomes the next version of the problem 7.2
+  solves, and it will need solving again at that layer.
+
+---
+
+## 08 · States that do not exist yet
 
 Every frame shows the happy path fully populated. That is normal for a design
 file, but the cockpit *is* the product, so its failure modes need specifying
@@ -1625,7 +1759,7 @@ before engineering meets them in QA.
 
 ---
 
-## 08 · Open gaps
+## 09 · Open gaps
 
 **P0**
 
@@ -1654,7 +1788,7 @@ before engineering meets them in QA.
 
 ---
 
-## 09 · Open questions
+## 10 · Open questions
 
 1. What is the real session lifetime? The current "signed out every launch" is a
    demo setting, not an answer.
