@@ -183,6 +183,7 @@ three pieces that outlive a screen are `InheritedNotifier`s stacked above
 | `AuthScope` | signed in or not | Every guarded route asks |
 | `PlaybackScope` | the session on the deck, and its clock | Starting a session is not a decision to stay on the player |
 | `ChatSessionScope` | the cockpit thread, the applied set, the rebuild | Going off to play what you just built must not throw it away |
+| `ChatTextSizeScope` | the chosen `ChatTextSize` (Small/Medium/Large) | Set on `/settings`, read by every bubble `Text` in `chat_screen.dart` — a screen-local `State` would forget the choice the moment you left Settings |
 
 The last two are the same bug in two directions, and each would have torn down
 the other. At this size that is not a shortcut to be corrected later — it is

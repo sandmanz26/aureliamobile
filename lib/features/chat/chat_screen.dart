@@ -8,6 +8,7 @@ import '../../core/data/sessions.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/theme/chat_text_size.dart';
 import '../../core/widgets/aurelia_logo.dart';
 import '../player/player_screen.dart';
 import '../progress/progress_screen.dart';
@@ -544,11 +545,14 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   if (startsRun) Text('Aurelia', style: AppTextStyles.caption),
                   Text(message.text,
-                      // TESTING: bodySm (14px) -> bodyLg (16px), comparing
-                      // readability against ChatGPT/WhatsApp's message size.
-                      // Not a Figma-backed change — revert to bodySm if this
-                      // doesn't stick.
-                      style: AppTextStyles.bodyLg.copyWith(color: AppColors.textPrimary)),
+                      // Settings → Chat text size. bodySm is the Figma
+                      // default; the control exists because one person
+                      // finding 14px small next to ChatGPT is not the same
+                      // as everyone finding it small.
+                      style: ChatTextSizeScope.of(context)
+                          .size
+                          .style
+                          .copyWith(color: AppColors.textPrimary)),
                   // Questions handed back instead of an answer, each one a
                   // tap. Being stuck should cost a tap rather than a sentence.
                   if (message.prompts != null)
@@ -601,9 +605,12 @@ class _ChatScreenState extends State<ChatScreen> {
                 borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
               child: Text(message.text,
-                  // TESTING: bodySm (14px) -> bodyLg (16px) — see the note on
-                  // the other bubble above.
-                  style: AppTextStyles.bodyLg.copyWith(color: AppColors.textStrong)),
+                  // Settings → Chat text size — see the note on the other
+                  // bubble above.
+                  style: ChatTextSizeScope.of(context)
+                      .size
+                      .style
+                      .copyWith(color: AppColors.textStrong)),
             ),
           // Under the message that carries it, not at the end of the thread,
           // so everything said afterwards comes after it.

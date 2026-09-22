@@ -5,6 +5,7 @@ import 'core/audio/playback_controller.dart';
 import 'core/auth/auth_scope.dart';
 import 'core/auth/sso.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/chat_text_size.dart';
 import 'features/auth/forgot_password_screen.dart';
 import 'features/auth/reset_password_screen.dart';
 import 'features/auth/sign_in_screen.dart';
@@ -59,6 +60,7 @@ class AureliaApp extends StatefulWidget {
 
 class _AureliaAppState extends State<AureliaApp> {
   final _auth = AuthController();
+  final _textSize = ChatTextSizeController();
 
   /// Both of these sit above the navigator on purpose.
   ///
@@ -73,6 +75,7 @@ class _AureliaAppState extends State<AureliaApp> {
     _auth.dispose();
     _playback.dispose();
     _chat.dispose();
+    _textSize.dispose();
     super.dispose();
   }
 
@@ -216,12 +219,15 @@ class _AureliaAppState extends State<AureliaApp> {
         notifier: _playback,
         child: ChatSessionScope(
           notifier: _chat,
-          child: MaterialApp(
-            title: 'Aurelia',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.light,
-            initialRoute: '/home',
-            onGenerateRoute: _onGenerateRoute,
+          child: ChatTextSizeScope(
+            notifier: _textSize,
+            child: MaterialApp(
+              title: 'Aurelia',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.light,
+              initialRoute: '/home',
+              onGenerateRoute: _onGenerateRoute,
+            ),
           ),
         ),
       ),

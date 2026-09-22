@@ -1019,6 +1019,35 @@ void main() {
     });
   });
 
+  group('Chat text size', () {
+    testWidgets('is bodySm until Settings says otherwise, and the thread feels the change',
+        (tester) async {
+      await _boot(tester);
+      await _signIn(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      navigator.pushNamed('/chat');
+      await tester.pumpAndSettle();
+
+      // The user's own reply in the demo thread — present regardless of the
+      // size it is drawn at, so the same finder works before and after.
+      final bubble = find.text(
+          'It was good, but it was to short, I had to repeat it multiple times.');
+      expect(tester.widget<Text>(bubble).style?.fontSize, 14,
+          reason: 'ships at bodySm, the Figma value, until someone changes it');
+
+      navigator.pushNamed('/settings');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Large · 18px'));
+      await tester.pumpAndSettle();
+
+      navigator.pop();
+      await tester.pumpAndSettle();
+      expect(tester.widget<Text>(bubble).style?.fontSize, 18,
+          reason: 'the same bubble, now at the size Settings was set to');
+    });
+  });
+
   group('The cockpit survives leaving it', () {
     testWidgets('an applied set is still there when you come back',
         (tester) async {

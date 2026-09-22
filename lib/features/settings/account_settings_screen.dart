@@ -3,6 +3,7 @@ import '../../core/auth/auth_scope.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/theme/chat_text_size.dart';
 import '../../core/widgets/aurelia_logo.dart';
 
 /// Figma 16523:13934 — what the gear on your own profile opens.
@@ -165,6 +166,9 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
             ],
 
             const SizedBox(height: AppSpacing.s8),
+            const _ChatTextSizeSection(),
+
+            const SizedBox(height: AppSpacing.s8),
             const _SettingsRow(
                 icon: Icons.paid_outlined, label: 'Coin Redemption'),
             const _SettingsRow(
@@ -222,6 +226,112 @@ class _SettingsRow extends StatelessWidget {
                   style: AppTextStyles.bodyLg.copyWith(color: color)),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Not a row that opens something else — the control and its effect sit on
+/// the same screen. A preview bubble under the segmented control means the
+/// change is felt here, before anyone goes looking for it in a real thread.
+class _ChatTextSizeSection extends StatelessWidget {
+  const _ChatTextSizeSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = ChatTextSizeScope.of(context);
+    final size = controller.size;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.text_fields,
+                size: 24, color: AppColors.iconDefault),
+            const SizedBox(width: AppPadding.md),
+            Expanded(
+              child: Text('Chat text size', style: AppTextStyles.bodyLg),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s1),
+        Padding(
+          padding: const EdgeInsets.only(left: 36),
+          child: Text(
+            'How Aurelia\'s messages and yours read in the cockpit.',
+            style: AppTextStyles.bodySm,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s3),
+        Row(
+          children: [
+            for (final option in ChatTextSize.values) ...[
+              _TextSizeChip(
+                size: option,
+                active: option == size,
+                onTap: () => controller.setSize(option),
+              ),
+              if (option != ChatTextSize.values.last)
+                const SizedBox(width: AppSpacing.s2),
+            ],
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s3),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppPadding.md),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+          ),
+          // A real sentence rather than "Aa" or a lorem line — the point is
+          // to feel like a message, not to admire a specimen of the font.
+          child: Text(
+            'How did you find the sleep meditation we created?',
+            style: size.style.copyWith(color: AppColors.textPrimary),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// One segment of the Small / Medium / Large control — the same visual
+/// language as Progress's tab chips, minus their icon.
+class _TextSizeChip extends StatelessWidget {
+  const _TextSizeChip({
+    required this.size,
+    required this.active,
+    required this.onTap,
+  });
+
+  final ChatTextSize size;
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: active ? AppColors.textPrimary : Colors.transparent,
+            border: Border.all(
+                color: active ? AppColors.textPrimary : AppColors.borderSubtle),
+            borderRadius: BorderRadius.circular(AppRadius.full),
+          ),
+          child: Text(
+            '${size.label} · ${size.px}px',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.label.copyWith(
+                color: active ? AppColors.surface : AppColors.textPrimary),
+          ),
         ),
       ),
     );
