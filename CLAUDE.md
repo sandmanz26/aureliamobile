@@ -12,11 +12,22 @@ that will mislead you if nobody tells you.
 | `admin_cms` | **Deliberately identical** to `web_app` |
 | `web_prod` | The production cut — `web_app` as of the last time someone asked to ship |
 | `mobile_app` | The Flutter app |
+| `storybook` | A Storybook catalogue of every component in `src/components/`, for design-system consistency. Branched from `web_app`; see `docs/STORYBOOK.md`. |
 
 `admin_cms` exists as a name for a workstream, not as different code. Keep them
 identical: commit on `web_app`, then `git checkout admin_cms && git merge
 --ff-only web_app`, and push both. A divergence between them is a mistake, not
 a feature.
+
+**`storybook` is different again: it carries real code of its own** — the
+`.storybook/` config and one `*.stories.tsx` file beside every component —
+so it cannot be a plain fast-forward mirror the way `admin_cms` is. It merges
+*from* `web_app` (`git checkout storybook && git merge web_app`, resolving
+forward rather than `--ff-only`) whenever `web_app`'s components have moved,
+and nothing merges back from it. See `docs/STORYBOOK.md` for the whole
+convention, including the intended practice — a new shared component gets a
+story on this branch close to when it lands on `web_app`, so the catalogue
+does not quietly fall behind what it exists to keep consistent.
 
 **`web_prod` is different in kind: it is allowed to be behind.** `web_app` is
 the staging branch and every commit lands there first; `web_prod` moves only

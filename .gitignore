@@ -35,3 +35,6 @@ dist-ssr
 /build/
 /web/
 *.iml
+
+*storybook.log
+storybook-static

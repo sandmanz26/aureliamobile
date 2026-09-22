@@ -11,10 +11,10 @@ it is true for `web_app` and `mobile_app` only in the sense that they should
 not know about each other's features for long without a reason — not that
 their code is identical, since one is React and the other Flutter.
 
-**Kept identical across `web_app`, `admin_cms`, `web_prod` and `mobile_app`,
-the same way `docs/PRD.md` is.** Whichever branch you open this from, it
-should read the same. Update it in the same commit as the change, every
-time — that is the whole point of it existing.
+**Kept identical across `web_app`, `admin_cms`, `web_prod`, `mobile_app` and
+`storybook`, the same way `docs/PRD.md` is.** Whichever branch you open this
+from, it should read the same. Update it in the same commit as the change,
+every time — that is the whole point of it existing.
 
 ## Entry format
 
@@ -30,6 +30,25 @@ Newest first. A branch left off "Not on" entirely means the change does not
 apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
+
+### 2026-09-22 — `storybook` branch: a component catalogue
+
+**Lands on:** `storybook` (new branch, cut from `web_app`)
+**Not on:** `web_app` / `admin_cms` / `web_prod` / `mobile_app` — this is
+tooling for the React component library specifically; nothing in `src/`
+itself changed, and mobile has no equivalent component set to catalogue.
+
+A `*.stories.tsx` file beside every one of the 32 files in
+`src/components/` (`ui/` and `chat/`, plus `SiteLock`) — Storybook 10 on
+the Vite/React builder, with a global decorator (`.storybook/preview.tsx`)
+that wraps every story in the same Router/Auth/AudioPlayer/ChatSession/
+FeatureFlags stack `main.tsx` uses, so a component that calls `useAuth()`
+or renders a `<Link>` just works instead of throwing. `BuildBadge`/
+`BuildStamp` needed `__BUILD_ID__` etc. stubbed in `main.ts`'s `viteFinal`,
+since Storybook runs its own Vite instance and never sees `web_app`'s
+`vite.config.ts` `define` block. See `docs/STORYBOOK.md` for the whole
+convention, including how this branch stays in step with `web_app` going
+forward — it is not a one-time snapshot.
 
 ### 2026-09-22 — Analytics, and a security review
 

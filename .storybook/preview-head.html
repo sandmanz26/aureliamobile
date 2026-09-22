@@ -1,0 +1,11 @@
+<!-- Same font this app loads in index.html — Storybook renders its own
+     document, so index.html's own <head> never reaches it. Mulish is
+     font-family/base in the Figma variables and this app's only face; a
+     story rendered without this looks like the system UI font and nothing
+     here would say why. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;500;600&display=swap"
+/>
