@@ -154,6 +154,19 @@ export function appliedOfKind(kind: StyleKind) {
   return APPLIED_STYLES.filter((style) => style.kind === kind)
 }
 
+/** By id, from the explore catalogue — for naming a pending change once the
+ *  card that offered it is out of view. */
+export function findStyle(id: string) {
+  return SESSION_STYLES.find((style) => style.id === id)
+}
+
+/** By id, from what is already on the session — the other half of naming a
+ *  pending change: an add names itself from the catalogue, a drop names
+ *  itself from what is being taken off. */
+export function findAppliedStyle(id: string) {
+  return APPLIED_STYLES.find((style) => style.id === id)
+}
+
 /**
  * The session script.
  *

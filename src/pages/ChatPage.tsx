@@ -97,6 +97,9 @@ export function ChatPage() {
         revert?: { id: string; label: string; slug: string }
         /** "Publish Now" on the empty Social Impact tab. */
         publish?: boolean
+        /** A sentence composed on Session settings — Add/Remove queued on
+         *  Visual or Sound, sent here the moment "Apply changes" is pressed. */
+        styleChanges?: string
       }
     | null
   const brief = routeState?.recreate
@@ -177,6 +180,7 @@ export function ChatPage() {
   const startHandled = useRef<string | null>(null)
   const askHandled = useRef(false)
   const freshHandled = useRef<string | null>(null)
+  const styleChangesHandled = useRef<string | null>(null)
 
   // Starting a new session from /chat does not remount the page, so the state
   // initialiser above never runs again and the old thread would stay put.
@@ -267,6 +271,21 @@ export function ChatPage() {
     if (!isEnabled('chat.publish')) return
     setPublishState('publishing')
   }, [location.key, routeState?.publish, isEnabled])
+
+  /**
+   * "Apply changes" on Session settings — Add/Remove queued on Visual or
+   * Sound, arriving here as one sentence already composed.
+   *
+   * Runs the same build `applyChanges` already runs for the recommendation
+   * deck: the request lands in the transcript as the user's own line, then a
+   * new version. Session settings names the change; the thread is what
+   * applies it — one build path rather than two that could drift apart.
+   */
+  useEffect(() => {
+    if (!routeState?.styleChanges || styleChangesHandled.current === location.key) return
+    styleChangesHandled.current = location.key
+    applyChanges(routeState.styleChanges)
+  }, [location.key, routeState?.styleChanges, applyChanges])
 
   /**
    * Going back to an earlier cut, chosen in Insights > Chapters.

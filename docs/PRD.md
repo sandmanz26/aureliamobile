@@ -1424,6 +1424,28 @@ Two cases deliberately do not build:
 - **Anything that is not a change.** A brief ("I can't sleep") proposes; an
   answer about last night's sleep reports. Neither touches the session.
 
+### Session settings is a second door into the same build, queued rather than one at a time
+
+The deck's Apply chip and a direct chat instruction both start a build
+immediately, one change at a time. Session settings — the Visual and Sound
+tabs' "Explore new styles" grid — needed a third: several changes picked
+across both tabs, reviewed as a set, then sent together.
+
+**Add and Remove are the same action in reverse**, not "Add" turning into a
+disabled "Added." Tapping a card queues it and flips its own button and
+border; tapping an applied style's own chip queues it for removal the same
+way. Nothing builds yet — the queue is a draft, held in the screen, not the
+session.
+
+**One floating "Apply changes" button, counting across both tabs.** A style
+queued on Visual has to still read as queued after switching to Sound, so
+the count is a total, not per tab, and the button itself is one thing
+rather than a bar duplicated per tab. It composes the same sentence a
+person would type — "Add Tibetan singing bowls, Aulos (Greek flute)" — and
+hands it to chat as if it had been typed there, which is what actually
+starts the build described above. Session settings names the change; the
+thread is still the only thing that applies one.
+
 ### Every cut is kept, and you can go back to one
 
 Generating is not a state the session passes through on its way back to the
