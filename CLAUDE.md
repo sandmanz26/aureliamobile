@@ -12,6 +12,8 @@ app per branch:
 | `mobile_app` | This Flutter app |
 | `web_app` | The React + Vite consumer web app |
 | `admin_cms` | Deliberately identical to `web_app`; kept in step with `--ff-only` |
+| `web_prod` | The web app's production cut — moves only on request |
+| `storybook` | A Storybook catalogue of `web_app`'s React components. Nothing Flutter here — mentioned only so the name is not a surprise in `git branch -a`. |
 
 Cloning the default branch and looking for `pubspec.yaml` is the first thing
 that goes wrong. `git checkout mobile_app`.
