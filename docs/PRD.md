@@ -482,7 +482,7 @@ Credits and a coin that reaches it, the second challenge, the empty new
 session, the free limit and Upgrade, the sixteen type styles, the deck's orbs,
 and the Objective sheet.
 
-Three differences are deliberate, and all three are platform rather than
+Four differences are deliberate, and all four are platform rather than
 design:
 
 - **Mute does not persist on mobile** — see above.
@@ -492,6 +492,15 @@ design:
   screen is turned back on.
 - **The web renders a simulated phone status bar**, because it is viewed in a
   browser.
+- **Chat text size is adjustable, and only on mobile.** A tester finding
+  14px small next to ChatGPT on their own phone is not the same as everyone
+  finding it small, so `Settings → Chat text size` (Small / Medium / Large,
+  meaning bodySm / bodyLg / bodyLarge — three points already on the type
+  scale) lets a listener decide for themselves, felt immediately in a preview
+  bubble on that screen and in the thread itself. In memory only, like the
+  rest of the app: a fresh launch starts back at bodySm, the Figma value. The
+  web's chat bubbles stay fixed at bodySm; the question that prompted this was
+  specific to the phone the thread is actually read on.
 
 Two things are known to be behind on mobile and are not yet ported: **Home's
 line-by-line frame pass** (the fourteen weight and size corrections in the
