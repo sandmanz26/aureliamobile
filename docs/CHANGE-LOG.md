@@ -31,6 +31,51 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-22 — Analytics, and a security review
+
+**Lands on:** `mobile_app`
+**Not on:** `web_app` / `admin_cms` / `web_prod` — requested for the Flutter
+client specifically; the web app has no equivalent instrumentation and this
+pass did not add one.
+
+Two asks in one pass: add analytics, and review the app's structure and code
+for security, fixing what was found.
+
+**Analytics** is a new seam, `core/analytics/`, on the same pattern as the
+audio engine and voice capture: an `AnalyticsService` interface, a
+console-only default (`ConsoleAnalytics` — nothing leaves the device, because
+there is still no backend to send it to), and fakes for tests
+(`NoopAnalytics`, `RecordingAnalytics`). `AnalyticsRouteObserver` logs a
+screen view on every navigation, push or walk-back, for all 19 screens for
+free. Business events are logged from the controllers that already own the
+actions rather than from each screen: sign-up/login/logout, session play,
+a message sent (never its words), recommendations applied, publish /
+unpublish / revert, a fork started, a voice memo started or thrown away.
+12 new tests (`test/analytics_test.dart` plus one in `widget_test.dart`)
+assert the wiring rather than the debug-console output.
+
+**The security review** found no secret in the repo and no network call this
+app makes that has anything to leak — the real finding was gaps waiting for
+the day something real is added. Fixed: `.gitignore` now explicitly excludes
+a release keystore, `key.properties`, and the SSO config files
+`docs/SSO.md` already said don't belong in git, none of which existed before
+this pass either — the rule is what keeps that true once one shows up, not a
+sign one already had. `android/app/build.gradle.kts` gained a signing-config
+seam that reads a real keystore from `key.properties` when one exists and
+falls back to the debug key exactly as before when it does not — release
+still ships debug-signed today, unchanged, until a real keystore is dropped
+in. And a real bug: cancelling a voice memo mid-recording (not from the
+review screen) skipped the capture's own `cancel()`, leaving the mic open
+and the partial file on disk until dispose() eventually caught up — both
+cancel paths now go through the same cleanup, `cancel()` deletes its own
+file rather than trusting the plugin to have done it, and a new
+`clearStaleRecordings()` sweeps orphaned recordings left from a previous run
+on every launch. See "Before this ships to a store" in `CLAUDE.md` for the
+one item this pass could not fix here — release still needs a real signing
+keystore and a verified build on a real device before it ships, neither of
+which a sandbox with no device and an older pinned Flutter than this
+project's own can responsibly do.
+
 ### 2026-09-22 — Session Detail redrawn against Figma
 **Lands on:** `web_app` / `admin_cms`
 **Not on:** `web_prod` (staging-only per standing instruction, awaiting a

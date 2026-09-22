@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'core/analytics/analytics_route_observer.dart';
+import 'core/analytics/analytics_service.dart';
 import 'core/audio/audio_engine.dart';
-import 'core/audio/voice_capture.dart';
+import 'core/audio/voice_capture.dart' show VoiceCapture, clearStaleRecordings;
 import 'core/audio/playback_controller.dart';
 import 'core/auth/auth_scope.dart';
 import 'core/auth/sso.dart';
@@ -32,11 +36,21 @@ import 'core/data/sessions.dart' show Shelf, findSession;
 import 'features/wellness/wellness_screen.dart';
 
 void main() {
+  // Fire-and-forget: a leftover voice memo from the previous run is an
+  // orphan the moment this one starts (see clearStaleRecordings' own doc for
+  // why), and sweeping it is not worth holding the first frame for.
+  unawaited(clearStaleRecordings());
   runApp(const AureliaApp());
 }
 
 class AureliaApp extends StatefulWidget {
-  const AureliaApp({super.key, this.audioEngine, this.voiceCapture, this.sso});
+  const AureliaApp({
+    super.key,
+    this.audioEngine,
+    this.voiceCapture,
+    this.sso,
+    this.analytics,
+  });
 
   /// The engine playback runs on. Null is the real one.
   ///
@@ -54,12 +68,20 @@ class AureliaApp extends StatefulWidget {
   /// provider never takes.
   final SsoProvider? sso;
 
+  /// Where an event goes. Null is [ConsoleAnalytics] — see
+  /// `core/analytics/analytics_service.dart` for why that, not a vendor SDK,
+  /// is the honest default. The tests pass [NoopAnalytics] so 62 runs stay
+  /// quiet, or [RecordingAnalytics] to assert on what fired.
+  final AnalyticsService? analytics;
+
   @override
   State<AureliaApp> createState() => _AureliaAppState();
 }
 
 class _AureliaAppState extends State<AureliaApp> {
-  final _auth = AuthController();
+  late final _analytics = widget.analytics ?? const ConsoleAnalytics();
+  late final _analyticsObserver = AnalyticsRouteObserver(_analytics);
+  late final _auth = AuthController(analytics: _analytics);
   final _textSize = ChatTextSizeController();
 
   /// Both of these sit above the navigator on purpose.
@@ -67,8 +89,9 @@ class _AureliaAppState extends State<AureliaApp> {
   /// A session being built has to survive leaving the cockpit to play it, and
   /// a session that is playing has to survive walking back to the cockpit.
   /// Owned by their screens, each would be torn down by the other.
-  late final _playback = PlaybackController(engine: widget.audioEngine);
-  final _chat = ChatSessionController();
+  late final _playback =
+      PlaybackController(engine: widget.audioEngine, analytics: _analytics);
+  late final _chat = ChatSessionController(analytics: _analytics);
 
   @override
   void dispose() {
@@ -213,20 +236,24 @@ class _AureliaAppState extends State<AureliaApp> {
 
   @override
   Widget build(BuildContext context) {
-    return AuthScope(
-      notifier: _auth,
-      child: PlaybackScope(
-        notifier: _playback,
-        child: ChatSessionScope(
-          notifier: _chat,
-          child: ChatTextSizeScope(
-            notifier: _textSize,
-            child: MaterialApp(
-              title: 'Aurelia',
-              debugShowCheckedModeBanner: false,
-              theme: AppTheme.light,
-              initialRoute: '/home',
-              onGenerateRoute: _onGenerateRoute,
+    return AnalyticsScope(
+      analytics: _analytics,
+      child: AuthScope(
+        notifier: _auth,
+        child: PlaybackScope(
+          notifier: _playback,
+          child: ChatSessionScope(
+            notifier: _chat,
+            child: ChatTextSizeScope(
+              notifier: _textSize,
+              child: MaterialApp(
+                title: 'Aurelia',
+                debugShowCheckedModeBanner: false,
+                theme: AppTheme.light,
+                initialRoute: '/home',
+                onGenerateRoute: _onGenerateRoute,
+                navigatorObservers: [_analyticsObserver],
+              ),
             ),
           ),
         ),

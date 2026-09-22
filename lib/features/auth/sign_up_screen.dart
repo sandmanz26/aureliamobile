@@ -56,7 +56,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   void _complete() {
-    AuthScope.of(context).signIn();
+    AuthScope.of(context).signIn(isSignUp: true);
     final navigator = Navigator.of(context);
     final route = widget.redirect?.route;
     if (route != null) {

@@ -47,3 +47,17 @@ app.*.map.json
 # Leftovers from the web app when switching branches in one working tree
 /node_modules/
 /dist/
+
+# Secrets that must never reach git, named explicitly rather than trusted to
+# nobody committing them by hand. None of these exist in this checkout yet —
+# docs/SSO.md already says the SSO config files don't belong in git, and
+# android/app/build.gradle.kts signs release with the debug key until a real
+# keystore exists — but there is no enforcement without a rule waiting for
+# the day one of these is dropped in.
+/android/key.properties
+*.jks
+*.keystore
+/ios/Runner/GoogleService-Info.plist
+/android/app/google-services.json
+.env
+.env.*

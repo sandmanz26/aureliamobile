@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../analytics/analytics_service.dart';
 import 'sso.dart';
 
 /// Who is using the app — the mobile mirror of the web app's AuthContext.
@@ -12,6 +13,11 @@ import 'sso.dart';
 /// reads it goes through this scope, so swapping in a real session token is one
 /// file.
 class AuthController extends ChangeNotifier {
+  AuthController({AnalyticsService? analytics})
+      : _analytics = analytics ?? const NoopAnalytics();
+
+  final AnalyticsService _analytics;
+
   bool _signedIn = false;
   SsoAccount? _account;
 
@@ -26,16 +32,25 @@ class AuthController extends ChangeNotifier {
   /// the other one.
   SsoProviderId? get provider => _account?.provider;
 
-  void signIn() {
+  /// [isSignUp] is the only thing that tells `sign_up` and `login` apart —
+  /// the three forms that reach this (sign in, sign up, reset-then-continue)
+  /// all call the same method, so the screen states which one it is rather
+  /// than this guessing from nothing.
+  void signIn({String method = 'email', bool isSignUp = false}) {
     if (_signedIn) return;
     _signedIn = true;
+    _analytics.logEvent(isSignUp ? 'sign_up' : 'login', parameters: {'method': method});
     notifyListeners();
   }
 
-  /// The same, carrying what the provider handed back.
+  /// The same, carrying what the provider handed back. Google and Apple do
+  /// not tell this dummy seam new-account from returning one apart — see
+  /// `docs/SSO.md` — so both log as `login`; that stops being accurate the
+  /// day a real provider is wired in and can say which one it was.
   void signInWith(SsoAccount account) {
     _account = account;
     _signedIn = true;
+    _analytics.logEvent('login', parameters: {'method': account.provider.name});
     notifyListeners();
   }
 
@@ -43,6 +58,7 @@ class AuthController extends ChangeNotifier {
     if (!_signedIn) return;
     _signedIn = false;
     _account = null;
+    _analytics.logEvent('logout');
     notifyListeners();
   }
 }

@@ -7,6 +7,7 @@ import 'package:aurelia_mobile/core/widgets/community_network.dart';
 import 'package:aurelia_mobile/core/widgets/photo_circle.dart';
 import 'package:aurelia_mobile/core/widgets/section_header.dart';
 import 'package:aurelia_mobile/core/widgets/session_grid_card.dart';
+import 'package:aurelia_mobile/core/analytics/analytics_service.dart';
 import 'package:aurelia_mobile/core/audio/audio_engine.dart';
 import 'package:aurelia_mobile/core/audio/voice_capture.dart';
 import 'package:aurelia_mobile/core/auth/auth_scope.dart';
@@ -31,7 +32,10 @@ import 'package:aurelia_mobile/main.dart';
 /// tests (the test HTTP client returns 400), which is the same path a blocked
 /// network takes on a device — so these tests also prove the fallback works.
 Future<void> _boot(WidgetTester tester,
-    {VoiceCapture? voiceCapture, SsoProvider? sso, AudioEngine? audioEngine}) async {
+    {VoiceCapture? voiceCapture,
+    SsoProvider? sso,
+    AudioEngine? audioEngine,
+    AnalyticsService? analytics}) async {
   // A tall phone-shaped surface: these screens are long scrolls, and the
   // default 800x600 test window leaves most of each one unbuilt.
   tester.view.physicalSize = const Size(420, 3200);
@@ -61,6 +65,10 @@ Future<void> _boot(WidgetTester tester,
     // No delay: the dummy's 900ms is there so a person sees the spinner, and
     // a test that waits it out is 900ms slower for nothing.
     sso: sso ?? DummySsoProvider(delay: Duration.zero),
+    // Quiet by default: ConsoleAnalytics' debugPrint would be real console
+    // noise across every one of these tests, and most have no opinion on
+    // analytics at all. The handful that do pass RecordingAnalytics.
+    analytics: analytics ?? const NoopAnalytics(),
   ));
   await tester.pumpAndSettle();
 }
@@ -1435,6 +1443,28 @@ void main() {
       // The player shows the cut, not the session it is a cut of.
       expect(find.byType(PlayerScreen), findsOneWidget);
       expect(find.text('Dolphins frequency v1.2'), findsOneWidget);
+    });
+  });
+
+  group('Analytics', () {
+    testWidgets('every push and every walk back logs a screen view',
+        (tester) async {
+      final analytics = RecordingAnalytics();
+      await _boot(tester, analytics: analytics);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      // initialRoute counts as a push — the launch screen is a screen view too.
+      expect(analytics.screenViews, contains('/home'));
+
+      navigator.pushNamed('/credits');
+      await tester.pumpAndSettle();
+      expect(analytics.screenViews.last, '/credits');
+
+      // Walking back is the case AnalyticsRouteObserver exists for: a route
+      // table only sees a push, and this is not one.
+      navigator.pop();
+      await tester.pumpAndSettle();
+      expect(analytics.screenViews.last, '/home');
     });
   });
 }

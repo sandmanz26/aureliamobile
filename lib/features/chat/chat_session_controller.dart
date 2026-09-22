@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../core/analytics/analytics_service.dart';
 import '../../core/data/recommendations.dart';
 import '../../core/data/replies.dart';
 import '../../core/data/sessions.dart';
@@ -171,9 +172,12 @@ const kDefaultDraft = Draft(title: 'Sleep meditation v1.2', slug: 'night-rain-sl
 /// a visit: it survives moving around the product, and a relaunch starts over.
 /// When there is a backend this is what a draft session persists into.
 class ChatSessionController extends ChangeNotifier {
-  ChatSessionController() {
+  ChatSessionController({AnalyticsService? analytics})
+      : _analytics = analytics ?? const NoopAnalytics() {
     _seedOpening();
   }
+
+  final AnalyticsService _analytics;
 
   final messages = <ChatMessage>[];
 
@@ -286,6 +290,10 @@ class ChatSessionController extends ChangeNotifier {
   void markPublished() {
     _publishedVersionId = _currentVersionId ?? _publishedVersionId;
     if (_sessionSlug != null) publishSession(_sessionSlug!);
+    _analytics.logEvent('session_published', parameters: {
+      'slug': _draft.slug,
+      'version': _currentVersionId,
+    });
     notifyListeners();
   }
 
@@ -293,6 +301,7 @@ class ChatSessionController extends ChangeNotifier {
   void markUnpublished() {
     _publishedVersionId = null;
     if (_sessionSlug != null) unpublishSession(_sessionSlug!);
+    _analytics.logEvent('session_unpublished', parameters: {'slug': _draft.slug});
     notifyListeners();
   }
 
@@ -322,6 +331,7 @@ class ChatSessionController extends ChangeNotifier {
   /// changes are accounted for: without the two lines the card quietly renames
   /// itself and nothing says why.
   void sayReverted(String label) {
+    _analytics.logEvent('session_reverted', parameters: {'slug': _draft.slug});
     messages.addAll([
       ChatMessage(
         id: _nextId++,
@@ -447,6 +457,7 @@ class ChatSessionController extends ChangeNotifier {
   /// under you. Same bargain as `load()` on the playback controller.
   void openSession(SessionRecord session) {
     if (_sessionSlug == session.slug) return;
+    _analytics.logEvent('chat_session_opened', parameters: {'slug': session.slug});
     for (final timer in _timers) {
       timer.cancel();
     }
@@ -520,6 +531,10 @@ class ChatSessionController extends ChangeNotifier {
     // words in the mouth of someone who never saw it is the app answering its
     // own question.
     final stated = brief.changes.isNotEmpty;
+    _analytics.logEvent('session_recreate_started', parameters: {
+      'slug': brief.slug,
+      'changes_stated': stated,
+    });
     messages.add(ChatMessage(
       id: _nextId++,
       fromAurelia: false,
@@ -555,6 +570,12 @@ class ChatSessionController extends ChangeNotifier {
   /// back a reply — the rhythm a chat app has, rather than a bubble that just
   /// appears.
   void send({required String text, Duration? voiceDuration, String? voicePath}) {
+    // The event records that a message was sent and whether it was a voice
+    // note — never the words themselves. See the file comment on
+    // AnalyticsEvent: free text a person typed does not belong in an event.
+    _analytics.logEvent('chat_message_sent', parameters: {
+      'has_voice': voicePath != null && voicePath.isNotEmpty,
+    });
     final id = _nextId++;
     messages.add(ChatMessage(
       id: id,
@@ -606,6 +627,7 @@ class ChatSessionController extends ChangeNotifier {
   void applyChanges() {
     if (applied.isEmpty || _session == SessionState.updating) return;
     _session = SessionState.updating;
+    _analytics.logEvent('recommendations_applied', parameters: {'count': applied.length});
     // A change makes a new cut, and it is recorded here rather than when the
     // percentage lands: the history has to be able to show the one being made.
     addVersion(kRecommendations

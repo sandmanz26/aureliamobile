@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/analytics/analytics_service.dart';
 import '../../../core/audio/voice_capture.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -62,10 +63,22 @@ class _VoiceRecorderState extends State<VoiceRecorder> {
   Timer? _ticker;
   Timer? _transcribeTimer;
 
+  // Cached in didChangeDependencies rather than read via AnalyticsScope.of
+  // at the point of use: _startRecording runs from initState, and the part
+  // of it after `await _capture.start()` resumes too late in the widget
+  // lifecycle for an InheritedWidget lookup to be made safely right there.
+  late AnalyticsService _analytics;
+
   @override
   void initState() {
     super.initState();
     _startRecording();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _analytics = AnalyticsScope.of(context);
   }
 
   @override
@@ -117,6 +130,7 @@ class _VoiceRecorderState extends State<VoiceRecorder> {
       return;
     }
     if (!mounted) return;
+    _analytics.logEvent('voice_memo_started');
 
     // The clock is ours; the bars are the device's. Keeping them apart means a
     // silent room shows a flat meter against a running timer, which is the
@@ -165,6 +179,7 @@ class _VoiceRecorderState extends State<VoiceRecorder> {
   }
 
   void _discard() {
+    _analytics.logEvent('voice_memo_cancelled');
     unawaited(_capture.cancel());
     widget.onCancel();
   }
@@ -390,7 +405,12 @@ class _VoiceRecorderState extends State<VoiceRecorder> {
               ),
               const SizedBox(width: AppSpacing.s2),
               IconButton.filled(
-                onPressed: widget.onCancel,
+                // Through _discard, not widget.onCancel directly: cancelling
+                // mid-recording used to leave the capture device open and its
+                // partial file on disk until dispose() eventually caught up —
+                // a live mic nobody is watching closing "eventually" is worth
+                // treating as a bug, not a style choice.
+                onPressed: _discard,
                 tooltip: 'Cancel recording',
                 style: IconButton.styleFrom(
                   backgroundColor: AppColors.surface,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/analytics/analytics_service.dart';
 import '../../core/auth/auth_scope.dart';
 import '../../core/auth/sso.dart';
 import '../../core/theme/app_colors.dart';
@@ -168,6 +169,10 @@ class _SocialSignInState extends State<SocialSignIn> {
     } on SsoException catch (error) {
       if (!mounted) return;
       setState(() => _busy = null);
+      AnalyticsScope.of(context).logEvent('login_failed', parameters: {
+        'method': provider.name,
+        'reason': error.failure.name,
+      });
       // A cancel gets no banner: the user dismissed the sheet themselves and
       // being told about it reads as a telling-off.
       if (error.failure == SsoFailure.cancelled) return;

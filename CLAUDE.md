@@ -23,7 +23,7 @@ that goes wrong. `git checkout mobile_app`.
 ```bash
 flutter pub get     # after any pubspec change — the fonts live there now
 flutter analyze     # must come back "No issues found!"
-flutter test        # 62 tests, ~25s
+flutter test        # 74 tests, ~30s
 flutter run         # onto whatever single device is attached
 ```
 
@@ -163,6 +163,8 @@ export PATH="/opt/flutter/bin:$PATH"     # or wherever `find / -name flutter -ty
 ```
 lib/
   core/
+    analytics/ AnalyticsService — where an event goes, and the route observer
+               that logs a screen view on every navigation for free
     audio/     PlaybackController — what is on the deck, and its clock
     auth/      AuthScope — an InheritedWidget holding one bool
     data/      The entire catalogue, as const Dart. No network, no database.
@@ -215,6 +217,21 @@ Every launch starts signed out so the app opens on the case for itself rather
 than on someone's leftover session. That is right while the data is mock and
 wrong the moment an account holds real history — treat it as a setting with an
 expiry date, not the session model.
+
+**Analytics events never leave the device, on the same standing rule as
+everything else here: there is no backend to send them to.**
+`core/analytics/analytics_service.dart` logs a screen view on every
+navigation (via `AnalyticsRouteObserver`, so no screen has to remember to
+announce itself) and a set of business events — sign-up, login, session play,
+a message sent, recommendations applied, publish/unpublish/revert, a fork
+started, a voice memo started or thrown away — through `AnalyticsService`.
+The default, `ConsoleAnalytics`, only ever `debugPrint`s, only in a debug
+build. Seeing nothing in a release build's console is correct, not a bug; a
+real vendor (Firebase, Amplitude, whatever the product ends up choosing) is
+one new class implementing `AnalyticsService`, handed to
+`AureliaApp(analytics: ...)` — nothing that calls `logEvent` today changes.
+Tests install `NoopAnalytics` (quiet) or `RecordingAnalytics` (keeps every
+call, so a test can assert one fired) instead of touching a real sink.
 
 **The web app is the reference implementation.** Where the two disagree, the web
 is right and this changes. Not because it matters more, but because a single
@@ -397,6 +414,45 @@ None of these matter at demo size. All of them will matter with a backend.
   playing, and it keeps running with the app in the background. A real engine
   would report its own position and this goes away; until then it is a battery
   cost nobody has measured.
+
+---
+
+## Before this ships to a store
+
+A security review found these. None of them break anything today — a demo
+that has never been built for release could not have hit them — but they are
+exactly the kind of thing that is cheap to fix before a keystore exists and
+expensive to notice after one has signed a build that shipped.
+
+- **Release still signs with the debug key.**
+  `android/app/build.gradle.kts` reads `android/key.properties` if it exists
+  and falls back to the debug keystore if it does not — the seam is there,
+  the keystore is not, same order as SSO. `key.properties`, `*.jks` and
+  `*.keystore` are `.gitignore`d now so dropping a real one in cannot also
+  commit it by accident. **A build signed with the debug key must never ship**
+  — Android and app-signing verification cannot tell it apart from anyone
+  else's debug build.
+- **Release is not minified or shrunk.** No `isMinifyEnabled` / ProGuard
+  rules were added here — not because it is not worth doing, but because it
+  is a runtime risk (a rule missing for one of the three plugins) that this
+  sandbox has no device to catch, on a Flutter/Gradle toolchain older than
+  the one this project is pinned to (see the version note up top). Turn it
+  on and build once for a real device before it ships, not as part of this
+  pass.
+- **A voice memo used to outlive the tap that threw it away.** The recorder's
+  in-progress "cancel" button called `widget.onCancel` directly, skipping the
+  capture's own `cancel()` — so the mic stayed open and the partial file
+  stayed on disk until whatever disposed the recorder eventually got to it.
+  Fixed: that button now goes through the same `_discard()` path the review
+  screen's trash icon already used. `DeviceVoiceCapture.cancel()` also
+  deletes the file itself now rather than trusting the plugin to have done
+  it, and `clearStaleRecordings()` sweeps `aurelia-voice-*` left in the temp
+  directory from a previous run — a fresh launch has nothing pointing at
+  them, so they are always orphaned. See `core/audio/voice_capture.dart`.
+- **No secret has ever been found in this repo** — the SSO seam is a dummy
+  end to end and nothing else here talks to a network with a key to leak.
+  The `.gitignore` rule above is what keeps that true once a real keystore or
+  `google-services.json` shows up, not a sign that one already has.
 
 ---
 

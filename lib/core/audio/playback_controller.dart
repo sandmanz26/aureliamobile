@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../analytics/analytics_service.dart';
 import 'audio_engine.dart';
 
 /// What is on the deck: enough of a session to draw the player and the mini
@@ -42,8 +43,12 @@ class Track {
 /// but it arrives through [AudioEngine], and this class still knows nothing
 /// about which one. That is what keeps the widget tests plugin-free.
 class PlaybackController extends ChangeNotifier {
-  PlaybackController({AudioEngine? engine, this.asset = defaultAsset})
-      : _engine = engine ?? JustAudioEngine() {
+  PlaybackController({
+    AudioEngine? engine,
+    this.asset = defaultAsset,
+    AnalyticsService? analytics,
+  })  : _engine = engine ?? JustAudioEngine(),
+        _analytics = analytics ?? const NoopAnalytics() {
     _positions = _engine.positionStream.listen((position) {
       // The engine is the clock. Reading it rather than counting our own ticks
       // is what stops the bar drifting from the sound when a load stalls or
@@ -62,6 +67,7 @@ class PlaybackController extends ChangeNotifier {
 
   final AudioEngine _engine;
   final String asset;
+  final AnalyticsService _analytics;
 
   late final StreamSubscription<Duration> _positions;
 
@@ -164,6 +170,10 @@ class PlaybackController extends ChangeNotifier {
   void _play() {
     _playing = true;
     notifyListeners();
+    final track = _track;
+    if (track != null) {
+      _analytics.logEvent('session_play', parameters: {'slug': track.slug});
+    }
     // Re-applied on every play: the engine is reloaded whenever a new session
     // goes on the deck, and a fresh source comes back at full volume.
     unawaited(_engine.setMuted(_muted));

@@ -6,11 +6,56 @@
 library;
 
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
+
+/// The name every recording is written under — shared between [start], the
+/// startup sweep in [clearStaleRecordings], and nowhere else, so the two
+/// cannot drift apart and delete (or fail to delete) the wrong files.
+const _recordingPrefix = 'aurelia-voice-';
+
+/// Deletes any `aurelia-voice-*` file left in the temp directory from a
+/// previous run.
+///
+/// **Why this exists at all:** a clip's path lives in [ChatMessage.voicePath]
+/// for as long as the message might be replayed, which on this app is "for
+/// the life of the process" — there is no backend to upload it to and no
+/// persistence to expire it from, so nothing during a normal run is ever safe
+/// to delete out from under a still-open thread. But a fresh launch resets
+/// that thread to nothing (see "Sign-in does not persist" in CLAUDE.md — nor
+/// does anything else), so any `aurelia-voice-*` file still sitting in the
+/// temp directory when the app starts is guaranteed orphaned: nothing in the
+/// new, empty chat state can point at it. Left alone, a wellness app whose
+/// whole feature is people describing personal things aloud would otherwise
+/// accumulate their voice on disk indefinitely with nothing surfacing that
+/// fact to them.
+///
+/// Call once, from `main()`, before the first frame. A no-op on the web,
+/// where recordings never touch a filesystem at all.
+Future<void> clearStaleRecordings() async {
+  if (kIsWeb) return;
+  try {
+    final dir = await getTemporaryDirectory();
+    await for (final entry in dir.list()) {
+      if (entry is! File || !entry.uri.pathSegments.last.startsWith(_recordingPrefix)) {
+        continue;
+      }
+      try {
+        await entry.delete();
+      } catch (_) {
+        // One file this run cannot remove is not a reason to stop sweeping
+        // the rest.
+      }
+    }
+  } catch (_) {
+    // Best-effort housekeeping. A temp directory this app cannot list or
+    // clean is not a reason to fail startup over.
+  }
+}
 
 /// Why a recording could not start. The recorder screen shows a different
 /// sentence for each, because "something went wrong" is not actionable and
@@ -125,7 +170,7 @@ class DeviceVoiceCapture implements VoiceCapture {
       final path = kIsWeb
           ? ''
           : '${(await getTemporaryDirectory()).path}'
-              '/aurelia-voice-${DateTime.now().millisecondsSinceEpoch}.m4a';
+              '/$_recordingPrefix${DateTime.now().millisecondsSinceEpoch}.m4a';
 
       await _recorder.start(
         RecordConfig(encoder: await _encoder(), bitRate: 96000),
@@ -179,8 +224,20 @@ class DeviceVoiceCapture implements VoiceCapture {
     await _amplitudes?.cancel();
     _amplitudes = null;
     _startedAt = null;
+    final path = _path;
     _path = null;
     await _recorder.cancel();
+    // Belt and braces on top of the plugin's own cancel: a thrown-away take
+    // is exactly the case with nothing in the thread ever going to point at
+    // this file, so it should not survive the tap that threw it away. Errors
+    // here are almost always "already gone" (the plugin got there first) or
+    // "never existed" (denied before a byte was written) — either is fine.
+    if (!kIsWeb && path != null && path.isNotEmpty) {
+      try {
+        final file = File(path);
+        if (await file.exists()) await file.delete();
+      } catch (_) {}
+    }
   }
 
   @override
