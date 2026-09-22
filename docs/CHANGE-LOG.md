@@ -31,6 +31,23 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-22 — Session settings: queue style changes, then Apply
+**Lands on:** `web_app` / `admin_cms`
+**Not on:** `web_prod` (staging-only per explicit request, awaiting a
+promotion ask); `mobile_app` (no Flutter equivalent built).
+
+Session settings' Visual and Sound tabs gained a real Add/Remove state:
+tapping "Add" on an explore card highlights it and flips the button to
+"Remove," a floating "Apply changes" button appears with a running count
+across both tabs, and tapping it hands the composed sentence (e.g. "Add
+Tibetan singing bowls, Aulos (Greek flute)") to Chat's existing
+`applyChanges` mechanic — posted as the user's own message, which then
+generates a new version, same as typing a change directly in the thread.
+Also fixed in the same commit: the floating button initially rendered
+through the routed page's own box rather than the viewport, the same
+`.u-page` transform trap documented above for sheets and modals — now
+portalled to `document.body`.
+
 ### 2026-09-22 — Chat text size, adjustable from Settings
 **Lands on:** `mobile_app` (`a6c37c9`)
 **Not on:** `web_app` / `admin_cms` / `web_prod` — the complaint that prompted
