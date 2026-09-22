@@ -120,4 +120,66 @@ actually ships.
 `mobile_app`'s treatment — nothing merges back from it, and
 `docs/CHANGE-LOG.md` tracks it the same as any other branch-specific change
 but does not expect it to "catch up" to anything. It exists to be read, not
-shipped.
+shipped to end users — though it is meant to be reachable by anyone on the
+team, which is what the next section is for.
+
+---
+
+## Deploying it (Vercel)
+
+This branch's `vercel.json` was inherited from `web_app` when the branch
+was cut and pointed at the wrong build entirely — `buildCommand: npm run
+build` and `outputDirectory: dist`, which builds the *consumer app*, not
+the catalogue. Deployed as-is, the site would just be another copy of
+`web_app`, with nothing here to say why Storybook never showed up. It now
+reads:
+
+```json
+{
+  "buildCommand": "npm run build-storybook",
+  "outputDirectory": "storybook-static"
+}
+```
+
+(the `framework: "vite"` line and the SPA rewrite were dropped too — the
+rewrite existed for the app's client-side routes, and Storybook's own
+manager UI addresses stories through a query string against one
+`index.html`, not through paths that would 404 without it.)
+
+**This needs its own Vercel project** — reusing the `web_app`/`web_prod`
+project would mean a `storybook` deployment shows up as just another
+Preview inside a project whose whole `VERCEL_ENV`/`BuildBadge` story (see
+`web_app`'s own `CLAUDE.md`) is built around *that* project meaning "the
+consumer app, staging or production." Mixing a design-system catalogue
+into that is confusing at best and actively misleading at worst — a
+teammate reading `BuildBadge` would see it and reasonably assume they are
+looking at the app.
+
+Steps, once (no CLI access from this environment — this is dashboard
+work):
+
+1. **Vercel dashboard → Add New → Project**, import the same GitHub repo
+   again as a second project.
+2. **Production Branch: `storybook`** — set this in the new project's Git
+   settings before the first deploy, or it will try to build whatever the
+   default branch is.
+3. Build & output settings should read from `vercel.json` automatically
+   (`npm run build-storybook`, `storybook-static`) — confirm they did
+   rather than assume; Vercel's own framework auto-detection can override
+   a `vercel.json` it thinks it knows better than.
+4. No environment variables are required. This branch's `.storybook/
+   main.ts` stubs the build-identity constants (`__BUILD_ID__` etc.) at
+   build time regardless of `VERCEL_ENV`, so `BuildBadge`/`BuildStamp`
+   render fixed `"storybook"`/`"local"` values on Vercel exactly as they
+   do locally — accurate for what they can say (nothing here claims to be
+   a real commit of the app), not a broken deploy.
+5. **Consider putting it behind Vercel's own Deployment Protection**
+   (password or SSO, in the project's Settings → Deployment Protection)
+   rather than this app's own `SiteLock` — `SiteLock` reads `siteLock` from
+   `/__demo`'s flag store, which this branch does not run `/__demo` to
+   manage, and it is documented everywhere else in this codebase as a
+   courtesy gate a determined visitor can read past in devtools, not
+   something to actually rely on for an internal tool.
+
+After that, every push to `storybook` deploys automatically, the same way
+`web_app` already does.

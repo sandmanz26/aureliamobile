@@ -31,6 +31,20 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-22 — `storybook` branch: fixed `vercel.json` for deployment
+
+**Lands on:** `storybook`
+**Not on:** everywhere else — this branch's own deploy config only.
+
+`vercel.json` was inherited from `web_app` unchanged when the branch was
+cut, and pointed at the wrong build entirely: `npm run build` into `dist/`,
+which builds the consumer app rather than the catalogue. Deployed as-is,
+Vercel would have shipped another copy of `web_app` with no Storybook in
+sight. Now `npm run build-storybook` into `storybook-static/`, verified by
+running the exact command Vercel would. See "Deploying it (Vercel)" in
+`docs/STORYBOOK.md` for why this needs its own Vercel project rather than
+folding into `web_app`/`web_prod`'s.
+
 ### 2026-09-22 — `storybook` branch: a component catalogue
 
 **Lands on:** `storybook` (new branch, cut from `web_app`)
