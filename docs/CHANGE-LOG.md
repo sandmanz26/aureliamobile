@@ -31,6 +31,24 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-23 — `@figma/code-connect` added as a dev dependency
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` / `web_prod` / `mobile_app` / `storybook` — dev
+tooling only, no source changed; propagate to `admin_cms` the normal way
+(`--ff-only` merge) whenever this is next merged, no urgency on its own.
+
+Installed via `npm install --save-dev @figma/code-connect` (resolved
+`^2.0.1`) while investigating Figma Code Connect for design/code parity.
+Nothing wired up yet — no `figma.config.json` or `.figma.tsx` files —
+because this file's Figma components are unpublished, plain frames with
+generic layer names ("Frame 43", not "Title"), which Code Connect's prop
+mapping needs to be worth doing, and publishing/scaffolding needs a Figma
+personal access token this environment doesn't have. Revisit once both are
+in place.
+
+---
+
 ### 2026-09-22 — `storybook` branch: a component catalogue
 
 **Lands on:** `storybook` (new branch, cut from `web_app`)
