@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/data/challenges.dart';
+import '../../core/data/people.dart';
 import '../../core/data/sessions.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
@@ -64,13 +65,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
         [AppPrimitives.danger400, AppPrimitives.warning300]),
     ('Sleep Meditation', 'Personalized exprience.', 'sleep',
         [AppPrimitives.neutral700, AppPrimitives.neutral400]),
-  ];
-
-  static const _creators = [
-    ('Ethan Miller', 'creatorEthan', '52 sessions'),
-    ('Daniel Carter', 'creatorDaniel', '38 sessions'),
-    ('Sophia Reynolds', 'creatorSophia', '27 sessions'),
-    ('Maya Bennett', 'creatorMaya', '19 sessions'),
   ];
 
   /// Read off the record rather than written here. The points figure used to
@@ -419,42 +413,56 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 child: SectionHeader(title: 'Trusted Creators'),
               ),
               const SizedBox(height: AppSpacing.s4),
-              SizedBox(
-                height: 116,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: AppPadding.page),
-                  itemCount: _creators.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.s5),
-                  itemBuilder: (context, index) {
-                    final (name, photo, sessions) = _creators[index];
-                    return SizedBox(
-                      width: 84,
-                      child: Column(
-                        children: [
-                          PhotoCircle(
-                            photo: photo,
-                            size: 72,
-                            gradient: const [
-                              AppPrimitives.primary300,
-                              AppPrimitives.info300,
-                            ],
+              Builder(
+                builder: (context) {
+                  final creators = trustedCreators(4);
+                  return SizedBox(
+                    height: 116,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: AppPadding.page),
+                      itemCount: creators.length,
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(width: AppSpacing.s5),
+                      itemBuilder: (context, index) {
+                        final creator = creators[index];
+                        return GestureDetector(
+                          onTap: () => Navigator.of(context)
+                              .pushNamed('/profile', arguments: creator.slug),
+                          child: SizedBox(
+                            width: 84,
+                            child: Column(
+                              children: [
+                                PhotoCircle(
+                                  photo: creator.photo,
+                                  size: 72,
+                                  gradient: const [
+                                    AppPrimitives.primary300,
+                                    AppPrimitives.info300,
+                                  ],
+                                ),
+                                const SizedBox(height: AppSpacing.s2),
+                                Text(creator.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTextStyles.caption
+                                        .copyWith(color: AppColors.textPrimary)),
+                                Text(
+                                    creator.sessions.length == 1
+                                        ? '1 session'
+                                        : '${creator.sessions.length} sessions',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTextStyles.caption),
+                              ],
+                            ),
                           ),
-                          const SizedBox(height: AppSpacing.s2),
-                          Text(name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTextStyles.caption
-                                  .copyWith(color: AppColors.textPrimary)),
-                          Text(sessions,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTextStyles.caption),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                        );
+                      },
+                    ),
+                  );
+                },
               ),
 
               const SizedBox(height: AppSpacing.s8),

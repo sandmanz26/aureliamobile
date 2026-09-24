@@ -109,11 +109,28 @@ class _PlayerScreenState extends State<PlayerScreen> {
         gradient: version?.gradient ?? session.gradient,
       ));
     });
+    // `_sheetUp` used to move only when the grabber was tapped, so a manual
+    // drag left it stale — drag the sheet up by hand, tap the grabber to
+    // bring it back down, and it snapped up again because the app still
+    // thought it was resting at the bottom. The scroll position is the one
+    // source of truth; this keeps the flag (and the grabber's label) in
+    // step with wherever a drag actually left it.
+    _scroll.addListener(_syncSheetUp);
+  }
+
+  void _syncSheetUp() {
+    if (!mounted || _heroHeight <= 0) return;
+    final top = MediaQuery.paddingOf(context).top;
+    final threshold = (_heroHeight - top) / 2;
+    final up = _scroll.offset > threshold;
+    if (up != _sheetUp) setState(() => _sheetUp = up);
   }
 
   @override
   void dispose() {
-    _scroll.dispose();
+    _scroll
+      ..removeListener(_syncSheetUp)
+      ..dispose();
     super.dispose();
   }
 

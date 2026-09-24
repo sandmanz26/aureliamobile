@@ -68,6 +68,18 @@ final Map<String, Person> _people = () {
 Person? findPerson(String? slug) =>
     _people[slug == null || slug.isEmpty ? kCurrentUserSlug : slug];
 
+/// The "Trusted Creators" rail — real people, sorted by what they have
+/// actually published, not a fixed guest list. The web mirror is
+/// `trustedCreators()` in `src/lib/people.ts`; keep both in step.
+List<Person> trustedCreators([int limit = 8]) {
+  final people = _people.values.where((person) => !person.isSelf).toList()
+    ..sort((a, b) {
+      final bySessions = b.sessions.length.compareTo(a.sessions.length);
+      return bySessions != 0 ? bySessions : a.name.compareTo(b.name);
+    });
+  return people.take(limit).toList();
+}
+
 /// How a screen was reached, when that changes whose work it is showing.
 ///
 /// The author answers "whose session is this" for anything in the catalogue.

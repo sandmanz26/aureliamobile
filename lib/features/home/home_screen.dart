@@ -475,8 +475,10 @@ class _AskAureliaFieldState extends State<_AskAureliaField> {
         children: [
           TextField(
             controller: _controller,
-            textInputAction: TextInputAction.send,
-            onSubmitted: (_) => _submit(),
+            keyboardType: TextInputType.multiline,
+            textInputAction: TextInputAction.newline,
+            minLines: 1,
+            maxLines: 5,
             style: AppTextStyles.bodyMd.copyWith(color: AppColors.textPrimary),
             // Every border, not just `border`, and `filled: false`.
             //

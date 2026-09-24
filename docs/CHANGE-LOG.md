@@ -31,6 +31,37 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-24 — Flutter: three real bugs and one inert-data pattern, twice
+
+**Lands on:** `mobile_app`
+**Not on:** `web_app` / `admin_cms` / `web_prod` / `storybook` — Flutter-only
+fixes; none of these three bugs exist on web, and the pattern the fourth item
+found (mock rows with no `onTap`) was already fixed there.
+
+- Home's "Ask Aurelia" field sent on Enter (`textInputAction: send` +
+  `onSubmitted`); it is a composer, not a one-line search box, so Enter now
+  inserts a newline (`TextInputType.multiline` / `TextInputAction.newline`,
+  `minLines: 1, maxLines: 5`) and only the arrow button sends.
+- The drawer's signed-in-only "Latest" section named three sessions that did
+  not exist and had no `onTap` at all — the same "three inert divs" bug the
+  web sidebar already had fixed. Now built from the same three real slugs
+  web's `RECENT_SLUGS` uses, and each row opens that session's thread.
+- The Player screen's sheet can be dragged by hand (it rides the page's own
+  scroll), but `_sheetUp` only ever changed when the grabber was tapped — drag
+  it up, tap the grabber to bring it down, and it snapped back up because the
+  app still thought it was resting at the bottom. A scroll listener now keeps
+  the flag in step with wherever a drag actually left it.
+- Same inert-row pattern found again, unprompted, in Explore's "Trusted
+  Creators" rail: four hardcoded names, two of which had no matching person
+  in the catalogue at all — tapping one would have silently opened *your own*
+  profile (`findPerson(slug) ?? findPerson(null)!`), not an error. Replaced
+  with a new `trustedCreators()` in `core/data/people.dart`, mirroring web's
+  `trustedCreators()` in `src/lib/people.ts` exactly (real people, sorted by
+  published-session count), with each avatar now opening that person's
+  profile.
+
+---
+
 ### 2026-09-22 — `storybook` branch: a component catalogue
 
 **Lands on:** `storybook` (new branch, cut from `web_app`)

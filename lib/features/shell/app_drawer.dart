@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/auth/auth_scope.dart';
+import '../../core/data/sessions.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
@@ -18,11 +19,12 @@ class AppDrawer extends StatelessWidget {
   /// Route name of the screen showing the drawer, so it can mark itself.
   final String current;
 
-  static const _recent = [
-    ('Sleep Meditation', 'Adam Nilson', 'sleep'),
-    ('Morning Mindfulness', 'Adam Nilson', 'morning'),
-    ('Stress relief techniques', 'Marcus Lee', 'stress'),
-  ];
+  // The same three, in the same order, as the web sidebar's `RECENT_SLUGS` —
+  // real sessions, so the row can open the thread it names.
+  static const _recentSlugs = ['night-rain-sleep', 'morning-spark', 'dolphins-frequency'];
+
+  static List<SessionRecord> get _recent =>
+      _recentSlugs.map(findSession).whereType<SessionRecord>().toList();
 
   // No Chat entry: there is none anywhere in the design. The cockpit is
   // reached by "New session" below, and by a session that is already running.
@@ -139,35 +141,49 @@ class AppDrawer extends StatelessWidget {
                         child: Text('Latest', style: AppTextStyles.bodySm),
                       ),
                       const SizedBox(height: AppSpacing.s3),
-                      for (final (title, author, photo) in _recent)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(
-                              AppSpacing.s3, 0, AppSpacing.s3, AppSpacing.s4),
-                          child: Row(
-                            children: [
-                              PhotoCircle(
-                                photo: photo,
-                                size: 40,
-                                gradient: const [
-                                  AppPrimitives.info300,
-                                  AppPrimitives.primary300,
+                      // Real sessions, and each one opens its own thread —
+                      // these used to be three inert rows naming sessions
+                      // that did not exist, on the one shelf whose whole job
+                      // is taking you back to a conversation.
+                      for (final session in _recent)
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.of(context).pop();
+                              Navigator.of(context).pushNamed('/chat',
+                                  arguments: ChatArgs(slug: session.slug));
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                  AppSpacing.s3, 0, AppSpacing.s3, AppSpacing.s4),
+                              child: Row(
+                                children: [
+                                  PhotoCircle(
+                                    photo: session.photo,
+                                    size: 40,
+                                    gradient: const [
+                                      AppPrimitives.info300,
+                                      AppPrimitives.primary300,
+                                    ],
+                                  ),
+                                  const SizedBox(width: AppSpacing.s3),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(session.title,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: AppTextStyles.label),
+                                        Text(session.author,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: AppTextStyles.caption),
+                                      ],
+                                    ),
+                                  ),
                                 ],
                               ),
-                              const SizedBox(width: AppSpacing.s3),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(title,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: AppTextStyles.label),
-                                    Text(author,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: AppTextStyles.caption),
-                                  ],
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                     ],
