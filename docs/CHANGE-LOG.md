@@ -31,6 +31,24 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-24 — "Join Challenge" opens a thread instead of doing nothing
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` — Challenge Detail has no
+Flutter equivalent screen yet, so there is nothing there to be missing this.
+
+`ChallengeDetailPage`'s "Join Challenge" button had no `onClick` at all —
+pressing it did nothing, silently. It now navigates to `/chat` with a
+`challenge: { title }` route state; a new effect in `ChatPage` (same shape as
+Quick Start and Recreate — clears the thread first, keyed on `location.key`
+so joining twice opens twice) seeds the opening exchange: the user's line
+stating which challenge, and Aurelia's welcome back, matching the Figma
+reference exactly (`Hi Aurelia AI, I'm joining the {title} Challenge!` /
+`Hi Adam, welcome to the challenge!` + the two follow-on lines).
+
+---
+
 ### 2026-09-24 — Home's white-to-cream gradient, and Profile's tabs
 
 **Lands on:** `web_app`
