@@ -100,9 +100,19 @@ export function HomePage() {
     // overflow-x-hidden: the decorative glows are deliberately larger than the
     // viewport and bleed past its right edge. Without the clip the document
     // itself scrolls sideways by a few pixels on every phone width.
+    //
+    // Figma's page (16653:14937) carries a single vertical gradient over its
+    // whole height: #FFFFFF held until 77% of the way down, easing to
+    // #FFF1DB only at the very bottom, under the dark banner. A percentage
+    // stop is what makes that work here too — a page built from real content
+    // is not 3749px tall the way the mock is, and splitting the white and
+    // cream into two hand-placed divs (white through Quick Start, implicitly
+    // white after) put the cream entirely behind the dark banner where it
+    // was never seen at all, instead of easing in just above it as the frame
+    // draws it.
     <div
       className="overflow-x-hidden pb-48"
-      style={{ background: '#FFFFFF' }}
+      style={{ background: 'linear-gradient(180deg, #FFFFFF 77%, #FFF1DB 100%)' }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-20 py-16 lg:px-24">
@@ -129,17 +139,6 @@ export function HomePage() {
         )}
       </div>
 
-      {/* White, and that is the frame's own answer rather than an absence of
-          one. Figma's page (16653:14937) carries a single vertical gradient
-          over its whole 3787px: #FFFFFF held until 77% of the way down, easing
-          to #FFF1DB only at the very bottom — which is under the dark banner
-          and never really seen. Everything from the hero to Quick Start sits in
-          the white part.
-
-          This was a three-stop wash reaching #FFF1DB at 55% of *this block*, so
-          the cream landed on the hero instead of a thousand pixels below it and
-          the whole opening read yellow. The only warmth up here is the glow. */}
-      <div style={{ background: '#FFFFFF' }}>
       {/* No bottom padding. This column is not the last block on the page —
           the full-bleed banner follows it and brings its own top margin. When
           both set the gap, the gap is their sum and neither number matches the
@@ -282,7 +281,6 @@ export function HomePage() {
           </div>
         </section>
         )}
-      </div>
       </div>
 
       {/* Dark generative wellness banner — full bleed.

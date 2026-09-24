@@ -1,4 +1,5 @@
-import { ArrowLeft, Menu, Play, Settings, Share2, Shuffle } from 'lucide-react'
+import { useState } from 'react'
+import { ArrowLeft, Menu, Music2, Play, Settings, Share2, Shuffle } from 'lucide-react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { CoverImage } from '../components/ui/CoverImage'
 import { CoinPill } from '../components/ui/CoinPill'
@@ -6,8 +7,10 @@ import { PhotoCircle } from '../components/ui/PhotoCircle'
 import type { CoverKey } from '../lib/photos'
 import { findPerson } from '../lib/people'
 import type { SessionRecord } from '../lib/sessions'
-import { totalMinutes } from '../lib/sessions'
+import { isRecreated, totalMinutes } from '../lib/sessions'
 import { useDrawer } from '../layouts/DrawerContext'
+
+type ProfileTab = 'sessions' | 'recreated'
 
 interface SessionCard {
   /** The session behind it. Both controls on the card need one. */
@@ -66,6 +69,11 @@ export function ProfilePage() {
   const { person: personSlugParam } = useParams()
   const navigate = useNavigate()
   const person = findPerson(personSlugParam)
+  // Sessions is everything this person made; Recreated is the subset of
+  // those that are themselves a fork of someone else's — the same
+  // `lineage.length > 2` test the session row's own marker uses, so the tab
+  // never disagrees with what a card already says about itself.
+  const [tab, setTab] = useState<ProfileTab>('sessions')
 
   if (!person) return <Navigate to="/profile" replace />
   const own = person.isSelf
@@ -83,7 +91,8 @@ export function ProfilePage() {
   // Both branches read the catalogue now. The signed-in profile used to draw a
   // hardcoded shelf of four, three of whose titles matched no session — which
   // is why neither control on a card could go anywhere.
-  const shownCards: SessionCard[] = person.sessions.map(toCard)
+  const tabSessions = tab === 'sessions' ? person.sessions : person.sessions.filter(isRecreated)
+  const shownCards: SessionCard[] = tabSessions.map(toCard)
 
   /**
    * Straight into the cockpit with the session already attached, rather than
@@ -168,20 +177,20 @@ export function ProfilePage() {
         </div>
       </header>
 
-      <div className="mt-24 flex flex-col items-center gap-16">
+      <div className="mt-24 flex items-center gap-16">
         <PhotoCircle
           photo={person.photo}
-          size={98}
+          size={72}
           gradient="var(--color-background-elevated)"
           alt={person.name}
         />
-        <div className="text-center">
+        <div>
           <p className="text-style-title text-text-strong">{person.name}</p>
-          <p className="text-style-label">{own ? 'Dubai, UAE' : person.role}</p>
+          <p className="text-style-label text-text-secondary">{own ? 'Dubai, UAE' : person.role}</p>
         </div>
       </div>
 
-      <div className="mt-24 grid grid-cols-3 divide-x divide-border-subtle py-16">
+      <div className="mt-24 grid grid-cols-3 py-16">
         {shownStats.map((stat) => (
           <div key={stat.label} className="flex flex-col items-center gap-4">
             <p className="text-style-title text-text-strong">{stat.value}</p>
@@ -190,48 +199,73 @@ export function ProfilePage() {
         ))}
       </div>
 
-      <div className="mt-24 grid grid-cols-2 gap-12">
+      {/* Sessions is everything published; Recreated narrows that to the
+          forks among them. Two readings of the same shelf, not two shelves —
+          switching tabs never refetches anything. */}
+      <div className="flex border-b border-border-subtle">
+        {(
+          [
+            { id: 'sessions', label: 'Sessions', icon: Music2 },
+            { id: 'recreated', label: 'Recreated', icon: Shuffle },
+          ] as const
+        ).map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setTab(id)}
+            aria-current={tab === id}
+            className={`u-press flex flex-1 items-center justify-center gap-6 border-b-2 py-12 text-style-label ${
+              tab === id
+                ? 'border-text-primary font-medium text-text-primary'
+                : 'border-transparent text-text-secondary'
+            }`}
+          >
+            <Icon size={16} />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-16 grid grid-cols-2 gap-12">
         {shownCards.map((card) => (
           <article
-            key={card.title}
-            className="@container relative flex h-[230px] flex-col justify-between overflow-hidden rounded-16 p-12 text-text-inverse"
+            key={card.slug}
+            className="@container flex flex-col overflow-hidden rounded-16 border border-border-subtle bg-surface-default"
           >
-            <CoverImage photo={card.photo} gradient={card.gradient} width={520} height={460} />
-            <div className="relative flex items-center justify-between">
-              {/* Both of these were inert: the glyph was a span and the button
-                  had no handler. They are the only two things a profile card
-                  is for — hear it, or make your own of it. */}
-              <Link
-                to={`/play/${card.slug}`}
-                state={{ origin: own ? 'own' : 'community' }}
-                aria-label={`Play ${card.title}`}
-                className="u-press flex size-32 shrink-0 items-center justify-center rounded-full bg-white/25 text-text-inverse backdrop-blur-sm"
-              >
-                <Play size={14} fill="currentColor" />
-              </Link>
-              <button
-                type="button"
-                aria-label={`Recreate ${card.title}`}
-                onClick={() => recreate(card)}
-                className="u-press flex h-32 shrink-0 items-center gap-4 rounded-full bg-surface-default/90 px-12 text-style-label text-text-primary"
-              >
-                <Shuffle size={14} className="shrink-0" />
-                <span className="hidden @min-[124px]:inline">Recreate</span>
-              </button>
+            <div className="relative aspect-[164/120] w-full shrink-0">
+              <CoverImage photo={card.photo} gradient={card.gradient} width={420} height={300} />
+              {/* relative: the cover is absolutely positioned, so anything meant
+                  to sit on top of it needs to be lifted out of normal flow's
+                  way explicitly. */}
+              <div className="relative flex items-center justify-between p-10">
+                <Link
+                  to={`/play/${card.slug}`}
+                  state={{ origin: own ? 'own' : 'community' }}
+                  aria-label={`Play ${card.title}`}
+                  className="u-press flex size-32 shrink-0 items-center justify-center rounded-full bg-white/25 text-text-inverse backdrop-blur-sm"
+                >
+                  <Play size={14} fill="currentColor" />
+                </Link>
+                <button
+                  type="button"
+                  aria-label={`Recreate ${card.title}`}
+                  onClick={() => recreate(card)}
+                  className="u-press flex h-32 shrink-0 items-center gap-4 rounded-full bg-surface-default/90 px-12 text-style-label text-text-primary"
+                >
+                  <Shuffle size={14} className="shrink-0" />
+                  <span className="hidden @min-[124px]:inline">Recreate</span>
+                </button>
+              </div>
             </div>
-            {/* relative: the cover is absolutely positioned, so anything in normal
-                flow paints behind it. The lines below only looked fine because
-                opacity-90 promotes them; the title, with no opacity, was
-                painted under the image and never showed. */}
-            <div className="relative">
-              <p className="text-style-body-small font-semibold">{card.title}</p>
-              <p className="mt-4 text-style-caption line-clamp-2 opacity-90">{card.description}</p>
-              <div className="text-style-caption mt-8 flex items-center gap-10 opacity-90">
+            <div className="p-12">
+              <p className="text-style-body-small font-semibold text-text-primary">{card.title}</p>
+              <p className="mt-4 text-style-caption line-clamp-2 text-text-secondary">{card.description}</p>
+              <div className="text-style-caption mt-8 flex items-center gap-10 text-text-secondary">
                 <span className="flex items-center gap-4">
                   <Play size={11} />
                   {card.plays}
                 </span>
-                <span aria-hidden="true" className="h-12 w-px bg-current opacity-50" />
+                <span aria-hidden="true" className="h-12 w-px bg-border-subtle" />
                 <span className="flex items-center gap-4">
                   <Shuffle size={11} />
                   {card.recreated}

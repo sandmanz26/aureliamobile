@@ -8,10 +8,10 @@ interface FeatureCardProps {
 
 export function FeatureCard({ icon, title, description }: FeatureCardProps) {
   return (
-    <div className="flex flex-col gap-12 rounded-16 bg-background-elevated p-16">
+    <div className="flex flex-col gap-12 rounded-16 bg-surface-default p-16 shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)]">
       <span
         className="flex size-40 items-center justify-center rounded-full text-icon-default"
-        style={{ background: 'linear-gradient(160deg, #fff1db, #ffe682)' }}
+        style={{ background: 'linear-gradient(225deg, #fff1db, #ffe682)' }}
       >
         {icon}
       </span>
