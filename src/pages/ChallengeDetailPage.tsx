@@ -257,6 +257,7 @@ export function ChallengeDetailPage() {
         <div className="mx-auto w-full max-w-[402px] lg:max-w-[720px]">
           <button
             type="button"
+            onClick={() => navigate('/chat', { state: { challenge: { title: challenge.title } } })}
             className="text-style-body u-press flex h-56 w-full items-center justify-center rounded-full bg-button-primary-background font-semibold text-button-primary-foreground"
           >
             Join Challenge

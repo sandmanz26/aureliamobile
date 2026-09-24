@@ -100,6 +100,8 @@ export function ChatPage() {
         /** A sentence composed on Session settings — Add/Remove queued on
          *  Visual or Sound, sent here the moment "Apply changes" is pressed. */
         styleChanges?: string
+        /** "Join Challenge" on a challenge's detail screen. */
+        challenge?: { title: string }
       }
     | null
   const brief = routeState?.recreate
@@ -181,6 +183,7 @@ export function ChatPage() {
   const askHandled = useRef(false)
   const freshHandled = useRef<string | null>(null)
   const styleChangesHandled = useRef<string | null>(null)
+  const challengeHandled = useRef<string | null>(null)
 
   // Starting a new session from /chat does not remount the page, so the state
   // initialiser above never runs again and the old thread would stay put.
@@ -250,6 +253,37 @@ export function ChatPage() {
     // After reset, which puts the draft back to the default.
     setDraft({ title: draftTitleFor(card), slug: card.plays })
   }, [location.key, routeState?.start, reset, setDraft])
+
+  /**
+   * "Join Challenge" opens the cockpit on a thread that already says so,
+   * rather than a blank one the user has to explain themselves into.
+   *
+   * Clears first, same as Quick Start and Recreate: joining a challenge is
+   * starting something, not appending to whatever thread happened to be open.
+   */
+  useEffect(() => {
+    const title = routeState?.challenge?.title
+    if (!title || challengeHandled.current === location.key) return
+    challengeHandled.current = location.key
+
+    const now = Date.now()
+    reset([
+      {
+        id: 1,
+        from: 'user',
+        at: now,
+        status: 'read',
+        text: `Hi Aurelia AI, I'm joining the ${title} Challenge!`,
+      },
+      {
+        id: 2,
+        from: 'aurelia',
+        at: now + 1_200,
+        text: `Hi ${CURRENT_USER.split(' ')[0]}, welcome to the challenge!\n\nCreate your own session and publish it to have it featured on the challenge page.\n\nGood luck! ✨`,
+      },
+    ])
+    setTyping(false)
+  }, [location.key, routeState?.challenge, reset])
 
   useEffect(() => {
     if (!limited) {
