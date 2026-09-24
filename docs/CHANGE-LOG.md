@@ -31,6 +31,43 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-24 — Home's white-to-cream gradient, and Profile's tabs
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` — the gradient fix is
+markup-only (no shared component changed), and Profile's redesign is
+web-specific until the Flutter client is asked to follow it.
+
+- **Home's Adaptive Wellness section** sat on flat white instead of easing
+  into the frame's cream — the previous implementation split white/cream
+  across two hand-placed divs at a guessed boundary (after Quick Start),
+  which put the whole cream stop behind the dark CTA banner where Figma's own
+  page (`16653:14937`) says it should still be 23% away. Replaced with one
+  percentage-stop gradient (`linear-gradient(180deg, #FFFFFF 77%, #FFF1DB
+  100%)`) on the page's outer wrapper, matching Figma's own gradient exactly
+  and surviving real content reflow the way two fixed divs could not.
+- **`FeatureCard`** (the six tiles in that section): card fill was
+  `bg-background-elevated` (`#F2F1EF`, an off-white grey) where Figma's fill
+  is pure white bound to a variable, and the card had no shadow at all where
+  Figma draws `0 5px 24px 4px rgba(0,0,0,0.05)`. The icon circle's gradient
+  had the right two colors (`#FFF1DB` → `#FFE682`) but the wrong angle (160°,
+  down-right) against Figma's actual handle positions (225°, down-left).
+  Fixed all three against `16659:38933`.
+- **Profile page redesign**, per updated Figma flow: avatar and name/location
+  are now a left-aligned row instead of a centered column; the stats row
+  dropped its dividers; and a **Sessions / Recreated** tab switcher sits
+  between the stats and the grid — Sessions shows everything this person has
+  published, Recreated narrows that to the ones that are themselves a fork
+  (the same `isRecreated` / `lineage.length > 2` test the session row's own
+  marker already uses, so the tab never disagrees with a card's own badge).
+  The card itself changed from a full-bleed image with text overlaid on top
+  to an image-top / white-content-below layout — title, description and the
+  played/recreated counts now sit in a plain white area under the art rather
+  than painted over it in inverse text.
+
+---
+
 ### 2026-09-24 — Flutter: three real bugs and one inert-data pattern, twice
 
 **Lands on:** `mobile_app`
