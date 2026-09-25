@@ -328,45 +328,45 @@ export function HomePage() {
           </div>
         </div>
 
-        {/* Card pair (Figma "Frame 25", 16698:4451) — two cards fanned in
-            opposite directions with a real gap between them, not two cards
-            rotated the same way and pushed edge to edge. Each card is its
-            own un-rotated 298.88×337.68 (aspect ~0.885), wide enough at
-            ~62% of the viewport that the centred pair bleeds past both
-            edges of the screen rather than just the right one. */}
+        {/* Card pair (Figma "Frame 25", 16698:4451). A supplied reference
+            screenshot, fitted with `cv2.minAreaRect` on each card's own
+            pixels rather than eyeballed, gave both cards the *same* ~30°
+            rotation (not a mirrored fan) and a true aspect of 289:458 —
+            close to this file's original 180:286, confirming that number
+            was right and only the rotation was too shallow (10–12°, not
+            ~30°) and the cards too small relative to the frame. */}
         <div
-          className="relative -mx-20 my-32 flex items-center justify-center gap-24 overflow-hidden lg:-mx-24"
+          className="relative -mx-20 my-32 flex items-center justify-center gap-16 overflow-hidden lg:-mx-24"
           style={{
-            // The card's own height is 1.13× its width, but a 9°-rotated
-            // rectangle's bounding box is taller than that — height*cos9°
-            // + width*sin9° ≈ 1.27× the width — or the tilted corners clip
-            // against this container's own overflow-hidden.
-            height: 'calc(var(--promo-card) * 1.3)',
-            ['--promo-card' as string]: 'clamp(160px, 62vw, 300px)',
+            // width*sin30° + height*cos30° ≈ 1.87× the width is the rotated
+            // bounding box height — short of that and the tilted corners
+            // clip against this container's own overflow-hidden.
+            height: 'calc(var(--promo-card) * 1.9)',
+            ['--promo-card' as string]: 'clamp(150px, 46vw, 260px)',
           }}
         >
           <div
-            className="relative aspect-[298.88/337.68] shrink-0 -rotate-[9deg] overflow-hidden rounded-24 shadow-2xl"
+            className="relative aspect-[180/286] shrink-0 -rotate-[30deg] overflow-hidden rounded-24 shadow-2xl"
             style={{ width: 'var(--promo-card)' }}
           >
             <CoverImage
               photo="underwater"
               gradient="linear-gradient(160deg, var(--color-info-900), var(--color-neutral-950))"
               width={560}
-              height={630}
+              height={890}
               scrim={false}
             />
             <PlayGlyph />
           </div>
           <div
-            className="relative aspect-[298.88/337.68] shrink-0 rotate-[9deg] overflow-hidden rounded-24 shadow-2xl"
+            className="relative aspect-[180/286] shrink-0 -rotate-[30deg] overflow-hidden rounded-24 shadow-2xl"
             style={{ width: 'var(--promo-card)' }}
           >
             <CoverImage
               photo="glow"
               gradient="linear-gradient(165deg, #FFD9A8 0%, #FFB25E 45%, #F97B14 100%)"
               width={560}
-              height={630}
+              height={890}
               scrim={false}
             />
             <PlayGlyph />
