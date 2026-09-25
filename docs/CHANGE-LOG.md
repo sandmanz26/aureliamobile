@@ -31,6 +31,44 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-25 — Real Home artwork, a real login photo, and a genuine fan instead of a stack
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` — Home's promo section and the
+login photo are web-specific; Flutter's own Home and Sign In are unaffected.
+
+Three fixes from supplied reference images and files, all against Figma
+16698:2103 (Home) and 16698:15285 (Sign In), reported back as still not
+matching after the last pass:
+
+- **The Home promo's two-card pair** (`16698:4451`) was rotating both cards
+  the *same* direction (`-10deg`/`-12deg`) at roughly half Figma's card
+  width, which read as one tight, slightly-skewed stack rather than a fan.
+  Figma's own cards are 298.88×337.68 (aspect ≈0.885, not the 180×286 this
+  was built against) and rotate in *opposite* directions with daylight
+  between them at the top, converging lower down. Rebuilt at the right
+  aspect ratio, `±9deg`, and a real `gap-24` in place of the 7px the two
+  cards used to sit almost flush across.
+- **The closing CTA's figure-in-a-network** was a hand-drawn SVG
+  approximation (`CommunityNetwork.tsx`) standing in for artwork nobody had
+  on hand yet. Replaced with the real export, supplied directly as
+  `aurelia-network.png`; the SVG had no other callers and was deleted rather
+  than left as dead code.
+- **Sign In's background photo** was hotlinked from Unsplash
+  (`photo="affirmations"`), which is a flat gradient in any sandbox without
+  network access to it — including this one, which is exactly why the first
+  two passes at this screen could only be checked against the gradient
+  floor, never the real composition. The actual export was supplied
+  (`auth-hero.png`, 402×661) and is now bundled directly; Sign Up and Forgot
+  Password's shared `AuthPhotoHeader` moved to the same file. Sign In was
+  rendering it stretched to cover the full card height at first — a 661-tall
+  image forced to cover a taller viewport zooms in hard — fixed by sizing the
+  image at its own native aspect ratio and positioning the fade against
+  *its* height (59.6%→95.9%) rather than the full page's.
+
+---
+
 ### 2026-09-25 — Fixed the login page's proportions; matched Sign Up and Forgot Password to it
 
 **Lands on:** `web_app`
