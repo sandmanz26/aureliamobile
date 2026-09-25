@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { CSSProperties } from 'react'
+import type { CSSProperties, FormEvent } from 'react'
 import {
   ArrowLeft,
+  ArrowUp,
   ChevronRight,
+  Heart,
   Pause,
   Play,
   RotateCcw,
@@ -42,6 +44,92 @@ const CUES = [
   'Breathe out, slower than you came in',
   'Let the next one arrive on its own',
 ]
+
+const MOODS = [
+  { emoji: '😣', label: 'Very unpleasant' },
+  { emoji: '🙁', label: 'Unpleasant' },
+  { emoji: '😐', label: 'Neutral' },
+  { emoji: '🙂', label: 'Pleasant' },
+  { emoji: '😆', label: 'Very pleasant' },
+] as const
+
+/**
+ * The mood check-in that surfaces once a session has played all the way
+ * through (Figma 16698:12236 "How does listening…", 16698:12300 "What's
+ * going on?", card itself 16698:15499) — pick a mood, then one optional
+ * free-text follow-up. Nothing is sent anywhere; there is no backend yet to
+ * hold a mood log, so answering just closes the card.
+ */
+function SessionCheckInCard({ onDismiss }: { onDismiss: () => void }) {
+  const [mood, setMood] = useState<string | null>(null)
+  const [note, setNote] = useState('')
+
+  function submitNote(event: FormEvent) {
+    event.preventDefault()
+    onDismiss()
+  }
+
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-[402px] lg:max-w-[560px]">
+      <div className="relative rounded-t-24 bg-surface-default p-20 pb-[calc(20px+env(safe-area-inset-bottom))] shadow-[0_8px_34px_4px_rgba(0,0,0,0.15)]">
+        {/* `.u-tap` sets `position: relative` on whatever it's given, which in
+            a later cascade layer than Tailwind's utilities beats `absolute`
+            on the same element — so the positioning goes on this wrapper and
+            `u-tap` stays on the button it was written for. */}
+        <div className="absolute right-16 top-16">
+          <button type="button" onClick={onDismiss} className="text-style-caption u-tap text-text-secondary">
+            Skip
+          </button>
+        </div>
+        <div className="flex items-start gap-12 pr-40">
+          <span
+            className="flex size-32 shrink-0 items-center justify-center rounded-8 text-white"
+            style={{ background: 'linear-gradient(135deg, var(--color-gold-300), var(--color-warning-600))' }}
+          >
+            <Heart size={16} fill="currentColor" />
+          </span>
+          <h2 className="text-style-body-small pt-4 font-medium text-text-primary">
+            {mood === null ? 'How does listening to this make you feel?' : "What's going on?"}
+          </h2>
+        </div>
+
+        {mood === null ? (
+          <div className="mt-16 flex justify-between">
+            {MOODS.map((m) => (
+              <button
+                key={m.label}
+                type="button"
+                aria-label={m.label}
+                onClick={() => setMood(m.label)}
+                className="u-press flex size-52 items-center justify-center rounded-full border-2 border-[#ff881b] text-[26px]"
+              >
+                {m.emoji}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <form onSubmit={submitNote} className="mt-16 flex items-center gap-10">
+            <input
+              type="text"
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              placeholder="Answer here…"
+              autoFocus
+              className="text-style-body-small h-48 flex-1 rounded-full border border-border-default bg-background-default px-16 text-text-primary placeholder:text-text-secondary"
+            />
+            <button
+              type="submit"
+              aria-label="Send"
+              className="u-press flex size-48 shrink-0 items-center justify-center rounded-full bg-icon-strong text-text-inverse"
+            >
+              <ArrowUp size={18} />
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
 
 function clock(seconds: number) {
   const m = Math.floor(seconds / 60)
@@ -134,6 +222,29 @@ export function PlayerPage() {
   const [dragging, setDragging] = useState(false)
   const drag = useRef<{ pointer: number; offset: number } | null>(null)
   const scroller = useRef<HTMLDivElement>(null)
+
+  // The bed loops (see AudioPlayerContext), so it never fires a real `ended`
+  // event — the clock just wraps back to 0 and keeps going. A wrap only means
+  // "played all the way through" when it fell from near the end, not from a
+  // scrub or a skip button landing near 0 on its own; either of those would
+  // otherwise look identical to a completed loop.
+  const [checkIn, setCheckIn] = useState(false)
+  const finishedOnce = useRef(false)
+  const lastElapsed = useRef(elapsed)
+  useEffect(() => {
+    const previous = lastElapsed.current
+    lastElapsed.current = elapsed
+    if (!finishedOnce.current && duration > 0 && previous >= duration - 0.5 && elapsed < 1) {
+      finishedOnce.current = true
+      setCheckIn(true)
+    }
+  }, [elapsed, duration])
+
+  // A different session is a different playthrough to ask about.
+  useEffect(() => {
+    finishedOnce.current = false
+    setCheckIn(false)
+  }, [slug])
 
   useEffect(() => {
     const measure = () => {
@@ -521,6 +632,8 @@ export function PlayerPage() {
           </section>
         </div>
       </aside>
+
+      {checkIn && <SessionCheckInCard onDismiss={() => setCheckIn(false)} />}
     </div>
   )
 }

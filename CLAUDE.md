@@ -232,7 +232,13 @@ than re-traced.
 
 **`.u-tap` widens a small target with a pseudo-element**, so an audit that
 measures element boxes will report a 16px link as too small when it is not.
-Verify by clicking above the box, not by reading its height.
+Verify by clicking above the box, not by reading its height. **It also sets
+`position: relative` on the element it's given** — in a later cascade layer
+than Tailwind's utilities, so it beats an `absolute` class on that same
+element and the "positioned" thing quietly renders in flow instead. Put
+`u-tap` on the element that needs the bigger hit area and the positioning on
+a wrapper around it, not both on one node. Found when a Player check-in
+card's "Skip" link landed top-left in normal flow instead of top-right.
 
 **Absolutely positioned covers paint over normal-flow content.** `CoverImage`
 fills its parent, so anything meant to sit on top needs `relative`. A card title
