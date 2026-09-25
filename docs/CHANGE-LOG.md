@@ -31,6 +31,42 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-25 — Fixed the login page's proportions; matched Sign Up and Forgot Password to it
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` — Flutter's auth screens keep
+their own forms for now.
+
+The first pass at the new Sign In (yesterday's entry below) put the photo in
+its own `54vh` box with a flat white panel under it — reported back as still
+not matching Figma. It didn't: Figma's photo runs the *full* 874px frame, and
+only the bottom 480 ("Body") carries a panel that is itself a gradient,
+transparent at its own top and solid by its own midpoint — 45%/55%, not
+54%/46%, and the photo never actually stops behind the panel, it fades under
+it. Rebuilt with the photo full-bleed behind everything and the panel sized
+to the frame's real 480/874, so "Welcome to Aurelia." now lands where the
+fade actually resolves instead of a fixed vh guess.
+
+Sign Up and Forgot Password had no Figma redesign of their own, but were
+asked to match: both now open with the same photo band (`AuthPhotoHeader`,
+new shared export in `AuthShell.tsx` — shorter and un-pinned to Sign In's
+exact ratio, since a name/email/password form needs room to scroll under it
+that two buttons and a line of legal text didn't). Their own forms and logic
+are unchanged; only the chrome around them moved off the old centered-logo
+`AuthShell` layout. `AuthTabs` (the Sign In/Sign Up pill switcher) has no
+callers left after this and was removed rather than left dead. The
+still-untouched `AuthShell` component keeps `ResetPasswordPage` working —
+that screen wasn't part of this request.
+
+Also fixed a second real bug found while checking all three: the mark's
+full-width centering wrapper sat over the back button (both pinned at
+`top-16`) and silently ate its clicks in Playwright — `pointer-events-none`
+on that wrapper in both `SignInPage` and `AuthPhotoHeader`, since the mark
+itself was never meant to be a target.
+
+---
+
 ### 2026-09-25 — A mood check-in once a session finishes playing
 
 **Lands on:** `web_app`
