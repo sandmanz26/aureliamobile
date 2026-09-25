@@ -1,8 +1,8 @@
 import { ArrowLeft } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
+import authHero from '../../assets/auth-hero.png'
 import { AureliaLogo } from '../../components/ui/AureliaLogo'
-import { CoverImage } from '../../components/ui/CoverImage'
 import { AppleMark, GoogleMark } from './AuthShell'
 
 /**
@@ -38,15 +38,27 @@ export function SignInPage() {
 
   return (
     <div className="flex min-h-full flex-col bg-background-default lg:items-center lg:justify-center lg:bg-background-elevated lg:py-48">
-      <div className="relative h-dvh w-full max-w-[402px] overflow-hidden lg:aspect-[402/874] lg:h-auto lg:max-h-[874px] lg:w-[402px] lg:rounded-24 lg:shadow-xl">
-        <CoverImage
-          photo="affirmations"
-          gradient="linear-gradient(160deg, var(--color-warning-600), var(--color-gold-300))"
-          width={800}
-          height={1600}
-          scrim={false}
-          className="absolute inset-0"
-        />
+      <div className="relative flex h-dvh w-full max-w-[402px] flex-col overflow-hidden bg-background-default lg:aspect-[402/874] lg:h-auto lg:max-h-[874px] lg:w-[402px] lg:rounded-24 lg:shadow-xl">
+        {/* The supplied photo (402×661) is its own crop, not a full-bleed
+            source to stretch — rendered at its native ratio rather than
+            forced to cover the whole card, which was zooming it in hard on
+            any viewport taller than 661px. It runs 661/874 (75.6%) of the
+            874 frame Figma drew, so the gradient below is positioned against
+            *this* image's own height, not the full page's. */}
+        <div className="relative w-full shrink-0" style={{ aspectRatio: '402 / 661' }}>
+          <img src={authHero} alt="" className="size-full object-cover" />
+          {/* Figma's "Body" fade (394→634 of an 874 frame) falls at
+              59.6%→95.9% of this 661-tall image — transparent, then solid
+              by 95.9%, so the rest of the image and the page below both read
+              as one continuous white field. */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                'linear-gradient(180deg, transparent 0%, transparent 59.6%, var(--color-background-default) 95.9%, var(--color-background-default) 100%)',
+            }}
+          />
+        </div>
 
         <button
           type="button"
@@ -63,54 +75,43 @@ export function SignInPage() {
           <AureliaLogo inverse />
         </div>
 
-        {/* Figma's "Body": the bottom 480/874 (54.92%) of the frame, fading
-            from transparent at its own top to solid by its own midpoint. */}
-        <div className="absolute inset-x-0 bottom-0 flex h-[54.92%] flex-col overflow-hidden">
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                'linear-gradient(180deg, transparent 0%, var(--color-background-default) 50%, var(--color-background-default) 100%)',
-            }}
-          />
-          <div className="relative flex flex-1 flex-col px-24 pb-24 pt-16">
-            <h1 className="text-style-title-large text-text-primary">Welcome to Aurelia.</h1>
+        <div className="flex flex-1 flex-col px-24 pb-24 pt-16">
+          <h1 className="text-style-title-large text-text-primary">Welcome to Aurelia.</h1>
 
-            <div className="mt-24 flex flex-col gap-12">
-              <button
-                type="button"
-                onClick={complete}
-                className="u-press flex h-44 w-full items-center justify-center gap-12 rounded-full border border-button-secondary-border text-style-body-small font-medium text-text-primary"
-              >
-                <GoogleMark />
-                Continue with Google
-              </button>
-              <button
-                type="button"
-                onClick={complete}
-                className="u-press flex h-44 w-full items-center justify-center gap-12 rounded-full border border-button-secondary-border text-style-body-small font-medium text-text-primary"
-              >
-                <AppleMark />
-                Continue with Apple
-              </button>
-            </div>
-
-            <p className="text-style-caption mt-auto pt-24 text-center text-text-secondary">
-              By continuing, you agree to Aurelia{' '}
-              <span className="font-medium underline">Privacy Policy</span> and{' '}
-              <span className="font-medium underline">Terms of Use</span>
-            </p>
-            <p className="text-style-caption mt-12 text-center text-text-secondary">
-              New here?{' '}
-              <Link to="/signup" state={location.state} className="u-tap font-medium text-text-brand">
-                Create an account
-              </Link>{' '}
-              ·{' '}
-              <Link to="/forgot-password" state={location.state} className="u-tap font-medium text-text-brand">
-                Forgot password?
-              </Link>
-            </p>
+          <div className="mt-24 flex flex-col gap-12">
+            <button
+              type="button"
+              onClick={complete}
+              className="u-press flex h-44 w-full items-center justify-center gap-12 rounded-full border border-button-secondary-border text-style-body-small font-medium text-text-primary"
+            >
+              <GoogleMark />
+              Continue with Google
+            </button>
+            <button
+              type="button"
+              onClick={complete}
+              className="u-press flex h-44 w-full items-center justify-center gap-12 rounded-full border border-button-secondary-border text-style-body-small font-medium text-text-primary"
+            >
+              <AppleMark />
+              Continue with Apple
+            </button>
           </div>
+
+          <p className="text-style-caption mt-auto pt-24 text-center text-text-secondary">
+            By continuing, you agree to Aurelia{' '}
+            <span className="font-medium underline">Privacy Policy</span> and{' '}
+            <span className="font-medium underline">Terms of Use</span>
+          </p>
+          <p className="text-style-caption mt-12 text-center text-text-secondary">
+            New here?{' '}
+            <Link to="/signup" state={location.state} className="u-tap font-medium text-text-brand">
+              Create an account
+            </Link>{' '}
+            ·{' '}
+            <Link to="/forgot-password" state={location.state} className="u-tap font-medium text-text-brand">
+              Forgot password?
+            </Link>
+          </p>
         </div>
       </div>
     </div>

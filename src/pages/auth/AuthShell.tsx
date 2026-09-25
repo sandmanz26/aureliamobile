@@ -1,8 +1,8 @@
 import { ArrowLeft } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
+import authHero from '../../assets/auth-hero.png'
 import { AureliaLogo } from '../../components/ui/AureliaLogo'
-import { CoverImage } from '../../components/ui/CoverImage'
 import { useHiddenScrollbars } from '../../hooks/useHiddenScrollbars'
 import { MobileStatusBar } from '../../components/ui/MobileStatusBar'
 
@@ -66,13 +66,8 @@ export function AuthPhotoHeader({ backTo }: { backTo: string }) {
   const navigate = useNavigate()
   return (
     <div className="relative h-[200px] w-full shrink-0 overflow-hidden">
-      <CoverImage
-        photo="affirmations"
-        gradient="linear-gradient(160deg, var(--color-warning-600), var(--color-gold-300))"
-        width={800}
-        height={500}
-        scrim={false}
-      />
+      {/* Same supplied background as Sign In, not an Unsplash stand-in. */}
+      <img src={authHero} alt="" className="absolute inset-0 size-full object-cover" />
       <div
         className="absolute inset-x-0 bottom-0 h-2/3"
         style={{ background: 'linear-gradient(180deg, transparent 0%, var(--color-background-default) 100%)' }}

@@ -15,11 +15,11 @@ import {
 import { useState } from 'react'
 import { useAuth } from '../auth/AuthContext'
 import { useSignInGate } from '../auth/useSignInGate'
+import aureliaNetwork from '../assets/aurelia-network.png'
 import liveSessionsMap from '../assets/live-sessions-map.png'
 import { Chip } from '../components/ui/Chip'
 import { CoverImage } from '../components/ui/CoverImage'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
-import { CommunityNetwork } from '../components/ui/CommunityNetwork'
 import { FeatureCard } from '../components/ui/FeatureCard'
 import { SessionGridCard } from '../components/ui/SessionGridCard'
 import { useFeatureFlags } from '../demo/FeatureFlags'
@@ -328,47 +328,45 @@ export function HomePage() {
           </div>
         </div>
 
-        {/* Card pair. The width is one number and everything else is derived
-            from it, so the pair grows with the screen instead of sitting at
-            phone size on a wide one — at 402px it lands on the Figma's 180px,
-            and it stops at 280 so it never dominates a desktop window.
-
-            The two derived numbers, both tied to the -10deg rotation: a card is
-            1.589 times as tall as it is wide, and once turned it measures
-            1.26 times its width, which puts each corner 0.13 widths outside the
-            layout box. That overhang is the left padding — it is what lets the
-            left card sit flush to the screen edge with all four corners visible
-            while the pair bleeds past the right edge. */}
+        {/* Card pair (Figma "Frame 25", 16698:4451) — two cards fanned in
+            opposite directions with a real gap between them, not two cards
+            rotated the same way and pushed edge to edge. Each card is its
+            own un-rotated 298.88×337.68 (aspect ~0.885), wide enough at
+            ~62% of the viewport that the centred pair bleeds past both
+            edges of the screen rather than just the right one. */}
         <div
-          className="relative -mx-20 my-32 flex items-center justify-start gap-[7px] overflow-hidden lg:-mx-24 lg:justify-center lg:pl-0"
+          className="relative -mx-20 my-32 flex items-center justify-center gap-24 overflow-hidden lg:-mx-24"
           style={{
-            height: 'calc(var(--promo-card) * 1.78)',
-            paddingLeft: 'calc(var(--promo-card) * 0.13)',
-            ['--promo-card' as string]: 'clamp(150px, 45vw, 280px)',
+            // The card's own height is 1.13× its width, but a 9°-rotated
+            // rectangle's bounding box is taller than that — height*cos9°
+            // + width*sin9° ≈ 1.27× the width — or the tilted corners clip
+            // against this container's own overflow-hidden.
+            height: 'calc(var(--promo-card) * 1.3)',
+            ['--promo-card' as string]: 'clamp(160px, 62vw, 300px)',
           }}
         >
           <div
-            className="relative aspect-[180/286] shrink-0 -rotate-[10deg] overflow-hidden rounded-24 shadow-2xl"
+            className="relative aspect-[298.88/337.68] shrink-0 -rotate-[9deg] overflow-hidden rounded-24 shadow-2xl"
             style={{ width: 'var(--promo-card)' }}
           >
             <CoverImage
               photo="underwater"
               gradient="linear-gradient(160deg, var(--color-info-900), var(--color-neutral-950))"
               width={560}
-              height={890}
+              height={630}
               scrim={false}
             />
             <PlayGlyph />
           </div>
           <div
-            className="relative aspect-[180/286] shrink-0 -rotate-[12deg] overflow-hidden rounded-24 shadow-2xl"
+            className="relative aspect-[298.88/337.68] shrink-0 rotate-[9deg] overflow-hidden rounded-24 shadow-2xl"
             style={{ width: 'var(--promo-card)' }}
           >
             <CoverImage
               photo="glow"
               gradient="linear-gradient(165deg, #FFD9A8 0%, #FFB25E 45%, #F97B14 100%)"
               width={560}
-              height={890}
+              height={630}
               scrim={false}
             />
             <PlayGlyph />
@@ -453,8 +451,11 @@ export function HomePage() {
               inside the content column. It was full-bleed with a 24 overlap,
               which made it read as a band under the page rather than the last
               card in the list, and left the footer sitting in a gap. The frame
-              runs the card flush off the illustration's bottom edge. */}
-          <CommunityNetwork className="w-full" />
+              runs the card flush off the illustration's bottom edge.
+
+              The figure was a hand-drawn SVG approximation of this artwork —
+              replaced with the real export, supplied directly. */}
+          <img src={aureliaNetwork} alt="" className="w-full" />
 
           {/* Figma "Frame 45" in the last Section — 223 tall, radius 20, 40
               above and below, 20 at the sides, 32 between the words and the
