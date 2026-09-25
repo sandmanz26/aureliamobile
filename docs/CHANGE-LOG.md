@@ -31,6 +31,28 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-25 — Home's card pair: measured the rotation instead of eyeballing it
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` — Home's promo section is
+web-specific.
+
+The previous pass at this section (below) guessed the two cards were fanned
+in *opposite* directions at a shallow ~9°, based on eyeballing a render.
+Reported back as still not matching. Fitted a rotated bounding box to each
+card's own pixels in the supplied reference (`cv2.minAreaRect`, independent
+per card) instead of guessing again: both cards come back at the *same*
+~30° rotation with a true aspect of 289:458 — parallel, not mirrored, and
+three times steeper than either the previous 9° or the original 10–12°.
+That aspect ratio (0.631) is close enough to this file's original 180:286
+(0.629) to confirm the size and ratio were already right; only the rotation
+was too shallow and the cards too small relative to the frame. Re-verified
+by fitting the same measurement to a screenshot of the rebuilt section —
+both cards land within a few hundredths of a degree of 30°.
+
+---
+
 ### 2026-09-25 — Real Home artwork, a real login photo, and a genuine fan instead of a stack
 
 **Lands on:** `web_app`
