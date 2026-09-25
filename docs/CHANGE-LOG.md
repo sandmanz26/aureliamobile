@@ -31,6 +31,32 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-25 — Account Deletion confirmation, and a real Log Out bug it surfaced
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` — Settings has no Flutter
+screen with an Account Deletion row yet.
+
+`AccountSettingsPage`'s "Account Deletion" row had no `onClick`, same gap as
+"Join Challenge" yesterday. It now opens a centered "Are you sure?" dialog
+(`DeleteAccountDialog`, portalled, matching the frame: a solid coral warning
+badge, Cancel + a red "Delete Account") — confirming ends the session, since
+there is no backend to delete an account from and "you won't be able to sign
+in again" has to mean at least that much.
+
+Building it surfaced a real, pre-existing bug in **Log Out**, on the same
+screen: `signOut()` then `navigate('/home')`, called together, let `signOut`'s
+re-render land while the route was still `/settings` — `RequireAuth` saw a
+signed-out user on a guarded page and threw the departure to `/login` out from
+under the navigate call. Traced with a navigation-event log: the arrival at
+`/home` was visible, then overwritten by `/login` about 20ms later. Fixed for
+both doors with one `endSession()` (navigate first, `signOut` deferred by a
+tick) — Log Out was not a one-off case invented for this change, it had been
+silently doing this since the screen shipped.
+
+---
+
 ### 2026-09-24 — "Join Challenge" opens a thread instead of doing nothing
 
 **Lands on:** `web_app`
