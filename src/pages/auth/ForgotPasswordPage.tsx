@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { TextField } from '../../components/ui/TextField'
-import { AuthShell } from './AuthShell'
+import { AuthPhotoHeader } from './AuthShell'
 
 /**
  * Password reset, request step.
@@ -30,67 +30,76 @@ export function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <AuthShell
-        header={<h1 className="text-style-title text-text-primary">Check your inbox</h1>}
-        backTo="/login"
-      >
-        <div className="mt-40 flex flex-col items-center gap-16 text-center">
-          <span className="flex size-64 items-center justify-center rounded-full bg-background-elevated text-icon-default">
-            <MailCheck size={26} />
-          </span>
-          <p className="text-style-body text-text-primary">
-            If an account exists for <span className="font-medium">{email || 'that address'}</span>, a reset link is on
-            its way.
-          </p>
-          <p className="text-style-body-small text-text-secondary">
-            The link works once and expires in 30 minutes. Check your spam folder before asking for another.
-          </p>
+      <div className="flex min-h-full flex-col bg-background-default lg:items-center lg:justify-center lg:bg-background-elevated lg:py-48">
+        <div className="flex h-dvh w-full max-w-[402px] flex-col overflow-hidden lg:h-auto lg:max-h-[874px] lg:rounded-24 lg:border lg:border-border-subtle lg:shadow-xl">
+          <AuthPhotoHeader backTo="/login" />
+          <div className="min-h-0 flex-1 overflow-y-auto px-24 pb-24 pt-20">
+            <h1 className="text-style-title-large text-text-primary">Check your inbox.</h1>
+            <div className="mt-24 flex flex-col items-center gap-16 text-center">
+              <span className="flex size-64 items-center justify-center rounded-full bg-background-elevated text-icon-default">
+                <MailCheck size={26} />
+              </span>
+              <p className="text-style-body text-text-primary">
+                If an account exists for <span className="font-medium">{email || 'that address'}</span>, a reset link
+                is on its way.
+              </p>
+              <p className="text-style-body-small text-text-secondary">
+                The link works once and expires in 30 minutes. Check your spam folder before asking for another.
+              </p>
 
-          {/* Demo affordance: there is no mail server, so the reset step is
-              reachable directly. A real build only gets here from the email. */}
-          <Button variant="primary" className="mt-8 w-full" onClick={() => navigate('/reset-password')}>
-            Open the reset link
-          </Button>
+              {/* Demo affordance: there is no mail server, so the reset step is
+                  reachable directly. A real build only gets here from the email. */}
+              <Button variant="primary" className="mt-8 w-full" onClick={() => navigate('/reset-password')}>
+                Open the reset link
+              </Button>
 
-          <button
-            type="button"
-            onClick={() => setSent(false)}
-            className="u-tap text-style-body-small text-text-brand"
-          >
-            Use a different email
-          </button>
+              <button
+                type="button"
+                onClick={() => setSent(false)}
+                className="u-tap text-style-body-small text-text-brand"
+              >
+                Use a different email
+              </button>
+            </div>
+          </div>
         </div>
-      </AuthShell>
+      </div>
     )
   }
 
   return (
-    <AuthShell header={<h1 className="text-style-title text-text-primary">Forgot password</h1>} backTo="/login">
-      <form className="mt-40 flex flex-col gap-16" onSubmit={handleSubmit}>
-        <p className="text-style-body-small text-text-secondary">
-          Enter the email you signed up with and we’ll send a link to set a new password.
-        </p>
-        <TextField
-          type="email"
-          placeholder="Email"
-          autoComplete="email"
-          leadingIcon={<Mail size={20} />}
-          required
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-        />
-        <Button type="submit" variant="primary" disabled={submitting} className="mt-8 w-full">
-          {submitting ? 'Sending…' : 'Send reset link'}
-        </Button>
-      </form>
+    <div className="flex min-h-full flex-col bg-background-default lg:items-center lg:justify-center lg:bg-background-elevated lg:py-48">
+      <div className="flex h-dvh w-full max-w-[402px] flex-col overflow-hidden lg:h-auto lg:max-h-[874px] lg:rounded-24 lg:border lg:border-border-subtle lg:shadow-xl">
+        <AuthPhotoHeader backTo="/login" />
+        <div className="min-h-0 flex-1 overflow-y-auto px-24 pb-24 pt-20">
+          <h1 className="text-style-title-large text-text-primary">Forgot password.</h1>
+          <form className="mt-24 flex flex-col gap-16" onSubmit={handleSubmit}>
+            <p className="text-style-body-small text-text-secondary">
+              Enter the email you signed up with and we’ll send a link to set a new password.
+            </p>
+            <TextField
+              type="email"
+              placeholder="Email"
+              autoComplete="email"
+              leadingIcon={<Mail size={20} />}
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+            <Button type="submit" variant="primary" disabled={submitting} className="mt-8 w-full">
+              {submitting ? 'Sending…' : 'Send reset link'}
+            </Button>
+          </form>
 
-      <Link
-        to="/login"
-        className="u-tap text-style-body-small mt-24 flex items-center justify-center gap-8 text-text-secondary"
-      >
-        <ArrowLeft size={15} />
-        Back to sign in
-      </Link>
-    </AuthShell>
+          <Link
+            to="/login"
+            className="u-tap text-style-body-small mt-24 flex items-center justify-center gap-8 text-text-secondary"
+          >
+            <ArrowLeft size={15} />
+            Back to sign in
+          </Link>
+        </div>
+      </div>
+    </div>
   )
 }

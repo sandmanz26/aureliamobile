@@ -2,6 +2,7 @@ import { ArrowLeft } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AureliaLogo } from '../../components/ui/AureliaLogo'
+import { CoverImage } from '../../components/ui/CoverImage'
 import { useHiddenScrollbars } from '../../hooks/useHiddenScrollbars'
 import { MobileStatusBar } from '../../components/ui/MobileStatusBar'
 
@@ -52,31 +53,44 @@ export function AuthShell({ header, backTo, children }: AuthShellProps) {
   )
 }
 
-/** Shared between Sign In and Sign Up, which are one control in two places. */
-export function AuthTabs({ value }: { value: 'Sign In' | 'Sign Up' }) {
+/**
+ * The photo band Sign In moved to (Figma 16698:15285) — reused, shorter, as
+ * the header for Sign Up and Forgot Password so all three read as one
+ * family. Sign In's own ratio is pinned to its Figma frame and stays a
+ * bespoke layout in `SignInPage`; this is deliberately a plainer, shorter
+ * band with no exact spec of its own, because both of these screens carry a
+ * real form that needs room to scroll below it rather than to live inside a
+ * fixed-height panel sized for two buttons and a line of legal text.
+ */
+export function AuthPhotoHeader({ backTo }: { backTo: string }) {
   const navigate = useNavigate()
-  const options = [
-    { label: 'Sign In', to: '/login' },
-    { label: 'Sign Up', to: '/signup' },
-  ] as const
-
   return (
-    <div className="inline-flex gap-4 rounded-full bg-background-elevated p-4">
-      {options.map((option) => {
-        const active = option.label === value
-        return (
-          <button
-            key={option.label}
-            type="button"
-            onClick={() => navigate(option.to)}
-            className={`text-style-label rounded-full px-20 py-8 transition-colors ${
-              active ? 'bg-surface-default text-text-strong' : 'bg-transparent text-text-secondary'
-            }`}
-          >
-            {option.label}
-          </button>
-        )
-      })}
+    <div className="relative h-[200px] w-full shrink-0 overflow-hidden">
+      <CoverImage
+        photo="affirmations"
+        gradient="linear-gradient(160deg, var(--color-warning-600), var(--color-gold-300))"
+        width={800}
+        height={500}
+        scrim={false}
+      />
+      <div
+        className="absolute inset-x-0 bottom-0 h-2/3"
+        style={{ background: 'linear-gradient(180deg, transparent 0%, var(--color-background-default) 100%)' }}
+      />
+      <button
+        type="button"
+        aria-label="Back"
+        onClick={() => navigate(backTo)}
+        className="u-press absolute left-16 top-16 flex size-44 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm"
+      >
+        <ArrowLeft size={20} />
+      </button>
+      {/* pointer-events-none: this spans the full width to center the mark,
+          and without it the empty part of that strip sits over the back
+          button (both at top-16) and swallows its clicks. */}
+      <div className="pointer-events-none absolute inset-x-0 top-16 flex justify-center">
+        <AureliaLogo inverse iconSize={32} />
+      </div>
     </div>
   )
 }
