@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { ArrowLeft, Check, ChevronUp, CircleDollarSign, LogOut, Plus, User, UserX } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { GoogleMark } from './auth/AuthShell'
@@ -33,6 +34,68 @@ function Row({
 }
 
 /**
+ * "Are you sure?" — Account Deletion had no handler at all, the same gap
+ * "New session" and a profile card's controls used to have. There is no
+ * backend to delete anything from, so confirming does what deleting an
+ * account would have to anyway: end the session. Cancel and the backdrop
+ * both back out without touching it.
+ */
+function DeleteAccountDialog({ onConfirm, onClose }: { onConfirm: () => void; onClose: () => void }) {
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return createPortal(
+    <div
+      className="u-fade fixed inset-0 z-50 flex items-center justify-center bg-icon-strong/20 px-20"
+      onClick={onClose}
+    >
+      <div
+        onClick={(event) => event.stopPropagation()}
+        className="flex w-full max-w-[362px] flex-col items-center gap-16 rounded-24 bg-surface-default px-24 py-32 text-center"
+      >
+        {/* A filled badge, not lucide's outline glyph — the frame draws a solid
+            coral triangle with a white mark inside, not a stroke icon. */}
+        <svg width="48" height="48" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
+            className="fill-danger-300"
+          />
+          <rect x="11" y="9" width="2" height="6" rx="1" fill="white" />
+          <circle cx="12" cy="17.5" r="1" fill="white" />
+        </svg>
+        <h2 className="text-style-title text-text-primary">Are you sure?</h2>
+        <p className="text-style-body-small text-text-secondary">
+          Deleting your account will permanently remove your account and data. You won&rsquo;t be able to sign in
+          again. Are you sure you want to continue?
+        </p>
+        <div className="mt-8 flex w-full gap-12">
+          <button
+            type="button"
+            onClick={onClose}
+            className="u-press flex h-47 flex-1 items-center justify-center rounded-full border border-[#D6D6D6] text-style-body text-text-primary"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="u-press flex h-47 flex-1 items-center justify-center rounded-full bg-feedback-error text-style-body font-medium text-text-inverse"
+          >
+            Delete Account
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
+/**
  * Figma 16523:13934 — what the gear on the profile opens.
  *
  * This is also where sign-out lives. It had been unreachable from anywhere in
@@ -43,6 +106,28 @@ export function AccountSettingsPage() {
   const { signOut } = useAuth()
   const navigate = useNavigate()
   const [accountsOpen, setAccountsOpen] = useState(true)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+
+  /**
+   * Leaves the account, from either door.
+   *
+   * `navigate` first, `signOut` after: this screen is behind `RequireAuth`,
+   * and calling them in the other order — or even in the same tick — let
+   * `signOut`'s re-render land while the route was still `/settings`, so
+   * `RequireAuth` saw a signed-out user on a guarded page and threw the
+   * departure to `/login` out from under it. Measured: the navigate to
+   * `/home` was landing and then being overwritten ~20ms later. Not a
+   * one-off — Log Out had the same bug, silently, since the screen shipped.
+   */
+  function endSession() {
+    navigate('/home')
+    setTimeout(signOut, 50)
+  }
+
+  function deleteAccount() {
+    setConfirmingDelete(false)
+    endSession()
+  }
 
   return (
     <div className="mx-auto max-w-[720px] px-20 py-16 lg:px-24 lg:py-24">
@@ -117,16 +202,18 @@ export function AccountSettingsPage() {
           label="Credit Redemption"
           onClick={() => navigate('/credits')}
         />
-        <Row icon={<UserX size={24} />} label="Account Deletion" />
         <Row
-          icon={<LogOut size={24} />}
-          label="Log Out"
-          onClick={() => {
-            signOut()
-            navigate('/home')
-          }}
+          icon={<UserX size={24} />}
+          label="Account Deletion"
+          tone="danger"
+          onClick={() => setConfirmingDelete(true)}
         />
+        <Row icon={<LogOut size={24} />} label="Log Out" onClick={endSession} />
       </div>
+
+      {confirmingDelete && (
+        <DeleteAccountDialog onConfirm={deleteAccount} onClose={() => setConfirmingDelete(false)} />
+      )}
     </div>
   )
 }
