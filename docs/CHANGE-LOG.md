@@ -31,6 +31,48 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-25 — Login screen becomes a social-only welcome gate
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (Flutter's sign-in screen keeps its own
+form for now) / `storybook`.
+
+`SignInPage` no longer shares `AuthShell` with Sign Up/Forgot/Reset — it now
+has its own full-bleed layout (Figma 16698:15285): a photo (`affirmations`,
+same fallback gradient it already had elsewhere) fading to white, "Welcome to
+Aurelia.", and two full-width "Continue with Google/Apple" buttons in place of
+the email/password form. Nothing about sign-in itself changed underneath —
+there is no backend to check credentials against, so both buttons call the
+same mock `complete()` the form's submit used to. `/signup` and
+`/forgot-password` had no other link into them anywhere in the app, so both
+stay reachable from a small line under the legal text even though the
+reference doesn't show either.
+
+Added an `inverse` prop to `AureliaLogo` for the wordmark over a photo instead
+of the light background it otherwise assumes — the tile turns solid white and
+its cutouts turn transparent (via an SVG mask) rather than white-on-orange, so
+the same single source of truth for the mark now covers both cases.
+
+---
+
+### 2026-09-25 — Session Detail: lineage arrow opens the player
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` — Session Detail's own Lineage
+Tree exists only on web.
+
+Per Figma 16698:8196: tapping a Lineage Tree row's arrow went back to the
+session's own detail page regardless of which step was tapped, since a
+lineage step doesn't carry its own catalogue entry (only title/author/note
+are modelled). It now opens the player for the session whose lineage is being
+looked at — the one thing every row can actually do. The bottom Recreate
+button already routed to chat correctly (`recreate.screen` is off by
+default), so it needed no change.
+
+---
+
 ### 2026-09-25 — Account Deletion confirmation, and a real Log Out bug it surfaced
 
 **Lands on:** `web_app`

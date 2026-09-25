@@ -88,7 +88,12 @@ function StylePresetCard({ style, session }: { style: AppliedStyle; session: Ses
 }
 
 /** A fork step — the same row Progress's own Lineage Tree draws (Figma
- *  "Highlight/Assessment", 16523:19712), so the two never read differently. */
+ *  "Highlight/Assessment", 16523:19712), so the two never read differently.
+ *
+ *  Opens the player, not this session's own detail page again — a step's
+ *  own catalogue entry isn't modelled (only its title/author/note are), so
+ *  the one thing every row can actually do is play the session whose
+ *  lineage you are looking at (Figma 16698:8196). */
 function LineageRow({
   step,
   index,
@@ -103,7 +108,7 @@ function LineageRow({
   return (
     <Fragment>
       <Link
-        to={`/session/${session.slug}`}
+        to={`/play/${session.slug}`}
         className={`u-press flex items-center gap-10 ${index === 0 ? 'pb-8' : last ? 'pt-8' : 'py-8'}`}
       >
         <PhotoCircle photo={last ? session.authorPhoto : 'avatar'} size={35} gradient={session.gradient} />
