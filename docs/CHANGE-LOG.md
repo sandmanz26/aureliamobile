@@ -31,6 +31,178 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-25 — Login screen becomes a social-only welcome gate
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (Flutter's sign-in screen keeps its own
+form for now) / `storybook`.
+
+`SignInPage` no longer shares `AuthShell` with Sign Up/Forgot/Reset — it now
+has its own full-bleed layout (Figma 16698:15285): a photo (`affirmations`,
+same fallback gradient it already had elsewhere) fading to white, "Welcome to
+Aurelia.", and two full-width "Continue with Google/Apple" buttons in place of
+the email/password form. Nothing about sign-in itself changed underneath —
+there is no backend to check credentials against, so both buttons call the
+same mock `complete()` the form's submit used to. `/signup` and
+`/forgot-password` had no other link into them anywhere in the app, so both
+stay reachable from a small line under the legal text even though the
+reference doesn't show either.
+
+Added an `inverse` prop to `AureliaLogo` for the wordmark over a photo instead
+of the light background it otherwise assumes — the tile turns solid white and
+its cutouts turn transparent (via an SVG mask) rather than white-on-orange, so
+the same single source of truth for the mark now covers both cases.
+
+---
+
+### 2026-09-25 — Session Detail: lineage arrow opens the player
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` — Session Detail's own Lineage
+Tree exists only on web.
+
+Per Figma 16698:8196: tapping a Lineage Tree row's arrow went back to the
+session's own detail page regardless of which step was tapped, since a
+lineage step doesn't carry its own catalogue entry (only title/author/note
+are modelled). It now opens the player for the session whose lineage is being
+looked at — the one thing every row can actually do. The bottom Recreate
+button already routed to chat correctly (`recreate.screen` is off by
+default), so it needed no change.
+
+---
+
+### 2026-09-25 — Account Deletion confirmation, and a real Log Out bug it surfaced
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` — Settings has no Flutter
+screen with an Account Deletion row yet.
+
+`AccountSettingsPage`'s "Account Deletion" row had no `onClick`, same gap as
+"Join Challenge" yesterday. It now opens a centered "Are you sure?" dialog
+(`DeleteAccountDialog`, portalled, matching the frame: a solid coral warning
+badge, Cancel + a red "Delete Account") — confirming ends the session, since
+there is no backend to delete an account from and "you won't be able to sign
+in again" has to mean at least that much.
+
+Building it surfaced a real, pre-existing bug in **Log Out**, on the same
+screen: `signOut()` then `navigate('/home')`, called together, let `signOut`'s
+re-render land while the route was still `/settings` — `RequireAuth` saw a
+signed-out user on a guarded page and threw the departure to `/login` out from
+under the navigate call. Traced with a navigation-event log: the arrival at
+`/home` was visible, then overwritten by `/login` about 20ms later. Fixed for
+both doors with one `endSession()` (navigate first, `signOut` deferred by a
+tick) — Log Out was not a one-off case invented for this change, it had been
+silently doing this since the screen shipped.
+
+---
+
+### 2026-09-24 — "Join Challenge" opens a thread instead of doing nothing
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` — Challenge Detail has no
+Flutter equivalent screen yet, so there is nothing there to be missing this.
+
+`ChallengeDetailPage`'s "Join Challenge" button had no `onClick` at all —
+pressing it did nothing, silently. It now navigates to `/chat` with a
+`challenge: { title }` route state; a new effect in `ChatPage` (same shape as
+Quick Start and Recreate — clears the thread first, keyed on `location.key`
+so joining twice opens twice) seeds the opening exchange: the user's line
+stating which challenge, and Aurelia's welcome back, matching the Figma
+reference exactly (`Hi Aurelia AI, I'm joining the {title} Challenge!` /
+`Hi Adam, welcome to the challenge!` + the two follow-on lines).
+
+---
+
+### 2026-09-24 — Home's white-to-cream gradient, and Profile's tabs
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` — the gradient fix is
+markup-only (no shared component changed), and Profile's redesign is
+web-specific until the Flutter client is asked to follow it.
+
+- **Home's Adaptive Wellness section** sat on flat white instead of easing
+  into the frame's cream — the previous implementation split white/cream
+  across two hand-placed divs at a guessed boundary (after Quick Start),
+  which put the whole cream stop behind the dark CTA banner where Figma's own
+  page (`16653:14937`) says it should still be 23% away. Replaced with one
+  percentage-stop gradient (`linear-gradient(180deg, #FFFFFF 77%, #FFF1DB
+  100%)`) on the page's outer wrapper, matching Figma's own gradient exactly
+  and surviving real content reflow the way two fixed divs could not.
+- **`FeatureCard`** (the six tiles in that section): card fill was
+  `bg-background-elevated` (`#F2F1EF`, an off-white grey) where Figma's fill
+  is pure white bound to a variable, and the card had no shadow at all where
+  Figma draws `0 5px 24px 4px rgba(0,0,0,0.05)`. The icon circle's gradient
+  had the right two colors (`#FFF1DB` → `#FFE682`) but the wrong angle (160°,
+  down-right) against Figma's actual handle positions (225°, down-left).
+  Fixed all three against `16659:38933`.
+- **Profile page redesign**, per updated Figma flow: avatar and name/location
+  are now a left-aligned row instead of a centered column; the stats row
+  dropped its dividers; and a **Sessions / Recreated** tab switcher sits
+  between the stats and the grid — Sessions shows everything this person has
+  published, Recreated narrows that to the ones that are themselves a fork
+  (the same `isRecreated` / `lineage.length > 2` test the session row's own
+  marker already uses, so the tab never disagrees with a card's own badge).
+  The card itself changed from a full-bleed image with text overlaid on top
+  to an image-top / white-content-below layout — title, description and the
+  played/recreated counts now sit in a plain white area under the art rather
+  than painted over it in inverse text.
+
+---
+
+### 2026-09-24 — Flutter: three real bugs and one inert-data pattern, twice
+
+**Lands on:** `mobile_app`
+**Not on:** `web_app` / `admin_cms` / `web_prod` / `storybook` — Flutter-only
+fixes; none of these three bugs exist on web, and the pattern the fourth item
+found (mock rows with no `onTap`) was already fixed there.
+
+- Home's "Ask Aurelia" field sent on Enter (`textInputAction: send` +
+  `onSubmitted`); it is a composer, not a one-line search box, so Enter now
+  inserts a newline (`TextInputType.multiline` / `TextInputAction.newline`,
+  `minLines: 1, maxLines: 5`) and only the arrow button sends.
+- The drawer's signed-in-only "Latest" section named three sessions that did
+  not exist and had no `onTap` at all — the same "three inert divs" bug the
+  web sidebar already had fixed. Now built from the same three real slugs
+  web's `RECENT_SLUGS` uses, and each row opens that session's thread.
+- The Player screen's sheet can be dragged by hand (it rides the page's own
+  scroll), but `_sheetUp` only ever changed when the grabber was tapped — drag
+  it up, tap the grabber to bring it down, and it snapped back up because the
+  app still thought it was resting at the bottom. A scroll listener now keeps
+  the flag in step with wherever a drag actually left it.
+- Same inert-row pattern found again, unprompted, in Explore's "Trusted
+  Creators" rail: four hardcoded names, two of which had no matching person
+  in the catalogue at all — tapping one would have silently opened *your own*
+  profile (`findPerson(slug) ?? findPerson(null)!`), not an error. Replaced
+  with a new `trustedCreators()` in `core/data/people.dart`, mirroring web's
+  `trustedCreators()` in `src/lib/people.ts` exactly (real people, sorted by
+  published-session count), with each avatar now opening that person's
+  profile.
+
+---
+
+### 2026-09-23 — `@figma/code-connect` added as a dev dependency
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` / `web_prod` / `mobile_app` / `storybook` — dev
+tooling only, no source changed; propagate to `admin_cms` the normal way
+(`--ff-only` merge) whenever this is next merged, no urgency on its own.
+
+Installed via `npm install --save-dev @figma/code-connect` (resolved
+`^2.0.1`) while investigating Figma Code Connect for design/code parity.
+Nothing wired up yet — no `figma.config.json` or `.figma.tsx` files —
+because this file's Figma components are unpublished, plain frames with
+generic layer names ("Frame 43", not "Title"), which Code Connect's prop
+mapping needs to be worth doing, and publishing/scaffolding needs a Figma
+personal access token this environment doesn't have. Revisit once both are
+in place.
+
+---
+
 ### 2026-09-22 — `storybook` branch: fixed `vercel.json` for deployment
 
 **Lands on:** `storybook`
