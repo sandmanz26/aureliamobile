@@ -31,6 +31,34 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-25 — A mood check-in once a session finishes playing
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` — Flutter's Player screen has
+no equivalent yet.
+
+Per Figma 16698:12236 / 16698:12300 / 16698:15499: finishing a session now
+surfaces a card over the player — "How does listening to this make you
+feel?" with five moods, then one optional "What's going on?" free-text
+follow-up. Nothing is sent anywhere; there is no backend yet to hold a mood
+log, so answering (or the small "Skip") just closes the card.
+
+The bed audio element loops (`AudioPlayerContext`), so it never fires a real
+`ended` event — the clock just wraps back to 0 and keeps going. "Finished"
+is detected as a wrap: the clock was within half a second of the end and is
+now near zero, which a manual scrub or the ±15s skip landing near 0 on its
+own does not produce. Fires once per playthrough of a given session.
+
+Building it surfaced a real CSS trap: `.u-tap` sets `position: relative` on
+whatever it's given, which — in a later cascade layer than Tailwind's own —
+beat `absolute` on the same "Skip" button and left it sitting top-left in
+normal flow instead of top-right where it was told to go. Fixed by moving
+the positioning to a wrapping element and keeping `.u-tap` on the button
+alone; noted in `CLAUDE.md` next to the rest of what `.u-tap` does.
+
+---
+
 ### 2026-09-25 — Login screen becomes a social-only welcome gate
 
 **Lands on:** `web_app`
