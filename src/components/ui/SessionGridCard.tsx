@@ -1,6 +1,7 @@
 import { Play, Repeat2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useRecreateTarget } from '../../chat/recreate'
+import type { ProfileOrigin } from '../../lib/people'
 import type { SessionRecord } from '../../lib/sessions'
 import { CoverImage } from './CoverImage'
 import { PhotoCircle } from './PhotoCircle'
@@ -18,10 +19,19 @@ export function SessionGridCard({
   className = 'aspect-[164/205] w-full',
   /** Home shows this card signed out, where opening a session asks for an account first. */
   guard,
+  /** Your own profile already says whose sessions these are in its own
+   *  header — crediting the creator again on every card is the one thing
+   *  that differs from the community grid this was built for. */
+  showAuthor = true,
+  /** Where the player's own byline should point back to — 'own' from your
+   *  own profile, 'community' everywhere else this card is used. */
+  playOrigin = 'community',
 }: {
   session: SessionRecord
   className?: string
   guard?: () => boolean
+  showAuthor?: boolean
+  playOrigin?: ProfileOrigin
 }) {
   const recreate = useRecreateTarget(session)
 
@@ -47,7 +57,7 @@ export function SessionGridCard({
       <div className="relative z-20 flex items-start justify-between gap-8">
         <Link
           to={`/play/${session.slug}`}
-          state={{ origin: 'community' }}
+          state={{ origin: playOrigin }}
           aria-label={`Play ${session.title}`}
           onClick={handleClick}
           className="flex size-32 shrink-0 items-center justify-center rounded-full bg-black/45 backdrop-blur-sm"
@@ -79,15 +89,23 @@ export function SessionGridCard({
         {/* Credit and counts share a row once the card is wide enough for both,
             which is how the design sets it. On the narrow grid cells they stack
             instead — one row there would leave the name a couple of letters. */}
-        <div className="flex flex-col gap-6 @min-[200px]:flex-row @min-[200px]:items-center @min-[200px]:justify-between @min-[200px]:gap-8">
-        <div className="flex min-w-0 items-center gap-6">
-          <PhotoCircle
-            photo={session.authorPhoto}
-            size={20}
-            gradient="conic-gradient(from 200deg, var(--color-gold-300), var(--color-blue-300), var(--color-gold-300))"
-          />
-          <span className="text-style-caption truncate">{session.author}</span>
-        </div>
+        <div
+          className={
+            showAuthor
+              ? 'flex flex-col gap-6 @min-[200px]:flex-row @min-[200px]:items-center @min-[200px]:justify-between @min-[200px]:gap-8'
+              : 'flex items-center'
+          }
+        >
+        {showAuthor && (
+          <div className="flex min-w-0 items-center gap-6">
+            <PhotoCircle
+              photo={session.authorPhoto}
+              size={20}
+              gradient="conic-gradient(from 200deg, var(--color-gold-300), var(--color-blue-300), var(--color-gold-300))"
+            />
+            <span className="text-style-caption truncate">{session.author}</span>
+          </div>
+        )}
 
         <div className="text-style-caption-light flex shrink-0 items-center gap-8">
           <span className="inline-flex items-center gap-3">

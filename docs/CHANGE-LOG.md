@@ -31,6 +31,38 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-27 — Profile's cards reverted to the full-bleed style; a dummy second Google account
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` — Flutter's Profile screen
+and Settings have their own implementations.
+
+- **Profile's session cards** (Figma 16685:23193) go back to the full-bleed
+  photo-with-overlay style `SessionGridCard` already uses on the community
+  grid and the challenge shelf — image-top / white-panel-below, from an
+  earlier redesign pass, was matching a different reference than this one.
+  `SessionGridCard` gained two props to serve both callers: `showAuthor`
+  (off on your own profile, which already says whose sessions these are
+  once in its header) and `playOrigin` (so the player's byline still points
+  back to 'own' from here, not 'community'). Profile's own card markup —
+  and the `SessionCard`/`toCard` mapping type it needed — is gone in favor
+  of passing real `SessionRecord`s straight through, which also moves its
+  Recreate action onto the same shared `useRecreateTarget` every other
+  Recreate button already uses instead of a fourth hand-rolled copy.
+- **"Add another Google account"** had no `onClick` at all — the same gap
+  this session has found repeatedly elsewhere. It now appends one of two
+  plausible dummy accounts per press (no OAuth to hand this to, same as
+  Sign Up "creating" an account with no backend behind it), and hides
+  itself once both are added.
+- Checked against a supplied reference and found already correct, so left
+  alone: Account Deletion's red (`tone="danger"` on `Row` already colors
+  both the icon and the label), and the Mulish heading font on Profile's
+  own title and name — a serif render in one of the supplied comparison
+  screenshots turned out to be from a different tool, not this codebase.
+
+---
+
 ### 2026-09-25 — Home's card pair: measured the rotation instead of eyeballing it
 
 **Lands on:** `web_app`

@@ -102,11 +102,21 @@ function DeleteAccountDialog({ onConfirm, onClose }: { onConfirm: () => void; on
  * the UI since it left the drawer, which meant the only way out of an account
  * was to reload the page.
  */
+/** Offered one at a time on each "Add another Google account" press — there
+ *  is no real OAuth flow to hand this to, so a plausible second (then third)
+ *  account is what pressing it actually does, same as Sign Up "creating" an
+ *  account with no backend behind it either. */
+const EXTRA_ACCOUNTS = [
+  { name: 'Alex Rivera', email: 'alex.rivera@gmail.com' },
+  { name: 'Sam Osei', email: 'sam.osei@gmail.com' },
+]
+
 export function AccountSettingsPage() {
   const { signOut } = useAuth()
   const navigate = useNavigate()
   const [accountsOpen, setAccountsOpen] = useState(true)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [addedAccounts, setAddedAccounts] = useState<typeof EXTRA_ACCOUNTS>([])
 
   /**
    * Leaves the account, from either door.
@@ -183,13 +193,32 @@ export function AccountSettingsPage() {
               <Check size={24} className="shrink-0 text-icon-default" aria-label="Signed in with this account" />
             </div>
 
-            <button
-              type="button"
-              className="u-press flex h-48 items-center justify-center gap-8 rounded-[40px] bg-surface-default shadow-sm"
-            >
-              <Plus size={20} className="text-icon-default" />
-              <span className="text-[14px] leading-[18px] text-icon-strong">Add another Google account</span>
-            </button>
+            {addedAccounts.map((account) => (
+              <div
+                key={account.email}
+                className="flex items-center gap-12 rounded-[20px] bg-surface-default p-16 shadow-sm"
+              >
+                <span className="flex size-32 shrink-0 items-center justify-center rounded-full bg-[#FFF1DB]">
+                  <GoogleMark />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="text-style-body block truncate text-text-primary">{account.name}</span>
+                  <span className="text-style-body-small block truncate text-text-secondary">{account.email}</span>
+                </span>
+                <Check size={24} className="shrink-0 text-icon-default" aria-label="Signed in with this account" />
+              </div>
+            ))}
+
+            {addedAccounts.length < EXTRA_ACCOUNTS.length && (
+              <button
+                type="button"
+                onClick={() => setAddedAccounts((current) => [...current, EXTRA_ACCOUNTS[current.length]])}
+                className="u-press flex h-48 items-center justify-center gap-8 rounded-[40px] bg-surface-default shadow-sm"
+              >
+                <Plus size={20} className="text-icon-default" />
+                <span className="text-[14px] leading-[18px] text-icon-strong">Add another Google account</span>
+              </button>
+            )}
           </div>
         )}
       </section>

@@ -1,29 +1,14 @@
 import { useState } from 'react'
-import { ArrowLeft, Menu, Music2, Play, Settings, Share2, Shuffle } from 'lucide-react'
+import { ArrowLeft, Menu, Music2, Settings, Share2, Shuffle } from 'lucide-react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { CoverImage } from '../components/ui/CoverImage'
 import { CoinPill } from '../components/ui/CoinPill'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
-import type { CoverKey } from '../lib/photos'
+import { SessionGridCard } from '../components/ui/SessionGridCard'
 import { findPerson } from '../lib/people'
-import type { SessionRecord } from '../lib/sessions'
-import { isRecreated, totalMinutes } from '../lib/sessions'
+import { isRecreated } from '../lib/sessions'
 import { useDrawer } from '../layouts/DrawerContext'
 
 type ProfileTab = 'sessions' | 'recreated'
-
-interface SessionCard {
-  /** The session behind it. Both controls on the card need one. */
-  slug: string
-  title: string
-  description: string
-  author: string
-  minutes: number
-  plays: string
-  recreated: string
-  gradient: string
-  photo: CoverKey
-}
 
 /**
  * The figures the design carries for the signed-in profile.
@@ -38,21 +23,6 @@ const stats = [
   { label: 'Played', value: '18,513' },
   { label: 'Recreated', value: '1,528' },
 ]
-
-/** A catalogue session, as this screen's card wants it. */
-function toCard(session: SessionRecord): SessionCard {
-  return {
-    slug: session.slug,
-    title: session.title,
-    photo: session.photo,
-    description: session.description,
-    author: session.author,
-    minutes: totalMinutes(session),
-    plays: session.plays,
-    recreated: session.recreated,
-    gradient: session.gradient,
-  }
-}
 
 /**
  * One page for two readings of the same screen. /profile is the signed-in
@@ -92,31 +62,6 @@ export function ProfilePage() {
   // hardcoded shelf of four, three of whose titles matched no session — which
   // is why neither control on a card could go anywhere.
   const tabSessions = tab === 'sessions' ? person.sessions : person.sessions.filter(isRecreated)
-  const shownCards: SessionCard[] = tabSessions.map(toCard)
-
-  /**
-   * Straight into the cockpit with the session already attached, rather than
-   * via /recreate.
-   *
-   * That screen is where you state changes against an original; from a profile
-   * card there are none to state yet, so it would be a form to skip. The brief
-   * is the same shape either way, and an empty `changes` is what the cockpit
-   * reads as "keep it as it is" — so the thread opens on the fork, and the
-   * first thing you say is the first change.
-   */
-  function recreate(card: SessionCard) {
-    navigate('/chat', {
-      state: {
-        recreate: {
-          slug: card.slug,
-          title: card.title,
-          author: card.author,
-          minutes: card.minutes,
-          changes: [],
-        },
-      },
-    })
-  }
 
   return (
     <div className="mx-auto max-w-[720px] px-20 py-16 lg:px-24 lg:py-24">
@@ -226,53 +171,21 @@ export function ProfilePage() {
         ))}
       </div>
 
+      {/* Figma's own card here (16685:23193) is the full-bleed photo-with-
+          overlay `SessionGridCard` already uses on the community grid and the
+          challenge shelf — an earlier pass split it into an image-top /
+          white-panel-below layout that matched a different reference, not
+          this one. `showAuthor` off: your own profile already says whose
+          sessions these are, once, in its own header. */}
       <div className="mt-16 grid grid-cols-2 gap-12">
-        {shownCards.map((card) => (
-          <article
-            key={card.slug}
-            className="@container flex flex-col overflow-hidden rounded-16 border border-border-subtle bg-surface-default"
-          >
-            <div className="relative aspect-[164/120] w-full shrink-0">
-              <CoverImage photo={card.photo} gradient={card.gradient} width={420} height={300} />
-              {/* relative: the cover is absolutely positioned, so anything meant
-                  to sit on top of it needs to be lifted out of normal flow's
-                  way explicitly. */}
-              <div className="relative flex items-center justify-between p-10">
-                <Link
-                  to={`/play/${card.slug}`}
-                  state={{ origin: own ? 'own' : 'community' }}
-                  aria-label={`Play ${card.title}`}
-                  className="u-press flex size-32 shrink-0 items-center justify-center rounded-full bg-white/25 text-text-inverse backdrop-blur-sm"
-                >
-                  <Play size={14} fill="currentColor" />
-                </Link>
-                <button
-                  type="button"
-                  aria-label={`Recreate ${card.title}`}
-                  onClick={() => recreate(card)}
-                  className="u-press flex h-32 shrink-0 items-center gap-4 rounded-full bg-surface-default/90 px-12 text-style-label text-text-primary"
-                >
-                  <Shuffle size={14} className="shrink-0" />
-                  <span className="hidden @min-[124px]:inline">Recreate</span>
-                </button>
-              </div>
-            </div>
-            <div className="p-12">
-              <p className="text-style-body-small font-semibold text-text-primary">{card.title}</p>
-              <p className="mt-4 text-style-caption line-clamp-2 text-text-secondary">{card.description}</p>
-              <div className="text-style-caption mt-8 flex items-center gap-10 text-text-secondary">
-                <span className="flex items-center gap-4">
-                  <Play size={11} />
-                  {card.plays}
-                </span>
-                <span aria-hidden="true" className="h-12 w-px bg-border-subtle" />
-                <span className="flex items-center gap-4">
-                  <Shuffle size={11} />
-                  {card.recreated}
-                </span>
-              </div>
-            </div>
-          </article>
+        {tabSessions.map((session) => (
+          <SessionGridCard
+            key={session.slug}
+            session={session}
+            showAuthor={false}
+            playOrigin={own ? 'own' : 'community'}
+            className="aspect-[173/230] w-full"
+          />
         ))}
       </div>
     </div>
