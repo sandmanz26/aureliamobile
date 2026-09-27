@@ -7,25 +7,14 @@ import { GoogleMark } from './auth/AuthShell'
 import { useAuth } from '../auth/AuthContext'
 import { CoinPill } from '../components/ui/CoinPill'
 
-/** One tappable line in the list under the accounts block. */
-function Row({
-  icon,
-  label,
-  onClick,
-  tone = 'default',
-}: {
-  icon: ReactNode
-  label: string
-  onClick?: () => void
-  tone?: 'default' | 'danger'
-}) {
+/** One tappable line in the list under the accounts block. Plain — every row
+ *  here reads the same, Account Deletion included. */
+function Row({ icon, label, onClick }: { icon: ReactNode; label: string; onClick?: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`u-press flex h-56 w-full items-center gap-12 border-t border-[#D6D6D6] text-left ${
-        tone === 'danger' ? 'text-danger-600' : 'text-text-primary'
-      }`}
+      className="u-press flex h-56 w-full items-center gap-12 border-t border-[#D6D6D6] text-left text-text-primary"
     >
       <span className="shrink-0">{icon}</span>
       <span className="text-style-body">{label}</span>
@@ -95,6 +84,86 @@ function DeleteAccountDialog({ onConfirm, onClose }: { onConfirm: () => void; on
   )
 }
 
+interface ConnectedAccount {
+  name: string
+  email: string
+}
+
+/** The account signed in before any of this screen's own dummy accounts. */
+const PRIMARY_ACCOUNT: ConnectedAccount = { name: 'Adam Nilson', email: 'adamnilson@gmail.com' }
+
+/** Offered one at a time on each "Add another Google account" press — there
+ *  is no real OAuth flow to hand this to, so a plausible second (then third)
+ *  account is what pressing it actually does, same as Sign Up "creating" an
+ *  account with no backend behind it either. */
+const EXTRA_ACCOUNTS: ConnectedAccount[] = [
+  { name: 'Alex Rivera', email: 'alex.rivera@gmail.com' },
+  { name: 'Sam Osei', email: 'sam.osei@gmail.com' },
+]
+
+/**
+ * Only one account is ever the one you're signed in with — a tick on every
+ * connected account said otherwise, which is not a state a real Google
+ * multi-account switcher can be in. Switching is real enough to ask about
+ * rather than do silently on a tap: it changes whose plays, credits and
+ * history the rest of the app shows.
+ */
+function SwitchAccountDialog({
+  account,
+  onConfirm,
+  onClose,
+}: {
+  account: ConnectedAccount
+  onConfirm: () => void
+  onClose: () => void
+}) {
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return createPortal(
+    <div
+      className="u-fade fixed inset-0 z-50 flex items-center justify-center bg-icon-strong/20 px-20"
+      onClick={onClose}
+    >
+      <div
+        onClick={(event) => event.stopPropagation()}
+        className="flex w-full max-w-[362px] flex-col items-center gap-16 rounded-24 bg-surface-default px-24 py-32 text-center"
+      >
+        <span className="flex size-48 shrink-0 items-center justify-center rounded-full bg-[#FFF1DB]">
+          <GoogleMark />
+        </span>
+        <h2 className="text-style-title text-text-primary">Switch to {account.name}?</h2>
+        <p className="text-style-body-small text-text-secondary">
+          Aurelia will switch to showing {account.name}&rsquo;s credits, sessions and history instead. You can switch
+          back the same way.
+        </p>
+        <div className="mt-8 flex w-full gap-12">
+          <button
+            type="button"
+            onClick={onClose}
+            className="u-press flex h-47 flex-1 items-center justify-center rounded-full border border-[#D6D6D6] text-style-body text-text-primary"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="u-press flex h-47 flex-1 items-center justify-center rounded-full bg-icon-strong text-style-body font-medium text-text-inverse"
+          >
+            Switch
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
 /**
  * Figma 16523:13934 — what the gear on the profile opens.
  *
@@ -102,21 +171,16 @@ function DeleteAccountDialog({ onConfirm, onClose }: { onConfirm: () => void; on
  * the UI since it left the drawer, which meant the only way out of an account
  * was to reload the page.
  */
-/** Offered one at a time on each "Add another Google account" press — there
- *  is no real OAuth flow to hand this to, so a plausible second (then third)
- *  account is what pressing it actually does, same as Sign Up "creating" an
- *  account with no backend behind it either. */
-const EXTRA_ACCOUNTS = [
-  { name: 'Alex Rivera', email: 'alex.rivera@gmail.com' },
-  { name: 'Sam Osei', email: 'sam.osei@gmail.com' },
-]
 
 export function AccountSettingsPage() {
   const { signOut } = useAuth()
   const navigate = useNavigate()
   const [accountsOpen, setAccountsOpen] = useState(true)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
-  const [addedAccounts, setAddedAccounts] = useState<typeof EXTRA_ACCOUNTS>([])
+  const [addedAccounts, setAddedAccounts] = useState<ConnectedAccount[]>([])
+  const [activeEmail, setActiveEmail] = useState(PRIMARY_ACCOUNT.email)
+  const [switchTarget, setSwitchTarget] = useState<ConnectedAccount | null>(null)
+  const accounts = [PRIMARY_ACCOUNT, ...addedAccounts]
 
   /**
    * Leaves the account, from either door.
@@ -175,39 +239,38 @@ export function AccountSettingsPage() {
 
         {accountsOpen && (
           <div className="mt-20 flex flex-col gap-12">
-            <div className="flex items-center gap-12 rounded-[20px] bg-surface-default p-16 shadow-sm">
-              <span className="flex size-32 shrink-0 items-center justify-center rounded-full bg-[#FFF1DB]">
-                <GoogleMark />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="text-style-body block truncate text-text-primary">Adam Nilson</span>
-                <span className="text-style-body-small block truncate text-text-secondary">
-                  adamnilson@gmail.com
-                </span>
-              </span>
-              {/* A tick, not a switch. The frame draws `tick-square`: the row
-                  states that this account is the one you are signed in with,
-                  and offers no way to pause it. Disconnecting is Account
-                  Deletion's business, and inventing a toggle here put a control
-                  in front of the user that nothing behind it honoured. */}
-              <Check size={24} className="shrink-0 text-icon-default" aria-label="Signed in with this account" />
-            </div>
-
-            {addedAccounts.map((account) => (
-              <div
-                key={account.email}
-                className="flex items-center gap-12 rounded-[20px] bg-surface-default p-16 shadow-sm"
-              >
-                <span className="flex size-32 shrink-0 items-center justify-center rounded-full bg-[#FFF1DB]">
-                  <GoogleMark />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="text-style-body block truncate text-text-primary">{account.name}</span>
-                  <span className="text-style-body-small block truncate text-text-secondary">{account.email}</span>
-                </span>
-                <Check size={24} className="shrink-0 text-icon-default" aria-label="Signed in with this account" />
-              </div>
-            ))}
+            {/* Only the active account gets the tick — the frame draws
+                `tick-square` once, for the account you're signed in with, not
+                a row of independent toggles. Tapping any other one asks
+                first: switching changes whose credits, sessions and history
+                the rest of the app shows, which is not a silent action. */}
+            {accounts.map((account) => {
+              const active = account.email === activeEmail
+              return (
+                <button
+                  key={account.email}
+                  type="button"
+                  onClick={() => !active && setSwitchTarget(account)}
+                  aria-pressed={active}
+                  className="u-press flex items-center gap-12 rounded-[20px] bg-surface-default p-16 text-left shadow-sm"
+                >
+                  <span className="flex size-32 shrink-0 items-center justify-center rounded-full bg-[#FFF1DB]">
+                    <GoogleMark />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="text-style-body block truncate text-text-primary">{account.name}</span>
+                    <span className="text-style-body-small block truncate text-text-secondary">{account.email}</span>
+                  </span>
+                  {active && (
+                    <Check
+                      size={24}
+                      className="shrink-0 text-icon-default"
+                      aria-label="Signed in with this account"
+                    />
+                  )}
+                </button>
+              )
+            })}
 
             {addedAccounts.length < EXTRA_ACCOUNTS.length && (
               <button
@@ -231,17 +294,22 @@ export function AccountSettingsPage() {
           label="Credit Redemption"
           onClick={() => navigate('/credits')}
         />
-        <Row
-          icon={<UserX size={24} />}
-          label="Account Deletion"
-          tone="danger"
-          onClick={() => setConfirmingDelete(true)}
-        />
+        <Row icon={<UserX size={24} />} label="Account Deletion" onClick={() => setConfirmingDelete(true)} />
         <Row icon={<LogOut size={24} />} label="Log Out" onClick={endSession} />
       </div>
 
       {confirmingDelete && (
         <DeleteAccountDialog onConfirm={deleteAccount} onClose={() => setConfirmingDelete(false)} />
+      )}
+      {switchTarget && (
+        <SwitchAccountDialog
+          account={switchTarget}
+          onConfirm={() => {
+            setActiveEmail(switchTarget.email)
+            setSwitchTarget(null)
+          }}
+          onClose={() => setSwitchTarget(null)}
+        />
       )}
     </div>
   )

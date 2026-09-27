@@ -31,6 +31,31 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-27 — Only one connected account is ever signed in; Account Deletion loses its red
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` — Settings' account list is
+web-specific.
+
+Two problems in the dummy "Add another Google account" flow shipped
+earlier today:
+
+- Every connected account showed a tick, including a freshly-added one that
+  had never been switched to — not a state a real multi-account switcher
+  can be in. Rows now share one `activeEmail`, only the active one gets a
+  tick, and tapping any other one opens a confirmation
+  (`SwitchAccountDialog`, "Aurelia will switch to showing {name}'s credits,
+  sessions and history instead") rather than switching silently — switching
+  changes what the rest of the app shows, so it gets the same "ask before
+  doing it" treatment Account Deletion already has.
+- Reported back that the row list should read as one color throughout.
+  Account Deletion's `tone="danger"` red (verified correct against Figma in
+  the previous entry) is removed at the user's explicit request — `Row` no
+  longer takes a `tone` prop at all, since nothing else used it.
+
+---
+
 ### 2026-09-27 — Profile's cards reverted to the full-bleed style; a dummy second Google account
 
 **Lands on:** `web_app`
