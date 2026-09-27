@@ -31,6 +31,27 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-27 — Settings' row rhythm, Profile's dividers and tab styling
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` — Settings' row list and
+Profile's tab switcher are web-specific.
+
+- **Settings' "Connected Accounts" toggle** had no explicit height, so it
+  hugged its own content while every `Row` below it is a fixed `h-56` —
+  visibly shorter, breaking the list's row rhythm. Given the same `h-56`.
+- **Profile's stats row** lost its `divide-x` dividers in an earlier redesign
+  pass working from a different reference; a supplied comparison shows them
+  back, so they're restored (`divide-x divide-border-subtle`).
+- **Profile's tab switcher**: "Sessions" is "My Sessions" in the reference,
+  with a rounded-badge icon (`Sticker`, replacing `Music2`) rather than a
+  music note, and the active tab's underline is the brand orange
+  (`#ff881b`, the one CLAUDE.md already documents as tokenless) rather than
+  `text-primary` black.
+
+---
+
 ### 2026-09-27 — Only one connected account is ever signed in; Account Deletion loses its red
 
 **Lands on:** `web_app`
