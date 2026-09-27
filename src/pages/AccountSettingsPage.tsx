@@ -227,7 +227,7 @@ export function AccountSettingsPage() {
           type="button"
           onClick={() => setAccountsOpen((open) => !open)}
           aria-expanded={accountsOpen}
-          className="flex w-full items-center gap-16 text-text-primary"
+          className="flex h-56 w-full items-center gap-16 text-text-primary"
         >
           <User size={24} className="shrink-0" />
           <span className="text-style-body flex-1 text-left">Connected Accounts</span>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowLeft, Menu, Music2, Settings, Share2, Shuffle } from 'lucide-react'
+import { ArrowLeft, Menu, Settings, Share2, Shuffle, Sticker } from 'lucide-react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { CoinPill } from '../components/ui/CoinPill'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
@@ -135,7 +135,7 @@ export function ProfilePage() {
         </div>
       </div>
 
-      <div className="mt-24 grid grid-cols-3 py-16">
+      <div className="mt-24 grid grid-cols-3 divide-x divide-border-subtle py-16">
         {shownStats.map((stat) => (
           <div key={stat.label} className="flex flex-col items-center gap-4">
             <p className="text-style-title text-text-strong">{stat.value}</p>
@@ -150,7 +150,7 @@ export function ProfilePage() {
       <div className="flex border-b border-border-subtle">
         {(
           [
-            { id: 'sessions', label: 'Sessions', icon: Music2 },
+            { id: 'sessions', label: 'My Sessions', icon: Sticker },
             { id: 'recreated', label: 'Recreated', icon: Shuffle },
           ] as const
         ).map(({ id, label, icon: Icon }) => (
@@ -161,7 +161,7 @@ export function ProfilePage() {
             aria-current={tab === id}
             className={`u-press flex flex-1 items-center justify-center gap-6 border-b-2 py-12 text-style-label ${
               tab === id
-                ? 'border-text-primary font-medium text-text-primary'
+                ? 'border-[#ff881b] font-medium text-text-primary'
                 : 'border-transparent text-text-secondary'
             }`}
           >
