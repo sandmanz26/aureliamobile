@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Clock, Play, Share2, Trophy, Users } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Clock, Play, Podium as PodiumIcon, Share2, Trophy, Users } from 'lucide-react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { CoverImage } from '../components/ui/CoverImage'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
@@ -164,7 +164,7 @@ export function ChallengeDetailPage() {
             type="button"
             className="text-style-label u-press absolute -top-22 left-20 flex h-44 items-center gap-8 rounded-full bg-espresso-800/85 px-16 text-text-inverse shadow-md backdrop-blur-sm"
           >
-            <Trophy size={16} />
+            <PodiumIcon size={16} />
             Rewards
             <ArrowRight size={15} />
           </button>

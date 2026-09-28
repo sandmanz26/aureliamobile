@@ -1,4 +1,4 @@
-import { ArrowRight, Clock, Coins, ListFilter, Menu, Play, Users } from 'lucide-react'
+import { ArrowRight, Clock, Coins, ListFilter, Menu, Play, Podium, Users } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import liveSessionsMap from '../assets/live-sessions-map.png'
@@ -359,9 +359,6 @@ export function ExplorePage() {
                   />
                   <span className="min-w-0">
                     <span className="text-style-caption block truncate text-text-primary">{creator.name}</span>
-                    <span className="text-style-caption block truncate text-text-secondary">
-                      {creator.sessions.length === 1 ? '1 session' : `${creator.sessions.length} sessions`}
-                    </span>
                   </span>
                 </Link>
               ))}
@@ -388,6 +385,9 @@ export function ExplorePage() {
                     aria-label={`Open the ${challenge.title} challenge`}
                     className="absolute inset-0 z-10"
                   />
+                  <span className="absolute left-16 top-16 z-20 flex size-44 items-center justify-center rounded-full bg-surface-default/20 text-text-inverse backdrop-blur-sm">
+                    <Podium size={20} />
+                  </span>
                   <Link
                     to={`/challenge/${challenge.slug}`}
                     className="text-style-label absolute right-16 top-16 z-20 flex h-32 items-center gap-6 whitespace-nowrap rounded-full bg-surface-default/90 px-12 text-text-primary"

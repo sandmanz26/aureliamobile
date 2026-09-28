@@ -1,4 +1,4 @@
-import { ArrowLeft, Sparkles, Trophy } from 'lucide-react'
+import { ArrowLeft, Podium, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Chip } from '../components/ui/Chip'
@@ -43,7 +43,7 @@ function RowMark({ item }: { item: NotificationRecord }) {
   if (item.kind === 'challenge') {
     return (
       <span className="flex size-40 shrink-0 items-center justify-center rounded-full bg-interactive-primary">
-        <Trophy size={18} className="text-icon-inverse" />
+        <Podium size={18} className="text-icon-inverse" />
       </span>
     )
   }

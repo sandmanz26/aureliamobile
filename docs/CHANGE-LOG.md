@@ -31,6 +31,26 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-28 — Trusted Creators drops its session count; a real ranking icon
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` — Explore, Challenge Detail
+and Notifications are web-specific screens.
+
+Explore's "Trusted Creators" row no longer shows a "N sessions" caption
+under each name, matching the Figma frame — the count was added earlier
+this session for a genuine reason (dead-end taps on zero-session creators),
+but `trustedCreators()` already sorts by session count first, so the
+caption was redundant with what the sort order already guarantees. The
+Figma design's podium-with-a-star ranking icon was a trophy cup everywhere
+it appeared in code (Challenge Detail's "Rewards" pill, the challenge-added
+row in Notifications) — swapped to lucide's `Podium` icon, the closest
+match the library has (not a pixel copy of Figma's custom glyph). Explore's
+own Monthly Challenge card was also missing that badge in the top-left
+corner entirely — Figma has it, the card never rendered any icon there —
+now added.
+
 ### 2026-09-28 — Skeleton states for slow photos and route chunks
 
 **Lands on:** `web_app`
