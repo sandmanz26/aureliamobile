@@ -31,6 +31,22 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-28 — A closed challenge stops offering to join it
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` — Challenge Detail and
+Explore are web-specific.
+
+Once `endsInDays <= 0`, Challenge Detail's stat pill reads "Ended" instead
+of "Ends in 0 days," and the sticky footer button becomes "View Winners" —
+scrolling to the podium instead of navigating to `/chat` to join something
+that is already over. Explore's own challenge card gets the same swap on
+its "Join" pill. The `focus-sprint` sample challenge (added last commit to
+demo the last-day state) now demonstrates this one instead — `endsInDays:
+0`, `yourDay: 7` (finished), and every leaderboard trend arrow cleared to
+`null`, since a closed board has no more movement left to show.
+
 ### 2026-09-28 — Drop the simulated phone status bar; this is web-first now
 
 **Lands on:** `web_app`

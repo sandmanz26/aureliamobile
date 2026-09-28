@@ -86,13 +86,16 @@ export const CHALLENGES: ChallengeRecord[] = [
   },
   {
     /**
-     * In its last day, with a full board and someone about to win.
+     * Closed. The board is final, and there is nothing left to join.
      *
      * The other two entries are a challenge mid-run and one that has not
-     * started — neither shows what the screen looks like right before it
-     * closes: "Ends in 18 days" reads completely differently from "Ends in
-     * 1 day", and a board this close to final still has real movement on
-     * it (the trend arrows), not the settled state a mid-run one would.
+     * started — neither shows what the screen has to do once a challenge is
+     * actually over: `endsInDays <= 0` swaps the "Ends in N days" pill for
+     * "Ended" and the footer's "Join Challenge" for "View Winners" (which
+     * scrolls to the podium instead of starting a chat, since there is
+     * nothing left to join). A closed board also has no more movement, which
+     * is why every trend below is null — an arrow implies a rank that could
+     * still change.
      */
     slug: 'focus-sprint',
     title: '7-Day Focus Sprint',
@@ -101,17 +104,17 @@ export const CHALLENGES: ChallengeRecord[] = [
     gradient: 'linear-gradient(160deg, var(--color-espresso-950), var(--color-info-700))',
     joined: '4.1k',
     points: 120,
-    endsInDays: 1,
+    endsInDays: 0,
     totalDays: 7,
     minutesPerDay: 5,
-    yourDay: 6,
+    yourDay: 7,
     leaderboard: [
       { rank: 1, sessionSlug: 'raise-your-vibration', creator: 'Sophia Reynolds', creatorPhoto: 'creatorSophia', plays: '15,902', trend: null },
       { rank: 2, sessionSlug: '528-hz-reset', creator: 'Noah Williams', creatorPhoto: 'creatorNoah', plays: '14,318', trend: null },
       { rank: 3, sessionSlug: 'quiet-space', creator: 'Lily Ahmad', creatorPhoto: 'creatorLily', plays: '13,067', trend: null },
-      { rank: 4, sessionSlug: 'slow-piano-drift', creator: 'Chloe Anderson', creatorPhoto: 'creatorChloe', plays: '12,455', trend: 'up' },
-      { rank: 5, sessionSlug: 'bowl-bath', creator: 'Ethan Miller', creatorPhoto: 'creatorEthan', plays: '11,980', trend: 'down' },
-      { rank: 6, sessionSlug: 'morning-spark', creator: 'Nina Harper', creatorPhoto: 'creatorNina', plays: '11,204', trend: 'up' },
+      { rank: 4, sessionSlug: 'slow-piano-drift', creator: 'Chloe Anderson', creatorPhoto: 'creatorChloe', plays: '12,455', trend: null },
+      { rank: 5, sessionSlug: 'bowl-bath', creator: 'Ethan Miller', creatorPhoto: 'creatorEthan', plays: '11,980', trend: null },
+      { rank: 6, sessionSlug: 'morning-spark', creator: 'Nina Harper', creatorPhoto: 'creatorNina', plays: '11,204', trend: null },
     ],
     sessionSlugs: ['cold-start', 'noting-practice'],
     rewards: [

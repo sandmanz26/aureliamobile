@@ -1,5 +1,5 @@
 import { ArrowLeft, ChevronRight, Clock, Play, Podium as PodiumIcon, Share2, Trophy, Users } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { CoverImage } from '../components/ui/CoverImage'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
@@ -124,12 +124,16 @@ export function ChallengeDetailPage() {
   const navigate = useNavigate()
   const challenge = findChallenge(slug)
   const [rewardsOpen, setRewardsOpen] = useState(false)
+  const podiumRef = useRef<HTMLDivElement>(null)
 
   if (!challenge) return <Navigate to="/sessions" replace />
 
   const podium = challenge.leaderboard.slice(0, 3)
   const ranked = challenge.leaderboard.slice(3)
   const sessions = challenge.sessionSlugs.map(findSession).filter((session) => session !== undefined)
+  // Once it's over there is nothing left to join — the board is already
+  // decided, and the one thing the screen can still do is point at it.
+  const hasEnded = challenge.endsInDays <= 0
 
   return (
     <div className="flex min-h-screen flex-col bg-background-default">
@@ -181,7 +185,7 @@ export function ChallengeDetailPage() {
               </span>
               <span className="text-style-label inline-flex h-34 items-center gap-6 rounded-full border border-border-subtle px-14 text-text-primary">
                 <Clock size={13} />
-                Ends in {challenge.endsInDays} {challenge.endsInDays === 1 ? 'day' : 'days'}
+                {hasEnded ? 'Ended' : `Ends in ${challenge.endsInDays} ${challenge.endsInDays === 1 ? 'day' : 'days'}`}
               </span>
             </div>
 
@@ -193,7 +197,7 @@ export function ChallengeDetailPage() {
                 a trophy plinth for nobody. The empty state says what is
                 actually true and what would change it. */}
             {podium.length === 0 ? (
-              <div className="mt-24 flex flex-col items-center gap-8 rounded-24 border border-border-subtle px-20 py-32 text-center">
+              <div ref={podiumRef} className="mt-24 scroll-mt-20 flex flex-col items-center gap-8 rounded-24 border border-border-subtle px-20 py-32 text-center">
                 <span className="flex size-56 items-center justify-center rounded-full bg-background-elevated">
                   <Trophy size={24} className="text-icon-secondary" />
                 </span>
@@ -203,7 +207,7 @@ export function ChallengeDetailPage() {
                 </p>
               </div>
             ) : (
-              <div className="mt-24">
+              <div ref={podiumRef} className="mt-24 scroll-mt-20">
                 <Podium top={podium} />
               </div>
             )}
@@ -261,10 +265,14 @@ export function ChallengeDetailPage() {
         <div className="mx-auto w-full max-w-[402px] lg:max-w-[720px]">
           <button
             type="button"
-            onClick={() => navigate('/chat', { state: { challenge: { title: challenge.title } } })}
+            onClick={() =>
+              hasEnded
+                ? podiumRef.current?.scrollIntoView({ behavior: 'smooth' })
+                : navigate('/chat', { state: { challenge: { title: challenge.title } } })
+            }
             className="text-style-body u-press flex h-56 w-full items-center justify-center rounded-full bg-button-primary-background font-semibold text-button-primary-foreground"
           >
-            Join Challenge
+            {hasEnded ? 'View Winners' : 'Join Challenge'}
           </button>
           {challenge.yourDay !== null && (
             <p className="text-style-caption mt-8 text-center text-text-secondary">

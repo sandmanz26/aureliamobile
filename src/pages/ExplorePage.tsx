@@ -392,7 +392,7 @@ export function ExplorePage() {
                     to={`/challenge/${challenge.slug}`}
                     className="text-style-label absolute right-16 top-16 z-20 flex h-32 items-center gap-6 whitespace-nowrap rounded-full bg-surface-default/90 px-12 text-text-primary"
                   >
-                    Join
+                    {challenge.endsInDays <= 0 ? 'View Winners' : 'Join'}
                     <ArrowRight size={13} />
                   </Link>
 
