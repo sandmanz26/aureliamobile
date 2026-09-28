@@ -177,7 +177,7 @@ export function ChallengeDetailPage() {
             <ChevronRight size={15} />
           </button>
 
-          <div className="mx-auto w-full max-w-[402px] px-20 pb-140 lg:max-w-[720px] lg:px-24">
+          <div className="mx-auto w-full max-w-[402px] px-20 pb-140 lg:max-w-[960px] lg:px-24">
             <div className="flex flex-wrap gap-8">
               <span className="text-style-label inline-flex h-34 items-center gap-6 rounded-full border border-border-subtle px-14 text-text-primary">
                 <Users size={13} />
@@ -262,7 +262,7 @@ export function ChallengeDetailPage() {
 
       {/* The one action the screen exists for, reachable from anywhere on it. */}
       <div className="sticky bottom-0 border-t border-border-subtle bg-background-default/95 px-20 py-12 backdrop-blur lg:px-24">
-        <div className="mx-auto w-full max-w-[402px] lg:max-w-[720px]">
+        <div className="mx-auto w-full max-w-[402px] lg:max-w-[960px]">
           <button
             type="button"
             onClick={() =>

@@ -140,7 +140,7 @@ export function RecreatePage() {
       </header>
 
       <div className="flex-1 px-20 pb-140">
-        <div className="mx-auto w-full max-w-[402px] lg:max-w-[720px]">
+        <div className="mx-auto w-full max-w-[402px] lg:max-w-[960px]">
           {/* The original, fixed — everything below is stated against it. */}
           <div className="flex items-center gap-14 rounded-16 border border-border-subtle bg-surface-default p-12">
             <span className="relative size-64 shrink-0 overflow-hidden rounded-12">
@@ -311,7 +311,7 @@ export function RecreatePage() {
 
       {/* The commit action stays reachable however far down the form you are. */}
       <div className="sticky bottom-0 border-t border-border-subtle bg-background-default/95 px-20 py-12 backdrop-blur">
-        <div className="mx-auto w-full max-w-[402px] lg:max-w-[720px]">
+        <div className="mx-auto w-full max-w-[402px] lg:max-w-[960px]">
           <button
             type="button"
             onClick={handOffToChat}

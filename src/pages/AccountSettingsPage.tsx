@@ -204,7 +204,7 @@ export function AccountSettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[720px] px-20 py-16 lg:px-24 lg:py-24">
+    <div className="mx-auto max-w-[960px] px-20 py-16 lg:px-24 lg:py-24">
       <header className="u-sticky-top flex items-center justify-between gap-12">
         <div className="flex min-w-0 items-center gap-20">
           {/* Back, not the drawer: this screen is opened by the gear on your

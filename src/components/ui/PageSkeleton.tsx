@@ -10,7 +10,7 @@ import { Skeleton } from './Skeleton'
  */
 export function PageSkeleton() {
   return (
-    <div role="status" aria-label="Loading" className="mx-auto flex max-w-[720px] flex-col gap-24 px-20 py-16">
+    <div role="status" aria-label="Loading" className="mx-auto flex max-w-[960px] flex-col gap-24 px-20 py-16">
       <div className="flex h-44 items-center gap-16">
         <Skeleton className="size-44 shrink-0 rounded-full" />
         <Skeleton className="h-24 w-112 rounded-8" />

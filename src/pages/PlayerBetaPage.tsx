@@ -224,7 +224,7 @@ export function PlayerBetaPage() {
 
   return (
     <div className="min-h-dvh bg-background-default pb-32">
-      <div className="mx-auto max-w-[560px]">
+      <div className="mx-auto max-w-[640px]">
         <header className="flex items-center gap-12 px-20 py-12">
           <button
             type="button"

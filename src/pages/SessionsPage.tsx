@@ -212,7 +212,7 @@ export function SessionsPage() {
 
   return (
     <div className="pb-40">
-      <div className="mx-auto max-w-[720px]">
+      <div className="mx-auto max-w-[960px]">
         {/* Header: 68 tall on a 20px gutter, 12 top and bottom, 20 between the
             menu and the title. */}
         <header className="u-sticky-top flex h-68 items-center gap-16 px-20">

@@ -46,7 +46,7 @@ export function SeeAllPage() {
         <CoinPill points="1,323" className="shadow-sm" />
       </header>
 
-      <div className="mx-auto w-full max-w-[402px] px-20 pb-40 lg:max-w-[900px] lg:px-24">
+      <div className="mx-auto w-full max-w-[402px] px-20 pb-40 lg:max-w-[960px] lg:px-24">
         {/* Cards deal in rather than all appearing at once — the delay is capped
             in motion.css so a long grid never leaves its last rows waiting. */}
         <div className="u-stagger grid grid-cols-2 gap-12 lg:grid-cols-4">

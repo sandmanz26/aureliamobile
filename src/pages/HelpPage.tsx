@@ -43,7 +43,7 @@ export function HelpPage() {
         <CoinPill points="1,323" className="shadow-sm" />
       </header>
 
-      <div className="mx-auto w-full max-w-[402px] px-20 pb-40 lg:max-w-[720px] lg:px-24">
+      <div className="mx-auto w-full max-w-[402px] px-20 pb-40 lg:max-w-[960px] lg:px-24">
         <div className="flex flex-col gap-12">
           {HELP_TOPICS.map((topic) => {
             const expanded = open.includes(topic.question)

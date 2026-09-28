@@ -682,14 +682,14 @@ export function ChatPage() {
 
       {track && (
         <div className="px-20 pb-12">
-          <div className="mx-auto w-full max-w-[402px] lg:max-w-[720px]">
+          <div className="mx-auto w-full max-w-[402px] lg:max-w-[800px]">
             <MiniPlayer />
           </div>
         </div>
       )}
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-20">
-        <div className="mx-auto flex min-h-full max-w-[402px] flex-col gap-4 pb-16 lg:max-w-[720px]">
+        <div className="mx-auto flex min-h-full max-w-[402px] flex-col gap-4 pb-16 lg:max-w-[800px]">
           {empty && <EmptyThread name="Adam" />}
 
           {!empty && (
@@ -875,7 +875,7 @@ export function ChatPage() {
 
           {limited && resetAt && (
             <div className="px-20">
-              <div className="mx-auto max-w-[402px] lg:max-w-[720px]">
+              <div className="mx-auto max-w-[402px] lg:max-w-[800px]">
                 <FreeLimitNotice
                   resetAt={resetAt}
                   onNewSession={() => navigate('/chat', { state: { fresh: true } })}
@@ -896,7 +896,7 @@ export function ChatPage() {
           </p>
 
           <div className="px-20">
-            <div className="mx-auto max-w-[402px] lg:max-w-[720px]">
+            <div className="mx-auto max-w-[402px] lg:max-w-[800px]">
               <ChatComposer
                 onSend={sendMessage}
                 onVoice={() => isEnabled('chat.voice') && setListening(true)}

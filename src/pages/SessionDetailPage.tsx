@@ -142,10 +142,10 @@ export function SessionDetailPage() {
           they need to be, and a header would cost 54px of a screen that is
           otherwise exactly one viewport. Full-bleed at the mobile width the
           frame was drawn at; the same aspect ratio stretched across a
-          966px desktop content column would make the cover taller than the
+          960px desktop content column would make the cover taller than the
           rest of the page, so it caps to a fixed height and the content
           column's own width there instead. */}
-      <div className="relative aspect-[375/300] w-full overflow-hidden lg:mx-auto lg:aspect-auto lg:h-[320px] lg:max-w-[720px] lg:rounded-24">
+      <div className="relative aspect-[375/300] w-full overflow-hidden lg:mx-auto lg:aspect-auto lg:h-[320px] lg:max-w-[960px] lg:rounded-24">
         <CoverImage photo={session.photo} gradient={session.gradient} width={750} height={600} />
         <button
           type="button"
@@ -171,7 +171,7 @@ export function SessionDetailPage() {
         </Link>
       </div>
 
-      <div className="mx-auto w-full max-w-[402px] px-20 lg:max-w-[720px]">
+      <div className="mx-auto w-full max-w-[402px] px-20 lg:max-w-[960px]">
         <Link to={profilePath(session.author)} className="u-press mt-16 flex items-center gap-12">
           <PhotoCircle
             photo={session.authorPhoto}
@@ -241,7 +241,7 @@ export function SessionDetailPage() {
         // it rather than under it (see SessionSettingsPage's Apply changes
         // button, which needs the same offset).
         <div className="fixed inset-x-0 bottom-0 z-30 bg-background-default px-20 pb-20 pt-12 lg:left-[313px] lg:px-24">
-          <div className="mx-auto w-full max-w-[402px] lg:max-w-[720px]">
+          <div className="mx-auto w-full max-w-[402px] lg:max-w-[960px]">
             <Link
               to={recreate.to}
               state={recreate.state}

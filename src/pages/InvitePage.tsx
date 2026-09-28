@@ -129,7 +129,7 @@ export function InvitePage() {
         <CoinPill points="1,323" className="shadow-sm" />
       </header>
 
-      <div className="mx-auto w-full max-w-[402px] px-20 lg:max-w-[560px] lg:px-24">
+      <div className="mx-auto w-full max-w-[402px] px-20 lg:max-w-[640px] lg:px-24">
         <div className="mt-16">
           <InviteConstellation />
         </div>

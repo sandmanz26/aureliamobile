@@ -69,7 +69,7 @@ function SessionCheckInCard({ onDismiss }: { onDismiss: () => void }) {
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-[402px] lg:max-w-[560px]">
+    <div className="fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-[402px] lg:max-w-[640px]">
       <div className="relative rounded-t-24 bg-surface-default p-20 pb-[calc(20px+env(safe-area-inset-bottom))] shadow-[0_8px_34px_4px_rgba(0,0,0,0.15)]">
         {/* `.u-tap` sets `position: relative` on whatever it's given, which in
             a later cascade layer than Tailwind's utilities beats `absolute`
@@ -346,7 +346,7 @@ export function PlayerPage() {
 
       {/* ------------------------------------------------------------ hero */}
       <section
-        className="relative mx-auto flex h-full w-full max-w-[402px] flex-col text-text-inverse lg:max-w-[560px]"
+        className="relative mx-auto flex h-full w-full max-w-[402px] flex-col text-text-inverse lg:max-w-[640px]"
         style={{ paddingBottom: SHEET_PEEK }}
       >
         {/* gap-12 rather than the frame's 16: the sound switch is a fourth
@@ -458,7 +458,7 @@ export function PlayerPage() {
            it in. Capped at the frame's 402 it left a sliver of cover art down
            either side of a white panel, which reads as a mistake rather than
            as the art showing through. */
-        className="fixed inset-x-0 z-20 mx-auto flex w-full flex-col overflow-hidden rounded-t-24 bg-surface-default lg:max-w-[560px]"
+        className="fixed inset-x-0 z-20 mx-auto flex w-full flex-col overflow-hidden rounded-t-24 bg-surface-default lg:max-w-[640px]"
         style={{
           top: SHEET_TOP,
           height: `calc(100dvh - ${SHEET_TOP}px)`,

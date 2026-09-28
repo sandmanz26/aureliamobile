@@ -218,7 +218,7 @@ export function ExplorePage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-[720px] px-20 lg:px-24">
+      <div className="mx-auto max-w-[960px] px-20 lg:px-24">
         {/* Hero banner — the one thing the app wants you to press today. */}
         {isEnabled('sessions.hero') && (
         <Link

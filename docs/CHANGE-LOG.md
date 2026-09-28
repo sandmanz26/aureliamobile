@@ -31,6 +31,39 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-28 — A wider, more deliberate desktop content column
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (no desktop concept) / `storybook` (no
+component story depends on page-level width).
+
+Every consumer page's content column was capped at 720px (a few at 900px)
+on desktop — narrow enough, next to the 313px sidebar, to leave a
+noticeably lopsided strip of empty page on anything wider than a small
+laptop. Feed and detail pages (Home, Explore, Profile, Sessions, Session
+Detail, Challenge Detail, Notifications, Help, Credits, Wellness, Session
+Settings, Account Settings, Progress, See All, Recreate) now cap at 960px.
+Chat's own thread column goes to 800px rather than the full 960 — wide
+message bubbles read worse, not better. The Player and Invite/Upgrade
+pages, whose content is a single focused card rather than a feed, land at
+640px — same direction, sized to what they actually hold. `PageSkeleton`
+matches the new 960px so a lazy-loaded route's loading state doesn't jump
+in width once the real page arrives.
+
+One thing widening the column surfaced on its own: Profile's session grid
+(`grid-cols-2`, cards locked to a fixed aspect ratio) turned into two
+oversized tiles at 960px, since the aspect ratio scales card height right
+along with the wider column. Gave it `lg:grid-cols-4`, the same move
+`SeeAllPage` already made for its own card grid — proportioned cards, not
+a redesign. Left `Sign In` / `Sign Up` / `Forgot Password` / `Reset
+Password` deliberately alone: their fixed-width "card floating on an
+elevated background" look is an intentional, previously Figma-matched
+pattern distinct from the main app's content layout, and `Sign In`
+specifically ties its width to a hand-tuned photo crop via a locked aspect
+ratio — widening it isn't a plain number change. Flagging it rather than
+touching it blind.
+
 ### 2026-09-28 — The real coin artwork, everywhere the coin appears
 
 **Lands on:** `web_app`

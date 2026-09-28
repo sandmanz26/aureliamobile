@@ -118,7 +118,7 @@ export function WellnessPage() {
         <CoinPill points="1,323" className="shadow-sm" />
       </header>
 
-      <div className="mx-auto w-full max-w-[402px] px-20 lg:max-w-[720px] lg:px-24">
+      <div className="mx-auto w-full max-w-[402px] px-20 lg:max-w-[960px] lg:px-24">
         {/* Summary. Everything here is derived from the switches below. */}
         <section className="rounded-24 bg-surface-default p-16 shadow-sm">
           <div className="flex flex-col gap-16 min-[380px]:flex-row min-[380px]:items-center min-[380px]:gap-16">

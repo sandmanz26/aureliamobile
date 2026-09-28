@@ -60,7 +60,7 @@ export function UpgradePage() {
         </button>
       </div>
 
-      <div className="mx-auto flex w-full max-w-[402px] flex-col px-20 pb-40 lg:max-w-[560px] lg:px-24">
+      <div className="mx-auto flex w-full max-w-[402px] flex-col px-20 pb-40 lg:max-w-[640px] lg:px-24">
         <h1 className="mt-16 text-center text-[28px] leading-[36px] text-text-primary">
           Upgrade for more access to <span className="text-[#FF881B]">Aurelia AI</span>
         </h1>

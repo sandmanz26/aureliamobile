@@ -223,7 +223,7 @@ export function SessionSettingsPage() {
         <h1 className="text-style-title truncate text-text-primary">Session settings</h1>
       </header>
 
-      <div className="mx-auto w-full max-w-[402px] lg:max-w-[900px]">
+      <div className="mx-auto w-full max-w-[402px] lg:max-w-[960px]">
         {/* Tabs scroll rather than shrink — a squeezed label is worse than one
             you have to nudge into view. */}
         <div className="flex gap-8 overflow-x-auto px-20 pb-4 lg:px-24">

@@ -117,7 +117,7 @@ export function NotificationsPage() {
         ))}
       </div>
 
-      <div className="w-full px-20 pb-40 lg:mx-auto lg:max-w-[720px] lg:px-24">
+      <div className="w-full px-20 pb-40 lg:mx-auto lg:max-w-[960px] lg:px-24">
         {groups.map((group) => (
           /* 24 above a heading, 16 under it, 12 between rows — the frame's
              rhythm is one group reading as a block, not evenly spaced rows. */

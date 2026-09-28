@@ -64,7 +64,7 @@ export function ProfilePage() {
   const tabSessions = tab === 'sessions' ? person.sessions : person.sessions.filter(isRecreated)
 
   return (
-    <div className="mx-auto max-w-[720px] px-20 py-16 lg:px-24 lg:py-24">
+    <div className="mx-auto max-w-[960px] px-20 py-16 lg:px-24 lg:py-24">
       <header className="u-sticky-top flex items-center justify-between">
         <div className="flex min-w-0 items-center gap-12">
           {own ? (
@@ -177,7 +177,7 @@ export function ProfilePage() {
           white-panel-below layout that matched a different reference, not
           this one. `showAuthor` off: your own profile already says whose
           sessions these are, once, in its own header. */}
-      <div className="mt-16 grid grid-cols-2 gap-12">
+      <div className="mt-16 grid grid-cols-2 gap-12 lg:grid-cols-4">
         {tabSessions.map((session) => (
           <SessionGridCard
             key={session.slug}

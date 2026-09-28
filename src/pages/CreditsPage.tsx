@@ -53,7 +53,7 @@ export function CreditsPage() {
         <h1 className="text-style-title-large-regular flex-1 truncate text-text-primary">Credits</h1>
       </header>
 
-      <div className="mx-auto flex w-full max-w-[402px] flex-col gap-20 px-20 pb-24 pt-24 lg:max-w-[720px] lg:px-24">
+      <div className="mx-auto flex w-full max-w-[402px] flex-col gap-20 px-20 pb-24 pt-24 lg:max-w-[960px] lg:px-24">
         {/* Total — 64 tall, the label growing and the figure held right. */}
         <div className={`flex items-center gap-12 rounded-[20px] bg-surface-default p-16 ${CARD_SHADOW}`}>
           <p className="text-style-body flex-1 text-text-primary">Total Credits</p>

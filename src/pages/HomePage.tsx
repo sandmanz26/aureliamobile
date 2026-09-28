@@ -143,7 +143,7 @@ export function HomePage() {
           the full-bleed banner follows it and brings its own top margin. When
           both set the gap, the gap is their sum and neither number matches the
           frame. One rule, one gap. */}
-      <div className="mx-auto max-w-[720px] px-20 lg:px-24">
+      <div className="mx-auto max-w-[960px] px-20 lg:px-24">
         {/* Hero */}
         <section className="relative pt-24 text-center">
           {/* Figma "Ellipse 6" — a 252 circle of #FFE682 at 60%, under a 224
@@ -298,7 +298,7 @@ export function HomePage() {
           style={{ background: '#ff881b' }}
         />
 
-        <div className="relative mx-auto flex max-w-[362px] flex-col gap-24 lg:max-w-[720px]">
+        <div className="relative mx-auto flex max-w-[362px] flex-col gap-24 lg:max-w-[960px]">
           <div className="flex flex-col gap-24">
             <span
               className="text-style-label-regular w-fit rounded-full px-12 py-8"
@@ -373,7 +373,7 @@ export function HomePage() {
           </div>
         </div>
 
-        <div className="relative mx-auto flex max-w-[362px] flex-col gap-24 lg:max-w-[720px]">
+        <div className="relative mx-auto flex max-w-[362px] flex-col gap-24 lg:max-w-[960px]">
           <p className="text-style-body-small-light text-text-inverse/80">
             Chat with Aurelia to instantly create custom meditations, soundscapes, and breathwork tailored to how you
             feel right now.
@@ -391,7 +391,7 @@ export function HomePage() {
       </section>
       )}
 
-      <div className="mx-auto max-w-[720px] px-20 lg:px-24">
+      <div className="mx-auto max-w-[960px] px-20 lg:px-24">
         {/* Recreate from Community */}
         {isEnabled('home.community') && (
         <section className="mt-24">
