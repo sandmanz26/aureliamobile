@@ -1,7 +1,9 @@
-import { ArrowLeft, ArrowRight, Clock, Play, Podium as PodiumIcon, Share2, Trophy, Users } from 'lucide-react'
+import { ArrowLeft, ChevronRight, Clock, Play, Podium as PodiumIcon, Share2, Trophy, Users } from 'lucide-react'
+import { useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { CoverImage } from '../components/ui/CoverImage'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
+import { RewardsSheet } from '../components/ui/RewardsSheet'
 import { SessionGridCard } from '../components/ui/SessionGridCard'
 import type { CoverKey } from '../lib/photos'
 import type { Contender } from '../lib/challenges'
@@ -121,6 +123,7 @@ export function ChallengeDetailPage() {
   const { slug } = useParams()
   const navigate = useNavigate()
   const challenge = findChallenge(slug)
+  const [rewardsOpen, setRewardsOpen] = useState(false)
 
   if (!challenge) return <Navigate to="/sessions" replace />
 
@@ -162,11 +165,12 @@ export function ChallengeDetailPage() {
               challenge has to answer, and an unlabelled chart icon does not. */}
           <button
             type="button"
-            className="text-style-label u-press absolute -top-22 left-20 flex h-44 items-center gap-8 rounded-full bg-espresso-800/85 px-16 text-text-inverse shadow-md backdrop-blur-sm"
+            onClick={() => setRewardsOpen(true)}
+            className="text-style-label u-press absolute -top-22 left-20 flex h-44 items-center gap-8 rounded-full bg-surface-default/20 px-16 text-text-inverse shadow-md backdrop-blur-sm"
           >
             <PodiumIcon size={16} />
             Rewards
-            <ArrowRight size={15} />
+            <ChevronRight size={15} />
           </button>
 
           <div className="mx-auto w-full max-w-[402px] px-20 pb-140 lg:max-w-[720px] lg:px-24">
@@ -177,7 +181,7 @@ export function ChallengeDetailPage() {
               </span>
               <span className="text-style-label inline-flex h-34 items-center gap-6 rounded-full border border-border-subtle px-14 text-text-primary">
                 <Clock size={13} />
-                Ends in {challenge.endsInDays} days
+                Ends in {challenge.endsInDays} {challenge.endsInDays === 1 ? 'day' : 'days'}
               </span>
             </div>
 
@@ -269,6 +273,8 @@ export function ChallengeDetailPage() {
           )}
         </div>
       </div>
+
+      {rewardsOpen && <RewardsSheet rewards={challenge.rewards} onClose={() => setRewardsOpen(false)} />}
     </div>
   )
 }

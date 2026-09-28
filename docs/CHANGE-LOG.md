@@ -31,6 +31,26 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-28 — A working Rewards sheet, and a challenge on its last day
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` — Challenge Detail is a
+web-specific screen.
+
+The "Rewards" pill on Challenge Detail did nothing when tapped; it now opens
+a real bottom sheet ("Rewards for Winners!") listing the top-3 prizes —
+coins and a premium-plan length per rank — built the same portal/backdrop/
+Escape way every other sheet in this app is. `ChallengeRecord` gained a
+`rewards` field for it, populated on all three challenges. The pill itself
+also gets a translucent background and a chevron instead of a solid fill
+and a straight arrow, matching Figma. A third sample challenge, "7-Day
+Focus Sprint," was added specifically to show the screen on a challenge's
+last day (`endsInDays: 1`, a near-complete progress line, a full and still-
+moving leaderboard) — the other two only covered mid-run and day-one. Adding
+it surfaced a real pluralization bug ("Ends in 1 days") that no existing
+data had ever triggered; fixed alongside it.
+
 ### 2026-09-28 — Trusted Creators drops its session count; a real ranking icon
 
 **Lands on:** `web_app`
