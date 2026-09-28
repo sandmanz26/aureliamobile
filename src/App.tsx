@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AdminLayout } from './admin/AdminLayout'
 import { AudioPlayerProvider } from './audio/AudioPlayerContext'
@@ -20,34 +21,41 @@ import { SessionsPage as AdminSessionsPage } from './admin/pages/SessionsPage'
 import { SettingsPage } from './admin/pages/SettingsPage'
 import { UsersPage } from './admin/pages/UsersPage'
 import { SiteLock } from './components/SiteLock'
+import { PageSkeleton } from './components/ui/PageSkeleton'
 import { FeatureFlagsProvider } from './demo/FeatureFlags'
 import { ModuleGuard } from './demo/ModuleGuard'
 import { AppLayout } from './layouts/AppLayout'
-import { ChallengeDetailPage } from './pages/ChallengeDetailPage'
-import { ChatPage } from './pages/ChatPage'
-import { ProgressPage } from './pages/ProgressPage'
 import { DemoControlPage } from './pages/DemoControlPage'
-import { HelpPage } from './pages/HelpPage'
-import { HomePage } from './pages/HomePage'
-import { NotificationsPage } from './pages/NotificationsPage'
-import { SessionSettingsPage } from './pages/SessionSettingsPage'
-import { WellnessPage } from './pages/WellnessPage'
-import { ProfilePage } from './pages/ProfilePage'
-import { SeeAllPage } from './pages/SeeAllPage'
-import { ExplorePage } from './pages/ExplorePage'
-import { SessionsPage } from './pages/SessionsPage'
-import { PlayerBetaPage } from './pages/PlayerBetaPage'
-import { PlayerPage } from './pages/PlayerPage'
-import { RecreateRoute } from './pages/RecreatePage'
-import { SessionDetailPage } from './pages/SessionDetailPage'
-import { AccountSettingsPage } from './pages/AccountSettingsPage'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
 import { SignInPage } from './pages/auth/SignInPage'
 import { SignUpPage } from './pages/auth/SignUpPage'
-import { InvitePage } from './pages/InvitePage'
-import { CreditsPage } from './pages/CreditsPage'
-import { UpgradePage } from './pages/UpgradePage'
+
+// The consumer app's own pages, lazily — each becomes its own chunk, and
+// AppLayout wraps its <Outlet /> in a <Suspense> that shows PageSkeleton
+// while one is still downloading. Auth, the demo console and /admin stay
+// eager: they're either the first thing a cold load needs or a separate
+// desktop-only area this doesn't touch.
+const ChallengeDetailPage = lazy(() => import('./pages/ChallengeDetailPage').then((m) => ({ default: m.ChallengeDetailPage })))
+const ChatPage = lazy(() => import('./pages/ChatPage').then((m) => ({ default: m.ChatPage })))
+const ProgressPage = lazy(() => import('./pages/ProgressPage').then((m) => ({ default: m.ProgressPage })))
+const HelpPage = lazy(() => import('./pages/HelpPage').then((m) => ({ default: m.HelpPage })))
+const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })))
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage').then((m) => ({ default: m.NotificationsPage })))
+const SessionSettingsPage = lazy(() => import('./pages/SessionSettingsPage').then((m) => ({ default: m.SessionSettingsPage })))
+const WellnessPage = lazy(() => import('./pages/WellnessPage').then((m) => ({ default: m.WellnessPage })))
+const ProfilePage = lazy(() => import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage })))
+const SeeAllPage = lazy(() => import('./pages/SeeAllPage').then((m) => ({ default: m.SeeAllPage })))
+const ExplorePage = lazy(() => import('./pages/ExplorePage').then((m) => ({ default: m.ExplorePage })))
+const SessionsPage = lazy(() => import('./pages/SessionsPage').then((m) => ({ default: m.SessionsPage })))
+const PlayerBetaPage = lazy(() => import('./pages/PlayerBetaPage').then((m) => ({ default: m.PlayerBetaPage })))
+const PlayerPage = lazy(() => import('./pages/PlayerPage').then((m) => ({ default: m.PlayerPage })))
+const RecreateRoute = lazy(() => import('./pages/RecreatePage').then((m) => ({ default: m.RecreateRoute })))
+const SessionDetailPage = lazy(() => import('./pages/SessionDetailPage').then((m) => ({ default: m.SessionDetailPage })))
+const AccountSettingsPage = lazy(() => import('./pages/AccountSettingsPage').then((m) => ({ default: m.AccountSettingsPage })))
+const InvitePage = lazy(() => import('./pages/InvitePage').then((m) => ({ default: m.InvitePage })))
+const CreditsPage = lazy(() => import('./pages/CreditsPage').then((m) => ({ default: m.CreditsPage })))
+const UpgradePage = lazy(() => import('./pages/UpgradePage').then((m) => ({ default: m.UpgradePage })))
 
 export default function App() {
   return (
@@ -153,7 +161,11 @@ export default function App() {
             element={
               <RequireAuth>
                 <ModuleGuard module="player">
-                  <PlayerPage />
+                  {/* Full-bleed, outside AppLayout's own Suspense boundary,
+                      so it needs one of its own. */}
+                  <Suspense fallback={<PageSkeleton />}>
+                    <PlayerPage />
+                  </Suspense>
                 </ModuleGuard>
               </RequireAuth>
             }
@@ -167,7 +179,9 @@ export default function App() {
             element={
               <RequireAuth>
                 <ModuleGuard module="player">
-                  <PlayerBetaPage />
+                  <Suspense fallback={<PageSkeleton />}>
+                    <PlayerBetaPage />
+                  </Suspense>
                 </ModuleGuard>
               </RequireAuth>
             }

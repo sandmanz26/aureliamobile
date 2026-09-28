@@ -25,18 +25,29 @@ export function CoverImage({
   scrim = true,
   className = '',
 }: CoverImageProps) {
-  const [failed, setFailed] = useState(false)
+  const [status, setStatus] = useState<'loading' | 'loaded' | 'failed'>('loading')
 
   return (
     <div className={`absolute inset-0 overflow-hidden ${className}`} style={{ background: gradient }}>
-      {!failed && (
+      {/* Sits over the gradient floor while the photo is still in flight —
+          `loading="lazy"` means that can be a while for anything below the
+          fold. Gone the moment the image loads or gives up, never both. */}
+      {/* Not the shared `Skeleton` primitive: this always sits inside a
+          card that already clips to its own radius via `overflow-hidden`,
+          and Tailwind v4 orders utilities by its own layers rather than
+          source order, so a `rounded-none` override here could lose to
+          Skeleton's built-in `rounded-8` instead of winning. Plain and
+          square avoids the fight entirely. */}
+      {status === 'loading' && <div aria-hidden="true" className="u-shimmer absolute inset-0" />}
+      {status !== 'failed' && (
         <img
           src={unsplash(COVER_PHOTOS[photo], width, height)}
           alt=""
           loading="lazy"
           decoding="async"
-          onError={() => setFailed(true)}
-          className="size-full object-cover"
+          onLoad={() => setStatus('loaded')}
+          onError={() => setStatus('failed')}
+          className={`size-full object-cover transition-opacity duration-300 ${status === 'loaded' ? 'opacity-100' : 'opacity-0'}`}
         />
       )}
       {scrim && <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-black/10" />}

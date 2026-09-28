@@ -31,6 +31,23 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-28 — Skeleton states for slow photos and route chunks
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (own loading-state work, if any) /
+`storybook` (add a story for `Skeleton`/`PageSkeleton` when convenient) — a
+new shared `.u-shimmer` animation in `motion.css`, a `Skeleton` primitive,
+and a `PageSkeleton` fallback. `CoverImage` shows the shimmer over its
+gradient floor while a session's Unsplash photo is still loading, fading
+the photo in on load rather than popping it in; the gradient-on-failure
+behavior is unchanged. Every consumer page under `AppLayout` is now its own
+lazy chunk (`React.lazy` + `Suspense`), with `PageSkeleton` as the fallback
+— the drawer, status band and page shell stay mounted throughout, so only
+the content area shows the skeleton, and only the first time a route's
+chunk is fetched in a session. `/play` and `/player-beta` get the same
+treatment with their own `Suspense`, being outside `AppLayout`.
+
 ### 2026-09-27 — Settings' row rhythm, Profile's dividers and tab styling
 
 **Lands on:** `web_app`

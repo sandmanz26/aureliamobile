@@ -1,11 +1,12 @@
 import { Bell, Compass, HelpCircle, ListMusic, Plus, User, UserPlus, Waves } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useHiddenScrollbars } from '../hooks/useHiddenScrollbars'
 import { useSignInGate } from '../auth/useSignInGate'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { BuildBadge } from '../components/ui/BuildBadge'
+import { PageSkeleton } from '../components/ui/PageSkeleton'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import { MobileStatusBar } from '../components/ui/MobileStatusBar'
 import { NavItem } from '../components/ui/NavItem'
@@ -241,7 +242,13 @@ export function AppLayout() {
           {/* Keyed on the path so the entrance replays on every navigation —
               without it React reuses the node and the animation runs once. */}
           <div key={location.pathname} className="u-page">
-            <Outlet />
+            {/* Only the page content suspends — the drawer, status band and
+                this shell stay put. Each page is its own lazy chunk (see
+                App.tsx), so this only shows on the first visit to a route
+                in a session; a cached chunk resolves before paint. */}
+            <Suspense fallback={<PageSkeleton />}>
+              <Outlet />
+            </Suspense>
           </div>
         </div>
       </div>
