@@ -31,6 +31,23 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-28 — The real coin artwork, everywhere the coin appears
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (worth carrying over so the two clients'
+currencies keep matching) / `storybook` (add a story for `CoinMark` when
+convenient).
+
+`CoinMark` drew the coin as a CSS gradient disc with a ring punched out of
+the middle — a stand-in until real artwork existed. It now renders the
+supplied icon (`src/assets/coin-icon.png`, 80x80, so every size this app
+actually uses is scaled down from a real source rather than up from one) at
+whatever size the caller asks for, same as before. Also caught and fixed
+one hand-rolled coin the earlier "thirteen places" cleanup had missed —
+Invite's own "+500" badge was still drawing a `Coins` glyph in the old
+gradient circle by hand; it goes through `CoinMark` now too.
+
 ### 2026-09-28 — A closed challenge stops offering to join it
 
 **Lands on:** `web_app`

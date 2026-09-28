@@ -1,9 +1,9 @@
-import { Check, Coins, Copy, MapPin, MessageCircle } from 'lucide-react'
+import { Check, Copy, MapPin, MessageCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { useDrawer } from '../layouts/DrawerContext'
 import type { CoverKey } from '../lib/photos'
-import { CoinPill } from '../components/ui/CoinPill'
+import { CoinMark, CoinPill } from '../components/ui/CoinPill'
 
 /**
  * Invite a Friend.
@@ -51,12 +51,7 @@ function InviteConstellation() {
             />
           </span>
           <span className="absolute -top-6 left-1/2 flex h-32 items-center gap-6 whitespace-nowrap rounded-full bg-surface-default px-12 shadow-md">
-            <span
-              className="flex size-16 items-center justify-center rounded-full"
-              style={{ background: 'linear-gradient(160deg, #ffe682, #ff881b)' }}
-            >
-              <Coins size={10} className="text-text-inverse" />
-            </span>
+            <CoinMark size={16} />
             <span className="text-style-label text-text-primary">+{REWARD}</span>
           </span>
         </span>
