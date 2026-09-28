@@ -18,6 +18,7 @@ import { replyTo } from '../lib/replies'
 import { RecommendationCard } from '../components/chat/RecommendationCard'
 import { RecommendationDeck } from '../components/chat/RecommendationDeck'
 import { SessionProgressCard } from '../components/chat/SessionProgressCard'
+import { SessionProgressCardV2 } from '../components/chat/SessionProgressCardV2'
 import { VoiceMessage } from '../components/chat/VoiceMessage'
 import { VoiceRecorder } from '../components/chat/VoiceRecorder'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
@@ -808,19 +809,23 @@ export function ChatPage() {
 
           {(sessionState === 'generating' || sessionState === 'ready') && (
             <div className="u-message mt-12">
-              <SessionProgressCard
-                title={draft.title}
-                status={sessionState === 'ready' ? readyStatus : 'Creating your new session..'}
-                progress={sessionState === 'ready' ? null : progress}
-                to={sessionState === 'ready' ? `/play/${draft.slug}` : undefined}
-                /* Only a draft is renamed. A thread about a session that
-                   already exists is making a new cut of that session, which is
-                   still its author's — overriding here credited Adam for
-                   Sophia's session, and, because the override also keys the
-                   cut, left her session on the deck under the previous draft's
-                   name. */
-                by={sessionSlug ? undefined : CURRENT_USER}
-              />
+              {sessionState === 'generating' && isEnabled('chat.generatingV2') ? (
+                <SessionProgressCardV2 title={draft.title} />
+              ) : (
+                <SessionProgressCard
+                  title={draft.title}
+                  status={sessionState === 'ready' ? readyStatus : 'Creating your new session..'}
+                  progress={sessionState === 'ready' ? null : progress}
+                  to={sessionState === 'ready' ? `/play/${draft.slug}` : undefined}
+                  /* Only a draft is renamed. A thread about a session that
+                     already exists is making a new cut of that session, which is
+                     still its author's — overriding here credited Adam for
+                     Sophia's session, and, because the override also keys the
+                     cut, left her session on the deck under the previous draft's
+                     name. */
+                  by={sessionSlug ? undefined : CURRENT_USER}
+                />
+              )}
             </div>
           )}
 

@@ -90,6 +90,13 @@ export const DEMO_MODULES: DemoModule[] = [
       { id: 'recommendations', label: 'Recommendation cards', description: 'Tunable cards with Add/Remove and Apply.' },
       { id: 'voice', label: 'Voice input', description: 'Record, transcribe, review, then send as a voice note.' },
       { id: 'publish', label: 'Publish flow', description: 'More-menu publish, publishing sheet, and confirmation.' },
+      {
+        id: 'generatingV2',
+        label: 'Generating: animated shape + rotating status (option 2)',
+        description:
+          'Alternate treatment for the "building your session" message: a morphing-squares mark and a status line that cycles through what the build is doing, instead of the static thumbnail and single "Creating your new session.." line. Off by default — a second option to preview, not a replacement.',
+        unreleased: true,
+      },
     ],
   },
   {

@@ -31,6 +31,25 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-28 — A second, dark "generating" treatment behind a demo flag
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (no `/__demo` concept there yet) /
+`storybook` (the two new pieces — `GeneratingShape`, `RotatingStatus` — are
+shared components once this settles; add stories once it does).
+
+Chat's "building your session" message now has a second look, `chat.generatingV2`
+in `/__demo`, off by default: a small morphing-squares mark
+(`GeneratingShape`) next to a status line that cycles through what the build
+is doing (`RotatingStatus`), combined in `SessionProgressCardV2`. It only
+covers the generating phase — once a build finishes, the thread falls back to
+the existing `SessionProgressCard` for the ready state regardless of which
+option drew the loading, since there is no reference yet for a "finished"
+option 2. With the flag off, Chat is pixel-for-pixel what it was before.
+
+---
+
 ### 2026-09-28 — A wider, more deliberate desktop content column
 
 **Lands on:** `web_app`
