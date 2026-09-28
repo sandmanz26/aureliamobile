@@ -132,7 +132,7 @@ export function ChallengeDetailPage() {
   const sessions = challenge.sessionSlugs.map(findSession).filter((session) => session !== undefined)
 
   return (
-    <div className="flex min-h-[calc(100vh-54px)] flex-col bg-background-default lg:min-h-screen">
+    <div className="flex min-h-screen flex-col bg-background-default">
       {/* Hero, with the sheet below overlapping it. */}
       <div className="relative">
         <div className="relative aspect-[402/300] w-full overflow-hidden">

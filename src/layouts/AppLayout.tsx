@@ -8,7 +8,6 @@ import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { BuildBadge } from '../components/ui/BuildBadge'
 import { PageSkeleton } from '../components/ui/PageSkeleton'
 import { useFeatureFlags } from '../demo/FeatureFlags'
-import { MobileStatusBar } from '../components/ui/MobileStatusBar'
 import { NavItem } from '../components/ui/NavItem'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { recentSessions } from '../lib/sessions'
@@ -24,12 +23,11 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     /* Figma "Menu" (16651:12647) — 313 wide on surface/default, 16 side
-       padding, 24 at the bottom, and 20 between blocks. The 66 at the top is
-       the frame's, measured from the top of the phone — the drawer used to
-       reach it as a 54 status bar plus 12, which put a second clock inside the
-       panel. Same position, one clock. Desktop has no phone chrome above it,
-       so it keeps its own 24. */
-    <div className="flex h-full flex-col gap-20 overflow-y-auto px-16 pb-24 pt-66 lg:pt-24">
+       padding, 24 at the bottom, and 20 between blocks. Used to add 54 at
+       the top to clear the simulated phone status bar AppLayout stuck above
+       the page; that band is gone now that this is web-first, so the drawer
+       keeps the same 24 as everything else. */
+    <div className="flex h-full flex-col gap-20 overflow-y-auto px-16 pb-24 pt-24">
       <div className="flex items-center justify-between px-20 pb-16">
         {/* The mark goes home, as a brand mark in app chrome is expected to.
             It closes the drawer on the way, so the destination is not left
@@ -226,19 +224,6 @@ export function AppLayout() {
         )}
 
         <div className="min-w-0 flex-1">
-          {/* Universal mobile-frame chrome — each page renders its own header row
-              (with the menu button, via useDrawer()) right below this.
-
-              Sticky, because a phone's real status bar never scrolls away. It
-              stays in flow, so nothing shifts; it only detaches once the page
-              moves under it. Translucent rather than solid: pages top out on
-              different backgrounds (Home and Sessions each open on their own
-              gradient), and a blur reads correctly over all of them where one
-              fixed colour would band against most. */}
-          <div className="sticky top-0 z-40 bg-background-default/80 backdrop-blur-md lg:hidden">
-            <MobileStatusBar />
-          </div>
-
           {/* Keyed on the path so the entrance replays on every navigation —
               without it React reuses the node and the animation runs once. */}
           <div key={location.pathname} className="u-page">

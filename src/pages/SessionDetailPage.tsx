@@ -136,7 +136,7 @@ export function SessionDetailPage() {
   if (!session) return <Navigate to="/home" replace />
 
   return (
-    <div className="min-h-[calc(100vh-54px)] bg-background-default pb-96 lg:min-h-screen">
+    <div className="min-h-screen bg-background-default pb-96">
       {/* Cover: the artwork alone. Back, Share and Play float on it rather
           than a separate header bar — there is nowhere else on this screen
           they need to be, and a header would cost 54px of a screen that is

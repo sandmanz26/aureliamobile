@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom'
 import authHero from '../../assets/auth-hero.png'
 import { AureliaLogo } from '../../components/ui/AureliaLogo'
 import { useHiddenScrollbars } from '../../hooks/useHiddenScrollbars'
-import { MobileStatusBar } from '../../components/ui/MobileStatusBar'
 
 interface AuthShellProps {
   /** Sits where the Sign In / Sign Up tabs do — tabs, or a plain title. */
@@ -15,9 +14,9 @@ interface AuthShellProps {
 }
 
 /**
- * The frame every account screen shares: status bar, back arrow, the header
- * slot, and the mark. Four screens use it, so the chrome is defined once and a
- * change to it cannot leave one of them looking different from the rest.
+ * The frame every account screen shares: back arrow, the header slot, and
+ * the mark. Four screens use it, so the chrome is defined once and a change
+ * to it cannot leave one of them looking different from the rest.
  */
 export function AuthShell({ header, backTo, children }: AuthShellProps) {
   const navigate = useNavigate()
@@ -26,9 +25,6 @@ export function AuthShell({ header, backTo, children }: AuthShellProps) {
   return (
     <div className="flex min-h-full flex-col items-center bg-background-default lg:justify-center lg:px-24 lg:py-48">
       <div className="w-full max-w-[402px] lg:mx-auto">
-        <div className="sticky top-0 z-40 bg-background-default/80 backdrop-blur-md lg:hidden">
-          <MobileStatusBar />
-        </div>
         <div className="px-24 pt-16 lg:px-0 lg:pt-0">
           <div className="relative flex h-44 items-center justify-center">
             <button

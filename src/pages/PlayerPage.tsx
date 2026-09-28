@@ -20,7 +20,6 @@ import { RECOMMENDATIONS } from '../chat/ChatSessionContext'
 import { useAudioPlayer } from '../audio/AudioPlayerContext'
 import { CoinPill } from '../components/ui/CoinPill'
 import { CoverImage } from '../components/ui/CoverImage'
-import { MobileStatusBar } from '../components/ui/MobileStatusBar'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import { findVersion } from '../lib/progress'
@@ -350,13 +349,6 @@ export function PlayerPage() {
         className="relative mx-auto flex h-full w-full max-w-[402px] flex-col text-text-inverse lg:max-w-[560px]"
         style={{ paddingBottom: SHEET_PEEK }}
       >
-        {/* The frame carries the iOS status bar over the art, not on a band
-            above it. Same lg:hidden rule AppLayout uses, so a desktop window
-            does not show a phone's clock. */}
-        <div className="relative lg:hidden">
-          <MobileStatusBar />
-        </div>
-
         {/* gap-12 rather than the frame's 16: the sound switch is a fourth
             control in a row the frame drew with three. */}
         <header className="relative flex items-center gap-12 px-20 py-12">

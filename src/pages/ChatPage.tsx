@@ -624,7 +624,7 @@ export function ChatPage() {
   const readyStatus = !onDeck ? 'Ready to play' : playing ? 'Playing now' : 'Paused'
 
   return (
-    <div className="flex h-[calc(100vh-54px)] flex-col bg-background-default lg:h-screen">
+    <div className="flex h-screen flex-col bg-background-default">
       <ChatHeader
         points="1,323"
         /* Once a session is on the deck the card below carries the transport,

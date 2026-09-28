@@ -39,7 +39,7 @@ export function CreditsPage() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-54px)] flex-col bg-background-default lg:min-h-screen">
+    <div className="flex min-h-screen flex-col bg-background-default">
       {/* 20 across, 12 down, 20 between the back button and the title. */}
       <header className="u-sticky-top flex items-center gap-20 px-20 py-12 lg:px-24">
         <button

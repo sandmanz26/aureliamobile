@@ -31,6 +31,27 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-28 — Drop the simulated phone status bar; this is web-first now
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (Flutter has its own real OS chrome, never
+this) / `storybook` — no component story depended on it.
+
+`MobileStatusBar` (the "9:41" clock plus signal/wifi/battery icons drawn at
+the top of every screen) is deleted, along with every place that rendered
+it — `AppLayout`, `AuthShell`, `PlayerPage`, `PlayerBetaPage`. The product
+is being built for web first, so simulating a phone's own status bar no
+longer makes sense at the top of it. Removing it left a real gap to close,
+not just a component to delete: `.u-sticky-top`'s `top: 54px` (clearing the
+status band on mobile widths) is now `top: 0` everywhere, and the eleven
+pages that sized their root to `calc(100vh-54px)` with an `lg:min-h-screen`
+override now just use `min-h-screen` (or `h-screen` for Chat) at every
+width — the same height the status bar used to eat is now available to the
+page everywhere, not only on desktop. The drawer's top padding, which used
+to reserve 54px so its own content lined up below the status band, drops to
+the same 24 it already used on desktop.
+
 ### 2026-09-28 — A working Rewards sheet, and a challenge on its last day
 
 **Lands on:** `web_app`

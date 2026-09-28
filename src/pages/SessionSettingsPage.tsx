@@ -207,7 +207,7 @@ export function SessionSettingsPage() {
 
   return (
     <div
-      className={`min-h-[calc(100vh-54px)] bg-background-default lg:min-h-screen ${
+      className={`min-h-screen bg-background-default ${
         pendingCount > 0 ? 'pb-96' : 'pb-48'
       }`}
     >

@@ -44,7 +44,7 @@ export function UpgradePage() {
 
   return (
     <div
-      className="relative flex min-h-[calc(100vh-54px)] flex-col lg:min-h-screen"
+      className="relative flex min-h-screen flex-col"
       /* The warm wash is the only decoration, and it sits under the card
          rather than behind the copy — the page argues in words, not colour. */
       style={{ background: 'linear-gradient(180deg, #FFFFFF 0%, #FFF6E9 62%, #FFD9A3 100%)' }}

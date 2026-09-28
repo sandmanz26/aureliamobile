@@ -118,7 +118,7 @@ export function RecreatePage() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-54px)] flex-col bg-background-default lg:min-h-screen">
+    <div className="flex min-h-screen flex-col bg-background-default">
       <header className="flex h-54 shrink-0 items-center justify-between px-20">
         <button
           type="button"

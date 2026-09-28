@@ -4,7 +4,6 @@ import { ArrowLeft, Pause, Play, TrendingUp, Users } from 'lucide-react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAudioPlayer } from '../audio/AudioPlayerContext'
 import { CoverImage } from '../components/ui/CoverImage'
-import { MobileStatusBar } from '../components/ui/MobileStatusBar'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import { progressFor } from '../lib/progress'
@@ -226,10 +225,6 @@ export function PlayerBetaPage() {
   return (
     <div className="min-h-dvh bg-background-default pb-32">
       <div className="mx-auto max-w-[560px]">
-        <div className="lg:hidden">
-          <MobileStatusBar />
-        </div>
-
         <header className="flex items-center gap-12 px-20 py-12">
           <button
             type="button"

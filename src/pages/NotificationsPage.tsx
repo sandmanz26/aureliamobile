@@ -86,7 +86,7 @@ export function NotificationsPage() {
   return (
     /* White, not background-default. The frame's body is surface/default and
        the rows sit directly on it — there is no card and no tint. */
-    <div className="flex min-h-[calc(100vh-54px)] flex-col bg-surface-default lg:min-h-screen">
+    <div className="flex min-h-screen flex-col bg-surface-default">
       {/* `.u-sticky-top` paints background-default and sits outside Tailwind's
           utility layer, so it beats bg-surface-default on class order alone —
           the `!` is what actually makes this header white. The frame's is

@@ -32,7 +32,7 @@ export function SeeAllPage() {
   const sessions = sessionsOnShelf(shelf)
 
   return (
-    <div className="flex min-h-[calc(100vh-54px)] flex-col bg-background-default lg:min-h-screen">
+    <div className="flex min-h-screen flex-col bg-background-default">
       <header className="u-sticky-top flex items-center justify-between gap-12 px-20 py-16 lg:px-24">
         <button
           type="button"
