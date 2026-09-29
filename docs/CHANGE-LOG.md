@@ -31,6 +31,25 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-29 — Fix a dead typography class on the Player Beta card title
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` (Flutter and the catalogue
+never had this typo).
+
+`PlayerBetaPage.tsx`'s card title used `text-style-title-lg`, which is not one
+of the 16 generated `text-style-*` classes (the real one is
+`text-style-title-large`) — Tailwind silently dropped it, so the heading
+rendered with no typography styling at all. Found while auditing the web app
+against a Figma sweep that put every text layer in `Aurelia AI - Daniel` onto
+the same 16 `Aurelia/*` text styles: the token definitions on both sides
+already matched, but this is a real place the app's own code wasn't using
+them. A second pass is still open — ~76 places in the app use raw
+`text-[Npx]` sizes instead of a `text-style-*` class, several matching the
+scale exactly (redundant, not broken) and a handful (13px, 22px, 26px, 8px)
+outside it — not yet triaged for whether each is intentional.
+
 ### 2026-09-29 — The Alignment Score needle animates
 
 **Lands on:** `web_app`

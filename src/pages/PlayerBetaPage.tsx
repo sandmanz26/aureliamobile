@@ -298,7 +298,7 @@ export function PlayerBetaPage() {
         {/* --------------------------------------------------------- detail */}
         <div className="mt-20 px-20">
           <p className="text-style-caption uppercase tracking-widest text-text-secondary">{card.eyebrow}</p>
-          <h2 className="text-style-title-lg mt-4 text-text-primary">{card.title}</h2>
+          <h2 className="text-style-title-large mt-4 text-text-primary">{card.title}</h2>
           <p className="text-style-body-small mt-4 text-text-secondary">
             By <span className="text-text-primary">{card.author}</span> · {card.minutes}
           </p>
