@@ -1,11 +1,49 @@
-import { ChevronRight, Menu, X } from 'lucide-react'
+import { ChartPie, ChevronRight, Link2, Menu, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { PageMeta } from '../components/PageMeta'
+import { WellnessObjectiveCard } from '../components/wellness/WellnessObjectiveCard'
 import { useDrawer } from '../layouts/DrawerContext'
 import type { SignalGroup } from '../lib/signals'
 import { SIGNAL_GROUPS, defaultConnections, sourcesInGroup } from '../lib/signals'
 import { CARD_SHADOW } from '../lib/shadows'
+import { WELLNESS_GOALS } from '../lib/wellnessGoals'
 import { CoinPill } from '../components/ui/CoinPill'
+
+type WellnessTab = 'Analytics' | 'Connect'
+
+/** The tab pill above the tab content — a standalone button per option
+ *  (dark fill when active, outline when not), not the shared
+ *  `SegmentedControl` (which puts both options inside one shared-background
+ *  track): the frame draws these as two separate pills with visible gaps
+ *  and their own icons, a different component, not a themed variant of it. */
+function WellnessTabButton({
+  active,
+  icon,
+  label,
+  onClick,
+}: {
+  active: boolean
+  icon: React.ReactNode
+  label: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`u-press flex h-40 shrink-0 items-center gap-8 rounded-full border px-16 text-style-label transition-colors ${
+        active
+          ? 'border-interactive-primary bg-interactive-primary text-text-inverse'
+          : 'border-border-subtle bg-surface-default text-text-primary'
+      }`}
+    >
+      {icon}
+      {label}
+    </button>
+  )
+}
 
 /**
  * My Wellness — what Aurelia is allowed to read about you.
@@ -93,8 +131,14 @@ function Meter({ label, connected, total }: { label: string; connected: number; 
 
 export function WellnessPage() {
   const { openDrawer } = useDrawer()
+  const navigate = useNavigate()
   const [connections, setConnections] = useState(defaultConnections)
   const [requestOpen, setRequestOpen] = useState(false)
+  const [tab, setTab] = useState<WellnessTab>('Analytics')
+  // The first goal opens by default, same reasoning as My Wellness always
+  // showing signal state rather than a blank list — the tab should not
+  // read as empty on first visit.
+  const [openGoalId, setOpenGoalId] = useState<string | null>(WELLNESS_GOALS[0]?.id ?? null)
 
   const active = Object.values(connections).filter(Boolean).length
   const total = Object.keys(connections).length
@@ -105,7 +149,7 @@ export function WellnessPage() {
     <div className="bg-background-default pb-48">
       <PageMeta
         title="My Wellness"
-        description="The signal sources Aurelia may read, and what each one is used for."
+        description="Track what's helping your goals progress, and the signal sources Aurelia may read to figure that out."
       />
       <header className="u-sticky-top flex items-center justify-between gap-12 px-20 py-16 lg:px-24">
         <div className="flex min-w-0 items-center gap-8">
@@ -123,8 +167,45 @@ export function WellnessPage() {
       </header>
 
       <div className="mx-auto w-full max-w-[402px] px-20 lg:max-w-[960px] lg:px-24">
+        <div className="flex gap-8">
+          <WellnessTabButton
+            active={tab === 'Analytics'}
+            icon={<ChartPie size={16} />}
+            label="Analytics"
+            onClick={() => setTab('Analytics')}
+          />
+          <WellnessTabButton
+            active={tab === 'Connect'}
+            icon={<Link2 size={16} />}
+            label="Connect"
+            onClick={() => setTab('Connect')}
+          />
+        </div>
+
+        {tab === 'Analytics' && (
+          <div className="mt-24 flex flex-col gap-16">
+            {WELLNESS_GOALS.map((goal) => (
+              <WellnessObjectiveCard
+                key={goal.id}
+                goal={goal}
+                expanded={openGoalId === goal.id}
+                onToggle={() => setOpenGoalId((current) => (current === goal.id ? null : goal.id))}
+                // Same hand-off Home's own ask box uses: land in the cockpit
+                // with the question already asked, rather than a blank
+                // thread the user has to explain themselves into again.
+                onAnalyze={() =>
+                  navigate('/chat', { state: { ask: `Can you analyze my current state for "${goal.title}"?` } })
+                }
+                onSecondaryAction={() => navigate('/chat', { state: { ask: goal.secondaryAction } })}
+              />
+            ))}
+          </div>
+        )}
+
+        {tab === 'Connect' && (
+          <>
         {/* Summary. Everything here is derived from the switches below. */}
-        <section className="rounded-24 bg-surface-default p-16 shadow-sm">
+        <section className="mt-24 rounded-24 bg-surface-default p-16 shadow-sm">
           <div className="flex flex-col gap-16 min-[380px]:flex-row min-[380px]:items-center min-[380px]:gap-16">
             <div className="shrink-0">
               <h2 className="text-style-body font-semibold text-text-primary">Active Signals</h2>
@@ -205,6 +286,8 @@ export function WellnessPage() {
           </span>
           <ChevronRight size={18} className="shrink-0 text-icon-secondary" />
         </button>
+          </>
+        )}
       </div>
 
       {requestOpen && <RequestSheet onClose={() => setRequestOpen(false)} />}

@@ -31,6 +31,34 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-29 — My Wellness gets an Analytics tab
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (not built there yet — the Figma reference
+was web-first) / `storybook` (new shared pieces — `TagRow`'s new home,
+`AlignmentGauge`, `WellnessObjectiveCard` — worth a story once this settles).
+
+My Wellness now opens on a tab switcher: **Analytics**, new, showing a
+person's wellness goals as expandable cards (XP progress toward the goal,
+"what's helping me progress," a semicircle "Alignment Score" gauge running
+from Challenging to Aligned, and before/after state tags) — and **Connect**,
+which is the screen exactly as it already existed (signal sources by
+group, the toggles), now just living behind a tab instead of being the
+whole page. Both action buttons on a goal card ("Analyze my state" and its
+topic-specific pair) hand off into the cockpit through the same `ask`
+route-state Home's own prompt box uses, rather than going nowhere.
+
+Mock data (`lib/wellnessGoals.ts`) is invented and deliberately specific,
+same convention as the rest of `lib/` — not derived from a session's own
+`tags`, which describe its topic for the catalogue rather than why it's
+working for the person looking at this screen.
+
+Pulled `TagRow` (the "+N overflow" hashtag row) out of `SessionDetailPage`
+into `components/ui/TagRow.tsx` so this screen's tag list and that one
+share it instead of a second copy — the exact kind of duplication flagged,
+not yet occurring, in the last code-quality pass.
+
 ### 2026-09-29 — Code-quality pass: split the god files, kill the duplication
 
 **Lands on:** `web_app`

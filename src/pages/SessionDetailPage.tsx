@@ -8,6 +8,7 @@ import orbIncreaseYellow from '../assets/orb-increase-yellow.png'
 import orbLessMovement from '../assets/orb-less-movement.png'
 import { CoverImage } from '../components/ui/CoverImage'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
+import { TagRow } from '../components/ui/TagRow'
 import type { RecreateBrief } from '../chat/recreate'
 import { briefFor, useRecreateTarget } from '../chat/recreate'
 import { useFeatureFlags } from '../demo/FeatureFlags'
@@ -32,25 +33,6 @@ function Description({ text }: { text: string }) {
       >
         {open ? 'Read Less' : 'Read More'}
       </button>
-    </div>
-  )
-}
-
-/** Topic hashtags. Six shown, the rest folded into one "+N" chip rather than
- *  wrapping the row for a session with a long list. */
-function TagRow({ tags }: { tags: string[] }) {
-  const shown = tags.slice(0, 6)
-  const overflow = tags.length - shown.length
-  return (
-    <div className="mt-14 flex flex-wrap gap-8">
-      {shown.map((tag) => (
-        <span key={tag} className="text-style-caption rounded-full bg-gold-100 px-10 py-4 text-warning-700">
-          #{tag}
-        </span>
-      ))}
-      {overflow > 0 && (
-        <span className="text-style-caption rounded-full bg-gold-100 px-10 py-4 text-warning-700">+{overflow}</span>
-      )}
     </div>
   )
 }
@@ -186,7 +168,9 @@ export function SessionDetailPage() {
 
         <h1 className="text-style-title-large mt-16 text-text-primary">{session.title}</h1>
         <Description text={session.summary} />
-        <TagRow tags={session.tags} />
+        <div className="mt-14">
+          <TagRow tags={session.tags} />
+        </div>
 
         <div className="mt-16 grid grid-cols-2 gap-12">
           <div className="rounded-16 border border-border-subtle p-14 text-center">
