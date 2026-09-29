@@ -12,6 +12,7 @@ import {
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
+import { PageMeta } from '../components/PageMeta'
 import orb432hz from '../assets/orb-432hz.png'
 import orbIncreaseYellow from '../assets/orb-increase-yellow.png'
 import orbLessMovement from '../assets/orb-less-movement.png'
@@ -211,6 +212,7 @@ export function SessionSettingsPage() {
         pendingCount > 0 ? 'pb-96' : 'pb-48'
       }`}
     >
+      <PageMeta title="Session settings" />
       <header className="u-sticky-top flex items-center gap-12 px-20 py-16 lg:px-24">
         <button
           type="button"

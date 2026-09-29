@@ -2,6 +2,7 @@ import { CheckCircle2, Eye, EyeOff, Lock } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
+import { PageMeta } from '../../components/PageMeta'
 import { Button } from '../../components/ui/Button'
 import { TextField } from '../../components/ui/TextField'
 import { AuthShell } from './AuthShell'
@@ -47,6 +48,7 @@ export function ResetPasswordPage() {
   if (done) {
     return (
       <AuthShell header={<h1 className="text-style-title text-text-primary">Password changed</h1>} backTo="/login">
+        <PageMeta title="Password changed" />
         <div className="mt-40 flex flex-col items-center gap-16 text-center">
           <span className="flex size-64 items-center justify-center rounded-full bg-background-elevated text-feedback-success">
             <CheckCircle2 size={28} />
@@ -72,6 +74,7 @@ export function ResetPasswordPage() {
 
   return (
     <AuthShell header={<h1 className="text-style-title text-text-primary">Set a new password</h1>} backTo="/login">
+      <PageMeta title="Reset password" description="Set a new password for your Aurelia account." />
       <form className="mt-40 flex flex-col gap-16" onSubmit={handleSubmit}>
         <p className="text-style-body-small text-text-secondary">
           Pick something you haven’t used on this account before. At least 8 characters.

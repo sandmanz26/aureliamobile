@@ -1,6 +1,7 @@
 import { ArrowLeft, Check, Coins, Menu, Repeat2, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { PageMeta } from '../components/PageMeta'
 import { CoverImage } from '../components/ui/CoverImage'
 import { briefFor } from '../chat/recreate'
 import { useFeatureFlags } from '../demo/FeatureFlags'
@@ -119,6 +120,7 @@ export function RecreatePage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background-default">
+      <PageMeta title={`Recreate — ${session.title}`} />
       <header className="flex h-54 shrink-0 items-center justify-between px-20">
         <button
           type="button"

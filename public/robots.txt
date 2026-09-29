@@ -1,0 +1,12 @@
+# Aurelia is a private preview — every page sits behind a password gate
+# (see src/demo/siteLock.ts) and the data throughout is mock. There is
+# nothing here worth a crawler's time yet, and no public marketing pages
+# exist to carve out an exception for.
+#
+# When this is a real, launched product: replace this with a real policy —
+# allow the public pages (e.g. /home, /help, /login, /signup), and disallow
+# the authenticated app surface and /admin explicitly. Per-page `noindex`
+# (see src/components/PageMeta.tsx and src/pages/NotFoundPage.tsx) narrows
+# further from there; this file is the coarse, first gate.
+User-agent: *
+Disallow: /

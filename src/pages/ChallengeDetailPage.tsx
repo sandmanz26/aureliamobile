@@ -1,6 +1,7 @@
 import { ArrowLeft, ChevronRight, Clock, Play, Podium as PodiumIcon, Share2, Trophy, Users } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { PageMeta } from '../components/PageMeta'
 import { CoverImage } from '../components/ui/CoverImage'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { RewardsSheet } from '../components/ui/RewardsSheet'
@@ -137,6 +138,7 @@ export function ChallengeDetailPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background-default">
+      <PageMeta title={challenge.title} />
       {/* Hero, with the sheet below overlapping it. */}
       <div className="relative">
         <div className="relative aspect-[402/300] w-full overflow-hidden">

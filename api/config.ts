@@ -97,10 +97,20 @@ export default async function handler(req: Req, res: Res) {
         return
       }
       // Only booleans get stored — this endpoint is unauthenticated, so keep
-      // what it can write to the narrowest possible shape.
+      // what it can write to the narrowest possible shape. The count and key
+      // length caps exist for the same reason: nothing here needs more than
+      // the real registry ever has, and an unauthenticated POST that can
+      // grow without limit is a storage-cost knob anyone can turn.
+      const MAX_FLAGS = 500
+      const MAX_KEY_LENGTH = 200
+      const entries = Object.entries(flags)
+      if (entries.length > MAX_FLAGS) {
+        res.status(400).json({ error: `Expected at most ${MAX_FLAGS} flags` })
+        return
+      }
       const clean: Record<string, boolean> = {}
-      for (const [key, value] of Object.entries(flags)) {
-        if (typeof value === 'boolean') clean[key] = value
+      for (const [key, value] of entries) {
+        if (typeof value === 'boolean' && key.length <= MAX_KEY_LENGTH) clean[key] = value
       }
 
       await redis(['SET', KEY, JSON.stringify(clean)])
@@ -116,6 +126,10 @@ export default async function handler(req: Req, res: Res) {
 
     res.status(405).json({ error: 'Use GET or POST' })
   } catch (error) {
-    res.status(500).json({ error: error instanceof Error ? error.message : 'KV request failed' })
+    // Logged for whoever can read Vercel's function logs; not returned to the
+    // caller, since this endpoint takes requests from anyone and an upstream
+    // error message is not this app's to hand out.
+    console.error('api/config failed', error)
+    res.status(500).json({ error: 'Request failed' })
   }
 }

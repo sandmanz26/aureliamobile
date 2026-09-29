@@ -2,6 +2,7 @@ import { ArrowLeft, ChevronRight, Play, Repeat2, Share2 } from 'lucide-react'
 import { Fragment, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { PageMeta } from '../components/PageMeta'
 import orb432hz from '../assets/orb-432hz.png'
 import orbIncreaseYellow from '../assets/orb-increase-yellow.png'
 import orbLessMovement from '../assets/orb-less-movement.png'
@@ -137,6 +138,7 @@ export function SessionDetailPage() {
 
   return (
     <div className="min-h-screen bg-background-default pb-96">
+      <PageMeta title={session.title} description={session.description} />
       {/* Cover: the artwork alone. Back, Share and Play float on it rather
           than a separate header bar — there is nowhere else on this screen
           they need to be, and a header would cost 54px of a screen that is

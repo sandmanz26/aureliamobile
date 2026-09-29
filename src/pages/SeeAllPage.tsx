@@ -1,5 +1,6 @@
 import { ArrowLeft } from 'lucide-react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { PageMeta } from '../components/PageMeta'
 import { SessionGridCard } from '../components/ui/SessionGridCard'
 import type { Shelf } from '../lib/sessions'
 import { sessionsOnShelf } from '../lib/sessions'
@@ -33,6 +34,7 @@ export function SeeAllPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background-default">
+      <PageMeta title={SHELF_TITLES[shelf]} />
       <header className="u-sticky-top flex items-center justify-between gap-12 px-20 py-16 lg:px-24">
         <button
           type="button"

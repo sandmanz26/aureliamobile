@@ -3,6 +3,7 @@ import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent }
 import { ArrowLeft, Pause, Play, TrendingUp, Users } from 'lucide-react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAudioPlayer } from '../audio/AudioPlayerContext'
+import { PageMeta } from '../components/PageMeta'
 import { CoverImage } from '../components/ui/CoverImage'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { useFeatureFlags } from '../demo/FeatureFlags'
@@ -224,6 +225,7 @@ export function PlayerBetaPage() {
 
   return (
     <div className="min-h-dvh bg-background-default pb-32">
+      <PageMeta title={session.title} />
       <div className="mx-auto max-w-[640px]">
         <header className="flex items-center gap-12 px-20 py-12">
           <button

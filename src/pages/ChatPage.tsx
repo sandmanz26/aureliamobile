@@ -2,6 +2,7 @@ import { Check, CheckCheck, WandSparkles } from 'lucide-react'
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { AddSheet } from '../components/chat/AddSheet'
+import { PageMeta } from '../components/PageMeta'
 import { ChatComposer } from '../components/chat/ChatComposer'
 import { FreeLimitNotice } from '../components/chat/FreeLimitNotice'
 import { EmptyThread, EmptyThreadPrompts } from '../components/chat/EmptyThread'
@@ -626,6 +627,7 @@ export function ChatPage() {
 
   return (
     <div className="flex h-screen flex-col bg-background-default">
+      <PageMeta title="Aurelia Chat" />
       <ChatHeader
         points="1,323"
         /* Once a session is on the deck the card below carries the transport,

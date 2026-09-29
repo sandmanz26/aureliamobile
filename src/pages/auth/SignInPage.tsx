@@ -2,6 +2,7 @@ import { ArrowLeft } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import authHero from '../../assets/auth-hero.png'
+import { PageMeta } from '../../components/PageMeta'
 import { AureliaLogo } from '../../components/ui/AureliaLogo'
 import { AppleMark, GoogleMark } from './AuthShell'
 
@@ -38,6 +39,7 @@ export function SignInPage() {
 
   return (
     <div className="flex min-h-full flex-col bg-background-default lg:items-center lg:justify-center lg:bg-background-elevated lg:py-48">
+      <PageMeta title="Sign in" description="Sign in to Aurelia to build and play your personalized sessions." />
       <div className="relative flex h-dvh w-full max-w-[402px] flex-col overflow-hidden bg-background-default lg:aspect-[402/874] lg:h-auto lg:max-h-[874px] lg:w-[402px] lg:rounded-24 lg:shadow-xl">
         {/* The supplied photo (402×661) is its own crop, not a full-bleed
             source to stretch — rendered at its native ratio rather than

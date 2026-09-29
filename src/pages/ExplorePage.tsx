@@ -2,6 +2,7 @@ import { ArrowRight, Clock, Coins, ListFilter, Menu, Play, Podium, Users } from 
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import liveSessionsMap from '../assets/live-sessions-map.png'
+import { PageMeta } from '../components/PageMeta'
 import { Chip } from '../components/ui/Chip'
 import { CoverImage } from '../components/ui/CoverImage'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
@@ -179,6 +180,10 @@ export function ExplorePage() {
 
   return (
     <div className="pb-48" style={{ background: 'linear-gradient(180deg, #ffffff, #fff6e6 40%, #ffffff)' }}>
+      <PageMeta
+        title="Explore"
+        description="Browse sessions by category, discover trusted creators, and join a monthly challenge."
+      />
       <div className="flex items-center justify-between gap-12 px-20 py-16 lg:px-24">
         <div className="flex items-center gap-8">
           <button

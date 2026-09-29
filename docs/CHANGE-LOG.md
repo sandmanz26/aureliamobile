@@ -31,6 +31,74 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-29 — Production-readiness pass: SEO, security headers, error handling
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (a web-specific pass — `strict` TS, Vercel
+headers, `<title>` hoisting and `robots.txt` have no Flutter equivalent) /
+`storybook` (no component-level change).
+
+A senior-level pass ahead of the backend engineer joining, covering code
+structure, security and SEO/metadata — with the mock-data reality (see
+`docs/FOR-BACKEND.md`) deliberately left untouched. Findings and fixes:
+
+- **TypeScript `strict` was off** in all three tsconfigs. Turning it on
+  surfaced zero errors — the code was already disciplined — but the setting
+  itself matters once real, possibly-`null` API responses replace the mock
+  constants. `api/config.ts`, the one serverless function in the repo, was
+  not covered by *any* tsconfig project and so was never actually
+  typechecked by `npm run typecheck`; it now has its own
+  (`tsconfig.api.json`), and passes strict mode cleanly too.
+- **No `ErrorBoundary` anywhere.** A render crash unmounted React entirely to
+  a blank white page. Added one (`src/components/ErrorBoundary.tsx`) around
+  the whole app, with an on-brand fallback and a `console.error` seam marked
+  for a real error-reporting service later.
+- **No catch-all route.** An unmatched path rendered nothing, and
+  `vercel.json`'s SPA rewrite still answered 200 — a dead link looked like a
+  blank page that loaded fine. Added `NotFoundPage` on `*`, `noindex`d.
+- **No per-page `<title>` or meta description**, anywhere — every route
+  showed the same static "Aurelia" tab title, and social/search previews
+  would too. Added `PageMeta` (uses React 19's native `<title>`/`<meta>`
+  hoisting, no library) and wired it into every consumer page.
+- **No security headers, no CSP.** Added `X-Content-Type-Options`,
+  `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` (camera,
+  microphone and geolocation all denied — nothing in the web client calls
+  any of them yet; the voice recorder's waveform is `Math.random()`, not a
+  real mic, unlike the Flutter client's), `Strict-Transport-Security`, and a
+  `Content-Security-Policy` scoped to the domains the app actually loads
+  from. Verified against a simulated CSP in a real browser: zero violations.
+- **`api/config.ts` hardening**, within its documented unauthenticated-by-
+  design shape: capped the flag count and key length an unauthenticated POST
+  can write (a storage-cost knob otherwise open-ended), and stopped
+  returning raw upstream error text to the caller (logged server-side
+  instead).
+- **`robots.txt` added, `noindex, nofollow` set globally.** The site is a
+  password-gated private preview on invented data — nothing here should be
+  indexed yet. Both are commented with exactly what to change when that
+  stops being true.
+- **A real bug**: `INVITE_LINK` was defined twice with two different
+  domains — `lib/credits.ts` had a typo'd `aurellia.ai`, `InvitePage.tsx`
+  had its own locally-declared, correctly-spelled copy. Depending on which
+  screen a user copied their referral link from, they got a different URL.
+  Consolidated to the one in `lib/credits.ts` (typo fixed), `InvitePage`
+  now imports it — same fix applied to the duplicated `500`-coin reward
+  constant.
+- Deleted `PlaceholderPage.tsx` — confirmed unreferenced anywhere in the
+  tree (superseded by `ModuleGuard`'s inline "not part of this walkthrough"
+  state).
+
+**Deliberately not changed**, because it needs a decision or a backend, not
+a cleanup pass: `/admin` and `/api/config` remain unauthenticated (both
+already documented P0/known-limitations in `docs/PRD.md` and
+`docs/FOR-BACKEND.md` — a demo-flag toggle is not auth, and bolting on a
+fake client-side login would be worse than the honest gap); no test
+framework added (none exists today, and choosing one is worth the
+incoming backend engineer's input); the site lock and mock data are
+untouched, as asked.
+
+---
+
 ### 2026-09-29 — `GeneratingShape` now traces the actual reference sequence
 
 **Lands on:** `web_app`

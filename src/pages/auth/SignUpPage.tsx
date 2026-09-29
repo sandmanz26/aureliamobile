@@ -2,6 +2,7 @@ import { Check, Eye, EyeOff, Lock, Mail, User } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
+import { PageMeta } from '../../components/PageMeta'
 import { Button } from '../../components/ui/Button'
 import { TextField } from '../../components/ui/TextField'
 import { AuthPhotoHeader, SocialSignIn } from './AuthShell'
@@ -65,6 +66,7 @@ export function SignUpPage() {
 
   return (
     <div className="flex min-h-full flex-col bg-background-default lg:items-center lg:justify-center lg:bg-background-elevated lg:py-48">
+      <PageMeta title="Create an account" description="Create your Aurelia account to start building personalized sessions." />
       <div className="flex h-dvh w-full max-w-[402px] flex-col overflow-hidden lg:h-auto lg:max-h-[874px] lg:rounded-24 lg:border lg:border-border-subtle lg:shadow-xl">
         <AuthPhotoHeader backTo="/home" />
         <div className="min-h-0 flex-1 overflow-y-auto px-24 pb-24 pt-20">

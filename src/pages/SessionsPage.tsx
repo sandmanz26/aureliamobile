@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ArrowDown, ArrowUp, Menu, Pencil, Plus, Play, Shuffle, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { PageMeta } from '../components/PageMeta'
 import { CoinPill } from '../components/ui/CoinPill'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { useSignInGate } from '../auth/useSignInGate'
@@ -212,6 +213,7 @@ export function SessionsPage() {
 
   return (
     <div className="pb-40">
+      <PageMeta title="Sessions" description="Browse and manage your Aurelia sessions." />
       <div className="mx-auto max-w-[960px]">
         {/* Header: 68 tall on a 20px gutter, 12 top and bottom, 20 between the
             menu and the title. */}

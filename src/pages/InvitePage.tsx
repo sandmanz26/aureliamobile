@@ -1,7 +1,9 @@
 import { Check, Copy, MapPin, MessageCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { PageMeta } from '../components/PageMeta'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { useDrawer } from '../layouts/DrawerContext'
+import { INVITE_LINK, INVITE_REWARD } from '../lib/credits'
 import type { CoverKey } from '../lib/photos'
 import { CoinMark, CoinPill } from '../components/ui/CoinPill'
 
@@ -11,12 +13,16 @@ import { CoinMark, CoinPill } from '../components/ui/CoinPill'
  * The referral link is the whole screen — everything above it exists to explain
  * why to send it. So the field is wide, the URL is fully visible, and copying is
  * one tap with a state change that proves it worked.
+ *
+ * `INVITE_LINK` and the reward figure come from `lib/credits.ts` — the same
+ * ones Credits shows in its own history. They used to be redeclared here
+ * with a different (correctly-spelled) domain than the one in `lib/credits.ts`,
+ * so which link a referral actually pointed to depended on which of the two
+ * screens copied it.
  */
-const REWARD = 500
 
 // A per-user code has to be here in production, or two people's invites are
 // indistinguishable and neither can be credited. Shown plain for the demo.
-const INVITE_LINK = 'https://www.aurelia.ai/inviteafriend'
 
 /** Orbiting friends, placed as percentages of the illustration box. */
 const ORBIT: { photo: CoverKey; size: number; left: string; top: string }[] = [
@@ -52,7 +58,7 @@ function InviteConstellation() {
           </span>
           <span className="absolute -top-6 left-1/2 flex h-32 items-center gap-6 whitespace-nowrap rounded-full bg-surface-default px-12 shadow-md">
             <CoinMark size={16} />
-            <span className="text-style-label text-text-primary">+{REWARD}</span>
+            <span className="text-style-label text-text-primary">+{INVITE_REWARD}</span>
           </span>
         </span>
       </span>
@@ -110,6 +116,7 @@ export function InvitePage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background-default">
+      <PageMeta title="Invite a Friend" description="Share your Aurelia link and earn credits when a friend joins." />
       <header className="u-sticky-top flex items-center justify-between gap-12 px-20 py-16 lg:px-24">
         <div className="flex items-center gap-12">
           <button
@@ -136,7 +143,7 @@ export function InvitePage() {
 
         <h2 className="text-style-title-large mt-40 text-center text-text-primary">Invite Friends, Get Points!</h2>
         <p className="text-style-body mt-12 text-center text-text-secondary">
-          Share the link below with a friend. When they sign up, you both get {REWARD} credits!
+          Share the link below with a friend. When they sign up, you both get {INVITE_REWARD} credits!
         </p>
 
         <div className="mt-32 flex h-56 items-center gap-12 rounded-full border border-amber-300 bg-surface-default pl-20 pr-12">

@@ -26,6 +26,7 @@ import { FeatureFlagsProvider } from './demo/FeatureFlags'
 import { ModuleGuard } from './demo/ModuleGuard'
 import { AppLayout } from './layouts/AppLayout'
 import { DemoControlPage } from './pages/DemoControlPage'
+import { NotFoundPage } from './pages/NotFoundPage'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
 import { SignInPage } from './pages/auth/SignInPage'
@@ -396,6 +397,10 @@ export default function App() {
           </Route>
           {/* Home is the front door now — a visitor can read it without an account. */}
           <Route path="/" element={<Navigate to="/home" replace />} />
+          {/* Catch-all: without this, an unmatched path rendered nothing (no
+              route to pick) and `vercel.json` still answers 200, so a dead
+              link looked like a blank page that loaded fine instead of a 404. */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
         </ChatSessionProvider>
         </AudioPlayerProvider>

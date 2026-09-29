@@ -1,6 +1,7 @@
 import { ArrowLeft, Podium, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { PageMeta } from '../components/PageMeta'
 import { Chip } from '../components/ui/Chip'
 import { CoinPill } from '../components/ui/CoinPill'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
@@ -87,6 +88,7 @@ export function NotificationsPage() {
     /* White, not background-default. The frame's body is surface/default and
        the rows sit directly on it — there is no card and no tint. */
     <div className="flex min-h-screen flex-col bg-surface-default">
+      <PageMeta title="Notifications" />
       {/* `.u-sticky-top` paints background-default and sits outside Tailwind's
           utility layer, so it beats bg-surface-default on class order alone —
           the `!` is what actually makes this header white. The frame's is

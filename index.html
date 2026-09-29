@@ -4,6 +4,43 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#FFF1DB" />
+
+    <!-- Static fallback for anything that reads this file without running
+         JavaScript — most social-preview bots, and a search crawler that
+         skips rendering. `PageMeta` (src/components/PageMeta.tsx) overrides
+         the title and description once a page actually mounts, but that
+         never reaches a client that doesn't execute JS, which is also why
+         this is the meta description used in a raw link preview. -->
+    <meta
+      name="description"
+      content="Aurelia builds a personalized meditation, breathwork, or sleep session from a conversation, and remembers what helps you."
+    />
+    <!-- Matches robots.txt: this is a private, password-gated preview built
+         on mock data, not a page meant to be indexed or link-previewed yet.
+         Remove once there is a real public surface to open up — see the
+         comment in robots.txt for what that switch looks like. -->
+    <meta name="robots" content="noindex, nofollow" />
+
+    <!-- No og:image: there is no designed social-card asset yet (the
+         content photos elsewhere in the app are Unsplash hotlinks, not a
+         brand asset, and would be a strange thing to promise a preview
+         browser is "Aurelia"). Add a real 1200x630 image and this tag
+         before this is meant to be shared. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Aurelia" />
+    <meta property="og:title" content="Aurelia" />
+    <meta
+      property="og:description"
+      content="Aurelia builds a personalized meditation, breathwork, or sleep session from a conversation, and remembers what helps you."
+    />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Aurelia" />
+    <meta
+      name="twitter:description"
+      content="Aurelia builds a personalized meditation, breathwork, or sleep session from a conversation, and remembers what helps you."
+    />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Mulish is font-family/base in the Figma variables, and now the app's

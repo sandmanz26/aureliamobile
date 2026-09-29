@@ -2,6 +2,7 @@ import { ChevronDown, Menu } from 'lucide-react'
 import { useState } from 'react'
 import { HELP_TOPICS } from '../lib/help'
 import { useDrawer } from '../layouts/DrawerContext'
+import { PageMeta } from '../components/PageMeta'
 import { CoinPill } from '../components/ui/CoinPill'
 
 /**
@@ -28,6 +29,10 @@ export function HelpPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background-default">
+      <PageMeta
+        title="Help"
+        description="Answers to common questions about Aurelia — accounts, sessions, credits, and privacy."
+      />
       <header className="u-sticky-top flex items-center justify-between gap-12 px-20 py-16 lg:px-24">
         <div className="flex min-w-0 items-center gap-12">
           <button

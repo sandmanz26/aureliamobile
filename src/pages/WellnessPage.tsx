@@ -1,5 +1,6 @@
 import { ChevronRight, Menu, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { PageMeta } from '../components/PageMeta'
 import { useDrawer } from '../layouts/DrawerContext'
 import type { SignalGroup } from '../lib/signals'
 import { SIGNAL_GROUPS, defaultConnections, sourcesInGroup } from '../lib/signals'
@@ -103,6 +104,10 @@ export function WellnessPage() {
 
   return (
     <div className="bg-background-default pb-48">
+      <PageMeta
+        title="My Wellness"
+        description="The signal sources Aurelia may read, and what each one is used for."
+      />
       <header className="u-sticky-top flex items-center justify-between gap-12 px-20 py-16 lg:px-24">
         <div className="flex min-w-0 items-center gap-8">
           <button

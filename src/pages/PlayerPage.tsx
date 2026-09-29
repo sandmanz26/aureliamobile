@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { RecommendationCard } from '../components/chat/RecommendationCard'
+import { PageMeta } from '../components/PageMeta'
 import { RECOMMENDATIONS } from '../chat/ChatSessionContext'
 import { useAudioPlayer } from '../audio/AudioPlayerContext'
 import { CoinPill } from '../components/ui/CoinPill'
@@ -330,6 +331,7 @@ export function PlayerPage() {
     // h-dvh and clipped: the art is the screen and nothing behind it scrolls.
     // The sheet does its own moving on top.
     <div className="relative h-dvh overflow-hidden bg-black">
+      <PageMeta title={session.title} description={session.description} />
       {/* Full-bleed to the window, not to the frame's 402. Capped, it left a
           white strip down either side of the photograph on every phone wider
           than that. */}

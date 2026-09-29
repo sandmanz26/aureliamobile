@@ -16,6 +16,7 @@ import {
   Users,
 } from 'lucide-react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { PageMeta } from '../components/PageMeta'
 import { CoverImage } from '../components/ui/CoverImage'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { progressFor, writeObjective } from '../lib/progress'
@@ -277,6 +278,7 @@ export function ProgressPage() {
 
   return (
     <div className="min-h-dvh bg-background-default pb-40">
+      <PageMeta title={`${session.title} — Progress`} />
       <div className="mx-auto w-full max-w-[402px] lg:max-w-[960px]">
         {/* Header: 68 tall on the page gutter, 20 between the back button and
             the title, which is Regular 24/24 like every other screen title. */}

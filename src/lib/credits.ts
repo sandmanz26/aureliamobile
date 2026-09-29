@@ -5,7 +5,7 @@
 // and this is the only place that says where it came from.
 
 /** The referral link the Invite card offers. The frame's own copy. */
-export const INVITE_LINK = 'https://www.aurellia.ai/inviteafriend'
+export const INVITE_LINK = 'https://www.aurelia.ai/inviteafriend'
 
 /** What both sides get when an invite is taken up. */
 export const INVITE_REWARD = 500

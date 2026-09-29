@@ -5,6 +5,7 @@ import { ArrowLeft, Check, ChevronUp, CircleDollarSign, LogOut, Plus, User, User
 import { useNavigate } from 'react-router-dom'
 import { GoogleMark } from './auth/AuthShell'
 import { useAuth } from '../auth/AuthContext'
+import { PageMeta } from '../components/PageMeta'
 import { CoinPill } from '../components/ui/CoinPill'
 
 /** One tappable line in the list under the accounts block. Plain — every row
@@ -205,6 +206,7 @@ export function AccountSettingsPage() {
 
   return (
     <div className="mx-auto max-w-[960px] px-20 py-16 lg:px-24 lg:py-24">
+      <PageMeta title="Settings" />
       <header className="u-sticky-top flex items-center justify-between gap-12">
         <div className="flex min-w-0 items-center gap-20">
           {/* Back, not the drawer: this screen is opened by the gear on your

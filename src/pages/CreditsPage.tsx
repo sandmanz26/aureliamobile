@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react'
 import { ArrowLeft, Check, Copy } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { PageMeta } from '../components/PageMeta'
 import { CoinMark } from '../components/ui/CoinPill'
 import { CREDIT_HISTORY, INVITE_LINK, INVITE_REWARD, TOTAL_CREDITS } from '../lib/credits'
 
@@ -40,6 +41,7 @@ export function CreditsPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background-default">
+      <PageMeta title="Credits" description="Your coin balance and how you earned it." />
       {/* 20 across, 12 down, 20 between the back button and the title. */}
       <header className="u-sticky-top flex items-center gap-20 px-20 py-12 lg:px-24">
         <button

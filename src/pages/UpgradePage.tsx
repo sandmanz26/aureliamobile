@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Check, Sparkles, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { PageMeta } from '../components/PageMeta'
 
 /** What the plan is worth, said as the product would say it. */
 const BENEFITS = [
@@ -49,6 +50,7 @@ export function UpgradePage() {
          rather than behind the copy — the page argues in words, not colour. */
       style={{ background: 'linear-gradient(180deg, #FFFFFF 0%, #FFF6E9 62%, #FFD9A3 100%)' }}
     >
+      <PageMeta title="Upgrade" description="More sessions, more room to explore, and priority placement in Explore." />
       <div className="flex justify-end px-20 pt-12 lg:px-24">
         <button
           type="button"

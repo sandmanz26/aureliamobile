@@ -1,6 +1,7 @@
 import { ArrowLeft, Mail, MailCheck } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { PageMeta } from '../../components/PageMeta'
 import { Button } from '../../components/ui/Button'
 import { TextField } from '../../components/ui/TextField'
 import { AuthPhotoHeader } from './AuthShell'
@@ -32,6 +33,7 @@ export function ForgotPasswordPage() {
     return (
       <div className="flex min-h-full flex-col bg-background-default lg:items-center lg:justify-center lg:bg-background-elevated lg:py-48">
         <div className="flex h-dvh w-full max-w-[402px] flex-col overflow-hidden lg:h-auto lg:max-h-[874px] lg:rounded-24 lg:border lg:border-border-subtle lg:shadow-xl">
+          <PageMeta title="Check your inbox" />
           <AuthPhotoHeader backTo="/login" />
           <div className="min-h-0 flex-1 overflow-y-auto px-24 pb-24 pt-20">
             <h1 className="text-style-title-large text-text-primary">Check your inbox.</h1>
@@ -70,6 +72,7 @@ export function ForgotPasswordPage() {
   return (
     <div className="flex min-h-full flex-col bg-background-default lg:items-center lg:justify-center lg:bg-background-elevated lg:py-48">
       <div className="flex h-dvh w-full max-w-[402px] flex-col overflow-hidden lg:h-auto lg:max-h-[874px] lg:rounded-24 lg:border lg:border-border-subtle lg:shadow-xl">
+        <PageMeta title="Forgot password" description="Reset the password for your Aurelia account." />
         <AuthPhotoHeader backTo="/login" />
         <div className="min-h-0 flex-1 overflow-y-auto px-24 pb-24 pt-20">
           <h1 className="text-style-title-large text-text-primary">Forgot password.</h1>

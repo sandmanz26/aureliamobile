@@ -17,6 +17,7 @@ import { useAuth } from '../auth/AuthContext'
 import { useSignInGate } from '../auth/useSignInGate'
 import aureliaNetwork from '../assets/aurelia-network.png'
 import liveSessionsMap from '../assets/live-sessions-map.png'
+import { PageMeta } from '../components/PageMeta'
 import { Chip } from '../components/ui/Chip'
 import { CoverImage } from '../components/ui/CoverImage'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
@@ -114,6 +115,10 @@ export function HomePage() {
       className="overflow-x-hidden pb-48"
       style={{ background: 'linear-gradient(180deg, #FFFFFF 77%, #FFF1DB 100%)' }}
     >
+      <PageMeta
+        title="Home"
+        description="Aurelia builds a personalized meditation, breathwork, or sleep session from a conversation — then remembers what helps you."
+      />
       {/* Header */}
       <div className="flex items-center justify-between px-20 py-16 lg:px-24">
         <button

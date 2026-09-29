@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ArrowLeft, Menu, Settings, Share2, Shuffle, Sticker } from 'lucide-react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { PageMeta } from '../components/PageMeta'
 import { CoinPill } from '../components/ui/CoinPill'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { SessionGridCard } from '../components/ui/SessionGridCard'
@@ -65,6 +66,7 @@ export function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-[960px] px-20 py-16 lg:px-24 lg:py-24">
+      <PageMeta title={own ? 'Profile' : person.name} />
       <header className="u-sticky-top flex items-center justify-between">
         <div className="flex min-w-0 items-center gap-12">
           {own ? (
