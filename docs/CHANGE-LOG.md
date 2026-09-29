@@ -31,6 +31,25 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-29 — Profile header matched to Figma: bigger avatar, stats beside it
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (its own profile screen, not audited here) /
+`storybook` (page-level layout, not a cataloged component).
+
+Checked against the Figma "Profile" frame (16698:4914) and found three real
+drifts, on both the signed-in profile and anyone else's: the avatar was 72px
+where the frame draws 88; the stats row (Posts/Played/Recreated) was a
+separate full-width block below the name instead of living in the same text
+column beside the avatar, so its numbers sat flush with the page edge rather
+than lining up under the name; and its labels had no color class, so they
+inherited body's ink brown (`text-primary`) instead of the frame's muted
+gray (`text-secondary`). All three fixed in `ProfilePage.tsx`; verified at
+both mobile and desktop widths.
+
+---
+
 ### 2026-09-28 — A second, dark "generating" treatment behind a demo flag
 
 **Lands on:** `web_app`

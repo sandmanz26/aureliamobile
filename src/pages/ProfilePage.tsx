@@ -122,26 +122,32 @@ export function ProfilePage() {
         </div>
       </header>
 
-      <div className="mt-24 flex items-center gap-16">
+      {/* Figma 16698:4947 — the avatar is 88, not 72, and the stats row
+          (16698:4953) is nested in the text column beside it, not a
+          separate full-width block: its width matches the name/location
+          column, and each stat sits left-aligned in its own slot rather
+          than centered. */}
+      <div className="mt-24 flex items-start gap-20">
         <PhotoCircle
           photo={person.photo}
-          size={72}
+          size={88}
           gradient="var(--color-background-elevated)"
           alt={person.name}
         />
-        <div>
-          <p className="text-style-title text-text-strong">{person.name}</p>
-          <p className="text-style-label text-text-secondary">{own ? 'Dubai, UAE' : person.role}</p>
-        </div>
-      </div>
-
-      <div className="mt-24 grid grid-cols-3 divide-x divide-border-subtle py-16">
-        {shownStats.map((stat) => (
-          <div key={stat.label} className="flex flex-col items-center gap-4">
-            <p className="text-style-title text-text-strong">{stat.value}</p>
-            <p className="text-style-label">{stat.label}</p>
+        <div className="flex min-w-0 flex-1 flex-col gap-12">
+          <div>
+            <p className="text-style-title text-text-strong">{person.name}</p>
+            <p className="text-style-label text-text-secondary">{own ? 'Dubai, UAE' : person.role}</p>
           </div>
-        ))}
+          <div className="flex gap-20 divide-x divide-border-subtle">
+            {shownStats.map((stat) => (
+              <div key={stat.label} className="flex flex-1 flex-col gap-4">
+                <p className="text-style-title text-text-strong">{stat.value}</p>
+                <p className="text-style-label text-text-secondary">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Sessions is everything published; Recreated narrows that to the
