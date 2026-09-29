@@ -31,6 +31,25 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-29 — The Alignment Score needle animates
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` (no component contract
+change — `AlignmentGauge`'s props are the same, just no longer static).
+
+The gauge needle on a wellness goal's Alignment Score used to snap straight
+to its final position. It now mounts pointed at "Challenging" (0) and
+sweeps to the real score on the next frame — since `AlignmentGauge` mounts
+fresh every time a goal card is expanded, it replays on every expand, not
+just once per page load. Done as a CSS `transform: rotate()` transition on
+the needle's `<g>` rather than recomputing its triangle on every animation
+frame: the shape is drawn once, the browser interpolates the angle.
+`transition-duration` collapses to 1ms under `prefers-reduced-motion` via
+the existing blanket rule in `motion.css` — nothing extra needed for that.
+
+---
+
 ### 2026-09-29 — My Wellness gets an Analytics tab
 
 **Lands on:** `web_app`
