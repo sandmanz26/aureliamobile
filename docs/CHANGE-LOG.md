@@ -31,6 +31,28 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-29 — Match ProfilePage's header and stats to Figma 16744:6367
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` (page-level, no shared
+component contract changed).
+
+Pulled the full node tree for the "Profile" frame straight from Figma via the
+Desktop Bridge plugin and diffed it against `ProfilePage.tsx` property by
+property. Fixed what was specific to this page: the header title is Title
+Large *Regular* (24/400), not the Title Large SemiBold used for other page
+headings; the menu/share/settings buttons are a radius-12 squircle, not a
+full circle, with 20px icons throughout (was 24/18/18); the name and each
+stat value read at Body (16/Regular) with the label at Label Regular
+(12/Regular), not Title/Label's larger Medium pairing; the tab bar is Body
+Small (14/Regular) with 20px icons, not Label (12/Medium) with 16px icons.
+Left two things alone even though the frame disagrees with them: `CoinPill`
+and `SessionGridCard` are shared across 4-5 other pages, and changing their
+shape or type scale from one page's Figma reference risks second-guessing
+frames I haven't checked. Also left the old stale `Figma 16698:4947` code
+comment's node reference updated to the one actually used here.
+
 ### 2026-09-29 — Fix a dead typography class on the Player Beta card title
 
 **Lands on:** `web_app`

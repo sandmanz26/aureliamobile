@@ -74,9 +74,9 @@ export function ProfilePage() {
               type="button"
               aria-label="Open menu"
               onClick={openDrawer}
-              className="flex size-44 items-center justify-center rounded-full bg-surface-default text-icon-default shadow-sm lg:hidden"
+              className="flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-default shadow-sm lg:hidden"
             >
-              <Menu size={24} />
+              <Menu size={20} />
             </button>
           ) : (
             <button
@@ -88,7 +88,7 @@ export function ProfilePage() {
               <ArrowLeft size={24} />
             </button>
           )}
-          <h1 className="text-style-title-large truncate text-text-primary">
+          <h1 className="text-style-title-large-regular truncate text-text-primary">
             {own ? 'Profile' : person.name}
           </h1>
         </div>
@@ -106,9 +106,9 @@ export function ProfilePage() {
           <button
             type="button"
             aria-label={own ? 'Share profile' : `Share ${person.name}`}
-            className="flex size-44 items-center justify-center rounded-full bg-surface-default text-icon-default shadow-sm"
+            className="flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-default shadow-sm"
           >
-            <Share2 size={18} />
+            <Share2 size={20} />
           </button>
           {/* Only on your own profile: there is nothing of a stranger's to
               configure. */}
@@ -116,19 +116,19 @@ export function ProfilePage() {
             <Link
               to="/settings"
               aria-label="Settings"
-              className="u-press flex size-44 items-center justify-center rounded-full bg-surface-default text-icon-default shadow-sm"
+              className="u-press flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-default shadow-sm"
             >
-              <Settings size={18} />
+              <Settings size={20} />
             </Link>
           )}
         </div>
       </header>
 
-      {/* Figma 16698:4947 — the avatar is 88, not 72, and the stats row
-          (16698:4953) is nested in the text column beside it, not a
-          separate full-width block: its width matches the name/location
-          column, and each stat sits left-aligned in its own slot rather
-          than centered. */}
+      {/* Figma 16744:6367 — avatar 88, stats row nested in the text column
+          beside it (not a separate full-width block), name/stat value on
+          Body (16/Regular) and the location/stat label on Label Regular
+          (12/Regular) — the smaller, lighter pairing the frame actually
+          draws, not Title/Label's larger Medium weight. */}
       <div className="mt-24 flex items-start gap-20">
         <PhotoCircle
           photo={person.photo}
@@ -138,14 +138,14 @@ export function ProfilePage() {
         />
         <div className="flex min-w-0 flex-1 flex-col gap-12">
           <div>
-            <p className="text-style-title text-text-strong">{person.name}</p>
-            <p className="text-style-label text-text-secondary">{own ? 'Dubai, UAE' : person.role}</p>
+            <p className="text-style-body text-text-strong">{person.name}</p>
+            <p className="text-style-label-regular text-text-secondary">{own ? 'Dubai, UAE' : person.role}</p>
           </div>
           <div className="flex gap-20 divide-x divide-border-subtle">
             {shownStats.map((stat) => (
               <div key={stat.label} className="flex flex-1 flex-col gap-4">
-                <p className="text-style-title text-text-strong">{stat.value}</p>
-                <p className="text-style-label text-text-secondary">{stat.label}</p>
+                <p className="text-style-body text-text-strong">{stat.value}</p>
+                <p className="text-style-label-regular text-text-secondary">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -167,13 +167,13 @@ export function ProfilePage() {
             type="button"
             onClick={() => setTab(id)}
             aria-current={tab === id}
-            className={`u-press flex flex-1 items-center justify-center gap-6 border-b-2 py-12 text-style-label ${
+            className={`u-press flex flex-1 items-center justify-center gap-6 border-b-2 py-12 text-style-body-small ${
               tab === id
                 ? 'border-[#ff881b] font-medium text-text-primary'
                 : 'border-transparent text-text-secondary'
             }`}
           >
-            <Icon size={16} />
+            <Icon size={20} />
             {label}
           </button>
         ))}
