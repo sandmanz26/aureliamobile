@@ -31,6 +31,27 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-29 — `GeneratingShape` now traces the actual reference sequence
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (no `/__demo` concept there yet) /
+`storybook` (still behind an unreleased flag, no story yet).
+
+The first pass at the `chat.generatingV2` morphing mark used an arbitrary
+on/off pattern across four cells, not Figma's actual "Squares, Spinner
+squares-6" reference. Traced the reference frame by frame (pixel-sampled
+each frame's slot-aligned grid position and corner colors, not eyeballed):
+a single lit cell walks clockwise TL→TR→BR→BL, leaving a pale trail as it
+grows into a full square over the first four steps, then walks the same
+four corners again erasing the cell two steps behind it, shrinking back to
+one corner before the loop restarts. `GeneratingShape.tsx` rewritten to
+that exact walk/present-set logic, with the lit cell's gradient and the
+settled cells' fill color matched to the reference's sampled hex values.
+Still off by default behind `chat.generatingV2`.
+
+---
+
 ### 2026-09-29 — Profile header matched to Figma: bigger avatar, stats beside it
 
 **Lands on:** `web_app`
