@@ -20,13 +20,12 @@ import { PageMeta } from '../components/PageMeta'
 import { CoverImage } from '../components/ui/CoverImage'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { progressFor, writeObjective } from '../lib/progress'
+import { CARD_SHADOW } from '../lib/shadows'
 import { ObjectiveSheet } from '../components/ui/ObjectiveSheet'
 import type { ProgressTab, Version } from '../lib/progress'
 import { findSession, isPublished } from '../lib/sessions'
 import { useChatSession } from '../chat/ChatSessionContext'
 
-/** The card shadow every surface in this design shares (Figma effect 16520:822). */
-const CARD_SHADOW = 'shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)]'
 
 const TABS: { id: ProgressTab; label: string; icon: typeof Library }[] = [
   { id: 'chapters', label: 'Chapters', icon: Library },

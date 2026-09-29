@@ -4,6 +4,7 @@ import { PageMeta } from '../components/PageMeta'
 import { useDrawer } from '../layouts/DrawerContext'
 import type { SignalGroup } from '../lib/signals'
 import { SIGNAL_GROUPS, defaultConnections, sourcesInGroup } from '../lib/signals'
+import { CARD_SHADOW } from '../lib/shadows'
 import { CoinPill } from '../components/ui/CoinPill'
 
 /**
@@ -29,8 +30,6 @@ function SpiralMark({ size = 64 }: { size?: number }) {
   )
 }
 
-/** The card shadow every surface in this design shares (Figma effect 16520:822). */
-const CARD_SHADOW = 'shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)]'
 
 /**
  * The switch on every source row — Figma ".switch" (16523:14071).

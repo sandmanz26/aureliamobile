@@ -1,26 +1,23 @@
-import { Check, CheckCheck, WandSparkles } from 'lucide-react'
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { WandSparkles } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { AddSheet } from '../components/chat/AddSheet'
 import { PageMeta } from '../components/PageMeta'
 import { ChatComposer } from '../components/chat/ChatComposer'
+import { ChatMessageItem } from '../components/chat/ChatMessageItem'
 import { FreeLimitNotice } from '../components/chat/FreeLimitNotice'
 import { EmptyThread, EmptyThreadPrompts } from '../components/chat/EmptyThread'
 import { ChatHeader } from '../components/chat/ChatHeader'
 import { MiniPlayer } from '../components/chat/MiniPlayer'
 import { PublishSheet } from '../components/chat/PublishSheet'
 import { useAudioPlayer } from '../audio/AudioPlayerContext'
-import { RECOMMENDATIONS, useChatSession } from '../chat/ChatSessionContext'
+import { useChatSession } from '../chat/ChatSessionContext'
 import type { Message, Status } from '../chat/ChatSessionContext'
 import type { RecreateBrief } from '../chat/recreate'
-import { AttachedSession } from '../components/chat/AttachedSession'
 import { draftTitleFor, findQuickStart } from '../lib/quickStart'
 import { replyTo } from '../lib/replies'
-import { RecommendationCard } from '../components/chat/RecommendationCard'
-import { RecommendationDeck } from '../components/chat/RecommendationDeck'
 import { SessionProgressCard } from '../components/chat/SessionProgressCard'
 import { SessionProgressCardV2 } from '../components/chat/SessionProgressCardV2'
-import { VoiceMessage } from '../components/chat/VoiceMessage'
 import { VoiceRecorder } from '../components/chat/VoiceRecorder'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { useFeatureFlags } from '../demo/FeatureFlags'
@@ -49,10 +46,6 @@ const OPENERS = [
 ]
 
 
-function clockTime(at: number) {
-  return new Date(at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-}
-
 /** Three dots, the universal "still typing" tell. */
 function TypingDots() {
   return (
@@ -65,17 +58,6 @@ function TypingDots() {
         />
       ))}
     </span>
-  )
-}
-
-function StatusTicks({ status }: { status: Status }) {
-  if (status === 'sending') {
-    return <span className="text-style-caption text-text-secondary">Sending…</span>
-  }
-  return status === 'read' ? (
-    <CheckCheck size={13} className="text-text-brand" />
-  ) : (
-    <Check size={13} className="text-text-secondary" />
   )
 }
 
@@ -706,106 +688,26 @@ export function ChatPage() {
             const next = messages[index + 1]
             // A run is consecutive messages from the same sender inside two
             // minutes: only its first bubble gets the avatar, only its last
-            // gets the timestamp.
+            // gets the timestamp. Kept here rather than in `ChatMessageItem`,
+            // since it is the one thing about a message that needs its
+            // neighbors — everything else about rendering one is self-contained.
             const startsRun = !previous || previous.from !== message.from || message.at - previous.at > 120_000
             const endsRun = !next || next.from !== message.from || next.at - message.at > 120_000
 
-            // Stacked full width, not a scrolling rail: these are read one
-            // after another and the longest runs to two lines, which a rail
-            // would either clip or leave ragged.
-            const promptList = message.prompts?.length ? (
-              <div className="u-message mt-8 flex flex-col gap-8 pl-34">
-                {message.prompts.map((prompt) => (
-                  <button
-                    key={prompt}
-                    type="button"
-                    onClick={() => sendMessage(prompt)}
-                    className="u-press rounded-[20px] border border-border-subtle bg-surface-default px-16 py-14 text-left text-[14px] leading-[20px] text-text-primary"
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              </div>
-            ) : null
-
-            const attached = message.attachment
-            const attachment =
-              typeof attached === 'object' ? (
-                <div
-                  className={`u-message mt-8 flex ${
-                    message.from === 'user' ? 'justify-end' : 'pl-34'
-                  }`}
-                >
-                  <AttachedSession slug={attached.session} />
-                </div>
-              ) : attached === 'recommendations' && showRecommendations ? (
-                deckOpen && canApply ? (
-                  <div className="u-message -mx-20 mt-12 flex gap-11 overflow-x-auto px-20 pb-4">
-                    {RECOMMENDATIONS.map((recommendation) => (
-                      <RecommendationCard
-                        key={recommendation.id}
-                        recommendation={recommendation}
-                        applied={applied.includes(recommendation.id)}
-                        onToggle={() => toggleRecommendation(recommendation.id)}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  // Not indented under the avatar: the frame runs the deck the
-                  // full width of the message column and lets the front card
-                  // lead 4px into the gutter. It needs the room — indented,
-                  // the steps had to tighten on a narrow screen and the whole
-                  // point of the deck, the orbs behind, went back into hiding.
-                  <div className="u-message -ml-4 mt-12">
-                    <RecommendationDeck
-                      recommendations={RECOMMENDATIONS}
-                      count={applied.length || RECOMMENDATIONS.length}
-                      onOpen={canApply ? () => setDeckOpen(true) : undefined}
-                    />
-                  </div>
-                )
-              ) : null
-
-            if (message.from === 'aurelia') {
-              return (
-                <Fragment key={message.id}>
-                <div className={`u-message flex gap-10 pr-40 ${startsRun ? 'mt-12' : 'mt-2'}`}>
-                  <span className="w-24 shrink-0">
-                    {startsRun && <AureliaLogo iconSize={24} markOnly />}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    {startsRun && (
-                      <p className="text-style-caption mb-2 text-text-secondary">Aurelia</p>
-                    )}
-                    <p className="text-style-body-small whitespace-pre-line text-text-primary">{message.text}</p>
-                    {endsRun && (
-                      <p className="text-style-caption mt-4 text-text-secondary">{clockTime(message.at)}</p>
-                    )}
-                  </div>
-                </div>
-                {promptList}
-                {attachment}
-                </Fragment>
-              )
-            }
-
             return (
-              <div key={message.id} className={`u-message flex flex-col items-end ${startsRun ? 'mt-12' : 'mt-2'}`}>
-                {message.voice ? (
-                  <VoiceMessage durationMs={message.voice.durationMs} transcript={message.text} />
-                ) : (
-                  <p className="text-style-body-small max-w-[283px] whitespace-pre-line rounded-16 bg-brand-default px-17 py-10 text-text-strong">
-                    {message.text}
-                  </p>
-                )}
-                {attachment}
-                {endsRun && (
-                  <span className="mt-4 flex items-center gap-4">
-                    <span className="text-style-caption text-text-secondary">{clockTime(message.at)}</span>
-                    {message.status && <StatusTicks status={message.status} />}
-                  </span>
-                )}
-              </div>
+              <ChatMessageItem
+                key={message.id}
+                message={message}
+                startsRun={startsRun}
+                endsRun={endsRun}
+                showRecommendations={showRecommendations}
+                deckOpen={deckOpen}
+                canApply={canApply}
+                applied={applied}
+                onToggleRecommendation={toggleRecommendation}
+                onOpenDeck={() => setDeckOpen(true)}
+                onSendPrompt={sendMessage}
+              />
             )
           })}
 

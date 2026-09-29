@@ -4,9 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import { PageMeta } from '../components/PageMeta'
 import { CoinMark } from '../components/ui/CoinPill'
 import { CREDIT_HISTORY, INVITE_LINK, INVITE_REWARD, TOTAL_CREDITS } from '../lib/credits'
+import { CARD_SHADOW } from '../lib/shadows'
 
-/** The card shadow every surface in this design shares (Figma effect 16520:822). */
-const CARD_SHADOW = 'shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)]'
 
 /**
  * Figma "Profile/Credits" (16658:29260) — where the coin balance goes.

@@ -7,11 +7,10 @@ import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { useSignInGate } from '../auth/useSignInGate'
 import { useDrawer } from '../layouts/DrawerContext'
 import { CURRENT_USER } from '../lib/people'
+import { CARD_SHADOW } from '../lib/shadows'
 import type { SessionRecord } from '../lib/sessions'
 import { PUBLISHED_SESSIONS, SESSIONS, durationLabel, isPublished, isRecreated } from '../lib/sessions'
 
-/** The card shadow every surface in this design shares (Figma effect 16520:822). */
-const CARD_SHADOW = 'shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)]'
 
 /**
  * Author and run time, at the frame's 10/14 on `text/secondary`.

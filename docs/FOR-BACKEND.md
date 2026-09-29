@@ -29,7 +29,9 @@ not invent one.
 ## 1 · The domain, as the clients already model it
 
 These are not proposals. They are the shapes the UI reads today, field for
-field, in `lib/core/data/sessions.dart` and `src/lib/sessions.ts`.
+field, in `lib/core/data/sessions.dart` and `src/lib/sessions/data.ts`
+(split from the query functions in `src/lib/sessions/queries.ts` on `web_app`
+— see that branch's README for why; the shapes below are unaffected).
 
 ### 1.1 Session
 

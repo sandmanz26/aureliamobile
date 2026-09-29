@@ -31,6 +31,60 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-29 — Code-quality pass: split the god files, kill the duplication
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (a web-specific refactor — no Dart
+equivalent of any of these files) / `storybook` (no component contract
+changed, nothing new to catalogue).
+
+A second senior-level pass, this one on structure rather than security/SEO —
+scalability, duplication, and whether the code explains itself. UI, mock data
+and demo state are explicitly untouched; every fix below is internal.
+
+- **`ChatPage.tsx` was 956 lines.** Most of that is legitimate — eight
+  distinct, heavily-commented "door" effects for the cockpit's entry points,
+  which is inherent complexity, not sloppiness. But the ~150-line per-message
+  rendering block (run-grouping, prompts, attachments, the recommendation
+  deck) was a separable concern with a clean prop boundary. Extracted to
+  `components/chat/ChatMessageItem.tsx`; `ChatPage.tsx` is now 858 lines and
+  its render body reads as "what happens," not "and here's how one bubble
+  draws." Verified behaviorally identical end-to-end (send, build, publish,
+  free-limit trip) in a real browser before and after.
+- **`src/lib/sessions.ts` was 1,607 lines** — 1,400 of them the 26-record
+  mock catalogue, the rest the dozen functions that read and mutate it. Split
+  into `lib/sessions/data.ts` (the shapes and the records) and
+  `lib/sessions/queries.ts` (`findSession`, `sessionsOnShelf`, publish/
+  unpublish, ...), re-exported through `lib/sessions/index.ts` so all 22
+  existing `from '../lib/sessions'` imports keep resolving unchanged — zero
+  consumer files touched. This *is* the seam `docs/FOR-BACKEND.md` describes
+  as the one a real API replaces; it was buried after 1,400 lines of records
+  before this.
+- **`CARD_SHADOW` was copy-pasted, identical down to its comment, into four
+  page files** (`Progress`, `Wellness`, `Sessions`, `Credits`). One of them
+  would have drifted the next time this shadow changes. Consolidated into
+  `lib/shadows.ts`, with a note on why it's a hand-written constant rather
+  than a generated design token (effects aren't in the Figma export yet).
+- **`README.md` was describing a version of this app that no longer exists**
+  — its "Structure" section listed four files from an early Figma-sync
+  proof of concept, and claimed session photography was "a placeholder, no
+  image assets exported yet," when cover art has been hotlinked from
+  Unsplash by a documented, deliberate architecture for most of this
+  project's life. Rewritten to describe the app as it actually is today:
+  real folder structure, the four state-management contexts and why each
+  one exists, the routing/guard layers, error handling, metadata — with the
+  token-pipeline section (which was accurate) kept intact.
+- Found, and flagged rather than silently fixed: the "Open menu" drawer
+  button is reimplemented per-page in nine places, with sizes, colors and
+  press-state classes that have already drifted from each other (`size-40`
+  vs `size-44`, some missing `u-press`, Home's has no background at all).
+  Not touched here — unifying it means picking one appearance, which is a
+  design call, not a refactor, and the instruction for this pass was
+  explicitly to leave the UI alone.
+
+---
+
 ### 2026-09-29 — Production-readiness pass: SEO, security headers, error handling
 
 **Lands on:** `web_app`
