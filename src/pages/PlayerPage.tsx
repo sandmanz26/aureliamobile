@@ -515,7 +515,7 @@ export function PlayerPage() {
               className="u-press flex min-w-0 items-center gap-8"
             >
               <PhotoCircle photo={session.authorPhoto} size={24} gradient={session.gradient} />
-              <span className="text-style-body-small truncate font-medium text-text-primary">{session.author}</span>
+              <span className="text-style-body truncate text-text-primary">{session.author}</span>
               <ChevronRight size={16} className="shrink-0 text-icon-default" />
             </Link>
           </div>
@@ -546,18 +546,20 @@ export function PlayerPage() {
             </button>
           </div>
 
-          {/* Hashtags: orange on a tenth of orange, with the frame's hairline. */}
+          {/* Figma 16760:1688's chips (Frame 81) are a solid #FF881B pill at
+              Body Small Light, not a tinted-border label — this page doesn't
+              share `TagRow`, so it can take the frame's own chip as-is. */}
           <div className="mt-20 flex flex-wrap gap-8">
             {tags.slice(0, SHOWN_TAGS).map((tag) => (
               <span
                 key={tag}
-                className="text-style-label flex h-30 items-center rounded-full border border-[#ff881b] bg-[#ff881b]/10 px-8 text-[#ff881b]"
+                className="text-style-body-small-light flex h-30 items-center rounded-full bg-[#ff881b] px-8 text-text-inverse"
               >
                 #{tag}
               </span>
             ))}
             {overflow > 0 && (
-              <span className="text-style-label flex h-30 items-center rounded-full border border-[#ff881b] bg-[#ff881b]/10 px-8 text-[#ff881b]">
+              <span className="text-style-body-small-light flex h-30 items-center rounded-full bg-[#ff881b] px-8 text-text-inverse">
                 +{overflow}
               </span>
             )}
@@ -573,8 +575,8 @@ export function PlayerPage() {
                 key={stat.label}
                 className="flex flex-col items-center gap-4 rounded-16 border border-border-subtle bg-surface-default p-16"
               >
-                <p className="text-style-title tabular-nums text-text-primary">{stat.value}</p>
-                <p className="text-style-body-small flex items-center gap-6 text-text-secondary">
+                <p className="text-style-title-large-regular tabular-nums text-text-primary">{stat.value}</p>
+                <p className="text-style-label-regular flex items-center gap-6 text-text-secondary">
                   {stat.icon}
                   {stat.label}
                 </p>

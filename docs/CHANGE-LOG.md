@@ -31,6 +31,35 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-30 — Fix PlayerPage's sheet typography against Figma; found a bigger gap underneath it
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` (page-level only).
+
+The user pointed at Figma 16760:2848 ("Player" x2) expecting the sheet
+below the transport to end up looking like it. Pulled all 120 of its text
+nodes; the content that has a direct match in `PlayerPage.tsx` — author,
+stats, tags — was one type-scale step off exactly like SessionDetail's own
+pass, and is fixed the same way: stat values to Title Large Regular
+(24/Regular, was Title/20/Medium), their labels to Label Regular (12, was
+Body Small/14), the author name to Body (16, was Body Small Medium/14).
+The `#hashtag` chips don't go through the shared `TagRow` here — this page
+has its own inline chip markup — so they could be changed outright to the
+frame's solid `#FF881B` pill at Body Small Light, no variant-prop decision
+needed the way SessionDetail's did.
+
+**The bigger finding:** that Figma frame is not just this page with
+different type sizes. It has an "Alignment Score" card (the same
+Challenging/Aligned gauge and Previous/Current State chips built for
+`WellnessObjectiveCard` earlier this session), a "scale" section, and a
+comparison-toggle block that don't exist anywhere in `PlayerPage.tsx` today
+— real missing sections, not a font mismatch. Left unbuilt pending a
+decision on scope; the title, description, tag, and Details/Lineage-Tree
+content that *is* already on the page matches this Figma frame's own copy
+almost verbatim, so the frame reads as "add these sections to the existing
+sheet," not "rebuild the sheet."
+
 ### 2026-09-30 — Close SessionDetail's cover seam; fix ten type-scale mismatches against Figma
 
 **Lands on:** `web_app`
