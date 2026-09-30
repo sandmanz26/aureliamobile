@@ -31,6 +31,26 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-30 — Fix Sign In's content getting clipped on short mobile viewports
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` (page-level only).
+
+Asked to make Sign In, Sign Up, and Forgot Password's height responsive on
+mobile. Sign Up and Forgot Password were already correct — both scroll their
+form under a fixed 200px photo header via `min-h-0 flex-1 overflow-y-auto`.
+Sign In was the one page without it: its photo is `shrink-0` at a fixed
+402/661 ratio (~661px tall on a 402-wide phone), and its button/legal-text
+block below had no `min-h-0` or scroll of its own, so on anything shorter
+than ~880px — measured, that's the Google/Apple buttons and the "Create an
+account" / "Forgot password?" links entirely — the flex item refused to
+shrink below its content size and the excess was clipped by the card's
+`overflow-hidden`, not scrollable. Confirmed with Playwright at 896/667/568px
+viewport heights: at 667 and 568 the sign-up link rendered at y=863,
+unreachably below the visible card. Brought Sign In in line with the other
+two screens' already-correct pattern.
+
 ### 2026-09-30 — Fix PlayerPage's sheet typography against Figma; found a bigger gap underneath it
 
 **Lands on:** `web_app`

@@ -77,7 +77,15 @@ export function SignInPage() {
           <AureliaLogo inverse />
         </div>
 
-        <div className="flex flex-1 flex-col px-24 pb-24 pt-16">
+        {/* min-h-0 + overflow-y-auto: the photo above is shrink-0 at a fixed
+            402/661 ratio, so on anything shorter than ~880px tall it alone
+            can approach the full h-dvh card height. Without this, the flex
+            item's default min-height (its own content's size) forces the
+            buttons and legal text past the card's overflow-hidden edge —
+            invisible, not scrollable. SignUp and Forgot Password already
+            scroll their own content under a fixed-height photo the same way;
+            this brings Sign In in line with them. */}
+        <div className="min-h-0 flex-1 overflow-y-auto flex flex-col px-24 pb-24 pt-16">
           <h1 className="text-style-title-large text-text-primary">Welcome to Aurelia.</h1>
 
           <div className="mt-24 flex flex-col gap-12">
