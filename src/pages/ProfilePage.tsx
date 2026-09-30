@@ -154,8 +154,10 @@ export function ProfilePage() {
 
       {/* Sessions is everything published; Recreated narrows that to the
           forks among them. Two readings of the same shelf, not two shelves —
-          switching tabs never refetches anything. */}
-      <div className="flex border-b border-border-subtle">
+          switching tabs never refetches anything. Figma 16744:6367 puts 32px
+          between the stats row and this bar — the tab button's own py-12 is
+          tap-target padding, not this gap, so it needs its own margin. */}
+      <div className="mt-32 flex border-b border-border-subtle">
         {(
           [
             { id: 'sessions', label: 'My Sessions', icon: Sticker },

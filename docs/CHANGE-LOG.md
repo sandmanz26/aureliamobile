@@ -31,6 +31,19 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-29 — Fix the gap between ProfilePage's stats and its tab bar
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` (page-level only).
+
+The tab bar had no margin-top at all — what read as spacing was only the tab
+button's own `py-12` tap-target padding. Figma 16744:6367 puts a real 32px
+gap between the stats row and the tab bar; added `mt-32` to the tab
+container rather than growing the padding, since that padding is a
+different concern (the button's own hit area) that happened to be doing
+double duty.
+
 ### 2026-09-29 — Match ProfilePage's header and stats to Figma 16744:6367
 
 **Lands on:** `web_app`
