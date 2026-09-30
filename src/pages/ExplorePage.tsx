@@ -179,47 +179,59 @@ export function ExplorePage() {
   const [categoriesOpen, setCategoriesOpen] = useState(false)
 
   return (
-    <div className="pb-48" style={{ background: 'linear-gradient(180deg, #ffffff, #fff6e6 40%, #ffffff)' }}>
+    <div className="pb-48">
       <PageMeta
         title="Explore"
         description="Browse sessions by category, discover trusted creators, and join a monthly challenge."
       />
-      <div className="flex items-center justify-between gap-12 px-20 py-16 lg:px-24">
-        <div className="flex items-center gap-8">
+      {/* Figma 16744:6839's "Top Header" is its own 122px band — status bar
+          plus header row — filled with this gradient; everything below sits
+          on the page's own flat #FAFAFA rather than a wash carried down the
+          whole screen. The bleed (-mt/pt-30) carries that band into the
+          status-bar clearance added in AppLayout, so the gradient reaches
+          the true top of the viewport instead of stopping at this div's
+          normal position. */}
+      <div
+        className="-mt-[30px] pt-[30px] lg:mt-0 lg:pt-0"
+        style={{ background: 'linear-gradient(180deg, #FFE682, #FFFFFF)' }}
+      >
+        <div className="flex items-center justify-between gap-12 px-20 py-16 lg:px-24">
+          <div className="flex items-center gap-8">
+            <button
+              type="button"
+              aria-label="Open menu"
+              onClick={openDrawer}
+              className="flex size-40 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-sm lg:hidden"
+            >
+              <Menu size={20} />
+            </button>
+            <h1 className="text-style-title-large text-text-primary">Explore</h1>
+          </div>
+          <div className="flex shrink-0 items-center gap-8">
+          <CoinPill points="1,323" className="shadow-sm" />
+          {/* A filter, not a bookmark. It opens the category sheet this screen
+              already has, so the header control and the chip row below it are
+              two ways to the same thing rather than two different promises. The
+              dot marks a filter that is on — a header that looks identical
+              whether or not the shelf is narrowed is how people lose track of
+              why a shelf looks empty. */}
           <button
             type="button"
-            aria-label="Open menu"
-            onClick={openDrawer}
-            className="flex size-40 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-sm lg:hidden"
+            aria-label={
+              category === 'All' ? 'Filter by category' : `Filtered by ${categoryLabel(category)}. Change filter`
+            }
+            onClick={() => setCategoriesOpen(true)}
+            className="u-press relative flex size-40 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-sm"
           >
-            <Menu size={20} />
+            <ListFilter size={18} />
+            {category !== 'All' && (
+              <span
+                aria-hidden="true"
+                className="absolute right-8 top-8 size-8 rounded-full border-2 border-surface-default bg-brand-emphasis"
+              />
+            )}
           </button>
-          <h1 className="text-style-title-large text-text-primary">Explore</h1>
-        </div>
-        <div className="flex shrink-0 items-center gap-8">
-        <CoinPill points="1,323" className="shadow-sm" />
-        {/* A filter, not a bookmark. It opens the category sheet this screen
-            already has, so the header control and the chip row below it are
-            two ways to the same thing rather than two different promises. The
-            dot marks a filter that is on — a header that looks identical
-            whether or not the shelf is narrowed is how people lose track of
-            why a shelf looks empty. */}
-        <button
-          type="button"
-          aria-label={
-            category === 'All' ? 'Filter by category' : `Filtered by ${categoryLabel(category)}. Change filter`
-          }
-          onClick={() => setCategoriesOpen(true)}
-          className="u-press relative flex size-40 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-sm"
-        >
-          <ListFilter size={18} />
-          {category !== 'All' && (
-            <span
-              aria-hidden="true"
-              className="absolute right-8 top-8 size-8 rounded-full border-2 border-surface-default bg-brand-emphasis"
-            />
-          )}
-        </button>
+          </div>
         </div>
       </div>
 

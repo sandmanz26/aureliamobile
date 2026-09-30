@@ -31,6 +31,49 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-30 — Bleed Home/Explore's header gradients under the status band; fix SessionDetail's floating controls
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` (page-level only).
+
+Closes the seam the previous entry flagged as a known gap, and fixes three
+more mismatches found comparing the live app against Figma 16744:6839
+(Explore) and 16744:9649 (Session Detail).
+
+**Home and Explore:** both paint their own gradient on their root div, which
+sat *inside* `AppLayout`'s new status-bar padding — so the padding showed
+the layout's flat `#FAFAFA` instead of the page's own color. Fixed with the
+standard bleed pair (`-mt-[30px] pt-[30px] lg:mt-0 lg:pt-0`) on each page's
+own background container, which pulls the background up to the true top of
+the viewport while an equal padding keeps the content where it already was.
+Explore's fix is more than a seam patch: its gradient was a `#ffffff →
+#fff6e6 → #ffffff` wash carried down the *entire* page, where Figma's
+`Top Header` draws `#FFE682 → #FFFFFF` confined to just the 122px status-bar
++ header band — the header row is now wrapped in its own gradient container
+instead of the gradient living on the page root.
+
+**Session Detail's floating controls:** the back and share buttons were a
+40px circle at the page's `left/right-16`; the frame draws a 44px
+radius-12 squircle at `left/right-20` (the app's usual 20px gutter). The
+play button was a 56px circle sitting 16px off the bottom edge; the frame
+is 44px and sits well clear of it, so it moved to `bottom-40`. The author
+row's avatar was 40px with a 12px gap and an 18px chevron on Body Small
+Medium; the frame draws a 24px avatar, an 8px gap, a 12px chevron, and Body
+Regular (no medium override) — all now match.
+
+**Also checked, no change:** the profile tab's active underline was reported
+as not spanning the full tab width, but a live render + `getBoundingClientRect`
+measurement shows it already does (each tab is a `flex-1` button with its
+own full-width `border-b-2`) — likely a stale build on the report side.
+
+**Known gap, not yet fixed:** Session Detail's cover image has the same
+seam as Home/Explore had, but its container is sized by `aspect-[375/300]`
+rather than fixed padding — the same bleed pair would fight the aspect
+ratio and grow the box taller than intended, so it needs a different
+technique (extending the image layer itself, not the container) rather
+than the one used here.
+
 ### 2026-09-30 — Bring back mobile status-bar clearance in AppLayout
 
 **Lands on:** `web_app`

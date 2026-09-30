@@ -112,7 +112,7 @@ export function HomePage() {
     // was never seen at all, instead of easing in just above it as the frame
     // draws it.
     <div
-      className="overflow-x-hidden pb-48"
+      className="-mt-[30px] overflow-x-hidden pb-48 pt-[30px] lg:mt-0 lg:pt-0"
       style={{ background: 'linear-gradient(180deg, #FFFFFF 77%, #FFF1DB 100%)' }}
     >
       <PageMeta

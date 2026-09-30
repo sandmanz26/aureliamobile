@@ -131,39 +131,43 @@ export function SessionDetailPage() {
           column's own width there instead. */}
       <div className="relative aspect-[375/300] w-full overflow-hidden lg:mx-auto lg:aspect-auto lg:h-[320px] lg:max-w-[960px] lg:rounded-24">
         <CoverImage photo={session.photo} gradient={session.gradient} width={750} height={600} />
+        {/* Figma 16744:9649 — these are 44 square with a radius-12 squircle,
+            not a 40 circle, and sit on the page's own 20px gutter, not 16. */}
         <button
           type="button"
           aria-label="Back"
           onClick={() => navigate(-1)}
-          className="u-press absolute left-16 top-16 flex size-40 items-center justify-center rounded-full bg-surface-default text-icon-strong"
+          className="u-press absolute left-20 top-16 flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-strong"
         >
           <ArrowLeft size={20} />
         </button>
         <button
           type="button"
           aria-label="Share"
-          className="u-press absolute right-16 top-16 flex size-40 items-center justify-center rounded-full bg-surface-default text-icon-strong"
+          className="u-press absolute right-20 top-16 flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-strong"
         >
-          <Share2 size={18} />
+          <Share2 size={20} />
         </button>
         <Link
           to={`/play/${session.slug}`}
           aria-label={`Play ${session.title}`}
-          className="u-press absolute bottom-16 left-16 flex size-56 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-md"
+          className="u-press absolute bottom-40 left-20 flex size-44 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-md"
         >
-          <Play size={22} fill="currentColor" />
+          <Play size={20} fill="currentColor" />
         </Link>
       </div>
 
       <div className="mx-auto w-full max-w-[402px] px-20 lg:max-w-[960px]">
-        <Link to={profilePath(session.author)} className="u-press mt-16 flex items-center gap-12">
+        {/* Figma 16744:9657 — a 24 avatar with an 8px gap, Body (not Body
+            Small/Medium) for the name, and a 12 chevron, not 40/12/18. */}
+        <Link to={profilePath(session.author)} className="u-press mt-20 flex items-center gap-8">
           <PhotoCircle
             photo={session.authorPhoto}
-            size={40}
+            size={24}
             gradient="conic-gradient(from 180deg, var(--color-blue-300), var(--color-gold-300), var(--color-blue-300))"
           />
-          <span className="text-style-body-small flex-1 font-medium text-text-primary">{session.author}</span>
-          <ChevronRight size={18} className="text-icon-strong" />
+          <span className="text-style-body flex-1 text-text-primary">{session.author}</span>
+          <ChevronRight size={12} className="text-icon-strong" />
         </Link>
 
         <h1 className="text-style-title-large mt-16 text-text-primary">{session.title}</h1>
