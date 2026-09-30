@@ -25,11 +25,11 @@ function Description({ text }: { text: string }) {
   const [open, setOpen] = useState(false)
   return (
     <div className="mt-12">
-      <p className={`text-style-body-small text-text-secondary ${open ? '' : 'line-clamp-3'}`}>{text}</p>
+      <p className={`text-style-body-small-light text-text-secondary ${open ? '' : 'line-clamp-3'}`}>{text}</p>
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="text-style-label u-tap mt-4 text-brand-emphasis"
+        className="text-style-body-small u-tap mt-4 text-brand-emphasis"
       >
         {open ? 'Read Less' : 'Read More'}
       </button>
@@ -56,12 +56,12 @@ function StylePresetCard({ style, session }: { style: AppliedStyle; session: Ses
   return (
     <div className="flex w-[164px] shrink-0 flex-col rounded-16 border border-border-subtle bg-surface-default p-12">
       <img src={ORBS[style.orb]} alt="" className="size-48 shrink-0 rounded-full object-cover" />
-      <h3 className="text-style-body-small mt-10 font-semibold text-text-primary">{style.name}</h3>
-      <p className="text-style-caption mt-2 line-clamp-2 text-text-secondary">{style.reason}</p>
+      <h3 className="text-style-body-small mt-10 text-text-primary">{style.name}</h3>
+      <p className="text-style-caption-light mt-2 line-clamp-2 text-text-secondary">{style.reason}</p>
       <button
         type="button"
         onClick={recreateWithStyle}
-        className="text-style-label u-press mt-10 flex h-32 w-full items-center justify-center gap-6 rounded-full border border-border-default text-text-primary"
+        className="text-style-label-regular u-press mt-10 flex h-32 w-full items-center justify-center gap-6 rounded-full border border-border-default text-text-primary"
       >
         <Repeat2 size={13} />
         Recreate
@@ -96,7 +96,7 @@ function LineageRow({
       >
         <PhotoCircle photo={last ? session.authorPhoto : 'avatar'} size={35} gradient={session.gradient} />
         <span className="flex min-w-0 flex-1 flex-col gap-4">
-          <span className="text-style-body-small truncate text-text-primary">{step.title}</span>
+          <span className="text-style-label-regular truncate text-text-primary">{step.title}</span>
           <span className="text-style-caption truncate text-text-secondary">
             Created by {step.author}, {lineageDate(index)}
           </span>
@@ -129,6 +129,12 @@ export function SessionDetailPage() {
           960px desktop content column would make the cover taller than the
           rest of the page, so it caps to a fixed height and the content
           column's own width there instead. */}
+      {/* The cover's own box is sized by aspect-ratio, so it can't grow to
+          bleed under the status band the way Home/Explore's padding-based
+          headers do — stretching it would throw off the ratio. A flat strip
+          in the same gradient the cover's own floor uses closes the seam
+          without a second image fetch or fighting the aspect box's math. */}
+      <div className="-mt-[30px] h-[30px] lg:hidden" style={{ background: session.gradient }} aria-hidden="true" />
       <div className="relative aspect-[375/300] w-full overflow-hidden lg:mx-auto lg:aspect-auto lg:h-[320px] lg:max-w-[960px] lg:rounded-24">
         <CoverImage photo={session.photo} gradient={session.gradient} width={750} height={600} />
         {/* Figma 16744:9649 — these are 44 square with a radius-12 squircle,
@@ -170,7 +176,10 @@ export function SessionDetailPage() {
           <ChevronRight size={12} className="text-icon-strong" />
         </Link>
 
-        <h1 className="text-style-title-large mt-16 text-text-primary">{session.title}</h1>
+        {/* Figma 16744:9649 — the session name is Title (20/Medium), not
+            Title Large (24/SemiBold); that's reserved for the sticky page
+            header, not a content heading like this one. */}
+        <h1 className="text-style-title mt-16 text-text-primary">{session.title}</h1>
         <Description text={session.summary} />
         <div className="mt-14">
           <TagRow tags={session.tags} />
@@ -178,17 +187,17 @@ export function SessionDetailPage() {
 
         <div className="mt-16 grid grid-cols-2 gap-12">
           <div className="rounded-16 border border-border-subtle p-14 text-center">
-            <p className="text-style-title tabular-nums text-text-primary">{session.plays}</p>
-            <p className="text-style-caption mt-2 text-text-secondary">Played</p>
+            <p className="text-style-title-large-regular tabular-nums text-text-primary">{session.plays}</p>
+            <p className="text-style-label-regular mt-2 text-text-secondary">Played</p>
           </div>
           <div className="rounded-16 border border-border-subtle p-14 text-center">
-            <p className="text-style-title tabular-nums text-text-primary">{session.recreated}</p>
-            <p className="text-style-caption mt-2 text-text-secondary">Recreated</p>
+            <p className="text-style-title-large-regular tabular-nums text-text-primary">{session.recreated}</p>
+            <p className="text-style-label-regular mt-2 text-text-secondary">Recreated</p>
           </div>
         </div>
 
         <section className="mt-24">
-          <h2 className="text-style-body-small text-text-primary">Recreate your own version</h2>
+          <h2 className="text-style-body text-text-primary">Recreate your own version</h2>
           <div className="-mx-20 mt-12 flex gap-12 overflow-x-auto px-20 pb-4">
             {APPLIED_STYLES.map((style) => (
               <StylePresetCard key={style.id} style={style} session={session} />
@@ -197,11 +206,11 @@ export function SessionDetailPage() {
         </section>
 
         <section className="mt-24">
-          <h2 className="text-style-body-small text-text-primary">Details</h2>
+          <h2 className="text-style-body text-text-primary">Details</h2>
           {/* Figma "Highlight/Assessment" (16523:19712) — same card Progress
               draws its own Lineage Tree with. */}
           <div className="mt-12 flex flex-col gap-20 rounded-[20px] bg-surface-default p-20 shadow-[0_4px_14px_rgba(0,0,0,0.08)]">
-            <h3 className="text-style-label text-text-primary">Lineage Tree</h3>
+            <h3 className="text-style-body-small text-text-primary">Lineage Tree</h3>
             <div className="flex flex-col gap-8">
               {session.lineage.map((step, index) => (
                 <LineageRow
@@ -213,7 +222,7 @@ export function SessionDetailPage() {
                 />
               ))}
             </div>
-            <button type="button" className="text-style-caption u-press w-fit text-text-secondary">
+            <button type="button" className="text-style-label-regular u-press w-fit text-text-secondary">
               See All ({session.lineage.length})
             </button>
           </div>
@@ -235,9 +244,9 @@ export function SessionDetailPage() {
             <Link
               to={recreate.to}
               state={recreate.state}
-              className="u-press text-style-body flex h-52 w-full items-center justify-center gap-8 rounded-full bg-icon-strong font-semibold text-text-inverse"
+              className="u-press text-style-body flex h-56 w-full items-center justify-center gap-8 rounded-16 bg-icon-strong text-text-inverse"
             >
-              <Repeat2 size={18} />
+              <Repeat2 size={20} />
               Recreate
             </Link>
           </div>

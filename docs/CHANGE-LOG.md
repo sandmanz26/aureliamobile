@@ -31,6 +31,40 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-30 — Close SessionDetail's cover seam; fix ten type-scale mismatches against Figma
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` (page-level only).
+
+**Cover seam:** the previous entry's fix for Home/Explore's status-band seam
+doesn't apply here — this cover is sized by `aspect-[375/300]`, and the same
+negative-margin-plus-padding bleed would grow the box past its intended
+ratio. Added a flat 30px strip above it in the session's own gradient
+instead, closing the seam without a second image fetch or fighting the
+aspect-ratio math.
+
+**Typography:** pulled every text node under Figma 16744:9649 with its style
+name and diffed against the page. Ten mismatches, all a size or weight off
+rather than a totally different scale: the session title was Title Large
+(24/SemiBold) where the frame draws Title (20/Medium — Title Large is for
+the sticky page header, not a content heading); the summary and its "Read
+More" control, the two stat values and their labels, the "Recreate your own
+version"/"Details" headings, "Lineage Tree" and its rows, "See All", the
+style-preset cards' body and reason text, and the footer's Recreate button
+(also `h-52 rounded-full` → the frame's `h-56 rounded-16`, and a
+`font-semibold` the frame doesn't draw) were each one step off the scale
+Figma actually specifies.
+
+**Not fixed — needs a decision:** the `#hashtag` chips use the shared
+`TagRow` component (`bg-gold-100`/`text-warning-700`, Caption 10px), but
+this frame draws them as solid `#FF881B` pills at Body Small Light (14px) —
+a different chip design, not just a font size. `TagRow` has no variant
+prop and is also used by `WellnessObjectiveCard`, whose own Figma reference
+matches the pale style already there, so this isn't a case of one page being
+wrong; the two screens want different chips. Left alone pending a decision
+on whether to add a `tone` prop or give SessionDetail its own chip markup.
+
 ### 2026-09-30 — Bleed Home/Explore's header gradients under the status band; fix SessionDetail's floating controls
 
 **Lands on:** `web_app`
