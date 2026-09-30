@@ -31,6 +31,31 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-30 — Slice AccountSettingsPage's account row and delete dialog to Figma
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` (page-level, no shared
+component contract changed).
+
+Pulled Figma 16744:6630 (Settings) and 16744:6819 (the delete-account toast)
+via the Desktop Bridge and diffed both against `AccountSettingsPage.tsx`.
+The connected-account row's name/email were on Body/Body Small (16/14) where
+the frame draws Body Small/Caption (14/10) — the 10px difference is exactly
+what showed up as a 76px-tall row in devtools against Figma's 66px. "Add
+another Google account" was a full pill with no border where the frame draws
+a radius-12 chip with a `#D6D6D6` stroke, and its label was a raw
+`text-[14px]` instead of a token. The delete-account dialog collapsed three
+different gaps (8 between title/description, 24 icon-to-copy, 32
+copy-to-buttons) into one flat `gap-16`, used lucide-sized `h-47`/`rounded-full`
+buttons where the frame draws `h-56`/`radius-16`, ran the description on Body
+Small where the frame specifies Body Small *Light*, and drew its icon at 48px
+in a pale `danger-300` where the frame is 64px in a saturated red — switched
+to `fill-feedback-error`, the same token already backing the Delete button,
+rather than adding a new unbound red to match Figma's un-tokenized `#EF2B2B`
+exactly. `SwitchAccountDialog` shares the same button/gap shape and wasn't
+touched — no Figma reference for it was checked in this pass.
+
 ### 2026-09-29 — Fix the gap between ProfilePage's stats and its tab bar
 
 **Lands on:** `web_app`

@@ -46,35 +46,44 @@ function DeleteAccountDialog({ onConfirm, onClose }: { onConfirm: () => void; on
     >
       <div
         onClick={(event) => event.stopPropagation()}
-        className="flex w-full max-w-[362px] flex-col items-center gap-16 rounded-24 bg-surface-default px-24 py-32 text-center"
+        className="flex w-full max-w-[362px] flex-col items-center gap-32 rounded-24 bg-surface-default px-20 pb-20 pt-24 text-center"
       >
-        {/* A filled badge, not lucide's outline glyph — the frame draws a solid
-            coral triangle with a white mark inside, not a stroke icon. */}
-        <svg width="48" height="48" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
-            className="fill-danger-300"
-          />
-          <rect x="11" y="9" width="2" height="6" rx="1" fill="white" />
-          <circle cx="12" cy="17.5" r="1" fill="white" />
-        </svg>
-        <h2 className="text-style-title text-text-primary">Are you sure?</h2>
-        <p className="text-style-body-small text-text-secondary">
-          Deleting your account will permanently remove your account and data. You won&rsquo;t be able to sign in
-          again. Are you sure you want to continue?
-        </p>
-        <div className="mt-8 flex w-full gap-12">
+        {/* Figma 16744:6819 groups icon+copy (gap 24, copy itself gap 8) apart
+            from the button row (gap 32 from that group) — one flat gap-16
+            for all four children read as one rhythm where the frame draws
+            three different ones. */}
+        <div className="flex flex-col items-center gap-24">
+          {/* A filled badge, not lucide's outline glyph — the frame draws a
+              solid coral triangle with a white mark inside, not a stroke
+              icon, at 64px. */}
+          <svg width="64" height="64" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
+              className="fill-feedback-error"
+            />
+            <rect x="11" y="9" width="2" height="6" rx="1" fill="white" />
+            <circle cx="12" cy="17.5" r="1" fill="white" />
+          </svg>
+          <div className="flex flex-col items-center gap-8">
+            <h2 className="text-style-title text-text-primary">Are you sure?</h2>
+            <p className="text-style-body-small-light text-text-secondary">
+              Deleting your account will permanently remove your account and data. You won&rsquo;t be able to sign in
+              again. Are you sure you want to continue?
+            </p>
+          </div>
+        </div>
+        <div className="flex w-full gap-8">
           <button
             type="button"
             onClick={onClose}
-            className="u-press flex h-47 flex-1 items-center justify-center rounded-full border border-[#D6D6D6] text-style-body text-text-primary"
+            className="u-press flex h-56 flex-1 items-center justify-center rounded-16 border border-[#D6D6D6] text-style-body text-text-primary"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="u-press flex h-47 flex-1 items-center justify-center rounded-full bg-feedback-error text-style-body font-medium text-text-inverse"
+            className="u-press flex h-56 flex-1 items-center justify-center rounded-16 bg-feedback-error text-style-body font-medium text-text-inverse"
           >
             Delete Account
           </button>
@@ -260,8 +269,8 @@ export function AccountSettingsPage() {
                     <GoogleMark />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="text-style-body block truncate text-text-primary">{account.name}</span>
-                    <span className="text-style-body-small block truncate text-text-secondary">{account.email}</span>
+                    <span className="text-style-body-small block truncate text-text-primary">{account.name}</span>
+                    <span className="text-style-caption block truncate text-text-secondary">{account.email}</span>
                   </span>
                   {active && (
                     <Check
@@ -278,10 +287,10 @@ export function AccountSettingsPage() {
               <button
                 type="button"
                 onClick={() => setAddedAccounts((current) => [...current, EXTRA_ACCOUNTS[current.length]])}
-                className="u-press flex h-48 items-center justify-center gap-8 rounded-[40px] bg-surface-default shadow-sm"
+                className="u-press flex h-48 items-center justify-center gap-8 rounded-12 border border-[#D6D6D6] bg-surface-default"
               >
                 <Plus size={20} className="text-icon-default" />
-                <span className="text-[14px] leading-[18px] text-icon-strong">Add another Google account</span>
+                <span className="text-style-body-small text-icon-strong">Add another Google account</span>
               </button>
             )}
           </div>
