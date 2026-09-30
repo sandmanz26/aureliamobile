@@ -31,6 +31,25 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-30 — Make Sign In's form the guaranteed-visible element, not just reachable
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` (page-level only).
+
+Revises the previous entry's fix. Making the button/legal-text block
+scrollable meant it was no longer *invisible* on a short phone, but it still
+needed a scroll to see — the ask was for the form to always be on screen
+with no action required, on any device. Swapped which element gives way:
+the photo is now `flex-1 min-h-0` (crops via `object-cover` down to however
+much space is left, all the way to nothing) and the form block is
+`shrink-0` (always renders at its full natural size, never compressed).
+Verified with Playwright that the "Create an account" link's own bounding
+box sits fully inside the viewport — not just reachable by scrolling — at
+896, 667, 568, and a deliberately extreme 480px viewport height, with
+screenshots confirming the photo crops cleanly rather than distorting at
+any of them.
+
 ### 2026-09-30 — Fix Sign In's content getting clipped on short mobile viewports
 
 **Lands on:** `web_app`

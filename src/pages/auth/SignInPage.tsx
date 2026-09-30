@@ -41,13 +41,14 @@ export function SignInPage() {
     <div className="flex min-h-full flex-col bg-background-default lg:items-center lg:justify-center lg:bg-background-elevated lg:py-48">
       <PageMeta title="Sign in" description="Sign in to Aurelia to build and play your personalized sessions." />
       <div className="relative flex h-dvh w-full max-w-[402px] flex-col overflow-hidden bg-background-default lg:aspect-[402/874] lg:h-auto lg:max-h-[874px] lg:w-[402px] lg:rounded-24 lg:shadow-xl">
-        {/* The supplied photo (402×661) is its own crop, not a full-bleed
-            source to stretch — rendered at its native ratio rather than
-            forced to cover the whole card, which was zooming it in hard on
-            any viewport taller than 661px. It runs 661/874 (75.6%) of the
-            874 frame Figma drew, so the gradient below is positioned against
-            *this* image's own height, not the full page's. */}
-        <div className="relative w-full shrink-0" style={{ aspectRatio: '402 / 661' }}>
+        {/* The photo is the one flexible element on this screen — `flex-1
+            min-h-0` lets it shrink all the way to nothing before the form
+            below gives up any of its own height. Figma's 661/874 ratio is
+            what it gets on a tall screen with room to spare; `object-cover`
+            crops instead of squishing on anything shorter, so the sign-in
+            buttons and the legal/sign-up line are never the thing that runs
+            out of room. */}
+        <div className="relative min-h-0 w-full flex-1">
           <img src={authHero} alt="" className="size-full object-cover" />
           {/* Figma's "Body" fade (394→634 of an 874 frame) falls at
               59.6%→95.9% of this 661-tall image — transparent, then solid
@@ -77,15 +78,10 @@ export function SignInPage() {
           <AureliaLogo inverse />
         </div>
 
-        {/* min-h-0 + overflow-y-auto: the photo above is shrink-0 at a fixed
-            402/661 ratio, so on anything shorter than ~880px tall it alone
-            can approach the full h-dvh card height. Without this, the flex
-            item's default min-height (its own content's size) forces the
-            buttons and legal text past the card's overflow-hidden edge —
-            invisible, not scrollable. SignUp and Forgot Password already
-            scroll their own content under a fixed-height photo the same way;
-            this brings Sign In in line with them. */}
-        <div className="min-h-0 flex-1 overflow-y-auto flex flex-col px-24 pb-24 pt-16">
+        {/* shrink-0: this is the content that actually matters on the
+            screen — it always renders at its full natural size, and the
+            photo above is what gives up space for it, never the reverse. */}
+        <div className="flex shrink-0 flex-col px-24 pb-24 pt-16">
           <h1 className="text-style-title-large text-text-primary">Welcome to Aurelia.</h1>
 
           <div className="mt-24 flex flex-col gap-12">
