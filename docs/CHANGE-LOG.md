@@ -31,6 +31,32 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-09-30 — Bring back mobile status-bar clearance in AppLayout
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (Flutter draws its own real status bar, not
+a web simulation of one) / `storybook` (no component affected).
+
+Ahead of a mobile-focused pass: added `pt-[30px] lg:pt-0` to the single
+`<Outlet />` wrapper in `AppLayout.tsx`, so every consumer route below the
+`lg` breakpoint clears space for the device's own status bar without a
+per-page change — the same reasoning that already centralizes the
+sticky-header behaviour in one `.u-sticky-top` class. This reintroduces, in
+smaller form, a "simulated phone status bar" band the code's own comments
+say used to sit above the page and was deliberately removed when the product
+went web-first; the removal stands for `lg` and up.
+
+**Known gap, not yet fixed:** pages that paint a full-bleed background or
+photo from their own root (`HomePage` and likely `ExplorePage`,
+`SessionDetailPage`, `ChallengeDetailPage`, `PlayerPage`) draw that
+background on a div *inside* the padded wrapper, so the new 30px sits above
+it in the wrapper's own `--color-background-default` (`#FAFAFA`) rather than
+the page's own color — a faint seam, confirmed on Home. Plain-background
+pages (Settings, Profile, the sign-in gate) show no seam. Fixing the
+hero-style pages means extending each one's own background into that band
+individually, which is a further, separate change.
+
 ### 2026-09-30 — Slice AccountSettingsPage's account row and delete dialog to Figma
 
 **Lands on:** `web_app`

@@ -226,11 +226,21 @@ export function AppLayout() {
         <div className="min-w-0 flex-1">
           {/* Keyed on the path so the entrance replays on every navigation —
               without it React reuses the node and the animation runs once. */}
-          <div key={location.pathname} className="u-page">
+          <div key={location.pathname} className="u-page pt-[30px] lg:pt-0">
             {/* Only the page content suspends — the drawer, status band and
                 this shell stay put. Each page is its own lazy chunk (see
                 App.tsx), so this only shows on the first visit to a route
-                in a session; a cached chunk resolves before paint. */}
+                in a session; a cached chunk resolves before paint.
+
+                The status band itself is back, in miniature: below `lg` this
+                wrapper clears space for the device's own status bar, which a
+                real phone (or a WebView) draws over the top of the page
+                regardless of what's under it. Sized here rather than per
+                page so it reaches every route without 35 files each adding
+                their own top offset — the same reasoning that put the
+                sticky-header behaviour in one `.u-sticky-top` class instead
+                of a shared header component. Desktop clears it back to 0:
+                nothing there draws a status bar over the browser chrome. */}
             <Suspense fallback={<PageSkeleton />}>
               <Outlet />
             </Suspense>
