@@ -22,8 +22,14 @@ import {
 // write a note on it, drag pins and the button around, save everything to a
 // .txt, open one back — and a note in the list takes you to its screen.
 //
-// Notes live in this browser's localStorage, not in the shared flag store:
-// the flag decides who sees the tool, the .txt is how notes travel.
+// Notes sync through /api/annotations — the same KV-backed pattern as
+// /__demo's own /api/config, scoped per deployment the same way, so a pin
+// dropped in one browser shows up in another's (same deployment) within one
+// poll. localStorage is kept too, as the offline cache: the first paint reads
+// it before the server round-trip lands, and it's what the tool falls back
+// to entirely when KV isn't configured (`configured: false`, same contract
+// as /api/config) or the network is down. The .txt export/import is still
+// how notes move between deployments or to someone outside them.
 //
 // Geometry (positions, sizes) is inline because it is computed; colour and
 // type are the token utilities like everywhere else. Rendered through a
@@ -36,6 +42,13 @@ const FAB = 40
 const PIN = 26
 const TAP_SLOP = 5
 const Z = 2147483000
+const POLL_MS = 15_000
+/** Debounce before a local change reaches the server — long enough that a
+ *  burst of keystrokes or a drag's final settle is one request, not one per
+ *  tick. */
+const PUSH_DEBOUNCE_MS = 700
+
+type SyncState = 'loading' | 'synced' | 'saving' | 'local-only' | 'error'
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n))
 
@@ -162,9 +175,86 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
   const [openId, setOpenId] = useState<string | null>(null)
   const [highlightId, setHighlightId] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [sync, setSync] = useState<SyncState>('loading')
+  const [scope, setScope] = useState<string | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
+  const syncRef = useRef(sync)
+  syncRef.current = sync
+  // A poll landing mid-edit shouldn't yank the pin or note out from under
+  // whoever's placing or writing one — the next poll catches up once they're
+  // done. Plain refs, kept current every render: read from an async callback
+  // (fetchServer), not from render itself.
+  const busyRef = useRef(false)
+  busyRef.current = placing || openId !== null
+  // The exact array last received from the server, so the push effect below
+  // can tell "freshly arrived from the server" apart from "actually edited
+  // locally" by reference, without a consumed-once boolean flag: StrictMode
+  // double-invokes effects in dev, and a flag that flips itself off the
+  // first time it's checked is exactly the shape of state that breaks under
+  // that — the real (second) invocation sees it already spent. A comparison
+  // against a ref some other code path writes doesn't have that problem.
+  const lastSyncedRef = useRef<Annotation[] | null>(null)
 
   useEffect(() => writeJson(NOTES_KEY, annotations), [annotations])
+
+  const applyServer = useCallback((incoming: Annotation[]) => {
+    if (busyRef.current) return
+    lastSyncedRef.current = incoming
+    setAnnotations(incoming)
+  }, [])
+
+  const fetchServer = useCallback(async () => {
+    try {
+      const response = await fetch('/api/annotations', { cache: 'no-store' })
+      if (!response.ok) throw new Error(String(response.status))
+      const data = (await response.json()) as {
+        configured: boolean
+        annotations: Annotation[] | null
+        scope?: string
+      }
+      setScope(data.scope ?? null)
+      if (!data.configured) {
+        setSync('local-only')
+        return
+      }
+      setSync('synced')
+      applyServer(data.annotations ?? [])
+    } catch {
+      // No endpoint (`vite dev` without `vercel dev`) or offline — the local
+      // copy carries the tool, same fallback /api/config's own flags take.
+      setSync('local-only')
+    }
+  }, [applyServer])
+
+  useEffect(() => {
+    void fetchServer()
+    const timer = window.setInterval(() => void fetchServer(), POLL_MS)
+    return () => window.clearInterval(timer)
+  }, [fetchServer])
+
+  const pushServer = useCallback(async (list: Annotation[]) => {
+    if (syncRef.current === 'local-only') return
+    try {
+      setSync('saving')
+      const response = await fetch('/api/annotations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ annotations: list }),
+      })
+      const data = (await response.json()) as { configured?: boolean; scope?: string; error?: string }
+      if (!response.ok) throw new Error(data.error ?? String(response.status))
+      if (data.scope) setScope(data.scope)
+      setSync(data.configured ? 'synced' : 'local-only')
+    } catch {
+      setSync('error')
+    }
+  }, [])
+
+  useEffect(() => {
+    if (annotations === lastSyncedRef.current) return
+    const timer = window.setTimeout(() => void pushServer(annotations), PUSH_DEBOUNCE_MS)
+    return () => window.clearTimeout(timer)
+  }, [annotations, pushServer])
 
   useEffect(() => {
     if (!highlightId) return
@@ -202,7 +292,10 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
       return
     }
     const count = annotations.length
-    if (!window.confirm(`Delete all ${count} note${count === 1 ? '' : 's'} on every page? This can't be undone.`)) {
+    const everyone = sync === 'synced' || sync === 'saving' ? ' for everyone, not just this device' : ''
+    if (
+      !window.confirm(`Delete all ${count} note${count === 1 ? '' : 's'} on every page${everyone}? This can't be undone.`)
+    ) {
       return
     }
     setAnnotations([])
@@ -397,6 +490,8 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
           onOpen={() => fileInput.current?.click()}
           onDeleteAll={clearAll}
           onHide={onHide}
+          sync={sync}
+          scope={scope}
         />
       )}
 
@@ -600,6 +695,8 @@ function Menu({
   onOpen,
   onDeleteAll,
   onHide,
+  sync,
+  scope,
 }: {
   fabLeft: number
   fabTop: number
@@ -612,6 +709,8 @@ function Menu({
   onOpen: () => void
   onDeleteAll: () => void
   onHide: () => void
+  sync: SyncState
+  scope: string | null
 }) {
   const width = 196
   const onRight = fabLeft + FAB / 2 > vw / 2
@@ -645,6 +744,19 @@ function Menu({
           {label}
         </button>
       ))}
+      {/* What "delete all" actually reaches, and whether a dropped pin is
+          visible to anyone else yet — the same reason /__demo prints its own
+          sync state next to the scope it's about to write. */}
+      <p className="text-style-caption truncate px-10 pb-4 pt-6 text-text-secondary">
+        {sync === 'synced' && 'Synced — visible in any browser'}
+        {sync === 'saving' && 'Saving…'}
+        {sync === 'loading' && 'Connecting…'}
+        {sync === 'local-only' && 'Local only — no server configured'}
+        {sync === 'error' && 'Sync error — saved on this device only'}
+      </p>
+      {scope && (sync === 'synced' || sync === 'saving') && (
+        <p className="text-style-caption truncate px-10 pb-4 text-text-secondary/70">{scope}</p>
+      )}
     </div>
   )
 }

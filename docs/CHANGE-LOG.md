@@ -31,6 +31,30 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-01 — Review annotations sync through a server, not just localStorage
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (no equivalent tool) / `storybook` (not a
+component).
+
+Annotations lived only in the browser's own `localStorage`, so a pin dropped
+on one phone or browser was invisible everywhere else — the only way to move
+notes between people was the `.txt` export. Added `api/annotations.ts`, the
+same KV-backed pattern `api/config.ts` already uses for flags (Upstash Redis
+over its REST API, scoped per deployment by `VERCEL_ENV` so staging and
+production don't share pins, `configured: false` when `KV_REST_API_URL`/
+`KV_REST_API_TOKEN` aren't set). Unlike flags there's no draft/publish
+split — every local change (add, edit, drag, delete, import, clear-all)
+debounces to one POST, and an open tab polls every 15s, so a pin another
+person drops shows up without a reload. `localStorage` stays as the offline
+cache and the fallback when KV isn't configured, so the tool still works
+exactly as before in that case. The menu's bottom line reports which mode
+it's actually in (`Synced…` / `Local only…` / `Sync error…`) plus the KV
+key, the same transparency `/__demo` already gives its own sync state.
+Last-write-wins, no merge — same simplification `api/config.ts` already
+makes for flags, and an accepted gap for a low-traffic internal tool.
+
 ### 2026-10-01 — Challenge podium: rank 1's headroom, and a solid Rewards pill
 
 **Lands on:** `web_app`

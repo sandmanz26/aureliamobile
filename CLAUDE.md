@@ -211,11 +211,22 @@ switched off.
 `/__demo`'s "Review annotations" card switches on `src/demo/annotations/`: a
 review overlay that only renders below 500px wide (`MOBILE_WEB_BREAKPOINT`)
 and never on `/__demo`. Like the site lock it is a tool around the demo, so
-it is kept out of `DEMO_MODULES` and Enable/Disable all skip it. Its notes sit
-in the reviewer's own localStorage (`aurelia.demo.annotations`), not in KV —
-the flag decides who sees the tool, a `.txt` export is how notes move between
-people. If a screenshot from a phone has numbered yellow pins on it, this is
-why.
+it is kept out of `DEMO_MODULES` and Enable/Disable all skip it. If a
+screenshot from a phone has numbered yellow pins on it, this is why.
+
+**Annotations sync through `/api/annotations`, scoped per deployment the
+same way `/api/config` scopes flags.** A pin dropped on staging shows up in
+any other browser open to staging within one poll (15s); it does not show up
+on production, same reason the flag split exists. `localStorage`
+(`aurelia.demo.annotations`) is the offline cache and the whole-tool
+fallback when `KV_REST_API_URL`/`KV_REST_API_TOKEN` aren't set — same
+`configured: false` contract as the flags endpoint. The menu's bottom line
+says which mode it's in (`Synced…` / `Local only…` / `Sync error…`); believe
+that line over an assumption that a pin is visible to anyone else. The
+server does a last-write-wins overwrite of the whole set, no merge — two
+people dropping pins within the same debounce window can lose one, an
+accepted gap for a low-traffic internal tool. A `.txt` export is still how
+notes move between deployments or to someone outside them.
 
 **A shared password sits in front of the site, but not in front of `/__demo`.**
 The console that owns the switch stays open so nobody can shut themselves out of
