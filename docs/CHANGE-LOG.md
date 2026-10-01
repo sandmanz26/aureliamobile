@@ -31,6 +31,26 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-01 — Explore's Quick Start card: horizontal, with its own Play action
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` (not a shared component —
+each page's Quick Start rail is local markup).
+
+`ExplorePage.tsx`'s Quick Start card was a 160×160 square with only a
+"Create" label — not a real second action, since the whole card was one
+`<Link to="/chat">`. Figma specs a 236×160 horizontal card with two
+independent actions: a Play button and a Create pill, the same shape
+`HomePage.tsx`'s own Quick Start rail already has. Rebuilt the card to
+match that shape, and wired Play to something real: `standInFor()` in
+`src/lib/quickStart.ts` — a helper that already existed, matched to each
+card's catalogue stand-in, but was never called from anywhere — now opens
+`/play/:slug` as a preview of that kind of session, while Create still
+opens the cockpit. `HomePage.tsx`'s own Play button is unchanged and still
+just opens chat (same as Create there); not touched here since the user
+flagged Explore specifically.
+
 ### 2026-10-01 — Settings row height to match Figma 16523:13934
 
 **Lands on:** `web_app`

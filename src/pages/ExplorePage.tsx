@@ -1,4 +1,4 @@
-import { ArrowRight, Clock, Coins, ListFilter, Menu, Play, Podium, Users } from 'lucide-react'
+import { ArrowRight, Clock, Coins, ListFilter, Menu, Play, Podium, Sparkles, Users } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import liveSessionsMap from '../assets/live-sessions-map.png'
@@ -9,7 +9,7 @@ import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { SessionGridCard } from '../components/ui/SessionGridCard'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import { useDrawer } from '../layouts/DrawerContext'
-import { QUICK_STARTS } from '../lib/quickStart'
+import { QUICK_STARTS, standInFor } from '../lib/quickStart'
 import { trustedCreators } from '../lib/people'
 import type { CategoryFilter, Shelf } from '../lib/sessions'
 import { CATEGORY_FILTERS, categoryLabel, findSession, sessionsOnShelf } from '../lib/sessions'
@@ -266,28 +266,50 @@ export function ExplorePage() {
         {isEnabled('sessions.quickStart') && (
           <section className="mt-32">
             <SectionHeader title="Quick Start" />
-            <div className="-mx-20 mt-16 flex gap-12 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
-              {QUICK_STARTS.map((card) => (
-                <Link
-                  key={card.id}
-                  to="/chat"
-                  // The card's own id, so the cockpit opens on this kind of
-                  // session rather than on whatever was last in it. `fresh` is
-                  // implied by `start` — the chat page clears before seeding —
-                  // but stating both keeps the intent readable at the link.
-                  state={{ start: card.id, fresh: true }}
-                  className="u-press relative h-[160px] w-[160px] shrink-0 overflow-hidden rounded-16 p-12 text-text-inverse"
-                >
-                  <CoverImage photo={card.photo} gradient={card.gradient} width={320} height={320} />
-                  <span className="text-style-caption relative flex h-24 w-fit items-center gap-4 whitespace-nowrap rounded-full bg-surface-default/90 px-8 text-text-primary">
-                    Create
-                  </span>
-                  <span className="absolute bottom-12 left-12 right-12">
-                    <span className="text-style-body-small block truncate font-semibold drop-shadow">{card.title}</span>
-                    <span className="text-style-caption block truncate opacity-90">{card.subtitle}</span>
-                  </span>
-                </Link>
-              ))}
+            <div className="-mx-20 mt-16 flex gap-16 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
+              {QUICK_STARTS.map((card) => {
+                const preview = standInFor(card)
+                return (
+                  <div
+                    key={card.id}
+                    className="relative h-[160px] w-[236px] shrink-0 overflow-hidden rounded-16 p-12 text-text-inverse"
+                  >
+                    <CoverImage photo={card.photo} gradient={card.gradient} width={480} height={320} />
+
+                    {/* Two ways in, and they are different: play the catalogue
+                        stand-in as a preview of this kind of session, or open
+                        chat and build your own from it. */}
+                    <div className="relative flex items-center justify-between gap-8">
+                      {preview && (
+                        <Link
+                          to={`/play/${card.plays}`}
+                          aria-label={`Play ${card.title} preview`}
+                          className="u-press flex size-32 shrink-0 items-center justify-center rounded-full bg-white/25 text-text-inverse backdrop-blur-sm"
+                        >
+                          <Play size={14} fill="currentColor" />
+                        </Link>
+                      )}
+                      <Link
+                        to="/chat"
+                        // The card's own id, so the cockpit opens on this kind
+                        // of session rather than on whatever was last in it.
+                        // `fresh` is implied by `start` — the chat page clears
+                        // before seeding — but stating both keeps the intent
+                        // readable at the link.
+                        state={{ start: card.id, fresh: true }}
+                        className="text-style-label u-press flex h-30 items-center gap-6 whitespace-nowrap rounded-full bg-surface-default/90 px-12 text-text-primary"
+                      >
+                        <Sparkles size={13} /> Create
+                      </Link>
+                    </div>
+
+                    <div className="absolute bottom-12 left-12 right-12">
+                      <p className="text-style-body-small truncate font-semibold drop-shadow">{card.title}</p>
+                      <p className="text-style-caption truncate opacity-90">{card.subtitle}</p>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </section>
         )}
