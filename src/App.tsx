@@ -57,6 +57,8 @@ const AccountSettingsPage = lazy(() => import('./pages/AccountSettingsPage').the
 const InvitePage = lazy(() => import('./pages/InvitePage').then((m) => ({ default: m.InvitePage })))
 const CreditsPage = lazy(() => import('./pages/CreditsPage').then((m) => ({ default: m.CreditsPage })))
 const UpgradePage = lazy(() => import('./pages/UpgradePage').then((m) => ({ default: m.UpgradePage })))
+const AboutLayoutPage = lazy(() => import('./pages/dev/AboutLayoutPage').then((m) => ({ default: m.AboutLayoutPage })))
+const GalleryLayoutPage = lazy(() => import('./pages/dev/GalleryLayoutPage').then((m) => ({ default: m.GalleryLayoutPage })))
 
 export default function App() {
   return (
@@ -70,6 +72,25 @@ export default function App() {
         <Routes>
           {/* Unlisted presenter console — see src/demo/modules.ts */}
           <Route path="/__demo" element={<DemoControlPage />} />
+
+          {/* Unlisted layout probes — dummy business, no Aurelia content, not
+              linked from anywhere in the app. See src/pages/dev/. */}
+          <Route
+            path="/__about"
+            element={
+              <Suspense fallback={<PageSkeleton />}>
+                <AboutLayoutPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/__about/gallery"
+            element={
+              <Suspense fallback={<PageSkeleton />}>
+                <GalleryLayoutPage />
+              </Suspense>
+            }
+          />
 
           {/* Super-admin CMS — its own shell, outside the consumer app layout */}
           <Route path="/admin" element={<AdminLayout />}>

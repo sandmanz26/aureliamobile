@@ -31,6 +31,25 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-01 — Two unlisted layout probes: /__about and /__about/gallery
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` (web-only scratch pages, not
+a component or a Flutter screen).
+
+Two new pages, `src/pages/dev/AboutLayoutPage.tsx` and
+`GalleryLayoutPage.tsx`, registered at `/__about` and `/__about/gallery` —
+top-level routes outside `AppLayout`, not linked from anywhere in the app,
+same as `/__demo`. Purpose-built for judging an About/Gallery *layout*
+without Aurelia's own content doing the work of making it look good: the
+business ("Fathom Studio," an architecture and interiors studio), the
+copy, the team, and the nine gallery projects are all invented and have
+nothing to do with this product. Styled with the app's existing tokens and
+components so what's on trial is the structure, not a second design
+system. No new entry in `robots.txt` — the file already disallows the
+whole site.
+
 ### 2026-09-30 — Make Sign In's form the guaranteed-visible element, not just reachable
 
 **Lands on:** `web_app`
