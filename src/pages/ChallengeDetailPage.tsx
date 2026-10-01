@@ -88,7 +88,7 @@ function Podium({ top }: { top: Contender[] }) {
 
   return (
     <div
-      className="relative flex items-end justify-center gap-8 overflow-hidden rounded-24 px-12 pt-16"
+      className="relative flex items-end justify-center gap-8 overflow-hidden rounded-24 px-12 pt-24"
       style={{ background: 'linear-gradient(170deg, #ffe6a8, #ff9a1f)' }}
     >
       {columns.map(({ contender, height, size, label }) => {
@@ -168,11 +168,16 @@ export function ChallengeDetailPage() {
         <div className="relative -mt-24 rounded-t-24 bg-background-default pt-24">
           {/* Sits on the seam, as in the design. It is a labelled way in rather
               than a bare glyph — "what do I get for this" is the first thing a
-              challenge has to answer, and an unlabelled chart icon does not. */}
+              challenge has to answer, and an unlabelled chart icon does not.
+              Solid, dark-on-light — not translucent-with-white-text — matching
+              every other floating control over a cover photo (back/share on
+              SessionDetailPage's own cover): a cover photo's brightness varies
+              per challenge, and a 20%-opacity pill mostly shows whatever is
+              behind it rather than reading as its own control. */}
           <button
             type="button"
             onClick={() => setRewardsOpen(true)}
-            className="text-style-label u-press absolute -top-22 left-20 flex h-44 items-center gap-8 rounded-full bg-surface-default/20 px-16 text-text-inverse shadow-md backdrop-blur-sm"
+            className="text-style-label u-press absolute -top-22 left-20 flex h-44 items-center gap-8 rounded-full bg-surface-default px-16 text-icon-strong shadow-md"
           >
             <PodiumIcon size={16} />
             Rewards

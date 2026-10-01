@@ -31,6 +31,24 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-01 — Challenge podium: rank 1's headroom, and a solid Rewards pill
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` (not a shared component).
+
+`ChallengeDetailPage.tsx`'s podium: rank 1's number sat right against the
+card's `pt-16`, since its column alone carries no extra top margin (it's
+the tallest of the three) — bumped the shared padding to `pt-24` so it
+reads with the same headroom as 2nd and 3rd, which was the comparison
+against Figma. The "Rewards" pill was `bg-surface-default/20` with white
+(`text-inverse`) text and a blur — translucent, so it read as whatever the
+cover photo underneath happened to be rather than its own control, unlike
+every other floating button over a cover photo in the app (the back/share
+buttons on `SessionDetailPage`'s own cover are solid `bg-surface-default`
+with a dark icon). Made it solid and dark-on-light to match both Figma and
+that convention.
+
 ### 2026-10-01 — "Delete all notes" in the review annotation menu
 
 **Lands on:** `web_app`
