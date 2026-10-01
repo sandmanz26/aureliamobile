@@ -31,6 +31,31 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-01 — Review annotation pins anchored to the page, not the viewport
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (no equivalent tool) / `storybook` (not a
+component).
+
+A pin dropped on a scrolled screen stayed glued to that screen position as
+you kept scrolling, instead of staying over the content it was marking —
+because the whole overlay, pins included, was `position: fixed`, so none
+of it ever scrolled with the page. `x`/`y` were (and still are) a percent
+of the viewport, which carries no scroll information, so a `fixed` pin
+rendered at the same spot on screen regardless of where the page was
+scrolled to. Pins now render in a separate, non-fixed layer anchored at
+the document's own (0, 0) — ordinary `position: absolute`, so they scroll
+with the content like anything else on the page — and a new `scrollY`
+field on each annotation (the scroll position at the moment it was placed
+or last dragged) resolves `y` into one fixed spot in the full document:
+`scrollY + (y / 100) * vh`. That spot holds across a scroll and across a
+reload. The tool's own chrome (FAB, menu, note editor, toast) stays
+genuinely viewport-fixed, which is what it needs. `NoteCard` now takes a
+`scrollY` too, to project a pin's document position back to a screen
+position when the editor opens. The `.txt` export gained a `scroll:` line;
+older exports without one default it to 0.
+
 ### 2026-10-01 — Explore's Quick Start card: horizontal, with its own Play action
 
 **Lands on:** `web_app`

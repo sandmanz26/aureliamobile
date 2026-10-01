@@ -12,6 +12,7 @@
  *   page: /chat
  *   pos: 42.5, 61.2
  *   viewport: 390x844
+ *   scroll: 240
  *   created: 2026-10-01T07:01:12.000Z
  *   updated: 2026-10-01T07:02:40.000Z
  *   note:
@@ -33,6 +34,14 @@ export type Annotation = {
   /** Viewport the note was written at — context for whoever reads the file. */
   vw: number
   vh: number
+  /**
+   * `window.scrollY` when the pin was placed (or last dragged). `y` alone is
+   * only a fraction of one screenful — without this, a pin rendered content-
+   * relative would land wherever the page happened to be scrolled to on
+   * reload, not where it was dropped. Added together they give the pin's
+   * fixed spot in the full document: `scrollY + (y / 100) * vh`.
+   */
+  scrollY: number
   text: string
   createdAt: string
   updatedAt: string
@@ -64,6 +73,7 @@ export function serializeAnnotations(list: Annotation[]): string {
       `page: ${a.page}`,
       `pos: ${a.x.toFixed(1)}, ${a.y.toFixed(1)}`,
       `viewport: ${Math.round(a.vw)}x${Math.round(a.vh)}`,
+      `scroll: ${Math.round(a.scrollY)}`,
       `created: ${a.createdAt}`,
       `updated: ${a.updatedAt}`,
       'note:',
@@ -91,6 +101,10 @@ export function parseAnnotations(raw: string): Annotation[] {
       y: clampPct(current.y ?? 50),
       vw: current.vw || 0,
       vh: current.vh || 0,
+      // Older exports (before scroll was tracked) have no line for it — 0 is
+      // the right default anyway, since those pins were meant to be read at
+      // the top of the page.
+      scrollY: current.scrollY || 0,
       text: (note ?? []).join('\n'),
       createdAt: current.createdAt || now,
       updatedAt: current.updatedAt || current.createdAt || now,
@@ -129,6 +143,9 @@ export function parseAnnotations(raw: string): Annotation[] {
         current.vh = h || 0
         break
       }
+      case 'scroll':
+        current.scrollY = parseInt(value, 10) || 0
+        break
       case 'created':
         current.createdAt = value.trim()
         break

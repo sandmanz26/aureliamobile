@@ -39,6 +39,20 @@ const Z = 2147483000
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n))
 
+/**
+ * A pin's spot in the full document, in pixels — independent of the current
+ * scroll position. `x` is recomputed against the live viewport width (so a
+ * note still lands on the same area on another phone width), but `y` has to
+ * be resolved against the scroll the page was at when the pin was placed:
+ * `y` alone is only a fraction of one screenful, not a position in the page.
+ */
+function docPosition(annotation: Annotation, vw: number) {
+  return {
+    left: (annotation.x / 100) * vw,
+    top: annotation.scrollY + (annotation.y / 100) * annotation.vh,
+  }
+}
+
 function readJson<T>(key: string, fallback: T): T {
   try {
     const raw = window.localStorage.getItem(key)
@@ -223,6 +237,7 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
       y: clamp((clientY / vh) * 100, 0, 100),
       vw,
       vh,
+      scrollY: window.scrollY,
       text: '',
       createdAt: now,
       updatedAt: now,
@@ -281,7 +296,43 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
   const fabTop = clamp(fab.y - FAB / 2, 8, vh - FAB - 8)
 
   return (
-    <div className="fixed inset-0" style={{ zIndex: Z, pointerEvents: 'none' }} data-demo-annotations="">
+    <>
+      {/* Pins, in normal document flow (`position: absolute`, no `fixed`
+          ancestor) so they scroll along with the content they're marking.
+          A `fixed` overlay stays put on screen while the page moves under
+          it, which reads as the pin itself drifting. This div sits at the
+          document's own (0, 0) — not the viewport's — so each pin's `left`/
+          `top` (from `docPosition`) is a document-absolute pixel position
+          that holds across a scroll, and across a reload. */}
+      <div style={{ position: 'absolute', top: 0, left: 0, zIndex: Z, pointerEvents: 'none' }} data-demo-annotations="">
+        {onThisPage.map((a, i) => {
+          const { left, top } = docPosition(a, vw)
+          return (
+            <Pin
+              key={a.id}
+              annotation={a}
+              left={left}
+              top={top}
+              number={i + 1}
+              active={a.id === openId}
+              highlight={a.id === highlightId}
+              onTap={() => (a.id === openId ? closeNote() : setOpenId(a.id))}
+              onMove={(cx, cy) =>
+                update(a.id, {
+                  x: clamp((cx / vw) * 100, 0, 100),
+                  y: clamp((cy / vh) * 100, 0, 100),
+                  scrollY: window.scrollY,
+                })
+              }
+              onDragEnd={() => update(a.id, { updatedAt: new Date().toISOString() })}
+            />
+          )
+        })}
+      </div>
+
+      {/* The tool's own chrome — FAB, menu, editor, toast — stays genuinely
+          fixed to the viewport, unlike the pins above. */}
+      <div className="fixed inset-0" style={{ zIndex: Z, pointerEvents: 'none' }} data-demo-annotations="">
       {placing && (
         <div
           className="absolute inset-0 bg-interactive-primary/5"
@@ -294,19 +345,6 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
         </div>
       )}
 
-      {onThisPage.map((a, i) => (
-        <Pin
-          key={a.id}
-          annotation={a}
-          number={i + 1}
-          active={a.id === openId}
-          highlight={a.id === highlightId}
-          onTap={() => (a.id === openId ? closeNote() : setOpenId(a.id))}
-          onMove={(cx, cy) => update(a.id, { x: clamp((cx / vw) * 100, 0, 100), y: clamp((cy / vh) * 100, 0, 100) })}
-          onDragEnd={() => update(a.id, { updatedAt: new Date().toISOString() })}
-        />
-      ))}
-
       {open && open.page === pathname && (
         <NoteCard
           key={open.id}
@@ -314,6 +352,7 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
           number={onThisPage.findIndex((a) => a.id === open.id) + 1}
           vw={vw}
           vh={vh}
+          scrollY={window.scrollY}
           onChange={(text) => update(open.id, { text, updatedAt: new Date().toISOString() })}
           onDelete={() => remove(open.id)}
           onClose={closeNote}
@@ -394,12 +433,15 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
       )}
 
       <input ref={fileInput} type="file" accept=".txt,text/plain" onChange={openTxt} hidden />
-    </div>
+      </div>
+    </>
   )
 }
 
 function Pin({
   annotation,
+  left,
+  top,
   number,
   active,
   highlight,
@@ -408,6 +450,11 @@ function Pin({
   onDragEnd,
 }: {
   annotation: Annotation
+  /** Document-absolute pixels, from `docPosition` — not a percentage of the
+   *  viewport, so this stays put under the pin's spot in the content as the
+   *  page scrolls. */
+  left: number
+  top: number
   number: number
   active: boolean
   highlight: boolean
@@ -427,8 +474,8 @@ function Pin({
       }`}
       style={{
         position: 'absolute',
-        left: `${annotation.x}%`,
-        top: `${annotation.y}%`,
+        left,
+        top,
         width: PIN,
         height: PIN,
         marginLeft: -PIN / 2,
@@ -451,6 +498,7 @@ function NoteCard({
   number,
   vw,
   vh,
+  scrollY,
   onChange,
   onDelete,
   onClose,
@@ -459,6 +507,10 @@ function NoteCard({
   number: number
   vw: number
   vh: number
+  /** `window.scrollY` as of this render — the card lives in the viewport-
+   *  fixed chrome layer, so its pin's document position has to be projected
+   *  back to a screen position before it means anything here. */
+  scrollY: number
   onChange: (text: string) => void
   onDelete: () => void
   onClose: () => void
@@ -471,8 +523,9 @@ function NoteCard({
   }, [])
 
   const width = Math.min(240, vw - 16)
-  const px = (annotation.x / 100) * vw
-  const py = (annotation.y / 100) * vh
+  const pin = docPosition(annotation, vw)
+  const px = pin.left
+  const py = pin.top - scrollY
   const left = clamp(px - width / 2, 8, vw - width - 8)
   const fitsBelow = py + PIN / 2 + 8 + 160 < vh
   const vertical = fitsBelow ? { top: py + PIN / 2 + 8 } : { bottom: vh - py + PIN / 2 + 8 }
