@@ -194,6 +194,16 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
   // that — the real (second) invocation sees it already spent. A comparison
   // against a ref some other code path writes doesn't have that problem.
   const lastSyncedRef = useRef<Annotation[] | null>(null)
+  // Set once fetchServer has resolved at least once (configured or not). A
+  // second browser with no local cache starts from `[]` before it has even
+  // asked the server what's really there — without this, that `[]` isn't
+  // reference-equal to anything in lastSyncedRef yet, the push effect reads
+  // it as a real edit, and if the GET is slower than the push debounce, an
+  // empty array reaches the server first and wipes out every annotation
+  // that browser hadn't loaded yet. Read, never mutated, by the push effect
+  // — only fetchServer's own callback writes it — so it's as safe under
+  // Strict Mode's double-invoke as lastSyncedRef is.
+  const hasLoadedRef = useRef(false)
 
   useEffect(() => writeJson(NOTES_KEY, annotations), [annotations])
 
@@ -223,6 +233,8 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
       // No endpoint (`vite dev` without `vercel dev`) or offline — the local
       // copy carries the tool, same fallback /api/config's own flags take.
       setSync('local-only')
+    } finally {
+      hasLoadedRef.current = true
     }
   }, [applyServer])
 
@@ -251,6 +263,7 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
   }, [])
 
   useEffect(() => {
+    if (!hasLoadedRef.current) return
     if (annotations === lastSyncedRef.current) return
     const timer = window.setTimeout(() => void pushServer(annotations), PUSH_DEBOUNCE_MS)
     return () => window.clearTimeout(timer)

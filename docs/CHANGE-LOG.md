@@ -31,6 +31,28 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-01 — Fixed a race that could wipe shared annotations on first open
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (no equivalent tool) / `storybook` (not a
+component).
+
+A real bug in the server sync added just above: opening the tool in a
+browser with no local cache starts `annotations` at `[]` before the first
+GET has even come back. The push effect only skipped data it recognized as
+freshly arrived from the server (by reference) — it had no way to know
+`[]` was "haven't checked yet" rather than "someone cleared every note" —
+so if that GET took longer than the 700ms push debounce, the empty state
+reached the server first and overwrote every real annotation other people
+had already placed. Reported as: open it on a second browser and the whole
+set reads as 0, even though the first browser still shows them. Added a
+ref that only flips true once the first fetch has resolved (configured or
+not) and gates the push effect on it, so nothing pushes before the tool
+has actually seen what the server holds. Verified with a deliberately
+slowed mock server: zero pushes before the slow GET resolves, the existing
+annotation survives.
+
 ### 2026-10-01 — Review annotations sync through a server, not just localStorage
 
 **Lands on:** `web_app`
