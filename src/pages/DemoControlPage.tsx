@@ -1,8 +1,8 @@
-import { CloudOff, CloudUpload, ExternalLink, Lock, RotateCcw, Undo2, Unlock } from 'lucide-react'
+import { CloudOff, CloudUpload, ExternalLink, Lock, PencilLine, RotateCcw, Undo2, Unlock } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import type { ModuleKind } from '../demo/modules'
-import { DEMO_MODULES, SITE_LOCK_FLAG } from '../demo/modules'
+import { ANNOTATIONS_FLAG, DEMO_MODULES, MOBILE_WEB_BREAKPOINT, SITE_LOCK_FLAG } from '../demo/modules'
 import { SITE_PASSWORD, forgetUnlock, rememberUnlock } from '../demo/siteLock'
 import { BuildBadge } from '../components/ui/BuildBadge'
 import { BuildStamp } from '../components/ui/BuildStamp'
@@ -183,6 +183,8 @@ export function DemoControlPage() {
 
         <SiteLockCard />
 
+        <AnnotationsCard />
+
         {(['consumer', 'admin'] as ModuleKind[]).map((kind) => (
         <section key={kind} className="mt-24 flex flex-col gap-12">
           <div className="flex items-baseline gap-8">
@@ -327,6 +329,52 @@ function SiteLockCard() {
       >
         Forget this browser
       </button>
+    </section>
+  )
+}
+
+/**
+ * The review overlay (src/demo/annotations/). A tool for whoever is giving or
+ * reviewing the demo, like the lock — so its own card, not a module row, and
+ * Enable all / Disable all leave it alone.
+ */
+function AnnotationsCard() {
+  const { flags, setFlag, dirty } = useFeatureFlags()
+  const on = flags[ANNOTATIONS_FLAG] === true
+
+  return (
+    <section className="mt-16 rounded-16 border border-border-subtle bg-surface-default p-16">
+      <div className="flex flex-wrap items-start justify-between gap-16">
+        <div className="flex min-w-0 gap-12">
+          <span
+            className={`flex size-36 shrink-0 items-center justify-center rounded-full ${
+              on ? 'bg-brand-default text-text-strong' : 'bg-background-elevated text-icon-default'
+            }`}
+          >
+            <PencilLine size={17} />
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-style-body font-semibold text-text-primary">Review annotations</h2>
+            <p className="text-style-body-small mt-2 text-text-secondary">
+              {on
+                ? `On the mobile web layout — any window narrower than ${MOBILE_WEB_BREAKPOINT}px — a small pen button floats over every screen. Pin numbered notes anywhere, drag them, save them to a .txt and open one back; a note in the list takes you to its screen.`
+                : 'Off — nobody sees the annotation button.'}
+            </p>
+          </div>
+        </div>
+
+        <Toggle
+          checked={on}
+          onChange={(next) => setFlag(ANNOTATIONS_FLAG, next)}
+          label="Review annotations"
+        />
+      </div>
+
+      <p className="text-style-caption mt-12 text-text-secondary">
+        {dirty
+          ? 'Changed here but not published — only this browser sees it. Press Publish for everyone above.'
+          : `Never shown at ${MOBILE_WEB_BREAKPOINT}px and wider, nor on this console. Notes stay in each reviewer’s browser; the .txt is how they travel.`}
+      </p>
     </section>
   )
 }

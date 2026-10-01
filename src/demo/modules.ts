@@ -276,7 +276,7 @@ export type FlagState = Record<string, boolean>
  * meant to be seen.
  */
 export function defaultFlags(): FlagState {
-  const flags: FlagState = { [SITE_LOCK_FLAG]: true }
+  const flags: FlagState = { [SITE_LOCK_FLAG]: true, [ANNOTATIONS_FLAG]: false }
   for (const mod of DEMO_MODULES) {
     flags[mod.id] = mod.built && !mod.unreleased
     for (const feature of mod.features ?? []) {
@@ -300,3 +300,20 @@ export const STORAGE_KEY = 'aurelia.demo.flags'
  * unreachable, a flag fetch that never resolves — is not a gate.
  */
 export const SITE_LOCK_FLAG = 'siteLock'
+
+/**
+ * Review annotations — numbered, draggable notes pinned over any screen,
+ * saved to and opened from a .txt file. See src/demo/annotations/.
+ *
+ * Like the site lock, this is a tool for the people giving and reviewing the
+ * demo, not a screen in it, so it stays out of DEMO_MODULES, keeps its own
+ * card in the console, and is untouched by Enable all / Disable all.
+ *
+ * Defaults OFF: an overlay nobody asked for must not appear in a walkthrough.
+ * Even when on, it only renders when the window is narrower than
+ * MOBILE_WEB_BREAKPOINT — the mobile web layout — and never on /__demo itself.
+ */
+export const ANNOTATIONS_FLAG = 'annotations'
+
+/** The overlay shows below this width (px), i.e. at 499 and not at 500. */
+export const MOBILE_WEB_BREAKPOINT = 500
