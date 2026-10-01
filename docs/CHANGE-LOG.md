@@ -31,6 +31,25 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-01 — Stop iOS rubber-band bounce from exposing the root background
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (no WebView bounce concern there) /
+`storybook` (not a component).
+
+Added `overscroll-behavior-y: none` on `html` in `src/index.css`. A real
+iPhone screenshot taken inside WhatsApp's in-app browser showed a flat
+`#FAFAFA` band above Sign In's hero photo — pixel-sampling confirmed it is
+an exact match for `--color-background-default`, i.e. our own root
+background, not a layout bug in the page. iOS WebKit's rubber-band bounce
+at the document edge briefly reveals whatever sits behind the viewport-
+filling app shell; `overscroll-behavior-y: none` is the standard fix and
+applies globally rather than to Sign In alone, since any page is equally
+exposed to the same bounce. Can't be reproduced or verified in this
+sandbox (Chromium automation has no touch-bounce physics) — needs
+re-checking on the real device that showed the bug.
+
 ### 2026-10-01 — Two unlisted layout probes: /__about and /__about/gallery
 
 **Lands on:** `web_app`

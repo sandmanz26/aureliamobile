@@ -27,6 +27,16 @@ body,
   height: 100%;
 }
 
+html {
+  /* Stops iOS WebKit's rubber-band bounce at the document edges. Without
+     this, scrolling past the top/bottom (trivial on an in-app browser like
+     WhatsApp's) briefly exposes this element's own background above/below
+     the app, which otherwise fills the viewport exactly and never scrolls -
+     a flat #FAFAFA band appearing over a page's own hero image is this, not
+     a layout bug in that page. */
+  overscroll-behavior-y: none;
+}
+
 body {
   margin: 0;
   background-color: var(--color-background-default);
