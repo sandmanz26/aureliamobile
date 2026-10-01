@@ -1,4 +1,4 @@
-import { Download, EyeOff, List, PencilLine, Plus, Upload, X } from 'lucide-react'
+import { Download, EyeOff, List, PencilLine, Plus, Trash2, Upload, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import type { ChangeEvent, PointerEvent as ReactPointerEvent } from 'react'
 import { createPortal } from 'react-dom'
@@ -193,6 +193,24 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
     setOpenId((current) => (current === id ? null : current))
   }, [])
 
+  /** Every note on every page, not just this one — "All notes" counts the
+   *  same way, so "delete all" means the same thing it does there. */
+  function clearAll() {
+    setMenuOpen(false)
+    if (!annotations.length) {
+      setToast('No notes to delete')
+      return
+    }
+    const count = annotations.length
+    if (!window.confirm(`Delete all ${count} note${count === 1 ? '' : 's'} on every page? This can't be undone.`)) {
+      return
+    }
+    setAnnotations([])
+    setOpenId(null)
+    setListOpen(false)
+    setToast('All notes deleted')
+  }
+
   /** Closing a note that was never written drops it, so a stray tap leaves nothing behind. */
   const closeNote = useCallback(() => {
     if (openId) setAnnotations((prev) => prev.filter((a) => a.id !== openId || a.text.trim() !== ''))
@@ -377,6 +395,7 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
           }}
           onSave={saveTxt}
           onOpen={() => fileInput.current?.click()}
+          onDeleteAll={clearAll}
           onHide={onHide}
         />
       )}
@@ -579,6 +598,7 @@ function Menu({
   onList,
   onSave,
   onOpen,
+  onDeleteAll,
   onHide,
 }: {
   fabLeft: number
@@ -590,6 +610,7 @@ function Menu({
   onList: () => void
   onSave: () => void
   onOpen: () => void
+  onDeleteAll: () => void
   onHide: () => void
 }) {
   const width = 196
@@ -602,6 +623,7 @@ function Menu({
     { label: `All notes (${count})`, icon: List, onClick: onList },
     { label: 'Save to .txt', icon: Download, onClick: onSave },
     { label: 'Open a .txt', icon: Upload, onClick: onOpen },
+    { label: 'Delete all notes', icon: Trash2, onClick: onDeleteAll, danger: true },
     { label: 'Hide until reload', icon: EyeOff, onClick: onHide },
   ]
 
@@ -610,14 +632,16 @@ function Menu({
       className="rounded-16 border border-border-subtle bg-surface-default p-4 shadow-[0_5px_24px_4px_rgba(0,0,0,0.1)]"
       style={{ position: 'absolute', left, width, ...vertical, pointerEvents: 'auto' }}
     >
-      {items.map(({ label, icon: Icon, onClick }) => (
+      {items.map(({ label, icon: Icon, onClick, danger }) => (
         <button
           key={label}
           type="button"
           onClick={onClick}
-          className="text-style-body-small flex w-full items-center gap-10 rounded-12 px-10 py-8 text-left text-text-primary hover:bg-background-elevated"
+          className={`text-style-body-small flex w-full items-center gap-10 rounded-12 px-10 py-8 text-left hover:bg-background-elevated ${
+            danger ? 'text-feedback-error' : 'text-text-primary'
+          }`}
         >
-          <Icon size={15} className="shrink-0 text-icon-secondary" />
+          <Icon size={15} className={`shrink-0 ${danger ? 'text-feedback-error' : 'text-icon-secondary'}`} />
           {label}
         </button>
       ))}

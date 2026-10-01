@@ -129,13 +129,17 @@ export function SessionDetailPage() {
           960px desktop content column would make the cover taller than the
           rest of the page, so it caps to a fixed height and the content
           column's own width there instead. */}
-      {/* The cover's own box is sized by aspect-ratio, so it can't grow to
-          bleed under the status band the way Home/Explore's padding-based
-          headers do — stretching it would throw off the ratio. A flat strip
-          in the same gradient the cover's own floor uses closes the seam
-          without a second image fetch or fighting the aspect box's math. */}
-      <div className="-mt-[30px] h-[30px] lg:hidden" style={{ background: session.gradient }} aria-hidden="true" />
-      <div className="relative aspect-[375/300] w-full overflow-hidden lg:mx-auto lg:aspect-auto lg:h-[320px] lg:max-w-[960px] lg:rounded-24">
+      {/* A flat strip in the cover's own gradient used to sit here to close
+          the seam under the status band, but it rendered that gradient
+          over its own 30px box independently of the cover below — two
+          copies of the same gradient, each stretched to a different
+          height, meeting at a visible seam instead of one continuous
+          color. `CoverImage` fills whatever box it's given (`object-cover`
+          on the `<img>`, the gradient and scrim both `inset-0`), so instead
+          the box itself grows 30px taller and bleeds upward: the real
+          photo extends under the status band, the same way Sign In's hero
+          image does, rather than a separate patch trying to match it. */}
+      <div className="relative -mt-[30px] h-[calc(100vw*0.8+30px)] w-full overflow-hidden lg:mx-auto lg:mt-0 lg:h-[320px] lg:max-w-[960px] lg:rounded-24">
         <CoverImage photo={session.photo} gradient={session.gradient} width={750} height={600} />
         {/* Figma 16744:9649 — these are 44 square with a radius-12 squircle,
             not a 40 circle, and sit on the page's own 20px gutter, not 16. */}

@@ -31,6 +31,38 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-01 — "Delete all notes" in the review annotation menu
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (no equivalent tool) / `storybook` (not a
+component).
+
+Deleting a batch of test pins one at a time (open, Delete, repeat) was the
+only way to clear them — relevant now that the scroll-anchoring fix above
+means old pins placed before it have to be dropped and re-placed rather
+than migrated. The menu's "Delete all notes" clears every annotation on
+every page (same scope the existing "All notes" list already covers), with
+a native confirm naming the count before it does anything irreversible.
+
+### 2026-10-01 — Session cover bleeds under the status band, not a color patch
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (no mobile-status-bar concern there) /
+`storybook` (not a component).
+
+The flat strip added earlier to close the seam above `SessionDetailPage`'s
+cover (under the mobile status-bar padding) painted the session's own
+gradient over its own 30px box, independently of the cover below it — two
+renders of the same gradient at two different heights, meeting at a visible
+seam rather than one continuous color, which read as a bug of its own.
+`CoverImage` fills whatever box it's given (`object-cover`, gradient and
+scrim all `inset-0`), so instead the cover box itself now grows 30px taller
+and bleeds upward (`-mt-[30px] h-[calc(100vw*0.8+30px)]`, reset on `lg:`):
+the real photo extends under the status band, same principle as Sign In's
+hero image, rather than a separate patch trying to match it.
+
 ### 2026-10-01 — Review annotation pins anchored to the page, not the viewport
 
 **Lands on:** `web_app`
