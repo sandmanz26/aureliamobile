@@ -31,6 +31,15 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-01 — Settings row height to match Figma 16523:13934
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` / `storybook` (not a shared component).
+
+`AccountSettingsPage.tsx`'s `Row` (Credit Redemption, Account Deletion, Log
+Out) was `h-56`; Figma specs it at 64px. One-line fix.
+
 ### 2026-10-01 — Stop iOS rubber-band bounce from exposing the root background
 
 **Lands on:** `web_app`

@@ -15,7 +15,7 @@ function Row({ icon, label, onClick }: { icon: ReactNode; label: string; onClick
     <button
       type="button"
       onClick={onClick}
-      className="u-press flex h-56 w-full items-center gap-12 border-t border-[#D6D6D6] text-left text-text-primary"
+      className="u-press flex h-64 w-full items-center gap-12 border-t border-[#D6D6D6] text-left text-text-primary"
     >
       <span className="shrink-0">{icon}</span>
       <span className="text-style-body">{label}</span>
