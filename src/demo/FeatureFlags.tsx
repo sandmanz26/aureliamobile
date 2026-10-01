@@ -1,7 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { FlagState } from './modules'
-import { SITE_LOCK_FLAG, STORAGE_KEY, defaultFlags } from './modules'
+import { ANNOTATIONS_FLAG, SITE_LOCK_FLAG, STORAGE_KEY, defaultFlags } from './modules'
+
+/** Flags that are tools around the demo rather than screens in it. */
+const NOT_A_MODULE = [SITE_LOCK_FLAG, ANNOTATIONS_FLAG]
 
 /**
  * Two layers of state, deliberately separate:
@@ -143,10 +146,13 @@ export function FeatureFlagsProvider({ children }: { children: ReactNode }) {
       setAll: (next) => {
         // The site lock is not a module and is not what "disable all" means:
         // that reads as "hide every screen from the walkthrough", not "let the
-        // world in". It keeps whatever it was set to.
-        const all: FlagState = { [SITE_LOCK_FLAG]: flags[SITE_LOCK_FLAG] !== false }
-        for (const key of Object.keys(defaultFlags())) {
-          if (key !== SITE_LOCK_FLAG) all[key] = next
+        // world in". It keeps whatever it was set to — and so does the
+        // annotation overlay, which is a review tool, not a screen.
+        const defaults = defaultFlags()
+        const all: FlagState = {}
+        for (const key of NOT_A_MODULE) all[key] = flags[key] ?? defaults[key]
+        for (const key of Object.keys(defaults)) {
+          if (!NOT_A_MODULE.includes(key)) all[key] = next
         }
         commit(all)
       },

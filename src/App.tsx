@@ -24,6 +24,7 @@ import { SiteLock } from './components/SiteLock'
 import { PageSkeleton } from './components/ui/PageSkeleton'
 import { FeatureFlagsProvider } from './demo/FeatureFlags'
 import { ModuleGuard } from './demo/ModuleGuard'
+import { DemoAnnotator } from './demo/annotations/DemoAnnotator'
 import { AppLayout } from './layouts/AppLayout'
 import { DemoControlPage } from './pages/DemoControlPage'
 import { NotFoundPage } from './pages/NotFoundPage'
@@ -423,6 +424,8 @@ export default function App() {
               link looked like a blank page that loaded fine instead of a 404. */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        {/* /__demo's "Review annotations" — renders nothing unless switched on there. */}
+        <DemoAnnotator />
         </ChatSessionProvider>
         </AudioPlayerProvider>
       </AuthProvider>

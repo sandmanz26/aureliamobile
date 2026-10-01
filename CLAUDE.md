@@ -207,6 +207,16 @@ before debugging the component. `src/demo/modules.ts` is the registry; `built:
 false` means there is nothing behind it, `unreleased: true` means built but
 switched off.
 
+**A floating pen button over the app is the `annotations` flag, not a bug.**
+`/__demo`'s "Review annotations" card switches on `src/demo/annotations/`: a
+review overlay that only renders below 500px wide (`MOBILE_WEB_BREAKPOINT`)
+and never on `/__demo`. Like the site lock it is a tool around the demo, so
+it is kept out of `DEMO_MODULES` and Enable/Disable all skip it. Its notes sit
+in the reviewer's own localStorage (`aurelia.demo.annotations`), not in KV —
+the flag decides who sees the tool, a `.txt` export is how notes move between
+people. If a screenshot from a phone has numbered yellow pins on it, this is
+why.
+
 **A shared password sits in front of the site, but not in front of `/__demo`.**
 The console that owns the switch stays open so nobody can shut themselves out of
 it — which also means that URL is a way around the lock for anyone who knows it.

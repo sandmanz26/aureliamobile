@@ -50,6 +50,20 @@ components so what's on trial is the structure, not a second design
 system. No new entry in `robots.txt` — the file already disallows the
 whole site.
 
+### 2026-10-01 — Review annotations, switched from `/__demo`
+
+**Lands on:** `web_app` / `admin_cms`
+**Not on:** `web_prod` (moves on request) / `mobile_app` (a web review tool;
+the Flutter client has no `/__demo`) / `storybook` (a presenter tool, not a
+shared component).
+
+New `annotations` flag with its own card under the site lock in `/__demo`,
+default off and untouched by Enable/Disable all. When on — and only below
+500px wide, never on `/__demo` — a draggable 40px pen button lets a reviewer
+pin numbered, draggable notes on any screen, save them to a `.txt` and open
+one back, with each note in the list jumping to its screen. Notes live in
+the reviewer's localStorage; the `.txt` is how they travel.
+
 ### 2026-09-30 — Make Sign In's form the guaranteed-visible element, not just reachable
 
 **Lands on:** `web_app`
