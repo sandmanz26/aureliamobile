@@ -31,6 +31,31 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-02 — FOR-FRONTEND-READINESS.md restructured around the end user, not the engineering plumbing
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (web-FE-specific) / `storybook` (not a
+component).
+
+The first version of this doc led with data-fetching layers and bundle
+splitting — real, but an answer to "what does an engineer need," not "what
+does the person using the app hit." Restructured into two parts: Part I is
+what a real end user actually experiences first — every screen's blank-slate
+day-one state (not just Home, which was the only one PRD's own table named),
+the cockpit's real generation latency with no wait-state UI, real audio
+delivery (including iOS Safari's autoplay-needs-a-direct-tap trap, untested
+by this project's Chromium-only verification history), getting signed out
+on every reload, a payment flow that's a page and not a flow, consent
+toggles that don't connect or disconnect anything real, account deletion
+that deletes nothing, "live" numbers that need to become true once real
+users exist, and error copy that needs the product's own voice. Part II
+keeps the original engineering-infrastructure content as the supporting
+work underneath Part I, not the headline. The "where to start" list is
+reordered accordingly — real session persistence now leads, since it's the
+single most retention-costing gap and the one most invisible in any
+walkthrough.
+
 ### 2026-10-02 — Admin's 18 pages are code-split now, not shipped in one bundle
 
 **Lands on:** `web_app`

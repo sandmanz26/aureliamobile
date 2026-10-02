@@ -352,7 +352,7 @@ one reader and kept identical on all three branches:
 | `docs/FOR-MOBILE.md` | a mobile engineer | The Flutter client at length: toolchain, running on an emulator and a real iPhone, the architecture and why, and every trap with the symptom it produces. |
 | `docs/FOR-PRODUCT.md` | a product manager | What works, what only looks like it works, the decisions already made and their reasons, the undesigned states, and the open questions. |
 | `docs/FOR-AI-AGENT.md` | an automated agent | Orientation for a cold start: the four facts that invalidate the obvious approach, the standing rules, and how to verify honestly. |
-| `docs/FOR-FRONTEND-READINESS.md` | whoever sequences FE work before launch | What has no code path yet because nothing here can fail or take time today — data fetching, auth, loading/error states, the image pipeline, testing, observability — and the order to tackle them in. |
+| `docs/FOR-FRONTEND-READINESS.md` | whoever sequences FE work before launch | What a real end user hits first — blank-slate accounts, the cockpit's real latency, getting signed out, audio/payment/consent flows with no real UI yet — then the engineering work underneath it, and the order to tackle both. |
 
 `docs/PRD.md` remains the requirements document and
 `docs/DESIGN-SYSTEM-HISTORY.md` the token log. Update the relevant one in the

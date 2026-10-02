@@ -6,278 +6,279 @@ the next ticket. It is not a wishlist; every item below is tied to a specific
 gap in the code as it stands today, not a generic pre-launch checklist copied
 from somewhere else.
 
-> **Status** Written 2 Oct 2026 against `web_app` @ `0bf084e`. Kept identical
+**Part I is what a real end user hits.** The first version of this document
+led with engineering infrastructure — data fetching, bundle splitting, test
+tooling — which are real and necessary, but answer "what does an engineer
+need to build this on," not "what breaks for the person actually using the
+app." Part I is that second question, asked directly. Part II is the
+supporting engineering work underneath it, kept because it's still true, but
+it is the *means*, not the point.
+
+> **Status** Written 2 Oct 2026 against `web_app` @ `289bd74`. Kept identical
 > on `web_app` and `admin_cms` the way the other `docs/FOR-*.md` files are.
 
 ---
 
-## 0 · The frame
+# Part I · What a real end user hits
 
-Every screen in this app — consumer and admin — reads from a `const` array
-compiled into the bundle, or (in the three admin modules that now have
-mutations) a React context seeded from that same array. Nothing fetches,
-nothing can fail, nothing is ever "not here yet." That is exactly right for a
-demo and it is why the FE work below is not a backlog of nice-to-haves: it is
-the set of things that have **no code path at all** today and will need one
-the moment a real network request sits where a `const` sits now.
+## 1 · Every "blank slate" screen, not just the one PRD already names
 
-The organizing question for everything below is the same one `AuthContext`
-already answers honestly for sign-in state: *this is a decision with an
-expiry date, not a permanent design* (CLAUDE.md says this almost verbatim
-about sign-in persistence — the same sentence applies to nearly every other
-piece of mock state in the app).
+`docs/PRD.md` §08 lists "Day-0 user with no personalisation" as a missing
+state, scoped to Home's Quick Start and Live Sessions. **The real scope is
+every screen that shows a statistic or a history**, because the mock catalogue
+is never anything but an established, active account:
 
----
+| Screen | What it assumes | What a real day-0 user actually has |
+| --- | --- | --- |
+| Home | Quick Start, Live Sessions populated | Nothing made yet |
+| Profile | "6 Posts," 18,513 plays, a Sessions/Recreated shelf | Zero of everything |
+| Progress / My Wellness | Chapters, Social Impact, Insights tabs all have data to chart | Nothing to chart — these tabs have never been empty in the mock data |
+| Credits | A balance and five history rows | 0 credits, no history |
+| Challenges | A leaderboard to view | Possibly no challenge joined at all |
+| Notifications | A bucketed feed (Today/Yesterday/Earlier) | An empty feed, on day one, forever until something happens |
 
-## 1 · There is no data-fetching layer, anywhere
+None of these have a designed empty state today because the mock catalogue
+can't produce one — `Adam Nilson` always has history. This needs actual
+design work, not just an engineering fallback, because "zero everything"
+is the literal first five minutes of every real account that will ever exist,
+and right now it's the one experience nobody has looked at.
 
-Every page does one of two things:
+## 2 · The cockpit's real latency has no UI — this is bigger than "failure," which PRD already names
 
-```ts
-import { SESSIONS } from '../lib/sessions'       // consumer — a straight const
-const { users } = useAdminData()                  // admin — context, still sync
-```
+PRD §08 names *generation failed or timed out* as the cockpit's missing
+state. That's the failure case. The **success case that takes real time** is
+a separate, unaddressed gap: today, asking for a session and getting "a new
+cut, named v1.3" is instant, because `replyTo()` is a keyword match
+(`src/lib/replies.ts`) and nothing actually generates audio. A real model
+reply and real audio generation each take real wall-clock time — plausibly
+seconds for a chat reply, and meaningfully longer for a full session's worth
+of mixed audio.
 
-Neither has a concept of loading, error, retry, or staleness, because neither
-has ever needed one — the data has always already been there, synchronously,
-since before the component existed. **This is the single largest gap.** Every
-screen in both the consumer app and the admin CMS needs new UI it does not
-have today: a loading state, an error state, and a decision about what
-"empty" means versus "still loading."
+This needs a designed wait state that is not just a spinner: how long is
+"too long" before the UI should say so, can the user navigate away and come
+back to a session still generating, does a finished session need to notify
+them (push/in-app) if they've left the cockpit, and does the existing
+version-list UI (`DraftVersion`) show "generating" as a distinct state from
+"ready" — today it only knows "exists."
 
-**`src/admin/data/AdminDataContext.tsx` is the template to generalize, not a
-one-off.** It already isolates every mutation behind a named function
-(`setUserRole`, `saveSession`, `saveChallenge`, …) rather than inline
-`setState` calls scattered through JSX — built that way specifically so a
-real backend call replaces the function body without any page needing to
-change. What it does *not* yet model is the asynchronous part: none of those
-functions can fail, take time, or need a loading flag, because today they
-don't. The honest next step is not "add a backend" — it's "make this context
-behave as if the functions were already async," so the loading/error seam
-gets built and tested against mock data before it has to also absorb a real
-network's unreliability at the same time.
+## 3 · Real audio delivery, not a 10-second looped bed
 
-**Concrete recommendation:** adopt a fetching library (TanStack Query or SWR)
-now, wrapping today's synchronous mock reads in a resolved `Promise` and
-today's mutations in the same shape `AdminDataContext` already uses. This
-costs almost nothing today — the mock functions still just return the array —
-but it means every "is this loading," "did this fail," "is this stale"
-question gets answered once, by the library, instead of once per screen,
-later, under deadline, when a real API is already live and every screen is
-guessing differently.
+Every session plays the same `assets/audio/session-bed.wav`, byte-identical
+regardless of the session (`docs/FOR-BACKEND.md` §2.4). A real generated
+10–20 minute file changes the playback UX in ways that don't show up yet:
 
----
+- **Progressive playback vs. full download.** Waiting for a 15-minute file to
+  finish downloading before "Play" works is a bad default; streaming or
+  chunked playback needs a decision and a loading state the scrubber can show
+  (buffered-vs-played, the way video players distinguish the two).
+- **iOS Safari blocks audio that doesn't start from a direct user gesture.**
+  The very first play on iOS must be triggered by the tap itself, not by a
+  state update that happens after — a common, silent failure mode for
+  exactly this kind of app, and nothing in the current player
+  (`u-scrubber`, `AudioPlayerContext`) has been exercised against it, since
+  the Playwright verification used in this project runs Chromium only.
+- **Background/cross-route playback.** `AudioPlayerProvider` is deliberately
+  mounted above the router "so a session being built has to survive leaving
+  /chat to play it and coming back" — that's the right instinct, but it's
+  only been proven for in-app navigation. A real user backgrounding the
+  browser tab or locking their phone mid-session is a different code path
+  (media session API, lock-screen controls) that doesn't exist yet.
 
-## 2 · Auth and session: currently a boolean with an expiry date
+## 4 · Getting signed out on every reload is not a demo quirk to a real user — it's why they leave
 
-`AuthContext` holds `signedIn` in React state, with no persistence, by
-design — "every load starts signed out" is explicitly documented as correct
-*for a demo on mock data* and explicitly wrong *once an account holds real
-history* (CLAUDE.md says this outright). `RequireAuth` is four lines: no
-token, no expiry, no refresh — it reads the boolean and redirects.
+`AuthContext` holds `signedIn` in memory with no persistence, "so the app
+opens on the case for itself" — explicitly a demo setting, per both
+CLAUDE.md and PRD's own open question #1 ("what is the real session
+lifetime?"). Translated to a real person: they close the tab, open it
+tomorrow, and are signed out — for a habit-forming wellness product, that is
+not a rough edge, it's the single most retention-costing gap on this list.
+Worth prioritizing above almost everything else here, specifically because
+it's invisible in every demo (nobody closes the tab and comes back a day
+later mid-walkthrough) and maximally visible to every real user.
 
-None of that is a bug today. It is a list of things that do not exist yet and
-will each need a real design before launch:
+## 5 · The payment flow is a page, not a flow
 
-- Where the session lives (httpOnly cookie vs. a token the FE holds) — this
-  is a security decision as much as an FE one, and it decides whether
-  `AuthContext` becomes a context around a cookie-backed session check or
-  around a token the FE refreshes itself.
-- Silent refresh before expiry, and what the UI does if refresh fails mid-session
-  (today: nothing can fail mid-session, because nothing is a request).
-  "Log out everywhere" has a UI already (`/settings`) but nothing behind it.
-- SSO is a seam, not an implementation: `DummySsoProvider` returns a fixed
-  account after ~900ms (per `docs/FOR-BACKEND.md` §3). The FE's OAuth
-  redirect/popup handling, error states (`cancelled` / `network` /
-  `rejected` are already typed) and token exchange are unbuilt.
+`/upgrade` exists as a screen, but PRD's own P0 is blunt: "No pricing or
+subscription model exists anywhere in the product." Once one does, the FE
+work is a second project of its own: card entry and validation, 3D Secure
+redirect/challenge handling, a specific UI for a declined card, proration
+copy when switching tiers mid-cycle, a cancel/downgrade flow, and receipts.
+None of this is built, and none of it can be, until the pricing decision
+lands — but it's worth naming now so it isn't discovered as a surprise-sized
+project the week pricing finally ships.
 
-**The one item here that is already a P0, independent of a backend:**
-`/admin` has no authentication of any kind — every module, including the
-ones with real write actions now (Users, Sessions, Challenges), is reachable
-by typing the URL. This has been flagged in `docs/PRD.md` and
-`docs/FOR-BACKEND.md` since before this session's work, and it is a FE
-route-guarding problem the FE can start closing today, independent of
-whether a real backend exists yet — the same way `SiteLock` already gates the
-whole consumer app with a client-side check that is explicitly *not* real
-security but *is* a real deterrent against wandering in. `/admin` has no
-equivalent today, and it is the one place on this list where "we'll wait for
-the backend" is not a defensible sequencing choice, because the admin
-screens already let someone suspend a user or unpublish a session by URL
-alone.
+## 6 · Consent toggles don't connect or disconnect anything
 
----
+My Wellness's signal sources (`src/lib/signals.ts`, now also mirrored in the
+admin Signal Sources module) are booleans in local state. A real Apple Watch
+or Oura Ring connection is an OAuth grant: turning one on needs a real
+redirect/consent flow, and turning one off needs to actually **revoke** that
+grant, not just flip a switch — which means a "disconnecting…" state and a
+failure mode ("we couldn't disconnect that, try again") that the current
+toggle has no room for. This is also where the admin-side consent text
+(`reads`) stops being documentation and starts being the literal string a
+real OAuth consent screen needs to show.
 
-## 3 · Loading / error / empty states are a missing state space, not a missing feature
+## 7 · Account deletion doesn't delete anything
 
-`docs/PRD.md` §07 names "generation has no failure state designed" as the
-top gap for the cockpit specifically. The same gap exists on every other
-screen, just unnamed: Explore, Sessions, Challenges, Notifications, My
-Wellness, the whole of `/admin` — none of them have ever had to render "the
-request is taking a while" or "that didn't work, try again." `PageSkeleton`
-exists today, but only for the *route itself* taking time to download its JS
-chunk (the `Suspense` boundary in `AppLayout`), never for data inside an
-already-loaded page.
+PRD §08 is direct: "Delete is missing entirely, not just its state." Today,
+confirming deletion on `/settings` just signs the session out — the account
+and its data are untouched. For a real user, this is both a trust question
+(did it actually work?) and a compliance one (GDPR's right to erasure). The
+FE needs a real async flow here: a confirmation that the *request* was
+received, realistic language about when it completes (immediately? a grace
+period?), and a transactional email trigger — none of which has a UI pattern
+in this app yet, because nothing today is asynchronous enough to need one.
 
-Building the fetching layer in §1 forces this question for every screen at
-once, which is the right time to answer it once — a shared skeleton
-component, a shared inline error+retry affordance, a documented rule for
-when "no rows" means "really empty" versus "still loading" (SESSIONS vs.
-`morning-light`'s deliberately-empty challenge in the current mock data
-already shows the product has opinions about real empty states; the FE needs
-the same opinion about *failed* and *loading* states, which don't exist in
-the mock catalogue because nothing in it can fail).
+## 8 · Numbers that claim to be real need to *be* real once real users exist
 
-**Offline is a related, currently unanswered question.** This is a
-meditation app plausibly used on a commute or at home with patchy wifi, and
-there is no offline detection, no request queue, no service worker — not
-necessarily wrong, but currently undecided rather than decided-against.
+Home's "Ongoing Live Sessions" shows a world map of global activity, and
+Explore's "Trusted Creators" and the various leaderboards imply a ranking
+over real usage. All of it is invented today, which is honestly labeled
+throughout this project's own docs — but the moment real users exist in
+small numbers, a confident "2,847 people meditating right now" stops being
+charming placeholder content and starts being a specific, visible lie to the
+first thousand real people who can tell the number doesn't match a quiet
+app. This needs a decision before launch, not after: wire it to something
+real (which likely means the websocket/polling layer this app doesn't have
+yet), or redesign the module to not claim a number it can't back — not
+"ship it and see."
 
----
+## 9 · Error and empty-state copy needs this product's own voice
 
-## 4 · The image pipeline is the most likely "it broke in production" surprise
+`replies.ts`'s fallback reply is deliberately specific: *"Got it — I've
+noted that for the next revision of your session"* rather than "Sorry,
+something went wrong." The whole product is written in that register — calm,
+specific, never apologetic-sounding. A generic toast library's default
+copy ("Error: request failed with status 500") would be a tone break on
+every single error surface at once, the first time any of them actually
+fires. This is content work, not just an error-boundary component, and it's
+cheap to do *before* errors are common and expensive to retrofit toast by
+toast afterward.
 
-Every cover photo is hotlinked from Unsplash at request time
-(`src/lib/photos.ts` maps a `photo` enum to an Unsplash photo id), with the
-token gradient as a deliberate fallback — documented, and fine for a demo.
-In production this is several problems at once that are each pure FE work
-once decided:
+## 10 · Accessibility and real device diversity, not the one Chromium viewport this project has tested in
 
-- No control over availability — an Unsplash outage or a removed photo
-  becomes a real-user-facing broken image, not a gradient (the current
-  fallback only covers *no network*, not *this specific photo id 404s*).
-- No responsive variants — the same full-size hotlink serves a 44px avatar
-  and a full-bleed hero, which is wasted bandwidth on exactly the connection
-  profile (mobile, on the go) this product's own users are most likely to have.
-- Licensing/rate-limit exposure at real scale, already flagged in
-  `docs/FOR-BACKEND.md` §6 as inherited debt, not a design choice.
+Every verification in this project's history — including every Playwright
+script run this session — has been Chromium, usually at one or two fixed
+viewport widths. Real end users bring: screen readers (the cockpit is
+chat-shaped, which needs deliberate focus management, not default DOM
+order), keyboard-only navigation, `prefers-reduced-motion` (the app leans on
+custom transform animations — `.u-page`, the folded-deck tilt effect, the
+podium), real font-scaling settings, and — concretely, likely to actually
+bite — **iOS Safari's autoplay restriction**, already called out in §3,
+which nothing in this project's test history would ever have caught.
 
-This needs a decision (own CDN + upload/resize pipeline, or a service like
-Cloudinary/Imgix) before real content exists, because the `photo` enum
-contract (`CoverKey`) is the seam both the FE and whatever backend owns
-asset storage need to agree on — deciding it late means redoing every
-`CoverImage` call site instead of just its implementation.
+## 11 · Legal pages and localization
 
----
+Two real-launch requirements with no visible home in the current app: a
+linked Terms of Service and Privacy Policy (required by app stores, ad
+platforms and payment processors alike, and currently not found anywhere in
+`src/pages/`), and localization — worth flagging now because
+`src/admin/data/commerce.ts`'s `REGION_PRICING` already lists Indonesia,
+India, Brazil and Japan with local currencies, implying multi-region intent
+that the consumer app's hardcoded-English strings don't yet support. i18n is
+structural work (extracting every string, choosing a library, deciding the
+date/currency formatting convention) that gets more expensive the more pages
+exist with strings baked directly into JSX — cheaper to start before the
+next 10 pages ship than after.
 
-## 5 · Zero automated test coverage
+## 12 · The moderation queue has no echo back to the person it's about
 
-CLAUDE.md states this plainly: "No test runner is configured — verification
-here is typecheck, lint, and driving the real app in a browser," and "the
-responsive and interaction checks in this project's history were one-off
-Playwright scripts, not a suite." That has been true for every verification
-in this session too — the Playwright scripts written to confirm the admin
-Challenges/Sessions/Users work this session live in a scratch directory and
-disappear with the container, not in the repository.
-
-This is sustainable exactly as long as one person (or one AI session) can
-manually click through the whole app before every change — which stops being
-true the moment there is a real team, a real backend to integrate against,
-or real users whose data a regression can corrupt. Concretely:
-
-- **Stand up Vitest + React Testing Library** for component-level tests —
-  currently nothing exists to add tests *to*, which is the actual blocker,
-  not test-writing effort.
-- **Convert the throwaway verification scripts into a checked-in E2E suite**
-  (Playwright, run in CI) for the highest-stakes flows specifically: sign-in,
-  publish/unpublish, challenge join, consent toggles on My Wellness, and
-  anything in `/admin` that mutates a user. This product is explicitly
-  mental-health-adjacent and already carries documented compliance weight
-  (`docs/FOR-BACKEND.md` §7) — an untested regression in a consent flow is a
-  compliance incident, not just a bug.
-
----
-
-## 6 · Admin's bundle is not code-split, and it just grew
-
-`src/App.tsx` lazy-loads every consumer page (`const ChatPage = lazy(() =>
-import(...))`) specifically so each becomes its own chunk, with
-`PageSkeleton` covering the download. Every admin page is imported eagerly
-instead — all 18 modules, including the three added this session, ship in
-the same bundle as the admin shell regardless of whether a given admin user
-ever opens anything but Dashboard. This was already true before this
-session; it is more true now, and it will keep compounding as the admin
-surface keeps growing the way it has in just the last few turns of this
-project. There's no bundle-size budget or CI check today either, so nothing
-would currently notice if this got worse.
+The new admin Moderation/reports workflow lets an operator action a report
+against someone's session. Today, nothing tells *that person* anything — no
+notification, no explanation, no appeal path. A real user whose published
+work gets quietly removed with zero feedback will assume it's a bug, not a
+decision, and either way the product owes them *something* (a notification
+in the existing feed, at minimum) once this queue is doing more than looking
+realistic.
 
 ---
 
-## 7 · No observability — the first sign of a real bug will be a support ticket
+# Part II · The engineering work underneath Part I
 
-No error tracking, no analytics, no Web Vitals / performance monitoring
-exists anywhere in the dependency list or the code. Today, "did that work?"
-is answered by a human watching the screen (an AI session running Playwright
-and reading its own console output, for the verification done in this
-session). Once real users exist, that stops being how anyone finds out
-something broke. This is cheap to add early (a Sentry-equivalent has no
-backend dependency) and expensive to retrofit after the first unreported
-incident.
+None of Part I is buildable without this. Kept from the first version of
+this document, compressed, because it's still accurate — it's just support
+structure, not the end-user story itself.
+
+## 13 · No data-fetching layer, anywhere
+
+Every page reads a `const` array or (in three admin modules) a context
+seeded from one — nothing has a concept of loading, error, or staleness,
+because nothing has ever needed one. `src/admin/data/AdminDataContext.tsx`'s
+pattern of named mutator functions (`setUserRole`, `saveSession`, …) is the
+template to generalize: it already isolates *what* changes from *how*, so a
+real API call replaces a function body without touching a page. What it
+doesn't model yet is the async part. **Recommendation:** adopt TanStack
+Query or SWR now, wrapping today's synchronous mock calls in resolved
+promises — free today, and it's the seam every item in Part I ultimately
+needs (a wait state, a retry, a "did that actually save").
+
+## 14 · `/admin` has no authentication, independent of any backend
+
+Every admin module — several of which now mutate real data — is reachable
+by URL alone. A `SiteLock`-style password gate (explicitly a deterrent, not
+real security, matching the pattern the consumer app already uses) closes
+this today without waiting on a backend.
+
+## 15 · Zero automated test coverage
+
+"No test runner is configured" (CLAUDE.md, verbatim) and every verification
+in this project's history, including this session's, has been a throwaway
+Playwright script that disappears with the container. Stand up Vitest +
+React Testing Library, and promote the next verification script into a
+committed CI test instead — starting with sign-in, publish/unpublish, and
+consent toggles, since this product carries real compliance weight
+(`docs/FOR-BACKEND.md` §7) and an untested regression there is an incident,
+not a bug.
+
+## 16 · Admin's bundle and mobile parity
+
+Admin's 18 pages were eagerly bundled instead of code-split — **fixed this
+session** (`src/App.tsx`, `AdminLayout.tsx` now `lazy()` + `Suspense`,
+matching the consumer app's existing pattern). Separately: `docs/CHANGE-LOG.md`
+is a passive record of web/mobile drift, not an active one — nothing stops
+a shipped web change from never getting a matching Flutter ticket, and the
+gap compounds as web's pace increases.
+
+## 17 · No observability, and no settled secrets convention
+
+No error tracking, analytics, or performance monitoring exists; the feature
+flag store and site lock are well-reasoned precedents for config management,
+but there's no general convention yet for the next environment variable or
+API key.
+
+## 18 · The image pipeline
+
+Hotlinked Unsplash photos (`src/lib/photos.ts`) have no availability
+guarantee, no responsive variants, and real licensing exposure at scale —
+this is already in `docs/FOR-BACKEND.md` §6 as inherited debt, repeated here
+because it blocks real content from day one and needs a backend-side answer
+before the FE work can start.
 
 ---
 
-## 8 · Config/secrets maturity — good precedent, not yet a convention
+## Where to start
 
-The feature-flag store (`/api/config`, Upstash, scoped by `VERCEL_ENV`) and
-the site lock (`VITE_SITE_PASSWORD`, kept out of git on purpose) are both
-genuinely well-reasoned patterns — staging/production flag separation in
-particular solved a real problem carefully. What doesn't exist yet is a
-*general* convention for the next environment variable: no `.env.example`,
-no documented naming scheme, no stated rule for "secrets never reach the
-client bundle" beyond the site lock's own explicit acknowledgment that it
-doesn't. Worth writing down once, before a real API base URL or API key is
-the next thing that needs adding.
+Interleaving both parts by what a real user would actually notice first:
 
----
-
-## 9 · Mobile parity is a standing process cost, not a one-time task
-
-CLAUDE.md is explicit that this app is the Flutter client's reference
-implementation, and `docs/CHANGE-LOG.md` exists specifically because "web_app
-and mobile_app do not diverge from each other for long without a reason" —
-and because mobile's own `PRD.md` was once found to have quietly drifted two
-sections behind. That log is a *passive* record: it says what happened, but
-nothing stops a change from shipping to `web_app` without the matching
-`mobile_app` ticket ever getting filed. As web's rate of change increases
-(this session alone shipped five admin modules and two cross-cutting data
-fixes), the parity gap compounds unless there's an active forcing function —
-worth considering a lighter-weight shared contract (shared JSON/constants
-for the type scale, the photo enum, the vector path strings) over the
-current pattern of two hand-maintained copies in TS and Dart.
-
----
-
-## 10 · Where to start, in order
-
-Given everything above, this is the sequencing that front-loads the highest
-risk and the cheapest fixes, and defers the items that are genuinely blocked
-on a product decision someone else owns:
-
-1. **Gate `/admin`.** Independent of a backend — a `SiteLock`-style password
-   gate (explicitly a deterrent, not real security, exactly like the one the
-   consumer app already has) closes the P0 that exists *today*, with modules
-   that now actually mutate data.
-2. **Lazy-load the 18 admin pages**, the same way the 22 consumer pages
-   already are. Mechanical, zero behavior change, same pattern already
-   proven in this codebase.
-3. **Wrap today's mock reads/writes in TanStack Query (or SWR).** Zero
-   behavior change today; it is what makes every later item on this list
-   tractable, because it is the one place "loading / error / stale" gets
-   decided instead of guessed per screen.
-4. **Stand up Vitest, and promote the next Playwright verification script
-   into a committed CI test** instead of a scratch-directory throwaway —
-   starting with sign-in, publish/unpublish, and one admin mutation flow.
-5. **Wire basic error tracking.** No backend dependency, immediately useful,
-   cheap.
-6. **Decide the image pipeline.** This one is not FE-only — it needs a
-   backend/asset-storage answer before the FE work can start, so it should
-   be raised now rather than discovered at launch.
-7. **Write down the env/secrets convention** before the next real API key
-   needs a home.
-
-Items 1–5 need no decision from anyone else and can start immediately. Item 6
-needs a backend-side answer first. Item 9 (mobile parity tooling) is worth
-raising with whoever owns the Flutter side rather than solved unilaterally
-from the web branch.
+1. **Real session persistence** (§4) — the single highest-retention-cost gap,
+   and invisible in every walkthrough because nobody re-opens a demo a day
+   later.
+2. **Gate `/admin`** (§14) — no backend dependency, closes a P0 today.
+3. **The cockpit's real-latency wait state** (§2) and **real audio playback**
+   (§3, iOS autoplay specifically) — both become visible the moment a real
+   model or real generated audio is wired in, so the UI for them should exist
+   *before* that day, not be improvised on it.
+4. **Day-0 empty states across Profile / Progress / Credits / Notifications**
+   (§1) — every real account starts here; it should not be the least-tested
+   state in the app.
+5. **Adopt TanStack Query / SWR now** (§13) — the seam everything above
+   actually needs.
+6. **Error/empty copy in the product's own voice** (§9) and **basic error
+   tracking** (§17) — cheap, and better before errors are common than after.
+7. Everything gated on a product or backend decision — pricing (§5), the
+   image pipeline (§18), real social-proof numbers (§8) — raised now so
+   they're a planned project, not a late discovery.
 
 ---
 
