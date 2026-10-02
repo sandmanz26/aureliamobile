@@ -31,6 +31,25 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-02 — A fifth `FOR-*` doc: what the frontend needs before this is a real product
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (web-FE-specific, though the testing and
+observability sections apply in spirit) / `storybook` (not a component).
+
+Added `docs/FOR-FRONTEND-READINESS.md` — a forward-looking audit of what has
+no code path today because nothing in the app can currently fail, take time,
+or arrive asynchronously: no data-fetching layer (every screen reads a
+`const` or a context seeded from one), no loading/error/empty states
+anywhere, `/admin` still has no auth even though three of its modules now
+mutate real data, zero automated tests, no image pipeline beyond hotlinking
+Unsplash, admin's 18 pages are not code-split the way the 22 consumer pages
+already are, and no observability of any kind. Ends with a priority-ordered
+"start here" list rather than a flat gap list, since the request was to
+begin addressing it, not just name it. CLAUDE.md's documents table updated
+to list it as the fifth `FOR-*` file.
+
 ### 2026-10-02 — Admin gets two modules on Aurelia's actual mechanics, not generic SaaS admin
 
 **Lands on:** `web_app`

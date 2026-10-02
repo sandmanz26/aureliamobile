@@ -343,7 +343,7 @@ Explain the config here instead.
 ## The other documents
 
 `CLAUDE.md` is the short, authoritative version for engineering conventions on
-this branch. Four longer documents sit beside it in `docs/`, each written for
+this branch. Five longer documents sit beside it in `docs/`, each written for
 one reader and kept identical on all three branches:
 
 | File | For | What it holds |
@@ -352,6 +352,7 @@ one reader and kept identical on all three branches:
 | `docs/FOR-MOBILE.md` | a mobile engineer | The Flutter client at length: toolchain, running on an emulator and a real iPhone, the architecture and why, and every trap with the symptom it produces. |
 | `docs/FOR-PRODUCT.md` | a product manager | What works, what only looks like it works, the decisions already made and their reasons, the undesigned states, and the open questions. |
 | `docs/FOR-AI-AGENT.md` | an automated agent | Orientation for a cold start: the four facts that invalidate the obvious approach, the standing rules, and how to verify honestly. |
+| `docs/FOR-FRONTEND-READINESS.md` | whoever sequences FE work before launch | What has no code path yet because nothing here can fail or take time today — data fetching, auth, loading/error states, the image pipeline, testing, observability — and the order to tackle them in. |
 
 `docs/PRD.md` remains the requirements document and
 `docs/DESIGN-SYSTEM-HISTORY.md` the token log. Update the relevant one in the
