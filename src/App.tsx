@@ -5,25 +5,6 @@ import { AudioPlayerProvider } from './audio/AudioPlayerContext'
 import { AuthProvider } from './auth/AuthContext'
 import { ChatSessionProvider } from './chat/ChatSessionContext'
 import { RequireAuth } from './auth/RequireAuth'
-import { AiMonitoring } from './admin/pages/AiMonitoring'
-import { AuditPage } from './admin/pages/AuditPage'
-import { ChallengesPage as AdminChallengesPage } from './admin/pages/ChallengesPage'
-import { CockpitRulesPage } from './admin/pages/CockpitRulesPage'
-import { CoinsPage } from './admin/pages/CoinsPage'
-import { CompliancePage } from './admin/pages/CompliancePage'
-import { DashboardPage } from './admin/pages/DashboardPage'
-import { ExperimentsPage } from './admin/pages/ExperimentsPage'
-import { ModerationPage } from './admin/pages/ModerationPage'
-import { NotificationsPage as AdminNotificationsPage } from './admin/pages/NotificationsPage'
-import { PaymentsPage } from './admin/pages/PaymentsPage'
-import { PricingPage } from './admin/pages/PricingPage'
-import { RevenuePage } from './admin/pages/RevenuePage'
-import { RolesPage } from './admin/pages/RolesPage'
-import { SessionsPage as AdminSessionsPage } from './admin/pages/SessionsPage'
-import { SettingsPage } from './admin/pages/SettingsPage'
-import { SignalSourcesPage } from './admin/pages/SignalSourcesPage'
-import { UserDetailPage } from './admin/pages/UserDetailPage'
-import { UsersPage } from './admin/pages/UsersPage'
 import { SiteLock } from './components/SiteLock'
 import { PageSkeleton } from './components/ui/PageSkeleton'
 import { FeatureFlagsProvider } from './demo/FeatureFlags'
@@ -39,8 +20,8 @@ import { SignUpPage } from './pages/auth/SignUpPage'
 
 // The consumer app's own pages, lazily — each becomes its own chunk, and
 // AppLayout wraps its <Outlet /> in a <Suspense> that shows PageSkeleton
-// while one is still downloading. Auth, the demo console and /admin stay
-// eager: they're either the first thing a cold load needs or a separate
+// while one is still downloading. Auth and the demo console stay eager:
+// they're either the first thing a cold load needs or a separate
 // desktop-only area this doesn't touch.
 const ChallengeDetailPage = lazy(() => import('./pages/ChallengeDetailPage').then((m) => ({ default: m.ChallengeDetailPage })))
 const ChatPage = lazy(() => import('./pages/ChatPage').then((m) => ({ default: m.ChatPage })))
@@ -64,6 +45,30 @@ const CreditsPage = lazy(() => import('./pages/CreditsPage').then((m) => ({ defa
 const UpgradePage = lazy(() => import('./pages/UpgradePage').then((m) => ({ default: m.UpgradePage })))
 const AboutLayoutPage = lazy(() => import('./pages/dev/AboutLayoutPage').then((m) => ({ default: m.AboutLayoutPage })))
 const GalleryLayoutPage = lazy(() => import('./pages/dev/GalleryLayoutPage').then((m) => ({ default: m.GalleryLayoutPage })))
+
+// The admin CMS's own pages, lazily for the same reason — 18 modules shipped
+// in the same chunk as the shell meant every admin visitor downloaded all of
+// them to see the Dashboard. AdminLayout wraps its own <Outlet /> in a
+// <Suspense> the same way AppLayout does.
+const DashboardPage = lazy(() => import('./admin/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })))
+const UsersPage = lazy(() => import('./admin/pages/UsersPage').then((m) => ({ default: m.UsersPage })))
+const UserDetailPage = lazy(() => import('./admin/pages/UserDetailPage').then((m) => ({ default: m.UserDetailPage })))
+const RolesPage = lazy(() => import('./admin/pages/RolesPage').then((m) => ({ default: m.RolesPage })))
+const AdminSessionsPage = lazy(() => import('./admin/pages/SessionsPage').then((m) => ({ default: m.SessionsPage })))
+const AdminChallengesPage = lazy(() => import('./admin/pages/ChallengesPage').then((m) => ({ default: m.ChallengesPage })))
+const ModerationPage = lazy(() => import('./admin/pages/ModerationPage').then((m) => ({ default: m.ModerationPage })))
+const AiMonitoring = lazy(() => import('./admin/pages/AiMonitoring').then((m) => ({ default: m.AiMonitoring })))
+const CockpitRulesPage = lazy(() => import('./admin/pages/CockpitRulesPage').then((m) => ({ default: m.CockpitRulesPage })))
+const RevenuePage = lazy(() => import('./admin/pages/RevenuePage').then((m) => ({ default: m.RevenuePage })))
+const PricingPage = lazy(() => import('./admin/pages/PricingPage').then((m) => ({ default: m.PricingPage })))
+const PaymentsPage = lazy(() => import('./admin/pages/PaymentsPage').then((m) => ({ default: m.PaymentsPage })))
+const CoinsPage = lazy(() => import('./admin/pages/CoinsPage').then((m) => ({ default: m.CoinsPage })))
+const ExperimentsPage = lazy(() => import('./admin/pages/ExperimentsPage').then((m) => ({ default: m.ExperimentsPage })))
+const AdminNotificationsPage = lazy(() => import('./admin/pages/NotificationsPage').then((m) => ({ default: m.NotificationsPage })))
+const CompliancePage = lazy(() => import('./admin/pages/CompliancePage').then((m) => ({ default: m.CompliancePage })))
+const SignalSourcesPage = lazy(() => import('./admin/pages/SignalSourcesPage').then((m) => ({ default: m.SignalSourcesPage })))
+const AuditPage = lazy(() => import('./admin/pages/AuditPage').then((m) => ({ default: m.AuditPage })))
+const SettingsPage = lazy(() => import('./admin/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })))
 
 export default function App() {
   return (

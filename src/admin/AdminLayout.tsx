@@ -21,10 +21,11 @@ import {
   X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { BuildBadge } from '../components/ui/BuildBadge'
+import { PageSkeleton } from '../components/ui/PageSkeleton'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import { AdminDataProvider } from './data/AdminDataContext'
 
@@ -181,7 +182,9 @@ export function AdminLayout() {
 
         <main className="flex flex-1 flex-col gap-20 p-16 lg:p-24">
           <AdminDataProvider>
-            <Outlet />
+            <Suspense fallback={<PageSkeleton />}>
+              <Outlet />
+            </Suspense>
           </AdminDataProvider>
         </main>
       </div>

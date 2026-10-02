@@ -31,6 +31,22 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-02 — Admin's 18 pages are code-split now, not shipped in one bundle
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (no equivalent bundle) / `storybook` (not a
+component).
+
+First concrete item off `docs/FOR-FRONTEND-READINESS.md`'s "start now" list.
+Every admin page was imported eagerly in `src/App.tsx`, so opening the
+Dashboard downloaded all 18 modules' code regardless of which one an admin
+actually wanted — the same mistake the 22 consumer pages solved with
+`lazy()` and a shared `<Suspense>` boundary. `AdminLayout` now wraps its own
+`<Outlet />` in exactly that pattern, and every admin page is `lazy()`
+alongside the consumer ones. No behavior change — confirmed every admin
+route still loads correctly — only a lighter bundle for the common case.
+
 ### 2026-10-02 — A fifth `FOR-*` doc: what the frontend needs before this is a real product
 
 **Lands on:** `web_app`
