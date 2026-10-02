@@ -20,6 +20,7 @@ import { RevenuePage } from './admin/pages/RevenuePage'
 import { RolesPage } from './admin/pages/RolesPage'
 import { SessionsPage as AdminSessionsPage } from './admin/pages/SessionsPage'
 import { SettingsPage } from './admin/pages/SettingsPage'
+import { UserDetailPage } from './admin/pages/UserDetailPage'
 import { UsersPage } from './admin/pages/UsersPage'
 import { SiteLock } from './components/SiteLock'
 import { PageSkeleton } from './components/ui/PageSkeleton'
@@ -104,6 +105,11 @@ export default function App() {
             <Route path="users" element={
               <ModuleGuard module="adminUsers">
                 <UsersPage />
+              </ModuleGuard>
+            } />
+            <Route path="users/:id" element={
+              <ModuleGuard module="adminUsers">
+                <UserDetailPage />
               </ModuleGuard>
             } />
             <Route path="roles" element={

@@ -339,15 +339,79 @@ the email-and-password path already has.
 
 ## 4 · Admin (`/admin` on the web branches)
 
-Fifteen modules exist as screens: Dashboard, Users, Sessions, AI Monitoring,
-Payments, Revenue, Pricing, Coins, Moderation, Compliance, Roles, Experiments,
-Notifications, Audit, Settings.
+Sixteen modules exist as screens: Dashboard, Users, Sessions, Challenges, AI
+Monitoring, Payments, Revenue, Pricing, Coins, Moderation, Compliance, Roles,
+Experiments, Notifications, Audit, Settings.
 
 > ### `/admin` has no authentication of any kind.
 > Every module is reachable by typing its URL. This is the P0 in the PRD and it
 > is in the code, not just the document. It needs real auth, roles and an audit
 > trail before the backend exists, not after — the Roles and Audit screens are
 > already drawn and will imply capabilities the API must actually enforce.
+
+### 4.1 Users, Sessions and Challenges are the three with real mutations
+
+Three admin screens now hold working write actions, not just read-only
+tables: inviting/suspending/role-changing a user, editing or
+publishing/unpublishing a session, and creating/editing/deleting a
+challenge. All three are implemented as mock state in
+`src/admin/data/AdminDataContext.tsx` — one React context the admin shell
+provides, holding `users`, `sessions` and `challenges` plus one named
+mutator per action (`inviteUser`, `setUserRole`, `toggleSuspendUser`,
+`saveSession`, `toggleSessionStatus`, `saveChallenge`, `deleteChallenge`).
+
+**This is the intended integration seam, not a prototype to throw away.**
+Every admin page calls these named functions instead of touching array
+state inline, so wiring a real backend is swapping what is inside each
+function body — add an API call, update state from the response (or
+refetch) — without touching a single page component. None of the screens
+know or care whether `saveSession` is a local `setState` or a `PATCH`
+behind a promise.
+
+```
+AdminUser
+  id, name, email, role, status ('active'|'suspended'|'pending'),
+  plan ('free'|'plus'|'pro'), coins, sessionsCreated, country,
+  joinedAt, lastActiveAt
+
+ContentSession (admin view)
+  id, title, author, authorId, type, status
+  ('published'|'draft'|'under_review'|'removed'),
+  plays, recreations, durationMin, moodDelta, createdAt
+
+Challenge (admin view) — same shape as §1.6, writable:
+  slug, title, summary, photo, gradient, joined, points,
+  endsInDays, totalDays, minutesPerDay, yourDay, leaderboard,
+  sessionSlugs, rewards[{ rank, coins, prize }]
+
+CoinTx    { id, user, userId, type, reason, amount, balanceAfter, at }
+AuditEntry { id, actor, actorId, actorRole, action, target, ip, result, at }
+```
+
+**`authorId`, `userId` and `actorId` are the decision to carry forward.**
+Each of `ContentSession`, `CoinTx` and `AuditEntry` used to hold only a
+free-text name (`author`, `user`, `actor`) generated independently of the
+`AdminUser` rows, so two mock datasets could name the same person without
+actually referring to the same account — harmless for a table, but the kind
+of thing that silently breaks the moment anything needs to join across
+them (a user's own detail page, in this case). They were changed to carry
+the real foreign key alongside the display name. **Your schema should do
+the same from day one** — model these as a user id with a denormalised
+name for display, never a name the client has to match against a user
+table by string equality.
+
+Endpoints these three screens imply, none of which exist:
+
+| Route | Notes |
+| --- | --- |
+| `POST /admin/users/invite` | name, email, role → a `pending` account. |
+| `PATCH /admin/users/{id}` | `{ role }` or `{ status }` — role change and suspend/reactivate are two independent writes today. |
+| `GET /admin/users/{id}` | The detail screen's aggregate: the user row plus their sessions, coin ledger and audit history. Today the client assembles this client-side by filtering `sessions`/`coinTx`/`auditLog` on `authorId`/`userId`/`actorId` — your endpoint should do the join server-side instead of shipping three full collections to filter in the browser. |
+| `PATCH /admin/sessions/{id}` | title, type, durationMin, status. |
+| `POST /admin/sessions/{id}/publish` / `unpublish` | The same publish state as §1.5, from the operator side. |
+| `POST /admin/challenges` | Create. |
+| `PATCH /admin/challenges/{slug}` | Edit copy, pacing, rewards. Leaderboard and `sessionSlugs` are not sent — those are written by play, not by this form. |
+| `DELETE /admin/challenges/{slug}` | |
 
 ---
 

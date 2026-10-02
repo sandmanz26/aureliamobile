@@ -167,6 +167,10 @@ export interface ContentSession {
   id: string
   title: string
   author: string
+  /** The account that made it — a real row in USERS, not a free-text name,
+   *  so a session can be traced back to a user's own detail page and a
+   *  future backend can join on an id instead of matching strings. */
+  authorId: string
   type: 'Meditation' | 'Soundscape' | 'Breathwork' | 'Affirmation'
   status: 'published' | 'draft' | 'under_review' | 'removed'
   plays: number
@@ -180,18 +184,22 @@ const TITLES = ['Dolphins frequency', 'Raise your Vibration', 'Mind Dance', 'Sle
 
 export const SESSIONS: ContentSession[] = (() => {
   const rng = makeRng(7)
-  return Array.from({ length: 54 }, (_, i) => ({
-    id: `ses_${(2000 + i).toString(36)}`,
-    title: `${pick(rng, TITLES)} v1.${Math.floor(rng() * 5)}`,
-    author: `${pick(rng, FIRST)} ${pick(rng, LAST)}`,
-    type: pick(rng, ['Meditation', 'Soundscape', 'Breathwork', 'Affirmation'] as const),
-    status: (rng() > 0.86 ? (rng() > 0.5 ? 'under_review' : 'removed') : rng() > 0.2 ? 'published' : 'draft') as ContentSession['status'],
-    plays: Math.floor(rng() * 21000),
-    recreations: Math.floor(rng() * 1800),
-    durationMin: Math.floor(rng() * 25) + 5,
-    moodDelta: Math.round((rng() * 24 - 4) * 10) / 10,
-    createdAt: daysAgo(Math.floor(rng() * 180)),
-  }))
+  return Array.from({ length: 54 }, (_, i) => {
+    const author = pick(rng, USERS)
+    return {
+      id: `ses_${(2000 + i).toString(36)}`,
+      title: `${pick(rng, TITLES)} v1.${Math.floor(rng() * 5)}`,
+      author: author.name,
+      authorId: author.id,
+      type: pick(rng, ['Meditation', 'Soundscape', 'Breathwork', 'Affirmation'] as const),
+      status: (rng() > 0.86 ? (rng() > 0.5 ? 'under_review' : 'removed') : rng() > 0.2 ? 'published' : 'draft') as ContentSession['status'],
+      plays: Math.floor(rng() * 21000),
+      recreations: Math.floor(rng() * 1800),
+      durationMin: Math.floor(rng() * 25) + 5,
+      moodDelta: Math.round((rng() * 24 - 4) * 10) / 10,
+      createdAt: daysAgo(Math.floor(rng() * 180)),
+    }
+  })
 })()
 
 /* ------------------------------------------------------------- Moderation */
@@ -376,6 +384,10 @@ export const SAFETY_EVENTS: SafetyEvent[] = (() => {
 export interface CoinTx {
   id: string
   user: string
+  /** The USERS row this posting belongs to — a real account, not a
+   *  freestanding name, so a user's detail page can show their own ledger
+   *  rather than one that happens to share a name. */
+  userId: string
   type: 'earn' | 'spend' | 'grant' | 'refund'
   reason: string
   amount: number
@@ -388,9 +400,11 @@ export const COIN_TX: CoinTx[] = (() => {
   return Array.from({ length: 60 }, (_, i) => {
     const type = pick(rng, ['earn', 'earn', 'spend', 'grant', 'refund'] as const)
     const amount = Math.floor(rng() * 400) + 10
+    const user = pick(rng, USERS)
     return {
       id: `cn_${(9000 + i).toString(36)}`,
-      user: `${pick(rng, FIRST)} ${pick(rng, LAST)}`,
+      user: user.name,
+      userId: user.id,
       type,
       reason: pick(rng, ['Daily streak', 'Session published', 'Community recreate', 'Redeemed theme', 'Referral bonus', 'Support credit', 'Challenge win']),
       amount: type === 'spend' ? -amount : amount,
@@ -405,6 +419,10 @@ export const COIN_TX: CoinTx[] = (() => {
 export interface AuditEntry {
   id: string
   actor: string
+  /** The staff USERS row that did this — picked to actually hold
+   *  `actorRole`, so "this user's audit history" is a real filter rather
+   *  than a name that happens to coincide. */
+  actorId: string
   actorRole: string
   action: string
   target: string
@@ -419,14 +437,20 @@ const ACTIONS = [
   'settings.update', 'user.export', 'auth.login', 'auth.login_failed',
 ]
 
+const STAFF_USERS = USERS.filter((user) => user.role !== 'member')
+
 export const AUDIT_LOG: AuditEntry[] = (() => {
   const rng = makeRng(31)
   return Array.from({ length: 120 }, (_, i) => {
     const action = pick(rng, ACTIONS)
+    const actorRole = pick(rng, ['super_admin', 'ops', 'moderator', 'ai_engineer', 'analyst'])
+    const candidates = STAFF_USERS.filter((user) => user.role === actorRole)
+    const actor = pick(rng, candidates.length ? candidates : STAFF_USERS)
     return {
       id: `aud_${(400000 + i * 13).toString(36)}`,
-      actor: `${pick(rng, FIRST)} ${pick(rng, LAST)}`,
-      actorRole: pick(rng, ['super_admin', 'ops', 'moderator', 'ai_engineer', 'analyst']),
+      actor: actor.name,
+      actorId: actor.id,
+      actorRole,
       action,
       target: action.startsWith('user') ? `usr_${(1000 + Math.floor(rng() * 68)).toString(36)}`
         : action.startsWith('session') ? `ses_${(2000 + Math.floor(rng() * 54)).toString(36)}`

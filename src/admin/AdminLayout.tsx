@@ -24,6 +24,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { BuildBadge } from '../components/ui/BuildBadge'
 import { useFeatureFlags } from '../demo/FeatureFlags'
+import { AdminDataProvider } from './data/AdminDataContext'
 
 interface NavItem {
   to: string
@@ -173,7 +174,9 @@ export function AdminLayout() {
         </header>
 
         <main className="flex flex-1 flex-col gap-20 p-16 lg:p-24">
-          <Outlet />
+          <AdminDataProvider>
+            <Outlet />
+          </AdminDataProvider>
         </main>
       </div>
     </div>

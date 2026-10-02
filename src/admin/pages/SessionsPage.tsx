@@ -4,8 +4,8 @@ import { Modal } from '../components/Modal'
 import type { Column } from '../components/DataTable'
 import { DataTable } from '../components/DataTable'
 import { Badge, Button, FormField, PageHeader, StatCard, StatusBadge, inputClass } from '../components/ui'
+import { useAdminData } from '../data/AdminDataContext'
 import type { ContentSession } from '../data/mock'
-import { SESSIONS } from '../data/mock'
 
 const date = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 
@@ -90,17 +90,12 @@ function EditSessionForm({
 }
 
 export function SessionsPage() {
-  const [sessions, setSessions] = useState<ContentSession[]>(SESSIONS)
+  const { sessions, saveSession, toggleSessionStatus } = useAdminData()
   const [editing, setEditing] = useState<ContentSession | null>(null)
 
   function save(updated: ContentSession) {
-    setSessions((current) => current.map((row) => (row.id === updated.id ? updated : row)))
+    saveSession(updated)
     setEditing(null)
-  }
-
-  function toggleStatus(row: ContentSession) {
-    const next = row.status === 'published' ? 'draft' : 'published'
-    save({ ...row, status: next })
   }
 
   const columns: Column<ContentSession>[] = [
@@ -129,7 +124,7 @@ export function SessionsPage() {
       render: (row) => (
         <div className="flex justify-end gap-4">
           {(row.status === 'published' || row.status === 'draft') && (
-            <Button variant="ghost" size="sm" onClick={() => toggleStatus(row)}>
+            <Button variant="ghost" size="sm" onClick={() => toggleSessionStatus(row.id)}>
               {row.status === 'published' ? 'Unpublish' : 'Publish'}
             </Button>
           )}

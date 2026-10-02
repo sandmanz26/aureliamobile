@@ -4,16 +4,9 @@ import { Modal } from '../components/Modal'
 import type { Column } from '../components/DataTable'
 import { DataTable } from '../components/DataTable'
 import { Badge, Button, FormField, PageHeader, StatCard, inputClass, textareaClass } from '../components/ui'
+import { useAdminData } from '../data/AdminDataContext'
 import type { ChallengeRecord } from '../data/challenges'
-import {
-  CHALLENGE_PHOTOS,
-  GRADIENT_PRESETS,
-  challengeStatus,
-  cloneChallenges,
-  emptyChallenge,
-  slugify,
-  withRewardAt,
-} from '../data/challenges'
+import { CHALLENGE_PHOTOS, GRADIENT_PRESETS, challengeStatus, emptyChallenge, slugify, withRewardAt } from '../data/challenges'
 
 const STATUS_TONE = { active: 'good', upcoming: 'info', closed: 'neutral' } as const
 
@@ -200,20 +193,17 @@ function DeleteConfirm({ challenge, onConfirm, onClose }: { challenge: Challenge
 }
 
 export function ChallengesPage() {
-  const [challenges, setChallenges] = useState<ChallengeRecord[]>(cloneChallenges)
+  const { challenges, saveChallenge, deleteChallenge } = useAdminData()
   const [editing, setEditing] = useState<ChallengeRecord | null>(null)
   const [deleting, setDeleting] = useState<ChallengeRecord | null>(null)
 
   function save(challenge: ChallengeRecord) {
-    setChallenges((current) => {
-      const exists = current.some((item) => item.slug === challenge.slug)
-      return exists ? current.map((item) => (item.slug === challenge.slug ? challenge : item)) : [challenge, ...current]
-    })
+    saveChallenge(challenge)
     setEditing(null)
   }
 
   function remove(slug: string) {
-    setChallenges((current) => current.filter((item) => item.slug !== slug))
+    deleteChallenge(slug)
     setDeleting(null)
   }
 

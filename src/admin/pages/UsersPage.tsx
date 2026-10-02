@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { UserPlus } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { Modal } from '../components/Modal'
 import type { Column } from '../components/DataTable'
 import { DataTable } from '../components/DataTable'
 import { Badge, Button, FormField, PageHeader, StatCard, StatusBadge, inputClass } from '../components/ui'
+import { useAdminData } from '../data/AdminDataContext'
 import type { AdminUser } from '../data/mock'
-import { ROLES, USERS } from '../data/mock'
+import { ROLES } from '../data/mock'
 
 const date = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 
@@ -67,24 +69,12 @@ function InviteUserForm({ onInvite, onClose }: { onInvite: (user: AdminUser) => 
 }
 
 export function UsersPage() {
-  const [users, setUsers] = useState<AdminUser[]>(USERS)
+  const { users, inviteUser, setUserRole, toggleSuspendUser } = useAdminData()
   const [inviting, setInviting] = useState(false)
 
   function invite(user: AdminUser) {
-    setUsers((current) => [user, ...current])
+    inviteUser(user)
     setInviting(false)
-  }
-
-  function setRole(id: string, role: string) {
-    setUsers((current) => current.map((user) => (user.id === id ? { ...user, role } : user)))
-  }
-
-  function toggleSuspend(id: string) {
-    setUsers((current) =>
-      current.map((user) =>
-        user.id === id ? { ...user, status: user.status === 'suspended' ? 'active' : 'suspended' } : user,
-      ),
-    )
   }
 
   const columns: Column<AdminUser>[] = [
@@ -100,7 +90,9 @@ export function UsersPage() {
             {row.name.split(' ').map((part) => part[0]).join('')}
           </span>
           <div className="min-w-0">
-            <p className="truncate font-medium text-adm-ink">{row.name}</p>
+            <Link to={`/admin/users/${row.id}`} className="block truncate font-medium text-adm-ink hover:underline">
+              {row.name}
+            </Link>
             <p className="truncate text-12 text-adm-muted">{row.email}</p>
           </div>
         </div>
@@ -112,7 +104,7 @@ export function UsersPage() {
       render: (row) => (
         <select
           value={row.role}
-          onChange={(event) => setRole(row.id, event.target.value)}
+          onChange={(event) => setUserRole(row.id, event.target.value)}
           className="h-26 rounded-6 border border-adm-line bg-adm-surface px-6 text-11 text-adm-ink outline-none focus:border-adm-accent"
         >
           {ROLES.map((r) => (
@@ -135,7 +127,7 @@ export function UsersPage() {
       sortable: false,
       render: (row) => (
         <div className="flex justify-end">
-          <Button variant="ghost" size="sm" onClick={() => toggleSuspend(row.id)}>
+          <Button variant="ghost" size="sm" onClick={() => toggleSuspendUser(row.id)}>
             {row.status === 'suspended' ? 'Reactivate' : 'Suspend'}
           </Button>
         </div>
