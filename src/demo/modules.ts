@@ -255,6 +255,7 @@ export const DEMO_MODULES: DemoModule[] = [
   { id: 'adminUsers', kind: 'admin', label: 'Users', description: 'Account list, roles, suspensions.', route: '/admin/users', built: true },
   { id: 'adminRoles', kind: 'admin', label: 'Roles & permissions', description: 'Permission matrix.', route: '/admin/roles', built: true },
   { id: 'adminSessions', kind: 'admin', label: 'Sessions', description: 'Generated session catalogue.', route: '/admin/sessions', built: true },
+  { id: 'adminChallenges', kind: 'admin', label: 'Challenges', description: 'Setup, pacing and reward tiers.', route: '/admin/challenges', built: true },
   { id: 'adminModeration', kind: 'admin', label: 'Moderation', description: 'Report queue and SLA.', route: '/admin/moderation', built: true },
   { id: 'adminAi', kind: 'admin', label: 'AI monitoring', description: 'Cost, latency, quality, guardrails.', route: '/admin/ai', built: true },
   { id: 'adminRevenue', kind: 'admin', label: 'Revenue', description: 'MRR movement, churn, cohorts.', route: '/admin/revenue', built: true },

@@ -1,5 +1,5 @@
-import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { ArrowDownRight, ArrowUpRight, Loader2 } from 'lucide-react'
+import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
 /* ------------------------------------------------------------------ Badge */
 
@@ -121,6 +121,76 @@ export function PageHeader({
     </div>
   )
 }
+
+/* ----------------------------------------------------------------- Button */
+
+const BUTTON_VARIANTS = {
+  primary: 'bg-adm-ink text-adm-surface hover:opacity-90',
+  secondary: 'border border-adm-line bg-adm-surface text-adm-ink hover:bg-adm-hover',
+  danger: 'bg-adm-critical text-white hover:opacity-90',
+  ghost: 'text-adm-ink-2 hover:bg-adm-hover',
+} as const
+
+interface AdminButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: keyof typeof BUTTON_VARIANTS
+  size?: 'sm' | 'md'
+  loading?: boolean
+  icon?: ReactNode
+}
+
+/** The one button style every admin page should reach for, so "Invite user",
+ *  "New challenge" and "Delete" all read as the same product rather than
+ *  each page inventing its own pill. */
+export function Button({
+  variant = 'secondary',
+  size = 'md',
+  loading = false,
+  icon,
+  disabled,
+  className = '',
+  children,
+  ...rest
+}: AdminButtonProps) {
+  return (
+    <button
+      type="button"
+      disabled={disabled || loading}
+      className={`inline-flex items-center justify-center gap-6 whitespace-nowrap rounded-8 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${
+        size === 'sm' ? 'h-30 px-10 text-12' : 'h-34 px-14 text-13'
+      } ${BUTTON_VARIANTS[variant]} ${className}`}
+      {...rest}
+    >
+      {loading ? <Loader2 size={size === 'sm' ? 12 : 14} className="animate-spin" /> : icon}
+      {children}
+    </button>
+  )
+}
+
+/* ------------------------------------------------------------- form bits */
+
+export function FormField({
+  label,
+  hint,
+  children,
+}: {
+  label: string
+  hint?: string
+  children: ReactNode
+}) {
+  return (
+    <label className="flex flex-col gap-6">
+      <span className="text-12 font-medium text-adm-ink-2">{label}</span>
+      {children}
+      {hint && <span className="text-11 text-adm-muted">{hint}</span>}
+    </label>
+  )
+}
+
+const FIELD_CLASS =
+  'h-34 w-full rounded-8 border border-adm-line bg-adm-surface px-10 text-13 text-adm-ink outline-none focus:border-adm-accent'
+
+export const inputClass = FIELD_CLASS
+export const textareaClass = `${FIELD_CLASS} h-auto min-h-[72px] resize-y py-8`
 
 /** Legend for a multi-series chart. Identity is never color-alone. */
 export function Legend({ items }: { items: { label: string; color: string }[] }) {

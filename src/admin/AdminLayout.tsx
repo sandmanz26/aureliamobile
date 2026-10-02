@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Tag,
   TrendingUp,
+  Trophy,
   Users,
   X,
 } from 'lucide-react'
@@ -47,6 +48,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
     section: 'Content',
     items: [
       { to: '/admin/sessions', label: 'Sessions', icon: FileText, flag: 'adminSessions' },
+      { to: '/admin/challenges', label: 'Challenges', icon: Trophy, flag: 'adminChallenges' },
       { to: '/admin/moderation', label: 'Moderation', icon: ShieldAlert, flag: 'adminModeration' },
     ],
   },

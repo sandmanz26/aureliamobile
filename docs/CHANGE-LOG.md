@@ -31,6 +31,30 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-02 — Admin gets a Challenges module, and Sessions/Users get real controls
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (admin is web-only) / `storybook` (not a
+shared component).
+
+The one genuinely missing admin capability — challenge setup and editing —
+is now a 16th module (`/admin/challenges`): create, edit and delete a
+challenge's copy, pacing and three reward tiers, reusing the same
+`ChallengeRecord` shape the consumer app reads so nothing can drift between
+them. Leaderboards and session entries stay read-only, since those are
+earned by play, not written by an admin. Sessions gained an actual
+Edit sheet and a one-click Publish/Unpublish, and Users gained a working
+"Invite user" and per-row Suspend/Reactivate and role change — all three
+were previously read-only tables whose copy promised controls that weren't
+wired up. Users, Sessions and Logs (Audit) were otherwise already adequate
+for what was asked; Audit stays intentionally read-only (append-only by
+design). Added two shared primitives other admin pages can now reuse:
+`Button` (primary/secondary/danger/ghost) and `Modal`, plus shared form-field
+styles — replacing one-off button and dialog markup with the same chrome
+everywhere. Like the rest of `src/admin/`, edits are in-memory only and
+reset on reload; there is still no backend.
+
 ### 2026-10-02 — Review annotations show up to 700px wide, not just 499px
 
 **Lands on:** `web_app`

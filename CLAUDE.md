@@ -74,7 +74,7 @@ nothing and passes on a broken tree. Use the script.
 ```
 src/
   pages/        one file per consumer screen (22)
-  admin/pages/  one file per admin module (15)
+  admin/pages/  one file per admin module (16)
   components/
     chat/       the cockpit's own parts
     ui/         everything shared

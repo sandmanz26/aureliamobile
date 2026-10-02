@@ -7,6 +7,7 @@ import { ChatSessionProvider } from './chat/ChatSessionContext'
 import { RequireAuth } from './auth/RequireAuth'
 import { AiMonitoring } from './admin/pages/AiMonitoring'
 import { AuditPage } from './admin/pages/AuditPage'
+import { ChallengesPage as AdminChallengesPage } from './admin/pages/ChallengesPage'
 import { CoinsPage } from './admin/pages/CoinsPage'
 import { CompliancePage } from './admin/pages/CompliancePage'
 import { DashboardPage } from './admin/pages/DashboardPage'
@@ -113,6 +114,11 @@ export default function App() {
             <Route path="sessions" element={
               <ModuleGuard module="adminSessions">
                 <AdminSessionsPage />
+              </ModuleGuard>
+            } />
+            <Route path="challenges" element={
+              <ModuleGuard module="adminChallenges">
+                <AdminChallengesPage />
               </ModuleGuard>
             } />
             <Route path="moderation" element={

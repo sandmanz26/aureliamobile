@@ -276,7 +276,7 @@ In order. Most reports resolve at step 1 or 2.
 ```
 src/
   pages/        one file per consumer screen (22)
-  admin/pages/  one file per admin module (15)
+  admin/pages/  one file per admin module (16)
   components/chat/   the cockpit's own parts
   components/ui/     everything shared
   layouts/      AppLayout (drawer + shell), AdminLayout

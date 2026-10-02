@@ -38,7 +38,7 @@ Three things follow from that sentence, and they are the whole product:
 | | Web | Flutter |
 | --- | --- | --- |
 | Consumer app | ✅ | ✅ |
-| Admin CMS | ✅ 15 modules | — |
+| Admin CMS | ✅ 16 modules | — |
 | Audio playback | ✅ | ✅ |
 | Voice input | ✅ | ✅ (real microphone) |
 | Google / Apple sign-in | ✅ paths, dummy behind | ✅ paths, dummy behind |
@@ -57,9 +57,9 @@ Upgrade · Auth (sign in, sign up, forgot, reset)
 
 ### 2.3 Admin (web only)
 
-Dashboard · Users · Sessions · AI Monitoring · Payments · Revenue · Pricing ·
-Coins · Moderation · Compliance · Roles · Experiments · Notifications · Audit ·
-Settings
+Dashboard · Users · Sessions · Challenges · AI Monitoring · Payments · Revenue ·
+Pricing · Coins · Moderation · Compliance · Roles · Experiments ·
+Notifications · Audit · Settings
 
 > **`/admin` has no authentication of any kind.** Every module is reachable by
 > typing its URL. This is the P0 and it is in the code, not just in the
@@ -162,7 +162,7 @@ Two things to say out loud in any demo:
 
 `/__demo` on the web app is a **feature-flag console**: a registry of every
 module with a switch, so a walkthrough can be scoped to exactly what is being
-shown. 17 consumer modules, 15 admin modules.
+shown. 17 consumer modules, 16 admin modules.
 
 - Toggling changes **only your browser** until you press **Publish**.
 - Publish writes to a shared store (Upstash KV via `/api/config`), so every
