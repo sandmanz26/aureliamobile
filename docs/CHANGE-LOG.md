@@ -31,6 +31,29 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-02 — Admin gets two modules on Aurelia's actual mechanics, not generic SaaS admin
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (admin is web-only) / `storybook` (not a
+shared component).
+
+A product-owner review of the admin panel so far (Users, Sessions,
+Challenges, Payments, Revenue, …) found it was all generic SaaS-operator
+boilerplate — nothing in it was distinctly *Aurelia*. Two new modules close
+that: **Cockpit Rules** (`/admin/cockpit-rules`) is the admin's window onto
+`src/lib/replies.ts`'s keyword-matched reply engine — today's entire "AI" —
+listing all ~20 rules with their trigger pattern (shown, not editable: a
+typo there would silently break matching) and letting an operator tune the
+reply text and whether it proposes a brief or produces a new cut.
+**Signal Sources** (`/admin/signal-sources`) manages the six My Wellness
+integrations from `src/lib/signals.ts`, including `reads` — the literal
+consent sentence a member agrees to, which makes this screen a compliance
+surface and not just copy. Both import the real arrays the consumer app
+runs rather than a parallel admin-scale mock, unlike every other admin
+module (deliberately — see `docs/FOR-BACKEND.md` §4.2 for why that split is
+intentional, not an inconsistency to fix).
+
 ### 2026-10-02 — Admin's mock data is cross-linked, shares one data layer, and users get a detail page
 
 **Lands on:** `web_app`

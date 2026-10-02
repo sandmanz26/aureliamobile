@@ -8,6 +8,7 @@ import { RequireAuth } from './auth/RequireAuth'
 import { AiMonitoring } from './admin/pages/AiMonitoring'
 import { AuditPage } from './admin/pages/AuditPage'
 import { ChallengesPage as AdminChallengesPage } from './admin/pages/ChallengesPage'
+import { CockpitRulesPage } from './admin/pages/CockpitRulesPage'
 import { CoinsPage } from './admin/pages/CoinsPage'
 import { CompliancePage } from './admin/pages/CompliancePage'
 import { DashboardPage } from './admin/pages/DashboardPage'
@@ -20,6 +21,7 @@ import { RevenuePage } from './admin/pages/RevenuePage'
 import { RolesPage } from './admin/pages/RolesPage'
 import { SessionsPage as AdminSessionsPage } from './admin/pages/SessionsPage'
 import { SettingsPage } from './admin/pages/SettingsPage'
+import { SignalSourcesPage } from './admin/pages/SignalSourcesPage'
 import { UserDetailPage } from './admin/pages/UserDetailPage'
 import { UsersPage } from './admin/pages/UsersPage'
 import { SiteLock } from './components/SiteLock'
@@ -137,6 +139,11 @@ export default function App() {
                 <AiMonitoring />
               </ModuleGuard>
             } />
+            <Route path="cockpit-rules" element={
+              <ModuleGuard module="adminCockpitRules">
+                <CockpitRulesPage />
+              </ModuleGuard>
+            } />
             <Route path="revenue" element={
               <ModuleGuard module="adminRevenue">
                 <RevenuePage />
@@ -170,6 +177,11 @@ export default function App() {
             <Route path="compliance" element={
               <ModuleGuard module="adminCompliance">
                 <CompliancePage />
+              </ModuleGuard>
+            } />
+            <Route path="signal-sources" element={
+              <ModuleGuard module="adminSignalSources">
+                <SignalSourcesPage />
               </ModuleGuard>
             } />
             <Route path="audit" element={

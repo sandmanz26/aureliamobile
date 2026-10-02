@@ -339,9 +339,10 @@ the email-and-password path already has.
 
 ## 4 · Admin (`/admin` on the web branches)
 
-Sixteen modules exist as screens: Dashboard, Users, Sessions, Challenges, AI
-Monitoring, Payments, Revenue, Pricing, Coins, Moderation, Compliance, Roles,
-Experiments, Notifications, Audit, Settings.
+Eighteen modules exist as screens: Dashboard, Users, Sessions, Challenges, AI
+Monitoring, Cockpit Rules, Payments, Revenue, Pricing, Coins, Moderation,
+Compliance, Signal Sources, Roles, Experiments, Notifications, Audit,
+Settings.
 
 > ### `/admin` has no authentication of any kind.
 > Every module is reachable by typing its URL. This is the P0 in the PRD and it
@@ -412,6 +413,56 @@ Endpoints these three screens imply, none of which exist:
 | `POST /admin/challenges` | Create. |
 | `PATCH /admin/challenges/{slug}` | Edit copy, pacing, rewards. Leaderboard and `sessionSlugs` are not sent — those are written by play, not by this form. |
 | `DELETE /admin/challenges/{slug}` | |
+
+### 4.2 Cockpit Rules and Signal Sources read the clients' own data, not a parallel mock
+
+Every other admin module (Users, Sessions, Payments, Revenue, …) is backed
+by its own independently-seeded mock in `src/admin/data/` — deliberately:
+an operator reviewing 68 accounts or 54 sessions is reviewing *platform
+scale*, which the handful of named sessions in the consumer demo was never
+meant to represent. Cockpit Rules and Signal Sources are the two exceptions,
+on purpose: they are the admin's window onto mechanics that exist exactly
+once in the product, so they import the real arrays directly —
+`src/lib/replies.ts`'s `RULES`/`FALLBACK` and `src/lib/signals.ts`'s
+`SIGNAL_SOURCES` — rather than a second, parallel copy that could drift
+from what the chat cockpit and My Wellness actually run.
+
+**Cockpit Rules** is the admin view onto `replyTo()`'s keyword matcher —
+today's entire "AI": ~20 rules, first match wins, order is priority.
+
+```
+Rule   { id, test: RegExp, reply: Reply }
+Reply  { text, proposes?, changes?, prompts? }
+```
+
+The trigger pattern (`test`) is shown but is deliberately **not** editable
+from this screen — it is the live regex `replyTo()` runs, and a typo here
+would silently stop a rule firing with nothing in the UI to catch it. Only
+`reply.text`, `.proposes`, `.changes` and `.prompts` are editable — the
+words Aurelia says and what saying them commits the cockpit to. When a real
+model sits behind the cockpit (§2.3), this whole page's reason for existing
+changes: it becomes a prompt/behaviour console instead of a rule table, and
+the trigger-pattern column goes away. Implied route, none of which exist
+today: `PATCH /admin/cockpit-rules/{id}` — `{ text, proposes, changes,
+prompts }`.
+
+**Signal Sources** is the admin view onto the six My Wellness integrations
+and — more importantly — **the consent text each one shows a member before
+they agree to it.**
+
+```
+SignalSource { id, name, group ('Biological'|'Cognitive'|'Atmospheric'),
+               icon, defaultOn, reads }
+```
+
+`reads` is not a summary for this page — per §1.9, it is the literal
+sentence a member consents to, so editing it here is a legal action, not
+copywriting. §1.9's warning applies directly: if your backend stores
+consent, store the text version the member actually saw, not a boolean that
+silently means something different after the next edit. Implied routes:
+`POST /admin/signal-sources` (add an integration), `PATCH
+/admin/signal-sources/{id}` (name, group, `reads`, `defaultOn`), `DELETE
+/admin/signal-sources/{id}`.
 
 ---
 

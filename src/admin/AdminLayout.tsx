@@ -6,7 +6,9 @@ import {
   FileText,
   FlaskConical,
   LayoutDashboard,
+  MessageSquareText,
   Menu,
+  Radio,
   Scale,
   ScrollText,
   Settings,
@@ -55,7 +57,10 @@ const NAV: { section: string; items: NavItem[] }[] = [
   },
   {
     section: 'Intelligence',
-    items: [{ to: '/admin/ai', label: 'AI monitoring', icon: Activity, flag: 'adminAi' }],
+    items: [
+      { to: '/admin/ai', label: 'AI monitoring', icon: Activity, flag: 'adminAi' },
+      { to: '/admin/cockpit-rules', label: 'Cockpit rules', icon: MessageSquareText, flag: 'adminCockpitRules' },
+    ],
   },
   {
     section: 'Revenue',
@@ -77,6 +82,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
     section: 'Platform',
     items: [
       { to: '/admin/compliance', label: 'Compliance', icon: Scale, flag: 'adminCompliance' },
+      { to: '/admin/signal-sources', label: 'Signal sources', icon: Radio, flag: 'adminSignalSources' },
       { to: '/admin/audit', label: 'Audit log', icon: ScrollText, flag: 'adminAudit' },
       { to: '/admin/settings', label: 'Settings', icon: Settings, flag: 'adminSettings' },
     ],

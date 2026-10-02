@@ -55,7 +55,7 @@ material. Flag for confirmation with product and business:
 | Discovery | Explore, See All | Core |
 | Community | Challenge, Challenge Detail, Leaderboard | Support |
 | Account | Profile, Invite a Friend, Notifications, My Wellness, Help | Core |
-| Admin | 16 modules, web only | Internal |
+| Admin | 18 modules, web only | Internal |
 
 ---
 

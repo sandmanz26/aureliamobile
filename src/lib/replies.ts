@@ -63,7 +63,9 @@ interface Rule {
   reply: Reply
 }
 
-const RULES: Rule[] = [
+export type { Rule }
+
+export const RULES: Rule[] = [
   // ------------------------------------------------------------- no answer --
   // First, deliberately. "I don't know" contains words other rules would
   // happily match, and a bare "?" would fall through to the fallback, which
@@ -257,7 +259,7 @@ const RULES: Rule[] = [
  * It says what it actually did — took the note — rather than pretending to
  * have understood, because a confident non-answer is worse than a plain one.
  */
-const FALLBACK: Reply = {
+export const FALLBACK: Reply = {
   text: 'Got it — I’ve noted that for the next revision of your session.',
 }
 

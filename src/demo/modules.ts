@@ -258,6 +258,7 @@ export const DEMO_MODULES: DemoModule[] = [
   { id: 'adminChallenges', kind: 'admin', label: 'Challenges', description: 'Setup, pacing and reward tiers.', route: '/admin/challenges', built: true },
   { id: 'adminModeration', kind: 'admin', label: 'Moderation', description: 'Report queue and SLA.', route: '/admin/moderation', built: true },
   { id: 'adminAi', kind: 'admin', label: 'AI monitoring', description: 'Cost, latency, quality, guardrails.', route: '/admin/ai', built: true },
+  { id: 'adminCockpitRules', kind: 'admin', label: 'Cockpit rules', description: 'The reply engine behind every chat session.', route: '/admin/cockpit-rules', built: true },
   { id: 'adminRevenue', kind: 'admin', label: 'Revenue', description: 'MRR movement, churn, cohorts.', route: '/admin/revenue', built: true },
   { id: 'adminPricing', kind: 'admin', label: 'Pricing', description: 'Plans, entitlements, regional pricing.', route: '/admin/pricing', built: true },
   { id: 'adminPayments', kind: 'admin', label: 'Payments', description: 'Transactions, refunds, dunning.', route: '/admin/payments', built: true },
@@ -265,6 +266,7 @@ export const DEMO_MODULES: DemoModule[] = [
   { id: 'adminExperiments', kind: 'admin', label: 'Experiments', description: 'A/B tests.', route: '/admin/experiments', built: true },
   { id: 'adminNotifications', kind: 'admin', label: 'Notifications', description: 'Campaigns.', route: '/admin/notifications', built: true },
   { id: 'adminCompliance', kind: 'admin', label: 'Compliance', description: 'DSAR, consent, retention.', route: '/admin/compliance', built: true },
+  { id: 'adminSignalSources', kind: 'admin', label: 'Signal sources', description: 'Wearable/integration catalogue and consent text.', route: '/admin/signal-sources', built: true },
   { id: 'adminAudit', kind: 'admin', label: 'Audit log', description: 'Privileged-action history.', route: '/admin/audit', built: true },
   { id: 'adminSettings', kind: 'admin', label: 'Settings', description: 'Model config and feature flags.', route: '/admin/settings', built: true },
 ]
