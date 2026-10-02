@@ -31,6 +31,18 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-02 — Review annotations show up to 700px wide, not just 499px
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (no equivalent tool) / `storybook` (not a
+component).
+
+Raised `MOBILE_WEB_BREAKPOINT` (`src/demo/modules.ts`) from 500 to 700. The
+annotation pen button and its pins now render on any window narrower than
+700px, not just true phone widths — the single constant also drives the
+`/__demo` console's own description text, so that copy updated with it.
+
 ### 2026-10-01 — Fixed a race that could wipe shared annotations on first open
 
 **Lands on:** `web_app`

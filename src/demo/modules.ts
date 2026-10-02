@@ -315,5 +315,5 @@ export const SITE_LOCK_FLAG = 'siteLock'
  */
 export const ANNOTATIONS_FLAG = 'annotations'
 
-/** The overlay shows below this width (px), i.e. at 499 and not at 500. */
-export const MOBILE_WEB_BREAKPOINT = 500
+/** The overlay shows below this width (px), i.e. at 699 and not at 700. */
+export const MOBILE_WEB_BREAKPOINT = 700
