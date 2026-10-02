@@ -12,9 +12,19 @@ tooling — which are real and necessary, but answer "what does an engineer
 need to build this on," not "what breaks for the person actually using the
 app." Part I is that second question, asked directly. Part II is the
 supporting engineering work underneath it, kept because it's still true, but
-it is the *means*, not the point.
+it is the *means*, not the point. **Part III is a risk register**,
+specifically for the moment real AI and a real backend replace the mock
+cockpit and the mock catalogue — written for a project that has no developer
+seated yet and is still finalizing scope with the client, so every risk ends
+in something to *decide or specify now*, not something to code now.
 
-> **Status** Written 2 Oct 2026 against `web_app` @ `289bd74`. Kept identical
+**All three parts are about the consumer site at `web_app`'s main routes —
+not `/admin`.** The admin CMS has its own gaps, covered in passing in Part
+II only because a couple of its fixes (lazy-loading, a password gate) are
+cheap and unrelated to the client-facing product; nothing here is scoped
+around it.
+
+> **Status** Written 2 Oct 2026 against `web_app` @ `ca14759`. Kept identical
 > on `web_app` and `admin_cms` the way the other `docs/FOR-*.md` files are.
 
 ---
@@ -254,6 +264,187 @@ guarantee, no responsive variants, and real licensing exposure at scale —
 this is already in `docs/FOR-BACKEND.md` §6 as inherited debt, repeated here
 because it blocks real content from day one and needs a backend-side answer
 before the FE work can start.
+
+---
+
+# Part III · Risk register — when real AI and a real backend replace the mocks
+
+Scoped to the main consumer site only. Written for where this project
+actually is: no developer seated yet, still finalizing scope with the
+client. That means the useful work right now is not code — it's locking down
+the handful of decisions below *before* a developer's first sprint collides
+with them, because every one of these is cheap to decide on paper and
+expensive to discover mid-integration.
+
+## AI integration
+
+### R1 — Replies are instant today; a real model is not, and nothing in the UI knows how to wait
+
+`replyTo()` (`src/lib/replies.ts`) is a synchronous keyword match — sub-
+millisecond, always. A real model call has real, variable latency: maybe
+under a second, maybe several, occasionally much longer if it's also
+generating a full session. ChatPage today has no "thinking" state, no
+streaming-token rendering, no cancel-mid-reply affordance, and no timeout
+message — because it has never once needed any of them.
+
+**Lock down now:** whether the real reply streams token-by-token or arrives
+whole, and what the UI shows while waiting (and after how long it should
+start saying so). **Cheap to de-risk before a developer even starts:**
+artificially delay the mock reply by a couple of seconds and see how badly
+the current UI copes — that single change surfaces most of this risk for
+free, on mock data, before it's tangled up with real model behavior too.
+
+### R2 — The reply contract has to stay structured, or the UI loses the ability to tell "talked about it" from "did it"
+
+Every mock `Reply` carries machine-readable flags — `proposes`, `changes`,
+`prompts` — not just prose, and `replies.ts`'s own comments are explicit
+about why: *"Saying 'adding white noise underneath' over a card still naming
+the previous cut is the app claiming to have done something it did not do."*
+A real model left to free-write prose has no reliable way to signal that
+same distinction unless it's required to.
+
+**Lock down now, as a condition on whoever builds the AI layer:** the real
+system must emit the same structured signal (function-calling / tool-use /
+a constrained JSON shape) alongside anything conversational — carry forward
+exactly the `Reply { text, proposes, changes, prompts }` shape in
+`docs/FOR-BACKEND.md` §2.3. This is a one-sentence requirement to put in a
+spec today and a painful retrofit to discover is missing after the chat UI
+is already built against free-text replies.
+
+### R3 — Audio generation can fail independently of the reply that promised it
+
+Today a "reply" and "the session now exists" are the same instant. A real
+pipeline is at least two steps — the model agrees to a change, then audio
+actually renders — and the second step can fail (or just take much longer)
+even when the first step succeeded. Nothing in the current version-list UI
+(`DraftVersion`) distinguishes "the plan is confirmed" from "the file is
+actually ready," because there's never been a gap between them to show.
+
+**Lock down now:** whether the API models this as one call or two, and what
+the FE shows in between — this changes the chat UI's state machine, not
+just its copy, so it needs deciding before that state machine gets built.
+
+### R4 — Nothing today ever gets held back from the user, and this is a mental-health product
+
+The admin side already models safety interventions that assume a real model
+will sometimes need to be stopped (`blocked` / `rerouted` / `escalated` /
+`logged`, by category — self-harm language, crisis keywords, medical
+claims). The consumer cockpit, by contrast, shows every reply the instant it
+exists; nothing is ever withheld for a check, because a keyword matcher
+never produces anything worth checking.
+
+**Lock down now:** what the end user's cockpit actually shows when a real
+reply gets blocked or rerouted — silently substituted, visibly paused with
+"let me think about that differently," or something else. This is a safety
+and liability question as much as a UX one, and per `docs/FOR-BACKEND.md`
+§7 the product already carries documented compliance weight here — it
+should not be improvised the week the real model starts producing output
+nobody has reviewed in advance.
+
+### R5 — A quota or budget limit may someday change what the user experiences, and today nothing could show that even if it existed
+
+The admin side already models a monthly spend ceiling with the system
+degrading to a cheaper model past it, and PRD's own open question #3 asks
+outright what the free tier caps. Whatever the eventual answer, the
+consumer UI has zero concept today of "you've hit a limit" or "this reply
+came from a lighter model because of one" — there is no affordance for it
+anywhere in the cockpit.
+
+**Lock down now:** nothing urgent to decide yet — this one is legitimately
+blocked on the pricing/plan decision in PRD's open questions — but worth
+flagging to the client now as a UI surface that pricing will create, so it
+isn't sized as "just add a modal" the week pricing finally lands.
+
+### R6 — This project's whole verification method assumes deterministic replies, and a real model isn't one
+
+Every check run in this project's history — manual or Playwright — has
+relied on the mock engine's replies being the same every time. A real
+model's output varies run to run by design. Any test or script written
+against exact reply text breaks the moment the swap happens, which means
+the testing approach itself (assert on structure and behavior — did a new
+version appear, did the right flag fire — never on exact wording) needs to
+be the convention from the first test written, not a rewrite after the fact.
+
+## Backend integration
+
+### R7 — The mock data shapes were designed for a demo, not validated against a real schema, and some are flagged as provisional by this project's own documentation
+
+`docs/FOR-BACKEND.md` already names specific fields as "a decision to
+revisit" — `plays` and `recreated` are pre-formatted strings ("18.5k") that
+assume the client never needs the raw number; `age` on notifications is
+pre-formatted the same way. If a real backend returns raw numbers and
+timestamps instead, every component currently rendering these fields
+verbatim needs rework, not just a type change.
+
+**Lock down now, in the client finalization conversation specifically:**
+freeze the exact field shapes (which strings are pre-formatted vs. raw,
+which enums are closed vs. open) before a developer builds against either
+assumption — this is exactly the kind of decision that's free to pin down
+on paper now and expensive to renegotiate after the FE and backend have
+each independently guessed.
+
+### R8 — Every list in the app loads everything at once, because the mock catalogue is small enough to
+
+26 sessions, a handful of challenges, a short notification feed — none of
+it has ever needed pagination, infinite scroll, or search debouncing,
+because all of it fits in memory trivially. A real catalogue won't. This is
+a structural rework of every list screen (Explore, Sessions, Notifications),
+not a styling pass, and worth sizing into the backend-integration estimate
+explicitly rather than assuming the existing components "basically work"
+once they're pointed at a real endpoint.
+
+### R9 — Two tabs or two devices can disagree once there's a real backend, and nothing today has ever had to notice
+
+State today comes from one static bundle per browser tab, so "is this
+stale" has never been a question that could even arise. A real backend
+means a user can have the app open on a phone and a laptop at once; if one
+publishes a session or changes a setting, nothing currently revalidates the
+other. This needs a decided strategy (polling, websockets, or an accepted
+"refresh to see it" limitation) before it's a bug report instead of a
+design choice.
+
+### R10 — "Something went wrong" won't be enough once failures are real and varied
+
+A real backend fails in distinguishable ways — an expired session, a
+rejected form value, a rate limit, a server error, no network at all — each
+of which wants different handling (redirect to sign-in vs. an inline field
+error vs. a retry-later banner vs. an offline notice). Nothing in the FE
+today distinguishes any of these because nothing can currently fail at all.
+
+**Lock down now:** agree an error-shape convention with whoever builds the
+backend (a stable error code per failure class, not just an HTTP status and
+a free-text message) before integration starts, so the FE can build one
+dispatcher instead of guessing case-by-case as real errors start arriving.
+
+### R11 — The frontend currently ships on its own schedule, and a real backend ends that
+
+`web_app` today is self-contained — it can be built and deployed with zero
+coordination, because there is nothing else to be in sync with. The moment
+a real backend exists, a breaking API change on either side can break the
+other mid-rollout. This is a process risk, not a code one, and the cheapest
+time to agree on a mitigation (API versioning, a staging environment both
+sides deploy to first, a contract test) is before either side has shipped
+anything against the other — a client-finalization conversation topic, not
+an engineering ticket.
+
+### What to put in front of the client now, while scope is still open
+
+Of the eleven risks above, these five are pure *decisions* — free to settle
+on paper during finalization, before any code exists to rework:
+
+| Risk | The one-sentence ask |
+| --- | --- |
+| R2 | The AI layer must emit structured `proposes`/`changes`/`prompts` signals alongside any reply, not prose alone. |
+| R3 | State whether "confirm the change" and "render the audio" are one API call or two. |
+| R4 | Decide what the cockpit shows when a real reply gets blocked or rerouted, before a real model produces the first one that needs it. |
+| R7 | Freeze the exact field shapes (pre-formatted vs. raw, closed vs. open enums) the backend will return. |
+| R10 | Agree a stable error-code convention, not just HTTP status + free text. |
+
+The rest (R1, R5, R6, R8, R9, R11) are either cheap to de-risk against the
+existing mock today (R1, R6), genuinely blocked on an upstream decision
+(R5), or process agreements rather than specs (R8, R9, R11) — worth naming
+in the same conversation, but they don't block finalization the way the five
+above do.
 
 ---
 

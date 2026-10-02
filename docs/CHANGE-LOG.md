@@ -31,6 +31,31 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-02 — A risk register for AI + backend integration, scoped to the main site only
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (web-FE-specific, though several risks —
+the reply contract, error taxonomy, pagination — apply in spirit) /
+`storybook` (not a component).
+
+Added Part III to `docs/FOR-FRONTEND-READINESS.md`: eleven risks for the
+moment real AI and a real backend replace the mock cockpit and catalogue,
+explicitly scoped to the consumer site (not `/admin`) and written for where
+this project actually is — no developer seated yet, still finalizing scope
+with the client — so every risk ends in something to *decide or specify
+now* rather than a coding task. Highlights: the reply contract needs to stay
+structured (`proposes`/`changes`/`prompts`) or the UI loses the ability to
+tell "talked about it" from "did it," exactly the failure `replies.ts`'s own
+comments already guard against; nothing today ever holds a reply back for a
+safety check even though the admin side already models that a real model
+will need one; the mock data shapes documented as "a decision to revisit" in
+`docs/FOR-BACKEND.md` need freezing before a developer builds against either
+side's guess; and this project's whole verification history assumes
+deterministic replies, which a real model will not give it. Closes with a
+five-item "put this in front of the client now" shortlist — the risks that
+are pure decisions, free to settle on paper during finalization.
+
 ### 2026-10-02 — FOR-FRONTEND-READINESS.md restructured around the end user, not the engineering plumbing
 
 **Lands on:** `web_app`
