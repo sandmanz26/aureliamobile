@@ -22,7 +22,7 @@ export function Chip({ label, active, onClick }: ChipProps) {
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`u-press text-style-label shrink-0 whitespace-nowrap rounded-full border px-16 py-8 ${
+      className={`u-press text-style-label shrink-0 whitespace-nowrap rounded-12 border px-16 py-8 ${
         active
           ? 'border-interactive-primary bg-interactive-primary text-text-inverse'
           : 'border-[#D6D6D6] bg-transparent text-text-primary'

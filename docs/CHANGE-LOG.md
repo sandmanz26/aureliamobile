@@ -31,6 +31,31 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-04 — Filter chips less rounded sitewide, a frosted card caption, a mismatched eyebrow fixed
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only per the supplied Figma references) /
+`mobile_app` (the Flutter chip/card equivalents need the same three changes,
+not filed yet) / `storybook` (`Chip` and `SessionGridCard` should get their
+stories refreshed there to match).
+
+Three more Figma corrections, this time to shared components rather than
+one page: `Chip.tsx` — the filter-pill component every category row on
+Home, Explore and Notifications shares — went from `rounded-full` to
+`rounded-12`, fixing all three screens' filter rows in one place rather than
+three separate ones. `SessionGridCard` (used on Home, Explore, See All,
+Profile and the challenge shelf) gained a `backdrop-blur-sm` frosted panel
+behind just its title/stats block — not a blur over the whole card, which
+would have also softened the Play/Recreate buttons above it; the panel
+needed its own `z-20` stacking context so its `-z-10` backdrop couldn't
+escape and render behind the photo instead of behind the text, confirmed via
+computed style (`backdrop-filter: blur(8px)`, text still painting on top).
+Home's "Adaptive Wellness" eyebrow chip, which used a different one-off
+style (`rounded-full bg-background-elevated`, a solid fill) rather than the
+shared `Chip` look, now matches it: `rounded-12`, a `border-[#D6D6D6]`
+outline, transparent background.
+
 ### 2026-10-04 — Home's Generative Wellness banner: less rounding, gapped cards
 
 **Lands on:** `web_app`

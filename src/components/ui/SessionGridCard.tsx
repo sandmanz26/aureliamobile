@@ -80,42 +80,54 @@ export function SessionGridCard({
         </Link>
       </div>
 
-      <div className="pointer-events-none relative flex flex-col gap-6">
-        <div>
-          <p className="text-style-body">{session.title}</p>
-          <p className="text-style-label-light mt-2 line-clamp-2">{session.description}</p>
-        </div>
-
-        {/* Credit and counts share a row once the card is wide enough for both,
-            which is how the design sets it. On the narrow grid cells they stack
-            instead — one row there would leave the name a couple of letters. */}
-        <div
-          className={
-            showAuthor
-              ? 'flex flex-col gap-6 @min-[200px]:flex-row @min-[200px]:items-center @min-[200px]:justify-between @min-[200px]:gap-8'
-              : 'flex items-center'
-          }
-        >
-        {showAuthor && (
-          <div className="flex min-w-0 items-center gap-6">
-            <PhotoCircle
-              photo={session.authorPhoto}
-              size={20}
-              gradient="conic-gradient(from 200deg, var(--color-gold-300), var(--color-blue-300), var(--color-gold-300))"
-            />
-            <span className="text-style-caption truncate">{session.author}</span>
+      <div className="pointer-events-none relative z-20 mt-auto">
+        {/* The frosted panel behind the title/stats block, not a blur over
+            the whole photo — CoverImage's own scrim already darkens the
+            full card, and blurring that too would soften the Play/Recreate
+            controls above it as well. Sized past the card's own p-10 with
+            negative insets so it reaches the actual edges `overflow-hidden`
+            clips to, rather than leaving a sharp strip around it. The
+            explicit z-20 on this wrapper (matching the top row's) gives the
+            blur panel's negative z-index a stacking context to stay inside,
+            so it stays behind the text without escaping to behind the photo. */}
+        <div className="absolute -inset-x-10 -bottom-10 -top-16 -z-10 bg-gradient-to-t from-black/55 via-black/35 to-transparent backdrop-blur-sm" />
+        <div className="flex flex-col gap-6">
+          <div>
+            <p className="text-style-body">{session.title}</p>
+            <p className="text-style-label-light mt-2 line-clamp-2">{session.description}</p>
           </div>
-        )}
 
-        <div className="text-style-caption-light flex shrink-0 items-center gap-8">
-          <span className="inline-flex items-center gap-3">
-            <Play size={11} /> {session.plays}
-          </span>
-          <span className="opacity-50">|</span>
-          <span className="inline-flex items-center gap-3">
-            <Repeat2 size={11} /> {session.recreated}
-          </span>
-        </div>
+          {/* Credit and counts share a row once the card is wide enough for both,
+              which is how the design sets it. On the narrow grid cells they stack
+              instead — one row there would leave the name a couple of letters. */}
+          <div
+            className={
+              showAuthor
+                ? 'flex flex-col gap-6 @min-[200px]:flex-row @min-[200px]:items-center @min-[200px]:justify-between @min-[200px]:gap-8'
+                : 'flex items-center'
+            }
+          >
+            {showAuthor && (
+              <div className="flex min-w-0 items-center gap-6">
+                <PhotoCircle
+                  photo={session.authorPhoto}
+                  size={20}
+                  gradient="conic-gradient(from 200deg, var(--color-gold-300), var(--color-blue-300), var(--color-gold-300))"
+                />
+                <span className="text-style-caption truncate">{session.author}</span>
+              </div>
+            )}
+
+            <div className="text-style-caption-light flex shrink-0 items-center gap-8">
+              <span className="inline-flex items-center gap-3">
+                <Play size={11} /> {session.plays}
+              </span>
+              <span className="opacity-50">|</span>
+              <span className="inline-flex items-center gap-3">
+                <Repeat2 size={11} /> {session.recreated}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </article>
