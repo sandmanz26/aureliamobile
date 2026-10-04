@@ -31,6 +31,20 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-04 — Adaptive Wellness feature-grid icons: rounded squares, not circles
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (same badge shape needs
+filing there) / `storybook` (`FeatureCard` should get a story refreshed).
+
+`FeatureCard`'s gradient icon badge was `rounded-full` — a perfect circle —
+where the Figma reference draws a rounded square, the same "squircle" ratio
+the app's own icon tile already uses (`AureliaLogo.tsx`'s `rx="17"` on a
+60px tile ≈ 28%, which maps to `rounded-12` on this component's 40px
+badge). Only used on Home's Adaptive Wellness grid, so no other screen was
+affected.
+
 ### 2026-10-04 — Filter chips less rounded sitewide, a frosted card caption, a mismatched eyebrow fixed
 
 **Lands on:** `web_app`
