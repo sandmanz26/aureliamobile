@@ -33,7 +33,9 @@ const TABS: { id: ProgressTab; label: string; icon: typeof Library }[] = [
   { id: 'insights', label: 'Insights', icon: Sparkles },
 ]
 
-/** The frame's chips: 35 tall, radius 40, 12/8 padding, 8 to the label, 7 apart. */
+/** The frame's chips: 35 tall, 12/8 padding, 8 to the label, 7 apart — a
+ *  closed rounded-rect corner, not a stadium pill; the `radius 40` this
+ *  comment used to claim doesn't match this screen's own reference. */
 function Tab({
   active,
   label,
@@ -50,7 +52,7 @@ function Tab({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`flex h-35 shrink-0 items-center gap-8 rounded-full border px-12 text-[12px] leading-[19px] transition-colors ${
+      className={`flex h-35 shrink-0 items-center gap-8 rounded-12 border px-12 text-[12px] leading-[19px] transition-colors ${
         active
           ? 'border-text-primary bg-text-primary text-text-inverse'
           : 'border-[#d6d6d6] bg-transparent text-text-primary'

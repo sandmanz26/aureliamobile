@@ -31,6 +31,25 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-04 — Progress page: Insights/Chapters/Social Impact tabs less rounded
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (same tab shape) /
+`storybook` (not a shared component).
+
+`Tab`'s own comment claimed "radius 40," which for a 35-tall chip is just
+`rounded-full` with extra headroom — a full stadium pill either way. The
+screenshot comparison showed the actual reference uses a closed rounded
+corner, not a pill. Changed to `rounded-12`, matching the radius this
+session's other over-rounded chips (`Chip.tsx` and others) were already
+corrected to. The same round also flagged the per-row icon in the Insights
+list (`vuesax/outline/star`, currently standing in as lucide's `Sparkles`)
+as the wrong shape, with the correct glyph supplied as a file attachment —
+but what reached this session was a 16×16, 425-byte placeholder with no
+usable artwork in it, so that swap is not done; asked the user to resend
+the actual SVG markup or a larger export.
+
 ### 2026-10-04 — Challenge Detail: Rewards pill restyled off the seam, and the excess gap above the CTA removed
 
 **Lands on:** `web_app`
