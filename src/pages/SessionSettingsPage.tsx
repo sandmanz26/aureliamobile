@@ -238,10 +238,10 @@ export function SessionSettingsPage() {
                 type="button"
                 aria-pressed={active}
                 onClick={() => setTab(item.id)}
-                className={`u-press text-style-label flex h-38 shrink-0 items-center gap-6 whitespace-nowrap rounded-full border px-16 ${
+                className={`u-press text-style-label flex h-38 shrink-0 items-center gap-6 whitespace-nowrap rounded-12 border px-16 ${
                   active
-                    ? 'border-icon-strong bg-surface-default text-text-primary'
-                    : 'border-transparent bg-surface-default text-text-secondary'
+                    ? 'border-text-primary bg-text-primary text-text-inverse'
+                    : 'border-[#d6d6d6] bg-transparent text-text-primary'
                 }`}
               >
                 <Icon size={15} />
@@ -254,10 +254,10 @@ export function SessionSettingsPage() {
             aria-label="General settings"
             aria-pressed={tab === 'general'}
             onClick={() => setTab('general')}
-            className={`u-press flex size-38 shrink-0 items-center justify-center rounded-full border ${
+            className={`u-press flex size-38 shrink-0 items-center justify-center rounded-12 border ${
               tab === 'general'
-                ? 'border-icon-strong bg-surface-default text-text-primary'
-                : 'border-transparent bg-surface-default text-text-secondary'
+                ? 'border-text-primary bg-text-primary text-text-inverse'
+                : 'border-[#d6d6d6] bg-transparent text-text-primary'
             }`}
           >
             <Settings2 size={16} />

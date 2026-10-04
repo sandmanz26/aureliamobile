@@ -31,6 +31,26 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-04 — Session settings tabs: wrong active style and radius, not just rounding
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (same tab treatment) /
+`storybook` (not a shared component).
+
+The Script/Visual/Sound tabs (and the trailing gear button) on Session
+settings had two things wrong, not one: `rounded-full` instead of the
+closed-corner `rounded-12` already corrected on Progress's own tab row, and
+— the bigger miss — an active state styled as a light pill with a dark
+outline (`border-icon-strong bg-surface-default text-text-primary`) where
+the reference is a solid dark fill with inverse text, the same treatment
+Progress's `Tab` component already uses. Matched both rows to that same
+pattern: active is `border-text-primary bg-text-primary text-text-inverse`,
+inactive is `border-[#d6d6d6] bg-transparent text-text-primary`. Confirmed
+live — the screenshot's thick black bar under "Hold for four counts" is a
+device text-selection handle in the user's own screenshot, not anything
+this app renders; no code change follows from it.
+
 ### 2026-10-04 — Challenge Detail: Rewards pill sat too far from the sheet
 
 **Lands on:** `web_app`
