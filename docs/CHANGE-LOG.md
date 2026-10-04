@@ -31,6 +31,21 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-04 — Adaptive Wellness eyebrow chip: 10px to the 12px every other chip uses
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (same text-style swap
+needed there) / `storybook` (not a shared component).
+
+The eyebrow's border/fill was already fixed to match the shared `Chip`
+look in an earlier pass, but its text style wasn't checked at the same
+time: `text-style-caption` is 10px, where `Chip.tsx` itself (and the Figma
+reference) both read 12px. Swapped to `text-style-label-regular` — 12px at
+the lighter weight the eyebrow actually uses, as opposed to `text-style-
+label`'s medium weight on the interactive filter chips. Confirmed via
+computed style (`font-size: 12px`) and a live screenshot.
+
 ### 2026-10-04 — Home's closing CTA padding, and three Challenge Detail fixes
 
 **Lands on:** `web_app`

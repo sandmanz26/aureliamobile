@@ -430,7 +430,7 @@ export function HomePage() {
         {/* Adaptive Wellness feature grid */}
         {isEnabled('home.adaptive') && (
         <section className="mt-48">
-          <span className="inline-block rounded-12 border border-[#D6D6D6] bg-transparent px-16 py-6 text-style-caption text-text-primary">
+          <span className="inline-block rounded-12 border border-[#D6D6D6] bg-transparent px-16 py-6 text-style-label-regular text-text-primary">
             Adaptive Wellness
           </span>
           <h2 className="mt-16 text-style-headline-regular text-text-primary">
