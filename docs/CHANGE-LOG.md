@@ -31,6 +31,44 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-04 — Challenge Detail: Rewards pill restyled off the seam, and the excess gap above the CTA removed
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (both are shape-of-the-page
+decisions the Flutter screen should match) / `storybook` (not a shared
+component).
+
+Two more fixes on this page, same round of feedback:
+
+- **The gap between Created Session and the sticky CTA bar was much larger
+  than it needed to be.** `pb-140` on the content column was added as a
+  manual reserve so the last row of cards would never sit under the sticky
+  footer — but the footer is `position: sticky`, not `fixed`: it already
+  occupies its own slot in normal flow at the true end of the page, so
+  nothing above it needs to reserve room by hand. The 140px reserve was
+  solving a problem `position: sticky` already solves on its own, and the
+  cost was a wall of empty space the screenshot called out directly.
+  Replaced with `pb-32`, matching the `mt-32` already set above the Created
+  Session section, and reverted the sheet's `pt-40` (added last round to
+  clear the Rewards pill, see below) back to `pt-24` now that the pill no
+  longer sits in that flow.
+- **The Rewards pill had the wrong style and the wrong position.** Last
+  round's fix gave it more clearance from the row below by pushing the
+  sheet's content down — a reasonable surface read of a 2px gap, but the
+  side-by-side Figma comparison in this round showed the real issue was
+  upstream: the pill isn't meant to sit on the hero/sheet seam at all. The
+  reference floats it well inside the photo, dark and translucent
+  (`bg-black/45 backdrop-blur-sm`, `text-text-inverse`) like every other
+  control that sits directly over a cover photo — the Play glyphs on
+  `SessionGridCard` and `CoverDisc` use the same pairing — rather than the
+  solid light pill this had. Moved it from the sheet container into the
+  hero container itself (`bottom-56` inside the now-bled hero), restyled to
+  match, and left the small gold dot at the pill's edge in the reference
+  unaddressed — no way to tell what value or state it represents from a
+  screenshot, same reasoning as the podium gradient left open earlier in
+  this file.
+
 ### 2026-10-04 — Challenge Detail: status-bar gap, Rewards collision, and a missing safe-area inset
 
 **Lands on:** `web_app`

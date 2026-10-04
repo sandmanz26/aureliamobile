@@ -175,28 +175,27 @@ export function ChallengeDetailPage() {
               </button>
             </div>
           </div>
-        </div>
 
-        <div className="relative -mt-24 rounded-t-24 bg-background-default pt-40">
-          {/* Sits on the seam, as in the design. It is a labelled way in rather
-              than a bare glyph — "what do I get for this" is the first thing a
-              challenge has to answer, and an unlabelled chart icon does not.
-              Solid, dark-on-light — not translucent-with-white-text — matching
-              every other floating control over a cover photo (back/share on
-              SessionDetailPage's own cover): a cover photo's brightness varies
-              per challenge, and a 20%-opacity pill mostly shows whatever is
-              behind it rather than reading as its own control. */}
+          {/* Floats inside the photo itself, well clear of the sheet below —
+              not on the seam. It was positioned relative to the sheet and
+              nearly touched the "joined" row under it; the reference has it
+              sitting with its own clearance above the sheet instead, dark
+              and translucent like every other control that floats directly
+              over a photo (the Play glyphs on `SessionGridCard` and
+              `CoverDisc`), rather than solid light-on-dark. */}
           <button
             type="button"
             onClick={() => setRewardsOpen(true)}
-            className="text-style-label u-press absolute -top-22 left-20 flex h-44 items-center gap-8 rounded-full bg-surface-default px-16 text-icon-strong shadow-md"
+            className="text-style-label u-press absolute bottom-56 left-20 flex h-44 items-center gap-8 rounded-full bg-black/45 px-16 text-text-inverse shadow-md backdrop-blur-sm"
           >
             <PodiumIcon size={16} />
             Rewards
             <ChevronRight size={15} />
           </button>
+        </div>
 
-          <div className="mx-auto w-full max-w-[402px] px-20 pb-140 lg:max-w-[960px] lg:px-24">
+        <div className="relative -mt-24 rounded-t-24 bg-background-default pt-24">
+          <div className="mx-auto w-full max-w-[402px] px-20 pb-32 lg:max-w-[960px] lg:px-24">
             <div className="flex flex-wrap gap-8">
               <span className="text-style-label inline-flex h-34 items-center gap-6 rounded-full border border-border-subtle px-14 text-text-primary">
                 <Users size={13} />
