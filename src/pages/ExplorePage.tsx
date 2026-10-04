@@ -1,4 +1,4 @@
-import { ArrowRight, Clock, Coins, ListFilter, Menu, Play, Podium, Sparkles, Users } from 'lucide-react'
+import { ArrowRight, Clock, ListFilter, Menu, Play, Podium, Sparkles, Users } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import liveSessionsMap from '../assets/live-sessions-map.png'
@@ -14,11 +14,9 @@ import { trustedCreators } from '../lib/people'
 import type { CategoryFilter, Shelf } from '../lib/sessions'
 import { CATEGORY_FILTERS, categoryLabel, findSession, sessionsOnShelf } from '../lib/sessions'
 import { CategorySheet } from '../components/ui/CategorySheet'
-import { CoinPill } from '../components/ui/CoinPill'
-import { FlipWord } from '../components/ui/FlipWord'
+import { CoinMark, CoinPill } from '../components/ui/CoinPill'
 import { CHALLENGES } from '../lib/challenges'
 import type { ChallengeRecord } from '../lib/challenges'
-import type { ReactNode } from 'react'
 
 /**
  * Sessions — the browse surface behind the Sessions nav item.
@@ -49,13 +47,15 @@ const recentlyPlayed: { slug: string; minutes: number; progress: number }[] = [
  * challenge rather than written out.
  *
  * All three were hard-coded — "250 pts", "2.3k joined", "30 days" — beside a
- * hard-coded title, summary, cover and slug. The card described one challenge
- * because it *was* one challenge, so a second could not appear and the first
- * could never be wrong in an interesting way.
+ * hard-coded title, summary, cover and slug.
+ *
+ * The points stat uses the app's own coin mark, not a generic lucide glyph —
+ * the frame calls it `icon-token`, the same asset `CoinPill` draws its
+ * balance beside everywhere else.
  */
 function challengeStats(challenge: ChallengeRecord) {
   return [
-    { icon: Coins, label: `${challenge.points} pts` },
+    { icon: CoinMark, label: `${challenge.points} pts` },
     // "0 joined" is a fact worth printing on a challenge that just opened.
     { icon: Users, label: `${challenge.joined} joined` },
     { icon: Clock, label: `${challenge.totalDays} days` },
@@ -69,8 +69,7 @@ function SectionHeader({
   action = 'See All',
   onAction,
 }: {
-  /** A string for most sections; a node for the one that carries FlipWord. */
-  title: ReactNode
+  title: string
   seeAllTo?: string
   action?: string
   /** Handles the action in place, for the ones that open a sheet rather than
@@ -177,6 +176,7 @@ export function ExplorePage() {
   const { isEnabled } = useFeatureFlags()
   const [category, setCategory] = useState<CategoryFilter>('All')
   const [categoriesOpen, setCategoriesOpen] = useState(false)
+  const challenge = CHALLENGES[0]
 
   return (
     <div className="pb-48">
@@ -241,7 +241,7 @@ export function ExplorePage() {
         <Link
           to="/chat"
           aria-label="Play today’s session"
-          className="relative block aspect-[362/200] w-full overflow-hidden rounded-24"
+          className="relative block aspect-[362/244] w-full overflow-hidden rounded-24"
         >
           <CoverImage
             photo="bloom"
@@ -373,13 +373,7 @@ export function ExplorePage() {
 
         {isEnabled('sessions.creators') && (
           <section className="mt-32">
-            <SectionHeader
-              title={
-                <>
-                  Trusted <FlipWord words={['Creators', 'Guides', 'Storytellers', 'Voices']} />
-                </>
-              }
-            />
+            <SectionHeader title="Trusted Creators" />
             <div className="-mx-20 mt-16 flex gap-20 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
               {/* Real people, counted rather than claimed. The shelf used to name
                   four, two of whom were in no session at all — so tapping them
@@ -407,53 +401,48 @@ export function ExplorePage() {
 
         {isEnabled('sessions.challenge') && (
           <section className="mt-32">
-            <SectionHeader title={CHALLENGES.length > 1 ? 'Monthly Challenges!' : 'Monthly Challenge!'} />
-            {/* A shelf, because there is more than one now. Same idiom as every
-                other row on this page: the card keeps the frame's 362 and the
-                next one peeks, which is what says the row scrolls. */}
-            <div className="-mx-20 mt-16 flex gap-12 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
-              {CHALLENGES.map((challenge) => (
-                <div
-                  key={challenge.slug}
-                  className="relative flex aspect-[362/240] w-[362px] shrink-0 flex-col justify-end overflow-hidden rounded-24 p-16 text-text-inverse"
+            {/* One challenge, one card — the frame has no shelf here, unlike
+                every other row on this page. "Monthly Challenge!" is always
+                singular to match; the running challenge is CHALLENGES[0]. */}
+            <SectionHeader title="Monthly Challenge!" />
+            {challenge && (
+              <div className="relative mt-16 flex aspect-[362/240] w-full flex-col justify-end overflow-hidden rounded-24 p-16 text-text-inverse">
+                <CoverImage photo={challenge.photo} gradient={challenge.gradient} width={760} height={520} />
+                {/* The whole card opens the challenge; Join sits above it. */}
+                <Link
+                  to={`/challenge/${challenge.slug}`}
+                  aria-label={`Open the ${challenge.title} challenge`}
+                  className="absolute inset-0 z-10"
+                />
+                <span className="absolute left-16 top-16 z-20 flex size-44 items-center justify-center rounded-full bg-surface-default/20 text-text-inverse backdrop-blur-sm">
+                  <Podium size={20} />
+                </span>
+                <Link
+                  to={`/challenge/${challenge.slug}`}
+                  className="text-style-label absolute right-16 top-16 z-20 flex h-32 items-center gap-6 whitespace-nowrap rounded-12 bg-surface-default/90 px-12 text-text-primary"
                 >
-                  <CoverImage photo={challenge.photo} gradient={challenge.gradient} width={760} height={520} />
-                  {/* The whole card opens the challenge; Join sits above it. */}
-                  <Link
-                    to={`/challenge/${challenge.slug}`}
-                    aria-label={`Open the ${challenge.title} challenge`}
-                    className="absolute inset-0 z-10"
-                  />
-                  <span className="absolute left-16 top-16 z-20 flex size-44 items-center justify-center rounded-full bg-surface-default/20 text-text-inverse backdrop-blur-sm">
-                    <Podium size={20} />
-                  </span>
-                  <Link
-                    to={`/challenge/${challenge.slug}`}
-                    className="text-style-label absolute right-16 top-16 z-20 flex h-32 items-center gap-6 whitespace-nowrap rounded-full bg-surface-default/90 px-12 text-text-primary"
-                  >
-                    {challenge.endsInDays <= 0 ? 'View Winners' : 'Join'}
-                    <ArrowRight size={13} />
-                  </Link>
+                  {challenge.endsInDays <= 0 ? 'View Winners' : 'Join'}
+                  <ArrowRight size={13} />
+                </Link>
 
-                  <p className="text-style-title relative">{challenge.title}</p>
-                  <p className="text-style-body-small relative mt-4 opacity-90">{challenge.summary}</p>
-                  <div className="relative mt-14 flex flex-wrap gap-8">
-                    {challengeStats(challenge).map((stat) => {
-                      const Icon = stat.icon
-                      return (
-                        <span
-                          key={stat.label}
-                          className="text-style-caption inline-flex h-28 items-center gap-6 whitespace-nowrap rounded-full bg-surface-default/20 px-12 backdrop-blur-sm"
-                        >
-                          <Icon size={12} />
-                          {stat.label}
-                        </span>
-                      )
-                    })}
-                  </div>
+                <p className="text-style-title relative">{challenge.title}</p>
+                <p className="text-style-body-small relative mt-4 opacity-90">{challenge.summary}</p>
+                <div className="relative mt-14 flex flex-wrap gap-8">
+                  {challengeStats(challenge).map((stat) => {
+                    const Icon = stat.icon
+                    return (
+                      <span
+                        key={stat.label}
+                        className="text-style-caption inline-flex h-28 items-center gap-6 whitespace-nowrap rounded-8 bg-surface-default/20 px-12 backdrop-blur-sm"
+                      >
+                        <Icon size={12} />
+                        {stat.label}
+                      </span>
+                    )
+                  })}
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </section>
         )}
 

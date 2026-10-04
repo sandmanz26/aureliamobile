@@ -31,6 +31,38 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-04 — Explore page matched to Figma's annotated "Issue 1" frame (16810:8673)
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (every item here applies
+there too) / `storybook` (not shared components beyond `CoinMark`, already
+covered).
+
+Read the referenced node directly rather than going by the screenshot's five
+callouts alone — the node data settled exactly what two of them meant:
+
+- **Hero banner height.** `aspect-[362/200]` → `aspect-[362/244]`, matching
+  the frame's own fixed 362×244 content box.
+- **"Trusted Guides" heading.** This was a `FlipWord` cycling through
+  Creators/Guides/Storytellers/Voices — the screenshot simply caught it
+  mid-cycle. The frame's own text node is a single static string, "Trusted
+  Creators", with no sign the heading was ever meant to rotate; switched to
+  that plain string and dropped the now-unused `FlipWord` import and the
+  `ReactNode` title type it required.
+- **The Monthly Challenge section rendered every entry in `CHALLENGES`** as a
+  horizontal shelf, with the heading pluralizing past one. Every other
+  section's Figma frame has a `carousel` child; this one has a single `card`
+  — confirmed by reading the node tree, not inferred from the screenshot. Cut
+  to `CHALLENGES[0]` and a permanently singular "Monthly Challenge!".
+- **The "Join" pill** was `rounded-full`; the frame's own button
+  (`Frame 16`) is `cornerRadius: 12`.
+- **The points/joined/days stat chips** were `rounded-full`; the frame's
+  `statistic` chips are `cornerRadius: 8`. The points chip's icon was
+  lucide's generic `Coins` glyph — the frame calls it `icon-token`, the same
+  asset `CoinPill` already draws its balance beside everywhere else, so it's
+  now `CoinMark` instead.
+
 ### 2026-10-04 — Chat cockpit matched to Figma's "Chat" frame (16809:4944), and Recreate's colour fixed sitewide
 
 **Lands on:** `web_app`
