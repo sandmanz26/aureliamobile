@@ -31,6 +31,21 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-04 — Site lock default password changed to AURELIA2.0
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request) / `mobile_app` (no site lock on mobile) / `storybook`
+(not a component).
+
+`SITE_PASSWORD`'s fallback in `src/demo/siteLock.ts` changed from
+`aurelia-preview` to `AURELIA2.0`, by request. Still the documented
+courtesy-lock, not security — `VITE_SITE_PASSWORD` overrides it per
+deployment without touching git history, same as before. Updated the one
+other literal reference to the old password, in `docs/FOR-AI-AGENT.md`'s
+Playwright unlock snippet. Verified live: the old password no longer
+unlocks the site, the new one does.
+
 ### 2026-10-02 — A risk register for AI + backend integration, scoped to the main site only
 
 **Lands on:** `web_app`

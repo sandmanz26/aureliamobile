@@ -13,7 +13,7 @@
  * keep it out of the bundle.
  */
 export const SITE_PASSWORD =
-  import.meta.env.VITE_SITE_PASSWORD?.trim() || 'aurelia-preview'
+  import.meta.env.VITE_SITE_PASSWORD?.trim() || 'AURELIA2.0'
 
 /** Per-browser, so nobody retypes it on every reload. */
 export const UNLOCK_KEY = 'aurelia.site.unlocked'
