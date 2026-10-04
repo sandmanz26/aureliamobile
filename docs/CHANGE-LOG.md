@@ -31,6 +31,27 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-04 — Home's Generative Wellness banner: less rounding, gapped cards
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — per three supplied Figma reference screenshots, this
+batch is staging-only for now) / `mobile_app` (the banner's own Flutter
+build needs the same three changes, not filed yet) / `storybook` (not an
+extracted component).
+
+Three Figma-flagged corrections to Home's dark "Generative Wellness Care"
+banner (`HomePage.tsx`'s promo section): the badge went from `rounded-full`
+to `rounded-12` and the "Start your Journey" button from `rounded-full` to
+`rounded-16` — both were full pills where the frame draws a noticeably
+flatter corner. The rotated photo-card pair (`Frame 25`, 16698:4451) kept
+its existing -30° tilt but the flex gap between them went from `gap-16` to
+`gap-48` — at `gap-16` the two cards' rotated corners visually touched
+despite the normal-flow gap between their (unrotated) bounding boxes, since
+rotation doesn't shift the box the gap is measured from. Verified against
+all three reference screenshots at both a 420px mobile width and 1440px
+desktop.
+
 ### 2026-10-04 — Site lock default password changed to AURELIA2.0
 
 **Lands on:** `web_app`

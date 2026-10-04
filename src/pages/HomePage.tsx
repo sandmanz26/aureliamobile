@@ -306,7 +306,7 @@ export function HomePage() {
         <div className="relative mx-auto flex max-w-[362px] flex-col gap-24 lg:max-w-[960px]">
           <div className="flex flex-col gap-24">
             <span
-              className="text-style-label-regular w-fit rounded-full px-12 py-8"
+              className="text-style-label-regular w-fit rounded-12 px-12 py-8"
               style={{
                 border: '1px solid rgba(255,136,27,0.55)',
                 background:
@@ -341,7 +341,7 @@ export function HomePage() {
             was right and only the rotation was too shallow (10–12°, not
             ~30°) and the cards too small relative to the frame. */}
         <div
-          className="relative -mx-20 my-32 flex items-center justify-center gap-16 overflow-hidden lg:-mx-24"
+          className="relative -mx-20 my-32 flex items-center justify-center gap-48 overflow-hidden lg:-mx-24"
           style={{
             // width*sin30° + height*cos30° ≈ 1.87× the width is the rotated
             // bounding box height — short of that and the tilted corners
@@ -387,7 +387,7 @@ export function HomePage() {
           <button
             type="button"
             onClick={() => gate('/chat')}
-            className="text-style-body flex w-fit items-center gap-12 rounded-full border border-text-inverse/20 bg-text-inverse/8 px-20 py-12 font-medium text-text-inverse backdrop-blur-sm transition-colors hover:bg-text-inverse/15"
+            className="text-style-body flex w-fit items-center gap-12 rounded-16 border border-text-inverse/20 bg-text-inverse/8 px-20 py-12 font-medium text-text-inverse backdrop-blur-sm transition-colors hover:bg-text-inverse/15"
           >
             Start your Journey
             <ArrowRight size={18} />
