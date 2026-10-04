@@ -70,7 +70,7 @@ export function ChatHeader({
         type="button"
         aria-label="Open menu"
         onClick={onMenu}
-        className="flex size-44 items-center justify-center rounded-full bg-surface-default text-icon-strong"
+        className="flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-strong shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)]"
       >
         <Menu size={20} />
       </button>
@@ -81,13 +81,13 @@ export function ChatHeader({
             to={playTo}
             state={{ origin: 'own', ...(playAs ? { as: playAs } : {}) }}
             aria-label="Play session"
-            className="u-press flex size-44 items-center justify-center rounded-full bg-surface-default text-icon-strong"
+            className="u-press flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-strong shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)]"
           >
             <Play size={20} />
           </Link>
         )}
 
-        <CoinPill points={points} />
+        <CoinPill points={points} className="shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)]" />
 
         <div className="relative" ref={menuRef}>
           <button
@@ -95,7 +95,7 @@ export function ChatHeader({
             aria-label="More options"
             aria-expanded={open}
             onClick={() => setOpen((value) => !value)}
-            className="flex size-44 items-center justify-center rounded-full bg-surface-default text-icon-strong"
+            className="flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-strong shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)]"
           >
             <MoreHorizontal size={20} />
           </button>

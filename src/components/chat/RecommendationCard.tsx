@@ -1,4 +1,4 @@
-import { ArrowUp, Play, Plus, Shuffle, Trash2 } from 'lucide-react'
+import { ArrowUp, Plus, Shuffle, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useRecreateTarget } from '../../chat/recreate'
 import { findSession } from '../../lib/sessions'
@@ -26,18 +26,22 @@ interface RecommendationCardProps {
   variant?: 'toggle' | 'recreate'
 }
 
-// Figma "Frame 45" (16523:9513), read from the file rather than a screenshot:
-// 173 wide, 16px padding, 12px between blocks, on a 1px gradient hairline
-// (#FFE682 -> #FCC181 at 217deg, from the frame's own gradient handles).
+// Figma "Frame 45" inside the Chat screen (16809:4944 → 16809:4992), read
+// from the file rather than a screenshot: 173 wide, 16px padding, 12px
+// between blocks, on a 1px gradient hairline — the established brand
+// gradient (#FF881B -> #FFE682; the file's own paint style for this hairline
+// resolves to #FF8514 -> #FFE270, close enough that DESIGN-SYSTEM-HISTORY.md
+// records the difference and leaves the established pair alone).
 //
-// rectangleCornerRadii is [48, 20, 20, 20] — the top-left is more than twice
-// the others, and that asymmetry is the card's signature. Both values are off
-// the token radius scale (0/2/4/8/12/16/24/32/full), so they have to be
-// arbitrary: rounded-20 and rounded-tl-48 are not classes and would render
-// square with no error at all.
+// cornerRadius is a uniform 20 here — off the token radius scale
+// (0/2/4/8/12/16/24/32/full), so it has to stay arbitrary: rounded-20 is not
+// a class and would render square with no error at all. An earlier pass read
+// an asymmetric [48, 20, 20, 20] off a different, older frame (16523:9513);
+// this screen's own card does not carry that asymmetry.
 //
-// The orb is a 73px circular image the play glyph sits on, rather than a badge
-// beside it.
+// The orb is a plain 73px circular image on this screen — no play glyph over
+// it. A different card elsewhere in the same file does carry one; this one
+// does not, and the two are not meant to agree.
 export function RecommendationCard({
   recommendation,
   applied,
@@ -52,31 +56,24 @@ export function RecommendationCard({
 
   return (
     <article
-      className="flex w-[173px] shrink-0 flex-col gap-12 rounded-[20px] rounded-tl-[48px] bg-surface-default p-16"
+      className="flex w-[173px] shrink-0 flex-col gap-12 rounded-[20px] bg-surface-default p-16"
       style={{
         border: '1px solid transparent',
         backgroundImage:
-          'linear-gradient(var(--color-surface-default), var(--color-surface-default)), linear-gradient(217deg, #ffe682, #fcc181)',
+          'linear-gradient(var(--color-surface-default), var(--color-surface-default)), linear-gradient(45deg, #FF881B, #FFE682)',
         backgroundOrigin: 'border-box',
         backgroundClip: 'padding-box, border-box',
       }}
     >
-      {/* The play glyph sits on the orb rather than in a badge beside it: the
-          orb is the preview, and a corner badge read as a second control. It
-          plays, rather than decorating — the disc is the only thing on this
-          card that looks like a control and did nothing. */}
+      {/* Plays on tap, same as the rest of the card's controls — but no play
+          glyph drawn over it, matching this screen's own cards. */}
       <Link
         to={`/play/${preview}`}
         state={{ origin: 'own' }}
         aria-label={`Play ${title}`}
-        className="u-press relative w-fit"
+        className="u-press w-fit"
       >
         <img src={orb} alt="" className="size-[73px] rounded-full object-cover" />
-        <span className="absolute inset-0 flex items-center justify-center">
-          <span className="flex size-32 items-center justify-center rounded-full bg-white/20 backdrop-blur-[16px]">
-            <Play size={16} fill="currentColor" className="text-white" />
-          </span>
-        </span>
       </Link>
 
       <div className="flex flex-col gap-2">
@@ -101,9 +98,9 @@ export function RecommendationCard({
         <Link
           to={recreateTarget.to}
           state={recreateTarget.state}
-          className="u-press mt-auto flex h-32 w-fit items-center gap-4 rounded-full border border-border-subtle pl-12 pr-14 text-style-label text-text-primary"
+          className="u-press mt-auto flex h-32 w-fit items-center gap-4 rounded-full border border-border-subtle pl-12 pr-14 text-style-label text-[#331B04]"
         >
-          <Shuffle size={12} className="text-icon-default" />
+          <Shuffle size={12} />
           Recreate
         </Link>
       ) : (

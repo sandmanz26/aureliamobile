@@ -1,35 +1,16 @@
-import { Check, CheckCheck } from 'lucide-react'
 import { Fragment } from 'react'
-import type { Message, Status } from '../../chat/ChatSessionContext'
+import type { Message } from '../../chat/ChatSessionContext'
 import { RECOMMENDATIONS } from '../../chat/ChatSessionContext'
-import { AureliaLogo } from '../ui/AureliaLogo'
 import { AttachedSession } from './AttachedSession'
 import { RecommendationCard } from './RecommendationCard'
 import { RecommendationDeck } from './RecommendationDeck'
 import { VoiceMessage } from './VoiceMessage'
 
-/** "9:41 PM" on a message's own timestamp — a clock time, not a countdown. */
-function clockTime(at: number) {
-  return new Date(at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-}
-
-function StatusTicks({ status }: { status: Status }) {
-  if (status === 'sending') {
-    return <span className="text-style-caption text-text-secondary">Sending…</span>
-  }
-  return status === 'read' ? (
-    <CheckCheck size={13} className="text-text-brand" />
-  ) : (
-    <Check size={13} className="text-text-secondary" />
-  )
-}
-
 interface ChatMessageItemProps {
   message: Message
-  /** Only the run's first bubble gets the avatar — see `ChatPage`'s run grouping. */
+  /** Only the run's first bubble opens a little extra space above it — see
+   *  `ChatPage`'s run grouping. */
   startsRun: boolean
-  /** Only the run's last bubble gets the timestamp. */
-  endsRun: boolean
   showRecommendations: boolean
   /** The deck is open and the session isn't mid-build, so cards can be toggled. */
   deckOpen: boolean
@@ -54,7 +35,6 @@ interface ChatMessageItemProps {
 export function ChatMessageItem({
   message,
   startsRun,
-  endsRun,
   showRecommendations,
   deckOpen,
   canApply,
@@ -118,13 +98,11 @@ export function ChatMessageItem({
   if (message.from === 'aurelia') {
     return (
       <Fragment>
-        <div className={`u-message flex gap-10 pr-40 ${startsRun ? 'mt-12' : 'mt-2'}`}>
-          <span className="w-24 shrink-0">{startsRun && <AureliaLogo iconSize={24} markOnly />}</span>
-          <div className="min-w-0 flex-1">
-            {startsRun && <p className="text-style-caption mb-2 text-text-secondary">Aurelia</p>}
-            <p className="text-style-body-small whitespace-pre-line text-text-primary">{message.text}</p>
-            {endsRun && <p className="text-style-caption mt-4 text-text-secondary">{clockTime(message.at)}</p>}
-          </div>
+        {/* No avatar, name or timestamp on Aurelia's own side — the
+            reference (Chat, 16809:4944) runs the reply as plain text flush
+            with the page's own left gutter, not under a sender header. */}
+        <div className={`u-message pr-40 ${startsRun ? 'mt-12' : 'mt-2'}`}>
+          <p className="text-style-body-small whitespace-pre-line text-text-primary">{message.text}</p>
         </div>
         {promptList}
         {attachment}
@@ -137,17 +115,19 @@ export function ChatMessageItem({
       {message.voice ? (
         <VoiceMessage durationMs={message.voice.durationMs} transcript={message.text} />
       ) : (
-        <p className="text-style-body-small max-w-[283px] whitespace-pre-line rounded-16 bg-brand-default px-17 py-10 text-text-strong">
+        // Figma's own bubble (16809:4985) is a sent-message tail, not a
+        // uniform rounded-16: the corner nearest the sender — bottom-right,
+        // since this is the user's own side — comes to a point. The fill is
+        // a diagonal gradient, not the flat `brand-default` token, which is
+        // one more step removed from either of the gradient's own stops.
+        <p
+          className="text-style-body-small max-w-[283px] whitespace-pre-line rounded-tl-16 rounded-tr-16 rounded-bl-16 px-17 py-10 text-text-strong"
+          style={{ background: 'linear-gradient(135deg, #FFE270, #FF993B)' }}
+        >
           {message.text}
         </p>
       )}
       {attachment}
-      {endsRun && (
-        <span className="mt-4 flex items-center gap-4">
-          <span className="text-style-caption text-text-secondary">{clockTime(message.at)}</span>
-          {message.status && <StatusTicks status={message.status} />}
-        </span>
-      )}
     </div>
   )
 }

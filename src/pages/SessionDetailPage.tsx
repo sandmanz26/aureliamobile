@@ -61,7 +61,7 @@ function StylePresetCard({ style, session }: { style: AppliedStyle; session: Ses
       <button
         type="button"
         onClick={recreateWithStyle}
-        className="text-style-label-regular u-press mt-10 flex h-32 w-full items-center justify-center gap-6 rounded-full border border-border-default text-text-primary"
+        className="text-style-label-regular u-press mt-10 flex h-32 w-full items-center justify-center gap-6 rounded-full border border-border-default text-[#331B04]"
       >
         <Repeat2 size={13} />
         Recreate
@@ -248,7 +248,7 @@ export function SessionDetailPage() {
             <Link
               to={recreate.to}
               state={recreate.state}
-              className="u-press text-style-body flex h-56 w-full items-center justify-center gap-8 rounded-16 bg-icon-strong text-text-inverse"
+              className="u-press text-style-body flex h-56 w-full items-center justify-center gap-8 rounded-16 bg-[#331B04] text-text-inverse"
             >
               <Repeat2 size={20} />
               Recreate

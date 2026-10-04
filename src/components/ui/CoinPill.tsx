@@ -57,7 +57,7 @@ export function CoinPill({
     </>
   )
 
-  const shape = `flex h-44 shrink-0 items-center gap-8 rounded-full bg-surface-default px-16 ${className}`
+  const shape = `flex h-44 shrink-0 items-center gap-8 rounded-12 bg-surface-default px-16 ${className}`
 
   if (!interactive) return <div className={shape}>{face}</div>
 

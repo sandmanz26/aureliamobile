@@ -685,21 +685,18 @@ export function ChatPage() {
 
           {messages.map((message, index) => {
             const previous = messages[index - 1]
-            const next = messages[index + 1]
             // A run is consecutive messages from the same sender inside two
-            // minutes: only its first bubble gets the avatar, only its last
-            // gets the timestamp. Kept here rather than in `ChatMessageItem`,
-            // since it is the one thing about a message that needs its
-            // neighbors — everything else about rendering one is self-contained.
+            // minutes: only its first bubble opens extra space above it.
+            // Kept here rather than in `ChatMessageItem`, since it is the one
+            // thing about a message that needs its neighbor — everything
+            // else about rendering one is self-contained.
             const startsRun = !previous || previous.from !== message.from || message.at - previous.at > 120_000
-            const endsRun = !next || next.from !== message.from || next.at - message.at > 120_000
 
             return (
               <ChatMessageItem
                 key={message.id}
                 message={message}
                 startsRun={startsRun}
-                endsRun={endsRun}
                 showRecommendations={showRecommendations}
                 deckOpen={deckOpen}
                 canApply={canApply}
@@ -756,11 +753,21 @@ export function ChatPage() {
                 one thing the limit exists to stop. Leaving it live would make
                 the notice a suggestion rather than a limit. */}
             {!empty && !limited && applied.length > 0 && showRecommendations && canApply && (
+              // The one chip in this row with its own gradient hairline — it's
+              // the primary action among suggestions, same brand gradient as
+              // the recommendation cards (#FF881B -> #FFE682).
               <button
                 type="button"
                 onClick={() => applyChanges()}
                 disabled={sessionState === 'updating'}
-                className="text-style-label flex h-40 shrink-0 items-center gap-6 whitespace-nowrap rounded-full border border-border-subtle bg-surface-default px-14 text-text-strong disabled:opacity-70"
+                style={{
+                  border: '1px solid transparent',
+                  backgroundImage:
+                    'linear-gradient(var(--color-surface-default), var(--color-surface-default)), linear-gradient(45deg, #FF881B, #FFE682)',
+                  backgroundOrigin: 'border-box',
+                  backgroundClip: 'padding-box, border-box',
+                }}
+                className="text-style-label flex h-40 shrink-0 items-center gap-6 whitespace-nowrap rounded-12 px-14 text-text-strong disabled:opacity-70"
               >
                 <WandSparkles size={13} />
                 {sessionState === 'updating' ? 'Updating..' : `Apply new changes (${applied.length})`}
@@ -774,7 +781,7 @@ export function ChatPage() {
                   key={suggestion}
                   type="button"
                   onClick={() => sendMessage(suggestion)}
-                  className="text-style-label flex h-40 shrink-0 items-center gap-6 whitespace-nowrap rounded-full border border-border-subtle bg-surface-default px-14 text-text-primary"
+                  className="text-style-label flex h-40 shrink-0 items-center gap-6 whitespace-nowrap rounded-12 border border-border-subtle bg-surface-default px-14 text-text-primary"
                 >
                   <WandSparkles size={13} />
                   {suggestion}

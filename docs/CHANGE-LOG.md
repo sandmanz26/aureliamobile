@@ -31,6 +31,58 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-04 — Chat cockpit matched to Figma's "Chat" frame (16809:4944), and Recreate's colour fixed sitewide
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (every item here applies
+there too) / `storybook` (`CoinPill`, `RecommendationCard` and
+`SessionGridCard` are shared components and should get a story update).
+
+Read the referenced Figma node directly (`figma_get_component_for_development`,
+`figma_get_file_data`) rather than guessing from the screenshot alone, since
+several of these are precise colour/radius corrections:
+
+- **`ChatHeader`'s four icon buttons and `CoinPill`** (shared by 13 screens)
+  were `rounded-full` with no shadow; the frame specifies `rounded-12` with
+  the same `0 5px 24px 4px rgba(0,0,0,0.05)` drop shadow already used on
+  other floating controls in this app (`UpgradePage`, `FeatureCard`).
+- **Aurelia's own chat bubble carried an avatar, a "Aurelia" label and a
+  timestamp.** The frame runs it as plain paragraph text, flush with the
+  page's own left gutter — no sender chrome on that side at all. Removed
+  `AureliaLogo`, the label, and the per-run timestamp; `endsRun` (the prop
+  that existed only to gate that timestamp) is gone from
+  `ChatMessageItem` and its caller along with it.
+- **The user's own bubble was a flat `brand-default` fill with a uniform
+  `rounded-16` and its own timestamp underneath.** The frame's bubble
+  (16809:4985) is a diagonal gradient (`#FFE270` → `#FF993B`) with a
+  sent-message tail — the corner nearest the sender, bottom-right, comes to
+  a point (`rectangleCornerRadii: [16,16,0,16]`). Timestamp removed to
+  match; the read-receipt ticks went with it; the data field itself is
+  unchanged.
+- **`RecommendationCard` read its asymmetric `[48,20,20,20]` radius off a
+  different, older Figma frame** (`16523:9513`, cited in the component's own
+  comment). This screen's own card (`16809:4992`) is a uniform `20`,
+  confirmed by reading the node directly — switched to match, and the
+  border gradient corrected to the established `#FF881B → #FFE682` pair
+  (the frame's own paint style resolves to `#FF8514 → #FFE270`;
+  `DESIGN-SYSTEM-HISTORY.md` already records that difference as
+  deliberately left alone). The play glyph drawn over the orb on every card
+  is gone — this screen's own two visible cards carry no such overlay in
+  the source file; the `Link` still plays on tap.
+- **The suggestion-chip row (`Apply new changes` + the plain suggestions)
+  was `rounded-full`.** Figma's own chips are `rounded-12`, and the "Apply
+  new changes" chip specifically carries the same brand-gradient hairline
+  as the recommendation cards — added via the same border-image technique,
+  rather than a plain grey border like the other chips.
+- **Every "Recreate" control site-wide used `text-text-primary` (`#3C2405`)
+  or, on `SessionDetailPage`'s filled CTA, `bg-icon-strong` (pure black).**
+  `#331B04` is already logged in `DESIGN-SYSTEM-HISTORY.md`'s open-colours
+  table as the distinct brown this exact control uses in Figma — applied
+  as a literal across all four instances (`SessionGridCard`,
+  `RecommendationCard`'s recreate variant, and both of
+  `SessionDetailPage`'s).
+
 ### 2026-10-04 — Session settings tabs: wrong active style and radius, not just rounding
 
 **Lands on:** `web_app`
