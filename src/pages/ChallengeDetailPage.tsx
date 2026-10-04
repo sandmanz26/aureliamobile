@@ -1,6 +1,6 @@
 import { ArrowLeft, ChevronRight, Clock, Play, Podium as PodiumIcon, Share2, Trophy, Users } from 'lucide-react'
 import { useRef, useState } from 'react'
-import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { PageMeta } from '../components/PageMeta'
 import { CoverImage } from '../components/ui/CoverImage'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
@@ -97,9 +97,14 @@ function Podium({ top }: { top: Contender[] }) {
         return (
           <div key={contender.rank} className={`flex min-w-0 flex-1 flex-col items-center ${label}`}>
             <span className="text-style-body-small font-semibold text-text-primary">{contender.rank}</span>
-            <span className="relative mt-6 rounded-full bg-surface-default p-3 shadow-md">
+            <Link
+              to={`/play/${session.slug}`}
+              state={{ origin: 'community' }}
+              aria-label={`Play ${session.title}`}
+              className="relative mt-6 rounded-full bg-surface-default p-3 shadow-md"
+            >
               <CoverDisc photo={session.photo} size={size} alt={session.title} />
-            </span>
+            </Link>
             {/* The count sits on the cover's edge, as the design overlaps it. */}
             <span className="-mt-13 relative z-10">
               <PlaysPill plays={contender.plays} dark />
@@ -148,7 +153,7 @@ export function ChallengeDetailPage() {
               type="button"
               aria-label="Back"
               onClick={() => navigate(-1)}
-              className="u-press flex size-40 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-sm"
+              className="u-press flex size-40 items-center justify-center rounded-12 bg-surface-default text-icon-strong shadow-sm"
             >
               <ArrowLeft size={20} />
             </button>
@@ -157,7 +162,7 @@ export function ChallengeDetailPage() {
               <button
                 type="button"
                 aria-label="Share challenge"
-                className="flex size-40 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-sm"
+                className="flex size-40 items-center justify-center rounded-12 bg-surface-default text-icon-strong shadow-sm"
               >
                 <Share2 size={18} />
               </button>
@@ -228,7 +233,9 @@ export function ChallengeDetailPage() {
                     <span className="text-style-body-small w-14 shrink-0 tabular-nums text-text-secondary">
                       {contender.rank}
                     </span>
-                    <CoverDisc photo={session.photo} size={40} alt={session.title} />
+                    <Link to={`/play/${session.slug}`} state={{ origin: 'community' }} aria-label={`Play ${session.title}`}>
+                      <CoverDisc photo={session.photo} size={40} alt={session.title} />
+                    </Link>
                     <div className="min-w-0 flex-1">
                       <p className="text-style-body-small truncate font-medium text-text-primary">{session.title}</p>
                       <p className="text-style-caption truncate text-text-secondary">by {contender.creator}</p>
@@ -257,7 +264,7 @@ export function ChallengeDetailPage() {
                 <div className="-mx-20 mt-16 flex gap-12 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
                   {sessions.map((session) => (
                     <div key={session.slug} className="w-[234px] shrink-0">
-                      <SessionGridCard session={session} className="aspect-[234/351] w-full" />
+                      <SessionGridCard session={session} className="aspect-[4/5] w-full" />
                     </div>
                   ))}
                 </div>

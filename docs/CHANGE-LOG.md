@@ -31,6 +31,42 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-04 — Home's closing CTA padding, and three Challenge Detail fixes
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (all four fixes below need
+filing for the Flutter equivalents) / `storybook` (no shared component
+changed — `HomePage.tsx`'s own CTA block and `ChallengeDetailPage.tsx` are
+both page-local).
+
+**Home's closing CTA.** The "Casual Intelligence for Global Community"
+card's own code comment already documented the intended line break ("the
+frame breaks after 'for'") and added `text-balance` specifically to hit
+it — but `px-20` left the text column wide enough that balancing still
+landed on "Casual Intelligence for Global / Community" instead. Tested
+`px-32` (no change) and `px-48` (correct break) directly against the
+reference before picking it — `text-balance`'s break point is sensitive to
+exactly how much width is left for the headline, not a linear function of
+the padding value, so the middle guess didn't move it at all.
+
+**Challenge Detail**, four Figma-flagged fixes, one a real functional gap
+rather than styling: the back/share buttons went from `rounded-full` to
+`rounded-12`, matching the squircle treatment applied elsewhere this
+session. **The podium's and the ranked list's "play" discs had no click
+handler at all** — tapping a track did nothing, where the design means it
+to open the full player; both now link to `/play/:slug` the same way
+`SessionGridCard` already does elsewhere, verified live (clicking rank 1's
+disc now lands on `/play/dolphins-frequency`). The "Created Session" cards
+were rendering at a 2:3 ratio (`aspect-[234/351]`) — markedly more
+elongated than the 4:5 ratio `SessionGridCard` itself defaults to and the
+Home/Explore community shelf uses — tall enough to crowd the page's sticky
+"Join Challenge" bar; now `aspect-[4/5]`, matching the component's own
+default and giving the sticky footer more breathing room. The podium's
+background gradient was also flagged as not matching Figma — left
+unchanged pending exact values, since this is a color-matching call and the
+screenshot alone didn't give enough confidence to guess at it correctly.
+
 ### 2026-10-04 — Adaptive Wellness feature-grid icons: rounded squares, not circles
 
 **Lands on:** `web_app`

@@ -463,15 +463,20 @@ export function HomePage() {
           <img src={aureliaNetwork} alt="" className="w-full" />
 
           {/* Figma "Frame 45" in the last Section — 223 tall, radius 20, 40
-              above and below, 20 at the sides, 32 between the words and the
-              button and 4 between the two lines of words.
+              above and below, 32 between the words and the button and 4
+              between the two lines of words.
 
               The headline is **24 Regular at 120%**, not the 32 semibold this
               was using: that is what made it three lines tall and the card
               nearly twice its height. `text-balance` goes with it — the frame
-              breaks after "for", and balancing fought that. */}
+              breaks after "for", and balancing fought that.
+
+              The side padding is 48, not the frame's stated 20 — at 20 the
+              text column was wide enough that `text-balance` still broke
+              after "Global" instead, confirmed by testing 20/32/48 directly
+              against the reference. */}
           <div
-            className="relative flex flex-col items-center gap-32 rounded-[20px] px-20 py-40 text-center text-text-inverse"
+            className="relative flex flex-col items-center gap-32 rounded-[20px] px-48 py-40 text-center text-text-inverse"
             style={{ background: 'linear-gradient(180deg, #3C2405, #FF881B)' }}
           >
             <div className="flex flex-col gap-4">
