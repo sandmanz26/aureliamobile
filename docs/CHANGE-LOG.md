@@ -31,6 +31,54 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-04 — Challenge Detail: status-bar gap, Rewards collision, and a missing safe-area inset
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (the session-card blur mask
+and the safe-area pattern both apply to the Flutter screens too) /
+`storybook` (not a shared component beyond `SessionGridCard`, see below).
+
+Four fixes from the same round of feedback:
+
+- **`SessionGridCard`'s frosted caption panel reads as a seam, not a
+  gradient.** `backdrop-blur-sm` has no fade of its own — the rectangle it's
+  painted on cuts blur intensity off instantly at its own edge, visible
+  against a sharp photo above it even though the *background colour* fades
+  via the existing gradient. Added a `mask-image` (and its `-webkit-` form)
+  on the same element so the blur itself tapers out over the top ~40% of
+  the panel instead of stopping hard.
+- **`ChallengeDetailPage`'s hero never bled into AppLayout's status-bar
+  clearance.** Every other full-bleed hero (`SessionDetailPage`,
+  `ExplorePage`'s header band) counters the `pt-[30px]` AppLayout adds below
+  `lg` with its own `-mt-[30px]` plus 30 extra pixels of height, so the
+  photo reaches the true top of the viewport instead of stopping where the
+  status-bar clearance starts. This page's hero was never given that
+  treatment, so `bg-background-default` showed through as a flat strip
+  above the back/coin/share row — confirmed via `getBoundingClientRect()`
+  (hero top was `y: 30`, not `0`) before the fix and a live screenshot
+  after. `aspect-[402/300]` doesn't combine with a `+30px` offset the way a
+  fixed height does, so the fix is `h-[calc(100vw*300/402+30px)]`, with
+  `lg:h-auto` handing sizing back to the aspect ratio once AppLayout's own
+  clearance resets to 0.
+- **The Rewards pill nearly touched the "joined/ends" row under it.**
+  Measured live: the button (`-top-22`, `h-44`) left only a 2px gap above
+  content that starts at the sheet's `pt-24` — close enough to read as a
+  collision, which is what the screenshot showed next to the correct Figma
+  spacing. Changed the sheet's top padding to `pt-40`, which doesn't move
+  the button (still floating on the seam, unaffected by padding) but gives
+  the row below it an 18px gap instead of 2.
+- **The sticky "Join Challenge" bar had no safe-area-inset-bottom.** Every
+  other bottom-pinned control in this codebase that needs one
+  (`PlayerPage`'s transport) adds `env(safe-area-inset-bottom)` to its own
+  bottom padding; this bar never had it, so on a real phone with a home
+  indicator the button's bottom edge sits under that bar instead of clear
+  of it — read from the screenshot as "the CTA is hit by an overlay."
+  `pb-12` is now `pb-[calc(12px+env(safe-area-inset-bottom))]`, matching
+  PlayerPage's own pattern. `env()` resolves to `0` outside a real device,
+  so this doesn't change anything in a desktop browser or this sandbox —
+  only on the hardware the bug actually shows on.
+
 ### 2026-10-04 — Adaptive Wellness eyebrow chip: 10px to the 12px every other chip uses
 
 **Lands on:** `web_app`

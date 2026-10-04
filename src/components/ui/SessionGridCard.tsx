@@ -89,8 +89,18 @@ export function SessionGridCard({
             clips to, rather than leaving a sharp strip around it. The
             explicit z-20 on this wrapper (matching the top row's) gives the
             blur panel's negative z-index a stacking context to stay inside,
-            so it stays behind the text without escaping to behind the photo. */}
-        <div className="absolute -inset-x-10 -bottom-10 -top-16 -z-10 bg-gradient-to-t from-black/55 via-black/35 to-transparent backdrop-blur-sm" />
+            so it stays behind the text without escaping to behind the photo.
+            `backdrop-blur` has no gradient of its own — a plain rectangle
+            cuts the blur off instantly at its top edge, which is a visible
+            seam against the sharp photo above it. The mask fades that same
+            edge out, so the blur itself tapers off rather than stopping. */}
+        <div
+          className="absolute -inset-x-10 -bottom-10 -top-16 -z-10 bg-gradient-to-t from-black/55 via-black/35 to-transparent backdrop-blur-sm"
+          style={{
+            maskImage: 'linear-gradient(to top, black 60%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to top, black 60%, transparent 100%)',
+          }}
+        />
         <div className="flex flex-col gap-6">
           <div>
             <p className="text-style-body">{session.title}</p>

@@ -146,7 +146,14 @@ export function ChallengeDetailPage() {
       <PageMeta title={challenge.title} />
       {/* Hero, with the sheet below overlapping it. */}
       <div className="relative">
-        <div className="relative aspect-[402/300] w-full overflow-hidden">
+        {/* `-mt`/`h-[calc(...)]` carries the photo into the status-bar
+            clearance AppLayout adds above every page (see SessionDetailPage's
+            own cover for the same trick): the box grows 30px taller and
+            bleeds upward by the same 30, so the bottom edge — where the
+            sheet overlaps it — stays put while the top reaches the true top
+            of the viewport instead of leaving `bg-background-default`
+            showing through above the back/coin/share row. */}
+        <div className="relative -mt-[30px] aspect-[402/300] h-[calc(100vw*300/402+30px)] w-full overflow-hidden lg:mt-0 lg:h-auto">
           <CoverImage photo={challenge.photo} gradient={challenge.gradient} width={820} height={620} scrim={false} />
           <div className="relative flex items-center justify-between gap-12 px-20 pt-16">
             <button
@@ -170,7 +177,7 @@ export function ChallengeDetailPage() {
           </div>
         </div>
 
-        <div className="relative -mt-24 rounded-t-24 bg-background-default pt-24">
+        <div className="relative -mt-24 rounded-t-24 bg-background-default pt-40">
           {/* Sits on the seam, as in the design. It is a labelled way in rather
               than a bare glyph — "what do I get for this" is the first thing a
               challenge has to answer, and an unlabelled chart icon does not.
@@ -274,8 +281,11 @@ export function ChallengeDetailPage() {
         </div>
       </div>
 
-      {/* The one action the screen exists for, reachable from anywhere on it. */}
-      <div className="sticky bottom-0 border-t border-border-subtle bg-background-default/95 px-20 py-12 backdrop-blur lg:px-24">
+      {/* The one action the screen exists for, reachable from anywhere on it.
+          `pb` adds the device's own home-indicator inset on top of the 12
+          the design sets — without it the button's bottom edge sits right
+          under that bar on a real phone, same fix as PlayerPage's transport. */}
+      <div className="sticky bottom-0 border-t border-border-subtle bg-background-default/95 px-20 pb-[calc(12px+env(safe-area-inset-bottom))] pt-12 backdrop-blur lg:px-24">
         <div className="mx-auto w-full max-w-[402px] lg:max-w-[960px]">
           <button
             type="button"
