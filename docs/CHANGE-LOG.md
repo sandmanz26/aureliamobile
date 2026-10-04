@@ -31,6 +31,19 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-04 — Challenge Detail: Rewards pill sat too far from the sheet
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` / `storybook` (not a
+shared component).
+
+The previous pass moved this pill off the seam and gave it generous
+clearance from the sheet — a reasonable read of that round's Figma crop,
+but this round's screenshot showed the reference sits much closer, 8–12px
+above the sheet rather than the ~56px it landed at. `bottom-56` → `bottom-34`,
+measured live to a 10px gap between the pill and the sheet's visual top.
+
 ### 2026-10-04 — Progress page: Insights/Chapters/Social Impact tabs less rounded
 
 **Lands on:** `web_app`

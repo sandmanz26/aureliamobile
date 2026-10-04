@@ -176,17 +176,16 @@ export function ChallengeDetailPage() {
             </div>
           </div>
 
-          {/* Floats inside the photo itself, well clear of the sheet below —
-              not on the seam. It was positioned relative to the sheet and
-              nearly touched the "joined" row under it; the reference has it
-              sitting with its own clearance above the sheet instead, dark
-              and translucent like every other control that floats directly
-              over a photo (the Play glyphs on `SessionGridCard` and
-              `CoverDisc`), rather than solid light-on-dark. */}
+          {/* Floats inside the photo itself, not on the seam — dark and
+              translucent like every other control that floats directly over
+              a photo (the Play glyphs on `SessionGridCard` and `CoverDisc`).
+              `bottom-34` clears the sheet (which overlaps the hero by 24) by
+              about 10px — close, the way the reference has it, not the 56px
+              gap the previous pass over-corrected to. */}
           <button
             type="button"
             onClick={() => setRewardsOpen(true)}
-            className="text-style-label u-press absolute bottom-56 left-20 flex h-44 items-center gap-8 rounded-full bg-black/45 px-16 text-text-inverse shadow-md backdrop-blur-sm"
+            className="text-style-label u-press absolute bottom-34 left-20 flex h-44 items-center gap-8 rounded-full bg-black/45 px-16 text-text-inverse shadow-md backdrop-blur-sm"
           >
             <PodiumIcon size={16} />
             Rewards
