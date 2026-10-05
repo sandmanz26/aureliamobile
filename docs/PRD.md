@@ -57,6 +57,114 @@ material. Flag for confirmation with product and business:
 | Account | Profile, Invite a Friend, Notifications, My Wellness, Help | Core |
 | Admin | 18 modules, web only | Internal |
 
+### Site map
+
+Every route the web client answers, grouped the same way as the table above.
+`web_app`'s own routing (`src/App.tsx`) is the source — this is not a
+separate plan, it is that file read as a tree. Admin's 18 modules are listed
+once rather than wired individually; §03's table and `src/admin/AdminLayout.tsx`
+carry the full set.
+
+```mermaid
+graph TD
+  Root["/"] -->|redirect| Home
+
+  subgraph Auth
+    SignIn["/login"]
+    SignUp["/signup"]
+    Forgot["/forgot-password"]
+    Reset["/reset-password"]
+  end
+
+  subgraph GrpHome["Home"]
+    Home["/home"]
+  end
+
+  subgraph Cockpit["The cockpit"]
+    ChatNew["/chat"]
+    ChatThread["/chat/:slug"]
+  end
+
+  subgraph SessionSetup["Session setup"]
+    SessionSettings["/session-settings"]
+  end
+
+  subgraph Sessions["Sessions"]
+    SessionsList["/sessions"]
+    SessionDetail["/session/:slug"]
+    Recreate["/recreate/:slug"]
+    SeeAll["/see-all/:shelf"]
+  end
+
+  subgraph Playback["Playback"]
+    Player["/play/:slug"]
+    PlayerBeta["/player-beta/:slug"]
+  end
+
+  subgraph Discovery["Discovery"]
+    Explore["/explore"]
+  end
+
+  subgraph Community["Community"]
+    Challenge["/challenge/:slug"]
+  end
+
+  subgraph Account["Account"]
+    Profile["/profile"]
+    OtherProfile["/profile/:person"]
+    Settings["/settings"]
+    Notifications["/notifications"]
+    Help["/help"]
+    Invite["/invite"]
+    Wellness["/wellness"]
+    Credits["/credits"]
+    Upgrade["/upgrade"]
+    Progress["/progress/:slug"]
+  end
+
+  subgraph Admin["Admin — web only, 18 modules"]
+    AdminRoot["/admin/*"]
+  end
+
+  subgraph Internal["Internal"]
+    Demo["/__demo"]
+    NotFound["* (404)"]
+  end
+
+  Home --> SignIn
+  Home -->|Ask Aurelia| ChatNew
+  Home --> Explore
+  Home --> SessionsList
+  Home --> Challenge
+  SessionsList --> SessionDetail
+  SessionDetail --> Player
+  SessionDetail --> Recreate
+  Explore --> SessionDetail
+  Explore --> Challenge
+  Explore --> SeeAll
+  ChatThread --> SessionSettings
+  ChatThread --> Progress
+  ChatThread --> Player
+  Player --> Profile
+  Profile --> Settings
+  Profile --> OtherProfile
+```
+
+### Screens, as built
+
+Captured from the running app (staging, signed in as the mock account),
+mobile width — the same frame size the Figma file is drawn at. These are
+screenshots, not mockups: what is on screen is what `web_app` currently
+renders, cover art included where Unsplash resolves.
+
+| | |
+| --- | --- |
+| ![Home, signed out](screenshots/01-home-signed-out.png) **Home — signed out.** The entire pitch, no account needed: the hero ask, live sessions, Quick Start. | ![Explore](screenshots/03-explore.png) **Explore.** The browse surface — today's banner, Quick Start, live map, shelves, Trusted Creators, the one running Monthly Challenge. |
+| ![The cockpit](screenshots/07-cockpit-chat.png) **The cockpit.** A thread mid-conversation: Aurelia's diagnosis, the user's reply, a folded recommendation deck, the suggestion chips and composer. | ![Session Detail](screenshots/05-session-detail.png) **Session Detail.** Cover with Back/Share/Play floating on it, author, description, hashtags, Played/Recreated, and the Recreate shelf. |
+| ![Player](screenshots/06-player.png) **Player.** Full-bleed art, the transport floating over it, the spoken line, the pulled-up sheet underneath. | ![Sessions](screenshots/04-sessions.png) **Sessions.** The plain list — all published work, with the two-scope filter (All / Created by you). |
+| ![Challenge Detail](screenshots/08-challenge-detail.png) **Challenge Detail.** Join state, the podium, the leaderboard, and Rewards. | ![Profile](screenshots/09-profile.png) **Profile.** Stats, My Sessions / Recreated tabs, the same session card used on every shelf. |
+| ![My Wellness](screenshots/10-my-wellness.png) **My Wellness — the consent surface.** What each signal source reads, and the objective it is measured against. | ![Admin dashboard](screenshots/11-admin-dashboard.png) **Admin — Dashboard.** Platform health at a glance; every figure links to the module that owns it. Desktop only, per §03. |
+
 ---
 
 ## 04 · How a session gets made
@@ -75,6 +183,45 @@ material. Flag for confirmation with product and business:
    mini-player that survives navigation. No frame demonstrates it yet.
 5. **Publish.** A progress sheet resolves to "Session Published!" and the
    session appears under Recreate from Community, attributed to its creator.
+
+### The same loop, as a flowchart
+
+Including the branch that matters most for conversion — the sign-in ask
+landing on send rather than on the first keystroke (§05, Home) — and the
+four doors into the cockpit besides the hero ask itself (§06, "Four doors
+into the cockpit").
+
+```mermaid
+flowchart TD
+  Start(["Visitor opens Home"]) --> Pitch["Reads the pitch — no account needed"]
+  Pitch --> AskField["Types or speaks into &quot;Ask Aurelia..&quot;"]
+
+  AskField --> SignedIn{"Signed in?"}
+  SignedIn -->|No| HoldDraft["What they typed is held"]
+  HoldDraft --> SignInGate["Sign-in ask, on send — not on the first keystroke"]
+  SignInGate --> AuthDone["Signs in"]
+  AuthDone --> Thread["Draft lands in the thread, unchanged"]
+  SignedIn -->|Yes| Thread
+
+  OtherDoors["Other doors in:\nRecreate · Latest · a Session or Quick Start card"] --> Thread
+
+  Thread --> Diagnosis["Aurelia opens with a status read,\nthen proposes 2–3 changes — each removable"]
+  Diagnosis --> Deck{"Keep, tune, or remove\neach recommendation?"}
+  Deck --> Apply["Apply new changes (N)"]
+  Apply --> Tune["Tune per channel:\nScript · Visual · Sound"]
+  Tune --> Build["Aurelia builds the next version"]
+  Build --> Ready["Ready to play"]
+
+  Ready --> Play["Play"]
+  Play --> MiniPlayer["Walks back to the cockpit:\nplayback survives as a mini-player card"]
+  MiniPlayer -->|more changes| Diagnosis
+
+  Play --> PublishDecision{"Publish?"}
+  PublishDecision -->|Not yet| Ready
+  PublishDecision -->|Yes| PublishSheet["Publishing sheet → &quot;Session Published!&quot;"]
+  PublishSheet --> Community["Appears under Recreate from Community,\nattributed to its creator"]
+  Community -->|someone else recreates it| OtherDoors
+```
 
 ---
 
