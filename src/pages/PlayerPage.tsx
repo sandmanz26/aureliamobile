@@ -11,8 +11,6 @@ import {
   RotateCw,
   Share2,
   Shuffle,
-  Volume2,
-  VolumeX,
 } from 'lucide-react'
 import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { RecommendationCard } from '../components/chat/RecommendationCard'
@@ -210,7 +208,7 @@ export function PlayerPage() {
 
   // Playback lives above the router. This screen is a view onto it, so
   // walking back to the cockpit leaves the session running.
-  const { playing, elapsed, duration, muted, load, toggle, seek, toggleMuted } = useAudioPlayer()
+  const { playing, elapsed, duration, load, toggle, seek } = useAudioPlayer()
   const { isEnabled } = useFeatureFlags()
   const [expanded, setExpanded] = useState(false)
 
@@ -351,9 +349,10 @@ export function PlayerPage() {
         className="relative mx-auto flex h-full w-full max-w-[402px] flex-col text-text-inverse lg:max-w-[640px]"
         style={{ paddingBottom: SHEET_PEEK }}
       >
-        {/* gap-12 rather than the frame's 16: the sound switch is a fourth
-            control in a row the frame drew with three. */}
-        <header className="relative flex items-center gap-12 px-20 py-12">
+        {/* The frame draws three controls in this row — back, coin, share.
+            A sound switch used to sit between the last two as a fourth; the
+            mute toggle MiniPlayer already carries is the one this app keeps. */}
+        <header className="relative flex items-center gap-16 px-20 py-12">
           <button
             type="button"
             aria-label="Back"
@@ -366,17 +365,6 @@ export function PlayerPage() {
           {/* Same coin as the cockpit header wears — one mark for the
               currency, not a lookalike per screen. */}
           <CoinPill points="1,323" />
-          {/* Sound off, and it stays off across a reload — the reason you
-              silenced it is usually the room you are in, not this session. */}
-          <button
-            type="button"
-            aria-label={muted ? 'Turn sound on' : 'Turn sound off'}
-            aria-pressed={muted}
-            onClick={toggleMuted}
-            className="u-press flex size-44 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-strong"
-          >
-            {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-          </button>
           <button
             type="button"
             aria-label="Share"

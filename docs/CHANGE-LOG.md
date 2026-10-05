@@ -31,6 +31,24 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-05 — Player header: dropped the extra sound-switch button
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (same header) /
+`storybook` (not a shared component).
+
+The frame draws three controls in this header — back, coin, share. A fourth,
+a mute toggle, had been added between the coin and share; the component's
+own comment already flagged it as "a fourth control in a row the frame drew
+with three," and this round's screenshot asked for it to come out. Removed
+the button and reverted the row's gap from 12 back to the frame's own 16,
+which the comment said was only tightened to fit the fourth control.
+`MiniPlayer` carries its own mute toggle already and is unaffected —
+`muted`/`toggleMuted` stay in `AudioPlayerContext`, only this page's own
+unused destructuring of them (and the now-unused `Volume2`/`VolumeX`
+imports) came out.
+
 ### 2026-10-04 — Explore page matched to Figma's annotated "Issue 1" frame (16810:8673)
 
 **Lands on:** `web_app`
