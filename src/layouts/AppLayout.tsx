@@ -1,9 +1,13 @@
-import { Bell, Compass, HelpCircle, ListMusic, Plus, User, UserPlus, Waves } from 'lucide-react'
+import { Bell, HelpCircle, Plus, UserPlus } from 'lucide-react'
 import { Suspense, useEffect, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useHiddenScrollbars } from '../hooks/useHiddenScrollbars'
 import { useSignInGate } from '../auth/useSignInGate'
+import iconSignIn from '../assets/icon-nav-signin.png'
+import iconExplore from '../assets/icon-nav-explore.png'
+import iconSessions from '../assets/icon-nav-sessions.png'
+import iconWellness from '../assets/icon-nav-wellness.png'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { BuildBadge } from '../components/ui/BuildBadge'
 import { PageSkeleton } from '../components/ui/PageSkeleton'
@@ -14,6 +18,13 @@ import { recentSessions } from '../lib/sessions'
 import { DrawerContext } from './DrawerContext'
 
 const LATEST = recentSessions()
+
+/** The real exported glyphs for the drawer's four nav rows, not lucide
+ *  lookalikes — flat icons, so NavItem's `text-icon-default` wrapper has
+ *  nothing to tint; the colour is baked into each file. */
+function NavIcon({ src }: { src: string }) {
+  return <img src={src} alt="" width={24} height={24} className="shrink-0" />
+}
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { isEnabled } = useFeatureFlags()
@@ -72,14 +83,14 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             disabled={!isEnabled('profile')}
           />
         ) : (
-          <NavItem to="/login" icon={<User size={24} />} label="Sign In" disabled={!isEnabled('auth')} />
+          <NavItem to="/login" icon={<NavIcon src={iconSignIn} />} label="Sign In" disabled={!isEnabled('auth')} />
         )}
         {/* No Chat entry: the design's drawer goes Profile / Explore / Sessions
             / My wellness, and the cockpit is reached by "New session" below
             rather than by being a destination of its own. */}
-        <NavItem to="/explore" icon={<Compass size={24} />} label="Explore" disabled={!isEnabled('explore')} />
-        <NavItem to="/sessions" icon={<ListMusic size={24} />} label="Sessions" disabled={!isEnabled('sessions')} />
-        <NavItem to="/wellness" icon={<Waves size={24} />} label="My wellness" disabled={!isEnabled('wellness')} />
+        <NavItem to="/explore" icon={<NavIcon src={iconExplore} />} label="Explore" disabled={!isEnabled('explore')} />
+        <NavItem to="/sessions" icon={<NavIcon src={iconSessions} />} label="Sessions" disabled={!isEnabled('sessions')} />
+        <NavItem to="/wellness" icon={<NavIcon src={iconWellness} />} label="My wellness" disabled={!isEnabled('wellness')} />
       </nav>
 
       {/* Figma "Frame 25" — Latest and the button are one block, 20 inside and

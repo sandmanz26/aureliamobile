@@ -31,6 +31,33 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-06 — Real icons for the drawer's four nav rows
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (same four icons apply
+there too) / `storybook` (worth a story update for the new assets).
+
+- The drawer's "Sign In" / "Explore" / "Sessions" / "My wellness" rows
+  were lucide stand-ins (`User`, `Compass`, `ListMusic`, `Waves`) — none
+  a real match for the Figma reference's own glyphs. Replaced all four
+  with the actual exported icons (`src/assets/icon-nav-*.png`), rendered
+  through a small `NavIcon` wrapper in `AppLayout.tsx` rather than
+  lucide components, since `NavItem`'s `text-icon-default` colour
+  wrapper has nothing to tint on a flat PNG — the colour is baked into
+  each file already.
+- Caught and fixed one mistake before pushing: Explore's and My
+  wellness's files were swapped on the first pass (the wave/chart icon
+  is My wellness's, the stacked-cards icon is Explore's) — a live
+  screenshot comparison against the reference caught it immediately.
+- Note for later: the Sign In icon's stroke renders at `#171717`
+  (near-black); the other three are `#331B04`, the same off-token brown
+  already logged in `DESIGN-SYSTEM-HISTORY.md`'s open-colours table.
+  Left as supplied rather than recoloured — these are the user's own
+  exported assets, not ours to repaint without being asked — but it may
+  be worth a matching re-export later if the slight mismatch is visible
+  side by side.
+
 ### 2026-10-06 — The generating-V2 build card: a missing shadow, an oversized icon
 
 **Lands on:** `web_app`
