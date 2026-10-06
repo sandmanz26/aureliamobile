@@ -125,9 +125,9 @@ export function HomePage() {
           type="button"
           aria-label="Open menu"
           onClick={openDrawer}
-          className="flex size-44 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-sm lg:hidden"
+          className="flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-default shadow-sm lg:hidden"
         >
-          <Menu size={24} />
+          <Menu size={20} />
         </button>
         <span className="hidden lg:block" />
         {signedIn ? (

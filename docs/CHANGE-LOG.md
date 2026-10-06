@@ -31,6 +31,59 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-06 — Explore's top gradient and live-sessions map were never fixed (only Home's copy was); hamburger and back buttons standardized sitewide
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (all fixes here apply
+there too, including the duplicate-component lesson below) / `storybook`
+(not shared components, except the icon-button radius — worth a story
+update there too).
+
+- **Explore's "Ongoing Live Sessions" map card was still `bg-cover
+  bg-center`.** A previous round fixed the empty-top-space problem on
+  Home's copy of this card (`backgroundSize: '140% auto'` +
+  `backgroundPosition: 'center bottom'`) and reported it done — but
+  `ExplorePage.tsx` has its own, separate copy of the exact same card
+  (same `liveSessionsMap` asset, same markup), never touched. That's why
+  the complaint kept coming back after being marked fixed: the two pages
+  render two different instances of this "component." Applied the same
+  fix here. There is no shared `LiveSessionsMapCard` component — that's
+  worth doing if this duplication bites again.
+- **Explore's top header gradient** didn't match its Figma frame
+  (`16744:9604`, "Top Header"): Figma's is a 122px band fading from
+  `rgba(255,230,130,0.6)` to fully transparent, laid over the page's own
+  background; the code had an opaque `#FFE682` fading to opaque
+  `#FFFFFF`, sized only to its (shorter) content instead of the full
+  122px. Now matches both the color stops and the height.
+- **The hamburger "Open menu" button was a different component on nearly
+  every page** — `rounded-full` at size 40 or 44, `text-icon-strong`,
+  inconsistent icon sizes, one page (`InvitePage`) even hand-rolling its
+  own three-bar icon instead of lucide's `Menu`. `ProfilePage`'s own
+  button (`rounded-12`, size 44, `text-icon-default`, `Menu` at 20) was
+  already the odd one out in the *correct* direction — Figma's actual
+  spec. Standardized every page's hamburger to match it: `Home`,
+  `Explore`, `Sessions`, `Wellness`, `Invite`, `Help`.
+- **The "Back" button had the same problem** — `rounded-full` on every
+  page except two (`SessionDetailPage`, `ChallengeDetailPage`, already
+  `rounded-12` from an earlier round). Standardized the rest to
+  `rounded-12` too: `Home`'s drawer aside, `Player`, `Session Settings`,
+  `Progress`, `Account Settings` (this round's ss5), `Credits`,
+  `Notifications`, `Player Beta`, `Profile`'s own (viewing someone else),
+  `See All`, and the photo-overlay back buttons on `Sign In` and the
+  shared `AuthShell` (Sign Up / Forgot Password).
+- **Explore's filter button, next to the coin pill, doesn't exist in
+  Figma** — removed. The category chips row and its "All Categories"
+  sheet (opened from the chip itself) still work exactly as before; only
+  the redundant header shortcut to the same sheet is gone.
+
+**Not changed — needs the actual asset:** the Settings "Credit
+Redemption" row icon. The current code (`CircleDollarSign` from lucide)
+doesn't match the diamond/sparkle shape in the screenshot sent this
+round, but that screenshot is of the row itself, not the icon file — so
+there's nothing to extract the real shape from. Asked for the actual
+icon export rather than guessing at a lucide substitute.
+
 ### 2026-10-06 — Explore hero radius and Trusted Creators type size; two other flagged items already matched spec
 
 **Lands on:** `web_app`

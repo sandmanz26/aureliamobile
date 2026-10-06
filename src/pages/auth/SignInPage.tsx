@@ -67,7 +67,7 @@ export function SignInPage() {
           type="button"
           aria-label="Back"
           onClick={() => navigate('/home')}
-          className="u-press absolute left-16 top-16 z-10 flex size-44 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm"
+          className="u-press absolute left-16 top-16 z-10 flex size-44 items-center justify-center rounded-12 bg-black/30 text-white backdrop-blur-sm"
         >
           <ArrowLeft size={20} />
         </button>

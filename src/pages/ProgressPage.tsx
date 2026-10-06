@@ -289,7 +289,7 @@ export function ProgressPage() {
               type="button"
               aria-label="Back"
               onClick={() => navigate(-1)}
-              className={`flex size-44 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-strong ${CARD_SHADOW}`}
+              className={`flex size-44 shrink-0 items-center justify-center rounded-12 bg-surface-default text-icon-strong ${CARD_SHADOW}`}
             >
               <ArrowLeft size={20} />
             </button>

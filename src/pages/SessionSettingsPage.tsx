@@ -218,7 +218,7 @@ export function SessionSettingsPage() {
           type="button"
           aria-label="Back"
           onClick={() => navigate(-1)}
-          className="u-press flex size-40 shrink-0 items-center justify-center rounded-full text-icon-strong"
+          className="u-press flex size-40 shrink-0 items-center justify-center rounded-12 text-icon-strong"
         >
           <ArrowLeft size={20} />
         </button>

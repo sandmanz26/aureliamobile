@@ -157,7 +157,7 @@ export function WellnessPage() {
             type="button"
             aria-label="Open menu"
             onClick={openDrawer}
-            className="u-press flex size-40 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-sm lg:hidden"
+            className="u-press flex size-44 shrink-0 items-center justify-center rounded-12 bg-surface-default text-icon-default shadow-sm lg:hidden"
           >
             <Menu size={20} />
           </button>

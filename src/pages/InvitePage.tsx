@@ -1,4 +1,4 @@
-import { Check, Copy, MapPin, MessageCircle } from 'lucide-react'
+import { Check, Copy, MapPin, Menu, MessageCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { PageMeta } from '../components/PageMeta'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
@@ -123,13 +123,9 @@ export function InvitePage() {
             type="button"
             aria-label="Open menu"
             onClick={openDrawer}
-            className="flex size-40 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-sm lg:hidden"
+            className="flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-default shadow-sm lg:hidden"
           >
-            <span className="flex flex-col gap-3">
-              <span className="block h-[2px] w-16 rounded-full bg-current" />
-              <span className="block h-[2px] w-16 rounded-full bg-current" />
-              <span className="block h-[2px] w-16 rounded-full bg-current" />
-            </span>
+            <Menu size={20} />
           </button>
           <h1 className="text-style-title-large text-text-primary">Invite a Friend</h1>
         </div>

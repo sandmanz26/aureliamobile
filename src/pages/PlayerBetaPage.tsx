@@ -232,7 +232,7 @@ export function PlayerBetaPage() {
             type="button"
             aria-label="Back"
             onClick={() => navigate(-1)}
-            className="u-press flex size-44 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-default shadow-sm"
+            className="u-press flex size-44 shrink-0 items-center justify-center rounded-12 bg-surface-default text-icon-default shadow-sm"
           >
             <ArrowLeft size={20} />
           </button>

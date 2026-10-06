@@ -83,7 +83,7 @@ export function ProfilePage() {
               type="button"
               aria-label="Back"
               onClick={() => navigate(-1)}
-              className="flex size-44 shrink-0 items-center justify-center rounded-full text-icon-default"
+              className="flex size-44 shrink-0 items-center justify-center rounded-12 text-icon-default"
             >
               <ArrowLeft size={24} />
             </button>

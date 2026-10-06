@@ -31,7 +31,7 @@ export function AuthShell({ header, backTo, children }: AuthShellProps) {
               type="button"
               aria-label="Back"
               onClick={() => navigate(backTo)}
-              className="absolute left-0 flex size-44 items-center justify-center rounded-full bg-surface-default text-icon-default"
+              className="absolute left-0 flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-default"
             >
               <ArrowLeft size={20} />
             </button>
@@ -72,7 +72,7 @@ export function AuthPhotoHeader({ backTo }: { backTo: string }) {
         type="button"
         aria-label="Back"
         onClick={() => navigate(backTo)}
-        className="u-press absolute left-16 top-16 flex size-44 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm"
+        className="u-press absolute left-16 top-16 flex size-44 items-center justify-center rounded-12 bg-black/30 text-white backdrop-blur-sm"
       >
         <ArrowLeft size={20} />
       </button>

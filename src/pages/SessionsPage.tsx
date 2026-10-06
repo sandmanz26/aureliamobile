@@ -222,9 +222,9 @@ export function SessionsPage() {
               type="button"
               aria-label="Open menu"
               onClick={openDrawer}
-              className={`flex size-44 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-default ${CARD_SHADOW} lg:hidden`}
+              className={`flex size-44 shrink-0 items-center justify-center rounded-12 bg-surface-default text-icon-default ${CARD_SHADOW} lg:hidden`}
             >
-              <Menu size={24} />
+              <Menu size={20} />
             </button>
             {/* Regular in the frame, not semibold — font-normal! because
                 .text-style-* sits outside Tailwind's utility layer. */}

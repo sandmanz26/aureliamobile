@@ -47,7 +47,7 @@ export function CreditsPage() {
           type="button"
           aria-label="Back"
           onClick={() => navigate(-1)}
-          className={`u-press flex size-44 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-default ${CARD_SHADOW}`}
+          className={`u-press flex size-44 shrink-0 items-center justify-center rounded-12 bg-surface-default text-icon-default ${CARD_SHADOW}`}
         >
           <ArrowLeft size={20} />
         </button>

@@ -1,4 +1,4 @@
-import { ArrowRight, Clock, ListFilter, Menu, Play, Podium, Sparkles, Users } from 'lucide-react'
+import { ArrowRight, Clock, Menu, Play, Podium, Sparkles, Users } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import liveSessionsMap from '../assets/live-sessions-map.png'
@@ -193,7 +193,10 @@ export function ExplorePage() {
           normal position. */}
       <div
         className="-mt-[30px] pt-[30px] lg:mt-0 lg:pt-0"
-        style={{ background: 'linear-gradient(180deg, #FFE682, #FFFFFF)' }}
+        style={{
+          background: 'linear-gradient(180deg, rgba(255,230,130,0.6), rgba(255,255,255,0))',
+          minHeight: '122px',
+        }}
       >
         <div className="flex items-center justify-between gap-12 px-20 py-16 lg:px-24">
           <div className="flex items-center gap-8">
@@ -201,7 +204,7 @@ export function ExplorePage() {
               type="button"
               aria-label="Open menu"
               onClick={openDrawer}
-              className="flex size-40 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-sm lg:hidden"
+              className="flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-default shadow-sm lg:hidden"
             >
               <Menu size={20} />
             </button>
@@ -209,28 +212,6 @@ export function ExplorePage() {
           </div>
           <div className="flex shrink-0 items-center gap-8">
           <CoinPill points="1,323" className="shadow-sm" />
-          {/* A filter, not a bookmark. It opens the category sheet this screen
-              already has, so the header control and the chip row below it are
-              two ways to the same thing rather than two different promises. The
-              dot marks a filter that is on — a header that looks identical
-              whether or not the shelf is narrowed is how people lose track of
-              why a shelf looks empty. */}
-          <button
-            type="button"
-            aria-label={
-              category === 'All' ? 'Filter by category' : `Filtered by ${categoryLabel(category)}. Change filter`
-            }
-            onClick={() => setCategoriesOpen(true)}
-            className="u-press relative flex size-40 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-sm"
-          >
-            <ListFilter size={18} />
-            {category !== 'All' && (
-              <span
-                aria-hidden="true"
-                className="absolute right-8 top-8 size-8 rounded-full border-2 border-surface-default bg-brand-emphasis"
-              />
-            )}
-          </button>
           </div>
         </div>
       </div>
@@ -318,8 +299,12 @@ export function ExplorePage() {
           <section className="mt-32">
             <SectionHeader title="Ongoing Live Sessions" />
             <div
-              className="relative mx-auto mt-16 flex aspect-[362/320] w-full max-w-[440px] flex-col justify-end overflow-hidden rounded-24 bg-cover bg-center px-20 pb-20 pt-40"
-              style={{ backgroundImage: `url(${liveSessionsMap})` }}
+              className="relative mx-auto mt-16 flex aspect-[362/320] w-full max-w-[440px] flex-col justify-end overflow-hidden rounded-24 px-20 pb-20 pt-40"
+              style={{
+                backgroundImage: `url(${liveSessionsMap})`,
+                backgroundSize: '140% auto',
+                backgroundPosition: 'center bottom',
+              }}
             >
               <div className="relative z-10 flex gap-12">
                 {[
