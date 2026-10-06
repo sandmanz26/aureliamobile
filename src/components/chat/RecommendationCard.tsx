@@ -98,7 +98,7 @@ export function RecommendationCard({
         <Link
           to={recreateTarget.to}
           state={recreateTarget.state}
-          className="u-press mt-auto flex h-32 w-fit items-center gap-4 rounded-full border border-border-subtle pl-12 pr-14 text-style-label text-[#331B04]"
+          className="u-press mt-auto flex h-32 w-fit items-center gap-4 rounded-12 border border-border-subtle pl-12 pr-14 text-style-label text-[#331B04]"
         >
           <Shuffle size={12} />
           Recreate

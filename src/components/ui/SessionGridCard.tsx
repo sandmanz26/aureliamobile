@@ -73,7 +73,7 @@ export function SessionGridCard({
           state={recreate.state}
           aria-label={`Recreate ${session.title}`}
           onClick={handleClick}
-          className="text-style-label-regular flex h-30 shrink-0 items-center gap-4 whitespace-nowrap rounded-full bg-surface-default/95 px-11 text-[#331B04]"
+          className="text-style-label-regular flex h-30 shrink-0 items-center gap-4 whitespace-nowrap rounded-12 bg-surface-default/95 px-11 text-[#331B04]"
         >
           <Repeat2 size={13} className="shrink-0" />
           <span className="hidden @min-[130px]:inline">Recreate</span>

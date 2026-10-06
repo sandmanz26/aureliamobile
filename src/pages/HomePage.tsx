@@ -226,8 +226,12 @@ export function HomePage() {
               the map. The card holds the source image's aspect ratio so the
               dot-map is never stretched, and caps its width on desktop. */}
           <div
-            className="relative mx-auto mt-16 flex aspect-[362/320] w-full max-w-[440px] flex-col justify-end overflow-hidden rounded-24 bg-cover bg-center px-20 pb-20 pt-40"
-            style={{ backgroundImage: `url(${liveSessionsMap})` }}
+            className="relative mx-auto mt-16 flex aspect-[362/320] w-full max-w-[440px] flex-col justify-end overflow-hidden rounded-24 px-20 pb-20 pt-40"
+            style={{
+              backgroundImage: `url(${liveSessionsMap})`,
+              backgroundSize: '140% auto',
+              backgroundPosition: 'center bottom',
+            }}
           >
             <div className="relative z-10 flex gap-12">
               {[

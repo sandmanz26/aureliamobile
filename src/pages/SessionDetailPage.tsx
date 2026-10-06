@@ -61,7 +61,7 @@ function StylePresetCard({ style, session }: { style: AppliedStyle; session: Ses
       <button
         type="button"
         onClick={recreateWithStyle}
-        className="text-style-label-regular u-press mt-10 flex h-32 w-full items-center justify-center gap-6 rounded-full border border-border-default text-[#331B04]"
+        className="text-style-label-regular u-press mt-10 flex h-32 w-full items-center justify-center gap-6 rounded-12 border border-border-default text-[#331B04]"
       >
         <Repeat2 size={13} />
         Recreate

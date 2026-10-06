@@ -31,6 +31,34 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-06 — Last three Recreate/Join radii, and the live-sessions map's real top-space problem
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (all four fixes apply
+there too) / `storybook` (not shared components).
+
+- **Three more "Recreate"/"Join" buttons were still `rounded-full`**,
+  missed in earlier rounds because each lives in a different file:
+  `SessionGridCard`'s Recreate pill (grid/shelf cards), `RecommendationCard`'s
+  Recreate link (chat cockpit), `SessionDetailPage`'s mini style-card
+  Recreate button, and Challenge Detail's "Join Challenge" / "View Winners"
+  sticky CTA. All four now `rounded-12`, confirmed live via
+  `getComputedStyle`.
+- **Home's "Ongoing Live Sessions" map card had real empty space at its
+  top, not a CSS margin problem.** The previous round checked the section's
+  own `mt-*` spacing against Figma and found it already correct, and said
+  so. A clearer side-by-side from the user prompted a second look: the
+  source asset `src/assets/live-sessions-map.png` (1086×960) has the exact
+  same aspect ratio as the card (362/320), so `bg-cover`/`bg-center` was
+  applying zero crop — meaning the top ~27% of the image, which is pure
+  gradient with no map dots, was rendering as-is. Fixed without touching
+  the asset: `backgroundSize: '140% auto'` + `backgroundPosition: 'center
+  bottom'` scales the image up and crops the overflow from the top,
+  anchoring the visible crop to the bottom where the dots and stats row
+  are. Confirmed live with a screenshot — map content now fills the card
+  edge to edge.
+
 ### 2026-10-06 — Two more "less rounded" fixes; a third item traced to the Player Beta flag, not a bug
 
 **Lands on:** `web_app`

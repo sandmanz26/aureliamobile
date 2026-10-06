@@ -292,7 +292,7 @@ export function ChallengeDetailPage() {
                 ? podiumRef.current?.scrollIntoView({ behavior: 'smooth' })
                 : navigate('/chat', { state: { challenge: { title: challenge.title } } })
             }
-            className="text-style-body u-press flex h-56 w-full items-center justify-center rounded-full bg-button-primary-background font-semibold text-button-primary-foreground"
+            className="text-style-body u-press flex h-56 w-full items-center justify-center rounded-12 bg-button-primary-background font-semibold text-button-primary-foreground"
           >
             {hasEnded ? 'View Winners' : 'Join Challenge'}
           </button>
