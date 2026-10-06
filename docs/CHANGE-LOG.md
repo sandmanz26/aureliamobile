@@ -31,6 +31,31 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-06 — The inverse logo gap is closed, and a better live-sessions map asset
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (both assets apply
+there too) / `storybook` (`AureliaLogo`'s rendering changed again — worth
+a story refresh, same as the last logo round).
+
+- **`AureliaLogo`'s `inverse` variant** — the white mark used over Sign
+  In's and Sign Up's photo header — was still the hand-traced SVG cutout
+  noted as a gap in the last logo round ("no white export of the new
+  mark exists yet"). Got the real export this round
+  (`src/assets/aurelia-mark-inverse.png`): one flat image with the mark
+  *and* the wordmark already white, not a mark to recolour and a
+  separately-styled word next to it. `AureliaLogo` renders it as a single
+  image for `inverse` now instead of composing mark + text, which also
+  means `markOnly` has no effect combined with `inverse` — there's no
+  placement that needs that combination yet, and no mark-only crop of
+  this asset to serve it from if there were.
+- **`live-sessions-map.png` replaced outright** with a better-composed
+  source image (same 362:320 aspect ratio as the card, so `bg-cover`
+  still shows it at zero crop) — the dot-map sits much closer to the top
+  of its own canvas than the old asset did. No CSS changes needed on
+  either `HomePage.tsx` or `ExplorePage.tsx`; both read the same file.
+
 ### 2026-10-06 — Self-hosted Mulish: the sidebar font wasn't actually different, it was a race
 
 **Lands on:** `web_app`
