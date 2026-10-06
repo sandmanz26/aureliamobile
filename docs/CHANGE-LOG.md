@@ -31,6 +31,34 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-06 — Explore hero radius and Trusted Creators type size; two other flagged items already matched spec
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (both real fixes apply
+there too) / `storybook` (not shared components).
+
+- **Explore's hero banner radius** was `rounded-24`; Figma's own Layout
+  panel for this frame gives `Radius 20px`, not a value on Tailwind's
+  closed scale (0/2/4/8/12/16/24/32/full), so it's `rounded-[20px]` as a
+  deliberate raw value — same treatment as `radius/20` and `radius/48`
+  elsewhere in this codebase (see `CLAUDE.md`). Height was already correct
+  (`aspect-[362/244]`, matching Figma's `Height Fixed 244px`).
+- **"Trusted Creators" names** were `text-style-caption` (10px); changed to
+  `text-style-body` (16px) as asked. Confirmed live via `getComputedStyle`
+  (scoped to the `/profile/:slug` avatar links — a plain text match on a
+  creator's name also catches that same person's author credit elsewhere
+  on the page, rendered at a different size).
+
+**Not changed — already matched the request when checked:** the Monthly
+Challenge card's subtitle (`ExplorePage.tsx`, `challenge.summary`) is
+already `text-style-body-small`, 14px, confirmed via live
+`getComputedStyle`. The "Picked for You" / "Biggest Impact" shelf cards'
+Recreate pill is already `rounded-12`, confirmed the same way (12px) —
+this is the same `SessionGridCard` component fixed in the previous round;
+the flagged screenshot likely predates that fix reaching the screen it
+was taken from.
+
 ### 2026-10-06 — Last three Recreate/Join radii, and the live-sessions map's real top-space problem
 
 **Lands on:** `web_app`

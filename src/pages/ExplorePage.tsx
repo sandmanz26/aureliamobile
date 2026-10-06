@@ -241,7 +241,7 @@ export function ExplorePage() {
         <Link
           to="/chat"
           aria-label="Play today’s session"
-          className="relative block aspect-[362/244] w-full overflow-hidden rounded-24"
+          className="relative block aspect-[362/244] w-full overflow-hidden rounded-[20px]"
         >
           <CoverImage
             photo="bloom"
@@ -391,7 +391,7 @@ export function ExplorePage() {
                     alt={creator.name}
                   />
                   <span className="min-w-0">
-                    <span className="text-style-caption block truncate text-text-primary">{creator.name}</span>
+                    <span className="text-style-body block truncate text-text-primary">{creator.name}</span>
                   </span>
                 </Link>
               ))}
