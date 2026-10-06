@@ -31,6 +31,29 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-06 — The "Back" button sweep missed two buttons entirely, not just their radius
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (same fix applies there)
+/ `storybook` (not a shared component).
+
+- The earlier radius sweep changed every back button's corner from
+  `rounded-full` to `rounded-12`, but two of them — `SessionSettingsPage`
+  and `ProfilePage`'s own (viewing someone else) — had no
+  `bg-surface-default` at all, so they rendered as a bare floating arrow
+  with no card behind it rather than a wrong-radius card. A side-by-side
+  the user sent this round made the gap obvious. Added the background
+  (and `shadow-sm`) to both.
+- While fixing those two, standardized every back button to the exact
+  same recipe — `size-44`, `bg-surface-default`, a shadow
+  (`shadow-sm` or `CARD_SHADOW`, whichever the file already used
+  elsewhere) — rather than leaving `ChallengeDetailPage` and
+  `SeeAllPage` at `size-40` or `SessionDetailPage`/`PlayerPage` without a
+  shadow. The photo-overlay back buttons (`Sign In`, `AuthShell`) are
+  untouched on purpose — `bg-black/30 backdrop-blur-sm` over a photo is a
+  deliberately different treatment, not a missed case.
+
 ### 2026-10-06 — The real logo, replacing the hand-traced approximation
 
 **Lands on:** `web_app`

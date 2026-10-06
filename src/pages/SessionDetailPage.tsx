@@ -147,7 +147,7 @@ export function SessionDetailPage() {
           type="button"
           aria-label="Back"
           onClick={() => navigate(-1)}
-          className="u-press absolute left-20 top-16 flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-strong"
+          className="u-press absolute left-20 top-16 flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-strong shadow-sm"
         >
           <ArrowLeft size={20} />
         </button>

@@ -160,7 +160,7 @@ export function ChallengeDetailPage() {
               type="button"
               aria-label="Back"
               onClick={() => navigate(-1)}
-              className="u-press flex size-40 items-center justify-center rounded-12 bg-surface-default text-icon-strong shadow-sm"
+              className="u-press flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-strong shadow-sm"
             >
               <ArrowLeft size={20} />
             </button>
