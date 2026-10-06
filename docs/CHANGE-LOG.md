@@ -31,6 +31,37 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-06 — Home: menu button shadow, composer buttons less rounded
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (same header and composer) /
+`storybook` (not shared components).
+
+Two confirmed fixes from this round:
+
+- **The "Open menu" hamburger button had no background and no shadow** —
+  transparent lines floating directly on the hero gradient, unlike its own
+  row-mate (Sign in / the coin pill), which already carries
+  `bg-surface-default shadow-sm`. Matched it to that sibling exactly.
+- **The Ask Aurelia composer's mic and send buttons were `rounded-full`**;
+  the reference calls for `rounded-12`, consistent with every other
+  "less rounded" chip/button fix already made across the app this round.
+
+Two items from the same feedback batch are not done:
+
+- **A replacement Aurelia logo** was attached but arrived as a 16×16
+  placeholder with no usable image data (same failure mode as an earlier
+  round's icon attachment) — asked the user to resend it as the actual
+  file or pasted SVG markup.
+- **"Reduce space at the top" of the Ongoing Live Sessions card** does not
+  reproduce on the current build: measured live, the gaps are exactly
+  `mt-40` (composer → heading) and `mt-16` (heading → card), which
+  `DESIGN-SYSTEM-HISTORY.md`-adjacent prose in this very document already
+  records as fact-checked against the frame in an earlier pass ("40, 40,
+  16, 24, 48, 24, checked in the browser"). Flagged back to the user rather
+  than undone on the strength of one screenshot that may be a stale build.
+
 ### 2026-10-05 — Player header: dropped the extra sound-switch button
 
 **Lands on:** `web_app`

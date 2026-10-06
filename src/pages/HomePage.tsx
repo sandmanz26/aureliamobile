@@ -125,7 +125,7 @@ export function HomePage() {
           type="button"
           aria-label="Open menu"
           onClick={openDrawer}
-          className="flex size-44 items-center justify-center rounded-full text-icon-strong lg:hidden"
+          className="flex size-44 items-center justify-center rounded-full bg-surface-default text-icon-strong shadow-sm lg:hidden"
         >
           <Menu size={24} />
         </button>
@@ -202,14 +202,14 @@ export function HomePage() {
                   type="button"
                   aria-label="Voice input"
                   onClick={() => gate('/chat', { startVoice: true })}
-                  className="u-press flex size-36 items-center justify-center rounded-full bg-background-elevated text-icon-default"
+                  className="u-press flex size-36 items-center justify-center rounded-12 bg-background-elevated text-icon-default"
                 >
                   <Mic size={17} />
                 </button>
                 <button
                   type="submit"
                   aria-label="Send"
-                  className="u-press flex size-40 items-center justify-center rounded-full bg-icon-default text-icon-inverse"
+                  className="u-press flex size-40 items-center justify-center rounded-12 bg-icon-default text-icon-inverse"
                 >
                   <ArrowUp size={18} />
                 </button>
