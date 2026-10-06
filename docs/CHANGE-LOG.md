@@ -31,6 +31,30 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-06 — The real logo, replacing the hand-traced approximation
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (the Flutter app should
+get the same asset — `docs/FOR-MOBILE.md` says the vectors are shared,
+not re-traced) / `storybook` (the shared `AureliaLogo` component
+deserves a story refresh since its rendering changed).
+
+- `AureliaLogo.tsx`'s own doc comment already said what to do here: *"If
+  the original vector exists... drop it in and replace the shapes
+  below."* Got the real export this round (`src/assets/aurelia-mark.png`,
+  48×48) after two failed attempts earlier in the session — one arrived
+  as a 1×1 placeholder, one came through as a live chat interjection that
+  never saved to a readable file. A proper message attachment finally
+  worked.
+- Swapped the hand-traced SVG (a rounded tile with a sweep and a dot,
+  approximating the real mark) for an `<img>` of the actual asset, in the
+  one file every placement reads from — hero, drawer, admin sidebar,
+  sign-in, site lock all update together. The `inverse` variant (plain
+  white tile for photo overlays, used on Sign In / Sign Up) is unchanged
+  — there's no white export of the new mark yet, so it still falls back
+  to the hand-traced cutout version for that one context.
+
 ### 2026-10-06 — My Wellness's Analytics/Connect chips were still rounded-full
 
 **Lands on:** `web_app`
