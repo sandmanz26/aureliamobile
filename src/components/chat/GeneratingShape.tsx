@@ -27,7 +27,7 @@ const LIGHT = '#F9DE7D'
 const DARK = '#F1A253'
 
 /** The "building this" mark for `SessionProgressCardV2` — /__demo option 2. */
-export function GeneratingShape({ size = 54 }: { size?: number }) {
+export function GeneratingShape({ size = 40 }: { size?: number }) {
   const [step, setStep] = useState(0)
 
   useEffect(() => {

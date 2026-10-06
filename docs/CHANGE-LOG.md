@@ -31,6 +31,33 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-06 — The generating-V2 build card: a missing shadow, an oversized icon
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (same two fixes apply
+if/when this option ships there) / `storybook` (`SessionProgressCardV2`
+and `GeneratingShape` already have an entry there per the round that
+introduced them — worth a refresh).
+
+- `SessionProgressCardV2` (`/__demo` `chat.generatingV2`, the "building
+  your session" card with the morphing-squares mark and rotating status
+  line) had no shadow at all — `rounded-24 bg-surface-default p-16`,
+  nothing else — unlike the Figma reference. Added `CARD_SHADOW`.
+- `GeneratingShape` was rendered at 54px, the same height as the regular
+  `SessionProgressCard`'s circular photo thumbnail. The two don't read
+  the same at that size: a photo at 54px is just a photo, but a flat
+  2×2 grid of saturated gold squares at the same pixel height reads
+  noticeably larger next to two lines of 14px/10px text. Reduced to
+  40px (both the one call site and the component's own default).
+- Verified by actually driving the build flow in a live browser rather
+  than guessing from the component in isolation — the `generatingV2`
+  demo flag only takes effect from a fresh page load (`FeatureFlags`
+  reads it once on mount; a same-tab `localStorage` write mid-session
+  doesn't trigger a re-read, only a `storage` event from *another* tab
+  does), so it has to be set before the first navigation, not toggled
+  partway through a running session.
+
 ### 2026-10-06 — The inverse logo gap is closed, and a better live-sessions map asset
 
 **Lands on:** `web_app`

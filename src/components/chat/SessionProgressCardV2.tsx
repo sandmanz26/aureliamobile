@@ -1,5 +1,6 @@
 import { GeneratingShape } from './GeneratingShape'
 import { RotatingStatus } from './RotatingStatus'
+import { CARD_SHADOW } from '../../lib/shadows'
 
 /**
  * Demo option 2 for the generating state — /__demo `chat.generatingV2`.
@@ -14,8 +15,8 @@ import { RotatingStatus } from './RotatingStatus'
  */
 export function SessionProgressCardV2({ title }: { title: string }) {
   return (
-    <div className="flex w-full items-center gap-16 rounded-24 bg-surface-default p-16">
-      <GeneratingShape size={54} />
+    <div className={`flex w-full items-center gap-16 rounded-24 bg-surface-default p-16 ${CARD_SHADOW}`}>
+      <GeneratingShape size={40} />
       <div className="min-w-0 flex-1">
         <p className="text-style-body-small truncate text-text-primary">{title}</p>
         <RotatingStatus />
