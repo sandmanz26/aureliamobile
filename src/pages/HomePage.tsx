@@ -224,14 +224,14 @@ export function HomePage() {
           <h2 className="text-style-body text-text-primary">Ongoing Live Sessions</h2>
           {/* Figma "Frame 45": 362x320, padding 40/20/20/20, stats pinned under
               the map. The card holds the source image's aspect ratio so the
-              dot-map is never stretched, and caps its width on desktop. */}
+              dot-map is never stretched, and caps its width on desktop. The
+              asset's own gradient margin above and below the dot-map (28%
+              top, 22.5% bottom) is the design, not slack to crop out — cover
+              shows it at exactly zero crop because the card and the image
+              share the same aspect ratio. */}
           <div
-            className="relative mx-auto mt-16 flex aspect-[362/320] w-full max-w-[440px] flex-col justify-end overflow-hidden rounded-24 px-20 pb-20 pt-40"
-            style={{
-              backgroundImage: `url(${liveSessionsMap})`,
-              backgroundSize: '140% auto',
-              backgroundPosition: 'center bottom',
-            }}
+            className="relative mx-auto mt-16 flex aspect-[362/320] w-full max-w-[440px] flex-col justify-end overflow-hidden rounded-24 bg-cover bg-center px-20 pb-20 pt-40"
+            style={{ backgroundImage: `url(${liveSessionsMap})` }}
           >
             <div className="relative z-10 flex gap-12">
               {[

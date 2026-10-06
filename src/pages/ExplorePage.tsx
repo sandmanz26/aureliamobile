@@ -298,13 +298,13 @@ export function ExplorePage() {
         {isEnabled('sessions.liveSessions') && (
           <section className="mt-32">
             <SectionHeader title="Ongoing Live Sessions" />
+            {/* The asset's own gradient margin above and below the dot-map
+                (28% top, 22.5% bottom) is the design, not slack to crop out
+                — cover shows it at exactly zero crop because the card and
+                the image share the same aspect ratio. */}
             <div
-              className="relative mx-auto mt-16 flex aspect-[362/320] w-full max-w-[440px] flex-col justify-end overflow-hidden rounded-24 px-20 pb-20 pt-40"
-              style={{
-                backgroundImage: `url(${liveSessionsMap})`,
-                backgroundSize: '140% auto',
-                backgroundPosition: 'center bottom',
-              }}
+              className="relative mx-auto mt-16 flex aspect-[362/320] w-full max-w-[440px] flex-col justify-end overflow-hidden rounded-24 bg-cover bg-center px-20 pb-20 pt-40"
+              style={{ backgroundImage: `url(${liveSessionsMap})` }}
             >
               <div className="relative z-10 flex gap-12">
                 {[

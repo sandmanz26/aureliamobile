@@ -31,6 +31,32 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-06 — Live-sessions map: reverted the "140% crop," the gradient margin was the design all along
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (same revert applies
+there) / `storybook` (not a shared component).
+
+- **The `backgroundSize: '140% auto'` / `backgroundPosition: 'center
+  bottom'` crop from two rounds ago was wrong.** It was built on the
+  assumption that the source asset's own top gradient band (no dots,
+  ~28% of its height) was slack to crop out. A side-by-side the user
+  sent this round, normalized to the same scale, showed the opposite:
+  the correct look (their "yang seharusnya") has visible gradient padding
+  on *both* top and bottom of the card, not dots filling it edge to edge.
+  Re-measuring the source PNG confirms it: dots span 28.1%–77.5% of the
+  image's height, a bottom margin as real as the top one, previously
+  unmeasured. Since the card's aspect ratio exactly matches the image's,
+  plain `bg-cover bg-center` — what both pages had *before* the "fix" —
+  shows the whole image at exactly zero crop, reproducing that margin on
+  every edge. Reverted both `HomePage.tsx` and `ExplorePage.tsx` to it.
+- Confirmed by normalizing the user's two screenshots to the same width
+  and comparing directly (not by eye at different scales, which is what
+  made the "too much top space" read as a real bug two rounds ago), and
+  again live after reverting: the rendered card now matches their
+  reference almost exactly.
+
 ### 2026-10-06 — Explore's top gradient and live-sessions map were never fixed (only Home's copy was); hamburger and back buttons standardized sitewide
 
 **Lands on:** `web_app`
