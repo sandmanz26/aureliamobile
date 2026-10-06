@@ -31,6 +31,18 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-06 — My Wellness's Analytics/Connect chips were still rounded-full
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (same fix applies there)
+/ `storybook` (not a shared component).
+
+- `WellnessTabButton` (the two standalone pills above the tab content,
+  not the shared `SegmentedControl`) was `rounded-full`. Missed in the
+  earlier hamburger/back/Recreate sweeps because it's its own
+  one-off component. Now `rounded-12`.
+
 ### 2026-10-06 — Progress page: real icons for Chapters and Insights, not lucide stand-ins
 
 **Lands on:** `web_app`

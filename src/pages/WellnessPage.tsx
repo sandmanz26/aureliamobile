@@ -33,7 +33,7 @@ function WellnessTabButton({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`u-press flex h-40 shrink-0 items-center gap-8 rounded-full border px-16 text-style-label transition-colors ${
+      className={`u-press flex h-40 shrink-0 items-center gap-8 rounded-12 border px-16 text-style-label transition-colors ${
         active
           ? 'border-interactive-primary bg-interactive-primary text-text-inverse'
           : 'border-border-subtle bg-surface-default text-text-primary'
