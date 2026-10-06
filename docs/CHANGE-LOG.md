@@ -31,6 +31,43 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-06 — Self-hosted Mulish: the sidebar font wasn't actually different, it was a race
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (nothing to port — the
+Flutter app bundles its own font asset rather than linking a webfont) /
+`storybook` (should pick up the same self-hosted file so its catalogue
+doesn't race the same way).
+
+- **The drawer's font looked different signed out vs signed in** — same
+  component (`AppLayout.tsx`'s `SidebarContent`, one copy for both
+  states), same `text-style-body` class either way, so nothing in the
+  code actually branches on sign-in state here. The real cause: Mulish
+  was linked from `fonts.googleapis.com` with `display=swap`, which
+  means the browser paints with a fallback system font first and swaps
+  in Mulish only once it's fetched. Opening the drawer signed out (right
+  after the page loads) and opening it again signed in (after several
+  more seconds of clicking through the sign-in flow) are two different
+  points in that race — same font, same file, different odds of having
+  already won the swap.
+- Fixed by removing the external dependency rather than tuning the
+  timing: downloaded the actual font file
+  (`fonts.gstatic.com/s/mulish/v18/1Ptvg83HX_SGhgqk3wot.woff2` — the
+  same **one** variable-font binary Google's own CSS points all four
+  requested weights at; it isn't four separate files) to
+  `public/fonts/mulish-variable.woff2`, added the matching four
+  `@font-face` blocks (300/400/500/600) to `src/index.css`, and replaced
+  `index.html`'s Google Fonts `<link rel="stylesheet">` with
+  `<link rel="preload" as="font">` pointed at the local file. That
+  removes the "fetch a stylesheet, parse it, discover the font URL,
+  *then* fetch the font" waterfall entirely — the browser starts
+  fetching the one file it actually needs immediately, from the same
+  origin as everything else.
+- Confirmed live: `document.fonts.status` reads `"loaded"` on first
+  check now (previously timing-dependent), and the drawer's rendered
+  glyphs are pixel-identical signed out vs signed in.
+
 ### 2026-10-06 — Sign In's hero photo: real asset, no more Unsplash+ watermark
 
 **Lands on:** `web_app`

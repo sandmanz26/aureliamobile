@@ -2,6 +2,46 @@
 @import './styles/motion.css';
 @import './admin/admin.css';
 
+/* Self-hosted rather than linked from fonts.googleapis.com: the Google
+   Fonts CSS has to be fetched and parsed before the browser even learns the
+   font file's URL, so first paint races that whole chain against whatever
+   happened to be cached already. Signed-out and signed-in opened the drawer
+   at different points in that race — same `display: swap`, same file,
+   different outcome depending on timing, which read as "the font is
+   different" when it was really "the font hadn't arrived yet." One local
+   file served from this origin removes the race entirely. It's a single
+   variable-font binary (the same one Google's own CSS points every weight
+   at); the four font-weight blocks below pick different static instances
+   out of it exactly the way Google's own @font-face rules do. */
+@font-face {
+  font-family: 'Mulish';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/mulish-variable.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Mulish';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/mulish-variable.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Mulish';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/mulish-variable.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Mulish';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/mulish-variable.woff2') format('woff2');
+}
+
 * {
   box-sizing: border-box;
 }

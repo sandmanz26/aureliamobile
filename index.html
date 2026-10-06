@@ -41,17 +41,17 @@
       content="Aurelia builds a personalized meditation, breathwork, or sleep session from a conversation, and remembers what helps you."
     />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Mulish is font-family/base in the Figma variables, and now the app's
          only face: the player's spoken cue used to be set in Goudy, and moved
          onto Mulish so there is one family to load and one to keep in step on
-         the player. Weights match the font-weight
-         variables: 300/400/500/600. -->
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;500;600&display=swap"
-    />
+         the player. Weights match the font-weight variables: 300/400/500/600.
+         Self-hosted — see the comment above the @font-face rules in
+         src/index.css for why this isn't a fonts.googleapis.com link. The
+         preload here is what makes self-hosting worth it: the browser can
+         start fetching the actual font file immediately, in parallel with
+         everything else in <head>, instead of discovering its URL only
+         after fetching and parsing a separate stylesheet first. -->
+    <link rel="preload" href="/fonts/mulish-variable.woff2" as="font" type="font/woff2" crossorigin />
     <title>Aurelia</title>
   </head>
   <body>
