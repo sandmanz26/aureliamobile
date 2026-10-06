@@ -1,4 +1,5 @@
 import { Fragment, useId, useState } from 'react'
+import type { ComponentType } from 'react'
 import {
   ArrowLeft,
   ArrowUp,
@@ -6,16 +7,16 @@ import {
   ChevronRight,
   ChevronUp,
   Clock,
-  Library,
   Pencil,
   Play,
   RotateCcw,
   Send,
-  Sparkles,
   Target,
   Users,
 } from 'lucide-react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import chaptersIconImg from '../assets/icon-chapters.png'
+import insightIconImg from '../assets/icon-insight.png'
 import { PageMeta } from '../components/PageMeta'
 import { CoverImage } from '../components/ui/CoverImage'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
@@ -26,11 +27,21 @@ import type { ProgressTab, Version } from '../lib/progress'
 import { findSession, isPublished } from '../lib/sessions'
 import { useChatSession } from '../chat/ChatSessionContext'
 
+type TabIcon = ComponentType<{ size?: number; className?: string }>
 
-const TABS: { id: ProgressTab; label: string; icon: typeof Library }[] = [
-  { id: 'chapters', label: 'Chapters', icon: Library },
+/** The two icons the catalogue doesn't have a lucide match for — supplied as
+ *  flat PNGs rather than approximated with a lookalike glyph. */
+function ChaptersIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
+  return <img src={chaptersIconImg} alt="" style={{ width: size, height: size }} className={className} />
+}
+function InsightIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
+  return <img src={insightIconImg} alt="" style={{ width: size, height: size }} className={className} />
+}
+
+const TABS: { id: ProgressTab; label: string; icon: TabIcon }[] = [
+  { id: 'chapters', label: 'Chapters', icon: ChaptersIcon },
   { id: 'social', label: 'Social Impact', icon: Users },
-  { id: 'insights', label: 'Insights', icon: Sparkles },
+  { id: 'insights', label: 'Insights', icon: InsightIcon },
 ]
 
 /** The frame's chips: 35 tall, 12/8 padding, 8 to the label, 7 apart — a
@@ -44,7 +55,7 @@ function Tab({
 }: {
   active: boolean
   label: string
-  icon: typeof Library
+  icon: TabIcon
   onClick: () => void
 }) {
   return (
@@ -530,10 +541,7 @@ export function ProgressPage() {
                   key={insight.id}
                   className={`flex gap-12 rounded-[20px] bg-surface-default p-16 ${CARD_SHADOW}`}
                 >
-                  {/* Outline in the frame (`vuesax/outline/star`), not a
-                      filled glyph — it sits beside body copy, and a solid mark
-                      at 20 outweighs the sentence it introduces. */}
-                  <Sparkles size={20} aria-hidden="true" className="shrink-0 text-text-primary" />
+                  <InsightIcon size={20} className="shrink-0" />
                   <div className="flex min-w-0 flex-1 flex-col gap-8">
                     <h2 className="text-[14px] leading-[19px] text-text-primary">{insight.title}</h2>
                     <p className="text-[12px] font-light! leading-[19px] text-[#525252]">{insight.body}</p>

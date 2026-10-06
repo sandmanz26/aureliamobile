@@ -31,6 +31,31 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-06 — Progress page: real icons for Chapters and Insights, not lucide stand-ins
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (same two icons apply
+there too) / `storybook` (worth a story update for the new icon assets).
+
+- The "Chapters" tab icon (lucide `Library`, a book-stack glyph) and the
+  "Insights" tab/card icon (lucide `Sparkles`) were always approximations
+  — a comment on the insight card already flagged this: *"Outline in the
+  frame (`vuesax/outline/star`), not a filled glyph"*. Replaced both with
+  the actual exported PNGs (`src/assets/icon-chapters.png`,
+  `src/assets/icon-insight.png`), rendered through two small wrapper
+  components (`ChaptersIcon`, `InsightIcon`) that accept the same
+  `size`/`className` shape the lucide icons did, so the `Tab` component
+  and the `TABS` array needed no restructuring beyond widening the icon
+  prop's type from `typeof Library` to `ComponentType<{ size?; className?
+  }>`.
+- Icon files came in as flat PNG (16×16 and 20×20) rather than SVG — SVG
+  attachments aren't accepted by the chat's upload path (it expects a
+  rendered raster image, and SVG is markup that needs a render step
+  first, which is also commonly blocked as a script-injection vector).
+  PNG at icon size is the right call here regardless: these are small,
+  flat, single-use glyphs, not art that benefits from being scalable.
+
 ### 2026-10-06 — Live-sessions map: reverted the "140% crop," the gradient margin was the design all along
 
 **Lands on:** `web_app`
