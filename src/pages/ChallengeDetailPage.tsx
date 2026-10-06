@@ -185,7 +185,7 @@ export function ChallengeDetailPage() {
           <button
             type="button"
             onClick={() => setRewardsOpen(true)}
-            className="text-style-label u-press absolute bottom-34 left-20 flex h-44 items-center gap-8 rounded-full bg-black/45 px-16 text-text-inverse shadow-md backdrop-blur-sm"
+            className="text-style-label u-press absolute bottom-34 left-20 flex h-44 items-center gap-8 rounded-12 bg-black/45 px-16 text-text-inverse shadow-md backdrop-blur-sm"
           >
             <PodiumIcon size={16} />
             Rewards

@@ -490,7 +490,7 @@ export function HomePage() {
             <button
               type="button"
               onClick={() => gate('/chat')}
-              className="u-press text-style-body inline-flex h-44 items-center rounded-[40px] border border-text-inverse/35 bg-text-inverse/12 px-20 text-text-inverse backdrop-blur-sm transition-colors hover:bg-text-inverse/20"
+              className="u-press text-style-body inline-flex h-44 items-center rounded-12 border border-text-inverse/35 bg-text-inverse/12 px-20 text-text-inverse backdrop-blur-sm transition-colors hover:bg-text-inverse/20"
             >
               Get Started
             </button>

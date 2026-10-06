@@ -31,6 +31,34 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-06 — Two more "less rounded" fixes; a third item traced to the Player Beta flag, not a bug
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (both radius fixes apply
+there too) / `storybook` (not shared components).
+
+- **Home's closing CTA — "Get Started"** was `rounded-[40px]`; the
+  reference calls for `rounded-12`.
+- **Challenge Detail's Rewards pill** was still `rounded-full` — the color
+  and position were corrected in an earlier round, but its radius was
+  missed. Now `rounded-12`.
+
+**Not changed:** the third item ("playing a podium/ranked-list cover opens
+a card, not the full-screen player"). Traced it to `player.beta` — the
+`/__demo` flag documented in `PRD.md`'s "Player Beta" section, default
+off (`unreleased: true` in `src/demo/modules.ts`). When it's on, *every*
+`/play/:slug` link redirects to the card-style beta player, by design —
+"a direct link is not a way around the flag." Verified live: with the
+flag off (a clean browser), the same podium link opens the plain
+full-screen player correctly. The screenshot's "Sleep Meditation / Adam
+Nilson" card is the app's own default demo track, which points at this
+being session/flag state in the browser that reported it, not a code
+path specific to Challenge Detail's podium or ranked list. Asked the
+user to confirm via `/__demo` → Player → Player Beta before changing
+anything, since bypassing the flag for one entry point would contradict
+how it's built everywhere else.
+
 ### 2026-10-06 — Home: menu button shadow, composer buttons less rounded
 
 **Lands on:** `web_app`
