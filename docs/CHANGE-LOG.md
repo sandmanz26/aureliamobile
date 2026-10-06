@@ -31,6 +31,19 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-06 — Sign In's hero photo: real asset, no more Unsplash+ watermark
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (same asset should
+replace the equivalent there) / `storybook` (not a shared component).
+
+- `src/assets/auth-hero.png` — the meditation photo behind Sign In, and
+  reused by `AuthShell` for Sign Up and Forgot Password — was a licensed
+  Unsplash+ preview, watermarked. Replaced with the real supplied photo
+  (same scene, same crop, exactly 2x the old file's pixel dimensions).
+  One file, so all three screens picked it up with no code change.
+
 ### 2026-10-06 — The "Back" button sweep missed two buttons entirely, not just their radius
 
 **Lands on:** `web_app`
