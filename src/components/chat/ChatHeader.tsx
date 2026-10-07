@@ -81,14 +81,21 @@ export function ChatHeader({
 
   return (
     <header className="flex items-center justify-between px-20 py-12">
+      {/* Opens the mobile drawer, which doesn't exist at lg: — the desktop
+          sidebar is already the nav. Hidden rather than left out, since a
+          `justify-between` header with only one child left snaps that child
+          to the start instead of the end; the spacer after it is what every
+          other header with this same button already does (see HomePage's,
+          Explore's) to keep the coin pill / more-menu pinned right. */}
       <button
         type="button"
         aria-label="Open menu"
         onClick={onMenu}
-        className="flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-strong shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)]"
+        className="flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-strong shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)] lg:hidden"
       >
         <Menu size={20} />
       </button>
+      <span className="hidden lg:block" />
 
       <div className="flex items-center gap-8">
         {canPlay && (

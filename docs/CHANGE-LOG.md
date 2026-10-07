@@ -31,6 +31,44 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-07 — Desktop sweep: a dead hamburger on Chat/Help, Sessions' single column
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (nothing here applies — no
+desktop sidebar or `lg:` concept on Flutter) / `storybook` (no story
+affected).
+
+A broader desktop-mode pass (no `/design` skill exists on this account —
+checked — so this was a manual sweep: screenshot every main authenticated
+page at 1440px, compare against mobile, fix what's actually broken). Three
+real findings, all `lg:`-scoped, mobile re-verified pixel-identical at 402px
+on every page touched:
+
+- **`ChatHeader`'s "Open menu" button had no `lg:hidden`.** Every other
+  page's own hamburger does (`HomePage`, `ExplorePage`, `SessionsPage`,
+  `ProfilePage`, `WellnessPage`, `InvitePage`, `RecreatePage` — checked all
+  eight `openDrawer` call sites). On desktop the mobile drawer it opens is
+  itself `lg:hidden`, so the button did nothing and sat there redundant next
+  to the already-visible sidebar. Hidden it, plus the same `<span
+  className="hidden lg:block" />` spacer those other headers use — without
+  it, `justify-between` with only one remaining child snaps that child to
+  the start instead of keeping the coin pill / more-menu pinned right.
+- **`HelpPage` had the identical gap** — found by the same audit, fixed the
+  same way (its title sits in the same flex group as the button, so no
+  spacer was needed there).
+- **`SessionsPage`'s list was a single column inside its own 960px-capped
+  container** — every row at full container width, so ~24 sessions made the
+  page nearly 3200px tall with the right half of the screen empty the whole
+  way down. `lg:grid lg:grid-cols-2` on the list; the empty-state message
+  gets `lg:col-span-2` so it isn't shoved into one narrow column.
+
+Checked and left alone: `PlayerPage` and `ProfilePage` already read fine at
+960/640px caps; `WellnessPage`'s single-column goal cards aren't a long
+enough list to need a second column the way Sessions did.
+
+---
+
 ### 2026-10-07 — Desktop only: a narrower sidebar, and Home's map/Quick Start side by side
 
 **Lands on:** `web_app`

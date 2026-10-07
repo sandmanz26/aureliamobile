@@ -246,7 +246,12 @@ export function SessionsPage() {
             />
           </div>
 
-          <div className="flex flex-col gap-12">
+          {/* Single column everywhere up to lg: a 960px-wide row of the
+              frame's own 108-tall card reads as a list that forgot to use
+              its width, not as a wider version of the card. Two columns at
+              lg: is this page's own number, not a frame measurement —
+              there's no desktop reference for this screen. */}
+          <div className="flex flex-col gap-12 lg:grid lg:grid-cols-2 lg:gap-16">
             {shown.map((session) => (
               <SessionRow
                 key={session.slug}
@@ -255,7 +260,7 @@ export function SessionsPage() {
               />
             ))}
             {shown.length === 0 && (
-              <p className="text-style-body-small py-40 text-center text-text-secondary">
+              <p className="text-style-body-small py-40 text-center text-text-secondary lg:col-span-2">
                 Nothing published yet — a session you make in the cockpit lands here.
               </p>
             )}

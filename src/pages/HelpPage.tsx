@@ -39,7 +39,7 @@ export function HelpPage() {
             type="button"
             aria-label="Open menu"
             onClick={openDrawer}
-            className="u-press flex size-44 shrink-0 items-center justify-center rounded-12 bg-surface-default text-icon-default shadow-sm"
+            className="u-press flex size-44 shrink-0 items-center justify-center rounded-12 bg-surface-default text-icon-default shadow-sm lg:hidden"
           >
             <Menu size={20} />
           </button>
