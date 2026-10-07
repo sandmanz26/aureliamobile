@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronRight, Play, Repeat2, Share2 } from 'lucide-react'
+import { ArrowLeft, ChevronRight, Play, Share2, Shuffle } from 'lucide-react'
 import { Fragment, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
@@ -54,16 +54,16 @@ function StylePresetCard({ style, session }: { style: AppliedStyle; session: Ses
   }
 
   return (
-    <div className="flex w-[164px] shrink-0 flex-col rounded-16 border border-[#F2A54B] bg-surface-default p-12">
-      <img src={ORBS[style.orb]} alt="" className="size-48 shrink-0 rounded-full object-cover" />
+    <div className="flex w-[173px] shrink-0 flex-col rounded-16 border border-[#F2A54B] bg-surface-default p-12">
+      <img src={ORBS[style.orb]} alt="" className="size-[73px] shrink-0 rounded-full object-cover" />
       <h3 className="text-style-body-small mt-10 text-text-primary">{style.name}</h3>
       <p className="text-style-caption-light mt-2 line-clamp-2 text-text-secondary">{style.reason}</p>
       <button
         type="button"
         onClick={recreateWithStyle}
-        className="text-style-label-regular u-press mt-10 flex h-32 w-full items-center justify-center gap-6 rounded-12 border border-border-default text-[#331B04]"
+        className="text-style-label u-press mt-10 flex h-32 w-fit items-center gap-4 rounded-12 border border-border-subtle pl-12 pr-14 text-[#331B04]"
       >
-        <Repeat2 size={13} />
+        <Shuffle size={12} />
         Recreate
       </button>
     </div>
@@ -250,7 +250,7 @@ export function SessionDetailPage() {
               state={recreate.state}
               className="u-press text-style-body flex h-56 w-full items-center justify-center gap-8 rounded-16 bg-[#331B04] text-text-inverse"
             >
-              <Repeat2 size={20} />
+              <Shuffle size={20} />
               Recreate
             </Link>
           </div>

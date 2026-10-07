@@ -114,6 +114,17 @@ function RecentCard({ slug, minutes, progress }: { slug: string; minutes: number
       <span className="relative flex size-32 items-center justify-center rounded-full bg-white/25 text-text-inverse backdrop-blur-sm">
         <Play size={14} fill="currentColor" />
       </span>
+      {/* CoverImage's own scrim darkens the whole photo; this is the extra
+          frosted panel behind just the text block, same treatment as
+          `SessionGridCard`. Without it, a bright photo (like the cyan half
+          here) leaves the title and author line low-contrast. */}
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 top-80 bg-gradient-to-t from-black/55 via-black/35 to-transparent backdrop-blur-sm"
+        style={{
+          maskImage: 'linear-gradient(to top, black 60%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to top, black 60%, transparent 100%)',
+        }}
+      />
       <div className="absolute bottom-14 left-12 right-12">
         <p className="text-style-body-small truncate font-semibold drop-shadow">{session.title}</p>
         <div className="mt-4 flex items-center justify-between gap-8">

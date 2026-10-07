@@ -58,6 +58,37 @@ markups.
 
 ---
 
+### 2026-10-07 — Recently Played cards needed their own text scrim; Session Detail's style cards were a size and an icon off
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (both gaps are worth
+checking for on the Flutter equivalents) / `storybook` (worth a story
+refresh if `RecentCard` or `StylePresetCard` ever gets pulled out as its
+own component).
+
+Two separate reference comparisons in one round:
+
+- **Explore's "Recently Played" shelf (`RecentCard`)** painted its title/
+  author/time text directly over `CoverImage`'s scrim with no extra
+  backdrop, unlike `SessionGridCard`'s frosted panel. A bright photo (the
+  cyan half of the reference's own example) left the text low-contrast.
+  Added the same tapered `backdrop-blur-sm` panel behind just the text
+  block, masked so it fades in rather than cutting off sharply.
+- **Session Detail's style-preset cards** (`StylePresetCard`, the
+  "Recreate your own version" shelf) had a 48px orb in a 164px card and a
+  full-width `Repeat2` button. The reference shows the same 73px-orb,
+  173px-card proportions as `PlayerPage`'s own recreate shelf, and a
+  pill-shaped button sized to its content, with `Shuffle` for the icon —
+  not `Repeat2`. Matched both. The page's other `Shuffle`-less button, the
+  sticky bottom "Recreate" CTA, had the same icon mismatch (its
+  `bg-[#331B04]` colour was already correct) and is now `Shuffle` too.
+  `StylePresetCard` stays its own component rather than merging into
+  `RecommendationCard` — it forks a style brief, not a session preview,
+  and the two have different navigation targets.
+
+---
+
 ### 2026-10-07 — Player's "Recreate your own version" orbs were missing their play glyph
 
 **Lands on:** `web_app`
