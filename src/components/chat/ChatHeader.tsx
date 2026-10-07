@@ -1,7 +1,22 @@
-import { CircleX, Menu, MoreHorizontal, Play, Send, SlidersHorizontal, TrendingUp } from 'lucide-react'
+import { CircleX, Menu, MoreHorizontal, Play, Send } from 'lucide-react'
+import type { ComponentType } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import insightsIconImg from '../../assets/icon-menu-insights.png'
+import settingsIconImg from '../../assets/icon-menu-settings.png'
 import { CoinPill } from '../ui/CoinPill'
+
+type MenuIcon = ComponentType<{ size?: number; className?: string }>
+
+/** The dropdown's two icons — supplied as flat PNGs rather than approximated
+ *  with a lookalike lucide glyph, same treatment as Progress's Chapters/
+ *  Insights tabs. */
+function InsightsIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
+  return <img src={insightsIconImg} alt="" style={{ width: size, height: size }} className={className} />
+}
+function SettingsIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
+  return <img src={settingsIconImg} alt="" style={{ width: size, height: size }} className={className} />
+}
 
 interface ChatHeaderProps {
   points: string
@@ -102,15 +117,18 @@ export function ChatHeader({
 
           {open && (
             <div className="absolute right-0 top-[52px] z-20 w-[186px] rounded-24 bg-surface-default p-12 shadow-lg">
-              {[
-                // No Version history row. The frame's Chapters tab is headed
-                // "Version History" and lists the same cuts, so the menu was
-                // offering a second door to one room — and the two lists did
-                // not even agree, since the sheet held this thread's builds
-                // while Chapters holds the catalogue's. Insights is the door.
-                { label: 'Insights', icon: TrendingUp, run: onInsights },
-                { label: 'Settings', icon: SlidersHorizontal, run: onSettings },
-              ].map((item) => {
+              {(
+                [
+                  // No Version history row. The frame's Chapters tab is
+                  // headed "Version History" and lists the same cuts, so the
+                  // menu was offering a second door to one room — and the
+                  // two lists did not even agree, since the sheet held this
+                  // thread's builds while Chapters holds the catalogue's.
+                  // Insights is the door.
+                  { label: 'Insights', icon: InsightsIcon, run: onInsights },
+                  { label: 'Settings', icon: SettingsIcon, run: onSettings },
+                ] satisfies { label: string; icon: MenuIcon; run?: () => void }[]
+              ).map((item) => {
                 const Icon = item.icon
                 // A row with no handler used to render exactly like a live one:
                 // it highlighted, it closed the menu, and it did nothing. That

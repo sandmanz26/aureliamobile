@@ -31,6 +31,23 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-07 — Chat header dropdown: real Insights/Settings icons
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (worth the same swap if
+the Flutter cockpit has an equivalent menu) / `storybook` (worth a story
+refresh for `ChatHeader`).
+
+Replaced `ChatHeader`'s "More options" dropdown — lucide's `TrendingUp` and
+`SlidersHorizontal` stand-ins — with the real exported icons
+(`icon-menu-insights.png`, `icon-menu-settings.png`), same treatment as
+Progress's Chapters/Insights tabs: a small `ComponentType<{ size,
+className }>` wrapper per icon so the existing `<Icon size={19} .../>` call
+site didn't need to change shape.
+
+---
+
 ### 2026-10-07 — Chat header's Publish button: 16px text, should be 14px
 
 **Lands on:** `web_app`
