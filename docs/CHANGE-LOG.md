@@ -31,6 +31,18 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-07 — taste-skill installed as a project skill, with Aurelia overrides
+
+**Lands on:** `web_app` / `admin_cms`
+**Not on:** `web_prod` (moves on request; tooling only, nothing ships) /
+`mobile_app` (the skill puts native mobile out of scope) / `storybook`.
+
+Vendored upstream `design-taste-frontend` (taste-skill `b482f7a`, MIT) into
+`.claude/skills/design-taste-frontend/`, unedited except for an overrides
+block at the top: Figma tokens, Mulish, Lucide, light-only, Unsplash covers,
+the 1px spacing scale and existing copy win over the skill's defaults, and
+it applies to new or pitch-like surfaces, not the cockpit, player or admin.
+
 ### 2026-10-07 — Promo banner's card pair drifted from the text column on wide desktop
 
 **Lands on:** `web_app`

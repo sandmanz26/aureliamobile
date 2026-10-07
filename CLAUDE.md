@@ -271,6 +271,16 @@ cockpit this is invisible; on a long scrolling page the sheet lands at the
 bottom of the document. Measured at `y=1710` in an 874px viewport before
 `createPortal` was added.
 
+**`.claude/skills/design-taste-frontend/` is a vendored design skill, and its
+top block outranks the rest of it.** It is taste-skill's "anti-slop" frontend
+rules (MIT, upstream `Leonxlnx/taste-skill`), installed so new surfaces do not
+come out templated. Left as shipped it would tell an agent to add dark mode,
+swap Lucide for Phosphor, replace the Unsplash covers with picsum, ban the
+gold-and-espresso palette as an "AI default", and read `gap-2` as 8px — each
+of which contradicts a decision recorded here. The **Aurelia overrides** block
+above the upstream text lists every such rule and what wins instead; this file
+and the Figma tokens outrank both. Keep that block when updating from upstream.
+
 **Do not run Prettier on this repo.** There is no config, so it would reformat
 the whole tree to double quotes and semicolons and bury the next diff.
 
