@@ -31,6 +31,19 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-07 — Chat header's Publish button: 16px text, should be 14px
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (worth checking the
+Flutter equivalent for the same size) / `storybook` (no story for
+`ChatHeader` yet).
+
+The dropdown's "Publish" button carried `text-style-body` (16px) instead of
+`text-style-body-small` (14px) — a one-class fix in `ChatHeader.tsx`.
+
+---
+
 ### 2026-10-07 — Chat's "ready" result gets a collapsible "Reasoning"
 
 **Lands on:** `web_app`

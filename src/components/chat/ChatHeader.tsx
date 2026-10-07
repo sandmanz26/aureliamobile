@@ -149,7 +149,7 @@ export function ChatHeader({
                   /* Brown, not the blue gradient it carried. Blue appears
                      nowhere else in this product, so the loudest control in
                      the app was also the only thing wearing another brand. */
-                  className="text-style-body u-press mt-8 flex h-44 w-full items-center justify-center gap-8 rounded-full bg-interactive-primary font-medium text-text-inverse"
+                  className="text-style-body-small u-press mt-8 flex h-44 w-full items-center justify-center gap-8 rounded-full bg-interactive-primary font-medium text-text-inverse"
                 >
                   <Send size={17} />
                   {publishLabel}
