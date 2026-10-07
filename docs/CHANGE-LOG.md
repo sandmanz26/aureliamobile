@@ -31,6 +31,21 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-07 — Real icons for the drawer's Invite a Friend / Help rows
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (same two icons apply
+there too) / `storybook` (worth a story update alongside the other four
+nav icons from the previous round).
+
+- Same treatment as the previous round's four nav rows: `UserPlus` and
+  `HelpCircle` (lucide stand-ins) replaced with the real exported icons
+  (`src/assets/icon-nav-invite.png`, `icon-nav-help.png`) through the
+  same `NavIcon` wrapper already in `AppLayout.tsx`. `UserPlus` stays in
+  use on `/admin/users` — a different, unrelated placement — so only
+  this file's two call sites changed.
+
 ### 2026-10-06 — Real icons for the drawer's four nav rows
 
 **Lands on:** `web_app`

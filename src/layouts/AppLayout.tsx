@@ -1,4 +1,4 @@
-import { Bell, HelpCircle, Plus, UserPlus } from 'lucide-react'
+import { Bell, Plus } from 'lucide-react'
 import { Suspense, useEffect, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
@@ -8,6 +8,8 @@ import iconSignIn from '../assets/icon-nav-signin.png'
 import iconExplore from '../assets/icon-nav-explore.png'
 import iconSessions from '../assets/icon-nav-sessions.png'
 import iconWellness from '../assets/icon-nav-wellness.png'
+import iconInvite from '../assets/icon-nav-invite.png'
+import iconHelp from '../assets/icon-nav-help.png'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { BuildBadge } from '../components/ui/BuildBadge'
 import { PageSkeleton } from '../components/ui/PageSkeleton'
@@ -157,7 +159,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             }}
             className="text-style-body u-press flex items-center gap-12 rounded-12 px-20 py-16 text-text-primary hover:bg-background-elevated"
           >
-            <UserPlus size={24} className="text-icon-default" />
+            <NavIcon src={iconInvite} />
             Invite a Friend
           </button>
         )}
@@ -170,7 +172,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             }}
             className="text-style-body u-press flex items-center gap-12 rounded-12 px-20 py-16 text-text-primary hover:bg-background-elevated"
           >
-            <HelpCircle size={24} className="text-icon-default" />
+            <NavIcon src={iconHelp} />
             Help
           </button>
         )}
