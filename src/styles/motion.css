@@ -132,6 +132,26 @@
   transform: scale(0.985);
 }
 
+/* A soft ambient drift for a background glow that should read as "alive,"
+   not "animating" — the promo banner's two warm ellipses. Parameterised on
+   `--glow-opacity` (each blob's own resting opacity) rather than a fixed
+   value, since the two differ and a shared keyframe can't otherwise serve
+   both without one of them jumping on the first frame. */
+@keyframes u-glow-drift {
+  0%,
+  100% {
+    opacity: var(--glow-opacity, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    opacity: calc(var(--glow-opacity, 0.4) + 0.12);
+    transform: scale(1.06);
+  }
+}
+.u-glow-drift {
+  animation: u-glow-drift 10s var(--ease-in-out) infinite;
+}
+
 /* Collapsible content, animated without measuring anything: the row is a grid
    whose single track goes 0fr -> 1fr, which the browser can interpolate. */
 .u-collapse {

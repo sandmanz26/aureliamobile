@@ -13,6 +13,7 @@ import {
   Wind,
 } from 'lucide-react'
 import { useState } from 'react'
+import type { CSSProperties } from 'react'
 import { useAuth } from '../auth/AuthContext'
 import { useSignInGate } from '../auth/useSignInGate'
 import aureliaNetwork from '../assets/aurelia-network.png'
@@ -300,14 +301,18 @@ export function HomePage() {
           content SPACE_BETWEEN with the card pair bleeding past both edges. */}
       {isEnabled('home.promo') && (
       <section className="relative mt-16 overflow-hidden bg-[#1B1006] px-20 py-40 text-text-inverse lg:px-24">
-        {/* The two warm ellipses behind the content (Figma "Ellipse 6/7"). */}
+        {/* The two warm ellipses behind the content (Figma "Ellipse 6/7") —
+            a soft drift in opacity and scale so the banner reads as alive
+            rather than a flat static glow. Different durations (10s/13s)
+            and a delay on the second keep the two out of phase, which is
+            what makes it read as ambient rather than a visible pulse. */}
         <span
-          className="pointer-events-none absolute -left-1/3 top-1/3 h-[276px] w-[565px] rounded-full opacity-50 blur-3xl"
-          style={{ background: '#ff881b' }}
+          className="u-glow-drift pointer-events-none absolute -left-1/3 top-1/3 h-[276px] w-[565px] rounded-full blur-3xl"
+          style={{ background: '#ff881b', '--glow-opacity': 0.5 } as CSSProperties}
         />
         <span
-          className="pointer-events-none absolute -right-1/4 bottom-0 h-[326px] w-[557px] rounded-full opacity-35 blur-3xl"
-          style={{ background: '#ff881b' }}
+          className="u-glow-drift pointer-events-none absolute -right-1/4 bottom-0 h-[326px] w-[557px] rounded-full blur-3xl"
+          style={{ background: '#ff881b', '--glow-opacity': 0.35, animationDuration: '13s', animationDelay: '-4s' } as CSSProperties}
         />
 
         <div className="relative mx-auto flex max-w-[362px] flex-col gap-24 lg:max-w-[960px]">

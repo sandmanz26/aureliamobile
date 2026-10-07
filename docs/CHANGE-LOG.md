@@ -31,6 +31,28 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-07 — A soft ambient drift on the promo banner's glow
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (worth the same touch if
+the promo banner gets built there) / `storybook` (not worth its own story —
+the motion is the whole point and a static catalogue frame can't show it).
+
+Home's dark "Generative Wellness Care" banner has two blurred orange
+ellipses behind its content (Figma's own "Ellipse 6/7") that were flat and
+static. Added `.u-glow-drift` to `motion.css` — a slow opacity-and-scale
+breathe, 10s and 13s on the two blobs with a negative delay on the second so
+they drift out of phase rather than pulsing in unison, which is what keeps
+it reading as ambient instead of a visible beat. Parameterised on a
+`--glow-opacity` custom property since the two ellipses keep their own
+different resting opacity (0.5 and 0.35) and one keyframe rule needed to
+serve both without either jumping on its first frame. Picked up by the
+existing `prefers-reduced-motion` blanket rule in the same file, same as
+every other animation here — nothing extra needed for that.
+
+---
+
 ### 2026-10-07 — Live-sessions stats count up instead of sitting pre-filled
 
 **Lands on:** `web_app`
