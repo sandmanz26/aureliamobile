@@ -19,6 +19,28 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-07 — Desktop taste-skill review: Home spacing regression, feature grid
+
+**Lands on:** `web_app` / `admin_cms`
+**Not on:** `web_prod` (moves on request) / `mobile_app` (desktop only) /
+`storybook` (no story affected).
+
+First review run through `design-taste-frontend` (Redesign - Preserve, desktop
+`lg:` only) over the skill's in-scope surfaces: Home below the hero, Upgrade,
+Invite. Upgrade and Invite already read well at 1440px; two fixes on Home:
+
+- **The live-sessions/Quick Start row sat flush under the prompt box.** A
+  regression from the side-by-side change: both sections dropped their `mt-40`
+  at `lg:` and nothing replaced it. The wrapper now carries `lg:mt-40`;
+  measured gap is 51px on desktop, identical to mobile.
+- **The six Adaptive Wellness feature cards ran 2 x 3 at desktop width**,
+  each card mostly empty space. `lg:grid-cols-3` makes it 3 x 2. Mobile stays
+  2 columns.
+
+Mobile re-measured at 402px: gap and grid unchanged.
+
+---
+
 ### <date> — <short name of the change>
 **Lands on:** <branch(es) the commit actually reached>
 **Not on:** <branch(es) that could plausibly want it but do not have it yet, and why>

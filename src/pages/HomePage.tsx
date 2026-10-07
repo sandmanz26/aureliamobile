@@ -228,7 +228,7 @@ export function HomePage() {
             becomes both columns' row height, which Quick Start's section
             (flex-col, its card row at flex-1) then fills rather than leaving
             blank space under a short row of cards. */}
-        <div className="lg:grid lg:grid-cols-2 lg:items-stretch lg:gap-24">
+        <div className="lg:mt-40 lg:grid lg:grid-cols-2 lg:items-stretch lg:gap-24">
           {/* Ongoing Live Sessions */}
           {isEnabled('home.liveSessions') && (
           <section className="mt-40 lg:mt-0">
@@ -481,7 +481,7 @@ export function HomePage() {
             The more you create, the more Aurelia understands your rhythm. Personalized to you from day one.
           </p>
 
-          <div className="mt-24 grid grid-cols-2 gap-12">
+          <div className="mt-24 grid grid-cols-2 gap-12 lg:grid-cols-3 lg:gap-16">
             {features.map((feature) => (
               <FeatureCard key={feature.title} {...feature} />
             ))}
