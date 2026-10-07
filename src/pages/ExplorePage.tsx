@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import liveSessionsMap from '../assets/live-sessions-map.png'
 import { PageMeta } from '../components/PageMeta'
 import { Chip } from '../components/ui/Chip'
+import { CountUp } from '../components/ui/CountUp'
 import { CoverImage } from '../components/ui/CoverImage'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { SessionGridCard } from '../components/ui/SessionGridCard'
@@ -319,15 +320,17 @@ export function ExplorePage() {
             >
               <div className="relative z-10 flex gap-12">
                 {[
-                  { label: 'People', value: '87k' },
-                  { label: 'Today', value: '20k' },
-                  { label: 'Now', value: '50' },
+                  { label: 'People', value: 87000 },
+                  { label: 'Today', value: 20000 },
+                  { label: 'Now', value: 50 },
                 ].map((stat) => (
                   <div
                     key={stat.label}
                     className="flex-1 rounded-16 bg-surface-default/25 py-12 text-center backdrop-blur-sm"
                   >
-                    <p className="text-style-title-large text-text-inverse">{stat.value}</p>
+                    <p className="text-style-title-large text-text-inverse">
+                      <CountUp value={stat.value} />
+                    </p>
                     <p className="text-style-caption text-text-inverse">{stat.label}</p>
                   </div>
                 ))}

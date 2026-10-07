@@ -31,6 +31,27 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-07 — Live-sessions stats count up instead of sitting pre-filled
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (worth the same treatment
+on the Flutter equivalent) / `storybook` (worth a story for `CountUp`).
+
+The "Ongoing Live Sessions" card's three numbers (87k People, 20k Today, 50
+Now) were static text on both `HomePage` and `ExplorePage` — each page held
+its own copy of the same hardcoded array. Added
+`src/components/ui/CountUp.tsx`: ticks a number up from 0 to its target over
+1.2s on mount, eased the same decelerating curve as everything else in this
+app, with a `formatCompactCount` helper for the "87k" shorthand. Both pages
+now hold the stats as numbers and animate them the same way instead of
+printing the formatted string outright. `prefers-reduced-motion` is checked
+by hand here — there's no CSS transition to tween formatted text like "87k",
+so `motion.css`'s blanket rule has nothing to catch; reduced motion skips
+straight to the final value.
+
+---
+
 ### 2026-10-07 — Player's post-session check-in: Alignment Score, unified into the sheet, and shared with Session Detail's Lineage Tree
 
 **Lands on:** `web_app`
