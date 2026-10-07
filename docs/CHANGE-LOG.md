@@ -31,6 +31,33 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-07 — PlayerPage had its own divergent tag chip; "TagRow is still wrong" was actually two different pages
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (worth checking whether the
+Flutter player has the same divergence) / `storybook` (no story change needed,
+`TagRow` already has one).
+
+Several rounds of "the tag colour is still wrong" after `TagRow.tsx` had
+already been fixed turned out to be two separate, visually near-identical
+pages: `/session/:slug` (`SessionDetailPage`, uses `TagRow`, was correct) and
+`/play/:slug` (`PlayerPage`), which had its own hardcoded solid-`#FF881B`
+pill, added under a comment citing a different Figma frame (`16760:1688`) as
+justification for not sharing `TagRow`. Every fix to `TagRow` was correct and
+simply never touched the page being screenshotted. Found by asking for the
+rendered `<span>`'s literal `class` attribute from devtools, which didn't
+match `TagRow` at all — a faster path than the cache/build/deploy checks that
+preceded it (browser cache, Vercel build cache via a diagnostic colour push,
+CSS bundle filename, all ruled out first). `PlayerPage` now renders
+`<TagRow tags={tags} />` like every other page; its own `SHOWN_TAGS`/`overflow`
+locals are gone. Lesson for next time one component's fix "isn't showing up":
+confirm the exact route in the URL bar before re-checking the component, since
+two pages can render the same session data in two different hand-rolled
+markups.
+
+---
+
 ### 2026-10-07 — Style cards: the sharp top-right corner was a misread, reverted; they need an orange border
 
 **Lands on:** `web_app`

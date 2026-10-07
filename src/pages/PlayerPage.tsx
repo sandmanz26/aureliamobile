@@ -20,6 +20,7 @@ import { useAudioPlayer } from '../audio/AudioPlayerContext'
 import { CoinPill } from '../components/ui/CoinPill'
 import { CoverImage } from '../components/ui/CoverImage'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
+import { TagRow } from '../components/ui/TagRow'
 import { findVersion } from '../lib/progress'
 import { profilePath } from '../lib/people'
 import type { ProfileOrigin } from '../lib/people'
@@ -309,8 +310,6 @@ export function PlayerPage() {
     ...session.layers.map((layer) => layer.name.toLowerCase().replace(/[^a-z0-9]/g, '')),
     ...session.personalization.map((item) => item.label.toLowerCase().replace(/[^a-z0-9]/g, '')),
   ].filter((tag, index, all) => tag && all.indexOf(tag) === index)
-  const SHOWN_TAGS = 6
-  const overflow = tags.length - SHOWN_TAGS
 
   return (
     // h-dvh and clipped: the art is the screen and nothing behind it scrolls.
@@ -521,23 +520,13 @@ export function PlayerPage() {
             </button>
           </div>
 
-          {/* Figma 16760:1688's chips (Frame 81) are a solid #FF881B pill at
-              Body Small Light, not a tinted-border label — this page doesn't
-              share `TagRow`, so it can take the frame's own chip as-is. */}
-          <div className="mt-20 flex flex-wrap gap-8">
-            {tags.slice(0, SHOWN_TAGS).map((tag) => (
-              <span
-                key={tag}
-                className="text-style-body-small-light flex h-30 items-center rounded-full bg-[#ff881b] px-8 text-text-inverse"
-              >
-                #{tag}
-              </span>
-            ))}
-            {overflow > 0 && (
-              <span className="text-style-body-small-light flex h-30 items-center rounded-full bg-[#ff881b] px-8 text-text-inverse">
-                +{overflow}
-              </span>
-            )}
+          {/* This page used to keep its own divergent chip (a solid #FF881B
+              pill, citing a different Figma frame than SessionDetailPage's)
+              instead of sharing `TagRow` — that's what let this page's tags
+              go unnoticed through several rounds of fixing TagRow itself.
+              Same component everywhere now. */}
+          <div className="mt-20">
+            <TagRow tags={tags} />
           </div>
 
           {/* What the session has done, as two figures rather than a sentence. */}
