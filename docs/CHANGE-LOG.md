@@ -31,6 +31,31 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-07 — Chat's "ready" result gets a collapsible "Reasoning"
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (worth the same addition if
+the cockpit's generating/ready flow gets built there) / `storybook` (worth a
+story for `SessionReasoningCard`).
+
+A new reference showed the chat cockpit's "ready" result sitting under a
+"Here it is:" label with a collapsible "Reasoning" chip — closed by default,
+opening onto a short paragraph explaining what was built, before the result
+card itself. Added `SessionReasoningCard`
+(`src/components/chat/SessionReasoningCard.tsx`) and swapped it in for
+`SessionProgressCard` specifically in `ChatPage`'s `sessionState === 'ready'`
+branch — the `generating` branch (`SessionProgressCard`/`SessionProgressCardV2`,
+the percentage-climbing state) is untouched. Confirmed with the user this
+should show for any round that reaches "ready," not just a brand-new thread,
+since `sessionState` already reaches `'ready'` the same way on a first build
+and on every later "Apply new changes." The reasoning text itself is a
+placeholder string for now — there's no brief/changes history yet to compose
+a real explanation from, and the user asked for placeholder copy "close
+enough to fit" rather than wiring it up today.
+
+---
+
 ### 2026-10-07 — A soft ambient drift on the promo banner's glow
 
 **Lands on:** `web_app`

@@ -17,6 +17,7 @@ import type { RecreateBrief } from '../chat/recreate'
 import { draftTitleFor, findQuickStart } from '../lib/quickStart'
 import { replyTo } from '../lib/replies'
 import { SessionProgressCard } from '../components/chat/SessionProgressCard'
+import { SessionReasoningCard } from '../components/chat/SessionReasoningCard'
 import { SessionProgressCardV2 } from '../components/chat/SessionProgressCardV2'
 import { VoiceRecorder } from '../components/chat/VoiceRecorder'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
@@ -710,14 +711,11 @@ export function ChatPage() {
 
           {(sessionState === 'generating' || sessionState === 'ready') && (
             <div className="u-message mt-12">
-              {sessionState === 'generating' && isEnabled('chat.generatingV2') ? (
-                <SessionProgressCardV2 title={draft.title} />
-              ) : (
-                <SessionProgressCard
+              {sessionState === 'ready' ? (
+                <SessionReasoningCard
                   title={draft.title}
-                  status={sessionState === 'ready' ? readyStatus : 'Creating your new session..'}
-                  progress={sessionState === 'ready' ? null : progress}
-                  to={sessionState === 'ready' ? `/play/${draft.slug}` : undefined}
+                  status={readyStatus}
+                  to={`/play/${draft.slug}`}
                   /* Only a draft is renamed. A thread about a session that
                      already exists is making a new cut of that session, which is
                      still its author's — overriding here credited Adam for
@@ -725,6 +723,14 @@ export function ChatPage() {
                      cut, left her session on the deck under the previous draft's
                      name. */
                   by={sessionSlug ? undefined : CURRENT_USER}
+                />
+              ) : isEnabled('chat.generatingV2') ? (
+                <SessionProgressCardV2 title={draft.title} />
+              ) : (
+                <SessionProgressCard
+                  title={draft.title}
+                  status="Creating your new session.."
+                  progress={progress}
                 />
               )}
             </div>
