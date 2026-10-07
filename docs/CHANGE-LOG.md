@@ -58,6 +58,26 @@ markups.
 
 ---
 
+### 2026-10-07 — Player's "Recreate your own version" orbs were missing their play glyph
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (worth checking whether the
+Flutter player's equivalent cards have the same gap) / `storybook` (worth a
+story refresh for `RecommendationCard`'s `recreate` variant).
+
+`RecommendationCard`'s 73px orb carried a comment stating the screen's own
+card deliberately has no play glyph over it, citing a different frame
+elsewhere in the same file that does. The reference for `PlayerPage`'s own
+"Recreate your own version" shelf (`recreate` variant) shows a translucent
+white circle with a play triangle centred on the orb — the comment's
+distinction didn't hold for this variant specifically. Added that glyph, same
+visual language as `HomePage`'s `PlayGlyph`, scaled down for the 73px orb;
+the cockpit's `toggle` cards (used from `ChatMessageItem`) are unaffected and
+still render the plain orb, which matches their own reference.
+
+---
+
 ### 2026-10-07 — Style cards: the sharp top-right corner was a misread, reverted; they need an orange border
 
 **Lands on:** `web_app`

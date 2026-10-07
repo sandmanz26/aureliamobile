@@ -39,9 +39,11 @@ interface RecommendationCardProps {
 // an asymmetric [48, 20, 20, 20] off a different, older frame (16523:9513);
 // this screen's own card does not carry that asymmetry.
 //
-// The orb is a plain 73px circular image on this screen — no play glyph over
-// it. A different card elsewhere in the same file does carry one; this one
-// does not, and the two are not meant to agree.
+// The orb is a plain 73px circular image for the cockpit's own `toggle`
+// cards — no play glyph over it there. The player's `recreate` cards are a
+// different frame (16760:1688's "Recreate your own version" shelf) and do
+// carry one: a translucent white circle with a play triangle, same visual
+// language as `HomePage`'s `PlayGlyph`, just scaled to this orb's 73px.
 export function RecommendationCard({
   recommendation,
   applied,
@@ -65,15 +67,28 @@ export function RecommendationCard({
         backgroundClip: 'padding-box, border-box',
       }}
     >
-      {/* Plays on tap, same as the rest of the card's controls — but no play
-          glyph drawn over it, matching this screen's own cards. */}
+      {/* Plays on tap, same as the rest of the card's controls. The toggle
+          (cockpit) cards draw no glyph over the orb; the recreate (player)
+          cards do. */}
       <Link
         to={`/play/${preview}`}
         state={{ origin: 'own' }}
         aria-label={`Play ${title}`}
-        className="u-press w-fit"
+        className="u-press relative w-fit"
       >
         <img src={orb} alt="" className="size-[73px] rounded-full object-cover" />
+        {recreate && (
+          <span className="absolute left-1/2 top-1/2 flex size-32 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/25 backdrop-blur-sm">
+            <span
+              className="ml-[1px] size-0"
+              style={{
+                borderTop: '6px solid transparent',
+                borderBottom: '6px solid transparent',
+                borderLeft: '10px solid rgba(255,255,255,0.95)',
+              }}
+            />
+          </span>
+        )}
       </Link>
 
       <div className="flex flex-col gap-2">
