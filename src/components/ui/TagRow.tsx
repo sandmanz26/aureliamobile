@@ -12,12 +12,12 @@ export function TagRow({ tags, max = 6 }: { tags: string[]; max?: number }) {
   return (
     <div className="flex flex-wrap gap-8">
       {shown.map((tag) => (
-        <span key={tag} className="text-style-caption rounded-full bg-gold-100 px-10 py-4 text-warning-700">
+        <span key={tag} className="text-style-body-small rounded-full bg-[#FDF3E9] px-12 py-6 text-[#EF8B39]">
           #{tag}
         </span>
       ))}
       {overflow > 0 && (
-        <span className="text-style-caption rounded-full bg-gold-100 px-10 py-4 text-warning-700">+{overflow}</span>
+        <span className="text-style-body-small rounded-full bg-[#FDF3E9] px-12 py-6 text-[#EF8B39]">+{overflow}</span>
       )}
     </div>
   )

@@ -54,7 +54,7 @@ function StylePresetCard({ style, session }: { style: AppliedStyle; session: Ses
   }
 
   return (
-    <div className="flex w-[164px] shrink-0 flex-col rounded-16 border border-border-subtle bg-surface-default p-12">
+    <div className="flex w-[164px] shrink-0 flex-col rounded-16 rounded-tr-4 border border-border-subtle bg-surface-default p-12">
       <img src={ORBS[style.orb]} alt="" className="size-48 shrink-0 rounded-full object-cover" />
       <h3 className="text-style-body-small mt-10 text-text-primary">{style.name}</h3>
       <p className="text-style-caption-light mt-2 line-clamp-2 text-text-secondary">{style.reason}</p>

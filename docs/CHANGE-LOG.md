@@ -31,6 +31,31 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-07 — Session Detail: tag colour/size, and one corner of the style cards
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (both fixes apply there
+too) / `storybook` (`TagRow` is a shared component — worth a story
+refresh).
+
+- **`TagRow`** (the `#hashtag` pills on Session Detail, shared with My
+  Wellness) was `bg-gold-100 text-warning-700` at `text-style-caption`
+  (10px) — a pale yellow chip with dark amber text, nowhere close to the
+  reference's warm peach chip with vivid orange text. Pixel-sampled the
+  reference screenshot rather than guess: background `#FDF3E9`, text
+  `#EF8B39` — neither matches an existing token, so both are explicit
+  values, same treatment as the other off-token colours already logged
+  in `DESIGN-SYSTEM-HISTORY.md`. Bumped the type from caption to
+  `text-style-body-small` (14px) and the padding from `px-10 py-4` to
+  `px-12 py-6` to match the chunkier pill in the reference — confirmed
+  against a live screenshot, not just the computed styles.
+- **`StylePresetCard`** (the "Increase Yellow" / "Less movement" cards
+  under "Recreate your own version") was a uniform `rounded-16` on all
+  four corners; the reference has a visibly tighter top-right corner —
+  close to square, not just a smaller round. Added `rounded-tr-4` on top
+  of the existing `rounded-16`.
+
 ### 2026-10-07 — "New session" radius corrected; Player Beta removed entirely
 
 **Lands on:** `web_app`
