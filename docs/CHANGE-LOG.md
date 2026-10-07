@@ -31,6 +31,40 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-07 — Desktop only: a narrower sidebar, and Home's map/Quick Start side by side
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (nothing here applies —
+Flutter has no desktop sidebar or `lg:` breakpoint concept) / `storybook`
+(no story affected).
+
+Both changes are `lg:`-scoped; nothing here touches the mobile layout —
+checked against a 402-wide viewport before and after, pixel-identical.
+
+- **The desktop sidebar was the mobile drawer's own width.** `AppLayout`'s
+  persistent `<aside>` carried the same `313px` as the Figma "Menu" frame —
+  right for a slide-out panel, oversized for a column that sits beside the
+  page at all times. Narrowed to `260px`. Two other places hardcode an
+  offset to sit a fixed bottom bar beside that sidebar rather than under it
+  (`SessionDetailPage` and `SessionSettingsPage`, both `lg:left-[313px]`) —
+  updated both to `lg:left-[260px]` in the same change, or the bars would
+  have landed under a 53px gap. The mobile drawer itself is a separate
+  element with its own width and was never touched (confirmed at 313px,
+  unchanged).
+- **Home's "Ongoing Live Sessions" map and "Quick Start" were stacked on
+  desktop the same way they are on mobile**, despite the extra width going
+  unused. Wrapped both sections in an `lg:grid lg:grid-cols-2` row. The map
+  keeps its own aspect ratio (its gradient margin can't be cropped without
+  losing the design, so it was never a candidate for a forced height) and
+  becomes the taller column at this width; Quick Start's section stretches
+  to match via the grid's default `items-stretch`, and its card row (now
+  `flex-1`, cards `lg:h-auto`) fills that height rather than leaving blank
+  space under a short 160px row. Measured live: both sections render at
+  identically 432px on a 1440px-wide screen.
+
+---
+
 ### 2026-10-07 — Chat header dropdown: real Insights/Settings icons
 
 **Lands on:** `web_app`

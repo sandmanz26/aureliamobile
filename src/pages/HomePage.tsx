@@ -220,80 +220,100 @@ export function HomePage() {
           </div>
         </section>
 
-        {/* Ongoing Live Sessions */}
-        {isEnabled('home.liveSessions') && (
-        <section className="mt-40">
-          <h2 className="text-style-body text-text-primary">Ongoing Live Sessions</h2>
-          {/* Figma "Frame 45": 362x320, padding 40/20/20/20, stats pinned under
-              the map. The card holds the source image's aspect ratio so the
-              dot-map is never stretched, and caps its width on desktop. The
-              asset's own gradient margin above and below the dot-map (28%
-              top, 22.5% bottom) is the design, not slack to crop out — cover
-              shows it at exactly zero crop because the card and the image
-              share the same aspect ratio. */}
-          <div
-            className="relative mx-auto mt-16 flex aspect-[362/320] w-full max-w-[440px] flex-col justify-end overflow-hidden rounded-24 bg-cover bg-center px-20 pb-20 pt-40"
-            style={{ backgroundImage: `url(${liveSessionsMap})` }}
-          >
-            <div className="relative z-10 flex gap-12">
-              {[
-                { label: 'People', value: 87000 },
-                { label: 'Today', value: 20000 },
-                { label: 'Now', value: 50 },
-              ].map((stat) => (
-                <div key={stat.label} className="flex-1 rounded-16 bg-surface-default/25 py-12 text-center backdrop-blur-sm">
-                  <p className="text-style-title-large-regular text-text-inverse">
-                    <CountUp value={stat.value} />
-                  </p>
-                  <p className="text-style-label-light text-text-inverse">{stat.label}</p>
+        {/* Ongoing Live Sessions + Quick Start — stacked on mobile (each
+            section's own mt-40 does the spacing), side by side on desktop.
+            `lg:items-stretch` is a grid default, spelled out because what
+            makes the pair actually read as "same height" depends on it: the
+            map's own aspect ratio makes it the taller column, and that
+            becomes both columns' row height, which Quick Start's section
+            (flex-col, its card row at flex-1) then fills rather than leaving
+            blank space under a short row of cards. */}
+        <div className="lg:grid lg:grid-cols-2 lg:items-stretch lg:gap-24">
+          {/* Ongoing Live Sessions */}
+          {isEnabled('home.liveSessions') && (
+          <section className="mt-40 lg:mt-0">
+            <h2 className="text-style-body text-text-primary">Ongoing Live Sessions</h2>
+            {/* Figma "Frame 45": 362x320, padding 40/20/20/20, stats pinned
+                under the map. The card holds the source image's aspect ratio
+                so the dot-map is never stretched — on desktop that means
+                growing to fill its column's width rather than capping at
+                440, since forcing a *different* height onto it to match
+                Quick Start would crop the asset's own gradient margin
+                instead of letting the ratio set the height. The asset's own
+                gradient margin above and below the dot-map (28% top, 22.5%
+                bottom) is the design, not slack to crop out — cover shows it
+                at exactly zero crop because the card and the image share the
+                same aspect ratio. */}
+            <div
+              className="relative mx-auto mt-16 flex aspect-[362/320] w-full max-w-[440px] flex-col justify-end overflow-hidden rounded-24 bg-cover bg-center px-20 pb-20 pt-40 lg:max-w-none"
+              style={{ backgroundImage: `url(${liveSessionsMap})` }}
+            >
+              <div className="relative z-10 flex gap-12">
+                {[
+                  { label: 'People', value: 87000 },
+                  { label: 'Today', value: 20000 },
+                  { label: 'Now', value: 50 },
+                ].map((stat) => (
+                  <div key={stat.label} className="flex-1 rounded-16 bg-surface-default/25 py-12 text-center backdrop-blur-sm">
+                    <p className="text-style-title-large-regular text-text-inverse">
+                      <CountUp value={stat.value} />
+                    </p>
+                    <p className="text-style-label-light text-text-inverse">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+          )}
+
+          {/* Quick Start */}
+          {isEnabled('home.quickStart') && (
+          <section className="mt-40 flex flex-col lg:mt-0">
+            <h2 className="text-style-body text-text-primary">Quick Start</h2>
+            {/* flex-1 only does anything on desktop, where the section
+                itself has been stretched to the map's height; mobile has no
+                taller sibling to fill, so the row just sits at its own
+                h-[160px]. items-stretch (flex's own default) is what then
+                lets each card grow to that height instead of staying 160
+                inside a taller row. */}
+            <div className="-mx-20 mt-16 flex flex-1 gap-16 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
+              {quickStartCards.map((card) => (
+                <div
+                  key={card.title}
+                  className="relative h-[160px] w-[236px] shrink-0 overflow-hidden rounded-16 p-12 text-text-inverse lg:h-auto"
+                >
+                  <CoverImage photo={card.photo} gradient={card.gradient} width={480} height={320} />
+
+                  {/* Two ways in, and they are different: play the starter as it
+                      is, or open chat and make your own from it. */}
+                  <div className="relative flex items-center justify-between gap-8">
+                    <button
+                      type="button"
+                      aria-label={`Play ${card.title}`}
+                      onClick={() => gate('/chat')}
+                      className="u-press flex size-32 shrink-0 items-center justify-center rounded-full bg-white/25 text-text-inverse backdrop-blur-sm"
+                    >
+                      <Play size={14} fill="currentColor" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => gate('/chat')}
+                      className="text-style-label u-press flex h-30 items-center gap-6 whitespace-nowrap rounded-full bg-surface-default/90 px-12 text-text-primary"
+                    >
+                      <Sparkles size={13} /> Create
+                    </button>
+                  </div>
+
+                  <div className="absolute bottom-12 left-12 right-12">
+                    <p className="text-style-body-small drop-shadow">{card.title}</p>
+                    <p className="text-style-caption-light">{card.subtitle}</p>
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
-        </section>
-        )}
-
-        {/* Quick Start */}
-        {isEnabled('home.quickStart') && (
-        <section className="mt-40">
-          <h2 className="text-style-body text-text-primary">Quick Start</h2>
-          <div className="-mx-20 mt-16 flex gap-16 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
-            {quickStartCards.map((card) => (
-              <div
-                key={card.title}
-                className="relative h-[160px] w-[236px] shrink-0 overflow-hidden rounded-16 p-12 text-text-inverse"
-              >
-                <CoverImage photo={card.photo} gradient={card.gradient} width={480} height={320} />
-
-                {/* Two ways in, and they are different: play the starter as it
-                    is, or open chat and make your own from it. */}
-                <div className="relative flex items-center justify-between gap-8">
-                  <button
-                    type="button"
-                    aria-label={`Play ${card.title}`}
-                    onClick={() => gate('/chat')}
-                    className="u-press flex size-32 shrink-0 items-center justify-center rounded-full bg-white/25 text-text-inverse backdrop-blur-sm"
-                  >
-                    <Play size={14} fill="currentColor" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => gate('/chat')}
-                    className="text-style-label u-press flex h-30 items-center gap-6 whitespace-nowrap rounded-full bg-surface-default/90 px-12 text-text-primary"
-                  >
-                    <Sparkles size={13} /> Create
-                  </button>
-                </div>
-
-                <div className="absolute bottom-12 left-12 right-12">
-                  <p className="text-style-body-small drop-shadow">{card.title}</p>
-                  <p className="text-style-caption-light">{card.subtitle}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-        )}
+          </section>
+          )}
+        </div>
       </div>
 
       {/* Dark generative wellness banner — full bleed.

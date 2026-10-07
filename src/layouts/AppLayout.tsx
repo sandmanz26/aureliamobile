@@ -213,7 +213,15 @@ export function AppLayout() {
             rendered and reachable only by scrolling the whole page. A sidebar
             is chrome: it is the height of the window and scrolls its own
             content. */}
-        <aside className="hidden w-[313px] shrink-0 border-r border-border-subtle bg-surface-default lg:sticky lg:top-0 lg:block lg:h-screen">
+        {/* 260, not the drawer's 313 — that number is the Figma mobile
+            "Menu" frame's own width, drawn for a slide-out panel over the
+            page. A sidebar that sits beside the page at all times reads as
+            oversized at the same width; 260 is this component's own desktop
+            number, not a frame measurement. `SessionDetailPage` and
+            `SessionSettingsPage` each offset a fixed bottom bar by this same
+            figure (`lg:left-[313px]`) to sit beside it rather than under it —
+            changing one without the other leaves a gap or an overlap. */}
+        <aside className="hidden w-[260px] shrink-0 border-r border-border-subtle bg-surface-default lg:sticky lg:top-0 lg:block lg:h-screen">
           <SidebarContent />
         </aside>
 
