@@ -31,6 +31,45 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-07 — "New session" radius corrected; Player Beta removed entirely
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (the Flutter app never
+had Player Beta, so nothing to remove there; the radius fix doesn't
+apply, it's web-only chrome) / `storybook` (if the drawer's "New
+session" button or the plain player have a story, refresh the radius
+there too).
+
+- **Drawer's "New session" button** was `rounded-[60px]`; Figma's own
+  value for this frame is 16px. The code comment citing "radius 60" was
+  wrong, not aspirational — corrected both.
+- **Player Beta removed, not just left off.** It was a deliberate,
+  documented feature (`/__demo`'s `player.beta` flag, default off,
+  described at length in `CLAUDE.md` and `PRD.md`) — explicitly asked to
+  be taken out this round rather than kept dormant: *"that screen
+  shouldn't exist anymore, we should be using the previous default."*
+  Removed the whole surface rather than just disabling it:
+  - Deleted `src/pages/PlayerBetaPage.tsx` and `src/lib/playerBeta.ts`
+    (the `playerHref()` URL-rewrite helper).
+  - Removed the `/player-beta/:slug` route and its lazy import from
+    `App.tsx`.
+  - `PlayerPage.tsx` no longer checks the flag or redirects to the beta
+    page — `/play/:slug` is now the only player, unconditionally.
+  - `MiniPlayer.tsx` and `AttachedSession.tsx` link straight to
+    `/play/:slug` again instead of rewriting the href through
+    `playerHref()`.
+  - Removed the `beta` feature from the `player` module in
+    `src/demo/modules.ts` — the `/__demo` console no longer offers a
+    switch for a screen that doesn't exist.
+  - Removed the "Player Beta" section from `PRD.md` (and the
+    `PlayerBeta` node from its site-map diagram) and the long `/__demo`
+    explainer paragraph from `CLAUDE.md` — both described current
+    behavior, and the behavior is gone.
+  - Verified: `tsc -b` and a production build are clean with no
+    `PlayerBetaPage` chunk in the output, and `/play/:slug` no longer
+    redirects anywhere.
+
 ### 2026-10-07 — Real icons for the drawer's Invite a Friend / Help rows
 
 **Lands on:** `web_app`

@@ -35,7 +35,6 @@ const ProfilePage = lazy(() => import('./pages/ProfilePage').then((m) => ({ defa
 const SeeAllPage = lazy(() => import('./pages/SeeAllPage').then((m) => ({ default: m.SeeAllPage })))
 const ExplorePage = lazy(() => import('./pages/ExplorePage').then((m) => ({ default: m.ExplorePage })))
 const SessionsPage = lazy(() => import('./pages/SessionsPage').then((m) => ({ default: m.SessionsPage })))
-const PlayerBetaPage = lazy(() => import('./pages/PlayerBetaPage').then((m) => ({ default: m.PlayerBetaPage })))
 const PlayerPage = lazy(() => import('./pages/PlayerPage').then((m) => ({ default: m.PlayerPage })))
 const RecreateRoute = lazy(() => import('./pages/RecreatePage').then((m) => ({ default: m.RecreateRoute })))
 const SessionDetailPage = lazy(() => import('./pages/SessionDetailPage').then((m) => ({ default: m.SessionDetailPage })))
@@ -217,22 +216,6 @@ export default function App() {
                       so it needs one of its own. */}
                   <Suspense fallback={<PageSkeleton />}>
                     <PlayerPage />
-                  </Suspense>
-                </ModuleGuard>
-              </RequireAuth>
-            }
-          />
-          {/* Same guard as /play — this is a different door onto the same
-              session, opted into from Settings rather than a demo flag. The
-              page itself sends a visitor back to /play if they reach it with
-              the beta off. */}
-          <Route
-            path="/player-beta/:slug"
-            element={
-              <RequireAuth>
-                <ModuleGuard module="player">
-                  <Suspense fallback={<PageSkeleton />}>
-                    <PlayerBetaPage />
                   </Suspense>
                 </ModuleGuard>
               </RequireAuth>

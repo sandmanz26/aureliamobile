@@ -127,10 +127,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         )}
 
-        {/* Figma "10" — 241 x 42, radius 60, and the gradient runs #FF881B into
+        {/* Figma "10" — 241 x 42, radius 16, and the gradient runs #FF881B into
             #FFE682 left to right. It was carrying #F0A032 into #FFCC66, which is
             a different pair of oranges and reads flatter. Written out rather
-            than taken from Button: the height, the 60 radius and the regular
+            than taken from Button: the height, the 16 radius and the regular
             weight are all this button's own, and overriding three of Button's
             utilities would leave the winner to v4's layer order. */}
         <button
@@ -139,7 +139,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             onNavigate?.()
             gate('/chat', { fresh: true })
           }}
-          className="text-style-body u-press flex h-42 w-full items-center justify-center gap-8 rounded-[60px] px-22 text-text-inverse"
+          className="text-style-body u-press flex h-42 w-full items-center justify-center gap-8 rounded-16 px-22 text-text-inverse"
           style={{ background: 'linear-gradient(90deg, #FF881B, #FFE682)' }}
         >
           <Plus size={14} />
