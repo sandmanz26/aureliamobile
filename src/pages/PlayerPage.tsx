@@ -11,14 +11,17 @@ import {
   RotateCw,
   Share2,
   Shuffle,
+  WandSparkles,
 } from 'lucide-react'
 import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { RecommendationCard } from '../components/chat/RecommendationCard'
 import { PageMeta } from '../components/PageMeta'
 import { RECOMMENDATIONS } from '../chat/ChatSessionContext'
 import { useAudioPlayer } from '../audio/AudioPlayerContext'
+import { AlignmentPanel } from '../components/wellness/AlignmentPanel'
 import { CoinPill } from '../components/ui/CoinPill'
 import { CoverImage } from '../components/ui/CoverImage'
+import { LineageTreeCard } from '../components/ui/LineageTreeCard'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { TagRow } from '../components/ui/TagRow'
 import { findVersion } from '../lib/progress'
@@ -51,14 +54,26 @@ const MOODS = [
   { emoji: '😆', label: 'Very pleasant' },
 ] as const
 
+/** Mock, like the rest of `lib/` — there is no backend yet to score a real
+ *  before/after, so the check-in always shows the same read. */
+const ALIGNMENT_SCORE = 65
+const ALIGNMENT_PREVIOUS_STATE = ['anxious', 'scattered', 'overwhelmed']
+const ALIGNMENT_CURRENT_STATE = ['aligned', 'grounded', 'peaceful']
+
 /**
  * The mood check-in that surfaces once a session has played all the way
  * through (Figma 16698:12236 "How does listening…", 16698:12300 "What's
  * going on?", card itself 16698:15499) — pick a mood, then one optional
- * free-text follow-up. Nothing is sent anywhere; there is no backend yet to
- * hold a mood log, so answering just closes the card.
- */
-function SessionCheckInCard({ onDismiss }: { onDismiss: () => void }) {
+ * free-text follow-up, with the same Alignment Score panel
+ * `WellnessObjectiveCard` draws (Figma's own before/after read) shown under
+ * either step. Nothing is sent anywhere; there is no backend yet to hold a
+ * mood log, so answering just closes the card.
+ *
+ * Flows with the rest of the sheet's content rather than floating over it —
+ * it used to be a `fixed` card with its own "Skip", but once it is part of
+ * the same scroll a flick past it *is* skipping it, and a floating card
+ * here would also sit on top of the sheet's drag handle. */
+function SessionCheckIn({ onDismiss }: { onDismiss: () => void }) {
   const [mood, setMood] = useState<string | null>(null)
   const [note, setNote] = useState('')
 
@@ -68,63 +83,59 @@ function SessionCheckInCard({ onDismiss }: { onDismiss: () => void }) {
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-[402px] lg:max-w-[640px]">
-      <div className="relative rounded-t-24 bg-surface-default p-20 pb-[calc(20px+env(safe-area-inset-bottom))] shadow-[0_8px_34px_4px_rgba(0,0,0,0.15)]">
-        {/* `.u-tap` sets `position: relative` on whatever it's given, which in
-            a later cascade layer than Tailwind's utilities beats `absolute`
-            on the same element — so the positioning goes on this wrapper and
-            `u-tap` stays on the button it was written for. */}
-        <div className="absolute right-16 top-16">
-          <button type="button" onClick={onDismiss} className="text-style-caption u-tap text-text-secondary">
-            Skip
-          </button>
-        </div>
-        <div className="flex items-start gap-12 pr-40">
-          <span
-            className="flex size-32 shrink-0 items-center justify-center rounded-8 text-white"
-            style={{ background: 'linear-gradient(135deg, var(--color-gold-300), var(--color-warning-600))' }}
-          >
-            <Heart size={16} fill="currentColor" />
-          </span>
-          <h2 className="text-style-body-small pt-4 font-medium text-text-primary">
-            {mood === null ? 'How does listening to this make you feel?' : "What's going on?"}
-          </h2>
-        </div>
-
-        {mood === null ? (
-          <div className="mt-16 flex justify-between">
-            {MOODS.map((m) => (
-              <button
-                key={m.label}
-                type="button"
-                aria-label={m.label}
-                onClick={() => setMood(m.label)}
-                className="u-press flex size-52 items-center justify-center rounded-full border-2 border-[#ff881b] text-[26px]"
-              >
-                {m.emoji}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <form onSubmit={submitNote} className="mt-16 flex items-center gap-10">
-            <input
-              type="text"
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              placeholder="Answer here…"
-              autoFocus
-              className="text-style-body-small h-48 flex-1 rounded-full border border-border-default bg-background-default px-16 text-text-primary placeholder:text-text-secondary"
-            />
-            <button
-              type="submit"
-              aria-label="Send"
-              className="u-press flex size-48 shrink-0 items-center justify-center rounded-full bg-icon-strong text-text-inverse"
-            >
-              <ArrowUp size={18} />
-            </button>
-          </form>
-        )}
+    <div className="mb-24 flex flex-col gap-16 rounded-20 border border-border-subtle bg-surface-default p-16">
+      <div className="flex items-center gap-12">
+        <span
+          className="flex size-32 shrink-0 items-center justify-center rounded-8 text-white"
+          style={{ background: 'linear-gradient(135deg, var(--color-gold-300), var(--color-warning-600))' }}
+        >
+          <Heart size={16} fill="currentColor" />
+        </span>
+        <h2 className="text-style-body-small font-medium text-text-primary">
+          {mood === null ? 'How does listening to this make you feel?' : 'How is the experience?'}
+        </h2>
       </div>
+
+      {mood === null ? (
+        <div className="flex justify-between">
+          {MOODS.map((m) => (
+            <button
+              key={m.label}
+              type="button"
+              aria-label={m.label}
+              onClick={() => setMood(m.label)}
+              className="u-press flex size-52 items-center justify-center rounded-12 text-[26px]"
+              style={{ background: 'linear-gradient(160deg, var(--color-gold-300), var(--color-warning-600))' }}
+            >
+              {m.emoji}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <form onSubmit={submitNote} className="flex items-center gap-10">
+          <input
+            type="text"
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+            placeholder="Answer here…"
+            autoFocus
+            className="text-style-body-small h-48 flex-1 rounded-full border border-border-default bg-background-default px-16 text-text-primary placeholder:text-text-secondary"
+          />
+          <button
+            type="submit"
+            aria-label="Send"
+            className="u-press flex size-48 shrink-0 items-center justify-center rounded-full bg-icon-strong text-text-inverse"
+          >
+            <ArrowUp size={18} />
+          </button>
+        </form>
+      )}
+
+      <AlignmentPanel
+        score={ALIGNMENT_SCORE}
+        previousState={ALIGNMENT_PREVIOUS_STATE}
+        currentState={ALIGNMENT_CURRENT_STATE}
+      />
     </div>
   )
 }
@@ -482,6 +493,8 @@ export function PlayerPage() {
           ref={scroller}
           className={`min-h-0 flex-1 px-20 pb-40 ${up ? 'overflow-y-auto' : 'overflow-hidden'}`}
         >
+          {checkIn && <SessionCheckIn onDismiss={() => setCheckIn(false)} />}
+
           <div className="flex items-center gap-12">
             <Link
               to={profilePath(session.author, origin)}
@@ -529,6 +542,32 @@ export function PlayerPage() {
             <TagRow tags={tags} />
           </div>
 
+          {/* Same hand-off Wellness's own "Analyze my state" chips use: land
+              in the cockpit with the question already asked, rather than a
+              blank thread the user has to explain themselves into again. */}
+          <div className="-mx-20 mt-20 flex gap-12 overflow-x-auto px-20 pb-4">
+            <button
+              type="button"
+              onClick={() =>
+                navigate('/chat', {
+                  state: { ask: `Can you help me elaborate on my experience with "${session.title}"?` },
+                })
+              }
+              className="u-press flex h-40 shrink-0 items-center gap-8 whitespace-nowrap rounded-12 border border-border-default px-14 text-style-label text-text-primary"
+            >
+              <WandSparkles size={14} />
+              Elaborate on my experience
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/chat', { state: { ask: 'Suggest my morning boost' } })}
+              className="u-press flex h-40 shrink-0 items-center gap-8 whitespace-nowrap rounded-12 border border-border-default px-14 text-style-label text-text-primary"
+            >
+              <WandSparkles size={14} />
+              Suggest my morning boost
+            </button>
+          </div>
+
           {/* What the session has done, as two figures rather than a sentence. */}
           <div className="mt-24 grid grid-cols-2 gap-16">
             {[
@@ -565,35 +604,10 @@ export function PlayerPage() {
 
           <section className="mt-24">
             <h2 className="text-style-body text-text-primary">Details</h2>
-            <div className="mt-16 flex flex-col gap-20 rounded-[20px] border border-border-subtle bg-surface-default p-20">
-              <div>
-                <p className="text-style-label text-text-secondary">Creator’s intent</p>
-                <p className="text-style-body-small mt-6 text-text-primary">{session.intent}</p>
-              </div>
-              <div className="flex flex-col gap-10">
-                <p className="text-style-label text-text-secondary">In the mix</p>
-                {session.layers.map((layer) => (
-                  <div key={layer.id} className="flex items-baseline justify-between gap-16">
-                    <span className="text-style-body-small text-text-primary">{layer.name}</span>
-                    <span className="text-style-caption tabular-nums text-text-secondary">{layer.level}%</span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex flex-col gap-10">
-                <p className="text-style-label text-text-secondary">Set for you</p>
-                {session.personalization.map((item) => (
-                  <div key={item.label} className="flex items-baseline justify-between gap-16">
-                    <span className="text-style-body-small text-text-primary">{item.label}</span>
-                    <span className="text-style-caption text-right text-text-secondary">{item.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <LineageTreeCard session={session} />
           </section>
         </div>
       </aside>
-
-      {checkIn && <SessionCheckInCard onDismiss={() => setCheckIn(false)} />}
     </div>
   )
 }

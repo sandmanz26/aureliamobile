@@ -1,28 +1,7 @@
 import { ChevronDown, ChevronRight, ChevronUp, Pencil, Target, WandSparkles } from 'lucide-react'
 import type { WellnessGoal } from '../../lib/wellnessGoals'
 import { TagRow } from '../ui/TagRow'
-import { AlignmentGauge } from './AlignmentGauge'
-
-/** A stacked, tinted tag list — `TagRow` wraps horizontally with overflow
- *  folded into "+N", which is right for a topic list but wrong here: these
- *  are exactly three states, always, and the frame stacks them so "before"
- *  and "after" read top-to-bottom rather than competing for one line. */
-function StateList({ states, tone }: { states: string[]; tone: 'previous' | 'current' }) {
-  return (
-    <div className={`flex flex-col gap-8 ${tone === 'current' ? 'items-end' : 'items-start'}`}>
-      {states.map((state) => (
-        <span
-          key={state}
-          className={`text-style-caption inline-block rounded-full px-10 py-4 ${
-            tone === 'previous' ? 'bg-[#FBDCC0] text-warning-700' : 'bg-gold-100 text-warning-700'
-          }`}
-        >
-          #{state}
-        </span>
-      ))}
-    </div>
-  )
-}
+import { AlignmentPanel } from './AlignmentPanel'
 
 function XpBar({ current, target }: { current: number; target: number }) {
   const share = target === 0 ? 0 : Math.min(1, current / target)
@@ -105,27 +84,11 @@ export function WellnessObjectiveCard({
             <TagRow tags={goal.tags} max={4} />
           </div>
 
-          <div className="flex flex-col gap-16 rounded-16 bg-background-elevated p-16">
-            <div className="flex items-center justify-between">
-              <h3 className="text-style-body font-semibold text-text-primary">Alignment Score</h3>
-              <span className="text-style-label rounded-full border border-border-default bg-surface-default px-12 py-4 text-text-primary">
-                {goal.alignmentScore}%
-              </span>
-            </div>
-
-            <AlignmentGauge score={goal.alignmentScore} />
-
-            <div className="grid grid-cols-2 gap-16">
-              <div className="flex flex-col gap-10">
-                <h4 className="text-style-body-small font-medium text-text-primary">Previous State</h4>
-                <StateList states={goal.previousState} tone="previous" />
-              </div>
-              <div className="flex flex-col items-end gap-10 text-right">
-                <h4 className="text-style-body-small font-medium text-text-primary">Current State</h4>
-                <StateList states={goal.currentState} tone="current" />
-              </div>
-            </div>
-          </div>
+          <AlignmentPanel
+            score={goal.alignmentScore}
+            previousState={goal.previousState}
+            currentState={goal.currentState}
+          />
 
           <div className="flex gap-12">
             <button

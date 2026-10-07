@@ -31,6 +31,54 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-07 — Player's post-session check-in: Alignment Score, unified into the sheet, and shared with Session Detail's Lineage Tree
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (this whole flow is worth
+porting — the Flutter player had neither the old floating check-in nor this
+one) / `storybook` (worth stories for `AlignmentPanel` and `LineageTreeCard`
+now that both are shared components).
+
+A new reference for `PlayerPage`'s post-session state, compared against what
+was actually in the code. Four confirmed gaps, each checked with the user
+before building rather than guessed:
+
+- **The mood check-in was a `fixed` card floating over the sheet, with its
+  own "Skip."** The reference shows it flowing as the first block inside the
+  same scrollable sheet content, pushing the session's own info down rather
+  than sitting on top of it — once it is part of the scroll, scrolling past
+  it *is* skipping it, so "Skip" is gone. `SessionCheckInCard` is now
+  `SessionCheckIn`, a normal block rendered inside the scroller.
+- **No Alignment Score.** The reference shows the same score-gauge-plus-
+  Previous/Current-state panel `WellnessObjectiveCard` draws on `/wellness`,
+  under the check-in's mood-or-text step, in both states. Extracted that
+  panel into `src/components/wellness/AlignmentPanel.tsx` (gauge + the two
+  state-tag columns) so `WellnessObjectiveCard` and `PlayerPage` draw it
+  from one place instead of each growing their own copy — the same mistake
+  `TagRow` made once already. The score and before/after tags are mock
+  constants (65%, `anxious/scattered/overwhelmed` → `aligned/grounded/
+  peaceful`) — there is no backend to compute a real one.
+- **Two new action chips, "Elaborate on my experience" and "Suggest my
+  morning boost,"** sit after the tags, visible whether or not the session
+  has finished. Same hand-off Wellness's own "Analyze my state" chips use:
+  `navigate('/chat', { state: { ask: '…' } })`, landing in the cockpit with
+  the question already asked.
+- **"Details" showed "Creator's intent / In the mix / Set for you"; the
+  reference shows the Lineage Tree** `SessionDetailPage` already draws.
+  Extracted `LineageRow` and its wrapping card into
+  `src/components/ui/LineageTreeCard.tsx`, shared by both pages now.
+  `SessionDetailPage`'s own Details section switched to the same shared
+  component in the same change — one fewer place for the two pages to drift
+  apart from. `session.intent`/`.layers`/`.personalization` are no longer
+  read on this page; nothing else used them.
+
+"Recreate your own version" was the one section the reference didn't show at
+all in any of its three states — confirmed with the user it stays, same
+position, rather than assuming the omission meant delete it.
+
+---
+
 ### 2026-10-07 — PlayerPage had its own divergent tag chip; "TagRow is still wrong" was actually two different pages
 
 **Lands on:** `web_app`
