@@ -31,6 +31,29 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-07 — Promo banner's card pair drifted from the text column on wide desktop
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (no desktop width there) /
+`storybook` (no story affected).
+
+The dark "Generative Wellness Care" banner's rotated card pair bleeds past
+both edges of its row on purpose — Figma's own "content SPACE_BETWEEN,"
+drawn for the 402px mobile frame it reads as dramatic on. On a wide desktop
+window that row has no cap, so it centers on the *window* while the text
+above and below it centers on its own 960px column; both share a centre
+point mathematically, but the text's left edge sits well left of where the
+(much wider) row's own content starts, which reads as the cards drifting
+away from the text rather than sitting with it. Measured before fixing:
+at 2560px the cards' row spanned the full 2300px of available width while
+the text stayed capped at 960. Capped and centered the row with
+`lg:mx-auto lg:max-w-[960px]`, same column as the text; below `lg:` it still
+bleeds exactly as before (verified: 0–402px at a 402-wide viewport,
+unchanged).
+
+---
+
 ### 2026-10-07 — Desktop sweep: a dead hamburger on Chat/Help, Sessions' single column
 
 **Lands on:** `web_app`

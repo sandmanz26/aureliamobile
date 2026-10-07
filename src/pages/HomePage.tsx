@@ -372,8 +372,17 @@ export function HomePage() {
             close to this file's original 180:286, confirming that number
             was right and only the rotation was too shallow (10–12°, not
             ~30°) and the cards too small relative to the frame. */}
+        {/* Bleeding past both edges (Figma's own "content SPACE_BETWEEN")
+            only reads as dramatic on the 402-wide mobile frame it was drawn
+            for. Full-bleed on a wide desktop window means this row centers
+            on the *window*, while the text above and below it centers on
+            its own 960px column — same centre-point in principle, but the
+            text's own left edge sits well left of where the (much wider)
+            row's content actually starts, reading as drift rather than
+            alignment. Capped and centered with the text column at lg:,
+            same as everything else in this banner. */}
         <div
-          className="relative -mx-20 my-32 flex items-center justify-center gap-48 overflow-hidden lg:-mx-24"
+          className="relative -mx-20 my-32 flex items-center justify-center gap-48 overflow-hidden lg:mx-auto lg:max-w-[960px]"
           style={{
             // width*sin30° + height*cos30° ≈ 1.87× the width is the rotated
             // bounding box height — short of that and the tilted corners
