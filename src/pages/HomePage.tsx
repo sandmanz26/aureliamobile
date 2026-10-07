@@ -516,10 +516,12 @@ export function HomePage() {
               text column was wide enough that `text-balance` still broke
               after "Global" instead, confirmed by testing 20/32/48 directly
               against the reference. */}
-          <div
-            className="relative flex flex-col items-center gap-32 rounded-[20px] px-48 py-40 text-center text-text-inverse"
-            style={{ background: 'linear-gradient(180deg, #3C2405, #FF881B)' }}
-          >
+          {/* Desktop (lg:) reads as a banner rather than a stacked card:
+              words left, button right, and the gradient turns 90° so the
+              espresso sits behind the words and the orange behind the
+              button. The gradient lives in classes, not an inline style,
+              because a style attribute cannot change at a breakpoint. */}
+          <div className="relative flex flex-col items-center gap-32 rounded-[20px] bg-[linear-gradient(180deg,#3C2405,#FF881B)] px-48 py-40 text-center text-text-inverse lg:flex-row lg:justify-between lg:gap-48 lg:bg-[linear-gradient(90deg,#3C2405,#FF881B)] lg:px-56 lg:py-48 lg:text-left">
             <div className="flex flex-col gap-4">
               <h2 className="text-[24px] leading-[29px]">Casual Intelligence for Global Community</h2>
               {/* Light *italic* at 14/21 in the frame — the italic is the only
@@ -531,7 +533,7 @@ export function HomePage() {
             <button
               type="button"
               onClick={() => gate('/chat')}
-              className="u-press text-style-body inline-flex h-44 items-center rounded-12 border border-text-inverse/35 bg-text-inverse/12 px-20 text-text-inverse backdrop-blur-sm transition-colors hover:bg-text-inverse/20"
+              className="u-press text-style-body inline-flex h-44 shrink-0 items-center rounded-12 border border-text-inverse/35 bg-text-inverse/12 px-20 text-text-inverse backdrop-blur-sm transition-colors hover:bg-text-inverse/20"
             >
               Get Started
             </button>

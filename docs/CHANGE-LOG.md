@@ -19,6 +19,21 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-07 — Home's closing CTA becomes a left/right banner on desktop
+
+**Lands on:** `web_app` / `admin_cms`
+**Not on:** `web_prod` (moves on request) / `mobile_app` (desktop only) /
+`storybook` (page section, not a shared component).
+
+At `lg:` the "Casual Intelligence for Global Community" card lays out as a
+banner: headline and subline left-aligned on the left, Get Started on the
+right, gradient turned 90° so espresso sits behind the words and orange
+behind the button. The gradient moved from an inline style to Tailwind
+classes so it can change at the breakpoint. Mobile card compared
+pixel-for-pixel before and after: identical.
+
+---
+
 ### 2026-10-07 — Sign-in gets a real desktop layout; mobile frozen by rule
 
 **Lands on:** `web_app` / `admin_cms`
