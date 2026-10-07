@@ -50,6 +50,15 @@ judgement.
 
 ---
 
+**Standing rule from the product owner: the mobile web layout is stable and
+frozen.** Do not change anything below the `lg:` breakpoint (the 402px
+mobile frame) unless the user explicitly asks for a mobile change. Desktop
+work goes in `lg:`-prefixed utilities (or an equivalent media query) only,
+and every desktop change is checked against a 402px viewport before it
+ships. "It looked like a harmless shared fix" is not an exception.
+
+---
+
 ## Running it
 
 ```bash

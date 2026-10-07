@@ -38,9 +38,13 @@ export function SignInPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-background-default lg:items-center lg:justify-center lg:bg-background-elevated lg:py-48">
+    <div className="flex min-h-full flex-col bg-background-default">
       <PageMeta title="Sign in" description="Sign in to Aurelia to build and play your personalized sessions." />
-      <div className="relative flex h-dvh w-full max-w-[402px] flex-col overflow-hidden bg-background-default lg:aspect-[402/874] lg:h-auto lg:max-h-[874px] lg:w-[402px] lg:rounded-24 lg:shadow-xl">
+      {/* Desktop is a split screen, not the phone frame floating in the
+          middle of the window: the photo takes everything left of a 480px
+          form panel, full height. All of it is lg: — below that this is the
+          402-wide mobile screen exactly as before. */}
+      <div className="relative flex h-dvh w-full max-w-[402px] flex-col overflow-hidden bg-background-default lg:max-w-none lg:flex-row">
         {/* The photo is the one flexible element on this screen — `flex-1
             min-h-0` lets it shrink all the way to nothing before the form
             below gives up any of its own height. Figma's 661/874 ratio is
@@ -48,14 +52,14 @@ export function SignInPage() {
             crops instead of squishing on anything shorter, so the sign-in
             buttons and the legal/sign-up line are never the thing that runs
             out of room. */}
-        <div className="relative min-h-0 w-full flex-1">
+        <div className="relative min-h-0 w-full flex-1 lg:h-full lg:w-auto">
           <img src={authHero} alt="" className="size-full object-cover" />
           {/* Figma's "Body" fade (394→634 of an 874 frame) falls at
               59.6%→95.9% of this 661-tall image — transparent, then solid
               by 95.9%, so the rest of the image and the page below both read
               as one continuous white field. */}
           <div
-            className="absolute inset-0"
+            className="absolute inset-0 lg:hidden"
             style={{
               background:
                 'linear-gradient(180deg, transparent 0%, transparent 59.6%, var(--color-background-default) 95.9%, var(--color-background-default) 100%)',
@@ -74,14 +78,14 @@ export function SignInPage() {
         {/* pointer-events-none: this spans the full width to center the mark,
             and without it the empty part of that strip sits over the back
             button (both at top-16) and swallows its clicks. */}
-        <div className="pointer-events-none absolute inset-x-0 top-16 z-10 flex justify-center">
+        <div className="pointer-events-none absolute inset-x-0 top-16 z-10 flex justify-center lg:right-[480px] lg:top-24">
           <AureliaLogo inverse />
         </div>
 
         {/* shrink-0: this is the content that actually matters on the
             screen — it always renders at its full natural size, and the
             photo above is what gives up space for it, never the reverse. */}
-        <div className="flex shrink-0 flex-col px-24 pb-24 pt-16">
+        <div className="flex shrink-0 flex-col px-24 pb-24 pt-16 lg:w-[480px] lg:justify-center lg:px-64 lg:py-48">
           <h1 className="text-style-title-large text-text-primary">Welcome to Aurelia.</h1>
 
           <div className="mt-24 flex flex-col gap-12">
@@ -103,7 +107,7 @@ export function SignInPage() {
             </button>
           </div>
 
-          <p className="text-style-caption mt-auto pt-24 text-center text-text-secondary">
+          <p className="text-style-caption mt-auto pt-24 text-center text-text-secondary lg:mt-0">
             By continuing, you agree to Aurelia{' '}
             <span className="font-medium underline">Privacy Policy</span> and{' '}
             <span className="font-medium underline">Terms of Use</span>

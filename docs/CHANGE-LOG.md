@@ -19,6 +19,22 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-07 — Sign-in gets a real desktop layout; mobile frozen by rule
+
+**Lands on:** `web_app` / `admin_cms`
+**Not on:** `web_prod` (moves on request) / `mobile_app` (desktop only) /
+`storybook` (page, not a shared component).
+
+`/login` at desktop width was the 402px phone screen floating in the middle
+of an empty window. At `lg:` it is now a split screen: the photo fills the
+left side full height, the form sits in a 480px panel on the right, logo
+centred over the photo. Every change is `lg:`-scoped; the 402px screen was
+compared pixel-for-pixel before and after and is identical. `CLAUDE.md` now
+records the product owner's standing rule that mobile web is frozen unless a
+change is explicitly asked for.
+
+---
+
 ### 2026-10-07 — Desktop taste-skill review: Home spacing regression, feature grid
 
 **Lands on:** `web_app` / `admin_cms`
