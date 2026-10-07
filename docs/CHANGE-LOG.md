@@ -31,6 +31,30 @@ apply there (a Flutter-only fix has nothing to say about `web_prod`).
 
 ---
 
+### 2026-10-07 — Style cards: the sharp top-right corner was a misread, reverted; they need an orange border
+
+**Lands on:** `web_app`
+**Not on:** `admin_cms` (propagate on the next `--ff-only` merge) / `web_prod`
+(moves on request — staging-only) / `mobile_app` (the border fix applies
+there too) / `storybook` (worth a story refresh for `StylePresetCard`).
+
+- **The previous round's `rounded-tr-4` was wrong.** It was read off a
+  hand-drawn circle annotating a screenshot, interpreted as "the
+  top-right corner is sharper than the others." A clean, unannotated
+  reference this round shows all four corners equally rounded — zoomed
+  in, there's no asymmetry at all. Reverted to plain `rounded-16`. The
+  annotation was pointing at something else on that card (most likely
+  the missing border below), not the corner geometry; worth remembering
+  that a circled region doesn't always mean "this exact edge is wrong,"
+  especially near a corner where a border and a radius both live.
+- **What the card actually needs: a visible border**, not the near-
+  invisible `border-border-subtle` it had — pixel-sampled the new
+  reference at `#F2A54B`, an orange that doesn't match an existing
+  token, so it's an explicit value like the session's other off-token
+  colours.
+- Confirmed live: corners uniform, border visibly orange, matching the
+  reference card-for-card.
+
 ### 2026-10-07 — Session Detail: tag colour/size, and one corner of the style cards
 
 **Lands on:** `web_app`
