@@ -78,17 +78,23 @@ export function WellnessObjectiveCard({
 
       {expanded && (
         <div className="flex flex-col gap-16 px-16 pb-16">
-          <div className="flex flex-col gap-12 rounded-16 bg-background-elevated p-16">
-            <h3 className="text-style-body font-semibold text-text-primary">What's helping me progress</h3>
-            <p className="text-style-body-small text-text-secondary">{goal.progress}</p>
-            <TagRow tags={goal.tags} max={4} />
-          </div>
+          {/* Side by side at lg: — stacked full-width on a desktop card, the
+              gauge sat alone in a wide grey box with the two state lists
+              pushed to opposite edges. The wrapper's own gap-16 is the same
+              gap the parent already gave these two on mobile. */}
+          <div className="flex flex-col gap-16 lg:grid lg:grid-cols-2 lg:items-stretch">
+            <div className="flex flex-col gap-12 rounded-16 bg-background-elevated p-16">
+              <h3 className="text-style-body font-semibold text-text-primary">What's helping me progress</h3>
+              <p className="text-style-body-small text-text-secondary">{goal.progress}</p>
+              <TagRow tags={goal.tags} max={4} />
+            </div>
 
-          <AlignmentPanel
-            score={goal.alignmentScore}
-            previousState={goal.previousState}
-            currentState={goal.currentState}
-          />
+            <AlignmentPanel
+              score={goal.alignmentScore}
+              previousState={goal.previousState}
+              currentState={goal.currentState}
+            />
+          </div>
 
           <div className="flex gap-12">
             <button

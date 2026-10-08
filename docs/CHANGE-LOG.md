@@ -19,6 +19,21 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-08 — Wellness goal card: progress and Alignment Score side by side on desktop
+
+**Lands on:** `web_app` / `admin_cms`
+**Not on:** `web_prod` (moves on request) / `mobile_app` (desktop only) /
+`storybook` (worth a refresh of `WellnessObjectiveCard`'s expanded story).
+
+At `lg:` the expanded "Learn more" panel puts "What's helping me progress"
+and the Alignment Score panel in two equal-height columns instead of two
+full-width stacked boxes, where the gauge sat alone in a wide grey box with
+the state lists pushed to opposite edges. The two action buttons below now
+line up under each column. `AlignmentPanel` itself is untouched (the Player
+check-in shares it). Mobile card compared pixel-for-pixel: identical.
+
+---
+
 ### 2026-10-07 — Home's closing CTA becomes a left/right banner on desktop
 
 **Lands on:** `web_app` / `admin_cms`
