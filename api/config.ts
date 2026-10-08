@@ -32,8 +32,11 @@ function keyFor() {
   // `vercel dev`, or some other host). Treat it as production: that is how
   // this endpoint behaved before the split, and there is nothing to collide
   // with.
-  if (!ENVIRONMENT || ENVIRONMENT === 'production') return BASE_KEY
   const ref = process.env.VERCEL_GIT_COMMIT_REF
+  // Staging is a separate Vercel project that deploys `web_app` as *its*
+  // production, so VERCEL_ENV=production is not enough: only `web_prod` gets
+  // the bare key.
+  if (!ENVIRONMENT || (ENVIRONMENT === 'production' && (!ref || ref === 'web_prod'))) return BASE_KEY
   const suffix = (ref || ENVIRONMENT).replace(/[^a-zA-Z0-9._-]+/g, '-')
   return `${BASE_KEY}:${suffix}`
 }

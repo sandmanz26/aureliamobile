@@ -26,8 +26,11 @@ const BASE_KEY = 'aurelia:demo:annotations'
 const ENVIRONMENT = process.env.VERCEL_ENV ?? ''
 
 function keyFor() {
-  if (!ENVIRONMENT || ENVIRONMENT === 'production') return BASE_KEY
   const ref = process.env.VERCEL_GIT_COMMIT_REF
+  // Staging is a separate Vercel project that deploys `web_app` as *its*
+  // production, so VERCEL_ENV=production is not enough: only `web_prod` gets
+  // the bare key.
+  if (!ENVIRONMENT || (ENVIRONMENT === 'production' && (!ref || ref === 'web_prod'))) return BASE_KEY
   const suffix = (ref || ENVIRONMENT).replace(/[^a-zA-Z0-9._-]+/g, '-')
   return `${BASE_KEY}:${suffix}`
 }

@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-08 — Staging no longer labelled Production
+
+Staging is a separate Vercel project that deploys `web_app` as *its* production branch, so `VERCEL_ENV=production` there and the build badge said **Production**. `vite.config.ts` now reports production only when the branch is `web_prod`; `api/config.ts` and `api/annotations.ts` apply the same rule, so staging stops writing the bare `aurelia:demo:config` / `aurelia:demo:annotations` keys (production's) and uses `…:web_app`. Staging's published flags therefore start from whatever is under the `:web_app` key — re-publish once on staging. Branches: `web_app`, `admin_cms`.
+
 ### 2026-10-08 — Sign-in desktop: smaller inset photo with headline
 
 `SignInPage.tsx`, `lg:` only: the photo is no longer ~75% of the window — it is an inset rounded panel (`rounded-24`, 16px page margin, 44% wide, max 720px) carrying a new headline, "Wellness, shaped around how you feel.", and a one-line subtitle over a bottom scrim. Back button and logo move onto the panel; the form centres in the remaining width at max 400px. Mobile untouched (402px pixel-identical). Branches: `web_app`, `admin_cms`.

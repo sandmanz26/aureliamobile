@@ -46,7 +46,12 @@ function buildBranch() {
  * the project deploys to its production domain, `preview` for every other.
  */
 function buildEnv() {
-  return process.env.VERCEL_ENV ?? 'local'
+  const env = process.env.VERCEL_ENV ?? 'local'
+  // The staging site is its own Vercel project whose *production* branch is
+  // `web_app`, so VERCEL_ENV alone calls it production. Only `web_prod` is.
+  const ref = process.env.VERCEL_GIT_COMMIT_REF
+  if (env === 'production' && ref && ref !== 'web_prod') return 'preview'
+  return env
 }
 
 /**
