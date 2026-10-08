@@ -19,6 +19,24 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-08 — Promo banner folds into one row on desktop (902px to 412px tall)
+
+**Lands on:** `web_app` / `admin_cms`
+**Not on:** `web_prod` (moves on request) / `mobile_app` (desktop only) /
+`storybook` (page section).
+
+The dark "Generative Wellness Care" banner stacked three blocks on desktop
+(headline, a 494px-tall card pair, then copy and CTA), 902px in all. At
+`lg:` it is now a two-column grid: badge, headline, copy and Start your
+Journey on the left, the rotated card pair on the right at a smaller
+`--promo-card` (170px) with `overflow-visible` so the 30° corners are not
+clipped by the narrower column. 412px tall at 1440px. `--promo-card` moved
+from the inline style into classes so it can change at the breakpoint; the
+new grid wrapper has no classes below `lg:`. Mobile banner compared
+pixel-for-pixel before and after: identical.
+
+---
+
 ### 2026-10-08 — Wellness goal card: progress and Alignment Score side by side on desktop
 
 **Lands on:** `web_app` / `admin_cms`

@@ -335,7 +335,12 @@ export function HomePage() {
           style={{ background: '#ff881b', '--glow-opacity': 0.35, animationDuration: '13s', animationDelay: '-4s' } as CSSProperties}
         />
 
-        <div className="relative mx-auto flex max-w-[362px] flex-col gap-24 lg:max-w-[960px]">
+        {/* Desktop (lg:) folds the banner into one row instead of three
+            stacked blocks: words and CTA on the left, the card pair on the
+            right at a smaller --promo-card. The wrapper has no classes below
+            lg:, so the mobile banner is the same block flow as before. */}
+        <div className="lg:mx-auto lg:grid lg:max-w-[960px] lg:grid-cols-[1fr_440px] lg:items-center lg:gap-x-48">
+        <div className="relative mx-auto flex max-w-[362px] flex-col gap-24 lg:max-w-[960px] lg:col-start-1 lg:row-start-1 lg:mx-0 lg:self-end">
           <div className="flex flex-col gap-24">
             <span
               className="text-style-label-regular w-fit rounded-12 px-12 py-8"
@@ -382,13 +387,12 @@ export function HomePage() {
             alignment. Capped and centered with the text column at lg:,
             same as everything else in this banner. */}
         <div
-          className="relative -mx-20 my-32 flex items-center justify-center gap-48 overflow-hidden lg:mx-auto lg:max-w-[960px]"
+          className="relative -mx-20 my-32 flex items-center justify-center gap-48 overflow-hidden lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:my-0 lg:mx-0 lg:max-w-none lg:gap-32 lg:overflow-visible lg:[--promo-card:170px] [--promo-card:clamp(150px,46vw,260px)]"
           style={{
             // width*sin30° + height*cos30° ≈ 1.87× the width is the rotated
             // bounding box height — short of that and the tilted corners
             // clip against this container's own overflow-hidden.
             height: 'calc(var(--promo-card) * 1.9)',
-            ['--promo-card' as string]: 'clamp(150px, 46vw, 260px)',
           }}
         >
           <div
@@ -419,7 +423,7 @@ export function HomePage() {
           </div>
         </div>
 
-        <div className="relative mx-auto flex max-w-[362px] flex-col gap-24 lg:max-w-[960px]">
+        <div className="relative mx-auto flex max-w-[362px] flex-col gap-24 lg:max-w-[960px] lg:col-start-1 lg:row-start-2 lg:mx-0 lg:mt-24 lg:self-start">
           <p className="text-style-body-small-light text-text-inverse/80">
             Chat with Aurelia to instantly create custom meditations, soundscapes, and breathwork tailored to how you
             feel right now.
@@ -433,6 +437,7 @@ export function HomePage() {
             Start your Journey
             <ArrowRight size={18} />
           </button>
+        </div>
         </div>
       </section>
       )}
