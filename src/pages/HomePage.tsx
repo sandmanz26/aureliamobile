@@ -316,11 +316,11 @@ export function HomePage() {
         </div>
       </div>
 
-      {/* Dark generative wellness banner — full bleed.
+      {/* Dark generative wellness banner — full bleed on mobile; on desktop a contained card in the content column.
           Figma frame 402x800, padding 40/20, counterAlign MIN (left-aligned),
           content SPACE_BETWEEN with the card pair bleeding past both edges. */}
       {isEnabled('home.promo') && (
-      <section className="relative mt-16 overflow-hidden bg-[#1B1006] px-20 py-40 text-text-inverse lg:px-24">
+      <section className="relative mt-16 overflow-hidden bg-[#1B1006] px-20 py-40 text-text-inverse lg:mx-auto lg:mt-40 lg:w-[calc(100%-48px)] lg:max-w-[912px] lg:rounded-[20px] lg:px-48 lg:py-48">
         {/* The two warm ellipses behind the content (Figma "Ellipse 6/7") —
             a soft drift in opacity and scale so the banner reads as alive
             rather than a flat static glow. Different durations (10s/13s)

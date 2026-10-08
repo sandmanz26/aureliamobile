@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-08 — Home promo banner contained on desktop
+
+`HomePage.tsx`: at `lg:` the dark "Generative Wellness Care" banner is no longer full-bleed — it sits in the content column (912px max, `rounded-[20px]`, 48px padding, `mt-40`) like every other section, since it was the only edge-to-edge block on the page. Mobile untouched (402px pixel-identical). Branches: `web_app`, `admin_cms`.
+
 ### 2026-10-08 — Promo banner folds into one row on desktop (902px to 412px tall)
 
 **Lands on:** `web_app` / `admin_cms`
