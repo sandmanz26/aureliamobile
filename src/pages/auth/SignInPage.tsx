@@ -38,14 +38,14 @@ export function SignInPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-background-default">
+    <div className="flex min-h-full flex-col bg-background-default lg:min-h-dvh lg:items-center lg:justify-center lg:p-40">
       <PageMeta title="Sign in" description="Sign in to Aurelia to build and play your personalized sessions." />
       {/* Desktop is a split screen, not the phone frame floating in the
-          middle of the window: the photo is an inset rounded panel at 44%
-          of the width carrying its own headline, and the form centres in
-          the rest. All of it is lg: — below that this is the 402-wide
+          middle of the window: the whole screen is one centred card (thin
+          border, soft shadow, max 1040x640) with the photo as an inset
+          panel carrying its own headline and the form beside it. All of it is lg: — below that this is the 402-wide
           mobile screen exactly as before. */}
-      <div className="relative flex h-dvh w-full max-w-[402px] flex-col overflow-hidden bg-background-default lg:max-w-none lg:flex-row lg:p-16">
+      <div className="relative flex h-dvh w-full max-w-[402px] flex-col overflow-hidden bg-background-default lg:h-[min(640px,calc(100dvh-80px))] lg:w-[min(1040px,calc(100vw-80px))] lg:max-w-none lg:flex-row lg:rounded-24 lg:border lg:border-black/8 lg:bg-surface-default lg:p-12 lg:shadow-[0_24px_64px_-16px_rgba(27,16,6,0.18)]">
         {/* The photo is the one flexible element on this screen — `flex-1
             min-h-0` lets it shrink all the way to nothing before the form
             below gives up any of its own height. Figma's 661/874 ratio is
@@ -53,7 +53,7 @@ export function SignInPage() {
             crops instead of squishing on anything shorter, so the sign-in
             buttons and the legal/sign-up line are never the thing that runs
             out of room. */}
-        <div className="relative min-h-0 w-full flex-1 lg:h-full lg:w-[44%] lg:max-w-[720px] lg:flex-none lg:overflow-hidden lg:rounded-24">
+        <div className="relative min-h-0 w-full flex-1 lg:h-full lg:w-[440px] lg:flex-none lg:overflow-hidden lg:rounded-16">
           <img src={authHero} alt="" className="size-full object-cover" />
           {/* Figma's "Body" fade (394→634 of an 874 frame) falls at
               59.6%→95.9% of this 661-tall image — transparent, then solid
@@ -69,8 +69,8 @@ export function SignInPage() {
           {/* Desktop only: the panel says what the product is, so the photo
               earns its space instead of being wallpaper. */}
           <div className="absolute inset-0 hidden bg-[linear-gradient(180deg,rgba(0,0,0,0.15)_0%,transparent_35%,rgba(27,16,6,0.75)_100%)] lg:block" />
-          <div className="absolute inset-x-40 bottom-40 hidden text-text-inverse lg:block">
-            <h2 className="text-style-headline max-w-[420px] text-balance">Wellness, shaped around how you feel.</h2>
+          <div className="absolute inset-x-32 bottom-32 hidden text-text-inverse lg:block">
+            <h2 className="text-style-title-large max-w-[360px] text-balance">Wellness, shaped around how you feel.</h2>
             <p className="text-style-body-small mt-12 max-w-[400px] text-white/80">
               Meditations, soundscapes and breathwork — generated in a conversation, for this moment rather than a playlist.
             </p>
@@ -81,21 +81,21 @@ export function SignInPage() {
           type="button"
           aria-label="Back"
           onClick={() => navigate('/home')}
-          className="u-press absolute left-16 top-16 z-10 flex size-44 items-center justify-center rounded-12 bg-black/30 text-white backdrop-blur-sm lg:left-40 lg:top-40"
+          className="u-press absolute left-16 top-16 z-10 flex size-44 items-center justify-center rounded-12 bg-black/30 text-white backdrop-blur-sm lg:left-28 lg:top-28"
         >
           <ArrowLeft size={20} />
         </button>
         {/* pointer-events-none: this spans the full width to center the mark,
             and without it the empty part of that strip sits over the back
             button (both at top-16) and swallows its clicks. */}
-        <div className="pointer-events-none absolute inset-x-0 top-16 z-10 flex justify-center lg:inset-x-auto lg:left-[calc(16px+min((100%-32px)*0.22,360px))] lg:top-40 lg:-translate-x-1/2">
+        <div className="pointer-events-none absolute inset-x-0 top-16 z-10 flex justify-center lg:inset-x-auto lg:left-[232px] lg:top-28 lg:-translate-x-1/2">
           <AureliaLogo inverse />
         </div>
 
         {/* shrink-0: this is the content that actually matters on the
             screen — it always renders at its full natural size, and the
             photo above is what gives up space for it, never the reverse. */}
-        <div className="flex shrink-0 flex-col px-24 pb-24 pt-16 lg:flex-1 lg:justify-center lg:items-center lg:px-64 lg:*:w-full lg:*:max-w-[400px] lg:py-48">
+        <div className="flex shrink-0 flex-col px-24 pb-24 pt-16 lg:flex-1 lg:justify-center lg:items-center lg:px-56 lg:*:w-full lg:*:max-w-[360px] lg:py-48">
           <h1 className="text-style-title-large text-text-primary">Welcome to Aurelia.</h1>
 
           <div className="mt-24 flex flex-col gap-12">

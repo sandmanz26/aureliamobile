@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-08 — Sign-in desktop: one centred card
+
+`SignInPage.tsx`, `lg:` only: the split screen is now a single centred card (max 1040x640, thin `border-black/8`, soft shadow, `rounded-24`, 12px inner padding) holding a 440px inset photo with the headline and the form beside it. Mobile untouched (402px pixel-identical). Branches: `web_app`, `admin_cms`.
+
 ### 2026-10-08 — Staging no longer labelled Production
 
 Staging is a separate Vercel project that deploys `web_app` as *its* production branch, so `VERCEL_ENV=production` there and the build badge said **Production**. `vite.config.ts` now reports production only when the branch is `web_prod`; `api/config.ts` and `api/annotations.ts` apply the same rule, so staging stops writing the bare `aurelia:demo:config` / `aurelia:demo:annotations` keys (production's) and uses `…:web_app`. Staging's published flags therefore start from whatever is under the `:web_app` key — re-publish once on staging. Branches: `web_app`, `admin_cms`.
