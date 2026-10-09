@@ -14,7 +14,14 @@ interface EmptyThreadPromptsProps {
  */
 export function EmptyThread({ name }: { name: string }) {
   return (
-    <div className="flex flex-1 flex-col items-center pt-32">
+    <div className="v2-empty flex flex-1 flex-col items-center pt-32">
+      {/* Version 2 only (hidden in v1 by versions.css): a soft warm field
+          drifting slowly behind the orb, so the empty screen breathes. */}
+      <span aria-hidden="true" className="v2-ambient">
+        <span />
+        <span />
+        <span />
+      </span>
       {/* Figma "Ellipse 30" + "Group 34" (16658:28872). Three layers, not one:
           a 160 radial wash at half opacity, with a 52 gold disc and a 64 orange
           disc blurred inside it and deliberately off-centre from each other.
@@ -23,7 +30,7 @@ export function EmptyThread({ name }: { name: string }) {
 
           Drawn rather than an image: it is the largest warm thing on the
           screen and a raster of a blur bands badly on a phone. */}
-      <span aria-hidden="true" className="relative size-160 shrink-0">
+      <span aria-hidden="true" className="v2-orb relative size-160 shrink-0">
         <span
           className="absolute inset-0 rounded-full"
           style={{
@@ -48,7 +55,7 @@ export function EmptyThread({ name }: { name: string }) {
           layer. Written out because the frame's leading is 115%, not the
           scale's 32. 295 wide is what breaks it after "you", as the frame
           does. */}
-      <h1 className="mt-32 max-w-[295px] text-center text-[24px] leading-[28px] text-text-primary">
+      <h1 className="v2-greeting mt-32 max-w-[295px] text-center text-[24px] leading-[28px] text-text-primary">
         Hello {name}, What are you creating today?
       </h1>
     </div>

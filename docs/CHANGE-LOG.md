@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-09 — v2: moving soft background on the new-chat screen
+
+`EmptyThread`: in Version 2 three blurred warm blobs drift slowly (18–26s loops) behind the orb, edges masked so nothing reads as a box; the orb breathes and its inner lights drift; the greeting rises in after it. Hooks (`v2-empty`, `v2-ambient`, `v2-orb`, `v2-greeting`) are inert in v1 — `/chat` empty state pixel-identical at 402px. Listed in the v2 pop-up. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-09 — v2: Total Credits counts up
 
 `/credits`: in Version 2 the Total Credits figure counts up to its value (same `CountUp` as `CoinPill`). v1 unchanged. Branches: `web_app`, `admin_cms`. Not `web_prod`.

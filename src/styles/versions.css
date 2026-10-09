@@ -217,3 +217,87 @@
 :root[data-floating-player] .u-page :is(.sticky, .fixed).bottom-0 {
   bottom: 88px;
 }
+
+/* ---- Version 2: chat empty state ---------------------------------------- */
+/* A soft, slowly drifting warm field behind the orb, the orb breathing, and
+   the greeting rising in after it. Hidden entirely in v1. */
+.v2-ambient {
+  display: none;
+}
+:root[data-ui-version='2'] .v2-empty {
+  position: relative;
+  isolation: isolate;
+}
+:root[data-ui-version='2'] .v2-ambient {
+  position: absolute;
+  inset: -32px -20px 0;
+  z-index: -1;
+  display: block;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 22%, #000 70%, transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 22%, #000 70%, transparent 100%);
+  pointer-events: none;
+}
+:root[data-ui-version='2'] .v2-ambient > span {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(60px);
+  opacity: 0.45;
+  animation: v2-ambient-a 18s var(--ease-in-out) infinite alternate;
+}
+:root[data-ui-version='2'] .v2-ambient > span:nth-child(1) {
+  left: -10%;
+  top: 0;
+  width: 70%;
+  height: 45%;
+  background: #ffe682;
+}
+:root[data-ui-version='2'] .v2-ambient > span:nth-child(2) {
+  right: -15%;
+  top: 20%;
+  width: 65%;
+  height: 40%;
+  background: #ffc58a;
+  animation-name: v2-ambient-b;
+  animation-duration: 22s;
+}
+:root[data-ui-version='2'] .v2-ambient > span:nth-child(3) {
+  left: 10%;
+  top: 50%;
+  width: 80%;
+  height: 40%;
+  background: #fff1db;
+  opacity: 0.7;
+  animation-duration: 26s;
+  animation-delay: -8s;
+}
+@keyframes v2-ambient-a {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(18%, 12%) scale(1.15); }
+  100% { transform: translate(-8%, 22%) scale(0.95); }
+}
+@keyframes v2-ambient-b {
+  0% { transform: translate(0, 0) scale(1.05); }
+  50% { transform: translate(-20%, -10%) scale(0.9); }
+  100% { transform: translate(-5%, 18%) scale(1.12); }
+}
+:root[data-ui-version='2'] .v2-orb {
+  animation: v2-orb-breathe 6s var(--ease-in-out) infinite;
+}
+:root[data-ui-version='2'] .v2-orb > span:nth-child(2) {
+  animation: v2-orb-drift 9s var(--ease-in-out) infinite alternate;
+}
+:root[data-ui-version='2'] .v2-orb > span:nth-child(3) {
+  animation: v2-orb-drift 7s var(--ease-in-out) infinite alternate-reverse;
+}
+@keyframes v2-orb-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.07); }
+}
+@keyframes v2-orb-drift {
+  from { translate: -8px -6px; }
+  to { translate: 8px 6px; }
+}
+:root[data-ui-version='2'] .v2-greeting {
+  animation: u-rise 600ms var(--ease-out) 200ms both;
+}
