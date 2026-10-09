@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-09 — Staging bar: version switcher on every page
+
+The design-version picker moved out of `BuildBadge` into `src/versions/StagingBar.tsx`: a 28px dark bar fixed to the top of every route (consumer app, `/login`, `/admin`, `/__demo`), showing environment, version · commit and the `Design v1 ▾` picker. It takes real space — `data-staging-bar` on <html> pads the body and shortens `h-dvh`/`h-screen`/`min-h-*` layouts and sticky tops by 28px (`versions.css`), checked for no overflow at 402 and 1440 on `/home`, `/chat`, `/login`, `/admin`, `/__demo`. Renders nothing on production, so production layout is unchanged; on staging every page sits 28px lower, on request. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-09 — Version 2: feature-card icon micro-animations
 
 Home's six feature cards get one looping micro-animation per icon (rise, wave, beat, breeze, flip, gather), staggered so they never move together, plus a tilt-and-glow on desktop hover. Version 2 only (`versions.css`); `FeatureCard` gains an optional `motion` prop and a `u-feature-icon` hook. v1 `/home` at 402px pixel-identical. Listed in the v2 "What changes" dialog. Branches: `web_app`, `admin_cms`. Not `web_prod`.

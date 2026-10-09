@@ -388,7 +388,8 @@ first.
 ## Design versions (staging only)
 
 `src/versions/versions.ts` lists switchable design versions; the picker sits
-beside `BuildBadge` and shows a "what changes" dialog before applying. A
+in `StagingBar`, a 28px bar fixed to the top of every page on staging (it
+offsets `h-dvh`/sticky layouts via `--staging-bar` in `versions.css`), and shows a "what changes" dialog before applying. A
 version is a set of rules scoped under `:root[data-ui-version='N']` in
 `src/styles/versions.css`, so v1 (no attribute) is always the app unchanged.
 Production ignores the stored choice and is pinned to v1. New experiments go

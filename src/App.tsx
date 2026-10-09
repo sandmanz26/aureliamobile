@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { StagingBar } from './versions/StagingBar'
 import { AdminLayout } from './admin/AdminLayout'
 import { AudioPlayerProvider } from './audio/AudioPlayerContext'
 import { AuthProvider } from './auth/AuthContext'
@@ -72,6 +73,7 @@ const SettingsPage = lazy(() => import('./admin/pages/SettingsPage').then((m) =>
 export default function App() {
   return (
     <FeatureFlagsProvider>
+      <StagingBar />
       <SiteLock>
       <AuthProvider>
         {/* Above the router on purpose: a session being built has to survive

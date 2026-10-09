@@ -153,3 +153,26 @@
     box-shadow: 0 8px 18px -8px rgb(255 136 27 / 0.55);
   }
 }
+
+/* ---- Staging bar (src/versions/StagingBar.tsx) ------------------------- */
+/* Unlayered, so these beat Tailwind's utilities. Every viewport-height
+   layout gives up the bar's height, and sticky headers sit under it. */
+:root { --staging-bar: 0px; }
+:root[data-staging-bar] { --staging-bar: 28px; }
+:root[data-staging-bar] body { padding-top: var(--staging-bar); }
+/* Unlayered rules beat every utility on the element, responsive ones too,
+   so at lg an element that sets its own lg: height keeps it. */
+:root[data-staging-bar] :is(.h-dvh, .h-screen):not([class*='lg:h-']) { height: calc(100dvh - var(--staging-bar)); }
+:root[data-staging-bar] :is(.min-h-dvh, .min-h-screen):not([class*='lg:min-h-']) { min-height: calc(100dvh - var(--staging-bar)); }
+@media (width < 64rem) {
+  :root[data-staging-bar] :is(.h-dvh, .h-screen) { height: calc(100dvh - var(--staging-bar)); }
+  :root[data-staging-bar] :is(.min-h-dvh, .min-h-screen) { min-height: calc(100dvh - var(--staging-bar)); }
+}
+:root[data-staging-bar] .u-sticky-top { top: var(--staging-bar); }
+:root[data-staging-bar] :is(.fixed.inset-0) { top: var(--staging-bar); }
+@media (width >= 64rem) {
+  :root[data-staging-bar] .lg\:h-screen { height: calc(100dvh - var(--staging-bar)); }
+  :root[data-staging-bar] .lg\:min-h-dvh { min-height: calc(100dvh - var(--staging-bar)); }
+  :root[data-staging-bar] .lg\:top-0 { top: var(--staging-bar); }
+  :root[data-staging-bar] .lg\:h-\[min\(640px\,calc\(100dvh-80px\)\)\] { height: min(640px, calc(100dvh - 80px - var(--staging-bar))); }
+}

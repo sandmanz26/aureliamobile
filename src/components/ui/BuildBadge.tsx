@@ -1,5 +1,4 @@
 import { BUILD, BUILD_VERSION } from '../../lib/build'
-import { VersionSwitcher } from '../../versions/VersionSwitcher'
 
 /**
  * Which site is this, and which build?
@@ -36,8 +35,6 @@ export function BuildBadge({ dark = false }: { dark?: boolean }) {
       <span className={`text-style-caption font-mono ${dark ? 'text-white/45' : 'text-text-secondary'}`}>
         {BUILD_VERSION}
       </span>
-      {/* Staging only — renders nothing on production. */}
-      <VersionSwitcher dark={dark} />
     </div>
   )
 }
