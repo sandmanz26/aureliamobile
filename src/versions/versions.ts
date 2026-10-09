@@ -40,6 +40,8 @@ export const UI_VERSIONS: UiVersion[] = [
           'Buttons have a springier press and a small lift on hover.',
           'New chat: a soft warm background drifts slowly behind a breathing orb, and the greeting rises in.',
           'Home: the Ask field types out example prompts while it waits, and the live dots on the Live Sessions map pulse.',
+          'Home promo banner: the warm glows behind it roam and brighten much more visibly.',
+          'Profile picture spins in like a coin, and flips to a gold coin face when tapped or hovered.',
           'Coin balances count up to their value, including the Total Credits figure.',
         ],
       },

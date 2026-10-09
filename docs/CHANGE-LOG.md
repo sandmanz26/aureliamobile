@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-09 — v2: stronger promo glow, coin-flip profile picture
+
+Version 2 only. (1) Home promo banner: the two `u-glow-drift` glows switch to `v2-glow-roam` — they now travel across the banner, grow to 1.25x and brighten by up to +0.35 opacity, instead of a barely visible pulse. (2) `/profile`: the 88px avatar is wrapped in `CoinFlip` — it spins in like a tossed coin on arrival and flips to a gold coin face and back on tap or hover (guarded so a flip can't retrigger itself). In v1 `CoinFlip` renders the picture alone; `/profile` and Home v1 pixel-identical apart from the commit hash. Listed in the v2 pop-up. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-09 — v2: typing placeholder and pulsing live map on Home
 
 Version 2 only. (12) Home's Ask field types out four example prompts, holds, erases and cycles; it stops and shows "Ask Aurelia.." while focused or filled, and under reduced motion (`useTypewriterPlaceholder`). (13) The Live Sessions map pulses a soft orange ring out of 17 of the live dots baked into the art (positions measured from the PNG). v1 Home pixel-identical at 402/820/1440. Listed in the v2 pop-up. Branches: `web_app`, `admin_cms`. Not `web_prod`.

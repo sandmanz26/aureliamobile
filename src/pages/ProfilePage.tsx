@@ -4,6 +4,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { PageMeta } from '../components/PageMeta'
 import { CoinPill } from '../components/ui/CoinPill'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
+import { CoinFlip } from '../versions/CoinFlip'
 import { SessionGridCard } from '../components/ui/SessionGridCard'
 import { findPerson } from '../lib/people'
 import { isRecreated } from '../lib/sessions'
@@ -130,12 +131,14 @@ export function ProfilePage() {
           (12/Regular) — the smaller, lighter pairing the frame actually
           draws, not Title/Label's larger Medium weight. */}
       <div className="mt-24 flex items-start gap-20">
-        <PhotoCircle
-          photo={person.photo}
-          size={88}
-          gradient="var(--color-background-elevated)"
-          alt={person.name}
-        />
+        <CoinFlip size={88}>
+          <PhotoCircle
+            photo={person.photo}
+            size={88}
+            gradient="var(--color-background-elevated)"
+            alt={person.name}
+          />
+        </CoinFlip>
         <div className="flex min-w-0 flex-1 flex-col gap-12">
           <div>
             <p className="text-style-body text-text-strong">{person.name}</p>
