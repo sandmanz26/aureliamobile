@@ -1,5 +1,6 @@
 @import './styles/tokens.css';
 @import './styles/motion.css';
+@import './styles/versions.css';
 @import './admin/admin.css';
 
 /* Self-hosted rather than linked from fonts.googleapis.com: the Google

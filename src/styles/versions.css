@@ -1,0 +1,106 @@
+/* Design versions (staging only — see src/versions/versions.ts).
+ *
+ * Every rule here is scoped under :root[data-ui-version='N'], so version 1
+ * (no attribute) is the app exactly as it ships. Reduced motion is handled by
+ * the blanket rule at the bottom of motion.css, which also covers these.
+ */
+
+/* ---- Version 2: more transition animation on every page ---------------- */
+
+@keyframes v2-page-in {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateY(18px);
+  }
+}
+
+@keyframes v2-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.985);
+  }
+}
+
+@keyframes v2-photo-in {
+  from {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes v2-spring-up {
+  0% { transform: translateY(100%); }
+  70% { transform: translateY(-2%); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes v2-spring-left {
+  0% { transform: translateX(-100%); }
+  70% { transform: translateX(1.5%); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes v2-pop {
+  0% { opacity: 0; transform: scale(0.92); }
+  70% { opacity: 1; transform: scale(1.01); }
+  100% { transform: scale(1); }
+}
+
+:root[data-ui-version='2'] {
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Screen change: blur-and-rise, a touch longer. */
+:root[data-ui-version='2'] .u-page {
+  animation: v2-page-in var(--motion-slow) var(--ease-out) both;
+}
+
+/* Scroll reveal for the blocks of any page. Scroll-driven, so it needs no
+   observer and costs nothing where unsupported (the element simply shows). */
+@supports (animation-timeline: view()) {
+  :root[data-ui-version='2'] .u-page :is(section, article, li, .u-lift) {
+    animation: v2-reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 60%;
+  }
+}
+
+/* Card photos settle in with a slow zoom, and drift on desktop hover. */
+:root[data-ui-version='2'] .u-page :is(article, .u-lift) img {
+  animation: v2-photo-in 900ms var(--ease-out) both;
+  transition: transform 600ms var(--ease-out);
+}
+@media (hover: hover) {
+  :root[data-ui-version='2'] .u-lift:hover img {
+    transform: scale(1.05);
+  }
+  :root[data-ui-version='2'] .u-press:hover {
+    transform: translateY(-1px);
+  }
+}
+
+/* Springier press. */
+:root[data-ui-version='2'] .u-press {
+  transition:
+    transform var(--motion-base) var(--ease-spring),
+    opacity var(--motion-fast) var(--ease-out),
+    background-color var(--motion-fast) var(--ease-in-out),
+    border-color var(--motion-fast) var(--ease-in-out);
+}
+:root[data-ui-version='2'] .u-press:active {
+  transform: scale(0.94);
+}
+
+/* Drawer, sheets and dialogs. */
+:root[data-ui-version='2'] .u-drawer {
+  animation: v2-spring-left 480ms var(--ease-out) both;
+}
+:root[data-ui-version='2'] .u-sheet {
+  animation: v2-spring-up 480ms var(--ease-out) both;
+}
+:root[data-ui-version='2'] .u-pop {
+  animation: v2-pop var(--motion-base) var(--ease-out) both;
+}
+:root[data-ui-version='2'] .u-stagger > * {
+  animation-duration: var(--motion-slow);
+}

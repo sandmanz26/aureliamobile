@@ -19,6 +19,13 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-09 — Staging version switcher, and Version 2 (more motion)
+
+- **Version switcher** (`src/versions/`): a `v1 ▾` picker beside the build badge (drawer foot, admin sidebar, `/__demo`). Choosing a version opens a "What changes in Version N" dialog first; Switch applies it and saves it in this browser (`aurelia.ui.version`). Renders nothing on production, which is pinned to v1 regardless of storage.
+- **Version 2** (`src/styles/versions.css`, all rules under `:root[data-ui-version='2']`): blur-and-rise page entrances, scroll-driven reveals for sections/cards/list rows on every page, slow zoom on card photos (+hover zoom on desktop), springier press and hover lift, springier drawer/sheet/dialog. Reduced motion still disables all of it.
+- Version 1 is the app unchanged: `/home`, `/explore`, `/sessions`, `/login` at 402px pixel-identical. The one visible addition on v1 is the picker itself next to the staging badge.
+- Branches: `web_app`, `admin_cms`. **Not** `web_prod` (on request: no production updates).
+
 ### 2026-10-09 — `web_prod` fast-forwarded to `web_app`
 
 On request, production moved from `d135f24` to this commit: everything on staging, including the desktop-only Home, sign-in and wellness changes and the staging/production label fix. Version left at 0.1.0. Branches: `web_app`, `admin_cms`, `web_prod`.

@@ -382,3 +382,15 @@ in `docs/PRD.md`. Two examples: the sign-in ask lands on send rather than on the
 first keystroke, and the password-reset confirmation must not reveal whether an
 address is registered. If you are about to change one of those, read the entry
 first.
+
+---
+
+## Design versions (staging only)
+
+`src/versions/versions.ts` lists switchable design versions; the picker sits
+beside `BuildBadge` and shows a "what changes" dialog before applying. A
+version is a set of rules scoped under `:root[data-ui-version='N']` in
+`src/styles/versions.css`, so v1 (no attribute) is always the app unchanged.
+Production ignores the stored choice and is pinned to v1. New experiments go
+in as a new version first; promoting one to the default is a separate,
+explicit step.
