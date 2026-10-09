@@ -223,6 +223,12 @@ people dropping pins within the same debounce window can lose one, an
 accepted gap for a low-traffic internal tool. A `.txt` export is still how
 notes move between deployments or to someone outside them.
 
+**Pins are also scoped to the design version** (staging's v1/v2 switcher).
+Each pin stores `ui`; a screen shows only the pins written in the version
+it is in, and the list, count and delete-all are per version. Pins from
+before this existed are v1. Save .txt exports every version, each note
+tagged `design: vN`.
+
 **A shared password sits in front of the site, but not in front of `/__demo`.**
 The console that owns the switch stays open so nobody can shut themselves out of
 it — which also means that URL is a way around the lock for anyone who knows it.

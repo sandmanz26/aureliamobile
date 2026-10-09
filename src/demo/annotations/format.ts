@@ -10,6 +10,7 @@
  *
  *   --- #1 a8f3k2
  *   page: /chat
+ *   design: v2
  *   pos: 42.5, 61.2
  *   viewport: 390x844
  *   scroll: 240
@@ -42,6 +43,13 @@ export type Annotation = {
    * fixed spot in the full document: `scrollY + (y / 100) * vh`.
    */
   scrollY: number
+  /**
+   * Design version the screen was in when the pin was dropped (staging's
+   * v1/v2 switcher). Pins only show in the version they were written for —
+   * a note about a v2 animation means nothing on v1. Older pins, and files
+   * exported before this existed, are v1.
+   */
+  ui: number
   text: string
   createdAt: string
   updatedAt: string
@@ -58,10 +66,14 @@ const clampPct = (n: number) => Math.min(100, Math.max(0, Number.isFinite(n) ? n
 const escapeLine = (line: string) => (line.startsWith(BLOCK) || line.startsWith('\\') ? `\\${line}` : line)
 const unescapeLine = (line: string) => (line.startsWith('\\') ? line.slice(1) : line)
 
-/** By page, then top to bottom — the order a reviewer reads a screen in. */
+/** Design version, then page, then top to bottom — the order a reviewer reads a screen in. */
 export function sortAnnotations(list: Annotation[]): Annotation[] {
   return [...list].sort((a, b) =>
-    a.page === b.page ? a.y - b.y || a.x - b.x : a.page.localeCompare(b.page),
+    (a.ui ?? 1) !== (b.ui ?? 1)
+      ? (a.ui ?? 1) - (b.ui ?? 1)
+      : a.page === b.page
+        ? a.y - b.y || a.x - b.x
+        : a.page.localeCompare(b.page),
   )
 }
 
@@ -71,6 +83,7 @@ export function serializeAnnotations(list: Annotation[]): string {
     out.push(
       `${BLOCK}${i + 1} ${a.id}`,
       `page: ${a.page}`,
+      `design: v${a.ui ?? 1}`,
       `pos: ${a.x.toFixed(1)}, ${a.y.toFixed(1)}`,
       `viewport: ${Math.round(a.vw)}x${Math.round(a.vh)}`,
       `scroll: ${Math.round(a.scrollY)}`,
@@ -105,6 +118,7 @@ export function parseAnnotations(raw: string): Annotation[] {
       // the right default anyway, since those pins were meant to be read at
       // the top of the page.
       scrollY: current.scrollY || 0,
+      ui: current.ui || 1,
       text: (note ?? []).join('\n'),
       createdAt: current.createdAt || now,
       updatedAt: current.updatedAt || current.createdAt || now,
@@ -143,6 +157,9 @@ export function parseAnnotations(raw: string): Annotation[] {
         current.vh = h || 0
         break
       }
+      case 'design':
+        current.ui = parseInt(value.replace(/^v/i, ''), 10) || 1
+        break
       case 'scroll':
         current.scrollY = parseInt(value, 10) || 0
         break

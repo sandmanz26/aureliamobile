@@ -6,6 +6,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useFeatureFlags } from '../FeatureFlags'
 import { ANNOTATIONS_FLAG, MOBILE_WEB_BREAKPOINT } from '../modules'
 import type { Annotation } from './format'
+import { useUiVersion } from '../../versions/useUiVersion'
 import {
   annotationsFileName,
   newAnnotationId,
@@ -164,6 +165,8 @@ export function DemoAnnotator() {
 }
 
 function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () => void }) {
+  // Pins belong to the design version they were dropped in (v1/v2 switcher).
+  const ui = useUiVersion()
   const navigate = useNavigate()
   const { w: vw, h: vh } = useViewport()
 
@@ -282,10 +285,13 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
   }, [toast])
 
   const onThisPage = useMemo(
-    () => sortAnnotations(annotations.filter((a) => a.page === pathname)),
-    [annotations, pathname],
+    () => sortAnnotations(annotations.filter((a) => a.page === pathname && (a.ui ?? 1) === ui)),
+    [annotations, pathname, ui],
   )
+  // Everything written, across versions — what Save .txt exports, each note
+  // tagged with its version. The list, count and delete-all are this version's.
   const written = annotations.filter((a) => a.text.trim() !== '')
+  const writtenHere = written.filter((a) => (a.ui ?? 1) === ui)
 
   const update = useCallback((id: string, patch: Partial<Annotation>) => {
     setAnnotations((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)))
@@ -300,18 +306,19 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
    *  same way, so "delete all" means the same thing it does there. */
   function clearAll() {
     setMenuOpen(false)
-    if (!annotations.length) {
+    const mine = annotations.filter((a) => (a.ui ?? 1) === ui)
+    if (!mine.length) {
       setToast('No notes to delete')
       return
     }
-    const count = annotations.length
+    const count = mine.length
     const everyone = sync === 'synced' || sync === 'saving' ? ' for everyone, not just this device' : ''
     if (
-      !window.confirm(`Delete all ${count} note${count === 1 ? '' : 's'} on every page${everyone}? This can't be undone.`)
+      !window.confirm(`Delete all ${count} v${ui} note${count === 1 ? '' : 's'} on every page${everyone}? Notes on other design versions stay. This can't be undone.`)
     ) {
       return
     }
-    setAnnotations([])
+    setAnnotations((prev) => prev.filter((a) => (a.ui ?? 1) !== ui))
     setOpenId(null)
     setListOpen(false)
     setToast('All notes deleted')
@@ -362,6 +369,7 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
       vw,
       vh,
       scrollY: window.scrollY,
+      ui,
       text: '',
       createdAt: now,
       updatedAt: now,
@@ -484,7 +492,7 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
       )}
 
       {listOpen && (
-        <NoteList annotations={written} currentPage={pathname} onPick={goTo} onClose={() => setListOpen(false)} />
+        <NoteList annotations={writtenHere} ui={ui} currentPage={pathname} onPick={goTo} onClose={() => setListOpen(false)} />
       )}
 
       {menuOpen && !placing && !listOpen && (
@@ -493,7 +501,7 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
           fabTop={fabTop}
           vw={vw}
           vh={vh}
-          count={written.length}
+          count={writtenHere.length}
           onAdd={startPlacing}
           onList={() => {
             setMenuOpen(false)
@@ -776,11 +784,13 @@ function Menu({
 
 function NoteList({
   annotations,
+  ui,
   currentPage,
   onPick,
   onClose,
 }: {
   annotations: Annotation[]
+  ui: number
   currentPage: string
   onPick: (annotation: Annotation) => void
   onClose: () => void
@@ -800,7 +810,7 @@ function NoteList({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-border-subtle px-16 pb-8 pt-12">
-          <h2 className="text-style-body font-semibold text-text-primary">Notes ({annotations.length})</h2>
+          <h2 className="text-style-body font-semibold text-text-primary">Notes · v{ui} ({annotations.length})</h2>
           <button type="button" aria-label="Close list" onClick={onClose} className="p-4 text-icon-secondary">
             <X size={16} />
           </button>

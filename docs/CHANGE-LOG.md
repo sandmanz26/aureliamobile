@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-09 — Review annotations know the design version
+
+Pins now record the design version they were dropped in (`ui` on `Annotation`). Each version shows only its own pins, so a v2 note never appears on v1 and vice versa; the Notes list (titled `Notes · vN`), the count on the menu and Delete all are per version (delete-all leaves other versions' notes). Existing pins have no version and read as v1. Save .txt still exports everything, each note with a `design: vN` line, and import reads it back (missing = v1). `api/annotations.ts` accepts the optional field. Verified: one v1 and one v2 pin on `/home` each show only in their own version. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-09 — v2: promo banner light follows the cursor
 
 Version 2 only. Home's dark promo banner tracks the pointer (mouse or finger): a soft warm light trails it with a 700ms ease, the two roaming glows lean the opposite way for depth, and the light fades out when the pointer leaves. Pointer position is written to CSS variables on the section, so moving never re-renders React. v1 Home pixel-identical at 402/820/1440. Branches: `web_app`, `admin_cms`. Not `web_prod`.

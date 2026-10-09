@@ -88,6 +88,9 @@ function isValidAnnotation(value: unknown): value is Record<string, unknown> {
     Number.isFinite(a.vh) &&
     typeof a.scrollY === 'number' &&
     Number.isFinite(a.scrollY) &&
+    // Design version (staging v1/v2 switcher). Optional: pins from before it
+    // existed have none and read as v1.
+    (a.ui === undefined || (typeof a.ui === 'number' && Number.isInteger(a.ui) && a.ui >= 1 && a.ui <= 99)) &&
     typeof a.text === 'string' &&
     a.text.length <= MAX_TEXT_LENGTH &&
     typeof a.createdAt === 'string' &&
