@@ -3,6 +3,8 @@ import { ArrowLeft, Check, Copy } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { PageMeta } from '../components/PageMeta'
 import { CoinMark } from '../components/ui/CoinPill'
+import { CountUp } from '../components/ui/CountUp'
+import { useUiVersion } from '../versions/useUiVersion'
 import { CREDIT_HISTORY, INVITE_LINK, INVITE_REWARD, TOTAL_CREDITS } from '../lib/credits'
 import { CARD_SHADOW } from '../lib/shadows'
 
@@ -24,6 +26,8 @@ import { CARD_SHADOW } from '../lib/shadows'
 export function CreditsPage() {
   const navigate = useNavigate()
   const [copied, setCopied] = useState(false)
+  // Version 2: the balance counts up to its value, like every CoinPill.
+  const v2 = useUiVersion() >= 2
 
   async function copy() {
     try {
@@ -63,7 +67,17 @@ export function CreditsPage() {
             {/* 24 Medium in the frame. The library has no 24 Medium style — it
                 has Title Large at Semibold and Title Large Regular — so this is
                 written out rather than bent onto the nearest one. */}
-            <span className="text-[24px] font-medium leading-[28px] text-text-primary">{TOTAL_CREDITS}</span>
+            <span className={`text-[24px] font-medium leading-[28px] text-text-primary${v2 ? ' tabular-nums' : ''}`}>
+              {v2 ? (
+                <CountUp
+                  value={Number(TOTAL_CREDITS.replace(/[^0-9]/g, ''))}
+                  durationMs={1300}
+                  format={(n) => Math.round(n).toLocaleString('en-US')}
+                />
+              ) : (
+                TOTAL_CREDITS
+              )}
+            </span>
           </span>
         </div>
 

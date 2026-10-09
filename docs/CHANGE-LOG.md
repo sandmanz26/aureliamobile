@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-09 — v2: Total Credits counts up
+
+`/credits`: in Version 2 the Total Credits figure counts up to its value (same `CountUp` as `CoinPill`). v1 unchanged. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-09 — v2 "What changes" pop-up rewritten
 
 The Version 2 dialog now summarises v2 in five groups (Motion, Interactions, Player, Tablet, Unchanged) instead of one flat list; `UiVersion.changes` is grouped and the list scrolls inside the dialog on short screens. Staging only. Branches: `web_app`, `admin_cms`. Not `web_prod`.

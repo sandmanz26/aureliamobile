@@ -38,7 +38,7 @@ export const UI_VERSIONS: UiVersion[] = [
           'Sections, cards and list rows fade up as you scroll to them.',
           'Card photos settle in with a slow zoom (and zoom slightly on desktop hover).',
           'Buttons have a springier press and a small lift on hover.',
-          'Coin balances count up to their value.',
+          'Coin balances count up to their value, including the Total Credits figure.',
         ],
       },
       {
