@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-09 — `web_prod` fast-forwarded to `web_app`
+
+On request, production moved from `d135f24` to this commit: everything on staging, including the desktop-only Home, sign-in and wellness changes and the staging/production label fix. Version left at 0.1.0. Branches: `web_app`, `admin_cms`, `web_prod`.
+
 ### 2026-10-08 — Sign-in desktop: one centred card
 
 `SignInPage.tsx`, `lg:` only: the split screen is now a single centred card (max 1040x640, thin `border-black/8`, soft shadow, `rounded-24`, 12px inner padding) holding a 440px inset photo with the headline and the form beside it. Mobile untouched (402px pixel-identical). Branches: `web_app`, `admin_cms`.
