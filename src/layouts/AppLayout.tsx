@@ -1,6 +1,8 @@
 import { Bell, Plus } from 'lucide-react'
 import { Suspense, useEffect, useState } from 'react'
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Outlet, useLocation, useNavigate, useNavigationType } from 'react-router-dom'
+import { FloatingPlayer, PullIndicator, usePullToRefresh, useSheetDrag } from '../versions/V2Shell'
+import { useUiVersion } from '../versions/useUiVersion'
 import { useAuth } from '../auth/AuthContext'
 import { useHiddenScrollbars } from '../hooks/useHiddenScrollbars'
 import { useSignInGate } from '../auth/useSignInGate'
@@ -201,6 +203,12 @@ export function AppLayout() {
   }, [drawerOpen])
   const location = useLocation()
   useHiddenScrollbars()
+  // Design Version 2 (staging only): directional page transitions, pull to
+  // refresh, draggable sheets and a player that follows you. See V2Shell.
+  const v2 = useUiVersion() >= 2
+  const navType = useNavigationType()
+  const { pull, refreshing, key: refreshKey } = usePullToRefresh(v2)
+  useSheetDrag(v2)
 
   return (
     <DrawerContext.Provider value={{ openDrawer: () => setDrawerOpen(true) }}>
@@ -247,7 +255,13 @@ export function AppLayout() {
         <div className="min-w-0 flex-1">
           {/* Keyed on the path so the entrance replays on every navigation —
               without it React reuses the node and the animation runs once. */}
-          <div key={location.pathname} className="u-page pt-[30px] lg:pt-0">
+          {v2 && <PullIndicator pull={pull} refreshing={refreshing} />}
+          <div
+            key={`${location.pathname}#${refreshKey}`}
+            data-nav={v2 ? navType : undefined}
+            className="u-page pt-[30px] lg:pt-0"
+            style={v2 && pull ? { transform: `translateY(${pull * 0.6}px)`, transition: 'none' } : undefined}
+          >
             {/* Only the page content suspends — the drawer, status band and
                 this shell stay put. Each page is its own lazy chunk (see
                 App.tsx), so this only shows on the first visit to a route
@@ -265,6 +279,7 @@ export function AppLayout() {
             <Suspense fallback={<PageSkeleton />}>
               <Outlet />
             </Suspense>
+            {v2 && <FloatingPlayer pathname={location.pathname} />}
           </div>
         </div>
       </div>

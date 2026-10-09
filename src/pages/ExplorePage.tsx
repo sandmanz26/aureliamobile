@@ -234,6 +234,7 @@ export function ExplorePage() {
         <Link
           to="/chat"
           aria-label="Play today’s session"
+          data-tablet="explore-hero"
           className="relative block aspect-[362/244] w-full overflow-hidden rounded-[20px]"
         >
           <CoverImage

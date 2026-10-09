@@ -38,7 +38,7 @@ export function SignInPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-background-default lg:min-h-dvh lg:items-center lg:justify-center lg:p-40">
+    <div data-tablet="signin" className="flex min-h-full flex-col bg-background-default lg:min-h-dvh lg:items-center lg:justify-center lg:p-40">
       <PageMeta title="Sign in" description="Sign in to Aurelia to build and play your personalized sessions." />
       {/* Desktop is a split screen, not the phone frame floating in the
           middle of the window: the whole screen is one centred card (thin

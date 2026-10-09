@@ -251,7 +251,7 @@ export function SessionsPage() {
               its width, not as a wider version of the card. Two columns at
               lg: is this page's own number, not a frame measurement —
               there's no desktop reference for this screen. */}
-          <div className="flex flex-col gap-12 lg:grid lg:grid-cols-2 lg:gap-16">
+          <div data-tablet="two-col" className="flex flex-col gap-12 lg:grid lg:grid-cols-2 lg:gap-16">
             {shown.map((session) => (
               <SessionRow
                 key={session.slug}

@@ -1,5 +1,7 @@
 import { useSignInGate } from '../../auth/useSignInGate'
 import coinIcon from '../../assets/coin-icon.png'
+import { useUiVersion } from '../../versions/useUiVersion'
+import { CountUp } from './CountUp'
 
 /**
  * The coin balance, as one object — and a control, not a label.
@@ -49,11 +51,17 @@ export function CoinPill({
   interactive?: boolean
 }) {
   const gate = useSignInGate()
+  // Version 2: the balance counts up to its value instead of arriving filled.
+  const v2 = useUiVersion() >= 2
+  const amount = Number(points.replace(/[^0-9.]/g, ''))
+  const counted = v2 && /^[\d,.]+$/.test(points.trim()) && Number.isFinite(amount)
 
   const face = (
     <>
       <CoinMark size={20} />
-      <span className="text-style-body-small text-text-primary">{points}</span>
+      <span className={`text-style-body-small text-text-primary ${counted ? 'tabular-nums' : ''}`}>
+        {counted ? <CountUp value={amount} durationMs={1100} format={(n) => Math.round(n).toLocaleString('en-US')} /> : points}
+      </span>
     </>
   )
 

@@ -19,6 +19,21 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-09 — Version 2 round 2 (staging only)
+
+All behind the design switcher (`v2`); v1 is unchanged — `/home`, `/explore`, `/sessions`, `/login` pixel-identical at 402, 820 and 1440px.
+
+1. **Feature-card icon micro-animations removed** (reverted `2d7e96d`; `FeatureCard` back to its old props).
+2. **Voice input:** the black button is pause/resume, so in v2 it shows Pause / Play instead of MicOff (`VoiceRecorder.tsx`).
+3. **Player on every screen:** while a session is loaded, its MiniPlayer floats at the bottom of every AppLayout screen except `/chat` (which already shows it); page bottom bars move up above it (`V2Shell.FloatingPlayer`).
+4. **Page transitions:** forward navigation slides in from the right, back from the left, with a soft blur (`data-nav` on `.u-page`).
+5. **Bottom sheets:** grab handle, follow the finger, rubber-band upward, close when flicked or dragged past a third (via their backdrop's own close), otherwise spring back (`V2Shell.useSheetDrag`).
+6. **Pull to refresh** at the top of any AppLayout page: resistance, spinner, then the screen remounts (no tab reload, which would sign you out).
+7. **Coin counter:** `CoinPill` counts up to its balance.
+8. **Tablet (640–1023px):** Home splits Live Sessions / Quick Start, Sessions is two columns, promo cards and Explore hero are resized, sign-in is a centred card. Done with `data-tablet` hooks + v2-scoped media queries; phones and `lg:` untouched.
+
+Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-09 — Staging bar: version switcher on every page
 
 The design-version picker moved out of `BuildBadge` into `src/versions/StagingBar.tsx`: a 28px dark bar fixed to the top of every route (consumer app, `/login`, `/admin`, `/__demo`), showing environment, version · commit and the `Design v1 ▾` picker. It takes real space — `data-staging-bar` on <html> pads the body and shortens `h-dvh`/`h-screen`/`min-h-*` layouts and sticky tops by 28px (`versions.css`), checked for no overflow at 402 and 1440 on `/home`, `/chat`, `/login`, `/admin`, `/__demo`. Renders nothing on production, so production layout is unchanged; on staging every page sits 28px lower, on request. Branches: `web_app`, `admin_cms`. Not `web_prod`.

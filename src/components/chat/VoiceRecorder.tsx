@@ -1,5 +1,6 @@
-import { Check, MicOff, RotateCcw, Trash2, Volume2, VolumeX } from 'lucide-react'
+import { Check, MicOff, Pause, Play, RotateCcw, Trash2, Volume2, VolumeX } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { useUiVersion } from '../../versions/useUiVersion'
 
 /**
  * Voice capture with a visible result, rather than a state that ends silently.
@@ -29,6 +30,7 @@ function formatDuration(ms: number) {
 }
 
 export function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) {
+  const v2 = useUiVersion() >= 2
   const [phase, setPhase] = useState<Phase>('recording')
   const [elapsed, setElapsed] = useState(0)
   const [levels, setLevels] = useState<number[]>(() => Array(BAR_COUNT).fill(0.15))
@@ -147,14 +149,15 @@ export function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) {
 
           <button
             type="button"
-            aria-label={muted ? 'Unmute your microphone' : 'Mute your microphone'}
+            aria-label={v2 ? (muted ? 'Resume listening' : 'Pause listening') : muted ? 'Unmute your microphone' : 'Mute your microphone'}
             aria-pressed={muted}
             onClick={() => setMuted((value) => !value)}
             className={`u-press flex size-64 items-center justify-center rounded-full shadow-sm ${
               muted ? 'bg-icon-strong text-icon-inverse' : 'bg-surface-default text-icon-strong'
             }`}
           >
-            <MicOff size={22} />
+            {/* v2: the button pauses listening, so it says pause/resume. */}
+            {v2 ? muted ? <Play size={22} fill="currentColor" strokeWidth={0} /> : <Pause size={22} fill="currentColor" strokeWidth={0} /> : <MicOff size={22} />}
           </button>
         </div>
 

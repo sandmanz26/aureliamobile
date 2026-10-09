@@ -45,13 +45,13 @@ const quickStartCards: { title: string; subtitle: string; gradient: string; phot
 ]
 
 const features = [
-  { icon: <TrendingUp size={20} />, motion: 'rise', title: 'Mood Progress', description: 'Tracks baseline shifts' },
-  { icon: <Waves size={20} />, motion: 'wave', title: 'Mindful Waves', description: 'Real-time frequency tuning' },
-  { icon: <Music size={20} />, motion: 'beat', title: 'Adaptive Audio', description: 'Adaptive soundscapes' },
-  { icon: <Wind size={20} />, motion: 'breeze', title: 'Breathwork Sync', description: 'Custom breathing patterns' },
-  { icon: <Coins size={20} />, motion: 'flip', title: 'Daily Coins', description: 'Earn daily rewards' },
-  { icon: <Users size={20} />, motion: 'gather', title: 'Community Mix', description: 'Shared Practices' },
-] as const
+  { icon: <TrendingUp size={20} />, title: 'Mood Progress', description: 'Tracks baseline shifts' },
+  { icon: <Waves size={20} />, title: 'Mindful Waves', description: 'Real-time frequency tuning' },
+  { icon: <Music size={20} />, title: 'Adaptive Audio', description: 'Adaptive soundscapes' },
+  { icon: <Wind size={20} />, title: 'Breathwork Sync', description: 'Custom breathing patterns' },
+  { icon: <Coins size={20} />, title: 'Daily Coins', description: 'Earn daily rewards' },
+  { icon: <Users size={20} />, title: 'Community Mix', description: 'Shared Practices' },
+]
 
 /** Translucent circle with a play triangle, centred on each promo card. */
 function PlayGlyph() {
@@ -228,7 +228,7 @@ export function HomePage() {
             becomes both columns' row height, which Quick Start's section
             (flex-col, its card row at flex-1) then fills rather than leaving
             blank space under a short row of cards. */}
-        <div className="lg:mt-40 lg:grid lg:grid-cols-2 lg:items-stretch lg:gap-24">
+        <div data-tablet="home-split" className="lg:mt-40 lg:grid lg:grid-cols-2 lg:items-stretch lg:gap-24">
           {/* Ongoing Live Sessions */}
           {isEnabled('home.liveSessions') && (
           <section className="mt-40 lg:mt-0">
@@ -387,6 +387,7 @@ export function HomePage() {
             alignment. Capped and centered with the text column at lg:,
             same as everything else in this banner. */}
         <div
+          data-tablet="promo-cards"
           className="relative -mx-20 my-32 flex items-center justify-center gap-48 overflow-hidden lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:my-0 lg:mx-0 lg:max-w-none lg:gap-32 lg:overflow-visible lg:[--promo-card:170px] [--promo-card:clamp(150px,46vw,260px)]"
           style={{
             // width*sin30° + height*cos30° ≈ 1.87× the width is the rotated
