@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-09 — v2: promo banner light follows the cursor
+
+Version 2 only. Home's dark promo banner tracks the pointer (mouse or finger): a soft warm light trails it with a 700ms ease, the two roaming glows lean the opposite way for depth, and the light fades out when the pointer leaves. Pointer position is written to CSS variables on the section, so moving never re-renders React. v1 Home pixel-identical at 402/820/1440. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-09 — v2: stronger promo glow, coin-flip profile picture
 
 Version 2 only. (1) Home promo banner: the two `u-glow-drift` glows switch to `v2-glow-roam` — they now travel across the banner, grow to 1.25x and brighten by up to +0.35 opacity, instead of a barely visible pulse. (2) `/profile`: the 88px avatar is wrapped in `CoinFlip` — it spins in like a tossed coin on arrival and flips to a gold coin face and back on tap or hover (guarded so a flip can't retrigger itself). In v1 `CoinFlip` renders the picture alone; `/profile` and Home v1 pixel-identical apart from the commit hash. Listed in the v2 pop-up. Branches: `web_app`, `admin_cms`. Not `web_prod`.

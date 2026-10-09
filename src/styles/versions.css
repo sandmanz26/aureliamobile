@@ -375,3 +375,31 @@
 :root[data-ui-version='2'] .u-glow-drift {
   animation-name: v2-glow-roam;
 }
+
+/* ---- Version 2: promo banner follows the pointer ------------------------ */
+/* A warm light sits under the cursor (or finger) and trails it; the two
+   roaming glows lean the opposite way for depth. Rests in the middle and
+   fades when the pointer leaves. */
+:root[data-ui-version='2'] .v2-follow-glow {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 520px;
+  height: 520px;
+  margin: -260px 0 0 -260px;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: radial-gradient(circle, rgb(255 168 70 / 0.55) 0%, rgb(255 136 27 / 0.22) 35%, transparent 70%);
+  transform: translate(var(--mx, 50%), var(--my, 50%));
+  opacity: 0;
+  transition:
+    transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 600ms ease;
+}
+:root[data-ui-version='2'] .v2-follow[data-pointer='in'] .v2-follow-glow {
+  opacity: 1;
+}
+:root[data-ui-version='2'] .v2-follow > .u-glow-drift {
+  translate: calc(var(--px, 0) * -60px) calc(var(--py, 0) * -40px);
+  transition: translate 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}

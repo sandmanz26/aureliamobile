@@ -355,7 +355,26 @@ export function HomePage() {
           Figma frame 402x800, padding 40/20, counterAlign MIN (left-aligned),
           content SPACE_BETWEEN with the card pair bleeding past both edges. */}
       {isEnabled('home.promo') && (
-      <section className="relative mt-16 overflow-hidden bg-[#1B1006] px-20 py-40 text-text-inverse lg:mx-auto lg:mt-40 lg:w-[calc(100%-48px)] lg:max-w-[912px] lg:rounded-[20px] lg:px-48 lg:py-48">
+      <section
+        className="v2-follow relative mt-16 overflow-hidden bg-[#1B1006] px-20 py-40 text-text-inverse lg:mx-auto lg:mt-40 lg:w-[calc(100%-48px)] lg:max-w-[912px] lg:rounded-[20px] lg:px-48 lg:py-48"
+        // Version 2: the glow follows the pointer. Written straight to CSS
+        // variables on the element, so moving the mouse never re-renders.
+        onPointerMove={
+          v2
+            ? (event) => {
+                const el = event.currentTarget
+                const box = el.getBoundingClientRect()
+                el.style.setProperty('--mx', `${event.clientX - box.left}px`)
+                el.style.setProperty('--my', `${event.clientY - box.top}px`)
+                el.style.setProperty('--px', `${((event.clientX - box.left) / box.width - 0.5).toFixed(3)}`)
+                el.style.setProperty('--py', `${((event.clientY - box.top) / box.height - 0.5).toFixed(3)}`)
+                el.dataset.pointer = 'in'
+              }
+            : undefined
+        }
+        onPointerLeave={v2 ? (event) => delete event.currentTarget.dataset.pointer : undefined}
+      >
+        {v2 && <span aria-hidden="true" className="v2-follow-glow" />}
         {/* The two warm ellipses behind the content (Figma "Ellipse 6/7") —
             a soft drift in opacity and scale so the banner reads as alive
             rather than a flat static glow. Different durations (10s/13s)
