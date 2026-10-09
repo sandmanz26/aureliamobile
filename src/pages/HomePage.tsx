@@ -45,13 +45,13 @@ const quickStartCards: { title: string; subtitle: string; gradient: string; phot
 ]
 
 const features = [
-  { icon: <TrendingUp size={20} />, title: 'Mood Progress', description: 'Tracks baseline shifts' },
-  { icon: <Waves size={20} />, title: 'Mindful Waves', description: 'Real-time frequency tuning' },
-  { icon: <Music size={20} />, title: 'Adaptive Audio', description: 'Adaptive soundscapes' },
-  { icon: <Wind size={20} />, title: 'Breathwork Sync', description: 'Custom breathing patterns' },
-  { icon: <Coins size={20} />, title: 'Daily Coins', description: 'Earn daily rewards' },
-  { icon: <Users size={20} />, title: 'Community Mix', description: 'Shared Practices' },
-]
+  { icon: <TrendingUp size={20} />, motion: 'rise', title: 'Mood Progress', description: 'Tracks baseline shifts' },
+  { icon: <Waves size={20} />, motion: 'wave', title: 'Mindful Waves', description: 'Real-time frequency tuning' },
+  { icon: <Music size={20} />, motion: 'beat', title: 'Adaptive Audio', description: 'Adaptive soundscapes' },
+  { icon: <Wind size={20} />, motion: 'breeze', title: 'Breathwork Sync', description: 'Custom breathing patterns' },
+  { icon: <Coins size={20} />, motion: 'flip', title: 'Daily Coins', description: 'Earn daily rewards' },
+  { icon: <Users size={20} />, motion: 'gather', title: 'Community Mix', description: 'Shared Practices' },
+] as const
 
 /** Translucent circle with a play triangle, centred on each promo card. */
 function PlayGlyph() {

@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-09 — Version 2: feature-card icon micro-animations
+
+Home's six feature cards get one looping micro-animation per icon (rise, wave, beat, breeze, flip, gather), staggered so they never move together, plus a tilt-and-glow on desktop hover. Version 2 only (`versions.css`); `FeatureCard` gains an optional `motion` prop and a `u-feature-icon` hook. v1 `/home` at 402px pixel-identical. Listed in the v2 "What changes" dialog. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-09 — Staging version switcher, and Version 2 (more motion)
 
 - **Version switcher** (`src/versions/`): a `v1 ▾` picker beside the build badge (drawer foot, admin sidebar, `/__demo`). Choosing a version opens a "What changes in Version N" dialog first; Switch applies it and saves it in this browser (`aurelia.ui.version`). Renders nothing on production, which is pinned to v1 regardless of storage.

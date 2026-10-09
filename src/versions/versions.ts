@@ -35,6 +35,7 @@ export const UI_VERSIONS: UiVersion[] = [
       'Card photos ease in with a slow zoom; on desktop they zoom slightly on hover.',
       'Buttons and links get a springier press, and a gentle lift on hover (desktop).',
       'Drawer, sheets and dialogs open with a springier, slightly longer motion.',
+      'Home feature cards: each icon has its own micro-animation (trend rises, waves drift, note beats, wind blows, coin flips, people gather); the tile tilts on desktop hover.',
       'All of it is switched off for anyone with "reduce motion" set.',
     ],
   },
