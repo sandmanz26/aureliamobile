@@ -78,14 +78,23 @@ export function VersionSwitcher({ dark = false }: { dark?: boolean }) {
                 </button>
               </div>
 
-              <ul className="mt-16 flex flex-col gap-8">
-                {target.changes.map((c) => (
-                  <li key={c} className="text-style-body-small flex gap-8 text-text-primary">
-                    <span aria-hidden="true" className="mt-7 size-6 shrink-0 rounded-full bg-brand-default" />
-                    {c}
-                  </li>
+              <div className="-mr-8 mt-16 flex max-h-[min(52dvh,420px)] flex-col gap-16 overflow-y-auto pr-8">
+                {target.changes.map((section) => (
+                  <section key={section.group}>
+                    <h3 className="text-style-caption font-semibold uppercase tracking-wide text-text-secondary">
+                      {section.group}
+                    </h3>
+                    <ul className="mt-6 flex flex-col gap-6">
+                      {section.items.map((c) => (
+                        <li key={c} className="text-style-body-small flex gap-8 text-text-primary">
+                          <span aria-hidden="true" className="mt-7 size-6 shrink-0 rounded-full bg-brand-default" />
+                          {c}
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
                 ))}
-              </ul>
+              </div>
 
               <p className="text-style-caption mt-16 text-text-secondary">
                 Staging only, saved in this browser. Production is not affected.

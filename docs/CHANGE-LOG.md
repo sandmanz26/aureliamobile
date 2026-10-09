@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-09 — v2 "What changes" pop-up rewritten
+
+The Version 2 dialog now summarises v2 in five groups (Motion, Interactions, Player, Tablet, Unchanged) instead of one flat list; `UiVersion.changes` is grouped and the list scrolls inside the dialog on short screens. Staging only. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-09 — Version 2 round 2 (staging only)
 
 All behind the design switcher (`v2`); v1 is unchanged — `/home`, `/explore`, `/sessions`, `/login` pixel-identical at 402, 820 and 1440px.

@@ -15,7 +15,8 @@ export interface UiVersion {
   id: number
   name: string
   summary: string
-  changes: string[]
+  /** Grouped so the dialog reads as a summary, not a wall of bullets. */
+  changes: { group: string; items: string[] }[]
 }
 
 export const UI_VERSIONS: UiVersion[] = [
@@ -23,24 +24,48 @@ export const UI_VERSIONS: UiVersion[] = [
     id: 1,
     name: 'Version 1',
     summary: 'The current app, as it ships.',
-    changes: ['Baseline: the screens and motion currently on staging.'],
+    changes: [{ group: 'Baseline', items: ['The screens and motion currently on staging, unchanged.'] }],
   },
   {
     id: 2,
     name: 'Version 2',
-    summary: 'More transition animation on every page.',
+    summary: 'More motion and smoother interactions across the app, plus a proper tablet layout.',
     changes: [
-      'Page change: forward slides in from the right, back from the left, with a soft blur.',
-      'Sections, cards and list rows reveal as they scroll into view, on every page.',
-      'Card photos ease in with a slow zoom; on desktop they zoom slightly on hover.',
-      'Buttons and links get a springier press, and a gentle lift on hover (desktop).',
-      'Bottom sheets have a grab handle, follow your finger, resist pulling up, and close when flicked or dragged down.',
-      'Pull down at the top of a page to refresh it.',
-      'A playing session follows you: its mini player floats over every screen (except the chat, which already shows it).',
-      'Voice input: the black button is pause/resume, so it shows pause and play icons.',
-      'Coin balances count up to their value.',
-      'Tablet (640–1023px): Home splits live sessions and Quick Start side by side, Sessions is two columns, promo cards and the Explore hero are sized for the width, and sign-in is a centred card.',
-      'All of it is switched off for anyone with "reduce motion" set.',
+      {
+        group: 'Motion',
+        items: [
+          'Page changes slide in: forward from the right, back from the left.',
+          'Sections, cards and list rows fade up as you scroll to them.',
+          'Card photos settle in with a slow zoom (and zoom slightly on desktop hover).',
+          'Buttons have a springier press and a small lift on hover.',
+          'Coin balances count up to their value.',
+        ],
+      },
+      {
+        group: 'Interactions',
+        items: [
+          'Bottom sheets: grab handle, follow your finger, close when dragged down or flicked, spring back otherwise.',
+          'Pull down at the top of a page to refresh it.',
+          'Voice input: the black button now shows Pause / Play, because that is what it does.',
+        ],
+      },
+      {
+        group: 'Player',
+        items: [
+          'A playing session follows you: its mini player floats over every screen (except chat, which already shows it), with bottom buttons moved above it.',
+        ],
+      },
+      {
+        group: 'Tablet (640–1023px)',
+        items: [
+          'Home shows Live Sessions and Quick Start side by side; Sessions is two columns.',
+          'Promo cards and the Explore hero are sized for the width; sign-in is a centred card.',
+        ],
+      },
+      {
+        group: 'Unchanged',
+        items: ['Phone and desktop layouts stay as they are. Anyone with "reduce motion" on sees none of the animation.'],
+      },
     ],
   },
 ]
