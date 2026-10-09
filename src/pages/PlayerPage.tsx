@@ -28,6 +28,7 @@ import { findVersion } from '../lib/progress'
 import { profilePath } from '../lib/people'
 import type { ProfileOrigin } from '../lib/people'
 import { findSession } from '../lib/sessions'
+import { useUiVersion } from '../versions/useUiVersion'
 import type { Named } from '../lib/named'
 
 /** Lines the session speaks, which the hero shows one at a time under the art.
@@ -199,6 +200,30 @@ export function PlayerPage() {
   const location = useLocation()
   const [params] = useSearchParams()
   const session = findSession(slug)
+  // Version 2: Share works — the system share sheet where there is one
+  // (phones), otherwise the link goes to the clipboard with a toast.
+  const v2 = useUiVersion() >= 2
+  const [shareToast, setShareToast] = useState<string | null>(null)
+  useEffect(() => {
+    if (!shareToast) return
+    const t = window.setTimeout(() => setShareToast(null), 2200)
+    return () => window.clearTimeout(t)
+  }, [shareToast])
+  async function share() {
+    const url = window.location.href
+    const title = session?.title ?? 'Aurelia'
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text: `Listen to “${title}” on Aurelia`, url })
+        return
+      }
+      await navigator.clipboard.writeText(url)
+      setShareToast('Link copied')
+    } catch (error) {
+      // Dismissing the share sheet is not a failure worth a message.
+      if ((error as Error)?.name !== 'AbortError') setShareToast('Couldn’t share — copy the address bar instead')
+    }
+  }
   // Which cut of it. Progress's version cards ask for one by id; everything
   // else asks for the session, which is the version that is current.
   const versionId = params.get('v')
@@ -365,10 +390,16 @@ export function PlayerPage() {
           <button
             type="button"
             aria-label="Share"
+            onClick={v2 ? share : undefined}
             className="u-press flex size-44 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-strong"
           >
             <Share2 size={18} />
           </button>
+          {shareToast && (
+            <span role="status" className="u-pop text-style-caption absolute right-20 top-full z-20 rounded-full bg-icon-strong px-12 py-6 text-text-inverse shadow-lg">
+              {shareToast}
+            </span>
+          )}
         </header>
 
         {/* Centres in what is left above the caption — the frame's own y=321

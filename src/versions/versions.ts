@@ -42,6 +42,7 @@ export const UI_VERSIONS: UiVersion[] = [
           'Home: the Ask field types out example prompts while it waits, and the live dots on the Live Sessions map pulse.',
           'Home promo banner: the warm glows roam and brighten much more visibly, and a soft light follows your cursor (or finger) across it.',
           'Profile picture spins in like a coin, and flips to a gold coin face when tapped or hovered.',
+          'Home order: Quick Start sits right under the Ask field, and Ongoing Live Sessions moves down above Recreate from Community.',
           'Coin balances count up to their value, including the Total Credits figure.',
         ],
       },
@@ -50,6 +51,8 @@ export const UI_VERSIONS: UiVersion[] = [
         items: [
           'Bottom sheets: grab handle, follow your finger, close when dragged down or flicked, spring back otherwise.',
           'Pull down at the top of a page to refresh it.',
+          'Player: the Share button works — the phone’s share sheet, or the link copied to the clipboard.',
+          'Sign-in: “Welcome to Aurelia.” is centred.',
           'Voice input: the black button now shows Pause / Play, because that is what it does.',
         ],
       },

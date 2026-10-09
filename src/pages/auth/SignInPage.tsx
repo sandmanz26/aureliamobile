@@ -96,7 +96,7 @@ export function SignInPage() {
             screen — it always renders at its full natural size, and the
             photo above is what gives up space for it, never the reverse. */}
         <div className="flex shrink-0 flex-col px-24 pb-24 pt-16 lg:flex-1 lg:justify-center lg:items-center lg:px-56 lg:*:w-full lg:*:max-w-[360px] lg:py-48">
-          <h1 className="text-style-title-large text-text-primary">Welcome to Aurelia.</h1>
+          <h1 className="v2-center text-style-title-large text-text-primary">Welcome to Aurelia.</h1>
 
           <div className="mt-24 flex flex-col gap-12">
             <button

@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-09 — v2: review-pin fixes (sign-in, Home order, Share)
+
+Version 2 only, from staging review pins. (1) Sign-in: "Welcome to Aurelia." is centred. (2) Home: Quick Start moves directly under the Ask field. (3) Home: Ongoing Live Sessions moves below the promo banner, above Recreate from Community (desktop caps it at 600px wide). Both sections are now built once (`liveSection`, `quickStartSection`) and placed by version; v1 keeps the original pair. (4) Player: the Share button works — `navigator.share` where available, otherwise the link is copied with a "Link copied" toast. v1 `/home`, `/login`, `/explore`, `/sessions` pixel-identical at 402/820/1440. Listed in the v2 pop-up. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-09 — Review annotations know the design version
 
 Pins now record the design version they were dropped in (`ui` on `Annotation`). Each version shows only its own pins, so a v2 note never appears on v1 and vice versa; the Notes list (titled `Notes · vN`), the count on the menu and Delete all are per version (delete-all leaves other versions' notes). Existing pins have no version and read as v1. Save .txt still exports everything, each note with a `design: vN` line, and import reads it back (missing = v1). `api/annotations.ts` accepts the optional field. Verified: one v1 and one v2 pin on `/home` each show only in their own version. Branches: `web_app`, `admin_cms`. Not `web_prod`.
