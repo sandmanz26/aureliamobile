@@ -18,6 +18,8 @@ import { useAuth } from '../auth/AuthContext'
 import { useSignInGate } from '../auth/useSignInGate'
 import aureliaNetwork from '../assets/aurelia-network.png'
 import liveSessionsMap from '../assets/live-sessions-map.png'
+import { useUiVersion } from '../versions/useUiVersion'
+import { useTypewriterPlaceholder } from '../versions/useTypewriterPlaceholder'
 import { PageMeta } from '../components/PageMeta'
 import { Chip } from '../components/ui/Chip'
 import { CountUp } from '../components/ui/CountUp'
@@ -42,6 +44,21 @@ const quickStartCards: { title: string; subtitle: string; gradient: string; phot
   { title: 'Morning Reset', subtitle: 'Start the day settled.', photo: 'morning', gradient: 'linear-gradient(160deg, var(--color-warning-700), var(--color-warning-300))' },
   { title: 'Stress Relief', subtitle: 'Come down a notch.', photo: 'stress', gradient: 'linear-gradient(160deg, var(--color-success-900), var(--color-success-500))' },
   { title: 'Deep Calm', subtitle: 'Nothing asked of you.', photo: 'calm', gradient: 'linear-gradient(160deg, var(--color-info-900), var(--color-neutral-950))' },
+]
+
+/** Version 2: what the Ask field types out while it waits. */
+const EXAMPLE_PROMPTS = [
+  'A 10-minute wind-down for after a long day…',
+  'Rain sounds to help me focus…',
+  'Breathwork for a nervous morning…',
+  'Something to help me fall asleep faster…',
+]
+
+/** Version 2: where the live dots baked into the map art sit, in % of the card. */
+const LIVE_DOTS = [
+  [32.8, 12.1], [64.8, 16.9], [85.2, 18.8], [51.7, 19.7], [24.1, 20.6], [74.3, 23.0],
+  [49.1, 26.6], [27.7, 28.7], [58.2, 30.6], [44.5, 34.9], [66.6, 35.1], [75.0, 41.6],
+  [32.8, 43.5], [53.2, 43.4], [80.1, 50.6], [51.7, 52.9], [31.3, 56.8],
 ]
 
 const features = [
@@ -90,6 +107,13 @@ export function HomePage() {
   const gate = useSignInGate()
   const [category, setCategory] = useState<CategoryFilter>('All')
   const [ask, setAsk] = useState('')
+  const v2 = useUiVersion() >= 2
+  const [askFocused, setAskFocused] = useState(false)
+  const askPlaceholder = useTypewriterPlaceholder(EXAMPLE_PROMPTS, {
+    enabled: v2,
+    paused: askFocused || ask.length > 0,
+    fallback: 'Ask Aurelia..',
+  })
 
   function askAurelia(event: React.FormEvent) {
     event.preventDefault()
@@ -195,7 +219,9 @@ export function HomePage() {
               <input
                 value={ask}
                 onChange={(event) => setAsk(event.target.value)}
-                placeholder="Ask Aurelia.."
+                placeholder={askPlaceholder}
+                onFocus={() => setAskFocused(true)}
+                onBlur={() => setAskFocused(false)}
                 aria-label="Ask Aurelia"
                 className="text-style-body-light h-24 w-full bg-transparent text-left text-text-primary outline-none placeholder:text-text-secondary"
               />
@@ -248,6 +274,15 @@ export function HomePage() {
               className="relative mx-auto mt-16 flex aspect-[362/320] w-full max-w-[440px] flex-col justify-end overflow-hidden rounded-24 bg-cover bg-center px-20 pb-20 pt-40 lg:max-w-none"
               style={{ backgroundImage: `url(${liveSessionsMap})` }}
             >
+              {/* Version 2 only (inert in v1): each live dot on the map pulses,
+                  out of step, so the map reads as people active right now. */}
+              {v2 && (
+                <span aria-hidden="true" className="v2-live-dots pointer-events-none absolute inset-0">
+                  {LIVE_DOTS.map(([x, y], i) => (
+                    <span key={i} style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${(i * 0.37) % 2.6}s` }} />
+                  ))}
+                </span>
+              )}
               <div className="relative z-10 flex gap-12">
                 {[
                   { label: 'People', value: 87000 },

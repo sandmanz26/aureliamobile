@@ -39,6 +39,7 @@ export const UI_VERSIONS: UiVersion[] = [
           'Card photos settle in with a slow zoom (and zoom slightly on desktop hover).',
           'Buttons have a springier press and a small lift on hover.',
           'New chat: a soft warm background drifts slowly behind a breathing orb, and the greeting rises in.',
+          'Home: the Ask field types out example prompts while it waits, and the live dots on the Live Sessions map pulse.',
           'Coin balances count up to their value, including the Total Credits figure.',
         ],
       },

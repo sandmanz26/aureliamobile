@@ -301,3 +301,22 @@
 :root[data-ui-version='2'] .v2-greeting {
   animation: u-rise 600ms var(--ease-out) 200ms both;
 }
+
+/* ---- Version 2: Home live map ------------------------------------------- */
+/* A soft ring pulses out of each live dot baked into the map art. */
+:root[data-ui-version='2'] .v2-live-dots > span {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.9);
+  box-shadow: 0 0 0 0 rgb(255 136 27 / 0.6);
+  animation: v2-live-ping 2.6s var(--ease-out) infinite both;
+}
+@keyframes v2-live-ping {
+  0% { box-shadow: 0 0 0 0 rgb(255 136 27 / 0.55); opacity: 0.4; }
+  20% { opacity: 1; }
+  70% { box-shadow: 0 0 0 9px rgb(255 136 27 / 0); }
+  100% { box-shadow: 0 0 0 9px rgb(255 136 27 / 0); opacity: 0.4; }
+}
