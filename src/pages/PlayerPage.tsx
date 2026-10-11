@@ -40,6 +40,12 @@ const SHEET_TOP = 54
  *  a 705 hero, so this is its own number. */
 const SHEET_PEEK = 169
 
+/** Version 2 (staging): the resting sheet shows the description under the
+ *  title too — author, title, four lines and Read More — so the cover above
+ *  it gets correspondingly shorter. Request: "make it shorter so the text
+ *  under the h1 is visible when the sheet is open". */
+const SHEET_PEEK_V2 = 268
+
 const CUES = [
   'Now take a deep breath in',
   'Hold it — and let the shoulders drop',
@@ -246,6 +252,7 @@ export function PlayerPage() {
   // walking back to the cockpit leaves the session running.
   const { playing, elapsed, duration, load, toggle, seek } = useAudioPlayer()
   const [expanded, setExpanded] = useState(false)
+  const peek = v2 ? SHEET_PEEK_V2 : SHEET_PEEK
 
   // How far the sheet is pushed down from its pulled-up rest. 0 is up; the
   // collapsed rest is whatever leaves SHEET_PEEK showing, which depends on the
@@ -281,7 +288,7 @@ export function PlayerPage() {
 
   useEffect(() => {
     const measure = () => {
-      const rest = Math.max(0, window.innerHeight - SHEET_TOP - SHEET_PEEK)
+      const rest = Math.max(0, window.innerHeight - SHEET_TOP - peek)
       setCollapsedY(rest)
       // Until the first measurement the sheet has no rest to sit at, so it
       // starts collapsed rather than flashing open.
@@ -290,7 +297,7 @@ export function PlayerPage() {
     measure()
     window.addEventListener('resize', measure)
     return () => window.removeEventListener('resize', measure)
-  }, [])
+  }, [peek])
 
   const up = offset !== null && offset < collapsedY / 2
 
@@ -369,7 +376,7 @@ export function PlayerPage() {
       {/* ------------------------------------------------------------ hero */}
       <section
         className="relative mx-auto flex h-full w-full max-w-[402px] flex-col text-text-inverse lg:max-w-[640px]"
-        style={{ paddingBottom: SHEET_PEEK }}
+        style={{ paddingBottom: peek }}
       >
         {/* The frame draws three controls in this row — back, coin, share.
             A sound switch used to sit between the last two as a fourth; the

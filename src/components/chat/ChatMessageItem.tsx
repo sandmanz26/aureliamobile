@@ -4,6 +4,8 @@ import { RECOMMENDATIONS } from '../../chat/ChatSessionContext'
 import { AttachedSession } from './AttachedSession'
 import { RecommendationCard } from './RecommendationCard'
 import { RecommendationDeck } from './RecommendationDeck'
+import { RecommendationFilter } from './RecommendationFilter'
+import { useUiVersion } from '../../versions/useUiVersion'
 import { VoiceMessage } from './VoiceMessage'
 
 interface ChatMessageItemProps {
@@ -43,6 +45,7 @@ export function ChatMessageItem({
   onOpenDeck,
   onSendPrompt,
 }: ChatMessageItemProps) {
+  const v2 = useUiVersion() >= 2
   // Stacked full width, not a scrolling rail: these are read one after
   // another and the longest runs to two lines, which a rail would either
   // clip or leave ragged.
@@ -68,7 +71,9 @@ export function ChatMessageItem({
         <AttachedSession slug={attached.session} />
       </div>
     ) : attached === 'recommendations' && showRecommendations ? (
-      deckOpen && canApply ? (
+      deckOpen && canApply && v2 ? (
+        <RecommendationFilter recommendations={RECOMMENDATIONS} applied={applied} onToggle={onToggleRecommendation} />
+      ) : deckOpen && canApply ? (
         <div className="u-message -mx-20 mt-12 flex gap-11 overflow-x-auto px-20 pb-4">
           {RECOMMENDATIONS.map((recommendation) => (
             <RecommendationCard
