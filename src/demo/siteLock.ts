@@ -1,3 +1,5 @@
+import { BUILD } from '../lib/build'
+
 /**
  * The shared password in front of the whole site.
  *
@@ -13,7 +15,12 @@
  * keep it out of the bundle.
  */
 export const SITE_PASSWORD =
-  import.meta.env.VITE_SITE_PASSWORD?.trim() || 'AURELIA2.0'
+  import.meta.env.VITE_SITE_PASSWORD?.trim() ||
+  // Staging and production keep different defaults: staging moved to
+  // AURELIA3.0 on request; production stays on AURELIA2.0. Visitors who
+  // unlocked staging with the old one are asked again, because the stored
+  // unlock is the password itself.
+  (BUILD.environment === 'production' ? 'AURELIA2.0' : 'AURELIA3.0')
 
 /** Per-browser, so nobody retypes it on every reload. */
 export const UNLOCK_KEY = 'aurelia.site.unlocked'

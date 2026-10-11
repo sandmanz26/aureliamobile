@@ -175,7 +175,7 @@ npm run dev                             # vite, port 5173
 
 Facts that will cost you a run each:
 
-- **The site lock:** `localStorage.setItem('aurelia.site.unlocked', 'AURELIA2.0')`
+- **The site lock:** `localStorage.setItem('aurelia.site.unlocked', 'AURELIA3.0')` on staging and local builds; production still uses `AURELIA2.0` (unless `VITE_SITE_PASSWORD` is set).
   in an init script.
 - **Sign-in does not survive `page.goto`.** It is a bool in memory. Navigate
   in-app, or sign in again after every `goto`. Module-level state (the publish

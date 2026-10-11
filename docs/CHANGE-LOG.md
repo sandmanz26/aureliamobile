@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-11 — Staging site password is now AURELIA3.0
+
+`src/demo/siteLock.ts`: the default password now depends on the build: staging and local use `AURELIA3.0`, production keeps `AURELIA2.0`. Browsers that unlocked staging with the old password are asked again (the stored unlock is the password). `VITE_SITE_PASSWORD`, if set on a Vercel project, still overrides the default. `docs/FOR-AI-AGENT.md` updated. Branches: `web_app`, `admin_cms`. Not `web_prod`; production's password is unchanged either way, since its default stays `AURELIA2.0`.
+
 ### 2026-10-09 — v2: review-pin fixes (sign-in, Home order, Share)
 
 Version 2 only, from staging review pins. (1) Sign-in: "Welcome to Aurelia." is centred. (2) Home: Quick Start moves directly under the Ask field. (3) Home: Ongoing Live Sessions moves below the promo banner, above Recreate from Community (desktop caps it at 600px wide). Both sections are now built once (`liveSection`, `quickStartSection`) and placed by version; v1 keeps the original pair. (4) Player: the Share button works — `navigator.share` where available, otherwise the link is copied with a "Link copied" toast. v1 `/home`, `/login`, `/explore`, `/sessions` pixel-identical at 402/820/1440. Listed in the v2 pop-up. Branches: `web_app`, `admin_cms`. Not `web_prod`.
