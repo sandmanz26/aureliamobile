@@ -1,0 +1,170 @@
+diff --git a/src/pages/HomePage.tsx b/src/pages/HomePage.tsx
+index bb535ad..5fdc9f5 100644
+--- a/src/pages/HomePage.tsx
++++ b/src/pages/HomePage.tsx
+@@ -18,6 +18,8 @@ import { useAuth } from '../auth/AuthContext'
+ import { useSignInGate } from '../auth/useSignInGate'
+ import aureliaNetwork from '../assets/aurelia-network.png'
+ import liveSessionsMap from '../assets/live-sessions-map.png'
++import { useUiVersion } from '../versions/useUiVersion'
++import { useTypewriterPlaceholder } from '../versions/useTypewriterPlaceholder'
+ import { PageMeta } from '../components/PageMeta'
+ import { Chip } from '../components/ui/Chip'
+ import { CountUp } from '../components/ui/CountUp'
+@@ -44,6 +46,21 @@ const quickStartCards: { title: string; subtitle: string; gradient: string; phot
+   { title: 'Deep Calm', subtitle: 'Nothing asked of you.', photo: 'calm', gradient: 'linear-gradient(160deg, var(--color-info-900), var(--color-neutral-950))' },
+ ]
+ 
++/** Version 2: what the Ask field types out while it waits. */
++const EXAMPLE_PROMPTS = [
++  'A 10-minute wind-down for after a long day…',
++  'Rain sounds to help me focus…',
++  'Breathwork for a nervous morning…',
++  'Something to help me fall asleep faster…',
++]
++
++/** Version 2: where the live dots baked into the map art sit, in % of the card. */
++const LIVE_DOTS = [
++  [32.8, 12.1], [64.8, 16.9], [85.2, 18.8], [51.7, 19.7], [24.1, 20.6], [74.3, 23.0],
++  [49.1, 26.6], [27.7, 28.7], [58.2, 30.6], [44.5, 34.9], [66.6, 35.1], [75.0, 41.6],
++  [32.8, 43.5], [53.2, 43.4], [80.1, 50.6], [51.7, 52.9], [31.3, 56.8],
++]
++
+ const features = [
+   { icon: <TrendingUp size={20} />, title: 'Mood Progress', description: 'Tracks baseline shifts' },
+   { icon: <Waves size={20} />, title: 'Mindful Waves', description: 'Real-time frequency tuning' },
+@@ -90,6 +107,13 @@ export function HomePage() {
+   const gate = useSignInGate()
+   const [category, setCategory] = useState<CategoryFilter>('All')
+   const [ask, setAsk] = useState('')
++  const v2 = useUiVersion() >= 2
++  const [askFocused, setAskFocused] = useState(false)
++  const askPlaceholder = useTypewriterPlaceholder(EXAMPLE_PROMPTS, {
++    enabled: v2,
++    paused: askFocused || ask.length > 0,
++    fallback: 'Ask Aurelia..',
++  })
+ 
+   function askAurelia(event: React.FormEvent) {
+     event.preventDefault()
+@@ -195,7 +219,9 @@ export function HomePage() {
+               <input
+                 value={ask}
+                 onChange={(event) => setAsk(event.target.value)}
+-                placeholder="Ask Aurelia.."
++                placeholder={askPlaceholder}
++                onFocus={() => setAskFocused(true)}
++                onBlur={() => setAskFocused(false)}
+                 aria-label="Ask Aurelia"
+                 className="text-style-body-light h-24 w-full bg-transparent text-left text-text-primary outline-none placeholder:text-text-secondary"
+               />
+@@ -248,6 +274,15 @@ export function HomePage() {
+               className="relative mx-auto mt-16 flex aspect-[362/320] w-full max-w-[440px] flex-col justify-end overflow-hidden rounded-24 bg-cover bg-center px-20 pb-20 pt-40 lg:max-w-none"
+               style={{ backgroundImage: `url(${liveSessionsMap})` }}
+             >
++              {/* Version 2 only (inert in v1): each live dot on the map pulses,
++                  out of step, so the map reads as people active right now. */}
++              {v2 && (
++                <span aria-hidden="true" className="v2-live-dots pointer-events-none absolute inset-0">
++                  {LIVE_DOTS.map(([x, y], i) => (
++                    <span key={i} style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${(i * 0.37) % 2.6}s` }} />
++                  ))}
++                </span>
++              )}
+               <div className="relative z-10 flex gap-12">
+                 {[
+                   { label: 'People', value: 87000 },
+diff --git a/src/styles/versions.css b/src/styles/versions.css
+index 35441b0..d5a3bcb 100644
+--- a/src/styles/versions.css
++++ b/src/styles/versions.css
+@@ -301,3 +301,22 @@
+ :root[data-ui-version='2'] .v2-greeting {
+   animation: u-rise 600ms var(--ease-out) 200ms both;
+ }
++
++/* ---- Version 2: Home live map ------------------------------------------- */
++/* A soft ring pulses out of each live dot baked into the map art. */
++:root[data-ui-version='2'] .v2-live-dots > span {
++  position: absolute;
++  width: 6px;
++  height: 6px;
++  margin: -3px 0 0 -3px;
++  border-radius: 9999px;
++  background: rgb(255 255 255 / 0.9);
++  box-shadow: 0 0 0 0 rgb(255 136 27 / 0.6);
++  animation: v2-live-ping 2.6s var(--ease-out) infinite both;
++}
++@keyframes v2-live-ping {
++  0% { box-shadow: 0 0 0 0 rgb(255 136 27 / 0.55); opacity: 0.4; }
++  20% { opacity: 1; }
++  70% { box-shadow: 0 0 0 9px rgb(255 136 27 / 0); }
++  100% { box-shadow: 0 0 0 9px rgb(255 136 27 / 0); opacity: 0.4; }
++}
+diff --git a/src/versions/useTypewriterPlaceholder.ts b/src/versions/useTypewriterPlaceholder.ts
+new file mode 100644
+index 0000000..c632f60
+--- /dev/null
++++ b/src/versions/useTypewriterPlaceholder.ts
+@@ -0,0 +1,49 @@
++import { useEffect, useState } from 'react'
++
++const REDUCED = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
++
++/**
++ * Version 2: a placeholder that types example prompts, holds, erases and moves
++ * on. Returns `fallback` when off, when the user prefers reduced motion, or
++ * while `paused` (the field has focus or text) — a placeholder that moves
++ * under someone's cursor is noise.
++ */
++export function useTypewriterPlaceholder(lines: string[], { enabled, paused, fallback }: { enabled: boolean; paused: boolean; fallback: string }) {
++  const [text, setText] = useState('')
++
++  useEffect(() => {
++    if (!enabled || paused || REDUCED) return
++    let line = 0
++    let i = 0
++    let deleting = false
++    let timer: number
++    const step = () => {
++      const target = lines[line]
++      if (!deleting) {
++        i += 1
++        setText(target.slice(0, i))
++        if (i >= target.length) {
++          deleting = true
++          timer = window.setTimeout(step, 1800)
++          return
++        }
++        timer = window.setTimeout(step, 45 + Math.random() * 40)
++      } else {
++        i -= 1
++        setText(target.slice(0, i))
++        if (i <= 0) {
++          deleting = false
++          line = (line + 1) % lines.length
++          timer = window.setTimeout(step, 400)
++          return
++        }
++        timer = window.setTimeout(step, 22)
++      }
++    }
++    timer = window.setTimeout(step, 600)
++    return () => window.clearTimeout(timer)
++  }, [enabled, paused, lines])
++
++  if (!enabled || paused || REDUCED) return fallback
++  return text ? `${text}|` : fallback
++}
+diff --git a/src/versions/versions.ts b/src/versions/versions.ts
+index bfba322..c38761a 100644
+--- a/src/versions/versions.ts
++++ b/src/versions/versions.ts
+@@ -39,6 +39,7 @@ export const UI_VERSIONS: UiVersion[] = [
+           'Card photos settle in with a slow zoom (and zoom slightly on desktop hover).',
+           'Buttons have a springier press and a small lift on hover.',
+           'New chat: a soft warm background drifts slowly behind a breathing orb, and the greeting rises in.',
++          'Home: the Ask field types out example prompts while it waits, and the live dots on the Live Sessions map pulse.',
+           'Coin balances count up to their value, including the Total Credits figure.',
+         ],
+       },

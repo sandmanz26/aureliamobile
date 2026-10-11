@@ -1,0 +1,124 @@
+diff --git a/CLAUDE.md b/CLAUDE.md
+index 3ef0327..42ac046 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -388,7 +388,8 @@ first.
+ ## Design versions (staging only)
+ 
+ `src/versions/versions.ts` lists switchable design versions; the picker sits
+-beside `BuildBadge` and shows a "what changes" dialog before applying. A
++in `StagingBar`, a 28px bar fixed to the top of every page on staging (it
++offsets `h-dvh`/sticky layouts via `--staging-bar` in `versions.css`), and shows a "what changes" dialog before applying. A
+ version is a set of rules scoped under `:root[data-ui-version='N']` in
+ `src/styles/versions.css`, so v1 (no attribute) is always the app unchanged.
+ Production ignores the stored choice and is pinned to v1. New experiments go
+diff --git a/src/App.tsx b/src/App.tsx
+index 22c97b6..0d93a6b 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -1,5 +1,6 @@
+ import { lazy, Suspense } from 'react'
+ import { Navigate, Route, Routes } from 'react-router-dom'
++import { StagingBar } from './versions/StagingBar'
+ import { AdminLayout } from './admin/AdminLayout'
+ import { AudioPlayerProvider } from './audio/AudioPlayerContext'
+ import { AuthProvider } from './auth/AuthContext'
+@@ -72,6 +73,7 @@ const SettingsPage = lazy(() => import('./admin/pages/SettingsPage').then((m) =>
+ export default function App() {
+   return (
+     <FeatureFlagsProvider>
++      <StagingBar />
+       <SiteLock>
+       <AuthProvider>
+         {/* Above the router on purpose: a session being built has to survive
+diff --git a/src/components/ui/BuildBadge.tsx b/src/components/ui/BuildBadge.tsx
+index 5a75946..e0cddb8 100644
+--- a/src/components/ui/BuildBadge.tsx
++++ b/src/components/ui/BuildBadge.tsx
+@@ -1,5 +1,4 @@
+ import { BUILD, BUILD_VERSION } from '../../lib/build'
+-import { VersionSwitcher } from '../../versions/VersionSwitcher'
+ 
+ /**
+  * Which site is this, and which build?
+@@ -36,8 +35,6 @@ export function BuildBadge({ dark = false }: { dark?: boolean }) {
+       <span className={`text-style-caption font-mono ${dark ? 'text-white/45' : 'text-text-secondary'}`}>
+         {BUILD_VERSION}
+       </span>
+-      {/* Staging only — renders nothing on production. */}
+-      <VersionSwitcher dark={dark} />
+     </div>
+   )
+ }
+diff --git a/src/styles/versions.css b/src/styles/versions.css
+index bde5f1c..0808aa2 100644
+--- a/src/styles/versions.css
++++ b/src/styles/versions.css
+@@ -153,3 +153,26 @@
+     box-shadow: 0 8px 18px -8px rgb(255 136 27 / 0.55);
+   }
+ }
++
++/* ---- Staging bar (src/versions/StagingBar.tsx) ------------------------- */
++/* Unlayered, so these beat Tailwind's utilities. Every viewport-height
++   layout gives up the bar's height, and sticky headers sit under it. */
++:root { --staging-bar: 0px; }
++:root[data-staging-bar] { --staging-bar: 28px; }
++:root[data-staging-bar] body { padding-top: var(--staging-bar); }
++/* Unlayered rules beat every utility on the element, responsive ones too,
++   so at lg an element that sets its own lg: height keeps it. */
++:root[data-staging-bar] :is(.h-dvh, .h-screen):not([class*='lg:h-']) { height: calc(100dvh - var(--staging-bar)); }
++:root[data-staging-bar] :is(.min-h-dvh, .min-h-screen):not([class*='lg:min-h-']) { min-height: calc(100dvh - var(--staging-bar)); }
++@media (width < 64rem) {
++  :root[data-staging-bar] :is(.h-dvh, .h-screen) { height: calc(100dvh - var(--staging-bar)); }
++  :root[data-staging-bar] :is(.min-h-dvh, .min-h-screen) { min-height: calc(100dvh - var(--staging-bar)); }
++}
++:root[data-staging-bar] .u-sticky-top { top: var(--staging-bar); }
++:root[data-staging-bar] :is(.fixed.inset-0) { top: var(--staging-bar); }
++@media (width >= 64rem) {
++  :root[data-staging-bar] .lg\:h-screen { height: calc(100dvh - var(--staging-bar)); }
++  :root[data-staging-bar] .lg\:min-h-dvh { min-height: calc(100dvh - var(--staging-bar)); }
++  :root[data-staging-bar] .lg\:top-0 { top: var(--staging-bar); }
++  :root[data-staging-bar] .lg\:h-\[min\(640px\,calc\(100dvh-80px\)\)\] { height: min(640px, calc(100dvh - 80px - var(--staging-bar))); }
++}
+diff --git a/src/versions/StagingBar.tsx b/src/versions/StagingBar.tsx
+new file mode 100644
+index 0000000..a5b2cba
+--- /dev/null
++++ b/src/versions/StagingBar.tsx
+@@ -0,0 +1,35 @@
++import { useEffect } from 'react'
++import { BUILD, BUILD_VERSION } from '../lib/build'
++import { VERSIONS_ENABLED } from './versions'
++import { VersionSwitcher } from './VersionSwitcher'
++
++/**
++ * A thin bar fixed to the very top of every page on staging, carrying the
++ * design-version picker. Renders nothing on production.
++ *
++ * It takes real space rather than covering the app: `data-staging-bar` on
++ * <html> turns on `--staging-bar` in versions.css, which pushes the body down
++ * and shortens the viewport-height layouts by the same amount.
++ */
++export function StagingBar() {
++  useEffect(() => {
++    if (!VERSIONS_ENABLED) return
++    document.documentElement.setAttribute('data-staging-bar', '')
++    return () => document.documentElement.removeAttribute('data-staging-bar')
++  }, [])
++
++  if (!VERSIONS_ENABLED) return null
++
++  return (
++    <div className="fixed inset-x-0 top-0 z-[90] flex h-28 items-center justify-between gap-12 bg-[#1B1006] px-12 text-white">
++      <p className="text-style-caption flex min-w-0 items-center gap-8">
++        <span className="rounded-full bg-brand-default px-6 py-1 leading-none text-text-strong">{BUILD.label}</span>
++        <span className="truncate font-mono text-white/55">{BUILD_VERSION}</span>
++      </p>
++      <div className="flex shrink-0 items-center gap-6">
++        <span className="text-style-caption text-white/55">Design</span>
++        <VersionSwitcher dark />
++      </div>
++    </div>
++  )
++}

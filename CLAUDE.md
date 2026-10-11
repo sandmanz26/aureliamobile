@@ -391,6 +391,16 @@ first.
 
 ---
 
+## Update log (every request, with rollback)
+
+`docs/UPDATE-LOG.md` is the per-request ledger: ID, commit, push time,
+request, the interpretation or assumption made when the ask was abstract,
+files, before → after, and how to revert that one update. Each update's code
+diff is also saved as `docs/update-log/patches/U###-<commit>.patch`. **Every
+change gets an entry and a patch in the same push**, alongside
+`docs/CHANGE-LOG.md`. Revert one update with `git revert --no-commit <commit>`
+then `git checkout HEAD -- docs/` so the logs survive.
+
 ## Design versions (staging only)
 
 `src/versions/versions.ts` lists switchable design versions; the picker sits

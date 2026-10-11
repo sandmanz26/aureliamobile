@@ -1,0 +1,210 @@
+diff --git a/CLAUDE.md b/CLAUDE.md
+index 42ac046..39b17c9 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -223,6 +223,12 @@ people dropping pins within the same debounce window can lose one, an
+ accepted gap for a low-traffic internal tool. A `.txt` export is still how
+ notes move between deployments or to someone outside them.
+ 
++**Pins are also scoped to the design version** (staging's v1/v2 switcher).
++Each pin stores `ui`; a screen shows only the pins written in the version
++it is in, and the list, count and delete-all are per version. Pins from
++before this existed are v1. Save .txt exports every version, each note
++tagged `design: vN`.
++
+ **A shared password sits in front of the site, but not in front of `/__demo`.**
+ The console that owns the switch stays open so nobody can shut themselves out of
+ it — which also means that URL is a way around the lock for anyone who knows it.
+diff --git a/api/annotations.ts b/api/annotations.ts
+index 6909bc5..077e633 100644
+--- a/api/annotations.ts
++++ b/api/annotations.ts
+@@ -88,6 +88,9 @@ function isValidAnnotation(value: unknown): value is Record<string, unknown> {
+     Number.isFinite(a.vh) &&
+     typeof a.scrollY === 'number' &&
+     Number.isFinite(a.scrollY) &&
++    // Design version (staging v1/v2 switcher). Optional: pins from before it
++    // existed have none and read as v1.
++    (a.ui === undefined || (typeof a.ui === 'number' && Number.isInteger(a.ui) && a.ui >= 1 && a.ui <= 99)) &&
+     typeof a.text === 'string' &&
+     a.text.length <= MAX_TEXT_LENGTH &&
+     typeof a.createdAt === 'string' &&
+diff --git a/src/demo/annotations/DemoAnnotator.tsx b/src/demo/annotations/DemoAnnotator.tsx
+index 06d9786..bae3c04 100644
+--- a/src/demo/annotations/DemoAnnotator.tsx
++++ b/src/demo/annotations/DemoAnnotator.tsx
+@@ -6,6 +6,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
+ import { useFeatureFlags } from '../FeatureFlags'
+ import { ANNOTATIONS_FLAG, MOBILE_WEB_BREAKPOINT } from '../modules'
+ import type { Annotation } from './format'
++import { useUiVersion } from '../../versions/useUiVersion'
+ import {
+   annotationsFileName,
+   newAnnotationId,
+@@ -164,6 +165,8 @@ export function DemoAnnotator() {
+ }
+ 
+ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () => void }) {
++  // Pins belong to the design version they were dropped in (v1/v2 switcher).
++  const ui = useUiVersion()
+   const navigate = useNavigate()
+   const { w: vw, h: vh } = useViewport()
+ 
+@@ -282,10 +285,13 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: ()
+   }, [toast])
+ 
+   const onThisPage = useMemo(
+-    () => sortAnnotations(annotations.filter((a) => a.page === pathname)),
+-    [annotations, pathname],
++    () => sortAnnotations(annotations.filter((a) => a.page === pathname && (a.ui ?? 1) === ui)),
++    [annotations, pathname, ui],
+   )
++  // Everything written, across versions — what Save .txt exports, each note
++  // tagged with its version. The list, count and delete-all are this version's.
+   const written = annotations.filter((a) => a.text.trim() !== '')
++  const writtenHere = written.filter((a) => (a.ui ?? 1) === ui)
+ 
+   const update = useCallback((id: string, patch: Partial<Annotation>) => {
+     setAnnotations((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)))
+@@ -300,18 +306,19 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: ()
+    *  same way, so "delete all" means the same thing it does there. */
+   function clearAll() {
+     setMenuOpen(false)
+-    if (!annotations.length) {
++    const mine = annotations.filter((a) => (a.ui ?? 1) === ui)
++    if (!mine.length) {
+       setToast('No notes to delete')
+       return
+     }
+-    const count = annotations.length
++    const count = mine.length
+     const everyone = sync === 'synced' || sync === 'saving' ? ' for everyone, not just this device' : ''
+     if (
+-      !window.confirm(`Delete all ${count} note${count === 1 ? '' : 's'} on every page${everyone}? This can't be undone.`)
++      !window.confirm(`Delete all ${count} v${ui} note${count === 1 ? '' : 's'} on every page${everyone}? Notes on other design versions stay. This can't be undone.`)
+     ) {
+       return
+     }
+-    setAnnotations([])
++    setAnnotations((prev) => prev.filter((a) => (a.ui ?? 1) !== ui))
+     setOpenId(null)
+     setListOpen(false)
+     setToast('All notes deleted')
+@@ -362,6 +369,7 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: ()
+       vw,
+       vh,
+       scrollY: window.scrollY,
++      ui,
+       text: '',
+       createdAt: now,
+       updatedAt: now,
+@@ -484,7 +492,7 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: ()
+       )}
+ 
+       {listOpen && (
+-        <NoteList annotations={written} currentPage={pathname} onPick={goTo} onClose={() => setListOpen(false)} />
++        <NoteList annotations={writtenHere} ui={ui} currentPage={pathname} onPick={goTo} onClose={() => setListOpen(false)} />
+       )}
+ 
+       {menuOpen && !placing && !listOpen && (
+@@ -493,7 +501,7 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: ()
+           fabTop={fabTop}
+           vw={vw}
+           vh={vh}
+-          count={written.length}
++          count={writtenHere.length}
+           onAdd={startPlacing}
+           onList={() => {
+             setMenuOpen(false)
+@@ -776,11 +784,13 @@ function Menu({
+ 
+ function NoteList({
+   annotations,
++  ui,
+   currentPage,
+   onPick,
+   onClose,
+ }: {
+   annotations: Annotation[]
++  ui: number
+   currentPage: string
+   onPick: (annotation: Annotation) => void
+   onClose: () => void
+@@ -800,7 +810,7 @@ function NoteList({
+         onClick={(e) => e.stopPropagation()}
+       >
+         <div className="flex items-center justify-between border-b border-border-subtle px-16 pb-8 pt-12">
+-          <h2 className="text-style-body font-semibold text-text-primary">Notes ({annotations.length})</h2>
++          <h2 className="text-style-body font-semibold text-text-primary">Notes · v{ui} ({annotations.length})</h2>
+           <button type="button" aria-label="Close list" onClick={onClose} className="p-4 text-icon-secondary">
+             <X size={16} />
+           </button>
+diff --git a/src/demo/annotations/format.ts b/src/demo/annotations/format.ts
+index 4a3ccdc..98c1c6b 100644
+--- a/src/demo/annotations/format.ts
++++ b/src/demo/annotations/format.ts
+@@ -10,6 +10,7 @@
+  *
+  *   --- #1 a8f3k2
+  *   page: /chat
++ *   design: v2
+  *   pos: 42.5, 61.2
+  *   viewport: 390x844
+  *   scroll: 240
+@@ -42,6 +43,13 @@ export type Annotation = {
+    * fixed spot in the full document: `scrollY + (y / 100) * vh`.
+    */
+   scrollY: number
++  /**
++   * Design version the screen was in when the pin was dropped (staging's
++   * v1/v2 switcher). Pins only show in the version they were written for —
++   * a note about a v2 animation means nothing on v1. Older pins, and files
++   * exported before this existed, are v1.
++   */
++  ui: number
+   text: string
+   createdAt: string
+   updatedAt: string
+@@ -58,10 +66,14 @@ const clampPct = (n: number) => Math.min(100, Math.max(0, Number.isFinite(n) ? n
+ const escapeLine = (line: string) => (line.startsWith(BLOCK) || line.startsWith('\\') ? `\\${line}` : line)
+ const unescapeLine = (line: string) => (line.startsWith('\\') ? line.slice(1) : line)
+ 
+-/** By page, then top to bottom — the order a reviewer reads a screen in. */
++/** Design version, then page, then top to bottom — the order a reviewer reads a screen in. */
+ export function sortAnnotations(list: Annotation[]): Annotation[] {
+   return [...list].sort((a, b) =>
+-    a.page === b.page ? a.y - b.y || a.x - b.x : a.page.localeCompare(b.page),
++    (a.ui ?? 1) !== (b.ui ?? 1)
++      ? (a.ui ?? 1) - (b.ui ?? 1)
++      : a.page === b.page
++        ? a.y - b.y || a.x - b.x
++        : a.page.localeCompare(b.page),
+   )
+ }
+ 
+@@ -71,6 +83,7 @@ export function serializeAnnotations(list: Annotation[]): string {
+     out.push(
+       `${BLOCK}${i + 1} ${a.id}`,
+       `page: ${a.page}`,
++      `design: v${a.ui ?? 1}`,
+       `pos: ${a.x.toFixed(1)}, ${a.y.toFixed(1)}`,
+       `viewport: ${Math.round(a.vw)}x${Math.round(a.vh)}`,
+       `scroll: ${Math.round(a.scrollY)}`,
+@@ -105,6 +118,7 @@ export function parseAnnotations(raw: string): Annotation[] {
+       // the right default anyway, since those pins were meant to be read at
+       // the top of the page.
+       scrollY: current.scrollY || 0,
++      ui: current.ui || 1,
+       text: (note ?? []).join('\n'),
+       createdAt: current.createdAt || now,
+       updatedAt: current.updatedAt || current.createdAt || now,
+@@ -143,6 +157,9 @@ export function parseAnnotations(raw: string): Annotation[] {
+         current.vh = h || 0
+         break
+       }
++      case 'design':
++        current.ui = parseInt(value.replace(/^v/i, ''), 10) || 1
++        break
+       case 'scroll':
+         current.scrollY = parseInt(value, 10) || 0
+         break

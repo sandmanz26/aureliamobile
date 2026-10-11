@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-11 — v2: player sheet shows the description; recommendation filter; update log
+
+Version 2 only. Player: the details sheet rests at 268px instead of 169px so the description under the title is readable at rest. Chat: opened recommendations get filter chips (All / Visual / Sound / Movement / Selected, with counts) — categories are an assumption, see `docs/UPDATE-LOG.md` U014. v1 player and chat pixel-identical at 402px. Also new: `docs/UPDATE-LOG.md` plus `docs/update-log/patches/` (U001–U014 backfilled from the version-switcher work onward) with commit, push time, request, assumptions, before/after and per-update revert steps. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-11 — Staging site password is now AURELIA3.0
 
 `src/demo/siteLock.ts`: the default password now depends on the build: staging and local use `AURELIA3.0`, production keeps `AURELIA2.0`. Browsers that unlocked staging with the old password are asked again (the stored unlock is the password). `VITE_SITE_PASSWORD`, if set on a Vercel project, still overrides the default. `docs/FOR-AI-AGENT.md` updated. Branches: `web_app`, `admin_cms`. Not `web_prod`; production's password is unchanged either way, since its default stays `AURELIA2.0`.

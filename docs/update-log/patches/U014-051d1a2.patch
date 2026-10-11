@@ -1,0 +1,192 @@
+diff --git a/src/components/chat/ChatMessageItem.tsx b/src/components/chat/ChatMessageItem.tsx
+index 59694aa..b548e8d 100644
+--- a/src/components/chat/ChatMessageItem.tsx
++++ b/src/components/chat/ChatMessageItem.tsx
+@@ -4,6 +4,8 @@ import { RECOMMENDATIONS } from '../../chat/ChatSessionContext'
+ import { AttachedSession } from './AttachedSession'
+ import { RecommendationCard } from './RecommendationCard'
+ import { RecommendationDeck } from './RecommendationDeck'
++import { RecommendationFilter } from './RecommendationFilter'
++import { useUiVersion } from '../../versions/useUiVersion'
+ import { VoiceMessage } from './VoiceMessage'
+ 
+ interface ChatMessageItemProps {
+@@ -43,6 +45,7 @@ export function ChatMessageItem({
+   onOpenDeck,
+   onSendPrompt,
+ }: ChatMessageItemProps) {
++  const v2 = useUiVersion() >= 2
+   // Stacked full width, not a scrolling rail: these are read one after
+   // another and the longest runs to two lines, which a rail would either
+   // clip or leave ragged.
+@@ -68,7 +71,9 @@ export function ChatMessageItem({
+         <AttachedSession slug={attached.session} />
+       </div>
+     ) : attached === 'recommendations' && showRecommendations ? (
+-      deckOpen && canApply ? (
++      deckOpen && canApply && v2 ? (
++        <RecommendationFilter recommendations={RECOMMENDATIONS} applied={applied} onToggle={onToggleRecommendation} />
++      ) : deckOpen && canApply ? (
+         <div className="u-message -mx-20 mt-12 flex gap-11 overflow-x-auto px-20 pb-4">
+           {RECOMMENDATIONS.map((recommendation) => (
+             <RecommendationCard
+diff --git a/src/components/chat/RecommendationFilter.tsx b/src/components/chat/RecommendationFilter.tsx
+new file mode 100644
+index 0000000..d76b22d
+--- /dev/null
++++ b/src/components/chat/RecommendationFilter.tsx
+@@ -0,0 +1,89 @@
++import { useState } from 'react'
++import type { Recommendation } from './RecommendationCard'
++import { RecommendationCard } from './RecommendationCard'
++
++/**
++ * Version 2 (staging): the opened recommendation row with a filter above it.
++ *
++ * Assumption, since the request was only "add a filter": the useful cut is
++ * *what each change acts on* — what you see, what you hear, how it moves —
++ * plus "Selected", so you can check the set you are about to apply before
++ * pressing Apply. Chips carry counts and a kind with nothing in it is not
++ * offered. v1 renders the plain row in ChatMessageItem and never this.
++ */
++export type RecommendationKind = 'visual' | 'sound' | 'movement'
++
++const KIND_OF: Record<string, RecommendationKind> = {
++  yellow: 'visual',
++  movement: 'movement',
++  frequency: 'sound',
++}
++
++const FILTERS: { id: 'all' | RecommendationKind | 'selected'; label: string }[] = [
++  { id: 'all', label: 'All' },
++  { id: 'visual', label: 'Visual' },
++  { id: 'sound', label: 'Sound' },
++  { id: 'movement', label: 'Movement' },
++  { id: 'selected', label: 'Selected' },
++]
++
++export function RecommendationFilter({
++  recommendations,
++  applied,
++  onToggle,
++}: {
++  recommendations: Recommendation[]
++  applied: string[]
++  onToggle: (id: string) => void
++}) {
++  const [filter, setFilter] = useState<(typeof FILTERS)[number]['id']>('all')
++
++  const matches = (r: Recommendation, id: (typeof FILTERS)[number]['id']) =>
++    id === 'all' ? true : id === 'selected' ? applied.includes(r.id) : KIND_OF[r.id] === id
++
++  const shown = recommendations.filter((r) => matches(r, filter))
++
++  return (
++    <div className="u-message mt-12">
++      <div role="toolbar" aria-label="Filter recommendations" className="-mx-20 flex gap-8 overflow-x-auto px-20 pb-4">
++        {FILTERS.map((f) => {
++          const count = recommendations.filter((r) => matches(r, f.id)).length
++          if (count === 0 && f.id !== 'all' && f.id !== 'selected') return null
++          const active = filter === f.id
++          return (
++            <button
++              key={f.id}
++              type="button"
++              aria-pressed={active}
++              onClick={() => setFilter(f.id)}
++              className={`u-press flex h-32 shrink-0 items-center gap-6 rounded-full border px-12 text-[13px] leading-none transition-colors ${
++                active
++                  ? 'border-text-primary bg-text-primary text-text-inverse'
++                  : 'border-border-subtle bg-surface-default text-text-primary'
++              }`}
++            >
++              {f.label}
++              <span className={`tabular-nums ${active ? 'text-text-inverse/70' : 'text-text-secondary'}`}>{count}</span>
++            </button>
++          )
++        })}
++      </div>
++
++      <div className="-mx-20 mt-8 flex gap-11 overflow-x-auto px-20 pb-4">
++        {shown.map((recommendation) => (
++          <RecommendationCard
++            key={recommendation.id}
++            recommendation={recommendation}
++            applied={applied.includes(recommendation.id)}
++            onToggle={() => onToggle(recommendation.id)}
++          />
++        ))}
++        {shown.length === 0 && (
++          <p className="text-style-body-small py-24 text-text-secondary">
++            Nothing selected yet. Add a change from All to see it here.
++          </p>
++        )}
++      </div>
++    </div>
++  )
++}
+diff --git a/src/pages/PlayerPage.tsx b/src/pages/PlayerPage.tsx
+index 16b25dd..d723045 100644
+--- a/src/pages/PlayerPage.tsx
++++ b/src/pages/PlayerPage.tsx
+@@ -40,6 +40,12 @@ const SHEET_TOP = 54
+  *  a 705 hero, so this is its own number. */
+ const SHEET_PEEK = 169
+ 
++/** Version 2 (staging): the resting sheet shows the description under the
++ *  title too — author, title, four lines and Read More — so the cover above
++ *  it gets correspondingly shorter. Request: "make it shorter so the text
++ *  under the h1 is visible when the sheet is open". */
++const SHEET_PEEK_V2 = 268
++
+ const CUES = [
+   'Now take a deep breath in',
+   'Hold it — and let the shoulders drop',
+@@ -246,6 +252,7 @@ export function PlayerPage() {
+   // walking back to the cockpit leaves the session running.
+   const { playing, elapsed, duration, load, toggle, seek } = useAudioPlayer()
+   const [expanded, setExpanded] = useState(false)
++  const peek = v2 ? SHEET_PEEK_V2 : SHEET_PEEK
+ 
+   // How far the sheet is pushed down from its pulled-up rest. 0 is up; the
+   // collapsed rest is whatever leaves SHEET_PEEK showing, which depends on the
+@@ -281,7 +288,7 @@ export function PlayerPage() {
+ 
+   useEffect(() => {
+     const measure = () => {
+-      const rest = Math.max(0, window.innerHeight - SHEET_TOP - SHEET_PEEK)
++      const rest = Math.max(0, window.innerHeight - SHEET_TOP - peek)
+       setCollapsedY(rest)
+       // Until the first measurement the sheet has no rest to sit at, so it
+       // starts collapsed rather than flashing open.
+@@ -290,7 +297,7 @@ export function PlayerPage() {
+     measure()
+     window.addEventListener('resize', measure)
+     return () => window.removeEventListener('resize', measure)
+-  }, [])
++  }, [peek])
+ 
+   const up = offset !== null && offset < collapsedY / 2
+ 
+@@ -369,7 +376,7 @@ export function PlayerPage() {
+       {/* ------------------------------------------------------------ hero */}
+       <section
+         className="relative mx-auto flex h-full w-full max-w-[402px] flex-col text-text-inverse lg:max-w-[640px]"
+-        style={{ paddingBottom: SHEET_PEEK }}
++        style={{ paddingBottom: peek }}
+       >
+         {/* The frame draws three controls in this row — back, coin, share.
+             A sound switch used to sit between the last two as a fourth; the
+diff --git a/src/versions/versions.ts b/src/versions/versions.ts
+index fdc1c83..5ab2384 100644
+--- a/src/versions/versions.ts
++++ b/src/versions/versions.ts
+@@ -51,6 +51,8 @@ export const UI_VERSIONS: UiVersion[] = [
+         items: [
+           'Bottom sheets: grab handle, follow your finger, close when dragged down or flicked, spring back otherwise.',
+           'Pull down at the top of a page to refresh it.',
++          'Player: the details sheet rests higher, so the description under the title is readable without pulling it up.',
++          'Chat: opened recommendations get a filter (All, Visual, Sound, Movement, Selected) with counts.',
+           'Player: the Share button works — the phone’s share sheet, or the link copied to the clipboard.',
+           'Sign-in: “Welcome to Aurelia.” is centred.',
+           'Voice input: the black button now shows Pause / Play, because that is what it does.',

@@ -1,0 +1,379 @@
+diff --git a/CLAUDE.md b/CLAUDE.md
+index 05ce5ff..3ef0327 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -382,3 +382,15 @@ in `docs/PRD.md`. Two examples: the sign-in ask lands on send rather than on the
+ first keystroke, and the password-reset confirmation must not reveal whether an
+ address is registered. If you are about to change one of those, read the entry
+ first.
++
++---
++
++## Design versions (staging only)
++
++`src/versions/versions.ts` lists switchable design versions; the picker sits
++beside `BuildBadge` and shows a "what changes" dialog before applying. A
++version is a set of rules scoped under `:root[data-ui-version='N']` in
++`src/styles/versions.css`, so v1 (no attribute) is always the app unchanged.
++Production ignores the stored choice and is pinned to v1. New experiments go
++in as a new version first; promoting one to the default is a separate,
++explicit step.
+diff --git a/src/components/ui/BuildBadge.tsx b/src/components/ui/BuildBadge.tsx
+index e0cddb8..5a75946 100644
+--- a/src/components/ui/BuildBadge.tsx
++++ b/src/components/ui/BuildBadge.tsx
+@@ -1,4 +1,5 @@
+ import { BUILD, BUILD_VERSION } from '../../lib/build'
++import { VersionSwitcher } from '../../versions/VersionSwitcher'
+ 
+ /**
+  * Which site is this, and which build?
+@@ -35,6 +36,8 @@ export function BuildBadge({ dark = false }: { dark?: boolean }) {
+       <span className={`text-style-caption font-mono ${dark ? 'text-white/45' : 'text-text-secondary'}`}>
+         {BUILD_VERSION}
+       </span>
++      {/* Staging only — renders nothing on production. */}
++      <VersionSwitcher dark={dark} />
+     </div>
+   )
+ }
+diff --git a/src/index.css b/src/index.css
+index cd2e7ad..cc7392d 100644
+--- a/src/index.css
++++ b/src/index.css
+@@ -1,5 +1,6 @@
+ @import './styles/tokens.css';
+ @import './styles/motion.css';
++@import './styles/versions.css';
+ @import './admin/admin.css';
+ 
+ /* Self-hosted rather than linked from fonts.googleapis.com: the Google
+diff --git a/src/main.tsx b/src/main.tsx
+index 4714810..863bd2d 100644
+--- a/src/main.tsx
++++ b/src/main.tsx
+@@ -4,6 +4,9 @@ import { BrowserRouter } from 'react-router-dom'
+ import App from './App.tsx'
+ import { ErrorBoundary } from './components/ErrorBoundary.tsx'
+ import './index.css'
++import { applyVersion, readVersion } from './versions/versions'
++
++applyVersion(readVersion())
+ 
+ createRoot(document.getElementById('root')!).render(
+   <StrictMode>
+diff --git a/src/styles/versions.css b/src/styles/versions.css
+new file mode 100644
+index 0000000..0e3283a
+--- /dev/null
++++ b/src/styles/versions.css
+@@ -0,0 +1,106 @@
++/* Design versions (staging only — see src/versions/versions.ts).
++ *
++ * Every rule here is scoped under :root[data-ui-version='N'], so version 1
++ * (no attribute) is the app exactly as it ships. Reduced motion is handled by
++ * the blanket rule at the bottom of motion.css, which also covers these.
++ */
++
++/* ---- Version 2: more transition animation on every page ---------------- */
++
++@keyframes v2-page-in {
++  from {
++    opacity: 0;
++    filter: blur(6px);
++    transform: translateY(18px);
++  }
++}
++
++@keyframes v2-reveal {
++  from {
++    opacity: 0;
++    transform: translateY(24px) scale(0.985);
++  }
++}
++
++@keyframes v2-photo-in {
++  from {
++    transform: scale(1.08);
++  }
++}
++
++@keyframes v2-spring-up {
++  0% { transform: translateY(100%); }
++  70% { transform: translateY(-2%); }
++  100% { transform: translateY(0); }
++}
++
++@keyframes v2-spring-left {
++  0% { transform: translateX(-100%); }
++  70% { transform: translateX(1.5%); }
++  100% { transform: translateX(0); }
++}
++
++@keyframes v2-pop {
++  0% { opacity: 0; transform: scale(0.92); }
++  70% { opacity: 1; transform: scale(1.01); }
++  100% { transform: scale(1); }
++}
++
++:root[data-ui-version='2'] {
++  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
++}
++
++/* Screen change: blur-and-rise, a touch longer. */
++:root[data-ui-version='2'] .u-page {
++  animation: v2-page-in var(--motion-slow) var(--ease-out) both;
++}
++
++/* Scroll reveal for the blocks of any page. Scroll-driven, so it needs no
++   observer and costs nothing where unsupported (the element simply shows). */
++@supports (animation-timeline: view()) {
++  :root[data-ui-version='2'] .u-page :is(section, article, li, .u-lift) {
++    animation: v2-reveal linear both;
++    animation-timeline: view();
++    animation-range: entry 0% entry 60%;
++  }
++}
++
++/* Card photos settle in with a slow zoom, and drift on desktop hover. */
++:root[data-ui-version='2'] .u-page :is(article, .u-lift) img {
++  animation: v2-photo-in 900ms var(--ease-out) both;
++  transition: transform 600ms var(--ease-out);
++}
++@media (hover: hover) {
++  :root[data-ui-version='2'] .u-lift:hover img {
++    transform: scale(1.05);
++  }
++  :root[data-ui-version='2'] .u-press:hover {
++    transform: translateY(-1px);
++  }
++}
++
++/* Springier press. */
++:root[data-ui-version='2'] .u-press {
++  transition:
++    transform var(--motion-base) var(--ease-spring),
++    opacity var(--motion-fast) var(--ease-out),
++    background-color var(--motion-fast) var(--ease-in-out),
++    border-color var(--motion-fast) var(--ease-in-out);
++}
++:root[data-ui-version='2'] .u-press:active {
++  transform: scale(0.94);
++}
++
++/* Drawer, sheets and dialogs. */
++:root[data-ui-version='2'] .u-drawer {
++  animation: v2-spring-left 480ms var(--ease-out) both;
++}
++:root[data-ui-version='2'] .u-sheet {
++  animation: v2-spring-up 480ms var(--ease-out) both;
++}
++:root[data-ui-version='2'] .u-pop {
++  animation: v2-pop var(--motion-base) var(--ease-out) both;
++}
++:root[data-ui-version='2'] .u-stagger > * {
++  animation-duration: var(--motion-slow);
++}
+diff --git a/src/versions/VersionSwitcher.tsx b/src/versions/VersionSwitcher.tsx
+new file mode 100644
+index 0000000..d5bff96
+--- /dev/null
++++ b/src/versions/VersionSwitcher.tsx
+@@ -0,0 +1,120 @@
++import { useEffect, useState } from 'react'
++import { createPortal } from 'react-dom'
++import { ChevronDown, Sparkles, X } from 'lucide-react'
++import { UI_VERSIONS, VERSIONS_ENABLED, readVersion, storeVersion } from './versions'
++
++/**
++ * Staging-only picker for the design versions in `versions.ts`.
++ *
++ * Choosing a version never applies straight away: a dialog first lists what
++ * changes, so whoever is reviewing knows what to look for before the screen
++ * moves under them. Renders nothing on production.
++ */
++export function VersionSwitcher({ dark = false }: { dark?: boolean }) {
++  const [current, setCurrent] = useState(readVersion)
++  const [pending, setPending] = useState<number | null>(null)
++
++  useEffect(() => {
++    const sync = () => setCurrent(readVersion())
++    window.addEventListener('aurelia:ui-version', sync)
++    return () => window.removeEventListener('aurelia:ui-version', sync)
++  }, [])
++
++  if (!VERSIONS_ENABLED) return null
++  const target = UI_VERSIONS.find((v) => v.id === pending)
++
++  return (
++    <>
++      <label
++        className={`text-style-caption relative flex items-center gap-4 rounded-full border px-8 py-2 leading-none ${
++          dark ? 'border-white/20 text-white/80' : 'border-black/15 text-text-primary'
++        }`}
++      >
++        <span className="sr-only">Design version</span>
++        <select
++          value={current}
++          onChange={(e) => setPending(Number(e.target.value))}
++          className="cursor-pointer appearance-none bg-transparent pr-12 outline-none"
++        >
++          {UI_VERSIONS.map((v) => (
++            <option key={v.id} value={v.id} className="text-black">
++              v{v.id}
++            </option>
++          ))}
++        </select>
++        <ChevronDown size={10} className="pointer-events-none absolute right-6" />
++      </label>
++
++      {target &&
++        createPortal(
++          <div
++            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-20 u-fade"
++            onClick={() => setPending(null)}
++          >
++            <div
++              role="dialog"
++              aria-modal="true"
++              aria-labelledby="version-title"
++              onClick={(e) => e.stopPropagation()}
++              className="u-pop w-full max-w-[440px] rounded-24 bg-surface-default p-24 text-left shadow-[0_24px_64px_-16px_rgba(27,16,6,0.35)]"
++            >
++              <div className="flex items-start justify-between gap-16">
++                <div>
++                  <p className="text-style-caption flex items-center gap-6 text-text-brand">
++                    <Sparkles size={12} /> Switch from v{current} to v{target.id}
++                  </p>
++                  <h2 id="version-title" className="text-style-title-large mt-6 text-text-primary">
++                    What changes in {target.name}
++                  </h2>
++                  <p className="text-style-body-small mt-4 text-text-secondary">{target.summary}</p>
++                </div>
++                <button
++                  type="button"
++                  aria-label="Close"
++                  onClick={() => setPending(null)}
++                  className="u-press u-tap text-icon-secondary"
++                >
++                  <X size={18} />
++                </button>
++              </div>
++
++              <ul className="mt-16 flex flex-col gap-8">
++                {target.changes.map((c) => (
++                  <li key={c} className="text-style-body-small flex gap-8 text-text-primary">
++                    <span aria-hidden="true" className="mt-7 size-6 shrink-0 rounded-full bg-brand-default" />
++                    {c}
++                  </li>
++                ))}
++              </ul>
++
++              <p className="text-style-caption mt-16 text-text-secondary">
++                Staging only, saved in this browser. Production is not affected.
++              </p>
++
++              <div className="mt-20 flex justify-end gap-8">
++                <button
++                  type="button"
++                  onClick={() => setPending(null)}
++                  className="text-style-body-small u-press h-40 rounded-full border border-button-secondary-border px-16 text-text-primary"
++                >
++                  Cancel
++                </button>
++                <button
++                  type="button"
++                  onClick={() => {
++                    storeVersion(target.id)
++                    setCurrent(target.id)
++                    setPending(null)
++                  }}
++                  className="text-style-body-small u-press h-40 rounded-full bg-interactive-primary px-16 text-text-inverse"
++                >
++                  Switch to v{target.id}
++                </button>
++              </div>
++            </div>
++          </div>,
++          document.body,
++        )}
++    </>
++  )
++}
+diff --git a/src/versions/versions.ts b/src/versions/versions.ts
+new file mode 100644
+index 0000000..7c133f4
+--- /dev/null
++++ b/src/versions/versions.ts
+@@ -0,0 +1,71 @@
++import { BUILD } from '../lib/build'
++
++/**
++ * Design versions you can switch between on staging.
++ *
++ * Each version is a set of opt-in changes layered on the same code, keyed by
++ * `data-ui-version` on <html>. Version 1 is the app exactly as it ships — no
++ * attribute-scoped rule applies to it — so switching back is always a true
++ * "before". Production never reads the stored choice: it is pinned to 1.
++ *
++ * To add a version: append an entry here, then scope its rules under
++ * `:root[data-ui-version='N']` (see `src/styles/versions.css`).
++ */
++export interface UiVersion {
++  id: number
++  name: string
++  summary: string
++  changes: string[]
++}
++
++export const UI_VERSIONS: UiVersion[] = [
++  {
++    id: 1,
++    name: 'Version 1',
++    summary: 'The current app, as it ships.',
++    changes: ['Baseline: the screens and motion currently on staging.'],
++  },
++  {
++    id: 2,
++    name: 'Version 2',
++    summary: 'More transition animation on every page.',
++    changes: [
++      'Page change: screens arrive with a soft blur-and-rise instead of a plain rise.',
++      'Sections, cards and list rows reveal as they scroll into view, on every page.',
++      'Card photos ease in with a slow zoom; on desktop they zoom slightly on hover.',
++      'Buttons and links get a springier press, and a gentle lift on hover (desktop).',
++      'Drawer, sheets and dialogs open with a springier, slightly longer motion.',
++      'All of it is switched off for anyone with "reduce motion" set.',
++    ],
++  },
++]
++
++const KEY = 'aurelia.ui.version'
++
++export const VERSIONS_ENABLED = BUILD.environment !== 'production'
++
++export function readVersion(): number {
++  if (!VERSIONS_ENABLED) return 1
++  try {
++    const n = Number(localStorage.getItem(KEY))
++    return UI_VERSIONS.some((v) => v.id === n) ? n : 1
++  } catch {
++    return 1
++  }
++}
++
++export function applyVersion(id: number) {
++  const root = document.documentElement
++  if (id === 1) root.removeAttribute('data-ui-version')
++  else root.setAttribute('data-ui-version', String(id))
++}
++
++export function storeVersion(id: number) {
++  try {
++    localStorage.setItem(KEY, String(id))
++  } catch {
++    /* private mode: the switch still applies for this tab */
++  }
++  applyVersion(id)
++  window.dispatchEvent(new Event('aurelia:ui-version'))
++}

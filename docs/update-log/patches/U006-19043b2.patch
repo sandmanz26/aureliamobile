@@ -1,0 +1,54 @@
+diff --git a/src/pages/CreditsPage.tsx b/src/pages/CreditsPage.tsx
+index 51ade30..a69312d 100644
+--- a/src/pages/CreditsPage.tsx
++++ b/src/pages/CreditsPage.tsx
+@@ -3,6 +3,8 @@ import { ArrowLeft, Check, Copy } from 'lucide-react'
+ import { useNavigate } from 'react-router-dom'
+ import { PageMeta } from '../components/PageMeta'
+ import { CoinMark } from '../components/ui/CoinPill'
++import { CountUp } from '../components/ui/CountUp'
++import { useUiVersion } from '../versions/useUiVersion'
+ import { CREDIT_HISTORY, INVITE_LINK, INVITE_REWARD, TOTAL_CREDITS } from '../lib/credits'
+ import { CARD_SHADOW } from '../lib/shadows'
+ 
+@@ -24,6 +26,8 @@ import { CARD_SHADOW } from '../lib/shadows'
+ export function CreditsPage() {
+   const navigate = useNavigate()
+   const [copied, setCopied] = useState(false)
++  // Version 2: the balance counts up to its value, like every CoinPill.
++  const v2 = useUiVersion() >= 2
+ 
+   async function copy() {
+     try {
+@@ -63,7 +67,17 @@ export function CreditsPage() {
+             {/* 24 Medium in the frame. The library has no 24 Medium style — it
+                 has Title Large at Semibold and Title Large Regular — so this is
+                 written out rather than bent onto the nearest one. */}
+-            <span className="text-[24px] font-medium leading-[28px] text-text-primary">{TOTAL_CREDITS}</span>
++            <span className={`text-[24px] font-medium leading-[28px] text-text-primary${v2 ? ' tabular-nums' : ''}`}>
++              {v2 ? (
++                <CountUp
++                  value={Number(TOTAL_CREDITS.replace(/[^0-9]/g, ''))}
++                  durationMs={1300}
++                  format={(n) => Math.round(n).toLocaleString('en-US')}
++                />
++              ) : (
++                TOTAL_CREDITS
++              )}
++            </span>
+           </span>
+         </div>
+ 
+diff --git a/src/versions/versions.ts b/src/versions/versions.ts
+index 81b41f5..8271f60 100644
+--- a/src/versions/versions.ts
++++ b/src/versions/versions.ts
+@@ -38,7 +38,7 @@ export const UI_VERSIONS: UiVersion[] = [
+           'Sections, cards and list rows fade up as you scroll to them.',
+           'Card photos settle in with a slow zoom (and zoom slightly on desktop hover).',
+           'Buttons have a springier press and a small lift on hover.',
+-          'Coin balances count up to their value.',
++          'Coin balances count up to their value, including the Total Credits figure.',
+         ],
+       },
+       {

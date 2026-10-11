@@ -1,0 +1,81 @@
+diff --git a/src/pages/HomePage.tsx b/src/pages/HomePage.tsx
+index 5fdc9f5..a1c6645 100644
+--- a/src/pages/HomePage.tsx
++++ b/src/pages/HomePage.tsx
+@@ -355,7 +355,26 @@ export function HomePage() {
+           Figma frame 402x800, padding 40/20, counterAlign MIN (left-aligned),
+           content SPACE_BETWEEN with the card pair bleeding past both edges. */}
+       {isEnabled('home.promo') && (
+-      <section className="relative mt-16 overflow-hidden bg-[#1B1006] px-20 py-40 text-text-inverse lg:mx-auto lg:mt-40 lg:w-[calc(100%-48px)] lg:max-w-[912px] lg:rounded-[20px] lg:px-48 lg:py-48">
++      <section
++        className="v2-follow relative mt-16 overflow-hidden bg-[#1B1006] px-20 py-40 text-text-inverse lg:mx-auto lg:mt-40 lg:w-[calc(100%-48px)] lg:max-w-[912px] lg:rounded-[20px] lg:px-48 lg:py-48"
++        // Version 2: the glow follows the pointer. Written straight to CSS
++        // variables on the element, so moving the mouse never re-renders.
++        onPointerMove={
++          v2
++            ? (event) => {
++                const el = event.currentTarget
++                const box = el.getBoundingClientRect()
++                el.style.setProperty('--mx', `${event.clientX - box.left}px`)
++                el.style.setProperty('--my', `${event.clientY - box.top}px`)
++                el.style.setProperty('--px', `${((event.clientX - box.left) / box.width - 0.5).toFixed(3)}`)
++                el.style.setProperty('--py', `${((event.clientY - box.top) / box.height - 0.5).toFixed(3)}`)
++                el.dataset.pointer = 'in'
++              }
++            : undefined
++        }
++        onPointerLeave={v2 ? (event) => delete event.currentTarget.dataset.pointer : undefined}
++      >
++        {v2 && <span aria-hidden="true" className="v2-follow-glow" />}
+         {/* The two warm ellipses behind the content (Figma "Ellipse 6/7") —
+             a soft drift in opacity and scale so the banner reads as alive
+             rather than a flat static glow. Different durations (10s/13s)
+diff --git a/src/styles/versions.css b/src/styles/versions.css
+index 2329a84..5e4f3d6 100644
+--- a/src/styles/versions.css
++++ b/src/styles/versions.css
+@@ -375,3 +375,31 @@
+ :root[data-ui-version='2'] .u-glow-drift {
+   animation-name: v2-glow-roam;
+ }
++
++/* ---- Version 2: promo banner follows the pointer ------------------------ */
++/* A warm light sits under the cursor (or finger) and trails it; the two
++   roaming glows lean the opposite way for depth. Rests in the middle and
++   fades when the pointer leaves. */
++:root[data-ui-version='2'] .v2-follow-glow {
++  position: absolute;
++  left: 0;
++  top: 0;
++  width: 520px;
++  height: 520px;
++  margin: -260px 0 0 -260px;
++  border-radius: 9999px;
++  pointer-events: none;
++  background: radial-gradient(circle, rgb(255 168 70 / 0.55) 0%, rgb(255 136 27 / 0.22) 35%, transparent 70%);
++  transform: translate(var(--mx, 50%), var(--my, 50%));
++  opacity: 0;
++  transition:
++    transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
++    opacity 600ms ease;
++}
++:root[data-ui-version='2'] .v2-follow[data-pointer='in'] .v2-follow-glow {
++  opacity: 1;
++}
++:root[data-ui-version='2'] .v2-follow > .u-glow-drift {
++  translate: calc(var(--px, 0) * -60px) calc(var(--py, 0) * -40px);
++  transition: translate 900ms cubic-bezier(0.22, 1, 0.36, 1);
++}
+diff --git a/src/versions/versions.ts b/src/versions/versions.ts
+index 5212aca..fd6ddec 100644
+--- a/src/versions/versions.ts
++++ b/src/versions/versions.ts
+@@ -40,7 +40,7 @@ export const UI_VERSIONS: UiVersion[] = [
+           'Buttons have a springier press and a small lift on hover.',
+           'New chat: a soft warm background drifts slowly behind a breathing orb, and the greeting rises in.',
+           'Home: the Ask field types out example prompts while it waits, and the live dots on the Live Sessions map pulse.',
+-          'Home promo banner: the warm glows behind it roam and brighten much more visibly.',
++          'Home promo banner: the warm glows roam and brighten much more visibly, and a soft light follows your cursor (or finger) across it.',
+           'Profile picture spins in like a coin, and flips to a gold coin face when tapped or hovered.',
+           'Coin balances count up to their value, including the Total Credits figure.',
+         ],
