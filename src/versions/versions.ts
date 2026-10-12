@@ -52,7 +52,7 @@ export const UI_VERSIONS: UiVersion[] = [
           'Bottom sheets: grab handle, follow your finger, close when dragged down or flicked, spring back otherwise.',
           'Pull down at the top of a page to refresh it.',
           'Player: the details sheet rests low, showing only the author and title; the description and the rest appear when you pull it fully open.',
-          'Chat: opened recommendations get a filter (All, Visual, Sound, Movement, Selected) with counts.',
+          'Chat: opened recommendations get a filter — icon chips (All, Visual, Sound, Movement, Selected) with counts and a sliding highlight, plus a live line with how many are selected and their combined score.',
           'Player: Share opens a share sheet — WhatsApp, X, Facebook, Telegram, LinkedIn, Email, Copy link, and More for the phone’s own sheet.',
           'Sign-in: “Welcome to Aurelia.” is centred.',
           'Voice input: the black button now shows Pause / Play, because that is what it does.',
