@@ -1,11 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Aurelia mark: gold-to-orange tile, white sweep, white dot.
+       Redrawn from src/assets/aurelia-mark.png so the tab icon matches the
+       in-app logo; keep the two in step if the mark changes. -->
   <defs>
-    <linearGradient id="g" x1="10" y1="8" x2="54" y2="58" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFD86B"/>
-      <stop offset="0.55" stop-color="#FCA22B"/>
-      <stop offset="1" stop-color="#F2801A"/>
+    <linearGradient id="tile" x1="60" y1="4" x2="4" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFDA70"/>
+      <stop offset="0.5" stop-color="#FFAE3C"/>
+      <stop offset="1" stop-color="#FF8A1F"/>
     </linearGradient>
+    <clipPath id="r"><rect width="64" height="64" rx="14"/></clipPath>
   </defs>
-  <path d="M18 46 A 24 24 0 1 1 46 50 A 13 13 0 1 1 32 20"
-        stroke="url(#g)" stroke-width="9.5" stroke-linecap="round" fill="none"/>
+  <g clip-path="url(#r)">
+    <rect width="64" height="64" fill="url(#tile)"/>
+    <path d="M-2 27 C 14 19, 34 9, 60 -1 C 38 12, 18 24, -2 38 Z" fill="#fff"/>
+    <circle cx="41.5" cy="41" r="11.5" fill="#fff"/>
+  </g>
 </svg>
