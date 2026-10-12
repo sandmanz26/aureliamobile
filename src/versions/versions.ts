@@ -6,7 +6,8 @@ import { BUILD } from '../lib/build'
  * Each version is a set of opt-in changes layered on the same code, keyed by
  * `data-ui-version` on <html>. Version 1 is the app exactly as it ships — no
  * attribute-scoped rule applies to it — so switching back is always a true
- * "before". Production never reads the stored choice: it is pinned to 1.
+ * "before". Production never reads the stored choice: it is pinned to
+ * PRODUCTION_VERSION (2 since U020, on request — production no longer uses v1).
  *
  * To add a version: append an entry here, then scope its rules under
  * `:root[data-ui-version='N']` (see `src/styles/versions.css`).
@@ -96,10 +97,13 @@ export const UI_VERSIONS: UiVersion[] = [
 
 const KEY = 'aurelia.ui.version'
 
+/** The one design version production shows. No picker there. */
+export const PRODUCTION_VERSION = 2
+
 export const VERSIONS_ENABLED = BUILD.environment !== 'production'
 
 export function readVersion(): number {
-  if (!VERSIONS_ENABLED) return 1
+  if (!VERSIONS_ENABLED) return PRODUCTION_VERSION
   try {
     const n = Number(localStorage.getItem(KEY))
     return UI_VERSIONS.some((v) => v.id === n) ? n : 1
