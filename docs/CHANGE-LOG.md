@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-12 — v2 dialog recap (U018); `web_prod` fast-forwarded to `web_app` (U019)
+
+The v2 "What changes" dialog now recaps every v2 change grouped by screen. Then, on request, `web_prod` moved from `f738209` to this commit. Production stays on v1 (no version picker, no v2 behaviour) and keeps password `AURELIA2.0`; version stays 0.1.0. Branches: `web_app`, `admin_cms`, `web_prod`.
+
 ### 2026-10-12 — v2: richer recommendation filter (U017)
 
 Version 2 only. The chat's opened-recommendations filter gets icon chips with count badges, a sliding active highlight, a live "N of M selected · ↑ X% combined" line, staggered card re-deal on filter change, and an empty state with Show all. Same component and props as U014 (`RecommendationFilter`). v1 unaffected. See `docs/UPDATE-LOG.md` U017. Branches: `web_app`, `admin_cms`. Not `web_prod`.

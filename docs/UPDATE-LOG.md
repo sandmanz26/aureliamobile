@@ -55,6 +55,8 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U015 | `6e5ae91` | 2026-10-12 15:16 | v2: player sheet rests at the title; description only when fully open (corrects U014). | [patch](patches/U015-6e5ae91.patch) |
 | U016 | `c39e1e6` | 2026-10-12 15:29 | v2: player Share opens a share sheet (social targets, copy link, More). | [patch](patches/U016-c39e1e6.patch) |
 | U017 | `d12528f` | 2026-10-12 15:32 | v2: richer recommendation filter (icon chips, sliding highlight, selected summary). | [patch](patches/U017-d12528f.patch) |
+| U018 | `f3cf7cd` | 2026-10-12 15:37 | v2 dialog: recap of every v2 change, grouped by screen. | [patch](patches/U018-f3cf7cd.patch) |
+| U019 | (this log commit) | 2026-10-12 15:37 | Production: `web_prod` fast-forwarded from `f738209` to `web_app`. | — |
 
 ## Entries
 
@@ -227,3 +229,19 @@ Production (`web_prod`) is never touched by these updates unless asked.
 - **Change:** `src/components/chat/RecommendationFilter.tsx` rewritten (same props, same place in `ChatMessageItem.tsx`); `src/versions/versions.ts` dialog line updated. No other files.
 - **Verified (v2, 402×874):** summary reads "3 of 3 selected · ↑ 36% combined", after one Remove "2 of 3 · ↑ 24%"; Sound shows 1 card; v1 untouched (v1 never renders this component).
 - **Revert to U014's plain chips:** `git revert --no-commit d12528f && git checkout HEAD -- docs/`. **Remove the filter entirely:** also revert the `ChatMessageItem.tsx` part of `051d1a2` (U014) and delete `RecommendationFilter.tsx`.
+
+### U018 — v2 "What changes" dialog: full recap
+
+- **Commit:** `f3cf7cd` · pushed 2026-10-12 15:37:36 UTC · `web_app` + `admin_cms`
+- **Patch:** [patches/U018-f3cf7cd.patch](patches/U018-f3cf7cd.patch)
+- **Request:** "recap semua changes dan jadikan content pop up di v2".
+- **Change:** `src/versions/versions.ts` only. v2's summary and list regrouped by screen — Everywhere, Home, Chat, Player, Profile/Credits/Sign-in, Tablet, Good to know — covering U001–U017. The old "Unchanged: phone and desktop layouts stay as they are" line was dropped: since U012 v2 does change Home's order on phones. Replaced by "Switching back to v1 restores the app exactly as before", plus per-version pins and reduced motion.
+- **Revert:** `git revert --no-commit f3cf7cd && git checkout HEAD -- docs/`.
+
+### U019 — Production promoted to staging
+
+- **Request:** "push lalu naikan dari staging ke production".
+- **What moved:** `web_prod` fast-forwarded from `f738209` to the head of `web_app` (this log commit), carrying U001–U018 and the desktop work before them.
+- **What production users actually see:** production is pinned to **v1** and renders no StagingBar or version picker (`VERSIONS_ENABLED` is false when the build is production), so none of the v2 experiments are visible there. What does reach production users: everything shipped to v1 since `f738209` — the review-annotation version scoping (tool only, behind its flag), the staging/production label and KV-key fix, and the `docs/` additions. The production password stays `AURELIA2.0` (U013).
+- **Version:** `package.json` stays `0.1.0` (not asked to bump).
+- **Undo:** production can only move forward by fast-forward; to roll it back, `git push --force-with-lease origin f738209:web_prod` — only on explicit request, since it rewrites the production branch.
