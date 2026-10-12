@@ -52,6 +52,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U012 | `9b63ad8` | 2026-10-09 15:25 | v2: centre sign-in heading; Home order (Quick Start up, Live Sessions above Community); working Share on player. | [patch](patches/U012-9b63ad8.patch) |
 | U013 | `b929beb` | 2026-10-11 15:19 | Staging password AURELIA3.0 (production stays AURELIA2.0). | [patch](patches/U013-b929beb.patch) |
 | U014 | `051d1a2` | 2026-10-11 16:41 | v2: taller player sheet rest (description visible); filter chips on opened recommendations. | [patch](patches/U014-051d1a2.patch) |
+| U015 | `6e5ae91` | 2026-10-12 15:16 | v2: player sheet rests at the title; description only when fully open (corrects U014). | [patch](patches/U015-6e5ae91.patch) |
 
 ## Entries
 
@@ -182,3 +183,16 @@ Production (`web_prod`) is never touched by these updates unless asked.
   - `src/versions/versions.ts` — two lines added to the v2 "What changes" list.
 - *Undo just this part:* delete the `v2 ?` branch in `ChatMessageItem.tsx` and the file `RecommendationFilter.tsx`.
 - *Open question for review:* categories are assumed; if the intended filter is something else (e.g. by score impact or by goal), only `KIND_OF` and `FILTERS` in `RecommendationFilter.tsx` need to change.
+
+### U015 — v2: player sheet rests at the title (corrects U014 update 1)
+
+- **Commit:** `6e5ae91` · pushed 2026-10-12 15:16:52 UTC · `web_app` + `admin_cms` · not `web_prod`
+- **Patch:** [patches/U015-6e5ae91.patch](patches/U015-6e5ae91.patch)
+- **Request (clarified by the user):** "bottom sheet nya hanya mencapai title saja, content dibawahnya harus di open full baru keliatan" — at rest the sheet shows only up to the title; the description and everything below appear only when the sheet is opened fully.
+- **What went wrong in U014:** "lebih pendek" was read as "the cover gets shorter", so the rest height grew to 268px and showed the description. The intent was the opposite: a *shorter sheet*.
+- **Change:** `src/pages/PlayerPage.tsx`
+  - before: `const SHEET_PEEK_V2 = 268`; the description block always visible.
+  - after: `const SHEET_PEEK_V2 = 112` (grabber 21 + author 24 + gap 20 + title ending at 93px, plus breathing room); the description wrapper gets `opacity: up ? 1 : 0` with a 240ms fade in v2, so the few pixels of description that would sit under the title at rest are hidden and it fades in when the sheet is up.
+  - `src/versions/versions.ts`: the v2 dialog line rewritten to match.
+- **Verified:** v2 at 402×874 — sheet top at 762px, only author and "Dolphins frequency" visible; v1 player pixel-identical.
+- **Tune:** `SHEET_PEEK_V2`. **Undo to U014 behaviour:** `git revert --no-commit 6e5ae91 && git checkout HEAD -- docs/`. **Undo both:** revert `6e5ae91`, then the PlayerPage part of `051d1a2` (see U014).

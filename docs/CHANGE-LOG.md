@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-12 — v2: player sheet rests at the title only (U015)
+
+Corrects U014: in Version 2 the player's details sheet now rests at 112px, showing only the author and title; the description and everything below it fade in when the sheet is pulled fully open. U014 had raised the rest to 268px, which showed the description — the opposite of the request. v1 player pixel-identical. Details and revert steps in `docs/UPDATE-LOG.md` U015. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-11 — v2: player sheet shows the description; recommendation filter; update log
 
 Version 2 only. Player: the details sheet rests at 268px instead of 169px so the description under the title is readable at rest. Chat: opened recommendations get filter chips (All / Visual / Sound / Movement / Selected, with counts) — categories are an assumption, see `docs/UPDATE-LOG.md` U014. v1 player and chat pixel-identical at 402px. Also new: `docs/UPDATE-LOG.md` plus `docs/update-log/patches/` (U001–U014 backfilled from the version-switcher work onward) with commit, push time, request, assumptions, before/after and per-update revert steps. Branches: `web_app`, `admin_cms`. Not `web_prod`.
