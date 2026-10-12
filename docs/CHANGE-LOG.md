@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-12 — v2: richer recommendation filter (U017)
+
+Version 2 only. The chat's opened-recommendations filter gets icon chips with count badges, a sliding active highlight, a live "N of M selected · ↑ X% combined" line, staggered card re-deal on filter change, and an empty state with Show all. Same component and props as U014 (`RecommendationFilter`). v1 unaffected. See `docs/UPDATE-LOG.md` U017. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-12 — v2: share sheet on the player (U016)
 
 Version 2 only. The player's Share button opens a phone-style bottom sheet: WhatsApp, X, Facebook, Telegram, LinkedIn, Email (each opening that service's own share link with title + URL prefilled), More for the system share sheet where available, and the link with a Copy button. New shared component `ShareSheet` (needs a Storybook story). Replaces U012's direct share/copy. v1 player pixel-identical. See `docs/UPDATE-LOG.md` U016. Branches: `web_app`, `admin_cms`. Not `web_prod`.

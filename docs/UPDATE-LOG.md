@@ -54,6 +54,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U014 | `051d1a2` | 2026-10-11 16:41 | v2: taller player sheet rest (description visible); filter chips on opened recommendations. | [patch](patches/U014-051d1a2.patch) |
 | U015 | `6e5ae91` | 2026-10-12 15:16 | v2: player sheet rests at the title; description only when fully open (corrects U014). | [patch](patches/U015-6e5ae91.patch) |
 | U016 | `c39e1e6` | 2026-10-12 15:29 | v2: player Share opens a share sheet (social targets, copy link, More). | [patch](patches/U016-c39e1e6.patch) |
+| U017 | `d12528f` | 2026-10-12 15:32 | v2: richer recommendation filter (icon chips, sliding highlight, selected summary). | [patch](patches/U017-d12528f.patch) |
 
 ## Entries
 
@@ -210,3 +211,19 @@ Production (`web_prod`) is never touched by these updates unless asked.
   - `src/versions/versions.ts` — v2 dialog line updated.
 - **Verified:** v2 402×874 — sheet opens with the six targets and correct URLs, Copy link writes `…/play/dolphins-frequency` and shows Copied, Escape closes; v1 player pixel-identical (Share still inert there, as before).
 - **Revert:** `git revert --no-commit c39e1e6 && git checkout HEAD -- docs/` (returns to the U012 share behaviour).
+
+### U017 — v2: richer recommendation filter (builds on U014 update 2)
+
+- **Commit:** `d12528f` · pushed 2026-10-12 15:32:30 UTC · `web_app` + `admin_cms` · not `web_prod`
+- **Patch:** [patches/U017-d12528f.patch](patches/U017-d12528f.patch)
+- **Request:** "pada bagian ini user ingin ada filternya, coba kreasikan" (on the opened recommendation cards in chat).
+- **Note:** U014 already added plain chips here in v2. A screenshot without them means the viewer was on v1 or an older build; this update makes the filter more visible and more useful rather than adding a second one.
+- **Assumptions / ideas:**
+  - Keep the cut by what each change acts on (Visual / Sound / Movement) plus All and Selected; each chip gets an icon (grid, eye, note, wind, check) and a count badge.
+  - The active highlight **slides** between chips (measured from the chip, 300ms ease-out) instead of jumping.
+  - A live summary under the chips: **"2 of 3 selected · ↑ 24% combined"**, summing `improveScore` of the selected cards, so Remove/Add immediately shows its effect before Apply.
+  - Switching filter re-deals the cards with a short staggered pop.
+  - Empty result (e.g. Selected with nothing chosen) shows a dashed card with **Show all N**.
+- **Change:** `src/components/chat/RecommendationFilter.tsx` rewritten (same props, same place in `ChatMessageItem.tsx`); `src/versions/versions.ts` dialog line updated. No other files.
+- **Verified (v2, 402×874):** summary reads "3 of 3 selected · ↑ 36% combined", after one Remove "2 of 3 · ↑ 24%"; Sound shows 1 card; v1 untouched (v1 never renders this component).
+- **Revert to U014's plain chips:** `git revert --no-commit d12528f && git checkout HEAD -- docs/`. **Remove the filter entirely:** also revert the `ChatMessageItem.tsx` part of `051d1a2` (U014) and delete `RecommendationFilter.tsx`.
