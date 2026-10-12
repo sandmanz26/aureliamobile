@@ -40,11 +40,12 @@ const SHEET_TOP = 54
  *  a 705 hero, so this is its own number. */
 const SHEET_PEEK = 169
 
-/** Version 2 (staging): the resting sheet shows the description under the
- *  title too — author, title, four lines and Read More — so the cover above
- *  it gets correspondingly shorter. Request: "make it shorter so the text
- *  under the h1 is visible when the sheet is open". */
-const SHEET_PEEK_V2 = 268
+/** Version 2 (staging): the resting sheet reaches only the title — grabber,
+ *  author and h1 (which ends 93px in). The description and everything below
+ *  it appear only once the sheet is pulled fully open, and fade in then.
+ *  (Corrected from 268 in U014, which showed the description at rest — the
+ *  opposite of what was asked.) */
+const SHEET_PEEK_V2 = 112
 
 const CUES = [
   'Now take a deep breath in',
@@ -551,7 +552,10 @@ export function PlayerPage() {
             {/* Clamped to the frame's lines, with the frame's fade over the cut.
                 Expanding drops both, so "Read More" is a real disclosure rather
                 than a link to somewhere else. */}
-            <div className="relative">
+            <div
+              className="relative"
+              style={v2 ? { opacity: up ? 1 : 0, transition: 'opacity 240ms ease' } : undefined}
+            >
               <p
                 className={`text-style-body-small font-light! text-text-secondary ${expanded ? '' : 'line-clamp-4'}`}
               >
