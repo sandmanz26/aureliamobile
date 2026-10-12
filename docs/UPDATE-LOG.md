@@ -53,6 +53,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U013 | `b929beb` | 2026-10-11 15:19 | Staging password AURELIA3.0 (production stays AURELIA2.0). | [patch](patches/U013-b929beb.patch) |
 | U014 | `051d1a2` | 2026-10-11 16:41 | v2: taller player sheet rest (description visible); filter chips on opened recommendations. | [patch](patches/U014-051d1a2.patch) |
 | U015 | `6e5ae91` | 2026-10-12 15:16 | v2: player sheet rests at the title; description only when fully open (corrects U014). | [patch](patches/U015-6e5ae91.patch) |
+| U016 | `c39e1e6` | 2026-10-12 15:29 | v2: player Share opens a share sheet (social targets, copy link, More). | [patch](patches/U016-c39e1e6.patch) |
 
 ## Entries
 
@@ -196,3 +197,16 @@ Production (`web_prod`) is never touched by these updates unless asked.
   - `src/versions/versions.ts`: the v2 dialog line rewritten to match.
 - **Verified:** v2 at 402×874 — sheet top at 762px, only author and "Dolphins frequency" visible; v1 player pixel-identical.
 - **Tune:** `SHEET_PEEK_V2`. **Undo to U014 behaviour:** `git revert --no-commit 6e5ae91 && git checkout HEAD -- docs/`. **Undo both:** revert `6e5ae91`, then the PlayerPage part of `051d1a2` (see U014).
+
+### U016 — v2: share sheet on the player
+
+- **Commit:** `c39e1e6` · pushed 2026-10-12 15:29:01 UTC · `web_app` + `admin_cms` · not `web_prod`
+- **Patch:** [patches/U016-c39e1e6.patch](patches/U016-c39e1e6.patch)
+- **Request:** "tombol share gunakan saja bottom sheet layaknya di mobile, jadi ada bottom sheet untuk share di socmed dan copy link".
+- **Interpretation / assumptions:** a phone-style share sheet replaces the U012 behaviour (system share or silent copy + toast). Targets chosen as the common set for a wellness audience: WhatsApp, X, Facebook, Telegram, LinkedIn, Email; plus **More** (the system share sheet) only where the browser has one. Each target opens that service's own web share link in a new tab with the title and link prefilled; nothing posts automatically. Lucide no longer ships brand logos, so X, Facebook and LinkedIn use lettermarks on their brand colours.
+- **Change:**
+  - new `src/components/ui/ShareSheet.tsx` — portaled bottom sheet (`.u-sheet`, so v2 drag-to-close applies), Escape closes, read-only link field + **Copy link** (turns green "Copied" for 2s; selects the field if the clipboard is refused).
+  - `src/pages/PlayerPage.tsx` — before: `share()` with `navigator.share`/clipboard and a `shareToast` pill under the header · after: `shareOpen` state; the Share button (v2 only) opens `<ShareSheet>`; the U012 toast code is removed.
+  - `src/versions/versions.ts` — v2 dialog line updated.
+- **Verified:** v2 402×874 — sheet opens with the six targets and correct URLs, Copy link writes `…/play/dolphins-frequency` and shows Copied, Escape closes; v1 player pixel-identical (Share still inert there, as before).
+- **Revert:** `git revert --no-commit c39e1e6 && git checkout HEAD -- docs/` (returns to the U012 share behaviour).

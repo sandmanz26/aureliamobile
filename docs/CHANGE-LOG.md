@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-12 — v2: share sheet on the player (U016)
+
+Version 2 only. The player's Share button opens a phone-style bottom sheet: WhatsApp, X, Facebook, Telegram, LinkedIn, Email (each opening that service's own share link with title + URL prefilled), More for the system share sheet where available, and the link with a Copy button. New shared component `ShareSheet` (needs a Storybook story). Replaces U012's direct share/copy. v1 player pixel-identical. See `docs/UPDATE-LOG.md` U016. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-12 — v2: player sheet rests at the title only (U015)
 
 Corrects U014: in Version 2 the player's details sheet now rests at 112px, showing only the author and title; the description and everything below it fade in when the sheet is pulled fully open. U014 had raised the rest to 268px, which showed the description — the opposite of the request. v1 player pixel-identical. Details and revert steps in `docs/UPDATE-LOG.md` U015. Branches: `web_app`, `admin_cms`. Not `web_prod`.
