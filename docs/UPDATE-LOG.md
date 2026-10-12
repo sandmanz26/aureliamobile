@@ -57,6 +57,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U017 | `d12528f` | 2026-10-12 15:32 | v2: richer recommendation filter (icon chips, sliding highlight, selected summary). | [patch](patches/U017-d12528f.patch) |
 | U018 | `f3cf7cd` | 2026-10-12 15:37 | v2 dialog: recap of every v2 change, grouped by screen. | [patch](patches/U018-f3cf7cd.patch) |
 | U019 | (this log commit) | 2026-10-12 15:37 | Production: `web_prod` fast-forwarded from `f738209` to `web_app`. | — |
+| U020 | `0381705` | 2026-10-12 16:03 | Production uses v2 only (pinned; no v1, no picker). `web_prod` fast-forwarded. | [patch](patches/U020-0381705.patch) |
 
 ## Entries
 
@@ -245,3 +246,16 @@ Production (`web_prod`) is never touched by these updates unless asked.
 - **What production users actually see:** production is pinned to **v1** and renders no StagingBar or version picker (`VERSIONS_ENABLED` is false when the build is production), so none of the v2 experiments are visible there. What does reach production users: everything shipped to v1 since `f738209` — the review-annotation version scoping (tool only, behind its flag), the staging/production label and KV-key fix, and the `docs/` additions. The production password stays `AURELIA2.0` (U013).
 - **Version:** `package.json` stays `0.1.0` (not asked to bump).
 - **Undo:** production can only move forward by fast-forward; to roll it back, `git push --force-with-lease origin f738209:web_prod` — only on explicit request, since it rewrites the production branch.
+
+### U020 — Production shows v2, not v1
+
+- **Commit:** `0381705` · pushed 2026-10-12 16:03:44 UTC · `web_app` + `admin_cms`, then `web_prod` fast-forwarded from `d5c9747` to the log commit after it.
+- **Patch:** [patches/U020-0381705.patch](patches/U020-0381705.patch)
+- **Request:** "untuk production gunakan v2 saja, jangan gunakan v1 lagi".
+- **Change:**
+  - `src/versions/versions.ts` — new `PRODUCTION_VERSION = 2`; before: `if (!VERSIONS_ENABLED) return 1` · after: `return PRODUCTION_VERSION`. Production still has no StagingBar and no picker, and ignores any stored choice (a browser that had picked v1 still gets v2).
+  - `src/demo/annotations/DemoAnnotator.tsx` — on production every pin is shown regardless of its stored version, so pins saved there as v1 before this change don't vanish. Staging keeps per-version pins (U011).
+  - `CLAUDE.md` — design-versions note updated.
+- **Staging is unchanged:** still defaults to v1 with the switcher, so v1 remains available there for comparison.
+- **Verified:** a production-mode build (`VERCEL_ENV=production`, `VERCEL_GIT_COMMIT_REF=web_prod`) served locally with `aurelia.ui.version = 1` stored: `<html data-ui-version="2">`, no staging bar, no picker, unlocks with `AURELIA2.0`, Home in v2 order (Quick Start first).
+- **Undo (production back to v1):** set `PRODUCTION_VERSION = 1` (or `git revert --no-commit 0381705 && git checkout HEAD -- docs/ CLAUDE.md`), push, then fast-forward `web_prod` again.

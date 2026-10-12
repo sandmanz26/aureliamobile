@@ -1,0 +1,88 @@
+diff --git a/src/demo/annotations/DemoAnnotator.tsx b/src/demo/annotations/DemoAnnotator.tsx
+index bae3c04..7cacea9 100644
+--- a/src/demo/annotations/DemoAnnotator.tsx
++++ b/src/demo/annotations/DemoAnnotator.tsx
+@@ -7,6 +7,7 @@ import { useFeatureFlags } from '../FeatureFlags'
+ import { ANNOTATIONS_FLAG, MOBILE_WEB_BREAKPOINT } from '../modules'
+ import type { Annotation } from './format'
+ import { useUiVersion } from '../../versions/useUiVersion'
++import { VERSIONS_ENABLED } from '../../versions/versions'
+ import {
+   annotationsFileName,
+   newAnnotationId,
+@@ -167,6 +168,9 @@ export function DemoAnnotator() {
+ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () => void }) {
+   // Pins belong to the design version they were dropped in (v1/v2 switcher).
+   const ui = useUiVersion()
++  // Production has one design version and no switcher, so every pin there is
++  // shown — including ones saved as v1 before production moved to v2 (U020).
++  const sameUi = (a: Annotation) => !VERSIONS_ENABLED || (a.ui ?? 1) === ui
+   const navigate = useNavigate()
+   const { w: vw, h: vh } = useViewport()
+ 
+@@ -285,13 +289,16 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: ()
+   }, [toast])
+ 
+   const onThisPage = useMemo(
+-    () => sortAnnotations(annotations.filter((a) => a.page === pathname && (a.ui ?? 1) === ui)),
++    () =>
++      sortAnnotations(
++        annotations.filter((a) => a.page === pathname && (!VERSIONS_ENABLED || (a.ui ?? 1) === ui)),
++      ),
+     [annotations, pathname, ui],
+   )
+   // Everything written, across versions — what Save .txt exports, each note
+   // tagged with its version. The list, count and delete-all are this version's.
+   const written = annotations.filter((a) => a.text.trim() !== '')
+-  const writtenHere = written.filter((a) => (a.ui ?? 1) === ui)
++  const writtenHere = written.filter((a) => sameUi(a))
+ 
+   const update = useCallback((id: string, patch: Partial<Annotation>) => {
+     setAnnotations((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)))
+@@ -306,7 +313,7 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: ()
+    *  same way, so "delete all" means the same thing it does there. */
+   function clearAll() {
+     setMenuOpen(false)
+-    const mine = annotations.filter((a) => (a.ui ?? 1) === ui)
++    const mine = annotations.filter((a) => sameUi(a))
+     if (!mine.length) {
+       setToast('No notes to delete')
+       return
+@@ -318,7 +325,7 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: ()
+     ) {
+       return
+     }
+-    setAnnotations((prev) => prev.filter((a) => (a.ui ?? 1) !== ui))
++    setAnnotations((prev) => prev.filter((a) => !sameUi(a)))
+     setOpenId(null)
+     setListOpen(false)
+     setToast('All notes deleted')
+diff --git a/src/versions/versions.ts b/src/versions/versions.ts
+index 5378183..07b9a47 100644
+--- a/src/versions/versions.ts
++++ b/src/versions/versions.ts
+@@ -6,7 +6,8 @@ import { BUILD } from '../lib/build'
+  * Each version is a set of opt-in changes layered on the same code, keyed by
+  * `data-ui-version` on <html>. Version 1 is the app exactly as it ships — no
+  * attribute-scoped rule applies to it — so switching back is always a true
+- * "before". Production never reads the stored choice: it is pinned to 1.
++ * "before". Production never reads the stored choice: it is pinned to
++ * PRODUCTION_VERSION (2 since U020, on request — production no longer uses v1).
+  *
+  * To add a version: append an entry here, then scope its rules under
+  * `:root[data-ui-version='N']` (see `src/styles/versions.css`).
+@@ -96,10 +97,13 @@ export const UI_VERSIONS: UiVersion[] = [
+ 
+ const KEY = 'aurelia.ui.version'
+ 
++/** The one design version production shows. No picker there. */
++export const PRODUCTION_VERSION = 2
++
+ export const VERSIONS_ENABLED = BUILD.environment !== 'production'
+ 
+ export function readVersion(): number {
+-  if (!VERSIONS_ENABLED) return 1
++  if (!VERSIONS_ENABLED) return PRODUCTION_VERSION
+   try {
+     const n = Number(localStorage.getItem(KEY))
+     return UI_VERSIONS.some((v) => v.id === n) ? n : 1

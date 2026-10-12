@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-12 — Production uses design v2 (U020)
+
+On request, production now always renders Version 2 (`PRODUCTION_VERSION = 2` in `src/versions/versions.ts`); still no picker or staging bar there, and stored choices are ignored. Review pins on production show regardless of version. Staging still defaults to v1 with the switcher. Verified on a local production-mode build. `web_prod` fast-forwarded from `d5c9747`. Branches: `web_app`, `admin_cms`, `web_prod`.
+
 ### 2026-10-12 — v2 dialog recap (U018); `web_prod` fast-forwarded to `web_app` (U019)
 
 The v2 "What changes" dialog now recaps every v2 change grouped by screen. Then, on request, `web_prod` moved from `f738209` to this commit. Production stays on v1 (no version picker, no v2 behaviour) and keeps password `AURELIA2.0`; version stays 0.1.0. Branches: `web_app`, `admin_cms`, `web_prod`.
