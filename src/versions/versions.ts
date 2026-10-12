@@ -53,7 +53,7 @@ export const UI_VERSIONS: UiVersion[] = [
           'Pull down at the top of a page to refresh it.',
           'Player: the details sheet rests low, showing only the author and title; the description and the rest appear when you pull it fully open.',
           'Chat: opened recommendations get a filter (All, Visual, Sound, Movement, Selected) with counts.',
-          'Player: the Share button works — the phone’s share sheet, or the link copied to the clipboard.',
+          'Player: Share opens a share sheet — WhatsApp, X, Facebook, Telegram, LinkedIn, Email, Copy link, and More for the phone’s own sheet.',
           'Sign-in: “Welcome to Aurelia.” is centred.',
           'Voice input: the black button now shows Pause / Play, because that is what it does.',
         ],
