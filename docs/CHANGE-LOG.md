@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-12 — Favicon matches the brand mark (U021)
+
+`public/favicon.svg` redrawn from the real Aurelia mark (gold-to-orange tile, white sweep and dot) instead of the old traced swirl; added `favicon-32.png`, `apple-touch-icon.png` (180), `icon-192/512.png` and `site.webmanifest`, linked from `index.html`. Not version-gated. Branches: `web_app`, `admin_cms`. Not `web_prod` yet.
+
 ### 2026-10-12 — Production uses design v2 (U020)
 
 On request, production now always renders Version 2 (`PRODUCTION_VERSION = 2` in `src/versions/versions.ts`); still no picker or staging bar there, and stored choices are ignored. Review pins on production show regardless of version. Staging still defaults to v1 with the switcher. Verified on a local production-mode build. `web_prod` fast-forwarded from `d5c9747`. Branches: `web_app`, `admin_cms`, `web_prod`.

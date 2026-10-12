@@ -58,6 +58,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U018 | `f3cf7cd` | 2026-10-12 15:37 | v2 dialog: recap of every v2 change, grouped by screen. | [patch](patches/U018-f3cf7cd.patch) |
 | U019 | (this log commit) | 2026-10-12 15:37 | Production: `web_prod` fast-forwarded from `f738209` to `web_app`. | — |
 | U020 | `0381705` | 2026-10-12 16:03 | Production uses v2 only (pinned; no v1, no picker). `web_prod` fast-forwarded. | [patch](patches/U020-0381705.patch) |
+| U021 | `4def866` | 2026-10-12 17:17 | Favicon redrawn from the real mark; PNG sizes, apple-touch-icon, manifest. | [patch](patches/U021-4def866.patch) |
 
 ## Entries
 
@@ -259,3 +260,16 @@ Production (`web_prod`) is never touched by these updates unless asked.
 - **Staging is unchanged:** still defaults to v1 with the switcher, so v1 remains available there for comparison.
 - **Verified:** a production-mode build (`VERCEL_ENV=production`, `VERCEL_GIT_COMMIT_REF=web_prod`) served locally with `aurelia.ui.version = 1` stored: `<html data-ui-version="2">`, no staging bar, no picker, unlocks with `AURELIA2.0`, Home in v2 order (Quick Start first).
 - **Undo (production back to v1):** set `PRODUCTION_VERSION = 1` (or `git revert --no-commit 0381705 && git checkout HEAD -- docs/ CLAUDE.md`), push, then fast-forward `web_prod` again.
+
+### U021 — Favicon
+
+- **Commit:** `4def866` · pushed 2026-10-12 17:17:30 UTC · `web_app` + `admin_cms` · not `web_prod` (reaches production on the next promotion)
+- **Patch:** [patches/U021-4def866.patch](patches/U021-4def866.patch) (binary, includes the PNGs)
+- **Request:** "kembali ke staging, buatkan favicon nya ya".
+- **Finding:** `public/favicon.svg` existed but was a hand-traced approximation (an orange stroked swirl on transparent) that didn't match the in-app logo (`src/assets/aurelia-mark.png`: gold-to-orange rounded tile, white sweep, white dot). Only an SVG was linked; no PNG fallback, no Apple icon, no manifest.
+- **Change:**
+  - `public/favicon.svg` — redrawn to match the mark (64×64, radius 14, gradient #FFDA70→#FF8A1F, white sweep path + dot at 41.5,41 r 11.5). before: stroked arc, gradient #FFD86B→#F2801A. Old file kept in the patch for reference.
+  - new `public/favicon-32.png`, `public/icon-192.png`, `public/icon-512.png` (rendered from the SVG), `public/apple-touch-icon.png` (180×180, full-bleed square because iOS rounds it itself), `public/site.webmanifest` (name, icons, theme #FFF1DB, start `/home`).
+  - `index.html` — adds the PNG icon, apple-touch-icon and manifest links under the existing SVG link.
+- **Verified:** dev server serves all six files with the right content types; `npm run build` copies them to `dist/`; 32px and 180px renders checked by eye against the mark.
+- **Revert:** `git revert --no-commit 4def866 && git checkout HEAD -- docs/` (restores the old SVG and removes the new files and links).
