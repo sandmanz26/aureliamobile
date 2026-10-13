@@ -59,6 +59,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U019 | (this log commit) | 2026-10-12 15:37 | Production: `web_prod` fast-forwarded from `f738209` to `web_app`. | — |
 | U020 | `0381705` | 2026-10-12 16:03 | Production uses v2 only (pinned; no v1, no picker). `web_prod` fast-forwarded. | [patch](patches/U020-0381705.patch) |
 | U021 | `4def866` | 2026-10-12 17:17 | Favicon redrawn from the real mark; PNG sizes, apple-touch-icon, manifest. | [patch](patches/U021-4def866.patch) |
+| U022 | `83fd46d` | 2026-10-13 00:29 | PNG icons replaced with supplied Aurelia SVGs (chat menu, header Play, Unpublish, Progress tabs). | [patch](patches/U022-83fd46d.patch) |
 
 ## Entries
 
@@ -273,3 +274,26 @@ Production (`web_prod`) is never touched by these updates unless asked.
   - `index.html` — adds the PNG icon, apple-touch-icon and manifest links under the existing SVG link.
 - **Verified:** dev server serves all six files with the right content types; `npm run build` copies them to `dist/`; 32px and 180px renders checked by eye against the mark.
 - **Revert:** `git revert --no-commit 4def866 && git checkout HEAD -- docs/` (restores the old SVG and removes the new files and links).
+
+### U022 — Icons: PNG → supplied SVGs
+
+- **Commit:** `83fd46d` · pushed 2026-10-13 00:29:40 UTC · `web_app` + `admin_cms` · not `web_prod`
+- **Patch:** [patches/U022-83fd46d.patch](patches/U022-83fd46d.patch) (binary; contains the removed PNGs for rollback)
+- **Request:** five SVGs uploaded (chart-increase, chart-medium, close-circle, note, play) — "update yang sebelumnya PNG menjadi SVG ini, ini untuk icon-icon nya". Not version-gated: applies to v1 and v2.
+- **Mapping (assumed from where PNG/lookalike icons were):**
+  | SVG | Replaces | Where |
+  | --- | --- | --- |
+  | `chart-increase` | `icon-menu-insights.png` | Chat ⋯ menu → Insights |
+  | `chart-medium` | `icon-insight.png` | Progress tabs → Insights |
+  | `note` | `icon-chapters.png` | Progress tabs → Chapters |
+  | `close-circle` | lucide `CircleX` | Chat ⋯ menu → Unpublish |
+  | `play` | lucide `Play` | Chat header Play button |
+  `icon-menu-settings.png` (Settings) stays a PNG — no SVG supplied for it.
+- **Change:**
+  - originals saved untouched in `src/assets/icons/*.svg`.
+  - new `src/components/ui/AureliaIcons.tsx` — `ChartIncreaseIcon`, `ChartMediumIcon`, `CloseCircleIcon`, `NoteIcon`, `PlayIcon`; same paths, fills/strokes switched to `currentColor`, `size` prop like lucide.
+  - `src/components/chat/ChatHeader.tsx`, `src/pages/ProgressPage.tsx` — use them; PNG imports removed.
+  - deleted `src/assets/icon-chapters.png`, `icon-insight.png`, `icon-menu-insights.png` (no other references).
+- **Visible difference:** icons now follow text colour, so the active (dark) Progress chip shows a light icon instead of a dark PNG on dark.
+- **Verified:** typecheck/lint clean; chat menu and Progress tabs screenshotted at 2× — all five render.
+- **Revert:** `git revert --no-commit 83fd46d && git checkout HEAD -- docs/` (restores the PNGs and lucide icons).

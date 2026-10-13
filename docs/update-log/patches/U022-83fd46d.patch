@@ -1,0 +1,248 @@
+diff --git a/src/assets/icon-chapters.png b/src/assets/icon-chapters.png
+deleted file mode 100644
+index 373c96b95022f1a8d5f4f1c178237220dc349686..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+HcmV?d00001
+
+literal 425
+zcmV;a0apHrP)<h;3K|Lk000e1NJLTq000mG000mO1^@s6AM^iV00009a7bBm000XU
+z000XU0RWnu7ytkO0drDELIAGL9O(c600d`2O+f$vv5yP<VFdsH01k9TSaefwW^{L9
+za%BKUX=iO=p0So=0003bNkl<Zcmb`EF;2rk5JhL!w&Vsd9l;d7K`a?0N^Sr*K$KLF
+z8^8&21i}p{>Bs@%2u=`$u!Xw_D)4%SSx_R!iX+R(mv&aWn%O_|7GO=G2}iyYGV<A~
+zL}Gj$C;6ayub`<D^6BA$eFJS3?zutaI}>Qzf#VjQ%sZ{#H)g;9U0@7llzS$Aj?>~{
+zX$O*c#SC8cEKV<`_}^Cbg~!QKr^vS^$AKHvosA648PLWI>SUWxW*{wlTI(R%xBCk5
+zmVhA7^|d(80W#yc@aWZcAPIN!@lyhRlHDs8GC@~ZT*T?mA4JQ9^ou^yPa2xl*|NS7
+zIExc~+1a)-h2R#B?v3B*(ce+Kh>(rm^#Iza46l~KDwStnc%Z4w?4u+f!Y1_#+532i
+T`QhEY00000NkvXXu0mjf{L!(q
+
+diff --git a/src/assets/icon-insight.png b/src/assets/icon-insight.png
+deleted file mode 100644
+index d847d86f96ca2838584e193bc9a010613b6e0eb3..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+HcmV?d00001
+
+literal 639
+zcmV-_0)YLAP)<h;3K|Lk000e1NJLTq000yK000yS1^@s6jfou%00009a7bBm000XU
+z000XU0RWnu7ytkO0drDELIAGL9O(c600d`2O+f$vv5yP<VFdsH01k9TSaefwW^{L9
+za%BKUX=iO=p0So=0005{Nkl<Zcmds1K~CF16#d_xsZbZlY^o~G!o7iuTdB+R1PLb~
+zJwb8<@Ch1D;PeEL6Oit@04X=<AeAUft7U=Yv47tr&`=Tw#18&qocO<a|IdGKO!T7S
+zW2oa+6a<?v?3Ue7cRiNqe$pyCm>9|z81)t4KDHRG{m(zlwOL1~+yb)wwdJn2hFJ0s
+zP1O>iep#w_zHhUlC=ZbRLQjn(RHsR(Gxyt(<G*~0wxV@de-n}0^yW47n5m2I_GVW$
+zpZ=~)W7}(0mBh_$|6=;5n%&*Q>qv^iX2`@O6yTY&aC&xG3~n(_oQmj}=-=EYB$A#_
+z%aawtq^SlZ+!m_RS6YwjhVLSV;>updLexX?*7>E~Q412?W1-0EB4tatkOU8r&D%1$
+zbHEr)^cd>9ci!UMvcnz)&LU^O>>-Xaf|93ogTEWQ4L`$)Vq5xq8-Ypa525VOIHFo3
+zJ8#Z0Z<mF=I&i7Wz8ktObX14I$vP0>Xfj)lrj}4y6}xAl3q!TRM(F<=rfRX63#w0+
+zS5J3Yq|MAmY5&Lx1|ddB?XM6f4RwtE=d*%|zdK=I1^7@dZm!({v7lrAhW8x^)<J<(
+zyvk6;(F&n3k8VE>l`Q1P#xck<khM|lq_pb&&8+$;atJ^MGS|Y89vkjP)LF-w+U4ol
+Z#b1^B(h-%I0m=XX002ovPDHLkV1fp+Ch7nH
+
+diff --git a/src/assets/icon-menu-insights.png b/src/assets/icon-menu-insights.png
+deleted file mode 100644
+index d959588febb6489bba97b45877c6fddd83d3e2a1..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+HcmV?d00001
+
+literal 473
+zcmV;~0Ve*5P)<h;3K|Lk000e1NJLTq000yK000yS1^@s6jfou%00009a7bBm000XU
+z000XU0RWnu7ytkO0drDELIAGL9O(c600d`2O+f$vv5yP<VFdsH01k9TSaefwW^{L9
+za%BKUX=iO=p0So=00040Nkl<ZcmcJPPfo%>6vn@)Gf9`YE{SslBAB?uBX|Pf1mX#l
+z8^8%Xg7E}&X(EdrVHTLUqlqq>OsCH`M1deCr7hp0)Amh%d4Ikc;8g1CRtpU%@Q;p0
+z>(hR%u63wUQ)?iyu#xPxzzXu!bR+e26{${bpodxO<^T-~(0mtK37F^k^Y)8gJk-yj
+zI*`Oj2pai!r`%Ww+$IKTWnl7dlY)c>gz=!oGLL^_m4_mL2VUa+|CNB<wz}iqY3I%+
+zwSjDv0f?po;y(Gv%zj*!1$k=}fX{5mLzpa<c6w;vzrf2#4Ff@%NL&yVeYS>XP|Ts5
+z-60$XhFJ<L;jG&nL52<1YXIYlV8*?P-<CE(S#{fT)r-^^HMJ?3Z7?J55to{Bc1B8R
+z%0fbfX>8K;hqG0$Eg!jO18)f&DW~#tZ*p-c*x}1IM0V7b_G<oGs1bbw)4Y0-o;ZCQ
+P00000NkvXXu0mjf61l@I
+
+diff --git a/src/assets/icons/chart-increase.svg b/src/assets/icons/chart-increase.svg
+new file mode 100644
+index 0000000..2e23c25
+--- /dev/null
++++ b/src/assets/icons/chart-increase.svg
+@@ -0,0 +1,3 @@
++<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
++<path d="M2.5 1.875C2.84518 1.875 3.125 2.15482 3.125 2.5V11.667C3.125 13.0594 3.12669 14.0413 3.22656 14.7842C3.32404 15.5088 3.50431 15.9125 3.7959 16.2041C4.08749 16.4957 4.49118 16.676 5.21582 16.7734C5.95869 16.8733 6.94058 16.875 8.33301 16.875H17.5C17.8452 16.875 18.125 17.1548 18.125 17.5C18.125 17.8452 17.8452 18.125 17.5 18.125H8.28711C6.95168 18.125 5.88569 18.1251 5.04981 18.0127C4.18625 17.8966 3.47472 17.6505 2.91211 17.0879C2.34952 16.5253 2.10341 15.8137 1.98731 14.9502C1.87493 14.1143 1.87499 13.0483 1.875 11.7129V2.5C1.875 2.15482 2.15482 1.875 2.5 1.875ZM14.8662 4.68262C15.2702 4.2757 15.9271 4.27266 16.335 4.67578L17.9365 6.25879C18.182 6.50147 18.1841 6.89809 17.9414 7.14355C17.6987 7.38855 17.3029 7.39096 17.0576 7.14844L16.1963 6.2959C16.0371 9.72953 14.5415 11.8636 12.6396 13.1289C10.613 14.4771 8.19926 14.792 6.66406 14.792C6.31889 14.792 6.03906 14.5122 6.03906 14.167C6.03907 13.8218 6.31889 13.542 6.66406 13.542C8.07175 13.542 10.2063 13.247 11.9473 12.0889C13.4778 11.0707 14.7657 9.34694 14.9404 6.38281L14.1836 7.14355C13.9404 7.38848 13.5448 7.39062 13.2998 7.14746C13.0549 6.90431 13.0539 6.50863 13.2969 6.26367L14.8662 4.68262Z" fill="#331B04"/>
++</svg>
+diff --git a/src/assets/icons/chart-medium.svg b/src/assets/icons/chart-medium.svg
+new file mode 100644
+index 0000000..0a54559
+--- /dev/null
++++ b/src/assets/icons/chart-medium.svg
+@@ -0,0 +1,5 @@
++<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
++<path d="M12 3H12.009M12 6H12.009M12 9H12.009M12 12H12.009M12 15H12.009M12 18H12.009" stroke="#331B04" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
++<path d="M6 7C6.67348 5.87847 7.58712 5 8.99282 5C14.9359 5 11.5954 17 17.9819 17C19.3976 17 20.3057 16.1157 21 15" stroke="#331B04" stroke-width="1.5" stroke-linecap="round"/>
++<path d="M21 21H10C6.70017 21 5.05025 21 4.02513 19.9749C3 18.9497 3 17.2998 3 14V3" stroke="#331B04" stroke-width="1.5" stroke-linecap="round"/>
++</svg>
+diff --git a/src/assets/icons/close-circle.svg b/src/assets/icons/close-circle.svg
+new file mode 100644
+index 0000000..e48c0bc
+--- /dev/null
++++ b/src/assets/icons/close-circle.svg
+@@ -0,0 +1,5 @@
++<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
++<path d="M9.99935 18.9587C5.05768 18.9587 1.04102 14.942 1.04102 10.0003C1.04102 5.05866 5.05768 1.04199 9.99935 1.04199C14.941 1.04199 18.9577 5.05866 18.9577 10.0003C18.9577 14.942 14.941 18.9587 9.99935 18.9587ZM9.99935 2.29199C5.74935 2.29199 2.29102 5.75033 2.29102 10.0003C2.29102 14.2503 5.74935 17.7087 9.99935 17.7087C14.2493 17.7087 17.7077 14.2503 17.7077 10.0003C17.7077 5.75033 14.2493 2.29199 9.99935 2.29199Z" fill="#331B04"/>
++<path d="M7.64245 12.9831C7.48411 12.9831 7.32578 12.9248 7.20078 12.7998C6.95911 12.5581 6.95911 12.1581 7.20078 11.9165L11.9174 7.1998C12.1591 6.95814 12.5591 6.95814 12.8008 7.1998C13.0424 7.44147 13.0424 7.84147 12.8008 8.08314L8.08411 12.7998C7.96745 12.9248 7.80078 12.9831 7.64245 12.9831Z" fill="#331B04"/>
++<path d="M12.3591 12.9831C12.2008 12.9831 12.0424 12.9248 11.9174 12.7998L7.20078 8.08314C6.95911 7.84147 6.95911 7.44147 7.20078 7.1998C7.44245 6.95814 7.84245 6.95814 8.08411 7.1998L12.8008 11.9165C13.0424 12.1581 13.0424 12.5581 12.8008 12.7998C12.6758 12.9248 12.5174 12.9831 12.3591 12.9831Z" fill="#331B04"/>
++</svg>
+diff --git a/src/assets/icons/note.svg b/src/assets/icons/note.svg
+new file mode 100644
+index 0000000..29d14e9
+--- /dev/null
++++ b/src/assets/icons/note.svg
+@@ -0,0 +1,4 @@
++<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
++<path d="M12.8809 7.01656L17.6538 8.28825M11.8578 10.8134L14.2442 11.4492M11.9765 17.9664L12.9311 18.2208C15.631 18.9401 16.981 19.2998 18.0445 18.6893C19.108 18.0787 19.4698 16.7363 20.1932 14.0516L21.2163 10.2548C21.9398 7.57005 22.3015 6.22768 21.6875 5.17016C21.0735 4.11264 19.7235 3.75295 17.0235 3.03358L16.0689 2.77924C13.369 2.05986 12.019 1.70018 10.9555 2.31074C9.89196 2.9213 9.53023 4.26367 8.80678 6.94841L7.78366 10.7452C7.0602 13.4299 6.69848 14.7723 7.3125 15.8298C7.92652 16.8874 9.27651 17.2471 11.9765 17.9664Z" stroke="#331B04" stroke-width="1.5" stroke-linecap="round"/>
++<path d="M12 20.9463L11.0477 21.2056C8.35403 21.9391 7.00722 22.3059 5.94619 21.6833C4.88517 21.0608 4.52429 19.6921 3.80253 16.9547L2.78182 13.0834C2.06006 10.346 1.69918 8.97731 2.31177 7.89904C2.84167 6.96631 4 7.00027 5.5 7.00015" stroke="#331B04" stroke-width="1.5" stroke-linecap="round"/>
++</svg>
+diff --git a/src/assets/icons/play.svg b/src/assets/icons/play.svg
+new file mode 100644
+index 0000000..045107f
+--- /dev/null
++++ b/src/assets/icons/play.svg
+@@ -0,0 +1,3 @@
++<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
++<path fill-rule="evenodd" clip-rule="evenodd" d="M11.5427 5.23896L11.6165 5.28088C12.9772 6.05395 14.0466 6.66146 14.8084 7.21795C15.5755 7.77826 16.1427 8.36392 16.3459 9.13601C16.4949 9.70224 16.4949 10.2979 16.3459 10.8641C16.1427 11.6362 15.5755 12.2218 14.8084 12.7822C14.0466 13.3386 12.9773 13.9461 11.6165 14.7192L11.5427 14.7611C10.2282 15.5079 9.19354 16.0958 8.35203 16.4537C7.50376 16.8145 6.73043 16.9973 5.97881 16.7844C5.42645 16.6278 4.92386 16.3307 4.51899 15.9223C3.96951 15.3679 3.74894 14.6016 3.64459 13.6795C3.541 12.7641 3.54101 11.5659 3.54102 10.0418V9.95831C3.54101 8.43424 3.541 7.23596 3.64459 6.32059C3.74894 5.39846 3.96951 4.63223 4.51899 4.07785C4.92386 3.66936 5.42645 3.37227 5.97881 3.21575C6.73043 3.00276 7.50376 3.18563 8.35203 3.54643C9.19354 3.90435 10.2282 4.49217 11.5427 5.23896ZM7.86278 4.6967C7.09422 4.36981 6.65247 4.32407 6.31961 4.41839C5.97525 4.51597 5.66083 4.70149 5.40679 4.95779C5.1594 5.20739 4.98153 5.62285 4.88666 6.46115C4.79198 7.29785 4.79102 8.42517 4.79102 10.0001C4.79102 11.5749 4.79198 12.7023 4.88666 13.539C4.98153 14.3772 5.1594 14.7927 5.40679 15.0423C5.66082 15.2986 5.97525 15.4841 6.31961 15.5817C6.65247 15.676 7.09422 15.6303 7.86278 15.3034C8.63025 14.977 9.60268 14.4256 10.9621 13.6534C12.3678 12.8547 13.3741 12.2819 14.0711 11.7728C14.7697 11.2624 15.0457 10.8931 15.1371 10.546C15.2312 10.1883 15.2312 9.81184 15.1371 9.45414C15.0457 9.10704 14.7697 8.73767 14.0711 8.22733C13.3741 7.71819 12.3678 7.14537 10.9621 6.34675C9.60268 5.57445 8.63025 5.02313 7.86278 4.6967Z" fill="black"/>
++</svg>
+diff --git a/src/components/chat/ChatHeader.tsx b/src/components/chat/ChatHeader.tsx
+index da40bf2..d565d95 100644
+--- a/src/components/chat/ChatHeader.tsx
++++ b/src/components/chat/ChatHeader.tsx
+@@ -1,18 +1,17 @@
+-import { CircleX, Menu, MoreHorizontal, Play, Send } from 'lucide-react'
++import { Menu, MoreHorizontal, Send } from 'lucide-react'
+ import type { ComponentType } from 'react'
+ import { useEffect, useRef, useState } from 'react'
+ import { Link } from 'react-router-dom'
+-import insightsIconImg from '../../assets/icon-menu-insights.png'
+ import settingsIconImg from '../../assets/icon-menu-settings.png'
++import { ChartIncreaseIcon, CloseCircleIcon, PlayIcon } from '../ui/AureliaIcons'
+ import { CoinPill } from '../ui/CoinPill'
+ 
+ type MenuIcon = ComponentType<{ size?: number; className?: string }>
+ 
+-/** The dropdown's two icons — supplied as flat PNGs rather than approximated
+- *  with a lookalike lucide glyph, same treatment as Progress's Chapters/
+- *  Insights tabs. */
++/** Insights uses Aurelia's own chart-increase SVG (AureliaIcons); Settings
++ *  is still the supplied flat PNG until an SVG for it arrives. */
+ function InsightsIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
+-  return <img src={insightsIconImg} alt="" style={{ width: size, height: size }} className={className} />
++  return <ChartIncreaseIcon size={size} className={className} />
+ }
+ function SettingsIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
+   return <img src={settingsIconImg} alt="" style={{ width: size, height: size }} className={className} />
+@@ -105,7 +104,7 @@ export function ChatHeader({
+             aria-label="Play session"
+             className="u-press flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-strong shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)]"
+           >
+-            <Play size={20} />
++            <PlayIcon size={20} />
+           </Link>
+         )}
+ 
+@@ -193,7 +192,7 @@ export function ChatHeader({
+                   }}
+                   className="text-style-body u-press mt-8 flex h-44 w-full items-center justify-center gap-8 rounded-full border border-[#d6d6d6] text-text-primary"
+                 >
+-                  <CircleX size={17} />
++                  <CloseCircleIcon size={17} />
+                   Unpublish
+                 </button>
+               )}
+diff --git a/src/components/ui/AureliaIcons.tsx b/src/components/ui/AureliaIcons.tsx
+new file mode 100644
+index 0000000..f4245d8
+--- /dev/null
++++ b/src/components/ui/AureliaIcons.tsx
+@@ -0,0 +1,55 @@
++import type { SVGProps } from 'react'
++
++/**
++ * Aurelia's own icons, supplied as SVG (originals in `src/assets/icons/`).
++ * Inlined as components with every fill/stroke set to `currentColor`, so they
++ * take the text colour of where they sit — a chip that goes dark when active
++ * gets a light icon for free, which the flat PNGs they replace could not do.
++ * Sized like lucide: `size` sets width and height; the viewBox is kept.
++ */
++type IconProps = Omit<SVGProps<SVGSVGElement>, 'children'> & { size?: number }
++
++export function ChartIncreaseIcon({ size = 20, ...props }: IconProps) {
++  return (
++    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
++      <path d="M2.5 1.875C2.84518 1.875 3.125 2.15482 3.125 2.5V11.667C3.125 13.0594 3.12669 14.0413 3.22656 14.7842C3.32404 15.5088 3.50431 15.9125 3.7959 16.2041C4.08749 16.4957 4.49118 16.676 5.21582 16.7734C5.95869 16.8733 6.94058 16.875 8.33301 16.875H17.5C17.8452 16.875 18.125 17.1548 18.125 17.5C18.125 17.8452 17.8452 18.125 17.5 18.125H8.28711C6.95168 18.125 5.88569 18.1251 5.04981 18.0127C4.18625 17.8966 3.47472 17.6505 2.91211 17.0879C2.34952 16.5253 2.10341 15.8137 1.98731 14.9502C1.87493 14.1143 1.87499 13.0483 1.875 11.7129V2.5C1.875 2.15482 2.15482 1.875 2.5 1.875ZM14.8662 4.68262C15.2702 4.2757 15.9271 4.27266 16.335 4.67578L17.9365 6.25879C18.182 6.50147 18.1841 6.89809 17.9414 7.14355C17.6987 7.38855 17.3029 7.39096 17.0576 7.14844L16.1963 6.2959C16.0371 9.72953 14.5415 11.8636 12.6396 13.1289C10.613 14.4771 8.19926 14.792 6.66406 14.792C6.31889 14.792 6.03906 14.5122 6.03906 14.167C6.03907 13.8218 6.31889 13.542 6.66406 13.542C8.07175 13.542 10.2063 13.247 11.9473 12.0889C13.4778 11.0707 14.7657 9.34694 14.9404 6.38281L14.1836 7.14355C13.9404 7.38848 13.5448 7.39062 13.2998 7.14746C13.0549 6.90431 13.0539 6.50863 13.2969 6.26367L14.8662 4.68262Z" fill="currentColor"/>
++    </svg>
++  )
++}
++
++export function ChartMediumIcon({ size = 20, ...props }: IconProps) {
++  return (
++    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
++      <path d="M12 3H12.009M12 6H12.009M12 9H12.009M12 12H12.009M12 15H12.009M12 18H12.009" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
++      <path d="M6 7C6.67348 5.87847 7.58712 5 8.99282 5C14.9359 5 11.5954 17 17.9819 17C19.3976 17 20.3057 16.1157 21 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
++      <path d="M21 21H10C6.70017 21 5.05025 21 4.02513 19.9749C3 18.9497 3 17.2998 3 14V3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
++    </svg>
++  )
++}
++
++export function CloseCircleIcon({ size = 20, ...props }: IconProps) {
++  return (
++    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
++      <path d="M9.99935 18.9587C5.05768 18.9587 1.04102 14.942 1.04102 10.0003C1.04102 5.05866 5.05768 1.04199 9.99935 1.04199C14.941 1.04199 18.9577 5.05866 18.9577 10.0003C18.9577 14.942 14.941 18.9587 9.99935 18.9587ZM9.99935 2.29199C5.74935 2.29199 2.29102 5.75033 2.29102 10.0003C2.29102 14.2503 5.74935 17.7087 9.99935 17.7087C14.2493 17.7087 17.7077 14.2503 17.7077 10.0003C17.7077 5.75033 14.2493 2.29199 9.99935 2.29199Z" fill="currentColor"/>
++      <path d="M7.64245 12.9831C7.48411 12.9831 7.32578 12.9248 7.20078 12.7998C6.95911 12.5581 6.95911 12.1581 7.20078 11.9165L11.9174 7.1998C12.1591 6.95814 12.5591 6.95814 12.8008 7.1998C13.0424 7.44147 13.0424 7.84147 12.8008 8.08314L8.08411 12.7998C7.96745 12.9248 7.80078 12.9831 7.64245 12.9831Z" fill="currentColor"/>
++      <path d="M12.3591 12.9831C12.2008 12.9831 12.0424 12.9248 11.9174 12.7998L7.20078 8.08314C6.95911 7.84147 6.95911 7.44147 7.20078 7.1998C7.44245 6.95814 7.84245 6.95814 8.08411 7.1998L12.8008 11.9165C13.0424 12.1581 13.0424 12.5581 12.8008 12.7998C12.6758 12.9248 12.5174 12.9831 12.3591 12.9831Z" fill="currentColor"/>
++    </svg>
++  )
++}
++
++export function NoteIcon({ size = 20, ...props }: IconProps) {
++  return (
++    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
++      <path d="M12.8809 7.01656L17.6538 8.28825M11.8578 10.8134L14.2442 11.4492M11.9765 17.9664L12.9311 18.2208C15.631 18.9401 16.981 19.2998 18.0445 18.6893C19.108 18.0787 19.4698 16.7363 20.1932 14.0516L21.2163 10.2548C21.9398 7.57005 22.3015 6.22768 21.6875 5.17016C21.0735 4.11264 19.7235 3.75295 17.0235 3.03358L16.0689 2.77924C13.369 2.05986 12.019 1.70018 10.9555 2.31074C9.89196 2.9213 9.53023 4.26367 8.80678 6.94841L7.78366 10.7452C7.0602 13.4299 6.69848 14.7723 7.3125 15.8298C7.92652 16.8874 9.27651 17.2471 11.9765 17.9664Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
++      <path d="M12 20.9463L11.0477 21.2056C8.35403 21.9391 7.00722 22.3059 5.94619 21.6833C4.88517 21.0608 4.52429 19.6921 3.80253 16.9547L2.78182 13.0834C2.06006 10.346 1.69918 8.97731 2.31177 7.89904C2.84167 6.96631 4 7.00027 5.5 7.00015" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
++    </svg>
++  )
++}
++
++export function PlayIcon({ size = 20, ...props }: IconProps) {
++  return (
++    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
++      <path fillRule="evenodd" clipRule="evenodd" d="M11.5427 5.23896L11.6165 5.28088C12.9772 6.05395 14.0466 6.66146 14.8084 7.21795C15.5755 7.77826 16.1427 8.36392 16.3459 9.13601C16.4949 9.70224 16.4949 10.2979 16.3459 10.8641C16.1427 11.6362 15.5755 12.2218 14.8084 12.7822C14.0466 13.3386 12.9773 13.9461 11.6165 14.7192L11.5427 14.7611C10.2282 15.5079 9.19354 16.0958 8.35203 16.4537C7.50376 16.8145 6.73043 16.9973 5.97881 16.7844C5.42645 16.6278 4.92386 16.3307 4.51899 15.9223C3.96951 15.3679 3.74894 14.6016 3.64459 13.6795C3.541 12.7641 3.54101 11.5659 3.54102 10.0418V9.95831C3.54101 8.43424 3.541 7.23596 3.64459 6.32059C3.74894 5.39846 3.96951 4.63223 4.51899 4.07785C4.92386 3.66936 5.42645 3.37227 5.97881 3.21575C6.73043 3.00276 7.50376 3.18563 8.35203 3.54643C9.19354 3.90435 10.2282 4.49217 11.5427 5.23896ZM7.86278 4.6967C7.09422 4.36981 6.65247 4.32407 6.31961 4.41839C5.97525 4.51597 5.66083 4.70149 5.40679 4.95779C5.1594 5.20739 4.98153 5.62285 4.88666 6.46115C4.79198 7.29785 4.79102 8.42517 4.79102 10.0001C4.79102 11.5749 4.79198 12.7023 4.88666 13.539C4.98153 14.3772 5.1594 14.7927 5.40679 15.0423C5.66082 15.2986 5.97525 15.4841 6.31961 15.5817C6.65247 15.676 7.09422 15.6303 7.86278 15.3034C8.63025 14.977 9.60268 14.4256 10.9621 13.6534C12.3678 12.8547 13.3741 12.2819 14.0711 11.7728C14.7697 11.2624 15.0457 10.8931 15.1371 10.546C15.2312 10.1883 15.2312 9.81184 15.1371 9.45414C15.0457 9.10704 14.7697 8.73767 14.0711 8.22733C13.3741 7.71819 12.3678 7.14537 10.9621 6.34675C9.60268 5.57445 8.63025 5.02313 7.86278 4.6967Z" fill="currentColor"/>
++    </svg>
++  )
++}
+diff --git a/src/pages/ProgressPage.tsx b/src/pages/ProgressPage.tsx
+index 0fd966b..2505c46 100644
+--- a/src/pages/ProgressPage.tsx
++++ b/src/pages/ProgressPage.tsx
+@@ -15,8 +15,7 @@ import {
+   Users,
+ } from 'lucide-react'
+ import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+-import chaptersIconImg from '../assets/icon-chapters.png'
+-import insightIconImg from '../assets/icon-insight.png'
++import { ChartMediumIcon, NoteIcon } from '../components/ui/AureliaIcons'
+ import { PageMeta } from '../components/PageMeta'
+ import { CoverImage } from '../components/ui/CoverImage'
+ import { PhotoCircle } from '../components/ui/PhotoCircle'
+@@ -29,13 +28,13 @@ import { useChatSession } from '../chat/ChatSessionContext'
+ 
+ type TabIcon = ComponentType<{ size?: number; className?: string }>
+ 
+-/** The two icons the catalogue doesn't have a lucide match for — supplied as
+- *  flat PNGs rather than approximated with a lookalike glyph. */
++/** The two icons the catalogue doesn't have a lucide match for — Aurelia's
++ *  own SVGs (AureliaIcons), which follow the chip's text colour. */
+ function ChaptersIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
+-  return <img src={chaptersIconImg} alt="" style={{ width: size, height: size }} className={className} />
++  return <NoteIcon size={size} className={className} />
+ }
+ function InsightIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
+-  return <img src={insightIconImg} alt="" style={{ width: size, height: size }} className={className} />
++  return <ChartMediumIcon size={size} className={className} />
+ }
+ 
+ const TABS: { id: ProgressTab; label: string; icon: TabIcon }[] = [
