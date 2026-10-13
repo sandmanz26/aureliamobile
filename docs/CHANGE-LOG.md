@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-13 — Nav icons: PNGs replaced with Aurelia SVGs (U023)
+
+Drawer/sidebar rows Sign In, Explore, Sessions and My wellness now use the supplied SVGs (`UserIcon`, `NoteIcon`, `PlaylistIcon`, `ChartMediumIcon` in `AureliaIcons.tsx`), coloured by the `icon-default` token; four nav PNGs removed. Invite and Help remain PNG. All versions. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-13 — Icons: PNGs replaced with Aurelia SVGs (U022)
 
 Five supplied SVGs (`src/assets/icons/`) become `currentColor` components in `src/components/ui/AureliaIcons.tsx` and replace the Insights/Chapters PNGs and the Play/Unpublish lucide glyphs in the chat header menu and Progress tabs. Three PNGs removed; Settings stays PNG. Applies to all versions. New shared component file (needs Storybook stories). Branches: `web_app`, `admin_cms`. Not `web_prod`.

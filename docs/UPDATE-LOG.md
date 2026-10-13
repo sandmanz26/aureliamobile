@@ -60,6 +60,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U020 | `0381705` | 2026-10-12 16:03 | Production uses v2 only (pinned; no v1, no picker). `web_prod` fast-forwarded. | [patch](patches/U020-0381705.patch) |
 | U021 | `4def866` | 2026-10-12 17:17 | Favicon redrawn from the real mark; PNG sizes, apple-touch-icon, manifest. | [patch](patches/U021-4def866.patch) |
 | U022 | `83fd46d` | 2026-10-13 00:29 | PNG icons replaced with supplied Aurelia SVGs (chat menu, header Play, Unpublish, Progress tabs). | [patch](patches/U022-83fd46d.patch) |
+| U023 | `ea37c00` | 2026-10-13 00:52 | Drawer/sidebar nav icons → Aurelia SVGs (user, note, playlist-02, chart-medium). | [patch](patches/U023-ea37c00.patch) |
 
 ## Entries
 
@@ -297,3 +298,17 @@ Production (`web_prod`) is never touched by these updates unless asked.
 - **Visible difference:** icons now follow text colour, so the active (dark) Progress chip shows a light icon instead of a dark PNG on dark.
 - **Verified:** typecheck/lint clean; chat menu and Progress tabs screenshotted at 2× — all five render.
 - **Revert:** `git revert --no-commit 83fd46d && git checkout HEAD -- docs/` (restores the PNGs and lucide icons).
+
+### U023 — Nav icons: PNG → supplied SVGs
+
+- **Commit:** `ea37c00` · pushed 2026-10-13 00:52:49 UTC · `web_app` + `admin_cms` · not `web_prod`
+- **Patch:** [patches/U023-ea37c00.patch](patches/U023-ea37c00.patch) (binary; contains the removed PNGs)
+- **Request:** screenshot of the drawer's four main rows + four SVGs (chart-medium, playlist-02, note, user): "update disitu … dengan icon yang saya sudah berikan". Not version-gated.
+- **Mapping:** Sign In → `user`, Explore → `note`, Sessions → `playlist-02`, My wellness → `chart-medium`. `note` and `chart-medium` are byte-identical to the U022 uploads, so the existing `NoteIcon`/`ChartMediumIcon` are reused.
+- **Change:**
+  - originals added: `src/assets/icons/playlist-02.svg`, `src/assets/icons/user.svg`.
+  - `src/components/ui/AureliaIcons.tsx` — adds `PlaylistIcon`, `UserIcon` (currentColor).
+  - `src/layouts/AppLayout.tsx` — the four rows use the SVG components at 24px; they now take NavItem's `text-icon-default` (#3C2405 token; the files used #331B04, visually the same). Invite and Help keep their PNGs (no SVG supplied).
+  - deleted `src/assets/icon-nav-signin.png`, `icon-nav-explore.png`, `icon-nav-sessions.png`, `icon-nav-wellness.png`.
+- **Verified:** mobile drawer (402, 2×) and desktop sidebar (1440) screenshotted — all four render; typecheck/lint clean.
+- **Revert:** `git revert --no-commit ea37c00 && git checkout HEAD -- docs/`.
