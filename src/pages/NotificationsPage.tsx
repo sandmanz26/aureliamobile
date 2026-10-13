@@ -1,11 +1,12 @@
 import { ArrowLeft, Podium, Sparkles } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { PageMeta } from '../components/PageMeta'
 import { Chip } from '../components/ui/Chip'
 import { CoinPill } from '../components/ui/CoinPill'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import type { NotificationBucket, NotificationRecord } from '../lib/notifications'
+import { markNotificationsSeen } from '../lib/notificationsSeen'
 import { BUCKET_TITLES, FILTER_BUCKETS, NOTIFICATIONS, NOTIFICATION_FILTERS } from '../lib/notifications'
 
 /**
@@ -78,6 +79,8 @@ function RowText({ item }: { item: NotificationRecord }) {
 export function NotificationsPage() {
   const navigate = useNavigate()
   const [filter, setFilter] = useState<'all' | NotificationBucket>('all')
+  // Opening the feed reads it: the drawer bell drops its unread dot.
+  useEffect(() => markNotificationsSeen(), [])
 
   const buckets = FILTER_BUCKETS[filter]
   const groups = buckets

@@ -1,4 +1,4 @@
-import { Bell, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Suspense, useEffect, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate, useNavigationType } from 'react-router-dom'
 import { FloatingPlayer, PullIndicator, usePullToRefresh, useSheetDrag } from '../versions/V2Shell'
@@ -6,10 +6,11 @@ import { useUiVersion } from '../versions/useUiVersion'
 import { useAuth } from '../auth/AuthContext'
 import { useHiddenScrollbars } from '../hooks/useHiddenScrollbars'
 import { useSignInGate } from '../auth/useSignInGate'
-import { ChartMediumIcon, NoteIcon, PlaylistIcon, UserIcon } from '../components/ui/AureliaIcons'
+import { ChartMediumIcon, NoteIcon, NotificationActiveIcon, NotificationIcon, PlaylistIcon, UserIcon } from '../components/ui/AureliaIcons'
+import sidebarLogo from '../assets/aurelia-sidebar-logo.svg'
+import { useHasUnreadNotifications } from '../lib/notificationsSeen'
 import iconInvite from '../assets/icon-nav-invite.png'
 import iconHelp from '../assets/icon-nav-help.png'
-import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { BuildBadge } from '../components/ui/BuildBadge'
 import { PageSkeleton } from '../components/ui/PageSkeleton'
 import { useFeatureFlags } from '../demo/FeatureFlags'
@@ -28,6 +29,7 @@ function NavIcon({ src }: { src: string }) {
 }
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+  const unread = useHasUnreadNotifications()
   const { isEnabled } = useFeatureFlags()
   const { signedIn } = useAuth()
   const gate = useSignInGate()
@@ -46,21 +48,22 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             sitting behind the panel that took you there. Home is open to
             everyone, so this needs no gate. */}
         <Link to="/home" aria-label="Aurelia home" onClick={onNavigate} className="u-press">
-          <AureliaLogo iconSize={30} />
+          {/* The supplied sidebar lockup (mark + gradient wordmark, 114x32). */}
+          <img src={sidebarLogo} alt="Aurelia" width={114} height={32} className="block h-32 w-auto" />
         </Link>
         {isEnabled('notifications') && (
           <button
             type="button"
-            aria-label="Notifications"
+            aria-label={unread ? 'Notifications, unread' : 'Notifications'}
             onClick={() => {
               onNavigate?.()
               gate('/notifications')
             }}
             className="u-press relative text-icon-default"
           >
-            <Bell size={24} />
-            {/* Unread marker. A real build drives this from the feed. */}
-            <span className="absolute -right-1 -top-1 size-8 rounded-full bg-feedback-error ring-2 ring-surface-default" />
+            {/* The supplied bell pair: with the red dot while there is
+                something unread, plain once Notifications has been opened. */}
+            {unread ? <NotificationActiveIcon size={24} /> : <NotificationIcon size={24} />}
           </button>
         )}
       </div>
