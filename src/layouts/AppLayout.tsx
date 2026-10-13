@@ -6,10 +6,7 @@ import { useUiVersion } from '../versions/useUiVersion'
 import { useAuth } from '../auth/AuthContext'
 import { useHiddenScrollbars } from '../hooks/useHiddenScrollbars'
 import { useSignInGate } from '../auth/useSignInGate'
-import iconSignIn from '../assets/icon-nav-signin.png'
-import iconExplore from '../assets/icon-nav-explore.png'
-import iconSessions from '../assets/icon-nav-sessions.png'
-import iconWellness from '../assets/icon-nav-wellness.png'
+import { ChartMediumIcon, NoteIcon, PlaylistIcon, UserIcon } from '../components/ui/AureliaIcons'
 import iconInvite from '../assets/icon-nav-invite.png'
 import iconHelp from '../assets/icon-nav-help.png'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
@@ -23,9 +20,9 @@ import { DrawerContext } from './DrawerContext'
 
 const LATEST = recentSessions()
 
-/** The real exported glyphs for the drawer's four nav rows, not lucide
- *  lookalikes — flat icons, so NavItem's `text-icon-default` wrapper has
- *  nothing to tint; the colour is baked into each file. */
+/** Invite and Help are still the exported flat PNGs (colour baked in). The
+ *  four main rows use Aurelia's SVGs (AureliaIcons, U023), which take
+ *  NavItem's `text-icon-default` colour. */
 function NavIcon({ src }: { src: string }) {
   return <img src={src} alt="" width={24} height={24} className="shrink-0" />
 }
@@ -87,14 +84,14 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             disabled={!isEnabled('profile')}
           />
         ) : (
-          <NavItem to="/login" icon={<NavIcon src={iconSignIn} />} label="Sign In" disabled={!isEnabled('auth')} />
+          <NavItem to="/login" icon={<UserIcon size={24} className="shrink-0" />} label="Sign In" disabled={!isEnabled('auth')} />
         )}
         {/* No Chat entry: the design's drawer goes Profile / Explore / Sessions
             / My wellness, and the cockpit is reached by "New session" below
             rather than by being a destination of its own. */}
-        <NavItem to="/explore" icon={<NavIcon src={iconExplore} />} label="Explore" disabled={!isEnabled('explore')} />
-        <NavItem to="/sessions" icon={<NavIcon src={iconSessions} />} label="Sessions" disabled={!isEnabled('sessions')} />
-        <NavItem to="/wellness" icon={<NavIcon src={iconWellness} />} label="My wellness" disabled={!isEnabled('wellness')} />
+        <NavItem to="/explore" icon={<NoteIcon size={24} className="shrink-0" />} label="Explore" disabled={!isEnabled('explore')} />
+        <NavItem to="/sessions" icon={<PlaylistIcon size={24} className="shrink-0" />} label="Sessions" disabled={!isEnabled('sessions')} />
+        <NavItem to="/wellness" icon={<ChartMediumIcon size={24} className="shrink-0" />} label="My wellness" disabled={!isEnabled('wellness')} />
       </nav>
 
       {/* Figma "Frame 25" — Latest and the button are one block, 20 inside and
