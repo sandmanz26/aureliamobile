@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-13 — Sidebar logo + notification bell SVGs (U024)
+
+Drawer/sidebar header uses the supplied `aurelia-sidebar-logo.svg`; the bell uses the supplied plain/active SVGs (`NotificationIcon`, `NotificationActiveIcon`). New local unread model (`src/lib/notificationsSeen.ts`): active while today's notifications are unopened in this browser, plain after visiting Notifications — replaces the always-on red dot. Staging only. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-13 — Nav icons: PNGs replaced with Aurelia SVGs (U023)
 
 Drawer/sidebar rows Sign In, Explore, Sessions and My wellness now use the supplied SVGs (`UserIcon`, `NoteIcon`, `PlaylistIcon`, `ChartMediumIcon` in `AureliaIcons.tsx`), coloured by the `icon-default` token; four nav PNGs removed. Invite and Help remain PNG. All versions. Branches: `web_app`, `admin_cms`. Not `web_prod`.

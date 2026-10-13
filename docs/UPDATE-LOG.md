@@ -61,6 +61,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U021 | `4def866` | 2026-10-12 17:17 | Favicon redrawn from the real mark; PNG sizes, apple-touch-icon, manifest. | [patch](patches/U021-4def866.patch) |
 | U022 | `83fd46d` | 2026-10-13 00:29 | PNG icons replaced with supplied Aurelia SVGs (chat menu, header Play, Unpublish, Progress tabs). | [patch](patches/U022-83fd46d.patch) |
 | U023 | `ea37c00` | 2026-10-13 00:52 | Drawer/sidebar nav icons → Aurelia SVGs (user, note, playlist-02, chart-medium). | [patch](patches/U023-ea37c00.patch) |
+| U024 | `2758524` | 2026-10-13 01:01 | Drawer/sidebar: supplied sidebar logo; bell SVGs (plain/active) with local unread state. | [patch](patches/U024-2758524.patch) |
 
 ## Entries
 
@@ -312,3 +313,18 @@ Production (`web_prod`) is never touched by these updates unless asked.
   - deleted `src/assets/icon-nav-signin.png`, `icon-nav-explore.png`, `icon-nav-sessions.png`, `icon-nav-wellness.png`.
 - **Verified:** mobile drawer (402, 2×) and desktop sidebar (1440) screenshotted — all four render; typecheck/lint clean.
 - **Revert:** `git revert --no-commit ea37c00 && git checkout HEAD -- docs/`.
+
+### U024 — Sidebar logo and notification bell
+
+- **Commit:** `2758524` · pushed 2026-10-13 01:01:36 UTC · `web_app` + `admin_cms` · **staging only** (as instructed: "ingat semua changes ini ada di staging dulu"); `web_prod` untouched at `803d15f`.
+- **Patch:** [patches/U024-2758524.patch](patches/U024-2758524.patch)
+- **Request:** (1) replace the drawer logo with the supplied `Aurelia-sidebar-logo.svg`; (2) replace the bell with the supplied `notification.svg` / `notification_active.svg` — one for when there are notifications, one for when there are none. Not version-gated.
+- **Assumption (unread state):** the app had no read/unread model — the red dot was hard-coded on. Now: unread = the feed has `today` items **and** this browser hasn't opened `/notifications` yet. Opening Notifications marks it seen (localStorage `aurelia.notifications.seen`), switching the bell to the plain icon. A real backend should replace this with the feed's read state (`src/lib/notificationsSeen.ts`).
+- **Change:**
+  - originals: `src/assets/aurelia-sidebar-logo.svg`, `src/assets/icons/notification.svg`, `src/assets/icons/notification-active.svg`.
+  - `src/layouts/AppLayout.tsx` — before: `<AureliaLogo iconSize=30 />` and lucide `Bell` + an always-on red span · after: `<img src={sidebarLogo}>` (114×32, h-32), `NotificationActiveIcon`/`NotificationIcon` by `useHasUnreadNotifications()`; the button's label reads "Notifications, unread" when active.
+  - `src/components/ui/AureliaIcons.tsx` — adds `NotificationIcon`, `NotificationActiveIcon` (bell in currentColor; the dot keeps its red gradient with a per-instance `useId` gradient id, because drawer and hidden desktop sidebar render the icon twice and a shared id left the visible dot unpainted).
+  - new `src/lib/notificationsSeen.ts`; `src/pages/NotificationsPage.tsx` calls `markNotificationsSeen()` on mount.
+  - `AureliaLogo` is still used elsewhere (hero, auth screens) — unchanged there.
+- **Verified:** signed-in drawer at 402 (2×): active bell with red dot before visiting Notifications, plain bell after; new logo renders; typecheck/lint clean.
+- **Revert:** `git revert --no-commit 2758524 && git checkout HEAD -- docs/`.
