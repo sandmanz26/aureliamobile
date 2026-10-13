@@ -1,18 +1,17 @@
-import { CircleX, Menu, MoreHorizontal, Play, Send } from 'lucide-react'
+import { Menu, MoreHorizontal, Send } from 'lucide-react'
 import type { ComponentType } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import insightsIconImg from '../../assets/icon-menu-insights.png'
 import settingsIconImg from '../../assets/icon-menu-settings.png'
+import { ChartIncreaseIcon, CloseCircleIcon, PlayIcon } from '../ui/AureliaIcons'
 import { CoinPill } from '../ui/CoinPill'
 
 type MenuIcon = ComponentType<{ size?: number; className?: string }>
 
-/** The dropdown's two icons — supplied as flat PNGs rather than approximated
- *  with a lookalike lucide glyph, same treatment as Progress's Chapters/
- *  Insights tabs. */
+/** Insights uses Aurelia's own chart-increase SVG (AureliaIcons); Settings
+ *  is still the supplied flat PNG until an SVG for it arrives. */
 function InsightsIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
-  return <img src={insightsIconImg} alt="" style={{ width: size, height: size }} className={className} />
+  return <ChartIncreaseIcon size={size} className={className} />
 }
 function SettingsIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
   return <img src={settingsIconImg} alt="" style={{ width: size, height: size }} className={className} />
@@ -105,7 +104,7 @@ export function ChatHeader({
             aria-label="Play session"
             className="u-press flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-strong shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)]"
           >
-            <Play size={20} />
+            <PlayIcon size={20} />
           </Link>
         )}
 
@@ -193,7 +192,7 @@ export function ChatHeader({
                   }}
                   className="text-style-body u-press mt-8 flex h-44 w-full items-center justify-center gap-8 rounded-full border border-[#d6d6d6] text-text-primary"
                 >
-                  <CircleX size={17} />
+                  <CloseCircleIcon size={17} />
                   Unpublish
                 </button>
               )}

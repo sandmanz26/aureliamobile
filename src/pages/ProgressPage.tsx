@@ -15,8 +15,7 @@ import {
   Users,
 } from 'lucide-react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import chaptersIconImg from '../assets/icon-chapters.png'
-import insightIconImg from '../assets/icon-insight.png'
+import { ChartMediumIcon, NoteIcon } from '../components/ui/AureliaIcons'
 import { PageMeta } from '../components/PageMeta'
 import { CoverImage } from '../components/ui/CoverImage'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
@@ -29,13 +28,13 @@ import { useChatSession } from '../chat/ChatSessionContext'
 
 type TabIcon = ComponentType<{ size?: number; className?: string }>
 
-/** The two icons the catalogue doesn't have a lucide match for — supplied as
- *  flat PNGs rather than approximated with a lookalike glyph. */
+/** The two icons the catalogue doesn't have a lucide match for — Aurelia's
+ *  own SVGs (AureliaIcons), which follow the chip's text colour. */
 function ChaptersIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
-  return <img src={chaptersIconImg} alt="" style={{ width: size, height: size }} className={className} />
+  return <NoteIcon size={size} className={className} />
 }
 function InsightIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
-  return <img src={insightIconImg} alt="" style={{ width: size, height: size }} className={className} />
+  return <ChartMediumIcon size={size} className={className} />
 }
 
 const TABS: { id: ProgressTab; label: string; icon: TabIcon }[] = [
