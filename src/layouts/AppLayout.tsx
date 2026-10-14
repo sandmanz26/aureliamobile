@@ -6,11 +6,9 @@ import { useUiVersion } from '../versions/useUiVersion'
 import { useAuth } from '../auth/AuthContext'
 import { useHiddenScrollbars } from '../hooks/useHiddenScrollbars'
 import { useSignInGate } from '../auth/useSignInGate'
-import { ChartMediumIcon, NoteIcon, NotificationActiveIcon, NotificationIcon, PlaylistIcon, UserIcon } from '../components/ui/AureliaIcons'
+import { ChartMediumIcon, NoteIcon, NotificationActiveIcon, MessageQuestionIcon, NotificationIcon, PlaylistIcon, UserAddIcon, UserIcon } from '../components/ui/AureliaIcons'
 import sidebarLogo from '../assets/aurelia-sidebar-logo.svg'
 import { useHasUnreadNotifications } from '../lib/notificationsSeen'
-import iconInvite from '../assets/icon-nav-invite.png'
-import iconHelp from '../assets/icon-nav-help.png'
 import { BuildBadge } from '../components/ui/BuildBadge'
 import { PageSkeleton } from '../components/ui/PageSkeleton'
 import { useFeatureFlags } from '../demo/FeatureFlags'
@@ -20,13 +18,6 @@ import { recentSessions } from '../lib/sessions'
 import { DrawerContext } from './DrawerContext'
 
 const LATEST = recentSessions()
-
-/** Invite and Help are still the exported flat PNGs (colour baked in). The
- *  four main rows use Aurelia's SVGs (AureliaIcons, U023), which take
- *  NavItem's `text-icon-default` colour. */
-function NavIcon({ src }: { src: string }) {
-  return <img src={src} alt="" width={24} height={24} className="shrink-0" />
-}
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const unread = useHasUnreadNotifications()
@@ -161,7 +152,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             }}
             className="text-style-body u-press flex items-center gap-12 rounded-12 px-20 py-16 text-text-primary hover:bg-background-elevated"
           >
-            <NavIcon src={iconInvite} />
+            <UserAddIcon size={24} className="shrink-0 text-icon-default" />
             Invite a Friend
           </button>
         )}
@@ -174,7 +165,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             }}
             className="text-style-body u-press flex items-center gap-12 rounded-12 px-20 py-16 text-text-primary hover:bg-background-elevated"
           >
-            <NavIcon src={iconHelp} />
+            <MessageQuestionIcon size={24} className="shrink-0 text-icon-default" />
             Help
           </button>
         )}
