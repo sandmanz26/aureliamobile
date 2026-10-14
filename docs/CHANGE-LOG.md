@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-14 — `web_prod` fast-forwarded to `web_app` (U029)
+
+On request, production moved from `803d15f` to this commit, carrying U021–U028 (favicon, SVG icon set, sidebar logo and notification bell, Google-Maps-style player sheet, animated generating card by default, Home vector logo). Production renders v2 (pinned), no picker, password `AURELIA2.0`, version 0.1.0. Branches: `web_app`, `admin_cms`, `web_prod`.
+
 ### 2026-10-14 — Invite and Help nav icons are SVG (U028)
 
 The last two nav rows now use the supplied `user-add` and `message-question` SVGs (`UserAddIcon`, `MessageQuestionIcon`); the two PNGs and the `NavIcon` helper are removed — every drawer/sidebar icon is now SVG. All versions. Branches: `web_app`, `admin_cms`. Not `web_prod`.

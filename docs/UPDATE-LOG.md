@@ -66,6 +66,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U026 | `cc85aab` | 2026-10-14 16:17 | Chat: animated generating card is the default (flag `chat.generatingV2` removed). | [patch](patches/U026-cc85aab.patch) |
 | U027 | `955d004` | 2026-10-14 16:22 | Home logo: supplied vector replaces the blurry upscaled PNG. | [patch](patches/U027-955d004.patch) |
 | U028 | `75f3664` | 2026-10-14 16:23 | Drawer/sidebar Invite a Friend + Help → SVG icons (user-add, message-question). | [patch](patches/U028-75f3664.patch) |
+| U029 | (this log commit) | 2026-10-14 | Production: `web_prod` fast-forwarded from `803d15f` to `web_app` (U021–U028 and everything since U020). | — |
 
 ## Entries
 
@@ -390,3 +391,11 @@ Production (`web_prod`) is never touched by these updates unless asked.
   - deleted `src/assets/icon-nav-invite.png`, `icon-nav-help.png`.
 - **Verified:** desktop sidebar 1440 (2×) shows both icons at the same size and colour as the rows above; typecheck/lint clean.
 - **Revert:** `git revert --no-commit 75f3664 && git checkout HEAD -- docs/`.
+
+### U029 — Promote staging to production
+
+- **Request:** "naikan semua yang ada di staging v2 ke production". Production has been pinned to v2 since U020, so everything on `web_app` goes as-is.
+- **What moved:** `web_prod` `803d15f` → this log commit (16 commits): U021 favicon, U022/U023/U028 SVG icons, U024 sidebar logo + notification bell (with local unread state), U025 Google-Maps-style player sheet, U026 animated generating card as default (flag removed), U027 Home vector logo, plus the logs.
+- **Production specifics:** v2 behaviour with no picker/staging bar; password stays `AURELIA2.0` (U013); version `0.1.0`. A production-mode build (`VERCEL_ENV=production`, branch `web_prod`) compiled before the push.
+- **Staging differs from production only by:** the StagingBar + picker (default v1 there) and the `AURELIA3.0` password.
+- **Undo:** `git push --force-with-lease origin 803d15f:web_prod` — only on explicit request (rewrites the production branch). Individual changes are reverted via their own U-entries, then re-promoted.
