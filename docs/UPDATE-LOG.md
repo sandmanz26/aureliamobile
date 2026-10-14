@@ -62,6 +62,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U022 | `83fd46d` | 2026-10-13 00:29 | PNG icons replaced with supplied Aurelia SVGs (chat menu, header Play, Unpublish, Progress tabs). | [patch](patches/U022-83fd46d.patch) |
 | U023 | `ea37c00` | 2026-10-13 00:52 | Drawer/sidebar nav icons → Aurelia SVGs (user, note, playlist-02, chart-medium). | [patch](patches/U023-ea37c00.patch) |
 | U024 | `2758524` | 2026-10-13 01:01 | Drawer/sidebar: supplied sidebar logo; bell SVGs (plain/active) with local unread state. | [patch](patches/U024-2758524.patch) |
+| U025 | `553c77f` | 2026-10-14 11:42 | v2: Google-Maps-style player sheet (drag anywhere, 3 rests, flick, tap; player visible at half). | [patch](patches/U025-553c77f.patch) |
 
 ## Entries
 
@@ -328,3 +329,21 @@ Production (`web_prod`) is never touched by these updates unless asked.
   - `AureliaLogo` is still used elsewhere (hero, auth screens) — unchanged there.
 - **Verified:** signed-in drawer at 402 (2×): active bell with red dot before visiting Notifications, plain bell after; new logo renders; typecheck/lint clean.
 - **Revert:** `git revert --no-commit 2758524 && git checkout HEAD -- docs/`.
+
+### U025 — v2: player sheet touch handling, Google Maps style
+
+- **Commit:** `553c77f` · pushed 2026-10-14 11:42:27 UTC · `web_app` + `admin_cms` · staging only (not `web_prod`, still `803d15f`)
+- **Patch:** [patches/U025-553c77f.patch](patches/U025-553c77f.patch)
+- **Feedback (screenshots from a phone on production, relayed):** "The touchpoints is weak when you scroll up to see more data" — swiping up on the sheet's title did nothing; only the ~21px grabber strip moved it. Plus: "Pls explore Google Maps … for this part we have to [stay] below media player … try to come close here" (Google Maps place sheet: peek / half / full, map still visible at half).
+- **Interpretation:** make the whole sheet the touch target and copy Google Maps' three-stop behaviour, keeping the player usable at the middle stop.
+- **Change (`src/pages/PlayerPage.tsx`, v2 only — v1 code paths unchanged):**
+  - **Three rests:** peek (title, `SHEET_PEEK_V2` 112 → **124** to fit the taller grabber), **half** (`halfY = collapsedY × 0.45`: title, description, tags, actions), full.
+  - **Drag from anywhere** on the sheet while it isn't fully open (pointer handlers on the `<aside>`, 6px threshold, pointer capture, `touch-action: none` while not full). Fully open, the content scrolls natively and the grabber drags it down.
+  - **Flick:** release velocity > 0.5 px/ms carries to the next rest in that direction; otherwise snaps to the nearest rest. `pointercancel` (phones sometimes claim a fast flick) settles from the last finger position instead of stranding the sheet.
+  - **Tap** on the peeking sheet (not on a link/button) opens to half; the grabber's tap cycles peek → half → full → peek. Grabber hit area taller (`py-8` → `py-14`).
+  - The click that ends a drag is swallowed, so a drag that starts on the author link doesn't open the profile.
+  - **Player stays visible at half:** the player section's `padding-bottom` follows the sheet up to the half rest, so play, the cue line and the scrubber re-centre above the sheet (animated with the sheet).
+  - `src/versions/versions.ts`: dialog line updated.
+- **Verified (touch emulation, 402×874, v2):** peek top 750 → slow 300px drag up from the title → half (367) → flick up → full (54) → grabber drag down → peek (750) → tap title → half (367); at half the play button, cue and scrubber are fully visible above the sheet. v1 player pixel-identical.
+- **Tune:** `halfY` factor (0.45), flick threshold (0.5), `SHEET_PEEK_V2`.
+- **Revert:** `git revert --no-commit 553c77f && git checkout HEAD -- docs/` (back to U015 behaviour: two rests, grabber-only drag).

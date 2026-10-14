@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-14 — v2: Google-Maps-style player sheet (U025)
+
+Version 2, staging only. The player details sheet can be dragged from anywhere (not just the grabber), has three rests (peek with title, half, full), follows flicks, opens to half on tap, and keeps the play controls visible above it at half by shrinking the player area. Fixes the reported weak touch target. v1 unchanged. See `docs/UPDATE-LOG.md` U025. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-13 — Sidebar logo + notification bell SVGs (U024)
 
 Drawer/sidebar header uses the supplied `aurelia-sidebar-logo.svg`; the bell uses the supplied plain/active SVGs (`NotificationIcon`, `NotificationActiveIcon`). New local unread model (`src/lib/notificationsSeen.ts`): active while today's notifications are unopened in this browser, plain after visiting Notifications — replaces the always-on red dot. Staging only. Branches: `web_app`, `admin_cms`. Not `web_prod`.
