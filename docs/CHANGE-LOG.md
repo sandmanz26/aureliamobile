@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-14 — Invite and Help nav icons are SVG (U028)
+
+The last two nav rows now use the supplied `user-add` and `message-question` SVGs (`UserAddIcon`, `MessageQuestionIcon`); the two PNGs and the `NavIcon` helper are removed — every drawer/sidebar icon is now SVG. All versions. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-14 — Home logo is the supplied vector (U027)
 
 The Home hero mark uses `src/assets/logo-homepage.svg` at 64px instead of the 48px PNG scaled up (which looked blurry). Layout unchanged (title spacing compensated `mt-20` → `mt-26`). Other logo placements still use the PNG. All versions. Branches: `web_app`, `admin_cms`. Not `web_prod`.

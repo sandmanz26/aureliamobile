@@ -65,6 +65,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U025 | `553c77f` | 2026-10-14 11:42 | v2: Google-Maps-style player sheet (drag anywhere, 3 rests, flick, tap; player visible at half). | [patch](patches/U025-553c77f.patch) |
 | U026 | `cc85aab` | 2026-10-14 16:17 | Chat: animated generating card is the default (flag `chat.generatingV2` removed). | [patch](patches/U026-cc85aab.patch) |
 | U027 | `955d004` | 2026-10-14 16:22 | Home logo: supplied vector replaces the blurry upscaled PNG. | [patch](patches/U027-955d004.patch) |
+| U028 | `75f3664` | 2026-10-14 16:23 | Drawer/sidebar Invite a Friend + Help → SVG icons (user-add, message-question). | [patch](patches/U028-75f3664.patch) |
 
 ## Entries
 
@@ -376,3 +377,16 @@ Production (`web_prod`) is never touched by these updates unless asked.
   - `AureliaLogo` itself is unchanged; the other uses (site lock, admin sidebar, auth screens) still use the PNG — only the Home hero was asked for. Note for later: the sign-in/site-lock marks at 56px have the same upscaling.
 - **Verified:** 402 and 1440 — logo box and title position identical to before (logo 169,158 64×64; title y 248 / 218); screenshot at 2× shows crisp edges. Typecheck/lint clean.
 - **Revert:** `git revert --no-commit 955d004 && git checkout HEAD -- docs/`.
+
+### U028 — Invite a Friend and Help icons
+
+- **Commit:** `75f3664` · pushed 2026-10-14 16:23:26 UTC · `web_app` + `admin_cms` · staging only (not `web_prod`)
+- **Patch:** [patches/U028-75f3664.patch](patches/U028-75f3664.patch) (binary; includes the removed PNGs)
+- **Request:** screenshot of the drawer's bottom rows + `user-add.svg`, `message-question.svg` — "update part ini juga" (follow-up to U023). Not version-gated.
+- **Change:**
+  - originals: `src/assets/icons/user-add.svg`, `message-question.svg`.
+  - `src/components/ui/AureliaIcons.tsx` — adds `UserAddIcon`, `MessageQuestionIcon` (currentColor).
+  - `src/layouts/AppLayout.tsx` — Invite a Friend → `UserAddIcon`, Help → `MessageQuestionIcon`, 24px with `text-icon-default` like the other rows; the `NavIcon` PNG helper and its imports removed (no PNG nav icons remain).
+  - deleted `src/assets/icon-nav-invite.png`, `icon-nav-help.png`.
+- **Verified:** desktop sidebar 1440 (2×) shows both icons at the same size and colour as the rows above; typecheck/lint clean.
+- **Revert:** `git revert --no-commit 75f3664 && git checkout HEAD -- docs/`.
