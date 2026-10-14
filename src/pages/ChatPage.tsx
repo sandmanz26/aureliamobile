@@ -16,7 +16,6 @@ import type { Message, Status } from '../chat/ChatSessionContext'
 import type { RecreateBrief } from '../chat/recreate'
 import { draftTitleFor, findQuickStart } from '../lib/quickStart'
 import { replyTo } from '../lib/replies'
-import { SessionProgressCard } from '../components/chat/SessionProgressCard'
 import { SessionReasoningCard } from '../components/chat/SessionReasoningCard'
 import { SessionProgressCardV2 } from '../components/chat/SessionProgressCardV2'
 import { VoiceRecorder } from '../components/chat/VoiceRecorder'
@@ -724,14 +723,11 @@ export function ChatPage() {
                      name. */
                   by={sessionSlug ? undefined : CURRENT_USER}
                 />
-              ) : isEnabled('chat.generatingV2') ? (
-                <SessionProgressCardV2 title={draft.title} />
               ) : (
-                <SessionProgressCard
-                  title={draft.title}
-                  status="Creating your new session.."
-                  progress={progress}
-                />
+                /* The animated build card is the only one now (U026). The
+                   static thumbnail + single line it replaced, and the
+                   chat.generatingV2 flag that chose between them, are gone. */
+                <SessionProgressCardV2 title={draft.title} />
               )}
             </div>
           )}

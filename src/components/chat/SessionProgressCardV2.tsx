@@ -3,7 +3,7 @@ import { RotatingStatus } from './RotatingStatus'
 import { CARD_SHADOW } from '../../lib/shadows'
 
 /**
- * Demo option 2 for the generating state — /__demo `chat.generatingV2`.
+ * The generating state for a session being built — the default since U026 (was /__demo option 2, `chat.generatingV2`).
  *
  * A morphing-shape mark and a status line that rotates through what the
  * build is doing, instead of the static circular thumbnail and single
