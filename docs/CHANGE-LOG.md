@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-14 — Home logo is the supplied vector (U027)
+
+The Home hero mark uses `src/assets/logo-homepage.svg` at 64px instead of the 48px PNG scaled up (which looked blurry). Layout unchanged (title spacing compensated `mt-20` → `mt-26`). Other logo placements still use the PNG. All versions. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-14 — Animated generating card is the default (U026)
 
 The chat's "building your session" state always uses `SessionProgressCardV2` (animated mark + rotating status); the `chat.generatingV2` demo flag and the old static-card branch are removed, so every device gets the same card without publishing a flag. All versions. Branches: `web_app`, `admin_cms`. Not `web_prod`.

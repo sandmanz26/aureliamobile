@@ -64,6 +64,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U024 | `2758524` | 2026-10-13 01:01 | Drawer/sidebar: supplied sidebar logo; bell SVGs (plain/active) with local unread state. | [patch](patches/U024-2758524.patch) |
 | U025 | `553c77f` | 2026-10-14 11:42 | v2: Google-Maps-style player sheet (drag anywhere, 3 rests, flick, tap; player visible at half). | [patch](patches/U025-553c77f.patch) |
 | U026 | `cc85aab` | 2026-10-14 16:17 | Chat: animated generating card is the default (flag `chat.generatingV2` removed). | [patch](patches/U026-cc85aab.patch) |
+| U027 | `955d004` | 2026-10-14 16:22 | Home logo: supplied vector replaces the blurry upscaled PNG. | [patch](patches/U027-955d004.patch) |
 
 ## Entries
 
@@ -362,3 +363,16 @@ Production (`web_prod`) is never touched by these updates unless asked.
   - Not version-gated: v1 and v2 both get the animated card.
 - **Verified:** fresh browser (no flags in storage), 402px, signed in → new chat → send → Apply new changes: the card shows the animated mark with the rotating status ("Layering in white noise…"); the old "Creating your new session.." line never appears. Typecheck/lint clean (one pre-existing ChatPage warning).
 - **Revert:** `git revert --no-commit cc85aab && git checkout HEAD -- docs/` (brings back the flag, off by default).
+
+### U027 — Home logo: SVG instead of blurry PNG
+
+- **Commit:** `955d004` · pushed 2026-10-14 16:22:04 UTC · `web_app` + `admin_cms` · staging only (not `web_prod`)
+- **Patch:** [patches/U027-955d004.patch](patches/U027-955d004.patch)
+- **Request:** `logo_homepage.svg` uploaded — "update logo di homepage karena yang sekarang blur". Not version-gated.
+- **Cause:** Home drew `AureliaLogo markOnly` at 64px, but `aurelia-mark.png` is a 48×48 bitmap, so it was scaled up 1.33×.
+- **Change:**
+  - new `src/assets/logo-homepage.svg` (original, untouched).
+  - `src/pages/HomePage.tsx` — before: `<AureliaLogo iconSize={64} markOnly className="relative" />` · after: `<img src={logoHomepage} width/height 64 className="relative mx-auto block size-64">`; `AureliaLogo` import removed from this file. The h1 below goes `mt-20` → `mt-26`: the old inline-flex wrapper added 6px of line-box space under the mark, and the block image doesn't, so this keeps the layout identical.
+  - `AureliaLogo` itself is unchanged; the other uses (site lock, admin sidebar, auth screens) still use the PNG — only the Home hero was asked for. Note for later: the sign-in/site-lock marks at 56px have the same upscaling.
+- **Verified:** 402 and 1440 — logo box and title position identical to before (logo 169,158 64×64; title y 248 / 218); screenshot at 2× shows crisp edges. Typecheck/lint clean.
+- **Revert:** `git revert --no-commit 955d004 && git checkout HEAD -- docs/`.
