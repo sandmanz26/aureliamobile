@@ -24,7 +24,7 @@ import { PageMeta } from '../components/PageMeta'
 import { Chip } from '../components/ui/Chip'
 import { CountUp } from '../components/ui/CountUp'
 import { CoverImage } from '../components/ui/CoverImage'
-import { AureliaLogo } from '../components/ui/AureliaLogo'
+import logoHomepage from '../assets/logo-homepage.svg'
 import { FeatureCard } from '../components/ui/FeatureCard'
 import { SessionGridCard } from '../components/ui/SessionGridCard'
 import { useFeatureFlags } from '../demo/FeatureFlags'
@@ -289,9 +289,11 @@ export function HomePage() {
           />
 
           {/* The mark opens the page, above the claim it belongs to. */}
-          <AureliaLogo iconSize={64} markOnly className="relative" />
+          {/* The supplied 48x48 vector, drawn at 64: the PNG it replaces was a
+              48px bitmap scaled up, which is what made the mark blurry. */}
+          <img src={logoHomepage} alt="Aurelia" width={64} height={64} className="relative mx-auto block size-64" />
 
-          <h1 className="text-style-title-large relative mt-20 text-text-primary">
+          <h1 className="text-style-title-large relative mt-26 text-text-primary">
             Create the{' '}
             {/* "space" is the product's whole promise, so the sentence points
                 at it — italic and in the brand gold, the way the design does. */}
