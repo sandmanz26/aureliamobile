@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-14 — Animated generating card is the default (U026)
+
+The chat's "building your session" state always uses `SessionProgressCardV2` (animated mark + rotating status); the `chat.generatingV2` demo flag and the old static-card branch are removed, so every device gets the same card without publishing a flag. All versions. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-14 — v2: Google-Maps-style player sheet (U025)
 
 Version 2, staging only. The player details sheet can be dragged from anywhere (not just the grabber), has three rests (peek with title, half, full), follows flicks, opens to half on tap, and keeps the play controls visible above it at half by shrinking the player area. Fixes the reported weak touch target. v1 unchanged. See `docs/UPDATE-LOG.md` U025. Branches: `web_app`, `admin_cms`. Not `web_prod`.

@@ -63,6 +63,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U023 | `ea37c00` | 2026-10-13 00:52 | Drawer/sidebar nav icons → Aurelia SVGs (user, note, playlist-02, chart-medium). | [patch](patches/U023-ea37c00.patch) |
 | U024 | `2758524` | 2026-10-13 01:01 | Drawer/sidebar: supplied sidebar logo; bell SVGs (plain/active) with local unread state. | [patch](patches/U024-2758524.patch) |
 | U025 | `553c77f` | 2026-10-14 11:42 | v2: Google-Maps-style player sheet (drag anywhere, 3 rests, flick, tap; player visible at half). | [patch](patches/U025-553c77f.patch) |
+| U026 | `cc85aab` | 2026-10-14 16:17 | Chat: animated generating card is the default (flag `chat.generatingV2` removed). | [patch](patches/U026-cc85aab.patch) |
 
 ## Entries
 
@@ -347,3 +348,17 @@ Production (`web_prod`) is never touched by these updates unless asked.
 - **Verified (touch emulation, 402×874, v2):** peek top 750 → slow 300px drag up from the title → half (367) → flick up → full (54) → grabber drag down → peek (750) → tap title → half (367); at half the play button, cue and scrubber are fully visible above the sheet. v1 player pixel-identical.
 - **Tune:** `halfY` factor (0.45), flick threshold (0.5), `SHEET_PEEK_V2`.
 - **Revert:** `git revert --no-commit 553c77f && git checkout HEAD -- docs/` (back to U015 behaviour: two rests, grabber-only drag).
+
+### U026 — Animated generating card by default
+
+- **Commit:** `cc85aab` · pushed 2026-10-14 16:17:57 UTC · `web_app` + `admin_cms` · staging only (not `web_prod`)
+- **Patch:** [patches/U026-cc85aab.patch](patches/U026-cc85aab.patch)
+- **Report:** on a phone the "generating your session" state still showed the old static card. Cause: the animated card (`SessionProgressCardV2`) sat behind the `/__demo` flag `chat.generatingV2`, off by default and `unreleased`; it had been switched on locally on one device and never published, so every other device got the old card.
+- **Request:** "pastikan itu jadi yang utama saja, jadi sudah by default memakai itu".
+- **Change:**
+  - `src/pages/ChatPage.tsx` — before: `isEnabled('chat.generatingV2') ? <SessionProgressCardV2/> : <SessionProgressCard status="Creating your new session.." progress={progress}/>` · after: always `<SessionProgressCardV2 title={draft.title} />`; the `SessionProgressCard` import removed.
+  - `src/demo/modules.ts` — the `generatingV2` feature entry removed from the chat module, so no published/local flag can bring the old card back.
+  - `src/components/chat/SessionProgressCardV2.tsx` — doc comment updated. `SessionProgressCard.tsx` itself is kept (unused) for reference/Storybook.
+  - Not version-gated: v1 and v2 both get the animated card.
+- **Verified:** fresh browser (no flags in storage), 402px, signed in → new chat → send → Apply new changes: the card shows the animated mark with the rotating status ("Layering in white noise…"); the old "Creating your new session.." line never appears. Typecheck/lint clean (one pre-existing ChatPage warning).
+- **Revert:** `git revert --no-commit cc85aab && git checkout HEAD -- docs/` (brings back the flag, off by default).

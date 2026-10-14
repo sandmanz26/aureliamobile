@@ -1,0 +1,62 @@
+diff --git a/src/components/chat/SessionProgressCardV2.tsx b/src/components/chat/SessionProgressCardV2.tsx
+index f163d4c..875bcb6 100644
+--- a/src/components/chat/SessionProgressCardV2.tsx
++++ b/src/components/chat/SessionProgressCardV2.tsx
+@@ -3,7 +3,7 @@ import { RotatingStatus } from './RotatingStatus'
+ import { CARD_SHADOW } from '../../lib/shadows'
+ 
+ /**
+- * Demo option 2 for the generating state — /__demo `chat.generatingV2`.
++ * The generating state for a session being built — the default since U026 (was /__demo option 2, `chat.generatingV2`).
+  *
+  * A morphing-shape mark and a status line that rotates through what the
+  * build is doing, instead of the static circular thumbnail and single
+diff --git a/src/demo/modules.ts b/src/demo/modules.ts
+index da22c7a..189f441 100644
+--- a/src/demo/modules.ts
++++ b/src/demo/modules.ts
+@@ -90,13 +90,6 @@ export const DEMO_MODULES: DemoModule[] = [
+       { id: 'recommendations', label: 'Recommendation cards', description: 'Tunable cards with Add/Remove and Apply.' },
+       { id: 'voice', label: 'Voice input', description: 'Record, transcribe, review, then send as a voice note.' },
+       { id: 'publish', label: 'Publish flow', description: 'More-menu publish, publishing sheet, and confirmation.' },
+-      {
+-        id: 'generatingV2',
+-        label: 'Generating: animated shape + rotating status (option 2)',
+-        description:
+-          'Alternate treatment for the "building your session" message: a morphing-squares mark and a status line that cycles through what the build is doing, instead of the static thumbnail and single "Creating your new session.." line. Off by default — a second option to preview, not a replacement.',
+-        unreleased: true,
+-      },
+     ],
+   },
+   {
+diff --git a/src/pages/ChatPage.tsx b/src/pages/ChatPage.tsx
+index 334405f..b1f69d5 100644
+--- a/src/pages/ChatPage.tsx
++++ b/src/pages/ChatPage.tsx
+@@ -16,7 +16,6 @@ import type { Message, Status } from '../chat/ChatSessionContext'
+ import type { RecreateBrief } from '../chat/recreate'
+ import { draftTitleFor, findQuickStart } from '../lib/quickStart'
+ import { replyTo } from '../lib/replies'
+-import { SessionProgressCard } from '../components/chat/SessionProgressCard'
+ import { SessionReasoningCard } from '../components/chat/SessionReasoningCard'
+ import { SessionProgressCardV2 } from '../components/chat/SessionProgressCardV2'
+ import { VoiceRecorder } from '../components/chat/VoiceRecorder'
+@@ -724,14 +723,11 @@ export function ChatPage() {
+                      name. */
+                   by={sessionSlug ? undefined : CURRENT_USER}
+                 />
+-              ) : isEnabled('chat.generatingV2') ? (
+-                <SessionProgressCardV2 title={draft.title} />
+               ) : (
+-                <SessionProgressCard
+-                  title={draft.title}
+-                  status="Creating your new session.."
+-                  progress={progress}
+-                />
++                /* The animated build card is the only one now (U026). The
++                   static thumbnail + single line it replaced, and the
++                   chat.generatingV2 flag that chose between them, are gone. */
++                <SessionProgressCardV2 title={draft.title} />
+               )}
+             </div>
+           )}
