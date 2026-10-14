@@ -64,7 +64,7 @@ export const UI_VERSIONS: UiVersion[] = [
       {
         group: 'Player',
         items: [
-          'The details sheet rests low — just the author and title; the description and the rest appear when you pull it fully open.',
+          'The details sheet works like Google Maps: it peeks with the title, stops halfway with the player still visible above it, and opens fully — drag it from anywhere, flick it, or tap it to open.',
           'Share opens a share sheet: WhatsApp, X, Facebook, Telegram, LinkedIn, Email, Copy link, and More for the phone’s own sheet.',
         ],
       },

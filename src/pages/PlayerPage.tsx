@@ -46,7 +46,7 @@ const SHEET_PEEK = 169
  *  it appear only once the sheet is pulled fully open, and fade in then.
  *  (Corrected from 268 in U014, which showed the description at rest — the
  *  opposite of what was asked.) */
-const SHEET_PEEK_V2 = 112
+const SHEET_PEEK_V2 = 124
 
 const CUES = [
   'Now take a deep breath in',
@@ -291,6 +291,36 @@ export function PlayerPage() {
     [collapsedY],
   )
 
+  // Version 2: a Google-Maps-style sheet (U025). Three rests — peek (title),
+  // half (title, description, tags) and full — and the whole sheet is the drag
+  // surface while it isn't fully open, not just the 21px grabber. A flick
+  // carries to the next rest in its direction; a tap on the peeking sheet
+  // opens it to half. Once fully open the content scrolls, and the grabber
+  // (now taller) drags it back down.
+  const halfY = Math.round(collapsedY * 0.45)
+  const sheetDrag = useRef<{ y: number; offset: number; t: number; lastY: number; lastT: number; moved: boolean } | null>(
+    null,
+  )
+  const suppressClick = useRef(false)
+  const settle = useCallback(
+    (from: number, velocity: number) => {
+      const rests = [0, halfY, collapsedY]
+      let target: number
+      if (Math.abs(velocity) > 0.5) {
+        // Flick: next rest in the direction of travel.
+        target =
+          velocity < 0
+            ? [...rests].reverse().find((r) => r < from - 4) ?? 0
+            : rests.find((r) => r > from + 4) ?? collapsedY
+      } else {
+        target = rests.reduce((best, r) => (Math.abs(r - from) < Math.abs(best - from) ? r : best), collapsedY)
+      }
+      setOffset(target)
+      if (target !== 0) scroller.current?.scrollTo({ top: 0 })
+    },
+    [halfY, collapsedY],
+  )
+
   // Put this session on the deck. load() no-ops when it is already there, so
   // arriving back from the cockpit does not restart what is playing.
   useEffect(() => {
@@ -358,7 +388,18 @@ export function PlayerPage() {
       {/* ------------------------------------------------------------ hero */}
       <section
         className="relative mx-auto flex h-full w-full max-w-[402px] flex-col text-text-inverse lg:max-w-[640px]"
-        style={{ paddingBottom: peek }}
+        style={
+          v2
+            ? {
+                // The player area shrinks with the sheet up to its half rest,
+                // so play, the cue and the scrubber stay visible above it
+                // instead of disappearing under it (U025). Past half the
+                // sheet simply covers the player, as a full sheet should.
+                paddingBottom: Math.max(peek, collapsedY - Math.max(offset ?? collapsedY, halfY) + peek),
+                transition: dragging ? 'none' : 'padding-bottom 260ms cubic-bezier(0.22, 1, 0.36, 1)',
+              }
+            : { paddingBottom: peek }
+        }
       >
         {/* The frame draws three controls in this row — back, coin, share.
             A sound switch used to sit between the last two as a fourth; the
@@ -468,7 +509,83 @@ export function PlayerPage() {
            either side of a white panel, which reads as a mistake rather than
            as the art showing through. */
         className="fixed inset-x-0 z-20 mx-auto flex w-full flex-col overflow-hidden rounded-t-24 bg-surface-default lg:max-w-[640px]"
+        onPointerDown={
+          v2
+            ? (event) => {
+                const current = offset ?? collapsedY
+                if (current <= 0) return // fully open: content scrolls, grabber drags
+                if ((event.target as Element).closest('[data-sheet-grabber]')) return
+                const now = performance.now()
+                sheetDrag.current = { y: event.clientY, offset: current, t: now, lastY: event.clientY, lastT: now, moved: false }
+              }
+            : undefined
+        }
+        onPointerMove={
+          v2
+            ? (event) => {
+                const d = sheetDrag.current
+                if (!d) return
+                const dy = event.clientY - d.y
+                if (!d.moved) {
+                  if (Math.abs(dy) < 6) return
+                  d.moved = true
+                  setDragging(true)
+                  event.currentTarget.setPointerCapture(event.pointerId)
+                }
+                d.lastT = performance.now()
+                d.lastY = event.clientY
+                setOffset(Math.min(collapsedY, Math.max(0, d.offset + dy)))
+              }
+            : undefined
+        }
+        onPointerUp={
+          v2
+            ? (event) => {
+                const d = sheetDrag.current
+                sheetDrag.current = null
+                if (!d) return
+                if (!d.moved) {
+                  // A tap on the peeking sheet (not on a link or button) opens it.
+                  if (d.offset >= collapsedY - 1 && !(event.target as Element).closest('a, button')) setOffset(halfY)
+                  return
+                }
+                setDragging(false)
+                suppressClick.current = true
+                const dt = Math.max(1, performance.now() - d.t)
+                settle(d.offset + (event.clientY - d.y), (event.clientY - d.y) / dt)
+              }
+            : undefined
+        }
+        onPointerCancel={
+          v2
+            ? () => {
+                // Mobile browsers sometimes take a fast flick over as their own
+                // gesture and cancel the pointer. Settle from where the finger
+                // last was rather than leaving the sheet stranded mid-way.
+                const d = sheetDrag.current
+                sheetDrag.current = null
+                setDragging(false)
+                if (!d?.moved) return
+                suppressClick.current = true
+                const dt = Math.max(1, d.lastT - d.t)
+                settle(d.offset + (d.lastY - d.y), (d.lastY - d.y) / dt)
+              }
+            : undefined
+        }
+        onClickCapture={
+          v2
+            ? (event) => {
+                // The click that ends a drag must not follow a link underneath.
+                if (suppressClick.current) {
+                  suppressClick.current = false
+                  event.preventDefault()
+                  event.stopPropagation()
+                }
+              }
+            : undefined
+        }
         style={{
+          touchAction: v2 && (offset ?? collapsedY) > 0 ? 'none' : undefined,
           top: SHEET_TOP,
           height: `calc(100dvh - ${SHEET_TOP}px)`,
           transform: `translateY(${offset ?? 9999}px)`,
@@ -501,10 +618,22 @@ export function PlayerPage() {
             const moved = start.pointer - event.clientY
             // A real drag decides by direction; anything smaller is a tap and
             // toggles.
+            if (v2) {
+              // Drag: settle on the nearest rest (three of them in v2). Tap:
+              // peek → half → full → peek.
+              if (Math.abs(moved) > 12) settle(start.offset - moved, 0)
+              else {
+                const at = offset ?? collapsedY
+                setOffset(at >= collapsedY - 1 ? halfY : at > 1 ? 0 : collapsedY)
+                if (at <= 1) scroller.current?.scrollTo({ top: 0 })
+              }
+              return
+            }
             if (Math.abs(moved) > 12) snap(moved > 0)
             else snap(!up)
           }}
-          className="flex shrink-0 cursor-grab touch-none justify-center py-8 active:cursor-grabbing"
+          data-sheet-grabber=""
+          className={`flex shrink-0 cursor-grab touch-none justify-center active:cursor-grabbing ${v2 ? 'py-14' : 'py-8'}`}
         >
           <span className="block h-5 w-36 rounded-full bg-[#7f7f7f]/40" />
         </button>
