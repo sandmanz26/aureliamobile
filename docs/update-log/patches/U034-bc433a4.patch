@@ -1,0 +1,950 @@
+diff --git a/api/clicks.ts b/api/clicks.ts
+index 589c654..42cf2e8 100644
+--- a/api/clicks.ts
++++ b/api/clicks.ts
+@@ -74,7 +74,17 @@ function isValidEvent(value: unknown): value is Record<string, unknown> {
+     (e.label === undefined || str(e.label, 120)) &&
+     (e.tag === undefined || str(e.tag, 20)) &&
+     (e.href === undefined || str(e.href, 300)) &&
+-    (e.from === undefined || str(e.from, 300))
++    (e.from === undefined || str(e.from, 300)) &&
++    // U034 element detail
++    (e.kind === undefined || str(e.kind, 20)) &&
++    (e.section === undefined || str(e.section, 80)) &&
++    (e.sel === undefined || str(e.sel, 300)) &&
++    (e.state === undefined || str(e.state, 60)) &&
++    (e.to === undefined || str(e.to, 300)) &&
++    (e.fx === undefined || e.fx === 'navigated' || e.fx === 'changed' || e.fx === 'nothing') &&
++    (e.rage === undefined || typeof e.rage === 'boolean') &&
++    (e.dead === undefined || typeof e.dead === 'boolean') &&
++    ['ex', 'ey', 'ew', 'eh', 'ms', 'sy'].every((k) => e[k] === undefined || num(e[k]))
+   )
+ }
+ 
+diff --git a/src/demo/insights/ClickTracker.tsx b/src/demo/insights/ClickTracker.tsx
+index 5b34820..e8dc3de 100644
+--- a/src/demo/insights/ClickTracker.tsx
++++ b/src/demo/insights/ClickTracker.tsx
+@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
+ import { useFeatureFlags } from '../FeatureFlags'
+ import { CLICKS_FLAG } from '../modules'
+ import type { ClickEvent } from './tracker'
+-import { installTracker, loadEvents, recordView } from './tracker'
++import { findVisible, installTracker, loadEvents, recordView } from './tracker'
+ 
+ /**
+  * Mounts the click recorder (when /__demo's "Click insights" is on) and, when
+@@ -29,50 +29,170 @@ export function ClickTracker() {
+     last.current = pathname
+   }, [on, pathname])
+ 
+-  return heatmap && !pathname.startsWith('/__demo') ? <Heatmap pathname={pathname} /> : null
++  return heatmap && !pathname.startsWith('/__demo') ? <Heatmap pathname={pathname} search={search} /> : null
+ }
+ 
+ /** Phones and desktops lay a screen out differently, so taps are only drawn
+  *  over the same kind of layout they were made on. */
+ const layoutOf = (vw: number) => (vw < 640 ? 'mobile' : vw < 1024 ? 'tablet' : 'desktop')
+ 
+-function Heatmap({ pathname }: { pathname: string }) {
++interface Box {
++  sel: string
++  label: string
++  count: number
++  nothing: number
++  left: number
++  top: number
++  width: number
++  height: number
++}
++
++/**
++ * `?heatmap` draws every tap as a dot; `?heatmap=elements` outlines each
++ * tapped element with its tap count instead, and `&el=<selector>` (from the
++ * insights page's "Show on screen") scrolls to one element and rings it.
++ */
++function Heatmap({ pathname, search }: { pathname: string; search: string }) {
+   const navigate = useNavigate()
++  const params = new URLSearchParams(search)
++  const mode = params.get('heatmap') === 'elements' ? 'elements' : 'dots'
++  const focus = params.get('el')
+   const [events, setEvents] = useState<ClickEvent[] | null>(null)
+   const [docH, setDocH] = useState(() => document.documentElement.scrollHeight)
++  const [tick, setTick] = useState(0)
+   const layout = layoutOf(window.innerWidth)
+ 
+   useEffect(() => {
+     void loadEvents().then((r) => setEvents(r.events))
+-    const id = window.setInterval(() => setDocH(document.documentElement.scrollHeight), 1000)
+-    return () => window.clearInterval(id)
++    const id = window.setInterval(() => {
++      setDocH(document.documentElement.scrollHeight)
++      setTick((n) => n + 1)
++    }, 1000)
++    // Elements inside horizontal shelves move when the shelf scrolls.
++    const onScroll = () => setTick((n) => n + 1)
++    document.addEventListener('scroll', onScroll, true)
++    return () => {
++      window.clearInterval(id)
++      document.removeEventListener('scroll', onScroll, true)
++    }
+   }, [])
+ 
+   const taps = (events ?? []).filter(
+     (e) => e.type === 'click' && e.page === pathname && layoutOf(e.vw) === layout && e.x !== undefined && e.y !== undefined,
+   )
+ 
++  // Group by element and measure where each one is now. Recomputed every
++  // tick so the outlines follow layout changes and scrolling shelves.
++  const boxes: Box[] = []
++  if (mode === 'elements') {
++    const bySel = new Map<string, ClickEvent[]>()
++    for (const e of taps) if (e.sel) bySel.set(e.sel, [...(bySel.get(e.sel) ?? []), e])
++    for (const [sel, list] of bySel) {
++      const el = findVisible(sel)
++      if (!el) continue
++      const r = el.getBoundingClientRect()
++      boxes.push({
++        sel,
++        label: list[list.length - 1].label ?? sel,
++        count: list.length,
++        nothing: list.filter((e) => e.fx === 'nothing').length,
++        left: r.left + window.scrollX,
++        top: r.top + window.scrollY,
++        width: r.width,
++        height: r.height,
++      })
++    }
++  }
++  const maxCount = Math.max(1, ...boxes.map((b) => b.count))
++  const unplaced = mode === 'elements' ? new Set(taps.filter((e) => e.sel).map((e) => e.sel)).size - boxes.length : 0
++  void tick
++
++  // Scroll the focused element into view once it exists.
++  const scrolled = useRef(false)
++  useEffect(() => {
++    if (!focus || scrolled.current || events === null) return
++    const el = findVisible(focus)
++    if (el) {
++      scrolled.current = true
++      el.scrollIntoView({ block: 'center', behavior: 'smooth' })
++    }
++  })
++
++  const setMode = (next: 'dots' | 'elements') =>
++    navigate(`${pathname}?heatmap${next === 'elements' ? '=elements' : ''}${focus ? `&el=${encodeURIComponent(focus)}` : ''}`, { replace: true })
++
+   return createPortal(
+     <div data-insights-ignore="">
+       <div className="pointer-events-none absolute left-0 top-0 z-[80] w-full" style={{ height: docH }}>
+-        {taps.map((e, i) => (
+-          <span
+-            key={i}
+-            className="absolute size-36 -translate-x-1/2 -translate-y-1/2 rounded-full"
+-            style={{
+-              left: `${e.x}%`,
+-              top: e.y,
+-              background: 'radial-gradient(circle, rgba(255,40,40,0.55) 0%, rgba(255,140,0,0.25) 45%, transparent 70%)',
+-            }}
+-          />
+-        ))}
++        {mode === 'dots' &&
++          taps.map((e, i) => (
++            <span
++              key={i}
++              className="absolute size-36 -translate-x-1/2 -translate-y-1/2 rounded-full"
++              style={{
++                left: `${e.x}%`,
++                top: e.y,
++                background: 'radial-gradient(circle, rgba(255,40,40,0.55) 0%, rgba(255,140,0,0.25) 45%, transparent 70%)',
++              }}
++            />
++          ))}
++        {mode === 'elements' &&
++          boxes.map((b) => {
++            const focused = b.sel === focus
++            const heat = b.count / maxCount
++            return (
++              <div
++                key={b.sel}
++                className="absolute rounded-8"
++                style={{
++                  left: b.left - 2,
++                  top: b.top - 2,
++                  width: b.width + 4,
++                  height: b.height + 4,
++                  border: `${focused ? 3 : 2}px solid rgba(255,${Math.round(140 - heat * 110)},20,${focused ? 1 : 0.5 + heat * 0.5})`,
++                  background: `rgba(255,${Math.round(140 - heat * 110)},20,${0.06 + heat * 0.18})`,
++                  boxShadow: focused ? '0 0 0 6px rgba(255,59,31,0.25)' : undefined,
++                }}
++              >
++                <span
++                  title={`${b.label} — ${b.count} ${b.count === 1 ? 'tap' : 'taps'}${b.nothing ? `, ${b.nothing} with no response` : ''}`}
++                  className="pointer-events-auto absolute -right-8 -top-10 flex h-20 min-w-20 items-center justify-center rounded-full bg-[#1B1006] px-6 text-[11px] tabular-nums text-white"
++                >
++                  {b.count}
++                  {b.nothing > 0 && <span className="ml-4 text-[#ff8a7a]">✕{b.nothing}</span>}
++                </span>
++                {focused && (
++                  <span className="absolute left-0 top-full mt-6 max-w-[260px] truncate rounded-8 bg-[#1B1006] px-8 py-4 text-[11px] text-white">
++                    {b.label}
++                  </span>
++                )}
++              </div>
++            )
++          })}
+       </div>
+-      <div className="fixed bottom-16 left-1/2 z-[95] flex -translate-x-1/2 items-center gap-12 rounded-full bg-[#1B1006] px-16 py-10 text-[13px] text-white shadow-lg">
++      <div className="fixed bottom-16 left-1/2 z-[95] flex -translate-x-1/2 items-center gap-8 whitespace-nowrap rounded-full bg-[#1B1006] px-12 py-8 text-[13px] text-white shadow-lg">
++        <span className="flex rounded-full bg-white/10 p-2">
++          {(['dots', 'elements'] as const).map((m) => (
++            <button
++              key={m}
++              type="button"
++              aria-pressed={mode === m}
++              onClick={() => setMode(m)}
++              className={`rounded-full px-10 py-4 ${mode === m ? 'bg-white text-[#1B1006]' : ''}`}
++            >
++              {m === 'dots' ? 'Taps' : 'Elements'}
++            </button>
++          ))}
++        </span>
+         <span>
+-          {events === null ? 'Loading taps…' : `${taps.length} ${taps.length === 1 ? 'tap' : 'taps'} on ${pathname} · ${layout}`}
++          {events === null
++            ? 'Loading…'
++            : mode === 'dots'
++              ? `${taps.length} ${taps.length === 1 ? 'tap' : 'taps'} · ${layout}`
++              : `${boxes.length} elements · ${layout}${unplaced > 0 ? ` · ${unplaced} not on screen now` : ''}`}
+         </span>
+         <button type="button" className="rounded-full bg-white/15 px-10 py-4" onClick={() => navigate(pathname)}>
+-          Close heatmap
++          Close
+         </button>
+       </div>
+     </div>,
+diff --git a/src/demo/insights/ElementsTable.tsx b/src/demo/insights/ElementsTable.tsx
+new file mode 100644
+index 0000000..3af2ecf
+--- /dev/null
++++ b/src/demo/insights/ElementsTable.tsx
+@@ -0,0 +1,339 @@
++import { Fragment, useMemo, useState } from 'react'
++import { ChevronDown, Crosshair } from 'lucide-react'
++import type { ClickEvent } from './tracker'
++
++/**
++ * The element-level read of Click insights (U034): every control people
++ * tapped on a screen, one row each, with how many tapped it, how soon, what
++ * it did, and where on it the finger landed — so the report says "the Join
++ * pill in Monthly Challenge, 41% of visitors, mostly its left edge, opens the
++ * challenge", not just "/explore was opened".
++ */
++export interface ElementStat {
++  key: string
++  page: string
++  label: string
++  kind: string
++  section: string
++  sel?: string
++  taps: ClickEvent[]
++  sessions: number
++  /** Sessions that opened this screen at all. */
++  viewers: number
++  medianMs?: number
++  medianDepth?: number
++  navigated: number
++  changed: number
++  nothing: number
++  rage: number
++  dead: number
++  topTo?: [string, number]
++}
++
++const median = (values: number[]) => {
++  if (!values.length) return undefined
++  const sorted = [...values].sort((a, b) => a - b)
++  return sorted[Math.floor(sorted.length / 2)]
++}
++
++export function countBy<T>(items: T[], key: (item: T) => string | undefined) {
++  const map = new Map<string, number>()
++  for (const item of items) {
++    const k = key(item)
++    if (k !== undefined) map.set(k, (map.get(k) ?? 0) + 1)
++  }
++  return [...map.entries()].sort((a, b) => b[1] - a[1])
++}
++
++const layoutOf = (vw: number) => (vw < 640 ? 'mobile' : vw < 1024 ? 'tablet' : 'desktop')
++
++/** Events before U034 have no element detail; fall back to label/tag. */
++const kindOf = (e: ClickEvent) => e.kind ?? (e.label?.startsWith('(not a control)') ? 'not a control' : e.tag === 'a' ? 'link' : e.tag ?? '?')
++
++export function elementStats(events: ClickEvent[]): ElementStat[] {
++  const viewersByPage = new Map<string, Set<string>>()
++  for (const e of events) {
++    if (e.type !== 'view') continue
++    if (!viewersByPage.has(e.page)) viewersByPage.set(e.page, new Set())
++    viewersByPage.get(e.page)!.add(e.sid)
++  }
++  const groups = new Map<string, ClickEvent[]>()
++  for (const e of events) {
++    if (e.type !== 'click') continue
++    const key = `${e.page}|${e.sel ?? e.label ?? e.tag}`
++    groups.set(key, [...(groups.get(key) ?? []), e])
++  }
++  return [...groups.entries()]
++    .map(([key, taps]) => {
++      const first = taps[taps.length - 1]
++      const sessions = new Set(taps.map((t) => t.sid)).size
++      return {
++        key,
++        page: first.page,
++        label: countBy(taps, (t) => t.label)[0]?.[0] ?? first.tag ?? '?',
++        kind: countBy(taps, kindOf)[0]?.[0] ?? '?',
++        section: countBy(taps, (t) => t.section)[0]?.[0] ?? '—',
++        sel: first.sel,
++        taps,
++        sessions,
++        viewers: Math.max(viewersByPage.get(first.page)?.size ?? 0, sessions),
++        medianMs: median(taps.flatMap((t) => (t.ms === undefined ? [] : [t.ms]))),
++        medianDepth: median(taps.flatMap((t) => (t.sy === undefined ? [] : [t.sy]))),
++        navigated: taps.filter((t) => t.fx === 'navigated').length,
++        changed: taps.filter((t) => t.fx === 'changed').length,
++        nothing: taps.filter((t) => t.fx === 'nothing').length,
++        rage: taps.filter((t) => t.rage).length,
++        dead: taps.filter((t) => t.dead || t.label?.startsWith('(not a control)')).length,
++        topTo: countBy(taps, (t) => t.to)[0],
++      }
++    })
++    .sort((a, b) => b.taps.length - a.taps.length)
++}
++
++export const seconds = (ms?: number) =>
++  ms === undefined ? '—' : ms < 1000 ? `${ms}ms` : ms < 60000 ? `${(ms / 1000).toFixed(1)}s` : `${Math.round(ms / 60000)}m`
++
++const pct = (n: number, of: number) => (of ? `${Math.round((n / of) * 100)}%` : '—')
++
++export function heatmapUrl(page: string, sel?: string) {
++  return `${page}?heatmap=elements${sel ? `&el=${encodeURIComponent(sel)}` : ''}`
++}
++
++function Pill({ tone, children }: { tone: 'neutral' | 'good' | 'warn' | 'bad'; children: React.ReactNode }) {
++  const cls = {
++    neutral: 'bg-background-elevated text-text-secondary',
++    good: 'bg-[#ECFBED] text-success-600',
++    warn: 'bg-[#FFF4E5] text-[#B25E09]',
++    bad: 'bg-[#FDECEC] text-feedback-error',
++  }[tone]
++  return <span className={`inline-flex h-20 items-center whitespace-nowrap rounded-full px-8 text-[11px] ${cls}`}>{children}</span>
++}
++
++/** One line saying what the taps did. */
++function Outcome({ s }: { s: ElementStat }) {
++  const n = s.taps.length
++  const known = s.navigated + s.changed + s.nothing
++  if (!known) return <span className="text-text-secondary">—</span>
++  return (
++    <span className="flex flex-wrap gap-4">
++      {s.navigated > 0 && <Pill tone="good">→ {s.topTo?.[0] ?? 'other screen'} {pct(s.navigated, n)}</Pill>}
++      {s.changed > 0 && <Pill tone="neutral">changed screen {pct(s.changed, n)}</Pill>}
++      {s.nothing > 0 && <Pill tone="bad">no response {pct(s.nothing, n)}</Pill>}
++    </span>
++  )
++}
++
++function Split({ title, rows }: { title: string; rows: [string, number][] }) {
++  const total = rows.reduce((sum, [, n]) => sum + n, 0)
++  return (
++    <div>
++      <p className="text-[11px] uppercase tracking-[0.06em] text-text-secondary">{title}</p>
++      <ul className="mt-6 flex flex-col gap-4">
++        {rows.length === 0 && <li className="text-text-secondary">—</li>}
++        {rows.slice(0, 6).map(([k, n]) => (
++          <li key={k} className="flex justify-between gap-8">
++            <span className="truncate" title={k}>
++              {k}
++            </span>
++            <span className="tabular-nums text-text-secondary">
++              {n} · {pct(n, total)}
++            </span>
++          </li>
++        ))}
++      </ul>
++    </div>
++  )
++}
++
++/** The element drawn to its average shape, with every tap as a dot where it
++ *  landed on it — shows whether people hit the middle, an edge, or the icon. */
++function OnElement({ taps }: { taps: ClickEvent[] }) {
++  const sized = taps.filter((t) => t.ex !== undefined && t.ey !== undefined)
++  if (!sized.length) return <p className="text-text-secondary">Recorded before element detail existed.</p>
++  const w = median(sized.flatMap((t) => (t.ew ? [t.ew] : []))) ?? 100
++  const h = median(sized.flatMap((t) => (t.eh ? [t.eh] : []))) ?? 40
++  const scale = Math.min(260 / w, 130 / h, 1.5)
++  return (
++    <div>
++      <div
++        className="relative rounded-8 border border-dashed border-text-secondary/50 bg-background-elevated"
++        style={{ width: Math.max(24, w * scale), height: Math.max(16, h * scale) }}
++      >
++        {sized.map((t, i) => (
++          <span
++            key={i}
++            className="absolute size-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#ff3b1f]/60"
++            style={{ left: `${Math.min(100, Math.max(0, t.ex!))}%`, top: `${Math.min(100, Math.max(0, t.ey!))}%` }}
++          />
++        ))}
++      </div>
++      <p className="mt-6 text-text-secondary">
++        {w}×{h}px{w < 44 || h < 44 ? ' · smaller than the 44px tap target' : ''}
++      </p>
++    </div>
++  )
++}
++
++function Detail({ s }: { s: ElementStat }) {
++  return (
++    <div className="grid gap-16 text-[12px] text-text-primary sm:grid-cols-2 lg:grid-cols-4">
++      <div>
++        <p className="text-[11px] uppercase tracking-[0.06em] text-text-secondary">Where on the element</p>
++        <div className="mt-6">
++          <OnElement taps={s.taps} />
++        </div>
++      </div>
++      <Split title="Devices" rows={countBy(s.taps, (t) => layoutOf(t.vw))} />
++      <Split title="Design version" rows={countBy(s.taps, (t) => `v${t.ui}`)} />
++      <Split title="State before tap" rows={countBy(s.taps, (t) => t.state ?? 'none')} />
++      <Split title="Led to" rows={countBy(s.taps, (t) => (t.fx === 'navigated' ? t.to : t.fx ? (t.fx === 'changed' ? 'changed this screen' : 'no response') : undefined))} />
++      <Split title="Label seen" rows={countBy(s.taps, (t) => t.label)} />
++      <div>
++        <p className="text-[11px] uppercase tracking-[0.06em] text-text-secondary">Timing</p>
++        <ul className="mt-6 flex flex-col gap-4">
++          <li>Median after screen opened: {seconds(s.medianMs)}</li>
++          <li>Fastest: {seconds(Math.min(...s.taps.flatMap((t) => (t.ms === undefined ? [] : [t.ms]))) || undefined)}</li>
++          <li>Median scroll depth: {s.medianDepth === undefined ? '—' : `${s.medianDepth}%`}</li>
++          <li>Rage taps: {s.rage}</li>
++        </ul>
++      </div>
++      <div className="min-w-0">
++        <p className="text-[11px] uppercase tracking-[0.06em] text-text-secondary">Find it</p>
++        <code className="mt-6 block break-all rounded-8 bg-background-elevated p-8 text-[11px]">{s.sel ?? '—'}</code>
++        <a href={heatmapUrl(s.page, s.sel)} target="_blank" rel="noreferrer" className="mt-8 inline-flex items-center gap-4 text-[#ff881b]">
++          <Crosshair size={13} /> Show on screen
++        </a>
++      </div>
++    </div>
++  )
++}
++
++export function ElementsTable({ stats }: { stats: ElementStat[] }) {
++  const [open, setOpen] = useState<string | null>(null)
++  const [kind, setKind] = useState('all')
++  const kinds = useMemo(() => countBy(stats, (s) => s.kind), [stats])
++  const shown = kind === 'all' ? stats : stats.filter((s) => s.kind === kind)
++
++  if (!stats.length) return <p className="text-[13px] text-text-secondary">No taps on this screen yet.</p>
++
++  return (
++    <div>
++      <div className="mb-12 flex flex-wrap gap-6">
++        {[['all', stats.length] as [string, number], ...kinds].map(([k, n]) => (
++          <button
++            key={k}
++            type="button"
++            aria-pressed={kind === k}
++            onClick={() => setKind(k)}
++            className={`h-28 rounded-full border px-10 text-[12px] ${
++              kind === k ? 'border-text-primary bg-text-primary text-text-inverse' : 'border-border-subtle text-text-primary'
++            }`}
++          >
++            {k === 'all' ? 'All elements' : k} · {n}
++          </button>
++        ))}
++      </div>
++      <div className="-mx-16 overflow-x-auto px-16">
++        <table className="w-full min-w-[860px] border-collapse text-left text-[13px]">
++          <thead>
++            <tr className="border-b border-border-subtle text-[11px] uppercase tracking-[0.06em] text-text-secondary">
++              <th className="py-8 pr-12 font-normal">Element</th>
++              <th className="py-8 pr-12 font-normal">Section</th>
++              <th className="py-8 pr-12 text-right font-normal">Taps</th>
++              <th className="py-8 pr-12 text-right font-normal" title="Share of the sessions that opened this screen and tapped this element">
++                Reach
++              </th>
++              <th className="py-8 pr-12 text-right font-normal" title="Median time from opening the screen to the tap">
++                After
++              </th>
++              <th className="py-8 pr-12 font-normal">What it did</th>
++              <th className="py-8 font-normal" />
++            </tr>
++          </thead>
++          <tbody>
++            {shown.map((s) => {
++              const isOpen = open === s.key
++              return (
++                <Fragment key={s.key}>
++                  <tr
++                    className={`cursor-pointer border-b border-border-subtle align-top hover:bg-background-elevated ${isOpen ? 'bg-background-elevated' : ''}`}
++                    onClick={() => setOpen(isOpen ? null : s.key)}
++                  >
++                    <td className="max-w-[280px] py-10 pr-12">
++                      <span className="block truncate text-text-primary" title={s.label}>
++                        {s.label}
++                      </span>
++                      <span className="mt-4 flex flex-wrap gap-4">
++                        <Pill tone={s.kind === 'not a control' ? 'warn' : 'neutral'}>{s.kind}</Pill>
++                        {s.rage > 0 && <Pill tone="bad">{s.rage} rage</Pill>}
++                      </span>
++                    </td>
++                    <td className="max-w-[200px] truncate py-10 pr-12 text-text-secondary" title={s.section}>
++                      {s.section}
++                    </td>
++                    <td className="py-10 pr-12 text-right tabular-nums">{s.taps.length}</td>
++                    <td className="py-10 pr-12 text-right tabular-nums">
++                      {pct(s.sessions, s.viewers)}
++                      <span className="block text-[11px] text-text-secondary">
++                        {s.sessions}/{s.viewers}
++                      </span>
++                    </td>
++                    <td className="py-10 pr-12 text-right tabular-nums">{seconds(s.medianMs)}</td>
++                    <td className="py-10 pr-12">
++                      <Outcome s={s} />
++                    </td>
++                    <td className="py-10">
++                      <ChevronDown size={16} className={`text-text-secondary transition-transform ${isOpen ? 'rotate-180' : ''}`} />
++                    </td>
++                  </tr>
++                  {isOpen && (
++                    <tr className="border-b border-border-subtle bg-background-elevated/50">
++                      <td colSpan={7} className="px-4 py-16">
++                        <Detail s={s} />
++                      </td>
++                    </tr>
++                  )}
++                </Fragment>
++              )
++            })}
++          </tbody>
++        </table>
++      </div>
++    </div>
++  )
++}
++
++/** Elements worth a look: taps that did nothing, rage taps, taps on things
++ *  that are not controls. */
++export function ProblemList({ stats }: { stats: ElementStat[] }) {
++  const rows = stats
++    .map((s) => ({ s, score: s.nothing + s.rage * 2 + s.dead }))
++    .filter((r) => r.score > 0)
++    .sort((a, b) => b.score - a.score)
++    .slice(0, 12)
++  if (!rows.length) return <p className="text-[13px] text-text-secondary">No dead, rage or unanswered taps for these filters.</p>
++  return (
++    <ul className="flex flex-col gap-10">
++      {rows.map(({ s }) => (
++        <li key={s.key} className="flex items-start justify-between gap-12 text-[13px]">
++          <span className="min-w-0">
++            <span className="block truncate text-text-primary" title={s.label}>
++              {s.label}
++            </span>
++            <span className="block truncate text-[11px] text-text-secondary">
++              {s.page} · {s.section}
++            </span>
++          </span>
++          <span className="flex shrink-0 flex-wrap justify-end gap-4">
++            {s.dead > 0 && <Pill tone="warn">{s.dead} not a control</Pill>}
++            {s.nothing > 0 && <Pill tone="bad">{s.nothing} no response</Pill>}
++            {s.rage > 0 && <Pill tone="bad">{s.rage} rage</Pill>}
++            <a href={heatmapUrl(s.page, s.sel)} target="_blank" rel="noreferrer" aria-label={`Show ${s.label} on screen`} className="text-[#ff881b]">
++              <Crosshair size={14} />
++            </a>
++          </span>
++        </li>
++      ))}
++    </ul>
++  )
++}
+diff --git a/src/demo/insights/tracker.ts b/src/demo/insights/tracker.ts
+index 034c636..76ce8e1 100644
+--- a/src/demo/insights/tracker.ts
++++ b/src/demo/insights/tracker.ts
+@@ -9,6 +9,13 @@ import { readVersion } from '../../versions/versions'
+  * - `click` — something was tapped: the nearest button/link/control, its
+  *   visible label, and where on the page it was (x as % of the window width,
+  *   y in page pixels) so a heatmap can be drawn back over the same screen.
++ *   Since U034 a click also describes the *element*: what kind of control it
++ *   is, the section it sits in, a selector to find it again, where on the
++ *   element the finger landed, its state before the tap (pressed, expanded,
++ *   disabled…), how long after the screen opened it came, how far down the
++ *   page, whether it was a rage tap (3+ in a second on one spot), and what
++ *   happened in the 700ms after: went to another screen, changed something
++ *   on this one, or nothing at all.
+  *
+  * Never recorded: anything typed into a field, names or emails, the content
+  * of the page. The session id is random per browser tab.
+@@ -34,6 +41,29 @@ export interface ClickEvent {
+   tag?: string
+   href?: string
+   from?: string
++  /** U034 element detail — absent on events recorded before it. */
++  kind?: string
++  section?: string
++  sel?: string
++  /** Where on the element the tap landed, % of its width/height. */
++  ex?: number
++  ey?: number
++  /** The element's size in px. */
++  ew?: number
++  eh?: number
++  /** aria-pressed/expanded/checked/selected/disabled before the tap. */
++  state?: string
++  /** ms since this screen was opened. */
++  ms?: number
++  /** How far down the page the bottom of the window was, %. */
++  sy?: number
++  rage?: boolean
++  /** The tap hit no button, link or field. */
++  dead?: boolean
++  /** What followed within 700ms. */
++  fx?: 'navigated' | 'changed' | 'nothing'
++  /** The screen it led to, when fx is 'navigated'. */
++  to?: string
+ }
+ 
+ export const LOCAL_KEY = 'aurelia.insights.clicks'
+@@ -119,11 +149,15 @@ function push(event: ClickEvent) {
+   if (timer === undefined) timer = window.setTimeout(() => ((timer = undefined), void flush()), FLUSH_MS)
+ }
+ 
++let viewedAt = Date.now()
++
+ export function recordView(from: string | null) {
++  viewedAt = Date.now()
+   push({ ...base('view'), ...(from && from !== window.location.pathname ? { from } : {}) })
+ }
+ 
+-const CONTROL = 'a, button, [role="button"], [role="tab"], [role="link"], input, select, textarea, label, summary'
++const CONTROL =
++  'a, button, [role="button"], [role="tab"], [role="link"], [role="switch"], [role="checkbox"], [role="menuitem"], [role="option"], input, select, textarea, label, summary'
+ 
+ /** A short human name for what was tapped — never a field's value. */
+ function labelFor(el: Element): string {
+@@ -138,24 +172,167 @@ function labelFor(el: Element): string {
+   return (img?.getAttribute('alt') || el.tagName.toLowerCase()).slice(0, 120)
+ }
+ 
++/** What sort of control it is, in words a reader of the report would use. */
++function kindFor(el: Element, isControl: boolean, w: number, h: number): string {
++  if (!isControl) return 'not a control'
++  const tag = el.tagName.toLowerCase()
++  const role = el.getAttribute('role')
++  const type = el instanceof HTMLInputElement ? el.type : ''
++  if (role === 'switch' || role === 'checkbox' || type === 'checkbox' || type === 'radio') return 'toggle'
++  if (tag === 'input' || tag === 'textarea' || tag === 'select') return 'field'
++  if (role === 'tab') return 'tab'
++  if (role === 'menuitem' || role === 'option') return 'menu item'
++  if (el.hasAttribute('aria-pressed')) return 'chip'
++  // Big tappable areas are cards whatever element they are made of.
++  if (w * h >= 24000) return 'card'
++  if (tag === 'a' || role === 'link') return 'link'
++  return 'button'
++}
++
++const clip = (text: string | null | undefined, max: number) => (text ?? '').replace(/\s+/g, ' ').trim().slice(0, max)
++
++/** The nearest named region around the element: a dialog, the sidebar, or
++ *  the section whose heading it sits under. */
++function sectionFor(el: Element): string {
++  const name = (n: Element) => clip(n.getAttribute('aria-label') || n.querySelector('h1, h2, h3, h4')?.textContent, 60)
++  for (let n = el.parentElement; n && n !== document.body; n = n.parentElement) {
++    const tag = n.tagName.toLowerCase()
++    const role = n.getAttribute('role')
++    if (role === 'dialog' || tag === 'dialog') return `Dialog · ${name(n) || 'untitled'}`
++    if (tag === 'nav' || tag === 'aside') return clip(n.getAttribute('aria-label'), 60) || (tag === 'nav' ? 'Navigation' : 'Sidebar')
++    if (tag === 'section' || tag === 'article' || tag === 'form' || tag === 'header' || role === 'toolbar') {
++      const found = name(n)
++      if (found) return found
++    }
++  }
++  return 'Page'
++}
++
++const attr = (value: string) => value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
++
++/** First match that is actually on screen — the drawer and the desktop
++ *  sidebar render the same controls twice, one of them hidden. */
++export function findVisible(sel: string): Element | null {
++  try {
++    for (const el of document.querySelectorAll(sel)) {
++      if (el.closest('[data-insights-ignore]')) continue
++      const r = el.getBoundingClientRect()
++      if (r.width > 0 && r.height > 0) return el
++    }
++  } catch {
++    /* a selector from an old build that no longer parses */
++  }
++  return null
++}
++
++/** A selector that finds the element again on the same screen — by its id,
++ *  accessible name or link target when that leads back to this element
++ *  (stable across layouts), otherwise by its position in the tree. Two links
++ *  to the same place (a card and its Join pill) fail the check and fall
++ *  through to the tree path. */
++function selectorFor(el: Element): string {
++  const tag = el.tagName.toLowerCase()
++  const aria = el.getAttribute('aria-label')
++  const href = el.getAttribute('href')
++  const candidates = [
++    el.id ? `#${CSS.escape(el.id)}` : '',
++    aria ? `${tag}[aria-label="${attr(aria)}"]` : '',
++    tag === 'a' && href ? `a[href="${attr(href)}"]` : '',
++  ]
++  for (const c of candidates) if (c && c.length <= 300 && findVisible(c) === el) return c
++  const parts: string[] = []
++  let node: Element | null = el
++  while (node && node !== document.body && parts.length < 10) {
++    if (node.id) {
++      parts.unshift(`#${CSS.escape(node.id)}`)
++      break
++    }
++    let part = node.tagName.toLowerCase()
++    const parent: Element | null = node.parentElement
++    if (parent) {
++      const same = [...parent.children].filter((c) => c.tagName === node!.tagName)
++      if (same.length > 1) part += `:nth-of-type(${same.indexOf(node) + 1})`
++    }
++    parts.unshift(part)
++    node = parent
++  }
++  return parts.join(' > ').slice(0, 300)
++}
++
++function stateFor(el: Element): string | undefined {
++  const out: string[] = []
++  for (const a of ['pressed', 'expanded', 'checked', 'selected', 'current']) {
++    const v = el.getAttribute(`aria-${a}`)
++    if (v !== null && v !== 'false') out.push(v === 'true' ? a : `${a}=${v}`)
++    else if (v === 'false') out.push(`not ${a}`)
++  }
++  if (el instanceof HTMLInputElement && (el.type === 'checkbox' || el.type === 'radio')) out.push(el.checked ? 'checked' : 'not checked')
++  if (el.getAttribute('aria-disabled') === 'true' || (el as HTMLButtonElement).disabled) out.push('disabled')
++  return out.length ? out.join(', ').slice(0, 60) : undefined
++}
++
++// Rage taps: three or more within a second on roughly the same spot.
++let recent: { at: number; x: number; y: number }[] = []
++
+ function onClick(e: MouseEvent) {
+   const target = e.target as Element | null
+   if (!target || target.closest('[data-demo-annotations], [data-insights-ignore]')) return
+   const control = target.closest(CONTROL)
+   const el = control ?? target
+   const href = el instanceof HTMLAnchorElement ? el.getAttribute('href') ?? undefined : undefined
+-  push({
++  const rect = el.getBoundingClientRect()
++  const docH = document.documentElement.scrollHeight
++  const now = Date.now()
++  recent = recent.filter((r) => now - r.at < 1000)
++  const rage = recent.filter((r) => Math.hypot(r.x - e.clientX, r.y - e.clientY) < 40).length >= 2
++  recent.push({ at: now, x: e.clientX, y: e.clientY })
++
++  const event: ClickEvent = {
+     ...base('click'),
+     x: Math.round((e.clientX / window.innerWidth) * 1000) / 10,
+     y: Math.round(e.clientY + window.scrollY),
+-    docH: document.documentElement.scrollHeight,
++    docH,
+     // A tap that missed every control is still worth seeing (people tapping
+     // things that look tappable but are not), but its "label" would be the
+     // text of a whole section — so name it as a miss, briefly.
+     label: control ? labelFor(el) : `(not a control) ${labelFor(el).slice(0, 40)}`,
+     tag: el.tagName.toLowerCase(),
+     ...(href ? { href: href.slice(0, 300) } : {}),
++    kind: kindFor(el, !!control, rect.width, rect.height),
++    section: sectionFor(el),
++    sel: selectorFor(el),
++    ex: rect.width ? Math.round(((e.clientX - rect.left) / rect.width) * 100) : 50,
++    ey: rect.height ? Math.round(((e.clientY - rect.top) / rect.height) * 100) : 50,
++    ew: Math.round(rect.width),
++    eh: Math.round(rect.height),
++    ms: now - viewedAt,
++    sy: docH ? Math.min(100, Math.round(((window.scrollY + window.innerHeight) / docH) * 100)) : 100,
++    ...(stateFor(el) ? { state: stateFor(el) } : {}),
++    ...(rage ? { rage: true } : {}),
++    ...(control ? {} : { dead: true }),
++  }
++
++  // What the tap did: watch the page for 700ms. Anything else on the page
++  // that animates by changing the DOM will also count as "changed", so
++  // "nothing" is the reliable reading and "changed" the generous one.
++  const before = window.location.pathname
++  let mutations = 0
++  const observer = new MutationObserver((list) => {
++    for (const m of list) {
++      const node = m.target instanceof Element ? m.target : m.target.parentElement
++      if (!node?.closest('[data-insights-ignore]')) mutations++
++    }
+   })
++  observer.observe(document.body, { subtree: true, childList: true, attributes: true, characterData: true })
++  window.setTimeout(() => {
++    observer.disconnect()
++    const after = window.location.pathname
++    push({
++      ...event,
++      fx: after !== before ? 'navigated' : mutations ? 'changed' : 'nothing',
++      ...(after !== before ? { to: after.slice(0, 300) } : {}),
++    })
++  }, 700)
+ }
+ 
+ function onHide() {
+diff --git a/src/pages/InsightsPage.tsx b/src/pages/InsightsPage.tsx
+index 41def62..698f98b 100644
+--- a/src/pages/InsightsPage.tsx
++++ b/src/pages/InsightsPage.tsx
+@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
+ import { PageMeta } from '../components/PageMeta'
+ import type { ClickEvent } from '../demo/insights/tracker'
+ import { clearEvents, loadEvents } from '../demo/insights/tracker'
++import { ElementsTable, ProblemList, countBy, elementStats, heatmapUrl } from '../demo/insights/ElementsTable'
+ 
+ /**
+  * /__demo/insights — reads back what Click insights recorded (U032).
+@@ -28,12 +29,6 @@ function download(name: string, text: string, type: string) {
+   URL.revokeObjectURL(url)
+ }
+ 
+-function countBy<T>(items: T[], key: (item: T) => string) {
+-  const map = new Map<string, number>()
+-  for (const item of items) map.set(key(item), (map.get(key(item)) ?? 0) + 1)
+-  return [...map.entries()].sort((a, b) => b[1] - a[1])
+-}
+-
+ function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+   return (
+     <button
+@@ -102,8 +97,8 @@ export function InsightsPage() {
+   const sessions = countBy(events, (e) => e.sid)
+   const screens = countBy(views, (e) => e.page)
+   const pages = [...new Set(events.map((e) => e.page))].sort()
+-  const tapsHere = page === 'all' ? taps : taps.filter((e) => e.page === page)
+-  const topTaps = countBy(tapsHere, (e) => `${page === 'all' ? `${e.page} · ` : ''}${e.label ?? e.tag ?? '?'}`).slice(0, 15)
++  const stats = useMemo(() => elementStats(events), [events])
++  const statsHere = page === 'all' ? stats : stats.filter((s) => s.page === page)
+   const paths = countBy(
+     views.filter((e) => e.from),
+     (e) => `${e.from} → ${e.page}`,
+@@ -120,13 +115,15 @@ export function InsightsPage() {
+   }, [events])
+ 
+   const exportCsv = () => {
+-    const cols: (keyof ClickEvent)[] = ['t', 'sid', 'type', 'page', 'from', 'label', 'tag', 'href', 'x', 'y', 'vw', 'vh', 'ui']
++    const cols: (keyof ClickEvent)[] = [
++      't', 'sid', 'type', 'page', 'from', 'label', 'kind', 'section', 'state', 'fx', 'to', 'rage', 'dead',
++      'ms', 'sy', 'ex', 'ey', 'ew', 'eh', 'sel', 'tag', 'href', 'x', 'y', 'vw', 'vh', 'ui',
++    ]
+     const esc = (v: unknown) => (v === undefined ? '' : `"${String(v).replace(/"/g, '""')}"`)
+     download(`aurelia-clicks-${new Date().toISOString().slice(0, 10)}.csv`, [cols.join(','), ...events.map((e) => cols.map((c) => esc(e[c])).join(','))].join('\n'), 'text/csv')
+   }
+ 
+   const maxScreen = screens[0]?.[1] ?? 0
+-  const maxTap = topTaps[0]?.[1] ?? 0
+   const maxPath = paths[0]?.[1] ?? 0
+ 
+   return (
+@@ -236,7 +233,7 @@ export function InsightsPage() {
+                         <span className="truncate text-text-primary">{p}</span>
+                         <Bar value={n} max={maxScreen} />
+                         <span className="text-right tabular-nums text-text-secondary">{n}</span>
+-                        <a href={`${p}?heatmap`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-4 text-[#ff881b]">
++                        <a href={heatmapUrl(p)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-4 text-[#ff881b]">
+                           <Flame size={13} /> Heatmap
+                         </a>
+                       </li>
+@@ -244,30 +241,31 @@ export function InsightsPage() {
+                   </ul>
+                 </Card>
+ 
+-                <Card title="Top taps" hint="What people tapped, by the control’s visible label.">
+-                  <select
+-                    value={page}
+-                    onChange={(e) => setPage(e.target.value)}
+-                    className="mb-12 h-32 w-full rounded-8 border border-border-subtle bg-surface-default px-8 text-[13px]"
+-                  >
+-                    <option value="all">All screens</option>
+-                    {pages.map((p) => (
+-                      <option key={p} value={p}>
+-                        {p}
+-                      </option>
+-                    ))}
+-                  </select>
+-                  <ul className="flex flex-col gap-10">
+-                    {topTaps.map(([label, n]) => (
+-                      <li key={label} className="grid grid-cols-[minmax(0,1fr)_80px_40px] items-center gap-10 text-[13px]">
+-                        <span className="truncate text-text-primary" title={label}>{label}</span>
+-                        <Bar value={n} max={maxTap} />
+-                        <span className="text-right tabular-nums text-text-secondary">{n}</span>
+-                      </li>
+-                    ))}
+-                  </ul>
++                <Card title="Problem taps" hint="Taps that did nothing visible within 0.7s, rage taps (3+ in a second on one spot), and taps on things that are not buttons or links — usually something that looks tappable and is not.">
++                  <ProblemList stats={statsHere} />
+                 </Card>
+ 
++                <div className="lg:col-span-2">
++                  <Card
++                    title="Elements"
++                    hint="Every element tapped, one row each. Reach = share of the visits to that screen that tapped it; After = median time from opening the screen. Click a row for where on the element people tap, devices, versions, state, where it led, and a link that outlines it on the real screen."
++                  >
++                    <select
++                      value={page}
++                      onChange={(e) => setPage(e.target.value)}
++                      className="mb-12 h-32 w-full rounded-8 border border-border-subtle bg-surface-default px-8 text-[13px] lg:w-[320px]"
++                    >
++                      <option value="all">All screens</option>
++                      {pages.map((p) => (
++                        <option key={p} value={p}>
++                          {p}
++                        </option>
++                      ))}
++                    </select>
++                    <ElementsTable key={page} stats={statsHere} />
++                  </Card>
++                </div>
++
+                 <Card title="Paths" hint="The most common moves from one screen to the next.">
+                   <ul className="flex flex-col gap-10">
+                     {paths.length === 0 && <li className="text-[13px] text-text-secondary">No moves between screens yet.</li>}
+@@ -281,7 +279,7 @@ export function InsightsPage() {
+                   </ul>
+                 </Card>
+ 
+-                <Card title="Recent sessions" hint="One visit each, step by step: ▸ screen opened, • tap.">
++                <Card title="Recent sessions" hint="One visit each, step by step: ▸ screen opened, • tap (section, → where it led, ✕ no response, !! rage).">
+                   <ul className="flex max-h-[520px] flex-col gap-12 overflow-y-auto">
+                     {journeys.map(({ sid, list }) => (
+                       <li key={sid} className="rounded-12 bg-background-elevated p-12 text-[12px]">
+@@ -291,7 +289,17 @@ export function InsightsPage() {
+                         <ol className="mt-6 flex flex-wrap gap-x-8 gap-y-4 text-text-primary">
+                           {list.slice(0, 40).map((e, i) => (
+                             <li key={i} className={e.type === 'view' ? 'font-semibold' : ''}>
+-                              {e.type === 'view' ? `▸ ${e.page}` : `• ${e.label ?? e.tag}`}
++                              {e.type === 'view' ? (
++                                `▸ ${e.page}`
++                              ) : (
++                                <>
++                                  • {e.label ?? e.tag}
++                                  {e.section && e.section !== 'Page' && <span className="text-text-secondary"> ({e.section})</span>}
++                                  {e.fx === 'navigated' && <span className="text-success-600"> → {e.to}</span>}
++                                  {e.fx === 'nothing' && <span className="text-feedback-error"> ✕</span>}
++                                  {e.rage && <span className="text-feedback-error"> !!</span>}
++                                </>
++                              )}
+                             </li>
+                           ))}
+                           {list.length > 40 && <li className="text-text-secondary">…{list.length - 40} more</li>}

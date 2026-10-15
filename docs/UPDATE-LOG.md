@@ -71,6 +71,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U031 | `cb37df5` | 2026-10-15 10:48 | Desktop v2: Ongoing Live Sessions becomes a full-width map banner. | [patch](patches/U031-cb37df5.patch) |
 | U032 | `6c2d911` | 2026-10-15 10:54 | New tool: click insights — records screens + taps, review at `/__demo/insights` with per-screen heatmap. | [patch](patches/U032-6c2d911.patch) + [b](patches/U032b-15a4254.patch) |
 | U033 | `1df0c28` | 2026-10-15 10:54 | Explore: Monthly Challenge card 320px tall on desktop (was ~600px). | [patch](patches/U033-1df0c28.patch) |
+| U034 | `bc433a4` | 2026-10-15 11:18 | Click insights: element-level detail (kind, section, position on element, state, timing, result, rage/dead), Elements table, Problem taps, element heatmap. | [patch](patches/U034-bc433a4.patch) |
 
 ## Entries
 
@@ -456,3 +457,19 @@ Production (`web_prod`) is never touched by these updates unless asked.
 - **Change:** `src/pages/ExplorePage.tsx` — card adds `lg:aspect-auto lg:h-[320px] lg:p-24` (a banner; inner padding grows to match). Applies in v1 and v2.
 - **Verified:** 402px 362×240 (unchanged), 820px unchanged (below `lg:`), 1440px 912×320 v1 / 898×315 v2 (v2's page scale). Typecheck clean.
 - **Tune:** `lg:h-[320px]`. **Revert:** `git revert --no-commit 1df0c28 && git checkout HEAD -- docs/`.
+
+### U034 — Click insights: per-element detail, not just per-page
+
+- **Commit:** `bc433a4` · pushed 2026-10-15 11:18:58 UTC · `web_app` + `admin_cms` · not on `web_prod` yet
+- **Patch:** [patches/U034-bc433a4.patch](patches/U034-bc433a4.patch)
+- **Request:** "menarik tapi saya mau lebih detail element nya agar saya bisa tau tidak sekedar membaca page saja sih".
+- **Interpretation:** the report should answer questions about *one element* — which control, in which part of the screen, how many of the screen's visitors use it, how quickly, where on it they press, and whether it worked — and point at it on the real screen.
+- **Change:**
+  - `src/demo/insights/tracker.ts` — every click now also records `kind` (button, link, card, chip, tab, toggle, field, menu item, not a control), `section` (nearest dialog / nav / sidebar / section heading), `sel` (a selector that finds the element again: id, aria-label or href when it resolves back to that exact element, else its tree path), `ex/ey` (where on the element, %), `ew/eh` (its size), `state` (aria-pressed/expanded/checked/selected/current, disabled — before the tap), `ms` (time since the screen opened), `sy` (scroll depth %), `rage` (3+ taps within 1s inside 40px), `dead` (no control hit), and after 700ms `fx` = `navigated` (with `to`), `changed` (DOM changed) or `nothing`. Clicks are now pushed 700ms after the tap to know `fx`. `findVisible()` moved here and is shared.
+  - `api/clicks.ts` — validates the new optional fields (old events stay valid).
+  - `src/demo/insights/ElementsTable.tsx` (new) — `elementStats()` groups taps by screen + selector; **Elements** table (label, kind, rage pill, section, taps, reach = sessions that tapped ÷ sessions that opened the screen, median time to tap, what it did) with a kind filter; a row expands into: tap positions drawn on the element at its real shape (flags < 44px targets), devices, design version, state before tap, where it led, label variants, timing/scroll depth/rage, the selector and **Show on screen**. **Problem taps** lists elements with no-response, rage or not-a-control taps.
+  - `src/pages/InsightsPage.tsx` — "Top taps" replaced by Problem taps + full-width Elements (screen select); Recent sessions show section, destination (→), no response (✕), rage (!!); CSV carries every new column.
+  - `src/demo/insights/ClickTracker.tsx` — heatmap gains a Taps/Elements switch; `?heatmap=elements` outlines each tapped element with its count (colour = share of the busiest), `&el=<selector>` scrolls to one element and rings it.
+- **Limits:** `fx: changed` counts *any* DOM change in the 700ms, so a tap during a page's entrance or next to something animating reads as "changed" — trust "no response", treat "changed" as generous. Tree-path selectors (elements without aria-label/href) can stop resolving after a layout change; the heatmap then says "N not on screen now". Events from before U034 show "—" for the new columns.
+- **Verified:** local, 1440 v2 — taps on Sign in (`changed`, dialog), Continue with Google (`navigated → /home`), 4 fast taps on the Explore header (`not a control`, `nothing`, 2 flagged rage), Join (`link`, section "Monthly Challenge!", hit at 12% across a 64×32 pill, `navigated → /challenge/…`). Show on screen outlined the Join pill (not the card link that shares its href — the selector check caught that). Typecheck clean; lint warnings only.
+- **Revert:** `git revert --no-commit bc433a4 && git checkout HEAD -- docs/` (back to U032 page-level insights; recorded events keep their extra fields harmlessly).

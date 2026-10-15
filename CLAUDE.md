@@ -233,8 +233,10 @@ tagged `design: vN`.
 `src/demo/insights/` sends `view`/`click` events to `/api/clicks` (same
 Upstash store and per-deployment key scoping as `/api/config`; localStorage
 fallback without KV), reviewed at `/__demo/insights`; append `?heatmap` to
-any URL to see that screen's taps. It stores the tapped control's label and
-position, never field values — keep it that way. Flag `clickInsights` turns
+any URL to see that screen's taps (`?heatmap=elements` outlines elements).
+Since U034 each tap also describes the element — kind, section, selector,
+position on it, state, timing, rage/dead, and what it did in the next 700ms.
+It stores labels and positions, never field values — keep it that way. Flag `clickInsights` turns
 it off; like annotations it is kept out of `DEMO_MODULES`.
 
 **A shared password sits in front of the site, but not in front of `/__demo`.**

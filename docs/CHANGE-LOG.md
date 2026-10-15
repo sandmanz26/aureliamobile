@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-15 — Click insights: element-level detail (U034)
+
+Each tap now records the element's kind, section, a selector, where on the element it landed, its state, time since the screen opened, scroll depth, rage/dead flags and what followed (navigated / changed / no response). `/__demo/insights` gains an Elements table with per-element drill-down, a Problem taps list, and `?heatmap=elements&el=…` outlines elements on the real screen. Web only. Branches: `web_app`, `admin_cms`. Not `web_prod` yet.
+
 ### 2026-10-15 — Explore: Monthly Challenge 320px tall on desktop (U033)
 
 The challenge card was following its mobile aspect ratio up to ~605px tall on desktop; at ≥1024px it is now a 320px banner. Mobile and tablet unchanged. All versions. Branches: `web_app`, `admin_cms`. Not `web_prod` yet.
