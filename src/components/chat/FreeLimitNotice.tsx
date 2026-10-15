@@ -13,6 +13,16 @@ import { Info, Sparkles } from 'lucide-react'
  * because it costs nothing and is what most people want; **Upgrade** is second
  * and outlined because the screen is already interrupting them and a filled
  * paywall button on top of that reads as a toll gate.
+ *
+ * **The limit is per session, and a new session is never limited** (U036,
+ * product decision: the free plan should push people to explore — try another
+ * idea — rather than polish one session forever). The count was always per
+ * thread in ChatPage; the copy said otherwise. "You've reached your current
+ * creation limit … resets at 12:00 AM" read as *the whole account* being shut
+ * until midnight, which hid the free way out behind the button that offered
+ * it. It now says what is paused (this session's edits), that a new session is
+ * free and uncounted, and the button carries "Free" so the answer is on the
+ * thing you press.
  */
 export function FreeLimitNotice({
   resetAt,
@@ -31,10 +41,10 @@ export function FreeLimitNotice({
           <Info size={13} strokeWidth={2.5} />
         </span>
         <div className="flex min-w-0 flex-col gap-4">
-          <p className="text-[14px] leading-[19px] text-text-primary">Session paused until {resetAt}</p>
+          <p className="text-[14px] leading-[19px] text-text-primary">Edits on this session paused until {resetAt}</p>
           <p className="text-[12px] font-light leading-[18px] text-[#525252]">
-            You’ve reached your current creation limit. You can continue creating when your usage resets at{' '}
-            {resetAt}, or upgrade to keep going now.
+            You’ve used this session’s free edits. A new session is always free and doesn’t count toward the
+            limit — start one to try another idea, or upgrade to keep refining this one now.
           </p>
         </div>
       </div>
@@ -43,9 +53,10 @@ export function FreeLimitNotice({
         <button
           type="button"
           onClick={onNewSession}
-          className="u-press flex h-44 flex-1 items-center justify-center rounded-full bg-interactive-primary text-[14px] leading-[19px] text-text-inverse"
+          className="u-press flex h-44 flex-1 items-center justify-center gap-8 rounded-full bg-interactive-primary text-[14px] leading-[19px] text-text-inverse"
         >
           New Session
+          <span className="rounded-full bg-white/18 px-6 py-1 text-[11px] leading-[14px]">Free</span>
         </button>
         <button
           type="button"

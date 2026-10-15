@@ -1,4 +1,5 @@
-import { Fragment } from 'react'
+import { Fragment, useRef, useState } from 'react'
+import { Reply } from 'lucide-react'
 import type { Message } from '../../chat/ChatSessionContext'
 import { RECOMMENDATIONS } from '../../chat/ChatSessionContext'
 import { AttachedSession } from './AttachedSession'
@@ -21,6 +22,114 @@ interface ChatMessageItemProps {
   onToggleRecommendation: (id: string) => void
   onOpenDeck: () => void
   onSendPrompt: (text: string) => void
+  /** Reply to this message (U036). Absent while replying is not possible —
+   *  e.g. the session is paused by the free limit. */
+  onReply?: (message: Message) => void
+  /** Scroll to and flash the message a quote points at. */
+  onJumpTo?: (id: number) => void
+  /** Briefly highlighted after a quote was tapped. */
+  flash?: boolean
+}
+
+/**
+ * Reply affordances around one line of the thread (U036).
+ *
+ * Three ways in, one per input, because none of them alone is discoverable
+ * everywhere: a swipe right on touch (the messaging-app gesture people already
+ * have), a Reply button that appears on hover with a mouse, and — for touch
+ * users who never swipe — a tap on the line, which shows the same button.
+ * The swipe follows the finger up to 64px and commits past 48.
+ */
+function Replyable({
+  side,
+  onReply,
+  children,
+}: {
+  side: 'left' | 'right'
+  onReply?: () => void
+  children: React.ReactNode
+}) {
+  const [dx, setDx] = useState(0)
+  const [shown, setShown] = useState(false)
+  const start = useRef<{ x: number; y: number; locked: 'x' | 'y' | null } | null>(null)
+
+  if (!onReply) return <>{children}</>
+
+  return (
+    <div
+      className="group/reply relative touch-pan-y"
+      onPointerDown={(e) => {
+        if (e.pointerType !== 'mouse') start.current = { x: e.clientX, y: e.clientY, locked: null }
+      }}
+      onPointerMove={(e) => {
+        const s = start.current
+        if (!s) return
+        const mx = e.clientX - s.x
+        const my = e.clientY - s.y
+        if (!s.locked && Math.hypot(mx, my) > 8) s.locked = Math.abs(mx) > Math.abs(my) ? 'x' : 'y'
+        if (s.locked === 'x') setDx(Math.max(0, Math.min(64, mx)))
+      }}
+      onPointerUp={() => {
+        if (dx >= 48) {
+          onReply()
+          setShown(false)
+        }
+        start.current = null
+        setDx(0)
+      }}
+      onPointerCancel={() => {
+        start.current = null
+        setDx(0)
+      }}
+      onClick={(e) => {
+        if ((e.target as Element).closest('button, a')) return
+        setShown((v) => !v)
+      }}
+    >
+      {/* The swipe's own feedback: the reply glyph fades in behind the line. */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute left-0 top-1/2 flex size-28 -translate-y-1/2 items-center justify-center rounded-full bg-background-elevated text-text-secondary"
+        style={{ opacity: dx / 48, transform: `translateY(-50%) scale(${0.6 + Math.min(1, dx / 48) * 0.4})` }}
+      >
+        <Reply size={14} />
+      </span>
+      <div style={{ transform: dx ? `translateX(${dx}px)` : undefined, transition: dx ? undefined : 'transform 200ms' }}>
+        {children}
+      </div>
+      <button
+        type="button"
+        aria-label="Reply"
+        onClick={() => {
+          onReply()
+          setShown(false)
+        }}
+        className={`u-press absolute top-0 flex size-28 items-center justify-center rounded-full border border-border-subtle bg-surface-default text-text-secondary shadow-sm transition-opacity ${
+          side === 'left' ? '-right-36' : '-left-36'
+        } ${shown ? 'opacity-100' : 'pointer-events-none opacity-0 group-hover/reply:pointer-events-auto group-hover/reply:opacity-100'}`}
+      >
+        <Reply size={14} />
+      </button>
+    </div>
+  )
+}
+
+/** The quoted line inside a reply — tap to go to the original. */
+function Quote({ reply, onJumpTo, tone }: { reply: NonNullable<Message['replyTo']>; onJumpTo?: (id: number) => void; tone: 'bubble' | 'plain' }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onJumpTo?.(reply.id)}
+      className={`mb-6 block w-full rounded-8 border-l-2 px-8 py-4 text-left ${
+        tone === 'bubble' ? 'border-[#8A4B0F]/50 bg-white/35' : 'border-[#EFA63C] bg-background-elevated'
+      }`}
+    >
+      <span className="block text-[11px] font-medium leading-[14px] text-text-strong">
+        {reply.from === 'aurelia' ? 'Aurelia' : 'You'}
+      </span>
+      <span className="line-clamp-2 text-[12px] leading-[16px] text-text-strong/80">{reply.text}</span>
+    </button>
+  )
 }
 
 /**
@@ -44,7 +153,12 @@ export function ChatMessageItem({
   onToggleRecommendation,
   onOpenDeck,
   onSendPrompt,
+  onReply,
+  onJumpTo,
+  flash,
 }: ChatMessageItemProps) {
+  const reply = onReply ? () => onReply(message) : undefined
+  const flashRing = flash ? 'rounded-12 bg-[#FFF1DB] transition-colors duration-700' : 'transition-colors duration-700'
   const v2 = useUiVersion() >= 2
   // Stacked full width, not a scrolling rail: these are read one after
   // another and the longest runs to two lines, which a rail would either
@@ -106,8 +220,13 @@ export function ChatMessageItem({
         {/* No avatar, name or timestamp on Aurelia's own side — the
             reference (Chat, 16809:4944) runs the reply as plain text flush
             with the page's own left gutter, not under a sender header. */}
-        <div className={`u-message pr-40 ${startsRun ? 'mt-12' : 'mt-2'}`}>
-          <p className="text-style-body-small whitespace-pre-line text-text-primary">{message.text}</p>
+        <div data-message-id={message.id} className={`u-message pr-40 ${startsRun ? 'mt-12' : 'mt-2'}`}>
+          <Replyable side="left" onReply={reply}>
+            <div className={flashRing}>
+              {message.replyTo && <Quote reply={message.replyTo} onJumpTo={onJumpTo} tone="plain" />}
+              <p className="text-style-body-small whitespace-pre-line text-text-primary">{message.text}</p>
+            </div>
+          </Replyable>
         </div>
         {promptList}
         {attachment}
@@ -116,7 +235,8 @@ export function ChatMessageItem({
   }
 
   return (
-    <div className={`u-message flex flex-col items-end ${startsRun ? 'mt-12' : 'mt-2'}`}>
+    <div data-message-id={message.id} className={`u-message flex flex-col items-end ${startsRun ? 'mt-12' : 'mt-2'}`}>
+      <Replyable side="right" onReply={reply}>
       {message.voice ? (
         <VoiceMessage durationMs={message.voice.durationMs} transcript={message.text} />
       ) : (
@@ -125,13 +245,15 @@ export function ChatMessageItem({
         // since this is the user's own side — comes to a point. The fill is
         // a diagonal gradient, not the flat `brand-default` token, which is
         // one more step removed from either of the gradient's own stops.
-        <p
-          className="text-style-body-small max-w-[283px] whitespace-pre-line rounded-tl-16 rounded-tr-16 rounded-bl-16 px-17 py-10 text-text-strong"
+        <div
+          className={`text-style-body-small max-w-[283px] whitespace-pre-line rounded-tl-16 rounded-tr-16 rounded-bl-16 px-17 py-10 text-text-strong ${flash ? 'ring-4 ring-[#FFE270]/60' : ''}`}
           style={{ background: 'linear-gradient(135deg, #FFE270, #FF993B)' }}
         >
-          {message.text}
-        </p>
+          {message.replyTo && <Quote reply={message.replyTo} onJumpTo={onJumpTo} tone="bubble" />}
+          <p>{message.text}</p>
+        </div>
       )}
+      </Replyable>
       {attachment}
     </div>
   )

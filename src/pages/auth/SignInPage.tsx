@@ -44,8 +44,14 @@ export function SignInPage() {
           middle of the window: the whole screen is one centred card (thin
           border, soft shadow, max 1040x640) with the photo as an inset
           panel carrying its own headline and the form beside it. All of it is lg: — below that this is the 402-wide
-          mobile screen exactly as before. */}
-      <div className="relative flex h-dvh w-full max-w-[402px] flex-col overflow-hidden bg-background-default lg:h-[min(640px,calc(100dvh-80px))] lg:w-[min(1040px,calc(100vw-80px))] lg:max-w-none lg:flex-row lg:rounded-24 lg:border lg:border-black/8 lg:bg-surface-default lg:p-12 lg:shadow-[0_24px_64px_-16px_rgba(27,16,6,0.18)]">
+          mobile screen exactly as before.
+
+          Below 640 the screen fills the window: it used to stop at
+          max-w-[402px], so a 540px phone (or a browser that narrow) showed
+          the photo and form in a 402 strip with a blank band down the right
+          (U036). From 640 it is a centred 480 column (v2's tablet card
+          styles it further). */}
+      <div className="relative flex h-dvh w-full flex-col overflow-hidden bg-background-default sm:mx-auto sm:max-w-[480px] lg:mx-0 lg:h-[min(640px,calc(100dvh-80px))] lg:w-[min(1040px,calc(100vw-80px))] lg:max-w-none lg:flex-row lg:rounded-24 lg:border lg:border-black/8 lg:bg-surface-default lg:p-12 lg:shadow-[0_24px_64px_-16px_rgba(27,16,6,0.18)]">
         {/* The photo is the one flexible element on this screen — `flex-1
             min-h-0` lets it shrink all the way to nothing before the form
             below gives up any of its own height. Figma's 661/874 ratio is

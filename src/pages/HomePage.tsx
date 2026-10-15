@@ -1,16 +1,23 @@
 import {
   ArrowRight,
   ArrowUp,
+  BatteryLow,
+  Brain,
+  CircleHelp,
+  CloudRain,
   Coins,
   Menu,
   Mic,
+  Moon,
   Music,
   Play,
   Sparkles,
+  Target,
   TrendingUp,
   Users,
   Waves,
   Wind,
+  Zap,
 } from 'lucide-react'
 import { useState } from 'react'
 import type { CSSProperties } from 'react'
@@ -55,6 +62,37 @@ const EXAMPLE_PROMPTS = [
   'Breathwork for a nervous morning…',
   'Something to help me fall asleep faster…',
 ]
+
+/**
+ * "How are you feeling?" — a way in for people who cannot put it into words
+ * (U036). Picking one or more writes the sentence into the Ask field, where it
+ * can be read and edited before sending; nothing is sent on a tap. Each
+ * `says` is phrased to reach the matching reply rule in lib/replies.ts, so
+ * the cockpit answers the feeling rather than a generic line. "Not sure" is
+ * exclusive and asks Aurelia to help name it — she answers with smaller,
+ * nameable states to pick from.
+ */
+const FEELINGS = [
+  { id: 'sleep', label: 'Hard to sleep', icon: Moon, says: 'I can’t sleep well' },
+  { id: 'stressed', label: 'Stressed', icon: Zap, says: 'I’m stressed' },
+  { id: 'anxious', label: 'Anxious', icon: Waves, says: 'I feel anxious' },
+  { id: 'racing', label: 'Overthinking', icon: Brain, says: 'my mind keeps racing and I feel tense' },
+  { id: 'focus', label: 'Can’t focus', icon: Target, says: 'I can’t focus' },
+  { id: 'energy', label: 'Low energy', icon: BatteryLow, says: 'I have no energy' },
+  { id: 'low', label: 'Feeling low', icon: CloudRain, says: 'I feel drained and low' },
+  { id: 'unsure', label: 'Not sure', icon: CircleHelp, says: '' },
+] as const
+const UNSURE_ASK = 'I don’t know exactly what I’m feeling right now — can you help me figure it out?'
+/** At most this many at once — past three the sentence stops being one. */
+const MAX_FEELINGS = 3
+
+function feelingSentence(ids: string[]) {
+  if (ids.includes('unsure')) return UNSURE_ASK
+  const parts = FEELINGS.filter((f) => ids.includes(f.id)).map((f) => f.says)
+  if (!parts.length) return ''
+  const joined = parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`
+  return `${joined.charAt(0).toUpperCase()}${joined.slice(1)}.`
+}
 
 /** Version 2: where the live dots baked into the map art sit, in % of the card. */
 const LIVE_DOTS = [
@@ -117,9 +155,33 @@ export function HomePage() {
     fallback: 'Ask Aurelia..',
   })
 
+  // Feeling chips (U036). `autoAsk` is the sentence the chips last wrote: if
+  // the field still holds it (or is empty) a chip change rewrites it; if the
+  // user has typed their own words, those are kept and the feeling sentence
+  // is put in front of them on send.
+  const [feelings, setFeelings] = useState<string[]>([])
+  const [autoAsk, setAutoAsk] = useState('')
+
+  function toggleFeeling(id: string) {
+    const next =
+      id === 'unsure'
+        ? feelings.includes('unsure')
+          ? []
+          : ['unsure']
+        : feelings.includes(id)
+          ? feelings.filter((f) => f !== id)
+          : [...feelings.filter((f) => f !== 'unsure'), id].slice(-MAX_FEELINGS)
+    setFeelings(next)
+    const sentence = feelingSentence(next)
+    if (ask.trim() === '' || ask === autoAsk) setAsk(sentence)
+    setAutoAsk(sentence)
+  }
+
   function askAurelia(event: React.FormEvent) {
     event.preventDefault()
-    const text = ask.trim()
+    const typed = ask.trim()
+    const sentence = feelingSentence(feelings)
+    const text = !sentence || typed === sentence ? typed : typed === '' || ask === autoAsk ? sentence : `${sentence} ${typed}`
     // An empty send still opens chat — there is nothing to carry, but the tap
     // clearly meant "take me there".
     gate('/chat', text ? { ask: text } : undefined)
@@ -347,6 +409,37 @@ export function HomePage() {
                 </button>
               </div>
             </form>
+          </div>
+
+          {/* "How are you feeling?" (U036) — for when the words are the hard
+              part. Scrolls sideways on a phone, wraps and centres on desktop. */}
+          <div className="relative mt-16 text-left lg:text-center">
+            <p className="text-style-caption text-text-secondary">Not sure how to put it? Start from how you feel.</p>
+            <div
+              role="group"
+              aria-label="How are you feeling?"
+              className="-mx-20 mt-10 flex gap-8 overflow-x-auto px-20 pb-4 lg:mx-0 lg:flex-wrap lg:justify-center lg:overflow-visible lg:px-0"
+            >
+              {FEELINGS.map(({ id, label, icon: Icon }) => {
+                const on = feelings.includes(id)
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => toggleFeeling(id)}
+                    className={`u-press flex h-36 shrink-0 items-center gap-6 whitespace-nowrap rounded-full border px-12 text-[13px] leading-none transition-colors ${
+                      on
+                        ? 'border-[#EFA63C] bg-[#FFF4E0] text-text-strong'
+                        : 'border-border-subtle bg-surface-default text-text-primary'
+                    }`}
+                  >
+                    <Icon size={14} className={on ? 'text-[#E58A1F]' : 'text-text-secondary'} />
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
           </div>
         </section>
 

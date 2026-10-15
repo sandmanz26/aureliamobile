@@ -38,6 +38,13 @@ export interface Message {
    * anything.
    */
   prompts?: string[]
+  /**
+   * The message this one answers (U036) — set when the user swipes or taps
+   * Reply on a line, so an edit names exactly what it is about ("make *this*
+   * part slower") instead of the whole session. A copy, not a pointer: the
+   * quote must still read right if the thread is reset under it.
+   */
+  replyTo?: { id: number; from: 'aurelia' | 'user'; text: string }
 }
 
 /** The thread opens mid-conversation, so the first messages are backdated. */

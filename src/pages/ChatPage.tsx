@@ -34,6 +34,11 @@ const FREE_SENDS = 3
 /** How long until the allowance comes back. */
 const FREE_RESET_MINUTES = 30
 
+/** "Adding white noise…" → "adding white noise…", to follow a lead-in. */
+function lowerFirst(text: string) {
+  return text.charAt(0).toLowerCase() + text.slice(1)
+}
+
 /** "9:55 PM" — the card names a clock time, not a countdown. */
 function formatResetTime(at: Date) {
   return at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
@@ -151,6 +156,12 @@ export function ChatPage() {
   const [resetAt, setResetAt] = useState<string | null>(null)
   const [addOpen, setAddOpen] = useState(false)
   const [addPicks, setAddPicks] = useState<string[]>([])
+  // Reply (U036): the line the next typed message answers. Derived against
+  // the thread so a reset or a new session can never leave a reply pointing
+  // at a message that is no longer there.
+  const [replyTarget, setReplyTarget] = useState<Message | null>(null)
+  const replyingTo = replyTarget && messages.some((m) => m.id === replyTarget.id) ? replyTarget : null
+  const [flashId, setFlashId] = useState<number | null>(null)
 
   // Read by the reply timers below, which fire long after the render that
   // scheduled them and would otherwise decide on a stale state.
@@ -419,15 +430,12 @@ export function ChatPage() {
     setTyping(true)
     window.setTimeout(() => {
       setTyping(false)
-      setMessages((current) => [
-        ...current,
-        {
-          id: nextMessageId(),
-          from: 'aurelia',
-          at: Date.now(),
-          text: 'Good place to start. Give me a moment and I’ll shape something around that.',
-        },
-      ])
+      // Answered like anything typed here (U036). It used to be one fixed
+      // line whatever was asked, which mattered once Home's feeling chips
+      // started composing the ask: "I can't sleep" and "I don't know what I'm
+      // feeling" deserve different first answers — the second gets the
+      // smaller questions, the first gets a proposal.
+      setMessages((current) => [...current, answerFor(ask, current)])
     }, 1400)
     // Uncleared for the same reason as the fork's reply above.
   }, [ask, setMessages, nextMessageId])
@@ -524,6 +532,34 @@ export function ChatPage() {
   }
 
   /**
+   * Aurelia's answer to `text`, given the thread so far. Shared by the
+   * composer and by Home's hand-off so both answer the same way.
+   *
+   * A reply to one of Aurelia's own lines (U036) is answered as an edit to
+   * *that part*: the answer names it, so the change is visibly scoped rather
+   * than read as being about the whole session.
+   */
+  function answerFor(text: string, current: Message[], answering?: Message['replyTo']): Message {
+    const reply = replyTo(text)
+    // The deck comes over once, with the first reply that is a proposal.
+    // Without that, a thread started from Quick Start offered "Apply new
+    // changes (3)" over a deck nobody had handed over.
+    const proposed = current.some((item) => item.attachment === 'recommendations')
+    // Never both: the deck is a proposal, and the prompts exist precisely
+    // because there is nothing to propose yet.
+    const hands = !reply.prompts && !proposed && (reply.proposes || current.length <= 3)
+    const scoped = answering?.from === 'aurelia' ? `Just that part — ${lowerFirst(reply.text)}` : reply.text
+    return {
+      id: nextMessageId(),
+      from: 'aurelia',
+      at: Date.now(),
+      text: hands ? `${scoped}\n\nHere is what I would put in it:` : scoped,
+      ...(hands ? { attachment: 'recommendations' as const } : {}),
+      ...(reply.prompts ? { prompts: reply.prompts } : {}),
+    }
+  }
+
+  /**
    * Sends, then walks the message through sending → sent → read and brings back
    * a reply — the rhythm a chat app has, rather than a bubble that just appears.
    */
@@ -556,31 +592,30 @@ export function ChatPage() {
       // is expected to be pure and React runs it twice to check, so a build
       // started from inside one records the version twice.
       if (reply.changes && stateRef.current === 'ready') build(message.text)
-      setMessages((current) => {
-        // The deck comes over once, with the first reply that is a proposal.
-        // Without that, a thread started from Quick Start offered "Apply new
-        // changes (3)" over a deck nobody had handed over.
-        const proposed = current.some((item) => item.attachment === 'recommendations')
-        // Never both: the deck is a proposal, and the prompts exist precisely
-        // because there is nothing to propose yet.
-        const hands = !reply.prompts && !proposed && (reply.proposes || current.length <= 3)
-        return [
-          ...current,
-          {
-            id: nextMessageId(),
-            from: 'aurelia',
-            at: Date.now(),
-            text: hands ? `${reply.text}\n\nHere is what I would put in it:` : reply.text,
-            ...(hands ? { attachment: 'recommendations' as const } : {}),
-            ...(reply.prompts ? { prompts: reply.prompts } : {}),
-          },
-        ]
-      })
+      setMessages((current) => [...current, answerFor(message.text, current, message.replyTo)])
     }, 2400)
   }
 
   function sendMessage(text: string) {
     pushUserMessage({ from: 'user', text })
+  }
+
+  /** What the composer sends: a typed line, carrying the reply if one is open. */
+  function sendTyped(text: string) {
+    pushUserMessage({
+      from: 'user',
+      text,
+      ...(replyingTo ? { replyTo: { id: replyingTo.id, from: replyingTo.from, text: replyingTo.text.slice(0, 160) } } : {}),
+    })
+    setReplyTarget(null)
+  }
+
+  function jumpTo(id: number) {
+    const el = scrollRef.current?.querySelector(`[data-message-id="${id}"]`)
+    if (!el) return
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    setFlashId(id)
+    window.setTimeout(() => setFlashId((current) => (current === id ? null : current)), 1400)
   }
 
   function sendVoice(transcript: string, durationMs: number) {
@@ -605,6 +640,7 @@ export function ChatPage() {
    * apart from it.
    */
   const onDeck = track?.href === `/play/${draft.slug}`
+  const hasSomethingToPlay = sessionSlug !== null || sessionState === 'ready'
   const readyStatus = !onDeck ? 'Ready to play' : playing ? 'Playing now' : 'Paused'
 
   return (
@@ -614,8 +650,11 @@ export function ChatPage() {
         points="1,323"
         /* Once a session is on the deck the card below carries the transport,
            so a second play glyph in the header would be two controls for one
-           thing. */
-        canPlay={!empty && !track}
+           thing. And only once there is something of this thread to play
+           (U036): an existing session opened here, or a build that finished.
+           Before that the button played a stand-in recording, which read as
+           "your session" when the user had not generated anything yet. */
+        canPlay={!track && hasSomethingToPlay}
         /* The cockpit is about a session, so its transport plays that one.
            Hardcoded, it played Dolphins frequency whichever session you had
            open. A thread with no session behind it is one being built, and the
@@ -704,6 +743,9 @@ export function ChatPage() {
                 onToggleRecommendation={toggleRecommendation}
                 onOpenDeck={() => setDeckOpen(true)}
                 onSendPrompt={sendMessage}
+                onReply={limited || listening ? undefined : (m) => setReplyTarget(m)}
+                onJumpTo={jumpTo}
+                flash={flashId === message.id}
               />
             )
           })}
@@ -816,7 +858,9 @@ export function ChatPage() {
           <div className="px-20">
             <div className="mx-auto max-w-[402px] lg:max-w-[800px]">
               <ChatComposer
-                onSend={sendMessage}
+                onSend={sendTyped}
+                replyingTo={replyingTo}
+                onCancelReply={() => setReplyTarget(null)}
                 onVoice={() => isEnabled('chat.voice') && setListening(true)}
                 onAdd={() => setAddOpen(true)}
                 canVoice={isEnabled('chat.voice')}

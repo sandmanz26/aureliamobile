@@ -71,6 +71,27 @@ export const RULES: Rule[] = [
   // happily match, and a bare "?" would fall through to the fallback, which
   // answers a question that was never asked.
   {
+    // U036 — Home's "Not sure" feeling chip, and anyone who says the same in
+    // their own words. Above `dont-know`, whose prompts are about a
+    // meditation the user has already made: someone who cannot name how they
+    // feel has made nothing yet, and needs smaller, nameable states instead.
+    // Each prompt is written to land on an existing rule when tapped
+    // (stress, tired, cannot-sleep, focus), so choosing one gets a proposal.
+    id: 'unsure-feeling',
+    test: /\b(not sure|don['’]?t know|do not know|no idea)\b.*\bfeel/,
+    reply: {
+      text: 'That’s more common than you’d think — feelings are easier to recognise than to name. Which of these is closest right now?',
+      prompts: [
+        'My body feels tense and I’m on edge',
+        'My mind won’t stop racing and I feel overwhelmed',
+        'I feel flat and drained',
+        'I can’t sleep and want to unwind',
+        'I’m distracted and can’t concentrate',
+      ],
+    },
+  },
+
+  {
     id: 'dont-know',
     // `?` is anchored — "what should I do?" is a question, not a shrug. The
     // rest are not, so "idk what to change" still lands here.
