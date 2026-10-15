@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { PageMeta } from '../components/PageMeta'
 import type { ClickEvent } from '../demo/insights/tracker'
 import { clearEvents, loadEvents } from '../demo/insights/tracker'
+import { ElementsTable, ProblemList, countBy, elementStats, heatmapUrl } from '../demo/insights/ElementsTable'
 
 /**
  * /__demo/insights — reads back what Click insights recorded (U032).
@@ -26,12 +27,6 @@ function download(name: string, text: string, type: string) {
   a.download = name
   a.click()
   URL.revokeObjectURL(url)
-}
-
-function countBy<T>(items: T[], key: (item: T) => string) {
-  const map = new Map<string, number>()
-  for (const item of items) map.set(key(item), (map.get(key(item)) ?? 0) + 1)
-  return [...map.entries()].sort((a, b) => b[1] - a[1])
 }
 
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
@@ -102,8 +97,8 @@ export function InsightsPage() {
   const sessions = countBy(events, (e) => e.sid)
   const screens = countBy(views, (e) => e.page)
   const pages = [...new Set(events.map((e) => e.page))].sort()
-  const tapsHere = page === 'all' ? taps : taps.filter((e) => e.page === page)
-  const topTaps = countBy(tapsHere, (e) => `${page === 'all' ? `${e.page} · ` : ''}${e.label ?? e.tag ?? '?'}`).slice(0, 15)
+  const stats = useMemo(() => elementStats(events), [events])
+  const statsHere = page === 'all' ? stats : stats.filter((s) => s.page === page)
   const paths = countBy(
     views.filter((e) => e.from),
     (e) => `${e.from} → ${e.page}`,
@@ -120,13 +115,15 @@ export function InsightsPage() {
   }, [events])
 
   const exportCsv = () => {
-    const cols: (keyof ClickEvent)[] = ['t', 'sid', 'type', 'page', 'from', 'label', 'tag', 'href', 'x', 'y', 'vw', 'vh', 'ui']
+    const cols: (keyof ClickEvent)[] = [
+      't', 'sid', 'type', 'page', 'from', 'label', 'kind', 'section', 'state', 'fx', 'to', 'rage', 'dead',
+      'ms', 'sy', 'ex', 'ey', 'ew', 'eh', 'sel', 'tag', 'href', 'x', 'y', 'vw', 'vh', 'ui',
+    ]
     const esc = (v: unknown) => (v === undefined ? '' : `"${String(v).replace(/"/g, '""')}"`)
     download(`aurelia-clicks-${new Date().toISOString().slice(0, 10)}.csv`, [cols.join(','), ...events.map((e) => cols.map((c) => esc(e[c])).join(','))].join('\n'), 'text/csv')
   }
 
   const maxScreen = screens[0]?.[1] ?? 0
-  const maxTap = topTaps[0]?.[1] ?? 0
   const maxPath = paths[0]?.[1] ?? 0
 
   return (
@@ -236,7 +233,7 @@ export function InsightsPage() {
                         <span className="truncate text-text-primary">{p}</span>
                         <Bar value={n} max={maxScreen} />
                         <span className="text-right tabular-nums text-text-secondary">{n}</span>
-                        <a href={`${p}?heatmap`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-4 text-[#ff881b]">
+                        <a href={heatmapUrl(p)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-4 text-[#ff881b]">
                           <Flame size={13} /> Heatmap
                         </a>
                       </li>
@@ -244,29 +241,30 @@ export function InsightsPage() {
                   </ul>
                 </Card>
 
-                <Card title="Top taps" hint="What people tapped, by the control’s visible label.">
-                  <select
-                    value={page}
-                    onChange={(e) => setPage(e.target.value)}
-                    className="mb-12 h-32 w-full rounded-8 border border-border-subtle bg-surface-default px-8 text-[13px]"
-                  >
-                    <option value="all">All screens</option>
-                    {pages.map((p) => (
-                      <option key={p} value={p}>
-                        {p}
-                      </option>
-                    ))}
-                  </select>
-                  <ul className="flex flex-col gap-10">
-                    {topTaps.map(([label, n]) => (
-                      <li key={label} className="grid grid-cols-[minmax(0,1fr)_80px_40px] items-center gap-10 text-[13px]">
-                        <span className="truncate text-text-primary" title={label}>{label}</span>
-                        <Bar value={n} max={maxTap} />
-                        <span className="text-right tabular-nums text-text-secondary">{n}</span>
-                      </li>
-                    ))}
-                  </ul>
+                <Card title="Problem taps" hint="Taps that did nothing visible within 0.7s, rage taps (3+ in a second on one spot), and taps on things that are not buttons or links — usually something that looks tappable and is not.">
+                  <ProblemList stats={statsHere} />
                 </Card>
+
+                <div className="lg:col-span-2">
+                  <Card
+                    title="Elements"
+                    hint="Every element tapped, one row each. Reach = share of the visits to that screen that tapped it; After = median time from opening the screen. Click a row for where on the element people tap, devices, versions, state, where it led, and a link that outlines it on the real screen."
+                  >
+                    <select
+                      value={page}
+                      onChange={(e) => setPage(e.target.value)}
+                      className="mb-12 h-32 w-full rounded-8 border border-border-subtle bg-surface-default px-8 text-[13px] lg:w-[320px]"
+                    >
+                      <option value="all">All screens</option>
+                      {pages.map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
+                    </select>
+                    <ElementsTable key={page} stats={statsHere} />
+                  </Card>
+                </div>
 
                 <Card title="Paths" hint="The most common moves from one screen to the next.">
                   <ul className="flex flex-col gap-10">
@@ -281,7 +279,7 @@ export function InsightsPage() {
                   </ul>
                 </Card>
 
-                <Card title="Recent sessions" hint="One visit each, step by step: ▸ screen opened, • tap.">
+                <Card title="Recent sessions" hint="One visit each, step by step: ▸ screen opened, • tap (section, → where it led, ✕ no response, !! rage).">
                   <ul className="flex max-h-[520px] flex-col gap-12 overflow-y-auto">
                     {journeys.map(({ sid, list }) => (
                       <li key={sid} className="rounded-12 bg-background-elevated p-12 text-[12px]">
@@ -291,7 +289,17 @@ export function InsightsPage() {
                         <ol className="mt-6 flex flex-wrap gap-x-8 gap-y-4 text-text-primary">
                           {list.slice(0, 40).map((e, i) => (
                             <li key={i} className={e.type === 'view' ? 'font-semibold' : ''}>
-                              {e.type === 'view' ? `▸ ${e.page}` : `• ${e.label ?? e.tag}`}
+                              {e.type === 'view' ? (
+                                `▸ ${e.page}`
+                              ) : (
+                                <>
+                                  • {e.label ?? e.tag}
+                                  {e.section && e.section !== 'Page' && <span className="text-text-secondary"> ({e.section})</span>}
+                                  {e.fx === 'navigated' && <span className="text-success-600"> → {e.to}</span>}
+                                  {e.fx === 'nothing' && <span className="text-feedback-error"> ✕</span>}
+                                  {e.rage && <span className="text-feedback-error"> !!</span>}
+                                </>
+                              )}
                             </li>
                           ))}
                           {list.length > 40 && <li className="text-text-secondary">…{list.length - 40} more</li>}

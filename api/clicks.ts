@@ -74,7 +74,17 @@ function isValidEvent(value: unknown): value is Record<string, unknown> {
     (e.label === undefined || str(e.label, 120)) &&
     (e.tag === undefined || str(e.tag, 20)) &&
     (e.href === undefined || str(e.href, 300)) &&
-    (e.from === undefined || str(e.from, 300))
+    (e.from === undefined || str(e.from, 300)) &&
+    // U034 element detail
+    (e.kind === undefined || str(e.kind, 20)) &&
+    (e.section === undefined || str(e.section, 80)) &&
+    (e.sel === undefined || str(e.sel, 300)) &&
+    (e.state === undefined || str(e.state, 60)) &&
+    (e.to === undefined || str(e.to, 300)) &&
+    (e.fx === undefined || e.fx === 'navigated' || e.fx === 'changed' || e.fx === 'nothing') &&
+    (e.rage === undefined || typeof e.rage === 'boolean') &&
+    (e.dead === undefined || typeof e.dead === 'boolean') &&
+    ['ex', 'ey', 'ew', 'eh', 'ms', 'sy'].every((k) => e[k] === undefined || num(e[k]))
   )
 }
 
