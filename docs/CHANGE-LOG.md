@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-15 — Home network artwork in Three.js, behind a switch (U035)
+
+The figure-among-orange-nodes artwork at the bottom of Home is rebuilt as a Three.js scene measured from the PNG (positions, colours, line opacities; the figure uses the PNG's own pixels on a relief), so it can be animated. **Off by default** — Home still shows the PNG; `/__demo` → "3D network" turns it on, with a Motion sub-switch. three.js loads lazily only when on. Web only. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-15 — Click insights: element-level detail (U034)
 
 Each tap now records the element's kind, section, a selector, where on the element it landed, its state, time since the screen opened, scroll depth, rage/dead flags and what followed (navigated / changed / no response). `/__demo/insights` gains an Elements table with per-element drill-down, a Problem taps list, and `?heatmap=elements&el=…` outlines elements on the real screen. Web only. Branches: `web_app`, `admin_cms`. Not `web_prod` yet.

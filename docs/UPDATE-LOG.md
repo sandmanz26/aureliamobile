@@ -72,6 +72,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U032 | `6c2d911` | 2026-10-15 10:54 | New tool: click insights — records screens + taps, review at `/__demo/insights` with per-screen heatmap. | [patch](patches/U032-6c2d911.patch) + [b](patches/U032b-15a4254.patch) |
 | U033 | `1df0c28` | 2026-10-15 10:54 | Explore: Monthly Challenge card 320px tall on desktop (was ~600px). | [patch](patches/U033-1df0c28.patch) |
 | U034 | `bc433a4` | 2026-10-15 11:18 | Click insights: element-level detail (kind, section, position on element, state, timing, result, rage/dead), Elements table, Problem taps, element heatmap. | [patch](patches/U034-bc433a4.patch) |
+| U035 | `b540605` | 2026-10-15 16:41 | Home closing network artwork rebuilt in Three.js (measured from the PNG); hidden by default, switched on from `/__demo` → 3D network (+ Motion). | [patch](patches/U035-b540605.patch) + [b](patches/U035b-d208547.patch) |
 
 ## Entries
 
@@ -473,3 +474,28 @@ Production (`web_prod`) is never touched by these updates unless asked.
 - **Limits:** `fx: changed` counts *any* DOM change in the 700ms, so a tap during a page's entrance or next to something animating reads as "changed" — trust "no response", treat "changed" as generous. Tree-path selectors (elements without aria-label/href) can stop resolving after a layout change; the heatmap then says "N not on screen now". Events from before U034 show "—" for the new columns.
 - **Verified:** local, 1440 v2 — taps on Sign in (`changed`, dialog), Continue with Google (`navigated → /home`), 4 fast taps on the Explore header (`not a control`, `nothing`, 2 flagged rage), Join (`link`, section "Monthly Challenge!", hit at 12% across a 64×32 pill, `navigated → /challenge/…`). Show on screen outlined the Join pill (not the card link that shares its href — the selector check caught that). Typecheck clean; lint warnings only.
 - **Revert:** `git revert --no-commit bc433a4 && git checkout HEAD -- docs/` (back to U032 page-level insights; recorded events keep their extra fields harmlessly).
+
+### U035 — Home network artwork as a Three.js scene (hidden, switch in /__demo)
+
+- **Commits:** `b540605` (scene, flags, card) + `d208547` (measurement scripts) · pushed 2026-10-15 16:41 UTC · `web_app` + `admin_cms` · not on `web_prod`
+- **Patches:** [patches/U035-b540605.patch](patches/U035-b540605.patch) (binary — includes the two figure PNGs) + [patches/U035b-d208547.patch](patches/U035b-d208547.patch)
+- **Request:** (screenshot of Home's closing artwork) "buatkan 3d object dengan three js dengan konsep sama persis ini… nanti bisa ada animasinya. tapi hide dulu, show off control nya dari __demo. warna dll pastikan harus sama persis".
+- **Interpretation:** "sama persis" = at rest it must be indistinguishable from `aurelia-network.png`, so everything is *measured* from that file rather than redrawn by eye; "3D" = real depth (things at different distances, a figure with volume) that only shows when the camera moves; "hide dulu" = the PNG stays the default and nothing changes for anyone until the switch is on.
+- **How it matches:**
+  - 31 nodes (5 hubs, 4 out-of-focus "bokeh", 22 dots): positions, radii and edge softness from blob analysis of the PNG's alpha; dot colours sampled per node. Hub colour = per-pixel median of the five hubs, rebuilt in the shader as a warm base + cream highlight + coral bruise (hub means within 1–4/255); halo ring r 8.6, alpha 0.27, `#FDC59E`.
+  - 49 lines: traced from each node + a Hough pass, each scored against the PNG. 11 dashed (`#FEB377`, ~0.45 opacity, 1.9/1.7 dash) and 38 solid hairlines (`#FFCBA8`, opacity measured per line).
+  - The figure is the PNG's own pixels (`head.png`) on a relief inflated from its silhouette (`head-depth.png`) — its gradient is the artwork's by construction.
+  - Colour management off for this chunk; values written untouched (no sRGB↔linear).
+  - Depth: bokeh +46 (near), hubs 0, figure −8 (+26 relief), dots −18…−70 by paleness — each scaled so it projects onto its PNG pixel from the rest pose.
+  - **Check:** rest-pose render at 778×333 vs the PNG in the same box: mean |Δ| 0.92/255; remaining differences are edge sharpness (the PNG is a 362px raster upscaled, the scene is drawn at full resolution).
+- **Motion** (sub-switch, on by default once the scene is on): slow orbit that leans toward the pointer, dashes flowing, hub halos breathing, bokeh drifting. Pauses when off-screen (IntersectionObserver) and for `prefers-reduced-motion`; Motion off = held at the rest pose.
+- **Change:**
+  - `src/components/network3d/networkScene.ts` (scene), `Network3D.tsx` (React wrapper: lazy-imports the scene, shows the PNG until the first frame or if WebGL fails, same 362:155 box), `networkData.ts` (generated), `head.png`, `head-depth.png`.
+  - `src/demo/modules.ts` — `NETWORK3D_FLAG = 'network3d'` (default **off**), `NETWORK3D_MOTION_FLAG = 'network3d.motion'` (default on); `src/demo/FeatureFlags.tsx` — both kept out of Enable/Disable all.
+  - `src/pages/DemoControlPage.tsx` — "3D network" card (toggle + Motion sub-toggle + link to Home).
+  - `src/pages/HomePage.tsx` — the `<img>` becomes `<Network3D>` only when the flag is on.
+  - `package.json` — `three@^0.180.0` (+ `@types/three` dev). Three is a separate lazy chunk (~134 KB gzip) fetched only when the flag is on; the main bundle is unchanged.
+  - `scripts/network3d/` — the measuring scripts + README (regenerate `networkData.ts` and the figure PNGs if the artwork changes).
+- **Mobile:** with the flag off (default) the DOM is exactly the old `<img>`. With it on, the box keeps the PNG's size at every width (checked 402 and 1086).
+- **Verified:** rest-pose pixel diff above; motion frames at 1086 and 402 differ (it moves) with no page errors; `/__demo` card renders; typecheck, lint and build clean.
+- **Revert:** `git revert --no-commit d208547 b540605 && git checkout HEAD -- docs/` (then `npm install` to drop three).

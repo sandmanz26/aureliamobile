@@ -1,0 +1,1298 @@
+diff --git a/package-lock.json b/package-lock.json
+index ccbd82e..eb89532 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -11,7 +11,8 @@
+         "lucide-react": "^1.40.0",
+         "react": "^19.2.8",
+         "react-dom": "^19.2.8",
+-        "react-router-dom": "^7.18.3"
++        "react-router-dom": "^7.18.3",
++        "three": "^0.180.0"
+       },
+       "devDependencies": {
+         "@figma/code-connect": "^2.0.1",
+@@ -19,6 +20,7 @@
+         "@types/node": "^24.13.3",
+         "@types/react": "^19.2.18",
+         "@types/react-dom": "^19.2.4",
++        "@types/three": "^0.180.0",
+         "@vitejs/plugin-react": "^6.1.0",
+         "oxlint": "^1.79.0",
+         "tailwindcss": "^4.3.3",
+@@ -155,6 +157,13 @@
+         "node": ">=18"
+       }
+     },
++    "node_modules/@dimforge/rapier3d-compat": {
++      "version": "0.12.0",
++      "resolved": "https://registry.npmjs.org/@dimforge/rapier3d-compat/-/rapier3d-compat-0.12.0.tgz",
++      "integrity": "sha512-uekIGetywIgopfD97oDL5PfeezkFpNhwlzlaEYNOA0N6ghdsOvh/HYjSMek5Q2O1PYvRSDFcqFVJl4r4ZBwOow==",
++      "dev": true,
++      "license": "Apache-2.0"
++    },
+     "node_modules/@figma/code-connect": {
+       "version": "2.0.1",
+       "resolved": "https://registry.npmjs.org/@figma/code-connect/-/code-connect-2.0.1.tgz",
+@@ -1432,6 +1441,13 @@
+         "url": "https://github.com/sponsors/isaacs"
+       }
+     },
++    "node_modules/@tweenjs/tween.js": {
++      "version": "23.1.3",
++      "resolved": "https://registry.npmjs.org/@tweenjs/tween.js/-/tween.js-23.1.3.tgz",
++      "integrity": "sha512-vJmvvwFxYuGnF2axRtPYocag6Clbb5YS7kLL+SO/TeVFzHqDIWrNKYtcsPMibjDx9O+bu+psAy9NKfWklassUA==",
++      "dev": true,
++      "license": "MIT"
++    },
+     "node_modules/@types/node": {
+       "version": "24.13.3",
+       "resolved": "https://registry.npmjs.org/@types/node/-/node-24.13.3.tgz",
+@@ -1462,6 +1478,36 @@
+         "@types/react": "^19.2.0"
+       }
+     },
++    "node_modules/@types/stats.js": {
++      "version": "0.17.4",
++      "resolved": "https://registry.npmjs.org/@types/stats.js/-/stats.js-0.17.4.tgz",
++      "integrity": "sha512-jIBvWWShCvlBqBNIZt0KAshWpvSjhkwkEu4ZUcASoAvhmrgAUI2t1dXrjSL4xXVLB4FznPrIsX3nKXFl/Dt4vA==",
++      "dev": true,
++      "license": "MIT"
++    },
++    "node_modules/@types/three": {
++      "version": "0.180.0",
++      "resolved": "https://registry.npmjs.org/@types/three/-/three-0.180.0.tgz",
++      "integrity": "sha512-ykFtgCqNnY0IPvDro7h+9ZeLY+qjgUWv+qEvUt84grhenO60Hqd4hScHE7VTB9nOQ/3QM8lkbNE+4vKjEpUxKg==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@dimforge/rapier3d-compat": "~0.12.0",
++        "@tweenjs/tween.js": "~23.1.3",
++        "@types/stats.js": "*",
++        "@types/webxr": "*",
++        "@webgpu/types": "*",
++        "fflate": "~0.8.2",
++        "meshoptimizer": "~0.22.0"
++      }
++    },
++    "node_modules/@types/webxr": {
++      "version": "0.5.24",
++      "resolved": "https://registry.npmjs.org/@types/webxr/-/webxr-0.5.24.tgz",
++      "integrity": "sha512-h8fgEd/DpoS9CBrjEQXR+dIDraopAEfu4wYVNY2tEPwk60stPWhvZMf4Foo5FakuQ7HFZoa8WceaWFervK2Ovg==",
++      "dev": true,
++      "license": "MIT"
++    },
+     "node_modules/@vitejs/plugin-react": {
+       "version": "6.1.1",
+       "resolved": "https://registry.npmjs.org/@vitejs/plugin-react/-/plugin-react-6.1.1.tgz",
+@@ -1492,6 +1538,13 @@
+         }
+       }
+     },
++    "node_modules/@webgpu/types": {
++      "version": "0.1.74",
++      "resolved": "https://registry.npmjs.org/@webgpu/types/-/types-0.1.74.tgz",
++      "integrity": "sha512-lgiI4hbuLcI9unnm2cL/tvCaQU45dp0xcLWJh5uB/9MBGvIA4F8XIk7nSiBeg+K4xWGYwgZKn80LmERI5CxoTA==",
++      "dev": true,
++      "license": "BSD-3-Clause"
++    },
+     "node_modules/agent-base": {
+       "version": "7.1.4",
+       "resolved": "https://registry.npmjs.org/agent-base/-/agent-base-7.1.4.tgz",
+@@ -2073,6 +2126,13 @@
+         }
+       }
+     },
++    "node_modules/fflate": {
++      "version": "0.8.3",
++      "resolved": "https://registry.npmjs.org/fflate/-/fflate-0.8.3.tgz",
++      "integrity": "sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==",
++      "dev": true,
++      "license": "MIT"
++    },
+     "node_modules/find-up": {
+       "version": "5.0.0",
+       "resolved": "https://registry.npmjs.org/find-up/-/find-up-5.0.0.tgz",
+@@ -2885,6 +2945,13 @@
+         "node": ">= 0.4"
+       }
+     },
++    "node_modules/meshoptimizer": {
++      "version": "0.22.0",
++      "resolved": "https://registry.npmjs.org/meshoptimizer/-/meshoptimizer-0.22.0.tgz",
++      "integrity": "sha512-IebiK79sqIy+E4EgOr+CAw+Ke8hAspXKzBd0JdgEmPHiAwmvEj2S4h1rfvo+o/BnfEYd/jAOg5IeeIjzlzSnDg==",
++      "dev": true,
++      "license": "MIT"
++    },
+     "node_modules/mime-db": {
+       "version": "1.52.0",
+       "resolved": "https://registry.npmjs.org/mime-db/-/mime-db-1.52.0.tgz",
+@@ -3616,6 +3683,12 @@
+         "url": "https://opencollective.com/webpack"
+       }
+     },
++    "node_modules/three": {
++      "version": "0.180.0",
++      "resolved": "https://registry.npmjs.org/three/-/three-0.180.0.tgz",
++      "integrity": "sha512-o+qycAMZrh+TsE01GqWUxUIKR1AL0S8pq7zDkYOQw8GqfX8b8VoCKYUoHbhiX5j+7hr8XsuHDVU6+gkQJQKg9w==",
++      "license": "MIT"
++    },
+     "node_modules/tiny-inflate": {
+       "version": "1.0.3",
+       "resolved": "https://registry.npmjs.org/tiny-inflate/-/tiny-inflate-1.0.3.tgz",
+diff --git a/package.json b/package.json
+index 4d22410..30a9db5 100644
+--- a/package.json
++++ b/package.json
+@@ -15,7 +15,8 @@
+     "lucide-react": "^1.40.0",
+     "react": "^19.2.8",
+     "react-dom": "^19.2.8",
+-    "react-router-dom": "^7.18.3"
++    "react-router-dom": "^7.18.3",
++    "three": "^0.180.0"
+   },
+   "devDependencies": {
+     "@figma/code-connect": "^2.0.1",
+@@ -23,6 +24,7 @@
+     "@types/node": "^24.13.3",
+     "@types/react": "^19.2.18",
+     "@types/react-dom": "^19.2.4",
++    "@types/three": "^0.180.0",
+     "@vitejs/plugin-react": "^6.1.0",
+     "oxlint": "^1.79.0",
+     "tailwindcss": "^4.3.3",
+diff --git a/src/components/network3d/Network3D.tsx b/src/components/network3d/Network3D.tsx
+new file mode 100644
+index 0000000..f45f0c5
+--- /dev/null
++++ b/src/components/network3d/Network3D.tsx
+@@ -0,0 +1,55 @@
++import { useEffect, useRef, useState } from 'react'
++import type { NetworkScene } from './networkScene'
++
++/**
++ * The Home network artwork as a live Three.js scene (U035). Off by default —
++ * /__demo's "3D network" card turns it on. Three.js is loaded only when this
++ * mounts, so nobody downloads it while the flag is off.
++ *
++ * Until the scene has drawn (and if WebGL is unavailable) the original PNG
++ * stays in place, so the box never jumps and the page never shows a hole.
++ */
++export function Network3D({ fallback, motion }: { fallback: string; motion: boolean }) {
++  const host = useRef<HTMLDivElement>(null)
++  const scene = useRef<NetworkScene | null>(null)
++  const [ready, setReady] = useState(false)
++
++  useEffect(() => {
++    let cancelled = false
++    void import('./networkScene')
++      .then(({ createNetworkScene }) => {
++        if (cancelled || !host.current) return
++        scene.current = createNetworkScene(host.current, { motion })
++        setReady(true)
++      })
++      .catch(() => {
++        /* no WebGL: the PNG stays */
++      })
++    return () => {
++      cancelled = true
++      scene.current?.dispose()
++      scene.current = null
++    }
++    // The scene is built once; motion changes go through setMotion below.
++    // eslint-disable-next-line react-hooks/exhaustive-deps
++  }, [])
++
++  useEffect(() => {
++    scene.current?.setMotion(motion)
++  }, [motion, ready])
++
++  // Only animate while on screen.
++  useEffect(() => {
++    if (!ready || !host.current) return
++    const io = new IntersectionObserver(([entry]) => scene.current?.setVisible(entry.isIntersecting))
++    io.observe(host.current)
++    return () => io.disconnect()
++  }, [ready])
++
++  return (
++    <div className="relative w-full" style={{ aspectRatio: '362 / 155' }} data-network-3d="">
++      {!ready && <img src={fallback} alt="" className="absolute inset-0 size-full" />}
++      <div ref={host} className="absolute inset-0" aria-hidden="true" />
++    </div>
++  )
++}
+diff --git a/src/components/network3d/head-depth.png b/src/components/network3d/head-depth.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..51ae9b75b9ebc37251792474ed12d7a28dc36196
+GIT binary patch
+literal 3223
+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
+JPDHLkV1lu>GZ6p)
+
+literal 0
+HcmV?d00001
+
+diff --git a/src/components/network3d/head.png b/src/components/network3d/head.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..9668860f9519769a24ba732d1081e06c54909f25
+GIT binary patch
+literal 17362
+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
+JPDHLkV1ny-3qt?^
+
+literal 0
+HcmV?d00001
+
+diff --git a/src/components/network3d/networkData.ts b/src/components/network3d/networkData.ts
+new file mode 100644
+index 0000000..3264639
+--- /dev/null
++++ b/src/components/network3d/networkData.ts
+@@ -0,0 +1,98 @@
++// GENERATED from src/assets/aurelia-network.png by measuring it (U035) —
++// positions in the artwork's own 362×155 pixel space, colours sampled.
++// Regenerate rather than hand-edit if the artwork changes.
++
++export type NodeKind = 'hub' | 'bokeh' | 'dot'
++export interface NetNode { x: number; y: number; r: number; soft: number; color: string; kind: NodeKind }
++/** An edge end: a node index, or a point (frame edge, head outline, a line that fades out). */
++export type End = number | readonly [number, number]
++export interface NetEdge { a: End; b: End; dashed: boolean; opacity: number; head?: boolean }
++
++export const ART = { width: 362, height: 155 } as const
++
++export const NODES: NetNode[] = [
++  { x: 271.8, y: 87.7, r: 6.5, soft: 1.0, color: '#FDAF74', kind: 'hub' }, // 0
++  { x: 256.4, y: 34.0, r: 6.5, soft: 1.0, color: '#FDAA6D', kind: 'hub' }, // 1
++  { x: 51.2, y: 83.2, r: 6.5, soft: 1.0, color: '#FEB171', kind: 'hub' }, // 2
++  { x: 102.8, y: 13.2, r: 6.5, soft: 1.0, color: '#FEB273', kind: 'hub' }, // 3
++  { x: 187.3, y: 9.0, r: 6.5, soft: 1.0, color: '#FDAF6E', kind: 'hub' }, // 4
++  { x: 56.3, y: 49.1, r: 5.0, soft: 1.75, color: '#FFCEA9', kind: 'bokeh' }, // 5
++  { x: 120.0, y: 53.3, r: 4.25, soft: 2.5, color: '#FECEA8', kind: 'bokeh' }, // 6
++  { x: 161.2, y: 28.4, r: 4.0, soft: 2.75, color: '#FECFAA', kind: 'bokeh' }, // 7
++  { x: 259.4, y: 104.1, r: 3.75, soft: 1.75, color: '#FEC9A8', kind: 'bokeh' }, // 8
++  { x: 263.4, y: 6.6, r: 3.25, soft: 1.75, color: '#FFCCAB', kind: 'dot' }, // 9
++  { x: 293.9, y: 30.5, r: 3.25, soft: 2.25, color: '#FFC5A2', kind: 'dot' }, // 10
++  { x: 290.4, y: 66.7, r: 3.25, soft: 2.25, color: '#FEC8A8', kind: 'dot' }, // 11
++  { x: 59.5, y: 123.0, r: 2.5, soft: 1.5, color: '#FFD0AB', kind: 'dot' }, // 12
++  { x: 40.5, y: 4.1, r: 2.25, soft: 1.75, color: '#FFCFAC', kind: 'dot' }, // 13
++  { x: 249.4, y: 118.4, r: 2.5, soft: 1.75, color: '#FFC5AC', kind: 'dot' }, // 14
++  { x: 90.7, y: 132.0, r: 2.25, soft: 1.5, color: '#FFE1C9', kind: 'dot' }, // 15
++  { x: 29.4, y: 32.4, r: 2.25, soft: 1.5, color: '#FFE0C7', kind: 'dot' }, // 16
++  { x: 342.4, y: 33.4, r: 2.25, soft: 1.75, color: '#FFDCC9', kind: 'dot' }, // 17
++  { x: 107.4, y: 64.6, r: 2.25, soft: 1.5, color: '#FFE0C7', kind: 'dot' }, // 18
++  { x: 11.4, y: 73.4, r: 2.0, soft: 1.75, color: '#FFCFA9', kind: 'dot' }, // 19
++  { x: 307.4, y: 109.6, r: 2.25, soft: 1.5, color: '#FFC9AA', kind: 'dot' }, // 20
++  { x: 32.4, y: 127.4, r: 2.25, soft: 1.75, color: '#FFD0AC', kind: 'dot' }, // 21
++  { x: 328.0, y: 56.5, r: 2.25, soft: 1.5, color: '#FFDAC5', kind: 'dot' }, // 22
++  { x: 309.5, y: 82.5, r: 2.25, soft: 1.75, color: '#FECAA8', kind: 'dot' }, // 23
++  { x: 77.0, y: 100.5, r: 2.25, soft: 1.75, color: '#FFDEC5', kind: 'dot' }, // 24
++  { x: 15.5, y: 107.5, r: 2.25, soft: 1.75, color: '#FFD3AC', kind: 'dot' }, // 25
++  { x: 284.3, y: 122.1, r: 2.25, soft: 1.75, color: '#FFC9A9', kind: 'dot' }, // 26
++  { x: 253.2, y: 58.8, r: 2.25, soft: 1.5, color: '#FFDCC8', kind: 'dot' }, // 27
++  { x: 81.8, y: 74.8, r: 2.25, soft: 1.5, color: '#FFDFC6', kind: 'dot' }, // 28
++  { x: 230.0, y: 71.2, r: 2.0, soft: 1.5, color: '#FFDCC8', kind: 'dot' }, // 29
++  { x: 67.4, y: 0.7, r: 1.75, soft: 1.75, color: '#FFCEAD', kind: 'dot' }, // 30
++]
++
++export const EDGES: NetEdge[] = [
++  { a: 0, b: 1, dashed: true, opacity: 0.47 },
++  { a: 4, b: 0, dashed: true, opacity: 0.44 },
++  { a: 0, b: [205, 87.5], dashed: true, opacity: 0.41, head: true },
++  { a: 3, b: 1, dashed: true, opacity: 0.47 },
++  { a: 1, b: [205.5, 55.8], dashed: true, opacity: 0.49, head: true },
++  { a: 2, b: 3, dashed: true, opacity: 0.44 },
++  { a: 2, b: 7, dashed: true, opacity: 0.5 },
++  { a: 4, b: 2, dashed: true, opacity: 0.49 },
++  { a: 2, b: [135.3, 75], dashed: true, opacity: 0.46, head: true },
++  { a: 2, b: [140.2, 87.1], dashed: true, opacity: 0.42, head: true },
++  { a: [157, 33.3], b: 1, dashed: true, opacity: 0.35, head: true },
++  { a: 0, b: 26, dashed: false, opacity: 0.12 },
++  { a: 0, b: 8, dashed: false, opacity: 0.15 },
++  { a: 0, b: 11, dashed: false, opacity: 0.15 },
++  { a: 1, b: 27, dashed: false, opacity: 0.1 },
++  { a: 27, b: 29, dashed: false, opacity: 0.13 },
++  { a: 1, b: 29, dashed: false, opacity: 0.1 },
++  { a: 29, b: [205, 69], dashed: false, opacity: 0.15, head: true },
++  { a: [57.5, 54], b: [124, 58.8], dashed: false, opacity: 0.36 },
++  { a: [151.8, 0], b: 6, dashed: false, opacity: 0.21 },
++  { a: [161, 0], b: 7, dashed: false, opacity: 0.21 },
++  { a: 4, b: 7, dashed: false, opacity: 0.51 },
++  { a: 2, b: 16, dashed: false, opacity: 0.08 },
++  { a: 16, b: [0, 36.5], dashed: false, opacity: 0.07 },
++  { a: 2, b: 25, dashed: false, opacity: 0.13 },
++  { a: 2, b: 28, dashed: false, opacity: 0.1 },
++  { a: 2, b: [35, 102], dashed: false, opacity: 0.07 },
++  { a: 28, b: 18, dashed: false, opacity: 0.12 },
++  { a: 28, b: 24, dashed: false, opacity: 0.39 },
++  { a: 18, b: 24, dashed: false, opacity: 0.24 },
++  { a: 24, b: 15, dashed: false, opacity: 0.13 },
++  { a: 3, b: 30, dashed: false, opacity: 0.16 },
++  { a: 30, b: 13, dashed: false, opacity: 0.17 },
++  { a: 13, b: [36, 0], dashed: false, opacity: 0.26 },
++  { a: 19, b: 25, dashed: false, opacity: 0.11 },
++  { a: 25, b: 12, dashed: false, opacity: 0.17 },
++  { a: 25, b: 21, dashed: false, opacity: 0.14 },
++  { a: 21, b: 12, dashed: false, opacity: 0.16 },
++  { a: 9, b: 10, dashed: false, opacity: 0.19 },
++  { a: 9, b: 11, dashed: false, opacity: 0.17 },
++  { a: 10, b: 11, dashed: false, opacity: 0.1 },
++  { a: 10, b: [321.5, 0], dashed: false, opacity: 0.18 },
++  { a: 17, b: 22, dashed: false, opacity: 0.1 },
++  { a: 17, b: [362, 33.2], dashed: false, opacity: 0.15 },
++  { a: 22, b: [362, 37.5], dashed: false, opacity: 0.09 },
++  { a: [296, 3], b: 17, dashed: false, opacity: 0.14 },
++  { a: 14, b: 26, dashed: false, opacity: 0.13 },
++  { a: 26, b: 23, dashed: false, opacity: 0.13 },
++  { a: 26, b: 20, dashed: false, opacity: 0.13 },
++  { a: 20, b: 23, dashed: false, opacity: 0.12 },
++]
+diff --git a/src/components/network3d/networkScene.ts b/src/components/network3d/networkScene.ts
+new file mode 100644
+index 0000000..33fd4de
+--- /dev/null
++++ b/src/components/network3d/networkScene.ts
+@@ -0,0 +1,379 @@
++import * as THREE from 'three'
++import { Line2 } from 'three/examples/jsm/lines/Line2.js'
++import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js'
++import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
++import headUrl from './head.png'
++import headDepthUrl from './head-depth.png'
++import { ART, EDGES, NODES } from './networkData'
++import type { End, NetNode } from './networkData'
++
++/**
++ * The Home closing-CTA artwork (`aurelia-network.png`) rebuilt as a real
++ * Three.js scene (U035) so it can move.
++ *
++ * Fidelity first: at rest, seen from the front, it is meant to be the PNG.
++ * - Every node position, radius and edge softness, every line, its dashing
++ *   and its opacity, was measured from the PNG (networkData.ts).
++ * - Colours are the PNG's own sRGB values and nothing converts them: colour
++ *   management is off for this chunk and output is written untouched.
++ * - The figure *is* the PNG's pixels — cut out (head.png) and wrapped over a
++ *   relief inflated from its silhouette (head-depth.png) — so its gradient
++ *   cannot drift from the artwork's.
++ * - Things sit at different depths (bokeh nodes near the camera, faint dots
++ *   far behind, the figure in between) but are scaled so that from the rest
++ *   pose each projects exactly where the PNG has it. Depth only shows once
++ *   the camera moves — which is the point of rebuilding it.
++ */
++
++THREE.ColorManagement.enabled = false
++
++/** World units are the artwork's pixels; this is the camera's distance for a
++ *  30° vertical field of view to frame its 155px height exactly. */
++const FOV = 30
++const D = ART.height / 2 / Math.tan(THREE.MathUtils.degToRad(FOV / 2))
++
++const HEAD = { x0: 114, y0: 30, w: 142, h: 125, z: -8, relief: 26 }
++
++/** Depth per node kind (positive = toward the camera). Dots go further back
++ *  the paler they are, which is how the artwork reads them. */
++function depthOf(node: NetNode) {
++  if (node.kind === 'hub') return 0
++  if (node.kind === 'bokeh') return 46
++  const g = parseInt(node.color.slice(3, 5), 16)
++  return -18 - ((g - 197) / 28) * 52
++}
++
++/** Artwork pixel (x down-right, y down) at depth z → world position that
++ *  projects back onto that same pixel from the rest pose. */
++function place(x: number, y: number, z: number) {
++  const k = (D - z) / D
++  return new THREE.Vector3((x - ART.width / 2) * k, (ART.height / 2 - y) * k, z)
++}
++
++const nodeVertex = /* glsl */ `
++  varying vec2 vP;
++  uniform float uHalf;
++  void main() {
++    vP = (uv * 2.0 - 1.0) * uHalf;
++    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
++  }
++`
++
++/* Hubs: the colour is a quadratic fit to the five hub discs in the PNG
++   (sRGB, mean error under 5/255), then a soft edge and the halo ring.
++   Bokeh and dots: flat colour, soft edge. Output is premultiplied. */
++const nodeFragment = /* glsl */ `
++  varying vec2 vP;
++  uniform vec3 uColor;
++  uniform float uR;
++  uniform float uSoft;
++  uniform float uHub;
++  uniform float uRingR;
++  uniform float uRingA;
++  uniform float uOpacity;
++  void main() {
++    float d = length(vP);
++    float disc = 1.0 - smoothstep(uR - uSoft * 0.5, uR + uSoft * 0.5, d);
++    vec3 col = uColor;
++    if (uHub > 0.5) {
++      // Measured from the five hub discs (median per pixel): a warm base
++      // that cools left→right, a cream highlight just off centre, a coral
++      // bruise low on the right and a slight dip left of centre.
++      vec2 q = vec2(vP.x, -vP.y); // artwork px, y down, centre = 0
++      float g = 170.0 - 1.8 * q.x;
++      float bl = 114.0;
++      float hi = exp(-dot(q - vec2(0.6, 0.6), q - vec2(0.6, 0.6)) / 2.4);
++      float coral = exp(-dot(q - vec2(3.2, 2.3), q - vec2(3.2, 2.3)) / 5.0);
++      float dip = exp(-dot(q - vec2(-1.6, 0.6), q - vec2(-1.6, 0.6)) / 2.0);
++      g += 9.0 * hi - 27.0 * coral - 8.0 * dip;
++      bl += 12.0 * hi - 8.0 * coral - 9.0 * dip;
++      col = vec3(253.0 - 2.0 * coral, g, bl) / 255.0;
++      float ring = exp(-pow((d - uRingR) / 0.5, 2.0)) * uRingA;
++      vec3 ringCol = vec3(253.0, 197.0, 158.0) / 255.0;
++      float a = disc + ring * (1.0 - disc);
++      vec3 c = (col * disc + ringCol * ring * (1.0 - disc)) / max(a, 1e-4);
++      gl_FragColor = vec4(c * a * uOpacity, a * uOpacity);
++      return;
++    }
++    gl_FragColor = vec4(col * disc * uOpacity, disc * uOpacity);
++  }
++`
++
++const headVertex = /* glsl */ `
++  uniform sampler2D uDepth;
++  uniform float uRelief;
++  uniform float uD;
++  uniform float uZ;
++  varying vec2 vUv;
++  void main() {
++    vUv = uv;
++    float h = texture2D(uDepth, uv).r;
++    vec3 p = position;
++    p.z = h * uRelief;
++    // Pull each vertex in by its own depth so the rest pose matches the
++    // flat artwork pixel for pixel, relief and all.
++    p.xy *= (uD - (uZ + p.z)) / uD;
++    gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
++  }
++`
++
++const headFragment = /* glsl */ `
++  uniform sampler2D uMap;
++  uniform float uOpacity;
++  varying vec2 vUv;
++  void main() {
++    vec4 t = texture2D(uMap, vUv); // premultiplied on upload
++    gl_FragColor = t * uOpacity;
++  }
++`
++
++export interface NetworkSceneOptions {
++  motion: boolean
++}
++
++export interface NetworkScene {
++  setMotion: (on: boolean) => void
++  setVisible: (on: boolean) => void
++  dispose: () => void
++}
++
++export function createNetworkScene(host: HTMLElement, options: NetworkSceneOptions): NetworkScene {
++  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, premultipliedAlpha: true })
++  renderer.outputColorSpace = THREE.LinearSRGBColorSpace
++  renderer.setClearColor(0x000000, 0)
++  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
++  const canvas = renderer.domElement
++  canvas.style.display = 'block'
++  canvas.style.width = '100%'
++  canvas.style.height = '100%'
++  host.appendChild(canvas)
++
++  const scene = new THREE.Scene()
++  const camera = new THREE.PerspectiveCamera(FOV, ART.width / ART.height, 1, 2000)
++  camera.position.set(0, 0, D)
++  camera.lookAt(0, 0, 0)
++
++  const disposables: { dispose: () => void }[] = []
++  const lineMaterials: LineMaterial[] = []
++
++  // ── Lines (painted first, like the artwork) ───────────────────────────
++  // A free end sits at the depth of the node it leaves; an end on the
++  // figure's outline sits at the figure's depth.
++  const endPoint = (end: End, other: End, onHead: boolean) => {
++    if (typeof end === 'number') {
++      const n = NODES[end]
++      return place(n.x, n.y, depthOf(n))
++    }
++    const z = onHead ? HEAD.z : typeof other === 'number' ? depthOf(NODES[other]) : 0
++    return place(end[0], end[1], z)
++  }
++  EDGES.forEach((edge, i) => {
++    const a = endPoint(edge.a, edge.b, !!edge.head)
++    const b = endPoint(edge.b, edge.a, !!edge.head)
++    const geometry = new LineGeometry()
++    geometry.setPositions([a.x, a.y, a.z, b.x, b.y, b.z])
++    const material = new LineMaterial({
++      color: edge.dashed ? 0xfeb377 : 0xffcba8,
++      linewidth: edge.dashed ? 0.9 : 0.8,
++      worldUnits: true,
++      transparent: true,
++      opacity: Math.min(1, edge.dashed ? edge.opacity : edge.opacity / 0.9),
++      dashed: edge.dashed,
++      dashSize: 1.9,
++      gapSize: 1.7,
++      depthTest: false,
++      depthWrite: false,
++    })
++    const line = new Line2(geometry, material)
++    line.computeLineDistances()
++    line.renderOrder = 0
++    line.userData.index = i
++    scene.add(line)
++    lineMaterials.push(material)
++    disposables.push(geometry, material)
++  })
++
++  // ── The figure ────────────────────────────────────────────────────────
++  const loader = new THREE.TextureLoader()
++  const headMap = loader.load(headUrl, () => render())
++  headMap.colorSpace = THREE.NoColorSpace
++  headMap.premultiplyAlpha = true
++  const headDepth = loader.load(headDepthUrl, () => render())
++  headDepth.colorSpace = THREE.NoColorSpace
++  const headMaterial = new THREE.ShaderMaterial({
++    vertexShader: headVertex,
++    fragmentShader: headFragment,
++    uniforms: {
++      uMap: { value: headMap },
++      uDepth: { value: headDepth },
++      uRelief: { value: HEAD.relief },
++      uD: { value: D },
++      uZ: { value: HEAD.z },
++      uOpacity: { value: 1 },
++    },
++    transparent: true,
++    premultipliedAlpha: true,
++    depthTest: false,
++    depthWrite: false,
++  })
++  const headGeometry = new THREE.PlaneGeometry(HEAD.w, HEAD.h, HEAD.w, HEAD.h)
++  const head = new THREE.Mesh(headGeometry, headMaterial)
++  const headCentre = place(HEAD.x0 + HEAD.w / 2, HEAD.y0 + HEAD.h / 2, 0)
++  head.position.set(headCentre.x, headCentre.y, HEAD.z)
++  head.renderOrder = 1
++  scene.add(head)
++  disposables.push(headMap, headDepth, headMaterial, headGeometry)
++
++  // ── Nodes (billboards, painted last) ──────────────────────────────────
++  const quad = new THREE.PlaneGeometry(1, 1)
++  disposables.push(quad)
++  const nodes = NODES.map((node, i) => {
++    const z = depthOf(node)
++    const hub = node.kind === 'hub'
++    const half = hub ? 10.5 : node.r + node.soft + 1
++    const material = new THREE.ShaderMaterial({
++      vertexShader: nodeVertex,
++      fragmentShader: nodeFragment,
++      uniforms: {
++        uHalf: { value: half },
++        uColor: { value: new THREE.Color(node.color) },
++        uR: { value: hub ? 6.6 : node.r },
++        uSoft: { value: hub ? 1.1 : node.soft },
++        uHub: { value: hub ? 1 : 0 },
++        uRingR: { value: 8.6 },
++        uRingA: { value: 0.27 },
++        uOpacity: { value: 1 },
++      },
++      transparent: true,
++      premultipliedAlpha: true,
++      depthTest: false,
++      depthWrite: false,
++    })
++    const mesh = new THREE.Mesh(quad, material)
++    const k = (D - z) / D
++    mesh.position.copy(place(node.x, node.y, z))
++    mesh.scale.setScalar(half * 2 * k)
++    mesh.renderOrder = hub ? 3 : 2
++    mesh.userData = { base: mesh.position.clone(), i }
++    scene.add(mesh)
++    disposables.push(material)
++    return mesh
++  })
++
++  // ── Sizing ────────────────────────────────────────────────────────────
++  const size = new THREE.Vector2()
++  const resize = () => {
++    const w = host.clientWidth || 1
++    const h = host.clientHeight || 1
++    renderer.setSize(w, h, false)
++    camera.aspect = w / h
++    // Keep the artwork's full width in frame if the box is narrower.
++    const fitWidth = ART.width / 2 / Math.tan(THREE.MathUtils.degToRad(FOV / 2)) / camera.aspect
++    camera.position.setLength(Math.max(D, fitWidth))
++    camera.updateProjectionMatrix()
++    renderer.getDrawingBufferSize(size)
++    for (const m of lineMaterials) m.resolution.set(size.x, size.y)
++    render()
++  }
++
++  // ── Motion ────────────────────────────────────────────────────────────
++  let motion = options.motion
++  let visible = true
++  let frame = 0
++  const pointer = new THREE.Vector2()
++  const eased = new THREE.Vector2()
++  const clock = new THREE.Clock()
++  const onPointer = (e: PointerEvent) => {
++    const r = host.getBoundingClientRect()
++    pointer.set(((e.clientX - r.left) / r.width) * 2 - 1, ((e.clientY - r.top) / r.height) * 2 - 1)
++  }
++  window.addEventListener('pointermove', onPointer, { passive: true })
++
++  function pose(t: number) {
++    // A slow orbit with the pointer leaning on it; dashes flow toward the
++    // figure; halos breathe; the near bokeh drifts. All small — the artwork
++    // should still be recognisably itself at every frame.
++    eased.lerp(pointer, 0.05)
++    const yaw = Math.sin(t * 0.23) * 0.09 + eased.x * 0.07
++    const pitch = Math.sin(t * 0.17) * 0.04 - eased.y * 0.04
++    const dist = camera.position.length()
++    camera.position.set(Math.sin(yaw) * Math.cos(pitch) * dist, Math.sin(pitch) * dist, Math.cos(yaw) * Math.cos(pitch) * dist)
++    camera.lookAt(0, 0, 0)
++    for (const m of lineMaterials) if (m.dashed) m.dashOffset = -t * 2.4
++    for (const mesh of nodes) {
++      const { base, i } = mesh.userData as { base: THREE.Vector3; i: number }
++      const node = NODES[i]
++      const u = (mesh.material as THREE.ShaderMaterial).uniforms
++      if (node.kind === 'hub') {
++        u.uRingR.value = 8.6 + Math.sin(t * 1.3 + i * 1.7) * 0.7
++        u.uRingA.value = 0.27 * (0.75 + 0.25 * Math.sin(t * 1.3 + i * 1.7 + 1))
++      } else if (node.kind === 'bokeh') {
++        mesh.position.set(base.x + Math.sin(t * 0.5 + i) * 1.6, base.y + Math.cos(t * 0.4 + i * 2) * 1.2, base.z)
++      }
++    }
++  }
++
++  function rest() {
++    camera.position.set(0, 0, camera.position.length())
++    camera.lookAt(0, 0, 0)
++    for (const m of lineMaterials) m.dashOffset = 0
++    for (const mesh of nodes) {
++      const { base, i } = mesh.userData as { base: THREE.Vector3; i: number }
++      mesh.position.copy(base)
++      const u = (mesh.material as THREE.ShaderMaterial).uniforms
++      if (NODES[i].kind === 'hub') {
++        u.uRingR.value = 8.6
++        u.uRingA.value = 0.27
++      }
++    }
++  }
++
++  function render() {
++    for (const mesh of nodes) mesh.quaternion.copy(camera.quaternion)
++    renderer.render(scene, camera)
++  }
++
++  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)')
++  function loop() {
++    frame = 0
++    if (!motion || !visible || reduced.matches) return
++    pose(clock.getElapsedTime())
++    render()
++    frame = requestAnimationFrame(loop)
++  }
++  function restart() {
++    cancelAnimationFrame(frame)
++    frame = 0
++    if (motion && visible && !reduced.matches) frame = requestAnimationFrame(loop)
++    else {
++      rest()
++      render()
++    }
++  }
++
++  const observer = new ResizeObserver(resize)
++  observer.observe(host)
++  resize()
++  restart()
++  reduced.addEventListener('change', restart)
++
++  return {
++    setMotion(on) {
++      motion = on
++      restart()
++    },
++    setVisible(on) {
++      visible = on
++      restart()
++    },
++    dispose() {
++      cancelAnimationFrame(frame)
++      observer.disconnect()
++      reduced.removeEventListener('change', restart)
++      window.removeEventListener('pointermove', onPointer)
++      for (const d of disposables) d.dispose()
++      renderer.dispose()
++      canvas.remove()
++    },
++  }
++}
+diff --git a/src/demo/FeatureFlags.tsx b/src/demo/FeatureFlags.tsx
+index 5d2c187..d03b4d5 100644
+--- a/src/demo/FeatureFlags.tsx
++++ b/src/demo/FeatureFlags.tsx
+@@ -1,10 +1,10 @@
+ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+ import type { ReactNode } from 'react'
+ import type { FlagState } from './modules'
+-import { ANNOTATIONS_FLAG, CLICKS_FLAG, SITE_LOCK_FLAG, STORAGE_KEY, defaultFlags } from './modules'
++import { ANNOTATIONS_FLAG, CLICKS_FLAG, NETWORK3D_FLAG, NETWORK3D_MOTION_FLAG, SITE_LOCK_FLAG, STORAGE_KEY, defaultFlags } from './modules'
+ 
+ /** Flags that are tools around the demo rather than screens in it. */
+-const NOT_A_MODULE = [SITE_LOCK_FLAG, ANNOTATIONS_FLAG, CLICKS_FLAG]
++const NOT_A_MODULE = [SITE_LOCK_FLAG, ANNOTATIONS_FLAG, CLICKS_FLAG, NETWORK3D_FLAG, NETWORK3D_MOTION_FLAG]
+ 
+ /**
+  * Two layers of state, deliberately separate:
+diff --git a/src/demo/modules.ts b/src/demo/modules.ts
+index a4b074a..9d9a692 100644
+--- a/src/demo/modules.ts
++++ b/src/demo/modules.ts
+@@ -265,7 +265,13 @@ export type FlagState = Record<string, boolean>
+  * meant to be seen.
+  */
+ export function defaultFlags(): FlagState {
+-  const flags: FlagState = { [SITE_LOCK_FLAG]: true, [ANNOTATIONS_FLAG]: false, [CLICKS_FLAG]: true }
++  const flags: FlagState = {
++    [SITE_LOCK_FLAG]: true,
++    [ANNOTATIONS_FLAG]: false,
++    [CLICKS_FLAG]: true,
++    [NETWORK3D_FLAG]: false,
++    [NETWORK3D_MOTION_FLAG]: true,
++  }
+   for (const mod of DEMO_MODULES) {
+     flags[mod.id] = mod.built && !mod.unreleased
+     for (const feature of mod.features ?? []) {
+@@ -312,5 +318,16 @@ export const ANNOTATIONS_FLAG = 'annotations'
+  */
+ export const CLICKS_FLAG = 'clickInsights'
+ 
++/**
++ * The Home closing-CTA network artwork as a live Three.js scene instead of
++ * the PNG (U035; src/components/network3d/). Built to be animated later, so
++ * it is hidden until someone switches it on here — the PNG stays the default.
++ * `network3d.motion` is its sub-switch: on = gentle orbit, flowing dashes,
++ * breathing halos; off = the scene held at its rest pose (identical to the
++ * PNG). Kept out of DEMO_MODULES and Enable/Disable all, like the other tools.
++ */
++export const NETWORK3D_FLAG = 'network3d'
++export const NETWORK3D_MOTION_FLAG = 'network3d.motion'
++
+ /** The overlay shows below this width (px), i.e. at 699 and not at 700. */
+ export const MOBILE_WEB_BREAKPOINT = 700
+diff --git a/src/pages/DemoControlPage.tsx b/src/pages/DemoControlPage.tsx
+index f8673be..2e443b1 100644
+--- a/src/pages/DemoControlPage.tsx
++++ b/src/pages/DemoControlPage.tsx
+@@ -1,8 +1,16 @@
+-import { CloudOff, CloudUpload, ExternalLink, Lock, MousePointerClick, PencilLine, RotateCcw, Undo2, Unlock } from 'lucide-react'
++import { Box, CloudOff, CloudUpload, ExternalLink, Lock, MousePointerClick, PencilLine, RotateCcw, Undo2, Unlock } from 'lucide-react'
+ import { Link } from 'react-router-dom'
+ import { useFeatureFlags } from '../demo/FeatureFlags'
+ import type { ModuleKind } from '../demo/modules'
+-import { ANNOTATIONS_FLAG, CLICKS_FLAG, DEMO_MODULES, MOBILE_WEB_BREAKPOINT, SITE_LOCK_FLAG } from '../demo/modules'
++import {
++  ANNOTATIONS_FLAG,
++  CLICKS_FLAG,
++  DEMO_MODULES,
++  MOBILE_WEB_BREAKPOINT,
++  NETWORK3D_FLAG,
++  NETWORK3D_MOTION_FLAG,
++  SITE_LOCK_FLAG,
++} from '../demo/modules'
+ import { SITE_PASSWORD, forgetUnlock, rememberUnlock } from '../demo/siteLock'
+ import { BuildBadge } from '../components/ui/BuildBadge'
+ import { BuildStamp } from '../components/ui/BuildStamp'
+@@ -186,6 +194,7 @@ export function DemoControlPage() {
+         <AnnotationsCard />
+ 
+         <InsightsCard />
++        <Network3DCard />
+ 
+         {(['consumer', 'admin'] as ModuleKind[]).map((kind) => (
+         <section key={kind} className="mt-24 flex flex-col gap-12">
+@@ -418,3 +427,55 @@ function InsightsCard() {
+     </section>
+   )
+ }
++
++function Network3DCard() {
++  const { flags, setFlag, dirty } = useFeatureFlags()
++  const on = flags[NETWORK3D_FLAG] === true
++  const motion = flags[NETWORK3D_MOTION_FLAG] !== false
++
++  return (
++    <section className="mt-16 rounded-16 border border-border-subtle bg-surface-default p-16">
++      <div className="flex flex-wrap items-start justify-between gap-16">
++        <div className="flex min-w-0 gap-12">
++          <span
++            className={`flex size-36 shrink-0 items-center justify-center rounded-full ${
++              on ? 'bg-brand-default text-text-strong' : 'bg-background-elevated text-icon-default'
++            }`}
++          >
++            <Box size={17} />
++          </span>
++          <div className="min-w-0">
++            <h2 className="text-style-body font-semibold text-text-primary">3D network</h2>
++            <p className="text-style-body-small mt-2 text-text-secondary">
++              {on
++                ? 'Home’s closing artwork (the figure among the orange nodes) is a live Three.js scene instead of the PNG — same positions, same colours, now with depth.'
++                : 'Hidden — Home shows the original PNG. Switch on to see the Three.js version in its place.'}
++            </p>
++            <Link to="/home" className="text-style-body-small mt-8 inline-flex items-center gap-6 font-medium text-text-brand">
++              Open Home (bottom of the page) <ExternalLink size={13} />
++            </Link>
++          </div>
++        </div>
++        <Toggle checked={on} onChange={(next) => setFlag(NETWORK3D_FLAG, next)} label="3D network" />
++      </div>
++      {on && (
++        <div className="mt-12 flex items-center justify-between gap-16 rounded-12 bg-background-elevated px-12 py-10">
++          <div className="min-w-0">
++            <p className="text-style-body-small font-medium text-text-primary">Motion</p>
++            <p className="text-style-caption text-text-secondary">
++              {motion
++                ? 'Slow orbit that follows the pointer, dashes flowing to the figure, halos breathing. Pauses off-screen and for reduced-motion users.'
++                : 'Held still at its rest pose — looks exactly like the PNG.'}
++            </p>
++          </div>
++          <Toggle checked={motion} onChange={(next) => setFlag(NETWORK3D_MOTION_FLAG, next)} label="3D network motion" />
++        </div>
++      )}
++      {dirty && (
++        <p className="text-style-caption mt-12 text-text-secondary">
++          Changed here but not published — only this browser follows it. Press Publish for everyone above.
++        </p>
++      )}
++    </section>
++  )
++}
+diff --git a/src/pages/HomePage.tsx b/src/pages/HomePage.tsx
+index 8723a3e..59c3863 100644
+--- a/src/pages/HomePage.tsx
++++ b/src/pages/HomePage.tsx
+@@ -28,6 +28,8 @@ import logoHomepage from '../assets/logo-homepage.svg'
+ import { FeatureCard } from '../components/ui/FeatureCard'
+ import { SessionGridCard } from '../components/ui/SessionGridCard'
+ import { useFeatureFlags } from '../demo/FeatureFlags'
++import { NETWORK3D_FLAG, NETWORK3D_MOTION_FLAG } from '../demo/modules'
++import { Network3D } from '../components/network3d/Network3D'
+ import type { CoverKey } from '../lib/photos'
+ import type { CategoryFilter } from '../lib/sessions'
+ import { CATEGORY_FILTERS, categoryLabel, sessionsInCategory } from '../lib/sessions'
+@@ -580,7 +582,13 @@ export function HomePage() {
+ 
+               The figure was a hand-drawn SVG approximation of this artwork —
+               replaced with the real export, supplied directly. */}
+-          <img src={aureliaNetwork} alt="" className="w-full" />
++          {/* U035: the same artwork as a live Three.js scene, switched on from
++              /__demo ("3D network"). Off, this is the PNG exactly as before. */}
++          {isEnabled(NETWORK3D_FLAG) ? (
++            <Network3D fallback={aureliaNetwork} motion={isEnabled(NETWORK3D_MOTION_FLAG)} />
++          ) : (
++            <img src={aureliaNetwork} alt="" className="w-full" />
++          )}
+ 
+           {/* Figma "Frame 45" in the last Section — 223 tall, radius 20, 40
+               above and below, 32 between the words and the button and 4

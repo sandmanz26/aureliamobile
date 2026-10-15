@@ -1,0 +1,181 @@
+diff --git a/scripts/network3d/.gitignore b/scripts/network3d/.gitignore
+new file mode 100644
+index 0000000..45b4b25
+--- /dev/null
++++ b/scripts/network3d/.gitignore
+@@ -0,0 +1,2 @@
++nodes.json
++soft.json
+diff --git a/scripts/network3d/README.md b/scripts/network3d/README.md
+new file mode 100644
+index 0000000..d8ee862
+--- /dev/null
++++ b/scripts/network3d/README.md
+@@ -0,0 +1,17 @@
++# network3d — measuring the Home network artwork (U035)
++
++`src/components/network3d/` rebuilds `src/assets/aurelia-network.png` in
++Three.js. Its inputs are measured from that PNG by these scripts, run from
++the repo root (Python 3 with numpy, scipy, scikit-image, Pillow):
++
++```bash
++python3 scripts/network3d/extract.py   # node blobs        -> scripts/network3d/nodes.json
++python3 scripts/network3d/soft.py      # radius/softness   -> scripts/network3d/soft.json
++python3 scripts/network3d/head.py      # figure cut-out + relief -> head.png, head-depth.png
++python3 scripts/network3d/gen.py       # -> src/components/network3d/networkData.ts
++```
++
++The edge list in `gen.py` (`D` dashed, `S` solid) was read off the artwork by
++tracing from each node and a Hough pass, then checked by rendering the scene
++at rest and pixel-diffing it against the PNG (mean |Δ| ≈ 0.9/255 at 778px).
++If the artwork changes, re-run all four and re-check the edge list.
+diff --git a/scripts/network3d/extract.py b/scripts/network3d/extract.py
+new file mode 100644
+index 0000000..12217fc
+--- /dev/null
++++ b/scripts/network3d/extract.py
+@@ -0,0 +1,27 @@
++import numpy as np, json
++from PIL import Image
++from scipy import ndimage
++from skimage import measure
++im=np.array(Image.open('src/assets/aurelia-network.png')).astype(float)
++A=im[...,3]; H,W=A.shape
++# silhouette: big component of alpha>100
++lab,n=ndimage.label(A>100)
++sizes=ndimage.sum(np.ones_like(A),lab,range(1,n+1))
++head=lab==(np.argmax(sizes)+1)
++print('head px',head.sum())
++ys,xs=np.nonzero(head); print('head bbox',xs.min(),xs.max(),ys.min(),ys.max())
++# blobs: everything else alpha>150
++rest=(A>150)&~ndimage.binary_dilation(head,iterations=1)
++lab2,n2=ndimage.label(rest)
++nodes=[]
++for i in range(1,n2+1):
++  m=lab2==i; area=m.sum()
++  if area<2: continue
++  ys,xs=np.nonzero(m)
++  cx,cy=xs.mean(),ys.mean(); r=np.sqrt(area/np.pi)
++  # colour at centre (premultiplied by alpha)
++  c=im[int(round(cy)),int(round(cx))]
++  nodes.append(dict(x=round(cx,1),y=round(cy,1),r=round(r,2),area=int(area),rgba=[int(v) for v in c]))
++nodes.sort(key=lambda n:-n['area'])
++for nd in nodes: print(nd)
++json.dump(dict(nodes=nodes),open('scripts/network3d/nodes.json','w'))
+diff --git a/scripts/network3d/gen.py b/scripts/network3d/gen.py
+new file mode 100644
+index 0000000..8ce3683
+--- /dev/null
++++ b/scripts/network3d/gen.py
+@@ -0,0 +1,52 @@
++import numpy as np, json
++from PIL import Image
++im=np.array(Image.open('src/assets/aurelia-network.png')).astype(float); A=im[...,3]; H,W=A.shape
++soft=json.load(open('scripts/network3d/soft.json'))
++N=json.load(open('scripts/network3d/nodes.json'))['nodes']
++P=[(n['x'],n['y']) for n in N]
++def pt(e): return P[e] if isinstance(e,int) else e
++def rad(e): return (N[e]['r']+(3 if N[e]['r']>6 else 1.2)) if isinstance(e,int) else 0.5
++def measure(a,b):
++  p,q=pt(a),pt(b); d=np.hypot(q[0]-p[0],q[1]-p[1]); nx,ny=-(q[1]-p[1])/d,(q[0]-p[0])/d; vals=[]
++  for t in np.linspace(0,1,int(d*3)):
++    if t*d<rad(a) or (1-t)*d<rad(b): continue
++    x=p[0]+t*(q[0]-p[0]); y=p[1]+t*(q[1]-p[1])
++    vals.append(max(A[min(H-1,max(0,int(round(y+ny*o)))),min(W-1,max(0,int(round(x+nx*o))))] for o in (-0.8,0,0.8)))
++  v=np.array(vals); on=v[v>12]
++  return float(np.percentile(on,85))/255 if len(on)>3 else 0.15
++H_=('head',)
++D=[(0,1),(4,0),(0,(205,87.5)),(3,1),(1,(205.5,55.8)),(2,3),(2,7),(4,2),(2,(135.3,75)),(2,(140.2,87.1)),((157,33.3),1)]
++S=[(0,26),(0,8),(0,11),(1,27),(27,29),(1,29),(29,(205,69)),((57.5,54),(124,58.8)),((151.8,0),6),((161,0),7),(4,7),(2,16),(16,(0,36.5)),(2,25),(2,28),(2,(35,102)),(28,18),(28,24),(18,24),(24,15),(3,30),(30,13),(13,(36,0)),(19,25),(25,12),(25,21),(21,12),(9,10),(9,11),(10,11),(10,(321.5,0)),(17,22),(17,(362,33.2)),(22,(362,37.5)),((296,3),17),(14,26),(26,23),(26,20),(20,23)]
++headpts={(205,87.5),(205.5,55.8),(135.3,75),(140.2,87.1),(205,69),(157,33.3)}
++def hexs(c): return '#%02X%02X%02X'%tuple(c)
++lines=[]
++lines.append("// GENERATED from src/assets/aurelia-network.png by measuring it (U035) —")
++lines.append("// positions in the artwork's own 362×155 pixel space, colours sampled.")
++lines.append("// Regenerate rather than hand-edit if the artwork changes.")
++lines.append("")
++lines.append("export type NodeKind = 'hub' | 'bokeh' | 'dot'")
++lines.append("export interface NetNode { x: number; y: number; r: number; soft: number; color: string; kind: NodeKind }")
++lines.append("/** An edge end: a node index, or a point (frame edge, head outline, a line that fades out). */")
++lines.append("export type End = number | readonly [number, number]")
++lines.append("export interface NetEdge { a: End; b: End; dashed: boolean; opacity: number; head?: boolean }")
++lines.append("")
++lines.append("export const ART = { width: 362, height: 155 } as const")
++lines.append("")
++lines.append("export const NODES: NetNode[] = [")
++for (i,x,y,r50,sw,peak,rgb) in soft:
++  kind='hub' if i<5 else 'bokeh' if i<9 else 'dot'
++  r = 6.5 if kind=='hub' else r50
++  s = 1.0 if kind=='hub' else max(0.8,sw)
++  lines.append(f"  {{ x: {x}, y: {y}, r: {round(r,2)}, soft: {round(s,2)}, color: '{hexs(rgb)}', kind: '{kind}' }}, // {i}")
++lines.append("]")
++lines.append("")
++lines.append("export const EDGES: NetEdge[] = [")
++def endstr(e): return str(e) if isinstance(e,int) else f"[{e[0]}, {e[1]}]"
++for dashed,L in ((True,D),(False,S)):
++  for a,b in L:
++    o=measure(a,b)
++    head = (not isinstance(b,int) and tuple(b) in headpts) or (not isinstance(a,int) and tuple(a) in headpts)
++    lines.append(f"  {{ a: {endstr(a)}, b: {endstr(b)}, dashed: {str(dashed).lower()}, opacity: {round(o,2)}{', head: true' if head else ''} }},")
++lines.append("]")
++open('src/components/network3d/networkData.ts','w').write('\n'.join(lines)+'\n')
++print('wrote src/components/network3d/networkData.ts')
+diff --git a/scripts/network3d/head.py b/scripts/network3d/head.py
+new file mode 100644
+index 0000000..bc7cd31
+--- /dev/null
++++ b/scripts/network3d/head.py
+@@ -0,0 +1,21 @@
++import numpy as np
++from PIL import Image
++from scipy import ndimage
++src=Image.open('src/assets/aurelia-network.png')
++im=np.array(src).astype(float); A=im[...,3]
++lab,n=ndimage.label(A>100); sizes=ndimage.sum(np.ones_like(A),lab,range(1,n+1)); head=lab==(np.argmax(sizes)+1)
++# soft mask: the head plus its blurred rim (4px), nothing else
++dist_out=ndimage.distance_transform_edt(~head)
++keep=np.clip(1-(dist_out-2)/3,0,1)
++x0,x1,y0,y1=114,256,30,155
++out=im.copy(); out[...,3]=A*keep
++crop=out[y0:y1,x0:x1].astype(np.uint8)
++Image.fromarray(crop,'RGBA').save('src/components/network3d/head.png',optimize=True)
++# depth: inflate the silhouette — distance to the edge, eased, smoothed
++d=ndimage.distance_transform_edt(head)
++d=ndimage.gaussian_filter(d,2.0)
++h=np.sqrt(np.clip(d/ d.max(),0,1))
++# the cut at the bottom edge is not a real edge: keep the body thick there
++dep=(h*255)[y0:y1,x0:x1].astype(np.uint8)
++Image.fromarray(dep,'L').save('src/components/network3d/head-depth.png',optimize=True)
++print('crop',x1-x0,y1-y0,'centre',(x0+x1)/2,(y0+y1)/2)
+diff --git a/scripts/network3d/soft.py b/scripts/network3d/soft.py
+new file mode 100644
+index 0000000..712b450
+--- /dev/null
++++ b/scripts/network3d/soft.py
+@@ -0,0 +1,26 @@
++import numpy as np, json
++from PIL import Image
++im=np.array(Image.open('src/assets/aurelia-network.png')).astype(float)
++A=im[...,3]; H,W=A.shape
++nodes=json.load(open('scripts/network3d/nodes.json'))['nodes']
++def a(x,y):
++  if x<0 or y<0 or x>W-1.001 or y>H-1.001: return np.nan
++  x0,y0=int(x),int(y); fx,fy=x-x0,y-y0
++  return A[y0,x0]*(1-fx)*(1-fy)+A[y0,x0+1]*fx*(1-fy)+A[y0+1,x0]*(1-fx)*fy+A[y0+1,x0+1]*fx*fy
++res=[]
++for i,n in enumerate(nodes):
++  rs=np.arange(0,9,0.25); prof=[]
++  for r in rs:
++    v=[a(n['x']+r*np.cos(t),n['y']+r*np.sin(t)) for t in np.linspace(0,2*np.pi,32,endpoint=False)]
++    v=[x for x in v if not np.isnan(x)]
++    prof.append(np.median(v) if v else np.nan)
++  prof=np.array(prof)
++  peak=np.nanmax(prof[:4])
++  def cross(level):
++    for k in range(len(rs)):
++      if prof[k]<level: return rs[k]
++    return rs[-1]
++  r50=cross(peak*0.5); r90=cross(peak*0.9); r10=cross(peak*0.1)
++  res.append((i,round(n['x'],1),round(n['y'],1),round(r50,2),round(r10-r90,2),int(peak),n['rgba'][:3]))
++  print(res[-1])
++json.dump(res,open('scripts/network3d/soft.json','w'))

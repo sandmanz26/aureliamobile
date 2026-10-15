@@ -239,6 +239,14 @@ position on it, state, timing, rage/dead, and what it did in the next 700ms.
 It stores labels and positions, never field values — keep it that way. Flag `clickInsights` turns
 it off; like annotations it is kept out of `DEMO_MODULES`.
 
+**Home's closing network artwork has a Three.js twin, off by default.**
+`/__demo` → "3D network" swaps the PNG for `src/components/network3d/` (with a
+Motion sub-switch). It is *measured* from `aurelia-network.png` — node and
+line data in the generated `networkData.ts`, the figure is the PNG's own
+pixels on a relief — so do not retune colours by eye; re-run
+`scripts/network3d/` if the artwork changes. Colour management is disabled
+in that chunk on purpose: values go to the screen as sampled.
+
 **A shared password sits in front of the site, but not in front of `/__demo`.**
 The console that owns the switch stays open so nobody can shut themselves out of
 it — which also means that URL is a way around the lock for anyone who knows it.
