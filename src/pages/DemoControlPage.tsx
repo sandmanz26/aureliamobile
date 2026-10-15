@@ -1,8 +1,8 @@
-import { CloudOff, CloudUpload, ExternalLink, Lock, PencilLine, RotateCcw, Undo2, Unlock } from 'lucide-react'
+import { CloudOff, CloudUpload, ExternalLink, Lock, MousePointerClick, PencilLine, RotateCcw, Undo2, Unlock } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import type { ModuleKind } from '../demo/modules'
-import { ANNOTATIONS_FLAG, DEMO_MODULES, MOBILE_WEB_BREAKPOINT, SITE_LOCK_FLAG } from '../demo/modules'
+import { ANNOTATIONS_FLAG, CLICKS_FLAG, DEMO_MODULES, MOBILE_WEB_BREAKPOINT, SITE_LOCK_FLAG } from '../demo/modules'
 import { SITE_PASSWORD, forgetUnlock, rememberUnlock } from '../demo/siteLock'
 import { BuildBadge } from '../components/ui/BuildBadge'
 import { BuildStamp } from '../components/ui/BuildStamp'
@@ -184,6 +184,8 @@ export function DemoControlPage() {
         <SiteLockCard />
 
         <AnnotationsCard />
+
+        <InsightsCard />
 
         {(['consumer', 'admin'] as ModuleKind[]).map((kind) => (
         <section key={kind} className="mt-24 flex flex-col gap-12">
@@ -375,6 +377,44 @@ function AnnotationsCard() {
           ? 'Changed here but not published — only this browser sees it. Press Publish for everyone above.'
           : `Never shown at ${MOBILE_WEB_BREAKPOINT}px and wider, nor on this console. Notes stay in each reviewer’s browser; the .txt is how they travel.`}
       </p>
+    </section>
+  )
+}
+
+function InsightsCard() {
+  const { flags, setFlag, dirty } = useFeatureFlags()
+  const on = flags[CLICKS_FLAG] !== false
+
+  return (
+    <section className="mt-16 rounded-16 border border-border-subtle bg-surface-default p-16">
+      <div className="flex flex-wrap items-start justify-between gap-16">
+        <div className="flex min-w-0 gap-12">
+          <span
+            className={`flex size-36 shrink-0 items-center justify-center rounded-full ${
+              on ? 'bg-brand-default text-text-strong' : 'bg-background-elevated text-icon-default'
+            }`}
+          >
+            <MousePointerClick size={17} />
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-style-body font-semibold text-text-primary">Click insights</h2>
+            <p className="text-style-body-small mt-2 text-text-secondary">
+              {on
+                ? 'Recording anonymous taps and screen-to-screen moves on this deployment — no typed text, no names. Read them back as top taps, paths and a heatmap over the real screen.'
+                : 'Off — nothing is recorded.'}
+            </p>
+            <Link to="/__demo/insights" className="text-style-body-small mt-8 inline-flex items-center gap-6 font-medium text-text-brand">
+              Open click insights <ExternalLink size={13} />
+            </Link>
+          </div>
+        </div>
+        <Toggle checked={on} onChange={(next) => setFlag(CLICKS_FLAG, next)} label="Click insights" />
+      </div>
+      {dirty && (
+        <p className="text-style-caption mt-12 text-text-secondary">
+          Changed here but not published — only this browser follows it. Press Publish for everyone above.
+        </p>
+      )}
     </section>
   )
 }

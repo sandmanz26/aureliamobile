@@ -11,8 +11,10 @@ import { PageSkeleton } from './components/ui/PageSkeleton'
 import { FeatureFlagsProvider } from './demo/FeatureFlags'
 import { ModuleGuard } from './demo/ModuleGuard'
 import { DemoAnnotator } from './demo/annotations/DemoAnnotator'
+import { ClickTracker } from './demo/insights/ClickTracker'
 import { AppLayout } from './layouts/AppLayout'
 import { DemoControlPage } from './pages/DemoControlPage'
+import { InsightsPage } from './pages/InsightsPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
@@ -83,6 +85,7 @@ export default function App() {
         <Routes>
           {/* Unlisted presenter console — see src/demo/modules.ts */}
           <Route path="/__demo" element={<DemoControlPage />} />
+          <Route path="/__demo/insights" element={<InsightsPage />} />
 
           {/* Unlisted layout probes — dummy business, no Aurelia content, not
               linked from anywhere in the app. See src/pages/dev/. */}
@@ -440,6 +443,8 @@ export default function App() {
         </Routes>
         {/* /__demo's "Review annotations" — renders nothing unless switched on there. */}
         <DemoAnnotator />
+        {/* /__demo's "Click insights" — records taps; ?heatmap draws them back. */}
+        <ClickTracker />
         </ChatSessionProvider>
         </AudioPlayerProvider>
       </AuthProvider>

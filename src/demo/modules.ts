@@ -265,7 +265,7 @@ export type FlagState = Record<string, boolean>
  * meant to be seen.
  */
 export function defaultFlags(): FlagState {
-  const flags: FlagState = { [SITE_LOCK_FLAG]: true, [ANNOTATIONS_FLAG]: false }
+  const flags: FlagState = { [SITE_LOCK_FLAG]: true, [ANNOTATIONS_FLAG]: false, [CLICKS_FLAG]: true }
   for (const mod of DEMO_MODULES) {
     flags[mod.id] = mod.built && !mod.unreleased
     for (const feature of mod.features ?? []) {
@@ -303,6 +303,14 @@ export const SITE_LOCK_FLAG = 'siteLock'
  * MOBILE_WEB_BREAKPOINT — the mobile web layout — and never on /__demo itself.
  */
 export const ANNOTATIONS_FLAG = 'annotations'
+
+/**
+ * Click insights — records anonymous taps and screen-to-screen moves so they
+ * can be read back at /__demo/insights (U032). A tool, like annotations, so it
+ * stays out of DEMO_MODULES and Enable/Disable all. Defaults ON: the point is
+ * to have data from people who were never told to switch anything on.
+ */
+export const CLICKS_FLAG = 'clickInsights'
 
 /** The overlay shows below this width (px), i.e. at 699 and not at 700. */
 export const MOBILE_WEB_BREAKPOINT = 700
