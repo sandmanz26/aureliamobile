@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-15 — Fix: Quick Start cards squashed on desktop in v2 (U030)
+
+Quick Start cards got `lg:min-h-[160px]`. In v2 the section sits alone, so the desktop `lg:h-auto` collapsed them to 56px and their content overlapped. v1 and mobile unchanged. Branches: `web_app`, `admin_cms`. Not `web_prod` yet.
+
 ### 2026-10-14 — `web_prod` fast-forwarded to `web_app` (U029)
 
 On request, production moved from `803d15f` to this commit, carrying U021–U028 (favicon, SVG icon set, sidebar logo and notification bell, Google-Maps-style player sheet, animated generating card by default, Home vector logo). Production renders v2 (pinned), no picker, password `AURELIA2.0`, version 0.1.0. Branches: `web_app`, `admin_cms`, `web_prod`.

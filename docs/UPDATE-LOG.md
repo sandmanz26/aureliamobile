@@ -67,6 +67,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U027 | `955d004` | 2026-10-14 16:22 | Home logo: supplied vector replaces the blurry upscaled PNG. | [patch](patches/U027-955d004.patch) |
 | U028 | `75f3664` | 2026-10-14 16:23 | Drawer/sidebar Invite a Friend + Help → SVG icons (user-add, message-question). | [patch](patches/U028-75f3664.patch) |
 | U029 | (this log commit) | 2026-10-14 | Production: `web_prod` fast-forwarded from `803d15f` to `web_app` (U021–U028 and everything since U020). | — |
+| U030 | `9b61806` | 2026-10-15 10:46 | Fix: Home Quick Start cards squashed to 56px on desktop in v2. | [patch](patches/U030-9b61806.patch) |
 
 ## Entries
 
@@ -399,3 +400,13 @@ Production (`web_prod`) is never touched by these updates unless asked.
 - **Production specifics:** v2 behaviour with no picker/staging bar; password stays `AURELIA2.0` (U013); version `0.1.0`. A production-mode build (`VERCEL_ENV=production`, branch `web_prod`) compiled before the push.
 - **Staging differs from production only by:** the StagingBar + picker (default v1 there) and the `AURELIA3.0` password.
 - **Undo:** `git push --force-with-lease origin 803d15f:web_prod` — only on explicit request (rewrites the production branch). Individual changes are reverted via their own U-entries, then re-promoted.
+
+### U030 — Fix: Quick Start cards broken on desktop (v2)
+
+- **Commit:** `9b61806` · pushed 2026-10-15 10:46:09 UTC · `web_app` + `admin_cms` · **not yet on `web_prod`** (production still at `4140e59`, which has this bug)
+- **Patch:** [patches/U030-9b61806.patch](patches/U030-9b61806.patch)
+- **Report:** screenshot of desktop Home — the Quick Start cards were squashed; the play button, "Create" pill and the title/subtitle overlapped each other.
+- **Cause:** the card is `lg:h-auto`: on desktop it was designed to stretch to the height of the Ongoing Live Sessions map beside it (v1 grid; card ≈ 388px). In v2 (U012) Quick Start sits alone under the Ask field, so nothing stretches it and it collapsed to its content height — **56px** measured at 1440 and 1024 — while the title is absolutely positioned at the bottom, so it landed on top of the play/Create row. Production is pinned to v2, so production showed it too.
+- **Change:** `src/pages/HomePage.tsx` — card class `lg:h-auto` → `lg:h-auto lg:min-h-[160px]` (the mobile height). Where a sibling stretches the row taller (v1 desktop) the min is inert.
+- **Verified:** card height at 1440 v2 / 1024 v2: 56 → 160; 1440 v1 still 388; 820 and 402 (v1 and v2) unchanged. Screenshots of the Quick Start section identical before/after for v1 1440, 402 v1/v2 and 820 v2. Typecheck clean.
+- **Revert:** `git revert --no-commit 9b61806 && git checkout HEAD -- docs/`.
