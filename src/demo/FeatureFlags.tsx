@@ -1,10 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { FlagState } from './modules'
-import { ANNOTATIONS_FLAG, CLICKS_FLAG, SITE_LOCK_FLAG, STORAGE_KEY, defaultFlags } from './modules'
+import { ANNOTATIONS_FLAG, CLICKS_FLAG, NETWORK3D_FLAG, NETWORK3D_MOTION_FLAG, SITE_LOCK_FLAG, STORAGE_KEY, defaultFlags } from './modules'
 
 /** Flags that are tools around the demo rather than screens in it. */
-const NOT_A_MODULE = [SITE_LOCK_FLAG, ANNOTATIONS_FLAG, CLICKS_FLAG]
+const NOT_A_MODULE = [SITE_LOCK_FLAG, ANNOTATIONS_FLAG, CLICKS_FLAG, NETWORK3D_FLAG, NETWORK3D_MOTION_FLAG]
 
 /**
  * Two layers of state, deliberately separate:

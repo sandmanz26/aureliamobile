@@ -1,8 +1,16 @@
-import { CloudOff, CloudUpload, ExternalLink, Lock, MousePointerClick, PencilLine, RotateCcw, Undo2, Unlock } from 'lucide-react'
+import { Box, CloudOff, CloudUpload, ExternalLink, Lock, MousePointerClick, PencilLine, RotateCcw, Undo2, Unlock } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import type { ModuleKind } from '../demo/modules'
-import { ANNOTATIONS_FLAG, CLICKS_FLAG, DEMO_MODULES, MOBILE_WEB_BREAKPOINT, SITE_LOCK_FLAG } from '../demo/modules'
+import {
+  ANNOTATIONS_FLAG,
+  CLICKS_FLAG,
+  DEMO_MODULES,
+  MOBILE_WEB_BREAKPOINT,
+  NETWORK3D_FLAG,
+  NETWORK3D_MOTION_FLAG,
+  SITE_LOCK_FLAG,
+} from '../demo/modules'
 import { SITE_PASSWORD, forgetUnlock, rememberUnlock } from '../demo/siteLock'
 import { BuildBadge } from '../components/ui/BuildBadge'
 import { BuildStamp } from '../components/ui/BuildStamp'
@@ -186,6 +194,7 @@ export function DemoControlPage() {
         <AnnotationsCard />
 
         <InsightsCard />
+        <Network3DCard />
 
         {(['consumer', 'admin'] as ModuleKind[]).map((kind) => (
         <section key={kind} className="mt-24 flex flex-col gap-12">
@@ -410,6 +419,58 @@ function InsightsCard() {
         </div>
         <Toggle checked={on} onChange={(next) => setFlag(CLICKS_FLAG, next)} label="Click insights" />
       </div>
+      {dirty && (
+        <p className="text-style-caption mt-12 text-text-secondary">
+          Changed here but not published — only this browser follows it. Press Publish for everyone above.
+        </p>
+      )}
+    </section>
+  )
+}
+
+function Network3DCard() {
+  const { flags, setFlag, dirty } = useFeatureFlags()
+  const on = flags[NETWORK3D_FLAG] === true
+  const motion = flags[NETWORK3D_MOTION_FLAG] !== false
+
+  return (
+    <section className="mt-16 rounded-16 border border-border-subtle bg-surface-default p-16">
+      <div className="flex flex-wrap items-start justify-between gap-16">
+        <div className="flex min-w-0 gap-12">
+          <span
+            className={`flex size-36 shrink-0 items-center justify-center rounded-full ${
+              on ? 'bg-brand-default text-text-strong' : 'bg-background-elevated text-icon-default'
+            }`}
+          >
+            <Box size={17} />
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-style-body font-semibold text-text-primary">3D network</h2>
+            <p className="text-style-body-small mt-2 text-text-secondary">
+              {on
+                ? 'Home’s closing artwork (the figure among the orange nodes) is a live Three.js scene instead of the PNG — same positions, same colours, now with depth.'
+                : 'Hidden — Home shows the original PNG. Switch on to see the Three.js version in its place.'}
+            </p>
+            <Link to="/home" className="text-style-body-small mt-8 inline-flex items-center gap-6 font-medium text-text-brand">
+              Open Home (bottom of the page) <ExternalLink size={13} />
+            </Link>
+          </div>
+        </div>
+        <Toggle checked={on} onChange={(next) => setFlag(NETWORK3D_FLAG, next)} label="3D network" />
+      </div>
+      {on && (
+        <div className="mt-12 flex items-center justify-between gap-16 rounded-12 bg-background-elevated px-12 py-10">
+          <div className="min-w-0">
+            <p className="text-style-body-small font-medium text-text-primary">Motion</p>
+            <p className="text-style-caption text-text-secondary">
+              {motion
+                ? 'Slow orbit that follows the pointer, dashes flowing to the figure, halos breathing. Pauses off-screen and for reduced-motion users.'
+                : 'Held still at its rest pose — looks exactly like the PNG.'}
+            </p>
+          </div>
+          <Toggle checked={motion} onChange={(next) => setFlag(NETWORK3D_MOTION_FLAG, next)} label="3D network motion" />
+        </div>
+      )}
       {dirty && (
         <p className="text-style-caption mt-12 text-text-secondary">
           Changed here but not published — only this browser follows it. Press Publish for everyone above.

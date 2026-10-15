@@ -265,7 +265,13 @@ export type FlagState = Record<string, boolean>
  * meant to be seen.
  */
 export function defaultFlags(): FlagState {
-  const flags: FlagState = { [SITE_LOCK_FLAG]: true, [ANNOTATIONS_FLAG]: false, [CLICKS_FLAG]: true }
+  const flags: FlagState = {
+    [SITE_LOCK_FLAG]: true,
+    [ANNOTATIONS_FLAG]: false,
+    [CLICKS_FLAG]: true,
+    [NETWORK3D_FLAG]: false,
+    [NETWORK3D_MOTION_FLAG]: true,
+  }
   for (const mod of DEMO_MODULES) {
     flags[mod.id] = mod.built && !mod.unreleased
     for (const feature of mod.features ?? []) {
@@ -311,6 +317,17 @@ export const ANNOTATIONS_FLAG = 'annotations'
  * to have data from people who were never told to switch anything on.
  */
 export const CLICKS_FLAG = 'clickInsights'
+
+/**
+ * The Home closing-CTA network artwork as a live Three.js scene instead of
+ * the PNG (U035; src/components/network3d/). Built to be animated later, so
+ * it is hidden until someone switches it on here — the PNG stays the default.
+ * `network3d.motion` is its sub-switch: on = gentle orbit, flowing dashes,
+ * breathing halos; off = the scene held at its rest pose (identical to the
+ * PNG). Kept out of DEMO_MODULES and Enable/Disable all, like the other tools.
+ */
+export const NETWORK3D_FLAG = 'network3d'
+export const NETWORK3D_MOTION_FLAG = 'network3d.motion'
 
 /** The overlay shows below this width (px), i.e. at 699 and not at 700. */
 export const MOBILE_WEB_BREAKPOINT = 700

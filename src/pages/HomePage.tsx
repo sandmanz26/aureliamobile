@@ -28,6 +28,8 @@ import logoHomepage from '../assets/logo-homepage.svg'
 import { FeatureCard } from '../components/ui/FeatureCard'
 import { SessionGridCard } from '../components/ui/SessionGridCard'
 import { useFeatureFlags } from '../demo/FeatureFlags'
+import { NETWORK3D_FLAG, NETWORK3D_MOTION_FLAG } from '../demo/modules'
+import { Network3D } from '../components/network3d/Network3D'
 import type { CoverKey } from '../lib/photos'
 import type { CategoryFilter } from '../lib/sessions'
 import { CATEGORY_FILTERS, categoryLabel, sessionsInCategory } from '../lib/sessions'
@@ -580,7 +582,13 @@ export function HomePage() {
 
               The figure was a hand-drawn SVG approximation of this artwork —
               replaced with the real export, supplied directly. */}
-          <img src={aureliaNetwork} alt="" className="w-full" />
+          {/* U035: the same artwork as a live Three.js scene, switched on from
+              /__demo ("3D network"). Off, this is the PNG exactly as before. */}
+          {isEnabled(NETWORK3D_FLAG) ? (
+            <Network3D fallback={aureliaNetwork} motion={isEnabled(NETWORK3D_MOTION_FLAG)} />
+          ) : (
+            <img src={aureliaNetwork} alt="" className="w-full" />
+          )}
 
           {/* Figma "Frame 45" in the last Section — 223 tall, radius 20, 40
               above and below, 32 between the words and the button and 4
