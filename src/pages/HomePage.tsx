@@ -187,7 +187,7 @@ export function HomePage() {
         {quickStartCards.map((card) => (
           <div
             key={card.title}
-            className="relative h-[160px] w-[236px] shrink-0 overflow-hidden rounded-16 p-12 text-text-inverse lg:h-auto"
+            className="relative h-[160px] w-[236px] shrink-0 overflow-hidden rounded-16 p-12 text-text-inverse lg:h-auto lg:min-h-[160px]"
           >
             <CoverImage photo={card.photo} gradient={card.gradient} width={480} height={320} />
 
