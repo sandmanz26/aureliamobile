@@ -406,7 +406,7 @@ export function ExplorePage() {
                 singular to match; the running challenge is CHALLENGES[0]. */}
             <SectionHeader title="Monthly Challenge!" />
             {challenge && (
-              <div className="relative mt-16 flex aspect-[362/240] w-full flex-col justify-end overflow-hidden rounded-24 p-16 text-text-inverse">
+              <div className="relative mt-16 flex aspect-[362/240] w-full flex-col justify-end overflow-hidden rounded-24 p-16 text-text-inverse lg:aspect-auto lg:h-[320px] lg:p-24">
                 <CoverImage photo={challenge.photo} gradient={challenge.gradient} width={760} height={520} />
                 {/* The whole card opens the challenge; Join sits above it. */}
                 <Link
