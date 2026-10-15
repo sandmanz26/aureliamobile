@@ -1,0 +1,17 @@
+diff --git a/src/demo/FeatureFlags.tsx b/src/demo/FeatureFlags.tsx
+index 084fbe7..5d2c187 100644
+--- a/src/demo/FeatureFlags.tsx
++++ b/src/demo/FeatureFlags.tsx
+@@ -1,10 +1,10 @@
+ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+ import type { ReactNode } from 'react'
+ import type { FlagState } from './modules'
+-import { ANNOTATIONS_FLAG, SITE_LOCK_FLAG, STORAGE_KEY, defaultFlags } from './modules'
++import { ANNOTATIONS_FLAG, CLICKS_FLAG, SITE_LOCK_FLAG, STORAGE_KEY, defaultFlags } from './modules'
+ 
+ /** Flags that are tools around the demo rather than screens in it. */
+-const NOT_A_MODULE = [SITE_LOCK_FLAG, ANNOTATIONS_FLAG]
++const NOT_A_MODULE = [SITE_LOCK_FLAG, ANNOTATIONS_FLAG, CLICKS_FLAG]
+ 
+ /**
+  * Two layers of state, deliberately separate:

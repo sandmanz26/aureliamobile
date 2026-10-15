@@ -69,6 +69,8 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U029 | (this log commit) | 2026-10-14 | Production: `web_prod` fast-forwarded from `803d15f` to `web_app` (U021–U028 and everything since U020). | — |
 | U030 | `9b61806` | 2026-10-15 10:46 | Fix: Home Quick Start cards squashed to 56px on desktop in v2. | [patch](patches/U030-9b61806.patch) |
 | U031 | `cb37df5` | 2026-10-15 10:48 | Desktop v2: Ongoing Live Sessions becomes a full-width map banner. | [patch](patches/U031-cb37df5.patch) |
+| U032 | `6c2d911` | 2026-10-15 10:54 | New tool: click insights — records screens + taps, review at `/__demo/insights` with per-screen heatmap. | [patch](patches/U032-6c2d911.patch) + [b](patches/U032b-15a4254.patch) |
+| U033 | `1df0c28` | 2026-10-15 10:54 | Explore: Monthly Challenge card 320px tall on desktop (was ~600px). | [patch](patches/U033-1df0c28.patch) |
 
 ## Entries
 
@@ -424,3 +426,33 @@ Production (`web_prod`) is never touched by these updates unless asked.
 - **Limit:** the map PNG is 543px wide, drawn at ~912px on desktop, so the dots are slightly soft; a larger export of `live-sessions-map.png` would fix it.
 - **Verified:** 1440 v2 screenshot — full-width banner, no empty sides, stats clear of the map; 1440 v1, 820 v2, 402 v1/v2 pixel-identical before/after. Typecheck clean.
 - **Tune:** `height` (600), `background-position`. **Revert:** `git revert --no-commit cb37df5 && git checkout HEAD -- docs/` (back to the 600px centred box).
+
+### U032 — Click insights: see how people use the app, and come back to it later
+
+- **Commit:** `6c2d911` · pushed 2026-10-15 10:54:33 UTC · `web_app` + `admin_cms` · not on `web_prod` yet
+- **Patch:** [patches/U032-6c2d911.patch](patches/U032-6c2d911.patch) + follow-up `15a4254` [patches/U032b-15a4254.patch](patches/U032b-15a4254.patch) (`src/demo/FeatureFlags.tsx`: `CLICKS_FLAG` added to `NOT_A_MODULE`, so Enable/Disable all on `/__demo` leaves the tracker alone)
+- **Request:** "buatlah semacam alat click detection agar saya bisa memahami bagaimana user bekerja dengan sistem kita, saya mau sebuah metode agar nantinya saya bisa melihat hasilnya lagi".
+- **Assumptions (the ask was open):**
+  - "Understand how users work" = which screens they open, in what order (paths), what they tap, and *where* on a screen they tap (heatmap). Not scroll depth, not session replay — those cost more and record far more than needed.
+  - "See the results again later" = stored on the server (Upstash KV, same store as flags/annotations), scoped per deployment exactly like `/api/config` — staging data never mixes with production. Exportable as CSV/JSON so a copy can live outside the store.
+  - Privacy: records the *label* of what was tapped (aria-label, placeholder, or the control's visible text) and coordinates — **never what anyone typed** into a field. No user id; one random id per browser tab (`sessionStorage`). Taps on the annotations tool and anything marked `data-insights-ignore` are skipped. `/__demo` itself is never recorded.
+  - On by default (flag `clickInsights`, toggle on `/__demo`), because data that starts collecting only after someone remembers to switch it on is data you do not have.
+- **Change:**
+  - `api/clicks.ts` (new) — `GET` returns the events; `POST {events}` appends (validated, max 200 per batch); `POST {clear:true}` deletes. Key `aurelia:insights:clicks` (+`:<branch>` off production); keeps the newest 20,000 events. `configured:false` without KV env vars.
+  - `src/demo/insights/tracker.ts` (new) — one capture-phase click listener + a `view` event per route change; batched every 8s and on tab hide (`sendBeacon`). Without a server it keeps the newest 3,000 events in `localStorage` (`aurelia.insights.clicks`). Taps that hit no control are labelled `(not a control) …` — useful for spotting things that look tappable and are not.
+  - `src/demo/insights/ClickTracker.tsx` (new) — installs the tracker; with `?heatmap` on any URL draws that screen's recorded taps as dots (same layout bucket only: mobile/tablet/desktop, because coordinates do not translate between them).
+  - `src/pages/InsightsPage.tsx` (new) at `/__demo/insights` — filters (today/7 days/all, device, design version), totals (sessions, screens, taps, taps per session), Screens (with a Heatmap link per screen), Top taps (per screen), Paths (screen → screen), Recent sessions (step by step), Refresh / CSV / JSON / Clear.
+  - `src/demo/modules.ts` — `CLICKS_FLAG = 'clickInsights'`, default on. `src/pages/DemoControlPage.tsx` — "Click insights" card (toggle + link). `src/App.tsx` — route + `<ClickTracker />`.
+- **No visual change** to any screen (the overlay renders only with `?heatmap`). Mobile untouched.
+- **Verified:** local (no KV) — taps on /home and /explore, 10 events stored locally, insights page shows sessions/screens/paths/top taps, `/explore?heatmap` draws the dots at the tapped spot. Typecheck clean; lint warnings only, of the kind already present elsewhere.
+- **Revert:** `git revert --no-commit 15a4254 6c2d911 && git checkout HEAD -- docs/`. Collected data stays in KV until cleared from the page (or `DEL aurelia:insights:clicks[:branch]`).
+
+### U033 — Explore: Monthly Challenge smaller on desktop
+
+- **Commit:** `1df0c28` · pushed 2026-10-15 10:54:33 UTC · `web_app` + `admin_cms` · not on `web_prod` yet
+- **Patch:** [patches/U033-1df0c28.patch](patches/U033-1df0c28.patch)
+- **Request:** "monthly challenge di desktop juga terlalu besar".
+- **Cause:** the card keeps the mobile frame's `aspect-[362/240]` at every width, so in the ~912px desktop column it was ~605px tall.
+- **Change:** `src/pages/ExplorePage.tsx` — card adds `lg:aspect-auto lg:h-[320px] lg:p-24` (a banner; inner padding grows to match). Applies in v1 and v2.
+- **Verified:** 402px 362×240 (unchanged), 820px unchanged (below `lg:`), 1440px 912×320 v1 / 898×315 v2 (v2's page scale). Typecheck clean.
+- **Tune:** `lg:h-[320px]`. **Revert:** `git revert --no-commit 1df0c28 && git checkout HEAD -- docs/`.

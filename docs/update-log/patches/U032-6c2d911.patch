@@ -1,0 +1,869 @@
+diff --git a/api/clicks.ts b/api/clicks.ts
+new file mode 100644
+index 0000000..589c654
+--- /dev/null
++++ b/api/clicks.ts
+@@ -0,0 +1,131 @@
++// Click insights — what people tap, and the path they take between screens.
++//
++// POST /api/clicks  { events: ClickEvent[] }  -> appends (capped list)
++// POST /api/clicks  { clear: true }           -> deletes this deployment's log
++// GET  /api/clicks                            -> every stored event
++//
++// Same Upstash KV and the same per-deployment scoping as api/annotations.ts:
++// production keeps the bare key, every other deployment appends its branch,
++// so staging rehearsal clicks never mix with production's. Without
++// KV_REST_API_URL/KV_REST_API_TOKEN it answers `configured: false` and the
++// client keeps events in localStorage instead.
++//
++// Unauthenticated like the other demo endpoints: anyone who finds it can read
++// or clear the log. Events carry no personal data (no typed text, no names) —
++// a random per-tab session id, the page, the element's visible label and a
++// position — which is what makes that acceptable for an internal tool.
++
++const BASE_KEY = 'aurelia:insights:clicks'
++const ENVIRONMENT = process.env.VERCEL_ENV ?? ''
++
++function keyFor() {
++  const ref = process.env.VERCEL_GIT_COMMIT_REF
++  if (!ENVIRONMENT || (ENVIRONMENT === 'production' && (!ref || ref === 'web_prod'))) return BASE_KEY
++  const suffix = (ref || ENVIRONMENT).replace(/[^a-zA-Z0-9._-]+/g, '-')
++  return `${BASE_KEY}:${suffix}`
++}
++
++const KEY = keyFor()
++/** The log keeps the newest this many events. */
++const MAX_EVENTS = 20000
++const MAX_BATCH = 200
++
++const URL_BASE = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL
++const TOKEN = process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN
++
++interface Req {
++  method?: string
++  body?: unknown
++}
++interface Res {
++  status: (code: number) => Res
++  json: (body: unknown) => void
++  setHeader: (name: string, value: string) => void
++}
++
++async function redis(command: (string | number)[]): Promise<unknown> {
++  const response = await fetch(URL_BASE!, {
++    method: 'POST',
++    headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
++    body: JSON.stringify(command),
++  })
++  if (!response.ok) throw new Error(`KV ${response.status}`)
++  const payload = (await response.json()) as { result?: unknown }
++  return payload.result
++}
++
++const str = (v: unknown, max: number) => typeof v === 'string' && v.length <= max
++const num = (v: unknown) => typeof v === 'number' && Number.isFinite(v)
++
++function isValidEvent(value: unknown): value is Record<string, unknown> {
++  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
++  const e = value as Record<string, unknown>
++  return (
++    (e.type === 'click' || e.type === 'view') &&
++    str(e.t, 40) &&
++    str(e.sid, 40) &&
++    str(e.page, 300) &&
++    num(e.ui) &&
++    num(e.vw) &&
++    num(e.vh) &&
++    (e.x === undefined || num(e.x)) &&
++    (e.y === undefined || num(e.y)) &&
++    (e.docH === undefined || num(e.docH)) &&
++    (e.label === undefined || str(e.label, 120)) &&
++    (e.tag === undefined || str(e.tag, 20)) &&
++    (e.href === undefined || str(e.href, 300)) &&
++    (e.from === undefined || str(e.from, 300))
++  )
++}
++
++export default async function handler(req: Req, res: Res) {
++  res.setHeader('Cache-Control', 'no-store, max-age=0')
++
++  if (!URL_BASE || !TOKEN) {
++    res.status(200).json({ configured: false, scope: KEY, events: null })
++    return
++  }
++
++  try {
++    if (req.method === 'GET') {
++      const raw = (await redis(['LRANGE', KEY, 0, -1])) as string[] | null
++      const events = (raw ?? []).flatMap((line) => {
++        try {
++          return [JSON.parse(line)]
++        } catch {
++          return []
++        }
++      })
++      res.status(200).json({ configured: true, scope: KEY, events })
++      return
++    }
++
++    if (req.method === 'POST') {
++      const body = (typeof req.body === 'string' ? JSON.parse(req.body) : req.body) as
++        | { events?: unknown; clear?: unknown }
++        | undefined
++      if (body?.clear === true) {
++        await redis(['DEL', KEY])
++        res.status(200).json({ configured: true, scope: KEY, cleared: true })
++        return
++      }
++      const list = body?.events
++      if (!Array.isArray(list) || list.length > MAX_BATCH) {
++        res.status(400).json({ error: `Expected { events: ClickEvent[] } with at most ${MAX_BATCH}` })
++        return
++      }
++      const clean = list.filter(isValidEvent)
++      if (clean.length) {
++        await redis(['RPUSH', KEY, ...clean.map((e) => JSON.stringify(e))])
++        await redis(['LTRIM', KEY, -MAX_EVENTS, -1])
++      }
++      res.status(200).json({ configured: true, scope: KEY, stored: clean.length })
++      return
++    }
++
++    res.status(405).json({ error: 'Use GET or POST' })
++  } catch (error) {
++    console.error('api/clicks failed', error)
++    res.status(500).json({ error: 'Request failed' })
++  }
++}
+diff --git a/src/App.tsx b/src/App.tsx
+index 0d93a6b..11ee590 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -11,8 +11,10 @@ import { PageSkeleton } from './components/ui/PageSkeleton'
+ import { FeatureFlagsProvider } from './demo/FeatureFlags'
+ import { ModuleGuard } from './demo/ModuleGuard'
+ import { DemoAnnotator } from './demo/annotations/DemoAnnotator'
++import { ClickTracker } from './demo/insights/ClickTracker'
+ import { AppLayout } from './layouts/AppLayout'
+ import { DemoControlPage } from './pages/DemoControlPage'
++import { InsightsPage } from './pages/InsightsPage'
+ import { NotFoundPage } from './pages/NotFoundPage'
+ import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
+ import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
+@@ -83,6 +85,7 @@ export default function App() {
+         <Routes>
+           {/* Unlisted presenter console — see src/demo/modules.ts */}
+           <Route path="/__demo" element={<DemoControlPage />} />
++          <Route path="/__demo/insights" element={<InsightsPage />} />
+ 
+           {/* Unlisted layout probes — dummy business, no Aurelia content, not
+               linked from anywhere in the app. See src/pages/dev/. */}
+@@ -440,6 +443,8 @@ export default function App() {
+         </Routes>
+         {/* /__demo's "Review annotations" — renders nothing unless switched on there. */}
+         <DemoAnnotator />
++        {/* /__demo's "Click insights" — records taps; ?heatmap draws them back. */}
++        <ClickTracker />
+         </ChatSessionProvider>
+         </AudioPlayerProvider>
+       </AuthProvider>
+diff --git a/src/demo/insights/ClickTracker.tsx b/src/demo/insights/ClickTracker.tsx
+new file mode 100644
+index 0000000..5b34820
+--- /dev/null
++++ b/src/demo/insights/ClickTracker.tsx
+@@ -0,0 +1,81 @@
++import { useEffect, useRef, useState } from 'react'
++import { createPortal } from 'react-dom'
++import { useLocation, useNavigate } from 'react-router-dom'
++import { useFeatureFlags } from '../FeatureFlags'
++import { CLICKS_FLAG } from '../modules'
++import type { ClickEvent } from './tracker'
++import { installTracker, loadEvents, recordView } from './tracker'
++
++/**
++ * Mounts the click recorder (when /__demo's "Click insights" is on) and, when
++ * the URL carries `?heatmap`, draws the recorded taps for this screen back
++ * over it. Nothing is recorded on /__demo, nor while a heatmap is showing.
++ */
++export function ClickTracker() {
++  const { isEnabled } = useFeatureFlags()
++  const { pathname, search } = useLocation()
++  const heatmap = new URLSearchParams(search).has('heatmap')
++  const on = isEnabled(CLICKS_FLAG) && !pathname.startsWith('/__demo') && !heatmap
++  const last = useRef<string | null>(null)
++
++  useEffect(() => {
++    if (!on) return
++    return installTracker()
++  }, [on])
++
++  useEffect(() => {
++    if (!on) return
++    recordView(last.current)
++    last.current = pathname
++  }, [on, pathname])
++
++  return heatmap && !pathname.startsWith('/__demo') ? <Heatmap pathname={pathname} /> : null
++}
++
++/** Phones and desktops lay a screen out differently, so taps are only drawn
++ *  over the same kind of layout they were made on. */
++const layoutOf = (vw: number) => (vw < 640 ? 'mobile' : vw < 1024 ? 'tablet' : 'desktop')
++
++function Heatmap({ pathname }: { pathname: string }) {
++  const navigate = useNavigate()
++  const [events, setEvents] = useState<ClickEvent[] | null>(null)
++  const [docH, setDocH] = useState(() => document.documentElement.scrollHeight)
++  const layout = layoutOf(window.innerWidth)
++
++  useEffect(() => {
++    void loadEvents().then((r) => setEvents(r.events))
++    const id = window.setInterval(() => setDocH(document.documentElement.scrollHeight), 1000)
++    return () => window.clearInterval(id)
++  }, [])
++
++  const taps = (events ?? []).filter(
++    (e) => e.type === 'click' && e.page === pathname && layoutOf(e.vw) === layout && e.x !== undefined && e.y !== undefined,
++  )
++
++  return createPortal(
++    <div data-insights-ignore="">
++      <div className="pointer-events-none absolute left-0 top-0 z-[80] w-full" style={{ height: docH }}>
++        {taps.map((e, i) => (
++          <span
++            key={i}
++            className="absolute size-36 -translate-x-1/2 -translate-y-1/2 rounded-full"
++            style={{
++              left: `${e.x}%`,
++              top: e.y,
++              background: 'radial-gradient(circle, rgba(255,40,40,0.55) 0%, rgba(255,140,0,0.25) 45%, transparent 70%)',
++            }}
++          />
++        ))}
++      </div>
++      <div className="fixed bottom-16 left-1/2 z-[95] flex -translate-x-1/2 items-center gap-12 rounded-full bg-[#1B1006] px-16 py-10 text-[13px] text-white shadow-lg">
++        <span>
++          {events === null ? 'Loading taps…' : `${taps.length} ${taps.length === 1 ? 'tap' : 'taps'} on ${pathname} · ${layout}`}
++        </span>
++        <button type="button" className="rounded-full bg-white/15 px-10 py-4" onClick={() => navigate(pathname)}>
++          Close heatmap
++        </button>
++      </div>
++    </div>,
++    document.body,
++  )
++}
+diff --git a/src/demo/insights/tracker.ts b/src/demo/insights/tracker.ts
+new file mode 100644
+index 0000000..034c636
+--- /dev/null
++++ b/src/demo/insights/tracker.ts
+@@ -0,0 +1,198 @@
++import { readVersion } from '../../versions/versions'
++
++/**
++ * Click insights: a record of what people tap and how they move between
++ * screens, so it can be read back later in /__demo/insights.
++ *
++ * Two kinds of event, both small and anonymous:
++ * - `view`  — a screen was opened (with the screen it came from).
++ * - `click` — something was tapped: the nearest button/link/control, its
++ *   visible label, and where on the page it was (x as % of the window width,
++ *   y in page pixels) so a heatmap can be drawn back over the same screen.
++ *
++ * Never recorded: anything typed into a field, names or emails, the content
++ * of the page. The session id is random per browser tab.
++ *
++ * Events are batched and sent to /api/clicks every few seconds and when the
++ * tab is hidden. If the server has no store (`configured: false`) or can't be
++ * reached, they go to localStorage instead, so local and offline use still
++ * produce something to read.
++ */
++export interface ClickEvent {
++  type: 'click' | 'view'
++  t: string
++  sid: string
++  page: string
++  /** Design version on screen (staging v1/v2 switcher; 2 on production). */
++  ui: number
++  vw: number
++  vh: number
++  x?: number
++  y?: number
++  docH?: number
++  label?: string
++  tag?: string
++  href?: string
++  from?: string
++}
++
++export const LOCAL_KEY = 'aurelia.insights.clicks'
++const LOCAL_MAX = 3000
++const FLUSH_MS = 8000
++
++function sessionId() {
++  try {
++    let id = sessionStorage.getItem('aurelia.insights.sid')
++    if (!id) {
++      id = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4)
++      sessionStorage.setItem('aurelia.insights.sid', id)
++    }
++    return id
++  } catch {
++    return 'anon'
++  }
++}
++
++let queue: ClickEvent[] = []
++let serverOff = false
++let timer: number | undefined
++
++function base(type: ClickEvent['type']): ClickEvent {
++  return {
++    type,
++    t: new Date().toISOString(),
++    sid: sessionId(),
++    page: window.location.pathname,
++    ui: readVersion(),
++    vw: window.innerWidth,
++    vh: window.innerHeight,
++  }
++}
++
++export function readLocal(): ClickEvent[] {
++  try {
++    return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]') as ClickEvent[]
++  } catch {
++    return []
++  }
++}
++
++function saveLocal(events: ClickEvent[]) {
++  try {
++    localStorage.setItem(LOCAL_KEY, JSON.stringify([...readLocal(), ...events].slice(-LOCAL_MAX)))
++  } catch {
++    /* storage full or blocked: drop */
++  }
++}
++
++export function clearLocal() {
++  try {
++    localStorage.removeItem(LOCAL_KEY)
++  } catch {
++    /* ignore */
++  }
++}
++
++async function flush(useBeacon = false) {
++  if (!queue.length) return
++  const batch = queue.splice(0, 200)
++  if (serverOff) return saveLocal(batch)
++  const body = JSON.stringify({ events: batch })
++  if (useBeacon && navigator.sendBeacon) {
++    if (!navigator.sendBeacon('/api/clicks', new Blob([body], { type: 'application/json' }))) saveLocal(batch)
++    return
++  }
++  try {
++    const res = await fetch('/api/clicks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, keepalive: true })
++    const data = (await res.json().catch(() => null)) as { configured?: boolean } | null
++    if (!res.ok || data?.configured === false) {
++      if (data?.configured === false) serverOff = true
++      saveLocal(batch)
++    }
++  } catch {
++    saveLocal(batch)
++  }
++}
++
++function push(event: ClickEvent) {
++  queue.push(event)
++  if (timer === undefined) timer = window.setTimeout(() => ((timer = undefined), void flush()), FLUSH_MS)
++}
++
++export function recordView(from: string | null) {
++  push({ ...base('view'), ...(from && from !== window.location.pathname ? { from } : {}) })
++}
++
++const CONTROL = 'a, button, [role="button"], [role="tab"], [role="link"], input, select, textarea, label, summary'
++
++/** A short human name for what was tapped — never a field's value. */
++function labelFor(el: Element): string {
++  const aria = el.getAttribute('aria-label')
++  if (aria) return aria.trim().slice(0, 120)
++  if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
++    return (el.getAttribute('placeholder') || el.name || el.type || 'field').slice(0, 120)
++  }
++  const text = (el.textContent || '').replace(/\s+/g, ' ').trim()
++  if (text) return text.slice(0, 80)
++  const img = el.querySelector('img[alt]')
++  return (img?.getAttribute('alt') || el.tagName.toLowerCase()).slice(0, 120)
++}
++
++function onClick(e: MouseEvent) {
++  const target = e.target as Element | null
++  if (!target || target.closest('[data-demo-annotations], [data-insights-ignore]')) return
++  const control = target.closest(CONTROL)
++  const el = control ?? target
++  const href = el instanceof HTMLAnchorElement ? el.getAttribute('href') ?? undefined : undefined
++  push({
++    ...base('click'),
++    x: Math.round((e.clientX / window.innerWidth) * 1000) / 10,
++    y: Math.round(e.clientY + window.scrollY),
++    docH: document.documentElement.scrollHeight,
++    // A tap that missed every control is still worth seeing (people tapping
++    // things that look tappable but are not), but its "label" would be the
++    // text of a whole section — so name it as a miss, briefly.
++    label: control ? labelFor(el) : `(not a control) ${labelFor(el).slice(0, 40)}`,
++    tag: el.tagName.toLowerCase(),
++    ...(href ? { href: href.slice(0, 300) } : {}),
++  })
++}
++
++function onHide() {
++  if (document.visibilityState === 'hidden') void flush(true)
++}
++
++let installed = false
++export function installTracker() {
++  if (installed) return () => {}
++  installed = true
++  document.addEventListener('click', onClick, true)
++  document.addEventListener('visibilitychange', onHide)
++  window.addEventListener('pagehide', onHide)
++  return () => {
++    installed = false
++    document.removeEventListener('click', onClick, true)
++    document.removeEventListener('visibilitychange', onHide)
++    window.removeEventListener('pagehide', onHide)
++    void flush(true)
++  }
++}
++
++/** Server events, or local ones when the server has no store. */
++export async function loadEvents(): Promise<{ events: ClickEvent[]; source: 'server' | 'local'; scope?: string }> {
++  try {
++    const res = await fetch('/api/clicks', { cache: 'no-store' })
++    const data = (await res.json()) as { configured: boolean; events: ClickEvent[] | null; scope?: string }
++    if (data.configured && data.events) return { events: data.events, source: 'server', scope: data.scope }
++  } catch {
++    /* fall through */
++  }
++  return { events: readLocal(), source: 'local' }
++}
++
++export async function clearEvents(source: 'server' | 'local') {
++  clearLocal()
++  if (source === 'server') {
++    await fetch('/api/clicks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clear: true }) })
++  }
++}
+diff --git a/src/demo/modules.ts b/src/demo/modules.ts
+index 189f441..a4b074a 100644
+--- a/src/demo/modules.ts
++++ b/src/demo/modules.ts
+@@ -265,7 +265,7 @@ export type FlagState = Record<string, boolean>
+  * meant to be seen.
+  */
+ export function defaultFlags(): FlagState {
+-  const flags: FlagState = { [SITE_LOCK_FLAG]: true, [ANNOTATIONS_FLAG]: false }
++  const flags: FlagState = { [SITE_LOCK_FLAG]: true, [ANNOTATIONS_FLAG]: false, [CLICKS_FLAG]: true }
+   for (const mod of DEMO_MODULES) {
+     flags[mod.id] = mod.built && !mod.unreleased
+     for (const feature of mod.features ?? []) {
+@@ -304,5 +304,13 @@ export const SITE_LOCK_FLAG = 'siteLock'
+  */
+ export const ANNOTATIONS_FLAG = 'annotations'
+ 
++/**
++ * Click insights — records anonymous taps and screen-to-screen moves so they
++ * can be read back at /__demo/insights (U032). A tool, like annotations, so it
++ * stays out of DEMO_MODULES and Enable/Disable all. Defaults ON: the point is
++ * to have data from people who were never told to switch anything on.
++ */
++export const CLICKS_FLAG = 'clickInsights'
++
+ /** The overlay shows below this width (px), i.e. at 699 and not at 700. */
+ export const MOBILE_WEB_BREAKPOINT = 700
+diff --git a/src/pages/DemoControlPage.tsx b/src/pages/DemoControlPage.tsx
+index 6f64c5d..f8673be 100644
+--- a/src/pages/DemoControlPage.tsx
++++ b/src/pages/DemoControlPage.tsx
+@@ -1,8 +1,8 @@
+-import { CloudOff, CloudUpload, ExternalLink, Lock, PencilLine, RotateCcw, Undo2, Unlock } from 'lucide-react'
++import { CloudOff, CloudUpload, ExternalLink, Lock, MousePointerClick, PencilLine, RotateCcw, Undo2, Unlock } from 'lucide-react'
+ import { Link } from 'react-router-dom'
+ import { useFeatureFlags } from '../demo/FeatureFlags'
+ import type { ModuleKind } from '../demo/modules'
+-import { ANNOTATIONS_FLAG, DEMO_MODULES, MOBILE_WEB_BREAKPOINT, SITE_LOCK_FLAG } from '../demo/modules'
++import { ANNOTATIONS_FLAG, CLICKS_FLAG, DEMO_MODULES, MOBILE_WEB_BREAKPOINT, SITE_LOCK_FLAG } from '../demo/modules'
+ import { SITE_PASSWORD, forgetUnlock, rememberUnlock } from '../demo/siteLock'
+ import { BuildBadge } from '../components/ui/BuildBadge'
+ import { BuildStamp } from '../components/ui/BuildStamp'
+@@ -185,6 +185,8 @@ export function DemoControlPage() {
+ 
+         <AnnotationsCard />
+ 
++        <InsightsCard />
++
+         {(['consumer', 'admin'] as ModuleKind[]).map((kind) => (
+         <section key={kind} className="mt-24 flex flex-col gap-12">
+           <div className="flex items-baseline gap-8">
+@@ -378,3 +380,41 @@ function AnnotationsCard() {
+     </section>
+   )
+ }
++
++function InsightsCard() {
++  const { flags, setFlag, dirty } = useFeatureFlags()
++  const on = flags[CLICKS_FLAG] !== false
++
++  return (
++    <section className="mt-16 rounded-16 border border-border-subtle bg-surface-default p-16">
++      <div className="flex flex-wrap items-start justify-between gap-16">
++        <div className="flex min-w-0 gap-12">
++          <span
++            className={`flex size-36 shrink-0 items-center justify-center rounded-full ${
++              on ? 'bg-brand-default text-text-strong' : 'bg-background-elevated text-icon-default'
++            }`}
++          >
++            <MousePointerClick size={17} />
++          </span>
++          <div className="min-w-0">
++            <h2 className="text-style-body font-semibold text-text-primary">Click insights</h2>
++            <p className="text-style-body-small mt-2 text-text-secondary">
++              {on
++                ? 'Recording anonymous taps and screen-to-screen moves on this deployment — no typed text, no names. Read them back as top taps, paths and a heatmap over the real screen.'
++                : 'Off — nothing is recorded.'}
++            </p>
++            <Link to="/__demo/insights" className="text-style-body-small mt-8 inline-flex items-center gap-6 font-medium text-text-brand">
++              Open click insights <ExternalLink size={13} />
++            </Link>
++          </div>
++        </div>
++        <Toggle checked={on} onChange={(next) => setFlag(CLICKS_FLAG, next)} label="Click insights" />
++      </div>
++      {dirty && (
++        <p className="text-style-caption mt-12 text-text-secondary">
++          Changed here but not published — only this browser follows it. Press Publish for everyone above.
++        </p>
++      )}
++    </section>
++  )
++}
+diff --git a/src/pages/InsightsPage.tsx b/src/pages/InsightsPage.tsx
+new file mode 100644
+index 0000000..41def62
+--- /dev/null
++++ b/src/pages/InsightsPage.tsx
+@@ -0,0 +1,310 @@
++import { useCallback, useEffect, useMemo, useState } from 'react'
++import { ArrowLeft, Download, Flame, RefreshCw, Trash2 } from 'lucide-react'
++import { Link } from 'react-router-dom'
++import { PageMeta } from '../components/PageMeta'
++import type { ClickEvent } from '../demo/insights/tracker'
++import { clearEvents, loadEvents } from '../demo/insights/tracker'
++
++/**
++ * /__demo/insights — reads back what Click insights recorded (U032).
++ *
++ * Summary first, then the three questions it exists to answer: which screens
++ * people open, what they tap on each, and the path they take — plus single
++ * sessions replayed as a list of steps, and a heatmap that draws the taps back
++ * over the real screen. Outside the site lock, like the rest of /__demo.
++ */
++type Range = 'today' | '7d' | 'all'
++type Device = 'all' | 'mobile' | 'tablet' | 'desktop'
++type Ui = 'all' | '1' | '2'
++
++const deviceOf = (vw: number): Exclude<Device, 'all'> => (vw < 640 ? 'mobile' : vw < 1024 ? 'tablet' : 'desktop')
++
++function download(name: string, text: string, type: string) {
++  const url = URL.createObjectURL(new Blob([text], { type }))
++  const a = document.createElement('a')
++  a.href = url
++  a.download = name
++  a.click()
++  URL.revokeObjectURL(url)
++}
++
++function countBy<T>(items: T[], key: (item: T) => string) {
++  const map = new Map<string, number>()
++  for (const item of items) map.set(key(item), (map.get(key(item)) ?? 0) + 1)
++  return [...map.entries()].sort((a, b) => b[1] - a[1])
++}
++
++function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
++  return (
++    <button
++      type="button"
++      aria-pressed={active}
++      onClick={onClick}
++      className={`h-32 rounded-full border px-12 text-[13px] ${
++        active ? 'border-text-primary bg-text-primary text-text-inverse' : 'border-border-subtle bg-surface-default text-text-primary'
++      }`}
++    >
++      {children}
++    </button>
++  )
++}
++
++function Bar({ value, max }: { value: number; max: number }) {
++  return (
++    <span className="block h-6 w-full overflow-hidden rounded-full bg-background-elevated">
++      <span className="block h-full rounded-full bg-[#ff881b]" style={{ width: `${max ? (value / max) * 100 : 0}%` }} />
++    </span>
++  )
++}
++
++function Card({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
++  return (
++    <section className="rounded-16 border border-border-subtle bg-surface-default p-16">
++      <h2 className="text-style-body font-semibold text-text-primary">{title}</h2>
++      {hint && <p className="text-style-caption mt-2 text-text-secondary">{hint}</p>}
++      <div className="mt-12">{children}</div>
++    </section>
++  )
++}
++
++export function InsightsPage() {
++  const [all, setAll] = useState<ClickEvent[] | null>(null)
++  const [source, setSource] = useState<'server' | 'local'>('local')
++  const [scope, setScope] = useState<string | undefined>()
++  const [range, setRange] = useState<Range>('7d')
++  const [device, setDevice] = useState<Device>('all')
++  const [ui, setUi] = useState<Ui>('all')
++  const [page, setPage] = useState<string>('all')
++  const [confirmClear, setConfirmClear] = useState(false)
++
++  const refresh = useCallback(() => {
++    setAll(null)
++    void loadEvents().then((r) => {
++      setAll(r.events)
++      setSource(r.source)
++      setScope(r.scope)
++    })
++  }, [])
++  useEffect(() => refresh(), [refresh])
++
++  const events = useMemo(() => {
++    const since = range === 'all' ? 0 : range === 'today' ? new Date().setHours(0, 0, 0, 0) : Date.now() - 7 * 864e5
++    return (all ?? []).filter(
++      (e) =>
++        Date.parse(e.t) >= since &&
++        (device === 'all' || deviceOf(e.vw) === device) &&
++        (ui === 'all' || String(e.ui) === ui),
++    )
++  }, [all, range, device, ui])
++
++  const views = events.filter((e) => e.type === 'view')
++  const taps = events.filter((e) => e.type === 'click')
++  const sessions = countBy(events, (e) => e.sid)
++  const screens = countBy(views, (e) => e.page)
++  const pages = [...new Set(events.map((e) => e.page))].sort()
++  const tapsHere = page === 'all' ? taps : taps.filter((e) => e.page === page)
++  const topTaps = countBy(tapsHere, (e) => `${page === 'all' ? `${e.page} · ` : ''}${e.label ?? e.tag ?? '?'}`).slice(0, 15)
++  const paths = countBy(
++    views.filter((e) => e.from),
++    (e) => `${e.from} → ${e.page}`,
++  ).slice(0, 12)
++
++  // Most recent sessions as step lists: screen, tap, tap, screen…
++  const journeys = useMemo(() => {
++    const bySid = new Map<string, ClickEvent[]>()
++    for (const e of events) bySid.set(e.sid, [...(bySid.get(e.sid) ?? []), e])
++    return [...bySid.entries()]
++      .map(([sid, list]) => ({ sid, list: list.sort((a, b) => a.t.localeCompare(b.t)) }))
++      .sort((a, b) => b.list[b.list.length - 1].t.localeCompare(a.list[a.list.length - 1].t))
++      .slice(0, 15)
++  }, [events])
++
++  const exportCsv = () => {
++    const cols: (keyof ClickEvent)[] = ['t', 'sid', 'type', 'page', 'from', 'label', 'tag', 'href', 'x', 'y', 'vw', 'vh', 'ui']
++    const esc = (v: unknown) => (v === undefined ? '' : `"${String(v).replace(/"/g, '""')}"`)
++    download(`aurelia-clicks-${new Date().toISOString().slice(0, 10)}.csv`, [cols.join(','), ...events.map((e) => cols.map((c) => esc(e[c])).join(','))].join('\n'), 'text/csv')
++  }
++
++  const maxScreen = screens[0]?.[1] ?? 0
++  const maxTap = topTaps[0]?.[1] ?? 0
++  const maxPath = paths[0]?.[1] ?? 0
++
++  return (
++    <div className="min-h-full bg-background-default px-20 py-24 lg:px-40">
++      <PageMeta title="Click insights" description="What people tap and how they move through Aurelia." />
++      <div className="mx-auto max-w-[1100px]">
++        <Link to="/__demo" className="text-style-body-small inline-flex items-center gap-6 text-text-secondary">
++          <ArrowLeft size={14} /> Presenter console
++        </Link>
++        <div className="mt-12 flex flex-wrap items-end justify-between gap-16">
++          <div>
++            <h1 className="text-[32px] leading-[38px] text-text-primary">Click insights</h1>
++            <p className="text-style-body-small mt-4 text-text-secondary">
++              {source === 'server'
++                ? `Shared log for this deployment (${scope ?? ''}) — every visitor’s taps, newest 20,000 kept.`
++                : 'Local only — no shared store configured, so this shows taps made in this browser.'}
++            </p>
++          </div>
++          <div className="flex flex-wrap gap-8">
++            <button type="button" onClick={refresh} className="inline-flex h-36 items-center gap-6 rounded-full border border-border-subtle bg-surface-default px-14 text-[13px] text-text-primary">
++              <RefreshCw size={14} /> Refresh
++            </button>
++            <button type="button" onClick={exportCsv} className="inline-flex h-36 items-center gap-6 rounded-full border border-border-subtle bg-surface-default px-14 text-[13px] text-text-primary">
++              <Download size={14} /> CSV
++            </button>
++            <button
++              type="button"
++              onClick={() => download(`aurelia-clicks-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(events, null, 2), 'application/json')}
++              className="inline-flex h-36 items-center gap-6 rounded-full border border-border-subtle bg-surface-default px-14 text-[13px] text-text-primary"
++            >
++              <Download size={14} /> JSON
++            </button>
++            {confirmClear ? (
++              <span className="inline-flex items-center gap-8 text-[13px]">
++                Delete the whole log?
++                <button
++                  type="button"
++                  onClick={async () => {
++                    await clearEvents(source)
++                    setConfirmClear(false)
++                    refresh()
++                  }}
++                  className="h-36 rounded-full bg-feedback-error px-14 text-white"
++                >
++                  Delete
++                </button>
++                <button type="button" onClick={() => setConfirmClear(false)} className="h-36 rounded-full border border-border-subtle px-14">
++                  Cancel
++                </button>
++              </span>
++            ) : (
++              <button type="button" onClick={() => setConfirmClear(true)} className="inline-flex h-36 items-center gap-6 rounded-full border border-border-subtle bg-surface-default px-14 text-[13px] text-feedback-error">
++                <Trash2 size={14} /> Clear
++              </button>
++            )}
++          </div>
++        </div>
++
++        <div className="mt-20 flex flex-wrap items-center gap-8">
++          {(['today', '7d', 'all'] as Range[]).map((r) => (
++            <Chip key={r} active={range === r} onClick={() => setRange(r)}>
++              {r === 'today' ? 'Today' : r === '7d' ? 'Last 7 days' : 'All time'}
++            </Chip>
++          ))}
++          <span className="mx-4 h-20 w-px bg-border-subtle" />
++          {(['all', 'mobile', 'tablet', 'desktop'] as Device[]).map((d) => (
++            <Chip key={d} active={device === d} onClick={() => setDevice(d)}>
++              {d === 'all' ? 'All devices' : d[0].toUpperCase() + d.slice(1)}
++            </Chip>
++          ))}
++          <span className="mx-4 h-20 w-px bg-border-subtle" />
++          {(['all', '1', '2'] as Ui[]).map((v) => (
++            <Chip key={v} active={ui === v} onClick={() => setUi(v)}>
++              {v === 'all' ? 'All versions' : `v${v}`}
++            </Chip>
++          ))}
++        </div>
++
++        {all === null ? (
++          <p className="text-style-body-small mt-32 text-text-secondary">Loading…</p>
++        ) : (
++          <>
++            <div className="mt-20 grid grid-cols-2 gap-12 lg:grid-cols-4">
++              {[
++                ['Sessions', sessions.length],
++                ['Screens viewed', views.length],
++                ['Taps', taps.length],
++                ['Taps per session', sessions.length ? Math.round((taps.length / sessions.length) * 10) / 10 : 0],
++              ].map(([label, value]) => (
++                <div key={label} className="rounded-16 border border-border-subtle bg-surface-default p-16">
++                  <p className="text-[28px] leading-[34px] tabular-nums text-text-primary">{value}</p>
++                  <p className="text-style-caption text-text-secondary">{label}</p>
++                </div>
++              ))}
++            </div>
++
++            {events.length === 0 ? (
++              <p className="text-style-body-small mt-32 text-text-secondary">
++                Nothing recorded for these filters yet. With Click insights on, open the app in another tab and tap around — taps are sent every few seconds and when the tab is hidden.
++              </p>
++            ) : (
++              <div className="mt-16 grid gap-16 lg:grid-cols-2">
++                <Card title="Screens" hint="How often each screen was opened. Heatmap draws the taps back over it in a new tab — open it at the same kind of window (phone/desktop) you want to see.">
++                  <ul className="flex flex-col gap-10">
++                    {screens.map(([p, n]) => (
++                      <li key={p} className="grid grid-cols-[minmax(0,1fr)_80px_40px_auto] items-center gap-10 text-[13px]">
++                        <span className="truncate text-text-primary">{p}</span>
++                        <Bar value={n} max={maxScreen} />
++                        <span className="text-right tabular-nums text-text-secondary">{n}</span>
++                        <a href={`${p}?heatmap`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-4 text-[#ff881b]">
++                          <Flame size={13} /> Heatmap
++                        </a>
++                      </li>
++                    ))}
++                  </ul>
++                </Card>
++
++                <Card title="Top taps" hint="What people tapped, by the control’s visible label.">
++                  <select
++                    value={page}
++                    onChange={(e) => setPage(e.target.value)}
++                    className="mb-12 h-32 w-full rounded-8 border border-border-subtle bg-surface-default px-8 text-[13px]"
++                  >
++                    <option value="all">All screens</option>
++                    {pages.map((p) => (
++                      <option key={p} value={p}>
++                        {p}
++                      </option>
++                    ))}
++                  </select>
++                  <ul className="flex flex-col gap-10">
++                    {topTaps.map(([label, n]) => (
++                      <li key={label} className="grid grid-cols-[minmax(0,1fr)_80px_40px] items-center gap-10 text-[13px]">
++                        <span className="truncate text-text-primary" title={label}>{label}</span>
++                        <Bar value={n} max={maxTap} />
++                        <span className="text-right tabular-nums text-text-secondary">{n}</span>
++                      </li>
++                    ))}
++                  </ul>
++                </Card>
++
++                <Card title="Paths" hint="The most common moves from one screen to the next.">
++                  <ul className="flex flex-col gap-10">
++                    {paths.length === 0 && <li className="text-[13px] text-text-secondary">No moves between screens yet.</li>}
++                    {paths.map(([path, n]) => (
++                      <li key={path} className="grid grid-cols-[minmax(0,1fr)_80px_40px] items-center gap-10 text-[13px]">
++                        <span className="truncate text-text-primary" title={path}>{path}</span>
++                        <Bar value={n} max={maxPath} />
++                        <span className="text-right tabular-nums text-text-secondary">{n}</span>
++                      </li>
++                    ))}
++                  </ul>
++                </Card>
++
++                <Card title="Recent sessions" hint="One visit each, step by step: ▸ screen opened, • tap.">
++                  <ul className="flex max-h-[520px] flex-col gap-12 overflow-y-auto">
++                    {journeys.map(({ sid, list }) => (
++                      <li key={sid} className="rounded-12 bg-background-elevated p-12 text-[12px]">
++                        <p className="text-text-secondary">
++                          {new Date(list[0].t).toLocaleString()} · {deviceOf(list[0].vw)} · v{list[0].ui} · {list.length} steps
++                        </p>
++                        <ol className="mt-6 flex flex-wrap gap-x-8 gap-y-4 text-text-primary">
++                          {list.slice(0, 40).map((e, i) => (
++                            <li key={i} className={e.type === 'view' ? 'font-semibold' : ''}>
++                              {e.type === 'view' ? `▸ ${e.page}` : `• ${e.label ?? e.tag}`}
++                            </li>
++                          ))}
++                          {list.length > 40 && <li className="text-text-secondary">…{list.length - 40} more</li>}
++                        </ol>
++                      </li>
++                    ))}
++                  </ul>
++                </Card>
++              </div>
++            )}
++          </>
++        )}
++      </div>
++    </div>
++  )
++}

@@ -19,6 +19,14 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-15 — Explore: Monthly Challenge 320px tall on desktop (U033)
+
+The challenge card was following its mobile aspect ratio up to ~605px tall on desktop; at ≥1024px it is now a 320px banner. Mobile and tablet unchanged. All versions. Branches: `web_app`, `admin_cms`. Not `web_prod` yet.
+
+### 2026-10-15 — Click insights tool (U032)
+
+New `/__demo/insights`: records screen views and taps (label + position, never typed values) to `/api/clicks` (Upstash, scoped per deployment; localStorage fallback), shows screens, top taps, paths and recent sessions, exports CSV/JSON, and draws a heatmap on any screen with `?heatmap`. Flag `clickInsights`, on by default. Web only — the Flutter app has no equivalent yet. Branches: `web_app`, `admin_cms`. Not `web_prod` yet.
+
 ### 2026-10-15 — v2 desktop: Live Sessions as a full-width banner (U031)
 
 In v2 on desktop (≥1024px) the Ongoing Live Sessions map card spans the content column (600px tall, map cropped to cover, stats along the foot) instead of a 600px-wide centred box. v1, tablet and mobile unchanged. Branches: `web_app`, `admin_cms`. Not `web_prod` yet.

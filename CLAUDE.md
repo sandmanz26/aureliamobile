@@ -229,6 +229,14 @@ it is in, and the list, count and delete-all are per version. Pins from
 before this existed are v1. Save .txt exports every version, each note
 tagged `design: vN`.
 
+**Click insights record every visitor's screens and taps, on by default.**
+`src/demo/insights/` sends `view`/`click` events to `/api/clicks` (same
+Upstash store and per-deployment key scoping as `/api/config`; localStorage
+fallback without KV), reviewed at `/__demo/insights`; append `?heatmap` to
+any URL to see that screen's taps. It stores the tapped control's label and
+position, never field values — keep it that way. Flag `clickInsights` turns
+it off; like annotations it is kept out of `DEMO_MODULES`.
+
 **A shared password sits in front of the site, but not in front of `/__demo`.**
 The console that owns the switch stays open so nobody can shut themselves out of
 it — which also means that URL is a way around the lock for anyone who knows it.
