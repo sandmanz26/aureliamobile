@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-15 — Feelings, reply, Play rule, limit copy, sign-in width (U036)
+
+Home gets "start from how you feel" chips (write an editable sentence; "Not sure" gets nameable states back via a new `unsure-feeling` reply rule). Chat gets reply-to-message (swipe / hover / tap → quoted reply; Aurelia scopes the edit to that line). The header Play shows only once something exists to play. The free-limit notice now says the pause is per session and New Session is free. Sign-in fills windows narrower than 640 (was a 402 strip at 540). Sticky player: options proposed, nothing built. **mobile_app does not have these yet** and now lags the shared reply rules by one. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-15 — Home network artwork in Three.js, behind a switch (U035)
 
 The figure-among-orange-nodes artwork at the bottom of Home is rebuilt as a Three.js scene measured from the PNG (positions, colours, line opacities; the figure uses the PNG's own pixels on a relief), so it can be animated. **Off by default** — Home still shows the PNG; `/__demo` → "3D network" turns it on, with a Motion sub-switch. three.js loads lazily only when on. Web only. Branches: `web_app`, `admin_cms`. Not `web_prod`.

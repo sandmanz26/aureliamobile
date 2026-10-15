@@ -940,6 +940,25 @@ sheet would keep the stopped composer in view behind it. Monthly and Annual are
 one segmented control rather than two buttons, because they are one choice with
 two positions.
 
+**The limit is per session; a new session is never limited** (U036, product
+owner's decision). The free plan is meant to push people to *explore* — try
+another idea — rather than polish one session indefinitely, so starting a new
+session always works and does not count. The count was already per thread;
+the notice used to say "you've reached your current creation limit … resets at
+12:00 AM", which read as the whole account being shut. It now says what is
+paused ("Edits on this session paused until …"), that a new session is free and
+uncounted, and the New Session button carries a "Free" tag.
+
+**Reply to a line, to scope an edit** (U036). Swipe right on a message (touch),
+hover and press Reply (mouse), or tap the line to show the button. The composer
+shows "Replying to Aurelia …" and the sent bubble quotes it; tapping the quote
+jumps to the original. A reply to one of Aurelia's lines is answered as an edit
+to *that part* ("Just that part — …"). Not offered while the session is paused.
+
+**The header's Play appears only once there is something to play** (U036): an
+existing session opened in the cockpit, or a build that has finished. Before,
+it showed as soon as the thread had a message and played a stand-in recording.
+
 Behind `chat.freeLimit`, which resolves like the other dotted sub-flags —
 defaulted on, gated by the `chat` module, switchable from `/__demo`.
 
