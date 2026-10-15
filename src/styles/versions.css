@@ -408,3 +408,19 @@
 :root[data-ui-version='2'] .v2-center {
   text-align: center;
 }
+
+/* ---- Version 2: Ongoing Live Sessions on desktop (U031) ----------------- */
+/* Under the promo banner the card is full content width, not a small box
+   with empty sides: a wide banner with the map centred and the three stats
+   in a row along its foot. The map art is near-square, so `cover` crops its
+   gradient margins above and below, leaving the dots centred. The 600px cap
+   from U012 is gone. */
+@media (min-width: 1024px) {
+  :root[data-ui-version='2'] [data-live-card] {
+    aspect-ratio: auto;
+    height: 600px;
+    max-width: none;
+    background-size: cover;
+    background-position: center 0%;
+  }
+}

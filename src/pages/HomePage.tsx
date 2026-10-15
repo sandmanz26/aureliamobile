@@ -143,6 +143,7 @@ export function HomePage() {
           at exactly zero crop because the card and the image share the
           same aspect ratio. */}
       <div
+        data-live-card=""
         className="relative mx-auto mt-16 flex aspect-[362/320] w-full max-w-[440px] flex-col justify-end overflow-hidden rounded-24 bg-cover bg-center px-20 pb-20 pt-40 lg:max-w-none"
         style={{ backgroundImage: `url(${liveSessionsMap})` }}
       >
@@ -515,7 +516,7 @@ export function HomePage() {
       )}
 
       <div className="mx-auto max-w-[960px] px-20 lg:px-24">
-        {v2 && <div className="lg:mx-auto lg:mt-48 lg:max-w-[600px] [&>section]:lg:mt-0">{liveSection}</div>}
+        {v2 && <div className="lg:mt-48 [&>section]:lg:mt-0">{liveSection}</div>}
         {/* Recreate from Community */}
         {isEnabled('home.community') && (
         <section className="mt-24">
