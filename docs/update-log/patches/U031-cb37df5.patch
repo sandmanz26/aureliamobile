@@ -1,0 +1,45 @@
+diff --git a/src/pages/HomePage.tsx b/src/pages/HomePage.tsx
+index 3a96f83..8723a3e 100644
+--- a/src/pages/HomePage.tsx
++++ b/src/pages/HomePage.tsx
+@@ -143,6 +143,7 @@ export function HomePage() {
+           at exactly zero crop because the card and the image share the
+           same aspect ratio. */}
+       <div
++        data-live-card=""
+         className="relative mx-auto mt-16 flex aspect-[362/320] w-full max-w-[440px] flex-col justify-end overflow-hidden rounded-24 bg-cover bg-center px-20 pb-20 pt-40 lg:max-w-none"
+         style={{ backgroundImage: `url(${liveSessionsMap})` }}
+       >
+@@ -515,7 +516,7 @@ export function HomePage() {
+       )}
+ 
+       <div className="mx-auto max-w-[960px] px-20 lg:px-24">
+-        {v2 && <div className="lg:mx-auto lg:mt-48 lg:max-w-[600px] [&>section]:lg:mt-0">{liveSection}</div>}
++        {v2 && <div className="lg:mt-48 [&>section]:lg:mt-0">{liveSection}</div>}
+         {/* Recreate from Community */}
+         {isEnabled('home.community') && (
+         <section className="mt-24">
+diff --git a/src/styles/versions.css b/src/styles/versions.css
+index 77f5bf3..f64b8a2 100644
+--- a/src/styles/versions.css
++++ b/src/styles/versions.css
+@@ -408,3 +408,19 @@
+ :root[data-ui-version='2'] .v2-center {
+   text-align: center;
+ }
++
++/* ---- Version 2: Ongoing Live Sessions on desktop (U031) ----------------- */
++/* Under the promo banner the card is full content width, not a small box
++   with empty sides: a wide banner with the map centred and the three stats
++   in a row along its foot. The map art is near-square, so `cover` crops its
++   gradient margins above and below, leaving the dots centred. The 600px cap
++   from U012 is gone. */
++@media (min-width: 1024px) {
++  :root[data-ui-version='2'] [data-live-card] {
++    aspect-ratio: auto;
++    height: 600px;
++    max-width: none;
++    background-size: cover;
++    background-position: center 0%;
++  }
++}

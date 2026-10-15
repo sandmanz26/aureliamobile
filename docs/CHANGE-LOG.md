@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-15 — v2 desktop: Live Sessions as a full-width banner (U031)
+
+In v2 on desktop (≥1024px) the Ongoing Live Sessions map card spans the content column (600px tall, map cropped to cover, stats along the foot) instead of a 600px-wide centred box. v1, tablet and mobile unchanged. Branches: `web_app`, `admin_cms`. Not `web_prod` yet.
+
 ### 2026-10-15 — Fix: Quick Start cards squashed on desktop in v2 (U030)
 
 Quick Start cards got `lg:min-h-[160px]`. In v2 the section sits alone, so the desktop `lg:h-auto` collapsed them to 56px and their content overlapped. v1 and mobile unchanged. Branches: `web_app`, `admin_cms`. Not `web_prod` yet.

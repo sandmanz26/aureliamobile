@@ -68,6 +68,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U028 | `75f3664` | 2026-10-14 16:23 | Drawer/sidebar Invite a Friend + Help → SVG icons (user-add, message-question). | [patch](patches/U028-75f3664.patch) |
 | U029 | (this log commit) | 2026-10-14 | Production: `web_prod` fast-forwarded from `803d15f` to `web_app` (U021–U028 and everything since U020). | — |
 | U030 | `9b61806` | 2026-10-15 10:46 | Fix: Home Quick Start cards squashed to 56px on desktop in v2. | [patch](patches/U030-9b61806.patch) |
+| U031 | `cb37df5` | 2026-10-15 10:48 | Desktop v2: Ongoing Live Sessions becomes a full-width map banner. | [patch](patches/U031-cb37df5.patch) |
 
 ## Entries
 
@@ -410,3 +411,16 @@ Production (`web_prod`) is never touched by these updates unless asked.
 - **Change:** `src/pages/HomePage.tsx` — card class `lg:h-auto` → `lg:h-auto lg:min-h-[160px]` (the mobile height). Where a sibling stretches the row taller (v1 desktop) the min is inert.
 - **Verified:** card height at 1440 v2 / 1024 v2: 56 → 160; 1440 v1 still 388; 820 and 402 (v1 and v2) unchanged. Screenshots of the Quick Start section identical before/after for v1 1440, 402 v1/v2 and 820 v2. Typecheck clean.
 - **Revert:** `git revert --no-commit 9b61806 && git checkout HEAD -- docs/`.
+
+### U031 — Desktop: Live Sessions as a full-width banner (v2)
+
+- **Commit:** `cb37df5` · pushed 2026-10-15 10:48:38 UTC · `web_app` + `admin_cms` · not on `web_prod` yet
+- **Patch:** [patches/U031-cb37df5.patch](patches/U031-cb37df5.patch)
+- **Report:** "di desktop rasanya aneh ada kotak kecil begitu di tengah-tengah dengan kanan kiri kosong".
+- **Cause:** U012 moved Live Sessions below the promo banner in v2 and I capped it at 600px, centred (`lg:mx-auto lg:max-w-[600px]`), while the heading stayed left-aligned — so a small, near-square map card floated in the middle of a 912px column.
+- **Change:**
+  - `src/pages/HomePage.tsx` — v2 wrapper loses `lg:mx-auto lg:max-w-[600px]` (now `lg:mt-48 [&>section]:lg:mt-0`); the map card gets a `data-live-card` hook (inert in v1).
+  - `src/styles/versions.css` — `@media (min-width: 1024px)` + v2: `[data-live-card]` → `aspect-ratio: auto; height: 600px; max-width: none; background-size: cover; background-position: center 0%`. The map art is near-square, so `cover` fills the width and the dots sit centred with the three stats in a row along the foot.
+- **Limit:** the map PNG is 543px wide, drawn at ~912px on desktop, so the dots are slightly soft; a larger export of `live-sessions-map.png` would fix it.
+- **Verified:** 1440 v2 screenshot — full-width banner, no empty sides, stats clear of the map; 1440 v1, 820 v2, 402 v1/v2 pixel-identical before/after. Typecheck clean.
+- **Tune:** `height` (600), `background-position`. **Revert:** `git revert --no-commit cb37df5 && git checkout HEAD -- docs/` (back to the 600px centred box).
