@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-18 — Lineage, version history, publish date, player Close + logic review (U037)
+
+Recommendation cards share one height; the parked/floating player has a Close (×); Lineage Tree rows say which parent version they were built on and See All opens the full tree (also from Progress); session Details show Published / Last updated / Live version and, on your own sessions, a version timeline (Live, You are here). A future lineage date (2026.12.10) fixed. Logic review PDF in `docs/reviews/`. **mobile_app does not have these.** Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-15 — Feelings, reply, Play rule, limit copy, sign-in width (U036)
 
 Home gets "start from how you feel" chips (write an editable sentence; "Not sure" gets nameable states back via a new `unsure-feeling` reply rule). Chat gets reply-to-message (swipe / hover / tap → quoted reply; Aurelia scopes the edit to that line). The header Play shows only once something exists to play. The free-limit notice now says the pause is per session and New Session is free. Sign-in fills windows narrower than 640 (was a 402 strip at 540). Sticky player: options proposed, nothing built. **mobile_app does not have these yet** and now lags the shared reply rules by one. Branches: `web_app`, `admin_cms`. Not `web_prod`.

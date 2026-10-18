@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Aurelia Logic Review</title>
+<style>
+  @font-face { font-family: 'Mulish'; src: url('../../public/fonts/mulish-variable.woff2') format('woff2'); font-weight: 200 900; }
+  :root {
+    --ink: #1B1006; --ink-2: #4A3B2C; --muted: #7A6A58; --rule: #E8DFD3;
+    --cream: #FFF6E8; --gold: #C98A1B; --orange: #E8761A;
+    --crit: #B42318; --crit-bg: #FDECEA; --high: #B54708; --high-bg: #FEF0E2;
+    --med: #8A6A00; --med-bg: #FCF5D9; --low: #5B5B5B; --low-bg: #EFEFEF;
+    --fixed: #067647; --fixed-bg: #E7F6EC;
+  }
+  @page { size: A4; margin: 18mm 16mm 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Mulish', system-ui, sans-serif; color: var(--ink); font-size: 9.6pt; line-height: 1.5; margin: 0; background: #fff; }
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+  p { margin: 0 0 6pt; }
+  .cover { height: 250mm; display: flex; flex-direction: column; justify-content: space-between; page-break-after: always; }
+  .eyebrow { font-size: 8pt; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); font-weight: 700; }
+  .cover h1 { font-size: 30pt; line-height: 1.1; font-weight: 600; margin-top: 10mm; max-width: 150mm; }
+  .cover .lede { font-size: 12pt; color: var(--ink-2); max-width: 140mm; margin-top: 6mm; }
+  .meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6mm; border-top: 1px solid var(--rule); padding-top: 5mm; font-size: 8.5pt; color: var(--muted); }
+  .meta b { display: block; color: var(--ink); font-weight: 600; font-size: 9.5pt; }
+  .tally { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3mm; margin-top: 10mm; }
+  .tally div { border-radius: 3mm; padding: 4mm; }
+  .tally strong { display: block; font-size: 22pt; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+  .tally span { font-size: 8pt; }
+  h2 { font-size: 15pt; font-weight: 600; margin: 9mm 0 3mm; padding-top: 2mm; border-top: 2px solid var(--ink); }
+  h2 .num { color: var(--gold); margin-right: 3mm; }
+  h3 { font-size: 10.5pt; font-weight: 700; margin: 0; }
+  .intro { color: var(--ink-2); max-width: 165mm; }
+  .finding { border: 1px solid var(--rule); border-left-width: 3px; border-radius: 2mm; padding: 3.2mm 4mm; margin: 3mm 0; break-inside: avoid; }
+  .finding.critical { border-left-color: var(--crit); }
+  .finding.high { border-left-color: var(--high); }
+  .finding.medium { border-left-color: #D4A300; }
+  .finding.low { border-left-color: #9A9A9A; }
+  .finding.fixed { border-left-color: var(--fixed); }
+  .fhead { display: flex; align-items: baseline; gap: 2.5mm; margin-bottom: 1.5mm; flex-wrap: wrap; }
+  .id { font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 9mm; }
+  .chip { font-size: 7pt; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: .6mm 2mm; border-radius: 10mm; white-space: nowrap; }
+  .chip.critical { color: var(--crit); background: var(--crit-bg); }
+  .chip.high { color: var(--high); background: var(--high-bg); }
+  .chip.medium { color: var(--med); background: var(--med-bg); }
+  .chip.low { color: var(--low); background: var(--low-bg); }
+  .chip.fixed { color: var(--fixed); background: var(--fixed-bg); }
+  .chip.type { color: var(--ink-2); background: transparent; border: 1px solid var(--rule); }
+  .grid { display: grid; grid-template-columns: 22mm 1fr; gap: 1mm 3mm; font-size: 9pt; }
+  .grid dt { color: var(--muted); font-weight: 600; }
+  .grid dd { margin: 0; }
+  code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 8pt; background: #F6F1EA; padding: 0 1mm; border-radius: 1mm; }
+  table { width: 100%; border-collapse: collapse; font-size: 8.8pt; margin: 3mm 0; }
+  th { text-align: left; font-size: 7.5pt; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); border-bottom: 1px solid var(--ink); padding: 1.5mm 2mm; }
+  td { border-bottom: 1px solid var(--rule); padding: 2mm; vertical-align: top; }
+  tr { break-inside: avoid; }
+  td.n { font-weight: 700; color: var(--gold); width: 7mm; }
+  .rec { color: var(--ink); }
+  .callout { background: var(--cream); border-radius: 2mm; padding: 4mm 5mm; margin: 4mm 0; break-inside: avoid; }
+  .callout h3 { margin-bottom: 2mm; }
+  ol.top { padding-left: 5mm; margin: 0; }
+  ol.top li { margin: 1.5mm 0; }
+  .pb { page-break-before: always; }
+  svg text { font-family: 'Mulish', sans-serif; }
+  .small { font-size: 8pt; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <div>
+    <div class="eyebrow">Aurelia · Product logic review</div>
+    <h1>The rules the screens assume but nobody has written down</h1>
+    <p class="lede">A review of the staging web app (the reference client) for logic that contradicts itself, logic that is quietly broken in the build, and rules that the UI/UX implies but that no one has decided. Each finding says what happens today, why it matters, and a recommended answer, so it can be decided rather than re-asked.</p>
+    <div class="tally">
+      <div style="background:var(--crit-bg)"><strong style="color:var(--crit)">6</strong><span>Critical</span></div>
+      <div style="background:var(--high-bg)"><strong style="color:var(--high)">16</strong><span>High</span></div>
+      <div style="background:var(--med-bg)"><strong style="color:var(--med)">14</strong><span>Medium</span></div>
+      <div style="background:var(--low-bg)"><strong style="color:var(--low)">4</strong><span>Low</span></div>
+      <div style="background:var(--fixed-bg)"><strong style="color:var(--fixed)">4</strong><span>Fixed in this pass</span></div>
+    </div>
+  </div>
+  <div class="meta">
+    <div><b>Build reviewed</b>web_app (staging) at 7328ab6, design v2</div>
+    <div><b>Date</b>18 October 2026</div>
+    <div><b>Method</b>Code reading, driving the app at 402 / 540 / 1280 px, cross-checked against PRD and FOR-PRODUCT</div>
+  </div>
+</section>
+
+<h2><span class="num">1</span>Read this first</h2>
+<p class="intro">Most of what follows is not a bug in the usual sense. The prototype is careful, but it was built screen by screen from Figma frames that show the happy path, so the rules <em>between</em> screens were never specified. Where a screen needed an answer, engineering picked a plausible one and wrote it in a code comment. That makes the app demo well and leaves the product undefined in exactly the places a backend, a pricing plan, or a real AI will need answers.</p>
+<p class="intro"><b>Three kinds of finding.</b> <span class="chip type">Broken</span> means the build contradicts itself or its own copy today. <span class="chip type">Missing rule</span> means the UI implies a rule that no one has decided. <span class="chip type">Contradiction</span> means two documented decisions or screens disagree.</p>
+
+<div class="callout">
+  <h3>The five to decide first</h3>
+  <ol class="top">
+    <li><b>What the free plan actually limits (A1, A2).</b> The pause never lifts, and "new sessions are free" makes it unlimited at the same time. These two cancel each other out.</li>
+    <li><b>One version model (B1, B2, B3).</b> Two separate version systems exist and disagree. Publish can be pressed on a cut that is still being built.</li>
+    <li><b>Recreate must fork the session you are looking at (C1).</b> On the player it forks one of three fixed sessions instead.</li>
+    <li><b>What a lineage is made of (C3, C6).</b> Creators are shown "Recreated 9.8k" with nothing behind it, and coin sharing depends on it.</li>
+    <li><b>What wins a challenge (F2).</b> The model says "days completed"; the board ranks by plays; prizes go to creators.</li>
+  </ol>
+</div>
+
+<h2><span class="num">2</span>Free plan and limits</h2>
+
+<div class="finding critical"><div class="fhead"><span class="id">A1</span><h3>The "paused until" time is never honoured</h3><span class="chip critical">Critical</span><span class="chip type">Broken</span></div>
+<dl class="grid"><dt>Today</dt><dd>The cockpit pauses after 3 sends in a thread (<code>sends &gt;= 3</code>). The notice says "Edits on this session paused until 5:20 PM", a time stamped as <em>now + 30 minutes</em>. Nothing ever checks that time: the composer stays disabled forever for that thread. The number is also arbitrary, set when the limit trips, so two users see different reset times for the same rule. An earlier copy showed 12:00 AM.</dd>
+<dt>Why</dt><dd>The product promises a resume that never happens. It is the first paid-plan moment most users will meet.</dd>
+<dt>Recommend</dt><dd>Pick one window, and store and enforce the reset timestamp against the account rather than the thread. A <b>daily reset at local midnight</b> is the easiest to explain.</dd></dl></div>
+
+<div class="finding critical"><div class="fhead"><span class="id">A2</span><h3>"New session is always free" makes the limit unlimited</h3><span class="chip critical">Critical</span><span class="chip type">Contradiction</span></div>
+<dl class="grid"><dt>Today</dt><dd>The limit counts sends per thread. New Session opens a fresh thread with 3 more sends, and the product owner's rule (U036) is that a new session never counts. A user can therefore generate without limit by pressing New Session every 3 messages.</dd>
+<dt>Why</dt><dd>The cost driver is <em>generation</em> (builds and audio), not messages. The current limit protects the cheap thing and leaves the expensive thing open.</dd>
+<dt>Recommend</dt><dd>Keep "explore freely", but count what costs money. Free plan: <b>N builds per day across all sessions</b> (for example 5). Unlimited conversation. New sessions are free to <em>start</em>; building in them draws from the same daily allowance.</dd></dl></div>
+
+<div class="finding high"><div class="fhead"><span class="id">A3</span><h3>What counts as a "send" is accidental</h3><span class="chip high">High</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Today</dt><dd>These all count: typed messages, voice notes, suggestion chips ("Make it longer"), the Home hand-off, a reply, and <b>"Apply new changes"</b> (it writes a user line into the thread). Messages written by a "door" (Recreate, Quick Start) do not count. A user who types one sentence and presses Apply has used 2 of 3.</dd>
+<dt>Recommend</dt><dd>Count builds, not lines (see A2). If lines must count, exclude Apply and the suggestion chips.</dd></dl></div>
+
+<div class="finding high"><div class="fhead"><span class="id">A4</span><h3>Upgrade has no defined benefit</h3><span class="chip high">High</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Today</dt><dd>The /upgrade screen has Monthly and Annual plans, but nothing defines what paying removes or adds. The coin balance, the limit, and premium prizes from challenges are not connected to it.</dd>
+<dt>Recommend</dt><dd>Write one table: <b>Free vs Premium</b> per resource (builds per day, session length, voices, publishing, analytics). Every limit screen then links to the row it is about.</dd></dl></div>
+
+<h2><span class="num">3</span>Versions and publishing</h2>
+
+<div class="finding high"><div class="fhead"><span class="id">B1</span><h3>Two version systems that do not know about each other</h3><span class="chip high">High</span><span class="chip type">Broken</span></div>
+<dl class="grid"><dt>Today</dt><dd><b>The cockpit</b> records real builds with ids <code>v0, v1, v2…</code> and labels like "Sleep meditation v1.2". <b>Progress → Version History</b> always shows two hard-coded cuts, ids <code>v3</code> and <code>v2</code> ("v1.3", "v1.2"), whatever was actually built. Progress decides "current" by comparing the cockpit's id with its own. They never match, except by collision: cockpit <code>v2</code> and Progress <code>v2</code> are different cuts. A build made in chat never appears in Progress.</dd>
+<dt>Recommend</dt><dd>A session owns one ordered list of versions. Cockpit, Progress, the player (<code>?v=</code>) and the new Details history all read it.</dd></dl></div>
+
+<div class="finding high"><div class="fhead"><span class="id">B2</span><h3>Version numbering has no scheme</h3><span class="chip high">High</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Today</dt><dd>A build adds 0.1 (v1.2 → v1.3). A Quick Start begins at whatever its title says. A fork is named "&lt;title&gt; v2" (a major bump on someone else's title). The catalogue never shows a v1.1. A creator cannot tell what "v2" means next to "v1.3".</dd>
+<dt>Recommend</dt><dd>Version numbers belong to a session, never to a title. The first build is <b>v1.0</b> and each build adds +0.1. A fork is a <em>new session</em> starting at v1.0, which records "built on &lt;parent&gt; v1.3". Drop the "v2" suffix from fork titles.</dd></dl></div>
+
+<div class="finding high"><div class="fhead"><span class="id">B3</span><h3>Publish can be pressed on a cut that is still building</h3><span class="chip high">High</span><span class="chip type">Broken</span></div>
+<dl class="grid"><dt>Today</dt><dd>The Publish/Republish menu item depends only on whether the current version is live, not on whether it is generating. Publishing mid-build marks the unfinished cut as the live one.</dd>
+<dt>Recommend</dt><dd>Publish and Republish are disabled while a build is in progress, with the reason shown ("Finishing v1.4…").</dd></dl></div>
+
+<div class="finding medium"><div class="fhead"><span class="id">B4</span><h3>"Live" vs "current" was never defined</h3><span class="chip medium">Medium</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Today</dt><dd>A creator can publish v1.3, then build v1.4 or revert to v1.2. Listeners presumably still get v1.3, but before U037 no screen said so.</dd>
+<dt>Recommend</dt><dd>State the rule and keep it visible. <b>Live</b> is what listeners get and changes only on Republish. <b>Current</b> is what you are editing. U037 now shows both labels ("Live", "You are here") in Details.</dd></dl></div>
+
+<div class="finding medium"><div class="fhead"><span class="id">B5</span><h3>Any cut is playable by URL</h3><span class="chip medium">Medium</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Today</dt><dd><code>/play/&lt;slug&gt;?v=&lt;id&gt;</code> plays any version, including cuts of a draft and cuts that were never published.</dd>
+<dt>Recommend</dt><dd>Only the creator can play non-live versions. Everyone else always gets the live one.</dd></dl></div>
+
+<div class="finding medium"><div class="fhead"><span class="id">B6</span><h3>What "published on" means</h3><span class="chip medium">Medium</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Today</dt><dd>There was no publish date anywhere. U037 shows "Published" (first publish), "Last updated" (when the live cut was published) and "Live version", derived from mock dates.</dd>
+<dt>Decide</dt><dd>If a session is unpublished and republished: does "Published" reset? Do plays, recreations and its challenge ranking survive?</dd></dl></div>
+
+<div class="finding medium"><div class="fhead"><span class="id">B7</span><h3>Unpublishing has no defined consequences</h3><span class="chip medium">Medium</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Today</dt><dd>Unpublish shows a reassuring sheet. It is undefined what happens to recreations already made from the session, its challenge entry, shared links, coins already earned, and people mid-listen.</dd>
+<dt>Recommend</dt><dd>Recreations keep working and keep the credit. Shared links show "No longer available" with the creator credited. Challenge entries are withdrawn. Coins already earned stay.</dd></dl></div>
+
+<h2><span class="num">4</span>Recreate and lineage</h2>
+
+<div class="finding critical"><div class="fhead"><span class="id">C1</span><h3>Player "Recreate your own version" forks the wrong session</h3><span class="chip critical">Critical</span><span class="chip type">Broken</span></div>
+<dl class="grid"><dt>Today</dt><dd>The three cards (Increase yellow, Less movement, 432Hz) each fork a <b>fixed</b> catalogue session: Dolphins frequency, Deep Grounding and 528 Hz Reset. This happens whichever session you are listening to. On "Soft Reset", Recreate → Increase yellow opens a fork of Dolphins frequency. The orb's play button also plays that fixed session.</dd>
+<dt>Recommend</dt><dd>The cards fork <b>the session on screen</b>, with the card's change already stated. The session detail page already does this.</dd></dl></div>
+
+<div class="finding high"><div class="fhead"><span class="id">C2</span><h3>Lineage steps are names, not sessions</h3><span class="chip high">High</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Today</dt><dd>"Ground floor" (Adam Nilson) and "Deep blue, slower" (Marcus Lee) appear in lineages but are not sessions anywhere. Until U037 every lineage row opened the player of the session you were already on. U037 links a row only when it is a real session.</dd>
+<dt>Decide</dt><dd>Must every step be a real, openable session? What is shown when an ancestor is unpublished, deleted, or private?</dd></dl></div>
+
+<div class="finding high"><div class="fhead"><span class="id">C3</span><h3>"Recreated 9.8k" has no data behind it</h3><span class="chip high">High</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Today</dt><dd>The catalogue stores only <em>ancestry</em> (where a session came from). It stores no forward link from a session to the sessions built from it. The creator's question is "how many times, by whom, and from which of my versions". It cannot be answered. The U037 See All sheet shows illustrative recent rebuilds, labelled as such in code.</dd>
+<dt>Recommend</dt><dd>Store a fork record: <code>child_session, parent_session, parent_version, created_at</code>. Counts, "built on v1.3", payouts (C7) and notifications all come from it.</dd></dl></div>
+
+<div class="finding medium"><div class="fhead"><span class="id">C4</span><h3>Which version does a fork use?</h3><span class="chip medium">Medium</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Decide</dt><dd>Always the live version, or may a user pick an older cut? When the parent is updated later, is the fork told? Can it pull the update?</dd>
+<dt>Recommend</dt><dd>Forks always start from the live version. No automatic updates. Optionally notify: "Parent updated to v1.4".</dd></dl></div>
+
+<div class="finding medium"><div class="fhead"><span class="id">C5</span><h3>Self-recreation and credit loops</h3><span class="chip medium">Medium</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Decide</dt><dd>Can you recreate your own session, or a recreation of your own? If you can, you appear twice in the lineage and may earn twice from the same chain. Can you recreate a draft?</dd></dl></div>
+
+<div class="finding high"><div class="fhead"><span class="id">C6</span><h3>Coin sharing through the lineage</h3><span class="chip high">High</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Today</dt><dd>The rule "Attribution is not a toggle… the coin split follows the chain" is a decision without numbers. A lineage is a chain, so this is a payout graph. Open since FOR-PRODUCT §9.6.</dd>
+<dt>Recommend</dt><dd>A simple capped rule. For example: the creator keeps 70%, the direct parent gets 20%, all earlier ancestors share 10%, and nothing goes deeper than 3 generations.</dd></dl></div>
+
+<h2><span class="num">5</span>The cockpit (chat)</h2>
+
+<div class="finding high"><div class="fhead"><span class="id">D1</span><h3>There is only ever one conversation</h3><span class="chip high">High</span><span class="chip type">Broken</span></div>
+<dl class="grid"><dt>Today</dt><dd>The app keeps a single thread. Opening another session, pressing a Quick Start, joining a challenge or recreating <b>replaces</b> it. Nothing lists past conversations. The drawer's "Latest" lists sessions, not chats.</dd>
+<dt>Recommend</dt><dd>One conversation per session, reopened with the session. "Latest" lists conversations.</dd></dl></div>
+
+<div class="finding high"><div class="fhead"><span class="id">D2</span><h3>Hand-offs land in whatever thread is open</h3><span class="chip high">High</span><span class="chip type">Broken</span></div>
+<dl class="grid"><dt>Today</dt><dd>"Elaborate on my experience" on the player, and anything typed on Home, are <em>appended</em> to the current thread, even when that thread is about a different session. Feedback on session A can end up in session B's conversation and change B.</dd>
+<dt>Recommend</dt><dd>A hand-off about a session opens that session's conversation (D1). A Home ask opens a new one.</dd></dl></div>
+
+<div class="finding medium"><div class="fhead"><span class="id">D3</span><h3>A build only progresses while you watch it</h3><span class="chip medium">Medium</span><span class="chip type">Broken</span></div>
+<dl class="grid"><dt>Today</dt><dd>The progress timer runs inside the chat screen. Leaving mid-build freezes it (for example at 43%) until you come back.</dd>
+<dt>Recommend</dt><dd>A build runs regardless of screen, and a notification or the mini player says "v1.4 is ready".</dd></dl></div>
+
+<div class="finding medium"><div class="fhead"><span class="id">D4</span><h3>Recommendations ignore the request; the scores add up</h3><span class="chip medium">Medium</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Today</dt><dd>Every request gets the same three cards, each "Improve Score +12%", whether you said "I can't sleep" or "I can't focus". The filter sums them to "+36% combined". "Improve Score" has no defined unit, baseline or meaning. Percent improvements do not add.</dd>
+<dt>Decide</dt><dd>What the score measures, against what baseline, and how combined effects are estimated. The Figma "Increase yellow" card is a <em>visual</em> change on an audio product: where is it seen?</dd></dl></div>
+
+<div class="finding medium"><div class="fhead"><span class="id">D5</span><h3>"Arrive applied" vs a free choice</h3><span class="chip medium">Medium</span><span class="chip type">Contradiction</span></div>
+<dl class="grid"><dt>Today</dt><dd>The PRD decision says recommendations arrive applied (you remove, you do not opt in). The screen also reaches "0 of 3 selected" with Add buttons. Nothing defines what Apply means with nothing selected, or whether a user can add a change that is not in the deck.</dd></dl></div>
+
+<div class="finding high"><div class="fhead"><span class="id">D6</span><h3>The core loop has no failure states</h3><span class="chip high">High</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Today</dt><dd>Generation failed or timed out, offline, microphone denied, and a recording too long are all still undesigned (FOR-PRODUCT §7). With a real AI and real audio these are the most common states, not edge cases.</dd></dl></div>
+
+<div class="finding low"><div class="fhead"><span class="id">D7</span><h3>New Session stops what is playing</h3><span class="chip low">Low</span><span class="chip type">Contradiction</span></div>
+<dl class="grid"><dt>Today</dt><dd>Starting a new session silences the current audio. The stated decision is "playback survives leaving the player". Decide which wins.</dd></dl></div>
+
+<h2><span class="num">6</span>Playback</h2>
+
+<div class="finding medium"><div class="fhead"><span class="id">E1</span><h3>What counts as a "play"</h3><span class="chip medium">Medium</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Today</dt><dd>"Played 124k" never changes. The challenge leaderboard ranks by plays. No definition exists: a start, 30 seconds, or a finish? Do replays by the same person count?</dd>
+<dt>Recommend</dt><dd>A play is at least 60 seconds or 25% of the session, whichever comes first. Count at most once per listener per day for any ranking.</dd></dl></div>
+
+<div class="finding medium"><div class="fhead"><span class="id">E2</span><h3>Floating player lifecycle</h3><span class="chip medium">Medium</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Today</dt><dd>U037 adds a Close (×) that stops and clears playback. Still undecided: Undo after close, auto-hide after a long pause, and resuming from the last position.</dd>
+<dt>Recommend</dt><dd>Close with a 4-second Undo. Auto-hide after 30 minutes paused. Remember the position per session.</dd></dl></div>
+
+<div class="finding low"><div class="fhead"><span class="id">E3</span><h3>Every session is the same 10-second loop</h3><span class="chip low">Low</span><span class="chip type">Broken (known)</span></div>
+<dl class="grid"><dt>Today</dt><dd>A demo shortcut. The scrubber shows 0:10 against a 22:22 duration elsewhere, which testers read as a bug. Worth labelling in demos.</dd></dl></div>
+
+<h2><span class="num">7</span>Coins, points and challenges</h2>
+
+<div class="finding high"><div class="fhead"><span class="id">F1</span><h3>Three currencies, no rules</h3><span class="chip high">High</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Today</dt><dd>"1,323" coins appear in every header and never change. Challenges award "250 pts" and coin prizes. Recommendations show an "Improve Score". Only the referral reward is defined, and it can be farmed with throwaway emails.</dd>
+<dt>Recommend</dt><dd>One currency (coins), one ledger, and a written earn/spend table before any more screens show it.</dd></dl></div>
+
+<div class="finding high"><div class="fhead"><span class="id">F2</span><h3>What wins a challenge</h3><span class="chip high">High</span><span class="chip type">Contradiction</span></div>
+<dl class="grid"><dt>Today</dt><dd>The challenge model says "a streak people join, ranked by days completed". The leaderboard ranks <em>sessions</em> by <em>plays</em>. The top-3 prizes (up to a year of premium) go to the creators of the most-played sessions, not to the people who completed the 30 days.</dd>
+<dt>Recommend</dt><dd>Separate the two. <b>Participants</b> earn points for completing days (a personal streak, no public rank needed). <b>Creators</b> compete on a board of sessions made for the challenge, ranked by qualified plays (E1).</dd></dl></div>
+
+<div class="finding medium"><div class="fhead"><span class="id">F3</span><h3>How a session enters a challenge</h3><span class="chip medium">Medium</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Today</dt><dd>"Join" opens a chat that says "publish it to be featured", but nothing links a published session to the challenge. There is no state for "joined", "submitted", or "streak broken", and the podium assumes 3 entries.</dd></dl></div>
+
+<h2><span class="num">8</span>Accounts, data and trust</h2>
+
+<div class="finding critical"><div class="fhead"><span class="id">G1</span><h3>Open admin and open write endpoints</h3><span class="chip critical">Critical</span><span class="chip type">Broken (known)</span></div>
+<dl class="grid"><dt>Today</dt><dd><code>/admin</code> has no authentication. <code>/api/config</code> (feature flags, including the site lock), <code>/api/clicks</code> (anyone can read or delete analytics) and <code>/api/annotations</code> accept anonymous writes.</dd>
+<dt>Recommend</dt><dd>Fix before any real users, starting with admin auth and a shared secret on the three endpoints.</dd></dl></div>
+
+<div class="finding high"><div class="fhead"><span class="id">G2</span><h3>"Is this mine?" is decided by display name</h3><span class="chip high">High</span><span class="chip type">Broken</span></div>
+<dl class="grid"><dt>Today</dt><dd>Ownership (profile chrome, version history, "your sessions") compares <code>author === 'Adam Nilson'</code>. Two creators with the same name merge. Renaming yourself makes you lose your own sessions.</dd>
+<dt>Recommend</dt><dd>User ids everywhere. Names are display only.</dd></dl></div>
+
+<div class="finding high"><div class="fhead"><span class="id">G3</span><h3>Session lifetime and sign-in</h3><span class="chip high">High</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Today</dt><dd>Sign-in is deliberately forgotten on every load, which suits a demo. The real lifetime, sign-out on mobile, and account deletion (and what happens to published sessions and lineage credit) are not decided. Open since FOR-PRODUCT §9.1.</dd></dl></div>
+
+<div class="finding medium"><div class="fhead"><span class="id">G4</span><h3>Click insights need consent before production</h3><span class="chip medium">Medium</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Today</dt><dd>Click insights (U032–U034) is on by default and records every visitor's screens and taps. It is anonymous and stores no typed text, but there is no notice or consent. If it is promoted to production, that is a privacy-law question, not a design one.</dd></dl></div>
+
+<h2><span class="num">9</span>Claims and safety</h2>
+
+<div class="finding critical"><div class="fhead"><span class="id">H1</span><h3>No safety path in a mental-health-adjacent chat</h3><span class="chip critical">Critical</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Today</dt><dd>The cockpit invites people to say how they feel. The new feeling chips include "Feeling low". There is no rule for crisis language (self-harm, suicidal ideation): no escalation, no resources, no handover. A keyword mock can ignore this; a real model cannot ship without it.</dd>
+<dt>Recommend</dt><dd>A written safety policy: detection, the exact response, local crisis resources, and a pause on generation. Legal and clinical review before launch.</dd></dl></div>
+
+<div class="finding critical"><div class="fhead"><span class="id">H2</span><h3>Health outcomes shown as facts</h3><span class="chip critical">Critical</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Today</dt><dd>"Reduce stress by 43%", "Resting HR −6 bpm" and "Improve Score +12%" are invented and appear on cards. The "Sessions with Biggest Impact" shelf ranks on them. Some are labelled self-reported; card copy ("This helped Adam reduce stress by 43%") is not.</dd>
+<dt>Recommend</dt><dd>Decide which outcome claims may appear at all, how they are measured, and the exact disclaimer. Until then, show no numeric health claims on cards.</dd></dl></div>
+
+<div class="finding high"><div class="fhead"><span class="id">H3</span><h3>Publishing has no review</h3><span class="chip high">High</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Today</dt><dd>Anyone can publish a session (voice, text, claims) to the community instantly. There is no review, report, or takedown flow.</dd></dl></div>
+
+<div class="finding medium"><div class="fhead"><span class="id">H4</span><h3>A switched-off signal</h3><span class="chip medium">Medium</span><span class="chip type">Missing rule</span></div>
+<dl class="grid"><dt>Today</dt><dd>Sessions are personalised on signals (sleep, heart rate). If the user later turns a signal off, should the session be regenerated, frozen, or should it warn the user? Open since FOR-PRODUCT §9.5.</dd></dl></div>
+
+<h2><span class="num">10</span>Process</h2>
+<div class="finding low"><div class="fhead"><span class="id">I1</span><h3>Staging opens on a different app than production</h3><span class="chip low">Low</span><span class="chip type">Contradiction</span></div>
+<dl class="grid"><dt>Today</dt><dd>Production is pinned to design v2. Staging defaults to v1 unless the reviewer switches. Feedback from staging is often about an app production no longer ships.</dd>
+<dt>Recommend</dt><dd>Default staging to v2.</dd></dl></div>
+
+<div class="finding low"><div class="fhead"><span class="id">I2</span><h3>Web and mobile drift</h3><span class="chip low">Low</span><span class="chip type">Process</span></div>
+<dl class="grid"><dt>Today</dt><dd>The Flutter app does not yet have feeling chips, reply, the Play rule, click insights, or the U037 changes. It also shares the reply rules, so it is one rule behind.</dd></dl></div>
+
+<h2 class="pb"><span class="num">11</span>Decisions needed, with a recommended default</h2>
+<p class="intro">These are the questions that keep coming back. Each has a default you can accept as-is, so engineering is no longer blocked.</p>
+<table>
+<thead><tr><th></th><th>Question</th><th>Recommended default</th><th>Unblocks</th></tr></thead>
+<tbody>
+<tr><td class="n">1</td><td>What does the free plan limit?</td><td class="rec">Builds per account per day (for example 5). Conversation unlimited. Resets at local midnight.</td><td>A1–A3</td></tr>
+<tr><td class="n">2</td><td>What does Premium add?</td><td class="rec">More builds per day, longer sessions, all voices, analytics.</td><td>A4</td></tr>
+<tr><td class="n">3</td><td>Version numbering</td><td class="rec">v1.0 first build, +0.1 per build, per session. A fork is a new session at v1.0.</td><td>B1, B2</td></tr>
+<tr><td class="n">4</td><td>Live vs current</td><td class="rec">Live changes only on (Re)publish. No publishing while building. Non-live cuts are creator-only.</td><td>B3–B5</td></tr>
+<tr><td class="n">5</td><td>Unpublish consequences</td><td class="rec">Recreations stay and keep credit. Links say "no longer available". Earned coins stay.</td><td>B6, B7</td></tr>
+<tr><td class="n">6</td><td>Fork source</td><td class="rec">Always the live version. Record parent and version. No automatic updates.</td><td>C3, C4</td></tr>
+<tr><td class="n">7</td><td>Lineage membership</td><td class="rec">Every step is a real session. Private or deleted steps show "Private session" with credit kept.</td><td>C2</td></tr>
+<tr><td class="n">8</td><td>Lineage payouts</td><td class="rec">70 / 20 / 10, at most 3 generations. No payout to yourself from your own chain.</td><td>C5, C6</td></tr>
+<tr><td class="n">9</td><td>Conversation model</td><td class="rec">One conversation per session, listed under "Latest". Hand-offs open the right one.</td><td>D1, D2</td></tr>
+<tr><td class="n">10</td><td>What is a play</td><td class="rec">At least 60 seconds or 25% of the session. Once per listener per day for rankings.</td><td>E1, F2</td></tr>
+<tr><td class="n">11</td><td>Challenge winners</td><td class="rec">Participants: personal streak and points. Creators: a board of challenge sessions ranked by qualified plays.</td><td>F2, F3</td></tr>
+<tr><td class="n">12</td><td>One currency</td><td class="rec">Coins only, with a written earn/spend table. Rename "pts".</td><td>F1</td></tr>
+<tr><td class="n">13</td><td>Safety and claims</td><td class="rec">Crisis policy and no numeric health claims on cards until measured. Clinical and legal review.</td><td>H1–H3</td></tr>
+<tr><td class="n">14</td><td>Identity and lifetime</td><td class="rec">User ids. A 30-day rolling session. Delete account keeps lineage credit as "Former member".</td><td>G2, G3</td></tr>
+<tr><td class="n">15</td><td>Analytics consent</td><td class="rec">Consent notice before click insights runs on production.</td><td>G4</td></tr>
+</tbody>
+</table>
+
+<h2 class="pb"><span class="num">12</span>Proposed session lifecycle</h2>
+<p class="intro">A single state model would answer B1–B7 at once. The arrows show what a creator can do; listeners only ever see the <b>Live</b> cut.</p>
+<svg viewBox="0 0 680 230" width="100%" role="img" aria-label="Session lifecycle: Draft, Building, Ready, Published, Unpublished">
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4A3B2C"/></marker></defs>
+  <g font-size="12" fill="#1B1006">
+    <rect x="10" y="80" width="100" height="56" rx="12" fill="#F3EEE7" stroke="#C9BBA8"/><text x="60" y="104" text-anchor="middle" font-weight="700">Draft</text><text x="60" y="122" text-anchor="middle" font-size="10" fill="#7A6A58">no build yet</text>
+    <rect x="150" y="80" width="110" height="56" rx="12" fill="#FEF0E2" stroke="#E8A35B"/><text x="205" y="104" text-anchor="middle" font-weight="700">Building vX</text><text x="205" y="122" text-anchor="middle" font-size="10" fill="#7A6A58">publish disabled</text>
+    <rect x="300" y="80" width="110" height="56" rx="12" fill="#FFF6E8" stroke="#C98A1B"/><text x="355" y="104" text-anchor="middle" font-weight="700">Ready vX</text><text x="355" y="122" text-anchor="middle" font-size="10" fill="#7A6A58">current = vX</text>
+    <rect x="450" y="80" width="110" height="56" rx="12" fill="#E7F6EC" stroke="#3E9C6B"/><text x="505" y="104" text-anchor="middle" font-weight="700">Published</text><text x="505" y="122" text-anchor="middle" font-size="10" fill="#7A6A58">live = vX</text>
+    <rect x="570" y="170" width="100" height="50" rx="12" fill="#EFEFEF" stroke="#AAA"/><text x="620" y="192" text-anchor="middle" font-weight="700">Unpublished</text><text x="620" y="208" text-anchor="middle" font-size="10" fill="#7A6A58">forks keep credit</text>
+  </g>
+  <g stroke="#4A3B2C" stroke-width="1.4" fill="none" marker-end="url(#a)">
+    <path d="M110,108 L148,108"/><path d="M260,108 L298,108"/><path d="M410,108 L448,108"/>
+    <path d="M505,80 C505,20 205,20 205,78"/>
+    <path d="M300,128 C280,160 240,160 230,138"/>
+    <path d="M540,136 L590,168"/>
+    <path d="M600,170 C600,150 560,150 545,138"/>
+  </g>
+  <g font-size="10" fill="#4A3B2C">
+    <text x="129" y="100" text-anchor="middle">ask</text>
+    <text x="279" y="100" text-anchor="middle">done</text>
+    <text x="429" y="100" text-anchor="middle">Publish</text>
+    <text x="355" y="34" text-anchor="middle">edit: builds vX+0.1 while live stays vX (Republish moves live)</text>
+    <text x="265" y="170" text-anchor="middle">revert: current → older cut</text>
+    <text x="588" y="150" text-anchor="end">Unpublish</text>
+    <text x="640" y="150" text-anchor="start">Publish</text>
+  </g>
+</svg>
+
+<h2><span class="num">13</span>Fixed in this pass (U037)</h2>
+<div class="finding fixed"><div class="fhead"><span class="id">✓1</span><h3>Recommendation cards are one height</h3><span class="chip fixed">Fixed</span></div><p>A card with a two-line description no longer pushes its Add button below its neighbours'.</p></div>
+<div class="finding fixed"><div class="fhead"><span class="id">✓2</span><h3>Lineage "See All" works, and the counts agree</h3><span class="chip fixed">Fixed</span></div><p>It was a dead button counting 3 (player) or a hard-coded 10 (Progress) under three rows. It now opens the full tree: where the session came from, each step's "built on &lt;parent&gt; v1.x", and recent rebuilds with the version they used. Rows link only to sessions that exist. A lineage date in the future (2026.12.10) was corrected.</p></div>
+<div class="finding fixed"><div class="fhead"><span class="id">✓3</span><h3>The mini player can be closed</h3><span class="chip fixed">Fixed</span></div><p>× stops and clears the parked session in the cockpit and the floating player.</p></div>
+<div class="finding fixed"><div class="fhead"><span class="id">✓4</span><h3>Details show publishing and the creator's version history</h3><span class="chip fixed">Fixed</span></div><p>"Published / Last updated / Live version", or "Not published" for a draft. On your own sessions, a version timeline marks <b>Live</b> and <b>You are here</b>. It shares ids with Progress so <code>?v=</code> means the same cut everywhere. B1 still applies to builds made in the cockpit.</p></div>
+
+<p class="small" style="margin-top:8mm">Prepared from the staging build at commit 7328ab6. Evidence for each finding is in the codebase (file paths in docs/UPDATE-LOG.md, U037), and the open questions continue FOR-PRODUCT §7–§9.</p>
+</body>
+</html>

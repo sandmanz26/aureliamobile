@@ -74,6 +74,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U034 | `bc433a4` | 2026-10-15 11:18 | Click insights: element-level detail (kind, section, position on element, state, timing, result, rage/dead), Elements table, Problem taps, element heatmap. | [patch](patches/U034-bc433a4.patch) |
 | U035 | `b540605` | 2026-10-15 16:41 | Home closing network artwork rebuilt in Three.js (measured from the PNG); hidden by default, switched on from `/__demo` → 3D network (+ Motion). | [patch](patches/U035-b540605.patch) + [b](patches/U035b-d208547.patch) |
 | U036 | `4bc9c2e` | 2026-10-15 16:51 | Home feeling chips; chat reply-to-message; header Play only after something exists; limit copy (new session free); sign-in fills <640px. | [patch](patches/U036-4bc9c2e.patch) |
+| U037 | `7328ab6` | 2026-10-18 16:39 | Equal-height recommendation cards; mini player Close; lineage See All + versions; Details publishing + creator version history; logic review PDF. | [patch](patches/U037-7328ab6.patch) |
 
 ## Entries
 
@@ -516,3 +517,20 @@ Production (`web_prod`) is never touched by these updates unless asked.
 - **Not yet in mobile_app:** the feeling chips, `unsure-feeling` rule, reply, and the Play rule — the Flutter client shares the reply rule set, so it now lags by one rule.
 - **Verified:** Playwright at 402 (chips → field text → Not sure → sign-in → chat answers with the five states), 540 (sign-in fills), 1280 (reply via hover, quote, scoped answer, Play hidden→shown, limit notice, New Session re-enables). Typecheck clean; lint warnings only, same kinds as before.
 - **Revert:** `git revert --no-commit 4bc9c2e && git checkout HEAD -- docs/`.
+
+### U037 — Card heights, See All, player Close, version history, publish date + logic review
+
+- **Commit:** `7328ab6` · pushed 2026-10-18 16:39:27 UTC · `web_app` + `admin_cms` · not on `web_prod`
+- **Patch:** [patches/U037-7328ab6.patch](patches/U037-7328ab6.patch)
+- **Request:** (1) recommendation cards should be the same height; (2) enable See All on the Lineage Tree; (3) a close button on the parked player in chat; (4) a version history in the player sheet so a creator knows where they are, and lineage rows saying which version was used; (5) Details should say when it was published. Then a PDF (English) of odd or missing logic. Standing instruction from now on: think as a senior PM and flag what is missing.
+- **Mobile:** all five touch layouts below `lg:`. Done on explicit request.
+- **Changes:**
+  1. `RecommendationFilter.tsx` — card wrapper is `flex` so cards stretch to the tallest; `RecommendationCard.tsx` — Add/Remove gets `mt-auto` so the buttons line up (v1 row too).
+  2. `LineageTreeCard.tsx` — rewritten: header shows "Recreated N×"; each step says "Built on <parent> v1.x" (or "Original template"); "This session" tag; rows link only to steps that are real catalogue sessions (before, every row opened the current session's player); **See All** opens a sheet (`LineageSheet`, exported) with the whole ancestry plus "Rebuilt from this session" (count + three illustrative recent rebuilds with the version each used). Progress's dead "See All (10)" opens the same sheet.
+  3. `MiniPlayer.tsx` — × Close stops and clears playback (cockpit header and v2 floating player).
+  4–5. New `src/lib/sessionHistory.ts` (versions derived from Progress's ids + v1.0, publish info, lineage steps with versions, illustrative recreations, `isOwnSession`); new `src/components/ui/SessionDetails.tsx` used by `PlayerPage` and `SessionDetailPage`: **Publishing** card (Published / Last updated / Live version, or "Not published" for drafts), **Version history** timeline on your own sessions (Live badge, "You are here" = the `?v=` being played, tap to switch, "Manage versions" → Progress), then the Lineage Tree.
+  - `src/lib/sessions/queries.ts` — `lineageDate` no longer returns 2026.12.10 (a future date); dates are now all in the past and ascending.
+- **Assumptions:** "the version used" = the parent's version a fork was built from; publish date = first publish, plus last update = when the live cut was published; version history is shown to the creator only. Descendant data does not exist in the catalogue — the rebuild rows are illustrative and labelled so in code (logic review C3).
+- **Logic review:** `docs/reviews/Aurelia-Logic-Review-2026-10-18.pdf` (source: `logic-review-2026-10-18.html`) — 43 findings (6 critical, 16 high, 14 medium, 4 low, 4 fixed here) and 15 decisions with recommended defaults.
+- **Verified:** 402 v2 (equal cards, Close removes the player, See All sheet), session detail for own published (Soft Reset) and own draft (Monday Reset). Typecheck clean, lint warnings only.
+- **Revert:** `git revert --no-commit 7328ab6 && git checkout HEAD -- docs/`.
