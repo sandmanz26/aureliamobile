@@ -23,6 +23,7 @@ import { progressFor, writeObjective } from '../lib/progress'
 import { CARD_SHADOW } from '../lib/shadows'
 import { ObjectiveSheet } from '../components/ui/ObjectiveSheet'
 import type { ProgressTab, Version } from '../lib/progress'
+import { LineageSheet } from '../components/ui/LineageTreeCard'
 import { findSession, isPublished } from '../lib/sessions'
 import { useChatSession } from '../chat/ChatSessionContext'
 
@@ -271,6 +272,7 @@ export function ProgressPage() {
   const [params, setParams] = useSearchParams()
   const session = findSession(slug)
   const [openVersion, setOpenVersion] = useState<string | null>('v3')
+  const [lineageOpen, setLineageOpen] = useState(false)
   const [editing, setEditing] = useState(false)
   // Bumped on save so the card re-reads the objective, which lives in lib/
   // rather than here — the screen is not where a goal should be kept.
@@ -523,9 +525,16 @@ export function ProgressPage() {
                     </Fragment>
                   ))}
                 </div>
-                <button type="button" className="u-press w-fit text-[12px] leading-[18px] text-[#525252]">
-                  See All ({progress.lineageTotal})
+                {/* U037: was a dead button counting a hardcoded 10 under a
+                    three-row list. Opens the same full tree as the player. */}
+                <button
+                  type="button"
+                  onClick={() => setLineageOpen(true)}
+                  className="u-press w-fit text-[12px] leading-[18px] text-[#525252]"
+                >
+                  See All
                 </button>
+                {lineageOpen && <LineageSheet session={session} onClose={() => setLineageOpen(false)} />}
               </section>
             </div>
           )}

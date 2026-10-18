@@ -122,9 +122,12 @@ export function RecommendationFilter({
         )}
       </p>
 
+      {/* Wrapper is flex so each card stretches to the row's tallest one
+          (U037) — a two-line description made one card taller and its Add
+          button sat lower than its neighbours'. */}
       <div key={filter} className="-mx-20 mt-10 flex gap-11 overflow-x-auto px-20 pb-4">
         {shown.map((recommendation, index) => (
-          <div key={recommendation.id} className="u-pop shrink-0" style={{ animationDelay: `${index * 50}ms` }}>
+          <div key={recommendation.id} className="u-pop flex shrink-0" style={{ animationDelay: `${index * 50}ms` }}>
             <RecommendationCard
               recommendation={recommendation}
               applied={applied.includes(recommendation.id)}

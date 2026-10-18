@@ -1,4 +1,4 @@
-import { Pause, Play, Volume2, VolumeX } from 'lucide-react'
+import { Pause, Play, Volume2, VolumeX, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAudioPlayer } from '../../audio/AudioPlayerContext'
 import { PhotoCircle } from '../ui/PhotoCircle'
@@ -20,9 +20,14 @@ import { PhotoCircle } from '../ui/PhotoCircle'
  * Reachable only from the full player, the switch would be two taps away at
  * the moment it is wanted, and — worse — a muted session playing here would
  * have nothing on it to say why it is silent.
+ *
+ * **Close (U037).** The card used to stay for as long as anything had been
+ * played — in the cockpit header and floating over every screen in v2 — with
+ * no way to get rid of it short of reloading. × stops the session and clears
+ * it; the session itself is untouched and plays again from wherever it is.
  */
 export function MiniPlayer() {
-  const { track, playing, elapsed, duration, muted, toggle, toggleMuted } = useAudioPlayer()
+  const { track, playing, elapsed, duration, muted, toggle, toggleMuted, stop } = useAudioPlayer()
   if (!track) return null
 
   const progress = duration > 0 ? Math.min(1, elapsed / duration) : 0
@@ -63,6 +68,15 @@ export function MiniPlayer() {
           ) : (
             <Play size={20} fill="currentColor" strokeWidth={0} />
           )}
+        </button>
+
+        <button
+          type="button"
+          onClick={stop}
+          aria-label={`Close ${track.title}`}
+          className="u-press -mr-6 flex size-32 shrink-0 items-center justify-center text-icon-default"
+        >
+          <X size={18} />
         </button>
       </div>
 

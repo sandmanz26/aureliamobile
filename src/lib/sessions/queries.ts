@@ -101,7 +101,12 @@ export function totalMinutes(session: SessionRecord) {
  * session.
  */
 export function lineageDate(index: number) {
-  return ['2026.2.23', '2026.6.21', '2026.12.10'][index] ?? '2026.6.21'
+  // U037: the third date was 2026.12.10 — in the future, so a recreation
+  // claimed to have been made two months from now. All three are now in the
+  // past and still ascending; anything deeper steps a month on from the last.
+  const dates = ['2026.2.23', '2026.6.21', '2026.9.12']
+  if (index < dates.length) return dates[index]
+  return `2026.${Math.min(9 + index - 2, 10)}.12`
 }
 
 /** The frame's duration format — 12:22, not "12 min". */

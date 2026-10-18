@@ -21,7 +21,7 @@ import { useAudioPlayer } from '../audio/AudioPlayerContext'
 import { AlignmentPanel } from '../components/wellness/AlignmentPanel'
 import { CoinPill } from '../components/ui/CoinPill'
 import { CoverImage } from '../components/ui/CoverImage'
-import { LineageTreeCard } from '../components/ui/LineageTreeCard'
+import { SessionDetails } from '../components/ui/SessionDetails'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { TagRow } from '../components/ui/TagRow'
 import { findVersion } from '../lib/progress'
@@ -758,7 +758,7 @@ export function PlayerPage() {
 
           <section className="mt-24">
             <h2 className="text-style-body text-text-primary">Details</h2>
-            <LineageTreeCard session={session} />
+            <SessionDetails session={session} playingId={versionId} playBase={`/play/${session.slug}`} />
           </section>
         </div>
       </aside>

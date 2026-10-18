@@ -122,7 +122,7 @@ export function RecommendationCard({
         <button
           type="button"
           onClick={onToggle}
-          className="flex h-32 w-fit items-center gap-4 rounded-full border border-border-subtle pl-12 pr-14 text-style-label text-text-primary transition-colors hover:bg-background-elevated"
+          className="mt-auto flex h-32 w-fit items-center gap-4 rounded-full border border-border-subtle pl-12 pr-14 text-style-label text-text-primary transition-colors hover:bg-background-elevated"
         >
           {applied ? <Trash2 size={12} className="text-icon-default" /> : <Plus size={12} className="text-icon-default" />}
           {applied ? 'Remove' : 'Add'}

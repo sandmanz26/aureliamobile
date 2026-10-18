@@ -7,7 +7,7 @@ import orb432hz from '../assets/orb-432hz.png'
 import orbIncreaseYellow from '../assets/orb-increase-yellow.png'
 import orbLessMovement from '../assets/orb-less-movement.png'
 import { CoverImage } from '../components/ui/CoverImage'
-import { LineageTreeCard } from '../components/ui/LineageTreeCard'
+import { SessionDetails } from '../components/ui/SessionDetails'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { TagRow } from '../components/ui/TagRow'
 import type { RecreateBrief } from '../chat/recreate'
@@ -174,7 +174,7 @@ export function SessionDetailPage() {
 
         <section className="mt-24">
           <h2 className="text-style-body text-text-primary">Details</h2>
-          <LineageTreeCard session={session} />
+          <SessionDetails session={session} />
         </section>
       </div>
 
