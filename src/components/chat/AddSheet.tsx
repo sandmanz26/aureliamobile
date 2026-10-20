@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom'
 import { ArrowUp, Check, Image, Music, Plus, Sparkles, X } from 'lucide-react'
 import { useEffect } from 'react'
+import { useUiVersion } from '../../versions/useUiVersion'
 import orb432hz from '../../assets/orb-432hz.png'
 import orbIncreaseYellow from '../../assets/orb-increase-yellow.png'
 import orbLessMovement from '../../assets/orb-less-movement.png'
@@ -57,6 +58,8 @@ interface AddSheetProps {
   onToggle: (id: string) => void
   onApply: () => void
   onClose: () => void
+  /** The version this will build, e.g. "Sleep meditation v1.5" — shown in v3's summary. */
+  nextLabel?: string
 }
 
 /**
@@ -69,7 +72,12 @@ interface AddSheetProps {
  * the same kind of claim, and a single undifferentiated list would present
  * them as if they were.
  */
-export function AddSheet({ added, onToggle, onApply, onClose }: AddSheetProps) {
+export function AddSheet(props: AddSheetProps) {
+  const v3 = useUiVersion() >= 3
+  return v3 ? <AddSheetV3 {...props} /> : <AddSheetV1 {...props} />
+}
+
+function AddSheetV1({ added, onToggle, onApply, onClose }: AddSheetProps) {
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.key === 'Escape') onClose()
@@ -88,7 +96,7 @@ export function AddSheet({ added, onToggle, onApply, onClose }: AddSheetProps) {
         aria-modal="true"
         aria-label="Add to this session"
         onClick={(event) => event.stopPropagation()}
-        className="u-sheet flex max-h-[85vh] w-full max-w-[402px] flex-col gap-20 overflow-y-auto rounded-t-24 bg-surface-default px-20 pb-24 pt-20 lg:max-w-[520px]"
+        className="u-sheet flex max-h-[85vh] w-full sm:max-w-[480px] flex-col gap-20 overflow-y-auto rounded-t-24 bg-surface-default px-20 pb-24 pt-20 lg:max-w-[520px]"
       >
         <button
           type="button"
@@ -200,5 +208,192 @@ function OptionCard({
         </button>
       </div>
     </article>
+  )
+}
+
+const ALL_OPTIONS = [...FROM_DIAGNOSIS, ...EXPERIMENTS]
+
+/** Titles of picked options, for the thread to say what a build contained. */
+export function addOptionTitles(ids: string[]) {
+  return ALL_OPTIONS.filter((option) => ids.includes(option.id)).map((option) => option.title)
+}
+
+/**
+ * Version 3 (U038): the same choices as a list you can scan, and a summary
+ * above Apply that says what you are about to get — which changes, what the
+ * diagnosis ones are expected to do, that the experiments are untested, and
+ * the version it will build. Before, Apply showed only a count, so the
+ * decision was made blind and the result arrived without a reason.
+ *
+ * The expected effect is shown per change and as "up to" the largest one,
+ * never summed: separate percentage lifts do not add (logic review D4).
+ */
+function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel }: AddSheetProps) {
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  const picked = ALL_OPTIONS.filter((option) => added.includes(option.id))
+  const predicted = picked.filter((option) => option.improveScore)
+  const experiments = picked.filter((option) => !option.improveScore)
+  const best = predicted.reduce((max, option) => Math.max(max, Number.parseFloat(option.improveScore ?? '0')), 0)
+
+  return createPortal(
+    <div className="u-fade fixed inset-0 z-50 flex items-end justify-center bg-icon-strong/40" onClick={onClose}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Change this session"
+        onClick={(event) => event.stopPropagation()}
+        className="u-sheet flex max-h-[88dvh] w-full flex-col rounded-t-24 bg-surface-default sm:max-w-[480px] lg:max-w-[560px]"
+      >
+        <div className="flex items-start justify-between gap-16 px-20 pt-24">
+          <div className="min-w-0">
+            <h2 className="text-style-title text-text-primary">Change this session</h2>
+            <p className="text-style-body-small mt-2 text-text-secondary">Pick what to change — Aurelia builds a new version with it.</p>
+          </div>
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+            className="u-press -mr-6 flex size-32 shrink-0 items-center justify-center rounded-full text-icon-strong"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="mt-16 flex-1 overflow-y-auto px-20 pb-16">
+          <ListSection
+            title="Based on your diagnosis"
+            hint="Aurelia expects these to help."
+            options={FROM_DIAGNOSIS}
+            added={added}
+            onToggle={onToggle}
+          />
+          <ListSection
+            title="Experiments"
+            hint="Untested — you’ll find out when you listen."
+            options={EXPERIMENTS}
+            added={added}
+            onToggle={onToggle}
+          />
+        </div>
+
+        {/* The summary: what Apply will actually do. */}
+        <div className="border-t border-border-subtle px-20 pb-[calc(20px+env(safe-area-inset-bottom))] pt-16">
+          {picked.length === 0 ? (
+            <p className="text-style-body-small text-center text-text-secondary">Nothing picked yet — add at least one change.</p>
+          ) : (
+            <div className="rounded-16 bg-[#FFF8EC] p-12">
+              <div className="flex items-baseline justify-between gap-12">
+                <p className="text-style-body-small font-medium text-text-primary">
+                  You’ll get {picked.length} {picked.length === 1 ? 'change' : 'changes'}
+                </p>
+                {nextLabel && <p className="text-style-caption truncate text-text-secondary">as {nextLabel}</p>}
+              </div>
+              <div className="mt-8 flex flex-wrap gap-6">
+                {picked.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => onToggle(option.id)}
+                    aria-label={`Remove ${option.title}`}
+                    className="u-press flex h-28 items-center gap-6 rounded-full bg-surface-default pl-4 pr-8 text-[12px] text-text-primary shadow-sm"
+                  >
+                    <img src={option.orb} alt="" className="size-20 rounded-full object-cover" />
+                    {option.title}
+                    <X size={12} className="text-icon-default" />
+                  </button>
+                ))}
+              </div>
+              <ul className="text-style-caption mt-10 flex flex-col gap-4 text-text-secondary">
+                {predicted.length > 0 && (
+                  <li className="flex items-center gap-6">
+                    <ArrowUp size={12} className="text-success-600" />
+                    Expected: up to <span className="font-medium text-success-600">+{best}%</span> improve score
+                  </li>
+                )}
+                {experiments.length > 0 && (
+                  <li className="flex items-center gap-6">
+                    <Sparkles size={12} className="text-[#E58A1F]" />
+                    {experiments.length} {experiments.length === 1 ? 'experiment' : 'experiments'} — effect unknown until you listen
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={onApply}
+            disabled={picked.length === 0}
+            className="text-style-body u-press mt-12 flex h-52 w-full items-center justify-center gap-8 rounded-16 bg-[#331B04] text-text-inverse disabled:opacity-40"
+          >
+            <Sparkles size={16} />
+            {picked.length === 0 ? 'Apply changes' : `Apply ${picked.length} ${picked.length === 1 ? 'change' : 'changes'}`}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
+function ListSection({
+  title,
+  hint,
+  options,
+  added,
+  onToggle,
+}: {
+  title: string
+  hint: string
+  options: AddOption[]
+  added: string[]
+  onToggle: (id: string) => void
+}) {
+  return (
+    <section className="mt-8 first:mt-0">
+      <h3 className="text-style-body-small font-medium text-text-primary">{title}</h3>
+      <p className="text-style-caption text-text-secondary">{hint}</p>
+      <ul className="mt-8 flex flex-col">
+        {options.map((option) => {
+          const on = added.includes(option.id)
+          return (
+            <li key={option.id} className="flex items-center gap-12 border-b border-border-subtle py-12 last:border-b-0">
+              <img src={option.orb} alt="" className="size-44 shrink-0 rounded-full object-cover" />
+              <div className="min-w-0 flex-1">
+                <p className="text-style-body-small text-text-primary">{option.title}</p>
+                <p className="text-style-caption line-clamp-2 text-text-secondary">{option.description}</p>
+                {option.improveScore ? (
+                  <span className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#ecfbed] px-6 py-1 text-[11px] text-success-600">
+                    <ArrowUp size={10} /> {option.improveScore} expected
+                  </span>
+                ) : (
+                  <span className="mt-4 inline-flex items-center gap-4 text-[11px] text-text-secondary">
+                    {option.channel === 'Visuals' ? <Image size={11} /> : <Music size={11} />}
+                    {option.channel}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => onToggle(option.id)}
+                aria-pressed={on}
+                className={`text-style-label u-press flex h-32 shrink-0 items-center gap-4 rounded-full border px-12 ${
+                  on ? 'border-transparent bg-brand-default text-text-strong' : 'border-border-subtle bg-surface-default text-text-primary'
+                }`}
+              >
+                {on ? <Check size={12} /> : <Plus size={12} />}
+                {on ? 'Added' : 'Add'}
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
   )
 }

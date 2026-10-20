@@ -53,7 +53,7 @@ export function ObjectiveSheet({
           save()
         }}
         /* 40 above, 32 below, 20 at the sides, 32 between the three blocks. */
-        className="u-sheet flex w-full max-w-[402px] flex-col gap-32 rounded-t-24 bg-surface-default px-20 pb-32 pt-40 lg:max-w-[560px]"
+        className="u-sheet flex w-full sm:max-w-[480px] flex-col gap-32 rounded-t-24 bg-surface-default px-20 pb-32 pt-40 lg:max-w-[560px]"
       >
         <div className="flex flex-col gap-24">
           {/* 64 in the frame — the icon is the sheet's whole illustration, and

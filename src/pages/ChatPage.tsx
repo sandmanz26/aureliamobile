@@ -1,7 +1,7 @@
 import { WandSparkles } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { AddSheet } from '../components/chat/AddSheet'
+import { AddSheet, addOptionTitles } from '../components/chat/AddSheet'
 import { PageMeta } from '../components/PageMeta'
 import { ChatComposer } from '../components/chat/ChatComposer'
 import { ChatMessageItem } from '../components/chat/ChatMessageItem'
@@ -11,8 +11,9 @@ import { ChatHeader } from '../components/chat/ChatHeader'
 import { MiniPlayer } from '../components/chat/MiniPlayer'
 import { PublishSheet } from '../components/chat/PublishSheet'
 import { useAudioPlayer } from '../audio/AudioPlayerContext'
-import { useChatSession } from '../chat/ChatSessionContext'
+import { nextVersionLabel, useChatSession } from '../chat/ChatSessionContext'
 import type { Message, Status } from '../chat/ChatSessionContext'
+import { RECOMMENDATIONS } from '../chat/ChatSessionContext'
 import type { RecreateBrief } from '../chat/recreate'
 import { draftTitleFor, findQuickStart } from '../lib/quickStart'
 import { replyTo } from '../lib/replies'
@@ -21,6 +22,7 @@ import { SessionProgressCardV2 } from '../components/chat/SessionProgressCardV2'
 import { VoiceRecorder } from '../components/chat/VoiceRecorder'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { useFeatureFlags } from '../demo/FeatureFlags'
+import { useUiVersion } from '../versions/useUiVersion'
 import { useDrawer } from '../layouts/DrawerContext'
 import { CURRENT_USER } from '../lib/people'
 import { findSession, publishSession, unpublishSession } from '../lib/sessions'
@@ -112,11 +114,12 @@ export function ChatPage() {
     sessionSlug, openSession,
     draft, setDraft,
     addVersion, pointAt,
-    currentVersionId, publishedVersionId, markPublished, markUnpublished,
+    currentVersionId, publishedVersionId, markPublished, markUnpublished, versions,
     nextMessageId,
     reset,
   } = useChatSession()
   const [typing, setTyping] = useState(false)
+  const v3 = useUiVersion() >= 3
   const { track, playing } = useAudioPlayer()
   // The session Insights should open: this thread's if it has one, otherwise
   // the one the draft stands in for — the same fallback `playTo` uses.
@@ -497,7 +500,12 @@ export function ChatPage() {
     setApplied((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]))
   }
 
-  function applyChanges(label = 'Apply new changes') {
+  /** "a, b and c" */
+  function listOf(items: string[]) {
+    return items.length <= 1 ? (items[0] ?? '') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
+  }
+
+  function applyChanges(label = 'Apply new changes', contents: string[] = []) {
     setSessionState('updating')
     // The request goes into the thread as the user's own line. Applying is a
     // thing they asked for, and a session that changes with nothing in the
@@ -508,10 +516,19 @@ export function ChatPage() {
     ])
     setDeckOpen(false)
     window.setTimeout(() => {
-      build(label)
+      const made = build(label)
       setMessages((current) => [
         ...current,
-        { id: nextMessageId(), from: 'aurelia', at: Date.now(), text: 'Sure, here it is:' },
+        // Carries the build it announces, so v3 can keep the result here —
+        // and in v3 says what went into it, so three results in a row are
+        // three different things rather than three "Sure, here it is:".
+        {
+          id: nextMessageId(),
+          from: 'aurelia',
+          at: Date.now(),
+          text: v3 && contents.length ? `Built ${made.label} with ${listOf(contents)}.` : 'Sure, here it is:',
+          build: made,
+        },
       ])
     }, 1400)
   }
@@ -528,7 +545,7 @@ export function ChatPage() {
   function build(change: string) {
     setProgress(0)
     setSessionState('generating')
-    addVersion(change)
+    return addVersion(change)
   }
 
   /**
@@ -591,8 +608,11 @@ export function ChatPage() {
       // Outside the updater below, and that is not a style choice: an updater
       // is expected to be pure and React runs it twice to check, so a build
       // started from inside one records the version twice.
-      if (reply.changes && stateRef.current === 'ready') build(message.text)
-      setMessages((current) => [...current, answerFor(message.text, current, message.replyTo)])
+      const made = reply.changes && stateRef.current === 'ready' ? build(message.text) : undefined
+      setMessages((current) => [
+        ...current,
+        { ...answerFor(message.text, current, message.replyTo), ...(made ? { build: made } : {}) },
+      ])
     }, 2400)
   }
 
@@ -640,6 +660,34 @@ export function ChatPage() {
    * apart from it.
    */
   const onDeck = track?.href === `/play/${draft.slug}`
+
+  /**
+   * Version 3 (U038): every build stays in the thread where it was asked
+   * for — apply three times, three results (v1.2, v1.3, v1.4) — the way an AI
+   * chat keeps each answer, instead of one card at the bottom that renames
+   * itself and makes the earlier cuts look gone. The newest carries the live
+   * status (building / ready / playing); the earlier ones say so and still
+   * play their own cut. The single bottom card remains for v1/v2, and for a
+   * state no message announced (a revert from Progress, say).
+   */
+  const resultInThread = v3 && messages.some((m) => m.build?.versionId === currentVersionId)
+  function buildCard(made: NonNullable<Message['build']>) {
+    const latest = made.versionId === currentVersionId
+    return (
+      <div className="u-message mt-12">
+        {latest && sessionState === 'generating' ? (
+          <SessionProgressCardV2 title={made.label} />
+        ) : (
+          <SessionReasoningCard
+            title={made.label}
+            status={latest ? readyStatus : 'Earlier version — tap to play'}
+            to={`/play/${made.slug}?v=${made.versionId}`}
+            by={sessionSlug ? undefined : CURRENT_USER}
+          />
+        )}
+      </div>
+    )
+  }
   const hasSomethingToPlay = sessionSlug !== null || sessionState === 'ready'
   const readyStatus = !onDeck ? 'Ready to play' : playing ? 'Playing now' : 'Paused'
 
@@ -746,11 +794,12 @@ export function ChatPage() {
                 onReply={limited || listening ? undefined : (m) => setReplyTarget(m)}
                 onJumpTo={jumpTo}
                 flash={flashId === message.id}
+                after={v3 && message.build ? buildCard(message.build) : undefined}
               />
             )
           })}
 
-          {(sessionState === 'generating' || sessionState === 'ready') && (
+          {(sessionState === 'generating' || sessionState === 'ready') && !resultInThread && (
             <div className="u-message mt-12">
               {sessionState === 'ready' ? (
                 <SessionReasoningCard
@@ -802,7 +851,9 @@ export function ChatPage() {
               // the recommendation cards (#FF881B -> #FFE682).
               <button
                 type="button"
-                onClick={() => applyChanges()}
+                onClick={() =>
+                  applyChanges(undefined, RECOMMENDATIONS.filter((r) => applied.includes(r.id)).map((r) => r.title))
+                }
                 disabled={sessionState === 'updating'}
                 style={{
                   border: '1px solid transparent',
@@ -873,6 +924,7 @@ export function ChatPage() {
 
       {addOpen && (
         <AddSheet
+          nextLabel={versions.length ? nextVersionLabel(versions[versions.length - 1].label) : draft.title}
           added={addPicks}
           onToggle={(id) =>
             setAddPicks((current) =>
@@ -886,6 +938,7 @@ export function ChatPage() {
             // the same thing, so it must not grow a second way of doing it.
             applyChanges(
               addPicks.length === 1 ? 'Apply 1 change' : `Apply ${addPicks.length} changes`,
+              addOptionTitles(addPicks),
             )
           }}
           onClose={() => setAddOpen(false)}

@@ -45,6 +45,13 @@ export interface Message {
    * quote must still read right if the thread is reset under it.
    */
   replyTo?: { id: number; from: 'aurelia' | 'user'; text: string }
+  /**
+   * The build this message announced (U038, design v3): the version it made,
+   * so the thread can keep each result where it happened — apply three times,
+   * see three versions — instead of one card at the bottom that renames
+   * itself.
+   */
+  build?: { versionId: string; label: string; slug: string }
 }
 
 /** The thread opens mid-conversation, so the first messages are backdated. */
@@ -254,7 +261,7 @@ interface ChatSessionValue {
   currentVersionId: string | null
   /** Start a new cut. Called when a build starts rather than when it finishes,
    *  so the history can show the one being made. */
-  addVersion: (change: string) => void
+  addVersion: (change: string) => { versionId: string; label: string; slug: string }
   /**
    * The cut that is live, or null if this thread has never published.
    *
@@ -352,6 +359,7 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
       setVersions((list) => [...list, { id, label, change, at: Date.now(), slug: draft.slug }])
       setCurrentVersionId(id)
       setDraft((current) => ({ ...current, title: label }))
+      return { versionId: id, label, slug: draft.slug }
     },
     [versions, draft],
   )

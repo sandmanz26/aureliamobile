@@ -87,7 +87,7 @@ export function LineageSheet({ session, onClose }: { session: SessionRecord; onC
         role="dialog"
         aria-modal="true"
         aria-labelledby="lineage-title"
-        className="u-sheet flex max-h-[85dvh] w-full max-w-[402px] flex-col overflow-y-auto rounded-t-24 bg-surface-default px-20 pb-[calc(24px+env(safe-area-inset-bottom))] pt-24 lg:max-w-[520px] lg:rounded-24"
+        className="u-sheet flex max-h-[85dvh] w-full sm:max-w-[480px] flex-col overflow-y-auto rounded-t-24 bg-surface-default px-20 pb-[calc(24px+env(safe-area-inset-bottom))] pt-24 lg:max-w-[520px] lg:rounded-24"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-16">

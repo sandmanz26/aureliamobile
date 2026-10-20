@@ -26,7 +26,7 @@ export function PublishSheet({ state, onCancel, onView, onDone }: PublishSheetPr
 
   return createPortal(
     <div className="u-fade fixed inset-0 z-50 flex items-end justify-center bg-icon-strong/40">
-      <div className="u-sheet flex w-full max-w-[402px] flex-col items-center gap-32 rounded-t-24 bg-surface-default px-20 pb-24 pt-40">
+      <div className="u-sheet flex w-full sm:max-w-[480px] flex-col items-center gap-32 rounded-t-24 bg-surface-default px-20 pb-24 pt-40">
         {unpublished ? (
           <span className="flex size-64 items-center justify-center rounded-full bg-background-elevated">
             <CircleX size={32} strokeWidth={2} className="text-text-primary" />

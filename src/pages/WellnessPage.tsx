@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import { ChartPie, ChevronRight, Link2, Menu, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -135,6 +136,7 @@ export function WellnessPage() {
   const [connections, setConnections] = useState(defaultConnections)
   const [requestOpen, setRequestOpen] = useState(false)
   const [tab, setTab] = useState<WellnessTab>('Analytics')
+  const [requestSent, setRequestSent] = useState(false)
   // The first goal opens by default, same reasoning as My Wellness always
   // showing signal state rather than a blank list — the tab should not
   // read as empty on first visit.
@@ -290,15 +292,92 @@ export function WellnessPage() {
         )}
       </div>
 
-      {requestOpen && <RequestSheet onClose={() => setRequestOpen(false)} />}
+      {requestOpen && (
+        <RequestSheet
+          onClose={() => setRequestOpen(false)}
+          onSent={() => {
+            setRequestOpen(false)
+            setRequestSent(true)
+          }}
+        />
+      )}
+      {requestSent && <RequestSentToast onClose={() => setRequestSent(false)} />}
     </div>
   )
 }
 
-/** Ask for a source Aurelia does not support yet. */
-function RequestSheet({ onClose }: { onClose: () => void }) {
+/** Figma "send-2" (16883:10061), 64px, the success glyph on the toast. */
+function SentMark() {
+  return (
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <path
+        opacity="0.4"
+        d="M18.9597 15.8928L43.0131 7.8661C53.8131 4.2661 59.6797 10.1594 56.1064 20.9594L48.0797 45.0128C42.6931 61.1994 33.8397 61.1994 28.4531 45.0128L26.0797 37.8661L18.9331 35.4928C2.77308 30.1328 2.77308 21.3061 18.9597 15.8928Z"
+        fill="#5FC52C"
+      />
+      <path
+        d="M32.3195 33.014C31.8128 33.014 31.3062 32.8273 30.9062 32.4273C30.1328 31.654 30.1328 30.374 30.9062 29.6007L41.0395 19.414C41.8128 18.6407 43.0928 18.6407 43.8662 19.414C44.6395 20.1873 44.6395 21.4673 43.8662 22.2407L33.7328 32.4273C33.3328 32.8007 32.8262 33.014 32.3195 33.014Z"
+        fill="#5FC52C"
+      />
+    </svg>
+  )
+}
+
+/**
+ * Figma "My Wellness/Connect" toast (16883:10056): after Send the sheet closes
+ * and a centred card confirms over the dimmed screen — 362 wide, radius 24,
+ * 24/20/20 padding, 32 between the copy and Done (an outlined 16-radius
+ * button on #D6D6D6). U038: this replaced a "Thanks — that's logged." line
+ * inside the sheet, which the frame does not have.
+ */
+function RequestSentToast({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return createPortal(
+    <div className="u-fade fixed inset-0 z-50 flex items-center justify-center bg-icon-strong/40 px-20" onClick={onClose}>
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="request-sent-title"
+        className="flex w-full max-w-[362px] flex-col gap-32 rounded-24 bg-surface-default px-20 pb-20 pt-24"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex flex-col items-center gap-24">
+          <SentMark />
+          <div className="flex flex-col items-center gap-8 text-center">
+            <h2 id="request-sent-title" className="text-[20px] font-medium leading-[24px] text-text-primary">
+              Your recommendation
+              <br />
+              has been sent!
+            </h2>
+            <p className="max-w-[280px] text-[14px] font-light! leading-[18.9px] text-[#525252]">
+              Thank you for sharing. Our team will review it and work on making it happen soon.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          autoFocus
+          onClick={onClose}
+          className="u-press flex h-51 w-full items-center justify-center rounded-16 border border-[#D6D6D6] text-[16px] leading-[19px] text-text-primary"
+        >
+          Done
+        </button>
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
+/** Ask for a source Aurelia does not support yet — Figma "drawer" (16883:9883). */
+function RequestSheet({ onClose, onSent }: { onClose: () => void; onSent: (name: string) => void }) {
   const [value, setValue] = useState('')
-  const [sent, setSent] = useState<string | null>(null)
 
   // Escape closes it. A sheet that can only be dismissed by hitting a 32px X
   // or the strip of backdrop above it is a trap on a keyboard.
@@ -314,16 +393,16 @@ function RequestSheet({ onClose }: { onClose: () => void }) {
     event.preventDefault()
     const name = value.trim()
     if (!name) return
-    setSent(name)
+    onSent(name)
   }
 
-  return (
+  return createPortal(
     <div className="u-fade fixed inset-0 z-50 flex items-end justify-center bg-icon-strong/40" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Request a device or app"
-        className="u-sheet relative flex w-full max-w-[402px] flex-col items-center gap-20 rounded-t-24 bg-surface-default px-24 pb-32 pt-40"
+        className="u-sheet relative flex w-full sm:max-w-[480px] flex-col gap-32 rounded-t-24 bg-surface-default px-20 pb-32 pt-40 lg:max-w-[480px]"
         onClick={(event) => event.stopPropagation()}
       >
         <button
@@ -335,53 +414,35 @@ function RequestSheet({ onClose }: { onClose: () => void }) {
           <X size={20} />
         </button>
 
-        <SpiralMark />
+        <div className="flex flex-col items-center gap-24">
+          <SpiralMark />
+          <div className="flex flex-col gap-8 text-center">
+            <h2 className="mx-auto max-w-[250px] text-balance text-[20px] font-medium leading-[24px] text-text-primary">
+              Don’t see your favorite device or app?
+            </h2>
+            <p className="text-[14px] font-light! leading-[21px] text-[#525252]">Tell us what you’d like to see next!</p>
+          </div>
+        </div>
 
-        {sent ? (
-          <>
-            <div className="flex flex-col gap-8 text-center">
-              <h2 className="text-style-title text-text-primary">Thanks — that’s logged.</h2>
-              <p className="text-style-body-small text-text-secondary">
-                We’ll let you know if {sent} becomes a source you can connect.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-style-body u-press w-full rounded-full bg-icon-default py-16 text-center font-semibold text-text-inverse"
-            >
-              Done
-            </button>
-          </>
-        ) : (
-          <>
-            <div className="flex flex-col gap-8 text-center">
-              <h2 className="text-style-title mx-auto max-w-[250px] text-balance text-text-primary">
-                Don’t see your favorite device or app?
-              </h2>
-              <p className="text-style-body-small text-text-secondary">Tell us what you’d like to see next!</p>
-            </div>
-
-            <form onSubmit={submit} className="flex w-full flex-col gap-16">
-              <input
-                autoFocus
-                value={value}
-                onChange={(event) => setValue(event.target.value)}
-                placeholder="E.g. Garmin"
-                aria-label="Device or app name"
-                className="text-style-body h-52 w-full rounded-full border border-border-default bg-surface-default px-20 text-text-primary outline-none placeholder:text-text-secondary focus:border-brand-emphasis"
-              />
-              <button
-                type="submit"
-                disabled={!value.trim()}
-                className="text-style-body u-press w-full rounded-full bg-icon-default py-16 text-center font-semibold text-text-inverse disabled:opacity-40"
-              >
-                Send
-              </button>
-            </form>
-          </>
-        )}
+        <form onSubmit={submit} className="flex w-full flex-col gap-32">
+          <input
+            autoFocus
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+            placeholder="E.g. Garmin"
+            aria-label="Device or app name"
+            className="h-44 w-full rounded-16 border border-[#D6D6D6] bg-surface-default pl-16 pr-12 text-[16px] font-light text-text-primary outline-none placeholder:text-[#626262] focus:border-brand-emphasis"
+          />
+          <button
+            type="submit"
+            disabled={!value.trim()}
+            className="u-press flex h-51 w-full items-center justify-center rounded-16 bg-[#331B04] text-[16px] leading-[19px] text-text-inverse disabled:opacity-40"
+          >
+            Send
+          </button>
+        </form>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

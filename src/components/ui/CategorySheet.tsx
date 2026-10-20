@@ -34,7 +34,7 @@ export function CategorySheet({
   return createPortal(
     <div className="u-fade fixed inset-0 z-50 flex items-end justify-center bg-icon-strong/40" onClick={onClose}>
       <div
-        className="u-sheet flex max-h-[80dvh] w-full max-w-[402px] flex-col rounded-t-24 bg-surface-default px-20 pb-24 pt-24 lg:max-w-[560px]"
+        className="u-sheet flex max-h-[80dvh] w-full sm:max-w-[480px] flex-col rounded-t-24 bg-surface-default px-20 pb-24 pt-24 lg:max-w-[560px]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-16">

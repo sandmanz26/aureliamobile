@@ -10,7 +10,9 @@ import { BUILD } from '../lib/build'
  * PRODUCTION_VERSION (2 since U020, on request — production no longer uses v1).
  *
  * To add a version: append an entry here, then scope its rules under
- * `:root[data-ui-version='N']` (see `src/styles/versions.css`).
+ * `:root[data-ui-version='N']` (see `src/styles/versions.css`). Versions are
+ * cumulative: code checks `useUiVersion() >= N`, and v2's CSS applies to every
+ * version above 1.
  */
 export interface UiVersion {
   id: number
@@ -90,6 +92,24 @@ export const UI_VERSIONS: UiVersion[] = [
           'Review pins are kept per version, so v2 notes never show on v1.',
           'Anyone with “reduce motion” turned on sees none of the animation.',
         ],
+      },
+    ],
+  },
+  {
+    id: 3,
+    name: 'Version 3',
+    summary: 'Everything in v2, plus a clearer way to change a session: a summary of what you will get before you apply, and every build kept in the chat.',
+    changes: [
+      {
+        group: 'Chat',
+        items: [
+          'The “+” sheet becomes a list you can scan, with a summary at the bottom: which changes are picked, what they are expected to do, and the version it will build.',
+          'Each Apply keeps its own result in the conversation — apply three times and you see three versions (v1.2, v1.3, v1.4), the newest playing, the older ones still there to go back to, like replies in an AI chat.',
+        ],
+      },
+      {
+        group: 'Good to know',
+        items: ['Includes everything in Version 2.', 'Switching to v2 or v1 restores those exactly.'],
       },
     ],
   },

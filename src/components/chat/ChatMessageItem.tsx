@@ -29,6 +29,8 @@ interface ChatMessageItemProps {
   onJumpTo?: (id: number) => void
   /** Briefly highlighted after a quote was tapped. */
   flash?: boolean
+  /** Rendered after the message and its attachments — v3's build result. */
+  after?: React.ReactNode
 }
 
 /**
@@ -156,6 +158,7 @@ export function ChatMessageItem({
   onReply,
   onJumpTo,
   flash,
+  after,
 }: ChatMessageItemProps) {
   const reply = onReply ? () => onReply(message) : undefined
   const flashRing = flash ? 'rounded-12 bg-[#FFF1DB] transition-colors duration-700' : 'transition-colors duration-700'
@@ -230,6 +233,7 @@ export function ChatMessageItem({
         </div>
         {promptList}
         {attachment}
+        {after}
       </Fragment>
     )
   }

@@ -50,7 +50,7 @@ export function RewardsSheet({ rewards, onClose }: { rewards: Reward[]; onClose:
   return createPortal(
     <div className="u-fade fixed inset-0 z-50 flex items-end justify-center bg-icon-strong/40" onClick={onClose}>
       <div
-        className="u-sheet flex w-full max-w-[402px] flex-col rounded-t-24 bg-surface-default px-20 pb-24 pt-20 lg:max-w-[560px]"
+        className="u-sheet flex w-full sm:max-w-[480px] flex-col rounded-t-24 bg-surface-default px-20 pb-24 pt-20 lg:max-w-[560px]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-16">

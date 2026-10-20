@@ -69,7 +69,7 @@ export function ShareSheet({ title, url, onClose }: { title: string; url: string
         role="dialog"
         aria-modal="true"
         aria-labelledby="share-title"
-        className="u-sheet flex w-full max-w-[402px] flex-col rounded-t-24 bg-surface-default px-20 pb-[calc(24px+env(safe-area-inset-bottom))] pt-28 lg:max-w-[560px]"
+        className="u-sheet flex w-full sm:max-w-[480px] flex-col rounded-t-24 bg-surface-default px-20 pb-[calc(24px+env(safe-area-inset-bottom))] pt-28 lg:max-w-[560px]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-16">
