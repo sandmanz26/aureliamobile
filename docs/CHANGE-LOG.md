@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-20 — Work journal for every request (J021)
+
+New `docs/WORK-JOURNAL.md`: one entry per request, including those that changed no code (questions, analyses, proposals, Eugene discussion, beta hide-list, Figma pairing), plus an **Open items** table of pending decisions. Backfilled J001–J020. Rule added to `CLAUDE.md`. Docs only. Branches: `web_app`, `admin_cms`.
+
 ### 2026-10-20 — Connect per Figma, full-width sheets, design v3 (U038)
 
 My Wellness › Connect: request sheet styled to the frame and the "Your recommendation has been sent!" dialog added. All bottom sheets fill phones wider than 402. New staging design **Version 3** (cumulative over v2): the "+" sheet becomes a list with a pre-apply summary, and every build stays in the thread as its own result. Production unchanged (pinned v2). **mobile_app does not have these.** Branches: `web_app`, `admin_cms`. Not `web_prod`.

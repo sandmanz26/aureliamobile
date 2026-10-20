@@ -419,6 +419,16 @@ change gets an entry and a patch in the same push**, alongside
 `docs/CHANGE-LOG.md`. Revert one update with `git revert --no-commit <commit>`
 then `git checkout HEAD -- docs/` so the logs survive.
 
+## Work journal (every request, code or not)
+
+`docs/WORK-JOURNAL.md` records **every request** — questions answered,
+analyses, proposals, discussions, decisions still open, operational steps —
+not only code. Standing instruction from the product owner (2026-10-20):
+nothing is left unrecorded. Each request gets a J-entry in the same push; one
+that changed code also gets its U-entry here and the J-entry links to it.
+Anything waiting on a decision goes into the journal's **Open items** table
+until decided. No secrets (pairing codes, passwords) in it.
+
 ## Design versions (staging only)
 
 `src/versions/versions.ts` lists switchable design versions; the picker sits
