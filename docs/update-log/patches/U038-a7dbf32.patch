@@ -1,0 +1,1118 @@
+diff --git a/src/chat/ChatSessionContext.tsx b/src/chat/ChatSessionContext.tsx
+index 8a480ae..7382b94 100644
+--- a/src/chat/ChatSessionContext.tsx
++++ b/src/chat/ChatSessionContext.tsx
+@@ -45,6 +45,13 @@ export interface Message {
+    * quote must still read right if the thread is reset under it.
+    */
+   replyTo?: { id: number; from: 'aurelia' | 'user'; text: string }
++  /**
++   * The build this message announced (U038, design v3): the version it made,
++   * so the thread can keep each result where it happened — apply three times,
++   * see three versions — instead of one card at the bottom that renames
++   * itself.
++   */
++  build?: { versionId: string; label: string; slug: string }
+ }
+ 
+ /** The thread opens mid-conversation, so the first messages are backdated. */
+@@ -254,7 +261,7 @@ interface ChatSessionValue {
+   currentVersionId: string | null
+   /** Start a new cut. Called when a build starts rather than when it finishes,
+    *  so the history can show the one being made. */
+-  addVersion: (change: string) => void
++  addVersion: (change: string) => { versionId: string; label: string; slug: string }
+   /**
+    * The cut that is live, or null if this thread has never published.
+    *
+@@ -352,6 +359,7 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
+       setVersions((list) => [...list, { id, label, change, at: Date.now(), slug: draft.slug }])
+       setCurrentVersionId(id)
+       setDraft((current) => ({ ...current, title: label }))
++      return { versionId: id, label, slug: draft.slug }
+     },
+     [versions, draft],
+   )
+diff --git a/src/components/chat/AddSheet.tsx b/src/components/chat/AddSheet.tsx
+index 0c1761b..2d3bd4c 100644
+--- a/src/components/chat/AddSheet.tsx
++++ b/src/components/chat/AddSheet.tsx
+@@ -1,6 +1,7 @@
+ import { createPortal } from 'react-dom'
+ import { ArrowUp, Check, Image, Music, Plus, Sparkles, X } from 'lucide-react'
+ import { useEffect } from 'react'
++import { useUiVersion } from '../../versions/useUiVersion'
+ import orb432hz from '../../assets/orb-432hz.png'
+ import orbIncreaseYellow from '../../assets/orb-increase-yellow.png'
+ import orbLessMovement from '../../assets/orb-less-movement.png'
+@@ -57,6 +58,8 @@ interface AddSheetProps {
+   onToggle: (id: string) => void
+   onApply: () => void
+   onClose: () => void
++  /** The version this will build, e.g. "Sleep meditation v1.5" — shown in v3's summary. */
++  nextLabel?: string
+ }
+ 
+ /**
+@@ -69,7 +72,12 @@ interface AddSheetProps {
+  * the same kind of claim, and a single undifferentiated list would present
+  * them as if they were.
+  */
+-export function AddSheet({ added, onToggle, onApply, onClose }: AddSheetProps) {
++export function AddSheet(props: AddSheetProps) {
++  const v3 = useUiVersion() >= 3
++  return v3 ? <AddSheetV3 {...props} /> : <AddSheetV1 {...props} />
++}
++
++function AddSheetV1({ added, onToggle, onApply, onClose }: AddSheetProps) {
+   useEffect(() => {
+     function onKey(event: KeyboardEvent) {
+       if (event.key === 'Escape') onClose()
+@@ -88,7 +96,7 @@ export function AddSheet({ added, onToggle, onApply, onClose }: AddSheetProps) {
+         aria-modal="true"
+         aria-label="Add to this session"
+         onClick={(event) => event.stopPropagation()}
+-        className="u-sheet flex max-h-[85vh] w-full max-w-[402px] flex-col gap-20 overflow-y-auto rounded-t-24 bg-surface-default px-20 pb-24 pt-20 lg:max-w-[520px]"
++        className="u-sheet flex max-h-[85vh] w-full sm:max-w-[480px] flex-col gap-20 overflow-y-auto rounded-t-24 bg-surface-default px-20 pb-24 pt-20 lg:max-w-[520px]"
+       >
+         <button
+           type="button"
+@@ -202,3 +210,190 @@ function OptionCard({
+     </article>
+   )
+ }
++
++const ALL_OPTIONS = [...FROM_DIAGNOSIS, ...EXPERIMENTS]
++
++/** Titles of picked options, for the thread to say what a build contained. */
++export function addOptionTitles(ids: string[]) {
++  return ALL_OPTIONS.filter((option) => ids.includes(option.id)).map((option) => option.title)
++}
++
++/**
++ * Version 3 (U038): the same choices as a list you can scan, and a summary
++ * above Apply that says what you are about to get — which changes, what the
++ * diagnosis ones are expected to do, that the experiments are untested, and
++ * the version it will build. Before, Apply showed only a count, so the
++ * decision was made blind and the result arrived without a reason.
++ *
++ * The expected effect is shown per change and as "up to" the largest one,
++ * never summed: separate percentage lifts do not add (logic review D4).
++ */
++function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel }: AddSheetProps) {
++  useEffect(() => {
++    function onKey(event: KeyboardEvent) {
++      if (event.key === 'Escape') onClose()
++    }
++    window.addEventListener('keydown', onKey)
++    return () => window.removeEventListener('keydown', onKey)
++  }, [onClose])
++
++  const picked = ALL_OPTIONS.filter((option) => added.includes(option.id))
++  const predicted = picked.filter((option) => option.improveScore)
++  const experiments = picked.filter((option) => !option.improveScore)
++  const best = predicted.reduce((max, option) => Math.max(max, Number.parseFloat(option.improveScore ?? '0')), 0)
++
++  return createPortal(
++    <div className="u-fade fixed inset-0 z-50 flex items-end justify-center bg-icon-strong/40" onClick={onClose}>
++      <div
++        role="dialog"
++        aria-modal="true"
++        aria-label="Change this session"
++        onClick={(event) => event.stopPropagation()}
++        className="u-sheet flex max-h-[88dvh] w-full flex-col rounded-t-24 bg-surface-default sm:max-w-[480px] lg:max-w-[560px]"
++      >
++        <div className="flex items-start justify-between gap-16 px-20 pt-24">
++          <div className="min-w-0">
++            <h2 className="text-style-title text-text-primary">Change this session</h2>
++            <p className="text-style-body-small mt-2 text-text-secondary">Pick what to change — Aurelia builds a new version with it.</p>
++          </div>
++          <button
++            type="button"
++            aria-label="Close"
++            onClick={onClose}
++            className="u-press -mr-6 flex size-32 shrink-0 items-center justify-center rounded-full text-icon-strong"
++          >
++            <X size={20} />
++          </button>
++        </div>
++
++        <div className="mt-16 flex-1 overflow-y-auto px-20 pb-16">
++          <ListSection
++            title="Based on your diagnosis"
++            hint="Aurelia expects these to help."
++            options={FROM_DIAGNOSIS}
++            added={added}
++            onToggle={onToggle}
++          />
++          <ListSection
++            title="Experiments"
++            hint="Untested — you’ll find out when you listen."
++            options={EXPERIMENTS}
++            added={added}
++            onToggle={onToggle}
++          />
++        </div>
++
++        {/* The summary: what Apply will actually do. */}
++        <div className="border-t border-border-subtle px-20 pb-[calc(20px+env(safe-area-inset-bottom))] pt-16">
++          {picked.length === 0 ? (
++            <p className="text-style-body-small text-center text-text-secondary">Nothing picked yet — add at least one change.</p>
++          ) : (
++            <div className="rounded-16 bg-[#FFF8EC] p-12">
++              <div className="flex items-baseline justify-between gap-12">
++                <p className="text-style-body-small font-medium text-text-primary">
++                  You’ll get {picked.length} {picked.length === 1 ? 'change' : 'changes'}
++                </p>
++                {nextLabel && <p className="text-style-caption truncate text-text-secondary">as {nextLabel}</p>}
++              </div>
++              <div className="mt-8 flex flex-wrap gap-6">
++                {picked.map((option) => (
++                  <button
++                    key={option.id}
++                    type="button"
++                    onClick={() => onToggle(option.id)}
++                    aria-label={`Remove ${option.title}`}
++                    className="u-press flex h-28 items-center gap-6 rounded-full bg-surface-default pl-4 pr-8 text-[12px] text-text-primary shadow-sm"
++                  >
++                    <img src={option.orb} alt="" className="size-20 rounded-full object-cover" />
++                    {option.title}
++                    <X size={12} className="text-icon-default" />
++                  </button>
++                ))}
++              </div>
++              <ul className="text-style-caption mt-10 flex flex-col gap-4 text-text-secondary">
++                {predicted.length > 0 && (
++                  <li className="flex items-center gap-6">
++                    <ArrowUp size={12} className="text-success-600" />
++                    Expected: up to <span className="font-medium text-success-600">+{best}%</span> improve score
++                  </li>
++                )}
++                {experiments.length > 0 && (
++                  <li className="flex items-center gap-6">
++                    <Sparkles size={12} className="text-[#E58A1F]" />
++                    {experiments.length} {experiments.length === 1 ? 'experiment' : 'experiments'} — effect unknown until you listen
++                  </li>
++                )}
++              </ul>
++            </div>
++          )}
++          <button
++            type="button"
++            onClick={onApply}
++            disabled={picked.length === 0}
++            className="text-style-body u-press mt-12 flex h-52 w-full items-center justify-center gap-8 rounded-16 bg-[#331B04] text-text-inverse disabled:opacity-40"
++          >
++            <Sparkles size={16} />
++            {picked.length === 0 ? 'Apply changes' : `Apply ${picked.length} ${picked.length === 1 ? 'change' : 'changes'}`}
++          </button>
++        </div>
++      </div>
++    </div>,
++    document.body,
++  )
++}
++
++function ListSection({
++  title,
++  hint,
++  options,
++  added,
++  onToggle,
++}: {
++  title: string
++  hint: string
++  options: AddOption[]
++  added: string[]
++  onToggle: (id: string) => void
++}) {
++  return (
++    <section className="mt-8 first:mt-0">
++      <h3 className="text-style-body-small font-medium text-text-primary">{title}</h3>
++      <p className="text-style-caption text-text-secondary">{hint}</p>
++      <ul className="mt-8 flex flex-col">
++        {options.map((option) => {
++          const on = added.includes(option.id)
++          return (
++            <li key={option.id} className="flex items-center gap-12 border-b border-border-subtle py-12 last:border-b-0">
++              <img src={option.orb} alt="" className="size-44 shrink-0 rounded-full object-cover" />
++              <div className="min-w-0 flex-1">
++                <p className="text-style-body-small text-text-primary">{option.title}</p>
++                <p className="text-style-caption line-clamp-2 text-text-secondary">{option.description}</p>
++                {option.improveScore ? (
++                  <span className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#ecfbed] px-6 py-1 text-[11px] text-success-600">
++                    <ArrowUp size={10} /> {option.improveScore} expected
++                  </span>
++                ) : (
++                  <span className="mt-4 inline-flex items-center gap-4 text-[11px] text-text-secondary">
++                    {option.channel === 'Visuals' ? <Image size={11} /> : <Music size={11} />}
++                    {option.channel}
++                  </span>
++                )}
++              </div>
++              <button
++                type="button"
++                onClick={() => onToggle(option.id)}
++                aria-pressed={on}
++                className={`text-style-label u-press flex h-32 shrink-0 items-center gap-4 rounded-full border px-12 ${
++                  on ? 'border-transparent bg-brand-default text-text-strong' : 'border-border-subtle bg-surface-default text-text-primary'
++                }`}
++              >
++                {on ? <Check size={12} /> : <Plus size={12} />}
++                {on ? 'Added' : 'Add'}
++              </button>
++            </li>
++          )
++        })}
++      </ul>
++    </section>
++  )
++}
+diff --git a/src/components/chat/ChatMessageItem.tsx b/src/components/chat/ChatMessageItem.tsx
+index 444b846..b9df319 100644
+--- a/src/components/chat/ChatMessageItem.tsx
++++ b/src/components/chat/ChatMessageItem.tsx
+@@ -29,6 +29,8 @@ interface ChatMessageItemProps {
+   onJumpTo?: (id: number) => void
+   /** Briefly highlighted after a quote was tapped. */
+   flash?: boolean
++  /** Rendered after the message and its attachments — v3's build result. */
++  after?: React.ReactNode
+ }
+ 
+ /**
+@@ -156,6 +158,7 @@ export function ChatMessageItem({
+   onReply,
+   onJumpTo,
+   flash,
++  after,
+ }: ChatMessageItemProps) {
+   const reply = onReply ? () => onReply(message) : undefined
+   const flashRing = flash ? 'rounded-12 bg-[#FFF1DB] transition-colors duration-700' : 'transition-colors duration-700'
+@@ -230,6 +233,7 @@ export function ChatMessageItem({
+         </div>
+         {promptList}
+         {attachment}
++        {after}
+       </Fragment>
+     )
+   }
+diff --git a/src/components/chat/PublishSheet.tsx b/src/components/chat/PublishSheet.tsx
+index 62b5730..333ab43 100644
+--- a/src/components/chat/PublishSheet.tsx
++++ b/src/components/chat/PublishSheet.tsx
+@@ -26,7 +26,7 @@ export function PublishSheet({ state, onCancel, onView, onDone }: PublishSheetPr
+ 
+   return createPortal(
+     <div className="u-fade fixed inset-0 z-50 flex items-end justify-center bg-icon-strong/40">
+-      <div className="u-sheet flex w-full max-w-[402px] flex-col items-center gap-32 rounded-t-24 bg-surface-default px-20 pb-24 pt-40">
++      <div className="u-sheet flex w-full sm:max-w-[480px] flex-col items-center gap-32 rounded-t-24 bg-surface-default px-20 pb-24 pt-40">
+         {unpublished ? (
+           <span className="flex size-64 items-center justify-center rounded-full bg-background-elevated">
+             <CircleX size={32} strokeWidth={2} className="text-text-primary" />
+diff --git a/src/components/ui/CategorySheet.tsx b/src/components/ui/CategorySheet.tsx
+index 0ea52f6..8fde761 100644
+--- a/src/components/ui/CategorySheet.tsx
++++ b/src/components/ui/CategorySheet.tsx
+@@ -34,7 +34,7 @@ export function CategorySheet({
+   return createPortal(
+     <div className="u-fade fixed inset-0 z-50 flex items-end justify-center bg-icon-strong/40" onClick={onClose}>
+       <div
+-        className="u-sheet flex max-h-[80dvh] w-full max-w-[402px] flex-col rounded-t-24 bg-surface-default px-20 pb-24 pt-24 lg:max-w-[560px]"
++        className="u-sheet flex max-h-[80dvh] w-full sm:max-w-[480px] flex-col rounded-t-24 bg-surface-default px-20 pb-24 pt-24 lg:max-w-[560px]"
+         onClick={(event) => event.stopPropagation()}
+       >
+         <div className="flex items-center justify-between gap-16">
+diff --git a/src/components/ui/LineageTreeCard.tsx b/src/components/ui/LineageTreeCard.tsx
+index 4be1476..69d1e98 100644
+--- a/src/components/ui/LineageTreeCard.tsx
++++ b/src/components/ui/LineageTreeCard.tsx
+@@ -87,7 +87,7 @@ export function LineageSheet({ session, onClose }: { session: SessionRecord; onC
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="lineage-title"
+-        className="u-sheet flex max-h-[85dvh] w-full max-w-[402px] flex-col overflow-y-auto rounded-t-24 bg-surface-default px-20 pb-[calc(24px+env(safe-area-inset-bottom))] pt-24 lg:max-w-[520px] lg:rounded-24"
++        className="u-sheet flex max-h-[85dvh] w-full sm:max-w-[480px] flex-col overflow-y-auto rounded-t-24 bg-surface-default px-20 pb-[calc(24px+env(safe-area-inset-bottom))] pt-24 lg:max-w-[520px] lg:rounded-24"
+         onClick={(event) => event.stopPropagation()}
+       >
+         <div className="flex items-start justify-between gap-16">
+diff --git a/src/components/ui/ObjectiveSheet.tsx b/src/components/ui/ObjectiveSheet.tsx
+index 1238371..e28f48c 100644
+--- a/src/components/ui/ObjectiveSheet.tsx
++++ b/src/components/ui/ObjectiveSheet.tsx
+@@ -53,7 +53,7 @@ export function ObjectiveSheet({
+           save()
+         }}
+         /* 40 above, 32 below, 20 at the sides, 32 between the three blocks. */
+-        className="u-sheet flex w-full max-w-[402px] flex-col gap-32 rounded-t-24 bg-surface-default px-20 pb-32 pt-40 lg:max-w-[560px]"
++        className="u-sheet flex w-full sm:max-w-[480px] flex-col gap-32 rounded-t-24 bg-surface-default px-20 pb-32 pt-40 lg:max-w-[560px]"
+       >
+         <div className="flex flex-col gap-24">
+           {/* 64 in the frame — the icon is the sheet's whole illustration, and
+diff --git a/src/components/ui/RewardsSheet.tsx b/src/components/ui/RewardsSheet.tsx
+index efe16c1..df9e917 100644
+--- a/src/components/ui/RewardsSheet.tsx
++++ b/src/components/ui/RewardsSheet.tsx
+@@ -50,7 +50,7 @@ export function RewardsSheet({ rewards, onClose }: { rewards: Reward[]; onClose:
+   return createPortal(
+     <div className="u-fade fixed inset-0 z-50 flex items-end justify-center bg-icon-strong/40" onClick={onClose}>
+       <div
+-        className="u-sheet flex w-full max-w-[402px] flex-col rounded-t-24 bg-surface-default px-20 pb-24 pt-20 lg:max-w-[560px]"
++        className="u-sheet flex w-full sm:max-w-[480px] flex-col rounded-t-24 bg-surface-default px-20 pb-24 pt-20 lg:max-w-[560px]"
+         onClick={(event) => event.stopPropagation()}
+       >
+         <div className="flex items-start justify-between gap-16">
+diff --git a/src/components/ui/ShareSheet.tsx b/src/components/ui/ShareSheet.tsx
+index 093153f..f54e0c7 100644
+--- a/src/components/ui/ShareSheet.tsx
++++ b/src/components/ui/ShareSheet.tsx
+@@ -69,7 +69,7 @@ export function ShareSheet({ title, url, onClose }: { title: string; url: string
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="share-title"
+-        className="u-sheet flex w-full max-w-[402px] flex-col rounded-t-24 bg-surface-default px-20 pb-[calc(24px+env(safe-area-inset-bottom))] pt-28 lg:max-w-[560px]"
++        className="u-sheet flex w-full sm:max-w-[480px] flex-col rounded-t-24 bg-surface-default px-20 pb-[calc(24px+env(safe-area-inset-bottom))] pt-28 lg:max-w-[560px]"
+         onClick={(event) => event.stopPropagation()}
+       >
+         <div className="flex items-center justify-between gap-16">
+diff --git a/src/pages/ChatPage.tsx b/src/pages/ChatPage.tsx
+index 09ac913..e765d84 100644
+--- a/src/pages/ChatPage.tsx
++++ b/src/pages/ChatPage.tsx
+@@ -1,7 +1,7 @@
+ import { WandSparkles } from 'lucide-react'
+ import { useEffect, useRef, useState } from 'react'
+ import { useLocation, useNavigate, useParams } from 'react-router-dom'
+-import { AddSheet } from '../components/chat/AddSheet'
++import { AddSheet, addOptionTitles } from '../components/chat/AddSheet'
+ import { PageMeta } from '../components/PageMeta'
+ import { ChatComposer } from '../components/chat/ChatComposer'
+ import { ChatMessageItem } from '../components/chat/ChatMessageItem'
+@@ -11,8 +11,9 @@ import { ChatHeader } from '../components/chat/ChatHeader'
+ import { MiniPlayer } from '../components/chat/MiniPlayer'
+ import { PublishSheet } from '../components/chat/PublishSheet'
+ import { useAudioPlayer } from '../audio/AudioPlayerContext'
+-import { useChatSession } from '../chat/ChatSessionContext'
++import { nextVersionLabel, useChatSession } from '../chat/ChatSessionContext'
+ import type { Message, Status } from '../chat/ChatSessionContext'
++import { RECOMMENDATIONS } from '../chat/ChatSessionContext'
+ import type { RecreateBrief } from '../chat/recreate'
+ import { draftTitleFor, findQuickStart } from '../lib/quickStart'
+ import { replyTo } from '../lib/replies'
+@@ -21,6 +22,7 @@ import { SessionProgressCardV2 } from '../components/chat/SessionProgressCardV2'
+ import { VoiceRecorder } from '../components/chat/VoiceRecorder'
+ import { AureliaLogo } from '../components/ui/AureliaLogo'
+ import { useFeatureFlags } from '../demo/FeatureFlags'
++import { useUiVersion } from '../versions/useUiVersion'
+ import { useDrawer } from '../layouts/DrawerContext'
+ import { CURRENT_USER } from '../lib/people'
+ import { findSession, publishSession, unpublishSession } from '../lib/sessions'
+@@ -112,11 +114,12 @@ export function ChatPage() {
+     sessionSlug, openSession,
+     draft, setDraft,
+     addVersion, pointAt,
+-    currentVersionId, publishedVersionId, markPublished, markUnpublished,
++    currentVersionId, publishedVersionId, markPublished, markUnpublished, versions,
+     nextMessageId,
+     reset,
+   } = useChatSession()
+   const [typing, setTyping] = useState(false)
++  const v3 = useUiVersion() >= 3
+   const { track, playing } = useAudioPlayer()
+   // The session Insights should open: this thread's if it has one, otherwise
+   // the one the draft stands in for — the same fallback `playTo` uses.
+@@ -497,7 +500,12 @@ export function ChatPage() {
+     setApplied((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]))
+   }
+ 
+-  function applyChanges(label = 'Apply new changes') {
++  /** "a, b and c" */
++  function listOf(items: string[]) {
++    return items.length <= 1 ? (items[0] ?? '') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
++  }
++
++  function applyChanges(label = 'Apply new changes', contents: string[] = []) {
+     setSessionState('updating')
+     // The request goes into the thread as the user's own line. Applying is a
+     // thing they asked for, and a session that changes with nothing in the
+@@ -508,10 +516,19 @@ export function ChatPage() {
+     ])
+     setDeckOpen(false)
+     window.setTimeout(() => {
+-      build(label)
++      const made = build(label)
+       setMessages((current) => [
+         ...current,
+-        { id: nextMessageId(), from: 'aurelia', at: Date.now(), text: 'Sure, here it is:' },
++        // Carries the build it announces, so v3 can keep the result here —
++        // and in v3 says what went into it, so three results in a row are
++        // three different things rather than three "Sure, here it is:".
++        {
++          id: nextMessageId(),
++          from: 'aurelia',
++          at: Date.now(),
++          text: v3 && contents.length ? `Built ${made.label} with ${listOf(contents)}.` : 'Sure, here it is:',
++          build: made,
++        },
+       ])
+     }, 1400)
+   }
+@@ -528,7 +545,7 @@ export function ChatPage() {
+   function build(change: string) {
+     setProgress(0)
+     setSessionState('generating')
+-    addVersion(change)
++    return addVersion(change)
+   }
+ 
+   /**
+@@ -591,8 +608,11 @@ export function ChatPage() {
+       // Outside the updater below, and that is not a style choice: an updater
+       // is expected to be pure and React runs it twice to check, so a build
+       // started from inside one records the version twice.
+-      if (reply.changes && stateRef.current === 'ready') build(message.text)
+-      setMessages((current) => [...current, answerFor(message.text, current, message.replyTo)])
++      const made = reply.changes && stateRef.current === 'ready' ? build(message.text) : undefined
++      setMessages((current) => [
++        ...current,
++        { ...answerFor(message.text, current, message.replyTo), ...(made ? { build: made } : {}) },
++      ])
+     }, 2400)
+   }
+ 
+@@ -640,6 +660,34 @@ export function ChatPage() {
+    * apart from it.
+    */
+   const onDeck = track?.href === `/play/${draft.slug}`
++
++  /**
++   * Version 3 (U038): every build stays in the thread where it was asked
++   * for — apply three times, three results (v1.2, v1.3, v1.4) — the way an AI
++   * chat keeps each answer, instead of one card at the bottom that renames
++   * itself and makes the earlier cuts look gone. The newest carries the live
++   * status (building / ready / playing); the earlier ones say so and still
++   * play their own cut. The single bottom card remains for v1/v2, and for a
++   * state no message announced (a revert from Progress, say).
++   */
++  const resultInThread = v3 && messages.some((m) => m.build?.versionId === currentVersionId)
++  function buildCard(made: NonNullable<Message['build']>) {
++    const latest = made.versionId === currentVersionId
++    return (
++      <div className="u-message mt-12">
++        {latest && sessionState === 'generating' ? (
++          <SessionProgressCardV2 title={made.label} />
++        ) : (
++          <SessionReasoningCard
++            title={made.label}
++            status={latest ? readyStatus : 'Earlier version — tap to play'}
++            to={`/play/${made.slug}?v=${made.versionId}`}
++            by={sessionSlug ? undefined : CURRENT_USER}
++          />
++        )}
++      </div>
++    )
++  }
+   const hasSomethingToPlay = sessionSlug !== null || sessionState === 'ready'
+   const readyStatus = !onDeck ? 'Ready to play' : playing ? 'Playing now' : 'Paused'
+ 
+@@ -746,11 +794,12 @@ export function ChatPage() {
+                 onReply={limited || listening ? undefined : (m) => setReplyTarget(m)}
+                 onJumpTo={jumpTo}
+                 flash={flashId === message.id}
++                after={v3 && message.build ? buildCard(message.build) : undefined}
+               />
+             )
+           })}
+ 
+-          {(sessionState === 'generating' || sessionState === 'ready') && (
++          {(sessionState === 'generating' || sessionState === 'ready') && !resultInThread && (
+             <div className="u-message mt-12">
+               {sessionState === 'ready' ? (
+                 <SessionReasoningCard
+@@ -802,7 +851,9 @@ export function ChatPage() {
+               // the recommendation cards (#FF881B -> #FFE682).
+               <button
+                 type="button"
+-                onClick={() => applyChanges()}
++                onClick={() =>
++                  applyChanges(undefined, RECOMMENDATIONS.filter((r) => applied.includes(r.id)).map((r) => r.title))
++                }
+                 disabled={sessionState === 'updating'}
+                 style={{
+                   border: '1px solid transparent',
+@@ -873,6 +924,7 @@ export function ChatPage() {
+ 
+       {addOpen && (
+         <AddSheet
++          nextLabel={versions.length ? nextVersionLabel(versions[versions.length - 1].label) : draft.title}
+           added={addPicks}
+           onToggle={(id) =>
+             setAddPicks((current) =>
+@@ -886,6 +938,7 @@ export function ChatPage() {
+             // the same thing, so it must not grow a second way of doing it.
+             applyChanges(
+               addPicks.length === 1 ? 'Apply 1 change' : `Apply ${addPicks.length} changes`,
++              addOptionTitles(addPicks),
+             )
+           }}
+           onClose={() => setAddOpen(false)}
+diff --git a/src/pages/WellnessPage.tsx b/src/pages/WellnessPage.tsx
+index 3a00623..37c8ddb 100644
+--- a/src/pages/WellnessPage.tsx
++++ b/src/pages/WellnessPage.tsx
+@@ -1,3 +1,4 @@
++import { createPortal } from 'react-dom'
+ import { ChartPie, ChevronRight, Link2, Menu, X } from 'lucide-react'
+ import { useEffect, useState } from 'react'
+ import { useNavigate } from 'react-router-dom'
+@@ -135,6 +136,7 @@ export function WellnessPage() {
+   const [connections, setConnections] = useState(defaultConnections)
+   const [requestOpen, setRequestOpen] = useState(false)
+   const [tab, setTab] = useState<WellnessTab>('Analytics')
++  const [requestSent, setRequestSent] = useState(false)
+   // The first goal opens by default, same reasoning as My Wellness always
+   // showing signal state rather than a blank list — the tab should not
+   // read as empty on first visit.
+@@ -290,15 +292,92 @@ export function WellnessPage() {
+         )}
+       </div>
+ 
+-      {requestOpen && <RequestSheet onClose={() => setRequestOpen(false)} />}
++      {requestOpen && (
++        <RequestSheet
++          onClose={() => setRequestOpen(false)}
++          onSent={() => {
++            setRequestOpen(false)
++            setRequestSent(true)
++          }}
++        />
++      )}
++      {requestSent && <RequestSentToast onClose={() => setRequestSent(false)} />}
+     </div>
+   )
+ }
+ 
+-/** Ask for a source Aurelia does not support yet. */
+-function RequestSheet({ onClose }: { onClose: () => void }) {
++/** Figma "send-2" (16883:10061), 64px, the success glyph on the toast. */
++function SentMark() {
++  return (
++    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden="true">
++      <path
++        opacity="0.4"
++        d="M18.9597 15.8928L43.0131 7.8661C53.8131 4.2661 59.6797 10.1594 56.1064 20.9594L48.0797 45.0128C42.6931 61.1994 33.8397 61.1994 28.4531 45.0128L26.0797 37.8661L18.9331 35.4928C2.77308 30.1328 2.77308 21.3061 18.9597 15.8928Z"
++        fill="#5FC52C"
++      />
++      <path
++        d="M32.3195 33.014C31.8128 33.014 31.3062 32.8273 30.9062 32.4273C30.1328 31.654 30.1328 30.374 30.9062 29.6007L41.0395 19.414C41.8128 18.6407 43.0928 18.6407 43.8662 19.414C44.6395 20.1873 44.6395 21.4673 43.8662 22.2407L33.7328 32.4273C33.3328 32.8007 32.8262 33.014 32.3195 33.014Z"
++        fill="#5FC52C"
++      />
++    </svg>
++  )
++}
++
++/**
++ * Figma "My Wellness/Connect" toast (16883:10056): after Send the sheet closes
++ * and a centred card confirms over the dimmed screen — 362 wide, radius 24,
++ * 24/20/20 padding, 32 between the copy and Done (an outlined 16-radius
++ * button on #D6D6D6). U038: this replaced a "Thanks — that's logged." line
++ * inside the sheet, which the frame does not have.
++ */
++function RequestSentToast({ onClose }: { onClose: () => void }) {
++  useEffect(() => {
++    function onKey(event: KeyboardEvent) {
++      if (event.key === 'Escape') onClose()
++    }
++    window.addEventListener('keydown', onKey)
++    return () => window.removeEventListener('keydown', onKey)
++  }, [onClose])
++
++  return createPortal(
++    <div className="u-fade fixed inset-0 z-50 flex items-center justify-center bg-icon-strong/40 px-20" onClick={onClose}>
++      <div
++        role="alertdialog"
++        aria-modal="true"
++        aria-labelledby="request-sent-title"
++        className="flex w-full max-w-[362px] flex-col gap-32 rounded-24 bg-surface-default px-20 pb-20 pt-24"
++        onClick={(event) => event.stopPropagation()}
++      >
++        <div className="flex flex-col items-center gap-24">
++          <SentMark />
++          <div className="flex flex-col items-center gap-8 text-center">
++            <h2 id="request-sent-title" className="text-[20px] font-medium leading-[24px] text-text-primary">
++              Your recommendation
++              <br />
++              has been sent!
++            </h2>
++            <p className="max-w-[280px] text-[14px] font-light! leading-[18.9px] text-[#525252]">
++              Thank you for sharing. Our team will review it and work on making it happen soon.
++            </p>
++          </div>
++        </div>
++        <button
++          type="button"
++          autoFocus
++          onClick={onClose}
++          className="u-press flex h-51 w-full items-center justify-center rounded-16 border border-[#D6D6D6] text-[16px] leading-[19px] text-text-primary"
++        >
++          Done
++        </button>
++      </div>
++    </div>,
++    document.body,
++  )
++}
++
++/** Ask for a source Aurelia does not support yet — Figma "drawer" (16883:9883). */
++function RequestSheet({ onClose, onSent }: { onClose: () => void; onSent: (name: string) => void }) {
+   const [value, setValue] = useState('')
+-  const [sent, setSent] = useState<string | null>(null)
+ 
+   // Escape closes it. A sheet that can only be dismissed by hitting a 32px X
+   // or the strip of backdrop above it is a trap on a keyboard.
+@@ -314,16 +393,16 @@ function RequestSheet({ onClose }: { onClose: () => void }) {
+     event.preventDefault()
+     const name = value.trim()
+     if (!name) return
+-    setSent(name)
++    onSent(name)
+   }
+ 
+-  return (
++  return createPortal(
+     <div className="u-fade fixed inset-0 z-50 flex items-end justify-center bg-icon-strong/40" onClick={onClose}>
+       <div
+         role="dialog"
+         aria-modal="true"
+         aria-label="Request a device or app"
+-        className="u-sheet relative flex w-full max-w-[402px] flex-col items-center gap-20 rounded-t-24 bg-surface-default px-24 pb-32 pt-40"
++        className="u-sheet relative flex w-full sm:max-w-[480px] flex-col gap-32 rounded-t-24 bg-surface-default px-20 pb-32 pt-40 lg:max-w-[480px]"
+         onClick={(event) => event.stopPropagation()}
+       >
+         <button
+@@ -335,53 +414,35 @@ function RequestSheet({ onClose }: { onClose: () => void }) {
+           <X size={20} />
+         </button>
+ 
+-        <SpiralMark />
+-
+-        {sent ? (
+-          <>
+-            <div className="flex flex-col gap-8 text-center">
+-              <h2 className="text-style-title text-text-primary">Thanks — that’s logged.</h2>
+-              <p className="text-style-body-small text-text-secondary">
+-                We’ll let you know if {sent} becomes a source you can connect.
+-              </p>
+-            </div>
+-            <button
+-              type="button"
+-              onClick={onClose}
+-              className="text-style-body u-press w-full rounded-full bg-icon-default py-16 text-center font-semibold text-text-inverse"
+-            >
+-              Done
+-            </button>
+-          </>
+-        ) : (
+-          <>
+-            <div className="flex flex-col gap-8 text-center">
+-              <h2 className="text-style-title mx-auto max-w-[250px] text-balance text-text-primary">
+-                Don’t see your favorite device or app?
+-              </h2>
+-              <p className="text-style-body-small text-text-secondary">Tell us what you’d like to see next!</p>
+-            </div>
++        <div className="flex flex-col items-center gap-24">
++          <SpiralMark />
++          <div className="flex flex-col gap-8 text-center">
++            <h2 className="mx-auto max-w-[250px] text-balance text-[20px] font-medium leading-[24px] text-text-primary">
++              Don’t see your favorite device or app?
++            </h2>
++            <p className="text-[14px] font-light! leading-[21px] text-[#525252]">Tell us what you’d like to see next!</p>
++          </div>
++        </div>
+ 
+-            <form onSubmit={submit} className="flex w-full flex-col gap-16">
+-              <input
+-                autoFocus
+-                value={value}
+-                onChange={(event) => setValue(event.target.value)}
+-                placeholder="E.g. Garmin"
+-                aria-label="Device or app name"
+-                className="text-style-body h-52 w-full rounded-full border border-border-default bg-surface-default px-20 text-text-primary outline-none placeholder:text-text-secondary focus:border-brand-emphasis"
+-              />
+-              <button
+-                type="submit"
+-                disabled={!value.trim()}
+-                className="text-style-body u-press w-full rounded-full bg-icon-default py-16 text-center font-semibold text-text-inverse disabled:opacity-40"
+-              >
+-                Send
+-              </button>
+-            </form>
+-          </>
+-        )}
++        <form onSubmit={submit} className="flex w-full flex-col gap-32">
++          <input
++            autoFocus
++            value={value}
++            onChange={(event) => setValue(event.target.value)}
++            placeholder="E.g. Garmin"
++            aria-label="Device or app name"
++            className="h-44 w-full rounded-16 border border-[#D6D6D6] bg-surface-default pl-16 pr-12 text-[16px] font-light text-text-primary outline-none placeholder:text-[#626262] focus:border-brand-emphasis"
++          />
++          <button
++            type="submit"
++            disabled={!value.trim()}
++            className="u-press flex h-51 w-full items-center justify-center rounded-16 bg-[#331B04] text-[16px] leading-[19px] text-text-inverse disabled:opacity-40"
++          >
++            Send
++          </button>
++        </form>
+       </div>
+-    </div>
++    </div>,
++    document.body,
+   )
+ }
+diff --git a/src/styles/versions.css b/src/styles/versions.css
+index f64b8a2..30a2716 100644
+--- a/src/styles/versions.css
++++ b/src/styles/versions.css
+@@ -1,7 +1,9 @@
+ /* Design versions (staging only — see src/versions/versions.ts).
+  *
+- * Every rule here is scoped under :root[data-ui-version='N'], so version 1
+- * (no attribute) is the app exactly as it ships. Reduced motion is handled by
++ * Every rule here is scoped under :root[data-ui-version], so version 1
++ * (no attribute) is the app exactly as it ships. Versions are cumulative
++ * (U038): the v2 rules are written as :root[data-ui-version] so v3 inherits
++ * them; a rule only for v3 and later is :root[data-ui-version='3']. Reduced motion is handled by
+  * the blanket rule at the bottom of motion.css, which also covers these.
+  */
+ 
+@@ -46,19 +48,19 @@
+   100% { transform: scale(1); }
+ }
+ 
+-:root[data-ui-version='2'] {
++:root[data-ui-version] {
+   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+ }
+ 
+ /* Screen change: blur-and-rise, a touch longer. */
+-:root[data-ui-version='2'] .u-page {
++:root[data-ui-version] .u-page {
+   animation: v2-page-in var(--motion-slow) var(--ease-out) both;
+ }
+ 
+ /* Scroll reveal for the blocks of any page. Scroll-driven, so it needs no
+    observer and costs nothing where unsupported (the element simply shows). */
+ @supports (animation-timeline: view()) {
+-  :root[data-ui-version='2'] .u-page :is(section, article, li, .u-lift) {
++  :root[data-ui-version] .u-page :is(section, article, li, .u-lift) {
+     animation: v2-reveal linear both;
+     animation-timeline: view();
+     animation-range: entry 0% entry 60%;
+@@ -66,42 +68,42 @@
+ }
+ 
+ /* Card photos settle in with a slow zoom, and drift on desktop hover. */
+-:root[data-ui-version='2'] .u-page :is(article, .u-lift) img {
++:root[data-ui-version] .u-page :is(article, .u-lift) img {
+   animation: v2-photo-in 900ms var(--ease-out) both;
+   transition: transform 600ms var(--ease-out);
+ }
+ @media (hover: hover) {
+-  :root[data-ui-version='2'] .u-lift:hover img {
++  :root[data-ui-version] .u-lift:hover img {
+     transform: scale(1.05);
+   }
+-  :root[data-ui-version='2'] .u-press:hover {
++  :root[data-ui-version] .u-press:hover {
+     transform: translateY(-1px);
+   }
+ }
+ 
+ /* Springier press. */
+-:root[data-ui-version='2'] .u-press {
++:root[data-ui-version] .u-press {
+   transition:
+     transform var(--motion-base) var(--ease-spring),
+     opacity var(--motion-fast) var(--ease-out),
+     background-color var(--motion-fast) var(--ease-in-out),
+     border-color var(--motion-fast) var(--ease-in-out);
+ }
+-:root[data-ui-version='2'] .u-press:active {
++:root[data-ui-version] .u-press:active {
+   transform: scale(0.94);
+ }
+ 
+ /* Drawer, sheets and dialogs. */
+-:root[data-ui-version='2'] .u-drawer {
++:root[data-ui-version] .u-drawer {
+   animation: v2-spring-left 480ms var(--ease-out) both;
+ }
+-:root[data-ui-version='2'] .u-sheet {
++:root[data-ui-version] .u-sheet {
+   animation: v2-spring-up 480ms var(--ease-out) both;
+ }
+-:root[data-ui-version='2'] .u-pop {
++:root[data-ui-version] .u-pop {
+   animation: v2-pop var(--motion-base) var(--ease-out) both;
+ }
+-:root[data-ui-version='2'] .u-stagger > * {
++:root[data-ui-version] .u-stagger > * {
+   animation-duration: var(--motion-slow);
+ }
+ 
+@@ -131,15 +133,15 @@
+ /* ---- Version 2: shell behaviour (src/versions/V2Shell.tsx) -------------- */
+ 
+ /* Bottom sheets get a grab handle and follow the finger. */
+-:root[data-ui-version='2'] .u-sheet {
++:root[data-ui-version] .u-sheet {
+   position: relative;
+   touch-action: none;
+   user-select: none;
+ }
+-:root[data-ui-version='2'] .u-sheet .overflow-y-auto {
++:root[data-ui-version] .u-sheet .overflow-y-auto {
+   touch-action: pan-y;
+ }
+-:root[data-ui-version='2'] .u-sheet::before {
++:root[data-ui-version] .u-sheet::before {
+   content: '';
+   position: absolute;
+   top: 8px;
+@@ -150,7 +152,7 @@
+   border-radius: 999px;
+   background: rgb(0 0 0 / 0.14);
+ }
+-:root[data-ui-version='2'] .u-sheet {
++:root[data-ui-version] .u-sheet {
+   animation: v2-spring-up 520ms var(--ease-out) both;
+ }
+ .v2-float-in {
+@@ -165,11 +167,11 @@
+ @keyframes v2-page-back {
+   from { opacity: 0; transform: translateX(-28px); filter: blur(4px); }
+ }
+-:root[data-ui-version='2'] .u-page[data-nav='PUSH'],
+-:root[data-ui-version='2'] .u-page[data-nav='REPLACE'] {
++:root[data-ui-version] .u-page[data-nav='PUSH'],
++:root[data-ui-version] .u-page[data-nav='REPLACE'] {
+   animation: v2-page-forward 420ms var(--ease-out) both;
+ }
+-:root[data-ui-version='2'] .u-page[data-nav='POP'] {
++:root[data-ui-version] .u-page[data-nav='POP'] {
+   animation: v2-page-back 420ms var(--ease-out) both;
+ }
+ 
+@@ -177,34 +179,34 @@
+ /* Phones (<640) and desktop (lg, >=1024) are untouched. Elements opt in with
+    a `data-tablet` hook, which renders nothing on its own. */
+ @media (min-width: 640px) and (max-width: 1023.98px) {
+-  :root[data-ui-version='2'] [data-tablet='home-split'] {
++  :root[data-ui-version] [data-tablet='home-split'] {
+     display: grid;
+     grid-template-columns: repeat(2, minmax(0, 1fr));
+     align-items: stretch;
+     gap: 24px;
+     margin-top: 40px;
+   }
+-  :root[data-ui-version='2'] [data-tablet='home-split'] > section {
++  :root[data-ui-version] [data-tablet='home-split'] > section {
+     margin-top: 0;
+   }
+-  :root[data-ui-version='2'] [data-tablet='promo-cards'] {
++  :root[data-ui-version] [data-tablet='promo-cards'] {
+     --promo-card: 190px !important;
+   }
+-  :root[data-ui-version='2'] [data-tablet='explore-hero'] {
++  :root[data-ui-version] [data-tablet='explore-hero'] {
+     aspect-ratio: 16 / 7;
+   }
+-  :root[data-ui-version='2'] [data-tablet='two-col'] {
++  :root[data-ui-version] [data-tablet='two-col'] {
+     display: grid;
+     grid-template-columns: repeat(2, minmax(0, 1fr));
+     gap: 16px;
+   }
+-  :root[data-ui-version='2'] [data-tablet='signin'] {
++  :root[data-ui-version] [data-tablet='signin'] {
+     align-items: center;
+     justify-content: center;
+     min-height: calc(100dvh - var(--staging-bar));
+     padding: 32px;
+   }
+-  :root[data-ui-version='2'] [data-tablet='signin'] > div:last-child {
++  :root[data-ui-version] [data-tablet='signin'] > div:last-child {
+     max-width: 480px;
+     height: min(860px, calc(100dvh - 64px - var(--staging-bar)));
+     border: 1px solid rgb(0 0 0 / 0.08);
+@@ -224,11 +226,11 @@
+ .v2-ambient {
+   display: none;
+ }
+-:root[data-ui-version='2'] .v2-empty {
++:root[data-ui-version] .v2-empty {
+   position: relative;
+   isolation: isolate;
+ }
+-:root[data-ui-version='2'] .v2-ambient {
++:root[data-ui-version] .v2-ambient {
+   position: absolute;
+   inset: -32px -20px 0;
+   z-index: -1;
+@@ -238,21 +240,21 @@
+   mask-image: linear-gradient(180deg, transparent 0%, #000 22%, #000 70%, transparent 100%);
+   pointer-events: none;
+ }
+-:root[data-ui-version='2'] .v2-ambient > span {
++:root[data-ui-version] .v2-ambient > span {
+   position: absolute;
+   border-radius: 9999px;
+   filter: blur(60px);
+   opacity: 0.45;
+   animation: v2-ambient-a 18s var(--ease-in-out) infinite alternate;
+ }
+-:root[data-ui-version='2'] .v2-ambient > span:nth-child(1) {
++:root[data-ui-version] .v2-ambient > span:nth-child(1) {
+   left: -10%;
+   top: 0;
+   width: 70%;
+   height: 45%;
+   background: #ffe682;
+ }
+-:root[data-ui-version='2'] .v2-ambient > span:nth-child(2) {
++:root[data-ui-version] .v2-ambient > span:nth-child(2) {
+   right: -15%;
+   top: 20%;
+   width: 65%;
+@@ -261,7 +263,7 @@
+   animation-name: v2-ambient-b;
+   animation-duration: 22s;
+ }
+-:root[data-ui-version='2'] .v2-ambient > span:nth-child(3) {
++:root[data-ui-version] .v2-ambient > span:nth-child(3) {
+   left: 10%;
+   top: 50%;
+   width: 80%;
+@@ -281,13 +283,13 @@
+   50% { transform: translate(-20%, -10%) scale(0.9); }
+   100% { transform: translate(-5%, 18%) scale(1.12); }
+ }
+-:root[data-ui-version='2'] .v2-orb {
++:root[data-ui-version] .v2-orb {
+   animation: v2-orb-breathe 6s var(--ease-in-out) infinite;
+ }
+-:root[data-ui-version='2'] .v2-orb > span:nth-child(2) {
++:root[data-ui-version] .v2-orb > span:nth-child(2) {
+   animation: v2-orb-drift 9s var(--ease-in-out) infinite alternate;
+ }
+-:root[data-ui-version='2'] .v2-orb > span:nth-child(3) {
++:root[data-ui-version] .v2-orb > span:nth-child(3) {
+   animation: v2-orb-drift 7s var(--ease-in-out) infinite alternate-reverse;
+ }
+ @keyframes v2-orb-breathe {
+@@ -298,13 +300,13 @@
+   from { translate: -8px -6px; }
+   to { translate: 8px 6px; }
+ }
+-:root[data-ui-version='2'] .v2-greeting {
++:root[data-ui-version] .v2-greeting {
+   animation: u-rise 600ms var(--ease-out) 200ms both;
+ }
+ 
+ /* ---- Version 2: Home live map ------------------------------------------- */
+ /* A soft ring pulses out of each live dot baked into the map art. */
+-:root[data-ui-version='2'] .v2-live-dots > span {
++:root[data-ui-version] .v2-live-dots > span {
+   position: absolute;
+   width: 6px;
+   height: 6px;
+@@ -372,7 +374,7 @@
+   33% { opacity: calc(var(--glow-opacity, 0.4) + 0.35); transform: translate(18%, -14%) scale(1.25); }
+   66% { opacity: calc(var(--glow-opacity, 0.4) + 0.15); transform: translate(-12%, 10%) scale(0.9); }
+ }
+-:root[data-ui-version='2'] .u-glow-drift {
++:root[data-ui-version] .u-glow-drift {
+   animation-name: v2-glow-roam;
+ }
+ 
+@@ -380,7 +382,7 @@
+ /* A warm light sits under the cursor (or finger) and trails it; the two
+    roaming glows lean the opposite way for depth. Rests in the middle and
+    fades when the pointer leaves. */
+-:root[data-ui-version='2'] .v2-follow-glow {
++:root[data-ui-version] .v2-follow-glow {
+   position: absolute;
+   left: 0;
+   top: 0;
+@@ -396,16 +398,16 @@
+     transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
+     opacity 600ms ease;
+ }
+-:root[data-ui-version='2'] .v2-follow[data-pointer='in'] .v2-follow-glow {
++:root[data-ui-version] .v2-follow[data-pointer='in'] .v2-follow-glow {
+   opacity: 1;
+ }
+-:root[data-ui-version='2'] .v2-follow > .u-glow-drift {
++:root[data-ui-version] .v2-follow > .u-glow-drift {
+   translate: calc(var(--px, 0) * -60px) calc(var(--py, 0) * -40px);
+   transition: translate 900ms cubic-bezier(0.22, 1, 0.36, 1);
+ }
+ 
+ /* ---- Version 2: small layout fixes -------------------------------------- */
+-:root[data-ui-version='2'] .v2-center {
++:root[data-ui-version] .v2-center {
+   text-align: center;
+ }
+ 
+@@ -416,7 +418,7 @@
+    gradient margins above and below, leaving the dots centred. The 600px cap
+    from U012 is gone. */
+ @media (min-width: 1024px) {
+-  :root[data-ui-version='2'] [data-live-card] {
++  :root[data-ui-version] [data-live-card] {
+     aspect-ratio: auto;
+     height: 600px;
+     max-width: none;
+diff --git a/src/versions/versions.ts b/src/versions/versions.ts
+index 2c631d9..6e3f1e5 100644
+--- a/src/versions/versions.ts
++++ b/src/versions/versions.ts
+@@ -10,7 +10,9 @@ import { BUILD } from '../lib/build'
+  * PRODUCTION_VERSION (2 since U020, on request — production no longer uses v1).
+  *
+  * To add a version: append an entry here, then scope its rules under
+- * `:root[data-ui-version='N']` (see `src/styles/versions.css`).
++ * `:root[data-ui-version='N']` (see `src/styles/versions.css`). Versions are
++ * cumulative: code checks `useUiVersion() >= N`, and v2's CSS applies to every
++ * version above 1.
+  */
+ export interface UiVersion {
+   id: number
+@@ -93,6 +95,24 @@ export const UI_VERSIONS: UiVersion[] = [
+       },
+     ],
+   },
++  {
++    id: 3,
++    name: 'Version 3',
++    summary: 'Everything in v2, plus a clearer way to change a session: a summary of what you will get before you apply, and every build kept in the chat.',
++    changes: [
++      {
++        group: 'Chat',
++        items: [
++          'The “+” sheet becomes a list you can scan, with a summary at the bottom: which changes are picked, what they are expected to do, and the version it will build.',
++          'Each Apply keeps its own result in the conversation — apply three times and you see three versions (v1.2, v1.3, v1.4), the newest playing, the older ones still there to go back to, like replies in an AI chat.',
++        ],
++      },
++      {
++        group: 'Good to know',
++        items: ['Includes everything in Version 2.', 'Switching to v2 or v1 restores those exactly.'],
++      },
++    ],
++  },
+ ]
+ 
+ const KEY = 'aurelia.ui.version'

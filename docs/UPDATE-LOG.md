@@ -75,6 +75,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U035 | `b540605` | 2026-10-15 16:41 | Home closing network artwork rebuilt in Three.js (measured from the PNG); hidden by default, switched on from `/__demo` → 3D network (+ Motion). | [patch](patches/U035-b540605.patch) + [b](patches/U035b-d208547.patch) |
 | U036 | `4bc9c2e` | 2026-10-15 16:51 | Home feeling chips; chat reply-to-message; header Play only after something exists; limit copy (new session free); sign-in fills <640px. | [patch](patches/U036-4bc9c2e.patch) |
 | U037 | `7328ab6` | 2026-10-18 16:39 | Equal-height recommendation cards; mini player Close; lineage See All + versions; Details publishing + creator version history; logic review PDF. | [patch](patches/U037-7328ab6.patch) |
+| U038 | `a7dbf32` | 2026-10-20 00:40 | Connect request + sent dialog per Figma; all sheets full-width <640; design v3 (change sheet summary, every build kept in thread). | [patch](patches/U038-a7dbf32.patch) |
 
 ## Entries
 
@@ -534,3 +535,18 @@ Production (`web_prod`) is never touched by these updates unless asked.
 - **Logic review:** `docs/reviews/Aurelia-Logic-Review-2026-10-18.pdf` (source: `logic-review-2026-10-18.html`) — 43 findings (6 critical, 16 high, 14 medium, 4 low, 4 fixed here) and 15 decisions with recommended defaults.
 - **Verified:** 402 v2 (equal cards, Close removes the player, See All sheet), session detail for own published (Soft Reset) and own draft (Monday Reset). Typecheck clean, lint warnings only.
 - **Revert:** `git revert --no-commit 7328ab6 && git checkout HEAD -- docs/`.
+
+### U038 — Connect per Figma, full-width sheets, design Version 3
+
+- **Commit:** `a7dbf32` · pushed 2026-10-20 00:40:00 UTC · `web_app` + `admin_cms` · not on `web_prod`
+- **Patch:** [patches/U038-a7dbf32.patch](patches/U038-a7dbf32.patch)
+- **Request:** (1) check whether Publish has its loading/success states; (2) Figma 16883:18480 (My Wellness – Connect) — build if missing; (3) the "+" bottom sheet is not full width, and improve it with a summary of what you get before applying — in v3; (4) in v3, each Apply should keep its own result (apply 3× → 3 results), like an AI chat.
+- **(1)** Already built: `PublishSheet` has Publishing (spinner + Cancel) → Session Published! (View Session), plus Unpublished. No change. (Logic review B3 still applies: Publish can be pressed mid-build.)
+- **(2)** Connect already existed (toggles, Active Signals, request entry). Brought to the frame: request sheet input 44px / radius 16 / #D6D6D6 and Send 51px / radius 16 / #331B04 (was pill-shaped); after Send the sheet closes and the Figma toast appears — centred 362 card, radius 24, green send-2 glyph (SVG from the file), "Your recommendation has been sent!", Done outlined. Replaced "Thanks — that’s logged." The sheet is now portalled. File: `src/pages/WellnessPage.tsx`.
+- **(3) width:** every bottom sheet (`AddSheet`, `ShareSheet`, `CategorySheet`, `ObjectiveSheet`, `RewardsSheet`, `PublishSheet`, `LineageSheet`, Wellness request) was capped at `max-w-[402px]`, leaving gaps on 403–639px phones. Now full width below 640, `sm:max-w-[480px]`, desktop caps unchanged. 402 identical. All versions.
+- **Design Version 3** added to `src/versions/versions.ts` (staging picker). Versions are now cumulative: the 43 `:root[data-ui-version='2']` selectors in `versions.css` became `:root[data-ui-version]` so v3 inherits v2; TS checks were already `>= 2`.
+- **(3) v3 sheet:** `AddSheetV3` — "Change this session", list rows (orb, title, description, "↑3% expected" or channel), sticky summary: "You’ll get N changes as <next version>", removable chips, "Expected: up to +6%" (largest, never summed — review D4), "N experiments — effect unknown until you listen", full-width "Apply N changes". v1/v2 keep the old sheet.
+- **(4) v3 thread:** `Message.build` records the version each build made (`addVersion` now returns it). In v3 every build message renders its own result card: the newest shows building/ready/playing, earlier ones "Earlier version — tap to play" (`/play/<slug>?v=<id>`); the single bottom card is kept for v1/v2 and for states no message announced (a revert). The announcement says what went in: "Built Sleep meditation v1.3 with Increase yellow and Less movement." Files: `ChatSessionContext.tsx`, `ChatPage.tsx`, `ChatMessageItem.tsx` (`after` slot), `AddSheet.tsx`.
+- **Limit:** the earlier-version cards play `?v=` with cockpit ids, which the player does not resolve (logic review B1), so they play the session's current recording.
+- **Verified:** 430px v3 — sheet 430 wide with summary; deck apply + two sheet applies → v1.2, v1.3 (earlier) and v1.4 (ready) all in the thread; Connect request sheet and sent dialog. Typecheck clean; lint warnings only.
+- **Revert:** `git revert --no-commit a7dbf32 && git checkout HEAD -- docs/`.

@@ -428,4 +428,7 @@ version is a set of rules scoped under `:root[data-ui-version='N']` in
 `src/styles/versions.css`, so v1 (no attribute) is always the app unchanged.
 Production ignores the stored choice and is pinned to `PRODUCTION_VERSION` — **v2 since U020** (on request; production no longer shows v1). New experiments go
 in as a new version first; promoting one to the default is a separate,
-explicit step.
+explicit step. Versions are cumulative since U038: v2's CSS is scoped
+`:root[data-ui-version]` (any version above 1) and code checks
+`useUiVersion() >= N`, so **v3 = v2 + the change sheet summary and builds kept
+in the thread**.

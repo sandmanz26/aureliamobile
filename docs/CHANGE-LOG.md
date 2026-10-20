@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-20 — Connect per Figma, full-width sheets, design v3 (U038)
+
+My Wellness › Connect: request sheet styled to the frame and the "Your recommendation has been sent!" dialog added. All bottom sheets fill phones wider than 402. New staging design **Version 3** (cumulative over v2): the "+" sheet becomes a list with a pre-apply summary, and every build stays in the thread as its own result. Production unchanged (pinned v2). **mobile_app does not have these.** Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-18 — Lineage, version history, publish date, player Close + logic review (U037)
 
 Recommendation cards share one height; the parked/floating player has a Close (×); Lineage Tree rows say which parent version they were built on and See All opens the full tree (also from Progress); session Details show Published / Last updated / Live version and, on your own sessions, a version timeline (Live, You are here). A future lineage date (2026.12.10) fixed. Logic review PDF in `docs/reviews/`. **mobile_app does not have these.** Branches: `web_app`, `admin_cms`. Not `web_prod`.
