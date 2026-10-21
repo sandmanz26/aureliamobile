@@ -66,6 +66,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J021 | 2026-10-20 | Process | Record everything in an md | this file |
 | J022 | 2026-10-21 | Ops | Figma pairing code | — |
 | J023 | 2026-10-21 | Code | Figma 16885:1622: Wellness Analytics cards + Analysis page, v2 + v3 | U039 |
+| J024 | 2026-10-21 | Ops | Figma pairing code | — |
 
 ---
 
@@ -175,3 +176,6 @@ transcript and the update log. Everything from J018 on was written at the time.
   All were resolved in code. Worth fixing in the file so design and build agree.
 - **Found and fixed on the way:** the cockpit dropped style changes passed in from another screen (race), which also affected earlier entries.
 - **Open:** O8 (what the metrics and prediction actually mean).
+
+### J024 — Figma pairing
+- **Ops:** a pairing code was issued for the Figma Desktop Bridge (Cloud Mode). It expires in 5 minutes and is not recorded.
