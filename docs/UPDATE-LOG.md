@@ -83,6 +83,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U043 | `c7a9243` | 2026-10-21 10:58 | Session settings stretches to full width below lg (was capped at 402); Add buttons aligned. All versions. | [patch](patches/U043-c7a9243.patch) |
 | U044 | (this log commit) | 2026-10-21 | Production: `web_prod` fast-forwarded from `4140e59` to `web_app` (U030–U043). | — |
 | U045 | `8286ffb` | 2026-10-21 17:48 | Change filter moved from the thread's opened deck into the "+" sheet (v2 + v3); summary shows the largest gain, not a sum. | [patch](patches/U045-8286ffb.patch) |
+| U046 | (this log commit) | 2026-10-21 | Production: `web_prod` fast-forwarded from `2a2a376` to `web_app` (U045). | — |
 
 ## Entries
 
@@ -714,7 +715,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 
 ### U045 — Change filter moved from the thread into the "+" sheet
 
-- **Commit:** `8286ffb` · pushed 2026-10-21 17:48:52 UTC · `web_app` + `admin_cms` · **not on `web_prod`** (production is at U044)
+- **Commit:** `8286ffb` · pushed 2026-10-21 17:48:52 UTC · `web_app` + `admin_cms` · `web_prod` since U046
 - **Patch:** [patches/U045-8286ffb.patch](patches/U045-8286ffb.patch)
 - **Request:** "saya dapat feedback ini tolong update di v2 dan v3". The feedback was a WhatsApp screenshot from Eugene: the filter row (All 3 / Visual 1 / Sound 1 / …) and "3 of 3 selected · ↑36% combined" were crossed out above the opened recommendation cards in the thread, with the note "This filter system.. should go here below instead..". A red line marked the "+" sheet just above "Improve based on diagnosis".
 - **Interpretation:** move the filter, don't duplicate it. It now lives at the top of the "+" sheet, between the close button and "Improve based on diagnosis". The opened row in the thread goes back to the plain cards in every version.
@@ -735,3 +736,10 @@ Production (`web_prod`) is never touched by these updates unless asked.
   - After two Adds, v2 shows "2 of 4 selected · ↑ up to 6% expected" and v3's summary says "You'll get 2 changes".
   - Typecheck clean; lint unchanged.
 - **Revert:** `git revert --no-commit 8286ffb && git checkout HEAD -- docs/`.
+
+### U046 — Promote U045 to production
+
+- **Request:** "oke naikan ke prod ya" (2026-10-21).
+- **What moved:** `web_prod` went from `2a2a376` (U044) to this log commit: U045 (the change filter moved into the "+" sheet, with the largest gain shown instead of a sum) plus its logs.
+- **Production specifics:** pinned to v2, so production gets the v2 sheet with the chips and the "N of 4 selected · up to X% expected" line. A production-mode build compiled before the push. Version stays `0.1.0`.
+- **Undo:** `git push --force-with-lease origin 2a2a376:web_prod`, only on explicit request.

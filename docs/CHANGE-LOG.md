@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-21 — Production promoted again (U046)
+
+`web_prod` fast-forwarded from `2a2a376` to `web_app`, carrying U045 (the filter in the "+" sheet) to production. Branches: `web_prod` = `web_app` = `admin_cms`. `mobile_app` unchanged.
+
 ### 2026-10-21 — Change filter moved into the "+" sheet (U045)
 
 Team feedback: the All / Visual / Sound / Movement / Selected filter now sits at the top of the "+" sheet, above "Improve based on diagnosis", instead of above the recommendation cards in the chat. It filters both sections. The line under it shows the largest expected gain rather than adding percentages together. v2 and v3. **mobile_app does not have this.** Branches: `web_app`, `admin_cms`. Not `web_prod`.

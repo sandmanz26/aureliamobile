@@ -30,7 +30,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | --- | --- | --- | --- |
 | O1 | **15 product decisions** with recommended defaults (free-plan limit, version model, live vs current, unpublish, fork source, lineage rules and payouts, conversation model, what a "play" is, challenge winners, one currency, safety and claims, identity, analytics consent) | J012, `docs/reviews/Aurelia-Logic-Review-2026-10-18.pdf` §11 | Product owner: accept the defaults or change them |
 | O2 | **Beta simplification list**: what stays visible, what is merged, what goes behind flags | J015 | Product owner + Eugene to agree. Then build a "Beta" preset in `/__demo` and add flags for coins in the header and Recreate on the player |
-| O3 | **Promote to production**: last done 2026-10-21 (J029, U044). Staging now carries U045 | J005 onward | Product owner request |
+| O3 | ~~Promote to production~~ **Done 2026-10-21 (J031, U046)**: `web_prod` = `web_app` as of U045. Reopens with the next staging change | J005 onward | — |
 | O4 | **Sticky player**: U037 added Close. Options A (swipe away + Undo) and C (auto-hide after 30 min paused) were proposed and not yet chosen | J008, J011 | Product owner |
 | O5 | **Free limit counts "Apply"**, so three applies trip it. This conflicts with v3's "keep experimenting" | J020 | Decision O1 #1 (limit model) |
 | O6 | **Two version systems** (cockpit ids vs Progress ids), so the earlier-version cards play the current recording | J011, J020 | Decision O1 #3 |
@@ -77,6 +77,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J028 | 2026-10-21 | Code | Settings at 470–480px should stretch | U043 |
 | J029 | 2026-10-21 | Ops | Promote v2 to production | U044 |
 | J030 | 2026-10-21 | Code | Eugene feedback: move the filter into the "+" sheet | U045 |
+| J031 | 2026-10-21 | Ops | Promote U045 to production | U046 |
 
 ---
 
@@ -231,3 +232,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 - **Asked:** apply Eugene's feedback in v2 and v3. In a WhatsApp screenshot he crossed out the filter above the recommendation cards in the chat ("This filter system.. should go here below instead..") and marked the "+" sheet above "Improve based on diagnosis".
 - **Code:** U045. The filter was moved, not copied. Its percentage line now shows the largest expected gain instead of a sum (the old "36% combined").
 - **Open:** O12. The chat deck and the sheet are two different lists with different scores and separate selections.
+
+### J031 — Promote U045 to production
+- **Asked:** "oke naikan ke prod ya".
+- **Ops:** U046. `web_prod` was fast-forwarded `2a2a376` → `web_app` after a production-mode build. O3 is closed again.
