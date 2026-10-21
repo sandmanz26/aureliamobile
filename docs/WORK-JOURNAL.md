@@ -30,7 +30,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | --- | --- | --- | --- |
 | O1 | **15 product decisions** with recommended defaults (free-plan limit, version model, live vs current, unpublish, fork source, lineage rules and payouts, conversation model, what a "play" is, challenge winners, one currency, safety and claims, identity, analytics consent) | J012, `docs/reviews/Aurelia-Logic-Review-2026-10-18.pdf` §11 | Product owner: accept the defaults or change them |
 | O2 | **Beta simplification list**: what stays visible, what is merged, what goes behind flags | J015 | Product owner + Eugene to agree. Then build a "Beta" preset in `/__demo` and add flags for coins in the header and Recreate on the player |
-| O3 | ~~Promote to production~~ **Done 2026-10-21 (J029, U044)**: `web_prod` = `web_app` as of U043. Reopens with the next staging change | J005 onward | — |
+| O3 | **Promote to production**: last done 2026-10-21 (J029, U044). Staging now carries U045 | J005 onward | Product owner request |
 | O4 | **Sticky player**: U037 added Close. Options A (swipe away + Undo) and C (auto-hide after 30 min paused) were proposed and not yet chosen | J008, J011 | Product owner |
 | O5 | **Free limit counts "Apply"**, so three applies trip it. This conflicts with v3's "keep experimenting" | J020 | Decision O1 #1 (limit model) |
 | O6 | **Two version systems** (cockpit ids vs Progress ids), so the earlier-version cards play the current recording | J011, J020 | Decision O1 #3 |
@@ -39,6 +39,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O9 | **Settings without General**: the v2 Settings frames have only Script / Visual / Sound, so the General gear (Length, Pace, Ends, Visibility; display-only mock) is hidden in v2. Keep it hidden, or design a place for those settings? | J026, U041 | Product owner / designer |
 | O10 | **Feedback has nowhere to go**: the player's Feedback answers are kept for the visit only. What should they change (the next chapter's proposals? the analysis?), and is a sad face worth a follow-up question? | J026, U041 | Product owner + backend |
 | O11 | **402px column on wider phones**: 17 other screens still cap their content at 402 below `lg:` (Help, Progress, Recreate, Wellness, Chat, Invite, Upgrade, See all, Credits, Session detail, Challenge detail, player hero, auth). Stretch them all like Settings (U043)? | J028 | Product owner |
+| O12 | **Two recommendation lists**: the chat's deck (scores of 12%, its own picks, "Apply new changes (3)") and the "+" sheet (3% / 6%, its own picks, starts at 0) are separate mock lists with separate selections. Should they be one list with one selection? | J030, U045 | Product owner |
 
 ---
 
@@ -75,6 +76,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J027 | 2026-10-21 | Code | Current style should not be removable | U042 |
 | J028 | 2026-10-21 | Code | Settings at 470–480px should stretch | U043 |
 | J029 | 2026-10-21 | Ops | Promote v2 to production | U044 |
+| J030 | 2026-10-21 | Code | Eugene feedback: move the filter into the "+" sheet | U045 |
 
 ---
 
@@ -224,3 +226,8 @@ transcript and the update log. Everything from J018 on was written at the time.
 - **Ops:** U044. `web_prod` was fast-forwarded `4140e59` → `web_app` (U030–U043), after a production-mode build. Production stays on v2, and the v3-only changes remain on staging.
 - **Flagged:** click insights is on by default and now records production visitors. The consent decision (O1 #15) is still open. It can be switched off from production's `/__demo` with Publish.
 - **Closed:** O3.
+
+### J030 — Eugene: the filter belongs in the sheet
+- **Asked:** apply Eugene's feedback in v2 and v3. In a WhatsApp screenshot he crossed out the filter above the recommendation cards in the chat ("This filter system.. should go here below instead..") and marked the "+" sheet above "Improve based on diagnosis".
+- **Code:** U045. The filter was moved, not copied. Its percentage line now shows the largest expected gain instead of a sum (the old "36% combined").
+- **Open:** O12. The chat deck and the sheet are two different lists with different scores and separate selections.

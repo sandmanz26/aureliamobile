@@ -82,6 +82,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U042 | `a4c9092` | 2026-10-21 10:55 | Session settings: Current style cards read-only in v2+ (no Remove). | [patch](patches/U042-a4c9092.patch) |
 | U043 | `c7a9243` | 2026-10-21 10:58 | Session settings stretches to full width below lg (was capped at 402); Add buttons aligned. All versions. | [patch](patches/U043-c7a9243.patch) |
 | U044 | (this log commit) | 2026-10-21 | Production: `web_prod` fast-forwarded from `4140e59` to `web_app` (U030–U043). | — |
+| U045 | `8286ffb` | 2026-10-21 17:48 | Change filter moved from the thread's opened deck into the "+" sheet (v2 + v3); summary shows the largest gain, not a sum. | [patch](patches/U045-8286ffb.patch) |
 
 ## Entries
 
@@ -710,3 +711,27 @@ Production (`web_prod`) is never touched by these updates unless asked.
   - **Click insights (U032/U034) is on by default, so production visitors' screens and taps are now recorded.** It stores labels and positions, never field values, but the consent decision (O1 #15) is still open. To turn it off on production: `/__demo` on the production site → Click insights off → Publish. Production keeps its own flag set.
   - O3 is closed by this promotion.
 - **Undo:** `git push --force-with-lease origin 4140e59:web_prod`, only on explicit request (it rewrites the production branch). Individual changes are reverted through their own U-entries and then re-promoted.
+
+### U045 — Change filter moved from the thread into the "+" sheet
+
+- **Commit:** `8286ffb` · pushed 2026-10-21 17:48:52 UTC · `web_app` + `admin_cms` · **not on `web_prod`** (production is at U044)
+- **Patch:** [patches/U045-8286ffb.patch](patches/U045-8286ffb.patch)
+- **Request:** "saya dapat feedback ini tolong update di v2 dan v3". The feedback was a WhatsApp screenshot from Eugene: the filter row (All 3 / Visual 1 / Sound 1 / …) and "3 of 3 selected · ↑36% combined" were crossed out above the opened recommendation cards in the thread, with the note "This filter system.. should go here below instead..". A red line marked the "+" sheet just above "Improve based on diagnosis".
+- **Interpretation:** move the filter, don't duplicate it. It now lives at the top of the "+" sheet, between the close button and "Improve based on diagnosis". The opened row in the thread goes back to the plain cards in every version.
+- **Change:**
+  - New `components/chat/FilterChips.tsx`: the chip rail with sliding highlight, icons and counts, extracted from the old `RecommendationFilter.tsx`, which is deleted.
+  - `AddSheet.tsx`:
+    - Every option has a `kind` (Increase yellow → visual, Less movement → movement, Aulos → sound, Art Deco → visual).
+    - `useSheetFilter` narrows both sections at once and hides a section that ends up empty.
+    - An empty result says "Nothing selected yet." / "No changes of this kind here." and offers "Show all 4".
+    - **v2:** the chips plus "N of 4 selected · ↑ up to X% expected" under them.
+    - **v3:** the chips only, because its summary panel at the foot already says what Apply will do.
+  - `ChatMessageItem.tsx`: the opened deck renders the plain row for v2 too.
+- **Logic fix carried with it:** the old line summed predictions ("36% combined" = 12+12+12). Two changes' expected gains do not stack (logic review D4), so the sheet shows the **largest** expected gain ("up to 6%"), the same rule as v3's summary.
+- **Flagged, not changed:** the thread's cards and the sheet keep **separate selections**. The thread's "Apply new changes (3)" counts the deck's picks, while the sheet starts at "0 of 4 selected". The scores also differ: the deck says 12% for Increase yellow and the sheet says 3%. Both come from different mock lists (O12).
+- **Verified (402px):**
+  - The thread has no filter in v2 or v3 (0 toolbars after opening the deck).
+  - The sheet shows All 4 / Visual 2 / Sound 1 / Movement 1 / Selected 0. Visual shows Increase yellow and Art Deco. Selected is empty and offers Show all.
+  - After two Adds, v2 shows "2 of 4 selected · ↑ up to 6% expected" and v3's summary says "You'll get 2 changes".
+  - Typecheck clean; lint unchanged.
+- **Revert:** `git revert --no-commit 8286ffb && git checkout HEAD -- docs/`.

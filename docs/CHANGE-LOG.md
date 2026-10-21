@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-21 — Change filter moved into the "+" sheet (U045)
+
+Team feedback: the All / Visual / Sound / Movement / Selected filter now sits at the top of the "+" sheet, above "Improve based on diagnosis", instead of above the recommendation cards in the chat. It filters both sections. The line under it shows the largest expected gain rather than adding percentages together. v2 and v3. **mobile_app does not have this.** Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-21 — Production promoted to staging v2 (U044)
 
 `web_prod` fast-forwarded from `4140e59` to `web_app`, carrying U030–U043 to production. Production stays pinned to v2, so the v3-only changes remain on staging. Click insights is on by default and now records production visits (labels and positions only); turn it off from production's `/__demo` if consent is not settled. Branches: `web_prod` (now equal to `web_app`, `admin_cms`). `mobile_app` unchanged.

@@ -1,0 +1,486 @@
+diff --git a/src/components/chat/AddSheet.tsx b/src/components/chat/AddSheet.tsx
+index 2d3bd4c..24b4a36 100644
+--- a/src/components/chat/AddSheet.tsx
++++ b/src/components/chat/AddSheet.tsx
+@@ -1,6 +1,8 @@
+ import { createPortal } from 'react-dom'
+ import { ArrowUp, Check, Image, Music, Plus, Sparkles, X } from 'lucide-react'
+-import { useEffect } from 'react'
++import { useEffect, useState } from 'react'
++import { FilterChips } from './FilterChips'
++import type { ChangeKind, FilterId } from './FilterChips'
+ import { useUiVersion } from '../../versions/useUiVersion'
+ import orb432hz from '../../assets/orb-432hz.png'
+ import orbIncreaseYellow from '../../assets/orb-increase-yellow.png'
+@@ -15,6 +17,8 @@ export interface AddOption {
+    *  channel they would change instead — the two are different claims. */
+   improveScore?: string
+   channel?: 'Audio' | 'Visuals'
++  /** What it acts on — the sheet's filter (U045). */
++  kind: ChangeKind
+ }
+ 
+ /** What Aurelia can improve from what it already knows about this session. */
+@@ -25,6 +29,7 @@ const FROM_DIAGNOSIS: AddOption[] = [
+     description: 'Helps bring joy, aligned with your goal',
+     improveScore: '3%',
+     orb: orbIncreaseYellow,
++    kind: 'visual',
+   },
+   {
+     id: 'movement',
+@@ -32,6 +37,7 @@ const FROM_DIAGNOSIS: AddOption[] = [
+     description: 'Reduced movement helps your nervous system to calm down',
+     improveScore: '6%',
+     orb: orbLessMovement,
++    kind: 'movement',
+   },
+ ]
+ 
+@@ -43,6 +49,7 @@ const EXPERIMENTS: AddOption[] = [
+     description: 'Experiment adding a touch of ancient Greece flute',
+     channel: 'Audio',
+     orb: orb432hz,
++    kind: 'sound',
+   },
+   {
+     id: 'art-deco',
+@@ -50,6 +57,7 @@ const EXPERIMENTS: AddOption[] = [
+     description: 'How about adding an Art Deco style to the visuals?',
+     channel: 'Visuals',
+     orb: orbLessMovement,
++    kind: 'visual',
+   },
+ ]
+ 
+@@ -72,12 +80,54 @@ interface AddSheetProps {
+  * the same kind of claim, and a single undifferentiated list would present
+  * them as if they were.
+  */
++function matches(option: AddOption, filter: FilterId, added: string[]) {
++  return filter === 'all' ? true : filter === 'selected' ? added.includes(option.id) : option.kind === filter
++}
++
++/**
++ * The filter at the top of the sheet (v2+, U045; moved here from the thread
++ * on team feedback). Narrows both sections at once; a section with nothing
++ * left is hidden, and an empty result offers the way back to All.
++ */
++function useSheetFilter(added: string[]) {
++  const [filter, setFilter] = useState<FilterId>('all')
++  const count = (id: FilterId) => ALL_OPTIONS.filter((o) => matches(o, id, added)).length
++  const only = (options: AddOption[]) => options.filter((o) => matches(o, filter, added))
++  return { filter, setFilter, count, only }
++}
++
++function NothingHere({ filter, onAll }: { filter: FilterId; onAll: () => void }) {
++  return (
++    <div className="flex min-h-120 w-full flex-col items-start justify-center gap-8 rounded-[20px] border border-dashed border-border-subtle px-16 py-20">
++      <p className="text-style-body-small text-text-secondary">
++        {filter === 'selected' ? 'Nothing selected yet.' : 'No changes of this kind here.'}
++      </p>
++      <button type="button" onClick={onAll} className="text-style-body-small text-[#ff881b]">
++        Show all {ALL_OPTIONS.length}
++      </button>
++    </div>
++  )
++}
++
++/** Largest predicted gain among what is picked — never a sum (review D4). */
++function bestExpected(added: string[]) {
++  return ALL_OPTIONS.filter((o) => added.includes(o.id) && o.improveScore).reduce(
++    (max, o) => Math.max(max, Number.parseFloat(o.improveScore ?? '0')),
++    0,
++  )
++}
++
+ export function AddSheet(props: AddSheetProps) {
+   const v3 = useUiVersion() >= 3
+   return v3 ? <AddSheetV3 {...props} /> : <AddSheetV1 {...props} />
+ }
+ 
+ function AddSheetV1({ added, onToggle, onApply, onClose }: AddSheetProps) {
++  const v2 = useUiVersion() >= 2
++  const { filter, setFilter, count, only } = useSheetFilter(added)
++  const diagnosis = v2 ? only(FROM_DIAGNOSIS) : FROM_DIAGNOSIS
++  const experiments = v2 ? only(EXPERIMENTS) : EXPERIMENTS
++  const best = bestExpected(added)
+   useEffect(() => {
+     function onKey(event: KeyboardEvent) {
+       if (event.key === 'Escape') onClose()
+@@ -107,8 +157,31 @@ function AddSheetV1({ added, onToggle, onApply, onClose }: AddSheetProps) {
+           <X size={20} />
+         </button>
+ 
+-        <Section title="Improve based on diagnosis" options={FROM_DIAGNOSIS} added={added} onToggle={onToggle} />
+-        <Section title="Experiment" options={EXPERIMENTS} added={added} onToggle={onToggle} />
++        {v2 && (
++          <div className="-mt-8">
++            <FilterChips filter={filter} onChange={setFilter} count={count} />
++            {/* What the picked set adds up to — the largest expected gain,
++                not a sum: two changes' predictions do not stack (the thread's
++                old "36% combined" did, review D4). */}
++            <p className="text-style-caption mt-8 flex items-center gap-6 text-text-secondary" aria-live="polite">
++              <span className="tabular-nums">
++                {added.length} of {ALL_OPTIONS.length} selected
++              </span>
++              {best > 0 && (
++                <>
++                  <span aria-hidden="true">·</span>
++                  <span className="rounded-full bg-[#ECFBED] px-6 py-2 text-success-600 tabular-nums">↑ up to {best}% expected</span>
++                </>
++              )}
++            </p>
++          </div>
++        )}
++
++        {diagnosis.length > 0 && (
++          <Section title="Improve based on diagnosis" options={diagnosis} added={added} onToggle={onToggle} />
++        )}
++        {experiments.length > 0 && <Section title="Experiment" options={experiments} added={added} onToggle={onToggle} />}
++        {diagnosis.length + experiments.length === 0 && <NothingHere filter={filter} onAll={() => setFilter('all')} />}
+ 
+         <button
+           type="button"
+@@ -237,6 +310,9 @@ function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel }: AddSheetPr
+     return () => window.removeEventListener('keydown', onKey)
+   }, [onClose])
+ 
++  const { filter, setFilter, count, only } = useSheetFilter(added)
++  const diagnosis = only(FROM_DIAGNOSIS)
++  const experimentOptions = only(EXPERIMENTS)
+   const picked = ALL_OPTIONS.filter((option) => added.includes(option.id))
+   const predicted = picked.filter((option) => option.improveScore)
+   const experiments = picked.filter((option) => !option.improveScore)
+@@ -266,21 +342,30 @@ function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel }: AddSheetPr
+           </button>
+         </div>
+ 
+-        <div className="mt-16 flex-1 overflow-y-auto px-20 pb-16">
+-          <ListSection
+-            title="Based on your diagnosis"
+-            hint="Aurelia expects these to help."
+-            options={FROM_DIAGNOSIS}
+-            added={added}
+-            onToggle={onToggle}
+-          />
+-          <ListSection
+-            title="Experiments"
+-            hint="Untested — you’ll find out when you listen."
+-            options={EXPERIMENTS}
+-            added={added}
+-            onToggle={onToggle}
+-          />
++        <div className="mt-16 px-20">
++          <FilterChips filter={filter} onChange={setFilter} count={count} />
++        </div>
++
++        <div className="mt-12 flex-1 overflow-y-auto px-20 pb-16">
++          {diagnosis.length > 0 && (
++            <ListSection
++              title="Based on your diagnosis"
++              hint="Aurelia expects these to help."
++              options={diagnosis}
++              added={added}
++              onToggle={onToggle}
++            />
++          )}
++          {experimentOptions.length > 0 && (
++            <ListSection
++              title="Experiments"
++              hint="Untested — you’ll find out when you listen."
++              options={experimentOptions}
++              added={added}
++              onToggle={onToggle}
++            />
++          )}
++          {diagnosis.length + experimentOptions.length === 0 && <NothingHere filter={filter} onAll={() => setFilter('all')} />}
+         </div>
+ 
+         {/* The summary: what Apply will actually do. */}
+diff --git a/src/components/chat/ChatMessageItem.tsx b/src/components/chat/ChatMessageItem.tsx
+index b9df319..ef87723 100644
+--- a/src/components/chat/ChatMessageItem.tsx
++++ b/src/components/chat/ChatMessageItem.tsx
+@@ -5,8 +5,6 @@ import { RECOMMENDATIONS } from '../../chat/ChatSessionContext'
+ import { AttachedSession } from './AttachedSession'
+ import { RecommendationCard } from './RecommendationCard'
+ import { RecommendationDeck } from './RecommendationDeck'
+-import { RecommendationFilter } from './RecommendationFilter'
+-import { useUiVersion } from '../../versions/useUiVersion'
+ import { VoiceMessage } from './VoiceMessage'
+ 
+ interface ChatMessageItemProps {
+@@ -162,7 +160,6 @@ export function ChatMessageItem({
+ }: ChatMessageItemProps) {
+   const reply = onReply ? () => onReply(message) : undefined
+   const flashRing = flash ? 'rounded-12 bg-[#FFF1DB] transition-colors duration-700' : 'transition-colors duration-700'
+-  const v2 = useUiVersion() >= 2
+   // Stacked full width, not a scrolling rail: these are read one after
+   // another and the longest runs to two lines, which a rail would either
+   // clip or leave ragged.
+@@ -188,9 +185,9 @@ export function ChatMessageItem({
+         <AttachedSession slug={attached.session} />
+       </div>
+     ) : attached === 'recommendations' && showRecommendations ? (
+-      deckOpen && canApply && v2 ? (
+-        <RecommendationFilter recommendations={RECOMMENDATIONS} applied={applied} onToggle={onToggleRecommendation} />
+-      ) : deckOpen && canApply ? (
++      // The opened row is the plain one in every version: v2's filter moved
++      // from here to the top of the "+" sheet (U045, team feedback).
++      deckOpen && canApply ? (
+         <div className="u-message -mx-20 mt-12 flex gap-11 overflow-x-auto px-20 pb-4">
+           {RECOMMENDATIONS.map((recommendation) => (
+             <RecommendationCard
+diff --git a/src/components/chat/FilterChips.tsx b/src/components/chat/FilterChips.tsx
+new file mode 100644
+index 0000000..47f4326
+--- /dev/null
++++ b/src/components/chat/FilterChips.tsx
+@@ -0,0 +1,89 @@
++import { useLayoutEffect, useRef, useState } from 'react'
++import { CheckCircle2, Eye, LayoutGrid, Music, Wind } from 'lucide-react'
++import type { LucideIcon } from 'lucide-react'
++
++/**
++ * The change filter: what each change acts on — what you see, what you hear,
++ * how it moves — plus "Selected", so the set about to be applied can be
++ * checked before pressing Apply. Each chip has an icon and a count, a kind
++ * with nothing in it is not offered, and the active highlight slides between
++ * chips rather than jumping.
++ *
++ * It lived above the opened recommendation row in the thread (v2, U017).
++ * Since U045 it sits at the top of the "+" sheet instead — the sheet is where
++ * the full menu of changes is, so that is where narrowing it helps; above the
++ * three cards in the thread it was a toolbar for a list you could already
++ * see in one glance (team feedback, Eugene).
++ */
++export type ChangeKind = 'visual' | 'sound' | 'movement'
++export type FilterId = 'all' | ChangeKind | 'selected'
++
++const FILTERS: { id: FilterId; label: string; icon: LucideIcon }[] = [
++  { id: 'all', label: 'All', icon: LayoutGrid },
++  { id: 'visual', label: 'Visual', icon: Eye },
++  { id: 'sound', label: 'Sound', icon: Music },
++  { id: 'movement', label: 'Movement', icon: Wind },
++  { id: 'selected', label: 'Selected', icon: CheckCircle2 },
++]
++
++export function FilterChips({
++  filter,
++  onChange,
++  count,
++}: {
++  filter: FilterId
++  onChange: (id: FilterId) => void
++  /** How many items a filter would show. A kind at 0 is not offered. */
++  count: (id: FilterId) => number
++}) {
++  const visible = FILTERS.filter((f) => f.id === 'all' || f.id === 'selected' || count(f.id) > 0)
++
++  // The sliding highlight: measured from the active chip, so it follows the
++  // chip's real width whatever its label and count.
++  const rail = useRef<HTMLDivElement>(null)
++  const [pill, setPill] = useState<{ left: number; width: number } | null>(null)
++  const selected = count('selected')
++  useLayoutEffect(() => {
++    const el = rail.current?.querySelector<HTMLElement>(`[data-filter="${filter}"]`)
++    if (el) setPill({ left: el.offsetLeft, width: el.offsetWidth })
++  }, [filter, selected])
++
++  return (
++    <div className="-mx-20 overflow-x-auto px-20 pb-4">
++      <div ref={rail} role="toolbar" aria-label="Filter changes" className="relative flex w-max gap-6">
++        {pill && (
++          <span
++            aria-hidden="true"
++            className="absolute inset-y-0 rounded-full bg-text-primary transition-[left,width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
++            style={{ left: pill.left, width: pill.width }}
++          />
++        )}
++        {visible.map(({ id, label, icon: Icon }) => {
++          const active = filter === id
++          return (
++            <button
++              key={id}
++              type="button"
++              data-filter={id}
++              aria-pressed={active}
++              onClick={() => onChange(id)}
++              className={`u-press relative flex h-34 shrink-0 items-center gap-6 rounded-full border px-12 text-[13px] leading-none transition-colors duration-300 ${
++                active ? 'border-transparent text-text-inverse' : 'border-border-subtle bg-surface-default text-text-primary'
++              }`}
++            >
++              <Icon size={14} />
++              {label}
++              <span
++                className={`min-w-18 rounded-full px-5 py-2 text-center text-[11px] tabular-nums ${
++                  active ? 'bg-white/20 text-text-inverse' : 'bg-background-elevated text-text-secondary'
++                }`}
++              >
++                {count(id)}
++              </span>
++            </button>
++          )
++        })}
++      </div>
++    </div>
++  )
++}
+diff --git a/src/components/chat/RecommendationFilter.tsx b/src/components/chat/RecommendationFilter.tsx
+deleted file mode 100644
+index 5c573ae..0000000
+--- a/src/components/chat/RecommendationFilter.tsx
++++ /dev/null
+@@ -1,151 +0,0 @@
+-import { useLayoutEffect, useRef, useState } from 'react'
+-import { CheckCircle2, Eye, LayoutGrid, Music, Wind } from 'lucide-react'
+-import type { LucideIcon } from 'lucide-react'
+-import type { Recommendation } from './RecommendationCard'
+-import { RecommendationCard } from './RecommendationCard'
+-
+-/**
+- * Version 2 (staging): the opened recommendation row with a filter above it.
+- *
+- * Assumption, since the request was only "add a filter, be creative": the
+- * useful cut is *what each change acts on* — what you see, what you hear, how
+- * it moves — plus "Selected", so the set about to be applied can be checked
+- * before pressing Apply. Each chip has an icon and a count, a kind with
+- * nothing in it is not offered, and the active highlight slides between chips
+- * rather than jumping. Under the chips a summary line says how many changes
+- * are selected and the score they would add together, which updates as cards
+- * are added or removed. v1 renders the plain row in ChatMessageItem.
+- */
+-export type RecommendationKind = 'visual' | 'sound' | 'movement'
+-
+-const KIND_OF: Record<string, RecommendationKind> = {
+-  yellow: 'visual',
+-  movement: 'movement',
+-  frequency: 'sound',
+-}
+-
+-type FilterId = 'all' | RecommendationKind | 'selected'
+-
+-const FILTERS: { id: FilterId; label: string; icon: LucideIcon }[] = [
+-  { id: 'all', label: 'All', icon: LayoutGrid },
+-  { id: 'visual', label: 'Visual', icon: Eye },
+-  { id: 'sound', label: 'Sound', icon: Music },
+-  { id: 'movement', label: 'Movement', icon: Wind },
+-  { id: 'selected', label: 'Selected', icon: CheckCircle2 },
+-]
+-
+-const percent = (value: string) => Number.parseFloat(value.replace(/[^0-9.-]/g, '')) || 0
+-
+-export function RecommendationFilter({
+-  recommendations,
+-  applied,
+-  onToggle,
+-}: {
+-  recommendations: Recommendation[]
+-  applied: string[]
+-  onToggle: (id: string) => void
+-}) {
+-  const [filter, setFilter] = useState<FilterId>('all')
+-
+-  const matches = (r: Recommendation, id: FilterId) =>
+-    id === 'all' ? true : id === 'selected' ? applied.includes(r.id) : KIND_OF[r.id] === id
+-
+-  const visible = FILTERS.filter(
+-    (f) => f.id === 'all' || f.id === 'selected' || recommendations.some((r) => matches(r, f.id)),
+-  )
+-  const shown = recommendations.filter((r) => matches(r, filter))
+-
+-  const selected = recommendations.filter((r) => applied.includes(r.id))
+-  const totalImpact = selected.reduce((sum, r) => sum + percent(r.improveScore), 0)
+-
+-  // The sliding highlight: measured from the active chip, so it follows the
+-  // chip's real width whatever its label and count.
+-  const rail = useRef<HTMLDivElement>(null)
+-  const [pill, setPill] = useState<{ left: number; width: number } | null>(null)
+-  useLayoutEffect(() => {
+-    const el = rail.current?.querySelector<HTMLElement>(`[data-filter="${filter}"]`)
+-    if (el) setPill({ left: el.offsetLeft, width: el.offsetWidth })
+-  }, [filter, applied.length])
+-
+-  return (
+-    <div className="u-message mt-12">
+-      <div className="-mx-20 overflow-x-auto px-20 pb-4">
+-        <div ref={rail} role="toolbar" aria-label="Filter recommendations" className="relative flex w-max gap-6">
+-          {pill && (
+-            <span
+-              aria-hidden="true"
+-              className="absolute inset-y-0 rounded-full bg-text-primary transition-[left,width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+-              style={{ left: pill.left, width: pill.width }}
+-            />
+-          )}
+-          {visible.map(({ id, label, icon: Icon }) => {
+-            const count = recommendations.filter((r) => matches(r, id)).length
+-            const active = filter === id
+-            return (
+-              <button
+-                key={id}
+-                type="button"
+-                data-filter={id}
+-                aria-pressed={active}
+-                onClick={() => setFilter(id)}
+-                className={`u-press relative flex h-34 shrink-0 items-center gap-6 rounded-full border px-12 text-[13px] leading-none transition-colors duration-300 ${
+-                  active ? 'border-transparent text-text-inverse' : 'border-border-subtle bg-surface-default text-text-primary'
+-                }`}
+-              >
+-                <Icon size={14} />
+-                {label}
+-                <span
+-                  className={`min-w-18 rounded-full px-5 py-2 text-center text-[11px] tabular-nums ${
+-                    active ? 'bg-white/20 text-text-inverse' : 'bg-background-elevated text-text-secondary'
+-                  }`}
+-                >
+-                  {count}
+-                </span>
+-              </button>
+-            )
+-          })}
+-        </div>
+-      </div>
+-
+-      {/* What the current set adds up to, in the card's own currency. */}
+-      <p className="text-style-caption mt-8 flex items-center gap-6 text-text-secondary" aria-live="polite">
+-        <span className="tabular-nums">
+-          {selected.length} of {recommendations.length} selected
+-        </span>
+-        {selected.length > 0 && (
+-          <>
+-            <span aria-hidden="true">·</span>
+-            <span className="rounded-full bg-[#ECFBED] px-6 py-2 text-success-600 tabular-nums">
+-              ↑ {totalImpact}% combined
+-            </span>
+-          </>
+-        )}
+-      </p>
+-
+-      {/* Wrapper is flex so each card stretches to the row's tallest one
+-          (U037) — a two-line description made one card taller and its Add
+-          button sat lower than its neighbours'. */}
+-      <div key={filter} className="-mx-20 mt-10 flex gap-11 overflow-x-auto px-20 pb-4">
+-        {shown.map((recommendation, index) => (
+-          <div key={recommendation.id} className="u-pop flex shrink-0" style={{ animationDelay: `${index * 50}ms` }}>
+-            <RecommendationCard
+-              recommendation={recommendation}
+-              applied={applied.includes(recommendation.id)}
+-              onToggle={() => onToggle(recommendation.id)}
+-            />
+-          </div>
+-        ))}
+-        {shown.length === 0 && (
+-          <div className="flex min-h-120 w-full flex-col items-start justify-center gap-8 rounded-[20px] border border-dashed border-border-subtle px-16 py-20">
+-            <p className="text-style-body-small text-text-secondary">
+-              {filter === 'selected' ? 'Nothing selected yet.' : 'No changes of this kind in this set.'}
+-            </p>
+-            <button type="button" onClick={() => setFilter('all')} className="text-style-body-small text-[#ff881b]">
+-              Show all {recommendations.length}
+-            </button>
+-          </div>
+-        )}
+-      </div>
+-    </div>
+-  )
+-}
