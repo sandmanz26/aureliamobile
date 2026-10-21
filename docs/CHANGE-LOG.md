@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-21 — Session settings fills wider phones (U043)
+
+Session settings no longer sits as a 402px strip on screens between 403 and 1023px; it fills the width like its header. The Add buttons on the style cards line up at the bottom of each card. 402 and desktop are unchanged. All versions. Web only. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-21 — Session settings: current styles read-only (U042)
 
 In v2 and v3, the "Current style" cards on Settings › Visual and Sound no longer have the red Remove (−). A style already on a session changes through a new build, not by deleting it here. v1 unchanged. Web only. Branches: `web_app`, `admin_cms`. Not `web_prod`.

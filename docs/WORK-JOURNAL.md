@@ -30,7 +30,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | --- | --- | --- | --- |
 | O1 | **15 product decisions** with recommended defaults (free-plan limit, version model, live vs current, unpublish, fork source, lineage rules and payouts, conversation model, what a "play" is, challenge winners, one currency, safety and claims, identity, analytics consent) | J012, `docs/reviews/Aurelia-Logic-Review-2026-10-18.pdf` §11 | Product owner: accept the defaults or change them |
 | O2 | **Beta simplification list**: what stays visible, what is merged, what goes behind flags | J015 | Product owner + Eugene to agree. Then build a "Beta" preset in `/__demo` and add flags for coins in the header and Recreate on the player |
-| O3 | **Promote to production**: `web_prod` is at `4140e59`; staging carries U030–U042 | J005 onward | Product owner request (production moves only on request) |
+| O3 | **Promote to production**: `web_prod` is at `4140e59`; staging carries U030–U043 | J005 onward | Product owner request (production moves only on request) |
 | O4 | **Sticky player**: U037 added Close. Options A (swipe away + Undo) and C (auto-hide after 30 min paused) were proposed and not yet chosen | J008, J011 | Product owner |
 | O5 | **Free limit counts "Apply"**, so three applies trip it. This conflicts with v3's "keep experimenting" | J020 | Decision O1 #1 (limit model) |
 | O6 | **Two version systems** (cockpit ids vs Progress ids), so the earlier-version cards play the current recording | J011, J020 | Decision O1 #3 |
@@ -38,6 +38,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O8 | **Wellness Analysis semantics**: what a metric's % measures (and against which baseline), where "Since yesterday" and "predicts +12%" come from, and what Aurelia may claim from signals (health-claims wording) | J023, U039 | Product owner + backend: define before real data. Ties to O1 #14 (safety and claims) |
 | O9 | **Settings without General**: the v2 Settings frames have only Script / Visual / Sound, so the General gear (Length, Pace, Ends, Visibility; display-only mock) is hidden in v2. Keep it hidden, or design a place for those settings? | J026, U041 | Product owner / designer |
 | O10 | **Feedback has nowhere to go**: the player's Feedback answers are kept for the visit only. What should they change (the next chapter's proposals? the analysis?), and is a sad face worth a follow-up question? | J026, U041 | Product owner + backend |
+| O11 | **402px column on wider phones**: 17 other screens still cap their content at 402 below `lg:` (Help, Progress, Recreate, Wellness, Chat, Invite, Upgrade, See all, Credits, Session detail, Challenge detail, player hero, auth). Stretch them all like Settings (U043)? | J028 | Product owner |
 
 ---
 
@@ -72,6 +73,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J025 | 2026-10-21 | Code | Analysis: metric list + chart text not balanced | U040 |
 | J026 | 2026-10-21 | Code | Figma 16886:1623 (player drawer + Feedback) and 16883:13096 (Settings/Script), v2 + v3 | U041 |
 | J027 | 2026-10-21 | Code | Current style should not be removable | U042 |
+| J028 | 2026-10-21 | Code | Settings at 470–480px should stretch | U043 |
 
 ---
 
@@ -209,3 +211,9 @@ transcript and the update log. Everything from J018 on was written at the time.
 - **Asked:** (screenshot) the Current style cards in Settings should not be removable.
 - **Code:** U042. No Remove button in v2 and above. This matches the Figma Visual and Sound frames, where the minus is in the file but does not render. v1 is unchanged.
 - **Note:** a style can still be replaced through a new build (Explore new styles → Apply changes). Whether a style should ever be removable, for example by asking Aurelia, is left as it is today: through the cockpit.
+
+### J028 — Settings should stretch at ~470px
+- **Asked:** (screenshot at 480) the Settings content looks odd and should stretch.
+- **Code:** U043. Full width below `lg:`; 402 and desktop are unchanged. The Add buttons are aligned too.
+- **Noted to the owner:** the screenshot was staging build `71c909e`, which predates U042, which is why the Remove (−) was still visible. The deployment had not caught up yet; it was not a regression.
+- **Flagged:** 17 other screens have the same 402 cap (O11).

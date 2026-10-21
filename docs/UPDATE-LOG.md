@@ -80,6 +80,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U040 | `b5ea379` | 2026-10-21 09:51 | Analysis: metric list + chart type balanced (chart drawn at real width, 12px labels; one weight per row). | [patch](patches/U040-b5ea379.patch) |
 | U041 | `8d6c79d` | 2026-10-21 10:03 | Player analysis drawer + Feedback (Figma 16886:1623); Settings/Script title card + rename (16883:13096); chat ask race fix. v2+. | [patch](patches/U041-8d6c79d.patch) |
 | U042 | `a4c9092` | 2026-10-21 10:55 | Session settings: Current style cards read-only in v2+ (no Remove). | [patch](patches/U042-a4c9092.patch) |
+| U043 | `c7a9243` | 2026-10-21 10:58 | Session settings stretches to full width below lg (was capped at 402); Add buttons aligned. All versions. | [patch](patches/U043-c7a9243.patch) |
 
 ## Entries
 
@@ -670,3 +671,17 @@ Production (`web_prod`) is never touched by these updates unless asked.
 - **Change (`SessionSettingsPage.tsx`):** `AppliedChip`'s `onRemove` is now optional and v2 doesn't pass it, so no Remove button renders. Changing what a session is made of still goes through a new build (Explore new styles → Apply changes, or the cockpit).
 - **Verified:** at 402px, v2 Visual and Sound show 0 Remove buttons; v1 shows 2 on each. Typecheck clean; lint unchanged.
 - **Revert:** `git revert --no-commit a4c9092 && git checkout HEAD -- docs/`.
+
+### U043 — Session settings: full width below lg, Add buttons aligned
+
+- **Commit:** `c7a9243` · pushed 2026-10-21 10:58:26 UTC · `web_app` + `admin_cms` · not on `web_prod`
+- **Patch:** [patches/U043-c7a9243.patch](patches/U043-c7a9243.patch)
+- **Request:** (screenshot at 480px, Settings › Sound) "untuk ukuran 470 saya merasa aneh harusnya sih stretched ya".
+- **Cause:** the content column was `mx-auto max-w-[402px]`. On anything between 403 and 1023px it sat as a centred 402 strip, while the header above it spans the width. At 480 the chips started at x=58 and the back button at x=20.
+- **Change (`SessionSettingsPage.tsx`, all versions):**
+  - The container is `w-full lg:mx-auto lg:max-w-[960px]`, so the content spans the width below `lg:` and keeps the 960 cap on desktop.
+  - Each style card's Add button is `mt-auto` (and More has `mb-10`), so Add sits at the foot of every card. Before, a one-line description lifted it out of line with the card beside it ("Aulos" next to "Tibetan singing bowls"). This shows at 402 too.
+- **Mobile rule:** the owner explicitly asked for a change below `lg:`. At 402 the layout is identical in position and size (chips x=20, cards 175 wide); only the Add alignment differs.
+- **Same cap elsewhere (not changed, flagged):** 17 other screens use the same `max-w-[402px]` column below `lg:`: Help, Progress, Recreate (×2), Wellness, Chat (thread and composer), Invite, Upgrade, See all, Credits, Session detail (×2), Challenge detail (×2), the player hero, and the auth screens. Offered as a follow-up rather than changed unasked.
+- **Verified:** 402 / 480 / 1280, with no horizontal scroll at any of them. At 480 the chips align with the back button (x=20) and cards are 214 wide; desktop is unchanged (cards 450). Typecheck clean; lint unchanged.
+- **Revert:** `git revert --no-commit c7a9243 && git checkout HEAD -- docs/`.
