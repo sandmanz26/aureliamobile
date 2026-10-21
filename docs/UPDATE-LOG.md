@@ -79,6 +79,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U039 | `98691ba` | 2026-10-21 08:55 | Wellness Analytics v2+: per-session analysis cards + Analysis page (Figma 16885:1622), derived logic; chat styleChanges race fix. | [patch](patches/U039-98691ba.patch) |
 | U040 | `b5ea379` | 2026-10-21 09:51 | Analysis: metric list + chart type balanced (chart drawn at real width, 12px labels; one weight per row). | [patch](patches/U040-b5ea379.patch) |
 | U041 | `8d6c79d` | 2026-10-21 10:03 | Player analysis drawer + Feedback (Figma 16886:1623); Settings/Script title card + rename (16883:13096); chat ask race fix. v2+. | [patch](patches/U041-8d6c79d.patch) |
+| U042 | `a4c9092` | 2026-10-21 10:55 | Session settings: Current style cards read-only in v2+ (no Remove). | [patch](patches/U042-a4c9092.patch) |
 
 ## Entries
 
@@ -659,3 +660,13 @@ Production (`web_prod`) is never touched by these updates unless asked.
   - v1 player and v1 Session settings are unchanged.
   - Typecheck clean. Lint shows two new warnings, both of patterns already in the codebase (a helper exported from the context file; setState inside the deferred ask effect).
 - **Revert:** `git revert --no-commit 8d6c79d && git checkout HEAD -- docs/`.
+
+### U042 — Session settings: current styles cannot be removed (v2+)
+
+- **Commit:** `a4c9092` · pushed 2026-10-21 10:55:13 UTC · `web_app` + `admin_cms` · not on `web_prod`
+- **Patch:** [patches/U042-a4c9092.patch](patches/U042-a4c9092.patch)
+- **Request:** (screenshot of Settings › Current style with the red minus) "ini harusnya tidak bisa di remove ya".
+- **Interpretation:** the request is a rule rather than a one-off. It matches the Figma Visual and Sound frames (16883:13158 / 16883:13270): their file still has a minus node on the second card, but it does not render in either frame, and none shows on screen. It applies in v2 and above, following the version convention; v1 keeps the minus.
+- **Change (`SessionSettingsPage.tsx`):** `AppliedChip`'s `onRemove` is now optional and v2 doesn't pass it, so no Remove button renders. Changing what a session is made of still goes through a new build (Explore new styles → Apply changes, or the cockpit).
+- **Verified:** at 402px, v2 Visual and Sound show 0 Remove buttons; v1 shows 2 on each. Typecheck clean; lint unchanged.
+- **Revert:** `git revert --no-commit a4c9092 && git checkout HEAD -- docs/`.

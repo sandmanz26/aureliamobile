@@ -30,7 +30,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | --- | --- | --- | --- |
 | O1 | **15 product decisions** with recommended defaults (free-plan limit, version model, live vs current, unpublish, fork source, lineage rules and payouts, conversation model, what a "play" is, challenge winners, one currency, safety and claims, identity, analytics consent) | J012, `docs/reviews/Aurelia-Logic-Review-2026-10-18.pdf` §11 | Product owner: accept the defaults or change them |
 | O2 | **Beta simplification list**: what stays visible, what is merged, what goes behind flags | J015 | Product owner + Eugene to agree. Then build a "Beta" preset in `/__demo` and add flags for coins in the header and Recreate on the player |
-| O3 | **Promote to production**: `web_prod` is at `4140e59`; staging carries U030–U041 | J005 onward | Product owner request (production moves only on request) |
+| O3 | **Promote to production**: `web_prod` is at `4140e59`; staging carries U030–U042 | J005 onward | Product owner request (production moves only on request) |
 | O4 | **Sticky player**: U037 added Close. Options A (swipe away + Undo) and C (auto-hide after 30 min paused) were proposed and not yet chosen | J008, J011 | Product owner |
 | O5 | **Free limit counts "Apply"**, so three applies trip it. This conflicts with v3's "keep experimenting" | J020 | Decision O1 #1 (limit model) |
 | O6 | **Two version systems** (cockpit ids vs Progress ids), so the earlier-version cards play the current recording | J011, J020 | Decision O1 #3 |
@@ -71,6 +71,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J024 | 2026-10-21 | Ops | Figma pairing code | — |
 | J025 | 2026-10-21 | Code | Analysis: metric list + chart text not balanced | U040 |
 | J026 | 2026-10-21 | Code | Figma 16886:1623 (player drawer + Feedback) and 16883:13096 (Settings/Script), v2 + v3 | U041 |
+| J027 | 2026-10-21 | Code | Current style should not be removable | U042 |
 
 ---
 
@@ -203,3 +204,8 @@ transcript and the update log. Everything from J018 on was written at the time.
   - The frame's chart still has the 0–400 axis fixed in U039.
 - **Found and fixed:** a question sent to a session's chat from another screen was lost (the same race as U039).
 - **Open:** O9 (General settings), O10 (where Feedback goes).
+
+### J027 — Current style should not be removable
+- **Asked:** (screenshot) the Current style cards in Settings should not be removable.
+- **Code:** U042. No Remove button in v2 and above. This matches the Figma Visual and Sound frames, where the minus is in the file but does not render. v1 is unchanged.
+- **Note:** a style can still be replaced through a new build (Explore new styles → Apply changes). Whether a style should ever be removable, for example by asking Aurelia, is left as it is today: through the cockpit.
