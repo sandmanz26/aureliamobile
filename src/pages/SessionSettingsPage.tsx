@@ -78,8 +78,14 @@ function ScriptLine({ line, small = false }: { line: string; small?: boolean }) 
   )
 }
 
-/** A style already on the session. */
-function AppliedChip({ style, onRemove }: { style: AppliedStyle; onRemove: () => void }) {
+/**
+ * A style already on the session. In v2 it is read-only (U042): the Visual and
+ * Sound frames draw "Current style" without the minus, and the product owner
+ * confirmed a current style is not removed from here — what the session is
+ * made of changes through a new build (Explore new styles → Apply changes, or
+ * the cockpit), not by deleting a layer out from under it.
+ */
+function AppliedChip({ style, onRemove }: { style: AppliedStyle; onRemove?: () => void }) {
   return (
     <div className="relative w-[236px] shrink-0 pr-8 pt-8">
       <div className="flex items-center gap-12 rounded-16 bg-surface-default p-12 shadow-sm">
@@ -89,14 +95,16 @@ function AppliedChip({ style, onRemove }: { style: AppliedStyle; onRemove: () =>
           <span className="text-style-caption line-clamp-2 text-text-secondary">{style.reason}</span>
         </span>
       </div>
-      <button
-        type="button"
-        aria-label={`Remove ${style.name}`}
-        onClick={onRemove}
-        className="u-press absolute right-0 top-0 flex size-26 items-center justify-center rounded-full bg-feedback-error text-text-inverse shadow-md"
-      >
-        <Minus size={15} />
-      </button>
+      {onRemove && (
+        <button
+          type="button"
+          aria-label={`Remove ${style.name}`}
+          onClick={onRemove}
+          className="u-press absolute right-0 top-0 flex size-26 items-center justify-center rounded-full bg-feedback-error text-text-inverse shadow-md"
+        >
+          <Minus size={15} />
+        </button>
+      )}
     </div>
   )
 }
@@ -384,7 +392,7 @@ export function SessionSettingsPage() {
                     <AppliedChip
                       key={style.id}
                       style={style}
-                      onRemove={() => setRemoved((prev) => new Set(prev).add(style.id))}
+                      onRemove={v2 ? undefined : () => setRemoved((prev) => new Set(prev).add(style.id))}
                     />
                   ))}
                 </div>
