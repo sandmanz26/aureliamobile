@@ -81,6 +81,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U041 | `8d6c79d` | 2026-10-21 10:03 | Player analysis drawer + Feedback (Figma 16886:1623); Settings/Script title card + rename (16883:13096); chat ask race fix. v2+. | [patch](patches/U041-8d6c79d.patch) |
 | U042 | `a4c9092` | 2026-10-21 10:55 | Session settings: Current style cards read-only in v2+ (no Remove). | [patch](patches/U042-a4c9092.patch) |
 | U043 | `c7a9243` | 2026-10-21 10:58 | Session settings stretches to full width below lg (was capped at 402); Add buttons aligned. All versions. | [patch](patches/U043-c7a9243.patch) |
+| U044 | (this log commit) | 2026-10-21 | Production: `web_prod` fast-forwarded from `4140e59` to `web_app` (U030–U043). | — |
 
 ## Entries
 
@@ -685,3 +686,27 @@ Production (`web_prod`) is never touched by these updates unless asked.
 - **Same cap elsewhere (not changed, flagged):** 17 other screens use the same `max-w-[402px]` column below `lg:`: Help, Progress, Recreate (×2), Wellness, Chat (thread and composer), Invite, Upgrade, See all, Credits, Session detail (×2), Challenge detail (×2), the player hero, and the auth screens. Offered as a follow-up rather than changed unasked.
 - **Verified:** 402 / 480 / 1280, with no horizontal scroll at any of them. At 480 the chips align with the back button (x=20) and cards are 214 wide; desktop is unchanged (cards 450). Typecheck clean; lint unchanged.
 - **Revert:** `git revert --no-commit c7a9243 && git checkout HEAD -- docs/`.
+
+### U044 — Promote staging v2 to production
+
+- **Request:** "naikan v2 ke prod ya" (2026-10-21).
+- **What moved:** `web_prod` `4140e59` → this log commit (33 commits): U030–U043.
+  - Desktop fixes: U030, U031, U033.
+  - Click insights: U032, U034.
+  - Three.js network, off by default: U035.
+  - Feelings / reply / Play rule / limit copy: U036.
+  - Lineage, version history, publish date, player Close: U037.
+  - Connect per Figma and full-width sheets: U038.
+  - Wellness Analytics + Analysis page: U039, U040.
+  - Player progress drawer, Feedback, Settings rename: U041.
+  - Current style read-only: U042.
+  - Settings full width: U043.
+  - Plus the logs, the work journal and the logic-review PDF.
+- **Production specifics:**
+  - Production is pinned to **v2** (`PRODUCTION_VERSION = 2`), so the v3-only parts stay on staging: the change-sheet summary and every build kept in the thread.
+  - No picker or staging bar. Version stays `0.1.0`, because no bump was asked for.
+  - A production-mode build (`VERCEL_ENV=production`, branch `web_prod`) compiled before the push.
+- **Flagged at promotion:**
+  - **Click insights (U032/U034) is on by default, so production visitors' screens and taps are now recorded.** It stores labels and positions, never field values, but the consent decision (O1 #15) is still open. To turn it off on production: `/__demo` on the production site → Click insights off → Publish. Production keeps its own flag set.
+  - O3 is closed by this promotion.
+- **Undo:** `git push --force-with-lease origin 4140e59:web_prod`, only on explicit request (it rewrites the production branch). Individual changes are reverted through their own U-entries and then re-promoted.

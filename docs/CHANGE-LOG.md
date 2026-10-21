@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-21 — Production promoted to staging v2 (U044)
+
+`web_prod` fast-forwarded from `4140e59` to `web_app`, carrying U030–U043 to production. Production stays pinned to v2, so the v3-only changes remain on staging. Click insights is on by default and now records production visits (labels and positions only); turn it off from production's `/__demo` if consent is not settled. Branches: `web_prod` (now equal to `web_app`, `admin_cms`). `mobile_app` unchanged.
+
 ### 2026-10-21 — Session settings fills wider phones (U043)
 
 Session settings no longer sits as a 402px strip on screens between 403 and 1023px; it fills the width like its header. The Add buttons on the style cards line up at the bottom of each card. 402 and desktop are unchanged. All versions. Web only. Branches: `web_app`, `admin_cms`. Not `web_prod`.

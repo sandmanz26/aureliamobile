@@ -30,7 +30,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | --- | --- | --- | --- |
 | O1 | **15 product decisions** with recommended defaults (free-plan limit, version model, live vs current, unpublish, fork source, lineage rules and payouts, conversation model, what a "play" is, challenge winners, one currency, safety and claims, identity, analytics consent) | J012, `docs/reviews/Aurelia-Logic-Review-2026-10-18.pdf` §11 | Product owner: accept the defaults or change them |
 | O2 | **Beta simplification list**: what stays visible, what is merged, what goes behind flags | J015 | Product owner + Eugene to agree. Then build a "Beta" preset in `/__demo` and add flags for coins in the header and Recreate on the player |
-| O3 | **Promote to production**: `web_prod` is at `4140e59`; staging carries U030–U043 | J005 onward | Product owner request (production moves only on request) |
+| O3 | ~~Promote to production~~ **Done 2026-10-21 (J029, U044)**: `web_prod` = `web_app` as of U043. Reopens with the next staging change | J005 onward | — |
 | O4 | **Sticky player**: U037 added Close. Options A (swipe away + Undo) and C (auto-hide after 30 min paused) were proposed and not yet chosen | J008, J011 | Product owner |
 | O5 | **Free limit counts "Apply"**, so three applies trip it. This conflicts with v3's "keep experimenting" | J020 | Decision O1 #1 (limit model) |
 | O6 | **Two version systems** (cockpit ids vs Progress ids), so the earlier-version cards play the current recording | J011, J020 | Decision O1 #3 |
@@ -74,6 +74,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J026 | 2026-10-21 | Code | Figma 16886:1623 (player drawer + Feedback) and 16883:13096 (Settings/Script), v2 + v3 | U041 |
 | J027 | 2026-10-21 | Code | Current style should not be removable | U042 |
 | J028 | 2026-10-21 | Code | Settings at 470–480px should stretch | U043 |
+| J029 | 2026-10-21 | Ops | Promote v2 to production | U044 |
 
 ---
 
@@ -217,3 +218,9 @@ transcript and the update log. Everything from J018 on was written at the time.
 - **Code:** U043. Full width below `lg:`; 402 and desktop are unchanged. The Add buttons are aligned too.
 - **Noted to the owner:** the screenshot was staging build `71c909e`, which predates U042, which is why the Remove (−) was still visible. The deployment had not caught up yet; it was not a regression.
 - **Flagged:** 17 other screens have the same 402 cap (O11).
+
+### J029 — Promote v2 to production
+- **Asked:** "naikan v2 ke prod ya".
+- **Ops:** U044. `web_prod` was fast-forwarded `4140e59` → `web_app` (U030–U043), after a production-mode build. Production stays on v2, and the v3-only changes remain on staging.
+- **Flagged:** click insights is on by default and now records production visitors. The consent decision (O1 #15) is still open. It can be switched off from production's `/__demo` with Publish.
+- **Closed:** O3.
