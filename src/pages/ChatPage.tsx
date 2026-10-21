@@ -313,11 +313,27 @@ export function ChatPage() {
    * new version. Session settings names the change; the thread is what
    * applies it — one build path rather than two that could drift apart.
    */
+  //
+  // U039: held until the session in the URL is the one on the deck. Arriving
+  // at /chat/<slug> for a session that is not open yet (Wellness → Analysis →
+  // "Create Chapter 2") used to apply the change in the same tick openSession
+  // replaced the thread — the request line vanished under the session's
+  // opening messages and the build was named after the previous thread's
+  // draft ("Sleep meditation v1.3" on Dolphins frequency). The route state is
+  // spent on the first render, so the sentence is parked in a ref.
+  const pendingStyleChanges = useRef<string | null>(null)
   useEffect(() => {
     if (!routeState?.styleChanges || styleChangesHandled.current === location.key) return
     styleChangesHandled.current = location.key
-    applyChanges(routeState.styleChanges)
-  }, [location.key, routeState?.styleChanges, applyChanges])
+    pendingStyleChanges.current = routeState.styleChanges
+  }, [location.key, routeState?.styleChanges])
+  useEffect(() => {
+    const sentence = pendingStyleChanges.current
+    if (!sentence) return
+    if (opened && opened.slug !== sessionSlug) return
+    pendingStyleChanges.current = null
+    applyChanges(sentence)
+  })
 
   /**
    * Going back to an earlier cut, chosen in Insights > Chapters.

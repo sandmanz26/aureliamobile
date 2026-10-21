@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageMeta } from '../components/PageMeta'
 import { WellnessObjectiveCard } from '../components/wellness/WellnessObjectiveCard'
+import { AnalyticsSessionCard } from '../components/wellness/AnalyticsSessionCard'
+import { ANALYSES } from '../lib/wellnessAnalysis'
+import { useUiVersion } from '../versions/useUiVersion'
 import { useDrawer } from '../layouts/DrawerContext'
 import type { SignalGroup } from '../lib/signals'
 import { SIGNAL_GROUPS, defaultConnections, sourcesInGroup } from '../lib/signals'
@@ -137,6 +140,10 @@ export function WellnessPage() {
   const [requestOpen, setRequestOpen] = useState(false)
   const [tab, setTab] = useState<WellnessTab>('Analytics')
   const [requestSent, setRequestSent] = useState(false)
+  // v2+ (U039): Analytics is the Figma "My Wellness/Analytics" list — one
+  // card per session with its progress, opening the full analysis. v1 keeps
+  // the expandable objective cards it had.
+  const v2 = useUiVersion() >= 2
   // The first goal opens by default, same reasoning as My Wellness always
   // showing signal state rather than a blank list — the tab should not
   // read as empty on first visit.
@@ -184,7 +191,15 @@ export function WellnessPage() {
           />
         </div>
 
-        {tab === 'Analytics' && (
+        {tab === 'Analytics' && v2 && (
+          <div className="mt-24 flex flex-col gap-12 lg:grid lg:grid-cols-2 lg:gap-16">
+            {ANALYSES.map((analysis) => (
+              <AnalyticsSessionCard key={analysis.id} analysis={analysis} />
+            ))}
+          </div>
+        )}
+
+        {tab === 'Analytics' && !v2 && (
           <div className="mt-24 flex flex-col gap-16">
             {WELLNESS_GOALS.map((goal) => (
               <WellnessObjectiveCard

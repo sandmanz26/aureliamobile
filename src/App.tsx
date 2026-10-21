@@ -34,6 +34,7 @@ const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage').then((m) => ({ default: m.NotificationsPage })))
 const SessionSettingsPage = lazy(() => import('./pages/SessionSettingsPage').then((m) => ({ default: m.SessionSettingsPage })))
 const WellnessPage = lazy(() => import('./pages/WellnessPage').then((m) => ({ default: m.WellnessPage })))
+const WellnessAnalysisPage = lazy(() => import('./pages/WellnessAnalysisPage').then((m) => ({ default: m.WellnessAnalysisPage })))
 const ProfilePage = lazy(() => import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage })))
 const SeeAllPage = lazy(() => import('./pages/SeeAllPage').then((m) => ({ default: m.SeeAllPage })))
 const ExplorePage = lazy(() => import('./pages/ExplorePage').then((m) => ({ default: m.ExplorePage })))
@@ -429,6 +430,16 @@ export default function App() {
                 <RequireAuth>
                   <ModuleGuard module="wellness">
                     <WellnessPage />
+                  </ModuleGuard>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/wellness/analysis/:id"
+              element={
+                <RequireAuth>
+                  <ModuleGuard module="wellness">
+                    <WellnessAnalysisPage />
                   </ModuleGuard>
                 </RequireAuth>
               }
