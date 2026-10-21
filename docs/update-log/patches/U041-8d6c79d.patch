@@ -1,0 +1,1636 @@
+diff --git a/src/assets/moods/mood-1.svg b/src/assets/moods/mood-1.svg
+new file mode 100644
+index 0000000..d91e877
+--- /dev/null
++++ b/src/assets/moods/mood-1.svg
+@@ -0,0 +1,12 @@
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="72 0 88 88" fill="none">
++<rect x="72" width="88" height="88" rx="8" fill="url(#paint0_linear_16883_15395)"/>
++<path d="M109.54 37.6973C103.06 37.6973 97.1399 41.5373 94.5799 47.4573C93.6999 49.5373 93.8599 51.8573 95.1399 53.7773C96.4199 55.6973 98.4999 56.8173 100.74 56.8173H118.34C120.58 56.8173 122.74 55.6973 123.94 53.7773C125.14 51.8573 125.38 49.5373 124.5 47.4573C121.94 41.5373 116.02 37.6973 109.54 37.6973ZM119.46 49.6973C119.789 50.3547 119.201 51.227 118.469 51.2917C118.428 51.2953 118.384 51.2973 118.34 51.2973H100.74C100.18 51.2973 99.8599 50.8973 99.6999 50.7373C99.5399 50.5773 99.3799 50.1773 99.6199 49.6973C101.38 45.7773 105.22 43.2173 109.54 43.2173C113.86 43.2173 117.78 45.7773 119.46 49.6973Z" fill="#331B04"/>
++<path d="M96.497 35.7778L102.977 30.3378C103.617 29.7778 103.937 29.0578 103.937 28.2578C103.937 27.4578 103.537 26.6578 102.977 26.1778L96.497 20.7378C95.297 19.7778 93.617 19.9378 92.657 21.0578C91.697 22.2578 91.857 23.9378 92.977 24.9778C95.0646 26.7314 95.0646 29.9442 92.977 31.6978C91.777 32.6578 91.697 34.4178 92.657 35.6178C92.7498 35.7239 92.8493 35.8213 92.9539 35.9098C93.9378 36.7424 95.4481 36.5269 96.497 35.7778Z" fill="#331B04"/>
++<path d="M126.499 20.977C125.539 19.777 123.779 19.697 122.659 20.657L116.179 26.097C115.539 26.657 115.219 27.377 115.219 28.177C115.219 28.977 115.619 29.777 116.179 30.257L122.659 35.697C123.139 36.097 123.779 36.337 124.419 36.337C125.219 36.337 126.019 36.017 126.499 35.377C127.459 34.177 127.299 32.497 126.179 31.457C124.091 29.7034 124.091 26.4906 126.179 24.737C127.299 23.937 127.459 22.177 126.499 20.977Z" fill="#331B04"/>
++<defs>
++<linearGradient id="paint0_linear_16883_15395" x1="72" y1="88" x2="160" y2="5.24521e-06" gradientUnits="userSpaceOnUse">
++<stop stop-color="#FF8514"/>
++<stop offset="1" stop-color="#FFE270"/>
++</linearGradient>
++</defs>
++</svg>
+diff --git a/src/assets/moods/mood-2.svg b/src/assets/moods/mood-2.svg
+new file mode 100644
+index 0000000..2b23ecd
+--- /dev/null
++++ b/src/assets/moods/mood-2.svg
+@@ -0,0 +1,12 @@
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="177 0 88 88" fill="none">
++<rect x="177" width="88" height="88" rx="8" fill="url(#paint1_linear_16883_15395)"/>
++<path d="M215.197 38.2402C208.877 38.2402 203.277 41.7602 200.557 47.3602C199.917 48.7202 200.477 50.4002 201.837 51.0402C203.197 51.6802 204.877 51.1202 205.517 49.7602C207.357 46.0002 211.037 43.6802 215.277 43.6802C219.437 43.6802 223.197 46.0002 225.037 49.7602C225.517 50.7202 226.477 51.2802 227.517 51.2802C227.917 51.2802 228.317 51.2002 228.717 50.9602C230.077 50.3202 230.637 48.6402 229.997 47.2802C227.117 41.7602 221.517 38.2402 215.197 38.2402Z" fill="#331B04"/>
++<path d="M202.88 29.76C205.575 29.76 207.76 27.5751 207.76 24.88C207.76 22.1848 205.575 20 202.88 20C200.185 20 198 22.1848 198 24.88C198 27.5751 200.185 29.76 202.88 29.76Z" fill="#331B04"/>
++<path d="M227.521 29.76C230.216 29.76 232.401 27.5751 232.401 24.88C232.401 22.1848 230.216 20 227.521 20C224.825 20 222.641 22.1848 222.641 24.88C222.641 27.5751 224.825 29.76 227.521 29.76Z" fill="#331B04"/>
++<defs>
++<linearGradient id="paint1_linear_16883_15395" x1="177" y1="88" x2="265" y2="5.24521e-06" gradientUnits="userSpaceOnUse">
++<stop stop-color="#FF8514"/>
++<stop offset="1" stop-color="#FFE270"/>
++</linearGradient>
++</defs>
++</svg>
+diff --git a/src/assets/moods/mood-3.svg b/src/assets/moods/mood-3.svg
+new file mode 100644
+index 0000000..1b4bf7a
+--- /dev/null
++++ b/src/assets/moods/mood-3.svg
+@@ -0,0 +1,12 @@
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="282 0 88 88" fill="none">
++<rect x="282" width="88" height="88" rx="8" fill="url(#paint2_linear_16883_15395)"/>
++<path d="M306.88 29.76C309.575 29.76 311.76 27.5751 311.76 24.88C311.76 22.1848 309.575 20 306.88 20C304.185 20 302 22.1848 302 24.88C302 27.5751 304.185 29.76 306.88 29.76Z" fill="#331B04"/>
++<path d="M331.521 29.76C334.216 29.76 336.401 27.5751 336.401 24.88C336.401 22.1848 334.216 20 331.521 20C328.825 20 326.641 22.1848 326.641 24.88C326.641 27.5751 328.825 29.76 331.521 29.76Z" fill="#331B04"/>
++<path d="M328.799 42.4004H309.599C308.079 42.4004 306.879 43.6004 306.879 45.1204C306.879 46.6404 308.079 47.8404 309.599 47.8404H328.799C330.319 47.8404 331.519 46.6404 331.519 45.1204C331.599 43.6004 330.319 42.4004 328.799 42.4004Z" fill="#331B04"/>
++<defs>
++<linearGradient id="paint2_linear_16883_15395" x1="282" y1="88" x2="370" y2="5.24521e-06" gradientUnits="userSpaceOnUse">
++<stop stop-color="#FF8514"/>
++<stop offset="1" stop-color="#FFE270"/>
++</linearGradient>
++</defs>
++</svg>
+diff --git a/src/assets/moods/mood-4.svg b/src/assets/moods/mood-4.svg
+new file mode 100644
+index 0000000..400b6d2
+--- /dev/null
++++ b/src/assets/moods/mood-4.svg
+@@ -0,0 +1,12 @@
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="387 0 88 88" fill="none">
++<rect x="387" width="88" height="88" rx="8" fill="url(#paint3_linear_16883_15395)"/>
++<path d="M438.639 40.479C437.279 39.839 435.599 40.399 434.959 41.759C433.119 45.519 429.439 47.839 425.199 47.839C420.959 47.839 417.279 45.519 415.439 41.759C414.799 40.399 413.119 39.839 411.759 40.479C410.399 41.119 409.839 42.799 410.479 44.159C413.199 49.759 418.879 53.279 425.119 53.279C431.279 53.279 437.039 49.679 439.759 44.159C440.559 42.799 439.999 41.199 438.639 40.479Z" fill="#331B04"/>
++<path d="M412.88 29.76C415.575 29.76 417.76 27.5751 417.76 24.88C417.76 22.1848 415.575 20 412.88 20C410.185 20 408 22.1848 408 24.88C408 27.5751 410.185 29.76 412.88 29.76Z" fill="#331B04"/>
++<path d="M437.521 29.76C440.216 29.76 442.401 27.5751 442.401 24.88C442.401 22.1848 440.216 20 437.521 20C434.825 20 432.641 22.1848 432.641 24.88C432.641 27.5751 434.825 29.76 437.521 29.76Z" fill="#331B04"/>
++<defs>
++<linearGradient id="paint3_linear_16883_15395" x1="387" y1="88" x2="475" y2="5.24521e-06" gradientUnits="userSpaceOnUse">
++<stop stop-color="#FF8514"/>
++<stop offset="1" stop-color="#FFE270"/>
++</linearGradient>
++</defs>
++</svg>
+diff --git a/src/assets/moods/mood-5.svg b/src/assets/moods/mood-5.svg
+new file mode 100644
+index 0000000..fe1167d
+--- /dev/null
++++ b/src/assets/moods/mood-5.svg
+@@ -0,0 +1,12 @@
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="492 0 88 88" fill="none">
++<rect x="492" width="88" height="88" rx="8" fill="url(#paint4_linear_16883_15395)"/>
++<path d="M529.515 58.4531C535.995 58.4531 541.915 54.6131 544.475 48.6931C545.355 46.6131 545.195 44.2931 543.915 42.3731C542.635 40.4531 540.555 39.3331 538.315 39.3331L520.715 39.3331C518.475 39.3331 516.315 40.4531 515.115 42.3731C513.915 44.2931 513.675 46.6131 514.555 48.6931C517.115 54.6131 523.035 58.4531 529.515 58.4531ZM519.595 46.4531C519.266 45.7957 519.853 44.9234 520.586 44.8587C520.627 44.8551 520.67 44.8531 520.715 44.8531L538.315 44.8531C538.875 44.8531 539.195 45.2531 539.355 45.4131C539.515 45.5731 539.675 45.9731 539.435 46.4531C537.675 50.3731 533.835 52.9331 529.515 52.9331C525.195 52.9331 521.275 50.3731 519.595 46.4531Z" fill="#331B04"/>
++<path d="M516.497 35.7778L522.977 30.3378C523.617 29.7778 523.937 29.0578 523.937 28.2578C523.937 27.4578 523.537 26.6578 522.977 26.1778L516.497 20.7378C515.297 19.7778 513.617 19.9378 512.657 21.0578C511.697 22.2578 511.857 23.9378 512.977 24.9778C515.065 26.7314 515.065 29.9442 512.977 31.6978C511.777 32.6578 511.697 34.4178 512.657 35.6178C512.75 35.7239 512.849 35.8213 512.954 35.9098C513.938 36.7424 515.448 36.5269 516.497 35.7778Z" fill="#331B04"/>
++<path d="M546.499 20.977C545.539 19.777 543.779 19.697 542.659 20.657L536.179 26.097C535.539 26.657 535.219 27.377 535.219 28.177C535.219 28.977 535.619 29.777 536.179 30.257L542.659 35.697C543.139 36.097 543.779 36.337 544.419 36.337C545.219 36.337 546.019 36.017 546.499 35.377C547.459 34.177 547.299 32.497 546.179 31.457C544.091 29.7034 544.091 26.4906 546.179 24.737C547.299 23.937 547.459 22.177 546.499 20.977Z" fill="#331B04"/>
++<defs>
++<linearGradient id="paint4_linear_16883_15395" x1="492" y1="88" x2="580" y2="5.24521e-06" gradientUnits="userSpaceOnUse">
++<stop stop-color="#FF8514"/>
++<stop offset="1" stop-color="#FFE270"/>
++</linearGradient>
++</defs>
++</svg>
+diff --git a/src/chat/ChatSessionContext.tsx b/src/chat/ChatSessionContext.tsx
+index 7382b94..1ed7268 100644
+--- a/src/chat/ChatSessionContext.tsx
++++ b/src/chat/ChatSessionContext.tsx
+@@ -226,6 +226,16 @@ export interface DraftVersion {
+ /** The label the next build takes. Bumps the minor where there is one —
+  *  v1.2 to v1.3 — the major where there is not, and starts a v2 where the
+  *  name carries no version at all, which is what a published session's does. */
++/**
++ * The session's name without its version: "Sleep meditation v1.3" →
++ * "Sleep meditation". Renaming edits this part only (U041) — the version is
++ * what each build sets, so a person never types it and cannot break it.
++ */
++export function sessionNameOf(label: string) {
++  const match = /\s+v(\d+)(?:\.(\d+))?$/i.exec(label)
++  return match ? label.slice(0, match.index) : label
++}
++
+ export function nextVersionLabel(label: string) {
+   const match = /\s+v(\d+)(?:\.(\d+))?$/i.exec(label)
+   if (!match) return `${label} v2`
+@@ -282,6 +292,8 @@ interface ChatSessionValue {
+    * their own ids, so it cannot go through `revertTo`.
+    */
+   pointAt: (cut: { id: string; label: string; slug: string }) => void
++  /** Rename the session: every cut keeps its own version, under the new name. */
++  renameSession: (name: string) => void
+   /** Open an existing session's conversation, already made. */
+   openSession: (session: SessionRecord) => void
+   /** Next message id. A function rather than the ref itself: handing out a
+@@ -364,6 +376,12 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
+     [versions, draft],
+   )
+ 
++  const renameSession = useCallback((name: string) => {
++    const renamed = (label: string) => name + label.slice(sessionNameOf(label).length)
++    setVersions((list) => list.map((v) => ({ ...v, label: renamed(v.label) })))
++    setDraft((current) => ({ ...current, title: renamed(current.title) }))
++  }, [])
++
+   const markPublished = useCallback(() => {
+     setPublishedVersionId((current) => currentVersionId ?? current)
+   }, [currentVersionId])
+@@ -480,13 +498,13 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
+       deckOpen, setDeckOpen,
+       sessionSlug, openSession,
+       draft, setDraft,
+-      versions, currentVersionId, publishedVersionId, markPublished, markUnpublished, addVersion, revertTo, pointAt,
++      versions, currentVersionId, publishedVersionId, markPublished, markUnpublished, addVersion, revertTo, pointAt, renameSession,
+       nextMessageId,
+       reset,
+     }),
+     [
+       messages, applied, sessionState, progress, deckOpen, sessionSlug, openSession, draft,
+-      versions, currentVersionId, publishedVersionId, markPublished, markUnpublished, addVersion, revertTo, pointAt, nextMessageId, reset,
++      versions, currentVersionId, publishedVersionId, markPublished, markUnpublished, addVersion, revertTo, pointAt, renameSession, nextMessageId, reset,
+     ],
+   )
+ 
+diff --git a/src/components/ui/RenameSessionSheet.tsx b/src/components/ui/RenameSessionSheet.tsx
+new file mode 100644
+index 0000000..edb483d
+--- /dev/null
++++ b/src/components/ui/RenameSessionSheet.tsx
+@@ -0,0 +1,105 @@
++import { useEffect, useState } from 'react'
++import { createPortal } from 'react-dom'
++import { Captions } from 'lucide-react'
++
++/**
++ * Renaming a session, from the pencil on Session settings' title card
++ * (Figma "Session/Settings/Script" 16883:13096, U041).
++ *
++ * The frame's pencil is prototyped to the Objective sheet — a copied link —
++ * so this is that sheet's layout asking the right question. Only the name is
++ * editable: the version ("v1.3") is set by each build and shown beside the
++ * field rather than typed, so a rename can neither drop it nor fake one.
++ * Save waits for a name that is non-empty and different.
++ */
++export function RenameSessionSheet({
++  name,
++  version,
++  onSave,
++  onClose,
++}: {
++  name: string
++  /** " v1.3", or "" when the session has no version yet. */
++  version: string
++  onSave: (next: string) => void
++  onClose: () => void
++}) {
++  const [value, setValue] = useState(name)
++
++  useEffect(() => {
++    function onKey(event: KeyboardEvent) {
++      if (event.key === 'Escape') onClose()
++    }
++    document.addEventListener('keydown', onKey)
++    return () => document.removeEventListener('keydown', onKey)
++  }, [onClose])
++
++  const next = value.trim().replace(/\s+/g, ' ')
++  const ready = next.length > 0 && next !== name
++
++  function save() {
++    if (!ready) return
++    onSave(next)
++    onClose()
++  }
++
++  return createPortal(
++    <div className="u-fade fixed inset-0 z-50 flex items-end justify-center bg-icon-strong/20" onClick={onClose}>
++      <form
++        onClick={(event) => event.stopPropagation()}
++        onSubmit={(event) => {
++          event.preventDefault()
++          save()
++        }}
++        className="u-sheet flex w-full flex-col gap-32 rounded-t-24 bg-surface-default px-20 pb-32 pt-40 sm:max-w-[480px] lg:max-w-[560px]"
++      >
++        <div className="flex flex-col gap-24">
++          <span className="flex justify-center text-[#FF881B]">
++            <Captions size={64} strokeWidth={1.5} />
++          </span>
++          <div className="flex flex-col gap-8 text-center">
++            <h2 className="text-style-title text-text-primary">Rename your session</h2>
++            <p className="text-[14px] font-light leading-[21px] text-[#525252]">
++              The name you’ll see in Sessions, the player and your Analytics.
++            </p>
++          </div>
++        </div>
++
++        <label className="flex h-44 w-full items-center gap-8 rounded-full border border-[#D6D6D6] bg-surface-default pl-16 pr-16 focus-within:border-brand-emphasis">
++          <input
++            autoFocus
++            value={value}
++            maxLength={60}
++            onChange={(event) => setValue(event.target.value)}
++            placeholder="E.g. Evening wind-down"
++            aria-label="Session name"
++            className="min-w-0 flex-1 bg-transparent text-[14px] leading-[19px] text-text-primary outline-none placeholder:font-light placeholder:text-[#626262]"
++          />
++          {version && (
++            <span className="shrink-0 text-[14px] font-light leading-[19px] text-[#7B7B7B]" title="Set by each build">
++              {version.trim()}
++            </span>
++          )}
++        </label>
++
++        <div className="flex gap-12">
++          <button
++            type="button"
++            onClick={onClose}
++            className="u-press flex h-47 flex-1 items-center justify-center rounded-[40px] border border-[#D6D6D6] text-[16px] leading-[19px] text-text-primary"
++          >
++            Cancel
++          </button>
++          <button
++            type="submit"
++            disabled={!ready}
++            className="u-press flex h-47 flex-1 items-center justify-center rounded-[40px] bg-[#331B04] text-[16px] leading-[19px] text-text-inverse disabled:cursor-not-allowed disabled:opacity-50"
++          >
++            Save
++          </button>
++        </div>
++      </form>
++    </div>,
++    document.body,
++  )
++}
+diff --git a/src/components/wellness/AnalysisParts.tsx b/src/components/wellness/AnalysisParts.tsx
+new file mode 100644
+index 0000000..c06ac42
+--- /dev/null
++++ b/src/components/wellness/AnalysisParts.tsx
+@@ -0,0 +1,247 @@
++import { ArrowUp } from 'lucide-react'
++import { useLayoutEffect, useRef, useState } from 'react'
++import { RecommendationDeck } from '../chat/RecommendationDeck'
++import type { Analysis, Metric } from '../../lib/wellnessAnalysis'
++import { nextChapterOf, predictionOf, progressOf, statusOf, summaryOf } from '../../lib/wellnessAnalysis'
++import { DeltaPill, ProgressRing } from './ProgressRing'
++
++// The pieces of an analysis that more than one screen shows: the Analysis
++// page (Figma 16883:15959) and, since U041, the player's drawer on a session
++// that has one (Figma "Session: Chat - Player", 16886:1623). One component
++// per block so the two cannot drift apart — same numbers, same type.
++
++/** "Great Progress!" over "3% ↑ Since yesterday"; the player adds the small ring. */
++export function AnalysisStatus({ analysis, ring = false }: { analysis: Analysis; ring?: boolean }) {
++  const progress = progressOf(analysis)
++  return (
++    <div className="flex items-start justify-between gap-12">
++      <div className="flex min-w-0 flex-col gap-3">
++        <h2 className="text-[24px] font-normal leading-[36px] text-text-primary">{statusOf(progress).heading}</h2>
++        <p className="flex items-center gap-8 text-[14px] font-light leading-[24px] text-[#7A7A7A]">
++          <DeltaPill value={analysis.sinceYesterday} /> Since yesterday
++        </p>
++      </div>
++      {ring && (
++        <span className="mt-8 flex shrink-0 items-center gap-6 text-[12px] font-semibold leading-[18px] tabular-nums text-text-primary">
++          <ProgressRing value={progress} size={20} stroke={3} track="#FFF1DB" />
++          {progress}%
++        </span>
++      )}
++    </div>
++  )
++}
++
++/** One coloured row: a metric and its value (or the predicted gain). */
++export function MetricRow({ metric, value, strong = false }: { metric: Metric; value: string; strong?: boolean }) {
++  return (
++    <li className={`flex items-center gap-9 text-[14px] leading-[21px] text-text-primary ${strong ? 'font-medium' : 'font-light'}`}>
++      <span aria-hidden="true" className="size-8 shrink-0 rounded-full" style={{ background: metric.color }} />
++      <span className="min-w-0 flex-1 truncate">{metric.label}</span>
++      <span className="flex shrink-0 items-center gap-4 tabular-nums">
++        {value}
++        <ArrowUp size={12} strokeWidth={2} className="text-[#70C973]" />
++      </span>
++    </li>
++  )
++}
++
++/** The generated sentence and the objective + its three shifts. */
++export function AnalysisShifts({ analysis }: { analysis: Analysis }) {
++  return (
++    <>
++      <p className="text-[14px] font-light leading-[21px] text-text-primary">{summaryOf(analysis)}</p>
++      <ul className="flex flex-col gap-10">
++        {analysis.metrics.map((m, i) => (
++          <MetricRow key={m.id} metric={m} value={`${m.value}%`} strong={i === 0} />
++        ))}
++      </ul>
++    </>
++  )
++}
++
++/**
++ * Next chapter: the prediction, the objective's predicted gain, and the
++ * proposals panel ending in Create Chapter N plus one secondary action —
++ * "Go to Session" on the Analysis page, "Ask Aurelia" in the player, where
++ * you are already in the session.
++ */
++export function NextChapter({
++  analysis,
++  onCreate,
++  secondary,
++  inset = 32,
++}: {
++  analysis: Analysis
++  onCreate: () => void
++  secondary: { label: string; onClick: () => void }
++  /** Side padding: 32 on the Analysis page, 20 in the player's drawer. */
++  inset?: 20 | 32
++}) {
++  const [listOpen, setListOpen] = useState(false)
++  const primary = analysis.metrics[0]
++  const px = inset === 20 ? 'px-20' : 'px-32'
++  const mx = inset === 20 ? 'mx-20' : 'mx-32'
++  return (
++    <>
++      <section className={`flex flex-col gap-24 ${px}`}>
++        <div className="flex flex-col gap-7">
++          <h2 className="text-[24px] font-normal leading-[36px] text-text-primary">Next chapter</h2>
++          <p className="text-[14px] font-light leading-[21px] text-text-primary">{predictionOf(analysis)}</p>
++        </div>
++        <ul>
++          <MetricRow metric={primary} value={`+${analysis.predictedGain}%`} strong />
++        </ul>
++      </section>
++
++      <section className={`${mx} mt-24 flex flex-col gap-8 rounded-12 bg-[#F5EEE8] p-24`}>
++        <div className="flex flex-col gap-5">
++          <h3 className="text-[16px] leading-[24px] text-black">Proposed improvements ({analysis.proposals.length}):</h3>
++          <p className="text-[14px] font-light leading-[21px] text-text-primary">
++            Here are the proposed elements that will contribute to an enhanced state.
++          </p>
++        </div>
++        <div className="flex justify-center py-8">
++          <RecommendationDeck recommendations={analysis.proposals} count={analysis.proposals.length} onOpen={() => setListOpen((v) => !v)} />
++        </div>
++        {listOpen && (
++          <ul className="flex flex-col gap-8 rounded-12 bg-surface-default p-12">
++            {analysis.proposals.map((p) => (
++              <li key={p.id} className="flex items-center gap-10">
++                <img src={p.orb} alt="" className="size-32 rounded-full object-cover" />
++                <span className="min-w-0 flex-1">
++                  <span className="block text-[14px] leading-[19px] text-text-primary">{p.title}</span>
++                  <span className="block truncate text-[12px] font-light leading-[16px] text-text-secondary">{p.description}</span>
++                </span>
++                <span className="shrink-0 rounded-full bg-[#ECFBED] px-6 py-1 text-[11px] text-success-600">+{p.improveScore}</span>
++              </li>
++            ))}
++          </ul>
++        )}
++        <button
++          type="button"
++          onClick={onCreate}
++          className="u-press mt-8 flex h-46 w-full items-center justify-center rounded-16 bg-[#331B04] text-[16px] leading-[16px] text-white"
++        >
++          Create Chapter {nextChapterOf(analysis)}
++        </button>
++        <button
++          type="button"
++          onClick={secondary.onClick}
++          className="u-press flex h-46 w-full items-center justify-center rounded-16 border border-[#331B04] text-[16px] leading-[19px] text-text-primary"
++        >
++          {secondary.label}
++        </button>
++      </section>
++    </>
++  )
++}
++
++/**
++ * Chapters across, progress up. Solid for what happened (the chapters done),
++ * dashed for what Aurelia projects (the rest). One scale for marks and labels:
++ * the values are percentages, so the axis is 0–100% — the frame's 0–400 axis
++ * under percentage metrics could not be read against them (U039).
++ */
++export function ProgressChart({ analysis }: { analysis: Analysis }) {
++  // Drawn at the box's own width, not scaled from a fixed viewBox, so the
++  // 12px labels stay 12px beside the 14px list above on every screen (U040).
++  const box = useRef<HTMLDivElement>(null)
++  const [W, setW] = useState(370)
++  useLayoutEffect(() => {
++    const el = box.current
++    if (!el) return
++    const measure = () => setW(Math.max(280, Math.round(el.clientWidth)))
++    measure()
++    const ro = new ResizeObserver(measure)
++    ro.observe(el)
++    return () => ro.disconnect()
++  }, [])
++  const H = 248
++  const left = 40
++  const top = 10
++  const plotW = W - left - 6
++  const plotH = 200
++  const chapters = 3
++  const xAt = (i: number) => left + (plotW * i) / chapters
++  const yAt = (v: number) => top + plotH * (1 - Math.max(0, Math.min(100, v)) / 100)
++  const done = analysis.chaptersDone
++
++  // Smooth curve through points (Catmull-Rom → cubic Bézier).
++  const path = (pts: [number, number][]) =>
++    pts
++      .map(([x, y], i) => {
++        if (i === 0) return `M${x},${y}`
++        const [x0, y0] = pts[i - 2] ?? pts[i - 1]
++        const [x1, y1] = pts[i - 1]
++        const [x3, y3] = pts[i + 1] ?? [x, y]
++        const c1x = x1 + (x - x0) / 6
++        const c1y = y1 + (y - y0) / 6
++        const c2x = x - (x3 - x1) / 6
++        const c2y = y - (y3 - y1) / 6
++        return `C${c1x},${c1y} ${c2x},${c2y} ${x},${y}`
++      })
++      .join(' ')
++
++  return (
++    <div ref={box}>
++      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="block font-sans" role="img" aria-label={`Progress by chapter. ${analysis.metrics.map((m) => `${m.label}: ${m.value}% now, projected ${m.projected[0]}% after chapter ${done + 1}`).join('. ')}.`}>
++        {[0, 25, 50, 75, 100].map((v) => (
++          <g key={v}>
++            <line x1={left} x2={W - 6} y1={yAt(v)} y2={yAt(v)} stroke="#EFEFEF" strokeWidth="1" />
++            <text x={left - 8} y={yAt(v) + 4} textAnchor="end" fontSize="12" fill="var(--color-text-secondary)">
++              {v}%
++            </text>
++          </g>
++        ))}
++        {Array.from({ length: chapters + 1 }, (_, i) => (
++          <line key={i} x1={xAt(i)} x2={xAt(i)} y1={top} y2={top + plotH} stroke="#EFEFEF" strokeWidth="1" />
++        ))}
++        {Array.from({ length: chapters }, (_, i) => (
++          <text key={i} x={(xAt(i) + xAt(i + 1)) / 2} y={H - 12} textAnchor="middle" fontSize="12" fill="var(--color-text-primary)">
++            Chapter {i + 1}
++          </text>
++        ))}
++        <defs>
++          <linearGradient id="analysis-primary" x1="0" y1="1" x2="1" y2="0">
++            <stop offset="0" stopColor="#FF881B" />
++            <stop offset="1" stopColor="#FFE270" />
++          </linearGradient>
++        </defs>
++        {/* Projections first, so the solid history paints over their joins. */}
++        {analysis.metrics.map((m) => {
++          const pts: [number, number][] = [
++            [xAt(done), yAt(m.value)],
++            ...m.projected.map((v, i) => [xAt(done + 1 + i), yAt(v)] as [number, number]),
++          ]
++          return (
++            <path key={`${m.id}-p`} d={path(pts)} fill="none" stroke={m.color} strokeOpacity="0.45" strokeWidth="2.5" strokeDasharray="5 5" strokeLinecap="round" />
++          )
++        })}
++        {analysis.metrics
++          .slice()
++          .reverse()
++          .map((m, i, all) => {
++            const isPrimary = i === all.length - 1
++            const start = Math.round(m.value * 0.15)
++            // A slow start that accelerates, the shape the frame draws.
++            const pts: [number, number][] = [
++              [xAt(0), yAt(start)],
++              [xAt(done / 2), yAt(start + (m.value - start) * 0.35)],
++              [xAt(done), yAt(m.value)],
++            ]
++            return (
++              <path
++                key={m.id}
++                d={path(pts)}
++                fill="none"
++                stroke={isPrimary ? 'url(#analysis-primary)' : m.color}
++                strokeOpacity={isPrimary ? 1 : 0.6}
++                strokeWidth={isPrimary ? 6 : 3}
++                strokeLinecap="round"
++              />
++            )
++          })}
++      </svg>
++    </div>
++  )
++}
+diff --git a/src/components/wellness/SessionFeedback.tsx b/src/components/wellness/SessionFeedback.tsx
+new file mode 100644
+index 0000000..c70bd56
+--- /dev/null
++++ b/src/components/wellness/SessionFeedback.tsx
+@@ -0,0 +1,154 @@
++import { ArrowUp } from 'lucide-react'
++import { useState } from 'react'
++import type { FormEvent } from 'react'
++import mood1 from '../../assets/moods/mood-1.svg'
++import mood2 from '../../assets/moods/mood-2.svg'
++import mood3 from '../../assets/moods/mood-3.svg'
++import mood4 from '../../assets/moods/mood-4.svg'
++import mood5 from '../../assets/moods/mood-5.svg'
++
++/**
++ * The player drawer's Feedback block (Figma "Session: Chat - Player",
++ * 16883:15321 asking, 16883:15487 answered; U041). Two cards on #F5EEE8:
++ * a free-text "How is the experience?" and a five-face "How does listening
++ * to this make you feel?". Each turns into its own thank-you once answered,
++ * independently — answering one does not hide the other.
++ *
++ * The faces are the frame's own vectors, split out of its scale. The frame
++ * draws only the happy answer ("Glad to hear it!"); a sad face deserves
++ * different words, so the reply follows the face (`MOODS`). The chosen face
++ * stays changeable — the scale stays on screen with the pick outlined.
++ *
++ * Nothing is sent anywhere (no backend). Answers are kept per session for
++ * the visit, so closing and reopening the player does not ask again.
++ */
++
++const MOODS = [
++  { src: mood1, label: 'Very unpleasant', title: 'Sorry it didn’t land', body: 'Thanks for being honest. We’ll change what isn’t working in your next chapter.' },
++  { src: mood2, label: 'Unpleasant', title: 'Sorry it didn’t land', body: 'Thanks for being honest. We’ll change what isn’t working in your next chapter.' },
++  { src: mood3, label: 'Neutral', title: 'Thanks for telling us', body: 'We’ll try a few changes in your next chapter and see what lands.' },
++  { src: mood4, label: 'Pleasant', title: 'Glad to hear it!', body: 'Thanks for sharing. We’ll lean into what’s working for your next chapter.' },
++  { src: mood5, label: 'Very pleasant', title: 'Glad to hear it!', body: 'Thanks for sharing. We’ll lean into what’s working for your next chapter.' },
++] as const
++
++const answers = new Map<string, { note?: string; mood?: number }>()
++
++function LikeIcon() {
++  return (
++    <svg width="24" height="24" viewBox="0 0 48 48" aria-hidden="true" className="shrink-0">
++      <defs>
++        <linearGradient id="feedback-like" x1="6" y1="43.975" x2="45.7567" y2="8.17155" gradientUnits="userSpaceOnUse">
++          <stop stopColor="#FF8514" />
++          <stop offset="1" stopColor="#FFE270" />
++        </linearGradient>
++      </defs>
++      <path
++        d="M36 4H12C8.68 4 6 6.66 6 9.94V31.76C6 35.04 8.68 37.7 12 37.7H13.52C15.12 37.7 16.64 38.32 17.76 39.44L21.18 42.82C22.74 44.36 25.28 44.36 26.84 42.82L30.26 39.44C31.38 38.32 32.92 37.7 34.5 37.7H36C39.32 37.7 42 35.04 42 31.76V9.94C42 6.66 39.32 4 36 4ZM24.56 29.92C24.26 30.02 23.76 30.02 23.44 29.92C20.84 29.02 15 25.32 15 19.02C15.02 16.24 17.24 14 20 14C21.64 14 23.08 14.78 24 16C24.92 14.78 26.36 14 28 14C30.76 14 33 16.24 33 19.02C32.98 25.32 27.16 29.02 24.56 29.92Z"
++        fill="url(#feedback-like)"
++      />
++    </svg>
++  )
++}
++
++function TickIcon() {
++  return (
++    <svg width="24" height="24" viewBox="0 0 48 48" aria-hidden="true" className="shrink-0">
++      <path
++        d="M24 4C12.98 4 4 12.98 4 24C4 35.02 12.98 44 24 44C35.02 44 44 35.02 44 24C44 12.98 35.02 4 24 4ZM33.56 19.4L22.22 30.74C21.94 31.02 21.56 31.18 21.16 31.18C20.76 31.18 20.38 31.02 20.1 30.74L14.44 25.08C13.86 24.5 13.86 23.54 14.44 22.96C15.02 22.38 15.98 22.38 16.56 22.96L21.16 27.56L31.44 17.28C32.02 16.7 32.98 16.7 33.56 17.28C34.14 17.86 34.14 18.8 33.56 19.4Z"
++        fill="#5FC52C"
++      />
++    </svg>
++  )
++}
++
++function Card({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
++  return (
++    <div className="flex flex-col gap-16 rounded-12 bg-[#F5EEE8] p-18">
++      <div className="flex items-start gap-12">
++        {icon}
++        <h3 className="text-[16px] font-medium leading-[19px] text-[#331B04] [padding-top:2px]">{title}</h3>
++      </div>
++      {children}
++    </div>
++  )
++}
++
++export function SessionFeedback({ sessionKey }: { sessionKey: string }) {
++  const [note, setNote] = useState('')
++  const [sent, setSent] = useState(() => Boolean(answers.get(sessionKey)?.note))
++  const [mood, setMood] = useState<number | null>(() => answers.get(sessionKey)?.mood ?? null)
++
++  function send(event: FormEvent) {
++    event.preventDefault()
++    const text = note.trim()
++    if (!text) return
++    answers.set(sessionKey, { ...answers.get(sessionKey), note: text })
++    setSent(true)
++  }
++
++  function pick(index: number) {
++    answers.set(sessionKey, { ...answers.get(sessionKey), mood: index })
++    setMood(index)
++  }
++
++  const chosen = mood === null ? null : MOODS[mood]
++
++  return (
++    <section className="flex flex-col gap-12" aria-label="Feedback">
++      <h2 className="text-[14px] leading-[21px] text-text-primary">Feedback</h2>
++
++      {sent ? (
++        <Card icon={<TickIcon />} title="Thank you for your feedback">
++          <p className="text-[14px] font-light leading-[21px] text-[#331B04]">It helps Aurelia fine-tune your next chapter.</p>
++        </Card>
++      ) : (
++        <Card icon={<LikeIcon />} title="How is the experience?">
++          <form onSubmit={send} className="flex h-44 items-center gap-12 rounded-full border border-[#331B04] pl-16 pr-4">
++            <input
++              value={note}
++              onChange={(event) => setNote(event.target.value)}
++              placeholder="Answer here..."
++              aria-label="How is the experience?"
++              className="min-w-0 flex-1 bg-transparent text-[14px] font-light leading-[19px] text-text-primary placeholder:text-[#626262] focus:outline-none"
++            />
++            <button
++              type="submit"
++              aria-label="Send feedback"
++              disabled={!note.trim()}
++              className="u-press flex size-35 shrink-0 items-center justify-center rounded-full bg-[#331B04] text-white disabled:opacity-40"
++            >
++              <ArrowUp size={19} strokeWidth={1.75} />
++            </button>
++          </form>
++        </Card>
++      )}
++
++      <Card
++        icon={chosen ? <TickIcon /> : <LikeIcon />}
++        title={chosen ? chosen.title : 'How does listening to this make you feel?'}
++      >
++        <div className="flex items-center justify-center gap-8" role="radiogroup" aria-label="How does listening to this make you feel?">
++          {MOODS.map((m, i) => {
++            const on = mood === i
++            return (
++              <button
++                key={m.label}
++                type="button"
++                role="radio"
++                aria-checked={on}
++                aria-label={m.label}
++                onClick={() => pick(i)}
++                className={`u-press flex shrink-0 items-center justify-center rounded-12 transition-opacity ${
++                  on ? 'size-52 border-2 border-[#331B04] p-2' : 'size-44'
++                } ${mood !== null && !on ? 'opacity-50' : ''}`}
++              >
++                <img src={m.src} alt="" className="size-44 rounded-8" />
++              </button>
++            )
++          })}
++        </div>
++        {chosen && <p className="text-[14px] font-light leading-[21px] text-[#331B04]">{chosen.body}</p>}
++      </Card>
++    </section>
++  )
++}
+diff --git a/src/lib/wellnessAnalysis.ts b/src/lib/wellnessAnalysis.ts
+index 866d324..d522258 100644
+--- a/src/lib/wellnessAnalysis.ts
++++ b/src/lib/wellnessAnalysis.ts
+@@ -130,6 +130,15 @@ export function findAnalysis(id: string | undefined) {
+   return ANALYSES.find((analysis) => analysis.id === id)
+ }
+ 
++/**
++ * The analysis for a session, if you are working on one with it. The player
++ * opens on this instead of the catalogue's description (U041): the analysis
++ * is about the listener, so it applies whoever made the session.
++ */
++export function analysisForSession(slug: string | undefined) {
++  return ANALYSES.find((analysis) => analysis.sessionSlug === slug)
++}
++
+ /** The objective's progress, % — the ring, the card and the first metric are all this. */
+ export function progressOf(analysis: Analysis) {
+   return analysis.metrics[0]?.value ?? 0
+@@ -178,3 +187,10 @@ export function predictionOf(analysis: Analysis) {
+ export function nextChapterOf(analysis: Analysis) {
+   return analysis.chaptersDone + 1
+ }
++
++/** "Create Chapter 2 with 435 Hz, Longer exhale and Warmer light" — the cockpit's brief. */
++export function chapterBrief(analysis: Analysis) {
++  const names = analysis.proposals.map((p) => p.title)
++  const list = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0]
++  return `Create Chapter ${nextChapterOf(analysis)} with ${list}`
++}
+diff --git a/src/pages/ChatPage.tsx b/src/pages/ChatPage.tsx
+index c3376bd..74b07b0 100644
+--- a/src/pages/ChatPage.tsx
++++ b/src/pages/ChatPage.tsx
+@@ -439,12 +439,24 @@ export function ChatPage() {
+ 
+   // What was typed on Home arrives as the first thing said here, so the visitor
+   // does not have to write it again — including after a detour through sign-in.
++  //
++  // Held until the thread is on the session the URL names (U041): an ask that
++  // arrives with /chat/:slug — the player's "Ask Aurelia" — used to be written
++  // into the thread that was open before, which openSession then replaced, so
++  // the question vanished and only a stray reply survived. Same race, and
++  // same fix, as the style changes below. The ref keeps the text after the
++  // route state is cleared.
++  const pendingAsk = useRef<string | null>(null)
++  if (ask && !askHandled.current && pendingAsk.current === null) pendingAsk.current = ask
+   useEffect(() => {
+-    if (!ask || askHandled.current) return
++    const text = pendingAsk.current
++    if (!text || askHandled.current) return
++    if (opened && opened.slug !== sessionSlug) return
+     askHandled.current = true
++    pendingAsk.current = null
+     setMessages((current) => [
+       ...current,
+-      { id: nextMessageId(), from: 'user', at: Date.now(), status: 'read', text: ask },
++      { id: nextMessageId(), from: 'user', at: Date.now(), status: 'read', text },
+     ])
+     setTyping(true)
+     window.setTimeout(() => {
+@@ -454,10 +466,10 @@ export function ChatPage() {
+       // started composing the ask: "I can't sleep" and "I don't know what I'm
+       // feeling" deserve different first answers — the second gets the
+       // smaller questions, the first gets a proposal.
+-      setMessages((current) => [...current, answerFor(ask, current)])
++      setMessages((current) => [...current, answerFor(text, current)])
+     }, 1400)
+     // Uncleared for the same reason as the fork's reply above.
+-  }, [ask, setMessages, nextMessageId])
++    }, [ask, opened, sessionSlug, setMessages, nextMessageId])
+ 
+   /**
+    * A door's state is spent once it has been played out.
+diff --git a/src/pages/PlayerPage.tsx b/src/pages/PlayerPage.tsx
+index 69e34a6..6d10abf 100644
+--- a/src/pages/PlayerPage.tsx
++++ b/src/pages/PlayerPage.tsx
+@@ -30,6 +30,10 @@ import type { ProfileOrigin } from '../lib/people'
+ import { findSession } from '../lib/sessions'
+ import { useUiVersion } from '../versions/useUiVersion'
+ import { ShareSheet } from '../components/ui/ShareSheet'
++import { AnalysisShifts, AnalysisStatus, NextChapter, ProgressChart } from '../components/wellness/AnalysisParts'
++import { SessionFeedback } from '../components/wellness/SessionFeedback'
++import { analysisForSession, chapterBrief } from '../lib/wellnessAnalysis'
++import type { Analysis } from '../lib/wellnessAnalysis'
+ import type { Named } from '../lib/named'
+ 
+ /** Lines the session speaks, which the hero shows one at a time under the art.
+@@ -212,6 +216,10 @@ export function PlayerPage() {
+   // link, and the system sheet under "More"). See ShareSheet.
+   const v2 = useUiVersion() >= 2
+   const [shareOpen, setShareOpen] = useState(false)
++  // Version 2: a session you have an analysis for opens on your progress
++  // rather than on the catalogue's description (Figma "Session: Chat -
++  // Player", U041). Every other session keeps the drawer it had.
++  const analysis = v2 ? analysisForSession(slug) : undefined
+   // Which cut of it. Progress's version cards ask for one by id; everything
+   // else asks for the session, which is the version that is current.
+   const versionId = params.get('v')
+@@ -644,124 +652,257 @@ export function PlayerPage() {
+           ref={scroller}
+           className={`min-h-0 flex-1 px-20 pb-40 ${up ? 'overflow-y-auto' : 'overflow-hidden'}`}
+         >
+-          {checkIn && <SessionCheckIn onDismiss={() => setCheckIn(false)} />}
+-
+-          <div className="flex items-center gap-12">
+-            <Link
+-              to={profilePath(session.author, origin)}
+-              aria-label={`Open ${session.author}'s profile`}
+-              className="u-press flex min-w-0 items-center gap-8"
+-            >
+-              <PhotoCircle photo={session.authorPhoto} size={24} gradient={session.gradient} />
+-              <span className="text-style-body truncate text-text-primary">{session.author}</span>
+-              <ChevronRight size={16} className="shrink-0 text-icon-default" />
+-            </Link>
+-          </div>
+-
+-          <div className="mt-20 flex flex-col gap-8">
+-            <h1 className="text-style-title text-text-primary">{named?.title ?? version?.title ?? session.title}</h1>
+-
+-            {/* Clamped to the frame's lines, with the frame's fade over the cut.
+-                Expanding drops both, so "Read More" is a real disclosure rather
+-                than a link to somewhere else. */}
+-            <div
+-              className="relative"
+-              style={v2 ? { opacity: up ? 1 : 0, transition: 'opacity 240ms ease' } : undefined}
+-            >
+-              <p
+-                className={`text-style-body-small font-light! text-text-secondary ${expanded ? '' : 'line-clamp-4'}`}
++          {analysis ? (
++            <AnalysisDrawer
++              analysis={analysis}
++              revealed={up}
++              title={named?.title ?? version?.title ?? session.title}
++              summary={session.summary}
++              tags={tags}
++              feedbackKey={version ? `${session.slug}#${version.id}` : session.slug}
++              playingId={versionId}
++            />
++          ) : (
++            <>
++            {checkIn && <SessionCheckIn onDismiss={() => setCheckIn(false)} />}
++
++            <div className="flex items-center gap-12">
++              <Link
++                to={profilePath(session.author, origin)}
++                aria-label={`Open ${session.author}'s profile`}
++                className="u-press flex min-w-0 items-center gap-8"
+               >
+-                {session.summary}
+-              </p>
+-              {!expanded && (
+-                <span className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-surface-default to-transparent" />
+-              )}
++                <PhotoCircle photo={session.authorPhoto} size={24} gradient={session.gradient} />
++                <span className="text-style-body truncate text-text-primary">{session.author}</span>
++                <ChevronRight size={16} className="shrink-0 text-icon-default" />
++              </Link>
+             </div>
+ 
+-            <button
+-              type="button"
+-              onClick={() => setExpanded((current) => !current)}
+-              className="text-style-body-small w-fit text-[#ff881b]"
+-            >
+-              {expanded ? 'Read Less' : 'Read More'}
+-            </button>
+-          </div>
+-
+-          {/* This page used to keep its own divergent chip (a solid #FF881B
+-              pill, citing a different Figma frame than SessionDetailPage's)
+-              instead of sharing `TagRow` — that's what let this page's tags
+-              go unnoticed through several rounds of fixing TagRow itself.
+-              Same component everywhere now. */}
+-          <div className="mt-20">
+-            <TagRow tags={tags} />
+-          </div>
++            <div className="mt-20 flex flex-col gap-8">
++              <h1 className="text-style-title text-text-primary">{named?.title ?? version?.title ?? session.title}</h1>
+ 
+-          {/* Same hand-off Wellness's own "Analyze my state" chips use: land
+-              in the cockpit with the question already asked, rather than a
+-              blank thread the user has to explain themselves into again. */}
+-          <div className="-mx-20 mt-20 flex gap-12 overflow-x-auto px-20 pb-4">
+-            <button
+-              type="button"
+-              onClick={() =>
+-                navigate('/chat', {
+-                  state: { ask: `Can you help me elaborate on my experience with "${session.title}"?` },
+-                })
+-              }
+-              className="u-press flex h-40 shrink-0 items-center gap-8 whitespace-nowrap rounded-12 border border-border-default px-14 text-style-label text-text-primary"
+-            >
+-              <WandSparkles size={14} />
+-              Elaborate on my experience
+-            </button>
+-            <button
+-              type="button"
+-              onClick={() => navigate('/chat', { state: { ask: 'Suggest my morning boost' } })}
+-              className="u-press flex h-40 shrink-0 items-center gap-8 whitespace-nowrap rounded-12 border border-border-default px-14 text-style-label text-text-primary"
+-            >
+-              <WandSparkles size={14} />
+-              Suggest my morning boost
+-            </button>
+-          </div>
+-
+-          {/* What the session has done, as two figures rather than a sentence. */}
+-          <div className="mt-24 grid grid-cols-2 gap-16">
+-            {[
+-              { value: session.plays, label: 'Played', icon: <Play size={14} /> },
+-              { value: session.recreated, label: 'Recreated', icon: <Shuffle size={14} /> },
+-            ].map((stat) => (
++              {/* Clamped to the frame's lines, with the frame's fade over the cut.
++                  Expanding drops both, so "Read More" is a real disclosure rather
++                  than a link to somewhere else. */}
+               <div
+-                key={stat.label}
+-                className="flex flex-col items-center gap-4 rounded-16 border border-border-subtle bg-surface-default p-16"
++                className="relative"
++                style={v2 ? { opacity: up ? 1 : 0, transition: 'opacity 240ms ease' } : undefined}
+               >
+-                <p className="text-style-title-large-regular tabular-nums text-text-primary">{stat.value}</p>
+-                <p className="text-style-label-regular flex items-center gap-6 text-text-secondary">
+-                  {stat.icon}
+-                  {stat.label}
++                <p
++                  className={`text-style-body-small font-light! text-text-secondary ${expanded ? '' : 'line-clamp-4'}`}
++                >
++                  {session.summary}
+                 </p>
++                {!expanded && (
++                  <span className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-surface-default to-transparent" />
++                )}
+               </div>
+-            ))}
+-          </div>
+ 
+-          <section className="mt-24">
+-            <h2 className="text-style-body text-text-primary">Recreate your own version</h2>
+-            <div className="-mx-20 mt-16 flex gap-11 overflow-x-auto px-20 pb-4">
+-              {RECOMMENDATIONS.map((recommendation) => (
+-                <RecommendationCard
+-                  key={recommendation.id}
+-                  recommendation={recommendation}
+-                  applied={false}
+-                  onToggle={() => {}}
+-                  variant="recreate"
+-                />
++              <button
++                type="button"
++                onClick={() => setExpanded((current) => !current)}
++                className="text-style-body-small w-fit text-[#ff881b]"
++              >
++                {expanded ? 'Read Less' : 'Read More'}
++              </button>
++            </div>
++
++            {/* This page used to keep its own divergent chip (a solid #FF881B
++                pill, citing a different Figma frame than SessionDetailPage's)
++                instead of sharing `TagRow` — that's what let this page's tags
++                go unnoticed through several rounds of fixing TagRow itself.
++                Same component everywhere now. */}
++            <div className="mt-20">
++              <TagRow tags={tags} />
++            </div>
++
++            {/* Same hand-off Wellness's own "Analyze my state" chips use: land
++                in the cockpit with the question already asked, rather than a
++                blank thread the user has to explain themselves into again. */}
++            <div className="-mx-20 mt-20 flex gap-12 overflow-x-auto px-20 pb-4">
++              <button
++                type="button"
++                onClick={() =>
++                  navigate('/chat', {
++                    state: { ask: `Can you help me elaborate on my experience with "${session.title}"?` },
++                  })
++                }
++                className="u-press flex h-40 shrink-0 items-center gap-8 whitespace-nowrap rounded-12 border border-border-default px-14 text-style-label text-text-primary"
++              >
++                <WandSparkles size={14} />
++                Elaborate on my experience
++              </button>
++              <button
++                type="button"
++                onClick={() => navigate('/chat', { state: { ask: 'Suggest my morning boost' } })}
++                className="u-press flex h-40 shrink-0 items-center gap-8 whitespace-nowrap rounded-12 border border-border-default px-14 text-style-label text-text-primary"
++              >
++                <WandSparkles size={14} />
++                Suggest my morning boost
++              </button>
++            </div>
++
++            {/* What the session has done, as two figures rather than a sentence. */}
++            <div className="mt-24 grid grid-cols-2 gap-16">
++              {[
++                { value: session.plays, label: 'Played', icon: <Play size={14} /> },
++                { value: session.recreated, label: 'Recreated', icon: <Shuffle size={14} /> },
++              ].map((stat) => (
++                <div
++                  key={stat.label}
++                  className="flex flex-col items-center gap-4 rounded-16 border border-border-subtle bg-surface-default p-16"
++                >
++                  <p className="text-style-title-large-regular tabular-nums text-text-primary">{stat.value}</p>
++                  <p className="text-style-label-regular flex items-center gap-6 text-text-secondary">
++                    {stat.icon}
++                    {stat.label}
++                  </p>
++                </div>
+               ))}
+             </div>
+-          </section>
+ 
+-          <section className="mt-24">
+-            <h2 className="text-style-body text-text-primary">Details</h2>
+-            <SessionDetails session={session} playingId={versionId} playBase={`/play/${session.slug}`} />
+-          </section>
++            <section className="mt-24">
++              <h2 className="text-style-body text-text-primary">Recreate your own version</h2>
++              <div className="-mx-20 mt-16 flex gap-11 overflow-x-auto px-20 pb-4">
++                {RECOMMENDATIONS.map((recommendation) => (
++                  <RecommendationCard
++                    key={recommendation.id}
++                    recommendation={recommendation}
++                    applied={false}
++                    onToggle={() => {}}
++                    variant="recreate"
++                  />
++                ))}
++              </div>
++            </section>
++
++            <section className="mt-24">
++              <h2 className="text-style-body text-text-primary">Details</h2>
++              <SessionDetails session={session} playingId={versionId} playBase={`/play/${session.slug}`} />
++            </section>
++            </>
++          )}
+         </div>
+       </aside>
+     </div>
+   )
+ }
++
++/**
++ * The drawer on a session with an analysis (Figma 16886:1623, U041).
++ *
++ * At rest it peeks the status — "Great Progress!", the change since
++ * yesterday and a small ring — so the first thing under the art is whether
++ * this is working. Pulled up, in the frame's order: the shifts and the
++ * chapter chart, Go to Analytics / Ask Aurelia, Feedback, About this session
++ * (what the old drawer led with), and Next chapter with its proposals.
++ * Session details (versions, publishing) stay at the foot.
++ *
++ * Feedback replaces the end-of-session check-in here, rather than asking the
++ * same thing twice.
++ */
++function AnalysisDrawer({
++  analysis,
++  revealed,
++  title,
++  summary,
++  tags,
++  feedbackKey,
++  playingId,
++}: {
++  analysis: Analysis
++  /** Half or fully open. At the peek only the status shows. */
++  revealed: boolean
++  title: string
++  summary: string
++  tags: string[]
++  feedbackKey: string
++  playingId: string | null
++}) {
++  const navigate = useNavigate()
++  const session = findSession(analysis.sessionSlug)
++  const [expanded, setExpanded] = useState(false)
++
++  function askAurelia() {
++    navigate(`/chat/${analysis.sessionSlug}`, {
++      state: { ask: `How can I get closer to "${analysis.objective}" in my next chapter?` },
++    })
++  }
++
++  return (
++    <>
++      <div className="px-12">
++        <AnalysisStatus analysis={analysis} ring />
++      </div>
++      <div style={{ opacity: revealed ? 1 : 0, transition: 'opacity 240ms ease' }}>
++        <div className="mt-24 flex flex-col gap-24 px-12">
++          <AnalysisShifts analysis={analysis} />
++        </div>
++        <section className="mt-24 -mx-4" aria-label="Progress by chapter">
++          <ProgressChart analysis={analysis} />
++        </section>
++
++        <div className="mt-24 grid grid-cols-2 gap-8">
++          <button
++            type="button"
++            onClick={() => navigate(`/wellness/analysis/${analysis.id}`)}
++            className="u-press flex h-46 items-center justify-center rounded-16 border border-[#331B04] text-[16px] leading-[19px] text-text-primary"
++          >
++            Go to Analytics
++          </button>
++          <button
++            type="button"
++            onClick={askAurelia}
++            className="u-press flex h-46 items-center justify-center rounded-16 border border-[#331B04] text-[16px] leading-[19px] text-text-primary"
++          >
++            Ask Aurelia
++          </button>
++        </div>
++
++        <div className="mt-40">
++          <SessionFeedback sessionKey={feedbackKey} />
++        </div>
++
++        <section className="mt-48 flex flex-col gap-12" aria-label="About this session">
++          <h2 className="text-[14px] leading-[21px] text-text-primary">About this session</h2>
++          <Link
++            to={`/session/${analysis.sessionSlug}`}
++            className="u-press flex items-center justify-between gap-12 text-[20px] leading-[30px] text-text-primary"
++          >
++            <span className="min-w-0 truncate">{title}</span>
++            <ChevronRight size={20} className="shrink-0" />
++          </Link>
++          <div className="relative">
++            <p className={`text-[14px] font-light leading-[21px] text-text-secondary ${expanded ? '' : 'line-clamp-3'}`}>{summary}</p>
++          </div>
++          <button
++            type="button"
++            onClick={() => setExpanded((v) => !v)}
++            className="text-style-body-small w-fit text-[#ff881b]"
++          >
++            {expanded ? 'Read Less' : 'Read More'}
++          </button>
++          <div className="mt-8">
++            <TagRow tags={tags} />
++          </div>
++        </section>
++
++        <div className="-mx-20 mt-48">
++          <NextChapter
++            analysis={analysis}
++            inset={20}
++            onCreate={() => navigate(`/chat/${analysis.sessionSlug}`, { state: { styleChanges: chapterBrief(analysis) } })}
++            secondary={{ label: 'Ask Aurelia', onClick: askAurelia }}
++          />
++        </div>
++
++        {session && (
++          <section className="mt-40">
++            <h2 className="text-style-body text-text-primary">Details</h2>
++            <SessionDetails session={session} playingId={playingId} playBase={`/play/${session.slug}`} />
++          </section>
++        )}
++      </div>
++    </>
++  )
++}
+diff --git a/src/pages/SessionSettingsPage.tsx b/src/pages/SessionSettingsPage.tsx
+index 9ec371a..d62d021 100644
+--- a/src/pages/SessionSettingsPage.tsx
++++ b/src/pages/SessionSettingsPage.tsx
+@@ -1,11 +1,16 @@
+ import {
+   ArrowLeft,
+   AudioLines,
++  Captions,
+   ChevronDown,
+   Image as ImageIcon,
+   Minus,
++  Music,
++  PencilLine,
+   Plus,
++  Presentation,
+   Settings2,
++  TextCursor,
+   Type,
+   WandSparkles,
+ } from 'lucide-react'
+@@ -17,6 +22,9 @@ import orb432hz from '../assets/orb-432hz.png'
+ import orbIncreaseYellow from '../assets/orb-increase-yellow.png'
+ import orbLessMovement from '../assets/orb-less-movement.png'
+ import { CoverImage } from '../components/ui/CoverImage'
++import { RenameSessionSheet } from '../components/ui/RenameSessionSheet'
++import { sessionNameOf, useChatSession } from '../chat/ChatSessionContext'
++import { useUiVersion } from '../versions/useUiVersion'
+ import type { AppliedStyle, StyleKind } from '../lib/sessionStyles'
+ import { SESSION_SCRIPT, appliedOfKind, findAppliedStyle, findStyle, stylesOfKind } from '../lib/sessionStyles'
+ 
+@@ -41,11 +49,20 @@ const TABS: { id: Tab; label: string; icon: typeof Type }[] = [
+   { id: 'sound', label: 'Sound', icon: AudioLines },
+ ]
+ 
++/** Version 2 (Figma "Session/Settings/*" 16883:13096, U041): the frame's icons
++ *  (cursor-text, canvas, music-note) in their nearest Lucide shapes, and no
++ *  General gear — none of the three frames has one. */
++const TABS_V2: { id: Tab; label: string; icon: typeof Type }[] = [
++  { id: 'script', label: 'Script', icon: TextCursor },
++  { id: 'visual', label: 'Visual', icon: Presentation },
++  { id: 'sound', label: 'Sound', icon: Music },
++]
++
+ /** A script line, with the reader's cues held apart from the spoken words. */
+-function ScriptLine({ line }: { line: string }) {
++function ScriptLine({ line, small = false }: { line: string; small?: boolean }) {
+   const parts = line.split(/(\[[^\]]+\])/g)
+   return (
+-    <p className="text-style-body whitespace-pre-line text-text-primary">
++    <p className={`whitespace-pre-line text-text-primary ${small ? 'text-[14px] leading-[19px]' : 'text-style-body'}`}>
+       {parts.map((part, index) =>
+         part.startsWith('[') ? (
+           // Direction, not dialogue — nobody should ever read this one aloud.
+@@ -175,8 +192,65 @@ function describeChanges(added: Set<string>, removed: Set<string>) {
+   return parts.join('; ') || 'Apply new changes'
+ }
+ 
++/**
++ * Version 2's Script tab (Figma 16883:13096): the session's title on the
++ * gradient-edged card with a pencil that renames it, then the script in its
++ * own white card. The title is the cockpit's — the same name the progress
++ * card, the player and Sessions use — so renaming here renames it there.
++ */
++function ScriptTabV2() {
++  const { draft, renameSession } = useChatSession()
++  const [renaming, setRenaming] = useState(false)
++  const name = sessionNameOf(draft.title)
++  const version = draft.title.slice(name.length)
++  return (
++    <div className="flex flex-col gap-32">
++      <div
++        className="flex items-center gap-12 rounded-[20px] bg-surface-default p-16 shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)]"
++        style={{
++          border: '1px solid transparent',
++          backgroundImage:
++            'linear-gradient(var(--color-surface-default), var(--color-surface-default)), linear-gradient(45deg, #FF8514, #FFE270)',
++          backgroundOrigin: 'border-box',
++          backgroundClip: 'padding-box, border-box',
++        }}
++      >
++        <span className="flex size-36 shrink-0 items-center justify-center rounded-full bg-[#FFF1DB] text-text-primary">
++          <Captions size={20} strokeWidth={1.5} />
++        </span>
++        <span className="flex min-w-0 flex-1 flex-col gap-4">
++          <span className="text-[12px] font-light leading-[12px] text-[#525252]">Session Title</span>
++          <span className="truncate text-[14px] leading-[19px] text-text-primary">{draft.title}</span>
++        </span>
++        <button
++          type="button"
++          aria-label="Rename session"
++          onClick={() => setRenaming(true)}
++          className="u-press u-tap flex size-16 shrink-0 items-center justify-center text-text-primary"
++        >
++          <PencilLine size={16} strokeWidth={1.5} />
++        </button>
++      </div>
++
++      <div className="flex flex-col gap-16">
++        <h2 className="text-[14px] font-light leading-[16px] text-[#9A9A9A]">Session Script</h2>
++        <div className="flex flex-col gap-19 rounded-[20px] bg-surface-default p-16 shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)]">
++          {SESSION_SCRIPT.map((line, index) => (
++            <ScriptLine key={index} line={line} small />
++          ))}
++        </div>
++      </div>
++
++      {renaming && (
++        <RenameSessionSheet name={name} version={version} onSave={renameSession} onClose={() => setRenaming(false)} />
++      )}
++    </div>
++  )
++}
++
+ export function SessionSettingsPage() {
+   const navigate = useNavigate()
++  const v2 = useUiVersion() >= 2
+   const [tab, setTab] = useState<Tab>('script')
+   const [removed, setRemoved] = useState<Set<string>>(new Set())
+   const [added, setAdded] = useState<Set<string>>(new Set())
+@@ -222,50 +296,74 @@ export function SessionSettingsPage() {
+         >
+           <ArrowLeft size={20} />
+         </button>
+-        <h1 className="text-style-title truncate text-text-primary">Session settings</h1>
++        <h1 className="text-style-title truncate text-text-primary">{v2 ? 'Settings' : 'Session settings'}</h1>
+       </header>
+ 
+       <div className="mx-auto w-full max-w-[402px] lg:max-w-[960px]">
+         {/* Tabs scroll rather than shrink — a squeezed label is worse than one
+             you have to nudge into view. */}
+-        <div className="flex gap-8 overflow-x-auto px-20 pb-4 lg:px-24">
+-          {TABS.map((item) => {
+-            const Icon = item.icon
+-            const active = tab === item.id
+-            return (
+-              <button
+-                key={item.id}
+-                type="button"
+-                aria-pressed={active}
+-                onClick={() => setTab(item.id)}
+-                className={`u-press text-style-label flex h-38 shrink-0 items-center gap-6 whitespace-nowrap rounded-12 border px-16 ${
+-                  active
+-                    ? 'border-text-primary bg-text-primary text-text-inverse'
+-                    : 'border-[#d6d6d6] bg-transparent text-text-primary'
+-                }`}
+-              >
+-                <Icon size={15} />
+-                {item.label}
+-              </button>
+-            )
+-          })}
+-          <button
+-            type="button"
+-            aria-label="General settings"
+-            aria-pressed={tab === 'general'}
+-            onClick={() => setTab('general')}
+-            className={`u-press flex size-38 shrink-0 items-center justify-center rounded-12 border ${
+-              tab === 'general'
+-                ? 'border-text-primary bg-text-primary text-text-inverse'
+-                : 'border-[#d6d6d6] bg-transparent text-text-primary'
+-            }`}
+-          >
+-            <Settings2 size={16} />
+-          </button>
+-        </div>
++        {v2 ? (
++          <div className="flex gap-7 overflow-x-auto px-20 pt-20 lg:px-24">
++            {TABS_V2.map((item) => {
++              const Icon = item.icon
++              const active = tab === item.id
++              return (
++                <button
++                  key={item.id}
++                  type="button"
++                  aria-pressed={active}
++                  onClick={() => setTab(item.id)}
++                  className={`u-press flex h-35 shrink-0 items-center gap-8 whitespace-nowrap rounded-12 border px-12 text-[12px] leading-[19px] ${
++                    active ? 'border-[#331B04] bg-[#331B04] text-white' : 'border-[#D6D6D6] bg-transparent text-text-primary'
++                  }`}
++                >
++                  <Icon size={16} strokeWidth={1.5} />
++                  {item.label}
++                </button>
++              )
++            })}
++          </div>
++        ) : (
++          <div className="flex gap-8 overflow-x-auto px-20 pb-4 lg:px-24">
++            {TABS.map((item) => {
++              const Icon = item.icon
++              const active = tab === item.id
++              return (
++                <button
++                  key={item.id}
++                  type="button"
++                  aria-pressed={active}
++                  onClick={() => setTab(item.id)}
++                  className={`u-press text-style-label flex h-38 shrink-0 items-center gap-6 whitespace-nowrap rounded-12 border px-16 ${
++                    active
++                      ? 'border-text-primary bg-text-primary text-text-inverse'
++                      : 'border-[#d6d6d6] bg-transparent text-text-primary'
++                  }`}
++                >
++                  <Icon size={15} />
++                  {item.label}
++                </button>
++              )
++            })}
++            <button
++              type="button"
++              aria-label="General settings"
++              aria-pressed={tab === 'general'}
++              onClick={() => setTab('general')}
++              className={`u-press flex size-38 shrink-0 items-center justify-center rounded-12 border ${
++                tab === 'general'
++                  ? 'border-text-primary bg-text-primary text-text-inverse'
++                  : 'border-[#d6d6d6] bg-transparent text-text-primary'
++              }`}
++            >
++              <Settings2 size={16} />
++            </button>
++          </div>
++        )}
+ 
+-        <div key={tab} className="u-fade px-20 pt-20 lg:px-24">
+-          {tab === 'script' && (
++        <div key={tab} className={`u-fade px-20 lg:px-24 ${v2 ? 'pt-32' : 'pt-20'}`}>
++          {tab === 'script' && v2 && <ScriptTabV2 />}
++          {tab === 'script' && !v2 && (
+             <div className="flex flex-col gap-14">
+               {SESSION_SCRIPT.map((line, index) => (
+                 <ScriptLine key={index} line={line} />
+diff --git a/src/pages/WellnessAnalysisPage.tsx b/src/pages/WellnessAnalysisPage.tsx
+index 2c470ef..aa318e0 100644
+--- a/src/pages/WellnessAnalysisPage.tsx
++++ b/src/pages/WellnessAnalysisPage.tsx
+@@ -1,20 +1,11 @@
+-import { ArrowLeft, ArrowUp } from 'lucide-react'
+-import { useLayoutEffect, useRef, useState } from 'react'
++import { ArrowLeft } from 'lucide-react'
+ import { Navigate, useNavigate, useParams } from 'react-router-dom'
+ import { PageMeta } from '../components/PageMeta'
+-import { RecommendationDeck } from '../components/chat/RecommendationDeck'
+ import { CoverImage } from '../components/ui/CoverImage'
+-import { DeltaPill, ProgressRing } from '../components/wellness/ProgressRing'
++import { AnalysisShifts, AnalysisStatus, NextChapter, ProgressChart } from '../components/wellness/AnalysisParts'
++import { ProgressRing } from '../components/wellness/ProgressRing'
+ import type { Analysis } from '../lib/wellnessAnalysis'
+-import {
+-  artOf,
+-  findAnalysis,
+-  nextChapterOf,
+-  predictionOf,
+-  progressOf,
+-  statusOf,
+-  summaryOf,
+-} from '../lib/wellnessAnalysis'
++import { artOf, chapterBrief, findAnalysis, progressOf } from '../lib/wellnessAnalysis'
+ 
+ /**
+  * Figma "Analysis" (16883:15959, U039) — one session's progress toward its
+@@ -38,11 +29,7 @@ export function WellnessAnalysisPage() {
+ function AnalysisView({ analysis }: { analysis: Analysis }) {
+   const navigate = useNavigate()
+   const progress = progressOf(analysis)
+-  const status = statusOf(progress)
+   const art = artOf(analysis)
+-  const [primary, ...shifts] = analysis.metrics
+-  const next = nextChapterOf(analysis)
+-  const [deckOpen, setDeckOpen] = useState(false)
+ 
+   function back() {
+     const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0
+@@ -54,9 +41,7 @@ function AnalysisView({ analysis }: { analysis: Analysis }) {
+     // The proposals are the brief: the cockpit opens on this session and
+     // builds the next chapter (the next version) with them, through the same
+     // path Session settings uses — one build path, not a second one.
+-    const names = analysis.proposals.map((p) => p.title)
+-    const list = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0]
+-    navigate(`/chat/${analysis.sessionSlug}`, { state: { styleChanges: `Create Chapter ${next} with ${list}` } })
++    navigate(`/chat/${analysis.sessionSlug}`, { state: { styleChanges: chapterBrief(analysis) } })
+   }
+ 
+   return (
+@@ -87,28 +72,8 @@ function AnalysisView({ analysis }: { analysis: Analysis }) {
+         <main className="relative -mt-20 rounded-t-32 bg-surface-default pb-40">
+           {/* Status, change since yesterday, summary, the shifts. */}
+           <section className="flex flex-col gap-24 px-32 pt-24">
+-            <div className="flex flex-col gap-3">
+-              <h2 className="text-[24px] font-normal leading-[36px] text-text-primary">{status.heading}</h2>
+-              <p className="flex items-center gap-8 text-[14px] font-light leading-[24px] text-[#7A7A7A]">
+-                <DeltaPill value={analysis.sinceYesterday} /> Since yesterday
+-              </p>
+-            </div>
+-            <p className="text-[14px] font-light leading-[21px] text-text-primary">{summaryOf(analysis)}</p>
+-            <ul className="flex flex-col gap-10">
+-              {[primary, ...shifts].map((m, i) => (
+-                <li
+-                  key={m.id}
+-                  className={`flex items-center gap-9 text-[14px] leading-[21px] text-text-primary ${i === 0 ? 'font-medium' : 'font-light'}`}
+-                >
+-                  <span aria-hidden="true" className="size-8 shrink-0 rounded-full" style={{ background: m.color }} />
+-                  <span className="min-w-0 flex-1 truncate">{m.label}</span>
+-                  <span className="flex shrink-0 items-center gap-4 tabular-nums">
+-                    {m.value}%
+-                    <ArrowUp size={12} strokeWidth={2} className="text-[#70C973]" />
+-                  </span>
+-                </li>
+-              ))}
+-            </ul>
++            <AnalysisStatus analysis={analysis} />
++            <AnalysisShifts analysis={analysis} />
+           </section>
+ 
+           <section className="mt-24 px-16" aria-label="Progress by chapter">
+@@ -139,176 +104,15 @@ function AnalysisView({ analysis }: { analysis: Analysis }) {
+           </section>
+ 
+           {/* Next chapter: the prediction, and the proposals it is built on. */}
+-          <section className="mt-32 flex flex-col gap-24 px-32">
+-            <div className="flex flex-col gap-7">
+-              <h2 className="text-[24px] font-normal leading-[36px] text-text-primary">Next chapter</h2>
+-              <p className="text-[14px] font-light leading-[21px] text-text-primary">{predictionOf(analysis)}</p>
+-            </div>
+-            <p className="flex items-center gap-9">
+-              <span aria-hidden="true" className="size-8 shrink-0 rounded-full" style={{ background: primary.color }} />
+-              <span className="min-w-0 flex-1 text-[14px] font-medium leading-[21px] text-text-primary">{primary.label}</span>
+-              <span className="flex items-center gap-4 text-[14px] font-medium leading-[21px] tabular-nums text-text-primary">
+-                +{analysis.predictedGain}%
+-                <ArrowUp size={12} strokeWidth={2} className="text-[#70C973]" />
+-              </span>
+-            </p>
+-          </section>
+-
+-          <section className="mx-32 mt-24 flex flex-col gap-8 rounded-12 bg-[#F5EEE8] p-24">
+-            <div className="flex flex-col gap-5">
+-              <h3 className="text-[16px] leading-[24px] text-black">Proposed improvements ({analysis.proposals.length}):</h3>
+-              <p className="text-[14px] font-light leading-[21px] text-text-primary">
+-                Here are the proposed elements that will contribute to an enhanced state.
+-              </p>
+-            </div>
+-            <div className="flex justify-center py-8">
+-              <RecommendationDeck
+-                recommendations={analysis.proposals}
+-                count={analysis.proposals.length}
+-                onOpen={() => setDeckOpen((v) => !v)}
+-              />
+-            </div>
+-            {deckOpen && (
+-              <ul className="flex flex-col gap-8 rounded-12 bg-surface-default p-12">
+-                {analysis.proposals.map((p) => (
+-                  <li key={p.id} className="flex items-center gap-10">
+-                    <img src={p.orb} alt="" className="size-32 rounded-full object-cover" />
+-                    <span className="min-w-0 flex-1">
+-                      <span className="block text-[14px] leading-[19px] text-text-primary">{p.title}</span>
+-                      <span className="block truncate text-[12px] font-light leading-[16px] text-text-secondary">{p.description}</span>
+-                    </span>
+-                    <span className="shrink-0 rounded-full bg-[#ECFBED] px-6 py-1 text-[11px] text-success-600">+{p.improveScore}</span>
+-                  </li>
+-                ))}
+-              </ul>
+-            )}
+-            <button
+-              type="button"
+-              onClick={createNextChapter}
+-              className="u-press mt-8 flex h-46 w-full items-center justify-center rounded-16 bg-[#331B04] text-[16px] leading-[16px] text-white"
+-            >
+-              Create Chapter {next}
+-            </button>
+-            <button
+-              type="button"
+-              onClick={() => navigate(`/play/${analysis.sessionSlug}`)}
+-              className="u-press flex h-46 w-full items-center justify-center rounded-16 border border-[#331B04] text-[16px] leading-[19px] text-text-primary"
+-            >
+-              Go to Session
+-            </button>
+-          </section>
++          <div className="mt-32">
++            <NextChapter
++              analysis={analysis}
++              onCreate={createNextChapter}
++              secondary={{ label: 'Go to Session', onClick: () => navigate(`/play/${analysis.sessionSlug}`) }}
++            />
++          </div>
+         </main>
+       </div>
+     </div>
+   )
+ }
+-
+-/**
+- * Chapters across, progress up. Solid for what happened (the chapters done),
+- * dashed for what Aurelia projects (the rest). One scale for marks and labels:
+- * the values are percentages, so the axis is 0–100% — the frame's 0–400 axis
+- * under percentage metrics could not be read against them (U039).
+- */
+-function ProgressChart({ analysis }: { analysis: Analysis }) {
+-  // Drawn at the box's own width, not scaled from a fixed viewBox, so the
+-  // 12px labels stay 12px beside the 14px list above on every screen (U040).
+-  const box = useRef<HTMLDivElement>(null)
+-  const [W, setW] = useState(370)
+-  useLayoutEffect(() => {
+-    const el = box.current
+-    if (!el) return
+-    const measure = () => setW(Math.max(280, Math.round(el.clientWidth)))
+-    measure()
+-    const ro = new ResizeObserver(measure)
+-    ro.observe(el)
+-    return () => ro.disconnect()
+-  }, [])
+-  const H = 248
+-  const left = 40
+-  const top = 10
+-  const plotW = W - left - 6
+-  const plotH = 200
+-  const chapters = 3
+-  const xAt = (i: number) => left + (plotW * i) / chapters
+-  const yAt = (v: number) => top + plotH * (1 - Math.max(0, Math.min(100, v)) / 100)
+-  const done = analysis.chaptersDone
+-
+-  // Smooth curve through points (Catmull-Rom → cubic Bézier).
+-  const path = (pts: [number, number][]) =>
+-    pts
+-      .map(([x, y], i) => {
+-        if (i === 0) return `M${x},${y}`
+-        const [x0, y0] = pts[i - 2] ?? pts[i - 1]
+-        const [x1, y1] = pts[i - 1]
+-        const [x3, y3] = pts[i + 1] ?? [x, y]
+-        const c1x = x1 + (x - x0) / 6
+-        const c1y = y1 + (y - y0) / 6
+-        const c2x = x - (x3 - x1) / 6
+-        const c2y = y - (y3 - y1) / 6
+-        return `C${c1x},${c1y} ${c2x},${c2y} ${x},${y}`
+-      })
+-      .join(' ')
+-
+-  return (
+-    <div ref={box}>
+-      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="block font-sans" role="img" aria-label={`Progress by chapter. ${analysis.metrics.map((m) => `${m.label}: ${m.value}% now, projected ${m.projected[0]}% after chapter ${done + 1}`).join('. ')}.`}>
+-        {[0, 25, 50, 75, 100].map((v) => (
+-          <g key={v}>
+-            <line x1={left} x2={W - 6} y1={yAt(v)} y2={yAt(v)} stroke="#EFEFEF" strokeWidth="1" />
+-            <text x={left - 8} y={yAt(v) + 4} textAnchor="end" fontSize="12" fill="var(--color-text-secondary)">
+-              {v}%
+-            </text>
+-          </g>
+-        ))}
+-        {Array.from({ length: chapters + 1 }, (_, i) => (
+-          <line key={i} x1={xAt(i)} x2={xAt(i)} y1={top} y2={top + plotH} stroke="#EFEFEF" strokeWidth="1" />
+-        ))}
+-        {Array.from({ length: chapters }, (_, i) => (
+-          <text key={i} x={(xAt(i) + xAt(i + 1)) / 2} y={H - 12} textAnchor="middle" fontSize="12" fill="var(--color-text-primary)">
+-            Chapter {i + 1}
+-          </text>
+-        ))}
+-        <defs>
+-          <linearGradient id="analysis-primary" x1="0" y1="1" x2="1" y2="0">
+-            <stop offset="0" stopColor="#FF881B" />
+-            <stop offset="1" stopColor="#FFE270" />
+-          </linearGradient>
+-        </defs>
+-        {/* Projections first, so the solid history paints over their joins. */}
+-        {analysis.metrics.map((m) => {
+-          const pts: [number, number][] = [
+-            [xAt(done), yAt(m.value)],
+-            ...m.projected.map((v, i) => [xAt(done + 1 + i), yAt(v)] as [number, number]),
+-          ]
+-          return (
+-            <path key={`${m.id}-p`} d={path(pts)} fill="none" stroke={m.color} strokeOpacity="0.45" strokeWidth="2.5" strokeDasharray="5 5" strokeLinecap="round" />
+-          )
+-        })}
+-        {analysis.metrics
+-          .slice()
+-          .reverse()
+-          .map((m, i, all) => {
+-            const isPrimary = i === all.length - 1
+-            const start = Math.round(m.value * 0.15)
+-            // A slow start that accelerates, the shape the frame draws.
+-            const pts: [number, number][] = [
+-              [xAt(0), yAt(start)],
+-              [xAt(done / 2), yAt(start + (m.value - start) * 0.35)],
+-              [xAt(done), yAt(m.value)],
+-            ]
+-            return (
+-              <path
+-                key={m.id}
+-                d={path(pts)}
+-                fill="none"
+-                stroke={isPrimary ? 'url(#analysis-primary)' : m.color}
+-                strokeOpacity={isPrimary ? 1 : 0.6}
+-                strokeWidth={isPrimary ? 6 : 3}
+-                strokeLinecap="round"
+-              />
+-            )
+-          })}
+-      </svg>
+-    </div>
+-  )
+-}

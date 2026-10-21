@@ -30,12 +30,14 @@ transcript and the update log. Everything from J018 on was written at the time.
 | --- | --- | --- | --- |
 | O1 | **15 product decisions** with recommended defaults (free-plan limit, version model, live vs current, unpublish, fork source, lineage rules and payouts, conversation model, what a "play" is, challenge winners, one currency, safety and claims, identity, analytics consent) | J012, `docs/reviews/Aurelia-Logic-Review-2026-10-18.pdf` §11 | Product owner: accept the defaults or change them |
 | O2 | **Beta simplification list**: what stays visible, what is merged, what goes behind flags | J015 | Product owner + Eugene to agree. Then build a "Beta" preset in `/__demo` and add flags for coins in the header and Recreate on the player |
-| O3 | **Promote to production**: `web_prod` is at `4140e59`; staging carries U030–U040 | J005 onward | Product owner request (production moves only on request) |
+| O3 | **Promote to production**: `web_prod` is at `4140e59`; staging carries U030–U041 | J005 onward | Product owner request (production moves only on request) |
 | O4 | **Sticky player**: U037 added Close. Options A (swipe away + Undo) and C (auto-hide after 30 min paused) were proposed and not yet chosen | J008, J011 | Product owner |
 | O5 | **Free limit counts "Apply"**, so three applies trip it. This conflicts with v3's "keep experimenting" | J020 | Decision O1 #1 (limit model) |
 | O6 | **Two version systems** (cockpit ids vs Progress ids), so the earlier-version cards play the current recording | J011, J020 | Decision O1 #3 |
-| O7 | **mobile_app (Flutter)** lacks U032–U038 (feeling chips, reply, Play rule, lineage/version/publish details, Connect toast, v3, Wellness Analysis) | J008 onward | A mobile pass when scheduled |
+| O7 | **mobile_app (Flutter)** lacks U032–U038 (feeling chips, reply, Play rule, lineage/version/publish details, Connect toast, v3, Wellness Analysis, player progress drawer, Settings rename) | J008 onward | A mobile pass when scheduled |
 | O8 | **Wellness Analysis semantics**: what a metric's % measures (and against which baseline), where "Since yesterday" and "predicts +12%" come from, and what Aurelia may claim from signals (health-claims wording) | J023, U039 | Product owner + backend: define before real data. Ties to O1 #14 (safety and claims) |
+| O9 | **Settings without General**: the v2 Settings frames have only Script / Visual / Sound, so the General gear (Length, Pace, Ends, Visibility; display-only mock) is hidden in v2. Keep it hidden, or design a place for those settings? | J026, U041 | Product owner / designer |
+| O10 | **Feedback has nowhere to go**: the player's Feedback answers are kept for the visit only. What should they change (the next chapter's proposals? the analysis?), and is a sad face worth a follow-up question? | J026, U041 | Product owner + backend |
 
 ---
 
@@ -68,6 +70,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J023 | 2026-10-21 | Code | Figma 16885:1622: Wellness Analytics cards + Analysis page, v2 + v3 | U039 |
 | J024 | 2026-10-21 | Ops | Figma pairing code | — |
 | J025 | 2026-10-21 | Code | Analysis: metric list + chart text not balanced | U040 |
+| J026 | 2026-10-21 | Code | Figma 16886:1623 (player drawer + Feedback) and 16883:13096 (Settings/Script), v2 + v3 | U041 |
 
 ---
 
@@ -185,3 +188,18 @@ transcript and the update log. Everything from J018 on was written at the time.
 - **Asked:** (screenshot) the metric list and chart area are not balanced in font size.
 - **Found:** the chart scaled its own text with the screen (a fixed viewBox), so on wider screens the chart labels were bigger than the list above them. The chart also mixed 11px and 13px labels, and the rows mixed weights.
 - **Code:** U040. The chart is drawn at its real width with 12px labels, and each row uses one weight with aligned figures.
+
+### J026 — Player progress drawer + Feedback; Settings/Script
+- **Asked:** apply Figma 16886:1623 in v2 and v3, and update 16883:13096.
+- **Code:** U041. Specs and assets (five face vectors, like and tick icons) were read directly from the Figma file.
+- **Decided (assumptions):**
+  - The progress drawer is only for sessions that have an analysis. Others keep the old drawer.
+  - Feedback replies follow the face chosen, because the frame only drew the happy one.
+  - Rename edits only the name; versions keep their numbers.
+  - The General gear is hidden in v2 because no Settings frame has it.
+  - The two drawer buttons go to real places: Analytics, and the session's chat with a question.
+- **Flagged — Figma:**
+  - The Settings pencil is prototyped to the Objective sheet, a copied link.
+  - The frame's chart still has the 0–400 axis fixed in U039.
+- **Found and fixed:** a question sent to a session's chat from another screen was lost (the same race as U039).
+- **Open:** O9 (General settings), O10 (where Feedback goes).

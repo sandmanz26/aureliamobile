@@ -78,6 +78,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U038 | `a7dbf32` | 2026-10-20 00:40 | Connect request + sent dialog per Figma; all sheets full-width <640; design v3 (change sheet summary, every build kept in thread). | [patch](patches/U038-a7dbf32.patch) |
 | U039 | `98691ba` | 2026-10-21 08:55 | Wellness Analytics v2+: per-session analysis cards + Analysis page (Figma 16885:1622), derived logic; chat styleChanges race fix. | [patch](patches/U039-98691ba.patch) |
 | U040 | `b5ea379` | 2026-10-21 09:51 | Analysis: metric list + chart type balanced (chart drawn at real width, 12px labels; one weight per row). | [patch](patches/U040-b5ea379.patch) |
+| U041 | `8d6c79d` | 2026-10-21 10:03 | Player analysis drawer + Feedback (Figma 16886:1623); Settings/Script title card + rename (16883:13096); chat ask race fix. v2+. | [patch](patches/U041-8d6c79d.patch) |
 
 ## Entries
 
@@ -604,3 +605,57 @@ Production (`web_prod`) is never touched by these updates unless asked.
 - **Mobile:** at 402px the list was already 14px and the chart was close to 1:1. What changes there is the chart labels (11/13 → 12/12) and the row weights. This is a fix to a screen added yesterday (U039), not a change to the frozen mobile layout.
 - **Verified:** screenshots at 402 and 1440 (2× DPR). The labels measure the same height at both widths. Typecheck clean; lint shows no new warnings.
 - **Revert:** `git revert --no-commit b5ea379 && git checkout HEAD -- docs/`.
+
+### U041 — Player analysis drawer, session Feedback, Settings script + rename
+
+- **Commit:** `8d6c79d` · pushed 2026-10-21 10:03:15 UTC · `web_app` + `admin_cms` · not on `web_prod`
+- **Patch:** [patches/U041-8d6c79d.patch](patches/U041-8d6c79d.patch)
+- **Request:** "Figma 16886:1623 ada update di area ini juga, apply di v2 dan v3" + "16883:13096 tolong di update". The first is the section "Session: Chat - Player" (player peek, open drawer, answered Feedback). The second is "Session/Settings/Script".
+- **Interpretation:** v2 and above, as with U039. The new drawer is for a session that **has an analysis** (`analysisForSession(slug)`: today dolphins-frequency, which is the cockpit's default draft, and ocean-breath). The frame shows a session you are working on with an objective. A session with no analysis has nothing to show there, so it keeps the drawer it had. v1 is unchanged.
+- **Player drawer** (`PlayerPage.tsx` → `AnalysisDrawer`):
+  - At the peek: "Great Progress!", "3% ↑ Since yesterday", and a small ring with 60%.
+  - Pulled up, in the frame's order:
+    1. the summary sentence and the metrics;
+    2. the 3-chapter chart;
+    3. **Go to Analytics** (`/wellness/analysis/:id`) and **Ask Aurelia** (`/chat/<slug>` asking "How can I get closer to "<objective>" in my next chapter?");
+    4. **Feedback**;
+    5. **About this session**: the title (the name the cockpit handed over, else the version, else the catalogue title), a chevron to `/session/<slug>`, a 3-line description with Read More, and tags;
+    6. **Next chapter**, with the proposals, **Create Chapter N** (the same cockpit build as the Analysis page) and **Ask Aurelia**.
+  - Session **Details** (versions, publishing; U037) stay at the foot. They are not in the frame, but they are what U037 asked for.
+  - What the old drawer carried and the frame drops is gone from this drawer only: the author row, the Played/Recreated figures, the Elaborate / Morning boost chips (Ask Aurelia replaces them) and the Recreate cards (you don't recreate your own session).
+- **Shared parts:** `components/wellness/AnalysisParts.tsx` (`AnalysisStatus`, `AnalysisShifts`, `MetricRow`, `ProgressChart`, `NextChapter`) is now used by both the Analysis page and the drawer, so their numbers and type cannot drift apart. `chapterBrief()` and `analysisForSession()` are in `lib/wellnessAnalysis.ts`.
+- **Feedback** (`components/wellness/SessionFeedback.tsx`):
+  - Two #F5EEE8 cards per the frame.
+  - **"How is the experience?"** is a pill input; Send stays disabled until something is typed. After sending, the card reads "Thank you for your feedback / It helps Aurelia fine-tune your next chapter."
+  - **"How does listening to this make you feel?"** is five faces, using the frame's own vectors split into `src/assets/moods/mood-1…5.svg`.
+  - The two cards answer independently.
+  - The frame only draws the happy answer, so the reply follows the face:
+    - 4–5: "Glad to hear it!" plus the frame's line.
+    - 3: "Thanks for telling us."
+    - 1–2: "Sorry it didn't land."
+  - The pick stays changeable: it is outlined 2px #331B04 and the others fade to 50%.
+  - Answers are kept per session/version for the visit, so reopening the player does not ask again. Nothing is sent, because there is no backend. In this drawer, Feedback replaces the end-of-play check-in, so nothing is asked twice.
+- **Settings / Script** (`SessionSettingsPage.tsx`, v2+):
+  - The title reads "Settings".
+  - The chips match the frame: 35 tall, radius 12, 12px text, Lucide equivalents of cursor-text / canvas / music-note. **No General gear**, because none of the three Settings frames has one; v1 keeps it.
+  - On the Script tab:
+    - a **Session Title** card (gradient edge, radius 20, a 36px #FFF1DB icon disc, "Session Title" 12 light #525252, the name at 14, and a pencil);
+    - "Session Script" (14 light #9A9A9A);
+    - the script in a white radius-20 card at 14px.
+- **Rename** (`RenameSessionSheet.tsx`, plus `renameSession` / `sessionNameOf` in `ChatSessionContext`):
+  - The frame's pencil is prototyped to the Objective sheet, a copied link. This sheet uses that layout but asks for the session name.
+  - Only the **name** is editable. The version ("v1.3") is shown beside the field and every cut keeps its own number, so "Sleep meditation v1.3" → "Evening calm v1.3" and the next build is "Evening calm v1.4".
+  - Save waits for a non-empty name that differs from the current one.
+  - The name is the cockpit's, so the progress card, player and Sessions follow it.
+- **Race fix (`ChatPage.tsx`):** an `ask` arriving with `/chat/:slug` was written into the thread that was already open, and openSession then replaced it. The question vanished and a stray reply was left. It is now held in a ref until the thread is on that session, the same fix as U039's style changes. Home's ask (`/chat`) is unaffected.
+- **Known limits:**
+  - Ask Aurelia's reply is the generic answer rule ("Got it — noted…"). There is no rule yet for questions about progress.
+  - Session settings has no session in its URL and edits whatever session the cockpit is on (true before this change too).
+- **Verified (402px, v2):**
+  - Player: the peek, half and full rests; Send disabled when empty; both Feedback answers, the sad-face copy, and answers remembered after leaving and coming back.
+  - Go to Analytics → `/wellness/analysis/mental-clarity`; Ask Aurelia → `/chat/dolphins-frequency` with the question shown.
+  - `golden-hour` keeps the old drawer.
+  - Settings: Save disabled until the name changes; the rename was applied.
+  - v1 player and v1 Session settings are unchanged.
+  - Typecheck clean. Lint shows two new warnings, both of patterns already in the codebase (a helper exported from the context file; setState inside the deferred ask effect).
+- **Revert:** `git revert --no-commit 8d6c79d && git checkout HEAD -- docs/`.

@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-21 — Player progress drawer, Feedback, Settings rename (U041)
+
+On v2 and v3, playing a session you have an analysis for opens the drawer on your progress, per Figma 16886:1623. It shows the status and ring, metrics, the chapter chart, Go to Analytics / Ask Aurelia, a **Feedback** block (free text plus a five-face scale, each with its own thank-you), About this session, and Next chapter with Create Chapter N. Other sessions keep the old drawer. Session settings (Figma 16883:13096) is retitled "Settings", uses the frame's chips, and puts a **Session Title** card on Script whose pencil renames the session (the version number is kept), with the script in its own card. Also fixed: a question sent from the player to a session's chat was lost. v1 unchanged. **mobile_app does not have this.** Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-21 — Analysis: balanced type in metrics and chart (U040)
 
 The Analysis chart no longer scales its text with the screen. It draws at its real width with 12px labels, so the labels sit under the 14px metric list instead of outgrowing it on desktop. Each metric row uses one weight, and its % column is aligned. v2+ only. **mobile_app does not have the Analysis page.** Branches: `web_app`, `admin_cms`. Not `web_prod`.
