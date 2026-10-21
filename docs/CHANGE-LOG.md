@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-21 — Analysis: balanced type in metrics and chart (U040)
+
+The Analysis chart no longer scales its text with the screen. It draws at its real width with 12px labels, so the labels sit under the 14px metric list instead of outgrowing it on desktop. Each metric row uses one weight, and its % column is aligned. v2+ only. **mobile_app does not have the Analysis page.** Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-21 — Wellness Analytics: session analysis + Analysis page (U039)
 
 My Wellness › Analytics (v2 and v3) shows one card per session: a progress ring, a status and the change since yesterday. Each card opens a new Analysis page (`/wellness/analysis/:id`) per Figma 16885:1622, with the hero ring, a generated summary, metrics, a 3-chapter chart, what helped, the next-chapter prediction and proposals. **Create Chapter N** builds the next version in the cockpit; **Go to Session** opens the player. Figma's drawing inconsistencies were resolved from the data rather than copied: ring arcs, a duplicate helper, the 0–400 axis, and placeholder links. Also fixed: a cockpit race that dropped style changes passed in from another screen. v1 unchanged. **mobile_app does not have this.** Branches: `web_app`, `admin_cms`. Not `web_prod`.

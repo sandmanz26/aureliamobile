@@ -77,6 +77,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U037 | `7328ab6` | 2026-10-18 16:39 | Equal-height recommendation cards; mini player Close; lineage See All + versions; Details publishing + creator version history; logic review PDF. | [patch](patches/U037-7328ab6.patch) |
 | U038 | `a7dbf32` | 2026-10-20 00:40 | Connect request + sent dialog per Figma; all sheets full-width <640; design v3 (change sheet summary, every build kept in thread). | [patch](patches/U038-a7dbf32.patch) |
 | U039 | `98691ba` | 2026-10-21 08:55 | Wellness Analytics v2+: per-session analysis cards + Analysis page (Figma 16885:1622), derived logic; chat styleChanges race fix. | [patch](patches/U039-98691ba.patch) |
+| U040 | `b5ea379` | 2026-10-21 09:51 | Analysis: metric list + chart type balanced (chart drawn at real width, 12px labels; one weight per row). | [patch](patches/U040-b5ea379.patch) |
 
 ## Entries
 
@@ -588,3 +589,18 @@ Production (`web_prod`) is never touched by these updates unless asked.
 - **Limits:** all of it is mock data and illustrative, like the rest of `lib/`. The 435 Hz proposal orb is hotlinked from Unsplash and shows only the gradient offline. What the metrics measure, and where "predicted +12%" would come from, is undefined (O8).
 - **Verified:** at 402px in v2, both cards; the Analysis page for 60% (Great Progress) and 24% (Needs Improvement, red 2%); Create Chapter 2 → cockpit with the user line and a "Dolphins frequency v2" build; Go to Session → `/play/ocean-breath`; v1 Analytics unchanged. Typecheck clean; lint shows no errors and one warning fewer than before.
 - **Revert:** `git revert --no-commit 98691ba && git checkout HEAD -- docs/`.
+
+### U040 — Analysis: balance the type in the metric list and chart
+
+- **Commit:** `b5ea379` · pushed 2026-10-21 09:51:12 UTC · `web_app` + `admin_cms` · not on `web_prod`
+- **Patch:** [patches/U040-b5ea379.patch](patches/U040-b5ea379.patch)
+- **Request:** (screenshot of the metric list and chart) "perhatikan area ini masih belum balance secara text font size nya".
+- **Cause:** the chart was an SVG with a fixed 370-wide viewBox, scaled to fill its box. On anything wider than the phone frame the labels grew with it: "Chapter 1" reached about 25px on desktop, next to the 14px list. Its labels also mixed 11px grey and 13px dark.
+- **Change (all widths, `WellnessAnalysisPage.tsx`):**
+  - The chart now draws at its container's real width (a ResizeObserver feeds the width; the minimum is 280), so its text never scales.
+  - Axis and chapter labels are both 12px in Mulish. The axis uses `text-secondary` and the chapters use `text-primary`.
+  - Each metric row now uses one weight for its label and its value (medium for the objective, light for the shifts). Before, the objective was medium + semibold and the shifts were light + regular.
+  - All rows are 14/21 with tabular figures so the % column lines up. The Next chapter row matches.
+- **Mobile:** at 402px the list was already 14px and the chart was close to 1:1. What changes there is the chart labels (11/13 → 12/12) and the row weights. This is a fix to a screen added yesterday (U039), not a change to the frozen mobile layout.
+- **Verified:** screenshots at 402 and 1440 (2× DPR). The labels measure the same height at both widths. Typecheck clean; lint shows no new warnings.
+- **Revert:** `git revert --no-commit b5ea379 && git checkout HEAD -- docs/`.

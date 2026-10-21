@@ -1,0 +1,181 @@
+diff --git a/src/pages/WellnessAnalysisPage.tsx b/src/pages/WellnessAnalysisPage.tsx
+index 6d45c34..2c470ef 100644
+--- a/src/pages/WellnessAnalysisPage.tsx
++++ b/src/pages/WellnessAnalysisPage.tsx
+@@ -1,5 +1,5 @@
+ import { ArrowLeft, ArrowUp } from 'lucide-react'
+-import { useState } from 'react'
++import { useLayoutEffect, useRef, useState } from 'react'
+ import { Navigate, useNavigate, useParams } from 'react-router-dom'
+ import { PageMeta } from '../components/PageMeta'
+ import { RecommendationDeck } from '../components/chat/RecommendationDeck'
+@@ -96,12 +96,13 @@ function AnalysisView({ analysis }: { analysis: Analysis }) {
+             <p className="text-[14px] font-light leading-[21px] text-text-primary">{summaryOf(analysis)}</p>
+             <ul className="flex flex-col gap-10">
+               {[primary, ...shifts].map((m, i) => (
+-                <li key={m.id} className="flex items-center gap-9">
++                <li
++                  key={m.id}
++                  className={`flex items-center gap-9 text-[14px] leading-[21px] text-text-primary ${i === 0 ? 'font-medium' : 'font-light'}`}
++                >
+                   <span aria-hidden="true" className="size-8 shrink-0 rounded-full" style={{ background: m.color }} />
+-                  <span className={`min-w-0 flex-1 truncate text-[14px] leading-[19px] text-text-primary ${i === 0 ? 'font-medium' : 'font-light'}`}>
+-                    {m.label}
+-                  </span>
+-                  <span className={`flex shrink-0 items-center gap-4 text-[14px] leading-[21px] text-text-primary ${i === 0 ? 'font-semibold' : ''}`}>
++                  <span className="min-w-0 flex-1 truncate">{m.label}</span>
++                  <span className="flex shrink-0 items-center gap-4 tabular-nums">
+                     {m.value}%
+                     <ArrowUp size={12} strokeWidth={2} className="text-[#70C973]" />
+                   </span>
+@@ -145,8 +146,8 @@ function AnalysisView({ analysis }: { analysis: Analysis }) {
+             </div>
+             <p className="flex items-center gap-9">
+               <span aria-hidden="true" className="size-8 shrink-0 rounded-full" style={{ background: primary.color }} />
+-              <span className="min-w-0 flex-1 text-[14px] font-medium leading-[19px] text-text-primary">{primary.label}</span>
+-              <span className="flex items-center gap-4 text-[14px] font-semibold leading-[21px] text-text-primary">
++              <span className="min-w-0 flex-1 text-[14px] font-medium leading-[21px] text-text-primary">{primary.label}</span>
++              <span className="flex items-center gap-4 text-[14px] font-medium leading-[21px] tabular-nums text-text-primary">
+                 +{analysis.predictedGain}%
+                 <ArrowUp size={12} strokeWidth={2} className="text-[#70C973]" />
+               </span>
+@@ -209,8 +210,20 @@ function AnalysisView({ analysis }: { analysis: Analysis }) {
+  * under percentage metrics could not be read against them (U039).
+  */
+ function ProgressChart({ analysis }: { analysis: Analysis }) {
+-  const W = 370
+-  const H = 250
++  // Drawn at the box's own width, not scaled from a fixed viewBox, so the
++  // 12px labels stay 12px beside the 14px list above on every screen (U040).
++  const box = useRef<HTMLDivElement>(null)
++  const [W, setW] = useState(370)
++  useLayoutEffect(() => {
++    const el = box.current
++    if (!el) return
++    const measure = () => setW(Math.max(280, Math.round(el.clientWidth)))
++    measure()
++    const ro = new ResizeObserver(measure)
++    ro.observe(el)
++    return () => ro.disconnect()
++  }, [])
++  const H = 248
+   const left = 40
+   const top = 10
+   const plotW = W - left - 6
+@@ -237,63 +250,65 @@ function ProgressChart({ analysis }: { analysis: Analysis }) {
+       .join(' ')
+ 
+   return (
+-    <svg viewBox={`0 0 ${W} ${H}`} className="block w-full" role="img" aria-label={`Progress by chapter. ${analysis.metrics.map((m) => `${m.label}: ${m.value}% now, projected ${m.projected[0]}% after chapter ${done + 1}`).join('. ')}.`}>
+-      {[0, 25, 50, 75, 100].map((v) => (
+-        <g key={v}>
+-          <line x1={left} x2={W - 6} y1={yAt(v)} y2={yAt(v)} stroke="#EFEFEF" strokeWidth="1" />
+-          <text x={left - 8} y={yAt(v) + 4} textAnchor="end" fontSize="11" fill="#8A8A8A">
+-            {v}%
++    <div ref={box}>
++      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="block font-sans" role="img" aria-label={`Progress by chapter. ${analysis.metrics.map((m) => `${m.label}: ${m.value}% now, projected ${m.projected[0]}% after chapter ${done + 1}`).join('. ')}.`}>
++        {[0, 25, 50, 75, 100].map((v) => (
++          <g key={v}>
++            <line x1={left} x2={W - 6} y1={yAt(v)} y2={yAt(v)} stroke="#EFEFEF" strokeWidth="1" />
++            <text x={left - 8} y={yAt(v) + 4} textAnchor="end" fontSize="12" fill="var(--color-text-secondary)">
++              {v}%
++            </text>
++          </g>
++        ))}
++        {Array.from({ length: chapters + 1 }, (_, i) => (
++          <line key={i} x1={xAt(i)} x2={xAt(i)} y1={top} y2={top + plotH} stroke="#EFEFEF" strokeWidth="1" />
++        ))}
++        {Array.from({ length: chapters }, (_, i) => (
++          <text key={i} x={(xAt(i) + xAt(i + 1)) / 2} y={H - 12} textAnchor="middle" fontSize="12" fill="var(--color-text-primary)">
++            Chapter {i + 1}
+           </text>
+-        </g>
+-      ))}
+-      {Array.from({ length: chapters + 1 }, (_, i) => (
+-        <line key={i} x1={xAt(i)} x2={xAt(i)} y1={top} y2={top + plotH} stroke="#EFEFEF" strokeWidth="1" />
+-      ))}
+-      {Array.from({ length: chapters }, (_, i) => (
+-        <text key={i} x={(xAt(i) + xAt(i + 1)) / 2} y={H - 12} textAnchor="middle" fontSize="13" fill="#331B04">
+-          Chapter {i + 1}
+-        </text>
+-      ))}
+-      <defs>
+-        <linearGradient id="analysis-primary" x1="0" y1="1" x2="1" y2="0">
+-          <stop offset="0" stopColor="#FF881B" />
+-          <stop offset="1" stopColor="#FFE270" />
+-        </linearGradient>
+-      </defs>
+-      {/* Projections first, so the solid history paints over their joins. */}
+-      {analysis.metrics.map((m) => {
+-        const pts: [number, number][] = [
+-          [xAt(done), yAt(m.value)],
+-          ...m.projected.map((v, i) => [xAt(done + 1 + i), yAt(v)] as [number, number]),
+-        ]
+-        return (
+-          <path key={`${m.id}-p`} d={path(pts)} fill="none" stroke={m.color} strokeOpacity="0.45" strokeWidth="2.5" strokeDasharray="5 5" strokeLinecap="round" />
+-        )
+-      })}
+-      {analysis.metrics
+-        .slice()
+-        .reverse()
+-        .map((m, i, all) => {
+-          const isPrimary = i === all.length - 1
+-          const start = Math.round(m.value * 0.15)
+-          // A slow start that accelerates, the shape the frame draws.
++        ))}
++        <defs>
++          <linearGradient id="analysis-primary" x1="0" y1="1" x2="1" y2="0">
++            <stop offset="0" stopColor="#FF881B" />
++            <stop offset="1" stopColor="#FFE270" />
++          </linearGradient>
++        </defs>
++        {/* Projections first, so the solid history paints over their joins. */}
++        {analysis.metrics.map((m) => {
+           const pts: [number, number][] = [
+-            [xAt(0), yAt(start)],
+-            [xAt(done / 2), yAt(start + (m.value - start) * 0.35)],
+             [xAt(done), yAt(m.value)],
++            ...m.projected.map((v, i) => [xAt(done + 1 + i), yAt(v)] as [number, number]),
+           ]
+           return (
+-            <path
+-              key={m.id}
+-              d={path(pts)}
+-              fill="none"
+-              stroke={isPrimary ? 'url(#analysis-primary)' : m.color}
+-              strokeOpacity={isPrimary ? 1 : 0.6}
+-              strokeWidth={isPrimary ? 6 : 3}
+-              strokeLinecap="round"
+-            />
++            <path key={`${m.id}-p`} d={path(pts)} fill="none" stroke={m.color} strokeOpacity="0.45" strokeWidth="2.5" strokeDasharray="5 5" strokeLinecap="round" />
+           )
+         })}
+-    </svg>
++        {analysis.metrics
++          .slice()
++          .reverse()
++          .map((m, i, all) => {
++            const isPrimary = i === all.length - 1
++            const start = Math.round(m.value * 0.15)
++            // A slow start that accelerates, the shape the frame draws.
++            const pts: [number, number][] = [
++              [xAt(0), yAt(start)],
++              [xAt(done / 2), yAt(start + (m.value - start) * 0.35)],
++              [xAt(done), yAt(m.value)],
++            ]
++            return (
++              <path
++                key={m.id}
++                d={path(pts)}
++                fill="none"
++                stroke={isPrimary ? 'url(#analysis-primary)' : m.color}
++                strokeOpacity={isPrimary ? 1 : 0.6}
++                strokeWidth={isPrimary ? 6 : 3}
++                strokeLinecap="round"
++              />
++            )
++          })}
++      </svg>
++    </div>
+   )
+ }
