@@ -30,11 +30,12 @@ transcript and the update log. Everything from J018 on was written at the time.
 | --- | --- | --- | --- |
 | O1 | **15 product decisions** with recommended defaults (free-plan limit, version model, live vs current, unpublish, fork source, lineage rules and payouts, conversation model, what a "play" is, challenge winners, one currency, safety and claims, identity, analytics consent) | J012, `docs/reviews/Aurelia-Logic-Review-2026-10-18.pdf` §11 | Product owner: accept the defaults or change them |
 | O2 | **Beta simplification list**: what stays visible, what is merged, what goes behind flags | J015 | Product owner + Eugene to agree. Then build a "Beta" preset in `/__demo` and add flags for coins in the header and Recreate on the player |
-| O3 | **Promote to production**: `web_prod` is at `4140e59`; staging carries U030–U038 | J005 onward | Product owner request (production moves only on request) |
+| O3 | **Promote to production**: `web_prod` is at `4140e59`; staging carries U030–U039 | J005 onward | Product owner request (production moves only on request) |
 | O4 | **Sticky player**: U037 added Close. Options A (swipe away + Undo) and C (auto-hide after 30 min paused) were proposed and not yet chosen | J008, J011 | Product owner |
 | O5 | **Free limit counts "Apply"**, so three applies trip it. This conflicts with v3's "keep experimenting" | J020 | Decision O1 #1 (limit model) |
 | O6 | **Two version systems** (cockpit ids vs Progress ids), so the earlier-version cards play the current recording | J011, J020 | Decision O1 #3 |
-| O7 | **mobile_app (Flutter)** lacks U032–U038 (feeling chips, reply, Play rule, lineage/version/publish details, Connect toast, v3) | J008 onward | A mobile pass when scheduled |
+| O7 | **mobile_app (Flutter)** lacks U032–U038 (feeling chips, reply, Play rule, lineage/version/publish details, Connect toast, v3, Wellness Analysis) | J008 onward | A mobile pass when scheduled |
+| O8 | **Wellness Analysis semantics**: what a metric's % measures (and against which baseline), where "Since yesterday" and "predicts +12%" come from, and what Aurelia may claim from signals (health-claims wording) | J023, U039 | Product owner + backend: define before real data. Ties to O1 #14 (safety and claims) |
 
 ---
 
@@ -64,6 +65,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J020 | 2026-10-20 | Code | Sheet width + v3 change summary + every build kept | U038 |
 | J021 | 2026-10-20 | Process | Record everything in an md | this file |
 | J022 | 2026-10-21 | Ops | Figma pairing code | — |
+| J023 | 2026-10-21 | Code | Figma 16885:1622: Wellness Analytics cards + Analysis page, v2 + v3 | U039 |
 
 ---
 
@@ -156,3 +158,20 @@ transcript and the update log. Everything from J018 on was written at the time.
 
 ### J022 — Figma pairing
 - **Ops:** a pairing code was issued for the Figma Desktop Bridge (Cloud Mode). It expires in 5 minutes and is not recorded.
+
+### J023 — Wellness Analytics + Analysis page (Figma 16885:1622)
+- **Asked:** update v2 + v3 from Figma section 16885:1622, "pastikan terimplementasi dengan detail dan logic yang benar".
+- **Code:** U039. Specs were read directly from the Figma file through the Figma bridge. The Connect frames in the same section were already done in U038.
+- **Decided (assumptions):**
+  - It applies to v2 and above; v1 is untouched.
+  - Every number is derived from one record, so the card, ring, heading, sentence and chart cannot disagree.
+  - The buttons were given real destinations: Create Chapter → cockpit build, Go to Session → player.
+- **Flagged to the owner — the Figma frames disagree with themselves:**
+  - the 24% ring is drawn at ~31%;
+  - a duplicate "Less movement" card;
+  - a 0–400 axis on % data;
+  - broken paragraph grammar;
+  - placeholder prototype links.
+  All were resolved in code. Worth fixing in the file so design and build agree.
+- **Found and fixed on the way:** the cockpit dropped style changes passed in from another screen (race), which also affected earlier entries.
+- **Open:** O8 (what the metrics and prediction actually mean).

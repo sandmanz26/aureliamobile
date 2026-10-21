@@ -76,6 +76,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U036 | `4bc9c2e` | 2026-10-15 16:51 | Home feeling chips; chat reply-to-message; header Play only after something exists; limit copy (new session free); sign-in fills <640px. | [patch](patches/U036-4bc9c2e.patch) |
 | U037 | `7328ab6` | 2026-10-18 16:39 | Equal-height recommendation cards; mini player Close; lineage See All + versions; Details publishing + creator version history; logic review PDF. | [patch](patches/U037-7328ab6.patch) |
 | U038 | `a7dbf32` | 2026-10-20 00:40 | Connect request + sent dialog per Figma; all sheets full-width <640; design v3 (change sheet summary, every build kept in thread). | [patch](patches/U038-a7dbf32.patch) |
+| U039 | `98691ba` | 2026-10-21 08:55 | Wellness Analytics v2+: per-session analysis cards + Analysis page (Figma 16885:1622), derived logic; chat styleChanges race fix. | [patch](patches/U039-98691ba.patch) |
 
 ## Entries
 
@@ -550,3 +551,40 @@ Production (`web_prod`) is never touched by these updates unless asked.
 - **Limit:** the earlier-version cards play `?v=` with cockpit ids, which the player does not resolve (logic review B1), so they play the session's current recording.
 - **Verified:** 430px v3 — sheet 430 wide with summary; deck apply + two sheet applies → v1.2, v1.3 (earlier) and v1.4 (ready) all in the thread; Connect request sheet and sent dialog. Typecheck clean; lint warnings only.
 - **Revert:** `git revert --no-commit a7dbf32 && git checkout HEAD -- docs/`.
+
+### U039 — Wellness Analytics: session analysis cards and Analysis page (v2 + v3)
+
+- **Commit:** `98691ba` · pushed 2026-10-21 08:55:56 UTC · `web_app` + `admin_cms` · not on `web_prod`
+- **Patch:** [patches/U039-98691ba.patch](patches/U039-98691ba.patch)
+- **Request:** "Figma 16885:1622 ada update disini, tolong update v2 + v3 ya, pastikan terimplementasi dengan detail dan logic yang benar." The section holds "My Wellness/Analytics" (16883:14834) and "Analysis" (16883:15959). Its Connect frames were already done in U038.
+- **Interpretation:** v2 and above (v3 inherits through `useUiVersion() >= 2`). v1 keeps the old objective cards. Production is pinned to v2, so it gets this once promoted (O3). "Logic yang benar" was read to mean every number comes from one record, and every button goes somewhere real.
+- **Analytics tab (v2+):** one `AnalyticsSessionCard` per session. Specs: radius 20; gradient hairline #FF8514→#FFE270; shadow 0 5 24 4 /5%. The 49px session art, "Session N: …" (12 light #525252), the objective (16 medium) and an arrow. Below that, a 23px ring with track #FFF1DB, "60%, Great Progress!" and the delta pill (green #70C973 up / red #F02B2B down). The cards form one column on mobile and two on `lg:`. Files: `WellnessPage.tsx`, `components/wellness/AnalyticsSessionCard.tsx`, `components/wellness/ProgressRing.tsx`.
+- **Analysis page** `/wellness/analysis/:id` (lazy, RequireAuth + wellness guard):
+  - A 348px hero: the session cover with a 60% black fade, Back, a 120px white ring over a 12% disc, the %, the objective and the session.
+  - A sheet with radius 32 holds, in order:
+    - the status heading and "N% ↑ Since yesterday";
+    - the summary sentence;
+    - the metrics list (objective + three shifts, coloured dots #FFB746 / #5FC52C / #D862FF / #4DCAFF);
+    - the 3-chapter chart: solid history, dashed projection, objective line thick with the brand gradient;
+    - "What helped me?" cards;
+    - "Next chapter" prediction;
+    - the proposals deck (or list);
+    - "Create Chapter N" and "Go to Session".
+  - File: `pages/WellnessAnalysisPage.tsx`.
+- **Logic (`lib/wellnessAnalysis.ts`):** one `Analysis` record per session, and every display value is derived from it:
+  - The ring, the card % and the first metric are all `progressOf()`.
+  - `statusOf()` sets the heading for both the card and the page: ≥50 Great Progress!, ≥35 Good Progress, else Needs Improvement.
+  - `summaryOf()` writes the sentence from the strongest shift. When progress fell since yesterday, it says so instead.
+  - `predictionOf()` builds "Based on analysis of chapter one…" from `chaptersDone`.
+  - The art is the session's own cover (`artOf()`).
+- **Figma inconsistencies resolved in code (not copied):**
+  - The 24% card's ring was drawn at about 31%. Rings are now drawn from the value.
+  - "What helped me?" listed Less movement twice. Now each helper appears once.
+  - The chart's axis ran 0–400 under percentage metrics. It is now 0–100%.
+  - The paragraph's grammar was broken and it quoted a number the list did not show. The sentence is now generated.
+  - "Go to Session" was prototyped to the Connect frame, a placeholder. It now opens `/play/<session>`.
+  - "Create Chapter 2" had no prototype. It now opens `/chat/<session>` with the proposals as the style change ("Create Chapter 2 with 435 Hz, Longer exhale and Warmer light"), so the cockpit builds the next version.
+- **Race fix (`ChatPage.tsx`):** a route `styleChanges` was applied before the cockpit had opened the requested session. The user line was lost and the build was named after the previous session ("Sleep meditation v1.3"). The sentence is now held in `pendingStyleChanges` and applied only once `opened.slug` matches. This affects every entry with styleChanges, not just this one.
+- **Limits:** all of it is mock data and illustrative, like the rest of `lib/`. The 435 Hz proposal orb is hotlinked from Unsplash and shows only the gradient offline. What the metrics measure, and where "predicted +12%" would come from, is undefined (O8).
+- **Verified:** at 402px in v2, both cards; the Analysis page for 60% (Great Progress) and 24% (Needs Improvement, red 2%); Create Chapter 2 → cockpit with the user line and a "Dolphins frequency v2" build; Go to Session → `/play/ocean-breath`; v1 Analytics unchanged. Typecheck clean; lint shows no errors and one warning fewer than before.
+- **Revert:** `git revert --no-commit 98691ba && git checkout HEAD -- docs/`.
