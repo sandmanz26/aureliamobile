@@ -147,7 +147,7 @@ function StyleGrid({
               type="button"
               aria-expanded={open}
               onClick={() => setExpanded(open ? null : style.id)}
-              className="text-style-caption u-tap mt-6 flex w-fit items-center gap-2 text-text-secondary"
+              className="text-style-caption u-tap mb-10 mt-6 flex w-fit items-center gap-2 text-text-secondary"
             >
               {open ? 'Less' : 'More'}
               <ChevronDown size={12} className={open ? 'rotate-180' : ''} />
@@ -160,7 +160,7 @@ function StyleGrid({
               type="button"
               onClick={() => onToggle(style.id)}
               aria-pressed={isAdded}
-              className={`text-style-label u-press mt-10 flex h-34 w-full items-center justify-center gap-6 rounded-full border ${
+              className={`text-style-label u-press mt-auto flex h-34 w-full items-center justify-center gap-6 rounded-full border ${
                 isAdded
                   ? 'border-transparent bg-icon-strong text-text-inverse'
                   : 'border-border-default bg-surface-default text-text-primary'
@@ -307,7 +307,10 @@ export function SessionSettingsPage() {
         <h1 className="text-style-title truncate text-text-primary">{v2 ? 'Settings' : 'Session settings'}</h1>
       </header>
 
-      <div className="mx-auto w-full max-w-[402px] lg:max-w-[960px]">
+      {/* Full width below lg (U043). Capped at the frame's 402 it sat as a
+          narrow column on 403–1023px phones and windows, out of line with
+          the header above it, which already spans the width. */}
+      <div className="w-full lg:mx-auto lg:max-w-[960px]">
         {/* Tabs scroll rather than shrink — a squeezed label is worse than one
             you have to nudge into view. */}
         {v2 ? (
