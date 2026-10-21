@@ -130,6 +130,15 @@ export function findAnalysis(id: string | undefined) {
   return ANALYSES.find((analysis) => analysis.id === id)
 }
 
+/**
+ * The analysis for a session, if you are working on one with it. The player
+ * opens on this instead of the catalogue's description (U041): the analysis
+ * is about the listener, so it applies whoever made the session.
+ */
+export function analysisForSession(slug: string | undefined) {
+  return ANALYSES.find((analysis) => analysis.sessionSlug === slug)
+}
+
 /** The objective's progress, % — the ring, the card and the first metric are all this. */
 export function progressOf(analysis: Analysis) {
   return analysis.metrics[0]?.value ?? 0
@@ -177,4 +186,11 @@ export function predictionOf(analysis: Analysis) {
 /** The next chapter's number, for "Create Chapter 2". */
 export function nextChapterOf(analysis: Analysis) {
   return analysis.chaptersDone + 1
+}
+
+/** "Create Chapter 2 with 435 Hz, Longer exhale and Warmer light" — the cockpit's brief. */
+export function chapterBrief(analysis: Analysis) {
+  const names = analysis.proposals.map((p) => p.title)
+  const list = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0]
+  return `Create Chapter ${nextChapterOf(analysis)} with ${list}`
 }

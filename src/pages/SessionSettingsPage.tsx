@@ -1,11 +1,16 @@
 import {
   ArrowLeft,
   AudioLines,
+  Captions,
   ChevronDown,
   Image as ImageIcon,
   Minus,
+  Music,
+  PencilLine,
   Plus,
+  Presentation,
   Settings2,
+  TextCursor,
   Type,
   WandSparkles,
 } from 'lucide-react'
@@ -17,6 +22,9 @@ import orb432hz from '../assets/orb-432hz.png'
 import orbIncreaseYellow from '../assets/orb-increase-yellow.png'
 import orbLessMovement from '../assets/orb-less-movement.png'
 import { CoverImage } from '../components/ui/CoverImage'
+import { RenameSessionSheet } from '../components/ui/RenameSessionSheet'
+import { sessionNameOf, useChatSession } from '../chat/ChatSessionContext'
+import { useUiVersion } from '../versions/useUiVersion'
 import type { AppliedStyle, StyleKind } from '../lib/sessionStyles'
 import { SESSION_SCRIPT, appliedOfKind, findAppliedStyle, findStyle, stylesOfKind } from '../lib/sessionStyles'
 
@@ -41,11 +49,20 @@ const TABS: { id: Tab; label: string; icon: typeof Type }[] = [
   { id: 'sound', label: 'Sound', icon: AudioLines },
 ]
 
+/** Version 2 (Figma "Session/Settings/*" 16883:13096, U041): the frame's icons
+ *  (cursor-text, canvas, music-note) in their nearest Lucide shapes, and no
+ *  General gear — none of the three frames has one. */
+const TABS_V2: { id: Tab; label: string; icon: typeof Type }[] = [
+  { id: 'script', label: 'Script', icon: TextCursor },
+  { id: 'visual', label: 'Visual', icon: Presentation },
+  { id: 'sound', label: 'Sound', icon: Music },
+]
+
 /** A script line, with the reader's cues held apart from the spoken words. */
-function ScriptLine({ line }: { line: string }) {
+function ScriptLine({ line, small = false }: { line: string; small?: boolean }) {
   const parts = line.split(/(\[[^\]]+\])/g)
   return (
-    <p className="text-style-body whitespace-pre-line text-text-primary">
+    <p className={`whitespace-pre-line text-text-primary ${small ? 'text-[14px] leading-[19px]' : 'text-style-body'}`}>
       {parts.map((part, index) =>
         part.startsWith('[') ? (
           // Direction, not dialogue — nobody should ever read this one aloud.
@@ -175,8 +192,65 @@ function describeChanges(added: Set<string>, removed: Set<string>) {
   return parts.join('; ') || 'Apply new changes'
 }
 
+/**
+ * Version 2's Script tab (Figma 16883:13096): the session's title on the
+ * gradient-edged card with a pencil that renames it, then the script in its
+ * own white card. The title is the cockpit's — the same name the progress
+ * card, the player and Sessions use — so renaming here renames it there.
+ */
+function ScriptTabV2() {
+  const { draft, renameSession } = useChatSession()
+  const [renaming, setRenaming] = useState(false)
+  const name = sessionNameOf(draft.title)
+  const version = draft.title.slice(name.length)
+  return (
+    <div className="flex flex-col gap-32">
+      <div
+        className="flex items-center gap-12 rounded-[20px] bg-surface-default p-16 shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)]"
+        style={{
+          border: '1px solid transparent',
+          backgroundImage:
+            'linear-gradient(var(--color-surface-default), var(--color-surface-default)), linear-gradient(45deg, #FF8514, #FFE270)',
+          backgroundOrigin: 'border-box',
+          backgroundClip: 'padding-box, border-box',
+        }}
+      >
+        <span className="flex size-36 shrink-0 items-center justify-center rounded-full bg-[#FFF1DB] text-text-primary">
+          <Captions size={20} strokeWidth={1.5} />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col gap-4">
+          <span className="text-[12px] font-light leading-[12px] text-[#525252]">Session Title</span>
+          <span className="truncate text-[14px] leading-[19px] text-text-primary">{draft.title}</span>
+        </span>
+        <button
+          type="button"
+          aria-label="Rename session"
+          onClick={() => setRenaming(true)}
+          className="u-press u-tap flex size-16 shrink-0 items-center justify-center text-text-primary"
+        >
+          <PencilLine size={16} strokeWidth={1.5} />
+        </button>
+      </div>
+
+      <div className="flex flex-col gap-16">
+        <h2 className="text-[14px] font-light leading-[16px] text-[#9A9A9A]">Session Script</h2>
+        <div className="flex flex-col gap-19 rounded-[20px] bg-surface-default p-16 shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)]">
+          {SESSION_SCRIPT.map((line, index) => (
+            <ScriptLine key={index} line={line} small />
+          ))}
+        </div>
+      </div>
+
+      {renaming && (
+        <RenameSessionSheet name={name} version={version} onSave={renameSession} onClose={() => setRenaming(false)} />
+      )}
+    </div>
+  )
+}
+
 export function SessionSettingsPage() {
   const navigate = useNavigate()
+  const v2 = useUiVersion() >= 2
   const [tab, setTab] = useState<Tab>('script')
   const [removed, setRemoved] = useState<Set<string>>(new Set())
   const [added, setAdded] = useState<Set<string>>(new Set())
@@ -222,50 +296,74 @@ export function SessionSettingsPage() {
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-style-title truncate text-text-primary">Session settings</h1>
+        <h1 className="text-style-title truncate text-text-primary">{v2 ? 'Settings' : 'Session settings'}</h1>
       </header>
 
       <div className="mx-auto w-full max-w-[402px] lg:max-w-[960px]">
         {/* Tabs scroll rather than shrink — a squeezed label is worse than one
             you have to nudge into view. */}
-        <div className="flex gap-8 overflow-x-auto px-20 pb-4 lg:px-24">
-          {TABS.map((item) => {
-            const Icon = item.icon
-            const active = tab === item.id
-            return (
-              <button
-                key={item.id}
-                type="button"
-                aria-pressed={active}
-                onClick={() => setTab(item.id)}
-                className={`u-press text-style-label flex h-38 shrink-0 items-center gap-6 whitespace-nowrap rounded-12 border px-16 ${
-                  active
-                    ? 'border-text-primary bg-text-primary text-text-inverse'
-                    : 'border-[#d6d6d6] bg-transparent text-text-primary'
-                }`}
-              >
-                <Icon size={15} />
-                {item.label}
-              </button>
-            )
-          })}
-          <button
-            type="button"
-            aria-label="General settings"
-            aria-pressed={tab === 'general'}
-            onClick={() => setTab('general')}
-            className={`u-press flex size-38 shrink-0 items-center justify-center rounded-12 border ${
-              tab === 'general'
-                ? 'border-text-primary bg-text-primary text-text-inverse'
-                : 'border-[#d6d6d6] bg-transparent text-text-primary'
-            }`}
-          >
-            <Settings2 size={16} />
-          </button>
-        </div>
+        {v2 ? (
+          <div className="flex gap-7 overflow-x-auto px-20 pt-20 lg:px-24">
+            {TABS_V2.map((item) => {
+              const Icon = item.icon
+              const active = tab === item.id
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setTab(item.id)}
+                  className={`u-press flex h-35 shrink-0 items-center gap-8 whitespace-nowrap rounded-12 border px-12 text-[12px] leading-[19px] ${
+                    active ? 'border-[#331B04] bg-[#331B04] text-white' : 'border-[#D6D6D6] bg-transparent text-text-primary'
+                  }`}
+                >
+                  <Icon size={16} strokeWidth={1.5} />
+                  {item.label}
+                </button>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="flex gap-8 overflow-x-auto px-20 pb-4 lg:px-24">
+            {TABS.map((item) => {
+              const Icon = item.icon
+              const active = tab === item.id
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setTab(item.id)}
+                  className={`u-press text-style-label flex h-38 shrink-0 items-center gap-6 whitespace-nowrap rounded-12 border px-16 ${
+                    active
+                      ? 'border-text-primary bg-text-primary text-text-inverse'
+                      : 'border-[#d6d6d6] bg-transparent text-text-primary'
+                  }`}
+                >
+                  <Icon size={15} />
+                  {item.label}
+                </button>
+              )
+            })}
+            <button
+              type="button"
+              aria-label="General settings"
+              aria-pressed={tab === 'general'}
+              onClick={() => setTab('general')}
+              className={`u-press flex size-38 shrink-0 items-center justify-center rounded-12 border ${
+                tab === 'general'
+                  ? 'border-text-primary bg-text-primary text-text-inverse'
+                  : 'border-[#d6d6d6] bg-transparent text-text-primary'
+              }`}
+            >
+              <Settings2 size={16} />
+            </button>
+          </div>
+        )}
 
-        <div key={tab} className="u-fade px-20 pt-20 lg:px-24">
-          {tab === 'script' && (
+        <div key={tab} className={`u-fade px-20 lg:px-24 ${v2 ? 'pt-32' : 'pt-20'}`}>
+          {tab === 'script' && v2 && <ScriptTabV2 />}
+          {tab === 'script' && !v2 && (
             <div className="flex flex-col gap-14">
               {SESSION_SCRIPT.map((line, index) => (
                 <ScriptLine key={index} line={line} />

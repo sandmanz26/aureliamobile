@@ -439,12 +439,24 @@ export function ChatPage() {
 
   // What was typed on Home arrives as the first thing said here, so the visitor
   // does not have to write it again — including after a detour through sign-in.
+  //
+  // Held until the thread is on the session the URL names (U041): an ask that
+  // arrives with /chat/:slug — the player's "Ask Aurelia" — used to be written
+  // into the thread that was open before, which openSession then replaced, so
+  // the question vanished and only a stray reply survived. Same race, and
+  // same fix, as the style changes below. The ref keeps the text after the
+  // route state is cleared.
+  const pendingAsk = useRef<string | null>(null)
+  if (ask && !askHandled.current && pendingAsk.current === null) pendingAsk.current = ask
   useEffect(() => {
-    if (!ask || askHandled.current) return
+    const text = pendingAsk.current
+    if (!text || askHandled.current) return
+    if (opened && opened.slug !== sessionSlug) return
     askHandled.current = true
+    pendingAsk.current = null
     setMessages((current) => [
       ...current,
-      { id: nextMessageId(), from: 'user', at: Date.now(), status: 'read', text: ask },
+      { id: nextMessageId(), from: 'user', at: Date.now(), status: 'read', text },
     ])
     setTyping(true)
     window.setTimeout(() => {
@@ -454,10 +466,10 @@ export function ChatPage() {
       // started composing the ask: "I can't sleep" and "I don't know what I'm
       // feeling" deserve different first answers — the second gets the
       // smaller questions, the first gets a proposal.
-      setMessages((current) => [...current, answerFor(ask, current)])
+      setMessages((current) => [...current, answerFor(text, current)])
     }, 1400)
     // Uncleared for the same reason as the fork's reply above.
-  }, [ask, setMessages, nextMessageId])
+    }, [ask, opened, sessionSlug, setMessages, nextMessageId])
 
   /**
    * A door's state is spent once it has been played out.

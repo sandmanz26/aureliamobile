@@ -226,6 +226,16 @@ export interface DraftVersion {
 /** The label the next build takes. Bumps the minor where there is one —
  *  v1.2 to v1.3 — the major where there is not, and starts a v2 where the
  *  name carries no version at all, which is what a published session's does. */
+/**
+ * The session's name without its version: "Sleep meditation v1.3" →
+ * "Sleep meditation". Renaming edits this part only (U041) — the version is
+ * what each build sets, so a person never types it and cannot break it.
+ */
+export function sessionNameOf(label: string) {
+  const match = /\s+v(\d+)(?:\.(\d+))?$/i.exec(label)
+  return match ? label.slice(0, match.index) : label
+}
+
 export function nextVersionLabel(label: string) {
   const match = /\s+v(\d+)(?:\.(\d+))?$/i.exec(label)
   if (!match) return `${label} v2`
@@ -282,6 +292,8 @@ interface ChatSessionValue {
    * their own ids, so it cannot go through `revertTo`.
    */
   pointAt: (cut: { id: string; label: string; slug: string }) => void
+  /** Rename the session: every cut keeps its own version, under the new name. */
+  renameSession: (name: string) => void
   /** Open an existing session's conversation, already made. */
   openSession: (session: SessionRecord) => void
   /** Next message id. A function rather than the ref itself: handing out a
@@ -363,6 +375,12 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
     },
     [versions, draft],
   )
+
+  const renameSession = useCallback((name: string) => {
+    const renamed = (label: string) => name + label.slice(sessionNameOf(label).length)
+    setVersions((list) => list.map((v) => ({ ...v, label: renamed(v.label) })))
+    setDraft((current) => ({ ...current, title: renamed(current.title) }))
+  }, [])
 
   const markPublished = useCallback(() => {
     setPublishedVersionId((current) => currentVersionId ?? current)
@@ -480,13 +498,13 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
       deckOpen, setDeckOpen,
       sessionSlug, openSession,
       draft, setDraft,
-      versions, currentVersionId, publishedVersionId, markPublished, markUnpublished, addVersion, revertTo, pointAt,
+      versions, currentVersionId, publishedVersionId, markPublished, markUnpublished, addVersion, revertTo, pointAt, renameSession,
       nextMessageId,
       reset,
     }),
     [
       messages, applied, sessionState, progress, deckOpen, sessionSlug, openSession, draft,
-      versions, currentVersionId, publishedVersionId, markPublished, markUnpublished, addVersion, revertTo, pointAt, nextMessageId, reset,
+      versions, currentVersionId, publishedVersionId, markPublished, markUnpublished, addVersion, revertTo, pointAt, renameSession, nextMessageId, reset,
     ],
   )
 

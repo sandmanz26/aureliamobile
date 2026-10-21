@@ -30,6 +30,10 @@ import type { ProfileOrigin } from '../lib/people'
 import { findSession } from '../lib/sessions'
 import { useUiVersion } from '../versions/useUiVersion'
 import { ShareSheet } from '../components/ui/ShareSheet'
+import { AnalysisShifts, AnalysisStatus, NextChapter, ProgressChart } from '../components/wellness/AnalysisParts'
+import { SessionFeedback } from '../components/wellness/SessionFeedback'
+import { analysisForSession, chapterBrief } from '../lib/wellnessAnalysis'
+import type { Analysis } from '../lib/wellnessAnalysis'
 import type { Named } from '../lib/named'
 
 /** Lines the session speaks, which the hero shows one at a time under the art.
@@ -212,6 +216,10 @@ export function PlayerPage() {
   // link, and the system sheet under "More"). See ShareSheet.
   const v2 = useUiVersion() >= 2
   const [shareOpen, setShareOpen] = useState(false)
+  // Version 2: a session you have an analysis for opens on your progress
+  // rather than on the catalogue's description (Figma "Session: Chat -
+  // Player", U041). Every other session keeps the drawer it had.
+  const analysis = v2 ? analysisForSession(slug) : undefined
   // Which cut of it. Progress's version cards ask for one by id; everything
   // else asks for the session, which is the version that is current.
   const versionId = params.get('v')
@@ -644,124 +652,257 @@ export function PlayerPage() {
           ref={scroller}
           className={`min-h-0 flex-1 px-20 pb-40 ${up ? 'overflow-y-auto' : 'overflow-hidden'}`}
         >
-          {checkIn && <SessionCheckIn onDismiss={() => setCheckIn(false)} />}
+          {analysis ? (
+            <AnalysisDrawer
+              analysis={analysis}
+              revealed={up}
+              title={named?.title ?? version?.title ?? session.title}
+              summary={session.summary}
+              tags={tags}
+              feedbackKey={version ? `${session.slug}#${version.id}` : session.slug}
+              playingId={versionId}
+            />
+          ) : (
+            <>
+            {checkIn && <SessionCheckIn onDismiss={() => setCheckIn(false)} />}
 
-          <div className="flex items-center gap-12">
-            <Link
-              to={profilePath(session.author, origin)}
-              aria-label={`Open ${session.author}'s profile`}
-              className="u-press flex min-w-0 items-center gap-8"
-            >
-              <PhotoCircle photo={session.authorPhoto} size={24} gradient={session.gradient} />
-              <span className="text-style-body truncate text-text-primary">{session.author}</span>
-              <ChevronRight size={16} className="shrink-0 text-icon-default" />
-            </Link>
-          </div>
-
-          <div className="mt-20 flex flex-col gap-8">
-            <h1 className="text-style-title text-text-primary">{named?.title ?? version?.title ?? session.title}</h1>
-
-            {/* Clamped to the frame's lines, with the frame's fade over the cut.
-                Expanding drops both, so "Read More" is a real disclosure rather
-                than a link to somewhere else. */}
-            <div
-              className="relative"
-              style={v2 ? { opacity: up ? 1 : 0, transition: 'opacity 240ms ease' } : undefined}
-            >
-              <p
-                className={`text-style-body-small font-light! text-text-secondary ${expanded ? '' : 'line-clamp-4'}`}
+            <div className="flex items-center gap-12">
+              <Link
+                to={profilePath(session.author, origin)}
+                aria-label={`Open ${session.author}'s profile`}
+                className="u-press flex min-w-0 items-center gap-8"
               >
-                {session.summary}
-              </p>
-              {!expanded && (
-                <span className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-surface-default to-transparent" />
-              )}
+                <PhotoCircle photo={session.authorPhoto} size={24} gradient={session.gradient} />
+                <span className="text-style-body truncate text-text-primary">{session.author}</span>
+                <ChevronRight size={16} className="shrink-0 text-icon-default" />
+              </Link>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setExpanded((current) => !current)}
-              className="text-style-body-small w-fit text-[#ff881b]"
-            >
-              {expanded ? 'Read Less' : 'Read More'}
-            </button>
-          </div>
+            <div className="mt-20 flex flex-col gap-8">
+              <h1 className="text-style-title text-text-primary">{named?.title ?? version?.title ?? session.title}</h1>
 
-          {/* This page used to keep its own divergent chip (a solid #FF881B
-              pill, citing a different Figma frame than SessionDetailPage's)
-              instead of sharing `TagRow` — that's what let this page's tags
-              go unnoticed through several rounds of fixing TagRow itself.
-              Same component everywhere now. */}
-          <div className="mt-20">
-            <TagRow tags={tags} />
-          </div>
-
-          {/* Same hand-off Wellness's own "Analyze my state" chips use: land
-              in the cockpit with the question already asked, rather than a
-              blank thread the user has to explain themselves into again. */}
-          <div className="-mx-20 mt-20 flex gap-12 overflow-x-auto px-20 pb-4">
-            <button
-              type="button"
-              onClick={() =>
-                navigate('/chat', {
-                  state: { ask: `Can you help me elaborate on my experience with "${session.title}"?` },
-                })
-              }
-              className="u-press flex h-40 shrink-0 items-center gap-8 whitespace-nowrap rounded-12 border border-border-default px-14 text-style-label text-text-primary"
-            >
-              <WandSparkles size={14} />
-              Elaborate on my experience
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/chat', { state: { ask: 'Suggest my morning boost' } })}
-              className="u-press flex h-40 shrink-0 items-center gap-8 whitespace-nowrap rounded-12 border border-border-default px-14 text-style-label text-text-primary"
-            >
-              <WandSparkles size={14} />
-              Suggest my morning boost
-            </button>
-          </div>
-
-          {/* What the session has done, as two figures rather than a sentence. */}
-          <div className="mt-24 grid grid-cols-2 gap-16">
-            {[
-              { value: session.plays, label: 'Played', icon: <Play size={14} /> },
-              { value: session.recreated, label: 'Recreated', icon: <Shuffle size={14} /> },
-            ].map((stat) => (
+              {/* Clamped to the frame's lines, with the frame's fade over the cut.
+                  Expanding drops both, so "Read More" is a real disclosure rather
+                  than a link to somewhere else. */}
               <div
-                key={stat.label}
-                className="flex flex-col items-center gap-4 rounded-16 border border-border-subtle bg-surface-default p-16"
+                className="relative"
+                style={v2 ? { opacity: up ? 1 : 0, transition: 'opacity 240ms ease' } : undefined}
               >
-                <p className="text-style-title-large-regular tabular-nums text-text-primary">{stat.value}</p>
-                <p className="text-style-label-regular flex items-center gap-6 text-text-secondary">
-                  {stat.icon}
-                  {stat.label}
+                <p
+                  className={`text-style-body-small font-light! text-text-secondary ${expanded ? '' : 'line-clamp-4'}`}
+                >
+                  {session.summary}
                 </p>
+                {!expanded && (
+                  <span className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-surface-default to-transparent" />
+                )}
               </div>
-            ))}
-          </div>
 
-          <section className="mt-24">
-            <h2 className="text-style-body text-text-primary">Recreate your own version</h2>
-            <div className="-mx-20 mt-16 flex gap-11 overflow-x-auto px-20 pb-4">
-              {RECOMMENDATIONS.map((recommendation) => (
-                <RecommendationCard
-                  key={recommendation.id}
-                  recommendation={recommendation}
-                  applied={false}
-                  onToggle={() => {}}
-                  variant="recreate"
-                />
+              <button
+                type="button"
+                onClick={() => setExpanded((current) => !current)}
+                className="text-style-body-small w-fit text-[#ff881b]"
+              >
+                {expanded ? 'Read Less' : 'Read More'}
+              </button>
+            </div>
+
+            {/* This page used to keep its own divergent chip (a solid #FF881B
+                pill, citing a different Figma frame than SessionDetailPage's)
+                instead of sharing `TagRow` — that's what let this page's tags
+                go unnoticed through several rounds of fixing TagRow itself.
+                Same component everywhere now. */}
+            <div className="mt-20">
+              <TagRow tags={tags} />
+            </div>
+
+            {/* Same hand-off Wellness's own "Analyze my state" chips use: land
+                in the cockpit with the question already asked, rather than a
+                blank thread the user has to explain themselves into again. */}
+            <div className="-mx-20 mt-20 flex gap-12 overflow-x-auto px-20 pb-4">
+              <button
+                type="button"
+                onClick={() =>
+                  navigate('/chat', {
+                    state: { ask: `Can you help me elaborate on my experience with "${session.title}"?` },
+                  })
+                }
+                className="u-press flex h-40 shrink-0 items-center gap-8 whitespace-nowrap rounded-12 border border-border-default px-14 text-style-label text-text-primary"
+              >
+                <WandSparkles size={14} />
+                Elaborate on my experience
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/chat', { state: { ask: 'Suggest my morning boost' } })}
+                className="u-press flex h-40 shrink-0 items-center gap-8 whitespace-nowrap rounded-12 border border-border-default px-14 text-style-label text-text-primary"
+              >
+                <WandSparkles size={14} />
+                Suggest my morning boost
+              </button>
+            </div>
+
+            {/* What the session has done, as two figures rather than a sentence. */}
+            <div className="mt-24 grid grid-cols-2 gap-16">
+              {[
+                { value: session.plays, label: 'Played', icon: <Play size={14} /> },
+                { value: session.recreated, label: 'Recreated', icon: <Shuffle size={14} /> },
+              ].map((stat) => (
+                <div
+                  key={stat.label}
+                  className="flex flex-col items-center gap-4 rounded-16 border border-border-subtle bg-surface-default p-16"
+                >
+                  <p className="text-style-title-large-regular tabular-nums text-text-primary">{stat.value}</p>
+                  <p className="text-style-label-regular flex items-center gap-6 text-text-secondary">
+                    {stat.icon}
+                    {stat.label}
+                  </p>
+                </div>
               ))}
             </div>
-          </section>
 
-          <section className="mt-24">
-            <h2 className="text-style-body text-text-primary">Details</h2>
-            <SessionDetails session={session} playingId={versionId} playBase={`/play/${session.slug}`} />
-          </section>
+            <section className="mt-24">
+              <h2 className="text-style-body text-text-primary">Recreate your own version</h2>
+              <div className="-mx-20 mt-16 flex gap-11 overflow-x-auto px-20 pb-4">
+                {RECOMMENDATIONS.map((recommendation) => (
+                  <RecommendationCard
+                    key={recommendation.id}
+                    recommendation={recommendation}
+                    applied={false}
+                    onToggle={() => {}}
+                    variant="recreate"
+                  />
+                ))}
+              </div>
+            </section>
+
+            <section className="mt-24">
+              <h2 className="text-style-body text-text-primary">Details</h2>
+              <SessionDetails session={session} playingId={versionId} playBase={`/play/${session.slug}`} />
+            </section>
+            </>
+          )}
         </div>
       </aside>
     </div>
+  )
+}
+
+/**
+ * The drawer on a session with an analysis (Figma 16886:1623, U041).
+ *
+ * At rest it peeks the status — "Great Progress!", the change since
+ * yesterday and a small ring — so the first thing under the art is whether
+ * this is working. Pulled up, in the frame's order: the shifts and the
+ * chapter chart, Go to Analytics / Ask Aurelia, Feedback, About this session
+ * (what the old drawer led with), and Next chapter with its proposals.
+ * Session details (versions, publishing) stay at the foot.
+ *
+ * Feedback replaces the end-of-session check-in here, rather than asking the
+ * same thing twice.
+ */
+function AnalysisDrawer({
+  analysis,
+  revealed,
+  title,
+  summary,
+  tags,
+  feedbackKey,
+  playingId,
+}: {
+  analysis: Analysis
+  /** Half or fully open. At the peek only the status shows. */
+  revealed: boolean
+  title: string
+  summary: string
+  tags: string[]
+  feedbackKey: string
+  playingId: string | null
+}) {
+  const navigate = useNavigate()
+  const session = findSession(analysis.sessionSlug)
+  const [expanded, setExpanded] = useState(false)
+
+  function askAurelia() {
+    navigate(`/chat/${analysis.sessionSlug}`, {
+      state: { ask: `How can I get closer to "${analysis.objective}" in my next chapter?` },
+    })
+  }
+
+  return (
+    <>
+      <div className="px-12">
+        <AnalysisStatus analysis={analysis} ring />
+      </div>
+      <div style={{ opacity: revealed ? 1 : 0, transition: 'opacity 240ms ease' }}>
+        <div className="mt-24 flex flex-col gap-24 px-12">
+          <AnalysisShifts analysis={analysis} />
+        </div>
+        <section className="mt-24 -mx-4" aria-label="Progress by chapter">
+          <ProgressChart analysis={analysis} />
+        </section>
+
+        <div className="mt-24 grid grid-cols-2 gap-8">
+          <button
+            type="button"
+            onClick={() => navigate(`/wellness/analysis/${analysis.id}`)}
+            className="u-press flex h-46 items-center justify-center rounded-16 border border-[#331B04] text-[16px] leading-[19px] text-text-primary"
+          >
+            Go to Analytics
+          </button>
+          <button
+            type="button"
+            onClick={askAurelia}
+            className="u-press flex h-46 items-center justify-center rounded-16 border border-[#331B04] text-[16px] leading-[19px] text-text-primary"
+          >
+            Ask Aurelia
+          </button>
+        </div>
+
+        <div className="mt-40">
+          <SessionFeedback sessionKey={feedbackKey} />
+        </div>
+
+        <section className="mt-48 flex flex-col gap-12" aria-label="About this session">
+          <h2 className="text-[14px] leading-[21px] text-text-primary">About this session</h2>
+          <Link
+            to={`/session/${analysis.sessionSlug}`}
+            className="u-press flex items-center justify-between gap-12 text-[20px] leading-[30px] text-text-primary"
+          >
+            <span className="min-w-0 truncate">{title}</span>
+            <ChevronRight size={20} className="shrink-0" />
+          </Link>
+          <div className="relative">
+            <p className={`text-[14px] font-light leading-[21px] text-text-secondary ${expanded ? '' : 'line-clamp-3'}`}>{summary}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="text-style-body-small w-fit text-[#ff881b]"
+          >
+            {expanded ? 'Read Less' : 'Read More'}
+          </button>
+          <div className="mt-8">
+            <TagRow tags={tags} />
+          </div>
+        </section>
+
+        <div className="-mx-20 mt-48">
+          <NextChapter
+            analysis={analysis}
+            inset={20}
+            onCreate={() => navigate(`/chat/${analysis.sessionSlug}`, { state: { styleChanges: chapterBrief(analysis) } })}
+            secondary={{ label: 'Ask Aurelia', onClick: askAurelia }}
+          />
+        </div>
+
+        {session && (
+          <section className="mt-40">
+            <h2 className="text-style-body text-text-primary">Details</h2>
+            <SessionDetails session={session} playingId={playingId} playBase={`/play/${session.slug}`} />
+          </section>
+        )}
+      </div>
+    </>
   )
 }
