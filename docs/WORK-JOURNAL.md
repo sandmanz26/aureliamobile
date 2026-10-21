@@ -63,6 +63,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J019 | 2026-10-20 | Code | Figma "My Wellness – Connect" | U038 |
 | J020 | 2026-10-20 | Code | Sheet width + v3 change summary + every build kept | U038 |
 | J021 | 2026-10-20 | Process | Record everything in an md | this file |
+| J022 | 2026-10-21 | Ops | Figma pairing code | — |
 
 ---
 
@@ -152,3 +153,6 @@ transcript and the update log. Everything from J018 on was written at the time.
 ### J021 — Record everything in an md
 - **Asked:** "setiap hal kamu harus catat dalam sebuah md, tidak boleh terlewatkan".
 - **Done:** created this journal with rules, open items, an index, and reconstructed entries J001–J020. Added the rule to `CLAUDE.md` so every future session keeps it.
+
+### J022 — Figma pairing
+- **Ops:** a pairing code was issued for the Figma Desktop Bridge (Cloud Mode). It expires in 5 minutes and is not recorded.
