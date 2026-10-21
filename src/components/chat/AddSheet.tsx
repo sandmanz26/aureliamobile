@@ -1,6 +1,8 @@
 import { createPortal } from 'react-dom'
 import { ArrowUp, Check, Image, Music, Plus, Sparkles, X } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { FilterChips } from './FilterChips'
+import type { ChangeKind, FilterId } from './FilterChips'
 import { useUiVersion } from '../../versions/useUiVersion'
 import orb432hz from '../../assets/orb-432hz.png'
 import orbIncreaseYellow from '../../assets/orb-increase-yellow.png'
@@ -15,6 +17,8 @@ export interface AddOption {
    *  channel they would change instead — the two are different claims. */
   improveScore?: string
   channel?: 'Audio' | 'Visuals'
+  /** What it acts on — the sheet's filter (U045). */
+  kind: ChangeKind
 }
 
 /** What Aurelia can improve from what it already knows about this session. */
@@ -25,6 +29,7 @@ const FROM_DIAGNOSIS: AddOption[] = [
     description: 'Helps bring joy, aligned with your goal',
     improveScore: '3%',
     orb: orbIncreaseYellow,
+    kind: 'visual',
   },
   {
     id: 'movement',
@@ -32,6 +37,7 @@ const FROM_DIAGNOSIS: AddOption[] = [
     description: 'Reduced movement helps your nervous system to calm down',
     improveScore: '6%',
     orb: orbLessMovement,
+    kind: 'movement',
   },
 ]
 
@@ -43,6 +49,7 @@ const EXPERIMENTS: AddOption[] = [
     description: 'Experiment adding a touch of ancient Greece flute',
     channel: 'Audio',
     orb: orb432hz,
+    kind: 'sound',
   },
   {
     id: 'art-deco',
@@ -50,6 +57,7 @@ const EXPERIMENTS: AddOption[] = [
     description: 'How about adding an Art Deco style to the visuals?',
     channel: 'Visuals',
     orb: orbLessMovement,
+    kind: 'visual',
   },
 ]
 
@@ -72,12 +80,54 @@ interface AddSheetProps {
  * the same kind of claim, and a single undifferentiated list would present
  * them as if they were.
  */
+function matches(option: AddOption, filter: FilterId, added: string[]) {
+  return filter === 'all' ? true : filter === 'selected' ? added.includes(option.id) : option.kind === filter
+}
+
+/**
+ * The filter at the top of the sheet (v2+, U045; moved here from the thread
+ * on team feedback). Narrows both sections at once; a section with nothing
+ * left is hidden, and an empty result offers the way back to All.
+ */
+function useSheetFilter(added: string[]) {
+  const [filter, setFilter] = useState<FilterId>('all')
+  const count = (id: FilterId) => ALL_OPTIONS.filter((o) => matches(o, id, added)).length
+  const only = (options: AddOption[]) => options.filter((o) => matches(o, filter, added))
+  return { filter, setFilter, count, only }
+}
+
+function NothingHere({ filter, onAll }: { filter: FilterId; onAll: () => void }) {
+  return (
+    <div className="flex min-h-120 w-full flex-col items-start justify-center gap-8 rounded-[20px] border border-dashed border-border-subtle px-16 py-20">
+      <p className="text-style-body-small text-text-secondary">
+        {filter === 'selected' ? 'Nothing selected yet.' : 'No changes of this kind here.'}
+      </p>
+      <button type="button" onClick={onAll} className="text-style-body-small text-[#ff881b]">
+        Show all {ALL_OPTIONS.length}
+      </button>
+    </div>
+  )
+}
+
+/** Largest predicted gain among what is picked — never a sum (review D4). */
+function bestExpected(added: string[]) {
+  return ALL_OPTIONS.filter((o) => added.includes(o.id) && o.improveScore).reduce(
+    (max, o) => Math.max(max, Number.parseFloat(o.improveScore ?? '0')),
+    0,
+  )
+}
+
 export function AddSheet(props: AddSheetProps) {
   const v3 = useUiVersion() >= 3
   return v3 ? <AddSheetV3 {...props} /> : <AddSheetV1 {...props} />
 }
 
 function AddSheetV1({ added, onToggle, onApply, onClose }: AddSheetProps) {
+  const v2 = useUiVersion() >= 2
+  const { filter, setFilter, count, only } = useSheetFilter(added)
+  const diagnosis = v2 ? only(FROM_DIAGNOSIS) : FROM_DIAGNOSIS
+  const experiments = v2 ? only(EXPERIMENTS) : EXPERIMENTS
+  const best = bestExpected(added)
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.key === 'Escape') onClose()
@@ -107,8 +157,31 @@ function AddSheetV1({ added, onToggle, onApply, onClose }: AddSheetProps) {
           <X size={20} />
         </button>
 
-        <Section title="Improve based on diagnosis" options={FROM_DIAGNOSIS} added={added} onToggle={onToggle} />
-        <Section title="Experiment" options={EXPERIMENTS} added={added} onToggle={onToggle} />
+        {v2 && (
+          <div className="-mt-8">
+            <FilterChips filter={filter} onChange={setFilter} count={count} />
+            {/* What the picked set adds up to — the largest expected gain,
+                not a sum: two changes' predictions do not stack (the thread's
+                old "36% combined" did, review D4). */}
+            <p className="text-style-caption mt-8 flex items-center gap-6 text-text-secondary" aria-live="polite">
+              <span className="tabular-nums">
+                {added.length} of {ALL_OPTIONS.length} selected
+              </span>
+              {best > 0 && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span className="rounded-full bg-[#ECFBED] px-6 py-2 text-success-600 tabular-nums">↑ up to {best}% expected</span>
+                </>
+              )}
+            </p>
+          </div>
+        )}
+
+        {diagnosis.length > 0 && (
+          <Section title="Improve based on diagnosis" options={diagnosis} added={added} onToggle={onToggle} />
+        )}
+        {experiments.length > 0 && <Section title="Experiment" options={experiments} added={added} onToggle={onToggle} />}
+        {diagnosis.length + experiments.length === 0 && <NothingHere filter={filter} onAll={() => setFilter('all')} />}
 
         <button
           type="button"
@@ -237,6 +310,9 @@ function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel }: AddSheetPr
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
+  const { filter, setFilter, count, only } = useSheetFilter(added)
+  const diagnosis = only(FROM_DIAGNOSIS)
+  const experimentOptions = only(EXPERIMENTS)
   const picked = ALL_OPTIONS.filter((option) => added.includes(option.id))
   const predicted = picked.filter((option) => option.improveScore)
   const experiments = picked.filter((option) => !option.improveScore)
@@ -266,21 +342,30 @@ function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel }: AddSheetPr
           </button>
         </div>
 
-        <div className="mt-16 flex-1 overflow-y-auto px-20 pb-16">
-          <ListSection
-            title="Based on your diagnosis"
-            hint="Aurelia expects these to help."
-            options={FROM_DIAGNOSIS}
-            added={added}
-            onToggle={onToggle}
-          />
-          <ListSection
-            title="Experiments"
-            hint="Untested — you’ll find out when you listen."
-            options={EXPERIMENTS}
-            added={added}
-            onToggle={onToggle}
-          />
+        <div className="mt-16 px-20">
+          <FilterChips filter={filter} onChange={setFilter} count={count} />
+        </div>
+
+        <div className="mt-12 flex-1 overflow-y-auto px-20 pb-16">
+          {diagnosis.length > 0 && (
+            <ListSection
+              title="Based on your diagnosis"
+              hint="Aurelia expects these to help."
+              options={diagnosis}
+              added={added}
+              onToggle={onToggle}
+            />
+          )}
+          {experimentOptions.length > 0 && (
+            <ListSection
+              title="Experiments"
+              hint="Untested — you’ll find out when you listen."
+              options={experimentOptions}
+              added={added}
+              onToggle={onToggle}
+            />
+          )}
+          {diagnosis.length + experimentOptions.length === 0 && <NothingHere filter={filter} onAll={() => setFilter('all')} />}
         </div>
 
         {/* The summary: what Apply will actually do. */}

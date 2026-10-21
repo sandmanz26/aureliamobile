@@ -5,8 +5,6 @@ import { RECOMMENDATIONS } from '../../chat/ChatSessionContext'
 import { AttachedSession } from './AttachedSession'
 import { RecommendationCard } from './RecommendationCard'
 import { RecommendationDeck } from './RecommendationDeck'
-import { RecommendationFilter } from './RecommendationFilter'
-import { useUiVersion } from '../../versions/useUiVersion'
 import { VoiceMessage } from './VoiceMessage'
 
 interface ChatMessageItemProps {
@@ -162,7 +160,6 @@ export function ChatMessageItem({
 }: ChatMessageItemProps) {
   const reply = onReply ? () => onReply(message) : undefined
   const flashRing = flash ? 'rounded-12 bg-[#FFF1DB] transition-colors duration-700' : 'transition-colors duration-700'
-  const v2 = useUiVersion() >= 2
   // Stacked full width, not a scrolling rail: these are read one after
   // another and the longest runs to two lines, which a rail would either
   // clip or leave ragged.
@@ -188,9 +185,9 @@ export function ChatMessageItem({
         <AttachedSession slug={attached.session} />
       </div>
     ) : attached === 'recommendations' && showRecommendations ? (
-      deckOpen && canApply && v2 ? (
-        <RecommendationFilter recommendations={RECOMMENDATIONS} applied={applied} onToggle={onToggleRecommendation} />
-      ) : deckOpen && canApply ? (
+      // The opened row is the plain one in every version: v2's filter moved
+      // from here to the top of the "+" sheet (U045, team feedback).
+      deckOpen && canApply ? (
         <div className="u-message -mx-20 mt-12 flex gap-11 overflow-x-auto px-20 pb-4">
           {RECOMMENDATIONS.map((recommendation) => (
             <RecommendationCard
