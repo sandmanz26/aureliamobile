@@ -2,6 +2,8 @@ import { Check, Eye, EyeOff, Lock, Mail, User } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
+import { onboarded } from '../../lib/onboarding'
+import { useUiVersion } from '../../versions/useUiVersion'
 import { PageMeta } from '../../components/PageMeta'
 import { Button } from '../../components/ui/Button'
 import { TextField } from '../../components/ui/TextField'
@@ -25,6 +27,7 @@ export function SignUpPage() {
   const location = useLocation()
   const { signIn } = useAuth()
   const from = (location.state as { from?: { pathname: string; state?: unknown } } | null)?.from
+  const v4 = useUiVersion() >= 4
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -42,6 +45,12 @@ export function SignUpPage() {
 
   function complete() {
     signIn()
+    // v4 (U047): a first sign-in on this browser goes through onboarding,
+    // which carries the destination and offers it again at the end.
+    if (v4 && !onboarded()) {
+      navigate('/welcome', { replace: true, state: { from } })
+      return
+    }
     navigate(from?.pathname ?? '/home', { replace: true, state: from?.state })
   }
 

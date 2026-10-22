@@ -1,6 +1,8 @@
 import { ArrowLeft } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
+import { onboarded } from '../../lib/onboarding'
+import { useUiVersion } from '../../versions/useUiVersion'
 import authHero from '../../assets/auth-hero.png'
 import { PageMeta } from '../../components/PageMeta'
 import { AureliaLogo } from '../../components/ui/AureliaLogo'
@@ -31,9 +33,16 @@ export function SignInPage() {
   const location = useLocation()
   const { signIn } = useAuth()
   const from = (location.state as { from?: { pathname: string; state?: unknown } } | null)?.from
+  const v4 = useUiVersion() >= 4
 
   function complete() {
     signIn()
+    // v4 (U047): a first sign-in on this browser goes through onboarding,
+    // which carries the destination and offers it again at the end.
+    if (v4 && !onboarded()) {
+      navigate('/welcome', { replace: true, state: { from } })
+      return
+    }
     navigate(from?.pathname ?? '/home', { replace: true, state: from?.state })
   }
 

@@ -66,6 +66,19 @@ interface Rule {
 export type { Rule }
 
 export const RULES: Rule[] = [
+  // ------------------------------------------------------- onboarding --
+  // U047 (v4): the brief onboarding writes opens with "my first session".
+  // First of all, because the brief carries a length, a voice and a feeling,
+  // each of which some later rule would answer on its own — "10 minutes"
+  // would get the duration reply to a person who has just set everything up.
+  {
+    id: 'first-session',
+    test: /\bmy first session\b/,
+    reply: {
+      text: 'Thank you — that is enough to start. I will build your first session around it. Listen once, tell me how it felt, and the next chapter changes with you.',
+      proposes: true,
+    },
+  },
   // ------------------------------------------------------------- no answer --
   // First, deliberately. "I don't know" contains words other rules would
   // happily match, and a bare "?" would fall through to the fallback, which

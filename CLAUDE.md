@@ -442,3 +442,6 @@ explicit step. Versions are cumulative since U038: v2's CSS is scoped
 `:root[data-ui-version]` (any version above 1) and code checks
 `useUiVersion() >= N`, so **v3 = v2 + the change sheet summary and builds kept
 in the thread**.
+**v4 = v3 + first-run onboarding** (U047): `/welcome`, shown after a first
+sign-in/sign-up on a browser (`aurelia.onboarding` in localStorage — there
+are no accounts); Settings → Replay onboarding runs it again.

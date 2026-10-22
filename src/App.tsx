@@ -35,6 +35,7 @@ const NotificationsPage = lazy(() => import('./pages/NotificationsPage').then((m
 const SessionSettingsPage = lazy(() => import('./pages/SessionSettingsPage').then((m) => ({ default: m.SessionSettingsPage })))
 const WellnessPage = lazy(() => import('./pages/WellnessPage').then((m) => ({ default: m.WellnessPage })))
 const WellnessAnalysisPage = lazy(() => import('./pages/WellnessAnalysisPage').then((m) => ({ default: m.WellnessAnalysisPage })))
+const OnboardingPage = lazy(() => import('./pages/OnboardingPage').then((m) => ({ default: m.OnboardingPage })))
 const ProfilePage = lazy(() => import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage })))
 const SeeAllPage = lazy(() => import('./pages/SeeAllPage').then((m) => ({ default: m.SeeAllPage })))
 const ExplorePage = lazy(() => import('./pages/ExplorePage').then((m) => ({ default: m.ExplorePage })))
@@ -213,6 +214,18 @@ export default function App() {
           {/* Full-bleed, outside AppLayout: the art runs to the top edge and the
               screen carries its own back/share header, so the shell's status
               band and drawer would both sit on top of the cover. */}
+          {/* v4 (U047): first-run onboarding. Full screen, outside the shell
+              like the player — it is a step before the app, not a page in it. */}
+          <Route
+            path="/welcome"
+            element={
+              <RequireAuth>
+                <Suspense fallback={<PageSkeleton />}>
+                  <OnboardingPage />
+                </Suspense>
+              </RequireAuth>
+            }
+          />
           <Route
             path="/play/:slug"
             element={

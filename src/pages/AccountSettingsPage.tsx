@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowLeft, Check, ChevronUp, CircleDollarSign, LogOut, Plus, User, UserX } from 'lucide-react'
+import { ArrowLeft, Check, ChevronUp, CircleDollarSign, LogOut, Plus, RotateCcw, User, UserX } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { GoogleMark } from './auth/AuthShell'
 import { useAuth } from '../auth/AuthContext'
 import { PageMeta } from '../components/PageMeta'
 import { CoinPill } from '../components/ui/CoinPill'
+import { resetOnboarding } from '../lib/onboarding'
+import { useUiVersion } from '../versions/useUiVersion'
 
 /** One tappable line in the list under the accounts block. Plain — every row
  *  here reads the same, Account Deletion included. */
@@ -184,6 +186,7 @@ function SwitchAccountDialog({
 
 export function AccountSettingsPage() {
   const { signOut } = useAuth()
+  const v4 = useUiVersion() >= 4
   const navigate = useNavigate()
   const [accountsOpen, setAccountsOpen] = useState(true)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
@@ -305,6 +308,18 @@ export function AccountSettingsPage() {
           label="Credit Redemption"
           onClick={() => navigate('/credits')}
         />
+        {/* v4 (U047): onboarding again, from scratch — for someone whose goal
+            has changed, and for whoever is demoing the first run. */}
+        {v4 && (
+          <Row
+            icon={<RotateCcw size={24} />}
+            label="Replay onboarding"
+            onClick={() => {
+              resetOnboarding()
+              navigate('/welcome')
+            }}
+          />
+        )}
         <Row icon={<UserX size={24} />} label="Account Deletion" onClick={() => setConfirmingDelete(true)} />
         <Row icon={<LogOut size={24} />} label="Log Out" onClick={endSession} />
       </div>

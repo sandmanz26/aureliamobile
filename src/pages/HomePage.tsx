@@ -1,23 +1,16 @@
 import {
   ArrowRight,
   ArrowUp,
-  BatteryLow,
-  Brain,
-  CircleHelp,
-  CloudRain,
   Coins,
   Menu,
   Mic,
-  Moon,
   Music,
   Play,
   Sparkles,
-  Target,
   TrendingUp,
   Users,
   Waves,
   Wind,
-  Zap,
 } from 'lucide-react'
 import { useState } from 'react'
 import type { CSSProperties } from 'react'
@@ -25,6 +18,7 @@ import { useAuth } from '../auth/AuthContext'
 import { useSignInGate } from '../auth/useSignInGate'
 import aureliaNetwork from '../assets/aurelia-network.png'
 import liveSessionsMap from '../assets/live-sessions-map.png'
+import { FEELINGS, MAX_FEELINGS, feelingSentence } from '../lib/feelings'
 import { useUiVersion } from '../versions/useUiVersion'
 import { useTypewriterPlaceholder } from '../versions/useTypewriterPlaceholder'
 import { PageMeta } from '../components/PageMeta'
@@ -62,37 +56,6 @@ const EXAMPLE_PROMPTS = [
   'Breathwork for a nervous morning…',
   'Something to help me fall asleep faster…',
 ]
-
-/**
- * "How are you feeling?" — a way in for people who cannot put it into words
- * (U036). Picking one or more writes the sentence into the Ask field, where it
- * can be read and edited before sending; nothing is sent on a tap. Each
- * `says` is phrased to reach the matching reply rule in lib/replies.ts, so
- * the cockpit answers the feeling rather than a generic line. "Not sure" is
- * exclusive and asks Aurelia to help name it — she answers with smaller,
- * nameable states to pick from.
- */
-const FEELINGS = [
-  { id: 'sleep', label: 'Hard to sleep', icon: Moon, says: 'I can’t sleep well' },
-  { id: 'stressed', label: 'Stressed', icon: Zap, says: 'I’m stressed' },
-  { id: 'anxious', label: 'Anxious', icon: Waves, says: 'I feel anxious' },
-  { id: 'racing', label: 'Overthinking', icon: Brain, says: 'my mind keeps racing and I feel tense' },
-  { id: 'focus', label: 'Can’t focus', icon: Target, says: 'I can’t focus' },
-  { id: 'energy', label: 'Low energy', icon: BatteryLow, says: 'I have no energy' },
-  { id: 'low', label: 'Feeling low', icon: CloudRain, says: 'I feel drained and low' },
-  { id: 'unsure', label: 'Not sure', icon: CircleHelp, says: '' },
-] as const
-const UNSURE_ASK = 'I don’t know exactly what I’m feeling right now — can you help me figure it out?'
-/** At most this many at once — past three the sentence stops being one. */
-const MAX_FEELINGS = 3
-
-function feelingSentence(ids: string[]) {
-  if (ids.includes('unsure')) return UNSURE_ASK
-  const parts = FEELINGS.filter((f) => ids.includes(f.id)).map((f) => f.says)
-  if (!parts.length) return ''
-  const joined = parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`
-  return `${joined.charAt(0).toUpperCase()}${joined.slice(1)}.`
-}
 
 /** Version 2: where the live dots baked into the map art sit, in % of the card. */
 const LIVE_DOTS = [

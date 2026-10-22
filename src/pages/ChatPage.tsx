@@ -82,6 +82,8 @@ export function ChatPage() {
         startVoice?: boolean
         ask?: string
         fresh?: boolean
+        /** v4 onboarding (U047): the first session's name, set after the reset. */
+        firstTitle?: string
         /** A Quick Start card's id — Explore's "Create". */
         start?: string
         /** A cut picked in the Insights > Chapters list, to go back to. */
@@ -210,7 +212,12 @@ export function ChatPage() {
     // session" opened on somebody else's, and the first thing the screen did
     // was misrepresent itself.
     reset([])
-  }, [location.key, routeState?.fresh, routeState?.start, routeState?.recreate, reset])
+    // Onboarding's first session gets a name from the goal rather than the
+    // demo draft's "Sleep meditation" — someone who asked to focus should
+    // not see their first build called a sleep meditation.
+    const firstTitle = routeState.firstTitle
+    if (firstTitle) setDraft((current) => ({ ...current, title: firstTitle }))
+  }, [location.key, routeState?.fresh, routeState?.start, routeState?.recreate, routeState?.firstTitle, reset, setDraft])
 
   // Point the thread at the session in the URL. openSession no-ops when it is
   // already on that one, which is what makes going off to play it and coming

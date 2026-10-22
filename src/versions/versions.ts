@@ -59,7 +59,7 @@ export const UI_VERSIONS: UiVersion[] = [
         group: 'Chat',
         items: [
           'New chat: a soft warm background drifts behind a breathing orb, and the greeting rises in.',
-          'Opened recommendations get a filter: All, Visual, Sound, Movement, Selected — with counts, a sliding highlight, and a live “N of M selected · ↑ X% combined” line.',
+          'The “+” sheet gets a filter: All, Visual, Sound, Movement, Selected — with counts, a sliding highlight, and a live “N of M selected · ↑ up to X% expected” line.',
           'Voice input: the black button shows Pause / Play, because that is what it does.',
         ],
       },
@@ -110,6 +110,30 @@ export const UI_VERSIONS: UiVersion[] = [
       {
         group: 'Good to know',
         items: ['Includes everything in Version 2.', 'Switching to v2 or v1 restores those exactly.'],
+      },
+    ],
+  },
+  {
+    id: 4,
+    name: 'Version 4',
+    summary: 'Everything in v3, plus onboarding: a first sign-in gets a short, skippable setup that ends with Aurelia building your first session.',
+    changes: [
+      {
+        group: 'Onboarding',
+        items: [
+          'After your first sign-in or sign-up on a device: Welcome (how Aurelia works, in three steps) → your goal → how you feel today (optional) → how sessions should sound (pre-filled) → a summary you can edit.',
+          'The goal becomes your first session’s objective; everything else becomes your first message to Aurelia, shown word for word before you send it.',
+          'Every step has Skip, and Skip keeps what you answered. If you signed in to do something specific, the last step offers “Continue where I was”.',
+          'Settings → Replay onboarding runs it again from the start.',
+        ],
+      },
+      {
+        group: 'Good to know',
+        items: [
+          'Includes everything in Version 3.',
+          'Answers are kept on this device only — there are no accounts yet, so a new browser asks again.',
+          'To see it again on staging: Settings → Replay onboarding, or clear site data.',
+        ],
       },
     ],
   },
