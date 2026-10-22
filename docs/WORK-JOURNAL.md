@@ -80,6 +80,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J030 | 2026-10-21 | Code | Eugene feedback: move the filter into the "+" sheet | U045 |
 | J031 | 2026-10-21 | Ops | Promote U045 to production | U046 |
 | J032 | 2026-10-22 | Code | v4: onboarding for first login | U047 |
+| J033 | 2026-10-22 | Question | "Try again" after v4 | — |
 
 ---
 
@@ -249,3 +250,8 @@ transcript and the update log. Everything from J018 on was written at the time.
   - Every step is skippable without losing answers, and the user's original destination is kept.
   - The first session starts in a fresh thread named after the goal, not in the demo conversation.
 - **Open:** O13 (per-account onboarding, real defaults, and whether v4 goes to production).
+
+### J033 — "Try again"
+- **Asked:** "Try again", with no further detail, right after U047 was delivered. The session had restarted in between.
+- **Checked:** U047 is intact. `web_app` and `admin_cms` are at `0d05c4a`, `web_prod` at `1fa7d83`, and the working tree is clean.
+- **Answered:** restated the result and asked whether it meant the onboarding not showing on staging (a deploy delay, or v4 not picked / onboarding already completed in that browser) or a different onboarding design.
