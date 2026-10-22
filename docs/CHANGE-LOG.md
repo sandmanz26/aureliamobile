@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-22 — Prompt for reusing click insights + review pins (J034)
+
+New `docs/prompts/tracking-and-review-pins.md`: a paste-ready prompt for an AI coding agent to rebuild click insights (tracking, heatmap, review page) and the floating review-pin button in another project. Docs only. Branches: `web_app`, `admin_cms`.
+
 ### 2026-10-22 — Design v4: first-run onboarding (U047)
 
 New staging design **Version 4** (v3 plus onboarding). The first sign-in on a device opens a short, skippable setup: welcome, your goal, how you feel today, how sessions should sound, and an editable summary that shows your first message to Aurelia word for word. It ends in a fresh chat building your first session, named after your goal and measured against it. Skip keeps your answers and takes you where you were going. Settings has Replay onboarding. Answers stay on the device (no accounts yet). Production is unchanged (pinned to v2). **mobile_app does not have this.** Branches: `web_app`, `admin_cms`. Not `web_prod`.

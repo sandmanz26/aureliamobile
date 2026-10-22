@@ -81,6 +81,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J031 | 2026-10-21 | Ops | Promote U045 to production | U046 |
 | J032 | 2026-10-22 | Code | v4: onboarding for first login | U047 |
 | J033 | 2026-10-22 | Question | "Try again" after v4 | — |
+| J034 | 2026-10-22 | Doc | Prompt to install click tracking + the floating review button elsewhere | docs only |
 
 ---
 
@@ -255,3 +256,8 @@ transcript and the update log. Everything from J018 on was written at the time.
 - **Asked:** "Try again", with no further detail, right after U047 was delivered. The session had restarted in between.
 - **Checked:** U047 is intact. `web_app` and `admin_cms` are at `0d05c4a`, `web_prod` at `1fa7d83`, and the working tree is clean.
 - **Answered:** restated the result and asked whether it meant the onboarding not showing on staging (a deploy delay, or v4 not picked / onboarding already completed in that browser) or a different onboarding design.
+
+### J034 — A prompt to reuse tracking and the comment button elsewhere
+- **Asked:** a prompt covering the user tracking (click insights) and the floating comment button (review annotations), to install them in another project.
+- **Delivered:** `docs/prompts/tracking-and-review-pins.md`. It is written from the actual code (tracker, `/api/clicks`, insights page, heatmap, annotator, `/api/annotations`, the .txt format) and kept stack-agnostic with placeholders. It covers privacy rules, per-deployment scoping, the `configured:false` fallback, validation, the UI, and a browser verification checklist.
+- **Decided:** the prompt sets production tracking **off until consent is decided**, unlike Aurelia today, where it is on (O1 #15). This is called out in the file.
