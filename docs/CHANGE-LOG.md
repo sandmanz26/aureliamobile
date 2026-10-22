@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-22 — Design v4: first-run onboarding (U047)
+
+New staging design **Version 4** (v3 plus onboarding). The first sign-in on a device opens a short, skippable setup: welcome, your goal, how you feel today, how sessions should sound, and an editable summary that shows your first message to Aurelia word for word. It ends in a fresh chat building your first session, named after your goal and measured against it. Skip keeps your answers and takes you where you were going. Settings has Replay onboarding. Answers stay on the device (no accounts yet). Production is unchanged (pinned to v2). **mobile_app does not have this.** Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-21 — Production promoted again (U046)
 
 `web_prod` fast-forwarded from `2a2a376` to `web_app`, carrying U045 (the filter in the "+" sheet) to production. Branches: `web_prod` = `web_app` = `admin_cms`. `mobile_app` unchanged.

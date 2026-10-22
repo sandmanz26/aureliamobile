@@ -84,6 +84,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U044 | (this log commit) | 2026-10-21 | Production: `web_prod` fast-forwarded from `4140e59` to `web_app` (U030–U043). | — |
 | U045 | `8286ffb` | 2026-10-21 17:48 | Change filter moved from the thread's opened deck into the "+" sheet (v2 + v3); summary shows the largest gain, not a sum. | [patch](patches/U045-8286ffb.patch) |
 | U046 | (this log commit) | 2026-10-21 | Production: `web_prod` fast-forwarded from `2a2a376` to `web_app` (U045). | — |
+| U047 | `720e50a` | 2026-10-22 06:14 | Design v4 = v3 + first-run onboarding (`/welcome`): goal, feeling, style, editable summary → first session; Skip keeps answers; Replay in Settings. | [patch](patches/U047-720e50a.patch) |
 
 ## Entries
 
@@ -743,3 +744,50 @@ Production (`web_prod`) is never touched by these updates unless asked.
 - **What moved:** `web_prod` went from `2a2a376` (U044) to this log commit: U045 (the change filter moved into the "+" sheet, with the largest gain shown instead of a sum) plus its logs.
 - **Production specifics:** pinned to v2, so production gets the v2 sheet with the chips and the "N of 4 selected · up to X% expected" line. A production-mode build compiled before the push. Version stays `0.1.0`.
 - **Undo:** `git push --force-with-lease origin 2a2a376:web_prod`, only on explicit request.
+
+### U047 — Design v4: first-run onboarding
+
+- **Commit:** `720e50a` · pushed 2026-10-22 06:14:32 UTC · `web_app` + `admin_cms` · not on `web_prod` (production is pinned to v2, so v4 cannot show there until it is promoted as the production version, a separate decision)
+- **Patch:** [patches/U047-720e50a.patch](patches/U047-720e50a.patch)
+- **Request:** "buatkan v4 yang didasarkan dari v3. saya mau ketika user pertama kali login maka ada proses onboarding, tolong coba improvisasi UX dan UI nya untuk proses onboarding user nya. pastikan fitur itu cocok untuk kondisi yang kita punya sekarang."
+- **Interpretation, read against "the conditions we have now":**
+  - **First login means first sign-in on this browser.** There are no accounts, and sign-in deliberately does not persist (AuthContext), so "first" is recorded in localStorage (`aurelia.onboarding`). Once accounts exist this moves to the account (O13).
+  - **Ask only what the app can use today.**
+    - The goal becomes the first session's objective (`writeObjective`), so Progress and Insights measure against it.
+    - The feeling, length, voice and sound become the first message to the cockpit, through the same `ask` path Home uses.
+  - **Don't ask for what the app can't do yet:** no wearable pairing (Connect is mock, and the summary points to it for later), no notification permission, no profile photo.
+  - **Never block intent.** Every step has Skip, and Skip saves what was answered. Someone who signed in to do something specific, such as sending Home's Ask, lands there after Skip. The last step offers "Continue where I was" whenever there was a destination.
+- **Flow** (`pages/OnboardingPage.tsx`, route `/welcome`, full screen, RequireAuth, v4+ only):
+  1. **Welcome:** "Welcome, Adam.", "three quick questions — about a minute", and how Aurelia works as three numbered steps (tell → it composes → every chapter adapts; numbered because it is a real sequence). "Let's begin".
+  2. **Goal:** a single choice from six cards with icon, label and hint (Sleep better, Feel calmer, Clear my mind, Focus, Regulate my body, More energy). "This becomes your objective". Continue is disabled until one is picked.
+  3. **Feeling today:** optional, up to 3, the same chips and sentences as Home (moved to `lib/feelings.ts`). "Not sure" is left out because it asks a question, which does not belong in a brief. With nothing picked the button reads "Skip this one".
+  4. **Session style:** pre-filled with the demo's own defaults, so Continue is always valid.
+     - Length 5 / 10 / 20 min, Voice Female / Male / No, Sound (multi).
+     - "Mostly silence" is exclusive of the other sounds.
+     - "Change later in Session settings".
+  5. **Ready:** an editable summary (Goal / Today / Sessions; each row jumps back to its step) and **the first message, word for word** ("Create my first session: 20 minutes to help me sleep better. I'm stressed. Male voice, with nature sounds and healing frequencies."). It says the answers stay on this device and that a wearable can be connected later.
+     - **Create my first session:** a fresh thread (no demo history), the draft named after the goal ("Sleep better v1.0"), and the goal written as its objective.
+     - **Explore Aurelia first** / **Continue where I was:** go to the destination or Home.
+- **UI:** a warm radial #FFF1DB wash, a progress bar of 4 segments (welcome has none), Back and Skip, one question per screen, and a fixed bottom primary (#331B04, h-52, radius 16). On desktop it is a centred 520 card.
+- **Supporting changes:**
+  - `lib/onboarding.ts`: goals, options, storage, the brief.
+  - `lib/replies.ts`: a new first rule, `first-session`, which acknowledges the setup and proposes. Without it, the brief's "20 minutes" would have been answered by the duration rule.
+  - `ChatPage.tsx`: `firstTitle` route state, applied after the fresh reset.
+  - Sign-in and sign-up route a first v4 sign-in through `/welcome` with the destination.
+  - Settings: **Replay onboarding** (v4).
+  - `versions.ts`: the v4 entry. The v2 change list now describes the filter where U045 put it.
+  - `CLAUDE.md`: a note on v4.
+- **Verified:**
+  - **402:**
+    - First sign-in → `/welcome`; Continue is disabled until a goal is picked.
+    - The full flow ends in `/chat` with an empty history: the brief as the user line, the `first-session` reply, then "Here is what I would put in it:" and the deck.
+    - The answers are stored. A second sign-in goes straight to `/home`.
+  - **Gated path:** Home Ask "I feel tense" while signed out → login → `/welcome` → Skip → `/chat` with the ask.
+  - **Settings:** Replay → `/welcome`.
+  - **1280:** the centred card.
+  - **v3:** sign-in still goes to `/home`, with no onboarding.
+  - Typecheck clean; lint unchanged.
+- **Known limits:**
+  - The answers do not yet change what the build contains, because the build is mock and always the same stand-in.
+  - The `first-session` rule is web-only, so `mobile_app`'s shared rule set now differs by one (O7).
+- **Revert:** `git revert --no-commit 720e50a && git checkout HEAD -- docs/`.

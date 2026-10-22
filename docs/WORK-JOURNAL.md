@@ -30,16 +30,17 @@ transcript and the update log. Everything from J018 on was written at the time.
 | --- | --- | --- | --- |
 | O1 | **15 product decisions** with recommended defaults (free-plan limit, version model, live vs current, unpublish, fork source, lineage rules and payouts, conversation model, what a "play" is, challenge winners, one currency, safety and claims, identity, analytics consent) | J012, `docs/reviews/Aurelia-Logic-Review-2026-10-18.pdf` §11 | Product owner: accept the defaults or change them |
 | O2 | **Beta simplification list**: what stays visible, what is merged, what goes behind flags | J015 | Product owner + Eugene to agree. Then build a "Beta" preset in `/__demo` and add flags for coins in the header and Recreate on the player |
-| O3 | ~~Promote to production~~ **Done 2026-10-21 (J031, U046)**: `web_prod` = `web_app` as of U045. Reopens with the next staging change | J005 onward | — |
+| O3 | **Promote to production**: last done 2026-10-21 (J031, U046). Staging now carries U047 (v4 only, so production would not change unless v4 becomes the production version) | J005 onward | Product owner request |
 | O4 | **Sticky player**: U037 added Close. Options A (swipe away + Undo) and C (auto-hide after 30 min paused) were proposed and not yet chosen | J008, J011 | Product owner |
 | O5 | **Free limit counts "Apply"**, so three applies trip it. This conflicts with v3's "keep experimenting" | J020 | Decision O1 #1 (limit model) |
 | O6 | **Two version systems** (cockpit ids vs Progress ids), so the earlier-version cards play the current recording | J011, J020 | Decision O1 #3 |
-| O7 | **mobile_app (Flutter)** lacks U032–U038 (feeling chips, reply, Play rule, lineage/version/publish details, Connect toast, v3, Wellness Analysis, player progress drawer, Settings rename) | J008 onward | A mobile pass when scheduled |
+| O7 | **mobile_app (Flutter)** lacks U032–U038 (feeling chips, reply, Play rule, lineage/version/publish details, Connect toast, v3, Wellness Analysis, player progress drawer, Settings rename, filter in sheet, onboarding + `first-session` reply rule) | J008 onward | A mobile pass when scheduled |
 | O8 | **Wellness Analysis semantics**: what a metric's % measures (and against which baseline), where "Since yesterday" and "predicts +12%" come from, and what Aurelia may claim from signals (health-claims wording) | J023, U039 | Product owner + backend: define before real data. Ties to O1 #14 (safety and claims) |
 | O9 | **Settings without General**: the v2 Settings frames have only Script / Visual / Sound, so the General gear (Length, Pace, Ends, Visibility; display-only mock) is hidden in v2. Keep it hidden, or design a place for those settings? | J026, U041 | Product owner / designer |
 | O10 | **Feedback has nowhere to go**: the player's Feedback answers are kept for the visit only. What should they change (the next chapter's proposals? the analysis?), and is a sad face worth a follow-up question? | J026, U041 | Product owner + backend |
 | O11 | **402px column on wider phones**: 17 other screens still cap their content at 402 below `lg:` (Help, Progress, Recreate, Wellness, Chat, Invite, Upgrade, See all, Credits, Session detail, Challenge detail, player hero, auth). Stretch them all like Settings (U043)? | J028 | Product owner |
 | O12 | **Two recommendation lists**: the chat's deck (scores of 12%, its own picks, "Apply new changes (3)") and the "+" sheet (3% / 6%, its own picks, starts at 0) are separate mock lists with separate selections. Should they be one list with one selection? | J030, U045 | Product owner |
+| O13 | **Onboarding when accounts exist**: today "first time" is per browser (localStorage). With a backend it should be per account and its answers saved to the profile. Also: should the style answers (length, voice, sound) become real defaults for every new session, and should onboarding become the production version (v4 → production)? | J032, U047 | Product owner + backend |
 
 ---
 
@@ -78,6 +79,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J029 | 2026-10-21 | Ops | Promote v2 to production | U044 |
 | J030 | 2026-10-21 | Code | Eugene feedback: move the filter into the "+" sheet | U045 |
 | J031 | 2026-10-21 | Ops | Promote U045 to production | U046 |
+| J032 | 2026-10-22 | Code | v4: onboarding for first login | U047 |
 
 ---
 
@@ -236,3 +238,14 @@ transcript and the update log. Everything from J018 on was written at the time.
 ### J031 — Promote U045 to production
 - **Asked:** "oke naikan ke prod ya".
 - **Ops:** U046. `web_prod` was fast-forwarded `2a2a376` → `web_app` after a production-mode build. O3 is closed again.
+
+### J032 — v4: onboarding after the first login
+- **Asked:** make v4 based on v3 with an onboarding process after a user's first login. Improve its UX and UI, and make sure it fits the conditions the product has now.
+- **Code:** U047.
+- **Decided (assumptions):**
+  - "First login" means the first sign-in on a browser, because there are no accounts and sign-in does not persist.
+  - Only ask what the app uses: goal → objective; feeling, length, voice and sound → the first message to Aurelia.
+  - Don't ask for wearables, notifications or a profile, because those would be promises the demo breaks.
+  - Every step is skippable without losing answers, and the user's original destination is kept.
+  - The first session starts in a fresh thread named after the goal, not in the demo conversation.
+- **Open:** O13 (per-account onboarding, real defaults, and whether v4 goes to production).
