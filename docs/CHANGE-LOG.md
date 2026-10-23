@@ -19,6 +19,19 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-23 — Production-grade foundation (U048)
+
+No visible change; 32 before/after screenshots are pixel-identical. Under the hood:
+- **Caching:** TanStack Query handles server data (caching, retries, cancellation, polling).
+- **Validation:** every API response and stored value is checked with Zod.
+- **Requests and storage:** one HTTP client with timeouts, and safe browser storage.
+- **Errors:** central reporting, ready for Sentry, plus a per-screen error boundary.
+- **Server:** shared server-side KV code; a malformed request is now a 400, not a 500.
+- **Lint and tests:** 0 lint warnings (was 41), enforced; 55 unit tests (Vitest).
+- **CI and bundle:** GitHub Actions CI, vendor chunking and dependency updates.
+
+A full route check of a staging build was clean. Web only. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-22 — Prompt for reusing click insights + review pins (J034)
 
 New `docs/prompts/tracking-and-review-pins.md`: a paste-ready prompt for an AI coding agent to rebuild click insights (tracking, heatmap, review page) and the floating review-pin button in another project. Docs only. Branches: `web_app`, `admin_cms`.

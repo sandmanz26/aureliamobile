@@ -30,7 +30,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | --- | --- | --- | --- |
 | O1 | **15 product decisions** with recommended defaults (free-plan limit, version model, live vs current, unpublish, fork source, lineage rules and payouts, conversation model, what a "play" is, challenge winners, one currency, safety and claims, identity, analytics consent) | J012, `docs/reviews/Aurelia-Logic-Review-2026-10-18.pdf` §11 | Product owner: accept the defaults or change them |
 | O2 | **Beta simplification list**: what stays visible, what is merged, what goes behind flags | J015 | Product owner + Eugene to agree. Then build a "Beta" preset in `/__demo` and add flags for coins in the header and Recreate on the player |
-| O3 | **Promote to production**: last done 2026-10-21 (J031, U046). Staging now carries U047 (v4 only, so production would not change unless v4 becomes the production version) | J005 onward | Product owner request |
+| O3 | **Promote to production**: last done 2026-10-21 (J031, U046). Staging now carries U047 (v4, staging-only) and U048 (foundation, affects production once promoted) | J005 onward | Product owner request |
 | O4 | **Sticky player**: U037 added Close. Options A (swipe away + Undo) and C (auto-hide after 30 min paused) were proposed and not yet chosen | J008, J011 | Product owner |
 | O5 | **Free limit counts "Apply"**, so three applies trip it. This conflicts with v3's "keep experimenting" | J020 | Decision O1 #1 (limit model) |
 | O6 | **Two version systems** (cockpit ids vs Progress ids), so the earlier-version cards play the current recording | J011, J020 | Decision O1 #3 |
@@ -41,6 +41,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O11 | **402px column on wider phones**: 17 other screens still cap their content at 402 below `lg:` (Help, Progress, Recreate, Wellness, Chat, Invite, Upgrade, See all, Credits, Session detail, Challenge detail, player hero, auth). Stretch them all like Settings (U043)? | J028 | Product owner |
 | O12 | **Two recommendation lists**: the chat's deck (scores of 12%, its own picks, "Apply new changes (3)") and the "+" sheet (3% / 6%, its own picks, starts at 0) are separate mock lists with separate selections. Should they be one list with one selection? | J030, U045 | Product owner |
 | O13 | **Onboarding when accounts exist**: today "first time" is per browser (localStorage). With a backend it should be per account and its answers saved to the profile. Also: should the style answers (length, voice, sound) become real defaults for every new session, and should onboarding become the production version (v4 → production)? | J032, U047 | Product owner + backend |
+| O14 | **Production hardening still to decide**: (1) an error-reporting service (Sentry or similar) to plug into `reportError`; (2) an end-to-end test suite (Playwright) for sign-in, onboarding, build/publish; (3) `vercel.json` blocks the microphone (`Permissions-Policy: microphone=()`), which must change before real voice input; (4) whether to trim bundle size with `zod/mini` | J035, U048 | Product owner + engineering |
 
 ---
 
@@ -82,6 +83,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J032 | 2026-10-22 | Code | v4: onboarding for first login | U047 |
 | J033 | 2026-10-22 | Question | "Try again" after v4 | — |
 | J034 | 2026-10-22 | Doc | Prompt to install click tracking + the floating review button elsewhere | docs only |
+| J035 | 2026-10-23 | Code + Check | Re-check staging; production-grade code quality; install libraries (cache etc.) | U048 |
 
 ---
 
@@ -261,3 +263,13 @@ transcript and the update log. Everything from J018 on was written at the time.
 - **Asked:** a prompt covering the user tracking (click insights) and the floating comment button (review annotations), to install them in another project.
 - **Delivered:** `docs/prompts/tracking-and-review-pins.md`. It is written from the actual code (tracker, `/api/clicks`, insights page, heatmap, annotator, `/api/annotations`, the .txt format) and kept stack-agnostic with placeholders. It covers privacy rules, per-deployment scoping, the `configured:false` fallback, validation, the UI, and a browser verification checklist.
 - **Decided:** the prompt sets production tracking **off until consent is decided**, unlike Aurelia today, where it is on (O1 #15). This is called out in the file.
+
+### J035 — Re-check staging, production-grade code, libraries for an AI product
+- **Asked:** re-check staging. The mock data stays because there is no backend yet, but the code quality should be production-grade, with libraries installed where needed (cache management and the like), since this will become an AI product.
+- **Code:** U048. Everything is in the U-entry.
+- **Decided:**
+  - No visible change. Pixel-identical screenshots are the bar, given the frozen mobile layout.
+  - Install what an AI client needs underneath: TanStack Query for server state and caching, and Zod for validation. Add Vitest and Testing Library for tests, and CI.
+  - Keep the delicate annotation sync logic as it was, only validating its data.
+- **Checked:** every route of a staging-mode build in v2 and v4 at 402 and 1280, and the main flows. The one defect found (`/__demo/insights` overflow) was fixed. The live staging URL is not reachable from this environment.
+- **Open:** O14 (error-reporting service, E2E suite, microphone policy, bundle size).

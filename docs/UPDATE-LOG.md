@@ -85,6 +85,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U045 | `8286ffb` | 2026-10-21 17:48 | Change filter moved from the thread's opened deck into the "+" sheet (v2 + v3); summary shows the largest gain, not a sum. | [patch](patches/U045-8286ffb.patch) |
 | U046 | (this log commit) | 2026-10-21 | Production: `web_prod` fast-forwarded from `2a2a376` to `web_app` (U045). | — |
 | U047 | `720e50a` | 2026-10-22 06:14 | Design v4 = v3 + first-run onboarding (`/welcome`): goal, feeling, style, editable summary → first session; Skip keeps answers; Replay in Settings. | [patch](patches/U047-720e50a.patch) |
+| U048 | `8bb282f` | 2026-10-23 15:35 | Production-grade foundation: TanStack Query, typed/validated HTTP, safe storage, error reporting, shared KV, 0 lint warnings, 55 Vitest tests, CI. No visual change. | [patch](patches/U048-8bb282f.patch) |
 
 ## Entries
 
@@ -791,3 +792,82 @@ Production (`web_prod`) is never touched by these updates unless asked.
   - The answers do not yet change what the build contains, because the build is mock and always the same stand-in.
   - The `first-session` rule is web-only, so `mobile_app`'s shared rule set now differs by one (O7).
 - **Revert:** `git revert --no-commit 720e50a && git checkout HEAD -- docs/`.
+
+### U048 — Production-grade foundation (code quality, caching, tests, CI)
+
+- **Commit:** `8bb282f` · pushed 2026-10-23 15:35:03 UTC · `web_app` + `admin_cms` · not on `web_prod`
+- **Patch:** [patches/U048-8bb282f.patch](patches/U048-8bb282f.patch). It excludes `package-lock.json`; after reverting, run `npm install`.
+- **Request:** "lakukan pengecekan ulang di staging… perbaiki secara code qualitynya, pastikan punya production grade, dan kalau ada library tolong di install karena kita mau jadikan ini AI product… cache management atau lainnya."
+- **Interpretation:**
+  - Keep the mock data. Make the plumbing the AI backend will use production-grade, and change nothing a user sees. The mobile layout is frozen, so pixel-identical screenshots are the acceptance bar.
+  - "Re-check staging" means a full route-by-route check of a staging-mode build. The live staging site is not reachable from this environment.
+- **Audit found:**
+  - 41 lint warnings.
+  - Raw `fetch` with no timeout or response validation (4 places).
+  - Direct `localStorage` access in 19 places.
+  - No server-state cache, no test runner, no CI.
+  - Duplicated KV/scoping code in the three endpoints, where a malformed JSON body produced a 500.
+  - Refs and the clock read during render.
+  - Three screenshots committed to the repo root.
+  - `/__demo/insights` overflowing to 914px at 402.
+- **Installed:**
+  - `@tanstack/react-query` (cache, de-duplication, retries, cancellation, polling, mutations).
+  - `zod` v4 (runtime validation of every API response and stored value).
+  - Dev: `vitest`, `@testing-library/react` + `dom`, `jsdom`, `@tanstack/react-query-devtools`.
+  - Existing dependencies updated within range (React 19.3, lucide 1.61, oxlint 1.89, Vite 8.3). `npm audit`: 0 vulnerabilities.
+- **New foundation (described in `CLAUDE.md` → "Engineering foundation"):**
+  - `lib/queryClient.ts`: defaults, plus central error reporting with a `meta.reportErrors` opt-out.
+  - `lib/http.ts` `requestJson`:
+    - 10s timeout and caller cancellation, with old-Safari fallbacks.
+    - Zod validation of the response.
+    - `HttpError` with `status` (0 = network) and `.retryable`.
+  - `lib/storage.ts`: nothing throws; JSON is validated with a fallback.
+  - `lib/monitoring.ts`:
+    - `reportError`, the seam for Sentry.
+    - Global `error` / `unhandledrejection` listeners.
+  - Error boundaries: root, plus a route-level one keyed on the pathname.
+  - `src/api/config.ts`, `clicks.ts`, `annotations.ts`: schemas, fetchers, query keys.
+- **Migrated:**
+  - **Feature flags** run on `useQuery` (15s poll) and `useMutation` (Publish writes back into the cache). Same semantics: a viewer follows the server, a presenter keeps edits until Publish or Revert.
+  - **Click insights** page and heatmap read through the cache.
+  - The **tracker** posts through `requestJson`, and a burst of more than 200 events now drains every batch instead of waiting for the next tap.
+  - **Annotations** validate what the unauthenticated endpoint returns and what is in storage.
+  - All direct storage access goes through `lib/storage` (site lock, mute, notifications seen, design version, onboarding with a schema).
+- **Serverless:** `api/_lib/kv.ts` shares the Upstash client (now with an 8s timeout), `scopedKey`, `parseBody` (malformed JSON → 400) and `noStore`. The three endpoints lost their copies. Verified by compiling to Node ESM and running the handlers; the `.js` import extension resolves.
+- **Lint:** 41 → 0, and the lint script now has `--deny-warnings`.
+  - Pure data moved out of component files: `chat/thread.ts` (messages, deck, drafts, version labels), `chat/addOptions.ts`, `demo/insights/stats.ts`.
+  - Render-time `Date.now()` and ref reads moved to lazy state or effects.
+  - The Player's check-in reset uses the adjust-state-on-prop-change pattern.
+  - `useEffectEvent` for the ask reply.
+  - The remaining route-state "door" effects are annotated with why they are effects.
+  - Provider hooks are allowed in `.oxlintrc.json`.
+- **Tests:** Vitest, 55 tests in 12 files covering:
+  - feelings, onboarding (brief, its reply rule, storage), replies;
+  - wellness analysis (derivations, thresholds, no duplicate helpers), version labels and rename;
+  - the annotation .txt round trip (escaping, CRLF), storage, HTTP;
+  - insights stats;
+  - the KV scoping and `parseBody`, and the three endpoints (configured:false, 400 on malformed JSON, booleans-only config, invalid clicks dropped, 405);
+  - the `SessionFeedback` component.
+  - Test files sit next to their code. Endpoint tests are under `api/_lib/` because every file directly in `api/` becomes a Vercel route.
+- **CI:** `.github/workflows/ci.yml` runs typecheck, lint, test and build on pushes to `web_app`/`admin_cms`/`web_prod` and on pull requests. Scripts `test`, `test:watch` and `check` were added, and `engines.node >=20.19`.
+- **Bundle and repo:**
+  - Vendor chunks `react-vendor` and `query-vendor` are long-cached across deploys.
+  - Chunk warning limit raised to 600 because the only large chunk is the lazy three.js one.
+  - Stray `drawer.png` / `notif.png` / `sessions-live.png` removed.
+  - `/__demo/insights` grid fixed (`grid-cols-1`, `min-w-0`).
+- **Staging re-check (staging-mode production build, served locally):**
+  - **Routes:** 53 routes (consumer, auth, onboarding, wellness, player, admin, `/__demo`, a 404) at 402 and 1280, v2 and v4. Result: no page errors, no console errors, no error boundary, no empty screens, no horizontal scroll, after the insights fix.
+  - **Before/after visuals:** 16 key screens at 402 and 1280 are **pixel-identical** (32/32).
+  - **Flows:**
+    - onboarding (first sign-in, skip with intent, replay);
+    - the "+" sheet filter in v2/v3;
+    - the player drawer, Feedback, Ask Aurelia and Settings rename;
+    - the site lock and toggling a flag from `/__demo`.
+  - `npm run check` and `npm run build` are clean.
+- **Not done (flagged):**
+  - No end-to-end suite yet (O14).
+  - No error-reporting service chosen (O14).
+  - The live staging URL could not be opened from here. Check that `/__demo` → This build shows `8bb282f` or later after the deploy.
+  - Initial JS grew by about 35 kB gzip for TanStack Query + Zod; `zod/mini` is an option if that matters later.
+  - `Permissions-Policy: microphone=()` in `vercel.json` will block real voice input when it arrives (O14).
+- **Revert:** `git revert --no-commit 8bb282f && git checkout HEAD -- docs/ && npm install`.
