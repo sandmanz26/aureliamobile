@@ -37,14 +37,16 @@ export function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) {
   const [transcript, setTranscript] = useState('')
   const [speaker, setSpeaker] = useState(true)
   const [muted, setMuted] = useState(false)
-  const startedAt = useRef(Date.now())
+  // Set when recording starts (in the effect), not during render.
+  const startedAt = useRef<number | null>(null)
 
   // Timer + animated levels. A real build feeds these from an AnalyserNode;
   // the shape of the component does not change when that is swapped in.
   useEffect(() => {
     if (phase !== 'recording' || muted) return
+    startedAt.current ??= Date.now()
     const timer = window.setInterval(() => {
-      setElapsed(Date.now() - startedAt.current)
+      setElapsed(Date.now() - (startedAt.current ?? Date.now()))
       setLevels((current) => [...current.slice(1), 0.25 + Math.random() * 0.75])
     }, 110)
     return () => window.clearInterval(timer)

@@ -5,7 +5,7 @@ const REDUCED_MOTION =
 
 /** "87k", "20k", "1,323" — the compact form these stat reads use. Only
  *  thousands get the suffix; nothing here has reached millions. */
-export function formatCompactCount(value: number) {
+function formatCompactCount(value: number) {
   if (value >= 1000) return `${Math.round(value / 1000)}k`
   return Math.round(value).toLocaleString()
 }
@@ -33,10 +33,8 @@ export function CountUp({
   const [shown, setShown] = useState(REDUCED_MOTION ? value : 0)
 
   useEffect(() => {
-    if (REDUCED_MOTION) {
-      setShown(value)
-      return
-    }
+    // Reduced motion shows the value directly (below), with nothing to animate.
+    if (REDUCED_MOTION) return
     let frame: number
     const start = performance.now()
     const tick = (now: number) => {
@@ -50,5 +48,5 @@ export function CountUp({
     return () => cancelAnimationFrame(frame)
   }, [value, durationMs])
 
-  return <>{format(shown)}</>
+  return <>{format(REDUCED_MOTION ? value : shown)}</>
 }

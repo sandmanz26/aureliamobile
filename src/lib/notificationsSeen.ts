@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NOTIFICATIONS } from './notifications'
+import { readString, writeString } from './storage'
 
 /**
  * Has the user opened Notifications since today's items arrived?
@@ -14,11 +15,7 @@ const KEY = 'aurelia.notifications.seen'
 const EVENT = 'aurelia:notifications-seen'
 
 function seen() {
-  try {
-    return localStorage.getItem(KEY) === '1'
-  } catch {
-    return false
-  }
+  return readString(KEY) === '1'
 }
 
 export function useHasUnreadNotifications() {
@@ -36,10 +33,7 @@ export function useHasUnreadNotifications() {
 }
 
 export function markNotificationsSeen() {
-  try {
-    localStorage.setItem(KEY, '1')
-  } catch {
-    /* private mode: stays unread for this tab */
-  }
+  // Private mode: stays unread for this tab.
+  writeString(KEY, '1')
   window.dispatchEvent(new Event(EVENT))
 }

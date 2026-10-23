@@ -6,6 +6,9 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useFeatureFlags } from '../FeatureFlags'
 import { ANNOTATIONS_FLAG, MOBILE_WEB_BREAKPOINT } from '../modules'
 import type { Annotation } from './format'
+import { z } from 'zod'
+import { fetchAnnotations, saveAnnotations, validAnnotations } from '../../api/annotations'
+import { readJson, writeJson } from '../../lib/storage'
 import { useUiVersion } from '../../versions/useUiVersion'
 import { VERSIONS_ENABLED } from '../../versions/versions'
 import {
@@ -68,22 +71,8 @@ function docPosition(annotation: Annotation, vw: number) {
   }
 }
 
-function readJson<T>(key: string, fallback: T): T {
-  try {
-    const raw = window.localStorage.getItem(key)
-    return raw ? (JSON.parse(raw) as T) : fallback
-  } catch {
-    return fallback
-  }
-}
-
-function writeJson(key: string, value: unknown) {
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value))
-  } catch {
-    // Private mode — notes last for the tab; Save to .txt still works.
-  }
-}
+const fabPosition = z.object({ x: z.number(), y: z.number() })
+const storedNotes = z.array(z.unknown()).transform(validAnnotations)
 
 const MOBILE_QUERY = `(max-width: ${MOBILE_WEB_BREAKPOINT - 0.02}px)`
 
@@ -174,8 +163,8 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
   const navigate = useNavigate()
   const { w: vw, h: vh } = useViewport()
 
-  const [annotations, setAnnotations] = useState<Annotation[]>(() => readJson<Annotation[]>(NOTES_KEY, []))
-  const [fab, setFab] = useState(() => readJson(FAB_KEY, { x: window.innerWidth - 36, y: window.innerHeight - 140 }))
+  const [annotations, setAnnotations] = useState<Annotation[]>(() => readJson(NOTES_KEY, storedNotes, []))
+  const [fab, setFab] = useState(() => readJson(FAB_KEY, fabPosition, { x: window.innerWidth - 36, y: window.innerHeight - 140 }))
   const [placing, setPlacing] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [listOpen, setListOpen] = useState(false)
@@ -186,13 +175,16 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
   const [scope, setScope] = useState<string | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
   const syncRef = useRef(sync)
-  syncRef.current = sync
   // A poll landing mid-edit shouldn't yank the pin or note out from under
   // whoever's placing or writing one — the next poll catches up once they're
   // done. Plain refs, kept current every render: read from an async callback
   // (fetchServer), not from render itself.
   const busyRef = useRef(false)
-  busyRef.current = placing || openId !== null
+  // Kept current after each commit, never written during render.
+  useEffect(() => {
+    syncRef.current = sync
+    busyRef.current = placing || openId !== null
+  })
   // The exact array last received from the server, so the push effect below
   // can tell "freshly arrived from the server" apart from "actually edited
   // locally" by reference, without a consumed-once boolean flag: StrictMode
@@ -212,7 +204,9 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
   // Strict Mode's double-invoke as lastSyncedRef is.
   const hasLoadedRef = useRef(false)
 
-  useEffect(() => writeJson(NOTES_KEY, annotations), [annotations])
+  useEffect(() => {
+    writeJson(NOTES_KEY, annotations)
+  }, [annotations])
 
   const applyServer = useCallback((incoming: Annotation[]) => {
     if (busyRef.current) return
@@ -222,20 +216,14 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
 
   const fetchServer = useCallback(async () => {
     try {
-      const response = await fetch('/api/annotations', { cache: 'no-store' })
-      if (!response.ok) throw new Error(String(response.status))
-      const data = (await response.json()) as {
-        configured: boolean
-        annotations: Annotation[] | null
-        scope?: string
-      }
+      const data = await fetchAnnotations()
       setScope(data.scope ?? null)
       if (!data.configured) {
         setSync('local-only')
         return
       }
       setSync('synced')
-      applyServer(data.annotations ?? [])
+      applyServer(data.annotations)
     } catch {
       // No endpoint (`vite dev` without `vercel dev`) or offline — the local
       // copy carries the tool, same fallback /api/config's own flags take.
@@ -246,6 +234,8 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
   }, [applyServer])
 
   useEffect(() => {
+    // Polling an external store; its state updates land after the await.
+    // oxlint-disable-next-line react/set-state-in-effect
     void fetchServer()
     const timer = window.setInterval(() => void fetchServer(), POLL_MS)
     return () => window.clearInterval(timer)
@@ -255,13 +245,7 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
     if (syncRef.current === 'local-only') return
     try {
       setSync('saving')
-      const response = await fetch('/api/annotations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ annotations: list }),
-      })
-      const data = (await response.json()) as { configured?: boolean; scope?: string; error?: string }
-      if (!response.ok) throw new Error(data.error ?? String(response.status))
+      const data = await saveAnnotations(list)
       if (data.scope) setScope(data.scope)
       setSync(data.configured ? 'synced' : 'local-only')
     } catch {

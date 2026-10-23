@@ -154,7 +154,8 @@ on an emulator. If you have not run the app, say so.
 ```bash
 npm install
 npm run typecheck   # tsc -b
-npm run lint        # oxlint
+npm run lint        # oxlint --deny-warnings
+npm test            # vitest run
 npm run build
 ```
 

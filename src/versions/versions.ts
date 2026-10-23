@@ -1,4 +1,5 @@
 import { BUILD } from '../lib/build'
+import { readString, writeString } from '../lib/storage'
 
 /**
  * Design versions you can switch between on staging.
@@ -148,12 +149,8 @@ export const VERSIONS_ENABLED = BUILD.environment !== 'production'
 
 export function readVersion(): number {
   if (!VERSIONS_ENABLED) return PRODUCTION_VERSION
-  try {
-    const n = Number(localStorage.getItem(KEY))
-    return UI_VERSIONS.some((v) => v.id === n) ? n : 1
-  } catch {
-    return 1
-  }
+  const n = Number(readString(KEY))
+  return UI_VERSIONS.some((v) => v.id === n) ? n : 1
 }
 
 export function applyVersion(id: number) {
@@ -163,11 +160,8 @@ export function applyVersion(id: number) {
 }
 
 export function storeVersion(id: number) {
-  try {
-    localStorage.setItem(KEY, String(id))
-  } catch {
-    /* private mode: the switch still applies for this tab */
-  }
+  // Private mode: the switch still applies for this tab.
+  writeString(KEY, String(id))
   applyVersion(id)
   window.dispatchEvent(new Event('aurelia:ui-version'))
 }

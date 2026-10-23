@@ -15,44 +15,15 @@
 // a random per-tab session id, the page, the element's visible label and a
 // position — which is what makes that acceptable for an internal tool.
 
+import { kvConfigured, noStore, parseBody, redis, scopedKey } from './_lib/kv.js'
+import type { Req, Res } from './_lib/kv.js'
+
 const BASE_KEY = 'aurelia:insights:clicks'
-const ENVIRONMENT = process.env.VERCEL_ENV ?? ''
 
-function keyFor() {
-  const ref = process.env.VERCEL_GIT_COMMIT_REF
-  if (!ENVIRONMENT || (ENVIRONMENT === 'production' && (!ref || ref === 'web_prod'))) return BASE_KEY
-  const suffix = (ref || ENVIRONMENT).replace(/[^a-zA-Z0-9._-]+/g, '-')
-  return `${BASE_KEY}:${suffix}`
-}
-
-const KEY = keyFor()
+const KEY = scopedKey(BASE_KEY)
 /** The log keeps the newest this many events. */
 const MAX_EVENTS = 20000
 const MAX_BATCH = 200
-
-const URL_BASE = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL
-const TOKEN = process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN
-
-interface Req {
-  method?: string
-  body?: unknown
-}
-interface Res {
-  status: (code: number) => Res
-  json: (body: unknown) => void
-  setHeader: (name: string, value: string) => void
-}
-
-async function redis(command: (string | number)[]): Promise<unknown> {
-  const response = await fetch(URL_BASE!, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(command),
-  })
-  if (!response.ok) throw new Error(`KV ${response.status}`)
-  const payload = (await response.json()) as { result?: unknown }
-  return payload.result
-}
 
 const str = (v: unknown, max: number) => typeof v === 'string' && v.length <= max
 const num = (v: unknown) => typeof v === 'number' && Number.isFinite(v)
@@ -89,9 +60,9 @@ function isValidEvent(value: unknown): value is Record<string, unknown> {
 }
 
 export default async function handler(req: Req, res: Res) {
-  res.setHeader('Cache-Control', 'no-store, max-age=0')
+  noStore(res)
 
-  if (!URL_BASE || !TOKEN) {
+  if (!kvConfigured) {
     res.status(200).json({ configured: false, scope: KEY, events: null })
     return
   }
@@ -111,9 +82,7 @@ export default async function handler(req: Req, res: Res) {
     }
 
     if (req.method === 'POST') {
-      const body = (typeof req.body === 'string' ? JSON.parse(req.body) : req.body) as
-        | { events?: unknown; clear?: unknown }
-        | undefined
+      const body = parseBody(req)
       if (body?.clear === true) {
         await redis(['DEL', KEY])
         res.status(200).json({ configured: true, scope: KEY, cleared: true })

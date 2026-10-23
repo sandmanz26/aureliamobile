@@ -1,3 +1,7 @@
+import { z } from 'zod'
+import type { ClickEvent } from '../../api/clicks'
+import { clearClicks, clickEvent, fetchClicks, postClicks } from '../../api/clicks'
+import { readJson, readString, removeKey, writeJson, writeString } from '../../lib/storage'
 import { readVersion } from '../../versions/versions'
 
 /**
@@ -25,62 +29,21 @@ import { readVersion } from '../../versions/versions'
  * reached, they go to localStorage instead, so local and offline use still
  * produce something to read.
  */
-export interface ClickEvent {
-  type: 'click' | 'view'
-  t: string
-  sid: string
-  page: string
-  /** Design version on screen (staging v1/v2 switcher; 2 on production). */
-  ui: number
-  vw: number
-  vh: number
-  x?: number
-  y?: number
-  docH?: number
-  label?: string
-  tag?: string
-  href?: string
-  from?: string
-  /** U034 element detail — absent on events recorded before it. */
-  kind?: string
-  section?: string
-  sel?: string
-  /** Where on the element the tap landed, % of its width/height. */
-  ex?: number
-  ey?: number
-  /** The element's size in px. */
-  ew?: number
-  eh?: number
-  /** aria-pressed/expanded/checked/selected/disabled before the tap. */
-  state?: string
-  /** ms since this screen was opened. */
-  ms?: number
-  /** How far down the page the bottom of the window was, %. */
-  sy?: number
-  rage?: boolean
-  /** The tap hit no button, link or field. */
-  dead?: boolean
-  /** What followed within 700ms. */
-  fx?: 'navigated' | 'changed' | 'nothing'
-  /** The screen it led to, when fx is 'navigated'. */
-  to?: string
-}
+export type { ClickEvent }
 
 export const LOCAL_KEY = 'aurelia.insights.clicks'
 const LOCAL_MAX = 3000
 const FLUSH_MS = 8000
 
+const SID_KEY = 'aurelia.insights.sid'
+
 function sessionId() {
-  try {
-    let id = sessionStorage.getItem('aurelia.insights.sid')
-    if (!id) {
-      id = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4)
-      sessionStorage.setItem('aurelia.insights.sid', id)
-    }
-    return id
-  } catch {
-    return 'anon'
+  let id = readString(SID_KEY, 'session')
+  if (!id) {
+    id = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4)
+    if (!writeString(SID_KEY, id, 'session')) return 'anon'
   }
+  return id
 }
 
 let queue: ClickEvent[] = []
@@ -99,33 +62,26 @@ function base(type: ClickEvent['type']): ClickEvent {
   }
 }
 
+const localEvents = z.array(clickEvent)
+
 export function readLocal(): ClickEvent[] {
-  try {
-    return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]') as ClickEvent[]
-  } catch {
-    return []
-  }
+  return readJson(LOCAL_KEY, localEvents, [])
 }
 
 function saveLocal(events: ClickEvent[]) {
-  try {
-    localStorage.setItem(LOCAL_KEY, JSON.stringify([...readLocal(), ...events].slice(-LOCAL_MAX)))
-  } catch {
-    /* storage full or blocked: drop */
-  }
+  // Storage full or blocked: the batch is dropped, which is acceptable for analytics.
+  writeJson(LOCAL_KEY, [...readLocal(), ...events].slice(-LOCAL_MAX))
 }
 
 export function clearLocal() {
-  try {
-    localStorage.removeItem(LOCAL_KEY)
-  } catch {
-    /* ignore */
-  }
+  removeKey(LOCAL_KEY)
 }
 
 async function flush(useBeacon = false) {
   if (!queue.length) return
   const batch = queue.splice(0, 200)
+  // More than one batch waiting (a long burst): send the rest on the next tick.
+  if (queue.length && !useBeacon && timer === undefined) timer = window.setTimeout(() => ((timer = undefined), void flush()), 0)
   if (serverOff) return saveLocal(batch)
   const body = JSON.stringify({ events: batch })
   if (useBeacon && navigator.sendBeacon) {
@@ -133,10 +89,9 @@ async function flush(useBeacon = false) {
     return
   }
   try {
-    const res = await fetch('/api/clicks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, keepalive: true })
-    const data = (await res.json().catch(() => null)) as { configured?: boolean } | null
-    if (!res.ok || data?.configured === false) {
-      if (data?.configured === false) serverOff = true
+    const data = await postClicks(batch)
+    if (!data.configured) {
+      serverOff = true
       saveLocal(batch)
     }
   } catch {
@@ -355,21 +310,21 @@ export function installTracker() {
   }
 }
 
-/** Server events, or local ones when the server has no store. */
-export async function loadEvents(): Promise<{ events: ClickEvent[]; source: 'server' | 'local'; scope?: string }> {
+/** Server events, or local ones when the server has no store or cannot be reached. */
+export async function loadEvents(
+  signal?: AbortSignal,
+): Promise<{ events: ClickEvent[]; source: 'server' | 'local'; scope?: string }> {
   try {
-    const res = await fetch('/api/clicks', { cache: 'no-store' })
-    const data = (await res.json()) as { configured: boolean; events: ClickEvent[] | null; scope?: string }
-    if (data.configured && data.events) return { events: data.events, source: 'server', scope: data.scope }
-  } catch {
-    /* fall through */
+    const data = await fetchClicks(signal)
+    if (data.configured) return { events: data.events, source: 'server', scope: data.scope }
+  } catch (error) {
+    if (signal?.aborted) throw error
+    /* fall through to this browser's copy */
   }
   return { events: readLocal(), source: 'local' }
 }
 
 export async function clearEvents(source: 'server' | 'local') {
   clearLocal()
-  if (source === 'server') {
-    await fetch('/api/clicks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clear: true }) })
-  }
+  if (source === 'server') await clearClicks()
 }

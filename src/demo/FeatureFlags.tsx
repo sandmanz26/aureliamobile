@@ -1,5 +1,9 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
+import { configKeys, fetchConfig, publishConfig } from '../api/config'
+import { readJson, writeJson } from '../lib/storage'
+import { z } from 'zod'
 import type { FlagState } from './modules'
 import { ANNOTATIONS_FLAG, CLICKS_FLAG, NETWORK3D_FLAG, NETWORK3D_MOTION_FLAG, SITE_LOCK_FLAG, STORAGE_KEY, defaultFlags } from './modules'
 
@@ -45,22 +49,15 @@ const FeatureFlagsContext = createContext<FeatureFlagsValue | null>(null)
 
 const POLL_MS = 15_000
 
+const storedFlags = z.record(z.string(), z.boolean())
+
 function readDraft(): FlagState {
-  const base = defaultFlags()
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
-    return raw ? { ...base, ...(JSON.parse(raw) as FlagState) } : base
-  } catch {
-    return base
-  }
+  return { ...defaultFlags(), ...readJson(STORAGE_KEY, storedFlags, {}) }
 }
 
 function writeDraft(flags: FlagState) {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(flags))
-  } catch {
-    // Private mode — the flags still apply for this tab's lifetime.
-  }
+  // Private mode — the flags still apply for this tab's lifetime.
+  writeJson(STORAGE_KEY, flags)
 }
 
 function sameFlags(a: FlagState, b: FlagState) {
@@ -70,68 +67,70 @@ function sameFlags(a: FlagState, b: FlagState) {
 }
 
 export function FeatureFlagsProvider({ children }: { children: ReactNode }) {
-  const [flags, setFlags] = useState<FlagState>(readDraft)
-  const [published, setPublished] = useState<FlagState | null>(null)
-  const [sync, setSync] = useState<SyncState>('loading')
-  const [publishing, setPublishing] = useState(false)
-  const [lastPublishedAt, setLastPublishedAt] = useState<string | null>(null)
-  const [scope, setScope] = useState<string | null>(null)
-  // A viewer follows the server; the presenter (who has edited) does not get
-  // their draft yanked out from under them by a poll.
-  const dirtyRef = useRef(false)
+  const client = useQueryClient()
+  // What this browser had last time — the first paint, before the server
+  // answers, and everything there is when no server is configured.
+  const [initialDraft] = useState<FlagState>(readDraft)
+  // Edits made in this tab. Null = following what is published.
+  const [edited, setEdited] = useState<FlagState | null>(null)
 
-  const applyPublished = useCallback((incoming: FlagState) => {
-    setPublished(incoming)
-    if (!dirtyRef.current) {
-      setFlags({ ...defaultFlags(), ...incoming })
-    }
-  }, [])
+  // The published set, polled so every open browser follows a Publish
+  // within one interval. React Query owns the request: cancellation,
+  // de-duplication and the cache the Publish mutation writes back into.
+  const config = useQuery({
+    queryKey: configKeys.all,
+    queryFn: ({ signal }) => fetchConfig(signal),
+    refetchInterval: POLL_MS,
+    staleTime: 0,
+    // No endpoint (plain `vite dev`) or offline: the local draft carries
+    // the demo, and the next poll tries again — no extra retries needed.
+    retry: false,
+    meta: { reportErrors: false },
+  })
 
-  const fetchPublished = useCallback(async () => {
-    try {
-      const response = await fetch('/api/config', { cache: 'no-store' })
-      if (!response.ok) throw new Error(String(response.status))
-      const data = (await response.json()) as {
-        configured: boolean
-        flags: FlagState | null
-        scope?: string
-      }
-      setScope(data.scope ?? null)
-      if (!data.configured) {
-        setSync('local-only')
-        return
-      }
-      setSync('synced')
-      if (data.flags) applyPublished(data.flags)
-      else setPublished({})
-    } catch {
-      // No endpoint (e.g. `vite dev` without `vercel dev`) or offline — the
-      // local draft carries the demo.
-      setSync('local-only')
-    }
-  }, [applyPublished])
-
-  useEffect(() => {
-    void fetchPublished()
-    const timer = window.setInterval(() => void fetchPublished(), POLL_MS)
-    return () => window.clearInterval(timer)
-  }, [fetchPublished])
+  const publishMutation = useMutation({
+    mutationKey: ['config', 'publish'],
+    mutationFn: publishConfig,
+    onSuccess: (data, sent) => {
+      client.setQueryData(configKeys.all, { ...data, flags: data.flags ?? sent })
+      if (data.configured) setEdited(null)
+    },
+  })
 
   // Keeps a second tab on the same machine in step with the console.
   useEffect(() => {
     function onStorage(event: StorageEvent) {
-      if (event.key === STORAGE_KEY) setFlags(readDraft())
+      if (event.key === STORAGE_KEY) setEdited(readDraft())
     }
     window.addEventListener('storage', onStorage)
     return () => window.removeEventListener('storage', onStorage)
   }, [])
 
-  const dirty = published !== null && !sameFlags(flags, { ...defaultFlags(), ...published })
-  dirtyRef.current = dirty
+  const data = config.data
+  const published = useMemo<FlagState | null>(() => (data?.configured ? (data.flags ?? {}) : null), [data])
+  const merged = useMemo(() => (published ? { ...defaultFlags(), ...published } : null), [published])
+  const dirty = edited !== null && merged !== null && !sameFlags(edited, merged)
+  // A viewer follows the server; the presenter (who has edited) keeps their
+  // draft until they publish or revert.
+  const flags = merged === null ? (edited ?? initialDraft) : dirty ? edited! : merged
+
+  // A failed Publish shows until the next successful poll proves the server
+  // is reachable again.
+  const publishFailed = publishMutation.isError && publishMutation.submittedAt > config.dataUpdatedAt
+  const sync: SyncState = config.isPending
+    ? 'loading'
+    : publishFailed
+      ? 'error'
+      : data?.configured
+        ? 'synced'
+        : 'local-only'
+  const scope = publishMutation.data?.scope ?? data?.scope ?? null
+  const lastPublishedAt = publishMutation.data?.configured ? (publishMutation.data.savedAt ?? null) : null
+  const { mutateAsync } = publishMutation
 
   const value = useMemo<FeatureFlagsValue>(() => {
     const commit = (next: FlagState) => {
-      setFlags(next)
+      setEdited(next)
       writeDraft(next)
     }
 
@@ -159,42 +158,19 @@ export function FeatureFlagsProvider({ children }: { children: ReactNode }) {
       reset: () => commit(defaultFlags()),
       revertToPublished: () => commit({ ...defaultFlags(), ...(published ?? {}) }),
       publish: async () => {
-        setPublishing(true)
         try {
-          const response = await fetch('/api/config', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ flags }),
-          })
-          const data = (await response.json()) as {
-            configured?: boolean
-            flags?: FlagState
-            savedAt?: string
-            scope?: string
-            error?: string
-          }
-          if (!response.ok) throw new Error(data.error ?? String(response.status))
-          if (data.scope) setScope(data.scope)
-          if (!data.configured) {
-            setSync('local-only')
-            return
-          }
-          setPublished(data.flags ?? flags)
-          setLastPublishedAt(data.savedAt ?? new Date().toISOString())
-          setSync('synced')
+          await mutateAsync(flags)
         } catch {
-          setSync('error')
-        } finally {
-          setPublishing(false)
+          // Surfaced through `sync === 'error'`; reported by the mutation cache.
         }
       },
       sync,
       dirty,
-      publishing,
+      publishing: publishMutation.isPending,
       lastPublishedAt,
       scope,
     }
-  }, [flags, published, sync, dirty, publishing, lastPublishedAt, scope])
+  }, [flags, published, sync, dirty, publishMutation.isPending, lastPublishedAt, scope, mutateAsync])
 
   return <FeatureFlagsContext.Provider value={value}>{children}</FeatureFlagsContext.Provider>
 }

@@ -16,7 +16,7 @@ import {
 import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { RecommendationCard } from '../components/chat/RecommendationCard'
 import { PageMeta } from '../components/PageMeta'
-import { RECOMMENDATIONS } from '../chat/ChatSessionContext'
+import { RECOMMENDATIONS } from '../chat/thread'
 import { useAudioPlayer } from '../audio/AudioPlayerContext'
 import { AlignmentPanel } from '../components/wellness/AlignmentPanel'
 import { CoinPill } from '../components/ui/CoinPill'
@@ -270,10 +270,16 @@ export function PlayerPage() {
     }
   }, [elapsed, duration])
 
-  // A different session is a different playthrough to ask about.
+  // A different session is a different playthrough to ask about. Reset
+  // while rendering (React's "adjust state when a prop changes" pattern)
+  // rather than in an effect, so the old answer never paints for a frame.
+  const [checkInSlug, setCheckInSlug] = useState(slug)
+  if (checkInSlug !== slug) {
+    setCheckInSlug(slug)
+    setCheckIn(false)
+  }
   useEffect(() => {
     finishedOnce.current = false
-    setCheckIn(false)
   }, [slug])
 
   useEffect(() => {

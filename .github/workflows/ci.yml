@@ -1,0 +1,29 @@
+# Every push to the web branches and every pull request runs the same checks
+# a contributor runs locally (`npm run check` + build). A red run means the
+# commit should not be promoted to web_prod.
+name: CI
+
+on:
+  push:
+    branches: [web_app, admin_cms, web_prod]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test
+      - run: npm run build

@@ -1,10 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMemo, useState } from 'react'
 import { ArrowLeft, Download, Flame, RefreshCw, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { PageMeta } from '../components/PageMeta'
 import type { ClickEvent } from '../demo/insights/tracker'
+import { clickKeys } from '../api/clicks'
 import { clearEvents, loadEvents } from '../demo/insights/tracker'
-import { ElementsTable, ProblemList, countBy, elementStats, heatmapUrl } from '../demo/insights/ElementsTable'
+import { ElementsTable, ProblemList } from '../demo/insights/ElementsTable'
+import { countBy, elementStats, heatmapUrl } from '../demo/insights/stats'
 
 /**
  * /__demo/insights — reads back what Click insights recorded (U032).
@@ -54,7 +57,7 @@ function Bar({ value, max }: { value: number; max: number }) {
 
 function Card({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-16 border border-border-subtle bg-surface-default p-16">
+    <section className="min-w-0 rounded-16 border border-border-subtle bg-surface-default p-16">
       <h2 className="text-style-body font-semibold text-text-primary">{title}</h2>
       {hint && <p className="text-style-caption mt-2 text-text-secondary">{hint}</p>}
       <div className="mt-12">{children}</div>
@@ -63,34 +66,45 @@ function Card({ title, hint, children }: { title: string; hint?: string; childre
 }
 
 export function InsightsPage() {
-  const [all, setAll] = useState<ClickEvent[] | null>(null)
-  const [source, setSource] = useState<'server' | 'local'>('local')
-  const [scope, setScope] = useState<string | undefined>()
+  // The log, through the query cache: Refresh refetches, leaving the page
+  // cancels an in-flight read, and Clear invalidates rather than patching
+  // local state by hand.
+  const insights = useQuery({
+    queryKey: clickKeys.all,
+    queryFn: ({ signal }) => loadEvents(signal),
+    staleTime: 0,
+  })
+  const all: ClickEvent[] | null = insights.isFetching && !insights.isRefetching ? null : (insights.data?.events ?? null)
+  const source = insights.data?.source ?? 'local'
+  const scope = insights.data?.scope
+  // "Now" for the date filters is when the data was read, not each render —
+  // a render must not depend on the clock.
+  const readAt = insights.dataUpdatedAt
   const [range, setRange] = useState<Range>('7d')
   const [device, setDevice] = useState<Device>('all')
   const [ui, setUi] = useState<Ui>('all')
   const [page, setPage] = useState<string>('all')
   const [confirmClear, setConfirmClear] = useState(false)
 
-  const refresh = useCallback(() => {
-    setAll(null)
-    void loadEvents().then((r) => {
-      setAll(r.events)
-      setSource(r.source)
-      setScope(r.scope)
-    })
-  }, [])
-  useEffect(() => refresh(), [refresh])
+  const refresh = () => void insights.refetch()
+  const clear = useMutation({
+    mutationKey: ['clicks', 'clear'],
+    mutationFn: () => clearEvents(source),
+    onSettled: () => {
+      setConfirmClear(false)
+      void insights.refetch()
+    },
+  })
 
   const events = useMemo(() => {
-    const since = range === 'all' ? 0 : range === 'today' ? new Date().setHours(0, 0, 0, 0) : Date.now() - 7 * 864e5
+    const since = range === 'all' ? 0 : range === 'today' ? new Date(readAt).setHours(0, 0, 0, 0) : readAt - 7 * 864e5
     return (all ?? []).filter(
       (e) =>
         Date.parse(e.t) >= since &&
         (device === 'all' || deviceOf(e.vw) === device) &&
         (ui === 'all' || String(e.ui) === ui),
     )
-  }, [all, range, device, ui])
+  }, [all, range, device, ui, readAt])
 
   const views = events.filter((e) => e.type === 'view')
   const taps = events.filter((e) => e.type === 'click')
@@ -161,11 +175,8 @@ export function InsightsPage() {
                 Delete the whole log?
                 <button
                   type="button"
-                  onClick={async () => {
-                    await clearEvents(source)
-                    setConfirmClear(false)
-                    refresh()
-                  }}
+                  onClick={() => clear.mutate()}
+                  disabled={clear.isPending}
                   className="h-36 rounded-full bg-feedback-error px-14 text-white"
                 >
                   Delete
@@ -225,7 +236,7 @@ export function InsightsPage() {
                 Nothing recorded for these filters yet. With Click insights on, open the app in another tab and tap around — taps are sent every few seconds and when the tab is hidden.
               </p>
             ) : (
-              <div className="mt-16 grid gap-16 lg:grid-cols-2">
+              <div className="mt-16 grid grid-cols-1 gap-16 lg:grid-cols-2">
                 <Card title="Screens" hint="How often each screen was opened. Heatmap draws the taps back over it in a new tab — open it at the same kind of window (phone/desktop) you want to see.">
                   <ul className="flex flex-col gap-10">
                     {screens.map(([p, n]) => (

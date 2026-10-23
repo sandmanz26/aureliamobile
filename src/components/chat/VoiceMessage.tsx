@@ -1,5 +1,5 @@
 import { Pause, Play } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface VoiceMessageProps {
   durationMs: number
@@ -32,7 +32,8 @@ function formatDuration(ms: number) {
 export function VoiceMessage({ durationMs, transcript }: VoiceMessageProps) {
   const [playing, setPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
-  const bars = useRef(waveform(durationMs))
+  // Drawn once per message: lazy state, so the random bars never change on re-render.
+  const [bars] = useState(() => waveform(durationMs))
 
   useEffect(() => {
     if (!playing) return
@@ -63,11 +64,11 @@ export function VoiceMessage({ durationMs, transcript }: VoiceMessageProps) {
           {playing ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" />}
         </button>
         <span className="flex h-24 flex-1 items-center gap-[2px]" aria-hidden="true">
-          {bars.current.map((level, index) => (
+          {bars.map((level, index) => (
             <span
               key={index}
               className="w-[2px] rounded-full bg-icon-strong"
-              style={{ height: `${level * 100}%`, opacity: index / bars.current.length <= played ? 0.95 : 0.35 }}
+              style={{ height: `${level * 100}%`, opacity: index / bars.length <= played ? 0.95 : 0.35 }}
             />
           ))}
         </span>

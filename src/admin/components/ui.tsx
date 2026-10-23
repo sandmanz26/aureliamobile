@@ -186,10 +186,9 @@ export function FormField({
   )
 }
 
-const FIELD_CLASS =
+export const inputClass =
   'h-34 w-full rounded-8 border border-adm-line bg-adm-surface px-10 text-13 text-adm-ink outline-none focus:border-adm-accent'
-
-export const inputClass = FIELD_CLASS
+const FIELD_CLASS = inputClass
 export const textareaClass = `${FIELD_CLASS} h-auto min-h-[72px] resize-y py-8`
 
 /** Legend for a multi-series chart. Identity is never color-alone. */

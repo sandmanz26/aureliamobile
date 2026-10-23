@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { CoverKey } from '../lib/photos'
+import { readString, writeString } from '../lib/storage'
 
 export interface Track {
   /**
@@ -58,11 +59,7 @@ const VOLUME = 0.7
 const MUTED_KEY = 'aurelia.audio.muted'
 
 function readMuted() {
-  try {
-    return localStorage.getItem(MUTED_KEY) === 'true'
-  } catch {
-    return false
-  }
+  return readString(MUTED_KEY) === 'true'
 }
 
 /**
@@ -137,11 +134,8 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const toggleMuted = useCallback(() => {
     setMuted((current) => {
       const next = !current
-      try {
-        localStorage.setItem(MUTED_KEY, String(next))
-      } catch {
-        // A browser that refuses storage still mutes; it just forgets.
-      }
+      // A browser that refuses storage still mutes; it just forgets.
+      writeString(MUTED_KEY, String(next))
       return next
     })
   }, [])

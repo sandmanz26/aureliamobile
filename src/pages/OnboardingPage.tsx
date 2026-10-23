@@ -34,7 +34,7 @@ import {
 } from '../lib/onboarding'
 import { CURRENT_USER } from '../lib/people'
 import { writeObjective } from '../lib/progress'
-import { DEFAULT_DRAFT } from '../chat/ChatSessionContext'
+import { DEFAULT_DRAFT } from '../chat/thread'
 import { useUiVersion } from '../versions/useUiVersion'
 
 /**

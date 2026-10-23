@@ -1,7 +1,8 @@
 import { WandSparkles } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { AddSheet, addOptionTitles } from '../components/chat/AddSheet'
+import { AddSheet } from '../components/chat/AddSheet'
+import { addOptionTitles } from '../chat/addOptions'
 import { PageMeta } from '../components/PageMeta'
 import { ChatComposer } from '../components/chat/ChatComposer'
 import { ChatMessageItem } from '../components/chat/ChatMessageItem'
@@ -11,9 +12,9 @@ import { ChatHeader } from '../components/chat/ChatHeader'
 import { MiniPlayer } from '../components/chat/MiniPlayer'
 import { PublishSheet } from '../components/chat/PublishSheet'
 import { useAudioPlayer } from '../audio/AudioPlayerContext'
-import { nextVersionLabel, useChatSession } from '../chat/ChatSessionContext'
-import type { Message, Status } from '../chat/ChatSessionContext'
-import { RECOMMENDATIONS } from '../chat/ChatSessionContext'
+import { useChatSession } from '../chat/ChatSessionContext'
+import { RECOMMENDATIONS, nextVersionLabel } from '../chat/thread'
+import type { Message, Status } from '../chat/thread'
 import type { RecreateBrief } from '../chat/recreate'
 import { draftTitleFor, findQuickStart } from '../lib/quickStart'
 import { replyTo } from '../lib/replies'
@@ -203,6 +204,9 @@ export function ChatPage() {
     // A card or a fork writes its own opening; letting the blank one land
     // first would show somebody else's conversation on the way to theirs.
     if (routeState.start || routeState.recreate) return
+    // Route-state doors (fresh/start/challenge/publish/ask) are one-shot instructions
+    // carried by navigation; reacting in an effect, keyed on location.key, is the sync.
+    // oxlint-disable-next-line react/set-state-in-effect
     setTyping(false)
     // Empty, per Figma 16658:28872 — the orb, the greeting and the openers,
     // with nothing above the composer. It used to open on the demo
@@ -227,6 +231,7 @@ export function ChatPage() {
     if (!opened || opened.slug === sessionSlug) return
     // Only on a real change of session: a stale "Aurelia is typing" from the
     // thread you just left has nothing to do with the one you just opened.
+    // oxlint-disable-next-line react/set-state-in-effect -- syncing to the session in the URL
     setTyping(false)
     openSession(opened)
   }, [opened, sessionSlug, openSession])
@@ -292,6 +297,7 @@ export function ChatPage() {
 
   useEffect(() => {
     if (!limited) {
+      // oxlint-disable-next-line react/set-state-in-effect -- derived from the free-limit flag changing
       setResetAt(null)
       return
     }
@@ -308,6 +314,7 @@ export function ChatPage() {
   useEffect(() => {
     if (!routeState?.publish) return
     if (!isEnabled('chat.publish')) return
+    // oxlint-disable-next-line react/set-state-in-effect -- route-state door, see above
     setPublishState('publishing')
   }, [location.key, routeState?.publish, isEnabled])
 
@@ -454,6 +461,9 @@ export function ChatPage() {
   // same fix, as the style changes below. The ref keeps the text after the
   // route state is cleared.
   const pendingAsk = useRef<string | null>(null)
+  // Reads the latest answerFor (and what it closes over) without making the
+  // effect re-run whenever those change.
+  const replyToAsk = useEffectEvent((text: string, current: Message[]) => answerFor(text, current))
   if (ask && !askHandled.current && pendingAsk.current === null) pendingAsk.current = ask
   useEffect(() => {
     const text = pendingAsk.current
@@ -465,6 +475,7 @@ export function ChatPage() {
       ...current,
       { id: nextMessageId(), from: 'user', at: Date.now(), status: 'read', text },
     ])
+    // oxlint-disable-next-line react/set-state-in-effect -- route-state door, see above
     setTyping(true)
     window.setTimeout(() => {
       setTyping(false)
@@ -473,7 +484,7 @@ export function ChatPage() {
       // started composing the ask: "I can't sleep" and "I don't know what I'm
       // feeling" deserve different first answers — the second gets the
       // smaller questions, the first gets a proposal.
-      setMessages((current) => [...current, answerFor(text, current)])
+      setMessages((current) => [...current, replyToAsk(text, current)])
     }, 1400)
     // Uncleared for the same reason as the fork's reply above.
     }, [ask, opened, sessionSlug, setMessages, nextMessageId])

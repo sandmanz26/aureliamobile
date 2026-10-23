@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { StagingBar } from './versions/StagingBar'
 import { AdminLayout } from './admin/AdminLayout'
 import { AudioPlayerProvider } from './audio/AudioPlayerContext'
@@ -8,6 +8,7 @@ import { ChatSessionProvider } from './chat/ChatSessionContext'
 import { RequireAuth } from './auth/RequireAuth'
 import { SiteLock } from './components/SiteLock'
 import { PageSkeleton } from './components/ui/PageSkeleton'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { FeatureFlagsProvider } from './demo/FeatureFlags'
 import { ModuleGuard } from './demo/ModuleGuard'
 import { DemoAnnotator } from './demo/annotations/DemoAnnotator'
@@ -75,6 +76,7 @@ const AuditPage = lazy(() => import('./admin/pages/AuditPage').then((m) => ({ de
 const SettingsPage = lazy(() => import('./admin/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })))
 
 export default function App() {
+  const { pathname } = useLocation()
   return (
     <FeatureFlagsProvider>
       <StagingBar />
@@ -84,6 +86,11 @@ export default function App() {
             leaving /chat to play it and coming back. */}
         <AudioPlayerProvider>
         <ChatSessionProvider>
+        {/* Route-level boundary: a crash on one screen shows the fallback
+            inside the app (staging bar, providers and the playing session
+            survive) and clears when the user navigates elsewhere. The root
+            boundary in main.tsx stays as the last resort. */}
+        <ErrorBoundary name="route" resetKey={pathname}>
         <Routes>
           {/* Unlisted presenter console — see src/demo/modules.ts */}
           <Route path="/__demo" element={<DemoControlPage />} />
@@ -465,6 +472,7 @@ export default function App() {
               link looked like a blank page that loaded fine instead of a 404. */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        </ErrorBoundary>
         {/* /__demo's "Review annotations" — renders nothing unless switched on there. */}
         <DemoAnnotator />
         {/* /__demo's "Click insights" — records taps; ?heatmap draws them back. */}

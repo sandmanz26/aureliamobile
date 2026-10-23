@@ -232,6 +232,11 @@ this today without waiting on a backend.
 
 ## 15 · Zero automated test coverage
 
+> **Update 2026-10-23 (U048):** partly closed. Vitest + React Testing Library
+> are installed, 55 unit tests cover the logic, the HTTP client, storage, the
+> serverless endpoints and one component, and CI runs them on every push. Still
+> open: an end-to-end suite for the flows named below.
+
 "No test runner is configured" (CLAUDE.md, verbatim) and every verification
 in this project's history, including this session's, has been a throwaway
 Playwright script that disappears with the container. Stand up Vitest +

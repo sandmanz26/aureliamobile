@@ -20,7 +20,9 @@ one React app, two shells. React 19 + Vite + Tailwind CSS v4, no backend yet.
 npm install
 npm run dev          # vite dev server, localhost:5173
 npm run typecheck    # tsc -b — see the note below, this is not tsc --noEmit
-npm run lint         # oxlint
+npm run lint         # oxlint --deny-warnings
+npm test             # vitest unit tests
+npm run check        # typecheck + lint + test (what CI runs)
 npm run build        # typecheck + production build
 npm run build:tokens # regenerate src/styles/tokens.css from design-tokens/figma-export.json
 npm run preview      # serve the production build locally
@@ -33,9 +35,12 @@ npm run preview      # serve the production build locally
 and exits clean on a broken tree. Always use the script. All three projects
 run in `strict` mode.
 
-There is no test runner configured. Verification here is typecheck, lint, a
-production build, and driving the real app in a browser — see
-`docs/FOR-AI-AGENT.md` for what "verify" means on this codebase in practice.
+Verification is `npm run check` (typecheck, lint with warnings as errors,
+Vitest unit tests), a production build, and driving the real app in a browser
+for anything visual — see `docs/FOR-AI-AGENT.md`. CI runs the same on every
+push to the web branches. The foundation new code uses (TanStack Query,
+`requestJson`, safe storage, error reporting) is described in `CLAUDE.md`
+under "Engineering foundation".
 
 ## Architecture, in one pass
 
@@ -246,7 +251,6 @@ full here — but the two that most affect how you work in this codebase:
 
 - **`/admin` has no authentication.** `ModuleGuard` (demo-flag scoping) is
   not a security boundary; every admin module is reachable by URL today.
-- **No automated tests.** Verification is typecheck + lint + build + manual
-  browser checks. Adding a test framework is a real decision (which one,
-  what it covers first) worth making deliberately rather than as a side
-  effect of an unrelated change.
+- **Unit tests only.** Vitest + Testing Library cover the logic and the
+  endpoints (U048); there is no end-to-end suite yet, so flows are still
+  checked by driving the app in a browser.

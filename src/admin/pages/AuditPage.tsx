@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Column } from '../components/DataTable'
 import { DataTable } from '../components/DataTable'
 import { Badge, PageHeader, StatCard, StatusBadge } from '../components/ui'
@@ -7,6 +8,8 @@ import { AUDIT_LOG, ROLES } from '../data/mock'
 const roleName = (id: string) => ROLES.find((role) => role.id === id)?.name ?? id
 
 export function AuditPage() {
+  // "Now" for the 48h window, fixed when the page opens rather than read on every render.
+  const [now] = useState(() => Date.now())
   const columns: Column<AuditEntry>[] = [
     {
       key: 'at',
@@ -28,7 +31,7 @@ export function AuditPage() {
 
   const denied = AUDIT_LOG.filter((entry) => entry.result === 'denied')
   const actors = new Set(AUDIT_LOG.map((entry) => entry.actor)).size
-  const today = AUDIT_LOG.filter((entry) => Date.now() - new Date(entry.at).getTime() < 86400000 * 2)
+  const today = AUDIT_LOG.filter((entry) => now - new Date(entry.at).getTime() < 86400000 * 2)
 
   return (
     <>

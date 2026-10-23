@@ -73,6 +73,26 @@ function appVersion() {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  build: {
+    // The one chunk over 500 kB is three.js behind the 3D network flag, which
+    // only loads when that flag is on; everything on the first load is well
+    // under. Raised so the warning stays meaningful for the rest.
+    chunkSizeWarningLimit: 600,
+    rolldownOptions: {
+      output: {
+        // Framework code changes far less often than the app, so it gets its
+        // own long-cached chunk: a deploy that only touches screens does not
+        // make returning visitors download React again. three.js is not
+        // listed — it is already split out behind the lazy 3D network.
+        advancedChunks: {
+          groups: [
+            { name: 'react-vendor', test: /node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/ },
+            { name: 'query-vendor', test: /node_modules[\\/](@tanstack|zod)[\\/]/ },
+          ],
+        },
+      },
+    },
+  },
   define: {
     __BUILD_ID__: JSON.stringify(buildId()),
     __BUILD_BRANCH__: JSON.stringify(buildBranch()),

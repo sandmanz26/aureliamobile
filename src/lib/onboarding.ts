@@ -1,4 +1,6 @@
+import { z } from 'zod'
 import { FEELINGS, feelingSentence } from './feelings'
+import { readJson, removeKey, writeJson } from './storage'
 
 // First-run onboarding (design v4, U047).
 //
@@ -73,13 +75,19 @@ interface Stored extends Onboarding {
   skipped?: boolean
 }
 
+const stored = z.object({
+  goal: z.string().nullable(),
+  feelings: z.array(z.string()),
+  length: z.union([z.literal(5), z.literal(10), z.literal(20)]),
+  voice: z.enum(['female', 'male', 'none']),
+  sounds: z.array(z.enum(['nature', 'music', 'frequencies', 'silence'])),
+  doneAt: z.number().optional(),
+  skipped: z.boolean().optional(),
+})
+
+/** A record from an older shape (or edited by hand) reads as "not onboarded", which only asks again. */
 function read(): Stored | null {
-  try {
-    const raw = localStorage.getItem(KEY)
-    return raw ? (JSON.parse(raw) as Stored) : null
-  } catch {
-    return null
-  }
+  return readJson<Stored | null>(KEY, stored, null)
 }
 
 /** Has this browser been through onboarding (finished or skipped)? */
@@ -94,20 +102,13 @@ export function onboardingAnswers(): Onboarding | null {
 }
 
 export function saveOnboarding(answers: Onboarding, skipped = false) {
-  try {
-    localStorage.setItem(KEY, JSON.stringify({ ...answers, doneAt: Date.now(), skipped }))
-  } catch {
-    // Private mode: onboarding just asks again next time, which is harmless.
-  }
+  // Private mode: onboarding just asks again next time, which is harmless.
+  writeJson(KEY, { ...answers, doneAt: Date.now(), skipped })
 }
 
 /** Settings → "Replay onboarding". Keeps nothing, so it asks from scratch. */
 export function resetOnboarding() {
-  try {
-    localStorage.removeItem(KEY)
-  } catch {
-    // nothing to clear
-  }
+  removeKey(KEY)
 }
 
 export function findGoal(id: string | null) {

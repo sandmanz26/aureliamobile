@@ -1,4 +1,5 @@
 import { BUILD } from '../lib/build'
+import { readString, removeKey, writeString } from '../lib/storage'
 
 /**
  * The shared password in front of the whole site.
@@ -31,25 +32,14 @@ export const UNLOCK_KEY = 'aurelia.site.unlocked'
  * supposed to let in, so every access is guarded and failure means "locked".
  */
 export function hasUnlocked(): boolean {
-  try {
-    return window.localStorage.getItem(UNLOCK_KEY) === SITE_PASSWORD
-  } catch {
-    return false
-  }
+  return readString(UNLOCK_KEY) === SITE_PASSWORD
 }
 
 export function rememberUnlock() {
-  try {
-    window.localStorage.setItem(UNLOCK_KEY, SITE_PASSWORD)
-  } catch {
-    // Unlocked for this page view only. Better than refusing to open.
-  }
+  // If storage refuses, it is unlocked for this page view only. Better than refusing to open.
+  writeString(UNLOCK_KEY, SITE_PASSWORD)
 }
 
 export function forgetUnlock() {
-  try {
-    window.localStorage.removeItem(UNLOCK_KEY)
-  } catch {
-    // Nothing stored to clear.
-  }
+  removeKey(UNLOCK_KEY)
 }

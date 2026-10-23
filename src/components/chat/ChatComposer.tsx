@@ -1,6 +1,6 @@
 import { ArrowUp, Plus, Reply, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import type { Message } from '../../chat/ChatSessionContext'
+import type { Message } from '../../chat/thread'
 
 interface ChatComposerProps {
   onSend: (text: string) => void

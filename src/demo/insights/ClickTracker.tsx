@@ -1,8 +1,10 @@
+import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useFeatureFlags } from '../FeatureFlags'
 import { CLICKS_FLAG } from '../modules'
+import { clickKeys } from '../../api/clicks'
 import type { ClickEvent } from './tracker'
 import { findVisible, installTracker, loadEvents, recordView } from './tracker'
 
@@ -57,13 +59,13 @@ function Heatmap({ pathname, search }: { pathname: string; search: string }) {
   const params = new URLSearchParams(search)
   const mode = params.get('heatmap') === 'elements' ? 'elements' : 'dots'
   const focus = params.get('el')
-  const [events, setEvents] = useState<ClickEvent[] | null>(null)
+  const { data } = useQuery({ queryKey: clickKeys.all, queryFn: ({ signal }) => loadEvents(signal) })
+  const events: ClickEvent[] | null = data?.events ?? null
   const [docH, setDocH] = useState(() => document.documentElement.scrollHeight)
   const [tick, setTick] = useState(0)
   const layout = layoutOf(window.innerWidth)
 
   useEffect(() => {
-    void loadEvents().then((r) => setEvents(r.events))
     const id = window.setInterval(() => {
       setDocH(document.documentElement.scrollHeight)
       setTick((n) => n + 1)

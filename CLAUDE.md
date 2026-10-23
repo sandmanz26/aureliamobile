@@ -65,12 +65,17 @@ ships. "It looked like a harmless shared fix" is not an exception.
 npm install
 npm run dev          # vite, port 5173
 npm run typecheck    # tsc -b
-npm run lint         # oxlint
+npm run lint         # oxlint --deny-warnings (a warning fails it)
+npm test             # vitest run — unit tests next to the code, *.test.ts(x)
+npm run check        # typecheck + lint + test, what CI runs before the build
 npm run build        # tsc -b && vite build
 ```
 
-React 19, Vite, TypeScript, Tailwind CSS v4. No test runner is configured —
-verification here is typecheck, lint, and driving the real app in a browser.
+React 19, Vite, TypeScript, Tailwind CSS v4, TanStack Query, Zod, Vitest +
+Testing Library. Verification is `npm run check`, the build, and driving the
+real app in a browser for anything visual. CI (`.github/workflows/ci.yml`)
+runs typecheck, lint, test and build on every push to the web branches and on
+pull requests; a red run is not promoted to `web_prod`.
 
 **`npm run typecheck` runs `tsc -b`, not `tsc --noEmit`.** The root `tsconfig`
 has `"files": []` and delegates to project references, so `tsc --noEmit` checks
@@ -88,10 +93,14 @@ src/
     chat/       the cockpit's own parts
     ui/         everything shared
   layouts/      AppLayout (drawer + shell), AdminLayout
-  lib/          the catalogue and its helpers — no network, no database
+  lib/          the catalogue and its helpers, plus http/storage/monitoring/queryClient
+  api/          typed fetchers + Zod schemas + query keys, one file per /api resource
+  chat/         the cockpit's state (ChatSessionContext) and its pure data (thread, addOptions)
+  test/         Vitest setup
   auth/         AuthContext + useSignInGate
   demo/         the /__demo feature-flag console
   styles/       tokens.css — GENERATED, see below
+api/            Vercel serverless endpoints; shared code in api/_lib (not routes)
 ```
 
 ---
@@ -153,6 +162,42 @@ is a design decision, not a sync gap.
 - **`rotate-*` sets the standalone CSS `rotate` property**, not `transform`. A
   probe reading `transform` will report no rotation on an element that is
   plainly rotated.
+
+---
+
+## Engineering foundation (U048) — use these, not the raw APIs
+
+The app is still mock data, but the plumbing is the one the AI backend plugs
+into. New code goes through it:
+
+- **Server state → TanStack Query** (`lib/queryClient.ts`, provider in
+  `main.tsx`). Every `/api/*` read is a `useQuery`, every write a
+  `useMutation`; keys live beside the fetcher in `src/api/<resource>.ts`.
+  Defaults: 30s stale, retries only retryable failures (offline, 408, 429,
+  5xx) twice with backoff, no refetch on window focus. Devtools in dev only.
+- **HTTP → `requestJson` (`lib/http.ts`)**, never bare `fetch`: 10s timeout,
+  cancellation from the caller's signal, and a Zod schema the response must
+  match. Failures are `HttpError` (`status` 0 = network/timeout,
+  `.retryable`). Old-phone fallbacks for `AbortSignal.timeout/any` included.
+- **Browser storage → `lib/storage.ts`**, never `localStorage` directly:
+  nothing throws, and JSON reads are validated by a schema with a fallback.
+- **Errors → `reportError` (`lib/monitoring.ts`)**, the one seam for Sentry
+  or similar. Global `error`/`unhandledrejection` listeners are installed in
+  `main.tsx`; query/mutation errors are reported centrally (a query whose
+  failure is an expected state sets `meta: { reportErrors: false }`). Two
+  error boundaries: root (last resort) and route-level, which resets on
+  navigation so one broken screen does not stick.
+- **Serverless → `api/_lib/kv.ts`**: the Upstash client (8s timeout), the
+  per-deployment key scoping, `parseBody` (malformed JSON is a 400, not a
+  500) and `noStore`. `_lib` is not a route; imports use `.js` because the
+  project is ESM. **Never put a test or helper file directly in `api/`** —
+  Vercel turns every file there into an endpoint.
+- **Pure data stays out of component files** (`chat/thread.ts`,
+  `chat/addOptions.ts`, `demo/insights/stats.ts`) so it can be tested and so
+  Fast Refresh works. Provider hooks (`useAuth`, `useChatSession`, …) are
+  the allowed exception, listed in `.oxlintrc.json`.
+- **Bundle:** React/router and TanStack/Zod are their own long-cached vendor
+  chunks; three.js stays lazy behind the 3D network flag.
 
 ---
 
@@ -362,8 +407,10 @@ Explain the config here instead.
 - **`/admin` has no authentication at all.** Every module is reachable by URL.
   This is the P0 in `docs/PRD.md` and it is in the code, not just the document.
 - No backend. Both clients are frontend-only.
-- No automated tests. The responsive and interaction checks in this project's
-  history were one-off Playwright scripts, not a suite.
+- ~~No automated tests.~~ Since U048: Vitest unit tests for the logic in
+  `lib/`, `chat/`, the insights/annotation helpers, the HTTP client, storage,
+  the serverless endpoints and one component. Still no end-to-end suite —
+  responsive and interaction checks are one-off Playwright scripts.
 - ~~Sign-out is unreachable from anywhere in the UI.~~ Fixed: it lives on
   `/settings`, reached by the gear on your own profile.
 

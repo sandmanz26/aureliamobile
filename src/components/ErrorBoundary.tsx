@@ -1,14 +1,21 @@
 import { Component } from 'react'
 import type { ErrorInfo, ReactNode } from 'react'
 import { AlertTriangle } from 'lucide-react'
+import { reportError } from '../lib/monitoring'
 import { Button } from './ui/Button'
 
 interface Props {
   children: ReactNode
+  /** Clears a caught error when it changes — pass the pathname so moving to
+   *  another screen recovers instead of leaving the fallback up. */
+  resetKey?: string
+  /** Where the boundary sits, for the report: "root", "route". */
+  name?: string
 }
 
 interface State {
   error: Error | null
+  resetKey?: string
 }
 
 /**
@@ -20,19 +27,24 @@ interface State {
  * effects, which is why individual features still need their own
  * try/catch where they call anything that can fail.
  *
- * `onError` is the seam for a real error-reporting service (Sentry or
- * equivalent) once one exists; today it only logs, since there is nothing
- * to report to yet.
+ * Errors go to `reportError` (lib/monitoring), the one seam for a real
+ * error-reporting service. A boundary with a `resetKey` clears itself when
+ * the key changes, so a crash on one screen does not survive navigating away.
  */
 export class ErrorBoundary extends Component<Props, State> {
-  state: State = { error: null }
+  state: State = { error: null, resetKey: this.props.resetKey }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { error }
   }
 
+  static getDerivedStateFromProps(props: Props, state: State): Partial<State> | null {
+    if (props.resetKey !== state.resetKey) return { error: null, resetKey: props.resetKey }
+    return null
+  }
+
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error('Unhandled render error', error, info.componentStack)
+    reportError(error, { source: `ErrorBoundary:${this.props.name ?? 'root'}`, componentStack: info.componentStack ?? undefined })
   }
 
   render() {
