@@ -84,6 +84,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J033 | 2026-10-22 | Question | "Try again" after v4 | — |
 | J034 | 2026-10-22 | Doc | Prompt to install click tracking + the floating review button elsewhere | docs only |
 | J035 | 2026-10-23 | Code + Check | Re-check staging; production-grade code quality; install libraries (cache etc.) | U048 |
+| J036 | 2026-10-23 | Question | Did U048 change the user experience? | — |
 
 ---
 
@@ -273,3 +274,14 @@ transcript and the update log. Everything from J018 on was written at the time.
   - Keep the delicate annotation sync logic as it was, only validating its data.
 - **Checked:** every route of a staging-mode build in v2 and v4 at 402 and 1280, and the main flows. The one defect found (`/__demo/insights` overflow) was fixed. The live staging URL is not reachable from this environment.
 - **Open:** O14 (error-reporting service, E2E suite, microphone policy, bundle size).
+
+### J036 — Did U048 change the user experience?
+- **Asked:** whether anything changed for users compared with before.
+- **Answered:**
+  - In normal use, nothing changed: 32 screenshots are pixel-identical and the flows behave the same.
+  - The differences are only in failure cases:
+    - a request now times out after 10s instead of hanging;
+    - a screen crash is contained to that screen and clears on navigation;
+    - invalid stored data or server data falls back instead of breaking.
+  - Visitors returning after a deploy download less, because React is in its own cached chunk. The very first visit downloads about 35 kB gzip more.
+  - Internal tools: `/__demo/insights` keeps the old data visible while refreshing and no longer overflows on a phone.
