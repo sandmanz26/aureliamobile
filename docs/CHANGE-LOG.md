@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-25 — Works offline; 404 for locked pages opened directly (U049)
+
+After one visit the app opens and every screen works without internet, including the session audio. A pill says "You're offline — saved screens still work", then "Back online". Covers already seen stay; others show their gradient. A new deploy is offered with "A new version of Aurelia is ready · Reload" instead of reloading on its own. Opening a page that needs an account directly while signed out shows the 404 page with a Sign in button that returns there; links inside the app still go to sign-in. All versions. Web only. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-23 — Production-grade foundation (U048)
 
 No visible change; 32 before/after screenshots are pixel-identical. Under the hood:

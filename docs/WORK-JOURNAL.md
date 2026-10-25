@@ -30,7 +30,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | --- | --- | --- | --- |
 | O1 | **15 product decisions** with recommended defaults (free-plan limit, version model, live vs current, unpublish, fork source, lineage rules and payouts, conversation model, what a "play" is, challenge winners, one currency, safety and claims, identity, analytics consent) | J012, `docs/reviews/Aurelia-Logic-Review-2026-10-18.pdf` §11 | Product owner: accept the defaults or change them |
 | O2 | **Beta simplification list**: what stays visible, what is merged, what goes behind flags | J015 | Product owner + Eugene to agree. Then build a "Beta" preset in `/__demo` and add flags for coins in the header and Recreate on the player |
-| O3 | **Promote to production**: last done 2026-10-21 (J031, U046). Staging now carries U047 (v4, staging-only) and U048 (foundation, affects production once promoted) | J005 onward | Product owner request |
+| O3 | **Promote to production**: last done 2026-10-21 (J031, U046). Staging now carries U047 (v4, staging-only), U048 (foundation) and U049 (offline + 404) | J005 onward | Product owner request |
 | O4 | **Sticky player**: U037 added Close. Options A (swipe away + Undo) and C (auto-hide after 30 min paused) were proposed and not yet chosen | J008, J011 | Product owner |
 | O5 | **Free limit counts "Apply"**, so three applies trip it. This conflicts with v3's "keep experimenting" | J020 | Decision O1 #1 (limit model) |
 | O6 | **Two version systems** (cockpit ids vs Progress ids), so the earlier-version cards play the current recording | J011, J020 | Decision O1 #3 |
@@ -42,6 +42,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O12 | **Two recommendation lists**: the chat's deck (scores of 12%, its own picks, "Apply new changes (3)") and the "+" sheet (3% / 6%, its own picks, starts at 0) are separate mock lists with separate selections. Should they be one list with one selection? | J030, U045 | Product owner |
 | O13 | **Onboarding when accounts exist**: today "first time" is per browser (localStorage). With a backend it should be per account and its answers saved to the profile. Also: should the style answers (length, voice, sound) become real defaults for every new session, and should onboarding become the production version (v4 → production)? | J032, U047 | Product owner + backend |
 | O14 | **Production hardening still to decide**: (1) an error-reporting service (Sentry or similar) to plug into `reportError`; (2) an end-to-end test suite (Playwright) for sign-in, onboarding, build/publish; (3) `vercel.json` blocks the microphone (`Permissions-Policy: microphone=()`), which must change before real voice input; (4) whether to trim bundle size with `zod/mini` | J035, U048 | Product owner + engineering |
+| O15 | **404 vs sign-in for shared links**: with U049 a signed-out visitor opening a shared session/player link sees the 404 (with Sign in). Right for privacy; worse for sharing. If sessions are meant to be shared publicly, the player/session pages may need to become public (or show a teaser) rather than 404 | J037, U049 | Product owner |
 
 ---
 
@@ -85,6 +86,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J034 | 2026-10-22 | Doc | Prompt to install click tracking + the floating review button elsewhere | docs only |
 | J035 | 2026-10-23 | Code + Check | Re-check staging; production-grade code quality; install libraries (cache etc.) | U048 |
 | J036 | 2026-10-23 | Question | Did U048 change the user experience? | — |
+| J037 | 2026-10-25 | Code | Offline: some pages must still open; 404 when forcing a signed-in page | U049 |
 
 ---
 
@@ -285,3 +287,13 @@ transcript and the update log. Everything from J018 on was written at the time.
     - invalid stored data or server data falls back instead of breaking.
   - Visitors returning after a deploy download less, because React is in its own cached chunk. The very first visit downloads about 35 kB gzip more.
   - Internal tools: `/__demo/insights` keeps the old data visible while refreshing and no longer overflows on a phone.
+
+### J037 — Offline pages, and a 404 for forced access
+- **Asked:** make sure some pages still open with no internet, and show a 404 page when a user forces access to a page that needs login.
+- **Code:** U049.
+- **Decided:**
+  - Offline covers the whole app after one visit, not just a few pages, since the data is bundled. Session audio is included and works on Safari.
+  - A new build is offered as a prompt rather than reloading by itself, so a session is never cut off.
+  - "Forced" means typed, bookmarked or reloaded. In-app links still go to sign-in, so normal use is not broken.
+  - The 404 offers Sign in and returns the user to the page.
+- **Flagged:** shared session links now show a 404 to signed-out recipients (O15). `/admin` is still unauthenticated.

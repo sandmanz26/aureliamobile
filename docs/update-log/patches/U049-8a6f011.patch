@@ -1,0 +1,640 @@
+diff --git a/CLAUDE.md b/CLAUDE.md
+index 8b6b4b3..2e906ee 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -198,6 +198,16 @@ into. New code goes through it:
+   the allowed exception, listed in `.oxlintrc.json`.
+ - **Bundle:** React/router and TanStack/Zod are their own long-cached vendor
+   chunks; three.js stays lazy behind the 3D network flag.
++- **Offline (U049) → `vite-plugin-pwa`** (config in `vite.config.ts`). The
++  service worker precaches the shell, every route's code, fonts and bundled
++  images, so after one visit every screen opens with no network (the data is
++  bundled). Unsplash covers are cached as seen; session audio sits in a
++  range-capable cache warmed by `UpdatePrompt`; `/api` and `/__*` are never
++  cached. `OfflineBanner` says when the device is offline. **A new deploy
++  waits for the user to tap Reload** in `UpdatePrompt` (no auto-reload
++  mid-session) — so "I pushed and still see the old one" can also mean the
++  toast has not been tapped yet. CSP allows `images.unsplash.com` in
++  `connect-src` for the worker. Dev (`npm run dev`) has no worker.
+ 
+ ---
+ 
+@@ -213,6 +223,13 @@ here came from a measurement.
+ over a token gradient, and the gradient is the floor, not a fallback. **A page
+ rendering as flat gradients has no network; it is not broken.**
+ 
++**A signed-out visitor who forces a signed-in address gets the 404 page
++(U049)**, with a Sign in link that returns to it — `RequireAuth` tells a typed,
++bookmarked or reloaded address (React Router's first entry, key `"default"`)
++apart from a link tapped inside the app, which still goes straight to
++`/login`. Because sign-in does not persist, reloading a signed-in page lands
++there too.
++
+ **Sign-in does not persist, on purpose.** `AuthContext` holds a bool in state
+ with no localStorage. Every load starts signed out so the app opens on the case
+ for itself. Right while the data is mock, wrong once an account holds history —
+diff --git a/package.json b/package.json
+index bf2bb7b..a3b0d8b 100644
+--- a/package.json
++++ b/package.json
+@@ -24,6 +24,7 @@
+     "react-dom": "^19.3.1",
+     "react-router-dom": "^7.18.4",
+     "three": "^0.180.0",
++    "workbox-window": "^7.4.1",
+     "zod": "^4.6.7"
+   },
+   "devDependencies": {
+@@ -42,6 +43,7 @@
+     "tailwindcss": "^4.3.3",
+     "typescript": "~6.0.2",
+     "vite": "^8.3.5",
++    "vite-plugin-pwa": "^2.0.0",
+     "vitest": "^5.0.5"
+   }
+ }
+diff --git a/src/App.tsx b/src/App.tsx
+index fac88ce..5037f2d 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -9,6 +9,8 @@ import { RequireAuth } from './auth/RequireAuth'
+ import { SiteLock } from './components/SiteLock'
+ import { PageSkeleton } from './components/ui/PageSkeleton'
+ import { ErrorBoundary } from './components/ErrorBoundary'
++import { OfflineBanner } from './components/system/OfflineBanner'
++import { UpdatePrompt } from './components/system/UpdatePrompt'
+ import { FeatureFlagsProvider } from './demo/FeatureFlags'
+ import { ModuleGuard } from './demo/ModuleGuard'
+ import { DemoAnnotator } from './demo/annotations/DemoAnnotator'
+@@ -473,6 +475,9 @@ export default function App() {
+           <Route path="*" element={<NotFoundPage />} />
+         </Routes>
+         </ErrorBoundary>
++        {/* Offline note and new-build prompt (U049) — render nothing normally. */}
++        <OfflineBanner />
++        <UpdatePrompt />
+         {/* /__demo's "Review annotations" — renders nothing unless switched on there. */}
+         <DemoAnnotator />
+         {/* /__demo's "Click insights" — records taps; ?heatmap draws them back. */}
+diff --git a/src/auth/RequireAuth.test.tsx b/src/auth/RequireAuth.test.tsx
+new file mode 100644
+index 0000000..8a6cb4e
+--- /dev/null
++++ b/src/auth/RequireAuth.test.tsx
+@@ -0,0 +1,55 @@
++import { act, fireEvent, render, screen } from '@testing-library/react'
++import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom'
++import { describe, expect, it } from 'vitest'
++import { AuthProvider } from './AuthContext'
++import { RequireAuth } from './RequireAuth'
++
++function Login() {
++  return <p>login page</p>
++}
++
++function Home() {
++  const navigate = useNavigate()
++  return (
++    <button type="button" onClick={() => navigate('/sessions')}>
++      open sessions
++    </button>
++  )
++}
++
++function app(initial: string) {
++  return render(
++    <AuthProvider>
++      <MemoryRouter initialEntries={[initial]}>
++        <Routes>
++          <Route path="/home" element={<Home />} />
++          <Route path="/login" element={<Login />} />
++          <Route
++            path="/sessions"
++            element={
++              <RequireAuth>
++                <p>secret sessions</p>
++              </RequireAuth>
++            }
++          />
++        </Routes>
++      </MemoryRouter>
++    </AuthProvider>,
++  )
++}
++
++describe('RequireAuth', () => {
++  it('answers a forced, signed-out address with the 404 page and a Sign in link', () => {
++    app('/sessions')
++    expect(screen.getByText('404')).toBeTruthy()
++    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeTruthy()
++    expect(screen.queryByText('secret sessions')).toBeNull()
++    expect(screen.getByRole('link', { name: 'Sign in' }).getAttribute('href')).toBe('/login')
++  })
++
++  it('sends someone navigating inside the app to sign-in instead', () => {
++    app('/home')
++    act(() => fireEvent.click(screen.getByRole('button', { name: 'open sessions' })))
++    expect(screen.getByText('login page')).toBeTruthy()
++  })
++})
+diff --git a/src/auth/RequireAuth.tsx b/src/auth/RequireAuth.tsx
+index 62085f6..536e12b 100644
+--- a/src/auth/RequireAuth.tsx
++++ b/src/auth/RequireAuth.tsx
+@@ -1,16 +1,28 @@
+ import type { ReactNode } from 'react'
+ import { Navigate, useLocation } from 'react-router-dom'
++import { NotFoundPage } from '../pages/NotFoundPage'
+ import { useAuth } from './AuthContext'
+ 
+ /**
+- * Wraps a route a visitor cannot use yet. The attempted location travels with
+- * the redirect, so signing in returns them to what they were trying to open
+- * rather than dumping them back on Home.
++ * Wraps a route a visitor cannot use yet.
++ *
++ * Two ways to arrive signed out, two answers (U049):
++ * - **Forced** — the address typed, pasted, bookmarked or reloaded (React
++ *   Router's first entry has the key "default"). The page answers like a 404:
++ *   it does not confirm what is behind a signed-in address to someone who
++ *   is not signed in. It still offers Sign in, which brings them back here.
++ * - **From inside the app** — a link or button. That is someone using the
++ *   product, so they go straight to sign-in and return to what they were
++ *   opening, as before.
++ *
++ * Sign-in does not persist yet (AuthContext), so reloading a signed-in page
++ * also lands on the 404; its Sign in button returns to the same page.
+  */
+ export function RequireAuth({ children }: { children: ReactNode }) {
+   const { signedIn } = useAuth()
+   const location = useLocation()
+ 
+-  if (!signedIn) return <Navigate to="/login" replace state={{ from: location }} />
+-  return <>{children}</>
++  if (signedIn) return <>{children}</>
++  if (location.key === 'default') return <NotFoundPage reason="signed-out" />
++  return <Navigate to="/login" replace state={{ from: location }} />
+ }
+diff --git a/src/components/system/OfflineBanner.test.tsx b/src/components/system/OfflineBanner.test.tsx
+new file mode 100644
+index 0000000..ead7f64
+--- /dev/null
++++ b/src/components/system/OfflineBanner.test.tsx
+@@ -0,0 +1,27 @@
++import { act, render, screen } from '@testing-library/react'
++import { describe, expect, it, vi } from 'vitest'
++import { OfflineBanner } from './OfflineBanner'
++
++function setOnline(value: boolean) {
++  vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(value)
++  window.dispatchEvent(new Event(value ? 'online' : 'offline'))
++}
++
++describe('OfflineBanner', () => {
++  it('renders nothing while online', () => {
++    render(<OfflineBanner />)
++    expect(screen.queryByRole('status')).toBeNull()
++  })
++
++  it('says so when offline, then "Back online" briefly when the connection returns', () => {
++    vi.useFakeTimers()
++    render(<OfflineBanner />)
++    act(() => setOnline(false))
++    expect(screen.getByRole('status').textContent).toContain('You’re offline')
++    act(() => setOnline(true))
++    expect(screen.getByRole('status').textContent).toContain('Back online')
++    act(() => vi.advanceTimersByTime(3000))
++    expect(screen.queryByRole('status')).toBeNull()
++    vi.useRealTimers()
++  })
++})
+diff --git a/src/components/system/OfflineBanner.tsx b/src/components/system/OfflineBanner.tsx
+new file mode 100644
+index 0000000..8b5a447
+--- /dev/null
++++ b/src/components/system/OfflineBanner.tsx
+@@ -0,0 +1,55 @@
++import { Wifi, WifiOff } from 'lucide-react'
++import { useEffect, useState } from 'react'
++import { createPortal } from 'react-dom'
++import { useOnlineStatus } from '../../lib/useOnlineStatus'
++
++/**
++ * Says so when there is no connection (U049). The app keeps working — every
++ * screen and the mock data are cached by the service worker — so this is a
++ * note, not a blocker: what will not happen offline is new cover photos,
++ * syncing flags/notes/insights to other browsers, and (later) anything that
++ * asks the AI. When the connection returns it says "Back online" briefly.
++ *
++ * Nothing renders while online, so the frozen layout is untouched in the
++ * normal case. Portalled, and offset by the staging bar.
++ */
++export function OfflineBanner() {
++  const online = useOnlineStatus()
++  const [wasOffline, setWasOffline] = useState(false)
++  const [showBack, setShowBack] = useState(false)
++
++  // Remember an outage while rendering, so the "Back online" note can follow it.
++  if (!online && !wasOffline) setWasOffline(true)
++  if (online && wasOffline) {
++    setWasOffline(false)
++    setShowBack(true)
++  }
++
++  useEffect(() => {
++    if (!showBack) return
++    const timer = window.setTimeout(() => setShowBack(false), 2500)
++    return () => window.clearTimeout(timer)
++  }, [showBack])
++
++  if (online && !showBack) return null
++
++  return createPortal(
++    <div
++      role="status"
++      aria-live="polite"
++      data-insights-ignore=""
++      className="pointer-events-none fixed inset-x-0 z-[70] flex justify-center px-16"
++      style={{ top: 'calc(var(--staging-bar, 0px) + 8px)' }}
++    >
++      <p
++        className={`u-fade flex items-center gap-8 rounded-full px-14 py-8 text-[13px] leading-[18px] shadow-[0_5px_24px_4px_rgba(0,0,0,0.08)] ${
++          online ? 'bg-[#ECFBED] text-success-600' : 'bg-[#331B04] text-white'
++        }`}
++      >
++        {online ? <Wifi size={14} /> : <WifiOff size={14} />}
++        {online ? 'Back online' : 'You’re offline — saved screens still work'}
++      </p>
++    </div>,
++    document.body,
++  )
++}
+diff --git a/src/components/system/UpdatePrompt.tsx b/src/components/system/UpdatePrompt.tsx
+new file mode 100644
+index 0000000..5ef44d6
+--- /dev/null
++++ b/src/components/system/UpdatePrompt.tsx
+@@ -0,0 +1,75 @@
++import { RefreshCw, X } from 'lucide-react'
++import { createPortal } from 'react-dom'
++import { useRegisterSW } from 'virtual:pwa-register/react'
++import { reportError } from '../../lib/monitoring'
++
++/** Checks for a new build every hour while the app stays open. */
++const UPDATE_CHECK_MS = 60 * 60 * 1000
++
++/** The session audio the player loops (AudioPlayerContext). */
++const SESSION_AUDIO = '/audio/session-bed.wav'
++
++/**
++ * Puts the session audio in the offline cache with one full download, once a
++ * worker controls the page. The player's own requests are byte ranges, which
++ * are answered from this copy but never create it.
++ */
++async function warmAudioCache() {
++  if (!navigator.serviceWorker?.controller || !('caches' in window)) return
++  const cache = await caches.open('session-audio')
++  if (await cache.match(SESSION_AUDIO)) return
++  await fetch(SESSION_AUDIO)
++}
++
++/**
++ * Registers the service worker and, when a new build has downloaded, offers
++ * it (U049). The new version waits for the tap rather than taking over on its
++ * own: an automatic reload mid-session would cut off whatever the person is
++ * listening to. "Later" hides the note; the new build then loads on the next
++ * visit.
++ */
++export function UpdatePrompt() {
++  const {
++    needRefresh: [needRefresh, setNeedRefresh],
++    updateServiceWorker,
++  } = useRegisterSW({
++    onRegisteredSW(_url, registration) {
++      if (!registration) return
++      void warmAudioCache().catch(() => {})
++      window.setInterval(() => void registration.update().catch(() => {}), UPDATE_CHECK_MS)
++    },
++    onRegisterError(error) {
++      reportError(error, { source: 'service-worker' })
++    },
++  })
++
++  if (!needRefresh) return null
++
++  return createPortal(
++    <div
++      role="status"
++      data-insights-ignore=""
++      className="fixed inset-x-0 bottom-16 z-[70] flex justify-center px-16 lg:bottom-24"
++    >
++      <div className="u-fade flex items-center gap-12 rounded-16 bg-[#331B04] py-10 pl-16 pr-8 text-white shadow-[0_5px_24px_4px_rgba(0,0,0,0.15)]">
++        <p className="text-[14px] leading-[20px]">A new version of Aurelia is ready</p>
++        <button
++          type="button"
++          onClick={() => void updateServiceWorker(true)}
++          className="u-press flex h-32 items-center gap-6 rounded-full bg-white px-12 text-[13px] font-medium text-[#331B04]"
++        >
++          <RefreshCw size={13} /> Reload
++        </button>
++        <button
++          type="button"
++          aria-label="Later"
++          onClick={() => setNeedRefresh(false)}
++          className="u-press flex size-32 items-center justify-center rounded-full text-white/80"
++        >
++          <X size={16} />
++        </button>
++      </div>
++    </div>,
++    document.body,
++  )
++}
+diff --git a/src/lib/useOnlineStatus.ts b/src/lib/useOnlineStatus.ts
+new file mode 100644
+index 0000000..54e51fd
+--- /dev/null
++++ b/src/lib/useOnlineStatus.ts
+@@ -0,0 +1,23 @@
++import { useSyncExternalStore } from 'react'
++
++/**
++ * Whether the browser believes it is online. `navigator.onLine` can say
++ * "online" on a network with no internet, but it is never wrong the other
++ * way: "offline" really is offline. That is the case the UI uses it for.
++ */
++function subscribe(onChange: () => void) {
++  window.addEventListener('online', onChange)
++  window.addEventListener('offline', onChange)
++  return () => {
++    window.removeEventListener('online', onChange)
++    window.removeEventListener('offline', onChange)
++  }
++}
++
++export function useOnlineStatus() {
++  return useSyncExternalStore(
++    subscribe,
++    () => navigator.onLine,
++    () => true,
++  )
++}
+diff --git a/src/pages/NotFoundPage.tsx b/src/pages/NotFoundPage.tsx
+index ae41d4c..89d519c 100644
+--- a/src/pages/NotFoundPage.tsx
++++ b/src/pages/NotFoundPage.tsx
+@@ -1,16 +1,23 @@
+ import { SearchX } from 'lucide-react'
+-import { Link } from 'react-router-dom'
++import { Link, useLocation } from 'react-router-dom'
+ import { PageMeta } from '../components/PageMeta'
+ 
+ /**
+- * The catch-all route. Before this existed, an unmatched path rendered
+- * nothing — React Router has no route to pick, so the outlet was empty —
+- * and `vercel.json` rewrites every path to `index.html` with a 200, so a
+- * dead link looked like a blank page that loaded successfully rather than a
+- * 404. `noindex` here matters for exactly that reason: without it, every
+- * mistyped or removed URL would be a soft-404 a crawler could index.
++ * The 404 page, for two cases:
++ *
++ * - **missing** — the catch-all route. Before it existed an unmatched path
++ *   rendered nothing, and `vercel.json` rewrites every path to `index.html`
++ *   with a 200, so a dead link looked like a blank page that loaded fine.
++ * - **signed-out** — an address that needs an account, opened directly while
++ *   signed out (RequireAuth, U049). Same page, so it neither confirms nor
++ *   denies what is there; it adds Sign in, which returns to this address.
++ *
++ * `noindex` because every one of these is a soft 404 to a crawler.
+  */
+-export function NotFoundPage() {
++export function NotFoundPage({ reason = 'missing' }: { reason?: 'missing' | 'signed-out' }) {
++  const location = useLocation()
++  const signedOut = reason === 'signed-out'
++
+   return (
+     <div className="flex min-h-screen flex-col items-center justify-center gap-16 bg-background-default px-24 text-center">
+       <PageMeta title="Page not found" />
+@@ -19,17 +26,35 @@ export function NotFoundPage() {
+         <SearchX size={24} />
+       </span>
+       <div className="flex flex-col gap-8">
++        <p className="text-style-label tracking-[0.08em] text-text-secondary">404</p>
+         <h1 className="text-style-title text-text-primary">Page not found</h1>
+         <p className="text-style-body-small max-w-[320px] text-text-secondary">
+-          The link may be old, or the address was mistyped. Nothing here was lost.
++          {signedOut
++            ? 'This page isn’t available right now. If it’s yours, sign in to open it.'
++            : 'The link may be old, or the address was mistyped. Nothing here was lost.'}
+         </p>
+       </div>
+-      <Link
+-        to="/home"
+-        className="u-press mt-8 inline-flex items-center justify-center gap-8 rounded-full bg-button-primary-background px-24 py-14 text-style-body font-semibold text-button-primary-foreground hover:bg-button-primary-background-pressed"
+-      >
+-        Back to Home
+-      </Link>
++      <div className="mt-8 flex flex-col items-center gap-12">
++        {signedOut && (
++          <Link
++            to="/login"
++            state={{ from: { pathname: location.pathname, search: location.search } }}
++            className="u-press inline-flex items-center justify-center gap-8 rounded-full bg-button-primary-background px-24 py-14 text-style-body font-semibold text-button-primary-foreground hover:bg-button-primary-background-pressed"
++          >
++            Sign in
++          </Link>
++        )}
++        <Link
++          to="/home"
++          className={
++            signedOut
++              ? 'u-tap text-style-body-small font-medium text-text-primary'
++              : 'u-press inline-flex items-center justify-center gap-8 rounded-full bg-button-primary-background px-24 py-14 text-style-body font-semibold text-button-primary-foreground hover:bg-button-primary-background-pressed'
++          }
++        >
++          Back to Home
++        </Link>
++      </div>
+     </div>
+   )
+ }
+diff --git a/src/pages/OnboardingPage.tsx b/src/pages/OnboardingPage.tsx
+index b69911c..4a313e3 100644
+--- a/src/pages/OnboardingPage.tsx
++++ b/src/pages/OnboardingPage.tsx
+@@ -77,6 +77,7 @@ const STEPS: Step[] = ['welcome', 'goal', 'feeling', 'style', 'ready']
+ 
+ interface From {
+   pathname: string
++  search?: string
+   state?: unknown
+ }
+ 
+@@ -99,7 +100,7 @@ export function OnboardingPage() {
+   const back = () => setStep(STEPS[Math.max(0, index - 1)])
+ 
+   function leave(to: From) {
+-    navigate(to.pathname, { replace: true, state: to.state })
++    navigate(`${to.pathname}${to.search ?? ''}`, { replace: true, state: to.state })
+   }
+ 
+   function skip() {
+diff --git a/src/pages/auth/SignInPage.tsx b/src/pages/auth/SignInPage.tsx
+index 8ba9a2f..776c392 100644
+--- a/src/pages/auth/SignInPage.tsx
++++ b/src/pages/auth/SignInPage.tsx
+@@ -32,7 +32,7 @@ export function SignInPage() {
+   const navigate = useNavigate()
+   const location = useLocation()
+   const { signIn } = useAuth()
+-  const from = (location.state as { from?: { pathname: string; state?: unknown } } | null)?.from
++  const from = (location.state as { from?: { pathname: string; search?: string; state?: unknown } } | null)?.from
+   const v4 = useUiVersion() >= 4
+ 
+   function complete() {
+@@ -43,7 +43,7 @@ export function SignInPage() {
+       navigate('/welcome', { replace: true, state: { from } })
+       return
+     }
+-    navigate(from?.pathname ?? '/home', { replace: true, state: from?.state })
++    navigate(from ? `${from.pathname}${from.search ?? ''}` : '/home', { replace: true, state: from?.state })
+   }
+ 
+   return (
+diff --git a/src/pages/auth/SignUpPage.tsx b/src/pages/auth/SignUpPage.tsx
+index fb5124e..e14db34 100644
+--- a/src/pages/auth/SignUpPage.tsx
++++ b/src/pages/auth/SignUpPage.tsx
+@@ -26,7 +26,7 @@ export function SignUpPage() {
+   const navigate = useNavigate()
+   const location = useLocation()
+   const { signIn } = useAuth()
+-  const from = (location.state as { from?: { pathname: string; state?: unknown } } | null)?.from
++  const from = (location.state as { from?: { pathname: string; search?: string; state?: unknown } } | null)?.from
+   const v4 = useUiVersion() >= 4
+ 
+   const [name, setName] = useState('')
+@@ -51,7 +51,7 @@ export function SignUpPage() {
+       navigate('/welcome', { replace: true, state: { from } })
+       return
+     }
+-    navigate(from?.pathname ?? '/home', { replace: true, state: from?.state })
++    navigate(from ? `${from.pathname}${from.search ?? ''}` : '/home', { replace: true, state: from?.state })
+   }
+ 
+   function handleSubmit(event: React.FormEvent) {
+diff --git a/tsconfig.app.json b/tsconfig.app.json
+index 57b8e73..0976bf2 100644
+--- a/tsconfig.app.json
++++ b/tsconfig.app.json
+@@ -4,7 +4,7 @@
+     "target": "es2023",
+     "lib": ["ES2023", "DOM"],
+     "module": "esnext",
+-    "types": ["vite/client"],
++    "types": ["vite/client", "vite-plugin-pwa/react"],
+     "allowArbitraryExtensions": true,
+     "skipLibCheck": true,
+ 
+diff --git a/vercel.json b/vercel.json
+index f0c0c61..f6faed0 100644
+--- a/vercel.json
++++ b/vercel.json
+@@ -20,7 +20,7 @@
+         { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
+         {
+           "key": "Content-Security-Policy",
+-          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://images.unsplash.com; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
++          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://images.unsplash.com; media-src 'self'; connect-src 'self' https://images.unsplash.com; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+         }
+       ]
+     }
+diff --git a/vite.config.ts b/vite.config.ts
+index e1b6ef3..294ab7e 100644
+--- a/vite.config.ts
++++ b/vite.config.ts
+@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
+ import tailwindcss from '@tailwindcss/vite'
+ import react from '@vitejs/plugin-react'
+ import { defineConfig } from 'vite'
++import { VitePWA } from 'vite-plugin-pwa'
+ 
+ /**
+  * Which commit is live?
+@@ -72,7 +73,66 @@ function appVersion() {
+ 
+ // https://vite.dev/config/
+ export default defineConfig({
+-  plugins: [react(), tailwindcss()],
++  plugins: [
++    react(),
++    tailwindcss(),
++    // Offline (U049): a service worker precaches the app shell, every route's
++    // code, the fonts, the bundled images and the session audio, so after one
++    // visit the app opens and every screen works with no network — the data is
++    // bundled mock data. Unsplash covers are cached as they are seen (the token
++    // gradient underneath shows for any not yet seen). /api is never cached:
++    // flags, annotations and insights already fall back to this device.
++    //
++    // `prompt`, not auto-update: a new build waits until the user taps Reload
++    // in the update toast (UpdatePrompt), so a deploy can never restart a
++    // session someone is listening to. Registration lives in main.tsx.
++    VitePWA({
++      registerType: 'prompt',
++      injectRegister: false,
++      // public/site.webmanifest is the manifest; the plugin must not write a second one.
++      manifest: false,
++      includeAssets: ['favicon.svg', 'favicon-32.png', 'apple-touch-icon.png', 'site.webmanifest', 'fonts/*.woff2'],
++      workbox: {
++        globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2,webmanifest}'],
++        // three.js behind the off-by-default 3D network: cached when first used, not up front.
++        globIgnores: ['**/networkScene-*.js'],
++        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
++        navigateFallback: '/index.html',
++        navigateFallbackDenylist: [/^\/api\//, /^\/__/],
++        cleanupOutdatedCaches: true,
++        runtimeCaching: [
++          {
++            // Session audio: not precached, because a media element asks for
++            // byte ranges and Safari will not play a plain 200 from a cache.
++            // This route answers ranges from the cached file; UpdatePrompt
++            // warms it with one full download once the worker is in control.
++            urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.startsWith('/audio/'),
++            handler: 'CacheFirst',
++            options: {
++              cacheName: 'session-audio',
++              rangeRequests: true,
++              cacheableResponse: { statuses: [200] },
++            },
++          },
++          {
++            urlPattern: ({ url }) => url.origin === 'https://images.unsplash.com',
++            handler: 'CacheFirst',
++            options: {
++              cacheName: 'cover-photos',
++              expiration: { maxEntries: 300, maxAgeSeconds: 30 * 24 * 60 * 60 },
++              cacheableResponse: { statuses: [0, 200] },
++            },
++          },
++          {
++            urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.startsWith('/assets/'),
++            handler: 'CacheFirst',
++            options: { cacheName: 'lazy-assets', expiration: { maxEntries: 50 } },
++          },
++        ],
++      },
++      devOptions: { enabled: false },
++    }),
++  ],
+   build: {
+     // The one chunk over 500 kB is three.js behind the 3D network flag, which
+     // only loads when that flag is on; everything on the first load is well
+@@ -84,7 +144,7 @@ export default defineConfig({
+         // own long-cached chunk: a deploy that only touches screens does not
+         // make returning visitors download React again. three.js is not
+         // listed — it is already split out behind the lazy 3D network.
+-        advancedChunks: {
++        codeSplitting: {
+           groups: [
+             { name: 'react-vendor', test: /node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/ },
+             { name: 'query-vendor', test: /node_modules[\\/](@tanstack|zod)[\\/]/ },

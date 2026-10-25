@@ -86,6 +86,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U046 | (this log commit) | 2026-10-21 | Production: `web_prod` fast-forwarded from `2a2a376` to `web_app` (U045). | — |
 | U047 | `720e50a` | 2026-10-22 06:14 | Design v4 = v3 + first-run onboarding (`/welcome`): goal, feeling, style, editable summary → first session; Skip keeps answers; Replay in Settings. | [patch](patches/U047-720e50a.patch) |
 | U048 | `8bb282f` | 2026-10-23 15:35 | Production-grade foundation: TanStack Query, typed/validated HTTP, safe storage, error reporting, shared KV, 0 lint warnings, 55 Vitest tests, CI. No visual change. | [patch](patches/U048-8bb282f.patch) |
+| U049 | `8a6f011` | 2026-10-25 09:42 | Offline support (service worker, offline banner, update prompt) + 404 for signed-out forced access to protected pages. | [patch](patches/U049-8a6f011.patch) |
 
 ## Entries
 
@@ -871,3 +872,47 @@ Production (`web_prod`) is never touched by these updates unless asked.
   - Initial JS grew by about 35 kB gzip for TanStack Query + Zod; `zod/mini` is an option if that matters later.
   - `Permissions-Policy: microphone=()` in `vercel.json` will block real voice input when it arrives (O14).
 - **Revert:** `git revert --no-commit 8bb282f && git checkout HEAD -- docs/ && npm install`.
+
+### U049 — Offline support, and 404 for forced signed-out access
+
+- **Commit:** `8a6f011` · pushed 2026-10-25 09:42:14 UTC · `web_app` + `admin_cms` · not on `web_prod`
+- **Patch:** [patches/U049-8a6f011.patch](patches/U049-8a6f011.patch). It excludes `package-lock.json`; after reverting, run `npm install`.
+- **Request:** "saya mau memastikan ketika tidak ada internet masih ada beberapa yang bisa dibuka, kemudian perlu ada halaman 404 jika user force akses page yang butuh login."
+- **Interpretation:**
+  - **Offline:** everything is bundled mock data, so the whole app can work offline after one visit, not just "some" pages. That makes it a service-worker job: cache the app, not only the data.
+  - **404:** "force access" means opening a signed-in address directly (typed, pasted, bookmarked, reloaded) while signed out. A link tapped inside the app is normal use and keeps going to sign-in, otherwise every in-app link would dead-end on a 404. All versions, because this is a requirement, not a design experiment.
+- **Offline (`vite-plugin-pwa` 2.0 + `workbox-window`, config in `vite.config.ts`):**
+  - **Precache:** 122 files, about 2.6 MB. That is the shell, every route's code, CSS, fonts, bundled images and the manifest. The existing `public/site.webmanifest` is kept (`manifest: false`).
+  - **Fallbacks and exclusions:** `navigateFallback` serves `/index.html`; `/api/*` and `/__*` are excluded. three.js (the off-by-default 3D network) is not precached; it is cached on first use.
+  - **Runtime caches:**
+    - Unsplash covers: CacheFirst, 300 items, 30 days. Covers not yet seen show the token gradient, as designed.
+    - Lazy assets: CacheFirst.
+    - **Session audio:** CacheFirst with range requests, because Safari will only play a 206. `UpdatePrompt` warms it with one full download once the worker controls the page.
+  - **`OfflineBanner`:** a pill under the staging bar reading "You're offline — saved screens still work", then "Back online" for 2.5s. It is not tappable, renders nothing while online, and is ignored by click insights.
+  - **`UpdatePrompt`:** registers the worker, checks for a new build hourly, and shows "A new version of Aurelia is ready · Reload · ×". It is `registerType: 'prompt'`, not auto-reload, so a deploy never cuts off a session someone is listening to.
+  - **`vercel.json` CSP:** `connect-src` adds `https://images.unsplash.com` (the worker fetches covers) and adds `worker-src 'self'`.
+  - The Vite option `advancedChunks` was renamed `codeSplitting`, which clears its deprecation warning.
+- **404 (`auth/RequireAuth.tsx`, `pages/NotFoundPage.tsx`):**
+  - A signed-out visitor on a protected route whose location key is `"default"` (the router's first entry, i.e. a forced address) sees the 404 page: "404 · Page not found · This page isn't available right now. If it's yours, sign in to open it." It has a **Sign in** button and **Back to Home**.
+  - It neither confirms nor denies what is at the address.
+  - Sign in returns to the address. Sign-in, sign-up and onboarding now keep the query string (`?v=…`).
+  - Unknown URLs keep the plain 404.
+  - Because sign-in does not persist, reloading a signed-in page also lands on this 404, and Sign in brings the user back.
+- **Not covered:** `/admin` still has no authentication (P0, unchanged), so it is not behind this 404.
+- **Tests:** `RequireAuth` (forced address → 404 with Sign in; an in-app link → `/login`) and `OfflineBanner` (silent online; offline → back online → gone). 59 tests total.
+- **Verified in a browser (staging-mode build, real service worker, network switched off):**
+  - The worker controls the page after the first visit.
+  - Offline, reloading `/home` works with the banner, and a hard load of `/explore` works.
+  - Signing in offline works.
+  - 13 routes in-app offline (explore, chat, sessions, session detail, player, wellness, analysis, progress, settings, session settings, notifications, help, admin) render without errors.
+  - The Mulish font loads offline. Session audio plays offline and answers range requests with 206.
+  - "Back online" appears.
+  - **404:**
+    - 4 protected addresses at 402 and 1280 show the 404 with Sign in; an unknown URL shows the plain 404.
+    - Sign in returns to `/play/dolphins-frequency?v=v2`.
+    - A Home card link while signed out goes to `/login`.
+  - **Update:** a rebuild triggered the toast; Reload moved the page onto the new build.
+  - Full 53-route smoke test (v2/v4, 402/1280): no problems.
+  - `npm run check` is clean.
+- **Noted:** `npm audit` shows 3 high findings in dev-only `@figma/code-connect` (bundled zod 3). They are not in the app bundle; `npm audit --omit=dev` = 0.
+- **Revert:** `git revert --no-commit 8a6f011 && git checkout HEAD -- docs/ && npm install`. Note that a reverted deploy still leaves the old worker in browsers until it updates. A self-unregistering `sw.js` would be needed to remove it immediately.
