@@ -43,6 +43,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O13 | **Onboarding when accounts exist**: today "first time" is per browser (localStorage). With a backend it should be per account and its answers saved to the profile. Also: should the style answers (length, voice, sound) become real defaults for every new session, and should onboarding become the production version (v4 → production)? | J032, U047 | Product owner + backend |
 | O14 | **Production hardening still to decide**: (1) an error-reporting service (Sentry or similar) to plug into `reportError`; (2) an end-to-end test suite (Playwright) for sign-in, onboarding, build/publish; (3) `vercel.json` blocks the microphone (`Permissions-Policy: microphone=()`), which must change before real voice input; (4) whether to trim bundle size with `zod/mini` | J035, U048 | Product owner + engineering |
 | O15 | **404 vs sign-in for shared links**: with U049 a signed-out visitor opening a shared session/player link sees the 404 (with Sign in). Right for privacy; worse for sharing. If sessions are meant to be shared publicly, the player/session pages may need to become public (or show a teaser) rather than 404 | J037, U049 | Product owner |
+| O16 | **Simplification plan, decisions D1–D7** (`docs/reviews/Aurelia-Simplification-Plan-2026-10-25.pdf` §7): four bottom tabs on mobile (a frozen-layout change); hide the marketing on Home when signed in; Data sources under Progress or as its own tab; coins only in Me; retire the Insights page; one list of changes in the chat (settles O12); a Figma pass for the new pieces | J038 | Product owner + Eugene, then a designer |
 
 ---
 
@@ -87,6 +88,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J035 | 2026-10-23 | Code + Check | Re-check staging; production-grade code quality; install libraries (cache etc.) | U048 |
 | J036 | 2026-10-23 | Question | Did U048 change the user experience? | — |
 | J037 | 2026-10-25 | Code | Offline: some pages must still open; 404 when forcing a signed-in page | U049 |
+| J038 | 2026-10-25 | Analysis | Simplification research + plan PDF with annotated screenshots and drafts (no code) | docs only |
 
 ---
 
@@ -297,3 +299,23 @@ transcript and the update log. Everything from J018 on was written at the time.
   - "Forced" means typed, bookmarked or reloaded. In-app links still go to sign-in, so normal use is not broken.
   - The 404 offers Sign in and returns the user to the page.
 - **Flagged:** shared session links now show a 404 to signed-out recipients (O15). `/admin` is still unauthenticated.
+
+### J038 — Simplification research and plan (no code)
+- **Asked:** Eugene (WhatsApp) asked for UX simplification without removing much of the core. He named the core as: community AI generations incl. profiles; the chat that builds chapters; analytics; the ecosystem of third-party data sources. The owner asked for deep research and a PDF plan first, with screenshots marked to show what changes, or at least drafts, before any code.
+- **Delivered:** `docs/reviews/Aurelia-Simplification-Plan-2026-10-25.pdf` (18 pages, English), with its HTML source and images in `docs/reviews/simplification-2026-10-25/`.
+  - **Method:** 23 screens of staging v4 captured at 402 px. Every element was counted and marked keep / merge / remove on the real screen. Drafts are the live app edited in the browser, not code.
+- **Findings:**
+  - 7 ways to start creating on Home.
+  - Home shows 9 sections once signed in, including the sign-up pitch.
+  - Progress/analytics appears on 6 screens under 4 names.
+  - The main navigation is hidden in a drawer, and coins sit in about 10 headers.
+  - The chat has 3 ways to pick changes from 2 lists.
+  - "Settings" is the title of 2 different screens.
+  - There are 3 session lists.
+  - Edit/delete icons show on other people's sessions (a bug).
+  - The notification filters duplicate the date headings.
+- **Proposal:** four tabs matching the four core features: Create, Discover, Progress (with Data sources), Me.
+  - Every core feature stays; §6 maps where each one goes.
+  - Phased: Phase 0 fixes in all versions, then v5 on staging for the structure, then one place per thing, then the chat's single change list.
+  - Measured with click insights.
+- **Open:** O16 (D1–D7). No code changed. The next step waits on the decisions.

@@ -19,6 +19,10 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-25 — Simplification plan (J038, docs only)
+
+New `docs/reviews/Aurelia-Simplification-Plan-2026-10-25.pdf`, with its HTML source and images. It is a screen-by-screen study of staging v4, with marked screenshots and draft screens. It proposes organising the app as four tabs (Create, Discover, Progress, Me) matching the four core features, and closing duplicate entry points, without removing a core feature. No code changed; waiting on decisions D1–D7. Branches: `web_app`, `admin_cms`.
+
 ### 2026-10-25 — Works offline; 404 for locked pages opened directly (U049)
 
 After one visit the app opens and every screen works without internet, including the session audio. A pill says "You're offline — saved screens still work", then "Back online". Covers already seen stay; others show their gradient. A new deploy is offered with "A new version of Aurelia is ready · Reload" instead of reloading on its own. Opening a page that needs an account directly while signed out shows the 404 page with a Sign in button that returns there; links inside the app still go to sign-in. All versions. Web only. Branches: `web_app`, `admin_cms`. Not `web_prod`.

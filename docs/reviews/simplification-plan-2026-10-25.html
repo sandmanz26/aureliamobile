@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Aurelia Simplification Plan</title>
+<style>
+  @font-face { font-family: 'Mulish'; src: url('../../public/fonts/mulish-variable.woff2') format('woff2'); font-weight: 200 900; }
+  :root {
+    --ink: #1B1006; --ink-2: #4A3B2C; --muted: #7A6A58; --rule: #E8DFD3;
+    --cream: #FFF6E8; --gold: #C98A1B; --espresso: #331B04;
+    --remove: #D93A3F; --remove-bg: #FDECEC; --merge: #C77D00; --merge-bg: #FEF3DC; --keep: #1F8A55; --keep-bg: #E6F5EC;
+  }
+  @page { size: A4; margin: 16mm 15mm 16mm 15mm; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Mulish', system-ui, sans-serif; color: var(--ink); font-size: 9.4pt; line-height: 1.5; margin: 0; background: #fff; }
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+  p { margin: 0 0 5pt; }
+  .cover { height: 258mm; display: flex; flex-direction: column; justify-content: space-between; page-break-after: always; }
+  .eyebrow { font-size: 8pt; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); font-weight: 700; }
+  .cover h1 { font-size: 30pt; line-height: 1.1; font-weight: 600; margin-top: 10mm; max-width: 160mm; }
+  .cover .lede { font-size: 12pt; color: var(--ink-2); max-width: 150mm; margin-top: 6mm; }
+  .status { display: inline-block; margin-top: 6mm; font-size: 8.5pt; font-weight: 700; color: var(--merge); background: var(--merge-bg); padding: 1.5mm 3.5mm; border-radius: 10mm; }
+  .meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6mm; border-top: 1px solid var(--rule); padding-top: 5mm; font-size: 8.5pt; color: var(--muted); }
+  .meta b { display: block; color: var(--ink); font-weight: 600; font-size: 9.5pt; }
+  .tally { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; margin-top: 9mm; }
+  .tally div { border-radius: 3mm; padding: 4mm; background: var(--cream); }
+  .tally strong { display: block; font-size: 19pt; font-weight: 600; line-height: 1.05; font-variant-numeric: tabular-nums; }
+  .tally strong em { font-style: normal; color: var(--muted); font-weight: 400; font-size: 13pt; }
+  .tally span { font-size: 8pt; color: var(--ink-2); }
+  h2 { font-size: 15pt; font-weight: 600; margin: 8mm 0 3mm; padding-top: 2mm; border-top: 2px solid var(--ink); }
+  h2 .num { color: var(--gold); margin-right: 3mm; }
+  h3 { font-size: 10.5pt; font-weight: 700; margin: 4mm 0 1.5mm; }
+  .intro { color: var(--ink-2); max-width: 170mm; }
+  table { width: 100%; border-collapse: collapse; font-size: 8.8pt; margin: 3mm 0; }
+  th { text-align: left; font-size: 7.4pt; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); border-bottom: 1px solid var(--ink); padding: 1.6mm 2mm; }
+  td { border-bottom: 1px solid var(--rule); padding: 1.8mm 2mm; vertical-align: top; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr { break-inside: avoid; }
+  .callout { background: var(--cream); border-radius: 2mm; padding: 4mm 5mm; margin: 4mm 0; break-inside: avoid; }
+  .callout h3 { margin-top: 0; }
+  .pb { page-break-before: always; }
+  .small { font-size: 8pt; color: var(--muted); }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 8pt; background: #F6F1EA; padding: 0 1mm; border-radius: 1mm; }
+  .tag { display: inline-block; font-size: 7pt; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: .5mm 2mm; border-radius: 10mm; white-space: nowrap; }
+  .tag.remove { color: var(--remove); background: var(--remove-bg); }
+  .tag.merge { color: var(--merge); background: var(--merge-bg); }
+  .tag.keep { color: var(--keep); background: var(--keep-bg); }
+  .legend { display: flex; gap: 5mm; flex-wrap: wrap; font-size: 8.5pt; margin: 2mm 0 4mm; }
+  .legend i { display: inline-block; width: 4mm; height: 3mm; border: 2px solid; border-radius: 1mm; margin-right: 1.5mm; vertical-align: -0.4mm; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 5mm; align-items: start; break-inside: avoid; margin: 3mm 0 2mm; }
+  .pair.two { grid-template-columns: 1fr 1.6fr; }
+  .shot { margin: 0; }
+  .shot img { width: 100%; border: 1px solid var(--rule); border-radius: 2.5mm; display: block; }
+  .shot figcaption { font-size: 7.5pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.5mm; }
+  .changes ol { margin: 0; padding-left: 4.5mm; }
+  .changes li { margin: 0 0 2.2mm; }
+  .changes li b { font-weight: 700; }
+  .wide img { width: 100%; border: 1px solid var(--rule); border-radius: 2.5mm; }
+  .ia { display: grid; grid-template-columns: 1fr 12mm 1fr; align-items: center; gap: 2mm; margin: 4mm 0; break-inside: avoid; }
+  .ia .col { border: 1px solid var(--rule); border-radius: 3mm; padding: 4mm; }
+  .ia .col h3 { margin: 0 0 2mm; font-size: 9.5pt; }
+  .ia .arrow { text-align: center; font-size: 16pt; color: var(--gold); }
+  .ia ul { margin: 0; padding-left: 4mm; font-size: 8.6pt; }
+  .tabs4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2mm; }
+  .tabs4 div { border-radius: 2mm; background: var(--cream); padding: 2.5mm; font-size: 8.3pt; }
+  .tabs4 b { display: block; font-size: 9.5pt; }
+  .thumbs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3mm; }
+  .thumbs figure { margin: 0; }
+  .thumbs img { width: 100%; border: 1px solid var(--rule); border-radius: 1.5mm; display: block; }
+  .thumbs figcaption { font-size: 7pt; color: var(--muted); margin-top: 1mm; text-align: center; }
+  .decision { border: 1px solid var(--rule); border-left: 3px solid var(--gold); border-radius: 2mm; padding: 3mm 4mm; margin: 2.5mm 0; break-inside: avoid; }
+  .decision h3 { margin: 0 0 1mm; }
+  .block { break-inside: avoid; page-break-inside: avoid; }
+  h3 { break-after: avoid; }
+  .wide img { max-height: 228mm; width: auto; max-width: 100%; margin: 0 auto; display: block; }
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <div>
+    <div class="eyebrow">Aurelia · UX simplification · Plan for review</div>
+    <h1>Same four core features, half the decisions on every screen</h1>
+    <p class="lede">A study of the staging web app, screen by screen, with what to keep, merge or remove marked on each, and draft screens of the simplified version. Nothing has been changed in the code yet: this document is the plan to agree on first.</p>
+    <span class="status">Draft · awaiting decisions D1–D7 · no code changed</span>
+    <div class="tally">
+      <div><strong>7 <em>→</em> 2</strong><span>ways to start creating a session from Home</span></div>
+      <div><strong>9 <em>→</em> 3</strong><span>sections on Home after sign-in</span></div>
+      <div><strong>6 <em>→</em> 3</strong><span>places that show progress and analytics</span></div>
+      <div><strong>Hidden <em>→</em> 4</strong><span>main navigation: a hamburger drawer becomes four visible tabs</span></div>
+    </div>
+  </div>
+  <div class="meta">
+    <div><b>Scope</b>Consumer web app (staging, design v4) at 402&nbsp;px, the mobile frame</div>
+    <div><b>Brief</b>Eugene, 25 Oct: “feel more simple, without removing too much of the core features”</div>
+    <div><b>Date</b>25 October 2026 · prepared for Daniel and Eugene</div>
+  </div>
+</section>
+
+<h2><span class="num">1</span>Summary</h2>
+<p class="intro">The app does not have too many features. It has too many <b>doors to the same features</b>, and it opens them all at once. Seven ways to start a session sit on Home. Progress shows up on six screens under four names. Coins appear in nearly every header. The main navigation hides behind a hamburger. A signed-in user still scrolls past the sign-up pitch.</p>
+<p class="intro">The plan organises the app around the four core features Eugene named, one place each, and closes the duplicate doors. <b>No core feature is removed</b> (section 6 lists where every feature ends up). It ships as <b>design version v5 on staging</b>, so it can be compared with v4 side by side, and production stays unchanged until it is approved.</p>
+
+<div class="callout">
+  <h3>The organising idea: four core features, four tabs</h3>
+  <div class="tabs4">
+    <div><b>Create</b>Chat with Aurelia that builds sessions chapter by chapter. Home becomes this.</div>
+    <div><b>Discover</b>Community-driven AI generations: creators, profiles, recreate, live, challenges.</div>
+    <div><b>Progress</b>Analytics to follow performance, plus <i>Data sources</i>: the third-party ecosystem that feeds it.</div>
+    <div><b>Me</b>Library, credits &amp; plan, invite, notifications, settings, help.</div>
+  </div>
+</div>
+
+<h2><span class="num">2</span>How this was studied</h2>
+<p class="intro">Every consumer screen of the staging build (design v4, signed in, 402&nbsp;px) was captured, 23 screens in all (appendix A), and counted for entry points, repeated content and naming. Each finding below is marked on the real screen in one of three colours:</p>
+<div class="legend">
+  <span><i style="border-color:var(--remove)"></i><b>Remove</b> from this screen (the feature lives on elsewhere, or the element is noise for a signed-in user)</span>
+  <span><i style="border-color:var(--merge)"></i><b>Merge or move</b> into the one place that owns it</span>
+  <span><i style="border-color:var(--keep)"></i><b>Keep</b>, and make it the primary thing</span>
+</div>
+<p class="intro">The drafts are the live app with elements hidden, relabelled or added in the browser, not redesigned mock-ups. They show structure, not final visual design, which needs a Figma pass (D7). Counts are from the screens as built.</p>
+
+<table>
+  <thead><tr><th>Measure</th><th class="num">Today</th><th class="num">Proposed</th><th>Where the difference goes</th></tr></thead>
+  <tbody>
+    <tr><td>Ways to start creating from Home (Ask, feeling chips, Quick Start, “Start your Journey”, “Get Started”, Recreate cards, drawer “New session”)</td><td class="num">7</td><td class="num">2</td><td>Ask (with feeling chips as starters) and the Create tab. Quick Start becomes example prompts. Recreate moves to Discover.</td></tr>
+    <tr><td>Sections on Home when signed in</td><td class="num">9</td><td class="num">3</td><td>Ask, “Continue where you left off”, and “For you from the community”. The marketing blocks stay for signed-out visitors only.</td></tr>
+    <tr><td>Screens showing progress or analytics (My Wellness, Analysis, the player's progress drawer, the Insights page with 3 tabs, session version history, profile stats)</td><td class="num">6</td><td class="num">3</td><td>Progress tab → Analysis page → player peek. Version history lives only in Session details.</td></tr>
+    <tr><td>Main navigation entries visible without opening a menu</td><td class="num">0</td><td class="num">4</td><td>The drawer's 9 items become 4 tabs. Invite, Help and Settings move into Me.</td></tr>
+    <tr><td>Screens with a coin balance in the header</td><td class="num">~10</td><td class="num">1</td><td>Me → Credits &amp; plan. Earning moments (invite, challenge) still show coins in context.</td></tr>
+    <tr><td>Ways to change a session in the chat (suggestion chips, the deck, the “+” sheet), from 2 different lists</td><td class="num">3</td><td class="num">1</td><td>One list of changes, opened from the deck or “+”, with one selection (open item O12).</td></tr>
+    <tr><td>Pages titled “Settings”</td><td class="num">2</td><td class="num">1</td><td>Session settings is renamed “Edit session”.</td></tr>
+    <tr><td>Session lists (Sessions, Profile → My Sessions, Explore → Recently played)</td><td class="num">3</td><td class="num">1</td><td>Me → Library, with two tabs: Created and Played.</td></tr>
+  </tbody>
+</table>
+
+<h2 class="pb"><span class="num">3</span>Navigation: from a hidden drawer to four tabs</h2>
+<div class="ia">
+  <div class="col"><h3>Today: hamburger drawer (9 items)</h3><ul><li>Profile · Explore · Sessions · My wellness</li><li>Latest (3 recent sessions)</li><li>New session</li><li>Invite a Friend · Help</li><li>Notifications bell (in the drawer header)</li></ul><p class="small" style="margin-top:2mm">Every move between the core features is two taps, and nothing tells a new user they exist.</p></div>
+  <div class="arrow">→</div>
+  <div class="col"><h3>Proposed: bottom tab bar (4 items)</h3><ul><li><b>Create</b>: Ask, continue, recent chats</li><li><b>Discover</b>: was Explore, plus the live map</li><li><b>Progress</b>: was My wellness (goals and data sources)</li><li><b>Me</b>: profile, Library, credits, invite, notifications, settings, help</li></ul><p class="small" style="margin-top:2mm">One tap between core features, always visible. The chat and the player stay full-screen and hide the bar.</p></div>
+</div>
+<div class="pair two">
+  <figure class="shot"><figcaption>Today · drawer</figcaption><img src="simplification-2026-10-25/ann-drawer.jpg" alt="Current drawer, annotated"></figure>
+  <div class="changes"><ol>
+    <li><span class="tag merge">Merge</span> <b>The four destinations become the tab bar.</b> They are the app's map; hiding them makes the product feel smaller and harder at the same time.</li>
+    <li><span class="tag merge">Merge</span> <b>Latest</b> becomes “Recent” on the Create tab, where you would look for a conversation.</li>
+    <li><span class="tag keep">Keep</span> <b>New session</b> stays one tap away, on the Create tab.</li>
+    <li><span class="tag merge">Merge</span> <b>Invite a Friend</b> and <b>5 Help</b> move into Me with Settings, Credits and Notifications: account things in one place.</li>
+  </ol>
+  <div class="callout small"><b>This is a mobile layout change.</b> The standing rule freezes the 402&nbsp;px layout unless asked. That is why it is decision D1, and why it would ship as v5 on staging first.</div></div>
+</div>
+
+<h2 class="pb"><span class="num">4</span>Screen by screen</h2>
+
+<div class="block"><h3>4.1 Home → the Create tab</h3>
+<div class="wide"><img src="simplification-2026-10-25/ann-home.jpg" alt="Current Home after sign-in, annotated, shown in two halves"></div></div>
+<p class="small">Today's Home after sign-in, the whole page in two halves (left = top, right = bottom).</p>
+<div class="pair two" style="margin-top:4mm">
+  <figure class="shot"><figcaption>Draft · Create</figcaption><img src="simplification-2026-10-25/draft-home.jpg" alt="Draft Create tab"></figure>
+  <div class="changes"><ol>
+    <li><span class="tag merge">Merge</span> Menu → tab bar, and <b>2</b> coins → Me (section 3).</li>
+    <li value="3"><span class="tag keep">Keep</span> <b>Ask + feeling chips</b> become the one way to start. They already write a brief Aurelia answers properly (U036/U047).</li>
+    <li><span class="tag merge">Merge</span> <b>Quick Start</b>: its cards become example prompts that rotate in the Ask field (the typewriter already exists).</li>
+    <li><span class="tag remove">Remove</span> <b>“Your Personal Mindfulness Guide”</b>, <b>8</b> the feature list and <b>9</b> “Free to start, no credit card”: they sell the app to someone already inside it. They stay for signed-out visitors.</li>
+    <li value="6"><span class="tag merge">Move</span> <b>Live sessions map</b> → Discover.</li>
+    <li><span class="tag keep">Keep</span> <b>Recreate from Community</b>, renamed “For you, from the community”: one shelf, not three.</li>
+    <li value="10"><span class="tag keep">New</span> <b>Continue where you left off</b>: the session being worked on, its chapter and progress, Play, and “Create Chapter 2”. This is the chapter loop made visible.</li>
+  </ol></div>
+</div>
+
+<div class="block"><h3 class="pb">4.2 Explore → Discover</h3>
+<div class="pair">
+  <figure class="shot"><figcaption>Today · Explore</figcaption><img src="simplification-2026-10-25/ann-explore.jpg" alt="Current Explore, annotated"></figure>
+  <figure class="shot"><figcaption>Draft · Discover</figcaption><img src="simplification-2026-10-25/draft-discover.jpg" alt="Draft Discover"></figure>
+  <div class="changes"><ol>
+    <li><span class="tag merge">Merge</span> Coins → Me.</li>
+    <li><span class="tag remove">Remove</span> <b>Quick Start</b>: it duplicates Home. Discovering other people's work and starting your own are different jobs.</li>
+    <li><span class="tag keep">Keep</span> <b>Live sessions</b>, moved here from Home: it is a community signal.</li>
+    <li><span class="tag merge">Move</span> <b>Recently played</b> → Me → Library → Played. It is your history, not discovery.</li>
+    <li><span class="tag keep">Keep</span> <b>Recreate from Community</b>, <b>6</b> <b>Trusted creators</b> (profiles) and <b>7</b> <b>Monthly challenge</b>. This is core feature 1.</li>
+  </ol>
+  <p class="small">Discover keeps every community feature: generations, recreate, profiles, live, challenge. It loses only what belongs to another tab.</p></div>
+</div></div>
+
+<div class="block"><h3>4.3 My Wellness → Progress (analytics + data sources)</h3>
+<div class="pair">
+  <figure class="shot"><figcaption>Today · My Wellness</figcaption><img src="simplification-2026-10-25/ann-wellness.jpg" alt="Current My Wellness, annotated"></figure>
+  <figure class="shot"><figcaption>Draft · Progress</figcaption><img src="simplification-2026-10-25/draft-progress.jpg" alt="Draft Progress"></figure>
+  <div class="changes"><ol>
+    <li><span class="tag merge">Merge</span> Menu → tabs.</li>
+    <li><span class="tag merge">Rename</span> <b>“My Wellness” → “Progress”</b>: the word people use for “how am I doing”, and one name instead of four (My Wellness, Analytics, Insights, Analysis).</li>
+    <li><span class="tag keep">Keep</span> The two tabs, named for what they hold: <b>Your goals</b> and <b>Data sources</b> (was Connect). The third-party ecosystem lives next to the analytics it feeds, so connecting a source has a visible reason.</li>
+    <li><span class="tag keep">Keep</span> One card per objective → the <b>Analysis</b> page (U039), which becomes the only deep analytics view.</li>
+  </ol></div>
+</div></div>
+
+<div class="block"><h3 class="pb">4.4 The duplicate analytics page (“Insights”)</h3>
+<div class="pair two">
+  <figure class="shot"><figcaption>Today · Insights (Progress page)</figcaption><img src="simplification-2026-10-25/ann-insights.jpg" alt="Current Insights page, annotated"></figure>
+  <div class="changes"><ol>
+    <li><span class="tag merge">Split</span> The <b>Chapters / Social Impact / Insights</b> tabs each repeat something that already has a home:
+      <br>· <b>Chapters</b> (version history, revert) → <b>Session details</b>, the one history. Today it also exists in the session's Details card.
+      <br>· <b>Insights</b> → the <b>Analysis</b> page.
+      <br>· <b>Social Impact</b> (plays, recreations) → the session's stats in Session details, and your totals in Me.</li>
+    <li><span class="tag merge">Rename</span> A page called “Insights” with a tab called “Insights” is the clearest sign the naming has drifted.</li>
+    <li><span class="tag merge">Merge</span> <b>Version history</b>: one list, in Session details.</li>
+  </ol>
+  <p class="small">Result: Progress → Analysis per goal, and Session details per session. Two places, each with one job.</p></div>
+</div></div>
+
+<div class="block"><h3>4.5 Player: someone else's session</h3>
+<div class="pair">
+  <figure class="shot"><figcaption>Today · player sheet</figcaption><img src="simplification-2026-10-25/ann-player.jpg" alt="Current player sheet, annotated"></figure>
+  <figure class="shot"><figcaption>Draft · player sheet</figcaption><img src="simplification-2026-10-25/draft-player.jpg" alt="Draft player sheet"></figure>
+  <div class="changes"><ol>
+    <li><span class="tag remove">Remove</span> <b>“Elaborate on my experience” / “Suggest my morning boost”</b>: two more doors into the chat while you are listening.</li>
+    <li><span class="tag merge">Move</span> <b>Played / Recreated stats</b>, Details, versions and lineage → <b>Session details</b>, one link away.</li>
+    <li><span class="tag merge">Merge</span> <b>“Recreate your own version”</b> (three cards, each a Recreate) → one button, <b>Recreate this session</b>, which opens the chat with the same choices.</li>
+  </ol>
+  <p class="small">Your own sessions keep the progress drawer from U041 (analytics, feedback, next chapter). That is the chapter loop, and it stays.</p></div>
+</div></div>
+
+<div class="block"><h3 class="pb">4.6 Chat: one list of changes</h3>
+<div class="pair two">
+  <figure class="shot"><figcaption>Today · chat</figcaption><img src="simplification-2026-10-25/ann-chat.jpg" alt="Current chat, annotated"></figure>
+  <div class="changes"><ol>
+    <li><span class="tag merge">Merge</span> Coins → Me.</li>
+    <li><span class="tag merge">Merge</span> <b>Suggestion chips, the recommendation deck and the “+” sheet</b> are three ways to pick changes, from two different lists with two different scores (Increase yellow is 12% in the deck and 3% in the sheet) and two selections that do not know about each other (open item O12).</li>
+    <li><span class="tag merge">Merge</span> Proposal: one list. Aurelia's suggestions arrive pre-selected at the top of the same sheet (with the filter added in U045), the deck opens that sheet, and Apply shows one summary (v3). The chips stay as quick replies, not as a second picker.</li>
+  </ol>
+  <div class="callout small">This is the PingPing chat that builds chapters, so it is core. The change is to the number of controls for the same action, not to the flow.</div></div>
+</div></div>
+
+<div class="block"><h3>4.7 Me: one place for everything about you</h3>
+<div class="pair">
+  <figure class="shot"><figcaption>Today · Profile</figcaption><img src="simplification-2026-10-25/ann-profile.jpg" alt="Current profile, annotated"></figure>
+  <figure class="shot"><figcaption>Draft · Me</figcaption><img src="simplification-2026-10-25/draft-me.jpg" alt="Draft Me"></figure>
+  <div class="changes"><ol>
+    <li><span class="tag keep">Keep</span> <b>Coins live here</b>, as <b>Credits &amp; plan</b> (balance, Upgrade, history). Today Credits, Upgrade and Invite are three separate screens reached from three places.</li>
+    <li><span class="tag merge">Merge</span> <b>Settings</b> (the gear) becomes a row, next to Notifications, Invite and Help: everything that was in the drawer's footer.</li>
+    <li><span class="tag merge">Merge</span> <b>My Sessions / Recreated</b> duplicates the Sessions screen → <b>Library</b>.</li>
+  </ol>
+  <p class="small">Your public profile (what others see) stays as it is in Discover → creators. Me is the private side of the same account.</p></div>
+</div></div>
+
+<div class="block"><h3 class="pb">4.8 Sessions → Library, and two quick fixes</h3>
+<div class="pair">
+  <figure class="shot"><figcaption>Today · Sessions</figcaption><img src="simplification-2026-10-25/ann-sessions.jpg" alt="Current Sessions, annotated"></figure>
+  <figure class="shot"><figcaption>Draft · Library</figcaption><img src="simplification-2026-10-25/draft-library.jpg" alt="Draft Library"></figure>
+  <div class="changes"><ol>
+    <li><span class="tag merge">Merge</span> <b>“All / Created by you”</b> → <b>Created / Played</b>. “All” mixes your sessions with everyone else's, which is Discover's job.</li>
+    <li><span class="tag remove">Remove</span> <b>Edit and delete icons on other people's sessions.</b> Today the list shows them on Sara's and Lily's sessions. This is a bug as much as clutter, and it can be fixed now, in every version (Phase 0).</li>
+  </ol></div>
+</div></div>
+<div class="pair" style="margin-top:6mm">
+  <figure class="shot"><figcaption>Today · Notifications</figcaption><img src="simplification-2026-10-25/ann-notifications.jpg" alt="Current notifications, annotated"></figure>
+  <figure class="shot"><figcaption>Draft · Notifications</figcaption><img src="simplification-2026-10-25/draft-notifications.jpg" alt="Draft notifications"></figure>
+  <div class="changes"><ol>
+    <li><span class="tag remove">Remove</span> <b>All / Today / Yesterday / Last 7 days / Last 30 days</b> filters. The list is already grouped under exactly those headings, so the filters only hide the headings below them.</li>
+  </ol>
+  <p class="small">Also Phase 0: <b>“Settings”</b> is the title of two different screens (account and session). The session one becomes <b>“Edit session”</b>.</p></div>
+</div>
+
+<h2 class="pb"><span class="num">5</span>The plan, in phases</h2>
+<table>
+  <thead><tr><th>Phase</th><th>What</th><th>Ships as</th><th>Risk</th></tr></thead>
+  <tbody>
+    <tr><td><b>0 · Fixes</b><br><span class="small">~1 day</span></td><td>Hide edit/delete on others' sessions · drop the notification date filters · rename session “Settings” → “Edit session” · hide the marketing sections on Home once signed in.</td><td>All versions (bugs and clutter, no new structure)</td><td>Low. Hiding Home's marketing blocks touches the 402&nbsp;px layout and needs a yes (D2).</td></tr>
+    <tr><td><b>1 · Structure</b><br><span class="small">~3–4 days</span></td><td>Four-tab navigation · Create tab (Ask + Continue + one community shelf) · Discover without duplicates · Progress (Your goals / Data sources) · Me with Library and Credits &amp; plan · coins only in Me.</td><td><b>Design v5</b> on staging (v5 = v4 + this)</td><td>Medium. It is the mobile layout change (D1); people must find what moved, which the move list in section 6 covers.</td></tr>
+    <tr><td><b>2 · One place per thing</b><br><span class="small">~2–3 days</span></td><td>Retire the Insights page: chapters to Session details, insights to Analysis, social impact to stats · simplify the player sheet for others' sessions (one Recreate).</td><td>v5</td><td>Medium. Links into the Insights page need redirects.</td></tr>
+    <tr><td><b>3 · Chat</b><br><span class="small">~2 days</span></td><td>One list of changes (suggestions pre-selected in the “+” sheet, the deck opens it), one score per change, one selection (O12).</td><td>v5</td><td>Medium. It is the core flow, so verify with the click-insights tool before and after.</td></tr>
+  </tbody>
+</table>
+<p class="intro">Each phase gets its own entries in the update log, with a patch and a revert. Production stays on v2 until someone asks to promote v5. Every phase is checked at 402&nbsp;px and 1280&nbsp;px, and the Flutter client follows once the web version is agreed (it is the reference).</p>
+
+<h3>How we will know it worked</h3>
+<p class="intro">Click insights (already recording on staging) gives a before and after without new tooling:</p>
+<table>
+  <thead><tr><th>Signal</th><th>Today (v4)</th><th>Target (v5)</th></tr></thead>
+  <tbody>
+    <tr><td>Taps from opening the app to the first message sent in a new session</td><td>measure</td><td>fewer</td></tr>
+    <tr><td>Share of sessions that open the hamburger menu, against tab taps</td><td>measure</td><td>tabs replace the menu</td></tr>
+    <tr><td>Dead and rage taps on Home, Explore and the player sheet</td><td>measure</td><td>fewer</td></tr>
+    <tr><td>Share of visits that reach Progress or Discover at least once</td><td>measure</td><td>higher</td></tr>
+  </tbody>
+</table>
+
+<h2 class="pb"><span class="num">6</span>Nothing core is removed: where everything goes</h2>
+<table>
+  <thead><tr><th>Feature</th><th>Today</th><th>After</th></tr></thead>
+  <tbody>
+    <tr><td>Create a session in chat, build chapters, version history</td><td>Home (7 entry points), drawer, chat, Insights page, Session details</td><td><b>Create</b> tab · chat · Session details (history)</td></tr>
+    <tr><td>Quick Start templates</td><td>Home, Explore</td><td>Example prompts in Ask</td></tr>
+    <tr><td>Community generations, Recreate</td><td>Home, Explore, player, session detail</td><td><b>Discover</b> · one Recreate button on player and details</td></tr>
+    <tr><td>Profiles and creators</td><td>Explore, profile pages</td><td><b>Discover</b> → creators · your own in <b>Me</b></td></tr>
+    <tr><td>Live sessions map</td><td>Home, Explore</td><td><b>Discover</b></td></tr>
+    <tr><td>Monthly challenge</td><td>Explore, challenge page</td><td><b>Discover</b> (unchanged)</td></tr>
+    <tr><td>Analytics (goals, analysis, chapters, prediction)</td><td>My Wellness, Analysis, player drawer, Insights page</td><td><b>Progress</b> → Analysis · player peek</td></tr>
+    <tr><td>Third-party data sources</td><td>My Wellness → Connect</td><td><b>Progress</b> → Data sources</td></tr>
+    <tr><td>Feedback after listening</td><td>Player drawer (U041)</td><td>Unchanged</td></tr>
+    <tr><td>Coins, credits, upgrade, invite</td><td>Every header, Credits, Upgrade, Invite, drawer</td><td><b>Me</b> → Credits &amp; plan · Invite</td></tr>
+    <tr><td>Your sessions, recently played</td><td>Sessions, Profile, Explore</td><td><b>Me</b> → Library (Created / Played)</td></tr>
+    <tr><td>Notifications</td><td>Drawer bell</td><td><b>Me</b> (with an unread dot on the tab)</td></tr>
+    <tr><td>Settings, edit session, help, onboarding replay</td><td>Profile gear, chat menu, drawer</td><td><b>Me</b> · “Edit session” in the chat menu</td></tr>
+    <tr><td>Sign-up pitch, feature list, “Start your Journey”</td><td>Home for everyone</td><td>Home for <b>signed-out visitors only</b></td></tr>
+  </tbody>
+</table>
+
+<h2><span class="num">7</span>Decisions needed before any code</h2>
+<div class="decision"><h3>D1 · Four bottom tabs on mobile</h3>The biggest single simplification, and a change to the frozen 402&nbsp;px layout. It ships as v5 on staging only. <b>Approve?</b></div>
+<div class="decision"><h3>D2 · Hide the marketing sections on Home once signed in</h3>They stay for visitors. This can ship in Phase 0, before v5. <b>Approve?</b></div>
+<div class="decision"><h3>D3 · Data sources under Progress</h3>Data sources sit inside Progress, beside the analytics they improve, rather than as a fifth tab. Eugene lists the ecosystem as a core feature, so if it should be a tab of its own, say so. <b>Progress, or its own tab?</b></div>
+<div class="decision"><h3>D4 · Coins only in Me</h3>The balance shows only in Me, plus in context where coins are earned (invite, challenge). <b>Approve?</b></div>
+<div class="decision"><h3>D5 · Retire the Insights page</h3>Its three tabs move to Session details, Analysis and stats; old links redirect. <b>Approve?</b></div>
+<div class="decision"><h3>D6 · One list of changes in the chat</h3>Also settles O12: which score is right, 12% or 3%, and should the deck and the sheet share one selection? <b>Approve, and pick the scores?</b></div>
+<div class="decision"><h3>D7 · Figma</h3>The drafts here are structural. The tab bar, the “Continue” card and the Me list need a designer's pass in Figma before Phase 1 is built to the pixel, as every other screen has been. <b>Who, and when?</b></div>
+
+<h2 class="pb"><span class="num">A</span>Appendix: every screen studied (today, v4, 402&nbsp;px)</h2>
+<div class="thumbs">
+  <figure><img src="simplification-2026-10-25/cur-home.jpg" alt=""><figcaption>Home</figcaption></figure>
+  <figure><img src="simplification-2026-10-25/cur-drawer.jpg" alt=""><figcaption>Drawer</figcaption></figure>
+  <figure><img src="simplification-2026-10-25/cur-chat.jpg" alt=""><figcaption>Chat</figcaption></figure>
+  <figure><img src="simplification-2026-10-25/cur-chat-sheet.jpg" alt=""><figcaption>Chat “+” sheet</figcaption></figure>
+  <figure><img src="simplification-2026-10-25/cur-explore.jpg" alt=""><figcaption>Explore</figcaption></figure>
+  <figure><img src="simplification-2026-10-25/cur-sessions.jpg" alt=""><figcaption>Sessions</figcaption></figure>
+  <figure><img src="simplification-2026-10-25/cur-session-detail.jpg" alt=""><figcaption>Session detail</figcaption></figure>
+  <figure><img src="simplification-2026-10-25/cur-player.jpg" alt=""><figcaption>Player (own)</figcaption></figure>
+  <figure><img src="simplification-2026-10-25/cur-player-other-open.jpg" alt=""><figcaption>Player (others)</figcaption></figure>
+  <figure><img src="simplification-2026-10-25/cur-progress.jpg" alt=""><figcaption>Insights page</figcaption></figure>
+  <figure><img src="simplification-2026-10-25/cur-wellness.jpg" alt=""><figcaption>My Wellness</figcaption></figure>
+  <figure><img src="simplification-2026-10-25/cur-wellness-connect.jpg" alt=""><figcaption>Connect</figcaption></figure>
+  <figure><img src="simplification-2026-10-25/cur-analysis.jpg" alt=""><figcaption>Analysis</figcaption></figure>
+  <figure><img src="simplification-2026-10-25/cur-profile.jpg" alt=""><figcaption>Profile</figcaption></figure>
+  <figure><img src="simplification-2026-10-25/cur-settings.jpg" alt=""><figcaption>Settings</figcaption></figure>
+  <figure><img src="simplification-2026-10-25/cur-session-settings.jpg" alt=""><figcaption>Session settings</figcaption></figure>
+  <figure><img src="simplification-2026-10-25/cur-credits.jpg" alt=""><figcaption>Credits</figcaption></figure>
+  <figure><img src="simplification-2026-10-25/cur-upgrade.jpg" alt=""><figcaption>Upgrade</figcaption></figure>
+  <figure><img src="simplification-2026-10-25/cur-invite.jpg" alt=""><figcaption>Invite</figcaption></figure>
+  <figure><img src="simplification-2026-10-25/cur-notifications.jpg" alt=""><figcaption>Notifications</figcaption></figure>
+  <figure><img src="simplification-2026-10-25/cur-challenge.jpg" alt=""><figcaption>Challenge</figcaption></figure>
+  <figure><img src="simplification-2026-10-25/cur-recreate.jpg" alt=""><figcaption>Recreate</figcaption></figure>
+  <figure><img src="simplification-2026-10-25/cur-help.jpg" alt=""><figcaption>Help</figcaption></figure>
+</div>
+<p class="small" style="margin-top:4mm">Source: the staging build at commit <code>fe0300a</code> (U049), signed in, onboarding done, cover photos offline (the token gradients show instead). Drafts are browser edits to that build, not code. The HTML source of this document sits beside the PDF in <code>docs/reviews/</code>.</p>
+
+</body>
+</html>
