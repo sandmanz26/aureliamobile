@@ -77,6 +77,7 @@ const STEPS: Step[] = ['welcome', 'goal', 'feeling', 'style', 'ready']
 
 interface From {
   pathname: string
+  search?: string
   state?: unknown
 }
 
@@ -99,7 +100,7 @@ export function OnboardingPage() {
   const back = () => setStep(STEPS[Math.max(0, index - 1)])
 
   function leave(to: From) {
-    navigate(to.pathname, { replace: true, state: to.state })
+    navigate(`${to.pathname}${to.search ?? ''}`, { replace: true, state: to.state })
   }
 
   function skip() {

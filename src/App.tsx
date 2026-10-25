@@ -9,6 +9,8 @@ import { RequireAuth } from './auth/RequireAuth'
 import { SiteLock } from './components/SiteLock'
 import { PageSkeleton } from './components/ui/PageSkeleton'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { OfflineBanner } from './components/system/OfflineBanner'
+import { UpdatePrompt } from './components/system/UpdatePrompt'
 import { FeatureFlagsProvider } from './demo/FeatureFlags'
 import { ModuleGuard } from './demo/ModuleGuard'
 import { DemoAnnotator } from './demo/annotations/DemoAnnotator'
@@ -473,6 +475,9 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
         </ErrorBoundary>
+        {/* Offline note and new-build prompt (U049) — render nothing normally. */}
+        <OfflineBanner />
+        <UpdatePrompt />
         {/* /__demo's "Review annotations" — renders nothing unless switched on there. */}
         <DemoAnnotator />
         {/* /__demo's "Click insights" — records taps; ?heatmap draws them back. */}

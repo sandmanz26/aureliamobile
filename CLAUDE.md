@@ -198,6 +198,16 @@ into. New code goes through it:
   the allowed exception, listed in `.oxlintrc.json`.
 - **Bundle:** React/router and TanStack/Zod are their own long-cached vendor
   chunks; three.js stays lazy behind the 3D network flag.
+- **Offline (U049) → `vite-plugin-pwa`** (config in `vite.config.ts`). The
+  service worker precaches the shell, every route's code, fonts and bundled
+  images, so after one visit every screen opens with no network (the data is
+  bundled). Unsplash covers are cached as seen; session audio sits in a
+  range-capable cache warmed by `UpdatePrompt`; `/api` and `/__*` are never
+  cached. `OfflineBanner` says when the device is offline. **A new deploy
+  waits for the user to tap Reload** in `UpdatePrompt` (no auto-reload
+  mid-session) — so "I pushed and still see the old one" can also mean the
+  toast has not been tapped yet. CSP allows `images.unsplash.com` in
+  `connect-src` for the worker. Dev (`npm run dev`) has no worker.
 
 ---
 
@@ -212,6 +222,13 @@ here came from a measurement.
 **Cover art is hotlinked from Unsplash at runtime.** Every card layers a photo
 over a token gradient, and the gradient is the floor, not a fallback. **A page
 rendering as flat gradients has no network; it is not broken.**
+
+**A signed-out visitor who forces a signed-in address gets the 404 page
+(U049)**, with a Sign in link that returns to it — `RequireAuth` tells a typed,
+bookmarked or reloaded address (React Router's first entry, key `"default"`)
+apart from a link tapped inside the app, which still goes straight to
+`/login`. Because sign-in does not persist, reloading a signed-in page lands
+there too.
 
 **Sign-in does not persist, on purpose.** `AuthContext` holds a bool in state
 with no localStorage. Every load starts signed out so the app opens on the case

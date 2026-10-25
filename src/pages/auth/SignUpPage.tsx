@@ -26,7 +26,7 @@ export function SignUpPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { signIn } = useAuth()
-  const from = (location.state as { from?: { pathname: string; state?: unknown } } | null)?.from
+  const from = (location.state as { from?: { pathname: string; search?: string; state?: unknown } } | null)?.from
   const v4 = useUiVersion() >= 4
 
   const [name, setName] = useState('')
@@ -51,7 +51,7 @@ export function SignUpPage() {
       navigate('/welcome', { replace: true, state: { from } })
       return
     }
-    navigate(from?.pathname ?? '/home', { replace: true, state: from?.state })
+    navigate(from ? `${from.pathname}${from.search ?? ''}` : '/home', { replace: true, state: from?.state })
   }
 
   function handleSubmit(event: React.FormEvent) {

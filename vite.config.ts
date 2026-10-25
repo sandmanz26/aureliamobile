@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+import { VitePWA } from 'vite-plugin-pwa'
 
 /**
  * Which commit is live?
@@ -72,7 +73,66 @@ function appVersion() {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    // Offline (U049): a service worker precaches the app shell, every route's
+    // code, the fonts, the bundled images and the session audio, so after one
+    // visit the app opens and every screen works with no network — the data is
+    // bundled mock data. Unsplash covers are cached as they are seen (the token
+    // gradient underneath shows for any not yet seen). /api is never cached:
+    // flags, annotations and insights already fall back to this device.
+    //
+    // `prompt`, not auto-update: a new build waits until the user taps Reload
+    // in the update toast (UpdatePrompt), so a deploy can never restart a
+    // session someone is listening to. Registration lives in main.tsx.
+    VitePWA({
+      registerType: 'prompt',
+      injectRegister: false,
+      // public/site.webmanifest is the manifest; the plugin must not write a second one.
+      manifest: false,
+      includeAssets: ['favicon.svg', 'favicon-32.png', 'apple-touch-icon.png', 'site.webmanifest', 'fonts/*.woff2'],
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2,webmanifest}'],
+        // three.js behind the off-by-default 3D network: cached when first used, not up front.
+        globIgnores: ['**/networkScene-*.js'],
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api\//, /^\/__/],
+        cleanupOutdatedCaches: true,
+        runtimeCaching: [
+          {
+            // Session audio: not precached, because a media element asks for
+            // byte ranges and Safari will not play a plain 200 from a cache.
+            // This route answers ranges from the cached file; UpdatePrompt
+            // warms it with one full download once the worker is in control.
+            urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.startsWith('/audio/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'session-audio',
+              rangeRequests: true,
+              cacheableResponse: { statuses: [200] },
+            },
+          },
+          {
+            urlPattern: ({ url }) => url.origin === 'https://images.unsplash.com',
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'cover-photos',
+              expiration: { maxEntries: 300, maxAgeSeconds: 30 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.startsWith('/assets/'),
+            handler: 'CacheFirst',
+            options: { cacheName: 'lazy-assets', expiration: { maxEntries: 50 } },
+          },
+        ],
+      },
+      devOptions: { enabled: false },
+    }),
+  ],
   build: {
     // The one chunk over 500 kB is three.js behind the 3D network flag, which
     // only loads when that flag is on; everything on the first load is well
@@ -84,7 +144,7 @@ export default defineConfig({
         // own long-cached chunk: a deploy that only touches screens does not
         // make returning visitors download React again. three.js is not
         // listed — it is already split out behind the lazy 3D network.
-        advancedChunks: {
+        codeSplitting: {
           groups: [
             { name: 'react-vendor', test: /node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/ },
             { name: 'query-vendor', test: /node_modules[\\/](@tanstack|zod)[\\/]/ },
