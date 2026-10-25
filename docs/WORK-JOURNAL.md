@@ -44,6 +44,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O14 | **Production hardening still to decide**: (1) an error-reporting service (Sentry or similar) to plug into `reportError`; (2) an end-to-end test suite (Playwright) for sign-in, onboarding, build/publish; (3) `vercel.json` blocks the microphone (`Permissions-Policy: microphone=()`), which must change before real voice input; (4) whether to trim bundle size with `zod/mini` | J035, U048 | Product owner + engineering |
 | O15 | **404 vs sign-in for shared links**: with U049 a signed-out visitor opening a shared session/player link sees the 404 (with Sign in). Right for privacy; worse for sharing. If sessions are meant to be shared publicly, the player/session pages may need to become public (or show a teaser) rather than 404 | J037, U049 | Product owner |
 | O16 | **Simplification plan, decisions D1–D7** (`docs/reviews/Aurelia-Simplification-Plan-2026-10-25.pdf` §7): four bottom tabs on mobile (a frozen-layout change); hide the marketing on Home when signed in; Data sources under Progress or as its own tab; coins only in Me; retire the Insights page; one list of changes in the chat (settles O12); a Figma pass for the new pieces | J038 | Product owner + Eugene, then a designer |
+| O17 | **Retention simulation, decisions D1–D5** (`docs/reviews/Aurelia-Retention-Simulation-2026-10-25.pdf` §8): which fixes form v5 (recommended: R1 their words, R2 fresh first thread + no early paywall, R3 build from the goal, R5 honest day 0 + check-in, R6 Chapter 2 reminder); persist sign-in and built sessions in a test build (reverses the AuthContext choice, test only); reminder channel without a backend (.ics now, push later); Quick Start plays a preview before sign-in; free limit counts only after the first session is played. Also: run the real 8–12 person test before trusting any number | J039 | Product owner + Eugene |
 
 ---
 
@@ -89,6 +90,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J036 | 2026-10-23 | Question | Did U048 change the user experience? | — |
 | J037 | 2026-10-25 | Code | Offline: some pages must still open; 404 when forcing a signed-in page | U049 |
 | J038 | 2026-10-25 | Analysis | Simplification research + plan PDF with annotated screenshots and drafts (no code) | docs only |
+| J039 | 2026-10-25 | Research | First-time-user retention simulation: 6 personas on the real v4 build, sequenced questionnaire, D1/D7/D30 predictions per suggestion (no code) | docs only |
 
 ---
 
@@ -319,3 +321,40 @@ transcript and the update log. Everything from J018 on was written at the time.
   - Phased: Phase 0 fixes in all versions, then v5 on staging for the structure, then one place per thing, then the chat's single change list.
   - Measured with click insights.
 - **Open:** O16 (D1–D7). No code changed. The next step waits on the decisions.
+
+### J039 — First-time-user retention simulation (no code)
+- **Asked:** "tolong perbaiki lagi untuk riset nya dan cara kerja kamu", with Eugene's WhatsApp brief. Give Claude the first-time-user retention metric and let it simulate, as different personas with different wellness needs, how real users would behave on the current version. Use a questionnaire sequenced like a real test. Answer "can a user have a simple flow to solve their wellness goal" and "why will they return to build more and reach other goals". Give the probability of return rates based on Claude's suggestions.
+- **Interpretation (assumptions):**
+  - "Current version" = staging v4 at `17053fa`.
+  - "Retention" = came back *and* played or built, on D1/D7/D30, as a share of all new users.
+  - Numbers are anchored to public Health & Fitness benchmarks (~20–27% / 8–13% / 3–8%), since no meditation-specific source was found.
+  - Persona shares (Maya 25, Raka 20, Sari 20, Leo 15, Dewi 10, Tom 10) are an assumption about the early audience.
+  - All scenarios assume persistence (see P0).
+- **Method:**
+  - Six personas each drove the real build in a 402 px browser via Playwright, from a fresh signed-out browser, each through a different door: typed on Home, a feeling chip, Quick Start Play, Sign in first, Create an account, skipping onboarding.
+  - Taps and screens were recorded, and the questionnaire was answered in role at each of eight stages (A–H).
+  - A stage model (finish a first session → D1 → D7 → D30) is scaled per fix and per persona, with overlap damping 0.45 (range 0.25–0.65).
+  - Each fix's contribution is a Shapley value.
+  - The scripts are archived in `docs/reviews/retention-sim-2026-10-25/simulation-scripts.txt`.
+- **Delivered:** `docs/reviews/Aurelia-Retention-Simulation-2026-10-25.pdf` (16 pages, English). Its HTML source and 32 images are in `docs/reviews/retention-sim-2026-10-25/`; 3 of the images are drafts of R1, R5+R6 and R7.
+- **Findings on the build:**
+  - F1: 5 of 6 doors open the demo conversation, with a fake sleep score and a user message the person never wrote.
+  - F2: replies and builds ignore the goal. Every build is "Sleep meditation v1.3" with yellow/432 Hz.
+  - F3: "Edits paused" appears after the first message.
+  - F4: "Great Progress! +3% since yesterday" shows before the first listen.
+  - F5: the typed sentence is asked again and then dropped.
+  - F6: Quick Start Play plays nothing.
+  - F7: nothing asks the user back; Home after session one is the marketing page, and notifications are fake social activity.
+  - F8: other people's sessions are shown as "yours", and Connect sources are ON for a new account.
+  - F9: sign-in and sessions do not persist, so the build cannot measure retention at all.
+  - Taps to the player: 6–15. Leo never heard audio.
+- **Prediction (panel-weighted):**
+  - Current: finish 45%, D1 12%, D7 3.8%, D30 1.5%.
+  - With the 10 fixes: 56% / 23% / 9.9% / 5.4%.
+  - Plus J038 simplification: 57% / 24% / 10.7% / 6.0%.
+  - Simplification alone: D7 4.0%.
+  - Top single fix: the Chapter 2 reminder (R6), but it only pays off on top of R2, R3 and R5.
+- **Answers:**
+  - **Simple flow:** short yes, solving their goal no — the steps are fine, relevance and continuity are not.
+  - **Return:** nothing asks them back today. The loop needed is: heard me → a promise (Chapter 2) → a cue → proof from their own check-ins → a second goal.
+- **Open:** O17. No code changed. Caveat stated in the PDF: a simulation ranks fixes and gives an order of magnitude; §8 is the real 8–12 person test that replaces it.

@@ -1,0 +1,346 @@
+===== ret/run.mjs
+// node ret/run.mjs <persona>
+import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs'
+import fs from 'node:fs'
+const who = process.argv[2]
+const OUT = `ret/p/${who}`; fs.mkdirSync(OUT, { recursive: true })
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' })
+const ctx = await b.newContext({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 2, serviceWorkers: 'block' })
+const p = await ctx.newPage()
+await p.addInitScript(() => {
+  if (sessionStorage.getItem('x')) return; sessionStorage.setItem('x', '1')
+  localStorage.setItem('aurelia.site.unlocked', 'AURELIA3.0'); localStorage.setItem('aurelia.ui.version', '4')
+  localStorage.setItem('aurelia.demo.flags', JSON.stringify({ clickInsights: false, annotations: false }))
+})
+const errors = []; p.on('pageerror', (e) => errors.push(e.message))
+const t0 = Date.now(); let taps = 0, typed = 0, n = 0; const log = []
+const snap = async (label, note = '', wait = 900) => {
+  await p.waitForTimeout(wait); n++
+  const file = `${String(n).padStart(2, '0')}-${label}.png`
+  await p.screenshot({ path: `${OUT}/${file}`, clip: { x: 0, y: 28, width: 402, height: 846 } })
+  const info = await p.evaluate(() => ({ url: location.pathname + location.search, h: [...document.querySelectorAll('h1,h2')].map(e => e.innerText.trim()).filter(Boolean).slice(0, 3).join(' | ') }))
+  log.push({ n, label, note, file, url: info.url, h: info.h, taps, typed, secs: Math.round((Date.now() - t0) / 1000) })
+  console.log(n, label, info.url, '| taps', taps, '|', info.h)
+}
+const tap = async (loc) => { await loc.first().click(); taps++; await p.waitForTimeout(350) }
+const role = (r, name) => p.getByRole(r, { name })
+const type = async (text) => { const f = p.getByLabel(/Ask Aurelia|Type here/).first(); await f.click(); taps++; await f.fill(text); typed += text.length; await p.keyboard.press('Enter') }
+const go = async (u) => { await p.evaluate((u) => { history.pushState({ usr: null, key: Math.random().toString(36).slice(2, 10), idx: 1 }, '', u); dispatchEvent(new PopStateEvent('popstate')) }, u); await p.waitForTimeout(1200) }
+const onboard = async ({ goal, feelings = [], length, sounds = [], end = 'create' }) => {
+  await tap(role('button', /let.s begin/i)); await snap('ob-goal')
+  if (goal) await tap(role('radio', new RegExp(goal, 'i')))
+  await tap(role('button', /^continue$/i)); await snap('ob-feeling')
+  for (const f of feelings) await tap(role('button', new RegExp('^' + f, 'i')))
+  await tap(role('button', /^(continue|skip this one)$/i)); await snap('ob-style')
+  if (length) await tap(role('radio', new RegExp('^' + length + ' min')))
+  for (const s of sounds) await tap(role('button', new RegExp('^' + s, 'i')))
+  await tap(role('button', /^continue$/i)); await snap('ob-ready')
+  if (end === 'create') { await tap(role('button', /create my first session/i)); await snap('chat-reply', '', 6500) }
+  else if (end === 'where') { await tap(role('button', /continue where i was/i)); await snap('back-where', '', 6500) }
+  else { await tap(role('button', /explore aurelia first/i)); await snap('explore-first', '', 1500) }
+}
+const applyAndPlay = async () => {
+  await tap(role('button', /apply new changes/i)); await snap('built', '', 8000)
+  await tap(p.getByLabel('Play session')); await snap('player', '', 2000)
+  await tap(p.locator('[data-sheet-grabber]')); await tap(p.locator('[data-sheet-grabber]')); await snap('player-sheet', '', 900)
+}
+const S = (await import(`./personas/${who}.mjs`)).default
+await p.goto('http://localhost:4173/home'); await snap('home-first')
+try { await S({ p, tap, role, type, go, snap, onboard, applyAndPlay }) } catch (e) { console.log('STOPPED:', e.message.split('\n')[0]); log.push({ stopped: e.message.split('\n')[0] }) }
+fs.writeFileSync(`${OUT}/log.json`, JSON.stringify({ who, taps, typed, errors, log }, null, 1))
+await b.close()
+
+===== ret/personas/dewi.mjs
+export default async ({ p, tap, role, type, snap, onboard, applyAndPlay, go }) => {
+  await tap(role('button', /^sign in$/i)); await tap(role('button', /continue with google/i)); await snap('welcome')
+  await tap(role('button', /^skip$/i)); await snap('after-skip', '', 1200)
+  await go('/explore'); await snap('explore')
+  await go('/sessions'); await snap('sessions')
+  await go('/home'); await type('Recreate a body scan like the one I do on Headspace, but with my own pace'); await snap('chat-reply', '', 6500)
+  await applyAndPlay()
+  await go('/upgrade'); await snap('upgrade')
+}
+
+===== ret/personas/leo.mjs
+export default async ({ p, tap, role, type, snap, onboard, applyAndPlay, go }) => {
+  await tap(role('button', /play focus sound/i)); await snap('after-quickstart', '', 1500)
+  const g = role('button', /continue with google/i); if (await g.count()) { await tap(g); await snap('welcome') }
+  if (await role('button', /let.s begin/i).count()) await onboard({ goal: 'focus', feelings: ['Can’t focus'], length: 5, sounds: ['Soft music', 'Nature'], end: 'where' })
+  await snap('landed', '', 3000)
+  await go('/challenge/nervous-system-reset'); await snap('challenge')
+}
+
+===== ret/personas/maya.mjs
+export default async ({ p, tap, role, type, snap, onboard, applyAndPlay, go }) => {
+  await type('I can’t fall asleep, my mind keeps racing'); await snap('gate')
+  await tap(role('button', /continue with google/i)); await snap('welcome')
+  await onboard({ goal: 'sleep better', feelings: ['Hard to sleep', 'Overthinking'], length: 20, sounds: ['Soft music'] })
+  await applyAndPlay()
+  await go('/home'); await snap('home-after')
+}
+
+===== ret/personas/raka.mjs
+export default async ({ p, tap, role, type, snap, onboard, applyAndPlay, go }) => {
+  await tap(role('button', /^sign in$/i)); await snap('login')
+  await tap(role('button', /continue with google/i)); await snap('welcome')
+  await onboard({ goal: 'feel calmer', feelings: ['Stressed'], length: 10, end: 'explore' })
+  await go('/wellness'); await snap('wellness')
+  await tap(role('button', /connect/i)); await snap('connect')
+  await go('/home'); await type('Give me something for work stress, no spiritual stuff'); await snap('chat-reply', '', 6500)
+  await applyAndPlay()
+}
+
+===== ret/personas/sari.mjs
+export default async ({ p, tap, role, type, snap, onboard, applyAndPlay, go }) => {
+  await tap(role('button', /^anxious$/i)); await snap('after-chip')
+  await tap(role('button', /^send$/i)); await snap('gate')
+  await tap(role('button', /continue with google/i)); await snap('welcome')
+  await onboard({ goal: 'feel calmer', feelings: ['Anxious'], length: 5, end: 'where' })
+  await applyAndPlay()
+}
+
+===== ret/personas/tom.mjs
+export default async ({ p, tap, role, type, snap, onboard, applyAndPlay, go }) => {
+  await type('My therapist said I should work on regulating my nervous system'); await snap('gate')
+  await tap(role('link', /create an account/i)); await snap('signup')
+  const g = role('button', /continue with google/i); await tap(g); await snap('welcome')
+  await onboard({ goal: 'regulate my body', feelings: ['Stressed', 'Low energy'], length: 20, sounds: ['Mostly silence'], end: 'where' })
+  await applyAndPlay()
+  await go('/settings'); await snap('settings')
+}
+
+===== ret/model.py
+# Retention model for the persona simulation (J039).
+# Probabilities are judgement calls by the simulated personas, anchored to
+# public Health & Fitness benchmarks (D1 ~20-27%, D7 ~8-13%, D30 ~3-8%).
+# Stage: act = finishes a first session in visit 1; r1 = D1 | act;
+# r7 = D7 | D1; r30 = D30 | D7. Each fix multiplies the stages it touches.
+import json, itertools
+
+P = {  # weight, S1 base: act, r1, r7, r30 (as observed on the build, persistence assumed)
+ 'maya': dict(w=.25, act=.60, r1=.30, r7=.32, r30=.40),
+ 'raka': dict(w=.20, act=.38, r1=.18, r7=.25, r30=.35),
+ 'sari': dict(w=.20, act=.45, r1=.26, r7=.30, r30=.38),
+ 'leo':  dict(w=.15, act=.25, r1=.28, r7=.22, r30=.25),
+ 'dewi': dict(w=.10, act=.52, r1=.30, r7=.40, r30=.50),
+ 'tom':  dict(w=.10, act=.45, r1=.26, r7=.36, r30=.46),
+}
+# Fix -> {persona: (act, r1, r7, r30) multipliers}; '*' = default for all.
+F = {
+ 'R1 One first message, in their words': {'*': (1.06, 1.03, 1, 1), 'maya': (1.10, 1.05, 1, 1), 'tom': (1.10, 1.05, 1, 1), 'sari': (1.08, 1.03, 1, 1)},
+ 'R2 A fresh first thread, no early paywall': {'*': (1.15, 1.10, 1.02, 1), 'maya': (1.02, 1.02, 1, 1), 'raka': (1.20, 1.18, 1.03, 1), 'dewi': (1.18, 1.15, 1.03, 1), 'tom': (1.20, 1.15, 1.03, 1)},
+ 'R3 Build from the goal': {'*': (1.10, 1.10, 1.04, 1.02), 'raka': (1.15, 1.18, 1.05, 1.02), 'dewi': (1.12, 1.15, 1.05, 1.03), 'leo': (1.15, 1.10, 1.03, 1)},
+ 'R4 A Play that plays': {'*': (1.04, 1, 1, 1), 'leo': (1.45, 1.06, 1, 1), 'sari': (1.08, 1, 1, 1), 'maya': (1.06, 1.03, 1, 1)},
+ 'R5 Honest day 0 + one-tap check-in': {'*': (1.00, 1.12, 1.08, 1.05), 'raka': (1.0, 1.25, 1.12, 1.05), 'tom': (1.0, 1.22, 1.10, 1.05), 'dewi': (1.0, 1.18, 1.10, 1.05)},
+ 'R6 Chapter 2 reminder': {'*': (1, 1.25, 1.22, 1.10), 'leo': (1, 1.30, 1.30, 1.12), 'sari': (1, 1.30, 1.25, 1.10), 'dewi': (1, 1.10, 1.08, 1.05)},
+ 'R7 Personal Home on return': {'*': (1, 1.12, 1.10, 1.05), 'leo': (1, 1.15, 1.12, 1.05)},
+ 'R8 Real progress from check-ins': {'*': (1, 1.03, 1.15, 1.20), 'raka': (1, 1.05, 1.20, 1.25), 'dewi': (1, 1.03, 1.18, 1.25), 'tom': (1, 1.03, 1.18, 1.25)},
+ 'R9 Only their own things': {'*': (1.02, 1.04, 1.02, 1), 'raka': (1.05, 1.08, 1.03, 1), 'tom': (1.05, 1.08, 1.02, 1)},
+ 'R10 Invite a second goal': {'*': (1, 1, 1.02, 1.15), 'dewi': (1, 1, 1.03, 1.22), 'maya': (1, 1, 1.02, 1.18)},
+}
+SIMPLIFY = {'*': (1.04, 1.03, 1.05, 1.06), 'leo': (1.06, 1.04, 1.06, 1.06), 'sari': (1.06, 1.03, 1.05, 1.05)}
+
+def mult(table, who):
+  return table.get(who, table['*'])
+
+DAMP = .45  # fixes overlap (two cues are not twice one cue): only part of the compounded lift lands
+
+def run(fixes, simplify=False, damp=DAMP):
+  out = {}
+  for who, b in P.items():
+    base = [b['act'], b['r1'], b['r7'], b['r30']]
+    prod = [1, 1, 1, 1]
+    for t in [F[f] for f in fixes] + ([SIMPLIFY] if simplify else []):
+      prod = [x * m for x, m in zip(prod, mult(t, who))]
+    s = [min(x * (1 + damp * (m - 1)), .9) for x, m in zip(base, prod)]
+    act, r1, r7, r30 = s
+    d1 = act * r1; d7 = d1 * r7; d30 = d7 * r30
+    out[who] = dict(act=act, d1=d1, d7=d7, d30=d30)
+  w = {k: sum(P[p]['w'] * out[p][k] for p in P) for k in ('act', 'd1', 'd7', 'd30')}
+  return out, w
+
+ALL = list(F)
+res = {}
+for name, fixes, simp in [('S1', [], False), ('S2', ALL, False), ('S3', ALL, True)]:
+  per, w = run(fixes, simp)
+  res[name] = dict(per=per, w=w, lo=run(fixes, simp, .25)[1], hi=run(fixes, simp, .65)[1])
+# The S1 base rates are the least certain number here: +/-30% on retention, +/-15% on activation
+res['S1']['lo'] = {k: v * (.85 if k == 'act' else .7) for k, v in res['S1']['w'].items()}
+res['S1']['hi'] = {k: v * (1.15 if k == 'act' else 1.3) for k, v in res['S1']['w'].items()}
+# Shapley value of each fix: its average marginal contribution over every order
+# the nine could ship in. They sum exactly to S2 - S1.
+from math import factorial
+n = len(ALL); cache = {}
+def val(sub):
+  key = frozenset(sub)
+  if key not in cache: cache[key] = run(list(sub))[1]
+  return cache[key]
+res['fix'] = {}
+for f in ALL:
+  others = [g for g in ALL if g != f]; acc = dict(act=0, d1=0, d7=0, d30=0)
+  for k in range(len(others) + 1):
+    for sub in itertools.combinations(others, k):
+      wgt = factorial(k) * factorial(n - k - 1) / factorial(n)
+      a = val(sub + (f,)); b = val(sub)
+      for m in acc: acc[m] += wgt * (a[m] - b[m])
+  res['fix'][f] = acc
+json.dump(res, open('ret/model.json', 'w'), indent=1)
+for s_ in ('S1', 'S2', 'S3'):
+  w = res[s_]['w']; print(s_, ' '.join(f"{k}={w[k]*100:.1f}%" for k in w), '| lo', ' '.join(f"{res[s_]['lo'][k]*100:.1f}" for k in w), '| hi', ' '.join(f"{res[s_]['hi'][k]*100:.1f}" for k in w))
+for s_ in ('S1','S2','S3'):
+  print(s_, {p: f"{v['act']*100:.0f}|{v['d1']*100:.0f}/{v['d7']*100:.1f}/{v['d30']*100:.1f}" for p, v in res[s_]['per'].items()})
+for f, v in sorted(res['fix'].items(), key=lambda x: -x[1]['d7']):
+  print(f"{f:34s} D1 +{v['d1']*100:.1f} D7 +{v['d7']*100:.2f} D30 +{v['d30']*100:.2f}")
+so = run([], True)[1]; res['SIMP'] = dict(w=so)
+first5 = ['R1 One first message, in their words', 'R2 A fresh first thread, no early paywall', 'R3 Build from the goal', 'R5 Honest day 0 + one-tap check-in', 'R6 Chapter 2 reminder']
+res['TOP'] = dict(w=run(first5)[1], fixes=first5)
+json.dump(res, open('ret/model.json', 'w'), indent=1)
+print('SIMP only', {k: round(v*100, 1) for k, v in so.items()}); print('TOP5', {k: round(v*100, 1) for k, v in res['TOP']['w'].items()})
+
+===== ret/charts.py
+import json
+M = json.load(open('ret/model.json'))
+C = {'S1': '#D9B08C', 'S2': '#D9822B', 'S3': '#6B3608'}
+NAME = {'S1': 'Current v4', 'S2': '+ 9 retention fixes', 'S3': '+ fixes + simplification'}
+INK, MUTED, RULE = '#1B1006', '#7A6A58', '#E8DFD3'
+def T(x, y, s, size=10, fill=MUTED, anchor='start', weight=400):
+  return f'<text x="{x:.1f}" y="{y:.1f}" font-size="{size}" fill="{fill}" text-anchor="{anchor}" font-weight="{weight}" font-family="Mulish">{s}</text>'
+
+def curve():
+  W, H, l, r, t, b = 640, 300, 44, 150, 16, 34
+  xs = {'d1': l + 20, 'd7': l + (W - l - r) * .42, 'd30': W - r - 10}
+  ymax = .40
+  y = lambda v: t + (H - t - b) * (1 - v / ymax)
+  o = [f'<svg viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Predicted retention D1, D7, D30 by scenario">']
+  for g in (0, .1, .2, .3, .4):
+    o.append(f'<line x1="{l}" x2="{W-r+20}" y1="{y(g):.1f}" y2="{y(g):.1f}" stroke="{RULE}" stroke-width="1"/>' + T(l - 8, y(g) + 3.5, f'{int(g*100)}%', 9, anchor='end'))
+  band = {'d1': (.20, .27), 'd7': (.08, .13), 'd30': (.03, .08)}
+  pts_hi = ' '.join(f'{xs[k]:.1f},{y(band[k][1]):.1f}' for k in xs); pts_lo = ' '.join(f'{xs[k]:.1f},{y(band[k][0]):.1f}' for k in reversed(list(xs)))
+  o.append(f'<polygon points="{pts_hi} {pts_lo}" fill="#EFE6DA" opacity=".9"/>')
+  o.append(T(xs['d30'] + 12, y(.055) + 3, 'Health &amp; Fitness', 9) + T(xs['d30'] + 12, y(.055) + 14, 'benchmark range', 9))
+  for k, lab in (('d1', 'Day 1'), ('d7', 'Day 7'), ('d30', 'Day 30')):
+    o.append(T(xs[k], H - 12, lab, 10, INK, 'middle', 600))
+  for s in ('S1', 'S2', 'S3'):
+    w, lo, hi = M[s]['w'], M[s]['lo'], M[s]['hi']
+    pts = ' '.join(f'{xs[k]:.1f},{y(w[k]):.1f}' for k in xs)
+    o.append(f'<polyline points="{pts}" fill="none" stroke="{C[s]}" stroke-width="2.4" stroke-linejoin="round"/>')
+    for k in xs:
+      o.append(f'<line x1="{xs[k]:.1f}" x2="{xs[k]:.1f}" y1="{y(lo[k]):.1f}" y2="{y(hi[k]):.1f}" stroke="{C[s]}" stroke-width="1.2" opacity=".55" transform="translate({ {"S1": -6, "S2": 0, "S3": 6}[s] },0)"/>')
+      o.append(f'<circle cx="{xs[k]:.1f}" cy="{y(w[k]):.1f}" r="4.2" fill="{C[s]}" stroke="#fff" stroke-width="2"/>')
+    dy = {'S1': 4, 'S2': -2, 'S3': -10}[s]
+    o.append(T(xs['d30'] + 12, y(w['d30']) + dy if s != 'S1' else y(w['d30']) + 14, f'{NAME[s]} · {w["d30"]*100:.0f}%', 9.5, INK, weight=600))
+  for s, dx in (('S1', 10), ('S3', 10)):
+    w = M[s]['w']; o.append(T(xs['d1'] + dx, y(w['d1']) + (14 if s == 'S1' else -8), f'{w["d1"]*100:.0f}%', 9.5, INK, weight=700))
+  w = M['S2']['w']; o.append(T(xs['d1'] + 10, y(w['d1']) + 4, f'{w["d1"]*100:.0f}%', 9.5, INK, weight=700))
+  for s in ('S1', 'S2', 'S3'):
+    w = M[s]['w']; o.append(T(xs['d7'], y(w['d7']) - 9 if s != 'S1' else y(w['d7']) + 16, f'{w["d7"]*100:.0f}%', 9.5, INK, 'middle', 700))
+  o.append('</svg>'); return '\n'.join(o)
+
+def fixes():
+  F = M['fix']; items = sorted(F.items(), key=lambda kv: -kv[1]['d7'])
+  W, row, l = 640, 30, 210; H = 34 + row * len(items)
+  vmax = max(v['d1'] for _, v in items) * 1.15
+  sx = lambda v: l + (W - l - 70) * v / vmax
+  o = [f'<svg viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Contribution of each fix to D1 and D7 retention">']
+  for g in (0, .01, .02, .03):
+    if g <= vmax: o.append(f'<line x1="{sx(g):.1f}" x2="{sx(g):.1f}" y1="18" y2="{H-6}" stroke="{RULE}"/>' + T(sx(g), 12, f'+{int(g*100)} pt', 9, anchor='middle'))
+  for i, (name, v) in enumerate(items):
+    yy = 26 + i * row
+    code, label = name.split(' ', 1)
+    o.append(T(0, yy + 12, f'<tspan font-weight="700" fill="{INK}">{code}</tspan> {label}', 10, INK))
+    o.append(f'<rect x="{l}" y="{yy+1}" width="{max(sx(v["d1"])-l,1):.1f}" height="10" rx="2" fill="#E9C9A6"/>')
+    o.append(f'<rect x="{l}" y="{yy+13}" width="{max(sx(v["d7"])-l,1):.1f}" height="10" rx="2" fill="#B5651D"/>')
+    o.append(T(sx(v['d1']) + 5, yy + 10, f'D1 +{v["d1"]*100:.1f}', 8.5, MUTED) + T(sx(v['d7']) + 5, yy + 22, f'D7 +{v["d7"]*100:.1f}', 8.5, INK, weight=700))
+  o.append('</svg>'); return '\n'.join(o)
+
+def personas():
+  per = {s: M[s]['per'] for s in ('S1', 'S2', 'S3')}
+  names = {'maya': 'Maya · sleep', 'raka': 'Raka · work stress', 'sari': 'Sari · anxiety, 5 min', 'leo': 'Leo · focus', 'dewi': 'Dewi · experienced', 'tom': 'Tom · nervous system'}
+  W, row, l = 640, 30, 150; H = 30 + row * 6
+  sx = lambda v: l + (W - l - 40) * v / .25
+  o = [f'<svg viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Day 7 retention per persona">']
+  for g in (0, .05, .10, .15, .20, .25):
+    o.append(f'<line x1="{sx(g):.1f}" x2="{sx(g):.1f}" y1="16" y2="{H-4}" stroke="{RULE}"/>' + T(sx(g), 11, f'{int(g*100)}%', 9, anchor='middle'))
+  for i, k in enumerate(names):
+    yy = 32 + i * row
+    o.append(T(0, yy + 4, names[k], 10, INK, weight=600))
+    a, b2, c = per['S1'][k]['d7'], per['S2'][k]['d7'], per['S3'][k]['d7']
+    o.append(f'<line x1="{sx(a):.1f}" x2="{sx(c):.1f}" y1="{yy}" y2="{yy}" stroke="#E9C9A6" stroke-width="2"/>')
+    for v, s in ((a, 'S1'), (b2, 'S2'), (c, 'S3')):
+      o.append(f'<circle cx="{sx(v):.1f}" cy="{yy}" r="5" fill="{C[s]}" stroke="#fff" stroke-width="2"/>')
+    o.append(T(sx(a) - 9, yy + 3.5, f'{a*100:.0f}%', 9, MUTED, 'end') + T(sx(c) + 9, yy + 3.5, f'{c*100:.0f}%', 9, INK, weight=700))
+  o.append('</svg>'); return '\n'.join(o)
+
+json.dump({'curve': curve(), 'fixes': fixes(), 'personas': personas()}, open('ret/charts.json', 'w'))
+print('ok')
+
+===== simp/ret-drafts.mjs
+const ink = '#331B04', soft = '#7A6A5C', line = '#E8DED4', cream = '#FFF8EC'
+const btn = (t, dark = true) => `<div style="height:48px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:16px;${dark ? `background:${ink};color:#fff` : `border:1px solid ${ink};color:${ink}`}">${t}</div>`
+export default async ({ p, go, grow, shot, run }) => {
+  // 1 — Player, first listen: an honest starting point instead of "Great Progress! +3%"
+  await go('/play/dolphins-frequency'); await p.locator('[data-sheet-grabber]').click(); await p.waitForTimeout(500); await p.locator('[data-sheet-grabber]').click(); await p.waitForTimeout(700)
+  await p.evaluate(({ ink, soft, line, cream, b1, b2 }) => {
+    const h = [...document.querySelectorAll('h1,h2,p,span,div')].find((e) => e.textContent.trim() === 'Great Progress!')
+    let s = h; while (s && !(getComputedStyle(s).overflowY === 'auto' || getComputedStyle(s).overflowY === 'hidden') ) s = s.parentElement
+    const faces = ['Worse', 'Same', 'A bit', 'Calmer', 'Very'].map((f, i) => `<div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:56px;height:56px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:18px;${i === 3 ? `background:${cream};border:2px solid #F5A524` : `border:1px solid ${line}`}">${i + 1}</div><span style="font-size:12px;color:${soft}">${f}</span></div>`).join('')
+    s.innerHTML = `<div style="font-family:Mulish,sans-serif;color:${ink};padding:4px 12px 40px">
+      <div style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#8A5A1E">Chapter 1 · your starting point</div>
+      <div style="font-size:28px;line-height:36px;margin-top:6px">How do you feel now?</div>
+      <div style="font-size:14px;line-height:21px;color:${soft};margin-top:6px">Before you listened you said: <b style="color:${ink};font-weight:500">hard to sleep, overthinking</b>. One tap gives Aurelia your first real data point — no numbers until there is something to measure.</div>
+      <div style="display:flex;justify-content:space-between;margin-top:20px">${faces}</div>
+      <div style="margin-top:28px;border-radius:16px;background:${cream};padding:16px">
+        <div style="font-size:12px;color:#8A5A1E">Next</div>
+        <div style="font-size:20px;line-height:28px;margin-top:4px">Chapter 2 is ready tomorrow night</div>
+        <div style="font-size:14px;line-height:21px;color:${soft};margin-top:4px">Built from tonight’s answer. Most sleep gains show after 3–5 nights in a row.</div>
+        <div style="display:flex;gap:8px;margin-top:14px"><div style="flex:1">${b1}</div></div>
+        <div style="font-size:12px;color:${soft};margin-top:10px;text-align:center">Or add it to your calendar · Not now</div>
+      </div>
+      <div style="margin-top:24px;display:flex;gap:6px;align-items:center;font-size:13px;color:${soft}">
+        <span style="width:10px;height:10px;border-radius:99px;background:#F5A524"></span><span style="width:10px;height:10px;border-radius:99px;border:1px solid ${line}"></span><span style="width:10px;height:10px;border-radius:99px;border:1px solid ${line}"></span><span style="width:10px;height:10px;border-radius:99px;border:1px solid ${line}"></span><span style="width:10px;height:10px;border-radius:99px;border:1px solid ${line}"></span>
+        <span style="margin-left:6px">Night 1 of your first 5</span></div>
+    </div>`
+  }, { ink, soft, line, cream, b1: btn('Remind me at 22:30') })
+  await shot('ret/draft/player-day0.png')
+
+  // 2 — Home on return: their chapter first, marketing gone
+  await go('/home')
+  await p.evaluate(({ ink, soft, line, cream, b1 }) => {
+    const S = window.__S
+    for (const t of ['Your Personal', 'Aurelia learns', 'Casual Intelligence', 'Ongoing Live Sessions', 'Quick Start']) S.hide?.(S.block(t))
+    const h = S.byText('Create the space'); let top = h; while (top.parentElement && top.parentElement.getBoundingClientRect().height < 700) top = top.parentElement
+    const card = document.createElement('div')
+    card.innerHTML = `<div style="font-family:Mulish,sans-serif;color:${ink};margin:0 0 28px;padding:0 20px">
+      <div style="font-size:14px;color:${soft}">Good evening, Adam</div>
+      <div style="margin-top:12px;border-radius:24px;padding:20px;background:linear-gradient(160deg,#2E3F8F,#4F7FD9);color:#fff">
+        <div style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;opacity:.8">Tonight · Sleep better</div>
+        <div style="font-size:24px;line-height:32px;margin-top:6px">Chapter 2 — slower, darker</div>
+        <div style="font-size:14px;line-height:21px;opacity:.85;margin-top:6px">Last night you felt “okay”. Aurelia slowed the breath pacing and dropped the voice for the last 8 minutes.</div>
+        <div style="display:flex;align-items:center;gap:12px;margin-top:16px"><div style="flex:1;height:48px;border-radius:16px;background:#fff;color:${ink};display:flex;align-items:center;justify-content:center;font-size:16px">▶ Play · 20 min</div></div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;margin-top:14px;font-size:13px;color:${soft}">
+        <span style="width:10px;height:10px;border-radius:99px;background:#F5A524"></span><span style="width:10px;height:10px;border-radius:99px;border:1px solid #F5A524"></span><span style="width:10px;height:10px;border-radius:99px;border:1px solid ${line}"></span><span style="width:10px;height:10px;border-radius:99px;border:1px solid ${line}"></span><span style="width:10px;height:10px;border-radius:99px;border:1px solid ${line}"></span>
+        <span style="margin-left:6px">Night 2 of 5 · Felt: okay → ?</span></div>
+      <div style="font-size:14px;color:${soft};margin-top:22px">Something else on your mind?</div></div>`
+    top.parentElement.insertBefore(card, top)
+  }, { ink, soft, line, cream })
+  await p.setViewportSize({ width: 402, height: 1300 }); await p.waitForTimeout(600); await shot('ret/draft/home-return.png'); await p.setViewportSize({ width: 402, height: 874 })
+
+  // 3 — Onboarding ready step that keeps the person's own words
+  await go('/welcome')
+  for (const n of [/let.s begin/i]) await p.getByRole('button', { name: n }).click()
+  await p.getByRole('radio', { name: /sleep better/i }).click(); await p.getByRole('button', { name: /^continue$/i }).click()
+  await p.getByRole('button', { name: /^hard to sleep/i }).click(); await p.getByRole('button', { name: /^continue$/i }).click()
+  await p.getByRole('button', { name: /^continue$/i }).click(); await p.waitForTimeout(500)
+  await p.evaluate(({ ink, soft, cream, b1 }) => {
+    const S = window.__S
+    const box = [...document.querySelectorAll('p')].find((e) => e.textContent.trim().startsWith('Your first message'))?.parentElement
+    if (box) box.innerHTML = `<p style="font-size:12px;color:#8A5A1E">In your words</p><p style="font-size:18px;line-height:27px;color:${ink};margin-top:6px">“I can’t fall asleep, my mind keeps racing.”</p><p style="font-size:13px;line-height:19px;color:${soft};margin-top:8px">Aurelia builds from this, plus your goal and style above. Nothing else to answer.</p>`
+    const btns = [...document.querySelectorAll('button')]
+    const create = btns.find((b) => /Create my first session/.test(b.textContent)); if (create) create.textContent = 'Build it and play · 10 min'
+    const other = btns.find((b) => /Continue where I was|Explore Aurelia first/.test(b.textContent)); if (other) other.style.display = 'none'
+    const t = [...document.querySelectorAll('h1,h2')].find((e) => e.textContent.includes('all set')); if (t) t.textContent = 'Got it, Adam.'
+  }, { ink, soft, cream })
+  await shot('ret/draft/ready-words.png')
+}
+

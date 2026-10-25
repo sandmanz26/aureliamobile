@@ -19,6 +19,16 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-25 — First-time-user retention simulation (J039, docs only)
+
+New `docs/reviews/Aurelia-Retention-Simulation-2026-10-25.pdf`, with its HTML source, screenshots, three drafts and the simulation scripts.
+
+Six simulated people with different wellness needs used staging v4 from their first tap and answered a questionnaire sequenced like a real user test. The report predicts day-1/7/30 retention today (12% / 3.8% / 1.5%) and with ten suggested fixes (23% / 9.9% / 5.4%), and shows what each fix contributes.
+
+It also records nine problems found on the way. The biggest: five of six entry paths open the sample conversation, and the player shows progress before the first listen.
+
+No code changed; waiting on decisions D1–D5 (O17). Branches: `web_app`, `admin_cms`.
+
 ### 2026-10-25 — Simplification plan (J038, docs only)
 
 New `docs/reviews/Aurelia-Simplification-Plan-2026-10-25.pdf`, with its HTML source and images. It is a screen-by-screen study of staging v4, with marked screenshots and draft screens. It proposes organising the app as four tabs (Create, Discover, Progress, Me) matching the four core features, and closing duplicate entry points, without removing a core feature. No code changed; waiting on decisions D1–D7. Branches: `web_app`, `admin_cms`.

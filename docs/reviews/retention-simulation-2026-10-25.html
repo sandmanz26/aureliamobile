@@ -1,0 +1,404 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Aurelia Retention Simulation</title><style>
+  @font-face { font-family: 'Mulish'; src: url('../../public/fonts/mulish-variable.woff2') format('woff2'); font-weight: 200 900; }
+  :root {
+    --ink: #1B1006; --ink-2: #4A3B2C; --muted: #7A6A58; --rule: #E8DFD3;
+    --cream: #FFF6E8; --gold: #C98A1B; --espresso: #331B04;
+    --remove: #D93A3F; --remove-bg: #FDECEC; --merge: #C77D00; --merge-bg: #FEF3DC; --keep: #1F8A55; --keep-bg: #E6F5EC;
+  }
+  @page { size: A4; margin: 16mm 15mm 16mm 15mm; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Mulish', system-ui, sans-serif; color: var(--ink); font-size: 9.4pt; line-height: 1.5; margin: 0; background: #fff; }
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+  p { margin: 0 0 5pt; }
+  .cover { height: 258mm; display: flex; flex-direction: column; justify-content: space-between; page-break-after: always; }
+  .eyebrow { font-size: 8pt; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); font-weight: 700; }
+  .cover h1 { font-size: 30pt; line-height: 1.1; font-weight: 600; margin-top: 10mm; max-width: 160mm; }
+  .cover .lede { font-size: 12pt; color: var(--ink-2); max-width: 150mm; margin-top: 6mm; }
+  .status { display: inline-block; margin-top: 6mm; font-size: 8.5pt; font-weight: 700; color: var(--merge); background: var(--merge-bg); padding: 1.5mm 3.5mm; border-radius: 10mm; }
+  .meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6mm; border-top: 1px solid var(--rule); padding-top: 5mm; font-size: 8.5pt; color: var(--muted); }
+  .meta b { display: block; color: var(--ink); font-weight: 600; font-size: 9.5pt; }
+  .tally { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; margin-top: 9mm; }
+  .tally div { border-radius: 3mm; padding: 4mm; background: var(--cream); }
+  .tally strong { display: block; font-size: 19pt; font-weight: 600; line-height: 1.05; font-variant-numeric: tabular-nums; }
+  .tally strong em { font-style: normal; color: var(--muted); font-weight: 400; font-size: 13pt; }
+  .tally span { font-size: 8pt; color: var(--ink-2); }
+  h2 { font-size: 15pt; font-weight: 600; margin: 8mm 0 3mm; padding-top: 2mm; border-top: 2px solid var(--ink); }
+  h2 .num { color: var(--gold); margin-right: 3mm; }
+  h3 { font-size: 10.5pt; font-weight: 700; margin: 4mm 0 1.5mm; }
+  .intro { color: var(--ink-2); max-width: 170mm; }
+  table { width: 100%; border-collapse: collapse; font-size: 8.8pt; margin: 3mm 0; }
+  th { text-align: left; font-size: 7.4pt; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); border-bottom: 1px solid var(--ink); padding: 1.6mm 2mm; }
+  td { border-bottom: 1px solid var(--rule); padding: 1.8mm 2mm; vertical-align: top; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr { break-inside: avoid; }
+  .callout { background: var(--cream); border-radius: 2mm; padding: 4mm 5mm; margin: 4mm 0; break-inside: avoid; }
+  .callout h3 { margin-top: 0; }
+  .pb { page-break-before: always; }
+  .small { font-size: 8pt; color: var(--muted); }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 8pt; background: #F6F1EA; padding: 0 1mm; border-radius: 1mm; }
+  .tag { display: inline-block; font-size: 7pt; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: .5mm 2mm; border-radius: 10mm; white-space: nowrap; }
+  .tag.remove { color: var(--remove); background: var(--remove-bg); }
+  .tag.merge { color: var(--merge); background: var(--merge-bg); }
+  .tag.keep { color: var(--keep); background: var(--keep-bg); }
+  .legend { display: flex; gap: 5mm; flex-wrap: wrap; font-size: 8.5pt; margin: 2mm 0 4mm; }
+  .legend i { display: inline-block; width: 4mm; height: 3mm; border: 2px solid; border-radius: 1mm; margin-right: 1.5mm; vertical-align: -0.4mm; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 5mm; align-items: start; break-inside: avoid; margin: 3mm 0 2mm; }
+  .pair.two { grid-template-columns: 1fr 1.6fr; }
+  .shot { margin: 0; }
+  .shot img { width: 100%; border: 1px solid var(--rule); border-radius: 2.5mm; display: block; }
+  .shot figcaption { font-size: 7.5pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.5mm; }
+  .changes ol { margin: 0; padding-left: 4.5mm; }
+  .changes li { margin: 0 0 2.2mm; }
+  .changes li b { font-weight: 700; }
+  .wide img { width: 100%; border: 1px solid var(--rule); border-radius: 2.5mm; }
+  .ia { display: grid; grid-template-columns: 1fr 12mm 1fr; align-items: center; gap: 2mm; margin: 4mm 0; break-inside: avoid; }
+  .ia .col { border: 1px solid var(--rule); border-radius: 3mm; padding: 4mm; }
+  .ia .col h3 { margin: 0 0 2mm; font-size: 9.5pt; }
+  .ia .arrow { text-align: center; font-size: 16pt; color: var(--gold); }
+  .ia ul { margin: 0; padding-left: 4mm; font-size: 8.6pt; }
+  .tabs4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2mm; }
+  .tabs4 div { border-radius: 2mm; background: var(--cream); padding: 2.5mm; font-size: 8.3pt; }
+  .tabs4 b { display: block; font-size: 9.5pt; }
+  .thumbs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3mm; }
+  .thumbs figure { margin: 0; }
+  .thumbs img { width: 100%; border: 1px solid var(--rule); border-radius: 1.5mm; display: block; }
+  .thumbs figcaption { font-size: 7pt; color: var(--muted); margin-top: 1mm; text-align: center; }
+  .decision { border: 1px solid var(--rule); border-left: 3px solid var(--gold); border-radius: 2mm; padding: 3mm 4mm; margin: 2.5mm 0; break-inside: avoid; }
+  .decision h3 { margin: 0 0 1mm; }
+  .block { break-inside: avoid; page-break-inside: avoid; }
+  h3 { break-after: avoid; }
+  .wide img { max-height: 228mm; width: auto; max-width: 100%; margin: 0 auto; display: block; }
+
+  .ask { font-size: 11pt; font-weight: 600; margin: 0 0 2mm; }
+  .answer { border-left: 3px solid var(--gold); padding: 1mm 0 1mm 4mm; margin: 0 0 5mm; }
+  .answer p { margin: 0 0 2mm; }
+  .kpi { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; margin: 4mm 0; }
+  .kpi div { border: 1px solid var(--rule); border-radius: 3mm; padding: 3mm 3.5mm; }
+  .kpi b { display: block; font-size: 8pt; color: var(--muted); font-weight: 600; letter-spacing: .04em; }
+  .kpi strong { display: block; font-size: 16pt; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.2; }
+  .kpi span { font-size: 7.8pt; color: var(--muted); }
+  .chart { margin: 3mm 0 1mm; break-inside: avoid; }
+  .chart svg { width: 100%; height: auto; display: block; }
+  .steps { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2.5mm; margin: 3mm 0; }
+  .steps figure { margin: 0; }
+  .steps img { width: 100%; border: 1px solid var(--rule); border-radius: 2mm; display: block; }
+  .steps figcaption { font-size: 7.2pt; color: var(--ink-2); margin-top: 1mm; line-height: 1.3; }
+  .steps figcaption b { color: var(--gold); }
+  .persona { break-inside: avoid; border-top: 1px solid var(--rule); padding-top: 4mm; margin-top: 5mm; display: grid; grid-template-columns: 1.5fr 1fr; gap: 6mm; }
+  .persona h3 { margin: 0 0 1mm; font-size: 12pt; }
+  .persona .who { font-size: 8.3pt; color: var(--muted); margin-bottom: 2mm; }
+  .persona .shots { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5mm; }
+  .persona .shots img { width: 100%; border: 1px solid var(--rule); border-radius: 2mm; }
+  .persona .shots figcaption { font-size: 7pt; color: var(--muted); margin-top: .8mm; }
+  .persona figure { margin: 0; }
+  .quote { font-style: italic; color: var(--ink-2); margin: 1.5mm 0; }
+  .scores { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5mm; margin: 2.5mm 0; }
+  .scores div { background: var(--cream); border-radius: 1.5mm; padding: 1.5mm 2mm; font-size: 7.4pt; color: var(--ink-2); }
+  .scores strong { display: block; font-size: 11pt; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .verdict { font-size: 8.5pt; margin-top: 2mm; }
+  .verdict b { font-variant-numeric: tabular-nums; }
+  .loop { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin: 4mm 0; break-inside: avoid; }
+  .loop div { border: 1px solid var(--rule); border-radius: 3mm; padding: 3mm; margin-right: 4mm; position: relative; font-size: 8.2pt; }
+  .loop div:not(:last-child)::after { content: '→'; position: absolute; right: -4.2mm; top: 40%; color: var(--gold); font-weight: 700; }
+  .loop b { display: block; font-size: 9pt; margin-bottom: 1mm; }
+  .stage { display: grid; grid-template-columns: 26mm 1fr; gap: 3mm; border-bottom: 1px solid var(--rule); padding: 2mm 0; break-inside: avoid; font-size: 8.6pt; }
+  .stage > b { color: var(--gold); font-size: 8pt; letter-spacing: .04em; }
+  .drafts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5mm; margin: 3mm 0; break-inside: avoid; }
+  .drafts figure { margin: 0; }
+  .drafts img { width: 100%; border: 2px dashed var(--gold); border-radius: 3mm; display: block; }
+  .drafts figcaption { font-size: 8pt; margin-top: 1.5mm; color: var(--ink-2); }
+  .drafts figcaption b { color: var(--ink); display: block; }
+  td.c { text-align: center; font-variant-numeric: tabular-nums; }
+  .low { color: var(--remove); font-weight: 700; } .mid { color: var(--merge); font-weight: 700; } .ok { color: var(--keep); font-weight: 700; }
+</style></head><body>
+<section class="cover">
+ <div>
+  <div class="eyebrow">Aurelia · first-time user research · simulated</div>
+  <h1>Would a first-time user come back?</h1>
+  <p class="lede">Six simulated people with different wellness needs used the current build (staging v4) from their first tap, answered the same sequenced questionnaire a moderated test would use, and estimated whether they would return on day 1, 7 and 30 — today, and with each suggested change.</p>
+  <span class="status">Simulation — a hypothesis to test with real users, not a measurement</span>
+  <div class="kpi">
+   <div><b>FINISH A FIRST SESSION</b><strong>45%</strong><span>today → 56% with the fixes</span></div>
+   <div><b>DAY 1</b><strong>12%</strong><span>→ 23% (range 18%–29%)</span></div>
+   <div><b>DAY 7</b><strong>3.8%</strong><span>→ 9.9% (range 7%–14%)</span></div>
+   <div><b>DAY 30</b><strong>1.5%</strong><span>→ 5.4% (range 3%–8%)</span></div>
+  </div>
+  <p class="small">Share of all new users who come back <i>and play or build</i> on that day. Health &amp; Fitness apps commonly report roughly 20–27% on day 1, 8–13% on day 7 and 3–8% on day 30.</p>
+ </div>
+ <div class="meta"><div><b>Prepared for</b>Eugene Werner, Daniel — MVP validation</div><div><b>Build tested</b>web_app @ 17053fa · staging · design v4 · 402 px</div><div><b>Date · ref</b>25 Oct 2026 · J039 (follows J038)</div></div>
+</section>
+
+<h2><span class="num">1</span>The two questions, answered</h2>
+<p class="ask">Can a user have a simple flow to solve their wellness goal?</p>
+<div class="answer"><p><b>A short flow, yes. A flow that solves their goal, not yet.</b> Five of six reached a playable session in 6–15 taps and under a minute of waiting, so the number of steps is not what stops them. What stops them is that in five of six cases the session was not about what they asked for. Answers came from a sample conversation about someone else’s sleep, every session was the same “Sleep meditation v1.3”, and the progress screen showed results before they had listened. Leo pressed Play on a focus card and never heard anything.</p>
+<p>Simplifying the navigation (J038) on its own moves the model very little: D7 goes from 3.8% to 4.0%. The first session has to be <i>theirs</i> before fewer screens matter.</p></div>
+<p class="ask">Why will they return, and come back for other wellness goals?</p>
+<div class="answer"><p><b>Today, nothing asks them back and nothing is waiting for them.</b> After the first session, Home looks exactly like the signed-out marketing page. There is no next step, no reminder and no sign the session changed anything. Every persona described the same conditions for coming back:</p>
+<div class="loop">
+ <div><b>1 · It heard me</b>The first session follows their words, goal and choices.</div>
+ <div><b>2 · A promise</b>“Chapter 2 is ready tomorrow, built from tonight’s answer.”</div>
+ <div><b>3 · A cue</b>A reminder at the time they chose — 22:30, school pick-up, before study.</div>
+ <div><b>4 · Proof</b>Their own before/after answers, chapter by chapter. No invented numbers.</div>
+ <div><b>5 · Next goal</b>After three good chapters: “want help with mornings too?”</div>
+</div>
+<p>Steps 2–4 are a habit loop, and they are what keeps someone coming back. Step 5 is what turns “use Aurelia for sleep” into “build more in Aurelia”. The current build has step 1 for one path out of five and none of steps 2–5.</p></div>
+
+<div class="chart"><svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Predicted retention D1, D7, D30 by scenario">
+<line x1="44" x2="510" y1="266.0" y2="266.0" stroke="#E8DFD3" stroke-width="1"/><text x="36.0" y="269.5" font-size="9" fill="#7A6A58" text-anchor="end" font-weight="400" font-family="Mulish">0%</text>
+<line x1="44" x2="510" y1="203.5" y2="203.5" stroke="#E8DFD3" stroke-width="1"/><text x="36.0" y="207.0" font-size="9" fill="#7A6A58" text-anchor="end" font-weight="400" font-family="Mulish">10%</text>
+<line x1="44" x2="510" y1="141.0" y2="141.0" stroke="#E8DFD3" stroke-width="1"/><text x="36.0" y="144.5" font-size="9" fill="#7A6A58" text-anchor="end" font-weight="400" font-family="Mulish">20%</text>
+<line x1="44" x2="510" y1="78.5" y2="78.5" stroke="#E8DFD3" stroke-width="1"/><text x="36.0" y="82.0" font-size="9" fill="#7A6A58" text-anchor="end" font-weight="400" font-family="Mulish">30%</text>
+<line x1="44" x2="510" y1="16.0" y2="16.0" stroke="#E8DFD3" stroke-width="1"/><text x="36.0" y="19.5" font-size="9" fill="#7A6A58" text-anchor="end" font-weight="400" font-family="Mulish">40%</text>
+<polygon points="64.0,97.2 231.3,184.8 480.0,216.0 480.0,247.2 231.3,216.0 64.0,141.0" fill="#EFE6DA" opacity=".9"/>
+<text x="492.0" y="200.0" font-size="9" fill="#7A6A58" text-anchor="start" font-weight="400" font-family="Mulish">Health &amp; Fitness range</text>
+<text x="64.0" y="288.0" font-size="10" fill="#1B1006" text-anchor="middle" font-weight="600" font-family="Mulish">Day 1</text>
+<text x="231.3" y="288.0" font-size="10" fill="#1B1006" text-anchor="middle" font-weight="600" font-family="Mulish">Day 7</text>
+<text x="480.0" y="288.0" font-size="10" fill="#1B1006" text-anchor="middle" font-weight="600" font-family="Mulish">Day 30</text>
+<polyline points="64.0,191.1 231.3,242.5 480.0,256.5" fill="none" stroke="#D9B08C" stroke-width="2.4" stroke-linejoin="round"/>
+<line x1="64.0" x2="64.0" y1="213.6" y2="168.6" stroke="#D9B08C" stroke-width="1.2" opacity=".55" transform="translate(-6,0)"/>
+<circle cx="64.0" cy="191.1" r="4.2" fill="#D9B08C" stroke="#fff" stroke-width="2"/>
+<line x1="231.3" x2="231.3" y1="249.5" y2="235.4" stroke="#D9B08C" stroke-width="1.2" opacity=".55" transform="translate(-6,0)"/>
+<circle cx="231.3" cy="242.5" r="4.2" fill="#D9B08C" stroke="#fff" stroke-width="2"/>
+<line x1="480.0" x2="480.0" y1="259.3" y2="253.6" stroke="#D9B08C" stroke-width="1.2" opacity=".55" transform="translate(-6,0)"/>
+<circle cx="480.0" cy="256.5" r="4.2" fill="#D9B08C" stroke="#fff" stroke-width="2"/>
+<text x="492.0" y="270.5" font-size="9.5" fill="#1B1006" text-anchor="start" font-weight="600" font-family="Mulish">Current v4 · 2%</text>
+<polyline points="64.0,122.0 231.3,204.0 480.0,232.6" fill="none" stroke="#D9822B" stroke-width="2.4" stroke-linejoin="round"/>
+<line x1="64.0" x2="64.0" y1="155.2" y2="84.9" stroke="#D9822B" stroke-width="1.2" opacity=".55" transform="translate(0,0)"/>
+<circle cx="64.0" cy="122.0" r="4.2" fill="#D9822B" stroke="#fff" stroke-width="2"/>
+<line x1="231.3" x2="231.3" y1="224.0" y2="178.4" stroke="#D9822B" stroke-width="1.2" opacity=".55" transform="translate(0,0)"/>
+<circle cx="231.3" cy="204.0" r="4.2" fill="#D9822B" stroke="#fff" stroke-width="2"/>
+<line x1="480.0" x2="480.0" y1="245.9" y2="213.6" stroke="#D9822B" stroke-width="1.2" opacity=".55" transform="translate(0,0)"/>
+<circle cx="480.0" cy="232.6" r="4.2" fill="#D9822B" stroke="#fff" stroke-width="2"/>
+<text x="492.0" y="246.6" font-size="9.5" fill="#1B1006" text-anchor="start" font-weight="600" font-family="Mulish">+ 10 fixes · 5%</text>
+<polyline points="64.0,115.4 231.3,199.1 480.0,228.8" fill="none" stroke="#6B3608" stroke-width="2.4" stroke-linejoin="round"/>
+<line x1="64.0" x2="64.0" y1="152.0" y2="74.0" stroke="#6B3608" stroke-width="1.2" opacity=".55" transform="translate(6,0)"/>
+<circle cx="64.0" cy="115.4" r="4.2" fill="#6B3608" stroke="#fff" stroke-width="2"/>
+<line x1="231.3" x2="231.3" y1="222.0" y2="169.6" stroke="#6B3608" stroke-width="1.2" opacity=".55" transform="translate(6,0)"/>
+<circle cx="231.3" cy="199.1" r="4.2" fill="#6B3608" stroke="#fff" stroke-width="2"/>
+<line x1="480.0" x2="480.0" y1="244.5" y2="205.9" stroke="#6B3608" stroke-width="1.2" opacity=".55" transform="translate(6,0)"/>
+<circle cx="480.0" cy="228.8" r="4.2" fill="#6B3608" stroke="#fff" stroke-width="2"/>
+<text x="492.0" y="219.8" font-size="9.5" fill="#1B1006" text-anchor="start" font-weight="600" font-family="Mulish">+ fixes + simplification · 6%</text>
+<text x="56.0" y="106.4" font-size="9.5" fill="#1B1006" text-anchor="end" font-weight="700" font-family="Mulish">24%</text>
+<text x="74.0" y="138.0" font-size="9.5" fill="#1B1006" text-anchor="start" font-weight="700" font-family="Mulish">23%</text>
+<text x="74.0" y="206.1" font-size="9.5" fill="#1B1006" text-anchor="start" font-weight="700" font-family="Mulish">12%</text>
+<text x="223.3" y="190.1" font-size="9.5" fill="#1B1006" text-anchor="end" font-weight="700" font-family="Mulish">11%</text>
+<text x="241.3" y="220.0" font-size="9.5" fill="#1B1006" text-anchor="start" font-weight="700" font-family="Mulish">10%</text>
+<text x="241.3" y="257.5" font-size="9.5" fill="#1B1006" text-anchor="start" font-weight="700" font-family="Mulish">4%</text>
+</svg></div>
+<p class="small">Points are panel-weighted predictions; the thin bars show the range for each (S1 ±30% on the base rates; the fix scenarios run from 25% to 65% of the modelled lift). The shaded band is the public Health &amp; Fitness benchmark range.</p>
+
+<h2 class="pb"><span class="num">2</span>How this was done</h2>
+<p class="intro">Eugene’s brief: give Claude the retention metric for first-time users and let it simulate, as different personas with different wellness needs, how real people would behave, using a questionnaire sequenced the way a real test would be. Here is exactly what that meant, so the numbers are read for what they are.</p>
+<table>
+<tr><th>Step</th><th>What happened</th></tr>
+<tr><td><b>1 · Panel</b></td><td>Six personas covering the goals onboarding offers (sleep, calm, focus, regulate) and the attitudes that change behaviour: skeptic, time-poor, distractible, experienced, clinically referred. Each has a share of the panel (an assumption about Aurelia’s early audience) used to weight the totals.</td></tr>
+<tr><td><b>2 · Real build</b></td><td>Each persona was driven through the actual staging v4 build in a 402 px browser by an automated script: a first-time browser, signed out, onboarding not done. Every tap, wait and screen was recorded. Nothing was mocked up for this step; every screenshot in sections 3–4 is the product as it is.</td></tr>
+<tr><td><b>3 · Different doors</b></td><td>Each persona entered differently — typed on Home, a feeling chip, a Quick Start card, Sign in first, Create an account, skipping onboarding — because a real first visit does not follow one script. This is how F1 surfaced: only one of these doors avoids the sample conversation.</td></tr>
+<tr><td><b>4 · Questionnaire</b></td><td>At each stage the persona answered the questions below, in role, based only on what was on screen at that moment.</td></tr>
+<tr><td><b>5 · Retention model</b></td><td>Each persona gives four probabilities: finishes a first session; returns on D1; still active on D7; still active on D30. These are anchored to the category benchmark. Each fix scales the stages it plausibly affects for that persona, with overlap damping (two cues are not twice one cue). Each fix’s contribution is its Shapley value: its average effect across every order the ten could ship in, so the contributions add up exactly to the total.</td></tr>
+</table>
+<h3>The questionnaire, in the order it was asked</h3>
+<div class='stage'><b>A · Screener</b><span>Before the app. What is your wellness need right now? What have you tried, and why did you stop? When in the day would you use this? How motivated are you, 1–5?</span></div><div class='stage'><b>B · First look</b><span>5-second test on Home. What does this app do? What would you tap first? Clarity, 1–5.</span></div><div class='stage'><b>C · The task</b><span>“Get help with your need.” Taps and waiting time are measured, not asked. Then the Single Ease Question: how easy was that, 1–7? Was anything asked twice?</span></div><div class='stage'><b>D · Onboarding</b><span>Did the questions feel relevant? Did Aurelia understand you, 1–5?</span></div><div class='stage'><b>E · First result</b><span>Does this session look made for you, 1–5? Do you believe what the progress screen says, 1–5? What would you change?</span></div><div class='stage'><b>F · Value</b><span>How would you feel if you could no longer use Aurelia — very, somewhat or not disappointed? (the Sean Ellis question)</span></div><div class='stage'><b>G · Return intent</b><span>Will you open Aurelia tomorrow, 0–100? What would bring you back? What do you expect to see in a week? Would you use it for a different wellness goal, 0–100?</span></div><div class='stage'><b>H · Diary</b><span>Simulated day 1, day 7 and day 30: “It is the next evening. What do you do?” — answered once for the current build and once with the fixes in place.</span></div>
+<div class="callout"><h3>What this is not</h3>
+<p>These are not users. A model playing a persona is more articulate, more patient and more rational than a tired person at 11 pm, and it cannot feel whether the audio actually calmed it — in the build the audio is a short placeholder loop. The simulation is good at finding where the product contradicts itself; it is weak at absolute numbers. Read the percentages as a ranking of fixes and an order of magnitude, then replace them with the real test in section 7.</p></div>
+
+<h2><span class="num">3</span>The first visit, as Maya saw it</h2>
+<p class="intro">The cleanest of the six paths (“Create my first session”), shown tap by tap. Even here the brief drops her sentence, the proposals contradict her choices, and the player opens on progress she has not made.</p>
+<div class="steps"><figure><img src='retention-sim-2026-10-25/maya-01-home-first.jpg'><figcaption><b>Tap 1</b> · Home: types her problem</figcaption></figure><figure><img src='retention-sim-2026-10-25/maya-02-gate.jpg'><figcaption><b>Tap 2</b> · Sign in on send</figcaption></figure><figure><img src='retention-sim-2026-10-25/maya-04-ob-goal.jpg'><figcaption><b>Tap 3–4</b> · Asked the goal again</figcaption></figure><figure><img src='retention-sim-2026-10-25/maya-06-ob-style.jpg'><figcaption><b>Tap 5–10</b> · Feeling, length, sound</figcaption></figure><figure><img src='retention-sim-2026-10-25/maya-09-built.jpg'><figcaption><b>Tap 11–13</b> · Reply → Apply → built</figcaption></figure><figure><img src='retention-sim-2026-10-25/maya-11-player-sheet.jpg'><figcaption><b>Tap 14</b> · Player: progress she has not made</figcaption></figure></div>
+
+<h2 class="pb"><span class="num">4</span>Six people, six first visits</h2>
+<div class='persona'><div>
+  <h3>Maya, 29 · Sleep — racing mind at 11 pm</h3><div class='who'>Product designer in Jakarta. Has tried Calm for two weeks, stopped. Uses her phone in bed. Patience: low, it is late. Panel share: 25%.</div>
+  <p><b>Path taken.</b> Typed “I can’t fall asleep, my mind keeps racing” on Home → Sign in → onboarding (Sleep better, Hard to sleep + Overthinking, 20 min, soft music) → <i>Create my first session</i> → Apply → Play. <span class='small'>(14 taps to the player, ~40 s waiting on replies and the build)</span></p>
+  <p class='quote'>“I already told it I can’t sleep. Why is it asking me what I want help with?”</p><p class='quote'>“Increase yellow — helps bring joy? I want to be sleepy, not joyful.”</p><p class='quote'>“I picked 20 minutes and it suggests ‘Make it longer’. And white noise, after I chose soft music.”</p><p class='quote'>“Great Progress, +3% since yesterday? I haven’t pressed play yet. There was no yesterday.”</p>
+  <div class='scores'><div><strong>5/7</strong>Ease</div><div><strong>3/5</strong>Made for me</div><div><strong>2/5</strong>Trust</div><div><strong>45</strong>Back tomorrow</div></div>
+  <p class='verdict'><b>Why they would or would not return.</b> She would come back only if she remembered at 11 pm the next night. Nothing reminds her and Home looks exactly as it did before she signed in.</p>
+  <p class='verdict'>Predicted D1 · D7 · D30: <b>18% · 6% · 2.3%</b> today → <b>30% · 13% · 7.1%</b> with the fixes.</p>
+  </div><div class='shots'><figure><img src='retention-sim-2026-10-25/maya-07-ob-ready.jpg'><figcaption>Her own sentence is gone from the brief</figcaption></figure><figure><img src='retention-sim-2026-10-25/maya-10-player.jpg'><figcaption>“Great Progress! +3% since yesterday” before the first listen</figcaption></figure></div></div><div class='persona'><div>
+  <h3>Raka, 35 · Work stress — wants evidence, not mysticism</h3><div class='who'>Founder, two meetings at once, Apple Watch. Skeptical of “frequencies”. Signs in first to see what he is getting into. Panel share: 20%.</div>
+  <p><b>Path taken.</b> Sign in → onboarding (Feel calmer, Stressed) → <i>Explore Aurelia first</i> → My Wellness → Connect → back to Home, typed “Give me something for work stress, no spiritual stuff” → Apply → Play. <span class='small'>(14 taps to the player, including a 3-tap detour to check his data)</span></p>
+  <p class='quote'>“Apple Watch, Google Calendar and Conversation History are already on? I never connected anything.”</p><p class='quote'>“‘Looks like you had a good sleep last night, score improved by 7%’ — and a message from me saying it was too short. I never wrote that.”</p><p class='quote'>“I said no spiritual stuff. It built 432 Hz and ‘Increase yellow’.”</p><p class='quote'>“The progress chart says I moved from anxious to calm by 35%. Based on what?”</p>
+  <div class='scores'><div><strong>3/7</strong>Ease</div><div><strong>1/5</strong>Made for me</div><div><strong>1/5</strong>Trust</div><div><strong>10</strong>Back tomorrow</div></div>
+  <p class='verdict'><b>Why they would or would not return.</b> The first credible number he sees decides it. Today every number is invented, so he leaves on day 0 and tells a co-founder it is “a mood board”.</p>
+  <p class='verdict'>Predicted D1 · D7 · D30: <b>7% · 2% · 0.6%</b> today → <b>16% · 6% · 2.8%</b> with the fixes.</p>
+  </div><div class='shots'><figure><img src='retention-sim-2026-10-25/raka-10-connect.jpg'><figcaption>Signals switched on for a brand-new account</figcaption></figure><figure><img src='retention-sim-2026-10-25/raka-11-chat-reply.jpg'><figcaption>The demo conversation, with words in his mouth</figcaption></figure></div></div><div class='persona'><div>
+  <h3>Sari, 42 · Anxiety — has five minutes, twice a day</h3><div class='who'>Mother of two, works part-time. Not a wellness-app person. Uses whatever is one tap away. Panel share: 20%.</div>
+  <p><b>Path taken.</b> Tapped the <i>Anxious</i> chip (it fills “I feel anxious.”) → Send → Sign in → onboarding (Feel calmer, Anxious, 5 min) → <i>Continue where I was</i> → Apply → Play. <span class='small'>(13 taps to the player)</span></p>
+  <p class='quote'>“It answers ‘the useful hour is the one right after work… rather than bedtime’. I said I’m anxious, now.”</p><p class='quote'>“It made a ‘Sleep meditation v1.3’. I asked for five minutes of calm.”</p><p class='quote'>“Edits on this session paused until 5:34 PM — I have sent one message. Am I being charged?”</p>
+  <div class='scores'><div><strong>4/7</strong>Ease</div><div><strong>2/5</strong>Made for me</div><div><strong>2/5</strong>Trust</div><div><strong>30</strong>Back tomorrow</div></div>
+  <p class='verdict'><b>Why they would or would not return.</b> She returns if the app is where her hand already goes at the anxious moment (a reminder at school pick-up) and if the 5 minutes actually calmed her. Neither is in place.</p>
+  <p class='verdict'>Predicted D1 · D7 · D30: <b>12% · 4% · 1.3%</b> today → <b>22% · 9% · 4.6%</b> with the fixes.</p>
+  </div><div class='shots'><figure><img src='retention-sim-2026-10-25/sari-02-after-chip.jpg'><figcaption>One chip, one tap — a good start</figcaption></figure><figure><img src='retention-sim-2026-10-25/sari-10-built.jpg'><figcaption>Off-topic reply, sleep session, paywall on message one</figcaption></figure></div></div><div class='persona'><div>
+  <h3>Leo, 22 · Focus — exam season, phone-distracted</h3><div class='who'>Student, TikTok-native, gives an app about 30 seconds. Responds to streaks and visible progress. Panel share: 15%.</div>
+  <p><b>Path taken.</b> Tapped <i>Play</i> on the “Focus Sound” Quick Start card → Sign in wall → onboarding (Focus, Can’t focus, 5 min) → <i>Continue where I was</i> → lands in the demo chat about sleep. <span class='small'>(12 taps and nothing has played)</span></p>
+  <p class='quote'>“I pressed Play. It asked me to sign in. Then five questions. Then a chat about my sleep score.”</p><p class='quote'>“Where is the focus sound? I’m out.”</p>
+  <div class='scores'><div><strong>2/7</strong>Ease</div><div><strong>1/5</strong>Made for me</div><div><strong>2/5</strong>Trust</div><div><strong>15</strong>Back tomorrow</div></div>
+  <p class='verdict'><b>Why they would or would not return.</b> He needed sound within 10 seconds of tapping Play; sign-in can come after he likes it. A 7-day focus streak with a reminder before study time is what would bring him back.</p>
+  <p class='verdict'>Predicted D1 · D7 · D30: <b>7% · 2% · 0.4%</b> today → <b>17% · 5% · 1.7%</b> with the fixes.</p>
+  </div><div class='shots'><figure><img src='retention-sim-2026-10-25/leo-02-after-quickstart.jpg'><figcaption>Play opens a sign-in wall</figcaption></figure><figure><img src='retention-sim-2026-10-25/leo-09-landed.jpg'><figcaption>Lands in a sleep conversation, not a focus sound</figcaption></figure></div></div><div class='persona'><div>
+  <h3>Dewi, 51 · Experienced meditator — wants it made for her</h3><div class='who'>Three years on Headspace. Knows exactly what she wants and will compare. Most likely to pay, most likely to notice shortcuts. Panel share: 10%.</div>
+  <p><b>Path taken.</b> Sign in → <i>Skip</i> onboarding → Explore → Sessions → Home, typed “Recreate a body scan like the one I do on Headspace, but with my own pace” → Apply → Play → Upgrade. <span class='small'>(6 taps to the player (she skipped onboarding))</span></p>
+  <p class='quote'>“Sessions shows thirteen sessions with Edit and Delete, all Published. None are mine.”</p><p class='quote'>“I asked for a body scan. I got ‘Sleep meditation v1.3’ with 432 Hz.”</p><p class='quote'>“Edits paused after one message. I would pay — but for what I asked, not this.”</p>
+  <div class='scores'><div><strong>5/7</strong>Ease</div><div><strong>2/5</strong>Made for me</div><div><strong>2/5</strong>Trust</div><div><strong>35</strong>Back tomorrow</div></div>
+  <p class='verdict'><b>Why they would or would not return.</b> She is the persona most likely to use Aurelia for a second and third goal — if the first session proves it listens. Today it proves the opposite.</p>
+  <p class='verdict'>Predicted D1 · D7 · D30: <b>16% · 6% · 3.1%</b> today → <b>29% · 15% · 10.5%</b> with the fixes.</p>
+  </div><div class='shots'><figure><img src='retention-sim-2026-10-25/dewi-05-sessions.jpg'><figcaption>Somebody else’s library presented as hers</figcaption></figure><figure><img src='retention-sim-2026-10-25/dewi-07-built.jpg'><figcaption>Body scan request → Sleep meditation v1.3 + edit limit</figcaption></figure></div></div><div class='persona'><div>
+  <h3>Tom, 38 · Burnout — therapist asked him to regulate his nervous system</h3><div class='who'>Recovering from burnout, cautious with health data, follows instructions to the letter. A referral user: high intent, low tolerance for being misread. Panel share: 10%.</div>
+  <p><b>Path taken.</b> Typed “My therapist said I should work on regulating my nervous system” → Create an account → onboarding (Regulate my body, Stressed + Low energy, 20 min, mostly silence) → <i>Continue where I was</i> → Apply → Play → Settings. <span class='small'>(15 taps to the player)</span></p>
+  <p class='quote'>“It replied ‘For focus the rule is that it has to be uninteresting’. I didn’t mention focus.”</p><p class='quote'>“I chose ‘mostly silence’. The session is a sleep meditation with colours.”</p><p class='quote'>“Conversation History is switched on. I talked about my therapist.”</p>
+  <div class='scores'><div><strong>3/7</strong>Ease</div><div><strong>2/5</strong>Made for me</div><div><strong>1/5</strong>Trust</div><div><strong>20</strong>Back tomorrow</div></div>
+  <p class='verdict'><b>Why they would or would not return.</b> He would build a routine if Aurelia behaved like a careful practitioner: asks before using data, follows the brief, reports honestly. He would return daily for weeks — the highest-value retention in this panel.</p>
+  <p class='verdict'>Predicted D1 · D7 · D30: <b>12% · 4% · 1.9%</b> today → <b>25% · 13% · 7.9%</b> with the fixes.</p>
+  </div><div class='shots'><figure><img src='retention-sim-2026-10-25/tom-10-built.jpg'><figcaption>Answered as if he had asked about focus</figcaption></figure><figure><img src='retention-sim-2026-10-25/tom-11-player.jpg'><figcaption>Day-0 progress he has not earned</figcaption></figure></div></div>
+
+<h2 class="pb"><span class="num">5</span>Questionnaire results</h2>
+<p class="intro">Each persona’s answers on the current build. Colour marks the weak end (red) and the strong end (green) of each scale. Clarity of Home and ease of the task score in the middle; understanding, fit and trust score low — which is where retention is lost.</p>
+<table><tr><th>Persona</th><th class="c">Clarity<br>1–5</th><th class="c">Ease (SEQ)<br>1–7</th><th class="c">Understood<br>1–5</th><th class="c">Made for me<br>1–5</th><th class="c">Trust<br>1–5</th><th class="c">If gone</th><th class="c">Back tomorrow<br>0–100</th><th class="c">2nd goal<br>0–100</th></tr><tr><td><b>Maya, 29</b><br><span class='small'>Sleep — racing mind at 11 pm</span></td><td class='c ok'>4</td><td class='c mid'>5</td><td class='c ok'>4</td><td class='c mid'>3</td><td class='c low'>2</td><td class='c'>Somewhat</td><td class='c mid'>45</td><td class='c mid'>25</td></tr><tr><td><b>Raka, 35</b><br><span class='small'>Work stress — wants evidence, not mysticism</span></td><td class='c mid'>3</td><td class='c low'>3</td><td class='c low'>2</td><td class='c low'>1</td><td class='c low'>1</td><td class='c'>Not</td><td class='c low'>10</td><td class='c low'>5</td></tr><tr><td><b>Sari, 42</b><br><span class='small'>Anxiety — has five minutes, twice a day</span></td><td class='c ok'>4</td><td class='c mid'>4</td><td class='c low'>2</td><td class='c low'>2</td><td class='c low'>2</td><td class='c'>Not</td><td class='c mid'>30</td><td class='c low'>15</td></tr><tr><td><b>Leo, 22</b><br><span class='small'>Focus — exam season, phone-distracted</span></td><td class='c mid'>3</td><td class='c low'>2</td><td class='c low'>1</td><td class='c low'>1</td><td class='c low'>2</td><td class='c'>Not</td><td class='c low'>15</td><td class='c low'>10</td></tr><tr><td><b>Dewi, 51</b><br><span class='small'>Experienced meditator — wants it made for her</span></td><td class='c ok'>4</td><td class='c mid'>5</td><td class='c low'>2</td><td class='c low'>2</td><td class='c low'>2</td><td class='c'>Somewhat</td><td class='c mid'>35</td><td class='c ok'>40</td></tr><tr><td><b>Tom, 38</b><br><span class='small'>Burnout — therapist asked him to regulate his nervous system</span></td><td class='c mid'>3</td><td class='c low'>3</td><td class='c low'>1</td><td class='c low'>2</td><td class='c low'>1</td><td class='c'>Not</td><td class='c low'>20</td><td class='c low'>10</td></tr><tr><td><b>Mean</b></td><td class='c'><b>3.5</b></td><td class='c'><b>3.7</b></td><td class='c'><b>2.0</b></td><td class='c'><b>1.8</b></td><td class='c'><b>1.7</b></td><td class='c'>0 very</td><td class='c'><b>26</b></td><td class='c'><b>18</b></td></tr></table>
+<p class="small">“If gone” is the Sean Ellis product–market-fit question; a product is usually said to have traction when 40% would be <i>very</i> disappointed. Here none of the six would be.</p>
+<h3>What went wrong, and how often</h3>
+<table><tr><th></th><th>Finding</th><th>Who hit it</th><th>Fix</th></tr><tr><td><b>F1</b></td><td><b>Five of six land in the demo conversation</b><br><span class='small'>Every path except “Create my first session” opens the sample thread: a sleep score “improved by 7%”, and a user message (“It was good, but it was too short”) the person never wrote.</span></td><td>Raka, Sari, Leo, Dewi, Tom</td><td>R2</td></tr><tr><td><b>F2</b></td><td><b>Replies and builds ignore the goal</b><br><span class='small'>Replies match a keyword from somewhere else (“For focus…” to a nervous-system request; “rather than for bedtime” to “I feel anxious”). Every build is Increase yellow + Less movement + 432 Hz and is titled “Sleep meditation v1.3”. “No spiritual stuff” still gets 432 Hz.</span></td><td>All six</td><td>R3</td></tr><tr><td><b>F3</b></td><td><b>A paywall on the first message</b><br><span class='small'>“Edits on this session paused” appears after one message, because the demo thread’s sends count toward the free limit.</span></td><td>Sari, Dewi, Tom</td><td>R2</td></tr><tr><td><b>F4</b></td><td><b>Progress before the first listen</b><br><span class='small'>The player opens on “Great Progress! +3% since yesterday … moved from anxious to calm by 35%”, three chapters drawn, objective “Gain mental clarity” — for someone who chose Sleep and has not pressed play.</span></td><td>All who reached the player</td><td>R5</td></tr><tr><td><b>F5</b></td><td><b>Their words are asked for twice, then dropped</b><br><span class='small'>A message typed on Home leads to sign-in, then onboarding asks the goal and feeling again. The primary button sends an onboarding brief without the sentence they typed; the secondary sends the sentence without the brief.</span></td><td>Maya, Sari, Tom</td><td>R1</td></tr><tr><td><b>F6</b></td><td><b>A Play button that does not play</b><br><span class='small'>Quick Start “Play” goes to a sign-in wall and onboarding, then the cockpit — no audio, and nothing about the card that was tapped.</span></td><td>Leo</td><td>R4</td></tr><tr><td><b>F7</b></td><td><b>Nothing asks them back</b><br><span class='small'>After the first session Home is identical to the signed-out marketing page. No next step, no reminder, no “Chapter 2”. Notifications are invented social activity (“You have now upgraded to Aurelia AI Plus”).</span></td><td>All six</td><td>R6, R7</td></tr><tr><td><b>F8</b></td><td><b>Other people’s things presented as theirs</b><br><span class='small'>Sessions lists 13 catalogue sessions with Edit / Delete / Published; My Wellness shows “Session 1: Ocean Meditation”; Connect has Apple Watch, Google Calendar and Conversation History switched on for a new account.</span></td><td>Raka, Dewi, Tom</td><td>R9</td></tr><tr><td><b>F9</b></td><td><b>A return visit finds nothing (demo build)</b><br><span class='small'>Sign-in and the built session live in memory, so the next day’s visit starts signed out with no session. This is why the current build cannot measure retention at all.</span></td><td>Everyone, on day 1</td><td>P0</td></tr></table>
+
+<h2 class="pb"><span class="num">6</span>The suggestions, and what each is worth</h2>
+<p class="intro">Ten changes, ranked by how much each adds to retention in the model. Effort: S is days, M is a sprint or more. The three right-hand columns are percentage points of all new users, and each column adds up to the total gain.</p>
+<table><tr><th></th><th>Change</th><th>Fixes</th><th class="c">Effort</th><th class="num">D1</th><th class="num">D7</th><th class="num">D30</th></tr><tr><td><b>R1</b></td><td><b>One first message, in their words</b><br><span class='small'>If they typed something, onboarding opens pre-filled from it (goal and feeling inferred, editable), shows “In your words”, and has one button: Build it and play. Their sentence and the brief go together.</span></td><td>F5</td><td class='c'>S</td><td class='num'>+1.0</td><td class='num'>+0.4</td><td class='num'>+0.2</td></tr><tr><td><b>R2</b></td><td><b>A fresh first thread, no early paywall</b><br><span class='small'>Every first-time path starts an empty thread for this person. The free limit starts counting after the first session has been played, not from the sample thread.</span></td><td>F1, F3</td><td class='c'>S</td><td class='num'>+1.8</td><td class='num'>+0.7</td><td class='num'>+0.4</td></tr><tr><td><b>R3</b></td><td><b>Build from the goal</b><br><span class='small'>Reply, proposed changes and session title follow the stated goal, length, voice and sound, and respect a “no …”. No suggestion that contradicts a choice made a minute earlier.</span></td><td>F2</td><td class='c'>M</td><td class='num'>+1.9</td><td class='num'>+0.9</td><td class='num'>+0.4</td></tr><tr><td><b>R4</b></td><td><b>A Play that plays</b><br><span class='small'>Quick Start plays a 60-second preview before sign-in; sign-in is asked when they want to save or personalise it. After the build, one tap starts the audio.</span></td><td>F6</td><td class='c'>S</td><td class='num'>+0.9</td><td class='num'>+0.3</td><td class='num'>+0.1</td></tr><tr><td><b>R5</b></td><td><b>Honest day 0 + one-tap check-in</b><br><span class='small'>The first player sheet says “Chapter 1 · your starting point” and asks “How do you feel now?” (1–5). Numbers appear only once there are two real check-ins.</span></td><td>F4</td><td class='c'>S</td><td class='num'>+1.3</td><td class='num'>+0.8</td><td class='num'>+0.5</td></tr><tr><td><b>R6</b></td><td><b>Chapter 2 reminder</b><br><span class='small'>Right after the check-in: “Chapter 2 is ready tomorrow — remind me at 22:30?” (web push where allowed, else calendar file or email). The single strongest return cue in the model.</span></td><td>F7</td><td class='c'>M</td><td class='num'>+2.0</td><td class='num'>+1.4</td><td class='num'>+0.8</td></tr><tr><td><b>R7</b></td><td><b>Personal Home on return</b><br><span class='small'>A signed-in Home leads with tonight’s chapter, what changed and why (“you felt okay, so Aurelia slowed the pacing”), and a 5-night dot track. Marketing blocks go for signed-in users.</span></td><td>F7</td><td class='c'>M</td><td class='num'>+1.1</td><td class='num'>+0.7</td><td class='num'>+0.4</td></tr><tr><td><b>R8</b></td><td><b>Real progress from check-ins</b><br><span class='small'>Progress and Analytics are drawn only from the person’s own before/after answers (and a wearable, if they connect one), chapter by chapter.</span></td><td>F4</td><td class='c'>M</td><td class='num'>+0.3</td><td class='num'>+0.6</td><td class='num'>+0.6</td></tr><tr><td><b>R9</b></td><td><b>Only their own things</b><br><span class='small'>Empty, inviting states for Sessions, My Wellness and Notifications on day 0; every Connect source off until they switch it on.</span></td><td>F8</td><td class='c'>S</td><td class='num'>+0.7</td><td class='num'>+0.3</td><td class='num'>+0.2</td></tr><tr><td><b>R10</b></td><td><b>Invite a second goal</b><br><span class='small'>After three good chapters: “Sleep is improving. Want help with mornings too?” — the path from one goal to “build more in Aurelia”.</span></td><td>—</td><td class='c'>S</td><td class='num'>+0.0</td><td class='num'>+0.1</td><td class='num'>+0.3</td></tr>
+<tr><td></td><td><b>All ten</b></td><td></td><td></td><td class="num"><b>+11.0</b></td><td class="num"><b>+6.2</b></td><td class="num"><b>+3.8</b></td></tr></table>
+<div class="chart"><svg viewBox="0 0 640 334" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Contribution of each fix to D1 and D7 retention">
+<line x1="210.0" x2="210.0" y1="18" y2="328" stroke="#E8DFD3"/><text x="210.0" y="12.0" font-size="9" fill="#7A6A58" text-anchor="middle" font-weight="400" font-family="Mulish">+0 pt</text>
+<line x1="364.5" x2="364.5" y1="18" y2="328" stroke="#E8DFD3"/><text x="364.5" y="12.0" font-size="9" fill="#7A6A58" text-anchor="middle" font-weight="400" font-family="Mulish">+1 pt</text>
+<line x1="519.0" x2="519.0" y1="18" y2="328" stroke="#E8DFD3"/><text x="519.0" y="12.0" font-size="9" fill="#7A6A58" text-anchor="middle" font-weight="400" font-family="Mulish">+2 pt</text>
+<text x="0.0" y="38.0" font-size="10" fill="#1B1006" text-anchor="start" font-weight="400" font-family="Mulish"><tspan font-weight="700" fill="#1B1006">R6</tspan> Chapter 2 reminder</text>
+<rect x="210" y="27" width="313.0" height="10" rx="2" fill="#E9C9A6"/>
+<rect x="210" y="39" width="209.6" height="10" rx="2" fill="#B5651D"/>
+<text x="528.0" y="36.0" font-size="8.5" fill="#7A6A58" text-anchor="start" font-weight="400" font-family="Mulish">D1 +2.0</text><text x="424.6" y="48.0" font-size="8.5" fill="#1B1006" text-anchor="start" font-weight="700" font-family="Mulish">D7 +1.4</text>
+<text x="0.0" y="68.0" font-size="10" fill="#1B1006" text-anchor="start" font-weight="400" font-family="Mulish"><tspan font-weight="700" fill="#1B1006">R3</tspan> Build from the goal</text>
+<rect x="210" y="57" width="298.8" height="10" rx="2" fill="#E9C9A6"/>
+<rect x="210" y="69" width="132.6" height="10" rx="2" fill="#B5651D"/>
+<text x="513.8" y="66.0" font-size="8.5" fill="#7A6A58" text-anchor="start" font-weight="400" font-family="Mulish">D1 +1.9</text><text x="347.6" y="78.0" font-size="8.5" fill="#1B1006" text-anchor="start" font-weight="700" font-family="Mulish">D7 +0.9</text>
+<text x="0.0" y="98.0" font-size="10" fill="#1B1006" text-anchor="start" font-weight="400" font-family="Mulish"><tspan font-weight="700" fill="#1B1006">R5</tspan> Honest day 0 + one-tap check-in</text>
+<rect x="210" y="87" width="207.0" height="10" rx="2" fill="#E9C9A6"/>
+<rect x="210" y="99" width="122.7" height="10" rx="2" fill="#B5651D"/>
+<text x="422.0" y="96.0" font-size="8.5" fill="#7A6A58" text-anchor="start" font-weight="400" font-family="Mulish">D1 +1.3</text><text x="337.7" y="108.0" font-size="8.5" fill="#1B1006" text-anchor="start" font-weight="700" font-family="Mulish">D7 +0.8</text>
+<text x="0.0" y="128.0" font-size="10" fill="#1B1006" text-anchor="start" font-weight="400" font-family="Mulish"><tspan font-weight="700" fill="#1B1006">R7</tspan> Personal Home on return</text>
+<rect x="210" y="117" width="167.7" height="10" rx="2" fill="#E9C9A6"/>
+<rect x="210" y="129" width="112.7" height="10" rx="2" fill="#B5651D"/>
+<text x="382.7" y="126.0" font-size="8.5" fill="#7A6A58" text-anchor="start" font-weight="400" font-family="Mulish">D1 +1.1</text><text x="327.7" y="138.0" font-size="8.5" fill="#1B1006" text-anchor="start" font-weight="700" font-family="Mulish">D7 +0.7</text>
+<text x="0.0" y="158.0" font-size="10" fill="#1B1006" text-anchor="start" font-weight="400" font-family="Mulish"><tspan font-weight="700" fill="#1B1006">R2</tspan> A fresh first thread, no early paywall</text>
+<rect x="210" y="147" width="273.0" height="10" rx="2" fill="#E9C9A6"/>
+<rect x="210" y="159" width="111.3" height="10" rx="2" fill="#B5651D"/>
+<text x="488.0" y="156.0" font-size="8.5" fill="#7A6A58" text-anchor="start" font-weight="400" font-family="Mulish">D1 +1.8</text><text x="326.3" y="168.0" font-size="8.5" fill="#1B1006" text-anchor="start" font-weight="700" font-family="Mulish">D7 +0.7</text>
+<text x="0.0" y="188.0" font-size="10" fill="#1B1006" text-anchor="start" font-weight="400" font-family="Mulish"><tspan font-weight="700" fill="#1B1006">R8</tspan> Real progress from check-ins</text>
+<rect x="210" y="177" width="46.8" height="10" rx="2" fill="#E9C9A6"/>
+<rect x="210" y="189" width="95.9" height="10" rx="2" fill="#B5651D"/>
+<text x="261.8" y="186.0" font-size="8.5" fill="#7A6A58" text-anchor="start" font-weight="400" font-family="Mulish">D1 +0.3</text><text x="310.9" y="198.0" font-size="8.5" fill="#1B1006" text-anchor="start" font-weight="700" font-family="Mulish">D7 +0.6</text>
+<text x="0.0" y="218.0" font-size="10" fill="#1B1006" text-anchor="start" font-weight="400" font-family="Mulish"><tspan font-weight="700" fill="#1B1006">R1</tspan> One first message, in their words</text>
+<rect x="210" y="207" width="157.6" height="10" rx="2" fill="#E9C9A6"/>
+<rect x="210" y="219" width="59.9" height="10" rx="2" fill="#B5651D"/>
+<text x="372.6" y="216.0" font-size="8.5" fill="#7A6A58" text-anchor="start" font-weight="400" font-family="Mulish">D1 +1.0</text><text x="274.9" y="228.0" font-size="8.5" fill="#1B1006" text-anchor="start" font-weight="700" font-family="Mulish">D7 +0.4</text>
+<text x="0.0" y="248.0" font-size="10" fill="#1B1006" text-anchor="start" font-weight="400" font-family="Mulish"><tspan font-weight="700" fill="#1B1006">R9</tspan> Only their own things</text>
+<rect x="210" y="237" width="104.9" height="10" rx="2" fill="#E9C9A6"/>
+<rect x="210" y="249" width="50.4" height="10" rx="2" fill="#B5651D"/>
+<text x="319.9" y="246.0" font-size="8.5" fill="#7A6A58" text-anchor="start" font-weight="400" font-family="Mulish">D1 +0.7</text><text x="265.4" y="258.0" font-size="8.5" fill="#1B1006" text-anchor="start" font-weight="700" font-family="Mulish">D7 +0.3</text>
+<text x="0.0" y="278.0" font-size="10" fill="#1B1006" text-anchor="start" font-weight="400" font-family="Mulish"><tspan font-weight="700" fill="#1B1006">R4</tspan> A Play that plays</text>
+<rect x="210" y="267" width="137.9" height="10" rx="2" fill="#E9C9A6"/>
+<rect x="210" y="279" width="46.3" height="10" rx="2" fill="#B5651D"/>
+<text x="352.9" y="276.0" font-size="8.5" fill="#7A6A58" text-anchor="start" font-weight="400" font-family="Mulish">D1 +0.9</text><text x="261.3" y="288.0" font-size="8.5" fill="#1B1006" text-anchor="start" font-weight="700" font-family="Mulish">D7 +0.3</text>
+<text x="0.0" y="308.0" font-size="10" fill="#1B1006" text-anchor="start" font-weight="400" font-family="Mulish"><tspan font-weight="700" fill="#1B1006">R10</tspan> Invite a second goal</text>
+<rect x="210" y="297" width="1.0" height="10" rx="2" fill="#E9C9A6"/>
+<rect x="210" y="309" width="11.2" height="10" rx="2" fill="#B5651D"/>
+<text x="215.0" y="306.0" font-size="8.5" fill="#7A6A58" text-anchor="start" font-weight="400" font-family="Mulish">D1 +0.0</text><text x="226.2" y="318.0" font-size="8.5" fill="#1B1006" text-anchor="start" font-weight="700" font-family="Mulish">D7 +0.1</text>
+</svg></div>
+<div class="callout"><h3>Read the ranking, not the decimals</h3>
+<p><b>The return cue (R6) is worth the most on its own, but it pays off only on top of R2, R3 and R5.</b> A reminder that brings someone back to a session that ignored them makes them leave faster. R1, R2, R3 and R5 together come to about S-effort plus one M. With R6 added, the model gives D1 19%, D7 7.0% and D30 3.0% — roughly double today’s numbers, and close to the bottom of the category range.</p>
+<p><b>Simplification (J038) is worth doing, but for a different reason.</b> It adds about 0.8 pt of D7 on top of the fixes, and 0.2 pt without them. It makes the product easier to explain and to build on. It does not, by itself, give anyone a reason to come back.</p></div>
+<h3>Predicted retention per persona</h3>
+<table><tr><th>Persona · share</th><th class="num">Current v4 · D1 · D7 · D30</th><th class="num">+ 10 fixes</th><th class="num">+ fixes + simplification</th></tr><tr><td><b>Maya</b> <span class='small'>25%</span></td><td class='num'>18% · 6% · 2.3%</td><td class='num'>30% · 13% · 7.1%</td><td class='num'>32% · 14% · 7.9%</td></tr><tr><td><b>Raka</b> <span class='small'>20%</span></td><td class='num'>7% · 2% · 0.6%</td><td class='num'>16% · 6% · 2.8%</td><td class='num'>17% · 6% · 3.1%</td></tr><tr><td><b>Sari</b> <span class='small'>20%</span></td><td class='num'>12% · 4% · 1.3%</td><td class='num'>22% · 9% · 4.6%</td><td class='num'>23% · 10% · 5.2%</td></tr><tr><td><b>Leo</b> <span class='small'>15%</span></td><td class='num'>7% · 2% · 0.4%</td><td class='num'>17% · 5% · 1.7%</td><td class='num'>18% · 6% · 2.0%</td></tr><tr><td><b>Dewi</b> <span class='small'>10%</span></td><td class='num'>16% · 6% · 3.1%</td><td class='num'>29% · 15% · 10.5%</td><td class='num'>30% · 16% · 11.6%</td></tr><tr><td><b>Tom</b> <span class='small'>10%</span></td><td class='num'>12% · 4% · 1.9%</td><td class='num'>25% · 13% · 7.9%</td><td class='num'>26% · 14% · 8.8%</td></tr><tr><td><b>Weighted panel</b></td><td class='num'><b>12% · 4% · 1.5%</b></td><td class='num'><b>23% · 10% · 5.4%</b></td><td class='num'><b>24% · 11% · 6.0%</b></td></tr></table>
+<div class="chart"><svg viewBox="0 0 640 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Day 7 retention per persona">
+<line x1="150.0" x2="150.0" y1="16" y2="206" stroke="#E8DFD3"/><text x="150.0" y="11.0" font-size="9" fill="#7A6A58" text-anchor="middle" font-weight="400" font-family="Mulish">0%</text>
+<line x1="240.0" x2="240.0" y1="16" y2="206" stroke="#E8DFD3"/><text x="240.0" y="11.0" font-size="9" fill="#7A6A58" text-anchor="middle" font-weight="400" font-family="Mulish">5%</text>
+<line x1="330.0" x2="330.0" y1="16" y2="206" stroke="#E8DFD3"/><text x="330.0" y="11.0" font-size="9" fill="#7A6A58" text-anchor="middle" font-weight="400" font-family="Mulish">10%</text>
+<line x1="420.0" x2="420.0" y1="16" y2="206" stroke="#E8DFD3"/><text x="420.0" y="11.0" font-size="9" fill="#7A6A58" text-anchor="middle" font-weight="400" font-family="Mulish">15%</text>
+<line x1="510.0" x2="510.0" y1="16" y2="206" stroke="#E8DFD3"/><text x="510.0" y="11.0" font-size="9" fill="#7A6A58" text-anchor="middle" font-weight="400" font-family="Mulish">20%</text>
+<line x1="600.0" x2="600.0" y1="16" y2="206" stroke="#E8DFD3"/><text x="600.0" y="11.0" font-size="9" fill="#7A6A58" text-anchor="middle" font-weight="400" font-family="Mulish">25%</text>
+<text x="0.0" y="36.0" font-size="10" fill="#1B1006" text-anchor="start" font-weight="600" font-family="Mulish">Maya · sleep</text>
+<line x1="253.7" x2="405.2" y1="32" y2="32" stroke="#E9C9A6" stroke-width="2"/>
+<circle cx="253.7" cy="32" r="5" fill="#D9B08C" stroke="#fff" stroke-width="2"/>
+<circle cx="388.3" cy="32" r="5" fill="#D9822B" stroke="#fff" stroke-width="2"/>
+<circle cx="405.2" cy="32" r="5" fill="#6B3608" stroke="#fff" stroke-width="2"/>
+<text x="244.7" y="35.5" font-size="9" fill="#7A6A58" text-anchor="end" font-weight="400" font-family="Mulish">6%</text><text x="414.2" y="35.5" font-size="9" fill="#1B1006" text-anchor="start" font-weight="700" font-family="Mulish">14%</text>
+<text x="0.0" y="66.0" font-size="10" fill="#1B1006" text-anchor="start" font-weight="600" font-family="Mulish">Raka · work stress</text>
+<line x1="180.8" x2="263.3" y1="62" y2="62" stroke="#E9C9A6" stroke-width="2"/>
+<circle cx="180.8" cy="62" r="5" fill="#D9B08C" stroke="#fff" stroke-width="2"/>
+<circle cx="255.3" cy="62" r="5" fill="#D9822B" stroke="#fff" stroke-width="2"/>
+<circle cx="263.3" cy="62" r="5" fill="#6B3608" stroke="#fff" stroke-width="2"/>
+<text x="171.8" y="65.5" font-size="9" fill="#7A6A58" text-anchor="end" font-weight="400" font-family="Mulish">2%</text><text x="272.3" y="65.5" font-size="9" fill="#1B1006" text-anchor="start" font-weight="700" font-family="Mulish">6%</text>
+<text x="0.0" y="96.0" font-size="10" fill="#1B1006" text-anchor="start" font-weight="600" font-family="Mulish">Sari · anxiety, 5 min</text>
+<line x1="213.2" x2="329.9" y1="92" y2="92" stroke="#E9C9A6" stroke-width="2"/>
+<circle cx="213.2" cy="92" r="5" fill="#D9B08C" stroke="#fff" stroke-width="2"/>
+<circle cx="315.8" cy="92" r="5" fill="#D9822B" stroke="#fff" stroke-width="2"/>
+<circle cx="329.9" cy="92" r="5" fill="#6B3608" stroke="#fff" stroke-width="2"/>
+<text x="204.2" y="95.5" font-size="9" fill="#7A6A58" text-anchor="end" font-weight="400" font-family="Mulish">4%</text><text x="338.9" y="95.5" font-size="9" fill="#1B1006" text-anchor="start" font-weight="700" font-family="Mulish">10%</text>
+<text x="0.0" y="126.0" font-size="10" fill="#1B1006" text-anchor="start" font-weight="600" font-family="Mulish">Leo · focus</text>
+<line x1="177.7" x2="255.6" y1="122" y2="122" stroke="#E9C9A6" stroke-width="2"/>
+<circle cx="177.7" cy="122" r="5" fill="#D9B08C" stroke="#fff" stroke-width="2"/>
+<circle cx="245.6" cy="122" r="5" fill="#D9822B" stroke="#fff" stroke-width="2"/>
+<circle cx="255.6" cy="122" r="5" fill="#6B3608" stroke="#fff" stroke-width="2"/>
+<text x="168.7" y="125.5" font-size="9" fill="#7A6A58" text-anchor="end" font-weight="400" font-family="Mulish">2%</text><text x="264.6" y="125.5" font-size="9" fill="#1B1006" text-anchor="start" font-weight="700" font-family="Mulish">6%</text>
+<text x="0.0" y="156.0" font-size="10" fill="#1B1006" text-anchor="start" font-weight="600" font-family="Mulish">Dewi · experienced</text>
+<line x1="262.3" x2="445.5" y1="152" y2="152" stroke="#E9C9A6" stroke-width="2"/>
+<circle cx="262.3" cy="152" r="5" fill="#D9B08C" stroke="#fff" stroke-width="2"/>
+<circle cx="425.7" cy="152" r="5" fill="#D9822B" stroke="#fff" stroke-width="2"/>
+<circle cx="445.5" cy="152" r="5" fill="#6B3608" stroke="#fff" stroke-width="2"/>
+<text x="253.3" y="155.5" font-size="9" fill="#7A6A58" text-anchor="end" font-weight="400" font-family="Mulish">6%</text><text x="454.5" y="155.5" font-size="9" fill="#1B1006" text-anchor="start" font-weight="700" font-family="Mulish">16%</text>
+<text x="0.0" y="186.0" font-size="10" fill="#1B1006" text-anchor="start" font-weight="600" font-family="Mulish">Tom · nervous system</text>
+<line x1="225.8" x2="397.2" y1="182" y2="182" stroke="#E9C9A6" stroke-width="2"/>
+<circle cx="225.8" cy="182" r="5" fill="#D9B08C" stroke="#fff" stroke-width="2"/>
+<circle cx="379.9" cy="182" r="5" fill="#D9822B" stroke="#fff" stroke-width="2"/>
+<circle cx="397.2" cy="182" r="5" fill="#6B3608" stroke="#fff" stroke-width="2"/>
+<text x="216.8" y="185.5" font-size="9" fill="#7A6A58" text-anchor="end" font-weight="400" font-family="Mulish">4%</text><text x="406.2" y="185.5" font-size="9" fill="#1B1006" text-anchor="start" font-weight="700" font-family="Mulish">14%</text>
+</svg></div>
+<p class="small">Day 7 per persona: current (light) → with fixes (orange) → with fixes and simplification (dark). Dewi and Tom gain most: they arrive with the most specific intent, so a session that listens matters most to them. Raka stays lowest whatever changes. For him, credible evidence (a connected wearable, honest numbers) is the product, so R8 and Connect done properly matter more than anything on this page.</p>
+
+<h2 class="pb"><span class="num">7</span>What the top three would look like</h2>
+<p class="intro">Drafts drawn over the live build to make the suggestions concrete — not final design, and nothing has been changed in the code.</p>
+<div class="drafts">
+ <figure><img src="retention-sim-2026-10-25/draft-ready-words.jpg"><figcaption><b>R1 · In your words</b>Onboarding keeps the sentence they typed and ends on one button that builds and plays.</figcaption></figure>
+ <figure><img src="retention-sim-2026-10-25/draft-player-day0.jpg"><figcaption><b>R5 + R6 · Honest day 0, then the promise</b>No invented progress. One tap of how they feel, and “Chapter 2 tomorrow — remind me at 22:30”.</figcaption></figure>
+ <figure><img src="retention-sim-2026-10-25/draft-home-return.jpg"><figcaption><b>R7 · Home that waits for them</b>Tonight’s chapter first, what changed and why, and a five-night track.</figcaption></figure>
+</div>
+
+<h2><span class="num">8</span>Before testing with real users</h2>
+<div class="callout"><h3>P0 — the current build cannot measure retention</h3>
+<p>Sign-in is not persisted, by design, and the session a person builds lives in memory. A real tester who comes back tomorrow starts signed out and finds nothing they made (F9), so any D1 figure taken on this build measures the demo, not the product. Until accounts exist, a test build at least needs both kept in this browser’s storage. That is a small change, and it is a decision (it reverses a recorded choice in AuthContext), so it is listed as decision D2 below.</p></div>
+<h3>A real test that checks this simulation</h3>
+<table>
+<tr><th>What</th><th>How</th></tr>
+<tr><td><b>Who</b></td><td>8–12 first-time people, recruited to match the six needs above (two per goal is enough). Nobody who has seen Aurelia.</td></tr>
+<tr><td><b>Session 1 (moderated, 30 min)</b></td><td>The same questionnaire, stages A–G, in the same order, on their own phone. Record taps and the think-aloud.</td></tr>
+<tr><td><b>Days 1–30 (unmoderated)</b></td><td>No prompting from the team; only what the product itself does. Click insights already records views and taps per deployment. Add three events — <code>session_played</code>, <code>checkin_answered</code>, <code>returned</code> — keyed to an anonymous per-browser ID, which it does not have today. Count a day as retained only if they played or built something, not just opened the app.</td></tr>
+<tr><td><b>Short diary</b></td><td>On days 1, 7 and 30, one question: “Did you open Aurelia? Why or why not?” This answers the “why”, which the numbers cannot.</td></tr>
+<tr><td><b>Pass line for the MVP</b></td><td>D1 ≥ 25%, D7 ≥ 10%, D30 ≥ 5%, and at least 40% “very disappointed”. Below the line, the questionnaire stage where scores dropped shows which fix to look at.</td></tr>
+<tr><td><b>Compare</b></td><td>Put the measured numbers next to sections 5–6. Where the simulation was wrong, the persona assumptions are what to correct; the model itself (<code>retention-sim-2026-10-25/simulation-scripts.txt</code>) is rerun with the new base rates.</td></tr>
+</table>
+<h3>Decisions needed</h3>
+<table>
+<tr><th></th><th>Decision</th><th>Recommendation</th></tr>
+<tr><td><b>D1</b></td><td>Which fixes form v5 (a new design version, staging only)?</td><td>R1, R2, R3, R5 and R6 first; R7–R10 in the next round; J038 simplification after that.</td></tr>
+<tr><td><b>D2</b></td><td>Keep sign-in and built sessions across reloads in a test build?</td><td>Yes, for the test only, until there is a backend.</td></tr>
+<tr><td><b>D3</b></td><td>Which reminder channel is in scope without a backend?</td><td>Calendar file (.ics) now; web push once there is a server to send it.</td></tr>
+<tr><td><b>D4</b></td><td>Should Quick Start play before sign-in?</td><td>Yes — a 60-second preview, with sign-in asked when they save or personalise.</td></tr>
+<tr><td><b>D5</b></td><td>When does the free limit start counting?</td><td>After the first session has been played.</td></tr>
+</table>
+
+<h2 class="pb"><span class="num">A</span>Appendix — model and assumptions</h2>
+<table><tr><th>Persona</th><th class="num">Share</th><th class="num">Finish 1st session</th><th class="num">D1 | finished</th><th class="num">D7 | D1</th><th class="num">D30 | D7</th></tr>
+<tr><td>Maya, 29</td><td class='num'>25%</td><td class='num'>60%</td><td class='num'>30%</td><td class='num'>32%</td><td class='num'>40%</td></tr><tr><td>Raka, 35</td><td class='num'>20%</td><td class='num'>38%</td><td class='num'>18%</td><td class='num'>25%</td><td class='num'>35%</td></tr><tr><td>Sari, 42</td><td class='num'>20%</td><td class='num'>45%</td><td class='num'>26%</td><td class='num'>30%</td><td class='num'>38%</td></tr><tr><td>Leo, 22</td><td class='num'>15%</td><td class='num'>25%</td><td class='num'>28%</td><td class='num'>22%</td><td class='num'>25%</td></tr><tr><td>Dewi, 51</td><td class='num'>10%</td><td class='num'>52%</td><td class='num'>30%</td><td class='num'>40%</td><td class='num'>50%</td></tr><tr><td>Tom, 38</td><td class='num'>10%</td><td class='num'>45%</td><td class='num'>26%</td><td class='num'>36%</td><td class='num'>46%</td></tr>
+</table>
+<ul class="small">
+<li><b>Benchmark.</b> Public roundups of Health &amp; Fitness app retention (Adjust, AppsFlyer, Statista via vendor blogs) disagree: roughly 20–27% D1, 8–13% D7, 3–8% D30. No meditation-specific source was found. Aurelia is a web app with no push today, which usually retains below native apps, so the current-build base rates sit below that band.</li>
+<li><b>Scenarios.</b> All three assume accounts and sessions persist (decision D2). Without that, the build’s measured D1 would be close to zero for reasons unrelated to design.</li>
+<li><b>Lift.</b> Each fix multiplies the stages it affects, per persona. Combined lift = 1 + 0.45 × (product of multipliers − 1); the ranges use 0.25 and 0.65. Stage probabilities are capped at 90%.</li>
+<li><b>Contribution.</b> Shapley values over all 2<sup>10</sup> orderings of the ten fixes. Each column adds up to the “All ten” row.</li>
+<li><b>Panel shares</b> are an assumption about Aurelia’s first audience. Changing them changes the totals but not the order of the fixes.</li>
+<li><b>Reproduce.</b> The persona scripts, model and chart code are archived in <code>docs/reviews/retention-sim-2026-10-25/simulation-scripts.txt</code>. Every number on these pages comes from one run of that model.</li>
+</ul>
+</body></html>
