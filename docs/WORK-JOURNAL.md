@@ -43,7 +43,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O13 | **Onboarding when accounts exist**: today "first time" is per browser (localStorage). With a backend it should be per account and its answers saved to the profile. Also: should the style answers (length, voice, sound) become real defaults for every new session, and should onboarding become the production version (v4 → production)? | J032, U047 | Product owner + backend |
 | O14 | **Production hardening still to decide**: (1) an error-reporting service (Sentry or similar) to plug into `reportError`; (2) an end-to-end test suite (Playwright) for sign-in, onboarding, build/publish; (3) `vercel.json` blocks the microphone (`Permissions-Policy: microphone=()`), which must change before real voice input; (4) whether to trim bundle size with `zod/mini` | J035, U048 | Product owner + engineering |
 | O15 | **404 vs sign-in for shared links**: with U049 a signed-out visitor opening a shared session/player link sees the 404 (with Sign in). Right for privacy; worse for sharing. If sessions are meant to be shared publicly, the player/session pages may need to become public (or show a teaser) rather than 404 | J037, U049 | Product owner |
-| O16 | **Simplification plan, decisions D1–D7** (`docs/reviews/Aurelia-Simplification-Plan-2026-10-25.pdf` §7): four bottom tabs on mobile (a frozen-layout change); hide the marketing on Home when signed in; Data sources under Progress or as its own tab; coins only in Me; retire the Insights page; one list of changes in the chat (settles O12); a Figma pass for the new pieces | J038 | Product owner + Eugene, then a designer |
+| O16 | **Simplification** (J038): D1–D6 applied to v4 in U051 (D3 = Progress; D6 = one score per change, the sheet's per-change figure). Still open: **D7**, a designer's Figma pass for the tab bar, Me rows, Recent and the Library chips; storybook stories for `TabBar` (and U050's components); Flutter to follow; whether production should move to v4 (it is pinned to v2) | J038, J041, J042, U051 | Product owner + Eugene, then a designer |
 | O17 | **Retention simulation follow-ups** (J039 §8): D1/D3/D4/D5 were settled by "update saja di v4" (U050: fixes in v4 rather than v5, `.ics` reminder, Quick Start plays before sign-in, limit after the first build). Still open: **D2**, which is persisting sign-in for a real retention test (the journey already persists per browser); the real 8–12 person test; Sessions/Notifications empty states; R10 beyond the five-chapter prompt; storybook stories for `ChapterCheckIn`/`NextChapterCard` | J039, J040, U050 | Product owner + Eugene |
 
 ---
@@ -93,6 +93,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J039 | 2026-10-25 | Research | First-time-user retention simulation: 6 personas on the real v4 build, sequenced questionnaire, D1/D7/D30 predictions per suggestion (no code) | docs only |
 | J040 | 2026-10-26 | Code | J039 refinements applied to v4 (U050), after: validity question, summary of what to refine, "is it already in v4?" | U050 |
 | J041 | 2026-10-26 | Question | Status of Eugene's simplification (J038) after U050 | docs only |
+| J042 | 2026-10-26 | Code | Simplification D1–D7 applied to v4 without touching v2 (U051) | U051 |
 
 ---
 
@@ -389,4 +390,14 @@ transcript and the update log. Everything from J018 on was written at the time.
     - D7: a Figma pass.
   - Recommended: Phase 0 now, since it needs no decision beyond confirmation, then v5 once D1/D3–D6 are answered. J039 also showed that simplification alone barely moves retention, so it comes after U050, not instead of it.
 - **Open:** O16 unchanged except D2, now done in v4.
+
+
+
+### J042 — Simplification D1–D7 in v4 (U051)
+- **Asked:** "Phase D1 - D7 lakukan saja dan apply di v4 ya. jangan sampai mengotori v2 (saya rasa yang terakhir)".
+- **Done:** U051, every decision as proposed in J038, plus Phase 0, all gated to v4.
+  - D3: Data sources under Progress.
+  - D6: one score per change, the sheet's figure.
+- **Verified:** v2 and v3 are pixel-identical before and after (88 pairs).
+- **Open:** O16 narrowed to D7 (Figma), storybook stories, Flutter, and the production question.
 

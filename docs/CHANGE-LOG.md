@@ -19,6 +19,26 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-26 — v4: simplified into four tabs (U051)
+
+Staging v4 now has Eugene's simplification (J038, D1–D7).
+
+**Navigation:**
+- Four tabs at the bottom (Create, Discover, Progress, Me) replace the menu. The desktop sidebar names the same four.
+- Create is ask, your next chapter, recent conversations and one community shelf.
+- Discover is the community: creators, live sessions and the challenge.
+- Progress is your goals and data sources.
+- Me holds Library (created / played), Credits & plan, notifications, invite, settings and help.
+
+**Simpler screens:**
+- The coin balance only shows in Me and where coins are earned.
+- The Insights page is folded into Session details and Analysis.
+- Someone else's session in the player has one Recreate button.
+- The chat has one list of changes, with one score each.
+- Notification filters are gone, and session settings is called "Edit session".
+
+v1–v3 and production (v2) are unchanged: 88 before/after screenshots are pixel-identical. Web only. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-26 — v4: first-time fixes from the retention simulation (U050)
 
 Staging v4 now does what J039 recommended for a first-time user.

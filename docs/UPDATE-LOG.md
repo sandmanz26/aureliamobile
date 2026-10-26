@@ -88,6 +88,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U048 | `8bb282f` | 2026-10-23 15:35 | Production-grade foundation: TanStack Query, typed/validated HTTP, safe storage, error reporting, shared KV, 0 lint warnings, 55 Vitest tests, CI. No visual change. | [patch](patches/U048-8bb282f.patch) |
 | U049 | `8a6f011` | 2026-10-25 09:42 | Offline support (service worker, offline banner, update prompt) + 404 for signed-out forced access to protected pages. | [patch](patches/U049-8a6f011.patch) |
 | U050 | `ae75233` | 2026-10-26 00:05 | v4 first-time fixes from the J039 retention simulation: words kept into onboarding, own thread + goal deck, limit after first build, chapter check-in + calendar reminder, next-chapter Home, Quick Start plays, Connect off. | [patch](patches/U050-ae75233.patch) |
+| U051 | `e826b7b` | 2026-10-26 01:40 | v4: J038 simplification D1–D7 — four tabs, Create/Discover/Progress/Me, Library, coins only in Me, Insights retired, simpler player sheet for others' sessions, one list of changes in the chat, Phase 0 fixes. | [patch](patches/U051-e826b7b.patch) |
 
 ## Entries
 
@@ -976,4 +977,57 @@ Production (`web_prod`) is never touched by these updates unless asked.
   - Analytics and My Wellness are still mock.
   - Replies after the first message are still keyword rules (mock AI).
 - **Revert:** `git revert --no-commit ae75233 && git checkout HEAD -- docs/`
+
+### U051 — v4: simplification D1–D7 (J038)
+
+- **Commit:** `e826b7b` · pushed 2026-10-26 01:40 UTC · `web_app` + `admin_cms` · not on `web_prod`
+- **Patch:** [patches/U051-e826b7b.patch](patches/U051-e826b7b.patch)
+- **Request:** "Phase D1 - D7 lakukan saja dan apply di v4 ya. jangan sampai mengotori v2 (saya rasa yang terakhir)".
+- **Interpretation:**
+  - Every decision is taken as proposed in the J038 plan, and applied to v4 rather than a new v5, as asked. That includes Phase 0, which the plan had for all versions: it is v4-only here so v2 stays untouched.
+  - D3: Data sources go under Progress (the plan's recommendation).
+  - D6 scores: one score per change, the per-change figure from the "+" sheet (Increase yellow 3%, Less movement 6%) rather than the deck's flat 12%; a proposal the sheet does not list keeps its own.
+  - D7, the Figma pass, cannot be done from code: the screens are built from the plan's drafts with existing tokens, and a designer's pass is still open (O16).
+  - "Saya rasa yang terakhir" is read as "v2 is the production one", which is right: production is pinned to v2.
+  - Changes below `lg` are an explicit mobile change for v4.
+- **What changed (all `useUiVersion() >= 4` unless noted):**
+  - **D1 Four tabs** (`components/ui/TabBar.tsx`, `AppLayout`, `versions.css`):
+    - A bottom bar below `lg` with Create, Discover, Progress and Me. Me has an unread dot.
+    - It is hidden in the cockpit. The player is outside the layout.
+    - Every `aria-label="Open menu"` button is hidden in v4 (CSS scoped to `data-ui-version='4'`). The chat's menu button becomes **Back** to Create (`ChatHeader` `onBack`).
+    - Bottom bars and the floating player sit above the bar (`data-tabbar`, `data-floating-card`).
+    - The desktop sidebar lists Create, Discover, Progress and Me (Profile renamed Me, moved last); "Latest" becomes "Recent".
+  - **Create** (`HomePage`, signed in): no header row. NextChapterCard, Ask with feeling chips, **Recent** (mobile; the sidebar has it on desktop), and one shelf, "For you, from the community". Quick Start and the live map are gone for signed-in users; visitors keep Quick Start, which plays per U050.
+  - **Discover** (`ExplorePage`): titled Discover. Quick Start and Recently played are removed. Live sessions, community, creators and the challenge stay.
+  - **D3 Progress** (`WellnessPage`): titled Progress, with tabs **Your goals** / **Data sources**.
+  - **Me** (`ProfilePage`, own profile): titled Me. The My Sessions / Recreated grid and the gear are replaced by rows: Library, Credits & plan (1,323), Notifications, Invite a friend, Settings, Help. Other people's profiles are unchanged.
+  - **Library** (`SessionsPage`): titled Library, with **Created** / **Played**. Edit and Delete only on your own sessions (Phase 0 bug).
+  - **D4 Coins:** `CoinPill` renders nothing in v4 unless `always`, which only Invite and the challenge pass. The balance otherwise lives in Me → Credits & plan.
+  - **D5 Insights retired:**
+    - `/progress/:slug` redirects to `/session/:slug`, or to `/wellness/analysis/:id` for `?tab=insights` when the session has an analysis.
+    - The chat menu reads **Session details** / **Edit session**.
+    - Others' player sheet is author, title, summary, tags, then **Recreate this session** and **Session details**. The two chat chips, the stats, three cards forking other sessions and the Details card are gone. Your own sessions keep the U050 check-in.
+  - **D6 One list** (`chat/addOptions.ts` `asOptions`, `AddSheet` `suggestions`, `ChatPage`):
+    - The folded deck opens the "+" sheet, whose first section, **Aurelia suggests**, holds the thread's proposals already picked.
+    - One selection: deck items toggle `applied`, others `addPicks`, and Apply builds both.
+    - One score per change. The deck never lays out its scored cards in v4. Chips stay as quick replies.
+  - **Phase 0:** notification date filters removed (the list keeps its headings); Session settings is titled **Edit session**; D2 was already in U050.
+  - **Picker:** the v4 "what changes" text in `versions.ts` now lists U050 and U051.
+- **Tests:** `asOptions`, two tests: the sheet entry wins, and a goal deck gets kinds with no invented score. 76 tests total.
+- **Verified:**
+  - **v2 and v3 unchanged:** 22 routes × 402/1280 × v2/v3 = 88 screenshot pairs, pixel-identical between the build before (`e9d0dca`) and after.
+  - **v4 at 402:** every new screen captured.
+    - Create, Discover, Progress, Me, Library, Notifications and Edit session all show the tab bar.
+    - `/progress/dolphins-frequency` lands on Session details.
+    - Others' player sheet shows one Recreate.
+    - A catalogue chat folds its deck, which opens the sheet with the three suggestions picked (3%, 6%, 12%).
+  - **v4 at 1280:** the sidebar reads Create, Discover, Progress, Me.
+  - **Regression:** the U050 Maya flow is unchanged (5 taps to the player, check-in, `.ics`, next-chapter Home).
+  - The 53-route smoke test (v2/v4, 402/1280) found no problems. `npm run check` and the build are clean.
+- **Not done / follow-ups:**
+  - D7, the Figma pass, for the tab bar, Me rows, Recent and the Library chips.
+  - Storybook stories for `TabBar`, `ChapterCheckIn` and `NextChapterCard`.
+  - The Flutter client follows once agreed.
+  - Me's avatar is the photo placeholder offline (Unsplash).
+- **Revert:** `git revert --no-commit e826b7b && git checkout HEAD -- docs/`
 

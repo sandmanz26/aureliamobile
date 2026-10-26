@@ -1,0 +1,1357 @@
+From e826b7b01c2de88f1497d815381a43da9972f4c6 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Mon, 26 Oct 2026 06:17:28 +0000
+Subject: [PATCH] v4: simplification D1-D7 (U051)
+
+Four bottom tabs (Create, Discover, Progress, Me) replace the hamburger
+below lg, and the desktop sidebar names the same four. Home signed in is
+Create (Ask, next chapter, Recent, one community shelf); Explore is
+Discover; My Wellness is Progress (Your goals / Data sources); your profile
+is Me with Library, Credits & plan, notifications, invite, settings, help.
+Sessions is Library (Created / Played, edit only your own); coins only in
+Me and where earned; the Insights page redirects to Session details or
+Analysis; others' player sheet is one Recreate; the chat's deck opens the
++ sheet as one list with one score per change. Notification date filters
+gone, session settings is Edit session. All v4-only: v2 and v3 are
+pixel-identical before and after (88 screens).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ CLAUDE.md                          | 11 ++++
+ src/chat/addOptions.ts             | 35 ++++++++++++
+ src/chat/firstSession.test.ts      | 18 ++++++
+ src/components/chat/AddSheet.tsx   | 37 ++++++++++---
+ src/components/chat/ChatHeader.tsx | 42 ++++++++++----
+ src/components/ui/CoinPill.tsx     | 11 +++-
+ src/components/ui/TabBar.tsx       | 89 ++++++++++++++++++++++++++++++
+ src/layouts/AppLayout.tsx          | 69 +++++++++++++++--------
+ src/pages/ChallengeDetailPage.tsx  |  2 +-
+ src/pages/ChatPage.tsx             | 42 ++++++++++----
+ src/pages/ExplorePage.tsx          | 14 ++++-
+ src/pages/HomePage.tsx             | 50 +++++++++++++++--
+ src/pages/InvitePage.tsx           |  2 +-
+ src/pages/NotificationsPage.tsx    |  6 ++
+ src/pages/PlayerPage.tsx           | 27 +++++++++
+ src/pages/ProfilePage.tsx          | 57 +++++++++++++++++--
+ src/pages/ProgressPage.tsx         | 11 ++++
+ src/pages/SessionSettingsPage.tsx  |  7 ++-
+ src/pages/SessionsPage.tsx         | 54 ++++++++++++++----
+ src/pages/WellnessPage.tsx         | 14 +++--
+ src/styles/versions.css            | 21 +++++++
+ src/versions/V2Shell.tsx           |  2 +-
+ src/versions/versions.ts           | 19 ++++++-
+ 23 files changed, 551 insertions(+), 89 deletions(-)
+ create mode 100644 src/components/ui/TabBar.tsx
+
+diff --git a/CLAUDE.md b/CLAUDE.md
+index 488e546..b6cbed9 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -517,3 +517,14 @@ journey (`lib/journey.ts`, `aurelia.journey`) — the player asks "How do you fe
+ now?" instead of showing demo progress, offers a calendar (.ics) reminder, and
+ signed-in Home leads with the next chapter and drops the marketing blocks;
+ Quick Start Play plays before sign-in; Connect starts all off.
++**v4 also carries the J038 simplification (U051, D1–D7):** below `lg` four
++bottom tabs (`components/ui/TabBar.tsx`) — Create (`/home`), Discover
++(`/explore`), Progress (`/wellness`), Me (`/profile`) — replace the hamburger
++(every `aria-label="Open menu"` is hidden by `versions.css` in v4; the chat has
++Back instead); the desktop sidebar names the same four. Library is
++`/sessions` (Created / Played, edit only your own); the coin balance shows only
++in Me, Invite and a challenge (`CoinPill always`); `/progress/:slug` redirects
++to Session details or Analysis; others' player sheet is one Recreate + Session
++details; the chat's deck opens the "+" sheet as the one list of changes. The
++v4 CSS is written for `data-ui-version='4'` exactly — a v5 that keeps the tabs
++must widen it.
+diff --git a/src/chat/addOptions.ts b/src/chat/addOptions.ts
+index c137108..e5ff6d0 100644
+--- a/src/chat/addOptions.ts
++++ b/src/chat/addOptions.ts
+@@ -1,4 +1,5 @@
+ import type { ChangeKind } from '../components/chat/FilterChips'
++import type { Recommendation } from '../components/chat/RecommendationCard'
+ import orb432hz from '../assets/orb-432hz.png'
+ import orbIncreaseYellow from '../assets/orb-increase-yellow.png'
+ import orbLessMovement from '../assets/orb-less-movement.png'
+@@ -67,3 +68,37 @@ export const ALL_OPTIONS = [...FROM_DIAGNOSIS, ...EXPERIMENTS]
+ export function addOptionTitles(ids: string[]) {
+   return ALL_OPTIONS.filter((option) => ids.includes(option.id)).map((option) => option.title)
+ }
++
++/** What a proposed change acts on, read from its words — for a deck card that has no sheet entry. */
++function kindOf(text: string): ChangeKind {
++  if (/breath|exhale|movement|scan|rhythm/i.test(text)) return 'movement'
++  if (/tone|sound|chime|melody|voice|pulse|silence|hz|music|noise|words|noting/i.test(text)) return 'sound'
++  return 'visual'
++}
++
++/**
++ * Aurelia's proposals as rows of the "+" sheet (design v4, U051 — D6).
++ *
++ * The chat had three ways to pick changes from two lists with two scores
++ * (Increase yellow was 12% on the deck and 3% in the sheet) and two
++ * selections that did not know about each other (O12). In v4 there is one
++ * list: the deck's proposals arrive pre-selected at the top of the sheet. A
++ * proposal the sheet already lists keeps the sheet's entry — one score per
++ * change, the per-change figure rather than the deck's flat 12% — and one it
++ * does not becomes a row of its own.
++ */
++export function asOptions(deck: Recommendation[]): AddOption[] {
++  return deck.map((card) => {
++    const listed = ALL_OPTIONS.find((option) => option.id === card.id)
++    if (listed) return listed
++    return {
++      id: card.id,
++      title: card.title,
++      description: card.description,
++      orb: card.orb,
++      improveScore: card.improveScore,
++      kind: kindOf(`${card.title} ${card.description}`),
++    }
++  })
++}
++
+diff --git a/src/chat/firstSession.test.ts b/src/chat/firstSession.test.ts
+index 98ce70d..c3310b9 100644
+--- a/src/chat/firstSession.test.ts
++++ b/src/chat/firstSession.test.ts
+@@ -57,3 +57,21 @@ describe('inferFromWords', () => {
+     expect(inferFromWords('hello')).toEqual({ goal: null, feelings: [] })
+   })
+ })
++
++describe('asOptions (one list of changes, U051)', () => {
++  it('keeps the sheet entry, and its score, for a proposal the sheet already lists', async () => {
++    const { asOptions, FROM_DIAGNOSIS } = await import('./addOptions')
++    const { RECOMMENDATIONS } = await import('./thread')
++    const options = asOptions(RECOMMENDATIONS)
++    const yellow = options.find((o) => o.id === 'yellow')
++    expect(yellow).toBe(FROM_DIAGNOSIS.find((o) => o.id === 'yellow'))
++    expect(options.map((o) => o.id)).toEqual(RECOMMENDATIONS.map((r) => r.id))
++  })
++
++  it('turns a goal deck into rows with a kind and no invented score', async () => {
++    const { asOptions } = await import('./addOptions')
++    const options = asOptions(deckFor({ ...DEFAULTS, goal: 'sleep' }))
++    expect(options.map((o) => o.kind)).toEqual(['movement', 'visual', 'sound'])
++    expect(options.every((o) => o.improveScore === undefined)).toBe(true)
++  })
++})
+diff --git a/src/components/chat/AddSheet.tsx b/src/components/chat/AddSheet.tsx
+index f7908ba..c5bb17f 100644
+--- a/src/components/chat/AddSheet.tsx
++++ b/src/components/chat/AddSheet.tsx
+@@ -14,6 +14,11 @@ interface AddSheetProps {
+   onClose: () => void
+   /** The version this will build, e.g. "Sleep meditation v1.5" — shown in v3's summary. */
+   nextLabel?: string
++  /**
++   * v4 (U051, D6): Aurelia's proposals for this thread, listed first and
++   * selected with everything else in one selection. Absent in v1–v3.
++   */
++  suggestions?: AddOption[]
+ }
+ 
+ /**
+@@ -35,9 +40,9 @@ function matches(option: AddOption, filter: FilterId, added: string[]) {
+  * on team feedback). Narrows both sections at once; a section with nothing
+  * left is hidden, and an empty result offers the way back to All.
+  */
+-function useSheetFilter(added: string[]) {
++function useSheetFilter(added: string[], options: AddOption[] = ALL_OPTIONS) {
+   const [filter, setFilter] = useState<FilterId>('all')
+-  const count = (id: FilterId) => ALL_OPTIONS.filter((o) => matches(o, id, added)).length
++  const count = (id: FilterId) => options.filter((o) => matches(o, id, added)).length
+   const only = (options: AddOption[]) => options.filter((o) => matches(o, filter, added))
+   return { filter, setFilter, count, only }
+ }
+@@ -240,7 +245,7 @@ function OptionCard({
+  * The expected effect is shown per change and as "up to" the largest one,
+  * never summed: separate percentage lifts do not add (logic review D4).
+  */
+-function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel }: AddSheetProps) {
++function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel, suggestions = [] }: AddSheetProps) {
+   useEffect(() => {
+     function onKey(event: KeyboardEvent) {
+       if (event.key === 'Escape') onClose()
+@@ -249,10 +254,15 @@ function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel }: AddSheetPr
+     return () => window.removeEventListener('keydown', onKey)
+   }, [onClose])
+ 
+-  const { filter, setFilter, count, only } = useSheetFilter(added)
+-  const diagnosis = only(FROM_DIAGNOSIS)
+-  const experimentOptions = only(EXPERIMENTS)
+-  const picked = ALL_OPTIONS.filter((option) => added.includes(option.id))
++  // One list: the thread's proposals first, then whatever the sheet offers
++  // that is not already among them.
++  const suggested = new Set(suggestions.map((option) => option.id))
++  const everything = [...suggestions, ...ALL_OPTIONS.filter((option) => !suggested.has(option.id))]
++  const { filter, setFilter, count, only } = useSheetFilter(added, everything)
++  const proposals = only(suggestions)
++  const diagnosis = only(FROM_DIAGNOSIS.filter((option) => !suggested.has(option.id)))
++  const experimentOptions = only(EXPERIMENTS.filter((option) => !suggested.has(option.id)))
++  const picked = everything.filter((option) => added.includes(option.id))
+   const predicted = picked.filter((option) => option.improveScore)
+   const experiments = picked.filter((option) => !option.improveScore)
+   const best = predicted.reduce((max, option) => Math.max(max, Number.parseFloat(option.improveScore ?? '0')), 0)
+@@ -286,6 +296,15 @@ function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel }: AddSheetPr
+         </div>
+ 
+         <div className="mt-12 flex-1 overflow-y-auto px-20 pb-16">
++          {proposals.length > 0 && (
++            <ListSection
++              title="Aurelia suggests"
++              hint="Proposed in the chat for this session."
++              options={proposals}
++              added={added}
++              onToggle={onToggle}
++            />
++          )}
+           {diagnosis.length > 0 && (
+             <ListSection
+               title="Based on your diagnosis"
+@@ -304,7 +323,9 @@ function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel }: AddSheetPr
+               onToggle={onToggle}
+             />
+           )}
+-          {diagnosis.length + experimentOptions.length === 0 && <NothingHere filter={filter} onAll={() => setFilter('all')} />}
++          {proposals.length + diagnosis.length + experimentOptions.length === 0 && (
++            <NothingHere filter={filter} onAll={() => setFilter('all')} />
++          )}
+         </div>
+ 
+         {/* The summary: what Apply will actually do. */}
+diff --git a/src/components/chat/ChatHeader.tsx b/src/components/chat/ChatHeader.tsx
+index d565d95..e59f167 100644
+--- a/src/components/chat/ChatHeader.tsx
++++ b/src/components/chat/ChatHeader.tsx
+@@ -1,4 +1,4 @@
+-import { Menu, MoreHorizontal, Send } from 'lucide-react'
++import { ArrowLeft, Menu, MoreHorizontal, Send } from 'lucide-react'
+ import type { ComponentType } from 'react'
+ import { useEffect, useRef, useState } from 'react'
+ import { Link } from 'react-router-dom'
+@@ -48,6 +48,13 @@ interface ChatHeaderProps {
+   onInsights?: () => void
+   /** Opens the list of cuts this thread has made. Left out when it has made
+    *  none — a history of nothing is a row that does nothing. */
++  /**
++   * v4 (U051): the cockpit is full screen with no tab bar, so the menu button
++   * becomes Back to Create. Absent, the menu button opens the drawer as before.
++   */
++  onBack?: () => void
++  /** v4 names the two menu rows for where they now go (Session details, Edit session). */
++  menuLabels?: { insights: string; settings: string }
+ }
+ 
+ // Figma "Top Header" — 44px circular surface buttons either side of a
+@@ -65,6 +72,8 @@ export function ChatHeader({
+   playAs,
+   onSettings,
+   onInsights,
++  onBack,
++  menuLabels = { insights: 'Insights', settings: 'Settings' },
+ }: ChatHeaderProps) {
+   const [open, setOpen] = useState(false)
+   const menuRef = useRef<HTMLDivElement>(null)
+@@ -86,14 +95,25 @@ export function ChatHeader({
+           to the start instead of the end; the spacer after it is what every
+           other header with this same button already does (see HomePage's,
+           Explore's) to keep the coin pill / more-menu pinned right. */}
+-      <button
+-        type="button"
+-        aria-label="Open menu"
+-        onClick={onMenu}
+-        className="flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-strong shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)] lg:hidden"
+-      >
+-        <Menu size={20} />
+-      </button>
++      {onBack ? (
++        <button
++          type="button"
++          aria-label="Back"
++          onClick={onBack}
++          className="flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-strong shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)] lg:hidden"
++        >
++          <ArrowLeft size={20} />
++        </button>
++      ) : (
++        <button
++          type="button"
++          aria-label="Open menu"
++          onClick={onMenu}
++          className="flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-strong shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)] lg:hidden"
++        >
++          <Menu size={20} />
++        </button>
++      )}
+       <span className="hidden lg:block" />
+ 
+       <div className="flex items-center gap-8">
+@@ -131,8 +151,8 @@ export function ChatHeader({
+                   // two lists did not even agree, since the sheet held this
+                   // thread's builds while Chapters holds the catalogue's.
+                   // Insights is the door.
+-                  { label: 'Insights', icon: InsightsIcon, run: onInsights },
+-                  { label: 'Settings', icon: SettingsIcon, run: onSettings },
++                  { label: menuLabels.insights, icon: InsightsIcon, run: onInsights },
++                  { label: menuLabels.settings, icon: SettingsIcon, run: onSettings },
+                 ] satisfies { label: string; icon: MenuIcon; run?: () => void }[]
+               ).map((item) => {
+                 const Icon = item.icon
+diff --git a/src/components/ui/CoinPill.tsx b/src/components/ui/CoinPill.tsx
+index af27b97..d1d6db4 100644
+--- a/src/components/ui/CoinPill.tsx
++++ b/src/components/ui/CoinPill.tsx
+@@ -45,14 +45,21 @@ export function CoinPill({
+   className = '',
+   /** Off only where the pill sits inside something already clickable. */
+   interactive = true,
++  /**
++   * Shown in v4 too. Design v4 (U051, simplification D4) keeps the balance in
++   * Me and where coins are earned (invite, a challenge), not in every header.
++   */
++  always = false,
+ }: {
+   points: string
+   className?: string
+   interactive?: boolean
++  always?: boolean
+ }) {
+   const gate = useSignInGate()
++  const version = useUiVersion()
+   // Version 2: the balance counts up to its value instead of arriving filled.
+-  const v2 = useUiVersion() >= 2
++  const v2 = version >= 2
+   const amount = Number(points.replace(/[^0-9.]/g, ''))
+   const counted = v2 && /^[\d,.]+$/.test(points.trim()) && Number.isFinite(amount)
+ 
+@@ -65,6 +72,8 @@ export function CoinPill({
+     </>
+   )
+ 
++  if (version >= 4 && !always) return null
++
+   const shape = `flex h-44 shrink-0 items-center gap-8 rounded-12 bg-surface-default px-16 ${className}`
+ 
+   if (!interactive) return <div className={shape}>{face}</div>
+diff --git a/src/components/ui/TabBar.tsx b/src/components/ui/TabBar.tsx
+new file mode 100644
+index 0000000..5d65c37
+--- /dev/null
++++ b/src/components/ui/TabBar.tsx
+@@ -0,0 +1,89 @@
++import { Sparkles } from 'lucide-react'
++import type { ReactNode } from 'react'
++import { useEffect } from 'react'
++import { createPortal } from 'react-dom'
++import { useLocation, useNavigate } from 'react-router-dom'
++import { useSignInGate } from '../../auth/useSignInGate'
++import { useHasUnreadNotifications } from '../../lib/notificationsSeen'
++import { ChartMediumIcon, NoteIcon, UserIcon } from './AureliaIcons'
++
++/**
++ * The four core features as four tabs (design v4, U051 — simplification D1).
++ *
++ * J038 found the main navigation hidden behind a hamburger: nine drawer items,
++ * every move between the core features two taps, and nothing telling a new
++ * user they exist. Eugene named four core features; these are they, one tap
++ * apart and always in view below `lg` (the desktop sidebar carries the same
++ * four). The cockpit and the player are full screen and have no bar.
++ */
++
++type TabId = 'create' | 'discover' | 'progress' | 'me'
++
++const TABS: { id: TabId; to: string; label: string; icon: (active: boolean) => ReactNode; open?: boolean }[] = [
++  { id: 'create', to: '/home', label: 'Create', open: true, icon: (a) => <Sparkles size={22} strokeWidth={a ? 2 : 1.5} /> },
++  { id: 'discover', to: '/explore', label: 'Discover', icon: () => <NoteIcon size={24} /> },
++  { id: 'progress', to: '/wellness', label: 'Progress', icon: () => <ChartMediumIcon size={24} /> },
++  { id: 'me', to: '/profile', label: 'Me', icon: () => <UserIcon size={24} /> },
++]
++
++/** Which tab a screen belongs to — where it sits in the four, not only its own URL. */
++function tabFor(pathname: string): TabId | null {
++  if (pathname === '/home') return 'create'
++  if (pathname === '/profile' || /^\/(sessions|settings|credits|upgrade|invite|notifications|help|session-settings)/.test(pathname)) return 'me'
++  if (/^\/(wellness|progress)/.test(pathname)) return 'progress'
++  if (/^\/(explore|see-all|challenge|session\/|recreate|profile\/)/.test(pathname)) return 'discover'
++  return null
++}
++
++export function TabBar() {
++  const { pathname } = useLocation()
++  const navigate = useNavigate()
++  const gate = useSignInGate()
++  const unread = useHasUnreadNotifications()
++  const active = tabFor(pathname)
++
++  // Page-level bottom bars and the floating player move up above the bar
++  // (versions.css, `data-tabbar`), the way they already do for the player.
++  useEffect(() => {
++    document.documentElement.setAttribute('data-tabbar', '')
++    return () => document.documentElement.removeAttribute('data-tabbar')
++  }, [])
++
++  return (
++    <>
++      {/* Room at the end of the page so the bar never hides the last row. */}
++      <div aria-hidden="true" className="h-72 lg:hidden" />
++      {createPortal(
++        <nav
++          aria-label="Main"
++          className="fixed inset-x-0 bottom-0 z-40 border-t border-border-subtle bg-surface-default/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
++        >
++          <ul className="mx-auto grid h-64 max-w-[480px] grid-cols-4">
++            {TABS.map((tab) => {
++              const on = active === tab.id
++              return (
++                <li key={tab.id} className="flex">
++                  <button
++                    type="button"
++                    aria-current={on ? 'page' : undefined}
++                    onClick={() => (tab.open ? navigate(tab.to) : gate(tab.to))}
++                    className={`u-press relative flex flex-1 flex-col items-center justify-center gap-4 text-[11px] leading-[14px] ${
++                      on ? 'font-medium text-text-primary' : 'text-text-secondary'
++                    }`}
++                  >
++                    <span className={on ? 'text-[#FF881B]' : 'text-icon-default'}>{tab.icon(on)}</span>
++                    {tab.label}
++                    {tab.id === 'me' && unread && (
++                      <span aria-label="Unread notifications" className="absolute right-[calc(50%-16px)] top-10 size-8 rounded-full bg-[#E5484D]" />
++                    )}
++                  </button>
++                </li>
++              )
++            })}
++          </ul>
++        </nav>,
++        document.body,
++      )}
++    </>
++  )
++}
+diff --git a/src/layouts/AppLayout.tsx b/src/layouts/AppLayout.tsx
+index fe294fc..3dce030 100644
+--- a/src/layouts/AppLayout.tsx
++++ b/src/layouts/AppLayout.tsx
+@@ -1,4 +1,4 @@
+-import { Plus } from 'lucide-react'
++import { Plus, Sparkles } from 'lucide-react'
+ import { Suspense, useEffect, useState } from 'react'
+ import { Link, Outlet, useLocation, useNavigate, useNavigationType } from 'react-router-dom'
+ import { FloatingPlayer, PullIndicator, usePullToRefresh, useSheetDrag } from '../versions/V2Shell'
+@@ -16,6 +16,7 @@ import { NavItem } from '../components/ui/NavItem'
+ import { PhotoCircle } from '../components/ui/PhotoCircle'
+ import { recentSessions } from '../lib/sessions'
+ import { DrawerContext } from './DrawerContext'
++import { TabBar } from '../components/ui/TabBar'
+ 
+ const LATEST = recentSessions()
+ 
+@@ -25,6 +26,26 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+   const { signedIn } = useAuth()
+   const gate = useSignInGate()
+   const navigate = useNavigate()
++  const v4 = useUiVersion() >= 4
++  // Signed in, the account itself is an item and wears the user's face;
++  // signed out, the same slot is the way in. First in v1–v3; in v4 it is
++  // "Me", the last of the four (U051).
++  const account = signedIn ? (
++    <NavItem
++      to="/profile"
++      icon={
++        <PhotoCircle
++          photo="avatar"
++          size={24}
++          gradient="conic-gradient(from 180deg, var(--color-blue-300), var(--color-gold-300), var(--color-blue-300))"
++        />
++      }
++      label={v4 ? 'Me' : 'Profile'}
++      disabled={!isEnabled('profile')}
++    />
++  ) : (
++    <NavItem to="/login" icon={<UserIcon size={24} className="shrink-0" />} label="Sign In" disabled={!isEnabled('auth')} />
++  )
+ 
+   return (
+     /* Figma "Menu" (16651:12647) — 313 wide on surface/default, 16 side
+@@ -62,30 +83,28 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+       {/* No gap: the frame's rows are 56 tall and stack flush, so the spacing
+           is the row's own padding rather than a gutter between them. */}
+       <nav className="flex flex-col" onClick={onNavigate}>
+-        {/* Signed in, the account itself is the first item and wears the user's
+-            face; signed out, the same slot is the way in. */}
+-        {signedIn ? (
+-          <NavItem
+-            to="/profile"
+-            icon={
+-              <PhotoCircle
+-                photo="avatar"
+-                size={24}
+-                gradient="conic-gradient(from 180deg, var(--color-blue-300), var(--color-gold-300), var(--color-blue-300))"
+-              />
+-            }
+-            label="Profile"
+-            disabled={!isEnabled('profile')}
+-          />
+-        ) : (
+-          <NavItem to="/login" icon={<UserIcon size={24} className="shrink-0" />} label="Sign In" disabled={!isEnabled('auth')} />
+-        )}
++        {/* v1–v3: the account comes first. v4 puts it last, as Me. */}
++        {!v4 && account}
+         {/* No Chat entry: the design's drawer goes Profile / Explore / Sessions
+             / My wellness, and the cockpit is reached by "New session" below
+             rather than by being a destination of its own. */}
+-        <NavItem to="/explore" icon={<NoteIcon size={24} className="shrink-0" />} label="Explore" disabled={!isEnabled('explore')} />
+-        <NavItem to="/sessions" icon={<PlaylistIcon size={24} className="shrink-0" />} label="Sessions" disabled={!isEnabled('sessions')} />
+-        <NavItem to="/wellness" icon={<ChartMediumIcon size={24} className="shrink-0" />} label="My wellness" disabled={!isEnabled('wellness')} />
++        {v4 ? (
++          /* v4 (U051): the desktop sidebar names the same four core features
++             as the mobile tab bar. "Me" is the account item above (Profile is
++             Me now); Library, credits, invite and help live inside it. */
++          <>
++            <NavItem to="/home" icon={<Sparkles size={22} strokeWidth={1.5} className="shrink-0" />} label="Create" />
++            <NavItem to="/explore" icon={<NoteIcon size={24} className="shrink-0" />} label="Discover" disabled={!isEnabled('explore')} />
++            <NavItem to="/wellness" icon={<ChartMediumIcon size={24} className="shrink-0" />} label="Progress" disabled={!isEnabled('wellness')} />
++            {account}
++          </>
++        ) : (
++          <>
++            <NavItem to="/explore" icon={<NoteIcon size={24} className="shrink-0" />} label="Explore" disabled={!isEnabled('explore')} />
++            <NavItem to="/sessions" icon={<PlaylistIcon size={24} className="shrink-0" />} label="Sessions" disabled={!isEnabled('sessions')} />
++            <NavItem to="/wellness" icon={<ChartMediumIcon size={24} className="shrink-0" />} label="My wellness" disabled={!isEnabled('wellness')} />
++          </>
++        )}
+       </nav>
+ 
+       {/* Figma "Frame 25" — Latest and the button are one block, 20 inside and
+@@ -93,7 +112,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+       <div className="flex flex-col gap-32 p-20">
+         {signedIn && (
+           <div className="flex flex-col gap-20">
+-            <p className="text-style-body-small text-text-secondary">Latest</p>
++            <p className="text-style-body-small text-text-secondary">{v4 ? 'Recent' : 'Latest'}</p>
+             {/* Real sessions, and each one opens its own thread. These were three
+                 inert divs naming sessions that did not exist — on the one shelf
+                 whose whole job is taking you back to a conversation. */}
+@@ -197,6 +216,7 @@ export function AppLayout() {
+   // Design Version 2 (staging only): directional page transitions, pull to
+   // refresh, draggable sheets and a player that follows you. See V2Shell.
+   const v2 = useUiVersion() >= 2
++  const v4 = useUiVersion() >= 4
+   const navType = useNavigationType()
+   const { pull, refreshing, key: refreshKey } = usePullToRefresh(v2)
+   useSheetDrag(v2)
+@@ -271,6 +291,9 @@ export function AppLayout() {
+               <Outlet />
+             </Suspense>
+             {v2 && <FloatingPlayer pathname={location.pathname} />}
++            {/* v4 (U051): four tabs below lg. Not in the cockpit, which is a
++                full-screen task with its own way back. */}
++            {v4 && !location.pathname.startsWith('/chat') && <TabBar />}
+           </div>
+         </div>
+       </div>
+diff --git a/src/pages/ChallengeDetailPage.tsx b/src/pages/ChallengeDetailPage.tsx
+index 7e7ad63..4006646 100644
+--- a/src/pages/ChallengeDetailPage.tsx
++++ b/src/pages/ChallengeDetailPage.tsx
+@@ -165,7 +165,7 @@ export function ChallengeDetailPage() {
+               <ArrowLeft size={20} />
+             </button>
+             <div className="flex items-center gap-8">
+-              <CoinPill points="1,323" className="shadow-sm" />
++              <CoinPill always points="1,323" className="shadow-sm" />
+               <button
+                 type="button"
+                 aria-label="Share challenge"
+diff --git a/src/pages/ChatPage.tsx b/src/pages/ChatPage.tsx
+index 627fd7b..7fd2fe8 100644
+--- a/src/pages/ChatPage.tsx
++++ b/src/pages/ChatPage.tsx
+@@ -2,7 +2,7 @@ import { WandSparkles } from 'lucide-react'
+ import { useEffect, useEffectEvent, useRef, useState } from 'react'
+ import { useLocation, useNavigate, useParams } from 'react-router-dom'
+ import { AddSheet } from '../components/chat/AddSheet'
+-import { addOptionTitles } from '../chat/addOptions'
++import { addOptionTitles, asOptions } from '../chat/addOptions'
+ import { PageMeta } from '../components/PageMeta'
+ import { ChatComposer } from '../components/chat/ChatComposer'
+ import { ChatMessageItem } from '../components/chat/ChatMessageItem'
+@@ -768,6 +768,10 @@ export function ChatPage() {
+   // a transcript that drops the request but keeps the answer reads as a gap.
+   // Only the acting on it stops.
+   const showRecommendations = isEnabled('chat.recommendations')
++  // Whether Aurelia has handed over a deck in this thread — only then are its
++  // proposals part of the sheet's one list (v4).
++  const proposed = showRecommendations && messages.some((m) => m.attachment === 'recommendations') && (sessionState === 'idle' || sessionState === 'updating')
++  const suggestionOptions = asOptions(deck)
+   // v4: none of the chips undoes a choice made in onboarding (J039 F2) — no
+   // "Make it longer" for someone who picked 20 minutes.
+   const suggestions = v4 && answers ? suggestionsFor(answers) : SUGGESTIONS
+@@ -851,8 +855,16 @@ export function ChatPage() {
+            because Progress redirects to /sessions on a slug it cannot find,
+            and a menu item that silently bounces you elsewhere is worse than
+            one that is plainly unavailable. */
+-        onInsights={insightsSlug ? () => navigate(`/progress/${insightsSlug}`) : undefined}
++        onInsights={
++          insightsSlug
++            ? // v4 (U051, D5): the Insights page is retired; its version history
++              // lives in Session details, the one history.
++              () => navigate(v4 ? `/session/${insightsSlug}` : `/progress/${insightsSlug}`)
++            : undefined
++        }
+         onMenu={openDrawer}
++        onBack={v4 ? () => navigate('/home') : undefined}
++        menuLabels={v4 ? { insights: 'Session details', settings: 'Edit session' } : undefined}
+         publishLabel={publishLabel}
+         /* Only where something of this thread is actually live. A session that
+            has never been published has nothing to take down, and offering it
+@@ -909,12 +921,15 @@ export function ChatPage() {
+                 message={message}
+                 startsRun={startsRun}
+                 showRecommendations={showRecommendations}
+-                deckOpen={deckOpen}
++                /* v4 (U051, D6): the deck never lays its cards out here — it
++                   opens the "+" sheet, the one list, so a change is never
++                   shown with two different scores. */
++                deckOpen={v4 ? false : deckOpen}
+                 canApply={canApply}
+                 applied={applied}
+                 recommendations={deck}
+                 onToggleRecommendation={toggleRecommendation}
+-                onOpenDeck={() => setDeckOpen(true)}
++                onOpenDeck={() => (v4 ? setAddOpen(true) : setDeckOpen(true))}
+                 onSendPrompt={sendMessage}
+                 onReply={limited || listening ? undefined : (m) => setReplyTarget(m)}
+                 onJumpTo={jumpTo}
+@@ -1050,21 +1065,24 @@ export function ChatPage() {
+       {addOpen && (
+         <AddSheet
+           nextLabel={versions.length ? nextVersionLabel(versions[versions.length - 1].label) : draft.title}
+-          added={addPicks}
++          // v4 (U051, D6): one list and one selection. The deck's proposals sit
++          // first in the sheet, picked as `applied` (what the deck and the
++          // Apply chip already use); anything else picked here joins them.
++          suggestions={v4 && proposed ? suggestionOptions : undefined}
++          added={v4 && proposed ? [...applied, ...addPicks] : addPicks}
+           onToggle={(id) =>
+-            setAddPicks((current) =>
+-              current.includes(id) ? current.filter((x) => x !== id) : [...current, id],
+-            )
++            v4 && proposed && deck.some((r) => r.id === id)
++              ? toggleRecommendation(id)
++              : setAddPicks((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]))
+           }
+           onApply={() => {
++            const fromDeck = v4 && proposed ? deck.filter((r) => applied.includes(r.id)).map((r) => r.title) : []
++            const titles = [...fromDeck, ...addOptionTitles(addPicks)]
+             setAddOpen(false)
+             setAddPicks([])
+             // Same path the chip takes — the sheet is another way to ask for
+             // the same thing, so it must not grow a second way of doing it.
+-            applyChanges(
+-              addPicks.length === 1 ? 'Apply 1 change' : `Apply ${addPicks.length} changes`,
+-              addOptionTitles(addPicks),
+-            )
++            applyChanges(titles.length === 1 ? 'Apply 1 change' : `Apply ${titles.length} changes`, titles)
+           }}
+           onClose={() => setAddOpen(false)}
+         />
+diff --git a/src/pages/ExplorePage.tsx b/src/pages/ExplorePage.tsx
+index 214ec2b..d8cddf3 100644
+--- a/src/pages/ExplorePage.tsx
++++ b/src/pages/ExplorePage.tsx
+@@ -2,6 +2,7 @@ import { ArrowRight, Clock, Menu, Play, Podium, Sparkles, Users } from 'lucide-r
+ import { useState } from 'react'
+ import { Link } from 'react-router-dom'
+ import liveSessionsMap from '../assets/live-sessions-map.png'
++import { useUiVersion } from '../versions/useUiVersion'
+ import { PageMeta } from '../components/PageMeta'
+ import { Chip } from '../components/ui/Chip'
+ import { CountUp } from '../components/ui/CountUp'
+@@ -189,11 +190,16 @@ export function ExplorePage() {
+   const [category, setCategory] = useState<CategoryFilter>('All')
+   const [categoriesOpen, setCategoriesOpen] = useState(false)
+   const challenge = CHALLENGES[0]
++  // v4 (U051): Explore is the Discover tab — other people's work. Quick Start
++  // (starting your own) lives in Create, and Recently played (your history)
++  // in Me → Library.
++  const v4 = useUiVersion() >= 4
++  const name = v4 ? 'Discover' : 'Explore'
+ 
+   return (
+     <div className="pb-48">
+       <PageMeta
+-        title="Explore"
++        title={name}
+         description="Browse sessions by category, discover trusted creators, and join a monthly challenge."
+       />
+       {/* Figma 16744:6839's "Top Header" is its own 122px band — status bar
+@@ -220,7 +226,7 @@ export function ExplorePage() {
+             >
+               <Menu size={20} />
+             </button>
+-            <h1 className="text-style-title-large text-text-primary">Explore</h1>
++            <h1 className="text-style-title-large text-text-primary">{name}</h1>
+           </div>
+           <div className="flex shrink-0 items-center gap-8">
+           <CoinPill points="1,323" className="shadow-sm" />
+@@ -257,7 +263,7 @@ export function ExplorePage() {
+         </Link>
+         )}
+ 
+-        {isEnabled('sessions.quickStart') && (
++        {isEnabled('sessions.quickStart') && !v4 && (
+           <section className="mt-32">
+             <SectionHeader title="Quick Start" />
+             <div className="-mx-20 mt-16 flex gap-16 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
+@@ -340,6 +346,7 @@ export function ExplorePage() {
+           </section>
+         )}
+ 
++        {!v4 && (
+         <section className="mt-32">
+           <SectionHeader title="Recently Played" seeAllTo="/see-all/picked" />
+           <div className="-mx-20 mt-16 flex gap-12 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
+@@ -348,6 +355,7 @@ export function ExplorePage() {
+             ))}
+           </div>
+         </section>
++        )}
+ 
+         {isEnabled('sessions.community') && (
+           <section className="mt-32">
+diff --git a/src/pages/HomePage.tsx b/src/pages/HomePage.tsx
+index 2679e22..4cb12c7 100644
+--- a/src/pages/HomePage.tsx
++++ b/src/pages/HomePage.tsx
+@@ -40,7 +40,9 @@ import { CoinPill } from '../components/ui/CoinPill'
+ import { NextChapterCard } from '../components/wellness/NextChapterCard'
+ import { readJourney } from '../lib/journey'
+ import { useAudioPlayer } from '../audio/AudioPlayerContext'
+-import { findSession } from '../lib/sessions'
++import { findSession, recentSessions } from '../lib/sessions'
++import { PhotoCircle } from '../components/ui/PhotoCircle'
++import { Link } from 'react-router-dom'
+ 
+ // A one-tap way in for each of the things Aurelia actually makes, so the rail
+ // doubles as the answer to "what can I even ask for?".
+@@ -312,6 +314,7 @@ export function HomePage() {
+         description="Aurelia builds a personalized meditation, breathwork, or sleep session from a conversation — then remembers what helps you."
+       />
+       {/* Header */}
++      {!member && (
+       <div className="flex items-center justify-between px-20 py-16 lg:px-24">
+         <button
+           type="button"
+@@ -335,6 +338,7 @@ export function HomePage() {
+           </button>
+         )}
+       </div>
++      )}
+ 
+       {/* No bottom padding. This column is not the last block on the page —
+           the full-bleed banner follows it and brings its own top margin. When
+@@ -454,7 +458,12 @@ export function HomePage() {
+             becomes both columns' row height, which Quick Start's section
+             (flex-col, its card row at flex-1) then fills rather than leaving
+             blank space under a short row of cards. */}
+-        {v2 ? (
++        {member ? (
++          // v4 (U051): Create keeps one way to start (Ask) and the
++          // conversations in progress. Quick Start's kinds live on as the
++          // rotating examples in Ask; visitors still get the cards.
++          <RecentConversations />
++        ) : v2 ? (
+           <div className="lg:mt-40 [&>section]:lg:mt-0">{quickStartSection}</div>
+         ) : (
+         <div data-tablet="home-split" className="lg:mt-40 lg:grid lg:grid-cols-2 lg:items-stretch lg:gap-24">
+@@ -614,11 +623,12 @@ export function HomePage() {
+       )}
+ 
+       <div className="mx-auto max-w-[960px] px-20 lg:px-24">
+-        {v2 && <div className="lg:mt-48 [&>section]:lg:mt-0">{liveSection}</div>}
++        {/* The live map is a community signal: Discover holds it in v4. */}
++        {v2 && !member && <div className="lg:mt-48 [&>section]:lg:mt-0">{liveSection}</div>}
+         {/* Recreate from Community */}
+         {isEnabled('home.community') && (
+         <section className="mt-24">
+-          <h2 className="text-style-body text-text-primary">Recreate from Community</h2>
++          <h2 className="text-style-body text-text-primary">{member ? 'For you, from the community' : 'Recreate from Community'}</h2>
+           <div className="-mx-20 mt-16 flex gap-8 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
+             {CATEGORY_FILTERS.map((filter) => (
+               <Chip
+@@ -728,3 +738,35 @@ export function HomePage() {
+     </div>
+   )
+ }
++
++/**
++ * Create's "Recent" (v4, U051): the drawer's Latest, moved to where you would
++ * look for a conversation once the drawer is gone. Each opens its own thread.
++ */
++function RecentConversations() {
++  const recent = recentSessions()
++  return (
++    // Below lg only: the desktop sidebar already lists the same three.
++    <section className="mt-40 lg:hidden" aria-label="Recent conversations">
++      <h2 className="text-style-body text-text-primary">Recent</h2>
++      <ul className="mt-16 flex flex-col gap-12">
++        {recent.map((session) => (
++          <li key={session.slug}>
++            <Link to={`/chat/${session.slug}`} className="u-press flex items-center gap-12">
++              <PhotoCircle
++                photo={session.photo}
++                size={40}
++                gradient="conic-gradient(from 180deg, var(--color-blue-300), var(--color-gold-300), var(--color-blue-300))"
++              />
++              <span className="flex min-w-0 flex-1 flex-col gap-2 text-left">
++                <span className="text-style-body-small truncate text-text-primary">{session.title}</span>
++                <span className="text-style-caption truncate text-text-secondary">{session.author}</span>
++              </span>
++            </Link>
++          </li>
++        ))}
++      </ul>
++    </section>
++  )
++}
++
+diff --git a/src/pages/InvitePage.tsx b/src/pages/InvitePage.tsx
+index 10151a8..2a855ef 100644
+--- a/src/pages/InvitePage.tsx
++++ b/src/pages/InvitePage.tsx
+@@ -129,7 +129,7 @@ export function InvitePage() {
+           </button>
+           <h1 className="text-style-title-large text-text-primary">Invite a Friend</h1>
+         </div>
+-        <CoinPill points="1,323" className="shadow-sm" />
++        <CoinPill always points="1,323" className="shadow-sm" />
+       </header>
+ 
+       <div className="mx-auto w-full max-w-[402px] px-20 lg:max-w-[640px] lg:px-24">
+diff --git a/src/pages/NotificationsPage.tsx b/src/pages/NotificationsPage.tsx
+index b1117ac..bc0c387 100644
+--- a/src/pages/NotificationsPage.tsx
++++ b/src/pages/NotificationsPage.tsx
+@@ -1,6 +1,7 @@
+ import { ArrowLeft, Podium, Sparkles } from 'lucide-react'
+ import { useEffect, useState } from 'react'
+ import { Link, useNavigate } from 'react-router-dom'
++import { useUiVersion } from '../versions/useUiVersion'
+ import { PageMeta } from '../components/PageMeta'
+ import { Chip } from '../components/ui/Chip'
+ import { CoinPill } from '../components/ui/CoinPill'
+@@ -79,6 +80,7 @@ function RowText({ item }: { item: NotificationRecord }) {
+ export function NotificationsPage() {
+   const navigate = useNavigate()
+   const [filter, setFilter] = useState<'all' | NotificationBucket>('all')
++  const v4 = useUiVersion() >= 4
+   // Opening the feed reads it: the drawer bell drops its unread dot.
+   useEffect(() => markNotificationsSeen(), [])
+ 
+@@ -111,6 +113,9 @@ export function NotificationsPage() {
+ 
+       {/* Full-bleed so the last chip runs off the edge as it does in the frame,
+           which is what says the row scrolls. */}
++      {/* v4 (U051): no date filters. The list is already grouped under
++          exactly these headings, so a filter only hid the headings below it. */}
++      {!v4 && (
+       <div className="flex gap-8 overflow-x-auto px-20 pb-4 lg:px-24">
+         {NOTIFICATION_FILTERS.map((option) => (
+           <Chip
+@@ -121,6 +126,7 @@ export function NotificationsPage() {
+           />
+         ))}
+       </div>
++      )}
+ 
+       <div className="w-full px-20 pb-40 lg:mx-auto lg:max-w-[960px] lg:px-24">
+         {groups.map((group) => (
+diff --git a/src/pages/PlayerPage.tsx b/src/pages/PlayerPage.tsx
+index 372974f..215c357 100644
+--- a/src/pages/PlayerPage.tsx
++++ b/src/pages/PlayerPage.tsx
+@@ -36,6 +36,7 @@ import { analysisForSession, chapterBrief } from '../lib/wellnessAnalysis'
+ import type { Analysis } from '../lib/wellnessAnalysis'
+ import type { Named } from '../lib/named'
+ import { ChapterCheckIn } from '../components/wellness/ChapterCheckIn'
++import { useRecreateTarget } from '../chat/recreate'
+ import { readJourney } from '../lib/journey'
+ import { findGoal } from '../lib/onboarding'
+ 
+@@ -246,6 +247,7 @@ export function PlayerPage() {
+   // session it stands in for keeps its usual drawer.
+   const v4 = useUiVersion() >= 4
+   const [journey] = useState(() => readJourney())
++  const recreateThis = useRecreateTarget(session)
+   const ownChapter = v4 && journey && session && journey.slug === session.slug && (named || versionId) ? journey : null
+ 
+   // Playback lives above the router. This screen is a view onto it, so
+@@ -737,6 +739,29 @@ export function PlayerPage() {
+             {/* Same hand-off Wellness's own "Analyze my state" chips use: land
+                 in the cockpit with the question already asked, rather than a
+                 blank thread the user has to explain themselves into again. */}
++            {v4 ? (
++              /* v4 (U051): someone else's session, simplified. The two extra
++                 doors into the chat, the stats, three Recreate cards (each
++                 forking a *different* session) and the Details card become
++                 one Recreate for this session and one link to Session
++                 details, where the stats, versions and lineage live. */
++              <div className="mt-24 flex flex-col gap-12">
++                <Link
++                  to={recreateThis.to}
++                  state={recreateThis.state}
++                  className="u-press flex h-48 items-center justify-center gap-8 rounded-16 bg-[#331B04] text-[16px] leading-[19px] text-white"
++                >
++                  <Shuffle size={16} /> Recreate this session
++                </Link>
++                <Link
++                  to={`/session/${session.slug}`}
++                  className="u-press flex h-48 items-center justify-center gap-8 rounded-16 border border-[#331B04] text-[16px] leading-[19px] text-text-primary"
++                >
++                  Session details <ChevronRight size={16} />
++                </Link>
++              </div>
++            ) : (
++            <>
+             <div className="-mx-20 mt-20 flex gap-12 overflow-x-auto px-20 pb-4">
+               <button
+                 type="button"
+@@ -799,6 +824,8 @@ export function PlayerPage() {
+               <SessionDetails session={session} playingId={versionId} playBase={`/play/${session.slug}`} />
+             </section>
+             </>
++            )}
++            </>
+           )}
+         </div>
+       </aside>
+diff --git a/src/pages/ProfilePage.tsx b/src/pages/ProfilePage.tsx
+index 69a6a87..ddef11c 100644
+--- a/src/pages/ProfilePage.tsx
++++ b/src/pages/ProfilePage.tsx
+@@ -1,8 +1,13 @@
+ import { useState } from 'react'
+-import { ArrowLeft, Menu, Settings, Share2, Shuffle, Sticker } from 'lucide-react'
++import { ArrowLeft, ChevronRight, Menu, Settings, Share2, Shuffle, Sticker } from 'lucide-react'
++import type { ReactNode } from 'react'
+ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+ import { PageMeta } from '../components/PageMeta'
+-import { CoinPill } from '../components/ui/CoinPill'
++import { CoinMark, CoinPill } from '../components/ui/CoinPill'
++import { MessageQuestionIcon, NotificationActiveIcon, NotificationIcon, PlaylistIcon, UserAddIcon } from '../components/ui/AureliaIcons'
++import { useFeatureFlags } from '../demo/FeatureFlags'
++import { useHasUnreadNotifications } from '../lib/notificationsSeen'
++import { useUiVersion } from '../versions/useUiVersion'
+ import { PhotoCircle } from '../components/ui/PhotoCircle'
+ import { CoinFlip } from '../versions/CoinFlip'
+ import { SessionGridCard } from '../components/ui/SessionGridCard'
+@@ -46,6 +51,12 @@ export function ProfilePage() {
+   // `lineage.length > 2` test the session row's own marker uses, so the tab
+   // never disagrees with what a card already says about itself.
+   const [tab, setTab] = useState<ProfileTab>('sessions')
++  const { isEnabled } = useFeatureFlags()
++  const unread = useHasUnreadNotifications()
++  // v4 (U051): your own profile is the Me tab — everything about your account
++  // in one list (D4: the coin balance lives here). Someone else's profile is
++  // unchanged: it is their public page, reached from Discover.
++  const me = useUiVersion() >= 4 && Boolean(person?.isSelf)
+ 
+   if (!person) return <Navigate to="/profile" replace />
+   const own = person.isSelf
+@@ -67,7 +78,7 @@ export function ProfilePage() {
+ 
+   return (
+     <div className="mx-auto max-w-[960px] px-20 py-16 lg:px-24 lg:py-24">
+-      <PageMeta title={own ? 'Profile' : person.name} />
++      <PageMeta title={me ? 'Me' : own ? 'Profile' : person.name} />
+       <header className="u-sticky-top flex items-center justify-between">
+         <div className="flex min-w-0 items-center gap-12">
+           {own ? (
+@@ -90,7 +101,7 @@ export function ProfilePage() {
+             </button>
+           )}
+           <h1 className="text-style-title-large-regular truncate text-text-primary">
+-            {own ? 'Profile' : person.name}
++            {me ? 'Me' : own ? 'Profile' : person.name}
+           </h1>
+         </div>
+         <div className="flex shrink-0 items-center gap-12">
+@@ -113,7 +124,7 @@ export function ProfilePage() {
+           </button>
+           {/* Only on your own profile: there is nothing of a stranger's to
+               configure. */}
+-          {own && (
++          {own && !me && (
+             <Link
+               to="/settings"
+               aria-label="Settings"
+@@ -155,6 +166,24 @@ export function ProfilePage() {
+         </div>
+       </div>
+ 
++      {me ? (
++        <nav aria-label="Your account" className="mt-32 flex flex-col overflow-hidden rounded-[20px] border border-border-subtle bg-surface-default">
++          <MeRow to="/sessions" icon={<PlaylistIcon size={24} />} label="Library" hint="Sessions you made and played" />
++          <MeRow to="/credits" icon={<CoinMark size={24} />} label="Credits & plan" value="1,323" />
++          {isEnabled('notifications') && (
++            <MeRow
++              to="/notifications"
++              icon={unread ? <NotificationActiveIcon size={24} /> : <NotificationIcon size={24} />}
++              label="Notifications"
++              hint={unread ? 'New activity' : undefined}
++            />
++          )}
++          {isEnabled('invite') && <MeRow to="/invite" icon={<UserAddIcon size={24} />} label="Invite a friend" />}
++          <MeRow to="/settings" icon={<Settings size={22} strokeWidth={1.5} />} label="Settings" />
++          {isEnabled('help') && <MeRow to="/help" icon={<MessageQuestionIcon size={24} />} label="Help" />}
++        </nav>
++      ) : (
++      <>
+       {/* Sessions is everything published; Recreated narrows that to the
+           forks among them. Two readings of the same shelf, not two shelves —
+           switching tabs never refetches anything. Figma 16744:6367 puts 32px
+@@ -201,6 +230,24 @@ export function ProfilePage() {
+           />
+         ))}
+       </div>
++      </>
++      )}
+     </div>
+   )
+ }
++
++/** One row of Me (v4): what it is, an optional line or figure, and a chevron. */
++function MeRow({ to, icon, label, hint, value }: { to: string; icon: ReactNode; label: string; hint?: string; value?: string }) {
++  return (
++    <Link to={to} className="u-press flex items-center gap-14 border-b border-border-subtle px-16 py-14 last:border-b-0">
++      <span className="flex size-24 shrink-0 items-center justify-center text-icon-default">{icon}</span>
++      <span className="flex min-w-0 flex-1 flex-col gap-2">
++        <span className="text-style-body text-text-primary">{label}</span>
++        {hint && <span className="text-style-caption text-text-secondary">{hint}</span>}
++      </span>
++      {value && <span className="text-style-body-small tabular-nums text-text-primary">{value}</span>}
++      <ChevronRight size={18} className="shrink-0 text-icon-default" />
++    </Link>
++  )
++}
++
+diff --git a/src/pages/ProgressPage.tsx b/src/pages/ProgressPage.tsx
+index 929075f..4cb5427 100644
+--- a/src/pages/ProgressPage.tsx
++++ b/src/pages/ProgressPage.tsx
+@@ -26,6 +26,8 @@ import type { ProgressTab, Version } from '../lib/progress'
+ import { LineageSheet } from '../components/ui/LineageTreeCard'
+ import { findSession, isPublished } from '../lib/sessions'
+ import { useChatSession } from '../chat/ChatSessionContext'
++import { analysisForSession } from '../lib/wellnessAnalysis'
++import { useUiVersion } from '../versions/useUiVersion'
+ 
+ type TabIcon = ComponentType<{ size?: number; className?: string }>
+ 
+@@ -277,8 +279,17 @@ export function ProgressPage() {
+   // Bumped on save so the card re-reads the objective, which lives in lib/
+   // rather than here — the screen is not where a goal should be kept.
+   const [saved, setSaved] = useState(0)
++  const v4 = useUiVersion() >= 4
+ 
+   if (!session) return <Navigate to="/sessions" replace />
++  // v4 (U051, simplification D5): this page is retired. Each of its tabs
++  // repeated something with a home of its own: Chapters (version history) is
++  // Session details, Insights is the Analysis page, Social Impact is the
++  // session's stats in Session details. Old links still land somewhere true.
++  if (v4) {
++    const analysis = params.get('tab') === 'insights' ? analysisForSession(session.slug) : undefined
++    return <Navigate to={analysis ? `/wellness/analysis/${analysis.id}` : `/session/${session.slug}`} replace />
++  }
+ 
+   // Social Impact has nothing to report until the world can reach the session.
+   // The frame draws that as its own screen, ending in the one action that
+diff --git a/src/pages/SessionSettingsPage.tsx b/src/pages/SessionSettingsPage.tsx
+index 967e9c0..e134ec0 100644
+--- a/src/pages/SessionSettingsPage.tsx
++++ b/src/pages/SessionSettingsPage.tsx
+@@ -260,6 +260,9 @@ function ScriptTabV2() {
+ export function SessionSettingsPage() {
+   const navigate = useNavigate()
+   const v2 = useUiVersion() >= 2
++  // v4 (U051): two different screens were both titled "Settings" (account and
++  // session). This one edits a session, so it says so.
++  const v4 = useUiVersion() >= 4
+   const [tab, setTab] = useState<Tab>('script')
+   const [removed, setRemoved] = useState<Set<string>>(new Set())
+   const [added, setAdded] = useState<Set<string>>(new Set())
+@@ -295,7 +298,7 @@ export function SessionSettingsPage() {
+         pendingCount > 0 ? 'pb-96' : 'pb-48'
+       }`}
+     >
+-      <PageMeta title="Session settings" />
++      <PageMeta title={v4 ? 'Edit session' : 'Session settings'} />
+       <header className="u-sticky-top flex items-center gap-12 px-20 py-16 lg:px-24">
+         <button
+           type="button"
+@@ -305,7 +308,7 @@ export function SessionSettingsPage() {
+         >
+           <ArrowLeft size={20} />
+         </button>
+-        <h1 className="text-style-title truncate text-text-primary">{v2 ? 'Settings' : 'Session settings'}</h1>
++        <h1 className="text-style-title truncate text-text-primary">{v4 ? 'Edit session' : v2 ? 'Settings' : 'Session settings'}</h1>
+       </header>
+ 
+       {/* Full width below lg (U043). Capped at the frame's 402 it sat as a
+diff --git a/src/pages/SessionsPage.tsx b/src/pages/SessionsPage.tsx
+index dd6c093..063b2ea 100644
+--- a/src/pages/SessionsPage.tsx
++++ b/src/pages/SessionsPage.tsx
+@@ -9,7 +9,8 @@ import { useDrawer } from '../layouts/DrawerContext'
+ import { CURRENT_USER } from '../lib/people'
+ import { CARD_SHADOW } from '../lib/shadows'
+ import type { SessionRecord } from '../lib/sessions'
+-import { PUBLISHED_SESSIONS, SESSIONS, durationLabel, isPublished, isRecreated } from '../lib/sessions'
++import { PUBLISHED_SESSIONS, SESSIONS, durationLabel, isPublished, isRecreated, recentSessions } from '../lib/sessions'
++import { useUiVersion } from '../versions/useUiVersion'
+ 
+ 
+ /**
+@@ -64,7 +65,17 @@ function Pill({ className, children }: { className: string; children: React.Reac
+  * conversation, and the two icons act on the session itself. They are
+  * separated because a 362-wide row with one destination wastes the row.
+  */
+-function SessionRow({ session, onDelete }: { session: SessionRecord; onDelete: (slug: string) => void }) {
++function SessionRow({
++  session,
++  onDelete,
++  editable = true,
++}: {
++  session: SessionRecord
++  onDelete: (slug: string) => void
++  /** v4 (U051): Edit and Delete only on your own sessions. They showed on
++   *  Sara's and Lily's too (J038), which was a bug as much as clutter. */
++  editable?: boolean
++}) {
+   const outcome = session.outcome[0]
+   const down = outcome?.value.trim().startsWith('−') || outcome?.value.trim().startsWith('-')
+   const published = isPublished(session)
+@@ -104,6 +115,7 @@ function SessionRow({ session, onDelete }: { session: SessionRecord; onDelete: (
+           <MetaLine session={session} />
+         </Link>
+ 
++        {editable && (
+         <div className="flex shrink-0 items-center gap-12">
+           <Link
+             to="/session-settings"
+@@ -128,6 +140,7 @@ function SessionRow({ session, onDelete }: { session: SessionRecord; onDelete: (
+             <Trash2 size={16} />
+           </button>
+         </div>
++        )}
+       </div>
+ 
+       {/* Row 2 — the two facts about the session rather than about its author. */}
+@@ -196,7 +209,12 @@ function ScopeChip({
+ export function SessionsPage() {
+   const { openDrawer } = useDrawer()
+   const gate = useSignInGate()
+-  const [scope, setScope] = useState<'all' | 'mine'>('all')
++  // v4 (U051): this is Me → Library — your sessions, Created and Played.
++  // "All" mixed yours with everyone else's, which is Discover's job, and
++  // Explore's Recently played (your history) moves here as Played.
++  const library = useUiVersion() >= 4
++  const [scope, setScope] = useState<'all' | 'mine' | 'played'>(() => (library ? 'mine' : 'all'))
++  const title = library ? 'Library' : 'Sessions'
+   // Deleted in this browser only. The catalogue is a module constant, so a
+   // reload brings them back — the same contract as every other thing this demo
+   // remembers, and better than a delete that visibly does nothing.
+@@ -207,12 +225,14 @@ export function SessionsPage() {
+   const shown = (
+     scope === 'mine'
+       ? SESSIONS.filter((s) => s.author === CURRENT_USER)
+-      : PUBLISHED_SESSIONS
++      : scope === 'played'
++        ? recentSessions()
++        : PUBLISHED_SESSIONS
+   ).filter((s) => !deleted.includes(s.slug))
+ 
+   return (
+     <div className="pb-40">
+-      <PageMeta title="Sessions" description="Browse and manage your Aurelia sessions." />
++      <PageMeta title={title} description="Browse and manage your Aurelia sessions." />
+       <div className="mx-auto max-w-[960px]">
+         {/* Header: 68 tall on a 20px gutter, 12 top and bottom, 20 between the
+             menu and the title. */}
+@@ -229,7 +249,7 @@ export function SessionsPage() {
+             {/* Regular in the frame, not semibold — font-normal! because
+                 .text-style-* sits outside Tailwind's utility layer. */}
+             <h1 className="truncate text-[24px] font-normal! leading-[30px] text-text-primary">
+-              Sessions
++              {title}
+             </h1>
+           </div>
+           <CoinPill points="1,323" className={CARD_SHADOW} />
+@@ -238,12 +258,21 @@ export function SessionsPage() {
+         {/* Body: 20 all round, 32 between the chips and the list. */}
+         <div className="flex flex-col gap-32 p-20">
+           <div className="flex gap-7">
+-            <ScopeChip active={scope === 'all'} label="All" narrow onClick={() => setScope('all')} />
+-            <ScopeChip
+-              active={scope === 'mine'}
+-              label="Created by you"
+-              onClick={() => setScope('mine')}
+-            />
++            {library ? (
++              <>
++                <ScopeChip active={scope === 'mine'} label="Created" onClick={() => setScope('mine')} />
++                <ScopeChip active={scope === 'played'} label="Played" onClick={() => setScope('played')} />
++              </>
++            ) : (
++              <>
++                <ScopeChip active={scope === 'all'} label="All" narrow onClick={() => setScope('all')} />
++                <ScopeChip
++                  active={scope === 'mine'}
++                  label="Created by you"
++                  onClick={() => setScope('mine')}
++                />
++              </>
++            )}
+           </div>
+ 
+           {/* Single column everywhere up to lg: a 960px-wide row of the
+@@ -256,6 +285,7 @@ export function SessionsPage() {
+               <SessionRow
+                 key={session.slug}
+                 session={session}
++                editable={!library || session.author === CURRENT_USER}
+                 onDelete={(slug) => setDeleted((list) => [...list, slug])}
+               />
+             ))}
+diff --git a/src/pages/WellnessPage.tsx b/src/pages/WellnessPage.tsx
+index 4be31c9..a1c5f02 100644
+--- a/src/pages/WellnessPage.tsx
++++ b/src/pages/WellnessPage.tsx
+@@ -162,7 +162,7 @@ export function WellnessPage() {
+   return (
+     <div className="bg-background-default pb-48">
+       <PageMeta
+-        title="My Wellness"
++        title={v4 ? 'Progress' : 'My Wellness'}
+         description="Track what's helping your goals progress, and the signal sources Aurelia may read to figure that out."
+       />
+       <header className="u-sticky-top flex items-center justify-between gap-12 px-20 py-16 lg:px-24">
+@@ -175,7 +175,13 @@ export function WellnessPage() {
+           >
+             <Menu size={20} />
+           </button>
+-          <h1 className="text-style-title-large truncate text-text-primary">My Wellness</h1>
++          <h1 className="text-style-title-large truncate text-text-primary">
++            {/* v4 (U051): one name for "how am I doing" instead of four (My
++                Wellness, Analytics, Insights, Analysis), and the tabs named
++                for what they hold. Data sources stay here, beside the
++                analytics they feed (D3). */}
++            {v4 ? 'Progress' : 'My Wellness'}
++          </h1>
+         </div>
+         <CoinPill points="1,323" className="shadow-sm" />
+       </header>
+@@ -185,13 +191,13 @@ export function WellnessPage() {
+           <WellnessTabButton
+             active={tab === 'Analytics'}
+             icon={<ChartPie size={16} />}
+-            label="Analytics"
++            label={v4 ? 'Your goals' : 'Analytics'}
+             onClick={() => setTab('Analytics')}
+           />
+           <WellnessTabButton
+             active={tab === 'Connect'}
+             icon={<Link2 size={16} />}
+-            label="Connect"
++            label={v4 ? 'Data sources' : 'Connect'}
+             onClick={() => setTab('Connect')}
+           />
+         </div>
+diff --git a/src/styles/versions.css b/src/styles/versions.css
+index 30a2716..01404c0 100644
+--- a/src/styles/versions.css
++++ b/src/styles/versions.css
+@@ -220,6 +220,27 @@
+   bottom: 88px;
+ }
+ 
++/* ---- Version 4: the tab bar (U051, simplification D1) ------------------- */
++/* Four tabs replace the hamburger below lg, so every page's menu button goes.
++   Written for v4 exactly; a later version that keeps the tabs widens this to
++   its own number (versions are cumulative, see the top of this file). The
++   chat keeps a way out of its own (ChatHeader, Back to Create). */
++:root[data-ui-version='4'] [aria-label='Open menu'] {
++  display: none !important;
++}
++@media (max-width: 1023.98px) {
++  /* Bottom bars and the floating player sit above the tab bar, not under it. */
++  :root[data-tabbar] .u-page :is(.sticky, .fixed).bottom-0 {
++    bottom: calc(64px + env(safe-area-inset-bottom));
++  }
++  :root[data-tabbar][data-floating-player] .u-page :is(.sticky, .fixed).bottom-0 {
++    bottom: calc(152px + env(safe-area-inset-bottom));
++  }
++  :root[data-tabbar] [data-floating-card] {
++    bottom: calc(76px + env(safe-area-inset-bottom));
++  }
++}
++
+ /* ---- Version 2: chat empty state ---------------------------------------- */
+ /* A soft, slowly drifting warm field behind the orb, the orb breathing, and
+    the greeting rising in after it. Hidden entirely in v1. */
+diff --git a/src/versions/V2Shell.tsx b/src/versions/V2Shell.tsx
+index 1b4a4b3..26976cc 100644
+--- a/src/versions/V2Shell.tsx
++++ b/src/versions/V2Shell.tsx
+@@ -26,7 +26,7 @@ export function FloatingPlayer({ pathname }: { pathname: string }) {
+       <div aria-hidden="true" className="h-96" />
+       {/* Portaled: .u-page's transform would otherwise pin this to the page box. */}
+       {createPortal(
+-      <div className="v2-float-in fixed inset-x-0 bottom-16 z-40 mx-auto w-[calc(100%-32px)] max-w-[402px] lg:left-auto lg:right-24 lg:mx-0 lg:w-[360px]">
++      <div data-floating-card="" className="v2-float-in fixed inset-x-0 bottom-16 z-40 mx-auto w-[calc(100%-32px)] max-w-[402px] lg:left-auto lg:right-24 lg:mx-0 lg:w-[360px]">
+         <div className="rounded-[20px] shadow-[0_12px_32px_-8px_rgba(27,16,6,0.28)]">
+           <MiniPlayer />
+         </div>
+diff --git a/src/versions/versions.ts b/src/versions/versions.ts
+index e727f0a..a2b2ce6 100644
+--- a/src/versions/versions.ts
++++ b/src/versions/versions.ts
+@@ -117,7 +117,7 @@ export const UI_VERSIONS: UiVersion[] = [
+   {
+     id: 4,
+     name: 'Version 4',
+-    summary: 'Everything in v3, plus onboarding: a first sign-in gets a short, skippable setup that ends with Aurelia building your first session.',
++    summary: 'Everything in v3, plus onboarding, a first session built from your own words with a reason to come back, and a simpler app: four tabs for the four core features.',
+     changes: [
+       {
+         group: 'Onboarding',
+@@ -128,6 +128,23 @@ export const UI_VERSIONS: UiVersion[] = [
+           'Settings → Replay onboarding runs it again from the start.',
+         ],
+       },
++      {
++        group: 'First session and coming back',
++        items: [
++          'What you typed on Home fills in onboarding and becomes your first message; one button builds your first session, with changes for your goal.',
++          'After listening: “How do you feel now?”, then “Chapter 2 is ready tomorrow” with a calendar reminder. Home leads with your next chapter.',
++        ],
++      },
++      {
++        group: 'Simpler',
++        items: [
++          'Four tabs at the bottom — Create, Discover, Progress, Me — instead of the menu.',
++          'Create: ask, your next chapter, recent conversations, one community shelf. Discover: community, creators, live, challenge.',
++          'Progress: your goals and data sources. Me: Library (created / played), Credits & plan, notifications, invite, settings, help.',
++          'The coin balance only in Me (and where coins are earned). Insights is folded into Session details and Analysis.',
++          'One list of changes in the chat: the proposals open the “+” sheet, already picked, one score each.',
++        ],
++      },
+       {
+         group: 'Good to know',
+         items: [
+-- 
+2.43.0
+
