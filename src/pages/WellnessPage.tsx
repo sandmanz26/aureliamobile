@@ -136,7 +136,12 @@ function Meter({ label, connected, total }: { label: string; connected: number; 
 export function WellnessPage() {
   const { openDrawer } = useDrawer()
   const navigate = useNavigate()
-  const [connections, setConnections] = useState(defaultConnections)
+  // v4 (U050): nothing is connected until the person connects it. J039 found
+  // Apple Watch, Google Calendar and Conversation History switched on for a
+  // brand-new account — read as a privacy breach by the people it mattered
+  // most to (a therapist-referred user, a skeptic).
+  const v4 = useUiVersion() >= 4
+  const [connections, setConnections] = useState(() => defaultConnections(v4))
   const [requestOpen, setRequestOpen] = useState(false)
   const [tab, setTab] = useState<WellnessTab>('Analytics')
   const [requestSent, setRequestSent] = useState(false)

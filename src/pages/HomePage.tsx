@@ -5,6 +5,7 @@ import {
   Menu,
   Mic,
   Music,
+  Pause,
   Play,
   Sparkles,
   TrendingUp,
@@ -36,9 +37,29 @@ import type { CategoryFilter } from '../lib/sessions'
 import { CATEGORY_FILTERS, categoryLabel, sessionsInCategory } from '../lib/sessions'
 import { useDrawer } from '../layouts/DrawerContext'
 import { CoinPill } from '../components/ui/CoinPill'
+import { NextChapterCard } from '../components/wellness/NextChapterCard'
+import { readJourney } from '../lib/journey'
+import { useAudioPlayer } from '../audio/AudioPlayerContext'
+import { findSession } from '../lib/sessions'
 
 // A one-tap way in for each of the things Aurelia actually makes, so the rail
 // doubles as the answer to "what can I even ask for?".
+/**
+ * What each Quick Start card's Play plays in v4 (U050): a catalogue session of
+ * the same kind, straight away and before any sign-in. J039 found Play led to
+ * a sign-in wall, five questions and then a chat about sleep — someone who
+ * tapped "Focus Sound" never heard a sound.
+ */
+const QUICK_START_PLAYS: Record<string, string> = {
+  Affirmations: 'noting-practice',
+  'Guided Breath Work': 'ocean-breath',
+  'Sleep Meditation': 'night-rain-sleep',
+  'Focus Sound': 'clear-skies',
+  'Morning Reset': 'morning-spark',
+  'Stress Relief': 'dolphins-frequency',
+  'Deep Calm': 'dream-drift',
+}
+
 const quickStartCards: { title: string; subtitle: string; gradient: string; photo: CoverKey }[] = [
   { title: 'Affirmations', subtitle: 'Personalized exprience.', photo: 'affirmations', gradient: 'linear-gradient(160deg, var(--color-danger-400), var(--color-warning-300))' },
   { title: 'Guided Breath Work', subtitle: 'Personalized exprience.', photo: 'breathwork', gradient: 'linear-gradient(160deg, var(--color-neutral-700), var(--color-neutral-400))' },
@@ -111,6 +132,20 @@ export function HomePage() {
   const [category, setCategory] = useState<CategoryFilter>('All')
   const [ask, setAsk] = useState('')
   const v2 = useUiVersion() >= 2
+  const v4 = useUiVersion() >= 4
+  // v4 (U050): once there is a first session, Home is about the next chapter
+  // of it rather than about selling the app to someone already inside it.
+  const [journey] = useState(() => readJourney())
+  const member = v4 && signedIn
+  const { track, playing, load, toggle } = useAudioPlayer()
+
+  function playQuickStart(title: string) {
+    const session = findSession(QUICK_START_PLAYS[title])
+    if (!session) return gate('/chat')
+    if (track?.slug === session.slug) return toggle()
+    load({ slug: session.slug, href: `/play/${session.slug}`, title: session.title, author: session.author, photo: session.photo, gradient: session.gradient })
+    toggle()
+  }
   const [askFocused, setAskFocused] = useState(false)
   const askPlaceholder = useTypewriterPlaceholder(EXAMPLE_PROMPTS, {
     enabled: v2,
@@ -224,11 +259,15 @@ export function HomePage() {
             <div className="relative flex items-center justify-between gap-8">
               <button
                 type="button"
-                aria-label={`Play ${card.title}`}
-                onClick={() => gate('/chat')}
+                aria-label={v4 && track?.slug === QUICK_START_PLAYS[card.title] && playing ? `Pause ${card.title}` : `Play ${card.title}`}
+                onClick={() => (v4 ? playQuickStart(card.title) : gate('/chat'))}
                 className="u-press flex size-32 shrink-0 items-center justify-center rounded-full bg-white/25 text-text-inverse backdrop-blur-sm"
               >
-                <Play size={14} fill="currentColor" />
+                {v4 && track?.slug === QUICK_START_PLAYS[card.title] && playing ? (
+                  <Pause size={14} fill="currentColor" />
+                ) : (
+                  <Play size={14} fill="currentColor" />
+                )}
               </button>
               <button
                 type="button"
@@ -302,6 +341,7 @@ export function HomePage() {
           both set the gap, the gap is their sum and neither number matches the
           frame. One rule, one gap. */}
       <div className="mx-auto max-w-[960px] px-20 lg:px-24">
+        {member && journey && <NextChapterCard journey={journey} />}
         {/* Hero */}
         <section className="relative pt-24 text-center">
           {/* Figma "Ellipse 6" — a 252 circle of #FFE682 at 60%, under a 224
@@ -430,7 +470,7 @@ export function HomePage() {
       {/* Dark generative wellness banner — full bleed on mobile; on desktop a contained card in the content column.
           Figma frame 402x800, padding 40/20, counterAlign MIN (left-aligned),
           content SPACE_BETWEEN with the card pair bleeding past both edges. */}
-      {isEnabled('home.promo') && (
+      {isEnabled('home.promo') && !member && (
       <section
         className="v2-follow relative mt-16 overflow-hidden bg-[#1B1006] px-20 py-40 text-text-inverse lg:mx-auto lg:mt-40 lg:w-[calc(100%-48px)] lg:max-w-[912px] lg:rounded-[20px] lg:px-48 lg:py-48"
         // Version 2: the glow follows the pointer. Written straight to CSS
@@ -606,7 +646,7 @@ export function HomePage() {
         )}
 
         {/* Adaptive Wellness feature grid */}
-        {isEnabled('home.adaptive') && (
+        {isEnabled('home.adaptive') && !member && (
         <section className="mt-48">
           <span className="inline-block rounded-12 border border-[#D6D6D6] bg-transparent px-16 py-6 text-style-label-regular text-text-primary">
             Adaptive Wellness
@@ -629,6 +669,7 @@ export function HomePage() {
         {/* Closing CTA. The network sits above the card and bleeds to both
             page edges — it is the argument the card then states in words, so
             it is wider than the content column on purpose. */}
+        {!member && (
         <section className="mt-24">
           {/* Figma "Frame 34" — the last row of the strength grid, 362 x 164,
               inside the content column. It was full-bleed with a 24 overlap,
@@ -682,6 +723,7 @@ export function HomePage() {
             </button>
           </div>
         </section>
+        )}
       </div>
     </div>
   )

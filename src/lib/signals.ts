@@ -84,7 +84,7 @@ export function sourcesInGroup(group: SignalGroup) {
   return SIGNAL_SOURCES.filter((source) => source.group === group)
 }
 
-/** The state the screen opens in. */
-export function defaultConnections(): Record<string, boolean> {
-  return Object.fromEntries(SIGNAL_SOURCES.map((source) => [source.id, source.defaultOn]))
+/** The state the screen opens in. `allOff` is design v4 (U050): nothing connected until the person connects it. */
+export function defaultConnections(allOff = false): Record<string, boolean> {
+  return Object.fromEntries(SIGNAL_SOURCES.map((source) => [source.id, allOff ? false : source.defaultOn]))
 }

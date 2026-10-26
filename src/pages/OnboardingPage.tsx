@@ -35,6 +35,7 @@ import {
 import { CURRENT_USER } from '../lib/people'
 import { writeObjective } from '../lib/progress'
 import { DEFAULT_DRAFT } from '../chat/thread'
+import { inferFromWords } from '../chat/firstSession'
 import { useUiVersion } from '../versions/useUiVersion'
 
 /**
@@ -88,7 +89,17 @@ export function OnboardingPage() {
   const from = (location.state as { from?: From } | null)?.from
   // A destination worth returning to: anything but Home itself.
   const heading = from && from.pathname !== '/home' ? from : null
-  const [answers, setAnswers] = useState<Onboarding>(() => onboardingAnswers() ?? DEFAULTS)
+  // What they typed on Home before signing in (U050). J039 found onboarding
+  // asked the goal and the feeling again and then dropped the sentence; now
+  // the answers are read off it, the summary shows it, and the first session
+  // is built from it.
+  const typed = heading?.pathname === '/chat' ? (heading.state as { ask?: string } | undefined)?.ask?.trim() || null : null
+  const [answers, setAnswers] = useState<Onboarding>(() => {
+    const saved = onboardingAnswers()
+    if (saved || !typed) return saved ?? DEFAULTS
+    const { goal, feelings } = inferFromWords(typed)
+    return { ...DEFAULTS, goal, feelings }
+  })
   const [step, setStep] = useState<Step>('welcome')
   const index = STEPS.indexOf(step)
   const firstName = CURRENT_USER.split(' ')[0]
@@ -96,7 +107,10 @@ export function OnboardingPage() {
   if (!v4) return <Navigate to="/home" replace />
 
   const set = <K extends keyof Onboarding>(key: K, value: Onboarding[K]) => setAnswers((a) => ({ ...a, [key]: value }))
-  const next = () => setStep(STEPS[Math.min(STEPS.length - 1, index + 1)])
+  // With their words in hand and a goal read off them, there is nothing left
+  // to ask: welcome goes straight to the summary, where each answer can still
+  // be changed.
+  const next = () => setStep(step === 'welcome' && typed && answers.goal ? 'ready' : STEPS[Math.min(STEPS.length - 1, index + 1)])
   const back = () => setStep(STEPS[Math.max(0, index - 1)])
 
   function leave(to: From) {
@@ -105,7 +119,10 @@ export function OnboardingPage() {
 
   function skip() {
     saveOnboarding(answers, true)
-    leave(heading ?? { pathname: '/home' })
+    // Skipping still sends what they typed — as a new conversation of their
+    // own, not appended to the demo one (J039 F1).
+    if (typed) navigate('/chat', { replace: true, state: { fresh: true, ask: typed } })
+    else leave(heading ?? { pathname: '/home' })
   }
 
   function createFirstSession() {
@@ -118,7 +135,12 @@ export function OnboardingPage() {
     // conversation would put words in their mouth ("it was too short").
     navigate('/chat', {
       replace: true,
-      state: { fresh: true, ask: firstSessionBrief(answers), firstTitle: `${goal?.label ?? 'My first session'} v1.0` },
+      state: {
+        fresh: true,
+        ask: firstSessionBrief(answers, typed ?? undefined),
+        firstTitle: `${goal?.label ?? 'My first session'} v1.0`,
+        firstSession: true,
+      },
     })
   }
 
@@ -175,7 +197,9 @@ export function OnboardingPage() {
                 <div className="flex flex-col gap-8">
                   <h1 className="text-[28px] font-normal leading-[36px] text-text-primary">Welcome, {firstName}.</h1>
                   <p className="text-[16px] font-light leading-[24px] text-text-secondary">
-                    Let’s shape Aurelia around you. Three quick questions — about a minute.
+                    {typed && answers.goal
+                      ? 'You’ve told Aurelia what’s on your mind. Check the summary and your first session is ready.'
+                      : 'Let’s shape Aurelia around you. Three quick questions — about a minute.'}
                   </p>
                 </div>
                 <ol className="flex flex-col gap-16" aria-label="How Aurelia works">
@@ -328,7 +352,10 @@ export function OnboardingPage() {
 
           {step === 'ready' && (
             <>
-              <Title title="You’re all set." sub="Here’s what Aurelia will start from. Tap anything to change it." />
+              <Title
+                title={typed ? `Got it, ${firstName}.` : 'You’re all set.'}
+                sub={typed ? 'Read from what you wrote. Tap anything to change it.' : 'Here’s what Aurelia will start from. Tap anything to change it.'}
+              />
               <div className="mt-24 flex flex-col overflow-hidden rounded-[20px] border border-border-subtle bg-surface-default">
                 <SummaryRow label="Goal" value={goal?.label ?? 'Not set'} onEdit={() => setStep('goal')} />
                 <SummaryRow
@@ -352,21 +379,26 @@ export function OnboardingPage() {
                 <p className="flex items-center gap-6 text-[12px] font-medium leading-[16px] text-[#8A5A1E]">
                   <Sparkles size={13} /> Your first message to Aurelia
                 </p>
-                <p className="mt-6 text-[14px] font-light leading-[21px] text-text-primary">“{firstSessionBrief(answers)}”</p>
+                <p className="mt-6 text-[14px] font-light leading-[21px] text-text-primary">“{firstSessionBrief(answers, typed ?? undefined)}”</p>
               </div>
               <p className="mt-12 text-[12px] font-light leading-[18px] text-text-secondary">
                 Kept on this device for now. Connect a wearable later in My Wellness for a sharper analysis.
               </p>
               <div className="flex-1" />
               <div className="flex flex-col gap-10 pt-24">
-                <Primary onClick={createFirstSession}>Create my first session</Primary>
-                <button
-                  type="button"
-                  onClick={finishElsewhere}
-                  className="u-press flex h-48 w-full items-center justify-center rounded-16 border border-[#331B04] text-[16px] leading-[19px] text-text-primary"
-                >
-                  {heading ? 'Continue where I was' : 'Explore Aurelia first'}
-                </button>
+                <Primary onClick={createFirstSession}>Build my first session</Primary>
+                {/* Not when they arrived with words: "Continue where I was"
+                    would send the same sentence without the setup, a second
+                    first message that answered differently (J039 F5). */}
+                {!typed && (
+                  <button
+                    type="button"
+                    onClick={finishElsewhere}
+                    className="u-press flex h-48 w-full items-center justify-center rounded-16 border border-[#331B04] text-[16px] leading-[19px] text-text-primary"
+                  >
+                    {heading ? 'Continue where I was' : 'Explore Aurelia first'}
+                  </button>
+                )}
               </div>
             </>
           )}

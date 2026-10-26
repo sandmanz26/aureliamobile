@@ -509,3 +509,11 @@ in the thread**.
 **v4 = v3 + first-run onboarding** (U047): `/welcome`, shown after a first
 sign-in/sign-up on a browser (`aurelia.onboarding` in localStorage — there
 are no accounts); Settings → Replay onboarding runs it again.
+**v4 also carries the J039 first-time fixes (U050):** a sentence typed on Home
+pre-fills onboarding and becomes the first brief; every path opens a thread of
+the person's own (never the demo one) whose deck follows their goal; the free
+limit counts only after the first build; the first build starts a five-chapter
+journey (`lib/journey.ts`, `aurelia.journey`) — the player asks "How do you feel
+now?" instead of showing demo progress, offers a calendar (.ics) reminder, and
+signed-in Home leads with the next chapter and drops the marketing blocks;
+Quick Start Play plays before sign-in; Connect starts all off.

@@ -35,6 +35,9 @@ import { SessionFeedback } from '../components/wellness/SessionFeedback'
 import { analysisForSession, chapterBrief } from '../lib/wellnessAnalysis'
 import type { Analysis } from '../lib/wellnessAnalysis'
 import type { Named } from '../lib/named'
+import { ChapterCheckIn } from '../components/wellness/ChapterCheckIn'
+import { readJourney } from '../lib/journey'
+import { findGoal } from '../lib/onboarding'
 
 /** Lines the session speaks, which the hero shows one at a time under the art.
  *  Mock, like everything in lib/ — as is the bed they play over. */
@@ -237,6 +240,13 @@ export function PlayerPage() {
   const handoff = location.state as { origin?: ProfileOrigin; as?: Named } | null
   const origin = handoff?.origin
   const named = handoff?.as
+  // v4 (U050): your own first session opens on a check-in, not on the demo's
+  // invented progress. "Own" is the journey's session played as a build (a
+  // version, or a name handed over by the cockpit or Home) — the catalogue
+  // session it stands in for keeps its usual drawer.
+  const v4 = useUiVersion() >= 4
+  const [journey] = useState(() => readJourney())
+  const ownChapter = v4 && journey && session && journey.slug === session.slug && (named || versionId) ? journey : null
 
   // Playback lives above the router. This screen is a view onto it, so
   // walking back to the cockpit leaves the session running.
@@ -658,7 +668,9 @@ export function PlayerPage() {
           ref={scroller}
           className={`min-h-0 flex-1 px-20 pb-40 ${up ? 'overflow-y-auto' : 'overflow-hidden'}`}
         >
-          {analysis ? (
+          {ownChapter ? (
+            <ChapterCheckIn initial={ownChapter} goalLabel={findGoal(ownChapter.goal)?.label ?? null} />
+          ) : analysis ? (
             <AnalysisDrawer
               analysis={analysis}
               revealed={up}

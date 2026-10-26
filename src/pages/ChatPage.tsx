@@ -13,11 +13,14 @@ import { MiniPlayer } from '../components/chat/MiniPlayer'
 import { PublishSheet } from '../components/chat/PublishSheet'
 import { useAudioPlayer } from '../audio/AudioPlayerContext'
 import { useChatSession } from '../chat/ChatSessionContext'
-import { RECOMMENDATIONS, nextVersionLabel } from '../chat/thread'
+import { OPENING_MESSAGES, nextVersionLabel, sessionNameOf } from '../chat/thread'
+import { deckFor, inferFromWords, suggestionsFor } from '../chat/firstSession'
+import { DEFAULTS, findGoal, onboardingAnswers } from '../lib/onboarding'
+import { readJourney, startJourney } from '../lib/journey'
 import type { Message, Status } from '../chat/thread'
 import type { RecreateBrief } from '../chat/recreate'
 import { draftTitleFor, findQuickStart } from '../lib/quickStart'
-import { replyTo } from '../lib/replies'
+import { FALLBACK, replyTo } from '../lib/replies'
 import { SessionReasoningCard } from '../components/chat/SessionReasoningCard'
 import { SessionProgressCardV2 } from '../components/chat/SessionProgressCardV2'
 import { VoiceRecorder } from '../components/chat/VoiceRecorder'
@@ -85,6 +88,8 @@ export function ChatPage() {
         fresh?: boolean
         /** v4 onboarding (U047): the first session's name, set after the reset. */
         firstTitle?: string
+        /** v4 (U050): onboarding's "Build my first session" — builds on its own. */
+        firstSession?: boolean
         /** A Quick Start card's id — Explore's "Create". */
         start?: string
         /** A cut picked in the Insights > Chapters list, to go back to. */
@@ -111,6 +116,7 @@ export function ChatPage() {
   const {
     messages, setMessages,
     applied, setApplied,
+    deck, replaceDeck,
     sessionState, setSessionState,
     progress, setProgress,
     deckOpen, setDeckOpen,
@@ -123,6 +129,10 @@ export function ChatPage() {
   } = useChatSession()
   const [typing, setTyping] = useState(false)
   const v3 = useUiVersion() >= 3
+  const v4 = useUiVersion() >= 4
+  // What onboarding stored (v4). Read once: this screen is never open while
+  // onboarding is, so it cannot change under it.
+  const [answers] = useState(() => onboardingAnswers())
   const { track, playing } = useAudioPlayer()
   // The session Insights should open: this thread's if it has one, otherwise
   // the one the draft stands in for — the same fallback `playTo` uses.
@@ -136,7 +146,13 @@ export function ChatPage() {
    * Messages a door writes on your behalf — a Recreate brief, a Quick Start —
    * are not sends. You did not spend anything to arrive somewhere.
    */
-  const sends = messages.filter((message) => message.from === 'user' && !message.attachment).length
+  // v4 (U050): counted only from the first build on. J039 found the limit
+  // tripping on someone's first message ever, because the demo thread's own
+  // lines counted; the allowance is for refining a session you have, not for
+  // getting one.
+  const firstBuild = messages.findIndex((message) => message.build)
+  const counted = v4 ? (firstBuild < 0 ? [] : messages.slice(firstBuild)) : messages
+  const sends = counted.filter((message) => message.from === 'user' && !message.attachment).length
   const limited = isEnabled('chat.freeLimit') && sends >= FREE_SENDS
   const insightsSlug = findSession(sessionSlug ?? draft.slug)?.slug
   /**
@@ -186,6 +202,53 @@ export function ChatPage() {
   const styleChangesHandled = useRef<string | null>(null)
   const challengeHandled = useRef<string | null>(null)
 
+  /**
+   * v4 (U050): a thread of the person's own, for their goal.
+   *
+   * J039's simulation found five of six first-time paths landed in the demo
+   * conversation — a sleep score "improved by 7%" and a message ("it was too
+   * short") the person never wrote — and every build was the same "Sleep
+   * meditation v1.3" with 432 Hz. In v4 a new thread is named after their
+   * goal and proposes changes for it, within what they chose.
+   */
+  const firstBuildPending = useRef(false)
+  function ownThread(words?: string) {
+    // Someone who skipped onboarding still has words; the goal is read off them.
+    const goalId = answers?.goal ?? (words ? inferFromWords(words).goal : null)
+    const goal = findGoal(goalId)
+    // Named after the goal while it is their first; after that, a new session
+    // is just that — not a second "Sleep better v1.0".
+    const title = readJourney() ? 'New session v1.0' : goal ? `${goal.label} v1.0` : 'My first session v1.0'
+    setDraft((current) => ({ ...current, title }))
+    replaceDeck(deckFor({ ...(answers ?? DEFAULTS), goal: goalId }, words))
+  }
+  const ownThreadEvent = useEffectEvent(ownThread)
+
+  // v4: the demo conversation is never somebody's first screen. Bare /chat on
+  // an untouched demo thread opens empty (or on what they typed), whichever
+  // door led here. Doors that write their own opening reset it themselves.
+  useEffect(() => {
+    if (!v4 || slug || messages !== OPENING_MESSAGES) return
+    if (routeState?.fresh || routeState?.start || routeState?.recreate || routeState?.challenge) return
+    reset([])
+    ownThreadEvent(routeState?.ask)
+  }, [v4, slug, messages, routeState, reset])
+
+  // Onboarding's "Build my first session" builds as soon as Aurelia has
+  // proposed: they have answered everything already, so a second "Apply"
+  // would only be one more tap between them and hearing it.
+  const buildFirst = useEffectEvent(() => {
+    const picked = deck.filter((r) => applied.includes(r.id))
+    applyChanges('Build my first session', picked.map((r) => r.title))
+  })
+  useEffect(() => {
+    if (!firstBuildPending.current) return
+    const last = messages[messages.length - 1]
+    if (last?.from !== 'aurelia' || last.attachment !== 'recommendations') return
+    firstBuildPending.current = false
+    window.setTimeout(() => buildFirst(), 900)
+  }, [messages])
+
   // Starting a new session from /chat does not remount the page, so the state
   // initialiser above never runs again and the old thread would stay put.
   // Keyed on the navigation rather than a boolean, so pressing New session
@@ -221,7 +284,9 @@ export function ChatPage() {
     // not see their first build called a sleep meditation.
     const firstTitle = routeState.firstTitle
     if (firstTitle) setDraft((current) => ({ ...current, title: firstTitle }))
-  }, [location.key, routeState?.fresh, routeState?.start, routeState?.recreate, routeState?.firstTitle, reset, setDraft])
+    if (v4) ownThreadEvent(routeState.ask)
+    if (routeState.firstSession) firstBuildPending.current = true
+  }, [location.key, routeState?.fresh, routeState?.start, routeState?.recreate, routeState?.firstTitle, routeState?.firstSession, routeState?.ask, v4, reset, setDraft])
 
   // Point the thread at the session in the URL. openSession no-ops when it is
   // already on that one, which is what makes going off to play it and coming
@@ -589,6 +654,12 @@ export function ChatPage() {
    * while this runs.
    */
   function build(change: string) {
+    // v4 (U050): the first thing someone builds of their own — whichever door
+    // they came in by — is chapter 1 of their journey. A catalogue session
+    // being re-cut is somebody else's and does not start one.
+    if (v4 && !sessionSlug && !readJourney()) {
+      startJourney({ goal: answers?.goal ?? null, name: sessionNameOf(draft.title), slug: draft.slug, href: `/play/${draft.slug}` })
+    }
     setProgress(0)
     setSessionState('generating')
     return addVersion(change)
@@ -603,7 +674,11 @@ export function ChatPage() {
    * than read as being about the whole session.
    */
   function answerFor(text: string, current: Message[], answering?: Message['replyTo']): Message {
-    const reply = replyTo(text)
+    const said = replyTo(text)
+    // v4: a first message the rules do not recognise is still a request for a
+    // first session. "I've noted that for the next revision" answered a person
+    // who had no session yet (J039, Dewi).
+    const reply = v4 && said === FALLBACK && !current.some((m) => m.build) ? replyTo('my first session') : said
     // The deck comes over once, with the first reply that is a proposal.
     // Without that, a thread started from Quick Start offered "Apply new
     // changes (3)" over a deck nobody had handed over.
@@ -693,6 +768,9 @@ export function ChatPage() {
   // a transcript that drops the request but keeps the answer reads as a gap.
   // Only the acting on it stops.
   const showRecommendations = isEnabled('chat.recommendations')
+  // v4: none of the chips undoes a choice made in onboarding (J039 F2) — no
+  // "Make it longer" for someone who picked 20 minutes.
+  const suggestions = v4 && answers ? suggestionsFor(answers) : SUGGESTIONS
   const canApply = sessionState === 'idle' || sessionState === 'updating'
 
   /**
@@ -834,6 +912,7 @@ export function ChatPage() {
                 deckOpen={deckOpen}
                 canApply={canApply}
                 applied={applied}
+                recommendations={deck}
                 onToggleRecommendation={toggleRecommendation}
                 onOpenDeck={() => setDeckOpen(true)}
                 onSendPrompt={sendMessage}
@@ -898,7 +977,7 @@ export function ChatPage() {
               <button
                 type="button"
                 onClick={() =>
-                  applyChanges(undefined, RECOMMENDATIONS.filter((r) => applied.includes(r.id)).map((r) => r.title))
+                  applyChanges(undefined, deck.filter((r) => applied.includes(r.id)).map((r) => r.title))
                 }
                 disabled={sessionState === 'updating'}
                 style={{
@@ -917,7 +996,7 @@ export function ChatPage() {
             {empty && !limited && <EmptyThreadPrompts prompts={OPENERS} onPrompt={sendMessage} />}
             {!empty &&
               !limited &&
-              SUGGESTIONS.map((suggestion) => (
+              suggestions.map((suggestion) => (
                 <button
                   key={suggestion}
                   type="button"

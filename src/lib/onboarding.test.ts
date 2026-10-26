@@ -41,3 +41,11 @@ describe('onboarding storage', () => {
     expect(onboardingAnswers()).toBeNull()
   })
 })
+
+describe('firstSessionBrief with their own words (U050)', () => {
+  it('carries the sentence typed on Home instead of the feeling line', () => {
+    const brief = firstSessionBrief({ ...DEFAULTS, goal: 'sleep', feelings: ['sleep'] }, 'I can’t fall asleep, my mind keeps racing')
+    expect(brief).toBe('Create my first session: 10 minutes to help me sleep better. In my words: “I can’t fall asleep, my mind keeps racing.” Female voice, with nature sounds.')
+    expect(replyTo(brief).text).toMatch(/first session/)
+  })
+})

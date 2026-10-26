@@ -7,7 +7,9 @@ export interface Recommendation {
   id: string
   title: string
   description: string
-  improveScore: string
+  /** Left out where there is nothing to predict from yet — a first session
+   *  (v4, U050) has no history, so a score there would be invented. */
+  improveScore?: string
   orb: string
   /** The session this change previews against, for the play glyph on the orb. */
   preview: string
@@ -99,7 +101,7 @@ export function RecommendationCard({
         <p className="text-style-caption font-light! text-text-primary">{description}</p>
       </div>
 
-      {!recreate && (
+      {!recreate && improveScore && (
         <div className="flex items-center gap-8">
           <span className="text-style-caption text-text-primary">Improve Score</span>
           <span className="flex items-center gap-4 rounded-full bg-[#ecfbed] px-8 py-4 text-style-caption text-text-primary">

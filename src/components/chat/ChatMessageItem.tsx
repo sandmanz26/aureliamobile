@@ -1,7 +1,7 @@
 import { Fragment, useRef, useState } from 'react'
 import { Reply } from 'lucide-react'
 import type { Message } from '../../chat/thread'
-import { RECOMMENDATIONS } from '../../chat/thread'
+import type { Recommendation } from './RecommendationCard'
 import { AttachedSession } from './AttachedSession'
 import { RecommendationCard } from './RecommendationCard'
 import { RecommendationDeck } from './RecommendationDeck'
@@ -17,6 +17,8 @@ interface ChatMessageItemProps {
   deckOpen: boolean
   canApply: boolean
   applied: string[]
+  /** The deck this thread proposes — the demo one, or a v4 first session's (U050). */
+  recommendations: Recommendation[]
   onToggleRecommendation: (id: string) => void
   onOpenDeck: () => void
   onSendPrompt: (text: string) => void
@@ -150,6 +152,7 @@ export function ChatMessageItem({
   deckOpen,
   canApply,
   applied,
+  recommendations,
   onToggleRecommendation,
   onOpenDeck,
   onSendPrompt,
@@ -189,7 +192,7 @@ export function ChatMessageItem({
       // from here to the top of the "+" sheet (U045, team feedback).
       deckOpen && canApply ? (
         <div className="u-message -mx-20 mt-12 flex gap-11 overflow-x-auto px-20 pb-4">
-          {RECOMMENDATIONS.map((recommendation) => (
+          {recommendations.map((recommendation) => (
             <RecommendationCard
               key={recommendation.id}
               recommendation={recommendation}
@@ -206,8 +209,8 @@ export function ChatMessageItem({
         // behind, went back into hiding.
         <div className="u-message -ml-4 mt-12">
           <RecommendationDeck
-            recommendations={RECOMMENDATIONS}
-            count={applied.length || RECOMMENDATIONS.length}
+            recommendations={recommendations}
+            count={applied.length || recommendations.length}
             onOpen={canApply ? onOpenDeck : undefined}
           />
         </div>

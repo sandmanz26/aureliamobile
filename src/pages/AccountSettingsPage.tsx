@@ -8,6 +8,7 @@ import { useAuth } from '../auth/AuthContext'
 import { PageMeta } from '../components/PageMeta'
 import { CoinPill } from '../components/ui/CoinPill'
 import { resetOnboarding } from '../lib/onboarding'
+import { resetJourney } from '../lib/journey'
 import { useUiVersion } from '../versions/useUiVersion'
 
 /** One tappable line in the list under the accounts block. Plain — every row
@@ -316,6 +317,8 @@ export function AccountSettingsPage() {
             label="Replay onboarding"
             onClick={() => {
               resetOnboarding()
+              // The chapters belong to the first session onboarding made (U050).
+              resetJourney()
               navigate('/welcome')
             }}
           />

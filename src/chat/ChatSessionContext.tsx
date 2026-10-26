@@ -5,6 +5,7 @@ import { isPublished } from '../lib/sessions'
 import { useAudioPlayer } from '../audio/AudioPlayerContext'
 
 /** Delivery state, as a messaging app shows it: one tick sent, two ticks read. */
+import type { Recommendation } from '../components/chat/RecommendationCard'
 import { DEFAULT_DRAFT, OPENING_MESSAGES, RECOMMENDATIONS, messagesForSession, nextVersionLabel, sessionNameOf } from './thread'
 import type { Draft, DraftVersion, Message, SessionState } from './thread'
 
@@ -15,6 +16,13 @@ interface ChatSessionValue {
   setMessages: Dispatch<SetStateAction<Message[]>>
   applied: string[]
   setApplied: Dispatch<SetStateAction<string[]>>
+  /**
+   * The changes Aurelia proposes in this thread. The demo deck everywhere,
+   * except a v4 first session, which proposes changes for the person's own
+   * goal (U050). Swapping it re-selects all of it, as a new deck arrives.
+   */
+  deck: Recommendation[]
+  replaceDeck: (deck: Recommendation[]) => void
   sessionState: SessionState
   setSessionState: Dispatch<SetStateAction<SessionState>>
   progress: number
@@ -104,6 +112,11 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
   // in the world opens on the cut people can hear, a draft on nothing.
   const [publishedVersionId, setPublishedVersionId] = useState<string | null>(null)
   const [applied, setApplied] = useState<string[]>(RECOMMENDATIONS.map((item) => item.id))
+  const [deck, setDeck] = useState<Recommendation[]>(RECOMMENDATIONS)
+  const replaceDeck = useCallback((next: Recommendation[]) => {
+    setDeck(next)
+    setApplied(next.map((item) => item.id))
+  }, [])
   const [sessionState, setSessionState] = useState<SessionState>('idle')
   const [progress, setProgress] = useState(0)
   const [deckOpen, setDeckOpen] = useState(false)
@@ -184,6 +197,7 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
       setPublishedVersionId(isPublished(session) ? 'v0' : null)
       const opening = messagesForSession(session)
       setMessages(opening)
+      setDeck(RECOMMENDATIONS)
       setApplied(RECOMMENDATIONS.map((item) => item.id))
       setSessionState('idle')
       setProgress(0)
@@ -235,6 +249,7 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
     stop()
     setPublishedVersionId(null)
     setMessages(opening)
+    setDeck(RECOMMENDATIONS)
     setApplied(RECOMMENDATIONS.map((item) => item.id))
     setSessionState('idle')
     setProgress(0)
@@ -255,6 +270,7 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
     () => ({
       messages, setMessages,
       applied, setApplied,
+      deck, replaceDeck,
       sessionState, setSessionState,
       progress, setProgress,
       deckOpen, setDeckOpen,
@@ -265,7 +281,7 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
       reset,
     }),
     [
-      messages, applied, sessionState, progress, deckOpen, sessionSlug, openSession, draft,
+      messages, applied, deck, replaceDeck, sessionState, progress, deckOpen, sessionSlug, openSession, draft,
       versions, currentVersionId, publishedVersionId, markPublished, markUnpublished, addVersion, revertTo, pointAt, renameSession, nextMessageId, reset,
     ],
   )

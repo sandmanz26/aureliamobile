@@ -126,12 +126,17 @@ function list(items: string[]) {
  * of its own answers (lib/replies.ts `first-session`), so the cockpit
  * acknowledges the setup and proposes, instead of whichever keyword happens
  * to come first.
+ *
+ * `words` is what they typed on Home before signing in (v4, U050). It goes
+ * into the brief as their own sentence and stands in for the feeling line —
+ * the feelings were read off it, so saying both would say it twice.
  */
-export function firstSessionBrief(answers: Onboarding) {
+export function firstSessionBrief(answers: Onboarding, words?: string) {
   const goal = findGoal(answers.goal)
   const purpose = goal ? `${answers.length} minutes to ${goal.says}` : `${answers.length} minutes to unwind`
+  const own = words?.trim()
   // "Not sure" asks a question; in a brief it would only confuse the build.
-  const feeling = feelingSentence(answers.feelings.filter((f) => f !== 'unsure'))
+  const feeling = own ? `In my words: “${own.replace(/[.!?]+$/, '')}.”` : feelingSentence(answers.feelings.filter((f) => f !== 'unsure'))
   const voice = VOICES.find((v) => v.id === answers.voice)?.label ?? 'Female voice'
   const sounds = list(SOUNDS.filter((s) => answers.sounds.includes(s.id)).map((s) => s.says))
   const style = sounds ? `${voice}, with ${sounds}.` : `${voice}.`
