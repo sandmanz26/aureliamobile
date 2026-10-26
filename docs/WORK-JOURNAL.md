@@ -96,6 +96,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J041 | 2026-10-26 | Question | Status of Eugene's simplification (J038) after U050 | docs only |
 | J042 | 2026-10-26 | Code | Simplification D1–D7 applied to v4 without touching v2 (U051) | U051 |
 | J043 | 2026-10-26 | Analysis | Second simplification audit of v4 after U051 (no code) | docs only |
+| J044 | 2026-10-26 | Operational | Owner is sending the J043 proposal (S1–S7) to users before deciding | docs only |
 
 ---
 
@@ -419,4 +420,8 @@ transcript and the update log. Everything from J018 on was written at the time.
   - S1 is a truth issue more than a simplification.
   - Estimated cuts: Create 92 → ~25 controls; Discover 149 → ~70 and 7 → 4 sections; Me rows 6 → 5.
 - **Open:** O18, waiting on approval. No code changed.
+
+### J044 — J043 proposal sent out for feedback
+- **Said:** "oke saya kirim dulu ke user untuk usulan simplifikasi kemarin".
+- **Status:** O18 (S1–S7) waits on that feedback. No code changed.
 
