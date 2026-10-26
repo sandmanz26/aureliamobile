@@ -2,6 +2,7 @@ import { ArrowRight, Clock, Menu, Play, Podium, Sparkles, Users } from 'lucide-r
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import liveSessionsMap from '../assets/live-sessions-map.png'
+import { useUiVersion } from '../versions/useUiVersion'
 import { PageMeta } from '../components/PageMeta'
 import { Chip } from '../components/ui/Chip'
 import { CountUp } from '../components/ui/CountUp'
@@ -189,11 +190,16 @@ export function ExplorePage() {
   const [category, setCategory] = useState<CategoryFilter>('All')
   const [categoriesOpen, setCategoriesOpen] = useState(false)
   const challenge = CHALLENGES[0]
+  // v4 (U051): Explore is the Discover tab — other people's work. Quick Start
+  // (starting your own) lives in Create, and Recently played (your history)
+  // in Me → Library.
+  const v4 = useUiVersion() >= 4
+  const name = v4 ? 'Discover' : 'Explore'
 
   return (
     <div className="pb-48">
       <PageMeta
-        title="Explore"
+        title={name}
         description="Browse sessions by category, discover trusted creators, and join a monthly challenge."
       />
       {/* Figma 16744:6839's "Top Header" is its own 122px band — status bar
@@ -220,7 +226,7 @@ export function ExplorePage() {
             >
               <Menu size={20} />
             </button>
-            <h1 className="text-style-title-large text-text-primary">Explore</h1>
+            <h1 className="text-style-title-large text-text-primary">{name}</h1>
           </div>
           <div className="flex shrink-0 items-center gap-8">
           <CoinPill points="1,323" className="shadow-sm" />
@@ -257,7 +263,7 @@ export function ExplorePage() {
         </Link>
         )}
 
-        {isEnabled('sessions.quickStart') && (
+        {isEnabled('sessions.quickStart') && !v4 && (
           <section className="mt-32">
             <SectionHeader title="Quick Start" />
             <div className="-mx-20 mt-16 flex gap-16 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
@@ -340,6 +346,7 @@ export function ExplorePage() {
           </section>
         )}
 
+        {!v4 && (
         <section className="mt-32">
           <SectionHeader title="Recently Played" seeAllTo="/see-all/picked" />
           <div className="-mx-20 mt-16 flex gap-12 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
@@ -348,6 +355,7 @@ export function ExplorePage() {
             ))}
           </div>
         </section>
+        )}
 
         {isEnabled('sessions.community') && (
           <section className="mt-32">

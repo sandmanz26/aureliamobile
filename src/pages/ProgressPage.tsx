@@ -26,6 +26,8 @@ import type { ProgressTab, Version } from '../lib/progress'
 import { LineageSheet } from '../components/ui/LineageTreeCard'
 import { findSession, isPublished } from '../lib/sessions'
 import { useChatSession } from '../chat/ChatSessionContext'
+import { analysisForSession } from '../lib/wellnessAnalysis'
+import { useUiVersion } from '../versions/useUiVersion'
 
 type TabIcon = ComponentType<{ size?: number; className?: string }>
 
@@ -277,8 +279,17 @@ export function ProgressPage() {
   // Bumped on save so the card re-reads the objective, which lives in lib/
   // rather than here — the screen is not where a goal should be kept.
   const [saved, setSaved] = useState(0)
+  const v4 = useUiVersion() >= 4
 
   if (!session) return <Navigate to="/sessions" replace />
+  // v4 (U051, simplification D5): this page is retired. Each of its tabs
+  // repeated something with a home of its own: Chapters (version history) is
+  // Session details, Insights is the Analysis page, Social Impact is the
+  // session's stats in Session details. Old links still land somewhere true.
+  if (v4) {
+    const analysis = params.get('tab') === 'insights' ? analysisForSession(session.slug) : undefined
+    return <Navigate to={analysis ? `/wellness/analysis/${analysis.id}` : `/session/${session.slug}`} replace />
+  }
 
   // Social Impact has nothing to report until the world can reach the session.
   // The frame draws that as its own screen, ending in the one action that

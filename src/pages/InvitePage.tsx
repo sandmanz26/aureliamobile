@@ -129,7 +129,7 @@ export function InvitePage() {
           </button>
           <h1 className="text-style-title-large text-text-primary">Invite a Friend</h1>
         </div>
-        <CoinPill points="1,323" className="shadow-sm" />
+        <CoinPill always points="1,323" className="shadow-sm" />
       </header>
 
       <div className="mx-auto w-full max-w-[402px] px-20 lg:max-w-[640px] lg:px-24">

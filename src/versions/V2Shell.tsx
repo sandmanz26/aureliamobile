@@ -26,7 +26,7 @@ export function FloatingPlayer({ pathname }: { pathname: string }) {
       <div aria-hidden="true" className="h-96" />
       {/* Portaled: .u-page's transform would otherwise pin this to the page box. */}
       {createPortal(
-      <div className="v2-float-in fixed inset-x-0 bottom-16 z-40 mx-auto w-[calc(100%-32px)] max-w-[402px] lg:left-auto lg:right-24 lg:mx-0 lg:w-[360px]">
+      <div data-floating-card="" className="v2-float-in fixed inset-x-0 bottom-16 z-40 mx-auto w-[calc(100%-32px)] max-w-[402px] lg:left-auto lg:right-24 lg:mx-0 lg:w-[360px]">
         <div className="rounded-[20px] shadow-[0_12px_32px_-8px_rgba(27,16,6,0.28)]">
           <MiniPlayer />
         </div>

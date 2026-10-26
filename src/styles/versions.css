@@ -220,6 +220,27 @@
   bottom: 88px;
 }
 
+/* ---- Version 4: the tab bar (U051, simplification D1) ------------------- */
+/* Four tabs replace the hamburger below lg, so every page's menu button goes.
+   Written for v4 exactly; a later version that keeps the tabs widens this to
+   its own number (versions are cumulative, see the top of this file). The
+   chat keeps a way out of its own (ChatHeader, Back to Create). */
+:root[data-ui-version='4'] [aria-label='Open menu'] {
+  display: none !important;
+}
+@media (max-width: 1023.98px) {
+  /* Bottom bars and the floating player sit above the tab bar, not under it. */
+  :root[data-tabbar] .u-page :is(.sticky, .fixed).bottom-0 {
+    bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+  :root[data-tabbar][data-floating-player] .u-page :is(.sticky, .fixed).bottom-0 {
+    bottom: calc(152px + env(safe-area-inset-bottom));
+  }
+  :root[data-tabbar] [data-floating-card] {
+    bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+}
+
 /* ---- Version 2: chat empty state ---------------------------------------- */
 /* A soft, slowly drifting warm field behind the orb, the orb breathing, and
    the greeting rising in after it. Hidden entirely in v1. */

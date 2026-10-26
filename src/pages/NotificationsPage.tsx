@@ -1,6 +1,7 @@
 import { ArrowLeft, Podium, Sparkles } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useUiVersion } from '../versions/useUiVersion'
 import { PageMeta } from '../components/PageMeta'
 import { Chip } from '../components/ui/Chip'
 import { CoinPill } from '../components/ui/CoinPill'
@@ -79,6 +80,7 @@ function RowText({ item }: { item: NotificationRecord }) {
 export function NotificationsPage() {
   const navigate = useNavigate()
   const [filter, setFilter] = useState<'all' | NotificationBucket>('all')
+  const v4 = useUiVersion() >= 4
   // Opening the feed reads it: the drawer bell drops its unread dot.
   useEffect(() => markNotificationsSeen(), [])
 
@@ -111,6 +113,9 @@ export function NotificationsPage() {
 
       {/* Full-bleed so the last chip runs off the edge as it does in the frame,
           which is what says the row scrolls. */}
+      {/* v4 (U051): no date filters. The list is already grouped under
+          exactly these headings, so a filter only hid the headings below it. */}
+      {!v4 && (
       <div className="flex gap-8 overflow-x-auto px-20 pb-4 lg:px-24">
         {NOTIFICATION_FILTERS.map((option) => (
           <Chip
@@ -121,6 +126,7 @@ export function NotificationsPage() {
           />
         ))}
       </div>
+      )}
 
       <div className="w-full px-20 pb-40 lg:mx-auto lg:max-w-[960px] lg:px-24">
         {groups.map((group) => (

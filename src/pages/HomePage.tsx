@@ -40,7 +40,9 @@ import { CoinPill } from '../components/ui/CoinPill'
 import { NextChapterCard } from '../components/wellness/NextChapterCard'
 import { readJourney } from '../lib/journey'
 import { useAudioPlayer } from '../audio/AudioPlayerContext'
-import { findSession } from '../lib/sessions'
+import { findSession, recentSessions } from '../lib/sessions'
+import { PhotoCircle } from '../components/ui/PhotoCircle'
+import { Link } from 'react-router-dom'
 
 // A one-tap way in for each of the things Aurelia actually makes, so the rail
 // doubles as the answer to "what can I even ask for?".
@@ -312,6 +314,7 @@ export function HomePage() {
         description="Aurelia builds a personalized meditation, breathwork, or sleep session from a conversation — then remembers what helps you."
       />
       {/* Header */}
+      {!member && (
       <div className="flex items-center justify-between px-20 py-16 lg:px-24">
         <button
           type="button"
@@ -335,6 +338,7 @@ export function HomePage() {
           </button>
         )}
       </div>
+      )}
 
       {/* No bottom padding. This column is not the last block on the page —
           the full-bleed banner follows it and brings its own top margin. When
@@ -454,7 +458,12 @@ export function HomePage() {
             becomes both columns' row height, which Quick Start's section
             (flex-col, its card row at flex-1) then fills rather than leaving
             blank space under a short row of cards. */}
-        {v2 ? (
+        {member ? (
+          // v4 (U051): Create keeps one way to start (Ask) and the
+          // conversations in progress. Quick Start's kinds live on as the
+          // rotating examples in Ask; visitors still get the cards.
+          <RecentConversations />
+        ) : v2 ? (
           <div className="lg:mt-40 [&>section]:lg:mt-0">{quickStartSection}</div>
         ) : (
         <div data-tablet="home-split" className="lg:mt-40 lg:grid lg:grid-cols-2 lg:items-stretch lg:gap-24">
@@ -614,11 +623,12 @@ export function HomePage() {
       )}
 
       <div className="mx-auto max-w-[960px] px-20 lg:px-24">
-        {v2 && <div className="lg:mt-48 [&>section]:lg:mt-0">{liveSection}</div>}
+        {/* The live map is a community signal: Discover holds it in v4. */}
+        {v2 && !member && <div className="lg:mt-48 [&>section]:lg:mt-0">{liveSection}</div>}
         {/* Recreate from Community */}
         {isEnabled('home.community') && (
         <section className="mt-24">
-          <h2 className="text-style-body text-text-primary">Recreate from Community</h2>
+          <h2 className="text-style-body text-text-primary">{member ? 'For you, from the community' : 'Recreate from Community'}</h2>
           <div className="-mx-20 mt-16 flex gap-8 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
             {CATEGORY_FILTERS.map((filter) => (
               <Chip
@@ -728,3 +738,35 @@ export function HomePage() {
     </div>
   )
 }
+
+/**
+ * Create's "Recent" (v4, U051): the drawer's Latest, moved to where you would
+ * look for a conversation once the drawer is gone. Each opens its own thread.
+ */
+function RecentConversations() {
+  const recent = recentSessions()
+  return (
+    // Below lg only: the desktop sidebar already lists the same three.
+    <section className="mt-40 lg:hidden" aria-label="Recent conversations">
+      <h2 className="text-style-body text-text-primary">Recent</h2>
+      <ul className="mt-16 flex flex-col gap-12">
+        {recent.map((session) => (
+          <li key={session.slug}>
+            <Link to={`/chat/${session.slug}`} className="u-press flex items-center gap-12">
+              <PhotoCircle
+                photo={session.photo}
+                size={40}
+                gradient="conic-gradient(from 180deg, var(--color-blue-300), var(--color-gold-300), var(--color-blue-300))"
+              />
+              <span className="flex min-w-0 flex-1 flex-col gap-2 text-left">
+                <span className="text-style-body-small truncate text-text-primary">{session.title}</span>
+                <span className="text-style-caption truncate text-text-secondary">{session.author}</span>
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+

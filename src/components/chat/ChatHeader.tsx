@@ -1,4 +1,4 @@
-import { Menu, MoreHorizontal, Send } from 'lucide-react'
+import { ArrowLeft, Menu, MoreHorizontal, Send } from 'lucide-react'
 import type { ComponentType } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -48,6 +48,13 @@ interface ChatHeaderProps {
   onInsights?: () => void
   /** Opens the list of cuts this thread has made. Left out when it has made
    *  none — a history of nothing is a row that does nothing. */
+  /**
+   * v4 (U051): the cockpit is full screen with no tab bar, so the menu button
+   * becomes Back to Create. Absent, the menu button opens the drawer as before.
+   */
+  onBack?: () => void
+  /** v4 names the two menu rows for where they now go (Session details, Edit session). */
+  menuLabels?: { insights: string; settings: string }
 }
 
 // Figma "Top Header" — 44px circular surface buttons either side of a
@@ -65,6 +72,8 @@ export function ChatHeader({
   playAs,
   onSettings,
   onInsights,
+  onBack,
+  menuLabels = { insights: 'Insights', settings: 'Settings' },
 }: ChatHeaderProps) {
   const [open, setOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -86,14 +95,25 @@ export function ChatHeader({
           to the start instead of the end; the spacer after it is what every
           other header with this same button already does (see HomePage's,
           Explore's) to keep the coin pill / more-menu pinned right. */}
-      <button
-        type="button"
-        aria-label="Open menu"
-        onClick={onMenu}
-        className="flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-strong shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)] lg:hidden"
-      >
-        <Menu size={20} />
-      </button>
+      {onBack ? (
+        <button
+          type="button"
+          aria-label="Back"
+          onClick={onBack}
+          className="flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-strong shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)] lg:hidden"
+        >
+          <ArrowLeft size={20} />
+        </button>
+      ) : (
+        <button
+          type="button"
+          aria-label="Open menu"
+          onClick={onMenu}
+          className="flex size-44 items-center justify-center rounded-12 bg-surface-default text-icon-strong shadow-[0_5px_24px_4px_rgba(0,0,0,0.05)] lg:hidden"
+        >
+          <Menu size={20} />
+        </button>
+      )}
       <span className="hidden lg:block" />
 
       <div className="flex items-center gap-8">
@@ -131,8 +151,8 @@ export function ChatHeader({
                   // two lists did not even agree, since the sheet held this
                   // thread's builds while Chapters holds the catalogue's.
                   // Insights is the door.
-                  { label: 'Insights', icon: InsightsIcon, run: onInsights },
-                  { label: 'Settings', icon: SettingsIcon, run: onSettings },
+                  { label: menuLabels.insights, icon: InsightsIcon, run: onInsights },
+                  { label: menuLabels.settings, icon: SettingsIcon, run: onSettings },
                 ] satisfies { label: string; icon: MenuIcon; run?: () => void }[]
               ).map((item) => {
                 const Icon = item.icon

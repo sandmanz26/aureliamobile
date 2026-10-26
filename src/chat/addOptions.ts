@@ -1,4 +1,5 @@
 import type { ChangeKind } from '../components/chat/FilterChips'
+import type { Recommendation } from '../components/chat/RecommendationCard'
 import orb432hz from '../assets/orb-432hz.png'
 import orbIncreaseYellow from '../assets/orb-increase-yellow.png'
 import orbLessMovement from '../assets/orb-less-movement.png'
@@ -67,3 +68,37 @@ export const ALL_OPTIONS = [...FROM_DIAGNOSIS, ...EXPERIMENTS]
 export function addOptionTitles(ids: string[]) {
   return ALL_OPTIONS.filter((option) => ids.includes(option.id)).map((option) => option.title)
 }
+
+/** What a proposed change acts on, read from its words — for a deck card that has no sheet entry. */
+function kindOf(text: string): ChangeKind {
+  if (/breath|exhale|movement|scan|rhythm/i.test(text)) return 'movement'
+  if (/tone|sound|chime|melody|voice|pulse|silence|hz|music|noise|words|noting/i.test(text)) return 'sound'
+  return 'visual'
+}
+
+/**
+ * Aurelia's proposals as rows of the "+" sheet (design v4, U051 — D6).
+ *
+ * The chat had three ways to pick changes from two lists with two scores
+ * (Increase yellow was 12% on the deck and 3% in the sheet) and two
+ * selections that did not know about each other (O12). In v4 there is one
+ * list: the deck's proposals arrive pre-selected at the top of the sheet. A
+ * proposal the sheet already lists keeps the sheet's entry — one score per
+ * change, the per-change figure rather than the deck's flat 12% — and one it
+ * does not becomes a row of its own.
+ */
+export function asOptions(deck: Recommendation[]): AddOption[] {
+  return deck.map((card) => {
+    const listed = ALL_OPTIONS.find((option) => option.id === card.id)
+    if (listed) return listed
+    return {
+      id: card.id,
+      title: card.title,
+      description: card.description,
+      orb: card.orb,
+      improveScore: card.improveScore,
+      kind: kindOf(`${card.title} ${card.description}`),
+    }
+  })
+}
+

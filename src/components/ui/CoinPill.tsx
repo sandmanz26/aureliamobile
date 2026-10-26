@@ -45,14 +45,21 @@ export function CoinPill({
   className = '',
   /** Off only where the pill sits inside something already clickable. */
   interactive = true,
+  /**
+   * Shown in v4 too. Design v4 (U051, simplification D4) keeps the balance in
+   * Me and where coins are earned (invite, a challenge), not in every header.
+   */
+  always = false,
 }: {
   points: string
   className?: string
   interactive?: boolean
+  always?: boolean
 }) {
   const gate = useSignInGate()
+  const version = useUiVersion()
   // Version 2: the balance counts up to its value instead of arriving filled.
-  const v2 = useUiVersion() >= 2
+  const v2 = version >= 2
   const amount = Number(points.replace(/[^0-9.]/g, ''))
   const counted = v2 && /^[\d,.]+$/.test(points.trim()) && Number.isFinite(amount)
 
@@ -64,6 +71,8 @@ export function CoinPill({
       </span>
     </>
   )
+
+  if (version >= 4 && !always) return null
 
   const shape = `flex h-44 shrink-0 items-center gap-8 rounded-12 bg-surface-default px-16 ${className}`
 

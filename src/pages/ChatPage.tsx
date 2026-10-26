@@ -2,7 +2,7 @@ import { WandSparkles } from 'lucide-react'
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { AddSheet } from '../components/chat/AddSheet'
-import { addOptionTitles } from '../chat/addOptions'
+import { addOptionTitles, asOptions } from '../chat/addOptions'
 import { PageMeta } from '../components/PageMeta'
 import { ChatComposer } from '../components/chat/ChatComposer'
 import { ChatMessageItem } from '../components/chat/ChatMessageItem'
@@ -768,6 +768,10 @@ export function ChatPage() {
   // a transcript that drops the request but keeps the answer reads as a gap.
   // Only the acting on it stops.
   const showRecommendations = isEnabled('chat.recommendations')
+  // Whether Aurelia has handed over a deck in this thread — only then are its
+  // proposals part of the sheet's one list (v4).
+  const proposed = showRecommendations && messages.some((m) => m.attachment === 'recommendations') && (sessionState === 'idle' || sessionState === 'updating')
+  const suggestionOptions = asOptions(deck)
   // v4: none of the chips undoes a choice made in onboarding (J039 F2) — no
   // "Make it longer" for someone who picked 20 minutes.
   const suggestions = v4 && answers ? suggestionsFor(answers) : SUGGESTIONS
@@ -851,8 +855,16 @@ export function ChatPage() {
            because Progress redirects to /sessions on a slug it cannot find,
            and a menu item that silently bounces you elsewhere is worse than
            one that is plainly unavailable. */
-        onInsights={insightsSlug ? () => navigate(`/progress/${insightsSlug}`) : undefined}
+        onInsights={
+          insightsSlug
+            ? // v4 (U051, D5): the Insights page is retired; its version history
+              // lives in Session details, the one history.
+              () => navigate(v4 ? `/session/${insightsSlug}` : `/progress/${insightsSlug}`)
+            : undefined
+        }
         onMenu={openDrawer}
+        onBack={v4 ? () => navigate('/home') : undefined}
+        menuLabels={v4 ? { insights: 'Session details', settings: 'Edit session' } : undefined}
         publishLabel={publishLabel}
         /* Only where something of this thread is actually live. A session that
            has never been published has nothing to take down, and offering it
@@ -909,12 +921,15 @@ export function ChatPage() {
                 message={message}
                 startsRun={startsRun}
                 showRecommendations={showRecommendations}
-                deckOpen={deckOpen}
+                /* v4 (U051, D6): the deck never lays its cards out here — it
+                   opens the "+" sheet, the one list, so a change is never
+                   shown with two different scores. */
+                deckOpen={v4 ? false : deckOpen}
                 canApply={canApply}
                 applied={applied}
                 recommendations={deck}
                 onToggleRecommendation={toggleRecommendation}
-                onOpenDeck={() => setDeckOpen(true)}
+                onOpenDeck={() => (v4 ? setAddOpen(true) : setDeckOpen(true))}
                 onSendPrompt={sendMessage}
                 onReply={limited || listening ? undefined : (m) => setReplyTarget(m)}
                 onJumpTo={jumpTo}
@@ -1050,21 +1065,24 @@ export function ChatPage() {
       {addOpen && (
         <AddSheet
           nextLabel={versions.length ? nextVersionLabel(versions[versions.length - 1].label) : draft.title}
-          added={addPicks}
+          // v4 (U051, D6): one list and one selection. The deck's proposals sit
+          // first in the sheet, picked as `applied` (what the deck and the
+          // Apply chip already use); anything else picked here joins them.
+          suggestions={v4 && proposed ? suggestionOptions : undefined}
+          added={v4 && proposed ? [...applied, ...addPicks] : addPicks}
           onToggle={(id) =>
-            setAddPicks((current) =>
-              current.includes(id) ? current.filter((x) => x !== id) : [...current, id],
-            )
+            v4 && proposed && deck.some((r) => r.id === id)
+              ? toggleRecommendation(id)
+              : setAddPicks((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]))
           }
           onApply={() => {
+            const fromDeck = v4 && proposed ? deck.filter((r) => applied.includes(r.id)).map((r) => r.title) : []
+            const titles = [...fromDeck, ...addOptionTitles(addPicks)]
             setAddOpen(false)
             setAddPicks([])
             // Same path the chip takes — the sheet is another way to ask for
             // the same thing, so it must not grow a second way of doing it.
-            applyChanges(
-              addPicks.length === 1 ? 'Apply 1 change' : `Apply ${addPicks.length} changes`,
-              addOptionTitles(addPicks),
-            )
+            applyChanges(titles.length === 1 ? 'Apply 1 change' : `Apply ${titles.length} changes`, titles)
           }}
           onClose={() => setAddOpen(false)}
         />

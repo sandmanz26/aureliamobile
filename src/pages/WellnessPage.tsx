@@ -162,7 +162,7 @@ export function WellnessPage() {
   return (
     <div className="bg-background-default pb-48">
       <PageMeta
-        title="My Wellness"
+        title={v4 ? 'Progress' : 'My Wellness'}
         description="Track what's helping your goals progress, and the signal sources Aurelia may read to figure that out."
       />
       <header className="u-sticky-top flex items-center justify-between gap-12 px-20 py-16 lg:px-24">
@@ -175,7 +175,13 @@ export function WellnessPage() {
           >
             <Menu size={20} />
           </button>
-          <h1 className="text-style-title-large truncate text-text-primary">My Wellness</h1>
+          <h1 className="text-style-title-large truncate text-text-primary">
+            {/* v4 (U051): one name for "how am I doing" instead of four (My
+                Wellness, Analytics, Insights, Analysis), and the tabs named
+                for what they hold. Data sources stay here, beside the
+                analytics they feed (D3). */}
+            {v4 ? 'Progress' : 'My Wellness'}
+          </h1>
         </div>
         <CoinPill points="1,323" className="shadow-sm" />
       </header>
@@ -185,13 +191,13 @@ export function WellnessPage() {
           <WellnessTabButton
             active={tab === 'Analytics'}
             icon={<ChartPie size={16} />}
-            label="Analytics"
+            label={v4 ? 'Your goals' : 'Analytics'}
             onClick={() => setTab('Analytics')}
           />
           <WellnessTabButton
             active={tab === 'Connect'}
             icon={<Link2 size={16} />}
-            label="Connect"
+            label={v4 ? 'Data sources' : 'Connect'}
             onClick={() => setTab('Connect')}
           />
         </div>

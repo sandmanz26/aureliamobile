@@ -14,6 +14,11 @@ interface AddSheetProps {
   onClose: () => void
   /** The version this will build, e.g. "Sleep meditation v1.5" — shown in v3's summary. */
   nextLabel?: string
+  /**
+   * v4 (U051, D6): Aurelia's proposals for this thread, listed first and
+   * selected with everything else in one selection. Absent in v1–v3.
+   */
+  suggestions?: AddOption[]
 }
 
 /**
@@ -35,9 +40,9 @@ function matches(option: AddOption, filter: FilterId, added: string[]) {
  * on team feedback). Narrows both sections at once; a section with nothing
  * left is hidden, and an empty result offers the way back to All.
  */
-function useSheetFilter(added: string[]) {
+function useSheetFilter(added: string[], options: AddOption[] = ALL_OPTIONS) {
   const [filter, setFilter] = useState<FilterId>('all')
-  const count = (id: FilterId) => ALL_OPTIONS.filter((o) => matches(o, id, added)).length
+  const count = (id: FilterId) => options.filter((o) => matches(o, id, added)).length
   const only = (options: AddOption[]) => options.filter((o) => matches(o, filter, added))
   return { filter, setFilter, count, only }
 }
@@ -240,7 +245,7 @@ function OptionCard({
  * The expected effect is shown per change and as "up to" the largest one,
  * never summed: separate percentage lifts do not add (logic review D4).
  */
-function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel }: AddSheetProps) {
+function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel, suggestions = [] }: AddSheetProps) {
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.key === 'Escape') onClose()
@@ -249,10 +254,15 @@ function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel }: AddSheetPr
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  const { filter, setFilter, count, only } = useSheetFilter(added)
-  const diagnosis = only(FROM_DIAGNOSIS)
-  const experimentOptions = only(EXPERIMENTS)
-  const picked = ALL_OPTIONS.filter((option) => added.includes(option.id))
+  // One list: the thread's proposals first, then whatever the sheet offers
+  // that is not already among them.
+  const suggested = new Set(suggestions.map((option) => option.id))
+  const everything = [...suggestions, ...ALL_OPTIONS.filter((option) => !suggested.has(option.id))]
+  const { filter, setFilter, count, only } = useSheetFilter(added, everything)
+  const proposals = only(suggestions)
+  const diagnosis = only(FROM_DIAGNOSIS.filter((option) => !suggested.has(option.id)))
+  const experimentOptions = only(EXPERIMENTS.filter((option) => !suggested.has(option.id)))
+  const picked = everything.filter((option) => added.includes(option.id))
   const predicted = picked.filter((option) => option.improveScore)
   const experiments = picked.filter((option) => !option.improveScore)
   const best = predicted.reduce((max, option) => Math.max(max, Number.parseFloat(option.improveScore ?? '0')), 0)
@@ -286,6 +296,15 @@ function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel }: AddSheetPr
         </div>
 
         <div className="mt-12 flex-1 overflow-y-auto px-20 pb-16">
+          {proposals.length > 0 && (
+            <ListSection
+              title="Aurelia suggests"
+              hint="Proposed in the chat for this session."
+              options={proposals}
+              added={added}
+              onToggle={onToggle}
+            />
+          )}
           {diagnosis.length > 0 && (
             <ListSection
               title="Based on your diagnosis"
@@ -304,7 +323,9 @@ function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel }: AddSheetPr
               onToggle={onToggle}
             />
           )}
-          {diagnosis.length + experimentOptions.length === 0 && <NothingHere filter={filter} onAll={() => setFilter('all')} />}
+          {proposals.length + diagnosis.length + experimentOptions.length === 0 && (
+            <NothingHere filter={filter} onAll={() => setFilter('all')} />
+          )}
         </div>
 
         {/* The summary: what Apply will actually do. */}

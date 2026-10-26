@@ -117,7 +117,7 @@ export const UI_VERSIONS: UiVersion[] = [
   {
     id: 4,
     name: 'Version 4',
-    summary: 'Everything in v3, plus onboarding: a first sign-in gets a short, skippable setup that ends with Aurelia building your first session.',
+    summary: 'Everything in v3, plus onboarding, a first session built from your own words with a reason to come back, and a simpler app: four tabs for the four core features.',
     changes: [
       {
         group: 'Onboarding',
@@ -126,6 +126,23 @@ export const UI_VERSIONS: UiVersion[] = [
           'The goal becomes your first session’s objective; everything else becomes your first message to Aurelia, shown word for word before you send it.',
           'Every step has Skip, and Skip keeps what you answered. If you signed in to do something specific, the last step offers “Continue where I was”.',
           'Settings → Replay onboarding runs it again from the start.',
+        ],
+      },
+      {
+        group: 'First session and coming back',
+        items: [
+          'What you typed on Home fills in onboarding and becomes your first message; one button builds your first session, with changes for your goal.',
+          'After listening: “How do you feel now?”, then “Chapter 2 is ready tomorrow” with a calendar reminder. Home leads with your next chapter.',
+        ],
+      },
+      {
+        group: 'Simpler',
+        items: [
+          'Four tabs at the bottom — Create, Discover, Progress, Me — instead of the menu.',
+          'Create: ask, your next chapter, recent conversations, one community shelf. Discover: community, creators, live, challenge.',
+          'Progress: your goals and data sources. Me: Library (created / played), Credits & plan, notifications, invite, settings, help.',
+          'The coin balance only in Me (and where coins are earned). Insights is folded into Session details and Analysis.',
+          'One list of changes in the chat: the proposals open the “+” sheet, already picked, one score each.',
         ],
       },
       {

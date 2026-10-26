@@ -36,6 +36,7 @@ import { analysisForSession, chapterBrief } from '../lib/wellnessAnalysis'
 import type { Analysis } from '../lib/wellnessAnalysis'
 import type { Named } from '../lib/named'
 import { ChapterCheckIn } from '../components/wellness/ChapterCheckIn'
+import { useRecreateTarget } from '../chat/recreate'
 import { readJourney } from '../lib/journey'
 import { findGoal } from '../lib/onboarding'
 
@@ -246,6 +247,7 @@ export function PlayerPage() {
   // session it stands in for keeps its usual drawer.
   const v4 = useUiVersion() >= 4
   const [journey] = useState(() => readJourney())
+  const recreateThis = useRecreateTarget(session)
   const ownChapter = v4 && journey && session && journey.slug === session.slug && (named || versionId) ? journey : null
 
   // Playback lives above the router. This screen is a view onto it, so
@@ -737,6 +739,29 @@ export function PlayerPage() {
             {/* Same hand-off Wellness's own "Analyze my state" chips use: land
                 in the cockpit with the question already asked, rather than a
                 blank thread the user has to explain themselves into again. */}
+            {v4 ? (
+              /* v4 (U051): someone else's session, simplified. The two extra
+                 doors into the chat, the stats, three Recreate cards (each
+                 forking a *different* session) and the Details card become
+                 one Recreate for this session and one link to Session
+                 details, where the stats, versions and lineage live. */
+              <div className="mt-24 flex flex-col gap-12">
+                <Link
+                  to={recreateThis.to}
+                  state={recreateThis.state}
+                  className="u-press flex h-48 items-center justify-center gap-8 rounded-16 bg-[#331B04] text-[16px] leading-[19px] text-white"
+                >
+                  <Shuffle size={16} /> Recreate this session
+                </Link>
+                <Link
+                  to={`/session/${session.slug}`}
+                  className="u-press flex h-48 items-center justify-center gap-8 rounded-16 border border-[#331B04] text-[16px] leading-[19px] text-text-primary"
+                >
+                  Session details <ChevronRight size={16} />
+                </Link>
+              </div>
+            ) : (
+            <>
             <div className="-mx-20 mt-20 flex gap-12 overflow-x-auto px-20 pb-4">
               <button
                 type="button"
@@ -798,6 +823,8 @@ export function PlayerPage() {
               <h2 className="text-style-body text-text-primary">Details</h2>
               <SessionDetails session={session} playingId={versionId} playBase={`/play/${session.slug}`} />
             </section>
+            </>
+            )}
             </>
           )}
         </div>

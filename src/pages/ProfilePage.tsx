@@ -1,8 +1,13 @@
 import { useState } from 'react'
-import { ArrowLeft, Menu, Settings, Share2, Shuffle, Sticker } from 'lucide-react'
+import { ArrowLeft, ChevronRight, Menu, Settings, Share2, Shuffle, Sticker } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { PageMeta } from '../components/PageMeta'
-import { CoinPill } from '../components/ui/CoinPill'
+import { CoinMark, CoinPill } from '../components/ui/CoinPill'
+import { MessageQuestionIcon, NotificationActiveIcon, NotificationIcon, PlaylistIcon, UserAddIcon } from '../components/ui/AureliaIcons'
+import { useFeatureFlags } from '../demo/FeatureFlags'
+import { useHasUnreadNotifications } from '../lib/notificationsSeen'
+import { useUiVersion } from '../versions/useUiVersion'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { CoinFlip } from '../versions/CoinFlip'
 import { SessionGridCard } from '../components/ui/SessionGridCard'
@@ -46,6 +51,12 @@ export function ProfilePage() {
   // `lineage.length > 2` test the session row's own marker uses, so the tab
   // never disagrees with what a card already says about itself.
   const [tab, setTab] = useState<ProfileTab>('sessions')
+  const { isEnabled } = useFeatureFlags()
+  const unread = useHasUnreadNotifications()
+  // v4 (U051): your own profile is the Me tab — everything about your account
+  // in one list (D4: the coin balance lives here). Someone else's profile is
+  // unchanged: it is their public page, reached from Discover.
+  const me = useUiVersion() >= 4 && Boolean(person?.isSelf)
 
   if (!person) return <Navigate to="/profile" replace />
   const own = person.isSelf
@@ -67,7 +78,7 @@ export function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-[960px] px-20 py-16 lg:px-24 lg:py-24">
-      <PageMeta title={own ? 'Profile' : person.name} />
+      <PageMeta title={me ? 'Me' : own ? 'Profile' : person.name} />
       <header className="u-sticky-top flex items-center justify-between">
         <div className="flex min-w-0 items-center gap-12">
           {own ? (
@@ -90,7 +101,7 @@ export function ProfilePage() {
             </button>
           )}
           <h1 className="text-style-title-large-regular truncate text-text-primary">
-            {own ? 'Profile' : person.name}
+            {me ? 'Me' : own ? 'Profile' : person.name}
           </h1>
         </div>
         <div className="flex shrink-0 items-center gap-12">
@@ -113,7 +124,7 @@ export function ProfilePage() {
           </button>
           {/* Only on your own profile: there is nothing of a stranger's to
               configure. */}
-          {own && (
+          {own && !me && (
             <Link
               to="/settings"
               aria-label="Settings"
@@ -155,6 +166,24 @@ export function ProfilePage() {
         </div>
       </div>
 
+      {me ? (
+        <nav aria-label="Your account" className="mt-32 flex flex-col overflow-hidden rounded-[20px] border border-border-subtle bg-surface-default">
+          <MeRow to="/sessions" icon={<PlaylistIcon size={24} />} label="Library" hint="Sessions you made and played" />
+          <MeRow to="/credits" icon={<CoinMark size={24} />} label="Credits & plan" value="1,323" />
+          {isEnabled('notifications') && (
+            <MeRow
+              to="/notifications"
+              icon={unread ? <NotificationActiveIcon size={24} /> : <NotificationIcon size={24} />}
+              label="Notifications"
+              hint={unread ? 'New activity' : undefined}
+            />
+          )}
+          {isEnabled('invite') && <MeRow to="/invite" icon={<UserAddIcon size={24} />} label="Invite a friend" />}
+          <MeRow to="/settings" icon={<Settings size={22} strokeWidth={1.5} />} label="Settings" />
+          {isEnabled('help') && <MeRow to="/help" icon={<MessageQuestionIcon size={24} />} label="Help" />}
+        </nav>
+      ) : (
+      <>
       {/* Sessions is everything published; Recreated narrows that to the
           forks among them. Two readings of the same shelf, not two shelves —
           switching tabs never refetches anything. Figma 16744:6367 puts 32px
@@ -201,6 +230,24 @@ export function ProfilePage() {
           />
         ))}
       </div>
+      </>
+      )}
     </div>
   )
 }
+
+/** One row of Me (v4): what it is, an optional line or figure, and a chevron. */
+function MeRow({ to, icon, label, hint, value }: { to: string; icon: ReactNode; label: string; hint?: string; value?: string }) {
+  return (
+    <Link to={to} className="u-press flex items-center gap-14 border-b border-border-subtle px-16 py-14 last:border-b-0">
+      <span className="flex size-24 shrink-0 items-center justify-center text-icon-default">{icon}</span>
+      <span className="flex min-w-0 flex-1 flex-col gap-2">
+        <span className="text-style-body text-text-primary">{label}</span>
+        {hint && <span className="text-style-caption text-text-secondary">{hint}</span>}
+      </span>
+      {value && <span className="text-style-body-small tabular-nums text-text-primary">{value}</span>}
+      <ChevronRight size={18} className="shrink-0 text-icon-default" />
+    </Link>
+  )
+}
+

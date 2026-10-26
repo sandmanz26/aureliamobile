@@ -260,6 +260,9 @@ function ScriptTabV2() {
 export function SessionSettingsPage() {
   const navigate = useNavigate()
   const v2 = useUiVersion() >= 2
+  // v4 (U051): two different screens were both titled "Settings" (account and
+  // session). This one edits a session, so it says so.
+  const v4 = useUiVersion() >= 4
   const [tab, setTab] = useState<Tab>('script')
   const [removed, setRemoved] = useState<Set<string>>(new Set())
   const [added, setAdded] = useState<Set<string>>(new Set())
@@ -295,7 +298,7 @@ export function SessionSettingsPage() {
         pendingCount > 0 ? 'pb-96' : 'pb-48'
       }`}
     >
-      <PageMeta title="Session settings" />
+      <PageMeta title={v4 ? 'Edit session' : 'Session settings'} />
       <header className="u-sticky-top flex items-center gap-12 px-20 py-16 lg:px-24">
         <button
           type="button"
@@ -305,7 +308,7 @@ export function SessionSettingsPage() {
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-style-title truncate text-text-primary">{v2 ? 'Settings' : 'Session settings'}</h1>
+        <h1 className="text-style-title truncate text-text-primary">{v4 ? 'Edit session' : v2 ? 'Settings' : 'Session settings'}</h1>
       </header>
 
       {/* Full width below lg (U043). Capped at the frame's 402 it sat as a

@@ -9,7 +9,8 @@ import { useDrawer } from '../layouts/DrawerContext'
 import { CURRENT_USER } from '../lib/people'
 import { CARD_SHADOW } from '../lib/shadows'
 import type { SessionRecord } from '../lib/sessions'
-import { PUBLISHED_SESSIONS, SESSIONS, durationLabel, isPublished, isRecreated } from '../lib/sessions'
+import { PUBLISHED_SESSIONS, SESSIONS, durationLabel, isPublished, isRecreated, recentSessions } from '../lib/sessions'
+import { useUiVersion } from '../versions/useUiVersion'
 
 
 /**
@@ -64,7 +65,17 @@ function Pill({ className, children }: { className: string; children: React.Reac
  * conversation, and the two icons act on the session itself. They are
  * separated because a 362-wide row with one destination wastes the row.
  */
-function SessionRow({ session, onDelete }: { session: SessionRecord; onDelete: (slug: string) => void }) {
+function SessionRow({
+  session,
+  onDelete,
+  editable = true,
+}: {
+  session: SessionRecord
+  onDelete: (slug: string) => void
+  /** v4 (U051): Edit and Delete only on your own sessions. They showed on
+   *  Sara's and Lily's too (J038), which was a bug as much as clutter. */
+  editable?: boolean
+}) {
   const outcome = session.outcome[0]
   const down = outcome?.value.trim().startsWith('−') || outcome?.value.trim().startsWith('-')
   const published = isPublished(session)
@@ -104,6 +115,7 @@ function SessionRow({ session, onDelete }: { session: SessionRecord; onDelete: (
           <MetaLine session={session} />
         </Link>
 
+        {editable && (
         <div className="flex shrink-0 items-center gap-12">
           <Link
             to="/session-settings"
@@ -128,6 +140,7 @@ function SessionRow({ session, onDelete }: { session: SessionRecord; onDelete: (
             <Trash2 size={16} />
           </button>
         </div>
+        )}
       </div>
 
       {/* Row 2 — the two facts about the session rather than about its author. */}
@@ -196,7 +209,12 @@ function ScopeChip({
 export function SessionsPage() {
   const { openDrawer } = useDrawer()
   const gate = useSignInGate()
-  const [scope, setScope] = useState<'all' | 'mine'>('all')
+  // v4 (U051): this is Me → Library — your sessions, Created and Played.
+  // "All" mixed yours with everyone else's, which is Discover's job, and
+  // Explore's Recently played (your history) moves here as Played.
+  const library = useUiVersion() >= 4
+  const [scope, setScope] = useState<'all' | 'mine' | 'played'>(() => (library ? 'mine' : 'all'))
+  const title = library ? 'Library' : 'Sessions'
   // Deleted in this browser only. The catalogue is a module constant, so a
   // reload brings them back — the same contract as every other thing this demo
   // remembers, and better than a delete that visibly does nothing.
@@ -207,12 +225,14 @@ export function SessionsPage() {
   const shown = (
     scope === 'mine'
       ? SESSIONS.filter((s) => s.author === CURRENT_USER)
-      : PUBLISHED_SESSIONS
+      : scope === 'played'
+        ? recentSessions()
+        : PUBLISHED_SESSIONS
   ).filter((s) => !deleted.includes(s.slug))
 
   return (
     <div className="pb-40">
-      <PageMeta title="Sessions" description="Browse and manage your Aurelia sessions." />
+      <PageMeta title={title} description="Browse and manage your Aurelia sessions." />
       <div className="mx-auto max-w-[960px]">
         {/* Header: 68 tall on a 20px gutter, 12 top and bottom, 20 between the
             menu and the title. */}
@@ -229,7 +249,7 @@ export function SessionsPage() {
             {/* Regular in the frame, not semibold — font-normal! because
                 .text-style-* sits outside Tailwind's utility layer. */}
             <h1 className="truncate text-[24px] font-normal! leading-[30px] text-text-primary">
-              Sessions
+              {title}
             </h1>
           </div>
           <CoinPill points="1,323" className={CARD_SHADOW} />
@@ -238,12 +258,21 @@ export function SessionsPage() {
         {/* Body: 20 all round, 32 between the chips and the list. */}
         <div className="flex flex-col gap-32 p-20">
           <div className="flex gap-7">
-            <ScopeChip active={scope === 'all'} label="All" narrow onClick={() => setScope('all')} />
-            <ScopeChip
-              active={scope === 'mine'}
-              label="Created by you"
-              onClick={() => setScope('mine')}
-            />
+            {library ? (
+              <>
+                <ScopeChip active={scope === 'mine'} label="Created" onClick={() => setScope('mine')} />
+                <ScopeChip active={scope === 'played'} label="Played" onClick={() => setScope('played')} />
+              </>
+            ) : (
+              <>
+                <ScopeChip active={scope === 'all'} label="All" narrow onClick={() => setScope('all')} />
+                <ScopeChip
+                  active={scope === 'mine'}
+                  label="Created by you"
+                  onClick={() => setScope('mine')}
+                />
+              </>
+            )}
           </div>
 
           {/* Single column everywhere up to lg: a 960px-wide row of the
@@ -256,6 +285,7 @@ export function SessionsPage() {
               <SessionRow
                 key={session.slug}
                 session={session}
+                editable={!library || session.author === CURRENT_USER}
                 onDelete={(slug) => setDeleted((list) => [...list, slug])}
               />
             ))}

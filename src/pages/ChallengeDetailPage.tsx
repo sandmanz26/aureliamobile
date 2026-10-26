@@ -165,7 +165,7 @@ export function ChallengeDetailPage() {
               <ArrowLeft size={20} />
             </button>
             <div className="flex items-center gap-8">
-              <CoinPill points="1,323" className="shadow-sm" />
+              <CoinPill always points="1,323" className="shadow-sm" />
               <button
                 type="button"
                 aria-label="Share challenge"

@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react'
+import { Plus, Sparkles } from 'lucide-react'
 import { Suspense, useEffect, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate, useNavigationType } from 'react-router-dom'
 import { FloatingPlayer, PullIndicator, usePullToRefresh, useSheetDrag } from '../versions/V2Shell'
@@ -16,6 +16,7 @@ import { NavItem } from '../components/ui/NavItem'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { recentSessions } from '../lib/sessions'
 import { DrawerContext } from './DrawerContext'
+import { TabBar } from '../components/ui/TabBar'
 
 const LATEST = recentSessions()
 
@@ -25,6 +26,26 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { signedIn } = useAuth()
   const gate = useSignInGate()
   const navigate = useNavigate()
+  const v4 = useUiVersion() >= 4
+  // Signed in, the account itself is an item and wears the user's face;
+  // signed out, the same slot is the way in. First in v1–v3; in v4 it is
+  // "Me", the last of the four (U051).
+  const account = signedIn ? (
+    <NavItem
+      to="/profile"
+      icon={
+        <PhotoCircle
+          photo="avatar"
+          size={24}
+          gradient="conic-gradient(from 180deg, var(--color-blue-300), var(--color-gold-300), var(--color-blue-300))"
+        />
+      }
+      label={v4 ? 'Me' : 'Profile'}
+      disabled={!isEnabled('profile')}
+    />
+  ) : (
+    <NavItem to="/login" icon={<UserIcon size={24} className="shrink-0" />} label="Sign In" disabled={!isEnabled('auth')} />
+  )
 
   return (
     /* Figma "Menu" (16651:12647) — 313 wide on surface/default, 16 side
@@ -62,30 +83,28 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       {/* No gap: the frame's rows are 56 tall and stack flush, so the spacing
           is the row's own padding rather than a gutter between them. */}
       <nav className="flex flex-col" onClick={onNavigate}>
-        {/* Signed in, the account itself is the first item and wears the user's
-            face; signed out, the same slot is the way in. */}
-        {signedIn ? (
-          <NavItem
-            to="/profile"
-            icon={
-              <PhotoCircle
-                photo="avatar"
-                size={24}
-                gradient="conic-gradient(from 180deg, var(--color-blue-300), var(--color-gold-300), var(--color-blue-300))"
-              />
-            }
-            label="Profile"
-            disabled={!isEnabled('profile')}
-          />
-        ) : (
-          <NavItem to="/login" icon={<UserIcon size={24} className="shrink-0" />} label="Sign In" disabled={!isEnabled('auth')} />
-        )}
+        {/* v1–v3: the account comes first. v4 puts it last, as Me. */}
+        {!v4 && account}
         {/* No Chat entry: the design's drawer goes Profile / Explore / Sessions
             / My wellness, and the cockpit is reached by "New session" below
             rather than by being a destination of its own. */}
-        <NavItem to="/explore" icon={<NoteIcon size={24} className="shrink-0" />} label="Explore" disabled={!isEnabled('explore')} />
-        <NavItem to="/sessions" icon={<PlaylistIcon size={24} className="shrink-0" />} label="Sessions" disabled={!isEnabled('sessions')} />
-        <NavItem to="/wellness" icon={<ChartMediumIcon size={24} className="shrink-0" />} label="My wellness" disabled={!isEnabled('wellness')} />
+        {v4 ? (
+          /* v4 (U051): the desktop sidebar names the same four core features
+             as the mobile tab bar. "Me" is the account item above (Profile is
+             Me now); Library, credits, invite and help live inside it. */
+          <>
+            <NavItem to="/home" icon={<Sparkles size={22} strokeWidth={1.5} className="shrink-0" />} label="Create" />
+            <NavItem to="/explore" icon={<NoteIcon size={24} className="shrink-0" />} label="Discover" disabled={!isEnabled('explore')} />
+            <NavItem to="/wellness" icon={<ChartMediumIcon size={24} className="shrink-0" />} label="Progress" disabled={!isEnabled('wellness')} />
+            {account}
+          </>
+        ) : (
+          <>
+            <NavItem to="/explore" icon={<NoteIcon size={24} className="shrink-0" />} label="Explore" disabled={!isEnabled('explore')} />
+            <NavItem to="/sessions" icon={<PlaylistIcon size={24} className="shrink-0" />} label="Sessions" disabled={!isEnabled('sessions')} />
+            <NavItem to="/wellness" icon={<ChartMediumIcon size={24} className="shrink-0" />} label="My wellness" disabled={!isEnabled('wellness')} />
+          </>
+        )}
       </nav>
 
       {/* Figma "Frame 25" — Latest and the button are one block, 20 inside and
@@ -93,7 +112,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <div className="flex flex-col gap-32 p-20">
         {signedIn && (
           <div className="flex flex-col gap-20">
-            <p className="text-style-body-small text-text-secondary">Latest</p>
+            <p className="text-style-body-small text-text-secondary">{v4 ? 'Recent' : 'Latest'}</p>
             {/* Real sessions, and each one opens its own thread. These were three
                 inert divs naming sessions that did not exist — on the one shelf
                 whose whole job is taking you back to a conversation. */}
@@ -197,6 +216,7 @@ export function AppLayout() {
   // Design Version 2 (staging only): directional page transitions, pull to
   // refresh, draggable sheets and a player that follows you. See V2Shell.
   const v2 = useUiVersion() >= 2
+  const v4 = useUiVersion() >= 4
   const navType = useNavigationType()
   const { pull, refreshing, key: refreshKey } = usePullToRefresh(v2)
   useSheetDrag(v2)
@@ -271,6 +291,9 @@ export function AppLayout() {
               <Outlet />
             </Suspense>
             {v2 && <FloatingPlayer pathname={location.pathname} />}
+            {/* v4 (U051): four tabs below lg. Not in the cockpit, which is a
+                full-screen task with its own way back. */}
+            {v4 && !location.pathname.startsWith('/chat') && <TabBar />}
           </div>
         </div>
       </div>

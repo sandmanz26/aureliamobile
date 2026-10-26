@@ -57,3 +57,21 @@ describe('inferFromWords', () => {
     expect(inferFromWords('hello')).toEqual({ goal: null, feelings: [] })
   })
 })
+
+describe('asOptions (one list of changes, U051)', () => {
+  it('keeps the sheet entry, and its score, for a proposal the sheet already lists', async () => {
+    const { asOptions, FROM_DIAGNOSIS } = await import('./addOptions')
+    const { RECOMMENDATIONS } = await import('./thread')
+    const options = asOptions(RECOMMENDATIONS)
+    const yellow = options.find((o) => o.id === 'yellow')
+    expect(yellow).toBe(FROM_DIAGNOSIS.find((o) => o.id === 'yellow'))
+    expect(options.map((o) => o.id)).toEqual(RECOMMENDATIONS.map((r) => r.id))
+  })
+
+  it('turns a goal deck into rows with a kind and no invented score', async () => {
+    const { asOptions } = await import('./addOptions')
+    const options = asOptions(deckFor({ ...DEFAULTS, goal: 'sleep' }))
+    expect(options.map((o) => o.kind)).toEqual(['movement', 'visual', 'sound'])
+    expect(options.every((o) => o.improveScore === undefined)).toBe(true)
+  })
+})

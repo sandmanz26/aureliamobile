@@ -517,3 +517,14 @@ journey (`lib/journey.ts`, `aurelia.journey`) — the player asks "How do you fe
 now?" instead of showing demo progress, offers a calendar (.ics) reminder, and
 signed-in Home leads with the next chapter and drops the marketing blocks;
 Quick Start Play plays before sign-in; Connect starts all off.
+**v4 also carries the J038 simplification (U051, D1–D7):** below `lg` four
+bottom tabs (`components/ui/TabBar.tsx`) — Create (`/home`), Discover
+(`/explore`), Progress (`/wellness`), Me (`/profile`) — replace the hamburger
+(every `aria-label="Open menu"` is hidden by `versions.css` in v4; the chat has
+Back instead); the desktop sidebar names the same four. Library is
+`/sessions` (Created / Played, edit only your own); the coin balance shows only
+in Me, Invite and a challenge (`CoinPill always`); `/progress/:slug` redirects
+to Session details or Analysis; others' player sheet is one Recreate + Session
+details; the chat's deck opens the "+" sheet as the one list of changes. The
+v4 CSS is written for `data-ui-version='4'` exactly — a v5 that keeps the tabs
+must widen it.
