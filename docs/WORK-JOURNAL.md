@@ -92,6 +92,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J038 | 2026-10-25 | Analysis | Simplification research + plan PDF with annotated screenshots and drafts (no code) | docs only |
 | J039 | 2026-10-25 | Research | First-time-user retention simulation: 6 personas on the real v4 build, sequenced questionnaire, D1/D7/D30 predictions per suggestion (no code) | docs only |
 | J040 | 2026-10-26 | Code | J039 refinements applied to v4 (U050), after: validity question, summary of what to refine, "is it already in v4?" | U050 |
+| J041 | 2026-10-26 | Question | Status of Eugene's simplification (J038) after U050 | docs only |
 
 ---
 
@@ -373,4 +374,19 @@ transcript and the update log. Everything from J018 on was written at the time.
   - **Already in v4?** Partly: onboarding and the mood feedback exist but misbehave. Reminder, personal Home and real progress did not exist.
 - **Done:** U050, all in v4. See the U-entry for the change list and the before/after persona re-run (Maya 14 → 5 taps; nobody lands in the demo thread).
 - **Open:** O17 updated (D2, the real test, the remaining R9/R10, storybook stories).
+
+### J041 — Status of the simplification (J038)
+- **Asked:** "bagaimana dengan simplifikasi yang kemarin diminta eugene?"
+- **Answered:** Still a plan, waiting on D1–D7 (O16).
+  - U050 delivered one piece in v4: D2, marketing hidden on Home when signed in.
+  - Not done yet:
+    - Phase 0 fixes: edit/delete icons on other people's sessions; "Settings" on two different screens.
+    - D1: four bottom tabs, as v5.
+    - D3: Data sources under Progress.
+    - D4: coins only in Me.
+    - D5: retire the Insights page.
+    - D6: one change list in the chat.
+    - D7: a Figma pass.
+  - Recommended: Phase 0 now, since it needs no decision beyond confirmation, then v5 once D1/D3–D6 are answered. J039 also showed that simplification alone barely moves retention, so it comes after U050, not instead of it.
+- **Open:** O16 unchanged except D2, now done in v4.
 
