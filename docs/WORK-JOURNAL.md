@@ -44,7 +44,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O14 | **Production hardening still to decide**: (1) an error-reporting service (Sentry or similar) to plug into `reportError`; (2) an end-to-end test suite (Playwright) for sign-in, onboarding, build/publish; (3) `vercel.json` blocks the microphone (`Permissions-Policy: microphone=()`), which must change before real voice input; (4) whether to trim bundle size with `zod/mini` | J035, U048 | Product owner + engineering |
 | O15 | **404 vs sign-in for shared links**: with U049 a signed-out visitor opening a shared session/player link sees the 404 (with Sign in). Right for privacy; worse for sharing. If sessions are meant to be shared publicly, the player/session pages may need to become public (or show a teaser) rather than 404 | J037, U049 | Product owner |
 | O16 | **Simplification plan, decisions D1–D7** (`docs/reviews/Aurelia-Simplification-Plan-2026-10-25.pdf` §7): four bottom tabs on mobile (a frozen-layout change); hide the marketing on Home when signed in; Data sources under Progress or as its own tab; coins only in Me; retire the Insights page; one list of changes in the chat (settles O12); a Figma pass for the new pieces | J038 | Product owner + Eugene, then a designer |
-| O17 | **Retention simulation, decisions D1–D5** (`docs/reviews/Aurelia-Retention-Simulation-2026-10-25.pdf` §8): which fixes form v5 (recommended: R1 their words, R2 fresh first thread + no early paywall, R3 build from the goal, R5 honest day 0 + check-in, R6 Chapter 2 reminder); persist sign-in and built sessions in a test build (reverses the AuthContext choice, test only); reminder channel without a backend (.ics now, push later); Quick Start plays a preview before sign-in; free limit counts only after the first session is played. Also: run the real 8–12 person test before trusting any number | J039 | Product owner + Eugene |
+| O17 | **Retention simulation follow-ups** (J039 §8): D1/D3/D4/D5 were settled by "update saja di v4" (U050: fixes in v4 rather than v5, `.ics` reminder, Quick Start plays before sign-in, limit after the first build). Still open: **D2**, which is persisting sign-in for a real retention test (the journey already persists per browser); the real 8–12 person test; Sessions/Notifications empty states; R10 beyond the five-chapter prompt; storybook stories for `ChapterCheckIn`/`NextChapterCard` | J039, J040, U050 | Product owner + Eugene |
 
 ---
 
@@ -91,6 +91,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J037 | 2026-10-25 | Code | Offline: some pages must still open; 404 when forcing a signed-in page | U049 |
 | J038 | 2026-10-25 | Analysis | Simplification research + plan PDF with annotated screenshots and drafts (no code) | docs only |
 | J039 | 2026-10-25 | Research | First-time-user retention simulation: 6 personas on the real v4 build, sequenced questionnaire, D1/D7/D30 predictions per suggestion (no code) | docs only |
+| J040 | 2026-10-26 | Code | J039 refinements applied to v4 (U050), after: validity question, summary of what to refine, "is it already in v4?" | U050 |
 
 ---
 
@@ -358,3 +359,18 @@ transcript and the update log. Everything from J018 on was written at the time.
   - **Simple flow:** short yes, solving their goal no — the steps are fine, relevance and continuity are not.
   - **Return:** nothing asks them back today. The loop needed is: heard me → a promise (Chapter 2) → a cue → proof from their own check-ins → a second goal.
 - **Open:** O17. No code changed. Caveat stated in the PDF: a simulation ranks fixes and gives an order of magnitude; §8 is the real 8–12 person test that replaces it.
+
+### J040 — How valid is J039, what to refine, and applying it to v4 (U050)
+- **Asked, in order:**
+  1. Why the PDF would not open in the app's file panel. It has no inline PDF preview; the file was re-sent as an attachment.
+  2. "seberapa valid riset yang kamu buat dalam PDF?"
+  3. A short summary of which features to refine.
+  4. "itu sudah ada di v4?"
+  5. "oke update saja di v4 deh".
+- **Answers given:**
+  - **Validity:** the findings F1–F9 and the tap counts are valid (observed on the real build). The share of people hitting each finding depends on which doors were chosen. Persona answers and retention numbers are low validity: authored by Claude, anchored to vendor benchmarks, ranges that are not confidence intervals, and a circular setup. Use the ranking, not the decimals, and run the real test.
+  - **What to refine:** (1) onboarding → first chat, (2) builder follows the goal, (3) an honest first player, (4) a reason to return (reminder + personal Home), (5) progress from their own check-ins. Plus Quick Start Play, their own data and Connect off. Prerequisite: persistence (D2).
+  - **Already in v4?** Partly: onboarding and the mood feedback exist but misbehave. Reminder, personal Home and real progress did not exist.
+- **Done:** U050, all in v4. See the U-entry for the change list and the before/after persona re-run (Maya 14 → 5 taps; nobody lands in the demo thread).
+- **Open:** O17 updated (D2, the real test, the remaining R9/R10, storybook stories).
+

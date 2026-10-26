@@ -87,6 +87,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U047 | `720e50a` | 2026-10-22 06:14 | Design v4 = v3 + first-run onboarding (`/welcome`): goal, feeling, style, editable summary → first session; Skip keeps answers; Replay in Settings. | [patch](patches/U047-720e50a.patch) |
 | U048 | `8bb282f` | 2026-10-23 15:35 | Production-grade foundation: TanStack Query, typed/validated HTTP, safe storage, error reporting, shared KV, 0 lint warnings, 55 Vitest tests, CI. No visual change. | [patch](patches/U048-8bb282f.patch) |
 | U049 | `8a6f011` | 2026-10-25 09:42 | Offline support (service worker, offline banner, update prompt) + 404 for signed-out forced access to protected pages. | [patch](patches/U049-8a6f011.patch) |
+| U050 | `ae75233` | 2026-10-26 00:05 | v4 first-time fixes from the J039 retention simulation: words kept into onboarding, own thread + goal deck, limit after first build, chapter check-in + calendar reminder, next-chapter Home, Quick Start plays, Connect off. | [patch](patches/U050-ae75233.patch) |
 
 ## Entries
 
@@ -916,3 +917,63 @@ Production (`web_prod`) is never touched by these updates unless asked.
   - `npm run check` is clean.
 - **Noted:** `npm audit` shows 3 high findings in dev-only `@figma/code-connect` (bundled zod 3). They are not in the app bundle; `npm audit --omit=dev` = 0.
 - **Revert:** `git revert --no-commit 8a6f011 && git checkout HEAD -- docs/ && npm install`. Note that a reverted deploy still leaves the old worker in browsers until it updates. A self-unregistering `sw.js` would be needed to remove it immediately.
+
+### U050 — v4: first-time fixes from the retention simulation
+
+- **Commit:** `ae75233` · pushed 2026-10-26 00:05 UTC · `web_app` + `admin_cms` · not on `web_prod`
+- **Patch:** [patches/U050-ae75233.patch](patches/U050-ae75233.patch)
+- **Request:** after J039 ("fitur apa yang harus kita refine?" → five features, "itu sudah ada di v4?" → no), "oke update saja di v4 deh".
+- **Interpretation:**
+  - The J039 recommendations go into **v4**, not a new v5, as the owner chose.
+  - v1–v3 and production (pinned to v2) are unchanged. The v4 screens are mobile screens, so this is an explicit mobile change for v4 only.
+  - Scope is the five features from the summary (R1, R2, R3, R5, R6, R7, plus a minimal R8) and the small ones (R4, and R9's Connect).
+  - The Sessions and Notifications empty states (rest of R9) and the second-goal invite (R10) are partial or left for later.
+  - Sign-in persistence (decision D2) is **not** changed. The journey lives in `localStorage` like onboarding, which is what lets tomorrow's visit find yesterday's chapter after signing in again.
+- **What changed (all `useUiVersion() >= 4`):**
+  - **R1 Their words** (`OnboardingPage`, `lib/onboarding.ts`, `chat/firstSession.ts`):
+    - A sentence typed on Home before sign-in pre-fills the goal and feelings (`inferFromWords`).
+    - Welcome goes straight to the summary ("Got it, Adam. Read from what you wrote"), and the brief carries "In my words: “…”".
+    - There is one button, **Build my first session**; "Continue where I was" is hidden when they arrived with words.
+    - Skip sends their words to a fresh thread.
+  - **R2 Own thread** (`ChatPage`):
+    - Bare `/chat` on the untouched demo thread resets to an empty thread of their own, whichever door they used. A fresh thread is named after the goal ("Sleep better v1.0"), "My first session v1.0" without one, and "New session v1.0" after the first.
+    - A first message no rule recognises gets the first-session reply instead of "noted for the next revision".
+  - **Free limit:** only sends after the first build count.
+  - **R3 Goal deck** (`chat/firstSession.ts`, `ChatSessionContext` `deck`/`replaceDeck`, `ChatMessageItem` `recommendations` prop):
+    - Three changes per goal (sleep, calm, clarity, focus, regulate, energy), with voice items dropped for "no voice" and sound items for "mostly silence". A "no spiritual/frequencies" request filters frequency items.
+    - No invented "Improve Score" (`Recommendation.improveScore` is now optional). Titles are kept within 13 characters so the folded deck does not clip them.
+    - The composer chips follow their choices (`suggestionsFor`): no "Make it longer" after 20 min.
+  - **Auto-build:** onboarding's button builds as soon as Aurelia has proposed (`firstSession` route flag).
+  - **Journey** (`lib/journey.ts`): the first build of an own thread starts a 5-chapter journey: goal, name, slug and check-ins, plus a reminder time once one is set.
+  - **R5 + R6 + R8 Player** (`ChapterCheckIn`, `PlayerPage`):
+    - The journey's session played as a build opens on "Chapter N · your starting point — How do you feel now?" (five faces) instead of the demo analysis.
+    - After answering: "Chapter N+1 is ready tomorrow (night)", then **Remind me at 22:30** (default per goal, editable). This downloads an `.ics` that repeats daily for the chapters left, with an alert.
+    - A 5-dot track. From two check-ins on, each answer is drawn as given.
+    - After five chapters: "Start on another goal".
+  - **R7 Home** (`NextChapterCard`, `HomePage`): signed in with a journey, Home leads with "Tonight · Sleep better — Chapter N". It says why ("last time you felt pleasant, this chapter keeps what worked"), shows Play, the reminder line and the track. The promo banner, the Adaptive Wellness grid and the closing CTA are hidden for signed-in users.
+  - **R4 Quick Start:** Play plays a catalogue session of that kind in place, before sign-in (the floating player shows it), and the icon turns to Pause.
+  - **R9 Connect:** all six sources start off (`defaultConnections(allOff)`).
+  - **Settings:** Replay onboarding also resets the journey.
+- **Tests:** `chat/firstSession.test.ts` (deck per goal, preference filters, no scores, title length, chips never undo a choice and reach a reply rule, inference) and `lib/journey.test.ts` (persistence, reset, schema rejects an edited record, reminder default, ICS start/repeat). The onboarding brief is now tested with their words. 74 tests total.
+- **Verified in the browser** (production build, 402 px), re-running the J039 personas:
+
+  | Persona | Before | After |
+  |---|---|---|
+  | Maya | 14 taps to the player | 5 taps. Summary pre-filled from her words; built "Sleep better v1.0" (Slow breath, Warm dim, Voice fades); check-in; `.ics` downloaded; Home shows "Sleep better — Chapter 2". |
+  | Sari | 13 taps | 6 taps |
+  | Tom | 15 taps | 6 taps |
+  | Raka (explore first) | lands in the demo thread | own "Feel calmer v1.0" thread with the calm deck; Connect shows 0/6; check-in on the player |
+  | Dewi (skipped onboarding) | "Sleep meditation v1.3" and the limit after one message | "Regulate my body v1.0" from "body scan"; first-session reply; no limit |
+  | Leo | — | Quick Start Play plays Clear Skies on Home |
+
+  - 53-route smoke test (v2/v4, 402/1280): no problems.
+  - v3 `/chat` still opens the demo conversation.
+  - Desktop 1280: Home card and player check-in checked.
+  - `npm run check` and the build are clean.
+- **Not done / follow-ups:**
+  - Stories for `ChapterCheckIn` and `NextChapterCard` on `storybook`.
+  - Sessions and Notifications empty states for a new user.
+  - Analytics and My Wellness are still mock.
+  - Replies after the first message are still keyword rules (mock AI).
+- **Revert:** `git revert --no-commit ae75233 && git checkout HEAD -- docs/`
+

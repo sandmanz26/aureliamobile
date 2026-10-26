@@ -1,0 +1,1483 @@
+From ae752338cfac042ab4d55bdc1f26a65bfac0030e Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Mon, 26 Oct 2026 00:03:56 +0000
+Subject: [PATCH] v4: first-time fixes from the retention simulation (U050)
+
+Onboarding keeps the sentence typed on Home and builds the first session
+from it; every v4 path opens the person's own thread with a deck for their
+goal; the free limit starts after the first build; the player asks for a
+check-in instead of showing demo progress, offers a calendar reminder for
+the next chapter, and Home leads with that chapter; Quick Start Play plays
+before sign-in; Connect starts all off. v1-v3 and production unchanged.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ CLAUDE.md                                   |   8 +
+ src/chat/ChatSessionContext.tsx             |  18 +-
+ src/chat/firstSession.test.ts               |  59 ++++++
+ src/chat/firstSession.ts                    | 118 +++++++++++
+ src/components/chat/ChatMessageItem.tsx     |  11 +-
+ src/components/chat/RecommendationCard.tsx  |   6 +-
+ src/components/wellness/ChapterCheckIn.tsx  | 223 ++++++++++++++++++++
+ src/components/wellness/NextChapterCard.tsx |  60 ++++++
+ src/lib/journey.test.ts                     |  42 ++++
+ src/lib/journey.ts                          | 163 ++++++++++++++
+ src/lib/onboarding.test.ts                  |   8 +
+ src/lib/onboarding.ts                       |   9 +-
+ src/lib/signals.ts                          |   6 +-
+ src/pages/AccountSettingsPage.tsx           |   3 +
+ src/pages/ChatPage.tsx                      |  93 +++++++-
+ src/pages/HomePage.tsx                      |  52 ++++-
+ src/pages/OnboardingPage.tsx                |  62 ++++--
+ src/pages/PlayerPage.tsx                    |  14 +-
+ src/pages/WellnessPage.tsx                  |   7 +-
+ 19 files changed, 921 insertions(+), 41 deletions(-)
+ create mode 100644 src/chat/firstSession.test.ts
+ create mode 100644 src/chat/firstSession.ts
+ create mode 100644 src/components/wellness/ChapterCheckIn.tsx
+ create mode 100644 src/components/wellness/NextChapterCard.tsx
+ create mode 100644 src/lib/journey.test.ts
+ create mode 100644 src/lib/journey.ts
+
+diff --git a/CLAUDE.md b/CLAUDE.md
+index 2e906ee..488e546 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -509,3 +509,11 @@ in the thread**.
+ **v4 = v3 + first-run onboarding** (U047): `/welcome`, shown after a first
+ sign-in/sign-up on a browser (`aurelia.onboarding` in localStorage — there
+ are no accounts); Settings → Replay onboarding runs it again.
++**v4 also carries the J039 first-time fixes (U050):** a sentence typed on Home
++pre-fills onboarding and becomes the first brief; every path opens a thread of
++the person's own (never the demo one) whose deck follows their goal; the free
++limit counts only after the first build; the first build starts a five-chapter
++journey (`lib/journey.ts`, `aurelia.journey`) — the player asks "How do you feel
++now?" instead of showing demo progress, offers a calendar (.ics) reminder, and
++signed-in Home leads with the next chapter and drops the marketing blocks;
++Quick Start Play plays before sign-in; Connect starts all off.
+diff --git a/src/chat/ChatSessionContext.tsx b/src/chat/ChatSessionContext.tsx
+index 7339375..9f2afcd 100644
+--- a/src/chat/ChatSessionContext.tsx
++++ b/src/chat/ChatSessionContext.tsx
+@@ -5,6 +5,7 @@ import { isPublished } from '../lib/sessions'
+ import { useAudioPlayer } from '../audio/AudioPlayerContext'
+ 
+ /** Delivery state, as a messaging app shows it: one tick sent, two ticks read. */
++import type { Recommendation } from '../components/chat/RecommendationCard'
+ import { DEFAULT_DRAFT, OPENING_MESSAGES, RECOMMENDATIONS, messagesForSession, nextVersionLabel, sessionNameOf } from './thread'
+ import type { Draft, DraftVersion, Message, SessionState } from './thread'
+ 
+@@ -15,6 +16,13 @@ interface ChatSessionValue {
+   setMessages: Dispatch<SetStateAction<Message[]>>
+   applied: string[]
+   setApplied: Dispatch<SetStateAction<string[]>>
++  /**
++   * The changes Aurelia proposes in this thread. The demo deck everywhere,
++   * except a v4 first session, which proposes changes for the person's own
++   * goal (U050). Swapping it re-selects all of it, as a new deck arrives.
++   */
++  deck: Recommendation[]
++  replaceDeck: (deck: Recommendation[]) => void
+   sessionState: SessionState
+   setSessionState: Dispatch<SetStateAction<SessionState>>
+   progress: number
+@@ -104,6 +112,11 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
+   // in the world opens on the cut people can hear, a draft on nothing.
+   const [publishedVersionId, setPublishedVersionId] = useState<string | null>(null)
+   const [applied, setApplied] = useState<string[]>(RECOMMENDATIONS.map((item) => item.id))
++  const [deck, setDeck] = useState<Recommendation[]>(RECOMMENDATIONS)
++  const replaceDeck = useCallback((next: Recommendation[]) => {
++    setDeck(next)
++    setApplied(next.map((item) => item.id))
++  }, [])
+   const [sessionState, setSessionState] = useState<SessionState>('idle')
+   const [progress, setProgress] = useState(0)
+   const [deckOpen, setDeckOpen] = useState(false)
+@@ -184,6 +197,7 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
+       setPublishedVersionId(isPublished(session) ? 'v0' : null)
+       const opening = messagesForSession(session)
+       setMessages(opening)
++      setDeck(RECOMMENDATIONS)
+       setApplied(RECOMMENDATIONS.map((item) => item.id))
+       setSessionState('idle')
+       setProgress(0)
+@@ -235,6 +249,7 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
+     stop()
+     setPublishedVersionId(null)
+     setMessages(opening)
++    setDeck(RECOMMENDATIONS)
+     setApplied(RECOMMENDATIONS.map((item) => item.id))
+     setSessionState('idle')
+     setProgress(0)
+@@ -255,6 +270,7 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
+     () => ({
+       messages, setMessages,
+       applied, setApplied,
++      deck, replaceDeck,
+       sessionState, setSessionState,
+       progress, setProgress,
+       deckOpen, setDeckOpen,
+@@ -265,7 +281,7 @@ export function ChatSessionProvider({ children }: { children: ReactNode }) {
+       reset,
+     }),
+     [
+-      messages, applied, sessionState, progress, deckOpen, sessionSlug, openSession, draft,
++      messages, applied, deck, replaceDeck, sessionState, progress, deckOpen, sessionSlug, openSession, draft,
+       versions, currentVersionId, publishedVersionId, markPublished, markUnpublished, addVersion, revertTo, pointAt, renameSession, nextMessageId, reset,
+     ],
+   )
+diff --git a/src/chat/firstSession.test.ts b/src/chat/firstSession.test.ts
+new file mode 100644
+index 0000000..98ce70d
+--- /dev/null
++++ b/src/chat/firstSession.test.ts
+@@ -0,0 +1,59 @@
++import { describe, expect, it } from 'vitest'
++import { DEFAULTS } from '../lib/onboarding'
++import { FALLBACK, replyTo } from '../lib/replies'
++import { deckFor, inferFromWords, suggestionsFor } from './firstSession'
++
++describe('deckFor', () => {
++  it('proposes changes for the goal, not the demo deck', () => {
++    const titles = deckFor({ ...DEFAULTS, goal: 'sleep' }).map((r) => r.title)
++    expect(titles).toContain('Slow breath')
++    expect(titles).not.toContain('Increase yellow')
++    expect(titles).not.toContain('432Hz')
++  })
++
++  it('drops voice changes for someone who chose no voice, and sound changes for mostly silence', () => {
++    expect(deckFor({ ...DEFAULTS, goal: 'sleep', voice: 'none' }).map((r) => r.id)).not.toContain('sleep-fade')
++    expect(deckFor({ ...DEFAULTS, goal: 'focus', sounds: ['silence'] }).map((r) => r.id)).not.toContain('focus-bed')
++  })
++
++  it('falls back to the calm deck and is never empty', () => {
++    expect(deckFor({ ...DEFAULTS, goal: null }).length).toBeGreaterThan(0)
++    expect(deckFor({ goal: 'focus', voice: 'none', sounds: ['silence'] }).length).toBeGreaterThan(0)
++  })
++
++  it('keeps every title short enough for the folded deck', () => {
++    for (const goal of ['sleep', 'calm', 'clarity', 'focus', 'regulate', 'energy']) {
++      for (const r of deckFor({ ...DEFAULTS, goal })) expect(r.title.length).toBeLessThanOrEqual(13)
++    }
++  })
++
++  it('claims no score for a session with no history', () => {
++    expect(deckFor({ ...DEFAULTS, goal: 'calm' }).every((r) => r.improveScore === undefined)).toBe(true)
++  })
++})
++
++describe('suggestionsFor', () => {
++  it('never undoes a choice just made', () => {
++    expect(suggestionsFor({ length: 20, voice: 'female', sounds: ['music'] })).toEqual(['Make it shorter', 'Male voice', 'Add ocean waves'])
++    expect(suggestionsFor({ length: 5, voice: 'none', sounds: ['silence'] })).toEqual(['Make it longer', 'No voice at all', 'Make it quieter'])
++  })
++
++  it('phrases each chip so a reply rule answers it', () => {
++    for (const chip of [...suggestionsFor(DEFAULTS), ...suggestionsFor({ length: 20, voice: 'male', sounds: ['silence'] })]) {
++      expect(replyTo(chip)).not.toBe(FALLBACK)
++    }
++  })
++})
++
++describe('inferFromWords', () => {
++  it('reads the goal and feelings off what was typed on Home', () => {
++    expect(inferFromWords('I can’t fall asleep, my mind keeps racing')).toEqual({ goal: 'sleep', feelings: ['sleep', 'racing'] })
++    expect(inferFromWords('My therapist said I should work on regulating my nervous system').goal).toBe('regulate')
++    expect(inferFromWords('I feel anxious.')).toEqual({ goal: 'calm', feelings: ['anxious'] })
++    expect(inferFromWords('exam next week and I keep getting distracted').goal).toBe('focus')
++  })
++
++  it('leaves the goal open when nothing matches', () => {
++    expect(inferFromWords('hello')).toEqual({ goal: null, feelings: [] })
++  })
++})
+diff --git a/src/chat/firstSession.ts b/src/chat/firstSession.ts
+new file mode 100644
+index 0000000..602c27d
+--- /dev/null
++++ b/src/chat/firstSession.ts
+@@ -0,0 +1,118 @@
++import orbIncreaseYellow from '../assets/orb-increase-yellow.png'
++import orbLessMovement from '../assets/orb-less-movement.png'
++import type { Recommendation } from '../components/chat/RecommendationCard'
++import { COVER_PHOTOS, unsplash } from '../lib/photos'
++import type { Onboarding } from '../lib/onboarding'
++
++// The first session, built from what the person said (design v4, U050).
++//
++// J039's simulation found the first build ignored the goal: every person got
++// "Increase yellow — helps bring joy", "Less movement" and "432Hz", including
++// someone who asked to sleep and someone who said "no spiritual stuff". A
++// deck per goal is still mock (nothing is generated), but it no longer
++// contradicts what was asked a minute earlier. Pure data, so it is tested.
++
++const orb = (key: keyof typeof COVER_PHOTOS) => unsplash(COVER_PHOTOS[key], 160, 160)
++
++type Change = Recommendation & {
++  /** Dropped when the person chose no voice. */
++  voice?: boolean
++  /** Dropped when they asked for mostly silence. */
++  sound?: boolean
++}
++
++// Titles stay within 13 characters: the folded deck's text column is 103px
++// and clamps to one line, so a longer one renders as "Slow body…".
++const DECKS: Record<string, Change[]> = {
++  sleep: [
++    { id: 'sleep-exhale', title: 'Slow breath', description: 'Breath cues slow down toward a long exhale, the pace your body falls asleep at', orb: orbLessMovement, preview: 'night-rain-sleep' },
++    { id: 'sleep-dim', title: 'Warm, dim', description: 'The picture darkens and warms as it goes, nothing bright to wake you', orb: orb('sleep'), preview: 'dream-drift' },
++    { id: 'sleep-fade', title: 'Voice fades', description: 'The voice stops for the last minutes, so the session ends where you drift off', orb: orb('calm'), preview: 'night-rain-sleep', voice: true },
++  ],
++  calm: [
++    { id: 'calm-exhale', title: 'Longer exhale', description: 'Out-breath longer than the in-breath, the quickest way to settle stress', orb: orbLessMovement, preview: 'ocean-breath' },
++    { id: 'calm-pulse', title: 'Steady pulse', description: 'A slow, even rhythm with nothing sudden in it', orb: orb('water'), preview: 'dolphins-frequency', sound: true },
++    { id: 'calm-words', title: 'Fewer words', description: 'Short, plain guidance with room between the lines', orb: orb('calm'), preview: 'deep-grounding', voice: true },
++  ],
++  clarity: [
++    { id: 'clarity-space', title: 'More silence', description: 'Long quiet stretches, so thoughts can settle instead of being talked over', orb: orb('mountains'), preview: 'noting-practice' },
++    { id: 'clarity-bed', title: 'One tone', description: 'A single steady sound bed, nothing to follow', orb: orb('stones'), preview: 'clear-skies', sound: true },
++    { id: 'clarity-noting', title: 'Gentle noting', description: 'Name a thought, let it go, come back to the breath', orb: orbLessMovement, preview: 'noting-practice', voice: true },
++  ],
++  focus: [
++    { id: 'focus-bed', title: 'No melody', description: 'An even, melody-free bed, so the sound never pulls your attention', orb: orb('stones'), preview: 'clear-skies', sound: true },
++    { id: 'focus-quiet', title: 'Brief voice', description: 'One short cue to begin, then silence until the end cue', orb: orb('mountains'), preview: 'clear-skies', voice: true },
++    { id: 'focus-cues', title: 'Clear edges', description: 'A soft chime at both ends, so the block has edges', orb: orbIncreaseYellow, preview: 'clear-skies' },
++  ],
++  regulate: [
++    { id: 'regulate-scan', title: 'Body scan', description: 'Attention moves through the body, head to feet', orb: orb('underwater'), preview: 'deep-grounding', voice: true },
++    { id: 'regulate-low', title: 'Low tones', description: 'Deep, slow sound that the body can rest against', orb: orb('stones'), preview: 'deep-grounding', sound: true },
++    { id: 'regulate-exhale', title: 'Longer exhale', description: 'Out-breath longer than the in-breath, to settle a wired system', orb: orbLessMovement, preview: 'ocean-breath' },
++  ],
++  energy: [
++    { id: 'energy-bright', title: 'Warm light', description: 'Warm, rising light through the session', orb: orbIncreaseYellow, preview: 'morning-spark' },
++    { id: 'energy-breath', title: 'Lively breath', description: 'A quicker, fuller breath rhythm to lift a flat day', orb: orb('morning'), preview: 'morning-spark' },
++    { id: 'energy-close', title: 'Upbeat close', description: 'Ends on something that moves, not on stillness', orb: orb('glow'), preview: 'morning-spark', sound: true },
++  ],
++}
++
++/** What a typed "no …" rules out: anything that leans on frequencies or colour magic. */
++const NO_SPIRITUAL = /\bno\s+(spiritual|woo|frequenc|hz|mystic|chakra)/i
++
++/**
++ * The first session's proposals, for this person's goal and choices. Never
++ * empty: a goal it does not know gets the calm deck, the gentlest default.
++ */
++export function deckFor(answers: Pick<Onboarding, 'goal' | 'voice' | 'sounds'>, words = ''): Recommendation[] {
++  const base = DECKS[answers.goal ?? ''] ?? DECKS.calm
++  const silent = answers.sounds.length === 1 && answers.sounds[0] === 'silence'
++  const kept = base.filter((c) => !(c.voice && answers.voice === 'none') && !(c.sound && silent))
++  // The decks hold no frequency or colour-therapy claims already; the check is
++  // here so a future deck that adds one cannot slip it past a "no".
++  const allowed = NO_SPIRITUAL.test(words) ? kept.filter((c) => !/hz|frequenc/i.test(c.title)) : kept
++  const deck = allowed.length ? allowed : base.slice(0, 1)
++  return deck.map((c) => ({ id: c.id, title: c.title, description: c.description, orb: c.orb, preview: c.preview }))
++}
++
++/**
++ * The chips under the composer, chosen so none undoes a choice the person just
++ * made: no "Make it longer" for someone who picked 20 minutes, no "Female
++ * voice" for someone who already has one. Each is phrased to reach a reply
++ * rule in lib/replies.ts.
++ */
++export function suggestionsFor(answers: Pick<Onboarding, 'length' | 'voice' | 'sounds'>): string[] {
++  const length = answers.length >= 20 ? 'Make it shorter' : 'Make it longer'
++  const voice = answers.voice === 'female' ? 'Male voice' : answers.voice === 'male' ? 'Female voice' : 'No voice at all'
++  const sound = answers.sounds.includes('silence') ? 'Make it quieter' : answers.sounds.includes('nature') ? 'Add rain sounds' : 'Add ocean waves'
++  return [length, voice, sound]
++}
++
++const GOAL_WORDS: [string, RegExp][] = [
++  ['sleep', /\b(sleep|asleep|insomnia|bed ?time|awake at night|night)/i],
++  ['regulate', /\b(nervous system|regulat|burn ?out|burnt out|body|wired|panic)/i],
++  ['focus', /\b(focus|concentrat|study|exam|distract|deadline)/i],
++  ['energy', /\b(energy|tired|exhausted|drained|flat|sluggish)/i],
++  ['calm', /\b(anxious|anxiety|stress|calm|tense|overwhelm|worried)/i],
++  ['clarity', /\b(racing|overthink|clear my (mind|head)|noise in my head|clarity)/i],
++]
++
++const FEELING_WORDS: [string, RegExp][] = [
++  ['sleep', /\b(can['’]?t sleep|fall asleep|insomnia|hard to sleep|sleep (badly|poorly|well))/i],
++  ['stressed', /\bstress/i],
++  ['anxious', /\banxi/i],
++  ['racing', /\b(racing|overthink|keeps? spinning)/i],
++  ['focus', /\b(can['’]?t focus|distract|concentrat)/i],
++  ['energy', /\b(no energy|tired|exhausted|low energy)/i],
++  ['low', /\b(feel(ing)? low|sad|down|drained)/i],
++]
++
++/**
++ * A goal and feelings read off what someone typed on Home, so onboarding can
++ * open already answered instead of asking again (J039 F5). Only a starting
++ * point — every answer stays editable on the summary.
++ */
++export function inferFromWords(text: string): { goal: string | null; feelings: string[] } {
++  const goal = GOAL_WORDS.find(([, test]) => test.test(text))?.[0] ?? null
++  const feelings = FEELING_WORDS.filter(([, test]) => test.test(text)).map(([id]) => id).slice(0, 3)
++  return { goal, feelings }
++}
+diff --git a/src/components/chat/ChatMessageItem.tsx b/src/components/chat/ChatMessageItem.tsx
+index a8a8d6a..dbb7021 100644
+--- a/src/components/chat/ChatMessageItem.tsx
++++ b/src/components/chat/ChatMessageItem.tsx
+@@ -1,7 +1,7 @@
+ import { Fragment, useRef, useState } from 'react'
+ import { Reply } from 'lucide-react'
+ import type { Message } from '../../chat/thread'
+-import { RECOMMENDATIONS } from '../../chat/thread'
++import type { Recommendation } from './RecommendationCard'
+ import { AttachedSession } from './AttachedSession'
+ import { RecommendationCard } from './RecommendationCard'
+ import { RecommendationDeck } from './RecommendationDeck'
+@@ -17,6 +17,8 @@ interface ChatMessageItemProps {
+   deckOpen: boolean
+   canApply: boolean
+   applied: string[]
++  /** The deck this thread proposes — the demo one, or a v4 first session's (U050). */
++  recommendations: Recommendation[]
+   onToggleRecommendation: (id: string) => void
+   onOpenDeck: () => void
+   onSendPrompt: (text: string) => void
+@@ -150,6 +152,7 @@ export function ChatMessageItem({
+   deckOpen,
+   canApply,
+   applied,
++  recommendations,
+   onToggleRecommendation,
+   onOpenDeck,
+   onSendPrompt,
+@@ -189,7 +192,7 @@ export function ChatMessageItem({
+       // from here to the top of the "+" sheet (U045, team feedback).
+       deckOpen && canApply ? (
+         <div className="u-message -mx-20 mt-12 flex gap-11 overflow-x-auto px-20 pb-4">
+-          {RECOMMENDATIONS.map((recommendation) => (
++          {recommendations.map((recommendation) => (
+             <RecommendationCard
+               key={recommendation.id}
+               recommendation={recommendation}
+@@ -206,8 +209,8 @@ export function ChatMessageItem({
+         // behind, went back into hiding.
+         <div className="u-message -ml-4 mt-12">
+           <RecommendationDeck
+-            recommendations={RECOMMENDATIONS}
+-            count={applied.length || RECOMMENDATIONS.length}
++            recommendations={recommendations}
++            count={applied.length || recommendations.length}
+             onOpen={canApply ? onOpenDeck : undefined}
+           />
+         </div>
+diff --git a/src/components/chat/RecommendationCard.tsx b/src/components/chat/RecommendationCard.tsx
+index 880d58d..3a7caef 100644
+--- a/src/components/chat/RecommendationCard.tsx
++++ b/src/components/chat/RecommendationCard.tsx
+@@ -7,7 +7,9 @@ export interface Recommendation {
+   id: string
+   title: string
+   description: string
+-  improveScore: string
++  /** Left out where there is nothing to predict from yet — a first session
++   *  (v4, U050) has no history, so a score there would be invented. */
++  improveScore?: string
+   orb: string
+   /** The session this change previews against, for the play glyph on the orb. */
+   preview: string
+@@ -99,7 +101,7 @@ export function RecommendationCard({
+         <p className="text-style-caption font-light! text-text-primary">{description}</p>
+       </div>
+ 
+-      {!recreate && (
++      {!recreate && improveScore && (
+         <div className="flex items-center gap-8">
+           <span className="text-style-caption text-text-primary">Improve Score</span>
+           <span className="flex items-center gap-4 rounded-full bg-[#ecfbed] px-8 py-4 text-style-caption text-text-primary">
+diff --git a/src/components/wellness/ChapterCheckIn.tsx b/src/components/wellness/ChapterCheckIn.tsx
+new file mode 100644
+index 0000000..20526f4
+--- /dev/null
++++ b/src/components/wellness/ChapterCheckIn.tsx
+@@ -0,0 +1,223 @@
++import { BellRing, Check } from 'lucide-react'
++import { useState } from 'react'
++import { useNavigate } from 'react-router-dom'
++import mood1 from '../../assets/moods/mood-1.svg'
++import mood2 from '../../assets/moods/mood-2.svg'
++import mood3 from '../../assets/moods/mood-3.svg'
++import mood4 from '../../assets/moods/mood-4.svg'
++import mood5 from '../../assets/moods/mood-5.svg'
++import type { Journey } from '../../lib/journey'
++import {
++  FIRST_CHAPTERS,
++  MOOD_LABELS,
++  addCheckIn,
++  defaultReminderTime,
++  nextChapterWhen,
++  reminderIcs,
++  setReminder,
++} from '../../lib/journey'
++
++const FACES = [mood1, mood2, mood3, mood4, mood5]
++
++/** A check-in this recent belongs to this listen, so reopening the player does not ask again. */
++const SAME_LISTEN_MS = 6 * 60 * 60_000
++
++/**
++ * The player sheet for your own first sessions (design v4, U050).
++ *
++ * J039 found it opened on "Great Progress! +3% since yesterday … moved from
++ * anxious to calm by 35%" for someone who had not pressed play. Here nothing
++ * is claimed until it has been measured: the sheet asks one question, keeps
++ * the answer, promises the next chapter, offers a reminder for it, and only
++ * draws progress once there are two real answers to draw.
++ */
++export function ChapterCheckIn({ initial, goalLabel }: { initial: Journey; goalLabel: string | null }) {
++  const navigate = useNavigate()
++  const [journey, setJourney] = useState(initial)
++  const [now] = useState(() => Date.now())
++  const last = journey.checkIns[journey.checkIns.length - 1]
++  const answered = Boolean(last && now - last.at < SAME_LISTEN_MS)
++  const [time, setTime] = useState(journey.reminder ?? defaultReminderTime(journey.goal))
++  const [added, setAdded] = useState(false)
++
++  // The chapter this listen is: the last one answered, or the next one.
++  const chapter = answered ? journey.checkIns.length : journey.checkIns.length + 1
++  const previous = answered ? journey.checkIns[journey.checkIns.length - 2] : last
++  const done = journey.checkIns.length >= FIRST_CHAPTERS && answered
++
++  function pick(mood: number) {
++    const next = addCheckIn(mood)
++    if (next) setJourney(next)
++  }
++
++  function remind() {
++    const ics = reminderIcs({
++      name: journey.name,
++      time,
++      remaining: Math.max(1, FIRST_CHAPTERS - journey.checkIns.length),
++      url: `${window.location.origin}/home`,
++    })
++    const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }))
++    const a = document.createElement('a')
++    a.href = url
++    a.download = 'aurelia-next-chapter.ics'
++    a.click()
++    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
++    const next = setReminder(time)
++    if (next) setJourney(next)
++    setAdded(true)
++  }
++
++  const mood = answered && last ? last.mood : null
++  const better = mood !== null && mood >= 4
++
++  return (
++    <section className="flex flex-col gap-16 px-12" aria-label="Your chapter">
++      <p className="text-[12px] font-medium uppercase leading-[16px] tracking-[0.06em] text-[#8A5A1E]">
++        Chapter {chapter} · {chapter === 1 ? 'your starting point' : (goalLabel ?? journey.name)}
++      </p>
++
++      {mood === null ? (
++        <div className="flex flex-col gap-8">
++          <h2 className="text-[24px] font-normal leading-[32px] text-text-primary">How do you feel now?</h2>
++          <p className="text-[14px] font-light leading-[21px] text-text-secondary">
++            {previous
++              ? `Last time you said ${MOOD_LABELS[previous.mood - 1].toLowerCase()}. One tap, and Aurelia can tell whether this chapter moved it.`
++              : 'One tap gives Aurelia its first real answer from you. Nothing is measured until there is something to measure.'}
++          </p>
++          <div className="mt-8 flex items-center justify-between gap-6" role="radiogroup" aria-label="How do you feel now?">
++            {FACES.map((src, i) => (
++              <button
++                key={src}
++                type="button"
++                role="radio"
++                aria-checked={false}
++                aria-label={MOOD_LABELS[i]}
++                onClick={() => pick(i + 1)}
++                className="u-press flex flex-col items-center gap-6"
++              >
++                <img src={src} alt="" className="size-48 rounded-12" />
++                <span className="text-[11px] leading-[14px] text-text-secondary">{i + 1}</span>
++              </button>
++            ))}
++          </div>
++        </div>
++      ) : (
++        <div className="flex flex-col gap-8">
++          <h2 className="flex items-center gap-8 text-[24px] font-normal leading-[32px] text-text-primary">
++            <img src={FACES[mood - 1]} alt="" className="size-32 rounded-8" />
++            {better ? 'Glad it helped.' : 'Thanks for being honest.'}
++          </h2>
++          <p className="text-[14px] font-light leading-[21px] text-text-secondary">
++            You felt {MOOD_LABELS[mood - 1].toLowerCase()} after chapter {chapter}.{' '}
++            {done
++              ? 'That is your first five.'
++              : better
++                ? `Chapter ${chapter + 1} keeps what worked.`
++                : `Chapter ${chapter + 1} changes what didn’t.`}
++          </p>
++        </div>
++      )}
++
++      {mood !== null && !done && (
++        <div className="flex flex-col gap-12 rounded-16 bg-[#FFF8EC] p-16">
++          <p className="text-[12px] leading-[16px] text-[#8A5A1E]">Next</p>
++          <p className="-mt-6 text-[20px] leading-[28px] text-text-primary">
++            Chapter {chapter + 1} is ready {nextChapterWhen(journey.goal)}
++          </p>
++          {journey.reminder && !added ? (
++            <p className="flex items-center gap-8 text-[14px] font-light leading-[21px] text-text-secondary">
++              <BellRing size={16} className="shrink-0 text-[#8A5A1E]" />
++              In your calendar at {journey.reminder}.
++            </p>
++          ) : added ? (
++            <p className="flex items-center gap-8 text-[14px] font-light leading-[21px] text-text-secondary">
++              <Check size={16} className="shrink-0 text-success-600" />
++              Added for {time}, daily until chapter {FIRST_CHAPTERS}. Open the downloaded file if your calendar did not.
++            </p>
++          ) : (
++            <>
++              <p className="-mt-6 text-[14px] font-light leading-[21px] text-text-secondary">
++                Most people notice a change after a few days in a row. A reminder at the time you would play it helps.
++              </p>
++              <div className="flex items-center gap-8">
++                <button
++                  type="button"
++                  onClick={remind}
++                  className="u-press flex h-48 flex-1 items-center justify-center gap-8 rounded-16 bg-[#331B04] text-[16px] leading-[19px] text-white"
++                >
++                  <BellRing size={16} /> Remind me at {time}
++                </button>
++                <label className="flex h-48 shrink-0 items-center rounded-16 border border-border-subtle bg-surface-default px-10">
++                  <span className="sr-only">Reminder time</span>
++                  <input
++                    type="time"
++                    value={time}
++                    onChange={(event) => event.target.value && setTime(event.target.value)}
++                    className="bg-transparent text-[14px] text-text-primary focus:outline-none"
++                  />
++                </label>
++              </div>
++            </>
++          )}
++        </div>
++      )}
++
++      {done && (
++        <div className="flex flex-col gap-12 rounded-16 bg-[#FFF8EC] p-16">
++          <p className="text-[20px] leading-[28px] text-text-primary">Five chapters in.</p>
++          <p className="-mt-6 text-[14px] font-light leading-[21px] text-text-secondary">
++            Keep going with {journey.name}, or let Aurelia help with something else too.
++          </p>
++          <button
++            type="button"
++            onClick={() => navigate('/chat', { state: { fresh: true } })}
++            className="u-press flex h-48 items-center justify-center rounded-16 border border-[#331B04] text-[16px] leading-[19px] text-text-primary"
++          >
++            Start on another goal
++          </button>
++        </div>
++      )}
++
++      <ChapterTrack journey={journey} />
++    </section>
++  )
++}
++
++/**
++ * The first five as dots, and — once there are two — each answer as it was
++ * given. No smoothing, no projection: two points are what they are.
++ */
++export function ChapterTrack({ journey }: { journey: Journey }) {
++  const count = journey.checkIns.length
++  return (
++    <div className="flex flex-col gap-12">
++      <div className="flex items-center gap-6" aria-label={`${Math.min(count, FIRST_CHAPTERS)} of your first ${FIRST_CHAPTERS} chapters`}>
++        {Array.from({ length: FIRST_CHAPTERS }, (_, i) => (
++          <span
++            key={i}
++            className={`size-10 rounded-full ${i < count ? 'bg-[#F5A524]' : 'border border-border-subtle'}`}
++          />
++        ))}
++        <span className="ml-6 text-[13px] leading-[18px] text-text-secondary">
++          {count === 0
++            ? `Your first ${FIRST_CHAPTERS} chapters`
++            : `${Math.min(count, FIRST_CHAPTERS)} of your first ${FIRST_CHAPTERS}`}
++        </span>
++      </div>
++      {count >= 2 && (
++        <ol className="flex flex-col gap-8" aria-label="How you felt after each chapter">
++          {journey.checkIns.map((c, i) => (
++            <li key={c.at} className="grid grid-cols-[84px_1fr_92px] items-center gap-8 text-[13px] leading-[18px]">
++              <span className="text-text-secondary">Chapter {i + 1}</span>
++              <span className="h-8 overflow-hidden rounded-full bg-[#F5EEE8]">
++                <span className="block h-full rounded-full bg-[#F5A524]" style={{ width: `${(c.mood / 5) * 100}%` }} />
++              </span>
++              <span className="text-right text-text-primary">{MOOD_LABELS[c.mood - 1]}</span>
++            </li>
++          ))}
++        </ol>
++      )}
++    </div>
++  )
++}
+diff --git a/src/components/wellness/NextChapterCard.tsx b/src/components/wellness/NextChapterCard.tsx
+new file mode 100644
+index 0000000..6c918cb
+--- /dev/null
++++ b/src/components/wellness/NextChapterCard.tsx
+@@ -0,0 +1,60 @@
++import { BellRing, Play } from 'lucide-react'
++import { useNavigate } from 'react-router-dom'
++import type { Journey } from '../../lib/journey'
++import { FIRST_CHAPTERS, MOOD_LABELS } from '../../lib/journey'
++import { findGoal } from '../../lib/onboarding'
++import { CURRENT_USER } from '../../lib/people'
++import { ChapterTrack } from './ChapterCheckIn'
++
++/**
++ * Home's first block once you have a first session (design v4, U050).
++ *
++ * J039 found Home after the first session was the signed-out marketing page:
++ * nothing said what to do next or that anything had been kept. This card is
++ * the next chapter — what changed and why, one tap to play — and the track
++ * of the first five.
++ */
++export function NextChapterCard({ journey }: { journey: Journey }) {
++  const navigate = useNavigate()
++  const goal = findGoal(journey.goal)
++  const last = journey.checkIns[journey.checkIns.length - 1]
++  const chapter = journey.checkIns.length + 1
++  const when = journey.goal === 'sleep' ? 'Tonight' : 'Today'
++  const why = !last
++    ? 'You built it — it has not been played yet. Listen once and say how it felt.'
++    : last.mood >= 4
++      ? `Last time you felt ${MOOD_LABELS[last.mood - 1].toLowerCase()}. This chapter keeps what worked.`
++      : `Last time you felt ${MOOD_LABELS[last.mood - 1].toLowerCase()}. This chapter changes what didn’t.`
++  const label = last ? `Chapter ${chapter}` : 'Chapter 1'
++
++  return (
++    <section aria-label="Your next chapter" className="mb-24 flex flex-col gap-14 pt-8 text-left">
++      <div className="flex flex-col gap-12 rounded-24 bg-[linear-gradient(160deg,#3C2405,#B4590E)] p-20 text-text-inverse">
++        <p className="text-[12px] font-medium uppercase leading-[16px] tracking-[0.06em] text-white/75">
++          {when} · {goal?.label ?? journey.name}
++        </p>
++        <h2 className="-mt-4 text-[24px] font-normal leading-[32px]">
++          {journey.name} — {label}
++        </h2>
++        <p className="text-[14px] font-light leading-[21px] text-white/85">{why}</p>
++        <button
++          type="button"
++          onClick={() =>
++            navigate(journey.href, {
++              state: { origin: 'own', as: { title: `${journey.name} — ${label}`, author: CURRENT_USER } },
++            })
++          }
++          className="u-press mt-4 flex h-48 items-center justify-center gap-8 rounded-16 bg-white text-[16px] leading-[19px] text-[#331B04]"
++        >
++          <Play size={16} fill="currentColor" /> Play {label.toLowerCase()}
++        </button>
++        {journey.reminder && (
++          <p className="flex items-center gap-6 text-[12px] leading-[16px] text-white/75">
++            <BellRing size={13} /> Reminder in your calendar at {journey.reminder}
++          </p>
++        )}
++      </div>
++      {journey.checkIns.length < FIRST_CHAPTERS && <ChapterTrack journey={journey} />}
++    </section>
++  )
++}
+diff --git a/src/lib/journey.test.ts b/src/lib/journey.test.ts
+new file mode 100644
+index 0000000..0a1083b
+--- /dev/null
++++ b/src/lib/journey.test.ts
+@@ -0,0 +1,42 @@
++import { beforeEach, describe, expect, it } from 'vitest'
++import { addCheckIn, defaultReminderTime, readJourney, reminderIcs, resetJourney, setReminder, startJourney } from './journey'
++
++describe('journey', () => {
++  beforeEach(() => localStorage.clear())
++
++  it('keeps the first session and every check-in across visits', () => {
++    expect(readJourney()).toBeNull()
++    startJourney({ goal: 'sleep', name: 'Sleep better', slug: 'dolphins-frequency', href: '/play/dolphins-frequency' })
++    addCheckIn(3, 1)
++    addCheckIn(4, 2)
++    setReminder('22:30')
++    expect(readJourney()).toMatchObject({ name: 'Sleep better', reminder: '22:30', checkIns: [{ at: 1, mood: 3 }, { at: 2, mood: 4 }] })
++  })
++
++  it('does nothing without a journey, and forgets on reset', () => {
++    expect(addCheckIn(5)).toBeNull()
++    startJourney({ goal: null, name: 'x', slug: 'y', href: '/play/y' })
++    resetJourney()
++    expect(readJourney()).toBeNull()
++  })
++
++  it('reads an edited or older record as none', () => {
++    localStorage.setItem('aurelia.journey', JSON.stringify({ name: 'x', checkIns: [{ at: 1, mood: 9 }] }))
++    expect(readJourney()).toBeNull()
++  })
++
++  it('suggests a reminder time for the goal', () => {
++    expect(defaultReminderTime('sleep')).toBe('22:30')
++    expect(defaultReminderTime(null)).toBe('20:00')
++  })
++})
++
++describe('reminderIcs', () => {
++  it('starts tomorrow at the chosen time and repeats for the chapters left', () => {
++    const ics = reminderIcs({ name: 'Sleep better', time: '22:30', remaining: 4, url: 'https://x/home', from: new Date(2026, 9, 25, 21, 0) })
++    expect(ics).toContain('DTSTART:20261026T223000')
++    expect(ics).toContain('RRULE:FREQ=DAILY;COUNT=4')
++    expect(ics).toContain('SUMMARY:Aurelia · Sleep better: your next chapter')
++    expect(ics.split('\r\n')[0]).toBe('BEGIN:VCALENDAR')
++  })
++})
+diff --git a/src/lib/journey.ts b/src/lib/journey.ts
+new file mode 100644
+index 0000000..eee4fb0
+--- /dev/null
++++ b/src/lib/journey.ts
+@@ -0,0 +1,163 @@
++import { z } from 'zod'
++import { readJson, removeKey, writeJson } from './storage'
++
++// The first five chapters (design v4, U050).
++//
++// J039's simulation found nothing asked a first-time user back: the player
++// showed invented progress ("+3% since yesterday") before the first listen,
++// and Home after the first session was the marketing page. This is the
++// smallest honest loop the demo can run without a backend:
++//
++//   first build → play → "How do you feel now?" (1–5) → "Chapter 2 is ready
++//   tomorrow — remind me at 22:30" (a calendar file) → Home leads with the
++//   next chapter → each check-in is a real data point, drawn as it is.
++//
++// Kept in this browser, like onboarding — sign-in is deliberately not
++// persisted, so this is what lets tomorrow's visit find yesterday's chapter.
++// It moves to the account once accounts exist. Never sent anywhere.
++
++/** The first stretch the loop counts toward: long enough to notice a change. */
++export const FIRST_CHAPTERS = 5
++
++export const MOOD_LABELS = ['Very unpleasant', 'Unpleasant', 'Neutral', 'Pleasant', 'Very pleasant'] as const
++
++export interface CheckIn {
++  at: number
++  /** 1–5, as tapped on the faces. */
++  mood: number
++}
++
++export interface Journey {
++  goal: string | null
++  /** The session's name without its version — "Sleep better". */
++  name: string
++  /** The catalogue session the build stands in for, which is what plays. */
++  slug: string
++  /** The version route the first build plays under, so Home can reopen it. */
++  href: string
++  checkIns: CheckIn[]
++  /** "22:30", once a reminder has been added to the calendar. */
++  reminder?: string
++}
++
++const KEY = 'aurelia.journey'
++
++const schema = z.object({
++  goal: z.string().nullable(),
++  name: z.string(),
++  slug: z.string(),
++  href: z.string(),
++  checkIns: z.array(z.object({ at: z.number(), mood: z.number().int().min(1).max(5) })),
++  reminder: z.string().optional(),
++})
++
++export function readJourney(): Journey | null {
++  return readJson<Journey | null>(KEY, schema.nullable(), null)
++}
++
++/**
++ * Called on the first build of a first-session thread. Starting again (a new
++ * first session after Replay onboarding) replaces the old journey rather
++ * than appending to it — two journeys would need a picker nobody asked for.
++ */
++export function startJourney(start: Omit<Journey, 'checkIns'>): Journey {
++  const journey: Journey = { ...start, checkIns: [] }
++  writeJson(KEY, journey)
++  return journey
++}
++
++export function addCheckIn(mood: number, at = Date.now()): Journey | null {
++  const journey = readJourney()
++  if (!journey) return null
++  const next = { ...journey, checkIns: [...journey.checkIns, { at, mood }] }
++  writeJson(KEY, next)
++  return next
++}
++
++export function setReminder(time: string): Journey | null {
++  const journey = readJourney()
++  if (!journey) return null
++  const next = { ...journey, reminder: time }
++  writeJson(KEY, next)
++  return next
++}
++
++/** Settings → Replay onboarding starts the loop over too. */
++export function resetJourney() {
++  removeKey(KEY)
++}
++
++/** When each goal's chapter is most likely to be played — the reminder's default. */
++const DEFAULT_TIMES: Record<string, string> = {
++  sleep: '22:30',
++  calm: '18:00',
++  clarity: '07:30',
++  focus: '08:30',
++  regulate: '21:00',
++  energy: '07:00',
++}
++
++export function defaultReminderTime(goal: string | null) {
++  return DEFAULT_TIMES[goal ?? ''] ?? '20:00'
++}
++
++/** "tomorrow night" for a sleep chapter, "tomorrow" otherwise — what the card promises. */
++export function nextChapterWhen(goal: string | null) {
++  return goal === 'sleep' ? 'tomorrow night' : 'tomorrow'
++}
++
++const pad = (n: number) => String(n).padStart(2, '0')
++
++/** Floating local time (no Z): the reminder is "22:30 wherever you are". */
++function icsDate(date: Date) {
++  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}00`
++}
++
++/**
++ * A calendar file that repeats daily for the rest of the first chapters, with
++ * an alert at the time itself. A calendar is the reminder the demo can keep
++ * without a server: web push needs one to send it (decision D3 in J039).
++ */
++export function reminderIcs({
++  name,
++  time,
++  remaining,
++  url,
++  from = new Date(),
++}: {
++  name: string
++  time: string
++  /** How many daily reminders — the chapters still to come. */
++  remaining: number
++  url: string
++  from?: Date
++}) {
++  const [h, m] = time.split(':').map(Number)
++  const start = new Date(from)
++  start.setDate(start.getDate() + 1)
++  start.setHours(h, m, 0, 0)
++  const end = new Date(start.getTime() + 15 * 60_000)
++  const lines = [
++    'BEGIN:VCALENDAR',
++    'VERSION:2.0',
++    'PRODID:-//Aurelia//Chapters//EN',
++    'CALSCALE:GREGORIAN',
++    'BEGIN:VEVENT',
++    `UID:aurelia-chapters-${start.getTime()}@aurelia.care`,
++    `DTSTAMP:${icsDate(from)}`,
++    `DTSTART:${icsDate(start)}`,
++    `DTEND:${icsDate(end)}`,
++    `RRULE:FREQ=DAILY;COUNT=${Math.max(1, remaining)}`,
++    `SUMMARY:Aurelia · ${name}: your next chapter`,
++    `DESCRIPTION:Your next chapter is ready. ${url}`,
++    `URL:${url}`,
++    'BEGIN:VALARM',
++    'ACTION:DISPLAY',
++    'TRIGGER:PT0M',
++    `DESCRIPTION:Aurelia · ${name}`,
++    'END:VALARM',
++    'END:VEVENT',
++    'END:VCALENDAR',
++  ]
++  return lines.join('\r\n') + '\r\n'
++}
+diff --git a/src/lib/onboarding.test.ts b/src/lib/onboarding.test.ts
+index 89d3d40..0ecf69d 100644
+--- a/src/lib/onboarding.test.ts
++++ b/src/lib/onboarding.test.ts
+@@ -41,3 +41,11 @@ describe('onboarding storage', () => {
+     expect(onboardingAnswers()).toBeNull()
+   })
+ })
++
++describe('firstSessionBrief with their own words (U050)', () => {
++  it('carries the sentence typed on Home instead of the feeling line', () => {
++    const brief = firstSessionBrief({ ...DEFAULTS, goal: 'sleep', feelings: ['sleep'] }, 'I can’t fall asleep, my mind keeps racing')
++    expect(brief).toBe('Create my first session: 10 minutes to help me sleep better. In my words: “I can’t fall asleep, my mind keeps racing.” Female voice, with nature sounds.')
++    expect(replyTo(brief).text).toMatch(/first session/)
++  })
++})
+diff --git a/src/lib/onboarding.ts b/src/lib/onboarding.ts
+index c8e2cac..32c83de 100644
+--- a/src/lib/onboarding.ts
++++ b/src/lib/onboarding.ts
+@@ -126,12 +126,17 @@ function list(items: string[]) {
+  * of its own answers (lib/replies.ts `first-session`), so the cockpit
+  * acknowledges the setup and proposes, instead of whichever keyword happens
+  * to come first.
++ *
++ * `words` is what they typed on Home before signing in (v4, U050). It goes
++ * into the brief as their own sentence and stands in for the feeling line —
++ * the feelings were read off it, so saying both would say it twice.
+  */
+-export function firstSessionBrief(answers: Onboarding) {
++export function firstSessionBrief(answers: Onboarding, words?: string) {
+   const goal = findGoal(answers.goal)
+   const purpose = goal ? `${answers.length} minutes to ${goal.says}` : `${answers.length} minutes to unwind`
++  const own = words?.trim()
+   // "Not sure" asks a question; in a brief it would only confuse the build.
+-  const feeling = feelingSentence(answers.feelings.filter((f) => f !== 'unsure'))
++  const feeling = own ? `In my words: “${own.replace(/[.!?]+$/, '')}.”` : feelingSentence(answers.feelings.filter((f) => f !== 'unsure'))
+   const voice = VOICES.find((v) => v.id === answers.voice)?.label ?? 'Female voice'
+   const sounds = list(SOUNDS.filter((s) => answers.sounds.includes(s.id)).map((s) => s.says))
+   const style = sounds ? `${voice}, with ${sounds}.` : `${voice}.`
+diff --git a/src/lib/signals.ts b/src/lib/signals.ts
+index 7a8b4b3..b5c06cf 100644
+--- a/src/lib/signals.ts
++++ b/src/lib/signals.ts
+@@ -84,7 +84,7 @@ export function sourcesInGroup(group: SignalGroup) {
+   return SIGNAL_SOURCES.filter((source) => source.group === group)
+ }
+ 
+-/** The state the screen opens in. */
+-export function defaultConnections(): Record<string, boolean> {
+-  return Object.fromEntries(SIGNAL_SOURCES.map((source) => [source.id, source.defaultOn]))
++/** The state the screen opens in. `allOff` is design v4 (U050): nothing connected until the person connects it. */
++export function defaultConnections(allOff = false): Record<string, boolean> {
++  return Object.fromEntries(SIGNAL_SOURCES.map((source) => [source.id, allOff ? false : source.defaultOn]))
+ }
+diff --git a/src/pages/AccountSettingsPage.tsx b/src/pages/AccountSettingsPage.tsx
+index 5669f08..6bad684 100644
+--- a/src/pages/AccountSettingsPage.tsx
++++ b/src/pages/AccountSettingsPage.tsx
+@@ -8,6 +8,7 @@ import { useAuth } from '../auth/AuthContext'
+ import { PageMeta } from '../components/PageMeta'
+ import { CoinPill } from '../components/ui/CoinPill'
+ import { resetOnboarding } from '../lib/onboarding'
++import { resetJourney } from '../lib/journey'
+ import { useUiVersion } from '../versions/useUiVersion'
+ 
+ /** One tappable line in the list under the accounts block. Plain — every row
+@@ -316,6 +317,8 @@ export function AccountSettingsPage() {
+             label="Replay onboarding"
+             onClick={() => {
+               resetOnboarding()
++              // The chapters belong to the first session onboarding made (U050).
++              resetJourney()
+               navigate('/welcome')
+             }}
+           />
+diff --git a/src/pages/ChatPage.tsx b/src/pages/ChatPage.tsx
+index 4104b3a..627fd7b 100644
+--- a/src/pages/ChatPage.tsx
++++ b/src/pages/ChatPage.tsx
+@@ -13,11 +13,14 @@ import { MiniPlayer } from '../components/chat/MiniPlayer'
+ import { PublishSheet } from '../components/chat/PublishSheet'
+ import { useAudioPlayer } from '../audio/AudioPlayerContext'
+ import { useChatSession } from '../chat/ChatSessionContext'
+-import { RECOMMENDATIONS, nextVersionLabel } from '../chat/thread'
++import { OPENING_MESSAGES, nextVersionLabel, sessionNameOf } from '../chat/thread'
++import { deckFor, inferFromWords, suggestionsFor } from '../chat/firstSession'
++import { DEFAULTS, findGoal, onboardingAnswers } from '../lib/onboarding'
++import { readJourney, startJourney } from '../lib/journey'
+ import type { Message, Status } from '../chat/thread'
+ import type { RecreateBrief } from '../chat/recreate'
+ import { draftTitleFor, findQuickStart } from '../lib/quickStart'
+-import { replyTo } from '../lib/replies'
++import { FALLBACK, replyTo } from '../lib/replies'
+ import { SessionReasoningCard } from '../components/chat/SessionReasoningCard'
+ import { SessionProgressCardV2 } from '../components/chat/SessionProgressCardV2'
+ import { VoiceRecorder } from '../components/chat/VoiceRecorder'
+@@ -85,6 +88,8 @@ export function ChatPage() {
+         fresh?: boolean
+         /** v4 onboarding (U047): the first session's name, set after the reset. */
+         firstTitle?: string
++        /** v4 (U050): onboarding's "Build my first session" — builds on its own. */
++        firstSession?: boolean
+         /** A Quick Start card's id — Explore's "Create". */
+         start?: string
+         /** A cut picked in the Insights > Chapters list, to go back to. */
+@@ -111,6 +116,7 @@ export function ChatPage() {
+   const {
+     messages, setMessages,
+     applied, setApplied,
++    deck, replaceDeck,
+     sessionState, setSessionState,
+     progress, setProgress,
+     deckOpen, setDeckOpen,
+@@ -123,6 +129,10 @@ export function ChatPage() {
+   } = useChatSession()
+   const [typing, setTyping] = useState(false)
+   const v3 = useUiVersion() >= 3
++  const v4 = useUiVersion() >= 4
++  // What onboarding stored (v4). Read once: this screen is never open while
++  // onboarding is, so it cannot change under it.
++  const [answers] = useState(() => onboardingAnswers())
+   const { track, playing } = useAudioPlayer()
+   // The session Insights should open: this thread's if it has one, otherwise
+   // the one the draft stands in for — the same fallback `playTo` uses.
+@@ -136,7 +146,13 @@ export function ChatPage() {
+    * Messages a door writes on your behalf — a Recreate brief, a Quick Start —
+    * are not sends. You did not spend anything to arrive somewhere.
+    */
+-  const sends = messages.filter((message) => message.from === 'user' && !message.attachment).length
++  // v4 (U050): counted only from the first build on. J039 found the limit
++  // tripping on someone's first message ever, because the demo thread's own
++  // lines counted; the allowance is for refining a session you have, not for
++  // getting one.
++  const firstBuild = messages.findIndex((message) => message.build)
++  const counted = v4 ? (firstBuild < 0 ? [] : messages.slice(firstBuild)) : messages
++  const sends = counted.filter((message) => message.from === 'user' && !message.attachment).length
+   const limited = isEnabled('chat.freeLimit') && sends >= FREE_SENDS
+   const insightsSlug = findSession(sessionSlug ?? draft.slug)?.slug
+   /**
+@@ -186,6 +202,53 @@ export function ChatPage() {
+   const styleChangesHandled = useRef<string | null>(null)
+   const challengeHandled = useRef<string | null>(null)
+ 
++  /**
++   * v4 (U050): a thread of the person's own, for their goal.
++   *
++   * J039's simulation found five of six first-time paths landed in the demo
++   * conversation — a sleep score "improved by 7%" and a message ("it was too
++   * short") the person never wrote — and every build was the same "Sleep
++   * meditation v1.3" with 432 Hz. In v4 a new thread is named after their
++   * goal and proposes changes for it, within what they chose.
++   */
++  const firstBuildPending = useRef(false)
++  function ownThread(words?: string) {
++    // Someone who skipped onboarding still has words; the goal is read off them.
++    const goalId = answers?.goal ?? (words ? inferFromWords(words).goal : null)
++    const goal = findGoal(goalId)
++    // Named after the goal while it is their first; after that, a new session
++    // is just that — not a second "Sleep better v1.0".
++    const title = readJourney() ? 'New session v1.0' : goal ? `${goal.label} v1.0` : 'My first session v1.0'
++    setDraft((current) => ({ ...current, title }))
++    replaceDeck(deckFor({ ...(answers ?? DEFAULTS), goal: goalId }, words))
++  }
++  const ownThreadEvent = useEffectEvent(ownThread)
++
++  // v4: the demo conversation is never somebody's first screen. Bare /chat on
++  // an untouched demo thread opens empty (or on what they typed), whichever
++  // door led here. Doors that write their own opening reset it themselves.
++  useEffect(() => {
++    if (!v4 || slug || messages !== OPENING_MESSAGES) return
++    if (routeState?.fresh || routeState?.start || routeState?.recreate || routeState?.challenge) return
++    reset([])
++    ownThreadEvent(routeState?.ask)
++  }, [v4, slug, messages, routeState, reset])
++
++  // Onboarding's "Build my first session" builds as soon as Aurelia has
++  // proposed: they have answered everything already, so a second "Apply"
++  // would only be one more tap between them and hearing it.
++  const buildFirst = useEffectEvent(() => {
++    const picked = deck.filter((r) => applied.includes(r.id))
++    applyChanges('Build my first session', picked.map((r) => r.title))
++  })
++  useEffect(() => {
++    if (!firstBuildPending.current) return
++    const last = messages[messages.length - 1]
++    if (last?.from !== 'aurelia' || last.attachment !== 'recommendations') return
++    firstBuildPending.current = false
++    window.setTimeout(() => buildFirst(), 900)
++  }, [messages])
++
+   // Starting a new session from /chat does not remount the page, so the state
+   // initialiser above never runs again and the old thread would stay put.
+   // Keyed on the navigation rather than a boolean, so pressing New session
+@@ -221,7 +284,9 @@ export function ChatPage() {
+     // not see their first build called a sleep meditation.
+     const firstTitle = routeState.firstTitle
+     if (firstTitle) setDraft((current) => ({ ...current, title: firstTitle }))
+-  }, [location.key, routeState?.fresh, routeState?.start, routeState?.recreate, routeState?.firstTitle, reset, setDraft])
++    if (v4) ownThreadEvent(routeState.ask)
++    if (routeState.firstSession) firstBuildPending.current = true
++  }, [location.key, routeState?.fresh, routeState?.start, routeState?.recreate, routeState?.firstTitle, routeState?.firstSession, routeState?.ask, v4, reset, setDraft])
+ 
+   // Point the thread at the session in the URL. openSession no-ops when it is
+   // already on that one, which is what makes going off to play it and coming
+@@ -589,6 +654,12 @@ export function ChatPage() {
+    * while this runs.
+    */
+   function build(change: string) {
++    // v4 (U050): the first thing someone builds of their own — whichever door
++    // they came in by — is chapter 1 of their journey. A catalogue session
++    // being re-cut is somebody else's and does not start one.
++    if (v4 && !sessionSlug && !readJourney()) {
++      startJourney({ goal: answers?.goal ?? null, name: sessionNameOf(draft.title), slug: draft.slug, href: `/play/${draft.slug}` })
++    }
+     setProgress(0)
+     setSessionState('generating')
+     return addVersion(change)
+@@ -603,7 +674,11 @@ export function ChatPage() {
+    * than read as being about the whole session.
+    */
+   function answerFor(text: string, current: Message[], answering?: Message['replyTo']): Message {
+-    const reply = replyTo(text)
++    const said = replyTo(text)
++    // v4: a first message the rules do not recognise is still a request for a
++    // first session. "I've noted that for the next revision" answered a person
++    // who had no session yet (J039, Dewi).
++    const reply = v4 && said === FALLBACK && !current.some((m) => m.build) ? replyTo('my first session') : said
+     // The deck comes over once, with the first reply that is a proposal.
+     // Without that, a thread started from Quick Start offered "Apply new
+     // changes (3)" over a deck nobody had handed over.
+@@ -693,6 +768,9 @@ export function ChatPage() {
+   // a transcript that drops the request but keeps the answer reads as a gap.
+   // Only the acting on it stops.
+   const showRecommendations = isEnabled('chat.recommendations')
++  // v4: none of the chips undoes a choice made in onboarding (J039 F2) — no
++  // "Make it longer" for someone who picked 20 minutes.
++  const suggestions = v4 && answers ? suggestionsFor(answers) : SUGGESTIONS
+   const canApply = sessionState === 'idle' || sessionState === 'updating'
+ 
+   /**
+@@ -834,6 +912,7 @@ export function ChatPage() {
+                 deckOpen={deckOpen}
+                 canApply={canApply}
+                 applied={applied}
++                recommendations={deck}
+                 onToggleRecommendation={toggleRecommendation}
+                 onOpenDeck={() => setDeckOpen(true)}
+                 onSendPrompt={sendMessage}
+@@ -898,7 +977,7 @@ export function ChatPage() {
+               <button
+                 type="button"
+                 onClick={() =>
+-                  applyChanges(undefined, RECOMMENDATIONS.filter((r) => applied.includes(r.id)).map((r) => r.title))
++                  applyChanges(undefined, deck.filter((r) => applied.includes(r.id)).map((r) => r.title))
+                 }
+                 disabled={sessionState === 'updating'}
+                 style={{
+@@ -917,7 +996,7 @@ export function ChatPage() {
+             {empty && !limited && <EmptyThreadPrompts prompts={OPENERS} onPrompt={sendMessage} />}
+             {!empty &&
+               !limited &&
+-              SUGGESTIONS.map((suggestion) => (
++              suggestions.map((suggestion) => (
+                 <button
+                   key={suggestion}
+                   type="button"
+diff --git a/src/pages/HomePage.tsx b/src/pages/HomePage.tsx
+index a3310a9..2679e22 100644
+--- a/src/pages/HomePage.tsx
++++ b/src/pages/HomePage.tsx
+@@ -5,6 +5,7 @@ import {
+   Menu,
+   Mic,
+   Music,
++  Pause,
+   Play,
+   Sparkles,
+   TrendingUp,
+@@ -36,9 +37,29 @@ import type { CategoryFilter } from '../lib/sessions'
+ import { CATEGORY_FILTERS, categoryLabel, sessionsInCategory } from '../lib/sessions'
+ import { useDrawer } from '../layouts/DrawerContext'
+ import { CoinPill } from '../components/ui/CoinPill'
++import { NextChapterCard } from '../components/wellness/NextChapterCard'
++import { readJourney } from '../lib/journey'
++import { useAudioPlayer } from '../audio/AudioPlayerContext'
++import { findSession } from '../lib/sessions'
+ 
+ // A one-tap way in for each of the things Aurelia actually makes, so the rail
+ // doubles as the answer to "what can I even ask for?".
++/**
++ * What each Quick Start card's Play plays in v4 (U050): a catalogue session of
++ * the same kind, straight away and before any sign-in. J039 found Play led to
++ * a sign-in wall, five questions and then a chat about sleep — someone who
++ * tapped "Focus Sound" never heard a sound.
++ */
++const QUICK_START_PLAYS: Record<string, string> = {
++  Affirmations: 'noting-practice',
++  'Guided Breath Work': 'ocean-breath',
++  'Sleep Meditation': 'night-rain-sleep',
++  'Focus Sound': 'clear-skies',
++  'Morning Reset': 'morning-spark',
++  'Stress Relief': 'dolphins-frequency',
++  'Deep Calm': 'dream-drift',
++}
++
+ const quickStartCards: { title: string; subtitle: string; gradient: string; photo: CoverKey }[] = [
+   { title: 'Affirmations', subtitle: 'Personalized exprience.', photo: 'affirmations', gradient: 'linear-gradient(160deg, var(--color-danger-400), var(--color-warning-300))' },
+   { title: 'Guided Breath Work', subtitle: 'Personalized exprience.', photo: 'breathwork', gradient: 'linear-gradient(160deg, var(--color-neutral-700), var(--color-neutral-400))' },
+@@ -111,6 +132,20 @@ export function HomePage() {
+   const [category, setCategory] = useState<CategoryFilter>('All')
+   const [ask, setAsk] = useState('')
+   const v2 = useUiVersion() >= 2
++  const v4 = useUiVersion() >= 4
++  // v4 (U050): once there is a first session, Home is about the next chapter
++  // of it rather than about selling the app to someone already inside it.
++  const [journey] = useState(() => readJourney())
++  const member = v4 && signedIn
++  const { track, playing, load, toggle } = useAudioPlayer()
++
++  function playQuickStart(title: string) {
++    const session = findSession(QUICK_START_PLAYS[title])
++    if (!session) return gate('/chat')
++    if (track?.slug === session.slug) return toggle()
++    load({ slug: session.slug, href: `/play/${session.slug}`, title: session.title, author: session.author, photo: session.photo, gradient: session.gradient })
++    toggle()
++  }
+   const [askFocused, setAskFocused] = useState(false)
+   const askPlaceholder = useTypewriterPlaceholder(EXAMPLE_PROMPTS, {
+     enabled: v2,
+@@ -224,11 +259,15 @@ export function HomePage() {
+             <div className="relative flex items-center justify-between gap-8">
+               <button
+                 type="button"
+-                aria-label={`Play ${card.title}`}
+-                onClick={() => gate('/chat')}
++                aria-label={v4 && track?.slug === QUICK_START_PLAYS[card.title] && playing ? `Pause ${card.title}` : `Play ${card.title}`}
++                onClick={() => (v4 ? playQuickStart(card.title) : gate('/chat'))}
+                 className="u-press flex size-32 shrink-0 items-center justify-center rounded-full bg-white/25 text-text-inverse backdrop-blur-sm"
+               >
+-                <Play size={14} fill="currentColor" />
++                {v4 && track?.slug === QUICK_START_PLAYS[card.title] && playing ? (
++                  <Pause size={14} fill="currentColor" />
++                ) : (
++                  <Play size={14} fill="currentColor" />
++                )}
+               </button>
+               <button
+                 type="button"
+@@ -302,6 +341,7 @@ export function HomePage() {
+           both set the gap, the gap is their sum and neither number matches the
+           frame. One rule, one gap. */}
+       <div className="mx-auto max-w-[960px] px-20 lg:px-24">
++        {member && journey && <NextChapterCard journey={journey} />}
+         {/* Hero */}
+         <section className="relative pt-24 text-center">
+           {/* Figma "Ellipse 6" — a 252 circle of #FFE682 at 60%, under a 224
+@@ -430,7 +470,7 @@ export function HomePage() {
+       {/* Dark generative wellness banner — full bleed on mobile; on desktop a contained card in the content column.
+           Figma frame 402x800, padding 40/20, counterAlign MIN (left-aligned),
+           content SPACE_BETWEEN with the card pair bleeding past both edges. */}
+-      {isEnabled('home.promo') && (
++      {isEnabled('home.promo') && !member && (
+       <section
+         className="v2-follow relative mt-16 overflow-hidden bg-[#1B1006] px-20 py-40 text-text-inverse lg:mx-auto lg:mt-40 lg:w-[calc(100%-48px)] lg:max-w-[912px] lg:rounded-[20px] lg:px-48 lg:py-48"
+         // Version 2: the glow follows the pointer. Written straight to CSS
+@@ -606,7 +646,7 @@ export function HomePage() {
+         )}
+ 
+         {/* Adaptive Wellness feature grid */}
+-        {isEnabled('home.adaptive') && (
++        {isEnabled('home.adaptive') && !member && (
+         <section className="mt-48">
+           <span className="inline-block rounded-12 border border-[#D6D6D6] bg-transparent px-16 py-6 text-style-label-regular text-text-primary">
+             Adaptive Wellness
+@@ -629,6 +669,7 @@ export function HomePage() {
+         {/* Closing CTA. The network sits above the card and bleeds to both
+             page edges — it is the argument the card then states in words, so
+             it is wider than the content column on purpose. */}
++        {!member && (
+         <section className="mt-24">
+           {/* Figma "Frame 34" — the last row of the strength grid, 362 x 164,
+               inside the content column. It was full-bleed with a 24 overlap,
+@@ -682,6 +723,7 @@ export function HomePage() {
+             </button>
+           </div>
+         </section>
++        )}
+       </div>
+     </div>
+   )
+diff --git a/src/pages/OnboardingPage.tsx b/src/pages/OnboardingPage.tsx
+index 4a313e3..b3d9c84 100644
+--- a/src/pages/OnboardingPage.tsx
++++ b/src/pages/OnboardingPage.tsx
+@@ -35,6 +35,7 @@ import {
+ import { CURRENT_USER } from '../lib/people'
+ import { writeObjective } from '../lib/progress'
+ import { DEFAULT_DRAFT } from '../chat/thread'
++import { inferFromWords } from '../chat/firstSession'
+ import { useUiVersion } from '../versions/useUiVersion'
+ 
+ /**
+@@ -88,7 +89,17 @@ export function OnboardingPage() {
+   const from = (location.state as { from?: From } | null)?.from
+   // A destination worth returning to: anything but Home itself.
+   const heading = from && from.pathname !== '/home' ? from : null
+-  const [answers, setAnswers] = useState<Onboarding>(() => onboardingAnswers() ?? DEFAULTS)
++  // What they typed on Home before signing in (U050). J039 found onboarding
++  // asked the goal and the feeling again and then dropped the sentence; now
++  // the answers are read off it, the summary shows it, and the first session
++  // is built from it.
++  const typed = heading?.pathname === '/chat' ? (heading.state as { ask?: string } | undefined)?.ask?.trim() || null : null
++  const [answers, setAnswers] = useState<Onboarding>(() => {
++    const saved = onboardingAnswers()
++    if (saved || !typed) return saved ?? DEFAULTS
++    const { goal, feelings } = inferFromWords(typed)
++    return { ...DEFAULTS, goal, feelings }
++  })
+   const [step, setStep] = useState<Step>('welcome')
+   const index = STEPS.indexOf(step)
+   const firstName = CURRENT_USER.split(' ')[0]
+@@ -96,7 +107,10 @@ export function OnboardingPage() {
+   if (!v4) return <Navigate to="/home" replace />
+ 
+   const set = <K extends keyof Onboarding>(key: K, value: Onboarding[K]) => setAnswers((a) => ({ ...a, [key]: value }))
+-  const next = () => setStep(STEPS[Math.min(STEPS.length - 1, index + 1)])
++  // With their words in hand and a goal read off them, there is nothing left
++  // to ask: welcome goes straight to the summary, where each answer can still
++  // be changed.
++  const next = () => setStep(step === 'welcome' && typed && answers.goal ? 'ready' : STEPS[Math.min(STEPS.length - 1, index + 1)])
+   const back = () => setStep(STEPS[Math.max(0, index - 1)])
+ 
+   function leave(to: From) {
+@@ -105,7 +119,10 @@ export function OnboardingPage() {
+ 
+   function skip() {
+     saveOnboarding(answers, true)
+-    leave(heading ?? { pathname: '/home' })
++    // Skipping still sends what they typed — as a new conversation of their
++    // own, not appended to the demo one (J039 F1).
++    if (typed) navigate('/chat', { replace: true, state: { fresh: true, ask: typed } })
++    else leave(heading ?? { pathname: '/home' })
+   }
+ 
+   function createFirstSession() {
+@@ -118,7 +135,12 @@ export function OnboardingPage() {
+     // conversation would put words in their mouth ("it was too short").
+     navigate('/chat', {
+       replace: true,
+-      state: { fresh: true, ask: firstSessionBrief(answers), firstTitle: `${goal?.label ?? 'My first session'} v1.0` },
++      state: {
++        fresh: true,
++        ask: firstSessionBrief(answers, typed ?? undefined),
++        firstTitle: `${goal?.label ?? 'My first session'} v1.0`,
++        firstSession: true,
++      },
+     })
+   }
+ 
+@@ -175,7 +197,9 @@ export function OnboardingPage() {
+                 <div className="flex flex-col gap-8">
+                   <h1 className="text-[28px] font-normal leading-[36px] text-text-primary">Welcome, {firstName}.</h1>
+                   <p className="text-[16px] font-light leading-[24px] text-text-secondary">
+-                    Let’s shape Aurelia around you. Three quick questions — about a minute.
++                    {typed && answers.goal
++                      ? 'You’ve told Aurelia what’s on your mind. Check the summary and your first session is ready.'
++                      : 'Let’s shape Aurelia around you. Three quick questions — about a minute.'}
+                   </p>
+                 </div>
+                 <ol className="flex flex-col gap-16" aria-label="How Aurelia works">
+@@ -328,7 +352,10 @@ export function OnboardingPage() {
+ 
+           {step === 'ready' && (
+             <>
+-              <Title title="You’re all set." sub="Here’s what Aurelia will start from. Tap anything to change it." />
++              <Title
++                title={typed ? `Got it, ${firstName}.` : 'You’re all set.'}
++                sub={typed ? 'Read from what you wrote. Tap anything to change it.' : 'Here’s what Aurelia will start from. Tap anything to change it.'}
++              />
+               <div className="mt-24 flex flex-col overflow-hidden rounded-[20px] border border-border-subtle bg-surface-default">
+                 <SummaryRow label="Goal" value={goal?.label ?? 'Not set'} onEdit={() => setStep('goal')} />
+                 <SummaryRow
+@@ -352,21 +379,26 @@ export function OnboardingPage() {
+                 <p className="flex items-center gap-6 text-[12px] font-medium leading-[16px] text-[#8A5A1E]">
+                   <Sparkles size={13} /> Your first message to Aurelia
+                 </p>
+-                <p className="mt-6 text-[14px] font-light leading-[21px] text-text-primary">“{firstSessionBrief(answers)}”</p>
++                <p className="mt-6 text-[14px] font-light leading-[21px] text-text-primary">“{firstSessionBrief(answers, typed ?? undefined)}”</p>
+               </div>
+               <p className="mt-12 text-[12px] font-light leading-[18px] text-text-secondary">
+                 Kept on this device for now. Connect a wearable later in My Wellness for a sharper analysis.
+               </p>
+               <div className="flex-1" />
+               <div className="flex flex-col gap-10 pt-24">
+-                <Primary onClick={createFirstSession}>Create my first session</Primary>
+-                <button
+-                  type="button"
+-                  onClick={finishElsewhere}
+-                  className="u-press flex h-48 w-full items-center justify-center rounded-16 border border-[#331B04] text-[16px] leading-[19px] text-text-primary"
+-                >
+-                  {heading ? 'Continue where I was' : 'Explore Aurelia first'}
+-                </button>
++                <Primary onClick={createFirstSession}>Build my first session</Primary>
++                {/* Not when they arrived with words: "Continue where I was"
++                    would send the same sentence without the setup, a second
++                    first message that answered differently (J039 F5). */}
++                {!typed && (
++                  <button
++                    type="button"
++                    onClick={finishElsewhere}
++                    className="u-press flex h-48 w-full items-center justify-center rounded-16 border border-[#331B04] text-[16px] leading-[19px] text-text-primary"
++                  >
++                    {heading ? 'Continue where I was' : 'Explore Aurelia first'}
++                  </button>
++                )}
+               </div>
+             </>
+           )}
+diff --git a/src/pages/PlayerPage.tsx b/src/pages/PlayerPage.tsx
+index 349dbf6..372974f 100644
+--- a/src/pages/PlayerPage.tsx
++++ b/src/pages/PlayerPage.tsx
+@@ -35,6 +35,9 @@ import { SessionFeedback } from '../components/wellness/SessionFeedback'
+ import { analysisForSession, chapterBrief } from '../lib/wellnessAnalysis'
+ import type { Analysis } from '../lib/wellnessAnalysis'
+ import type { Named } from '../lib/named'
++import { ChapterCheckIn } from '../components/wellness/ChapterCheckIn'
++import { readJourney } from '../lib/journey'
++import { findGoal } from '../lib/onboarding'
+ 
+ /** Lines the session speaks, which the hero shows one at a time under the art.
+  *  Mock, like everything in lib/ — as is the bed they play over. */
+@@ -237,6 +240,13 @@ export function PlayerPage() {
+   const handoff = location.state as { origin?: ProfileOrigin; as?: Named } | null
+   const origin = handoff?.origin
+   const named = handoff?.as
++  // v4 (U050): your own first session opens on a check-in, not on the demo's
++  // invented progress. "Own" is the journey's session played as a build (a
++  // version, or a name handed over by the cockpit or Home) — the catalogue
++  // session it stands in for keeps its usual drawer.
++  const v4 = useUiVersion() >= 4
++  const [journey] = useState(() => readJourney())
++  const ownChapter = v4 && journey && session && journey.slug === session.slug && (named || versionId) ? journey : null
+ 
+   // Playback lives above the router. This screen is a view onto it, so
+   // walking back to the cockpit leaves the session running.
+@@ -658,7 +668,9 @@ export function PlayerPage() {
+           ref={scroller}
+           className={`min-h-0 flex-1 px-20 pb-40 ${up ? 'overflow-y-auto' : 'overflow-hidden'}`}
+         >
+-          {analysis ? (
++          {ownChapter ? (
++            <ChapterCheckIn initial={ownChapter} goalLabel={findGoal(ownChapter.goal)?.label ?? null} />
++          ) : analysis ? (
+             <AnalysisDrawer
+               analysis={analysis}
+               revealed={up}
+diff --git a/src/pages/WellnessPage.tsx b/src/pages/WellnessPage.tsx
+index 634da91..4be31c9 100644
+--- a/src/pages/WellnessPage.tsx
++++ b/src/pages/WellnessPage.tsx
+@@ -136,7 +136,12 @@ function Meter({ label, connected, total }: { label: string; connected: number;
+ export function WellnessPage() {
+   const { openDrawer } = useDrawer()
+   const navigate = useNavigate()
+-  const [connections, setConnections] = useState(defaultConnections)
++  // v4 (U050): nothing is connected until the person connects it. J039 found
++  // Apple Watch, Google Calendar and Conversation History switched on for a
++  // brand-new account — read as a privacy breach by the people it mattered
++  // most to (a therapist-referred user, a skeptic).
++  const v4 = useUiVersion() >= 4
++  const [connections, setConnections] = useState(() => defaultConnections(v4))
+   const [requestOpen, setRequestOpen] = useState(false)
+   const [tab, setTab] = useState<WellnessTab>('Analytics')
+   const [requestSent, setRequestSent] = useState(false)
+-- 
+2.43.0
+

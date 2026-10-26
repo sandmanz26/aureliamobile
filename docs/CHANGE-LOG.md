@@ -19,6 +19,24 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-26 — v4: first-time fixes from the retention simulation (U050)
+
+Staging v4 now does what J039 recommended for a first-time user.
+
+**Starting:**
+- What they typed on Home fills in onboarding and becomes their first message. One button builds their first session.
+- Every path opens a conversation of their own, never the sample one, with changes proposed for their goal.
+- The free limit only starts after the first build.
+
+**After listening:**
+- The player asks "How do you feel now?" instead of showing invented progress.
+- It offers "Remind me at 22:30" for the next chapter, as a calendar file.
+- Home leads with "Sleep better — Chapter 2" and drops the sign-up pitch for signed-in users.
+
+**Also:** Quick Start Play plays straight away, and data sources start switched off.
+
+v1–v3 and production are unchanged. Web only. Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-25 — First-time-user retention simulation (J039, docs only)
 
 New `docs/reviews/Aurelia-Retention-Simulation-2026-10-25.pdf`, with its HTML source, screenshots, three drafts and the simulation scripts.
