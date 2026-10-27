@@ -9,6 +9,7 @@ import { useFeatureFlags } from '../demo/FeatureFlags'
 import { useHasUnreadNotifications } from '../lib/notificationsSeen'
 import { useUiVersion } from '../versions/useUiVersion'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
+import { BuildBadge } from '../components/ui/BuildBadge'
 import { CoinFlip } from '../versions/CoinFlip'
 import { SessionGridCard } from '../components/ui/SessionGridCard'
 import { findPerson } from '../lib/people'
@@ -167,6 +168,7 @@ export function ProfilePage() {
       </div>
 
       {me ? (
+        <>
         <nav aria-label="Your account" className="mt-32 flex flex-col overflow-hidden rounded-[20px] border border-border-subtle bg-surface-default">
           <MeRow to="/sessions" icon={<PlaylistIcon size={24} />} label="Library" hint="Sessions you made and played" />
           <MeRow to="/credits" icon={<CoinMark size={24} />} label="Credits & plan" value="1,323" />
@@ -182,6 +184,12 @@ export function ProfilePage() {
           <MeRow to="/settings" icon={<Settings size={22} strokeWidth={1.5} />} label="Settings" />
           {isEnabled('help') && <MeRow to="/help" icon={<MessageQuestionIcon size={24} />} label="Help" />}
         </nav>
+        {/* Which site and build — it sat at the foot of the drawer, which v4
+            has no longer below lg. Not a link, same as everywhere (BuildBadge). */}
+        <div className="mt-24 flex justify-center lg:hidden">
+          <BuildBadge />
+        </div>
+        </>
       ) : (
       <>
       {/* Sessions is everything published; Recreated narrows that to the

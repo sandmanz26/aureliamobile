@@ -8,7 +8,7 @@ import { readString, writeString } from '../lib/storage'
  * `data-ui-version` on <html>. Version 1 is the app exactly as it ships — no
  * attribute-scoped rule applies to it — so switching back is always a true
  * "before". Production never reads the stored choice: it is pinned to
- * PRODUCTION_VERSION (2 since U020, on request — production no longer uses v1).
+ * PRODUCTION_VERSION (2 since U020, 4 since U052 — both on request).
  *
  * To add a version: append an entry here, then scope its rules under
  * `:root[data-ui-version='N']` (see `src/styles/versions.css`). Versions are
@@ -159,8 +159,11 @@ export const UI_VERSIONS: UiVersion[] = [
 
 const KEY = 'aurelia.ui.version'
 
-/** The one design version production shows. No picker there. */
-export const PRODUCTION_VERSION = 2
+/**
+ * The one design version production shows. No picker there.
+ * v2 since U020; v4 since U052 (on request, 2026-10-27).
+ */
+export const PRODUCTION_VERSION = 4
 
 export const VERSIONS_ENABLED = BUILD.environment !== 'production'
 

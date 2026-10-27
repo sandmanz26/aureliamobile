@@ -500,7 +500,7 @@ in `StagingBar`, a 28px bar fixed to the top of every page on staging (it
 offsets `h-dvh`/sticky layouts via `--staging-bar` in `versions.css`), and shows a "what changes" dialog before applying. A
 version is a set of rules scoped under `:root[data-ui-version='N']` in
 `src/styles/versions.css`, so v1 (no attribute) is always the app unchanged.
-Production ignores the stored choice and is pinned to `PRODUCTION_VERSION` — **v2 since U020** (on request; production no longer shows v1). New experiments go
+Production ignores the stored choice and is pinned to `PRODUCTION_VERSION` — **v4 since U052** (on request, 2026-10-27; it was v2 from U020). New experiments go
 in as a new version first; promoting one to the default is a separate,
 explicit step. Versions are cumulative since U038: v2's CSS is scoped
 `:root[data-ui-version]` (any version above 1) and code checks
