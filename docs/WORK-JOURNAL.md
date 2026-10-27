@@ -99,6 +99,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J044 | 2026-10-26 | Operational | Owner is sending the J043 proposal (S1–S7) to users before deciding | docs only |
 | J045 | 2026-10-27 | Release | Production moved to v4; `web_prod` fast-forwarded (U052) | U052 |
 | J046 | 2026-10-27 | Analysis | Production v4 compared with the J039 retention report; model re-scored for what was actually built | docs only |
+| J047 | 2026-10-27 | Report | Owner report: before / suggestion / now / impact (HTML + PDF, no code) | docs only |
 
 ---
 
@@ -456,4 +457,21 @@ transcript and the update log. Everything from J018 on was written at the time.
     - The report's two reference points: before the work 45% / 12% / 3.8% / 1.5%; everything plus simplification 57% / 24% / 10.7% / 6.0%.
     - Adding S1 alone: D7 8.8%.
     - Same caveat as J039: the ordering is useful, the decimals are not; D2 persistence and the real user test are still needed to measure.
+
+### J047 — Report for the owner
+- **Asked:** a clear, easy report for the owner covering the state before, the suggestions, the latest state and the impact.
+- **Delivered:**
+  - `docs/reviews/Aurelia-Owner-Report-2026-10-27.pdf`, 8 pages in plain English.
+  - Its HTML source and 14 before/now screenshots are in `docs/reviews/owner-report-2026-10-27/`. The same page is published as a private artifact for sharing.
+- **Contents:**
+  - Four headline numbers:
+    - taps 14 → 5 (measured);
+    - landed in someone else's conversation 5/6 → 0/6 (measured);
+    - first sessions built for the user's goal 0/6 → 5/5 (measured);
+    - predicted D7 3.8% → 8.3%.
+  - How it was studied.
+  - Seven before/suggestion/now pairs with screenshots.
+  - A measured outcome per test user, and a predicted-retention chart against the wellness-app range.
+  - What is not done, and three decisions: keep users signed in (D2); run the 8–12 person test; S1.
+  - Measured and predicted figures are labelled apart throughout.
 
