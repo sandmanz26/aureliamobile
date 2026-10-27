@@ -46,6 +46,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O16 | **Simplification** (J038): D1–D6 applied to v4 in U051 (D3 = Progress; D6 = one score per change, the sheet's per-change figure). Still open: **D7**, a designer's Figma pass for the tab bar, Me rows, Recent and the Library chips; storybook stories for `TabBar` (and U050's components); Flutter to follow; whether production should move to v4 (it is pinned to v2) | J038, J041, J042, U051 | Product owner + Eugene, then a designer |
 | O18 | **Second simplification pass (J043)**: S1 Progress leads with the person's own journey, so mock analyses are not shown as theirs; S2 card actions 3 → 2 (Recreate only on details/player); S3 Discover shelves 3 → 1 with chips, hero dropped; S4 Create without category chips, Recent = own conversations only; S5 Credits & plan absorbs Invite, Upgrade and Settings' Credit Redemption; S6 one Recreate on Session details, versions only on your own; S7 Edit session keeps rename + script, changes go through the chat. Approve which, all v4 | J043 | Product owner + Eugene |
 | O17 | **Retention simulation follow-ups** (J039 §8): D1/D3/D4/D5 were settled by "update saja di v4" (U050: fixes in v4 rather than v5, `.ics` reminder, Quick Start plays before sign-in, limit after the first build). Still open: **D2**, which is persisting sign-in for a real retention test (the journey already persists per browser); the real 8–12 person test; Sessions/Notifications empty states; R10 beyond the five-chapter prompt; storybook stories for `ChapterCheckIn`/`NextChapterCard` | J039, J040, U050 | Product owner + Eugene |
+| O19 | **v5 (J049)**: (1) promote v5 to production, or keep it on staging for a follow-up with the same three users; (2) backend for real wearable data (Apple Health, Whoop, Oura) — v5 shows example readings; (3) voice choice with previews (needs voices); (4) friends / local groups; (5) a reward for sharing; (6) the two-week report as a push/email; (7) the journal and check-ins are per browser until D2 (persisted sign-in); (8) v4's sheet counts goal-deck items as experiments — fixed in v5 only, so v4 pixels stay as shipped; (9) storybook stories for `FeelingProgress`, `ChapterCheckIn`, `NextChapterCard`, `TabBar`; Flutter to follow | J049, U053 | Product owner + Eugene; backend for 2, 4, 6 |
 
 ---
 
@@ -101,6 +102,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J046 | 2026-10-27 | Analysis | Production v4 compared with the J039 retention report; model re-scored for what was actually built | docs only |
 | J047 | 2026-10-27 | Report | Owner report: before / suggestion / now / impact (HTML + PDF, no code) | docs only |
 | J048 | 2026-10-27 | Report | Owner report labelled as AI analysis by Claude (self-analysis + deep research) | docs only |
+| J049 | 2026-10-27 | Code + report | Three real user interviews vs the simulation; staging v5 built from v4; v5 proposal report (HTML + PDF) | U053 |
 
 ---
 
@@ -489,3 +491,14 @@ transcript and the update log. Everything from J018 on was written at the time.
   - First-person wording changed to Claude, and the PDF footer carries the attribution.
   - PDF regenerated (9 pages); the artifact republished at the same link.
 
+### J049 — Real user feedback, staging v5 and its proposal (U053)
+- **Asked:** use three interview notes (Ishmeet, Olivia, Bryan) to iterate on the earlier research, build staging v5 from v4, and write the feature proposal in the same format as the owner report.
+- **Synthesis (interviews vs the J039 simulation):**
+  - Confirmed: invented numbers are distrusted ("unserious", "how is this calculated?"); little input with Aurelia deciding; one list with toggles.
+  - Corrected: scores do not motivate everyone (anxiety for one; a report every few weeks; detail on demand). Wearables are wanted, with consent — the simulation had treated them as a risk.
+  - Missed: why a change is suggested; all three rejected competitive challenges (stories, friends, local groups instead); the landing "space" plus map read as co-working; journal; voice quality; the "#" on tags; sharing needs clear privacy and a reason.
+  - Assumption: they likely tested a v2 build (they mention the sample "7% REM sleep" conversation, removed in v4). The points still apply to v4's Progress, player, cards and challenge.
+- **Model:** R8 (progress scores) halved, wearable consent turned positive, levers V1–V7 added. Predicted D1/D7/D30: v4 recalibrated 20.7 / 8.1 / 3.9% → v5 24.0 / 11.4 / 6.9% (D7 range 9.6–13.6). Largest single levers at D7: wearable 0.6 pt, progress in words 0.6, Why 0.5.
+- **Built:** U053 (v5, staging only). Production stays v4; `web_prod` untouched.
+- **Delivered:** `docs/reviews/Aurelia-v5-Proposal-2026-10-27.pdf` and its HTML source `docs/reviews/v5-proposal-2026-10-27.html` with 16 v4/v5 screenshots, also published as a private artifact. Labelled "AI analysis · Based on Claude self-analysis and deep research"; measured and predicted figures tagged apart.
+- **Open items:** O19 added.

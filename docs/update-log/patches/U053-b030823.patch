@@ -1,0 +1,1269 @@
+From b0308236576119554372903620cd9cffad6b2dcc Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 27 Oct 2026 18:36:56 +0000
+Subject: [PATCH] Design v5 on staging: v4 reworked after three user interviews
+
+v5 = v4 + interview-driven changes, staging only (production stays v4):
+progress in words from the user's own check-ins with a two-week report
+and detail on demand; no analytics on the player; a Why on every
+suggested change; Aurelia says what the next chapter changes; wearable
+asked for in onboarding (only that source on); optional journal; cards
+describe the session, tags without #; challenge without ranks; publish
+says what stays private; visitor Home without the map.
+
+v1-v4 are pixel-identical (150 pairs, 402/1280).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/components/chat/AddSheet.tsx            |  46 +++++-
+ src/components/chat/PublishSheet.tsx        |  10 ++
+ src/components/ui/SessionGridCard.tsx       |   7 +-
+ src/components/ui/TagRow.tsx                |   8 +-
+ src/components/wellness/ChapterCheckIn.tsx  |  88 +++++++++-
+ src/components/wellness/FeelingProgress.tsx | 168 ++++++++++++++++++++
+ src/components/wellness/NextChapterCard.tsx |   4 +-
+ src/lib/journey.test.ts                     |  29 ++++
+ src/lib/journey.ts                          |  57 ++++++-
+ src/lib/onboarding.ts                       |  18 +++
+ src/lib/signals.test.ts                     |  17 ++
+ src/lib/signals.ts                          |  24 ++-
+ src/pages/ChallengeDetailPage.tsx           |  37 +++++
+ src/pages/ChatPage.tsx                      |  15 +-
+ src/pages/HomePage.tsx                      |  12 +-
+ src/pages/OnboardingPage.tsx                |  35 +++-
+ src/pages/PlayerPage.tsx                    |  14 +-
+ src/pages/WellnessAnalysisPage.tsx          |   6 +-
+ src/pages/WellnessPage.tsx                  |  21 ++-
+ src/styles/versions.css                     |   6 +-
+ src/versions/versions.ts                    |  42 +++++
+ 21 files changed, 635 insertions(+), 29 deletions(-)
+ create mode 100644 src/components/wellness/FeelingProgress.tsx
+ create mode 100644 src/lib/signals.test.ts
+
+diff --git a/src/components/chat/AddSheet.tsx b/src/components/chat/AddSheet.tsx
+index c5bb17f..c0b8b80 100644
+--- a/src/components/chat/AddSheet.tsx
++++ b/src/components/chat/AddSheet.tsx
+@@ -19,6 +19,12 @@ interface AddSheetProps {
+    * selected with everything else in one selection. Absent in v1–v3.
+    */
+   suggestions?: AddOption[]
++  /**
++   * v5 (U053): what Aurelia's suggestions are based on ("your goal 'Sleep
++   * better' and how you felt last time"). Present, every row gets a Why —
++   * two interviewed users asked for the reason behind each change.
++   */
++  basis?: string
+ }
+ 
+ /**
+@@ -245,7 +251,7 @@ function OptionCard({
+  * The expected effect is shown per change and as "up to" the largest one,
+  * never summed: separate percentage lifts do not add (logic review D4).
+  */
+-function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel, suggestions = [] }: AddSheetProps) {
++function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel, suggestions = [], basis }: AddSheetProps) {
+   useEffect(() => {
+     function onKey(event: KeyboardEvent) {
+       if (event.key === 'Escape') onClose()
+@@ -264,7 +270,11 @@ function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel, suggestions
+   const experimentOptions = only(EXPERIMENTS.filter((option) => !suggested.has(option.id)))
+   const picked = everything.filter((option) => added.includes(option.id))
+   const predicted = picked.filter((option) => option.improveScore)
+-  const experiments = picked.filter((option) => !option.improveScore)
++  // An experiment is a row with a channel and no prediction. v5 (U053) counts
++  // only those: a goal-deck suggestion has no score either (nothing to
++  // predict from yet) but is not an experiment. v4 still counts it as one —
++  // a known gap logged in U053, left alone so production's v4 is unchanged.
++  const experiments = picked.filter((option) => !option.improveScore && (!basis || option.channel))
+   const best = predicted.reduce((max, option) => Math.max(max, Number.parseFloat(option.improveScore ?? '0')), 0)
+ 
+   return createPortal(
+@@ -303,6 +313,7 @@ function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel, suggestions
+               options={proposals}
+               added={added}
+               onToggle={onToggle}
++              basis={basis}
+             />
+           )}
+           {diagnosis.length > 0 && (
+@@ -312,6 +323,9 @@ function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel, suggestions
+               options={diagnosis}
+               added={added}
+               onToggle={onToggle}
++              // Not the person's goal: this list is the session's own
++              // diagnosis, which in the demo is sample data — said so.
++              basis={basis ? 'Aurelia’s read of how this session has been working (sample data in this demo).' : undefined}
+             />
+           )}
+           {experimentOptions.length > 0 && (
+@@ -321,6 +335,7 @@ function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel, suggestions
+               options={experimentOptions}
+               added={added}
+               onToggle={onToggle}
++              basis={basis}
+             />
+           )}
+           {proposals.length + diagnosis.length + experimentOptions.length === 0 && (
+@@ -393,13 +408,16 @@ function ListSection({
+   options,
+   added,
+   onToggle,
++  basis,
+ }: {
+   title: string
+   hint: string
+   options: AddOption[]
+   added: string[]
+   onToggle: (id: string) => void
++  basis?: string
+ }) {
++  const [open, setOpen] = useState<string | null>(null)
+   return (
+     <section className="mt-8 first:mt-0">
+       <h3 className="text-style-body-small font-medium text-text-primary">{title}</h3>
+@@ -417,11 +435,33 @@ function ListSection({
+                   <span className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#ecfbed] px-6 py-1 text-[11px] text-success-600">
+                     <ArrowUp size={10} /> {option.improveScore} expected
+                   </span>
+-                ) : (
++                ) : option.channel ? (
+                   <span className="mt-4 inline-flex items-center gap-4 text-[11px] text-text-secondary">
+                     {option.channel === 'Visuals' ? <Image size={11} /> : <Music size={11} />}
+                     {option.channel}
+                   </span>
++                ) : null}
++                {basis && (
++                  <button
++                    type="button"
++                    aria-expanded={open === option.id}
++                    onClick={() => setOpen((current) => (current === option.id ? null : option.id))}
++                    className="u-tap ml-8 mt-4 inline-flex items-center gap-2 text-[11px] font-medium text-[#C25E0A]"
++                  >
++                    Why?
++                  </button>
++                )}
++                {basis && open === option.id && (
++                  <div className="mt-8 rounded-12 bg-[#FFF8EC] p-10 text-[12px] leading-[18px] text-text-primary">
++                    <p>
++                      <span className="font-medium">What it does: </span>
++                      {option.description}.
++                    </p>
++                    <p className="mt-4">
++                      <span className="font-medium">Based on: </span>
++                      {option.channel ? 'nothing yet. This one is an experiment, so you find out when you listen.' : basis}
++                    </p>
++                  </div>
+                 )}
+               </div>
+               <button
+diff --git a/src/components/chat/PublishSheet.tsx b/src/components/chat/PublishSheet.tsx
+index 333ab43..c123fe6 100644
+--- a/src/components/chat/PublishSheet.tsx
++++ b/src/components/chat/PublishSheet.tsx
+@@ -1,4 +1,5 @@
+ import { createPortal } from 'react-dom'
++import { useUiVersion } from '../../versions/useUiVersion'
+ import { Check, CircleX } from 'lucide-react'
+ 
+ interface PublishSheetProps {
+@@ -21,6 +22,7 @@ interface PublishSheetProps {
+ // neutral surface rather than a warning colour — the sheet is there to say what
+ // happened and that nothing was lost, not to make the user feel caught out.
+ export function PublishSheet({ state, onCancel, onView, onDone }: PublishSheetProps) {
++  const v5 = useUiVersion() >= 5
+   const publishing = state === 'publishing'
+   const unpublished = state === 'unpublished'
+ 
+@@ -61,6 +63,14 @@ export function PublishSheet({ state, onCancel, onView, onDone }: PublishSheetPr
+                 ? 'Hang tight! This’ll only take a moment.'
+                 : 'Your session is now ready to view.'}
+           </p>
++          {/* v5 (U053): what publishing shares, said plainly. An interviewed
++              user (Olivia) would share "but it should be clear what others
++              can see and what's private". */}
++          {v5 && !unpublished && (
++            <p className="text-style-caption mt-4 rounded-12 bg-background-elevated px-12 py-10 text-left text-text-secondary">
++              Others can play and recreate the session: its title, sound, visuals and script. Your check-ins, journal, wearable data and this conversation stay private.
++            </p>
++          )}
+         </div>
+ 
+         {unpublished ? (
+diff --git a/src/components/ui/SessionGridCard.tsx b/src/components/ui/SessionGridCard.tsx
+index 6479a91..315583e 100644
+--- a/src/components/ui/SessionGridCard.tsx
++++ b/src/components/ui/SessionGridCard.tsx
+@@ -5,6 +5,7 @@ import type { ProfileOrigin } from '../../lib/people'
+ import type { SessionRecord } from '../../lib/sessions'
+ import { CoverImage } from './CoverImage'
+ import { PhotoCircle } from './PhotoCircle'
++import { useUiVersion } from '../../versions/useUiVersion'
+ 
+ /**
+  * The tall session card used on the See All grid and the challenge shelf.
+@@ -34,6 +35,7 @@ export function SessionGridCard({
+   playOrigin?: ProfileOrigin
+ }) {
+   const recreate = useRecreateTarget(session)
++  const v5 = useUiVersion() >= 5
+ 
+   function handleClick(event: React.MouseEvent) {
+     if (guard && !guard()) event.preventDefault()
+@@ -104,7 +106,10 @@ export function SessionGridCard({
+         <div className="flex flex-col gap-6">
+           <div>
+             <p className="text-style-body">{session.title}</p>
+-            <p className="text-style-label-light mt-2 line-clamp-2">{session.description}</p>
++            {/* v5 (U053): what the session is like, not a percentage it
++                claims. Real users read "reduced stress by 43%" as
++                unserious, and asked for the process over the result. */}
++            <p className="text-style-label-light mt-2 line-clamp-2">{v5 ? session.summary : session.description}</p>
+           </div>
+ 
+           {/* Credit and counts share a row once the card is wide enough for both,
+diff --git a/src/components/ui/TagRow.tsx b/src/components/ui/TagRow.tsx
+index 65c9f40..1157945 100644
+--- a/src/components/ui/TagRow.tsx
++++ b/src/components/ui/TagRow.tsx
+@@ -1,3 +1,5 @@
++import { useUiVersion } from '../../versions/useUiVersion'
++
+ /**
+  * Topic hashtags, wrapped, with the overflow folded into one "+N" chip
+  * rather than letting a long list wrap the row indefinitely.
+@@ -7,13 +9,17 @@
+  * copy is exactly how `CARD_SHADOW` ended up duplicated four times.
+  */
+ export function TagRow({ tags, max = 6 }: { tags: string[]; max?: number }) {
++  // v5 (U053): plain words. A user interview (Ishmeet) liked the tags but
++  // not the hashtags — this is not a social feed.
++  const hash = useUiVersion() >= 5 ? '' : '#'
+   const shown = tags.slice(0, max)
+   const overflow = tags.length - shown.length
+   return (
+     <div className="flex flex-wrap gap-8">
+       {shown.map((tag) => (
+         <span key={tag} className="text-style-body-small rounded-full bg-[#FDF3E9] px-12 py-6 text-[#EF8B39]">
+-          #{tag}
++          {hash}
++          {tag}
+         </span>
+       ))}
+       {overflow > 0 && (
+diff --git a/src/components/wellness/ChapterCheckIn.tsx b/src/components/wellness/ChapterCheckIn.tsx
+index 20526f4..61714b2 100644
+--- a/src/components/wellness/ChapterCheckIn.tsx
++++ b/src/components/wellness/ChapterCheckIn.tsx
+@@ -11,6 +11,7 @@ import {
+   FIRST_CHAPTERS,
+   MOOD_LABELS,
+   addCheckIn,
++  noteLastCheckIn,
+   defaultReminderTime,
+   nextChapterWhen,
+   reminderIcs,
+@@ -31,7 +32,26 @@ const SAME_LISTEN_MS = 6 * 60 * 60_000
+  * the answer, promises the next chapter, offers a reminder for it, and only
+  * draws progress once there are two real answers to draw.
+  */
+-export function ChapterCheckIn({ initial, goalLabel }: { initial: Journey; goalLabel: string | null }) {
++/** v5: what the next chapter will change, so there is nothing to tune (J049, Ishmeet: "I'd rather you tell me what to change"). */
++function nextPlan(mood: number, chapter: number) {
++  if (mood <= 2) return `Chapter ${chapter + 1} will be gentler: slower pacing, fewer words, and a softer ending.`
++  if (mood === 3) return `Chapter ${chapter + 1} will try one change: a slower, quieter close.`
++  return `Chapter ${chapter + 1} keeps what worked and goes a little deeper.`
++}
++
++export function ChapterCheckIn({
++  initial,
++  goalLabel,
++  v5 = false,
++  wearable,
++}: {
++  initial: Journey
++  goalLabel: string | null
++  /** Design v5 (U053): journal line, the next chapter's plan, no score bars. */
++  v5?: boolean
++  /** v5: the wearable chosen in onboarding, if any ("Apple Watch"). */
++  wearable?: string | null
++}) {
+   const navigate = useNavigate()
+   const [journey, setJourney] = useState(initial)
+   const [now] = useState(() => Date.now())
+@@ -39,6 +59,8 @@ export function ChapterCheckIn({ initial, goalLabel }: { initial: Journey; goalL
+   const answered = Boolean(last && now - last.at < SAME_LISTEN_MS)
+   const [time, setTime] = useState(journey.reminder ?? defaultReminderTime(journey.goal))
+   const [added, setAdded] = useState(false)
++  const [note, setNote] = useState('')
++  const [noted, setNoted] = useState(false)
+ 
+   // The chapter this listen is: the last one answered, or the next one.
+   const chapter = answered ? journey.checkIns.length : journey.checkIns.length + 1
+@@ -119,12 +141,63 @@ export function ChapterCheckIn({ initial, goalLabel }: { initial: Journey; goalL
+         </div>
+       )}
+ 
++      {v5 && mood !== null && wearable && (
++        /* Olivia asked for this exact thing: the body's reading during the
++           session, not a score. The demo has no live connection, so the
++           figures are marked as an example. */
++        <div className="flex flex-col gap-4 rounded-16 border border-border-subtle p-14">
++          <p className="text-[12px] leading-[16px] text-text-secondary">{wearable} · during this session</p>
++          <p className="text-[16px] leading-[22px] text-text-primary">Heart rate settled from 78 to 66 bpm</p>
++          <p className="text-[11px] leading-[14px] text-text-secondary">Example reading — real data once the connection is live.</p>
++        </div>
++      )}
++
++      {v5 && mood !== null && (
++        <div className="flex flex-col gap-8">
++          {noted ? (
++            <p className="text-[14px] font-light leading-[21px] text-text-secondary">Saved to your journal. Only you can see it.</p>
++          ) : (
++            <form
++              className="flex flex-col gap-8"
++              onSubmit={(event) => {
++                event.preventDefault()
++                const next = noteLastCheckIn(note)
++                if (next && note.trim()) {
++                  setJourney(next)
++                  setNoted(true)
++                }
++              }}
++            >
++              <label htmlFor="checkin-note" className="text-[14px] leading-[21px] text-text-primary">
++                Anything on your mind? <span className="text-text-secondary">Optional, only you see it.</span>
++              </label>
++              <div className="flex gap-8">
++                <input
++                  id="checkin-note"
++                  value={note}
++                  onChange={(event) => setNote(event.target.value)}
++                  placeholder="A line for your journal…"
++                  maxLength={500}
++                  className="h-44 min-w-0 flex-1 rounded-12 border border-border-subtle bg-surface-default px-12 text-[14px] text-text-primary placeholder:text-text-secondary focus:outline-none"
++                />
++                <button type="submit" disabled={!note.trim()} className="u-press h-44 shrink-0 rounded-12 bg-[#331B04] px-14 text-[14px] text-white disabled:opacity-40">
++                  Save
++                </button>
++              </div>
++            </form>
++          )}
++        </div>
++      )}
++
+       {mood !== null && !done && (
+         <div className="flex flex-col gap-12 rounded-16 bg-[#FFF8EC] p-16">
+           <p className="text-[12px] leading-[16px] text-[#8A5A1E]">Next</p>
+           <p className="-mt-6 text-[20px] leading-[28px] text-text-primary">
+             Chapter {chapter + 1} is ready {nextChapterWhen(journey.goal)}
+           </p>
++          {v5 && mood !== null && (
++            <p className="-mt-6 text-[14px] font-light leading-[21px] text-text-secondary">{nextPlan(mood, chapter)}</p>
++          )}
+           {journey.reminder && !added ? (
+             <p className="flex items-center gap-8 text-[14px] font-light leading-[21px] text-text-secondary">
+               <BellRing size={16} className="shrink-0 text-[#8A5A1E]" />
+@@ -179,7 +252,7 @@ export function ChapterCheckIn({ initial, goalLabel }: { initial: Journey; goalL
+         </div>
+       )}
+ 
+-      <ChapterTrack journey={journey} />
++      <ChapterTrack journey={journey} words={v5} />
+     </section>
+   )
+ }
+@@ -188,7 +261,7 @@ export function ChapterCheckIn({ initial, goalLabel }: { initial: Journey; goalL
+  * The first five as dots, and — once there are two — each answer as it was
+  * given. No smoothing, no projection: two points are what they are.
+  */
+-export function ChapterTrack({ journey }: { journey: Journey }) {
++export function ChapterTrack({ journey, words = false }: { journey: Journey; words?: boolean }) {
+   const count = journey.checkIns.length
+   return (
+     <div className="flex flex-col gap-12">
+@@ -208,6 +281,14 @@ export function ChapterTrack({ journey }: { journey: Journey }) {
+       {count >= 2 && (
+         <ol className="flex flex-col gap-8" aria-label="How you felt after each chapter">
+           {journey.checkIns.map((c, i) => (
++            words ? (
++              /* v5: words only. A bar per chapter is a score to chase, which
++                 is what one interviewed user said would make them anxious. */
++              <li key={c.at} className="flex items-baseline gap-8 text-[13px] leading-[18px]">
++                <span className="w-[84px] shrink-0 text-text-secondary">Chapter {i + 1}</span>
++                <span className="text-text-primary">Felt {MOOD_LABELS[c.mood - 1].toLowerCase()}</span>
++              </li>
++            ) : (
+             <li key={c.at} className="grid grid-cols-[84px_1fr_92px] items-center gap-8 text-[13px] leading-[18px]">
+               <span className="text-text-secondary">Chapter {i + 1}</span>
+               <span className="h-8 overflow-hidden rounded-full bg-[#F5EEE8]">
+@@ -215,6 +296,7 @@ export function ChapterTrack({ journey }: { journey: Journey }) {
+               </span>
+               <span className="text-right text-text-primary">{MOOD_LABELS[c.mood - 1]}</span>
+             </li>
++            )
+           ))}
+         </ol>
+       )}
+diff --git a/src/components/wellness/FeelingProgress.tsx b/src/components/wellness/FeelingProgress.tsx
+new file mode 100644
+index 0000000..62b50e7
+--- /dev/null
++++ b/src/components/wellness/FeelingProgress.tsx
+@@ -0,0 +1,168 @@
++import { ChevronDown, NotebookPen } from 'lucide-react'
++import { useState } from 'react'
++import { useNavigate } from 'react-router-dom'
++import type { Journey } from '../../lib/journey'
++import { FIRST_CHAPTERS, MOOD_LABELS, addJournalNote, feelingSummary, readJourney } from '../../lib/journey'
++import { findGoal, onboardingAnswers, wearableLabel } from '../../lib/onboarding'
++
++const DAY = 24 * 60 * 60_000
++const REPORT_EVERY_DAYS = 14
++
++const dateLabel = (at: number) => new Date(at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
++
++/**
++ * Progress → Your goals, design v5 (U053).
++ *
++ * The first three user interviews (J049) turned on this screen. One person
++ * said tracking numbers would make them anxious, one laughed at the sample
++ * figures ("what are these numbers from?"), and one wanted to know what drove
++ * them. So: their own check-ins, said in words; a short report every two
++ * weeks rather than live numbers; and the detail, with what it is based on,
++ * for whoever opens it. Nothing here comes from the demo's sample analyses.
++ */
++export function FeelingProgress() {
++  const navigate = useNavigate()
++  const [journey, setJourney] = useState<Journey | null>(() => readJourney())
++  const [open, setOpen] = useState(false)
++  const [note, setNote] = useState('')
++  const [now] = useState(() => Date.now())
++  const answers = onboardingAnswers()
++  const wearable = wearableLabel(answers?.wearable)
++
++  if (!journey) {
++    return (
++      <div className="mt-24 flex flex-col gap-12 rounded-[20px] border border-border-subtle bg-surface-default p-20">
++        <p className="text-[20px] leading-[28px] text-text-primary">Your progress starts with your first session.</p>
++        <p className="text-[14px] font-light leading-[21px] text-text-secondary">
++          After each one, a single tap tells Aurelia how you feel. It shows up here in words, not scores, with a short report every two weeks.
++        </p>
++        <button
++          type="button"
++          onClick={() => navigate('/home')}
++          className="u-press mt-4 flex h-48 items-center justify-center rounded-16 bg-[#331B04] text-[16px] leading-[19px] text-white"
++        >
++          Create a session
++        </button>
++      </div>
++    )
++  }
++
++  const summary = feelingSummary(journey.checkIns)
++  const goal = findGoal(journey.goal)
++  const started = journey.checkIns[0]?.at
++  const nextReport = started ? started + REPORT_EVERY_DAYS * DAY : null
++  const headline =
++    summary.trend === 'new'
++      ? summary.count === 0
++        ? 'Nothing to report yet.'
++        : `After one chapter you felt ${summary.usual.toLowerCase()}.`
++      : summary.trend === 'up'
++        ? 'You have been feeling better since you started.'
++        : summary.trend === 'down'
++          ? 'A harder stretch lately.'
++          : 'Steady so far.'
++  const detail =
++    summary.trend === 'new'
++      ? 'Aurelia needs two check-ins before it can say which way things are going.'
++      : summary.trend === 'down'
++        ? 'Aurelia is making the next chapters gentler. If something else is going on, the journal is a good place for it.'
++        : `Most often you felt ${summary.usual.toLowerCase()}, across ${summary.count} chapters.`
++
++  const journal = [
++    ...journey.checkIns.filter((c) => c.note).map((c) => ({ at: c.at, text: c.note as string, mood: c.mood })),
++    ...(journey.notes ?? []),
++  ].sort((a, b) => b.at - a.at)
++
++  return (
++    <div className="mt-24 flex flex-col gap-16">
++      <section aria-label="How you have been feeling" className="flex flex-col gap-10 rounded-[20px] border border-border-subtle bg-surface-default p-20">
++        <p className="text-[12px] font-medium uppercase leading-[16px] tracking-[0.06em] text-[#8A5A1E]">
++          {goal?.label ?? journey.name} · {Math.min(summary.count, FIRST_CHAPTERS)} of your first {FIRST_CHAPTERS} chapters
++        </p>
++        <p className="text-[22px] leading-[30px] text-text-primary">{headline}</p>
++        <p className="text-[14px] font-light leading-[21px] text-text-secondary">{detail}</p>
++        {nextReport && (
++          <p className="text-[13px] leading-[18px] text-text-secondary">
++            Your two-week report: {nextReport > now ? dateLabel(nextReport) : 'ready'}. No live numbers in between.
++          </p>
++        )}
++        <button
++          type="button"
++          aria-expanded={open}
++          onClick={() => setOpen((v) => !v)}
++          className="u-press mt-4 flex items-center gap-6 self-start text-[14px] font-medium text-[#C25E0A]"
++        >
++          See what’s behind this <ChevronDown size={16} className={open ? 'rotate-180' : ''} />
++        </button>
++        {open && (
++          <div className="flex flex-col gap-10 border-t border-border-subtle pt-12">
++            <p className="text-[13px] leading-[19px] text-text-secondary">
++              Based on: {journey.checkIns.length} check-in{journey.checkIns.length === 1 ? '' : 's'} after your chapters
++              {wearable ? `, and your ${wearable} (example data until the connection is live)` : ''}. Nothing else.
++            </p>
++            <ol className="flex flex-col gap-8">
++              {journey.checkIns.map((c, i) => (
++                <li key={c.at} className="flex items-baseline gap-10 text-[13px] leading-[19px]">
++                  <span className="w-[84px] shrink-0 text-text-secondary">Chapter {i + 1}</span>
++                  <span className="min-w-0 text-text-primary">
++                    {MOOD_LABELS[c.mood - 1]}
++                    {c.note ? <span className="text-text-secondary"> · “{c.note}”</span> : null}
++                  </span>
++                </li>
++              ))}
++            </ol>
++          </div>
++        )}
++      </section>
++
++      <section aria-label="Journal" className="flex flex-col gap-12 rounded-[20px] border border-border-subtle bg-surface-default p-20">
++        <p className="flex items-center gap-8 text-[16px] leading-[22px] text-text-primary">
++          <NotebookPen size={18} className="text-icon-default" /> Journal
++        </p>
++        <form
++          className="flex gap-8"
++          onSubmit={(event) => {
++            event.preventDefault()
++            const next = addJournalNote(note)
++            if (next && note.trim()) {
++              setJourney(next)
++              setNote('')
++            }
++          }}
++        >
++          <label htmlFor="journal-note" className="sr-only">
++            Today’s note
++          </label>
++          <input
++            id="journal-note"
++            value={note}
++            onChange={(event) => setNote(event.target.value)}
++            placeholder="How was today?"
++            maxLength={500}
++            className="h-44 min-w-0 flex-1 rounded-12 border border-border-subtle bg-surface-default px-12 text-[14px] text-text-primary placeholder:text-text-secondary focus:outline-none"
++          />
++          <button type="submit" disabled={!note.trim()} className="u-press h-44 shrink-0 rounded-12 bg-[#331B04] px-14 text-[14px] text-white disabled:opacity-40">
++            Save
++          </button>
++        </form>
++        {journal.length === 0 ? (
++          <p className="text-[13px] font-light leading-[19px] text-text-secondary">
++            A line a day, if you like. Only you see it, and Aurelia uses it to shape your next chapters.
++          </p>
++        ) : (
++          <ul className="flex flex-col gap-10">
++            {journal.map((entry) => (
++              <li key={entry.at} className="flex flex-col gap-2 border-t border-border-subtle pt-10 first:border-t-0 first:pt-0">
++                <span className="text-[12px] leading-[16px] text-text-secondary">
++                  {dateLabel(entry.at)}
++                  {entry.mood ? ` · felt ${MOOD_LABELS[entry.mood - 1].toLowerCase()}` : ''}
++                </span>
++                <span className="text-[14px] leading-[21px] text-text-primary">{entry.text}</span>
++              </li>
++            ))}
++          </ul>
++        )}
++      </section>
++    </div>
++  )
++}
+diff --git a/src/components/wellness/NextChapterCard.tsx b/src/components/wellness/NextChapterCard.tsx
+index 6c918cb..cf2606c 100644
+--- a/src/components/wellness/NextChapterCard.tsx
++++ b/src/components/wellness/NextChapterCard.tsx
+@@ -5,6 +5,7 @@ import { FIRST_CHAPTERS, MOOD_LABELS } from '../../lib/journey'
+ import { findGoal } from '../../lib/onboarding'
+ import { CURRENT_USER } from '../../lib/people'
+ import { ChapterTrack } from './ChapterCheckIn'
++import { useUiVersion } from '../../versions/useUiVersion'
+ 
+ /**
+  * Home's first block once you have a first session (design v4, U050).
+@@ -16,6 +17,7 @@ import { ChapterTrack } from './ChapterCheckIn'
+  */
+ export function NextChapterCard({ journey }: { journey: Journey }) {
+   const navigate = useNavigate()
++  const v5 = useUiVersion() >= 5
+   const goal = findGoal(journey.goal)
+   const last = journey.checkIns[journey.checkIns.length - 1]
+   const chapter = journey.checkIns.length + 1
+@@ -54,7 +56,7 @@ export function NextChapterCard({ journey }: { journey: Journey }) {
+           </p>
+         )}
+       </div>
+-      {journey.checkIns.length < FIRST_CHAPTERS && <ChapterTrack journey={journey} />}
++      {journey.checkIns.length < FIRST_CHAPTERS && <ChapterTrack journey={journey} words={v5} />}
+     </section>
+   )
+ }
+diff --git a/src/lib/journey.test.ts b/src/lib/journey.test.ts
+index 0a1083b..74e1632 100644
+--- a/src/lib/journey.test.ts
++++ b/src/lib/journey.test.ts
+@@ -40,3 +40,32 @@ describe('reminderIcs', () => {
+     expect(ics.split('\r\n')[0]).toBe('BEGIN:VCALENDAR')
+   })
+ })
++
++describe('journal and feeling summary (v5, U053)', () => {
++  beforeEach(() => localStorage.clear())
++
++  it('keeps a note on the last check-in and journal lines on their own', async () => {
++    const { noteLastCheckIn, addJournalNote } = await import('./journey')
++    startJourney({ goal: 'sleep', name: 'Sleep better', slug: 'dolphins-frequency', href: '/play/dolphins-frequency' })
++    addCheckIn(3, 1)
++    noteLastCheckIn('  Fell asleep before midnight  ')
++    addJournalNote('Long day, skipped the session', 2, 5)
++    expect(readJourney()).toMatchObject({ checkIns: [{ mood: 3, note: 'Fell asleep before midnight' }], notes: [{ at: 5, text: 'Long day, skipped the session', mood: 2 }] })
++  })
++
++  it('ignores empty notes', async () => {
++    const { addJournalNote } = await import('./journey')
++    startJourney({ goal: null, name: 'x', slug: 'y', href: '/play/y' })
++    addJournalNote('   ')
++    expect(readJourney()?.notes).toBeUndefined()
++  })
++
++  it('says the direction in words, never a score', async () => {
++    const { feelingSummary } = await import('./journey')
++    expect(feelingSummary([])).toEqual({ trend: 'new', usual: '', count: 0 })
++    expect(feelingSummary([{ at: 1, mood: 3 }])).toMatchObject({ trend: 'new', usual: 'Neutral' })
++    expect(feelingSummary([{ at: 1, mood: 2 }, { at: 2, mood: 3 }, { at: 3, mood: 4 }, { at: 4, mood: 4 }])).toMatchObject({ trend: 'up', usual: 'Pleasant', count: 4 })
++    expect(feelingSummary([{ at: 1, mood: 4 }, { at: 2, mood: 4 }])).toMatchObject({ trend: 'same' })
++    expect(feelingSummary([{ at: 1, mood: 5 }, { at: 2, mood: 2 }])).toMatchObject({ trend: 'down' })
++  })
++})
+diff --git a/src/lib/journey.ts b/src/lib/journey.ts
+index eee4fb0..274bbea 100644
+--- a/src/lib/journey.ts
++++ b/src/lib/journey.ts
+@@ -25,6 +25,15 @@ export interface CheckIn {
+   at: number
+   /** 1–5, as tapped on the faces. */
+   mood: number
++  /** v5 (U053): an optional line in their own words — the journal. Only they see it. */
++  note?: string
++}
++
++/** v5 (U053): a journal line written without a session, from Progress. */
++export interface JournalNote {
++  at: number
++  text: string
++  mood?: number
+ }
+ 
+ export interface Journey {
+@@ -38,6 +47,8 @@ export interface Journey {
+   checkIns: CheckIn[]
+   /** "22:30", once a reminder has been added to the calendar. */
+   reminder?: string
++  /** v5: journal lines written outside a session. */
++  notes?: JournalNote[]
+ }
+ 
+ const KEY = 'aurelia.journey'
+@@ -47,8 +58,9 @@ const schema = z.object({
+   name: z.string(),
+   slug: z.string(),
+   href: z.string(),
+-  checkIns: z.array(z.object({ at: z.number(), mood: z.number().int().min(1).max(5) })),
++  checkIns: z.array(z.object({ at: z.number(), mood: z.number().int().min(1).max(5), note: z.string().max(500).optional() })),
+   reminder: z.string().optional(),
++  notes: z.array(z.object({ at: z.number(), text: z.string().max(500), mood: z.number().int().min(1).max(5).optional() })).optional(),
+ })
+ 
+ export function readJourney(): Journey | null {
+@@ -74,6 +86,49 @@ export function addCheckIn(mood: number, at = Date.now()): Journey | null {
+   return next
+ }
+ 
++/** v5: the note typed under the check-in that was just made. */
++export function noteLastCheckIn(note: string): Journey | null {
++  const journey = readJourney()
++  const text = note.trim().slice(0, 500)
++  if (!journey || !journey.checkIns.length || !text) return journey
++  const checkIns = journey.checkIns.map((c, i) => (i === journey.checkIns.length - 1 ? { ...c, note: text } : c))
++  const next = { ...journey, checkIns }
++  writeJson(KEY, next)
++  return next
++}
++
++/** v5: a journal line from Progress, with no session behind it. */
++export function addJournalNote(text: string, mood?: number, at = Date.now()): Journey | null {
++  const journey = readJourney()
++  const line = text.trim().slice(0, 500)
++  if (!journey || !line) return journey
++  const next = { ...journey, notes: [...(journey.notes ?? []), { at, text: line, ...(mood ? { mood } : {}) }] }
++  writeJson(KEY, next)
++  return next
++}
++
++/**
++ * v5 (U053): how the stretch is going, in words rather than a score.
++ *
++ * Real users (Ishmeet, Olivia, Bryan; J049) read the demo's percentages as
++ * either anxiety-making or unserious. This summarises their own answers the
++ * way a person would: the direction, the most common feeling, and how many
++ * times they showed up. No percentages, no projection.
++ */
++export function feelingSummary(checkIns: CheckIn[]): { trend: 'up' | 'same' | 'down' | 'new'; usual: string; count: number } {
++  const count = checkIns.length
++  if (count < 2) return { trend: 'new', usual: count ? MOOD_LABELS[checkIns[0].mood - 1] : '', count }
++  const half = Math.ceil(count / 2)
++  const avg = (list: CheckIn[]) => list.reduce((s, c) => s + c.mood, 0) / list.length
++  const early = avg(checkIns.slice(0, count - half)) || avg(checkIns.slice(0, 1))
++  const late = avg(checkIns.slice(count - half))
++  const trend = late - early >= 0.5 ? 'up' : early - late >= 0.5 ? 'down' : 'same'
++  const tally = new Map<number, number>()
++  for (const c of checkIns) tally.set(c.mood, (tally.get(c.mood) ?? 0) + 1)
++  const usualMood = [...tally.entries()].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0]
++  return { trend, usual: MOOD_LABELS[usualMood - 1], count }
++}
++
+ export function setReminder(time: string): Journey | null {
+   const journey = readJourney()
+   if (!journey) return null
+diff --git a/src/lib/onboarding.ts b/src/lib/onboarding.ts
+index 32c83de..07f3736 100644
+--- a/src/lib/onboarding.ts
++++ b/src/lib/onboarding.ts
+@@ -62,6 +62,23 @@ export interface Onboarding {
+   length: Length
+   voice: Voice
+   sounds: Sound[]
++  /** v5 (U053): the wearable they chose to connect, if any. Absent = not asked. */
++  wearable?: Wearable
++}
++
++/** v5: the devices the three interviewed users wear, plus "none". */
++export const WEARABLES = [
++  { id: 'apple-watch', label: 'Apple Watch' },
++  { id: 'whoop', label: 'Whoop' },
++  { id: 'oura', label: 'Oura Ring' },
++  { id: 'none', label: 'Not now' },
++] as const
++export type Wearable = (typeof WEARABLES)[number]['id']
++
++/** "Apple Watch" for a connected device; null for none or not asked. */
++export function wearableLabel(id: Wearable | undefined): string | null {
++  if (!id || id === 'none') return null
++  return WEARABLES.find((w) => w.id === id)?.label ?? null
+ }
+ 
+ /** What a skipped step leaves behind — sensible, and what the demo session already is. */
+@@ -81,6 +98,7 @@ const stored = z.object({
+   length: z.union([z.literal(5), z.literal(10), z.literal(20)]),
+   voice: z.enum(['female', 'male', 'none']),
+   sounds: z.array(z.enum(['nature', 'music', 'frequencies', 'silence'])),
++  wearable: z.enum(['apple-watch', 'whoop', 'oura', 'none']).optional(),
+   doneAt: z.number().optional(),
+   skipped: z.boolean().optional(),
+ })
+diff --git a/src/lib/signals.test.ts b/src/lib/signals.test.ts
+new file mode 100644
+index 0000000..ff69dde
+--- /dev/null
++++ b/src/lib/signals.test.ts
+@@ -0,0 +1,17 @@
++import { describe, expect, it } from 'vitest'
++import { SIGNAL_SOURCES, connectionsForWearable, sourcesInGroup } from './signals'
++
++describe('wearable-first data sources (v5, U053)', () => {
++  it('switches on only the wearable chosen in onboarding', () => {
++    const on = Object.entries(connectionsForWearable('whoop')).filter(([, v]) => v).map(([k]) => k)
++    expect(on).toEqual(['whoop'])
++    expect(Object.values(connectionsForWearable('none')).every((v) => !v)).toBe(true)
++    expect(Object.values(connectionsForWearable(undefined)).every((v) => !v)).toBe(true)
++  })
++
++  it('lists Whoop in v5 only, leaving v1–v4 and admin unchanged', () => {
++    expect(SIGNAL_SOURCES.some((s) => s.id === 'whoop')).toBe(false)
++    expect(sourcesInGroup('Biological').map((s) => s.id)).not.toContain('whoop')
++    expect(sourcesInGroup('Biological', true).map((s) => s.id)).toContain('whoop')
++  })
++})
+diff --git a/src/lib/signals.ts b/src/lib/signals.ts
+index b5c06cf..ebe6792 100644
+--- a/src/lib/signals.ts
++++ b/src/lib/signals.ts
+@@ -6,7 +6,7 @@
+ // connection per source — the shape here is deliberately close to it.
+ 
+ import type { LucideIcon } from 'lucide-react'
+-import { CalendarDays, CircleDot, CloudSun, MapPin, MessagesSquare, Watch } from 'lucide-react'
++import { Activity, CalendarDays, CircleDot, CloudSun, MapPin, MessagesSquare, Watch } from 'lucide-react'
+ 
+ export type SignalGroup = 'Biological' | 'Cognitive' | 'Atmospheric'
+ 
+@@ -80,8 +80,26 @@ export const SIGNAL_SOURCES: SignalSource[] = [
+   },
+ ]
+ 
+-export function sourcesInGroup(group: SignalGroup) {
+-  return SIGNAL_SOURCES.filter((source) => source.group === group)
++/**
++ * v5 (U053): sources only design v5 lists. Whoop is here because one of the
++ * three interviewed users wears one; kept out of SIGNAL_SOURCES so v1–v4 and
++ * the admin list are unchanged.
++ */
++export const V5_SOURCES: SignalSource[] = [
++  { id: 'whoop', name: 'Whoop', group: 'Biological', icon: Activity, defaultOn: false, reads: 'Heart rate, HRV, sleep, strain' },
++]
++
++export function sourcesInGroup(group: SignalGroup, v5 = false) {
++  return [...SIGNAL_SOURCES, ...(v5 ? V5_SOURCES : [])].filter((source) => source.group === group)
++}
++
++/** Onboarding's wearable choice (v5) → the source it switches on. */
++const WEARABLE_SOURCE: Record<string, string> = { 'apple-watch': 'apple-watch', whoop: 'whoop', oura: 'oura-ring' }
++
++/** v5: everything off except the wearable the person chose in onboarding. */
++export function connectionsForWearable(wearable: string | undefined): Record<string, boolean> {
++  const on = wearable ? WEARABLE_SOURCE[wearable] : undefined
++  return Object.fromEntries([...SIGNAL_SOURCES, ...V5_SOURCES].map((source) => [source.id, source.id === on]))
+ }
+ 
+ /** The state the screen opens in. `allOff` is design v4 (U050): nothing connected until the person connects it. */
+diff --git a/src/pages/ChallengeDetailPage.tsx b/src/pages/ChallengeDetailPage.tsx
+index 4006646..e254ab4 100644
+--- a/src/pages/ChallengeDetailPage.tsx
++++ b/src/pages/ChallengeDetailPage.tsx
+@@ -1,6 +1,7 @@
+ import { ArrowLeft, ChevronRight, Clock, Play, Podium as PodiumIcon, Share2, Trophy, Users } from 'lucide-react'
+ import { useRef, useState } from 'react'
+ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
++import { useUiVersion } from '../versions/useUiVersion'
+ import { PageMeta } from '../components/PageMeta'
+ import { CoverImage } from '../components/ui/CoverImage'
+ import { PhotoCircle } from '../components/ui/PhotoCircle'
+@@ -132,6 +133,7 @@ export function ChallengeDetailPage() {
+   const [rewardsOpen, setRewardsOpen] = useState(false)
+   const podiumRef = useRef<HTMLDivElement>(null)
+ 
++  const v5 = useUiVersion() >= 5
+   if (!challenge) return <Navigate to="/sessions" replace />
+ 
+   const podium = challenge.leaderboard.slice(0, 3)
+@@ -209,6 +211,39 @@ export function ChallengeDetailPage() {
+             <h1 className="text-style-title-large mt-16 text-text-primary">{challenge.title}</h1>
+             <p className="text-style-body mt-8 text-text-secondary">{challenge.summary}</p>
+ 
++            {v5 ? (
++              /* v5 (U053): a shared journey, not a contest. All three
++                 interviewed users disliked competing on wellbeing ("a strange
++                 mix of wanting to win vs caring about someone's wellbeing"),
++                 so there is no podium, rank, play count or trend: only who
++                 is in and what they made for it. */
++              <section className="mt-24" aria-label="Made for this journey">
++                <h2 className="text-style-body text-text-primary">Made for this journey</h2>
++                <p className="text-style-body-small mt-4 font-light! text-text-secondary">
++                  {challenge.leaderboard.length === 0
++                    ? 'Nobody has shared a session yet. Join, and yours can be the first.'
++                    : `${challenge.leaderboard.length} people have shared a session. No rankings — just what helped them.`}
++                </p>
++                <div className="mt-8 flex flex-col divide-y divide-border-subtle">
++                  {challenge.leaderboard.map((contender) => {
++                    const session = findSession(contender.sessionSlug)
++                    if (!session) return null
++                    return (
++                      <div key={contender.rank} className="flex items-center gap-10 py-14">
++                        <Link to={`/play/${session.slug}`} state={{ origin: 'community' }} aria-label={`Play ${session.title}`}>
++                          <CoverDisc photo={session.photo} size={40} alt={session.title} />
++                        </Link>
++                        <div className="min-w-0 flex-1">
++                          <p className="text-style-body-small truncate font-medium text-text-primary">{session.title}</p>
++                          <p className="text-style-caption truncate text-text-secondary">by {contender.creator}</p>
++                        </div>
++                      </div>
++                    )
++                  })}
++                </div>
++              </section>
++            ) : (
++            <>
+             {/* A challenge that has just opened has no board, and `Podium`
+                 would render its gradient block with nothing standing on it —
+                 a trophy plinth for nobody. The empty state says what is
+@@ -251,6 +286,8 @@ export function ChallengeDetailPage() {
+                 )
+               })}
+             </div>
++            </>
++            )}
+ 
+             {sessions.length === 0 ? (
+               <section className="mt-32">
+diff --git a/src/pages/ChatPage.tsx b/src/pages/ChatPage.tsx
+index 7fd2fe8..e8ab80d 100644
+--- a/src/pages/ChatPage.tsx
++++ b/src/pages/ChatPage.tsx
+@@ -16,7 +16,7 @@ import { useChatSession } from '../chat/ChatSessionContext'
+ import { OPENING_MESSAGES, nextVersionLabel, sessionNameOf } from '../chat/thread'
+ import { deckFor, inferFromWords, suggestionsFor } from '../chat/firstSession'
+ import { DEFAULTS, findGoal, onboardingAnswers } from '../lib/onboarding'
+-import { readJourney, startJourney } from '../lib/journey'
++import { MOOD_LABELS, readJourney, startJourney } from '../lib/journey'
+ import type { Message, Status } from '../chat/thread'
+ import type { RecreateBrief } from '../chat/recreate'
+ import { draftTitleFor, findQuickStart } from '../lib/quickStart'
+@@ -130,6 +130,8 @@ export function ChatPage() {
+   const [typing, setTyping] = useState(false)
+   const v3 = useUiVersion() >= 3
+   const v4 = useUiVersion() >= 4
++  const v5 = useUiVersion() >= 5
++  const [journey] = useState(() => readJourney())
+   // What onboarding stored (v4). Read once: this screen is never open while
+   // onboarding is, so it cannot change under it.
+   const [answers] = useState(() => onboardingAnswers())
+@@ -772,6 +774,16 @@ export function ChatPage() {
+   // proposals part of the sheet's one list (v4).
+   const proposed = showRecommendations && messages.some((m) => m.attachment === 'recommendations') && (sessionState === 'idle' || sessionState === 'updating')
+   const suggestionOptions = asOptions(deck)
++  // v5 (U053): what the suggestions rest on, in words, for each row's Why.
++  const lastCheckIn = journey?.checkIns[journey.checkIns.length - 1]
++  const basisLine = [
++    findGoal(answers?.goal ?? null) ? `your goal, “${findGoal(answers?.goal ?? null)?.label}”` : 'what you asked for in this conversation',
++    lastCheckIn ? `how you felt after your last chapter (“${MOOD_LABELS[lastCheckIn.mood - 1]}”)` : null,
++    answers?.wearable && answers.wearable !== 'none' ? 'your wearable' : null,
++  ]
++    .filter(Boolean)
++    .join(', ')
++    .replace(/, ([^,]*)$/, ' and $1') + '.'
+   // v4: none of the chips undoes a choice made in onboarding (J039 F2) — no
+   // "Make it longer" for someone who picked 20 minutes.
+   const suggestions = v4 && answers ? suggestionsFor(answers) : SUGGESTIONS
+@@ -1069,6 +1081,7 @@ export function ChatPage() {
+           // first in the sheet, picked as `applied` (what the deck and the
+           // Apply chip already use); anything else picked here joins them.
+           suggestions={v4 && proposed ? suggestionOptions : undefined}
++          basis={v5 ? basisLine : undefined}
+           added={v4 && proposed ? [...applied, ...addPicks] : addPicks}
+           onToggle={(id) =>
+             v4 && proposed && deck.some((r) => r.id === id)
+diff --git a/src/pages/HomePage.tsx b/src/pages/HomePage.tsx
+index 4cb12c7..5291dc3 100644
+--- a/src/pages/HomePage.tsx
++++ b/src/pages/HomePage.tsx
+@@ -135,6 +135,7 @@ export function HomePage() {
+   const [ask, setAsk] = useState('')
+   const v2 = useUiVersion() >= 2
+   const v4 = useUiVersion() >= 4
++  const v5 = useUiVersion() >= 5
+   // v4 (U050): once there is a first session, Home is about the next chapter
+   // of it rather than about selling the app to someone already inside it.
+   const [journey] = useState(() => readJourney())
+@@ -365,6 +366,14 @@ export function HomePage() {
+               48px bitmap scaled up, which is what made the mark blurry. */}
+           <img src={logoHomepage} alt="Aurelia" width={64} height={64} className="relative mx-auto block size-64" />
+ 
++          {v5 ? (
++            /* v5 (U053): says what Aurelia is. An interviewed user (Olivia)
++               read "Create the space you imagine" over the live map as a
++               co-working space with locations. */
++            <h1 className="text-style-title-large relative mt-26 text-text-primary">
++              Sessions made for how you feel <em className="italic" style={{ color: '#E9A93A' }}>today</em>.
++            </h1>
++          ) : (
+           <h1 className="text-style-title-large relative mt-26 text-text-primary">
+             Create the{' '}
+             {/* "space" is the product's whole promise, so the sentence points
+@@ -374,6 +383,7 @@ export function HomePage() {
+             </em>{' '}
+             you imagine.
+           </h1>
++          )}
+ 
+           {/* A composer, not a search field: it is sized for a sentence about
+               how you want to feel, and the actions sit under what you typed
+@@ -624,7 +634,7 @@ export function HomePage() {
+ 
+       <div className="mx-auto max-w-[960px] px-20 lg:px-24">
+         {/* The live map is a community signal: Discover holds it in v4. */}
+-        {v2 && !member && <div className="lg:mt-48 [&>section]:lg:mt-0">{liveSection}</div>}
++        {v2 && !member && !v5 && <div className="lg:mt-48 [&>section]:lg:mt-0">{liveSection}</div>}
+         {/* Recreate from Community */}
+         {isEnabled('home.community') && (
+         <section className="mt-24">
+diff --git a/src/pages/OnboardingPage.tsx b/src/pages/OnboardingPage.tsx
+index b3d9c84..6165848 100644
+--- a/src/pages/OnboardingPage.tsx
++++ b/src/pages/OnboardingPage.tsx
+@@ -26,6 +26,7 @@ import {
+   LENGTHS,
+   SOUNDS,
+   VOICES,
++  WEARABLES,
+   feelingLabels,
+   findGoal,
+   firstSessionBrief,
+@@ -84,6 +85,7 @@ interface From {
+ 
+ export function OnboardingPage() {
+   const v4 = useUiVersion() >= 4
++  const v5 = useUiVersion() >= 5
+   const navigate = useNavigate()
+   const location = useLocation()
+   const from = (location.state as { from?: From } | null)?.from
+@@ -375,6 +377,37 @@ export function OnboardingPage() {
+                   onEdit={() => setStep('style')}
+                 />
+               </div>
++              {v5 && (
++                /* v5 (U053): all three interviewed users wear a watch or band
++                   and wanted Aurelia to use it rather than ask them. Asked
++                   here, with exactly what it reads, instead of being switched
++                   on behind their back (J039 F8) or buried in Data sources. */
++                <div className="mt-16 rounded-16 border border-border-subtle p-14">
++                  <p className="text-[14px] font-medium leading-[20px] text-text-primary">Do you wear one of these?</p>
++                  <p className="mt-2 text-[12px] font-light leading-[18px] text-text-secondary">
++                    Aurelia would read your heart rate during sessions and last night’s sleep. Nothing else, and you can disconnect it any time.
++                  </p>
++                  <div className="mt-10 flex flex-wrap gap-8" role="radiogroup" aria-label="Your wearable">
++                    {WEARABLES.map((w) => {
++                      const on = answers.wearable === w.id
++                      return (
++                        <button
++                          key={w.id}
++                          type="button"
++                          role="radio"
++                          aria-checked={on}
++                          onClick={() => set('wearable', w.id)}
++                          className={`u-press h-36 rounded-full border px-14 text-[13px] ${
++                            on ? 'border-[#331B04] bg-[#331B04] text-white' : 'border-border-subtle bg-surface-default text-text-primary'
++                          }`}
++                        >
++                          {w.label}
++                        </button>
++                      )
++                    })}
++                  </div>
++                </div>
++              )}
+               <div className="mt-16 rounded-16 bg-[#FFF8EC] p-14">
+                 <p className="flex items-center gap-6 text-[12px] font-medium leading-[16px] text-[#8A5A1E]">
+                   <Sparkles size={13} /> Your first message to Aurelia
+@@ -382,7 +415,7 @@ export function OnboardingPage() {
+                 <p className="mt-6 text-[14px] font-light leading-[21px] text-text-primary">“{firstSessionBrief(answers, typed ?? undefined)}”</p>
+               </div>
+               <p className="mt-12 text-[12px] font-light leading-[18px] text-text-secondary">
+-                Kept on this device for now. Connect a wearable later in My Wellness for a sharper analysis.
++                {v5 ? 'Kept on this device for now.' : 'Kept on this device for now. Connect a wearable later in My Wellness for a sharper analysis.'}
+               </p>
+               <div className="flex-1" />
+               <div className="flex flex-col gap-10 pt-24">
+diff --git a/src/pages/PlayerPage.tsx b/src/pages/PlayerPage.tsx
+index 215c357..b65d1f7 100644
+--- a/src/pages/PlayerPage.tsx
++++ b/src/pages/PlayerPage.tsx
+@@ -38,7 +38,7 @@ import type { Named } from '../lib/named'
+ import { ChapterCheckIn } from '../components/wellness/ChapterCheckIn'
+ import { useRecreateTarget } from '../chat/recreate'
+ import { readJourney } from '../lib/journey'
+-import { findGoal } from '../lib/onboarding'
++import { findGoal, onboardingAnswers, wearableLabel } from '../lib/onboarding'
+ 
+ /** Lines the session speaks, which the hero shows one at a time under the art.
+  *  Mock, like everything in lib/ — as is the bed they play over. */
+@@ -223,7 +223,10 @@ export function PlayerPage() {
+   // Version 2: a session you have an analysis for opens on your progress
+   // rather than on the catalogue's description (Figma "Session: Chat -
+   // Player", U041). Every other session keeps the drawer it had.
+-  const analysis = v2 ? analysisForSession(slug) : undefined
++  // v5 (U053): no analytics in the player. An interviewed user (Ishmeet) did
++  // not want them here, and the others did not trust the sample numbers.
++  const v5 = useUiVersion() >= 5
++  const analysis = v2 && !v5 ? analysisForSession(slug) : undefined
+   // Which cut of it. Progress's version cards ask for one by id; everything
+   // else asks for the session, which is the version that is current.
+   const versionId = params.get('v')
+@@ -671,7 +674,12 @@ export function PlayerPage() {
+           className={`min-h-0 flex-1 px-20 pb-40 ${up ? 'overflow-y-auto' : 'overflow-hidden'}`}
+         >
+           {ownChapter ? (
+-            <ChapterCheckIn initial={ownChapter} goalLabel={findGoal(ownChapter.goal)?.label ?? null} />
++            <ChapterCheckIn
++              initial={ownChapter}
++              goalLabel={findGoal(ownChapter.goal)?.label ?? null}
++              v5={v5}
++              wearable={v5 ? wearableLabel(onboardingAnswers()?.wearable) : null}
++            />
+           ) : analysis ? (
+             <AnalysisDrawer
+               analysis={analysis}
+diff --git a/src/pages/WellnessAnalysisPage.tsx b/src/pages/WellnessAnalysisPage.tsx
+index aa318e0..d765cbe 100644
+--- a/src/pages/WellnessAnalysisPage.tsx
++++ b/src/pages/WellnessAnalysisPage.tsx
+@@ -1,5 +1,6 @@
+ import { ArrowLeft } from 'lucide-react'
+ import { Navigate, useNavigate, useParams } from 'react-router-dom'
++import { useUiVersion } from '../versions/useUiVersion'
+ import { PageMeta } from '../components/PageMeta'
+ import { CoverImage } from '../components/ui/CoverImage'
+ import { AnalysisShifts, AnalysisStatus, NextChapter, ProgressChart } from '../components/wellness/AnalysisParts'
+@@ -22,7 +23,10 @@ import { artOf, chapterBrief, findAnalysis, progressOf } from '../lib/wellnessAn
+ export function WellnessAnalysisPage() {
+   const { id } = useParams()
+   const analysis = findAnalysis(id)
+-  if (!analysis) return <Navigate to="/wellness" replace />
++  // v5 (U053): the sample analyses are not shown as anyone's progress; Progress
++  // holds the person's own check-ins instead.
++  const v5 = useUiVersion() >= 5
++  if (!analysis || v5) return <Navigate to="/wellness" replace />
+   return <AnalysisView analysis={analysis} />
+ }
+ 
+diff --git a/src/pages/WellnessPage.tsx b/src/pages/WellnessPage.tsx
+index a1c5f02..52b2567 100644
+--- a/src/pages/WellnessPage.tsx
++++ b/src/pages/WellnessPage.tsx
+@@ -9,7 +9,9 @@ import { ANALYSES } from '../lib/wellnessAnalysis'
+ import { useUiVersion } from '../versions/useUiVersion'
+ import { useDrawer } from '../layouts/DrawerContext'
+ import type { SignalGroup } from '../lib/signals'
+-import { SIGNAL_GROUPS, defaultConnections, sourcesInGroup } from '../lib/signals'
++import { SIGNAL_GROUPS, connectionsForWearable, defaultConnections, sourcesInGroup } from '../lib/signals'
++import { onboardingAnswers } from '../lib/onboarding'
++import { FeelingProgress } from '../components/wellness/FeelingProgress'
+ import { CARD_SHADOW } from '../lib/shadows'
+ import { WELLNESS_GOALS } from '../lib/wellnessGoals'
+ import { CoinPill } from '../components/ui/CoinPill'
+@@ -141,7 +143,11 @@ export function WellnessPage() {
+   // brand-new account — read as a privacy breach by the people it mattered
+   // most to (a therapist-referred user, a skeptic).
+   const v4 = useUiVersion() >= 4
+-  const [connections, setConnections] = useState(() => defaultConnections(v4))
++  const v5 = useUiVersion() >= 5
++  // v5 (U053): the wearable chosen in onboarding is the one thing on.
++  const [connections, setConnections] = useState(() =>
++    v5 ? connectionsForWearable(onboardingAnswers()?.wearable) : defaultConnections(v4),
++  )
+   const [requestOpen, setRequestOpen] = useState(false)
+   const [tab, setTab] = useState<WellnessTab>('Analytics')
+   const [requestSent, setRequestSent] = useState(false)
+@@ -157,7 +163,7 @@ export function WellnessPage() {
+   const active = Object.values(connections).filter(Boolean).length
+   const total = Object.keys(connections).length
+ 
+-  const countIn = (group: SignalGroup) => sourcesInGroup(group).filter((source) => connections[source.id]).length
++  const countIn = (group: SignalGroup) => sourcesInGroup(group, v5).filter((source) => connections[source.id]).length
+ 
+   return (
+     <div className="bg-background-default pb-48">
+@@ -202,7 +208,10 @@ export function WellnessPage() {
+           />
+         </div>
+ 
+-        {tab === 'Analytics' && v2 && (
++        {/* v5 (U053): their own check-ins in words, not the sample analyses. */}
++        {tab === 'Analytics' && v5 && <FeelingProgress />}
++
++        {tab === 'Analytics' && v2 && !v5 && (
+           <div className="mt-24 flex flex-col gap-12 lg:grid lg:grid-cols-2 lg:gap-16">
+             {ANALYSES.map((analysis) => (
+               <AnalyticsSessionCard key={analysis.id} analysis={analysis} />
+@@ -248,7 +257,7 @@ export function WellnessPage() {
+                   key={group}
+                   label={group}
+                   connected={countIn(group)}
+-                  total={sourcesInGroup(group).length}
++                  total={sourcesInGroup(group, v5).length}
+                 />
+               ))}
+             </div>
+@@ -262,7 +271,7 @@ export function WellnessPage() {
+                 cards under it. */}
+             <h2 className="text-[14px] font-light! leading-[14px] text-[#9a9a9a]">{group}</h2>
+             <div className="mt-12 flex flex-col gap-12">
+-              {sourcesInGroup(group).map((source) => {
++              {sourcesInGroup(group, v5).map((source) => {
+                 const Icon = source.icon
+                 const on = connections[source.id]
+                 return (
+diff --git a/src/styles/versions.css b/src/styles/versions.css
+index 01404c0..58f4263 100644
+--- a/src/styles/versions.css
++++ b/src/styles/versions.css
+@@ -222,10 +222,10 @@
+ 
+ /* ---- Version 4: the tab bar (U051, simplification D1) ------------------- */
+ /* Four tabs replace the hamburger below lg, so every page's menu button goes.
+-   Written for v4 exactly; a later version that keeps the tabs widens this to
+-   its own number (versions are cumulative, see the top of this file). The
++   Written for v4 and v5 (U053); a later version that keeps the tabs adds its
++   own number here (versions are cumulative, see the top of this file). The
+    chat keeps a way out of its own (ChatHeader, Back to Create). */
+-:root[data-ui-version='4'] [aria-label='Open menu'] {
++:root:is([data-ui-version='4'], [data-ui-version='5']) [aria-label='Open menu'] {
+   display: none !important;
+ }
+ @media (max-width: 1023.98px) {
+diff --git a/src/versions/versions.ts b/src/versions/versions.ts
+index 3f5b625..048edfa 100644
+--- a/src/versions/versions.ts
++++ b/src/versions/versions.ts
+@@ -155,6 +155,48 @@ export const UI_VERSIONS: UiVersion[] = [
+       },
+     ],
+   },
++  {
++    id: 5,
++    name: 'Version 5',
++    summary: 'Everything in v4, reworked after the first three user interviews: progress in words instead of scores, the reason behind every suggestion, an optional journal, your wearable asked for up front, and a community about stories rather than rankings.',
++    changes: [
++      {
++        group: 'Progress without the scoreboard',
++        items: [
++          'Progress shows how you have been feeling, in words, from your own check-ins — no percentages, no sample analytics.',
++          'A short report every two weeks; the detail (each check-in and what drove it) is one tap away for those who want it.',
++          'The player no longer shows analytics at all.',
++        ],
++      },
++      {
++        group: 'Tell me why, ask me less',
++        items: [
++          'Every suggested change has a Why: what it does and what it is based on (your goal, your words, your last check-in).',
++          'After a check-in Aurelia says what it will change in the next chapter, so there is nothing to tune unless you want to.',
++        ],
++      },
++      {
++        group: 'Your data, asked for properly',
++        items: [
++          'Onboarding asks which wearable you use (Apple Watch, Whoop, Oura) and says exactly what it would read. Data sources start with only that one on.',
++          'A journal: an optional line under each check-in, and notes from Progress on days without a session. Only you see it.',
++        ],
++      },
++      {
++        group: 'Community',
++        items: [
++          'Session cards describe what the session is like instead of percentage claims; tags lose the #.',
++          'The challenge is a shared journey: who joined and what they made, no podium or ranking.',
++          'Publishing says plainly what others can see and what stays private.',
++          'Home for visitors says what Aurelia is in plain words, without the map that read as co-working locations.',
++        ],
++      },
++      {
++        group: 'Good to know',
++        items: ['Includes everything in Version 4.', 'Production stays on v4 until v5 is approved.'],
++      },
++    ],
++  },
+ ]
+ 
+ const KEY = 'aurelia.ui.version'
+-- 
+2.43.0
+

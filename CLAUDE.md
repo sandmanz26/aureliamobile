@@ -527,4 +527,10 @@ in Me, Invite and a challenge (`CoinPill always`); `/progress/:slug` redirects
 to Session details or Analysis; others' player sheet is one Recreate + Session
 details; the chat's deck opens the "+" sheet as the one list of changes. The
 v4 CSS is written for `data-ui-version='4'` exactly — a v5 that keeps the tabs
-must widen it.
+must widen it — v5 does (`:is([data-ui-version='4'],[data-ui-version='5'])`).
+**v5 = v4 + the first real user interviews (U053, J049), staging only:**
+progress told in words from the person's own check-ins (`FeelingProgress`,
+`feelingSummary`) with no sample analytics anywhere; a Why? on each suggested
+change; the wearable asked for in onboarding (`aurelia.onboarding.wearable`,
+example readings until a backend exists); a journal in `aurelia.journey`;
+community without ranks. Production stays on v4 until asked.

@@ -90,8 +90,34 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U050 | `ae75233` | 2026-10-26 00:05 | v4 first-time fixes from the J039 retention simulation: words kept into onboarding, own thread + goal deck, limit after first build, chapter check-in + calendar reminder, next-chapter Home, Quick Start plays, Connect off. | [patch](patches/U050-ae75233.patch) |
 | U051 | `e826b7b` | 2026-10-26 01:40 | v4: J038 simplification D1–D7 — four tabs, Create/Discover/Progress/Me, Library, coins only in Me, Insights retired, simpler player sheet for others' sessions, one list of changes in the chat, Phase 0 fixes. | [patch](patches/U051-e826b7b.patch) |
 | U052 | `399d87a` | 2026-10-27 | Production moves to design v4 (`PRODUCTION_VERSION` 2 → 4) and `web_prod` is fast-forwarded to `web_app`; build badge on Me in v4. | [patch](patches/U052-399d87a.patch) |
+| U053 | `b030823` | 2026-10-27 | Design v5 (staging only) = v4 reworked after three real user interviews: progress in words, Why on suggestions, next-chapter plan, wearable in onboarding, journal, community without ranks, plain landing. | [patch](patches/U053-b030823.patch) |
 
 ## Entries
+
+### U053 — Design v5 on staging, from three user interviews
+
+- **Commit:** `b030823` · pushed 2026-10-27 UTC · `web_app` + `admin_cms`. **Not `web_prod`**: production stays on v4.
+- **Patch:** [patches/U053-b030823.patch](patches/U053-b030823.patch)
+- **Request:** "buatkan staging v5 / v5 adalah perubahan dari v4 / ini adalah feedback dari user, nah sekarang kamu gunakan itu untuk melakukan iterasi lagi dari sisi research yang sudah kamu pakai untuk mengimprove. kemudian buatkan proposal feature nya dari v4 yang sudah ada sekarang. formatnya sama kaya report ya"
+- **Interpretation:**
+  - Three interview notes (Ishmeet, Olivia, Bryan) are compared with the J039 simulation; where they disagree, the interviews win (J049).
+  - v5 is a new staging version on top of v4. v1–v4 and production must not change.
+  - Things that need a backend or assets (real wearable data, voice choice, friends/groups, push) are proposed in the report, not faked beyond clearly labelled example data.
+- **Changed (all behind `useUiVersion() >= 5`):**
+  - `versions.ts`: v5 entry. `versions.css`: the v4 tab-bar rules now match `:is([data-ui-version='4'],[data-ui-version='5'])`.
+  - `lib/journey.ts`: check-in `note`, journal `notes`, `noteLastCheckIn`, `addJournalNote`, `feelingSummary` (trend in words, no numbers). Tests added.
+  - `lib/onboarding.ts`: `wearable` answer and `WEARABLES`. `lib/signals.ts`: Whoop source, `connectionsForWearable` (only the chosen source on). New `signals.test.ts`.
+  - `FeelingProgress` (new): Progress → Your goals in words, two-week report date, "See what's behind this", journal. Sample analyses hidden; `/wellness/analysis/*` redirects to `/wellness`.
+  - Player: no analytics; `ChapterCheckIn` adds a wearable reading (example data, labelled), a journal line and what the next chapter changes. `ChapterTrack` in words.
+  - `AddSheet`: a Why? per suggestion (what it does, what it is based on); untested ideas say so; the experiments count excludes goal-deck items (v5 only — v4 keeps its known miscount, see J049).
+  - `OnboardingPage`: "Do you wear one of these?" on Ready.
+  - Cards show the session summary instead of the "reduced stress by 43%" claim; tags lose the `#`; the challenge lists contributors without podium or ranks; Publish says what stays private; visitor Home: new headline, no live map.
+- **Verified:**
+  - `npm run check` clean (81 tests), build clean.
+  - Pixel regression HEAD vs working tree: v2/v3/v4 × 25 routes × 402/1280 = 150 pairs identical.
+  - v5 smoke: 53 routes at 402 and 1280, no page errors.
+  - v5 flow at 402: visitor Home → typed ask → sign in → Ready with wearable → build → Why sheet → check-in with note → Home → Progress (detail + journal) → Data sources (Apple Watch only) → challenge → Discover → player.
+- **Revert:** `git revert --no-commit b030823 && git checkout HEAD -- docs/`. v1–v4 are unaffected either way.
 
 ### U001 — Add a design-version switcher on staging and create Version 2 (more motion).
 

@@ -19,6 +19,21 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-27 — Staging v5 from three user interviews (U053)
+
+Staging has a new design version, v5, built on v4 from the first three real user interviews (J049).
+
+What v5 adds:
+- Progress in words from the user's own check-ins, a report every two weeks, detail on demand; no analytics on the player.
+- A Why? on every suggested change, and the check-in says what the next chapter changes.
+- Onboarding asks which wearable you use; only that source starts on (readings are example data).
+- An optional journal.
+- Session cards describe the session; tags without #; the challenge has no ranks; Publish says what stays private; a plainer visitor Home.
+
+v1–v4 unchanged. Production stays on v4.
+
+Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-27 — Production moves to v4 (U052)
 
 The public site now shows design v4, the same app staging shows in v4.
