@@ -5,6 +5,7 @@ import { FIRST_CHAPTERS, MOOD_LABELS } from '../../lib/journey'
 import { findGoal } from '../../lib/onboarding'
 import { CURRENT_USER } from '../../lib/people'
 import { ChapterTrack } from './ChapterCheckIn'
+import { useUiVersion } from '../../versions/useUiVersion'
 
 /**
  * Home's first block once you have a first session (design v4, U050).
@@ -16,6 +17,7 @@ import { ChapterTrack } from './ChapterCheckIn'
  */
 export function NextChapterCard({ journey }: { journey: Journey }) {
   const navigate = useNavigate()
+  const v5 = useUiVersion() >= 5
   const goal = findGoal(journey.goal)
   const last = journey.checkIns[journey.checkIns.length - 1]
   const chapter = journey.checkIns.length + 1
@@ -54,7 +56,7 @@ export function NextChapterCard({ journey }: { journey: Journey }) {
           </p>
         )}
       </div>
-      {journey.checkIns.length < FIRST_CHAPTERS && <ChapterTrack journey={journey} />}
+      {journey.checkIns.length < FIRST_CHAPTERS && <ChapterTrack journey={journey} words={v5} />}
     </section>
   )
 }

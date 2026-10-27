@@ -222,10 +222,10 @@
 
 /* ---- Version 4: the tab bar (U051, simplification D1) ------------------- */
 /* Four tabs replace the hamburger below lg, so every page's menu button goes.
-   Written for v4 exactly; a later version that keeps the tabs widens this to
-   its own number (versions are cumulative, see the top of this file). The
+   Written for v4 and v5 (U053); a later version that keeps the tabs adds its
+   own number here (versions are cumulative, see the top of this file). The
    chat keeps a way out of its own (ChatHeader, Back to Create). */
-:root[data-ui-version='4'] [aria-label='Open menu'] {
+:root:is([data-ui-version='4'], [data-ui-version='5']) [aria-label='Open menu'] {
   display: none !important;
 }
 @media (max-width: 1023.98px) {

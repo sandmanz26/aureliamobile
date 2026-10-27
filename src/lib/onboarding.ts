@@ -62,6 +62,23 @@ export interface Onboarding {
   length: Length
   voice: Voice
   sounds: Sound[]
+  /** v5 (U053): the wearable they chose to connect, if any. Absent = not asked. */
+  wearable?: Wearable
+}
+
+/** v5: the devices the three interviewed users wear, plus "none". */
+export const WEARABLES = [
+  { id: 'apple-watch', label: 'Apple Watch' },
+  { id: 'whoop', label: 'Whoop' },
+  { id: 'oura', label: 'Oura Ring' },
+  { id: 'none', label: 'Not now' },
+] as const
+export type Wearable = (typeof WEARABLES)[number]['id']
+
+/** "Apple Watch" for a connected device; null for none or not asked. */
+export function wearableLabel(id: Wearable | undefined): string | null {
+  if (!id || id === 'none') return null
+  return WEARABLES.find((w) => w.id === id)?.label ?? null
 }
 
 /** What a skipped step leaves behind — sensible, and what the demo session already is. */
@@ -81,6 +98,7 @@ const stored = z.object({
   length: z.union([z.literal(5), z.literal(10), z.literal(20)]),
   voice: z.enum(['female', 'male', 'none']),
   sounds: z.array(z.enum(['nature', 'music', 'frequencies', 'silence'])),
+  wearable: z.enum(['apple-watch', 'whoop', 'oura', 'none']).optional(),
   doneAt: z.number().optional(),
   skipped: z.boolean().optional(),
 })

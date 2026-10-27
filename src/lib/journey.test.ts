@@ -40,3 +40,32 @@ describe('reminderIcs', () => {
     expect(ics.split('\r\n')[0]).toBe('BEGIN:VCALENDAR')
   })
 })
+
+describe('journal and feeling summary (v5, U053)', () => {
+  beforeEach(() => localStorage.clear())
+
+  it('keeps a note on the last check-in and journal lines on their own', async () => {
+    const { noteLastCheckIn, addJournalNote } = await import('./journey')
+    startJourney({ goal: 'sleep', name: 'Sleep better', slug: 'dolphins-frequency', href: '/play/dolphins-frequency' })
+    addCheckIn(3, 1)
+    noteLastCheckIn('  Fell asleep before midnight  ')
+    addJournalNote('Long day, skipped the session', 2, 5)
+    expect(readJourney()).toMatchObject({ checkIns: [{ mood: 3, note: 'Fell asleep before midnight' }], notes: [{ at: 5, text: 'Long day, skipped the session', mood: 2 }] })
+  })
+
+  it('ignores empty notes', async () => {
+    const { addJournalNote } = await import('./journey')
+    startJourney({ goal: null, name: 'x', slug: 'y', href: '/play/y' })
+    addJournalNote('   ')
+    expect(readJourney()?.notes).toBeUndefined()
+  })
+
+  it('says the direction in words, never a score', async () => {
+    const { feelingSummary } = await import('./journey')
+    expect(feelingSummary([])).toEqual({ trend: 'new', usual: '', count: 0 })
+    expect(feelingSummary([{ at: 1, mood: 3 }])).toMatchObject({ trend: 'new', usual: 'Neutral' })
+    expect(feelingSummary([{ at: 1, mood: 2 }, { at: 2, mood: 3 }, { at: 3, mood: 4 }, { at: 4, mood: 4 }])).toMatchObject({ trend: 'up', usual: 'Pleasant', count: 4 })
+    expect(feelingSummary([{ at: 1, mood: 4 }, { at: 2, mood: 4 }])).toMatchObject({ trend: 'same' })
+    expect(feelingSummary([{ at: 1, mood: 5 }, { at: 2, mood: 2 }])).toMatchObject({ trend: 'down' })
+  })
+})

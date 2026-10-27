@@ -1,6 +1,7 @@
 import { ArrowLeft, ChevronRight, Clock, Play, Podium as PodiumIcon, Share2, Trophy, Users } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { useUiVersion } from '../versions/useUiVersion'
 import { PageMeta } from '../components/PageMeta'
 import { CoverImage } from '../components/ui/CoverImage'
 import { PhotoCircle } from '../components/ui/PhotoCircle'
@@ -132,6 +133,7 @@ export function ChallengeDetailPage() {
   const [rewardsOpen, setRewardsOpen] = useState(false)
   const podiumRef = useRef<HTMLDivElement>(null)
 
+  const v5 = useUiVersion() >= 5
   if (!challenge) return <Navigate to="/sessions" replace />
 
   const podium = challenge.leaderboard.slice(0, 3)
@@ -209,6 +211,39 @@ export function ChallengeDetailPage() {
             <h1 className="text-style-title-large mt-16 text-text-primary">{challenge.title}</h1>
             <p className="text-style-body mt-8 text-text-secondary">{challenge.summary}</p>
 
+            {v5 ? (
+              /* v5 (U053): a shared journey, not a contest. All three
+                 interviewed users disliked competing on wellbeing ("a strange
+                 mix of wanting to win vs caring about someone's wellbeing"),
+                 so there is no podium, rank, play count or trend: only who
+                 is in and what they made for it. */
+              <section className="mt-24" aria-label="Made for this journey">
+                <h2 className="text-style-body text-text-primary">Made for this journey</h2>
+                <p className="text-style-body-small mt-4 font-light! text-text-secondary">
+                  {challenge.leaderboard.length === 0
+                    ? 'Nobody has shared a session yet. Join, and yours can be the first.'
+                    : `${challenge.leaderboard.length} people have shared a session. No rankings — just what helped them.`}
+                </p>
+                <div className="mt-8 flex flex-col divide-y divide-border-subtle">
+                  {challenge.leaderboard.map((contender) => {
+                    const session = findSession(contender.sessionSlug)
+                    if (!session) return null
+                    return (
+                      <div key={contender.rank} className="flex items-center gap-10 py-14">
+                        <Link to={`/play/${session.slug}`} state={{ origin: 'community' }} aria-label={`Play ${session.title}`}>
+                          <CoverDisc photo={session.photo} size={40} alt={session.title} />
+                        </Link>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-style-body-small truncate font-medium text-text-primary">{session.title}</p>
+                          <p className="text-style-caption truncate text-text-secondary">by {contender.creator}</p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </section>
+            ) : (
+            <>
             {/* A challenge that has just opened has no board, and `Podium`
                 would render its gradient block with nothing standing on it —
                 a trophy plinth for nobody. The empty state says what is
@@ -251,6 +286,8 @@ export function ChallengeDetailPage() {
                 )
               })}
             </div>
+            </>
+            )}
 
             {sessions.length === 0 ? (
               <section className="mt-32">

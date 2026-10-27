@@ -5,6 +5,7 @@ import type { ProfileOrigin } from '../../lib/people'
 import type { SessionRecord } from '../../lib/sessions'
 import { CoverImage } from './CoverImage'
 import { PhotoCircle } from './PhotoCircle'
+import { useUiVersion } from '../../versions/useUiVersion'
 
 /**
  * The tall session card used on the See All grid and the challenge shelf.
@@ -34,6 +35,7 @@ export function SessionGridCard({
   playOrigin?: ProfileOrigin
 }) {
   const recreate = useRecreateTarget(session)
+  const v5 = useUiVersion() >= 5
 
   function handleClick(event: React.MouseEvent) {
     if (guard && !guard()) event.preventDefault()
@@ -104,7 +106,10 @@ export function SessionGridCard({
         <div className="flex flex-col gap-6">
           <div>
             <p className="text-style-body">{session.title}</p>
-            <p className="text-style-label-light mt-2 line-clamp-2">{session.description}</p>
+            {/* v5 (U053): what the session is like, not a percentage it
+                claims. Real users read "reduced stress by 43%" as
+                unserious, and asked for the process over the result. */}
+            <p className="text-style-label-light mt-2 line-clamp-2">{v5 ? session.summary : session.description}</p>
           </div>
 
           {/* Credit and counts share a row once the card is wide enough for both,

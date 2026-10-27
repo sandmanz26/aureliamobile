@@ -26,6 +26,7 @@ import {
   LENGTHS,
   SOUNDS,
   VOICES,
+  WEARABLES,
   feelingLabels,
   findGoal,
   firstSessionBrief,
@@ -84,6 +85,7 @@ interface From {
 
 export function OnboardingPage() {
   const v4 = useUiVersion() >= 4
+  const v5 = useUiVersion() >= 5
   const navigate = useNavigate()
   const location = useLocation()
   const from = (location.state as { from?: From } | null)?.from
@@ -375,6 +377,37 @@ export function OnboardingPage() {
                   onEdit={() => setStep('style')}
                 />
               </div>
+              {v5 && (
+                /* v5 (U053): all three interviewed users wear a watch or band
+                   and wanted Aurelia to use it rather than ask them. Asked
+                   here, with exactly what it reads, instead of being switched
+                   on behind their back (J039 F8) or buried in Data sources. */
+                <div className="mt-16 rounded-16 border border-border-subtle p-14">
+                  <p className="text-[14px] font-medium leading-[20px] text-text-primary">Do you wear one of these?</p>
+                  <p className="mt-2 text-[12px] font-light leading-[18px] text-text-secondary">
+                    Aurelia would read your heart rate during sessions and last night’s sleep. Nothing else, and you can disconnect it any time.
+                  </p>
+                  <div className="mt-10 flex flex-wrap gap-8" role="radiogroup" aria-label="Your wearable">
+                    {WEARABLES.map((w) => {
+                      const on = answers.wearable === w.id
+                      return (
+                        <button
+                          key={w.id}
+                          type="button"
+                          role="radio"
+                          aria-checked={on}
+                          onClick={() => set('wearable', w.id)}
+                          className={`u-press h-36 rounded-full border px-14 text-[13px] ${
+                            on ? 'border-[#331B04] bg-[#331B04] text-white' : 'border-border-subtle bg-surface-default text-text-primary'
+                          }`}
+                        >
+                          {w.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
               <div className="mt-16 rounded-16 bg-[#FFF8EC] p-14">
                 <p className="flex items-center gap-6 text-[12px] font-medium leading-[16px] text-[#8A5A1E]">
                   <Sparkles size={13} /> Your first message to Aurelia
@@ -382,7 +415,7 @@ export function OnboardingPage() {
                 <p className="mt-6 text-[14px] font-light leading-[21px] text-text-primary">“{firstSessionBrief(answers, typed ?? undefined)}”</p>
               </div>
               <p className="mt-12 text-[12px] font-light leading-[18px] text-text-secondary">
-                Kept on this device for now. Connect a wearable later in My Wellness for a sharper analysis.
+                {v5 ? 'Kept on this device for now.' : 'Kept on this device for now. Connect a wearable later in My Wellness for a sharper analysis.'}
               </p>
               <div className="flex-1" />
               <div className="flex flex-col gap-10 pt-24">

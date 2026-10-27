@@ -38,7 +38,7 @@ import type { Named } from '../lib/named'
 import { ChapterCheckIn } from '../components/wellness/ChapterCheckIn'
 import { useRecreateTarget } from '../chat/recreate'
 import { readJourney } from '../lib/journey'
-import { findGoal } from '../lib/onboarding'
+import { findGoal, onboardingAnswers, wearableLabel } from '../lib/onboarding'
 
 /** Lines the session speaks, which the hero shows one at a time under the art.
  *  Mock, like everything in lib/ — as is the bed they play over. */
@@ -223,7 +223,10 @@ export function PlayerPage() {
   // Version 2: a session you have an analysis for opens on your progress
   // rather than on the catalogue's description (Figma "Session: Chat -
   // Player", U041). Every other session keeps the drawer it had.
-  const analysis = v2 ? analysisForSession(slug) : undefined
+  // v5 (U053): no analytics in the player. An interviewed user (Ishmeet) did
+  // not want them here, and the others did not trust the sample numbers.
+  const v5 = useUiVersion() >= 5
+  const analysis = v2 && !v5 ? analysisForSession(slug) : undefined
   // Which cut of it. Progress's version cards ask for one by id; everything
   // else asks for the session, which is the version that is current.
   const versionId = params.get('v')
@@ -671,7 +674,12 @@ export function PlayerPage() {
           className={`min-h-0 flex-1 px-20 pb-40 ${up ? 'overflow-y-auto' : 'overflow-hidden'}`}
         >
           {ownChapter ? (
-            <ChapterCheckIn initial={ownChapter} goalLabel={findGoal(ownChapter.goal)?.label ?? null} />
+            <ChapterCheckIn
+              initial={ownChapter}
+              goalLabel={findGoal(ownChapter.goal)?.label ?? null}
+              v5={v5}
+              wearable={v5 ? wearableLabel(onboardingAnswers()?.wearable) : null}
+            />
           ) : analysis ? (
             <AnalysisDrawer
               analysis={analysis}

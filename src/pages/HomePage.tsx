@@ -135,6 +135,7 @@ export function HomePage() {
   const [ask, setAsk] = useState('')
   const v2 = useUiVersion() >= 2
   const v4 = useUiVersion() >= 4
+  const v5 = useUiVersion() >= 5
   // v4 (U050): once there is a first session, Home is about the next chapter
   // of it rather than about selling the app to someone already inside it.
   const [journey] = useState(() => readJourney())
@@ -365,6 +366,14 @@ export function HomePage() {
               48px bitmap scaled up, which is what made the mark blurry. */}
           <img src={logoHomepage} alt="Aurelia" width={64} height={64} className="relative mx-auto block size-64" />
 
+          {v5 ? (
+            /* v5 (U053): says what Aurelia is. An interviewed user (Olivia)
+               read "Create the space you imagine" over the live map as a
+               co-working space with locations. */
+            <h1 className="text-style-title-large relative mt-26 text-text-primary">
+              Sessions made for how you feel <em className="italic" style={{ color: '#E9A93A' }}>today</em>.
+            </h1>
+          ) : (
           <h1 className="text-style-title-large relative mt-26 text-text-primary">
             Create the{' '}
             {/* "space" is the product's whole promise, so the sentence points
@@ -374,6 +383,7 @@ export function HomePage() {
             </em>{' '}
             you imagine.
           </h1>
+          )}
 
           {/* A composer, not a search field: it is sized for a sentence about
               how you want to feel, and the actions sit under what you typed
@@ -624,7 +634,7 @@ export function HomePage() {
 
       <div className="mx-auto max-w-[960px] px-20 lg:px-24">
         {/* The live map is a community signal: Discover holds it in v4. */}
-        {v2 && !member && <div className="lg:mt-48 [&>section]:lg:mt-0">{liveSection}</div>}
+        {v2 && !member && !v5 && <div className="lg:mt-48 [&>section]:lg:mt-0">{liveSection}</div>}
         {/* Recreate from Community */}
         {isEnabled('home.community') && (
         <section className="mt-24">

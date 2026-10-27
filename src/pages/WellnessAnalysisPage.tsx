@@ -1,5 +1,6 @@
 import { ArrowLeft } from 'lucide-react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { useUiVersion } from '../versions/useUiVersion'
 import { PageMeta } from '../components/PageMeta'
 import { CoverImage } from '../components/ui/CoverImage'
 import { AnalysisShifts, AnalysisStatus, NextChapter, ProgressChart } from '../components/wellness/AnalysisParts'
@@ -22,7 +23,10 @@ import { artOf, chapterBrief, findAnalysis, progressOf } from '../lib/wellnessAn
 export function WellnessAnalysisPage() {
   const { id } = useParams()
   const analysis = findAnalysis(id)
-  if (!analysis) return <Navigate to="/wellness" replace />
+  // v5 (U053): the sample analyses are not shown as anyone's progress; Progress
+  // holds the person's own check-ins instead.
+  const v5 = useUiVersion() >= 5
+  if (!analysis || v5) return <Navigate to="/wellness" replace />
   return <AnalysisView analysis={analysis} />
 }
 

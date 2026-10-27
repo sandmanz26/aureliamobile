@@ -11,6 +11,7 @@ import {
   FIRST_CHAPTERS,
   MOOD_LABELS,
   addCheckIn,
+  noteLastCheckIn,
   defaultReminderTime,
   nextChapterWhen,
   reminderIcs,
@@ -31,7 +32,26 @@ const SAME_LISTEN_MS = 6 * 60 * 60_000
  * the answer, promises the next chapter, offers a reminder for it, and only
  * draws progress once there are two real answers to draw.
  */
-export function ChapterCheckIn({ initial, goalLabel }: { initial: Journey; goalLabel: string | null }) {
+/** v5: what the next chapter will change, so there is nothing to tune (J049, Ishmeet: "I'd rather you tell me what to change"). */
+function nextPlan(mood: number, chapter: number) {
+  if (mood <= 2) return `Chapter ${chapter + 1} will be gentler: slower pacing, fewer words, and a softer ending.`
+  if (mood === 3) return `Chapter ${chapter + 1} will try one change: a slower, quieter close.`
+  return `Chapter ${chapter + 1} keeps what worked and goes a little deeper.`
+}
+
+export function ChapterCheckIn({
+  initial,
+  goalLabel,
+  v5 = false,
+  wearable,
+}: {
+  initial: Journey
+  goalLabel: string | null
+  /** Design v5 (U053): journal line, the next chapter's plan, no score bars. */
+  v5?: boolean
+  /** v5: the wearable chosen in onboarding, if any ("Apple Watch"). */
+  wearable?: string | null
+}) {
   const navigate = useNavigate()
   const [journey, setJourney] = useState(initial)
   const [now] = useState(() => Date.now())
@@ -39,6 +59,8 @@ export function ChapterCheckIn({ initial, goalLabel }: { initial: Journey; goalL
   const answered = Boolean(last && now - last.at < SAME_LISTEN_MS)
   const [time, setTime] = useState(journey.reminder ?? defaultReminderTime(journey.goal))
   const [added, setAdded] = useState(false)
+  const [note, setNote] = useState('')
+  const [noted, setNoted] = useState(false)
 
   // The chapter this listen is: the last one answered, or the next one.
   const chapter = answered ? journey.checkIns.length : journey.checkIns.length + 1
@@ -119,12 +141,63 @@ export function ChapterCheckIn({ initial, goalLabel }: { initial: Journey; goalL
         </div>
       )}
 
+      {v5 && mood !== null && wearable && (
+        /* Olivia asked for this exact thing: the body's reading during the
+           session, not a score. The demo has no live connection, so the
+           figures are marked as an example. */
+        <div className="flex flex-col gap-4 rounded-16 border border-border-subtle p-14">
+          <p className="text-[12px] leading-[16px] text-text-secondary">{wearable} · during this session</p>
+          <p className="text-[16px] leading-[22px] text-text-primary">Heart rate settled from 78 to 66 bpm</p>
+          <p className="text-[11px] leading-[14px] text-text-secondary">Example reading — real data once the connection is live.</p>
+        </div>
+      )}
+
+      {v5 && mood !== null && (
+        <div className="flex flex-col gap-8">
+          {noted ? (
+            <p className="text-[14px] font-light leading-[21px] text-text-secondary">Saved to your journal. Only you can see it.</p>
+          ) : (
+            <form
+              className="flex flex-col gap-8"
+              onSubmit={(event) => {
+                event.preventDefault()
+                const next = noteLastCheckIn(note)
+                if (next && note.trim()) {
+                  setJourney(next)
+                  setNoted(true)
+                }
+              }}
+            >
+              <label htmlFor="checkin-note" className="text-[14px] leading-[21px] text-text-primary">
+                Anything on your mind? <span className="text-text-secondary">Optional, only you see it.</span>
+              </label>
+              <div className="flex gap-8">
+                <input
+                  id="checkin-note"
+                  value={note}
+                  onChange={(event) => setNote(event.target.value)}
+                  placeholder="A line for your journal…"
+                  maxLength={500}
+                  className="h-44 min-w-0 flex-1 rounded-12 border border-border-subtle bg-surface-default px-12 text-[14px] text-text-primary placeholder:text-text-secondary focus:outline-none"
+                />
+                <button type="submit" disabled={!note.trim()} className="u-press h-44 shrink-0 rounded-12 bg-[#331B04] px-14 text-[14px] text-white disabled:opacity-40">
+                  Save
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
+
       {mood !== null && !done && (
         <div className="flex flex-col gap-12 rounded-16 bg-[#FFF8EC] p-16">
           <p className="text-[12px] leading-[16px] text-[#8A5A1E]">Next</p>
           <p className="-mt-6 text-[20px] leading-[28px] text-text-primary">
             Chapter {chapter + 1} is ready {nextChapterWhen(journey.goal)}
           </p>
+          {v5 && mood !== null && (
+            <p className="-mt-6 text-[14px] font-light leading-[21px] text-text-secondary">{nextPlan(mood, chapter)}</p>
+          )}
           {journey.reminder && !added ? (
             <p className="flex items-center gap-8 text-[14px] font-light leading-[21px] text-text-secondary">
               <BellRing size={16} className="shrink-0 text-[#8A5A1E]" />
@@ -179,7 +252,7 @@ export function ChapterCheckIn({ initial, goalLabel }: { initial: Journey; goalL
         </div>
       )}
 
-      <ChapterTrack journey={journey} />
+      <ChapterTrack journey={journey} words={v5} />
     </section>
   )
 }
@@ -188,7 +261,7 @@ export function ChapterCheckIn({ initial, goalLabel }: { initial: Journey; goalL
  * The first five as dots, and — once there are two — each answer as it was
  * given. No smoothing, no projection: two points are what they are.
  */
-export function ChapterTrack({ journey }: { journey: Journey }) {
+export function ChapterTrack({ journey, words = false }: { journey: Journey; words?: boolean }) {
   const count = journey.checkIns.length
   return (
     <div className="flex flex-col gap-12">
@@ -208,6 +281,14 @@ export function ChapterTrack({ journey }: { journey: Journey }) {
       {count >= 2 && (
         <ol className="flex flex-col gap-8" aria-label="How you felt after each chapter">
           {journey.checkIns.map((c, i) => (
+            words ? (
+              /* v5: words only. A bar per chapter is a score to chase, which
+                 is what one interviewed user said would make them anxious. */
+              <li key={c.at} className="flex items-baseline gap-8 text-[13px] leading-[18px]">
+                <span className="w-[84px] shrink-0 text-text-secondary">Chapter {i + 1}</span>
+                <span className="text-text-primary">Felt {MOOD_LABELS[c.mood - 1].toLowerCase()}</span>
+              </li>
+            ) : (
             <li key={c.at} className="grid grid-cols-[84px_1fr_92px] items-center gap-8 text-[13px] leading-[18px]">
               <span className="text-text-secondary">Chapter {i + 1}</span>
               <span className="h-8 overflow-hidden rounded-full bg-[#F5EEE8]">
@@ -215,6 +296,7 @@ export function ChapterTrack({ journey }: { journey: Journey }) {
               </span>
               <span className="text-right text-text-primary">{MOOD_LABELS[c.mood - 1]}</span>
             </li>
+            )
           ))}
         </ol>
       )}

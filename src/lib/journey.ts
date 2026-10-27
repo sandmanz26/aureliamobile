@@ -25,6 +25,15 @@ export interface CheckIn {
   at: number
   /** 1–5, as tapped on the faces. */
   mood: number
+  /** v5 (U053): an optional line in their own words — the journal. Only they see it. */
+  note?: string
+}
+
+/** v5 (U053): a journal line written without a session, from Progress. */
+export interface JournalNote {
+  at: number
+  text: string
+  mood?: number
 }
 
 export interface Journey {
@@ -38,6 +47,8 @@ export interface Journey {
   checkIns: CheckIn[]
   /** "22:30", once a reminder has been added to the calendar. */
   reminder?: string
+  /** v5: journal lines written outside a session. */
+  notes?: JournalNote[]
 }
 
 const KEY = 'aurelia.journey'
@@ -47,8 +58,9 @@ const schema = z.object({
   name: z.string(),
   slug: z.string(),
   href: z.string(),
-  checkIns: z.array(z.object({ at: z.number(), mood: z.number().int().min(1).max(5) })),
+  checkIns: z.array(z.object({ at: z.number(), mood: z.number().int().min(1).max(5), note: z.string().max(500).optional() })),
   reminder: z.string().optional(),
+  notes: z.array(z.object({ at: z.number(), text: z.string().max(500), mood: z.number().int().min(1).max(5).optional() })).optional(),
 })
 
 export function readJourney(): Journey | null {
@@ -72,6 +84,49 @@ export function addCheckIn(mood: number, at = Date.now()): Journey | null {
   const next = { ...journey, checkIns: [...journey.checkIns, { at, mood }] }
   writeJson(KEY, next)
   return next
+}
+
+/** v5: the note typed under the check-in that was just made. */
+export function noteLastCheckIn(note: string): Journey | null {
+  const journey = readJourney()
+  const text = note.trim().slice(0, 500)
+  if (!journey || !journey.checkIns.length || !text) return journey
+  const checkIns = journey.checkIns.map((c, i) => (i === journey.checkIns.length - 1 ? { ...c, note: text } : c))
+  const next = { ...journey, checkIns }
+  writeJson(KEY, next)
+  return next
+}
+
+/** v5: a journal line from Progress, with no session behind it. */
+export function addJournalNote(text: string, mood?: number, at = Date.now()): Journey | null {
+  const journey = readJourney()
+  const line = text.trim().slice(0, 500)
+  if (!journey || !line) return journey
+  const next = { ...journey, notes: [...(journey.notes ?? []), { at, text: line, ...(mood ? { mood } : {}) }] }
+  writeJson(KEY, next)
+  return next
+}
+
+/**
+ * v5 (U053): how the stretch is going, in words rather than a score.
+ *
+ * Real users (Ishmeet, Olivia, Bryan; J049) read the demo's percentages as
+ * either anxiety-making or unserious. This summarises their own answers the
+ * way a person would: the direction, the most common feeling, and how many
+ * times they showed up. No percentages, no projection.
+ */
+export function feelingSummary(checkIns: CheckIn[]): { trend: 'up' | 'same' | 'down' | 'new'; usual: string; count: number } {
+  const count = checkIns.length
+  if (count < 2) return { trend: 'new', usual: count ? MOOD_LABELS[checkIns[0].mood - 1] : '', count }
+  const half = Math.ceil(count / 2)
+  const avg = (list: CheckIn[]) => list.reduce((s, c) => s + c.mood, 0) / list.length
+  const early = avg(checkIns.slice(0, count - half)) || avg(checkIns.slice(0, 1))
+  const late = avg(checkIns.slice(count - half))
+  const trend = late - early >= 0.5 ? 'up' : early - late >= 0.5 ? 'down' : 'same'
+  const tally = new Map<number, number>()
+  for (const c of checkIns) tally.set(c.mood, (tally.get(c.mood) ?? 0) + 1)
+  const usualMood = [...tally.entries()].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0]
+  return { trend, usual: MOOD_LABELS[usualMood - 1], count }
 }
 
 export function setReminder(time: string): Journey | null {

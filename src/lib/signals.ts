@@ -6,7 +6,7 @@
 // connection per source — the shape here is deliberately close to it.
 
 import type { LucideIcon } from 'lucide-react'
-import { CalendarDays, CircleDot, CloudSun, MapPin, MessagesSquare, Watch } from 'lucide-react'
+import { Activity, CalendarDays, CircleDot, CloudSun, MapPin, MessagesSquare, Watch } from 'lucide-react'
 
 export type SignalGroup = 'Biological' | 'Cognitive' | 'Atmospheric'
 
@@ -80,8 +80,26 @@ export const SIGNAL_SOURCES: SignalSource[] = [
   },
 ]
 
-export function sourcesInGroup(group: SignalGroup) {
-  return SIGNAL_SOURCES.filter((source) => source.group === group)
+/**
+ * v5 (U053): sources only design v5 lists. Whoop is here because one of the
+ * three interviewed users wears one; kept out of SIGNAL_SOURCES so v1–v4 and
+ * the admin list are unchanged.
+ */
+export const V5_SOURCES: SignalSource[] = [
+  { id: 'whoop', name: 'Whoop', group: 'Biological', icon: Activity, defaultOn: false, reads: 'Heart rate, HRV, sleep, strain' },
+]
+
+export function sourcesInGroup(group: SignalGroup, v5 = false) {
+  return [...SIGNAL_SOURCES, ...(v5 ? V5_SOURCES : [])].filter((source) => source.group === group)
+}
+
+/** Onboarding's wearable choice (v5) → the source it switches on. */
+const WEARABLE_SOURCE: Record<string, string> = { 'apple-watch': 'apple-watch', whoop: 'whoop', oura: 'oura-ring' }
+
+/** v5: everything off except the wearable the person chose in onboarding. */
+export function connectionsForWearable(wearable: string | undefined): Record<string, boolean> {
+  const on = wearable ? WEARABLE_SOURCE[wearable] : undefined
+  return Object.fromEntries([...SIGNAL_SOURCES, ...V5_SOURCES].map((source) => [source.id, source.id === on]))
 }
 
 /** The state the screen opens in. `allOff` is design v4 (U050): nothing connected until the person connects it. */

@@ -155,6 +155,48 @@ export const UI_VERSIONS: UiVersion[] = [
       },
     ],
   },
+  {
+    id: 5,
+    name: 'Version 5',
+    summary: 'Everything in v4, reworked after the first three user interviews: progress in words instead of scores, the reason behind every suggestion, an optional journal, your wearable asked for up front, and a community about stories rather than rankings.',
+    changes: [
+      {
+        group: 'Progress without the scoreboard',
+        items: [
+          'Progress shows how you have been feeling, in words, from your own check-ins — no percentages, no sample analytics.',
+          'A short report every two weeks; the detail (each check-in and what drove it) is one tap away for those who want it.',
+          'The player no longer shows analytics at all.',
+        ],
+      },
+      {
+        group: 'Tell me why, ask me less',
+        items: [
+          'Every suggested change has a Why: what it does and what it is based on (your goal, your words, your last check-in).',
+          'After a check-in Aurelia says what it will change in the next chapter, so there is nothing to tune unless you want to.',
+        ],
+      },
+      {
+        group: 'Your data, asked for properly',
+        items: [
+          'Onboarding asks which wearable you use (Apple Watch, Whoop, Oura) and says exactly what it would read. Data sources start with only that one on.',
+          'A journal: an optional line under each check-in, and notes from Progress on days without a session. Only you see it.',
+        ],
+      },
+      {
+        group: 'Community',
+        items: [
+          'Session cards describe what the session is like instead of percentage claims; tags lose the #.',
+          'The challenge is a shared journey: who joined and what they made, no podium or ranking.',
+          'Publishing says plainly what others can see and what stays private.',
+          'Home for visitors says what Aurelia is in plain words, without the map that read as co-working locations.',
+        ],
+      },
+      {
+        group: 'Good to know',
+        items: ['Includes everything in Version 4.', 'Production stays on v4 until v5 is approved.'],
+      },
+    ],
+  },
 ]
 
 const KEY = 'aurelia.ui.version'

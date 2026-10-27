@@ -16,7 +16,7 @@ import { useChatSession } from '../chat/ChatSessionContext'
 import { OPENING_MESSAGES, nextVersionLabel, sessionNameOf } from '../chat/thread'
 import { deckFor, inferFromWords, suggestionsFor } from '../chat/firstSession'
 import { DEFAULTS, findGoal, onboardingAnswers } from '../lib/onboarding'
-import { readJourney, startJourney } from '../lib/journey'
+import { MOOD_LABELS, readJourney, startJourney } from '../lib/journey'
 import type { Message, Status } from '../chat/thread'
 import type { RecreateBrief } from '../chat/recreate'
 import { draftTitleFor, findQuickStart } from '../lib/quickStart'
@@ -130,6 +130,8 @@ export function ChatPage() {
   const [typing, setTyping] = useState(false)
   const v3 = useUiVersion() >= 3
   const v4 = useUiVersion() >= 4
+  const v5 = useUiVersion() >= 5
+  const [journey] = useState(() => readJourney())
   // What onboarding stored (v4). Read once: this screen is never open while
   // onboarding is, so it cannot change under it.
   const [answers] = useState(() => onboardingAnswers())
@@ -772,6 +774,16 @@ export function ChatPage() {
   // proposals part of the sheet's one list (v4).
   const proposed = showRecommendations && messages.some((m) => m.attachment === 'recommendations') && (sessionState === 'idle' || sessionState === 'updating')
   const suggestionOptions = asOptions(deck)
+  // v5 (U053): what the suggestions rest on, in words, for each row's Why.
+  const lastCheckIn = journey?.checkIns[journey.checkIns.length - 1]
+  const basisLine = [
+    findGoal(answers?.goal ?? null) ? `your goal, “${findGoal(answers?.goal ?? null)?.label}”` : 'what you asked for in this conversation',
+    lastCheckIn ? `how you felt after your last chapter (“${MOOD_LABELS[lastCheckIn.mood - 1]}”)` : null,
+    answers?.wearable && answers.wearable !== 'none' ? 'your wearable' : null,
+  ]
+    .filter(Boolean)
+    .join(', ')
+    .replace(/, ([^,]*)$/, ' and $1') + '.'
   // v4: none of the chips undoes a choice made in onboarding (J039 F2) — no
   // "Make it longer" for someone who picked 20 minutes.
   const suggestions = v4 && answers ? suggestionsFor(answers) : SUGGESTIONS
@@ -1069,6 +1081,7 @@ export function ChatPage() {
           // first in the sheet, picked as `applied` (what the deck and the
           // Apply chip already use); anything else picked here joins them.
           suggestions={v4 && proposed ? suggestionOptions : undefined}
+          basis={v5 ? basisLine : undefined}
           added={v4 && proposed ? [...applied, ...addPicks] : addPicks}
           onToggle={(id) =>
             v4 && proposed && deck.some((r) => r.id === id)

@@ -19,6 +19,12 @@ interface AddSheetProps {
    * selected with everything else in one selection. Absent in v1–v3.
    */
   suggestions?: AddOption[]
+  /**
+   * v5 (U053): what Aurelia's suggestions are based on ("your goal 'Sleep
+   * better' and how you felt last time"). Present, every row gets a Why —
+   * two interviewed users asked for the reason behind each change.
+   */
+  basis?: string
 }
 
 /**
@@ -245,7 +251,7 @@ function OptionCard({
  * The expected effect is shown per change and as "up to" the largest one,
  * never summed: separate percentage lifts do not add (logic review D4).
  */
-function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel, suggestions = [] }: AddSheetProps) {
+function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel, suggestions = [], basis }: AddSheetProps) {
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.key === 'Escape') onClose()
@@ -264,7 +270,11 @@ function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel, suggestions 
   const experimentOptions = only(EXPERIMENTS.filter((option) => !suggested.has(option.id)))
   const picked = everything.filter((option) => added.includes(option.id))
   const predicted = picked.filter((option) => option.improveScore)
-  const experiments = picked.filter((option) => !option.improveScore)
+  // An experiment is a row with a channel and no prediction. v5 (U053) counts
+  // only those: a goal-deck suggestion has no score either (nothing to
+  // predict from yet) but is not an experiment. v4 still counts it as one —
+  // a known gap logged in U053, left alone so production's v4 is unchanged.
+  const experiments = picked.filter((option) => !option.improveScore && (!basis || option.channel))
   const best = predicted.reduce((max, option) => Math.max(max, Number.parseFloat(option.improveScore ?? '0')), 0)
 
   return createPortal(
@@ -303,6 +313,7 @@ function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel, suggestions 
               options={proposals}
               added={added}
               onToggle={onToggle}
+              basis={basis}
             />
           )}
           {diagnosis.length > 0 && (
@@ -312,6 +323,9 @@ function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel, suggestions 
               options={diagnosis}
               added={added}
               onToggle={onToggle}
+              // Not the person's goal: this list is the session's own
+              // diagnosis, which in the demo is sample data — said so.
+              basis={basis ? 'Aurelia’s read of how this session has been working (sample data in this demo).' : undefined}
             />
           )}
           {experimentOptions.length > 0 && (
@@ -321,6 +335,7 @@ function AddSheetV3({ added, onToggle, onApply, onClose, nextLabel, suggestions 
               options={experimentOptions}
               added={added}
               onToggle={onToggle}
+              basis={basis}
             />
           )}
           {proposals.length + diagnosis.length + experimentOptions.length === 0 && (
@@ -393,13 +408,16 @@ function ListSection({
   options,
   added,
   onToggle,
+  basis,
 }: {
   title: string
   hint: string
   options: AddOption[]
   added: string[]
   onToggle: (id: string) => void
+  basis?: string
 }) {
+  const [open, setOpen] = useState<string | null>(null)
   return (
     <section className="mt-8 first:mt-0">
       <h3 className="text-style-body-small font-medium text-text-primary">{title}</h3>
@@ -417,11 +435,33 @@ function ListSection({
                   <span className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#ecfbed] px-6 py-1 text-[11px] text-success-600">
                     <ArrowUp size={10} /> {option.improveScore} expected
                   </span>
-                ) : (
+                ) : option.channel ? (
                   <span className="mt-4 inline-flex items-center gap-4 text-[11px] text-text-secondary">
                     {option.channel === 'Visuals' ? <Image size={11} /> : <Music size={11} />}
                     {option.channel}
                   </span>
+                ) : null}
+                {basis && (
+                  <button
+                    type="button"
+                    aria-expanded={open === option.id}
+                    onClick={() => setOpen((current) => (current === option.id ? null : option.id))}
+                    className="u-tap ml-8 mt-4 inline-flex items-center gap-2 text-[11px] font-medium text-[#C25E0A]"
+                  >
+                    Why?
+                  </button>
+                )}
+                {basis && open === option.id && (
+                  <div className="mt-8 rounded-12 bg-[#FFF8EC] p-10 text-[12px] leading-[18px] text-text-primary">
+                    <p>
+                      <span className="font-medium">What it does: </span>
+                      {option.description}.
+                    </p>
+                    <p className="mt-4">
+                      <span className="font-medium">Based on: </span>
+                      {option.channel ? 'nothing yet. This one is an experiment, so you find out when you listen.' : basis}
+                    </p>
+                  </div>
                 )}
               </div>
               <button

@@ -9,7 +9,9 @@ import { ANALYSES } from '../lib/wellnessAnalysis'
 import { useUiVersion } from '../versions/useUiVersion'
 import { useDrawer } from '../layouts/DrawerContext'
 import type { SignalGroup } from '../lib/signals'
-import { SIGNAL_GROUPS, defaultConnections, sourcesInGroup } from '../lib/signals'
+import { SIGNAL_GROUPS, connectionsForWearable, defaultConnections, sourcesInGroup } from '../lib/signals'
+import { onboardingAnswers } from '../lib/onboarding'
+import { FeelingProgress } from '../components/wellness/FeelingProgress'
 import { CARD_SHADOW } from '../lib/shadows'
 import { WELLNESS_GOALS } from '../lib/wellnessGoals'
 import { CoinPill } from '../components/ui/CoinPill'
@@ -141,7 +143,11 @@ export function WellnessPage() {
   // brand-new account — read as a privacy breach by the people it mattered
   // most to (a therapist-referred user, a skeptic).
   const v4 = useUiVersion() >= 4
-  const [connections, setConnections] = useState(() => defaultConnections(v4))
+  const v5 = useUiVersion() >= 5
+  // v5 (U053): the wearable chosen in onboarding is the one thing on.
+  const [connections, setConnections] = useState(() =>
+    v5 ? connectionsForWearable(onboardingAnswers()?.wearable) : defaultConnections(v4),
+  )
   const [requestOpen, setRequestOpen] = useState(false)
   const [tab, setTab] = useState<WellnessTab>('Analytics')
   const [requestSent, setRequestSent] = useState(false)
@@ -157,7 +163,7 @@ export function WellnessPage() {
   const active = Object.values(connections).filter(Boolean).length
   const total = Object.keys(connections).length
 
-  const countIn = (group: SignalGroup) => sourcesInGroup(group).filter((source) => connections[source.id]).length
+  const countIn = (group: SignalGroup) => sourcesInGroup(group, v5).filter((source) => connections[source.id]).length
 
   return (
     <div className="bg-background-default pb-48">
@@ -202,7 +208,10 @@ export function WellnessPage() {
           />
         </div>
 
-        {tab === 'Analytics' && v2 && (
+        {/* v5 (U053): their own check-ins in words, not the sample analyses. */}
+        {tab === 'Analytics' && v5 && <FeelingProgress />}
+
+        {tab === 'Analytics' && v2 && !v5 && (
           <div className="mt-24 flex flex-col gap-12 lg:grid lg:grid-cols-2 lg:gap-16">
             {ANALYSES.map((analysis) => (
               <AnalyticsSessionCard key={analysis.id} analysis={analysis} />
@@ -248,7 +257,7 @@ export function WellnessPage() {
                   key={group}
                   label={group}
                   connected={countIn(group)}
-                  total={sourcesInGroup(group).length}
+                  total={sourcesInGroup(group, v5).length}
                 />
               ))}
             </div>
@@ -262,7 +271,7 @@ export function WellnessPage() {
                 cards under it. */}
             <h2 className="text-[14px] font-light! leading-[14px] text-[#9a9a9a]">{group}</h2>
             <div className="mt-12 flex flex-col gap-12">
-              {sourcesInGroup(group).map((source) => {
+              {sourcesInGroup(group, v5).map((source) => {
                 const Icon = source.icon
                 const on = connections[source.id]
                 return (

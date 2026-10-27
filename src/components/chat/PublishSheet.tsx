@@ -1,4 +1,5 @@
 import { createPortal } from 'react-dom'
+import { useUiVersion } from '../../versions/useUiVersion'
 import { Check, CircleX } from 'lucide-react'
 
 interface PublishSheetProps {
@@ -21,6 +22,7 @@ interface PublishSheetProps {
 // neutral surface rather than a warning colour — the sheet is there to say what
 // happened and that nothing was lost, not to make the user feel caught out.
 export function PublishSheet({ state, onCancel, onView, onDone }: PublishSheetProps) {
+  const v5 = useUiVersion() >= 5
   const publishing = state === 'publishing'
   const unpublished = state === 'unpublished'
 
@@ -61,6 +63,14 @@ export function PublishSheet({ state, onCancel, onView, onDone }: PublishSheetPr
                 ? 'Hang tight! This’ll only take a moment.'
                 : 'Your session is now ready to view.'}
           </p>
+          {/* v5 (U053): what publishing shares, said plainly. An interviewed
+              user (Olivia) would share "but it should be clear what others
+              can see and what's private". */}
+          {v5 && !unpublished && (
+            <p className="text-style-caption mt-4 rounded-12 bg-background-elevated px-12 py-10 text-left text-text-secondary">
+              Others can play and recreate the session: its title, sound, visuals and script. Your check-ins, journal, wearable data and this conversation stay private.
+            </p>
+          )}
         </div>
 
         {unpublished ? (
