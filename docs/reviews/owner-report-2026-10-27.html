@@ -31,6 +31,8 @@ h1 { font-size: clamp(30px, 5vw, 42px); font-weight: 800; letter-spacing: -0.01e
 h2 { font-size: 24px; font-weight: 800; margin-top: 56px; padding-top: 20px; border-top: 2px solid var(--ink); }
 h3 { font-size: 17px; font-weight: 700; }
 p { margin: 0; max-width: 68ch; }
+.ai { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; padding: 6px 12px; border-radius: 999px; background: var(--ink); color: var(--bg); font-size: 13px; font-weight: 700; }
+.ai::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--bar-now); }
 .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
 .lede { font-size: 18px; color: var(--muted); margin-top: 12px; }
 .meta { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 18px; font-size: 13px; color: var(--muted); }
@@ -86,18 +88,20 @@ ul.plain li { margin: 6px 0; max-width: 68ch; }
   h2 { break-after: avoid; }
   .change, .kpi, .chart, .next, .table-wrap, .answer { break-inside: avoid; }
   h3 { break-after: avoid; }
+  .kpis { grid-template-columns: 1fr 1fr; }
 }
 </style>
 
 <div class="wrap">
   <header>
     <p class="eyebrow">Aurelia · report for the owner · 27 October 2026</p>
-    <h1>The first-time experience: before, what we changed, and what it should do</h1>
-    <p class="lede">We tested how a brand-new user experiences Aurelia, fixed what stopped them, simplified the app, and put it live. This page shows the state before, what we suggested, what is in production now, and the expected effect.</p>
+    <p class="ai">AI analysis · Based on Claude self-analysis and deep research</p>
+    <h1>The first-time experience: before, what changed, and what it should do</h1>
+    <p class="lede">At Eugene's request, Aurelia was analysed with AI. Claude tested how a brand-new user experiences the app, found what stopped them, suggested fixes and a simpler structure, and built them. They are now live. This page shows the state before, the suggestions, what is in production now, and the expected effect.</p>
     <div class="meta">
       <span><b>Live in production:</b> design v4, commit c58a67a</span>
       <span><b>Based on:</b> retention simulation (25 Oct) and simplification plan (25 Oct)</span>
-      <span><b>Prepared by:</b> Claude, for Werner and Eugene</span>
+      <span><b>Analysis and report:</b> Claude (Anthropic's AI), for Werner and Eugene</span>
     </div>
   </header>
 
@@ -125,14 +129,26 @@ ul.plain li { margin: 6px 0; max-width: 68ch; }
   </section>
 
   <div class="answer">
-    <p><strong>In one paragraph.</strong> Before, a new user could reach a session quickly, but in most cases it was not about what they asked for. They saw invented progress before they had listened, and nothing invited them back. We fixed those moments, added a simple reason to return (a check-in after each session and a reminder for the next chapter), and reorganised the app into four tabs. All of it is live. The test users now get a session built for their goal in about a third of the taps. Our model predicts that roughly twice as many new users will still be active after a week. That forecast is not a measurement yet: it needs a short test with real users.</p>
+    <p><strong>In one paragraph.</strong> Before, a new user could reach a session quickly, but in most cases it was not about what they asked for. They saw invented progress before they had listened, and nothing invited them back. Claude fixed those moments, added a simple reason to return (a check-in after each session and a reminder for the next chapter), and reorganised the app into four tabs. All of it is live. The test users now get a session built for their goal in about a third of the taps. Claude's model predicts that roughly twice as many new users will still be active after a week. That forecast is not a measurement yet: it needs a short test with real users.</p>
   </div>
 
-  <h2>1. How we looked at it</h2>
+  <h2>1. How Claude analysed it</h2>
   <div class="stack">
-    <p>We set up six realistic first-time users with different needs: trouble sleeping, work stress, anxiety with only five minutes to spare, exam focus, an experienced meditator, and someone recovering from burnout. Each one used the real app from a fresh browser, entering a different way (typing on Home, tapping a feeling, pressing Play, signing in first, skipping the setup). We recorded every tap and screen.</p>
-    <p>We then asked the questions a real user test would ask at each step: was it easy, did it understand me, do I trust what it shows, would I come back tomorrow. A simple model turns those answers into a forecast of how many people return after 1, 7 and 30 days, checked against typical numbers for health and wellness apps.</p>
-    <p class="small">Two kinds of numbers appear in this report. <span class="tag measured">Measured</span> means it happened on the real app. <span class="tag predicted">Predicted</span> means it comes from the model and still has to be confirmed with real people.</p>
+    <p>The whole analysis was done by Claude, an AI model, rather than by a research agency or a panel of real users. The table below shows what it did.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Step</th><th>What Claude did</th><th>Output</th></tr></thead>
+        <tbody>
+          <tr><td>Self-analysis of the live app</td><td>Opened every screen of the real staging app, counted the buttons, sections and duplicate paths, and marked each one keep, merge or remove.</td><td>Simplification plan (25 Oct), second audit (26 Oct)</td></tr>
+          <tr><td>Simulated user research</td><td>Played six different first-time users, used the real app as each of them, and answered a sequenced user-test questionnaire at every step.</td><td>Retention simulation (25 Oct)</td></tr>
+          <tr><td>Deep research</td><td>Compared the findings with published retention figures for health and wellness apps, and built a model that forecasts day 1, 7 and 30 return rates for each suggested fix.</td><td>The forecasts in section 3</td></tr>
+          <tr><td>Build and verify</td><td>Implemented the approved fixes, re-ran the same six users on the new version, and checked that nothing else changed before production.</td><td>Live in production (27 Oct)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>In more detail: Claude set up six realistic first-time users with different needs: trouble sleeping, work stress, anxiety with only five minutes to spare, exam focus, an experienced meditator, and someone recovering from burnout. Each one used the real app from a fresh browser, entering a different way (typing on Home, tapping a feeling, pressing Play, signing in first, skipping the setup). Every tap and screen was recorded.</p>
+    <p>Claude then answered the questions a real user test would ask at each step: was it easy, did it understand me, do I trust what it shows, would I come back tomorrow. A simple model turns those answers into a forecast of how many people return after 1, 7 and 30 days, checked against typical numbers for health and wellness apps.</p>
+    <p class="small">Because the users were simulated by AI, two kinds of numbers appear in this report. <span class="tag measured">Measured</span> means it happened on the real app. <span class="tag predicted">Predicted</span> means it comes from the model and still has to be confirmed with real people.</p>
   </div>
 
   <h2>2. Before, the suggestion, and what is live now</h2>
@@ -230,7 +246,7 @@ ul.plain li { margin: 6px 0; max-width: 68ch; }
   </article>
 
   <h2>3. Impact</h2>
-  <h3 style="margin-top:18px">What we measured on the real app <span class="tag measured">Measured</span></h3>
+  <h3 style="margin-top:18px">Measured on the real app <span class="tag measured">Measured</span></h3>
   <div class="table-wrap">
     <table>
       <thead><tr><th>Test user</th><th>Need</th><th>Before</th><th>Now</th></tr></thead>
@@ -245,7 +261,7 @@ ul.plain li { margin: 6px 0; max-width: 68ch; }
     </table>
   </div>
 
-  <h3 style="margin-top:32px">What we expect for retention <span class="tag predicted">Predicted</span></h3>
+  <h3 style="margin-top:32px">Expected retention <span class="tag predicted">Predicted</span></h3>
   <p style="margin-top:8px">Share of all new users who come back <em>and listen or create</em> on day 1, 7 and 30. The shaded band is the usual range for health and wellness apps.</p>
   <div class="chart">
     <svg viewBox="0 0 640 300" role="img" aria-label="Predicted retention: day 1 rises from 12% to 21%, day 7 from 3.8% to 8.3%, day 30 from 1.5% to 4.1%; full potential 24%, 10.7% and 6%">
@@ -303,7 +319,7 @@ ul.plain li { margin: 6px 0; max-width: 68ch; }
       <tbody>
         <tr><td>Progress tab shows the user's own results</td><td>It still shows sample results ("Great Progress 60%") that are not the user's. This is the last place the app shows invented progress.</td><td><span class="tag part">Proposed (S1)</span></td></tr>
         <tr><td>Staying signed in after closing the page</td><td>Today every visit starts signed out. Without this, we cannot measure real retention.</td><td><span class="tag todo">Decision needed</span></td></tr>
-        <tr><td>A short test with 8–12 real users</td><td>Turns the forecast above into real numbers. Pass line we suggest: day 1 at least 25%, day 7 at least 10%, day 30 at least 5%.</td><td><span class="tag todo">Not started</span></td></tr>
+        <tr><td>A short test with 8–12 real users</td><td>Turns the forecast above into real numbers. Suggested pass line: day 1 at least 25%, day 7 at least 10%, day 30 at least 5%.</td><td><span class="tag todo">Not started</span></td></tr>
         <tr><td>Push reminders and real AI replies</td><td>The reminder is a calendar file for now, and replies after the first message are still demo text. Both need the backend.</td><td><span class="tag todo">Needs backend</span></td></tr>
         <tr><td>Further simplification (S2–S7)</td><td>Fewer buttons on Create and Discover, one Credits &amp; plan page, one Recreate button. Sent to users for feedback.</td><td><span class="tag part">Waiting on feedback</span></td></tr>
         <tr><td>Design polish in Figma, and the mobile app</td><td>The new screens follow our drafts and existing styles. A designer's pass and the Flutter app should follow.</td><td><span class="tag todo">Not started</span></td></tr>
@@ -311,12 +327,12 @@ ul.plain li { margin: 6px 0; max-width: 68ch; }
     </table>
   </div>
 
-  <h2>5. Decisions we need from you</h2>
+  <h2>5. Decisions needed from you</h2>
   <div class="next">
-    <div><b>1. Keep users signed in?</b>Needed before any real retention number can be trusted. We recommend yes, for the test at least.</div>
+    <div><b>1. Keep users signed in?</b>Needed before any real retention number can be trusted. Claude recommends yes, at least for the test.</div>
     <div><b>2. Run the 8–12 person test?</b>About two weeks including the day-7 follow-up. It confirms or corrects every forecast in this report.</div>
-    <div><b>3. Show users their own progress (S1)?</b>A small change that removes the last invented numbers. We recommend doing it next.</div>
+    <div><b>3. Show users their own progress (S1)?</b>A small change that removes the last invented numbers. Claude recommends doing it next.</div>
   </div>
 
-  <p class="small" style="margin-top:40px">Sources in the repository: retention simulation (docs/reviews/Aurelia-Retention-Simulation-2026-10-25.pdf), simplification plan (docs/reviews/Aurelia-Simplification-Plan-2026-10-25.pdf), update log entries U050–U052, work journal J039–J046.</p>
+  <p class="small" style="margin-top:40px">AI analysis by Claude, based on its own analysis of the app and deep research. Sources in the repository: retention simulation (docs/reviews/Aurelia-Retention-Simulation-2026-10-25.pdf), simplification plan (docs/reviews/Aurelia-Simplification-Plan-2026-10-25.pdf), update log entries U050–U052, work journal J039–J046.</p>
 </div>
