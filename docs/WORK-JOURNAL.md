@@ -98,6 +98,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J043 | 2026-10-26 | Analysis | Second simplification audit of v4 after U051 (no code) | docs only |
 | J044 | 2026-10-26 | Operational | Owner is sending the J043 proposal (S1–S7) to users before deciding | docs only |
 | J045 | 2026-10-27 | Release | Production moved to v4; `web_prod` fast-forwarded (U052) | U052 |
+| J046 | 2026-10-27 | Analysis | Production v4 compared with the J039 retention report; model re-scored for what was actually built | docs only |
 
 ---
 
@@ -433,4 +434,26 @@ transcript and the update log. Everything from J018 on was written at the time.
   - Then: "oke sekarang yang v4 naikan ke production ya."
 - **Done:** U052. `PRODUCTION_VERSION` 4, `web_prod` fast-forwarded after CI on `web_app`, build badge added to Me.
 - **Open items affected:** O13 (v4 to prod) is settled by this. The others stand: D2 persistence, the real user test, O16 D7 Figma, and O18 S1–S7, which is still waiting on user feedback.
+
+### J046 — Production v4 against the retention report (J039)
+- **Asked:** compare v4 / production now with the retention analysis report; the owner assumed the suggestions were fixes based on that report.
+- **Answered:**
+  - **Where the work came from:**
+    - U050 is the report's R1–R10.
+    - U051 came from the earlier simplification plan (J038), not from the retention report. The report predicted simplification alone barely moves retention.
+    - J043's S1–S7 is a new audit. S1 finishes the report's R8; the rest are simplification.
+  - **Status of each recommendation in production:**
+    - Done: R1, R2, R5, R7.
+    - Partly done:
+      - R3: the first build follows the goal; later replies are keyword rules.
+      - R4: visitors only.
+      - R6: a calendar file, not push.
+      - R8: the Progress tab is still demo data (S1).
+      - R9: notifications are still invented.
+      - R10: a prompt after five chapters only.
+  - **Re-scored with the same J039 model**, each fix weighted by how much of it is built:
+    - Current production v4: finish 54%, D1 21%, D7 8.3%, D30 4.1%.
+    - The report's two reference points: before the work 45% / 12% / 3.8% / 1.5%; everything plus simplification 57% / 24% / 10.7% / 6.0%.
+    - Adding S1 alone: D7 8.8%.
+    - Same caveat as J039: the ordering is useful, the decimals are not; D2 persistence and the real user test are still needed to measure.
 
