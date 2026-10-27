@@ -89,6 +89,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U049 | `8a6f011` | 2026-10-25 09:42 | Offline support (service worker, offline banner, update prompt) + 404 for signed-out forced access to protected pages. | [patch](patches/U049-8a6f011.patch) |
 | U050 | `ae75233` | 2026-10-26 00:05 | v4 first-time fixes from the J039 retention simulation: words kept into onboarding, own thread + goal deck, limit after first build, chapter check-in + calendar reminder, next-chapter Home, Quick Start plays, Connect off. | [patch](patches/U050-ae75233.patch) |
 | U051 | `e826b7b` | 2026-10-26 01:40 | v4: J038 simplification D1–D7 — four tabs, Create/Discover/Progress/Me, Library, coins only in Me, Insights retired, simpler player sheet for others' sessions, one list of changes in the chat, Phase 0 fixes. | [patch](patches/U051-e826b7b.patch) |
+| U052 | `399d87a` | 2026-10-27 | Production moves to design v4 (`PRODUCTION_VERSION` 2 → 4) and `web_prod` is fast-forwarded to `web_app`; build badge on Me in v4. | [patch](patches/U052-399d87a.patch) |
 
 ## Entries
 
@@ -1030,4 +1031,30 @@ Production (`web_prod`) is never touched by these updates unless asked.
   - The Flutter client follows once agreed.
   - Me's avatar is the photo placeholder offline (Unsplash).
 - **Revert:** `git revert --no-commit e826b7b && git checkout HEAD -- docs/`
+
+### U052 — Production shows v4
+
+- **Commit:** `399d87a` · pushed 2026-10-27 UTC · `web_app` + `admin_cms`, then **`web_prod` fast-forwarded** to the same commit
+- **Patch:** [patches/U052-399d87a.patch](patches/U052-399d87a.patch)
+- **Request:** "oke sekarang yang v4 naikan ke production ya."
+- **Interpretation:**
+  - Production moves from design v2 to v4 (`PRODUCTION_VERSION` 2 → 4).
+  - `web_prod` is fast-forwarded to `web_app`, so everything staging had beyond `1fa7d83` reaches production too: U047–U051 and the J038/J039 documents.
+  - `package.json` stays 0.1.0, because nobody asked for a new release name. The commit is the identifier, as CLAUDE.md says.
+- **Changed:**
+  - `src/versions/versions.ts`: `PRODUCTION_VERSION = 4`, with comments updated.
+  - `CLAUDE.md`: "pinned to v4 since U052".
+  - `ProfilePage`: `BuildBadge` at the foot of Me in v4, below `lg`. The drawer that carried it on mobile is gone in v4, so production on a phone had no way to say which build it was.
+- **Verified** with a production-mode build (`VERCEL_ENV=production`, `VERCEL_GIT_COMMIT_REF=web_prod`) at 402 px:
+  - `data-ui-version="4"` even with a stale stored choice of `2`.
+  - No staging bar.
+  - The production password is the gate; the staging one is rejected.
+  - Tab bar shown, menu buttons hidden.
+  - Typed on Home → sign in → `/welcome` → "Got it" summary → Build my first session → player check-in → `.ics` downloaded → Home "Sleep better — Chapter 2".
+  - The Me badge reads "Production · 0.1.0 · <sha>".
+  - No page errors. `npm run check` is clean (76 tests).
+- **Revert:**
+  - Production only: set `PRODUCTION_VERSION = 2` on `web_app`, then fast-forward `web_prod` again.
+  - Or revert this commit: `git revert --no-commit 399d87a && git checkout HEAD -- docs/`.
+  - `web_prod` must never be reset backwards with a force push.
 

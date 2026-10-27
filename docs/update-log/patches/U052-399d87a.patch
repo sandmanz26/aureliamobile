@@ -1,0 +1,92 @@
+From 399d87a7ec41be34c646c60ca045b76fccac2174 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 27 Oct 2026 15:24:16 +0000
+Subject: [PATCH] Production shows design v4 (U052)
+
+PRODUCTION_VERSION 2 -> 4, on request. Also puts the build badge at the
+foot of Me in v4, since the drawer it sat in is gone below lg.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ CLAUDE.md                 | 2 +-
+ src/pages/ProfilePage.tsx | 8 ++++++++
+ src/versions/versions.ts  | 9 ++++++---
+ 3 files changed, 15 insertions(+), 4 deletions(-)
+
+diff --git a/CLAUDE.md b/CLAUDE.md
+index b6cbed9..be7cc93 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -500,7 +500,7 @@ in `StagingBar`, a 28px bar fixed to the top of every page on staging (it
+ offsets `h-dvh`/sticky layouts via `--staging-bar` in `versions.css`), and shows a "what changes" dialog before applying. A
+ version is a set of rules scoped under `:root[data-ui-version='N']` in
+ `src/styles/versions.css`, so v1 (no attribute) is always the app unchanged.
+-Production ignores the stored choice and is pinned to `PRODUCTION_VERSION` — **v2 since U020** (on request; production no longer shows v1). New experiments go
++Production ignores the stored choice and is pinned to `PRODUCTION_VERSION` — **v4 since U052** (on request, 2026-10-27; it was v2 from U020). New experiments go
+ in as a new version first; promoting one to the default is a separate,
+ explicit step. Versions are cumulative since U038: v2's CSS is scoped
+ `:root[data-ui-version]` (any version above 1) and code checks
+diff --git a/src/pages/ProfilePage.tsx b/src/pages/ProfilePage.tsx
+index ddef11c..3857c55 100644
+--- a/src/pages/ProfilePage.tsx
++++ b/src/pages/ProfilePage.tsx
+@@ -9,6 +9,7 @@ import { useFeatureFlags } from '../demo/FeatureFlags'
+ import { useHasUnreadNotifications } from '../lib/notificationsSeen'
+ import { useUiVersion } from '../versions/useUiVersion'
+ import { PhotoCircle } from '../components/ui/PhotoCircle'
++import { BuildBadge } from '../components/ui/BuildBadge'
+ import { CoinFlip } from '../versions/CoinFlip'
+ import { SessionGridCard } from '../components/ui/SessionGridCard'
+ import { findPerson } from '../lib/people'
+@@ -167,6 +168,7 @@ export function ProfilePage() {
+       </div>
+ 
+       {me ? (
++        <>
+         <nav aria-label="Your account" className="mt-32 flex flex-col overflow-hidden rounded-[20px] border border-border-subtle bg-surface-default">
+           <MeRow to="/sessions" icon={<PlaylistIcon size={24} />} label="Library" hint="Sessions you made and played" />
+           <MeRow to="/credits" icon={<CoinMark size={24} />} label="Credits & plan" value="1,323" />
+@@ -182,6 +184,12 @@ export function ProfilePage() {
+           <MeRow to="/settings" icon={<Settings size={22} strokeWidth={1.5} />} label="Settings" />
+           {isEnabled('help') && <MeRow to="/help" icon={<MessageQuestionIcon size={24} />} label="Help" />}
+         </nav>
++        {/* Which site and build — it sat at the foot of the drawer, which v4
++            has no longer below lg. Not a link, same as everywhere (BuildBadge). */}
++        <div className="mt-24 flex justify-center lg:hidden">
++          <BuildBadge />
++        </div>
++        </>
+       ) : (
+       <>
+       {/* Sessions is everything published; Recreated narrows that to the
+diff --git a/src/versions/versions.ts b/src/versions/versions.ts
+index a2b2ce6..3f5b625 100644
+--- a/src/versions/versions.ts
++++ b/src/versions/versions.ts
+@@ -8,7 +8,7 @@ import { readString, writeString } from '../lib/storage'
+  * `data-ui-version` on <html>. Version 1 is the app exactly as it ships — no
+  * attribute-scoped rule applies to it — so switching back is always a true
+  * "before". Production never reads the stored choice: it is pinned to
+- * PRODUCTION_VERSION (2 since U020, on request — production no longer uses v1).
++ * PRODUCTION_VERSION (2 since U020, 4 since U052 — both on request).
+  *
+  * To add a version: append an entry here, then scope its rules under
+  * `:root[data-ui-version='N']` (see `src/styles/versions.css`). Versions are
+@@ -159,8 +159,11 @@ export const UI_VERSIONS: UiVersion[] = [
+ 
+ const KEY = 'aurelia.ui.version'
+ 
+-/** The one design version production shows. No picker there. */
+-export const PRODUCTION_VERSION = 2
++/**
++ * The one design version production shows. No picker there.
++ * v2 since U020; v4 since U052 (on request, 2026-10-27).
++ */
++export const PRODUCTION_VERSION = 4
+ 
+ export const VERSIONS_ENABLED = BUILD.environment !== 'production'
+ 
+-- 
+2.43.0
+

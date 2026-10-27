@@ -97,6 +97,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J042 | 2026-10-26 | Code | Simplification D1–D7 applied to v4 without touching v2 (U051) | U051 |
 | J043 | 2026-10-26 | Analysis | Second simplification audit of v4 after U051 (no code) | docs only |
 | J044 | 2026-10-26 | Operational | Owner is sending the J043 proposal (S1–S7) to users before deciding | docs only |
+| J045 | 2026-10-27 | Release | Production moved to v4; `web_prod` fast-forwarded (U052) | U052 |
 
 ---
 
@@ -424,4 +425,12 @@ transcript and the update log. Everything from J018 on was written at the time.
 ### J044 — J043 proposal sent out for feedback
 - **Said:** "oke saya kirim dulu ke user untuk usulan simplifikasi kemarin".
 - **Status:** O18 (S1–S7) waits on that feedback. No code changed.
+
+### J045 — v4 to production (U052)
+- **Asked:**
+  - "sekarang production sama dengan staging version berapa?" Answered: production was `1fa7d83` on v2, 20 commits behind staging; `package.json` 0.1.0 on both.
+  - "berikan saya password untuk prod dan staging": given in chat only, not recorded here.
+  - Then: "oke sekarang yang v4 naikan ke production ya."
+- **Done:** U052. `PRODUCTION_VERSION` 4, `web_prod` fast-forwarded after CI on `web_app`, build badge added to Me.
+- **Open items affected:** O13 (v4 to prod) is settled by this. The others stand: D2 persistence, the real user test, O16 D7 Figma, and O18 S1–S7, which is still waiting on user feedback.
 

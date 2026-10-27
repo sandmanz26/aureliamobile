@@ -19,6 +19,21 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-27 — Production moves to v4 (U052)
+
+The public site now shows design v4, the same app staging shows in v4.
+
+What is now live:
+- Onboarding.
+- The first-session fixes and the chapter check-in with a calendar reminder.
+- The four-tab app.
+- Offline support and the 404 for forced addresses.
+- The engineering foundation.
+
+The build badge moved to the bottom of Me on phones. Production keeps its own password.
+
+Branches: `web_app`, `admin_cms`, `web_prod` (fast-forwarded from `1fa7d83`).
+
 ### 2026-10-26 — v4: simplified into four tabs (U051)
 
 Staging v4 now has Eugene's simplification (J038, D1–D7).
