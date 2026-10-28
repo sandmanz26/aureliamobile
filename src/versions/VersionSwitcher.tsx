@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, Sparkles, X } from 'lucide-react'
-import { UI_VERSIONS, VERSIONS_ENABLED, readVersion, storeVersion } from './versions'
+import { IS_PRODUCTION, PRODUCTION_VERSION, UI_VERSIONS, readVersion, storeVersion } from './versions'
 
 /**
- * Staging-only picker for the design versions in `versions.ts`.
+ * Picker for the design versions in `versions.ts`, on staging and (since U054)
+ * production.
  *
  * Choosing a version never applies straight away: a dialog first lists what
  * changes, so whoever is reviewing knows what to look for before the screen
- * moves under them. Renders nothing on production.
+ * moves under them.
  */
 export function VersionSwitcher({ dark = false }: { dark?: boolean }) {
   const [current, setCurrent] = useState(readVersion)
@@ -20,7 +21,6 @@ export function VersionSwitcher({ dark = false }: { dark?: boolean }) {
     return () => window.removeEventListener('aurelia:ui-version', sync)
   }, [])
 
-  if (!VERSIONS_ENABLED) return null
   const target = UI_VERSIONS.find((v) => v.id === pending)
 
   return (
@@ -97,7 +97,9 @@ export function VersionSwitcher({ dark = false }: { dark?: boolean }) {
               </div>
 
               <p className="text-style-caption mt-16 text-text-secondary">
-                Staging only, saved in this browser. Production is not affected.
+                {IS_PRODUCTION
+                  ? `Saved in this browser only. Everyone else still sees v${PRODUCTION_VERSION}.`
+                  : 'Staging only, saved in this browser. Production is not affected.'}
               </p>
 
               <div className="mt-20 flex justify-end gap-8">

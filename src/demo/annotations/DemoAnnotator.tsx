@@ -10,7 +10,7 @@ import { z } from 'zod'
 import { fetchAnnotations, saveAnnotations, validAnnotations } from '../../api/annotations'
 import { readJson, writeJson } from '../../lib/storage'
 import { useUiVersion } from '../../versions/useUiVersion'
-import { VERSIONS_ENABLED } from '../../versions/versions'
+import { IS_PRODUCTION } from '../../versions/versions'
 import {
   annotationsFileName,
   newAnnotationId,
@@ -157,9 +157,10 @@ export function DemoAnnotator() {
 function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () => void }) {
   // Pins belong to the design version they were dropped in (v1/v2 switcher).
   const ui = useUiVersion()
-  // Production has one design version and no switcher, so every pin there is
-  // shown — including ones saved as v1 before production moved to v2 (U020).
-  const sameUi = (a: Annotation) => !VERSIONS_ENABLED || (a.ui ?? 1) === ui
+  // Production shows every pin whatever the version — its pins were saved as
+  // v1 before production moved to v2 (U020), and it had no switcher until
+  // U054, so their version tag says nothing there.
+  const sameUi = (a: Annotation) => IS_PRODUCTION || (a.ui ?? 1) === ui
   const navigate = useNavigate()
   const { w: vw, h: vh } = useViewport()
 
@@ -275,7 +276,7 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () 
   const onThisPage = useMemo(
     () =>
       sortAnnotations(
-        annotations.filter((a) => a.page === pathname && (!VERSIONS_ENABLED || (a.ui ?? 1) === ui)),
+        annotations.filter((a) => a.page === pathname && (IS_PRODUCTION || (a.ui ?? 1) === ui)),
       ),
     [annotations, pathname, ui],
   )

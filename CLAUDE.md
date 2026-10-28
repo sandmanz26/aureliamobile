@@ -493,14 +493,14 @@ that changed code also gets its U-entry here and the J-entry links to it.
 Anything waiting on a decision goes into the journal's **Open items** table
 until decided. No secrets (pairing codes, passwords) in it.
 
-## Design versions (staging only)
+## Design versions (staging, and production since U054)
 
 `src/versions/versions.ts` lists switchable design versions; the picker sits
 in `StagingBar`, a 28px bar fixed to the top of every page on staging (it
 offsets `h-dvh`/sticky layouts via `--staging-bar` in `versions.css`), and shows a "what changes" dialog before applying. A
 version is a set of rules scoped under `:root[data-ui-version='N']` in
 `src/styles/versions.css`, so v1 (no attribute) is always the app unchanged.
-Production ignores the stored choice and is pinned to `PRODUCTION_VERSION` — **v4 since U052** (on request, 2026-10-27; it was v2 from U020). New experiments go
+Production opens on `PRODUCTION_VERSION` — **v4 since U052** (on request, 2026-10-27; it was v2 from U020). **Since U054 (on request, 2026-10-28) production has the bar and picker too**, with a grey chip: a browser that picks another version keeps it, everyone else gets `PRODUCTION_VERSION` (`DEFAULT_VERSION` in `versions.ts`; staging's default is still v1). The product owner called this temporary, to be cleaned up later. Pins on production still ignore the version (`IS_PRODUCTION` in `DemoAnnotator`). New experiments go
 in as a new version first; promoting one to the default is a separate,
 explicit step. Versions are cumulative since U038: v2's CSS is scoped
 `:root[data-ui-version]` (any version above 1) and code checks
