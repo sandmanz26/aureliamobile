@@ -1,0 +1,195 @@
+From e661073e2383e2e4db5682b8656dca66e25c25bc Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 28 Oct 2026 05:42:34 +0000
+Subject: [PATCH] Production gets the design-version picker too
+
+The staging bar and picker now render on production as well, with a
+grey Production chip. A browser that never picked a version still gets
+PRODUCTION_VERSION (v4); staging's default stays v1. Pins on
+production still ignore the version.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ CLAUDE.md                              |  4 ++--
+ src/demo/annotations/DemoAnnotator.tsx | 11 ++++++-----
+ src/versions/StagingBar.tsx            | 12 +++++-------
+ src/versions/VersionSwitcher.tsx       | 12 +++++++-----
+ src/versions/versions.ts               | 13 ++++++++-----
+ 5 files changed, 28 insertions(+), 24 deletions(-)
+
+diff --git a/CLAUDE.md b/CLAUDE.md
+index d62aeaf..dc2fa92 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -493,14 +493,14 @@ that changed code also gets its U-entry here and the J-entry links to it.
+ Anything waiting on a decision goes into the journal's **Open items** table
+ until decided. No secrets (pairing codes, passwords) in it.
+ 
+-## Design versions (staging only)
++## Design versions (staging, and production since U054)
+ 
+ `src/versions/versions.ts` lists switchable design versions; the picker sits
+ in `StagingBar`, a 28px bar fixed to the top of every page on staging (it
+ offsets `h-dvh`/sticky layouts via `--staging-bar` in `versions.css`), and shows a "what changes" dialog before applying. A
+ version is a set of rules scoped under `:root[data-ui-version='N']` in
+ `src/styles/versions.css`, so v1 (no attribute) is always the app unchanged.
+-Production ignores the stored choice and is pinned to `PRODUCTION_VERSION` — **v4 since U052** (on request, 2026-10-27; it was v2 from U020). New experiments go
++Production opens on `PRODUCTION_VERSION` — **v4 since U052** (on request, 2026-10-27; it was v2 from U020). **Since U054 (on request, 2026-10-28) production has the bar and picker too**, with a grey chip: a browser that picks another version keeps it, everyone else gets `PRODUCTION_VERSION` (`DEFAULT_VERSION` in `versions.ts`; staging's default is still v1). The product owner called this temporary, to be cleaned up later. Pins on production still ignore the version (`IS_PRODUCTION` in `DemoAnnotator`). New experiments go
+ in as a new version first; promoting one to the default is a separate,
+ explicit step. Versions are cumulative since U038: v2's CSS is scoped
+ `:root[data-ui-version]` (any version above 1) and code checks
+diff --git a/src/demo/annotations/DemoAnnotator.tsx b/src/demo/annotations/DemoAnnotator.tsx
+index 61e614b..f527bb3 100644
+--- a/src/demo/annotations/DemoAnnotator.tsx
++++ b/src/demo/annotations/DemoAnnotator.tsx
+@@ -10,7 +10,7 @@ import { z } from 'zod'
+ import { fetchAnnotations, saveAnnotations, validAnnotations } from '../../api/annotations'
+ import { readJson, writeJson } from '../../lib/storage'
+ import { useUiVersion } from '../../versions/useUiVersion'
+-import { VERSIONS_ENABLED } from '../../versions/versions'
++import { IS_PRODUCTION } from '../../versions/versions'
+ import {
+   annotationsFileName,
+   newAnnotationId,
+@@ -157,9 +157,10 @@ export function DemoAnnotator() {
+ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: () => void }) {
+   // Pins belong to the design version they were dropped in (v1/v2 switcher).
+   const ui = useUiVersion()
+-  // Production has one design version and no switcher, so every pin there is
+-  // shown — including ones saved as v1 before production moved to v2 (U020).
+-  const sameUi = (a: Annotation) => !VERSIONS_ENABLED || (a.ui ?? 1) === ui
++  // Production shows every pin whatever the version — its pins were saved as
++  // v1 before production moved to v2 (U020), and it had no switcher until
++  // U054, so their version tag says nothing there.
++  const sameUi = (a: Annotation) => IS_PRODUCTION || (a.ui ?? 1) === ui
+   const navigate = useNavigate()
+   const { w: vw, h: vh } = useViewport()
+ 
+@@ -275,7 +276,7 @@ function AnnotationOverlay({ pathname, onHide }: { pathname: string; onHide: ()
+   const onThisPage = useMemo(
+     () =>
+       sortAnnotations(
+-        annotations.filter((a) => a.page === pathname && (!VERSIONS_ENABLED || (a.ui ?? 1) === ui)),
++        annotations.filter((a) => a.page === pathname && (IS_PRODUCTION || (a.ui ?? 1) === ui)),
+       ),
+     [annotations, pathname, ui],
+   )
+diff --git a/src/versions/StagingBar.tsx b/src/versions/StagingBar.tsx
+index a5b2cba..89ac9af 100644
+--- a/src/versions/StagingBar.tsx
++++ b/src/versions/StagingBar.tsx
+@@ -1,11 +1,12 @@
+ import { useEffect } from 'react'
+ import { BUILD, BUILD_VERSION } from '../lib/build'
+-import { VERSIONS_ENABLED } from './versions'
++import { IS_PRODUCTION } from './versions'
+ import { VersionSwitcher } from './VersionSwitcher'
+ 
+ /**
+- * A thin bar fixed to the very top of every page on staging, carrying the
+- * design-version picker. Renders nothing on production.
++ * A thin bar fixed to the very top of every page, carrying the design-version
++ * picker. Staging only until U054; production has it too now (on request),
++ * with a quiet grey chip instead of the brand one, as BuildBadge does.
+  *
+  * It takes real space rather than covering the app: `data-staging-bar` on
+  * <html> turns on `--staging-bar` in versions.css, which pushes the body down
+@@ -13,17 +14,14 @@ import { VersionSwitcher } from './VersionSwitcher'
+  */
+ export function StagingBar() {
+   useEffect(() => {
+-    if (!VERSIONS_ENABLED) return
+     document.documentElement.setAttribute('data-staging-bar', '')
+     return () => document.documentElement.removeAttribute('data-staging-bar')
+   }, [])
+ 
+-  if (!VERSIONS_ENABLED) return null
+-
+   return (
+     <div className="fixed inset-x-0 top-0 z-[90] flex h-28 items-center justify-between gap-12 bg-[#1B1006] px-12 text-white">
+       <p className="text-style-caption flex min-w-0 items-center gap-8">
+-        <span className="rounded-full bg-brand-default px-6 py-1 leading-none text-text-strong">{BUILD.label}</span>
++        <span className={`rounded-full px-6 py-1 leading-none ${IS_PRODUCTION ? 'bg-white/15 text-white' : 'bg-brand-default text-text-strong'}`}>{BUILD.label}</span>
+         <span className="truncate font-mono text-white/55">{BUILD_VERSION}</span>
+       </p>
+       <div className="flex shrink-0 items-center gap-6">
+diff --git a/src/versions/VersionSwitcher.tsx b/src/versions/VersionSwitcher.tsx
+index b1ddd50..f9b6e7b 100644
+--- a/src/versions/VersionSwitcher.tsx
++++ b/src/versions/VersionSwitcher.tsx
+@@ -1,14 +1,15 @@
+ import { useEffect, useState } from 'react'
+ import { createPortal } from 'react-dom'
+ import { ChevronDown, Sparkles, X } from 'lucide-react'
+-import { UI_VERSIONS, VERSIONS_ENABLED, readVersion, storeVersion } from './versions'
++import { IS_PRODUCTION, PRODUCTION_VERSION, UI_VERSIONS, readVersion, storeVersion } from './versions'
+ 
+ /**
+- * Staging-only picker for the design versions in `versions.ts`.
++ * Picker for the design versions in `versions.ts`, on staging and (since U054)
++ * production.
+  *
+  * Choosing a version never applies straight away: a dialog first lists what
+  * changes, so whoever is reviewing knows what to look for before the screen
+- * moves under them. Renders nothing on production.
++ * moves under them.
+  */
+ export function VersionSwitcher({ dark = false }: { dark?: boolean }) {
+   const [current, setCurrent] = useState(readVersion)
+@@ -20,7 +21,6 @@ export function VersionSwitcher({ dark = false }: { dark?: boolean }) {
+     return () => window.removeEventListener('aurelia:ui-version', sync)
+   }, [])
+ 
+-  if (!VERSIONS_ENABLED) return null
+   const target = UI_VERSIONS.find((v) => v.id === pending)
+ 
+   return (
+@@ -97,7 +97,9 @@ export function VersionSwitcher({ dark = false }: { dark?: boolean }) {
+               </div>
+ 
+               <p className="text-style-caption mt-16 text-text-secondary">
+-                Staging only, saved in this browser. Production is not affected.
++                {IS_PRODUCTION
++                  ? `Saved in this browser only. Everyone else still sees v${PRODUCTION_VERSION}.`
++                  : 'Staging only, saved in this browser. Production is not affected.'}
+               </p>
+ 
+               <div className="mt-20 flex justify-end gap-8">
+diff --git a/src/versions/versions.ts b/src/versions/versions.ts
+index 048edfa..14d2909 100644
+--- a/src/versions/versions.ts
++++ b/src/versions/versions.ts
+@@ -7,8 +7,9 @@ import { readString, writeString } from '../lib/storage'
+  * Each version is a set of opt-in changes layered on the same code, keyed by
+  * `data-ui-version` on <html>. Version 1 is the app exactly as it ships — no
+  * attribute-scoped rule applies to it — so switching back is always a true
+- * "before". Production never reads the stored choice: it is pinned to
+- * PRODUCTION_VERSION (2 since U020, 4 since U052 — both on request).
++ * "before". Production opens on PRODUCTION_VERSION (2 since U020, 4 since
++ * U052 — both on request); since U054 it has the picker too, so a browser
++ * that chose another version keeps it, and everyone else gets the default.
+  *
+  * To add a version: append an entry here, then scope its rules under
+  * `:root[data-ui-version='N']` (see `src/styles/versions.css`). Versions are
+@@ -207,12 +208,14 @@ const KEY = 'aurelia.ui.version'
+  */
+ export const PRODUCTION_VERSION = 4
+ 
+-export const VERSIONS_ENABLED = BUILD.environment !== 'production'
++export const IS_PRODUCTION = BUILD.environment === 'production'
++
++/** The version a browser that never picked one sees: v1 on staging, PRODUCTION_VERSION on production. */
++export const DEFAULT_VERSION = IS_PRODUCTION ? PRODUCTION_VERSION : 1
+ 
+ export function readVersion(): number {
+-  if (!VERSIONS_ENABLED) return PRODUCTION_VERSION
+   const n = Number(readString(KEY))
+-  return UI_VERSIONS.some((v) => v.id === n) ? n : 1
++  return UI_VERSIONS.some((v) => v.id === n) ? n : DEFAULT_VERSION
+ }
+ 
+ export function applyVersion(id: number) {
+-- 
+2.43.0
+

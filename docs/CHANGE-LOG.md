@@ -19,6 +19,17 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-28 — Version picker on production (U054)
+
+Production now has the design-version bar at the top, like staging.
+
+- Visitors still see v4 unless they pick another version.
+- v1–v5 are selectable, including v5 from U053.
+- The choice is kept in that browser only.
+- Temporary, to be cleaned up later.
+
+Branches: `web_app`, `admin_cms`, `web_prod` (fast-forwarded from `c58a67a`).
+
 ### 2026-10-27 — Staging v5 from three user interviews (U053)
 
 Staging has a new design version, v5, built on v4 from the first three real user interviews (J049).

@@ -91,8 +91,37 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U051 | `e826b7b` | 2026-10-26 01:40 | v4: J038 simplification D1–D7 — four tabs, Create/Discover/Progress/Me, Library, coins only in Me, Insights retired, simpler player sheet for others' sessions, one list of changes in the chat, Phase 0 fixes. | [patch](patches/U051-e826b7b.patch) |
 | U052 | `399d87a` | 2026-10-27 | Production moves to design v4 (`PRODUCTION_VERSION` 2 → 4) and `web_prod` is fast-forwarded to `web_app`; build badge on Me in v4. | [patch](patches/U052-399d87a.patch) |
 | U053 | `b030823` | 2026-10-27 | Design v5 (staging only) = v4 reworked after three real user interviews: progress in words, Why on suggestions, next-chapter plan, wearable in onboarding, journal, community without ranks, plain landing. | [patch](patches/U053-b030823.patch) |
+| U054 | `e661073` | 2026-10-28 | Production gets the design-version bar and picker (default still v4); `web_prod` fast-forwarded, bringing v5 (U053) to production as an option. | [patch](patches/U054-e661073.patch) |
 
 ## Entries
+
+### U054 — Version picker on production
+
+- **Commit:** `e661073` · pushed 2026-10-28 UTC · `web_app` + `admin_cms`, then **`web_prod` fast-forwarded** from `c58a67a`
+- **Patch:** [patches/U054-e661073.patch](patches/U054-e661073.patch)
+- **Request:** "saya mau di prod juga ada version ya. jadi memang agak sedikit rumit tapi nanti kita clean up deh"
+- **Interpretation:**
+  - Production gets the same top bar and picker as staging.
+  - Visitors who never pick keep seeing v4, so the public default does not change.
+  - It is a request for production, so `web_prod` is fast-forwarded. That also brings U053 (v5, the proposal report) to production, as an option in the picker only.
+  - The owner called it temporary ("nanti kita clean up").
+- **Changed:**
+  - `versions.ts`: `VERSIONS_ENABLED` is replaced by `IS_PRODUCTION` and `DEFAULT_VERSION` (v4 on production, v1 elsewhere). `readVersion` honours a stored choice everywhere.
+  - `StagingBar`: renders on production with a grey chip.
+  - `VersionSwitcher`: the dialog on production says "Saved in this browser only. Everyone else still sees v4."
+  - `DemoAnnotator`: production pins still ignore the version, as before.
+  - `CLAUDE.md`: the Design versions section.
+- **Verified:**
+  - `npm run check` passes (81 tests).
+  - Production-mode build (`VERCEL_ENV=production`) at 402 px:
+    - default `data-ui-version="4"`, with the bar and tabs;
+    - picking v5 shows the dialog, then the v5 Home;
+    - the choice survives a reload;
+    - no page errors.
+  - Staging's default is unchanged (v1).
+- **Revert:**
+  - `git revert --no-commit e661073 && git checkout HEAD -- docs/` on `web_app`, then fast-forward `web_prod` again.
+  - Never reset `web_prod` backwards.
 
 ### U053 — Design v5 on staging, from three user interviews
 
