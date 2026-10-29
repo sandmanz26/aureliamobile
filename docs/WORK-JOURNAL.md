@@ -106,6 +106,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J049 | 2026-10-27 | Code + report | Three real user interviews vs the simulation; staging v5 built from v4; v5 proposal report (HTML + PDF) | U053 |
 | J050 | 2026-10-28 | Code + Ops | Design-version picker on production too (default stays v4); `web_prod` fast-forwarded | U054 |
 | J051 | 2026-10-29 | Question + Code + Ops | Production status (no code); Higgsfield connector; production limited to two versions with its own numbers | U055 |
+| J052 | 2026-10-29 | Question | Is the interview version v3 + interviews or v4 + interviews? | — |
 
 ---
 
@@ -531,3 +532,10 @@ transcript and the update log. Everything from J018 on was written at the time.
   - `web_prod` was fast-forwarded.
 - **Open items:**
   - O20 now also covers the mapping: which staging versions production should offer next.
+
+### J052 — Which version the interview changes sit on
+- **Asked:** "hasil interview ini apakah v3 + interview user atau v4 + interview user ?"
+- **Answered:** v4 + the interviews.
+  - Staging v5 (U053) includes everything in v4: onboarding, the first-session fixes, the chapter check-in and the four tabs. On top of that come the interview changes.
+  - Production v2 (U055) is the same thing as staging v5.
+  - The three interviewees most likely tried an older build (v2): they mention the sample "7% REM sleep" conversation, which v4 removed. Their feedback was applied to v4 because v4 is what was live.
