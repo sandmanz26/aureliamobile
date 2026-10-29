@@ -47,7 +47,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O18 | **Second simplification pass (J043)**: S1 Progress leads with the person's own journey, so mock analyses are not shown as theirs; S2 card actions 3 → 2 (Recreate only on details/player); S3 Discover shelves 3 → 1 with chips, hero dropped; S4 Create without category chips, Recent = own conversations only; S5 Credits & plan absorbs Invite, Upgrade and Settings' Credit Redemption; S6 one Recreate on Session details, versions only on your own; S7 Edit session keeps rename + script, changes go through the chat. Approve which, all v4 | J043 | Product owner + Eugene |
 | O17 | **Retention simulation follow-ups** (J039 §8): D1/D3/D4/D5 were settled by "update saja di v4" (U050: fixes in v4 rather than v5, `.ics` reminder, Quick Start plays before sign-in, limit after the first build). Still open: **D2**, which is persisting sign-in for a real retention test (the journey already persists per browser); the real 8–12 person test; Sessions/Notifications empty states; R10 beyond the five-chapter prompt; storybook stories for `ChapterCheckIn`/`NextChapterCard` | J039, J040, U050 | Product owner + Eugene |
 | O19 | **v5 (J049)**: (1) promote v5 to production, or keep it on staging for a follow-up with the same three users; (2) backend for real wearable data (Apple Health, Whoop, Oura) — v5 shows example readings; (3) voice choice with previews (needs voices); (4) friends / local groups; (5) a reward for sharing; (6) the two-week report as a push/email; (7) the journal and check-ins are per browser until D2 (persisted sign-in); (8) v4's sheet counts goal-deck items as experiments — fixed in v5 only, so v4 pixels stay as shipped; (9) storybook stories for `FeelingProgress`, `ChapterCheckIn`, `NextChapterCard`, `TabBar`; Flutter to follow | J049, U053 | Product owner + Eugene; backend for 2, 4, 6 |
-| O20 | **Production version picker is temporary** (U054): the bar takes 28px at the top of production for every visitor, and pins on production ignore the version. Clean-up options: hide it behind a flag or a URL parameter, or remove it once a default is chosen | J050, U054 | Product owner: when to clean up and how |
+| O20 | **Production version picker is temporary** (U054): the bar takes 28px at the top of production for every visitor, and pins on production ignore the version. Clean-up options: hide it behind a flag or a URL parameter, or remove it once a default is chosen Since U055 production lists two versions of its own (v1 = staging v4, v2 = staging v5); which staging versions it offers next is a one-line change in `PRODUCTION_VERSIONS` | J050, J051, U054, U055 | Product owner: when to clean up and how |
 
 ---
 
@@ -105,6 +105,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J048 | 2026-10-27 | Report | Owner report labelled as AI analysis by Claude (self-analysis + deep research) | docs only |
 | J049 | 2026-10-27 | Code + report | Three real user interviews vs the simulation; staging v5 built from v4; v5 proposal report (HTML + PDF) | U053 |
 | J050 | 2026-10-28 | Code + Ops | Design-version picker on production too (default stays v4); `web_prod` fast-forwarded | U054 |
+| J051 | 2026-10-29 | Question + Code + Ops | Production status (no code); Higgsfield connector; production limited to two versions with its own numbers | U055 |
 
 ---
 
@@ -514,3 +515,19 @@ transcript and the update log. Everything from J018 on was written at the time.
 - **Open items:**
   - O20 added: cleanup of the production picker.
   - O19 (1) is partly settled: v5 is on production as an option, but not as the default.
+
+### J051 — Production status, Higgsfield, and two versions on production (U055)
+- **Asked (Higgsfield):** whether Claude can connect to Higgsfield.
+  - There was no connector in the registry and the network blocks `*.higgsfield.ai`.
+  - The owner was pointed to the official custom connector (`https://mcp.higgsfield.ai/mcp`, needs a paid plan).
+  - It is now connected. Its tools only browse workspaces, models, credits and past generations; it cannot generate media.
+- **Asked (status):** "status prod sekarang bagaimana?"
+  - Answered: `web_prod` = `web_app` = `admin_cms` at `3c85118`.
+  - Vercel `aureliaprod` deployed it; CI is green.
+  - Production defaults to v4, with the picker (U054) and v5 available as an option.
+- **Asked (two versions):** production should list only two versions with its own numbering ("versi 1 prod = versi 3 staging").
+  - Done in U055: prod v1 = staging v4 (the default), prod v2 = staging v5.
+  - The mapping was assumed and is one line to change.
+  - `web_prod` was fast-forwarded.
+- **Open items:**
+  - O20 now also covers the mapping: which staging versions production should offer next.

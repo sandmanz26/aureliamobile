@@ -19,6 +19,16 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-29 — Production lists two versions of its own (U055)
+
+The production picker now offers two versions, numbered for production:
+- v1 is staging v4, and is still the default.
+- v2 is staging v5.
+
+Staging still lists v1–v5.
+
+Branches: `web_app`, `admin_cms`, `web_prod` (fast-forwarded from `3c85118`).
+
 ### 2026-10-28 — Version picker on production (U054)
 
 Production now has the design-version bar at the top, like staging.

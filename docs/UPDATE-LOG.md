@@ -92,8 +92,40 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U052 | `399d87a` | 2026-10-27 | Production moves to design v4 (`PRODUCTION_VERSION` 2 → 4) and `web_prod` is fast-forwarded to `web_app`; build badge on Me in v4. | [patch](patches/U052-399d87a.patch) |
 | U053 | `b030823` | 2026-10-27 | Design v5 (staging only) = v4 reworked after three real user interviews: progress in words, Why on suggestions, next-chapter plan, wearable in onboarding, journal, community without ranks, plain landing. | [patch](patches/U053-b030823.patch) |
 | U054 | `e661073` | 2026-10-28 | Production gets the design-version bar and picker (default still v4); `web_prod` fast-forwarded, bringing v5 (U053) to production as an option. | [patch](patches/U054-e661073.patch) |
+| U055 | `e4c8e8e` | 2026-10-29 | Production offers two versions with its own numbers: prod v1 = staging v4 (default), prod v2 = staging v5; `web_prod` fast-forwarded. | [patch](patches/U055-e4c8e8e.patch) |
 
 ## Entries
+
+### U055 — Production has its own two versions
+
+- **Commit:** `e4c8e8e` · pushed 2026-10-29 UTC · `web_app` + `admin_cms`, then **`web_prod` fast-forwarded**
+- **Patch:** [patches/U055-e4c8e8e.patch](patches/U055-e4c8e8e.patch)
+- **Request:** "aurelia prod saya mau cukup 2 versi saja / jadi nanti bisa jadi ada case versi 1 aurelia prod =. versi 3 aurelia staging gt kira kira nya"
+- **Interpretation:**
+  - Production lists two versions, numbered from 1, each mapped to a staging version. Staging keeps v1–v5.
+  - Assumed mapping, since none was named: prod v1 = staging v4 (what is live now, still the default) and prod v2 = staging v5.
+  - Changing the mapping is one edit to `PRODUCTION_VERSIONS`.
+- **Changed:**
+  - `versions.ts`:
+    - added `PRODUCTION_VERSIONS` (own names and summaries; v2 reuses v5's change groups);
+    - added `OFFERED_VERSIONS`, the list this site shows;
+    - `readVersion` accepts only an offered version. A browser that picked v1–v3 on production under U054 falls back to the default.
+  - `VersionSwitcher`:
+    - the options are labelled with this site's numbers, while their values stay the staging ids;
+    - the dialog says "Switch from v1 to v2", "Same as staging v5" and "Everyone else still sees v1".
+  - New `versions.test.ts`: every production version maps to a real staging version, and the default is offered.
+  - `CLAUDE.md`: the mapping, and the warning that the data carries staging ids.
+- **Verified:**
+  - `npm run check` passes (83 tests).
+  - Production-mode build at 402 px:
+    - options `v1` (=4) and `v2` (=5);
+    - a stale stored `2` falls back to v4;
+    - switching to v2 gives the v5 Home and survives a reload;
+    - no page errors.
+  - Staging-mode build: v1–v5, default v1.
+- **Revert:**
+  - `git revert --no-commit e4c8e8e && git checkout HEAD -- docs/` on `web_app`, then fast-forward `web_prod`.
+  - Never reset `web_prod` backwards.
 
 ### U054 — Version picker on production
 
