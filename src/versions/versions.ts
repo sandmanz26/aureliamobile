@@ -8,8 +8,8 @@ import { readString, writeString } from '../lib/storage'
  * `data-ui-version` on <html>. Version 1 is the app exactly as it ships — no
  * attribute-scoped rule applies to it — so switching back is always a true
  * "before". Production opens on PRODUCTION_VERSION (2 since U020, 4 since
- * U052 — both on request); since U054 it has the picker too, so a browser
- * that chose another version keeps it, and everyone else gets the default.
+ * U052 — both on request); since U054 it has the picker too, and since U055
+ * it offers only PRODUCTION_VERSIONS, numbered for production.
  *
  * To add a version: append an entry here, then scope its rules under
  * `:root[data-ui-version='N']` (see `src/styles/versions.css`). Versions are
@@ -210,12 +210,43 @@ export const PRODUCTION_VERSION = 4
 
 export const IS_PRODUCTION = BUILD.environment === 'production'
 
+/**
+ * Production's own short list (U055, on request): two versions, numbered for
+ * production and mapped to the staging version each one shows. `ui` is the
+ * staging id — what `data-ui-version`, `useUiVersion()` and the stored choice
+ * hold — so production v1 is staging v4 and production v2 is staging v5.
+ * Change the mapping here; nothing else knows production's numbers.
+ */
+export const PRODUCTION_VERSIONS: (UiVersion & { ui: number })[] = [
+  {
+    id: 1,
+    ui: 4,
+    name: 'Version 1',
+    summary: 'Aurelia as it is today: onboarding, a first session built from your own words, a check-in after each chapter, and four tabs.',
+    changes: [{ group: 'Good to know', items: ['This is what everyone sees unless they switch.', 'Same as staging v4.'] }],
+  },
+  {
+    id: 2,
+    ui: 5,
+    name: 'Version 2',
+    summary:
+      'Everything in v1, reworked after the first three user interviews: progress in words instead of scores, the reason behind every suggestion, an optional journal, your wearable asked for up front, and a community about stories rather than rankings.',
+    changes: [
+      ...(UI_VERSIONS.find((v) => v.id === 5)?.changes ?? []).filter((c) => c.group !== 'Good to know'),
+      { group: 'Good to know', items: ['Includes everything in Version 1.', 'Same as staging v5.'] },
+    ],
+  },
+]
+
+/** The versions this site offers, keyed by the staging id they apply. */
+export const OFFERED_VERSIONS = IS_PRODUCTION ? PRODUCTION_VERSIONS : UI_VERSIONS.map((v) => ({ ...v, ui: v.id }))
+
 /** The version a browser that never picked one sees: v1 on staging, PRODUCTION_VERSION on production. */
 export const DEFAULT_VERSION = IS_PRODUCTION ? PRODUCTION_VERSION : 1
 
 export function readVersion(): number {
   const n = Number(readString(KEY))
-  return UI_VERSIONS.some((v) => v.id === n) ? n : DEFAULT_VERSION
+  return OFFERED_VERSIONS.some((v) => v.ui === n) ? n : DEFAULT_VERSION
 }
 
 export function applyVersion(id: number) {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, Sparkles, X } from 'lucide-react'
-import { IS_PRODUCTION, PRODUCTION_VERSION, UI_VERSIONS, readVersion, storeVersion } from './versions'
+import { IS_PRODUCTION, OFFERED_VERSIONS, readVersion, storeVersion } from './versions'
 
 /**
  * Picker for the design versions in `versions.ts`, on staging and (since U054)
@@ -21,7 +21,10 @@ export function VersionSwitcher({ dark = false }: { dark?: boolean }) {
     return () => window.removeEventListener('aurelia:ui-version', sync)
   }, [])
 
-  const target = UI_VERSIONS.find((v) => v.id === pending)
+  // Values are staging ids; labels are this site's own numbers (production
+  // has its own short list since U055).
+  const target = OFFERED_VERSIONS.find((v) => v.ui === pending)
+  const from = OFFERED_VERSIONS.find((v) => v.ui === current)
 
   return (
     <>
@@ -36,8 +39,8 @@ export function VersionSwitcher({ dark = false }: { dark?: boolean }) {
           onChange={(e) => setPending(Number(e.target.value))}
           className="cursor-pointer appearance-none bg-transparent pr-12 outline-none"
         >
-          {UI_VERSIONS.map((v) => (
-            <option key={v.id} value={v.id} className="text-black">
+          {OFFERED_VERSIONS.map((v) => (
+            <option key={v.ui} value={v.ui} className="text-black">
               v{v.id}
             </option>
           ))}
@@ -61,7 +64,7 @@ export function VersionSwitcher({ dark = false }: { dark?: boolean }) {
               <div className="flex items-start justify-between gap-16">
                 <div>
                   <p className="text-style-caption flex items-center gap-6 text-text-brand">
-                    <Sparkles size={12} /> Switch from v{current} to v{target.id}
+                    <Sparkles size={12} /> Switch from v{from?.id ?? current} to v{target.id}
                   </p>
                   <h2 id="version-title" className="text-style-title-large mt-6 text-text-primary">
                     What changes in {target.name}
@@ -98,7 +101,7 @@ export function VersionSwitcher({ dark = false }: { dark?: boolean }) {
 
               <p className="text-style-caption mt-16 text-text-secondary">
                 {IS_PRODUCTION
-                  ? `Saved in this browser only. Everyone else still sees v${PRODUCTION_VERSION}.`
+                  ? 'Saved in this browser only. Everyone else still sees v1.'
                   : 'Staging only, saved in this browser. Production is not affected.'}
               </p>
 
@@ -113,8 +116,8 @@ export function VersionSwitcher({ dark = false }: { dark?: boolean }) {
                 <button
                   type="button"
                   onClick={() => {
-                    storeVersion(target.id)
-                    setCurrent(target.id)
+                    storeVersion(target.ui)
+                    setCurrent(target.ui)
                     setPending(null)
                   }}
                   className="text-style-body-small u-press h-40 rounded-full bg-interactive-primary px-16 text-text-inverse"
