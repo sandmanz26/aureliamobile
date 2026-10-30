@@ -112,6 +112,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J054 | 2026-10-30 | Code | Chat box taller, Explore header follows the scroll, admin well-being outcomes | U056 |
 | J055 | 2026-10-30 | Question | v5 changes as an English bullet list | — |
 | J056 | 2026-10-30 | Question | Shorter version of the v5 update | — |
+| J057 | 2026-10-30 | Question | v5 update formatted for WhatsApp | — |
 
 ---
 
@@ -584,3 +585,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 ### J056 — v5 update, simpler
 - **Asked:** "buat lebih sederhana untuk update nya"
 - **Answered:** a shorter English bullet list of the v5 changes in chat. No code.
+
+### J057 — v5 update for WhatsApp
+- **Asked:** "buat agar saya bisa copas di WA"
+- **Answered:** the J056 text reformatted for WhatsApp (single-asterisk bold, plain bullets), in a copyable block. No code.
