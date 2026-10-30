@@ -107,6 +107,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J050 | 2026-10-28 | Code + Ops | Design-version picker on production too (default stays v4); `web_prod` fast-forwarded | U054 |
 | J051 | 2026-10-29 | Question + Code + Ops | Production status (no code); Higgsfield connector; production limited to two versions with its own numbers | U055 |
 | J052 | 2026-10-29 | Question | Is the interview version v3 + interviews or v4 + interviews? | — |
+| J053 | 2026-10-30 | Question | What is the difference between staging v4 and v5? | — |
 
 ---
 
@@ -539,3 +540,20 @@ transcript and the update log. Everything from J018 on was written at the time.
   - Staging v5 (U053) includes everything in v4: onboarding, the first-session fixes, the chapter check-in and the four tabs. On top of that come the interview changes.
   - Production v2 (U055) is the same thing as staging v5.
   - The three interviewees most likely tried an older build (v2): they mention the sample "7% REM sleep" conversation, which v4 removed. Their feedback was applied to v4 because v4 is what was live.
+
+### J053 — Staging v4 vs v5
+- **Asked:** "beda v4 vs v5 staging apa ?"
+- **Answered:** v5 = v4 + the interview changes (U053). The differences:
+  - **Progress:** sample percentage cards are replaced by the person's own check-ins in words, a two-week report date, and the detail on demand.
+  - **Player:** no analytics. The analysis pages redirect to Progress.
+  - **Change list:** a "Why?" on each suggestion.
+  - **Check-in:** a wearable reading (example data), a journal line, and what the next chapter changes.
+  - **Onboarding:** asks which wearable the person uses; only that source is switched on.
+  - **Journal:** on Progress.
+  - **Community:**
+    - cards describe the session instead of claims like "reduce stress by 43%";
+    - tags have no "#";
+    - the challenge has no podium or ranks;
+    - Publish says what stays private.
+  - **Visitor Home:** new headline, no live map.
+  - **Unchanged:** everything else in v4 (onboarding flow, first session, four tabs, reminder).
