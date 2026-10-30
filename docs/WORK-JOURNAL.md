@@ -111,6 +111,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J053 | 2026-10-30 | Question | What is the difference between staging v4 and v5? | — |
 | J054 | 2026-10-30 | Code | Chat box taller, Explore header follows the scroll, admin well-being outcomes | U056 |
 | J055 | 2026-10-30 | Question | v5 changes as an English bullet list | — |
+| J056 | 2026-10-30 | Question | Shorter version of the v5 update | — |
 
 ---
 
@@ -579,3 +580,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 ### J055 — v5 changes in English, as bullets
 - **Asked:** "tolong changes v5 tulis dalam bahasa inggris saja dan dalam bentuk point point"
 - **Answered:** the v5 changes from J053 as an English bullet list in chat, grouped by area. No code.
+
+### J056 — v5 update, simpler
+- **Asked:** "buat lebih sederhana untuk update nya"
+- **Answered:** a shorter English bullet list of the v5 changes in chat. No code.
