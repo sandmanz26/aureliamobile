@@ -1,0 +1,670 @@
+From b469f8688242afb005c3ce0c9d71c36442efb259 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 30 Oct 2026 05:49:45 +0000
+Subject: [PATCH] Taller chat box, sticky Explore header, admin well-being
+ outcomes
+
+- Chat composer 59px -> 75px (8px more above and below), every version.
+- Explore/Discover header stays at the top while scrolling: clear over
+  the gradient at rest (pixel positions unchanged), frosted once
+  content passes under it. Every version.
+- Admin: new Well-being outcomes module (/admin/outcomes) and a panel
+  on each user's page: WHO-5 every two weeks, check-ins, resting heart
+  rate; improved / steady / declined / too early, and a follow-up flag
+  at WHO-5 <= 28. Sample data, with a note on what it can't claim.
+- Bar chart draws a negative value as an empty bar instead of a full one.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/App.tsx                          |   6 +
+ src/admin/AdminLayout.tsx            |   2 +
+ src/admin/components/Charts.tsx      |   2 +-
+ src/admin/data/outcomes.test.ts      |  38 ++++++
+ src/admin/data/outcomes.ts           | 141 ++++++++++++++++++++
+ src/admin/pages/OutcomesPage.tsx     | 184 +++++++++++++++++++++++++++
+ src/admin/pages/UserDetailPage.tsx   |  36 ++++++
+ src/components/chat/ChatComposer.tsx |   5 +-
+ src/demo/modules.ts                  |   1 +
+ src/pages/ExplorePage.tsx            |  69 ++++++++--
+ 10 files changed, 471 insertions(+), 13 deletions(-)
+ create mode 100644 src/admin/data/outcomes.test.ts
+ create mode 100644 src/admin/data/outcomes.ts
+ create mode 100644 src/admin/pages/OutcomesPage.tsx
+
+diff --git a/src/App.tsx b/src/App.tsx
+index 5037f2d..7f58c15 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -60,6 +60,7 @@ const GalleryLayoutPage = lazy(() => import('./pages/dev/GalleryLayoutPage').the
+ const DashboardPage = lazy(() => import('./admin/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })))
+ const UsersPage = lazy(() => import('./admin/pages/UsersPage').then((m) => ({ default: m.UsersPage })))
+ const UserDetailPage = lazy(() => import('./admin/pages/UserDetailPage').then((m) => ({ default: m.UserDetailPage })))
++const OutcomesPage = lazy(() => import('./admin/pages/OutcomesPage').then((m) => ({ default: m.OutcomesPage })))
+ const RolesPage = lazy(() => import('./admin/pages/RolesPage').then((m) => ({ default: m.RolesPage })))
+ const AdminSessionsPage = lazy(() => import('./admin/pages/SessionsPage').then((m) => ({ default: m.SessionsPage })))
+ const AdminChallengesPage = lazy(() => import('./admin/pages/ChallengesPage').then((m) => ({ default: m.ChallengesPage })))
+@@ -134,6 +135,11 @@ export default function App() {
+                 <UserDetailPage />
+               </ModuleGuard>
+             } />
++            <Route path="outcomes" element={
++              <ModuleGuard module="adminOutcomes">
++                <OutcomesPage />
++              </ModuleGuard>
++            } />
+             <Route path="roles" element={
+               <ModuleGuard module="adminRoles">
+                 <RolesPage />
+diff --git a/src/admin/AdminLayout.tsx b/src/admin/AdminLayout.tsx
+index cda0c81..e153b0c 100644
+--- a/src/admin/AdminLayout.tsx
++++ b/src/admin/AdminLayout.tsx
+@@ -1,4 +1,5 @@
+ import {
++  HeartPulse,
+   Activity,
+   Bell,
+   Coins,
+@@ -45,6 +46,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
+     section: 'People',
+     items: [
+       { to: '/admin/users', label: 'Users', icon: Users, flag: 'adminUsers' },
++      { to: '/admin/outcomes', label: 'Well-being outcomes', icon: HeartPulse, flag: 'adminOutcomes' },
+       { to: '/admin/roles', label: 'Roles & permissions', icon: ShieldCheck, flag: 'adminRoles' },
+     ],
+   },
+diff --git a/src/admin/components/Charts.tsx b/src/admin/components/Charts.tsx
+index b661494..9f703aa 100644
+--- a/src/admin/components/Charts.tsx
++++ b/src/admin/components/Charts.tsx
+@@ -180,7 +180,7 @@ export function BarChart({ data, color = 'var(--color-adm-s1)', format = (v) =>
+           <div className="relative h-16 flex-1 rounded-4 bg-adm-hover">
+             <div
+               className="h-full rounded-4 transition-[width]"
+-              style={{ width: `${(row.value / max) * 100}%`, background: color, opacity: hover === null || hover === i ? 1 : 0.55 }}
++              style={{ width: `${(Math.max(0, row.value) / max) * 100}%`, background: color, opacity: hover === null || hover === i ? 1 : 0.55 }}
+             />
+           </div>
+           <span className="w-[68px] shrink-0 text-right text-12 font-medium tabular-nums text-adm-ink">
+diff --git a/src/admin/data/outcomes.test.ts b/src/admin/data/outcomes.test.ts
+new file mode 100644
+index 0000000..ccd6155
+--- /dev/null
++++ b/src/admin/data/outcomes.test.ts
+@@ -0,0 +1,38 @@
++import { describe, expect, it } from 'vitest'
++import { USERS } from './mock'
++import { buildOutcomes, needsFollowUp, outcomeOf, summarise, who5Change } from './outcomes'
++
++describe('well-being outcomes', () => {
++  it('needs two WHO-5 assessments before it calls a direction', () => {
++    expect(outcomeOf({ who5: [] })).toBe('too early')
++    expect(outcomeOf({ who5: [40] })).toBe('too early')
++    expect(who5Change({ who5: [40] })).toBeNull()
++  })
++
++  it('uses a 10-point change as meaningful', () => {
++    expect(outcomeOf({ who5: [40, 50] })).toBe('improved')
++    expect(outcomeOf({ who5: [40, 49] })).toBe('steady')
++    expect(outcomeOf({ who5: [40, 30] })).toBe('declined')
++  })
++
++  it('flags a latest score of 28 or below for follow-up', () => {
++    expect(needsFollowUp({ who5: [60, 28] })).toBe(true)
++    expect(needsFollowUp({ who5: [20, 29] })).toBe(false)
++    expect(needsFollowUp({ who5: [] })).toBe(false)
++  })
++
++  it('summarises only measured users into the average', () => {
++    const s = summarise([
++      { userId: 'a', name: 'A', goal: 'Focus', chapters: 20, who5: [40, 60], moodStart: 3, moodLatest: 4, wearable: null, restingHrStart: null, restingHrLatest: null },
++      { userId: 'b', name: 'B', goal: 'Focus', chapters: 2, who5: [30], moodStart: 3, moodLatest: 3, wearable: null, restingHrStart: null, restingHrLatest: null },
++    ])
++    expect(s).toMatchObject({ measured: 1, improved: 1, tooEarly: 1, averageChange: 20, followUp: 0 })
++  })
++
++  it('builds stable sample data for member accounts only', () => {
++    const a = buildOutcomes(USERS)
++    expect(a).toEqual(buildOutcomes(USERS))
++    expect(a.length).toBe(USERS.filter((u) => u.role === 'member').length)
++    for (const o of a) for (const score of o.who5) expect(score).toBeGreaterThanOrEqual(0)
++  })
++})
+diff --git a/src/admin/data/outcomes.ts b/src/admin/data/outcomes.ts
+new file mode 100644
+index 0000000..8836705
+--- /dev/null
++++ b/src/admin/data/outcomes.ts
+@@ -0,0 +1,141 @@
++// Well-being outcomes per user (U056) — "how well has each user improved
++// their well-being?", asked for by Eugene on the admin blueprint.
++//
++// No backend, so this is seeded mock data like the rest of `mock.ts`, but
++// the shape is the one the real pipeline would need to return:
++//
++// - WHO-5, the five-question well-being index (0–100), asked at the start
++//   and then every two weeks — the same rhythm as the consumer app's
++//   two-week report (v5). A 10-point change is the threshold the index's
++//   authors treat as meaningful, so "improved" and "declined" use it; a
++//   latest score of 28 or below is the index's own cue for a follow-up,
++//   flagged here for a human to look at rather than for Aurelia to act on.
++// - The after-session check-ins (1–5) the app already collects.
++// - A wearable signal where one is connected (resting heart rate).
++//
++// Self-reported and observational: it says how people changed while using
++// Aurelia, not that Aurelia caused it, and it is not a clinical assessment.
++
++import type { Tone } from '../components/ui'
++import type { AdminUser } from './mock'
++
++export type Outcome = 'improved' | 'steady' | 'declined' | 'too early'
++
++export const GOALS = ['Sleep better', 'Feel calmer', 'Clear my mind', 'Focus', 'Regulate my body', 'More energy'] as const
++export const WEARABLES = ['Apple Watch', 'Whoop', 'Oura Ring'] as const
++
++export const OUTCOME_TONE: Record<Outcome, Tone> = {
++  improved: 'good',
++  steady: 'neutral',
++  declined: 'critical',
++  'too early': 'info',
++}
++
++/** The WHO-5 change its authors treat as meaningful. */
++export const MEANINGFUL_CHANGE = 10
++/** At or below this, the WHO-5 suggests someone should check in with the person. */
++export const FOLLOW_UP_AT = 28
++
++export interface UserOutcome {
++  userId: string
++  name: string
++  goal: string
++  chapters: number
++  /** WHO-5 assessments so far, oldest first (0–100). */
++  who5: number[]
++  /** Average after-session check-in (1–5) over the first and the last three. */
++  moodStart: number | null
++  moodLatest: number | null
++  wearable: string | null
++  /** Resting heart rate, bpm: first week vs the last. */
++  restingHrStart: number | null
++  restingHrLatest: number | null
++}
++
++export function who5Change(o: Pick<UserOutcome, 'who5'>): number | null {
++  return o.who5.length < 2 ? null : o.who5[o.who5.length - 1] - o.who5[0]
++}
++
++export function outcomeOf(o: Pick<UserOutcome, 'who5'>): Outcome {
++  const change = who5Change(o)
++  if (change === null) return 'too early'
++  if (change >= MEANINGFUL_CHANGE) return 'improved'
++  if (change <= -MEANINGFUL_CHANGE) return 'declined'
++  return 'steady'
++}
++
++export function needsFollowUp(o: Pick<UserOutcome, 'who5'>): boolean {
++  return o.who5.length > 0 && o.who5[o.who5.length - 1] <= FOLLOW_UP_AT
++}
++
++export interface OutcomeSummary {
++  measured: number
++  improved: number
++  steady: number
++  declined: number
++  tooEarly: number
++  /** Mean WHO-5 change over the users with two or more assessments. */
++  averageChange: number | null
++  followUp: number
++}
++
++export function summarise(list: UserOutcome[]): OutcomeSummary {
++  const changes = list.map(who5Change).filter((c): c is number => c !== null)
++  const count = (kind: Outcome) => list.filter((o) => outcomeOf(o) === kind).length
++  return {
++    measured: changes.length,
++    improved: count('improved'),
++    steady: count('steady'),
++    declined: count('declined'),
++    tooEarly: count('too early'),
++    averageChange: changes.length ? changes.reduce((s, c) => s + c, 0) / changes.length : null,
++    followUp: list.filter(needsFollowUp).length,
++  }
++}
++
++function makeRng(seed: number) {
++  let state = seed
++  return () => {
++    state = (state * 1664525 + 1013904223) % 4294967296
++    return state / 4294967296
++  }
++}
++
++const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n))
++const round1 = (n: number) => Math.round(n * 10) / 10
++
++/** Sample outcomes for every member account (staff roles are not users of the app). */
++export function buildOutcomes(users: AdminUser[], seed = 7): UserOutcome[] {
++  const rng = makeRng(seed)
++  return users
++    .filter((u) => u.role === 'member')
++    .map((u) => {
++      const goal = GOALS[Math.floor(rng() * GOALS.length)]
++      const chapters = Math.floor(rng() * 44)
++      // One WHO-5 at the start, then one every 14 days of use (~1 chapter a day).
++      const assessments = chapters === 0 ? 0 : 1 + Math.floor(chapters / 14)
++      const start = Math.round(24 + rng() * 40)
++      // Most drift up a little, some a lot, a few go down — a plausible spread, not a claim.
++      const drift = (rng() - 0.25) * 40
++      const who5 = Array.from({ length: assessments }, (_, i) =>
++        clamp(Math.round(start + (drift * i) / Math.max(1, assessments - 1) + (rng() - 0.5) * 6), 0, 100),
++      )
++      const checked = chapters > 0
++      const moodStart = checked ? round1(clamp(2.4 + rng() * 1.4, 1, 5)) : null
++      const moodLatest = checked && moodStart !== null ? round1(clamp(moodStart + drift / 25 + (rng() - 0.5) * 0.4, 1, 5)) : null
++      const wearable = rng() > 0.45 ? WEARABLES[Math.floor(rng() * WEARABLES.length)] : null
++      const hr = wearable ? Math.round(58 + rng() * 18) : null
++      return {
++        userId: u.id,
++        name: u.name,
++        goal,
++        chapters,
++        who5,
++        moodStart,
++        moodLatest,
++        wearable,
++        restingHrStart: hr,
++        restingHrLatest: hr !== null && chapters >= 7 ? Math.round(hr - drift / 6 + (rng() - 0.5) * 2) : null,
++      }
++    })
++}
+diff --git a/src/admin/pages/OutcomesPage.tsx b/src/admin/pages/OutcomesPage.tsx
+new file mode 100644
+index 0000000..d66b87a
+--- /dev/null
++++ b/src/admin/pages/OutcomesPage.tsx
+@@ -0,0 +1,184 @@
++import { useMemo } from 'react'
++import { Link } from 'react-router-dom'
++import { BarChart } from '../components/Charts'
++import type { Column } from '../components/DataTable'
++import { DataTable } from '../components/DataTable'
++import { Badge, PageHeader, Panel, StatCard } from '../components/ui'
++import { useAdminData } from '../data/AdminDataContext'
++import type { Outcome } from '../data/outcomes'
++import { FOLLOW_UP_AT, GOALS, MEANINGFUL_CHANGE, OUTCOME_TONE, buildOutcomes, needsFollowUp, outcomeOf, summarise, who5Change } from '../data/outcomes'
++
++interface Row {
++  userId: string
++  name: string
++  goal: string
++  chapters: number
++  who5Start: number | ''
++  who5Latest: number | ''
++  who5Change: number | ''
++  mood: string
++  heart: string
++  outcome: Outcome
++  followUp: 'yes' | 'no'
++}
++
++const signed = (n: number) => `${n > 0 ? '+' : ''}${n}`
++
++/**
++ * Well-being outcomes (U056) — Eugene's "how well have each user improved
++ * their well-being therapeutically". One row per member, read from the
++ * same three sources the consumer app has or plans: a WHO-5 score every
++ * two weeks, the after-session check-ins, and a wearable where connected.
++ */
++export function OutcomesPage() {
++  const { users } = useAdminData()
++  const outcomes = useMemo(() => buildOutcomes(users), [users])
++  const summary = summarise(outcomes)
++
++  const rows: Row[] = outcomes.map((o) => {
++    const change = who5Change(o)
++    return {
++      userId: o.userId,
++      name: o.name,
++      goal: o.goal,
++      chapters: o.chapters,
++      who5Start: o.who5[0] ?? '',
++      who5Latest: o.who5.length > 1 ? o.who5[o.who5.length - 1] : '',
++      who5Change: change ?? '',
++      mood: o.moodStart !== null && o.moodLatest !== null ? `${o.moodStart} → ${o.moodLatest}` : '—',
++      heart:
++        o.wearable && o.restingHrStart !== null
++          ? o.restingHrLatest !== null
++            ? `${o.restingHrStart} → ${o.restingHrLatest} bpm`
++            : `${o.restingHrStart} bpm (first week)`
++          : '—',
++      outcome: outcomeOf(o),
++      followUp: needsFollowUp(o) ? 'yes' : 'no',
++    }
++  })
++
++  // Goals nobody has two scores for yet are left out rather than drawn as 0.
++  const byGoal = GOALS.flatMap((goal) => {
++    const measured = outcomes.filter((o) => o.goal === goal).map(who5Change).filter((c): c is number => c !== null)
++    return measured.length
++      ? [{ label: `${goal} (${measured.length})`, value: Math.round((measured.reduce((s, c) => s + c, 0) / measured.length) * 10) / 10 }]
++      : []
++  })
++
++  const columns: Column<Row>[] = [
++    {
++      key: 'name',
++      header: 'User',
++      sortable: true,
++      render: (row) => (
++        <Link to={`/admin/users/${row.userId}`} className="font-medium text-adm-ink hover:underline">
++          {row.name}
++        </Link>
++      ),
++    },
++    { key: 'goal', header: 'Goal', sortable: true },
++    { key: 'chapters', header: 'Chapters', numeric: true, sortable: true },
++    { key: 'who5Start', header: 'WHO-5 start', numeric: true, sortable: true },
++    { key: 'who5Latest', header: 'WHO-5 latest', numeric: true, sortable: true },
++    {
++      key: 'who5Change',
++      header: 'Change',
++      numeric: true,
++      sortable: true,
++      render: (row) =>
++        row.who5Change === '' ? (
++          <span className="text-adm-muted">—</span>
++        ) : (
++          <span className={row.who5Change >= MEANINGFUL_CHANGE ? 'text-adm-good' : row.who5Change <= -MEANINGFUL_CHANGE ? 'text-adm-critical' : ''}>
++            {signed(row.who5Change)}
++          </span>
++        ),
++    },
++    { key: 'mood', header: 'Check-ins (1–5)' },
++    { key: 'heart', header: 'Resting heart rate' },
++    {
++      key: 'outcome',
++      header: 'Outcome',
++      sortable: true,
++      render: (row) => (
++        <span className="flex flex-wrap items-center gap-4">
++          <Badge tone={OUTCOME_TONE[row.outcome]}>{row.outcome}</Badge>
++          {row.followUp === 'yes' && <Badge tone="warning">follow up</Badge>}
++        </span>
++      ),
++    },
++  ]
++
++  return (
++    <>
++      <PageHeader
++        title="Well-being outcomes"
++        description="How each user's well-being has changed since they started: a WHO-5 well-being score every two weeks, their check-ins after each session, and their wearable where one is connected. Sample data until there is a backend."
++      />
++
++      <div className="grid grid-cols-2 gap-12 lg:grid-cols-4">
++        <StatCard label="Measured" value={`${summary.measured}`} hint={`of ${outcomes.length} members, 2+ WHO-5 scores`} />
++        <StatCard
++          label="Improved"
++          value={summary.measured ? `${Math.round((summary.improved / summary.measured) * 100)}%` : '—'}
++          hint={`${summary.improved} users, +${MEANINGFUL_CHANGE} or more`}
++        />
++        <StatCard
++          label="Average change"
++          value={summary.averageChange === null ? '—' : `${signed(Math.round(summary.averageChange * 10) / 10)}`}
++          hint="WHO-5 points, measured users"
++        />
++        <StatCard label="Follow up" value={`${summary.followUp}`} hint={`latest WHO-5 at ${FOLLOW_UP_AT} or below`} />
++      </div>
++
++      <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
++        <Panel title="Where people are" description="Members by outcome so far.">
++          <BarChart
++            data={[
++              { label: 'Improved', value: summary.improved },
++              { label: 'Steady', value: summary.steady },
++              { label: 'Declined', value: summary.declined },
++              { label: 'Too early to tell', value: summary.tooEarly },
++            ]}
++            height={0}
++          />
++        </Panel>
++        <Panel title="Average change by goal" description="WHO-5 points, users with two or more scores (how many in brackets).">
++          <BarChart data={byGoal} format={(v) => signed(v)} color="var(--color-adm-good)" height={0} />
++        </Panel>
++      </div>
++
++      <Panel title="Every user" description="Sort by change to see who improved most, or filter to those who need a follow-up.">
++        <DataTable
++          rows={rows}
++          columns={columns}
++          searchKeys={['name', 'goal']}
++          filters={[
++            { key: 'outcome', label: 'Outcome', options: ['improved', 'steady', 'declined', 'too early'] },
++            { key: 'goal', label: 'Goal', options: [...GOALS] },
++            { key: 'followUp', label: 'Follow up', options: ['yes', 'no'] },
++          ]}
++          exportName="wellbeing-outcomes"
++        />
++      </Panel>
++
++      <Panel title="How to read this" description="What the numbers can and cannot say.">
++        <ul className="flex list-disc flex-col gap-6 pl-18 text-13 text-adm-ink-2">
++          <li>
++            <b className="text-adm-ink">WHO-5</b> is a five-question well-being index from 0 to 100, widely used in research and
++            primary care. A change of {MEANINGFUL_CHANGE} points is the threshold its authors treat as meaningful.
++          </li>
++          <li>
++            A latest score of {FOLLOW_UP_AT} or below is the index's own cue that someone should check in with the person. It is
++            flagged for a human to look at, not for Aurelia to act on.
++          </li>
++          <li>
++            Self-reported and observational: it shows how people changed while using Aurelia, not that Aurelia caused it, and it
++            is not a clinical diagnosis. Claims to users or partners need the wording agreed in Compliance first.
++          </li>
++          <li>The app does not ask the WHO-5 yet. Asking it at the start and with each two-week report is the proposed source.</li>
++        </ul>
++      </Panel>
++    </>
++  )
++}
+diff --git a/src/admin/pages/UserDetailPage.tsx b/src/admin/pages/UserDetailPage.tsx
+index 89f20ac..5cb8809 100644
+--- a/src/admin/pages/UserDetailPage.tsx
++++ b/src/admin/pages/UserDetailPage.tsx
+@@ -3,6 +3,7 @@ import { Link, Navigate, useParams } from 'react-router-dom'
+ import { Badge, Panel, StatCard, StatusBadge } from '../components/ui'
+ import { useAdminData } from '../data/AdminDataContext'
+ import { AUDIT_LOG, COIN_TX, ROLES } from '../data/mock'
++import { MEANINGFUL_CHANGE, OUTCOME_TONE, buildOutcomes, needsFollowUp, outcomeOf, who5Change } from '../data/outcomes'
+ 
+ const roleName = (id: string) => ROLES.find((role) => role.id === id)?.name ?? 'Member'
+ const dateTime = (iso: string) => new Date(iso).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })
+@@ -29,6 +30,9 @@ export function UserDetailPage() {
+   const sessions = allSessions.filter((session) => session.authorId === user.id)
+   const coinTx = COIN_TX.filter((tx) => tx.userId === user.id)
+   const auditEntries = AUDIT_LOG.filter((entry) => entry.actorId === user.id || entry.target === user.id)
++  // U056: the same sample outcomes as /admin/outcomes, so the two never disagree.
++  const outcome = buildOutcomes(users).find((o) => o.userId === user.id)
++  const change = outcome ? who5Change(outcome) : null
+ 
+   return (
+     <>
+@@ -63,6 +67,38 @@ export function UserDetailPage() {
+         <StatCard label="Last active" value={date(user.lastActiveAt)} />
+       </div>
+ 
++      {outcome && (
++        <Panel
++          title="Well-being outcome"
++          description="WHO-5 every two weeks, check-ins after each session, wearable where connected. Sample data until there is a backend."
++          actions={
++            <span className="flex flex-wrap items-center gap-4">
++              <Badge tone={OUTCOME_TONE[outcomeOf(outcome)]}>{outcomeOf(outcome)}</Badge>
++              {needsFollowUp(outcome) && <Badge tone="warning">follow up</Badge>}
++            </span>
++          }
++        >
++          <div className="grid grid-cols-2 gap-12 lg:grid-cols-4">
++            <StatCard label="Goal" value={outcome.goal} hint={`${outcome.chapters} chapters`} />
++            <StatCard
++              label="WHO-5"
++              value={outcome.who5.length ? outcome.who5.join(' → ') : '—'}
++              hint={change === null ? 'needs two scores' : `${change > 0 ? '+' : ''}${change} points (${MEANINGFUL_CHANGE} is meaningful)`}
++            />
++            <StatCard
++              label="Check-ins (1–5)"
++              value={outcome.moodStart !== null && outcome.moodLatest !== null ? `${outcome.moodStart} → ${outcome.moodLatest}` : '—'}
++              hint="first three vs last three"
++            />
++            <StatCard
++              label="Resting heart rate"
++              value={outcome.restingHrStart !== null ? `${outcome.restingHrStart}${outcome.restingHrLatest !== null ? ` → ${outcome.restingHrLatest}` : ''}` : '—'}
++              hint={outcome.wearable ?? 'no wearable connected'}
++            />
++          </div>
++        </Panel>
++      )}
++
+       <Panel title="Sessions created" description="Everything in the catalogue authored by this account.">
+         {sessions.length ? (
+           <div className="flex flex-col divide-y divide-adm-line">
+diff --git a/src/components/chat/ChatComposer.tsx b/src/components/chat/ChatComposer.tsx
+index dcba7c9..bec22bb 100644
+--- a/src/components/chat/ChatComposer.tsx
++++ b/src/components/chat/ChatComposer.tsx
+@@ -16,7 +16,8 @@ interface ChatComposerProps {
+ }
+ 
+ // Figma "Container" — 356x59, radius 70, surface/default on a 0.5px
+-// #e4e4e4 hairline. Plus / field / voice orb / send.
++// #e4e4e4 hairline. Plus / field / voice orb / send. 75px since U056: 8px
++// more above and below, on request, so the box reads as the place to type.
+ export function ChatComposer({ onSend, onVoice, onAdd, disabled, canVoice = true, replyingTo, onCancelReply }: ChatComposerProps) {
+   const [value, setValue] = useState('')
+   const input = useRef<HTMLInputElement>(null)
+@@ -59,7 +60,7 @@ export function ChatComposer({ onSend, onVoice, onAdd, disabled, canVoice = true
+       )}
+     <form
+       onSubmit={submit}
+-      className="flex h-[59px] items-center gap-14 rounded-full border-[0.5px] border-border-subtle bg-surface-default py-12 pl-19 pr-12"
++      className="flex h-[75px] items-center gap-14 rounded-full border-[0.5px] border-border-subtle bg-surface-default py-20 pl-19 pr-12"
+     >
+       {/* Padding pulled back by an equal negative margin: a 40x40 touch target
+           around a 16px glyph, with the row spacing unchanged. */}
+diff --git a/src/demo/modules.ts b/src/demo/modules.ts
+index 9d9a692..717c89d 100644
+--- a/src/demo/modules.ts
++++ b/src/demo/modules.ts
+@@ -239,6 +239,7 @@ export const DEMO_MODULES: DemoModule[] = [
+   /* --- Back office (the product's own admin, shown as a feature) --- */
+   { id: 'admin', kind: 'admin', label: 'Admin — access', description: 'Master switch. Off means /admin is unreachable entirely.', route: '/admin', built: true },
+   { id: 'adminUsers', kind: 'admin', label: 'Users', description: 'Account list, roles, suspensions.', route: '/admin/users', built: true },
++  { id: 'adminOutcomes', kind: 'admin', label: 'Well-being outcomes', description: 'How much each user’s well-being has changed (WHO-5, check-ins, wearable).', route: '/admin/outcomes', built: true },
+   { id: 'adminRoles', kind: 'admin', label: 'Roles & permissions', description: 'Permission matrix.', route: '/admin/roles', built: true },
+   { id: 'adminSessions', kind: 'admin', label: 'Sessions', description: 'Generated session catalogue.', route: '/admin/sessions', built: true },
+   { id: 'adminChallenges', kind: 'admin', label: 'Challenges', description: 'Setup, pacing and reward tiers.', route: '/admin/challenges', built: true },
+diff --git a/src/pages/ExplorePage.tsx b/src/pages/ExplorePage.tsx
+index d8cddf3..41da464 100644
+--- a/src/pages/ExplorePage.tsx
++++ b/src/pages/ExplorePage.tsx
+@@ -1,5 +1,5 @@
+ import { ArrowRight, Clock, Menu, Play, Podium, Sparkles, Users } from 'lucide-react'
+-import { useState } from 'react'
++import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+ import { Link } from 'react-router-dom'
+ import liveSessionsMap from '../assets/live-sessions-map.png'
+ import { useUiVersion } from '../versions/useUiVersion'
+@@ -196,8 +196,46 @@ export function ExplorePage() {
+   const v4 = useUiVersion() >= 4
+   const name = v4 ? 'Discover' : 'Explore'
+ 
++  // U056: the header follows the page down (Eugene: "This header has to
++  // follow as you scroll down"). At rest it stays clear over the gradient
++  // band, exactly as before; once something scrolls under it, it takes the
++  // shared `.u-sticky-top` frosted background so it stays readable.
++  const sentinel = useRef<HTMLDivElement>(null)
++  const [stuck, setStuck] = useState(false)
++  useEffect(() => {
++    const el = sentinel.current
++    if (!el || typeof IntersectionObserver === 'undefined') return
++    const bar = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--staging-bar')) || 0
++    const observer = new IntersectionObserver(([entry]) => setStuck(!entry.isIntersecting), {
++      rootMargin: `-${bar}px 0px 0px 0px`,
++    })
++    observer.observe(el)
++    return () => observer.disconnect()
++  }, [])
++
++  // The old band was a 122px box (from -30px below lg) that the header sat
++  // in, so the hero landed 92px (lg: 122px) below the page top whatever the
++  // header's height — which varies, since the menu button is hidden on lg
++  // and in v4+. The spacer makes up the same difference.
++  const header = useRef<HTMLDivElement>(null)
++  const [gap, setGap] = useState(16)
++  useLayoutEffect(() => {
++    const el = header.current
++    if (!el) return
++    const wide = window.matchMedia('(width >= 64rem)')
++    const measure = () => setGap(Math.max(0, (wide.matches ? 122 : 92) - el.offsetHeight))
++    measure()
++    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
++    observer?.observe(el)
++    wide.addEventListener('change', measure)
++    return () => {
++      observer?.disconnect()
++      wide.removeEventListener('change', measure)
++    }
++  }, [])
++
+   return (
+-    <div className="pb-48">
++    <div className="relative pb-48">
+       <PageMeta
+         title={name}
+         description="Browse sessions by category, discover trusted creators, and join a monthly challenge."
+@@ -209,14 +247,25 @@ export function ExplorePage() {
+           status-bar clearance added in AppLayout, so the gradient reaches
+           the true top of the viewport instead of stopping at this div's
+           normal position. */}
++      {/* U056: the band is painted behind (absolute) rather than wrapping the
++          header, because a sticky element can only stick inside its parent —
++          wrapped in a 122px band it would scroll away with it. Same box as
++          before: from -30px (mobile) or 0 (lg), 122px tall, and the spacer
++          after the header keeps the hero where it was (92 / 122px down).
++          `lg:top-[0px]`, not `lg:top-0`: versions.css moves every
++          `.lg:top-0` under the staging bar, which is for sticky columns. */}
+       <div
+-        className="-mt-[30px] pt-[30px] lg:mt-0 lg:pt-0"
+-        style={{
+-          background: 'linear-gradient(180deg, rgba(255,230,130,0.6), rgba(255,255,255,0))',
+-          minHeight: '122px',
+-        }}
+-      >
+-        <div className="flex items-center justify-between gap-12 px-20 py-16 lg:px-24">
++        aria-hidden="true"
++        className="pointer-events-none absolute inset-x-0 -top-[30px] h-[122px] lg:top-[0px]"
++        style={{ background: 'linear-gradient(180deg, rgba(255,230,130,0.6), rgba(255,255,255,0))' }}
++      />
++      <div ref={sentinel} aria-hidden="true" className="h-0" />
++        <div
++          ref={header}
++          className={`u-sticky-top flex items-center justify-between gap-12 px-20 py-16 lg:px-24 ${
++            stuck ? '' : 'bg-transparent! backdrop-blur-none! [backdrop-filter:none]!'
++          }`}
++        >
+           <div className="flex items-center gap-8">
+             <button
+               type="button"
+@@ -232,7 +281,7 @@ export function ExplorePage() {
+           <CoinPill points="1,323" className="shadow-sm" />
+           </div>
+         </div>
+-      </div>
++      <div aria-hidden="true" style={{ height: gap }} />
+ 
+       <div className="mx-auto max-w-[960px] px-20 lg:px-24">
+         {/* Hero banner — the one thing the app wants you to press today. */}
+-- 
+2.43.0
+

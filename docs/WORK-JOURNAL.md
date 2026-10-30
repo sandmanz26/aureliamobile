@@ -48,6 +48,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O17 | **Retention simulation follow-ups** (J039 §8): D1/D3/D4/D5 were settled by "update saja di v4" (U050: fixes in v4 rather than v5, `.ics` reminder, Quick Start plays before sign-in, limit after the first build). Still open: **D2**, which is persisting sign-in for a real retention test (the journey already persists per browser); the real 8–12 person test; Sessions/Notifications empty states; R10 beyond the five-chapter prompt; storybook stories for `ChapterCheckIn`/`NextChapterCard` | J039, J040, U050 | Product owner + Eugene |
 | O19 | **v5 (J049)**: (1) promote v5 to production, or keep it on staging for a follow-up with the same three users; (2) backend for real wearable data (Apple Health, Whoop, Oura) — v5 shows example readings; (3) voice choice with previews (needs voices); (4) friends / local groups; (5) a reward for sharing; (6) the two-week report as a push/email; (7) the journal and check-ins are per browser until D2 (persisted sign-in); (8) v4's sheet counts goal-deck items as experiments — fixed in v5 only, so v4 pixels stay as shipped; (9) storybook stories for `FeelingProgress`, `ChapterCheckIn`, `NextChapterCard`, `TabBar`; Flutter to follow | J049, U053 | Product owner + Eugene; backend for 2, 4, 6 |
 | O20 | **Production version picker is temporary** (U054): the bar takes 28px at the top of production for every visitor, and pins on production ignore the version. Clean-up options: hide it behind a flag or a URL parameter, or remove it once a default is chosen Since U055 production lists two versions of its own (v1 = staging v4, v2 = staging v5); which staging versions it offers next is a one-line change in `PRODUCTION_VERSIONS` | J050, J051, U054, U055 | Product owner: when to clean up and how |
+| O21 | **Well-being outcomes are a proposal on sample data** (U056): (1) confirm WHO-5 as the measure, and when the app asks it (start + every two weeks); (2) backend to store assessments, check-ins and wearable readings per user; (3) Compliance wording before any outcome is shown to users or partners; (4) who owns the follow-up for WHO-5 ≤ 28, and how; (5) storybook stories for the taller `ChatComposer`; (6) production gets U056 only when asked | J054, U056 | Product owner + Eugene; backend; compliance |
 
 ---
 
@@ -108,6 +109,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J051 | 2026-10-29 | Question + Code + Ops | Production status (no code); Higgsfield connector; production limited to two versions with its own numbers | U055 |
 | J052 | 2026-10-29 | Question | Is the interview version v3 + interviews or v4 + interviews? | — |
 | J053 | 2026-10-30 | Question | What is the difference between staging v4 and v5? | — |
+| J054 | 2026-10-30 | Code | Chat box taller, Explore header follows the scroll, admin well-being outcomes | U056 |
 
 ---
 
@@ -557,3 +559,18 @@ transcript and the update log. Everything from J018 on was written at the time.
     - Publish says what stays private.
   - **Visitor Home:** new headline, no live map.
   - **Unchanged:** everything else in v4 (onboarding flow, first session, four tabs, reminder).
+
+### J054 — Chat box, Explore header, admin outcomes (U056)
+- **Asked:** three pieces of feedback.
+  - Make the chat box larger by about 8px above and below, in every staging version.
+  - Eugene: the Explore header should follow as you scroll.
+  - Eugene, on admin: a section on how well each user has improved their well-being "therapeutically".
+- **Done:** U056, staging only.
+  - The chat box is 75px (was 59).
+  - The Explore/Discover header sticks, frosted once content passes under it; at rest it looks unchanged.
+  - New admin module, Well-being outcomes:
+    - WHO-5 every two weeks, check-ins and resting heart rate;
+    - improved / steady / declined / too early;
+    - a follow-up flag at WHO-5 ≤ 28.
+  - Each user's admin page has the same panel. Everything there is sample data and says so.
+- **Open items:** O21 added.

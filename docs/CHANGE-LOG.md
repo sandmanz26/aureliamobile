@@ -19,6 +19,16 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-30 — Taller chat box, sticky Explore header, admin well-being outcomes (U056)
+
+Staging, every version:
+- The chat box is 16px taller.
+- The Explore/Discover header stays at the top while scrolling.
+
+Admin has a new Well-being outcomes page (WHO-5, check-ins, heart rate per user) and the same panel on each user's page. Its data is sample data.
+
+Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-29 — Production lists two versions of its own (U055)
 
 The production picker now offers two versions, numbered for production:

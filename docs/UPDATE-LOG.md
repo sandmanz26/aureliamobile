@@ -93,8 +93,46 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U053 | `b030823` | 2026-10-27 | Design v5 (staging only) = v4 reworked after three real user interviews: progress in words, Why on suggestions, next-chapter plan, wearable in onboarding, journal, community without ranks, plain landing. | [patch](patches/U053-b030823.patch) |
 | U054 | `e661073` | 2026-10-28 | Production gets the design-version bar and picker (default still v4); `web_prod` fast-forwarded, bringing v5 (U053) to production as an option. | [patch](patches/U054-e661073.patch) |
 | U055 | `e4c8e8e` | 2026-10-29 | Production offers two versions with its own numbers: prod v1 = staging v4 (default), prod v2 = staging v5; `web_prod` fast-forwarded. | [patch](patches/U055-e4c8e8e.patch) |
+| U056 | `b469f86` | 2026-10-30 | Chat box 16px taller; Explore/Discover header follows the scroll; admin Well-being outcomes (WHO-5, check-ins, heart rate) page + per-user panel. Staging only. | [patch](patches/U056-b469f86.patch) |
 
 ## Entries
+
+### U056 — Taller chat box, sticky Explore header, admin well-being outcomes
+
+- **Commit:** `b469f86` · pushed 2026-10-30 UTC · `web_app` + `admin_cms`. **Not `web_prod`.**
+- **Patch:** [patches/U056-b469f86.patch](patches/U056-b469f86.patch)
+- **Request:** three screenshots.
+  1. "untuk semua versi staging, user mau bagian area chat box nya itu agak dibesarkan sedikit mungkin kita bisa tambah sekitar 8px atas bawah"
+  2. Eugene: "This header has to follow as you scroll down.." (Explore).
+  3. Eugene, on admin: "Whats missing is a section on the outputs from user analytics 'how well have each user improved their well-being theraputicly'".
+- **Interpretation:**
+  - These are explicit mobile changes, so they are allowed past the frozen-mobile rule.
+  - Both consumer changes apply to every version, v1–v5.
+  - "Therapeutically" needs a measure that means something. The proposal is WHO-5 (0–100) every two weeks, matching v5's two-week report:
+    - a 10-point change counts as meaningful;
+    - a latest score of 28 or below is flagged for a human follow-up.
+  - Labelled as self-reported and observational, not causal or clinical, with claims routed to Compliance.
+  - Sample data until a backend exists.
+- **Changed:**
+  - `ChatComposer`: `h-[59px] py-12` → `h-[75px] py-20`.
+  - `ExplorePage`:
+    - the gradient band is now an absolute layer behind the page, and the header row is `.u-sticky-top`;
+    - the header is transparent until an IntersectionObserver sentinel leaves the viewport;
+    - a measured spacer keeps the hero 92px (lg: 122px) down, whatever the header's height (the menu button is hidden on lg and in v4+);
+    - the band uses `lg:top-[0px]`, because versions.css moves every `.lg:top-0` under the staging bar.
+  - Admin:
+    - `data/outcomes.ts`: model, rules and seeded sample, with tests;
+    - `pages/OutcomesPage.tsx`: four stat cards, outcome and per-goal bars, a filterable/sortable/CSV table, and "How to read this";
+    - a Well-being outcome panel on `UserDetailPage`;
+    - a nav item under People, module flag `adminOutcomes`, and the route `/admin/outcomes`.
+  - `Charts.tsx` `BarChart`: a negative value draws an empty bar (it drew a full one).
+- **Verified:**
+  - `npm run check` passes (88 tests); staging build.
+  - Explore at rest, before vs after, v1–v5 × 402/1280: the same positions and colours. The only pixel differences are text anti-aliasing in the header row and one section title, because the header is now its own layer.
+  - Scrolled 900px: the header is pinned at the top (under the staging bar) with the frosted background.
+  - Chat at 402 (v1/v4/v5): the box is 75px.
+  - `/admin/outcomes` at 1280 and 402, and a user's page, have no page errors.
+- **Revert:** `git revert --no-commit b469f86 && git checkout HEAD -- docs/`.
 
 ### U055 — Production has its own two versions
 
