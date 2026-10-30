@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What's New in Aurelia</title>
+<style>
+/* A user-facing update: one change per block, its words beside its screen, the change marked in orange. */
+@font-face { font-family: 'Mulish'; src: url('../../public/fonts/mulish-variable.woff2') format('woff2'); font-weight: 200 900; }
+:root {
+  --bg: #FFFDF9; --ink: #2A1704; --muted: #6F5E4D; --line: #EADFD2; --accent: #E8770F; --accent-ink: #B4560A; --soft: #FFF1DB;
+  --font: 'Mulish', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 760px; margin: 0 auto; padding: 36px 16px 56px; }
+h1, h2 { margin: 0; line-height: 1.2; text-wrap: balance; }
+h1 { font-size: 34px; font-weight: 800; letter-spacing: -0.01em; }
+h2 { font-size: 21px; font-weight: 800; }
+p { margin: 0; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-ink); }
+.lede { font-size: 17px; color: var(--muted); margin-top: 10px; max-width: 60ch; }
+.try { margin-top: 18px; background: var(--soft); border-radius: 14px; padding: 14px 16px; font-size: 14px; }
+.try b { color: var(--ink); }
+.summary { margin: 22px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; }
+.summary li { display: flex; gap: 10px; font-size: 14px; align-items: baseline; }
+.summary li span { flex: none; display: inline-flex; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 12px; font-weight: 800; align-items: center; justify-content: center; }
+.feature { display: grid; grid-template-columns: minmax(0, 1fr) 236px; gap: 28px; align-items: start; padding-top: 28px; margin-top: 28px; border-top: 1px solid var(--line); break-inside: avoid; }
+.feature.two { grid-template-columns: minmax(0, 1fr) 236px 236px; gap: 18px; }
+.feature .text { display: flex; flex-direction: column; gap: 10px; }
+.num { display: inline-flex; width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: var(--bg); font-weight: 800; font-size: 14px; align-items: center; justify-content: center; }
+.feature ol { margin: 4px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.feature ol li { display: flex; gap: 10px; font-size: 14px; }
+.feature ol li i { flex: none; font-style: normal; display: inline-flex; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 12px; font-weight: 800; align-items: center; justify-content: center; margin-top: 1px; }
+.feature .note { font-size: 13px; color: var(--muted); }
+figure { margin: 0; }
+figure img { width: 100%; display: block; border-radius: 22px; border: 1px solid var(--line); box-shadow: 0 10px 30px -18px rgba(42, 23, 4, 0.45); }
+figcaption { font-size: 12px; color: var(--muted); text-align: center; margin-top: 6px; }
+.thanks { margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+@media (max-width: 640px) {
+  .summary { grid-template-columns: 1fr; }
+  .feature, .feature.two { grid-template-columns: 1fr; }
+  .feature figure { max-width: 260px; }
+}
+@media print {
+  body { font-size: 13px; }
+  .wrap { padding: 0; max-width: none; }
+  h1 { font-size: 30px; }
+  .lede { font-size: 15px; }
+  .feature { grid-template-columns: minmax(0, 1fr) 190px; margin-top: 18px; padding-top: 18px; }
+  .feature.two { grid-template-columns: minmax(0, 1fr) 175px 175px; }
+  figure img { border-radius: 16px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Aurelia · update</p>
+    <h1>What's new in Aurelia</h1>
+    <p class="lede">You told us what you liked and what didn't feel right. This update is built around what you said: fewer numbers, more reasons, and an app that adapts to you.</p>
+    <p class="try"><b>How to try it:</b> open Aurelia, tap <b>Design</b> at the top of the screen and choose <b>v2</b>. On the test site it is listed as <b>v5</b>. The changes are marked in <b style="color: var(--accent-ink)">orange</b> on the screens below.</p>
+    <ul class="summary">
+      <li><span>1</span>Progress in words, not scores</li>
+      <li><span>2</span>No more made-up numbers</li>
+      <li><span>3</span>A "Why?" on every suggestion</li>
+      <li><span>4</span>Aurelia plans your next chapter</li>
+      <li><span>5</span>Your wearable, asked up front</li>
+      <li><span>6</span>An optional journal</li>
+      <li><span>7</span>Community without competition</li>
+      <li><span>8</span>A clearer home page</li>
+    </ul>
+  </header>
+
+  <section class="feature">
+    <div class="text">
+      <span class="num">1</span>
+      <h2>Progress in words, not scores</h2>
+      <p>The Progress tab now tells you how you've been feeling, in plain words, from your own check-ins. No percentages.</p>
+      <ol>
+        <li><i>1</i><span>A short summary of how you've felt so far, and the date of your next two-week report. Tap <b>See what's behind this</b> for each check-in.</span></li>
+        <li><i>2</i><span>Your journal (see 6).</span></li>
+      </ol>
+    </div>
+    <figure><img src="v5-whats-new/5-progress.jpg" alt="Progress tab describing how you have been feeling, with a journal below"></figure>
+  </section>
+
+  <section class="feature two page">
+    <div class="text">
+      <span class="num">2</span>
+      <h2>No more made-up numbers</h2>
+      <p>We removed figures that weren't yours.</p>
+      <ol>
+        <li><i>A</i><span>The player shows the session itself, with no progress charts.</span></li>
+        <li><i>B</i><span>Session cards describe what the session is like, instead of claims such as "reduced stress by 43%". Tags no longer have a "#".</span></li>
+      </ol>
+    </div>
+    <figure><img src="v5-whats-new/6-player.jpg" alt="Player showing the session description"><figcaption>A · Player</figcaption></figure>
+    <figure><img src="v5-whats-new/7-cards.jpg" alt="Discover with session cards that describe the session"><figcaption>B · Session cards</figcaption></figure>
+  </section>
+
+  <section class="feature">
+    <div class="text">
+      <span class="num">3</span>
+      <h2>A "Why?" on every suggestion</h2>
+      <p>When Aurelia suggests a change to your session, tap <b>Why?</b> to see what it does and what it is based on: your goal, how you felt last time, and your wearable if you connected one.</p>
+    </div>
+    <figure><img src="v5-whats-new/3-why.jpg" alt="Suggested changes with a Why panel open"></figure>
+  </section>
+
+  <section class="feature page">
+    <div class="text">
+      <span class="num">4</span>
+      <h2>Aurelia plans your next chapter</h2>
+      <p>After each session you tell Aurelia how you feel with one tap. It then tells you what it will change next time, so there is nothing for you to tune.</p>
+      <ol>
+        <li><i>1</i><span>What your wearable noticed during the session.</span></li>
+        <li><i>2</i><span>An optional line for your journal.</span></li>
+        <li><i>3</i><span>What the next chapter keeps and changes, with a reminder at the time you choose.</span></li>
+      </ol>
+      <p class="note">Wearable readings shown are examples until the connection goes live.</p>
+    </div>
+    <figure><img src="v5-whats-new/4-checkin.jpg" alt="Check-in after a session with wearable reading, journal and next chapter plan"></figure>
+  </section>
+
+  <section class="feature">
+    <div class="text">
+      <span class="num">5</span>
+      <h2>Your wearable, asked up front</h2>
+      <p>During setup Aurelia asks if you wear an Apple Watch, Whoop or Oura Ring, and says exactly what it would read. Only the one you choose is switched on. "Not now" is always fine.</p>
+    </div>
+    <figure><img src="v5-whats-new/2-wearable.jpg" alt="Setup summary asking which wearable you use"></figure>
+  </section>
+
+  <section class="feature page">
+    <div class="text">
+      <span class="num">6</span>
+      <h2>An optional journal</h2>
+      <p>Write a short note after a session (see 4) or on any day from the Progress tab (see 1). Only you can see it, and Aurelia uses it to shape your next chapters.</p>
+      <span class="num" style="margin-top: 18px">7</span>
+      <h2>Community without competition</h2>
+      <ol>
+        <li><i>A</i><span>Challenges are a shared journey: who joined and what they made, with no podium or rankings.</span></li>
+        <li><i>B</i><span>When you publish a session, Aurelia says plainly what others can see and what stays private: your check-ins, journal, wearable data and conversation.</span></li>
+      </ol>
+    </div>
+    <figure><img src="v5-whats-new/8-challenge.jpg" alt="Challenge page listing what people made, without rankings"><figcaption>7A · Challenge</figcaption></figure>
+  </section>
+
+  <section class="feature two">
+    <div class="text">
+      <span class="num">8</span>
+      <h2>A clearer home page</h2>
+      <p>The first screen now says what Aurelia is: "Sessions made for how you feel today." The world map, which looked like a co-working space, is gone.</p>
+    </div>
+    <figure><img src="v5-whats-new/9-publish.jpg" alt="Publishing a session with a note on what stays private"><figcaption>7B · Publishing</figcaption></figure>
+    <figure><img src="v5-whats-new/1-home.jpg" alt="Home page with the new headline"><figcaption>8 · Home</figcaption></figure>
+  </section>
+
+  <p class="thanks">Thank you for the feedback. Keep it coming: tell us what works for you and what doesn't.</p>
+</div>
+</body>
+</html>

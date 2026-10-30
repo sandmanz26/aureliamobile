@@ -113,6 +113,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J055 | 2026-10-30 | Question | v5 changes as an English bullet list | — |
 | J056 | 2026-10-30 | Question | Shorter version of the v5 update | — |
 | J057 | 2026-10-30 | Question | v5 update formatted for WhatsApp | — |
+| J058 | 2026-10-30 | Report + Code | What's New PDF for users (v5 / prod v2), changes marked on screenshots; Why? text fix | U057 |
 
 ---
 
@@ -589,3 +590,11 @@ transcript and the update log. Everything from J018 on was written at the time.
 ### J057 — v5 update for WhatsApp
 - **Asked:** "buat agar saya bisa copas di WA"
 - **Answered:** the J056 text reformatted for WhatsApp (single-asterisk bold, plain bullets), in a copyable block. No code.
+
+### J058 — What's New PDF for users (U057)
+- **Asked:** a PDF of v5 (staging) / v2 (production) screenshots with the changes marked, to send to users.
+- **Delivered:**
+  - `docs/user-updates/Aurelia-Whats-New-v5.pdf`: 4 pages in English, eight changes, each with a marked screenshot.
+  - It includes how to switch: Design → v2, or v5 on the test site.
+  - Wearable readings are labelled as examples.
+- **Also fixed:** the v5 Why? sentence for a goal-only basis (U057).

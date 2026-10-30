@@ -19,6 +19,13 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-10-30 — v5 Why? text fix; What's New PDF for users (U057)
+
+- v5: a suggestion's "Why?" now reads "Based on: your goal (“Sleep better”) …". Before, it read "your goal and “Sleep better”".
+- Added `docs/user-updates/Aurelia-Whats-New-v5.pdf`, the user-facing summary of v5 with marked screenshots.
+
+Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-30 — Taller chat box, sticky Explore header, admin well-being outcomes (U056)
 
 Staging, every version:

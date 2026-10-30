@@ -94,8 +94,27 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U054 | `e661073` | 2026-10-28 | Production gets the design-version bar and picker (default still v4); `web_prod` fast-forwarded, bringing v5 (U053) to production as an option. | [patch](patches/U054-e661073.patch) |
 | U055 | `e4c8e8e` | 2026-10-29 | Production offers two versions with its own numbers: prod v1 = staging v4 (default), prod v2 = staging v5; `web_prod` fast-forwarded. | [patch](patches/U055-e4c8e8e.patch) |
 | U056 | `b469f86` | 2026-10-30 | Chat box 16px taller; Explore/Discover header follows the scroll; admin Well-being outcomes (WHO-5, check-ins, heart rate) page + per-user panel. Staging only. | [patch](patches/U056-b469f86.patch) |
+| U057 | `f390b95` | 2026-10-30 | v5 Why? text fix (goal-only basis read "your goal and “Sleep better”"); user-facing What's New PDF for v5 / prod v2. Staging only. | [patch](patches/U057-f390b95.patch) |
 
 ## Entries
+
+### U057 — v5 Why? sentence fix, and the What's New PDF for users
+
+- **Commit:** `f390b95` · pushed 2026-10-30 UTC · `web_app` + `admin_cms`. **Not `web_prod`.**
+- **Patch:** [patches/U057-f390b95.patch](patches/U057-f390b95.patch)
+- **Request:** "untuk aurelia v5 staging atau v2 tolong buatkan pdf berisikan screenshot yang mana saja dan tandai, saya mau kirim ke user"
+- **Interpretation:**
+  - A user-facing PDF in English: the eight changes from J056, each with a fresh v5 screenshot and the change marked in orange.
+  - It explains how to switch (Design → v2 on production, v5 on staging).
+- **Found while capturing:** with only a goal as its basis, the v5 Why? panel read "Based on: your goal and “Sleep better”". The code rewrote the last comma as "and", and that comma was inside the goal phrase.
+  - Fixed in `ChatPage`: the parts are joined as a list, and the goal now reads "your goal (“Sleep better”)".
+  - This is v5 only.
+- **Delivered:**
+  - `docs/user-updates/Aurelia-Whats-New-v5.pdf` (4 pages, A4).
+  - Its source `docs/user-updates/aurelia-v5-whats-new.html`.
+  - Nine marked screenshots in `docs/user-updates/v5-whats-new/`, captured at 402 px from a staging build of this commit, with markers drawn from each element's measured position.
+- **Verified:** `npm run check` passes (88 tests). The Why? panel now reads "Based on: your goal (“Sleep better”) and your wearable."
+- **Revert:** `git revert --no-commit f390b95 && git checkout HEAD -- docs/`.
 
 ### U056 — Taller chat box, sticky Explore header, admin well-being outcomes
 

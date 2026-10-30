@@ -1,0 +1,47 @@
+From f390b950ed0d3d399ffbd2c5ba827582613e5fdc Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 30 Oct 2026 15:32:03 +0000
+Subject: [PATCH] v5: fix the Why basis sentence for a goal-only basis
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+"Based on: your goal and “Sleep better”" — the last-comma rewrite also
+matched the comma inside the goal phrase. Join the parts as a list
+instead; the goal now reads "your goal (“Sleep better”)".
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/pages/ChatPage.tsx | 13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
+
+diff --git a/src/pages/ChatPage.tsx b/src/pages/ChatPage.tsx
+index e8ab80d..e6eea26 100644
+--- a/src/pages/ChatPage.tsx
++++ b/src/pages/ChatPage.tsx
+@@ -776,14 +776,15 @@ export function ChatPage() {
+   const suggestionOptions = asOptions(deck)
+   // v5 (U053): what the suggestions rest on, in words, for each row's Why.
+   const lastCheckIn = journey?.checkIns[journey.checkIns.length - 1]
+-  const basisLine = [
+-    findGoal(answers?.goal ?? null) ? `your goal, “${findGoal(answers?.goal ?? null)?.label}”` : 'what you asked for in this conversation',
++  const basisParts = [
++    findGoal(answers?.goal ?? null) ? `your goal (“${findGoal(answers?.goal ?? null)?.label}”)` : 'what you asked for in this conversation',
+     lastCheckIn ? `how you felt after your last chapter (“${MOOD_LABELS[lastCheckIn.mood - 1]}”)` : null,
+     answers?.wearable && answers.wearable !== 'none' ? 'your wearable' : null,
+-  ]
+-    .filter(Boolean)
+-    .join(', ')
+-    .replace(/, ([^,]*)$/, ' and $1') + '.'
++  ].filter((part): part is string => Boolean(part))
++  // "a, b and c" — joined on the list, not by rewriting the last comma in the
++  // text, which also matched a comma inside the goal's own phrase.
++  const basisLine =
++    (basisParts.length > 1 ? `${basisParts.slice(0, -1).join(', ')} and ${basisParts[basisParts.length - 1]}` : basisParts[0]) + '.'
+   // v4: none of the chips undoes a choice made in onboarding (J039 F2) — no
+   // "Make it longer" for someone who picked 20 minutes.
+   const suggestions = v4 && answers ? suggestionsFor(answers) : SUGGESTIONS
+-- 
+2.43.0
+
