@@ -776,14 +776,15 @@ export function ChatPage() {
   const suggestionOptions = asOptions(deck)
   // v5 (U053): what the suggestions rest on, in words, for each row's Why.
   const lastCheckIn = journey?.checkIns[journey.checkIns.length - 1]
-  const basisLine = [
-    findGoal(answers?.goal ?? null) ? `your goal, “${findGoal(answers?.goal ?? null)?.label}”` : 'what you asked for in this conversation',
+  const basisParts = [
+    findGoal(answers?.goal ?? null) ? `your goal (“${findGoal(answers?.goal ?? null)?.label}”)` : 'what you asked for in this conversation',
     lastCheckIn ? `how you felt after your last chapter (“${MOOD_LABELS[lastCheckIn.mood - 1]}”)` : null,
     answers?.wearable && answers.wearable !== 'none' ? 'your wearable' : null,
-  ]
-    .filter(Boolean)
-    .join(', ')
-    .replace(/, ([^,]*)$/, ' and $1') + '.'
+  ].filter((part): part is string => Boolean(part))
+  // "a, b and c" — joined on the list, not by rewriting the last comma in the
+  // text, which also matched a comma inside the goal's own phrase.
+  const basisLine =
+    (basisParts.length > 1 ? `${basisParts.slice(0, -1).join(', ')} and ${basisParts[basisParts.length - 1]}` : basisParts[0]) + '.'
   // v4: none of the chips undoes a choice made in onboarding (J039 F2) — no
   // "Make it longer" for someone who picked 20 minutes.
   const suggestions = v4 && answers ? suggestionsFor(answers) : SUGGESTIONS
