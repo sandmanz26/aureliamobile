@@ -180,7 +180,7 @@ export function BarChart({ data, color = 'var(--color-adm-s1)', format = (v) => 
           <div className="relative h-16 flex-1 rounded-4 bg-adm-hover">
             <div
               className="h-full rounded-4 transition-[width]"
-              style={{ width: `${(row.value / max) * 100}%`, background: color, opacity: hover === null || hover === i ? 1 : 0.55 }}
+              style={{ width: `${(Math.max(0, row.value) / max) * 100}%`, background: color, opacity: hover === null || hover === i ? 1 : 0.55 }}
             />
           </div>
           <span className="w-[68px] shrink-0 text-right text-12 font-medium tabular-nums text-adm-ink">

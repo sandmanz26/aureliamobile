@@ -60,6 +60,7 @@ const GalleryLayoutPage = lazy(() => import('./pages/dev/GalleryLayoutPage').the
 const DashboardPage = lazy(() => import('./admin/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })))
 const UsersPage = lazy(() => import('./admin/pages/UsersPage').then((m) => ({ default: m.UsersPage })))
 const UserDetailPage = lazy(() => import('./admin/pages/UserDetailPage').then((m) => ({ default: m.UserDetailPage })))
+const OutcomesPage = lazy(() => import('./admin/pages/OutcomesPage').then((m) => ({ default: m.OutcomesPage })))
 const RolesPage = lazy(() => import('./admin/pages/RolesPage').then((m) => ({ default: m.RolesPage })))
 const AdminSessionsPage = lazy(() => import('./admin/pages/SessionsPage').then((m) => ({ default: m.SessionsPage })))
 const AdminChallengesPage = lazy(() => import('./admin/pages/ChallengesPage').then((m) => ({ default: m.ChallengesPage })))
@@ -132,6 +133,11 @@ export default function App() {
             <Route path="users/:id" element={
               <ModuleGuard module="adminUsers">
                 <UserDetailPage />
+              </ModuleGuard>
+            } />
+            <Route path="outcomes" element={
+              <ModuleGuard module="adminOutcomes">
+                <OutcomesPage />
               </ModuleGuard>
             } />
             <Route path="roles" element={

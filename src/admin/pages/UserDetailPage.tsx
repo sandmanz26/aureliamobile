@@ -3,6 +3,7 @@ import { Link, Navigate, useParams } from 'react-router-dom'
 import { Badge, Panel, StatCard, StatusBadge } from '../components/ui'
 import { useAdminData } from '../data/AdminDataContext'
 import { AUDIT_LOG, COIN_TX, ROLES } from '../data/mock'
+import { MEANINGFUL_CHANGE, OUTCOME_TONE, buildOutcomes, needsFollowUp, outcomeOf, who5Change } from '../data/outcomes'
 
 const roleName = (id: string) => ROLES.find((role) => role.id === id)?.name ?? 'Member'
 const dateTime = (iso: string) => new Date(iso).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })
@@ -29,6 +30,9 @@ export function UserDetailPage() {
   const sessions = allSessions.filter((session) => session.authorId === user.id)
   const coinTx = COIN_TX.filter((tx) => tx.userId === user.id)
   const auditEntries = AUDIT_LOG.filter((entry) => entry.actorId === user.id || entry.target === user.id)
+  // U056: the same sample outcomes as /admin/outcomes, so the two never disagree.
+  const outcome = buildOutcomes(users).find((o) => o.userId === user.id)
+  const change = outcome ? who5Change(outcome) : null
 
   return (
     <>
@@ -62,6 +66,38 @@ export function UserDetailPage() {
         <StatCard label="Sessions created" value={sessions.length.toString()} />
         <StatCard label="Last active" value={date(user.lastActiveAt)} />
       </div>
+
+      {outcome && (
+        <Panel
+          title="Well-being outcome"
+          description="WHO-5 every two weeks, check-ins after each session, wearable where connected. Sample data until there is a backend."
+          actions={
+            <span className="flex flex-wrap items-center gap-4">
+              <Badge tone={OUTCOME_TONE[outcomeOf(outcome)]}>{outcomeOf(outcome)}</Badge>
+              {needsFollowUp(outcome) && <Badge tone="warning">follow up</Badge>}
+            </span>
+          }
+        >
+          <div className="grid grid-cols-2 gap-12 lg:grid-cols-4">
+            <StatCard label="Goal" value={outcome.goal} hint={`${outcome.chapters} chapters`} />
+            <StatCard
+              label="WHO-5"
+              value={outcome.who5.length ? outcome.who5.join(' → ') : '—'}
+              hint={change === null ? 'needs two scores' : `${change > 0 ? '+' : ''}${change} points (${MEANINGFUL_CHANGE} is meaningful)`}
+            />
+            <StatCard
+              label="Check-ins (1–5)"
+              value={outcome.moodStart !== null && outcome.moodLatest !== null ? `${outcome.moodStart} → ${outcome.moodLatest}` : '—'}
+              hint="first three vs last three"
+            />
+            <StatCard
+              label="Resting heart rate"
+              value={outcome.restingHrStart !== null ? `${outcome.restingHrStart}${outcome.restingHrLatest !== null ? ` → ${outcome.restingHrLatest}` : ''}` : '—'}
+              hint={outcome.wearable ?? 'no wearable connected'}
+            />
+          </div>
+        </Panel>
+      )}
 
       <Panel title="Sessions created" description="Everything in the catalogue authored by this account.">
         {sessions.length ? (

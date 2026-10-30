@@ -16,7 +16,8 @@ interface ChatComposerProps {
 }
 
 // Figma "Container" — 356x59, radius 70, surface/default on a 0.5px
-// #e4e4e4 hairline. Plus / field / voice orb / send.
+// #e4e4e4 hairline. Plus / field / voice orb / send. 75px since U056: 8px
+// more above and below, on request, so the box reads as the place to type.
 export function ChatComposer({ onSend, onVoice, onAdd, disabled, canVoice = true, replyingTo, onCancelReply }: ChatComposerProps) {
   const [value, setValue] = useState('')
   const input = useRef<HTMLInputElement>(null)
@@ -59,7 +60,7 @@ export function ChatComposer({ onSend, onVoice, onAdd, disabled, canVoice = true
       )}
     <form
       onSubmit={submit}
-      className="flex h-[59px] items-center gap-14 rounded-full border-[0.5px] border-border-subtle bg-surface-default py-12 pl-19 pr-12"
+      className="flex h-[75px] items-center gap-14 rounded-full border-[0.5px] border-border-subtle bg-surface-default py-20 pl-19 pr-12"
     >
       {/* Padding pulled back by an equal negative margin: a 40x40 touch target
           around a 16px glyph, with the row spacing unchanged. */}

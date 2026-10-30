@@ -1,5 +1,5 @@
 import { ArrowRight, Clock, Menu, Play, Podium, Sparkles, Users } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import liveSessionsMap from '../assets/live-sessions-map.png'
 import { useUiVersion } from '../versions/useUiVersion'
@@ -196,8 +196,46 @@ export function ExplorePage() {
   const v4 = useUiVersion() >= 4
   const name = v4 ? 'Discover' : 'Explore'
 
+  // U056: the header follows the page down (Eugene: "This header has to
+  // follow as you scroll down"). At rest it stays clear over the gradient
+  // band, exactly as before; once something scrolls under it, it takes the
+  // shared `.u-sticky-top` frosted background so it stays readable.
+  const sentinel = useRef<HTMLDivElement>(null)
+  const [stuck, setStuck] = useState(false)
+  useEffect(() => {
+    const el = sentinel.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const bar = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--staging-bar')) || 0
+    const observer = new IntersectionObserver(([entry]) => setStuck(!entry.isIntersecting), {
+      rootMargin: `-${bar}px 0px 0px 0px`,
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  // The old band was a 122px box (from -30px below lg) that the header sat
+  // in, so the hero landed 92px (lg: 122px) below the page top whatever the
+  // header's height — which varies, since the menu button is hidden on lg
+  // and in v4+. The spacer makes up the same difference.
+  const header = useRef<HTMLDivElement>(null)
+  const [gap, setGap] = useState(16)
+  useLayoutEffect(() => {
+    const el = header.current
+    if (!el) return
+    const wide = window.matchMedia('(width >= 64rem)')
+    const measure = () => setGap(Math.max(0, (wide.matches ? 122 : 92) - el.offsetHeight))
+    measure()
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
+    observer?.observe(el)
+    wide.addEventListener('change', measure)
+    return () => {
+      observer?.disconnect()
+      wide.removeEventListener('change', measure)
+    }
+  }, [])
+
   return (
-    <div className="pb-48">
+    <div className="relative pb-48">
       <PageMeta
         title={name}
         description="Browse sessions by category, discover trusted creators, and join a monthly challenge."
@@ -209,14 +247,25 @@ export function ExplorePage() {
           status-bar clearance added in AppLayout, so the gradient reaches
           the true top of the viewport instead of stopping at this div's
           normal position. */}
+      {/* U056: the band is painted behind (absolute) rather than wrapping the
+          header, because a sticky element can only stick inside its parent —
+          wrapped in a 122px band it would scroll away with it. Same box as
+          before: from -30px (mobile) or 0 (lg), 122px tall, and the spacer
+          after the header keeps the hero where it was (92 / 122px down).
+          `lg:top-[0px]`, not `lg:top-0`: versions.css moves every
+          `.lg:top-0` under the staging bar, which is for sticky columns. */}
       <div
-        className="-mt-[30px] pt-[30px] lg:mt-0 lg:pt-0"
-        style={{
-          background: 'linear-gradient(180deg, rgba(255,230,130,0.6), rgba(255,255,255,0))',
-          minHeight: '122px',
-        }}
-      >
-        <div className="flex items-center justify-between gap-12 px-20 py-16 lg:px-24">
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 -top-[30px] h-[122px] lg:top-[0px]"
+        style={{ background: 'linear-gradient(180deg, rgba(255,230,130,0.6), rgba(255,255,255,0))' }}
+      />
+      <div ref={sentinel} aria-hidden="true" className="h-0" />
+        <div
+          ref={header}
+          className={`u-sticky-top flex items-center justify-between gap-12 px-20 py-16 lg:px-24 ${
+            stuck ? '' : 'bg-transparent! backdrop-blur-none! [backdrop-filter:none]!'
+          }`}
+        >
           <div className="flex items-center gap-8">
             <button
               type="button"
@@ -232,7 +281,7 @@ export function ExplorePage() {
           <CoinPill points="1,323" className="shadow-sm" />
           </div>
         </div>
-      </div>
+      <div aria-hidden="true" style={{ height: gap }} />
 
       <div className="mx-auto max-w-[960px] px-20 lg:px-24">
         {/* Hero banner — the one thing the app wants you to press today. */}
