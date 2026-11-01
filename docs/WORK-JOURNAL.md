@@ -115,6 +115,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J057 | 2026-10-30 | Question | v5 update formatted for WhatsApp | — |
 | J058 | 2026-10-30 | Report + Code | What's New PDF for users (v5 / prod v2), changes marked on screenshots; Why? text fix | U057 |
 | J059 | 2026-11-01 | Doc | Full technical and context handoff for another person or model (`docs/HANDOFF.md`) | docs only |
+| J060 | 2026-11-01 | Doc | Handoff completed with every working rule and every research result (Appendices A and B) | docs only |
 
 ---
 
@@ -624,3 +625,29 @@ transcript and the update log. Everything from J018 on was written at the time.
   - `FOR-AI-AGENT.md` (20 Sep) is marked superseded for current state.
 - **Noted while writing:** a fresh cloud container can start on the near-empty `claude/figma-variable-check-t6kazm` branch. Check out `web_app` first.
 - **No secrets included:** the site passwords are referenced by file, not by value.
+
+### J060 — Every rule and every research result in the handoff
+- **Asked:** "pastikan semua aturan permainan kita, hasil research nya pun juga harus dimasukan semua ya."
+- **Done:** `docs/HANDOFF.md` gained two appendices.
+  - **Appendix A, the rulebook:** every working rule with its source, in seven groups (working with the session owner; recording; branches and releases; design and layout; product principles from the research; engineering; reports and deliverables). It also says which rule wins when two seem to conflict.
+  - **Appendix B, the research compendium:** every result, in order.
+    - The logic review: all findings by area and severity, the 15 decisions with defaults, the session lifecycle.
+    - The beta thinking (J013–J015).
+    - The simplification plan and D1–D7.
+    - The retention simulation:
+      - brief, setup and benchmarks;
+      - the A–H questionnaire;
+      - the six personas with paths, scores and predictions;
+      - F1–F9 and R1–R10 with Shapley contributions;
+      - per-persona predictions and model parameters;
+      - J039's own D1–D5 and their outcome;
+      - the real-test plan and its pass line.
+    - The J040 validity assessment.
+    - The measured U050 re-run.
+    - J043 S1–S7 with control counts.
+    - The J046 re-score.
+    - The three interviews and the calibration.
+    - The v5 levers and totals.
+    - The WHO-5 outcomes proposal.
+    - The user-facing v5 summary.
+- **Corrected in §13:** the J039 model scripts *are* archived (`docs/reviews/retention-sim-2026-10-25/simulation-scripts.txt`). Only the v5 recalibration script was lost with a session scratch area; its method is written down in B.9.

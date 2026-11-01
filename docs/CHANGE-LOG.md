@@ -19,6 +19,16 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-01 — Handoff: full rulebook and research compendium (J060)
+
+`docs/HANDOFF.md` now includes:
+- Appendix A, every working rule with its source;
+- Appendix B, every research result: logic review, simplification, retention simulation, interviews, v5 model, WHO-5 proposal.
+
+Docs only.
+
+Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-11-01 — Handoff document (J059)
 
 `docs/HANDOFF.md` is the complete context and technical handoff for another person or model. `CLAUDE.md` points to it, and `FOR-AI-AGENT.md` is marked superseded for current state. Docs only.
