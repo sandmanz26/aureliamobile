@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-01 — Handoff document (J059)
+
+`docs/HANDOFF.md` is the complete context and technical handoff for another person or model. `CLAUDE.md` points to it, and `FOR-AI-AGENT.md` is marked superseded for current state. Docs only.
+
+Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-10-30 — v5 Why? text fix; What's New PDF for users (U057)
 
 - v5: a suggestion's "Why?" now reads "Based on: your goal (“Sleep better”) …". Before, it read "your goal and “Sleep better”".

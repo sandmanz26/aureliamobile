@@ -114,6 +114,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J056 | 2026-10-30 | Question | Shorter version of the v5 update | — |
 | J057 | 2026-10-30 | Question | v5 update formatted for WhatsApp | — |
 | J058 | 2026-10-30 | Report + Code | What's New PDF for users (v5 / prod v2), changes marked on screenshots; Why? text fix | U057 |
+| J059 | 2026-11-01 | Doc | Full technical and context handoff for another person or model (`docs/HANDOFF.md`) | docs only |
 
 ---
 
@@ -598,3 +599,28 @@ transcript and the update log. Everything from J018 on was written at the time.
   - It includes how to switch: Design → v2, or v5 on the test site.
   - Wearable readings are labelled as examples.
 - **Also fixed:** the v5 Why? sentence for a goal-only basis (U057).
+
+### J059 — Handoff document
+- **Asked:** "buatlah dokumentasi secara teknis lengkap dan bisa di pakai oleh model lain. karena ada kemungkinan akan di hand off, berikan secara detail semua dari rekap, baik secara context ataupun secara teknis nya"
+- **Delivered:** `docs/HANDOFF.md`, in sixteen sections:
+  - product and people;
+  - standing rules;
+  - branches, environments and deploys, with heads as of today;
+  - what is on production vs staging;
+  - stack, with the storage keys;
+  - the design-version system, including production's own mapping;
+  - the feature map per version with files;
+  - the admin CMS, including outcomes;
+  - the recording procedure (U/J/O/CHANGE-LOG/patches, numbering);
+  - the release and CI checks;
+  - verification recipes (Playwright sign-in, pixel regression, PDF rendering, screenshot marking);
+  - traps;
+  - the research numbers and every report;
+  - open decisions and known gaps;
+  - tools and connectors;
+  - a glossary.
+- **Also:**
+  - `CLAUDE.md` now points to it first.
+  - `FOR-AI-AGENT.md` (20 Sep) is marked superseded for current state.
+- **Noted while writing:** a fresh cloud container can start on the near-empty `claude/figma-variable-check-t6kazm` branch. Check out `web_app` first.
+- **No secrets included:** the site passwords are referenced by file, not by value.

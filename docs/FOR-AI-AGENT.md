@@ -6,6 +6,8 @@ repository up cold. Written to be read in one pass, before touching anything.
 **If you read only one section, read §1 and §2.** Nearly every wasted hour in
 this project's history came from one of the four facts in §1.
 
+> **Superseded for current state by [`HANDOFF.md`](HANDOFF.md)** (1 Nov 2026), which covers design versions v1–v5, production's own two versions, the logging and release procedure, and the verification recipes. This file is still accurate on the four facts in §1.
+
 > **Status** Written 20 Sep 2026 against `mobile_app` @ `e4fc580` and
 > `web_app` @ `4dfaa4b`.
 

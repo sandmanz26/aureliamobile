@@ -4,6 +4,8 @@ Context for anyone (human or AI) reading this code for the first time. It covers
 what is here, the decisions that are not obvious from the source, and the things
 that will mislead you if nobody tells you.
 
+**Picking this project up cold, or taking it over? Read `docs/HANDOFF.md` first**: the people, the standing rules, the current state of every branch and environment, the recording and release procedure, verification recipes, the traps, and the open decisions, in one place.
+
 **This branch is the React app.** The repository keeps one app per branch:
 
 | Branch | What is on it |
