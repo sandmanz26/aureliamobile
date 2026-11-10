@@ -239,7 +239,7 @@ export const DEMO_MODULES: DemoModule[] = [
   /* --- Back office (the product's own admin, shown as a feature) --- */
   { id: 'admin', kind: 'admin', label: 'Admin — access', description: 'Master switch. Off means /admin is unreachable entirely.', route: '/admin', built: true },
   { id: 'adminUsers', kind: 'admin', label: 'Users', description: 'Account list, roles, suspensions.', route: '/admin/users', built: true },
-  { id: 'adminExperimentation', kind: 'admin', label: 'Experimentation · feedback group', description: 'The 30-person, 8-week study of therapeutic outcomes: criteria, participants, measures, data quality and safety.', route: '/admin/experimentation', built: true },
+  { id: 'adminExperimentation', kind: 'admin', label: 'Experimentation · feedback group', description: 'The 30-person, 8-week study of therapeutic outcomes: criteria, participants, measures, data quality and safety.', route: '/admin/experimentation', built: true, unreleased: true },
   { id: 'adminOutcomes', kind: 'admin', label: 'Well-being outcomes', description: 'How much each user’s well-being has changed (WHO-5, check-ins, wearable).', route: '/admin/outcomes', built: true },
   { id: 'adminRoles', kind: 'admin', label: 'Roles & permissions', description: 'Permission matrix.', route: '/admin/roles', built: true },
   { id: 'adminSessions', kind: 'admin', label: 'Sessions', description: 'Generated session catalogue.', route: '/admin/sessions', built: true },
