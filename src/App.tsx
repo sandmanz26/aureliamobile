@@ -60,6 +60,8 @@ const GalleryLayoutPage = lazy(() => import('./pages/dev/GalleryLayoutPage').the
 const DashboardPage = lazy(() => import('./admin/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })))
 const UsersPage = lazy(() => import('./admin/pages/UsersPage').then((m) => ({ default: m.UsersPage })))
 const UserDetailPage = lazy(() => import('./admin/pages/UserDetailPage').then((m) => ({ default: m.UserDetailPage })))
+const ExperimentationPage = lazy(() => import('./admin/pages/ExperimentationPage').then((m) => ({ default: m.ExperimentationPage })))
+const ExperimentationParticipantPage = lazy(() => import('./admin/pages/ExperimentationPage').then((m) => ({ default: m.ExperimentationParticipantPage })))
 const OutcomesPage = lazy(() => import('./admin/pages/OutcomesPage').then((m) => ({ default: m.OutcomesPage })))
 const RolesPage = lazy(() => import('./admin/pages/RolesPage').then((m) => ({ default: m.RolesPage })))
 const AdminSessionsPage = lazy(() => import('./admin/pages/SessionsPage').then((m) => ({ default: m.SessionsPage })))
@@ -133,6 +135,16 @@ export default function App() {
             <Route path="users/:id" element={
               <ModuleGuard module="adminUsers">
                 <UserDetailPage />
+              </ModuleGuard>
+            } />
+            <Route path="experimentation" element={
+              <ModuleGuard module="adminExperimentation">
+                <ExperimentationPage />
+              </ModuleGuard>
+            } />
+            <Route path="experimentation/:pid" element={
+              <ModuleGuard module="adminExperimentation">
+                <ExperimentationParticipantPage />
               </ModuleGuard>
             } />
             <Route path="outcomes" element={

@@ -1,5 +1,6 @@
 import {
   HeartPulse,
+  Microscope,
   Activity,
   Bell,
   Coins,
@@ -49,6 +50,10 @@ const NAV: { section: string; items: NavItem[] }[] = [
       { to: '/admin/outcomes', label: 'Well-being outcomes', icon: HeartPulse, flag: 'adminOutcomes' },
       { to: '/admin/roles', label: 'Roles & permissions', icon: ShieldCheck, flag: 'adminRoles' },
     ],
+  },
+  {
+    section: 'Experimentation',
+    items: [{ to: '/admin/experimentation', label: 'Feedback group study', icon: Microscope, flag: 'adminExperimentation' }],
   },
   {
     section: 'Content',
