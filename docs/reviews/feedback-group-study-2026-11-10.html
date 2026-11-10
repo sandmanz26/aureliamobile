@@ -1,0 +1,291 @@
+<title>Aurelia Feedback Group Study</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&display=swap">
+<style>
+/* Layout: one reading column; tables carry the protocol; full-width admin screenshots; one timeline strip. */
+:root {
+  --bg: #FFFDF9; --surface: #FFFFFF; --ink: #2A1704; --muted: #6F5E4D; --line: #EADFD2;
+  --accent: #C25E0A; --accent-soft: #FFF1DB; --good: #1F7A4D; --good-soft: #E7F5EC; --bad: #B4380C; --bad-soft: #FDEDE6;
+  --bar-before: #CDBBA7; --bar-now: #E8770F; --bar-full: #6B3608; --band: #F3E9DC;
+  --font: 'Mulish', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #17110B; --surface: #211910; --ink: #F6EDE3; --muted: #BBA894; --line: #3A2E22;
+    --accent: #FF9A3D; --accent-soft: #3A2712; --good: #6FD39A; --good-soft: #15301F; --bad: #FF8A5C; --bad-soft: #3A1C12;
+    --bar-before: #6E5B48; --bar-now: #FF9A3D; --bar-full: #F2C18F; --band: #2A2017; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #17110B; --surface: #211910; --ink: #F6EDE3; --muted: #BBA894; --line: #3A2E22;
+  --accent: #FF9A3D; --accent-soft: #3A2712; --good: #6FD39A; --good-soft: #15301F; --bad: #FF8A5C; --bad-soft: #3A1C12;
+  --bar-before: #6E5B48; --bar-now: #FF9A3D; --bar-full: #F2C18F; --band: #2A2017; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.6; margin: 0; }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 40px 72px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 42px); font-weight: 800; letter-spacing: -0.01em; }
+h2 { font-size: 24px; font-weight: 800; margin-top: 56px; padding-top: 20px; border-top: 2px solid var(--ink); }
+h3 { font-size: 17px; font-weight: 700; }
+p { margin: 0; max-width: 68ch; }
+.ai { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; padding: 6px 12px; border-radius: 999px; background: var(--ink); color: var(--bg); font-size: 13px; font-weight: 700; }
+.ai::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--bar-now); }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.lede { font-size: 18px; color: var(--muted); margin-top: 12px; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 18px; font-size: 13px; color: var(--muted); }
+.meta b { color: var(--ink); font-weight: 600; }
+.stack { display: flex; flex-direction: column; gap: 14px; margin-top: 14px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 28px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.kpi .label { font-size: 13px; color: var(--muted); line-height: 1.35; }
+.kpi .vals { display: flex; align-items: baseline; gap: 8px; font-variant-numeric: tabular-nums; flex-wrap: wrap; }
+.kpi .from { font-size: 18px; color: var(--muted); text-decoration: line-through; text-decoration-thickness: 1px; }
+.kpi .to { font-size: 30px; font-weight: 800; color: var(--ink); }
+.kpi .note { font-size: 12px; color: var(--muted); }
+.tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.tag.measured { background: var(--good-soft); color: var(--good); }
+.tag.predicted { background: var(--accent-soft); color: var(--accent); }
+.tag.done { background: var(--good-soft); color: var(--good); }
+.tag.part { background: var(--accent-soft); color: var(--accent); }
+.tag.todo { background: var(--bad-soft); color: var(--bad); }
+.answer { background: var(--accent-soft); border-radius: 16px; padding: 18px 20px; margin-top: 24px; }
+.answer p + p { margin-top: 8px; }
+.table-wrap { overflow-x: auto; margin-top: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 560px; }
+th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 12px 14px; border-bottom: 1px solid var(--line); font-weight: 700; }
+td { padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.change { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 20px; margin-top: 28px; align-items: start; break-inside: avoid; }
+.change .text { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.change .text .row { font-size: 14px; }
+.change .text .row b { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.shots { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; min-width: 0; }
+.shots figure { margin: 0; min-width: 0; }
+.shots img { width: 100%; height: auto; display: block; border-radius: 12px; border: 1px solid var(--line); }
+.shots figcaption { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+.shots figure:first-child figcaption { color: var(--bad); }
+.shots figure:last-child figcaption { color: var(--good); }
+.chart { margin-top: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+.chart svg { width: 100%; height: auto; display: block; }
+.chart text { font-family: var(--font); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); margin-top: 8px; }
+.legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
+.small { font-size: 13px; color: var(--muted); }
+ul.plain { margin: 10px 0 0; padding-left: 20px; }
+ul.plain li { margin: 6px 0; max-width: 68ch; }
+.next { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 16px; }
+.next div { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; font-size: 14px; }
+.next b { display: block; margin-bottom: 4px; font-size: 15px; }
+@media (max-width: 640px) {
+  .change { grid-template-columns: 1fr; }
+}
+@media print {
+  .wrap { padding: 0; max-width: none; }
+  h2 { break-after: avoid; }
+  .change, .kpi, .chart, .next, .table-wrap, .answer { break-inside: avoid; }
+  h3 { break-after: avoid; }
+  .kpis { grid-template-columns: 1fr 1fr; }
+}
+.tag.design { background: var(--band); color: var(--ink); }
+.timeline { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 6px; margin-top: 16px; }
+.timeline div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px; font-size: 11px; line-height: 1.35; min-width: 0; }
+.timeline b { display: block; font-size: 12px; color: var(--accent); }
+.timeline .key { border-color: var(--accent); background: var(--accent-soft); }
+figure.wide { margin: 18px 0 0; break-inside: avoid; }
+figure.wide img { width: 100%; height: auto; display: block; border-radius: 12px; border: 1px solid var(--line); }
+figure.wide figcaption { font-size: 13px; color: var(--muted); margin-top: 8px; }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 18px; align-items: start; margin-top: 18px; break-inside: avoid; }
+.pair img { width: 100%; border-radius: 12px; border: 1px solid var(--line); display: block; }
+@media (max-width: 640px) { .timeline { grid-template-columns: repeat(3, minmax(0, 1fr)); } .pair { grid-template-columns: 1fr; } }
+@media print { figure.wide, .pair, .timeline { break-inside: avoid; } figure.wide img { max-height: 218mm; width: auto; max-width: 100%; margin: 0 auto; } .pair figure.wide img { max-height: 200mm; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Aurelia · study protocol · 10 November 2026</p>
+    <p class="ai">AI analysis · Based on Claude self-analysis and deep research</p>
+    <h1>The feedback group: does Aurelia actually help people get better?</h1>
+    <p class="lede">Thirty people, each with one issue Aurelia is meant to help with, will use it for eight weeks. This document explains why we run the study, how it is designed, what data we must collect, what counts as success, and the new Experimentation section in admin where the team tracks it.</p>
+    <div class="meta">
+      <span><b>Requested by:</b> Eugene, for MVP validation</span>
+      <span><b>Study id:</b> fg-2026-01</span>
+      <span><b>Admin:</b> Experimentation → Feedback group study (staging)</span>
+      <span><b>Prepared by:</b> Claude (Anthropic's AI), for Werner and Eugene</span>
+    </div>
+  </header>
+
+  <section class="kpis" aria-label="The study at a glance">
+    <div class="kpi"><span class="label">People in the feedback group</span><span class="vals"><span class="to">30</span></span><span class="note"><span class="tag design">Design</span> six cohorts of 4–6</span></div>
+    <div class="kpi"><span class="label">Length of the study</span><span class="vals"><span class="to">8 weeks</span></span><span class="note"><span class="tag design">Design</span> baseline, then weeks 1–8</span></div>
+    <div class="kpi"><span class="label">Main question asked every two weeks</span><span class="vals"><span class="to">WHO-5</span></span><span class="note"><span class="tag design">Design</span> well-being, 0–100</span></div>
+    <div class="kpi"><span class="label">Pass line for well-being</span><span class="vals"><span class="to">≥ 50%</span></span><span class="note"><span class="tag design">Design</span> improve by 10+ points</span></div>
+  </section>
+
+  <div class="answer">
+    <p><strong>In one paragraph.</strong> So far we have tested whether people <em>understand and come back to</em> Aurelia: a simulation with six AI personas, then three real interviews. We have not tested whether it <em>helps</em>. This study does that in the simplest honest way. Thirty people with one target issue each (bad sleep, anxiety, mental fog, low energy, poor focus, a stressed body) use Aurelia for eight weeks. Every two weeks they answer a short, widely used well-being questionnaire (WHO-5), and at the start, middle and end a validated questionnaire for their own issue. The app records how often they actually use it. Before we start we fix the pass lines, so the result cannot be read to fit. The study can show whether people improve while using Aurelia and whether they keep using it, which is enough to decide whether the MVP deserves a proper controlled trial. It cannot prove that Aurelia caused the change, and we will not claim that it did.</p>
+  </div>
+
+  <h2>1. Why this study, and why now</h2>
+  <div class="stack">
+    <p>Eugene's brief: a group of 30 people with different issues tries Aurelia for a period of time, to see whether they can "solve and win them": bad sleep to good sleep, mental fog to mental clarity. The admin needs a section to track and measure the group, as validation of therapeutic outcomes for the MVP.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>What we have</th><th>What it told us</th><th>What it cannot tell us</th></tr></thead>
+        <tbody>
+          <tr><td>Retention simulation (25 Oct), six AI personas</td><td>Where first-time users get lost, and which fixes should bring them back</td><td>Anything about real people's outcomes; its numbers are predictions</td></tr>
+          <tr><td>Three real interviews (Ishmeet, Olivia, Bryan)</td><td>What feels untrustworthy, what they want (words, not scores; the why; their wearable)</td><td>Whether using Aurelia for weeks changes anything for them</td></tr>
+          <tr><td>The app (production v1 / v2)</td><td>A one-tap check-in after each session, a five-chapter journey, a journal</td><td>Validated outcome measures; the check-in is a mood tap, not a clinical measure</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The study fills the gap between "people like it" and "it helps". It is also the first time real use is measured over weeks. That is why the work to keep people signed in (decision D2) becomes a must-have before week 0.</p>
+  </div>
+
+  <h2>2. The design at a glance</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Element</th><th>Choice</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Type</td><td>Single-arm, pre-registered pilot (everyone uses Aurelia; no control group)</td><td>The right size for an MVP. It tells us whether a controlled trial is worth running. A control group of 15 would be too small to show anything.</td></tr>
+        <tr><td>People</td><td>30 adults, recruited for one target issue each, never having used Aurelia</td><td>Matches the six goals onboarding already offers, so each person uses the product as it is</td></tr>
+        <tr><td>Length</td><td>8 weeks: baseline (week 0), then weeks 1–8</td><td>Long enough for sleep and stress to change; short enough to keep people. Eugene asked for two months.</td></tr>
+        <tr><td>What they do</td><td>Use Aurelia as they like, with a suggested rhythm of 3+ sessions a week and the five-chapter journey</td><td>We test the real product, not a lab version. Adherence is measured, not forced.</td></tr>
+        <tr><td>Main measure</td><td>WHO-5 Well-Being Index at weeks 0, 2, 4, 6, 8</td><td>Five questions, free to use, validated in many languages, with a known meaningful change (10 points)</td></tr>
+        <tr><td>Issue measure</td><td>One validated questionnaire per cohort at weeks 0, 4, 8</td><td>"Bad sleep to good sleep" needs a sleep measure, not only general well-being</td></tr>
+        <tr><td>Safety</td><td>PHQ-9 at screening, week 4 and week 8; same-day human follow-up on any risk answer</td><td>People with real difficulties will join; we must notice when someone is getting worse</td></tr>
+        <tr><td>Identity</td><td>Pseudonymous ids (P01–P30) in every tool; names only with the research team</td><td>Health data. The admin never needs to know who someone is to measure the study.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>3. Six cohorts, one measure each</h2>
+  <p style="margin-top:14px">Each cohort is one of the goals people already choose in onboarding. Each has a validated questionnaire for its issue, and the change that counts as meaningful for one person.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Cohort</th><th>App goal</th><th>Measure</th><th>Range</th><th>Meaningful change</th><th>Places</th></tr></thead>
+      <tbody>
+        <tr><td>Bad sleep → good sleep</td><td>Sleep better</td><td>Insomnia Severity Index (ISI)</td><td class="num">0–28</td><td>6 points lower</td><td class="num">6</td></tr>
+        <tr><td>Anxious → calm</td><td>Feel calmer</td><td>GAD-7</td><td class="num">0–21</td><td>4 points lower</td><td class="num">6</td></tr>
+        <tr><td>Mental fog → clarity</td><td>Clear my mind</td><td>PROMIS Cognitive Function 4a (T-score)</td><td class="num">20–80</td><td>5 points higher</td><td class="num">5</td></tr>
+        <tr><td>Low energy → energy</td><td>More energy</td><td>PROMIS Fatigue 4a (T-score)</td><td class="num">30–80</td><td>5 points lower</td><td class="num">5</td></tr>
+        <tr><td>Distracted → focused</td><td>Focus</td><td>PROMIS Cognitive Function 4a (T-score)</td><td class="num">20–80</td><td>5 points higher</td><td class="num">4</td></tr>
+        <tr><td>Stressed body → regulated</td><td>Regulate my body</td><td>Perceived Stress Scale (PSS-10)</td><td class="num">0–40</td><td>4 points lower</td><td class="num">4</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="small" style="margin-top:10px">The meaningful-change figures are the thresholds commonly used in the research literature for these instruments. A clinical advisor should confirm them before week 0, together with licensing: WHO-5, PHQ-9, GAD-7 and PROMIS are free to use; ISI and PSS-10 may need permission for commercial use. Sleep and calm are the largest cohorts because they had the largest shares in the simulated panel. That is an assumption about early users, not a measurement.</p>
+
+  <h2>4. The eight weeks</h2>
+  <div class="timeline" aria-label="Study timeline">
+    <div class="key"><b>Week 0</b>Consent, screening (PHQ-9), WHO-5, cohort measure, interview 1, onboarding</div>
+    <div><b>Week 1</b>Use Aurelia; check-ins; sleep diary for the sleep cohort</div>
+    <div class="key"><b>Week 2</b>WHO-5</div>
+    <div><b>Week 3</b>Use; weekly one-liner</div>
+    <div class="key"><b>Week 4</b>WHO-5, cohort measure, PHQ-9, interview 2 · interim read</div>
+    <div><b>Week 5</b>Use</div>
+    <div class="key"><b>Week 6</b>WHO-5</div>
+    <div><b>Week 7</b>Use</div>
+    <div class="key"><b>Week 8</b>WHO-5, cohort measure, PHQ-9, value question, interview 3 · final read</div>
+  </div>
+  <p class="small" style="margin-top:10px">Every session: a before-play tap and the existing "How do you feel now?" check-in. Daily, if the person agrees: wearable sleep, resting heart rate and HRV. Any time: "Something felt wrong", reviewed by a person.</p>
+
+  <h2>5. The data we need to collect</h2>
+  <p style="margin-top:14px">This is the list Eugene asked for. The last column says whether production can collect it today. Most of it has to be built before week 0 (section 9).</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Measure</th><th>Why we need it</th><th>When</th><th>In the app today</th></tr></thead>
+      <tbody>
+        <tr><td><b>WHO-5</b> well-being, 0–100</td><td>The one comparable outcome across all six issues; the primary result</td><td>Wk 0, 2, 4, 6, 8</td><td><span class="tag todo">No</span></td></tr>
+        <tr><td><b>Cohort measure</b> (table above)</td><td>Whether their own issue improved: "bad sleep to good sleep"</td><td>Wk 0, 4, 8</td><td><span class="tag todo">No</span></td></tr>
+        <tr><td><b>PHQ-9</b> safety screen</td><td>To notice anyone getting worse; item 9 triggers a same-day call</td><td>Screening, wk 4, 8</td><td><span class="tag todo">No</span></td></tr>
+        <tr><td><b>After-session check-in</b> 1–5</td><td>Short-term effect of each session</td><td>Every session</td><td><span class="tag done">Yes</span> needs saving to the account</td></tr>
+        <tr><td><b>Before-session state</b> 1–5</td><td>Turns the check-in into a before/after for each session</td><td>Every session</td><td><span class="tag todo">No</span></td></tr>
+        <tr><td><b>Sleep diary</b> (sleep cohort)</td><td>Time to fall asleep, night wakings: the details ISI summarises</td><td>Every morning</td><td><span class="tag todo">No</span></td></tr>
+        <tr><td><b>Wearable</b> sleep, resting heart rate, HRV</td><td>An objective signal next to what people report; all three interviewees wear one</td><td>Daily, if consented</td><td><span class="tag part">Partly</span> v2 asks; connection needs backend</td></tr>
+        <tr><td><b>Engagement</b>: sessions played, minutes, chapters, journal</td><td>Without use there is no effect to measure; it also separates "did not help" from "did not use"</td><td>Continuous</td><td><span class="tag part">Partly</span> views and taps only</td></tr>
+        <tr><td><b>Weekly one-liner</b> and <b>interviews</b></td><td>The why behind the numbers</td><td>Weekly; wk 0, 4, 8</td><td><span class="tag todo">No</span> research team</td></tr>
+        <tr><td><b>Value question</b> (Sean Ellis) and would-recommend</td><td>Would they miss it: the product-market-fit signal</td><td>Wk 8</td><td><span class="tag todo">No</span></td></tr>
+        <tr><td><b>Adverse events</b></td><td>Anything that felt worse, at any time</td><td>Any time</td><td><span class="tag todo">No</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>6. What counts as success</h2>
+  <p style="margin-top:14px">Set before week 0 and not changed afterwards. Outcome lines are judged only at week 8; the admin shows interim figures as "not yet".</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Question</th><th>Pass line</th><th>Why this line</th></tr></thead>
+      <tbody>
+        <tr><td>Does well-being improve meaningfully?</td><td>≥ 50% of people gain 10+ WHO-5 points by week 8</td><td>10 points is the change the WHO-5's authors call meaningful; half the group is a strong signal for a pilot</td></tr>
+        <tr><td>Does their own issue improve?</td><td>≥ 40% reach the meaningful change on their cohort measure</td><td>Issue measures move more slowly than general well-being</td></tr>
+        <tr><td>Do people stay?</td><td>≥ 70% still enrolled at week 8</td><td>Below that, the people who remain are not representative</td></tr>
+        <tr><td>Do people actually use it?</td><td>≥ 60% play 3+ sessions in at least 60% of weeks</td><td>An effect without use would be noise; use without effect is its own finding</td></tr>
+        <tr><td>Do we have the data to judge?</td><td>≥ 85% of due questionnaires answered</td><td>Missing data weakens every other line</td></tr>
+        <tr><td>Is anyone harmed?</td><td>No serious adverse event; every alert followed up the same day</td><td>Non-negotiable in a mental-health-adjacent product</td></tr>
+        <tr><td>Would they miss it?</td><td>≥ 40% "very disappointed" (Sean Ellis)</td><td>The usual product-market-fit bar, also used in the retention test plan</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>7. How we will read the results</h2>
+  <ul class="plain">
+    <li><strong>Responder rates with their uncertainty.</strong> With 30 people, a 50% responder rate has a 95% range of roughly 32–68%, so we report the range, not just the number.</li>
+    <li><strong>Change from baseline</strong> on WHO-5 and each cohort measure: the average change, a paired test (Wilcoxon signed-rank), and an effect size.</li>
+    <li><strong>Cohorts are described, not tested.</strong> With 4–6 people each, a cohort result is a direction, not a finding.</li>
+    <li><strong>Everyone counts:</strong> people who withdraw stay in the denominator ("intention to treat"). We also report the result for people who used it as suggested.</li>
+    <li><strong>Use is related to change:</strong> do people who played more improve more? This is the closest a single-arm study gets to a dose signal.</li>
+    <li><strong>What we will not claim:</strong> that Aurelia caused the change, that it treats any condition, or any number in marketing. People who join a study to feel better often do; regression to the mean and expectation both push scores up. A controlled trial is the next step if the pass lines are met.</li>
+  </ul>
+
+  <h2>8. Safety, consent and privacy</h2>
+  <ul class="plain">
+    <li><strong>Informed consent</strong> before any data is stored: what is collected, who sees it, the right to withdraw at any time, and that Aurelia is not a treatment. Anyone in treatment keeps it; Aurelia is never a replacement.</li>
+    <li><strong>Who should not join:</strong> people in active crisis, with recent psychiatric hospitalisation, or scoring 20+ on PHQ-9 at screening. They are offered support resources instead.</li>
+    <li><strong>Risk answers go to a person:</strong> a PHQ-9 item 9 above zero, a WHO-5 of 28 or below, or a reported adverse event goes to the study lead, who calls the same day. Aurelia never handles it on its own, and the participant never sees a PHQ-9 score.</li>
+    <li><strong>Privacy:</strong> pseudonymous ids in every tool, journal text never leaves the participant's account without consent, and wearable data only with a separate consent.</li>
+    <li><strong>Review:</strong> an independent ethics review and a clinical advisor before week 0 are strongly recommended. They are needed if the results are ever to be published or used with partners.</li>
+  </ul>
+
+  <h2>9. The Experimentation section in admin</h2>
+  <p style="margin-top:14px">New in admin on staging: <b>Experimentation → Feedback group study</b>. It has four views and a page per participant. Until the study runs on the backend it shows sample data, generated by the same rules the real data will use. The screenshots below are mid-study (week 4 of 8) on sample data.</p>
+  <figure class="wide"><img src="feedback-group-study-2026-11-10/1-overview.jpg" alt="Admin overview of the study"><figcaption><b>Overview.</b> A timeline of the eight weeks and what is collected when; headline figures; the success criteria with their status (outcome lines "not yet" until week 8); well-being by cohort; a cohort table; and a box on what the study can and cannot show.</figcaption></figure>
+  <figure class="wide"><img src="feedback-group-study-2026-11-10/2-participants.jpg" alt="Participants table"><figcaption><b>Participants.</b> Thirty pseudonymous rows: cohort, status, WHO-5 before and now, their own measure, adherence, data completeness and follow-up flags. Filter by cohort, status or whether they met their measure; export to CSV.</figcaption></figure>
+  <figure class="wide"><img src="feedback-group-study-2026-11-10/3-protocol.jpg" alt="What we collect"><figcaption><b>What we collect.</b> The protocol from section 5 inside the tool, with what each item needs to be built, plus the cohort measures.</figcaption></figure>
+  <figure class="wide"><img src="feedback-group-study-2026-11-10/4-quality.jpg" alt="Data and safety"><figcaption><b>Data &amp; safety.</b> Follow-ups for a person, data collected per cohort, and every missing questionnaire, so nobody silently drops out of the data.</figcaption></figure>
+  <div class="pair">
+    <figure class="wide" style="margin:0"><img src="feedback-group-study-2026-11-10/5-participant.jpg" alt="One participant"><figcaption><b>One participant.</b> WHO-5 over time, their own measure, adherence, mood lift per session, sessions per week, and each questionnaire: done, missed or due. Contact details stay with the research team.</figcaption></figure>
+    <figure class="wide" style="margin:0"><img src="feedback-group-study-2026-11-10/6-phone.jpg" alt="The study overview on a phone"><figcaption>The same overview on a phone.</figcaption></figure>
+  </div>
+
+  <h2>10. What must be built before week 0</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Item</th><th>Why</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Stay signed in, with data saved to the account (D2)</td><td>Eight weeks of check-ins cannot live in one browser</td><td><span class="tag todo">Needs backend</span></td></tr>
+        <tr><td>Study enrolment and consent in the app</td><td>Links a person to fg-2026-01, a cohort and a pseudonymous id</td><td><span class="tag todo">To build</span></td></tr>
+        <tr><td>Questionnaire screen (WHO-5, cohort measures, PHQ-9) with reminders</td><td>The primary data; the API contract now includes it (§5.12)</td><td><span class="tag todo">To build</span></td></tr>
+        <tr><td>Before-play tap, sleep diary card, weekly one-liner</td><td>Secondary measures</td><td><span class="tag todo">To build</span></td></tr>
+        <tr><td>Events: session played, check-in answered, returned</td><td>Engagement and adherence</td><td><span class="tag todo">To build</span></td></tr>
+        <tr><td>Safety alert to the study lead</td><td>Same-day follow-up</td><td><span class="tag todo">To build</span></td></tr>
+        <tr><td>Wearable connection (Apple Health first)</td><td>Optional objective signal</td><td><span class="tag part">Optional for week 0</span></td></tr>
+        <tr><td>Admin Experimentation section</td><td>Tracking and measuring the group</td><td><span class="tag done">On staging</span> (sample data)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="small" style="margin-top:10px">If the backend is not ready, the study can start with the questionnaires in a form tool and the admin fed by a weekly import. That is slower and leaves more gaps, so it is a fallback, not the plan.</p>
+
+  <h2>11. Decisions needed from you</h2>
+  <div class="next">
+    <div><b>1. Approve the design and pass lines</b>They must be fixed before the first person starts, or the result can be read to fit.</div>
+    <div><b>2. Who recruits, and with what incentive?</b>Recommended: two people per issue from outside the team, with free Pro for a year after completing.</div>
+    <div><b>3. A clinical advisor and an ethics review</b>To confirm the measures, the thresholds and the safety process.</div>
+    <div><b>4. Start date</b>Week 0 starts when the items in section 10 are ready; about three to four weeks of build after a yes.</div>
+  </div>
+
+  <p class="small" style="margin-top:40px">AI analysis by Claude, based on its own analysis of the app and deep research. In the repository: retention simulation (docs/reviews/Aurelia-Retention-Simulation-2026-10-25.pdf), v5 proposal (docs/reviews/Aurelia-v5-Proposal-2026-10-27.pdf), API contract (docs/api/API-CONTRACT.md §5.12), admin rules (src/admin/data/study.ts), update log U058, work journal J062.</p>
+</div>

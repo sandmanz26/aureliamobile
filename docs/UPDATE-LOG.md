@@ -95,8 +95,32 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U055 | `e4c8e8e` | 2026-10-29 | Production offers two versions with its own numbers: prod v1 = staging v4 (default), prod v2 = staging v5; `web_prod` fast-forwarded. | [patch](patches/U055-e4c8e8e.patch) |
 | U056 | `b469f86` | 2026-10-30 | Chat box 16px taller; Explore/Discover header follows the scroll; admin Well-being outcomes (WHO-5, check-ins, heart rate) page + per-user panel. Staging only. | [patch](patches/U056-b469f86.patch) |
 | U057 | `f390b95` | 2026-10-30 | v5 Why? text fix (goal-only basis read "your goal and “Sleep better”"); user-facing What's New PDF for v5 / prod v2. Staging only. | [patch](patches/U057-f390b95.patch) |
+| U058 | `57e192d` | 2026-11-10 | Admin Experimentation section: the feedback-group study (30 people, 8 weeks, six cohorts): criteria, participants, measures, data quality and safety, per-participant page. Sample data. Staging only. | [patch](patches/U058-57e192d.patch) |
 
 ## Entries
+
+### U058 — Admin Experimentation: the feedback-group study
+
+- **Commit:** `57e192d` · pushed 2026-11-10 UTC · `web_app` + `admin_cms`. **Not `web_prod`.**
+- **Patch:** [patches/U058-57e192d.patch](patches/U058-57e192d.patch)
+- **Request** (Eugene, via the session owner):
+  - "a group of 30 people with different issues/illnesses that will try aurelia for a certain period of time to see if they can solve and win them (bad sleep to good sleep, mental fog to mental clarity etc)"
+  - "make a section in admin for this project where we can track and measure the feedback group in validation of therapeutic outcomes to our MVP"
+  - "Develop a section called experimentation here of metric data we need to collect in order to validate therapeutic outcomes from the feedback group over 2 months period — and make the PDF that explains the project in close design and reason to the other PDFs"
+- **Interpretation:**
+  - A single-arm, pre-registered 8-week pilot: 30 people in six cohorts that match the onboarding goals. Design and reasons are in the protocol PDF (J062).
+  - Admin gets its own nav section "Experimentation". The existing Growth → Experiments (A/B tests) is a different thing and is unchanged.
+  - Pseudonymous ids only.
+  - Sample data until the backend exists.
+  - Outcome criteria are not judged before week 8.
+- **Changed:**
+  - `admin/data/study.ts`: the study, the cohorts and their measures (ISI, GAD-7, PROMIS Cognitive Function, PROMIS Fatigue, PSS-10), the schedule (WHO-5 at weeks 0/2/4/6/8; cohort measure and PHQ-9 at 0/4/8) and the measure list. It also holds the rules (study week, responders, direction-aware meaningful change, adherence, completeness, follow-ups, success criteria, trajectory) and a seeded 30-person sample. Tests in `study.test.ts`.
+  - `admin/pages/ExperimentationPage.tsx`: the Overview / Participants / What we collect / Data & safety tabs, and `ExperimentationParticipantPage`.
+  - `AdminLayout`: a new nav section. `App.tsx`: the routes `/admin/experimentation` and `/admin/experimentation/:pid`. `modules.ts`: the flag `adminExperimentation`.
+- **Verified:**
+  - `npm run check` passes (97 tests).
+  - In a staging build, all four tabs and a participant page were checked at 1440 and 402 px: no horizontal page overflow and no page errors. Tables scroll inside their panels on a phone.
+- **Revert:** `git revert --no-commit 57e192d && git checkout HEAD -- docs/`.
 
 ### U057 — v5 Why? sentence fix, and the What's New PDF for users
 

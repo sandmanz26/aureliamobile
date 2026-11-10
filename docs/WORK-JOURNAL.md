@@ -50,6 +50,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O20 | **Production version picker is temporary** (U054): the bar takes 28px at the top of production for every visitor, and pins on production ignore the version. Clean-up options: hide it behind a flag or a URL parameter, or remove it once a default is chosen Since U055 production lists two versions of its own (v1 = staging v4, v2 = staging v5); which staging versions it offers next is a one-line change in `PRODUCTION_VERSIONS` | J050, J051, U054, U055 | Product owner: when to clean up and how |
 | O21 | **Well-being outcomes are a proposal on sample data** (U056): (1) confirm WHO-5 as the measure, and when the app asks it (start + every two weeks); (2) backend to store assessments, check-ins and wearable readings per user; (3) Compliance wording before any outcome is shown to users or partners; (4) who owns the follow-up for WHO-5 ≤ 28, and how; (5) storybook stories for the taller `ChatComposer`; (6) production gets U056 only when asked | J054, U056 | Product owner + Eugene; backend; compliance |
 | O22 | **API contract decisions** (J061, `docs/api/API-CONTRACT.md` §11): confirm the contract's own decisions (persistence, builds-based limit, one version model, integers + formatting, provenance); free-plan N and Plus/Pro; AI cost posture (Opus 5.5 on every route vs a cheaper model after evals); TTS, sound, visual and STT vendors; data residency and AI retention; safety policy with clinical review; payment provider and coin table; WHO-5; hosting | J061 | Product owner + Eugene; legal; engineering |
+| O23 | **Feedback-group study (J062)**: (1) approve the design and pass lines before week 0; (2) recruitment and incentive; (3) clinical advisor + ethics review, and instrument licensing (ISI, PSS-10 for commercial use); (4) start date, which needs D2 persistence, study enrolment and consent, questionnaire screens, events and a safety alert (API §5.12); (5) whether the Experimentation section goes to production now (sample data) or with the study | J062, U058 | Product owner + Eugene; clinical advisor |
 
 ---
 
@@ -118,6 +119,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J059 | 2026-11-01 | Doc | Full technical and context handoff for another person or model (`docs/HANDOFF.md`) | docs only |
 | J060 | 2026-11-01 | Doc | Handoff completed with every working rule and every research result (Appendices A and B) | docs only |
 | J061 | 2026-11-10 | Doc | API contract plan in English for the production version, including the AI features (`docs/api/`) | docs only |
+| J062 | 2026-11-10 | Question + Code + Report | Where admin lives (same app on staging and production); Experimentation section for the 30-person feedback-group study; protocol PDF | U058 |
 
 ---
 
@@ -685,3 +687,30 @@ transcript and the update log. Everything from J018 on was written at the time.
   - `FOR-BACKEND.md` points to the contract as the endpoint specification.
   - `HANDOFF.md` §13 lists it.
 - **Open items:** O22 added.
+
+### J062 — Admin location, the Experimentation section, and the study protocol (U058)
+- **Asked:**
+  - "saya confirm untuk admin, sekarang ini ada di terpisah atau tergabung dengan prod dan stage?"
+  - Eugene's request (via WhatsApp screenshots): a section in admin to track and measure a 30-person feedback group over 2 months, in validation of therapeutic outcomes; a section called Experimentation with the metric data to collect; and a PDF explaining the project, close in design and reasoning to the other PDFs.
+- **Answered (admin location):**
+  - Admin is not a separate site. It is the `/admin` route of the same app, deployed with each environment:
+    - staging = `web_app` (Vercel `aureliamobile`);
+    - production = `web_prod` (`aureliaprod.vercel.app/admin`).
+  - `admin_cms` is the same code as `web_app`, not a separate deployment.
+  - Each environment's admin shows its own bundled mock data; nothing is shared between them, and there is still no admin login (P0).
+  - Production's admin is at U055, so it does not have U056 (well-being outcomes) or this section.
+- **Done:** U058, the Experimentation section on staging.
+- **Delivered:** `docs/reviews/Aurelia-Feedback-Group-Study-2026-11-10.pdf`, 14 pages in the owner-report design and labelled AI analysis. HTML source and 6 screenshots in `docs/reviews/feedback-group-study-2026-11-10/`. Its sections:
+  - why;
+  - the design and the reasons for each choice;
+  - six cohorts with validated measures and the change that matters;
+  - the 8-week timeline;
+  - the data we need to collect, and whether production can collect it today;
+  - pre-registered success criteria with reasons;
+  - the analysis plan and what it can and cannot show;
+  - safety, consent and privacy;
+  - the admin section with screenshots;
+  - what must be built before week 0;
+  - four decisions.
+- **Also:** `docs/api/API-CONTRACT.md` §5.12 and `openapi.yaml` gained the study endpoints (now 90 paths, validated).
+- **Open items:** O23 added.

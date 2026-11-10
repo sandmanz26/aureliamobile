@@ -19,6 +19,19 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-10 — Admin Experimentation: feedback-group study (U058)
+
+Admin on staging has a new section, Experimentation → Feedback group study. It tracks a 30-person, 8-week study of therapeutic outcomes:
+- the success criteria;
+- the participants;
+- the data to collect;
+- data quality and safety;
+- a page per participant.
+
+It runs on sample data. The study protocol PDF is in `docs/reviews/`, and the API contract gained the study endpoints.
+
+Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-11-10 — API contract plan (J061)
 
 Added `docs/api/API-CONTRACT.md` and `docs/api/openapi.yaml`, the API contract for the production version (prod v1 = staging v4, prod v2 = staging v5).

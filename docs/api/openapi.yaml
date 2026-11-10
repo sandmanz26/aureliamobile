@@ -27,6 +27,8 @@ tags:
   - name: signals
   - name: community
   - name: economy
+  - name: studies
+    description: The feedback-group outcomes study (participant side)
   - name: platform
   - name: admin
 
@@ -1171,6 +1173,139 @@ paths:
           content: { application/json: { schema: { $ref: '#/components/schemas/Wallet' } } }
         '409': { $ref: '#/components/responses/Problem' }
 
+  /me/studies:
+    get:
+      tags: [studies]
+      responses:
+        '200':
+          description: Studies the user is enrolled in, with what is due
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [studyId, cohort, week, due]
+                  properties:
+                    studyId: { type: string, examples: [fg-2026-01] }
+                    cohort: { type: string, enum: [sleep, calm, clarity, energy, focus, regulate] }
+                    week: { type: integer, minimum: 0, maximum: 8 }
+                    due: { type: array, items: { $ref: '#/components/schemas/Instrument' } }
+  /studies/{studyId}/consent:
+    parameters: [{ $ref: '#/components/parameters/StudyId' }]
+    post:
+      tags: [studies]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [consentTextVersion, signedAt]
+              properties:
+                consentTextVersion: { type: string }
+                signedAt: { type: string, format: date-time }
+      responses:
+        '204': { description: Consent recorded; required before any study data is stored }
+  /studies/{studyId}/instruments/{instrument}:
+    parameters:
+      - { $ref: '#/components/parameters/StudyId' }
+      - { name: instrument, in: path, required: true, schema: { $ref: '#/components/schemas/Instrument' } }
+    get:
+      tags: [studies]
+      responses:
+        '200':
+          description: Versioned questions (server-owned text)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [instrument, version, questions]
+                properties:
+                  instrument: { $ref: '#/components/schemas/Instrument' }
+                  version: { type: string }
+                  questions:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, text, options]
+                      properties:
+                        id: { type: string }
+                        text: { type: string }
+                        options: { type: array, items: { type: object, properties: { value: { type: integer }, label: { type: string } } } }
+  /studies/{studyId}/assessments:
+    parameters: [{ $ref: '#/components/parameters/StudyId' }]
+    post:
+      tags: [studies]
+      description: A PHQ-9 item 9 above zero or a total of 20+ creates a same-day safety item; the participant never sees a PHQ-9 score.
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [instrument, week, answers, completedAt]
+              properties:
+                instrument: { $ref: '#/components/schemas/Instrument' }
+                week: { type: integer, minimum: 0, maximum: 8 }
+                answers: { type: array, items: { type: object, properties: { questionId: { type: string }, value: { type: integer } } } }
+                completedAt: { type: string, format: date-time }
+      responses:
+        '201':
+          description: Scored
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { score: { type: [number, 'null'] } }
+        '422': { $ref: '#/components/responses/Problem' }
+  /studies/{studyId}/session-states:
+    parameters: [{ $ref: '#/components/parameters/StudyId' }]
+    post:
+      tags: [studies]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sessionId, versionId, before]
+              properties:
+                sessionId: { type: string }
+                versionId: { type: string }
+                before: { $ref: '#/components/schemas/Mood' }
+      responses:
+        '204': { description: Before-play state recorded (the after is the check-in) }
+  /studies/{studyId}/adverse-events:
+    parameters: [{ $ref: '#/components/parameters/StudyId' }]
+    post:
+      tags: [studies]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties: { text: { type: string, maxLength: 2000 } }
+      responses:
+        '201': { description: Recorded; reviewed by a person }
+  /studies/{studyId}/withdraw:
+    parameters: [{ $ref: '#/components/parameters/StudyId' }]
+    post:
+      tags: [studies]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: { deleteData: { type: boolean, default: false } }
+      responses:
+        '204': { description: Collection stopped }
+
   /events:
     post:
       tags: [platform]
@@ -1431,6 +1566,11 @@ components:
       in: path
       required: true
       schema: { type: string }
+    StudyId:
+      name: studyId
+      in: path
+      required: true
+      schema: { type: string }
     ChallengeSlug:
       name: challengeSlug
       in: path
@@ -1506,6 +1646,9 @@ components:
     OnboardingStatus: { type: string, enum: [not_started, done, skipped] }
     ConversationSource: { type: string, enum: [home, chip, quick_start, onboarding, recreate, session, new] }
     Provenance: { type: string, enum: [self_reported, measured, sample] }
+    Instrument:
+      type: string
+      enum: [who5, isi, gad7, promis_cog, promis_fatigue, pss10, phq9, sleep_diary, weekly, value]
     AiRoute:
       type: string
       enum: [intent.infer, cockpit.reply, proposals.generate, session.spec, session.script, chapter.plan, progress.words, report.biweekly, safety.classify, moderation.publish]

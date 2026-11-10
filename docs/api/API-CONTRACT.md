@@ -6,8 +6,8 @@
 **prod v1** (= staging v4, the default) and **prod v2** (= staging v5,
 opt-in). Staging-only work (U056 admin well-being outcomes, U057) appears only
 as clearly marked *later* items.
-**Companion:** [`openapi.yaml`](openapi.yaml) (OpenAPI 3.1, validated: 83
-paths, 60 schemas) is the machine-readable form of §5–§6 in full and of the
+**Companion:** [`openapi.yaml`](openapi.yaml) (OpenAPI 3.1, validated: 90
+paths, 61 schemas) is the machine-readable form of §5–§6 in full and of the
 core of §7 (users, moderation, AI metrics and policies, audit). The other admin
 modules follow in P4. Where the two disagree, this document is the intent and
 the YAML is a bug.
@@ -591,6 +591,32 @@ says "adding white noise" over an unchanged version is a contract violation
 | GET | `/plans` | 🔓 | `Plan[]` with `entitlements` (logic A4: one table) |
 | POST | `/me/subscription` | 🔐 ♻️ | `{planId, interval}` → checkout session (payment provider TBD, §11) |
 | GET | `/me/invite` · POST `/invites/redeem` | 🔐 | Link + reward (500 coins today); redeem `{code}` |
+
+### 5.12 Studies (the feedback group, U058)
+
+For the 30-person, 8-week outcomes pilot. Participants see only their own
+tasks. The answers feed `/admin/studies` (§7).
+
+| Method | Path | | Notes |
+| --- | --- | --- | --- |
+| GET | `/me/studies` | 🔐 | Studies the user is enrolled in, with `cohort`, `week` and `due[]` (which questionnaires are open) |
+| POST | `/studies/{id}/consent` | 🔐 ♻️ | `{consentTextVersion, signedAt}`; required before any study data is stored |
+| GET | `/studies/{id}/instruments/{instrument}` | 🔐 | Questions for `who5`, `isi`, `gad7`, `promis_cog`, `promis_fatigue`, `pss10`, `phq9`, `sleep_diary`, `weekly`, `value` (server-owned text, versioned) |
+| POST | `/studies/{id}/assessments` | 🔐 ♻️ | `{instrument, week, answers[], completedAt}` → `201 {score}`. A PHQ-9 item 9 > 0 or total ≥ 20 creates a same-day safety item for the study lead. The participant never sees a PHQ-9 score. |
+| POST | `/studies/{id}/session-states` | 🔐 | `{sessionId, versionId, before: 1..5}`: the before-play tap (the after is the existing check-in) |
+| POST | `/studies/{id}/adverse-events` | 🔐 ♻️ | "Something felt wrong": free text, reviewed by a person |
+| POST | `/studies/{id}/withdraw` | 🔐 | Stops collection; already-collected data is kept or deleted per the consent choice |
+
+Admin (§7) adds:
+- `GET /admin/studies/{id}`: criteria, cohorts, the trajectory.
+- `GET /admin/studies/{id}/participants`: pseudonymous ids only.
+- `GET /admin/studies/{id}/participants/{pid}`.
+- `GET /admin/studies/{id}/quality`: missing assessments and follow-ups.
+- `POST /admin/studies/{id}/follow-ups/{itemId}/resolve`.
+
+The rules (study week, responders, the meaningful change per instrument,
+adherence, completeness, success criteria) are the ones in
+`src/admin/data/study.ts`, moved server-side.
 
 ---
 
