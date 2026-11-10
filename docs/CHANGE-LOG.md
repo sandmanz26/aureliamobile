@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-10 — Experimentation section hidden (U059)
+
+The new admin section is switched off until the client's pricing arrives. The code is kept and can be switched back on.
+
+Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-11-10 — Admin Experimentation: feedback-group study (U058)
 
 Admin on staging has a new section, Experimentation → Feedback group study. It tracks a 30-person, 8-week study of therapeutic outcomes:

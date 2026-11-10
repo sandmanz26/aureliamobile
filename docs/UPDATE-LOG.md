@@ -96,8 +96,28 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U056 | `b469f86` | 2026-10-30 | Chat box 16px taller; Explore/Discover header follows the scroll; admin Well-being outcomes (WHO-5, check-ins, heart rate) page + per-user panel. Staging only. | [patch](patches/U056-b469f86.patch) |
 | U057 | `f390b95` | 2026-10-30 | v5 Why? text fix (goal-only basis read "your goal and “Sleep better”"); user-facing What's New PDF for v5 / prod v2. Staging only. | [patch](patches/U057-f390b95.patch) |
 | U058 | `57e192d` | 2026-11-10 | Admin Experimentation section: the feedback-group study (30 people, 8 weeks, six cohorts): criteria, participants, measures, data quality and safety, per-participant page. Sample data. Staging only. | [patch](patches/U058-57e192d.patch) |
+| U059 | `5bb9580` | 2026-11-10 | Experimentation section hidden (flag `adminExperimentation` unreleased) while the client's pricing is awaited. Staging only. | [patch](patches/U059-5bb9580.patch) |
 
 ## Entries
+
+### U059 — Experimentation section hidden for now
+
+- **Commit:** `5bb9580` · pushed 2026-11-10 UTC · `web_app` + `admin_cms`. **Not `web_prod`** (it never had the section).
+- **Patch:** [patches/U059-5bb9580.patch](patches/U059-5bb9580.patch)
+- **Request:** "sementara saya mau kamu hide untuk update yang tadi sampai saya memberikan update ya, karena saya masih menunggu client memberikan pricing ke saya"
+- **Interpretation:**
+  - Hide U058's admin section until the owner says so. Keep the work, and make it one switch to bring back.
+  - The protocol PDF and the API contract §5.12 stay in `docs/` (internal documents, not shown in the app). Tell the owner they exist, in case they should not be shared yet either.
+- **Changed:** `src/demo/modules.ts`: `adminExperimentation` gets `unreleased: true`, so it is off by default.
+  - The nav item and the empty "Experimentation" heading disappear.
+  - `/admin/experimentation` shows the ModuleGuard page ("Not part of this walkthrough").
+  - Growth → Experiments (A/B) is unaffected.
+- **Verified:**
+  - `npm run check` passes (97 tests).
+  - Staging build: the admin nav has no Experimentation section; the route shows the guard.
+- **Caveat:** a browser that switched the flag on in `/__demo` keeps it on locally. A published flag set that includes it would override the default. Neither had happened when this shipped, since the section was hours old.
+- **To bring it back:** remove `unreleased: true` (a new U-entry), or switch it on in `/__demo` and Publish for one deployment.
+- **Revert:** `git revert --no-commit 5bb9580 && git checkout HEAD -- docs/`.
 
 ### U058 — Admin Experimentation: the feedback-group study
 

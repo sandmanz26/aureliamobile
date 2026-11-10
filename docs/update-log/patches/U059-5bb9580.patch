@@ -1,0 +1,33 @@
+From 5bb958028037b74034e5b0d7a2e6a218e262215f Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 10 Nov 2026 18:35:34 +0000
+Subject: [PATCH] Hide the Experimentation section until the client's pricing
+ is in
+
+adminExperimentation is now unreleased (off by default): the nav item
+and its section heading disappear and the route shows the "not part of
+this walkthrough" guard. The code, data rules and tests stay; one flag
+brings it back.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/demo/modules.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/demo/modules.ts b/src/demo/modules.ts
+index c1bd0e6..03d2e46 100644
+--- a/src/demo/modules.ts
++++ b/src/demo/modules.ts
+@@ -239,7 +239,7 @@ export const DEMO_MODULES: DemoModule[] = [
+   /* --- Back office (the product's own admin, shown as a feature) --- */
+   { id: 'admin', kind: 'admin', label: 'Admin — access', description: 'Master switch. Off means /admin is unreachable entirely.', route: '/admin', built: true },
+   { id: 'adminUsers', kind: 'admin', label: 'Users', description: 'Account list, roles, suspensions.', route: '/admin/users', built: true },
+-  { id: 'adminExperimentation', kind: 'admin', label: 'Experimentation · feedback group', description: 'The 30-person, 8-week study of therapeutic outcomes: criteria, participants, measures, data quality and safety.', route: '/admin/experimentation', built: true },
++  { id: 'adminExperimentation', kind: 'admin', label: 'Experimentation · feedback group', description: 'The 30-person, 8-week study of therapeutic outcomes: criteria, participants, measures, data quality and safety.', route: '/admin/experimentation', built: true, unreleased: true },
+   { id: 'adminOutcomes', kind: 'admin', label: 'Well-being outcomes', description: 'How much each user’s well-being has changed (WHO-5, check-ins, wearable).', route: '/admin/outcomes', built: true },
+   { id: 'adminRoles', kind: 'admin', label: 'Roles & permissions', description: 'Permission matrix.', route: '/admin/roles', built: true },
+   { id: 'adminSessions', kind: 'admin', label: 'Sessions', description: 'Generated session catalogue.', route: '/admin/sessions', built: true },
+-- 
+2.43.0
+

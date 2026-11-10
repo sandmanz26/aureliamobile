@@ -398,7 +398,7 @@ in the conversation.
   - Sessions; Challenges; Moderation; AI monitoring; Cockpit rules;
   - Revenue; Pricing; Payments; Coins; Experiments; Notifications;
   - Compliance; Signal sources; Audit; Settings.
-- **Experimentation → Feedback group study (U058, staging):** the 30-person, 8-week outcomes pilot. Rules in `admin/data/study.ts`; protocol PDF in `docs/reviews/`. Outcome criteria are not judged before week 8.
+- **Experimentation → Feedback group study (U058, staging; hidden since U059 via `unreleased` until the owner says go):** the 30-person, 8-week outcomes pilot. Rules in `admin/data/study.ts`; protocol PDF in `docs/reviews/`. Outcome criteria are not judged before week 8.
 - **No authentication on `/admin`.** This is the P0 in `docs/PRD.md`.
 - Data comes from seeded mock data (`admin/data/mock.ts`) through
   `AdminDataContext`. Edits live in memory only.
