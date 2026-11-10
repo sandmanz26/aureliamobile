@@ -614,6 +614,7 @@ All in the repository unless noted.
 | 27 Oct | `docs/reviews/Aurelia-Owner-Report-2026-10-27.pdf` (+ HTML, 14 images) | J047–J048: before / suggestion / now / impact; labelled AI analysis. Private artifact: https://claude.ai/artifact/VTjHzkzYfBXnGbZFKcDTJ5 |
 | 27 Oct | `docs/reviews/Aurelia-v5-Proposal-2026-10-27.pdf` (+ HTML, 16 images) | J049: interviews vs simulation, v4 → v5 pairs, predicted impact. Private artifact: https://claude.ai/artifact/PXDGCwz7BXzv5ASr67bS84 |
 | 30 Oct | `docs/user-updates/Aurelia-Whats-New-v5.pdf` (+ HTML, 9 marked images) | J058: **for end users**; eight changes, how to switch to v2 |
+| 10 Nov | `docs/api/API-CONTRACT.md` + `docs/api/openapi.yaml` | J061: **API contract plan** for production (prod v1/v2): conventions, data model, every consumer and admin endpoint, the AI system (routes, models, safety, evals), phasing and decisions |
 | — | `docs/PRD.md`, `FOR-*.md`, `DESIGN-SYSTEM-HISTORY.md` | Requirements and reader-specific guides. `FOR-AI-AGENT.md` dates from 20 Sep; **this file supersedes it for current state.** |
 
 ### The retention model, in numbers (all **Predicted**, not measured)

@@ -1,0 +1,2303 @@
+openapi: 3.1.0
+info:
+  title: Aurelia API
+  version: 1.0.0-draft
+  summary: Contract for the Aurelia clients (web reference + Flutter), production scope (prod v1 = staging v4, prod v2 = staging v5).
+  description: |
+    Machine-readable companion to docs/api/API-CONTRACT.md. The markdown is the intent;
+    a disagreement between the two is a bug here. Draft: nothing is implemented yet.
+    Conventions: JSON, camelCase, RFC 3339 UTC timestamps, cursor pagination,
+    RFC 9457 problem details, Idempotency-Key on costly POSTs, SSE for streams.
+servers:
+  - url: https://api.aurelia.care/v1
+    description: Production
+  - url: https://api.staging.aurelia.care/v1
+    description: Staging
+security:
+  - bearer: []
+tags:
+  - name: auth
+  - name: onboarding
+  - name: catalogue
+  - name: cockpit
+    description: Conversations, messages, proposals and builds (AI-backed)
+  - name: playback
+  - name: journey
+    description: Chapters, check-ins, reminders, journal, progress
+  - name: signals
+  - name: community
+  - name: economy
+  - name: platform
+  - name: admin
+
+paths:
+  /auth/sign-up:
+    post:
+      tags: [auth]
+      security: []
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, displayName]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+                displayName: { type: string, maxLength: 60 }
+      responses:
+        '201': { $ref: '#/components/responses/AuthSession' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+  /auth/sign-in:
+    post:
+      tags: [auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200': { $ref: '#/components/responses/AuthSession' }
+        '401': { $ref: '#/components/responses/Problem' }
+  /auth/oauth/{provider}:
+    post:
+      tags: [auth]
+      security: []
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema: { type: string, enum: [google, apple] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idToken: { type: string }
+                code: { type: string }
+                nonce: { type: string }
+      responses:
+        '200': { $ref: '#/components/responses/AuthSession' }
+        '201': { $ref: '#/components/responses/AuthSession' }
+        '401': { $ref: '#/components/responses/Problem' }
+  /auth/refresh:
+    post:
+      tags: [auth]
+      security: []
+      description: Rotates the httpOnly refresh cookie (web) or the refresh token in the body (mobile).
+      responses:
+        '200':
+          description: New access token
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [accessToken]
+                properties: { accessToken: { type: string } }
+        '401': { $ref: '#/components/responses/Problem' }
+  /auth/sign-out:
+    post:
+      tags: [auth]
+      responses:
+        '204': { description: Signed out }
+  /auth/password-reset:
+    post:
+      tags: [auth]
+      security: []
+      description: Always 202, whether or not the address exists (never reveals registration).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties: { email: { type: string, format: email } }
+      responses:
+        '202': { description: Accepted }
+  /auth/password-reset/confirm:
+    post:
+      tags: [auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, newPassword]
+              properties:
+                token: { type: string }
+                newPassword: { type: string, minLength: 8 }
+      responses:
+        '204': { description: Password changed }
+        '400': { $ref: '#/components/responses/Problem' }
+
+  /me:
+    get:
+      tags: [auth]
+      responses:
+        '200':
+          description: The signed-in user, entitlements and onboarding status in one call
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [user, entitlements, onboardingStatus]
+                properties:
+                  user: { $ref: '#/components/schemas/User' }
+                  entitlements: { $ref: '#/components/schemas/Entitlements' }
+                  onboardingStatus: { $ref: '#/components/schemas/OnboardingStatus' }
+        '401': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                displayName: { type: string }
+                locale: { type: string }
+                timezone: { type: string, examples: [Asia/Jakarta] }
+      responses:
+        '200':
+          description: Updated
+          content: { application/json: { schema: { $ref: '#/components/schemas/User' } } }
+    delete:
+      tags: [auth]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      description: Deletion request. Lineage credit is kept as "Former member".
+      responses:
+        '202': { description: Deletion scheduled }
+  /me/export:
+    post:
+      tags: [auth]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      responses:
+        '202': { description: Export job started; a link is emailed }
+  /me/entitlements:
+    get:
+      tags: [economy]
+      responses:
+        '200':
+          description: Server-enforced plan limits
+          content: { application/json: { schema: { $ref: '#/components/schemas/Entitlements' } } }
+
+  /reference/goals:
+    get:
+      tags: [onboarding]
+      security: []
+      responses:
+        '200':
+          description: Goals, feelings, lengths, voices, sounds and wearables with their copy
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReferenceData' }
+  /onboarding/infer:
+    post:
+      tags: [onboarding]
+      security: []
+      description: "AI route intent.infer. Pre-fills onboarding from the sentence typed on Home; works before sign-in."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties: { text: { type: string, maxLength: 1000 } }
+      responses:
+        '200':
+          description: Inferred goal and feelings
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [feelings, confidence]
+                properties:
+                  goal: { $ref: '#/components/schemas/GoalId' }
+                  feelings: { type: array, items: { type: string } }
+                  confidence: { type: number, minimum: 0, maximum: 1 }
+                  ask: { type: [string, 'null'], description: A clarifying question when confidence is low }
+        '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+  /me/onboarding:
+    get:
+      tags: [onboarding]
+      responses:
+        '200':
+          description: Onboarding answers
+          headers: { ETag: { $ref: '#/components/headers/ETag' } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/Onboarding' } } }
+    put:
+      tags: [onboarding]
+      parameters: [{ $ref: '#/components/parameters/IfMatch' }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/Onboarding' } } }
+      responses:
+        '200':
+          description: Saved. status "done" seeds the first conversation.
+          content: { application/json: { schema: { $ref: '#/components/schemas/Onboarding' } } }
+        '409': { $ref: '#/components/responses/Problem' }
+  /me/onboarding/replay:
+    post:
+      tags: [onboarding]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: { resetJourney: { type: boolean, default: false } }
+      responses:
+        '204': { description: Onboarding reset to not_started }
+
+  /home:
+    get:
+      tags: [catalogue]
+      security: [{}, { bearer: [] }]
+      parameters:
+        - name: include
+          in: query
+          schema: { type: string, enum: [live] }
+          description: Prod v1 visitor layout only; prod v2 drops the live map.
+      responses:
+        '200':
+          description: Home aggregate; signed-in Home has no marketing blocks
+          content: { application/json: { schema: { $ref: '#/components/schemas/Home' } } }
+  /quick-starts:
+    get:
+      tags: [catalogue]
+      security: []
+      responses:
+        '200':
+          description: Quick Start cards
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/QuickStart' }
+  /sessions:
+    get:
+      tags: [catalogue]
+      security: [{}, { bearer: [] }]
+      parameters:
+        - { name: shelf, in: query, schema: { type: string, enum: [community, picked, impact] } }
+        - { name: category, in: query, schema: { $ref: '#/components/schemas/Category' } }
+        - { name: q, in: query, schema: { type: string } }
+        - { $ref: '#/components/parameters/Limit' }
+        - { $ref: '#/components/parameters/Cursor' }
+      responses:
+        '200':
+          description: Published sessions
+          content: { application/json: { schema: { $ref: '#/components/schemas/SessionCardPage' } } }
+  /sessions/{sessionRef}:
+    parameters: [{ $ref: '#/components/parameters/SessionRef' }]
+    get:
+      tags: [catalogue]
+      security: [{}, { bearer: [] }]
+      responses:
+        '200':
+          description: Session detail; private sessions return 404 unless owner
+          content: { application/json: { schema: { $ref: '#/components/schemas/SessionDetail' } } }
+        '404': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [cockpit]
+      parameters: [{ $ref: '#/components/parameters/IfMatch' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string, maxLength: 80 }
+                tags: { type: array, items: { type: string } }
+      responses:
+        '200':
+          description: Renamed or retagged (versions keep their numbers)
+          content: { application/json: { schema: { $ref: '#/components/schemas/Session' } } }
+        '403': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [cockpit]
+      responses:
+        '204': { description: Soft-deleted; forks keep credit }
+        '403': { $ref: '#/components/responses/Problem' }
+  /sessions/{sessionRef}/lineage:
+    parameters: [{ $ref: '#/components/parameters/SessionRef' }]
+    get:
+      tags: [catalogue]
+      security: [{}, { bearer: [] }]
+      responses:
+        '200':
+          description: Provenance, oldest first, and recent recreations
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [steps]
+                properties:
+                  steps: { type: array, items: { $ref: '#/components/schemas/LineageStep' } }
+                  recreations: { $ref: '#/components/schemas/SessionCardPage' }
+  /sessions/{sessionRef}/versions:
+    parameters: [{ $ref: '#/components/parameters/SessionRef' }]
+    get:
+      tags: [cockpit]
+      responses:
+        '200':
+          description: Owner only; marks live and current
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Version' } }
+        '403': { $ref: '#/components/responses/Problem' }
+  /sessions/{sessionRef}/revert:
+    parameters: [{ $ref: '#/components/parameters/SessionRef' }]
+    post:
+      tags: [cockpit]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [versionId]
+              properties: { versionId: { type: string } }
+      responses:
+        '200':
+          description: current now points at the older cut
+          content: { application/json: { schema: { $ref: '#/components/schemas/Session' } } }
+  /people/{personSlug}:
+    get:
+      tags: [catalogue]
+      security: []
+      parameters:
+        - { name: personSlug, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Profile projected from published sessions
+          content: { application/json: { schema: { $ref: '#/components/schemas/Person' } } }
+        '404': { $ref: '#/components/responses/Problem' }
+  /creators:
+    get:
+      tags: [catalogue]
+      security: []
+      responses:
+        '200':
+          description: Trusted creators
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/PersonSummary' } }
+  /live:
+    get:
+      tags: [catalogue]
+      security: []
+      responses:
+        '200':
+          description: Ongoing live sessions (prod v1 only; may be empty)
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/SessionCard' } }
+  /me/library:
+    get:
+      tags: [catalogue]
+      parameters:
+        - { name: tab, in: query, required: true, schema: { type: string, enum: [created, played] } }
+        - { $ref: '#/components/parameters/Cursor' }
+      responses:
+        '200':
+          description: Library (created / played)
+          content: { application/json: { schema: { $ref: '#/components/schemas/SessionCardPage' } } }
+
+  /conversations:
+    get:
+      tags: [cockpit]
+      parameters: [{ $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' }]
+      responses:
+        '200':
+          description: Recent conversations
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, nextCursor]
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Conversation' } }
+                  nextCursor: { type: [string, 'null'] }
+    post:
+      tags: [cockpit]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [source]
+              properties:
+                source: { $ref: '#/components/schemas/ConversationSource' }
+                sessionId: { type: string }
+                quickStartId: { type: string }
+                recreateOf: { type: string, description: Session id being recreated }
+                firstMessage: { type: string, maxLength: 4000 }
+      responses:
+        '201':
+          description: A conversation of the person's own (never a shared demo thread)
+          content: { application/json: { schema: { $ref: '#/components/schemas/Conversation' } } }
+  /conversations/{conversationId}:
+    parameters: [{ $ref: '#/components/parameters/ConversationId' }]
+    get:
+      tags: [cockpit]
+      responses:
+        '200':
+          description: Conversation with its latest proposals and session summary
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: '#/components/schemas/Conversation' }
+                  - type: object
+                    properties:
+                      proposals: { oneOf: [{ $ref: '#/components/schemas/ProposalSet' }, { type: 'null' }] }
+                      session: { oneOf: [{ $ref: '#/components/schemas/SessionCard' }, { type: 'null' }] }
+        '404': { $ref: '#/components/responses/Problem' }
+  /conversations/{conversationId}/messages:
+    parameters: [{ $ref: '#/components/parameters/ConversationId' }]
+    get:
+      tags: [cockpit]
+      parameters:
+        - { $ref: '#/components/parameters/Cursor' }
+        - { name: direction, in: query, schema: { type: string, enum: [backward, forward], default: backward } }
+      responses:
+        '200':
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, nextCursor]
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Message' } }
+                  nextCursor: { type: [string, 'null'] }
+    post:
+      tags: [cockpit]
+      description: |
+        AI route cockpit.reply, after safety.classify. With Accept: text/event-stream the reply
+        streams as MessageStreamEvent; otherwise 202 and the client polls the assistant message.
+        A reply that says it changes the session must start a build (build.started event).
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text: { type: string, maxLength: 4000 }
+                replyTo: { type: string, description: Message id }
+                voiceUploadId: { type: string }
+      responses:
+        '200':
+          description: Server-sent events (see components.schemas.MessageStreamEvent)
+          content:
+            text/event-stream:
+              schema: { type: string }
+        '202':
+          description: Accepted without streaming
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [userMessage, assistantMessageId]
+                properties:
+                  userMessage: { $ref: '#/components/schemas/Message' }
+                  assistantMessageId: { type: string }
+        '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /conversations/{conversationId}/messages/{messageId}/feedback:
+    parameters:
+      - { $ref: '#/components/parameters/ConversationId' }
+      - { name: messageId, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [cockpit]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rating]
+              properties:
+                rating: { type: string, enum: [up, down] }
+                reason: { type: string, maxLength: 500 }
+      responses:
+        '204': { description: Recorded for evals }
+  /uploads/voice:
+    post:
+      tags: [cockpit]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [audio]
+              properties:
+                audio: { type: string, contentMediaType: audio/webm }
+      responses:
+        '201':
+          description: Transcribed voice note (audio deleted after transcription by default)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [uploadId, transcript, durationSec]
+                properties:
+                  uploadId: { type: string }
+                  transcript: { type: string }
+                  durationSec: { type: number, maximum: 60 }
+  /conversations/{conversationId}/proposals:
+    parameters: [{ $ref: '#/components/parameters/ConversationId' }]
+    get:
+      tags: [cockpit]
+      responses:
+        '200':
+          description: The one list of changes (deck and "+" sheet)
+          content: { application/json: { schema: { $ref: '#/components/schemas/ProposalSet' } } }
+        '404': { $ref: '#/components/responses/Problem' }
+  /conversations/{conversationId}/proposals/refresh:
+    parameters: [{ $ref: '#/components/parameters/ConversationId' }]
+    post:
+      tags: [cockpit]
+      description: AI route proposals.generate.
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      responses:
+        '201':
+          description: New proposal set
+          content: { application/json: { schema: { $ref: '#/components/schemas/ProposalSet' } } }
+  /conversations/{conversationId}/builds:
+    parameters: [{ $ref: '#/components/parameters/ConversationId' }]
+    post:
+      tags: [cockpit]
+      description: First build of a conversation creates the Session. AI routes session.spec + session.script.
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody: { $ref: '#/components/requestBodies/BuildRequest' }
+      responses:
+        '202':
+          description: Build accepted; version label reserved
+          content: { application/json: { schema: { $ref: '#/components/schemas/Build' } } }
+        '409': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+  /sessions/{sessionRef}/builds:
+    parameters: [{ $ref: '#/components/parameters/SessionRef' }]
+    post:
+      tags: [cockpit]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody: { $ref: '#/components/requestBodies/BuildRequest' }
+      responses:
+        '202':
+          description: Build accepted
+          content: { application/json: { schema: { $ref: '#/components/schemas/Build' } } }
+        '409': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+  /builds/{buildId}:
+    parameters: [{ $ref: '#/components/parameters/BuildId' }]
+    get:
+      tags: [cockpit]
+      responses:
+        '200':
+          description: Build state
+          content: { application/json: { schema: { $ref: '#/components/schemas/Build' } } }
+  /builds/{buildId}/events:
+    parameters: [{ $ref: '#/components/parameters/BuildId' }]
+    get:
+      tags: [cockpit]
+      parameters:
+        - { name: Last-Event-ID, in: header, schema: { type: string } }
+      responses:
+        '200':
+          description: Server-sent events (see components.schemas.BuildStreamEvent)
+          content:
+            text/event-stream:
+              schema: { type: string }
+  /builds/{buildId}/cancel:
+    parameters: [{ $ref: '#/components/parameters/BuildId' }]
+    post:
+      tags: [cockpit]
+      responses:
+        '200':
+          description: Canceled; the limit is refunded if canceled before the voice stage
+          content: { application/json: { schema: { $ref: '#/components/schemas/Build' } } }
+
+  /sessions/{sessionRef}/playback:
+    parameters: [{ $ref: '#/components/parameters/SessionRef' }]
+    get:
+      tags: [playback]
+      security: [{}, { bearer: [] }]
+      parameters:
+        - name: version
+          in: query
+          schema: { type: string, default: live, description: "live | current | a version id (non-live: owner only)" }
+      responses:
+        '200':
+          description: Signed media URLs; signed-out callers get a 60-second preview
+          content: { application/json: { schema: { $ref: '#/components/schemas/Playback' } } }
+        '403': { $ref: '#/components/responses/Problem' }
+  /plays:
+    post:
+      tags: [playback]
+      security: [{}, { bearer: [] }]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sessionId, versionId, startedAt, listenedSec, completed]
+              properties:
+                sessionId: { type: string }
+                versionId: { type: string }
+                startedAt: { type: string, format: date-time }
+                listenedSec: { type: number, minimum: 0 }
+                completed: { type: boolean }
+                anonymousId: { type: string }
+      responses:
+        '202': { description: 'Recorded. Qualified = at least 60 s or 25 %, once per listener per day' }
+  /sessions/{sessionRef}/feedback:
+    parameters: [{ $ref: '#/components/parameters/SessionRef' }]
+    post:
+      tags: [playback]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [face]
+              properties:
+                face: { type: integer, minimum: 1, maximum: 5 }
+                text: { type: string, maxLength: 500 }
+      responses:
+        '204': { description: Feeds the next proposals }
+
+  /journeys/current:
+    get:
+      tags: [journey]
+      responses:
+        '200':
+          description: The active five-chapter journey
+          content: { application/json: { schema: { $ref: '#/components/schemas/Journey' } } }
+        '404': { $ref: '#/components/responses/Problem' }
+  /journeys:
+    post:
+      tags: [journey]
+      description: Normally created by the server on the first build; explicit create replaces the current journey.
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sessionId]
+              properties: { sessionId: { type: string } }
+      responses:
+        '201':
+          description: Journey started
+          content: { application/json: { schema: { $ref: '#/components/schemas/Journey' } } }
+  /journeys/{journeyId}/reminder:
+    parameters: [{ name: journeyId, in: path, required: true, schema: { type: string } }]
+    put:
+      tags: [journey]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/Reminder' } } }
+      responses:
+        '200':
+          description: Saved
+          content: { application/json: { schema: { $ref: '#/components/schemas/Reminder' } } }
+  /journeys/{journeyId}/reminder.ics:
+    parameters: [{ name: journeyId, in: path, required: true, schema: { type: string } }]
+    get:
+      tags: [journey]
+      parameters:
+        - { name: sig, in: query, required: true, schema: { type: string }, description: Signed link so calendars can fetch without a token }
+      security: []
+      responses:
+        '200':
+          description: Daily reminder for the remaining chapters
+          content:
+            text/calendar:
+              schema: { type: string }
+  /check-ins:
+    post:
+      tags: [journey]
+      description: AI route chapter.plan (direction chosen in code from the mood). The note is safety-checked.
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sessionId, versionId, mood]
+              properties:
+                sessionId: { type: string }
+                versionId: { type: string }
+                mood: { $ref: '#/components/schemas/Mood' }
+                note: { type: string, maxLength: 500 }
+      responses:
+        '201':
+          description: Saved, with the next-chapter plan and the refreshed summary
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [checkIn, nextChapterPlan, progressSummary]
+                properties:
+                  checkIn: { $ref: '#/components/schemas/CheckIn' }
+                  nextChapterPlan: { $ref: '#/components/schemas/NextChapterPlan' }
+                  progressSummary: { $ref: '#/components/schemas/ProgressSummary' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /check-ins/{checkInId}:
+    parameters: [{ name: checkInId, in: path, required: true, schema: { type: string } }]
+    patch:
+      tags: [journey]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [note]
+              properties: { note: { type: string, maxLength: 500 } }
+      responses:
+        '200':
+          description: Journal line added to the check-in
+          content: { application/json: { schema: { $ref: '#/components/schemas/CheckIn' } } }
+  /journal:
+    get:
+      tags: [journey]
+      parameters: [{ $ref: '#/components/parameters/Cursor' }]
+      responses:
+        '200':
+          description: Check-in notes and journal notes, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, nextCursor]
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/JournalEntry' } }
+                  nextCursor: { type: [string, 'null'] }
+    post:
+      tags: [journey]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text: { type: string, minLength: 1, maxLength: 500 }
+                mood: { $ref: '#/components/schemas/Mood' }
+      responses:
+        '201':
+          description: Saved (private)
+          content: { application/json: { schema: { $ref: '#/components/schemas/JournalEntry' } } }
+        '422': { $ref: '#/components/responses/Problem' }
+  /journal/{entryId}:
+    parameters: [{ name: entryId, in: path, required: true, schema: { type: string } }]
+    delete:
+      tags: [journey]
+      responses:
+        '204': { description: Deleted }
+  /progress/summary:
+    get:
+      tags: [journey]
+      description: Prod v2 "progress in words". AI route progress.words; trend and usual are computed in code.
+      responses:
+        '200':
+          description: Summary
+          content: { application/json: { schema: { $ref: '#/components/schemas/ProgressSummary' } } }
+  /progress/goals:
+    get:
+      tags: [journey]
+      description: Prod v1 "Your goals" — the person's own journeys only; sample analyses are never served.
+      responses:
+        '200':
+          description: Goals
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Journey' } }
+  /progress/reports:
+    get:
+      tags: [journey]
+      responses:
+        '200':
+          description: Two-week reports
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Report' } }
+  /me/push-subscriptions:
+    post:
+      tags: [journey]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [platform, token]
+              properties:
+                platform: { type: string, enum: [webpush, apns, fcm] }
+                token: { type: string }
+      responses:
+        '204': { description: Registered }
+
+  /signal-sources:
+    get:
+      tags: [signals]
+      security: []
+      responses:
+        '200':
+          description: Catalogue with verbatim consent text
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/SignalSource' } }
+  /me/connections:
+    get:
+      tags: [signals]
+      responses:
+        '200':
+          description: All off for a new account
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Connection' } }
+  /me/connections/{sourceId}:
+    parameters: [{ name: sourceId, in: path, required: true, schema: { type: string } }]
+    put:
+      tags: [signals]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [state, consentTextVersion]
+              properties:
+                state: { type: string, enum: ['on', 'off'] }
+                consentTextVersion: { type: string }
+      responses:
+        '200':
+          description: Connection state, plus how to authorise where needed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: '#/components/schemas/Connection' }
+                  - type: object
+                    properties:
+                      authorizeUrl: { type: string, format: uri }
+                      nativePermission: { type: string, enum: [healthkit, health_connect] }
+  /signals/ingest:
+    post:
+      tags: [signals]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sourceId, readings]
+              properties:
+                sourceId: { type: string }
+                readings: { type: array, maxItems: 1000, items: { $ref: '#/components/schemas/SignalReading' } }
+      responses:
+        '202': { description: Accepted }
+        '422': { $ref: '#/components/responses/Problem' }
+  /me/signals/summary:
+    get:
+      tags: [signals]
+      parameters:
+        - { name: sessionId, in: query, schema: { type: string } }
+        - { name: versionId, in: query, schema: { type: string } }
+        - { name: window, in: query, schema: { type: string, examples: [P1D] } }
+      responses:
+        '200':
+          description: Readings for the check-in card
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/SignalReading' } }
+  /me/signals:
+    delete:
+      tags: [signals]
+      responses:
+        '202': { description: All ingested signal data scheduled for erasure }
+
+  /sessions/{sessionRef}/publish:
+    parameters: [{ $ref: '#/components/parameters/SessionRef' }]
+    post:
+      tags: [community]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [versionId]
+              properties: { versionId: { type: string } }
+      responses:
+        '200':
+          description: Published; says what is shared and what stays private
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [session, shares, private]
+                properties:
+                  session: { $ref: '#/components/schemas/Session' }
+                  shares: { type: array, items: { type: string, enum: [title, sound, visuals, script] } }
+                  private: { type: array, items: { type: string, enum: [check_ins, journal, wearable, conversation] } }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [community]
+      responses:
+        '200':
+          description: Unpublished; forks keep credit
+          content: { application/json: { schema: { $ref: '#/components/schemas/Session' } } }
+  /sessions/{sessionRef}/recreate:
+    parameters: [{ $ref: '#/components/parameters/SessionRef' }]
+    post:
+      tags: [community]
+      description: Forks this session's live version.
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      responses:
+        '201':
+          description: New session at v1.0 with parent, and its conversation
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [session, conversation]
+                properties:
+                  session: { $ref: '#/components/schemas/Session' }
+                  conversation: { $ref: '#/components/schemas/Conversation' }
+  /challenges:
+    get:
+      tags: [community]
+      security: [{}, { bearer: [] }]
+      responses:
+        '200':
+          description: Challenges
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Challenge' } }
+  /challenges/{challengeSlug}:
+    parameters: [{ $ref: '#/components/parameters/ChallengeSlug' }]
+    get:
+      tags: [community]
+      security: [{}, { bearer: [] }]
+      responses:
+        '200':
+          description: Challenge
+          content: { application/json: { schema: { $ref: '#/components/schemas/Challenge' } } }
+  /challenges/{challengeSlug}/entries:
+    parameters: [{ $ref: '#/components/parameters/ChallengeSlug' }]
+    get:
+      tags: [community]
+      security: [{}, { bearer: [] }]
+      parameters:
+        - name: view
+          in: query
+          schema: { type: string, enum: [journey, ranked], default: journey }
+          description: journey = prod v2 (no rank fields, by addedAt); ranked = prod v1 podium (by qualifiedPlays)
+        - { $ref: '#/components/parameters/Cursor' }
+      responses:
+        '200':
+          description: Entries
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, nextCursor]
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/ChallengeEntry' } }
+                  nextCursor: { type: [string, 'null'] }
+    post:
+      tags: [community]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sessionId]
+              properties: { sessionId: { type: string } }
+      responses:
+        '201':
+          description: Entry submitted
+          content: { application/json: { schema: { $ref: '#/components/schemas/ChallengeEntry' } } }
+  /challenges/{challengeSlug}/join:
+    parameters: [{ $ref: '#/components/parameters/ChallengeSlug' }]
+    post:
+      tags: [community]
+      responses:
+        '204': { description: Joined }
+  /challenges/{challengeSlug}/leave:
+    parameters: [{ $ref: '#/components/parameters/ChallengeSlug' }]
+    post:
+      tags: [community]
+      responses:
+        '204': { description: Left }
+  /notifications:
+    get:
+      tags: [community]
+      parameters:
+        - { name: bucket, in: query, schema: { type: string, enum: [today, yesterday, week, month] } }
+        - { $ref: '#/components/parameters/Cursor' }
+      responses:
+        '200':
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, nextCursor]
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Notification' } }
+                  nextCursor: { type: [string, 'null'] }
+  /notifications/read:
+    post:
+      tags: [community]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids: { type: array, items: { type: string } }
+                before: { type: string, format: date-time }
+      responses:
+        '204': { description: Marked read }
+
+  /me/wallet:
+    get:
+      tags: [economy]
+      responses:
+        '200':
+          description: Coins balance and ledger
+          content: { application/json: { schema: { $ref: '#/components/schemas/Wallet' } } }
+  /plans:
+    get:
+      tags: [economy]
+      security: []
+      responses:
+        '200':
+          description: Plans with entitlements
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Plan' } }
+  /me/subscription:
+    post:
+      tags: [economy]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [planId, interval]
+              properties:
+                planId: { $ref: '#/components/schemas/PlanId' }
+                interval: { type: string, enum: [month, year] }
+      responses:
+        '201':
+          description: Checkout session
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [checkoutUrl]
+                properties: { checkoutUrl: { type: string, format: uri } }
+  /me/invite:
+    get:
+      tags: [economy]
+      responses:
+        '200':
+          description: Invite link and reward
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url, rewardCoins]
+                properties:
+                  url: { type: string, format: uri }
+                  rewardCoins: { type: integer, examples: [500] }
+  /invites/redeem:
+    post:
+      tags: [economy]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties: { code: { type: string } }
+      responses:
+        '200':
+          description: Redeemed
+          content: { application/json: { schema: { $ref: '#/components/schemas/Wallet' } } }
+        '409': { $ref: '#/components/responses/Problem' }
+
+  /events:
+    post:
+      tags: [platform]
+      security: [{}, { bearer: [] }]
+      description: Dropped unless analytics consent is on. Labels and positions only, never field values.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [events]
+              properties:
+                anonymousId: { type: string }
+                events:
+                  type: array
+                  maxItems: 200
+                  items:
+                    type: object
+                    required: [name, at]
+                    properties:
+                      name: { type: string, examples: [screen_view, tap, session_played, checkin_answered, returned] }
+                      at: { type: string, format: date-time }
+                      props: { type: object, additionalProperties: true }
+      responses:
+        '202': { description: Accepted }
+  /config:
+    get:
+      tags: [platform]
+      security: []
+      responses:
+        '200':
+          description: Feature flags and the production design-version mapping
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [flags, productionVersions, defaultVersion]
+                properties:
+                  flags: { type: object, additionalProperties: { type: boolean } }
+                  productionVersions:
+                    type: array
+                    items:
+                      type: object
+                      required: [label, ui]
+                      properties:
+                        label: { type: integer }
+                        ui: { type: integer }
+                    examples: [[{ label: 1, ui: 4 }, { label: 2, ui: 5 }]]
+                  defaultVersion: { type: integer, examples: [4] }
+  /me/consents:
+    get:
+      tags: [platform]
+      responses:
+        '200':
+          description: Consents
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Consent' } }
+  /me/consents/{kind}:
+    parameters:
+      - { name: kind, in: path, required: true, schema: { type: string, enum: [analytics, personalisation, marketing] } }
+    put:
+      tags: [platform]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [granted, textVersion]
+              properties:
+                granted: { type: boolean }
+                textVersion: { type: string }
+      responses:
+        '200':
+          description: Saved
+          content: { application/json: { schema: { $ref: '#/components/schemas/Consent' } } }
+
+  /admin/users:
+    get:
+      tags: [admin]
+      security: [{ adminBearer: [] }]
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [active, suspended, pending] } }
+        - { name: plan, in: query, schema: { $ref: '#/components/schemas/PlanId' } }
+        - { name: role, in: query, schema: { type: string } }
+        - { name: q, in: query, schema: { type: string } }
+        - { $ref: '#/components/parameters/Cursor' }
+      responses:
+        '200':
+          description: Users
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, nextCursor]
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/AdminUser' } }
+                  nextCursor: { type: [string, 'null'] }
+  /admin/users/{userId}:
+    parameters: [{ name: userId, in: path, required: true, schema: { type: string } }]
+    get:
+      tags: [admin]
+      security: [{ adminBearer: [] }]
+      responses:
+        '200':
+          description: User detail
+          content: { application/json: { schema: { $ref: '#/components/schemas/AdminUser' } } }
+    patch:
+      tags: [admin]
+      security: [{ adminBearer: [] }]
+      description: Every admin mutation writes the audit log.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role: { type: string }
+                status: { type: string, enum: [active, suspended] }
+      responses:
+        '200':
+          description: Updated
+          content: { application/json: { schema: { $ref: '#/components/schemas/AdminUser' } } }
+  /admin/moderation/queue:
+    get:
+      tags: [admin]
+      security: [{ adminBearer: [] }]
+      responses:
+        '200':
+          description: Reports and safety flags awaiting a human
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/ModerationItem' } }
+  /admin/moderation/{itemId}/resolve:
+    parameters: [{ name: itemId, in: path, required: true, schema: { type: string } }]
+    post:
+      tags: [admin]
+      security: [{ adminBearer: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action: { type: string, enum: [dismiss, takedown, contact_user, escalate] }
+                note: { type: string }
+      responses:
+        '204': { description: Resolved }
+  /admin/ai/metrics:
+    get:
+      tags: [admin]
+      security: [{ adminBearer: [] }]
+      parameters:
+        - { name: from, in: query, required: true, schema: { type: string, format: date-time } }
+        - { name: to, in: query, required: true, schema: { type: string, format: date-time } }
+        - { name: route, in: query, schema: { $ref: '#/components/schemas/AiRoute' } }
+      responses:
+        '200':
+          description: Tokens, cost, latency, refusals, fallbacks, safety flags, eval scores
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/AiMetricPoint' } }
+  /admin/ai/policies/{route}:
+    parameters: [{ name: route, in: path, required: true, schema: { $ref: '#/components/schemas/AiRoute' } }]
+    get:
+      tags: [admin]
+      security: [{ adminBearer: [] }]
+      responses:
+        '200':
+          description: Current and draft policy
+          content: { application/json: { schema: { $ref: '#/components/schemas/AiPolicy' } } }
+    put:
+      tags: [admin]
+      security: [{ adminBearer: [] }]
+      parameters: [{ $ref: '#/components/parameters/IfMatch' }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/AiPolicy' } } }
+      responses:
+        '200':
+          description: Saved as a new version (draft until published)
+          content: { application/json: { schema: { $ref: '#/components/schemas/AiPolicy' } } }
+  /admin/audit:
+    get:
+      tags: [admin]
+      security: [{ adminBearer: [] }]
+      parameters:
+        - { name: actor, in: query, schema: { type: string } }
+        - { name: action, in: query, schema: { type: string } }
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { $ref: '#/components/parameters/Cursor' }
+      responses:
+        '200':
+          description: Audit log
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, nextCursor]
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/AuditEntry' } }
+                  nextCursor: { type: [string, 'null'] }
+
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 15-minute access token; refresh via /auth/refresh.
+    adminBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Staff SSO token with audience "admin" and an RBAC role.
+
+  headers:
+    ETag:
+      schema: { type: string }
+
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, format: uuid }
+      description: Replays within 24 h return the first result.
+    IfMatch:
+      name: If-Match
+      in: header
+      schema: { type: string }
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    SessionRef:
+      name: sessionRef
+      in: path
+      required: true
+      schema: { type: string }
+      description: Session slug (public) or id
+    ConversationId:
+      name: conversationId
+      in: path
+      required: true
+      schema: { type: string }
+    BuildId:
+      name: buildId
+      in: path
+      required: true
+      schema: { type: string }
+    ChallengeSlug:
+      name: challengeSlug
+      in: path
+      required: true
+      schema: { type: string }
+
+  requestBodies:
+    BuildRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [changeOptionIds]
+            properties:
+              changeOptionIds: { type: array, items: { type: string }, maxItems: 10 }
+              note: { type: string, maxLength: 500 }
+
+  responses:
+    Problem:
+      description: RFC 9457 problem details
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    AuthSession:
+      description: Signed in; the refresh token is set as an httpOnly cookie on web
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [user, accessToken]
+            properties:
+              user: { $ref: '#/components/schemas/User' }
+              accessToken: { type: string }
+              refreshToken: { type: string, description: Mobile clients only }
+
+  schemas:
+    Problem:
+      type: object
+      required: [type, title, status, code, retryable, requestId]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        code:
+          type: string
+          examples: [invalid_request, unauthenticated, forbidden, not_found, conflict, build_in_progress, version_mismatch, unsafe_content, consent_required, rate_limited, build_limit_reached, ai_unavailable]
+        detail: { type: string }
+        retryable: { type: boolean }
+        resetAt: { type: string, format: date-time }
+        requestId: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              path: { type: string }
+              message: { type: string }
+        support:
+          type: array
+          description: Present on unsafe_content for crisis/self-harm; local resources by locale
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              phone: { type: string }
+              url: { type: string, format: uri }
+
+    GoalId: { type: [string, 'null'], enum: [sleep, calm, clarity, focus, regulate, energy, null] }
+    Mood: { type: integer, minimum: 1, maximum: 5, description: 1 Very unpleasant … 5 Very pleasant }
+    Category: { type: string, enum: [meditations, music, energy, sleep, calm] }
+    PlanId: { type: string, enum: [free, plus, pro] }
+    OnboardingStatus: { type: string, enum: [not_started, done, skipped] }
+    ConversationSource: { type: string, enum: [home, chip, quick_start, onboarding, recreate, session, new] }
+    Provenance: { type: string, enum: [self_reported, measured, sample] }
+    AiRoute:
+      type: string
+      enum: [intent.infer, cockpit.reply, proposals.generate, session.spec, session.script, chapter.plan, progress.words, report.biweekly, safety.classify, moderation.publish]
+
+    User:
+      type: object
+      required: [id, email, displayName, createdAt, locale, timezone, plan, roles]
+      properties:
+        id: { type: string, examples: [usr_01J9] }
+        email: { type: string, format: email }
+        displayName: { type: string }
+        photoUrl: { type: [string, 'null'], format: uri }
+        createdAt: { type: string, format: date-time }
+        locale: { type: string, examples: [en-GB, id-ID] }
+        timezone: { type: string }
+        plan: { $ref: '#/components/schemas/PlanId' }
+        roles: { type: array, items: { type: string } }
+    Entitlements:
+      type: object
+      required: [buildsPerDay, buildsUsedToday, resetAt, maxLengthMin, voices, publishing]
+      properties:
+        buildsPerDay: { type: [integer, 'null'], description: null = unlimited }
+        buildsUsedToday: { type: integer }
+        resetAt: { type: string, format: date-time }
+        firstBuildFree: { type: boolean, default: true }
+        maxLengthMin: { type: integer }
+        voices: { type: array, items: { type: string } }
+        publishing: { type: boolean }
+    Onboarding:
+      type: object
+      required: [status, feelings, length, voice, sounds]
+      properties:
+        status: { $ref: '#/components/schemas/OnboardingStatus' }
+        goal: { $ref: '#/components/schemas/GoalId' }
+        feelings: { type: array, items: { type: string } }
+        length: { type: integer, enum: [5, 10, 20] }
+        voice: { type: string, enum: [female, male, none] }
+        sounds: { type: array, items: { type: string, enum: [nature, music, frequencies, silence] } }
+        wearable: { type: [string, 'null'], enum: [apple_watch, whoop, oura, none, null], description: Asked in prod v2 }
+        words: { type: [string, 'null'], description: 'The sentence typed on Home, kept as said' }
+        completedAt: { type: [string, 'null'], format: date-time }
+    ReferenceData:
+      type: object
+      properties:
+        goals:
+          type: array
+          items:
+            type: object
+            required: [id, label, hint, objective]
+            properties:
+              id: { type: string }
+              label: { type: string }
+              hint: { type: string }
+              objective: { type: string }
+              defaultReminderTime: { type: string, examples: ['22:30'] }
+        feelings: { type: array, items: { type: object, properties: { id: { type: string }, label: { type: string } } } }
+        lengths: { type: array, items: { type: integer } }
+        voices: { type: array, items: { type: object, properties: { id: { type: string }, label: { type: string } } } }
+        sounds: { type: array, items: { type: object, properties: { id: { type: string }, label: { type: string } } } }
+        wearables: { type: array, items: { type: object, properties: { id: { type: string }, label: { type: string } } } }
+
+    PersonSummary:
+      type: object
+      required: [id, slug, name, role]
+      properties:
+        id: { type: string }
+        slug: { type: string }
+        name: { type: string }
+        photoUrl: { type: [string, 'null'], format: uri }
+        role: { type: string }
+    Person:
+      allOf:
+        - { $ref: '#/components/schemas/PersonSummary' }
+        - type: object
+          required: [sessions, isSelf]
+          properties:
+            sessions: { type: array, items: { $ref: '#/components/schemas/SessionCard' } }
+            isSelf: { type: boolean }
+    Cover:
+      type: object
+      required: [photoKey, gradient]
+      properties:
+        photoKey: { type: string }
+        gradient: { type: array, items: { type: string, pattern: '^#[0-9a-fA-F]{6}$' }, minItems: 2, maxItems: 2 }
+        imageUrl: { type: [string, 'null'], format: uri }
+    Outcome:
+      type: object
+      required: [label, value, unit, provenance, n, window, note]
+      properties:
+        label: { type: string }
+        value: { type: number }
+        unit: { type: string, enum: [percent, points, minutes, bpm] }
+        provenance: { $ref: '#/components/schemas/Provenance' }
+        n: { type: integer }
+        window: { type: string, examples: [P7D] }
+        note: { type: string }
+    SessionStats:
+      type: object
+      required: [plays, recreations, qualifiedPlays]
+      properties:
+        plays: { type: integer }
+        recreations: { type: integer }
+        qualifiedPlays: { type: integer }
+    SessionCard:
+      type: object
+      required: [id, slug, title, author, cover, description, summary, category, tags, durationSec, stats]
+      properties:
+        id: { type: string }
+        slug: { type: string }
+        title: { type: string }
+        author: { $ref: '#/components/schemas/PersonSummary' }
+        cover: { $ref: '#/components/schemas/Cover' }
+        description: { type: string, description: Prod v1 card line }
+        summary: { type: string, description: Prod v2 card line }
+        category: { $ref: '#/components/schemas/Category' }
+        tags: { type: array, items: { type: string }, description: Plain words; the client decides whether to prefix "#" }
+        durationSec: { type: integer }
+        stats: { $ref: '#/components/schemas/SessionStats' }
+    SessionCardPage:
+      type: object
+      required: [data, nextCursor]
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/SessionCard' } }
+        nextCursor: { type: [string, 'null'] }
+    Session:
+      allOf:
+        - { $ref: '#/components/schemas/SessionCard' }
+        - type: object
+          required: [ownerId, visibility, currentVersionId, intent, shelves, createdAt, updatedAt]
+          properties:
+            ownerId: { type: string }
+            intent: { type: string }
+            goal: { $ref: '#/components/schemas/GoalId' }
+            outcomes: { type: array, items: { $ref: '#/components/schemas/Outcome' } }
+            visibility: { type: string, enum: [private, published, unpublished] }
+            liveVersionId: { type: [string, 'null'] }
+            currentVersionId: { type: string }
+            parent:
+              type: [object, 'null']
+              properties:
+                sessionId: { type: string }
+                versionId: { type: string }
+            shelves: { type: array, items: { type: string, enum: [community, picked, impact] } }
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }
+            publishedAt: { type: [string, 'null'], format: date-time }
+    SessionDetail:
+      allOf:
+        - { $ref: '#/components/schemas/Session' }
+        - type: object
+          properties:
+            chapters:
+              type: array
+              items:
+                type: object
+                required: [label, minutes, detail]
+                properties:
+                  label: { type: string }
+                  minutes: { type: integer }
+                  detail: { type: string }
+            layers:
+              type: array
+              items:
+                type: object
+                required: [id, name, detail, level]
+                properties:
+                  id: { type: string }
+                  name: { type: string }
+                  detail: { type: string }
+                  level: { type: integer, minimum: 0, maximum: 100 }
+            personalization: { type: array, items: { $ref: '#/components/schemas/LabelValue' } }
+            commonChanges: { type: array, items: { $ref: '#/components/schemas/LabelValue' } }
+            safety: { type: array, items: { type: string } }
+    LabelValue:
+      type: object
+      required: [label, value]
+      properties:
+        label: { type: string }
+        value: { type: string }
+    LineageStep:
+      type: object
+      required: [title, author, versionLabel, note, private]
+      properties:
+        sessionId: { type: [string, 'null'] }
+        title: { type: string }
+        author: { $ref: '#/components/schemas/PersonSummary' }
+        versionLabel: { type: string, examples: [v1.3] }
+        note: { type: string }
+        private: { type: boolean }
+    SessionSpec:
+      type: object
+      description: What the model produces; the build pipeline renders it. The model never produces audio.
+      required: [goal, lengthSec, voice, sound, visuals, chapters, constraints]
+      properties:
+        goal: { $ref: '#/components/schemas/GoalId' }
+        lengthSec: { type: integer }
+        voice:
+          type: object
+          required: [gender, pace]
+          properties:
+            gender: { type: string, enum: [female, male, none] }
+            pace: { type: number, minimum: 0.6, maximum: 1.2 }
+        sound:
+          type: object
+          required: [bed, layers]
+          properties:
+            bed: { type: string, enum: [nature, music, frequencies, silence] }
+            layers:
+              type: array
+              items:
+                type: object
+                required: [id, level]
+                properties:
+                  id: { type: string }
+                  level: { type: integer, minimum: 0, maximum: 100 }
+            tuningHz: { type: [number, 'null'] }
+        visuals:
+          type: object
+          required: [palette, movement, form]
+          properties:
+            palette: { type: array, items: { type: string } }
+            movement: { type: number, minimum: 0, maximum: 1 }
+            form: { type: string, examples: [orb, waves] }
+        breath:
+          type: [object, 'null']
+          properties:
+            inhaleSec: { type: number }
+            exhaleSec: { type: number }
+        chapters:
+          type: array
+          items:
+            type: object
+            required: [label, startSec, endSec, intent]
+            properties:
+              label: { type: string }
+              startSec: { type: integer }
+              endSec: { type: integer }
+              intent: { type: string }
+        constraints:
+          type: object
+          required: [excluded]
+          properties:
+            excluded: { type: array, items: { type: string }, examples: [[frequencies, spiritual_language]] }
+    ChangeRef:
+      type: object
+      required: [optionId, title]
+      properties:
+        optionId: { type: string }
+        title: { type: string }
+    Version:
+      type: object
+      required: [id, sessionId, label, state, buildId, changes, createdAt]
+      properties:
+        id: { type: string }
+        sessionId: { type: string }
+        label: { type: string, pattern: '^v\d+\.\d+$', examples: [v1.0, v1.1] }
+        state: { type: string, enum: [building, ready, failed] }
+        buildId: { type: string }
+        spec: { $ref: '#/components/schemas/SessionSpec' }
+        changes: { type: array, items: { $ref: '#/components/schemas/ChangeRef' } }
+        durationSec: { type: [integer, 'null'] }
+        isLive: { type: boolean }
+        isCurrent: { type: boolean }
+        createdAt: { type: string, format: date-time }
+
+    Conversation:
+      type: object
+      required: [id, title, source, lastMessageAt, unread]
+      properties:
+        id: { type: string }
+        sessionId: { type: [string, 'null'] }
+        title: { type: string }
+        source: { $ref: '#/components/schemas/ConversationSource' }
+        lastMessageAt: { type: string, format: date-time }
+        unread: { type: integer }
+    Message:
+      type: object
+      required: [id, conversationId, role, text, createdAt]
+      properties:
+        id: { type: string }
+        conversationId: { type: string }
+        role: { type: string, enum: [user, assistant, system_event] }
+        text: { type: string }
+        createdAt: { type: string, format: date-time }
+        status: { type: string, enum: [sending, sent, read] }
+        voice:
+          type: object
+          properties:
+            uploadId: { type: string }
+            durationSec: { type: number }
+            transcript: { type: string }
+        replyTo:
+          type: object
+          properties:
+            messageId: { type: string }
+            role: { type: string, enum: [user, assistant] }
+            excerpt: { type: string }
+        attachment:
+          oneOf:
+            - type: object
+              required: [type, proposalSetId]
+              properties:
+                type: { const: proposals }
+                proposalSetId: { type: string }
+            - type: object
+              required: [type, buildId, versionId, label]
+              properties:
+                type: { const: build }
+                buildId: { type: string }
+                versionId: { type: string }
+                label: { type: string }
+            - type: object
+              required: [type, sessionId]
+              properties:
+                type: { const: session }
+                sessionId: { type: string }
+        prompts: { type: array, items: { type: string }, maxItems: 4 }
+        safety:
+          type: object
+          properties:
+            flagged: { type: boolean }
+            category: { type: [string, 'null'] }
+            support: { type: array, items: { type: object } }
+    MessageStreamEvent:
+      description: |
+        One SSE event of POST /conversations/{id}/messages. The SSE "event:" field carries `type`.
+        Order: message.accepted, safety.checked, message.delta*, message.prompts?, proposals.created?,
+        build.started?, then exactly one of message.completed or error.
+      oneOf:
+        - type: object
+          required: [type, userMessage, assistantMessageId]
+          properties:
+            type: { const: message.accepted }
+            userMessage: { $ref: '#/components/schemas/Message' }
+            assistantMessageId: { type: string }
+        - type: object
+          required: [type, flagged]
+          properties:
+            type: { const: safety.checked }
+            flagged: { type: boolean }
+        - type: object
+          required: [type, text]
+          properties:
+            type: { const: message.delta }
+            text: { type: string }
+        - type: object
+          required: [type, prompts]
+          properties:
+            type: { const: message.prompts }
+            prompts: { type: array, items: { type: string } }
+        - type: object
+          required: [type, proposalSetId]
+          properties:
+            type: { const: proposals.created }
+            proposalSetId: { type: string }
+        - type: object
+          required: [type, buildId, versionLabel]
+          properties:
+            type: { const: build.started }
+            buildId: { type: string }
+            versionLabel: { type: string }
+        - type: object
+          required: [type, message]
+          properties:
+            type: { const: message.completed }
+            message: { $ref: '#/components/schemas/Message' }
+        - type: object
+          required: [type, problem]
+          properties:
+            type: { const: error }
+            problem: { $ref: '#/components/schemas/Problem' }
+
+    Estimate:
+      type: [object, 'null']
+      description: Prod v1 chip. null until an estimate is measured; never for experiments.
+      required: [value, unit, provenance, n]
+      properties:
+        value: { type: number }
+        unit: { const: percent }
+        provenance: { $ref: '#/components/schemas/Provenance' }
+        n: { type: integer }
+    Basis:
+      type: object
+      required: [text]
+      description: Prod v2 "Why? — Based on". text is a server-written sentence joined as a list.
+      properties:
+        goal: { type: [string, 'null'] }
+        lastCheckIn:
+          type: [object, 'null']
+          properties:
+            mood: { $ref: '#/components/schemas/Mood' }
+            label: { type: string }
+        wearable: { type: [string, 'null'] }
+        words: { type: [string, 'null'] }
+        sessionHistory: { type: boolean }
+        text: { type: string, examples: ['your goal (“Sleep better”) and your wearable.'] }
+    ChangeOption:
+      type: object
+      required: [id, title, description, kind, preselected, isExperiment, basis]
+      properties:
+        id: { type: string }
+        title: { type: string, maxLength: 13 }
+        description: { type: string }
+        kind: { type: string, enum: [visual, sound, movement, voice, script, length] }
+        channel: { type: [string, 'null'], enum: [audio, visuals, null] }
+        preselected: { type: boolean }
+        isExperiment: { type: boolean }
+        estimate: { $ref: '#/components/schemas/Estimate' }
+        basis: { $ref: '#/components/schemas/Basis' }
+        previewSessionSlug: { type: [string, 'null'] }
+    ProposalSet:
+      type: object
+      required: [id, conversationId, createdAt, sections]
+      properties:
+        id: { type: string }
+        conversationId: { type: string }
+        sessionId: { type: [string, 'null'] }
+        createdAt: { type: string, format: date-time }
+        sections:
+          type: array
+          items:
+            type: object
+            required: [kind, title, options]
+            properties:
+              kind: { type: string, enum: [suggested, diagnosis, experiment] }
+              title: { type: string }
+              options: { type: array, items: { $ref: '#/components/schemas/ChangeOption' } }
+
+    Build:
+      type: object
+      required: [id, sessionId, conversationId, versionId, state, progress, countsTowardLimit, createdAt]
+      properties:
+        id: { type: string }
+        sessionId: { type: string }
+        conversationId: { type: string }
+        versionId: { type: string }
+        versionLabel: { type: string }
+        state: { type: string, enum: [queued, running, succeeded, failed, canceled] }
+        stage: { type: [string, 'null'], enum: [plan, script, voice, sound, visuals, mix, publish_assets, null] }
+        progress: { type: number, minimum: 0, maximum: 1 }
+        etaSec: { type: [integer, 'null'] }
+        error:
+          type: [object, 'null']
+          properties:
+            code: { type: string }
+            retryable: { type: boolean }
+            message: { type: string }
+        countsTowardLimit: { type: boolean, description: false for the first build }
+        createdAt: { type: string, format: date-time }
+        finishedAt: { type: [string, 'null'], format: date-time }
+    BuildStreamEvent:
+      oneOf:
+        - type: object
+          required: [type, stage, progress]
+          properties:
+            type: { const: build.stage }
+            stage: { type: string }
+            progress: { type: number }
+        - type: object
+          required: [type, versionId]
+          properties:
+            type: { const: build.completed }
+            versionId: { type: string }
+        - type: object
+          required: [type, error]
+          properties:
+            type: { const: build.failed }
+            error: { $ref: '#/components/schemas/Problem' }
+
+    Playback:
+      type: object
+      required: [audio, visuals, chapters, durationSec, preview]
+      properties:
+        audio:
+          type: object
+          required: [hlsUrl, mp3Url, expiresAt]
+          properties:
+            hlsUrl: { type: string, format: uri }
+            mp3Url: { type: string, format: uri }
+            expiresAt: { type: string, format: date-time }
+        visuals:
+          type: object
+          required: [kind, params]
+          properties:
+            kind: { type: string }
+            params: { type: object, additionalProperties: true }
+        chapters: { type: array, items: { type: object } }
+        cues: { type: array, items: { type: object, properties: { atSec: { type: number }, text: { type: string } } } }
+        durationSec: { type: integer }
+        preview: { type: boolean, description: true = 60-second signed-out preview }
+
+    Reminder:
+      type: object
+      required: [time, timezone, channel, enabled]
+      properties:
+        time: { type: string, pattern: '^\d{2}:\d{2}$', examples: ['22:30'] }
+        timezone: { type: string }
+        channel: { type: string, enum: [calendar, push, email] }
+        enabled: { type: boolean }
+    Journey:
+      type: object
+      required: [id, goal, name, sessionId, chapterTarget, chapters, status]
+      properties:
+        id: { type: string }
+        goal: { $ref: '#/components/schemas/GoalId' }
+        name: { type: string, examples: [Sleep better] }
+        sessionId: { type: string }
+        chapterTarget: { type: integer, default: 5 }
+        chapters:
+          type: array
+          items:
+            type: object
+            required: [number, unlockedAt]
+            properties:
+              number: { type: integer }
+              versionId: { type: [string, 'null'] }
+              unlockedAt: { type: string, format: date-time }
+              playedAt: { type: [string, 'null'], format: date-time }
+              checkInId: { type: [string, 'null'] }
+        reminder: { oneOf: [{ $ref: '#/components/schemas/Reminder' }, { type: 'null' }] }
+        status: { type: string, enum: [active, completed, abandoned] }
+    SignalReading:
+      type: object
+      required: [sourceId, metric, start, end, provenance]
+      properties:
+        sourceId: { type: string }
+        metric: { type: string, enum: [heart_rate, hrv, sleep_duration, resting_heart_rate, steps] }
+        start: { type: string, format: date-time }
+        end: { type: string, format: date-time }
+        summary:
+          type: object
+          properties:
+            from: { type: number }
+            to: { type: number }
+            unit: { type: string }
+        provenance: { type: string, enum: [measured, example] }
+    CheckIn:
+      type: object
+      required: [id, sessionId, versionId, mood, createdAt]
+      properties:
+        id: { type: string }
+        journeyId: { type: [string, 'null'] }
+        sessionId: { type: string }
+        versionId: { type: string }
+        chapter: { type: [integer, 'null'] }
+        mood: { $ref: '#/components/schemas/Mood' }
+        note: { type: [string, 'null'], maxLength: 500 }
+        wearable: { oneOf: [{ $ref: '#/components/schemas/SignalReading' }, { type: 'null' }] }
+        createdAt: { type: string, format: date-time }
+    NextChapterPlan:
+      type: object
+      required: [chapter, unlocksAt, headline, direction]
+      properties:
+        chapter: { type: integer }
+        unlocksAt: { type: string, format: date-time }
+        direction: { type: string, enum: [gentler, keep, deeper], description: Chosen in code from the mood }
+        headline: { type: string, examples: [Chapter 2 is ready tomorrow night] }
+        plan: { type: string, examples: [Chapter 2 keeps what worked and goes a little deeper.], description: Prod v2 }
+        changes: { type: array, items: { $ref: '#/components/schemas/ChangeRef' }, maxItems: 3 }
+        reminderSuggestion:
+          type: object
+          properties: { time: { type: string } }
+    JournalEntry:
+      type: object
+      required: [id, text, createdAt, source]
+      properties:
+        id: { type: string }
+        text: { type: string, maxLength: 500 }
+        mood: { $ref: '#/components/schemas/Mood' }
+        source: { type: string, enum: [check_in, note] }
+        createdAt: { type: string, format: date-time }
+    ProgressSummary:
+      type: object
+      required: [chaptersDone, chapterTarget, trend, headline, detail, basis, checkIns]
+      properties:
+        goal: { $ref: '#/components/schemas/GoalId' }
+        chaptersDone: { type: integer }
+        chapterTarget: { type: integer }
+        trend: { type: string, enum: [up, same, down, new], description: 'Computed in code (halves, ±0.5)' }
+        usual: { type: [string, 'null'], examples: [Pleasant] }
+        headline: { type: string, examples: [After one chapter you felt pleasant.] }
+        detail: { type: string }
+        basis: { type: string }
+        nextReportAt: { type: [string, 'null'], format: date-time }
+        checkIns: { type: array, items: { $ref: '#/components/schemas/CheckIn' } }
+    Report:
+      type: object
+      required: [id, period, headline, body, generatedAt]
+      properties:
+        id: { type: string }
+        period:
+          type: object
+          required: [from, to]
+          properties:
+            from: { type: string, format: date }
+            to: { type: string, format: date }
+        headline: { type: string }
+        body: { type: string }
+        highlights: { type: array, items: { type: string } }
+        generatedAt: { type: string, format: date-time }
+
+    SignalSource:
+      type: object
+      required: [id, name, group, reads, consentTextVersion, availability]
+      properties:
+        id: { type: string, examples: [apple_watch, whoop, oura, google_calendar, conversation_history] }
+        name: { type: string }
+        group: { type: string, enum: [biological, contextual, behavioural] }
+        reads: { type: string, description: Verbatim consent text }
+        consentTextVersion: { type: string }
+        availability: { type: string, enum: [live, coming_soon] }
+    Connection:
+      type: object
+      required: [sourceId, state]
+      properties:
+        sourceId: { type: string }
+        state: { type: string, enum: ['off', 'on', pending, error] }
+        consentedAt: { type: [string, 'null'], format: date-time }
+        consentTextVersion: { type: [string, 'null'] }
+        lastSyncAt: { type: [string, 'null'], format: date-time }
+    Consent:
+      type: object
+      required: [kind, granted, textVersion, updatedAt]
+      properties:
+        kind: { type: string, enum: [analytics, personalisation, marketing] }
+        granted: { type: boolean }
+        textVersion: { type: string }
+        updatedAt: { type: string, format: date-time }
+
+    Home:
+      type: object
+      properties:
+        hero:
+          type: object
+          properties:
+            headline: { type: string }
+            prompts: { type: array, items: { type: string } }
+        quickStarts: { type: array, items: { $ref: '#/components/schemas/QuickStart' } }
+        nextChapter:
+          type: [object, 'null']
+          description: Signed in with an active journey
+          properties:
+            journey: { $ref: '#/components/schemas/Journey' }
+            label: { type: string, examples: ['Tonight · Sleep better, Chapter 2'] }
+            changedBecause: { type: [string, 'null'] }
+        recentConversations: { type: array, items: { $ref: '#/components/schemas/Conversation' }, maxItems: 3 }
+        communityShelf: { type: array, items: { $ref: '#/components/schemas/SessionCard' } }
+        live: { type: array, items: { $ref: '#/components/schemas/SessionCard' } }
+    QuickStart:
+      type: object
+      required: [id, title, photoKey, previewSessionSlug, starterPrompt]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        photoKey: { type: string }
+        previewSessionSlug: { type: string }
+        starterPrompt: { type: string }
+
+    Challenge:
+      type: object
+      required: [id, slug, title, summary, startsAt, endsAt, joined, days, rewardCoins]
+      properties:
+        id: { type: string }
+        slug: { type: string }
+        title: { type: string }
+        summary: { type: string }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        joined: { type: integer }
+        days: { type: integer }
+        rewardCoins: { type: integer }
+        me:
+          type: [object, 'null']
+          properties:
+            joined: { type: boolean }
+            daysDone: { type: integer }
+            streak: { type: integer }
+    ChallengeEntry:
+      type: object
+      required: [sessionId, session, addedAt]
+      properties:
+        sessionId: { type: string }
+        session: { $ref: '#/components/schemas/SessionCard' }
+        addedAt: { type: string, format: date-time }
+        qualifiedPlays: { type: integer, description: Only in view=ranked (prod v1) }
+        rank: { type: integer, description: Only in view=ranked (prod v1) }
+    Notification:
+      type: object
+      required: [id, kind, text, createdAt]
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [person, account, challenge, journey] }
+        actor: { oneOf: [{ $ref: '#/components/schemas/PersonSummary' }, { type: 'null' }] }
+        text: { type: string }
+        sessionId: { type: [string, 'null'] }
+        createdAt: { type: string, format: date-time }
+        readAt: { type: [string, 'null'], format: date-time }
+    Wallet:
+      type: object
+      required: [balance, currency, history]
+      properties:
+        balance: { type: integer }
+        currency: { const: coins }
+        history:
+          type: array
+          items:
+            type: object
+            required: [id, amount, reason, createdAt]
+            properties:
+              id: { type: string }
+              amount: { type: integer }
+              reason: { type: string, enum: [invite, challenge, lineage, purchase, grant] }
+              ref: { type: [string, 'null'] }
+              createdAt: { type: string, format: date-time }
+    Plan:
+      type: object
+      required: [id, price, entitlements]
+      properties:
+        id: { $ref: '#/components/schemas/PlanId' }
+        price:
+          type: object
+          required: [amount, currency, interval]
+          properties:
+            amount: { type: integer, description: Minor units }
+            currency: { type: string, examples: [USD, IDR] }
+            interval: { type: string, enum: [month, year] }
+        entitlements: { $ref: '#/components/schemas/Entitlements' }
+
+    AdminUser:
+      allOf:
+        - { $ref: '#/components/schemas/User' }
+        - type: object
+          properties:
+            status: { type: string, enum: [active, suspended, pending] }
+            country: { type: string }
+            coins: { type: integer }
+            sessionsCreated: { type: integer }
+            lastActiveAt: { type: string, format: date-time }
+    ModerationItem:
+      type: object
+      required: [id, kind, createdAt, status]
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [report, safety_flag, publish_review] }
+        category: { type: [string, 'null'] }
+        severity: { type: string, enum: [low, medium, high] }
+        subject:
+          type: object
+          properties:
+            userId: { type: string }
+            sessionId: { type: [string, 'null'] }
+            messageId: { type: [string, 'null'] }
+        excerpt: { type: string, description: Redacted }
+        status: { type: string, enum: [open, resolved] }
+        createdAt: { type: string, format: date-time }
+    AiMetricPoint:
+      type: object
+      required: [at, route]
+      properties:
+        at: { type: string, format: date-time }
+        route: { $ref: '#/components/schemas/AiRoute' }
+        requests: { type: integer }
+        inputTokens: { type: integer }
+        outputTokens: { type: integer }
+        cacheReadTokens: { type: integer }
+        costUsd: { type: number }
+        latencyP50Ms: { type: integer }
+        latencyP95Ms: { type: integer }
+        refusals: { type: integer }
+        fallbacks: { type: integer }
+        safetyFlags: { type: integer }
+        evalScore: { type: [number, 'null'] }
+    AiPolicy:
+      type: object
+      required: [route, version, model, effort, systemPrompt, state]
+      properties:
+        route: { $ref: '#/components/schemas/AiRoute' }
+        version: { type: integer }
+        model: { type: string, examples: [claude-opus-5-5] }
+        effort: { type: string, enum: [low, medium, high, xhigh, max] }
+        systemPrompt: { type: string }
+        maxTokens: { type: integer }
+        allowedChanges: { type: array, items: { type: string } }
+        state: { type: string, enum: [draft, published, archived] }
+        publishedAt: { type: [string, 'null'], format: date-time }
+    AuditEntry:
+      type: object
+      required: [id, actorId, action, target, result, at]
+      properties:
+        id: { type: string }
+        actorId: { type: string }
+        action: { type: string, examples: [user.suspend, session.takedown, ai.policy.publish] }
+        target: { type: string }
+        result: { type: string, enum: [success, denied, error] }
+        at: { type: string, format: date-time }

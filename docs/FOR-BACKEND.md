@@ -1,5 +1,7 @@
 # Aurelia — for a backend engineer
 
+> **Superseded as the endpoint specification by [`api/API-CONTRACT.md`](api/API-CONTRACT.md)** and [`api/openapi.yaml`](api/openapi.yaml) (Nov 2026, against production). This file is still the best explanation of *why* the domain shapes are the way they are.
+
 **There is no backend.** Both clients are frontend-only, running on mock data
 compiled into the bundle. This document is the specification for the backend
 that has to exist, written from what the product already does — every screen,

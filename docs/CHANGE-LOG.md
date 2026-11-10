@@ -19,6 +19,20 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-10 — API contract plan (J061)
+
+Added `docs/api/API-CONTRACT.md` and `docs/api/openapi.yaml`, the API contract for the production version (prod v1 = staging v4, prod v2 = staging v5).
+
+It covers:
+- conventions and the data model;
+- every consumer and admin endpoint;
+- the AI system (routes, model settings, safety, evals, cost);
+- phasing and the decisions still needed.
+
+Docs only.
+
+Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-11-01 — Handoff: full rulebook and research compendium (J060)
 
 `docs/HANDOFF.md` now includes:

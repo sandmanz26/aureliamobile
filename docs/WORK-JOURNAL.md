@@ -49,6 +49,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O19 | **v5 (J049)**: (1) promote v5 to production, or keep it on staging for a follow-up with the same three users; (2) backend for real wearable data (Apple Health, Whoop, Oura) — v5 shows example readings; (3) voice choice with previews (needs voices); (4) friends / local groups; (5) a reward for sharing; (6) the two-week report as a push/email; (7) the journal and check-ins are per browser until D2 (persisted sign-in); (8) v4's sheet counts goal-deck items as experiments — fixed in v5 only, so v4 pixels stay as shipped; (9) storybook stories for `FeelingProgress`, `ChapterCheckIn`, `NextChapterCard`, `TabBar`; Flutter to follow | J049, U053 | Product owner + Eugene; backend for 2, 4, 6 |
 | O20 | **Production version picker is temporary** (U054): the bar takes 28px at the top of production for every visitor, and pins on production ignore the version. Clean-up options: hide it behind a flag or a URL parameter, or remove it once a default is chosen Since U055 production lists two versions of its own (v1 = staging v4, v2 = staging v5); which staging versions it offers next is a one-line change in `PRODUCTION_VERSIONS` | J050, J051, U054, U055 | Product owner: when to clean up and how |
 | O21 | **Well-being outcomes are a proposal on sample data** (U056): (1) confirm WHO-5 as the measure, and when the app asks it (start + every two weeks); (2) backend to store assessments, check-ins and wearable readings per user; (3) Compliance wording before any outcome is shown to users or partners; (4) who owns the follow-up for WHO-5 ≤ 28, and how; (5) storybook stories for the taller `ChatComposer`; (6) production gets U056 only when asked | J054, U056 | Product owner + Eugene; backend; compliance |
+| O22 | **API contract decisions** (J061, `docs/api/API-CONTRACT.md` §11): confirm the contract's own decisions (persistence, builds-based limit, one version model, integers + formatting, provenance); free-plan N and Plus/Pro; AI cost posture (Opus 5.5 on every route vs a cheaper model after evals); TTS, sound, visual and STT vendors; data residency and AI retention; safety policy with clinical review; payment provider and coin table; WHO-5; hosting | J061 | Product owner + Eugene; legal; engineering |
 
 ---
 
@@ -116,6 +117,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J058 | 2026-10-30 | Report + Code | What's New PDF for users (v5 / prod v2), changes marked on screenshots; Why? text fix | U057 |
 | J059 | 2026-11-01 | Doc | Full technical and context handoff for another person or model (`docs/HANDOFF.md`) | docs only |
 | J060 | 2026-11-01 | Doc | Handoff completed with every working rule and every research result (Appendices A and B) | docs only |
+| J061 | 2026-11-10 | Doc | API contract plan in English for the production version, including the AI features (`docs/api/`) | docs only |
 
 ---
 
@@ -651,3 +653,35 @@ transcript and the update log. Everything from J018 on was written at the time.
     - The WHO-5 outcomes proposal.
     - The user-facing v5 summary.
 - **Corrected in §13:** the J039 model scripts *are* archived (`docs/reviews/retention-sim-2026-10-25/simulation-scripts.txt`). Only the v5 recalibration script was lost with a session scratch area; its method is written down in B.9.
+
+### J061 — API contract plan (production version, AI included)
+- **Asked:** "work as head of engineer dan head of product. tolong siapkan API contract plan dalam bahasa inggris, versi yang kita gunakan adalah yang prod. pastikan secara detail, pertimbangkan juga fitur fitur AI yang ada."
+- **Interpretation:**
+  - Production means `web_prod` @ `bc028a6`: prod v1 (= staging v4, the default) and prod v2 (= staging v5).
+  - One API serves both versions. Staging-only work (U056 admin outcomes) is marked as later.
+  - Written as a plan a backend team can build from: a markdown contract plus a machine-readable OpenAPI file.
+- **Delivered:** `docs/api/API-CONTRACT.md`, with:
+  - the features the API serves, per prod version;
+  - 10 decisions the contract takes so engineering is not blocked;
+  - conventions: auth/JWT + OAuth, RFC 9457 errors with stable codes, cursor pagination, Idempotency-Key, ETags, rate limits, SSE streaming, webhooks;
+  - the full data model;
+  - every consumer endpoint: auth, onboarding (+ AI intent inference), home and catalogue, conversations with streamed replies, proposals with `estimate` (v1) and `basis` (v2), async builds with streamed stages, playback and plays, journey, check-ins, reminders, journal, progress, signals and consent, publish/recreate/challenges (journey vs ranked view), wallet, plans and invite;
+  - telemetry and config (including the production version mapping);
+  - the admin API with RBAC and audit;
+  - the AI system:
+    - principles;
+    - ten routes with inputs, outputs, latency targets and effort;
+    - Claude Opus 5.5 via the Anthropic TypeScript SDK, with structured outputs, streaming, prompt caching, refusal fallbacks and retries;
+    - SessionSpec and the build pipeline with swappable vendors;
+    - journey intelligence (direction in code, words by the model);
+    - voice input;
+    - a mandatory safety layer;
+    - evals and cost;
+  - non-functional requirements;
+  - phases P0–P4;
+  - ten decisions needed.
+- **Also delivered:** `docs/api/openapi.yaml`, OpenAPI 3.1, validated with openapi-spec-validator (83 paths, 60 schemas).
+- **Also:**
+  - `FOR-BACKEND.md` points to the contract as the endpoint specification.
+  - `HANDOFF.md` §13 lists it.
+- **Open items:** O22 added.
