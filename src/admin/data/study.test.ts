@@ -3,17 +3,22 @@ import {
   COHORTS,
   STUDY,
   adherence,
+  bandOf,
+  bandShift,
   buildParticipants,
   completeness,
   conditionImprovement,
+  doseBuckets,
   dueCount,
   evaluateCriteria,
   followUpReasons,
   isConditionResponder,
   isWho5Responder,
   studyWeek,
+  weekTasks,
   who5Change,
   who5Trajectory,
+  winStatus,
 } from './study'
 import type { Participant } from './study'
 
@@ -87,5 +92,54 @@ describe('feedback-group study', () => {
     // outcome lines are not judged before week 8
     expect(criteria[0].status).toBe('not_yet')
     expect(['on_track', 'at_risk']).toContain(evaluateCriteria(buildParticipants(8), 8)[0].status)
+  })
+})
+
+describe('feedback-group study v2 (wins and weekly ops)', () => {
+  it('places scores in the published severity bands', () => {
+    expect(bandOf('isi', 7).healthy).toBe(true)
+    expect(bandOf('isi', 8).label).toBe('Subthreshold')
+    expect(bandOf('isi', 22).label).toBe('Severe')
+    expect(bandOf('promis_cog', 45).healthy).toBe(true) // higher is better
+    expect(bandOf('promis_cog', 38).label).toBe('Moderate')
+    expect(bandOf('who5', 28).label).toBe('Very low')
+  })
+
+  it('calls a win only when someone moves into the healthy band', () => {
+    expect(winStatus({ cohort: 'sleep', condition: [18, 7, null] })).toBe('won')
+    expect(winStatus({ cohort: 'sleep', condition: [18, 12, null] })).toBe('improving') // −6, still subthreshold
+    expect(winStatus({ cohort: 'sleep', condition: [18, 17, null] })).toBe('steady')
+    expect(winStatus({ cohort: 'sleep', condition: [12, 19, null] })).toBe('worse')
+    expect(winStatus({ cohort: 'sleep', condition: [5, 4, null] })).toBe('started healthy')
+    expect(winStatus({ cohort: 'sleep', condition: [18, null, null] })).toBe('too early')
+  })
+
+  it('counts band shifts only for people with a later score', () => {
+    const ps = [
+      { ...base, id: 'A', condition: [18, 7, null] },
+      { ...base, id: 'B', condition: [16, null, null] },
+    ]
+    const s = bandShift(ps, 'sleep')
+    expect(s.n).toBe(1)
+    expect(s.start).toEqual([0, 0, 1, 0])
+    expect(s.now).toEqual([1, 0, 0, 0])
+  })
+
+  it('groups WHO-5 change by how much people used it', () => {
+    const ps = [
+      { ...base, id: 'A', who5: [40, 55, null, null, null], sessionsByWeek: [4, 5] },
+      { ...base, id: 'B', who5: [40, 42, null, null, null], sessionsByWeek: [1, 0] },
+    ]
+    const d = doseBuckets(ps, 2)
+    expect(d[0]).toMatchObject({ n: 1, meanChange: 2 })
+    expect(d[2]).toMatchObject({ n: 1, meanChange: 15 })
+  })
+
+  it('lists the week’s work with follow-ups first', () => {
+    const tasks = weekTasks(buildParticipants(4), 4)
+    expect(tasks.length).toBeGreaterThan(0)
+    const firstNonFollowUp = tasks.findIndex((t) => t.kind !== 'follow-up')
+    expect(tasks.slice(firstNonFollowUp).some((t) => t.kind === 'follow-up')).toBe(false)
+    expect(tasks.some((t) => t.kind === 'interview')).toBe(true) // week 4 is an interview week
   })
 })

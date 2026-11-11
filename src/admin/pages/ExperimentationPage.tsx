@@ -5,6 +5,7 @@ import { BarChart, LineChart } from '../components/Charts'
 import type { Column } from '../components/DataTable'
 import { DataTable } from '../components/DataTable'
 import { Badge, Legend, PageHeader, Panel, StatCard } from '../components/ui'
+import { StudyVersionSwitch } from './ExperimentationV2Page'
 import type { CohortId, Participant, ParticipantStatus } from '../data/study'
 import {
   COHORTS,
@@ -82,7 +83,12 @@ export function ExperimentationPage() {
       <PageHeader
         title="Experimentation · feedback group"
         description={`${STUDY.target} people, each with one issue Aurelia targets, use it for ${STUDY.weeks} weeks. We measure whether their well-being and their own issue improve on validated questionnaires, and whether they keep using it. Sample data until the study runs on the backend.`}
-        actions={<Badge tone="info">{week >= STUDY.weeks ? 'Completed' : week === 0 ? 'Starting' : 'Running'} · week {week} of {STUDY.weeks}</Badge>}
+        actions={
+          <div className="flex flex-wrap items-center gap-8">
+            <Badge tone="info">{week >= STUDY.weeks ? 'Completed' : week === 0 ? 'Starting' : 'Running'} · week {week} of {STUDY.weeks}</Badge>
+            <StudyVersionSwitch current={1} />
+          </div>
+        }
       />
 
       <StudyTimeline week={week} endsOn={endsOn} />

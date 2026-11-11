@@ -317,3 +317,148 @@ export function buildParticipants(week: number, seed = 11): Participant[] {
   }
   return out
 }
+
+/* ------------------------------------------------- v2: wins and weekly ops */
+//
+// Version 2 of the section (U060) reads the study the way Eugene put it:
+// "solve and win them" — bad sleep to good sleep. A change of the meaningful
+// size is progress; arriving in the healthy band of the measure is a win.
+// Bands are the published severity cut-points for each instrument (PROMIS:
+// the usual 5/10/20-point distances from the population mean of 50).
+
+export type Band = { label: string; tone: Tone; healthy: boolean }
+
+interface BandRule {
+  /** Upper bounds (inclusive) for lower-is-better scales, lower bounds for higher-is-better. */
+  cut: number
+  band: Band
+}
+
+const HEALTHY = (label: string): Band => ({ label, tone: 'good', healthy: true })
+const MILD = (label: string): Band => ({ label, tone: 'info', healthy: false })
+const MODERATE = (label: string): Band => ({ label, tone: 'warning', healthy: false })
+const SEVERE = (label: string): Band => ({ label, tone: 'critical', healthy: false })
+
+/** Ordered from the healthiest band down. */
+const BANDS: Record<ConditionMeasure['id'] | 'who5', { better: 'lower' | 'higher'; rules: BandRule[] }> = {
+  isi: { better: 'lower', rules: [{ cut: 7, band: HEALTHY('No insomnia') }, { cut: 14, band: MILD('Subthreshold') }, { cut: 21, band: MODERATE('Moderate') }, { cut: 28, band: SEVERE('Severe') }] },
+  gad7: { better: 'lower', rules: [{ cut: 4, band: HEALTHY('Minimal') }, { cut: 9, band: MILD('Mild') }, { cut: 14, band: MODERATE('Moderate') }, { cut: 21, band: SEVERE('Severe') }] },
+  pss10: { better: 'lower', rules: [{ cut: 13, band: HEALTHY('Low stress') }, { cut: 26, band: MODERATE('Moderate') }, { cut: 40, band: SEVERE('High') }] },
+  promis_fatigue: { better: 'lower', rules: [{ cut: 54, band: HEALTHY('Within normal') }, { cut: 59, band: MILD('Mild') }, { cut: 69, band: MODERATE('Moderate') }, { cut: 80, band: SEVERE('Severe') }] },
+  promis_cog: { better: 'higher', rules: [{ cut: 45, band: HEALTHY('Within normal') }, { cut: 40, band: MILD('Mild') }, { cut: 30, band: MODERATE('Moderate') }, { cut: 0, band: SEVERE('Severe') }] },
+  who5: { better: 'higher', rules: [{ cut: 50, band: HEALTHY('Good') }, { cut: 29, band: MODERATE('Low') }, { cut: 0, band: SEVERE('Very low') }] },
+}
+
+export function bandOf(measure: ConditionMeasure['id'] | 'who5', score: number): Band {
+  const { better, rules } = BANDS[measure]
+  const hit = better === 'lower' ? rules.find((r) => score <= r.cut) : rules.find((r) => score >= r.cut)
+  return (hit ?? rules[rules.length - 1]).band
+}
+
+export function bandsFor(measure: ConditionMeasure['id'] | 'who5'): Band[] {
+  return BANDS[measure].rules.map((r) => r.band)
+}
+
+export type WinStatus = 'won' | 'improving' | 'steady' | 'worse' | 'too early' | 'started healthy'
+
+export const WIN_TONE: Record<WinStatus, Tone> = {
+  won: 'good',
+  improving: 'info',
+  steady: 'neutral',
+  worse: 'critical',
+  'too early': 'neutral',
+  'started healthy': 'warning',
+}
+
+/**
+ * On the cohort's own measure: won = started outside the healthy band and is
+ * in it now; improving = a meaningful change but not there yet; worse = a
+ * meaningful change the wrong way. "Started healthy" is a recruitment signal,
+ * not a result — they had little to win.
+ */
+export function winStatus(p: Pick<Participant, 'condition' | 'cohort'>): WinStatus {
+  const m = cohortOf(p.cohort).measure
+  const base = p.condition[0]
+  if (base === null || base === undefined) return 'too early'
+  if (bandOf(m.id, base).healthy) return 'started healthy'
+  const imp = conditionImprovement(p)
+  if (imp === null) return 'too early'
+  const latest = [...p.condition].reverse().find((v) => v !== null) as number
+  if (bandOf(m.id, latest).healthy) return 'won'
+  if (imp >= m.mcid) return 'improving'
+  if (imp <= -m.mcid) return 'worse'
+  return 'steady'
+}
+
+/** Baseline vs latest band counts for one cohort (only people with both). */
+export function bandShift(ps: Participant[], cohort: CohortId) {
+  const m = cohortOf(cohort).measure
+  const bands = bandsFor(m.id)
+  const rows = ps.filter((p) => p.cohort === cohort && p.condition[0] !== null)
+  const count = (pick: (p: Participant) => number | null) =>
+    bands.map((b) => rows.filter((p) => { const v = pick(p); return v !== null && bandOf(m.id, v).label === b.label }).length)
+  const latestOf = (p: Participant) => { const later = p.condition.slice(1).reverse().find((v) => v !== null); return later ?? null }
+  const withLatest = rows.filter((p) => latestOf(p) !== null)
+  return {
+    bands,
+    start: count((p) => (withLatest.includes(p) ? p.condition[0] : null)),
+    now: count(latestOf),
+    n: withLatest.length,
+  }
+}
+
+/** Does more use go with more change? WHO-5 change by average sessions per week. */
+export function doseBuckets(ps: Participant[], week: number) {
+  const buckets = [
+    { label: 'Under 2 a week', min: 0, max: 2 },
+    { label: '2–3 a week', min: 2, max: 4 },
+    { label: '4 or more a week', min: 4, max: Infinity },
+  ]
+  return buckets.map((b) => {
+    const inB = ps.filter((p) => {
+      const weeks = p.sessionsByWeek.slice(0, week)
+      const avg = weeks.length ? weeks.reduce((s, v) => s + v, 0) / weeks.length : 0
+      return avg >= b.min && avg < b.max
+    })
+    const changes = inB.map(who5Change).filter((c): c is number => c !== null)
+    return { label: b.label, n: inB.length, meanChange: changes.length ? Math.round((changes.reduce((s, c) => s + c, 0) / changes.length) * 10) / 10 : null }
+  })
+}
+
+export type TaskKind = 'questionnaire' | 'reminder' | 'follow-up' | 'nudge' | 'interview'
+
+export interface WeekTask {
+  id: string
+  kind: TaskKind
+  participantId: string
+  text: string
+  done: boolean
+}
+
+/** The study team's list for `week`: what is due, missed, at risk or scheduled. */
+export function weekTasks(ps: Participant[], week: number): WeekTask[] {
+  const tasks: WeekTask[] = []
+  const live = ps.filter((p) => p.status === 'active' || p.status === 'paused')
+  const who5i = (WHO5_WEEKS as readonly number[]).indexOf(week)
+  const condi = (CONDITION_WEEKS as readonly number[]).indexOf(week)
+  for (const p of ps) {
+    for (const r of followUpReasons(p)) tasks.push({ id: `${p.id}-fu-${r}`, kind: 'follow-up', participantId: p.id, text: `Call today: ${r}`, done: false })
+  }
+  for (const p of live) {
+    const m = cohortOf(p.cohort).measure
+    if (who5i >= 0) tasks.push({ id: `${p.id}-who5-${week}`, kind: 'questionnaire', participantId: p.id, text: `WHO-5 (week ${week})`, done: p.who5[who5i] !== null })
+    if (condi >= 0) {
+      tasks.push({ id: `${p.id}-cond-${week}`, kind: 'questionnaire', participantId: p.id, text: `${m.short} + PHQ-9 (week ${week})`, done: p.condition[condi] !== null })
+      tasks.push({ id: `${p.id}-int-${week}`, kind: 'interview', participantId: p.id, text: `Interview ${condi + 1} of 3 (30 min)`, done: false })
+    }
+    const missed = [
+      ...WHO5_WEEKS.filter((w, i) => w < week && p.who5[i] === null).map((w) => `WHO-5 wk ${w}`),
+      ...CONDITION_WEEKS.filter((w, i) => w < week && p.condition[i] === null).map((w) => `${m.short} wk ${w}`),
+    ]
+    if (missed.length) tasks.push({ id: `${p.id}-miss`, kind: 'reminder', participantId: p.id, text: `Remind: ${missed.join(', ')}${missed.length >= 2 ? ' — call, two misses' : ''}`, done: false })
+    const lastWeek = p.sessionsByWeek[week - 1]
+    if (week > 0 && lastWeek !== undefined && lastWeek < 2) tasks.push({ id: `${p.id}-nudge`, kind: 'nudge', participantId: p.id, text: `Only ${lastWeek} session${lastWeek === 1 ? '' : 's'} last week — check in`, done: false })
+  }
+  const order: TaskKind[] = ['follow-up', 'reminder', 'questionnaire', 'nudge', 'interview']
+  return tasks.sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind) || Number(a.done) - Number(b.done))
+}
