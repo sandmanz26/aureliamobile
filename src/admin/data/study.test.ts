@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  milestones,
   COHORTS,
   STUDY,
   adherence,
@@ -141,5 +142,24 @@ describe('feedback-group study v2 (wins and weekly ops)', () => {
     const firstNonFollowUp = tasks.findIndex((t) => t.kind !== 'follow-up')
     expect(tasks.slice(firstNonFollowUp).some((t) => t.kind === 'follow-up')).toBe(false)
     expect(tasks.some((t) => t.kind === 'interview')).toBe(true) // week 4 is an interview week
+  })
+})
+
+describe('milestones (U062)', () => {
+  it('has six milestones in order, with the current one by study week', () => {
+    const ms = milestones(buildParticipants(4), 4)
+    expect(ms.map((m) => m.id)).toEqual(['m0', 'm1', 'm2', 'm3', 'm4', 'm5'])
+    expect(ms.map((m) => m.state)).toEqual(['done', 'done', 'done', 'current', 'upcoming', 'upcoming'])
+  })
+
+  it('does not judge later gates before their week', () => {
+    const ms = milestones(buildParticipants(1), 1)
+    expect(ms.find((m) => m.id === 'm2')!.gates.every((g) => g.status === 'not_yet')).toBe(true)
+    expect(ms.find((m) => m.id === 'm5')!.gates.every((g) => g.status === 'not_yet')).toBe(true)
+  })
+
+  it('judges the final gates at week 8', () => {
+    const m5 = milestones(buildParticipants(8), 8).find((m) => m.id === 'm5')!
+    expect(m5.gates.filter((g) => g.status === 'not_yet')).toHaveLength(0)
   })
 })

@@ -1,13 +1,15 @@
-import { ArrowLeft, BookOpen, FileText, Search, Server, X } from 'lucide-react'
+import { ArrowLeft, BookOpen, FileText, Map as MapIcon, Search, Server, X } from 'lucide-react'
 import { marked } from 'marked'
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { BUILD } from '../lib/build'
 import adminGuideline from './content/admin-guideline.html?raw'
+import pmPlaybook from './content/pm-playbook.html?raw'
 import prdOverview from '../../docs/PRD-OVERVIEW.md?raw'
 import apiContract from '../../docs/api/API-CONTRACT.md?raw'
 import { filterToc, prepareDoc } from './prepareDoc'
 import './guides.css'
+import './content/pm-playbook.css'
 
 /**
  * /guide — the team's documents, readable on any site (production included)
@@ -24,6 +26,14 @@ const DOCS = [
     icon: BookOpen,
     source: 'scripts/guides/admin_guideline.py',
     html: () => adminGuideline,
+  },
+  {
+    id: 'playbook',
+    title: 'PM playbook',
+    blurb: 'The feedback group, for the project manager: the six milestones over eight weeks, the daily rhythm, iterating with the product team, and where the admin shows each step.',
+    icon: MapIcon,
+    source: 'scripts/guides/pm_playbook.py',
+    html: () => pmPlaybook,
   },
   {
     id: 'prd',
@@ -185,7 +195,7 @@ function GuideDoc({ meta }: { meta: (typeof DOCS)[number] }) {
     if (href.startsWith('#')) {
       e.preventDefault()
       jump(href.slice(1))
-    } else if (href.startsWith('/guide')) {
+    } else if (href.startsWith('/')) {
       e.preventDefault()
       navigate(href)
     }
@@ -239,7 +249,7 @@ function GuideDoc({ meta }: { meta: (typeof DOCS)[number] }) {
         <main className="gd-main">
           <div
             ref={content}
-            className={`gd-doc ${meta.id === 'admin' ? 'is-guideline' : 'is-markdown'}`}
+            className={`gd-doc ${meta.id === 'admin' || meta.id === 'playbook' ? 'is-guideline' : 'is-markdown'}`}
             onClick={onContentClick}
             // Our own documents from the repository, not user input.
             dangerouslySetInnerHTML={{ __html: prepared.html }}

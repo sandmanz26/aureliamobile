@@ -84,7 +84,8 @@ export function prepareDoc(html: string): PreparedDoc {
 
   root.querySelectorAll('a[href]').forEach((a) => {
     const href = a.getAttribute('href') ?? ''
-    if (href.startsWith('#') || href.startsWith('/guide')) return
+    // In-app paths (/guide, /admin …) are routed by GuidePage.
+    if (href.startsWith('#') || href.startsWith('/')) return
     if (/^https?:\/\//.test(href)) {
       a.setAttribute('target', '_blank')
       a.setAttribute('rel', 'noopener noreferrer')

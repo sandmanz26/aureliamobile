@@ -1,4 +1,7 @@
 import { ArrowLeft } from 'lucide-react'
+import { CoachingLogPanel } from '../components/CoachingLogPanel'
+import { daysBetween, entriesFor, isoDay } from '../data/coachingLog'
+import { useCoachingLog } from '../data/useCoachingLog'
 import { useMemo, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { BarChart, LineChart } from '../components/Charts'
@@ -472,8 +475,12 @@ function Quality({ week, participants }: { week: number; participants: Participa
 export function ExperimentationParticipantPage() {
   const { pid } = useParams()
   const { week, participants } = useStudy()
+  const [today] = useState(() => isoDay(Date.now()))
+  const coaching = useCoachingLog(participants, today)
   const p = participants.find((x) => x.id === pid)
   if (!p) return <Navigate to="/admin/experimentation" replace />
+  const last = entriesFor(coaching.log, p.id)[0]
+  const sinceContact = last ? daysBetween(last.date, today) : null
   const cohort = cohortOf(p.cohort)
   const who5Rows = WHO5_WEEKS.filter((w) => w <= week).map((w, i) => ({ date: weekDate(w), who5: p.who5[i] ?? 0 }))
   const imp = conditionImprovement(p)
@@ -491,6 +498,9 @@ export function ExperimentationParticipantPage() {
             <Badge tone="info">{cohort.label}</Badge>
             <Badge tone={STATUS_TONE[p.status]}>{p.status}</Badge>
             {reasons.length > 0 && <Badge tone="warning">Follow up: {reasons.join(', ')}</Badge>}
+            <Badge tone={sinceContact !== null && sinceContact < 2 ? 'neutral' : 'warning'}>
+              {sinceContact === null ? 'No contact logged' : sinceContact === 0 ? 'Contacted today' : `Last contact ${sinceContact} day${sinceContact === 1 ? '' : 's'} ago`}
+            </Badge>
           </div>
           <p className="mt-2 text-13 text-adm-ink-2">
             Goal “{cohort.goal}” · enrolled {date(p.enrolledOn)} · {p.wearable ?? 'no wearable'} · week {week} of {STUDY.weeks}
@@ -543,6 +553,8 @@ export function ExperimentationParticipantPage() {
         </div>
         <p className="text-12 text-adm-muted">Interview notes and contact details are kept by the research team, outside this tool.</p>
       </Panel>
+
+      <CoachingLogPanel participantId={p.id} log={coaching.log} saved={coaching.saved} today={today} onAdd={coaching.add} onRemove={coaching.remove} />
     </>
   )
 }

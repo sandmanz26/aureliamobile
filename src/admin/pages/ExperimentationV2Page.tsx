@@ -4,9 +4,12 @@ import { Link } from 'react-router-dom'
 import { BarChart } from '../components/Charts'
 import type { Tone } from '../components/ui'
 import { Badge, PageHeader, Panel, StatCard } from '../components/ui'
-import type { Band, Participant, TaskKind, WinStatus } from '../data/study'
+import { isoDay, overdueContacts } from '../data/coachingLog'
+import { useCoachingLog } from '../data/useCoachingLog'
+import type { Band, Milestone, Participant, TaskKind, WeekTask, WinStatus } from '../data/study'
 import {
   COHORTS,
+  GATE_TONE,
   STUDY,
   WIN_TONE,
   bandOf,
@@ -15,6 +18,7 @@ import {
   buildParticipants,
   cohortOf,
   doseBuckets,
+  milestones,
   studyWeek,
   weekDate,
   weekTasks,
@@ -34,7 +38,7 @@ const TONE_COLOR: Record<Tone, string> = {
 const date = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 const signed = (n: number | null) => (n === null ? '—' : `${n > 0 ? '+' : ''}${n}`)
 
-type Tab = 'wins' | 'week' | 'engagement'
+type Tab = 'plan' | 'wins' | 'week' | 'engagement'
 
 /** The v1 | v2 switch both pages carry, so a reviewer can compare. */
 export function StudyVersionSwitch({ current }: { current: 1 | 2 }) {
@@ -65,7 +69,7 @@ export function ExperimentationV2Page() {
   const [now] = useState(() => Date.now())
   const week = studyWeek(now)
   const participants = useMemo(() => buildParticipants(week), [week])
-  const [tab, setTab] = useState<Tab>('wins')
+  const [tab, setTab] = useState<Tab>('plan')
 
   return (
     <>
@@ -82,12 +86,14 @@ export function ExperimentationV2Page() {
           <li><b className="text-adm-ink">Where people started and where they are now</b>, per cohort, in the published severity bands of each questionnaire.</li>
           <li><b className="text-adm-ink">This week</b> is a checklist for the study team: calls first, then missed questionnaires, then what is due, nudges and interviews.</li>
           <li><b className="text-adm-ink">Engagement</b> shows every participant's weeks as a heat strip and whether heavier use goes with a bigger WHO-5 change. That is an association, not proof.</li>
+          <li><b className="text-adm-ink">Milestones</b> (added for the project manager) are the six steps of the two months, each with a gate that says whether it is passed. They follow the PM playbook in <Link to="/guide/playbook" className="underline">Guideline &amp; docs</Link>.</li>
+          <li><b className="text-adm-ink">A coaching log</b> on every participant's page records each contact; anyone not reached for two days appears in This week.</li>
           <li>Version 1 keeps the success criteria, the protocol and data quality. Both versions read the same data and the same rules.</li>
         </ul>
       </details>
 
       <div role="tablist" aria-label="Version 2 views" className="flex flex-wrap gap-6 border-b border-adm-line">
-        {([['wins', 'Wins'], ['week', `This week (${week})`], ['engagement', 'Engagement']] as const).map(([id, label]) => (
+        {([['plan', 'Milestones'], ['wins', 'Wins'], ['week', `This week (${week})`], ['engagement', 'Engagement']] as const).map(([id, label]) => (
           <button
             key={id}
             type="button"
@@ -101,6 +107,7 @@ export function ExperimentationV2Page() {
         ))}
       </div>
 
+      {tab === 'plan' && <Milestones participants={participants} week={week} />}
       {tab === 'wins' && <Wins participants={participants} week={week} />}
       {tab === 'week' && <ThisWeek participants={participants} week={week} />}
       {tab === 'engagement' && <Engagement participants={participants} week={week} />}
@@ -205,13 +212,25 @@ const KIND_LABEL: Record<TaskKind, string> = {
   'follow-up': 'Follow-ups: call today',
   reminder: 'Missed questionnaires',
   questionnaire: 'Due this week',
+  contact: 'Not reached for 2+ days',
   nudge: 'Low use: check in',
   interview: 'Interviews',
 }
-const KIND_TONE: Record<TaskKind, Tone> = { 'follow-up': 'critical', reminder: 'warning', questionnaire: 'info', nudge: 'neutral', interview: 'neutral' }
+const KIND_TONE: Record<TaskKind, Tone> = { 'follow-up': 'critical', reminder: 'warning', questionnaire: 'info', nudge: 'neutral', interview: 'neutral', contact: 'warning' }
 
 function ThisWeek({ participants, week }: { participants: Participant[]; week: number }) {
-  const tasks = weekTasks(participants, week)
+  const [today] = useState(() => isoDay(Date.now()))
+  const { log } = useCoachingLog(participants, today)
+  const contacts: WeekTask[] = overdueContacts(participants, log, today).map((c) => ({
+    id: `${c.participantId}-contact`,
+    kind: 'contact',
+    participantId: c.participantId,
+    text: c.days === null ? 'No contact logged yet' : `Last contact ${c.days} days ago — reach out today`,
+    done: false,
+  }))
+  const study = weekTasks(participants, week)
+  // Safety calls stay first; a missing daily contact comes straight after.
+  const tasks = [...study.filter((t) => t.kind === 'follow-up'), ...contacts, ...study.filter((t) => t.kind !== 'follow-up')]
   const [ticked, setTicked] = useState<Set<string>>(() => new Set())
   const kinds = [...new Set(tasks.map((t) => t.kind))]
   const isDone = (id: string, done: boolean) => done || ticked.has(id)
@@ -324,5 +343,68 @@ function Engagement({ participants, week }: { participants: Participant[]; week:
         <p className="text-11 text-adm-muted">The number in brackets is how many people fall in each group.</p>
       </Panel>
     </div>
+  )
+}
+
+const MS_STATE: Record<Milestone['state'], { label: string; tone: Tone }> = {
+  done: { label: 'Done', tone: 'good' },
+  current: { label: 'Now', tone: 'warning' },
+  upcoming: { label: 'Upcoming', tone: 'neutral' },
+}
+const GATE_LABEL = { pass: 'passed', fail: 'below the line', not_yet: 'not yet', manual: 'confirm' } as const
+
+const weeksLabel = (m: Milestone) =>
+  m.from < 0 ? `Before week 0` : m.from === m.to ? `Week ${m.from}` : `Weeks ${m.from}–${m.to}`
+
+/** The project manager's plan: where the study is, and whether each milestone's gate is passed. */
+function Milestones({ participants, week }: { participants: Participant[]; week: number }) {
+  const list = milestones(participants, week)
+  const current = list.find((m) => m.state === 'current') ?? list[list.length - 1]
+  return (
+    <>
+      <div className="grid grid-cols-2 gap-12 lg:grid-cols-4">
+        <StatCard label="Study week" value={`${week} of ${STUDY.weeks}`} hint={`started ${date(STUDY.startsOn)}`} />
+        <StatCard label="Milestone now" value={current.name} hint={weeksLabel(current)} />
+        <StatCard label="Gates passed so far" value={String(list.flatMap((m) => m.gates).filter((g) => g.status === 'pass').length)} hint={`of ${list.flatMap((m) => m.gates).length}`} />
+        <StatCard label="To confirm by a person" value={String(list.flatMap((m) => m.gates).filter((g) => g.status === 'manual').length)} hint="ethics, iteration, safety" />
+      </div>
+      <p className="text-12 text-adm-muted">
+        The same six milestones as the project manager's playbook (<Link to="/guide/playbook" className="underline">Guideline &amp; docs → PM playbook</Link>). Gates are computed from the study data; “confirm” gates need a person to check them. Outcome lines are judged only at week 8.
+      </p>
+      <ol className="flex flex-col gap-12">
+        {list.map((m, i) => (
+          <li key={m.id}>
+            <Panel
+              title={`M${i} · ${m.name}`}
+              description={`${weeksLabel(m)} · ${m.goal}`}
+              actions={<Badge tone={MS_STATE[m.state].tone}>{MS_STATE[m.state].label}</Badge>}
+            >
+              <div className="grid gap-12 lg:grid-cols-2">
+                <div>
+                  <p className="text-11 font-medium uppercase tracking-wider text-adm-muted">The project manager</p>
+                  <ul className="mt-6 flex list-disc flex-col gap-4 pl-18 text-13 text-adm-ink-2">
+                    {m.pmDoes.map((d) => <li key={d}>{d}</li>)}
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-11 font-medium uppercase tracking-wider text-adm-muted">Gate</p>
+                  <ul className="mt-6 flex flex-col divide-y divide-adm-line">
+                    {m.gates.map((g) => (
+                      <li key={g.label} className="flex items-center justify-between gap-10 py-6 text-13">
+                        <span className="min-w-0 text-adm-ink-2">{g.label}</span>
+                        <span className="flex shrink-0 items-center gap-6">
+                          <span className="tabular-nums text-adm-ink">{g.display}</span>
+                          <Badge tone={GATE_TONE[g.status]}>{GATE_LABEL[g.status]}</Badge>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </Panel>
+          </li>
+        ))}
+      </ol>
+    </>
   )
 }

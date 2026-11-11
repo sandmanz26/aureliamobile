@@ -425,7 +425,8 @@ export function doseBuckets(ps: Participant[], week: number) {
   })
 }
 
-export type TaskKind = 'questionnaire' | 'reminder' | 'follow-up' | 'nudge' | 'interview'
+/** `contact` comes from the coaching log (coachingLog.ts), not from weekTasks. */
+export type TaskKind = 'questionnaire' | 'reminder' | 'follow-up' | 'nudge' | 'interview' | 'contact'
 
 export interface WeekTask {
   id: string
@@ -461,4 +462,99 @@ export function weekTasks(ps: Participant[], week: number): WeekTask[] {
   }
   const order: TaskKind[] = ['follow-up', 'reminder', 'questionnaire', 'nudge', 'interview']
   return tasks.sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind) || Number(a.done) - Number(b.done))
+}
+
+/* ------------------------------------------------------ milestones (U062) */
+
+/**
+ * The project manager's plan: six milestones over the two months, each with a
+ * gate that says whether it is passed. The same milestones are in the PM
+ * playbook (docs/reviews/feedback-group-playbook-2026-11-11.html), which links
+ * here; change one and change the other.
+ */
+export type GateStatus = 'pass' | 'fail' | 'not_yet' | 'manual'
+
+export interface Gate {
+  label: string
+  display: string
+  status: GateStatus
+}
+
+export interface Milestone {
+  id: string
+  name: string
+  /** Study weeks it covers; negative weeks are before week 0. */
+  from: number
+  to: number
+  goal: string
+  pmDoes: string[]
+  gates: Gate[]
+  state: 'done' | 'current' | 'upcoming'
+}
+
+export const GATE_TONE: Record<GateStatus, Tone> = { pass: 'good', fail: 'warning', not_yet: 'neutral', manual: 'info' }
+
+function share(n: number, d: number) {
+  return d ? n / d : null
+}
+
+function gate(label: string, value: number | null, line: number, have: boolean, suffix = ''): Gate {
+  if (!have || value === null) return { label, display: '—', status: 'not_yet' }
+  return { label, display: `${pct(value)}${suffix}`, status: value >= line ? 'pass' : 'fail' }
+}
+
+export function milestones(ps: Participant[], week: number): Milestone[] {
+  const live = ps.filter((p) => p.status !== 'withdrawn')
+  const baseline = share(ps.filter((p) => p.who5[0] !== null && p.condition[0] !== null).length, ps.length)
+  const firstWeek = share(ps.filter((p) => (p.sessionsByWeek[0] ?? 0) >= 1).length, ps.length)
+  const habit = share(live.filter((p) => (p.sessionsByWeek[0] ?? 0) >= 3 && (p.sessionsByWeek[1] ?? 0) >= 3).length, live.length)
+  const who5wk2 = share(live.filter((p) => p.who5[1] !== null).length, live.length)
+  const retained = share(live.length, ps.length)
+  const complete = ps.length ? ps.reduce((s, p) => s + completeness(p, week), 0) / ps.length : null
+  const adh = live.map((p) => adherence(p, week)).filter((a): a is number => a !== null)
+  const adhRate = share(adh.filter((a) => a >= 0.6).length, adh.length)
+  const final = evaluateCriteria(ps, week).filter((c) => ['who5', 'condition', 'retention', 'data'].includes(c.id))
+
+  const list: Omit<Milestone, 'state'>[] = [
+    {
+      id: 'm0', name: 'Set up and recruit', from: -3, to: -1,
+      goal: '30 people across six issues, consented, with the study tools ready.',
+      pmDoes: ['Recruit 4–6 people per cohort', 'Consent and PHQ-9 screening', 'Book every baseline call'],
+      gates: [
+        { label: `Enrolled (target ${STUDY.target})`, display: `${ps.length} of ${STUDY.target}`, status: ps.length >= STUDY.target ? 'pass' : 'fail' },
+        { label: 'Ethics review and clinical advisor', display: 'confirm', status: 'manual' },
+      ],
+    },
+    {
+      id: 'm1', name: 'Baseline and first session', from: 0, to: 0,
+      goal: 'Everyone measured before they start, and playing within two days.',
+      pmDoes: ['WHO-5, cohort measure and interview 1', 'Sit with each person for their first session', 'Agree a daily time with each person'],
+      gates: [gate('Baseline WHO-5 and cohort measure collected (line 100%)', baseline, 1, week >= 0), gate('Played a first session in week 1 (line 90%)', firstWeek, 0.9, week >= 1)],
+    },
+    {
+      id: 'm2', name: 'Build the habit', from: 1, to: 2,
+      goal: 'A daily rhythm: three or more sessions a week, a check-in after each.',
+      pmDoes: ['A short message every day at the agreed time', 'Call anyone under 2 sessions in a week', 'Log every contact in the coaching log'],
+      gates: [gate('3+ sessions in both weeks 1 and 2 (line 70%)', habit, 0.7, week >= 2), gate('WHO-5 week 2 answered (line 85%)', who5wk2, 0.85, week >= 2)],
+    },
+    {
+      id: 'm3', name: 'Midpoint read, first iteration', from: 3, to: 4,
+      goal: 'Read what is and is not working, and ship one change for the second half.',
+      pmDoes: ['Interview 2 with everyone', 'Bring the top three findings to the product team', 'Explain the change to participants'],
+      gates: [gate('Still enrolled (line 85%)', retained, 0.85, week >= 4), gate('Due questionnaires collected (line 85%)', complete, 0.85, week >= 4), { label: 'Iteration shipped to the group', display: 'product team', status: week >= 5 ? 'manual' : 'not_yet' }],
+    },
+    {
+      id: 'm4', name: 'Second half, second iteration', from: 5, to: 7,
+      goal: 'Measure whether the change helped; one more adjustment if needed.',
+      pmDoes: ['Keep the daily rhythm', 'Watch who is winning and who is stuck', 'Follow up every alert the same day'],
+      gates: [gate('Adherent people (line 60%)', adhRate, 0.6, week >= 6), { label: 'Every safety alert followed up the same day', display: `${ps.filter((p) => p.phq9Alert).length} alerts`, status: 'manual' }],
+    },
+    {
+      id: 'm5', name: 'Final read and decision', from: 8, to: 9,
+      goal: 'The pass lines decide: go, iterate or pivot.',
+      pmDoes: ['Final measures, value question, interview 3', 'Write the participant stories', 'Present the result in week 9'],
+      gates: [...final.map((c) => ({ label: c.label, display: c.display, status: (week < STUDY.weeks ? 'not_yet' : c.status === 'on_track' ? 'pass' : 'fail') as GateStatus })), { label: '“Very disappointed” without Aurelia (line 40%)', display: '—', status: week < STUDY.weeks ? 'not_yet' : 'manual' }],
+    },
+  ]
+  return list.map((m) => ({ ...m, state: week > m.to ? 'done' : week >= m.from ? 'current' : 'upcoming' }))
 }

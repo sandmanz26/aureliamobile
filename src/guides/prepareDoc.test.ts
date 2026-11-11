@@ -28,9 +28,10 @@ describe('prepareDoc', () => {
   })
 
   it('keeps web and guide links, turns repository paths into text', () => {
-    const { html } = prepareDoc('<p><a href="https://x.test">w</a> <a href="/guide/api">g</a> <a href="../HANDOFF.md">h</a></p>')
+    const { html } = prepareDoc('<p><a href="https://x.test">w</a> <a href="/guide/api">g</a> <a href="/admin/x">a</a> <a href="../HANDOFF.md">h</a></p>')
     expect(html).toContain('target="_blank"')
     expect(html).toContain('href="/guide/api"')
+    expect(html).toContain('href="/admin/x"')
     expect(html).toContain('<span class="repo-ref">h</span>')
   })
 })
