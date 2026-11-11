@@ -19,6 +19,23 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-11 — Team documents at /guide; production promoted (U061, J065)
+
+`/guide` in the app holds three documents behind the site password:
+- the admin guideline;
+- a new whole-product PRD (`docs/PRD-OVERVIEW.md`);
+- the API contract.
+
+The admin sidebar links to it.
+
+Production was fast-forwarded on request. It now carries:
+- U056: chat box, Discover header, Well-being outcomes;
+- U057: the v5 Why? fix;
+- U058–U060: admin Experimentation v1 and v2;
+- U061: `/guide`.
+
+Branches: `web_app`, `admin_cms`, **`web_prod`**.
+
 ### 2026-11-11 — Experimentation reopened, version 2 added (U060); admin guideline (J064)
 
 The admin Experimentation section is visible on staging again, with two menu items:

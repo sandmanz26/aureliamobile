@@ -50,7 +50,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O20 | **Production version picker is temporary** (U054): the bar takes 28px at the top of production for every visitor, and pins on production ignore the version. Clean-up options: hide it behind a flag or a URL parameter, or remove it once a default is chosen Since U055 production lists two versions of its own (v1 = staging v4, v2 = staging v5); which staging versions it offers next is a one-line change in `PRODUCTION_VERSIONS` | J050, J051, U054, U055 | Product owner: when to clean up and how |
 | O21 | **Well-being outcomes are a proposal on sample data** (U056): (1) confirm WHO-5 as the measure, and when the app asks it (start + every two weeks); (2) backend to store assessments, check-ins and wearable readings per user; (3) Compliance wording before any outcome is shown to users or partners; (4) who owns the follow-up for WHO-5 ≤ 28, and how; (5) storybook stories for the taller `ChatComposer`; (6) production gets U056 only when asked | J054, U056 | Product owner + Eugene; backend; compliance |
 | O22 | **API contract decisions** (J061, `docs/api/API-CONTRACT.md` §11): confirm the contract's own decisions (persistence, builds-based limit, one version model, integers + formatting, provenance); free-plan N and Plus/Pro; AI cost posture (Opus 5.5 on every route vs a cheaper model after evals); TTS, sound, visual and STT vendors; data residency and AI retention; safety policy with clinical review; payment provider and coin table; WHO-5; hosting | J061 | Product owner + Eugene; legal; engineering |
-| O23 | **Feedback-group study (J062, J064)** — visible again on staging since U060, as two versions for review: (1) which version (or which parts of each) to keep, and approve the design and pass lines before week 0; (2) recruitment and incentive; (3) clinical advisor + ethics review, and instrument licensing (ISI, PSS-10 for commercial use); (4) start date, which needs D2 persistence, study enrolment and consent, questionnaire screens, events and a safety alert (API §5.12); (5) whether the Experimentation section goes to production now (sample data) or with the study | J062, U058, U060 | Product owner + Eugene; clinical advisor |
+| O23 | **Feedback-group study (J062, J064)** — on staging since U060 and on production since U061 (sample data), as two versions for review: (1) which version (or which parts of each) to keep, and approve the design and pass lines before week 0; (2) recruitment and incentive; (3) clinical advisor + ethics review, and instrument licensing (ISI, PSS-10 for commercial use); (4) start date, which needs D2 persistence, study enrolment and consent, questionnaire screens, events and a safety alert (API §5.12); (5) ~~production now or with the study~~ — on production since U061 | J062, U058, U060 | Product owner + Eugene; clinical advisor |
 
 ---
 
@@ -122,6 +122,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J062 | 2026-11-10 | Question + Code + Report | Where admin lives (same app on staging and production); Experimentation section for the 30-person feedback-group study; protocol PDF | U058 |
 | J063 | 2026-11-10 | Code | Hide the Experimentation section until the client's pricing arrives | U059 |
 | J064 | 2026-11-11 | Code + Doc | Reopen Experimentation with a version 2 for review; detailed admin guideline in HTML | U060 |
+| J065 | 2026-11-11 | Code + Doc + Release | Guideline, a whole-product PRD and the API contract readable on production at `/guide`; production promoted | U061 |
 
 ---
 
@@ -716,6 +717,22 @@ transcript and the update log. Everything from J018 on was written at the time.
   - four decisions.
 - **Also:** `docs/api/API-CONTRACT.md` §5.12 and `openapi.yaml` gained the study endpoints (now 90 paths, validated).
 - **Open items:** O23 added.
+
+### J065 — Documents on production at /guide; production promoted (U061)
+- **Asked:**
+  - The guideline should open on production.
+  - Write a PRD of Aurelia as a whole.
+  - Put the API contract in HTML too.
+  - Before that, "kalo mo saya akses di url bgmana?": where are v1/v2 and the guideline? Answered with the paths. The staging domain is not recorded in the repository.
+- **Done:**
+  - `docs/PRD-OVERVIEW.md`.
+  - `/guide`, `/guide/admin`, `/guide/prd` and `/guide/api` in the app, behind the site password, linked from the admin sidebar.
+  - The owner chose to ship staging as it stands, so `web_prod` was fast-forwarded with U056–U061: chat box, Discover header, Well-being outcomes, the v5 Why? fix, Experimentation v1 and v2, and `/guide`.
+  - The guideline artifact was republished with the production wording.
+- **Open items:**
+  - O3: production was promoted.
+  - O23 (5) is answered: Experimentation is on production on sample data.
+  - O21 still stands for outcomes shown to anyone outside the team.
 
 ### J064 — Experimentation reopened with a version 2; admin guideline (U060)
 - **Asked:**

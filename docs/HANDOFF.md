@@ -6,7 +6,7 @@ environment, how the code is put together, how work is recorded and shipped,
 how to verify it honestly, and what is still open.
 
 > **Status:** written 1 Nov 2026 against `web_app` @ `e5c3dcf` (U057 / J058).
-> Production (`web_prod`) is at `bc028a6` (U055). If the branch heads have
+> Production (`web_prod`) is at the same head as `web_app` (U061, 11 Nov 2026). If the branch heads have
 > moved, trust `git log` and the logs (§9) over this snapshot.
 
 **Read order for a cold start:** §1 → §2 (and Appendix A, the complete rulebook) → §3 → §4, then `CLAUDE.md` (the
@@ -132,7 +132,7 @@ Repository: **`sandmanz26/aureliamobile`** (GitHub). One app per branch:
 | --- | --- | --- | --- |
 | `web_app` | React app: consumer client + admin CMS. **Work happens here.** Staging. | `e5c3dcf` | every change |
 | `admin_cms` | Identical to `web_app` | `e5c3dcf` | ff after every `web_app` push |
-| `web_prod` | Production cut of `web_app` | `bc028a6` (U055) | ff **on request only** |
+| `web_prod` | Production cut of `web_app` | same as `web_app` (U061) | ff **on request only** |
 | `mobile_app` | Flutter 3.x client | `2e3f202` (27 Sep) | stale, see §14 |
 | `storybook` | Storybook catalogue of `src/components/` | `6e144b7` (27 Sep) | stale, see §14 |
 | `claude/figma-variable-check-t6kazm` | The branch a fresh cloud session may open on: an almost empty Flutter scaffold, reverted. **Not the app.** | `ea49ba6` | — |
@@ -172,26 +172,23 @@ Repository: **`sandmanz26/aureliamobile`** (GitHub). One app per branch:
 
 ## 4 · Where things stand right now
 
-### Production (`web_prod` @ `bc028a6`, U055)
+### Production (`web_prod` = `web_app`, U061, 11 Nov 2026)
 
 - **Version bar and picker are visible on production** (U054, temporary; owner
   said "nanti kita clean up"). Production offers **two versions of its own**
   (U055):
   - **prod v1 = staging v4.** This is the default every visitor sees.
   - **prod v2 = staging v5.** Opt-in, saved per browser.
-- It includes everything up to U055: onboarding, first-session fixes, chapter
-  check-in and reminder, four tabs, offline support, the v5 interview changes
-  (behind v2) and the foundation work.
+- It includes everything up to U061:
+  - the U056 chat box and Discover header;
+  - admin Well-being outcomes;
+  - the v5 Why? fix;
+  - admin Experimentation v1 and v2;
+  - the team documents at **`/guide`** (admin guideline, `docs/PRD-OVERVIEW.md`, API contract), behind the site password.
 
-### Staging (`web_app` @ `e5c3dcf`): ahead of production by
+### Staging (`web_app`)
 
-| U | What | In prod? |
-| --- | --- | --- |
-| U056 | Chat composer 59 → 75px (every version); Explore/Discover header follows the scroll (every version); admin **Well-being outcomes** page and per-user panel | **No** |
-| U057 | v5 "Why?" sentence fix (prod v2 still shows "your goal and “Sleep better”") | **No** |
-| J052–J058 | Docs only (answers, What's New PDF) | n/a |
-
-Promoting these is waiting on a request.
+Level with production as of U061. Anything newer is waiting on a request.
 
 ### Last things delivered (most recent first)
 
@@ -398,7 +395,7 @@ in the conversation.
   - Sessions; Challenges; Moderation; AI monitoring; Cockpit rules;
   - Revenue; Pricing; Payments; Coins; Experiments; Notifications;
   - Compliance; Signal sources; Audit; Settings.
-- **Experimentation → Feedback group · v1 and · v2 (U058, U060; staging only):** the 30-person, 8-week outcomes pilot. U059 hid it and U060 reopened it. v1 (`ExperimentationPage`) covers criteria, participants, measures and data quality. v2 (`ExperimentationV2Page`, `/admin/experimentation/v2`) covers Wins (clinical bands), This week (a task list) and Engagement (dose). Both are kept for review until O23 picks one. Rules are in `admin/data/study.ts`; the protocol PDF is in `docs/reviews/`. Outcome criteria are not judged before week 8. **Every admin module is described in `docs/guidelines/admin-guideline.html`.**
+- **Experimentation → Feedback group · v1 and · v2 (U058, U060; on production since U061):** the 30-person, 8-week outcomes pilot. U059 hid it and U060 reopened it. v1 (`ExperimentationPage`) covers criteria, participants, measures and data quality. v2 (`ExperimentationV2Page`, `/admin/experimentation/v2`) covers Wins (clinical bands), This week (a task list) and Engagement (dose). Both are kept for review until O23 picks one. Rules are in `admin/data/study.ts`; the protocol PDF is in `docs/reviews/`. Outcome criteria are not judged before week 8. **Every admin module is described in the guideline: in the app at `/guide/admin` (both sites), generated with the standalone `docs/guidelines/admin-guideline.html` by `scripts/guides/admin_guideline.py`.**
 - **No authentication on `/admin`.** This is the P0 in `docs/PRD.md`.
 - Data comes from seeded mock data (`admin/data/mock.ts`) through
   `AdminDataContext`. Edits live in memory only.
@@ -615,7 +612,8 @@ All in the repository unless noted.
 | 27 Oct | `docs/reviews/Aurelia-Owner-Report-2026-10-27.pdf` (+ HTML, 14 images) | J047–J048: before / suggestion / now / impact; labelled AI analysis. Private artifact: https://claude.ai/artifact/VTjHzkzYfBXnGbZFKcDTJ5 |
 | 27 Oct | `docs/reviews/Aurelia-v5-Proposal-2026-10-27.pdf` (+ HTML, 16 images) | J049: interviews vs simulation, v4 → v5 pairs, predicted impact. Private artifact: https://claude.ai/artifact/PXDGCwz7BXzv5ASr67bS84 |
 | 30 Oct | `docs/user-updates/Aurelia-Whats-New-v5.pdf` (+ HTML, 9 marked images) | J058: **for end users**; eight changes, how to switch to v2 |
-| 11 Nov | `docs/guidelines/admin-guideline.html` (+ 25 screenshots) | J064: interactive guide to every admin module (purpose, actions, rules, permissions, environment, backend) |
+| 11 Nov | `docs/PRD-OVERVIEW.md`, at `/guide/prd` | J065: the whole product on one page: users, principles, feature status by version, AI, privacy, business model, metrics, roadmap, risks, decisions |
+| 11 Nov | `docs/guidelines/admin-guideline.html` (+ 25 screenshots), at `/guide/admin` | J064: interactive guide to every admin module (purpose, actions, rules, permissions, environment, backend) |
 | 10 Nov | `docs/reviews/Aurelia-Feedback-Group-Study-2026-11-10.pdf` (+ HTML, 6 images) | J062: protocol for the 30-person, 8-week therapeutic-outcomes pilot, and the admin Experimentation section (U058) |
 | 10 Nov | `docs/api/API-CONTRACT.md` + `docs/api/openapi.yaml` | J061: **API contract plan** for production (prod v1/v2): conventions, data model, every consumer and admin endpoint, the AI system (routes, models, safety, evals), phasing and decisions |
 | — | `docs/PRD.md`, `FOR-*.md`, `DESIGN-SYSTEM-HISTORY.md` | Requirements and reader-specific guides. `FOR-AI-AGENT.md` dates from 20 Sep; **this file supersedes it for current state.** |
