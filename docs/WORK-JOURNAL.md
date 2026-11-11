@@ -127,6 +127,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J067 | 2026-11-11 | Report + Code | Eugene: a PDF for the project manager on the two-month feedback group, linked to the admin as source of truth; Milestones and coaching log in admin | U062 |
 | J068 | 2026-11-11 | Question | All the URLs (production, staging, artifacts), and where Eugene's request lives | — |
 | J069 | 2026-11-11 | Code + Doc | The study protocol put inside the playbook HTML as its appendix | U063 |
+| J070 | 2026-11-11 | Doc | The playbook as one HTML file instead of a PDF, to send to Eugene | docs only |
 
 ---
 
@@ -721,6 +722,14 @@ transcript and the update log. Everything from J018 on was written at the time.
   - four decisions.
 - **Also:** `docs/api/API-CONTRACT.md` §5.12 and `openapi.yaml` gained the study endpoints (now 90 paths, validated).
 - **Open items:** O23 added.
+
+### J070 — The playbook as an HTML file, not a PDF
+- **Asked:** "mksd saya daripada pdf jadikan saja html": send HTML instead of the PDF.
+- **Done:**
+  - `docs/share/Aurelia-Feedback-Group-Playbook.html` is one self-contained file: the playbook and the protocol appendix, with the six screenshots embedded (about 1.5 MB). It opens from disk in any browser and can be sent by WhatsApp or email.
+  - `scripts/guides/pm_playbook.py` now writes it with the other outputs, so it stays in step.
+  - The artifact link remains the online version.
+  - The PDFs stay in `docs/reviews/` as records; HTML is now the format to share.
 
 ### J069 — The protocol inside the playbook (U063)
 - **Asked:** put item 3 (the study protocol) inside the playbook HTML.
