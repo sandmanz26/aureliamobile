@@ -1,0 +1,49 @@
+From a876ab5f2ec546cfdfd6ca4a290fd38575f7339c Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 11 Nov 2026 16:07:09 +0000
+Subject: [PATCH] Guide: the feedback group playbook first, named for Eugene's
+ request
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/guides/GuidePage.tsx | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/src/guides/GuidePage.tsx b/src/guides/GuidePage.tsx
+index ca5a57f..cce9da4 100644
+--- a/src/guides/GuidePage.tsx
++++ b/src/guides/GuidePage.tsx
+@@ -19,6 +19,14 @@ import './content/pm-playbook.css'
+  * drift from the file it shows.
+  */
+ const DOCS = [
++  {
++    id: 'playbook',
++    title: 'Feedback group playbook',
++    blurb: 'Eugene\'s request: the 30-person, two-month feedback group, for the project manager: the six milestones over eight weeks, the daily rhythm, iterating with the product team, where the admin shows each step, and the full study protocol.',
++    icon: MapIcon,
++    source: 'scripts/guides/pm_playbook.py',
++    html: () => pmPlaybook,
++  },
+   {
+     id: 'admin',
+     title: 'Admin guideline',
+@@ -27,14 +35,6 @@ const DOCS = [
+     source: 'scripts/guides/admin_guideline.py',
+     html: () => adminGuideline,
+   },
+-  {
+-    id: 'playbook',
+-    title: 'PM playbook',
+-    blurb: 'The feedback group, for the project manager: the six milestones over eight weeks, the daily rhythm, iterating with the product team, and where the admin shows each step.',
+-    icon: MapIcon,
+-    source: 'scripts/guides/pm_playbook.py',
+-    html: () => pmPlaybook,
+-  },
+   {
+     id: 'prd',
+     title: 'Product requirements',
+-- 
+2.43.0
+

@@ -6,7 +6,7 @@ environment, how the code is put together, how work is recorded and shipped,
 how to verify it honestly, and what is still open.
 
 > **Status:** written 1 Nov 2026 against `web_app` @ `e5c3dcf` (U057 / J058).
-> Production (`web_prod`) is at the same head as `web_app` (U061, 11 Nov 2026). If the branch heads have
+> Production (`web_prod`) is at the same head as `web_app` (U064, 11 Nov 2026). If the branch heads have
 > moved, trust `git log` and the logs (§9) over this snapshot.
 
 **Read order for a cold start:** §1 → §2 (and Appendix A, the complete rulebook) → §3 → §4, then `CLAUDE.md` (the
@@ -132,7 +132,7 @@ Repository: **`sandmanz26/aureliamobile`** (GitHub). One app per branch:
 | --- | --- | --- | --- |
 | `web_app` | React app: consumer client + admin CMS. **Work happens here.** Staging. | `e5c3dcf` | every change |
 | `admin_cms` | Identical to `web_app` | `e5c3dcf` | ff after every `web_app` push |
-| `web_prod` | Production cut of `web_app` | same as `web_app` (U061) | ff **on request only** |
+| `web_prod` | Production cut of `web_app` | same as `web_app` (U064) | ff **on request only** |
 | `mobile_app` | Flutter 3.x client | `2e3f202` (27 Sep) | stale, see §14 |
 | `storybook` | Storybook catalogue of `src/components/` | `6e144b7` (27 Sep) | stale, see §14 |
 | `claude/figma-variable-check-t6kazm` | The branch a fresh cloud session may open on: an almost empty Flutter scaffold, reverted. **Not the app.** | `ea49ba6` | — |
@@ -188,7 +188,7 @@ Repository: **`sandmanz26/aureliamobile`** (GitHub). One app per branch:
 
 ### Staging (`web_app`)
 
-Ahead of production by U062 (PM playbook, Milestones, coaching log) and U063 (the protocol as the playbook's appendix). Waiting on an explicit request.
+Level with production as of U064 (11 Nov 2026). Anything newer is waiting on a request.
 
 ### Last things delivered (most recent first)
 
@@ -395,7 +395,7 @@ in the conversation.
   - Sessions; Challenges; Moderation; AI monitoring; Cockpit rules;
   - Revenue; Pricing; Payments; Coins; Experiments; Notifications;
   - Compliance; Signal sources; Audit; Settings.
-- **Experimentation → Feedback group · v1 and · v2 (U058, U060; on production since U061):** the 30-person, 8-week outcomes pilot. U059 hid it and U060 reopened it. v1 (`ExperimentationPage`) covers criteria, participants, measures and data quality. v2 (`ExperimentationV2Page`, `/admin/experimentation/v2`) covers Wins (clinical bands), This week (a task list) and Engagement (dose). Both are kept for review until O23 picks one. **U062 (staging only):** v2 opens on **Milestones** (`milestones()` in `study.ts`; the same M0–M5 as the PM playbook, change both together), and each participant page has a **coaching log** (`data/coachingLog.ts`, `aurelia.admin.study.log`, per browser). Rules are in `admin/data/study.ts`; the protocol PDF is in `docs/reviews/`. Outcome criteria are not judged before week 8. **Every admin module is described in the guideline: in the app at `/guide/admin` (both sites), generated with the standalone `docs/guidelines/admin-guideline.html` by `scripts/guides/admin_guideline.py`.**
+- **Experimentation → Feedback group · v1 and · v2 (U058, U060; on production since U061):** the 30-person, 8-week outcomes pilot. U059 hid it and U060 reopened it. v1 (`ExperimentationPage`) covers criteria, participants, measures and data quality. v2 (`ExperimentationV2Page`, `/admin/experimentation/v2`) covers Wins (clinical bands), This week (a task list) and Engagement (dose). Both are kept for review until O23 picks one. **U062 (on production since U064):** v2 opens on **Milestones** (`milestones()` in `study.ts`; the same M0–M5 as the PM playbook, change both together), and each participant page has a **coaching log** (`data/coachingLog.ts`, `aurelia.admin.study.log`, per browser). Rules are in `admin/data/study.ts`; the protocol PDF is in `docs/reviews/`. Outcome criteria are not judged before week 8. **Every admin module is described in the guideline: in the app at `/guide/admin` (both sites), generated with the standalone `docs/guidelines/admin-guideline.html` by `scripts/guides/admin_guideline.py`.**
 - **No authentication on `/admin`.** This is the P0 in `docs/PRD.md`.
 - Data comes from seeded mock data (`admin/data/mock.ts`) through
   `AdminDataContext`. Edits live in memory only.

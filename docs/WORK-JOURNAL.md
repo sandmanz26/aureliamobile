@@ -50,7 +50,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O20 | **Production version picker is temporary** (U054): the bar takes 28px at the top of production for every visitor, and pins on production ignore the version. Clean-up options: hide it behind a flag or a URL parameter, or remove it once a default is chosen Since U055 production lists two versions of its own (v1 = staging v4, v2 = staging v5); which staging versions it offers next is a one-line change in `PRODUCTION_VERSIONS` | J050, J051, U054, U055 | Product owner: when to clean up and how |
 | O21 | **Well-being outcomes are a proposal on sample data** (U056): (1) confirm WHO-5 as the measure, and when the app asks it (start + every two weeks); (2) backend to store assessments, check-ins and wearable readings per user; (3) Compliance wording before any outcome is shown to users or partners; (4) who owns the follow-up for WHO-5 ≤ 28, and how; (5) storybook stories for the taller `ChatComposer`; (6) production gets U056 only when asked | J054, U056 | Product owner + Eugene; backend; compliance |
 | O22 | **API contract decisions** (J061, `docs/api/API-CONTRACT.md` §11): confirm the contract's own decisions (persistence, builds-based limit, one version model, integers + formatting, provenance); free-plan N and Plus/Pro; AI cost posture (Opus 5.5 on every route vs a cheaper model after evals); TTS, sound, visual and STT vendors; data residency and AI retention; safety policy with clinical review; payment provider and coin table; WHO-5; hosting | J061 | Product owner + Eugene; legal; engineering |
-| O23 | **Feedback-group study (J062, J064)** — on staging since U060 and on production since U061 (sample data), as two versions for review: (1) which version (or which parts of each) to keep, and approve the design and pass lines before week 0; (2) recruitment and incentive; (3) clinical advisor + ethics review, and instrument licensing (ISI, PSS-10 for commercial use); (4) start date, which needs D2 persistence, study enrolment and consent, questionnaire screens, events and a safety alert (API §5.12); (5) ~~production now or with the study~~ — on production since U061; (6) the project manager's name and start date (J067); (7) U062 (Milestones, coaching log, playbook page) to production when the PM starts; (8) the coaching log is per browser until the backend | J062, U058, U060, U062 | Product owner + Eugene; clinical advisor |
+| O23 | **Feedback-group study (J062, J064)** — on staging since U060 and on production since U061 (sample data), as two versions for review: (1) which version (or which parts of each) to keep, and approve the design and pass lines before week 0; (2) recruitment and incentive; (3) clinical advisor + ethics review, and instrument licensing (ISI, PSS-10 for commercial use); (4) start date, which needs D2 persistence, study enrolment and consent, questionnaire screens, events and a safety alert (API §5.12); (5) ~~production now or with the study~~ — on production since U061; (6) the project manager's name and start date (J067); (7) ~~U062 to production~~ — done in U064; (8) the coaching log is per browser until the backend | J062, U058, U060, U062 | Product owner + Eugene; clinical advisor |
 
 ---
 
@@ -128,6 +128,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J068 | 2026-11-11 | Question | All the URLs (production, staging, artifacts), and where Eugene's request lives | — |
 | J069 | 2026-11-11 | Code + Doc | The study protocol put inside the playbook HTML as its appendix | U063 |
 | J070 | 2026-11-11 | Doc | The playbook as one HTML file instead of a PDF, to send to Eugene | docs only |
+| J071 | 2026-11-11 | Code + Release | Eugene's playbook was not found on production `/guide`: put first and production promoted on request | U064 |
 
 ---
 
@@ -722,6 +723,16 @@ transcript and the update log. Everything from J018 on was written at the time.
   - four decisions.
 - **Also:** `docs/api/API-CONTRACT.md` §5.12 and `openapi.yaml` gained the study endpoints (now 90 paths, validated).
 - **Open items:** O23 added.
+
+### J071 — "I can't find Eugene's request" (U064)
+- **Asked:** the URL for the playbook. Production `/guide` showed only the admin guideline, the API contract and the PRD.
+- **Cause:** production was still at `17b053f`, from before the playbook.
+- **Done:**
+  - The owner chose "Yes, ship to production".
+  - The playbook is now first in `/guide`, as "Feedback group playbook".
+  - Production was fast-forwarded with U062–U064.
+  - URL: `https://aureliaprod.vercel.app/guide/playbook`.
+- **Open items:** O23 (7) is answered: on production.
 
 ### J070 — The playbook as an HTML file, not a PDF
 - **Asked:** "mksd saya daripada pdf jadikan saja html": send HTML instead of the PDF.

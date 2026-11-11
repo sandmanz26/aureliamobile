@@ -99,10 +99,26 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U059 | `5bb9580` | 2026-11-10 | Experimentation section hidden (flag `adminExperimentation` unreleased) while the client's pricing is awaited. Staging only. | [patch](patches/U059-5bb9580.patch) |
 | U060 | `ac6f07d` | 2026-11-11 | Experimentation reopened, plus a second version for review (Feedback group · v1 and · v2: Wins, This week, Engagement). Staging only. | [patch](patches/U060-ac6f07d.patch) |
 | U061 | `66207a7` | 2026-11-11 | Team documents in the app at `/guide`: admin guideline, PRD overview (new), API contract; admin sidebar link. **Promoted to production with everything since U055.** | [patch](patches/U061-66207a7.patch) |
-| U062 | `1ff0d04` | 2026-11-11 | Feedback group for the project manager: PM playbook (PDF + `/guide/playbook`), Version 2 → Milestones tab with computed gates, coaching log on every participant page, "not reached for 2 days" in This week. Staging only. | [patch](patches/U062-1ff0d04.patch) |
-| U063 | `ed5e2b7` | 2026-11-11 | PM playbook carries the whole study protocol as its appendix (P1–P11, six screenshots), in the HTML, the PDF and `/guide/playbook`. Staging only. | [patch](patches/U063-ed5e2b7.patch) |
+| U062 | `1ff0d04` | 2026-11-11 | Feedback group for the project manager: PM playbook (PDF + `/guide/playbook`), Version 2 → Milestones tab with computed gates, coaching log on every participant page, "not reached for 2 days" in This week. On production since U064. | [patch](patches/U062-1ff0d04.patch) |
+| U063 | `ed5e2b7` | 2026-11-11 | PM playbook carries the whole study protocol as its appendix (P1–P11, six screenshots), in the HTML, the PDF and `/guide/playbook`. On production since U064. | [patch](patches/U063-ed5e2b7.patch) |
+| U064 | `a876ab5` | 2026-11-11 | `/guide` lists the feedback group playbook first, titled for Eugene's request; **production promoted with U062–U064** (on request). | [patch](patches/U064-a876ab5.patch) |
 
 ## Entries
+
+### U064 — Playbook first in /guide; production promoted
+
+- **Commit:** `a876ab5` · pushed 2026-11-11 UTC · `web_app` + `admin_cms` + **`web_prod`**.
+- **Patch:** [patches/U064-a876ab5.patch](patches/U064-a876ab5.patch)
+- **Request:** "urlnya bagaimana saya mau bisa diakses via url… kalau saya buka isinya kok guidance soal admin page, terus abis itu api… saya tidak ketemu jawaban untuk permintaan eugene".
+  - The owner had opened production `/guide`, which only had the admin guideline, the PRD and the API contract.
+  - Asked to choose, they answered "Yes, ship to production".
+- **Changed:** `src/guides/GuidePage.tsx`. The playbook is now first in the documents, titled "Feedback group playbook", with a blurb that names Eugene's request.
+- **Production:** fast-forwarded. It now has:
+  - U062: the playbook, Milestones and the coaching log;
+  - U063: the protocol appendix;
+  - J070: the share file;
+  - this commit.
+- **Revert:** `git revert --no-commit a876ab5 && git checkout HEAD -- docs/`.
 
 ### U063 — The study protocol inside the playbook
 
