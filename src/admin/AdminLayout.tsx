@@ -1,4 +1,5 @@
 import {
+  BookOpen,
   HeartPulse,
   Target,
   Microscope,
@@ -97,6 +98,8 @@ const NAV: { section: string; items: NavItem[] }[] = [
       { to: '/admin/signal-sources', label: 'Signal sources', icon: Radio, flag: 'adminSignalSources' },
       { to: '/admin/audit', label: 'Audit log', icon: ScrollText, flag: 'adminAudit' },
       { to: '/admin/settings', label: 'Settings', icon: Settings, flag: 'adminSettings' },
+      // Outside the admin shell: the team documents at /guide.
+      { to: '/guide/admin', label: 'Guideline & docs', icon: BookOpen, flag: 'admin' },
     ],
   },
 ]

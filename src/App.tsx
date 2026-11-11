@@ -62,6 +62,8 @@ const UsersPage = lazy(() => import('./admin/pages/UsersPage').then((m) => ({ de
 const UserDetailPage = lazy(() => import('./admin/pages/UserDetailPage').then((m) => ({ default: m.UserDetailPage })))
 const ExperimentationPage = lazy(() => import('./admin/pages/ExperimentationPage').then((m) => ({ default: m.ExperimentationPage })))
 const ExperimentationV2Page = lazy(() => import('./admin/pages/ExperimentationV2Page').then((m) => ({ default: m.ExperimentationV2Page })))
+const GuidePage = lazy(() => import('./guides/GuidePage').then((m) => ({ default: m.GuidePage })))
+const GuideIndexPage = lazy(() => import('./guides/GuidePage').then((m) => ({ default: m.GuideIndexPage })))
 const ExperimentationParticipantPage = lazy(() => import('./admin/pages/ExperimentationPage').then((m) => ({ default: m.ExperimentationParticipantPage })))
 const OutcomesPage = lazy(() => import('./admin/pages/OutcomesPage').then((m) => ({ default: m.OutcomesPage })))
 const RolesPage = lazy(() => import('./admin/pages/RolesPage').then((m) => ({ default: m.RolesPage })))
@@ -101,6 +103,10 @@ export default function App() {
           {/* Unlisted presenter console — see src/demo/modules.ts */}
           <Route path="/__demo" element={<DemoControlPage />} />
           <Route path="/__demo/insights" element={<InsightsPage />} />
+          {/* Team documents (admin guideline, PRD overview, API contract): inside
+              the site lock, outside sign-in, on every site. */}
+          <Route path="/guide" element={<Suspense fallback={null}><GuideIndexPage /></Suspense>} />
+          <Route path="/guide/:doc" element={<Suspense fallback={null}><GuidePage /></Suspense>} />
 
           {/* Unlisted layout probes — dummy business, no Aurelia content, not
               linked from anywhere in the app. See src/pages/dev/. */}
