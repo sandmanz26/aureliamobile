@@ -100,8 +100,30 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U060 | `ac6f07d` | 2026-11-11 | Experimentation reopened, plus a second version for review (Feedback group · v1 and · v2: Wins, This week, Engagement). Staging only. | [patch](patches/U060-ac6f07d.patch) |
 | U061 | `66207a7` | 2026-11-11 | Team documents in the app at `/guide`: admin guideline, PRD overview (new), API contract; admin sidebar link. **Promoted to production with everything since U055.** | [patch](patches/U061-66207a7.patch) |
 | U062 | `1ff0d04` | 2026-11-11 | Feedback group for the project manager: PM playbook (PDF + `/guide/playbook`), Version 2 → Milestones tab with computed gates, coaching log on every participant page, "not reached for 2 days" in This week. Staging only. | [patch](patches/U062-1ff0d04.patch) |
+| U063 | `ed5e2b7` | 2026-11-11 | PM playbook carries the whole study protocol as its appendix (P1–P11, six screenshots), in the HTML, the PDF and `/guide/playbook`. Staging only. | [patch](patches/U063-ed5e2b7.patch) |
 
 ## Entries
+
+### U063 — The study protocol inside the playbook
+
+- **Commit:** `ed5e2b7` · pushed 2026-11-11 UTC · `web_app` + `admin_cms`. **Not `web_prod`.**
+- **Patch:** [patches/U063-ed5e2b7.patch](patches/U063-ed5e2b7.patch)
+- **Request:** "saya mau itu taruh dalam html saja didalam playbook untuk no 3 itu". Item 3 of the previous answer was the J062 study protocol.
+- **Interpretation:** one document for Eugene and the PM. The protocol becomes the playbook's appendix, not a separate PDF.
+- **Changed:**
+  - `scripts/guides/pm_playbook.py` reads `docs/reviews/feedback-group-study-2026-11-10.html` and makes it the appendix:
+    - it takes everything from the key figures to the decisions;
+    - it renumbers the sections P1–P11 (ids `p1`…`p11`) and the references between them;
+    - it updates the one sentence that predated version 2 and production;
+    - it points the images at the protocol's folder (standalone) or `/guide/study/` (app).
+  - The protocol's own classes are styled under `.pb-proto`.
+  - The screenshots are copied to `public/guides/study/`.
+  - The PDF is now 26 pages: the playbook, then the appendix on a new page.
+  - The artifact was republished with the six screenshots.
+- **Verified:**
+  - `npm run check` passes (114 tests).
+  - Staging build, `/guide/playbook#p9` at 1400px and 402px: 44 contents entries, all 6 images load, no page errors and no horizontal overflow.
+- **Revert:** `git revert --no-commit ed5e2b7 && git checkout HEAD -- docs/`.
 
 ### U062 — PM playbook, Milestones and the coaching log
 

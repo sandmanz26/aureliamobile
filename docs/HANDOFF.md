@@ -188,7 +188,7 @@ Repository: **`sandmanz26/aureliamobile`** (GitHub). One app per branch:
 
 ### Staging (`web_app`)
 
-Ahead of production by U062 (PM playbook, Milestones, coaching log). Waiting on a request.
+Ahead of production by U062 (PM playbook, Milestones, coaching log) and U063 (the protocol as the playbook's appendix). Waiting on an explicit request.
 
 ### Last things delivered (most recent first)
 
@@ -612,7 +612,7 @@ All in the repository unless noted.
 | 27 Oct | `docs/reviews/Aurelia-Owner-Report-2026-10-27.pdf` (+ HTML, 14 images) | J047–J048: before / suggestion / now / impact; labelled AI analysis. Private artifact: https://claude.ai/artifact/VTjHzkzYfBXnGbZFKcDTJ5 |
 | 27 Oct | `docs/reviews/Aurelia-v5-Proposal-2026-10-27.pdf` (+ HTML, 16 images) | J049: interviews vs simulation, v4 → v5 pairs, predicted impact. Private artifact: https://claude.ai/artifact/PXDGCwz7BXzv5ASr67bS84 |
 | 30 Oct | `docs/user-updates/Aurelia-Whats-New-v5.pdf` (+ HTML, 9 marked images) | J058: **for end users**; eight changes, how to switch to v2 |
-| 11 Nov | `docs/reviews/Aurelia-Feedback-Group-Playbook-2026-11-11.pdf` (+ HTML), at `/guide/playbook` | J067: for the project manager: six milestones, daily rhythm, iteration, admin map. Private artifact: https://claude.ai/artifact/RUUUiUx8C2N8reRYceCKPJ |
+| 11 Nov | `docs/reviews/Aurelia-Feedback-Group-Playbook-2026-11-11.pdf` (+ HTML), at `/guide/playbook` | J067, J069: for the project manager: six milestones, daily rhythm, iteration, admin map; **the study protocol is its appendix** (P1–P11). Private artifact: https://claude.ai/artifact/RUUUiUx8C2N8reRYceCKPJ |
 | 11 Nov | `docs/PRD-OVERVIEW.md`, at `/guide/prd` | J065: the whole product on one page: users, principles, feature status by version, AI, privacy, business model, metrics, roadmap, risks, decisions |
 | 11 Nov | `docs/guidelines/admin-guideline.html` (+ 25 screenshots), at `/guide/admin` | J064: interactive guide to every admin module (purpose, actions, rules, permissions, environment, backend) |
 | 10 Nov | `docs/reviews/Aurelia-Feedback-Group-Study-2026-11-10.pdf` (+ HTML, 6 images) | J062: protocol for the 30-person, 8-week therapeutic-outcomes pilot, and the admin Experimentation section (U058) |

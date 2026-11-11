@@ -125,6 +125,8 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J065 | 2026-11-11 | Code + Doc + Release | Guideline, a whole-product PRD and the API contract readable on production at `/guide`; production promoted | U061 |
 | J066 | 2026-11-11 | Question | Production showed a 404 at `/guide/prd`: the browser was still on the cached build `bc028a6`; how to load `17b053f` | — |
 | J067 | 2026-11-11 | Report + Code | Eugene: a PDF for the project manager on the two-month feedback group, linked to the admin as source of truth; Milestones and coaching log in admin | U062 |
+| J068 | 2026-11-11 | Question | All the URLs (production, staging, artifacts), and where Eugene's request lives | — |
+| J069 | 2026-11-11 | Code + Doc | The study protocol put inside the playbook HTML as its appendix | U063 |
 
 ---
 
@@ -719,6 +721,20 @@ transcript and the update log. Everything from J018 on was written at the time.
   - four decisions.
 - **Also:** `docs/api/API-CONTRACT.md` §5.12 and `openapi.yaml` gained the study endpoints (now 90 paths, validated).
 - **Open items:** O23 added.
+
+### J069 — The protocol inside the playbook (U063)
+- **Asked:** put item 3 (the study protocol) inside the playbook HTML.
+- **Done:** U063. The playbook ends with "Appendix · The study protocol", P1–P11 with its screenshots, in the HTML (artifact https://claude.ai/artifact/RUUUiUx8C2N8reRYceCKPJ, republished), the PDF and `/guide/playbook`.
+- **Earlier the same day:**
+  - A production push for `/guide/playbook` was refused by the session's permission check (production deploy) and **not done**.
+  - Production stays at `17b053f` until the owner confirms explicitly.
+
+### J068 — All URLs; where Eugene's request is
+- **Asked:** "berikan semua url nya", then where Eugene's request lives.
+- **Answer:**
+  - The production `/guide` and `/admin/experimentation` URLs, the staging paths and the two artifacts.
+  - The request lives in three places: the playbook (artifact, PDF, `/guide/playbook`); admin v2 → Milestones, the coaching log and This week; and the J062 protocol.
+  - The playbook and the new admin parts are on staging only.
 
 ### J067 — PM playbook for the feedback group (U062)
 - **Asked:** Eugene's WhatsApp, forwarded: a PDF explaining the experimental admin part and the two-month process (milestones, testing and iteration) to the new project manager, who will recruit up to 30 people and guide them daily. Framed as product-market-fit validation; "let the AI be creative"; linked to the admin as the source of truth. The owner agreed to the proposal (playbook + daily log).

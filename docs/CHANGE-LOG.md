@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-11 — The study protocol inside the playbook (U063, J069)
+
+The PM playbook now ends with the full study protocol as an appendix (P1–P11, with screenshots), in HTML, PDF and `/guide/playbook`.
+
+Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-11-11 — PM playbook, Milestones and the coaching log (U062, J067)
 
 For the project manager of the feedback group:
