@@ -7,7 +7,9 @@ writes two files from one source:
   src/guides/content/admin-guideline.html  the body only, rendered in the app at /guide/admin (images in public/guides/admin/)
 Edit the data here, never the outputs.
 """
-import html, os, re
+import html, os, re, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import brand
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT = os.path.join(ROOT, 'docs/guidelines/admin-guideline.html')
@@ -290,7 +292,11 @@ code {{ font-family: var(--mono); font-size: 12.5px; background: var(--accent-so
 .layout {{ display: grid; grid-template-columns: 264px minmax(0, 1fr); min-height: 100vh; }}
 nav.toc {{ position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto; background: var(--side); color: var(--side-ink); padding: 20px 14px 40px; }}
 .brand {{ display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 15px; padding: 0 6px 14px; }}
-.brand i {{ width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(150deg, #FFC56B, #FF881B); display: inline-block; }}
+.brand span {{ font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--side-muted); padding-left: 10px; border-left: 1px solid #3A2A1B; }}
+main {{ position: relative; overflow: hidden; }}
+main::before {{ content: ""; position: absolute; top: -120px; right: -60px; width: 320px; height: 320px; border-radius: 50%; background: #FFE682; opacity: 0.45; filter: blur(90px); pointer-events: none; }}
+.inner {{ position: relative; }}
+h2.group {{ border-top: 3px solid transparent !important; border-image: linear-gradient(90deg, #FF8514, #FFE270 60%, transparent) 1; }}
 nav.toc input {{ width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #3A2A1B; background: #26180C; color: var(--side-ink); font: inherit; font-size: 13px; }}
 nav.toc input::placeholder {{ color: var(--side-muted); }}
 nav.toc ul {{ list-style: none; margin: 0; padding: 0; }}
@@ -376,7 +382,7 @@ dialog img {{ display: block; width: 100%; height: auto; }}
 
 <div class="layout">
   <nav class="toc" aria-label="Guideline contents">
-    <div class="brand"><i aria-hidden="true"></i>Admin Guideline</div>
+    <div class="brand">{brand.logo(26)}<span>Admin guideline</span></div>
     <label class="sr" for="q" style="position:absolute;left:-9999px">Search modules</label>
     <input id="q" type="search" placeholder="Search modules, e.g. coins, WHO-5" autocomplete="off">
     <ul>

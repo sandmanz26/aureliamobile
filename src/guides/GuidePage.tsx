@@ -2,6 +2,9 @@ import { ArrowLeft, BookOpen, FileText, Map as MapIcon, Search, Server, X } from
 import { marked } from 'marked'
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import markSvg from '../assets/logo-homepage.svg'
+import networkArt from '../assets/aurelia-network.png'
+import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { BUILD } from '../lib/build'
 import adminGuideline from './content/admin-guideline.html?raw'
 import pmPlaybook from './content/pm-playbook.html?raw'
@@ -22,7 +25,9 @@ const DOCS = [
   {
     id: 'playbook',
     title: 'Feedback group playbook',
-    blurb: 'Eugene\'s request: the 30-person, two-month feedback group, for the project manager: the six milestones over eight weeks, the daily rhythm, iterating with the product team, where the admin shows each step, and the full study protocol.',
+    blurb: 'How we will find out, over eight weeks, whether Aurelia helps 30 people solve a real wellness problem, such as going from bad sleep to good sleep.',
+    audience: 'The project manager running the study, and the team behind them',
+    inside: ['The six milestones, and how to know each one is passed', 'What the project manager does every day and every week', 'How the product team tests and improves Aurelia during the study', 'Where each step shows in the admin, and the full study protocol'],
     icon: MapIcon,
     source: 'scripts/guides/pm_playbook.py',
     html: () => pmPlaybook,
@@ -30,7 +35,9 @@ const DOCS = [
   {
     id: 'admin',
     title: 'Admin guideline',
-    blurb: 'Every admin module: purpose, what you see, what you can do, rules, permissions, and what the backend replaces.',
+    blurb: 'A tour of every screen in the Aurelia admin: what it is for, what you can see and change there, and who is allowed to.',
+    audience: 'Anyone who runs Aurelia day to day',
+    inside: ['All 21 modules, each with a screenshot', 'Roles and permissions', 'How staging and production differ', 'What the real backend will replace'],
     icon: BookOpen,
     source: 'scripts/guides/admin_guideline.py',
     html: () => adminGuideline,
@@ -38,7 +45,9 @@ const DOCS = [
   {
     id: 'prd',
     title: 'Product requirements',
-    blurb: 'What Aurelia is, who it is for, what is built and what is not, how success is measured, and the open decisions.',
+    blurb: 'Aurelia on one page: what it is, who it is for, what works today and what is still sample data.',
+    audience: 'Anyone new to the product, partners and investors',
+    inside: ['The problem and the people it is for', 'Every feature, and whether it is built yet', 'How success is measured, and the roadmap', 'Risks and the decisions still open'],
     icon: FileText,
     source: 'docs/PRD-OVERVIEW.md',
     html: () => marked.parse(prdOverview, { async: false }),
@@ -46,7 +55,9 @@ const DOCS = [
   {
     id: 'api',
     title: 'API contract',
-    blurb: 'The backend plan for production: conventions, data model, every endpoint, the AI system, phasing and decisions.',
+    blurb: 'The plan for the backend that will replace today\'s sample data, including how the AI features work and are kept safe.',
+    audience: 'Engineers',
+    inside: ['Every endpoint the apps need', 'The data model', 'The AI system: routes, models, safety and cost', 'The order to build it in'],
     icon: Server,
     source: 'docs/api/API-CONTRACT.md',
     html: () => marked.parse(apiContract, { async: false }),
@@ -70,9 +81,9 @@ function DocTabs({ current }: { current?: DocId }) {
 function TopBar({ current }: { current?: DocId }) {
   return (
     <header className="gd-top">
-      <Link to="/guide" className="gd-brand">
-        <span aria-hidden="true" className="gd-mark" />
-        Aurelia docs
+      <Link to="/guide" className="gd-brand" aria-label="Aurelia documents">
+        <AureliaLogo iconSize={26} />
+        <span className="gd-brand-label">Docs</span>
       </Link>
       <DocTabs current={current} />
       <Link to="/admin" className="gd-back">
@@ -87,18 +98,40 @@ export function GuideIndexPage() {
     <div className="gd">
       <TopBar />
       <main className="gd-index">
-        <p className="gd-eyebrow">Aurelia · team documents</p>
-        <h1>Read the product, the admin and the backend plan</h1>
-        <p className="gd-lede">
-          Three documents, kept in the repository and shown here as they stand. Every figure in the app is sample data
-          until the backend exists.
-        </p>
+        <section className="gd-hero">
+          <div className="gd-glow" aria-hidden="true" />
+          <img src={networkArt} alt="" aria-hidden="true" className="gd-net" />
+          <img src={markSvg} alt="" aria-hidden="true" width={52} height={52} className="gd-hero-mark" />
+          <p className="gd-eyebrow">Aurelia · documents</p>
+          <h1>
+            Everything about Aurelia, <span className="gd-grad">in four documents</span>
+          </h1>
+          <p className="gd-lede">
+            Aurelia builds personal wellness sessions from one sentence: someone says how they feel, and Aurelia makes a
+            session for it. These documents explain the product, the admin the team runs it from, the backend still to
+            be built, and the eight-week study that will show whether Aurelia really helps people.
+          </p>
+          <p className="gd-note">
+            The app runs on realistic sample data until the backend exists, so no figure in it is a real result yet.
+          </p>
+        </section>
         <div className="gd-cards">
           {DOCS.map((d) => (
             <Link key={d.id} to={`/guide/${d.id}`} className="gd-card">
-              <d.icon size={20} aria-hidden="true" />
+              <span className="gd-card-icon" aria-hidden="true">
+                <d.icon size={18} />
+              </span>
               <b>{d.title}</b>
-              <span>{d.blurb}</span>
+              <span className="gd-card-blurb">{d.blurb}</span>
+              <ul>
+                {d.inside.map((i) => (
+                  <li key={i}>{i}</li>
+                ))}
+              </ul>
+              <span className="gd-card-for">
+                <b>For</b> {d.audience}
+              </span>
+              <span className="gd-card-open">Open →</span>
             </Link>
           ))}
         </div>
