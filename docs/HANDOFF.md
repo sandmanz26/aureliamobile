@@ -188,7 +188,7 @@ Repository: **`sandmanz26/aureliamobile`** (GitHub). One app per branch:
 
 ### Staging (`web_app`)
 
-Level with production as of U061. Anything newer is waiting on a request.
+Ahead of production by U062 (PM playbook, Milestones, coaching log). Waiting on a request.
 
 ### Last things delivered (most recent first)
 
@@ -395,7 +395,7 @@ in the conversation.
   - Sessions; Challenges; Moderation; AI monitoring; Cockpit rules;
   - Revenue; Pricing; Payments; Coins; Experiments; Notifications;
   - Compliance; Signal sources; Audit; Settings.
-- **Experimentation → Feedback group · v1 and · v2 (U058, U060; on production since U061):** the 30-person, 8-week outcomes pilot. U059 hid it and U060 reopened it. v1 (`ExperimentationPage`) covers criteria, participants, measures and data quality. v2 (`ExperimentationV2Page`, `/admin/experimentation/v2`) covers Wins (clinical bands), This week (a task list) and Engagement (dose). Both are kept for review until O23 picks one. Rules are in `admin/data/study.ts`; the protocol PDF is in `docs/reviews/`. Outcome criteria are not judged before week 8. **Every admin module is described in the guideline: in the app at `/guide/admin` (both sites), generated with the standalone `docs/guidelines/admin-guideline.html` by `scripts/guides/admin_guideline.py`.**
+- **Experimentation → Feedback group · v1 and · v2 (U058, U060; on production since U061):** the 30-person, 8-week outcomes pilot. U059 hid it and U060 reopened it. v1 (`ExperimentationPage`) covers criteria, participants, measures and data quality. v2 (`ExperimentationV2Page`, `/admin/experimentation/v2`) covers Wins (clinical bands), This week (a task list) and Engagement (dose). Both are kept for review until O23 picks one. **U062 (staging only):** v2 opens on **Milestones** (`milestones()` in `study.ts`; the same M0–M5 as the PM playbook, change both together), and each participant page has a **coaching log** (`data/coachingLog.ts`, `aurelia.admin.study.log`, per browser). Rules are in `admin/data/study.ts`; the protocol PDF is in `docs/reviews/`. Outcome criteria are not judged before week 8. **Every admin module is described in the guideline: in the app at `/guide/admin` (both sites), generated with the standalone `docs/guidelines/admin-guideline.html` by `scripts/guides/admin_guideline.py`.**
 - **No authentication on `/admin`.** This is the P0 in `docs/PRD.md`.
 - Data comes from seeded mock data (`admin/data/mock.ts`) through
   `AdminDataContext`. Edits live in memory only.
@@ -612,6 +612,7 @@ All in the repository unless noted.
 | 27 Oct | `docs/reviews/Aurelia-Owner-Report-2026-10-27.pdf` (+ HTML, 14 images) | J047–J048: before / suggestion / now / impact; labelled AI analysis. Private artifact: https://claude.ai/artifact/VTjHzkzYfBXnGbZFKcDTJ5 |
 | 27 Oct | `docs/reviews/Aurelia-v5-Proposal-2026-10-27.pdf` (+ HTML, 16 images) | J049: interviews vs simulation, v4 → v5 pairs, predicted impact. Private artifact: https://claude.ai/artifact/PXDGCwz7BXzv5ASr67bS84 |
 | 30 Oct | `docs/user-updates/Aurelia-Whats-New-v5.pdf` (+ HTML, 9 marked images) | J058: **for end users**; eight changes, how to switch to v2 |
+| 11 Nov | `docs/reviews/Aurelia-Feedback-Group-Playbook-2026-11-11.pdf` (+ HTML), at `/guide/playbook` | J067: for the project manager: six milestones, daily rhythm, iteration, admin map. Private artifact: https://claude.ai/artifact/RUUUiUx8C2N8reRYceCKPJ |
 | 11 Nov | `docs/PRD-OVERVIEW.md`, at `/guide/prd` | J065: the whole product on one page: users, principles, feature status by version, AI, privacy, business model, metrics, roadmap, risks, decisions |
 | 11 Nov | `docs/guidelines/admin-guideline.html` (+ 25 screenshots), at `/guide/admin` | J064: interactive guide to every admin module (purpose, actions, rules, permissions, environment, backend) |
 | 10 Nov | `docs/reviews/Aurelia-Feedback-Group-Study-2026-11-10.pdf` (+ HTML, 6 images) | J062: protocol for the 30-person, 8-week therapeutic-outcomes pilot, and the admin Experimentation section (U058) |

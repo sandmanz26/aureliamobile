@@ -19,6 +19,15 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-11 — PM playbook, Milestones and the coaching log (U062, J067)
+
+For the project manager of the feedback group:
+- a playbook PDF in `docs/reviews/`, also shown at `/guide/playbook`;
+- admin Experimentation v2 gains a Milestones tab, with gates computed from the data;
+- every participant page gains a coaching log for the daily contact.
+
+Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-11-11 — Team documents at /guide; production promoted (U061, J065)
 
 `/guide` in the app holds three documents behind the site password:

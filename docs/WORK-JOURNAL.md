@@ -50,7 +50,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O20 | **Production version picker is temporary** (U054): the bar takes 28px at the top of production for every visitor, and pins on production ignore the version. Clean-up options: hide it behind a flag or a URL parameter, or remove it once a default is chosen Since U055 production lists two versions of its own (v1 = staging v4, v2 = staging v5); which staging versions it offers next is a one-line change in `PRODUCTION_VERSIONS` | J050, J051, U054, U055 | Product owner: when to clean up and how |
 | O21 | **Well-being outcomes are a proposal on sample data** (U056): (1) confirm WHO-5 as the measure, and when the app asks it (start + every two weeks); (2) backend to store assessments, check-ins and wearable readings per user; (3) Compliance wording before any outcome is shown to users or partners; (4) who owns the follow-up for WHO-5 ≤ 28, and how; (5) storybook stories for the taller `ChatComposer`; (6) production gets U056 only when asked | J054, U056 | Product owner + Eugene; backend; compliance |
 | O22 | **API contract decisions** (J061, `docs/api/API-CONTRACT.md` §11): confirm the contract's own decisions (persistence, builds-based limit, one version model, integers + formatting, provenance); free-plan N and Plus/Pro; AI cost posture (Opus 5.5 on every route vs a cheaper model after evals); TTS, sound, visual and STT vendors; data residency and AI retention; safety policy with clinical review; payment provider and coin table; WHO-5; hosting | J061 | Product owner + Eugene; legal; engineering |
-| O23 | **Feedback-group study (J062, J064)** — on staging since U060 and on production since U061 (sample data), as two versions for review: (1) which version (or which parts of each) to keep, and approve the design and pass lines before week 0; (2) recruitment and incentive; (3) clinical advisor + ethics review, and instrument licensing (ISI, PSS-10 for commercial use); (4) start date, which needs D2 persistence, study enrolment and consent, questionnaire screens, events and a safety alert (API §5.12); (5) ~~production now or with the study~~ — on production since U061 | J062, U058, U060 | Product owner + Eugene; clinical advisor |
+| O23 | **Feedback-group study (J062, J064)** — on staging since U060 and on production since U061 (sample data), as two versions for review: (1) which version (or which parts of each) to keep, and approve the design and pass lines before week 0; (2) recruitment and incentive; (3) clinical advisor + ethics review, and instrument licensing (ISI, PSS-10 for commercial use); (4) start date, which needs D2 persistence, study enrolment and consent, questionnaire screens, events and a safety alert (API §5.12); (5) ~~production now or with the study~~ — on production since U061; (6) the project manager's name and start date (J067); (7) U062 (Milestones, coaching log, playbook page) to production when the PM starts; (8) the coaching log is per browser until the backend | J062, U058, U060, U062 | Product owner + Eugene; clinical advisor |
 
 ---
 
@@ -123,6 +123,8 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J063 | 2026-11-10 | Code | Hide the Experimentation section until the client's pricing arrives | U059 |
 | J064 | 2026-11-11 | Code + Doc | Reopen Experimentation with a version 2 for review; detailed admin guideline in HTML | U060 |
 | J065 | 2026-11-11 | Code + Doc + Release | Guideline, a whole-product PRD and the API contract readable on production at `/guide`; production promoted | U061 |
+| J066 | 2026-11-11 | Question | Production showed a 404 at `/guide/prd`: the browser was still on the cached build `bc028a6`; how to load `17b053f` | — |
+| J067 | 2026-11-11 | Report + Code | Eugene: a PDF for the project manager on the two-month feedback group, linked to the admin as source of truth; Milestones and coaching log in admin | U062 |
 
 ---
 
@@ -717,6 +719,24 @@ transcript and the update log. Everything from J018 on was written at the time.
   - four decisions.
 - **Also:** `docs/api/API-CONTRACT.md` §5.12 and `openapi.yaml` gained the study endpoints (now 90 paths, validated).
 - **Open items:** O23 added.
+
+### J067 — PM playbook for the feedback group (U062)
+- **Asked:** Eugene's WhatsApp, forwarded: a PDF explaining the experimental admin part and the two-month process (milestones, testing and iteration) to the new project manager, who will recruit up to 30 people and guide them daily. Framed as product-market-fit validation; "let the AI be creative"; linked to the admin as the source of truth. The owner agreed to the proposal (playbook + daily log).
+- **Done:**
+  - `docs/reviews/Aurelia-Feedback-Group-Playbook-2026-11-11.pdf` and its HTML, a private artifact (https://claude.ai/artifact/RUUUiUx8C2N8reRYceCKPJ) and `/guide/playbook`. Contents:
+    - why it matters, and the hypothesis with what would disprove it;
+    - the PM's role, and the six cohorts with what a win means;
+    - an 11-week timeline, and six milestones (you / product team / gate / if not / admin link);
+    - a day and a week, a daily message per issue, and the escalation ladder;
+    - the iteration loop and its rules, and the admin map;
+    - rules that never bend, the go / iterate / pivot decision, and the checklist before week 0.
+  - In admin (staging): Version 2 → Milestones, and a coaching log per participant.
+- **Open items:**
+  - O23 gains: (6) the PM's name and start date; (7) whether U062 goes to production now (the PM will work there); (8) the coaching log needs the backend (it is per browser today).
+
+### J066 — "/guide/prd is a 404 on production"
+- **Asked:** a screenshot of production showing 404 at `/guide/prd`.
+- **Answer:** the server already served `17b053f` with `/guide`. The badge showed `bc028a6`, so the browser was running the cached build: the PWA waits for Reload. The fix is to press Reload in the toast, close every tab, or hard-refresh. An exception for `/guide` was offered, not built.
 
 ### J065 — Documents on production at /guide; production promoted (U061)
 - **Asked:**

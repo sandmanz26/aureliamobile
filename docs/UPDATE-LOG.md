@@ -99,8 +99,50 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U059 | `5bb9580` | 2026-11-10 | Experimentation section hidden (flag `adminExperimentation` unreleased) while the client's pricing is awaited. Staging only. | [patch](patches/U059-5bb9580.patch) |
 | U060 | `ac6f07d` | 2026-11-11 | Experimentation reopened, plus a second version for review (Feedback group · v1 and · v2: Wins, This week, Engagement). Staging only. | [patch](patches/U060-ac6f07d.patch) |
 | U061 | `66207a7` | 2026-11-11 | Team documents in the app at `/guide`: admin guideline, PRD overview (new), API contract; admin sidebar link. **Promoted to production with everything since U055.** | [patch](patches/U061-66207a7.patch) |
+| U062 | `1ff0d04` | 2026-11-11 | Feedback group for the project manager: PM playbook (PDF + `/guide/playbook`), Version 2 → Milestones tab with computed gates, coaching log on every participant page, "not reached for 2 days" in This week. Staging only. | [patch](patches/U062-1ff0d04.patch) |
 
 ## Entries
+
+### U062 — PM playbook, Milestones and the coaching log
+
+- **Commit:** `1ff0d04` · pushed 2026-11-11 UTC · `web_app` + `admin_cms`. **Not `web_prod`.**
+- **Patch:** [patches/U062-1ff0d04.patch](patches/U062-1ff0d04.patch)
+- **Request (Eugene, forwarded):**
+  - "Design the PDF so it tries to explain the part of admin that is experimental… the process for how to succeed over the course of 2 months testing and iteration… clear what each milestone of the project is about to the project manager who will start… she will find up to 30 users… guiding them daily… using our MVP".
+  - "Let the AI be creative… this market fit validation MVP process."
+  - "Link it to the new section in admin because the new project manager… will use this admin section as source of truth to validation of users' therapeutic goals."
+  - The owner: "oke ya bisa silahkan".
+- **Interpretation:**
+  - A playbook for the person running the study, as a companion to the J062 protocol (which is written for the researcher).
+  - "Source of truth" needs two things the admin lacked: the milestones with their gates, and a place for the daily guidance. Hence a Milestones tab and a coaching log.
+- **Changed:**
+  - `src/admin/data/study.ts`:
+    - `milestones()` covers M0–M5, each with a goal, what the PM does, and gates computed from the data (pass / below the line / not yet / confirm by a person). Outcome gates wait for week 8.
+    - `TaskKind` gains `contact`.
+  - `src/admin/data/coachingLog.ts` (+ test) and `useCoachingLog.ts`:
+    - entries hold a day, a channel, a feeling (1–5), a note, a next step and an escalate flag;
+    - stored in `aurelia.admin.study.log` through `lib/storage`;
+    - deterministic sample entries are marked sample and never stored;
+    - `overdueContacts()` covers anyone not reached for 2+ days.
+  - `components/CoachingLogPanel.tsx`: the form and the list. Delete asks for confirmation.
+  - Participant page (shared by v1 and v2): the coaching log, plus "Last contact" in the header.
+  - `ExperimentationV2Page.tsx`: the Milestones tab (now first) and the "Not reached for 2+ days" group in This week. "What is different" is updated.
+  - `scripts/guides/pm_playbook.py` generates three outputs:
+    - `docs/reviews/feedback-group-playbook-2026-11-11.html`;
+    - its PDF, `docs/reviews/Aurelia-Feedback-Group-Playbook-2026-11-11.pdf` (13 pages, A4);
+    - `src/guides/content/pm-playbook.{html,css}`, shown at `/guide/playbook`.
+
+    In the PDF, links point to production admin URLs; in the app they are relative.
+  - `prepareDoc` keeps every `/…` link and routes it in the app. The admin guideline describes the new parts.
+- **Verified:**
+  - `npm run check` passes (114 tests).
+  - Staging build, 1400px and 402px:
+    - Milestones shows 6 panels and "Midpoint read, first iteration" is current at week 4;
+    - This week lists the contact group;
+    - a log entry survives a reload, and the header says "Contacted today";
+    - `/guide/playbook` shows 32 contents entries, and its admin link routes;
+    - no page errors and no horizontal overflow.
+- **Revert:** `git revert --no-commit 1ff0d04 && git checkout HEAD -- docs/`.
 
 ### U061 — Team documents at /guide, and production promoted
 
