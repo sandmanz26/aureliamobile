@@ -20,20 +20,20 @@ import './content/pm-playbook.css'
  */
 const DOCS = [
   {
+    id: 'playbook',
+    title: 'Feedback group playbook',
+    blurb: 'Eugene\'s request: the 30-person, two-month feedback group, for the project manager: the six milestones over eight weeks, the daily rhythm, iterating with the product team, where the admin shows each step, and the full study protocol.',
+    icon: MapIcon,
+    source: 'scripts/guides/pm_playbook.py',
+    html: () => pmPlaybook,
+  },
+  {
     id: 'admin',
     title: 'Admin guideline',
     blurb: 'Every admin module: purpose, what you see, what you can do, rules, permissions, and what the backend replaces.',
     icon: BookOpen,
     source: 'scripts/guides/admin_guideline.py',
     html: () => adminGuideline,
-  },
-  {
-    id: 'playbook',
-    title: 'PM playbook',
-    blurb: 'The feedback group, for the project manager: the six milestones over eight weeks, the daily rhythm, iterating with the product team, and where the admin shows each step.',
-    icon: MapIcon,
-    source: 'scripts/guides/pm_playbook.py',
-    html: () => pmPlaybook,
   },
   {
     id: 'prd',
