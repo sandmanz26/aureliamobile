@@ -131,6 +131,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J071 | 2026-11-11 | Code + Release | Eugene's playbook was not found on production `/guide`: put first and production promoted on request | U064 |
 | J072 | 2026-11-11 | Question | What Eugene asked for, and whether it needs admin features (it does; they exist on sample data) | — |
 | J073 | 2026-11-11 | Code + Doc | `/guide` front page without a person's name and more detailed; Aurelia branding on every document, strongest on the playbook | U065 |
+| J074 | 2026-11-11 | Doc | Branded, self-contained HTML files for all four documents, to send | docs + scripts |
 
 ---
 
@@ -725,6 +726,15 @@ transcript and the update log. Everything from J018 on was written at the time.
   - four decisions.
 - **Also:** `docs/api/API-CONTRACT.md` §5.12 and `openapi.yaml` gained the study endpoints (now 90 paths, validated).
 - **Open items:** O23 added.
+
+### J074 — Branded HTML files for every document
+- **Asked:** "di html nya juga perlu di berikan unsur unsur branding nya". The HTML file sent in J070 was made before U065's branding.
+- **Done:** `docs/share/` now holds one self-contained file per document, each with the Aurelia logo, the gradient rules, the glow and the network artwork. Screenshots are embedded, and each file opens from disk.
+  - `Aurelia-Feedback-Group-Playbook.html` (1.6 MB), from `pm_playbook.py`.
+  - `Aurelia-Admin-Guideline.html` (3.8 MB): each screenshot is embedded once, and the viewer reads the thumbnail.
+  - `Aurelia-Product-Requirements.html` and `Aurelia-API-Contract.html`, rendered from the Markdown by the new `scripts/guides/share.mjs`, which uses `marked`. Each has a branded cover, a contents column and a closing mark.
+- **Also:** on a phone the playbook's glow overflowed by 24px; it now sits inside the page (`pm-playbook.css`, staging).
+- **Verified:** all four files at 1300px and 402px have no overflow and no page errors.
 
 ### J073 — Plainer front page, branded documents (U065)
 - **Asked:** the `/guide` front page named Eugene; make it easy to understand and detailed. Give every document Aurelia branding (logo, colours, elements), above all the playbook.

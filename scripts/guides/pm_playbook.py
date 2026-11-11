@@ -424,6 +424,7 @@ def pb_css(S):
   {S}.pb-day li {{ grid-template-columns: 1fr; gap: 2px; }}
   {S}.pb-scale {{ font-size: 9.5px; }}
   {S}.pb-net {{ position: static; display: block; width: 180px; margin: 0 0 12px auto; }}
+  {S}.pb-glow {{ right: 0; width: 220px; height: 220px; }}
   {S}.pb-proto .timeline {{ grid-template-columns: repeat(3, minmax(0, 1fr)); }}
   {S}.pb-proto .pair {{ grid-template-columns: 1fr; }}
 }}

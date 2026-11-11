@@ -118,6 +118,7 @@
   .gd-doc .pb .pb-day li { grid-template-columns: 1fr; gap: 2px; }
   .gd-doc .pb .pb-scale { font-size: 9.5px; }
   .gd-doc .pb .pb-net { position: static; display: block; width: 180px; margin: 0 0 12px auto; }
+  .gd-doc .pb .pb-glow { right: 0; width: 220px; height: 220px; }
   .gd-doc .pb .pb-proto .timeline { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .gd-doc .pb .pb-proto .pair { grid-template-columns: 1fr; }
 }

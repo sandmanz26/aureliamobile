@@ -19,6 +19,14 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-11 — Branded HTML files to send (J074)
+
+`docs/share/` has one self-contained, Aurelia-branded HTML file for each document: playbook, admin guideline, product requirements and API contract.
+
+The playbook's glow no longer overflows on a phone.
+
+Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-11-11 — Branded documents, plainer /guide front page (U065, J073)
 
 Every document has Aurelia's logo, its orange-to-gold gradient, the soft glow from Home and the network artwork. The playbook has the strongest treatment.
