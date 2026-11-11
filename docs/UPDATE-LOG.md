@@ -102,8 +102,45 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U062 | `1ff0d04` | 2026-11-11 | Feedback group for the project manager: PM playbook (PDF + `/guide/playbook`), Version 2 → Milestones tab with computed gates, coaching log on every participant page, "not reached for 2 days" in This week. On production since U064. | [patch](patches/U062-1ff0d04.patch) |
 | U063 | `ed5e2b7` | 2026-11-11 | PM playbook carries the whole study protocol as its appendix (P1–P11, six screenshots), in the HTML, the PDF and `/guide/playbook`. On production since U064. | [patch](patches/U063-ed5e2b7.patch) |
 | U064 | `a876ab5` | 2026-11-11 | `/guide` lists the feedback group playbook first, titled for Eugene's request; **production promoted with U062–U064** (on request). | [patch](patches/U064-a876ab5.patch) |
+| U065 | `8002466` | 2026-11-11 | Aurelia branding on every document (logo, gradient, Home's glow, network artwork), strongest on the playbook; `/guide` front page rewritten plainly, without naming a person. Staging. | [patch](patches/U065-8002466.patch) |
 
 ## Entries
+
+### U065 — Branded documents, and a plainer /guide front page
+
+- **Commit:** `8002466` · pushed 2026-11-11 UTC · `web_app` + `admin_cms`. `web_prod` only on request.
+- **Patch:** [patches/U065-8002466.patch](patches/U065-8002466.patch)
+- **Request:**
+  - "masa tulisan depanya begini ada kata eugene nya, pastikan tulisan mudah dipahami dan cukup detail ya". The `/guide` card said "Eugene's request: …".
+  - "ada permintaan juga untuk semua dokumen tersebut ada unsur branding dari aurelia, mungkin logo, warna atau ada element… terutama di playbook".
+- **Interpretation:**
+  - Use the brand the consumer app already has, not a new one: the logo lockup (`src/assets/aurelia-sidebar-logo.svg`) and the mark (`logo-homepage.svg`); the #FF8514 → #FFE270 gradient of the mark; the #FFE682 glow from Home's hero; and `aurelia-network.png`.
+  - No person is named in product copy.
+- **Changed:**
+  - `src/guides/GuidePage.tsx`:
+    - the top bar shows `AureliaLogo` and "Docs";
+    - the front page has a new headline and lede, explaining what Aurelia is and what the four documents are;
+    - each card gives a plain summary, what is inside, and who it is for.
+  - `src/guides/guides.css`:
+    - the shell is now light: warm white, a gradient rule under the top bar, and a cream contents column;
+    - a glow at the top of every document, and gradient section rules;
+    - the hero, the cards and the gradient icon tiles.
+
+    `--gd-side` stays espresso for content blocks; the new `--gd-chrome*` tokens are the shell.
+  - `scripts/guides/brand.py` (new) reads the logo, the mark and the artwork from `src/assets`. SVG gradient ids are made unique per copy.
+  - `scripts/guides/pm_playbook.py`:
+    - the cover has the logo and a "Feedback group playbook" label, the glow, the network artwork, and a gradient phrase in the headline;
+    - section rules and milestone tiles use the gradient;
+    - it closes with the mark.
+
+    The app copy is wrapped in `.pb` so its styles cannot reach other documents.
+  - `scripts/guides/admin_guideline.py`: the logo in the standalone sidebar, the glow, and gradient group rules.
+  - The artifacts, the share file and the archive PDF were regenerated.
+- **Verified:**
+  - `npm run check` passes (114 tests).
+  - Staging build: `/guide`, `/guide/playbook` and `/guide/prd` at 1400px and 402px have no overflow and no page errors.
+  - The share file renders the cover correctly.
+- **Revert:** `git revert --no-commit 8002466 && git checkout HEAD -- docs/`.
 
 ### U064 — Playbook first in /guide; production promoted
 

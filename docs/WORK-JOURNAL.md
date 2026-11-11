@@ -129,6 +129,8 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J069 | 2026-11-11 | Code + Doc | The study protocol put inside the playbook HTML as its appendix | U063 |
 | J070 | 2026-11-11 | Doc | The playbook as one HTML file instead of a PDF, to send to Eugene | docs only |
 | J071 | 2026-11-11 | Code + Release | Eugene's playbook was not found on production `/guide`: put first and production promoted on request | U064 |
+| J072 | 2026-11-11 | Question | What Eugene asked for, and whether it needs admin features (it does; they exist on sample data) | — |
+| J073 | 2026-11-11 | Code + Doc | `/guide` front page without a person's name and more detailed; Aurelia branding on every document, strongest on the playbook | U065 |
 
 ---
 
@@ -723,6 +725,21 @@ transcript and the update log. Everything from J018 on was written at the time.
   - four decisions.
 - **Also:** `docs/api/API-CONTRACT.md` §5.12 and `openapi.yaml` gained the study endpoints (now 90 paths, validated).
 - **Open items:** O23 added.
+
+### J073 — Plainer front page, branded documents (U065)
+- **Asked:** the `/guide` front page named Eugene; make it easy to understand and detailed. Give every document Aurelia branding (logo, colours, elements), above all the playbook.
+- **Done:** U065. The front page now explains Aurelia and each document (summary, what is inside, who it is for). The shell, the playbook and the admin guideline carry the app's own logo, gradient, glow and network artwork. Artifacts, the share file and the PDF were regenerated.
+
+### J072 — "What did Eugene ask for?"
+- **Asked:** help understanding Eugene's request, and whether it means admin features.
+- **Answer:**
+  - Yes. Round 1 (10 Nov) was an admin section to track and measure the 30-person, two-month group, plus a document. Round 2 (11 Nov) was a guide for the project manager, with the admin as their source of truth.
+  - Built:
+    - Experimentation v1;
+    - v2 with Milestones, Wins, This week and Engagement;
+    - a page per participant, with the coaching log;
+    - the playbook.
+  - Not yet real: sample data, questionnaires not in the app, no backend (playbook section 11, protocol P10).
 
 ### J071 — "I can't find Eugene's request" (U064)
 - **Asked:** the URL for the playbook. Production `/guide` showed only the admin guideline, the API contract and the PRD.
