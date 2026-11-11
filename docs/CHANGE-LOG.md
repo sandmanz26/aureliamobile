@@ -25,7 +25,7 @@ Every document has Aurelia's logo, its orange-to-gold gradient, the soft glow fr
 
 The `/guide` front page now explains each document plainly, and names no one.
 
-Branches: `web_app`, `admin_cms`. Not `web_prod` yet.
+Branches: `web_app`, `admin_cms`, **`web_prod`** (on request).
 
 ### 2026-11-11 — Playbook first in /guide; production promoted (U064, J071)
 

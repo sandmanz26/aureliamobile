@@ -188,7 +188,7 @@ Repository: **`sandmanz26/aureliamobile`** (GitHub). One app per branch:
 
 ### Staging (`web_app`)
 
-Ahead of production by U065 (branded documents, `/guide` front page). Waiting on a request.
+Level with production as of U065 (11 Nov 2026). Anything newer is waiting on a request.
 
 ### Last things delivered (most recent first)
 

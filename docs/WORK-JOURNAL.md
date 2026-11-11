@@ -728,6 +728,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 
 ### J073 — Plainer front page, branded documents (U065)
 - **Asked:** the `/guide` front page named Eugene; make it easy to understand and detailed. Give every document Aurelia branding (logo, colours, elements), above all the playbook.
+- **Production:** asked "ship to production?", the owner answered yes, and `web_prod` was fast-forwarded with U065.
 - **Done:** U065. The front page now explains Aurelia and each document (summary, what is inside, who it is for). The shell, the playbook and the admin guideline carry the app's own logo, gradient, glow and network artwork. Artifacts, the share file and the PDF were regenerated.
 
 ### J072 — "What did Eugene ask for?"

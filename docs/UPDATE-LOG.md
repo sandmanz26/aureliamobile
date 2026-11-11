@@ -102,13 +102,13 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U062 | `1ff0d04` | 2026-11-11 | Feedback group for the project manager: PM playbook (PDF + `/guide/playbook`), Version 2 → Milestones tab with computed gates, coaching log on every participant page, "not reached for 2 days" in This week. On production since U064. | [patch](patches/U062-1ff0d04.patch) |
 | U063 | `ed5e2b7` | 2026-11-11 | PM playbook carries the whole study protocol as its appendix (P1–P11, six screenshots), in the HTML, the PDF and `/guide/playbook`. On production since U064. | [patch](patches/U063-ed5e2b7.patch) |
 | U064 | `a876ab5` | 2026-11-11 | `/guide` lists the feedback group playbook first, titled for Eugene's request; **production promoted with U062–U064** (on request). | [patch](patches/U064-a876ab5.patch) |
-| U065 | `8002466` | 2026-11-11 | Aurelia branding on every document (logo, gradient, Home's glow, network artwork), strongest on the playbook; `/guide` front page rewritten plainly, without naming a person. Staging. | [patch](patches/U065-8002466.patch) |
+| U065 | `8002466` | 2026-11-11 | Aurelia branding on every document (logo, gradient, Home's glow, network artwork), strongest on the playbook; `/guide` front page rewritten plainly, without naming a person. On production. | [patch](patches/U065-8002466.patch) |
 
 ## Entries
 
 ### U065 — Branded documents, and a plainer /guide front page
 
-- **Commit:** `8002466` · pushed 2026-11-11 UTC · `web_app` + `admin_cms`. `web_prod` only on request.
+- **Commit:** `8002466` · pushed 2026-11-11 UTC · `web_app` + `admin_cms` + **`web_prod`** (on request).
 - **Patch:** [patches/U065-8002466.patch](patches/U065-8002466.patch)
 - **Request:**
   - "masa tulisan depanya begini ada kata eugene nya, pastikan tulisan mudah dipahami dan cukup detail ya". The `/guide` card said "Eugene's request: …".
