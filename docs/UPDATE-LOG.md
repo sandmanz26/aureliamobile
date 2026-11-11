@@ -97,8 +97,33 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U057 | `f390b95` | 2026-10-30 | v5 Why? text fix (goal-only basis read "your goal and “Sleep better”"); user-facing What's New PDF for v5 / prod v2. Staging only. | [patch](patches/U057-f390b95.patch) |
 | U058 | `57e192d` | 2026-11-10 | Admin Experimentation section: the feedback-group study (30 people, 8 weeks, six cohorts): criteria, participants, measures, data quality and safety, per-participant page. Sample data. Staging only. | [patch](patches/U058-57e192d.patch) |
 | U059 | `5bb9580` | 2026-11-10 | Experimentation section hidden (flag `adminExperimentation` unreleased) while the client's pricing is awaited. Staging only. | [patch](patches/U059-5bb9580.patch) |
+| U060 | `ac6f07d` | 2026-11-11 | Experimentation reopened, plus a second version for review (Feedback group · v1 and · v2: Wins, This week, Engagement). Staging only. | [patch](patches/U060-ac6f07d.patch) |
 
 ## Entries
+
+### U060 — Experimentation reopened, with a version 2 for review
+
+- **Commit:** `ac6f07d` · pushed 2026-11-11 UTC · `web_app` + `admin_cms`. **Not `web_prod`.**
+- **Patch:** [patches/U060-ac6f07d.patch](patches/U060-ac6f07d.patch)
+- **Request:** "untuk menu kemarin bisa dibuka kembali ya, tapi coba lakukan iterate lagi dan buat menu lagi untuk version 2. jadi nanti di menu itu ada 2 version untuk bisa di review sama user."
+- **Interpretation:**
+  - Undo U059's hiding: the section is visible again on staging.
+  - Keep version 1 exactly as reviewed. Add version 2 as its own menu item and route, so a reviewer can compare the two side by side.
+  - Version 2 iterates on Eugene's own framing ("solve and win them") and on the study team's week, instead of adding more charts.
+- **Changed:**
+  - `src/demo/modules.ts`: `unreleased` removed from `adminExperimentation`.
+  - `src/admin/AdminLayout.tsx`: the Experimentation section has two items, "Feedback group · v1" and "Feedback group · v2".
+  - `src/App.tsx`: new route `/admin/experimentation/v2` (behind the same ModuleGuard).
+  - `src/admin/pages/ExperimentationV2Page.tsx` (new). A v1/v2 switch in both page headers, and three tabs:
+    - **Wins:** each person's own questionnaire scored in its clinical bands. A win means a meaningful change *and* reaching the healthy band. Shown per cohort as start-vs-now band bars and a badge for every participant. "Started healthy" is kept apart.
+    - **This week:** the team's checklist: follow-up calls first, then missed questionnaires, due questionnaires, low use (<2 sessions last week) and interviews at weeks 0/4/8. Answered items are hidden by default.
+    - **Engagement:** sessions per week for each participant as a heat strip; WHO-5 change by dose (under 2, 2–3, 4+ a week), labelled as association, not proof.
+  - `src/admin/data/study.ts`: `bandOf`, `bandsFor`, `winStatus`, `bandShift`, `doseBuckets`, `weekTasks`. The test file has 5 more tests.
+  - `ExperimentationPage.tsx` (v1): only the header gained the version switch.
+- **Verified:**
+  - `npm run check` passes (102 tests).
+  - Staging build: all 23 admin routes render with no page errors. v2 has no horizontal overflow at 402px.
+- **Revert:** `git revert --no-commit ac6f07d && git checkout HEAD -- docs/`. To hide it again without reverting, re-add `unreleased: true` as in U059.
 
 ### U059 — Experimentation section hidden for now
 

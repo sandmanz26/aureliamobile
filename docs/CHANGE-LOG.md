@@ -19,6 +19,16 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-11 — Experimentation reopened, version 2 added (U060); admin guideline (J064)
+
+The admin Experimentation section is visible on staging again, with two menu items:
+- Feedback group · v1, unchanged;
+- Feedback group · v2: Wins, This week and Engagement.
+
+Added `docs/guidelines/admin-guideline.html`, an interactive guide to every admin module, with screenshots.
+
+Branches: `web_app`, `admin_cms`. Not `web_prod`.
+
 ### 2026-11-10 — Experimentation section hidden (U059)
 
 The new admin section is switched off until the client's pricing arrives. The code is kept and can be switched back on.

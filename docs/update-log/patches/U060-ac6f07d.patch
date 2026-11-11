@@ -1,0 +1,689 @@
+From ac6f07d7008b1a70118cc85c4ccf89206262dab0 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 11 Nov 2026 04:15:52 +0000
+Subject: [PATCH] Admin Experimentation: reopen, and add version 2 for review
+
+The section is visible again (flag no longer unreleased) and now has two
+menu items, Feedback group v1 and v2, with a Version 1 | Version 2
+switch on both pages so reviewers can compare.
+
+v2 reads the same study and rules as "solve and win them":
+- Wins: won (into the measure's healthy band) / improving / steady /
+  worse / started healthy, per cohort with start-vs-now severity bands
+  (ISI, GAD-7, PSS-10, PROMIS cut-points; WHO-5 50/28).
+- This week: the study team's checklist (calls, missed questionnaires,
+  due, low use, interviews).
+- Engagement: per-participant weekly heat strip and WHO-5 change by
+  sessions per week (association, not proof).
+
+Rules in admin/data/study.ts with tests.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/App.tsx                               |   6 +
+ src/admin/AdminLayout.tsx                 |   6 +-
+ src/admin/data/study.test.ts              |  54 ++++
+ src/admin/data/study.ts                   | 145 ++++++++++
+ src/admin/pages/ExperimentationPage.tsx   |   8 +-
+ src/admin/pages/ExperimentationV2Page.tsx | 328 ++++++++++++++++++++++
+ src/demo/modules.ts                       |   2 +-
+ 7 files changed, 546 insertions(+), 3 deletions(-)
+ create mode 100644 src/admin/pages/ExperimentationV2Page.tsx
+
+diff --git a/src/App.tsx b/src/App.tsx
+index 80fd17b..28514f9 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -61,6 +61,7 @@ const DashboardPage = lazy(() => import('./admin/pages/DashboardPage').then((m)
+ const UsersPage = lazy(() => import('./admin/pages/UsersPage').then((m) => ({ default: m.UsersPage })))
+ const UserDetailPage = lazy(() => import('./admin/pages/UserDetailPage').then((m) => ({ default: m.UserDetailPage })))
+ const ExperimentationPage = lazy(() => import('./admin/pages/ExperimentationPage').then((m) => ({ default: m.ExperimentationPage })))
++const ExperimentationV2Page = lazy(() => import('./admin/pages/ExperimentationV2Page').then((m) => ({ default: m.ExperimentationV2Page })))
+ const ExperimentationParticipantPage = lazy(() => import('./admin/pages/ExperimentationPage').then((m) => ({ default: m.ExperimentationParticipantPage })))
+ const OutcomesPage = lazy(() => import('./admin/pages/OutcomesPage').then((m) => ({ default: m.OutcomesPage })))
+ const RolesPage = lazy(() => import('./admin/pages/RolesPage').then((m) => ({ default: m.RolesPage })))
+@@ -142,6 +143,11 @@ export default function App() {
+                 <ExperimentationPage />
+               </ModuleGuard>
+             } />
++            <Route path="experimentation/v2" element={
++              <ModuleGuard module="adminExperimentation">
++                <ExperimentationV2Page />
++              </ModuleGuard>
++            } />
+             <Route path="experimentation/:pid" element={
+               <ModuleGuard module="adminExperimentation">
+                 <ExperimentationParticipantPage />
+diff --git a/src/admin/AdminLayout.tsx b/src/admin/AdminLayout.tsx
+index 68ef149..f1bb543 100644
+--- a/src/admin/AdminLayout.tsx
++++ b/src/admin/AdminLayout.tsx
+@@ -1,5 +1,6 @@
+ import {
+   HeartPulse,
++  Target,
+   Microscope,
+   Activity,
+   Bell,
+@@ -53,7 +54,10 @@ const NAV: { section: string; items: NavItem[] }[] = [
+   },
+   {
+     section: 'Experimentation',
+-    items: [{ to: '/admin/experimentation', label: 'Feedback group study', icon: Microscope, flag: 'adminExperimentation' }],
++    items: [
++      { to: '/admin/experimentation', label: 'Feedback group · v1', icon: Microscope, end: true, flag: 'adminExperimentation' },
++      { to: '/admin/experimentation/v2', label: 'Feedback group · v2', icon: Target, flag: 'adminExperimentation' },
++    ],
+   },
+   {
+     section: 'Content',
+diff --git a/src/admin/data/study.test.ts b/src/admin/data/study.test.ts
+index 190c5f0..eedce5a 100644
+--- a/src/admin/data/study.test.ts
++++ b/src/admin/data/study.test.ts
+@@ -3,17 +3,22 @@ import {
+   COHORTS,
+   STUDY,
+   adherence,
++  bandOf,
++  bandShift,
+   buildParticipants,
+   completeness,
+   conditionImprovement,
++  doseBuckets,
+   dueCount,
+   evaluateCriteria,
+   followUpReasons,
+   isConditionResponder,
+   isWho5Responder,
+   studyWeek,
++  weekTasks,
+   who5Change,
+   who5Trajectory,
++  winStatus,
+ } from './study'
+ import type { Participant } from './study'
+ 
+@@ -89,3 +94,52 @@ describe('feedback-group study', () => {
+     expect(['on_track', 'at_risk']).toContain(evaluateCriteria(buildParticipants(8), 8)[0].status)
+   })
+ })
++
++describe('feedback-group study v2 (wins and weekly ops)', () => {
++  it('places scores in the published severity bands', () => {
++    expect(bandOf('isi', 7).healthy).toBe(true)
++    expect(bandOf('isi', 8).label).toBe('Subthreshold')
++    expect(bandOf('isi', 22).label).toBe('Severe')
++    expect(bandOf('promis_cog', 45).healthy).toBe(true) // higher is better
++    expect(bandOf('promis_cog', 38).label).toBe('Moderate')
++    expect(bandOf('who5', 28).label).toBe('Very low')
++  })
++
++  it('calls a win only when someone moves into the healthy band', () => {
++    expect(winStatus({ cohort: 'sleep', condition: [18, 7, null] })).toBe('won')
++    expect(winStatus({ cohort: 'sleep', condition: [18, 12, null] })).toBe('improving') // −6, still subthreshold
++    expect(winStatus({ cohort: 'sleep', condition: [18, 17, null] })).toBe('steady')
++    expect(winStatus({ cohort: 'sleep', condition: [12, 19, null] })).toBe('worse')
++    expect(winStatus({ cohort: 'sleep', condition: [5, 4, null] })).toBe('started healthy')
++    expect(winStatus({ cohort: 'sleep', condition: [18, null, null] })).toBe('too early')
++  })
++
++  it('counts band shifts only for people with a later score', () => {
++    const ps = [
++      { ...base, id: 'A', condition: [18, 7, null] },
++      { ...base, id: 'B', condition: [16, null, null] },
++    ]
++    const s = bandShift(ps, 'sleep')
++    expect(s.n).toBe(1)
++    expect(s.start).toEqual([0, 0, 1, 0])
++    expect(s.now).toEqual([1, 0, 0, 0])
++  })
++
++  it('groups WHO-5 change by how much people used it', () => {
++    const ps = [
++      { ...base, id: 'A', who5: [40, 55, null, null, null], sessionsByWeek: [4, 5] },
++      { ...base, id: 'B', who5: [40, 42, null, null, null], sessionsByWeek: [1, 0] },
++    ]
++    const d = doseBuckets(ps, 2)
++    expect(d[0]).toMatchObject({ n: 1, meanChange: 2 })
++    expect(d[2]).toMatchObject({ n: 1, meanChange: 15 })
++  })
++
++  it('lists the week’s work with follow-ups first', () => {
++    const tasks = weekTasks(buildParticipants(4), 4)
++    expect(tasks.length).toBeGreaterThan(0)
++    const firstNonFollowUp = tasks.findIndex((t) => t.kind !== 'follow-up')
++    expect(tasks.slice(firstNonFollowUp).some((t) => t.kind === 'follow-up')).toBe(false)
++    expect(tasks.some((t) => t.kind === 'interview')).toBe(true) // week 4 is an interview week
++  })
++})
+diff --git a/src/admin/data/study.ts b/src/admin/data/study.ts
+index 390f016..dbf68fd 100644
+--- a/src/admin/data/study.ts
++++ b/src/admin/data/study.ts
+@@ -317,3 +317,148 @@ export function buildParticipants(week: number, seed = 11): Participant[] {
+   }
+   return out
+ }
++
++/* ------------------------------------------------- v2: wins and weekly ops */
++//
++// Version 2 of the section (U060) reads the study the way Eugene put it:
++// "solve and win them" — bad sleep to good sleep. A change of the meaningful
++// size is progress; arriving in the healthy band of the measure is a win.
++// Bands are the published severity cut-points for each instrument (PROMIS:
++// the usual 5/10/20-point distances from the population mean of 50).
++
++export type Band = { label: string; tone: Tone; healthy: boolean }
++
++interface BandRule {
++  /** Upper bounds (inclusive) for lower-is-better scales, lower bounds for higher-is-better. */
++  cut: number
++  band: Band
++}
++
++const HEALTHY = (label: string): Band => ({ label, tone: 'good', healthy: true })
++const MILD = (label: string): Band => ({ label, tone: 'info', healthy: false })
++const MODERATE = (label: string): Band => ({ label, tone: 'warning', healthy: false })
++const SEVERE = (label: string): Band => ({ label, tone: 'critical', healthy: false })
++
++/** Ordered from the healthiest band down. */
++const BANDS: Record<ConditionMeasure['id'] | 'who5', { better: 'lower' | 'higher'; rules: BandRule[] }> = {
++  isi: { better: 'lower', rules: [{ cut: 7, band: HEALTHY('No insomnia') }, { cut: 14, band: MILD('Subthreshold') }, { cut: 21, band: MODERATE('Moderate') }, { cut: 28, band: SEVERE('Severe') }] },
++  gad7: { better: 'lower', rules: [{ cut: 4, band: HEALTHY('Minimal') }, { cut: 9, band: MILD('Mild') }, { cut: 14, band: MODERATE('Moderate') }, { cut: 21, band: SEVERE('Severe') }] },
++  pss10: { better: 'lower', rules: [{ cut: 13, band: HEALTHY('Low stress') }, { cut: 26, band: MODERATE('Moderate') }, { cut: 40, band: SEVERE('High') }] },
++  promis_fatigue: { better: 'lower', rules: [{ cut: 54, band: HEALTHY('Within normal') }, { cut: 59, band: MILD('Mild') }, { cut: 69, band: MODERATE('Moderate') }, { cut: 80, band: SEVERE('Severe') }] },
++  promis_cog: { better: 'higher', rules: [{ cut: 45, band: HEALTHY('Within normal') }, { cut: 40, band: MILD('Mild') }, { cut: 30, band: MODERATE('Moderate') }, { cut: 0, band: SEVERE('Severe') }] },
++  who5: { better: 'higher', rules: [{ cut: 50, band: HEALTHY('Good') }, { cut: 29, band: MODERATE('Low') }, { cut: 0, band: SEVERE('Very low') }] },
++}
++
++export function bandOf(measure: ConditionMeasure['id'] | 'who5', score: number): Band {
++  const { better, rules } = BANDS[measure]
++  const hit = better === 'lower' ? rules.find((r) => score <= r.cut) : rules.find((r) => score >= r.cut)
++  return (hit ?? rules[rules.length - 1]).band
++}
++
++export function bandsFor(measure: ConditionMeasure['id'] | 'who5'): Band[] {
++  return BANDS[measure].rules.map((r) => r.band)
++}
++
++export type WinStatus = 'won' | 'improving' | 'steady' | 'worse' | 'too early' | 'started healthy'
++
++export const WIN_TONE: Record<WinStatus, Tone> = {
++  won: 'good',
++  improving: 'info',
++  steady: 'neutral',
++  worse: 'critical',
++  'too early': 'neutral',
++  'started healthy': 'warning',
++}
++
++/**
++ * On the cohort's own measure: won = started outside the healthy band and is
++ * in it now; improving = a meaningful change but not there yet; worse = a
++ * meaningful change the wrong way. "Started healthy" is a recruitment signal,
++ * not a result — they had little to win.
++ */
++export function winStatus(p: Pick<Participant, 'condition' | 'cohort'>): WinStatus {
++  const m = cohortOf(p.cohort).measure
++  const base = p.condition[0]
++  if (base === null || base === undefined) return 'too early'
++  if (bandOf(m.id, base).healthy) return 'started healthy'
++  const imp = conditionImprovement(p)
++  if (imp === null) return 'too early'
++  const latest = [...p.condition].reverse().find((v) => v !== null) as number
++  if (bandOf(m.id, latest).healthy) return 'won'
++  if (imp >= m.mcid) return 'improving'
++  if (imp <= -m.mcid) return 'worse'
++  return 'steady'
++}
++
++/** Baseline vs latest band counts for one cohort (only people with both). */
++export function bandShift(ps: Participant[], cohort: CohortId) {
++  const m = cohortOf(cohort).measure
++  const bands = bandsFor(m.id)
++  const rows = ps.filter((p) => p.cohort === cohort && p.condition[0] !== null)
++  const count = (pick: (p: Participant) => number | null) =>
++    bands.map((b) => rows.filter((p) => { const v = pick(p); return v !== null && bandOf(m.id, v).label === b.label }).length)
++  const latestOf = (p: Participant) => { const later = p.condition.slice(1).reverse().find((v) => v !== null); return later ?? null }
++  const withLatest = rows.filter((p) => latestOf(p) !== null)
++  return {
++    bands,
++    start: count((p) => (withLatest.includes(p) ? p.condition[0] : null)),
++    now: count(latestOf),
++    n: withLatest.length,
++  }
++}
++
++/** Does more use go with more change? WHO-5 change by average sessions per week. */
++export function doseBuckets(ps: Participant[], week: number) {
++  const buckets = [
++    { label: 'Under 2 a week', min: 0, max: 2 },
++    { label: '2–3 a week', min: 2, max: 4 },
++    { label: '4 or more a week', min: 4, max: Infinity },
++  ]
++  return buckets.map((b) => {
++    const inB = ps.filter((p) => {
++      const weeks = p.sessionsByWeek.slice(0, week)
++      const avg = weeks.length ? weeks.reduce((s, v) => s + v, 0) / weeks.length : 0
++      return avg >= b.min && avg < b.max
++    })
++    const changes = inB.map(who5Change).filter((c): c is number => c !== null)
++    return { label: b.label, n: inB.length, meanChange: changes.length ? Math.round((changes.reduce((s, c) => s + c, 0) / changes.length) * 10) / 10 : null }
++  })
++}
++
++export type TaskKind = 'questionnaire' | 'reminder' | 'follow-up' | 'nudge' | 'interview'
++
++export interface WeekTask {
++  id: string
++  kind: TaskKind
++  participantId: string
++  text: string
++  done: boolean
++}
++
++/** The study team's list for `week`: what is due, missed, at risk or scheduled. */
++export function weekTasks(ps: Participant[], week: number): WeekTask[] {
++  const tasks: WeekTask[] = []
++  const live = ps.filter((p) => p.status === 'active' || p.status === 'paused')
++  const who5i = (WHO5_WEEKS as readonly number[]).indexOf(week)
++  const condi = (CONDITION_WEEKS as readonly number[]).indexOf(week)
++  for (const p of ps) {
++    for (const r of followUpReasons(p)) tasks.push({ id: `${p.id}-fu-${r}`, kind: 'follow-up', participantId: p.id, text: `Call today: ${r}`, done: false })
++  }
++  for (const p of live) {
++    const m = cohortOf(p.cohort).measure
++    if (who5i >= 0) tasks.push({ id: `${p.id}-who5-${week}`, kind: 'questionnaire', participantId: p.id, text: `WHO-5 (week ${week})`, done: p.who5[who5i] !== null })
++    if (condi >= 0) {
++      tasks.push({ id: `${p.id}-cond-${week}`, kind: 'questionnaire', participantId: p.id, text: `${m.short} + PHQ-9 (week ${week})`, done: p.condition[condi] !== null })
++      tasks.push({ id: `${p.id}-int-${week}`, kind: 'interview', participantId: p.id, text: `Interview ${condi + 1} of 3 (30 min)`, done: false })
++    }
++    const missed = [
++      ...WHO5_WEEKS.filter((w, i) => w < week && p.who5[i] === null).map((w) => `WHO-5 wk ${w}`),
++      ...CONDITION_WEEKS.filter((w, i) => w < week && p.condition[i] === null).map((w) => `${m.short} wk ${w}`),
++    ]
++    if (missed.length) tasks.push({ id: `${p.id}-miss`, kind: 'reminder', participantId: p.id, text: `Remind: ${missed.join(', ')}${missed.length >= 2 ? ' — call, two misses' : ''}`, done: false })
++    const lastWeek = p.sessionsByWeek[week - 1]
++    if (week > 0 && lastWeek !== undefined && lastWeek < 2) tasks.push({ id: `${p.id}-nudge`, kind: 'nudge', participantId: p.id, text: `Only ${lastWeek} session${lastWeek === 1 ? '' : 's'} last week — check in`, done: false })
++  }
++  const order: TaskKind[] = ['follow-up', 'reminder', 'questionnaire', 'nudge', 'interview']
++  return tasks.sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind) || Number(a.done) - Number(b.done))
++}
+diff --git a/src/admin/pages/ExperimentationPage.tsx b/src/admin/pages/ExperimentationPage.tsx
+index 1200c90..0287791 100644
+--- a/src/admin/pages/ExperimentationPage.tsx
++++ b/src/admin/pages/ExperimentationPage.tsx
+@@ -5,6 +5,7 @@ import { BarChart, LineChart } from '../components/Charts'
+ import type { Column } from '../components/DataTable'
+ import { DataTable } from '../components/DataTable'
+ import { Badge, Legend, PageHeader, Panel, StatCard } from '../components/ui'
++import { StudyVersionSwitch } from './ExperimentationV2Page'
+ import type { CohortId, Participant, ParticipantStatus } from '../data/study'
+ import {
+   COHORTS,
+@@ -82,7 +83,12 @@ export function ExperimentationPage() {
+       <PageHeader
+         title="Experimentation · feedback group"
+         description={`${STUDY.target} people, each with one issue Aurelia targets, use it for ${STUDY.weeks} weeks. We measure whether their well-being and their own issue improve on validated questionnaires, and whether they keep using it. Sample data until the study runs on the backend.`}
+-        actions={<Badge tone="info">{week >= STUDY.weeks ? 'Completed' : week === 0 ? 'Starting' : 'Running'} · week {week} of {STUDY.weeks}</Badge>}
++        actions={
++          <div className="flex flex-wrap items-center gap-8">
++            <Badge tone="info">{week >= STUDY.weeks ? 'Completed' : week === 0 ? 'Starting' : 'Running'} · week {week} of {STUDY.weeks}</Badge>
++            <StudyVersionSwitch current={1} />
++          </div>
++        }
+       />
+ 
+       <StudyTimeline week={week} endsOn={endsOn} />
+diff --git a/src/admin/pages/ExperimentationV2Page.tsx b/src/admin/pages/ExperimentationV2Page.tsx
+new file mode 100644
+index 0000000..474cb4b
+--- /dev/null
++++ b/src/admin/pages/ExperimentationV2Page.tsx
+@@ -0,0 +1,328 @@
++import { Check } from 'lucide-react'
++import { useMemo, useState } from 'react'
++import { Link } from 'react-router-dom'
++import { BarChart } from '../components/Charts'
++import type { Tone } from '../components/ui'
++import { Badge, PageHeader, Panel, StatCard } from '../components/ui'
++import type { Band, Participant, TaskKind, WinStatus } from '../data/study'
++import {
++  COHORTS,
++  STUDY,
++  WIN_TONE,
++  bandOf,
++  bandShift,
++  bandsFor,
++  buildParticipants,
++  cohortOf,
++  doseBuckets,
++  studyWeek,
++  weekDate,
++  weekTasks,
++  who5Change,
++  winStatus,
++} from '../data/study'
++
++const TONE_COLOR: Record<Tone, string> = {
++  good: 'var(--color-adm-good)',
++  info: 'var(--color-adm-s1)',
++  warning: 'var(--color-adm-warning)',
++  serious: 'var(--color-adm-serious)',
++  critical: 'var(--color-adm-critical)',
++  neutral: 'var(--color-adm-hover)',
++}
++
++const date = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
++const signed = (n: number | null) => (n === null ? '—' : `${n > 0 ? '+' : ''}${n}`)
++
++type Tab = 'wins' | 'week' | 'engagement'
++
++/** The v1 | v2 switch both pages carry, so a reviewer can compare. */
++export function StudyVersionSwitch({ current }: { current: 1 | 2 }) {
++  return (
++    <nav aria-label="Section version" className="flex items-center gap-2 rounded-8 border border-adm-line bg-adm-surface p-2 text-12">
++      {[1, 2].map((v) => (
++        <Link
++          key={v}
++          to={v === 1 ? '/admin/experimentation' : '/admin/experimentation/v2'}
++          aria-current={current === v ? 'page' : undefined}
++          className={`rounded-4 px-10 py-4 font-medium ${current === v ? 'bg-adm-ink text-adm-surface' : 'text-adm-ink-2 hover:bg-adm-hover'}`}
++        >
++          Version {v}
++        </Link>
++      ))}
++    </nav>
++  )
++}
++
++/**
++ * Experimentation · feedback group, version 2 (U060), for review beside v1.
++ * v1 is the researcher's view (criteria, completeness, protocol). v2 reads the
++ * same study the way Eugene framed it — "solve and win them" — and as the
++ * study team's week: who won, who is improving, what has to happen this week,
++ * and whether use goes with change.
++ */
++export function ExperimentationV2Page() {
++  const [now] = useState(() => Date.now())
++  const week = studyWeek(now)
++  const participants = useMemo(() => buildParticipants(week), [week])
++  const [tab, setTab] = useState<Tab>('wins')
++
++  return (
++    <>
++      <PageHeader
++        title="Experimentation · feedback group"
++        description="Version 2, for review: the same 30-person study read as wins (moving from the problem range into the healthy range), the study team's week, and whether more use goes with more change. Sample data."
++        actions={<StudyVersionSwitch current={2} />}
++      />
++
++      <details className="rounded-12 border border-adm-line bg-adm-surface px-16 py-12 text-13 text-adm-ink-2">
++        <summary className="cursor-pointer font-medium text-adm-ink">What is different from version 1</summary>
++        <ul className="mt-8 flex list-disc flex-col gap-4 pl-18">
++          <li><b className="text-adm-ink">Wins, not only change.</b> A meaningful change counts as <i>improving</i>; reaching the healthy band of the measure counts as a <i>win</i> ("bad sleep → good sleep"). People who started healthy are shown apart: they had little to win.</li>
++          <li><b className="text-adm-ink">Where people started and where they are now</b>, per cohort, in the published severity bands of each questionnaire.</li>
++          <li><b className="text-adm-ink">This week</b> is a checklist for the study team: calls first, then missed questionnaires, then what is due, nudges and interviews.</li>
++          <li><b className="text-adm-ink">Engagement</b> shows every participant's weeks as a heat strip and whether heavier use goes with a bigger WHO-5 change. That is an association, not proof.</li>
++          <li>Version 1 keeps the success criteria, the protocol and data quality. Both versions read the same data and the same rules.</li>
++        </ul>
++      </details>
++
++      <div role="tablist" aria-label="Version 2 views" className="flex flex-wrap gap-6 border-b border-adm-line">
++        {([['wins', 'Wins'], ['week', `This week (${week})`], ['engagement', 'Engagement']] as const).map(([id, label]) => (
++          <button
++            key={id}
++            type="button"
++            role="tab"
++            aria-selected={tab === id}
++            onClick={() => setTab(id)}
++            className={`-mb-px border-b-2 px-10 py-8 text-13 font-medium ${tab === id ? 'border-adm-ink text-adm-ink' : 'border-transparent text-adm-muted hover:text-adm-ink'}`}
++          >
++            {label}
++          </button>
++        ))}
++      </div>
++
++      {tab === 'wins' && <Wins participants={participants} week={week} />}
++      {tab === 'week' && <ThisWeek participants={participants} week={week} />}
++      {tab === 'engagement' && <Engagement participants={participants} week={week} />}
++    </>
++  )
++}
++
++function BandBar({ bands, counts, label }: { bands: Band[]; counts: number[]; label: string }) {
++  const total = counts.reduce((s, c) => s + c, 0)
++  return (
++    <div className="flex items-center gap-8">
++      <span className="w-[44px] shrink-0 text-11 text-adm-muted">{label}</span>
++      <div className="flex h-14 flex-1 overflow-hidden rounded-4 bg-adm-hover" role="img" aria-label={`${label}: ${bands.map((b, i) => `${counts[i]} ${b.label}`).join(', ')}`}>
++        {total > 0 &&
++          bands.map((b, i) =>
++            counts[i] ? <span key={b.label} title={`${counts[i]} ${b.label}`} style={{ width: `${(counts[i] / total) * 100}%`, background: TONE_COLOR[b.tone] }} className="border-r-2 border-adm-surface last:border-r-0" /> : null,
++          )}
++      </div>
++    </div>
++  )
++}
++
++function Wins({ participants, week }: { participants: Participant[]; week: number }) {
++  const statuses = participants.map((p) => ({ p, s: winStatus(p) }))
++  const count = (s: WinStatus) => statuses.filter((x) => x.s === s).length
++  const judged = statuses.filter((x) => x.s !== 'too early' && x.s !== 'started healthy').length
++
++  return (
++    <>
++      <div className="grid grid-cols-2 gap-12 lg:grid-cols-5">
++        <StatCard label="Won" value={`${count('won')}`} hint={`of ${judged} with a later score`} />
++        <StatCard label="Improving" value={`${count('improving')}`} hint="meaningful change, not healthy yet" />
++        <StatCard label="Steady" value={`${count('steady')}`} hint="no meaningful change" />
++        <StatCard label="Worse" value={`${count('worse')}`} hint="meaningful change the wrong way" />
++        <StatCard label="Started healthy" value={`${count('started healthy')}`} hint="little to win: a recruitment signal" />
++      </div>
++      {week < STUDY.weeks && (
++        <p className="text-12 text-adm-muted">
++          Interim at week {week}: the cohort measures are asked at weeks 0, 4 and 8, so most wins can only show up at week 8.
++        </p>
++      )}
++
++      <div className="grid gap-12 lg:grid-cols-3">
++        {COHORTS.map((c) => {
++          const shift = bandShift(participants, c.id)
++          const mine = statuses.filter((x) => x.p.cohort === c.id)
++          const won = mine.filter((x) => x.s === 'won').length
++          return (
++            <Panel key={c.id} title={c.label} description={`${c.measure.name} · healthy band: ${bandsFor(c.measure.id).find((b) => b.healthy)?.label}`}>
++              <p className="text-13 text-adm-ink">
++                <span className="text-22 font-semibold tabular-nums">{won}</span>
++                <span className="text-adm-muted"> of {mine.length} won</span>
++              </p>
++              <div className="flex flex-col gap-6">
++                <BandBar bands={shift.bands} counts={shift.start} label="Start" />
++                <BandBar bands={shift.bands} counts={shift.now} label="Now" />
++                <ul className="flex flex-wrap gap-x-10 gap-y-2 text-11 text-adm-muted">
++                  {shift.bands.map((b) => (
++                    <li key={b.label} className="flex items-center gap-4">
++                      <span aria-hidden="true" className="size-8 rounded-2" style={{ background: TONE_COLOR[b.tone] }} />
++                      {b.label}
++                    </li>
++                  ))}
++                </ul>
++              </div>
++              <ul className="flex flex-wrap gap-6" aria-label="Participants">
++                {mine.map(({ p, s }) => (
++                  <li key={p.id}>
++                    <Link to={`/admin/experimentation/${p.id}`} title={s} className="hover:opacity-80">
++                      <Badge tone={WIN_TONE[s]}>{p.id} · {s}</Badge>
++                    </Link>
++                  </li>
++                ))}
++              </ul>
++            </Panel>
++          )
++        })}
++      </div>
++
++      <Panel title="Well-being bands across the group" description="WHO-5 at baseline and at the latest score. Below 50 is low well-being; 28 or below is a follow-up cue.">
++        <Who5Shift participants={participants} />
++      </Panel>
++    </>
++  )
++}
++
++function Who5Shift({ participants }: { participants: Participant[] }) {
++  const bands = bandsFor('who5')
++  const withLater = participants.filter((p) => p.who5[0] !== null && p.who5.slice(1).some((v) => v !== null))
++  const tally = (pick: (p: Participant) => number) => bands.map((b) => withLater.filter((p) => bandOf('who5', pick(p)).label === b.label).length)
++  const latest = (p: Participant) => [...p.who5].reverse().find((v) => v !== null) as number
++  return (
++    <div className="flex max-w-[640px] flex-col gap-6">
++      <BandBar bands={bands} counts={tally((p) => p.who5[0] as number)} label="Start" />
++      <BandBar bands={bands} counts={tally(latest)} label="Now" />
++      <p className="text-11 text-adm-muted">{withLater.length} people with a baseline and a later WHO-5 · {bands.map((b) => b.label).join(' / ')}</p>
++    </div>
++  )
++}
++
++const KIND_LABEL: Record<TaskKind, string> = {
++  'follow-up': 'Follow-ups: call today',
++  reminder: 'Missed questionnaires',
++  questionnaire: 'Due this week',
++  nudge: 'Low use: check in',
++  interview: 'Interviews',
++}
++const KIND_TONE: Record<TaskKind, Tone> = { 'follow-up': 'critical', reminder: 'warning', questionnaire: 'info', nudge: 'neutral', interview: 'neutral' }
++
++function ThisWeek({ participants, week }: { participants: Participant[]; week: number }) {
++  const tasks = weekTasks(participants, week)
++  const [ticked, setTicked] = useState<Set<string>>(() => new Set())
++  const kinds = [...new Set(tasks.map((t) => t.kind))]
++  const isDone = (id: string, done: boolean) => done || ticked.has(id)
++  const open = tasks.filter((t) => !isDone(t.id, t.done)).length
++  const cohortLabel = new Map(participants.map((p) => [p.id, cohortOf(p.cohort).label]))
++  const [showDone, setShowDone] = useState(false)
++
++  return (
++    <>
++      <div className="grid grid-cols-2 gap-12 lg:grid-cols-5">
++        <StatCard label="Open this week" value={String(open)} hint={`week ${week} · ${date(weekDate(week))} → ${date(weekDate(Math.min(week + 1, STUDY.weeks)))}`} />
++        {kinds.slice(0, 4).map((k) => (
++          <StatCard key={k} label={KIND_LABEL[k]} value={String(tasks.filter((t) => t.kind === k && !isDone(t.id, t.done)).length)} hint={`of ${tasks.filter((t) => t.kind === k).length}`} />
++        ))}
++      </div>
++      <div className="flex flex-wrap items-center justify-between gap-8">
++        <p className="text-12 text-adm-muted">Ticks are kept on this page only until the study runs on the backend; questionnaires tick themselves when answered.</p>
++        <label className="flex items-center gap-6 text-12 text-adm-ink-2">
++          <input type="checkbox" checked={showDone} onChange={(e) => setShowDone(e.target.checked)} />
++          Show answered questionnaires ({tasks.filter((t) => t.done).length})
++        </label>
++      </div>
++      <div className="grid gap-12 lg:grid-cols-2">
++        {kinds.map((k) => (
++          <Panel key={k} title={KIND_LABEL[k]} actions={<Badge tone={KIND_TONE[k]}>{tasks.filter((t) => t.kind === k && !isDone(t.id, t.done)).length} open</Badge>}>
++            <ul className="flex flex-col divide-y divide-adm-line">
++              {tasks
++                .filter((t) => t.kind === k && (showDone || !t.done))
++                .map((t) => {
++                  const done = isDone(t.id, t.done)
++                  return (
++                    <li key={t.id} className="flex items-center gap-10 py-8 text-13">
++                      <button
++                        type="button"
++                        role="checkbox"
++                        aria-checked={done}
++                        aria-label={`${t.participantId}: ${t.text}`}
++                        disabled={t.done}
++                        onClick={() => setTicked((s) => { const n = new Set(s); if (n.has(t.id)) n.delete(t.id); else n.add(t.id); return n })}
++                        className={`flex size-18 shrink-0 items-center justify-center rounded-4 border ${done ? 'border-adm-good bg-adm-good text-white' : 'border-adm-line bg-adm-surface'} disabled:opacity-70`}
++                      >
++                        {done && <Check size={12} />}
++                      </button>
++                      <Link to={`/admin/experimentation/${t.participantId}`} className="w-[36px] shrink-0 font-medium text-adm-ink hover:underline">{t.participantId}</Link>
++                      <span className={`min-w-0 flex-1 ${done ? 'text-adm-muted line-through' : 'text-adm-ink-2'}`}>{t.text}</span>
++                      <span className="hidden text-11 text-adm-muted sm:inline">{cohortLabel.get(t.participantId)}</span>
++                    </li>
++                  )
++                })}
++            </ul>
++          </Panel>
++        ))}
++      </div>
++    </>
++  )
++}
++
++function shade(n: number) {
++  if (n === 0) return 'var(--color-adm-hover)'
++  if (n <= 2) return 'color-mix(in oklab, var(--color-adm-good) 30%, transparent)'
++  if (n <= 4) return 'color-mix(in oklab, var(--color-adm-good) 65%, transparent)'
++  return 'var(--color-adm-good)'
++}
++
++function Engagement({ participants, week }: { participants: Participant[]; week: number }) {
++  const dose = doseBuckets(participants, week)
++  return (
++    <div className="grid gap-12 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
++      <Panel title="Every participant's weeks" description="Sessions played per week (darker = more). Three a week is the adherence line. Grouped by cohort.">
++        <div className="overflow-x-auto">
++          <table className="w-full min-w-[520px] border-collapse text-12">
++            <thead>
++              <tr className="text-left text-11 uppercase tracking-wider text-adm-muted">
++                <th className="px-6 py-6 font-medium">Who</th>
++                {Array.from({ length: week }, (_, i) => (
++                  <th key={i} className="px-2 py-6 text-center font-medium">W{i + 1}</th>
++                ))}
++                <th className="px-6 py-6 text-right font-medium">WHO-5 Δ</th>
++                <th className="px-6 py-6 font-medium">Own measure</th>
++              </tr>
++            </thead>
++            <tbody>
++              {COHORTS.flatMap((c) =>
++                participants
++                  .filter((p) => p.cohort === c.id)
++                  .map((p, i) => (
++                    <tr key={p.id} className={i === 0 ? 'border-t border-adm-line' : ''}>
++                      <td className="px-6 py-3">
++                        <Link to={`/admin/experimentation/${p.id}`} className="font-medium text-adm-ink hover:underline">{p.id}</Link>
++                        {i === 0 && <span className="ml-6 text-11 text-adm-muted">{c.label}</span>}
++                      </td>
++                      {p.sessionsByWeek.map((n, w) => (
++                        <td key={w} className="px-2 py-3">
++                          <span title={`Week ${w + 1}: ${n} sessions`} className={`block h-16 rounded-2 text-center text-10 leading-[16px] ${n >= 5 ? 'text-white' : 'text-adm-ink'}`} style={{ background: shade(n) }}>
++                            {n}
++                          </span>
++                        </td>
++                      ))}
++                      <td className="px-6 py-3 text-right tabular-nums">{signed(who5Change(p))}</td>
++                      <td className="px-6 py-3"><Badge tone={WIN_TONE[winStatus(p)]}>{winStatus(p)}</Badge></td>
++                    </tr>
++                  )),
++              )}
++            </tbody>
++          </table>
++        </div>
++      </Panel>
++      <Panel title="Does more use go with more change?" description="Mean WHO-5 change by average sessions per week. With 30 people this is a direction, not proof, and people who feel better may simply use it more.">
++        <BarChart data={dose.map((d) => ({ label: `${d.label} (${d.n})`, value: d.meanChange ?? 0 }))} format={(v) => signed(v)} color="var(--color-adm-good)" height={0} />
++        <p className="text-11 text-adm-muted">The number in brackets is how many people fall in each group.</p>
++      </Panel>
++    </div>
++  )
++}
+diff --git a/src/demo/modules.ts b/src/demo/modules.ts
+index 03d2e46..c1bd0e6 100644
+--- a/src/demo/modules.ts
++++ b/src/demo/modules.ts
+@@ -239,7 +239,7 @@ export const DEMO_MODULES: DemoModule[] = [
+   /* --- Back office (the product's own admin, shown as a feature) --- */
+   { id: 'admin', kind: 'admin', label: 'Admin — access', description: 'Master switch. Off means /admin is unreachable entirely.', route: '/admin', built: true },
+   { id: 'adminUsers', kind: 'admin', label: 'Users', description: 'Account list, roles, suspensions.', route: '/admin/users', built: true },
+-  { id: 'adminExperimentation', kind: 'admin', label: 'Experimentation · feedback group', description: 'The 30-person, 8-week study of therapeutic outcomes: criteria, participants, measures, data quality and safety.', route: '/admin/experimentation', built: true, unreleased: true },
++  { id: 'adminExperimentation', kind: 'admin', label: 'Experimentation · feedback group', description: 'The 30-person, 8-week study of therapeutic outcomes: criteria, participants, measures, data quality and safety.', route: '/admin/experimentation', built: true },
+   { id: 'adminOutcomes', kind: 'admin', label: 'Well-being outcomes', description: 'How much each user’s well-being has changed (WHO-5, check-ins, wearable).', route: '/admin/outcomes', built: true },
+   { id: 'adminRoles', kind: 'admin', label: 'Roles & permissions', description: 'Permission matrix.', route: '/admin/roles', built: true },
+   { id: 'adminSessions', kind: 'admin', label: 'Sessions', description: 'Generated session catalogue.', route: '/admin/sessions', built: true },
+-- 
+2.43.0
+
