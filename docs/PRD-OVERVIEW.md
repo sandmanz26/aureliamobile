@@ -169,8 +169,8 @@ Twenty-one modules in eight groups. Each is described in full in the
 | Group | Modules | On production |
 | --- | --- | --- |
 | Overview | Dashboard | ✓ |
-| People | Users and user detail, Well-being outcomes (WHO-5), Roles & permissions | Outcomes: staging only |
-| Experimentation | Feedback group study, version 1 and version 2 | Staging only |
+| People | Users and user detail, Well-being outcomes (WHO-5), Roles & permissions | ✓ |
+| Experimentation | Feedback group study, version 1 and version 2 | ✓ (sample data) |
 | Content | Sessions, Challenges, Moderation | ✓ |
 | Intelligence | AI monitoring, Cockpit rules | ✓ |
 | Revenue | Revenue, Pricing, Payments, Coins & rewards | ✓ |

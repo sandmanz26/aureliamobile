@@ -61,7 +61,7 @@ M = [
   ["The outcome panel uses the same sample data as Well-being outcomes, so the two never disagree."],
   "GET /admin/users/{id}.",
   [("users_usr_rs", "User detail")]),
- ("People", "outcomes", "Well-being outcomes", "/admin/outcomes", False, True, "Not defined yet (proposed: users.read + a health-data permission)",
+ ("People", "outcomes", "Well-being outcomes", "/admin/outcomes", True, True, "Not defined yet (proposed: users.read + a health-data permission)",
   "How much each member's well-being has changed since they started, for Eugene's question about therapeutic improvement.",
   ["Cards: measured users (2+ WHO-5 scores), improved (+10 points or more), average change, follow-ups (latest WHO-5 at 28 or below).",
    "Where people are (improved / steady / declined / too early) and average change by goal.",
@@ -79,7 +79,7 @@ M = [
   ["Super Admin cannot be reduced, so nobody can lock everyone out."],
   "Part of the admin API RBAC (§7).",
   [("roles", "Roles & permissions")]),
- ("Experimentation", "study-v1", "Feedback group · version 1", "/admin/experimentation", False, True, "Not defined yet (proposed: research lead role)",
+ ("Experimentation", "study-v1", "Feedback group · version 1", "/admin/experimentation", True, True, "Not defined yet (proposed: research lead role)",
   "The 30-person, 8-week study of therapeutic outcomes, from the researcher's side: are we on track against the pass lines we set, and is the data good enough to judge?",
   ["A timeline of the eight weeks and what is collected when.", "Cards: enrolled, active, WHO-5 +10 so far, data collected, follow-ups.",
    "Success criteria with pass lines and status. Outcome lines read 'not yet' until week 8.",
@@ -90,7 +90,7 @@ M = [
    "The study cannot prove Aurelia caused a change: there is no control group.", "Sample data until the study runs on the backend."],
   "GET /admin/studies/{id}, …/participants, …/quality (API contract §5.12).",
   [("experimentation", "Version 1 overview")]),
- ("Experimentation", "study-v2", "Feedback group · version 2", "/admin/experimentation/v2", False, True, "Not defined yet (proposed: research lead role)",
+ ("Experimentation", "study-v2", "Feedback group · version 2", "/admin/experimentation/v2", True, True, "Not defined yet (proposed: research lead role)",
   "The same study read the way Eugene framed it, 'solve and win them', and as the study team's week. Built for review beside version 1.",
   ["What is different from version 1 (expandable).",
    "Wins: won (moved into the healthy band of their questionnaire), improving, steady, worse, started healthy. Per cohort: start-vs-now severity bands and every participant's status.",
@@ -101,7 +101,7 @@ M = [
    "Use and change moving together is an association, not proof."],
   "Same endpoints as version 1.",
   [("experimentation_v2", "Version 2: Wins"), ("v2-week", "Version 2: This week"), ("v2-engagement", "Version 2: Engagement")]),
- ("Experimentation", "participant", "Study participant", "/admin/experimentation/:id", False, True, "Not defined yet",
+ ("Experimentation", "participant", "Study participant", "/admin/experimentation/:id", True, True, "Not defined yet",
   "One participant's study record.",
   ["Cohort, status and follow-up flags; WHO-5, their own measure, adherence and mood lift per session.",
    "WHO-5 over time, sessions played per week, and every questionnaire as done, missed or due."],
@@ -401,7 +401,7 @@ dialog img {{ display: block; width: 100%; height: auto; }}
         <span class="chip">23 screens · 21 modules in 8 groups</span>
         <span class="chip warn">All figures are sample data</span>
         <span class="chip warn">No admin login yet</span>
-        <span class="chip">Staging build ac6f07d</span>
+        <span class="chip">Same admin on staging and production</span>
       </div>
     </header>
 
@@ -458,7 +458,7 @@ dialog img {{ display: block; width: 100%; height: auto; }}
       <thead><tr><th>Question</th><th>Staging</th><th>Production</th></tr></thead>
       <tbody>
         <tr><td>What it is</td><td>Where every change lands first; shared for review</td><td>What end users and the client see; moves only on request</td></tr>
-        <tr><td>Admin version</td><td>All 21 modules, including Well-being outcomes and both Experimentation versions</td><td>19 modules: everything except Well-being outcomes and Experimentation</td></tr>
+        <tr><td>Admin version</td><td colspan="2">All 21 modules on both since 11 November 2026, including Well-being outcomes and both Experimentation versions. New modules reach staging first.</td></tr>
         <tr><td>Data</td><td colspan="2">Sample data in both, generated separately; nothing is shared between them</td></tr>
         <tr><td>Feature flags</td><td colspan="2">Each site has its own flag set (switched in the /__demo console, which is deliberately not linked from the app)</td></tr>
       </tbody></table></div>
@@ -493,7 +493,7 @@ dialog img {{ display: block; width: 100%; height: auto; }}
       <tr><th>LLM-as-judge</th><td>A model scoring a sample of AI outputs against a rubric, shown in AI monitoring.</td></tr>
       <tr><th>Sample data</th><td>Realistic generated figures used until the backend exists. Never quote them as results.</td></tr>
     </tbody></table></div>
-    <p style="margin-top:36px;color:var(--muted);font-size:13px">Prepared by Claude for the Aurelia team from the staging admin at build ac6f07d. Source in the repository: <code>docs/guidelines/admin-guideline.html</code>. The backend plan is <code>docs/api/API-CONTRACT.md</code>.</p>
+    <p style="margin-top:36px;color:var(--muted);font-size:13px">Prepared by Claude for the Aurelia team from the admin as of 11 November 2026. Source in the repository: <code>docs/guidelines/admin-guideline.html</code>. The backend plan is <code>docs/api/API-CONTRACT.md</code>.</p>
    </div>
   </main>
 </div>

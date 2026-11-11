@@ -7,7 +7,7 @@
         <span class="chip">23 screens · 21 modules in 8 groups</span>
         <span class="chip warn">All figures are sample data</span>
         <span class="chip warn">No admin login yet</span>
-        <span class="chip">Staging build ac6f07d</span>
+        <span class="chip">Same admin on staging and production</span>
       </div>
     </header>
 
@@ -64,7 +64,7 @@
       <thead><tr><th>Question</th><th>Staging</th><th>Production</th></tr></thead>
       <tbody>
         <tr><td>What it is</td><td>Where every change lands first; shared for review</td><td>What end users and the client see; moves only on request</td></tr>
-        <tr><td>Admin version</td><td>All 21 modules, including Well-being outcomes and both Experimentation versions</td><td>19 modules: everything except Well-being outcomes and Experimentation</td></tr>
+        <tr><td>Admin version</td><td colspan="2">All 21 modules on both since 11 November 2026, including Well-being outcomes and both Experimentation versions. New modules reach staging first.</td></tr>
         <tr><td>Data</td><td colspan="2">Sample data in both, generated separately; nothing is shared between them</td></tr>
         <tr><td>Feature flags</td><td colspan="2">Each site has its own flag set (switched in the /__demo console, which is deliberately not linked from the app)</td></tr>
       </tbody></table></div>
@@ -125,7 +125,7 @@
   <header class="mod-head">
     <p class="eyebrow">People</p>
     <h3>Well-being outcomes</h3>
-    <p class="route"><code>/admin/outcomes</code> <span class="chip ok">Staging</span><span class="chip no">Not in production yet</span></p>
+    <p class="route"><code>/admin/outcomes</code> <span class="chip ok">Staging</span><span class="chip ok">Production</span></p>
   </header>
   <p class="purpose">How much each member&#x27;s well-being has changed since they started, for Eugene&#x27;s question about therapeutic improvement.</p>
   <div class="mod-body">
@@ -159,7 +159,7 @@
   <header class="mod-head">
     <p class="eyebrow">Experimentation</p>
     <h3>Feedback group · version 1</h3>
-    <p class="route"><code>/admin/experimentation</code> <span class="chip ok">Staging</span><span class="chip no">Not in production yet</span></p>
+    <p class="route"><code>/admin/experimentation</code> <span class="chip ok">Staging</span><span class="chip ok">Production</span></p>
   </header>
   <p class="purpose">The 30-person, 8-week study of therapeutic outcomes, from the researcher&#x27;s side: are we on track against the pass lines we set, and is the data good enough to judge?</p>
   <div class="mod-body">
@@ -176,7 +176,7 @@
   <header class="mod-head">
     <p class="eyebrow">Experimentation</p>
     <h3>Feedback group · version 2</h3>
-    <p class="route"><code>/admin/experimentation/v2</code> <span class="chip ok">Staging</span><span class="chip no">Not in production yet</span></p>
+    <p class="route"><code>/admin/experimentation/v2</code> <span class="chip ok">Staging</span><span class="chip ok">Production</span></p>
   </header>
   <p class="purpose">The same study read the way Eugene framed it, &#x27;solve and win them&#x27;, and as the study team&#x27;s week. Built for review beside version 1.</p>
   <div class="mod-body">
@@ -193,7 +193,7 @@
   <header class="mod-head">
     <p class="eyebrow">Experimentation</p>
     <h3>Study participant</h3>
-    <p class="route"><code>/admin/experimentation/:id</code> <span class="chip ok">Staging</span><span class="chip no">Not in production yet</span></p>
+    <p class="route"><code>/admin/experimentation/:id</code> <span class="chip ok">Staging</span><span class="chip ok">Production</span></p>
   </header>
   <p class="purpose">One participant&#x27;s study record.</p>
   <div class="mod-body">
@@ -490,4 +490,4 @@
       <tr><th>LLM-as-judge</th><td>A model scoring a sample of AI outputs against a rubric, shown in AI monitoring.</td></tr>
       <tr><th>Sample data</th><td>Realistic generated figures used until the backend exists. Never quote them as results.</td></tr>
     </tbody></table></div>
-    <p style="margin-top:36px;color:var(--muted);font-size:13px">Prepared by Claude for the Aurelia team from the staging admin at build ac6f07d. Source in the repository: <code>scripts/guides/admin_guideline.py</code>. The backend plan is <code>docs/api/API-CONTRACT.md</code>.</p>
+    <p style="margin-top:36px;color:var(--muted);font-size:13px">Prepared by Claude for the Aurelia team from the admin as of 11 November 2026. Source in the repository: <code>scripts/guides/admin_guideline.py</code>. The backend plan is <code>docs/api/API-CONTRACT.md</code>.</p>
