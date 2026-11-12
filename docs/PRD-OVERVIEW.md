@@ -44,9 +44,8 @@ say one sentence and be listening within a minute.
 | Competitive challenges feel wrong for well-being | Challenges without ranks (prod v2). |
 | Wearables are wanted, but with consent | Asked once during onboarding, and off until switched on. |
 
-Sources: three real user interviews (Ishmeet, Olivia, Bryan, late Oct 2026),
-a simulation with six personas (J039), and the product owner's and Eugene's
-reviews. See `docs/HANDOFF.md` §13.
+Sources: interviews with three real users (late October 2026), a simulation
+with six personas, and reviews by the product and business owners.
 
 ---
 
@@ -258,9 +257,9 @@ and cost and latency are reported per route in AI monitoring.
 | Therapeutic outcome | WHO-5 change of 10 points or more; the condition measure reaching the healthy band | The feedback-group study (30 people, 8 weeks) is designed but has not started |
 | Share rate | Recreates per published session | Not instrumented yet |
 
-**No retention number can be measured until sign-in persists** (decision D2).
-Every predicted figure comes from the J039 simulation, recalibrated with the
-three interviews. None of them is a measurement.
+**No retention number can be measured until sign-in persists.** Every
+predicted figure comes from the persona simulation, adjusted with what the
+three interviews said. None of them is a measurement.
 
 ---
 
@@ -286,8 +285,8 @@ From the API contract's phasing. Each phase unblocks the next.
 | **P3 · Community and economy** | Publish and recreate with lineage, challenges, wallet and ledger, plans and payments, notifications | Discover; Me → Credits & plan |
 | **P4 · Admin and growth** | Every admin module on real data, the AI policies console, experiments, the outcomes module | Operations at scale |
 
-Alongside: the Flutter app catches up with the web app (O7), and a designer
-does a Figma pass on the new screens (O16).
+Alongside: the mobile (Flutter) app catches up with the web app, and a
+designer does a Figma pass on the new screens.
 
 ---
 
@@ -306,19 +305,19 @@ does a Figma pass on the new screens (O16).
 
 ## 13 · Open decisions
 
-The full list is the Open items table in `docs/WORK-JOURNAL.md` (O1–O23). The
-ones that block the next phase:
+These are the decisions that block the next phase. The team keeps the full
+list in its decision log.
 
-| # | Decision | Recommendation |
+| Topic | Decision | Recommendation |
 | --- | --- | --- |
-| D2 / O17 | Persist sign-in | Yes. Nothing can be measured without it. |
+| Accounts | Persist sign-in | Yes. Nothing can be measured without it. |
 | Pricing | Free limit N; what Plus and Pro add | Waiting on the client. Contract default: 5 builds a day free. |
-| O19 | Make prod v2 (staging v5) the production default? | Yes, once the follow-up with the same three users confirms it |
-| O21 | WHO-5 in the app, and who owns follow-ups | Ask at the start and every two weeks with the report, behind consent |
-| O22 | API contract decisions, AI vendors, data residency | Accept §2 of the contract as written; decide residency with legal before P1 |
-| O23 | Feedback-group study: version 1 or 2; ethics review; start date | Keep v2's Wins and This week, and v1's criteria and data quality |
-| O1 | 15 product decisions (versions, lineage payouts, what a play is, …) | Defaults in the logic review |
-| PRD §10 | Session lifetime; what earns and spends a coin; public leaderboard; signals switched off; ownership of a recreated session | Each needs an owner's answer before P3 |
+| Production default | Make prod v2 (staging v5) the production default? | Yes, once the follow-up with the same three users confirms it |
+| Well-being measure | WHO-5 in the app, and who owns follow-ups | Ask at the start and every two weeks with the report, behind consent |
+| Backend | API contract decisions, AI vendors, data residency | Accept §2 of the contract as written; decide residency with legal before P1 |
+| Feedback group | Feedback-group study: version 1 or 2; ethics review; start date | Keep v2's Wins and This week, and v1's criteria and data quality |
+| Product rules | 15 product decisions (versions, lineage payouts, what a play is, …) | Defaults in the logic review |
+| Open questions | Session lifetime; what earns and spends a coin; public leaderboard; signals switched off; ownership of a recreated session | Each needs an owner's answer before P3 |
 
 ---
 

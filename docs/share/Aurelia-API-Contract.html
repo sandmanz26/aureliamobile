@@ -94,7 +94,7 @@ thead th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; c
 </defs>
 </svg><span class="label">API contract</span></header>
 <div class="layout">
-  <nav class="toc" aria-label="Contents"><ol><li><a href="#s-0-summary">0 · Summary</a></li><li><a href="#s-1-what-the-api-serves-production-today">1 · What the API serves (production today)</a></li><li><a href="#s-2-decisions-this-contract-makes">2 · Decisions this contract makes</a></li><li><a href="#s-3-conventions">3 · Conventions</a></li><li class="sub"><a href="#s-3-1-transport-and-versioning">3.1 Transport and versioning</a></li><li class="sub"><a href="#s-3-2-authentication">3.2 Authentication</a></li><li class="sub"><a href="#s-3-3-errors-rfc-9457-problem-details">3.3 Errors (RFC 9457 problem details)</a></li><li class="sub"><a href="#s-3-4-pagination-filtering-idempotency-concurrency">3.4 Pagination, filtering, idempotency, concurrency</a></li><li class="sub"><a href="#s-3-5-streaming">3.5 Streaming</a></li><li class="sub"><a href="#s-3-6-webhooks-outbound-later-phases">3.6 Webhooks (outbound, later phases)</a></li><li><a href="#s-4-data-model">4 · Data model</a></li><li class="sub"><a href="#s-4-1-account-and-onboarding">4.1 Account and onboarding</a></li><li class="sub"><a href="#s-4-2-sessions-versions-lineage">4.2 Sessions, versions, lineage</a></li><li class="sub"><a href="#s-4-3-conversation-the-cockpit">4.3 Conversation (the cockpit)</a></li><li class="sub"><a href="#s-4-4-proposals-quot-change-this-session-quot-one-list-with-wh">4.4 Proposals (&amp;quot;Change this session&amp;quot;: one list, with Why)</a></li><li class="sub"><a href="#s-4-5-builds">4.5 Builds</a></li><li class="sub"><a href="#s-4-6-journey-check-ins-journal-progress">4.6 Journey, check-ins, journal, progress</a></li><li class="sub"><a href="#s-4-7-signals-and-consent">4.7 Signals and consent</a></li><li class="sub"><a href="#s-4-8-community-economy-notifications">4.8 Community, economy, notifications</a></li><li><a href="#s-5-consumer-endpoints">5 · Consumer endpoints</a></li><li class="sub"><a href="#s-5-1-auth-and-account">5.1 Auth and account</a></li><li class="sub"><a href="#s-5-2-onboarding">5.2 Onboarding</a></li><li class="sub"><a href="#s-5-3-home-catalogue-people">5.3 Home, catalogue, people</a></li><li class="sub"><a href="#s-5-4-conversations-and-messages-cockpit">5.4 Conversations and messages (cockpit) 🤖</a></li><li class="sub"><a href="#s-5-5-proposals">5.5 Proposals 🤖</a></li><li class="sub"><a href="#s-5-6-builds">5.6 Builds 🤖⚡</a></li><li class="sub"><a href="#s-5-7-playback-plays-feedback">5.7 Playback, plays, feedback</a></li><li class="sub"><a href="#s-5-8-journey-check-ins-reminders-journal-progress">5.8 Journey, check-ins, reminders, journal, progress</a></li><li class="sub"><a href="#s-5-9-signal-sources-and-connections">5.9 Signal sources and connections</a></li><li class="sub"><a href="#s-5-10-publish-recreate-community-challenges">5.10 Publish, recreate, community, challenges</a></li><li class="sub"><a href="#s-5-11-wallet-plans-invite">5.11 Wallet, plans, invite</a></li><li class="sub"><a href="#s-5-12-studies-the-feedback-group-u058">5.12 Studies (the feedback group, U058)</a></li><li><a href="#s-6-telemetry-and-experimentation">6 · Telemetry and experimentation</a></li><li><a href="#s-7-admin-api-v1-admin-separate-scope">7 · Admin API (/v1/admin, separate scope)</a></li><li><a href="#s-8-the-ai-system">8 · The AI system</a></li><li class="sub"><a href="#s-8-1-principles">8.1 Principles</a></li><li class="sub"><a href="#s-8-2-ai-routes">8.2 AI routes</a></li><li class="sub"><a href="#s-8-3-model-and-request-settings">8.3 Model and request settings</a></li><li class="sub"><a href="#s-8-4-sessionspec-and-the-build-pipeline">8.4 SessionSpec and the build pipeline</a></li><li class="sub"><a href="#s-8-5-journey-intelligence">8.5 Journey intelligence</a></li><li class="sub"><a href="#s-8-6-voice-input">8.6 Voice input</a></li><li class="sub"><a href="#s-8-7-safety-mandatory">8.7 Safety (mandatory)</a></li><li class="sub"><a href="#s-8-8-quality-evals-and-cost">8.8 Quality, evals and cost</a></li><li><a href="#s-9-non-functional-requirements">9 · Non-functional requirements</a></li><li><a href="#s-10-phasing">10 · Phasing</a></li><li><a href="#s-11-decisions-needed">11 · Decisions needed</a></li><li><a href="#appendix-mapping-from-today-39-s-mock-to-this-contract">Appendix · Mapping from today&amp;#39;s mock to this contract</a></li></ol></nav>
+  <nav class="toc" aria-label="Contents"><ol><li><a href="#s-0-summary">0 · Summary</a></li><li><a href="#s-1-what-the-api-serves-production-today">1 · What the API serves (production today)</a></li><li><a href="#s-2-decisions-this-contract-makes">2 · Decisions this contract makes</a></li><li><a href="#s-3-conventions">3 · Conventions</a></li><li class="sub"><a href="#s-3-1-transport-and-versioning">3.1 Transport and versioning</a></li><li class="sub"><a href="#s-3-2-authentication">3.2 Authentication</a></li><li class="sub"><a href="#s-3-3-errors-rfc-9457-problem-details">3.3 Errors (RFC 9457 problem details)</a></li><li class="sub"><a href="#s-3-4-pagination-filtering-idempotency-concurrency">3.4 Pagination, filtering, idempotency, concurrency</a></li><li class="sub"><a href="#s-3-5-streaming">3.5 Streaming</a></li><li class="sub"><a href="#s-3-6-webhooks-outbound-later-phases">3.6 Webhooks (outbound, later phases)</a></li><li><a href="#s-4-data-model">4 · Data model</a></li><li class="sub"><a href="#s-4-1-account-and-onboarding">4.1 Account and onboarding</a></li><li class="sub"><a href="#s-4-2-sessions-versions-lineage">4.2 Sessions, versions, lineage</a></li><li class="sub"><a href="#s-4-3-conversation-the-cockpit">4.3 Conversation (the cockpit)</a></li><li class="sub"><a href="#s-4-4-proposals-quot-change-this-session-quot-one-list-with-wh">4.4 Proposals (&amp;quot;Change this session&amp;quot;: one list, with Why)</a></li><li class="sub"><a href="#s-4-5-builds">4.5 Builds</a></li><li class="sub"><a href="#s-4-6-journey-check-ins-journal-progress">4.6 Journey, check-ins, journal, progress</a></li><li class="sub"><a href="#s-4-7-signals-and-consent">4.7 Signals and consent</a></li><li class="sub"><a href="#s-4-8-community-economy-notifications">4.8 Community, economy, notifications</a></li><li><a href="#s-5-consumer-endpoints">5 · Consumer endpoints</a></li><li class="sub"><a href="#s-5-1-auth-and-account">5.1 Auth and account</a></li><li class="sub"><a href="#s-5-2-onboarding">5.2 Onboarding</a></li><li class="sub"><a href="#s-5-3-home-catalogue-people">5.3 Home, catalogue, people</a></li><li class="sub"><a href="#s-5-4-conversations-and-messages-cockpit">5.4 Conversations and messages (cockpit) 🤖</a></li><li class="sub"><a href="#s-5-5-proposals">5.5 Proposals 🤖</a></li><li class="sub"><a href="#s-5-6-builds">5.6 Builds 🤖⚡</a></li><li class="sub"><a href="#s-5-7-playback-plays-feedback">5.7 Playback, plays, feedback</a></li><li class="sub"><a href="#s-5-8-journey-check-ins-reminders-journal-progress">5.8 Journey, check-ins, reminders, journal, progress</a></li><li class="sub"><a href="#s-5-9-signal-sources-and-connections">5.9 Signal sources and connections</a></li><li class="sub"><a href="#s-5-10-publish-recreate-community-challenges">5.10 Publish, recreate, community, challenges</a></li><li class="sub"><a href="#s-5-11-wallet-plans-invite">5.11 Wallet, plans, invite</a></li><li class="sub"><a href="#s-5-12-studies-the-feedback-group">5.12 Studies (the feedback group)</a></li><li><a href="#s-6-telemetry-and-experimentation">6 · Telemetry and experimentation</a></li><li><a href="#s-7-admin-api-v1-admin-separate-scope">7 · Admin API (/v1/admin, separate scope)</a></li><li><a href="#s-8-the-ai-system">8 · The AI system</a></li><li class="sub"><a href="#s-8-1-principles">8.1 Principles</a></li><li class="sub"><a href="#s-8-2-ai-routes">8.2 AI routes</a></li><li class="sub"><a href="#s-8-3-model-and-request-settings">8.3 Model and request settings</a></li><li class="sub"><a href="#s-8-4-sessionspec-and-the-build-pipeline">8.4 SessionSpec and the build pipeline</a></li><li class="sub"><a href="#s-8-5-journey-intelligence">8.5 Journey intelligence</a></li><li class="sub"><a href="#s-8-6-voice-input">8.6 Voice input</a></li><li class="sub"><a href="#s-8-7-safety-mandatory">8.7 Safety (mandatory)</a></li><li class="sub"><a href="#s-8-8-quality-evals-and-cost">8.8 Quality, evals and cost</a></li><li><a href="#s-9-non-functional-requirements">9 · Non-functional requirements</a></li><li><a href="#s-10-phasing">10 · Phasing</a></li><li><a href="#s-11-decisions-needed">11 · Decisions needed</a></li><li><a href="#appendix-mapping-from-today-39-s-mock-to-this-contract">Appendix · Mapping from today&amp;#39;s mock to this contract</a></li></ol></nav>
   <main>
     <div class="doc">
       <header class="cover">
@@ -116,8 +116,8 @@ thead th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; c
 <strong>Status:</strong> Draft for review. Nothing here is built; the clients still run on mock data.
 <strong>Scope:</strong> what <strong>production</strong> runs today: <code>web_prod</code> @ <code>bc028a6</code>, design
 <strong>prod v1</strong> (= staging v4, the default) and <strong>prod v2</strong> (= staging v5,
-opt-in). Staging-only work (U056 admin well-being outcomes, U057) appears only
-as clearly marked <em>later</em> items.
+opt-in). Work that is only on staging today (for example the admin&#39;s well-being
+outcomes) appears only as clearly marked <em>later</em> items.
 <strong>Companion:</strong> <b><code>openapi.yaml</code></b> (OpenAPI 3.1, validated: 90
 paths, 61 schemas) is the machine-readable form of §5–§6 in full and of the
 core of §7 (users, moderation, AI metrics and policies, audit). The other admin
@@ -169,7 +169,7 @@ capabilities sit behind the API (§8):</p>
 </li>
 <li><p><strong>Honesty is part of the contract, not a UI choice.</strong> No figure that is not
 the person&#39;s own, or that nobody measured, may be returned to a client
-without a <code>provenance</code> field. Rule A5.1 in <code>docs/HANDOFF.md</code>.</p>
+without a <code>provenance</code> field. This is the project&#39;s honesty rule.</p>
 </li>
 </ul>
 <hr>
@@ -264,11 +264,11 @@ without a <code>provenance</code> field. Rule A5.1 in <code>docs/HANDOFF.md</cod
 <li><strong>Persistent accounts (D2 = yes).</strong> Sign-in persists via a refresh token.
 The journey, journal, check-ins, onboarding and conversations move from
 <code>localStorage</code> to the account. Without this no retention number can be
-measured (J039 F9).</li>
+measured (the retention test).</li>
 <li><strong>Free plan limits builds, not messages</strong> (logic-review decision 1). The
 server owns the counter: N builds per account per day, reset at local
 midnight. Conversation is unlimited, and the first build is never counted
-(U050). The client renders <code>entitlements</code> and never computes the limit.</li>
+  . The client renders <code>entitlements</code> and never computes the limit.</li>
 <li><strong>One version model</strong> (decision 3). A session owns an ordered list of
 versions: v1.0 for the first build, +0.1 per build. A fork is a new
 session at v1.0 that records <code>parent {sessionId, versionId}</code>. Live changes
@@ -277,7 +277,7 @@ logic B3).</li>
 <li><strong>The API serves both design versions from one shape.</strong> Example: a proposal
 carries both <code>estimate</code> (nullable, with provenance) and <code>basis</code> (the
 reasons). Prod v1 renders the estimate; prod v2 renders the basis. The
-server sets <code>estimate</code> to <code>null</code> until an estimate is measured (A5.1), and
+server sets <code>estimate</code> to <code>null</code> until an estimate is measured (the honesty rule), and
 prod v1 then hides the chip. No endpoint branches on design version. The
 client sends <code>X-Aurelia-UI: 4|5</code> <strong>only for analytics</strong>.</li>
 <li><strong>Numbers are integers; formatting is the client&#39;s.</strong> <code>plays: 18500</code>, not
@@ -293,7 +293,7 @@ reopened with it. A Home ask opens a new conversation. Hand-offs carry
 with streamed progress. The client may leave and come back.</li>
 <li><strong>The safety layer is mandatory on every user-authored text input</strong>
 (messages, journal, check-in notes, publish titles). It runs before
-generation (logic H1; A5.10).</li>
+generation.</li>
 <li><strong>Privacy by default.</strong><ul>
 <li>Signal sources start off.</li>
 <li>Consent is stored per source, with the consent-text version.</li>
@@ -455,7 +455,7 @@ Onboarding {                              // GET/PUT /me/onboarding; ETag
   voice: &quot;female&quot; | &quot;male&quot; | &quot;none&quot;,
   sounds: (&quot;nature&quot; | &quot;music&quot; | &quot;frequencies&quot; | &quot;silence&quot;)[],
   wearable?: &quot;apple_watch&quot; | &quot;whoop&quot; | &quot;oura&quot; | &quot;none&quot;,  // prod v2 asks; v1 leaves it null
-  words?: string,                         // the sentence typed on Home, kept as said (U050)
+  words?: string,                         // the sentence typed on Home, kept as said
   completedAt?
 }
 </code></pre>
@@ -530,7 +530,7 @@ Message {
 }
 
 ChangeOption {
-  id, title,                              // ≤ 13 chars for the folded deck (U050)
+  id, title,                              // ≤ 13 chars for the folded deck
   description,                            // &quot;What it does&quot;
   kind: &quot;visual&quot; | &quot;sound&quot; | &quot;movement&quot; | &quot;voice&quot; | &quot;script&quot; | &quot;length&quot;,  // the sheet filter
   channel?: &quot;audio&quot; | &quot;visuals&quot;,
@@ -546,7 +546,7 @@ ChangeOption {
 </code></pre>
 <p>The server writes <code>basis.text</code> as a sentence, so both clients render the same
 words, e.g. &quot;your goal (“Sleep better”) and your wearable.&quot; It is joined as a
-list (the U057 bug must not reappear).</p>
+list (a known wording bug must not reappear).</p>
 <h3 id="s-4-5-builds">4.5 Builds</h3>
 <pre><code>Build {
   id, sessionId, conversationId, versionId,         // versionId reserved at accept time
@@ -554,12 +554,12 @@ list (the U057 bug must not reappear).</p>
   stage?: &quot;plan&quot; | &quot;script&quot; | &quot;voice&quot; | &quot;sound&quot; | &quot;visuals&quot; | &quot;mix&quot; | &quot;publish_assets&quot;,
   progress: 0..1, etaSec?,
   error?: { code, retryable, message },
-  countsTowardLimit: bool,                          // false for the first build (U050)
+  countsTowardLimit: bool,                          // false for the first build
   createdAt, finishedAt?
 }
 </code></pre>
 <h3 id="s-4-6-journey-check-ins-journal-progress">4.6 Journey, check-ins, journal, progress</h3>
-<pre><code>Journey {                                   // the five-chapter loop (U050)
+<pre><code>Journey {                                   // the five-chapter loop
   id, goal, name: &quot;Sleep better&quot;, sessionId, chapterTarget: 5,
   chapters: [{ number, versionId?, unlockedAt, playedAt?, checkInId? }],
   reminder?: { time: &quot;22:30&quot;, timezone, channel: &quot;calendar&quot; | &quot;push&quot; | &quot;email&quot;, enabled }
@@ -760,7 +760,7 @@ Notification { id, kind: &quot;person&quot; | &quot;account&quot; | &quot;challe
 <td>GET</td>
 <td><code>/home</code></td>
 <td>🔓/🔐</td>
-<td>Signed out: hero copy, Quick Starts, community shelf. Signed in: <code>nextChapter</code> (journey card), <code>recentConversations[3]</code>, one community shelf; <strong>no marketing blocks</strong> (U050). Live map <strong>only</strong> if <code>?include=live</code> (prod v1 visitors; prod v2 drops it).</td>
+<td>Signed out: hero copy, Quick Starts, community shelf. Signed in: <code>nextChapter</code> (journey card), <code>recentConversations[3]</code>, one community shelf; <strong>no marketing blocks</strong>. Live map <strong>only</strong> if <code>?include=live</code> (prod v1 visitors; prod v2 drops it).</td>
 </tr>
 <tr>
 <td>GET</td>
@@ -831,7 +831,7 @@ Notification { id, kind: &quot;person&quot; | &quot;account&quot; | &quot;challe
 <td>POST</td>
 <td><code>/conversations</code></td>
 <td>🔐 ♻️</td>
-<td><code>{source, sessionId?, quickStartId?, recreateOf?, firstMessage?}</code> → <code>201 Conversation</code>. <code>source:&quot;onboarding&quot;</code> seeds the first message from <code>Onboarding</code> (shown word for word before send, U047). Every first visit gets <strong>its own</strong> conversation; there is no shared demo thread (J039 F1).</td>
+<td><code>{source, sessionId?, quickStartId?, recreateOf?, firstMessage?}</code> → <code>201 Conversation</code>. <code>source:&quot;onboarding&quot;</code> seeds the first message from <code>Onboarding</code> (shown word for word before send). Every first visit gets <strong>its own</strong> conversation; there is no shared demo thread.</td>
 </tr>
 <tr>
 <td>GET</td>
@@ -991,7 +991,7 @@ says &quot;adding white noise&quot; over an unchanged version is a contract viol
 <td>POST</td>
 <td><code>/sessions/{id}/feedback</code></td>
 <td>🔐</td>
-<td>Player feedback (face + text): goes to the next proposals (O10)</td>
+<td>Player feedback (face + text): goes to the next proposals</td>
 </tr>
 </tbody></table></div>
 <h3 id="s-5-8-journey-check-ins-reminders-journal-progress">5.8 Journey, check-ins, reminders, journal, progress</h3>
@@ -1074,7 +1074,7 @@ says &quot;adding white noise&quot; over an unchanged version is a contract viol
 <td>GET</td>
 <td><code>/progress/goals</code></td>
 <td>🔐</td>
-<td>Prod v1 &quot;Your goals&quot; cards: <strong>the person&#39;s own journeys only</strong>. The sample analyses (<code>wellnessAnalysis.ts</code>) are not served (S1, A5.1).</td>
+<td>Prod v1 &quot;Your goals&quot; cards: <strong>the person&#39;s own journeys only</strong>. The sample analyses (<code>wellnessAnalysis.ts</code>) are not served.</td>
 </tr>
 <tr>
 <td>GET</td>
@@ -1224,7 +1224,7 @@ says &quot;adding white noise&quot; over an unchanged version is a contract viol
 <td>Link + reward (500 coins today); redeem <code>{code}</code></td>
 </tr>
 </tbody></table></div>
-<h3 id="s-5-12-studies-the-feedback-group-u058">5.12 Studies (the feedback group, U058)</h3>
+<h3 id="s-5-12-studies-the-feedback-group">5.12 Studies (the feedback group)</h3>
 <p>For the 30-person, 8-week outcomes pilot. Participants see only their own
 tasks. The answers feed <code>/admin/studies</code> (§7).</p>
 <div class="table-wrap"><table>
@@ -1307,7 +1307,7 @@ unauthenticated today).</p>
 <td>POST</td>
 <td><code>/events</code></td>
 <td>🔓/🔐</td>
-<td>Batched <code>{events: [{name, at, props}]}</code>. Names include <code>screen_view</code>, <code>tap</code> (labels and positions only, <strong>never field values</strong>), <code>session_played</code>, <code>checkin_answered</code>, <code>returned</code> (the three J039 test events). Dropped unless <code>analytics</code> consent is on (decision 15).</td>
+<td>Batched <code>{events: [{name, at, props}]}</code>. Names include <code>screen_view</code>, <code>tap</code> (labels and positions only, <strong>never field values</strong>), <code>session_played</code>, <code>checkin_answered</code>, <code>returned</code> (the three retention-simulation test events). Dropped unless <code>analytics</code> consent is on (decision 15).</td>
 </tr>
 <tr>
 <td>GET</td>
@@ -1385,7 +1385,7 @@ This closes logic G1, the P0.</p>
 </tr>
 <tr>
 <td><em>Later (staging only today)</em></td>
-<td><code>GET /admin/outcomes</code> + <code>GET /admin/users/{id}/outcome</code>: WHO-5, check-ins and heart rate per user (U056). <strong>Not in prod&#39;s contract</strong>; it needs the WHO-5 question in the app and the Compliance wording first (O21).</td>
+<td><code>GET /admin/outcomes</code> + <code>GET /admin/users/{id}/outcome</code>: WHO-5, check-ins and heart rate per user. <strong>Not in prod&#39;s contract</strong>; it needs the WHO-5 question in the app and the Compliance wording first.</td>
 </tr>
 </tbody></table></div>
 <hr>
@@ -1407,7 +1407,7 @@ them; it does not decide them.</li>
 <li><strong>Nothing invented about the person.</strong> The model is given only the
 person&#39;s own data. Prompts forbid claims about effects, scores or numbers
 not present in the input. Outputs are checked by a validator that rejects
-any number not traceable to the input (A5.1).</li>
+any number not traceable to the input.</li>
 <li><strong>Every AI output names its basis.</strong> <code>basis</code> on proposals; <code>basis</code> on
 progress summaries. It is the prod v2 &quot;Why&quot;, and it doubles as an audit
 trail.</li>
@@ -1448,7 +1448,7 @@ model, effort, schema and limits.</p>
 <td>goal, style answers, words, session spec, last check-in, feedback, wearable summary, catalogue of allowed changes</td>
 <td><code>ProposalSet</code> (sections, options, <code>basis</code>)</td>
 <td>p95 &lt; 4 s</td>
-<td>Options <strong>must come from the allowed-change catalogue</strong> (no invented change types); honours &quot;no …&quot; (J039 F2, <code>deckFor</code>).</td>
+<td>Options <strong>must come from the allowed-change catalogue</strong> (no invented change types); honours &quot;no …&quot; (<code>deckFor</code>).</td>
 </tr>
 <tr>
 <td><code>session.spec</code></td>
@@ -1609,8 +1609,7 @@ check-in. Two-week reports are generated by a scheduled job in batch.</li>
 <p><code>/uploads/voice</code> transcribes server-side with a speech-to-text vendor (open,
 §11). The transcript becomes the message text. The audio is deleted after
 transcription unless the user keeps voice notes. <code>vercel.json</code> currently
-blocks the microphone (<code>Permissions-Policy</code>); that must change before launch
-(O14).</p>
+blocks the microphone (<code>Permissions-Policy</code>); that must change before launch.</p>
 <h3 id="s-8-7-safety-mandatory">8.7 Safety (mandatory)</h3>
 <ul>
 <li><strong>Where it runs:</strong> <code>safety.classify</code> on every user-authored text before any
@@ -1707,7 +1706,7 @@ not cost per request.</li>
 <tbody><tr>
 <td><strong>P0 · Accounts and persistence</strong></td>
 <td>§5.1, §5.2 (without <code>infer</code>), <code>/me</code>, consents; journey, check-ins and journal persisted (no AI yet); admin auth + audit</td>
-<td>The real 8–12 person test (J039 §8), and closes G1</td>
+<td>The real 8–12 person test, and closes G1</td>
 </tr>
 <tr>
 <td><strong>P1 · The AI core loop</strong></td>
@@ -1726,7 +1725,7 @@ not cost per request.</li>
 </tr>
 <tr>
 <td><strong>P4 · Admin and growth</strong></td>
-<td>Admin modules on real data, AI policies console, experiments and config, the outcomes module (after O21)</td>
+<td>Admin modules on real data, AI policies console, experiments and config, the outcomes module</td>
 <td>Operations at scale</td>
 </tr>
 </tbody></table></div>
@@ -1751,7 +1750,7 @@ not cost per request.</li>
 <td>2</td>
 <td>Free plan N builds per day, and what Plus/Pro add</td>
 <td>5 builds/day free; Plus: 30/day, 20-min sessions, all voices; Pro: unlimited fair use + analytics</td>
-<td>Product owner + Eugene</td>
+<td>Product owner + business owner</td>
 </tr>
 <tr>
 <td>3</td>
@@ -1762,7 +1761,7 @@ not cost per request.</li>
 <tr>
 <td>4</td>
 <td>TTS, sound and visual vendors</td>
-<td>Shortlist three per stage, blind listening test with the interviewees (Olivia raised voice quality)</td>
+<td>Shortlist three per stage, blind listening test with the interviewees (voice quality came up in the interviews)</td>
 <td>Head of Product</td>
 </tr>
 <tr>
@@ -1793,7 +1792,7 @@ not cost per request.</li>
 <td>9</td>
 <td>WHO-5 in the app (prerequisite for admin outcomes)</td>
 <td>Ask at start + every two weeks with the report, behind consent</td>
-<td>Product owner + Compliance (O21)</td>
+<td>Product owner + Compliance</td>
 </tr>
 <tr>
 <td>10</td>

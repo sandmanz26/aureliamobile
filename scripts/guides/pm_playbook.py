@@ -289,7 +289,7 @@ def body(base, proto_img, net):
 
 <h2 id="before">11. Before week 0</h2>
 <div class="table-wrap"><table><thead><tr><th>Ready?</th><th>What</th><th>Who</th></tr></thead><tbody>
-<tr><td>☐</td><td>Design, pass lines and this playbook approved</td><td>Product owner, Eugene</td></tr>
+<tr><td>☐</td><td>Design, pass lines and this playbook approved</td><td>Product and business owners</td></tr>
 <tr><td>☐</td><td>Clinical advisor and ethics review; questionnaire licences (ISI, PSS-10)</td><td>Product owner</td></tr>
 <tr><td>☐</td><td>Accounts that stay signed in; study enrolment and consent in the app</td><td>Product team</td></tr>
 <tr><td>☐</td><td>Questionnaire screens with reminders; the safety alert to the study lead</td><td>Product team</td></tr>
