@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-12 — Documents without names (J078)
+
+The shared documents (PRD overview, API contract, admin guideline, playbook and its protocol) no longer name people or cite internal ids, and their wording is plainer.
+
+Branches: `web_app`, `admin_cms`, `web_prod` (for `/guide`).
+
 ### 2026-11-12 — Chapter card, Personal journeys (U066, U067, J076)
 
 The chat proposal is now one Chapter card with a Review sheet, replacing the fanned deck of three cards.

@@ -134,6 +134,8 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J074 | 2026-11-11 | Doc | Branded, self-contained HTML files for all four documents, to send | docs + scripts |
 | J075 | 2026-11-12 | Discussion | Figma change list for every version on staging and production (being written by the owner): (1) chat proposal deck → Chapter card + Review sheet; (2) Personal journeys on Explore + story page | waiting on the full list |
 | J076 | 2026-11-12 | Release + Code | `/guide` kept identical on both sites (production promoted for it); app work staging-only via `RELEASES`; Chapter card + Review sheet and Personal journeys built | U066, U067 |
+| J077 | 2026-11-12 | Question | Staging showed the old deck: the browser was on build `9c8f298` (10 Nov), not `3cba602` | — |
+| J078 | 2026-11-12 | Doc | Shared documents: no personal names, no internal ids, plainer wording; `/guide` synced to production | docs only |
 
 ---
 
@@ -728,6 +730,20 @@ transcript and the update log. Everything from J018 on was written at the time.
   - four decisions.
 - **Also:** `docs/api/API-CONTRACT.md` §5.12 and `openapi.yaml` gained the study endpoints (now 90 paths, validated).
 - **Open items:** O23 added.
+
+### J078 — Documents without names or internal ids
+- **Asked:** "harusnya kamu tidak perlu memasukan nama eugene di dokumen supaya tidak aneh, review lagi dokumen nya pastikan mudah dibaca".
+- **Done:** the shared documents no longer name the business owner, the session owner or the three interviewees, and no longer cite J/U/O ids or internal rule numbers. Each reference became what it stands for: "the brief", "the business owner", "the interviews", "the honesty rule", a topic column instead of O-numbers. The documents are:
+  - the PRD overview and the API contract;
+  - the admin guideline;
+  - the playbook, and the study protocol it carries;
+  - the share files and the PDFs, regenerated.
+- **Kept:** the internal logs (this journal, the update log, the handoff), which are records, not documents to share. The fictional story authors in Personal journeys also stay.
+- **Production:** fast-forwarded for `/guide`, as the J076 rule requires. The app's new work is still off there (`RELEASES`).
+
+### J077 — "Kok belum ada"
+- **Asked:** a staging screenshot still showing the fanned deck.
+- **Answer:** its badge read `9c8f298` (10 Nov), while staging was at `3cba602`. Either the browser was on a cached build (press Reload, close the tabs, or hard-refresh), or the URL was a fixed per-deployment link rather than the branch link.
 
 ### J076 — Guide in step on both sites; Chapter card and Personal journeys (U066, U067)
 - **Asked:**
