@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react'
+import { RELEASES } from './versions/releases'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { StagingBar } from './versions/StagingBar'
 import { AdminLayout } from './admin/AdminLayout'
@@ -62,6 +63,8 @@ const UsersPage = lazy(() => import('./admin/pages/UsersPage').then((m) => ({ de
 const UserDetailPage = lazy(() => import('./admin/pages/UserDetailPage').then((m) => ({ default: m.UserDetailPage })))
 const ExperimentationPage = lazy(() => import('./admin/pages/ExperimentationPage').then((m) => ({ default: m.ExperimentationPage })))
 const ExperimentationV2Page = lazy(() => import('./admin/pages/ExperimentationV2Page').then((m) => ({ default: m.ExperimentationV2Page })))
+const StoryPage = lazy(() => import('./pages/StoryPage').then((m) => ({ default: m.StoryPage })))
+const JourneysPage = lazy(() => import('./pages/JourneysPage').then((m) => ({ default: m.JourneysPage })))
 const GuidePage = lazy(() => import('./guides/GuidePage').then((m) => ({ default: m.GuidePage })))
 const GuideIndexPage = lazy(() => import('./guides/GuidePage').then((m) => ({ default: m.GuideIndexPage })))
 const ExperimentationParticipantPage = lazy(() => import('./admin/pages/ExperimentationPage').then((m) => ({ default: m.ExperimentationParticipantPage })))
@@ -361,6 +364,15 @@ export default function App() {
                   </ModuleGuard>
                 </RequireAuth>
               }
+            />
+            {/* U066 (staging until shipped): personal journeys. */}
+            <Route
+              path="/journeys"
+              element={<RequireAuth>{RELEASES.personalJourneys ? <JourneysPage /> : <Navigate to="/explore" replace />}</RequireAuth>}
+            />
+            <Route
+              path="/journeys/:slug"
+              element={<RequireAuth>{RELEASES.personalJourneys ? <StoryPage /> : <Navigate to="/explore" replace />}</RequireAuth>}
             />
             <Route
               path="/recreate/:slug"

@@ -31,7 +31,7 @@ function tabFor(pathname: string): TabId | null {
   if (pathname === '/home') return 'create'
   if (pathname === '/profile' || /^\/(sessions|settings|credits|upgrade|invite|notifications|help|session-settings)/.test(pathname)) return 'me'
   if (/^\/(wellness|progress)/.test(pathname)) return 'progress'
-  if (/^\/(explore|see-all|challenge|session\/|recreate|profile\/)/.test(pathname)) return 'discover'
+  if (/^\/(explore|see-all|challenge|session\/|recreate|profile\/|journeys)/.test(pathname)) return 'discover'
   return null
 }
 

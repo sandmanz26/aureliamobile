@@ -1,4 +1,7 @@
 import { ArrowRight, Clock, Menu, Play, Podium, Sparkles, Users } from 'lucide-react'
+import { JourneyCard } from '../components/journeys/JourneyCard'
+import { STORIES } from '../lib/journeys'
+import { RELEASES } from '../versions/releases'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import liveSessionsMap from '../assets/live-sessions-map.png'
@@ -359,6 +362,17 @@ export function ExplorePage() {
                   </div>
                 )
               })}
+            </div>
+          </section>
+        )}
+
+        {RELEASES.personalJourneys && (
+          <section className="mt-32">
+            <SectionHeader title="Personal Journeys" seeAllTo="/journeys" />
+            <div className="-mx-20 mt-16 flex gap-16 overflow-x-auto px-20 pb-4 lg:-mx-24 lg:px-24">
+              {STORIES.map((story) => (
+                <JourneyCard key={story.slug} story={story} />
+              ))}
             </div>
           </section>
         )}
