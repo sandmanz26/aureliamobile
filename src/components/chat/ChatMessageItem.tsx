@@ -4,6 +4,7 @@ import type { Message } from '../../chat/thread'
 import type { Recommendation } from './RecommendationCard'
 import { AttachedSession } from './AttachedSession'
 import { RecommendationCard } from './RecommendationCard'
+import { ChapterCard } from './ChapterCard'
 import { RecommendationDeck } from './RecommendationDeck'
 import { VoiceMessage } from './VoiceMessage'
 
@@ -19,6 +20,8 @@ interface ChatMessageItemProps {
   applied: string[]
   /** The deck this thread proposes — the demo one, or a v4 first session's (U050). */
   recommendations: Recommendation[]
+  /** U066 (staging until shipped): the proposal as one Chapter card instead of the deck. */
+  chapter?: { title: string; onReview?: () => void; onApply?: () => void; applying?: boolean }
   onToggleRecommendation: (id: string) => void
   onOpenDeck: () => void
   onSendPrompt: (text: string) => void
@@ -153,6 +156,7 @@ export function ChatMessageItem({
   canApply,
   applied,
   recommendations,
+  chapter,
   onToggleRecommendation,
   onOpenDeck,
   onSendPrompt,
@@ -186,6 +190,17 @@ export function ChatMessageItem({
     typeof attached === 'object' ? (
       <div className={`u-message mt-8 flex ${message.from === 'user' ? 'justify-end' : 'pl-34'}`}>
         <AttachedSession slug={attached.session} />
+      </div>
+    ) : attached === 'recommendations' && showRecommendations && chapter ? (
+      <div className="u-message mt-12">
+        <ChapterCard
+          title={chapter.title}
+          recommendations={recommendations}
+          count={canApply ? applied.length : recommendations.length}
+          onReview={canApply ? chapter.onReview : undefined}
+          onApply={canApply ? chapter.onApply : undefined}
+          applying={chapter.applying}
+        />
       </div>
     ) : attached === 'recommendations' && showRecommendations ? (
       // The opened row is the plain one in every version: v2's filter moved

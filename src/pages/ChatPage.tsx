@@ -2,7 +2,10 @@ import { WandSparkles } from 'lucide-react'
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { AddSheet } from '../components/chat/AddSheet'
-import { addOptionTitles, asOptions } from '../chat/addOptions'
+import { EXPERIMENTS, addOptionTitles, asOptions } from '../chat/addOptions'
+import { chapterTitle } from '../chat/chapter'
+import { ReviewSheet } from '../components/chat/ReviewSheet'
+import { RELEASES } from '../versions/releases'
 import { PageMeta } from '../components/PageMeta'
 import { ChatComposer } from '../components/chat/ChatComposer'
 import { ChatMessageItem } from '../components/chat/ChatMessageItem'
@@ -179,6 +182,8 @@ export function ChatPage() {
   // card would quietly promise a later time each time React re-rendered it.
   const [resetAt, setResetAt] = useState<string | null>(null)
   const [addOpen, setAddOpen] = useState(false)
+  // U066: the Chapter card's Review sheet (staging until shipped).
+  const [reviewOpen, setReviewOpen] = useState(false)
   const [addPicks, setAddPicks] = useState<string[]>([])
   // Reply (U036): the line the next typed message answers. Derived against
   // the thread so a reset or a new session can never leave a reply pointing
@@ -776,6 +781,7 @@ export function ChatPage() {
   const suggestionOptions = asOptions(deck)
   // v5 (U053): what the suggestions rest on, in words, for each row's Why.
   const lastCheckIn = journey?.checkIns[journey.checkIns.length - 1]
+  const nextChapter = chapterTitle(v4 && journey ? journey.checkIns.length : null, versions.length)
   const basisParts = [
     findGoal(answers?.goal ?? null) ? `your goal (“${findGoal(answers?.goal ?? null)?.label}”)` : 'what you asked for in this conversation',
     lastCheckIn ? `how you felt after your last chapter (“${MOOD_LABELS[lastCheckIn.mood - 1]}”)` : null,
@@ -943,6 +949,16 @@ export function ChatPage() {
                 recommendations={deck}
                 onToggleRecommendation={toggleRecommendation}
                 onOpenDeck={() => (v4 ? setAddOpen(true) : setDeckOpen(true))}
+                chapter={
+                  RELEASES.chapterCard
+                    ? {
+                        title: nextChapter,
+                        onReview: () => setReviewOpen(true),
+                        onApply: () => applyChanges(undefined, deck.filter((r) => applied.includes(r.id)).map((r) => r.title)),
+                        applying: sessionState === 'updating',
+                      }
+                    : undefined
+                }
                 onSendPrompt={sendMessage}
                 onReply={limited || listening ? undefined : (m) => setReplyTarget(m)}
                 onJumpTo={jumpTo}
@@ -1099,6 +1115,27 @@ export function ChatPage() {
             applyChanges(titles.length === 1 ? 'Apply 1 change' : `Apply ${titles.length} changes`, titles)
           }}
           onClose={() => setAddOpen(false)}
+        />
+      )}
+
+      {reviewOpen && (
+        <ReviewSheet
+          title={nextChapter}
+          changes={deck}
+          applied={applied}
+          onToggle={toggleRecommendation}
+          experiments={EXPERIMENTS}
+          picks={addPicks}
+          onTogglePick={(id) => setAddPicks((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]))}
+          basis={v5 ? basisLine : undefined}
+          onApply={() => {
+            const titles = [...deck.filter((r) => applied.includes(r.id)).map((r) => r.title), ...addOptionTitles(addPicks)]
+            setReviewOpen(false)
+            setAddPicks([])
+            // The same path as the card's Apply and the chip.
+            applyChanges(titles.length === 1 ? 'Apply 1 change' : `Apply ${titles.length} changes`, titles)
+          }}
+          onClose={() => setReviewOpen(false)}
         />
       )}
 
