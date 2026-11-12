@@ -1,0 +1,464 @@
+From 0c52d70fbcf684f6d04d3e9abe2f5a2c5d67299c Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Thu, 12 Nov 2026 00:48:22 +0000
+Subject: [PATCH] Chat: one Chapter card and a Review sheet instead of the
+ fanned deck
+
+Figma Changes (16906:4947) item 1, every design version. The proposal
+is one card (stacked orbs with a count, the chapter it makes, a one-line
+summary, Review changes / Apply changes (N)); Review opens a sheet with
+the proposed changes ticked and experiments to add. Behind
+RELEASES.chapterCard: on for staging, off for production until shipped,
+so the /guide documents can keep moving to production on their own.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/chat/chapter.test.ts                |  15 +++
+ src/chat/chapter.ts                     |  17 +++
+ src/components/chat/ChapterCard.tsx     |  84 ++++++++++++++
+ src/components/chat/ChatMessageItem.tsx |  15 +++
+ src/components/chat/ReviewSheet.tsx     | 139 ++++++++++++++++++++++++
+ src/pages/ChatPage.tsx                  |  39 ++++++-
+ src/versions/releases.ts                |  21 ++++
+ 7 files changed, 329 insertions(+), 1 deletion(-)
+ create mode 100644 src/chat/chapter.test.ts
+ create mode 100644 src/chat/chapter.ts
+ create mode 100644 src/components/chat/ChapterCard.tsx
+ create mode 100644 src/components/chat/ReviewSheet.tsx
+ create mode 100644 src/versions/releases.ts
+
+diff --git a/src/chat/chapter.test.ts b/src/chat/chapter.test.ts
+new file mode 100644
+index 0000000..95f547e
+--- /dev/null
++++ b/src/chat/chapter.test.ts
+@@ -0,0 +1,15 @@
++import { describe, expect, it } from 'vitest'
++import { chapterSummary, chapterTitle } from './chapter'
++
++describe('chapter card helpers', () => {
++  it('reads the changes as one line', () => {
++    expect(chapterSummary([{ title: 'Longer' }, { title: 'Increase yellow' }, { title: 'Less movement' }])).toBe('Longer, increase yellow and less movement')
++    expect(chapterSummary([{ title: 'No melody' }])).toBe('No melody')
++    expect(chapterSummary([])).toBe('')
++  })
++  it('names the chapter from the journey, else from the builds', () => {
++    expect(chapterTitle(1, 0)).toBe('Chapter 2')
++    expect(chapterTitle(null, 0)).toBe('Chapter 1')
++    expect(chapterTitle(null, 2)).toBe('Chapter 3')
++  })
++})
+diff --git a/src/chat/chapter.ts b/src/chat/chapter.ts
+new file mode 100644
+index 0000000..06c72f4
+--- /dev/null
++++ b/src/chat/chapter.ts
+@@ -0,0 +1,17 @@
++import type { Recommendation } from '../components/chat/RecommendationCard'
++
++/** "Longer, increased yellow and less movement" — the Chapter card's one line (U066). */
++export function chapterSummary(recommendations: Pick<Recommendation, 'title'>[]) {
++  const words = recommendations.map((r, i) => (i === 0 ? r.title : r.title.charAt(0).toLowerCase() + r.title.slice(1)))
++  return words.length > 1 ? `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}` : (words[0] ?? '')
++}
++
++/**
++ * What the next build is called on the card and the sheet. With a journey
++ * (v4+) it is the chapter that check-ins have reached; otherwise the count of
++ * builds already in this thread, plus the one this would make.
++ */
++export function chapterTitle(checkIns: number | null, builds: number) {
++  if (checkIns !== null) return `Chapter ${checkIns + 1}`
++  return `Chapter ${builds + 1}`
++}
+diff --git a/src/components/chat/ChapterCard.tsx b/src/components/chat/ChapterCard.tsx
+new file mode 100644
+index 0000000..ce9c9d8
+--- /dev/null
++++ b/src/components/chat/ChapterCard.tsx
+@@ -0,0 +1,84 @@
++import { WandSparkles } from 'lucide-react'
++import { chapterSummary } from '../../chat/chapter'
++import type { Recommendation } from './RecommendationCard'
++
++/**
++ * The proposal as one card (Figma "Frame 45" in Changes → Chat, 16906:4995),
++ * replacing the fanned deck (U066): the changes' orbs stacked with a count,
++ * the chapter it would make, a one-line summary, and two actions — Review the
++ * list, or Apply it as it stands.
++ *
++ * White, 20 radius (off the token scale, so arbitrary), 16 padding, 24 between
++ * the summary row and the buttons, the deck's two shadows. Orbs overlap by 34.
++ */
++const CARD_SHADOW = '14px 9px 14px 4px rgba(0, 0, 0, 0.03), 4px 4px 5px rgba(0, 0, 0, 0.03)'
++
++interface ChapterCardProps {
++  title: string
++  recommendations: Recommendation[]
++  count: number
++  /** Left out once applied: the card is then a record of what was asked for. */
++  onReview?: () => void
++  onApply?: () => void
++  applying?: boolean
++}
++
++export function ChapterCard({ title, recommendations, count, onReview, onApply, applying }: ChapterCardProps) {
++  const orbs = recommendations.slice(0, 3)
++  return (
++    <article
++      aria-label={`${title}: ${count} ${count === 1 ? 'change' : 'changes'}`}
++      className="flex flex-col gap-24 rounded-[20px] bg-surface-default p-16"
++      style={{ boxShadow: CARD_SHADOW }}
++    >
++      <div className="flex items-center gap-14">
++        <div className="relative flex shrink-0 items-center" aria-hidden="true">
++          {orbs.map((r, i) => (
++            <img
++              key={r.id}
++              src={r.orb}
++              alt=""
++              className="size-48 rounded-full border-2 border-surface-default object-cover"
++              style={{ marginLeft: i === 0 ? 0 : -34, zIndex: i + 1 }}
++            />
++          ))}
++          <span
++            className="text-style-caption absolute -right-4 -top-4 z-10 flex size-20 items-center justify-center rounded-full bg-surface-default font-medium! text-text-primary"
++            style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.12)' }}
++          >
++            {count}
++          </span>
++        </div>
++        <div className="flex min-w-0 flex-1 flex-col gap-4">
++          <p className="text-[20px] leading-[26px] text-text-primary">{title}</p>
++          <p className="text-style-caption line-clamp-1 text-text-secondary">{chapterSummary(recommendations)}</p>
++        </div>
++      </div>
++
++      {(onReview || onApply) && (
++        <div className="flex gap-12">
++          {onReview && (
++            <button
++              type="button"
++              onClick={onReview}
++              className="text-style-label u-press flex h-40 flex-1 items-center justify-center rounded-12 border border-[#E4E4E4] bg-surface-default px-12 text-text-primary"
++            >
++              Review changes
++            </button>
++          )}
++          {onApply && (
++            <button
++              type="button"
++              onClick={onApply}
++              disabled={applying || count === 0}
++              className="text-style-label u-press flex h-40 flex-1 items-center justify-center gap-4 rounded-12 bg-[#331B04] px-12 text-text-inverse disabled:opacity-60"
++            >
++              <WandSparkles size={13} aria-hidden="true" />
++              {applying ? 'Updating..' : `Apply changes (${count})`}
++            </button>
++          )}
++        </div>
++      )}
++    </article>
++  )
++}
+diff --git a/src/components/chat/ChatMessageItem.tsx b/src/components/chat/ChatMessageItem.tsx
+index dbb7021..abd3c32 100644
+--- a/src/components/chat/ChatMessageItem.tsx
++++ b/src/components/chat/ChatMessageItem.tsx
+@@ -4,6 +4,7 @@ import type { Message } from '../../chat/thread'
+ import type { Recommendation } from './RecommendationCard'
+ import { AttachedSession } from './AttachedSession'
+ import { RecommendationCard } from './RecommendationCard'
++import { ChapterCard } from './ChapterCard'
+ import { RecommendationDeck } from './RecommendationDeck'
+ import { VoiceMessage } from './VoiceMessage'
+ 
+@@ -19,6 +20,8 @@ interface ChatMessageItemProps {
+   applied: string[]
+   /** The deck this thread proposes — the demo one, or a v4 first session's (U050). */
+   recommendations: Recommendation[]
++  /** U066 (staging until shipped): the proposal as one Chapter card instead of the deck. */
++  chapter?: { title: string; onReview?: () => void; onApply?: () => void; applying?: boolean }
+   onToggleRecommendation: (id: string) => void
+   onOpenDeck: () => void
+   onSendPrompt: (text: string) => void
+@@ -153,6 +156,7 @@ export function ChatMessageItem({
+   canApply,
+   applied,
+   recommendations,
++  chapter,
+   onToggleRecommendation,
+   onOpenDeck,
+   onSendPrompt,
+@@ -187,6 +191,17 @@ export function ChatMessageItem({
+       <div className={`u-message mt-8 flex ${message.from === 'user' ? 'justify-end' : 'pl-34'}`}>
+         <AttachedSession slug={attached.session} />
+       </div>
++    ) : attached === 'recommendations' && showRecommendations && chapter ? (
++      <div className="u-message mt-12">
++        <ChapterCard
++          title={chapter.title}
++          recommendations={recommendations}
++          count={canApply ? applied.length : recommendations.length}
++          onReview={canApply ? chapter.onReview : undefined}
++          onApply={canApply ? chapter.onApply : undefined}
++          applying={chapter.applying}
++        />
++      </div>
+     ) : attached === 'recommendations' && showRecommendations ? (
+       // The opened row is the plain one in every version: v2's filter moved
+       // from here to the top of the "+" sheet (U045, team feedback).
+diff --git a/src/components/chat/ReviewSheet.tsx b/src/components/chat/ReviewSheet.tsx
+new file mode 100644
+index 0000000..3958052
+--- /dev/null
++++ b/src/components/chat/ReviewSheet.tsx
+@@ -0,0 +1,139 @@
++import { createPortal } from 'react-dom'
++import { Check, Image, Music, Plus, WandSparkles, X } from 'lucide-react'
++import { useEffect } from 'react'
++import type { AddOption } from '../../chat/addOptions'
++import type { Recommendation } from './RecommendationCard'
++
++/**
++ * Review changes (Figma "Review", 16906:5067; U066): the Chapter card opened.
++ * The proposed changes come ticked — the person takes away what they do not
++ * want, the product's standing rule — and experiments sit below as cards to
++ * add. One full-width Apply carries the total.
++ */
++interface ReviewSheetProps {
++  title: string
++  changes: Recommendation[]
++  applied: string[]
++  onToggle: (id: string) => void
++  experiments: AddOption[]
++  picks: string[]
++  onTogglePick: (id: string) => void
++  /** v5's "Why?": what the proposals are based on. */
++  basis?: string
++  onApply: () => void
++  onClose: () => void
++}
++
++const ROW_SHADOW = '0 4px 14px rgba(0, 0, 0, 0.04)'
++
++export function ReviewSheet({ title, changes, applied, onToggle, experiments, picks, onTogglePick, basis, onApply, onClose }: ReviewSheetProps) {
++  const count = applied.length + picks.length
++  useEffect(() => {
++    function onKey(event: KeyboardEvent) {
++      if (event.key === 'Escape') onClose()
++    }
++    window.addEventListener('keydown', onKey)
++    return () => window.removeEventListener('keydown', onKey)
++  }, [onClose])
++
++  return createPortal(
++    <div className="u-fade fixed inset-0 z-50 flex items-end justify-center bg-icon-strong/40" onClick={onClose}>
++      <div
++        role="dialog"
++        aria-modal="true"
++        aria-label={`${title}: review changes`}
++        onClick={(event) => event.stopPropagation()}
++        className="u-sheet flex max-h-[88vh] w-full flex-col rounded-t-32 bg-surface-default sm:max-w-[480px] lg:max-w-[520px]"
++      >
++        <div className="flex items-center justify-between px-22 pb-8 pt-28">
++          <h2 className="text-[22px] leading-[28px] text-text-primary">{title}</h2>
++          <button type="button" aria-label="Close" onClick={onClose} className="u-press -mr-6 flex size-36 items-center justify-center rounded-full text-icon-strong">
++            <X size={22} />
++          </button>
++        </div>
++
++        <div className="flex flex-col gap-24 overflow-y-auto px-22 pb-16">
++          <section>
++            <h3 className="text-style-body-small text-text-primary">New changes</h3>
++            {basis && <p className="text-style-caption mt-4 text-text-secondary">Why: {basis}</p>}
++            <ul className="mt-12 flex flex-col gap-12">
++              {changes.map((change) => {
++                const on = applied.includes(change.id)
++                return (
++                  <li key={change.id}>
++                    <label className="flex cursor-pointer items-center gap-14 rounded-[20px] bg-surface-default px-16 py-18" style={{ boxShadow: ROW_SHADOW }}>
++                      <img src={change.orb} alt="" className="size-42 shrink-0 rounded-full object-cover" />
++                      <span className="flex min-w-0 flex-1 flex-col gap-2">
++                        <span className="text-[18px] leading-[24px] text-text-primary">{change.title}</span>
++                        <span className="text-style-caption text-text-secondary">{change.description}</span>
++                      </span>
++                      <input type="checkbox" checked={on} onChange={() => onToggle(change.id)} className="sr-only" />
++                      <span
++                        aria-hidden="true"
++                        className={`flex size-32 shrink-0 items-center justify-center rounded-8 border ${on ? 'border-[#331B04] bg-[#331B04] text-text-inverse' : 'border-border-subtle bg-surface-default'}`}
++                      >
++                        {on && <Check size={16} />}
++                      </span>
++                    </label>
++                  </li>
++                )
++              })}
++            </ul>
++          </section>
++
++          {experiments.length > 0 && (
++            <section>
++              <h3 className="text-style-body-small text-text-primary">Experiment</h3>
++              {/* Bleeds past the sheet's padding so a card sits half off the
++                  edge — which is what says there are more than fit. */}
++              <div className="-mx-22 mt-12 flex gap-12 overflow-x-auto px-22 pb-4">
++                {experiments.map((option) => {
++                  const on = picks.includes(option.id)
++                  return (
++                    <article key={option.id} className="flex w-[245px] shrink-0 flex-col gap-14 rounded-16 border border-[#CFE3F7] bg-surface-default p-16">
++                      <div className="flex gap-12">
++                        <img src={option.orb} alt="" className="size-42 shrink-0 rounded-full object-cover" />
++                        <div className="min-w-0">
++                          <p className="text-style-body-small text-text-primary">{option.title}</p>
++                          <p className="text-style-caption line-clamp-2 text-text-secondary">{option.description}</p>
++                        </div>
++                      </div>
++                      <div className="flex items-center justify-between gap-6">
++                        <span className="text-style-caption flex items-center gap-6 text-text-primary">
++                          {option.channel === 'Visuals' ? <Image size={14} /> : <Music size={14} />}
++                          {option.channel}
++                        </span>
++                        <button
++                          type="button"
++                          onClick={() => onTogglePick(option.id)}
++                          aria-pressed={on}
++                          className={`text-style-label flex h-32 items-center gap-4 rounded-8 border px-12 ${on ? 'border-transparent bg-brand-default text-text-strong' : 'border-border-subtle bg-surface-default text-text-primary'}`}
++                        >
++                          {on ? <Check size={13} /> : <Plus size={13} />}
++                          {on ? 'Added' : 'Add'}
++                        </button>
++                      </div>
++                    </article>
++                  )
++                })}
++              </div>
++            </section>
++          )}
++        </div>
++
++        <div className="px-22 pb-[max(20px,env(safe-area-inset-bottom))] pt-8">
++          <button
++            type="button"
++            onClick={onApply}
++            disabled={count === 0}
++            className="text-style-label u-press flex h-52 w-full items-center justify-center gap-6 rounded-12 bg-[#331B04] text-text-inverse disabled:opacity-50"
++          >
++            <WandSparkles size={14} aria-hidden="true" />
++            Apply changes ({count})
++          </button>
++        </div>
++      </div>
++    </div>,
++    document.body,
++  )
++}
+diff --git a/src/pages/ChatPage.tsx b/src/pages/ChatPage.tsx
+index e6eea26..cfb4779 100644
+--- a/src/pages/ChatPage.tsx
++++ b/src/pages/ChatPage.tsx
+@@ -2,7 +2,10 @@ import { WandSparkles } from 'lucide-react'
+ import { useEffect, useEffectEvent, useRef, useState } from 'react'
+ import { useLocation, useNavigate, useParams } from 'react-router-dom'
+ import { AddSheet } from '../components/chat/AddSheet'
+-import { addOptionTitles, asOptions } from '../chat/addOptions'
++import { EXPERIMENTS, addOptionTitles, asOptions } from '../chat/addOptions'
++import { chapterTitle } from '../chat/chapter'
++import { ReviewSheet } from '../components/chat/ReviewSheet'
++import { RELEASES } from '../versions/releases'
+ import { PageMeta } from '../components/PageMeta'
+ import { ChatComposer } from '../components/chat/ChatComposer'
+ import { ChatMessageItem } from '../components/chat/ChatMessageItem'
+@@ -179,6 +182,8 @@ export function ChatPage() {
+   // card would quietly promise a later time each time React re-rendered it.
+   const [resetAt, setResetAt] = useState<string | null>(null)
+   const [addOpen, setAddOpen] = useState(false)
++  // U066: the Chapter card's Review sheet (staging until shipped).
++  const [reviewOpen, setReviewOpen] = useState(false)
+   const [addPicks, setAddPicks] = useState<string[]>([])
+   // Reply (U036): the line the next typed message answers. Derived against
+   // the thread so a reset or a new session can never leave a reply pointing
+@@ -776,6 +781,7 @@ export function ChatPage() {
+   const suggestionOptions = asOptions(deck)
+   // v5 (U053): what the suggestions rest on, in words, for each row's Why.
+   const lastCheckIn = journey?.checkIns[journey.checkIns.length - 1]
++  const nextChapter = chapterTitle(v4 && journey ? journey.checkIns.length : null, versions.length)
+   const basisParts = [
+     findGoal(answers?.goal ?? null) ? `your goal (“${findGoal(answers?.goal ?? null)?.label}”)` : 'what you asked for in this conversation',
+     lastCheckIn ? `how you felt after your last chapter (“${MOOD_LABELS[lastCheckIn.mood - 1]}”)` : null,
+@@ -943,6 +949,16 @@ export function ChatPage() {
+                 recommendations={deck}
+                 onToggleRecommendation={toggleRecommendation}
+                 onOpenDeck={() => (v4 ? setAddOpen(true) : setDeckOpen(true))}
++                chapter={
++                  RELEASES.chapterCard
++                    ? {
++                        title: nextChapter,
++                        onReview: () => setReviewOpen(true),
++                        onApply: () => applyChanges(undefined, deck.filter((r) => applied.includes(r.id)).map((r) => r.title)),
++                        applying: sessionState === 'updating',
++                      }
++                    : undefined
++                }
+                 onSendPrompt={sendMessage}
+                 onReply={limited || listening ? undefined : (m) => setReplyTarget(m)}
+                 onJumpTo={jumpTo}
+@@ -1102,6 +1118,27 @@ export function ChatPage() {
+         />
+       )}
+ 
++      {reviewOpen && (
++        <ReviewSheet
++          title={nextChapter}
++          changes={deck}
++          applied={applied}
++          onToggle={toggleRecommendation}
++          experiments={EXPERIMENTS}
++          picks={addPicks}
++          onTogglePick={(id) => setAddPicks((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]))}
++          basis={v5 ? basisLine : undefined}
++          onApply={() => {
++            const titles = [...deck.filter((r) => applied.includes(r.id)).map((r) => r.title), ...addOptionTitles(addPicks)]
++            setReviewOpen(false)
++            setAddPicks([])
++            // The same path as the card's Apply and the chip.
++            applyChanges(titles.length === 1 ? 'Apply 1 change' : `Apply ${titles.length} changes`, titles)
++          }}
++          onClose={() => setReviewOpen(false)}
++        />
++      )}
++
+       {publishState && (
+         <PublishSheet
+           state={publishState}
+diff --git a/src/versions/releases.ts b/src/versions/releases.ts
+new file mode 100644
+index 0000000..2661d45
+--- /dev/null
++++ b/src/versions/releases.ts
+@@ -0,0 +1,21 @@
++import { BUILD } from '../lib/build'
++
++/**
++ * Changes that are on staging but not yet on production (U066).
++ *
++ * The owner keeps the documents at /guide identical on both sites, which means
++ * `web_prod` is fast-forwarded whenever they change, and those pushes carry
++ * every app change on staging with them. So new app work lands switched on for
++ * staging and off for production. Shipping one to production is a request
++ * like any other: set it to `true` here (and say so in the logs).
++ *
++ * Every design version gets these: they are not a version of their own.
++ */
++const onStagingOnly = BUILD.environment !== 'production'
++
++export const RELEASES = {
++  /** Figma "Changes" (16906:4947) item 1: one Chapter card + a Review sheet instead of the fanned deck. */
++  chapterCard: onStagingOnly,
++  /** Figma item 2: Personal journeys on Explore, and the story page (16906:8333). */
++  personalJourneys: onStagingOnly,
++} as const
+-- 
+2.43.0
+

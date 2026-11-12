@@ -27,6 +27,8 @@ branch carries its own `.storybook/` setup this one doesn't, but soon
 enough that the catalogue does not quietly fall behind what it exists to
 keep consistent. See that branch's `docs/STORYBOOK.md`.
 
+**Since J076 (2026-11-12) `/guide` must be identical on staging and production**, so `web_prod` is fast-forwarded whenever the documents change. That carries the app code with it, so **new app work lands behind `RELEASES` in `src/versions/releases.ts`**: on for staging, off for production. Shipping app work is setting its flag to `true`, still only on request.
+
 **`web_prod` is different in kind: it is allowed to be behind.** `web_app` is
 the staging branch and every commit lands there first; `web_prod` moves only
 when somebody asks for it, by fast-forward:

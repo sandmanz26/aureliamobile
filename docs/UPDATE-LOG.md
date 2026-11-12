@@ -103,8 +103,72 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U063 | `ed5e2b7` | 2026-11-11 | PM playbook carries the whole study protocol as its appendix (P1–P11, six screenshots), in the HTML, the PDF and `/guide/playbook`. On production since U064. | [patch](patches/U063-ed5e2b7.patch) |
 | U064 | `a876ab5` | 2026-11-11 | `/guide` lists the feedback group playbook first, titled for Eugene's request; **production promoted with U062–U064** (on request). | [patch](patches/U064-a876ab5.patch) |
 | U065 | `8002466` | 2026-11-11 | Aurelia branding on every document (logo, gradient, Home's glow, network artwork), strongest on the playbook; `/guide` front page rewritten plainly, without naming a person. On production. | [patch](patches/U065-8002466.patch) |
+| U066 | `0c52d70` | 2026-11-12 | Chat: one Chapter card + Review sheet instead of the fanned deck, every version. Staging only (`RELEASES.chapterCard`). | [patch](patches/U066-0c52d70.patch) |
+| U067 | `6085b63` | 2026-11-12 | Explore: Personal journeys shelf, See All and a story page, every version. Staging only (`RELEASES.personalJourneys`). | [patch](patches/U067-6085b63.patch) |
 
 ## Entries
+
+### U067 — Personal journeys
+
+- **Commit:** `6085b63` · pushed 2026-11-12 UTC · `web_app` + `admin_cms`. On `web_prod` the code is present but switched off (`RELEASES.personalJourneys`).
+- **Patch:** [patches/U067-6085b63.patch](patches/U067-6085b63.patch)
+- **Request:** "ada tambahan personal journey, [Figma 16906:8333] ini isinya". Asked about content: "kamu bisa cek yang saya kirim screenshot nya dan sudah ada di figma contohnya".
+- **Interpretation:**
+  - Build the Figma examples as they are: Olivia Bennett's story and its photos from the Explore and Session Detail frames.
+  - The Explore frame also shows Lucas Walsh's card but has no story page for it, so his story is written to the same pattern.
+  - Every version gets it.
+- **Changed:**
+  - `src/lib/journeys.ts` (+ test): two stories made of blocks (paragraph, section, quote, session, gallery). The test checks that every story's session exists.
+  - `src/assets/journeys/`: 8 images exported from Figma (220 kB).
+  - `components/journeys/JourneyCard.tsx`, 236 x 320.
+  - `pages/StoryPage.tsx` (`/journeys/:slug`):
+    - the hero with back and share (Web Share, or copy the link);
+    - the author (linked only where a profile exists), the title, the date and read time;
+    - blocks, the pull quote with its orange rule, and the session embed;
+    - a carousel that opens on the middle photo;
+    - "Try the Session" fixed at the bottom, above the v4/v5 tab bar.
+  - `pages/JourneysPage.tsx` (`/journeys`).
+  - The Explore shelf sits after the hero or Quick Start.
+  - The TabBar marks `/journeys` as Discover.
+- **Verified:**
+  - `npm run check` passes (118 tests).
+  - Staging build: v1 and v5 at 402px, and v5 at 1400px, show the shelf, the story renders, there is no overflow and no page errors.
+  - Production build: no shelf, and `/journeys/*` redirects to Explore.
+- **Revert:** `git revert --no-commit 6085b63 && git checkout HEAD -- docs/`.
+
+### U066 — The Chapter card and the Review sheet
+
+- **Commit:** `0c52d70` · pushed 2026-11-12 UTC · `web_app` + `admin_cms`. Off on production (`RELEASES.chapterCard`).
+- **Patch:** [patches/U066-0c52d70.patch](patches/U066-0c52d70.patch)
+- **Request:** "ss 1 adalah pengganti 3 card yang sebelum nya ada, ss 2 adalah yang lama", for every version on staging and production. Then:
+  - "untuk software kita akan tetap sama biarkan di prod tetap ada 2 version";
+  - the owner agreed to take only the card and the sheet, not that frame's header or sample greeting.
+- **Interpretation:**
+  - The owner also wants `/guide` identical on both sites. Since `web_prod` only fast-forwards, new app work is switched on for staging and off for production in `src/versions/releases.ts`. Shipping it is a one-line change, on request.
+- **Changed:**
+  - `src/versions/releases.ts` (new): `RELEASES` holds `chapterCard` and `personalJourneys`. Each is `BUILD.environment !== 'production'`.
+  - `components/chat/ChapterCard.tsx` (Figma 16906:4995):
+    - up to three orbs overlapping by 34, with a count;
+    - "Chapter N" and a one-line summary;
+    - Review changes / Apply changes (N);
+    - white, radius 20, padding 16, gap 24, and the deck's shadows.
+  - `components/chat/ReviewSheet.tsx` (16906:5067):
+    - the title and a close button;
+    - New changes, ticked, with a dark checkbox, plus v5's "Why";
+    - Experiment cards with Add;
+    - a full-width Apply changes (N).
+  - `chat/chapter.ts` (+ test):
+    - `chapterSummary`;
+    - `chapterTitle`: with a journey (v4+) it is the next chapter after the check-ins; otherwise the builds in the thread + 1.
+  - `ChatMessageItem` renders the card when `chapter` is passed. `ChatPage` wires it into the same `applyChanges` path as the chip and the "+" sheet. The composer's "+" still opens AddSheet.
+- **Verified:**
+  - `npm run check` passes (116 tests).
+  - Staging build:
+    - v1: the card shows "Chapter 2"; the sheet opens, and Add moves the count to 4;
+    - v5: after the first sentence, the card shows "Chapter 1", in v5's own header;
+    - 402px, no overflow.
+  - Production build: no card.
+- **Revert:** `git revert --no-commit 0c52d70 && git checkout HEAD -- docs/`.
 
 ### U065 — Branded documents, and a plainer /guide front page
 

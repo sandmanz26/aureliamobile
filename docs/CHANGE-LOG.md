@@ -19,6 +19,18 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-12 — Chapter card, Personal journeys (U066, U067, J076)
+
+The chat proposal is now one Chapter card with a Review sheet, replacing the fanned deck of three cards.
+
+Explore gains Personal Journeys: story cards, a See All page, and a story page that ends on its session.
+
+Both run in every design version on staging and are switched off on production (`src/versions/releases.ts`).
+
+`/guide` is identical on both sites again.
+
+Branches: `web_app`, `admin_cms`. `web_prod` received only the documents (the code is present but off).
+
 ### 2026-11-11 — Branded HTML files to send (J074)
 
 `docs/share/` has one self-contained, Aurelia-branded HTML file for each document: playbook, admin guideline, product requirements and API contract.

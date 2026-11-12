@@ -188,7 +188,13 @@ Repository: **`sandmanz26/aureliamobile`** (GitHub). One app per branch:
 
 ### Staging (`web_app`)
 
-Level with production as of U065 (11 Nov 2026). Anything newer is waiting on a request.
+Ahead of production in what users see:
+- U066: the Chapter card and Review sheet;
+- U067: Personal journeys.
+
+Both are switched on for staging only by `RELEASES` in `src/versions/releases.ts`.
+
+**Standing rule (J076):** `/guide` stays identical on both sites, so `web_prod` is fast-forwarded for documents. App work therefore goes behind `RELEASES`, and is turned on for production only on request.
 
 ### Last things delivered (most recent first)
 

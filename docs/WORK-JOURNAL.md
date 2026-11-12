@@ -133,6 +133,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J073 | 2026-11-11 | Code + Doc | `/guide` front page without a person's name and more detailed; Aurelia branding on every document, strongest on the playbook | U065 |
 | J074 | 2026-11-11 | Doc | Branded, self-contained HTML files for all four documents, to send | docs + scripts |
 | J075 | 2026-11-12 | Discussion | Figma change list for every version on staging and production (being written by the owner): (1) chat proposal deck → Chapter card + Review sheet; (2) Personal journeys on Explore + story page | waiting on the full list |
+| J076 | 2026-11-12 | Release + Code | `/guide` kept identical on both sites (production promoted for it); app work staging-only via `RELEASES`; Chapter card + Review sheet and Personal journeys built | U066, U067 |
 
 ---
 
@@ -727,6 +728,23 @@ transcript and the update log. Everything from J018 on was written at the time.
   - four decisions.
 - **Also:** `docs/api/API-CONTRACT.md` §5.12 and `openapi.yaml` gained the study endpoints (now 90 paths, validated).
 - **Open items:** O23 added.
+
+### J076 — Guide in step on both sites; Chapter card and Personal journeys (U066, U067)
+- **Asked:**
+  1. Update production so `/guide` matches staging. The guidebook (Eugene's request, the PRD and the other documents) must always be the same on staging and production.
+  2. The software stays the same on production, with its two versions.
+  3. Build the two Figma items, with the scope agreed in J075. The stories are the Figma examples.
+- **Done:**
+  - **Production promoted for `/guide`** (`77d2d17`; the difference was documents only).
+  - New standing rule, below.
+  - **U066:** the Chapter card and Review sheet.
+  - **U067:** Personal journeys (shelf, See All, story page).
+  - Both run in every design version on staging and are off on production.
+- **Standing rule (from 2026-11-12):**
+  - `/guide` and its documents are identical on staging and production. A documents change is fast-forwarded to `web_prod`.
+  - Because that carries the app code too, new app work goes behind `RELEASES` in `src/versions/releases.ts`: on for staging, off for production.
+  - Moving app work to production is still on request only, by setting its flag to `true`.
+- **Not done yet:** the other frames in Figma "Changes" (Analysis, Player, Daily, Session/Insights/Journal, wearable data). They wait for the owner's list.
 
 ### J075 — The next change list from Figma (being collected)
 - **Asked:** the owner is writing a list of changes to implement on staging and production, for **every version**. The Figma section is `16906:4947` "Changes" in *Aurelia AI - Daniel*. So far:
