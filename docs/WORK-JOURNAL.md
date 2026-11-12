@@ -132,6 +132,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J072 | 2026-11-11 | Question | What Eugene asked for, and whether it needs admin features (it does; they exist on sample data) | — |
 | J073 | 2026-11-11 | Code + Doc | `/guide` front page without a person's name and more detailed; Aurelia branding on every document, strongest on the playbook | U065 |
 | J074 | 2026-11-11 | Doc | Branded, self-contained HTML files for all four documents, to send | docs + scripts |
+| J075 | 2026-11-12 | Discussion | Figma change list for every version on staging and production (being written by the owner): (1) chat proposal deck → Chapter card + Review sheet; (2) Personal journeys on Explore + story page | waiting on the full list |
 
 ---
 
@@ -726,6 +727,24 @@ transcript and the update log. Everything from J018 on was written at the time.
   - four decisions.
 - **Also:** `docs/api/API-CONTRACT.md` §5.12 and `openapi.yaml` gained the study endpoints (now 90 paths, validated).
 - **Open items:** O23 added.
+
+### J075 — The next change list from Figma (being collected)
+- **Asked:** the owner is writing a list of changes to implement on staging and production, for **every version**. The Figma section is `16906:4947` "Changes" in *Aurelia AI - Daniel*. So far:
+  1. **Chat**: the fanned deck of three proposal cards (current, all versions) becomes one **Chapter card**: stacked orbs with a count, a title, a one-line summary, and Review changes / Apply changes (N). **Review** (`16906:5067`) is a sheet titled "Chapter 2": New changes, each ticked with a reason; Experiment cards with Add; a full-width Apply changes (N).
+  2. **Personal journeys**: a new Explore shelf of story cards (photo, quote title, author, read time; See All). Each opens a **story page** (`16906:8333`):
+     - a hero photo with back and share;
+     - the author, the title, the date and read time, and body text with subheads;
+     - a pull quote;
+     - an embedded session card;
+     - a photo carousel;
+     - a sticky "Try the Session".
+- **Also in the same Figma section, not yet listed:** Analysis, Player, Daily (check-in), Session / Insights / Journal, and a note "The most relevant Wearable data".
+- **Open questions, to ask before building:**
+  - The Chat frame also shows a hamburger, a coin pill and a sample "7% REM" greeting. v4/v5 removed those (D1–D7, v5). Take only the card and the sheet?
+  - Who writes the stories: sample content for now? Use Explore's existing creators?
+- **Standing rules this touches:**
+  - "All versions" is an explicit request to change below `lg` and in v1–v3.
+  - Production still moves only on request.
 
 ### J074 — Branded HTML files for every document
 - **Asked:** "di html nya juga perlu di berikan unsur unsur branding nya". The HTML file sent in J070 was made before U065's branding.
