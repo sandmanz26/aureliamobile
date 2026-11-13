@@ -142,6 +142,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J082 | 2026-11-13 | Code + Release | My Wellness → Analytics redesigned to Figma (analysis page), staging and production; U070 shipped with it | U071 |
 | J083 | 2026-11-13 | Question + Code + Release | Summary of every change and its status; then Journal moved to About as in Figma, and every release switched on for production (v5 left as is) | U072 |
 | J084 | 2026-11-13 | Question | Version map: staging v1–v5 against production v1/v2, and the changes on every version | — |
+| J085 | 2026-11-13 | Code + Release | v3 still showed the Journal on My Wellness: a cached pre-U072 build; plus a long note overflowing its card, fixed | U073 |
 
 ---
 
@@ -736,6 +737,14 @@ transcript and the update log. Everything from J018 on was written at the time.
   - four decisions.
 - **Also:** `docs/api/API-CONTRACT.md` §5.12 and `openapi.yaml` gained the study endpoints (now 90 paths, validated).
 - **Open items:** O23 added.
+
+### J085 — "v3 still looks like this" (U073)
+- **Asked:** on v3 the Journal still sat on My Wellness. Check the way to the results matches Figma.
+- **Found:**
+  - The screenshot was build `eec6860`, from before U072, so it was a cached build.
+  - On the current build, v3's check-in, then Open Journal, lands on About → Journal as in Figma.
+  - A real bug was also visible: a long unbroken note ran out of its card.
+- **Done:** U073 wraps it, on both sites.
 
 ### J084 — Version map
 - **Asked:** a map of the versions between staging and production.

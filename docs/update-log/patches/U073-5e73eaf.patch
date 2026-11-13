@@ -1,0 +1,27 @@
+From 5e73eaf56cd22a6e5b3f60f987e4d7b63f4b33fa Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 13 Nov 2026 08:13:45 +0000
+Subject: [PATCH] Journal: a long unbroken note wraps inside its card
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/components/daily/JournalView.tsx | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/components/daily/JournalView.tsx b/src/components/daily/JournalView.tsx
+index 55a4e81..c509631 100644
+--- a/src/components/daily/JournalView.tsx
++++ b/src/components/daily/JournalView.tsx
+@@ -25,7 +25,7 @@ export function JournalView() {
+     <div className={`flex gap-12 rounded-[20px] bg-surface-default px-16 py-16 ${tall ? 'min-h-[156px]' : ''}`} style={{ boxShadow: CARD_SHADOW }}>
+       <div className="min-w-0 flex-1">
+         <p className="text-style-caption text-text-secondary">{label}</p>
+-        <p className="text-style-body mt-4 whitespace-pre-line text-text-primary">{value}</p>
++        <p className="text-style-body mt-4 whitespace-pre-line [overflow-wrap:anywhere] text-text-primary">{value}</p>
+       </div>
+       {extra}
+       <button type="button" aria-label={`Edit: ${label}`} onClick={() => setEditing(true)} className="u-press -mr-4 flex size-28 shrink-0 items-center justify-center self-start rounded-8 text-icon-strong">
+-- 
+2.43.0
+
