@@ -110,10 +110,32 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U070 | `eee28bc` | 2026-11-13 | Daily check-in findable: "Saved to your Journal · Open Journal", Journal tab on Progress in every version, v5's journal lists check-ins. On production with U071. | [patch](patches/U070-eee28bc.patch) |
 | U071 | `6303583` | 2026-11-13 | My Wellness → Analytics → analysis page to Figma 16906:5168 (mood-face chart, What helped me list, no Next chapter), v1–v4. Staging and production (on request). | [patch](patches/U071-6303583.patch) |
 | U072 | `811a444` | 2026-11-13 | Journal moved to the session's About page (back in every version, titled About); out of Progress. Chapter card and Personal journeys switched on for production. Staging and production. | [patch](patches/U072-811a444.patch) |
-| U073 | `5e73eaf` | 2026-11-13 | Journal cards wrap a long unbroken note instead of running past the card. Staging; production waiting on confirmation. | [patch](patches/U073-5e73eaf.patch) |
-| U074 | `168c32d` | 2026-11-13 | Journal note wrapping: `word-break: break-word` fallback beside `overflow-wrap: anywhere` (older Safari). Staging; production waiting on confirmation. | [patch](patches/U074-168c32d.patch) |
+| U073 | `5e73eaf` | 2026-11-13 | Journal cards wrap a long unbroken note instead of running past the card. On production with U075. | [patch](patches/U073-5e73eaf.patch) |
+| U074 | `168c32d` | 2026-11-13 | Journal note wrapping: `word-break: break-word` fallback beside `overflow-wrap: anywhere` (older Safari). On production with U075. | [patch](patches/U074-168c32d.patch) |
+| U075 | `593dc17` | 2026-11-13 | Production offers three versions — v1 = staging v3, v2 = staging v4, v3 = staging v5 — and opens on v3. Shipped with U073–U074. | [patch](patches/U075-593dc17.patch) |
 
 ## Entries
+
+### U075 — Production's three versions
+
+- **Commit:** `593dc17` · pushed 2026-11-13 UTC · `web_app` + `admin_cms` + **`web_prod`** ("update prod"), carrying U073–U074 too.
+- **Patch:** [patches/U075-593dc17.patch](patches/U075-593dc17.patch)
+- **Request:** "update prod — staging v3 -> v1 prod (before iteration), v1 prod -> v2 prod, v2 prod -> v3 prod". Asked about two points, the owner chose:
+  - the default is **prod v3 (staging v5)**;
+  - prod v1 gets the recent changes like every version.
+- **Changed:** `src/versions/versions.ts`
+  - `PRODUCTION_VERSIONS` is now `[{id:1, ui:3}, {id:2, ui:4}, {id:3, ui:5}]`, with new names and summaries.
+  - `PRODUCTION_VERSION` is 5.
+  - Staging v5's note reads "On production as Version 3, the default".
+  - `versions.test.ts` checks the mapping and the default.
+- **Note:** the stored choice keeps its staging id.
+  - A browser that had picked the old "prod v2" (staging 5) is now on prod v3.
+  - One that never picked now opens on v3 instead of staging v4.
+  - Click insights still record the staging id.
+- **Verified:**
+  - `npm run check` passes (122 tests).
+  - Production build: a new visitor opens on `data-ui-version=5`, and the picker lists v1 | v2 | v3.
+- **Revert:** restore the two constants (U055 values: `[{1,4},{2,5}]` and 4), or `git revert --no-commit 593dc17 && git checkout HEAD -- docs/`.
 
 ### U074 — Wrapping fallback
 

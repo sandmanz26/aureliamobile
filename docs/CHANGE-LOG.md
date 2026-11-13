@@ -19,6 +19,17 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-13 — Production's three versions (U075, J087)
+
+Production now offers three versions:
+- v1 = staging v3;
+- v2 = staging v4;
+- v3 = staging v5, which opens by default.
+
+The Journal wrapping fixes (U073–U074) went with it.
+
+Branches: `web_app`, `admin_cms`, **`web_prod`**.
+
 ### 2026-11-13 — Long notes wrap in the Journal (U073, J085)
 
 A long note without spaces now wraps inside its Journal card.

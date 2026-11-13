@@ -144,6 +144,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J084 | 2026-11-13 | Question | Version map: staging v1–v5 against production v1/v2, and the changes on every version | — |
 | J085 | 2026-11-13 | Code + Release | v3 still showed the Journal on My Wellness: a cached pre-U072 build; plus a long note overflowing its card, fixed | U073 |
 | J086 | 2026-11-13 | Code | "Ada bug di UI": the Journal note overflow again (production lacks U073); a wrapping fallback added | U074 |
+| J087 | 2026-11-13 | Code + Release | Production remapped to three versions (v1 = staging v3, v2 = staging v4, v3 = staging v5), opening on v3; production updated | U075 |
 
 ---
 
@@ -739,12 +740,22 @@ transcript and the update log. Everything from J018 on was written at the time.
 - **Also:** `docs/api/API-CONTRACT.md` §5.12 and `openapi.yaml` gained the study endpoints (now 90 paths, validated).
 - **Open items:** O23 added.
 
+### J087 — Production's versions remapped (U075)
+- **Asked:** update production; prod v1 = staging v3 ("before iteration"), the old prod v1 becomes v2, the old prod v2 becomes v3.
+- **Clarified:**
+  - The default is prod v3 (staging v5).
+  - prod v1 has the recent changes too.
+- **Done:**
+  - U075, with U073–U074, on production.
+  - New visitors open on staging v5.
+- **Supersedes:** U055's two-version list and U052's default (v4).
+
 ### J086 — "Ada bug di UI" (U074)
 - **Asked:** a screenshot of About → Journal with the long note running out of its card.
 - **Answer:**
   - U073 fixed this on staging. Production (`d44b579`) does not have it, because that push was refused pending the owner's go.
   - U074 adds a fallback for older Safari.
-- **Waiting on:** the owner's go to ship U073 and U074 to production.
+- **Shipped** to production with U075 (J087).
 
 ### J085 — "v3 still looks like this" (U073)
 - **Asked:** on v3 the Journal still sat on My Wellness. Check the way to the results matches Figma.

@@ -296,8 +296,8 @@ The project's way of shipping experiments without disturbing what works.
   - v2's CSS is scoped `:root[data-ui-version]` (any version above 1).
   - The v4 tab-bar CSS is scoped `:root:is([data-ui-version='4'],[data-ui-version='5'])`. **A v6 that keeps the tabs must add `'6'` there.**
 - **Defaults (`DEFAULT_VERSION`):** staging opens on **v1**; production opens on
-  `PRODUCTION_VERSION = 4`.
-- **Production's own list (U055):**
+  `PRODUCTION_VERSION = 5` (since U075; it was 4).
+- **Production's own list (U075; U055 had two):** prod v1 = staging v3, prod v2 = staging v4, prod v3 = staging v5 (default).
   - `PRODUCTION_VERSIONS` in `versions.ts` maps production labels to staging ids: `{id:1, ui:4}`, `{id:2, ui:5}`.
   - Only the labels differ. `data-ui-version`, the stored value, `useUiVersion()`, click insights and pins all carry the **staging id**, so "prod v2" appears as `5` in data.
   - To offer something else on production, edit that array (the test `versions.test.ts` checks every `ui` exists and the default is offered).
