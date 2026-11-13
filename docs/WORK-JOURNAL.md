@@ -141,6 +141,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J081 | 2026-11-13 | Code | "Daily check-in does not show in the journal": found and fixed where it was easy to miss (staging; production waiting on confirmation) | U070 |
 | J082 | 2026-11-13 | Code + Release | My Wellness → Analytics redesigned to Figma (analysis page), staging and production; U070 shipped with it | U071 |
 | J083 | 2026-11-13 | Question + Code + Release | Summary of every change and its status; then Journal moved to About as in Figma, and every release switched on for production (v5 left as is) | U072 |
+| J084 | 2026-11-13 | Question | Version map: staging v1–v5 against production v1/v2, and the changes on every version | — |
 
 ---
 
@@ -735,6 +736,12 @@ transcript and the update log. Everything from J018 on was written at the time.
   - four decisions.
 - **Also:** `docs/api/API-CONTRACT.md` §5.12 and `openapi.yaml` gained the study endpoints (now 90 paths, validated).
 - **Open items:** O23 added.
+
+### J084 — Version map
+- **Asked:** a map of the versions between staging and production.
+- **Answer:**
+  - Staging offers v1–v5 and opens on v1. Production offers two: prod v1 = staging v4 (the default) and prod v2 = staging v5 (`PRODUCTION_VERSIONS` in `versions.ts`).
+  - The U066–U072 changes are on every version on both sites through `RELEASES`. The analytics redesign skips v5 / prod v2.
 
 ### J083 — What changed, Journal on About, everything on production (U072)
 - **Asked:**
