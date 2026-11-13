@@ -1,0 +1,221 @@
+From 630358356a93e5129a341ceca7bbf51fe19b2558 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 13 Nov 2026 06:46:36 +0000
+Subject: [PATCH] Analysis: mood-face chart, What helped me as a list, no Next
+ chapter
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Figma Changes → Analysis (16906:5168), every version below v5 (which
+shows no sample analyses by design), staging and production. The chart's
+axis is the five mood faces instead of percentages and the projections
+are grey dashes; 'What helped me?' is a list of rows that open to the
+effect, three shown with Show more beyond; the Next chapter section is
+gone; 'Since yesterday' reads 'Since last week'. v1's Analytics tab now
+opens the analyses too. RELEASES.analysisV2, true on both sites.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/components/wellness/AnalysisParts.tsx | 19 ++++--
+ src/pages/WellnessAnalysisPage.tsx        | 72 ++++++++++++++++++++++-
+ src/pages/WellnessPage.tsx                |  5 +-
+ src/versions/releases.ts                  |  2 +
+ 4 files changed, 88 insertions(+), 10 deletions(-)
+
+diff --git a/src/components/wellness/AnalysisParts.tsx b/src/components/wellness/AnalysisParts.tsx
+index c06ac42..fa44dd3 100644
+--- a/src/components/wellness/AnalysisParts.tsx
++++ b/src/components/wellness/AnalysisParts.tsx
+@@ -4,6 +4,8 @@ import { RecommendationDeck } from '../chat/RecommendationDeck'
+ import type { Analysis, Metric } from '../../lib/wellnessAnalysis'
+ import { nextChapterOf, predictionOf, progressOf, statusOf, summaryOf } from '../../lib/wellnessAnalysis'
+ import { DeltaPill, ProgressRing } from './ProgressRing'
++import { MOOD_FACES } from '../daily/moods'
++import { RELEASES } from '../../versions/releases'
+ 
+ // The pieces of an analysis that more than one screen shows: the Analysis
+ // page (Figma 16883:15959) and, since U041, the player's drawer on a session
+@@ -18,7 +20,7 @@ export function AnalysisStatus({ analysis, ring = false }: { analysis: Analysis;
+       <div className="flex min-w-0 flex-col gap-3">
+         <h2 className="text-[24px] font-normal leading-[36px] text-text-primary">{statusOf(progress).heading}</h2>
+         <p className="flex items-center gap-8 text-[14px] font-light leading-[24px] text-[#7A7A7A]">
+-          <DeltaPill value={analysis.sinceYesterday} /> Since yesterday
++          <DeltaPill value={analysis.sinceYesterday} /> {RELEASES.analysisV2 ? 'Since last week' : 'Since yesterday'}
+         </p>
+       </div>
+       {ring && (
+@@ -185,12 +187,17 @@ export function ProgressChart({ analysis }: { analysis: Analysis }) {
+   return (
+     <div ref={box}>
+       <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="block font-sans" role="img" aria-label={`Progress by chapter. ${analysis.metrics.map((m) => `${m.label}: ${m.value}% now, projected ${m.projected[0]}% after chapter ${done + 1}`).join('. ')}.`}>
+-        {[0, 25, 50, 75, 100].map((v) => (
++        {[0, 25, 50, 75, 100].map((v, i) => (
+           <g key={v}>
+             <line x1={left} x2={W - 6} y1={yAt(v)} y2={yAt(v)} stroke="#EFEFEF" strokeWidth="1" />
+-            <text x={left - 8} y={yAt(v) + 4} textAnchor="end" fontSize="12" fill="var(--color-text-secondary)">
+-              {v}%
+-            </text>
++            {RELEASES.analysisV2 ? (
++              // Figma 16906:5168: how it feels, not a percentage — the five faces, worst at the foot.
++              <image href={MOOD_FACES[i]} x={0} y={yAt(v) - 11} width={22} height={22} />
++            ) : (
++              <text x={left - 8} y={yAt(v) + 4} textAnchor="end" fontSize="12" fill="var(--color-text-secondary)">
++                {v}%
++              </text>
++            )}
+           </g>
+         ))}
+         {Array.from({ length: chapters + 1 }, (_, i) => (
+@@ -214,7 +221,7 @@ export function ProgressChart({ analysis }: { analysis: Analysis }) {
+             ...m.projected.map((v, i) => [xAt(done + 1 + i), yAt(v)] as [number, number]),
+           ]
+           return (
+-            <path key={`${m.id}-p`} d={path(pts)} fill="none" stroke={m.color} strokeOpacity="0.45" strokeWidth="2.5" strokeDasharray="5 5" strokeLinecap="round" />
++            <path key={`${m.id}-p`} d={path(pts)} fill="none" stroke={RELEASES.analysisV2 ? '#D6D6D6' : m.color} strokeOpacity={RELEASES.analysisV2 ? 0.9 : 0.45} strokeWidth="2.5" strokeDasharray="5 5" strokeLinecap="round" />
+           )
+         })}
+         {analysis.metrics
+diff --git a/src/pages/WellnessAnalysisPage.tsx b/src/pages/WellnessAnalysisPage.tsx
+index d765cbe..6560543 100644
+--- a/src/pages/WellnessAnalysisPage.tsx
++++ b/src/pages/WellnessAnalysisPage.tsx
+@@ -1,4 +1,6 @@
+-import { ArrowLeft } from 'lucide-react'
++import { ArrowLeft, ChevronDown } from 'lucide-react'
++import { useState } from 'react'
++import { RELEASES } from '../versions/releases'
+ import { Navigate, useNavigate, useParams } from 'react-router-dom'
+ import { useUiVersion } from '../versions/useUiVersion'
+ import { PageMeta } from '../components/PageMeta'
+@@ -84,7 +86,10 @@ function AnalysisView({ analysis }: { analysis: Analysis }) {
+             <ProgressChart analysis={analysis} />
+           </section>
+ 
++          {RELEASES.analysisV2 && <HelpedList analysis={analysis} />}
++
+           {/* What helped me? — the changes in the chapters done, by effect. */}
++          {!RELEASES.analysisV2 && (
+           <section className="mt-32">
+             <h2 className="px-24 text-[20px] font-normal leading-[30px] text-text-primary">What helped me?</h2>
+             <div className="mt-16 flex gap-12 overflow-x-auto px-24 pb-8">
+@@ -106,8 +111,11 @@ function AnalysisView({ analysis }: { analysis: Analysis }) {
+               ))}
+             </div>
+           </section>
++          )}
+ 
+-          {/* Next chapter: the prediction, and the proposals it is built on. */}
++          {/* Next chapter: the prediction, and the proposals it is built on.
++              Not in the new frame (16906:5168): the page ends on what helped. */}
++          {!RELEASES.analysisV2 && (
+           <div className="mt-32">
+             <NextChapter
+               analysis={analysis}
+@@ -115,8 +123,68 @@ function AnalysisView({ analysis }: { analysis: Analysis }) {
+               secondary={{ label: 'Go to Session', onClick: () => navigate(`/play/${analysis.sessionSlug}`) }}
+             />
+           </div>
++          )}
+         </main>
+       </div>
+     </div>
+   )
+ }
++
++const VISIBLE = 3
++const ROW_SHADOW = '0 4px 14px rgba(0, 0, 0, 0.04)'
++
++/**
++ * "What helped me?" as a list (Figma 16906:5282; U071): orb, title and one
++ * line, with a chevron that opens the effect; three shown, the rest behind
++ * Show more.
++ */
++function HelpedList({ analysis }: { analysis: Analysis }) {
++  const [open, setOpen] = useState<string | null>(null)
++  const [all, setAll] = useState(false)
++  const shown = all ? analysis.helped : analysis.helped.slice(0, VISIBLE)
++  return (
++    <section className="mt-32 px-24">
++      <h2 className="text-[20px] font-normal leading-[30px] text-text-primary">What helped me?</h2>
++      <ul className="mt-16 flex flex-col gap-12">
++        {shown.map((h) => {
++          const expanded = open === h.title
++          return (
++            <li key={h.title} className="rounded-[20px] bg-surface-default" style={{ boxShadow: ROW_SHADOW }}>
++              <button
++                type="button"
++                aria-expanded={expanded}
++                onClick={() => setOpen(expanded ? null : h.title)}
++                className="flex w-full items-center gap-14 rounded-[20px] px-16 py-18 text-left"
++              >
++                <img src={h.orb} alt="" className="size-42 shrink-0 rounded-full object-cover" />
++                <span className="flex min-w-0 flex-1 flex-col gap-2">
++                  <span className="text-[18px] leading-[24px] text-text-primary">{h.title}</span>
++                  <span className="text-[12px] font-light leading-[18px] text-text-primary">{h.description}</span>
++                </span>
++                <ChevronDown size={18} className={`shrink-0 text-icon-strong transition-transform ${expanded ? 'rotate-180' : ''}`} />
++              </button>
++              {expanded && (
++                <p className="flex items-center gap-8 px-16 pb-16 pl-[72px] text-[12px] leading-[16px] text-text-secondary">
++                  Improved your score by
++                  <span className="flex h-20 items-center gap-4 rounded-full bg-[#ECFBED] px-8 text-[12px] text-text-primary">
++                    <span aria-hidden="true" className="text-[#5FC52C]">▲</span>
++                    {h.improved}%
++                  </span>
++                </p>
++              )}
++            </li>
++          )
++        })}
++      </ul>
++      {analysis.helped.length > VISIBLE && (
++        <button
++          type="button"
++          onClick={() => setAll((v) => !v)}
++          className="text-style-label u-press mt-12 h-40 w-full rounded-12 border border-[#E4E4E4] bg-surface-default text-text-primary"
++        >
++          {all ? 'Show less' : 'Show more'}
++        </button>
++      )}
++    </section>
++  )
++}
+diff --git a/src/pages/WellnessPage.tsx b/src/pages/WellnessPage.tsx
+index add48d5..d9cc2fa 100644
+--- a/src/pages/WellnessPage.tsx
++++ b/src/pages/WellnessPage.tsx
+@@ -228,7 +228,8 @@ export function WellnessPage() {
+         {/* v5 (U053): their own check-ins in words, not the sample analyses. */}
+         {tab === 'Analytics' && v5 && <FeelingProgress />}
+ 
+-        {tab === 'Analytics' && v2 && !v5 && (
++        {/* U071: every version below v5 opens the analyses, v1 included. */}
++        {tab === 'Analytics' && (v2 || RELEASES.analysisV2) && !v5 && (
+           <div className="mt-24 flex flex-col gap-12 lg:grid lg:grid-cols-2 lg:gap-16">
+             {ANALYSES.map((analysis) => (
+               <AnalyticsSessionCard key={analysis.id} analysis={analysis} />
+@@ -236,7 +237,7 @@ export function WellnessPage() {
+           </div>
+         )}
+ 
+-        {tab === 'Analytics' && !v2 && (
++        {tab === 'Analytics' && !v2 && !RELEASES.analysisV2 && (
+           <div className="mt-24 flex flex-col gap-16">
+             {WELLNESS_GOALS.map((goal) => (
+               <WellnessObjectiveCard
+diff --git a/src/versions/releases.ts b/src/versions/releases.ts
+index 78c4eb0..8b14439 100644
+--- a/src/versions/releases.ts
++++ b/src/versions/releases.ts
+@@ -22,4 +22,6 @@ export const RELEASES = {
+   dailyCheckIn: true,
+   /** Figma Player (16906:5328): back, share, play, the cue and the scrubber, nothing else. On both sites (J080). */
+   simplePlayer: true,
++  /** Figma Analysis (16906:5168): mood-face chart, "What helped me?" as a list, no Next chapter. On both sites (J082). */
++  analysisV2: true,
+ } as const
+-- 
+2.43.0
+

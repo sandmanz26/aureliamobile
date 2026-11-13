@@ -107,9 +107,42 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U067 | `6085b63` | 2026-11-12 | Explore: Personal journeys shelf, See All and a story page, every version. Staging only (`RELEASES.personalJourneys`). | [patch](patches/U067-6085b63.patch) |
 | U068 | `ae2c156` | 2026-11-13 | Daily check-in sheet after every sign-in + Journal tab (v1–v3 session page, v4+ Progress), every version. **Staging and production** (on request). | [patch](patches/U068-ae2c156.patch) |
 | U069 | `c535dd5` | 2026-11-13 | Player simplified (back, share, play, cue, scrubber; no coin, skips or details sheet), every version. **Staging and production** (on request). | [patch](patches/U069-c535dd5.patch) |
-| U070 | `eee28bc` | 2026-11-13 | Daily check-in findable: "Saved to your Journal · Open Journal", Journal tab on Progress in every version, v5's journal lists check-ins. Staging; production waiting on confirmation. | [patch](patches/U070-eee28bc.patch) |
+| U070 | `eee28bc` | 2026-11-13 | Daily check-in findable: "Saved to your Journal · Open Journal", Journal tab on Progress in every version, v5's journal lists check-ins. On production with U071. | [patch](patches/U070-eee28bc.patch) |
+| U071 | `6303583` | 2026-11-13 | My Wellness → Analytics → analysis page to Figma 16906:5168 (mood-face chart, What helped me list, no Next chapter), v1–v4. Staging and production (on request). | [patch](patches/U071-6303583.patch) |
 
 ## Entries
+
+### U071 — The analysis page, redesigned
+
+- **Commit:** `6303583` · pushed 2026-11-13 UTC · `web_app` + `admin_cms` + **`web_prod`** (on request: "update prod stag untuk all version"). This push also took U070 to production.
+- **Patch:** [patches/U071-6303583.patch](patches/U071-6303583.patch)
+- **Request:** "ada perubahan UI di bagian My wellness > analytics tolong bantu implementasi" (Figma 16906:5168), on staging and production, every version.
+- **Interpretation:**
+  - The frame is the analysis page that an Analytics card opens.
+  - It changes the chart's axis to mood faces and greys the projections.
+  - "What helped me?" becomes a vertical list with chevrons and Show more.
+  - It ends there: no Next chapter or Create Chapter 2.
+  - "Since last week" replaces "Since yesterday".
+  - The metric labels and summary in the frame are its own sample text ("Alignement", "Heart-rate"…). The page keeps each analysis's own data.
+  - **v5 is not changed:** since U053 it shows no sample analyses anywhere (the interviews' finding), and the analysis route redirects. Raised with the owner.
+- **Changed:** behind `RELEASES.analysisV2` (true on both sites).
+  - `AnalysisParts`:
+    - the y axis shows the five mood faces (worst at the foot) instead of 0–100%;
+    - projections are #D6D6D6 dashes;
+    - the status reads "Since last week".
+  - `WellnessAnalysisPage`:
+    - `HelpedList`: rows with orb, title, line and chevron; opening a row shows "Improved your score by ▲N%"; Show more / Show less past three;
+    - the Next chapter section is not rendered.
+  - `WellnessPage`: v1's Analytics tab lists the analysis cards (it showed the old objective cards), so every version below v5 reaches the page.
+- **Verified:**
+  - `npm run check` passes (122 tests).
+  - Staging build, v1 and v4 at 402px:
+    - 2 cards, which open the page;
+    - 3 helped rows that open;
+    - no Next chapter;
+    - the faces on the axis;
+    - no overflow, no page errors.
+- **Revert:** set `RELEASES.analysisV2` to `false`, or `git revert --no-commit 6303583 && git checkout HEAD -- docs/`.
 
 ### U070 — Daily check-ins findable in the Journal
 

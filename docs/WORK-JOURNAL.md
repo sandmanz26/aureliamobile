@@ -139,6 +139,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J079 | 2026-11-13 | Code + Release | Daily check-in after every sign-in, and its Journal, in every version on staging and production | U068 |
 | J080 | 2026-11-13 | Code + Release | Player simplified to the Figma frame, every version, staging and production | U069 |
 | J081 | 2026-11-13 | Code | "Daily check-in does not show in the journal": found and fixed where it was easy to miss (staging; production waiting on confirmation) | U070 |
+| J082 | 2026-11-13 | Code + Release | My Wellness → Analytics redesigned to Figma (analysis page), staging and production; U070 shipped with it | U071 |
 
 ---
 
@@ -733,6 +734,19 @@ transcript and the update log. Everything from J018 on was written at the time.
   - four decisions.
 - **Also:** `docs/api/API-CONTRACT.md` §5.12 and `openapi.yaml` gained the study endpoints (now 90 paths, validated).
 - **Open items:** O23 added.
+
+### J082 — Analytics redesign (U071)
+- **Asked:** implement the UI change in My Wellness → Analytics (Figma 16906:5168) on staging and production, every version.
+- **Done:** U071 on both sites.
+  - The analysis page has the mood-face chart and grey projections.
+  - "What helped me?" is a list that opens, with Show more.
+  - There is no Next chapter section.
+  - "Since last week".
+  - v1 now reaches the analyses too.
+  - This production push also carried U070, the daily check-in findability fix.
+- **Open items:**
+  - v5 (prod v2) still shows no sample analyses, by its own design. Should it get this page anyway?
+  - With Next chapter gone, "Create Chapter 2" from the analysis has no button; the Chapter card in the chat is the way to the next chapter.
 
 ### J081 — "Not in the journal" (U070)
 - **Asked:** the daily check-in did not appear in the journal.

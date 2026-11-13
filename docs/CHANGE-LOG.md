@@ -19,11 +19,22 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-13 — Analytics redesign (U071, J082)
+
+The analysis page that My Wellness → Analytics opens:
+- the chart uses mood faces;
+- "What helped me?" is a list with Show more;
+- the Next chapter section is gone.
+
+v1–v4.
+
+Branches: `web_app`, `admin_cms`, **`web_prod`** (with U070).
+
 ### 2026-11-13 — Daily check-ins easy to find (U070, J081)
 
 After a check-in the sheet says "Saved to your Journal", with Open Journal. The Journal tab is on Progress in every version, and v5's journal lists the check-ins.
 
-Branches: `web_app`, `admin_cms`. `web_prod` waits on confirmation.
+Branches: `web_app`, `admin_cms`; `web_prod` with U071.
 
 ### 2026-11-13 — Simplified player (U069, J080)
 
