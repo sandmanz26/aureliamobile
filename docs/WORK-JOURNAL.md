@@ -137,6 +137,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J077 | 2026-11-12 | Question | Staging showed the old deck: the browser was on build `9c8f298` (10 Nov), not `3cba602` | — |
 | J078 | 2026-11-12 | Doc | Shared documents: no personal names, no internal ids, plainer wording; `/guide` synced to production | docs only |
 | J079 | 2026-11-13 | Code + Release | Daily check-in after every sign-in, and its Journal, in every version on staging and production | U068 |
+| J080 | 2026-11-13 | Code + Release | Player simplified to the Figma frame, every version, staging and production | U069 |
 
 ---
 
@@ -731,6 +732,14 @@ transcript and the update log. Everything from J018 on was written at the time.
   - four decisions.
 - **Also:** `docs/api/API-CONTRACT.md` §5.12 and `openapi.yaml` gained the study endpoints (now 90 paths, validated).
 - **Open items:** O23 added.
+
+### J080 — Simplified player (U069)
+- **Asked:** simplify the player to Figma 16906:5328, in every version, on staging and production.
+- **Done:** U069 is on both sites.
+  - The player is back, share, play/pause, the cue and the scrubber.
+  - The coin, the skips and the details sheet are gone.
+  - In v4+ this also removes the player's own "How do you feel now?" check-in and the Chapter 2 reminder; the daily check-in now asks how the session went.
+- **Open items:** whether the journey's next-chapter reminder (.ics) needs a new home now that the player no longer offers it.
 
 ### J079 — Daily check-in and Journal (U068)
 - **Asked:**

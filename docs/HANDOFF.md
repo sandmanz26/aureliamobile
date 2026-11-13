@@ -194,7 +194,9 @@ Ahead of production in what users see:
 
 Both are switched on for staging only by `RELEASES` in `src/versions/releases.ts`.
 
-**On both sites:** U068, the daily check-in and Journal (`RELEASES.dailyCheckIn = true`, J079).
+**On both sites:**
+- U068, the daily check-in and Journal (`RELEASES.dailyCheckIn = true`, J079);
+- U069, the simplified player (`RELEASES.simplePlayer = true`, J080).
 
 **Standing rule (J076):** `/guide` stays identical on both sites, so `web_prod` is fast-forwarded for documents. App work therefore goes behind `RELEASES`, and is turned on for production only on request.
 

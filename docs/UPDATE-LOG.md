@@ -106,8 +106,36 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U066 | `0c52d70` | 2026-11-12 | Chat: one Chapter card + Review sheet instead of the fanned deck, every version. Staging only (`RELEASES.chapterCard`). | [patch](patches/U066-0c52d70.patch) |
 | U067 | `6085b63` | 2026-11-12 | Explore: Personal journeys shelf, See All and a story page, every version. Staging only (`RELEASES.personalJourneys`). | [patch](patches/U067-6085b63.patch) |
 | U068 | `ae2c156` | 2026-11-13 | Daily check-in sheet after every sign-in + Journal tab (v1–v3 session page, v4+ Progress), every version. **Staging and production** (on request). | [patch](patches/U068-ae2c156.patch) |
+| U069 | `c535dd5` | 2026-11-13 | Player simplified (back, share, play, cue, scrubber; no coin, skips or details sheet), every version. **Staging and production** (on request). | [patch](patches/U069-c535dd5.patch) |
 
 ## Entries
+
+### U069 — The simplified player
+
+- **Commit:** `c535dd5` · pushed 2026-11-13 UTC · `web_app` + `admin_cms` + **`web_prod`** (on request).
+- **Patch:** [patches/U069-c535dd5.patch](patches/U069-c535dd5.patch)
+- **Request:** "untuk player akan ada simplifikasi menjadi seperti ini, sama juga terapkan di semua versi baik staging dan production" (Figma 16906:5328).
+- **Interpretation:**
+  - The frame has only back, share, play/pause, the cue line and the scrubber with its times. Everything else on the player goes:
+    - the coin pill;
+    - the two 15-second skips;
+    - the details sheet, with its session info, Recreate, the v2 analysis drawer, and v4's chapter check-in and reminder.
+  - How the session went is now asked by the daily check-in (U068), and the details stay on Session details.
+- **Changed:** `PlayerPage.tsx` behind `RELEASES.simplePlayer` (true on both sites):
+  - the parts above are hidden and the sheet is not rendered;
+  - the player pads only for the safe area;
+  - the cue sits 72px below the centre, under the play button;
+  - Share works in every version (it was v2+) and is a 12-radius square with a shadow, like Back.
+
+  The scrubber already matched the frame.
+- **Verified:**
+  - `npm run check` passes (121 tests).
+  - Staging build, v1 and v5 at 402px and v5 at 1400px:
+    - the only buttons are Back, Share and Play;
+    - no sheet, no skips, no coin;
+    - Share opens the share sheet;
+    - no overflow, no page errors.
+- **Revert:** set `RELEASES.simplePlayer` to `false`, or `git revert --no-commit c535dd5 && git checkout HEAD -- docs/`.
 
 ### U068 — Daily check-in and Journal
 

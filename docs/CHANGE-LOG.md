@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-13 — Simplified player (U069, J080)
+
+The player is now back, share, play/pause, the guidance line and the progress bar. The coin, the 15-second skips and the details sheet are gone. Every version.
+
+Branches: `web_app`, `admin_cms`, **`web_prod`** (on request).
+
 ### 2026-11-13 — Daily check-in and Journal (U068, J079)
 
 After each sign-in a Daily check-in sheet asks:
