@@ -744,7 +744,7 @@ transcript and the update log. Everything from J018 on was written at the time.
   - The screenshot was build `eec6860`, from before U072, so it was a cached build.
   - On the current build, v3's check-in, then Open Journal, lands on About → Journal as in Figma.
   - A real bug was also visible: a long unbroken note ran out of its card.
-- **Done:** U073 wraps it, on both sites.
+- **Done:** U073 wraps it, on staging. Production is waiting on the owner's go: the push was refused by the session's permission check.
 
 ### J084 — Version map
 - **Asked:** a map of the versions between staging and production.

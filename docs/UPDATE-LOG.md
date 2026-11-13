@@ -110,13 +110,13 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U070 | `eee28bc` | 2026-11-13 | Daily check-in findable: "Saved to your Journal · Open Journal", Journal tab on Progress in every version, v5's journal lists check-ins. On production with U071. | [patch](patches/U070-eee28bc.patch) |
 | U071 | `6303583` | 2026-11-13 | My Wellness → Analytics → analysis page to Figma 16906:5168 (mood-face chart, What helped me list, no Next chapter), v1–v4. Staging and production (on request). | [patch](patches/U071-6303583.patch) |
 | U072 | `811a444` | 2026-11-13 | Journal moved to the session's About page (back in every version, titled About); out of Progress. Chapter card and Personal journeys switched on for production. Staging and production. | [patch](patches/U072-811a444.patch) |
-| U073 | `5e73eaf` | 2026-11-13 | Journal cards wrap a long unbroken note instead of running past the card. Staging and production. | [patch](patches/U073-5e73eaf.patch) |
+| U073 | `5e73eaf` | 2026-11-13 | Journal cards wrap a long unbroken note instead of running past the card. Staging; production waiting on confirmation. | [patch](patches/U073-5e73eaf.patch) |
 
 ## Entries
 
 ### U073 — Long notes wrap in the Journal
 
-- **Commit:** `5e73eaf` · pushed 2026-11-13 UTC · `web_app` + `admin_cms` + `web_prod` (a fix to U068/U072, which are on both sites).
+- **Commit:** `5e73eaf` · pushed 2026-11-13 UTC · `web_app` + `admin_cms`. `web_prod`: the push was refused by the session's permission check, and is waiting on the owner's go.
 - **Patch:** [patches/U073-5e73eaf.patch](patches/U073-5e73eaf.patch)
 - **Request:** "ini saya pake v3 kok masih seperti ini tolong cek untuk gate untuk melihat hasilnya ya. pastikan dengan yang kaya di figma". The screenshot showed a Journal tab on My Wellness, with a 40-digit note running out of its card.
 - **Cause:** two things.

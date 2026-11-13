@@ -23,7 +23,7 @@ every time — that is the whole point of it existing.
 
 A long note without spaces now wraps inside its Journal card.
 
-Branches: `web_app`, `admin_cms`, `web_prod`.
+Branches: `web_app`, `admin_cms`. `web_prod` waits on confirmation.
 
 ### 2026-11-13 — Journal on About; everything on in production (U072, J083)
 
