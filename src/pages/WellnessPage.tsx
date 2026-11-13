@@ -228,7 +228,8 @@ export function WellnessPage() {
         {/* v5 (U053): their own check-ins in words, not the sample analyses. */}
         {tab === 'Analytics' && v5 && <FeelingProgress />}
 
-        {tab === 'Analytics' && v2 && !v5 && (
+        {/* U071: every version below v5 opens the analyses, v1 included. */}
+        {tab === 'Analytics' && (v2 || RELEASES.analysisV2) && !v5 && (
           <div className="mt-24 flex flex-col gap-12 lg:grid lg:grid-cols-2 lg:gap-16">
             {ANALYSES.map((analysis) => (
               <AnalyticsSessionCard key={analysis.id} analysis={analysis} />
@@ -236,7 +237,7 @@ export function WellnessPage() {
           </div>
         )}
 
-        {tab === 'Analytics' && !v2 && (
+        {tab === 'Analytics' && !v2 && !RELEASES.analysisV2 && (
           <div className="mt-24 flex flex-col gap-16">
             {WELLNESS_GOALS.map((goal) => (
               <WellnessObjectiveCard

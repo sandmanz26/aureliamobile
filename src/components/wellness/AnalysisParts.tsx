@@ -4,6 +4,8 @@ import { RecommendationDeck } from '../chat/RecommendationDeck'
 import type { Analysis, Metric } from '../../lib/wellnessAnalysis'
 import { nextChapterOf, predictionOf, progressOf, statusOf, summaryOf } from '../../lib/wellnessAnalysis'
 import { DeltaPill, ProgressRing } from './ProgressRing'
+import { MOOD_FACES } from '../daily/moods'
+import { RELEASES } from '../../versions/releases'
 
 // The pieces of an analysis that more than one screen shows: the Analysis
 // page (Figma 16883:15959) and, since U041, the player's drawer on a session
@@ -18,7 +20,7 @@ export function AnalysisStatus({ analysis, ring = false }: { analysis: Analysis;
       <div className="flex min-w-0 flex-col gap-3">
         <h2 className="text-[24px] font-normal leading-[36px] text-text-primary">{statusOf(progress).heading}</h2>
         <p className="flex items-center gap-8 text-[14px] font-light leading-[24px] text-[#7A7A7A]">
-          <DeltaPill value={analysis.sinceYesterday} /> Since yesterday
+          <DeltaPill value={analysis.sinceYesterday} /> {RELEASES.analysisV2 ? 'Since last week' : 'Since yesterday'}
         </p>
       </div>
       {ring && (
@@ -185,12 +187,17 @@ export function ProgressChart({ analysis }: { analysis: Analysis }) {
   return (
     <div ref={box}>
       <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="block font-sans" role="img" aria-label={`Progress by chapter. ${analysis.metrics.map((m) => `${m.label}: ${m.value}% now, projected ${m.projected[0]}% after chapter ${done + 1}`).join('. ')}.`}>
-        {[0, 25, 50, 75, 100].map((v) => (
+        {[0, 25, 50, 75, 100].map((v, i) => (
           <g key={v}>
             <line x1={left} x2={W - 6} y1={yAt(v)} y2={yAt(v)} stroke="#EFEFEF" strokeWidth="1" />
-            <text x={left - 8} y={yAt(v) + 4} textAnchor="end" fontSize="12" fill="var(--color-text-secondary)">
-              {v}%
-            </text>
+            {RELEASES.analysisV2 ? (
+              // Figma 16906:5168: how it feels, not a percentage — the five faces, worst at the foot.
+              <image href={MOOD_FACES[i]} x={0} y={yAt(v) - 11} width={22} height={22} />
+            ) : (
+              <text x={left - 8} y={yAt(v) + 4} textAnchor="end" fontSize="12" fill="var(--color-text-secondary)">
+                {v}%
+              </text>
+            )}
           </g>
         ))}
         {Array.from({ length: chapters + 1 }, (_, i) => (
@@ -214,7 +221,7 @@ export function ProgressChart({ analysis }: { analysis: Analysis }) {
             ...m.projected.map((v, i) => [xAt(done + 1 + i), yAt(v)] as [number, number]),
           ]
           return (
-            <path key={`${m.id}-p`} d={path(pts)} fill="none" stroke={m.color} strokeOpacity="0.45" strokeWidth="2.5" strokeDasharray="5 5" strokeLinecap="round" />
+            <path key={`${m.id}-p`} d={path(pts)} fill="none" stroke={RELEASES.analysisV2 ? '#D6D6D6' : m.color} strokeOpacity={RELEASES.analysisV2 ? 0.9 : 0.45} strokeWidth="2.5" strokeDasharray="5 5" strokeLinecap="round" />
           )
         })}
         {analysis.metrics

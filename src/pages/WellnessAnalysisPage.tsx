@@ -1,4 +1,6 @@
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ChevronDown } from 'lucide-react'
+import { useState } from 'react'
+import { RELEASES } from '../versions/releases'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useUiVersion } from '../versions/useUiVersion'
 import { PageMeta } from '../components/PageMeta'
@@ -84,7 +86,10 @@ function AnalysisView({ analysis }: { analysis: Analysis }) {
             <ProgressChart analysis={analysis} />
           </section>
 
+          {RELEASES.analysisV2 && <HelpedList analysis={analysis} />}
+
           {/* What helped me? — the changes in the chapters done, by effect. */}
+          {!RELEASES.analysisV2 && (
           <section className="mt-32">
             <h2 className="px-24 text-[20px] font-normal leading-[30px] text-text-primary">What helped me?</h2>
             <div className="mt-16 flex gap-12 overflow-x-auto px-24 pb-8">
@@ -106,8 +111,11 @@ function AnalysisView({ analysis }: { analysis: Analysis }) {
               ))}
             </div>
           </section>
+          )}
 
-          {/* Next chapter: the prediction, and the proposals it is built on. */}
+          {/* Next chapter: the prediction, and the proposals it is built on.
+              Not in the new frame (16906:5168): the page ends on what helped. */}
+          {!RELEASES.analysisV2 && (
           <div className="mt-32">
             <NextChapter
               analysis={analysis}
@@ -115,8 +123,68 @@ function AnalysisView({ analysis }: { analysis: Analysis }) {
               secondary={{ label: 'Go to Session', onClick: () => navigate(`/play/${analysis.sessionSlug}`) }}
             />
           </div>
+          )}
         </main>
       </div>
     </div>
+  )
+}
+
+const VISIBLE = 3
+const ROW_SHADOW = '0 4px 14px rgba(0, 0, 0, 0.04)'
+
+/**
+ * "What helped me?" as a list (Figma 16906:5282; U071): orb, title and one
+ * line, with a chevron that opens the effect; three shown, the rest behind
+ * Show more.
+ */
+function HelpedList({ analysis }: { analysis: Analysis }) {
+  const [open, setOpen] = useState<string | null>(null)
+  const [all, setAll] = useState(false)
+  const shown = all ? analysis.helped : analysis.helped.slice(0, VISIBLE)
+  return (
+    <section className="mt-32 px-24">
+      <h2 className="text-[20px] font-normal leading-[30px] text-text-primary">What helped me?</h2>
+      <ul className="mt-16 flex flex-col gap-12">
+        {shown.map((h) => {
+          const expanded = open === h.title
+          return (
+            <li key={h.title} className="rounded-[20px] bg-surface-default" style={{ boxShadow: ROW_SHADOW }}>
+              <button
+                type="button"
+                aria-expanded={expanded}
+                onClick={() => setOpen(expanded ? null : h.title)}
+                className="flex w-full items-center gap-14 rounded-[20px] px-16 py-18 text-left"
+              >
+                <img src={h.orb} alt="" className="size-42 shrink-0 rounded-full object-cover" />
+                <span className="flex min-w-0 flex-1 flex-col gap-2">
+                  <span className="text-[18px] leading-[24px] text-text-primary">{h.title}</span>
+                  <span className="text-[12px] font-light leading-[18px] text-text-primary">{h.description}</span>
+                </span>
+                <ChevronDown size={18} className={`shrink-0 text-icon-strong transition-transform ${expanded ? 'rotate-180' : ''}`} />
+              </button>
+              {expanded && (
+                <p className="flex items-center gap-8 px-16 pb-16 pl-[72px] text-[12px] leading-[16px] text-text-secondary">
+                  Improved your score by
+                  <span className="flex h-20 items-center gap-4 rounded-full bg-[#ECFBED] px-8 text-[12px] text-text-primary">
+                    <span aria-hidden="true" className="text-[#5FC52C]">▲</span>
+                    {h.improved}%
+                  </span>
+                </p>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+      {analysis.helped.length > VISIBLE && (
+        <button
+          type="button"
+          onClick={() => setAll((v) => !v)}
+          className="text-style-label u-press mt-12 h-40 w-full rounded-12 border border-[#E4E4E4] bg-surface-default text-text-primary"
+        >
+          {all ? 'Show less' : 'Show more'}
+        </button>
+      )}
+    </section>
   )
 }

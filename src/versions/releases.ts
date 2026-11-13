@@ -22,4 +22,6 @@ export const RELEASES = {
   dailyCheckIn: true,
   /** Figma Player (16906:5328): back, share, play, the cue and the scrubber, nothing else. On both sites (J080). */
   simplePlayer: true,
+  /** Figma Analysis (16906:5168): mood-face chart, "What helped me?" as a list, no Next chapter. On both sites (J082). */
+  analysisV2: true,
 } as const
