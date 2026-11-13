@@ -15,12 +15,15 @@ interface Props {
   initial?: DailyEntry
   onDone: (entry: DailyEntry) => void
   onClose: () => void
+  /** After a check-in from the sign-in prompt: say where it went, with a way there (J081). */
+  onOpenJournal?: () => void
 }
 
-export function DailyCheckInSheet({ date, initial, onDone, onClose }: Props) {
+export function DailyCheckInSheet({ date, initial, onDone, onClose, onOpenJournal }: Props) {
   const [mood, setMood] = useState<number | null>(initial?.mood ?? null)
   const [helped, setHelped] = useState<boolean | null>(initial?.helped ?? null)
   const [note, setNote] = useState(initial?.note ?? '')
+  const [saved, setSaved] = useState<DailyEntry | null>(null)
   const week = weekOf(new Date(`${date}T12:00:00`))
 
   useEffect(() => {
@@ -34,7 +37,8 @@ export function DailyCheckInSheet({ date, initial, onDone, onClose }: Props) {
   function submit() {
     const entry = { date, mood, helped, note: note.trim() }
     saveEntry(entry)
-    onDone(entry)
+    if (onOpenJournal) setSaved(entry)
+    else onDone(entry)
   }
 
   const choice = (on: boolean) =>
@@ -57,6 +61,25 @@ export function DailyCheckInSheet({ date, initial, onDone, onClose }: Props) {
         </div>
 
         <WeekStrip days={week} selected={date} />
+
+        {saved ? (
+          <div className="flex flex-col gap-16" aria-live="polite">
+            <div className="flex items-center gap-12 rounded-[20px] bg-[#FFF1DB] p-16">
+              {saved.mood && <img src={MOOD_FACES[saved.mood - 1]} alt="" className="size-34 shrink-0" />}
+              <div className="min-w-0">
+                <p className="text-style-body text-text-primary">Saved to your Journal</p>
+                <p className="text-style-caption text-text-secondary">Find it under Progress → Journal, where you can change it any time today.</p>
+              </div>
+            </div>
+            <button type="button" onClick={onOpenJournal} className="text-style-body-small u-press h-48 w-full rounded-12 bg-[#331B04] text-text-inverse">
+              Open Journal
+            </button>
+            <button type="button" onClick={() => onDone(saved)} className="text-style-body-small u-press h-44 w-full rounded-12 border border-[#E4E4E4] text-text-primary">
+              Done
+            </button>
+          </div>
+        ) : (
+        <>
 
         <fieldset className="flex flex-col gap-14">
           <legend className="text-style-body-small mb-14 text-text-primary">How are you feeling today?</legend>
@@ -111,6 +134,8 @@ export function DailyCheckInSheet({ date, initial, onDone, onClose }: Props) {
         >
           Check-in
         </button>
+        </>
+        )}
       </div>
     </div>,
     document.body,

@@ -67,3 +67,19 @@ export function weekOf(today: Date): WeekDay[] {
     return { date, label: d.toLocaleDateString('en-GB', { weekday: 'short' }).toUpperCase(), day: d.getDate(), today: date === todayKey, future: date > todayKey }
   })
 }
+
+/** One line for a list: "Feeling great! · The session helped · I had no bad dreams." */
+export function dailyLine(entry: DailyEntry) {
+  return [
+    entry.mood ? MOOD_WORDS[entry.mood - 1] : null,
+    entry.helped === null ? null : entry.helped ? 'The session helped' : 'The session did not help',
+    entry.note || null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+}
+
+/** Midday on the entry's own day, so lists sort it among timestamped notes. */
+export function entryTime(entry: DailyEntry) {
+  return new Date(`${entry.date}T12:00:00`).getTime()
+}

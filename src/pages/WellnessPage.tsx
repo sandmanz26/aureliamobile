@@ -151,7 +151,10 @@ export function WellnessPage() {
     v5 ? connectionsForWearable(onboardingAnswers()?.wearable) : defaultConnections(v4),
   )
   const [requestOpen, setRequestOpen] = useState(false)
-  const [tab, setTab] = useState<WellnessTab>('Analytics')
+  // ?tab=journal opens the Journal, which is where the daily check-in sends you (J081).
+  const [tab, setTab] = useState<WellnessTab>(() =>
+    RELEASES.dailyCheckIn && new URLSearchParams(window.location.search).get('tab') === 'journal' ? 'Journal' : 'Analytics',
+  )
   const [requestSent, setRequestSent] = useState(false)
   // v2+ (U039): Analytics is the Figma "My Wellness/Analytics" list — one
   // card per session with its progress, opening the full analysis. v1 keeps
@@ -208,9 +211,10 @@ export function WellnessPage() {
             label={v4 ? 'Data sources' : 'Connect'}
             onClick={() => setTab('Connect')}
           />
-          {/* U068: v4+ retired the session "About" page that carries the
-              Journal in v1–v3, so the daily check-ins live here instead. */}
-          {v4 && RELEASES.dailyCheckIn && (
+          {/* U068: the daily check-ins, in every version (J081). In v1–v3
+              the session "About" page carries them too, as Figma draws it;
+              v4+ retired that page, so this is their only home there. */}
+          {RELEASES.dailyCheckIn && (
             <WellnessTabButton active={tab === 'Journal'} icon={<NotebookText size={16} />} label="Journal" onClick={() => setTab('Journal')} />
           )}
         </div>

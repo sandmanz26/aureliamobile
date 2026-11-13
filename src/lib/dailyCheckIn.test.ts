@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { DAILY_KEY, dayKey, entryFor, readDaily, saveEntry, weekOf } from './dailyCheckIn'
+import { DAILY_KEY, dailyLine, dayKey, entryFor, readDaily, saveEntry, weekOf } from './dailyCheckIn'
 
 describe('daily check-in', () => {
   beforeEach(() => localStorage.removeItem(DAILY_KEY))
@@ -18,6 +18,11 @@ describe('daily check-in', () => {
     saveEntry({ date: today, mood: 5, helped: true, note: 'Slept well' })
     expect(readDaily()).toHaveLength(1)
     expect(entryFor(readDaily(), today)).toMatchObject({ mood: 5, helped: true, note: 'Slept well' })
+  })
+
+  it('reads an entry as one line', () => {
+    expect(dailyLine({ date: '2026-11-13', mood: 5, helped: true, note: 'No bad dreams.' })).toBe('Feeling great! · The session helped · No bad dreams.')
+    expect(dailyLine({ date: '2026-11-13', mood: null, helped: false, note: '' })).toBe('The session did not help')
   })
 
   it('ignores a stored value of the wrong shape', () => {

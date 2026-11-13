@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import type { Journey } from '../../lib/journey'
 import { FIRST_CHAPTERS, MOOD_LABELS, addJournalNote, feelingSummary, readJourney } from '../../lib/journey'
 import { findGoal, onboardingAnswers, wearableLabel } from '../../lib/onboarding'
+import { dailyLine, entryTime, readDaily } from '../../lib/dailyCheckIn'
+import { RELEASES } from '../../versions/releases'
 
 const DAY = 24 * 60 * 60_000
 const REPORT_EVERY_DAYS = 14
@@ -26,6 +28,8 @@ export function FeelingProgress() {
   const [open, setOpen] = useState(false)
   const [note, setNote] = useState('')
   const [now] = useState(() => Date.now())
+  // U068: the daily check-ins belong in this journal too, not only in the Journal tab.
+  const [daily] = useState(() => (RELEASES.dailyCheckIn ? readDaily() : []))
   const answers = onboardingAnswers()
   const wearable = wearableLabel(answers?.wearable)
 
@@ -43,6 +47,19 @@ export function FeelingProgress() {
         >
           Create a session
         </button>
+        {daily.length > 0 && (
+          <div className="mt-8 flex flex-col gap-10 border-t border-border-subtle pt-12">
+            <p className="text-[14px] font-medium leading-[20px] text-text-primary">Your daily check-ins</p>
+            <ul className="flex flex-col gap-10">
+              {[...daily].reverse().map((entry) => (
+                <li key={entry.date} className="flex flex-col gap-2">
+                  <span className="text-[12px] leading-[16px] text-text-secondary">{dateLabel(entryTime(entry))}</span>
+                  <span className="text-[14px] leading-[21px] text-text-primary">{dailyLine(entry)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     )
   }
@@ -71,6 +88,7 @@ export function FeelingProgress() {
   const journal = [
     ...journey.checkIns.filter((c) => c.note).map((c) => ({ at: c.at, text: c.note as string, mood: c.mood })),
     ...(journey.notes ?? []),
+    ...daily.map((entry) => ({ at: entryTime(entry), text: dailyLine(entry), mood: entry.mood ?? undefined, daily: true })),
   ].sort((a, b) => b.at - a.at)
 
   return (
@@ -155,7 +173,7 @@ export function FeelingProgress() {
               <li key={entry.at} className="flex flex-col gap-2 border-t border-border-subtle pt-10 first:border-t-0 first:pt-0">
                 <span className="text-[12px] leading-[16px] text-text-secondary">
                   {dateLabel(entry.at)}
-                  {entry.mood ? ` · felt ${MOOD_LABELS[entry.mood - 1].toLowerCase()}` : ''}
+                  {'daily' in entry ? ' · daily check-in' : entry.mood ? ` · felt ${MOOD_LABELS[entry.mood - 1].toLowerCase()}` : ''}
                 </span>
                 <span className="text-[14px] leading-[21px] text-text-primary">{entry.text}</span>
               </li>
