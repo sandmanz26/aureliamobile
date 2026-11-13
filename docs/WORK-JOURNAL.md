@@ -149,6 +149,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J087 | 2026-11-13 | Code + Release | Production remapped to three versions (v1 = staging v3, v2 = staging v4, v3 = staging v5), opening on v3; production updated | U075 |
 | J088 | 2026-11-13 | Question | The owner's new requests read and summarised, nothing done yet: playbook tone, Insight Timer replica, buyer agents, the 2025 backend docs into /guide, AI speed/quality research, design system, main-menu rail | — |
 | J089 | 2026-11-13 | Research | Insight Timer replica study, agent-run: every public feature mapped to Aurelia v1, 2,000 App Store reviews ranked; report in `docs/reviews/` | — |
+| J090 | 2026-11-13 | Research | Read the owner's three sources: the Technical Architecture Deep Dive is readable and read in full; the second Google Doc and the Notion wiki need a sign-in | — |
 
 ---
 
@@ -1020,3 +1021,12 @@ transcript and the update log. Everything from J018 on was written at the time.
   - The consumer app has no crisis-help link.
 - **Report:** `docs/reviews/insight-timer-replica-2026-11-13.html`. Evidence, review CSV and scripts are in the folder of the same name.
 - **Open items:** O24 (which recommendations go into v1).
+
+### J090 — Reading the three backend sources
+- **Asked:** read the Google Docs from the links already given.
+- **Done:**
+  - The first Google Doc, "Aurelia Wellness AI: Technical Architecture Deep Dive" (10 slides, the 2025 system), is shared by link and was read in full.
+  - The second Google Doc asks for a Google sign-in.
+  - The Notion wiki asks for a sign-in to its owner's workspace.
+  Neither is readable from the session.
+- **Waiting on:** both shared as "anyone with the link can view", or exported (PDF or Markdown) into the session (O25).
