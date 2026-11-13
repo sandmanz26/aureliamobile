@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { dayKey, entryFor, readDaily } from '../../lib/dailyCheckIn'
+import { readJourney } from '../../lib/journey'
+import { findSession } from '../../lib/sessions'
 import { RELEASES } from '../../versions/releases'
 import { DailyCheckInSheet } from './DailyCheckInSheet'
 
@@ -32,6 +34,10 @@ export function DailyCheckInGate() {
   if (!RELEASES.dailyCheckIn || !pending || HOLD.test(pathname)) return null
   return <DailyCheckInSheet date={today} initial={entryFor(readDaily(), today)} onDone={() => setPending(false)} onClose={() => setPending(false)} onOpenJournal={() => {
     setPending(false)
-    navigate('/wellness?tab=journal')
+    // The Journal is a tab of the session's About page (Figma 16906:5450): the
+    // person's own journey session if there is one, else the session they
+    // are most likely to have played, the catalogue's first.
+    const slug = findSession(readJourney()?.slug ?? '')?.slug ?? 'inner-frequency'
+    navigate(`/progress/${slug}?tab=journal`)
   }} />
 }

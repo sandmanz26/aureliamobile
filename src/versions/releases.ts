@@ -11,17 +11,21 @@ import { BUILD } from '../lib/build'
  *
  * Every design version gets these: they are not a version of their own.
  */
-const onStagingOnly = BUILD.environment !== 'production'
+// Every release is on for production since J083 ("nyalakan semua ke production").
+// A new one that should wait uses BUILD.environment !== 'production'.
+void BUILD
 
 export const RELEASES = {
   /** Figma "Changes" (16906:4947) item 1: one Chapter card + a Review sheet instead of the fanned deck. */
-  chapterCard: onStagingOnly,
+  chapterCard: true,
   /** Figma item 2: Personal journeys on Explore, and the story page (16906:8333). */
-  personalJourneys: onStagingOnly,
+  personalJourneys: true,
   /** Figma Daily (16906:5362) + Journal (16906:5450). On both sites: the owner asked for staging and production (J079). */
   dailyCheckIn: true,
   /** Figma Player (16906:5328): back, share, play, the cue and the scrubber, nothing else. On both sites (J080). */
   simplePlayer: true,
   /** Figma Analysis (16906:5168): mood-face chart, "What helped me?" as a list, no Next chapter. On both sites (J082). */
   analysisV2: true,
+  /** The session's About page (Chapters, Social Impact, Journal, Insights) in every version, v4+ included (J083). */
+  aboutPage: true,
 } as const

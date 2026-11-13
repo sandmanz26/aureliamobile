@@ -68,7 +68,7 @@ export function DailyCheckInSheet({ date, initial, onDone, onClose, onOpenJourna
               {saved.mood && <img src={MOOD_FACES[saved.mood - 1]} alt="" className="size-34 shrink-0" />}
               <div className="min-w-0">
                 <p className="text-style-body text-text-primary">Saved to your Journal</p>
-                <p className="text-style-caption text-text-secondary">Find it under Progress → Journal, where you can change it any time today.</p>
+                <p className="text-style-caption text-text-secondary">Find it in your session’s About → Journal, where you can change it any time today.</p>
               </div>
             </div>
             <button type="button" onClick={onOpenJournal} className="text-style-body-small u-press h-48 w-full rounded-12 bg-[#331B04] text-text-inverse">

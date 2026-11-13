@@ -291,7 +291,7 @@ export function ProgressPage() {
   // repeated something with a home of its own: Chapters (version history) is
   // Session details, Insights is the Analysis page, Social Impact is the
   // session's stats in Session details. Old links still land somewhere true.
-  if (v4) {
+  if (v4 && !RELEASES.aboutPage) {
     const analysis = params.get('tab') === 'insights' ? analysisForSession(session.slug) : undefined
     return <Navigate to={analysis ? `/wellness/analysis/${analysis.id}` : `/session/${session.slug}`} replace />
   }
@@ -324,7 +324,8 @@ export function ProgressPage() {
             {/* "Insights" in the frame, and it is what the ... menu that
                 opens this screen calls it. It said "Sessions", which is a
                 different screen. */}
-            <h1 className="truncate text-[24px] font-normal! leading-[24px] text-text-primary">Insights</h1>
+            {/* Figma Session/Insights/Journal (16906:5450) titles it About (J083). */}
+            <h1 className="truncate text-[24px] font-normal! leading-[24px] text-text-primary">{RELEASES.aboutPage ? 'About' : 'Insights'}</h1>
           </div>
         </header>
 

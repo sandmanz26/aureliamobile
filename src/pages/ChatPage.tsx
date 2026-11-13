@@ -878,12 +878,12 @@ export function ChatPage() {
           insightsSlug
             ? // v4 (U051, D5): the Insights page is retired; its version history
               // lives in Session details, the one history.
-              () => navigate(v4 ? `/session/${insightsSlug}` : `/progress/${insightsSlug}`)
+              () => navigate(v4 && !RELEASES.aboutPage ? `/session/${insightsSlug}` : `/progress/${insightsSlug}`)
             : undefined
         }
         onMenu={openDrawer}
         onBack={v4 ? () => navigate('/home') : undefined}
-        menuLabels={v4 ? { insights: 'Session details', settings: 'Edit session' } : undefined}
+        menuLabels={v4 ? { insights: RELEASES.aboutPage ? 'About' : 'Session details', settings: 'Edit session' } : undefined}
         publishLabel={publishLabel}
         /* Only where something of this thread is actually live. A session that
            has never been published has nothing to take down, and offering it

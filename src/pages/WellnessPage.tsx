@@ -1,6 +1,5 @@
 import { createPortal } from 'react-dom'
-import { ChartPie, ChevronRight, Link2, Menu, NotebookText, X } from 'lucide-react'
-import { JournalView } from '../components/daily/JournalView'
+import { ChartPie, ChevronRight, Link2, Menu, X } from 'lucide-react'
 import { RELEASES } from '../versions/releases'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -18,7 +17,7 @@ import { CARD_SHADOW } from '../lib/shadows'
 import { WELLNESS_GOALS } from '../lib/wellnessGoals'
 import { CoinPill } from '../components/ui/CoinPill'
 
-type WellnessTab = 'Analytics' | 'Connect' | 'Journal'
+type WellnessTab = 'Analytics' | 'Connect'
 
 /** The tab pill above the tab content — a standalone button per option
  *  (dark fill when active, outline when not), not the shared
@@ -151,10 +150,7 @@ export function WellnessPage() {
     v5 ? connectionsForWearable(onboardingAnswers()?.wearable) : defaultConnections(v4),
   )
   const [requestOpen, setRequestOpen] = useState(false)
-  // ?tab=journal opens the Journal, which is where the daily check-in sends you (J081).
-  const [tab, setTab] = useState<WellnessTab>(() =>
-    RELEASES.dailyCheckIn && new URLSearchParams(window.location.search).get('tab') === 'journal' ? 'Journal' : 'Analytics',
-  )
+  const [tab, setTab] = useState<WellnessTab>('Analytics')
   const [requestSent, setRequestSent] = useState(false)
   // v2+ (U039): Analytics is the Figma "My Wellness/Analytics" list — one
   // card per session with its progress, opening the full analysis. v1 keeps
@@ -211,19 +207,8 @@ export function WellnessPage() {
             label={v4 ? 'Data sources' : 'Connect'}
             onClick={() => setTab('Connect')}
           />
-          {/* U068: the daily check-ins, in every version (J081). In v1–v3
-              the session "About" page carries them too, as Figma draws it;
-              v4+ retired that page, so this is their only home there. */}
-          {RELEASES.dailyCheckIn && (
-            <WellnessTabButton active={tab === 'Journal'} icon={<NotebookText size={16} />} label="Journal" onClick={() => setTab('Journal')} />
-          )}
         </div>
 
-        {tab === 'Journal' && (
-          <div className="mt-24">
-            <JournalView />
-          </div>
-        )}
 
         {/* v5 (U053): their own check-ins in words, not the sample analyses. */}
         {tab === 'Analytics' && v5 && <FeelingProgress />}
