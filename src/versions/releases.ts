@@ -20,4 +20,6 @@ export const RELEASES = {
   personalJourneys: onStagingOnly,
   /** Figma Daily (16906:5362) + Journal (16906:5450). On both sites: the owner asked for staging and production (J079). */
   dailyCheckIn: true,
+  /** Figma Player (16906:5328): back, share, play, the cue and the scrubber, nothing else. On both sites (J080). */
+  simplePlayer: true,
 } as const

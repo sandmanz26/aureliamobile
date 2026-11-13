@@ -30,6 +30,7 @@ import type { ProfileOrigin } from '../lib/people'
 import { findSession } from '../lib/sessions'
 import { useUiVersion } from '../versions/useUiVersion'
 import { ShareSheet } from '../components/ui/ShareSheet'
+import { RELEASES } from '../versions/releases'
 import { AnalysisShifts, AnalysisStatus, NextChapter, ProgressChart } from '../components/wellness/AnalysisParts'
 import { SessionFeedback } from '../components/wellness/SessionFeedback'
 import { analysisForSession, chapterBrief } from '../lib/wellnessAnalysis'
@@ -418,7 +419,10 @@ export function PlayerPage() {
       <section
         className="relative mx-auto flex h-full w-full max-w-[402px] flex-col text-text-inverse lg:max-w-[640px]"
         style={
-          v2
+          // U068+ (Figma 16906:5328): no sheet under the player, only the safe area.
+          RELEASES.simplePlayer
+            ? { paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }
+            : v2
             ? {
                 // The player area shrinks with the sheet up to its half rest,
                 // so play, the cue and the scrubber stay visible above it
@@ -445,16 +449,16 @@ export function PlayerPage() {
           <span className="flex-1" />
           {/* Same coin as the cockpit header wears — one mark for the
               currency, not a lookalike per screen. */}
-          <CoinPill points="1,323" />
+          {!RELEASES.simplePlayer && <CoinPill points="1,323" />}
           <button
             type="button"
             aria-label="Share"
-            onClick={v2 ? () => setShareOpen(true) : undefined}
-            className="u-press flex size-44 shrink-0 items-center justify-center rounded-full bg-surface-default text-icon-strong"
+            onClick={v2 || RELEASES.simplePlayer ? () => setShareOpen(true) : undefined}
+            className={`u-press flex size-44 shrink-0 items-center justify-center bg-surface-default text-icon-strong ${RELEASES.simplePlayer ? 'rounded-12 shadow-sm' : 'rounded-full'}`}
           >
             <Share2 size={18} />
           </button>
-          {v2 && shareOpen && (
+          {(v2 || RELEASES.simplePlayer) && shareOpen && (
             <ShareSheet
               title={session?.title ?? 'Aurelia'}
               url={window.location.href}
@@ -465,8 +469,8 @@ export function PlayerPage() {
 
         {/* Centres in what is left above the caption — the frame's own y=321
             for the 96px disc in a 402x874, arrived at by flow. */}
-        <div className="relative flex flex-1 items-center justify-center gap-24">
-          <SkipButton seconds={-SKIP} onPress={() => seek(elapsed - SKIP)} />
+        <div className={`relative flex flex-1 items-center justify-center ${RELEASES.simplePlayer ? '' : 'gap-24'}`}>
+          {!RELEASES.simplePlayer && <SkipButton seconds={-SKIP} onPress={() => seek(elapsed - SKIP)} />}
           <button
             type="button"
             onClick={toggle}
@@ -479,13 +483,15 @@ export function PlayerPage() {
               <Play size={48} fill="currentColor" strokeWidth={0} className="ml-4" />
             )}
           </button>
-          <SkipButton seconds={SKIP} onPress={() => seek(elapsed + SKIP)} />
+          {!RELEASES.simplePlayer && <SkipButton seconds={SKIP} onPress={() => seek(elapsed + SKIP)} />}
+          {/* Figma 16906:5328: the cue sits under the play button, the scrubber alone at the foot. */}
+          {RELEASES.simplePlayer && <p className="text-player-cue absolute left-0 right-0 top-[calc(50%+72px)] px-20 text-center">{cue}</p>}
         </div>
 
         <div className="relative px-20 pb-24">
-          <p className="text-player-cue text-center">{cue}</p>
+          {!RELEASES.simplePlayer && <p className="text-player-cue text-center">{cue}</p>}
 
-          <div className="mt-40">
+          <div className={RELEASES.simplePlayer ? '' : 'mt-40'}>
             {/* 14 either side is the knob's radius: the control keeps its knob
                 inside the track, so the track has to start where the knob can. */}
             <div className="relative mx-14 h-7">
@@ -531,6 +537,9 @@ export function PlayerPage() {
       </section>
 
       {/* ----------------------------------------------------------- sheet */}
+      {/* Gone in the simplified player (Figma 16906:5328): the daily check-in
+          asks how the session went, and Session details has the rest. */}
+      {!RELEASES.simplePlayer && (
       <aside
         aria-label="Session details"
         /* Full width on a phone, capped only once there is a window to centre
@@ -837,6 +846,7 @@ export function PlayerPage() {
           )}
         </div>
       </aside>
+      )}
     </div>
   )
 }
