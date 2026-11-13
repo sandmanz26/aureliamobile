@@ -19,6 +19,14 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-13 — Journal on About; everything on in production (U072, J083)
+
+The Journal is a tab of the session's About page in every version, as in Figma, and no longer in Progress.
+
+The Chapter card and Personal journeys are now on in production. v5's analytics are unchanged.
+
+Branches: `web_app`, `admin_cms`, **`web_prod`**.
+
 ### 2026-11-13 — Analytics redesign (U071, J082)
 
 The analysis page that My Wellness → Analytics opens:

@@ -1,0 +1,251 @@
+From 811a444e50468329e1093c0b960aa694202b1694 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 13 Nov 2026 08:00:10 +0000
+Subject: [PATCH] Journal on the session's About page; every release on for
+ production
+
+As Figma Session/Insights/Journal (16906:5450) draws it, the Journal is
+a tab of the session's About page (Chapters, Social Impact, Journal,
+Insights), not of Progress: the About page is back in every version
+(v4+ had retired it), titled About, reached from the chat menu ('About')
+and after a check-in via Open Journal. Progress no longer has a Journal
+tab, and v5's own journal is as it was. On request, the Chapter card and
+Personal journeys are switched on for production too; v5's analytics
+stay as they are.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/components/daily/DailyCheckInGate.tsx   |  8 +++++++-
+ src/components/daily/DailyCheckInSheet.tsx  |  2 +-
+ src/components/wellness/FeelingProgress.tsx | 20 +-------------------
+ src/pages/ChatPage.tsx                      |  4 ++--
+ src/pages/ProgressPage.tsx                  |  5 +++--
+ src/pages/WellnessPage.tsx                  | 21 +++------------------
+ src/versions/releases.ts                    | 10 +++++++---
+ 7 files changed, 24 insertions(+), 46 deletions(-)
+
+diff --git a/src/components/daily/DailyCheckInGate.tsx b/src/components/daily/DailyCheckInGate.tsx
+index 1ac9f3e..7865b43 100644
+--- a/src/components/daily/DailyCheckInGate.tsx
++++ b/src/components/daily/DailyCheckInGate.tsx
+@@ -2,6 +2,8 @@ import { useState } from 'react'
+ import { useLocation, useNavigate } from 'react-router-dom'
+ import { useAuth } from '../../auth/AuthContext'
+ import { dayKey, entryFor, readDaily } from '../../lib/dailyCheckIn'
++import { readJourney } from '../../lib/journey'
++import { findSession } from '../../lib/sessions'
+ import { RELEASES } from '../../versions/releases'
+ import { DailyCheckInSheet } from './DailyCheckInSheet'
+ 
+@@ -32,6 +34,10 @@ export function DailyCheckInGate() {
+   if (!RELEASES.dailyCheckIn || !pending || HOLD.test(pathname)) return null
+   return <DailyCheckInSheet date={today} initial={entryFor(readDaily(), today)} onDone={() => setPending(false)} onClose={() => setPending(false)} onOpenJournal={() => {
+     setPending(false)
+-    navigate('/wellness?tab=journal')
++    // The Journal is a tab of the session's About page (Figma 16906:5450): the
++    // person's own journey session if there is one, else the session they
++    // are most likely to have played, the catalogue's first.
++    const slug = findSession(readJourney()?.slug ?? '')?.slug ?? 'inner-frequency'
++    navigate(`/progress/${slug}?tab=journal`)
+   }} />
+ }
+diff --git a/src/components/daily/DailyCheckInSheet.tsx b/src/components/daily/DailyCheckInSheet.tsx
+index 633c079..49d751f 100644
+--- a/src/components/daily/DailyCheckInSheet.tsx
++++ b/src/components/daily/DailyCheckInSheet.tsx
+@@ -68,7 +68,7 @@ export function DailyCheckInSheet({ date, initial, onDone, onClose, onOpenJourna
+               {saved.mood && <img src={MOOD_FACES[saved.mood - 1]} alt="" className="size-34 shrink-0" />}
+               <div className="min-w-0">
+                 <p className="text-style-body text-text-primary">Saved to your Journal</p>
+-                <p className="text-style-caption text-text-secondary">Find it under Progress → Journal, where you can change it any time today.</p>
++                <p className="text-style-caption text-text-secondary">Find it in your session’s About → Journal, where you can change it any time today.</p>
+               </div>
+             </div>
+             <button type="button" onClick={onOpenJournal} className="text-style-body-small u-press h-48 w-full rounded-12 bg-[#331B04] text-text-inverse">
+diff --git a/src/components/wellness/FeelingProgress.tsx b/src/components/wellness/FeelingProgress.tsx
+index 4bbbc5f..62b50e7 100644
+--- a/src/components/wellness/FeelingProgress.tsx
++++ b/src/components/wellness/FeelingProgress.tsx
+@@ -4,8 +4,6 @@ import { useNavigate } from 'react-router-dom'
+ import type { Journey } from '../../lib/journey'
+ import { FIRST_CHAPTERS, MOOD_LABELS, addJournalNote, feelingSummary, readJourney } from '../../lib/journey'
+ import { findGoal, onboardingAnswers, wearableLabel } from '../../lib/onboarding'
+-import { dailyLine, entryTime, readDaily } from '../../lib/dailyCheckIn'
+-import { RELEASES } from '../../versions/releases'
+ 
+ const DAY = 24 * 60 * 60_000
+ const REPORT_EVERY_DAYS = 14
+@@ -28,8 +26,6 @@ export function FeelingProgress() {
+   const [open, setOpen] = useState(false)
+   const [note, setNote] = useState('')
+   const [now] = useState(() => Date.now())
+-  // U068: the daily check-ins belong in this journal too, not only in the Journal tab.
+-  const [daily] = useState(() => (RELEASES.dailyCheckIn ? readDaily() : []))
+   const answers = onboardingAnswers()
+   const wearable = wearableLabel(answers?.wearable)
+ 
+@@ -47,19 +43,6 @@ export function FeelingProgress() {
+         >
+           Create a session
+         </button>
+-        {daily.length > 0 && (
+-          <div className="mt-8 flex flex-col gap-10 border-t border-border-subtle pt-12">
+-            <p className="text-[14px] font-medium leading-[20px] text-text-primary">Your daily check-ins</p>
+-            <ul className="flex flex-col gap-10">
+-              {[...daily].reverse().map((entry) => (
+-                <li key={entry.date} className="flex flex-col gap-2">
+-                  <span className="text-[12px] leading-[16px] text-text-secondary">{dateLabel(entryTime(entry))}</span>
+-                  <span className="text-[14px] leading-[21px] text-text-primary">{dailyLine(entry)}</span>
+-                </li>
+-              ))}
+-            </ul>
+-          </div>
+-        )}
+       </div>
+     )
+   }
+@@ -88,7 +71,6 @@ export function FeelingProgress() {
+   const journal = [
+     ...journey.checkIns.filter((c) => c.note).map((c) => ({ at: c.at, text: c.note as string, mood: c.mood })),
+     ...(journey.notes ?? []),
+-    ...daily.map((entry) => ({ at: entryTime(entry), text: dailyLine(entry), mood: entry.mood ?? undefined, daily: true })),
+   ].sort((a, b) => b.at - a.at)
+ 
+   return (
+@@ -173,7 +155,7 @@ export function FeelingProgress() {
+               <li key={entry.at} className="flex flex-col gap-2 border-t border-border-subtle pt-10 first:border-t-0 first:pt-0">
+                 <span className="text-[12px] leading-[16px] text-text-secondary">
+                   {dateLabel(entry.at)}
+-                  {'daily' in entry ? ' · daily check-in' : entry.mood ? ` · felt ${MOOD_LABELS[entry.mood - 1].toLowerCase()}` : ''}
++                  {entry.mood ? ` · felt ${MOOD_LABELS[entry.mood - 1].toLowerCase()}` : ''}
+                 </span>
+                 <span className="text-[14px] leading-[21px] text-text-primary">{entry.text}</span>
+               </li>
+diff --git a/src/pages/ChatPage.tsx b/src/pages/ChatPage.tsx
+index cfb4779..cc5a8f0 100644
+--- a/src/pages/ChatPage.tsx
++++ b/src/pages/ChatPage.tsx
+@@ -878,12 +878,12 @@ export function ChatPage() {
+           insightsSlug
+             ? // v4 (U051, D5): the Insights page is retired; its version history
+               // lives in Session details, the one history.
+-              () => navigate(v4 ? `/session/${insightsSlug}` : `/progress/${insightsSlug}`)
++              () => navigate(v4 && !RELEASES.aboutPage ? `/session/${insightsSlug}` : `/progress/${insightsSlug}`)
+             : undefined
+         }
+         onMenu={openDrawer}
+         onBack={v4 ? () => navigate('/home') : undefined}
+-        menuLabels={v4 ? { insights: 'Session details', settings: 'Edit session' } : undefined}
++        menuLabels={v4 ? { insights: RELEASES.aboutPage ? 'About' : 'Session details', settings: 'Edit session' } : undefined}
+         publishLabel={publishLabel}
+         /* Only where something of this thread is actually live. A session that
+            has never been published has nothing to take down, and offering it
+diff --git a/src/pages/ProgressPage.tsx b/src/pages/ProgressPage.tsx
+index bead7a6..1780d8b 100644
+--- a/src/pages/ProgressPage.tsx
++++ b/src/pages/ProgressPage.tsx
+@@ -291,7 +291,7 @@ export function ProgressPage() {
+   // repeated something with a home of its own: Chapters (version history) is
+   // Session details, Insights is the Analysis page, Social Impact is the
+   // session's stats in Session details. Old links still land somewhere true.
+-  if (v4) {
++  if (v4 && !RELEASES.aboutPage) {
+     const analysis = params.get('tab') === 'insights' ? analysisForSession(session.slug) : undefined
+     return <Navigate to={analysis ? `/wellness/analysis/${analysis.id}` : `/session/${session.slug}`} replace />
+   }
+@@ -324,7 +324,8 @@ export function ProgressPage() {
+             {/* "Insights" in the frame, and it is what the ... menu that
+                 opens this screen calls it. It said "Sessions", which is a
+                 different screen. */}
+-            <h1 className="truncate text-[24px] font-normal! leading-[24px] text-text-primary">Insights</h1>
++            {/* Figma Session/Insights/Journal (16906:5450) titles it About (J083). */}
++            <h1 className="truncate text-[24px] font-normal! leading-[24px] text-text-primary">{RELEASES.aboutPage ? 'About' : 'Insights'}</h1>
+           </div>
+         </header>
+ 
+diff --git a/src/pages/WellnessPage.tsx b/src/pages/WellnessPage.tsx
+index d9cc2fa..7c2ed76 100644
+--- a/src/pages/WellnessPage.tsx
++++ b/src/pages/WellnessPage.tsx
+@@ -1,6 +1,5 @@
+ import { createPortal } from 'react-dom'
+-import { ChartPie, ChevronRight, Link2, Menu, NotebookText, X } from 'lucide-react'
+-import { JournalView } from '../components/daily/JournalView'
++import { ChartPie, ChevronRight, Link2, Menu, X } from 'lucide-react'
+ import { RELEASES } from '../versions/releases'
+ import { useEffect, useState } from 'react'
+ import { useNavigate } from 'react-router-dom'
+@@ -18,7 +17,7 @@ import { CARD_SHADOW } from '../lib/shadows'
+ import { WELLNESS_GOALS } from '../lib/wellnessGoals'
+ import { CoinPill } from '../components/ui/CoinPill'
+ 
+-type WellnessTab = 'Analytics' | 'Connect' | 'Journal'
++type WellnessTab = 'Analytics' | 'Connect'
+ 
+ /** The tab pill above the tab content — a standalone button per option
+  *  (dark fill when active, outline when not), not the shared
+@@ -151,10 +150,7 @@ export function WellnessPage() {
+     v5 ? connectionsForWearable(onboardingAnswers()?.wearable) : defaultConnections(v4),
+   )
+   const [requestOpen, setRequestOpen] = useState(false)
+-  // ?tab=journal opens the Journal, which is where the daily check-in sends you (J081).
+-  const [tab, setTab] = useState<WellnessTab>(() =>
+-    RELEASES.dailyCheckIn && new URLSearchParams(window.location.search).get('tab') === 'journal' ? 'Journal' : 'Analytics',
+-  )
++  const [tab, setTab] = useState<WellnessTab>('Analytics')
+   const [requestSent, setRequestSent] = useState(false)
+   // v2+ (U039): Analytics is the Figma "My Wellness/Analytics" list — one
+   // card per session with its progress, opening the full analysis. v1 keeps
+@@ -211,19 +207,8 @@ export function WellnessPage() {
+             label={v4 ? 'Data sources' : 'Connect'}
+             onClick={() => setTab('Connect')}
+           />
+-          {/* U068: the daily check-ins, in every version (J081). In v1–v3
+-              the session "About" page carries them too, as Figma draws it;
+-              v4+ retired that page, so this is their only home there. */}
+-          {RELEASES.dailyCheckIn && (
+-            <WellnessTabButton active={tab === 'Journal'} icon={<NotebookText size={16} />} label="Journal" onClick={() => setTab('Journal')} />
+-          )}
+         </div>
+ 
+-        {tab === 'Journal' && (
+-          <div className="mt-24">
+-            <JournalView />
+-          </div>
+-        )}
+ 
+         {/* v5 (U053): their own check-ins in words, not the sample analyses. */}
+         {tab === 'Analytics' && v5 && <FeelingProgress />}
+diff --git a/src/versions/releases.ts b/src/versions/releases.ts
+index 8b14439..a535244 100644
+--- a/src/versions/releases.ts
++++ b/src/versions/releases.ts
+@@ -11,17 +11,21 @@ import { BUILD } from '../lib/build'
+  *
+  * Every design version gets these: they are not a version of their own.
+  */
+-const onStagingOnly = BUILD.environment !== 'production'
++// Every release is on for production since J083 ("nyalakan semua ke production").
++// A new one that should wait uses BUILD.environment !== 'production'.
++void BUILD
+ 
+ export const RELEASES = {
+   /** Figma "Changes" (16906:4947) item 1: one Chapter card + a Review sheet instead of the fanned deck. */
+-  chapterCard: onStagingOnly,
++  chapterCard: true,
+   /** Figma item 2: Personal journeys on Explore, and the story page (16906:8333). */
+-  personalJourneys: onStagingOnly,
++  personalJourneys: true,
+   /** Figma Daily (16906:5362) + Journal (16906:5450). On both sites: the owner asked for staging and production (J079). */
+   dailyCheckIn: true,
+   /** Figma Player (16906:5328): back, share, play, the cue and the scrubber, nothing else. On both sites (J080). */
+   simplePlayer: true,
+   /** Figma Analysis (16906:5168): mood-face chart, "What helped me?" as a list, no Next chapter. On both sites (J082). */
+   analysisV2: true,
++  /** The session's About page (Chapters, Social Impact, Journal, Insights) in every version, v4+ included (J083). */
++  aboutPage: true,
+ } as const
+-- 
+2.43.0
+

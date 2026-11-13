@@ -140,6 +140,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J080 | 2026-11-13 | Code + Release | Player simplified to the Figma frame, every version, staging and production | U069 |
 | J081 | 2026-11-13 | Code | "Daily check-in does not show in the journal": found and fixed where it was easy to miss (staging; production waiting on confirmation) | U070 |
 | J082 | 2026-11-13 | Code + Release | My Wellness → Analytics redesigned to Figma (analysis page), staging and production; U070 shipped with it | U071 |
+| J083 | 2026-11-13 | Question + Code + Release | Summary of every change and its status; then Journal moved to About as in Figma, and every release switched on for production (v5 left as is) | U072 |
 
 ---
 
@@ -734,6 +735,18 @@ transcript and the update log. Everything from J018 on was written at the time.
   - four decisions.
 - **Also:** `docs/api/API-CONTRACT.md` §5.12 and `openapi.yaml` gained the study endpoints (now 90 paths, validated).
 - **Open items:** O23 added.
+
+### J083 — What changed, Journal on About, everything on production (U072)
+- **Asked:**
+  1. "jadi mana saja yang sudah berubah?" Answered with the five Figma items and their status.
+  2. The Journal should be on About, as Figma names it, not Progress.
+  3. Switch everything on in production; leave v5 / prod v2 as it is.
+- **Done:**
+  - U072. The About page is back in every version, with Chapters, Social Impact, Journal and Insights. Open Journal and the chat menu lead there.
+  - Progress has no Journal tab.
+  - The Chapter card and Personal journeys are on in production.
+  - v5's analytics and its journal are unchanged.
+- **Standing rule update:** `RELEASES` now holds only switches that are on everywhere. The J076 mechanism (staging-only by default) stays for the next item that should wait.
 
 ### J082 — Analytics redesign (U071)
 - **Asked:** implement the UI change in My Wellness → Analytics (Figma 16906:5168) on staging and production, every version.

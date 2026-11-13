@@ -109,8 +109,34 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U069 | `c535dd5` | 2026-11-13 | Player simplified (back, share, play, cue, scrubber; no coin, skips or details sheet), every version. **Staging and production** (on request). | [patch](patches/U069-c535dd5.patch) |
 | U070 | `eee28bc` | 2026-11-13 | Daily check-in findable: "Saved to your Journal · Open Journal", Journal tab on Progress in every version, v5's journal lists check-ins. On production with U071. | [patch](patches/U070-eee28bc.patch) |
 | U071 | `6303583` | 2026-11-13 | My Wellness → Analytics → analysis page to Figma 16906:5168 (mood-face chart, What helped me list, no Next chapter), v1–v4. Staging and production (on request). | [patch](patches/U071-6303583.patch) |
+| U072 | `811a444` | 2026-11-13 | Journal moved to the session's About page (back in every version, titled About); out of Progress. Chapter card and Personal journeys switched on for production. Staging and production. | [patch](patches/U072-811a444.patch) |
 
 ## Entries
+
+### U072 — Journal on About; every release on for production
+
+- **Commit:** `811a444` · pushed 2026-11-13 UTC · `web_app` + `admin_cms` + **`web_prod`** (on request).
+- **Patch:** [patches/U072-811a444.patch](patches/U072-811a444.patch)
+- **Request:** "kenapa malah masuk ke progress. di figma kan tertulisnya about. nyalakan semua dong ke production kan saya sudah minta. v5 / v2 prod biarkan saja".
+- **Interpretation:**
+  - The Journal belongs where Figma draws it: a tab of the session's About page. That page was retired in v4+ (D5), so it comes back in every version, all four tabs.
+  - "Nyalakan semua": every release in `RELEASES` is on for production.
+  - "v5 biarkan saja": v5's analytics, and its own journal on Your goals, stay as they were before U070.
+- **Changed:**
+  - `releases.ts`: `chapterCard` and `personalJourneys` are now `true`. New `aboutPage: true`. A future release that should wait uses `BUILD.environment !== 'production'` again.
+  - `ProgressPage`: no v4 redirect while `aboutPage`, and the title is "About".
+  - `ChatPage`: the menu item opens `/progress/:slug` in every version, labelled "About" in v4+.
+  - `DailyCheckInGate`: Open Journal goes to `/progress/<journey session, or inner-frequency>?tab=journal`. The sheet's text points to "your session's About → Journal".
+  - `WellnessPage`: the Journal tab and `?tab=journal` are removed.
+  - `FeelingProgress`: U070's daily merge is reverted.
+- **Verified:**
+  - `npm run check` passes (122 tests).
+  - **Production build**, v4 and v1 at 402px:
+    - check in, then Open Journal, lands on About with the Journal tab and the entry;
+    - Progress has no Journal tab;
+    - Explore shows Personal Journeys;
+    - no overflow, no page errors.
+- **Revert:** `git revert --no-commit 811a444 && git checkout HEAD -- docs/`. To hide one thing, set its `RELEASES` flag.
 
 ### U071 — The analysis page, redesigned
 

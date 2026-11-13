@@ -188,17 +188,15 @@ Repository: **`sandmanz26/aureliamobile`** (GitHub). One app per branch:
 
 ### Staging (`web_app`)
 
-Ahead of production in what users see:
-- U066: the Chapter card and Review sheet;
-- U067: Personal journeys.
+Level with production (U072, 13 Nov 2026). Everything in `RELEASES` (`src/versions/releases.ts`) is on for both sites:
+- the Chapter card;
+- Personal journeys;
+- the daily check-in and Journal (on the session's About page);
+- the simplified player;
+- the analytics redesign (v1–v4; v5 unchanged);
+- the About page in every version.
 
-Both are switched on for staging only by `RELEASES` in `src/versions/releases.ts`.
-
-**On both sites:**
-- U068, the daily check-in and Journal (`RELEASES.dailyCheckIn = true`, J079);
-- U069, the simplified player (`RELEASES.simplePlayer = true`, J080).
-
-**Standing rule (J076):** `/guide` stays identical on both sites, so `web_prod` is fast-forwarded for documents. App work therefore goes behind `RELEASES`, and is turned on for production only on request.
+**Standing rule (J076):** `/guide` stays identical on both sites. New app work that should wait goes behind a `RELEASES` flag set to `BUILD.environment !== 'production'`, and is turned on only on request.
 
 ### Last things delivered (most recent first)
 
