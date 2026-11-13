@@ -1,0 +1,256 @@
+From eee28bc5c5da5ac5c5560645bd4fe92659627d6a Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 13 Nov 2026 01:49:41 +0000
+Subject: [PATCH] Daily check-in: easy to find in the Journal afterwards
+
+After Check-in the sheet now says 'Saved to your Journal' with Open
+Journal (Progress, Journal tab, via /wellness?tab=journal) and Done.
+The Journal tab is on Progress in every version, not only v4+, and v5's
+own journal on Your goals lists the daily check-ins too (also when no
+session has been built yet).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/components/daily/DailyCheckInGate.tsx   |  8 ++++--
+ src/components/daily/DailyCheckInSheet.tsx  | 29 +++++++++++++++++++--
+ src/components/wellness/FeelingProgress.tsx | 20 +++++++++++++-
+ src/lib/dailyCheckIn.test.ts                |  7 ++++-
+ src/lib/dailyCheckIn.ts                     | 16 ++++++++++++
+ src/pages/WellnessPage.tsx                  | 12 ++++++---
+ 6 files changed, 82 insertions(+), 10 deletions(-)
+
+diff --git a/src/components/daily/DailyCheckInGate.tsx b/src/components/daily/DailyCheckInGate.tsx
+index f25da06..1ac9f3e 100644
+--- a/src/components/daily/DailyCheckInGate.tsx
++++ b/src/components/daily/DailyCheckInGate.tsx
+@@ -1,5 +1,5 @@
+ import { useState } from 'react'
+-import { useLocation } from 'react-router-dom'
++import { useLocation, useNavigate } from 'react-router-dom'
+ import { useAuth } from '../../auth/AuthContext'
+ import { dayKey, entryFor, readDaily } from '../../lib/dailyCheckIn'
+ import { RELEASES } from '../../versions/releases'
+@@ -18,6 +18,7 @@ const HOLD = /^\/(login|signup|forgot-password|reset-password|welcome|admin|guid
+ export function DailyCheckInGate() {
+   const { signedIn } = useAuth()
+   const { pathname } = useLocation()
++  const navigate = useNavigate()
+   const [today] = useState(() => dayKey(new Date()))
+   // A sign-in is the moment signedIn turns true: remember it until it can be
+   // shown (React's "adjust state when a prop changes" pattern, no effect).
+@@ -29,5 +30,8 @@ export function DailyCheckInGate() {
+   }
+ 
+   if (!RELEASES.dailyCheckIn || !pending || HOLD.test(pathname)) return null
+-  return <DailyCheckInSheet date={today} initial={entryFor(readDaily(), today)} onDone={() => setPending(false)} onClose={() => setPending(false)} />
++  return <DailyCheckInSheet date={today} initial={entryFor(readDaily(), today)} onDone={() => setPending(false)} onClose={() => setPending(false)} onOpenJournal={() => {
++    setPending(false)
++    navigate('/wellness?tab=journal')
++  }} />
+ }
+diff --git a/src/components/daily/DailyCheckInSheet.tsx b/src/components/daily/DailyCheckInSheet.tsx
+index b1bb7eb..633c079 100644
+--- a/src/components/daily/DailyCheckInSheet.tsx
++++ b/src/components/daily/DailyCheckInSheet.tsx
+@@ -15,12 +15,15 @@ interface Props {
+   initial?: DailyEntry
+   onDone: (entry: DailyEntry) => void
+   onClose: () => void
++  /** After a check-in from the sign-in prompt: say where it went, with a way there (J081). */
++  onOpenJournal?: () => void
+ }
+ 
+-export function DailyCheckInSheet({ date, initial, onDone, onClose }: Props) {
++export function DailyCheckInSheet({ date, initial, onDone, onClose, onOpenJournal }: Props) {
+   const [mood, setMood] = useState<number | null>(initial?.mood ?? null)
+   const [helped, setHelped] = useState<boolean | null>(initial?.helped ?? null)
+   const [note, setNote] = useState(initial?.note ?? '')
++  const [saved, setSaved] = useState<DailyEntry | null>(null)
+   const week = weekOf(new Date(`${date}T12:00:00`))
+ 
+   useEffect(() => {
+@@ -34,7 +37,8 @@ export function DailyCheckInSheet({ date, initial, onDone, onClose }: Props) {
+   function submit() {
+     const entry = { date, mood, helped, note: note.trim() }
+     saveEntry(entry)
+-    onDone(entry)
++    if (onOpenJournal) setSaved(entry)
++    else onDone(entry)
+   }
+ 
+   const choice = (on: boolean) =>
+@@ -58,6 +62,25 @@ export function DailyCheckInSheet({ date, initial, onDone, onClose }: Props) {
+ 
+         <WeekStrip days={week} selected={date} />
+ 
++        {saved ? (
++          <div className="flex flex-col gap-16" aria-live="polite">
++            <div className="flex items-center gap-12 rounded-[20px] bg-[#FFF1DB] p-16">
++              {saved.mood && <img src={MOOD_FACES[saved.mood - 1]} alt="" className="size-34 shrink-0" />}
++              <div className="min-w-0">
++                <p className="text-style-body text-text-primary">Saved to your Journal</p>
++                <p className="text-style-caption text-text-secondary">Find it under Progress → Journal, where you can change it any time today.</p>
++              </div>
++            </div>
++            <button type="button" onClick={onOpenJournal} className="text-style-body-small u-press h-48 w-full rounded-12 bg-[#331B04] text-text-inverse">
++              Open Journal
++            </button>
++            <button type="button" onClick={() => onDone(saved)} className="text-style-body-small u-press h-44 w-full rounded-12 border border-[#E4E4E4] text-text-primary">
++              Done
++            </button>
++          </div>
++        ) : (
++        <>
++
+         <fieldset className="flex flex-col gap-14">
+           <legend className="text-style-body-small mb-14 text-text-primary">How are you feeling today?</legend>
+           <div className="flex gap-18">
+@@ -111,6 +134,8 @@ export function DailyCheckInSheet({ date, initial, onDone, onClose }: Props) {
+         >
+           Check-in
+         </button>
++        </>
++        )}
+       </div>
+     </div>,
+     document.body,
+diff --git a/src/components/wellness/FeelingProgress.tsx b/src/components/wellness/FeelingProgress.tsx
+index 62b50e7..4bbbc5f 100644
+--- a/src/components/wellness/FeelingProgress.tsx
++++ b/src/components/wellness/FeelingProgress.tsx
+@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom'
+ import type { Journey } from '../../lib/journey'
+ import { FIRST_CHAPTERS, MOOD_LABELS, addJournalNote, feelingSummary, readJourney } from '../../lib/journey'
+ import { findGoal, onboardingAnswers, wearableLabel } from '../../lib/onboarding'
++import { dailyLine, entryTime, readDaily } from '../../lib/dailyCheckIn'
++import { RELEASES } from '../../versions/releases'
+ 
+ const DAY = 24 * 60 * 60_000
+ const REPORT_EVERY_DAYS = 14
+@@ -26,6 +28,8 @@ export function FeelingProgress() {
+   const [open, setOpen] = useState(false)
+   const [note, setNote] = useState('')
+   const [now] = useState(() => Date.now())
++  // U068: the daily check-ins belong in this journal too, not only in the Journal tab.
++  const [daily] = useState(() => (RELEASES.dailyCheckIn ? readDaily() : []))
+   const answers = onboardingAnswers()
+   const wearable = wearableLabel(answers?.wearable)
+ 
+@@ -43,6 +47,19 @@ export function FeelingProgress() {
+         >
+           Create a session
+         </button>
++        {daily.length > 0 && (
++          <div className="mt-8 flex flex-col gap-10 border-t border-border-subtle pt-12">
++            <p className="text-[14px] font-medium leading-[20px] text-text-primary">Your daily check-ins</p>
++            <ul className="flex flex-col gap-10">
++              {[...daily].reverse().map((entry) => (
++                <li key={entry.date} className="flex flex-col gap-2">
++                  <span className="text-[12px] leading-[16px] text-text-secondary">{dateLabel(entryTime(entry))}</span>
++                  <span className="text-[14px] leading-[21px] text-text-primary">{dailyLine(entry)}</span>
++                </li>
++              ))}
++            </ul>
++          </div>
++        )}
+       </div>
+     )
+   }
+@@ -71,6 +88,7 @@ export function FeelingProgress() {
+   const journal = [
+     ...journey.checkIns.filter((c) => c.note).map((c) => ({ at: c.at, text: c.note as string, mood: c.mood })),
+     ...(journey.notes ?? []),
++    ...daily.map((entry) => ({ at: entryTime(entry), text: dailyLine(entry), mood: entry.mood ?? undefined, daily: true })),
+   ].sort((a, b) => b.at - a.at)
+ 
+   return (
+@@ -155,7 +173,7 @@ export function FeelingProgress() {
+               <li key={entry.at} className="flex flex-col gap-2 border-t border-border-subtle pt-10 first:border-t-0 first:pt-0">
+                 <span className="text-[12px] leading-[16px] text-text-secondary">
+                   {dateLabel(entry.at)}
+-                  {entry.mood ? ` · felt ${MOOD_LABELS[entry.mood - 1].toLowerCase()}` : ''}
++                  {'daily' in entry ? ' · daily check-in' : entry.mood ? ` · felt ${MOOD_LABELS[entry.mood - 1].toLowerCase()}` : ''}
+                 </span>
+                 <span className="text-[14px] leading-[21px] text-text-primary">{entry.text}</span>
+               </li>
+diff --git a/src/lib/dailyCheckIn.test.ts b/src/lib/dailyCheckIn.test.ts
+index 4439d34..20327cb 100644
+--- a/src/lib/dailyCheckIn.test.ts
++++ b/src/lib/dailyCheckIn.test.ts
+@@ -1,5 +1,5 @@
+ import { beforeEach, describe, expect, it } from 'vitest'
+-import { DAILY_KEY, dayKey, entryFor, readDaily, saveEntry, weekOf } from './dailyCheckIn'
++import { DAILY_KEY, dailyLine, dayKey, entryFor, readDaily, saveEntry, weekOf } from './dailyCheckIn'
+ 
+ describe('daily check-in', () => {
+   beforeEach(() => localStorage.removeItem(DAILY_KEY))
+@@ -20,6 +20,11 @@ describe('daily check-in', () => {
+     expect(entryFor(readDaily(), today)).toMatchObject({ mood: 5, helped: true, note: 'Slept well' })
+   })
+ 
++  it('reads an entry as one line', () => {
++    expect(dailyLine({ date: '2026-11-13', mood: 5, helped: true, note: 'No bad dreams.' })).toBe('Feeling great! · The session helped · No bad dreams.')
++    expect(dailyLine({ date: '2026-11-13', mood: null, helped: false, note: '' })).toBe('The session did not help')
++  })
++
+   it('ignores a stored value of the wrong shape', () => {
+     localStorage.setItem(DAILY_KEY, '[{"date":"x"}]')
+     expect(readDaily()).toEqual([])
+diff --git a/src/lib/dailyCheckIn.ts b/src/lib/dailyCheckIn.ts
+index d8a925d..0d8b3f1 100644
+--- a/src/lib/dailyCheckIn.ts
++++ b/src/lib/dailyCheckIn.ts
+@@ -67,3 +67,19 @@ export function weekOf(today: Date): WeekDay[] {
+     return { date, label: d.toLocaleDateString('en-GB', { weekday: 'short' }).toUpperCase(), day: d.getDate(), today: date === todayKey, future: date > todayKey }
+   })
+ }
++
++/** One line for a list: "Feeling great! · The session helped · I had no bad dreams." */
++export function dailyLine(entry: DailyEntry) {
++  return [
++    entry.mood ? MOOD_WORDS[entry.mood - 1] : null,
++    entry.helped === null ? null : entry.helped ? 'The session helped' : 'The session did not help',
++    entry.note || null,
++  ]
++    .filter(Boolean)
++    .join(' · ')
++}
++
++/** Midday on the entry's own day, so lists sort it among timestamped notes. */
++export function entryTime(entry: DailyEntry) {
++  return new Date(`${entry.date}T12:00:00`).getTime()
++}
+diff --git a/src/pages/WellnessPage.tsx b/src/pages/WellnessPage.tsx
+index 0d257de..add48d5 100644
+--- a/src/pages/WellnessPage.tsx
++++ b/src/pages/WellnessPage.tsx
+@@ -151,7 +151,10 @@ export function WellnessPage() {
+     v5 ? connectionsForWearable(onboardingAnswers()?.wearable) : defaultConnections(v4),
+   )
+   const [requestOpen, setRequestOpen] = useState(false)
+-  const [tab, setTab] = useState<WellnessTab>('Analytics')
++  // ?tab=journal opens the Journal, which is where the daily check-in sends you (J081).
++  const [tab, setTab] = useState<WellnessTab>(() =>
++    RELEASES.dailyCheckIn && new URLSearchParams(window.location.search).get('tab') === 'journal' ? 'Journal' : 'Analytics',
++  )
+   const [requestSent, setRequestSent] = useState(false)
+   // v2+ (U039): Analytics is the Figma "My Wellness/Analytics" list — one
+   // card per session with its progress, opening the full analysis. v1 keeps
+@@ -208,9 +211,10 @@ export function WellnessPage() {
+             label={v4 ? 'Data sources' : 'Connect'}
+             onClick={() => setTab('Connect')}
+           />
+-          {/* U068: v4+ retired the session "About" page that carries the
+-              Journal in v1–v3, so the daily check-ins live here instead. */}
+-          {v4 && RELEASES.dailyCheckIn && (
++          {/* U068: the daily check-ins, in every version (J081). In v1–v3
++              the session "About" page carries them too, as Figma draws it;
++              v4+ retired that page, so this is their only home there. */}
++          {RELEASES.dailyCheckIn && (
+             <WellnessTabButton active={tab === 'Journal'} icon={<NotebookText size={16} />} label="Journal" onClick={() => setTab('Journal')} />
+           )}
+         </div>
+-- 
+2.43.0
+

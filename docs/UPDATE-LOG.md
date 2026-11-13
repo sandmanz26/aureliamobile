@@ -107,8 +107,32 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U067 | `6085b63` | 2026-11-12 | Explore: Personal journeys shelf, See All and a story page, every version. Staging only (`RELEASES.personalJourneys`). | [patch](patches/U067-6085b63.patch) |
 | U068 | `ae2c156` | 2026-11-13 | Daily check-in sheet after every sign-in + Journal tab (v1–v3 session page, v4+ Progress), every version. **Staging and production** (on request). | [patch](patches/U068-ae2c156.patch) |
 | U069 | `c535dd5` | 2026-11-13 | Player simplified (back, share, play, cue, scrubber; no coin, skips or details sheet), every version. **Staging and production** (on request). | [patch](patches/U069-c535dd5.patch) |
+| U070 | `eee28bc` | 2026-11-13 | Daily check-in findable: "Saved to your Journal · Open Journal", Journal tab on Progress in every version, v5's journal lists check-ins. Staging; production waiting on confirmation. | [patch](patches/U070-eee28bc.patch) |
 
 ## Entries
+
+### U070 — Daily check-ins findable in the Journal
+
+- **Commit:** `eee28bc` · pushed 2026-11-13 UTC · `web_app` + `admin_cms`. `web_prod`: the push was refused by the session's permission check, and is waiting on the owner's confirmation.
+- **Patch:** [patches/U070-eee28bc.patch](patches/U070-eee28bc.patch)
+- **Request:** "saya sudah coba kok tidak muncul di jurnal ya yang daily check in".
+- **Cause:** the check-ins were saved and the Journal tab showed them, but they were easy to miss.
+  - Progress opens on Your goals.
+  - In v5 that tab has an older "Journal" box (journey notes) that did not include them, and before a first build it shows no journal at all.
+  - In v1–v3 the Journal tab was only on the session "About" page.
+- **Changed:**
+  - `DailyCheckInSheet` has a saved state when opened at sign-in: "Saved to your Journal", **Open Journal** (`/wellness?tab=journal`) and **Done**.
+  - `WellnessPage`: the Journal tab is shown in every version, and `?tab=journal` opens it.
+  - `FeelingProgress` (v5) merges the daily check-ins into its journal, tagged "daily check-in". Before a first build it lists them under "Your daily check-ins".
+  - `lib/dailyCheckIn`: `dailyLine` and `entryTime` (+ test).
+- **Verified:**
+  - `npm run check` passes (122 tests).
+  - Staging build, v1, v4 and v5 at 402px:
+    - after a check-in the entry is on Progress → Journal;
+    - in v5 it is also on Your goals;
+    - Open Journal lands on the tab with the entry;
+    - no page errors.
+- **Revert:** `git revert --no-commit eee28bc && git checkout HEAD -- docs/`.
 
 ### U069 — The simplified player
 

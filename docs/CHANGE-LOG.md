@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-13 — Daily check-ins easy to find (U070, J081)
+
+After a check-in the sheet says "Saved to your Journal", with Open Journal. The Journal tab is on Progress in every version, and v5's journal lists the check-ins.
+
+Branches: `web_app`, `admin_cms`. `web_prod` waits on confirmation.
+
 ### 2026-11-13 — Simplified player (U069, J080)
 
 The player is now back, share, play/pause, the guidance line and the progress bar. The coin, the 15-second skips and the details sheet are gone. Every version.

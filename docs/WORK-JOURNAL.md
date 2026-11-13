@@ -138,6 +138,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J078 | 2026-11-12 | Doc | Shared documents: no personal names, no internal ids, plainer wording; `/guide` synced to production | docs only |
 | J079 | 2026-11-13 | Code + Release | Daily check-in after every sign-in, and its Journal, in every version on staging and production | U068 |
 | J080 | 2026-11-13 | Code + Release | Player simplified to the Figma frame, every version, staging and production | U069 |
+| J081 | 2026-11-13 | Code | "Daily check-in does not show in the journal": found and fixed where it was easy to miss (staging; production waiting on confirmation) | U070 |
 
 ---
 
@@ -732,6 +733,15 @@ transcript and the update log. Everything from J018 on was written at the time.
   - four decisions.
 - **Also:** `docs/api/API-CONTRACT.md` §5.12 and `openapi.yaml` gained the study endpoints (now 90 paths, validated).
 - **Open items:** O23 added.
+
+### J081 — "Not in the journal" (U070)
+- **Asked:** the daily check-in did not appear in the journal.
+- **Found:** it was saved and the Journal tab showed it. But Progress opens on Your goals, v5's older journal box there did not list check-ins, and v1–v3 had the Journal only on the session page.
+- **Done:** U070 on staging.
+  - After Check-in the sheet confirms "Saved to your Journal", with Open Journal.
+  - The Journal tab is on Progress in every version.
+  - v5's journal lists the check-ins too.
+- **Production:** the push was refused by the session's permission check. It waits for the owner's explicit go.
 
 ### J080 — Simplified player (U069)
 - **Asked:** simplify the player to Figma 16906:5328, in every version, on staging and production.
