@@ -105,8 +105,41 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U065 | `8002466` | 2026-11-11 | Aurelia branding on every document (logo, gradient, Home's glow, network artwork), strongest on the playbook; `/guide` front page rewritten plainly, without naming a person. On production. | [patch](patches/U065-8002466.patch) |
 | U066 | `0c52d70` | 2026-11-12 | Chat: one Chapter card + Review sheet instead of the fanned deck, every version. Staging only (`RELEASES.chapterCard`). | [patch](patches/U066-0c52d70.patch) |
 | U067 | `6085b63` | 2026-11-12 | Explore: Personal journeys shelf, See All and a story page, every version. Staging only (`RELEASES.personalJourneys`). | [patch](patches/U067-6085b63.patch) |
+| U068 | `ae2c156` | 2026-11-13 | Daily check-in sheet after every sign-in + Journal tab (v1–v3 session page, v4+ Progress), every version. **Staging and production** (on request). | [patch](patches/U068-ae2c156.patch) |
 
 ## Entries
+
+### U068 — Daily check-in and Journal
+
+- **Commit:** `ae2c156` · pushed 2026-11-13 UTC · `web_app` + `admin_cms` + **`web_prod`** (on request: "terapkan ini di semua versi baik staging ataupun production").
+- **Patch:** [patches/U068-ae2c156.patch](patches/U068-ae2c156.patch)
+- **Request:** Figma Daily (16906:5362) and Session/Insights/Journal (16906:5450). "Karena ini masih dummy … setiap user login maka akan muncul seperti itu walaupun hari ini dia sudah login log out login lagi."
+- **Interpretation:**
+  - The sheet opens on every sign-in, even when today is already answered. In that case it opens with today's answers, so a second check-in is an edit, not a duplicate.
+  - It waits out the sign-in screens and v4's onboarding, then opens on the first ordinary screen. It never opens on `/admin`, `/guide` or `/__demo`.
+  - The Journal sits where Figma puts it (the session's "About" tabs) in v1–v3. v4+ retired that page (D5), so there it is a third tab on Progress.
+- **Changed:**
+  - `lib/dailyCheckIn.ts` (+ test):
+    - one entry per local day (`mood` 1–5, `helped` yes/no, `note`) in `aurelia.daily`, through `lib/storage`;
+    - `weekOf`: Monday first, with today and the future marked;
+    - `saveEntry` replaces a day's entry.
+  - `components/daily/`:
+    - `WeekStrip`: the selected day in a white tile with the brand hairline; future days greyed and not selectable;
+    - `DailyCheckInSheet`: five faces (the same artwork as the player feedback), Yes/No, notes, and Check-in, which is disabled until something is answered;
+    - `JournalView`: the week; for the chosen day, three cards with edit, or "Check in now / Add a check-in";
+    - `DailyCheckInGate`: mounted in `App`. It notices `signedIn` turning true by adjusting state during render, with no effect.
+  - `ProgressPage`: a Journal tab between Social Impact and Insights.
+  - `WellnessPage` (v4+): a Journal tab.
+  - `RELEASES.dailyCheckIn = true`.
+- **Verified:**
+  - `npm run check` passes (121 tests).
+  - Staging build at 402px:
+    - v1 and v5 show no sheet before sign-in, and the sheet after sign-in;
+    - answers are saved;
+    - after sign-out and sign-in the sheet is back with the note filled in;
+    - the Journal shows "Feeling great!", "Yes." and the note (v1 on the session page, v5 on Progress);
+    - no overflow, no page errors.
+- **Revert:** `git revert --no-commit ae2c156 && git checkout HEAD -- docs/`, or set `RELEASES.dailyCheckIn` to `false` to hide it.
 
 ### U067 — Personal journeys
 

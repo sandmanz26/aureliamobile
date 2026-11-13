@@ -19,6 +19,17 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-13 — Daily check-in and Journal (U068, J079)
+
+After each sign-in a Daily check-in sheet asks:
+- how the person feels today;
+- whether yesterday's session helped;
+- for an optional note.
+
+A Journal tab shows and edits each day's answers. Every version.
+
+Branches: `web_app`, `admin_cms`, **`web_prod`** (on request).
+
 ### 2026-11-12 — Documents without names (J078)
 
 The shared documents (PRD overview, API contract, admin guideline, playbook and its protocol) no longer name people or cite internal ids, and their wording is plainer.

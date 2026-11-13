@@ -136,6 +136,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J076 | 2026-11-12 | Release + Code | `/guide` kept identical on both sites (production promoted for it); app work staging-only via `RELEASES`; Chapter card + Review sheet and Personal journeys built | U066, U067 |
 | J077 | 2026-11-12 | Question | Staging showed the old deck: the browser was on build `9c8f298` (10 Nov), not `3cba602` | — |
 | J078 | 2026-11-12 | Doc | Shared documents: no personal names, no internal ids, plainer wording; `/guide` synced to production | docs only |
+| J079 | 2026-11-13 | Code + Release | Daily check-in after every sign-in, and its Journal, in every version on staging and production | U068 |
 
 ---
 
@@ -730,6 +731,19 @@ transcript and the update log. Everything from J018 on was written at the time.
   - four decisions.
 - **Also:** `docs/api/API-CONTRACT.md` §5.12 and `openapi.yaml` gained the study endpoints (now 90 paths, validated).
 - **Open items:** O23 added.
+
+### J079 — Daily check-in and Journal (U068)
+- **Asked:**
+  - Apply Figma Daily and Session/Insights/Journal to every version, on staging and production.
+  - Because the app is a demo, the check-in appears on every sign-in, even after logging out and in again the same day.
+- **Done:**
+  - U068 is on both sites.
+  - The sheet opens after each sign-in (after onboarding, in v4+), prefilled when today is answered.
+  - The Journal tab is on the session page (v1–v3) and on Progress (v4+).
+  - Production was fast-forwarded as asked. It also carries U066/U067's code, which stays off there (`RELEASES`).
+- **Open items:**
+  - When accounts exist: once a day per account, not every sign-in.
+  - Whether the Journal should merge with v5's journal notes.
 
 ### J078 — Documents without names or internal ids
 - **Asked:** "harusnya kamu tidak perlu memasukan nama eugene di dokumen supaya tidak aneh, review lagi dokumen nya pastikan mudah dibaca".
