@@ -12,7 +12,7 @@ import type { CoverKey } from './photos'
 import type { SessionRecord } from './sessions'
 import { lineageDate, totalMinutes } from './sessions'
 
-export type ProgressTab = 'chapters' | 'social' | 'insights'
+export type ProgressTab = 'chapters' | 'social' | 'journal' | 'insights'
 
 /** One earlier cut of the session, newest first. */
 export interface Version {

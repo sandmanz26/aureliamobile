@@ -1,4 +1,6 @@
 import { Fragment, useId, useState } from 'react'
+import { JournalView } from '../components/daily/JournalView'
+import { RELEASES } from '../versions/releases'
 import type { ComponentType } from 'react'
 import {
   ArrowLeft,
@@ -13,6 +15,7 @@ import {
   Send,
   Target,
   Users,
+  NotebookText,
 } from 'lucide-react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ChartMediumIcon, NoteIcon } from '../components/ui/AureliaIcons'
@@ -43,6 +46,8 @@ function InsightIcon({ size = 16, className = '' }: { size?: number; className?:
 const TABS: { id: ProgressTab; label: string; icon: TabIcon }[] = [
   { id: 'chapters', label: 'Chapters', icon: ChaptersIcon },
   { id: 'social', label: 'Social Impact', icon: Users },
+  // U068 (Figma 16906:5450): the daily check-ins, between Social Impact and Insights.
+  ...(RELEASES.dailyCheckIn ? [{ id: 'journal' as const, label: 'Journal', icon: NotebookText }] : []),
   { id: 'insights', label: 'Insights', icon: InsightIcon },
 ]
 
@@ -553,6 +558,8 @@ export function ProgressPage() {
           {/* Figma "Frame 97" (16523:19792) — 12 between cards, not 16, and
               each is 16 all round with the glyph 12 from a column that runs
               title, body, date at 8 apart. */}
+          {tab === 'journal' && <JournalView />}
+
           {tab === 'insights' && (
             <div className="flex flex-col gap-12">
               {progress.insights.map((insight) => (

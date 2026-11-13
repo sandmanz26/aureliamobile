@@ -1,5 +1,7 @@
 import { createPortal } from 'react-dom'
-import { ChartPie, ChevronRight, Link2, Menu, X } from 'lucide-react'
+import { ChartPie, ChevronRight, Link2, Menu, NotebookText, X } from 'lucide-react'
+import { JournalView } from '../components/daily/JournalView'
+import { RELEASES } from '../versions/releases'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageMeta } from '../components/PageMeta'
@@ -16,7 +18,7 @@ import { CARD_SHADOW } from '../lib/shadows'
 import { WELLNESS_GOALS } from '../lib/wellnessGoals'
 import { CoinPill } from '../components/ui/CoinPill'
 
-type WellnessTab = 'Analytics' | 'Connect'
+type WellnessTab = 'Analytics' | 'Connect' | 'Journal'
 
 /** The tab pill above the tab content — a standalone button per option
  *  (dark fill when active, outline when not), not the shared
@@ -206,7 +208,18 @@ export function WellnessPage() {
             label={v4 ? 'Data sources' : 'Connect'}
             onClick={() => setTab('Connect')}
           />
+          {/* U068: v4+ retired the session "About" page that carries the
+              Journal in v1–v3, so the daily check-ins live here instead. */}
+          {v4 && RELEASES.dailyCheckIn && (
+            <WellnessTabButton active={tab === 'Journal'} icon={<NotebookText size={16} />} label="Journal" onClick={() => setTab('Journal')} />
+          )}
         </div>
+
+        {tab === 'Journal' && (
+          <div className="mt-24">
+            <JournalView />
+          </div>
+        )}
 
         {/* v5 (U053): their own check-ins in words, not the sample analyses. */}
         {tab === 'Analytics' && v5 && <FeelingProgress />}

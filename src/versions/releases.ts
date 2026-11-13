@@ -18,4 +18,6 @@ export const RELEASES = {
   chapterCard: onStagingOnly,
   /** Figma item 2: Personal journeys on Explore, and the story page (16906:8333). */
   personalJourneys: onStagingOnly,
+  /** Figma Daily (16906:5362) + Journal (16906:5450). On both sites: the owner asked for staging and production (J079). */
+  dailyCheckIn: true,
 } as const

@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { RELEASES } from './versions/releases'
+import { DailyCheckInGate } from './components/daily/DailyCheckInGate'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { StagingBar } from './versions/StagingBar'
 import { AdminLayout } from './admin/AdminLayout'
@@ -520,6 +521,8 @@ export default function App() {
         {/* Offline note and new-build prompt (U049) — render nothing normally. */}
         <OfflineBanner />
         <UpdatePrompt />
+        {/* U068: the daily check-in after each sign-in. */}
+        <DailyCheckInGate />
         {/* /__demo's "Review annotations" — renders nothing unless switched on there. */}
         <DemoAnnotator />
         {/* /__demo's "Click insights" — records taps; ?heatmap draws them back. */}
