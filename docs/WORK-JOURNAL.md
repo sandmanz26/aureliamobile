@@ -51,6 +51,8 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O21 | **Well-being outcomes are a proposal on sample data** (U056): (1) confirm WHO-5 as the measure, and when the app asks it (start + every two weeks); (2) backend to store assessments, check-ins and wearable readings per user; (3) Compliance wording before any outcome is shown to users or partners; (4) who owns the follow-up for WHO-5 ≤ 28, and how; (5) storybook stories for the taller `ChatComposer`; (6) production gets U056 only when asked | J054, U056 | Product owner + Eugene; backend; compliance |
 | O22 | **API contract decisions** (J061, `docs/api/API-CONTRACT.md` §11): confirm the contract's own decisions (persistence, builds-based limit, one version model, integers + formatting, provenance); free-plan N and Plus/Pro; AI cost posture (Opus 5.5 on every route vs a cheaper model after evals); TTS, sound, visual and STT vendors; data residency and AI retention; safety policy with clinical review; payment provider and coin table; WHO-5; hosting | J061 | Product owner + Eugene; legal; engineering |
 | O23 | **Feedback-group study (J062, J064)** — on staging since U060 and on production since U061 (sample data), as two versions for review: (1) which version (or which parts of each) to keep, and approve the design and pass lines before week 0; (2) recruitment and incentive; (3) clinical advisor + ethics review, and instrument licensing (ISI, PSS-10 for commercial use); (4) start date, which needs D2 persistence, study enrolment and consent, questionnaire screens, events and a safety alert (API §5.12); (5) ~~production now or with the study~~ — on production since U061; (6) the project manager's name and start date (J067); (7) ~~U062 to production~~ — done in U064; (8) the coaching log is per browser until the backend | J062, U058, U060, U062 | Product owner + Eugene; clinical advisor |
+| O24 | **Insight Timer study recommendations for v1 (J089)**: (1) a "Need help now?" crisis link, (2) daily check-in at most once a day, skippable, (3) topic words as starting points, (4) rewind/resume never paid, (5) "made with AI" said plainly; also a public explainer of the causal graph | J089, `docs/reviews/insight-timer-replica-2026-11-13.html` | Product owner: pick which go into v1 |
+| O25 | **Owner requests not started (J088)**: playbook rewritten simpler and inspiring; the 2025 backend/AI documents (Technical Architecture Deep Dive, second Google Doc, Notion wiki, diagram) merged into /guide as a black-branded tab and aligned with the API contract; AI speed/quality appendix and the final design system in Product requirements; desktop main menu as a narrow icon rail; buyer-agents test of v1 | J088 | Access to the three sources and the diagram; go-ahead per item |
 
 ---
 
@@ -145,6 +147,8 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J085 | 2026-11-13 | Code + Release | v3 still showed the Journal on My Wellness: a cached pre-U072 build; plus a long note overflowing its card, fixed | U073 |
 | J086 | 2026-11-13 | Code | "Ada bug di UI": the Journal note overflow again (production lacks U073); a wrapping fallback added | U074 |
 | J087 | 2026-11-13 | Code + Release | Production remapped to three versions (v1 = staging v3, v2 = staging v4, v3 = staging v5), opening on v3; production updated | U075 |
+| J088 | 2026-11-13 | Question | The owner's new requests read and summarised, nothing done yet: playbook tone, Insight Timer replica, buyer agents, the 2025 backend docs into /guide, AI speed/quality research, design system, main-menu rail | — |
+| J089 | 2026-11-13 | Research | Insight Timer replica study, agent-run: every public feature mapped to Aurelia v1, 2,000 App Store reviews ranked; report in `docs/reviews/` | — |
 
 ---
 
@@ -988,3 +992,31 @@ transcript and the update log. Everything from J018 on was written at the time.
 - **Done:** U059. The admin section is behind its flag, off by default, so it is gone from the menu and its URL shows the guard page. The code stays, and it comes back with one switch.
 - **Not hidden** (documents, not the app): the protocol PDF in `docs/reviews/` and the study endpoints in the API contract.
 - **Open items:** O23 now marked as waiting on the owner's go.
+
+### J088 — The owner's new requests, understood first
+- **Asked:** read the owner's messages and three source links (two Google Docs, the Notion wiki) and understand them; do nothing yet.
+- **Understood:** seven asks.
+  1. Playbook language simpler, playful and inspiring.
+  2. An Insight Timer replica study run by agents, not by hand.
+  3. A buyer-agents test of version 1, with a report.
+  4. The 2025 backend and AI system (already designed and coded) brought into /guide as a new tab beside the API contract, with a black logo and the owner's diagram, so 2025 and 2026 read as one story.
+  5. An AI research appendix in Product requirements: speed and quality goals for the backend.
+  6. The final design system in Product requirements.
+  7. The desktop main menu as a narrow icon rail.
+  The link between the product's "Lego" changes and the causal graph (the State-Flip film) is the thread that joins them.
+- **Blocked:** the Google Docs and Notion are not readable from the session; they need an export or a public link, plus the diagram file. Recorded as O25.
+
+### J089 — Insight Timer replica study
+- **Asked:** explore insighttimer.com and research what Aurelia can learn from all its features.
+- **Done:** replica-skill's recon and entrepreneur steps, run by the agent; public pages and Apple's official reviews feed only, no account and no app code. Sources:
+  - 11 pages of the website;
+  - the App Store listing;
+  - 2,000 reviews (the latest 500 each from US, GB, AU and CA, 2022-03 to 2026-11).
+  The skill's own Python could not be run here, so the ranking used an equivalent script of our own, kept beside the evidence.
+- **Found:**
+  - Insight Timer's "Map of Healing" publicly tells the story of Aurelia's causal graph.
+  - Its 1–2 star share rose from 9% (2022) to 23% (2025), driven by questions before listening, a paywall on rewind and streak pop-ups.
+  - Aurelia's daily check-in on every sign-in is the same pattern.
+  - The consumer app has no crisis-help link.
+- **Report:** `docs/reviews/insight-timer-replica-2026-11-13.html`. Evidence, review CSV and scripts are in the folder of the same name.
+- **Open items:** O24 (which recommendations go into v1).

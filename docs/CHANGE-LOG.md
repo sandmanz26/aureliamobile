@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-13 — Insight Timer replica study (J089)
+
+Research only, no app change: `docs/reviews/insight-timer-replica-2026-11-13.html`, plus its evidence (2,000 App Store reviews, the ranking and build scripts) in the folder of the same name.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-13 — Production's three versions (U075, J087)
 
 Production now offers three versions:
