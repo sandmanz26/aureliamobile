@@ -25,7 +25,7 @@ export function JournalView() {
     <div className={`flex gap-12 rounded-[20px] bg-surface-default px-16 py-16 ${tall ? 'min-h-[156px]' : ''}`} style={{ boxShadow: CARD_SHADOW }}>
       <div className="min-w-0 flex-1">
         <p className="text-style-caption text-text-secondary">{label}</p>
-        <p className="text-style-body mt-4 whitespace-pre-line text-text-primary">{value}</p>
+        <p className="text-style-body mt-4 whitespace-pre-line [overflow-wrap:anywhere] text-text-primary">{value}</p>
       </div>
       {extra}
       <button type="button" aria-label={`Edit: ${label}`} onClick={() => setEditing(true)} className="u-press -mr-4 flex size-28 shrink-0 items-center justify-center self-start rounded-8 text-icon-strong">
