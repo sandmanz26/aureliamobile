@@ -194,7 +194,7 @@ export const UI_VERSIONS: UiVersion[] = [
       },
       {
         group: 'Good to know',
-        items: ['Includes everything in Version 4.', 'Production stays on v4 until v5 is approved.'],
+        items: ['Includes everything in Version 4.', 'On production as Version 3, the default since 13 Nov 2026.'],
       },
     ],
   },
@@ -203,37 +203,47 @@ export const UI_VERSIONS: UiVersion[] = [
 const KEY = 'aurelia.ui.version'
 
 /**
- * The one design version production shows. No picker there.
- * v2 since U020; v4 since U052 (on request, 2026-10-27).
+ * The design version a production visitor sees until they pick one.
+ * v2 since U020; v4 since U052; **v5 since U075** (on request, 2026-11-13).
  */
-export const PRODUCTION_VERSION = 4
+export const PRODUCTION_VERSION = 5
 
 export const IS_PRODUCTION = BUILD.environment === 'production'
 
 /**
- * Production's own short list (U055, on request): two versions, numbered for
- * production and mapped to the staging version each one shows. `ui` is the
- * staging id — what `data-ui-version`, `useUiVersion()` and the stored choice
- * hold — so production v1 is staging v4 and production v2 is staging v5.
+ * Production's own short list, numbered for production and mapped to the
+ * staging version each one shows. `ui` is the staging id — what
+ * `data-ui-version`, `useUiVersion()` and the stored choice hold.
+ * U055: v1 = staging v4, v2 = staging v5. U075 (on request, 2026-11-13):
+ * three versions, oldest first — v1 = staging v3, v2 = staging v4,
+ * v3 = staging v5 (the default). A stored choice keeps its staging id, so a
+ * browser that had picked the old "prod v2" (staging 5) is now on prod v3.
  * Change the mapping here; nothing else knows production's numbers.
  */
 export const PRODUCTION_VERSIONS: (UiVersion & { ui: number })[] = [
   {
     id: 1,
-    ui: 4,
+    ui: 3,
     name: 'Version 1',
-    summary: 'Aurelia as it is today: onboarding, a first session built from your own words, a check-in after each chapter, and four tabs.',
-    changes: [{ group: 'Good to know', items: ['This is what everyone sees unless they switch.', 'Same as staging v4.'] }],
+    summary: 'Aurelia before onboarding and the bottom tabs: the drawer menu, the chat with its change summary, and every build kept in the conversation.',
+    changes: [{ group: 'Good to know', items: ['The earliest design still offered, kept to compare against.', 'Same as staging v3.'] }],
   },
   {
     id: 2,
-    ui: 5,
+    ui: 4,
     name: 'Version 2',
+    summary: 'Onboarding, a first session built from your own words, a five-chapter journey, and four tabs at the bottom.',
+    changes: [{ group: 'Good to know', items: ['Includes everything in Version 1.', 'Same as staging v4.'] }],
+  },
+  {
+    id: 3,
+    ui: 5,
+    name: 'Version 3',
     summary:
-      'Everything in v1, reworked after the first three user interviews: progress in words instead of scores, the reason behind every suggestion, an optional journal, your wearable asked for up front, and a community about stories rather than rankings.',
+      'Everything in v2, reworked after the first three user interviews: progress in words instead of scores, the reason behind every suggestion, an optional journal, your wearable asked for up front, and a community about stories rather than rankings.',
     changes: [
       ...(UI_VERSIONS.find((v) => v.id === 5)?.changes ?? []).filter((c) => c.group !== 'Good to know'),
-      { group: 'Good to know', items: ['Includes everything in Version 1.', 'Same as staging v5.'] },
+      { group: 'Good to know', items: ['What everyone sees unless they switch.', 'Includes everything in Version 2.', 'Same as staging v5.'] },
     ],
   },
 ]
