@@ -111,8 +111,18 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U071 | `6303583` | 2026-11-13 | My Wellness → Analytics → analysis page to Figma 16906:5168 (mood-face chart, What helped me list, no Next chapter), v1–v4. Staging and production (on request). | [patch](patches/U071-6303583.patch) |
 | U072 | `811a444` | 2026-11-13 | Journal moved to the session's About page (back in every version, titled About); out of Progress. Chapter card and Personal journeys switched on for production. Staging and production. | [patch](patches/U072-811a444.patch) |
 | U073 | `5e73eaf` | 2026-11-13 | Journal cards wrap a long unbroken note instead of running past the card. Staging; production waiting on confirmation. | [patch](patches/U073-5e73eaf.patch) |
+| U074 | `168c32d` | 2026-11-13 | Journal note wrapping: `word-break: break-word` fallback beside `overflow-wrap: anywhere` (older Safari). Staging; production waiting on confirmation. | [patch](patches/U074-168c32d.patch) |
 
 ## Entries
+
+### U074 — Wrapping fallback
+
+- **Commit:** `168c32d` · pushed 2026-11-13 UTC · `web_app` + `admin_cms`. `web_prod` is waiting on the owner's go (with U073).
+- **Patch:** [patches/U074-168c32d.patch](patches/U074-168c32d.patch)
+- **Request:** "ada bug di UI ya". The same overflow as J085, seen again, most likely on production, which does not have U073 yet, or on a cached build.
+- **Changed:** `JournalView` card values also get `break-words` and `word-break: break-word`, so the note wraps where `overflow-wrap: anywhere` is unsupported (Safari before 15.4).
+- **Verified:** `npm run check` passes (122 tests). Staging build, v3 at 402px: the note wraps (text ends at 330, card at 382).
+- **Revert:** `git revert --no-commit 168c32d && git checkout HEAD -- docs/`.
 
 ### U073 — Long notes wrap in the Journal
 

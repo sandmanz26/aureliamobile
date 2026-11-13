@@ -143,6 +143,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J083 | 2026-11-13 | Question + Code + Release | Summary of every change and its status; then Journal moved to About as in Figma, and every release switched on for production (v5 left as is) | U072 |
 | J084 | 2026-11-13 | Question | Version map: staging v1–v5 against production v1/v2, and the changes on every version | — |
 | J085 | 2026-11-13 | Code + Release | v3 still showed the Journal on My Wellness: a cached pre-U072 build; plus a long note overflowing its card, fixed | U073 |
+| J086 | 2026-11-13 | Code | "Ada bug di UI": the Journal note overflow again (production lacks U073); a wrapping fallback added | U074 |
 
 ---
 
@@ -737,6 +738,13 @@ transcript and the update log. Everything from J018 on was written at the time.
   - four decisions.
 - **Also:** `docs/api/API-CONTRACT.md` §5.12 and `openapi.yaml` gained the study endpoints (now 90 paths, validated).
 - **Open items:** O23 added.
+
+### J086 — "Ada bug di UI" (U074)
+- **Asked:** a screenshot of About → Journal with the long note running out of its card.
+- **Answer:**
+  - U073 fixed this on staging. Production (`d44b579`) does not have it, because that push was refused pending the owner's go.
+  - U074 adds a fallback for older Safari.
+- **Waiting on:** the owner's go to ship U073 and U074 to production.
 
 ### J085 — "v3 still looks like this" (U073)
 - **Asked:** on v3 the Journal still sat on My Wellness. Check the way to the results matches Figma.
