@@ -1,0 +1,112 @@
+[
+ {
+  "id": "B071",
+  "name": "Kofi",
+  "age": 36,
+  "segment": "High earner, already pays for wellness",
+  "income": 138000,
+  "behaviour": "Sleep-first",
+  "behaviour_how": "Only opens a wellness app at bedtime, mostly for sleep sounds or stories.",
+  "habit": "you have a stressful meeting or deadline most weeks",
+  "objection": "Another subscription I'll forget to use"
+ },
+ {
+  "id": "B072",
+  "name": "Marco",
+  "age": 27,
+  "segment": "High earner, already pays for wellness",
+  "income": 167000,
+  "behaviour": "Lapsed subscriber",
+  "behaviour_how": "Paid for Calm or Headspace once, stopped using it after a month, cancelled.",
+  "habit": "you track your sleep score every morning",
+  "objection": "I don't want an app asking me questions every day"
+ },
+ {
+  "id": "B073",
+  "name": "Ravi",
+  "age": 31,
+  "segment": "High earner, already pays for wellness",
+  "income": 145000,
+  "behaviour": "Free-app loyalist",
+  "behaviour_how": "Uses free meditation apps or YouTube and has never paid for one.",
+  "habit": "you lie awake most weeknights scrolling your phone",
+  "objection": "I already have free apps and YouTube for this"
+ },
+ {
+  "id": "B074",
+  "name": "Hana",
+  "age": 33,
+  "segment": "Parent juggling work and kids",
+  "income": 98000,
+  "behaviour": "Therapy-adjacent",
+  "behaviour_how": "Sees or has seen a therapist and uses apps between sessions.",
+  "habit": "your commute is 40 minutes each way with headphones on",
+  "objection": "Another subscription I'll forget to use"
+ },
+ {
+  "id": "B075",
+  "name": "Nadia",
+  "age": 43,
+  "segment": "Stretched professional",
+  "income": 58000,
+  "behaviour": "Lapsed subscriber",
+  "behaviour_how": "Paid for Calm or Headspace once, stopped using it after a month, cancelled.",
+  "habit": "you lie awake most weeknights scrolling your phone",
+  "objection": "I don't want to type how I feel when I already feel bad"
+ },
+ {
+  "id": "B076",
+  "name": "Sam",
+  "age": 34,
+  "segment": "Stretched professional",
+  "income": 96000,
+  "behaviour": "Therapy-adjacent",
+  "behaviour_how": "Sees or has seen a therapist and uses apps between sessions.",
+  "habit": "you lie awake most weeknights scrolling your phone",
+  "objection": "Will it actually help, or is it a gimmick?"
+ },
+ {
+  "id": "B077",
+  "name": "Paolo",
+  "age": 41,
+  "segment": "Parent juggling work and kids",
+  "income": 100000,
+  "behaviour": "Sceptic of AI",
+  "behaviour_how": "Distrusts AI-made content, especially for anything about mental health.",
+  "habit": "your commute is 40 minutes each way with headphones on",
+  "objection": "I don't want an app asking me questions every day"
+ },
+ {
+  "id": "B078",
+  "name": "Kai",
+  "age": 44,
+  "segment": "Parent juggling work and kids",
+  "income": 70000,
+  "behaviour": "Free-app loyalist",
+  "behaviour_how": "Uses free meditation apps or YouTube and has never paid for one.",
+  "habit": "you have a stressful meeting or deadline most weeks",
+  "objection": "I don't want an app asking me questions every day"
+ },
+ {
+  "id": "B079",
+  "name": "Victor",
+  "age": 40,
+  "segment": "Early-career, tight budget",
+  "income": 32000,
+  "behaviour": "Quantified self",
+  "behaviour_how": "Wears an Oura ring or Apple Watch and likes to see data change.",
+  "habit": "you journal now and then but never keep it up",
+  "objection": "Will it actually help, or is it a gimmick?"
+ },
+ {
+  "id": "B080",
+  "name": "Beatriz",
+  "age": 45,
+  "segment": "Parent juggling work and kids",
+  "income": 54000,
+  "behaviour": "Free-app loyalist",
+  "behaviour_how": "Uses free meditation apps or YouTube and has never paid for one.",
+  "habit": "you journal now and then but never keep it up",
+  "objection": "Will it actually help, or is it a gimmick?"
+ }
+]

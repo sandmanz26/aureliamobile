@@ -1,0 +1,112 @@
+[
+ {
+  "id": "B041",
+  "name": "Rafael",
+  "age": 33,
+  "segment": "Stretched professional",
+  "income": 73000,
+  "behaviour": "Lapsed subscriber",
+  "behaviour_how": "Paid for Calm or Headspace once, stopped using it after a month, cancelled.",
+  "habit": "your commute is 40 minutes each way with headphones on",
+  "objection": "I don't want to type how I feel when I already feel bad"
+ },
+ {
+  "id": "B042",
+  "name": "Hugo",
+  "age": 29,
+  "segment": "Parent juggling work and kids",
+  "income": 98000,
+  "behaviour": "Quantified self",
+  "behaviour_how": "Wears an Oura ring or Apple Watch and likes to see data change.",
+  "habit": "you journal now and then but never keep it up",
+  "objection": "What happens to what I tell it about my mental state?"
+ },
+ {
+  "id": "B043",
+  "name": "Aria",
+  "age": 33,
+  "segment": "Stretched professional",
+  "income": 81000,
+  "behaviour": "Free-app loyalist",
+  "behaviour_how": "Uses free meditation apps or YouTube and has never paid for one.",
+  "habit": "you track your sleep score every morning",
+  "objection": "Will it actually help, or is it a gimmick?"
+ },
+ {
+  "id": "B044",
+  "name": "Caleb",
+  "age": 43,
+  "segment": "Early-career, tight budget",
+  "income": 41000,
+  "behaviour": "Sceptic of AI",
+  "behaviour_how": "Distrusts AI-made content, especially for anything about mental health.",
+  "habit": "you have a stressful meeting or deadline most weeks",
+  "objection": "I already have free apps and YouTube for this"
+ },
+ {
+  "id": "B045",
+  "name": "Oscar",
+  "age": 33,
+  "segment": "Stretched professional",
+  "income": 59000,
+  "behaviour": "Sleep-first",
+  "behaviour_how": "Only opens a wellness app at bedtime, mostly for sleep sounds or stories.",
+  "habit": "you journal now and then but never keep it up",
+  "objection": "AI-made meditation sounds generic or a bit creepy"
+ },
+ {
+  "id": "B046",
+  "name": "Sana",
+  "age": 38,
+  "segment": "Stretched professional",
+  "income": 113000,
+  "behaviour": "Quantified self",
+  "behaviour_how": "Wears an Oura ring or Apple Watch and likes to see data change.",
+  "habit": "you have a stressful meeting or deadline most weeks",
+  "objection": "I already have free apps and YouTube for this"
+ },
+ {
+  "id": "B047",
+  "name": "Arjun",
+  "age": 45,
+  "segment": "Early-career, tight budget",
+  "income": 30000,
+  "behaviour": "Tries new apps",
+  "behaviour_how": "Downloads new wellness and AI apps early and talks about them.",
+  "habit": "you have a stressful meeting or deadline most weeks",
+  "objection": "I already have free apps and YouTube for this"
+ },
+ {
+  "id": "B048",
+  "name": "Hiro",
+  "age": 44,
+  "segment": "Stretched professional",
+  "income": 111000,
+  "behaviour": "Therapy-adjacent",
+  "behaviour_how": "Sees or has seen a therapist and uses apps between sessions.",
+  "habit": "you lie awake most weeknights scrolling your phone",
+  "objection": "I don't want to type how I feel when I already feel bad"
+ },
+ {
+  "id": "B049",
+  "name": "Isla",
+  "age": 28,
+  "segment": "Early-career, tight budget",
+  "income": 40000,
+  "behaviour": "Free-app loyalist",
+  "behaviour_how": "Uses free meditation apps or YouTube and has never paid for one.",
+  "habit": "you have a stressful meeting or deadline most weeks",
+  "objection": "Will it actually help, or is it a gimmick?"
+ },
+ {
+  "id": "B050",
+  "name": "Noor",
+  "age": 38,
+  "segment": "Parent juggling work and kids",
+  "income": 105000,
+  "behaviour": "Free-app loyalist",
+  "behaviour_how": "Uses free meditation apps or YouTube and has never paid for one.",
+  "habit": "you have a stressful meeting or deadline most weeks",
+  "objection": "Will it actually help, or is it a gimmick?"
+ }
+]

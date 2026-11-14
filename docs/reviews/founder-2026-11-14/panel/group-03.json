@@ -1,0 +1,112 @@
+[
+ {
+  "id": "B021",
+  "name": "Leah",
+  "age": 26,
+  "segment": "Early-career, tight budget",
+  "income": 35000,
+  "behaviour": "Sceptic of AI",
+  "behaviour_how": "Distrusts AI-made content, especially for anything about mental health.",
+  "habit": "you have a stressful meeting or deadline most weeks",
+  "objection": "I already have free apps and YouTube for this"
+ },
+ {
+  "id": "B022",
+  "name": "Amara",
+  "age": 28,
+  "segment": "Stretched professional",
+  "income": 88000,
+  "behaviour": "Lapsed subscriber",
+  "behaviour_how": "Paid for Calm or Headspace once, stopped using it after a month, cancelled.",
+  "habit": "you track your sleep score every morning",
+  "objection": "I already have free apps and YouTube for this"
+ },
+ {
+  "id": "B023",
+  "name": "Owen",
+  "age": 27,
+  "segment": "Early-career, tight budget",
+  "income": 40000,
+  "behaviour": "Therapy-adjacent",
+  "behaviour_how": "Sees or has seen a therapist and uses apps between sessions.",
+  "habit": "you track your sleep score every morning",
+  "objection": "Will it actually help, or is it a gimmick?"
+ },
+ {
+  "id": "B024",
+  "name": "Talia",
+  "age": 44,
+  "segment": "Stretched professional",
+  "income": 88000,
+  "behaviour": "Free-app loyalist",
+  "behaviour_how": "Uses free meditation apps or YouTube and has never paid for one.",
+  "habit": "you journal now and then but never keep it up",
+  "objection": "I don't want to type how I feel when I already feel bad"
+ },
+ {
+  "id": "B025",
+  "name": "Andre",
+  "age": 39,
+  "segment": "Stretched professional",
+  "income": 88000,
+  "behaviour": "Lapsed subscriber",
+  "behaviour_how": "Paid for Calm or Headspace once, stopped using it after a month, cancelled.",
+  "habit": "you put kids to bed at 8 and finally have an hour to yourself",
+  "objection": "Will it actually help, or is it a gimmick?"
+ },
+ {
+  "id": "B026",
+  "name": "Aisha",
+  "age": 32,
+  "segment": "Early-career, tight budget",
+  "income": 47000,
+  "behaviour": "Sceptic of AI",
+  "behaviour_how": "Distrusts AI-made content, especially for anything about mental health.",
+  "habit": "you have a stressful meeting or deadline most weeks",
+  "objection": "Will it actually help, or is it a gimmick?"
+ },
+ {
+  "id": "B027",
+  "name": "Mei",
+  "age": 31,
+  "segment": "Stretched professional",
+  "income": 110000,
+  "behaviour": "Lapsed subscriber",
+  "behaviour_how": "Paid for Calm or Headspace once, stopped using it after a month, cancelled.",
+  "habit": "your commute is 40 minutes each way with headphones on",
+  "objection": "Another subscription I'll forget to use"
+ },
+ {
+  "id": "B028",
+  "name": "Lina",
+  "age": 28,
+  "segment": "Stretched professional",
+  "income": 81000,
+  "behaviour": "Free-app loyalist",
+  "behaviour_how": "Uses free meditation apps or YouTube and has never paid for one.",
+  "habit": "you have a stressful meeting or deadline most weeks",
+  "objection": "I already have free apps and YouTube for this"
+ },
+ {
+  "id": "B029",
+  "name": "Chloe",
+  "age": 32,
+  "segment": "Stretched professional",
+  "income": 83000,
+  "behaviour": "Lapsed subscriber",
+  "behaviour_how": "Paid for Calm or Headspace once, stopped using it after a month, cancelled.",
+  "habit": "your commute is 40 minutes each way with headphones on",
+  "objection": "I don't want an app asking me questions every day"
+ },
+ {
+  "id": "B030",
+  "name": "Ben",
+  "age": 34,
+  "segment": "High earner, already pays for wellness",
+  "income": 198000,
+  "behaviour": "Tries new apps",
+  "behaviour_how": "Downloads new wellness and AI apps early and talks about them.",
+  "habit": "your commute is 40 minutes each way with headphones on",
+  "objection": "I don't want an app asking me questions every day"
+ }
+]

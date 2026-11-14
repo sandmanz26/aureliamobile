@@ -1,0 +1,112 @@
+[
+ {
+  "id": "B091",
+  "name": "Ji-woo",
+  "age": 41,
+  "segment": "Parent juggling work and kids",
+  "income": 49000,
+  "behaviour": "Lapsed subscriber",
+  "behaviour_how": "Paid for Calm or Headspace once, stopped using it after a month, cancelled.",
+  "habit": "you journal now and then but never keep it up",
+  "objection": "Another subscription I'll forget to use"
+ },
+ {
+  "id": "B092",
+  "name": "Ava",
+  "age": 33,
+  "segment": "Early-career, tight budget",
+  "income": 50000,
+  "behaviour": "Therapy-adjacent",
+  "behaviour_how": "Sees or has seen a therapist and uses apps between sessions.",
+  "habit": "you have a stressful meeting or deadline most weeks",
+  "objection": "AI-made meditation sounds generic or a bit creepy"
+ },
+ {
+  "id": "B093",
+  "name": "Daniel",
+  "age": 31,
+  "segment": "Stretched professional",
+  "income": 70000,
+  "behaviour": "Free-app loyalist",
+  "behaviour_how": "Uses free meditation apps or YouTube and has never paid for one.",
+  "habit": "you journal now and then but never keep it up",
+  "objection": "Another subscription I'll forget to use"
+ },
+ {
+  "id": "B094",
+  "name": "Marcus",
+  "age": 40,
+  "segment": "Early-career, tight budget",
+  "income": 51000,
+  "behaviour": "Therapy-adjacent",
+  "behaviour_how": "Sees or has seen a therapist and uses apps between sessions.",
+  "habit": "you lie awake most weeknights scrolling your phone",
+  "objection": "Another subscription I'll forget to use"
+ },
+ {
+  "id": "B095",
+  "name": "Lucia",
+  "age": 34,
+  "segment": "Stretched professional",
+  "income": 105000,
+  "behaviour": "Tries new apps",
+  "behaviour_how": "Downloads new wellness and AI apps early and talks about them.",
+  "habit": "you track your sleep score every morning",
+  "objection": "I don't want an app asking me questions every day"
+ },
+ {
+  "id": "B096",
+  "name": "Elena",
+  "age": 45,
+  "segment": "Stretched professional",
+  "income": 68000,
+  "behaviour": "Tries new apps",
+  "behaviour_how": "Downloads new wellness and AI apps early and talks about them.",
+  "habit": "you track your sleep score every morning",
+  "objection": "AI-made meditation sounds generic or a bit creepy"
+ },
+ {
+  "id": "B097",
+  "name": "Grace",
+  "age": 35,
+  "segment": "Parent juggling work and kids",
+  "income": 62000,
+  "behaviour": "Sceptic of AI",
+  "behaviour_how": "Distrusts AI-made content, especially for anything about mental health.",
+  "habit": "you journal now and then but never keep it up",
+  "objection": "I don't want an app asking me questions every day"
+ },
+ {
+  "id": "B098",
+  "name": "Olivia",
+  "age": 34,
+  "segment": "Early-career, tight budget",
+  "income": 45000,
+  "behaviour": "Lapsed subscriber",
+  "behaviour_how": "Paid for Calm or Headspace once, stopped using it after a month, cancelled.",
+  "habit": "your commute is 40 minutes each way with headphones on",
+  "objection": "I already have free apps and YouTube for this"
+ },
+ {
+  "id": "B099",
+  "name": "Noah",
+  "age": 40,
+  "segment": "Stretched professional",
+  "income": 59000,
+  "behaviour": "Free-app loyalist",
+  "behaviour_how": "Uses free meditation apps or YouTube and has never paid for one.",
+  "habit": "you have a stressful meeting or deadline most weeks",
+  "objection": "I don't want an app asking me questions every day"
+ },
+ {
+  "id": "B100",
+  "name": "Iris",
+  "age": 28,
+  "segment": "Early-career, tight budget",
+  "income": 47000,
+  "behaviour": "Free-app loyalist",
+  "behaviour_how": "Uses free meditation apps or YouTube and has never paid for one.",
+  "habit": "you journal now and then but never keep it up",
+  "objection": "Another subscription I'll forget to use"
+ }
+]

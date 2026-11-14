@@ -1,0 +1,112 @@
+[
+ {
+  "id": "B011",
+  "name": "Malik",
+  "age": 33,
+  "segment": "Stretched professional",
+  "income": 69000,
+  "behaviour": "Free-app loyalist",
+  "behaviour_how": "Uses free meditation apps or YouTube and has never paid for one.",
+  "habit": "you track your sleep score every morning",
+  "objection": "AI-made meditation sounds generic or a bit creepy"
+ },
+ {
+  "id": "B012",
+  "name": "Mira",
+  "age": 43,
+  "segment": "Stretched professional",
+  "income": 76000,
+  "behaviour": "Tries new apps",
+  "behaviour_how": "Downloads new wellness and AI apps early and talks about them.",
+  "habit": "you track your sleep score every morning",
+  "objection": "Another subscription I'll forget to use"
+ },
+ {
+  "id": "B013",
+  "name": "Leila",
+  "age": 29,
+  "segment": "Early-career, tight budget",
+  "income": 30000,
+  "behaviour": "Free-app loyalist",
+  "behaviour_how": "Uses free meditation apps or YouTube and has never paid for one.",
+  "habit": "you journal now and then but never keep it up",
+  "objection": "I don't want to type how I feel when I already feel bad"
+ },
+ {
+  "id": "B014",
+  "name": "Freya",
+  "age": 39,
+  "segment": "Parent juggling work and kids",
+  "income": 88000,
+  "behaviour": "Sceptic of AI",
+  "behaviour_how": "Distrusts AI-made content, especially for anything about mental health.",
+  "habit": "you track your sleep score every morning",
+  "objection": "Another subscription I'll forget to use"
+ },
+ {
+  "id": "B015",
+  "name": "Theo",
+  "age": 41,
+  "segment": "Stretched professional",
+  "income": 63000,
+  "behaviour": "Quantified self",
+  "behaviour_how": "Wears an Oura ring or Apple Watch and likes to see data change.",
+  "habit": "your commute is 40 minutes each way with headphones on",
+  "objection": "Will it actually help, or is it a gimmick?"
+ },
+ {
+  "id": "B016",
+  "name": "Luca",
+  "age": 41,
+  "segment": "Early-career, tight budget",
+  "income": 29000,
+  "behaviour": "Free-app loyalist",
+  "behaviour_how": "Uses free meditation apps or YouTube and has never paid for one.",
+  "habit": "you put kids to bed at 8 and finally have an hour to yourself",
+  "objection": "What happens to what I tell it about my mental state?"
+ },
+ {
+  "id": "B017",
+  "name": "Lena",
+  "age": 30,
+  "segment": "Stretched professional",
+  "income": 95000,
+  "behaviour": "Therapy-adjacent",
+  "behaviour_how": "Sees or has seen a therapist and uses apps between sessions.",
+  "habit": "your commute is 40 minutes each way with headphones on",
+  "objection": "AI-made meditation sounds generic or a bit creepy"
+ },
+ {
+  "id": "B018",
+  "name": "Liam",
+  "age": 29,
+  "segment": "Early-career, tight budget",
+  "income": 41000,
+  "behaviour": "Sleep-first",
+  "behaviour_how": "Only opens a wellness app at bedtime, mostly for sleep sounds or stories.",
+  "habit": "you journal now and then but never keep it up",
+  "objection": "I already have free apps and YouTube for this"
+ },
+ {
+  "id": "B019",
+  "name": "Gabriel",
+  "age": 42,
+  "segment": "Parent juggling work and kids",
+  "income": 49000,
+  "behaviour": "Lapsed subscriber",
+  "behaviour_how": "Paid for Calm or Headspace once, stopped using it after a month, cancelled.",
+  "habit": "you journal now and then but never keep it up",
+  "objection": "Will it actually help, or is it a gimmick?"
+ },
+ {
+  "id": "B020",
+  "name": "Rana",
+  "age": 41,
+  "segment": "Parent juggling work and kids",
+  "income": 81000,
+  "behaviour": "Free-app loyalist",
+  "behaviour_how": "Uses free meditation apps or YouTube and has never paid for one.",
+  "habit": "you lie awake most weeknights scrolling your phone",
+  "objection": "Will it actually help, or is it a gimmick?"
+ }
+]

@@ -1,0 +1,39 @@
+{
+  "business": "Aurelia, a generative wellness companion (web app; sessions made from one sentence)",
+  "target": "Adults 25 to 45 who already reach for an app, a podcast or a YouTube video when they cannot sleep, feel stressed or foggy, and who would rather say how they feel than browse a library",
+  "where": "Online, English-speaking markets (US, UK, Australia, Canada)",
+  "age": [25, 45],
+  "segments": [
+    {"name": "Stretched professional", "share": 0.40, "income": [55000, 120000]},
+    {"name": "Early-career, tight budget", "share": 0.30, "income": [28000, 55000]},
+    {"name": "Parent juggling work and kids", "share": 0.20, "income": [45000, 110000]},
+    {"name": "High earner, already pays for wellness", "share": 0.10, "income": [120000, 220000]}
+  ],
+  "behaviours": [
+    {"name": "Free-app loyalist", "share": 0.22, "how": "Uses free meditation apps or YouTube and has never paid for one."},
+    {"name": "Lapsed subscriber", "share": 0.18, "how": "Paid for Calm or Headspace once, stopped using it after a month, cancelled."},
+    {"name": "Sleep-first", "share": 0.16, "how": "Only opens a wellness app at bedtime, mostly for sleep sounds or stories."},
+    {"name": "Sceptic of AI", "share": 0.12, "how": "Distrusts AI-made content, especially for anything about mental health."},
+    {"name": "Quantified self", "share": 0.12, "how": "Wears an Oura ring or Apple Watch and likes to see data change."},
+    {"name": "Tries new apps", "share": 0.10, "how": "Downloads new wellness and AI apps early and talks about them."},
+    {"name": "Therapy-adjacent", "share": 0.10, "how": "Sees or has seen a therapist and uses apps between sessions."}
+  ],
+  "objections": [
+    "I already have free apps and YouTube for this",
+    "AI-made meditation sounds generic or a bit creepy",
+    "I don't want to type how I feel when I already feel bad",
+    "Another subscription I'll forget to use",
+    "Will it actually help, or is it a gimmick?",
+    "I don't want an app asking me questions every day",
+    "What happens to what I tell it about my mental state?"
+  ],
+  "habits": [
+    "you lie awake most weeknights scrolling your phone",
+    "your commute is 40 minutes each way with headphones on",
+    "you have a stressful meeting or deadline most weeks",
+    "you put kids to bed at 8 and finally have an hour to yourself",
+    "you track your sleep score every morning",
+    "you journal now and then but never keep it up"
+  ],
+  "_grounding": "Segments and behaviours are guesses informed by three user interviews (Oct 2026), the six-persona simulation (Oct 2026) and the Insight Timer review study (J089). Confirm with real people."
+}
