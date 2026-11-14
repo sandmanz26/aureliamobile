@@ -1045,3 +1045,4 @@ transcript and the update log. Everything from J018 on was written at the time.
   - **The common thread:** make the core real, prove one result for racing-mind sleepers, and remove invented figures.
 - **Report:** `docs/reviews/founder-test-prod-versions-2026-11-14.html`. Inputs, memos, answers and scripts are in `docs/reviews/founder-2026-11-14/`.
 - **Open items:** O26.
+- **PDF (on request):** `docs/reviews/Aurelia-Founder-Test-2026-11-14.pdf` (11 pages, A4), printed from the HTML.
