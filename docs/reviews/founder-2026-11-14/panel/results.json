@@ -1,0 +1,201 @@
+{
+ "n": 100,
+ "missing": [],
+ "broken": [],
+ "tries": 79,
+ "pays": 10,
+ "sessions_first_month_median_of_triers": 5,
+ "keep": {
+  "1": 0,
+  "2": 34,
+  "3": 48
+ },
+ "best": {
+  "3": 72,
+  "2": 28
+ },
+ "worst": {
+  "1": 100
+ },
+ "reasons_no_pay": {
+  "price": 26,
+  "habit": 24,
+  "trust": 21,
+  "quality": 6,
+  "need": 6,
+  "values": 3,
+  "convenience": 2,
+  "timing": 2
+ },
+ "by_segment": {
+  "Early-career, tight budget": {
+   "n": 30,
+   "tries": 23,
+   "pays": 0,
+   "keep": {
+    "1": 0,
+    "2": 7,
+    "3": 12
+   },
+   "best": {
+    "3": 20,
+    "2": 10
+   }
+  },
+  "High earner, already pays for wellness": {
+   "n": 10,
+   "tries": 10,
+   "pays": 2,
+   "keep": {
+    "1": 0,
+    "2": 6,
+    "3": 7
+   },
+   "best": {
+    "2": 3,
+    "3": 7
+   }
+  },
+  "Parent juggling work and kids": {
+   "n": 20,
+   "tries": 14,
+   "pays": 1,
+   "keep": {
+    "1": 0,
+    "2": 4,
+    "3": 8
+   },
+   "best": {
+    "2": 6,
+    "3": 14
+   }
+  },
+  "Stretched professional": {
+   "n": 40,
+   "tries": 32,
+   "pays": 7,
+   "keep": {
+    "1": 0,
+    "2": 17,
+    "3": 21
+   },
+   "best": {
+    "3": 31,
+    "2": 9
+   }
+  }
+ },
+ "by_behaviour": {
+  "Free-app loyalist": {
+   "n": 22,
+   "tries": 19,
+   "pays": 0,
+   "keep": {
+    "1": 0,
+    "2": 5,
+    "3": 7
+   },
+   "best": {
+    "3": 16,
+    "2": 6
+   }
+  },
+  "Lapsed subscriber": {
+   "n": 18,
+   "tries": 17,
+   "pays": 0,
+   "keep": {
+    "1": 0,
+    "2": 6,
+    "3": 10
+   },
+   "best": {
+    "3": 12,
+    "2": 6
+   }
+  },
+  "Quantified self": {
+   "n": 12,
+   "tries": 11,
+   "pays": 0,
+   "keep": {
+    "1": 0,
+    "2": 2,
+    "3": 6
+   },
+   "best": {
+    "2": 3,
+    "3": 9
+   }
+  },
+  "Sceptic of AI": {
+   "n": 12,
+   "tries": 0,
+   "pays": 0,
+   "keep": {
+    "1": 0,
+    "2": 0,
+    "3": 0
+   },
+   "best": {
+    "3": 12
+   }
+  },
+  "Sleep-first": {
+   "n": 16,
+   "tries": 12,
+   "pays": 2,
+   "keep": {
+    "1": 0,
+    "2": 7,
+    "3": 8
+   },
+   "best": {
+    "2": 12,
+    "3": 4
+   }
+  },
+  "Therapy-adjacent": {
+   "n": 10,
+   "tries": 10,
+   "pays": 2,
+   "keep": {
+    "1": 0,
+    "2": 6,
+    "3": 9
+   },
+   "best": {
+    "3": 10
+   }
+  },
+  "Tries new apps": {
+   "n": 10,
+   "tries": 10,
+   "pays": 6,
+   "keep": {
+    "1": 0,
+    "2": 8,
+    "3": 8
+   },
+   "best": {
+    "3": 9,
+    "2": 1
+   }
+  }
+ },
+ "price": {
+  "point_of_marginal_cheapness": 4.5,
+  "optimal_price": 5.5,
+  "indifference_price": 6.0,
+  "point_of_marginal_expensiveness": 7.5,
+  "medians": {
+   "price_too_cheap": 2,
+   "price_cheap": 4,
+   "price_expensive": 8,
+   "price_too_expensive": 12
+  },
+  "n": 100,
+  "share_too_expensive_at_10": 0.44,
+  "share_expensive_at_10": 0.76
+ }
+}

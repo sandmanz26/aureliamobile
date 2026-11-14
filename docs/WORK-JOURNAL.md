@@ -53,6 +53,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O23 | **Feedback-group study (J062, J064)** — on staging since U060 and on production since U061 (sample data), as two versions for review: (1) which version (or which parts of each) to keep, and approve the design and pass lines before week 0; (2) recruitment and incentive; (3) clinical advisor + ethics review, and instrument licensing (ISI, PSS-10 for commercial use); (4) start date, which needs D2 persistence, study enrolment and consent, questionnaire screens, events and a safety alert (API §5.12); (5) ~~production now or with the study~~ — on production since U061; (6) the project manager's name and start date (J067); (7) ~~U062 to production~~ — done in U064; (8) the coaching log is per browser until the backend | J062, U058, U060, U062 | Product owner + Eugene; clinical advisor |
 | O24 | **Insight Timer study recommendations for v1 (J089)**: (1) a "Need help now?" crisis link, (2) daily check-in at most once a day, skippable, (3) topic words as starting points, (4) rewind/resume never paid, (5) "made with AI" said plainly; also a public explainer of the causal graph | J089, `docs/reviews/insight-timer-replica-2026-11-13.html` | Product owner: pick which go into v1 |
 | O25 | **Owner requests not started (J088)**: playbook rewritten simpler and inspiring; the 2025 backend/AI documents (Technical Architecture Deep Dive, second Google Doc, Notion wiki, diagram) merged into /guide as a black-branded tab and aligned with the API contract; AI speed/quality appendix and the final design system in Product requirements; desktop main menu as a narrow icon rail; buyer-agents test of v1 | J088 | Access to the three sources and the diagram; go-ahead per item |
+| O26 | **Founder test recommendations (J091)**: (1) retire prod v1 from the picker, (2) remove invented figures in v3 (About page ↑12%/↑8%, others' names under Recent, "exprience"), (3) daily check-in never on first sign-in, (4) a privacy line and delete-everything, (5) a lighter v3 for sleep-first users; with the backend: narrow to racing-mind sleepers, outcome-led Upgrade with a guarantee, price test ($10 vs about $5/month annual) | J091, `docs/reviews/founder-test-prod-versions-2026-11-14.html` | Product owner: pick which to do |
 
 ---
 
@@ -150,6 +151,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J088 | 2026-11-13 | Question | The owner's new requests read and summarised, nothing done yet: playbook tone, Insight Timer replica, buyer agents, the 2025 backend docs into /guide, AI speed/quality research, design system, main-menu rail | — |
 | J089 | 2026-11-13 | Research | Insight Timer replica study, agent-run: every public feature mapped to Aurelia v1, 2,000 App Store reviews ranked; report in `docs/reviews/` | — |
 | J090 | 2026-11-13 | Research | Read the owner's three sources: the Technical Architecture Deep Dive is readable and read in full; the second Google Doc and the Notion wiki need a sign-in | — |
+| J091 | 2026-11-14 | Research | founder-skill installed; board (3 lenses) and a 100-buyer panel tested production v1, v2 and v3 on real screen captures; report in `docs/reviews/` | — |
 
 ---
 
@@ -1030,3 +1032,16 @@ transcript and the update log. Everything from J018 on was written at the time.
   - The Notion wiki asks for a sign-in to its owner's workspace.
   Neither is readable from the session.
 - **Waiting on:** both shared as "anyone with the link can view", or exported (PDF or Markdown) into the session (O25).
+
+### J091 — Founder-skill test of production v1, v2 and v3
+- **Asked:** install founder-skill, check production versions 1, 2 and 3 with it, and write up the result.
+- **Done:** installed the skill's eleven skills in the session (not in the repo). Ran the board (three sub-agents: Offers, Monopoly, Product lenses) and the consumer panel. Prices come from the panel's answers (Van Westendorp).
+  - **Panel:** 100 buyer cards dealt with a fixed seed from a target profile, played by ten agents of ten buyers each, all shown real captures of the production build at 402px.
+  - **Not run:** the skill's own Python (equivalent scripts of our own sit beside the evidence); competitors, offer, CFO, marketing, brand, ops, launch and plan. The plan's verdict would be Incomplete without an AI cost per session.
+- **Found:**
+  - **Board:** 3 × fund-if, average 5/10. Each lens scored v1 3, v2 6, v3 7.
+  - **Buyers:** 72 of 100 picked v3 as best, 28 picked v2, none picked v1. v1 was the worst for all 100. 79 would try the free tier and 10 would pay.
+  - **Price:** the acceptable range is $4.5–7.5 a month; 44% call $10 too expensive.
+  - **The common thread:** make the core real, prove one result for racing-mind sleepers, and remove invented figures.
+- **Report:** `docs/reviews/founder-test-prod-versions-2026-11-14.html`. Inputs, memos, answers and scripts are in `docs/reviews/founder-2026-11-14/`.
+- **Open items:** O26.

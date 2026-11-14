@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-14 — Founder test of production v1–v3 (J091)
+
+Research only, no app change: `docs/reviews/founder-test-prod-versions-2026-11-14.html`, plus its evidence in `docs/reviews/founder-2026-11-14/`. The evidence covers the board memos, 100 simulated buyers' answers, the screen captures and the scripts.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-13 — Insight Timer replica study (J089)
 
 Research only, no app change: `docs/reviews/insight-timer-replica-2026-11-13.html`, plus its evidence (2,000 App Store reviews, the ranking and build scripts) in the folder of the same name.
