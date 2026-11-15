@@ -152,6 +152,8 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J089 | 2026-11-13 | Research | Insight Timer replica study, agent-run: every public feature mapped to Aurelia v1, 2,000 App Store reviews ranked; report in `docs/reviews/` | — |
 | J090 | 2026-11-13 | Research | Read the owner's three sources: the Technical Architecture Deep Dive is readable and read in full; the second Google Doc and the Notion wiki need a sign-in | — |
 | J091 | 2026-11-14 | Research | founder-skill installed; board (3 lenses) and a 100-buyer panel tested production v1, v2 and v3 on real screen captures; report in `docs/reviews/` | — |
+| J092 | 2026-11-14 | Question | What founder-skill can do (11 skills summarised) | — |
+| J093 | 2026-11-15 | Question | Recap of everything the owner asked for, with status | — |
 
 ---
 
@@ -1046,3 +1048,15 @@ transcript and the update log. Everything from J018 on was written at the time.
 - **Report:** `docs/reviews/founder-test-prod-versions-2026-11-14.html`. Inputs, memos, answers and scripts are in `docs/reviews/founder-2026-11-14/`.
 - **Open items:** O26.
 - **PDF (on request):** `docs/reviews/Aurelia-Founder-Test-2026-11-14.pdf` (11 pages, A4), printed from the HTML.
+
+### J092 — What founder-skill can do
+- **Asked:** a summary of the skill's abilities.
+- **Answered:** the eleven skills, each with its job and output: board, competitors, consumer, pricing, offer, CFO, marketing, brand, ops, launch and plan. Board and consumer have run; pricing has run in part. Offer and marketing can run now. CFO and plan wait on an AI cost per session.
+
+### J093 — Recap of the owner's requests
+- **Asked:** a bullet recap of everything to do from the conversation with the owner.
+- **Answered:** a status list.
+  - **Done:** the Insight Timer study and the founder test.
+  - **Not started:** playbook tone, the backend/AI docs tab, the speed/quality appendix, the design system in Product requirements, and the desktop icon rail.
+  - **Waiting on decisions:** O24 and O26.
+  - **Waiting on access:** the second Google Doc, the Notion wiki and the diagram (O25).
