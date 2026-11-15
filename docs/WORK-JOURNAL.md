@@ -155,6 +155,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J092 | 2026-11-14 | Question | What founder-skill can do (11 skills summarised) | — |
 | J093 | 2026-11-15 | Question | Recap of everything the owner asked for, with status | — |
 | J094 | 2026-11-15 | Research | Insight Timer deep research: features, strategy and business, users and backlash, AI landscape and fit with Aurelia; report in Markdown, HTML and PDF | — |
+| J095 | 2026-11-15 | Code + Release | The Insight Timer deep research as an easy-to-read Research tab in /guide, on staging and production; the two backend source PDFs received | U076 |
 
 ---
 
@@ -1083,3 +1084,12 @@ transcript and the update log. Everything from J018 on was written at the time.
 - **Files:**
   - the report: `docs/research/reports/Insight Timer deep research.md`, plus its HTML and the PDF `Aurelia-Insight-Timer-Deep-Research-2026-11-15.pdf`;
   - the notes: `docs/research/research_notes/Insight Timer deep research/`.
+
+### J095 — Research tab, and the two backend sources received
+- **Asked:**
+  - the owner sent the two documents that could not be read before, as PDFs: "Aurelia Wellness AI — Technical Architecture Documentation" and "Wiki Aurelia" (20 pages);
+  - make the Insight Timer deep research tidy and easy to understand, as HTML, in a new "Research" menu at /guide.
+- **Done:** U076, the Research tab, rewritten for reading.
+  - Order: short version → key figures → who they are → features (free or paid) → money → problems → retention → AI and the Map of Healing → backlash → market → side by side with Aurelia → threats and opportunities → next steps → sources.
+  - Production fast-forwarded so /guide stays identical on both sites (J076).
+- **Next:** the two PDFs feed the AI & backend tab (O25). They are kept out of the repository until checked for secrets.

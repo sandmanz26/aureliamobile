@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-15 — Research tab in /guide (U076, J095)
+
+/guide has a fifth document, **Research**, holding the Insight Timer deep research rewritten to be easy to read.
+
+Branches: `web_app`, `admin_cms`, **`web_prod`** (J076: documents identical on both sites).
+
 ### 2026-11-15 — Insight Timer deep research (J094)
 
 Research only, no app change. Added `docs/research/` (notes and the report in Markdown, HTML and PDF).

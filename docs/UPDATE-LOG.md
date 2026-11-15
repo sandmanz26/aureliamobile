@@ -113,8 +113,24 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U073 | `5e73eaf` | 2026-11-13 | Journal cards wrap a long unbroken note instead of running past the card. On production with U075. | [patch](patches/U073-5e73eaf.patch) |
 | U074 | `168c32d` | 2026-11-13 | Journal note wrapping: `word-break: break-word` fallback beside `overflow-wrap: anywhere` (older Safari). On production with U075. | [patch](patches/U074-168c32d.patch) |
 | U075 | `593dc17` | 2026-11-13 | Production offers three versions — v1 = staging v3, v2 = staging v4, v3 = staging v5 — and opens on v3. Shipped with U073–U074. | [patch](patches/U075-593dc17.patch) |
+| U076 | `eeb7a8f` | 2026-11-15 | /guide gets a fifth document, **Research**: the Insight Timer deep research rewritten for reading. Staging and production (J076). | [patch](patches/U076-eeb7a8f.patch) |
 
 ## Entries
+
+### U076 — Research tab in /guide
+
+- **Commit:** `eeb7a8f` · pushed 2026-11-15 UTC · `web_app` + `admin_cms` + `web_prod` (documents stay identical on both sites, J076).
+- **Patch:** [patches/U076-eeb7a8f.patch](patches/U076-eeb7a8f.patch)
+- **Request:** "untuk insight timer deep research secara report pastikan harus rapi dan mudah dipahami. buatkan versi html taruh di link kemarin, masukan saja ke menu baru bernama research".
+- **Interpretation:** "the link from yesterday" is /guide. "A new menu" is a fifth tab, **Research**, built to hold more studies later. The report is rewritten for readers, not pasted: a short version, key figures, numbered sections, tables and next steps, and every figure keeps its source link.
+- **Changed:**
+  - `scripts/guides/research_insight_timer.py` (new) generates `src/guides/content/research-insight-timer.html` and `research.css`, scoped under `.gd-doc .rs`.
+  - `src/guides/GuidePage.tsx` gains the `research` entry (Telescope icon); the index reads "in five documents".
+  - CLAUDE.md's layout line is updated.
+- **Verified:**
+  - `npm run check` passes (122 tests).
+  - Production build: `/guide/research` renders with 19 contents entries, no page errors, and no horizontal overflow at 1280px or 402px.
+- **Revert:** `git revert --no-commit eeb7a8f && git checkout HEAD -- docs/`.
 
 ### U075 — Production's three versions
 
