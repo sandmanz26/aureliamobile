@@ -154,6 +154,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J091 | 2026-11-14 | Research | founder-skill installed; board (3 lenses) and a 100-buyer panel tested production v1, v2 and v3 on real screen captures; report in `docs/reviews/` | — |
 | J092 | 2026-11-14 | Question | What founder-skill can do (11 skills summarised) | — |
 | J093 | 2026-11-15 | Question | Recap of everything the owner asked for, with status | — |
+| J094 | 2026-11-15 | Research | Insight Timer deep research: features, strategy and business, users and backlash, AI landscape and fit with Aurelia; report in Markdown, HTML and PDF | — |
 
 ---
 
@@ -1060,3 +1061,25 @@ transcript and the update log. Everything from J018 on was written at the time.
   - **Not started:** playbook tone, the backend/AI docs tab, the speed/quality appendix, the design system in Product requirements, and the desktop icon rail.
   - **Waiting on decisions:** O24 and O26.
   - **Waiting on access:** the second Google Doc, the Notion wiki and the diagram (O25).
+
+### J094 — Insight Timer deep research
+- **Asked:** step one of the recap. Deep research on Insight Timer: every feature in detail, its strategy, key features, the problems it solves, how it differs from Aurelia, and the rest.
+- **Done:** four parallel research agents, with public sources only and every claim linked:
+  - product features;
+  - strategy and business;
+  - users and the 2024–26 backlash;
+  - the AI landscape and fit with Aurelia.
+
+  A fifth agent wrote the report, building on the replica study (J089) and the founder test (J091).
+- **Found:**
+  - **Insight Timer, in short:** a profitable but shrinking company (about 80 staff, about 3M monthly active users in 2024, about 350k subscribers).
+  - **Paywall:** more is now behind it (rewind and resume, courses, offline).
+  - **AI:** "AI may choose; AI may not speak". Recommendations and a reflection chatbot are allowed; AI voices and scripts are banned.
+  - **Map of Healing:** close to our graph in shape, but it counts published mentions and learns nothing per person.
+  - **Backlash:** no company response or reversal found.
+  - **Market:** no well-funded player makes a session from one sentence.
+  - **Correction:** the "2021 Series A led by TCV" could not be confirmed; the recorded round is about $27.4M in March 2020.
+- **Limits:** Reddit and Google Play reviews could not be read; most company figures are the company's own claims or outside estimates.
+- **Files:**
+  - the report: `docs/research/reports/Insight Timer deep research.md`, plus its HTML and the PDF `Aurelia-Insight-Timer-Deep-Research-2026-11-15.pdf`;
+  - the notes: `docs/research/research_notes/Insight Timer deep research/`.

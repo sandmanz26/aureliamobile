@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-15 — Insight Timer deep research (J094)
+
+Research only, no app change. Added `docs/research/` (notes and the report in Markdown, HTML and PDF).
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-14 — Founder test of production v1–v3 (J091)
 
 Research only, no app change: `docs/reviews/founder-test-prod-versions-2026-11-14.html`, plus its evidence in `docs/reviews/founder-2026-11-14/`. The evidence covers the board memos, 100 simulated buyers' answers, the screen captures and the scripts.
