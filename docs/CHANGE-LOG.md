@@ -19,6 +19,15 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-15 — Playbook versions in /guide (U077, J096–J097)
+
+The feedback-group playbook has a version switcher:
+- **v1 Original:** the existing playbook, still the default.
+- **v2 Mission guide:** the same goal and numbers in plain, upbeat words.
+- **v3 Quick start:** one page.
+
+Branches: `web_app`, `admin_cms`, **`web_prod`** (J076).
+
 ### 2026-11-15 — Research tab in /guide (U076, J095)
 
 /guide has a fifth document, **Research**, holding the Insight Timer deep research rewritten to be easy to read.

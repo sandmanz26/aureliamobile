@@ -54,6 +54,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O24 | **Insight Timer study recommendations for v1 (J089)**: (1) a "Need help now?" crisis link, (2) daily check-in at most once a day, skippable, (3) topic words as starting points, (4) rewind/resume never paid, (5) "made with AI" said plainly; also a public explainer of the causal graph | J089, `docs/reviews/insight-timer-replica-2026-11-13.html` | Product owner: pick which go into v1 |
 | O25 | **Owner requests not started (J088)**: playbook rewritten simpler and inspiring; the 2025 backend/AI documents (Technical Architecture Deep Dive, second Google Doc, Notion wiki, diagram) merged into /guide as a black-branded tab and aligned with the API contract; AI speed/quality appendix and the final design system in Product requirements; desktop main menu as a narrow icon rail; buyer-agents test of v1 | J088 | Access to the three sources and the diagram; go-ahead per item |
 | O26 | **Founder test recommendations (J091)**: (1) retire prod v1 from the picker, (2) remove invented figures in v3 (About page ↑12%/↑8%, others' names under Recent, "exprience"), (3) daily check-in never on first sign-in, (4) a privacy line and delete-everything, (5) a lighter v3 for sleep-first users; with the backend: narrow to racing-mind sleepers, outcome-led Upgrade with a guarantee, price test ($10 vs about $5/month annual) | J091, `docs/reviews/founder-test-prod-versions-2026-11-14.html` | Product owner: pick which to do |
+| O27 | **Playbook version (J097)**: which of v1 Original / v2 Mission guide / v3 Quick start is the default for the PM, and whether the chosen one replaces the share HTML/PDF | J097, `/guide/playbook?v=2`, `?v=3` | Product owner |
 
 ---
 
@@ -156,6 +157,8 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J093 | 2026-11-15 | Question | Recap of everything the owner asked for, with status | — |
 | J094 | 2026-11-15 | Research | Insight Timer deep research: features, strategy and business, users and backlash, AI landscape and fit with Aurelia; report in Markdown, HTML and PDF | — |
 | J095 | 2026-11-15 | Code + Release | The Insight Timer deep research as an easy-to-read Research tab in /guide, on staging and production; the two backend source PDFs received | U076 |
+| J096 | 2026-11-15 | Question | What the owner means by "make the feedback playbook more simple and playful": the same content and accuracy, a mission tone, plain words | — |
+| J097 | 2026-11-15 | Code + Release | Playbook versioning: v1 Original, v2 Mission guide, v3 Quick start (much shorter), on staging and production | U077 |
 
 ---
 
@@ -1093,3 +1096,18 @@ transcript and the update log. Everything from J018 on was written at the time.
   - Order: short version → key figures → who they are → features (free or paid) → money → problems → retention → AI and the Map of Healing → backlash → market → side by side with Aurelia → threats and opportunities → next steps → sources.
   - Production fast-forwarded so /guide stays identical on both sites (J076).
 - **Next:** the two PDFs feed the AI & backend tab (O25). They are kept out of the repository until checked for secrets.
+
+### J096 — Understanding "simple and playful playbook"
+- **Asked:** what is understood by the owner's request.
+- **Answered:**
+  - Today's playbook reads like a research protocol: about 5,000 words, with hypothesis, cohorts and product-market fit.
+  - The owner wants a mission handbook in plain, upbeat words, written for the PM. The milestones, numbers, safety rules and appendix stay accurate.
+  - Before/after examples were given. Two questions were asked: whether to rewrite the appendix, and how long the result should be.
+
+### J097 — Playbook versions
+- **Asked:** add versioning, and two new versions in two different styles, same goal, one much shorter.
+- **Done:** U077, with a switcher in /guide/playbook. Every number was checked against v1.
+  - **v1 Original:** unchanged, the default.
+  - **v2 Mission guide:** about 2,100 words; milestones as levels.
+  - **v3 Quick start:** about 300 words.
+- **Open:** which version becomes the default, and whether v2/v3 also get share HTML and PDF files. Added to O27.

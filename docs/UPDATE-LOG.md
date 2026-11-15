@@ -114,8 +114,29 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U074 | `168c32d` | 2026-11-13 | Journal note wrapping: `word-break: break-word` fallback beside `overflow-wrap: anywhere` (older Safari). On production with U075. | [patch](patches/U074-168c32d.patch) |
 | U075 | `593dc17` | 2026-11-13 | Production offers three versions — v1 = staging v3, v2 = staging v4, v3 = staging v5 — and opens on v3. Shipped with U073–U074. | [patch](patches/U075-593dc17.patch) |
 | U076 | `eeb7a8f` | 2026-11-15 | /guide gets a fifth document, **Research**: the Insight Timer deep research rewritten for reading. Staging and production (J076). | [patch](patches/U076-eeb7a8f.patch) |
+| U077 | `a6619b4` | 2026-11-15 | Feedback-group playbook in /guide gets versions: v1 Original, v2 Mission guide (plain and upbeat), v3 Quick start (one page). Staging and production (J076). | [patch](patches/U077-a6619b4.patch) |
 
 ## Entries
+
+### U077 — Playbook versions
+
+- **Commit:** `a6619b4` · pushed 2026-11-15 UTC · `web_app` + `admin_cms` + `web_prod` (J076).
+- **Patch:** [patches/U077-a6619b4.patch](patches/U077-a6619b4.patch)
+- **Request:** "tolong berikan versioning dan tolong update… buatkan tambahan 2 versi dengan 2 style yang berbeda tapi tetap fokus pada goal… salah satunya harus jauh lebih pendek". It follows the owner's ask for a simpler, playful playbook (J096).
+- **Interpretation:** the existing playbook stays as v1 so nothing is lost. Two new versions keep the same goal, milestones, pass lines and numbers, told differently:
+  - **v2 Mission guide:** about 2,100 words. Plain, upbeat words, written as a mission; the milestones become "levels", each with its moves, "you've made it when" and "stuck?".
+  - **v3 Quick start:** about 300 words, on one page.
+  - v1 stays the default. `?v=2` and `?v=3` open the others, so a link can point at one version.
+- **Changed:**
+  - `scripts/guides/pm_playbook_versions.py` (new) generates `pm-playbook-v2.html`, `pm-playbook-v3.html` and `pm-playbook-versions.css`.
+  - `src/guides/GuidePage.tsx`: `DOC_VERSIONS`, a `DocVersions` switcher above the document, and the version read from `?v=`.
+  - `guides.css`: `.gd-versions`.
+  - The playbook card on the index mentions the three versions.
+- **Verified:**
+  - `npm run check` passes (122 tests).
+  - Production build at 1280px and 402px: each version renders with its own contents (44, 19 and 5 entries), with no overflow and no page errors. Tapping v3 goes to `/guide/playbook?v=3`.
+- **Not changed:** the share HTML and PDF of the playbook are still v1 only.
+- **Revert:** `git revert --no-commit a6619b4 && git checkout HEAD -- docs/`.
 
 ### U076 — Research tab in /guide
 
