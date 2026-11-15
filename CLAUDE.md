@@ -103,7 +103,7 @@ src/
   test/         Vitest setup
   auth/         AuthContext + useSignInGate
   demo/         the /__demo feature-flag console
-  guides/       /guide: the team documents (admin guideline, PRD overview, API contract)
+  guides/       /guide: the team documents (feedback playbook, admin guideline, PRD overview, API contract, Research)
   styles/       tokens.css — GENERATED, see below
 api/            Vercel serverless endpoints; shared code in api/_lib (not routes)
 ```
