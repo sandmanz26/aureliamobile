@@ -171,6 +171,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J104 | 2026-11-16 | Research + Code + Release | Insight Timer screenshots and competitor research in Research; a new /designsystem page for review; staging and production | U080 |
 | J105 | 2026-11-16 | Question | "/designsystem is not found" on production: the browser ran a cached build (eb5d63f) from before the route existed; production serves 1f1e9a5 | — |
 | J106 | 2026-11-16 | Code + Release | /designsystem components made complete: 71 components in 10 patterns, with detail, demos and props from source | U081 |
+| J107 | 2026-11-16 | Code + Release | /guide typography made easier to read: weights, size, leading, measure, spacing, links, lists, tables | U082 |
 
 ---
 
@@ -1221,3 +1222,10 @@ transcript and the update log. Everything from J018 on was written at the time.
   - **Coverage:** all 71 files in `src/components`, in 10 patterns, each pattern with when-to-use guidance and rules.
   - **Each component:** purpose, use when, where, states, Figma node, a live demo where possible (28), and props read from its source.
   - **Kept complete by a test:** a new component cannot be added without an entry.
+
+### J107 — Guide typography
+- **Asked:** update the guidebook's typography so it is easier to read and understand, with attention to type and spacing details.
+- **Done:** U082.
+  - **The main defect:** faked bold. Mulish ships 300–600 here and the documents asked for 700–800.
+  - **Then the reading basics:** 16.5px body text with a 1.7 line height, a 68-character line, a consistent rhythm, and a calmer heading scale.
+  - **Also:** clearer links, lists and tables, and the generated documents aligned.

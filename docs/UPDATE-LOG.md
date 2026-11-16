@@ -119,8 +119,31 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U079 | `ccb84a3` | 2026-11-16 | Admin guideline in /guide gets versions: v1 Original, v2 Task guide, v3 Quick start (one page). Staging and production. | [patch](patches/U079-ccb84a3.patch) |
 | U080 | `0453426` | 2026-11-16 | New page `/designsystem` (the design system read live from the Figma export and the app's components). Research gains Insight Timer screenshots and a competition section. Staging and production. | [patch](patches/U080-0453426.patch) |
 | U081 | `d891491` | 2026-11-16 | /designsystem lists every component (71) in 10 patterns, with guidance, states, live demos (28) and props read from the source. Staging and production. | [patch](patches/U081-d891491.patch) |
+| U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U082 — /guide typography
+
+- **Commit:** `68d7b21` · pushed 2026-11-16 UTC · `web_app` + `admin_cms` + `web_prod` (J076: documents identical on both sites).
+- **Patch:** [patches/U082-68d7b21.patch](patches/U082-68d7b21.patch)
+- **Request:** "secara guidebook tolong update format secara tipografi nya buat agar lebih mudah dibaca dan dipahami. perhatikan lebih detail dari tipografi, spacing dll".
+- **Found first:** Mulish is self-hosted at weights 300–600 only (`src/index.css`), but `/guide` asked for 700 and 800 (16 rules, plus the generated documents). The browser was synthesising every heading and bold word, which makes them heavier and blurrier.
+- **Changed:**
+  - **`src/guides/guides.css`, one typography block for every document:**
+    - weights 600 at most;
+    - body 16.5px with a 1.7 line height (16px / 1.68 on phones), 68-character measure, `text-wrap: pretty`;
+    - headings h1 clamp 30–42 / h2 26 / h3 19.5 / h4 13 caps, more space above than below;
+    - paragraphs and lists end on 1em; list markers in the brand orange;
+    - links underlined with an offset;
+    - tables at 14.5px with 12–14px padding and a tinted header;
+    - one h2 treatment (the two markdown h2 rules that fought are gone);
+    - contents list slightly larger with calmer weights.
+  - **Generators** (`research_insight_timer.py`, `pm_playbook_versions.py`, `admin_guideline_versions.py`, `pm_playbook.py`): 700/800 → 600, and small text one step up (14 → 15, 13 → 13.5…). Regenerated, which includes the playbook share HTML.
+- **Verified:**
+  - `npm run check` passes.
+  - Production build: every document at 1280px and 402px measures body text 16.5/28px desktop and 16/27px phone, headings at weight 600, no overflow, no errors.
+- **Revert:** `git revert --no-commit 68d7b21 && git checkout HEAD -- docs/`.
 
 ### U081 — /designsystem: every component, by pattern
 

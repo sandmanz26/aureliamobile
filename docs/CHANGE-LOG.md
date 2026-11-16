@@ -19,6 +19,16 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-16 — /guide typography (U082, J107)
+
+The documents were retuned for reading:
+- no faked bold (the font only has weights up to 600);
+- larger body text, more line height and a 68-character line;
+- one spacing rhythm and calmer headings;
+- clearer links, lists and tables.
+
+Branches: `web_app`, `admin_cms`, **`web_prod`** (J076).
+
 ### 2026-11-16 — /designsystem: every component by pattern (U081, J106)
 
 `/designsystem` now catalogues all 71 components in 10 patterns. Each comes with guidance, states, live demos for 28 of them, and props read from the code. A test keeps the catalogue complete.
