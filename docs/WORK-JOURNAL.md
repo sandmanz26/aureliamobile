@@ -159,6 +159,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J095 | 2026-11-15 | Code + Release | The Insight Timer deep research as an easy-to-read Research tab in /guide, on staging and production; the two backend source PDFs received | U076 |
 | J096 | 2026-11-15 | Question | What the owner means by "make the feedback playbook more simple and playful": the same content and accuracy, a mission tone, plain words | — |
 | J097 | 2026-11-15 | Code + Release | Playbook versioning: v1 Original, v2 Mission guide, v3 Quick start (much shorter), on staging and production | U077 |
+| J098 | 2026-11-16 | Review + Code + Release | Roast of playbook v2/v3 as a junior PM: ten gaps found and fixed | U078 |
 
 ---
 
@@ -1111,3 +1112,8 @@ transcript and the update log. Everything from J018 on was written at the time.
   - **v2 Mission guide:** about 2,100 words; milestones as levels.
   - **v3 Quick start:** about 300 words.
 - **Open:** which version becomes the default, and whether v2/v3 also get share HTML and PDF files. Added to O27.
+
+### J098 — Junior-PM roast of the playbook versions
+- **Asked:** roast v2 and v3; could a junior PM understand them? If not, update.
+- **Answer:** not yet. Ten gaps were found, including unexplained abbreviations, no picture of what participants do, unclear roles, no worked example, a jargon safety trigger and no first-week guidance. All ten are fixed in U078.
+- **Still to decide before week 0** (now on v2's checklist): names and contacts for each role, where participants are recruited, and the daily-message channel.

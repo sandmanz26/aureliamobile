@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-16 — Playbook v2/v3 for a junior PM (U078, J098)
+
+Playbook versions 2 and 3 in /guide were rewritten so a new junior PM can follow them without help. They now explain what Aurelia is and who's who, give the questionnaires in plain words, and add a worked example, what to say when, a glossary and the first week on the job.
+
+Branches: `web_app`, `admin_cms`, **`web_prod`** (J076).
+
 ### 2026-11-15 — Playbook versions in /guide (U077, J096–J097)
 
 The feedback-group playbook has a version switcher:

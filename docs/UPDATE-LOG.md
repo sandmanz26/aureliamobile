@@ -115,8 +115,39 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U075 | `593dc17` | 2026-11-13 | Production offers three versions — v1 = staging v3, v2 = staging v4, v3 = staging v5 — and opens on v3. Shipped with U073–U074. | [patch](patches/U075-593dc17.patch) |
 | U076 | `eeb7a8f` | 2026-11-15 | /guide gets a fifth document, **Research**: the Insight Timer deep research rewritten for reading. Staging and production (J076). | [patch](patches/U076-eeb7a8f.patch) |
 | U077 | `a6619b4` | 2026-11-15 | Feedback-group playbook in /guide gets versions: v1 Original, v2 Mission guide (plain and upbeat), v3 Quick start (one page). Staging and production (J076). | [patch](patches/U077-a6619b4.patch) |
+| U078 | `07a59e1` | 2026-11-16 | Playbook v2 and v3 rewritten after a junior-PM read-through: what Aurelia is, who's who, questionnaires in plain words, a worked example, what to say when, a glossary, the first week. Staging and production. | [patch](patches/U078-07a59e1.patch) |
 
 ## Entries
+
+### U078 — Playbook v2/v3 for a junior PM
+
+- **Commit:** `07a59e1` · pushed 2026-11-16 UTC · `web_app` + `admin_cms` + `web_prod` (J076).
+- **Patch:** [patches/U078-07a59e1.patch](patches/U078-07a59e1.patch)
+- **Request:** "coba roast lagi 2 versi baru itu, apakah jika kamu sebagai junior PM sudah bisa memahami. jika belum tolong update lagi."
+- **Roast:** read as a new junior PM who has never used Aurelia or run a study. Ten gaps:
+  1. Questionnaire abbreviations were never explained.
+  2. What a participant actually does in the app was missing.
+  3. Roles (study lead, product team, clinical advisor) had no explanation.
+  4. "Real step forward" and "finish line" had no worked example.
+  5. The safety trigger was written as "PHQ-9 item 9 above zero".
+  6. There was no first-day guidance.
+  7. The daily-message channel was not named.
+  8. Nothing said what to answer when asked medical questions.
+  9. Undefined words: staging, coaching log, admin, regular, finish lines.
+  10. Week 9: who decides was not said.
+- **Changed:** `scripts/guides/pm_playbook_versions.py`.
+  - **v2 (about 2,900 words):**
+    - "New here? Start with these three things": what Aurelia is, what the study is, try it yourself.
+    - Who's who, a worked example (Maya, ISI 18 → 12 → 6), and the questionnaires in plain words.
+    - The safety trigger in plain words.
+    - "What to say when…", "Words you'll hear", and "Your first week on the job".
+    - The checklist gains roles, contacts and the message channel.
+  - **v3 (about 420 words):** Aurelia in one line, an example finish line, "not your job", "Start here", and who decides in week 9.
+  - No number changed. "Regular" is defined as v1 defines adherence.
+- **Verified:**
+  - `npm run check` passes.
+  - Production build at 1280px and 402px: v1/v2/v3 contents have 44, 25 and 6 entries, with no overflow and no errors.
+- **Revert:** `git revert --no-commit 07a59e1 && git checkout HEAD -- docs/`.
 
 ### U077 — Playbook versions
 
