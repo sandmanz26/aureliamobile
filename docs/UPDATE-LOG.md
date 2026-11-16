@@ -117,8 +117,32 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U077 | `a6619b4` | 2026-11-15 | Feedback-group playbook in /guide gets versions: v1 Original, v2 Mission guide (plain and upbeat), v3 Quick start (one page). Staging and production (J076). | [patch](patches/U077-a6619b4.patch) |
 | U078 | `07a59e1` | 2026-11-16 | Playbook v2 and v3 rewritten after a junior-PM read-through: what Aurelia is, who's who, questionnaires in plain words, a worked example, what to say when, a glossary, the first week. Staging and production. | [patch](patches/U078-07a59e1.patch) |
 | U079 | `ccb84a3` | 2026-11-16 | Admin guideline in /guide gets versions: v1 Original, v2 Task guide, v3 Quick start (one page). Staging and production. | [patch](patches/U079-ccb84a3.patch) |
+| U080 | `0453426` | 2026-11-16 | New page `/designsystem` (the design system read live from the Figma export and the app's components). Research gains Insight Timer screenshots and a competition section. Staging and production. | [patch](patches/U080-0453426.patch) |
 
 ## Entries
+
+### U080 — /designsystem, and Insight Timer screenshots and competitors
+
+- **Commit:** `0453426` · pushed 2026-11-16 UTC · `web_app` + `admin_cms` + `web_prod` ("update stag dan prod untuk semua itu").
+- **Patch:** [patches/U080-0453426.patch](patches/U080-0453426.patch)
+- **Request:**
+  1. "untuk insight timer apakah kamu bisa memberikan screenshot juga… kemudian coba lakukan competitor research… taruh di bagian insight timer".
+  2. "untuk design system… jangan masukkan ke dokumen ini melainkan ke dalam 1 url khusus bernama /designsystem… nanti saya cek dulu baru combine".
+- **Interpretation:**
+  - **Screenshots:** the app cannot be opened from our region, so the app screens are Insight Timer's own App Store screenshots. The website screens were captured from the public site. Both are labelled as internal reference.
+  - **Competitor research:** two research agents (established apps; AI-native apps), summarised into section 8 of Research.
+  - **Design system:** its own route, not in /guide, until the owner reviews it. It is built from the sources so it cannot drift. It is a new page, so no existing mobile layout changes.
+- **Changed:**
+  - `src/designsystem/DesignSystemPage.tsx` and `tokens.ts` (pure parsing of `figma-export.json?raw`), with a test.
+  - The `/designsystem` route in `App.tsx`; the daily check-in holds on it.
+  - `scripts/guides/research_insight_timer.py`: the "What it looks like" gallery and "8. The competition".
+  - `public/guides/research/insight-timer/` (19 WebP images, about 590 KB).
+  - `docs/research/research_notes/Insight Timer competitors/`.
+  - CLAUDE.md layout.
+- **Verified:**
+  - `npm run check` passes (126 tests). The new test checks 251 variables in 5 collections, 16 text styles and the closed radius scale against the export.
+  - Production build at 1280px and 402px: `/designsystem` and `/guide/research` have no overflow and no errors; 19 gallery images load; tapping one opens the viewer.
+- **Revert:** `git revert --no-commit 0453426 && git checkout HEAD -- docs/`.
 
 ### U079 — Admin guideline versions
 

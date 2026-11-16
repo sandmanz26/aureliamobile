@@ -19,6 +19,15 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-16 — /designsystem; Insight Timer screenshots and competitors (U080, J104)
+
+- **New page `/designsystem`:** the design system read live from `figma-export.json` and the app's own components. It is a draft for review, not yet combined into the documents.
+- **Research (Insight Timer):**
+  - a screenshot gallery: 10 App Store screens and 9 website captures;
+  - a competition section: price ladder, established apps, AI apps that generate sessions, and what is crowded vs open.
+
+Branches: `web_app`, `admin_cms`, **`web_prod`**.
+
 ### 2026-11-16 — Admin guideline versions (U079, J102)
 
 The admin guideline in /guide has a version switcher:

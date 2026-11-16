@@ -57,6 +57,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O27 | **Default document versions (J097, J102)**: which version the playbook (v1 Original / v2 Mission guide / v3 Quick start) and the admin guideline (v1 Original / v2 Task guide / v3 Quick start) open on, and whether the chosen one replaces the share HTML/PDF | J097, `/guide/playbook?v=2`, `?v=3` | Product owner |
 | O28 | **Admin redefinition (J100)**: approve the proposed structure (Building blocks, AI system, Safety desk, one Learning area, simpler money, clear names) and its order, before any build | J100 | Product owner |
 | O29 | **Shared entity model first (J101)**: approve a `src/domain/` layer (Goal, Building block, Build, Check-in, Person, Safety signal) used by app, admin and the API contract, with consistency tests, before any admin redesign | J101 | Product owner |
+| O30 | **Design system review (J104)**: check `/designsystem`, then decide whether and how it joins Product requirements; also the open token gaps (brand orange `#FF881B`, two brand gradients) | J104, `/designsystem` | Product owner |
 
 ---
 
@@ -167,6 +168,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J101 | 2026-11-16 | Analysis | Entity coherence check: does the admin proposal fit today's UI flow? It fits only after one shared entity model; seven breaks found in the code | — |
 | J102 | 2026-11-16 | Code + Release | Admin guideline versions like the playbook: v2 Task guide, v3 Quick start (much shorter), staging and production | U079 |
 | J103 | 2026-11-16 | Question | Updated recap of everything the owner asked for, with status and the next steps | — |
+| J104 | 2026-11-16 | Research + Code + Release | Insight Timer screenshots and competitor research in Research; a new /designsystem page for review; staging and production | U080 |
 
 ---
 
@@ -1188,3 +1190,20 @@ transcript and the update log. Everything from J018 on was written at the time.
   - **Not started:** the AI & backend tab with the diagram and the black logo; the speed/quality appendix; the design system in Product requirements; the desktop icon rail.
   - **Waiting on decisions:** O24, O26, O27, O28, O29.
   - **Waiting on the owner:** the diagram file.
+
+### J104 — Screenshots, competitors, and /designsystem
+- **Asked:**
+  1. Insight Timer screenshots and competitor research, in the Insight Timer part.
+  2. Read our design and put the design system on its own URL, `/designsystem`, not in the documents; the owner will check it before combining.
+
+  Update staging and production.
+- **Done:** U080.
+  - **Research:** 10 App Store screens (the app itself is region-locked) and 9 website captures, plus "8. The competition".
+  - **Competition findings:**
+    - Insight Timer has the cheapest paid plan.
+    - About $70 a year is the norm.
+    - Aurelia's planned $100 sits with the AI-heavy tier.
+    - "Mood → generated meditation" is crowded but shallow.
+    - "Change one part" and "a journey that learns" are still open.
+  - **`/designsystem`:** everything is read from the Figma export and the live components; the open token gaps are listed.
+- **Open:** O30, the owner's review of `/designsystem` before it is combined into Product requirements.
