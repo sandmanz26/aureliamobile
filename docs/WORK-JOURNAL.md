@@ -166,6 +166,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J100 | 2026-11-16 | Proposal | Does the admin need redefining? Yes: seven changes proposed against the 2025 backend, the research and the founder test | — |
 | J101 | 2026-11-16 | Analysis | Entity coherence check: does the admin proposal fit today's UI flow? It fits only after one shared entity model; seven breaks found in the code | — |
 | J102 | 2026-11-16 | Code + Release | Admin guideline versions like the playbook: v2 Task guide, v3 Quick start (much shorter), staging and production | U079 |
+| J103 | 2026-11-16 | Question | Updated recap of everything the owner asked for, with status and the next steps | — |
 
 ---
 
@@ -1179,3 +1180,11 @@ transcript and the update log. Everything from J018 on was written at the time.
   - **v3 Quick start:** one page.
   - Both new versions were written for someone new from the start (the J098 lessons). Every route and rule matches v1.
 - **Open:** which version is the default for new team members. Added to O27.
+
+### J103 — Recap of the owner's requests (update of J093)
+- **Asked:** recap, as bullet points, what has to be done from all the conversations with the owner.
+- **Answered:** a status list.
+  - **Done:** Insight Timer replica (J089), deep research and the Research tab (J094, U076), the founder test (J091), the playbook simpler with versions (U077, U078), and the three backend sources read (J099).
+  - **Not started:** the AI & backend tab with the diagram and the black logo; the speed/quality appendix; the design system in Product requirements; the desktop icon rail.
+  - **Waiting on decisions:** O24, O26, O27, O28, O29.
+  - **Waiting on the owner:** the diagram file.
