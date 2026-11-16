@@ -169,6 +169,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J102 | 2026-11-16 | Code + Release | Admin guideline versions like the playbook: v2 Task guide, v3 Quick start (much shorter), staging and production | U079 |
 | J103 | 2026-11-16 | Question | Updated recap of everything the owner asked for, with status and the next steps | — |
 | J104 | 2026-11-16 | Research + Code + Release | Insight Timer screenshots and competitor research in Research; a new /designsystem page for review; staging and production | U080 |
+| J105 | 2026-11-16 | Question | "/designsystem is not found" on production: the browser ran a cached build (eb5d63f) from before the route existed; production serves 1f1e9a5 | — |
 
 ---
 
@@ -1207,3 +1208,8 @@ transcript and the update log. Everything from J018 on was written at the time.
     - "Change one part" and "a journey that learns" are still open.
   - **`/designsystem`:** everything is read from the Figma export and the live components; the open token gaps are listed.
 - **Open:** O30, the owner's review of `/designsystem` before it is combined into Product requirements.
+
+### J105 — "/designsystem not found" on production
+- **Asked:** why `aureliaprod.vercel.app/designsystem` shows Page not found. The screenshot's badge shows `eb5d63f`.
+- **Found:** production serves `1f1e9a5`, which includes the route (checked in the live bundle). The browser was still running the build its service worker cached, `eb5d63f`. That build predates `/designsystem`, so the old router sent it to the 404.
+- **Answer:** tap Reload on the update toast, or hard refresh. In DevTools, Application → Service workers → Update (or unregister), then reload; the badge must show `1f1e9a5`.
