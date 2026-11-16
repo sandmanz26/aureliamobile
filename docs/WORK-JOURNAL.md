@@ -55,6 +55,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O25 | **Owner requests not started (J088)**: playbook rewritten simpler and inspiring; the 2025 backend/AI documents (Technical Architecture Deep Dive, second Google Doc, Notion wiki, diagram) merged into /guide as a black-branded tab and aligned with the API contract; AI speed/quality appendix and the final design system in Product requirements; desktop main menu as a narrow icon rail; buyer-agents test of v1 | J088 | Access to the three sources and the diagram; go-ahead per item |
 | O26 | **Founder test recommendations (J091)**: (1) retire prod v1 from the picker, (2) remove invented figures in v3 (About page ↑12%/↑8%, others' names under Recent, "exprience"), (3) daily check-in never on first sign-in, (4) a privacy line and delete-everything, (5) a lighter v3 for sleep-first users; with the backend: narrow to racing-mind sleepers, outcome-led Upgrade with a guarantee, price test ($10 vs about $5/month annual) | J091, `docs/reviews/founder-test-prod-versions-2026-11-14.html` | Product owner: pick which to do |
 | O27 | **Playbook version (J097)**: which of v1 Original / v2 Mission guide / v3 Quick start is the default for the PM, and whether the chosen one replaces the share HTML/PDF | J097, `/guide/playbook?v=2`, `?v=3` | Product owner |
+| O28 | **Admin redefinition (J100)**: approve the proposed structure (Building blocks, AI system, Safety desk, one Learning area, simpler money, clear names) and its order, before any build | J100 | Product owner |
 
 ---
 
@@ -161,6 +162,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J097 | 2026-11-15 | Code + Release | Playbook versioning: v1 Original, v2 Mission guide, v3 Quick start (much shorter), on staging and production | U077 |
 | J098 | 2026-11-16 | Review + Code + Release | Roast of playbook v2/v3 as a junior PM: ten gaps found and fixed | U078 |
 | J099 | 2026-11-16 | Research | Summary of the three 2025 backend sources (Deep Dive, Technical Architecture Documentation, Wiki Aurelia): what each says, how they disagree, and what carries into 2026 | — |
+| J100 | 2026-11-16 | Proposal | Does the admin need redefining? Yes: seven changes proposed against the 2025 backend, the research and the founder test | — |
 
 ---
 
@@ -1134,3 +1136,18 @@ transcript and the update log. Everything from J018 on was written at the time.
   - The words-per-minute table (about 310 a minute) is reading pace, not meditation pace.
   - There is no crisis handling in the prompts.
 - **Next:** these feed the AI & backend tab and the speed/quality appendix (O25). The PDFs stay out of the repository until the owner says otherwise.
+
+### J100 — Does the admin need redefining?
+- **Asked:** whether anything in the admin system should be redefined.
+- **Answer:** yes. The admin was designed around the 2026 mock consumer app. It does not yet manage the parts the 2025 backend shows are the core of the system.
+- **The seven proposals:**
+  1. A **Building blocks** module for the "Lego" library and the entity taxonomy, with per-block performance (utility index).
+  2. **AI system:** Cockpit rules and AI monitoring become models and routing, versioned prompts, quality (the LLM judge), the generation pipeline (time to first sound) and cost.
+  3. A **Safety desk** for crisis signals in free text and check-ins, separate from community moderation.
+  4. **One Learning area:** Outcomes, the feedback-group study (v1 and v2 merged) and A/B tests.
+  5. **Simpler money:** park coins; merge pricing and payments into plans.
+  6. **Journeys and chapters content:** no admin exists for it today.
+  7. **Clear names:** stop calling modules "v1/v2", which clash with the design versions and the playbook versions.
+
+  Admin authentication is still the P0.
+- **Status:** a proposal only, nothing built. Recorded as O28.
