@@ -68,6 +68,7 @@ const StoryPage = lazy(() => import('./pages/StoryPage').then((m) => ({ default:
 const JourneysPage = lazy(() => import('./pages/JourneysPage').then((m) => ({ default: m.JourneysPage })))
 const GuidePage = lazy(() => import('./guides/GuidePage').then((m) => ({ default: m.GuidePage })))
 const GuideIndexPage = lazy(() => import('./guides/GuidePage').then((m) => ({ default: m.GuideIndexPage })))
+const DesignSystemPage = lazy(() => import('./designsystem/DesignSystemPage').then((m) => ({ default: m.DesignSystemPage })))
 const ExperimentationParticipantPage = lazy(() => import('./admin/pages/ExperimentationPage').then((m) => ({ default: m.ExperimentationParticipantPage })))
 const OutcomesPage = lazy(() => import('./admin/pages/OutcomesPage').then((m) => ({ default: m.OutcomesPage })))
 const RolesPage = lazy(() => import('./admin/pages/RolesPage').then((m) => ({ default: m.RolesPage })))
@@ -111,6 +112,9 @@ export default function App() {
               the site lock, outside sign-in, on every site. */}
           <Route path="/guide" element={<Suspense fallback={null}><GuideIndexPage /></Suspense>} />
           <Route path="/guide/:doc" element={<Suspense fallback={null}><GuidePage /></Suspense>} />
+          {/* The design system, for review before it joins the documents: inside the
+              site lock, outside sign-in, on every site. */}
+          <Route path="/designsystem" element={<Suspense fallback={null}><DesignSystemPage /></Suspense>} />
 
           {/* Unlisted layout probes — dummy business, no Aurelia content, not
               linked from anywhere in the app. See src/pages/dev/. */}

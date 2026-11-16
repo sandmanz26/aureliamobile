@@ -104,6 +104,7 @@ src/
   auth/         AuthContext + useSignInGate
   demo/         the /__demo feature-flag console
   guides/       /guide: the team documents (feedback playbook, admin guideline, PRD overview, API contract, Research)
+  designsystem/ /designsystem: the design system read live from figma-export.json and the ui components (draft for review)
   styles/       tokens.css — GENERATED, see below
 api/            Vercel serverless endpoints; shared code in api/_lib (not routes)
 ```
