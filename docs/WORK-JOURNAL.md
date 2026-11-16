@@ -54,7 +54,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O24 | **Insight Timer study recommendations for v1 (J089)**: (1) a "Need help now?" crisis link, (2) daily check-in at most once a day, skippable, (3) topic words as starting points, (4) rewind/resume never paid, (5) "made with AI" said plainly; also a public explainer of the causal graph | J089, `docs/reviews/insight-timer-replica-2026-11-13.html` | Product owner: pick which go into v1 |
 | O25 | **Owner requests not started (J088)**: playbook rewritten simpler and inspiring; the 2025 backend/AI documents (Technical Architecture Deep Dive, second Google Doc, Notion wiki, diagram) merged into /guide as a black-branded tab and aligned with the API contract; AI speed/quality appendix and the final design system in Product requirements; desktop main menu as a narrow icon rail; buyer-agents test of v1 | J088 | Access to the three sources and the diagram; go-ahead per item |
 | O26 | **Founder test recommendations (J091)**: (1) retire prod v1 from the picker, (2) remove invented figures in v3 (About page ↑12%/↑8%, others' names under Recent, "exprience"), (3) daily check-in never on first sign-in, (4) a privacy line and delete-everything, (5) a lighter v3 for sleep-first users; with the backend: narrow to racing-mind sleepers, outcome-led Upgrade with a guarantee, price test ($10 vs about $5/month annual) | J091, `docs/reviews/founder-test-prod-versions-2026-11-14.html` | Product owner: pick which to do |
-| O27 | **Playbook version (J097)**: which of v1 Original / v2 Mission guide / v3 Quick start is the default for the PM, and whether the chosen one replaces the share HTML/PDF | J097, `/guide/playbook?v=2`, `?v=3` | Product owner |
+| O27 | **Default document versions (J097, J102)**: which version the playbook (v1 Original / v2 Mission guide / v3 Quick start) and the admin guideline (v1 Original / v2 Task guide / v3 Quick start) open on, and whether the chosen one replaces the share HTML/PDF | J097, `/guide/playbook?v=2`, `?v=3` | Product owner |
 | O28 | **Admin redefinition (J100)**: approve the proposed structure (Building blocks, AI system, Safety desk, one Learning area, simpler money, clear names) and its order, before any build | J100 | Product owner |
 | O29 | **Shared entity model first (J101)**: approve a `src/domain/` layer (Goal, Building block, Build, Check-in, Person, Safety signal) used by app, admin and the API contract, with consistency tests, before any admin redesign | J101 | Product owner |
 
@@ -165,6 +165,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J099 | 2026-11-16 | Research | Summary of the three 2025 backend sources (Deep Dive, Technical Architecture Documentation, Wiki Aurelia): what each says, how they disagree, and what carries into 2026 | — |
 | J100 | 2026-11-16 | Proposal | Does the admin need redefining? Yes: seven changes proposed against the 2025 backend, the research and the founder test | — |
 | J101 | 2026-11-16 | Analysis | Entity coherence check: does the admin proposal fit today's UI flow? It fits only after one shared entity model; seven breaks found in the code | — |
+| J102 | 2026-11-16 | Code + Release | Admin guideline versions like the playbook: v2 Task guide, v3 Quick start (much shorter), staging and production | U079 |
 
 ---
 
@@ -1169,3 +1170,12 @@ transcript and the update log. Everything from J018 on was written at the time.
   The goal ids are consistent across onboarding, the study cohorts and the API contract.
 - **Conclusion:** the admin proposal is right in direction but must come second. First comes one shared domain model with tests; then the admin and the app both read it.
 - **Status:** proposal (O29). Nothing built.
+
+### J102 — Admin guideline versions
+- **Asked:** make the admin guideline simpler too, with two extra versions like the feedback-group playbook.
+- **Done:** U079.
+  - **v1 Original:** the module-by-module reference, unchanged. It stays the default.
+  - **v2 Task guide:** "I want to…", 24 tasks, each with steps and one watch-out, plus the first 15 minutes, roles in plain words, the morning check and a glossary.
+  - **v3 Quick start:** one page.
+  - Both new versions were written for someone new from the start (the J098 lessons). Every route and rule matches v1.
+- **Open:** which version is the default for new team members. Added to O27.

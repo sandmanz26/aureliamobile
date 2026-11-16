@@ -116,8 +116,34 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U076 | `eeb7a8f` | 2026-11-15 | /guide gets a fifth document, **Research**: the Insight Timer deep research rewritten for reading. Staging and production (J076). | [patch](patches/U076-eeb7a8f.patch) |
 | U077 | `a6619b4` | 2026-11-15 | Feedback-group playbook in /guide gets versions: v1 Original, v2 Mission guide (plain and upbeat), v3 Quick start (one page). Staging and production (J076). | [patch](patches/U077-a6619b4.patch) |
 | U078 | `07a59e1` | 2026-11-16 | Playbook v2 and v3 rewritten after a junior-PM read-through: what Aurelia is, who's who, questionnaires in plain words, a worked example, what to say when, a glossary, the first week. Staging and production. | [patch](patches/U078-07a59e1.patch) |
+| U079 | `ccb84a3` | 2026-11-16 | Admin guideline in /guide gets versions: v1 Original, v2 Task guide, v3 Quick start (one page). Staging and production. | [patch](patches/U079-ccb84a3.patch) |
 
 ## Entries
+
+### U079 — Admin guideline versions
+
+- **Commit:** `ccb84a3` · pushed 2026-11-16 UTC · `web_app` + `admin_cms` + `web_prod` (J076).
+- **Patch:** [patches/U079-ccb84a3.patch](patches/U079-ccb84a3.patch)
+- **Request:** "untuk admin group yang dibuat lebih sederhana bisa kamu bantu juga, buat tambahan 2 versi juga sama seperti feedback group".
+- **Interpretation:** "admin group" is the Admin guideline document in /guide. It gets the same treatment as the playbook:
+  - v1 stays as it is, and stays the default.
+  - v2 and v3 are written for someone new, applying what the junior-PM roast found (J098).
+- **What the two new versions are:**
+  - **v2 Task guide (about 1,500 words):**
+    - "New here?" and "Your first 15 minutes".
+    - Who can do what, in plain words.
+    - A 10-minute morning check.
+    - "I want to…": 24 tasks in 7 groups, each with where, steps and one watch-out.
+    - Rules that always apply, a glossary, and what's coming.
+  - **v3 Quick start (about 230 words):** the admin in one line, three things to know, the morning check, the map of the 8 groups, and the "always" rules.
+- **Changed:**
+  - `scripts/guides/admin_guideline_versions.py` (new) writes `admin-guideline-v2.html`, `-v3.html` and `admin-guideline-versions.css`.
+  - `GuidePage.tsx`: the `admin` entry in `DOC_VERSIONS`.
+  - The index card mentions the three versions.
+- **Verified:**
+  - `npm run check` passes.
+  - Production build at 1280px and 402px: contents have 47, 15 and 4 entries, with no overflow and no errors. Tapping v3 opens `/guide/admin?v=3`.
+- **Revert:** `git revert --no-commit ccb84a3 && git checkout HEAD -- docs/`.
 
 ### U078 — Playbook v2/v3 for a junior PM
 
