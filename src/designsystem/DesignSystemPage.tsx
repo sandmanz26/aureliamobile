@@ -1,21 +1,14 @@
 import { ArrowLeft, Bell, Heart, Moon, Play, Search, Sparkles, Wind } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import figmaExport from '../../design-tokens/figma-export.json?raw'
 import networkArt from '../assets/aurelia-network.png'
-import { Accordion } from '../components/ui/Accordion'
 import { ChartIncreaseIcon, NoteIcon, NotificationIcon, PlayIcon, PlaylistIcon, UserIcon } from '../components/ui/AureliaIcons'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
-import { Button } from '../components/ui/Button'
-import { Chip } from '../components/ui/Chip'
-import { CoinPill } from '../components/ui/CoinPill'
-import { FeatureCard } from '../components/ui/FeatureCard'
-import { SegmentedControl } from '../components/ui/SegmentedControl'
-import { Skeleton } from '../components/ui/Skeleton'
-import { TagRow } from '../components/ui/TagRow'
-import { TextField } from '../components/ui/TextField'
 import { BUILD } from '../lib/build'
 import { CARD_SHADOW } from '../lib/shadows'
+import { CATALOGUE } from './catalogue'
+import { ComponentCatalogue } from './ComponentCatalogue'
 import { gaps, parseExport, semanticUsage, type Ramp } from './tokens'
 
 /**
@@ -35,7 +28,7 @@ const SECTIONS = [
   ['effects', 'Shadow and gradient'],
   ['brand', 'Brand'],
   ['icons', 'Icons'],
-  ['components', 'Components'],
+  ['components', 'Components and patterns'],
   ['gaps', 'Open gaps'],
 ] as const
 
@@ -82,9 +75,6 @@ function RampRow({ ramp }: { ramp: Ramp }) {
 }
 
 export function DesignSystemPage() {
-  const [segment, setSegment] = useState('Week')
-  const [chip, setChip] = useState('Sleep')
-
   useEffect(() => {
     document.title = 'Design system · Aurelia'
   }, [])
@@ -122,7 +112,7 @@ export function DesignSystemPage() {
             <h1 className="text-style-headline mt-8 max-w-[560px] text-text-primary">The pieces every Aurelia screen is made of</h1>
             <p className="text-style-body mt-12 max-w-[600px] text-text-secondary">
               Read straight from the Figma file’s variables and the app’s own components. {T.total} variables in {T.collections.length} collections,
-              16 text styles, and the components the app ships. If a value here changes, it changed in Figma first.
+              16 text styles, and all {CATALOGUE.length} components the app ships, in 10 patterns. If a value here changes, it changed in Figma first.
             </p>
             <div className="mt-16 flex flex-wrap gap-8">
               {T.collections.map((c) => (
@@ -282,54 +272,12 @@ export function DesignSystemPage() {
             </div>
           </Section>
 
-          <Section id="components" title="Components" lede="The app’s shared components from src/components/ui, rendered live with sample content. The full catalogue with every state lives on the Storybook branch.">
-            <div className="grid gap-16 lg:grid-cols-2">
-              <Panel name="Button" note="primary · secondary · ghost · disabled">
-                <div className="flex flex-wrap gap-8">
-                  <Button>Create a session</Button>
-                  <Button variant="secondary">Review changes</Button>
-                  <Button variant="ghost">Skip</Button>
-                  <Button disabled>Disabled</Button>
-                </div>
-              </Panel>
-              <Panel name="Chip" note="tap to select">
-                <div className="flex flex-wrap gap-8">
-                  {['Sleep', 'Calm', 'Focus', 'Energy'].map((c) => (
-                    <Chip key={c} label={c} active={chip === c} onClick={() => setChip(c)} />
-                  ))}
-                </div>
-              </Panel>
-              <Panel name="TextField" note="with a leading icon">
-                <TextField placeholder="How are you feeling today?" leadingIcon={<Search size={16} />} aria-label="Example text field" />
-              </Panel>
-              <Panel name="SegmentedControl" note="one of a few">
-                <SegmentedControl options={['Day', 'Week', 'Month']} value={segment} onChange={setSegment} />
-              </Panel>
-              <Panel name="TagRow" note="folds past the limit">
-                <TagRow tags={['Breathwork', 'Sleep', 'Longer exhale', 'Nature', 'Evening', 'Calm']} max={4} />
-              </Panel>
-              <Panel name="CoinPill" note="the coin balance">
-                <CoinPill points="1,323" always />
-              </Panel>
-              <Panel name="FeatureCard" note="a benefit with an icon">
-                <FeatureCard icon={<Sparkles size={20} />} title="Made for how you feel" description="One sentence in, a session out, in about a minute." />
-              </Panel>
-              <Panel name="Skeleton" note="loading placeholder">
-                <div className="space-y-8">
-                  <Skeleton className="h-16 w-3/4" />
-                  <Skeleton className="h-16 w-1/2" />
-                </div>
-              </Panel>
-              <Panel name="Accordion" note="one or more open">
-                <Accordion
-                  sections={[
-                    { id: 'a', label: 'What is a chapter?', content: <p className="text-style-body-small text-text-secondary">One session in a five-chapter journey. The next one changes with how you said you felt.</p> },
-                    { id: 'b', label: 'Why does Aurelia suggest a change?', content: <p className="text-style-body-small text-text-secondary">Every suggestion carries a Why: your goal, your words, or your last check-in.</p> },
-                  ]}
-                  defaultOpen={['a']}
-                />
-              </Panel>
-            </div>
+          <Section
+            id="components"
+            title="Components and patterns"
+            lede={`Every one of the ${CATALOGUE.length} components in src/components, grouped by the pattern it belongs to. Each card says what it is for, when to use it, where it appears and its states, with its props read from its own source. Components that need app state to draw are listed with where to see them.`}
+          >
+            <ComponentCatalogue />
           </Section>
 
           <Section id="gaps" title="Open gaps" lede="Colours the design uses that have no variable yet, reported and not invented. Each needs a design decision, then a variable in Figma, then a re-export.">
@@ -363,17 +311,6 @@ export function DesignSystemPage() {
           </Section>
         </main>
       </div>
-    </div>
-  )
-}
-
-function Panel({ name, note, children }: { name: string; note: string; children: React.ReactNode }) {
-  return (
-    <div className="min-w-0 rounded-16 border border-border-subtle bg-surface-default p-16">
-      <p className="text-style-label text-text-primary">
-        {name} <span className="text-text-secondary">· {note}</span>
-      </p>
-      <div className="mt-12">{children}</div>
     </div>
   )
 }
