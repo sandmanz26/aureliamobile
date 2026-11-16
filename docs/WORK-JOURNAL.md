@@ -56,6 +56,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O26 | **Founder test recommendations (J091)**: (1) retire prod v1 from the picker, (2) remove invented figures in v3 (About page ↑12%/↑8%, others' names under Recent, "exprience"), (3) daily check-in never on first sign-in, (4) a privacy line and delete-everything, (5) a lighter v3 for sleep-first users; with the backend: narrow to racing-mind sleepers, outcome-led Upgrade with a guarantee, price test ($10 vs about $5/month annual) | J091, `docs/reviews/founder-test-prod-versions-2026-11-14.html` | Product owner: pick which to do |
 | O27 | **Playbook version (J097)**: which of v1 Original / v2 Mission guide / v3 Quick start is the default for the PM, and whether the chosen one replaces the share HTML/PDF | J097, `/guide/playbook?v=2`, `?v=3` | Product owner |
 | O28 | **Admin redefinition (J100)**: approve the proposed structure (Building blocks, AI system, Safety desk, one Learning area, simpler money, clear names) and its order, before any build | J100 | Product owner |
+| O29 | **Shared entity model first (J101)**: approve a `src/domain/` layer (Goal, Building block, Build, Check-in, Person, Safety signal) used by app, admin and the API contract, with consistency tests, before any admin redesign | J101 | Product owner |
 
 ---
 
@@ -163,6 +164,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J098 | 2026-11-16 | Review + Code + Release | Roast of playbook v2/v3 as a junior PM: ten gaps found and fixed | U078 |
 | J099 | 2026-11-16 | Research | Summary of the three 2025 backend sources (Deep Dive, Technical Architecture Documentation, Wiki Aurelia): what each says, how they disagree, and what carries into 2026 | — |
 | J100 | 2026-11-16 | Proposal | Does the admin need redefining? Yes: seven changes proposed against the 2025 backend, the research and the founder test | — |
+| J101 | 2026-11-16 | Analysis | Entity coherence check: does the admin proposal fit today's UI flow? It fits only after one shared entity model; seven breaks found in the code | — |
 
 ---
 
@@ -1151,3 +1153,19 @@ transcript and the update log. Everything from J018 on was written at the time.
 
   Admin authentication is still the P0.
 - **Status:** a proposal only, nothing built. Recorded as O28.
+
+### J101 — Do the entities hold together from UI to admin to backend?
+- **Asked:** does the admin redefinition make sense, and does it connect with the current UI flow? The frontend must be safe as a whole entity model, not just added to.
+- **Method:** traced the flow onboarding → chat → proposals → build → play → check-in → next chapter → journal and progress through the code, the admin data, the API contract and the 2025 backend.
+- **Found seven breaks:**
+  1. The same "Lego" is defined three times with different ids and texts (`firstSession.ts` `calm-exhale`/`regulate-exhale`, `wellnessAnalysis.ts` `longer-exhale`, `addOptions.ts` `yellow` vs `APPLIED_STYLES` `increase-yellow`).
+  2. A check-in is not linked to the build or the blocks it rated, so the 2025 utility-index loop cannot work.
+  3. Three feedback shapes: the journey check-in, the daily entry, and analytics `WellnessGoal` with an invented alignment score.
+  4. Admin sessions and users are a separate random dataset (`admin/data/mock.ts`), not the app's catalogue and people.
+  5. Analytics "goals" (`wellnessGoals.ts`) are a different concept from onboarding goals.
+  6. No safety-signal entity for free text in chat or check-ins.
+  7. Study participants are not linked to accounts (by design for pseudonymity, but the link must exist on the server).
+
+  The goal ids are consistent across onboarding, the study cohorts and the API contract.
+- **Conclusion:** the admin proposal is right in direction but must come second. First comes one shared domain model with tests; then the admin and the app both read it.
+- **Status:** proposal (O29). Nothing built.
