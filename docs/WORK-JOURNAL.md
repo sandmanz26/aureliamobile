@@ -160,6 +160,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J096 | 2026-11-15 | Question | What the owner means by "make the feedback playbook more simple and playful": the same content and accuracy, a mission tone, plain words | — |
 | J097 | 2026-11-15 | Code + Release | Playbook versioning: v1 Original, v2 Mission guide, v3 Quick start (much shorter), on staging and production | U077 |
 | J098 | 2026-11-16 | Review + Code + Release | Roast of playbook v2/v3 as a junior PM: ten gaps found and fixed | U078 |
+| J099 | 2026-11-16 | Research | Summary of the three 2025 backend sources (Deep Dive, Technical Architecture Documentation, Wiki Aurelia): what each says, how they disagree, and what carries into 2026 | — |
 
 ---
 
@@ -1117,3 +1118,19 @@ transcript and the update log. Everything from J018 on was written at the time.
 - **Asked:** roast v2 and v3; could a junior PM understand them? If not, update.
 - **Answer:** not yet. Ten gaps were found, including unexplained abbreviations, no picture of what participants do, unclear roles, no worked example, a jargon safety trigger and no first-week guidance. All ten are fixed in U078.
 - **Still to decide before week 0** (now on v2's checklist): names and contacts for each role, where participants are recruited, and the daily-message channel.
+
+### J099 — The three 2025 backend sources, summarised
+- **Asked:** a bullet summary of what the three links hold. The second Google Doc and the Notion wiki arrived as PDFs.
+- **Read:**
+  - "Technical Architecture Deep Dive": 10 slides, the vision.
+  - "Technical Architecture Documentation": 6 pages, infrastructure.
+  - "Wiki Aurelia": 20 pages, the real prompts.
+  - No secrets in any of them.
+- **Main findings:**
+  - The 2025 product was a creator tool: wellness professionals built "campaigns" from a taxonomy, an LLM wrote the script, and media came from Luma AI (video and thumbnails), Beatoven.ai (music) and TTS.
+  - Feedback is scored by an LLM, including a per-entity "utility index" from −1 to 1, and the scores are aggregated by analytics.
+  - The causal inference and reinforcement learning in the Deep Dive are not visible in the wiki's prompts.
+  - The documents disagree on providers, vector sizes and knowledge-point counts.
+  - The words-per-minute table (about 310 a minute) is reading pace, not meditation pace.
+  - There is no crisis handling in the prompts.
+- **Next:** these feed the AI & backend tab and the speed/quality appendix (O25). The PDFs stay out of the repository until the owner says otherwise.
