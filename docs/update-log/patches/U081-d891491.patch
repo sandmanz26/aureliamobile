@@ -1,0 +1,800 @@
+From d891491cfe4d1135cd65277a4603b87d65d99d24 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Mon, 16 Nov 2026 12:03:48 +0000
+Subject: [PATCH] feat(designsystem): every component, grouped into patterns,
+ in detail
+
+The Components section of /designsystem becomes Components and patterns:
+all 71 components in src/components, in 10 patterns (actions, inputs,
+navigation, cards, sheets, cockpit, progress, loading and motion, brand,
+plumbing), each pattern with guidance and rules, each component with
+purpose, when to use, where it appears, its states, its Figma node, a
+live demo where it renders on its own (28), and its props read from its
+own source by a small parser. A test fails when a component file is
+added without a catalogue entry.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/designsystem/ComponentCatalogue.tsx | 300 ++++++++++++++++++++++++
+ src/designsystem/DesignSystemPage.tsx   |  85 +------
+ src/designsystem/catalogue.test.ts      |  55 +++++
+ src/designsystem/catalogue.ts           | 133 +++++++++++
+ src/designsystem/props.ts               | 120 ++++++++++
+ 5 files changed, 619 insertions(+), 74 deletions(-)
+ create mode 100644 src/designsystem/ComponentCatalogue.tsx
+ create mode 100644 src/designsystem/catalogue.test.ts
+ create mode 100644 src/designsystem/catalogue.ts
+ create mode 100644 src/designsystem/props.ts
+
+diff --git a/src/designsystem/ComponentCatalogue.tsx b/src/designsystem/ComponentCatalogue.tsx
+new file mode 100644
+index 0000000..03118e2
+--- /dev/null
++++ b/src/designsystem/ComponentCatalogue.tsx
+@@ -0,0 +1,300 @@
++import { Sparkles } from 'lucide-react'
++import { useState, type ReactNode } from 'react'
++import { FilterChips, type FilterId } from '../components/chat/FilterChips'
++import { EmptyThread } from '../components/chat/EmptyThread'
++import { GeneratingShape } from '../components/chat/GeneratingShape'
++import { RotatingStatus } from '../components/chat/RotatingStatus'
++import { VoiceMessage } from '../components/chat/VoiceMessage'
++import { WeekStrip } from '../components/daily/WeekStrip'
++import { JourneyCard } from '../components/journeys/JourneyCard'
++import { Accordion } from '../components/ui/Accordion'
++import { ChartIncreaseIcon, NoteIcon, PlayIcon, PlaylistIcon, UserIcon } from '../components/ui/AureliaIcons'
++import { AureliaLogo } from '../components/ui/AureliaLogo'
++import { BuildBadge } from '../components/ui/BuildBadge'
++import { Button } from '../components/ui/Button'
++import { Chip } from '../components/ui/Chip'
++import { CoinMark, CoinPill } from '../components/ui/CoinPill'
++import { CountUp } from '../components/ui/CountUp'
++import { CoverImage } from '../components/ui/CoverImage'
++import { FeatureCard } from '../components/ui/FeatureCard'
++import { FlipWord } from '../components/ui/FlipWord'
++import { PhotoCircle } from '../components/ui/PhotoCircle'
++import { SegmentedControl } from '../components/ui/SegmentedControl'
++import { SessionGridCard } from '../components/ui/SessionGridCard'
++import { ShareSheet } from '../components/ui/ShareSheet'
++import { Skeleton } from '../components/ui/Skeleton'
++import { TagRow } from '../components/ui/TagRow'
++import { TextField } from '../components/ui/TextField'
++import { AlignmentGauge } from '../components/wellness/AlignmentGauge'
++import { AlignmentPanel } from '../components/wellness/AlignmentPanel'
++import { ProgressRing } from '../components/wellness/ProgressRing'
++import { dayKey, weekOf } from '../lib/dailyCheckIn'
++import { STORIES } from '../lib/journeys'
++import { SESSIONS } from '../lib/sessions'
++import { CATALOGUE, PATTERNS, type CatalogueEntry } from './catalogue'
++import { extractProps } from './props'
++
++// Every component's own source, so its props are read rather than restated.
++const SOURCES = import.meta.glob(['../components/**/*.tsx', '!../components/**/*.test.tsx'], {
++  query: '?raw',
++  import: 'default',
++  eager: true,
++}) as Record<string, string>
++
++const GRADIENT = 'linear-gradient(135deg, #FF881B, #FFE682)'
++
++function useDemos(): Record<string, ReactNode> {
++  const [chip, setChip] = useState('Sleep')
++  const [segment, setSegment] = useState('Week')
++  const [filter, setFilter] = useState<FilterId>('all')
++  const [share, setShare] = useState(false)
++  const [today] = useState(() => new Date())
++  const [day, setDay] = useState(() => dayKey(today))
++  return {
++    'ui/Button.tsx': (
++      <div className="flex flex-wrap gap-8">
++        <Button>Create a session</Button>
++        <Button variant="secondary">Review changes</Button>
++        <Button variant="ghost">Skip</Button>
++        <Button disabled>Disabled</Button>
++        <Button icon={<Sparkles size={16} />}>With icon</Button>
++      </div>
++    ),
++    'ui/Chip.tsx': (
++      <div className="flex flex-wrap gap-8">
++        {['Sleep', 'Calm', 'Focus', 'Energy'].map((c) => (
++          <Chip key={c} label={c} active={chip === c} onClick={() => setChip(c)} />
++        ))}
++      </div>
++    ),
++    'ui/SegmentedControl.tsx': <SegmentedControl options={['Day', 'Week', 'Month']} value={segment} onChange={setSegment} />,
++    'chat/FilterChips.tsx': <FilterChips filter={filter} onChange={setFilter} count={(id) => (id === 'selected' ? 2 : 3)} />,
++    'ui/CoinPill.tsx': (
++      <div className="flex items-center gap-16">
++        <CoinPill points="1,323" always />
++        <CoinMark size={28} />
++      </div>
++    ),
++    'ui/TextField.tsx': <TextField placeholder="How are you feeling today?" aria-label="Example text field" />,
++    'ui/FeatureCard.tsx': <FeatureCard icon={<Sparkles size={20} />} title="Made for how you feel" description="One sentence in, a session out, in about a minute." />,
++    'ui/SessionGridCard.tsx': (
++      <div className="w-[180px]">
++        <SessionGridCard session={SESSIONS[0]} />
++      </div>
++    ),
++    'journeys/JourneyCard.tsx': <JourneyCard story={STORIES[0]} />,
++    'ui/CoverImage.tsx': (
++      <div className="relative h-120 w-full max-w-[280px] overflow-hidden rounded-16">
++        <CoverImage photo="breathwork" gradient={GRADIENT} />
++      </div>
++    ),
++    'ui/PhotoCircle.tsx': (
++      <div className="flex gap-12">
++        <PhotoCircle photo="affirmations" size={56} gradient={GRADIENT} />
++        <PhotoCircle photo="breathwork" size={40} gradient={GRADIENT} />
++      </div>
++    ),
++    'ui/TagRow.tsx': <TagRow tags={['Breathwork', 'Sleep', 'Longer exhale', 'Nature', 'Evening', 'Calm']} max={4} />,
++    'ui/Accordion.tsx': (
++      <Accordion
++        sections={[
++          { id: 'a', label: 'What is a chapter?', content: <p className="text-style-body-small text-text-secondary">One session in a five-chapter journey.</p> },
++          { id: 'b', label: 'Why a change?', content: <p className="text-style-body-small text-text-secondary">Every suggestion carries a Why.</p> },
++        ]}
++        defaultOpen={['a']}
++      />
++    ),
++    'ui/ShareSheet.tsx': (
++      <>
++        <Button variant="secondary" onClick={() => setShare(true)}>
++          Open the share sheet
++        </Button>
++        {share && <ShareSheet title="Sleep meditation" url="https://example.com/s/sleep" onClose={() => setShare(false)} />}
++      </>
++    ),
++    'chat/EmptyThread.tsx': (
++      <div className="relative h-[260px] overflow-hidden rounded-16 bg-background-default">
++        <EmptyThread name="Adam" />
++      </div>
++    ),
++    'chat/RotatingStatus.tsx': <RotatingStatus />,
++    'chat/GeneratingShape.tsx': <GeneratingShape size={40} />,
++    'chat/VoiceMessage.tsx': <VoiceMessage durationMs={14000} transcript="I can’t switch off at night, my mind keeps racing." />,
++    'daily/WeekStrip.tsx': <WeekStrip days={weekOf(today)} selected={day} onSelect={setDay} />,
++    'wellness/ProgressRing.tsx': (
++      <ProgressRing value={62} size={96} stroke={8} track="#F2F1EF">
++        <span className="text-style-title">62</span>
++      </ProgressRing>
++    ),
++    'wellness/AlignmentGauge.tsx': (
++      <div className="max-w-[240px]">
++        <AlignmentGauge score={72} />
++      </div>
++    ),
++    'wellness/AlignmentPanel.tsx': <AlignmentPanel score={64} previousState={['Restless', 'Wired']} currentState={['Settled', 'Sleepy']} />,
++    'ui/Skeleton.tsx': (
++      <div className="space-y-8">
++        <Skeleton className="h-16 w-3/4" />
++        <Skeleton className="h-16 w-1/2" />
++        <Skeleton className="h-80 w-full rounded-16" />
++      </div>
++    ),
++    'ui/CountUp.tsx': (
++      <p className="text-style-title-large">
++        <CountUp value={1323} />
++      </p>
++    ),
++    'ui/FlipWord.tsx': (
++      <p className="text-style-title">
++        Trusted <FlipWord words={['Creators', 'Guides', 'Storytellers']} />
++      </p>
++    ),
++    'ui/AureliaLogo.tsx': (
++      <div className="flex flex-wrap items-center gap-16">
++        <AureliaLogo iconSize={28} />
++        <AureliaLogo iconSize={28} markOnly />
++        <span className="rounded-12 bg-espresso-900 p-8">
++          <AureliaLogo iconSize={24} inverse />
++        </span>
++      </div>
++    ),
++    'ui/AureliaIcons.tsx': (
++      <div className="flex gap-16 text-icon-default">
++        <PlayIcon size={24} />
++        <PlaylistIcon size={24} />
++        <NoteIcon size={24} />
++        <UserIcon size={24} />
++        <ChartIncreaseIcon size={24} />
++      </div>
++    ),
++    'ui/BuildBadge.tsx': <BuildBadge />,
++  }
++}
++
++function PropsTable({ entry }: { entry: CatalogueEntry }) {
++  const parsed = extractProps(SOURCES[`../components/${entry.file}`] ?? '')
++  const withProps = parsed.filter((c) => c.props.length || c.extendsFrom)
++  if (!withProps.length) return <p className="text-style-caption text-text-secondary">No props.</p>
++  return (
++    <div className="space-y-12">
++      {withProps.map((c) => (
++        <div key={c.component} className="min-w-0">
++          {withProps.length > 1 && <p className="text-style-label mb-4">{c.component}</p>}
++          <div className="overflow-x-auto rounded-12 border border-border-subtle">
++            <table className="w-full min-w-[520px] text-left">
++              <thead>
++                <tr className="text-style-caption border-b border-border-subtle text-text-secondary uppercase tracking-wide">
++                  <th className="px-10 py-6">Prop</th>
++                  <th className="px-10 py-6">Type</th>
++                  <th className="px-10 py-6">Default</th>
++                  <th className="px-10 py-6">Notes</th>
++                </tr>
++              </thead>
++              <tbody>
++                {c.props.map((p) => (
++                  <tr key={p.name} className="text-style-label-regular border-b border-border-subtle align-top last:border-b-0">
++                    <td className="px-10 py-6 font-semibold">
++                      <code>
++                        {p.name}
++                        {p.optional ? '?' : ''}
++                      </code>
++                    </td>
++                    <td className="max-w-[220px] px-10 py-6 break-words text-text-secondary">
++                      <code>{p.type}</code>
++                    </td>
++                    <td className="px-10 py-6 text-text-secondary">
++                      <code>{p.defaultValue ?? '–'}</code>
++                    </td>
++                    <td className="max-w-[260px] px-10 py-6 text-text-secondary">{p.doc ?? ''}</td>
++                  </tr>
++                ))}
++              </tbody>
++            </table>
++          </div>
++          {c.extendsFrom && <p className="text-style-caption mt-4 text-text-secondary">Also takes every attribute of <code>{c.extendsFrom}</code>.</p>}
++        </div>
++      ))}
++    </div>
++  )
++}
++
++function EntryCard({ entry, demo }: { entry: CatalogueEntry; demo?: ReactNode }) {
++  return (
++    <article id={`c-${entry.name.split(' ')[0].toLowerCase()}`} className="min-w-0 rounded-16 border border-border-subtle bg-surface-default p-16">
++      <div className="flex flex-wrap items-baseline justify-between gap-8">
++        <h4 className="text-style-title text-text-primary">{entry.name}</h4>
++        <code className="text-style-caption text-text-secondary">src/components/{entry.file}</code>
++      </div>
++      <p className="text-style-body-small mt-6 text-text-primary">{entry.purpose}</p>
++      <dl className="text-style-label-regular mt-12 grid gap-x-16 gap-y-6 sm:grid-cols-[110px_minmax(0,1fr)]">
++        <dt className="text-text-secondary">Use when</dt>
++        <dd>{entry.useWhen}</dd>
++        <dt className="text-text-secondary">Where</dt>
++        <dd>{entry.where}</dd>
++        {entry.figma && (
++          <>
++            <dt className="text-text-secondary">Figma</dt>
++            <dd>{entry.figma}</dd>
++          </>
++        )}
++        {entry.states.length > 0 && (
++          <>
++            <dt className="text-text-secondary">States</dt>
++            <dd className="flex flex-wrap gap-6">
++              {entry.states.map((s) => (
++                <span key={s} className="rounded-full bg-background-elevated px-8 py-2 text-[11px] leading-[16px]">
++                  {s}
++                </span>
++              ))}
++            </dd>
++          </>
++        )}
++      </dl>
++      {demo ? (
++        <div className="mt-16 rounded-12 border border-dashed border-border-default bg-background-default p-16">{demo}</div>
++      ) : (
++        <p className="text-style-caption mt-16 text-text-secondary">Shown in context only: it needs app state to render. See it on: {entry.where}.</p>
++      )}
++      <details className="mt-12">
++        <summary className="text-style-label cursor-pointer text-text-brand">Props (read from the source)</summary>
++        <div className="mt-8">
++          <PropsTable entry={entry} />
++        </div>
++      </details>
++    </article>
++  )
++}
++
++export function ComponentCatalogue() {
++  const demos = useDemos()
++  return (
++    <div className="space-y-40">
++      <div className="flex flex-wrap gap-8">
++        {PATTERNS.map((p) => (
++          <a key={p.id} href={`#p-${p.id}`} className="text-style-label rounded-full border border-border-default bg-surface-default px-10 py-4 hover:bg-background-elevated">
++            {p.name} · {CATALOGUE.filter((c) => c.pattern === p.id).length}
++          </a>
++        ))}
++      </div>
++      {PATTERNS.map((p) => {
++        const entries = CATALOGUE.filter((c) => c.pattern === p.id)
++        return (
++          <div key={p.id} id={`p-${p.id}`} className="scroll-mt-[calc(var(--staging-bar,0px)+72px)]">
++            <h3 className="text-style-title-large-regular text-text-primary">{p.name}</h3>
++            <p className="text-style-body-small mt-4 max-w-[640px] text-text-secondary">{p.guidance}</p>
++            <ul className="text-style-body-small mt-8 max-w-[680px] list-disc space-y-2 pl-20 text-text-primary">
++              {p.rules.map((r) => (
++                <li key={r}>{r}</li>
++              ))}
++            </ul>
++            <div className="mt-16 grid gap-16">
++              {entries.map((e) => (
++                <EntryCard key={e.file} entry={e} demo={demos[e.file]} />
++              ))}
++            </div>
++          </div>
++        )
++      })}
++    </div>
++  )
++}
+diff --git a/src/designsystem/DesignSystemPage.tsx b/src/designsystem/DesignSystemPage.tsx
+index ce6ff03..82bccf8 100644
+--- a/src/designsystem/DesignSystemPage.tsx
++++ b/src/designsystem/DesignSystemPage.tsx
+@@ -1,21 +1,14 @@
+ import { ArrowLeft, Bell, Heart, Moon, Play, Search, Sparkles, Wind } from 'lucide-react'
+-import { useEffect, useState } from 'react'
++import { useEffect } from 'react'
+ import { Link } from 'react-router-dom'
+ import figmaExport from '../../design-tokens/figma-export.json?raw'
+ import networkArt from '../assets/aurelia-network.png'
+-import { Accordion } from '../components/ui/Accordion'
+ import { ChartIncreaseIcon, NoteIcon, NotificationIcon, PlayIcon, PlaylistIcon, UserIcon } from '../components/ui/AureliaIcons'
+ import { AureliaLogo } from '../components/ui/AureliaLogo'
+-import { Button } from '../components/ui/Button'
+-import { Chip } from '../components/ui/Chip'
+-import { CoinPill } from '../components/ui/CoinPill'
+-import { FeatureCard } from '../components/ui/FeatureCard'
+-import { SegmentedControl } from '../components/ui/SegmentedControl'
+-import { Skeleton } from '../components/ui/Skeleton'
+-import { TagRow } from '../components/ui/TagRow'
+-import { TextField } from '../components/ui/TextField'
+ import { BUILD } from '../lib/build'
+ import { CARD_SHADOW } from '../lib/shadows'
++import { CATALOGUE } from './catalogue'
++import { ComponentCatalogue } from './ComponentCatalogue'
+ import { gaps, parseExport, semanticUsage, type Ramp } from './tokens'
+ 
+ /**
+@@ -35,7 +28,7 @@ const SECTIONS = [
+   ['effects', 'Shadow and gradient'],
+   ['brand', 'Brand'],
+   ['icons', 'Icons'],
+-  ['components', 'Components'],
++  ['components', 'Components and patterns'],
+   ['gaps', 'Open gaps'],
+ ] as const
+ 
+@@ -82,9 +75,6 @@ function RampRow({ ramp }: { ramp: Ramp }) {
+ }
+ 
+ export function DesignSystemPage() {
+-  const [segment, setSegment] = useState('Week')
+-  const [chip, setChip] = useState('Sleep')
+-
+   useEffect(() => {
+     document.title = 'Design system · Aurelia'
+   }, [])
+@@ -122,7 +112,7 @@ export function DesignSystemPage() {
+             <h1 className="text-style-headline mt-8 max-w-[560px] text-text-primary">The pieces every Aurelia screen is made of</h1>
+             <p className="text-style-body mt-12 max-w-[600px] text-text-secondary">
+               Read straight from the Figma file’s variables and the app’s own components. {T.total} variables in {T.collections.length} collections,
+-              16 text styles, and the components the app ships. If a value here changes, it changed in Figma first.
++              16 text styles, and all {CATALOGUE.length} components the app ships, in 10 patterns. If a value here changes, it changed in Figma first.
+             </p>
+             <div className="mt-16 flex flex-wrap gap-8">
+               {T.collections.map((c) => (
+@@ -282,54 +272,12 @@ export function DesignSystemPage() {
+             </div>
+           </Section>
+ 
+-          <Section id="components" title="Components" lede="The app’s shared components from src/components/ui, rendered live with sample content. The full catalogue with every state lives on the Storybook branch.">
+-            <div className="grid gap-16 lg:grid-cols-2">
+-              <Panel name="Button" note="primary · secondary · ghost · disabled">
+-                <div className="flex flex-wrap gap-8">
+-                  <Button>Create a session</Button>
+-                  <Button variant="secondary">Review changes</Button>
+-                  <Button variant="ghost">Skip</Button>
+-                  <Button disabled>Disabled</Button>
+-                </div>
+-              </Panel>
+-              <Panel name="Chip" note="tap to select">
+-                <div className="flex flex-wrap gap-8">
+-                  {['Sleep', 'Calm', 'Focus', 'Energy'].map((c) => (
+-                    <Chip key={c} label={c} active={chip === c} onClick={() => setChip(c)} />
+-                  ))}
+-                </div>
+-              </Panel>
+-              <Panel name="TextField" note="with a leading icon">
+-                <TextField placeholder="How are you feeling today?" leadingIcon={<Search size={16} />} aria-label="Example text field" />
+-              </Panel>
+-              <Panel name="SegmentedControl" note="one of a few">
+-                <SegmentedControl options={['Day', 'Week', 'Month']} value={segment} onChange={setSegment} />
+-              </Panel>
+-              <Panel name="TagRow" note="folds past the limit">
+-                <TagRow tags={['Breathwork', 'Sleep', 'Longer exhale', 'Nature', 'Evening', 'Calm']} max={4} />
+-              </Panel>
+-              <Panel name="CoinPill" note="the coin balance">
+-                <CoinPill points="1,323" always />
+-              </Panel>
+-              <Panel name="FeatureCard" note="a benefit with an icon">
+-                <FeatureCard icon={<Sparkles size={20} />} title="Made for how you feel" description="One sentence in, a session out, in about a minute." />
+-              </Panel>
+-              <Panel name="Skeleton" note="loading placeholder">
+-                <div className="space-y-8">
+-                  <Skeleton className="h-16 w-3/4" />
+-                  <Skeleton className="h-16 w-1/2" />
+-                </div>
+-              </Panel>
+-              <Panel name="Accordion" note="one or more open">
+-                <Accordion
+-                  sections={[
+-                    { id: 'a', label: 'What is a chapter?', content: <p className="text-style-body-small text-text-secondary">One session in a five-chapter journey. The next one changes with how you said you felt.</p> },
+-                    { id: 'b', label: 'Why does Aurelia suggest a change?', content: <p className="text-style-body-small text-text-secondary">Every suggestion carries a Why: your goal, your words, or your last check-in.</p> },
+-                  ]}
+-                  defaultOpen={['a']}
+-                />
+-              </Panel>
+-            </div>
++          <Section
++            id="components"
++            title="Components and patterns"
++            lede={`Every one of the ${CATALOGUE.length} components in src/components, grouped by the pattern it belongs to. Each card says what it is for, when to use it, where it appears and its states, with its props read from its own source. Components that need app state to draw are listed with where to see them.`}
++          >
++            <ComponentCatalogue />
+           </Section>
+ 
+           <Section id="gaps" title="Open gaps" lede="Colours the design uses that have no variable yet, reported and not invented. Each needs a design decision, then a variable in Figma, then a re-export.">
+@@ -367,17 +315,6 @@ export function DesignSystemPage() {
+   )
+ }
+ 
+-function Panel({ name, note, children }: { name: string; note: string; children: React.ReactNode }) {
+-  return (
+-    <div className="min-w-0 rounded-16 border border-border-subtle bg-surface-default p-16">
+-      <p className="text-style-label text-text-primary">
+-        {name} <span className="text-text-secondary">· {note}</span>
+-      </p>
+-      <div className="mt-12">{children}</div>
+-    </div>
+-  )
+-}
+-
+ function isLight(hex: string) {
+   const n = parseInt(hex.slice(1, 7), 16)
+   const r = (n >> 16) & 255
+diff --git a/src/designsystem/catalogue.test.ts b/src/designsystem/catalogue.test.ts
+new file mode 100644
+index 0000000..a836784
+--- /dev/null
++++ b/src/designsystem/catalogue.test.ts
+@@ -0,0 +1,55 @@
++import { describe, expect, it } from 'vitest'
++import { CATALOGUE, PATTERNS } from './catalogue'
++import { extractProps } from './props'
++
++// The same glob the page uses, so the test sees exactly what /designsystem sees.
++const SOURCES = import.meta.glob(['../components/**/*.tsx', '!../components/**/*.test.tsx'], {
++  query: '?raw',
++  import: 'default',
++  eager: true,
++}) as Record<string, string>
++const source = (file: string) => SOURCES[`../components/${file}`]
++const componentFiles = () => Object.keys(SOURCES).map((k) => k.replace('../components/', ''))
++
++describe('component catalogue', () => {
++  it('lists every component file, and nothing that does not exist', () => {
++    const files = componentFiles().sort()
++    const listed = CATALOGUE.map((c) => c.file).sort()
++    expect(listed).toEqual(files)
++  })
++
++  it('puts every entry in a known pattern, and every pattern has entries', () => {
++    const ids = new Set(PATTERNS.map((p) => p.id))
++    expect(CATALOGUE.every((c) => ids.has(c.pattern))).toBe(true)
++    for (const p of PATTERNS) expect(CATALOGUE.some((c) => c.pattern === p.id)).toBe(true)
++  })
++})
++
++describe('extractProps', () => {
++  it('reads an interface with an extends clause and defaults', () => {
++    const [button] = extractProps(source('ui/Button.tsx'))
++    expect(button.component).toBe('Button')
++    expect(button.extendsFrom).toMatch(/ButtonHTMLAttributes/)
++    expect(button.props.find((p) => p.name === 'variant')).toMatchObject({ optional: true, defaultValue: "'primary'" })
++    expect(button.props.find((p) => p.name === 'children')).toMatchObject({ optional: false })
++  })
++
++  it('reads an inline type with docs', () => {
++    const [ring] = extractProps(source('wellness/ProgressRing.tsx'))
++    expect(ring.props.find((p) => p.name === 'value')).toMatchObject({ type: 'number', doc: '0–100' })
++    expect(ring.props.find((p) => p.name === 'arc')).toMatchObject({ optional: true, defaultValue: "'gradient'" })
++  })
++
++  it('reads a simple inline type', () => {
++    const [tags] = extractProps(source('ui/TagRow.tsx'))
++    expect(tags.props.map((p) => p.name)).toEqual(['tags', 'max'])
++  })
++
++  it('reads `(props: Props)` and `type X = Y & { … }`', () => {
++    const [sheet] = extractProps(source('chat/AddSheet.tsx'))
++    expect(sheet.props.length).toBeGreaterThan(3)
++    const [icon] = extractProps(source('ui/AureliaIcons.tsx'))
++    expect(icon.extendsFrom).toMatch(/SVGProps/)
++    expect(icon.props.find((p) => p.name === 'size')).toMatchObject({ optional: true, defaultValue: '20' })
++  })
++})
+diff --git a/src/designsystem/catalogue.ts b/src/designsystem/catalogue.ts
+new file mode 100644
+index 0000000..6b58f36
+--- /dev/null
++++ b/src/designsystem/catalogue.ts
+@@ -0,0 +1,133 @@
++// Every component in src/components, grouped into the patterns they belong to,
++// for /designsystem. `catalogue.test.ts` fails when a component file is added
++// without an entry here, so the catalogue cannot quietly fall behind the code.
++// Props are not written here: the page reads them from each file's source.
++
++export interface Pattern {
++  id: string
++  name: string
++  /** When to reach for this pattern, in one or two sentences. */
++  guidance: string
++  /** Rules every component in the pattern follows. */
++  rules: string[]
++}
++
++export interface CatalogueEntry {
++  /** Path under src/components, e.g. "ui/Button.tsx". */
++  file: string
++  name: string
++  pattern: string
++  purpose: string
++  useWhen: string
++  /** Variants and states worth knowing before using it. */
++  states: string[]
++  /** Where it appears in the app (routes or screens). */
++  where: string
++  /** Figma node, when the code names one. */
++  figma?: string
++}
++
++export const PATTERNS: Pattern[] = [
++  { id: 'actions', name: 'Actions and controls', guidance: 'Anything a person taps to do something or choose between a few things.', rules: ['One primary button per view; everything else is secondary or ghost.', 'A selected chip is filled espresso; an unselected one is an outline, never a grey fill.', 'Disabled uses button/disabled tokens, never lowered opacity.'] },
++  { id: 'inputs', name: 'Inputs', guidance: 'Where a person types or speaks. Aurelia’s main input is one sentence about how they feel.', rules: ['Pill-shaped fields on surface/default with a border/default hairline.', 'Voice is always offered beside typing, never instead of it.', 'Never ask before the first session what could be asked after it.'] },
++  { id: 'navigation', name: 'Navigation', guidance: 'Moving between the four core places: Create, Discover, Progress and Me.', rules: ['Below lg: four bottom tabs (design v4+). At lg and above: the sidebar names the same four.', 'A turned-off module stays listed but inert, so the map never changes shape.'] },
++  { id: 'content', name: 'Cards and content', guidance: 'Showing sessions, journeys and their details. Every card layers a photo over a token gradient.', rules: ['The gradient is the floor, not a fallback: a card without network still looks finished.', 'Covers fill their parent: anything on top needs `relative`.', 'One card shadow for every surface (0 5px 24px 4px, black 5%).'] },
++  { id: 'sheets', name: 'Sheets and overlays', guidance: 'A focused task on top of the current screen: share, rename, pick, review, check in.', rules: ['Always rendered through a portal, because routed pages animate with a transform.', 'A grab handle, close on drag-down or flick, Escape and a Close button.', 'Picking something that ends the task closes the sheet.'] },
++  { id: 'cockpit', name: 'Cockpit (chat)', guidance: 'Where sessions are made: the conversation, the proposals, the build and the player docked in the header.', rules: ['The thread is where the product happens; an empty one must say what the field is for.', 'Proposals arrive applied; the person takes away what they do not want.', 'The product speaking about itself (limits, errors) sits above the composer, not in the thread.'] },
++  { id: 'progress', name: 'Progress and wellness', guidance: 'How someone is doing: check-ins, the journal, chapters and progress told in words.', rules: ['From design v5: progress in words from the person’s own check-ins, no invented percentages.', 'A score is never shown that nobody measured.', 'Days still to come are greyed and not selectable.'] },
++  { id: 'feedback', name: 'Loading, status and motion', guidance: 'What the app shows while something loads, changes or goes offline.', rules: ['Skeletons mirror the shape of what is coming, never a spinner on a blank page.', 'All motion respects “reduce motion”.', 'Offline is a note, not a blocker: the app keeps working.'] },
++  { id: 'brand', name: 'Brand and identity', guidance: 'The logo, Aurelia’s own icons and the build badge.', rules: ['The real exported artwork only; never redrawn.', 'Icons take currentColor, so they follow the text colour where they sit.'] },
++  { id: 'plumbing', name: 'App plumbing', guidance: 'Components with little or no visual design of their own that every screen relies on.', rules: ['Not reused as visual building blocks.'] },
++]
++
++export const CATALOGUE: CatalogueEntry[] = [
++  // Actions and controls
++  { file: 'ui/Button.tsx', name: 'Button', pattern: 'actions', purpose: 'The app’s button, mapped 1:1 to the button/* tokens.', useWhen: 'Any action. Primary for the one main action of a view.', states: ['primary', 'secondary', 'ghost', 'hover', 'pressed', 'disabled', 'with icon'], where: 'Everywhere' },
++  { file: 'ui/Chip.tsx', name: 'Chip', pattern: 'actions', purpose: 'The filter pill shared by every row of filters.', useWhen: 'Filtering a list by one value.', states: ['unselected (outline)', 'selected (filled)'], where: 'Home, Discover, See All', figma: 'Tab Set_notClear 16538:21547' },
++  { file: 'ui/SegmentedControl.tsx', name: 'SegmentedControl', pattern: 'actions', purpose: 'One choice out of two to four options in a single track.', useWhen: 'Switching a view (Monthly / Annual, Day / Week).', states: ['one option selected'], where: 'Upgrade, Progress' },
++  { file: 'chat/FilterChips.tsx', name: 'FilterChips', pattern: 'actions', purpose: 'The “+” sheet’s filter: All, Visual, Sound, Movement, Selected, with counts and a sliding highlight.', useWhen: 'Filtering the list of changes in the cockpit.', states: ['a kind at 0 is not offered', 'sliding highlight'], where: 'Chat → “+” sheet' },
++  { file: 'ui/CoinPill.tsx', name: 'CoinPill / CoinMark', pattern: 'actions', purpose: 'The coin balance as one object, and a control that opens Credits.', useWhen: 'Showing the balance (from v4 only in Me, Invite and a challenge).', states: ['interactive', 'static', 'always (shown in v4+)'], where: 'Me, Invite, Challenges' },
++
++  // Inputs
++  { file: 'ui/TextField.tsx', name: 'TextField', pattern: 'inputs', purpose: 'A pill text input with an optional leading icon and trailing slot.', useWhen: 'Search and short single-line input.', states: ['empty', 'filled', 'focus', 'with icon'], where: 'Search, sign-in, settings' },
++  { file: 'chat/ChatComposer.tsx', name: 'ChatComposer', pattern: 'inputs', purpose: 'The cockpit’s input: plus, field, voice orb, send.', useWhen: 'Only in the chat.', states: ['empty', 'typing', 'replying to a message', 'disabled', 'voice unavailable'], where: 'Chat', figma: 'Container' },
++  { file: 'chat/VoiceRecorder.tsx', name: 'VoiceRecorder', pattern: 'inputs', purpose: 'Recording a voice message, with Pause / Play and send.', useWhen: 'When someone would rather speak than type.', states: ['recording', 'paused', 'cancelled'], where: 'Chat' },
++
++  // Navigation
++  { file: 'ui/TabBar.tsx', name: 'TabBar', pattern: 'navigation', purpose: 'Four bottom tabs for the four core features (design v4+).', useWhen: 'Below lg on every main screen.', states: ['active tab', 'notification dot on Me', 'hidden in chat and sheets'], where: 'Create, Discover, Progress, Me' },
++  { file: 'ui/NavItem.tsx', name: 'NavItem', pattern: 'navigation', purpose: 'One row of the drawer or desktop sidebar.', useWhen: 'Menu lists.', states: ['active', 'disabled (module off)', 'end (exact match)'], where: 'Drawer, desktop sidebar', figma: 'Menu List Item (16651:12647)' },
++
++  // Cards and content
++  { file: 'ui/FeatureCard.tsx', name: 'FeatureCard', pattern: 'content', purpose: 'A benefit with an icon, a title and one line.', useWhen: 'Explaining what Aurelia does on marketing surfaces.', states: ['default'], where: 'Home (signed out)' },
++  { file: 'ui/SessionGridCard.tsx', name: 'SessionGridCard', pattern: 'content', purpose: 'The tall session card: leads with Play and credits the creator by face.', useWhen: 'Grids of sessions.', states: ['with or without author', 'guarded (asks to sign in)'], where: 'See All, challenge shelf, profile' },
++  { file: 'journeys/JourneyCard.tsx', name: 'JourneyCard', pattern: 'content', purpose: 'A personal journey story: photo under a dark gradient, the story’s words as the title.', useWhen: 'The Personal Journeys shelf.', states: ['loading (gradient floor)', 'loaded'], where: 'Discover, /journeys', figma: '16906:5645' },
++  { file: 'ui/CoverImage.tsx', name: 'CoverImage', pattern: 'content', purpose: 'A photo over its gradient floor, with an optional scrim.', useWhen: 'Inside any card that has a cover.', states: ['loading', 'loaded', 'failed (gradient only)'], where: 'Every card' },
++  { file: 'ui/PhotoCircle.tsx', name: 'PhotoCircle', pattern: 'content', purpose: 'The round counterpart to CoverImage, for avatars.', useWhen: 'Creator and author portraits.', states: ['loading', 'loaded', 'failed'], where: 'Cards, profiles, lineage' },
++  { file: 'ui/TagRow.tsx', name: 'TagRow', pattern: 'content', purpose: 'Topic tags, wrapped, with the overflow folded into “+N”.', useWhen: 'A session’s topics.', states: ['under the limit', 'folded'], where: 'Session details, Progress' },
++  { file: 'ui/Accordion.tsx', name: 'Accordion', pattern: 'content', purpose: 'Sections that open and close, one or more at a time.', useWhen: 'Long detail a person may not need.', states: ['closed', 'open', 'default open'], where: 'Help, Analysis' },
++  { file: 'ui/SessionDetails.tsx', name: 'SessionDetails', pattern: 'content', purpose: 'When a session went public and which cut is live.', useWhen: 'Session detail and settings.', states: ['draft', 'published'], where: 'Session details' },
++  { file: 'ui/LineageTreeCard.tsx', name: 'LineageTreeCard / LineageSheet', pattern: 'content', purpose: 'Who a session was recreated from, as a short tree, with See All in a sheet.', useWhen: 'Crediting originals on a recreated session.', states: ['three rows', 'see all (sheet)'], where: 'Session details' },
++  { file: 'chat/AttachedSession.tsx', name: 'AttachedSession', pattern: 'content', purpose: 'The original a recreate is being made from, shown and playable in the thread.', useWhen: 'Recreate flows in the chat.', states: ['default'], where: 'Chat (recreate)' },
++
++  // Sheets and overlays
++  { file: 'ui/ShareSheet.tsx', name: 'ShareSheet', pattern: 'sheets', purpose: 'Share a session: WhatsApp, X, Facebook, Telegram, LinkedIn, Email, Copy link, More.', useWhen: 'Any share action.', states: ['link copied'], where: 'Player, session details' },
++  { file: 'ui/CategorySheet.tsx', name: 'CategorySheet', pattern: 'sheets', purpose: 'All categories as a list, the one in force marked.', useWhen: 'When the chip row cannot show every category.', states: ['one selected'], where: 'Home, Discover', figma: '16523:18461' },
++  { file: 'ui/ObjectiveSheet.tsx', name: 'ObjectiveSheet', pattern: 'sheets', purpose: 'Edit a session’s objective.', useWhen: 'The pencil on the Objective card.', states: ['editing', 'saved'], where: 'Session → About', figma: '16659:41284' },
++  { file: 'ui/RenameSessionSheet.tsx', name: 'RenameSessionSheet', pattern: 'sheets', purpose: 'Rename a session.', useWhen: 'The pencil on Session settings’ title.', states: ['editing', 'saved'], where: 'Session settings', figma: '16883:13096' },
++  { file: 'ui/RewardsSheet.tsx', name: 'RewardsSheet', pattern: 'sheets', purpose: 'A challenge’s rewards.', useWhen: 'Opening rewards on a challenge.', states: ['default'], where: 'Challenge detail' },
++  { file: 'chat/AddSheet.tsx', name: 'AddSheet', pattern: 'sheets', purpose: 'The “+” sheet: every change you can make to a session, with a summary of what you will get.', useWhen: 'Changing a session in the chat.', states: ['filtered', 'items selected', 'summary (v3+)', 'proposals first (v4+)'], where: 'Chat' },
++  { file: 'chat/ReviewSheet.tsx', name: 'ReviewSheet', pattern: 'sheets', purpose: '“Change this session”: the changes and experiments for a chapter, with Apply.', useWhen: 'Reviewing a chapter before building it.', states: ['changes on or off', 'experiments picked'], where: 'Chat' },
++  { file: 'chat/PublishSheet.tsx', name: 'PublishSheet', pattern: 'sheets', purpose: 'Publishing, published and unpublishing a session.', useWhen: 'Publish from the chat.', states: ['publishing (brand ring)', 'published (green)', 'unpublished'], where: 'Chat', figma: 'Chat: Publish' },
++  { file: 'daily/DailyCheckInSheet.tsx', name: 'DailyCheckInSheet', pattern: 'sheets', purpose: 'The daily check-in: mood, whether yesterday’s session helped, a note.', useWhen: 'After sign-in (a demo rule), or from the Journal.', states: ['empty', 'prefilled with today', 'saved'], where: 'After sign-in, Journal', figma: '16906:5362' },
++
++  // Cockpit
++  { file: 'chat/ChatHeader.tsx', name: 'ChatHeader', pattern: 'cockpit', purpose: 'The chat’s top bar: back or menu, coin, insights and more.', useWhen: 'Only in the chat.', states: ['v1–v3 menu', 'v4+ back'], where: 'Chat' },
++  { file: 'chat/ChatMessageItem.tsx', name: 'ChatMessageItem', pattern: 'cockpit', purpose: 'One message in the thread, from the person or from Aurelia.', useWhen: 'The thread.', states: ['person', 'Aurelia', 'with proposals', 'with a chapter card', 'sending / sent / read'], where: 'Chat' },
++  { file: 'chat/EmptyThread.tsx', name: 'EmptyThread', pattern: 'cockpit', purpose: 'A new thread: Aurelia present and waiting, asking what you are creating today.', useWhen: 'A conversation with nothing in it yet.', states: ['default'], where: 'Chat' },
++  { file: 'chat/RecommendationCard.tsx', name: 'RecommendationCard', pattern: 'cockpit', purpose: 'One proposed change, on the brand gradient hairline.', useWhen: 'Inside the recommendation deck.', states: ['on', 'off', 'locked while building'], where: 'Chat', figma: 'Frame 45 (16809:4992)' },
++  { file: 'chat/RecommendationDeck.tsx', name: 'RecommendationDeck', pattern: 'cockpit', purpose: 'The stacked proposals, opening the “+” sheet.', useWhen: 'Showing Aurelia’s proposals in a message.', states: ['collapsed', 'open'], where: 'Chat' },
++  { file: 'chat/ChapterCard.tsx', name: 'ChapterCard', pattern: 'cockpit', purpose: 'The next chapter with its changes: Review changes or Apply.', useWhen: 'Proposing the next chapter.', states: ['ready', 'applying'], where: 'Chat' },
++  { file: 'chat/SessionProgressCard.tsx', name: 'SessionProgressCard', pattern: 'cockpit', purpose: 'The original building state: a pill with the thumbnail and a percentage.', useWhen: 'Kept for the older design option.', states: ['building', 'done'], where: 'Chat (older option)', figma: 'Frame 10' },
++  { file: 'chat/SessionProgressCardV2.tsx', name: 'SessionProgressCardV2', pattern: 'cockpit', purpose: 'The building state since U026: a morphing mark and a rotating status line.', useWhen: 'While a session is being built.', states: ['generating', 'ready'], where: 'Chat' },
++  { file: 'chat/SessionReasoningCard.tsx', name: 'SessionReasoningCard', pattern: 'cockpit', purpose: 'Why a session was built the way it was.', useWhen: 'After a build, to explain it.', states: ['placeholder reasoning until a real one exists'], where: 'Chat' },
++  { file: 'chat/RotatingStatus.tsx', name: 'RotatingStatus', pattern: 'cockpit', purpose: 'A status line that cycles through what the build is doing.', useWhen: 'Inside the building state.', states: ['cycling'], where: 'Chat' },
++  { file: 'chat/GeneratingShape.tsx', name: 'GeneratingShape', pattern: 'cockpit', purpose: 'The 2×2 morphing mark traced from Figma’s spinner.', useWhen: 'Anything being generated.', states: ['animating', 'static with reduced motion'], where: 'Chat' },
++  { file: 'chat/VoiceMessage.tsx', name: 'VoiceMessage', pattern: 'cockpit', purpose: 'A sent voice message: waveform, duration and transcript.', useWhen: 'In the thread after recording.', states: ['playing', 'paused'], where: 'Chat' },
++  { file: 'chat/MiniPlayer.tsx', name: 'MiniPlayer', pattern: 'cockpit', purpose: 'The running session, docked in the chat header so playing is not leaving.', useWhen: 'While a session plays.', states: ['playing', 'paused'], where: 'Chat; floats elsewhere in v2+', figma: 'Chat: Play (16523:18533)' },
++  { file: 'chat/FreeLimitNotice.tsx', name: 'FreeLimitNotice', pattern: 'cockpit', purpose: 'The free plan’s limit, above the composer.', useWhen: 'When free creations are used up.', states: ['limit reached', 'resets in N minutes'], where: 'Chat', figma: 'Free Limit' },
++
++  // Progress and wellness
++  { file: 'wellness/FeelingProgress.tsx', name: 'FeelingProgress', pattern: 'progress', purpose: 'Progress told in words from the person’s own check-ins (design v5).', useWhen: 'Progress → Your goals in v5.', states: ['before the first session', 'with check-ins', 'two-week report'], where: 'Progress' },
++  { file: 'daily/WeekStrip.tsx', name: 'WeekStrip', pattern: 'progress', purpose: 'Mon–Sun with today framed; days to come greyed.', useWhen: 'Picking a day in the check-in or the journal.', states: ['today', 'selected', 'future (disabled)'], where: 'Daily check-in, Journal', figma: '16906:5374' },
++  { file: 'daily/JournalView.tsx', name: 'JournalView', pattern: 'progress', purpose: 'The Journal tab: the week, then the chosen day’s three answers as cards.', useWhen: 'A session’s About → Journal.', states: ['day with answers', 'empty day'], where: 'Session → About → Journal', figma: '16906:5450' },
++  { file: 'wellness/ChapterCheckIn.tsx', name: 'ChapterCheckIn', pattern: 'progress', purpose: '“How do you feel now?” after listening to your own chapter.', useWhen: 'The player sheet for your own sessions (v4+).', states: ['asking', 'answered', 'recent (not asked again)'], where: 'Player' },
++  { file: 'wellness/NextChapterCard.tsx', name: 'NextChapterCard', pattern: 'progress', purpose: 'Home’s first block once you have a session: the next chapter.', useWhen: 'Signed-in Home with a journey.', states: ['ready', 'tomorrow'], where: 'Home' },
++  { file: 'wellness/ProgressRing.tsx', name: 'ProgressRing', pattern: 'progress', purpose: 'A ring whose arc is the value, drawn from the number.', useWhen: 'Small or hero progress readouts.', states: ['gradient arc', 'solid arc', 'with inner content'], where: 'Analysis, cards' },
++  { file: 'wellness/AlignmentGauge.tsx', name: 'AlignmentGauge', pattern: 'progress', purpose: 'A needle between “Challenging” and “Aligned”.', useWhen: 'Analytics (v1–v4).', states: ['0–100'], where: 'My Wellness → Analytics' },
++  { file: 'wellness/AlignmentPanel.tsx', name: 'AlignmentPanel', pattern: 'progress', purpose: 'The gauge with before and after states stacked.', useWhen: 'Analytics (v1–v4).', states: ['default'], where: 'My Wellness → Analytics' },
++  { file: 'wellness/AnalysisParts.tsx', name: 'AnalysisParts', pattern: 'progress', purpose: 'The pieces of the analysis page: status, trends, what helped, projections.', useWhen: 'The wellness analysis page.', states: ['improving', 'steady', 'declining'], where: 'Analysis' },
++  { file: 'wellness/AnalyticsSessionCard.tsx', name: 'AnalyticsSessionCard', pattern: 'progress', purpose: 'One session’s analytics card on the brand gradient hairline.', useWhen: 'Analytics list (v1–v4).', states: ['default'], where: 'My Wellness → Analytics', figma: '16883:14859' },
++  { file: 'wellness/SessionFeedback.tsx', name: 'SessionFeedback', pattern: 'progress', purpose: 'Feedback on a played session.', useWhen: 'After a session.', states: ['asking', 'thanked'], where: 'Player' },
++  { file: 'wellness/WellnessObjectiveCard.tsx', name: 'WellnessObjectiveCard', pattern: 'progress', purpose: 'An objective with its progress, on My Wellness.', useWhen: 'Goals lists (v1–v4).', states: ['default'], where: 'My Wellness' },
++
++  // Loading, status and motion
++  { file: 'ui/Skeleton.tsx', name: 'Skeleton', pattern: 'feedback', purpose: 'A shimmering placeholder block, sized by its class.', useWhen: 'Anything still loading.', states: ['shimmer', 'static with reduced motion'], where: 'Everywhere' },
++  { file: 'ui/PageSkeleton.tsx', name: 'PageSkeleton', pattern: 'feedback', purpose: 'The route fallback: a page header and body in outline.', useWhen: 'While a lazy screen loads.', states: ['default'], where: 'Every lazy route' },
++  { file: 'ui/CountUp.tsx', name: 'CountUp', pattern: 'feedback', purpose: 'A number that counts up to its value, in compact form (1,323 · 87k).', useWhen: 'Balances and stat reads (v2+).', states: ['counting', 'final'], where: 'Credits, profile' },
++  { file: 'ui/FlipWord.tsx', name: 'FlipWord', pattern: 'feedback', purpose: 'One word in a heading that cycles in place.', useWhen: 'Marketing headings.', states: ['cycling', 'static with reduced motion'], where: 'Home (signed out)' },
++  { file: 'system/OfflineBanner.tsx', name: 'OfflineBanner', pattern: 'feedback', purpose: 'Says so when there is no connection; the app keeps working.', useWhen: 'Automatic.', states: ['offline', 'back online'], where: 'Every screen' },
++  { file: 'system/UpdatePrompt.tsx', name: 'UpdatePrompt', pattern: 'feedback', purpose: 'A new build is ready: tap Reload. Never reloads mid-session on its own.', useWhen: 'Automatic.', states: ['update ready', 'offline ready'], where: 'Every screen' },
++
++  // Brand and identity
++  { file: 'ui/AureliaLogo.tsx', name: 'AureliaLogo', pattern: 'brand', purpose: 'The real exported logo: lockup, mark only, or white.', useWhen: 'Headers, sidebars, documents.', states: ['lockup', 'mark only', 'inverse'], where: 'Everywhere' },
++  { file: 'ui/AureliaIcons.tsx', name: 'AureliaIcons', pattern: 'brand', purpose: 'Aurelia’s own icons as SVG components in currentColor.', useWhen: 'Where the design has its own icon; Lucide otherwise.', states: ['any size', 'any colour'], where: 'Chat header, tabs, notifications' },
++  { file: 'ui/BuildBadge.tsx', name: 'BuildBadge', pattern: 'brand', purpose: 'Which site and which build: “Staging · 0.1.0 · abc1234”.', useWhen: 'The foot of the drawer, the admin sidebar, the console.', states: ['staging (brand chip)', 'production (grey)', 'dark'], where: 'Drawer, admin' },
++  { file: 'ui/BuildStamp.tsx', name: 'BuildStamp', pattern: 'brand', purpose: 'What is actually running, stated on the page.', useWhen: 'Diagnosing “I pushed and cannot see it”.', states: ['default'], where: 'Console, settings' },
++  { file: 'network3d/Network3D.tsx', name: 'Network3D', pattern: 'brand', purpose: 'Home’s network artwork as a live Three.js scene, off by default.', useWhen: 'Only with the 3D network flag.', states: ['loading (PNG)', 'scene', 'motion'], where: 'Home' },
++
++  // App plumbing
++  { file: 'ErrorBoundary.tsx', name: 'ErrorBoundary', pattern: 'plumbing', purpose: 'Catches a crash: root (last resort) and per route, resetting on navigation.', useWhen: 'Wrapping the app and routes.', states: ['fallback'], where: 'App root, routes' },
++  { file: 'PageMeta.tsx', name: 'PageMeta', pattern: 'plumbing', purpose: 'A page’s title and description, hoisted into the head by React 19.', useWhen: 'Every page.', states: [], where: 'Every page' },
++  { file: 'SiteLock.tsx', name: 'SiteLock', pattern: 'plumbing', purpose: 'The shared site password in front of everything except the console.', useWhen: 'Wrapping the app.', states: ['locked', 'unlocked'], where: 'Whole site' },
++  { file: 'daily/DailyCheckInGate.tsx', name: 'DailyCheckInGate', pattern: 'plumbing', purpose: 'Opens the daily check-in after sign-in, and holds it on screens it would interrupt.', useWhen: 'Mounted once in the app.', states: ['pending', 'held', 'done'], where: 'After sign-in' },
++]
+diff --git a/src/designsystem/props.ts b/src/designsystem/props.ts
+new file mode 100644
+index 0000000..187d511
+--- /dev/null
++++ b/src/designsystem/props.ts
+@@ -0,0 +1,120 @@
++// Reads a component's props from its own source, so /designsystem shows the
++// real API rather than a copy that would drift. A small, forgiving parser for
++// the shapes this codebase uses: `export function Name({ a, b = 1 }: Props)`
++// with `interface Props { … }`, or an inline `}: { … }) {` type.
++
++export interface PropInfo {
++  name: string
++  type: string
++  optional: boolean
++  defaultValue?: string
++  doc?: string
++}
++
++export interface ComponentProps {
++  component: string
++  props: PropInfo[]
++  /** e.g. "ButtonHTMLAttributes<HTMLButtonElement>": every native attribute too. */
++  extendsFrom?: string
++}
++
++/** The text between `open` at `start` and its matching closer. */
++function balanced(src: string, start: number, open: string, close: string): string {
++  let depth = 0
++  for (let i = start; i < src.length; i++) {
++    if (src[i] === open) depth++
++    else if (src[i] === close) {
++      depth--
++      if (depth === 0) return src.slice(start + 1, i)
++    }
++  }
++  return ''
++}
++
++/** Split at top-level separators, ignoring those inside <>, (), {} and []. */
++function splitTop(body: string, seps: string[]): string[] {
++  const out: string[] = []
++  let depth = 0
++  let cur = ''
++  for (let i = 0; i < body.length; i++) {
++    const c = body[i]
++    if ('<({['.includes(c)) depth++
++    else if ('>)}]'.includes(c) && !(c === '>' && body[i - 1] === '=')) depth--
++    if (depth === 0 && seps.includes(c)) {
++      out.push(cur)
++      cur = ''
++    } else cur += c
++  }
++  out.push(cur)
++  return out
++}
++
++function members(body: string): PropInfo[] {
++  // Drop line comments, keep the JSDoc blocks as docs for the next member.
++  const clean = body.replace(/^\s*\/\/.*$/gm, '')
++  const props: PropInfo[] = []
++  let doc: string | undefined
++  for (const raw of splitTop(clean, ['\n', ';'])) {
++    let line = raw.trim()
++    if (!line) continue
++    const d = line.match(/^\/\*\*([\s\S]*?)\*\/\s*/)
++    if (d) {
++      doc = d[1].replace(/^\s*\*\s?/gm, ' ').replace(/\s+/g, ' ').trim()
++      line = line.slice(d[0].length).trim()
++      if (!line) continue
++    }
++    if (line.startsWith('/*') || line.startsWith('*')) continue
++    const m = line.match(/^([A-Za-z_$][\w$]*)(\?)?\s*:\s*([\s\S]+?),?$/)
++    if (m) {
++      props.push({ name: m[1], optional: Boolean(m[2]), type: m[3].replace(/\s+/g, ' ').trim(), doc })
++      doc = undefined
++    }
++  }
++  return props
++}
++
++function defaults(destructure: string): Record<string, string> {
++  const out: Record<string, string> = {}
++  for (const part of splitTop(destructure.replace(/\/\*[\s\S]*?\*\//g, ''), [','])) {
++    const m = part.trim().match(/^([A-Za-z_$][\w$]*)\s*=\s*([\s\S]+)$/)
++    if (m) out[m[1]] = m[2].trim()
++  }
++  return out
++}
++
++export function extractProps(src: string): ComponentProps[] {
++  const out: ComponentProps[] = []
++  const re = /export function ([A-Z][\w]*)\s*\(/g
++  let m: RegExpExecArray | null
++  while ((m = re.exec(src))) {
++    const component = m[1]
++    const params = balanced(src, m.index + m[0].length - 1, '(', ')')
++    // `(props: Props)` as well as `({ a, b }: Props)`; no parameter means no props.
++    const named = params.trim().match(/^[A-Za-z_$][\w$]*\s*:\s*([\s\S]+)$/)
++    if (!params.trim().startsWith('{') && !named) {
++      out.push({ component, props: [] })
++      continue
++    }
++    const destructure = named ? '' : balanced(params, params.indexOf('{'), '{', '}')
++    const typeText = named ? named[1].trim() : params.slice(params.indexOf('{') + destructure.length + 2).replace(/^\s*:\s*/, '')
++    const defs = defaults(destructure)
++    let props: PropInfo[] = []
++    let extendsFrom: string | undefined
++    if (typeText.startsWith('{')) {
++      props = members(balanced(typeText, 0, '{', '}'))
++    } else {
++      const typeName = typeText.match(/^[A-Za-z_$][\w$]*/)?.[0]
++      if (typeName) {
++        // interface X extends Y { … } · type X = { … } · type X = Y & { … }
++        const decl = new RegExp(`(?:interface ${typeName}(?:\\s+extends\\s+([^{]+))?\\s*\\{|type ${typeName}\\s*=\\s*(?:([^{=;]+?)\\s*&\\s*)?\\{)`).exec(src)
++        if (decl) {
++          extendsFrom = (decl[1] ?? decl[2])?.trim()
++          props = members(balanced(src, decl.index + decl[0].length - 1, '{', '}'))
++        }
++      }
++    }
++    for (const p of props) if (defs[p.name] !== undefined) p.defaultValue = defs[p.name]
++    out.push({ component, props, extendsFrom })
++  }
++  return out
++}
+-- 
+2.43.0
+

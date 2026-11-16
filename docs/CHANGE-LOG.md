@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-16 — /designsystem: every component by pattern (U081, J106)
+
+`/designsystem` now catalogues all 71 components in 10 patterns. Each comes with guidance, states, live demos for 28 of them, and props read from the code. A test keeps the catalogue complete.
+
+Branches: `web_app`, `admin_cms`, **`web_prod`**.
+
 ### 2026-11-16 — /designsystem; Insight Timer screenshots and competitors (U080, J104)
 
 - **New page `/designsystem`:** the design system read live from `figma-export.json` and the app's own components. It is a draft for review, not yet combined into the documents.

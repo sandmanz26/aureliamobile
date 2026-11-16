@@ -170,6 +170,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J103 | 2026-11-16 | Question | Updated recap of everything the owner asked for, with status and the next steps | — |
 | J104 | 2026-11-16 | Research + Code + Release | Insight Timer screenshots and competitor research in Research; a new /designsystem page for review; staging and production | U080 |
 | J105 | 2026-11-16 | Question | "/designsystem is not found" on production: the browser ran a cached build (eb5d63f) from before the route existed; production serves 1f1e9a5 | — |
+| J106 | 2026-11-16 | Code + Release | /designsystem components made complete: 71 components in 10 patterns, with detail, demos and props from source | U081 |
 
 ---
 
@@ -1213,3 +1214,10 @@ transcript and the update log. Everything from J018 on was written at the time.
 - **Asked:** why `aureliaprod.vercel.app/designsystem` shows Page not found. The screenshot's badge shows `eb5d63f`.
 - **Found:** production serves `1f1e9a5`, which includes the route (checked in the live bundle). The browser was still running the build its service worker cached, `eb5d63f`. That build predates `/designsystem`, so the old router sent it to the 404.
 - **Answer:** tap Reload on the update toast, or hard refresh. In DevTools, Application → Service workers → Update (or unregister), then reload; the badge must show `1f1e9a5`.
+
+### J106 — Components, complete and by pattern
+- **Asked:** the components on /designsystem were incomplete; group them into patterns and add more detail.
+- **Done:** U081.
+  - **Coverage:** all 71 files in `src/components`, in 10 patterns, each pattern with when-to-use guidance and rules.
+  - **Each component:** purpose, use when, where, states, Figma node, a live demo where possible (28), and props read from its source.
+  - **Kept complete by a test:** a new component cannot be added without an entry.

@@ -118,8 +118,28 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U078 | `07a59e1` | 2026-11-16 | Playbook v2 and v3 rewritten after a junior-PM read-through: what Aurelia is, who's who, questionnaires in plain words, a worked example, what to say when, a glossary, the first week. Staging and production. | [patch](patches/U078-07a59e1.patch) |
 | U079 | `ccb84a3` | 2026-11-16 | Admin guideline in /guide gets versions: v1 Original, v2 Task guide, v3 Quick start (one page). Staging and production. | [patch](patches/U079-ccb84a3.patch) |
 | U080 | `0453426` | 2026-11-16 | New page `/designsystem` (the design system read live from the Figma export and the app's components). Research gains Insight Timer screenshots and a competition section. Staging and production. | [patch](patches/U080-0453426.patch) |
+| U081 | `d891491` | 2026-11-16 | /designsystem lists every component (71) in 10 patterns, with guidance, states, live demos (28) and props read from the source. Staging and production. | [patch](patches/U081-d891491.patch) |
 
 ## Entries
+
+### U081 — /designsystem: every component, by pattern
+
+- **Commit:** `d891491` · pushed 2026-11-16 UTC · `web_app` + `admin_cms` + `web_prod` (continuing U080's "update stag dan prod").
+- **Patch:** [patches/U081-d891491.patch](patches/U081-d891491.patch)
+- **Request:** "dari segi component masih belum lengkap, kelompokan pattern dan buat lebih detail."
+- **Interpretation:** every component, not a sample, grouped into the patterns the product uses. Each one is detailed enough to use without opening the code.
+- **Changed:**
+  - **`src/designsystem/catalogue.ts`:** 10 patterns, each with guidance and rules, and 71 entries. Each entry has:
+    - what it is for, when to use it, where it appears;
+    - its states and its Figma node.
+  - **`props.ts`:** reads props from each component's own source (`import.meta.glob` raw), including types, optionality, defaults, docs and `extends`.
+  - **`ComponentCatalogue.tsx`:** 28 live demos, including the share sheet opening for real. Components that need app state to draw say where to see them.
+  - **`catalogue.test.ts`:** fails if a component file has no entry, and checks the parser on interface, inline-type, `(props: P)` and `type X = Y & {…}` shapes.
+- **Verified:**
+  - `npm run check` passes (132 tests).
+  - Production build at 1280px and 402px: 71 cards, 28 demos, no overflow, no errors.
+  - The props tables are empty only for the 10 components that take no props.
+- **Revert:** `git revert --no-commit d891491 && git checkout HEAD -- docs/`.
 
 ### U080 — /designsystem, and Insight Timer screenshots and competitors
 
