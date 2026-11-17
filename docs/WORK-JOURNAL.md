@@ -60,6 +60,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O30 | **Design system review (J104)**: check `/designsystem`, then decide whether and how it joins Product requirements; also the open token gaps (brand orange `#FF881B`, two brand gradients) | J104, `/designsystem` | Product owner — **Update (U083):** the design system now sits in the wiki as its own tab; the token gaps remain |
 | O31 | **The 2025 backend code (J109)**: the three sources (Deep Dive, Technical Architecture Documentation, Wiki Aurelia) hold prompts, data shapes and principles, but no code. The wiki lists features as "implemented", so a 2025 Python codebase exists. Ask for the repository and access, then decide what to port (HANDOFF B.12) | J109 | Product owner / Eugene |
 | O32 | **Aurelia Pro / corporate wellness (J110)**: Eugene asks how big an exploration it is to propose features for a B2B2C version (companies buy, employees use). Proposed: a short exploration in the retention-simulation format (employee and HR personas, what changes, what is reused, size) before any build | J110 | Product owner: go ahead, and with whom to validate (a pilot company?) |
+| J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 
 ---
@@ -1256,3 +1257,8 @@ transcript and the update log. Everything from J018 on was written at the time.
   - New for B2B2C: company and seats, invite code or SSO sign-up, an HR dashboard with anonymous aggregates only (minimum group size), company content and programmes, an employee-assistance/crisis link per company, reporting for the buyer, billing per seat, and a privacy promise employees can read.
   - Size: the exploration itself about 1–2 days; building it needs the backend and accounts first (no persisted sign-in today, O17).
 - **Open:** O32.
+
+### J111 — What "Pydantic model" means; is there code in the Notion wiki?
+- **Asked:** "apa itu model pydantic yang kam usebut diatas ? jadi yang ada di notion untuk tidak code apa apa ya"
+- **Answered:** Pydantic is a Python library for declaring the shape of data (field names and types) and validating it; it is the Python counterpart of the Zod schemas this app uses. The 2025 backend was evidently Python because its prompts ask the model to return "a ScriptVersion (Pydantic model)" and paste class definitions such as `FeedbackEvaluation(MongoBase)` and `EntitySatisfactionScore(BaseModel)`.
+  - Confirmed: the Notion wiki has **no runnable code**. It has prompt texts plus those few class definitions copied into the prompts, which describe data shapes only (5 models, about 25 fields). No functions, endpoints, database setup, API keys or repository. Useful as a specification to rewrite as Zod, not as code to run.
