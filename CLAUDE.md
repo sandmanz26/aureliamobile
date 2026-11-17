@@ -499,6 +499,11 @@ that changed code also gets its U-entry here and the J-entry links to it.
 Anything waiting on a decision goes into the journal's **Open items** table
 until decided. No secrets (pairing codes, passwords) in it.
 
+**Every request and change is also in `docs/HANDOFF.md`** (owner, J109): its
+§17 copies each J row and U row in the same push, and §4 is updated when the
+state moves. `src/guides/records.test.ts` fails `npm run check` when an id in
+the journal or the update log is missing from it.
+
 ## Design versions (staging, and production since U054)
 
 `src/versions/versions.ts` lists switchable design versions; the picker sits
