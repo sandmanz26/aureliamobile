@@ -258,3 +258,6 @@
 .gd-versions a span { font-size: 12.5px; color: var(--gd-muted); }
 .gd-versions a[aria-current='page'] { background: var(--gd-accent-soft); border-color: #f1c46a; }
 .gd-versions a:focus-visible { outline: 2px solid #c25e0a; outline-offset: 2px; }
+
+/* A key/value table written with an empty header row ("| | |") shows no header. */
+.gd-doc thead:not(:has(th:not(:empty))) { display: none; }

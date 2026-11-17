@@ -1,68 +1,44 @@
-# Aurelia API contract plan · v1
+# Aurelia API contract
 
-**Owner:** Head of Engineering + Head of Product
-**Status:** Draft for review. Nothing here is built; the clients still run on mock data.
-**Scope:** what **production** runs today: `web_prod` @ `bc028a6`, design
-**prod v1** (= staging v4, the default) and **prod v2** (= staging v5,
-opt-in). Work that is only on staging today (for example the admin's well-being
-outcomes) appears only as clearly marked *later* items.
-**Companion:** [`openapi.yaml`](openapi.yaml) (OpenAPI 3.1, validated: 90
-paths, 61 schemas) is the machine-readable form of §5–§6 in full and of the
-core of §7 (users, moderation, AI metrics and policies, audit). The other admin
-modules follow in P4. Where the two disagree, this document is the intent and
-the YAML is a bug.
+| | |
+| --- | --- |
+| Version | 1.0 (draft) |
+| Status | For review. Not implemented; both apps still run on sample data. |
+| Owners | Head of Engineering, Head of Product |
+| Covers | The app as it runs in production: design versions v4 and v5 |
+| Machine-readable form | [`openapi.yaml`](openapi.yaml) (OpenAPI 3.1) |
+| Last updated | 17 November 2026 |
 
-Read order:
-1. §1 for the product the API serves.
-2. §2 for the decisions this contract makes.
-3. §3 for conventions.
-4. §4 for the data model.
-5. §5–§7 for endpoints.
-6. §8 for the AI system.
-7. §11 for what we still have to decide.
+## Overview
 
----
+Aurelia has one REST API, `https://api.aurelia.care/v1`, JSON over HTTPS. It
+serves the web app and the Flutter app. Both design versions in production
+(v4 and v5) use the same responses; how a field is shown is up to the client
+(§2.4).
 
-## 0 · Summary
+The API's first job is the core loop: sign in, onboarding, a conversation
+with Aurelia, proposals with reasons, a build, play, check-in, the next
+chapter with a reminder, and progress told in words. Community, coins,
+challenges and the admin follow (§10).
 
-- **One REST API, `https://api.aurelia.care/v1`, JSON over HTTPS.** It serves
-  both clients: the React web app, which is the reference, and the Flutter
-  app. The same contract serves prod v1 and prod v2; the design version is a
-  **client** concern, so the API returns everything both need (§2.4).
-- **The core loop is the API's first job:**
-  1. sign in;
-  2. onboarding;
-  3. a conversation with Aurelia;
-  4. proposals with reasons;
-  5. a build (async, streamed progress);
-  6. play;
-  7. check-in;
-  8. the next chapter and a reminder;
-  9. progress told in words.
+All AI runs on the server; the apps never hold a model key. Six AI features
+sit behind the API: understanding the first sentence, the conversation,
+change proposals with a reason, the session build, the next-chapter plan and
+progress summaries (§8). A safety check runs on every text a person writes.
 
-  Community, coins, challenges and admin come after it (§10).
-- **AI features run server-side only.** Clients never hold a model key. Six AI
-  capabilities sit behind the API (§8):
-  - understanding the first sentence;
-  - the cockpit conversation;
-  - change proposals with a "Why";
-  - the session build (script → voice → sound → visuals);
-  - the next-chapter plan;
-  - progress summaries in words.
+Figures are returned only with their source. A number that is not the
+person's own, or that nobody measured, carries a `provenance` field (§2.6).
 
-  A safety layer runs on every user turn.
-- **Honesty is part of the contract, not a UI choice.** No figure that is not
-  the person's own, or that nobody measured, may be returned to a client
-  without a `provenance` field. This is the project's honesty rule.
+If this document and `openapi.yaml` disagree, this document is right.
 
 ---
 
-## 1 · What the API serves (production today)
+## 1 · What the API serves
 
-| Area | Prod v1 (= staging v4, default) | Prod v2 (= staging v5) | API consequence |
+| Area | v4 | v5 | What the API needs |
 | --- | --- | --- | --- |
 | Entry | Home Ask, feeling chips, Quick Start (plays before sign-in) | Same, plainer visitor Home | Public catalogue reads, preview playback without auth |
-| Sign-in | Email/password, "Continue with Google" | Same | Auth + OAuth; **must persist** (decision D2, §2.1) |
+| Sign-in | Email/password, "Continue with Google" | Same | Auth + OAuth; **must persist** (§2.1) |
 | Onboarding | Goal → feeling → style (length, voice, sounds) → editable summary; the typed sentence pre-fills it | Plus "Do you wear one of these?" (Apple Watch / Whoop / Oura / Not now) | `onboarding` resource; AI intent inference from free text |
 | Cockpit | Own thread per person; the reply; a deck of proposals; the one "+" list; Apply builds v1.0 → v1.1 …; every build kept in the thread | Plus a **"Why?"** per proposal (what it does, what it is based on) | Conversations, messages (streamed), proposals with `basis`, builds (async) |
 | Free limit | Counts only after the first build | Same | Entitlements resource; the limit is server-enforced |
@@ -78,39 +54,38 @@ Read order:
 
 ## 2 · Decisions this contract makes
 
-The open product decisions are listed in §11. These are the ones the contract
-**takes** so engineering is not blocked. Each can be reversed before build.
+These are the decisions this contract takes so engineering is not blocked.
+Each can still be reversed before the build starts. Decisions that are still
+open are in §11.
 
-1. **Persistent accounts (D2 = yes).** Sign-in persists via a refresh token.
-   The journey, journal, check-ins, onboarding and conversations move from
+1. **Persistent accounts.** Sign-in persists via a refresh token. The
+   journey, journal, check-ins, onboarding and conversations move from
    `localStorage` to the account. Without this no retention number can be
-   measured (the retention test).
-2. **Free plan limits builds, not messages** (logic-review decision 1). The
-   server owns the counter: N builds per account per day, reset at local
-   midnight. Conversation is unlimited, and the first build is never counted
-  . The client renders `entitlements` and never computes the limit.
-3. **One version model** (decision 3). A session owns an ordered list of
+   measured.
+2. **The free plan limits builds, not messages.** The server owns the
+   counter: N builds per account per day, reset at local midnight.
+   Conversation is unlimited, and the first build is never counted. The
+   client renders `entitlements` and never computes the limit.
+3. **One version model.** A session owns an ordered list of
    versions: v1.0 for the first build, +0.1 per build. A fork is a new
    session at v1.0 that records `parent {sessionId, versionId}`. Live changes
-   only on (Re)publish, and publish is refused while a build runs (decision 4,
-   logic B3).
+   only on (Re)publish, and publish is refused while a build runs.
 4. **The API serves both design versions from one shape.** Example: a proposal
    carries both `estimate` (nullable, with provenance) and `basis` (the
-   reasons). Prod v1 renders the estimate; prod v2 renders the basis. The
-   server sets `estimate` to `null` until an estimate is measured (the honesty rule), and
-   prod v1 then hides the chip. No endpoint branches on design version. The
+   reasons). v4 shows the estimate; v5 shows the basis. The server
+   sets `estimate` to `null` until an estimate is measured, and v4 then
+   hides the chip. No endpoint branches on design version. The
    client sends `X-Aurelia-UI: 4|5` **only for analytics**.
 5. **Numbers are integers; formatting is the client's.** `plays: 18500`, not
-   "18.5k". Both clients use one formatting rule (`docs/FOR-BACKEND.md` §1.1,
-   now decided): ≥1000 → one decimal + k, ≥1,000,000 → one decimal + M,
+   "18.5k". Both clients use one formatting rule (`docs/FOR-BACKEND.md` §1.1): ≥1000 → one decimal + k, ≥1,000,000 → one decimal + M,
    trailing ".0" dropped.
 6. **Outcomes always carry provenance.** Any `Outcome` has `{label, value,
    unit, provenance: "self_reported"|"measured"|"sample", n, window}`. Sample
    data is never returned in production responses after launch.
-7. **One conversation per session** (decision 9). A session's conversation is
+7. **One conversation per session.** A session's conversation is
    reopened with it. A Home ask opens a new conversation. Hand-offs carry
-   `source` (logic D1, D2).
-8. **Builds run server-side, independent of the screen** (logic D3), as jobs
+   `source`.
+8. **Builds run server-side, independent of the screen,** as jobs
    with streamed progress. The client may leave and come back.
 9. **The safety layer is mandatory on every user-authored text input**
    (messages, journal, check-in notes, publish titles). It runs before
@@ -121,7 +96,7 @@ The open product decisions are listed in §11. These are the ones the contract
     - Journal and check-in notes are private and are used for generation only
       with the `personalisation` consent.
     - Publishing shares title, sound, visuals and script, never check-ins,
-      journal, wearable data or the conversation (the prod v2 privacy note is
+      journal, wearable data or the conversation (the v5 privacy note is
       the contract).
 
 ---
@@ -141,13 +116,13 @@ The open product decisions are listed in §11. These are the ones the contract
   enum values as "other"**. The web client already validates every response
   with Zod (`requestJson`). Schemas use `.passthrough()`-style tolerance for
   this reason.
-- `Aurelia-Client: web/0.1.0+bc028a6` or `ios/…` on every request (support and
+- `Aurelia-Client: web/0.1.0+<commit>` or `ios/…` on every request (support and
   telemetry). `X-Aurelia-UI: 4|5` (design version, analytics only).
 
 ### 3.2 Authentication
 
 - `Authorization: Bearer <access token>`: a JWT, 15-minute lifetime.
-  The refresh token is opaque, rotates, lives 30 days rolling (decision 14),
+  The refresh token is opaque, rotates, lives 30 days rolling,
   and is stored in an httpOnly cookie on web and in secure storage on mobile.
 - OAuth providers: Google (live in UI), Apple (required for iOS once Google is
   offered). The exchange runs server-side. Sign-up and sign-in share
@@ -180,7 +155,7 @@ The open product decisions are listed in §11. These are the ones the contract
 | --- | --- | --- |
 | 400 | `invalid_request` | Schema violation (with `errors[]` of `{path, message}`) |
 | 401 | `unauthenticated` | Missing or expired token |
-| 403 | `forbidden` | Authenticated but not allowed (e.g. editing someone else's session: logic G2) |
+| 403 | `forbidden` | Authenticated but not allowed (e.g. editing someone else's session) |
 | 404 | `not_found` | Also returned for private resources you cannot see (no existence leak) |
 | 409 | `conflict` / `build_in_progress` / `version_mismatch` | Publish while building; stale `If-Match` |
 | 422 | `unsafe_content` | The safety layer blocked user content (§8.7); the body carries `support` resources |
@@ -245,7 +220,7 @@ Onboarding {                              // GET/PUT /me/onboarding; ETag
   length: 5 | 10 | 20,                    // minutes
   voice: "female" | "male" | "none",
   sounds: ("nature" | "music" | "frequencies" | "silence")[],
-  wearable?: "apple_watch" | "whoop" | "oura" | "none",  // prod v2 asks; v1 leaves it null
+  wearable?: "apple_watch" | "whoop" | "oura" | "none",  // v5 asks; v1 leaves it null
   words?: string,                         // the sentence typed on Home, kept as said
   completedAt?
 }
@@ -262,18 +237,18 @@ Session {
   id, slug, title,
   ownerId, author: PersonSummary,
   cover: { photoKey, gradient: [hex, hex], imageUrl? },  // photoKey into the fixed map until media is generated
-  description,                            // prod v1 card line
-  summary,                                // prod v2 card line; detail and player sheet
+  description,                            // v4 card line
+  summary,                                // v5 card line; detail and player sheet
   category: "meditations" | "music" | "energy" | "sleep" | "calm",
   intent,                                 // the creator's stated goal, one sentence
   goal?,                                  // Onboarding.goal it was built for
-  tags: string[],                         // plain words; the client decides "#" (prod v1) or none (prod v2)
+  tags: string[],                         // plain words; the client decides "#" (v4) or none (v5)
   durationSec,                            // derived from chapters, sent so lists need not load chapters
   stats: { plays: int, recreations: int, qualifiedPlays: int },
   outcomes: Outcome[],                    // ALWAYS with provenance (§2.6)
   visibility: "private" | "published" | "unpublished",
   liveVersionId?, currentVersionId,       // live = what listeners get; current = what the owner edits
-  parent?: { sessionId, versionId },      // fork source (decision 6)
+  parent?: { sessionId, versionId },      // fork source
   shelves: ("community" | "picked" | "impact")[],
   createdAt, updatedAt, publishedAt?
 }
@@ -311,7 +286,7 @@ Message {
   replyTo?: { messageId, role, excerpt },
   attachment?:
       { type: "proposals", proposalSetId }          // "Based on … this is what I'd recommend"
-    | { type: "build", buildId, versionId, label }   // each Apply keeps its card (v3+)
+    | { type: "build", buildId, versionId, label }   // each Apply keeps its card in the thread
     | { type: "session", sessionId },
   prompts?: string[],                    // suggestion chips under the reply ("Make it longer")
   safety?: { flagged: bool, category? }   // never shown as-is; drives the support card (§8.7)
@@ -337,8 +312,8 @@ ChangeOption {
   channel?: "audio" | "visuals",
   preselected: bool,
   isExperiment: bool,                     // untested: v2 says so; no estimate ever
-  estimate?: { value: number, unit: "percent", provenance, n } | null,  // prod v1 chip; null until measured
-  basis: {                                // prod v2 "Based on: …"
+  estimate?: { value: number, unit: "percent", provenance, n } | null,  // v4 chip; null until measured
+  basis: {                                // v5 "Based on: …"
     goal?: string, lastCheckIn?: { mood: 1..5, label }, wearable?: string,
     words?: string, sessionHistory?: bool, text: string   // text = ready-to-render sentence
   },
@@ -377,8 +352,8 @@ Journey {                                   // the five-chapter loop
 CheckIn {
   id, journeyId?, sessionId, versionId, chapter?,
   mood: 1..5,                               // Very unpleasant … Very pleasant
-  note?: string (≤ 500),                    // prod v2 journal line; private
-  wearable?: SignalReading,                 // prod v2 "Heart rate settled from 78 to 66 bpm"
+  note?: string (≤ 500),                    // v5 journal line; private
+  wearable?: SignalReading,                 // v5 "Heart rate settled from 78 to 66 bpm"
   createdAt
 }
 // The response to POST check-in also carries the next-chapter plan:
@@ -386,9 +361,9 @@ NextChapterPlan { chapter: 2, unlocksAt, headline: "Chapter 2 is ready tomorrow 
                   plan: "Chapter 2 keeps what worked and goes a little deeper.",
                   changes: ChangeRef[], reminderSuggestion: { time: "22:30" } }
 
-JournalNote { id, text (≤ 500), mood?: 1..5, createdAt }     // private; prod v2
+JournalNote { id, text (≤ 500), mood?: 1..5, createdAt }     // private; v5
 
-ProgressSummary {                           // prod v2 "Progress in words"
+ProgressSummary {                           // v5 "Progress in words"
   goal, chaptersDone, chapterTarget,
   trend: "up" | "same" | "down" | "new",   // rule in lib/journey feelingSummary: halves, ±0.5
   usual?: "Pleasant",
@@ -418,7 +393,7 @@ SignalReading{ sourceId, metric: "heart_rate" | "hrv" | "sleep_duration" | …, 
 ```
 
 New accounts have every connection `off`. The one exception: the source picked
-in onboarding (prod v2) moves to `pending` until the OS/vendor permission
+in onboarding (v5) moves to `pending` until the OS/vendor permission
 completes (§5.8).
 
 ### 4.8 Community, economy, notifications
@@ -427,7 +402,7 @@ completes (§5.8).
 Challenge { id, slug, title, summary, startsAt, endsAt, joined: int, days: int,
             rewardCoins: int, me?: { joined, daysDone, streak } }
 ChallengeEntry { sessionId, session: SessionCard, addedAt, qualifiedPlays: int }
-Wallet  { balance: int, currency: "coins", history: LedgerEntry[] }   // one currency (decision 12)
+Wallet  { balance: int, currency: "coins", history: LedgerEntry[] }   // one currency
 LedgerEntry { id, amount: int, reason: "invite" | "challenge" | "lineage" | "purchase" | "grant", ref?, createdAt }
 Plan { id: "free" | "plus" | "pro", price: { amount, currency, interval }, entitlements: Entitlements }
 Entitlements { buildsPerDay, buildsUsedToday, resetAt, maxLengthMin, voices: string[], publishing: bool }
@@ -455,7 +430,7 @@ Legend: 🔓 public · 🔐 auth · 🤖 AI-backed · ⚡ streamed · ♻️ nee
 | POST | `/auth/password-reset/confirm` | 🔓 | `{token, newPassword}` |
 | GET | `/me` | 🔐 | `User` + `entitlements` + `onboarding.status` (one call at app start) |
 | PATCH | `/me` | 🔐 | `displayName`, `photo`, `locale`, `timezone` |
-| DELETE | `/me` | 🔐 ♻️ | Deletion request; lineage credit becomes "Former member" (decision 14); `202` |
+| DELETE | `/me` | 🔐 ♻️ | Deletion request; lineage credit becomes "Former member"; `202` |
 | POST | `/me/export` | 🔐 ♻️ | Data export job → emailed link (GDPR art. 20) |
 | GET | `/me/entitlements` | 🔐 | The limit counter the cockpit shows ("Edits paused until …" becomes "Builds reset at …") |
 
@@ -473,7 +448,7 @@ Legend: 🔓 public · 🔐 auth · 🤖 AI-backed · ⚡ streamed · ♻️ nee
 
 | Method | Path | | Notes |
 | --- | --- | --- | --- |
-| GET | `/home` | 🔓/🔐 | Signed out: hero copy, Quick Starts, community shelf. Signed in: `nextChapter` (journey card), `recentConversations[3]`, one community shelf; **no marketing blocks**. Live map **only** if `?include=live` (prod v1 visitors; prod v2 drops it). |
+| GET | `/home` | 🔓/🔐 | Signed out: hero copy, Quick Starts, community shelf. Signed in: `nextChapter` (journey card), `recentConversations[3]`, one community shelf; **no marketing blocks**. Live map **only** if `?include=live` (v4 visitors; v5 drops it). |
 | GET | `/quick-starts` | 🔓 | `{id, title, photoKey, previewSessionSlug, starterPrompt}` |
 | GET | `/sessions` | 🔓 | `?shelf=community|picked|impact&category=…&q=…&cursor` → `SessionCard[]` |
 | GET | `/sessions/{slugOrId}` | 🔓 | `Session` (+ `chapters`, `layers`, `personalization`, `commonChanges`, `safety[]`). Private sessions → 404 unless owner. |
@@ -482,7 +457,7 @@ Legend: 🔓 public · 🔐 auth · 🤖 AI-backed · ⚡ streamed · ♻️ nee
 | GET | `/people/{slug}` | 🔓 | Profile **projected from published sessions** (FOR-BACKEND §1.3) |
 | GET | `/me/library` | 🔐 | `?tab=created|played` (Library = `/sessions` screen) |
 | GET | `/creators` | 🔓 | Trusted creators shelf |
-| GET | `/live` | 🔓 | Ongoing live sessions (prod v1 only; can return `[]`) |
+| GET | `/live` | 🔓 | Ongoing live sessions (v4 only; can return `[]`) |
 
 ### 5.4 Conversations and messages (cockpit) 🤖
 
@@ -517,7 +492,7 @@ says "adding white noise" over an unchanged version is a contract violation
 
 | Method | Path | | Notes |
 | --- | --- | --- | --- |
-| GET | `/conversations/{id}/proposals` | 🔐 | The current `ProposalSet` (the deck and the "+" sheet are **one list**, D6) |
+| GET | `/conversations/{id}/proposals` | 🔐 | The current `ProposalSet` (the deck and the "+" sheet are **one list**) |
 | POST | `/conversations/{id}/proposals/refresh` | 🔐 🤖 ♻️ | Regenerate (e.g. after a check-in) |
 | GET | `/proposals/{setId}/options/{optionId}/why` | 🔐 | Optional long-form Why. The short form is already in `basis.text`. |
 
@@ -537,8 +512,8 @@ says "adding white noise" over an unchanged version is a contract violation
 
 | Method | Path | | Notes |
 | --- | --- | --- | --- |
-| GET | `/sessions/{id}/playback` | 🔓 preview / 🔐 full | `?version=live|current|{id}` → `{audio: {hlsUrl, mp3Url, expiresAt}, visuals: {kind, params}, chapters[], cues[], durationSec, preview: bool}`. Signed URLs (10 min). Signed out → 60-second preview (D4). Non-live versions → owner only (decision 4). |
-| POST | `/plays` | 🔓/🔐 ♻️ | `{sessionId, versionId, startedAt, listenedSec, completed}`. Qualified play = ≥ 60 s or 25 %, once per listener per day (decision 10). Anonymous plays carry the per-browser id. |
+| GET | `/sessions/{id}/playback` | 🔓 preview / 🔐 full | `?version=live|current|{id}` → `{audio: {hlsUrl, mp3Url, expiresAt}, visuals: {kind, params}, chapters[], cues[], durationSec, preview: bool}`. Signed URLs (10 min). Signed out → 60-second preview. Non-live versions → owner only. |
+| POST | `/plays` | 🔓/🔐 ♻️ | `{sessionId, versionId, startedAt, listenedSec, completed}`. Qualified play = ≥ 60 s or 25 %, once per listener per day. Anonymous plays carry the per-browser id. |
 | POST | `/sessions/{id}/feedback` | 🔐 | Player feedback (face + text): goes to the next proposals |
 
 ### 5.8 Journey, check-ins, reminders, journal, progress
@@ -551,12 +526,12 @@ says "adding white noise" over an unchanged version is a contract violation
 | PATCH | `/check-ins/{id}` | 🔐 | Add the journal line after saving the mood (`noteLastCheckIn`) |
 | PUT | `/journeys/{id}/reminder` | 🔐 | `{time, timezone, channel}`; default time per goal (sleep 22:30, calm 18:00, clarity 07:30, focus 08:30, regulate 21:00, energy 07:00) |
 | GET | `/journeys/{id}/reminder.ics` | 🔐 (signed link) | `text/calendar`, daily `RRULE` for the remaining chapters (same as `reminderIcs()`) |
-| POST | `/me/push-subscriptions` | 🔐 | Web Push / APNs / FCM tokens (later; D3 is `.ics` until a sender exists) |
+| POST | `/me/push-subscriptions` | 🔐 | Web Push / APNs / FCM tokens (later; reminders are `.ics` files until a sender exists) |
 | GET | `/journal` | 🔐 | Merged check-in notes + notes, newest first |
 | POST | `/journal` | 🔐 ♻️ | `{text, mood?}` → `JournalNote` (safety-checked) |
 | DELETE | `/journal/{id}` | 🔐 | |
-| GET | `/progress/summary` | 🔐 🤖 | `ProgressSummary` (prod v2). Prod v1 reads `/progress/goals` (below). |
-| GET | `/progress/goals` | 🔐 | Prod v1 "Your goals" cards: **the person's own journeys only**. The sample analyses (`wellnessAnalysis.ts`) are not served. |
+| GET | `/progress/summary` | 🔐 🤖 | `ProgressSummary` (v5). v4 reads `/progress/goals` (below). |
+| GET | `/progress/goals` | 🔐 | v4 "Your goals" cards: **the person's own journeys only**. The sample analyses (`wellnessAnalysis.ts`) are not served. |
 | GET | `/progress/reports` | 🔐 🤖 | Two-week reports (`Report[]`), generated by a scheduled job (§8.5) |
 
 ### 5.9 Signal sources and connections
@@ -574,11 +549,11 @@ says "adding white noise" over an unchanged version is a contract violation
 
 | Method | Path | | Notes |
 | --- | --- | --- | --- |
-| POST | `/sessions/{id}/publish` | 🔐 ♻️ | `{versionId}` → live = that version. `409 build_in_progress` while building. Title and text go through moderation (§8.7). Response includes `shares: ["title","sound","visuals","script"]`, `private: ["check_ins","journal","wearable","conversation"]` (the prod v2 note). |
-| DELETE | `/sessions/{id}/publish` | 🔐 | Unpublish: forks keep credit; links show "no longer available" (decision 5) |
-| POST | `/sessions/{id}/recreate` | 🔐 ♻️ | Fork **this** session's live version (logic C1) → `201 {session, conversation}` at v1.0 with `parent` |
+| POST | `/sessions/{id}/publish` | 🔐 ♻️ | `{versionId}` → live = that version. `409 build_in_progress` while building. Title and text go through moderation (§8.7). Response includes `shares: ["title","sound","visuals","script"]`, `private: ["check_ins","journal","wearable","conversation"]` (the v5 note). |
+| DELETE | `/sessions/{id}/publish` | 🔐 | Unpublish: forks keep credit; links show "no longer available"  |
+| POST | `/sessions/{id}/recreate` | 🔐 ♻️ | Fork **this** session's live version → `201 {session, conversation}` at v1.0 with `parent` |
 | GET | `/challenges` · `/challenges/{slug}` | 🔓 | `Challenge` (+ `me` if signed in) |
-| GET | `/challenges/{slug}/entries` | 🔓 | `?view=journey` (prod v2: "Made for this journey", by `addedAt`, no rank fields) · `?view=ranked` (prod v1 podium: by `qualifiedPlays`) |
+| GET | `/challenges/{slug}/entries` | 🔓 | `?view=journey` (v5: "Made for this journey", by `addedAt`, no rank fields) · `?view=ranked` (v4 podium: by `qualifiedPlays`) |
 | POST | `/challenges/{slug}/join` · `/leave` | 🔐 | |
 | POST | `/challenges/{slug}/entries` | 🔐 | Submit own published session |
 | GET | `/notifications` · POST `/notifications/read` | 🔐 | `?bucket=today|yesterday|week|month`; `{ids[] | before}` |
@@ -587,8 +562,8 @@ says "adding white noise" over an unchanged version is a contract violation
 
 | Method | Path | | Notes |
 | --- | --- | --- | --- |
-| GET | `/me/wallet` | 🔐 | `Wallet` (coins). Shown only in Me, Invite and challenges (D4); the API does not care where. |
-| GET | `/plans` | 🔓 | `Plan[]` with `entitlements` (logic A4: one table) |
+| GET | `/me/wallet` | 🔐 | `Wallet` (coins). Shown only in Me, Invite and challenges; the API does not care where. |
+| GET | `/plans` | 🔓 | `Plan[]` with `entitlements` (one table) |
 | POST | `/me/subscription` | 🔐 ♻️ | `{planId, interval}` → checkout session (payment provider TBD, §11) |
 | GET | `/me/invite` · POST `/invites/redeem` | 🔐 | Link + reward (500 coins today); redeem `{code}` |
 
@@ -638,7 +613,7 @@ unauthenticated today).
 Admin uses SSO with staff accounts only and has its own token audience
 (`aud: admin`). RBAC uses the roles in `admin/data/mock.ts` (super_admin, ops,
 moderator, analyst, ai_engineer). **Every mutation writes the audit log.**
-This closes logic G1, the P0.
+This closes the admin's missing authentication, today's top-priority gap.
 
 | Area | Endpoints (all 🔐 staff) |
 | --- | --- |
@@ -679,7 +654,7 @@ This closes logic G1, the P0.
    not present in the input. Outputs are checked by a validator that rejects
    any number not traceable to the input.
 5. **Every AI output names its basis.** `basis` on proposals; `basis` on
-   progress summaries. It is the prod v2 "Why", and it doubles as an audit
+   progress summaries. It is the v5 "Why", and it doubles as an audit
    trail.
 
 ### 8.2 AI routes
@@ -728,8 +703,7 @@ official TypeScript SDK (`@anthropic-ai/sdk`), matching the stack.
   (timestamps, request ids) never go in the system prompt. Monitor
   `usage.cache_read_input_tokens`.
 - **Refusals and fallbacks:** check `stop_reason` before reading content. A
-  `refusal` is mapped to a safe, scripted reply, never a blank screen (logic
-  D6). Server-side refusal fallbacks are enabled (`fallbacks: "default"`
+  `refusal` is mapped to a safe, scripted reply, never a blank screen. Server-side refusal fallbacks are enabled (`fallbacks: "default"`
   under the `server-side-fallback-2026-07-01` beta). Fallback events are
   logged to AI monitoring.
 - **Retries:** the SDK retries 408/409/429/5xx twice. The gateway adds a
@@ -788,9 +762,9 @@ later) → `mix` (loudness-normalised master, HLS + MP3) → `publish_assets`
 The voice, sound and visual vendors sit behind internal interfaces
 (`TtsProvider`, `SoundProvider`, `VisualProvider`) so they can be swapped. The
 vendor choice is open (§11). Higgsfield is connected to our workspace as a
-candidate for generated visuals and audio, to be evaluated. The prod web
+candidate for generated visuals and audio, to be evaluated. The web
 player renders visuals from parameters today, so the API needs nothing more
-for prod v1/v2.
+for v4 and v5.
 
 ### 8.5 Journey intelligence
 
@@ -798,8 +772,8 @@ for prod v1/v2.
   1–2 = gentler, 3 = keep, 4–5 = keep what worked and go a little deeper. It
   also picks the unlock time: tomorrow, or tomorrow night for sleep. The model
   (`chapter.plan`) writes the sentence and selects up to 3 allowed changes
-  consistent with the direction. The result is the prod v2 "Chapter 2 keeps
-  what worked and goes a little deeper." Prod v1 shows only the headline and
+  consistent with the direction. The result is the v5 "Chapter 2 keeps
+  what worked and goes a little deeper." v4 shows only the headline and
   the reminder.
 - **Progress in words.** `trend` and `usual` are computed as in `feelingSummary`.
   The model writes `headline`/`detail` from them, under a rule: no
@@ -826,12 +800,12 @@ blocks the microphone (`Permissions-Policy`); that must change before launch.
     card);
   - a moderation item is created for a human. Aurelia never "treats".
 - **Content rules for every generative route:** no medical claims, no
-  diagnosis, no numeric health promises (decision 13), no
+  diagnosis, no numeric health promises, no
   spiritual/frequency claims when the person excluded them.
 - **Moderation:** published content passes `moderation.publish`. User reports
   go to `/admin/moderation`.
 - **Required before launch:** a written safety policy with clinical and legal
-  review (logic H1–H3). This contract only provides the hooks.
+  review. This contract only provides the hooks.
 
 ### 8.8 Quality, evals and cost
 
@@ -871,9 +845,9 @@ blocks the microphone (`Permissions-Policy`); that must change before launch.
 
 | Phase | Ships | Unblocks |
 | --- | --- | --- |
-| **P0 · Accounts and persistence** | §5.1, §5.2 (without `infer`), `/me`, consents; journey, check-ins and journal persisted (no AI yet); admin auth + audit | The real 8–12 person test, and closes G1 |
-| **P1 · The AI core loop** | `intent.infer`, conversations + streamed `cockpit.reply`, proposals with `basis`, builds (spec → script → TTS → mix), playback, plays, `chapter.plan`, reminders (.ics), safety | Prod v1 and v2 run on real data end to end |
-| **P2 · Progress and signals** | `progress.words`, two-week reports, signal sources (Apple Health first, then Whoop and Oura), push reminders | Prod v2's promises, without example data |
+| **P0 · Accounts and persistence** | §5.1, §5.2 (without `infer`), `/me`, consents; journey, check-ins and journal persisted (no AI yet); admin auth + audit | The real 8–12 person test; admin authentication |
+| **P1 · The AI core loop** | `intent.infer`, conversations + streamed `cockpit.reply`, proposals with `basis`, builds (spec → script → TTS → mix), playback, plays, `chapter.plan`, reminders (.ics), safety | v4 and v2 run on real data end to end |
+| **P2 · Progress and signals** | `progress.words`, two-week reports, signal sources (Apple Health first, then Whoop and Oura), push reminders | v5's promises, without example data |
 | **P3 · Community and economy** | Publish/recreate with lineage, challenges (journey + ranked views), wallet/ledger, plans + payments, notifications | Discover, Me → Credits & plan |
 | **P4 · Admin and growth** | Admin modules on real data, AI policies console, experiments and config, the outcomes module | Operations at scale |
 
@@ -890,7 +864,7 @@ blocks the microphone (`Permissions-Policy`); that must change before launch.
 | 5 | Speech-to-text vendor and the microphone policy | Pick with TTS; update `vercel.json` before P1 voice | Head of Engineering |
 | 6 | Data residency and AI data-retention terms | Decide with legal before P1; affects which API platform and region | Legal + Engineering |
 | 7 | Safety policy and crisis resources per country | Written policy + clinical review before any public beta | Product owner + clinical advisor |
-| 8 | Payment provider and coin economy table (decisions 11–12) | Stripe (web) + store billing (mobile); one coin ledger | Product owner |
+| 8 | Payment provider and coin economy table  | Stripe (web) + store billing (mobile); one coin ledger | Product owner |
 | 9 | WHO-5 in the app (prerequisite for admin outcomes) | Ask at start + every two weeks with the report, behind consent | Product owner + Compliance |
 | 10 | Hosting | Keep Vercel for web; API + workers on a container platform with a Postgres + object store + queue | Head of Engineering |
 
@@ -909,7 +883,7 @@ blocks the microphone (`Permissions-Policy`); that must change before launch.
 | `lib/onboarding.ts` (`aurelia.onboarding`) | `/me/onboarding`, `/reference/goals` |
 | `lib/journey.ts` (`aurelia.journey`), `feelingSummary`, `reminderIcs` | `/journeys`, `/check-ins`, `/journal`, `/progress/summary`, `reminder.ics` |
 | `lib/signals.ts` (`connectionsForWearable`) | `/signal-sources`, `/me/connections` |
-| `lib/wellnessAnalysis.ts` (sample analyses) | Not served (prod v1 shows own journeys; S1) |
+| `lib/wellnessAnalysis.ts` (sample analyses) | Not served (v4 shows the person's own journeys) |
 | `lib/credits.ts`, `notifications.ts`, `challenges.ts` | `/me/wallet`, `/notifications`, `/challenges` |
 | `api/config.ts`, `api/clicks.ts`, `api/annotations.ts` | `/config`, `/events`; annotations stay an internal staging tool |
 | `admin/data/mock.ts` | `/admin/*` |

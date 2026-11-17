@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Aurelia API
   version: 1.0.0-draft
-  summary: Contract for the Aurelia clients (web reference + Flutter), production scope (prod v1 = staging v4, prod v2 = staging v5).
+  summary: Contract for the Aurelia clients (web reference + Flutter), covering design versions v4 and v5 as they run in production.
   description: |
     Machine-readable companion to docs/api/API-CONTRACT.md. The markdown is the intent;
     a disagreement between the two is a bug here. Draft: nothing is implemented yet.
@@ -275,7 +275,7 @@ paths:
         - name: include
           in: query
           schema: { type: string, enum: [live] }
-          description: Prod v1 visitor layout only; prod v2 drops the live map.
+          description: v4 visitor layout only; v5 drops the live map.
       responses:
         '200':
           description: Home aggregate; signed-in Home has no marketing blocks
@@ -408,7 +408,7 @@ paths:
       security: []
       responses:
         '200':
-          description: Ongoing live sessions (prod v1 only; may be empty)
+          description: Ongoing live sessions (v4 only; may be empty)
           content:
             application/json:
               schema: { type: array, items: { $ref: '#/components/schemas/SessionCard' } }
@@ -833,7 +833,7 @@ paths:
   /progress/summary:
     get:
       tags: [journey]
-      description: Prod v2 "progress in words". AI route progress.words; trend and usual are computed in code.
+      description: v5 "progress in words". AI route progress.words; trend and usual are computed in code.
       responses:
         '200':
           description: Summary
@@ -841,7 +841,7 @@ paths:
   /progress/goals:
     get:
       tags: [journey]
-      description: Prod v1 "Your goals" — the person's own journeys only; sample analyses are never served.
+      description: v4 "Your goals" — the person's own journeys only; sample analyses are never served.
       responses:
         '200':
           description: Goals
@@ -1031,7 +1031,7 @@ paths:
         - name: view
           in: query
           schema: { type: string, enum: [journey, ranked], default: journey }
-          description: journey = prod v2 (no rank fields, by addedAt); ranked = prod v1 podium (by qualifiedPlays)
+          description: journey = v5 (no rank fields, by addedAt); ranked = v4 podium (by qualifiedPlays)
         - { $ref: '#/components/parameters/Cursor' }
       responses:
         '200':
@@ -1687,7 +1687,7 @@ components:
         length: { type: integer, enum: [5, 10, 20] }
         voice: { type: string, enum: [female, male, none] }
         sounds: { type: array, items: { type: string, enum: [nature, music, frequencies, silence] } }
-        wearable: { type: [string, 'null'], enum: [apple_watch, whoop, oura, none, null], description: Asked in prod v2 }
+        wearable: { type: [string, 'null'], enum: [apple_watch, whoop, oura, none, null], description: Asked in v5 }
         words: { type: [string, 'null'], description: 'The sentence typed on Home, kept as said' }
         completedAt: { type: [string, 'null'], format: date-time }
     ReferenceData:
@@ -1761,8 +1761,8 @@ components:
         title: { type: string }
         author: { $ref: '#/components/schemas/PersonSummary' }
         cover: { $ref: '#/components/schemas/Cover' }
-        description: { type: string, description: Prod v1 card line }
-        summary: { type: string, description: Prod v2 card line }
+        description: { type: string, description: v4 card line }
+        summary: { type: string, description: v5 card line }
         category: { $ref: '#/components/schemas/Category' }
         tags: { type: array, items: { type: string }, description: Plain words; the client decides whether to prefix "#" }
         durationSec: { type: integer }
@@ -2023,7 +2023,7 @@ components:
 
     Estimate:
       type: [object, 'null']
-      description: Prod v1 chip. null until an estimate is measured; never for experiments.
+      description: v4 chip. null until an estimate is measured; never for experiments.
       required: [value, unit, provenance, n]
       properties:
         value: { type: number }
@@ -2033,7 +2033,7 @@ components:
     Basis:
       type: object
       required: [text]
-      description: Prod v2 "Why? — Based on". text is a server-written sentence joined as a list.
+      description: v5 "Why? — Based on". text is a server-written sentence joined as a list.
       properties:
         goal: { type: [string, 'null'] }
         lastCheckIn:
@@ -2206,7 +2206,7 @@ components:
         unlocksAt: { type: string, format: date-time }
         direction: { type: string, enum: [gentler, keep, deeper], description: Chosen in code from the mood }
         headline: { type: string, examples: [Chapter 2 is ready tomorrow night] }
-        plan: { type: string, examples: [Chapter 2 keeps what worked and goes a little deeper.], description: Prod v2 }
+        plan: { type: string, examples: [Chapter 2 keeps what worked and goes a little deeper.], description: v5 }
         changes: { type: array, items: { $ref: '#/components/schemas/ChangeRef' }, maxItems: 3 }
         reminderSuggestion:
           type: object
@@ -2333,8 +2333,8 @@ components:
         sessionId: { type: string }
         session: { $ref: '#/components/schemas/SessionCard' }
         addedAt: { type: string, format: date-time }
-        qualifiedPlays: { type: integer, description: Only in view=ranked (prod v1) }
-        rank: { type: integer, description: Only in view=ranked (prod v1) }
+        qualifiedPlays: { type: integer, description: Only in view=ranked (v4) }
+        rank: { type: integer, description: Only in view=ranked (v4) }
     Notification:
       type: object
       required: [id, kind, text, createdAt]
