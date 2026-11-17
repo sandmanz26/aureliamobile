@@ -103,7 +103,7 @@ src/
   test/         Vitest setup
   auth/         AuthContext + useSignInGate
   demo/         the /__demo feature-flag console
-  guides/       /wiki (old /guide links redirect): the team wiki (feedback playbook, admin guideline, PRD overview, API contract, Research, Design system)
+  guides/       /wiki (old /guide links redirect): the team wiki (feedback playbook, admin guideline, PRD overview, API contract, Research, Backend (old) + Artefact from docs/backend-old/, Design system)
   designsystem/ the wiki's Design system tab (/wiki/design-system; /designsystem redirects): read live from figma-export.json and the components
   styles/       tokens.css — GENERATED, see below
 api/            Vercel serverless endpoints; shared code in api/_lib (not routes)

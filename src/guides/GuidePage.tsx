@@ -1,4 +1,4 @@
-import { ArrowLeft, BookOpen, FileText, Map as MapIcon, Palette, Search, Server, Telescope, X } from 'lucide-react'
+import { Archive, ArrowLeft, BookOpen, FileText, Lightbulb, Map as MapIcon, Palette, Search, Server, Telescope, X } from 'lucide-react'
 import { marked } from 'marked'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -15,6 +15,8 @@ import pmPlaybookV3 from './content/pm-playbook-v3.html?raw'
 import researchInsightTimer from './content/research-insight-timer.html?raw'
 import prdOverview from '../../docs/PRD-OVERVIEW.md?raw'
 import apiContract from '../../docs/api/API-CONTRACT.md?raw'
+import backendOld from '../../docs/backend-old/BACKEND-OLD.md?raw'
+import artefact from '../../docs/backend-old/ARTEFACT.md?raw'
 import { DS_TOC } from '../designsystem/toc'
 import { filterToc, prepareDoc } from './prepareDoc'
 import './guides.css'
@@ -31,7 +33,7 @@ const DesignSystemContent = lazy(() =>
 /**
  * /wiki (was /guide until U083; old links redirect) — the team's documents,
  * readable on any site (production included) behind the same site password as
- * the app. One shell, six documents: generated HTML guides, Markdown files
+ * the app. One shell, eight documents: generated HTML guides, Markdown files
  * rendered as they stand in docs/, and the design system, which is a React
  * view read live from the Figma export and the components, so no page can
  * drift from its source.
@@ -86,6 +88,26 @@ const DOCS = [
     icon: Telescope,
     source: 'scripts/guides/research_insight_timer.py',
     html: () => researchInsightTimer,
+  },
+  {
+    id: 'backend-old',
+    title: 'Backend (old)',
+    blurb: 'The 2025 backend, from its three documents: how it worked, and the prompts, data shapes and rubric we can reuse.',
+    audience: 'Engineers and whoever builds the new backend',
+    inside: ['The three sources, and what they are good for', 'How the 2025 system worked, and its 16-entity taxonomy', 'Data shapes as Zod, and the prompts worth reusing', 'Where each piece goes today, and what not to reuse'],
+    icon: Archive,
+    source: 'docs/backend-old/BACKEND-OLD.md',
+    html: () => marked.parse(backendOld, { async: false }),
+  },
+  {
+    id: 'artefact',
+    title: 'Artefact',
+    blurb: 'What the 2025 backend teaches us: eleven lessons from reading its three documents side by side.',
+    audience: 'The product owner, engineers and anyone describing Aurelia to others',
+    inside: ['Claims that ran ahead of the build', 'The pace table, safety, and scores the model made up', 'Tagging, one vocabulary, prompts as code', 'What we do differently, and a checklist for the new backend'],
+    icon: Lightbulb,
+    source: 'docs/backend-old/ARTEFACT.md',
+    html: () => marked.parse(artefact, { async: false }),
   },
   {
     id: 'design-system',
@@ -145,8 +167,18 @@ function DocVersions({ id, current }: { id: DocId; current: number }) {
 }
 
 function DocTabs({ current }: { current?: DocId }) {
+  // Eight tabs overflow a phone's width: bring the open one into view.
+  const nav = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const el = nav.current
+    const tab = el?.querySelector<HTMLElement>('[aria-current="page"]')
+    if (!el || !tab) return
+    const t = tab.getBoundingClientRect()
+    const n = el.getBoundingClientRect()
+    el.scrollLeft += t.left - n.left - (n.width - t.width) / 2
+  }, [current])
   return (
-    <nav className="gd-tabs" aria-label="Documents">
+    <nav ref={nav} className="gd-tabs" aria-label="Documents">
       {DOCS.map((d) => (
         <Link key={d.id} to={`/wiki/${d.id}`} aria-current={d.id === current ? 'page' : undefined}>
           {d.title}
@@ -182,13 +214,13 @@ export function GuideIndexPage() {
           <img src={markSvg} alt="" aria-hidden="true" width={52} height={52} className="gd-hero-mark" />
           <p className="gd-eyebrow">Aurelia · wiki</p>
           <h1>
-            Everything about Aurelia, <span className="gd-grad">in six documents</span>
+            Everything about Aurelia, <span className="gd-grad">in eight documents</span>
           </h1>
           <p className="gd-lede">
             Aurelia builds personal wellness sessions from one sentence: someone says how they feel, and Aurelia makes a
             session for it. These documents explain the product, the admin the team runs it from, the backend still to
             be built, the eight-week study that will show whether Aurelia really helps people, what we learn
-            from other products, and the design system every screen is built from.
+            from other products, what the 2025 backend left us, and the design system every screen is built from.
           </p>
           <p className="gd-note">
             The app runs on realistic sample data until the backend exists, so no figure in it is a real result yet.
