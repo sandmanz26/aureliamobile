@@ -1,0 +1,72 @@
+From e8ca69df66b712f64bd83a5474e11c7cade73298 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 17 Nov 2026 15:14:55 +0000
+Subject: [PATCH] Records: HANDOFF.md must list every request and change
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The owner asked that every request and change also be kept in
+docs/HANDOFF.md so nothing is lost. A test now fails the check when a J id
+from the work journal or a U id from the update log is missing from the
+handoff's ledger (§17). CLAUDE.md states the rule.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ CLAUDE.md                  |  5 +++++
+ src/guides/records.test.ts | 26 ++++++++++++++++++++++++++
+ 2 files changed, 31 insertions(+)
+ create mode 100644 src/guides/records.test.ts
+
+diff --git a/CLAUDE.md b/CLAUDE.md
+index f53be65..370396f 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -499,6 +499,11 @@ that changed code also gets its U-entry here and the J-entry links to it.
+ Anything waiting on a decision goes into the journal's **Open items** table
+ until decided. No secrets (pairing codes, passwords) in it.
+ 
++**Every request and change is also in `docs/HANDOFF.md`** (owner, J109): its
++§17 copies each J row and U row in the same push, and §4 is updated when the
++state moves. `src/guides/records.test.ts` fails `npm run check` when an id in
++the journal or the update log is missing from it.
++
+ ## Design versions (staging, and production since U054)
+ 
+ `src/versions/versions.ts` lists switchable design versions; the picker sits
+diff --git a/src/guides/records.test.ts b/src/guides/records.test.ts
+new file mode 100644
+index 0000000..8429bd9
+--- /dev/null
++++ b/src/guides/records.test.ts
+@@ -0,0 +1,26 @@
++import { describe, expect, it } from 'vitest'
++import handoff from '../../docs/HANDOFF.md?raw'
++import journal from '../../docs/WORK-JOURNAL.md?raw'
++import updateLog from '../../docs/UPDATE-LOG.md?raw'
++
++// Owner, 17 Nov 2026 (J109): every request and every change must also be in
++// HANDOFF.md, so nothing is lost. Its §17 copies the index rows of the
++// journal and the update log; this fails the check when one is missing.
++const ids = (text: string, prefix: 'J' | 'U') =>
++  [...text.matchAll(new RegExp(`^\\| (${prefix}\\d{3}) \\|`, 'gm'))].map((m) => m[1])
++
++describe('HANDOFF.md ledger', () => {
++  const ledger = new Set([...ids(handoff, 'J'), ...ids(handoff, 'U')])
++
++  it('lists every request in the work journal', () => {
++    const journalIds = ids(journal, 'J')
++    expect(journalIds.length).toBeGreaterThan(100)
++    expect(journalIds.filter((id) => !ledger.has(id))).toEqual([])
++  })
++
++  it('lists every code change in the update log', () => {
++    const updateIds = ids(updateLog, 'U')
++    expect(updateIds.length).toBeGreaterThan(80)
++    expect(updateIds.filter((id) => !ledger.has(id))).toEqual([])
++  })
++})
+-- 
+2.43.0
+

@@ -57,7 +57,8 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O27 | **Default document versions (J097, J102)**: which version the playbook (v1 Original / v2 Mission guide / v3 Quick start) and the admin guideline (v1 Original / v2 Task guide / v3 Quick start) open on, and whether the chosen one replaces the share HTML/PDF | J097, `/guide/playbook?v=2`, `?v=3` | Product owner |
 | O28 | **Admin redefinition (J100)**: approve the proposed structure (Building blocks, AI system, Safety desk, one Learning area, simpler money, clear names) and its order, before any build | J100 | Product owner |
 | O29 | **Shared entity model first (J101)**: approve a `src/domain/` layer (Goal, Building block, Build, Check-in, Person, Safety signal) used by app, admin and the API contract, with consistency tests, before any admin redesign | J101 | Product owner |
-| O30 | **Design system review (J104)**: check `/designsystem`, then decide whether and how it joins Product requirements; also the open token gaps (brand orange `#FF881B`, two brand gradients) | J104, `/designsystem` | Product owner |
+| O30 | **Design system review (J104)**: check `/designsystem`, then decide whether and how it joins Product requirements; also the open token gaps (brand orange `#FF881B`, two brand gradients) | J104, `/designsystem` | Product owner — **Update (U083):** the design system now sits in the wiki as its own tab; the token gaps remain |
+| O31 | **The 2025 backend code (J109)**: the three sources (Deep Dive, Technical Architecture Documentation, Wiki Aurelia) hold prompts, data shapes and principles, but no code. The wiki lists features as "implemented", so a 2025 Python codebase exists. Ask for the repository and access, then decide what to port (HANDOFF B.12) | J109 | Product owner / Eugene |
 
 ---
 
@@ -173,6 +174,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J106 | 2026-11-16 | Code + Release | /designsystem components made complete: 71 components in 10 patterns, with detail, demos and props from source | U081 |
 | J107 | 2026-11-16 | Code + Release | /guide typography made easier to read: weights, size, leading, measure, spacing, links, lists, tables | U082 |
 | J108 | 2026-11-17 | Code + Release | Docs renamed Wiki (/guide → /wiki, redirects kept); design system merged in as a wiki tab | U083 |
+| J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
 
 ---
 
@@ -1234,3 +1236,13 @@ transcript and the update log. Everything from J018 on was written at the time.
 ### J108 — Docs become the Wiki, design system joins it
 - **Asked:** "1. gabungkan ke playbook. 2. ganti docs dengan wiki". Clarified by question: the design system goes into the guidebook; the label and the address both change, with old links redirected.
 - **Done:** U083. `/wiki` with six tabs, the sixth is Design system; `/guide/*` and `/designsystem` redirect; "Wiki" in the top bar and the admin sidebar. Released to staging and production (J076).
+
+### J109 — Gaps against the 2025 backend sources, and HANDOFF as the full record
+- **Asked:** "ini masi docs, harusnya WIKI. Kemudian saya mau bahas yang kemarin dulu soal 3 dokumen yang di provide. 1. apa saja yang masih menjadi gap dengan yang ada sekarang 2. apa saja yang bisa diambil dan dipakai untuk yang sekarang secara code ? saya tidak yakin apakah ada code atau backend yang bisa dipakai ? jika ada tolong infokan saya 3. kemudian pastikan semua permintaan, changes selalu disimpan dalam handoff md agar tidak ada yang terhilang"
+- **"Still Docs":** the screenshot's badge reads `d5a51aa`, the build before U083. Production serves `0faaf3b`. The browser kept the old app shell (the PWA waits for Reload); Reload on the update toast or a hard refresh shows Wiki.
+- **Answered (1, 2):** the three sources were reread in full against the code and the API contract. Fifteen gaps and nine reusable pieces, written up in `HANDOFF.md` Appendix B.12.
+  - None of the three holds code: no repository, endpoints or schema. They hold prompts, Pydantic shapes, a rubric and principles. A 2025 Python codebase exists (the wiki lists features as implemented), so it must be asked for (O31).
+  - Reusable now, as text and shapes: the script prompt's modality rules, `ScriptElement` entity tags, the feedback-attribution prompt (`utility_index`), the LLM-as-judge rubric, seven edit modes, pause markup, media prompt templates, the recommendation chain.
+  - Do not reuse: the words-per-minute table (reading pace, about three times too many words for meditation), the expert persona, LLM scores as truth, the Deep Dive figures.
+- **Done (3):** `HANDOFF.md` now carries every J and U row (§17), a standing rule (§2 rule 12, A2.9), a current §4 and numbering, and B.12. `src/guides/records.test.ts` fails the check when an id is missing from it (U084).
+- **Open:** O31 added.

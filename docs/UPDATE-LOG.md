@@ -120,9 +120,20 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U080 | `0453426` | 2026-11-16 | New page `/designsystem` (the design system read live from the Figma export and the app's components). Research gains Insight Timer screenshots and a competition section. Staging and production. | [patch](patches/U080-0453426.patch) |
 | U081 | `d891491` | 2026-11-16 | /designsystem lists every component (71) in 10 patterns, with guidance, states, live demos (28) and props read from the source. Staging and production. | [patch](patches/U081-d891491.patch) |
 | U083 | `de65993` | 2026-11-17 | Docs become the Wiki: /guide → /wiki (old links redirect), "Wiki" everywhere, and the design system joins it as a sixth tab (/designsystem redirects). Staging and production. | [patch](patches/U083-de65993.patch) |
+| U084 | `e8ca69d` | 2026-11-17 | HANDOFF.md becomes the full record: a test fails the check when a request (J) or change (U) is missing from its ledger; CLAUDE.md states the rule. Staging. | [patch](patches/U084-e8ca69d.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U084 — HANDOFF.md as the full record
+
+- **Commit:** `e8ca69d` · pushed 2026-11-17 UTC · `web_app` + `admin_cms`.
+- **Patch:** [patches/U084-e8ca69d.patch](patches/U084-e8ca69d.patch)
+- **Request:** "kemudian pastikan semua permintaan, changes selalu disimpan dalam handoff md agar tidak ada yang terhilang".
+- **Interpretation:** "always" needs enforcement, not a promise. HANDOFF.md gets a ledger (§17) with every J and U row, and a test makes a missing row fail `npm run check` and CI.
+- **Changed:** `src/guides/records.test.ts` (new): reads the three files with `?raw` and checks every `| J### |` and `| U### |` id of the journal and the update log appears in HANDOFF.md. `CLAUDE.md`: the rule, under Work journal. Docs in the same push: HANDOFF §17 ledger (J001–J109, U001–U084), §2 rule 12, A2.9, §4 current state, §9 numbering, §14 open items, Appendix B.12.
+- **Verified:** `npm run check` passes (134 tests).
+- **Revert:** `git revert --no-commit e8ca69d && git checkout HEAD -- docs/`.
 
 ### U083 — Wiki: /guide → /wiki, design system as a tab
 

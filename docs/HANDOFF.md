@@ -5,9 +5,12 @@ the context, the people and how they work, the state of every branch and
 environment, how the code is put together, how work is recorded and shipped,
 how to verify it honestly, and what is still open.
 
-> **Status:** written 1 Nov 2026 against `web_app` @ `e5c3dcf` (U057 / J058).
-> Production (`web_prod`) is at the same head as `web_app` (U064, 11 Nov 2026). If the branch heads have
-> moved, trust `git log` and the logs (§9) over this snapshot.
+> **Status:** written 1 Nov 2026; brought up to date 17 Nov 2026 (U084 / J109).
+> `web_app`, `admin_cms` and `web_prod` are at the same head. **§17 is the
+> complete ledger of every request (J) and every code change (U)** and is
+> kept current in the same push as the work, so nothing asked or changed is
+> missing from this file. If the branch heads have moved, trust `git log` and
+> the logs (§9) over the prose snapshot in §4.
 
 **Read order for a cold start:** §1 → §2 (and Appendix A, the complete rulebook) → §3 → §4, then `CLAUDE.md` (the
 authoritative engineering conventions), then whichever later section your task
@@ -34,6 +37,7 @@ first change.
 14. [Open decisions and known gaps](#14--open-decisions-and-known-gaps)
 15. [Tools and connectors available to an agent](#15--tools-and-connectors)
 16. [Glossary](#16--glossary)
+17. [Ledger: every request and every change](#17--ledger-every-request-and-every-change)
 - [Appendix A · The rulebook: every rule of the game, with its source](#appendix-a--the-rulebook-every-rule-of-the-game-with-its-source)
 - [Appendix B · Research compendium: every result](#appendix-b--research-compendium-every-result)
 
@@ -121,6 +125,12 @@ Each of these came from the owner, or from a mistake that was expensive once.
     branches above.
 11. Verify before claiming. Run `npm run check`, build, and drive the real app
     in a browser for anything visual. Report failures as failures.
+12. **Every request and every change also lands in this file** (owner,
+    17 Nov 2026: "pastikan semua permintaan, changes selalu disimpan dalam
+    handoff md agar tidak ada yang terhilang"). In the same push as the
+    work: add the J row (and the U row, for code) to §17, and update §4 when
+    the state moves. `src/guides/records.test.ts` fails `npm run check` (and
+    CI) when a J or U id in the journal or the update log is missing here.
 
 ---
 
@@ -172,6 +182,20 @@ Repository: **`sandmanz26/aureliamobile`** (GitHub). One app per branch:
 
 ## 4 · Where things stand right now
 
+### 17 Nov 2026 in one paragraph
+
+All three web branches are at the same head (U083). Since J076 every
+documents change ships to production too, and new app work waits behind
+`RELEASES`. Production offers three design versions of its own since U075
+(prod v1 = staging v3, prod v2 = staging v4, prod v3 = staging v5, the
+default). The team documents are the **Wiki** at `/wiki` (U083; `/guide/*`
+and `/designsystem` redirect): Feedback group playbook (v1–v3), Admin
+guideline (v1–v3), Product requirements, API contract, Research (Insight
+Timer deep research, screenshots, competitors) and Design system (live from
+the Figma export and the components). The work since 13 Nov is mostly
+research and documents for Eugene's brief (J088–J109); the decisions it
+raised are O24–O31. The older snapshot below is kept for history.
+
 ### Production (`web_prod` = `web_app`, U061, 11 Nov 2026)
 
 - **Version bar and picker are visible on production** (U054, temporary; owner
@@ -199,6 +223,18 @@ Level with production (U072, 13 Nov 2026). Everything in `RELEASES` (`src/versio
 **Standing rule (J076):** `/wiki` stays identical on both sites. New app work that should wait goes behind a `RELEASES` flag set to `BUILD.environment !== 'production'`, and is turned on only on request.
 
 ### Last things delivered (most recent first)
+
+The full list is §17. Since 13 Nov:
+
+- **J109:** gap analysis of the three 2025 backend sources against today, and what can be reused (Appendix B.12); this file became the complete ledger (§17).
+- **J108 / U083:** Docs renamed Wiki (`/wiki`); the design system is its sixth tab.
+- **J107 / U082:** wiki typography for comfortable reading.
+- **J104–J106 / U080–U081:** Insight Timer screenshots and competitors; the design system with all components by pattern.
+- **J100–J102 / U079:** admin redefinition proposal (O28), the entity coherence check (O29), admin guideline v2/v3.
+- **J094–J098 / U076–U078:** Insight Timer deep research (Research tab), playbook v1–v3 and the junior-PM roast.
+- **J088–J093:** Eugene's brief read and recapped; founder-skill test of prod v1–v3 (`docs/reviews/`).
+
+Before that:
 
 - **J058 / U057:** `docs/user-updates/Aurelia-Whats-New-v5.pdf`, a 4-page
   English guide for users. Eight changes, each on a v5 screenshot marked in
@@ -429,10 +465,14 @@ the work.
 | `WORK-JOURNAL.md` | **every request** (questions included) | **Index** table row `\| J0NN \| date \| kind \| request \| U-ref or — \|`, then a `### J0NN — title` section appended at the **end** of the file. **Open items** table at the top (`\| O## \| … \|`). |
 | `UPDATE-LOG.md` | every code change | **Index** row `\| U0NN \| \`sha\` \| date \| summary \| [patch](patches/U0NN-sha.patch) \|`, then a `### U0NN — title` section inserted **right after `## Entries`** (newest first). Fields: Commit, Patch, Request (verbatim), Interpretation, Changed, Verified, Revert. |
 | `update-log/patches/U0NN-<sha>.patch` | every code change | `git format-patch -1 <code-commit> --stdout > …` |
+| `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of this handoff:** last U = **U057**, last J = **J058**, last
-O = **O21**. Before numbering, check the files for anything newer.
+**Numbering as of 17 Nov 2026:** last U = **U084**, last J = **J109**, last
+O = **O31**. Before numbering, check the files for anything newer.
+
+**And this file:** every J row and every U row is copied into §17 in the same
+push. `src/guides/records.test.ts` enforces it.
 
 **Commit pattern used throughout:**
 
@@ -666,10 +706,14 @@ in Appendix B.**
 ## 14 · Open decisions and known gaps
 
 The authoritative list is the **Open items** table at the top of
-`docs/WORK-JOURNAL.md` (O1–O21). The ones most likely to come up next:
+`docs/WORK-JOURNAL.md` (O1–O31). The ones most likely to come up next:
 
 | # | Decision / gap | Notes |
 | --- | --- | --- |
+| **O31** | The 2025 backend code | The three sources hold prompts and shapes, no code (B.12). Ask Eugene for the 2025 repository and access; then decide what to port. |
+| **O29** | Shared entity model first | `src/domain/`, seeded from the 2025 taxonomy (B.12 #2), before admin rebuilds. |
+| **O28** | Admin redefinition | Structure proposed in J100. |
+| **O24–O27, O30** | Insight Timer recommendations, Eugene's remaining asks, founder-test fixes, default document versions, design-system token gaps | See the journal. |
 | **O19** | v5: make it production's default? | Built, on prod as v2 only. Real wearable data, voice choice, friends/groups, push and a share reward need a backend or assets. |
 | **O20** | Clean up the production version bar | Temporary per the owner. It takes 28px for every visitor. Options: behind a flag or URL parameter, or remove once a default is chosen. |
 | **O21** | Well-being outcomes | Confirm WHO-5 and when to ask it; backend; Compliance wording; who owns follow-ups at ≤ 28; prod promotion. |
@@ -733,6 +777,219 @@ What a Claude session in this project has had available:
 
 ---
 
+## 17 · Ledger: every request and every change
+
+Copied from the index tables of `WORK-JOURNAL.md` (§17.1) and
+`UPDATE-LOG.md` (§17.2), and extended in the same push as every new request.
+The details stay in those files; this is the one place where the whole
+history can be read without opening four documents.
+`src/guides/records.test.ts` fails the build when an id is missing here.
+
+### 17.1 Requests (J)
+
+| ID | Date | Kind | Request (short) | Code |
+| --- | --- | --- | --- | --- |
+| J001 | ≤2026-10-14 | Question | URL for the owner panel | — |
+| J002 | 2026-10-14 | Bug | Mobile still showed the old generating animation | U026 |
+| J003 | 2026-10-14 | Code | Make the animated generating card the default | U026 |
+| J004 | 2026-10-14 | Code | New Home logo, Invite/Help icons | U027, U028 |
+| J005 | 2026-10-14 | Ops | Promote all of staging v2 to production | U029 |
+| J006 | 2026-10-15 | Code | Desktop fixes: Quick Start, Live Sessions, Monthly Challenge | U030, U031, U033 |
+| J007 | 2026-10-15 | Code | Click-detection tool, then per-element detail | U032, U034 |
+| J008 | 2026-10-15 | Code + Proposal | Six product points (feelings, sign-in width, limit, reply, Play icon, sticky player idea) | U036 |
+| J009 | 2026-10-15 | Code | Home network artwork in Three.js, hidden behind a flag | U035 |
+| J010 | 2026-10-18 | Question | "Do you understand this app?" | — |
+| J011 | 2026-10-18 | Code | Card heights, See All, player Close, version history, publish date | U037 |
+| J012 | 2026-10-18 | Analysis | PDF of odd or missing logic | U037 (docs) |
+| J013 | 2026-10-18 | Discussion | Eugene: "remove parts without removing?" | — |
+| J014 | 2026-10-18 | Question | Why did Eugene mention the backend? | — |
+| J015 | 2026-10-18 | Proposal | What to hide for beta | — |
+| J016 | 2026-10-19 | Ops | Figma pairing code (×1) | — |
+| J017 | 2026-10-20 | Ops | Figma pairing code (×2) | — |
+| J018 | 2026-10-20 | Check | Does Publish have loading/success states? | — |
+| J019 | 2026-10-20 | Code | Figma "My Wellness – Connect" | U038 |
+| J020 | 2026-10-20 | Code | Sheet width + v3 change summary + every build kept | U038 |
+| J021 | 2026-10-20 | Process | Record everything in an md | this file |
+| J022 | 2026-10-21 | Ops | Figma pairing code | — |
+| J023 | 2026-10-21 | Code | Figma 16885:1622: Wellness Analytics cards + Analysis page, v2 + v3 | U039 |
+| J024 | 2026-10-21 | Ops | Figma pairing code | — |
+| J025 | 2026-10-21 | Code | Analysis: metric list + chart text not balanced | U040 |
+| J026 | 2026-10-21 | Code | Figma 16886:1623 (player drawer + Feedback) and 16883:13096 (Settings/Script), v2 + v3 | U041 |
+| J027 | 2026-10-21 | Code | Current style should not be removable | U042 |
+| J028 | 2026-10-21 | Code | Settings at 470–480px should stretch | U043 |
+| J029 | 2026-10-21 | Ops | Promote v2 to production | U044 |
+| J030 | 2026-10-21 | Code | Eugene feedback: move the filter into the "+" sheet | U045 |
+| J031 | 2026-10-21 | Ops | Promote U045 to production | U046 |
+| J032 | 2026-10-22 | Code | v4: onboarding for first login | U047 |
+| J033 | 2026-10-22 | Question | "Try again" after v4 | — |
+| J034 | 2026-10-22 | Doc | Prompt to install click tracking + the floating review button elsewhere | docs only |
+| J035 | 2026-10-23 | Code + Check | Re-check staging; production-grade code quality; install libraries (cache etc.) | U048 |
+| J036 | 2026-10-23 | Question | Did U048 change the user experience? | — |
+| J037 | 2026-10-25 | Code | Offline: some pages must still open; 404 when forcing a signed-in page | U049 |
+| J038 | 2026-10-25 | Analysis | Simplification research + plan PDF with annotated screenshots and drafts (no code) | docs only |
+| J039 | 2026-10-25 | Research | First-time-user retention simulation: 6 personas on the real v4 build, sequenced questionnaire, D1/D7/D30 predictions per suggestion (no code) | docs only |
+| J040 | 2026-10-26 | Code | J039 refinements applied to v4 (U050), after: validity question, summary of what to refine, "is it already in v4?" | U050 |
+| J041 | 2026-10-26 | Question | Status of Eugene's simplification (J038) after U050 | docs only |
+| J042 | 2026-10-26 | Code | Simplification D1–D7 applied to v4 without touching v2 (U051) | U051 |
+| J043 | 2026-10-26 | Analysis | Second simplification audit of v4 after U051 (no code) | docs only |
+| J044 | 2026-10-26 | Operational | Owner is sending the J043 proposal (S1–S7) to users before deciding | docs only |
+| J045 | 2026-10-27 | Release | Production moved to v4; `web_prod` fast-forwarded (U052) | U052 |
+| J046 | 2026-10-27 | Analysis | Production v4 compared with the J039 retention report; model re-scored for what was actually built | docs only |
+| J047 | 2026-10-27 | Report | Owner report: before / suggestion / now / impact (HTML + PDF, no code) | docs only |
+| J048 | 2026-10-27 | Report | Owner report labelled as AI analysis by Claude (self-analysis + deep research) | docs only |
+| J049 | 2026-10-27 | Code + report | Three real user interviews vs the simulation; staging v5 built from v4; v5 proposal report (HTML + PDF) | U053 |
+| J050 | 2026-10-28 | Code + Ops | Design-version picker on production too (default stays v4); `web_prod` fast-forwarded | U054 |
+| J051 | 2026-10-29 | Question + Code + Ops | Production status (no code); Higgsfield connector; production limited to two versions with its own numbers | U055 |
+| J052 | 2026-10-29 | Question | Is the interview version v3 + interviews or v4 + interviews? | — |
+| J053 | 2026-10-30 | Question | What is the difference between staging v4 and v5? | — |
+| J054 | 2026-10-30 | Code | Chat box taller, Explore header follows the scroll, admin well-being outcomes | U056 |
+| J055 | 2026-10-30 | Question | v5 changes as an English bullet list | — |
+| J056 | 2026-10-30 | Question | Shorter version of the v5 update | — |
+| J057 | 2026-10-30 | Question | v5 update formatted for WhatsApp | — |
+| J058 | 2026-10-30 | Report + Code | What's New PDF for users (v5 / prod v2), changes marked on screenshots; Why? text fix | U057 |
+| J059 | 2026-11-01 | Doc | Full technical and context handoff for another person or model (`docs/HANDOFF.md`) | docs only |
+| J060 | 2026-11-01 | Doc | Handoff completed with every working rule and every research result (Appendices A and B) | docs only |
+| J061 | 2026-11-10 | Doc | API contract plan in English for the production version, including the AI features (`docs/api/`) | docs only |
+| J062 | 2026-11-10 | Question + Code + Report | Where admin lives (same app on staging and production); Experimentation section for the 30-person feedback-group study; protocol PDF | U058 |
+| J063 | 2026-11-10 | Code | Hide the Experimentation section until the client's pricing arrives | U059 |
+| J064 | 2026-11-11 | Code + Doc | Reopen Experimentation with a version 2 for review; detailed admin guideline in HTML | U060 |
+| J065 | 2026-11-11 | Code + Doc + Release | Guideline, a whole-product PRD and the API contract readable on production at `/guide`; production promoted | U061 |
+| J066 | 2026-11-11 | Question | Production showed a 404 at `/guide/prd`: the browser was still on the cached build `bc028a6`; how to load `17b053f` | — |
+| J067 | 2026-11-11 | Report + Code | Eugene: a PDF for the project manager on the two-month feedback group, linked to the admin as source of truth; Milestones and coaching log in admin | U062 |
+| J068 | 2026-11-11 | Question | All the URLs (production, staging, artifacts), and where Eugene's request lives | — |
+| J069 | 2026-11-11 | Code + Doc | The study protocol put inside the playbook HTML as its appendix | U063 |
+| J070 | 2026-11-11 | Doc | The playbook as one HTML file instead of a PDF, to send to Eugene | docs only |
+| J071 | 2026-11-11 | Code + Release | Eugene's playbook was not found on production `/guide`: put first and production promoted on request | U064 |
+| J072 | 2026-11-11 | Question | What Eugene asked for, and whether it needs admin features (it does; they exist on sample data) | — |
+| J073 | 2026-11-11 | Code + Doc | `/guide` front page without a person's name and more detailed; Aurelia branding on every document, strongest on the playbook | U065 |
+| J074 | 2026-11-11 | Doc | Branded, self-contained HTML files for all four documents, to send | docs + scripts |
+| J075 | 2026-11-12 | Discussion | Figma change list for every version on staging and production (being written by the owner): (1) chat proposal deck → Chapter card + Review sheet; (2) Personal journeys on Explore + story page | waiting on the full list |
+| J076 | 2026-11-12 | Release + Code | `/guide` kept identical on both sites (production promoted for it); app work staging-only via `RELEASES`; Chapter card + Review sheet and Personal journeys built | U066, U067 |
+| J077 | 2026-11-12 | Question | Staging showed the old deck: the browser was on build `9c8f298` (10 Nov), not `3cba602` | — |
+| J078 | 2026-11-12 | Doc | Shared documents: no personal names, no internal ids, plainer wording; `/guide` synced to production | docs only |
+| J079 | 2026-11-13 | Code + Release | Daily check-in after every sign-in, and its Journal, in every version on staging and production | U068 |
+| J080 | 2026-11-13 | Code + Release | Player simplified to the Figma frame, every version, staging and production | U069 |
+| J081 | 2026-11-13 | Code | "Daily check-in does not show in the journal": found and fixed where it was easy to miss (staging; production waiting on confirmation) | U070 |
+| J082 | 2026-11-13 | Code + Release | My Wellness → Analytics redesigned to Figma (analysis page), staging and production; U070 shipped with it | U071 |
+| J083 | 2026-11-13 | Question + Code + Release | Summary of every change and its status; then Journal moved to About as in Figma, and every release switched on for production (v5 left as is) | U072 |
+| J084 | 2026-11-13 | Question | Version map: staging v1–v5 against production v1/v2, and the changes on every version | — |
+| J085 | 2026-11-13 | Code + Release | v3 still showed the Journal on My Wellness: a cached pre-U072 build; plus a long note overflowing its card, fixed | U073 |
+| J086 | 2026-11-13 | Code | "Ada bug di UI": the Journal note overflow again (production lacks U073); a wrapping fallback added | U074 |
+| J087 | 2026-11-13 | Code + Release | Production remapped to three versions (v1 = staging v3, v2 = staging v4, v3 = staging v5), opening on v3; production updated | U075 |
+| J088 | 2026-11-13 | Question | The owner's new requests read and summarised, nothing done yet: playbook tone, Insight Timer replica, buyer agents, the 2025 backend docs into /guide, AI speed/quality research, design system, main-menu rail | — |
+| J089 | 2026-11-13 | Research | Insight Timer replica study, agent-run: every public feature mapped to Aurelia v1, 2,000 App Store reviews ranked; report in `docs/reviews/` | — |
+| J090 | 2026-11-13 | Research | Read the owner's three sources: the Technical Architecture Deep Dive is readable and read in full; the second Google Doc and the Notion wiki need a sign-in | — |
+| J091 | 2026-11-14 | Research | founder-skill installed; board (3 lenses) and a 100-buyer panel tested production v1, v2 and v3 on real screen captures; report in `docs/reviews/` | — |
+| J092 | 2026-11-14 | Question | What founder-skill can do (11 skills summarised) | — |
+| J093 | 2026-11-15 | Question | Recap of everything the owner asked for, with status | — |
+| J094 | 2026-11-15 | Research | Insight Timer deep research: features, strategy and business, users and backlash, AI landscape and fit with Aurelia; report in Markdown, HTML and PDF | — |
+| J095 | 2026-11-15 | Code + Release | The Insight Timer deep research as an easy-to-read Research tab in /guide, on staging and production; the two backend source PDFs received | U076 |
+| J096 | 2026-11-15 | Question | What the owner means by "make the feedback playbook more simple and playful": the same content and accuracy, a mission tone, plain words | — |
+| J097 | 2026-11-15 | Code + Release | Playbook versioning: v1 Original, v2 Mission guide, v3 Quick start (much shorter), on staging and production | U077 |
+| J098 | 2026-11-16 | Review + Code + Release | Roast of playbook v2/v3 as a junior PM: ten gaps found and fixed | U078 |
+| J099 | 2026-11-16 | Research | Summary of the three 2025 backend sources (Deep Dive, Technical Architecture Documentation, Wiki Aurelia): what each says, how they disagree, and what carries into 2026 | — |
+| J100 | 2026-11-16 | Proposal | Does the admin need redefining? Yes: seven changes proposed against the 2025 backend, the research and the founder test | — |
+| J101 | 2026-11-16 | Analysis | Entity coherence check: does the admin proposal fit today's UI flow? It fits only after one shared entity model; seven breaks found in the code | — |
+| J102 | 2026-11-16 | Code + Release | Admin guideline versions like the playbook: v2 Task guide, v3 Quick start (much shorter), staging and production | U079 |
+| J103 | 2026-11-16 | Question | Updated recap of everything the owner asked for, with status and the next steps | — |
+| J104 | 2026-11-16 | Research + Code + Release | Insight Timer screenshots and competitor research in Research; a new /designsystem page for review; staging and production | U080 |
+| J105 | 2026-11-16 | Question | "/designsystem is not found" on production: the browser ran a cached build (eb5d63f) from before the route existed; production serves 1f1e9a5 | — |
+| J106 | 2026-11-16 | Code + Release | /designsystem components made complete: 71 components in 10 patterns, with detail, demos and props from source | U081 |
+| J107 | 2026-11-16 | Code + Release | /guide typography made easier to read: weights, size, leading, measure, spacing, links, lists, tables | U082 |
+| J108 | 2026-11-17 | Code + Release | Docs renamed Wiki (/guide → /wiki, redirects kept); design system merged in as a wiki tab | U083 |
+| U084 | `e8ca69d` | 2026-11-17 | HANDOFF.md becomes the full record: a test fails the check when a request (J) or change (U) is missing from its ledger; CLAUDE.md states the rule. Staging. | [patch](update-log/patches/U084-e8ca69d.patch) |
+| J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
+
+### 17.2 Code changes (U)
+
+| ID | Commit | Pushed (UTC) | What | Patch |
+| --- | --- | --- | --- | --- |
+| U001 | `d456e53` | 2026-10-09 04:53 | Add a design-version switcher on staging and create Version 2 (more motion). | [patch](update-log/patches/U001-d456e53.patch) |
+| U002 | `2d7e96d` | 2026-10-09 04:55 | v2: micro-animations on Home feature-card icons. | [patch](update-log/patches/U002-2d7e96d.patch) |
+| U003 | `f4710e2` | 2026-10-09 05:00 | Move the switcher into a 28px StagingBar fixed at the top of every page. | [patch](update-log/patches/U003-f4710e2.patch) |
+| U004 | `a8470a3` | 2026-10-09 07:08 | v2 round 2: remove icon micro-animation; Pause/Play voice icon; floating player; directional page transitions; draggable sheets; pull to refresh; coin counter; tablet layout. | [patch](update-log/patches/U004-a8470a3.patch) |
+| U005 | `9ba8ab5` | 2026-10-09 07:17 | Rewrite the v2 "What changes" dialog as grouped sections. | [patch](update-log/patches/U005-9ba8ab5.patch) |
+| U006 | `19043b2` | 2026-10-09 07:24 | v2: Total Credits counts up on /credits. | [patch](update-log/patches/U006-19043b2.patch) |
+| U007 | `9dd0d7d` | 2026-10-09 07:27 | v2: drifting soft background behind the new-chat orb. | [patch](update-log/patches/U007-9dd0d7d.patch) |
+| U008 | `f71c219` | 2026-10-09 07:40 | v2: typing example prompts in Home Ask field; pulsing live-map dots. | [patch](update-log/patches/U008-f71c219.patch) |
+| U009 | `c72297e` | 2026-10-09 07:58 | v2: stronger promo glow; coin-flip profile picture. | [patch](update-log/patches/U009-c72297e.patch) |
+| U010 | `d6052a0` | 2026-10-09 08:10 | v2: promo banner light follows the cursor. | [patch](update-log/patches/U010-d6052a0.patch) |
+| U011 | `37db91f` | 2026-10-09 14:59 | Annotations: pins scoped to the design version. | [patch](update-log/patches/U011-37db91f.patch) |
+| U012 | `9b63ad8` | 2026-10-09 15:25 | v2: centre sign-in heading; Home order (Quick Start up, Live Sessions above Community); working Share on player. | [patch](update-log/patches/U012-9b63ad8.patch) |
+| U013 | `b929beb` | 2026-10-11 15:19 | Staging password AURELIA3.0 (production stays AURELIA2.0). | [patch](update-log/patches/U013-b929beb.patch) |
+| U014 | `051d1a2` | 2026-10-11 16:41 | v2: taller player sheet rest (description visible); filter chips on opened recommendations. | [patch](update-log/patches/U014-051d1a2.patch) |
+| U015 | `6e5ae91` | 2026-10-12 15:16 | v2: player sheet rests at the title; description only when fully open (corrects U014). | [patch](update-log/patches/U015-6e5ae91.patch) |
+| U016 | `c39e1e6` | 2026-10-12 15:29 | v2: player Share opens a share sheet (social targets, copy link, More). | [patch](update-log/patches/U016-c39e1e6.patch) |
+| U017 | `d12528f` | 2026-10-12 15:32 | v2: richer recommendation filter (icon chips, sliding highlight, selected summary). | [patch](update-log/patches/U017-d12528f.patch) |
+| U018 | `f3cf7cd` | 2026-10-12 15:37 | v2 dialog: recap of every v2 change, grouped by screen. | [patch](update-log/patches/U018-f3cf7cd.patch) |
+| U019 | (this log commit) | 2026-10-12 15:37 | Production: `web_prod` fast-forwarded from `f738209` to `web_app`. | — |
+| U020 | `0381705` | 2026-10-12 16:03 | Production uses v2 only (pinned; no v1, no picker). `web_prod` fast-forwarded. | [patch](update-log/patches/U020-0381705.patch) |
+| U021 | `4def866` | 2026-10-12 17:17 | Favicon redrawn from the real mark; PNG sizes, apple-touch-icon, manifest. | [patch](update-log/patches/U021-4def866.patch) |
+| U022 | `83fd46d` | 2026-10-13 00:29 | PNG icons replaced with supplied Aurelia SVGs (chat menu, header Play, Unpublish, Progress tabs). | [patch](update-log/patches/U022-83fd46d.patch) |
+| U023 | `ea37c00` | 2026-10-13 00:52 | Drawer/sidebar nav icons → Aurelia SVGs (user, note, playlist-02, chart-medium). | [patch](update-log/patches/U023-ea37c00.patch) |
+| U024 | `2758524` | 2026-10-13 01:01 | Drawer/sidebar: supplied sidebar logo; bell SVGs (plain/active) with local unread state. | [patch](update-log/patches/U024-2758524.patch) |
+| U025 | `553c77f` | 2026-10-14 11:42 | v2: Google-Maps-style player sheet (drag anywhere, 3 rests, flick, tap; player visible at half). | [patch](update-log/patches/U025-553c77f.patch) |
+| U026 | `cc85aab` | 2026-10-14 16:17 | Chat: animated generating card is the default (flag `chat.generatingV2` removed). | [patch](update-log/patches/U026-cc85aab.patch) |
+| U027 | `955d004` | 2026-10-14 16:22 | Home logo: supplied vector replaces the blurry upscaled PNG. | [patch](update-log/patches/U027-955d004.patch) |
+| U028 | `75f3664` | 2026-10-14 16:23 | Drawer/sidebar Invite a Friend + Help → SVG icons (user-add, message-question). | [patch](update-log/patches/U028-75f3664.patch) |
+| U029 | (this log commit) | 2026-10-14 | Production: `web_prod` fast-forwarded from `803d15f` to `web_app` (U021–U028 and everything since U020). | — |
+| U030 | `9b61806` | 2026-10-15 10:46 | Fix: Home Quick Start cards squashed to 56px on desktop in v2. | [patch](update-log/patches/U030-9b61806.patch) |
+| U031 | `cb37df5` | 2026-10-15 10:48 | Desktop v2: Ongoing Live Sessions becomes a full-width map banner. | [patch](update-log/patches/U031-cb37df5.patch) |
+| U032 | `6c2d911` | 2026-10-15 10:54 | New tool: click insights — records screens + taps, review at `/__demo/insights` with per-screen heatmap. | [patch](update-log/patches/U032-6c2d911.patch) + [b](update-log/patches/U032b-15a4254.patch) |
+| U033 | `1df0c28` | 2026-10-15 10:54 | Explore: Monthly Challenge card 320px tall on desktop (was ~600px). | [patch](update-log/patches/U033-1df0c28.patch) |
+| U034 | `bc433a4` | 2026-10-15 11:18 | Click insights: element-level detail (kind, section, position on element, state, timing, result, rage/dead), Elements table, Problem taps, element heatmap. | [patch](update-log/patches/U034-bc433a4.patch) |
+| U035 | `b540605` | 2026-10-15 16:41 | Home closing network artwork rebuilt in Three.js (measured from the PNG); hidden by default, switched on from `/__demo` → 3D network (+ Motion). | [patch](update-log/patches/U035-b540605.patch) + [b](update-log/patches/U035b-d208547.patch) |
+| U036 | `4bc9c2e` | 2026-10-15 16:51 | Home feeling chips; chat reply-to-message; header Play only after something exists; limit copy (new session free); sign-in fills <640px. | [patch](update-log/patches/U036-4bc9c2e.patch) |
+| U037 | `7328ab6` | 2026-10-18 16:39 | Equal-height recommendation cards; mini player Close; lineage See All + versions; Details publishing + creator version history; logic review PDF. | [patch](update-log/patches/U037-7328ab6.patch) |
+| U038 | `a7dbf32` | 2026-10-20 00:40 | Connect request + sent dialog per Figma; all sheets full-width <640; design v3 (change sheet summary, every build kept in thread). | [patch](update-log/patches/U038-a7dbf32.patch) |
+| U039 | `98691ba` | 2026-10-21 08:55 | Wellness Analytics v2+: per-session analysis cards + Analysis page (Figma 16885:1622), derived logic; chat styleChanges race fix. | [patch](update-log/patches/U039-98691ba.patch) |
+| U040 | `b5ea379` | 2026-10-21 09:51 | Analysis: metric list + chart type balanced (chart drawn at real width, 12px labels; one weight per row). | [patch](update-log/patches/U040-b5ea379.patch) |
+| U041 | `8d6c79d` | 2026-10-21 10:03 | Player analysis drawer + Feedback (Figma 16886:1623); Settings/Script title card + rename (16883:13096); chat ask race fix. v2+. | [patch](update-log/patches/U041-8d6c79d.patch) |
+| U042 | `a4c9092` | 2026-10-21 10:55 | Session settings: Current style cards read-only in v2+ (no Remove). | [patch](update-log/patches/U042-a4c9092.patch) |
+| U043 | `c7a9243` | 2026-10-21 10:58 | Session settings stretches to full width below lg (was capped at 402); Add buttons aligned. All versions. | [patch](update-log/patches/U043-c7a9243.patch) |
+| U044 | (this log commit) | 2026-10-21 | Production: `web_prod` fast-forwarded from `4140e59` to `web_app` (U030–U043). | — |
+| U045 | `8286ffb` | 2026-10-21 17:48 | Change filter moved from the thread's opened deck into the "+" sheet (v2 + v3); summary shows the largest gain, not a sum. | [patch](update-log/patches/U045-8286ffb.patch) |
+| U046 | (this log commit) | 2026-10-21 | Production: `web_prod` fast-forwarded from `2a2a376` to `web_app` (U045). | — |
+| U047 | `720e50a` | 2026-10-22 06:14 | Design v4 = v3 + first-run onboarding (`/welcome`): goal, feeling, style, editable summary → first session; Skip keeps answers; Replay in Settings. | [patch](update-log/patches/U047-720e50a.patch) |
+| U048 | `8bb282f` | 2026-10-23 15:35 | Production-grade foundation: TanStack Query, typed/validated HTTP, safe storage, error reporting, shared KV, 0 lint warnings, 55 Vitest tests, CI. No visual change. | [patch](update-log/patches/U048-8bb282f.patch) |
+| U049 | `8a6f011` | 2026-10-25 09:42 | Offline support (service worker, offline banner, update prompt) + 404 for signed-out forced access to protected pages. | [patch](update-log/patches/U049-8a6f011.patch) |
+| U050 | `ae75233` | 2026-10-26 00:05 | v4 first-time fixes from the J039 retention simulation: words kept into onboarding, own thread + goal deck, limit after first build, chapter check-in + calendar reminder, next-chapter Home, Quick Start plays, Connect off. | [patch](update-log/patches/U050-ae75233.patch) |
+| U051 | `e826b7b` | 2026-10-26 01:40 | v4: J038 simplification D1–D7 — four tabs, Create/Discover/Progress/Me, Library, coins only in Me, Insights retired, simpler player sheet for others' sessions, one list of changes in the chat, Phase 0 fixes. | [patch](update-log/patches/U051-e826b7b.patch) |
+| U052 | `399d87a` | 2026-10-27 | Production moves to design v4 (`PRODUCTION_VERSION` 2 → 4) and `web_prod` is fast-forwarded to `web_app`; build badge on Me in v4. | [patch](update-log/patches/U052-399d87a.patch) |
+| U053 | `b030823` | 2026-10-27 | Design v5 (staging only) = v4 reworked after three real user interviews: progress in words, Why on suggestions, next-chapter plan, wearable in onboarding, journal, community without ranks, plain landing. | [patch](update-log/patches/U053-b030823.patch) |
+| U054 | `e661073` | 2026-10-28 | Production gets the design-version bar and picker (default still v4); `web_prod` fast-forwarded, bringing v5 (U053) to production as an option. | [patch](update-log/patches/U054-e661073.patch) |
+| U055 | `e4c8e8e` | 2026-10-29 | Production offers two versions with its own numbers: prod v1 = staging v4 (default), prod v2 = staging v5; `web_prod` fast-forwarded. | [patch](update-log/patches/U055-e4c8e8e.patch) |
+| U056 | `b469f86` | 2026-10-30 | Chat box 16px taller; Explore/Discover header follows the scroll; admin Well-being outcomes (WHO-5, check-ins, heart rate) page + per-user panel. Staging only. | [patch](update-log/patches/U056-b469f86.patch) |
+| U057 | `f390b95` | 2026-10-30 | v5 Why? text fix (goal-only basis read "your goal and “Sleep better”"); user-facing What's New PDF for v5 / prod v2. Staging only. | [patch](update-log/patches/U057-f390b95.patch) |
+| U058 | `57e192d` | 2026-11-10 | Admin Experimentation section: the feedback-group study (30 people, 8 weeks, six cohorts): criteria, participants, measures, data quality and safety, per-participant page. Sample data. Staging only. | [patch](update-log/patches/U058-57e192d.patch) |
+| U059 | `5bb9580` | 2026-11-10 | Experimentation section hidden (flag `adminExperimentation` unreleased) while the client's pricing is awaited. Staging only. | [patch](update-log/patches/U059-5bb9580.patch) |
+| U060 | `ac6f07d` | 2026-11-11 | Experimentation reopened, plus a second version for review (Feedback group · v1 and · v2: Wins, This week, Engagement). Staging only. | [patch](update-log/patches/U060-ac6f07d.patch) |
+| U061 | `66207a7` | 2026-11-11 | Team documents in the app at `/guide`: admin guideline, PRD overview (new), API contract; admin sidebar link. **Promoted to production with everything since U055.** | [patch](update-log/patches/U061-66207a7.patch) |
+| U062 | `1ff0d04` | 2026-11-11 | Feedback group for the project manager: PM playbook (PDF + `/guide/playbook`), Version 2 → Milestones tab with computed gates, coaching log on every participant page, "not reached for 2 days" in This week. On production since U064. | [patch](update-log/patches/U062-1ff0d04.patch) |
+| U063 | `ed5e2b7` | 2026-11-11 | PM playbook carries the whole study protocol as its appendix (P1–P11, six screenshots), in the HTML, the PDF and `/guide/playbook`. On production since U064. | [patch](update-log/patches/U063-ed5e2b7.patch) |
+| U064 | `a876ab5` | 2026-11-11 | `/guide` lists the feedback group playbook first, titled for Eugene's request; **production promoted with U062–U064** (on request). | [patch](update-log/patches/U064-a876ab5.patch) |
+| U065 | `8002466` | 2026-11-11 | Aurelia branding on every document (logo, gradient, Home's glow, network artwork), strongest on the playbook; `/guide` front page rewritten plainly, without naming a person. On production. | [patch](update-log/patches/U065-8002466.patch) |
+| U066 | `0c52d70` | 2026-11-12 | Chat: one Chapter card + Review sheet instead of the fanned deck, every version. Staging only (`RELEASES.chapterCard`). | [patch](update-log/patches/U066-0c52d70.patch) |
+| U067 | `6085b63` | 2026-11-12 | Explore: Personal journeys shelf, See All and a story page, every version. Staging only (`RELEASES.personalJourneys`). | [patch](update-log/patches/U067-6085b63.patch) |
+| U068 | `ae2c156` | 2026-11-13 | Daily check-in sheet after every sign-in + Journal tab (v1–v3 session page, v4+ Progress), every version. **Staging and production** (on request). | [patch](update-log/patches/U068-ae2c156.patch) |
+| U069 | `c535dd5` | 2026-11-13 | Player simplified (back, share, play, cue, scrubber; no coin, skips or details sheet), every version. **Staging and production** (on request). | [patch](update-log/patches/U069-c535dd5.patch) |
+| U070 | `eee28bc` | 2026-11-13 | Daily check-in findable: "Saved to your Journal · Open Journal", Journal tab on Progress in every version, v5's journal lists check-ins. On production with U071. | [patch](update-log/patches/U070-eee28bc.patch) |
+| U071 | `6303583` | 2026-11-13 | My Wellness → Analytics → analysis page to Figma 16906:5168 (mood-face chart, What helped me list, no Next chapter), v1–v4. Staging and production (on request). | [patch](update-log/patches/U071-6303583.patch) |
+| U072 | `811a444` | 2026-11-13 | Journal moved to the session's About page (back in every version, titled About); out of Progress. Chapter card and Personal journeys switched on for production. Staging and production. | [patch](update-log/patches/U072-811a444.patch) |
+| U073 | `5e73eaf` | 2026-11-13 | Journal cards wrap a long unbroken note instead of running past the card. On production with U075. | [patch](update-log/patches/U073-5e73eaf.patch) |
+| U074 | `168c32d` | 2026-11-13 | Journal note wrapping: `word-break: break-word` fallback beside `overflow-wrap: anywhere` (older Safari). On production with U075. | [patch](update-log/patches/U074-168c32d.patch) |
+| U075 | `593dc17` | 2026-11-13 | Production offers three versions — v1 = staging v3, v2 = staging v4, v3 = staging v5 — and opens on v3. Shipped with U073–U074. | [patch](update-log/patches/U075-593dc17.patch) |
+| U076 | `eeb7a8f` | 2026-11-15 | /guide gets a fifth document, **Research**: the Insight Timer deep research rewritten for reading. Staging and production (J076). | [patch](update-log/patches/U076-eeb7a8f.patch) |
+| U077 | `a6619b4` | 2026-11-15 | Feedback-group playbook in /guide gets versions: v1 Original, v2 Mission guide (plain and upbeat), v3 Quick start (one page). Staging and production (J076). | [patch](update-log/patches/U077-a6619b4.patch) |
+| U078 | `07a59e1` | 2026-11-16 | Playbook v2 and v3 rewritten after a junior-PM read-through: what Aurelia is, who's who, questionnaires in plain words, a worked example, what to say when, a glossary, the first week. Staging and production. | [patch](update-log/patches/U078-07a59e1.patch) |
+| U079 | `ccb84a3` | 2026-11-16 | Admin guideline in /guide gets versions: v1 Original, v2 Task guide, v3 Quick start (one page). Staging and production. | [patch](update-log/patches/U079-ccb84a3.patch) |
+| U080 | `0453426` | 2026-11-16 | New page `/designsystem` (the design system read live from the Figma export and the app's components). Research gains Insight Timer screenshots and a competition section. Staging and production. | [patch](update-log/patches/U080-0453426.patch) |
+| U081 | `d891491` | 2026-11-16 | /designsystem lists every component (71) in 10 patterns, with guidance, states, live demos (28) and props read from the source. Staging and production. | [patch](update-log/patches/U081-d891491.patch) |
+| U083 | `de65993` | 2026-11-17 | Docs become the Wiki: /guide → /wiki (old links redirect), "Wiki" everywhere, and the design system joins it as a sixth tab (/designsystem redirects). Staging and production. | [patch](update-log/patches/U083-de65993.patch) |
+| U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](update-log/patches/U082-68d7b21.patch) |
+
+---
+
 # Appendix A · The rulebook: every rule of the game, with its source
 
 §2 is the short version. This is the complete set: every rule that governs how
@@ -764,6 +1021,7 @@ Record any such conflict in the journal.
 | A2.5 | **No secrets** anywhere in the repo: passwords, Figma pairing codes (they expire in 5 minutes), tokens. Log that a code was issued, never the code itself. | Journal rule 5; J016/J017/J022/J024/J045 |
 | A2.6 | Log ambiguous asks with the verbatim request and the interpretation, so a single update can be reverted on its own (`git revert --no-commit <sha> && git checkout HEAD -- docs/`). | `CLAUDE.md` · Update log |
 | A2.7 | A design-token change is also logged in `docs/DESIGN-SYSTEM-HISTORY.md`. | `CLAUDE.md` · tokens |
+| A2.9 | **Every request and change is also in `HANDOFF.md` §17**, in the same push; §4 is updated when the state moves. A test fails the build otherwise. | Owner, 17 Nov 2026 (J109) |
 | A2.8 | Update `PRD.md` / `FOR-*.md` in the same commit when behaviour they describe changes. Update `HANDOFF.md` §4 whenever production moves or the state changes materially. | `CLAUDE.md` · other documents; this file |
 
 ### A.3 Branches and releases
@@ -1233,3 +1491,61 @@ The eight messages that were sent to users:
 
 They are in `docs/user-updates/Aurelia-Whats-New-v5.pdf`, with the WhatsApp
 text in J057.
+
+## B.12 The three 2025 backend sources against today (J099, J109)
+
+Sources, read in full (kept outside the repository, as the owner sent them):
+- **Technical Architecture Deep Dive** (Google Doc, 10 slides): the vision.
+- **Technical Architecture Documentation** (PDF, 6 pages): infrastructure principles.
+- **Wiki Aurelia** (Notion export, 20 pages): the prompts the 2025 backend actually used.
+
+**There is no code in any of them.** No repository, no endpoint list, no
+database schema, no deployable service. What they hold is prompts (verbatim),
+data shapes (Pydantic models written into the prompts), a rubric, and
+principles. They show the 2025 backend was Python (Pydantic models), MongoDB
+("MongoBase", job state), Redis caching, and Azure OpenAI / AWS Bedrock behind
+an `LLMModel` abstraction, with Luma AI (video, thumbnails), Beatoven.ai
+(music) and a TTS service. The wiki's last page lists three things as
+"MISSING (but implemented)" (Talk with analytics, Agents marketplace, Insight
+cards), so **a 2025 codebase exists somewhere**. Asking for it is O31.
+
+Our own repository has no product backend either: `api/` holds only
+`config.ts` (flags), `annotations.ts` and `clicks.ts` (review tools), on
+Vercel + Upstash.
+
+### What is still a gap (2025 sources → today)
+
+| # | Area | 2025 | Today | Gap |
+| --- | --- | --- | --- | --- |
+| 1 | Product shape | Creator tool: wellness pros build **campaigns** from a taxonomy; the LLM writes the script | Consumer-first: one sentence → a session, then chapters | No creator, campaign or pro-profile concept anywhere (app, admin, contract). A product decision, not a port. |
+| 2 | Taxonomy | 16 entities: Pro profile, Script logic, Chakra, Concept, Skill, Mood, State, Audience, Wellness category, Method, Technique, Framework category, Framework, Style, Setting (world-building), Character. Nesting Concept → Skill → Mood → State; Method → Technique | "Building blocks" defined three times with different ids (J101 break 1); goal ids consistent | No single entity catalogue. The 2025 taxonomy is the obvious seed for O29's `src/domain/`. |
+| 3 | Script structure | `ScriptVersion {plain_text, campaign_id, version_number, elements[]}`; each `ScriptElement {text, index_number, method/mood/state/framework/technique/skill name}` | `SessionSpec.chapters [{label, startSec, endSec, intent}]` (contract §8.4) | Chapters carry no entity tags, so feedback cannot be traced to the blocks that produced it. |
+| 4 | Feedback loop | Free text → LLM `FeedbackEvaluation` (general 0–10, per-entity 0–10, mastery 0–10) and attribution `utility_index` −1…1 per entity → analytics aggregates | Check-in mood 1–5 + note, not linked to the build (J101 break 2); three feedback shapes (break 3) | No attribution, no per-block score, no aggregation. |
+| 5 | Analytics | Campaign, script and entity performance, best combinations, user mastery over time, supply vs demand, revenue per script | Admin analytics are sample data on a separate dataset (break 4) | Nothing computed from real feedback; no supply/demand. |
+| 6 | Editing | Seven LLM edit modes on script elements: suggest, (re)generate, in-between, merge, split, expand, simplify | Proposals in the cockpit and the "+" sheet; whole-session changes | No element-level editing (for a creator or for the admin). |
+| 7 | Recommendations | Each step recommends the next entity, ranked, **with a reason** | Proposals with a Why? (v5) | Mostly matched; the reason field already exists as `basis`. |
+| 8 | Quality | LLM-as-judge: 9 criteria scored 1–10 + strict breathing rules | Contract §8.8 lists evals but no rubric | Rubric missing on our side. |
+| 9 | Media | Video and thumbnails (Luma), music (Beatoven), TTS | Parameter-driven visuals, Unsplash covers, bundled audio; vendors open (§11 of the contract) | No generation at all yet. |
+| 10 | Pacing | `<break time="x.xs"/>` (max 3 s), dashes and ellipses; words-per-minute table | `voice.pace` in the spec | Pause markup missing; **the 2025 word table is wrong for meditation** (~310 words a minute is reading pace; guided meditation is roughly 100–130, so a 10-minute script at 3,094 words is about three times too long). |
+| 11 | Safety | **None** in the prompts | `safety.classify` mandatory before every route (contract §8.7) | A 2025 gap. Keep ours. |
+| 12 | Providers | Multi-provider routing (Azure OpenAI, Gemini, Claude, DeepSeek, Bedrock) with failover and cost routing | One gateway, Anthropic, model id as a policy field | A choice, not a gap. Provider failover can be added inside the gateway later. |
+| 13 | Infrastructure | Job queue with WebSocket progress, circuit breakers, retries, cost tracking, health checks, audit trail | Same principles in contract §8.3 and §9 (SSE instead of WebSocket) | Aligned on paper; neither is built. |
+| 14 | Deep Dive claims | Wellness State Graph (4,000 points, 120,000 edges), causal inference, RL with 768-/512-dim user vectors, Compassion Computational Index | Nothing | **Not supported by the 2025 prompts either.** Treat as roadmap; do not state as existing in decks or investor material. |
+| 15 | Missing in both | Talk with analytics, Agents marketplace, Insight cards | Nothing | Need the 2025 code or a product decision. |
+
+### What can be reused now (as text and shapes, not code)
+
+| Reuse | From | Where it goes |
+| --- | --- | --- |
+| Script prompt 2's modality rules (breathing: 5–7 full written cycles; visualisation; affirmations; meditation phases; PMR; RAIN; hypnosis; mantra; "include only practices in the setup") | Wiki §Campaign a | `session.script` route policy (contract §8.2), after a safety and claims pass (remove "transforms lives", "healing") |
+| `ScriptVersion` / `ScriptElement` with per-element entity tags | Wiki §Campaign a | Extend `SessionSpec.chapters` with block ids, as Zod in the contract |
+| Feedback attribution prompt (`utility_index` −1…1 per entity, "none" when not mentioned) | Wiki §Notebook b | A new route linking a check-in note to the blocks of the build it rates; fixes J101 break 2 |
+| `FeedbackEvaluation` / `EntitySatisfactionScore` | Wiki §Campaign b | Admin learning area (O28); scores stay inputs, never shown to the person as numbers |
+| LLM-as-judge rubric (9 criteria, breathing rules) | Wiki §Notebook a | Contract §8.8 evals, run on every policy change |
+| Seven edit modes | Wiki §Campaign c | Admin "Building blocks" editor; later the cockpit |
+| Pause markup | Wiki §Campaign a | TTS input in the build pipeline |
+| Media prompt templates (video, thumbnail, music with duration) | Wiki §Media | `VisualProvider` / `SoundProvider` adapters |
+| Recommendation chain with reasons | Wiki §Recommendation | The allowed-change catalogue and `basis` |
+
+Do **not** reuse: the words-per-minute table, the "world-renowned wellness
+expert" persona, LLM scores as ground truth, or any Deep Dive figure.

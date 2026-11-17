@@ -19,6 +19,15 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-17 — HANDOFF.md holds every request and change (U084, J109)
+
+`docs/HANDOFF.md` §17 lists every request (J001–J109) and code change
+(U001–U084); a test fails the check when one is missing. Also: §4 brought up
+to date, and Appendix B.12, the gaps and reusable parts of the three 2025
+backend sources.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-17 — Docs become the Wiki (U083, J108)
 
 The team documents live at `/wiki` and are called Wiki everywhere. The design
