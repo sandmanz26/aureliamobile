@@ -121,9 +121,24 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U081 | `d891491` | 2026-11-16 | /designsystem lists every component (71) in 10 patterns, with guidance, states, live demos (28) and props read from the source. Staging and production. | [patch](patches/U081-d891491.patch) |
 | U083 | `de65993` | 2026-11-17 | Docs become the Wiki: /guide → /wiki (old links redirect), "Wiki" everywhere, and the design system joins it as a sixth tab (/designsystem redirects). Staging and production. | [patch](patches/U083-de65993.patch) |
 | U084 | `e8ca69d` | 2026-11-17 | HANDOFF.md becomes the full record: a test fails the check when a request (J) or change (U) is missing from its ledger; CLAUDE.md states the rule. Staging. | [patch](patches/U084-e8ca69d.patch) |
+| U085 | `a718484` | 2026-11-17 | Wiki: two new tabs from the three 2025 backend documents, Backend (old) (what we can reuse) and Artefact (eleven lessons); the open tab scrolls into view on phones. Staging and production. | [patch](patches/U085-a718484.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U085 — Wiki: Backend (old) and Artefact
+
+- **Commit:** `a718484` · pushed 2026-11-17 UTC · `web_app` + `admin_cms` + `web_prod` (J076: the wiki is identical on both sites).
+- **Patch:** [patches/U085-a718484.patch](patches/U085-a718484.patch)
+- **Request:** "oke dari 3 dokumen itu tolong summary dan buat 2 menu backend (old) berisikan hal hal dari 3 dokumen tersebut yang kita bisa pakai dan 1 lagi artefact yang merupakan hasil dari 3 dokuemn itu yang bisa menjadi pembelajaran."
+- **Interpretation:** two wiki tabs. "Backend (old)" = a summary of the three documents focused on what can be used. "Artefact" = the lessons the documents teach, read side by side. Placed after Research, before Design system. The prompts are quoted (shortened where marked); the wiki sits behind the site password, and the source PDFs themselves stay out of the repository.
+- **Changed:**
+  - `docs/backend-old/BACKEND-OLD.md` (new): the three sources, how the 2025 system worked, the 16-entity taxonomy, data shapes as Zod, reusable prompts (modality rules, pause markup, attribution, judge rubric, seven edit modes, closed-list recommendations, media prompts), infrastructure principles against the API contract, where each piece goes, what not to reuse.
+  - `docs/backend-old/ARTEFACT.md` (new): eleven lessons (claims vs build, the pace arithmetic, safety, tagging, model scores, one vocabulary, prompts as code, rules over personas, the changed loop, one source of truth, keep the code), a comparison table and a ten-step checklist.
+  - `src/guides/GuidePage.tsx`: the two tabs (Archive and Lightbulb icons), index copy "eight documents"; `DocTabs` scrolls the open tab into view (eight tabs overflow 402px).
+  - `CLAUDE.md`: layout line.
+- **Verified:** `npm run check` passes (134 tests). Production build at 1280px and 402px: both tabs render (15 and 14 contents entries, tables and code blocks), the open tab is visible in the strip at both widths, eight index cards, no horizontal overflow, no page errors.
+- **Revert:** `git revert --no-commit a718484 && git checkout HEAD -- docs/`.
 
 ### U084 — HANDOFF.md as the full record
 

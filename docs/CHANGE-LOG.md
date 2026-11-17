@@ -19,6 +19,14 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-17 — Wiki: Backend (old) and Artefact (U085, J112)
+
+Two new wiki tabs from the three 2025 backend documents: Backend (old), what
+we can reuse (taxonomy, data shapes, prompts, rubric), and Artefact, eleven
+lessons for the new backend. The open tab scrolls into view on phones.
+
+Branches: `web_app`, `admin_cms`, **`web_prod`** (J076).
+
 ### 2026-11-17 — HANDOFF.md holds every request and change (U084, J109)
 
 `docs/HANDOFF.md` §17 lists every request (J001–J109) and code change
