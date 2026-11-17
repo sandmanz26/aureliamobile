@@ -19,6 +19,14 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-17 — API contract as a team document (U086, J113)
+
+The API contract opens with an info table and a plain overview; internal
+review codes and commit hashes are gone from the body, and design versions
+are named v4/v5. Empty table headers are hidden in the wiki.
+
+Branches: `web_app`, `admin_cms`, **`web_prod`** (J076).
+
 ### 2026-11-17 — Wiki: Backend (old) and Artefact (U085, J112)
 
 Two new wiki tabs from the three 2025 backend documents: Backend (old), what

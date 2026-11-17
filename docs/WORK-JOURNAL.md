@@ -62,6 +62,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O32 | **Aurelia Pro / corporate wellness (J110)**: Eugene asks how big an exploration it is to propose features for a B2B2C version (companies buy, employees use). Proposed: a short exploration in the retention-simulation format (employee and HR personas, what changes, what is reused, size) before any build | J110 | Product owner: go ahead, and with whom to validate (a pilot company?) |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
 | J112 | 2026-11-17 | Code + Release | Summary of the three 2025 backend documents as two wiki tabs: Backend (old), what we can reuse; Artefact, the lessons | U085 |
+| J113 | 2026-11-17 | Code + Release | API contract: the opening paragraph replaced by a simple info table; the document cleaned to read like an internal team document | U086 |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 
 ---
@@ -1270,3 +1271,8 @@ transcript and the update log. Everything from J018 on was written at the time.
   - **Backend (old)** (`/wiki/backend-old`): what each source is good for, the 2025 flow, the taxonomy, the data shapes as Zod, the prompts we can reuse with the changes each needs, the infrastructure checklist, where each piece goes, what not to reuse.
   - **Artefact** (`/wiki/artefact`): eleven lessons. Claims ran ahead of the build; the word table was about three times too long; there was no safety layer; tagging is what makes learning possible; model scores are signals, not measurements; one vocabulary; prompts are code; rules beat personas; the loop changed from creator to person; one source of truth for system facts; keep the code with the documents. Ends with a checklist for the new backend.
   - Staging and production (J076).
+
+### J113 — The API contract as a team document
+- **Asked:** "part in saya rasa tidak perlu cukup cantumkan saja. saya mau dokumen ini ya memang dokumen bukan seperti dokumen yang ai generated, tapi lebih ke dokumen yang dikonsumsi oleh internal team"
+- **Done:** U086. The opening is an info table and a short overview. The body keeps all its content, without internal review codes, commit hashes or production's shifting version labels. Staging and production.
+- **Note:** the same habits (review codes, verbose openings) exist in other wiki documents. They can get the same pass on request.

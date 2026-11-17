@@ -227,6 +227,7 @@ Level with production (U072, 13 Nov 2026). Everything in `RELEASES` (`src/versio
 
 The full list is §17. Since 13 Nov:
 
+- **J113 / U086:** the API contract rewritten to read as a team document (info table, plain overview, no internal review codes).
 - **J112 / U085:** wiki tabs Backend (old) and Artefact, from the three 2025 backend documents.
 - **J109:** gap analysis of the three 2025 backend sources against today, and what can be reused (Appendix B.12); this file became the complete ledger (§17).
 - **J108 / U083:** Docs renamed Wiki (`/wiki`); the design system is its sixth tab.
@@ -470,7 +471,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U085**, last J = **J112**, last
+**Numbering as of 17 Nov 2026:** last U = **U086**, last J = **J113**, last
 O = **O32**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -902,10 +903,12 @@ history can be read without opening four documents.
 | J108 | 2026-11-17 | Code + Release | Docs renamed Wiki (/guide → /wiki, redirects kept); design system merged in as a wiki tab | U083 |
 | U084 | `e8ca69d` | 2026-11-17 | HANDOFF.md becomes the full record: a test fails the check when a request (J) or change (U) is missing from its ledger; CLAUDE.md states the rule. Staging. | [patch](update-log/patches/U084-e8ca69d.patch) |
 | U085 | `a718484` | 2026-11-17 | Wiki: two new tabs from the three 2025 backend documents, Backend (old) (what we can reuse) and Artefact (eleven lessons); the open tab scrolls into view on phones. Staging and production. | [patch](update-log/patches/U085-a718484.patch) |
+| U086 | `2913b15` | 2026-11-17 | API contract reads as a team document: an info table and a plain overview replace the long opening; internal review references removed; v4/v5 instead of prod v1/v2. Staging and production. | [patch](update-log/patches/U086-2913b15.patch) |
 | J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
 | J112 | 2026-11-17 | Code + Release | Summary of the three 2025 backend documents as two wiki tabs: Backend (old), what we can reuse; Artefact, the lessons | U085 |
+| J113 | 2026-11-17 | Code + Release | API contract: the opening paragraph replaced by a simple info table; the document cleaned to read like an internal team document | U086 |
 
 ### 17.2 Code changes (U)
 

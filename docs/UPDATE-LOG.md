@@ -122,9 +122,28 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U083 | `de65993` | 2026-11-17 | Docs become the Wiki: /guide → /wiki (old links redirect), "Wiki" everywhere, and the design system joins it as a sixth tab (/designsystem redirects). Staging and production. | [patch](patches/U083-de65993.patch) |
 | U084 | `e8ca69d` | 2026-11-17 | HANDOFF.md becomes the full record: a test fails the check when a request (J) or change (U) is missing from its ledger; CLAUDE.md states the rule. Staging. | [patch](patches/U084-e8ca69d.patch) |
 | U085 | `a718484` | 2026-11-17 | Wiki: two new tabs from the three 2025 backend documents, Backend (old) (what we can reuse) and Artefact (eleven lessons); the open tab scrolls into view on phones. Staging and production. | [patch](patches/U085-a718484.patch) |
+| U086 | `2913b15` | 2026-11-17 | API contract reads as a team document: an info table and a plain overview replace the long opening; internal review references removed; v4/v5 instead of prod v1/v2. Staging and production. | [patch](patches/U086-2913b15.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U086 — API contract as a team document
+
+- **Commit:** `2913b15` · pushed 2026-11-17 UTC · `web_app` + `admin_cms` + `web_prod` (J076).
+- **Patch:** [patches/U086-2913b15.patch](patches/U086-2913b15.patch) (the CSS; the document changes are in `docs/`).
+- **Request:** "part in saya rasa tidak perlu cukup cantumkan saja. saya mau dokumen ini ya memang dokumen bukan seperti dokumen yang ai generated, tapi lebih ke dokumen yang dikonsumsi oleh internal team" (on a screenshot of the contract's opening paragraph).
+- **Interpretation:** "cukup cantumkan saja" = state the facts as fields, not prose. The whole document should read like something the team keeps and edits, so the clean-up went past the opening.
+- **Changed:**
+  - `docs/api/API-CONTRACT.md`:
+    - The opening (owner, status, scope with a commit hash, companion paragraph, read order) is now an info table: Version, Status, Owners, Covers, Machine-readable form, Last updated.
+    - The bold "Summary" is now a plain-prose Overview.
+    - Every internal review reference (logic G1/G2/B3…, decision N, D2/D4/D6, S1, "the honesty rule", "the retention test") is removed; the statements stand on their own.
+    - "prod v1/prod v2" become the design versions they are (v4, v5), since production's labels moved in U075.
+    - §2's broken punctuation is fixed.
+  - `docs/api/openapi.yaml`: the same version wording; still valid YAML.
+  - `src/guides/guides.css`: an empty table header row is hidden, so key/value tables render without a blank strip.
+- **Verified:** `npm run check` passes. Production build at 1280px and 402px: the info table renders without a header, contents start at Overview, no overflow.
+- **Revert:** `git revert --no-commit 2913b15 && git checkout HEAD -- docs/` (that keeps the logs and the new document; to restore the old document, check out `docs/api/` from `2913b15~1`).
 
 ### U085 — Wiki: Backend (old) and Artefact
 
