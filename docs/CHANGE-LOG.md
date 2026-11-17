@@ -19,6 +19,14 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-17 — Docs become the Wiki (U083, J108)
+
+The team documents live at `/wiki` and are called Wiki everywhere. The design
+system is its sixth tab. `/guide/*` and `/designsystem` redirect, query and
+section kept.
+
+Branches: `web_app`, `admin_cms`, **`web_prod`** (J076).
+
 ### 2026-11-16 — /guide typography (U082, J107)
 
 The documents were retuned for reading:

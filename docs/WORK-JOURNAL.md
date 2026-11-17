@@ -172,6 +172,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J105 | 2026-11-16 | Question | "/designsystem is not found" on production: the browser ran a cached build (eb5d63f) from before the route existed; production serves 1f1e9a5 | — |
 | J106 | 2026-11-16 | Code + Release | /designsystem components made complete: 71 components in 10 patterns, with detail, demos and props from source | U081 |
 | J107 | 2026-11-16 | Code + Release | /guide typography made easier to read: weights, size, leading, measure, spacing, links, lists, tables | U082 |
+| J108 | 2026-11-17 | Code + Release | Docs renamed Wiki (/guide → /wiki, redirects kept); design system merged in as a wiki tab | U083 |
 
 ---
 
@@ -1229,3 +1230,7 @@ transcript and the update log. Everything from J018 on was written at the time.
   - **The main defect:** faked bold. Mulish ships 300–600 here and the documents asked for 700–800.
   - **Then the reading basics:** 16.5px body text with a 1.7 line height, a 68-character line, a consistent rhythm, and a calmer heading scale.
   - **Also:** clearer links, lists and tables, and the generated documents aligned.
+
+### J108 — Docs become the Wiki, design system joins it
+- **Asked:** "1. gabungkan ke playbook. 2. ganti docs dengan wiki". Clarified by question: the design system goes into the guidebook; the label and the address both change, with old links redirected.
+- **Done:** U083. `/wiki` with six tabs, the sixth is Design system; `/guide/*` and `/designsystem` redirect; "Wiki" in the top bar and the admin sidebar. Released to staging and production (J076).

@@ -1,0 +1,680 @@
+From de659936b6e7a6208679f06edef888a81d7f2e2d Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 17 Nov 2026 14:54:12 +0000
+Subject: [PATCH] Wiki: /guide becomes /wiki, design system joins it as a tab
+
+The team documents move to /wiki and are labelled Wiki everywhere (top bar,
+admin sidebar, experimentation links). /guide, /guide/:doc and /designsystem
+redirect with query and section kept. The design system renders as the
+wiki's sixth tab, lazily loaded and outside .gd-doc so the document
+typography does not restyle live components; its contents list and section
+tracking use the wiki shell.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ CLAUDE.md                                  |  6 +-
+ docs/HANDOFF.md                            |  4 +-
+ docs/PRD-OVERVIEW.md                       |  6 +-
+ scripts/guides/admin_guideline.py          |  2 +-
+ scripts/guides/admin_guideline_versions.py |  2 +-
+ scripts/guides/pm_playbook.py              |  2 +-
+ scripts/guides/pm_playbook_versions.py     |  2 +-
+ scripts/guides/research_insight_timer.py   |  2 +-
+ src/App.tsx                                | 22 ++++--
+ src/admin/AdminLayout.tsx                  |  4 +-
+ src/admin/pages/ExperimentationV2Page.tsx  |  4 +-
+ src/components/daily/DailyCheckInGate.tsx  |  2 +-
+ src/designsystem/DesignSystemPage.tsx      | 61 ++++------------
+ src/designsystem/catalogue.test.ts         |  2 +-
+ src/designsystem/catalogue.ts              |  2 +-
+ src/designsystem/props.ts                  |  2 +-
+ src/designsystem/toc.ts                    | 14 ++++
+ src/designsystem/tokens.ts                 |  2 +-
+ src/guides/GuidePage.tsx                   | 85 +++++++++++++++-------
+ src/guides/prepareDoc.test.ts              |  4 +-
+ src/guides/prepareDoc.ts                   |  2 +-
+ src/versions/releases.ts                   |  2 +-
+ vite.config.ts                             |  2 +-
+ 23 files changed, 127 insertions(+), 109 deletions(-)
+ create mode 100644 src/designsystem/toc.ts
+
+diff --git a/CLAUDE.md b/CLAUDE.md
+index 5946efe..f53be65 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -27,7 +27,7 @@ branch carries its own `.storybook/` setup this one doesn't, but soon
+ enough that the catalogue does not quietly fall behind what it exists to
+ keep consistent. See that branch's `docs/STORYBOOK.md`.
+ 
+-**Since J076 (2026-11-12) `/guide` must be identical on staging and production**, so `web_prod` is fast-forwarded whenever the documents change. That carries the app code with it, so **new app work lands behind `RELEASES` in `src/versions/releases.ts`**: on for staging, off for production. Shipping app work is setting its flag to `true`, still only on request.
++**Since J076 (2026-11-12) `/wiki` (was `/guide` until U083) must be identical on staging and production**, so `web_prod` is fast-forwarded whenever the documents change. That carries the app code with it, so **new app work lands behind `RELEASES` in `src/versions/releases.ts`**: on for staging, off for production. Shipping app work is setting its flag to `true`, still only on request.
+ 
+ **`web_prod` is different in kind: it is allowed to be behind.** `web_app` is
+ the staging branch and every commit lands there first; `web_prod` moves only
+@@ -103,8 +103,8 @@ src/
+   test/         Vitest setup
+   auth/         AuthContext + useSignInGate
+   demo/         the /__demo feature-flag console
+-  guides/       /guide: the team documents (feedback playbook, admin guideline, PRD overview, API contract, Research)
+-  designsystem/ /designsystem: the design system read live from figma-export.json and the ui components (draft for review)
++  guides/       /wiki (old /guide links redirect): the team wiki (feedback playbook, admin guideline, PRD overview, API contract, Research, Design system)
++  designsystem/ the wiki's Design system tab (/wiki/design-system; /designsystem redirects): read live from figma-export.json and the components
+   styles/       tokens.css — GENERATED, see below
+ api/            Vercel serverless endpoints; shared code in api/_lib (not routes)
+ ```
+diff --git a/docs/HANDOFF.md b/docs/HANDOFF.md
+index e8c8774..c8a1313 100644
+--- a/docs/HANDOFF.md
++++ b/docs/HANDOFF.md
+@@ -184,7 +184,7 @@ Repository: **`sandmanz26/aureliamobile`** (GitHub). One app per branch:
+   - admin Well-being outcomes;
+   - the v5 Why? fix;
+   - admin Experimentation v1 and v2;
+-  - the team documents at **`/guide`** (admin guideline, `docs/PRD-OVERVIEW.md`, API contract), behind the site password.
++  - the team documents at **`/wiki`** (was `/guide` until U083; feedback playbook, admin guideline, `docs/PRD-OVERVIEW.md`, API contract, Research, Design system), behind the site password.
+ 
+ ### Staging (`web_app`)
+ 
+@@ -196,7 +196,7 @@ Level with production (U072, 13 Nov 2026). Everything in `RELEASES` (`src/versio
+ - the analytics redesign (v1–v4; v5 unchanged);
+ - the About page in every version.
+ 
+-**Standing rule (J076):** `/guide` stays identical on both sites. New app work that should wait goes behind a `RELEASES` flag set to `BUILD.environment !== 'production'`, and is turned on only on request.
++**Standing rule (J076):** `/wiki` stays identical on both sites. New app work that should wait goes behind a `RELEASES` flag set to `BUILD.environment !== 'production'`, and is turned on only on request.
+ 
+ ### Last things delivered (most recent first)
+ 
+diff --git a/docs/PRD-OVERVIEW.md b/docs/PRD-OVERVIEW.md
+index a072c33..540bd2b 100644
+--- a/docs/PRD-OVERVIEW.md
++++ b/docs/PRD-OVERVIEW.md
+@@ -163,7 +163,7 @@ only.
+ ### 5.4 The admin site
+ 
+ Twenty-one modules in eight groups. Each is described in full in the
+-[Admin guideline](/guide/admin).
++[Admin guideline](/wiki/admin).
+ 
+ | Group | Modules | On production |
+ | --- | --- | --- |
+@@ -325,8 +325,8 @@ list in its decision log.
+ 
+ | Document | What it holds |
+ | --- | --- |
+-| [Admin guideline](/guide/admin) | Every admin module: purpose, screens, actions, rules, permissions |
+-| [API contract](/guide/api) | The backend plan: endpoints, data model, AI system, phasing |
++| [Admin guideline](/wiki/admin) | Every admin module: purpose, screens, actions, rules, permissions |
++| [API contract](/wiki/api) | The backend plan: endpoints, data model, AI system, phasing |
+ | `docs/PRD.md` | Every detailed requirement, with the reasoning |
+ | `docs/HANDOFF.md` | The whole project: people, rules, state, research |
+ | `docs/reviews/` | The logic review, simplification plan, retention simulation, v5 proposal, study protocol |
+diff --git a/scripts/guides/admin_guideline.py b/scripts/guides/admin_guideline.py
+index 19e32e5..213ba1e 100644
+--- a/scripts/guides/admin_guideline.py
++++ b/scripts/guides/admin_guideline.py
+@@ -4,7 +4,7 @@
+ 
+ writes two files from one source:
+   docs/guidelines/admin-guideline.html     standalone page (images beside it), also published as an artifact
+-  src/guides/content/admin-guideline.html  the body only, rendered in the app at /guide/admin (images in public/guides/admin/)
++  src/guides/content/admin-guideline.html  the body only, rendered in the app at /wiki/admin (images in public/guides/admin/)
+ Edit the data here, never the outputs.
+ """
+ import html, os, re, sys
+diff --git a/scripts/guides/admin_guideline_versions.py b/scripts/guides/admin_guideline_versions.py
+index 210f9bc..3978a6a 100644
+--- a/scripts/guides/admin_guideline_versions.py
++++ b/scripts/guides/admin_guideline_versions.py
+@@ -1,4 +1,4 @@
+-"""Generates the two newer versions of the admin guideline for /guide.
++"""Generates the two newer versions of the admin guideline for /wiki.
+ 
+ v1 is the original module-by-module reference (scripts/guides/admin_guideline.py).
+ These cover the same admin, told two other ways, for someone new:
+diff --git a/scripts/guides/pm_playbook.py b/scripts/guides/pm_playbook.py
+index 39211bb..335909a 100644
+--- a/scripts/guides/pm_playbook.py
++++ b/scripts/guides/pm_playbook.py
+@@ -4,7 +4,7 @@
+ 
+ One source, three outputs:
+   docs/reviews/feedback-group-playbook-2026-11-11.html   standalone page; printed to the PDF beside it
+-  src/guides/content/pm-playbook.html                    the body only, shown in the app at /guide/playbook
++  src/guides/content/pm-playbook.html                    the body only, shown in the app at /wiki/playbook
+   src/guides/content/pm-playbook.css                     its styles, scoped for the app
+ The milestones and their gates must match `milestones()` in src/admin/data/study.ts,
+ which computes them in admin → Experimentation → Version 2 → Milestones.
+diff --git a/scripts/guides/pm_playbook_versions.py b/scripts/guides/pm_playbook_versions.py
+index c3e023b..8882899 100644
+--- a/scripts/guides/pm_playbook_versions.py
++++ b/scripts/guides/pm_playbook_versions.py
+@@ -1,4 +1,4 @@
+-"""Generates the two newer versions of the feedback-group playbook for /guide.
++"""Generates the two newer versions of the feedback-group playbook for /wiki.
+ 
+ v1 is the original (scripts/guides/pm_playbook.py). These are the same goal,
+ the same milestones and the same numbers, told two other ways:
+diff --git a/scripts/guides/research_insight_timer.py b/scripts/guides/research_insight_timer.py
+index f99596d..47a6872 100644
+--- a/scripts/guides/research_insight_timer.py
++++ b/scripts/guides/research_insight_timer.py
+@@ -1,4 +1,4 @@
+-"""Generates /guide's Research document: the Insight Timer deep research,
++"""Generates /wiki's Research document: the Insight Timer deep research,
+ rewritten for reading (src/guides/content/research-insight-timer.html and
+ research.css, scoped under `.gd-doc .rs`).
+ 
+diff --git a/src/App.tsx b/src/App.tsx
+index 1aa481b..212bc99 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -1,7 +1,7 @@
+ import { lazy, Suspense } from 'react'
+ import { RELEASES } from './versions/releases'
+ import { DailyCheckInGate } from './components/daily/DailyCheckInGate'
+-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
++import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
+ import { StagingBar } from './versions/StagingBar'
+ import { AdminLayout } from './admin/AdminLayout'
+ import { AudioPlayerProvider } from './audio/AudioPlayerContext'
+@@ -68,7 +68,6 @@ const StoryPage = lazy(() => import('./pages/StoryPage').then((m) => ({ default:
+ const JourneysPage = lazy(() => import('./pages/JourneysPage').then((m) => ({ default: m.JourneysPage })))
+ const GuidePage = lazy(() => import('./guides/GuidePage').then((m) => ({ default: m.GuidePage })))
+ const GuideIndexPage = lazy(() => import('./guides/GuidePage').then((m) => ({ default: m.GuideIndexPage })))
+-const DesignSystemPage = lazy(() => import('./designsystem/DesignSystemPage').then((m) => ({ default: m.DesignSystemPage })))
+ const ExperimentationParticipantPage = lazy(() => import('./admin/pages/ExperimentationPage').then((m) => ({ default: m.ExperimentationParticipantPage })))
+ const OutcomesPage = lazy(() => import('./admin/pages/OutcomesPage').then((m) => ({ default: m.OutcomesPage })))
+ const RolesPage = lazy(() => import('./admin/pages/RolesPage').then((m) => ({ default: m.RolesPage })))
+@@ -110,11 +109,13 @@ export default function App() {
+           <Route path="/__demo/insights" element={<InsightsPage />} />
+           {/* Team documents (admin guideline, PRD overview, API contract): inside
+               the site lock, outside sign-in, on every site. */}
+-          <Route path="/guide" element={<Suspense fallback={null}><GuideIndexPage /></Suspense>} />
+-          <Route path="/guide/:doc" element={<Suspense fallback={null}><GuidePage /></Suspense>} />
+-          {/* The design system, for review before it joins the documents: inside the
+-              site lock, outside sign-in, on every site. */}
+-          <Route path="/designsystem" element={<Suspense fallback={null}><DesignSystemPage /></Suspense>} />
++          <Route path="/wiki" element={<Suspense fallback={null}><GuideIndexPage /></Suspense>} />
++          <Route path="/wiki/:doc" element={<Suspense fallback={null}><GuidePage /></Suspense>} />
++          {/* /guide was the wiki's address until U083; shared links keep working. */}
++          <Route path="/guide" element={<LegacyGuideRedirect />} />
++          <Route path="/guide/:doc" element={<LegacyGuideRedirect />} />
++          {/* The design system is a wiki tab since U083. */}
++          <Route path="/designsystem" element={<LegacyGuideRedirect to="/wiki/design-system" />} />
+ 
+           {/* Unlisted layout probes — dummy business, no Aurelia content, not
+               linked from anywhere in the app. See src/pages/dev/. */}
+@@ -538,3 +539,10 @@ export default function App() {
+     </FeatureFlagsProvider>
+   )
+ }
++
++/** Old /guide and /designsystem links land on the same place in /wiki, query and section kept. */
++function LegacyGuideRedirect({ to }: { to?: string }) {
++  const { doc } = useParams()
++  const { search, hash } = useLocation()
++  return <Navigate to={`${to ?? (doc ? `/wiki/${doc}` : '/wiki')}${search}${hash}`} replace />
++}
+diff --git a/src/admin/AdminLayout.tsx b/src/admin/AdminLayout.tsx
+index 9d64128..b4a589d 100644
+--- a/src/admin/AdminLayout.tsx
++++ b/src/admin/AdminLayout.tsx
+@@ -98,8 +98,8 @@ const NAV: { section: string; items: NavItem[] }[] = [
+       { to: '/admin/signal-sources', label: 'Signal sources', icon: Radio, flag: 'adminSignalSources' },
+       { to: '/admin/audit', label: 'Audit log', icon: ScrollText, flag: 'adminAudit' },
+       { to: '/admin/settings', label: 'Settings', icon: Settings, flag: 'adminSettings' },
+-      // Outside the admin shell: the team documents at /guide.
+-      { to: '/guide/admin', label: 'Guideline & docs', icon: BookOpen, flag: 'admin' },
++      // Outside the admin shell: the team wiki at /wiki.
++      { to: '/wiki/admin', label: 'Wiki', icon: BookOpen, flag: 'admin' },
+     ],
+   },
+ ]
+diff --git a/src/admin/pages/ExperimentationV2Page.tsx b/src/admin/pages/ExperimentationV2Page.tsx
+index 0f423c3..cb53265 100644
+--- a/src/admin/pages/ExperimentationV2Page.tsx
++++ b/src/admin/pages/ExperimentationV2Page.tsx
+@@ -86,7 +86,7 @@ export function ExperimentationV2Page() {
+           <li><b className="text-adm-ink">Where people started and where they are now</b>, per cohort, in the published severity bands of each questionnaire.</li>
+           <li><b className="text-adm-ink">This week</b> is a checklist for the study team: calls first, then missed questionnaires, then what is due, nudges and interviews.</li>
+           <li><b className="text-adm-ink">Engagement</b> shows every participant's weeks as a heat strip and whether heavier use goes with a bigger WHO-5 change. That is an association, not proof.</li>
+-          <li><b className="text-adm-ink">Milestones</b> (added for the project manager) are the six steps of the two months, each with a gate that says whether it is passed. They follow the PM playbook in <Link to="/guide/playbook" className="underline">Guideline &amp; docs</Link>.</li>
++          <li><b className="text-adm-ink">Milestones</b> (added for the project manager) are the six steps of the two months, each with a gate that says whether it is passed. They follow the PM playbook in <Link to="/wiki/playbook" className="underline">Wiki</Link>.</li>
+           <li><b className="text-adm-ink">A coaching log</b> on every participant's page records each contact; anyone not reached for two days appears in This week.</li>
+           <li>Version 1 keeps the success criteria, the protocol and data quality. Both versions read the same data and the same rules.</li>
+         </ul>
+@@ -369,7 +369,7 @@ function Milestones({ participants, week }: { participants: Participant[]; week:
+         <StatCard label="To confirm by a person" value={String(list.flatMap((m) => m.gates).filter((g) => g.status === 'manual').length)} hint="ethics, iteration, safety" />
+       </div>
+       <p className="text-12 text-adm-muted">
+-        The same six milestones as the project manager's playbook (<Link to="/guide/playbook" className="underline">Guideline &amp; docs → PM playbook</Link>). Gates are computed from the study data; “confirm” gates need a person to check them. Outcome lines are judged only at week 8.
++        The same six milestones as the project manager's playbook (<Link to="/wiki/playbook" className="underline">Wiki → Feedback group playbook</Link>). Gates are computed from the study data; “confirm” gates need a person to check them. Outcome lines are judged only at week 8.
+       </p>
+       <ol className="flex flex-col gap-12">
+         {list.map((m, i) => (
+diff --git a/src/components/daily/DailyCheckInGate.tsx b/src/components/daily/DailyCheckInGate.tsx
+index d284887..ee26e8f 100644
+--- a/src/components/daily/DailyCheckInGate.tsx
++++ b/src/components/daily/DailyCheckInGate.tsx
+@@ -8,7 +8,7 @@ import { RELEASES } from '../../versions/releases'
+ import { DailyCheckInSheet } from './DailyCheckInSheet'
+ 
+ /** Screens where the sheet would interrupt something: signing in, onboarding, the admin, the documents, the console. */
+-const HOLD = /^\/(login|signup|forgot-password|reset-password|welcome|admin|guide|designsystem|__demo)/
++const HOLD = /^\/(login|signup|forgot-password|reset-password|welcome|admin|wiki|guide|designsystem|__demo)/
+ 
+ /**
+  * Opens the daily check-in after every sign-in (U068). The demo does not keep
+diff --git a/src/designsystem/DesignSystemPage.tsx b/src/designsystem/DesignSystemPage.tsx
+index 82bccf8..98a3b30 100644
+--- a/src/designsystem/DesignSystemPage.tsx
++++ b/src/designsystem/DesignSystemPage.tsx
+@@ -1,6 +1,5 @@
+-import { ArrowLeft, Bell, Heart, Moon, Play, Search, Sparkles, Wind } from 'lucide-react'
+ import { useEffect } from 'react'
+-import { Link } from 'react-router-dom'
++import { Bell, Heart, Moon, Play, Search, Sparkles, Wind } from 'lucide-react'
+ import figmaExport from '../../design-tokens/figma-export.json?raw'
+ import networkArt from '../assets/aurelia-network.png'
+ import { ChartIncreaseIcon, NoteIcon, NotificationIcon, PlayIcon, PlaylistIcon, UserIcon } from '../components/ui/AureliaIcons'
+@@ -12,25 +11,14 @@ import { ComponentCatalogue } from './ComponentCatalogue'
+ import { gaps, parseExport, semanticUsage, type Ramp } from './tokens'
+ 
+ /**
+- * /designsystem — Aurelia's design system on one page, for review before it
+- * is combined into the documents. Everything on it is read from the source:
++ * The design system, shown as a tab of the wiki (/wiki/design-system; the
++ * old /designsystem address redirects there). Everything on it is read from the source:
+  * colours, numbers and type from design-tokens/figma-export.json (the Figma
+  * snapshot), the type classes from tokens.css, and the components are the
+  * app's own, rendered live. Nothing is restated by hand, so it cannot drift.
+  */
+ const T = parseExport(figmaExport)
+ 
+-const SECTIONS = [
+-  ['principles', 'Principles'],
+-  ['colour', 'Colour'],
+-  ['type', 'Typography'],
+-  ['numbers', 'Spacing, size and radius'],
+-  ['effects', 'Shadow and gradient'],
+-  ['brand', 'Brand'],
+-  ['icons', 'Icons'],
+-  ['components', 'Components and patterns'],
+-  ['gaps', 'Open gaps'],
+-] as const
+ 
+ function Section({ id, title, lede, children }: { id: string; title: string; lede: string; children: React.ReactNode }) {
+   return (
+@@ -74,38 +62,17 @@ function RampRow({ ramp }: { ramp: Ramp }) {
+   )
+ }
+ 
+-export function DesignSystemPage() {
+-  useEffect(() => {
+-    document.title = 'Design system · Aurelia'
+-  }, [])
+-
++/**
++ * The design system's content, rendered inside the wiki (/wiki/design-system)
++ * since U083. The wiki shell supplies the top bar, contents and search; this
++ * is only the body. It does not sit under `.gd-doc`, so the documents'
++ * typography never touches the live components.
++ */
++export function DesignSystemContent({ onReady }: { onReady?: () => void }) {
++  // Loaded lazily by the wiki, which waits for this to wire its contents list.
++  useEffect(() => onReady?.(), [onReady])
+   return (
+-    <div className="min-h-dvh bg-background-default font-sans text-text-primary">
+-      <header className="u-sticky-top sticky top-0 z-20 border-b border-border-subtle bg-surface-default/95 backdrop-blur">
+-        <div className="mx-auto flex h-56 max-w-[1120px] items-center gap-16 px-20">
+-          <AureliaLogo iconSize={24} />
+-          <span className="text-style-label border-l border-border-default pl-12 uppercase tracking-wide text-text-secondary">Design system</span>
+-          <span className="text-style-caption ml-auto hidden rounded-full bg-gold-100 px-10 py-4 text-text-primary sm:inline">Draft for review</span>
+-          <Link to="/guide" className="text-style-body-small flex items-center gap-4 text-text-secondary hover:text-text-primary">
+-            <ArrowLeft size={14} aria-hidden="true" /> Docs
+-          </Link>
+-        </div>
+-      </header>
+-
+-      <div className="mx-auto max-w-[1120px] px-20 lg:grid lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-48">
+-        <nav aria-label="Sections" className="hidden lg:block">
+-          <ol className="sticky top-[calc(var(--staging-bar,0px)+80px)] mt-40 space-y-4">
+-            {SECTIONS.map(([id, label]) => (
+-              <li key={id}>
+-                <a href={`#${id}`} className="text-style-body-small block rounded-8 px-8 py-4 text-text-secondary hover:bg-background-elevated hover:text-text-primary">
+-                  {label}
+-                </a>
+-              </li>
+-            ))}
+-          </ol>
+-        </nav>
+-
+-        <main className="min-w-0 pb-80">
++    <div className="ds-embed min-w-0 pb-40 font-sans text-text-primary">
+           <div className="relative overflow-hidden py-40">
+             <img src={networkArt} alt="" aria-hidden="true" className="pointer-events-none absolute -top-16 right-0 hidden w-[220px] opacity-90 sm:block" />
+             <p className="text-style-label uppercase tracking-wide text-text-brand">Aurelia · design system</p>
+@@ -309,8 +276,6 @@ export function DesignSystemPage() {
+               design. Every change is logged in docs/DESIGN-SYSTEM-HISTORY.md.
+             </p>
+           </Section>
+-        </main>
+-      </div>
+     </div>
+   )
+ }
+diff --git a/src/designsystem/catalogue.test.ts b/src/designsystem/catalogue.test.ts
+index a836784..362ca5f 100644
+--- a/src/designsystem/catalogue.test.ts
++++ b/src/designsystem/catalogue.test.ts
+@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
+ import { CATALOGUE, PATTERNS } from './catalogue'
+ import { extractProps } from './props'
+ 
+-// The same glob the page uses, so the test sees exactly what /designsystem sees.
++// The same glob the page uses, so the test sees exactly what the design system tab sees.
+ const SOURCES = import.meta.glob(['../components/**/*.tsx', '!../components/**/*.test.tsx'], {
+   query: '?raw',
+   import: 'default',
+diff --git a/src/designsystem/catalogue.ts b/src/designsystem/catalogue.ts
+index 6b58f36..1e2406c 100644
+--- a/src/designsystem/catalogue.ts
++++ b/src/designsystem/catalogue.ts
+@@ -1,5 +1,5 @@
+ // Every component in src/components, grouped into the patterns they belong to,
+-// for /designsystem. `catalogue.test.ts` fails when a component file is added
++// for the wiki's Design system tab (/wiki/design-system). `catalogue.test.ts` fails when a component file is added
+ // without an entry here, so the catalogue cannot quietly fall behind the code.
+ // Props are not written here: the page reads them from each file's source.
+ 
+diff --git a/src/designsystem/props.ts b/src/designsystem/props.ts
+index 187d511..d33cde3 100644
+--- a/src/designsystem/props.ts
++++ b/src/designsystem/props.ts
+@@ -1,4 +1,4 @@
+-// Reads a component's props from its own source, so /designsystem shows the
++// Reads a component's props from its own source, so the design system shows the
+ // real API rather than a copy that would drift. A small, forgiving parser for
+ // the shapes this codebase uses: `export function Name({ a, b = 1 }: Props)`
+ // with `interface Props { … }`, or an inline `}: { … }) {` type.
+diff --git a/src/designsystem/toc.ts b/src/designsystem/toc.ts
+new file mode 100644
+index 0000000..544773c
+--- /dev/null
++++ b/src/designsystem/toc.ts
+@@ -0,0 +1,14 @@
++import type { TocEntry } from '../guides/prepareDoc'
++
++/** The design system's sections, in page order, for the wiki's contents list. */
++export const DS_TOC: TocEntry[] = [
++  ['principles', 'Principles'],
++  ['colour', 'Colour'],
++  ['type', 'Typography'],
++  ['numbers', 'Spacing, size and radius'],
++  ['effects', 'Shadow and gradient'],
++  ['brand', 'Brand'],
++  ['icons', 'Icons'],
++  ['components', 'Components and patterns'],
++  ['gaps', 'Open gaps'],
++].map(([id, text]) => ({ id, text, level: 2 as const, search: text.toLowerCase() }))
+diff --git a/src/designsystem/tokens.ts b/src/designsystem/tokens.ts
+index c6b4974..ecc11e4 100644
+--- a/src/designsystem/tokens.ts
++++ b/src/designsystem/tokens.ts
+@@ -1,4 +1,4 @@
+-// Pure data for /designsystem: reads the Figma variables snapshot
++// Pure data for the wiki's Design system tab: reads the Figma variables snapshot
+ // (design-tokens/figma-export.json) into what the page lists. Kept out of the
+ // component so it can be tested, and so the counts on the page are computed
+ // from the file rather than typed in.
+diff --git a/src/guides/GuidePage.tsx b/src/guides/GuidePage.tsx
+index e6236e6..6735b41 100644
+--- a/src/guides/GuidePage.tsx
++++ b/src/guides/GuidePage.tsx
+@@ -1,6 +1,6 @@
+-import { ArrowLeft, BookOpen, FileText, Map as MapIcon, Search, Server, Telescope, X } from 'lucide-react'
++import { ArrowLeft, BookOpen, FileText, Map as MapIcon, Palette, Search, Server, Telescope, X } from 'lucide-react'
+ import { marked } from 'marked'
+-import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
++import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
+ import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+ import markSvg from '../assets/logo-homepage.svg'
+ import networkArt from '../assets/aurelia-network.png'
+@@ -15,6 +15,7 @@ import pmPlaybookV3 from './content/pm-playbook-v3.html?raw'
+ import researchInsightTimer from './content/research-insight-timer.html?raw'
+ import prdOverview from '../../docs/PRD-OVERVIEW.md?raw'
+ import apiContract from '../../docs/api/API-CONTRACT.md?raw'
++import { DS_TOC } from '../designsystem/toc'
+ import { filterToc, prepareDoc } from './prepareDoc'
+ import './guides.css'
+ import './content/pm-playbook.css'
+@@ -22,12 +23,18 @@ import './content/pm-playbook-versions.css'
+ import './content/admin-guideline-versions.css'
+ import './content/research.css'
+ 
++// The design system renders live components, so it loads only when opened.
++const DesignSystemContent = lazy(() =>
++  import('../designsystem/DesignSystemPage').then((m) => ({ default: m.DesignSystemContent })),
++)
++
+ /**
+- * /guide — the team's documents, readable on any site (production included)
+- * behind the same site password as the app. One shell, five documents:
+- * the admin guideline (generated by scripts/guides/admin_guideline.py) and
+- * two Markdown files rendered as they stand in docs/, so the page can never
+- * drift from the file it shows.
++ * /wiki (was /guide until U083; old links redirect) — the team's documents,
++ * readable on any site (production included) behind the same site password as
++ * the app. One shell, six documents: generated HTML guides, Markdown files
++ * rendered as they stand in docs/, and the design system, which is a React
++ * view read live from the Figma export and the components, so no page can
++ * drift from its source.
+  */
+ const DOCS = [
+   {
+@@ -80,6 +87,16 @@ const DOCS = [
+     source: 'scripts/guides/research_insight_timer.py',
+     html: () => researchInsightTimer,
+   },
++  {
++    id: 'design-system',
++    title: 'Design system',
++    blurb: 'The pieces every Aurelia screen is made of, read live from the Figma variables and the app\'s own components.',
++    audience: 'Designers and engineers, and anyone checking a screen against the design',
++    inside: ['Colour, type, spacing, radius and effects, from Figma', 'Brand artwork and icons', 'Every component in src/components, in 10 patterns, with props and states', 'The colours that still have no variable'],
++    icon: Palette,
++    source: 'design-tokens/figma-export.json + src/components',
++    html: () => '',
++  },
+ ] as const
+ 
+ type DocId = (typeof DOCS)[number]['id']
+@@ -116,7 +133,7 @@ function DocVersions({ id, current }: { id: DocId; current: number }) {
+     <nav className="gd-versions" aria-label="Document versions">
+       <span className="gd-versions-label">Version</span>
+       {versions.map((x) => (
+-        <Link key={x.v} to={`/guide/${id}?v=${x.v}`} aria-current={x.v === current ? 'page' : undefined}>
++        <Link key={x.v} to={`/wiki/${id}?v=${x.v}`} aria-current={x.v === current ? 'page' : undefined}>
+           <b>
+             v{x.v} · {x.label}
+           </b>
+@@ -131,7 +148,7 @@ function DocTabs({ current }: { current?: DocId }) {
+   return (
+     <nav className="gd-tabs" aria-label="Documents">
+       {DOCS.map((d) => (
+-        <Link key={d.id} to={`/guide/${d.id}`} aria-current={d.id === current ? 'page' : undefined}>
++        <Link key={d.id} to={`/wiki/${d.id}`} aria-current={d.id === current ? 'page' : undefined}>
+           {d.title}
+         </Link>
+       ))}
+@@ -142,9 +159,9 @@ function DocTabs({ current }: { current?: DocId }) {
+ function TopBar({ current }: { current?: DocId }) {
+   return (
+     <header className="gd-top">
+-      <Link to="/guide" className="gd-brand" aria-label="Aurelia documents">
++      <Link to="/wiki" className="gd-brand" aria-label="Aurelia wiki">
+         <AureliaLogo iconSize={26} />
+-        <span className="gd-brand-label">Docs</span>
++        <span className="gd-brand-label">Wiki</span>
+       </Link>
+       <DocTabs current={current} />
+       <Link to="/admin" className="gd-back">
+@@ -163,15 +180,15 @@ export function GuideIndexPage() {
+           <div className="gd-glow" aria-hidden="true" />
+           <img src={networkArt} alt="" aria-hidden="true" className="gd-net" />
+           <img src={markSvg} alt="" aria-hidden="true" width={52} height={52} className="gd-hero-mark" />
+-          <p className="gd-eyebrow">Aurelia · documents</p>
++          <p className="gd-eyebrow">Aurelia · wiki</p>
+           <h1>
+-            Everything about Aurelia, <span className="gd-grad">in five documents</span>
++            Everything about Aurelia, <span className="gd-grad">in six documents</span>
+           </h1>
+           <p className="gd-lede">
+             Aurelia builds personal wellness sessions from one sentence: someone says how they feel, and Aurelia makes a
+             session for it. These documents explain the product, the admin the team runs it from, the backend still to
+-            be built, the eight-week study that will show whether Aurelia really helps people, and what we learn
+-            from other products.
++            be built, the eight-week study that will show whether Aurelia really helps people, what we learn
++            from other products, and the design system every screen is built from.
+           </p>
+           <p className="gd-note">
+             The app runs on realistic sample data until the backend exists, so no figure in it is a real result yet.
+@@ -179,7 +196,7 @@ export function GuideIndexPage() {
+         </section>
+         <div className="gd-cards">
+           {DOCS.map((d) => (
+-            <Link key={d.id} to={`/guide/${d.id}`} className="gd-card">
++            <Link key={d.id} to={`/wiki/${d.id}`} className="gd-card">
+               <span className="gd-card-icon" aria-hidden="true">
+                 <d.icon size={18} />
+               </span>
+@@ -209,7 +226,7 @@ export function GuidePage() {
+   const { doc: docParam } = useParams()
+   const [params] = useSearchParams()
+   const meta = DOCS.find((d) => d.id === docParam)
+-  if (!meta) return <Navigate to="/guide" replace />
++  if (!meta) return <Navigate to="/wiki" replace />
+   const versions = DOC_VERSIONS[meta.id]
+   const version = versions?.find((x) => String(x.v) === params.get('v')) ?? versions?.[0]
+   return <GuideDoc key={`${meta.id}-${version?.v ?? 0}`} meta={meta} version={version} />
+@@ -217,7 +234,12 @@ export function GuidePage() {
+ 
+ function GuideDoc({ meta, version }: { meta: (typeof DOCS)[number]; version?: DocVersion }) {
+   const navigate = useNavigate()
+-  const prepared = useMemo(() => prepareDoc((version ?? meta).html()), [meta, version])
++  const isDs = meta.id === 'design-system'
++  const prepared = useMemo(() => (isDs ? { html: '', toc: DS_TOC } : prepareDoc((version ?? meta).html())), [isDs, meta, version])
++  // The design system mounts after its chunk loads; the scroll and contents
++  // effects below wait for it.
++  const [dsReady, setDsReady] = useState(false)
++  const onDsReady = useCallback(() => setDsReady(true), [])
+   const [query, setQuery] = useState('')
+   // Below lg the contents list folds away above the document.
+   const [tocOpen, setTocOpen] = useState(false)
+@@ -236,7 +258,7 @@ function GuideDoc({ meta, version }: { meta: (typeof DOCS)[number]; version?: Do
+     const id = decodeURIComponent(window.location.hash.slice(1))
+     if (id) document.getElementById(id)?.scrollIntoView()
+     else window.scrollTo(0, 0)
+-  }, [prepared])
++  }, [prepared, dsReady])
+ 
+   // The admin guideline's module cards hide when a search does not match
+   // them; the Markdown documents keep their text and filter the contents only.
+@@ -264,7 +286,7 @@ function GuideDoc({ meta, version }: { meta: (typeof DOCS)[number]; version?: Do
+       if (el) io.observe(el)
+     })
+     return () => io.disconnect()
+-  }, [prepared])
++  }, [prepared, dsReady])
+ 
+   useEffect(() => {
+     const d = viewer.current
+@@ -346,13 +368,22 @@ function GuideDoc({ meta, version }: { meta: (typeof DOCS)[number]; version?: Do
+         </aside>
+         <main className="gd-main">
+           {version && <DocVersions id={meta.id} current={version.v} />}
+-          <div
+-            ref={content}
+-            className={`gd-doc ${meta.id === 'admin' || meta.id === 'playbook' || meta.id === 'research' ? 'is-guideline' : 'is-markdown'}`}
+-            onClick={onContentClick}
+-            // Our own documents from the repository, not user input.
+-            dangerouslySetInnerHTML={{ __html: prepared.html }}
+-          />
++          {isDs ? (
++            // Not under .gd-doc: the documents' typography must not restyle live components.
++            <div ref={content}>
++              <Suspense fallback={<p className="gd-empty">Loading the design system…</p>}>
++                <DesignSystemContent onReady={onDsReady} />
++              </Suspense>
++            </div>
++          ) : (
++            <div
++              ref={content}
++              className={`gd-doc ${meta.id === 'admin' || meta.id === 'playbook' || meta.id === 'research' ? 'is-guideline' : 'is-markdown'}`}
++              onClick={onContentClick}
++              // Our own documents from the repository, not user input.
++              dangerouslySetInnerHTML={{ __html: prepared.html }}
++            />
++          )}
+         </main>
+       </div>
+       <dialog ref={viewer} className="gd-viewer" onClose={() => setShot(null)} aria-label={shot?.caption ?? 'Screenshot'}>
+diff --git a/src/guides/prepareDoc.test.ts b/src/guides/prepareDoc.test.ts
+index 9894d13..9098bdb 100644
+--- a/src/guides/prepareDoc.test.ts
++++ b/src/guides/prepareDoc.test.ts
+@@ -28,9 +28,9 @@ describe('prepareDoc', () => {
+   })
+ 
+   it('keeps web and guide links, turns repository paths into text', () => {
+-    const { html } = prepareDoc('<p><a href="https://x.test">w</a> <a href="/guide/api">g</a> <a href="/admin/x">a</a> <a href="../HANDOFF.md">h</a></p>')
++    const { html } = prepareDoc('<p><a href="https://x.test">w</a> <a href="/wiki/api">g</a> <a href="/admin/x">a</a> <a href="../HANDOFF.md">h</a></p>')
+     expect(html).toContain('target="_blank"')
+-    expect(html).toContain('href="/guide/api"')
++    expect(html).toContain('href="/wiki/api"')
+     expect(html).toContain('href="/admin/x"')
+     expect(html).toContain('<span class="repo-ref">h</span>')
+   })
+diff --git a/src/guides/prepareDoc.ts b/src/guides/prepareDoc.ts
+index 93b81aa..1c9f16c 100644
+--- a/src/guides/prepareDoc.ts
++++ b/src/guides/prepareDoc.ts
+@@ -84,7 +84,7 @@ export function prepareDoc(html: string): PreparedDoc {
+ 
+   root.querySelectorAll('a[href]').forEach((a) => {
+     const href = a.getAttribute('href') ?? ''
+-    // In-app paths (/guide, /admin …) are routed by GuidePage.
++    // In-app paths (/wiki, /admin …) are routed by GuidePage.
+     if (href.startsWith('#') || href.startsWith('/')) return
+     if (/^https?:\/\//.test(href)) {
+       a.setAttribute('target', '_blank')
+diff --git a/src/versions/releases.ts b/src/versions/releases.ts
+index a535244..97c2a0d 100644
+--- a/src/versions/releases.ts
++++ b/src/versions/releases.ts
+@@ -3,7 +3,7 @@ import { BUILD } from '../lib/build'
+ /**
+  * Changes that are on staging but not yet on production (U066).
+  *
+- * The owner keeps the documents at /guide identical on both sites, which means
++ * The owner keeps the documents at /wiki identical on both sites, which means
+  * `web_prod` is fast-forwarded whenever they change, and those pushes carry
+  * every app change on staging with them. So new app work lands switched on for
+  * staging and off for production. Shipping one to production is a request
+diff --git a/vite.config.ts b/vite.config.ts
+index e02b9a2..d317766 100644
+--- a/vite.config.ts
++++ b/vite.config.ts
+@@ -94,7 +94,7 @@ export default defineConfig({
+       includeAssets: ['favicon.svg', 'favicon-32.png', 'apple-touch-icon.png', 'site.webmanifest', 'fonts/*.woff2'],
+       workbox: {
+         globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2,webmanifest}'],
+-        // three.js behind the off-by-default 3D network, and the /guide team
++        // three.js behind the off-by-default 3D network, and the /wiki team
+         // documents (180 kB): fetched when first opened, not installed for everyone.
+         globIgnores: ['**/networkScene-*.js', '**/GuidePage-*'],
+         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+-- 
+2.43.0
+

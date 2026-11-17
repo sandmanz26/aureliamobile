@@ -119,9 +119,24 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U079 | `ccb84a3` | 2026-11-16 | Admin guideline in /guide gets versions: v1 Original, v2 Task guide, v3 Quick start (one page). Staging and production. | [patch](patches/U079-ccb84a3.patch) |
 | U080 | `0453426` | 2026-11-16 | New page `/designsystem` (the design system read live from the Figma export and the app's components). Research gains Insight Timer screenshots and a competition section. Staging and production. | [patch](patches/U080-0453426.patch) |
 | U081 | `d891491` | 2026-11-16 | /designsystem lists every component (71) in 10 patterns, with guidance, states, live demos (28) and props read from the source. Staging and production. | [patch](patches/U081-d891491.patch) |
+| U083 | `de65993` | 2026-11-17 | Docs become the Wiki: /guide → /wiki (old links redirect), "Wiki" everywhere, and the design system joins it as a sixth tab (/designsystem redirects). Staging and production. | [patch](patches/U083-de65993.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U083 — Wiki: /guide → /wiki, design system as a tab
+
+- **Commit:** `de65993` · pushed 2026-11-17 UTC · `web_app` + `admin_cms` + `web_prod` (J076: documents identical on both sites).
+- **Patch:** [patches/U083-de65993.patch](patches/U083-de65993.patch)
+- **Request:** "1. gabungkan ke playbook. 2. ganti docs dengan wiki". Clarified: (1) the /designsystem content goes into the guidebook; (2) label and address both change, old links redirect.
+- **Interpretation:** "playbook" was read as the guidebook as a whole (the wiki), not the feedback-group playbook document, so the design system is its own tab beside the five documents.
+- **Changed:**
+  - `src/App.tsx`: routes `/wiki` and `/wiki/:doc`; `/guide`, `/guide/:doc` and `/designsystem` redirect, keeping `?v=` and `#section`.
+  - `src/guides/GuidePage.tsx`: label "Docs" → "Wiki", index copy (six documents), a `design-system` tab that lazy-loads the design system outside `.gd-doc` (so the documents' typography does not restyle live components), contents from `src/designsystem/toc.ts`, section tracking waits for the lazy chunk.
+  - `src/designsystem/DesignSystemPage.tsx`: the standalone page shell is gone; it exports `DesignSystemContent`.
+  - Admin sidebar "Guideline & docs" → "Wiki" (`/wiki/admin`); experimentation links → `/wiki/playbook`; `DailyCheckInGate` holds on `/wiki`; PRD-OVERVIEW links; comments in generators, `vite.config.ts`, `releases.ts`; CLAUDE.md and HANDOFF.
+- **Verified:** `npm run check` passes (132 tests). Production build at 1280px and 402px: `/guide/playbook?v=2#x` → `/wiki/playbook?v=2#x`, `/designsystem` → `/wiki/design-system`, six tabs, design system shows 9 contents entries and 9 sections, contents click scrolls and highlights, no horizontal overflow, no page errors.
+- **Revert:** `git revert --no-commit de65993 && git checkout HEAD -- docs/`.
 
 ### U082 — /guide typography
 
