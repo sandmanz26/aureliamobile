@@ -1,4 +1,4 @@
-// Pure data for /designsystem: reads the Figma variables snapshot
+// Pure data for the wiki's Design system tab: reads the Figma variables snapshot
 // (design-tokens/figma-export.json) into what the page lists. Kept out of the
 // component so it can be tested, and so the counts on the page are computed
 // from the file rather than typed in.

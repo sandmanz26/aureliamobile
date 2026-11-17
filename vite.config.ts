@@ -94,7 +94,7 @@ export default defineConfig({
       includeAssets: ['favicon.svg', 'favicon-32.png', 'apple-touch-icon.png', 'site.webmanifest', 'fonts/*.woff2'],
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2,webmanifest}'],
-        // three.js behind the off-by-default 3D network, and the /guide team
+        // three.js behind the off-by-default 3D network, and the /wiki team
         // documents (180 kB): fetched when first opened, not installed for everyone.
         globIgnores: ['**/networkScene-*.js', '**/GuidePage-*'],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,

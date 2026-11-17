@@ -27,7 +27,7 @@ branch carries its own `.storybook/` setup this one doesn't, but soon
 enough that the catalogue does not quietly fall behind what it exists to
 keep consistent. See that branch's `docs/STORYBOOK.md`.
 
-**Since J076 (2026-11-12) `/guide` must be identical on staging and production**, so `web_prod` is fast-forwarded whenever the documents change. That carries the app code with it, so **new app work lands behind `RELEASES` in `src/versions/releases.ts`**: on for staging, off for production. Shipping app work is setting its flag to `true`, still only on request.
+**Since J076 (2026-11-12) `/wiki` (was `/guide` until U083) must be identical on staging and production**, so `web_prod` is fast-forwarded whenever the documents change. That carries the app code with it, so **new app work lands behind `RELEASES` in `src/versions/releases.ts`**: on for staging, off for production. Shipping app work is setting its flag to `true`, still only on request.
 
 **`web_prod` is different in kind: it is allowed to be behind.** `web_app` is
 the staging branch and every commit lands there first; `web_prod` moves only
@@ -103,8 +103,8 @@ src/
   test/         Vitest setup
   auth/         AuthContext + useSignInGate
   demo/         the /__demo feature-flag console
-  guides/       /guide: the team documents (feedback playbook, admin guideline, PRD overview, API contract, Research)
-  designsystem/ /designsystem: the design system read live from figma-export.json and the ui components (draft for review)
+  guides/       /wiki (old /guide links redirect): the team wiki (feedback playbook, admin guideline, PRD overview, API contract, Research, Design system)
+  designsystem/ the wiki's Design system tab (/wiki/design-system; /designsystem redirects): read live from figma-export.json and the components
   styles/       tokens.css — GENERATED, see below
 api/            Vercel serverless endpoints; shared code in api/_lib (not routes)
 ```

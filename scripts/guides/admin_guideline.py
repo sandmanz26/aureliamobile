@@ -4,7 +4,7 @@
 
 writes two files from one source:
   docs/guidelines/admin-guideline.html     standalone page (images beside it), also published as an artifact
-  src/guides/content/admin-guideline.html  the body only, rendered in the app at /guide/admin (images in public/guides/admin/)
+  src/guides/content/admin-guideline.html  the body only, rendered in the app at /wiki/admin (images in public/guides/admin/)
 Edit the data here, never the outputs.
 """
 import html, os, re, sys

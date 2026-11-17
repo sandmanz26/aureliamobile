@@ -3,7 +3,7 @@ import { BUILD } from '../lib/build'
 /**
  * Changes that are on staging but not yet on production (U066).
  *
- * The owner keeps the documents at /guide identical on both sites, which means
+ * The owner keeps the documents at /wiki identical on both sites, which means
  * `web_prod` is fast-forwarded whenever they change, and those pushes carry
  * every app change on staging with them. So new app work lands switched on for
  * staging and off for production. Shipping one to production is a request

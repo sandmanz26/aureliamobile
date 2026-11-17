@@ -1,5 +1,5 @@
 // Every component in src/components, grouped into the patterns they belong to,
-// for /designsystem. `catalogue.test.ts` fails when a component file is added
+// for the wiki's Design system tab (/wiki/design-system). `catalogue.test.ts` fails when a component file is added
 // without an entry here, so the catalogue cannot quietly fall behind the code.
 // Props are not written here: the page reads them from each file's source.
 

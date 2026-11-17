@@ -1,4 +1,4 @@
-"""Generates the two newer versions of the feedback-group playbook for /guide.
+"""Generates the two newer versions of the feedback-group playbook for /wiki.
 
 v1 is the original (scripts/guides/pm_playbook.py). These are the same goal,
 the same milestones and the same numbers, told two other ways:

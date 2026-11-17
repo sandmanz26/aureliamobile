@@ -1,4 +1,4 @@
-"""Generates the two newer versions of the admin guideline for /guide.
+"""Generates the two newer versions of the admin guideline for /wiki.
 
 v1 is the original module-by-module reference (scripts/guides/admin_guideline.py).
 These cover the same admin, told two other ways, for someone new:

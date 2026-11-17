@@ -163,7 +163,7 @@ only.
 ### 5.4 The admin site
 
 Twenty-one modules in eight groups. Each is described in full in the
-[Admin guideline](/guide/admin).
+[Admin guideline](/wiki/admin).
 
 | Group | Modules | On production |
 | --- | --- | --- |
@@ -325,8 +325,8 @@ list in its decision log.
 
 | Document | What it holds |
 | --- | --- |
-| [Admin guideline](/guide/admin) | Every admin module: purpose, screens, actions, rules, permissions |
-| [API contract](/guide/api) | The backend plan: endpoints, data model, AI system, phasing |
+| [Admin guideline](/wiki/admin) | Every admin module: purpose, screens, actions, rules, permissions |
+| [API contract](/wiki/api) | The backend plan: endpoints, data model, AI system, phasing |
 | `docs/PRD.md` | Every detailed requirement, with the reasoning |
 | `docs/HANDOFF.md` | The whole project: people, rules, state, research |
 | `docs/reviews/` | The logic review, simplification plan, retention simulation, v5 proposal, study protocol |

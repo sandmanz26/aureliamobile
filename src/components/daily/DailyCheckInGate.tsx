@@ -8,7 +8,7 @@ import { RELEASES } from '../../versions/releases'
 import { DailyCheckInSheet } from './DailyCheckInSheet'
 
 /** Screens where the sheet would interrupt something: signing in, onboarding, the admin, the documents, the console. */
-const HOLD = /^\/(login|signup|forgot-password|reset-password|welcome|admin|guide|designsystem|__demo)/
+const HOLD = /^\/(login|signup|forgot-password|reset-password|welcome|admin|wiki|guide|designsystem|__demo)/
 
 /**
  * Opens the daily check-in after every sign-in (U068). The demo does not keep

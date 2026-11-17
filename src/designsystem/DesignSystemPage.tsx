@@ -1,6 +1,5 @@
-import { ArrowLeft, Bell, Heart, Moon, Play, Search, Sparkles, Wind } from 'lucide-react'
 import { useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Bell, Heart, Moon, Play, Search, Sparkles, Wind } from 'lucide-react'
 import figmaExport from '../../design-tokens/figma-export.json?raw'
 import networkArt from '../assets/aurelia-network.png'
 import { ChartIncreaseIcon, NoteIcon, NotificationIcon, PlayIcon, PlaylistIcon, UserIcon } from '../components/ui/AureliaIcons'
@@ -12,25 +11,14 @@ import { ComponentCatalogue } from './ComponentCatalogue'
 import { gaps, parseExport, semanticUsage, type Ramp } from './tokens'
 
 /**
- * /designsystem — Aurelia's design system on one page, for review before it
- * is combined into the documents. Everything on it is read from the source:
+ * The design system, shown as a tab of the wiki (/wiki/design-system; the
+ * old /designsystem address redirects there). Everything on it is read from the source:
  * colours, numbers and type from design-tokens/figma-export.json (the Figma
  * snapshot), the type classes from tokens.css, and the components are the
  * app's own, rendered live. Nothing is restated by hand, so it cannot drift.
  */
 const T = parseExport(figmaExport)
 
-const SECTIONS = [
-  ['principles', 'Principles'],
-  ['colour', 'Colour'],
-  ['type', 'Typography'],
-  ['numbers', 'Spacing, size and radius'],
-  ['effects', 'Shadow and gradient'],
-  ['brand', 'Brand'],
-  ['icons', 'Icons'],
-  ['components', 'Components and patterns'],
-  ['gaps', 'Open gaps'],
-] as const
 
 function Section({ id, title, lede, children }: { id: string; title: string; lede: string; children: React.ReactNode }) {
   return (
@@ -74,38 +62,17 @@ function RampRow({ ramp }: { ramp: Ramp }) {
   )
 }
 
-export function DesignSystemPage() {
-  useEffect(() => {
-    document.title = 'Design system · Aurelia'
-  }, [])
-
+/**
+ * The design system's content, rendered inside the wiki (/wiki/design-system)
+ * since U083. The wiki shell supplies the top bar, contents and search; this
+ * is only the body. It does not sit under `.gd-doc`, so the documents'
+ * typography never touches the live components.
+ */
+export function DesignSystemContent({ onReady }: { onReady?: () => void }) {
+  // Loaded lazily by the wiki, which waits for this to wire its contents list.
+  useEffect(() => onReady?.(), [onReady])
   return (
-    <div className="min-h-dvh bg-background-default font-sans text-text-primary">
-      <header className="u-sticky-top sticky top-0 z-20 border-b border-border-subtle bg-surface-default/95 backdrop-blur">
-        <div className="mx-auto flex h-56 max-w-[1120px] items-center gap-16 px-20">
-          <AureliaLogo iconSize={24} />
-          <span className="text-style-label border-l border-border-default pl-12 uppercase tracking-wide text-text-secondary">Design system</span>
-          <span className="text-style-caption ml-auto hidden rounded-full bg-gold-100 px-10 py-4 text-text-primary sm:inline">Draft for review</span>
-          <Link to="/guide" className="text-style-body-small flex items-center gap-4 text-text-secondary hover:text-text-primary">
-            <ArrowLeft size={14} aria-hidden="true" /> Docs
-          </Link>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-[1120px] px-20 lg:grid lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-48">
-        <nav aria-label="Sections" className="hidden lg:block">
-          <ol className="sticky top-[calc(var(--staging-bar,0px)+80px)] mt-40 space-y-4">
-            {SECTIONS.map(([id, label]) => (
-              <li key={id}>
-                <a href={`#${id}`} className="text-style-body-small block rounded-8 px-8 py-4 text-text-secondary hover:bg-background-elevated hover:text-text-primary">
-                  {label}
-                </a>
-              </li>
-            ))}
-          </ol>
-        </nav>
-
-        <main className="min-w-0 pb-80">
+    <div className="ds-embed min-w-0 pb-40 font-sans text-text-primary">
           <div className="relative overflow-hidden py-40">
             <img src={networkArt} alt="" aria-hidden="true" className="pointer-events-none absolute -top-16 right-0 hidden w-[220px] opacity-90 sm:block" />
             <p className="text-style-label uppercase tracking-wide text-text-brand">Aurelia · design system</p>
@@ -309,8 +276,6 @@ export function DesignSystemPage() {
               design. Every change is logged in docs/DESIGN-SYSTEM-HISTORY.md.
             </p>
           </Section>
-        </main>
-      </div>
     </div>
   )
 }

@@ -184,7 +184,7 @@ Repository: **`sandmanz26/aureliamobile`** (GitHub). One app per branch:
   - admin Well-being outcomes;
   - the v5 Why? fix;
   - admin Experimentation v1 and v2;
-  - the team documents at **`/guide`** (admin guideline, `docs/PRD-OVERVIEW.md`, API contract), behind the site password.
+  - the team documents at **`/wiki`** (was `/guide` until U083; feedback playbook, admin guideline, `docs/PRD-OVERVIEW.md`, API contract, Research, Design system), behind the site password.
 
 ### Staging (`web_app`)
 
@@ -196,7 +196,7 @@ Level with production (U072, 13 Nov 2026). Everything in `RELEASES` (`src/versio
 - the analytics redesign (v1–v4; v5 unchanged);
 - the About page in every version.
 
-**Standing rule (J076):** `/guide` stays identical on both sites. New app work that should wait goes behind a `RELEASES` flag set to `BUILD.environment !== 'production'`, and is turned on only on request.
+**Standing rule (J076):** `/wiki` stays identical on both sites. New app work that should wait goes behind a `RELEASES` flag set to `BUILD.environment !== 'production'`, and is turned on only on request.
 
 ### Last things delivered (most recent first)
 

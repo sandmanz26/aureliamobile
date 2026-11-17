@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { CATALOGUE, PATTERNS } from './catalogue'
 import { extractProps } from './props'
 
-// The same glob the page uses, so the test sees exactly what /designsystem sees.
+// The same glob the page uses, so the test sees exactly what the design system tab sees.
 const SOURCES = import.meta.glob(['../components/**/*.tsx', '!../components/**/*.test.tsx'], {
   query: '?raw',
   import: 'default',

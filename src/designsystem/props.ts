@@ -1,4 +1,4 @@
-// Reads a component's props from its own source, so /designsystem shows the
+// Reads a component's props from its own source, so the design system shows the
 // real API rather than a copy that would drift. A small, forgiving parser for
 // the shapes this codebase uses: `export function Name({ a, b = 1 }: Props)`
 // with `interface Props { … }`, or an inline `}: { … }) {` type.

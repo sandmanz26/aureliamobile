@@ -86,7 +86,7 @@ export function ExperimentationV2Page() {
           <li><b className="text-adm-ink">Where people started and where they are now</b>, per cohort, in the published severity bands of each questionnaire.</li>
           <li><b className="text-adm-ink">This week</b> is a checklist for the study team: calls first, then missed questionnaires, then what is due, nudges and interviews.</li>
           <li><b className="text-adm-ink">Engagement</b> shows every participant's weeks as a heat strip and whether heavier use goes with a bigger WHO-5 change. That is an association, not proof.</li>
-          <li><b className="text-adm-ink">Milestones</b> (added for the project manager) are the six steps of the two months, each with a gate that says whether it is passed. They follow the PM playbook in <Link to="/guide/playbook" className="underline">Guideline &amp; docs</Link>.</li>
+          <li><b className="text-adm-ink">Milestones</b> (added for the project manager) are the six steps of the two months, each with a gate that says whether it is passed. They follow the PM playbook in <Link to="/wiki/playbook" className="underline">Wiki</Link>.</li>
           <li><b className="text-adm-ink">A coaching log</b> on every participant's page records each contact; anyone not reached for two days appears in This week.</li>
           <li>Version 1 keeps the success criteria, the protocol and data quality. Both versions read the same data and the same rules.</li>
         </ul>
@@ -369,7 +369,7 @@ function Milestones({ participants, week }: { participants: Participant[]; week:
         <StatCard label="To confirm by a person" value={String(list.flatMap((m) => m.gates).filter((g) => g.status === 'manual').length)} hint="ethics, iteration, safety" />
       </div>
       <p className="text-12 text-adm-muted">
-        The same six milestones as the project manager's playbook (<Link to="/guide/playbook" className="underline">Guideline &amp; docs → PM playbook</Link>). Gates are computed from the study data; “confirm” gates need a person to check them. Outcome lines are judged only at week 8.
+        The same six milestones as the project manager's playbook (<Link to="/wiki/playbook" className="underline">Wiki → Feedback group playbook</Link>). Gates are computed from the study data; “confirm” gates need a person to check them. Outcome lines are judged only at week 8.
       </p>
       <ol className="flex flex-col gap-12">
         {list.map((m, i) => (

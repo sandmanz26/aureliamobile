@@ -1,4 +1,4 @@
-"""Generates /guide's Research document: the Insight Timer deep research,
+"""Generates /wiki's Research document: the Insight Timer deep research,
 rewritten for reading (src/guides/content/research-insight-timer.html and
 research.css, scoped under `.gd-doc .rs`).
 

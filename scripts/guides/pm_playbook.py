@@ -4,7 +4,7 @@
 
 One source, three outputs:
   docs/reviews/feedback-group-playbook-2026-11-11.html   standalone page; printed to the PDF beside it
-  src/guides/content/pm-playbook.html                    the body only, shown in the app at /guide/playbook
+  src/guides/content/pm-playbook.html                    the body only, shown in the app at /wiki/playbook
   src/guides/content/pm-playbook.css                     its styles, scoped for the app
 The milestones and their gates must match `milestones()` in src/admin/data/study.ts,
 which computes them in admin → Experimentation → Version 2 → Milestones.
