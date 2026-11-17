@@ -468,8 +468,8 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U084**, last J = **J109**, last
-O = **O31**. Before numbering, check the files for anything newer.
+**Numbering as of 17 Nov 2026:** last U = **U084**, last J = **J110**, last
+O = **O32**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
 push. `src/guides/records.test.ts` enforces it.
@@ -710,6 +710,7 @@ The authoritative list is the **Open items** table at the top of
 
 | # | Decision / gap | Notes |
 | --- | --- | --- |
+| **O32** | Aurelia Pro (corporate wellness, B2B2C) | Eugene asks for a feature-proposition exploration (J110). Proposed format: the retention-simulation method with employee and HR personas. |
 | **O31** | The 2025 backend code | The three sources hold prompts and shapes, no code (B.12). Ask Eugene for the 2025 repository and access; then decide what to port. |
 | **O29** | Shared entity model first | `src/domain/`, seeded from the 2025 taxonomy (B.12 #2), before admin rebuilds. |
 | **O28** | Admin redefinition | Structure proposed in J100. |
@@ -899,6 +900,7 @@ history can be read without opening four documents.
 | J108 | 2026-11-17 | Code + Release | Docs renamed Wiki (/guide → /wiki, redirects kept); design system merged in as a wiki tab | U083 |
 | U084 | `e8ca69d` | 2026-11-17 | HANDOFF.md becomes the full record: a test fails the check when a request (J) or change (U) is missing from its ledger; CLAUDE.md states the rule. Staging. | [patch](update-log/patches/U084-e8ca69d.patch) |
 | J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
+| J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 
 ### 17.2 Code changes (U)
 

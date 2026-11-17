@@ -59,6 +59,8 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O29 | **Shared entity model first (J101)**: approve a `src/domain/` layer (Goal, Building block, Build, Check-in, Person, Safety signal) used by app, admin and the API contract, with consistency tests, before any admin redesign | J101 | Product owner |
 | O30 | **Design system review (J104)**: check `/designsystem`, then decide whether and how it joins Product requirements; also the open token gaps (brand orange `#FF881B`, two brand gradients) | J104, `/designsystem` | Product owner — **Update (U083):** the design system now sits in the wiki as its own tab; the token gaps remain |
 | O31 | **The 2025 backend code (J109)**: the three sources (Deep Dive, Technical Architecture Documentation, Wiki Aurelia) hold prompts, data shapes and principles, but no code. The wiki lists features as "implemented", so a 2025 Python codebase exists. Ask for the repository and access, then decide what to port (HANDOFF B.12) | J109 | Product owner / Eugene |
+| O32 | **Aurelia Pro / corporate wellness (J110)**: Eugene asks how big an exploration it is to propose features for a B2B2C version (companies buy, employees use). Proposed: a short exploration in the retention-simulation format (employee and HR personas, what changes, what is reused, size) before any build | J110 | Product owner: go ahead, and with whom to validate (a pilot company?) |
+| J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 
 ---
 
@@ -1246,3 +1248,11 @@ transcript and the update log. Everything from J018 on was written at the time.
   - Do not reuse: the words-per-minute table (reading pace, about three times too many words for meditation), the expert persona, LLM scores as truth, the Deep Dive figures.
 - **Done (3):** `HANDOFF.md` now carries every J and U row (§17), a standing rule (§2 rule 12, A2.9), a current §4 and numbering, and B.12. `src/guides/records.test.ts` fails the check when an id is missing from it (U084).
 - **Open:** O31 added.
+
+### J110 — What Eugene means by "Aurelia Pro, corporate wellness"
+- **Asked:** "sbntr saya bingung apa mksdnya yang dibagian bawah itu", on Eugene's WhatsApp: "How big of a exploration is the make feature propositions for doing Aurelia Pro - cooprate Wellness .. the one we built now is for consumer side.. but its really not far to make B2B2C out of it..", the forwarded `Aurelia-Retention-Simulation-2026-10-25.pdf`, and "You know making this for coopeate wellness.. suggestions on adaptable features etc".
+- **Answered:** Eugene is asking for a scope estimate and a proposal, not a build. "Aurelia Pro" = a corporate-wellness edition: a company pays, its employees use the same consumer app (B2B2C). The forwarded PDF is the format he wants: the J039 persona simulation redone for employees and HR, ending in suggested adaptable features. Not to be confused with the 2025 "pro" (creators building campaigns, HANDOFF B.12 #1).
+  - Reusable today: the admin CMS, the feedback-group study (cohorts, milestones), well-being outcomes (WHO-5, O21), challenges and community without ranks, roles.
+  - New for B2B2C: company and seats, invite code or SSO sign-up, an HR dashboard with anonymous aggregates only (minimum group size), company content and programmes, an employee-assistance/crisis link per company, reporting for the buyer, billing per seat, and a privacy promise employees can read.
+  - Size: the exploration itself about 1–2 days; building it needs the backend and accounts first (no persisted sign-in today, O17).
+- **Open:** O32.
