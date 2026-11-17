@@ -19,6 +19,14 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-17 — Knowledge-base export (U087, J114)
+
+`scripts/knowledge/export.py` exports the wiki as Markdown for the separate
+knowledge-base repository, to be pushed only on request. Not pushed yet: no
+access to that repository from this session.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-17 — API contract as a team document (U086, J113)
 
 The API contract opens with an info table and a plain overview; internal

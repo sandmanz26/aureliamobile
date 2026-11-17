@@ -123,9 +123,24 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U084 | `e8ca69d` | 2026-11-17 | HANDOFF.md becomes the full record: a test fails the check when a request (J) or change (U) is missing from its ledger; CLAUDE.md states the rule. Staging. | [patch](patches/U084-e8ca69d.patch) |
 | U085 | `a718484` | 2026-11-17 | Wiki: two new tabs from the three 2025 backend documents, Backend (old) (what we can reuse) and Artefact (eleven lessons); the open tab scrolls into view on phones. Staging and production. | [patch](patches/U085-a718484.patch) |
 | U086 | `2913b15` | 2026-11-17 | API contract reads as a team document: an info table and a plain overview replace the long opening; internal review references removed; v4/v5 instead of prod v1/v2. Staging and production. | [patch](patches/U086-2913b15.patch) |
+| U087 | `d14298b` | 2026-11-17 | Knowledge-base export: `scripts/knowledge/export.py` writes the eight wiki documents as Markdown (plus OpenAPI, images, README) for `danielaurelia26/aureliabase_knowledge`; run and pushed only on request. Staging. | [patch](patches/U087-d14298b.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U087 — Knowledge-base export of the wiki
+
+- **Commit:** `d14298b` · pushed 2026-11-17 UTC · `web_app` + `admin_cms`.
+- **Patch:** [patches/U087-d14298b.patch](patches/U087-d14298b.patch)
+- **Request:** "coba push semua yang ada di wiki ke sini sebagai base knowledge yang bisa di consume AI lain atau dev lain, tapi ini hanya dilakukan ketika kedepan saya meminta kamu jika tidak maka biarkan saja https://github.com/danielaurelia26/aureliabase_knowledge"
+- **Interpretation:** push the wiki now, as Markdown other agents and developers can read. Later updates of that repository happen only when the owner asks; nothing syncs automatically.
+- **Changed:**
+  - `scripts/knowledge/export.py` (new): writes `README.md` (what Aurelia is, the document list, reading order, notes for AI agents, the source commit) and `wiki/01…08-*.md` in the wiki's tab order. The HTML guides (playbook v1–v3, admin guideline v1–v3, research) are converted with `markdownify`, screenshots kept as images in `assets/`; the Markdown documents are copied; `openapi.yaml` included.
+  - `scripts/knowledge/design-system.mjs` (new): the Design system tab as Markdown, from `figma-export.json`, `tokens.ts` and `catalogue.ts` (needs Node 22, `--experimental-strip-types`).
+- **Verified:** the export produces 8 documents (about 37,000 words), 51 images and `openapi.yaml`, 4.9 MB; no site password in the output. `npm run check` passes.
+- **Not done:** the push. This session's GitHub access covers only `sandmanz26/*`; `danielaurelia26/aureliabase_knowledge` returned "no access" (O33).
+- **Run it:** `pip install markdownify`, then `python3 scripts/knowledge/export.py <clone-of-the-knowledge-repo>`, review, commit and push there.
+- **Revert:** `git revert --no-commit d14298b && git checkout HEAD -- docs/`.
 
 ### U086 — API contract as a team document
 

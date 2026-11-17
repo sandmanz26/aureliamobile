@@ -131,6 +131,10 @@ Each of these came from the owner, or from a mistake that was expensive once.
     work: add the J row (and the U row, for code) to §17, and update §4 when
     the state moves. `src/guides/records.test.ts` fails `npm run check` (and
     CI) when a J or U id in the journal or the update log is missing here.
+13. **The knowledge-base repository is updated only on request** (J114).
+    `danielaurelia26/aureliabase_knowledge` holds the wiki as Markdown, made
+    by `scripts/knowledge/export.py`. Run and push it only when the owner
+    asks; never as part of other work.
 
 ---
 
@@ -227,6 +231,7 @@ Level with production (U072, 13 Nov 2026). Everything in `RELEASES` (`src/versio
 
 The full list is §17. Since 13 Nov:
 
+- **J114 / U087:** knowledge-base export of the wiki; the push to `danielaurelia26/aureliabase_knowledge` waits for access (O33), and future updates happen only on request.
 - **J113 / U086:** the API contract rewritten to read as a team document (info table, plain overview, no internal review codes).
 - **J112 / U085:** wiki tabs Backend (old) and Artefact, from the three 2025 backend documents.
 - **J109:** gap analysis of the three 2025 backend sources against today, and what can be reused (Appendix B.12); this file became the complete ledger (§17).
@@ -713,6 +718,7 @@ The authoritative list is the **Open items** table at the top of
 
 | # | Decision / gap | Notes |
 | --- | --- | --- |
+| **O33** | Knowledge-base repository access | The export is ready; install the Claude GitHub App on `danielaurelia26/aureliabase_knowledge`, then push on request. |
 | **O32** | Aurelia Pro (corporate wellness, B2B2C) | Eugene asks for a feature-proposition exploration (J110). Proposed format: the retention-simulation method with employee and HR personas. |
 | **O31** | The 2025 backend code | The three sources hold prompts and shapes, no code (B.12). Ask Eugene for the 2025 repository and access; then decide what to port. |
 | **O29** | Shared entity model first | `src/domain/`, seeded from the 2025 taxonomy (B.12 #2), before admin rebuilds. |
@@ -904,11 +910,13 @@ history can be read without opening four documents.
 | U084 | `e8ca69d` | 2026-11-17 | HANDOFF.md becomes the full record: a test fails the check when a request (J) or change (U) is missing from its ledger; CLAUDE.md states the rule. Staging. | [patch](update-log/patches/U084-e8ca69d.patch) |
 | U085 | `a718484` | 2026-11-17 | Wiki: two new tabs from the three 2025 backend documents, Backend (old) (what we can reuse) and Artefact (eleven lessons); the open tab scrolls into view on phones. Staging and production. | [patch](update-log/patches/U085-a718484.patch) |
 | U086 | `2913b15` | 2026-11-17 | API contract reads as a team document: an info table and a plain overview replace the long opening; internal review references removed; v4/v5 instead of prod v1/v2. Staging and production. | [patch](update-log/patches/U086-2913b15.patch) |
+| U087 | `d14298b` | 2026-11-17 | Knowledge-base export: `scripts/knowledge/export.py` writes the eight wiki documents as Markdown (plus OpenAPI, images, README) for `danielaurelia26/aureliabase_knowledge`; run and pushed only on request. Staging. | [patch](update-log/patches/U087-d14298b.patch) |
 | J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
 | J112 | 2026-11-17 | Code + Release | Summary of the three 2025 backend documents as two wiki tabs: Backend (old), what we can reuse; Artefact, the lessons | U085 |
 | J113 | 2026-11-17 | Code + Release | API contract: the opening paragraph replaced by a simple info table; the document cleaned to read like an internal team document | U086 |
+| J114 | 2026-11-17 | Code | Push the wiki to `danielaurelia26/aureliabase_knowledge` as a knowledge base, only when asked: export built; push blocked (no access from this session) | U087 |
 
 ### 17.2 Code changes (U)
 

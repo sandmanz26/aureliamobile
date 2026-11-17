@@ -60,9 +60,11 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O30 | **Design system review (J104)**: check `/designsystem`, then decide whether and how it joins Product requirements; also the open token gaps (brand orange `#FF881B`, two brand gradients) | J104, `/designsystem` | Product owner — **Update (U083):** the design system now sits in the wiki as its own tab; the token gaps remain |
 | O31 | **The 2025 backend code (J109)**: the three sources (Deep Dive, Technical Architecture Documentation, Wiki Aurelia) hold prompts, data shapes and principles, but no code. The wiki lists features as "implemented", so a 2025 Python codebase exists. Ask for the repository and access, then decide what to port (HANDOFF B.12) | J109 | Product owner / Eugene |
 | O32 | **Aurelia Pro / corporate wellness (J110)**: Eugene asks how big an exploration it is to propose features for a B2B2C version (companies buy, employees use). Proposed: a short exploration in the retention-simulation format (employee and HR personas, what changes, what is reused, size) before any build | J110 | Product owner: go ahead, and with whom to validate (a pilot company?) |
+| O33 | **Knowledge-base repository access (J114)**: `danielaurelia26/aureliabase_knowledge` is not reachable from this session (GitHub access covers `sandmanz26/*` only). The export is ready (`scripts/knowledge/export.py`). Needed: the Claude GitHub App installed on that repository (or the repository moved under an account the session can use), then a new session with it selected | J114 | Product owner |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
 | J112 | 2026-11-17 | Code + Release | Summary of the three 2025 backend documents as two wiki tabs: Backend (old), what we can reuse; Artefact, the lessons | U085 |
 | J113 | 2026-11-17 | Code + Release | API contract: the opening paragraph replaced by a simple info table; the document cleaned to read like an internal team document | U086 |
+| J114 | 2026-11-17 | Code | Push the wiki to `danielaurelia26/aureliabase_knowledge` as a knowledge base, only when asked: export built; push blocked (no access from this session) | U087 |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 
 ---
@@ -1276,3 +1278,9 @@ transcript and the update log. Everything from J018 on was written at the time.
 - **Asked:** "part in saya rasa tidak perlu cukup cantumkan saja. saya mau dokumen ini ya memang dokumen bukan seperti dokumen yang ai generated, tapi lebih ke dokumen yang dikonsumsi oleh internal team"
 - **Done:** U086. The opening is an info table and a short overview. The body keeps all its content, without internal review codes, commit hashes or production's shifting version labels. Staging and production.
 - **Note:** the same habits (review codes, verbose openings) exist in other wiki documents. They can get the same pass on request.
+
+### J114 — The wiki as a knowledge base in another repository
+- **Asked:** "coba push semua yang ada di wiki ke sini sebagai base knowledge yang bisa di consume AI lain atau dev lain, tapi ini hanya dilakukan ketika kedepan saya meminta kamu jika tidak maka biarkan saja https://github.com/danielaurelia26/aureliabase_knowledge"
+- **Standing rule from this request:** the knowledge-base repository is updated **only when the owner asks**. No automatic sync, no push as part of other work.
+- **Done:** U087, the export. Eight documents as Markdown in the wiki's order, with `openapi.yaml`, the 51 images the guides use, and a README for agents and developers.
+- **Blocked:** the push. The session's GitHub access covers only `sandmanz26/*`, and the repository returned no access (O33). The bundle was given to the owner as a zip in the meantime.
