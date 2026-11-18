@@ -482,8 +482,8 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U094**, last J = **J121**, last
-O = **O34**. Before numbering, check the files for anything newer.
+**Numbering as of 17 Nov 2026:** last U = **U094**, last J = **J122**, last
+O = **O35**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
 push. `src/guides/records.test.ts` enforces it.
@@ -938,6 +938,7 @@ history can be read without opening four documents.
 | J119 | 2026-11-18 | Code | User journey flow simplified as head of product (one page, one panel), and the desktop sidebar that folds to an icon rail (Eugene) | U091, U092 |
 | J120 | 2026-11-18 | Code | Desktop sidebar still too big, and should start minimised: rail by default, tighter when expanded | U093 |
 | J121 | 2026-11-18 | Code | Desktop sidebar still too big, icons and text inconsistent: one icon size, one row height, a narrower rail | U094 |
+| J122 | 2026-11-18 | Question | Head-of-product view: what the user journey is for (a shared opportunity map from moment to feature to evidence), its limits today, and what would make it useful | — |
 
 ### 17.2 Code changes (U)
 

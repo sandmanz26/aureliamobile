@@ -62,11 +62,13 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O32 | **Aurelia Pro / corporate wellness (J110)**: Eugene asks how big an exploration it is to propose features for a B2B2C version (companies buy, employees use). Proposed: a short exploration in the retention-simulation format (employee and HR personas, what changes, what is reused, size) before any build | J110 | Product owner: go ahead, and with whom to validate (a pilot company?) |
 | O33 | **Knowledge-base repository access (J114)**: `danielaurelia26/aureliabase_knowledge` is not reachable from this session (GitHub access covers `sandmanz26/*` only). The export is ready (`scripts/knowledge/export.py`). Needed: the Claude GitHub App installed on that repository (or the repository moved under an account the session can use), then a new session with it selected | J114 | Product owner |
 | O34 | **Journey tags (J116)**: review the eight tag groups and the proposed tagging of the ten moments (Admin → Journey tags on staging); decide the gaps it shows (evening, night, positive state, Share has one moment); then release to production (`RELEASES.journeyTags`) | J116 | Product owner + the user who asked |
+| O35 | **Purpose of the user journey (J122)**: confirm it is an internal opportunity map (moment → feature → evidence → decision) and who owns it; if yes, add evidence and a priority decision per moment, a link to the real screen or session, team-wide storage, and the same tags in analytics | J122 | Product owner + Eugene |
 | J117 | 2026-11-18 | Question | "I can't see what changed": Journey tags is on staging only (O34); where to find it and how to check the build | — |
 | J118 | 2026-11-18 | Code | Admin sidebar too long: folding groups and a sticky sidebar; the missing phone menu button fixed. Staging; production waits for a request | U090 |
 | J119 | 2026-11-18 | Code | User journey flow simplified as head of product (one page, one panel), and the desktop sidebar that folds to an icon rail (Eugene) | U091, U092 |
 | J120 | 2026-11-18 | Code | Desktop sidebar still too big, and should start minimised: rail by default, tighter when expanded | U093 |
 | J121 | 2026-11-18 | Code | Desktop sidebar still too big, icons and text inconsistent: one icon size, one row height, a narrower rail | U094 |
+| J122 | 2026-11-18 | Question | Head-of-product view: what the user journey is for (a shared opportunity map from moment to feature to evidence), its limits today, and what would make it useful | — |
 | J115 | 2026-11-18 | Code + Release | Admin "User journey" menu built from the owner's journey-blueprint zip, on staging and production | U088 |
 | J116 | 2026-11-18 | Proposal + Code | Tagging and classification for the user journey, as a new admin menu for review (Journey tags), staging only | U089 |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
@@ -1362,3 +1364,28 @@ transcript and the update log. Everything from J018 on was written at the time.
   - One tile height (56px) with the same label style.
   - A 72px rail.
   - The phone drawer is untouched.
+
+### J122 — What is the user journey for?
+- **Asked:** "oke terkait user journey, menurutmu fungsinya apa ? saya mau tau pov kamu dulu"
+- **Answered (head of product):** an internal opportunity map. It is not a user feature.
+  - It answers when and why people reach for Aurelia (moments), and what serves each moment (feature, screen).
+  - It shows how much of that exists, and where the gaps are.
+  - It is used for:
+    - one shared picture for the team, Eugene and partners;
+    - prioritising the roadmap (readiness × moment);
+    - finding gaps (evening, positive state, Share);
+    - a brief per moment for content, sessions, reminders and onboarding;
+    - later, the same tags labelling analytics and personalisation;
+    - hypotheses for the feedback-group study.
+- **Limits today:**
+  - Every moment is an assumption, with no evidence attached.
+  - Edits live in one browser, so the team cannot review together.
+  - Nothing links to the real product or its data.
+  - It risks becoming a poster.
+- **Proposed next steps:**
+  - evidence and confidence per moment;
+  - a priority decision;
+  - a link to the real screen or session;
+  - shared storage, like annotations;
+  - the tags reused in click insights.
+- **Questions back:** internal planning or client-facing (Aurelia Pro, O32)? Who owns it? Recorded as O35.
