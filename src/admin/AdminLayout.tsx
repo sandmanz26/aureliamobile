@@ -13,6 +13,7 @@ import {
   MessageSquareText,
   Menu,
   Radio,
+  Route,
   Scale,
   ScrollText,
   Settings,
@@ -59,6 +60,10 @@ const NAV: { section: string; items: NavItem[] }[] = [
       { to: '/admin/experimentation', label: 'Feedback group · v1', icon: Microscope, end: true, flag: 'adminExperimentation' },
       { to: '/admin/experimentation/v2', label: 'Feedback group · v2', icon: Target, flag: 'adminExperimentation' },
     ],
+  },
+  {
+    section: 'Product',
+    items: [{ to: '/admin/user-journey', label: 'User journey', icon: Route, flag: 'adminUserJourney' }],
   },
   {
     section: 'Content',

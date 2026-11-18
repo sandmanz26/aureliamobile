@@ -86,6 +86,7 @@ const CompliancePage = lazy(() => import('./admin/pages/CompliancePage').then((m
 const SignalSourcesPage = lazy(() => import('./admin/pages/SignalSourcesPage').then((m) => ({ default: m.SignalSourcesPage })))
 const AuditPage = lazy(() => import('./admin/pages/AuditPage').then((m) => ({ default: m.AuditPage })))
 const SettingsPage = lazy(() => import('./admin/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })))
+const UserJourneyPage = lazy(() => import('./admin/pages/UserJourneyPage').then((m) => ({ default: m.UserJourneyPage })))
 
 export default function App() {
   const { pathname } = useLocation()
@@ -176,6 +177,11 @@ export default function App() {
             <Route path="roles" element={
               <ModuleGuard module="adminRoles">
                 <RolesPage />
+              </ModuleGuard>
+            } />
+            <Route path="user-journey" element={
+              <ModuleGuard module="adminUserJourney">
+                <UserJourneyPage />
               </ModuleGuard>
             } />
             <Route path="sessions" element={
