@@ -126,9 +126,36 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U087 | `d14298b` | 2026-11-17 | Knowledge-base export: `scripts/knowledge/export.py` writes the eight wiki documents as Markdown (plus OpenAPI, images, README) for `danielaurelia26/aureliabase_knowledge`; run and pushed only on request. Staging. | [patch](patches/U087-d14298b.patch) |
 | U088 | `92fae15` | 2026-11-18 | Admin: new module Product → User journey (`/admin/user-journey`), the journey map from the owner's blueprint: 4 stages, 10 moments, 3 screens, editable, export/import. Staging and production. | [patch](patches/U088-92fae15.patch) |
 | U089 | `f029a4f` | 2026-11-18 | Admin: new module Product → Journey tags (`/admin/journey-tags`): eight tag groups for every user-journey moment, a proposed first tagging, review status and notes, coverage gaps, an editable taxonomy. Staging only (`RELEASES.journeyTags`). | [patch](patches/U089-f029a4f.patch) |
+| U090 | `8440ca1` | 2026-11-18 | Admin sidebar: groups fold (current one open, choices remembered), tighter, sticky; the phone menu button, hidden by the v4/v5 rule, is back. Staging; production on request. | [patch](patches/U090-8440ca1.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U090 — Admin sidebar
+
+- **Commit:** `8440ca1` · pushed 2026-11-18 UTC · `web_app` + `admin_cms`. Not on `web_prod`: production moves only on an explicit request, and the request did not name it.
+- **Patch:** [patches/U090-8440ca1.patch](patches/U090-8440ca1.patch)
+- **Request:** "secara sidebar tolong diperbaiki ya karena sekarang terlalu panjang." (screenshot of the production admin sidebar).
+- **Interpretation:** keep every module reachable, but show only what is in use. The groups fold instead of modules being removed or renamed, so nobody loses a link.
+- **Changed (`src/admin/AdminLayout.tsx`):**
+  - Each group folds behind its heading, with a chevron and, when folded, its item count.
+  - The group holding the current page is always open. Groups someone opens stay open in this browser (`aurelia.admin.navOpen`, through `lib/storage`).
+  - Dashboard stands alone, without a heading.
+  - Links are tighter: 6px vertical padding, 15px icons.
+  - The desktop sidebar is sticky, below the version bar.
+  - At 1440px the menu is now 323px tall; before, all 22 links showed at once.
+  - **Bug fixed:** on phones in design v4/v5 (production's default) the admin had no menu button. `versions.css` hides every `[aria-label='Open menu']` to retire the consumer hamburger, and the admin's button carried the same label. It is now "Open admin menu".
+  - Tapping a group heading no longer closes the phone drawer; only a link does.
+- **Verified:**
+  - `npm run check` passes.
+  - Production build at 1440px:
+    - only Dashboard and the current group are open;
+    - opening Revenue persists across a reload;
+    - going to Pricing opens Revenue and folds Product;
+    - the sidebar stays put when the page scrolls.
+  - At 402px: the menu button shows, the drawer opens, and a group toggles without closing it.
+  - No errors.
+- **Revert:** `git revert --no-commit 8440ca1 && git checkout HEAD -- docs/`.
 
 ### U089 — Admin: Journey tags
 

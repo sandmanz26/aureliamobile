@@ -19,6 +19,14 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-18 — Admin sidebar (U090, J118)
+
+The admin menu folds by group (the current one open, choices remembered),
+is tighter and sticky. The admin's menu button on phones, hidden in design
+v4/v5 by the consumer hamburger rule, is back.
+
+Branches: `web_app`, `admin_cms`. Production on request.
+
 ### 2026-11-18 — Admin: Journey tags (U089, J116)
 
 New admin module Product → Journey tags: eight tag groups for every
