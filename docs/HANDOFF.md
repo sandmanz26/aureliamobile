@@ -478,7 +478,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U089**, last J = **J116**, last
+**Numbering as of 17 Nov 2026:** last U = **U089**, last J = **J117**, last
 O = **O34**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -924,6 +924,7 @@ history can be read without opening four documents.
 | J114 | 2026-11-17 | Code | Push the wiki to `danielaurelia26/aureliabase_knowledge` as a knowledge base, only when asked: export built; push blocked (no access from this session) | U087 |
 | J115 | 2026-11-18 | Code + Release | Admin "User journey" menu built from the owner's journey-blueprint zip, on staging and production | U088 |
 | J116 | 2026-11-18 | Proposal + Code | Tagging and classification for the user journey, as a new admin menu for review (Journey tags), staging only | U089 |
+| J117 | 2026-11-18 | Question | "I can't see what changed": Journey tags is on staging only (O34); where to find it and how to check the build | — |
 
 ### 17.2 Code changes (U)
 

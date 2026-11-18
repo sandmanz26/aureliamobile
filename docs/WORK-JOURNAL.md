@@ -62,6 +62,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O32 | **Aurelia Pro / corporate wellness (J110)**: Eugene asks how big an exploration it is to propose features for a B2B2C version (companies buy, employees use). Proposed: a short exploration in the retention-simulation format (employee and HR personas, what changes, what is reused, size) before any build | J110 | Product owner: go ahead, and with whom to validate (a pilot company?) |
 | O33 | **Knowledge-base repository access (J114)**: `danielaurelia26/aureliabase_knowledge` is not reachable from this session (GitHub access covers `sandmanz26/*` only). The export is ready (`scripts/knowledge/export.py`). Needed: the Claude GitHub App installed on that repository (or the repository moved under an account the session can use), then a new session with it selected | J114 | Product owner |
 | O34 | **Journey tags (J116)**: review the eight tag groups and the proposed tagging of the ten moments (Admin → Journey tags on staging); decide the gaps it shows (evening, night, positive state, Share has one moment); then release to production (`RELEASES.journeyTags`) | J116 | Product owner + the user who asked |
+| J117 | 2026-11-18 | Question | "I can't see what changed": Journey tags is on staging only (O34); where to find it and how to check the build | — |
 | J115 | 2026-11-18 | Code + Release | Admin "User journey" menu built from the owner's journey-blueprint zip, on staging and production | U088 |
 | J116 | 2026-11-18 | Proposal + Code | Tagging and classification for the user journey, as a new admin menu for review (Journey tags), staging only | U089 |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
@@ -1309,3 +1310,11 @@ transcript and the update log. Everything from J018 on was written at the time.
   - No evening moment; one night moment; one positive-state moment; Share has a single moment.
   - Two of the ten feature ideas are pure concept: micro-journaling at work, and processing after an event.
 - **Open:** O34 (review, then release to production).
+
+### J117 — "Why can't I see the change?"
+- **Asked:** "jadi apa yang kamu rubah kok saya ngga lihat ya"
+- **Answered:**
+  - U089 (Journey tags) is on staging only by design (`RELEASES.journeyTags`, O34). It is absent from production, where the owner may be looking.
+  - Where to find it: the staging site → `/admin/journey-tags`, or the admin sidebar → Product → Journey tags.
+  - The build badge must read `161c0b0` or later. If it is older, the browser is on a cached build: tap Reload on the update toast, or hard refresh.
+  - Offered to release it to production on request.
