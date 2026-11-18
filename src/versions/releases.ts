@@ -13,7 +13,6 @@ import { BUILD } from '../lib/build'
  */
 // Every release is on for production since J083 ("nyalakan semua ke production").
 // A new one that should wait uses BUILD.environment !== 'production'.
-void BUILD
 
 export const RELEASES = {
   /** Figma "Changes" (16906:4947) item 1: one Chapter card + a Review sheet instead of the fanned deck. */
@@ -28,4 +27,6 @@ export const RELEASES = {
   analysisV2: true,
   /** The session's About page (Chapters, Social Impact, Journal, Insights) in every version, v4+ included (J083). */
   aboutPage: true,
+  /** Admin → Product → Journey tags (U089): the user journey's tagging, for review. Staging only until asked. */
+  journeyTags: BUILD.environment !== 'production',
 } as const
