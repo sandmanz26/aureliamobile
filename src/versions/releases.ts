@@ -31,4 +31,6 @@ export const RELEASES = {
   journeyTags: BUILD.environment !== 'production',
   /** Desktop sidebar that folds to an icon rail and expands again (U091, Eugene). Staging only until asked. */
   sidebarRail: BUILD.environment !== 'production',
+  /** Admin → Product lab → Personas (U096): 300 synthetic research personas. Staging only until asked. */
+  personas: BUILD.environment !== 'production',
 } as const
