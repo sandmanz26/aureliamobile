@@ -19,6 +19,13 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-18 — User journey: screens serve moments (U095, J126)
+
+A screen in the admin user journey links to the moments it serves and to
+where it lives; a moment lists its screens or shows "No screen yet".
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-18 — Sidebar sizes consistent (U094, J121)
 
 Desktop sidebar: one 20px icon size, 56px rail tiles with the same label,

@@ -1,0 +1,517 @@
+From 09868db913aae95b7aa1bb4a5327642e868e2790 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 18 Nov 2026 16:06:34 +0000
+Subject: [PATCH] User journey: screens link to the moments they serve, plus
+ where they live
+
+A screen now names one or more moments (any stage) and an optional link
+(app route or Figma URL). Both fields are optional in JourneyScreenSchema,
+so maps saved or exported before this still parse with edits intact.
+The bundled screens are linked to their moments; a moment's panel lists
+its screens or says "No screen yet"; map cards show a small count; a
+deleted moment is unlinked from every screen. Works on staging and
+production (not behind journeyTags).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/admin/data/userJourney.test.ts  |  85 +++++++++++++++++-
+ src/admin/data/userJourney.ts       |  70 +++++++++++++--
+ src/admin/pages/UserJourneyPage.tsx | 132 +++++++++++++++++++++++++---
+ 3 files changed, 269 insertions(+), 18 deletions(-)
+
+diff --git a/src/admin/data/userJourney.test.ts b/src/admin/data/userJourney.test.ts
+index 3b31608..767f212 100644
+--- a/src/admin/data/userJourney.test.ts
++++ b/src/admin/data/userJourney.test.ts
+@@ -1,5 +1,29 @@
+ import { describe, expect, it } from 'vitest'
+-import { INITIAL_JOURNEY, JourneyMapSchema, addItem, counts, parseImport, removeItem, updateItem, updateStage } from './userJourney'
++import {
++  INITIAL_JOURNEY,
++  JourneyMapSchema,
++  addItem,
++  allMoments,
++  counts,
++  linkHref,
++  parseImport,
++  removeItem,
++  screensFor,
++  servedMoments,
++  toggleMoment,
++  unlinkMoment,
++  updateItem,
++  updateStage,
++} from './userJourney'
++import { toBundle, parseAnyImport } from './journeyBundle'
++
++/** The map as it was saved before screens could name their moments. */
++function oldShape() {
++  return {
++    ...INITIAL_JOURNEY,
++    stages: INITIAL_JOURNEY.stages.map((s) => ({ ...s, screens: s.screens.map(({ momentIds: _m, link: _l, ...rest }) => rest) })),
++  }
++}
+ 
+ describe('user journey map', () => {
+   it('starts with four stages, ten moments and three screens', () => {
+@@ -35,4 +59,63 @@ describe('user journey map', () => {
+     expect(parseImport('{"stages": []}')).toBeNull()
+     expect(parseImport('not json')).toBeNull()
+   })
++
++  it('still reads a map saved before screens had moments or a link, edits intact', () => {
++    const old = oldShape()
++    old.stages[0].screens[0].title = 'My edited check-in'
++    const parsed = JourneyMapSchema.safeParse(JSON.parse(JSON.stringify(old)))
++    expect(parsed.success).toBe(true)
++    expect(parsed.data?.stages[0].screens[0].title).toBe('My edited check-in')
++    expect(parsed.data?.stages[0].screens[0].momentIds).toBeUndefined()
++    expect(parseImport(JSON.stringify(old))?.stages[0].screens[0].title).toBe('My edited check-in')
++    expect(parseAnyImport(JSON.stringify(toBundle(old)))?.journey?.stages[0].screens[0].title).toBe('My edited check-in')
++  })
++
++  it('links the bundled screens only to moments that exist', () => {
++    const ids = new Set(allMoments(INITIAL_JOURNEY).map((m) => m.moment.id))
++    const screens = INITIAL_JOURNEY.stages.flatMap((s) => s.screens)
++    for (const sc of screens) {
++      expect(sc.momentIds?.length).toBeGreaterThan(0)
++      for (const id of sc.momentIds ?? []) expect(ids.has(id)).toBe(true)
++    }
++    expect(screensFor(INITIAL_JOURNEY, 'r1').map((x) => x.screen.id)).toEqual(['s1'])
++    expect(screensFor(INITIAL_JOURNEY, 'e3')).toEqual([])
++  })
++
++  it('links and unlinks a screen to moments in any stage', () => {
++    const s1 = INITIAL_JOURNEY.stages[0].screens[0]
++    const linked = toggleMoment(s1, 'h1', true)
++    expect(linked.momentIds).toEqual(['r1', 'r2', 'h1'])
++    expect(toggleMoment(linked, 'h1', true).momentIds).toEqual(['r1', 'r2', 'h1'])
++    expect(toggleMoment(linked, 'r1', false).momentIds).toEqual(['r2', 'h1'])
++    expect(toggleMoment({ ...s1, momentIds: undefined }, 'c1', true).momentIds).toEqual(['c1'])
++    const map = updateItem(INITIAL_JOURNEY, 'reflect', 'screens', linked)
++    expect(screensFor(map, 'h1')).toEqual([{ stageId: 'reflect', screen: linked }])
++  })
++
++  it('removes a deleted moment from every screen, and ignores links to moments that are gone', () => {
++    let map = updateItem(INITIAL_JOURNEY, 'create', 'screens', { ...INITIAL_JOURNEY.stages[1].screens[0], momentIds: ['c1', 'c2', 'e2'] })
++    map = removeItem(map, 'experience', 'moments', 'e2')
++    expect(servedMoments(map, map.stages[1].screens[0])).toEqual(['c1', 'c2'])
++    map = unlinkMoment(map, 'e2')
++    expect(map.stages[1].screens[0].momentIds).toEqual(['c1', 'c2'])
++    expect(map.stages[2].screens[0].momentIds).toEqual(['e1', 'e4', 'e5'])
++    expect(map.stages[0]).toBe(INITIAL_JOURNEY.stages[0])
++    expect(unlinkMoment(map, 'nothing')).toBe(map)
++  })
++
++  it('round-trips the new fields through export and import', () => {
++    const map = updateItem(INITIAL_JOURNEY, 'reflect', 'screens', { ...INITIAL_JOURNEY.stages[0].screens[0], link: '/wellness' })
++    expect(parseAnyImport(JSON.stringify(toBundle(map)))?.journey).toEqual(map)
++    expect(parseImport(JSON.stringify(map))).toEqual(map)
++  })
++
++  it('opens only app routes and http(s) links', () => {
++    expect(linkHref(' /play/morning ')).toBe('/play/morning')
++    expect(linkHref('https://www.figma.com/design/abc')).toBe('https://www.figma.com/design/abc')
++    expect(linkHref('//evil.example')).toBeNull()
++    expect(linkHref('javascript:alert(1)')).toBeNull()
++    expect(linkHref('')).toBeNull()
++    expect(linkHref(undefined)).toBeNull()
++  })
+ })
+diff --git a/src/admin/data/userJourney.ts b/src/admin/data/userJourney.ts
+index 7765fb5..50afcf0 100644
+--- a/src/admin/data/userJourney.ts
++++ b/src/admin/data/userJourney.ts
+@@ -18,6 +18,19 @@ export const JourneyItemSchema = z.object({
+   image: z.string(),
+ })
+ 
++/**
++ * A product screen is an item plus what it serves (U-next): the moments it
++ * answers and where it lives. Both are optional so a map saved or exported
++ * before they existed still parses, instead of `readJson` falling back to the
++ * initial data and wiping a user's edits.
++ */
++export const JourneyScreenSchema = JourneyItemSchema.extend({
++  /** Ids of the moments this screen serves, in any stage. */
++  momentIds: z.array(z.string()).optional(),
++  /** Where it lives: an app route (`/play/...`) or a Figma URL. */
++  link: z.string().optional(),
++})
++
+ export const JourneyStageSchema = z.object({
+   id: z.string(),
+   title: z.string(),
+@@ -25,7 +38,7 @@ export const JourneyStageSchema = z.object({
+   question: z.string(),
+   color: z.string(),
+   moments: z.array(JourneyItemSchema),
+-  screens: z.array(JourneyItemSchema),
++  screens: z.array(JourneyScreenSchema),
+ })
+ 
+ export const JourneyMapSchema = z.object({
+@@ -34,6 +47,7 @@ export const JourneyMapSchema = z.object({
+ })
+ 
+ export type JourneyItem = z.infer<typeof JourneyItemSchema>
++export type JourneyScreen = z.infer<typeof JourneyScreenSchema>
+ export type JourneyStage = z.infer<typeof JourneyStageSchema>
+ export type JourneyMap = z.infer<typeof JourneyMapSchema>
+ export type ItemKind = 'moments' | 'screens'
+@@ -53,7 +67,7 @@ export const INITIAL_JOURNEY: JourneyMap = {
+         { id: 'r1', title: 'Morning check-in', description: 'Start the day with a lightweight emotional pulse check and a simple recommendation based on mood, energy, or intent.', feature: 'Mood check-in + personalized daily recommendation', image: `${IMG}/scene-01.webp` },
+         { id: 'r2', title: 'In-the-moment conversation', description: 'Reach for support during the day through a conversational flow that helps users name what they feel and respond in context.', feature: 'AI chat support + emotional labeling', image: `${IMG}/scene-02.webp` },
+       ],
+-      screens: [{ id: 's1', title: 'Reflection / check-in', description: 'The daily check-in: how you feel today, whether the last session helped, an optional note.', feature: 'Check-in, journaling, and adaptive guidance', image: `${IMG}/screen-3.webp` }],
++      screens: [{ id: 's1', title: 'Reflection / check-in', description: 'The daily check-in: how you feel today, whether the last session helped, an optional note.', feature: 'Check-in, journaling, and adaptive guidance', image: `${IMG}/screen-3.webp`, momentIds: ['r1', 'r2'] }],
+     },
+     {
+       id: 'create',
+@@ -64,7 +78,7 @@ export const INITIAL_JOURNEY: JourneyMap = {
+         { id: 'c1', title: 'Create while commuting', description: 'Use transit time to capture thoughts, respond to prompts, and turn emotional momentum into something tangible inside the app.', feature: 'Prompt-based journaling + quick capture', image: `${IMG}/scene-03.webp` },
+         { id: 'c2', title: 'Create during work breaks', description: 'Dip into a short creative ritual between tasks to reset focus and transform mental load into reflection or expression.', feature: 'Micro-journaling + guided creation', image: `${IMG}/scene-04.webp` },
+       ],
+-      screens: [{ id: 's2', title: 'Create / conversation', description: 'The cockpit: the next chapter and the changes Aurelia proposes for it.', feature: 'Creative prompts + conversational flow', image: `${IMG}/screen-1.webp` }],
++      screens: [{ id: 's2', title: 'Create / conversation', description: 'The cockpit: the next chapter and the changes Aurelia proposes for it.', feature: 'Creative prompts + conversational flow', image: `${IMG}/screen-1.webp`, momentIds: ['c1', 'c2'] }],
+     },
+     {
+       id: 'experience',
+@@ -78,7 +92,7 @@ export const INITIAL_JOURNEY: JourneyMap = {
+         { id: 'e4', title: 'Support while commuting', description: 'Use transition moments to decompress, reflect, or continue a guided session while on the move.', feature: 'On-the-go listening + session continuation', image: `${IMG}/scene-09.webp` },
+         { id: 'e5', title: 'Before sleep', description: 'Wind down with a gentle end-of-day ritual that helps release the day and prepare the nervous system for sleep.', feature: 'Sleep wind-down + evening reflection', image: `${IMG}/scene-10.webp` },
+       ],
+-      screens: [{ id: 's3', title: 'Experience / session', description: 'The player: a guided session playing, with its cue and progress.', feature: 'Guided experience + progress state', image: `${IMG}/screen-2.webp` }],
++      screens: [{ id: 's3', title: 'Experience / session', description: 'The player: a guided session playing, with its cue and progress.', feature: 'Guided experience + progress state', image: `${IMG}/screen-2.webp`, momentIds: ['e1', 'e2', 'e4', 'e5'] }],
+     },
+     {
+       id: 'share',
+@@ -116,7 +130,8 @@ export function addItem(map: JourneyMap, stageId: string, kind: ItemKind, id: st
+   return mapStage(map, stageId, (s) => ({ ...s, [kind]: [...s[kind], item] }))
+ }
+ 
+-export function updateItem(map: JourneyMap, stageId: string, kind: ItemKind, item: JourneyItem): JourneyMap {
++/** `item` may be a screen with its links; a moment simply has none. */
++export function updateItem(map: JourneyMap, stageId: string, kind: ItemKind, item: JourneyScreen): JourneyMap {
+   return mapStage(map, stageId, (s) => ({ ...s, [kind]: s[kind].map((x) => (x.id === item.id ? item : x)) }))
+ }
+ 
+@@ -124,6 +139,51 @@ export function removeItem(map: JourneyMap, stageId: string, kind: ItemKind, id:
+   return mapStage(map, stageId, (s) => ({ ...s, [kind]: s[kind].filter((x) => x.id !== id) }))
+ }
+ 
++/** Every moment with the stage it sits in, in map order. */
++export function allMoments(map: JourneyMap): { stageId: string; moment: JourneyItem }[] {
++  return map.stages.flatMap((s) => s.moments.map((moment) => ({ stageId: s.id, moment })))
++}
++
++/** The moment ids a screen serves that still exist in the map. */
++export function servedMoments(map: JourneyMap, screen: JourneyScreen): string[] {
++  const ids = new Set(allMoments(map).map((m) => m.moment.id))
++  return (screen.momentIds ?? []).filter((id) => ids.has(id))
++}
++
++/** The screens that serve a moment, with the stage each sits in. */
++export function screensFor(map: JourneyMap, momentId: string): { stageId: string; screen: JourneyScreen }[] {
++  return map.stages.flatMap((s) => s.screens.filter((sc) => sc.momentIds?.includes(momentId)).map((screen) => ({ stageId: s.id, screen })))
++}
++
++/** Adds or removes one moment from a screen's list, keeping the order it was given. */
++export function toggleMoment(screen: JourneyScreen, momentId: string, on: boolean): JourneyScreen {
++  const ids = (screen.momentIds ?? []).filter((id) => id !== momentId)
++  return { ...screen, momentIds: on ? [...ids, momentId] : ids }
++}
++
++/**
++ * Drops a moment from every screen that served it. Run it when a moment is
++ * deleted, not when it moves stage (`removeItem` is part of a move too).
++ */
++export function unlinkMoment(map: JourneyMap, momentId: string): JourneyMap {
++  if (!map.stages.some((s) => s.screens.some((sc) => sc.momentIds?.includes(momentId)))) return map
++  return {
++    ...map,
++    stages: map.stages.map((s) =>
++      s.screens.some((sc) => sc.momentIds?.includes(momentId))
++        ? { ...s, screens: s.screens.map((sc) => (sc.momentIds?.includes(momentId) ? { ...sc, momentIds: sc.momentIds.filter((id) => id !== momentId) } : sc)) }
++        : s,
++    ),
++  }
++}
++
++/** A screen's link as something safe to open: an app route or an http(s) URL, else null. */
++export function linkHref(link: string | undefined): string | null {
++  const v = link?.trim() ?? ''
++  if (/^\/(?!\/)/.test(v)) return v
++  return /^https?:\/\/\S+$/i.test(v) ? v : null
++}
++
+ export function updateStage(map: JourneyMap, stageId: string, patch: Pick<JourneyStage, 'title' | 'question'>): JourneyMap {
+   return mapStage(map, stageId, (s) => ({
+     ...s,
+diff --git a/src/admin/pages/UserJourneyPage.tsx b/src/admin/pages/UserJourneyPage.tsx
+index 8974ef0..6c062ca 100644
+--- a/src/admin/pages/UserJourneyPage.tsx
++++ b/src/admin/pages/UserJourneyPage.tsx
+@@ -1,4 +1,4 @@
+-import { AlertCircle, Download, ImagePlus, MoreHorizontal, Pencil, Plus, RotateCcw, Upload } from 'lucide-react'
++import { AlertCircle, Download, ExternalLink, ImagePlus, MoreHorizontal, Pencil, Plus, RotateCcw, Smartphone, Upload } from 'lucide-react'
+ import { useEffect, useMemo, useState, type ChangeEvent, type CSSProperties } from 'react'
+ import { useSearchParams } from 'react-router-dom'
+ import { Modal } from '../components/Modal'
+@@ -25,12 +25,18 @@ import {
+   JourneyMapSchema,
+   NEW_MOMENT_IMAGE,
+   STORAGE_KEY,
++  allMoments,
++  linkHref,
+   removeItem,
++  screensFor,
++  servedMoments,
++  toggleMoment,
++  unlinkMoment,
+   updateItem,
+   updateStage,
+   type ItemKind,
+-  type JourneyItem,
+   type JourneyMap,
++  type JourneyScreen,
+ } from '../data/userJourney'
+ import { readJson, writeJson } from '../../lib/storage'
+ import { RELEASES } from '../../versions/releases'
+@@ -48,7 +54,8 @@ const VIEWS: { id: View; label: string }[] = [
+ interface Editing {
+   kind: ItemKind
+   stageId: string
+-  item: JourneyItem
++  /** A moment or a screen; only a screen carries `momentIds` and `link`. */
++  item: JourneyScreen
+   assignment: Assignment
+   isNew: boolean
+ }
+@@ -126,7 +133,7 @@ export function UserJourneyPage() {
+     setParams(next === 'map' ? {} : { view: next }, { replace: true })
+   }
+ 
+-  function openItem(kind: ItemKind, stageId: string, item: JourneyItem) {
++  function openItem(kind: ItemKind, stageId: string, item: JourneyScreen) {
+     setEditing({ kind, stageId, item, assignment: byId.get(item.id)?.assignment ?? EMPTY, isNew: false })
+   }
+ 
+@@ -141,7 +148,10 @@ export function UserJourneyPage() {
+   }
+ 
+   function saveEditing(e: Editing) {
+-    const item = { ...e.item, title: e.item.title.trim() || (e.kind === 'moments' ? 'Untitled moment' : 'Untitled screen'), description: e.item.description.trim(), feature: e.item.feature.trim() }
++    const base = { ...e.item, title: e.item.title.trim() || (e.kind === 'moments' ? 'Untitled moment' : 'Untitled screen'), description: e.item.description.trim(), feature: e.item.feature.trim() }
++    // Only a screen keeps what it serves and where it lives; a moment saves as it always did.
++    const { momentIds, link, ...plain } = base
++    const item: JourneyScreen = e.kind === 'screens' ? { ...plain, momentIds: momentIds ?? [], link: link?.trim() ?? '' } : plain
+     let next = map
+     if (e.isNew) {
+       next = { ...map, stages: map.stages.map((s) => (s.id === e.stageId ? { ...s, [e.kind]: [...s[e.kind], item] } : s)) }
+@@ -160,7 +170,9 @@ export function UserJourneyPage() {
+   }
+ 
+   function deleteEditing(e: Editing) {
+-    const ok = saveMap(removeItem(map, e.stageId, e.kind, e.item.id))
++    const removed = removeItem(map, e.stageId, e.kind, e.item.id)
++    // A deleted moment leaves no dangling link on the screens that served it.
++    const ok = saveMap(e.kind === 'moments' ? unlinkMoment(removed, e.item.id) : removed)
+     if (tagsOn && tags.assignments[e.item.id]) {
+       const rest = { ...tags.assignments }
+       delete rest[e.item.id]
+@@ -338,7 +350,8 @@ export function UserJourneyPage() {
+             </label>
+           </div>
+ 
+-          <div className="min-w-0 overflow-x-auto rounded-12 border border-adm-line bg-adm-surface">
++          {/* relative: the scroller contains its absolute children (sr-only labels), or they widen the page. */}
++          <div className="relative min-w-0 overflow-x-auto rounded-12 border border-adm-line bg-adm-surface">
+             <div className="grid" style={grid}>
+               {stages.map((s) => {
+                 const shown = s.moments.filter((m) => !tagFilter || byId.get(m.id)?.assignment.tags.includes(tagFilter))
+@@ -355,6 +368,7 @@ export function UserJourneyPage() {
+                         const a = byId.get(m.id)?.assignment ?? EMPTY
+                         const ready = a.tags.find((t) => t.startsWith('readiness:'))?.split(':')[1]
+                         const untagged = tagsOn && missingGroups(tags.groups, a.tags).length > 0
++                        const served = screensFor(map, m.id).length
+                         return (
+                           <button
+                             key={m.id}
+@@ -365,7 +379,16 @@ export function UserJourneyPage() {
+                             <span className="block aspect-[16/9] overflow-hidden rounded-8 bg-adm-hover">
+                               {m.image && <img src={m.image} alt="" loading="lazy" className="size-full object-cover" />}
+                             </span>
+-                            <span className="px-2 text-13 font-semibold text-adm-ink">{m.title}</span>
++                            <span className="flex items-start justify-between gap-6 px-2">
++                              <span className="text-13 font-semibold text-adm-ink">{m.title}</span>
++                              {served > 0 && (
++                                <span className="mt-2 inline-flex shrink-0 items-center gap-2 text-11 tabular-nums text-adm-muted" title={`${served} screen${served === 1 ? '' : 's'} serve this moment`}>
++                                  <Smartphone size={11} aria-hidden="true" />
++                                  {served}
++                                  <span className="sr-only">{served === 1 ? 'screen' : 'screens'}</span>
++                                </span>
++                              )}
++                            </span>
+                             {m.description && <span className="line-clamp-3 px-2 text-12 leading-[18px] text-adm-ink-2">{m.description}</span>}
+                             {m.feature && (
+                               <span className="rounded-8 bg-adm-bg px-8 py-6 text-12 text-adm-ink">
+@@ -400,7 +423,9 @@ export function UserJourneyPage() {
+                       <div className="border-t border-adm-line p-12">
+                         <p className="mb-8 text-10 font-semibold uppercase tracking-widest text-adm-muted">Screens</p>
+                         <div className="flex flex-wrap gap-10">
+-                          {s.screens.map((sc) => (
++                          {s.screens.map((sc) => {
++                            const serves = servedMoments(map, sc).length
++                            return (
+                             <button key={sc.id} type="button" onClick={() => openItem('screens', s.id, sc)} className="group flex w-[84px] flex-col gap-4 text-left">
+                               <span className="block h-[168px] w-[80px] rounded-[14px] bg-adm-sidebar p-3 transition-transform group-hover:-translate-y-2">
+                                 <span className="flex size-full items-center justify-center overflow-hidden rounded-[11px] bg-adm-surface">
+@@ -408,8 +433,10 @@ export function UserJourneyPage() {
+                                 </span>
+                               </span>
+                               <span className="text-11 font-medium leading-[14px] text-adm-ink">{sc.title}</span>
++                              <span className={`text-10 leading-[12px] ${serves ? 'text-adm-muted' : 'text-adm-critical'}`}>{serves ? `Serves ${serves} moment${serves === 1 ? '' : 's'}` : 'No moment linked'}</span>
+                             </button>
+-                          ))}
++                            )
++                          })}
+                           <button
+                             type="button"
+                             onClick={() => openNew('screens', s.id)}
+@@ -459,6 +486,7 @@ export function UserJourneyPage() {
+           onClose={() => setEditing(null)}
+           onSave={saveEditing}
+           onDelete={deleteEditing}
++          onOpenScreen={(stageId, screen) => openItem('screens', stageId, screen)}
+         />
+       )}
+ 
+@@ -497,6 +525,7 @@ function ItemPanel({
+   onClose,
+   onSave,
+   onDelete,
++  onOpenScreen,
+ }: {
+   editing: Editing
+   map: JourneyMap
+@@ -504,12 +533,13 @@ function ItemPanel({
+   onClose: () => void
+   onSave: (e: Editing) => void
+   onDelete: (e: Editing) => void
++  onOpenScreen: (stageId: string, screen: JourneyScreen) => void
+ }) {
+   const [draft, setDraft] = useState(editing)
+   const [error, setError] = useState<string | null>(null)
+   const moment = draft.kind === 'moments'
+   const noun = moment ? 'moment' : 'screen'
+-  const set = (patch: Partial<JourneyItem>) => setDraft({ ...draft, item: { ...draft.item, ...patch } })
++  const set = (patch: Partial<JourneyScreen>) => setDraft({ ...draft, item: { ...draft.item, ...patch } })
+ 
+   async function pick(event: ChangeEvent<HTMLInputElement>) {
+     const file = event.target.files?.[0]
+@@ -525,7 +555,7 @@ function ItemPanel({
+   return (
+     <SidePanel
+       title={editing.isNew ? `New ${noun}` : editing.item.title || `Untitled ${noun}`}
+-      description={!moment ? 'A product screen that serves this stage.' : groups ? 'Details, then tags and review.' : 'What happens, and the feature it suggests.'}
++      description={!moment ? 'A product screen, the moments it serves and where it lives.' : groups ? 'Details, then tags and review.' : 'What happens, and the feature it suggests.'}
+       onClose={onClose}
+       footer={
+         <>
+@@ -582,6 +612,7 @@ function ItemPanel({
+           </div>
+           {error && <span className="text-11 text-adm-critical">{error}</span>}
+         </div>
++        {moment ? <MomentScreens map={map} momentId={draft.item.id} onOpen={onOpenScreen} /> : <ScreenLinks map={map} draft={draft.item} onChange={set} />}
+         {groups && (
+           <div className="flex flex-col gap-12 border-t border-adm-line pt-16">
+             <div>
+@@ -596,6 +627,83 @@ function ItemPanel({
+   )
+ }
+ 
++/** Read-only: the screens that serve a moment. None is the signal a design is missing. */
++function MomentScreens({ map, momentId, onOpen }: { map: JourneyMap; momentId: string; onOpen: (stageId: string, screen: JourneyScreen) => void }) {
++  const screens = screensFor(map, momentId)
++  return (
++    <div className="flex flex-col gap-8 border-t border-adm-line pt-16">
++      <div>
++        <h3 className="text-13 font-semibold text-adm-ink">Screens</h3>
++        <p className="mt-2 text-12 text-adm-muted">The product screens that serve this moment. Link one from the screen's own panel.</p>
++      </div>
++      {screens.length === 0 ? (
++        <p className="inline-flex items-center gap-6 rounded-8 border border-dashed border-adm-line px-10 py-8 text-12 text-adm-critical">
++          <AlertCircle size={13} aria-hidden="true" /> No screen yet
++        </p>
++      ) : (
++        <ul className="flex flex-col gap-6">
++          {screens.map(({ stageId, screen }) => (
++            <li key={screen.id}>
++              <button type="button" onClick={() => onOpen(stageId, screen)} className="flex w-full items-center gap-10 rounded-8 border border-adm-line p-6 text-left hover:bg-adm-hover">
++                <span className="flex h-[52px] w-[26px] shrink-0 items-center justify-center overflow-hidden rounded-4 bg-adm-hover">
++                  {screen.image ? <img src={screen.image} alt="" className="size-full object-cover object-top" /> : <ImagePlus size={11} className="text-adm-muted" />}
++                </span>
++                <span className="min-w-0 flex-1">
++                  <span className="block truncate text-12 font-medium text-adm-ink">{screen.title}</span>
++                  <span className="block text-11 text-adm-muted">{map.stages.find((s) => s.id === stageId)?.title}</span>
++                </span>
++              </button>
++            </li>
++          ))}
++        </ul>
++      )}
++    </div>
++  )
++}
++
++/** A screen's moments (any stage) and where it lives. */
++function ScreenLinks({ map, draft, onChange }: { map: JourneyMap; draft: JourneyScreen; onChange: (patch: Partial<JourneyScreen>) => void }) {
++  const chosen = new Set(draft.momentIds ?? [])
++  const all = allMoments(map)
++  const href = linkHref(draft.link)
++  const selected = servedMoments(map, draft).length
++  return (
++    <div className="flex flex-col gap-14 border-t border-adm-line pt-16">
++      <fieldset className="flex min-w-0 flex-col gap-10">
++        <legend className="text-13 font-semibold text-adm-ink">Serves these moments</legend>
++        <p className="text-12 text-adm-muted">{selected ? `${selected} selected, from any stage.` : 'None yet. Pick the moments this screen answers, in any stage.'}</p>
++        {map.stages.map((s) => {
++          const items = all.filter((m) => m.stageId === s.id)
++          if (items.length === 0) return null
++          return (
++            <div key={s.id} className="flex flex-col gap-2">
++              <span className="inline-flex items-center gap-6 text-10 font-semibold uppercase tracking-widest text-adm-muted">
++                <span className="size-6 rounded-full" style={{ background: s.color }} aria-hidden="true" /> {s.title}
++              </span>
++              {items.map(({ moment: m }) => (
++                <label key={m.id} className="flex cursor-pointer items-center gap-8 rounded-8 px-6 py-4 text-12 text-adm-ink hover:bg-adm-hover">
++                  <input type="checkbox" checked={chosen.has(m.id)} onChange={(e) => onChange({ momentIds: toggleMoment(draft, m.id, e.target.checked).momentIds })} />
++                  <span className="min-w-0 flex-1">{m.title}</span>
++                </label>
++              ))}
++            </div>
++          )
++        })}
++      </fieldset>
++      <FormField label="Link" hint="Where it lives: app route or Figma URL">
++        <div className="flex gap-8">
++          <input aria-label="Link" className={`${inputClass} min-w-0 flex-1`} value={draft.link ?? ''} placeholder="/play/… or https://www.figma.com/…" onChange={(e) => onChange({ link: e.target.value })} />
++          {href && (
++            <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex shrink-0 items-center gap-4 rounded-8 border border-adm-line px-10 text-12 font-medium text-adm-ink hover:bg-adm-hover">
++              <ExternalLink size={12} aria-hidden="true" /> Open
++            </a>
++          )}
++        </div>
++      </FormField>
++    </div>
++  )
++}
++
+ function StageNames({ map, onClose, onSave }: { map: JourneyMap; onClose: () => void; onSave: (stages: { id: string; title: string; question: string }[]) => void }) {
+   const [drafts, setDrafts] = useState(() => map.stages.map((s) => ({ id: s.id, title: s.title, question: s.question, color: s.color })))
+   return (
+-- 
+2.43.0
+

@@ -66,6 +66,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J123 | 2026-11-18 | Question | How the user journey is actually used: who, when, and three concrete walkthroughs (planning a sprint, after interviews, briefing content) | — |
 | J124 | 2026-11-18 | Docs | A one-to-two-sentence question for the lead to confirm what the user journey is for | — |
 | J125 | 2026-11-18 | Question | What "Add screen" in the user journey is for, and its weak spot (screens belong to a stage, not to a moment) | — |
+| J126 | 2026-11-18 | Code + Research | Screens linked to moments (done with another agent); a second, deeper Insight Timer research started (behaviour, journeys, what to adopt, then a roast) | U095 |
 | J117 | 2026-11-18 | Question | "I can't see what changed": Journey tags is on staging only (O34); where to find it and how to check the build | — |
 | J118 | 2026-11-18 | Code | Admin sidebar too long: folding groups and a sticky sidebar; the missing phone menu button fixed. Staging; production waits for a request | U090 |
 | J119 | 2026-11-18 | Code | User journey flow simplified as head of product (one page, one panel), and the desktop sidebar that folds to an icon rail (Eugene) | U091, U092 |
@@ -1427,3 +1428,11 @@ transcript and the update log. Everything from J018 on was written at the time.
   3. A before/after record when a screen is redesigned.
 - **Weak spot:** a screen belongs to a whole stage, not to a moment. With one screen per stage it reads as an example, not as "this screen serves this moment".
 - **Proposed:** link a screen to one or more moments, plus an optional link to the app route or the Figma frame.
+
+### J126 — Screens linked to moments; deeper Insight Timer research
+- **Asked:** "ya coba tolong tambahkan. saja dan kerjakan dengan agent lain. terkait ini "Insight Timer, and what it means for Aurelia" tolong saya mau lakukan lebih deep lagi soal research nya, dari user behaviour, user journey nya juga kemudian apa yang bisa kita adopsi. hasil research di roast lagi untuk mendapatkan hasil yang jauh lebih baik. jika kamu ada flow chart atau user journey dari mereka akan lebih baik. intinya si eugene ini mau benar benar kita bisa mengadopsi apa yang dimiliki insight timer untuk bisa kita ambil dan tiru. kamu tolong lakukan pencarian yang lebih luas mungkin dari sosial media atau apa"
+- **Done:** U095 (screens ↔ moments), built by a separate agent and reviewed here.
+- **In progress:** second-round Insight Timer research in `docs/research/research_notes/Insight Timer behaviour and journeys/`.
+  - Done so far: retention mechanics and evidence; nine journey flows as flow charts.
+  - Still running: user behaviour from social media and reviews.
+  - Then: a report with what to adopt, a roast, and the wiki Research tab.

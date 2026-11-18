@@ -482,7 +482,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U094**, last J = **J125**, last
+**Numbering as of 17 Nov 2026:** last U = **U095**, last J = **J126**, last
 O = **O35**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -925,6 +925,7 @@ history can be read without opening four documents.
 | U092 | `01e0e78` | 2026-11-18 | User journey reworked after user feedback: Journey tags merged in as tabs, a map that fits, one side panel per moment (details + tags + review), Add moment + More, one export file. Staging. | [patch](update-log/patches/U092-01e0e78.patch) |
 | U093 | `db0b3a0` | 2026-11-18 | Desktop sidebar folded to the rail by default; the expanded sidebar tighter (232px, 44px rows). Phone drawer unchanged. Staging only (`RELEASES.sidebarRail`). | [patch](update-log/patches/U093-db0b3a0.patch) |
 | U094 | `1c2e0f4` | 2026-11-18 | Desktop sidebar consistent: every icon 20px, rail tiles 56px with 11px labels, rail 72px; the phone drawer unchanged. Staging only. | [patch](update-log/patches/U094-1c2e0f4.patch) |
+| U095 | `09868db` | 2026-11-18 | User journey: a screen links to the moments it serves and to where it lives (route or Figma); a moment lists its screens or says "No screen yet". Built by a separate agent, reviewed here. Staging. | [patch](update-log/patches/U095-09868db.patch) |
 | J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
@@ -942,6 +943,7 @@ history can be read without opening four documents.
 | J123 | 2026-11-18 | Question | How the user journey is actually used: who, when, and three concrete walkthroughs (planning a sprint, after interviews, briefing content) | — |
 | J124 | 2026-11-18 | Docs | A one-to-two-sentence question for the lead to confirm what the user journey is for | — |
 | J125 | 2026-11-18 | Question | What "Add screen" in the user journey is for, and its weak spot (screens belong to a stage, not to a moment) | — |
+| J126 | 2026-11-18 | Code + Research | Screens linked to moments (done with another agent); a second, deeper Insight Timer research started (behaviour, journeys, what to adopt, then a roast) | U095 |
 
 ### 17.2 Code changes (U)
 

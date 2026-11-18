@@ -131,9 +131,46 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U092 | `01e0e78` | 2026-11-18 | User journey reworked after user feedback: Journey tags merged in as tabs, a map that fits, one side panel per moment (details + tags + review), Add moment + More, one export file. Staging. | [patch](patches/U092-01e0e78.patch) |
 | U093 | `db0b3a0` | 2026-11-18 | Desktop sidebar folded to the rail by default; the expanded sidebar tighter (232px, 44px rows). Phone drawer unchanged. Staging only (`RELEASES.sidebarRail`). | [patch](patches/U093-db0b3a0.patch) |
 | U094 | `1c2e0f4` | 2026-11-18 | Desktop sidebar consistent: every icon 20px, rail tiles 56px with 11px labels, rail 72px; the phone drawer unchanged. Staging only. | [patch](patches/U094-1c2e0f4.patch) |
+| U095 | `09868db` | 2026-11-18 | User journey: a screen links to the moments it serves and to where it lives (route or Figma); a moment lists its screens or says "No screen yet". Built by a separate agent, reviewed here. Staging. | [patch](patches/U095-09868db.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U095 — User journey: screens serve moments
+
+- **Commit:** `09868db` · pushed 2026-11-18 UTC · `web_app` + `admin_cms`. Not flag-gated: reaches production with the next push there.
+- **Patch:** [patches/U095-09868db.patch](patches/U095-09868db.patch)
+- **Request:** "ya coba tolong tambahkan. saja dan kerjakan dengan agent lain", answering J125's proposal: link a screen to the moments it serves, plus a link to where it lives.
+- **How it was built:**
+  - Delegated to a separate agent working in its own git worktree, as asked.
+  - Brought in here by cherry-pick, re-checked and looked at once on a staging build.
+- **Changed:**
+  - `src/admin/data/userJourney.ts`:
+    - `JourneyScreenSchema` adds optional `momentIds` and `link` to screens. Old saved data and old exports still parse; moments are unchanged.
+    - Initial links: `s1` → `r1`, `r2`; `s2` → `c1`, `c2`; `s3` → `e1`, `e2`, `e4`, `e5`.
+    - Helpers: `allMoments`, `servedMoments`, `screensFor`, `toggleMoment`, `unlinkMoment`, `linkHref`. `linkHref` only opens `/route` or `http(s)://`, never `javascript:`.
+    - Six new tests.
+  - `src/admin/pages/UserJourneyPage.tsx`:
+    - Screen panel: "Serves these moments" (grouped by stage) and "Link", with Open.
+    - Moment panel: its screens, which open on click, or "No screen yet".
+    - Map: a phone icon and count on moments; "Serves N moments" or "No moment linked" under screens.
+    - Deleting a moment unlinks it from every screen.
+    - The map scroller is `relative`, which fixed a 231px page overflow at 402px caused by the badge's screen-reader label.
+- **Verified:**
+  - By the agent: `npm run check` (152 tests). Playwright on staging and production builds at 1440px and 402px, all 80 checks passed:
+    - link, save, reload;
+    - the moment panel lists the screen;
+    - deleting a moment unlinks it;
+    - old-shape saved data keeps its edits;
+    - no overflow and no console errors.
+
+    Not checked in a browser: Export → Import through the real file picker (covered by unit tests).
+  - Here: `npm run check` again after the cherry-pick; one staging screenshot of the screen panel, with no errors.
+- **Judgement calls (agent):**
+  - `e3` "After an event" is left unlinked, so it shows "No screen yet".
+  - A screen can serve moments in any stage.
+  - Opening a screen from a moment's panel discards that moment's unsaved edits.
+- **Revert:** `git revert --no-commit 09868db && git checkout HEAD -- docs/`.
 
 ### U094 — Desktop sidebar: consistent sizes
 
