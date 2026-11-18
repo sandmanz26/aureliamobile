@@ -80,7 +80,7 @@ export function StoryPage() {
 
       {session &&
         createPortal(
-          <div className="fixed inset-x-0 bottom-0 z-30 bg-background-default px-20 pb-20 pt-12 lg:left-[260px] lg:px-24 [:root[data-tabbar]_&]:bottom-[calc(64px+env(safe-area-inset-bottom))] lg:[:root[data-tabbar]_&]:bottom-0">
+          <div className="fixed inset-x-0 bottom-0 z-30 bg-background-default px-20 pb-20 pt-12 lg:left-(--app-sidebar) lg:px-24 [:root[data-tabbar]_&]:bottom-[calc(64px+env(safe-area-inset-bottom))] lg:[:root[data-tabbar]_&]:bottom-0">
             <div className="mx-auto w-full max-w-[402px] lg:max-w-[720px]">
               <Link to={`/play/${session.slug}`} className="u-press text-style-body flex h-56 w-full items-center justify-center gap-8 rounded-16 bg-[#331B04] text-text-inverse">
                 Try the Session

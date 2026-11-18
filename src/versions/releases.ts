@@ -29,4 +29,6 @@ export const RELEASES = {
   aboutPage: true,
   /** Admin → Product → Journey tags (U089): the user journey's tagging, for review. Staging only until asked. */
   journeyTags: BUILD.environment !== 'production',
+  /** Desktop sidebar that folds to an icon rail and expands again (U091, Eugene). Staging only until asked. */
+  sidebarRail: BUILD.environment !== 'production',
 } as const

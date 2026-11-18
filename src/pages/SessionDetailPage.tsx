@@ -189,7 +189,7 @@ export function SessionDetailPage() {
         // it rather than under it (see SessionSettingsPage's Apply changes
         // button, which needs the same offset — AppLayout's own number, keep
         // the two in sync).
-        <div className="fixed inset-x-0 bottom-0 z-30 bg-background-default px-20 pb-20 pt-12 lg:left-[260px] lg:px-24">
+        <div className="fixed inset-x-0 bottom-0 z-30 bg-background-default px-20 pb-20 pt-12 lg:left-(--app-sidebar) lg:px-24">
           <div className="mx-auto w-full max-w-[402px] lg:max-w-[960px]">
             <Link
               to={recreate.to}

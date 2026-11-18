@@ -111,6 +111,9 @@
 /* Unlayered, so these beat Tailwind's utilities. Every viewport-height
    layout gives up the bar's height, and sticky headers sit under it. */
 :root { --staging-bar: 0px; }
+/* The desktop sidebar's width, for fixed bars that sit beside it (U091: it folds to an 88px rail). */
+:root { --app-sidebar: 260px; }
+:root[data-sidebar='rail'] { --app-sidebar: 88px; }
 :root[data-staging-bar] { --staging-bar: 28px; }
 :root[data-staging-bar] body { padding-top: var(--staging-bar); }
 /* Unlayered rules beat every utility on the element, responsive ones too,

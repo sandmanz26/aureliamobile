@@ -1,6 +1,6 @@
-import { Plus, Sparkles } from 'lucide-react'
-import { Suspense, useEffect, useState } from 'react'
-import { Link, Outlet, useLocation, useNavigate, useNavigationType } from 'react-router-dom'
+import { PanelLeftClose, PanelLeftOpen, Plus, Sparkles } from 'lucide-react'
+import { Suspense, useEffect, useState, type ReactNode } from 'react'
+import { Link, NavLink, Outlet, useLocation, useNavigate, useNavigationType } from 'react-router-dom'
 import { FloatingPlayer, PullIndicator, usePullToRefresh, useSheetDrag } from '../versions/V2Shell'
 import { useUiVersion } from '../versions/useUiVersion'
 import { useAuth } from '../auth/AuthContext'
@@ -17,10 +17,13 @@ import { PhotoCircle } from '../components/ui/PhotoCircle'
 import { recentSessions } from '../lib/sessions'
 import { DrawerContext } from './DrawerContext'
 import { TabBar } from '../components/ui/TabBar'
+import { AureliaLogo } from '../components/ui/AureliaLogo'
+import { readString, writeString } from '../lib/storage'
+import { RELEASES } from '../versions/releases'
 
 const LATEST = recentSessions()
 
-function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarContent({ onNavigate, onCollapse }: { onNavigate?: () => void; onCollapse?: () => void }) {
   const unread = useHasUnreadNotifications()
   const { isEnabled } = useFeatureFlags()
   const { signedIn } = useAuth()
@@ -63,6 +66,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           {/* The supplied sidebar lockup (mark + gradient wordmark, 114x32). */}
           <img src={sidebarLogo} alt="Aurelia" width={114} height={32} className="block h-32 w-auto" />
         </Link>
+        <div className="flex items-center gap-12">
         {isEnabled('notifications') && (
           <button
             type="button"
@@ -78,6 +82,13 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             {unread ? <NotificationActiveIcon size={24} /> : <NotificationIcon size={24} />}
           </button>
         )}
+        {/* Desktop only (U091): fold the sidebar to the icon rail. */}
+        {onCollapse && (
+          <button type="button" aria-label="Collapse sidebar" title="Collapse sidebar" onClick={onCollapse} className="u-press text-icon-default">
+            <PanelLeftClose size={22} strokeWidth={1.5} />
+          </button>
+        )}
+        </div>
       </div>
 
       {/* No gap: the frame's rows are 56 tall and stack flush, so the spacing
@@ -198,8 +209,115 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
+const RAIL_KEY = 'aurelia.sidebar.rail'
+
+/**
+ * The desktop sidebar folded to an icon rail (U091, Eugene's request): the
+ * same destinations as the full sidebar, each an icon with a short label,
+ * New session as the round button on top, and Expand at the foot. Recent
+ * sessions and the build badge live only in the full sidebar.
+ */
+function SidebarRail({ onExpand }: { onExpand: () => void }) {
+  const unread = useHasUnreadNotifications()
+  const { isEnabled } = useFeatureFlags()
+  const { signedIn } = useAuth()
+  const gate = useSignInGate()
+  const v4 = useUiVersion() >= 4
+
+  const items: { to: string; label: string; icon: ReactNode; flag?: string }[] = v4
+    ? [
+        { to: '/home', label: 'Create', icon: <Sparkles size={22} strokeWidth={1.5} /> },
+        { to: '/explore', label: 'Discover', icon: <NoteIcon size={24} />, flag: 'explore' },
+        { to: '/wellness', label: 'Progress', icon: <ChartMediumIcon size={24} />, flag: 'wellness' },
+      ]
+    : [
+        { to: '/explore', label: 'Explore', icon: <NoteIcon size={24} />, flag: 'explore' },
+        { to: '/sessions', label: 'Sessions', icon: <PlaylistIcon size={24} />, flag: 'sessions' },
+        { to: '/wellness', label: 'Wellness', icon: <ChartMediumIcon size={24} />, flag: 'wellness' },
+      ]
+  const account = signedIn
+    ? { to: '/profile', label: v4 ? 'Me' : 'Profile', icon: <PhotoCircle photo="avatar" size={24} gradient="conic-gradient(from 180deg, var(--color-blue-300), var(--color-gold-300), var(--color-blue-300))" />, flag: 'profile' }
+    : { to: '/login', label: 'Sign In', icon: <UserIcon size={24} />, flag: 'auth' }
+  const all = v4 ? [...items, account] : [account, ...items]
+
+  const tile = 'u-press flex w-full flex-col items-center gap-4 rounded-12 px-4 py-10 text-center text-[11px] leading-[14px] text-text-primary'
+  const iconButton = 'u-press relative flex size-44 items-center justify-center rounded-12 text-icon-default hover:bg-background-elevated'
+
+  return (
+    <div className="flex h-full flex-col items-center gap-16 px-8 pb-20 pt-24">
+      <Link to="/home" aria-label="Aurelia home" className="u-press">
+        <AureliaLogo iconSize={32} markOnly />
+      </Link>
+      <button
+        type="button"
+        aria-label="New session"
+        title="New session"
+        onClick={() => gate('/chat', { fresh: true })}
+        className="u-press flex size-44 items-center justify-center rounded-full text-text-inverse"
+        style={{ background: 'linear-gradient(90deg, #FF881B, #FFE682)' }}
+      >
+        <Plus size={18} />
+      </button>
+      <nav className="flex w-full flex-col gap-4">
+        {all.map((item) =>
+          item.flag && !isEnabled(item.flag) ? (
+            <span key={item.to} aria-disabled="true" title="Not part of this walkthrough" className={`${tile} pointer-events-none opacity-45`}>
+              <span className="text-icon-default">{item.icon}</span>
+              {item.label}
+            </span>
+          ) : (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) => `${tile} ${isActive ? 'bg-background-elevated font-semibold' : 'hover:bg-background-elevated'}`}
+            >
+              <span className="text-icon-default">{item.icon}</span>
+              {item.label}
+            </NavLink>
+          ),
+        )}
+      </nav>
+      <div className="mt-auto flex flex-col items-center gap-4">
+        {isEnabled('notifications') && (
+          <button type="button" aria-label={unread ? 'Notifications, unread' : 'Notifications'} title="Notifications" onClick={() => gate('/notifications')} className={iconButton}>
+            {unread ? <NotificationActiveIcon size={24} /> : <NotificationIcon size={24} />}
+          </button>
+        )}
+        {isEnabled('invite') && (
+          <button type="button" aria-label="Invite a Friend" title="Invite a Friend" onClick={() => gate('/invite')} className={iconButton}>
+            <UserAddIcon size={24} />
+          </button>
+        )}
+        {isEnabled('help') && (
+          <Link to="/help" aria-label="Help" title="Help" className={iconButton}>
+            <MessageQuestionIcon size={24} />
+          </Link>
+        )}
+        <div className="mt-8 flex w-full justify-center border-t border-border-default pt-8">
+          <button type="button" aria-label="Expand sidebar" title="Expand sidebar" onClick={onExpand} className={iconButton}>
+            <PanelLeftOpen size={22} strokeWidth={1.5} />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
+  // Desktop sidebar folded to the icon rail; remembered per browser (U091).
+  const [rail, setRail] = useState(() => RELEASES.sidebarRail && readString(RAIL_KEY) === '1')
+  function setRailMode(next: boolean) {
+    setRail(next)
+    writeString(RAIL_KEY, next ? '1' : '0')
+  }
+  // Fixed bars beside the sidebar read its width from --app-sidebar.
+  useEffect(() => {
+    const root = document.documentElement
+    if (rail) root.setAttribute('data-sidebar', 'rail')
+    else root.removeAttribute('data-sidebar')
+    return () => root.removeAttribute('data-sidebar')
+  }, [rail])
 
   // The drawer has no close button by design, so Escape has to be a real way
   // out — the backdrop alone is not one for a keyboard.
@@ -240,8 +358,10 @@ export function AppLayout() {
             `SessionSettingsPage` each offset a fixed bottom bar by this same
             figure (`lg:left-[313px]`) to sit beside it rather than under it —
             changing one without the other leaves a gap or an overlap. */}
-        <aside className="hidden w-[260px] shrink-0 border-r border-border-subtle bg-surface-default lg:sticky lg:top-0 lg:block lg:h-screen">
-          <SidebarContent />
+        <aside
+          className={`hidden shrink-0 border-r border-border-subtle bg-surface-default transition-[width] duration-200 lg:sticky lg:top-0 lg:block lg:h-screen ${rail ? 'w-[88px]' : 'w-[260px]'}`}
+        >
+          {rail ? <SidebarRail onExpand={() => setRailMode(false)} /> : <SidebarContent onCollapse={RELEASES.sidebarRail ? () => setRailMode(true) : undefined} />}
         </aside>
 
         {/* Mobile: hamburger-triggered drawer, faithful to the Figma "Menu" screen */}
