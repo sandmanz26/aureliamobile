@@ -65,6 +65,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J117 | 2026-11-18 | Question | "I can't see what changed": Journey tags is on staging only (O34); where to find it and how to check the build | — |
 | J118 | 2026-11-18 | Code | Admin sidebar too long: folding groups and a sticky sidebar; the missing phone menu button fixed. Staging; production waits for a request | U090 |
 | J119 | 2026-11-18 | Code | User journey flow simplified as head of product (one page, one panel), and the desktop sidebar that folds to an icon rail (Eugene) | U091, U092 |
+| J120 | 2026-11-18 | Code | Desktop sidebar still too big, and should start minimised: rail by default, tighter when expanded | U093 |
 | J115 | 2026-11-18 | Code + Release | Admin "User journey" menu built from the owner's journey-blueprint zip, on staging and production | U088 |
 | J116 | 2026-11-18 | Proposal + Code | Tagging and classification for the user journey, as a new admin menu for review (Journey tags), staging only | U089 |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
@@ -1344,3 +1345,11 @@ transcript and the update log. Everything from J018 on was written at the time.
   - Both are on staging.
   - The rail is behind `RELEASES.sidebarRail` (staging only).
   - The reworked user journey map is not behind a flag. It reaches production with the next push to `web_prod`; the tags stay off there (O34).
+
+### J120 — Sidebar: smaller, and minimised by default
+- **Asked:** "saya merasa ini masih terlalu besar dan by default harsunya terminimize"
+- **Done:** U093, on staging.
+  - Desktop opens on the icon rail.
+  - Expanded, the sidebar is 232px with tighter rows.
+  - The phone drawer is unchanged.
+  - Production waits for a request (`RELEASES.sidebarRail`).

@@ -129,9 +129,34 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U090 | `8440ca1` | 2026-11-18 | Admin sidebar: groups fold (current one open, choices remembered), tighter, sticky; the phone menu button, hidden by the v4/v5 rule, is back. Staging; production on request. | [patch](patches/U090-8440ca1.patch) |
 | U091 | `cb7c21b` | 2026-11-18 | Desktop sidebar folds to an 88px icon rail and expands again, remembered per browser; fixed bars follow `--app-sidebar`. Staging only (`RELEASES.sidebarRail`). | [patch](patches/U091-cb7c21b.patch) |
 | U092 | `01e0e78` | 2026-11-18 | User journey reworked after user feedback: Journey tags merged in as tabs, a map that fits, one side panel per moment (details + tags + review), Add moment + More, one export file. Staging. | [patch](patches/U092-01e0e78.patch) |
+| U093 | `db0b3a0` | 2026-11-18 | Desktop sidebar folded to the rail by default; the expanded sidebar tighter (232px, 44px rows). Phone drawer unchanged. Staging only (`RELEASES.sidebarRail`). | [patch](patches/U093-db0b3a0.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U093 — Sidebar folded by default, tighter when open
+
+- **Commit:** `db0b3a0` · pushed 2026-11-18 UTC · `web_app` + `admin_cms`. Staging only (`RELEASES.sidebarRail`).
+- **Patch:** [patches/U093-db0b3a0.patch](patches/U093-db0b3a0.patch)
+- **Request:** "saya merasa ini masih terlalu besar dan by default harsunya terminimize" (screenshot of the expanded desktop sidebar on staging).
+- **Interpretation:** two asks. Start folded, and make the open sidebar smaller. Desktop only; the phone drawer is frozen.
+- **Changed:**
+  - `src/layouts/AppLayout.tsx`:
+    - The rail is the default on desktop; only a browser that chose Expand (`aurelia.sidebar.rail` = `0`) opens wide.
+    - The expanded desktop sidebar is 232px wide instead of 260px.
+    - Rows are 44px at 15px instead of the drawer's 56px at 16px.
+    - Gaps, the logo row, the Latest/Recent block and New session (38px) are tighter.
+    - Done with a `compact` prop on `SidebarContent` that only the desktop aside passes.
+  - `src/components/ui/NavItem.tsx`: a `compact` prop for the same rows.
+  - `src/styles/versions.css`: `--app-sidebar` is 232px with `data-sidebar='compact'`.
+- **Verified:**
+  - Staging build, designs v1 and v5 at 1440px:
+    - a first visit shows the 88px rail;
+    - Expand gives 232px and `--app-sidebar: 232px`, and survives a reload.
+  - Phone drawer: rows still 56px.
+  - Production build: sidebar 260px, unchanged.
+  - No errors.
+- **Revert:** `git revert --no-commit db0b3a0 && git checkout HEAD -- docs/`.
 
 ### U092 — User journey: one page, one panel
 

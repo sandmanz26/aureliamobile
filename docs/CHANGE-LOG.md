@@ -19,6 +19,13 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-18 — Sidebar rail by default (U093, J120)
+
+On desktop the sidebar starts folded to the icon rail; expanded it is
+tighter (232px, 44px rows). The phone drawer is unchanged.
+
+Branches: `web_app`, `admin_cms` (staging only, `RELEASES.sidebarRail`).
+
 ### 2026-11-18 — Sidebar rail; a simpler user journey (U091, U092, J119)
 
 The desktop sidebar folds to an icon rail and expands again (staging only).
