@@ -13,6 +13,7 @@ import pmPlaybook from './content/pm-playbook.html?raw'
 import pmPlaybookV2 from './content/pm-playbook-v2.html?raw'
 import pmPlaybookV3 from './content/pm-playbook-v3.html?raw'
 import researchInsightTimer from './content/research-insight-timer.html?raw'
+import researchRound2 from '../../docs/research/reports/Insight Timer behaviour and journeys.md?raw'
 import prdOverview from '../../docs/PRD-OVERVIEW.md?raw'
 import apiContract from '../../docs/api/API-CONTRACT.md?raw'
 import backendOld from '../../docs/backend-old/BACKEND-OLD.md?raw'
@@ -84,7 +85,7 @@ const DOCS = [
     title: 'Research',
     blurb: 'What we learn from other products. First: Insight Timer, the biggest free meditation app, and what it means for Aurelia.',
     audience: 'The product owner, the project manager and anyone shaping what Aurelia builds next',
-    inside: ['Every Insight Timer feature, and what is free or paid', 'How it makes money and why people stay', 'What went wrong for its users, 2024–2026', 'Where Aurelia overlaps, differs and can win'],
+    inside: ['How people really use Insight Timer, from Reddit and reviews', 'Its whole journey as 11 flow charts', 'What Aurelia should adopt now, next and later, after a roast', 'Round 1: features, business, backlash and competitors'],
     icon: Telescope,
     source: 'scripts/guides/research_insight_timer.py',
     html: () => researchInsightTimer,
@@ -134,6 +135,8 @@ interface DocVersion {
   label: string
   note: string
   html: () => string
+  /** Rendered from Markdown: styled as a Markdown document, not a generated guide. */
+  markdown?: boolean
 }
 const DOC_VERSIONS: Partial<Record<DocId, DocVersion[]>> = {
   playbook: [
@@ -145,6 +148,17 @@ const DOC_VERSIONS: Partial<Record<DocId, DocVersion[]>> = {
     { v: 1, label: 'Original', note: 'Every module in full, with screenshots.', html: () => adminGuideline },
     { v: 2, label: 'Task guide', note: 'Organised by what you want to do, in plain words.', html: () => adminGuidelineV2 },
     { v: 3, label: 'Quick start', note: 'The morning check, the map and the rules, on one page.', html: () => adminGuidelineV3 },
+  ],
+  // Round 2 first, so it is the default (U098).
+  research: [
+    {
+      v: 2,
+      label: 'Behaviour & journeys',
+      note: 'Round 2: how people really use it, 11 flow charts, what to adopt, the roast.',
+      html: () => marked.parse(researchRound2, { async: false }),
+      markdown: true,
+    },
+    { v: 1, label: 'Features & business', note: 'Round 1: features, strategy, backlash, competitors.', html: () => researchInsightTimer },
   ],
 }
 
@@ -303,6 +317,42 @@ function GuideDoc({ meta, version }: { meta: (typeof DOCS)[number]; version?: Do
     })
   }, [query, prepared])
 
+  // Flow charts written as ```mermaid blocks become diagrams (U098). The
+  // library is large, so it loads only for a document that has one.
+  useEffect(() => {
+    const root = content.current
+    const blocks = root ? [...root.querySelectorAll<HTMLElement>('pre > code.language-mermaid')] : []
+    if (!blocks.length) return
+    let cancelled = false
+    void import('mermaid').then(async ({ default: mermaid }) => {
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'strict',
+        theme: 'base',
+        fontFamily: 'Mulish, system-ui, sans-serif',
+        themeVariables: { primaryColor: '#fff7ec', primaryBorderColor: '#e0a35a', primaryTextColor: '#3c2405', lineColor: '#b4530a', fontSize: '14px' },
+        flowchart: { htmlLabels: false, curve: 'basis' },
+      })
+      for (const [i, code] of blocks.entries()) {
+        if (cancelled) return
+        const pre = code.parentElement
+        if (!pre) continue
+        try {
+          const { svg } = await mermaid.render(`gd-mermaid-${i}`, code.textContent ?? '')
+          const figure = document.createElement('div')
+          figure.className = 'gd-mermaid'
+          figure.innerHTML = svg
+          pre.replaceWith(figure)
+        } catch {
+          pre.classList.add('gd-mermaid-error')
+        }
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [prepared])
+
   useEffect(() => {
     const root = content.current
     if (!root || !('IntersectionObserver' in window)) return
@@ -410,7 +460,7 @@ function GuideDoc({ meta, version }: { meta: (typeof DOCS)[number]; version?: Do
           ) : (
             <div
               ref={content}
-              className={`gd-doc ${meta.id === 'admin' || meta.id === 'playbook' || meta.id === 'research' ? 'is-guideline' : 'is-markdown'}`}
+              className={`gd-doc ${!version?.markdown && (meta.id === 'admin' || meta.id === 'playbook' || meta.id === 'research') ? 'is-guideline' : 'is-markdown'}`}
               onClick={onContentClick}
               // Our own documents from the repository, not user input.
               dangerouslySetInnerHTML={{ __html: prepared.html }}

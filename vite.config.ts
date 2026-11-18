@@ -96,7 +96,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2,webmanifest}'],
         // three.js behind the off-by-default 3D network, and the /wiki team
         // documents (180 kB): fetched when first opened, not installed for everyone.
-        globIgnores: ['**/networkScene-*.js', '**/GuidePage-*'],
+        // Mermaid (the wiki's flow charts, U098) likewise.
+        globIgnores: ['**/networkScene-*.js', '**/GuidePage-*', '**/mermaid-vendor-*'],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//, /^\/__/],
@@ -149,6 +150,8 @@ export default defineConfig({
           groups: [
             { name: 'react-vendor', test: /node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/ },
             { name: 'query-vendor', test: /node_modules[\\/](@tanstack|zod)[\\/]/ },
+            // Mermaid and everything it pulls in, for the wiki's flow charts only (U098): one chunk, kept out of the precache below.
+            { name: 'mermaid-vendor', test: /node_modules[\\/](mermaid|@mermaid-js|cytoscape[^\\/]*|katex|d3[^\\/]*|dagre[^\\/]*|khroma|langium|chevrotain[^\\/]*|@chevrotain|roughjs|lodash-es|dayjs|elkjs|stylis|dompurify|internmap|delaunator|robust-predicates|vscode-[^\\/]*|ts-dedent|@iconify|@braintree|uuid|marked-[^\\/]*)[\\/]/ },
           ],
         },
       },

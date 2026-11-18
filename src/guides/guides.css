@@ -261,3 +261,8 @@
 
 /* A key/value table written with an empty header row ("| | |") shows no header. */
 .gd-doc thead:not(:has(th:not(:empty))) { display: none; }
+
+/* Flow charts rendered from ```mermaid blocks (U098). Wide charts scroll in their own box. */
+.gd-doc .gd-mermaid { margin: 20px 0 28px; padding: 16px; overflow-x: auto; border: 1px solid #ecdfcd; border-radius: 12px; background: #fffdf9; text-align: center; }
+.gd-doc .gd-mermaid svg { max-width: 100%; height: auto; }
+.gd-doc pre.gd-mermaid-error { border-left: 3px solid #d03b3b; }
