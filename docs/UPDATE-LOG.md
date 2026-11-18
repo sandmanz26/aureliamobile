@@ -132,9 +132,57 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U093 | `db0b3a0` | 2026-11-18 | Desktop sidebar folded to the rail by default; the expanded sidebar tighter (232px, 44px rows). Phone drawer unchanged. Staging only (`RELEASES.sidebarRail`). | [patch](patches/U093-db0b3a0.patch) |
 | U094 | `1c2e0f4` | 2026-11-18 | Desktop sidebar consistent: every icon 20px, rail tiles 56px with 11px labels, rail 72px; the phone drawer unchanged. Staging only. | [patch](patches/U094-1c2e0f4.patch) |
 | U095 | `09868db` | 2026-11-18 | User journey: a screen links to the moments it serves and to where it lives (route or Figma); a moment lists its screens or says "No screen yet". Built by a separate agent, reviewed here. Staging. | [patch](patches/U095-09868db.patch) |
+| U096 | `f655605` | 2026-11-18 | Admin: the Product group becomes Product lab; new Personas module with 300 synthetic, seeded personas, role-play prompts and balanced research panels for AI-run research. Personas staging only. | [patch](patches/U096-f655605.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U096 — Product lab and Personas
+
+- **Commit:** `f655605` · pushed 2026-11-18 UTC · `web_app` + `admin_cms`. Personas are staging only (`RELEASES.personas`). The group rename "Product lab" is not flagged and reaches production with the next push.
+- **Patch:** [patches/U096-f655605.patch](patches/U096-f655605.patch)
+- **Request:** "oke abaikan dulu yang dipikirkan oleh eugene. sekarang tolong buatkan menu namanya persona. dan user journey ini sebaiknya dimasukan ke menu yang lebih cocok deh, saya mungkin akan memasukan ke dalam menu baru bernamaa product lab instead of product saja. nah menu persona saya mau kamu isi dengan 300 data dengan persona yang berbeda beda, dengana segala variasi. saya mikirnya adalah ini akan digunakan untuk sebagai kandidat untuk menjalankan research via AI. bagaimana menurutmu ?"
+- **Opinion given:**
+  - A good use: a fixed, varied pool to test ideas, copy, onboarding and prices with AI before asking real people (like the J091 buyer panel).
+  - Synthetic answers are hypotheses, not evidence. Validation stays with interviews and the feedback-group study.
+- **Changed:**
+  - `src/admin/data/personas.ts` (new):
+    - `generatePersonas()` makes 300 personas from seed 2026 (mulberry32), identical on every build.
+    - Coherence rules:
+      - age fits work pattern and household (students under 40, retired from 51);
+      - goal drives struggle, triggers, session length and sound, and the user-journey moments (`r1`…`h1`);
+      - distrust of AI always appears as a barrier;
+      - someone who never meditated uses no app.
+    - Variety:
+      - 6 goals, ages 18–82, 17 countries in 6 regions with local names and cities;
+      - 9 work patterns, household and income;
+      - meditation experience and apps used, wearable;
+      - preferences, tech comfort, attitude to AI, willingness to pay, privacy;
+      - barriers; 14 circumstances to test for (low vision, hard of hearing, ADHD, autism, chronic pain, pregnancy, bereavement, burnout, therapy, English as a second language, night shifts, new parent, menopause, long COVID);
+      - a quote.
+    - Mix: 74 sleep, 64 calm, 46 regulate, 44 energy, 38 focus, 34 clarity; 140 with a circumstance flag.
+    - `personaPrompt()` writes a role-play system prompt that says the persona is synthetic.
+    - `drawPanel()` returns a goal-balanced, reproducible panel.
+    - `distribution()`.
+    - Tests: `personas.test.ts` (6).
+  - `src/admin/pages/PersonasPage.tsx` (new):
+    - a "Synthetic" note;
+    - Draw a research panel (size 6–100, Draw another, Export panel as JSON with a prompt per persona);
+    - six distributions;
+    - a searchable, filterable, sortable table with CSV export;
+    - a side panel per persona with its details, journey moments and role-play prompt (Copy);
+    - All as JSON.
+  - `src/admin/AdminLayout.tsx`: group "Product" → "Product lab", with Personas when released. Also `src/App.tsx` (route), `src/versions/releases.ts` (`personas`, staging only) and `src/demo/modules.ts` (flag `adminPersonas`).
+- **Verified:**
+  - `npm run check` passes (158 tests).
+  - Staging build at 1440px and 402px:
+    - Product lab holds User journey and Personas;
+    - 20 rows a page;
+    - the side panel shows the prompt;
+    - Draw another moves to panel 2;
+    - no overflow and no console errors.
+  - Production build: `/admin/personas` is not found, and no menu item shows.
+- **Revert:** `git revert --no-commit f655605 && git checkout HEAD -- docs/`.
 
 ### U095 — User journey: screens serve moments
 

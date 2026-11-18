@@ -231,6 +231,7 @@ Level with production (U072, 13 Nov 2026). Everything in `RELEASES` (`src/versio
 
 The full list is §17. Since 13 Nov:
 
+- **J128 / U096:** admin Product lab (User journey, Personas); 300 seeded synthetic personas for AI-run research (staging only, `RELEASES.personas`).
 - **J121 / U094:** desktop sidebar sizes made consistent (20px icons, 56px rail tiles, 72px rail); staging only.
 - **J120 / U093:** desktop sidebar starts on the rail; expanded it is 232px with tighter rows (staging only).
 - **J119 / U091–U092:** desktop sidebar folds to an icon rail (staging only, `RELEASES.sidebarRail`); the admin user journey reworked into one page with tabs and one side panel (Journey tags merged in; `/admin/journey-tags` redirects).
@@ -482,7 +483,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U095**, last J = **J127**, last
+**Numbering as of 17 Nov 2026:** last U = **U096**, last J = **J128**, last
 O = **O36**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -926,6 +927,7 @@ history can be read without opening four documents.
 | U093 | `db0b3a0` | 2026-11-18 | Desktop sidebar folded to the rail by default; the expanded sidebar tighter (232px, 44px rows). Phone drawer unchanged. Staging only (`RELEASES.sidebarRail`). | [patch](update-log/patches/U093-db0b3a0.patch) |
 | U094 | `1c2e0f4` | 2026-11-18 | Desktop sidebar consistent: every icon 20px, rail tiles 56px with 11px labels, rail 72px; the phone drawer unchanged. Staging only. | [patch](update-log/patches/U094-1c2e0f4.patch) |
 | U095 | `09868db` | 2026-11-18 | User journey: a screen links to the moments it serves and to where it lives (route or Figma); a moment lists its screens or says "No screen yet". Built by a separate agent, reviewed here. Staging. | [patch](update-log/patches/U095-09868db.patch) |
+| U096 | `f655605` | 2026-11-18 | Admin: the Product group becomes Product lab; new Personas module with 300 synthetic, seeded personas, role-play prompts and balanced research panels for AI-run research. Personas staging only. | [patch](update-log/patches/U096-f655605.patch) |
 | J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
@@ -945,6 +947,7 @@ history can be read without opening four documents.
 | J125 | 2026-11-18 | Question | What "Add screen" in the user journey is for, and its weak spot (screens belong to a stage, not to a moment) | — |
 | J126 | 2026-11-18 | Code + Research | Screens linked to moments (done with another agent); a second, deeper Insight Timer research started (behaviour, journeys, what to adopt, then a roast) | U095 |
 | J127 | 2026-11-18 | Analysis + Proposal | Eugene on the user journey: product-team driven, every scenario across the 4 stages, an evolving platform like Trello/Asana, readable by Claude to reason about journeys and product logic; the 'AI that builds the AI' plan. Read and turned into a three-phase proposal | — |
+| J128 | 2026-11-18 | Code + Opinion | Product lab menu; Personas with 300 varied synthetic personas as candidates for AI-run research, and a view on using them | U096 |
 
 ### 17.2 Code changes (U)
 

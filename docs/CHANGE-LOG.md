@@ -19,6 +19,14 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-18 — Product lab and Personas (U096, J128)
+
+The admin group Product is now Product lab. New Personas module: 300 seeded
+synthetic personas with role-play prompts and balanced research panels, for
+AI-run research (staging only).
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-18 — User journey: screens serve moments (U095, J126)
 
 A screen in the admin user journey links to the moments it serves and to
