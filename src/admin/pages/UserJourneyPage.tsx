@@ -1,4 +1,4 @@
-import { AlertCircle, Download, ImagePlus, MoreHorizontal, Pencil, Plus, RotateCcw, Upload } from 'lucide-react'
+import { AlertCircle, Download, ExternalLink, ImagePlus, MoreHorizontal, Pencil, Plus, RotateCcw, Smartphone, Upload } from 'lucide-react'
 import { useEffect, useMemo, useState, type ChangeEvent, type CSSProperties } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Modal } from '../components/Modal'
@@ -25,12 +25,18 @@ import {
   JourneyMapSchema,
   NEW_MOMENT_IMAGE,
   STORAGE_KEY,
+  allMoments,
+  linkHref,
   removeItem,
+  screensFor,
+  servedMoments,
+  toggleMoment,
+  unlinkMoment,
   updateItem,
   updateStage,
   type ItemKind,
-  type JourneyItem,
   type JourneyMap,
+  type JourneyScreen,
 } from '../data/userJourney'
 import { readJson, writeJson } from '../../lib/storage'
 import { RELEASES } from '../../versions/releases'
@@ -48,7 +54,8 @@ const VIEWS: { id: View; label: string }[] = [
 interface Editing {
   kind: ItemKind
   stageId: string
-  item: JourneyItem
+  /** A moment or a screen; only a screen carries `momentIds` and `link`. */
+  item: JourneyScreen
   assignment: Assignment
   isNew: boolean
 }
@@ -126,7 +133,7 @@ export function UserJourneyPage() {
     setParams(next === 'map' ? {} : { view: next }, { replace: true })
   }
 
-  function openItem(kind: ItemKind, stageId: string, item: JourneyItem) {
+  function openItem(kind: ItemKind, stageId: string, item: JourneyScreen) {
     setEditing({ kind, stageId, item, assignment: byId.get(item.id)?.assignment ?? EMPTY, isNew: false })
   }
 
@@ -141,7 +148,10 @@ export function UserJourneyPage() {
   }
 
   function saveEditing(e: Editing) {
-    const item = { ...e.item, title: e.item.title.trim() || (e.kind === 'moments' ? 'Untitled moment' : 'Untitled screen'), description: e.item.description.trim(), feature: e.item.feature.trim() }
+    const base = { ...e.item, title: e.item.title.trim() || (e.kind === 'moments' ? 'Untitled moment' : 'Untitled screen'), description: e.item.description.trim(), feature: e.item.feature.trim() }
+    // Only a screen keeps what it serves and where it lives; a moment saves as it always did.
+    const { momentIds, link, ...plain } = base
+    const item: JourneyScreen = e.kind === 'screens' ? { ...plain, momentIds: momentIds ?? [], link: link?.trim() ?? '' } : plain
     let next = map
     if (e.isNew) {
       next = { ...map, stages: map.stages.map((s) => (s.id === e.stageId ? { ...s, [e.kind]: [...s[e.kind], item] } : s)) }
@@ -160,7 +170,9 @@ export function UserJourneyPage() {
   }
 
   function deleteEditing(e: Editing) {
-    const ok = saveMap(removeItem(map, e.stageId, e.kind, e.item.id))
+    const removed = removeItem(map, e.stageId, e.kind, e.item.id)
+    // A deleted moment leaves no dangling link on the screens that served it.
+    const ok = saveMap(e.kind === 'moments' ? unlinkMoment(removed, e.item.id) : removed)
     if (tagsOn && tags.assignments[e.item.id]) {
       const rest = { ...tags.assignments }
       delete rest[e.item.id]
@@ -338,7 +350,8 @@ export function UserJourneyPage() {
             </label>
           </div>
 
-          <div className="min-w-0 overflow-x-auto rounded-12 border border-adm-line bg-adm-surface">
+          {/* relative: the scroller contains its absolute children (sr-only labels), or they widen the page. */}
+          <div className="relative min-w-0 overflow-x-auto rounded-12 border border-adm-line bg-adm-surface">
             <div className="grid" style={grid}>
               {stages.map((s) => {
                 const shown = s.moments.filter((m) => !tagFilter || byId.get(m.id)?.assignment.tags.includes(tagFilter))
@@ -355,6 +368,7 @@ export function UserJourneyPage() {
                         const a = byId.get(m.id)?.assignment ?? EMPTY
                         const ready = a.tags.find((t) => t.startsWith('readiness:'))?.split(':')[1]
                         const untagged = tagsOn && missingGroups(tags.groups, a.tags).length > 0
+                        const served = screensFor(map, m.id).length
                         return (
                           <button
                             key={m.id}
@@ -365,7 +379,16 @@ export function UserJourneyPage() {
                             <span className="block aspect-[16/9] overflow-hidden rounded-8 bg-adm-hover">
                               {m.image && <img src={m.image} alt="" loading="lazy" className="size-full object-cover" />}
                             </span>
-                            <span className="px-2 text-13 font-semibold text-adm-ink">{m.title}</span>
+                            <span className="flex items-start justify-between gap-6 px-2">
+                              <span className="text-13 font-semibold text-adm-ink">{m.title}</span>
+                              {served > 0 && (
+                                <span className="mt-2 inline-flex shrink-0 items-center gap-2 text-11 tabular-nums text-adm-muted" title={`${served} screen${served === 1 ? '' : 's'} serve this moment`}>
+                                  <Smartphone size={11} aria-hidden="true" />
+                                  {served}
+                                  <span className="sr-only">{served === 1 ? 'screen' : 'screens'}</span>
+                                </span>
+                              )}
+                            </span>
                             {m.description && <span className="line-clamp-3 px-2 text-12 leading-[18px] text-adm-ink-2">{m.description}</span>}
                             {m.feature && (
                               <span className="rounded-8 bg-adm-bg px-8 py-6 text-12 text-adm-ink">
@@ -400,7 +423,9 @@ export function UserJourneyPage() {
                       <div className="border-t border-adm-line p-12">
                         <p className="mb-8 text-10 font-semibold uppercase tracking-widest text-adm-muted">Screens</p>
                         <div className="flex flex-wrap gap-10">
-                          {s.screens.map((sc) => (
+                          {s.screens.map((sc) => {
+                            const serves = servedMoments(map, sc).length
+                            return (
                             <button key={sc.id} type="button" onClick={() => openItem('screens', s.id, sc)} className="group flex w-[84px] flex-col gap-4 text-left">
                               <span className="block h-[168px] w-[80px] rounded-[14px] bg-adm-sidebar p-3 transition-transform group-hover:-translate-y-2">
                                 <span className="flex size-full items-center justify-center overflow-hidden rounded-[11px] bg-adm-surface">
@@ -408,8 +433,10 @@ export function UserJourneyPage() {
                                 </span>
                               </span>
                               <span className="text-11 font-medium leading-[14px] text-adm-ink">{sc.title}</span>
+                              <span className={`text-10 leading-[12px] ${serves ? 'text-adm-muted' : 'text-adm-critical'}`}>{serves ? `Serves ${serves} moment${serves === 1 ? '' : 's'}` : 'No moment linked'}</span>
                             </button>
-                          ))}
+                            )
+                          })}
                           <button
                             type="button"
                             onClick={() => openNew('screens', s.id)}
@@ -459,6 +486,7 @@ export function UserJourneyPage() {
           onClose={() => setEditing(null)}
           onSave={saveEditing}
           onDelete={deleteEditing}
+          onOpenScreen={(stageId, screen) => openItem('screens', stageId, screen)}
         />
       )}
 
@@ -497,6 +525,7 @@ function ItemPanel({
   onClose,
   onSave,
   onDelete,
+  onOpenScreen,
 }: {
   editing: Editing
   map: JourneyMap
@@ -504,12 +533,13 @@ function ItemPanel({
   onClose: () => void
   onSave: (e: Editing) => void
   onDelete: (e: Editing) => void
+  onOpenScreen: (stageId: string, screen: JourneyScreen) => void
 }) {
   const [draft, setDraft] = useState(editing)
   const [error, setError] = useState<string | null>(null)
   const moment = draft.kind === 'moments'
   const noun = moment ? 'moment' : 'screen'
-  const set = (patch: Partial<JourneyItem>) => setDraft({ ...draft, item: { ...draft.item, ...patch } })
+  const set = (patch: Partial<JourneyScreen>) => setDraft({ ...draft, item: { ...draft.item, ...patch } })
 
   async function pick(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
@@ -525,7 +555,7 @@ function ItemPanel({
   return (
     <SidePanel
       title={editing.isNew ? `New ${noun}` : editing.item.title || `Untitled ${noun}`}
-      description={!moment ? 'A product screen that serves this stage.' : groups ? 'Details, then tags and review.' : 'What happens, and the feature it suggests.'}
+      description={!moment ? 'A product screen, the moments it serves and where it lives.' : groups ? 'Details, then tags and review.' : 'What happens, and the feature it suggests.'}
       onClose={onClose}
       footer={
         <>
@@ -582,6 +612,7 @@ function ItemPanel({
           </div>
           {error && <span className="text-11 text-adm-critical">{error}</span>}
         </div>
+        {moment ? <MomentScreens map={map} momentId={draft.item.id} onOpen={onOpenScreen} /> : <ScreenLinks map={map} draft={draft.item} onChange={set} />}
         {groups && (
           <div className="flex flex-col gap-12 border-t border-adm-line pt-16">
             <div>
@@ -593,6 +624,83 @@ function ItemPanel({
         )}
       </div>
     </SidePanel>
+  )
+}
+
+/** Read-only: the screens that serve a moment. None is the signal a design is missing. */
+function MomentScreens({ map, momentId, onOpen }: { map: JourneyMap; momentId: string; onOpen: (stageId: string, screen: JourneyScreen) => void }) {
+  const screens = screensFor(map, momentId)
+  return (
+    <div className="flex flex-col gap-8 border-t border-adm-line pt-16">
+      <div>
+        <h3 className="text-13 font-semibold text-adm-ink">Screens</h3>
+        <p className="mt-2 text-12 text-adm-muted">The product screens that serve this moment. Link one from the screen's own panel.</p>
+      </div>
+      {screens.length === 0 ? (
+        <p className="inline-flex items-center gap-6 rounded-8 border border-dashed border-adm-line px-10 py-8 text-12 text-adm-critical">
+          <AlertCircle size={13} aria-hidden="true" /> No screen yet
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-6">
+          {screens.map(({ stageId, screen }) => (
+            <li key={screen.id}>
+              <button type="button" onClick={() => onOpen(stageId, screen)} className="flex w-full items-center gap-10 rounded-8 border border-adm-line p-6 text-left hover:bg-adm-hover">
+                <span className="flex h-[52px] w-[26px] shrink-0 items-center justify-center overflow-hidden rounded-4 bg-adm-hover">
+                  {screen.image ? <img src={screen.image} alt="" className="size-full object-cover object-top" /> : <ImagePlus size={11} className="text-adm-muted" />}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-12 font-medium text-adm-ink">{screen.title}</span>
+                  <span className="block text-11 text-adm-muted">{map.stages.find((s) => s.id === stageId)?.title}</span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+/** A screen's moments (any stage) and where it lives. */
+function ScreenLinks({ map, draft, onChange }: { map: JourneyMap; draft: JourneyScreen; onChange: (patch: Partial<JourneyScreen>) => void }) {
+  const chosen = new Set(draft.momentIds ?? [])
+  const all = allMoments(map)
+  const href = linkHref(draft.link)
+  const selected = servedMoments(map, draft).length
+  return (
+    <div className="flex flex-col gap-14 border-t border-adm-line pt-16">
+      <fieldset className="flex min-w-0 flex-col gap-10">
+        <legend className="text-13 font-semibold text-adm-ink">Serves these moments</legend>
+        <p className="text-12 text-adm-muted">{selected ? `${selected} selected, from any stage.` : 'None yet. Pick the moments this screen answers, in any stage.'}</p>
+        {map.stages.map((s) => {
+          const items = all.filter((m) => m.stageId === s.id)
+          if (items.length === 0) return null
+          return (
+            <div key={s.id} className="flex flex-col gap-2">
+              <span className="inline-flex items-center gap-6 text-10 font-semibold uppercase tracking-widest text-adm-muted">
+                <span className="size-6 rounded-full" style={{ background: s.color }} aria-hidden="true" /> {s.title}
+              </span>
+              {items.map(({ moment: m }) => (
+                <label key={m.id} className="flex cursor-pointer items-center gap-8 rounded-8 px-6 py-4 text-12 text-adm-ink hover:bg-adm-hover">
+                  <input type="checkbox" checked={chosen.has(m.id)} onChange={(e) => onChange({ momentIds: toggleMoment(draft, m.id, e.target.checked).momentIds })} />
+                  <span className="min-w-0 flex-1">{m.title}</span>
+                </label>
+              ))}
+            </div>
+          )
+        })}
+      </fieldset>
+      <FormField label="Link" hint="Where it lives: app route or Figma URL">
+        <div className="flex gap-8">
+          <input aria-label="Link" className={`${inputClass} min-w-0 flex-1`} value={draft.link ?? ''} placeholder="/play/… or https://www.figma.com/…" onChange={(e) => onChange({ link: e.target.value })} />
+          {href && (
+            <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex shrink-0 items-center gap-4 rounded-8 border border-adm-line px-10 text-12 font-medium text-adm-ink hover:bg-adm-hover">
+              <ExternalLink size={12} aria-hidden="true" /> Open
+            </a>
+          )}
+        </div>
+      </FormField>
+    </div>
   )
 }
 

@@ -18,6 +18,19 @@ export const JourneyItemSchema = z.object({
   image: z.string(),
 })
 
+/**
+ * A product screen is an item plus what it serves (U-next): the moments it
+ * answers and where it lives. Both are optional so a map saved or exported
+ * before they existed still parses, instead of `readJson` falling back to the
+ * initial data and wiping a user's edits.
+ */
+export const JourneyScreenSchema = JourneyItemSchema.extend({
+  /** Ids of the moments this screen serves, in any stage. */
+  momentIds: z.array(z.string()).optional(),
+  /** Where it lives: an app route (`/play/...`) or a Figma URL. */
+  link: z.string().optional(),
+})
+
 export const JourneyStageSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -25,7 +38,7 @@ export const JourneyStageSchema = z.object({
   question: z.string(),
   color: z.string(),
   moments: z.array(JourneyItemSchema),
-  screens: z.array(JourneyItemSchema),
+  screens: z.array(JourneyScreenSchema),
 })
 
 export const JourneyMapSchema = z.object({
@@ -34,6 +47,7 @@ export const JourneyMapSchema = z.object({
 })
 
 export type JourneyItem = z.infer<typeof JourneyItemSchema>
+export type JourneyScreen = z.infer<typeof JourneyScreenSchema>
 export type JourneyStage = z.infer<typeof JourneyStageSchema>
 export type JourneyMap = z.infer<typeof JourneyMapSchema>
 export type ItemKind = 'moments' | 'screens'
@@ -53,7 +67,7 @@ export const INITIAL_JOURNEY: JourneyMap = {
         { id: 'r1', title: 'Morning check-in', description: 'Start the day with a lightweight emotional pulse check and a simple recommendation based on mood, energy, or intent.', feature: 'Mood check-in + personalized daily recommendation', image: `${IMG}/scene-01.webp` },
         { id: 'r2', title: 'In-the-moment conversation', description: 'Reach for support during the day through a conversational flow that helps users name what they feel and respond in context.', feature: 'AI chat support + emotional labeling', image: `${IMG}/scene-02.webp` },
       ],
-      screens: [{ id: 's1', title: 'Reflection / check-in', description: 'The daily check-in: how you feel today, whether the last session helped, an optional note.', feature: 'Check-in, journaling, and adaptive guidance', image: `${IMG}/screen-3.webp` }],
+      screens: [{ id: 's1', title: 'Reflection / check-in', description: 'The daily check-in: how you feel today, whether the last session helped, an optional note.', feature: 'Check-in, journaling, and adaptive guidance', image: `${IMG}/screen-3.webp`, momentIds: ['r1', 'r2'] }],
     },
     {
       id: 'create',
@@ -64,7 +78,7 @@ export const INITIAL_JOURNEY: JourneyMap = {
         { id: 'c1', title: 'Create while commuting', description: 'Use transit time to capture thoughts, respond to prompts, and turn emotional momentum into something tangible inside the app.', feature: 'Prompt-based journaling + quick capture', image: `${IMG}/scene-03.webp` },
         { id: 'c2', title: 'Create during work breaks', description: 'Dip into a short creative ritual between tasks to reset focus and transform mental load into reflection or expression.', feature: 'Micro-journaling + guided creation', image: `${IMG}/scene-04.webp` },
       ],
-      screens: [{ id: 's2', title: 'Create / conversation', description: 'The cockpit: the next chapter and the changes Aurelia proposes for it.', feature: 'Creative prompts + conversational flow', image: `${IMG}/screen-1.webp` }],
+      screens: [{ id: 's2', title: 'Create / conversation', description: 'The cockpit: the next chapter and the changes Aurelia proposes for it.', feature: 'Creative prompts + conversational flow', image: `${IMG}/screen-1.webp`, momentIds: ['c1', 'c2'] }],
     },
     {
       id: 'experience',
@@ -78,7 +92,7 @@ export const INITIAL_JOURNEY: JourneyMap = {
         { id: 'e4', title: 'Support while commuting', description: 'Use transition moments to decompress, reflect, or continue a guided session while on the move.', feature: 'On-the-go listening + session continuation', image: `${IMG}/scene-09.webp` },
         { id: 'e5', title: 'Before sleep', description: 'Wind down with a gentle end-of-day ritual that helps release the day and prepare the nervous system for sleep.', feature: 'Sleep wind-down + evening reflection', image: `${IMG}/scene-10.webp` },
       ],
-      screens: [{ id: 's3', title: 'Experience / session', description: 'The player: a guided session playing, with its cue and progress.', feature: 'Guided experience + progress state', image: `${IMG}/screen-2.webp` }],
+      screens: [{ id: 's3', title: 'Experience / session', description: 'The player: a guided session playing, with its cue and progress.', feature: 'Guided experience + progress state', image: `${IMG}/screen-2.webp`, momentIds: ['e1', 'e2', 'e4', 'e5'] }],
     },
     {
       id: 'share',
@@ -116,12 +130,58 @@ export function addItem(map: JourneyMap, stageId: string, kind: ItemKind, id: st
   return mapStage(map, stageId, (s) => ({ ...s, [kind]: [...s[kind], item] }))
 }
 
-export function updateItem(map: JourneyMap, stageId: string, kind: ItemKind, item: JourneyItem): JourneyMap {
+/** `item` may be a screen with its links; a moment simply has none. */
+export function updateItem(map: JourneyMap, stageId: string, kind: ItemKind, item: JourneyScreen): JourneyMap {
   return mapStage(map, stageId, (s) => ({ ...s, [kind]: s[kind].map((x) => (x.id === item.id ? item : x)) }))
 }
 
 export function removeItem(map: JourneyMap, stageId: string, kind: ItemKind, id: string): JourneyMap {
   return mapStage(map, stageId, (s) => ({ ...s, [kind]: s[kind].filter((x) => x.id !== id) }))
+}
+
+/** Every moment with the stage it sits in, in map order. */
+export function allMoments(map: JourneyMap): { stageId: string; moment: JourneyItem }[] {
+  return map.stages.flatMap((s) => s.moments.map((moment) => ({ stageId: s.id, moment })))
+}
+
+/** The moment ids a screen serves that still exist in the map. */
+export function servedMoments(map: JourneyMap, screen: JourneyScreen): string[] {
+  const ids = new Set(allMoments(map).map((m) => m.moment.id))
+  return (screen.momentIds ?? []).filter((id) => ids.has(id))
+}
+
+/** The screens that serve a moment, with the stage each sits in. */
+export function screensFor(map: JourneyMap, momentId: string): { stageId: string; screen: JourneyScreen }[] {
+  return map.stages.flatMap((s) => s.screens.filter((sc) => sc.momentIds?.includes(momentId)).map((screen) => ({ stageId: s.id, screen })))
+}
+
+/** Adds or removes one moment from a screen's list, keeping the order it was given. */
+export function toggleMoment(screen: JourneyScreen, momentId: string, on: boolean): JourneyScreen {
+  const ids = (screen.momentIds ?? []).filter((id) => id !== momentId)
+  return { ...screen, momentIds: on ? [...ids, momentId] : ids }
+}
+
+/**
+ * Drops a moment from every screen that served it. Run it when a moment is
+ * deleted, not when it moves stage (`removeItem` is part of a move too).
+ */
+export function unlinkMoment(map: JourneyMap, momentId: string): JourneyMap {
+  if (!map.stages.some((s) => s.screens.some((sc) => sc.momentIds?.includes(momentId)))) return map
+  return {
+    ...map,
+    stages: map.stages.map((s) =>
+      s.screens.some((sc) => sc.momentIds?.includes(momentId))
+        ? { ...s, screens: s.screens.map((sc) => (sc.momentIds?.includes(momentId) ? { ...sc, momentIds: sc.momentIds.filter((id) => id !== momentId) } : sc)) }
+        : s,
+    ),
+  }
+}
+
+/** A screen's link as something safe to open: an app route or an http(s) URL, else null. */
+export function linkHref(link: string | undefined): string | null {
+  const v = link?.trim() ?? ''
+  if (/^\/(?!\/)/.test(v)) return v
+  return /^https?:\/\/\S+$/i.test(v) ? v : null
 }
 
 export function updateStage(map: JourneyMap, stageId: string, patch: Pick<JourneyStage, 'title' | 'question'>): JourneyMap {

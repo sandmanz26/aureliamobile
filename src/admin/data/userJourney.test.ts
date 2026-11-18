@@ -1,5 +1,29 @@
 import { describe, expect, it } from 'vitest'
-import { INITIAL_JOURNEY, JourneyMapSchema, addItem, counts, parseImport, removeItem, updateItem, updateStage } from './userJourney'
+import {
+  INITIAL_JOURNEY,
+  JourneyMapSchema,
+  addItem,
+  allMoments,
+  counts,
+  linkHref,
+  parseImport,
+  removeItem,
+  screensFor,
+  servedMoments,
+  toggleMoment,
+  unlinkMoment,
+  updateItem,
+  updateStage,
+} from './userJourney'
+import { toBundle, parseAnyImport } from './journeyBundle'
+
+/** The map as it was saved before screens could name their moments. */
+function oldShape() {
+  return {
+    ...INITIAL_JOURNEY,
+    stages: INITIAL_JOURNEY.stages.map((s) => ({ ...s, screens: s.screens.map(({ momentIds: _m, link: _l, ...rest }) => rest) })),
+  }
+}
 
 describe('user journey map', () => {
   it('starts with four stages, ten moments and three screens', () => {
@@ -34,5 +58,64 @@ describe('user journey map', () => {
     expect(map?.stages[0].moments[0]).toEqual({ id: 'r1', title: 'A', description: '', feature: '', image: '/admin/user-journey/scene-01.webp' })
     expect(parseImport('{"stages": []}')).toBeNull()
     expect(parseImport('not json')).toBeNull()
+  })
+
+  it('still reads a map saved before screens had moments or a link, edits intact', () => {
+    const old = oldShape()
+    old.stages[0].screens[0].title = 'My edited check-in'
+    const parsed = JourneyMapSchema.safeParse(JSON.parse(JSON.stringify(old)))
+    expect(parsed.success).toBe(true)
+    expect(parsed.data?.stages[0].screens[0].title).toBe('My edited check-in')
+    expect(parsed.data?.stages[0].screens[0].momentIds).toBeUndefined()
+    expect(parseImport(JSON.stringify(old))?.stages[0].screens[0].title).toBe('My edited check-in')
+    expect(parseAnyImport(JSON.stringify(toBundle(old)))?.journey?.stages[0].screens[0].title).toBe('My edited check-in')
+  })
+
+  it('links the bundled screens only to moments that exist', () => {
+    const ids = new Set(allMoments(INITIAL_JOURNEY).map((m) => m.moment.id))
+    const screens = INITIAL_JOURNEY.stages.flatMap((s) => s.screens)
+    for (const sc of screens) {
+      expect(sc.momentIds?.length).toBeGreaterThan(0)
+      for (const id of sc.momentIds ?? []) expect(ids.has(id)).toBe(true)
+    }
+    expect(screensFor(INITIAL_JOURNEY, 'r1').map((x) => x.screen.id)).toEqual(['s1'])
+    expect(screensFor(INITIAL_JOURNEY, 'e3')).toEqual([])
+  })
+
+  it('links and unlinks a screen to moments in any stage', () => {
+    const s1 = INITIAL_JOURNEY.stages[0].screens[0]
+    const linked = toggleMoment(s1, 'h1', true)
+    expect(linked.momentIds).toEqual(['r1', 'r2', 'h1'])
+    expect(toggleMoment(linked, 'h1', true).momentIds).toEqual(['r1', 'r2', 'h1'])
+    expect(toggleMoment(linked, 'r1', false).momentIds).toEqual(['r2', 'h1'])
+    expect(toggleMoment({ ...s1, momentIds: undefined }, 'c1', true).momentIds).toEqual(['c1'])
+    const map = updateItem(INITIAL_JOURNEY, 'reflect', 'screens', linked)
+    expect(screensFor(map, 'h1')).toEqual([{ stageId: 'reflect', screen: linked }])
+  })
+
+  it('removes a deleted moment from every screen, and ignores links to moments that are gone', () => {
+    let map = updateItem(INITIAL_JOURNEY, 'create', 'screens', { ...INITIAL_JOURNEY.stages[1].screens[0], momentIds: ['c1', 'c2', 'e2'] })
+    map = removeItem(map, 'experience', 'moments', 'e2')
+    expect(servedMoments(map, map.stages[1].screens[0])).toEqual(['c1', 'c2'])
+    map = unlinkMoment(map, 'e2')
+    expect(map.stages[1].screens[0].momentIds).toEqual(['c1', 'c2'])
+    expect(map.stages[2].screens[0].momentIds).toEqual(['e1', 'e4', 'e5'])
+    expect(map.stages[0]).toBe(INITIAL_JOURNEY.stages[0])
+    expect(unlinkMoment(map, 'nothing')).toBe(map)
+  })
+
+  it('round-trips the new fields through export and import', () => {
+    const map = updateItem(INITIAL_JOURNEY, 'reflect', 'screens', { ...INITIAL_JOURNEY.stages[0].screens[0], link: '/wellness' })
+    expect(parseAnyImport(JSON.stringify(toBundle(map)))?.journey).toEqual(map)
+    expect(parseImport(JSON.stringify(map))).toEqual(map)
+  })
+
+  it('opens only app routes and http(s) links', () => {
+    expect(linkHref(' /play/morning ')).toBe('/play/morning')
+    expect(linkHref('https://www.figma.com/design/abc')).toBe('https://www.figma.com/design/abc')
+    expect(linkHref('//evil.example')).toBeNull()
+    expect(linkHref('javascript:alert(1)')).toBeNull()
+    expect(linkHref('')).toBeNull()
+    expect(linkHref(undefined)).toBeNull()
   })
 })
