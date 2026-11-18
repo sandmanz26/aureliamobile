@@ -19,6 +19,14 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-18 — Admin: User journey (U088, J115)
+
+New admin module Product → User journey: the journey map in four stages
+(Reflect, Create, Experience, Share) with moments, potential features and
+product screens. Editable in the browser, with export and import.
+
+Branches: `web_app`, `admin_cms`, **`web_prod`** (asked for both sites).
+
 ### 2026-11-17 — Knowledge-base export (U087, J114)
 
 `scripts/knowledge/export.py` exports the wiki as Markdown for the separate

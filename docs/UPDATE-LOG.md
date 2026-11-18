@@ -124,9 +124,40 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U085 | `a718484` | 2026-11-17 | Wiki: two new tabs from the three 2025 backend documents, Backend (old) (what we can reuse) and Artefact (eleven lessons); the open tab scrolls into view on phones. Staging and production. | [patch](patches/U085-a718484.patch) |
 | U086 | `2913b15` | 2026-11-17 | API contract reads as a team document: an info table and a plain overview replace the long opening; internal review references removed; v4/v5 instead of prod v1/v2. Staging and production. | [patch](patches/U086-2913b15.patch) |
 | U087 | `d14298b` | 2026-11-17 | Knowledge-base export: `scripts/knowledge/export.py` writes the eight wiki documents as Markdown (plus OpenAPI, images, README) for `danielaurelia26/aureliabase_knowledge`; run and pushed only on request. Staging. | [patch](patches/U087-d14298b.patch) |
+| U088 | `92fae15` | 2026-11-18 | Admin: new module Product → User journey (`/admin/user-journey`), the journey map from the owner's blueprint: 4 stages, 10 moments, 3 screens, editable, export/import. Staging and production. | [patch](patches/U088-92fae15.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U088 — Admin: User journey
+
+- **Commit:** `92fae15` · pushed 2026-11-18 UTC · `web_app` + `admin_cms` + `web_prod` (asked for staging and production).
+- **Patch:** [patches/U088-92fae15.patch](patches/U088-92fae15.patch)
+- **Request:** "oke di halaman admin ada penambahan namanya user journey map , nanti saya kirimkan disini zip file nya untuk kamu baca, kemudian tolong implementasi di halaman admin kita. jadi ada 1 menu lagi namanya user journey. coba lakukan dulu bisa di implement di stag dan prod", with `aurelia-blueprint-updated_1.zip`: a static HTML "journey blueprint" (4 stages, 10 moments, 3 screens; edit, add, delete, image upload, filters, zoom, JSON export/import, reset) and 15 images.
+- **Interpretation:**
+  - One new admin menu, "User journey", in a new sidebar group "Product".
+  - The blueprint's features are rebuilt in React with the admin's own components and colours (light and dark), not embedded as a separate page.
+  - Its "Journey blueprint / Manage content" sidebar becomes the page's stage filter and a "Manage stages" dialog.
+  - Edits stay in the browser, like every other admin edit, until a backend exists.
+- **Found:** the source's three screenshots were attached to the wrong stages. `screen-1` is the cockpit (Chapter 2 proposals), `screen-2` the player and `screen-3` the daily check-in. They are now matched to Create, Experience and Reflect respectively, with descriptions saying what each shows.
+- **Changed:**
+  - `src/admin/data/userJourney.ts` (new): types and Zod schema, the initial journey, pure helpers (counts, add, update, remove, rename stage) and `parseImport`, which also reads the original page's export. Test: `userJourney.test.ts`.
+  - `src/admin/pages/UserJourneyPage.tsx` (new): the page.
+    - Header actions: Import, Export, Manage stages.
+    - Count chips.
+    - Layer and stage filters; zoom from 60 to 130 %.
+    - The board, scrolling sideways in its own container: stage headers, a moments row, a screens row in phone frames, and add buttons.
+    - An edit dialog (title, description, potential feature, image upload resized to WebP in the browser, remove, delete).
+    - A Manage stages dialog (rename and question, export/import, restore original).
+    - Saves through `lib/storage` (`aurelia.admin.userJourney`) and reports when storage is full.
+  - `public/admin/user-journey/` (new): the 15 images; the illustrations resized from about 2 MB to under 60 KB (400 KB in all).
+  - `src/App.tsx` (route), `src/admin/AdminLayout.tsx` (Product → User journey), `src/demo/modules.ts` (flag `adminUserJourney`, on by default).
+- **Verified:**
+  - `npm run check` passes (138 tests).
+  - Production build at 1440px and 402px: menu present, four stages, images load, no page overflow, no console errors.
+  - An edit survives a reload; the layer and stage filters work; Restore original resets.
+- **Not done:** the Admin guideline in the wiki does not describe this module yet.
+- **Revert:** `git revert --no-commit 92fae15 && git checkout HEAD -- docs/`.
 
 ### U087 — Knowledge-base export of the wiki
 

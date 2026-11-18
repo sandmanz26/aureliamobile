@@ -231,6 +231,7 @@ Level with production (U072, 13 Nov 2026). Everything in `RELEASES` (`src/versio
 
 The full list is §17. Since 13 Nov:
 
+- **J115 / U088:** admin module Product → User journey (`/admin/user-journey`), the owner's journey map, on staging and production.
 - **J114 / U087:** knowledge-base export of the wiki; the push to `danielaurelia26/aureliabase_knowledge` waits for access (O33), and future updates happen only on request.
 - **J113 / U086:** the API contract rewritten to read as a team document (info table, plain overview, no internal review codes).
 - **J112 / U085:** wiki tabs Backend (old) and Artefact, from the three 2025 backend documents.
@@ -476,7 +477,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U087**, last J = **J114**, last
+**Numbering as of 17 Nov 2026:** last U = **U088**, last J = **J115**, last
 O = **O33**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -911,12 +912,14 @@ history can be read without opening four documents.
 | U085 | `a718484` | 2026-11-17 | Wiki: two new tabs from the three 2025 backend documents, Backend (old) (what we can reuse) and Artefact (eleven lessons); the open tab scrolls into view on phones. Staging and production. | [patch](update-log/patches/U085-a718484.patch) |
 | U086 | `2913b15` | 2026-11-17 | API contract reads as a team document: an info table and a plain overview replace the long opening; internal review references removed; v4/v5 instead of prod v1/v2. Staging and production. | [patch](update-log/patches/U086-2913b15.patch) |
 | U087 | `d14298b` | 2026-11-17 | Knowledge-base export: `scripts/knowledge/export.py` writes the eight wiki documents as Markdown (plus OpenAPI, images, README) for `danielaurelia26/aureliabase_knowledge`; run and pushed only on request. Staging. | [patch](update-log/patches/U087-d14298b.patch) |
+| U088 | `92fae15` | 2026-11-18 | Admin: new module Product → User journey (`/admin/user-journey`), the journey map from the owner's blueprint: 4 stages, 10 moments, 3 screens, editable, export/import. Staging and production. | [patch](update-log/patches/U088-92fae15.patch) |
 | J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
 | J112 | 2026-11-17 | Code + Release | Summary of the three 2025 backend documents as two wiki tabs: Backend (old), what we can reuse; Artefact, the lessons | U085 |
 | J113 | 2026-11-17 | Code + Release | API contract: the opening paragraph replaced by a simple info table; the document cleaned to read like an internal team document | U086 |
 | J114 | 2026-11-17 | Code | Push the wiki to `danielaurelia26/aureliabase_knowledge` as a knowledge base, only when asked: export built; push blocked (no access from this session) | U087 |
+| J115 | 2026-11-18 | Code + Release | Admin "User journey" menu built from the owner's journey-blueprint zip, on staging and production | U088 |
 
 ### 17.2 Code changes (U)
 
