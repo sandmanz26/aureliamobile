@@ -62,11 +62,13 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O32 | **Aurelia Pro / corporate wellness (J110)**: Eugene asks how big an exploration it is to propose features for a B2B2C version (companies buy, employees use). Proposed: a short exploration in the retention-simulation format (employee and HR personas, what changes, what is reused, size) before any build | J110 | Product owner: go ahead, and with whom to validate (a pilot company?) |
 | O33 | **Knowledge-base repository access (J114)**: `danielaurelia26/aureliabase_knowledge` is not reachable from this session (GitHub access covers `sandmanz26/*` only). The export is ready (`scripts/knowledge/export.py`). Needed: the Claude GitHub App installed on that repository (or the repository moved under an account the session can use), then a new session with it selected | J114 | Product owner |
 | O34 | **Journey tags (J116)**: review the eight tag groups and the proposed tagging of the ten moments (Admin → Journey tags on staging); decide the gaps it shows (evening, night, positive state, Share has one moment); then release to production (`RELEASES.journeyTags`) | J116 | Product owner + the user who asked |
-| O35 | **Purpose of the user journey (J122)**: confirm it is an internal opportunity map (moment → feature → evidence → decision) and who owns it; if yes, add evidence and a priority decision per moment, a link to the real screen or session, team-wide storage, and the same tags in analytics | J122 | Product owner + Eugene |
+| O35 | **Purpose of the user journey (J122)**: confirm it is an internal opportunity map (moment → feature → evidence → decision) and who owns it; if yes, add evidence and a priority decision per moment, a link to the real screen or session, team-wide storage, and the same tags in analytics | J122 | Product owner + Eugene — **Answered by Eugene (J127):** internal, driven by the product team; evolving like Trello/Asana; readable by Claude |
+| O36 | **User journey as an evolving platform (J127)**: approve the three phases. (1) Shared storage, a status workflow (Idea → Validated → Planned → Building → Live → Measured), owner, Board view, activity log. (2) A scenario template, evidence and a decision log per card; a structured export to the knowledge base. (3) An AI assist on the page, after a backend exists. | J127 | Product owner + Eugene |
 | J123 | 2026-11-18 | Question | How the user journey is actually used: who, when, and three concrete walkthroughs (planning a sprint, after interviews, briefing content) | — |
 | J124 | 2026-11-18 | Docs | A one-to-two-sentence question for the lead to confirm what the user journey is for | — |
 | J125 | 2026-11-18 | Question | What "Add screen" in the user journey is for, and its weak spot (screens belong to a stage, not to a moment) | — |
 | J126 | 2026-11-18 | Code + Research | Screens linked to moments (done with another agent); a second, deeper Insight Timer research started (behaviour, journeys, what to adopt, then a roast) | U095 |
+| J127 | 2026-11-18 | Analysis + Proposal | Eugene on the user journey: product-team driven, every scenario across the 4 stages, an evolving platform like Trello/Asana, readable by Claude to reason about journeys and product logic; the 'AI that builds the AI' plan. Read and turned into a three-phase proposal | — |
 | J117 | 2026-11-18 | Question | "I can't see what changed": Journey tags is on staging only (O34); where to find it and how to check the build | — |
 | J118 | 2026-11-18 | Code | Admin sidebar too long: folding groups and a sticky sidebar; the missing phone menu button fixed. Staging; production waits for a request | U090 |
 | J119 | 2026-11-18 | Code | User journey flow simplified as head of product (one page, one panel), and the desktop sidebar that folds to an icon rail (Eugene) | U091, U092 |
@@ -1436,3 +1438,34 @@ transcript and the update log. Everything from J018 on was written at the time.
   - Done so far: retention mechanics and evidence; nine journey flows as flow charts.
   - Still running: user behaviour from social media and reviews.
   - Then: a report with what to adopt, a roast, and the wiki Research tab.
+
+### J127 — Eugene confirms the purpose of the user journey
+- **Asked:** "oke nah terkait denga user journey itu ini saya sertakan ss dari eugene sepertinya kamu bener . bagaimana menurutmu ?" (Eugene's WhatsApp below).
+  - "It should be driven by Product team to populate more moments and scenarios across the 4 stages"
+  - "Iron out all possible scenarios moments user might use aurelia for/during"
+  - "So it should be designed as evolving platform"
+  - "A little bit the same way trello or asana works when making task tickets across projects"
+  - "The different purposes and moments"
+  - "So our Claude AI can start to reason and analyze user journey and product logic in a more creative way"
+  - "Pls keep in mind the grand master PLAN.. bits by bits design an AI that can build the AI"
+  - "So all pipelines across data and functions needs to have a clear logic and pathways"
+  - "For accumulation of right decision making once building upwards"
+- **Reading:**
+  - Confirms J122: an internal tool owned by product.
+  - Adds two things:
+    1. a workflow: cards that move through a status, like tickets;
+    2. structure: every moment is data Claude can reason over, not a picture.
+  - The "grand master plan" means every decision is recorded with its reason and linked along one pathway: moment → tags → feature → screen or session → analytics event → outcome. Later decisions then build on earlier ones.
+- **Gap today:** edits live in one browser. A platform the team evolves together needs shared storage first.
+- **Proposed (O36):**
+  - **Phase 1:**
+    - shared storage;
+    - status, owner and priority on each card;
+    - a Board view by status;
+    - an activity log.
+  - **Phase 2:**
+    - a scenario template (who, situation, trigger, need, desired outcome);
+    - evidence and confidence;
+    - a decision log;
+    - a structured export to the knowledge base for Claude.
+  - **Phase 3:** an AI assist on the page (gap analysis, new scenarios, consistency with the product logic), once there is a backend and an API key.

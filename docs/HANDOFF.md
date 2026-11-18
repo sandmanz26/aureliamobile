@@ -482,8 +482,8 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U095**, last J = **J126**, last
-O = **O35**. Before numbering, check the files for anything newer.
+**Numbering as of 17 Nov 2026:** last U = **U095**, last J = **J127**, last
+O = **O36**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
 push. `src/guides/records.test.ts` enforces it.
@@ -944,6 +944,7 @@ history can be read without opening four documents.
 | J124 | 2026-11-18 | Docs | A one-to-two-sentence question for the lead to confirm what the user journey is for | — |
 | J125 | 2026-11-18 | Question | What "Add screen" in the user journey is for, and its weak spot (screens belong to a stage, not to a moment) | — |
 | J126 | 2026-11-18 | Code + Research | Screens linked to moments (done with another agent); a second, deeper Insight Timer research started (behaviour, journeys, what to adopt, then a roast) | U095 |
+| J127 | 2026-11-18 | Analysis + Proposal | Eugene on the user journey: product-team driven, every scenario across the 4 stages, an evolving platform like Trello/Asana, readable by Claude to reason about journeys and product logic; the 'AI that builds the AI' plan. Read and turned into a three-phase proposal | — |
 
 ### 17.2 Code changes (U)
 
