@@ -65,6 +65,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O35 | **Purpose of the user journey (J122)**: confirm it is an internal opportunity map (moment → feature → evidence → decision) and who owns it; if yes, add evidence and a priority decision per moment, a link to the real screen or session, team-wide storage, and the same tags in analytics | J122 | Product owner + Eugene — **Answered by Eugene (J127):** internal, driven by the product team; evolving like Trello/Asana; readable by Claude |
 | O36 | **User journey as an evolving platform (J127)**: approve the three phases. (1) Shared storage, a status workflow (Idea → Validated → Planned → Building → Live → Measured), owner, Board view, activity log. (2) A scenario template, evidence and a decision log per card; a structured export to the knowledge base. (3) An AI assist on the page, after a backend exists. | J127 | Product owner + Eugene |
 | J128 | 2026-11-18 | Code + Opinion | Product lab menu; Personas with 300 varied synthetic personas as candidates for AI-run research, and a view on using them | U096 |
+| J129 | 2026-11-18 | Code + Docs | Always add what was learned to a file other AIs can read: `docs/AI-KNOWLEDGE.md`, enforced by a test | U097 |
 | J123 | 2026-11-18 | Question | How the user journey is actually used: who, when, and three concrete walkthroughs (planning a sprint, after interviews, briefing content) | — |
 | J124 | 2026-11-18 | Docs | A one-to-two-sentence question for the lead to confirm what the user journey is for | — |
 | J125 | 2026-11-18 | Question | What "Add screen" in the user journey is for, and its weak spot (screens belong to a stage, not to a moment) | — |
@@ -1483,3 +1484,10 @@ transcript and the update log. Everything from J018 on was written at the time.
   - Personas holds 300 seeded synthetic personas, each with a role-play prompt.
   - Research panels are balanced by goal, reproducible, and exportable as JSON.
   - Staging only.
+
+### J129 — Keep the agent's knowledge in a file other AIs can read
+- **Asked:** "dari semua yang sudah kita bahaas selalu tambahkan knowledge kamu dan simpan dalam file yang bisa dibaca oleh ai lain juga."
+- **Done:** U097, `docs/AI-KNOWLEDGE.md`.
+  - Updated on every request from now on: stale lines are rewritten, and "Covers up to" moves on.
+  - `records.test.ts` fails the check (and CI) when it is behind.
+  - It is the first thing `CLAUDE.md` tells an agent to read, and part of the knowledge-base export.

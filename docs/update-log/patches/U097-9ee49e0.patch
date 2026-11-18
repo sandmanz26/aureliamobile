@@ -1,0 +1,98 @@
+From 9ee49e073e018295b5b216c135165fdd84b6c8cd Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 18 Nov 2026 16:22:08 +0000
+Subject: [PATCH] AI-KNOWLEDGE.md: the agent's working knowledge, kept current
+
+A new docs/AI-KNOWLEDGE.md holds what another AI needs to act like the
+agent that has run this project: the product, the people and how to work
+with them, the release rules that bite, the recording rules, the state on
+staging and production, the positions taken and why, the traps hit, and a
+short verification recipe. The owner asked for it to grow with every
+request; records.test.ts now fails when its 'Covers up to J###' is behind
+the journal. CLAUDE.md, HANDOFF.md and FOR-AI-AGENT.md point to it first,
+and the knowledge-base export includes it.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ CLAUDE.md                   |  7 ++++++-
+ scripts/knowledge/export.py |  3 +++
+ src/guides/records.test.ts  | 12 ++++++++++++
+ 3 files changed, 21 insertions(+), 1 deletion(-)
+
+diff --git a/CLAUDE.md b/CLAUDE.md
+index 0a86f01..56b6c4f 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -4,7 +4,7 @@ Context for anyone (human or AI) reading this code for the first time. It covers
+ what is here, the decisions that are not obvious from the source, and the things
+ that will mislead you if nobody tells you.
+ 
+-**Picking this project up cold, or taking it over? Read `docs/HANDOFF.md` first**: the people, the standing rules, the current state of every branch and environment, the recording and release procedure, verification recipes, the traps, and the open decisions, in one place.
++**Picking this project up cold, or taking it over? Read `docs/AI-KNOWLEDGE.md` (short, current) and then `docs/HANDOFF.md`**: the people, the standing rules, the current state of every branch and environment, the recording and release procedure, verification recipes, the traps, and the open decisions, in one place.
+ 
+ **This branch is the React app.** The repository keeps one app per branch:
+ 
+@@ -504,6 +504,11 @@ until decided. No secrets (pairing codes, passwords) in it.
+ state moves. `src/guides/records.test.ts` fails `npm run check` when an id in
+ the journal or the update log is missing from it.
+ 
++**What the agent learns goes into `docs/AI-KNOWLEDGE.md`** (owner, J129): the
++short, current knowledge another AI needs: people, release rules, state,
++positions taken, traps. Update it on every request, rewriting stale lines, and
++move its "Covers up to J###" line; the same test fails when it is behind.
++
+ ## Design versions (staging, and production since U054)
+ 
+ `src/versions/versions.ts` lists switchable design versions; the picker sits
+diff --git a/scripts/knowledge/export.py b/scripts/knowledge/export.py
+index 81d883c..0b7d334 100644
+--- a/scripts/knowledge/export.py
++++ b/scripts/knowledge/export.py
+@@ -97,6 +97,8 @@ def main(out):
+         open(path, 'w').write(text)
+         rows.append(f'| [{title}](wiki/{name}.md) | {audience} | `{source}` |')
+     shutil.copy(os.path.join(ROOT, 'docs/api/openapi.yaml'), os.path.join(out, 'wiki', 'openapi.yaml'))
++    # The agent's working knowledge, for other AIs (J129).
++    shutil.copy(os.path.join(ROOT, 'docs/AI-KNOWLEDGE.md'), os.path.join(out, 'AI-KNOWLEDGE.md'))
+     for src in sorted(images):
+         rel = src[len('/guides/'):]
+         dst = os.path.join(out, 'assets', rel)
+@@ -138,6 +140,7 @@ guides are in `assets/`.
+ 
+ ## For AI agents
+ 
++- Read `AI-KNOWLEDGE.md` first: people, release rules, current state, positions taken, traps.
+ - Treat these documents as the current state of the plan, not as a built system.
+ - The app repository is the source of truth; if this copy disagrees, the repository wins.
+ - The prompts quoted in Backend (old) are from 2025 and need the changes listed beside them before reuse.
+diff --git a/src/guides/records.test.ts b/src/guides/records.test.ts
+index 8429bd9..7d10f20 100644
+--- a/src/guides/records.test.ts
++++ b/src/guides/records.test.ts
+@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
+ import handoff from '../../docs/HANDOFF.md?raw'
+ import journal from '../../docs/WORK-JOURNAL.md?raw'
+ import updateLog from '../../docs/UPDATE-LOG.md?raw'
++import knowledge from '../../docs/AI-KNOWLEDGE.md?raw'
+ 
+ // Owner, 17 Nov 2026 (J109): every request and every change must also be in
+ // HANDOFF.md, so nothing is lost. Its §17 copies the index rows of the
+@@ -24,3 +25,14 @@ describe('HANDOFF.md ledger', () => {
+     expect(updateIds.filter((id) => !ledger.has(id))).toEqual([])
+   })
+ })
++
++// Owner, 18 Nov 2026 (J129): what the agent learns goes into AI-KNOWLEDGE.md
++// on every request, for other AIs to read. Its "Covers up to J###" line must
++// match the latest request in the journal.
++describe('AI-KNOWLEDGE.md', () => {
++  it('is up to date with the latest request', () => {
++    const latest = ids(journal, 'J').sort().at(-1)
++    const covers = knowledge.match(/Covers up to (J\d{3})/)?.[1]
++    expect(covers, 'update docs/AI-KNOWLEDGE.md and its "Covers up to" line').toBe(latest)
++  })
++})
+-- 
+2.43.0
+

@@ -19,6 +19,13 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-18 — AI-KNOWLEDGE.md (U097, J129)
+
+`docs/AI-KNOWLEDGE.md` holds the agent's working knowledge for other AIs and
+is updated on every request; a test fails when it falls behind.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-18 — Product lab and Personas (U096, J128)
 
 The admin group Product is now Product lab. New Personas module: 300 seeded

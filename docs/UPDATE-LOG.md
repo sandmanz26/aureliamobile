@@ -133,9 +133,34 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U094 | `1c2e0f4` | 2026-11-18 | Desktop sidebar consistent: every icon 20px, rail tiles 56px with 11px labels, rail 72px; the phone drawer unchanged. Staging only. | [patch](patches/U094-1c2e0f4.patch) |
 | U095 | `09868db` | 2026-11-18 | User journey: a screen links to the moments it serves and to where it lives (route or Figma); a moment lists its screens or says "No screen yet". Built by a separate agent, reviewed here. Staging. | [patch](patches/U095-09868db.patch) |
 | U096 | `f655605` | 2026-11-18 | Admin: the Product group becomes Product lab; new Personas module with 300 synthetic, seeded personas, role-play prompts and balanced research panels for AI-run research. Personas staging only. | [patch](patches/U096-f655605.patch) |
+| U097 | `9ee49e0` | 2026-11-18 | `docs/AI-KNOWLEDGE.md`, the agent's working knowledge for other AIs, kept current on every request; a test fails when it falls behind the journal; included in the knowledge-base export. | [patch](patches/U097-9ee49e0.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U097 — AI-KNOWLEDGE.md
+
+- **Commit:** `9ee49e0` · pushed 2026-11-18 UTC · `web_app` + `admin_cms`.
+- **Patch:** [patches/U097-9ee49e0.patch](patches/U097-9ee49e0.patch) (the test and the export script; the document is in `docs/`).
+- **Request:** "dari semua yang sudah kita bahaas selalu tambahkan knowledge kamu dan simpan dalam file yang bisa dibaca oleh ai lain juga."
+- **Interpretation:**
+  - One short, current file another AI can act on, instead of reading the 1,000-line handoff and the journal.
+  - "Always" needs enforcement, so a test fails when the file falls behind.
+- **Changed:**
+  - `docs/AI-KNOWLEDGE.md` (new), in eight sections:
+    1. the product;
+    2. people and working style;
+    3. release rules, including the staging-only flags;
+    4. recording;
+    5. the current state;
+    6. positions taken, newest first;
+    7. traps;
+    8. verifying.
+  - `src/guides/records.test.ts`: the "Covers up to J###" line must equal the latest J in the journal.
+  - `CLAUDE.md` (read it first, and the rule), `docs/HANDOFF.md` §2 rule 14, `docs/FOR-AI-AGENT.md` (pointer).
+  - `scripts/knowledge/export.py`: the export includes it, and its README says to read it first.
+- **Verified:** the test failed until this J129 entry existed, then passed; `npm run check` passes.
+- **Revert:** `git revert --no-commit 9ee49e0 && git checkout HEAD -- docs/`.
 
 ### U096 — Product lab and Personas
 
