@@ -65,6 +65,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O35 | **Purpose of the user journey (J122)**: confirm it is an internal opportunity map (moment → feature → evidence → decision) and who owns it; if yes, add evidence and a priority decision per moment, a link to the real screen or session, team-wide storage, and the same tags in analytics | J122 | Product owner + Eugene |
 | J123 | 2026-11-18 | Question | How the user journey is actually used: who, when, and three concrete walkthroughs (planning a sprint, after interviews, briefing content) | — |
 | J124 | 2026-11-18 | Docs | A one-to-two-sentence question for the lead to confirm what the user journey is for | — |
+| J125 | 2026-11-18 | Question | What "Add screen" in the user journey is for, and its weak spot (screens belong to a stage, not to a moment) | — |
 | J117 | 2026-11-18 | Question | "I can't see what changed": Journey tags is on staging only (O34); where to find it and how to check the build | — |
 | J118 | 2026-11-18 | Code | Admin sidebar too long: folding groups and a sticky sidebar; the missing phone menu button fixed. Staging; production waits for a request | U090 |
 | J119 | 2026-11-18 | Code | User journey flow simplified as head of product (one page, one panel), and the desktop sidebar that folds to an icon rail (Eugene) | U091, U092 |
@@ -1416,3 +1417,13 @@ transcript and the update log. Everything from J018 on was written at the time.
 - **Asked:** "coba buatkan pertanyaan sederhana untuk mengconfirm itu ke lead 1 -2. kalimat saja"
 - **Given (English):** "Quick check on the User journey page: is it meant as an internal tool for the team to decide what to build next and record what we learn from users, or should it also be something we show to clients? And who should own and update it?"
 - **Feeds:** O35.
+
+### J125 — What "Add screen" is for
+- **Asked:** "nah terkait add screen itu nanti buat apa gt ?"
+- **Answered:** a product screen shows **what the person actually sees** in Aurelia at that stage, so a moment's feature idea sits next to the real interface.
+- **Uses:**
+  1. Proof of what exists. A screenshot of a live screen, e.g. the daily check-in for Reflect.
+  2. Concepts. A Figma mock-up for a feature that is still Concept, so a review can compare idea and design.
+  3. A before/after record when a screen is redesigned.
+- **Weak spot:** a screen belongs to a whole stage, not to a moment. With one screen per stage it reads as an example, not as "this screen serves this moment".
+- **Proposed:** link a screen to one or more moments, plus an optional link to the app route or the Figma frame.
