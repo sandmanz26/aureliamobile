@@ -64,6 +64,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O34 | **Journey tags (J116)**: review the eight tag groups and the proposed tagging of the ten moments (Admin → Journey tags on staging); decide the gaps it shows (evening, night, positive state, Share has one moment); then release to production (`RELEASES.journeyTags`) | J116 | Product owner + the user who asked |
 | O35 | **Purpose of the user journey (J122)**: confirm it is an internal opportunity map (moment → feature → evidence → decision) and who owns it; if yes, add evidence and a priority decision per moment, a link to the real screen or session, team-wide storage, and the same tags in analytics | J122 | Product owner + Eugene |
 | J123 | 2026-11-18 | Question | How the user journey is actually used: who, when, and three concrete walkthroughs (planning a sprint, after interviews, briefing content) | — |
+| J124 | 2026-11-18 | Docs | A one-to-two-sentence question for the lead to confirm what the user journey is for | — |
 | J117 | 2026-11-18 | Question | "I can't see what changed": Journey tags is on staging only (O34); where to find it and how to check the build | — |
 | J118 | 2026-11-18 | Code | Admin sidebar too long: folding groups and a sticky sidebar; the missing phone menu button fixed. Staging; production waits for a request | U090 |
 | J119 | 2026-11-18 | Code | User journey flow simplified as head of product (one page, one panel), and the desktop sidebar that folds to an icon rail (Eugene) | U091, U092 |
@@ -1410,3 +1411,8 @@ transcript and the update log. Everything from J018 on was written at the time.
 - **In one line:** it decides what to build next, records what we learn from users, and gives each piece of work its brief.
 - **Who:** PM (owner), Eugene (decides), designer and content (read).
 - **Not for:** end users.
+
+### J124 — A short question for the lead
+- **Asked:** "coba buatkan pertanyaan sederhana untuk mengconfirm itu ke lead 1 -2. kalimat saja"
+- **Given (English):** "Quick check on the User journey page: is it meant as an internal tool for the team to decide what to build next and record what we learn from users, or should it also be something we show to clients? And who should own and update it?"
+- **Feeds:** O35.
