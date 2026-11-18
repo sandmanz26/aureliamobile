@@ -44,6 +44,21 @@ describe('personas', () => {
     for (const [, n] of distribution(panel, 'goal')) expect(n).toBe(5)
   })
 
+  it('gives everyone a full profile that reads correctly', () => {
+    for (const p of all) {
+      const f = p.profile
+      expect(f.bio.length, p.id).toBeGreaterThan(160)
+      expect(f.bio, p.id).not.toMatch(/undefined|lives with with|their own|%CITY%/)
+      expect(f.bio, p.id).toContain(p.city)
+      expect(f.day).toHaveLength(5)
+      expect(f.values).toHaveLength(2)
+      expect(f.quotes).toHaveLength(3)
+      expect(f.sleep.hours).toBeGreaterThanOrEqual(4)
+      if (p.workPattern !== 'student') expect(f.stressors, p.id).not.toContain('exams and grades')
+      if (!/kids|teenagers|single parent/.test(p.household)) expect(f.day[0].what, p.id).not.toMatch(/kids/)
+    }
+  })
+
   it('writes a role-play prompt that says it is synthetic', () => {
     const prompt = personaPrompt(all[0])
     expect(prompt).toContain(all[0].name)

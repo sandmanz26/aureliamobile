@@ -35,7 +35,7 @@ export function Modal({
   }, [onClose])
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-16" onClick={onClose}>
+    <div className="adm-root fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-16" onClick={onClose}>
       <div
         onClick={(event) => event.stopPropagation()}
         style={{ maxWidth: width }}

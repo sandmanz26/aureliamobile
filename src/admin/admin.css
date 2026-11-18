@@ -82,3 +82,15 @@
   --color-adm-grid: #2c2b28;
   --color-adm-axis: #3a3833;
 }
+
+/* Native controls follow the admin theme (U099). Without this, a <select>'s
+   option list and checkboxes stayed light in dark mode: light text on a white
+   list. .adm-root is on the admin shell and on the portaled Modal and
+   SidePanel, which render outside it. The consumer app stays light-only. */
+.adm-root { color-scheme: light; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .adm-root { color-scheme: dark; }
+}
+:root[data-theme='dark'] .adm-root { color-scheme: dark; }
+.adm-root select option,
+.adm-root select optgroup { background-color: var(--color-adm-surface); color: var(--color-adm-ink); }

@@ -201,7 +201,7 @@ export function AdminLayout() {
   const [open, setOpen] = useState(false)
 
   return (
-    <div className="flex min-h-screen bg-adm-bg">
+    <div className="adm-root flex min-h-screen bg-adm-bg">
       <aside className="sticky top-[var(--staging-bar,0px)] hidden h-[calc(100dvh-var(--staging-bar,0px))] w-[232px] shrink-0 flex-col self-start bg-adm-sidebar lg:flex">
         <div className="flex h-56 items-center gap-8 border-b border-white/8 px-20">
           <AureliaLogo iconSize={22} markOnly />

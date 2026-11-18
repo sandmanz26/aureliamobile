@@ -47,6 +47,34 @@ export interface Persona {
   /** Circumstances worth testing for: accessibility, health, life events. */
   flags: string[]
   quote: string
+  /** The profile (U099): who this person is beyond the research fields. */
+  profile: Profile
+}
+
+export type Level = 'low' | 'medium' | 'high'
+
+export interface Profile {
+  pronouns: string
+  /** Three or four sentences, in the third person. */
+  bio: string
+  personality: { openness: Level; conscientiousness: Level; extraversion: Level; agreeableness: Level; neuroticism: Level }
+  traits: string[]
+  values: string[]
+  /** A weekday, hour by hour. */
+  day: { time: string; what: string }[]
+  sleep: { bedtime: string; wake: string; hours: number; quality: 1 | 2 | 3 | 4 | 5 }
+  stressors: string[]
+  coping: string[]
+  phone: string
+  screenTimeHours: number
+  topApps: string[]
+  /** What happened with wellness apps before. */
+  appHistory: string
+  decides: string
+  wouldHearAbout: string
+  dealBreakers: string[]
+  success: string
+  quotes: string[]
 }
 
 export const SEED = 2026
@@ -205,6 +233,69 @@ const QUOTES: Record<GoalId, string[]> = {
   energy: ['By three o’clock I am running on fumes.', 'I want to wake up and actually feel awake.', 'I give energy to everyone else all day. I want some back.'],
 }
 
+const TRAITS = ['practical', 'warm', 'guarded', 'funny', 'restless', 'thoughtful', 'organised', 'impatient', 'curious', 'private', 'driven', 'gentle', 'sceptical', 'sociable', 'quiet', 'perfectionist', 'easy-going', 'anxious', 'loyal', 'blunt']
+const VALUES = ['family', 'independence', 'faith', 'achievement', 'health', 'security', 'creativity', 'community', 'fairness', 'freedom', 'learning', 'calm']
+const STRESSORS = ['money and rising costs', 'workload and long hours', 'a strained relationship', 'caring for someone', 'health worries', 'exams and grades', 'job insecurity', 'loneliness', 'a long commute', 'news and social media', 'a noisy home', 'being the one everyone relies on']
+const COPING = ['scrolling the phone', 'a glass of wine in the evening', 'running', 'prayer', 'calling a friend', 'nothing in particular', 'music on headphones', 'video games', 'journaling now and then', 'seeing a therapist', 'long walks', 'binge-watching series', 'cleaning the house', 'smoking', 'the gym']
+const CHANNELS = ['a friend’s recommendation', 'a TikTok or Reels video', 'their therapist', 'their employer’s wellbeing programme', 'a podcast ad', 'searching the App Store at night', 'a newsletter they read', 'their partner']
+const DECIDES = ['tries the free version first and decides within a day', 'reads every review before installing anything', 'asks one trusted friend', 'follows what a creator they like uses', 'compares three options in a spreadsheet', 'installs on impulse and deletes just as fast']
+const DEAL_BREAKERS = ['being asked to pay before trying', 'a voice that sounds fake or salesy', 'notifications every day', 'having to create an account first', 'anything that feels like therapy talk', 'ads', 'sessions that run longer than promised', 'sharing data with third parties', 'religious or spiritual framing', 'a cluttered home screen']
+const SUCCESS: Record<GoalId, string[]> = {
+  sleep: ['asleep within twenty minutes most nights', 'not dreading bedtime any more', 'waking up without the 3am spiral'],
+  calm: ['getting through a hard meeting without the racing chest', 'not snapping at the kids by Friday', 'a week where the worry stays in the background'],
+  clarity: ['knowing what to do first on a Monday', 'making the decision and sleeping on it calmly', 'a head that feels quieter by the evening'],
+  focus: ['two real hours of work before lunch', 'finishing one thing before starting the next', 'getting through a chapter without reaching for the phone'],
+  regulate: ['coming down from a stressful moment in minutes, not hours', 'shoulders that are not up by the ears at night', 'fewer headaches in a month'],
+  energy: ['no 3pm crash on most days', 'waking up and getting going without three coffees', 'having something left for the evening'],
+}
+const EXTRA_QUOTES = {
+  ai: {
+    enthusiastic: ['If it actually learns what works for me, I am all in.'],
+    curious: ['I would try it. I just want to know it is not making things up.'],
+    skeptical: ['An app that writes my meditation? Show me it works first.'],
+    distrustful: ['I am not telling a machine how I feel. Who reads that?'],
+  },
+  money: {
+    low: ['Every subscription is a choice between this and groceries.'],
+    middle: ['I pay for things that earn their place. Most apps do not.'],
+    high: ['Price is not the problem. Wasting my time is.'],
+  },
+} as const
+const PHONES = { low: ['an older Android phone', 'a budget Android phone', 'a hand-me-down iPhone'], middle: ['a mid-range Android phone', 'an iPhone a few years old', 'a recent Samsung'], high: ['the latest iPhone', 'a new Pixel', 'a recent iPhone and an iPad'] } as const
+const SOCIAL = ['WhatsApp', 'Instagram', 'TikTok', 'YouTube', 'Facebook', 'X', 'Reddit', 'LinkedIn', 'Spotify', 'Netflix', 'Telegram', 'Line']
+
+const hhmm = (h: number, m = 0) => `${String(((h % 24) + 24) % 24).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+
+function makeDay(r: Rand, work: WorkPattern, household: string, goal: GoalId, bed: number, wake: number, coping: string[]): { time: string; what: string }[] {
+  const kids = /kids|teenagers|single parent/.test(household)
+  const start: Record<WorkPattern, string> = {
+    office: 'commutes to the office',
+    hybrid: 'office or home, depending on the day',
+    remote: 'opens the laptop at the kitchen table',
+    shift: 'starts a shift that changes every week',
+    'self-employed': 'opens up and deals with whatever comes in',
+    student: 'lectures, library, part-time job',
+    caregiver: 'appointments, meals, the school run',
+    'between jobs': 'applications and a lot of waiting',
+    retired: 'a slow start, errands, a walk',
+  }
+  const lows: Record<GoalId, string> = {
+    sleep: 'tired and running on caffeine',
+    calm: 'a tense meeting or call, chest tight',
+    clarity: 'ten things open at once, none finished',
+    focus: 'the afternoon slips away into the phone',
+    regulate: 'a stressful moment that stays in the body for hours',
+    energy: 'the 3pm crash',
+  }
+  return [
+    { time: hhmm(wake, pick(r, [0, 15, 30, 45])), what: kids ? 'up before everyone else, then breakfast and getting the kids out' : pick(r, ['phone first, then coffee', 'snoozes twice, then rushes', 'up slowly, tea and the news']) },
+    { time: hhmm(wake + 2), what: start[work] },
+    { time: work === 'shift' ? 'mid-shift' : '15:00', what: lows[goal] },
+    { time: hhmm(bed - 3, 30), what: kids ? 'dinner, homework, bedtime routines' : `winds down with ${coping[0]}` },
+    { time: hhmm(bed), what: goal === 'sleep' ? 'in bed, awake longer than they want to be' : 'in bed, phone in hand for a while' },
+  ]
+}
+
 function ageBand(age: number) {
   return age < 25 ? '18–24' : age < 35 ? '25–34' : age < 45 ? '35–44' : age < 55 ? '45–54' : age < 65 ? '55–64' : '65+'
 }
@@ -229,7 +320,7 @@ function makePersona(r: Rand, n: number): Persona {
         ? pick(r, ['with a partner', 'lives alone', 'lives with adult children'])
         : workPattern === 'caregiver'
           ? pick(r, ['partner and young kids', 'single parent', 'cares for a parent at home'])
-          : pick(r, ['lives alone', 'with a partner', 'partner and young kids', 'partner and teenagers', 'single parent', 'flatmates', 'cares for a parent at home'])
+          : weighted(r, [['lives alone', 20], ['with a partner', 22], ['partner and young kids', 22], ['partner and teenagers', 12], ['single parent', 9], ['flatmates', 10], ['cares for a parent at home', 5]] as const)
   const income = workPattern === 'student' || workPattern === 'between jobs' ? weighted(r, [['low', 80], ['middle', 20]] as const) : weighted(r, [['low', 25], ['middle', 50], ['high', 25]] as const)
 
   const goal = weighted<GoalId>(r, [['sleep', 25], ['calm', 22], ['focus', 15], ['clarity', 12], ['regulate', 14], ['energy', 12]])
@@ -257,6 +348,88 @@ function makePersona(r: Rand, n: number): Persona {
   const barriers = some(r, BARRIERS, 1, 2)
   if (aiAttitude === 'distrustful' && !barriers.includes('does not trust AI with feelings')) barriers[0] = 'does not trust AI with feelings'
 
+  const traits = some(r, TRAITS, 2, 3)
+  const neuroticism: Level = ['calm', 'regulate', 'sleep'].includes(goal) ? weighted(r, [['medium', 45], ['high', 45], ['low', 10]] as const) : weighted(r, [['low', 30], ['medium', 50], ['high', 20]] as const)
+  const personality = {
+    openness: aiAttitude === 'enthusiastic' ? 'high' : aiAttitude === 'distrustful' ? 'low' : pick(r, ['low', 'medium', 'high'] as const),
+    conscientiousness: pick(r, ['low', 'medium', 'high'] as const),
+    extraversion: pick(r, ['low', 'medium', 'high'] as const),
+    agreeableness: pick(r, ['medium', 'high', 'low'] as const),
+    neuroticism,
+  } as const
+  const coping = some(r, COPING, 1, 2)
+  const shift = workPattern === 'shift' || flags.includes('night shift worker')
+  const bedHour = shift ? pick(r, [1, 2, 8]) : clamped >= 65 ? pick(r, [22, 23]) : pick(r, [22, 23, 0, 1])
+  const wakeHour = shift && bedHour === 8 ? 15 : clamped >= 65 ? 6 : pick(r, [6, 6, 7, 7, 8])
+  const hoursRaw = ((wakeHour - bedHour + 24) % 24) - (goal === 'sleep' ? 1.5 + r() : r() * 0.8)
+  const hours = Math.max(4, Math.round(hoursRaw * 2) / 2)
+  const quality = (goal === 'sleep' ? weighted(r, [[1, 30], [2, 50], [3, 20]] as const) : weighted(r, [[2, 20], [3, 50], [4, 25], [5, 5]] as const)) as 1 | 2 | 3 | 4 | 5
+  const stressors = some(r, STRESSORS.filter((x) => workPattern === 'student' || x !== 'exams and grades'), 2, 3)
+  if (workPattern === 'student' && !stressors.includes('exams and grades')) stressors[0] = 'exams and grades'
+  if (household.includes('cares for') && !stressors.includes('caring for someone')) stressors[0] = 'caring for someone'
+  const firstName = first
+  const HOME: Record<string, string> = {
+    'lives with parents': 'still lives with their parents',
+    flatmates: 'shares a flat with two others',
+    'lives alone': 'lives alone',
+    'with a partner': 'lives with a partner',
+    'partner and young kids': 'lives with a partner and two young children',
+    'partner and teenagers': 'lives with a partner and two teenagers',
+    'single parent': 'is raising a child alone',
+    'cares for a parent at home': 'looks after an ageing parent at home',
+    'lives with adult children': 'lives with a grown-up son and his family',
+  }
+  const home = (HOME[household] ?? household).replace('their parents', gender === 'woman' ? 'her parents' : gender === 'man' ? 'his parents' : 'their parents')
+  const APP_PHRASE: Record<string, string> = { 'YouTube videos': 'meditation videos on YouTube', 'Spotify sleep playlists': 'sleep playlists on Spotify' }
+  const appName = (x?: string) => (x ? APP_PHRASE[x] ?? x : 'an app')
+  const pronouns = gender === 'woman' ? 'she/her' : gender === 'man' ? 'he/him' : 'they/them'
+  const they = gender === 'woman' ? 'She' : gender === 'man' ? 'He' : 'They'
+  const theyVerb = (v: string, plural: string) => (gender === 'non-binary' ? plural : v)
+  const occupationText = OCCUPATIONS[workPattern]
+  const occupationPick = pick(r, occupationText)
+  const appHistory =
+    experience === 'never'
+      ? 'Has never used a wellness app.'
+      : experience === 'tried and stopped'
+        ? `Tried ${appName(apps[0])} for ${pick(r, ['a week', 'about three weeks', 'two months'])} and stopped ${pick(r, ['when the free trial ended', 'after the reminders got annoying', 'because it all started to sound the same', 'when life got busy', 'after one session that felt too spiritual'])}.`
+        : experience === 'occasional'
+          ? `Turns to ${appName(apps[0])} ${pick(r, ['when things get bad', 'a couple of times a week', 'mostly at night'])}, with no routine.`
+          : `Uses ${apps.map(appName).join(' and ')} almost every day, ${pick(r, ['for years', 'since a hard year', 'mainly for sleep'])}.`
+  const occLower = /^[A-Z]{2}/.test(occupationPick) ? occupationPick : occupationPick.charAt(0).toLowerCase() + occupationPick.slice(1)
+  const occLine = ['student', 'caregiver', 'between jobs', 'retired'].includes(workPattern)
+    ? { student: `a ${occLower.replace(/ student$/, '')} student`.replace('a university university', 'a university'), caregiver: occLower.startsWith('carer') ? `a ${occLower}` : `a ${occLower}`, 'between jobs': occLower.toLowerCase().startsWith('looking') ? 'looking for work' : occLower.startsWith('recently') ? 'recently laid off' : 'on a career break', retired: occLower.replace(/^retired /, 'a retired ') }[workPattern as 'student']
+    : `${/^(hr|[aeiou])/i.test(occLower) ? 'an' : 'a'} ${occLower}`
+  const profile: Profile = {
+    pronouns,
+    bio: [
+      `${firstName} is ${clamped}, ${occLine} in ${'%CITY%'}, ${place.country}, and ${theyVerb(home, home.replace(/^(\w+)s /, '$1 ').replace(/^is /, 'are '))}.`,
+      `${they} ${theyVerb('describes', 'describe')} ${gender === 'woman' ? 'herself' : gender === 'man' ? 'himself' : 'themselves'} as ${traits.join(', ').replace(/, ([^,]*)$/, ' and $1')}, and ${theyVerb('cares', 'care')} most about ${some(r, VALUES, 2, 2).join(' and ')}.`,
+      `Right now ${firstName} ${struggle}, mostly because of ${stressors[0]}.`,
+      `${appHistory}`,
+    ].join(' '),
+    personality,
+    traits,
+    values: [],
+    day: makeDay(r, workPattern, household, goal, bedHour, wakeHour, coping),
+    sleep: { bedtime: hhmm(bedHour), wake: hhmm(wakeHour), hours, quality },
+    stressors,
+    coping,
+    phone: pick(r, PHONES[income]),
+    screenTimeHours: Math.round((clamped < 30 ? 5 + r() * 4 : clamped < 55 ? 3 + r() * 3 : 1.5 + r() * 2.5) * 2) / 2,
+    topApps: some(r, SOCIAL, 3, 4),
+    appHistory,
+    decides: pick(r, DECIDES),
+    wouldHearAbout: pick(r, CHANNELS),
+    dealBreakers: some(r, DEAL_BREAKERS, 1, 2),
+    success: pick(r, SUCCESS[goal]),
+    quotes: [],
+  }
+  profile.values = (profile.bio.match(/most about (.+?) and (.+?)\./) ?? []).slice(1, 3)
+  if (barriers.includes('dislikes spiritual language') && !profile.dealBreakers.includes('religious or spiritual framing')) profile.dealBreakers.push('religious or spiritual framing')
+  const city = pick(r, place.cities)
+  profile.bio = profile.bio.replace('%CITY%', city)
+  profile.quotes = [pick(r, QUOTES[goal]), EXTRA_QUOTES.ai[aiAttitude][0], EXTRA_QUOTES.money[income][0]]
+
   return {
     id: `P${String(n).padStart(3, '0')}`,
     name: `${first} ${pick(r, place.last)}`,
@@ -264,11 +437,11 @@ function makePersona(r: Rand, n: number): Persona {
     ageBand: ageBand(clamped),
     gender,
     country: place.country,
-    city: pick(r, place.cities),
+    city,
     region: place.region,
     language: place.language,
     workPattern,
-    occupation: pick(r, OCCUPATIONS[workPattern]),
+    occupation: occupationPick,
     household,
     income,
     goal,
@@ -289,7 +462,8 @@ function makePersona(r: Rand, n: number): Persona {
     privacy: weighted(r, [['relaxed', 30], ['careful', 50], ['very protective', 20]] as const),
     barriers,
     flags,
-    quote: pick(r, QUOTES[goal]),
+    quote: profile.quotes[0],
+    profile,
   }
 }
 
@@ -314,7 +488,16 @@ export function personaPrompt(p: Persona): string {
     `Preferences: ${p.length}-minute sessions, ${p.voice === 'none' ? 'no voice' : `a ${p.voice} voice`}, ${p.sound}; spiritual language: ${p.spiritual}.`,
     `Attitudes: tech comfort ${p.techComfort}; towards AI you are ${p.aiAttitude}; privacy ${p.privacy}; you would pay ${p.willingnessToPay}.`,
     `What gets in your way: ${p.barriers.join('; ')}.${p.flags.length ? ` Also: ${p.flags.join('; ')}.` : ''}`,
-    `In your own words: "${p.quote}"`,
+    '',
+    `Your story: ${p.profile.bio}`,
+    `Personality: ${p.profile.traits.join(', ')}; openness ${p.profile.personality.openness}, conscientiousness ${p.profile.personality.conscientiousness}, extraversion ${p.profile.personality.extraversion}, agreeableness ${p.profile.personality.agreeableness}, neuroticism ${p.profile.personality.neuroticism}. You value ${p.profile.values.join(' and ')}.`,
+    `A normal weekday: ${p.profile.day.map((d) => `${d.time} ${d.what}`).join('; ')}.`,
+    `Sleep: bed around ${p.profile.sleep.bedtime}, up at ${p.profile.sleep.wake}, about ${p.profile.sleep.hours} hours, quality ${p.profile.sleep.quality} out of 5.`,
+    `What weighs on you: ${p.profile.stressors.join('; ')}. How you cope now: ${p.profile.coping.join('; ')}.`,
+    `Your phone: ${p.profile.phone}, about ${p.profile.screenTimeHours} hours a day, mostly ${p.profile.topApps.join(', ')}. ${p.profile.appHistory}`,
+    `How you pick an app: you ${p.profile.decides}; you would most likely hear about Aurelia through ${p.profile.wouldHearAbout}. Deal breakers: ${p.profile.dealBreakers.join('; ')}.`,
+    `Success for you looks like: ${p.profile.success}.`,
+    `Things you might say: ${p.profile.quotes.map((q) => `"${q}"`).join(' ')}`,
     '',
     'Answer in the first person, briefly and concretely, as this person would. Be honest about doubts and say when something would not fit your life. Do not invent facts about Aurelia that you have not been shown.',
   ]

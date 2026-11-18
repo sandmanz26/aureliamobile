@@ -1,5 +1,5 @@
 import { Copy, Download, Shuffle, Users } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { DataTable, type Column } from '../components/DataTable'
 import { SidePanel } from '../components/SidePanel'
@@ -222,8 +222,9 @@ export function PersonasPage() {
 
       {open && (
         <SidePanel
-          title={`${open.name}, ${open.age}`}
-          description={`${open.id} · ${open.occupation} · ${open.city}, ${open.country}`}
+          width={600}
+          title={open.name}
+          description={`${open.id} · synthetic persona`}
           onClose={() => setOpen(null)}
           footer={
             <>
@@ -234,50 +235,192 @@ export function PersonasPage() {
             </>
           }
         >
-          <div className="flex flex-col gap-14 text-13 text-adm-ink">
-            <p className="rounded-8 bg-adm-bg px-12 py-10 italic text-adm-ink-2">“{open.quote}”</p>
-            <dl className="grid grid-cols-[120px_1fr] gap-x-12 gap-y-8 text-12">
-              {(
-                [
-                  ['Goal', GOAL_LABEL[open.goal]],
-                  ['What is going on', `${open.name.split(' ')[0]} ${open.struggle}`],
-                  ['Triggers', open.triggers.join('; ')],
-                  ['Life', `${open.gender}, ${open.household}; ${open.workPattern}, ${open.income} income`],
-                  ['Language', open.language],
-                  ['Meditation', `${open.experience}${open.apps.length ? `; uses ${open.apps.join(', ')}` : ''}`],
-                  ['Wearable', open.wearable],
-                  ['Prefers', `${open.length} min, ${open.voice === 'none' ? 'no voice' : `${open.voice} voice`}, ${open.sound}; spiritual: ${open.spiritual}`],
-                  ['Tech, AI, privacy', `${open.techComfort} tech comfort; ${open.aiAttitude} about AI; ${open.privacy}`],
-                  ['Would pay', open.willingnessToPay],
-                  ['Barriers', open.barriers.join('; ')],
-                  ['To test for', open.flags.join('; ') || 'nothing in particular'],
-                ] as const
-              ).map(([k, v]) => (
-                <div key={k} className="contents">
-                  <dt className="text-adm-muted">{k}</dt>
-                  <dd>{v}</dd>
-                </div>
-              ))}
-            </dl>
-            <div className="flex flex-col gap-6">
-              <span className="text-12 font-semibold">User journey moments</span>
-              <div className="flex flex-wrap gap-6">
-                {open.moments.map((m) => (
-                  <span key={m} className="rounded-full bg-adm-hover px-8 py-2 text-11">
-                    {MOMENT_TITLE.get(m) ?? m}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div className="flex flex-col gap-6">
-              <span className="inline-flex items-center gap-6 text-12 font-semibold">
-                <Users size={13} /> Role-play prompt
-              </span>
-              <pre className="max-h-[240px] overflow-auto whitespace-pre-wrap rounded-8 border border-adm-line bg-adm-bg p-10 text-11 leading-[16px] text-adm-ink-2">{personaPrompt(open)}</pre>
-            </div>
-          </div>
+          <PersonaProfile p={open} />
         </SidePanel>
       )}
+    </div>
+  )
+}
+
+const LEVEL_WIDTH = { low: '25%', medium: '55%', high: '90%' } as const
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="flex flex-col gap-8 border-t border-adm-line pt-14">
+      <h3 className="text-11 font-semibold uppercase tracking-widest text-adm-muted">{title}</h3>
+      {children}
+    </section>
+  )
+}
+
+function Chips({ items }: { items: string[] }) {
+  return (
+    <div className="flex flex-wrap gap-6">
+      {items.map((x) => (
+        <span key={x} className="rounded-full bg-adm-hover px-8 py-2 text-11 text-adm-ink">
+          {x}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+/** One persona as a person: who they are, a day, how they feel, what wins or loses them. */
+function PersonaProfile({ p }: { p: Persona }) {
+  const f = p.profile
+  const initials = p.name
+    .split(' ')
+    .map((x) => x[0])
+    .slice(0, 2)
+    .join('')
+  return (
+    <div className="flex flex-col gap-14 text-13 text-adm-ink">
+      <div className="flex items-center gap-12">
+        <span className="flex size-56 shrink-0 items-center justify-center rounded-full bg-adm-hover text-[17px] font-semibold text-adm-ink-2" aria-hidden="true">
+          {initials}
+        </span>
+        <div className="min-w-0">
+          <p className="text-15 font-semibold">
+            {p.name}, {p.age} <span className="text-12 font-normal text-adm-muted">({f.pronouns})</span>
+          </p>
+          <p className="text-12 text-adm-ink-2">
+            {p.occupation} · {p.city}, {p.country}
+          </p>
+          <div className="mt-4 flex flex-wrap gap-4">
+            <Badge tone="info">{GOAL_LABEL[p.goal]}</Badge>
+            <Badge>{p.experience === 'never' ? 'New to meditation' : `Meditation: ${p.experience}`}</Badge>
+            <Badge tone={p.aiAttitude === 'distrustful' || p.aiAttitude === 'skeptical' ? 'warning' : 'good'}>AI: {p.aiAttitude}</Badge>
+          </div>
+        </div>
+      </div>
+      <p className="leading-[20px]">{f.bio}</p>
+      <p className="rounded-8 bg-adm-bg px-12 py-10 italic text-adm-ink-2">“{f.quotes[0]}”</p>
+
+      <Section title="A weekday">
+        <ol className="flex flex-col gap-6">
+          {f.day.map((d) => (
+            <li key={d.time + d.what} className="grid grid-cols-[72px_1fr] gap-8 text-12">
+              <span className="tabular-nums text-adm-muted">{d.time}</span>
+              <span>{d.what}</span>
+            </li>
+          ))}
+        </ol>
+      </Section>
+
+      <Section title="How they are doing">
+        <div className="grid grid-cols-3 gap-8 text-12">
+          <div className="rounded-8 bg-adm-bg p-8">
+            <p className="text-adm-muted">Sleep</p>
+            <p className="font-semibold tabular-nums">
+              {f.sleep.hours} h · {f.sleep.bedtime}–{f.sleep.wake}
+            </p>
+          </div>
+          <div className="rounded-8 bg-adm-bg p-8">
+            <p className="text-adm-muted">Sleep quality</p>
+            <p className="font-semibold tabular-nums">{f.sleep.quality} of 5</p>
+          </div>
+          <div className="rounded-8 bg-adm-bg p-8">
+            <p className="text-adm-muted">Screen time</p>
+            <p className="font-semibold tabular-nums">{f.screenTimeHours} h a day</p>
+          </div>
+        </div>
+        <p className="text-12">
+          <span className="text-adm-muted">Right now: </span>
+          {p.name.split(' ')[0]} {p.struggle}. It hits at: {p.triggers.join('; ')}.
+        </p>
+        <div className="flex flex-col gap-4 text-12">
+          <span className="text-adm-muted">What weighs on them</span>
+          <Chips items={f.stressors} />
+          <span className="mt-4 text-adm-muted">How they cope now</span>
+          <Chips items={f.coping} />
+          {p.flags.length > 0 && (
+            <>
+              <span className="mt-4 text-adm-muted">Circumstances to test for</span>
+              <Chips items={p.flags} />
+            </>
+          )}
+        </div>
+      </Section>
+
+      <Section title="Personality and values">
+        <div className="flex flex-col gap-6">
+          {(Object.entries(f.personality) as [string, keyof typeof LEVEL_WIDTH][]).map(([k, v]) => (
+            <div key={k} className="grid grid-cols-[130px_1fr_56px] items-center gap-8 text-12">
+              <span className="capitalize text-adm-ink-2">{k}</span>
+              <span className="h-6 overflow-hidden rounded-full bg-adm-hover">
+                <span className="block h-full rounded-full bg-adm-s1" style={{ width: LEVEL_WIDTH[v] }} />
+              </span>
+              <span className="text-adm-muted">{v}</span>
+            </div>
+          ))}
+        </div>
+        <p className="text-12">
+          <span className="text-adm-muted">Traits: </span>
+          {f.traits.join(', ')} · <span className="text-adm-muted">Values: </span>
+          {f.values.join(', ')}
+        </p>
+      </Section>
+
+      <Section title="Life and tech">
+        <dl className="grid grid-cols-[130px_1fr] gap-x-12 gap-y-6 text-12">
+          {(
+            [
+              ['Home', p.household],
+              ['Work', `${p.workPattern}; ${p.income} income`],
+              ['Language', p.language],
+              ['Phone', `${f.phone}; mostly ${f.topApps.join(', ')}`],
+              ['Wearable', p.wearable],
+              ['Wellness apps', f.appHistory],
+            ] as const
+          ).map(([k, v]) => (
+            <div key={k} className="contents">
+              <dt className="text-adm-muted">{k}</dt>
+              <dd>{v}</dd>
+            </div>
+          ))}
+        </dl>
+      </Section>
+
+      <Section title="Winning them, losing them">
+        <dl className="grid grid-cols-[130px_1fr] gap-x-12 gap-y-6 text-12">
+          {(
+            [
+              ['Success looks like', f.success],
+              ['Would hear about it', f.wouldHearAbout],
+              ['How they decide', f.decides],
+              ['Would pay', p.willingnessToPay],
+              ['Prefers', `${p.length} min, ${p.voice === 'none' ? 'no voice' : `${p.voice} voice`}, ${p.sound}; spiritual language: ${p.spiritual}`],
+              ['Privacy', p.privacy],
+              ['Barriers', p.barriers.join('; ')],
+              ['Deal breakers', f.dealBreakers.join('; ')],
+            ] as const
+          ).map(([k, v]) => (
+            <div key={k} className="contents">
+              <dt className="text-adm-muted">{k}</dt>
+              <dd>{v}</dd>
+            </div>
+          ))}
+        </dl>
+      </Section>
+
+      <Section title="In their words">
+        <ul className="flex flex-col gap-6 text-12 italic text-adm-ink-2">
+          {f.quotes.map((q) => (
+            <li key={q}>“{q}”</li>
+          ))}
+        </ul>
+      </Section>
+
+      <Section title="User journey moments">
+        <Chips items={p.moments.map((m) => MOMENT_TITLE.get(m) ?? m)} />
+      </Section>
+
+      <Section title="Role-play prompt">
+        <span className="inline-flex items-center gap-6 text-12 text-adm-muted">
+          <Users size={13} /> For an AI research run. Copy it with the button below.
+        </span>
+        <pre className="max-h-[220px] overflow-auto whitespace-pre-wrap rounded-8 border border-adm-line bg-adm-bg p-10 text-11 leading-[16px] text-adm-ink-2">{personaPrompt(p)}</pre>
+      </Section>
     </div>
   )
 }

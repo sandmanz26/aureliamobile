@@ -14,12 +14,15 @@ export function SidePanel({
   onClose,
   footer,
   children,
+  width = 480,
 }: {
   title: string
   description?: string
   onClose: () => void
   footer?: ReactNode
   children: ReactNode
+  /** Max width in px (default 480). */
+  width?: number
 }) {
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -30,12 +33,13 @@ export function SidePanel({
   }, [onClose])
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/25" onClick={onClose}>
+    <div className="adm-root fixed inset-0 z-50 flex justify-end bg-black/25" onClick={onClose}>
       <aside
         role="dialog"
         aria-label={title}
         onClick={(event) => event.stopPropagation()}
-        className="flex h-full w-full max-w-[480px] flex-col bg-adm-surface shadow-2xl"
+        style={{ maxWidth: width }}
+        className="flex h-full w-full flex-col bg-adm-surface shadow-2xl"
       >
         <div className="flex items-start justify-between gap-12 border-b border-adm-line px-20 py-16">
           <div className="min-w-0">
