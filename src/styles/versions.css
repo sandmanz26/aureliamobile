@@ -113,6 +113,7 @@
 :root { --staging-bar: 0px; }
 /* The desktop sidebar's width, for fixed bars that sit beside it (U091: it folds to an 88px rail). */
 :root { --app-sidebar: 260px; }
+:root[data-sidebar='compact'] { --app-sidebar: 232px; }
 :root[data-sidebar='rail'] { --app-sidebar: 88px; }
 :root[data-staging-bar] { --staging-bar: 28px; }
 :root[data-staging-bar] body { padding-top: var(--staging-bar); }

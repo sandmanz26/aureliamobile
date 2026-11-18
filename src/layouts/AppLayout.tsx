@@ -23,7 +23,9 @@ import { RELEASES } from '../versions/releases'
 
 const LATEST = recentSessions()
 
-function SidebarContent({ onNavigate, onCollapse }: { onNavigate?: () => void; onCollapse?: () => void }) {
+function SidebarContent({ onNavigate, onCollapse, compact = false }: { onNavigate?: () => void; onCollapse?: () => void; compact?: boolean }) {
+  // compact (U093): the desktop sidebar on staging, tighter than the phone drawer's Figma rows.
+  const row = compact ? 'px-14 py-10 text-[15px] leading-[22px]' : 'text-style-body px-20 py-16'
   const unread = useHasUnreadNotifications()
   const { isEnabled } = useFeatureFlags()
   const { signedIn } = useAuth()
@@ -47,7 +49,7 @@ function SidebarContent({ onNavigate, onCollapse }: { onNavigate?: () => void; o
       disabled={!isEnabled('profile')}
     />
   ) : (
-    <NavItem to="/login" icon={<UserIcon size={24} className="shrink-0" />} label="Sign In" disabled={!isEnabled('auth')} />
+    <NavItem compact={compact} to="/login" icon={<UserIcon size={24} className="shrink-0" />} label="Sign In" disabled={!isEnabled('auth')} />
   )
 
   return (
@@ -56,8 +58,8 @@ function SidebarContent({ onNavigate, onCollapse }: { onNavigate?: () => void; o
        the top to clear the simulated phone status bar AppLayout stuck above
        the page; that band is gone now that this is web-first, so the drawer
        keeps the same 24 as everything else. */
-    <div className="flex h-full flex-col gap-20 overflow-y-auto px-16 pb-24 pt-24">
-      <div className="flex items-center justify-between px-20 pb-16">
+    <div className={`flex h-full flex-col overflow-y-auto ${compact ? 'gap-12 px-12 pb-16 pt-20' : 'gap-20 px-16 pb-24 pt-24'}`}>
+      <div className={`flex items-center justify-between ${compact ? 'px-12 pb-8' : 'px-20 pb-16'}`}>
         {/* The mark goes home, as a brand mark in app chrome is expected to.
             It closes the drawer on the way, so the destination is not left
             sitting behind the panel that took you there. Home is open to
@@ -104,23 +106,23 @@ function SidebarContent({ onNavigate, onCollapse }: { onNavigate?: () => void; o
              as the mobile tab bar. "Me" is the account item above (Profile is
              Me now); Library, credits, invite and help live inside it. */
           <>
-            <NavItem to="/home" icon={<Sparkles size={22} strokeWidth={1.5} className="shrink-0" />} label="Create" />
-            <NavItem to="/explore" icon={<NoteIcon size={24} className="shrink-0" />} label="Discover" disabled={!isEnabled('explore')} />
-            <NavItem to="/wellness" icon={<ChartMediumIcon size={24} className="shrink-0" />} label="Progress" disabled={!isEnabled('wellness')} />
+            <NavItem compact={compact} to="/home" icon={<Sparkles size={22} strokeWidth={1.5} className="shrink-0" />} label="Create" />
+            <NavItem compact={compact} to="/explore" icon={<NoteIcon size={24} className="shrink-0" />} label="Discover" disabled={!isEnabled('explore')} />
+            <NavItem compact={compact} to="/wellness" icon={<ChartMediumIcon size={24} className="shrink-0" />} label="Progress" disabled={!isEnabled('wellness')} />
             {account}
           </>
         ) : (
           <>
-            <NavItem to="/explore" icon={<NoteIcon size={24} className="shrink-0" />} label="Explore" disabled={!isEnabled('explore')} />
-            <NavItem to="/sessions" icon={<PlaylistIcon size={24} className="shrink-0" />} label="Sessions" disabled={!isEnabled('sessions')} />
-            <NavItem to="/wellness" icon={<ChartMediumIcon size={24} className="shrink-0" />} label="My wellness" disabled={!isEnabled('wellness')} />
+            <NavItem compact={compact} to="/explore" icon={<NoteIcon size={24} className="shrink-0" />} label="Explore" disabled={!isEnabled('explore')} />
+            <NavItem compact={compact} to="/sessions" icon={<PlaylistIcon size={24} className="shrink-0" />} label="Sessions" disabled={!isEnabled('sessions')} />
+            <NavItem compact={compact} to="/wellness" icon={<ChartMediumIcon size={24} className="shrink-0" />} label="My wellness" disabled={!isEnabled('wellness')} />
           </>
         )}
       </nav>
 
       {/* Figma "Frame 25" — Latest and the button are one block, 20 inside and
           32 between them, rather than two things that happen to be adjacent. */}
-      <div className="flex flex-col gap-32 p-20">
+      <div className={`flex flex-col ${compact ? 'gap-20 p-12' : 'gap-32 p-20'}`}>
         {signedIn && (
           <div className="flex flex-col gap-20">
             <p className="text-style-body-small text-text-secondary">{v4 ? 'Recent' : 'Latest'}</p>
@@ -162,7 +164,7 @@ function SidebarContent({ onNavigate, onCollapse }: { onNavigate?: () => void; o
             onNavigate?.()
             gate('/chat', { fresh: true })
           }}
-          className="text-style-body u-press flex h-42 w-full items-center justify-center gap-8 rounded-16 px-22 text-text-inverse"
+          className={`u-press flex w-full items-center justify-center gap-8 rounded-16 px-22 text-text-inverse ${compact ? 'h-38 text-[15px]' : 'text-style-body h-42'}`}
           style={{ background: 'linear-gradient(90deg, #FF881B, #FFE682)' }}
         >
           <Plus size={14} />
@@ -172,7 +174,7 @@ function SidebarContent({ onNavigate, onCollapse }: { onNavigate?: () => void; o
 
       {/* border/default in the frame, not border/subtle — #CBC4B8 against
           #E4E1DC, and the divider is the one rule the panel draws. */}
-      <div className="mt-auto flex flex-col border-t border-border-default pt-20">
+      <div className={`mt-auto flex flex-col border-t border-border-default ${compact ? 'pt-12' : 'pt-20'}`}>
         {isEnabled('invite') && (
           <button
             type="button"
@@ -180,7 +182,7 @@ function SidebarContent({ onNavigate, onCollapse }: { onNavigate?: () => void; o
               onNavigate?.()
               gate('/invite')
             }}
-            className="text-style-body u-press flex items-center gap-12 rounded-12 px-20 py-16 text-text-primary hover:bg-background-elevated"
+            className={`u-press flex items-center gap-12 rounded-12 text-text-primary hover:bg-background-elevated ${row}`}
           >
             <UserAddIcon size={24} className="shrink-0 text-icon-default" />
             Invite a Friend
@@ -193,7 +195,7 @@ function SidebarContent({ onNavigate, onCollapse }: { onNavigate?: () => void; o
               onNavigate?.()
               navigate('/help')
             }}
-            className="text-style-body u-press flex items-center gap-12 rounded-12 px-20 py-16 text-text-primary hover:bg-background-elevated"
+            className={`u-press flex items-center gap-12 rounded-12 text-text-primary hover:bg-background-elevated ${row}`}
           >
             <MessageQuestionIcon size={24} className="shrink-0 text-icon-default" />
             Help
@@ -201,7 +203,7 @@ function SidebarContent({ onNavigate, onCollapse }: { onNavigate?: () => void; o
         )}
         {/* Which site and which build, where it is always in view. Not a
             navigation item and deliberately not a link — see BuildBadge. */}
-        <div className="px-20 pt-12">
+        <div className={compact ? 'px-14 pt-8' : 'px-20 pt-12'}>
           <BuildBadge />
         </div>
       </div>
@@ -306,7 +308,8 @@ function SidebarRail({ onExpand }: { onExpand: () => void }) {
 export function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   // Desktop sidebar folded to the icon rail; remembered per browser (U091).
-  const [rail, setRail] = useState(() => RELEASES.sidebarRail && readString(RAIL_KEY) === '1')
+  // Folded by default (U093); '0' means this browser chose the full sidebar.
+  const [rail, setRail] = useState(() => RELEASES.sidebarRail && readString(RAIL_KEY) !== '0')
   function setRailMode(next: boolean) {
     setRail(next)
     writeString(RAIL_KEY, next ? '1' : '0')
@@ -315,6 +318,7 @@ export function AppLayout() {
   useEffect(() => {
     const root = document.documentElement
     if (rail) root.setAttribute('data-sidebar', 'rail')
+    else if (RELEASES.sidebarRail) root.setAttribute('data-sidebar', 'compact')
     else root.removeAttribute('data-sidebar')
     return () => root.removeAttribute('data-sidebar')
   }, [rail])
@@ -359,9 +363,9 @@ export function AppLayout() {
             figure (`lg:left-[313px]`) to sit beside it rather than under it —
             changing one without the other leaves a gap or an overlap. */}
         <aside
-          className={`hidden shrink-0 border-r border-border-subtle bg-surface-default transition-[width] duration-200 lg:sticky lg:top-0 lg:block lg:h-screen ${rail ? 'w-[88px]' : 'w-[260px]'}`}
+          className={`hidden shrink-0 border-r border-border-subtle bg-surface-default transition-[width] duration-200 lg:sticky lg:top-0 lg:block lg:h-screen ${rail ? 'w-[88px]' : RELEASES.sidebarRail ? 'w-[232px]' : 'w-[260px]'}`}
         >
-          {rail ? <SidebarRail onExpand={() => setRailMode(false)} /> : <SidebarContent onCollapse={RELEASES.sidebarRail ? () => setRailMode(true) : undefined} />}
+          {rail ? <SidebarRail onExpand={() => setRailMode(false)} /> : <SidebarContent compact={RELEASES.sidebarRail} onCollapse={RELEASES.sidebarRail ? () => setRailMode(true) : undefined} />}
         </aside>
 
         {/* Mobile: hamburger-triggered drawer, faithful to the Figma "Menu" screen */}
