@@ -19,6 +19,15 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-18 — Sidebar rail; a simpler user journey (U091, U092, J119)
+
+The desktop sidebar folds to an icon rail and expands again (staging only).
+The admin user journey is one page: Journey tags became its tabs, the map
+fits the page, and one side panel edits a moment's details, tags and review.
+
+Branches: `web_app`, `admin_cms`. The user journey rework is not flagged and
+reaches production with the next push there; the rail and tags stay off.
+
 ### 2026-11-18 — Admin sidebar (U090, J118)
 
 The admin menu folds by group (the current one open, choices remembered),

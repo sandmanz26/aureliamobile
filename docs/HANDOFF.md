@@ -231,6 +231,7 @@ Level with production (U072, 13 Nov 2026). Everything in `RELEASES` (`src/versio
 
 The full list is §17. Since 13 Nov:
 
+- **J119 / U091–U092:** desktop sidebar folds to an icon rail (staging only, `RELEASES.sidebarRail`); the admin user journey reworked into one page with tabs and one side panel (Journey tags merged in; `/admin/journey-tags` redirects).
 - **J118 / U090:** admin sidebar groups fold and the sidebar is sticky; the admin's phone menu button (hidden by the v4/v5 `Open menu` rule) is back. Staging; production on request.
 - **J116 / U089:** admin module Product → Journey tags (`/admin/journey-tags`), the journey's tagging for review; staging only (`RELEASES.journeyTags`, O34).
 - **J115 / U088:** admin module Product → User journey (`/admin/user-journey`), the owner's journey map, on staging and production.
@@ -479,7 +480,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U090**, last J = **J118**, last
+**Numbering as of 17 Nov 2026:** last U = **U092**, last J = **J119**, last
 O = **O34**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -918,6 +919,8 @@ history can be read without opening four documents.
 | U088 | `92fae15` | 2026-11-18 | Admin: new module Product → User journey (`/admin/user-journey`), the journey map from the owner's blueprint: 4 stages, 10 moments, 3 screens, editable, export/import. Staging and production. | [patch](update-log/patches/U088-92fae15.patch) |
 | U089 | `f029a4f` | 2026-11-18 | Admin: new module Product → Journey tags (`/admin/journey-tags`): eight tag groups for every user-journey moment, a proposed first tagging, review status and notes, coverage gaps, an editable taxonomy. Staging only (`RELEASES.journeyTags`). | [patch](update-log/patches/U089-f029a4f.patch) |
 | U090 | `8440ca1` | 2026-11-18 | Admin sidebar: groups fold (current one open, choices remembered), tighter, sticky; the phone menu button, hidden by the v4/v5 rule, is back. Staging; production on request. | [patch](update-log/patches/U090-8440ca1.patch) |
+| U091 | `cb7c21b` | 2026-11-18 | Desktop sidebar folds to an 88px icon rail and expands again, remembered per browser; fixed bars follow `--app-sidebar`. Staging only (`RELEASES.sidebarRail`). | [patch](update-log/patches/U091-cb7c21b.patch) |
+| U092 | `01e0e78` | 2026-11-18 | User journey reworked after user feedback: Journey tags merged in as tabs, a map that fits, one side panel per moment (details + tags + review), Add moment + More, one export file. Staging. | [patch](update-log/patches/U092-01e0e78.patch) |
 | J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
@@ -928,6 +931,7 @@ history can be read without opening four documents.
 | J116 | 2026-11-18 | Proposal + Code | Tagging and classification for the user journey, as a new admin menu for review (Journey tags), staging only | U089 |
 | J117 | 2026-11-18 | Question | "I can't see what changed": Journey tags is on staging only (O34); where to find it and how to check the build | — |
 | J118 | 2026-11-18 | Code | Admin sidebar too long: folding groups and a sticky sidebar; the missing phone menu button fixed. Staging; production waits for a request | U090 |
+| J119 | 2026-11-18 | Code | User journey flow simplified as head of product (one page, one panel), and the desktop sidebar that folds to an icon rail (Eugene) | U091, U092 |
 
 ### 17.2 Code changes (U)
 

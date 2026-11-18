@@ -64,6 +64,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O34 | **Journey tags (J116)**: review the eight tag groups and the proposed tagging of the ten moments (Admin → Journey tags on staging); decide the gaps it shows (evening, night, positive state, Share has one moment); then release to production (`RELEASES.journeyTags`) | J116 | Product owner + the user who asked |
 | J117 | 2026-11-18 | Question | "I can't see what changed": Journey tags is on staging only (O34); where to find it and how to check the build | — |
 | J118 | 2026-11-18 | Code | Admin sidebar too long: folding groups and a sticky sidebar; the missing phone menu button fixed. Staging; production waits for a request | U090 |
+| J119 | 2026-11-18 | Code | User journey flow simplified as head of product (one page, one panel), and the desktop sidebar that folds to an icon rail (Eugene) | U091, U092 |
 | J115 | 2026-11-18 | Code + Release | Admin "User journey" menu built from the owner's journey-blueprint zip, on staging and production | U088 |
 | J116 | 2026-11-18 | Proposal + Code | Tagging and classification for the user journey, as a new admin menu for review (Journey tags), staging only | U089 |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
@@ -1327,3 +1328,19 @@ transcript and the update log. Everything from J018 on was written at the time.
   - Links are tighter, and the sidebar is sticky.
   - The admin's phone menu button was missing in v4/v5, hidden by the rule that retires the consumer hamburger. It is back.
 - **Waiting:** production, on request. The screenshot was from production, but production moves only when asked.
+
+### J119 — A simpler user journey, and a sidebar that folds
+- **Asked:** "tolong terkait yang ada user journey itu secara flow masih ada feedback dari user agak membingungkan kemudian bekerjalah sebagai head of product coba perbaiki secara flow nya agar lebih nyaman dan mudah dipakai tapi tetap bisa mengakomodir kebutuhan eugene. perhatikan ss ini, jadi client / eugene mau untuk desktop version ada model sidebar yang bisa di squeeze atau di minimize seperti itu tapi nanti ada opsi expand nya. tolong update ya"
+- **Done:**
+  - **U092: the user journey reworked as head of product.**
+    - One menu instead of two: Journey tags became tabs.
+    - A map that fits the page.
+    - One side panel for everything about a moment, with the map still in view.
+    - One primary action, Add moment; the rest under More.
+    - One export file.
+    - Everything Eugene's blueprint needs is still there.
+  - **U091: the desktop sidebar folds to an icon rail and expands again (Eugene's screenshot), remembered per browser.**
+- **Release:**
+  - Both are on staging.
+  - The rail is behind `RELEASES.sidebarRail` (staging only).
+  - The reworked user journey map is not behind a flag. It reaches production with the next push to `web_prod`; the tags stay off there (O34).

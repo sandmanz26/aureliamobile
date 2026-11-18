@@ -1,0 +1,2147 @@
+From 01e0e78a7209b2637b0cc44091ff1f73cb8c8740 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 18 Nov 2026 05:34:07 +0000
+Subject: [PATCH] User journey: one page, one panel, a simpler flow
+
+Users found the user journey confusing. As head of product, the flow is
+reworked around what people actually do there: look at the map, open a
+moment, change it.
+
+- One menu. Journey tags (U089) is no longer a separate page; its table,
+  coverage and tag setup are tabs of User journey (Map, Tags & review,
+  Coverage, Tag setup). /admin/journey-tags redirects to the tags tab.
+- The map fits the page: four stage columns with no zoom and no sideways
+  scroll at desktop widths. Filters are the stage chips, a tag filter and
+  a Show product screens switch.
+- Every card is one button. With tags on, it shows readiness, the review
+  status and 'Tags missing' when the classification is incomplete.
+- One side panel for everything about a moment: stage (so it can move),
+  title, what happens, the potential feature, the illustration, then its
+  tags, review status and note, saved with one button. The map stays in
+  view beside it. Screens use the same panel without tags.
+- One primary action, Add moment (with its stage chosen in the panel);
+  the rest moves under More: stage names (all four at once), Export,
+  Import, Restore the original.
+- Export writes the map and the tags in one file; Import reads it, the
+  older single exports and the original blueprint page's export.
+
+On production (RELEASES.journeyTags off) the page is the map and the
+panel without tags. Shared pieces: admin/components/SidePanel,
+admin/pages/journey/TagViews, admin/data/journeyBundle (tested).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/App.tsx                          |  10 +-
+ src/admin/AdminLayout.tsx            |   9 +-
+ src/admin/components/SidePanel.tsx   |  60 ++
+ src/admin/data/journeyBundle.test.ts |  17 +
+ src/admin/data/journeyBundle.ts      |  37 ++
+ src/admin/data/journeyTags.ts        |   3 +
+ src/admin/pages/JourneyTagsPage.tsx  | 543 ------------------
+ src/admin/pages/UserJourneyPage.tsx  | 808 +++++++++++++++------------
+ src/admin/pages/journey/TagViews.tsx | 342 ++++++++++++
+ src/demo/modules.ts                  |   1 -
+ src/versions/releases.ts             |   2 +-
+ 11 files changed, 923 insertions(+), 909 deletions(-)
+ create mode 100644 src/admin/components/SidePanel.tsx
+ create mode 100644 src/admin/data/journeyBundle.test.ts
+ create mode 100644 src/admin/data/journeyBundle.ts
+ delete mode 100644 src/admin/pages/JourneyTagsPage.tsx
+ create mode 100644 src/admin/pages/journey/TagViews.tsx
+
+diff --git a/src/App.tsx b/src/App.tsx
+index bf2f71b..716281c 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -87,7 +87,6 @@ const SignalSourcesPage = lazy(() => import('./admin/pages/SignalSourcesPage').t
+ const AuditPage = lazy(() => import('./admin/pages/AuditPage').then((m) => ({ default: m.AuditPage })))
+ const SettingsPage = lazy(() => import('./admin/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })))
+ const UserJourneyPage = lazy(() => import('./admin/pages/UserJourneyPage').then((m) => ({ default: m.UserJourneyPage })))
+-const JourneyTagsPage = lazy(() => import('./admin/pages/JourneyTagsPage').then((m) => ({ default: m.JourneyTagsPage })))
+ 
+ export default function App() {
+   const { pathname } = useLocation()
+@@ -185,13 +184,8 @@ export default function App() {
+                 <UserJourneyPage />
+               </ModuleGuard>
+             } />
+-            {RELEASES.journeyTags && (
+-              <Route path="journey-tags" element={
+-                <ModuleGuard module="adminJourneyTags">
+-                  <JourneyTagsPage />
+-                </ModuleGuard>
+-              } />
+-            )}
++            {/* Journey tags became tabs of User journey (U092). */}
++            <Route path="journey-tags" element={<Navigate to="/admin/user-journey?view=tags" replace />} />
+             <Route path="sessions" element={
+               <ModuleGuard module="adminSessions">
+                 <AdminSessionsPage />
+diff --git a/src/admin/AdminLayout.tsx b/src/admin/AdminLayout.tsx
+index 87c936c..b36c473 100644
+--- a/src/admin/AdminLayout.tsx
++++ b/src/admin/AdminLayout.tsx
+@@ -21,7 +21,6 @@ import {
+   ShieldAlert,
+   ShieldCheck,
+   Tag,
+-  Tags,
+   TrendingUp,
+   Trophy,
+   Users,
+@@ -36,7 +35,6 @@ import { BuildBadge } from '../components/ui/BuildBadge'
+ import { PageSkeleton } from '../components/ui/PageSkeleton'
+ import { useFeatureFlags } from '../demo/FeatureFlags'
+ import { readJson, writeJson } from '../lib/storage'
+-import { RELEASES } from '../versions/releases'
+ import { AdminDataProvider } from './data/AdminDataContext'
+ 
+ interface NavItem {
+@@ -68,11 +66,8 @@ const NAV: { section: string; items: NavItem[] }[] = [
+   },
+   {
+     section: 'Product',
+-    items: [
+-      { to: '/admin/user-journey', label: 'User journey', icon: Route, flag: 'adminUserJourney' },
+-      // Staging only until released (RELEASES.journeyTags).
+-      ...(RELEASES.journeyTags ? [{ to: '/admin/journey-tags', label: 'Journey tags', icon: Tags, flag: 'adminJourneyTags' }] : []),
+-    ],
++    // Tags, review and coverage are tabs inside User journey (U092).
++    items: [{ to: '/admin/user-journey', label: 'User journey', icon: Route, flag: 'adminUserJourney' }],
+   },
+   {
+     section: 'Content',
+diff --git a/src/admin/components/SidePanel.tsx b/src/admin/components/SidePanel.tsx
+new file mode 100644
+index 0000000..8d7ddf9
+--- /dev/null
++++ b/src/admin/components/SidePanel.tsx
+@@ -0,0 +1,60 @@
++import { X } from 'lucide-react'
++import { useEffect, type ReactNode } from 'react'
++import { createPortal } from 'react-dom'
++
++/**
++ * A panel that slides in from the right and leaves the page visible beside
++ * it, for editing one item of a larger view (U092: the user journey's
++ * moments). Portaled for the same reason as Modal. The footer stays in view
++ * while the body scrolls.
++ */
++export function SidePanel({
++  title,
++  description,
++  onClose,
++  footer,
++  children,
++}: {
++  title: string
++  description?: string
++  onClose: () => void
++  footer?: ReactNode
++  children: ReactNode
++}) {
++  useEffect(() => {
++    function onKey(event: KeyboardEvent) {
++      if (event.key === 'Escape') onClose()
++    }
++    document.addEventListener('keydown', onKey)
++    return () => document.removeEventListener('keydown', onKey)
++  }, [onClose])
++
++  return createPortal(
++    <div className="fixed inset-0 z-50 flex justify-end bg-black/25" onClick={onClose}>
++      <aside
++        role="dialog"
++        aria-label={title}
++        onClick={(event) => event.stopPropagation()}
++        className="flex h-full w-full max-w-[480px] flex-col bg-adm-surface shadow-2xl"
++      >
++        <div className="flex items-start justify-between gap-12 border-b border-adm-line px-20 py-16">
++          <div className="min-w-0">
++            <h2 className="truncate text-15 font-semibold text-adm-ink">{title}</h2>
++            {description && <p className="mt-2 text-12 text-adm-muted">{description}</p>}
++          </div>
++          <button
++            type="button"
++            aria-label="Close"
++            onClick={onClose}
++            className="flex size-28 shrink-0 items-center justify-center rounded-8 text-adm-muted hover:bg-adm-hover hover:text-adm-ink"
++          >
++            <X size={16} />
++          </button>
++        </div>
++        <div className="flex-1 overflow-y-auto px-20 py-16">{children}</div>
++        {footer && <div className="flex flex-wrap items-center gap-8 border-t border-adm-line px-20 py-12">{footer}</div>}
++      </aside>
++    </div>,
++    document.body,
++  )
++}
+diff --git a/src/admin/data/journeyBundle.test.ts b/src/admin/data/journeyBundle.test.ts
+new file mode 100644
+index 0000000..4c563d7
+--- /dev/null
++++ b/src/admin/data/journeyBundle.test.ts
+@@ -0,0 +1,17 @@
++import { describe, expect, it } from 'vitest'
++import { INITIAL_TAGS } from './journeyTags'
++import { parseAnyImport, toBundle } from './journeyBundle'
++import { INITIAL_JOURNEY } from './userJourney'
++
++describe('journey export bundle', () => {
++  it('round-trips the map and the tags together', () => {
++    expect(parseAnyImport(JSON.stringify(toBundle(INITIAL_JOURNEY, INITIAL_TAGS)))).toEqual({ journey: INITIAL_JOURNEY, tags: INITIAL_TAGS })
++  })
++
++  it('still reads the older single exports', () => {
++    expect(parseAnyImport(JSON.stringify(INITIAL_JOURNEY))).toEqual({ journey: INITIAL_JOURNEY })
++    expect(parseAnyImport(JSON.stringify(INITIAL_TAGS))).toEqual({ tags: INITIAL_TAGS })
++    expect(parseAnyImport('nope')).toBeNull()
++    expect(parseAnyImport('{"hello": 1}')).toBeNull()
++  })
++})
+diff --git a/src/admin/data/journeyBundle.ts b/src/admin/data/journeyBundle.ts
+new file mode 100644
+index 0000000..613ba28
+--- /dev/null
++++ b/src/admin/data/journeyBundle.ts
+@@ -0,0 +1,37 @@
++import { z } from 'zod'
++import { JourneyTagsSchema, type JourneyTags } from './journeyTags'
++import { JourneyMapSchema, parseImport, type JourneyMap } from './userJourney'
++
++// One file for the whole user journey (U092): the map and its tags travel
++// together, so a review done in one browser can be opened in another.
++
++export const JourneyBundleSchema = z.object({
++  kind: z.literal('aurelia-user-journey'),
++  version: z.literal(1),
++  journey: JourneyMapSchema,
++  tags: JourneyTagsSchema.optional(),
++})
++
++export function toBundle(journey: JourneyMap, tags?: JourneyTags) {
++  return { kind: 'aurelia-user-journey' as const, version: 1 as const, journey, ...(tags ? { tags } : {}) }
++}
++
++/**
++ * Reads any file the user journey has ever exported: this bundle, the map on
++ * its own (U088), the tags on their own (U089), or the original blueprint
++ * page's export. Returns what it found, or null.
++ */
++export function parseAnyImport(text: string): { journey?: JourneyMap; tags?: JourneyTags } | null {
++  let raw: unknown
++  try {
++    raw = JSON.parse(text)
++  } catch {
++    return null
++  }
++  const bundle = JourneyBundleSchema.safeParse(raw)
++  if (bundle.success) return { journey: bundle.data.journey, tags: bundle.data.tags }
++  const tags = JourneyTagsSchema.safeParse(raw)
++  if (tags.success) return { tags: tags.data }
++  const journey = parseImport(text)
++  return journey ? { journey } : null
++}
+diff --git a/src/admin/data/journeyTags.ts b/src/admin/data/journeyTags.ts
+index 6fc22a3..08fdc4d 100644
+--- a/src/admin/data/journeyTags.ts
++++ b/src/admin/data/journeyTags.ts
+@@ -41,6 +41,9 @@ export type JourneyTags = z.infer<typeof JourneyTagsSchema>
+ 
+ export const TAGS_STORAGE_KEY = 'aurelia.admin.journeyTags'
+ 
++/** Badge tones for the admin's Badge component. */
++export const STATUS_TONE: Record<ReviewStatus, 'neutral' | 'good' | 'warning'> = { proposed: 'neutral', agreed: 'good', discuss: 'warning' }
++
+ export const STATUS_LABEL: Record<ReviewStatus, string> = {
+   proposed: 'Proposed',
+   agreed: 'Agreed',
+diff --git a/src/admin/pages/JourneyTagsPage.tsx b/src/admin/pages/JourneyTagsPage.tsx
+deleted file mode 100644
+index e32292b..0000000
+--- a/src/admin/pages/JourneyTagsPage.tsx
++++ /dev/null
+@@ -1,543 +0,0 @@
+-import { Download, Pencil, Plus, RotateCcw, Trash2, Upload } from 'lucide-react'
+-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
+-import { Link } from 'react-router-dom'
+-import { Modal } from '../components/Modal'
+-import { Badge, Button, FormField, PageHeader, Panel, inputClass, textareaClass, type Tone } from '../components/ui'
+-import {
+-  INITIAL_TAGS,
+-  JourneyTagsSchema,
+-  STATUS_LABEL,
+-  TAGS_STORAGE_KEY,
+-  coverage,
+-  labelOf,
+-  missingGroups,
+-  removeGroup,
+-  saveGroup,
+-  setAssignment,
+-  slug,
+-  taggedMoments,
+-  toggleTag,
+-  type Assignment,
+-  type JourneyTags,
+-  type ReviewStatus,
+-  type TagGroup,
+-  type TaggedMoment,
+-} from '../data/journeyTags'
+-import { INITIAL_JOURNEY, JourneyMapSchema, STORAGE_KEY as JOURNEY_KEY } from '../data/userJourney'
+-import { readJson, writeJson } from '../../lib/storage'
+-
+-type View = 'moments' | 'coverage' | 'taxonomy'
+-
+-const STATUS_TONE: Record<ReviewStatus, Tone> = { proposed: 'neutral', agreed: 'good', discuss: 'warning' }
+-
+-/**
+- * Journey tags (U089): one classification for every moment in the user
+- * journey map. The moments come from Product → User journey, so a moment
+- * added there appears here untagged. The groups and the first tagging are a
+- * product proposal; each moment carries a review status and a note so the
+- * team can agree or question it.
+- */
+-export function JourneyTagsPage() {
+-  const journey = useMemo(() => readJson(JOURNEY_KEY, JourneyMapSchema, INITIAL_JOURNEY), [])
+-  const [data, setData] = useState<JourneyTags>(() => readJson(TAGS_STORAGE_KEY, JourneyTagsSchema, INITIAL_TAGS))
+-  const [view, setView] = useState<View>('moments')
+-  const [stage, setStage] = useState('')
+-  const [tagFilter, setTagFilter] = useState('')
+-  const [status, setStatus] = useState('')
+-  const [editing, setEditing] = useState<TaggedMoment | null>(null)
+-  const [editingGroup, setEditingGroup] = useState<TagGroup | 'new' | null>(null)
+-  const [notice, setNotice] = useState<string | null>(null)
+-  const importInput = useRef<HTMLInputElement>(null)
+-
+-  useEffect(() => {
+-    if (!notice) return
+-    const t = setTimeout(() => setNotice(null), 3200)
+-    return () => clearTimeout(t)
+-  }, [notice])
+-
+-  function commit(next: JourneyTags, message = 'Saved in this browser') {
+-    setData(next)
+-    setNotice(writeJson(TAGS_STORAGE_KEY, next) ? message : 'Browser storage is full.')
+-  }
+-
+-  const moments = useMemo(() => taggedMoments(journey, data), [journey, data])
+-  const shown = moments.filter(
+-    (m) => (!stage || m.stageId === stage) && (!tagFilter || m.assignment.tags.includes(tagFilter)) && (!status || m.assignment.status === status),
+-  )
+-  const complete = moments.filter((m) => missingGroups(data.groups, m.assignment.tags).length === 0).length
+-  const agreed = moments.filter((m) => m.assignment.status === 'agreed').length
+-  const discuss = moments.filter((m) => m.assignment.status === 'discuss').length
+-
+-  function exportJson() {
+-    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }))
+-    const a = document.createElement('a')
+-    a.href = url
+-    a.download = 'aurelia-journey-tags.json'
+-    a.click()
+-    setTimeout(() => URL.revokeObjectURL(url), 1000)
+-    setNotice('Exported aurelia-journey-tags.json')
+-  }
+-
+-  async function importJson(event: ChangeEvent<HTMLInputElement>) {
+-    const file = event.target.files?.[0]
+-    event.target.value = ''
+-    if (!file) return
+-    try {
+-      const parsed = JourneyTagsSchema.safeParse(JSON.parse(await file.text()))
+-      if (parsed.success) commit(parsed.data, 'Imported')
+-      else setNotice('That file is not a journey tags export.')
+-    } catch {
+-      setNotice('That file is not a journey tags export.')
+-    }
+-  }
+-
+-  const segment = (id: View, label: string) => (
+-    <button
+-      key={id}
+-      type="button"
+-      aria-pressed={view === id}
+-      onClick={() => setView(id)}
+-      className={`rounded-8 px-12 py-6 text-12 font-medium ${view === id ? 'bg-adm-hover text-adm-ink' : 'text-adm-muted hover:text-adm-ink'}`}
+-    >
+-      {label}
+-    </button>
+-  )
+-
+-  return (
+-    <div className="flex flex-col gap-16">
+-      <PageHeader
+-        title="Journey tags"
+-        description="One classification for every moment in the user journey: when it happens, where, what triggers it, what the person needs, how they feel, how much time they have, which part of Aurelia serves it, and how much of that exists today. The first tagging is a proposal for review."
+-        actions={
+-          <div className="flex flex-wrap gap-8">
+-            <Button size="sm" icon={<Upload size={13} />} onClick={() => importInput.current?.click()}>
+-              Import
+-            </Button>
+-            <Button size="sm" icon={<Download size={13} />} onClick={exportJson}>
+-              Export
+-            </Button>
+-            <Button
+-              size="sm"
+-              icon={<RotateCcw size={13} />}
+-              onClick={() => {
+-                if (window.confirm('Restore the proposed tags? Your changes in this browser will be lost.')) commit(INITIAL_TAGS, 'Restored the proposal')
+-              }}
+-            >
+-              Restore proposal
+-            </Button>
+-            <input ref={importInput} type="file" accept=".json,application/json" hidden onChange={importJson} />
+-          </div>
+-        }
+-      />
+-
+-      <div className="flex flex-wrap items-center gap-8 text-12 text-adm-ink-2">
+-        <Chip value={moments.length} label="moments" />
+-        <Chip value={data.groups.length} label="tag groups" />
+-        <Chip value={complete} label="fully tagged" />
+-        <Chip value={agreed} label="agreed" />
+-        <Chip value={discuss} label="need discussion" />
+-        <span className="text-adm-muted">
+-          Moments come from <Link to="/admin/user-journey" className="underline hover:text-adm-ink">User journey</Link>. Edits are saved in this browser.
+-        </span>
+-      </div>
+-
+-      <div className="flex flex-wrap gap-4 self-start rounded-12 border border-adm-line bg-adm-surface p-6" role="group" aria-label="View">
+-        {segment('moments', 'Tagged moments')}
+-        {segment('coverage', 'Coverage')}
+-        {segment('taxonomy', 'Taxonomy')}
+-      </div>
+-
+-      {view === 'moments' && (
+-        <Panel
+-          title="Tagged moments"
+-          description="Select a moment to change its tags, its review status or the note."
+-          actions={
+-            <div className="flex flex-wrap gap-8">
+-              <select aria-label="Stage" className={`${inputClass} h-30 w-auto! text-12`} value={stage} onChange={(e) => setStage(e.target.value)}>
+-                <option value="">All stages</option>
+-                {journey.stages.map((s) => (
+-                  <option key={s.id} value={s.id}>
+-                    {s.title}
+-                  </option>
+-                ))}
+-              </select>
+-              <select aria-label="Tag" className={`${inputClass} h-30 w-auto! text-12`} value={tagFilter} onChange={(e) => setTagFilter(e.target.value)}>
+-                <option value="">Any tag</option>
+-                {data.groups.map((grp) => (
+-                  <optgroup key={grp.id} label={grp.name}>
+-                    {grp.tags.map((t) => (
+-                      <option key={t.id} value={`${grp.id}:${t.id}`}>
+-                        {t.label}
+-                      </option>
+-                    ))}
+-                  </optgroup>
+-                ))}
+-              </select>
+-              <select aria-label="Review status" className={`${inputClass} h-30 w-auto! text-12`} value={status} onChange={(e) => setStatus(e.target.value)}>
+-                <option value="">Any status</option>
+-                {(Object.keys(STATUS_LABEL) as ReviewStatus[]).map((s) => (
+-                  <option key={s} value={s}>
+-                    {STATUS_LABEL[s]}
+-                  </option>
+-                ))}
+-              </select>
+-            </div>
+-          }
+-        >
+-          <div className="min-w-0 overflow-x-auto">
+-            <table className="w-full min-w-[1100px] border-collapse text-left text-12">
+-              <thead>
+-                <tr className="border-b border-adm-line text-11 uppercase tracking-wider text-adm-muted">
+-                  <th className="py-8 pr-12 font-medium">Moment</th>
+-                  {data.groups.map((grp) => (
+-                    <th key={grp.id} className="px-8 py-8 font-medium">
+-                      {grp.name}
+-                    </th>
+-                  ))}
+-                  <th className="px-8 py-8 font-medium">Review</th>
+-                </tr>
+-              </thead>
+-              <tbody>
+-                {shown.map((m) => (
+-                  <tr key={m.id} onClick={() => setEditing(m)} className="cursor-pointer border-b border-adm-line align-top last:border-b-0 hover:bg-adm-hover">
+-                    <td className="py-10 pr-12">
+-                      <button type="button" className="flex items-center gap-10 text-left" onClick={() => setEditing(m)}>
+-                        {m.image ? <img src={m.image} alt="" className="size-40 shrink-0 rounded-8 object-cover" /> : <span className="size-40 shrink-0 rounded-8 bg-adm-hover" />}
+-                        <span className="flex flex-col gap-2">
+-                          <span className="font-semibold text-adm-ink">{m.title}</span>
+-                          <span className="inline-flex items-center gap-4 text-11 text-adm-muted">
+-                            <span className="size-6 rounded-full" style={{ background: m.stageColor }} aria-hidden="true" />
+-                            {m.stageTitle}
+-                          </span>
+-                        </span>
+-                      </button>
+-                    </td>
+-                    {data.groups.map((grp) => {
+-                      const own = m.assignment.tags.filter((t) => t.startsWith(`${grp.id}:`))
+-                      return (
+-                        <td key={grp.id} className="px-8 py-10">
+-                          {own.length ? (
+-                            <span className="flex flex-wrap gap-4">
+-                              {own.map((t) => (
+-                                <span key={t} className="rounded-full bg-adm-hover px-8 py-2 text-11 text-adm-ink">
+-                                  {labelOf(data.groups, t)}
+-                                </span>
+-                              ))}
+-                            </span>
+-                          ) : (
+-                            <span className="text-11 text-adm-critical">Not tagged</span>
+-                          )}
+-                        </td>
+-                      )
+-                    })}
+-                    <td className="px-8 py-10">
+-                      <Badge tone={STATUS_TONE[m.assignment.status]}>{STATUS_LABEL[m.assignment.status]}</Badge>
+-                      {m.assignment.note && <p className="mt-4 max-w-[180px] text-11 text-adm-muted">{m.assignment.note}</p>}
+-                    </td>
+-                  </tr>
+-                ))}
+-                {shown.length === 0 && (
+-                  <tr>
+-                    <td colSpan={data.groups.length + 2} className="py-24 text-center text-adm-muted">
+-                      No moment matches these filters.
+-                    </td>
+-                  </tr>
+-                )}
+-              </tbody>
+-            </table>
+-          </div>
+-        </Panel>
+-      )}
+-
+-      {view === 'coverage' && (
+-        <div className="grid grid-cols-1 gap-16 lg:grid-cols-2">
+-          {data.groups.map((grp) => {
+-            const rows = coverage(grp, moments)
+-            const gaps = rows.filter((r) => r.moments.length === 0).length
+-            return (
+-              <Panel
+-                key={grp.id}
+-                title={grp.name}
+-                description={grp.description}
+-                actions={gaps ? <Badge tone="warning">{gaps === 1 ? '1 gap' : `${gaps} gaps`}</Badge> : <Badge tone="good">Covered</Badge>}
+-              >
+-                <ul className="flex flex-col gap-10">
+-                  {rows.map((r) => (
+-                    <li key={r.tag.id} className="flex flex-col gap-4">
+-                      <div className="flex items-center justify-between gap-8 text-12">
+-                        <span className="font-medium text-adm-ink">{r.tag.label}</span>
+-                        <span className={`tabular-nums ${r.moments.length ? 'text-adm-ink-2' : 'text-adm-critical'}`}>
+-                          {r.moments.length ? `${r.moments.length} of ${moments.length}` : 'No moment yet'}
+-                        </span>
+-                      </div>
+-                      <div className="h-6 overflow-hidden rounded-full bg-adm-hover">
+-                        <div className="h-full rounded-full bg-adm-s1" style={{ width: `${moments.length ? (r.moments.length / moments.length) * 100 : 0}%` }} />
+-                      </div>
+-                      {r.moments.length > 0 && <span className="text-11 text-adm-muted">{r.moments.map((m) => m.title).join(' · ')}</span>}
+-                    </li>
+-                  ))}
+-                </ul>
+-              </Panel>
+-            )
+-          })}
+-        </div>
+-      )}
+-
+-      {view === 'taxonomy' && (
+-        <div className="flex flex-col gap-12">
+-          <div className="grid grid-cols-1 gap-16 lg:grid-cols-2">
+-            {data.groups.map((grp) => (
+-              <Panel
+-                key={grp.id}
+-                title={grp.name}
+-                description={grp.description}
+-                actions={
+-                  <div className="flex items-center gap-6">
+-                    <Badge>{grp.multi ? 'Several allowed' : 'One per moment'}</Badge>
+-                    <Button size="sm" variant="ghost" aria-label={`Edit ${grp.name}`} onClick={() => setEditingGroup(grp)}>
+-                      <Pencil size={13} />
+-                    </Button>
+-                  </div>
+-                }
+-              >
+-                <div className="flex flex-wrap gap-6">
+-                  {grp.tags.map((t) => (
+-                    <span key={t.id} className="rounded-full border border-adm-line px-10 py-4 text-12 text-adm-ink">
+-                      {t.label}
+-                    </span>
+-                  ))}
+-                </div>
+-              </Panel>
+-            ))}
+-          </div>
+-          <Button className="self-start" icon={<Plus size={13} />} onClick={() => setEditingGroup('new')}>
+-            Add a tag group
+-          </Button>
+-        </div>
+-      )}
+-
+-      {notice && (
+-        <div role="status" className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-8 bg-adm-ink px-14 py-10 text-12 text-adm-surface shadow-lg">
+-          {notice}
+-        </div>
+-      )}
+-
+-      {editing && (
+-        <TagEditor
+-          moment={editing}
+-          groups={data.groups}
+-          onClose={() => setEditing(null)}
+-          onSave={(asg) => {
+-            commit(setAssignment(data, editing.id, asg))
+-            setEditing(null)
+-          }}
+-        />
+-      )}
+-
+-      {editingGroup && (
+-        <GroupEditor
+-          group={editingGroup === 'new' ? null : editingGroup}
+-          takenIds={data.groups.map((x) => x.id)}
+-          onClose={() => setEditingGroup(null)}
+-          onSave={(grp) => {
+-            commit(saveGroup(data, grp), 'Tag group saved')
+-            setEditingGroup(null)
+-          }}
+-          onDelete={(id) => {
+-            commit(removeGroup(data, id), 'Tag group deleted')
+-            setEditingGroup(null)
+-          }}
+-        />
+-      )}
+-    </div>
+-  )
+-}
+-
+-function Chip({ value, label }: { value: number; label: string }) {
+-  return (
+-    <span className="rounded-full border border-adm-line bg-adm-surface px-10 py-4">
+-      <b className="tabular-nums text-adm-ink">{value}</b> {label}
+-    </span>
+-  )
+-}
+-
+-function TagEditor({
+-  moment,
+-  groups,
+-  onClose,
+-  onSave,
+-}: {
+-  moment: TaggedMoment
+-  groups: TagGroup[]
+-  onClose: () => void
+-  onSave: (a: Assignment) => void
+-}) {
+-  const [draft, setDraft] = useState<Assignment>(moment.assignment)
+-  return (
+-    <Modal title={moment.title} description={`${moment.stageTitle} stage`} onClose={onClose} width={600}>
+-      <div className="flex flex-col gap-16">
+-        {groups.map((grp) => (
+-          <div key={grp.id} className="flex flex-col gap-6">
+-            <div className="flex items-baseline justify-between gap-8">
+-              <span className="text-12 font-semibold text-adm-ink">{grp.name}</span>
+-              <span className="text-11 text-adm-muted">{grp.multi ? 'Choose any' : 'Choose one'}</span>
+-            </div>
+-            <div className="flex flex-wrap gap-6">
+-              {grp.tags.map((t) => {
+-                const on = draft.tags.includes(`${grp.id}:${t.id}`)
+-                return (
+-                  <button
+-                    key={t.id}
+-                    type="button"
+-                    aria-pressed={on}
+-                    onClick={() => setDraft({ ...draft, tags: toggleTag(draft.tags, grp, t.id) })}
+-                    className={`rounded-full border px-10 py-4 text-12 ${on ? 'border-adm-ink bg-adm-ink text-adm-surface' : 'border-adm-line text-adm-ink hover:bg-adm-hover'}`}
+-                  >
+-                    {t.label}
+-                  </button>
+-                )
+-              })}
+-            </div>
+-          </div>
+-        ))}
+-        <div className="flex flex-col gap-6 border-t border-adm-line pt-14">
+-          <span className="text-12 font-semibold text-adm-ink">Review</span>
+-          <div className="flex flex-wrap gap-6">
+-            {(Object.keys(STATUS_LABEL) as ReviewStatus[]).map((s) => (
+-              <button
+-                key={s}
+-                type="button"
+-                aria-pressed={draft.status === s}
+-                onClick={() => setDraft({ ...draft, status: s })}
+-                className={`rounded-full border px-10 py-4 text-12 ${draft.status === s ? 'border-adm-ink bg-adm-ink text-adm-surface' : 'border-adm-line text-adm-ink hover:bg-adm-hover'}`}
+-              >
+-                {STATUS_LABEL[s]}
+-              </button>
+-            ))}
+-          </div>
+-        </div>
+-        <FormField label="Note" hint="Why a tag is right or wrong, or what to decide">
+-          <textarea className={textareaClass} value={draft.note} onChange={(e) => setDraft({ ...draft, note: e.target.value })} />
+-        </FormField>
+-        <div className="flex gap-8 border-t border-adm-line pt-14">
+-          <Button variant="primary" onClick={() => onSave({ ...draft, note: draft.note.trim() })}>
+-            Save
+-          </Button>
+-          <Button onClick={onClose}>Cancel</Button>
+-        </div>
+-      </div>
+-    </Modal>
+-  )
+-}
+-
+-function GroupEditor({
+-  group,
+-  takenIds,
+-  onClose,
+-  onSave,
+-  onDelete,
+-}: {
+-  group: TagGroup | null
+-  takenIds: string[]
+-  onClose: () => void
+-  onSave: (g: TagGroup) => void
+-  onDelete: (id: string) => void
+-}) {
+-  const [name, setName] = useState(group?.name ?? '')
+-  const [description, setDescription] = useState(group?.description ?? '')
+-  const [multi, setMulti] = useState(group?.multi ?? true)
+-  const [tags, setTags] = useState(group?.tags ?? [])
+-  const [newTag, setNewTag] = useState('')
+-
+-  function addTag() {
+-    const label = newTag.trim()
+-    if (!label) return
+-    setTags([...tags, { id: slug(label, tags.map((t) => t.id)), label }])
+-    setNewTag('')
+-  }
+-
+-  function save() {
+-    const trimmed = name.trim()
+-    if (!trimmed) return
+-    onSave({
+-      id: group?.id ?? slug(trimmed, takenIds),
+-      name: trimmed,
+-      description: description.trim(),
+-      multi,
+-      tags: tags.map((t) => ({ ...t, label: t.label.trim() || t.id })),
+-    })
+-  }
+-
+-  return (
+-    <Modal
+-      title={group ? `Edit ${group.name}` : 'New tag group'}
+-      description="Removing a tag also removes it from every moment."
+-      onClose={onClose}
+-      width={520}
+-    >
+-      <div className="flex flex-col gap-14">
+-        <FormField label="Name">
+-          <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} />
+-        </FormField>
+-        <FormField label="What it answers">
+-          <input className={inputClass} value={description} onChange={(e) => setDescription(e.target.value)} />
+-        </FormField>
+-        <label className="flex items-center gap-8 text-12 text-adm-ink">
+-          <input type="checkbox" checked={multi} onChange={(e) => setMulti(e.target.checked)} />
+-          A moment can have several tags from this group
+-        </label>
+-        <div className="flex flex-col gap-6">
+-          <span className="text-12 font-medium text-adm-ink-2">Tags</span>
+-          {tags.map((t, i) => (
+-            <div key={t.id} className="flex items-center gap-6">
+-              <input
+-                aria-label={`Tag ${i + 1}`}
+-                className={inputClass}
+-                value={t.label}
+-                onChange={(e) => setTags(tags.map((x) => (x.id === t.id ? { ...x, label: e.target.value } : x)))}
+-              />
+-              <Button size="sm" variant="ghost" aria-label={`Remove ${t.label}`} onClick={() => setTags(tags.filter((x) => x.id !== t.id))}>
+-                <Trash2 size={13} />
+-              </Button>
+-            </div>
+-          ))}
+-          <div className="flex items-center gap-6">
+-            <input
+-              aria-label="New tag"
+-              placeholder="New tag"
+-              className={inputClass}
+-              value={newTag}
+-              onChange={(e) => setNewTag(e.target.value)}
+-              onKeyDown={(e) => {
+-                if (e.key === 'Enter') {
+-                  e.preventDefault()
+-                  addTag()
+-                }
+-              }}
+-            />
+-            <Button size="sm" onClick={addTag} disabled={!newTag.trim()}>
+-              Add
+-            </Button>
+-          </div>
+-        </div>
+-        <div className="flex flex-wrap items-center gap-8 border-t border-adm-line pt-14">
+-          <Button variant="primary" onClick={save} disabled={!name.trim()}>
+-            Save group
+-          </Button>
+-          <Button onClick={onClose}>Cancel</Button>
+-          {group && (
+-            <Button
+-              variant="ghost"
+-              className="ml-auto text-adm-critical"
+-              onClick={() => {
+-                if (window.confirm(`Delete the group “${group.name}” and its tags on every moment?`)) onDelete(group.id)
+-              }}
+-            >
+-              Delete group
+-            </Button>
+-          )}
+-        </div>
+-      </div>
+-    </Modal>
+-  )
+-}
+diff --git a/src/admin/pages/UserJourneyPage.tsx b/src/admin/pages/UserJourneyPage.tsx
+index 2b3e3ed..8974ef0 100644
+--- a/src/admin/pages/UserJourneyPage.tsx
++++ b/src/admin/pages/UserJourneyPage.tsx
+@@ -1,14 +1,30 @@
+-import { Download, ImagePlus, Minus, Pencil, Plus, RotateCcw, Settings2, Upload } from 'lucide-react'
+-import { useEffect, useRef, useState, type ChangeEvent, type CSSProperties } from 'react'
++import { AlertCircle, Download, ImagePlus, MoreHorizontal, Pencil, Plus, RotateCcw, Upload } from 'lucide-react'
++import { useEffect, useMemo, useState, type ChangeEvent, type CSSProperties } from 'react'
++import { useSearchParams } from 'react-router-dom'
+ import { Modal } from '../components/Modal'
+-import { Button, FormField, PageHeader, inputClass, textareaClass } from '../components/ui'
++import { SidePanel } from '../components/SidePanel'
++import { Badge, Button, FormField, PageHeader, inputClass, textareaClass, type Tone } from '../components/ui'
++import { parseAnyImport, toBundle } from '../data/journeyBundle'
++import {
++  INITIAL_TAGS,
++  JourneyTagsSchema,
++  STATUS_LABEL,
++  STATUS_TONE,
++  TAGS_STORAGE_KEY,
++  missingGroups,
++  removeGroup,
++  saveGroup,
++  setAssignment,
++  taggedMoments,
++  type Assignment,
++  type JourneyTags,
++  type TagGroup,
++} from '../data/journeyTags'
+ import {
+   INITIAL_JOURNEY,
+   JourneyMapSchema,
++  NEW_MOMENT_IMAGE,
+   STORAGE_KEY,
+-  addItem,
+-  counts,
+-  parseImport,
+   removeItem,
+   updateItem,
+   updateStage,
+@@ -17,13 +33,29 @@ import {
+   type JourneyMap,
+ } from '../data/userJourney'
+ import { readJson, writeJson } from '../../lib/storage'
++import { RELEASES } from '../../versions/releases'
++import { CoverageView, GroupEditor, TagFields, TagSetupView, TagsTable } from './journey/TagViews'
+ 
+-type Layer = 'all' | 'moments' | 'screens'
+-type Editing = { stageId: string; kind: ItemKind; item: JourneyItem }
++type View = 'map' | 'tags' | 'coverage' | 'setup'
++const VIEWS: { id: View; label: string }[] = [
++  { id: 'map', label: 'Map' },
++  { id: 'tags', label: 'Tags & review' },
++  { id: 'coverage', label: 'Coverage' },
++  { id: 'setup', label: 'Tag setup' },
++]
+ 
+-const ZOOM_MIN = 60
+-const ZOOM_MAX = 130
+-const COL = 248
++/** What the side panel is editing. `isNew`: not in the map until saved. */
++interface Editing {
++  kind: ItemKind
++  stageId: string
++  item: JourneyItem
++  assignment: Assignment
++  isNew: boolean
++}
++
++const READINESS_TONE: Record<string, Tone> = { live: 'good', partial: 'info', concept: 'warning' }
++const EMPTY: Assignment = { tags: [], status: 'proposed', note: '' }
++const uid = () => Math.random().toString(36).slice(2, 10)
+ 
+ /** Shrinks an uploaded image so a few of them fit in browser storage. */
+ function readCompressed(file: File, max: number): Promise<string> {
+@@ -47,24 +79,29 @@ function readCompressed(file: File, max: number): Promise<string> {
+   })
+ }
+ 
+-const uid = () => Math.random().toString(36).slice(2, 10)
+-
+ /**
+- * User journey (U088): when people reach for Aurelia, in four stages
+- * (Reflect, Create, Experience, Share). Each stage has illustrated moments
+- * with the feature each suggests, and the product screens that serve it.
+- * Ported from the owner's "Aurelia journey blueprint" page. Edits are saved
+- * in this browser; Export and Import move them between browsers.
++ * User journey (U088, reworked in U092 after user feedback): when people
++ * reach for Aurelia, in four stages, with the moments that bring them, the
++ * feature each moment suggests, the screens that serve it, and (on staging,
++ * `RELEASES.journeyTags`) one classification of every moment with a review
++ * status. One page, one panel for everything about a moment.
+  */
+ export function UserJourneyPage() {
++  const tagsOn = RELEASES.journeyTags
++  const [params, setParams] = useSearchParams()
++  const requested = params.get('view') as View | null
++  const view: View = tagsOn && requested && VIEWS.some((v) => v.id === requested) ? requested : 'map'
++
+   const [map, setMap] = useState<JourneyMap>(() => readJson(STORAGE_KEY, JourneyMapSchema, INITIAL_JOURNEY))
+-  const [layer, setLayer] = useState<Layer>('all')
++  const [tags, setTags] = useState<JourneyTags>(() => readJson(TAGS_STORAGE_KEY, JourneyTagsSchema, INITIAL_TAGS))
+   const [stageFilter, setStageFilter] = useState<string | null>(null)
+-  const [zoom, setZoom] = useState(100)
++  const [tagFilter, setTagFilter] = useState('')
++  const [showScreens, setShowScreens] = useState(true)
+   const [editing, setEditing] = useState<Editing | null>(null)
+-  const [managing, setManaging] = useState(false)
++  const [stagesOpen, setStagesOpen] = useState(false)
++  const [groupEditing, setGroupEditing] = useState<TagGroup | 'new' | null>(null)
++  const [moreOpen, setMoreOpen] = useState(false)
+   const [notice, setNotice] = useState<string | null>(null)
+-  const importInput = useRef<HTMLInputElement>(null)
+ 
+   useEffect(() => {
+     if (!notice) return
+@@ -72,13 +109,69 @@ export function UserJourneyPage() {
+     return () => clearTimeout(t)
+   }, [notice])
+ 
+-  function commit(next: JourneyMap, message = 'Saved in this browser') {
++  const moments = useMemo(() => taggedMoments(map, tags), [map, tags])
++  const byId = useMemo(() => new Map(moments.map((m) => [m.id, m])), [moments])
++
++  function saveMap(next: JourneyMap) {
+     setMap(next)
+-    setNotice(writeJson(STORAGE_KEY, next) ? message : 'Browser storage is full. Export a backup, or use smaller images.')
++    return writeJson(STORAGE_KEY, next)
++  }
++  function saveTags(next: JourneyTags) {
++    setTags(next)
++    return writeJson(TAGS_STORAGE_KEY, next)
++  }
++  const report = (ok: boolean, message = 'Saved in this browser') => setNotice(ok ? message : 'Browser storage is full. Export a backup, or use smaller images.')
++
++  function setView(next: View) {
++    setParams(next === 'map' ? {} : { view: next }, { replace: true })
++  }
++
++  function openItem(kind: ItemKind, stageId: string, item: JourneyItem) {
++    setEditing({ kind, stageId, item, assignment: byId.get(item.id)?.assignment ?? EMPTY, isNew: false })
++  }
++
++  function openNew(kind: ItemKind, stageId: string) {
++    setEditing({
++      kind,
++      stageId,
++      item: { id: uid(), title: '', description: '', feature: '', image: kind === 'moments' ? NEW_MOMENT_IMAGE : '' },
++      assignment: EMPTY,
++      isNew: true,
++    })
++  }
++
++  function saveEditing(e: Editing) {
++    const item = { ...e.item, title: e.item.title.trim() || (e.kind === 'moments' ? 'Untitled moment' : 'Untitled screen'), description: e.item.description.trim(), feature: e.item.feature.trim() }
++    let next = map
++    if (e.isNew) {
++      next = { ...map, stages: map.stages.map((s) => (s.id === e.stageId ? { ...s, [e.kind]: [...s[e.kind], item] } : s)) }
++    } else {
++      // The stage may have changed in the panel: move the item.
++      const from = map.stages.find((s) => s[e.kind].some((x) => x.id === item.id))
++      next = from && from.id !== e.stageId ? removeItem(map, from.id, e.kind, item.id) : map
++      next = from && from.id !== e.stageId
++        ? { ...next, stages: next.stages.map((s) => (s.id === e.stageId ? { ...s, [e.kind]: [...s[e.kind], item] } : s)) }
++        : updateItem(next, e.stageId, e.kind, item)
++    }
++    let ok = saveMap(next)
++    if (tagsOn && e.kind === 'moments') ok = saveTags(setAssignment(tags, item.id, { ...e.assignment, note: e.assignment.note.trim() })) && ok
++    report(ok, e.isNew ? 'Added' : 'Saved in this browser')
++    setEditing(null)
++  }
++
++  function deleteEditing(e: Editing) {
++    const ok = saveMap(removeItem(map, e.stageId, e.kind, e.item.id))
++    if (tagsOn && tags.assignments[e.item.id]) {
++      const rest = { ...tags.assignments }
++      delete rest[e.item.id]
++      saveTags({ ...tags, assignments: rest })
++    }
++    report(ok, 'Deleted')
++    setEditing(null)
+   }
+ 
+   function exportJson() {
+-    const url = URL.createObjectURL(new Blob([JSON.stringify(map, null, 2)], { type: 'application/json' }))
++    const url = URL.createObjectURL(new Blob([JSON.stringify(toBundle(map, tagsOn ? tags : undefined), null, 2)], { type: 'application/json' }))
+     const a = document.createElement('a')
+     a.href = url
+     a.download = 'aurelia-user-journey.json'
+@@ -87,218 +180,269 @@ export function UserJourneyPage() {
+     setNotice('Exported aurelia-user-journey.json')
+   }
+ 
++  function restoreOriginal() {
++    if (!window.confirm('Restore the original journey and tags? Your edits in this browser will be lost.')) return
++    let ok = saveMap(INITIAL_JOURNEY)
++    if (tagsOn) ok = saveTags(INITIAL_TAGS) && ok
++    report(ok, 'Restored the original')
++  }
++
+   async function importJson(event: ChangeEvent<HTMLInputElement>) {
+     const file = event.target.files?.[0]
+     event.target.value = ''
+     if (!file) return
+-    const parsed = parseImport(await file.text())
+-    if (parsed) {
+-      commit(parsed, 'Imported')
+-      setManaging(false)
+-    } else setNotice('That file is not a user journey export.')
++    const found = parseAnyImport(await file.text())
++    if (!found) return setNotice('That file is not a user journey export.')
++    let ok = true
++    if (found.journey) ok = saveMap(found.journey) && ok
++    if (found.tags && tagsOn) ok = saveTags(found.tags) && ok
++    report(ok, 'Imported')
+   }
+ 
+-  function add(stageId: string, kind: ItemKind) {
+-    const id = uid()
+-    const next = addItem(map, stageId, kind, id)
+-    commit(next)
+-    const item = next.stages.find((s) => s.id === stageId)?.[kind].find((x) => x.id === id)
+-    if (item) setEditing({ stageId, kind, item })
++  const counts = {
++    moments: moments.length,
++    screens: map.stages.reduce((n, s) => n + s.screens.length, 0),
++    agreed: moments.filter((m) => m.assignment.status === 'agreed').length,
++    toTag: moments.filter((m) => missingGroups(tags.groups, m.assignment.tags).length > 0).length,
+   }
+-
+-  const total = counts(map)
+   const stages = map.stages.filter((s) => !stageFilter || s.id === stageFilter)
+-  const grid: CSSProperties = { gridTemplateColumns: `repeat(${stages.length}, minmax(${COL - 18}px, 1fr))` }
++  const grid: CSSProperties = { gridTemplateColumns: `repeat(${stages.length}, minmax(220px, 1fr))` }
++  const readiness = tags.groups.find((g) => g.id === 'readiness')
+ 
+   return (
+     <div className="flex flex-col gap-16">
+       <PageHeader
+         title="User journey"
+-        description="When people reach for Aurelia, in four stages. Each stage has the moments that bring someone to the app, the feature each moment suggests, and the product screens that serve it."
++        description="When people reach for Aurelia, in four stages: the moments that bring them, the feature each moment suggests, and the screens that serve it. Select any moment to edit it."
+         actions={
+-          <div className="flex flex-wrap gap-8">
+-            <Button size="sm" icon={<Upload size={13} />} onClick={() => importInput.current?.click()}>
+-              Import
++          <div className="relative flex gap-8">
++            <Button size="sm" variant="primary" icon={<Plus size={13} />} onClick={() => openNew('moments', stageFilter ?? map.stages[0].id)}>
++              Add moment
+             </Button>
+-            <Button size="sm" icon={<Download size={13} />} onClick={exportJson}>
+-              Export
++            <Button size="sm" icon={<MoreHorizontal size={14} />} aria-expanded={moreOpen} onClick={() => setMoreOpen((o) => !o)}>
++              More
+             </Button>
+-            <Button size="sm" variant="primary" icon={<Settings2 size={13} />} onClick={() => setManaging(true)}>
+-              Manage stages
+-            </Button>
+-            <input ref={importInput} type="file" accept=".json,application/json" hidden onChange={importJson} />
++            {moreOpen && (
++              <>
++                <div className="fixed inset-0 z-30" onClick={() => setMoreOpen(false)} aria-hidden="true" />
++                <div role="menu" className="absolute right-0 top-[calc(100%+6px)] z-40 flex w-[220px] flex-col rounded-12 border border-adm-line bg-adm-surface p-6 shadow-lg">
++                  {[
++                    { label: 'Edit stage names', icon: <Pencil size={13} />, run: () => setStagesOpen(true) },
++                    { label: 'Export (JSON)', icon: <Download size={13} />, run: exportJson },
++                  ].map((a) => (
++                    <button
++                      key={a.label}
++                      type="button"
++                      role="menuitem"
++                      onClick={() => {
++                        setMoreOpen(false)
++                        a.run()
++                      }}
++                      className="flex items-center gap-8 rounded-8 px-10 py-8 text-left text-13 text-adm-ink hover:bg-adm-hover"
++                    >
++                      <span className="text-adm-muted">{a.icon}</span>
++                      {a.label}
++                    </button>
++                  ))}
++                  <label role="menuitem" className="flex cursor-pointer items-center gap-8 rounded-8 px-10 py-8 text-13 text-adm-ink hover:bg-adm-hover">
++                    <span className="text-adm-muted">
++                      <Upload size={13} />
++                    </span>
++                    Import (JSON)
++                    <input
++                      type="file"
++                      accept=".json,application/json"
++                      hidden
++                      onChange={(e) => {
++                        setMoreOpen(false)
++                        void importJson(e)
++                      }}
++                    />
++                  </label>
++                  <button
++                    type="button"
++                    role="menuitem"
++                    onClick={() => {
++                      setMoreOpen(false)
++                      restoreOriginal()
++                    }}
++                    className="mt-4 flex items-center gap-8 rounded-8 border-t border-adm-line px-10 py-8 text-left text-13 text-adm-critical hover:bg-adm-hover"
++                  >
++                    <RotateCcw size={13} />
++                    Restore the original
++                  </button>
++                </div>
++              </>
++            )}
+           </div>
+         }
+       />
+ 
+-      <div className="flex flex-wrap items-center gap-8 text-12 text-adm-ink-2">
+-        <span className="rounded-full border border-adm-line bg-adm-surface px-10 py-4">
+-          <b className="tabular-nums text-adm-ink">{total.stages}</b> stages
+-        </span>
+-        <span className="rounded-full border border-adm-line bg-adm-surface px-10 py-4">
+-          <b className="tabular-nums text-adm-ink">{total.moments}</b> moments
+-        </span>
+-        <span className="rounded-full border border-adm-line bg-adm-surface px-10 py-4">
+-          <b className="tabular-nums text-adm-ink">{total.screens}</b> screens
+-        </span>
+-        <span className="text-adm-muted">Edits are saved in this browser. Export to share them.</span>
+-      </div>
+-
+-      <div className="flex flex-wrap items-center justify-between gap-10 rounded-12 border border-adm-line bg-adm-surface p-8">
+-        <div className="flex flex-wrap gap-4" role="group" aria-label="Show">
+-          {(
+-            [
+-              ['all', 'All layers'],
+-              ['moments', 'Moments'],
+-              ['screens', 'Product screens'],
+-            ] as const
+-          ).map(([id, label]) => (
+-            <button
+-              key={id}
+-              type="button"
+-              aria-pressed={layer === id}
+-              onClick={() => setLayer(id)}
+-              className={`rounded-8 px-10 py-6 text-12 font-medium ${layer === id ? 'bg-adm-hover text-adm-ink' : 'text-adm-muted hover:text-adm-ink'}`}
+-            >
+-              {label}
+-            </button>
+-          ))}
+-          <span className="mx-4 w-px self-stretch bg-adm-line" aria-hidden="true" />
+-          <button
+-            type="button"
+-            aria-pressed={stageFilter === null}
+-            onClick={() => setStageFilter(null)}
+-            className={`rounded-8 px-10 py-6 text-12 font-medium ${stageFilter === null ? 'bg-adm-hover text-adm-ink' : 'text-adm-muted hover:text-adm-ink'}`}
+-          >
+-            All stages
+-          </button>
+-          {map.stages.map((s) => (
+-            <button
+-              key={s.id}
+-              type="button"
+-              aria-pressed={stageFilter === s.id}
+-              onClick={() => setStageFilter(stageFilter === s.id ? null : s.id)}
+-              className={`inline-flex items-center gap-6 rounded-8 px-10 py-6 text-12 font-medium ${stageFilter === s.id ? 'bg-adm-hover text-adm-ink' : 'text-adm-muted hover:text-adm-ink'}`}
+-            >
+-              <span className="size-8 rounded-full" style={{ background: s.color }} aria-hidden="true" />
+-              {s.title}
+-            </button>
+-          ))}
+-        </div>
+-        <div className="flex items-center gap-4 text-12 text-adm-muted">
+-          <span className="mr-4">Zoom</span>
+-          <Button size="sm" variant="ghost" aria-label="Zoom out" disabled={zoom <= ZOOM_MIN} onClick={() => setZoom((z) => Math.max(ZOOM_MIN, z - 10))}>
+-            <Minus size={13} />
+-          </Button>
+-          <span className="w-40 text-center tabular-nums text-adm-ink">{zoom}%</span>
+-          <Button size="sm" variant="ghost" aria-label="Zoom in" disabled={zoom >= ZOOM_MAX} onClick={() => setZoom((z) => Math.min(ZOOM_MAX, z + 10))}>
+-            <Plus size={13} />
+-          </Button>
+-          <Button size="sm" variant="ghost" aria-label="Reset zoom" onClick={() => setZoom(100)}>
+-            <RotateCcw size={13} />
+-          </Button>
+-        </div>
+-      </div>
+-
+-      <div className="min-w-0 overflow-auto rounded-12 border border-adm-line bg-adm-surface">
+-        <div style={{ zoom: zoom / 100, minWidth: stages.length * COL }}>
+-          <div className="grid" style={grid}>
+-            {stages.map((s) => (
+-              <div key={s.id} className="relative border-b border-r border-adm-line px-18 pb-18 pt-20 last:border-r-0">
+-                <span className="text-10 font-semibold uppercase tracking-widest text-adm-muted">
+-                  Stage {String(map.stages.indexOf(s) + 1).padStart(2, '0')}
+-                </span>
+-                <h2 className="mt-6 text-22 font-semibold text-adm-ink">{s.title}</h2>
+-                <p className="mt-2 text-12 leading-[18px] text-adm-muted">{s.question}</p>
+-                <span className="absolute bottom-0 left-18 h-3 w-40 rounded-full" style={{ background: s.color }} aria-hidden="true" />
+-              </div>
++      {tagsOn && (
++        <div className="flex flex-wrap items-center justify-between gap-10">
++          <div className="flex flex-wrap gap-2 rounded-12 border border-adm-line bg-adm-surface p-4" role="tablist" aria-label="View">
++            {VIEWS.map((v) => (
++              <button
++                key={v.id}
++                type="button"
++                role="tab"
++                aria-selected={view === v.id}
++                onClick={() => setView(v.id)}
++                className={`rounded-8 px-12 py-6 text-12 font-medium ${view === v.id ? 'bg-adm-hover text-adm-ink' : 'text-adm-muted hover:text-adm-ink'}`}
++              >
++                {v.label}
++              </button>
+             ))}
+           </div>
++          <p className="text-12 text-adm-ink-2">
++            <b className="tabular-nums text-adm-ink">{counts.moments}</b> moments · <b className="tabular-nums text-adm-ink">{counts.agreed}</b> agreed ·{' '}
++            <b className={`tabular-nums ${counts.toTag ? 'text-adm-critical' : 'text-adm-ink'}`}>{counts.toTag}</b> still to tag
++          </p>
++        </div>
++      )}
+ 
+-          {layer !== 'screens' && (
+-            <>
+-              <RowHeading title="Moments" hint="Select a moment to edit it" />
+-              <div className="grid" style={grid}>
+-                {stages.map((s) => (
+-                  <div key={s.id} className="flex flex-col gap-16 border-r border-adm-line p-14 last:border-r-0">
+-                    {s.moments.map((m) => (
+-                      <button
+-                        key={m.id}
+-                        type="button"
+-                        onClick={() => setEditing({ stageId: s.id, kind: 'moments', item: m })}
+-                        className="group flex flex-col gap-6 rounded-8 text-left focus-visible:outline-2 focus-visible:outline-adm-accent"
+-                      >
+-                        <span className="relative block aspect-[16/10] overflow-hidden rounded-8 bg-adm-hover">
+-                          {m.image && <img src={m.image} alt="" loading="lazy" className="size-full object-cover transition-transform group-hover:scale-[1.02]" />}
+-                          <span className="absolute bottom-6 right-6 hidden items-center gap-4 rounded-8 bg-adm-surface/95 px-8 py-4 text-11 text-adm-ink group-hover:inline-flex">
+-                            <Pencil size={11} /> Edit
+-                          </span>
+-                        </span>
+-                        <span className="text-13 font-semibold text-adm-ink">{m.title}</span>
+-                        {m.description && <span className="text-12 leading-[18px] text-adm-ink-2">{m.description}</span>}
+-                        {m.feature && (
+-                          <span className="flex flex-col gap-2 rounded-8 border border-adm-line bg-adm-bg px-10 py-8">
+-                            <span className="text-10 font-semibold uppercase tracking-wider text-adm-muted">Potential feature</span>
+-                            <span className="text-12 font-medium text-adm-ink">{m.feature}</span>
+-                          </span>
+-                        )}
+-                      </button>
++      {view === 'map' && (
++        <>
++          <div className="flex flex-wrap items-center gap-8">
++            <div className="flex flex-wrap gap-4" role="group" aria-label="Stage">
++              {[{ id: null as string | null, title: 'All stages', color: '' }, ...map.stages].map((s) => (
++                <button
++                  key={s.id ?? 'all'}
++                  type="button"
++                  aria-pressed={stageFilter === s.id}
++                  onClick={() => setStageFilter(s.id)}
++                  className={`inline-flex items-center gap-6 rounded-full border px-10 py-4 text-12 ${stageFilter === s.id ? 'border-adm-ink bg-adm-ink text-adm-surface' : 'border-adm-line bg-adm-surface text-adm-ink-2 hover:text-adm-ink'}`}
++                >
++                  {s.color && <span className="size-8 rounded-full" style={{ background: s.color }} aria-hidden="true" />}
++                  {s.title}
++                </button>
++              ))}
++            </div>
++            {tagsOn && (
++              <select aria-label="Show moments with tag" className={`${inputClass} h-30 w-auto! text-12`} value={tagFilter} onChange={(e) => setTagFilter(e.target.value)}>
++                <option value="">Any tag</option>
++                {tags.groups.map((grp) => (
++                  <optgroup key={grp.id} label={grp.name}>
++                    {grp.tags.map((t) => (
++                      <option key={t.id} value={`${grp.id}:${t.id}`}>
++                        {t.label}
++                      </option>
+                     ))}
+-                    <button
+-                      type="button"
+-                      onClick={() => add(s.id, 'moments')}
+-                      className="flex h-44 items-center justify-center gap-6 rounded-8 border border-dashed border-adm-line text-12 font-medium text-adm-muted hover:bg-adm-hover hover:text-adm-ink"
+-                    >
+-                      <Plus size={13} /> Add a moment
+-                    </button>
+-                  </div>
++                  </optgroup>
+                 ))}
+-              </div>
+-            </>
+-          )}
++              </select>
++            )}
++            <label className="ml-auto flex items-center gap-6 text-12 text-adm-ink-2">
++              <input type="checkbox" checked={showScreens} onChange={(e) => setShowScreens(e.target.checked)} />
++              Show product screens
++            </label>
++          </div>
+ 
+-          {layer !== 'moments' && (
+-            <>
+-              <RowHeading title="Product screens" hint="Select a screen to replace its screenshot" bordered={layer === 'all'} />
+-              <div className="grid" style={grid}>
+-                {stages.map((s) => (
+-                  <div key={s.id} className="flex flex-wrap items-start gap-14 border-r border-adm-line p-14 last:border-r-0">
+-                    {s.screens.map((sc) => (
++          <div className="min-w-0 overflow-x-auto rounded-12 border border-adm-line bg-adm-surface">
++            <div className="grid" style={grid}>
++              {stages.map((s) => {
++                const shown = s.moments.filter((m) => !tagFilter || byId.get(m.id)?.assignment.tags.includes(tagFilter))
++                return (
++                  <section key={s.id} className="flex flex-col border-r border-adm-line last:border-r-0" aria-label={`${s.title} stage`}>
++                    <header className="relative border-b border-adm-line px-16 pb-14 pt-16">
++                      <span className="text-10 font-semibold uppercase tracking-widest text-adm-muted">Stage {String(map.stages.indexOf(s) + 1).padStart(2, '0')}</span>
++                      <h2 className="mt-4 text-19 font-semibold text-adm-ink">{s.title}</h2>
++                      <p className="mt-2 text-12 leading-[18px] text-adm-muted">{s.question}</p>
++                      <span className="absolute bottom-0 left-16 h-3 w-40 rounded-full" style={{ background: s.color }} aria-hidden="true" />
++                    </header>
++                    <div className="flex flex-1 flex-col gap-12 p-12">
++                      {shown.map((m) => {
++                        const a = byId.get(m.id)?.assignment ?? EMPTY
++                        const ready = a.tags.find((t) => t.startsWith('readiness:'))?.split(':')[1]
++                        const untagged = tagsOn && missingGroups(tags.groups, a.tags).length > 0
++                        return (
++                          <button
++                            key={m.id}
++                            type="button"
++                            onClick={() => openItem('moments', s.id, m)}
++                            className="group flex flex-col gap-6 rounded-12 border border-adm-line bg-adm-surface p-8 text-left transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-adm-accent"
++                          >
++                            <span className="block aspect-[16/9] overflow-hidden rounded-8 bg-adm-hover">
++                              {m.image && <img src={m.image} alt="" loading="lazy" className="size-full object-cover" />}
++                            </span>
++                            <span className="px-2 text-13 font-semibold text-adm-ink">{m.title}</span>
++                            {m.description && <span className="line-clamp-3 px-2 text-12 leading-[18px] text-adm-ink-2">{m.description}</span>}
++                            {m.feature && (
++                              <span className="rounded-8 bg-adm-bg px-8 py-6 text-12 text-adm-ink">
++                                <span className="block text-10 font-semibold uppercase tracking-wider text-adm-muted">Potential feature</span>
++                                {m.feature}
++                              </span>
++                            )}
++                            {tagsOn && (
++                              <span className="flex flex-wrap items-center gap-4 px-2">
++                                {ready && readiness && <Badge tone={READINESS_TONE[ready] ?? 'neutral'}>{readiness.tags.find((t) => t.id === ready)?.label ?? ready}</Badge>}
++                                <Badge tone={STATUS_TONE[a.status]}>{STATUS_LABEL[a.status]}</Badge>
++                                {untagged && (
++                                  <span className="inline-flex items-center gap-2 text-11 text-adm-critical">
++                                    <AlertCircle size={11} /> Tags missing
++                                  </span>
++                                )}
++                              </span>
++                            )}
++                          </button>
++                        )
++                      })}
++                      {shown.length === 0 && tagFilter && <p className="py-8 text-center text-12 text-adm-muted">No moment with this tag.</p>}
+                       <button
+-                        key={sc.id}
+                         type="button"
+-                        onClick={() => setEditing({ stageId: s.id, kind: 'screens', item: sc })}
+-                        className="group flex w-[112px] flex-col gap-6 text-left"
++                        onClick={() => openNew('moments', s.id)}
++                        className="flex h-40 items-center justify-center gap-6 rounded-12 border border-dashed border-adm-line text-12 font-medium text-adm-muted hover:bg-adm-hover hover:text-adm-ink"
+                       >
+-                        <span className="block h-[224px] w-[108px] rounded-[18px] bg-adm-sidebar p-4 shadow-md transition-transform group-hover:-translate-y-2">
+-                          <span className="flex size-full items-center justify-center overflow-hidden rounded-[14px] bg-adm-surface">
+-                            {sc.image ? (
+-                              <img src={sc.image} alt="" loading="lazy" className="size-full object-cover object-top" />
+-                            ) : (
+-                              <span className="flex flex-col items-center gap-6 text-10 text-adm-muted">
+-                                <ImagePlus size={16} /> Add screenshot
+-                              </span>
+-                            )}
+-                          </span>
+-                        </span>
+-                        <span className="text-12 font-semibold text-adm-ink">{sc.title}</span>
+-                        {sc.feature && <span className="text-11 leading-[15px] text-adm-muted">{sc.feature}</span>}
++                        <Plus size={13} /> Add a moment
+                       </button>
+-                    ))}
+-                    <button
+-                      type="button"
+-                      onClick={() => add(s.id, 'screens')}
+-                      className="flex h-[224px] w-[108px] flex-col items-center justify-center gap-6 rounded-[18px] border border-dashed border-adm-line text-11 font-medium text-adm-muted hover:bg-adm-hover hover:text-adm-ink"
+-                    >
+-                      <Plus size={16} /> Add screen
+-                    </button>
+-                  </div>
+-                ))}
+-              </div>
+-            </>
+-          )}
+-        </div>
+-      </div>
++                    </div>
++                    {showScreens && (
++                      <div className="border-t border-adm-line p-12">
++                        <p className="mb-8 text-10 font-semibold uppercase tracking-widest text-adm-muted">Screens</p>
++                        <div className="flex flex-wrap gap-10">
++                          {s.screens.map((sc) => (
++                            <button key={sc.id} type="button" onClick={() => openItem('screens', s.id, sc)} className="group flex w-[84px] flex-col gap-4 text-left">
++                              <span className="block h-[168px] w-[80px] rounded-[14px] bg-adm-sidebar p-3 transition-transform group-hover:-translate-y-2">
++                                <span className="flex size-full items-center justify-center overflow-hidden rounded-[11px] bg-adm-surface">
++                                  {sc.image ? <img src={sc.image} alt="" loading="lazy" className="size-full object-cover object-top" /> : <ImagePlus size={14} className="text-adm-muted" />}
++                                </span>
++                              </span>
++                              <span className="text-11 font-medium leading-[14px] text-adm-ink">{sc.title}</span>
++                            </button>
++                          ))}
++                          <button
++                            type="button"
++                            onClick={() => openNew('screens', s.id)}
++                            aria-label={`Add a screen to ${s.title}`}
++                            className="flex h-[168px] w-[80px] items-center justify-center rounded-[14px] border border-dashed border-adm-line text-adm-muted hover:bg-adm-hover hover:text-adm-ink"
++                          >
++                            <Plus size={14} />
++                          </button>
++                        </div>
++                      </div>
++                    )}
++                  </section>
++                )
++              })}
++            </div>
++          </div>
++          <p className="text-11 text-adm-muted">Edits are saved in this browser. Use More → Export to share them with the team.</p>
++        </>
++      )}
++
++      {view === 'tags' && (
++        <TagsTable
++          moments={moments}
++          groups={tags.groups}
++          stages={map.stages}
++          onOpen={(m) => {
++            const found = map.stages.find((s) => s.id === m.stageId)?.moments.find((x) => x.id === m.id)
++            if (found) openItem('moments', m.stageId, found)
++          }}
++        />
++      )}
++      {view === 'coverage' && <CoverageView moments={moments} groups={tags.groups} />}
++      {view === 'setup' && <TagSetupView groups={tags.groups} onEdit={setGroupEditing} onAdd={() => setGroupEditing('new')} />}
+ 
+       {notice && (
+         <div role="status" className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-8 bg-adm-ink px-14 py-10 text-12 text-adm-surface shadow-lg">
+@@ -307,70 +451,71 @@ export function UserJourneyPage() {
+       )}
+ 
+       {editing && (
+-        <ItemEditor
++        <ItemPanel
++          key={editing.item.id}
+           editing={editing}
+-          stageTitle={map.stages.find((s) => s.id === editing.stageId)?.title ?? ''}
++          map={map}
++          groups={tagsOn && editing.kind === 'moments' ? tags.groups : null}
+           onClose={() => setEditing(null)}
+-          onSave={(item) => {
+-            commit(updateItem(map, editing.stageId, editing.kind, item))
+-            setEditing(null)
+-          }}
+-          onDelete={() => {
+-            commit(removeItem(map, editing.stageId, editing.kind, editing.item.id), 'Deleted')
+-            setEditing(null)
+-          }}
++          onSave={saveEditing}
++          onDelete={deleteEditing}
+         />
+       )}
+ 
+-      {managing && (
+-        <ManageStages
++      {stagesOpen && (
++        <StageNames
+           map={map}
+-          onClose={() => setManaging(false)}
+-          onSaveStage={(id, title, question) => commit(updateStage(map, id, { title, question }), 'Stage saved')}
+-          onExport={exportJson}
+-          onImport={() => importInput.current?.click()}
+-          onReset={() => {
+-            commit(INITIAL_JOURNEY, 'Restored the original journey')
+-            setManaging(false)
+-          }}
++          onClose={() => setStagesOpen(false)}
++          onSave={(drafts) => report(saveMap(drafts.reduce((m, d) => updateStage(m, d.id, d), map)), 'Stages saved')}
+         />
+       )}
+-    </div>
+-  )
+-}
+ 
+-function RowHeading({ title, hint, bordered }: { title: string; hint: string; bordered?: boolean }) {
+-  return (
+-    <div className={`flex items-center justify-between gap-12 border-b border-adm-line px-18 py-12 ${bordered ? 'border-t' : ''}`}>
+-      <span className="text-11 font-semibold uppercase tracking-widest text-adm-ink-2">{title}</span>
+-      <span className="text-11 text-adm-muted">{hint}</span>
++      {groupEditing && (
++        <GroupEditor
++          group={groupEditing === 'new' ? null : groupEditing}
++          takenIds={tags.groups.map((g) => g.id)}
++          onClose={() => setGroupEditing(null)}
++          onSave={(g) => {
++            report(saveTags(saveGroup(tags, g)), 'Tag group saved')
++            setGroupEditing(null)
++          }}
++          onDelete={(id) => {
++            report(saveTags(removeGroup(tags, id)), 'Tag group deleted')
++            setGroupEditing(null)
++          }}
++        />
++      )}
+     </div>
+   )
+ }
+ 
+-function ItemEditor({
++/** Everything about one moment or screen, in one place, saved with one button. */
++function ItemPanel({
+   editing,
+-  stageTitle,
++  map,
++  groups,
+   onClose,
+   onSave,
+   onDelete,
+ }: {
+   editing: Editing
+-  stageTitle: string
++  map: JourneyMap
++  groups: TagGroup[] | null
+   onClose: () => void
+-  onSave: (item: JourneyItem) => void
+-  onDelete: () => void
++  onSave: (e: Editing) => void
++  onDelete: (e: Editing) => void
+ }) {
+-  const [draft, setDraft] = useState(editing.item)
++  const [draft, setDraft] = useState(editing)
+   const [error, setError] = useState<string | null>(null)
+-  const moment = editing.kind === 'moments'
++  const moment = draft.kind === 'moments'
++  const noun = moment ? 'moment' : 'screen'
++  const set = (patch: Partial<JourneyItem>) => setDraft({ ...draft, item: { ...draft.item, ...patch } })
+ 
+   async function pick(event: ChangeEvent<HTMLInputElement>) {
+     const file = event.target.files?.[0]
+     if (!file) return
+     try {
+-      const image = await readCompressed(file, moment ? 1100 : 900)
+-      setDraft((d) => ({ ...d, image }))
++      set({ image: await readCompressed(file, moment ? 1100 : 900) })
+       setError(null)
+     } catch {
+       setError('That image could not be read.')
+@@ -378,140 +523,105 @@ function ItemEditor({
+   }
+ 
+   return (
+-    <Modal title={moment ? 'Edit moment' : 'Edit product screen'} description={`${stageTitle} stage`} onClose={onClose} width={520}>
++    <SidePanel
++      title={editing.isNew ? `New ${noun}` : editing.item.title || `Untitled ${noun}`}
++      description={!moment ? 'A product screen that serves this stage.' : groups ? 'Details, then tags and review.' : 'What happens, and the feature it suggests.'}
++      onClose={onClose}
++      footer={
++        <>
++          <Button variant="primary" onClick={() => onSave(draft)}>
++            {editing.isNew ? `Add ${noun}` : 'Save'}
++          </Button>
++          <Button onClick={onClose}>Cancel</Button>
++          {!editing.isNew && (
++            <Button
++              variant="ghost"
++              className="ml-auto text-adm-critical"
++              onClick={() => {
++                if (window.confirm(`Delete “${editing.item.title}”?`)) onDelete(editing)
++              }}
++            >
++              Delete
++            </Button>
++          )}
++        </>
++      }
++    >
+       <div className="flex flex-col gap-14">
++        <FormField label="Stage">
++          <select className={inputClass} value={draft.stageId} onChange={(e) => setDraft({ ...draft, stageId: e.target.value })}>
++            {map.stages.map((s) => (
++              <option key={s.id} value={s.id}>
++                {s.title}
++              </option>
++            ))}
++          </select>
++        </FormField>
+         <FormField label="Title">
+-          <input className={inputClass} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
++          <input className={inputClass} value={draft.item.title} placeholder={moment ? 'e.g. Before a difficult call' : 'e.g. Check-in sheet'} onChange={(e) => set({ title: e.target.value })} autoFocus={editing.isNew} />
+         </FormField>
+-        <FormField label="Description">
+-          <textarea className={textareaClass} value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
++        <FormField label={moment ? 'What happens' : 'What it shows'}>
++          <textarea className={textareaClass} value={draft.item.description} onChange={(e) => set({ description: e.target.value })} />
+         </FormField>
+         <FormField label="Potential feature" hint="The opportunity or capability this suggests">
+-          <input className={inputClass} value={draft.feature} onChange={(e) => setDraft({ ...draft, feature: e.target.value })} />
++          <input className={inputClass} value={draft.item.feature} onChange={(e) => set({ feature: e.target.value })} />
+         </FormField>
+         <div className="flex flex-col gap-6">
+           <span className="text-12 font-medium text-adm-ink-2">{moment ? 'Illustration' : 'Screenshot'}</span>
+-          {draft.image && (
+-            <img
+-              src={draft.image}
+-              alt=""
+-              className={`rounded-8 border border-adm-line bg-adm-hover object-contain ${moment ? 'max-h-[200px]' : 'max-h-[260px] self-start'}`}
+-            />
+-          )}
++          {draft.item.image && <img src={draft.item.image} alt="" className={`rounded-8 border border-adm-line bg-adm-hover object-contain ${moment ? 'max-h-[180px]' : 'max-h-[240px] self-start'}`} />}
+           <div className="flex flex-wrap gap-8">
+             <label className="inline-flex h-30 cursor-pointer items-center gap-6 rounded-8 border border-adm-line bg-adm-surface px-10 text-12 font-medium text-adm-ink hover:bg-adm-hover">
+-              <ImagePlus size={13} /> {draft.image ? 'Replace image' : 'Choose image'}
++              <ImagePlus size={13} /> {draft.item.image ? 'Replace image' : 'Choose image'}
+               <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden onChange={pick} />
+             </label>
+-            {draft.image && (
+-              <Button size="sm" variant="ghost" onClick={() => setDraft({ ...draft, image: '' })}>
++            {draft.item.image && (
++              <Button size="sm" variant="ghost" onClick={() => set({ image: '' })}>
+                 Remove image
+               </Button>
+             )}
+           </div>
+-          <span className="text-11 text-adm-muted">PNG, JPG, WebP or GIF. Resized and kept in this browser.</span>
+           {error && <span className="text-11 text-adm-critical">{error}</span>}
+         </div>
+-        <div className="flex flex-wrap items-center gap-8 border-t border-adm-line pt-14">
+-          <Button variant="primary" onClick={() => onSave({ ...draft, title: draft.title.trim() || 'Untitled', description: draft.description.trim(), feature: draft.feature.trim() })}>
+-            Save changes
+-          </Button>
+-          <Button onClick={onClose}>Cancel</Button>
+-          <Button
+-            variant="ghost"
+-            className="ml-auto text-adm-critical"
+-            onClick={() => {
+-              if (window.confirm(`Delete “${editing.item.title}”?`)) onDelete()
+-            }}
+-          >
+-            Delete
+-          </Button>
+-        </div>
++        {groups && (
++          <div className="flex flex-col gap-12 border-t border-adm-line pt-16">
++            <div>
++              <h3 className="text-13 font-semibold text-adm-ink">Tags and review</h3>
++              <p className="mt-2 text-12 text-adm-muted">How this moment is classified, and whether the team agrees.</p>
++            </div>
++            <TagFields groups={groups} value={draft.assignment} onChange={(assignment) => setDraft({ ...draft, assignment })} />
++          </div>
++        )}
+       </div>
+-    </Modal>
++    </SidePanel>
+   )
+ }
+ 
+-function ManageStages({
+-  map,
+-  onClose,
+-  onSaveStage,
+-  onExport,
+-  onImport,
+-  onReset,
+-}: {
+-  map: JourneyMap
+-  onClose: () => void
+-  onSaveStage: (id: string, title: string, question: string) => void
+-  onExport: () => void
+-  onImport: () => void
+-  onReset: () => void
+-}) {
+-  const [stageId, setStageId] = useState(map.stages[0].id)
+-  const stage = map.stages.find((s) => s.id === stageId) ?? map.stages[0]
+-  const [title, setTitle] = useState(stage.title)
+-  const [question, setQuestion] = useState(stage.question)
+-
+-  function choose(id: string) {
+-    const s = map.stages.find((x) => x.id === id)
+-    setStageId(id)
+-    setTitle(s?.title ?? '')
+-    setQuestion(s?.question ?? '')
+-  }
+-
++function StageNames({ map, onClose, onSave }: { map: JourneyMap; onClose: () => void; onSave: (stages: { id: string; title: string; question: string }[]) => void }) {
++  const [drafts, setDrafts] = useState(() => map.stages.map((s) => ({ id: s.id, title: s.title, question: s.question, color: s.color })))
+   return (
+-    <Modal title="Manage stages" description="Rename a stage, back the journey up, or start again." onClose={onClose} width={520}>
+-      <div className="flex flex-col gap-18">
+-        <section className="flex flex-col gap-12">
+-          <h3 className="text-13 font-semibold text-adm-ink">Stage name and question</h3>
+-          <FormField label="Stage">
+-            <select className={inputClass} value={stageId} onChange={(e) => choose(e.target.value)}>
+-              {map.stages.map((s) => (
+-                <option key={s.id} value={s.id}>
+-                  {s.title}
+-                </option>
+-              ))}
+-            </select>
+-          </FormField>
+-          <FormField label="Title">
+-            <input className={inputClass} value={title} onChange={(e) => setTitle(e.target.value)} />
+-          </FormField>
+-          <FormField label="Guiding question">
+-            <input className={inputClass} value={question} onChange={(e) => setQuestion(e.target.value)} />
+-          </FormField>
+-          <Button variant="primary" className="self-start" onClick={() => onSaveStage(stageId, title, question)}>
+-            Save stage
+-          </Button>
+-        </section>
+-        <section className="flex flex-col gap-8 border-t border-adm-line pt-16">
+-          <h3 className="text-13 font-semibold text-adm-ink">Back up and move</h3>
+-          <p className="text-12 text-adm-muted">
+-            Export saves the journey, uploaded images included, as a JSON file. Import restores it in another browser, and also reads a file
+-            exported from the original blueprint page.
+-          </p>
+-          <div className="flex gap-8">
+-            <Button size="sm" icon={<Download size={13} />} onClick={onExport}>
+-              Export JSON
+-            </Button>
+-            <Button size="sm" icon={<Upload size={13} />} onClick={onImport}>
+-              Import JSON
+-            </Button>
++    <Modal title="Stage names" description="The four stages and the question each answers." onClose={onClose} width={560}>
++      <div className="flex flex-col gap-16">
++        {drafts.map((d, i) => (
++          <div key={d.id} className="flex flex-col gap-8">
++            <span className="inline-flex items-center gap-6 text-11 font-semibold uppercase tracking-widest text-adm-muted">
++              <span className="size-8 rounded-full" style={{ background: d.color }} aria-hidden="true" /> Stage {String(i + 1).padStart(2, '0')}
++            </span>
++            <input aria-label={`Stage ${i + 1} name`} className={inputClass} value={d.title} onChange={(e) => setDrafts(drafts.map((x) => (x.id === d.id ? { ...x, title: e.target.value } : x)))} />
++            <input aria-label={`Stage ${i + 1} question`} className={inputClass} value={d.question} onChange={(e) => setDrafts(drafts.map((x) => (x.id === d.id ? { ...x, question: e.target.value } : x)))} />
+           </div>
+-        </section>
+-        <section className="flex flex-col gap-8 border-t border-adm-line pt-16">
+-          <h3 className="text-13 font-semibold text-adm-ink">Start again</h3>
+-          <p className="text-12 text-adm-muted">Restores the original four stages, moments and screens. Your edits in this browser are lost.</p>
++        ))}
++        <div className="flex gap-8 border-t border-adm-line pt-14">
+           <Button
+-            size="sm"
+-            variant="danger"
+-            className="self-start"
++            variant="primary"
+             onClick={() => {
+-              if (window.confirm('Restore the original journey? Your edits in this browser will be lost.')) onReset()
++              onSave(drafts)
++              onClose()
+             }}
+           >
+-            Restore original
++            Save stages
+           </Button>
+-        </section>
++          <Button onClick={onClose}>Cancel</Button>
++        </div>
+       </div>
+     </Modal>
+   )
+diff --git a/src/admin/pages/journey/TagViews.tsx b/src/admin/pages/journey/TagViews.tsx
+new file mode 100644
+index 0000000..ceab061
+--- /dev/null
++++ b/src/admin/pages/journey/TagViews.tsx
+@@ -0,0 +1,342 @@
++import { Pencil, Plus, Trash2 } from 'lucide-react'
++import { useState } from 'react'
++import { Modal } from '../../components/Modal'
++import { Badge, Button, FormField, Panel, inputClass } from '../../components/ui'
++import {
++  STATUS_LABEL,
++  STATUS_TONE,
++  coverage,
++  labelOf,
++  slug,
++  toggleTag,
++  type Assignment,
++  type ReviewStatus,
++  type TagGroup,
++  type TaggedMoment,
++} from '../../data/journeyTags'
++import type { JourneyStage } from '../../data/userJourney'
++
++const chip = (on: boolean) =>
++  `rounded-full border px-10 py-4 text-12 ${on ? 'border-adm-ink bg-adm-ink text-adm-surface' : 'border-adm-line text-adm-ink hover:bg-adm-hover'}`
++
++/** The tag chips and review controls for one moment, used inside the moment panel. */
++export function TagFields({ groups, value, onChange }: { groups: TagGroup[]; value: Assignment; onChange: (a: Assignment) => void }) {
++  return (
++    <div className="flex flex-col gap-14">
++      {groups.map((grp) => (
++        <div key={grp.id} className="flex flex-col gap-6">
++          <div className="flex items-baseline justify-between gap-8">
++            <span className="text-12 font-semibold text-adm-ink">{grp.name}</span>
++            <span className="text-11 text-adm-muted">{grp.multi ? 'Choose any' : 'Choose one'}</span>
++          </div>
++          <div className="flex flex-wrap gap-6">
++            {grp.tags.map((t) => {
++              const on = value.tags.includes(`${grp.id}:${t.id}`)
++              return (
++                <button key={t.id} type="button" aria-pressed={on} onClick={() => onChange({ ...value, tags: toggleTag(value.tags, grp, t.id) })} className={chip(on)}>
++                  {t.label}
++                </button>
++              )
++            })}
++          </div>
++        </div>
++      ))}
++      <div className="flex flex-col gap-6 border-t border-adm-line pt-14">
++        <span className="text-12 font-semibold text-adm-ink">Review</span>
++        <div className="flex flex-wrap gap-6">
++          {(Object.keys(STATUS_LABEL) as ReviewStatus[]).map((s) => (
++            <button key={s} type="button" aria-pressed={value.status === s} onClick={() => onChange({ ...value, status: s })} className={chip(value.status === s)}>
++              {STATUS_LABEL[s]}
++            </button>
++          ))}
++        </div>
++      </div>
++      <FormField label="Review note" hint="Why a tag is right or wrong, or what to decide">
++        <textarea className={`${inputClass} h-auto min-h-[64px] resize-y py-8`} value={value.note} onChange={(e) => onChange({ ...value, note: e.target.value })} />
++      </FormField>
++    </div>
++  )
++}
++
++/** Every moment as a row, every tag group as a column. */
++export function TagsTable({
++  moments,
++  groups,
++  stages,
++  onOpen,
++}: {
++  moments: TaggedMoment[]
++  groups: TagGroup[]
++  stages: JourneyStage[]
++  onOpen: (m: TaggedMoment) => void
++}) {
++  const [stage, setStage] = useState('')
++  const [tag, setTag] = useState('')
++  const [status, setStatus] = useState('')
++  const shown = moments.filter((m) => (!stage || m.stageId === stage) && (!tag || m.assignment.tags.includes(tag)) && (!status || m.assignment.status === status))
++  const select = `${inputClass} h-30 w-auto! text-12`
++  return (
++    <Panel
++      title="Tags and review"
++      description="Every moment with its tags. Select a row to change them, mark the review, or leave a note."
++      actions={
++        <div className="flex flex-wrap gap-8">
++          <select aria-label="Stage" className={select} value={stage} onChange={(e) => setStage(e.target.value)}>
++            <option value="">All stages</option>
++            {stages.map((s) => (
++              <option key={s.id} value={s.id}>
++                {s.title}
++              </option>
++            ))}
++          </select>
++          <select aria-label="Tag" className={select} value={tag} onChange={(e) => setTag(e.target.value)}>
++            <option value="">Any tag</option>
++            {groups.map((grp) => (
++              <optgroup key={grp.id} label={grp.name}>
++                {grp.tags.map((t) => (
++                  <option key={t.id} value={`${grp.id}:${t.id}`}>
++                    {t.label}
++                  </option>
++                ))}
++              </optgroup>
++            ))}
++          </select>
++          <select aria-label="Review status" className={select} value={status} onChange={(e) => setStatus(e.target.value)}>
++            <option value="">Any review</option>
++            {(Object.keys(STATUS_LABEL) as ReviewStatus[]).map((s) => (
++              <option key={s} value={s}>
++                {STATUS_LABEL[s]}
++              </option>
++            ))}
++          </select>
++        </div>
++      }
++    >
++      <div className="min-w-0 overflow-x-auto">
++        <table className="w-full min-w-[1100px] border-collapse text-left text-12">
++          <thead>
++            <tr className="border-b border-adm-line text-11 uppercase tracking-wider text-adm-muted">
++              <th className="py-8 pr-12 font-medium">Moment</th>
++              {groups.map((grp) => (
++                <th key={grp.id} className="px-8 py-8 font-medium">
++                  {grp.name}
++                </th>
++              ))}
++              <th className="px-8 py-8 font-medium">Review</th>
++            </tr>
++          </thead>
++          <tbody>
++            {shown.map((m) => (
++              <tr key={m.id} className="border-b border-adm-line align-top last:border-b-0 hover:bg-adm-hover">
++                <td className="py-10 pr-12">
++                  <button type="button" className="flex items-center gap-10 text-left" onClick={() => onOpen(m)}>
++                    {m.image ? <img src={m.image} alt="" className="size-40 shrink-0 rounded-8 object-cover" /> : <span className="size-40 shrink-0 rounded-8 bg-adm-hover" />}
++                    <span className="flex flex-col gap-2">
++                      <span className="font-semibold text-adm-ink underline-offset-2 hover:underline">{m.title}</span>
++                      <span className="inline-flex items-center gap-4 text-11 text-adm-muted">
++                        <span className="size-6 rounded-full" style={{ background: m.stageColor }} aria-hidden="true" />
++                        {m.stageTitle}
++                      </span>
++                    </span>
++                  </button>
++                </td>
++                {groups.map((grp) => {
++                  const own = m.assignment.tags.filter((t) => t.startsWith(`${grp.id}:`))
++                  return (
++                    <td key={grp.id} className="px-8 py-10">
++                      {own.length ? (
++                        <span className="flex flex-wrap gap-4">
++                          {own.map((t) => (
++                            <span key={t} className="rounded-full bg-adm-hover px-8 py-2 text-11 text-adm-ink">
++                              {labelOf(groups, t)}
++                            </span>
++                          ))}
++                        </span>
++                      ) : (
++                        <span className="text-11 text-adm-critical">Not tagged</span>
++                      )}
++                    </td>
++                  )
++                })}
++                <td className="px-8 py-10">
++                  <Badge tone={STATUS_TONE[m.assignment.status]}>{STATUS_LABEL[m.assignment.status]}</Badge>
++                  {m.assignment.note && <p className="mt-4 max-w-[180px] text-11 text-adm-muted">{m.assignment.note}</p>}
++                </td>
++              </tr>
++            ))}
++            {shown.length === 0 && (
++              <tr>
++                <td colSpan={groups.length + 2} className="py-24 text-center text-adm-muted">
++                  No moment matches these filters.
++                </td>
++              </tr>
++            )}
++          </tbody>
++        </table>
++      </div>
++    </Panel>
++  )
++}
++
++/** For each tag group, how many moments carry each tag; tags with none are gaps. */
++export function CoverageView({ moments, groups }: { moments: TaggedMoment[]; groups: TagGroup[] }) {
++  return (
++    <div className="grid grid-cols-1 gap-16 lg:grid-cols-2">
++      {groups.map((grp) => {
++        const rows = coverage(grp, moments)
++        const gaps = rows.filter((r) => r.moments.length === 0).length
++        return (
++          <Panel key={grp.id} title={grp.name} description={grp.description} actions={gaps ? <Badge tone="warning">{gaps === 1 ? '1 gap' : `${gaps} gaps`}</Badge> : <Badge tone="good">Covered</Badge>}>
++            <ul className="flex flex-col gap-10">
++              {rows.map((r) => (
++                <li key={r.tag.id} className="flex flex-col gap-4">
++                  <div className="flex items-center justify-between gap-8 text-12">
++                    <span className="font-medium text-adm-ink">{r.tag.label}</span>
++                    <span className={`tabular-nums ${r.moments.length ? 'text-adm-ink-2' : 'text-adm-critical'}`}>{r.moments.length ? `${r.moments.length} of ${moments.length}` : 'No moment yet'}</span>
++                  </div>
++                  <div className="h-6 overflow-hidden rounded-full bg-adm-hover">
++                    <div className="h-full rounded-full bg-adm-s1" style={{ width: `${moments.length ? (r.moments.length / moments.length) * 100 : 0}%` }} />
++                  </div>
++                  {r.moments.length > 0 && <span className="text-11 text-adm-muted">{r.moments.map((m) => m.title).join(' · ')}</span>}
++                </li>
++              ))}
++            </ul>
++          </Panel>
++        )
++      })}
++    </div>
++  )
++}
++
++/** The tag groups and their tags, editable. */
++export function TagSetupView({ groups, onEdit, onAdd }: { groups: TagGroup[]; onEdit: (g: TagGroup) => void; onAdd: () => void }) {
++  return (
++    <div className="flex flex-col gap-12">
++      <p className="text-12 text-adm-muted">The groups every moment is tagged in. Change them only when the team agrees; removing a tag removes it from every moment.</p>
++      <div className="grid grid-cols-1 gap-16 lg:grid-cols-2">
++        {groups.map((grp) => (
++          <Panel
++            key={grp.id}
++            title={grp.name}
++            description={grp.description}
++            actions={
++              <div className="flex items-center gap-6">
++                <Badge>{grp.multi ? 'Several allowed' : 'One per moment'}</Badge>
++                <Button size="sm" variant="ghost" aria-label={`Edit ${grp.name}`} onClick={() => onEdit(grp)}>
++                  <Pencil size={13} />
++                </Button>
++              </div>
++            }
++          >
++            <div className="flex flex-wrap gap-6">
++              {grp.tags.map((t) => (
++                <span key={t.id} className="rounded-full border border-adm-line px-10 py-4 text-12 text-adm-ink">
++                  {t.label}
++                </span>
++              ))}
++            </div>
++          </Panel>
++        ))}
++      </div>
++      <Button className="self-start" icon={<Plus size={13} />} onClick={onAdd}>
++        Add a tag group
++      </Button>
++    </div>
++  )
++}
++
++export function GroupEditor({
++  group,
++  takenIds,
++  onClose,
++  onSave,
++  onDelete,
++}: {
++  group: TagGroup | null
++  takenIds: string[]
++  onClose: () => void
++  onSave: (g: TagGroup) => void
++  onDelete: (id: string) => void
++}) {
++  const [name, setName] = useState(group?.name ?? '')
++  const [description, setDescription] = useState(group?.description ?? '')
++  const [multi, setMulti] = useState(group?.multi ?? true)
++  const [tags, setTags] = useState(group?.tags ?? [])
++  const [newTag, setNewTag] = useState('')
++
++  function addTag() {
++    const label = newTag.trim()
++    if (!label) return
++    setTags([...tags, { id: slug(label, tags.map((t) => t.id)), label }])
++    setNewTag('')
++  }
++
++  function save() {
++    const trimmed = name.trim()
++    if (!trimmed) return
++    onSave({ id: group?.id ?? slug(trimmed, takenIds), name: trimmed, description: description.trim(), multi, tags: tags.map((t) => ({ ...t, label: t.label.trim() || t.id })) })
++  }
++
++  return (
++    <Modal title={group ? `Edit ${group.name}` : 'New tag group'} description="Removing a tag also removes it from every moment." onClose={onClose} width={520}>
++      <div className="flex flex-col gap-14">
++        <FormField label="Name">
++          <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} />
++        </FormField>
++        <FormField label="What it answers">
++          <input className={inputClass} value={description} onChange={(e) => setDescription(e.target.value)} />
++        </FormField>
++        <label className="flex items-center gap-8 text-12 text-adm-ink">
++          <input type="checkbox" checked={multi} onChange={(e) => setMulti(e.target.checked)} />
++          A moment can have several tags from this group
++        </label>
++        <div className="flex flex-col gap-6">
++          <span className="text-12 font-medium text-adm-ink-2">Tags</span>
++          {tags.map((t, i) => (
++            <div key={t.id} className="flex items-center gap-6">
++              <input aria-label={`Tag ${i + 1}`} className={inputClass} value={t.label} onChange={(e) => setTags(tags.map((x) => (x.id === t.id ? { ...x, label: e.target.value } : x)))} />
++              <Button size="sm" variant="ghost" aria-label={`Remove ${t.label}`} onClick={() => setTags(tags.filter((x) => x.id !== t.id))}>
++                <Trash2 size={13} />
++              </Button>
++            </div>
++          ))}
++          <div className="flex items-center gap-6">
++            <input
++              aria-label="New tag"
++              placeholder="New tag"
++              className={inputClass}
++              value={newTag}
++              onChange={(e) => setNewTag(e.target.value)}
++              onKeyDown={(e) => {
++                if (e.key === 'Enter') {
++                  e.preventDefault()
++                  addTag()
++                }
++              }}
++            />
++            <Button size="sm" onClick={addTag} disabled={!newTag.trim()}>
++              Add
++            </Button>
++          </div>
++        </div>
++        <div className="flex flex-wrap items-center gap-8 border-t border-adm-line pt-14">
++          <Button variant="primary" onClick={save} disabled={!name.trim()}>
++            Save group
++          </Button>
++          <Button onClick={onClose}>Cancel</Button>
++          {group && (
++            <Button
++              variant="ghost"
++              className="ml-auto text-adm-critical"
++              onClick={() => {
++                if (window.confirm(`Delete the group “${group.name}” and its tags on every moment?`)) onDelete(group.id)
++              }}
++            >
++              Delete group
++            </Button>
++          )}
++        </div>
++      </div>
++    </Modal>
++  )
++}
+diff --git a/src/demo/modules.ts b/src/demo/modules.ts
+index cc25c1d..37858c8 100644
+--- a/src/demo/modules.ts
++++ b/src/demo/modules.ts
+@@ -242,7 +242,6 @@ export const DEMO_MODULES: DemoModule[] = [
+   { id: 'adminExperimentation', kind: 'admin', label: 'Experimentation · feedback group', description: 'The 30-person, 8-week study of therapeutic outcomes: criteria, participants, measures, data quality and safety.', route: '/admin/experimentation', built: true },
+   { id: 'adminOutcomes', kind: 'admin', label: 'Well-being outcomes', description: 'How much each user’s well-being has changed (WHO-5, check-ins, wearable).', route: '/admin/outcomes', built: true },
+   { id: 'adminUserJourney', kind: 'admin', label: 'User journey', description: 'The journey map: four stages (Reflect, Create, Experience, Share), their moments, the feature each suggests, and the screens that serve them.', route: '/admin/user-journey', built: true },
+-  { id: 'adminJourneyTags', kind: 'admin', label: 'Journey tags', description: 'Tags and classification for every user-journey moment, with coverage gaps and a review status. Staging only until released.', route: '/admin/journey-tags', built: true },
+   { id: 'adminRoles', kind: 'admin', label: 'Roles & permissions', description: 'Permission matrix.', route: '/admin/roles', built: true },
+   { id: 'adminSessions', kind: 'admin', label: 'Sessions', description: 'Generated session catalogue.', route: '/admin/sessions', built: true },
+   { id: 'adminChallenges', kind: 'admin', label: 'Challenges', description: 'Setup, pacing and reward tiers.', route: '/admin/challenges', built: true },
+diff --git a/src/versions/releases.ts b/src/versions/releases.ts
+index 2b921d1..ec3fc58 100644
+--- a/src/versions/releases.ts
++++ b/src/versions/releases.ts
+@@ -27,7 +27,7 @@ export const RELEASES = {
+   analysisV2: true,
+   /** The session's About page (Chapters, Social Impact, Journal, Insights) in every version, v4+ included (J083). */
+   aboutPage: true,
+-  /** Admin → Product → Journey tags (U089): the user journey's tagging, for review. Staging only until asked. */
++  /** Tags, review and coverage in Admin → User journey (U089, merged into that page in U092). Staging only until asked. */
+   journeyTags: BUILD.environment !== 'production',
+   /** Desktop sidebar that folds to an icon rail and expands again (U091, Eugene). Staging only until asked. */
+   sidebarRail: BUILD.environment !== 'production',
+-- 
+2.43.0
+

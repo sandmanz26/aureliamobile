@@ -1,0 +1,282 @@
+From cb7c21b135048d4214cc7b1a482e2d9073e8e752 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 18 Nov 2026 05:27:02 +0000
+Subject: [PATCH] Desktop sidebar folds to an icon rail
+
+Eugene asked for a desktop sidebar that can be squeezed to icons and
+expanded again. At lg and up, the sidebar's header now has Collapse; the
+rail (88px) keeps every destination as an icon with a short label (Create,
+Discover, Progress, Me in v4+; the v1-v3 set otherwise), New session as
+a round button on top, notifications, invite and help as icons, and
+Expand at the foot. Recent sessions and the build badge stay in the full
+sidebar. The choice is remembered per browser (aurelia.sidebar.rail).
+
+Fixed bars beside the sidebar (Story, Session details, Session settings)
+now read its width from --app-sidebar instead of a hard 260px, so they
+follow the rail. Below lg nothing changes: the drawer has no collapse.
+Staging only (RELEASES.sidebarRail).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/layouts/AppLayout.tsx         | 132 ++++++++++++++++++++++++++++--
+ src/pages/SessionDetailPage.tsx   |   2 +-
+ src/pages/SessionSettingsPage.tsx |   4 +-
+ src/pages/StoryPage.tsx           |   2 +-
+ src/styles/versions.css           |   3 +
+ src/versions/releases.ts          |   2 +
+ 6 files changed, 135 insertions(+), 10 deletions(-)
+
+diff --git a/src/layouts/AppLayout.tsx b/src/layouts/AppLayout.tsx
+index 3dce030..0934fc5 100644
+--- a/src/layouts/AppLayout.tsx
++++ b/src/layouts/AppLayout.tsx
+@@ -1,6 +1,6 @@
+-import { Plus, Sparkles } from 'lucide-react'
+-import { Suspense, useEffect, useState } from 'react'
+-import { Link, Outlet, useLocation, useNavigate, useNavigationType } from 'react-router-dom'
++import { PanelLeftClose, PanelLeftOpen, Plus, Sparkles } from 'lucide-react'
++import { Suspense, useEffect, useState, type ReactNode } from 'react'
++import { Link, NavLink, Outlet, useLocation, useNavigate, useNavigationType } from 'react-router-dom'
+ import { FloatingPlayer, PullIndicator, usePullToRefresh, useSheetDrag } from '../versions/V2Shell'
+ import { useUiVersion } from '../versions/useUiVersion'
+ import { useAuth } from '../auth/AuthContext'
+@@ -17,10 +17,13 @@ import { PhotoCircle } from '../components/ui/PhotoCircle'
+ import { recentSessions } from '../lib/sessions'
+ import { DrawerContext } from './DrawerContext'
+ import { TabBar } from '../components/ui/TabBar'
++import { AureliaLogo } from '../components/ui/AureliaLogo'
++import { readString, writeString } from '../lib/storage'
++import { RELEASES } from '../versions/releases'
+ 
+ const LATEST = recentSessions()
+ 
+-function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
++function SidebarContent({ onNavigate, onCollapse }: { onNavigate?: () => void; onCollapse?: () => void }) {
+   const unread = useHasUnreadNotifications()
+   const { isEnabled } = useFeatureFlags()
+   const { signedIn } = useAuth()
+@@ -63,6 +66,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+           {/* The supplied sidebar lockup (mark + gradient wordmark, 114x32). */}
+           <img src={sidebarLogo} alt="Aurelia" width={114} height={32} className="block h-32 w-auto" />
+         </Link>
++        <div className="flex items-center gap-12">
+         {isEnabled('notifications') && (
+           <button
+             type="button"
+@@ -78,6 +82,13 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+             {unread ? <NotificationActiveIcon size={24} /> : <NotificationIcon size={24} />}
+           </button>
+         )}
++        {/* Desktop only (U091): fold the sidebar to the icon rail. */}
++        {onCollapse && (
++          <button type="button" aria-label="Collapse sidebar" title="Collapse sidebar" onClick={onCollapse} className="u-press text-icon-default">
++            <PanelLeftClose size={22} strokeWidth={1.5} />
++          </button>
++        )}
++        </div>
+       </div>
+ 
+       {/* No gap: the frame's rows are 56 tall and stack flush, so the spacing
+@@ -198,8 +209,115 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+   )
+ }
+ 
++const RAIL_KEY = 'aurelia.sidebar.rail'
++
++/**
++ * The desktop sidebar folded to an icon rail (U091, Eugene's request): the
++ * same destinations as the full sidebar, each an icon with a short label,
++ * New session as the round button on top, and Expand at the foot. Recent
++ * sessions and the build badge live only in the full sidebar.
++ */
++function SidebarRail({ onExpand }: { onExpand: () => void }) {
++  const unread = useHasUnreadNotifications()
++  const { isEnabled } = useFeatureFlags()
++  const { signedIn } = useAuth()
++  const gate = useSignInGate()
++  const v4 = useUiVersion() >= 4
++
++  const items: { to: string; label: string; icon: ReactNode; flag?: string }[] = v4
++    ? [
++        { to: '/home', label: 'Create', icon: <Sparkles size={22} strokeWidth={1.5} /> },
++        { to: '/explore', label: 'Discover', icon: <NoteIcon size={24} />, flag: 'explore' },
++        { to: '/wellness', label: 'Progress', icon: <ChartMediumIcon size={24} />, flag: 'wellness' },
++      ]
++    : [
++        { to: '/explore', label: 'Explore', icon: <NoteIcon size={24} />, flag: 'explore' },
++        { to: '/sessions', label: 'Sessions', icon: <PlaylistIcon size={24} />, flag: 'sessions' },
++        { to: '/wellness', label: 'Wellness', icon: <ChartMediumIcon size={24} />, flag: 'wellness' },
++      ]
++  const account = signedIn
++    ? { to: '/profile', label: v4 ? 'Me' : 'Profile', icon: <PhotoCircle photo="avatar" size={24} gradient="conic-gradient(from 180deg, var(--color-blue-300), var(--color-gold-300), var(--color-blue-300))" />, flag: 'profile' }
++    : { to: '/login', label: 'Sign In', icon: <UserIcon size={24} />, flag: 'auth' }
++  const all = v4 ? [...items, account] : [account, ...items]
++
++  const tile = 'u-press flex w-full flex-col items-center gap-4 rounded-12 px-4 py-10 text-center text-[11px] leading-[14px] text-text-primary'
++  const iconButton = 'u-press relative flex size-44 items-center justify-center rounded-12 text-icon-default hover:bg-background-elevated'
++
++  return (
++    <div className="flex h-full flex-col items-center gap-16 px-8 pb-20 pt-24">
++      <Link to="/home" aria-label="Aurelia home" className="u-press">
++        <AureliaLogo iconSize={32} markOnly />
++      </Link>
++      <button
++        type="button"
++        aria-label="New session"
++        title="New session"
++        onClick={() => gate('/chat', { fresh: true })}
++        className="u-press flex size-44 items-center justify-center rounded-full text-text-inverse"
++        style={{ background: 'linear-gradient(90deg, #FF881B, #FFE682)' }}
++      >
++        <Plus size={18} />
++      </button>
++      <nav className="flex w-full flex-col gap-4">
++        {all.map((item) =>
++          item.flag && !isEnabled(item.flag) ? (
++            <span key={item.to} aria-disabled="true" title="Not part of this walkthrough" className={`${tile} pointer-events-none opacity-45`}>
++              <span className="text-icon-default">{item.icon}</span>
++              {item.label}
++            </span>
++          ) : (
++            <NavLink
++              key={item.to}
++              to={item.to}
++              className={({ isActive }) => `${tile} ${isActive ? 'bg-background-elevated font-semibold' : 'hover:bg-background-elevated'}`}
++            >
++              <span className="text-icon-default">{item.icon}</span>
++              {item.label}
++            </NavLink>
++          ),
++        )}
++      </nav>
++      <div className="mt-auto flex flex-col items-center gap-4">
++        {isEnabled('notifications') && (
++          <button type="button" aria-label={unread ? 'Notifications, unread' : 'Notifications'} title="Notifications" onClick={() => gate('/notifications')} className={iconButton}>
++            {unread ? <NotificationActiveIcon size={24} /> : <NotificationIcon size={24} />}
++          </button>
++        )}
++        {isEnabled('invite') && (
++          <button type="button" aria-label="Invite a Friend" title="Invite a Friend" onClick={() => gate('/invite')} className={iconButton}>
++            <UserAddIcon size={24} />
++          </button>
++        )}
++        {isEnabled('help') && (
++          <Link to="/help" aria-label="Help" title="Help" className={iconButton}>
++            <MessageQuestionIcon size={24} />
++          </Link>
++        )}
++        <div className="mt-8 flex w-full justify-center border-t border-border-default pt-8">
++          <button type="button" aria-label="Expand sidebar" title="Expand sidebar" onClick={onExpand} className={iconButton}>
++            <PanelLeftOpen size={22} strokeWidth={1.5} />
++          </button>
++        </div>
++      </div>
++    </div>
++  )
++}
++
+ export function AppLayout() {
+   const [drawerOpen, setDrawerOpen] = useState(false)
++  // Desktop sidebar folded to the icon rail; remembered per browser (U091).
++  const [rail, setRail] = useState(() => RELEASES.sidebarRail && readString(RAIL_KEY) === '1')
++  function setRailMode(next: boolean) {
++    setRail(next)
++    writeString(RAIL_KEY, next ? '1' : '0')
++  }
++  // Fixed bars beside the sidebar read its width from --app-sidebar.
++  useEffect(() => {
++    const root = document.documentElement
++    if (rail) root.setAttribute('data-sidebar', 'rail')
++    else root.removeAttribute('data-sidebar')
++    return () => root.removeAttribute('data-sidebar')
++  }, [rail])
+ 
+   // The drawer has no close button by design, so Escape has to be a real way
+   // out — the backdrop alone is not one for a keyboard.
+@@ -240,8 +358,10 @@ export function AppLayout() {
+             `SessionSettingsPage` each offset a fixed bottom bar by this same
+             figure (`lg:left-[313px]`) to sit beside it rather than under it —
+             changing one without the other leaves a gap or an overlap. */}
+-        <aside className="hidden w-[260px] shrink-0 border-r border-border-subtle bg-surface-default lg:sticky lg:top-0 lg:block lg:h-screen">
+-          <SidebarContent />
++        <aside
++          className={`hidden shrink-0 border-r border-border-subtle bg-surface-default transition-[width] duration-200 lg:sticky lg:top-0 lg:block lg:h-screen ${rail ? 'w-[88px]' : 'w-[260px]'}`}
++        >
++          {rail ? <SidebarRail onExpand={() => setRailMode(false)} /> : <SidebarContent onCollapse={RELEASES.sidebarRail ? () => setRailMode(true) : undefined} />}
+         </aside>
+ 
+         {/* Mobile: hamburger-triggered drawer, faithful to the Figma "Menu" screen */}
+diff --git a/src/pages/SessionDetailPage.tsx b/src/pages/SessionDetailPage.tsx
+index 6dd2c9d..ffef1ef 100644
+--- a/src/pages/SessionDetailPage.tsx
++++ b/src/pages/SessionDetailPage.tsx
+@@ -189,7 +189,7 @@ export function SessionDetailPage() {
+         // it rather than under it (see SessionSettingsPage's Apply changes
+         // button, which needs the same offset — AppLayout's own number, keep
+         // the two in sync).
+-        <div className="fixed inset-x-0 bottom-0 z-30 bg-background-default px-20 pb-20 pt-12 lg:left-[260px] lg:px-24">
++        <div className="fixed inset-x-0 bottom-0 z-30 bg-background-default px-20 pb-20 pt-12 lg:left-(--app-sidebar) lg:px-24">
+           <div className="mx-auto w-full max-w-[402px] lg:max-w-[960px]">
+             <Link
+               to={recreate.to}
+diff --git a/src/pages/SessionSettingsPage.tsx b/src/pages/SessionSettingsPage.tsx
+index e134ec0..e72d11b 100644
+--- a/src/pages/SessionSettingsPage.tsx
++++ b/src/pages/SessionSettingsPage.tsx
+@@ -442,12 +442,12 @@ export function SessionSettingsPage() {
+           descendant, so an un-portalled bar would pin itself to the bottom
+           of the scrollable page box instead of the viewport (the same trap
+           documented for sheets and modals). `left-0` alone would centre it
+-          against the full window, sidebar included — `lg:left-[260px]`
++          against the full window, sidebar included — `lg:left-(--app-sidebar)`
+           keeps it centred on the content column beside the 260px desktop
+           sidebar instead (`AppLayout`'s own number — keep the two in sync). */}
+       {pendingCount > 0 &&
+         createPortal(
+-          <div className="fixed inset-x-0 bottom-20 z-30 flex justify-center px-20 lg:bottom-24 lg:left-[260px]">
++          <div className="fixed inset-x-0 bottom-20 z-30 flex justify-center px-20 lg:bottom-24 lg:left-(--app-sidebar)">
+             <button
+               type="button"
+               onClick={applyPendingChanges}
+diff --git a/src/pages/StoryPage.tsx b/src/pages/StoryPage.tsx
+index 3d56fd0..4f8955c 100644
+--- a/src/pages/StoryPage.tsx
++++ b/src/pages/StoryPage.tsx
+@@ -80,7 +80,7 @@ export function StoryPage() {
+ 
+       {session &&
+         createPortal(
+-          <div className="fixed inset-x-0 bottom-0 z-30 bg-background-default px-20 pb-20 pt-12 lg:left-[260px] lg:px-24 [:root[data-tabbar]_&]:bottom-[calc(64px+env(safe-area-inset-bottom))] lg:[:root[data-tabbar]_&]:bottom-0">
++          <div className="fixed inset-x-0 bottom-0 z-30 bg-background-default px-20 pb-20 pt-12 lg:left-(--app-sidebar) lg:px-24 [:root[data-tabbar]_&]:bottom-[calc(64px+env(safe-area-inset-bottom))] lg:[:root[data-tabbar]_&]:bottom-0">
+             <div className="mx-auto w-full max-w-[402px] lg:max-w-[720px]">
+               <Link to={`/play/${session.slug}`} className="u-press text-style-body flex h-56 w-full items-center justify-center gap-8 rounded-16 bg-[#331B04] text-text-inverse">
+                 Try the Session
+diff --git a/src/styles/versions.css b/src/styles/versions.css
+index 58f4263..01f2bf4 100644
+--- a/src/styles/versions.css
++++ b/src/styles/versions.css
+@@ -111,6 +111,9 @@
+ /* Unlayered, so these beat Tailwind's utilities. Every viewport-height
+    layout gives up the bar's height, and sticky headers sit under it. */
+ :root { --staging-bar: 0px; }
++/* The desktop sidebar's width, for fixed bars that sit beside it (U091: it folds to an 88px rail). */
++:root { --app-sidebar: 260px; }
++:root[data-sidebar='rail'] { --app-sidebar: 88px; }
+ :root[data-staging-bar] { --staging-bar: 28px; }
+ :root[data-staging-bar] body { padding-top: var(--staging-bar); }
+ /* Unlayered rules beat every utility on the element, responsive ones too,
+diff --git a/src/versions/releases.ts b/src/versions/releases.ts
+index 5ef2da4..2b921d1 100644
+--- a/src/versions/releases.ts
++++ b/src/versions/releases.ts
+@@ -29,4 +29,6 @@ export const RELEASES = {
+   aboutPage: true,
+   /** Admin → Product → Journey tags (U089): the user journey's tagging, for review. Staging only until asked. */
+   journeyTags: BUILD.environment !== 'production',
++  /** Desktop sidebar that folds to an icon rail and expands again (U091, Eugene). Staging only until asked. */
++  sidebarRail: BUILD.environment !== 'production',
+ } as const
+-- 
+2.43.0
+

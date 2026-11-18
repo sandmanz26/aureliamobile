@@ -127,9 +127,79 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U088 | `92fae15` | 2026-11-18 | Admin: new module Product → User journey (`/admin/user-journey`), the journey map from the owner's blueprint: 4 stages, 10 moments, 3 screens, editable, export/import. Staging and production. | [patch](patches/U088-92fae15.patch) |
 | U089 | `f029a4f` | 2026-11-18 | Admin: new module Product → Journey tags (`/admin/journey-tags`): eight tag groups for every user-journey moment, a proposed first tagging, review status and notes, coverage gaps, an editable taxonomy. Staging only (`RELEASES.journeyTags`). | [patch](patches/U089-f029a4f.patch) |
 | U090 | `8440ca1` | 2026-11-18 | Admin sidebar: groups fold (current one open, choices remembered), tighter, sticky; the phone menu button, hidden by the v4/v5 rule, is back. Staging; production on request. | [patch](patches/U090-8440ca1.patch) |
+| U091 | `cb7c21b` | 2026-11-18 | Desktop sidebar folds to an 88px icon rail and expands again, remembered per browser; fixed bars follow `--app-sidebar`. Staging only (`RELEASES.sidebarRail`). | [patch](patches/U091-cb7c21b.patch) |
+| U092 | `01e0e78` | 2026-11-18 | User journey reworked after user feedback: Journey tags merged in as tabs, a map that fits, one side panel per moment (details + tags + review), Add moment + More, one export file. Staging. | [patch](patches/U092-01e0e78.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U092 — User journey: one page, one panel
+
+- **Commit:** `01e0e78` · pushed 2026-11-18 UTC · `web_app` + `admin_cms`.
+- **Not on production yet.** The map and panel are not behind a flag (only the tags are), so they reach production with the next push to `web_prod`, documents push included. Ready for it; say if it should wait.
+- **Patch:** [patches/U092-01e0e78.patch](patches/U092-01e0e78.patch)
+- **Request:** "tolong terkait yang ada user journey itu secara flow masih ada feedback dari user agak membingungkan kemudian bekerjalah sebagai head of product coba perbaiki secara flow nya agar lebih nyaman dan mudah dipakai tapi tetap bisa mengakomodir kebutuhan eugene. perhatikan ss ini, jadi client / eugene mau untuk desktop version ada model sidebar yang bisa di squeeze atau di minimize seperti itu tapi nanti ada opsi expand nya. tolong update ya" (first half).
+- **Diagnosis (head of product):** four things made it confusing.
+  1. The same moments were managed in two menus: details in User journey, tags and review in Journey tags.
+  2. Many controls had equal weight (layers, stages, zoom, import, export, manage), while the main task, adding or changing a moment, did not stand out.
+  3. The board needed zoom and sideways scrolling, and Edit appeared only on hover.
+  4. Editing opened a centred dialog that hid the map.
+- **Eugene's needs kept:**
+  - the four stages and their questions;
+  - illustrated moments with a potential feature;
+  - product screens;
+  - editing with image upload;
+  - adding and deleting;
+  - export and import;
+  - restoring the original;
+  - the tagging and classification for review.
+- **Changed:**
+  - `src/admin/pages/UserJourneyPage.tsx` rewritten:
+    - Tabs Map · Tags & review · Coverage · Tag setup (the last three only with `RELEASES.journeyTags`).
+    - The map: four columns that fit without zoom; stage chips, a tag filter and a Show product screens switch.
+    - Each card is one button; with tags on it shows readiness, review status and "Tags missing".
+    - One side panel per moment: stage (moves it), title, what happens, feature, image, then tags, review and note, saved with one button. Screens use the same panel without tags.
+    - "Add moment" as the one primary action; More holds Edit stage names (all four at once), Export, Import and Restore the original (last, in red).
+    - The counts line shows moments, agreed, and still to tag.
+  - `src/admin/components/SidePanel.tsx` (new).
+  - `src/admin/pages/journey/TagViews.tsx` (new): the tag chips, table, coverage, tag setup and group editor, moved from the deleted `JourneyTagsPage.tsx`.
+  - `src/admin/data/journeyBundle.ts` (new, tested): one export file holding map and tags; import reads it, the U088 and U089 single exports, and the original blueprint export.
+  - `STATUS_TONE` moved to `journeyTags.ts`.
+  - `src/App.tsx`: `/admin/journey-tags` redirects to `/admin/user-journey?view=tags`.
+  - Sidebar and flag registry: the separate Journey tags item and flag are gone.
+- **Verified:**
+  - `npm run check` passes (146 tests).
+  - Staging build at 1440px:
+    - the redirect lands on the tags tab;
+    - four tabs, and no sideways scroll on the map;
+    - the panel edits a title and the review, and both survive a reload;
+    - Add moment into Share appears on the map and as "Not tagged" in the table;
+    - the More menu runs Edit stage names, Export, Import, Restore.
+  - Production build: no tabs and no tag section, and the same edit and add flow works.
+  - 402px: no page overflow.
+  - No errors on either build.
+- **Revert:** `git revert --no-commit 01e0e78 && git checkout HEAD -- docs/`.
+
+### U091 — Desktop sidebar as an icon rail
+
+- **Commit:** `cb7c21b` · pushed 2026-11-18 UTC · `web_app` + `admin_cms`. Staging only (`RELEASES.sidebarRail`).
+- **Patch:** [patches/U091-cb7c21b.patch](patches/U091-cb7c21b.patch)
+- **Request:** "tolong terkait yang ada user journey itu secara flow masih ada feedback dari user agak membingungkan kemudian bekerjalah sebagai head of product coba perbaiki secara flow nya agar lebih nyaman dan mudah dipakai tapi tetap bisa mengakomodir kebutuhan eugene. perhatikan ss ini, jadi client / eugene mau untuk desktop version ada model sidebar yang bisa di squeeze atau di minimize seperti itu tapi nanti ada opsi expand nya. tolong update ya" (second half), with a screenshot comparing a folded icon rail and the full sidebar.
+- **Changed:**
+  - `src/layouts/AppLayout.tsx`:
+    - At lg and up the full sidebar has a Collapse button beside the bell.
+    - The rail is 88px: the Aurelia mark, New session as a round gradient button, the destinations as icon + label (Create, Discover, Progress, Me in v4+; the v1–v3 set otherwise), then notifications, invite and help as icons, and Expand at the foot.
+    - Recent sessions and the build badge stay in the full sidebar.
+    - The choice is kept in `aurelia.sidebar.rail` (through `lib/storage`).
+    - The phone drawer has no collapse.
+  - `src/styles/versions.css`: `--app-sidebar` (260px, 88px with `data-sidebar='rail'` on the root).
+  - The fixed bars in `StoryPage`, `SessionDetailPage` and `SessionSettingsPage` use `lg:left-(--app-sidebar)` instead of `260px`, so they follow the rail. Desktop only.
+  - `src/versions/releases.ts`: `sidebarRail`, staging only.
+- **Verified:**
+  - Staging build at 1440px, design v5: 260px → 88px on Collapse; the choice survives a reload; links work from the rail; Expand returns to 260px.
+  - 402px: no aside and no collapse control, as before.
+  - No errors.
+- **Revert:** `git revert --no-commit cb7c21b && git checkout HEAD -- docs/`.
 
 ### U090 — Admin sidebar
 
