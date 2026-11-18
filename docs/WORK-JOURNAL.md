@@ -65,6 +65,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O35 | **Purpose of the user journey (J122)**: confirm it is an internal opportunity map (moment → feature → evidence → decision) and who owns it; if yes, add evidence and a priority decision per moment, a link to the real screen or session, team-wide storage, and the same tags in analytics | J122 | Product owner + Eugene — **Answered by Eugene (J127):** internal, driven by the product team; evolving like Trello/Asana; readable by Claude |
 | O36 | **User journey as an evolving platform (J127)**: approve the three phases. (1) Shared storage, a status workflow (Idea → Validated → Planned → Building → Live → Measured), owner, Board view, activity log. (2) A scenario template, evidence and a decision log per card; a structured export to the knowledge base. (3) An AI assist on the page, after a backend exists. | J127 | Product owner + Eugene |
 | O37 | **Insight Timer round 2 recommendations (J130)**: decide the "now" list, including changing the demo's every-sign-in daily check-in before real users, and a "Need help now?" link; and whether to push the wiki (and the app work riding with it) to production | J130 | Product owner + Eugene |
+| J131 | 2026-11-18 | Code | Personas too thin: rebuilt as real profiles; a dropdown that looked broken (dark mode) fixed | U099 |
 | J128 | 2026-11-18 | Code + Opinion | Product lab menu; Personas with 300 varied synthetic personas as candidates for AI-run research, and a view on using them | U096 |
 | J129 | 2026-11-18 | Code + Docs | Always add what was learned to a file other AIs can read: `docs/AI-KNOWLEDGE.md`, enforced by a test | U097 |
 | J130 | 2026-11-18 | Research + Code | Insight Timer round 2 delivered: behaviour from communities and reviews, its journey as 11 flow charts, retention evidence, what to adopt now/next/later after a roast; in the wiki Research tab | U098 |
@@ -1528,3 +1529,9 @@ transcript and the update log. Everything from J018 on was written at the time.
   - **Next:** history and export; a tested sleep mode; a trial long enough for a whole journey; scoring on "came back and it helped"; therapist share links.
   - **Later:** a real co-presence count, licensed voices.
 - **Open:** O37.
+
+### J131 — Stronger personas; the dropdown bug
+- **Asked:** "persona yang kamu buat masih belum kuat, masih terlalu lemah saya mau lebih kaut layaknya profile seseorang. kemudian kamu cek ya ada dropdown kadang yang bug seperti di ss 1 secara UI nya"
+- **Done:** U099.
+  - Each persona is now a full profile: bio, weekday, sleep, stressors and coping, personality and values, tech, how they decide, deal breakers, what success looks like, and quotes. It shows as a profile and feeds the role-play prompt.
+  - The dropdown bug was dark mode: native option lists stayed light. Fixed across the admin, including dialogs.

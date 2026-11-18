@@ -19,6 +19,13 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-18 — Personas as profiles; dark dropdowns (U099, J131)
+
+Personas carry a full profile and show as one. Admin dropdowns and other
+native controls follow the dark theme.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-18 — Research round 2 (U098, J130)
 
 The wiki's Research tab opens on round 2 of the Insight Timer research

@@ -135,9 +135,52 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U096 | `f655605` | 2026-11-18 | Admin: the Product group becomes Product lab; new Personas module with 300 synthetic, seeded personas, role-play prompts and balanced research panels for AI-run research. Personas staging only. | [patch](patches/U096-f655605.patch) |
 | U097 | `9ee49e0` | 2026-11-18 | `docs/AI-KNOWLEDGE.md`, the agent's working knowledge for other AIs, kept current on every request; a test fails when it falls behind the journal; included in the knowledge-base export. | [patch](patches/U097-9ee49e0.patch) |
 | U098 | `f834b1e` | 2026-11-18 | Wiki Research: round 2 on Insight Timer (behaviour, 11 journey flow charts, adopt/avoid after a roast) as the default version; Mermaid charts render lazily, kept out of the precache. Staging; production on request (J076). | [patch](patches/U098-f834b1e.patch) |
+| U099 | `61b4abf` | 2026-11-18 | Personas become full profiles (bio, weekday, sleep, stressors, coping, personality, tech, decision style, deal breakers, success, quotes), shown as a profile and carried into the role-play prompt; admin dropdowns follow the dark theme. Staging. | [patch](patches/U099-61b4abf.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U099 — Personas as profiles; dark-mode dropdowns
+
+- **Commit:** `61b4abf` · pushed 2026-11-18 UTC · `web_app` + `admin_cms`. Personas stay staging only. The dropdown fix is not flagged.
+- **Patch:** [patches/U099-61b4abf.patch](patches/U099-61b4abf.patch)
+- **Request:** "persona yang kamu buat masih belum kuat, masih terlalu lemah saya mau lebih kaut layaknya profile seseorang. kemudian kamu cek ya ada dropdown kadang yang bug seperti di ss 1 secara UI nya" (screenshot of the dark admin with the panel-size select).
+- **Found (dropdown):** the admin follows the device's dark mode, but native controls were still rendered light. A `<select>`'s option list showed light text on white. The screenshot was in dark mode.
+- **Changed:**
+  - `src/admin/data/personas.ts`: a `Profile` per persona.
+    - Who they are: pronouns; a bio (age, work, city, home, traits, values, what is going on and why, their wellness-app history).
+    - Personality: Big Five levels, traits and values.
+    - Daily life: a weekday in five timed lines; sleep (bed, wake, hours, quality 1–5); stressors; coping; phone, screen time and top apps.
+    - Winning and losing them: how they decide; where they would hear about Aurelia; deal breakers; what success looks like; three quotes (goal, AI attitude, money).
+    - New coherence rules:
+      - exam stress only for students;
+      - no school run without children;
+      - carers have caring named as a stressor;
+      - households rebalanced, with carers at 5%;
+      - "HR" takes "an";
+      - app names read naturally ("meditation videos on YouTube").
+    - The role-play prompt includes the whole profile.
+  - `src/admin/data/personas.test.ts`: a profile test, checking that every bio is long, names the city, and has no broken phrases.
+  - `src/admin/pages/PersonasPage.tsx`: the side panel (600px) is now a profile:
+    - a header with initials, pronouns and badges;
+    - the bio and the lead quote;
+    - A weekday;
+    - How they are doing (sleep and screen-time tiles, stressors, coping, circumstances);
+    - Personality and values (bars);
+    - Life and tech;
+    - Winning them, losing them;
+    - In their words;
+    - User journey moments;
+    - Role-play prompt.
+  - `src/admin/components/SidePanel.tsx`: a `width` prop.
+  - `src/admin/admin.css`, `AdminLayout.tsx`, `Modal.tsx`, `SidePanel.tsx`: `.adm-root` sets `color-scheme` from the admin theme and styles options. Portaled dialogs carry it too. The consumer app stays light-only.
+- **Verified:**
+  - `npm run check` passes (160 tests).
+  - Staging build:
+    - Dark: the select's `color-scheme` is dark and its options are `rgb(28,27,25)` on `rgb(245,244,240)`. The panel is dark.
+    - Light: the select and its options are unchanged.
+    - The profile panel renders at 1440px and 402px with no overflow and no errors.
+- **Revert:** `git revert --no-commit 61b4abf && git checkout HEAD -- docs/`.
 
 ### U098 — Research tab, round 2, with diagrams
 

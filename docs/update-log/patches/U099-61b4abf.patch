@@ -1,0 +1,656 @@
+From 61b4abfb44e4997ee7651fe53f8b491572ef1988 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 18 Nov 2026 17:47:14 +0000
+Subject: [PATCH] Personas as real profiles; admin dropdowns follow the dark
+ theme
+
+Personas were thin records. Each now has a profile a researcher can read
+as a person: pronouns; a four-sentence bio (age, work, city, home,
+traits, values, what is going on and why, wellness-app history); Big Five
+levels, traits and values; a weekday hour by hour; sleep (bed, wake,
+hours, quality); stressors and how they cope now; phone, screen time and
+the apps they live in; how they decide and where they would hear about
+Aurelia; deal breakers; what success looks like; three quotes. The rules
+keep it coherent (no exam stress outside students, no school run without
+children, carers' stress named, household rebalanced). The role-play
+prompt carries all of it. The side panel shows it as a profile: header
+with initials and badges, bio, a weekday, how they are doing (sleep and
+screen-time tiles, stressors, coping, circumstances), personality bars,
+life and tech, winning and losing them, quotes, journey moments, prompt.
+SidePanel takes a width.
+
+Dropdowns: in dark mode a native select's option list stayed light (light
+text on white). The admin shell, Modal and SidePanel now carry .adm-root,
+which sets color-scheme from the admin theme and styles options; the
+consumer app stays light-only.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/admin/AdminLayout.tsx          |   2 +-
+ src/admin/admin.css                |  12 ++
+ src/admin/components/Modal.tsx     |   2 +-
+ src/admin/components/SidePanel.tsx |   8 +-
+ src/admin/data/personas.test.ts    |  15 ++
+ src/admin/data/personas.ts         | 193 +++++++++++++++++++++++-
+ src/admin/pages/PersonasPage.tsx   | 233 +++++++++++++++++++++++------
+ 7 files changed, 411 insertions(+), 54 deletions(-)
+
+diff --git a/src/admin/AdminLayout.tsx b/src/admin/AdminLayout.tsx
+index 9f8ac03..54384ac 100644
+--- a/src/admin/AdminLayout.tsx
++++ b/src/admin/AdminLayout.tsx
+@@ -201,7 +201,7 @@ export function AdminLayout() {
+   const [open, setOpen] = useState(false)
+ 
+   return (
+-    <div className="flex min-h-screen bg-adm-bg">
++    <div className="adm-root flex min-h-screen bg-adm-bg">
+       <aside className="sticky top-[var(--staging-bar,0px)] hidden h-[calc(100dvh-var(--staging-bar,0px))] w-[232px] shrink-0 flex-col self-start bg-adm-sidebar lg:flex">
+         <div className="flex h-56 items-center gap-8 border-b border-white/8 px-20">
+           <AureliaLogo iconSize={22} markOnly />
+diff --git a/src/admin/admin.css b/src/admin/admin.css
+index 647e140..9922915 100644
+--- a/src/admin/admin.css
++++ b/src/admin/admin.css
+@@ -82,3 +82,15 @@
+   --color-adm-grid: #2c2b28;
+   --color-adm-axis: #3a3833;
+ }
++
++/* Native controls follow the admin theme (U099). Without this, a <select>'s
++   option list and checkboxes stayed light in dark mode: light text on a white
++   list. .adm-root is on the admin shell and on the portaled Modal and
++   SidePanel, which render outside it. The consumer app stays light-only. */
++.adm-root { color-scheme: light; }
++@media (prefers-color-scheme: dark) {
++  :root:not([data-theme='light']) .adm-root { color-scheme: dark; }
++}
++:root[data-theme='dark'] .adm-root { color-scheme: dark; }
++.adm-root select option,
++.adm-root select optgroup { background-color: var(--color-adm-surface); color: var(--color-adm-ink); }
+diff --git a/src/admin/components/Modal.tsx b/src/admin/components/Modal.tsx
+index b373a80..28761e2 100644
+--- a/src/admin/components/Modal.tsx
++++ b/src/admin/components/Modal.tsx
+@@ -35,7 +35,7 @@ export function Modal({
+   }, [onClose])
+ 
+   return createPortal(
+-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-16" onClick={onClose}>
++    <div className="adm-root fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-16" onClick={onClose}>
+       <div
+         onClick={(event) => event.stopPropagation()}
+         style={{ maxWidth: width }}
+diff --git a/src/admin/components/SidePanel.tsx b/src/admin/components/SidePanel.tsx
+index 8d7ddf9..0b2b33b 100644
+--- a/src/admin/components/SidePanel.tsx
++++ b/src/admin/components/SidePanel.tsx
+@@ -14,12 +14,15 @@ export function SidePanel({
+   onClose,
+   footer,
+   children,
++  width = 480,
+ }: {
+   title: string
+   description?: string
+   onClose: () => void
+   footer?: ReactNode
+   children: ReactNode
++  /** Max width in px (default 480). */
++  width?: number
+ }) {
+   useEffect(() => {
+     function onKey(event: KeyboardEvent) {
+@@ -30,12 +33,13 @@ export function SidePanel({
+   }, [onClose])
+ 
+   return createPortal(
+-    <div className="fixed inset-0 z-50 flex justify-end bg-black/25" onClick={onClose}>
++    <div className="adm-root fixed inset-0 z-50 flex justify-end bg-black/25" onClick={onClose}>
+       <aside
+         role="dialog"
+         aria-label={title}
+         onClick={(event) => event.stopPropagation()}
+-        className="flex h-full w-full max-w-[480px] flex-col bg-adm-surface shadow-2xl"
++        style={{ maxWidth: width }}
++        className="flex h-full w-full flex-col bg-adm-surface shadow-2xl"
+       >
+         <div className="flex items-start justify-between gap-12 border-b border-adm-line px-20 py-16">
+           <div className="min-w-0">
+diff --git a/src/admin/data/personas.test.ts b/src/admin/data/personas.test.ts
+index b15f44d..6645b28 100644
+--- a/src/admin/data/personas.test.ts
++++ b/src/admin/data/personas.test.ts
+@@ -44,6 +44,21 @@ describe('personas', () => {
+     for (const [, n] of distribution(panel, 'goal')) expect(n).toBe(5)
+   })
+ 
++  it('gives everyone a full profile that reads correctly', () => {
++    for (const p of all) {
++      const f = p.profile
++      expect(f.bio.length, p.id).toBeGreaterThan(160)
++      expect(f.bio, p.id).not.toMatch(/undefined|lives with with|their own|%CITY%/)
++      expect(f.bio, p.id).toContain(p.city)
++      expect(f.day).toHaveLength(5)
++      expect(f.values).toHaveLength(2)
++      expect(f.quotes).toHaveLength(3)
++      expect(f.sleep.hours).toBeGreaterThanOrEqual(4)
++      if (p.workPattern !== 'student') expect(f.stressors, p.id).not.toContain('exams and grades')
++      if (!/kids|teenagers|single parent/.test(p.household)) expect(f.day[0].what, p.id).not.toMatch(/kids/)
++    }
++  })
++
+   it('writes a role-play prompt that says it is synthetic', () => {
+     const prompt = personaPrompt(all[0])
+     expect(prompt).toContain(all[0].name)
+diff --git a/src/admin/data/personas.ts b/src/admin/data/personas.ts
+index 17108b3..d6bcea2 100644
+--- a/src/admin/data/personas.ts
++++ b/src/admin/data/personas.ts
+@@ -47,6 +47,34 @@ export interface Persona {
+   /** Circumstances worth testing for: accessibility, health, life events. */
+   flags: string[]
+   quote: string
++  /** The profile (U099): who this person is beyond the research fields. */
++  profile: Profile
++}
++
++export type Level = 'low' | 'medium' | 'high'
++
++export interface Profile {
++  pronouns: string
++  /** Three or four sentences, in the third person. */
++  bio: string
++  personality: { openness: Level; conscientiousness: Level; extraversion: Level; agreeableness: Level; neuroticism: Level }
++  traits: string[]
++  values: string[]
++  /** A weekday, hour by hour. */
++  day: { time: string; what: string }[]
++  sleep: { bedtime: string; wake: string; hours: number; quality: 1 | 2 | 3 | 4 | 5 }
++  stressors: string[]
++  coping: string[]
++  phone: string
++  screenTimeHours: number
++  topApps: string[]
++  /** What happened with wellness apps before. */
++  appHistory: string
++  decides: string
++  wouldHearAbout: string
++  dealBreakers: string[]
++  success: string
++  quotes: string[]
+ }
+ 
+ export const SEED = 2026
+@@ -205,6 +233,69 @@ const QUOTES: Record<GoalId, string[]> = {
+   energy: ['By three o’clock I am running on fumes.', 'I want to wake up and actually feel awake.', 'I give energy to everyone else all day. I want some back.'],
+ }
+ 
++const TRAITS = ['practical', 'warm', 'guarded', 'funny', 'restless', 'thoughtful', 'organised', 'impatient', 'curious', 'private', 'driven', 'gentle', 'sceptical', 'sociable', 'quiet', 'perfectionist', 'easy-going', 'anxious', 'loyal', 'blunt']
++const VALUES = ['family', 'independence', 'faith', 'achievement', 'health', 'security', 'creativity', 'community', 'fairness', 'freedom', 'learning', 'calm']
++const STRESSORS = ['money and rising costs', 'workload and long hours', 'a strained relationship', 'caring for someone', 'health worries', 'exams and grades', 'job insecurity', 'loneliness', 'a long commute', 'news and social media', 'a noisy home', 'being the one everyone relies on']
++const COPING = ['scrolling the phone', 'a glass of wine in the evening', 'running', 'prayer', 'calling a friend', 'nothing in particular', 'music on headphones', 'video games', 'journaling now and then', 'seeing a therapist', 'long walks', 'binge-watching series', 'cleaning the house', 'smoking', 'the gym']
++const CHANNELS = ['a friend’s recommendation', 'a TikTok or Reels video', 'their therapist', 'their employer’s wellbeing programme', 'a podcast ad', 'searching the App Store at night', 'a newsletter they read', 'their partner']
++const DECIDES = ['tries the free version first and decides within a day', 'reads every review before installing anything', 'asks one trusted friend', 'follows what a creator they like uses', 'compares three options in a spreadsheet', 'installs on impulse and deletes just as fast']
++const DEAL_BREAKERS = ['being asked to pay before trying', 'a voice that sounds fake or salesy', 'notifications every day', 'having to create an account first', 'anything that feels like therapy talk', 'ads', 'sessions that run longer than promised', 'sharing data with third parties', 'religious or spiritual framing', 'a cluttered home screen']
++const SUCCESS: Record<GoalId, string[]> = {
++  sleep: ['asleep within twenty minutes most nights', 'not dreading bedtime any more', 'waking up without the 3am spiral'],
++  calm: ['getting through a hard meeting without the racing chest', 'not snapping at the kids by Friday', 'a week where the worry stays in the background'],
++  clarity: ['knowing what to do first on a Monday', 'making the decision and sleeping on it calmly', 'a head that feels quieter by the evening'],
++  focus: ['two real hours of work before lunch', 'finishing one thing before starting the next', 'getting through a chapter without reaching for the phone'],
++  regulate: ['coming down from a stressful moment in minutes, not hours', 'shoulders that are not up by the ears at night', 'fewer headaches in a month'],
++  energy: ['no 3pm crash on most days', 'waking up and getting going without three coffees', 'having something left for the evening'],
++}
++const EXTRA_QUOTES = {
++  ai: {
++    enthusiastic: ['If it actually learns what works for me, I am all in.'],
++    curious: ['I would try it. I just want to know it is not making things up.'],
++    skeptical: ['An app that writes my meditation? Show me it works first.'],
++    distrustful: ['I am not telling a machine how I feel. Who reads that?'],
++  },
++  money: {
++    low: ['Every subscription is a choice between this and groceries.'],
++    middle: ['I pay for things that earn their place. Most apps do not.'],
++    high: ['Price is not the problem. Wasting my time is.'],
++  },
++} as const
++const PHONES = { low: ['an older Android phone', 'a budget Android phone', 'a hand-me-down iPhone'], middle: ['a mid-range Android phone', 'an iPhone a few years old', 'a recent Samsung'], high: ['the latest iPhone', 'a new Pixel', 'a recent iPhone and an iPad'] } as const
++const SOCIAL = ['WhatsApp', 'Instagram', 'TikTok', 'YouTube', 'Facebook', 'X', 'Reddit', 'LinkedIn', 'Spotify', 'Netflix', 'Telegram', 'Line']
++
++const hhmm = (h: number, m = 0) => `${String(((h % 24) + 24) % 24).padStart(2, '0')}:${String(m).padStart(2, '0')}`
++
++function makeDay(r: Rand, work: WorkPattern, household: string, goal: GoalId, bed: number, wake: number, coping: string[]): { time: string; what: string }[] {
++  const kids = /kids|teenagers|single parent/.test(household)
++  const start: Record<WorkPattern, string> = {
++    office: 'commutes to the office',
++    hybrid: 'office or home, depending on the day',
++    remote: 'opens the laptop at the kitchen table',
++    shift: 'starts a shift that changes every week',
++    'self-employed': 'opens up and deals with whatever comes in',
++    student: 'lectures, library, part-time job',
++    caregiver: 'appointments, meals, the school run',
++    'between jobs': 'applications and a lot of waiting',
++    retired: 'a slow start, errands, a walk',
++  }
++  const lows: Record<GoalId, string> = {
++    sleep: 'tired and running on caffeine',
++    calm: 'a tense meeting or call, chest tight',
++    clarity: 'ten things open at once, none finished',
++    focus: 'the afternoon slips away into the phone',
++    regulate: 'a stressful moment that stays in the body for hours',
++    energy: 'the 3pm crash',
++  }
++  return [
++    { time: hhmm(wake, pick(r, [0, 15, 30, 45])), what: kids ? 'up before everyone else, then breakfast and getting the kids out' : pick(r, ['phone first, then coffee', 'snoozes twice, then rushes', 'up slowly, tea and the news']) },
++    { time: hhmm(wake + 2), what: start[work] },
++    { time: work === 'shift' ? 'mid-shift' : '15:00', what: lows[goal] },
++    { time: hhmm(bed - 3, 30), what: kids ? 'dinner, homework, bedtime routines' : `winds down with ${coping[0]}` },
++    { time: hhmm(bed), what: goal === 'sleep' ? 'in bed, awake longer than they want to be' : 'in bed, phone in hand for a while' },
++  ]
++}
++
+ function ageBand(age: number) {
+   return age < 25 ? '18–24' : age < 35 ? '25–34' : age < 45 ? '35–44' : age < 55 ? '45–54' : age < 65 ? '55–64' : '65+'
+ }
+@@ -229,7 +320,7 @@ function makePersona(r: Rand, n: number): Persona {
+         ? pick(r, ['with a partner', 'lives alone', 'lives with adult children'])
+         : workPattern === 'caregiver'
+           ? pick(r, ['partner and young kids', 'single parent', 'cares for a parent at home'])
+-          : pick(r, ['lives alone', 'with a partner', 'partner and young kids', 'partner and teenagers', 'single parent', 'flatmates', 'cares for a parent at home'])
++          : weighted(r, [['lives alone', 20], ['with a partner', 22], ['partner and young kids', 22], ['partner and teenagers', 12], ['single parent', 9], ['flatmates', 10], ['cares for a parent at home', 5]] as const)
+   const income = workPattern === 'student' || workPattern === 'between jobs' ? weighted(r, [['low', 80], ['middle', 20]] as const) : weighted(r, [['low', 25], ['middle', 50], ['high', 25]] as const)
+ 
+   const goal = weighted<GoalId>(r, [['sleep', 25], ['calm', 22], ['focus', 15], ['clarity', 12], ['regulate', 14], ['energy', 12]])
+@@ -257,6 +348,88 @@ function makePersona(r: Rand, n: number): Persona {
+   const barriers = some(r, BARRIERS, 1, 2)
+   if (aiAttitude === 'distrustful' && !barriers.includes('does not trust AI with feelings')) barriers[0] = 'does not trust AI with feelings'
+ 
++  const traits = some(r, TRAITS, 2, 3)
++  const neuroticism: Level = ['calm', 'regulate', 'sleep'].includes(goal) ? weighted(r, [['medium', 45], ['high', 45], ['low', 10]] as const) : weighted(r, [['low', 30], ['medium', 50], ['high', 20]] as const)
++  const personality = {
++    openness: aiAttitude === 'enthusiastic' ? 'high' : aiAttitude === 'distrustful' ? 'low' : pick(r, ['low', 'medium', 'high'] as const),
++    conscientiousness: pick(r, ['low', 'medium', 'high'] as const),
++    extraversion: pick(r, ['low', 'medium', 'high'] as const),
++    agreeableness: pick(r, ['medium', 'high', 'low'] as const),
++    neuroticism,
++  } as const
++  const coping = some(r, COPING, 1, 2)
++  const shift = workPattern === 'shift' || flags.includes('night shift worker')
++  const bedHour = shift ? pick(r, [1, 2, 8]) : clamped >= 65 ? pick(r, [22, 23]) : pick(r, [22, 23, 0, 1])
++  const wakeHour = shift && bedHour === 8 ? 15 : clamped >= 65 ? 6 : pick(r, [6, 6, 7, 7, 8])
++  const hoursRaw = ((wakeHour - bedHour + 24) % 24) - (goal === 'sleep' ? 1.5 + r() : r() * 0.8)
++  const hours = Math.max(4, Math.round(hoursRaw * 2) / 2)
++  const quality = (goal === 'sleep' ? weighted(r, [[1, 30], [2, 50], [3, 20]] as const) : weighted(r, [[2, 20], [3, 50], [4, 25], [5, 5]] as const)) as 1 | 2 | 3 | 4 | 5
++  const stressors = some(r, STRESSORS.filter((x) => workPattern === 'student' || x !== 'exams and grades'), 2, 3)
++  if (workPattern === 'student' && !stressors.includes('exams and grades')) stressors[0] = 'exams and grades'
++  if (household.includes('cares for') && !stressors.includes('caring for someone')) stressors[0] = 'caring for someone'
++  const firstName = first
++  const HOME: Record<string, string> = {
++    'lives with parents': 'still lives with their parents',
++    flatmates: 'shares a flat with two others',
++    'lives alone': 'lives alone',
++    'with a partner': 'lives with a partner',
++    'partner and young kids': 'lives with a partner and two young children',
++    'partner and teenagers': 'lives with a partner and two teenagers',
++    'single parent': 'is raising a child alone',
++    'cares for a parent at home': 'looks after an ageing parent at home',
++    'lives with adult children': 'lives with a grown-up son and his family',
++  }
++  const home = (HOME[household] ?? household).replace('their parents', gender === 'woman' ? 'her parents' : gender === 'man' ? 'his parents' : 'their parents')
++  const APP_PHRASE: Record<string, string> = { 'YouTube videos': 'meditation videos on YouTube', 'Spotify sleep playlists': 'sleep playlists on Spotify' }
++  const appName = (x?: string) => (x ? APP_PHRASE[x] ?? x : 'an app')
++  const pronouns = gender === 'woman' ? 'she/her' : gender === 'man' ? 'he/him' : 'they/them'
++  const they = gender === 'woman' ? 'She' : gender === 'man' ? 'He' : 'They'
++  const theyVerb = (v: string, plural: string) => (gender === 'non-binary' ? plural : v)
++  const occupationText = OCCUPATIONS[workPattern]
++  const occupationPick = pick(r, occupationText)
++  const appHistory =
++    experience === 'never'
++      ? 'Has never used a wellness app.'
++      : experience === 'tried and stopped'
++        ? `Tried ${appName(apps[0])} for ${pick(r, ['a week', 'about three weeks', 'two months'])} and stopped ${pick(r, ['when the free trial ended', 'after the reminders got annoying', 'because it all started to sound the same', 'when life got busy', 'after one session that felt too spiritual'])}.`
++        : experience === 'occasional'
++          ? `Turns to ${appName(apps[0])} ${pick(r, ['when things get bad', 'a couple of times a week', 'mostly at night'])}, with no routine.`
++          : `Uses ${apps.map(appName).join(' and ')} almost every day, ${pick(r, ['for years', 'since a hard year', 'mainly for sleep'])}.`
++  const occLower = /^[A-Z]{2}/.test(occupationPick) ? occupationPick : occupationPick.charAt(0).toLowerCase() + occupationPick.slice(1)
++  const occLine = ['student', 'caregiver', 'between jobs', 'retired'].includes(workPattern)
++    ? { student: `a ${occLower.replace(/ student$/, '')} student`.replace('a university university', 'a university'), caregiver: occLower.startsWith('carer') ? `a ${occLower}` : `a ${occLower}`, 'between jobs': occLower.toLowerCase().startsWith('looking') ? 'looking for work' : occLower.startsWith('recently') ? 'recently laid off' : 'on a career break', retired: occLower.replace(/^retired /, 'a retired ') }[workPattern as 'student']
++    : `${/^(hr|[aeiou])/i.test(occLower) ? 'an' : 'a'} ${occLower}`
++  const profile: Profile = {
++    pronouns,
++    bio: [
++      `${firstName} is ${clamped}, ${occLine} in ${'%CITY%'}, ${place.country}, and ${theyVerb(home, home.replace(/^(\w+)s /, '$1 ').replace(/^is /, 'are '))}.`,
++      `${they} ${theyVerb('describes', 'describe')} ${gender === 'woman' ? 'herself' : gender === 'man' ? 'himself' : 'themselves'} as ${traits.join(', ').replace(/, ([^,]*)$/, ' and $1')}, and ${theyVerb('cares', 'care')} most about ${some(r, VALUES, 2, 2).join(' and ')}.`,
++      `Right now ${firstName} ${struggle}, mostly because of ${stressors[0]}.`,
++      `${appHistory}`,
++    ].join(' '),
++    personality,
++    traits,
++    values: [],
++    day: makeDay(r, workPattern, household, goal, bedHour, wakeHour, coping),
++    sleep: { bedtime: hhmm(bedHour), wake: hhmm(wakeHour), hours, quality },
++    stressors,
++    coping,
++    phone: pick(r, PHONES[income]),
++    screenTimeHours: Math.round((clamped < 30 ? 5 + r() * 4 : clamped < 55 ? 3 + r() * 3 : 1.5 + r() * 2.5) * 2) / 2,
++    topApps: some(r, SOCIAL, 3, 4),
++    appHistory,
++    decides: pick(r, DECIDES),
++    wouldHearAbout: pick(r, CHANNELS),
++    dealBreakers: some(r, DEAL_BREAKERS, 1, 2),
++    success: pick(r, SUCCESS[goal]),
++    quotes: [],
++  }
++  profile.values = (profile.bio.match(/most about (.+?) and (.+?)\./) ?? []).slice(1, 3)
++  if (barriers.includes('dislikes spiritual language') && !profile.dealBreakers.includes('religious or spiritual framing')) profile.dealBreakers.push('religious or spiritual framing')
++  const city = pick(r, place.cities)
++  profile.bio = profile.bio.replace('%CITY%', city)
++  profile.quotes = [pick(r, QUOTES[goal]), EXTRA_QUOTES.ai[aiAttitude][0], EXTRA_QUOTES.money[income][0]]
++
+   return {
+     id: `P${String(n).padStart(3, '0')}`,
+     name: `${first} ${pick(r, place.last)}`,
+@@ -264,11 +437,11 @@ function makePersona(r: Rand, n: number): Persona {
+     ageBand: ageBand(clamped),
+     gender,
+     country: place.country,
+-    city: pick(r, place.cities),
++    city,
+     region: place.region,
+     language: place.language,
+     workPattern,
+-    occupation: pick(r, OCCUPATIONS[workPattern]),
++    occupation: occupationPick,
+     household,
+     income,
+     goal,
+@@ -289,7 +462,8 @@ function makePersona(r: Rand, n: number): Persona {
+     privacy: weighted(r, [['relaxed', 30], ['careful', 50], ['very protective', 20]] as const),
+     barriers,
+     flags,
+-    quote: pick(r, QUOTES[goal]),
++    quote: profile.quotes[0],
++    profile,
+   }
+ }
+ 
+@@ -314,7 +488,16 @@ export function personaPrompt(p: Persona): string {
+     `Preferences: ${p.length}-minute sessions, ${p.voice === 'none' ? 'no voice' : `a ${p.voice} voice`}, ${p.sound}; spiritual language: ${p.spiritual}.`,
+     `Attitudes: tech comfort ${p.techComfort}; towards AI you are ${p.aiAttitude}; privacy ${p.privacy}; you would pay ${p.willingnessToPay}.`,
+     `What gets in your way: ${p.barriers.join('; ')}.${p.flags.length ? ` Also: ${p.flags.join('; ')}.` : ''}`,
+-    `In your own words: "${p.quote}"`,
++    '',
++    `Your story: ${p.profile.bio}`,
++    `Personality: ${p.profile.traits.join(', ')}; openness ${p.profile.personality.openness}, conscientiousness ${p.profile.personality.conscientiousness}, extraversion ${p.profile.personality.extraversion}, agreeableness ${p.profile.personality.agreeableness}, neuroticism ${p.profile.personality.neuroticism}. You value ${p.profile.values.join(' and ')}.`,
++    `A normal weekday: ${p.profile.day.map((d) => `${d.time} ${d.what}`).join('; ')}.`,
++    `Sleep: bed around ${p.profile.sleep.bedtime}, up at ${p.profile.sleep.wake}, about ${p.profile.sleep.hours} hours, quality ${p.profile.sleep.quality} out of 5.`,
++    `What weighs on you: ${p.profile.stressors.join('; ')}. How you cope now: ${p.profile.coping.join('; ')}.`,
++    `Your phone: ${p.profile.phone}, about ${p.profile.screenTimeHours} hours a day, mostly ${p.profile.topApps.join(', ')}. ${p.profile.appHistory}`,
++    `How you pick an app: you ${p.profile.decides}; you would most likely hear about Aurelia through ${p.profile.wouldHearAbout}. Deal breakers: ${p.profile.dealBreakers.join('; ')}.`,
++    `Success for you looks like: ${p.profile.success}.`,
++    `Things you might say: ${p.profile.quotes.map((q) => `"${q}"`).join(' ')}`,
+     '',
+     'Answer in the first person, briefly and concretely, as this person would. Be honest about doubts and say when something would not fit your life. Do not invent facts about Aurelia that you have not been shown.',
+   ]
+diff --git a/src/admin/pages/PersonasPage.tsx b/src/admin/pages/PersonasPage.tsx
+index 5bb06bc..0acb764 100644
+--- a/src/admin/pages/PersonasPage.tsx
++++ b/src/admin/pages/PersonasPage.tsx
+@@ -1,5 +1,5 @@
+ import { Copy, Download, Shuffle, Users } from 'lucide-react'
+-import { useEffect, useMemo, useState } from 'react'
++import { useEffect, useMemo, useState, type ReactNode } from 'react'
+ import { Link } from 'react-router-dom'
+ import { DataTable, type Column } from '../components/DataTable'
+ import { SidePanel } from '../components/SidePanel'
+@@ -222,8 +222,9 @@ export function PersonasPage() {
+ 
+       {open && (
+         <SidePanel
+-          title={`${open.name}, ${open.age}`}
+-          description={`${open.id} · ${open.occupation} · ${open.city}, ${open.country}`}
++          width={600}
++          title={open.name}
++          description={`${open.id} · synthetic persona`}
+           onClose={() => setOpen(null)}
+           footer={
+             <>
+@@ -234,50 +235,192 @@ export function PersonasPage() {
+             </>
+           }
+         >
+-          <div className="flex flex-col gap-14 text-13 text-adm-ink">
+-            <p className="rounded-8 bg-adm-bg px-12 py-10 italic text-adm-ink-2">“{open.quote}”</p>
+-            <dl className="grid grid-cols-[120px_1fr] gap-x-12 gap-y-8 text-12">
+-              {(
+-                [
+-                  ['Goal', GOAL_LABEL[open.goal]],
+-                  ['What is going on', `${open.name.split(' ')[0]} ${open.struggle}`],
+-                  ['Triggers', open.triggers.join('; ')],
+-                  ['Life', `${open.gender}, ${open.household}; ${open.workPattern}, ${open.income} income`],
+-                  ['Language', open.language],
+-                  ['Meditation', `${open.experience}${open.apps.length ? `; uses ${open.apps.join(', ')}` : ''}`],
+-                  ['Wearable', open.wearable],
+-                  ['Prefers', `${open.length} min, ${open.voice === 'none' ? 'no voice' : `${open.voice} voice`}, ${open.sound}; spiritual: ${open.spiritual}`],
+-                  ['Tech, AI, privacy', `${open.techComfort} tech comfort; ${open.aiAttitude} about AI; ${open.privacy}`],
+-                  ['Would pay', open.willingnessToPay],
+-                  ['Barriers', open.barriers.join('; ')],
+-                  ['To test for', open.flags.join('; ') || 'nothing in particular'],
+-                ] as const
+-              ).map(([k, v]) => (
+-                <div key={k} className="contents">
+-                  <dt className="text-adm-muted">{k}</dt>
+-                  <dd>{v}</dd>
+-                </div>
+-              ))}
+-            </dl>
+-            <div className="flex flex-col gap-6">
+-              <span className="text-12 font-semibold">User journey moments</span>
+-              <div className="flex flex-wrap gap-6">
+-                {open.moments.map((m) => (
+-                  <span key={m} className="rounded-full bg-adm-hover px-8 py-2 text-11">
+-                    {MOMENT_TITLE.get(m) ?? m}
+-                  </span>
+-                ))}
+-              </div>
+-            </div>
+-            <div className="flex flex-col gap-6">
+-              <span className="inline-flex items-center gap-6 text-12 font-semibold">
+-                <Users size={13} /> Role-play prompt
+-              </span>
+-              <pre className="max-h-[240px] overflow-auto whitespace-pre-wrap rounded-8 border border-adm-line bg-adm-bg p-10 text-11 leading-[16px] text-adm-ink-2">{personaPrompt(open)}</pre>
+-            </div>
+-          </div>
++          <PersonaProfile p={open} />
+         </SidePanel>
+       )}
+     </div>
+   )
+ }
++
++const LEVEL_WIDTH = { low: '25%', medium: '55%', high: '90%' } as const
++
++function Section({ title, children }: { title: string; children: ReactNode }) {
++  return (
++    <section className="flex flex-col gap-8 border-t border-adm-line pt-14">
++      <h3 className="text-11 font-semibold uppercase tracking-widest text-adm-muted">{title}</h3>
++      {children}
++    </section>
++  )
++}
++
++function Chips({ items }: { items: string[] }) {
++  return (
++    <div className="flex flex-wrap gap-6">
++      {items.map((x) => (
++        <span key={x} className="rounded-full bg-adm-hover px-8 py-2 text-11 text-adm-ink">
++          {x}
++        </span>
++      ))}
++    </div>
++  )
++}
++
++/** One persona as a person: who they are, a day, how they feel, what wins or loses them. */
++function PersonaProfile({ p }: { p: Persona }) {
++  const f = p.profile
++  const initials = p.name
++    .split(' ')
++    .map((x) => x[0])
++    .slice(0, 2)
++    .join('')
++  return (
++    <div className="flex flex-col gap-14 text-13 text-adm-ink">
++      <div className="flex items-center gap-12">
++        <span className="flex size-56 shrink-0 items-center justify-center rounded-full bg-adm-hover text-[17px] font-semibold text-adm-ink-2" aria-hidden="true">
++          {initials}
++        </span>
++        <div className="min-w-0">
++          <p className="text-15 font-semibold">
++            {p.name}, {p.age} <span className="text-12 font-normal text-adm-muted">({f.pronouns})</span>
++          </p>
++          <p className="text-12 text-adm-ink-2">
++            {p.occupation} · {p.city}, {p.country}
++          </p>
++          <div className="mt-4 flex flex-wrap gap-4">
++            <Badge tone="info">{GOAL_LABEL[p.goal]}</Badge>
++            <Badge>{p.experience === 'never' ? 'New to meditation' : `Meditation: ${p.experience}`}</Badge>
++            <Badge tone={p.aiAttitude === 'distrustful' || p.aiAttitude === 'skeptical' ? 'warning' : 'good'}>AI: {p.aiAttitude}</Badge>
++          </div>
++        </div>
++      </div>
++      <p className="leading-[20px]">{f.bio}</p>
++      <p className="rounded-8 bg-adm-bg px-12 py-10 italic text-adm-ink-2">“{f.quotes[0]}”</p>
++
++      <Section title="A weekday">
++        <ol className="flex flex-col gap-6">
++          {f.day.map((d) => (
++            <li key={d.time + d.what} className="grid grid-cols-[72px_1fr] gap-8 text-12">
++              <span className="tabular-nums text-adm-muted">{d.time}</span>
++              <span>{d.what}</span>
++            </li>
++          ))}
++        </ol>
++      </Section>
++
++      <Section title="How they are doing">
++        <div className="grid grid-cols-3 gap-8 text-12">
++          <div className="rounded-8 bg-adm-bg p-8">
++            <p className="text-adm-muted">Sleep</p>
++            <p className="font-semibold tabular-nums">
++              {f.sleep.hours} h · {f.sleep.bedtime}–{f.sleep.wake}
++            </p>
++          </div>
++          <div className="rounded-8 bg-adm-bg p-8">
++            <p className="text-adm-muted">Sleep quality</p>
++            <p className="font-semibold tabular-nums">{f.sleep.quality} of 5</p>
++          </div>
++          <div className="rounded-8 bg-adm-bg p-8">
++            <p className="text-adm-muted">Screen time</p>
++            <p className="font-semibold tabular-nums">{f.screenTimeHours} h a day</p>
++          </div>
++        </div>
++        <p className="text-12">
++          <span className="text-adm-muted">Right now: </span>
++          {p.name.split(' ')[0]} {p.struggle}. It hits at: {p.triggers.join('; ')}.
++        </p>
++        <div className="flex flex-col gap-4 text-12">
++          <span className="text-adm-muted">What weighs on them</span>
++          <Chips items={f.stressors} />
++          <span className="mt-4 text-adm-muted">How they cope now</span>
++          <Chips items={f.coping} />
++          {p.flags.length > 0 && (
++            <>
++              <span className="mt-4 text-adm-muted">Circumstances to test for</span>
++              <Chips items={p.flags} />
++            </>
++          )}
++        </div>
++      </Section>
++
++      <Section title="Personality and values">
++        <div className="flex flex-col gap-6">
++          {(Object.entries(f.personality) as [string, keyof typeof LEVEL_WIDTH][]).map(([k, v]) => (
++            <div key={k} className="grid grid-cols-[130px_1fr_56px] items-center gap-8 text-12">
++              <span className="capitalize text-adm-ink-2">{k}</span>
++              <span className="h-6 overflow-hidden rounded-full bg-adm-hover">
++                <span className="block h-full rounded-full bg-adm-s1" style={{ width: LEVEL_WIDTH[v] }} />
++              </span>
++              <span className="text-adm-muted">{v}</span>
++            </div>
++          ))}
++        </div>
++        <p className="text-12">
++          <span className="text-adm-muted">Traits: </span>
++          {f.traits.join(', ')} · <span className="text-adm-muted">Values: </span>
++          {f.values.join(', ')}
++        </p>
++      </Section>
++
++      <Section title="Life and tech">
++        <dl className="grid grid-cols-[130px_1fr] gap-x-12 gap-y-6 text-12">
++          {(
++            [
++              ['Home', p.household],
++              ['Work', `${p.workPattern}; ${p.income} income`],
++              ['Language', p.language],
++              ['Phone', `${f.phone}; mostly ${f.topApps.join(', ')}`],
++              ['Wearable', p.wearable],
++              ['Wellness apps', f.appHistory],
++            ] as const
++          ).map(([k, v]) => (
++            <div key={k} className="contents">
++              <dt className="text-adm-muted">{k}</dt>
++              <dd>{v}</dd>
++            </div>
++          ))}
++        </dl>
++      </Section>
++
++      <Section title="Winning them, losing them">
++        <dl className="grid grid-cols-[130px_1fr] gap-x-12 gap-y-6 text-12">
++          {(
++            [
++              ['Success looks like', f.success],
++              ['Would hear about it', f.wouldHearAbout],
++              ['How they decide', f.decides],
++              ['Would pay', p.willingnessToPay],
++              ['Prefers', `${p.length} min, ${p.voice === 'none' ? 'no voice' : `${p.voice} voice`}, ${p.sound}; spiritual language: ${p.spiritual}`],
++              ['Privacy', p.privacy],
++              ['Barriers', p.barriers.join('; ')],
++              ['Deal breakers', f.dealBreakers.join('; ')],
++            ] as const
++          ).map(([k, v]) => (
++            <div key={k} className="contents">
++              <dt className="text-adm-muted">{k}</dt>
++              <dd>{v}</dd>
++            </div>
++          ))}
++        </dl>
++      </Section>
++
++      <Section title="In their words">
++        <ul className="flex flex-col gap-6 text-12 italic text-adm-ink-2">
++          {f.quotes.map((q) => (
++            <li key={q}>“{q}”</li>
++          ))}
++        </ul>
++      </Section>
++
++      <Section title="User journey moments">
++        <Chips items={p.moments.map((m) => MOMENT_TITLE.get(m) ?? m)} />
++      </Section>
++
++      <Section title="Role-play prompt">
++        <span className="inline-flex items-center gap-6 text-12 text-adm-muted">
++          <Users size={13} /> For an AI research run. Copy it with the button below.
++        </span>
++        <pre className="max-h-[220px] overflow-auto whitespace-pre-wrap rounded-8 border border-adm-line bg-adm-bg p-10 text-11 leading-[16px] text-adm-ink-2">{personaPrompt(p)}</pre>
++      </Section>
++    </div>
++  )
++}
+-- 
+2.43.0
+
