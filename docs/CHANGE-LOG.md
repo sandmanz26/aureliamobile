@@ -19,6 +19,13 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-18 — Sidebar sizes consistent (U094, J121)
+
+Desktop sidebar: one 20px icon size, 56px rail tiles with the same label,
+a 72px rail. The phone drawer is unchanged.
+
+Branches: `web_app`, `admin_cms` (staging only).
+
 ### 2026-11-18 — Sidebar rail by default (U093, J120)
 
 On desktop the sidebar starts folded to the icon rail; expanded it is

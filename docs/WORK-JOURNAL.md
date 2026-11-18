@@ -66,6 +66,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J118 | 2026-11-18 | Code | Admin sidebar too long: folding groups and a sticky sidebar; the missing phone menu button fixed. Staging; production waits for a request | U090 |
 | J119 | 2026-11-18 | Code | User journey flow simplified as head of product (one page, one panel), and the desktop sidebar that folds to an icon rail (Eugene) | U091, U092 |
 | J120 | 2026-11-18 | Code | Desktop sidebar still too big, and should start minimised: rail by default, tighter when expanded | U093 |
+| J121 | 2026-11-18 | Code | Desktop sidebar still too big, icons and text inconsistent: one icon size, one row height, a narrower rail | U094 |
 | J115 | 2026-11-18 | Code + Release | Admin "User journey" menu built from the owner's journey-blueprint zip, on staging and production | U088 |
 | J116 | 2026-11-18 | Proposal + Code | Tagging and classification for the user journey, as a new admin menu for review (Journey tags), staging only | U089 |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
@@ -1353,3 +1354,11 @@ transcript and the update log. Everything from J018 on was written at the time.
   - Expanded, the sidebar is 232px with tighter rows.
   - The phone drawer is unchanged.
   - Production waits for a request (`RELEASES.sidebarRail`).
+
+### J121 — Sidebar sizes made consistent
+- **Asked:** "ukuran sidebar nya masih terlalu besar itu antara icon icon dan text nya tidak terlalu konsisten. ingat ya ini khsuus desktop"
+- **Done:** U094, on staging, desktop only.
+  - One icon size (20px) everywhere in the desktop sidebar.
+  - One tile height (56px) with the same label style.
+  - A 72px rail.
+  - The phone drawer is untouched.

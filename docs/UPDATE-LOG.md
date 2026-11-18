@@ -130,9 +130,34 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U091 | `cb7c21b` | 2026-11-18 | Desktop sidebar folds to an 88px icon rail and expands again, remembered per browser; fixed bars follow `--app-sidebar`. Staging only (`RELEASES.sidebarRail`). | [patch](patches/U091-cb7c21b.patch) |
 | U092 | `01e0e78` | 2026-11-18 | User journey reworked after user feedback: Journey tags merged in as tabs, a map that fits, one side panel per moment (details + tags + review), Add moment + More, one export file. Staging. | [patch](patches/U092-01e0e78.patch) |
 | U093 | `db0b3a0` | 2026-11-18 | Desktop sidebar folded to the rail by default; the expanded sidebar tighter (232px, 44px rows). Phone drawer unchanged. Staging only (`RELEASES.sidebarRail`). | [patch](patches/U093-db0b3a0.patch) |
+| U094 | `1c2e0f4` | 2026-11-18 | Desktop sidebar consistent: every icon 20px, rail tiles 56px with 11px labels, rail 72px; the phone drawer unchanged. Staging only. | [patch](patches/U094-1c2e0f4.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U094 — Desktop sidebar: consistent sizes
+
+- **Commit:** `1c2e0f4` · pushed 2026-11-18 UTC · `web_app` + `admin_cms`. Staging only (`RELEASES.sidebarRail`).
+- **Patch:** [patches/U094-1c2e0f4.patch](patches/U094-1c2e0f4.patch)
+- **Request:** "ukuran sidebar nya masih terlalu besar itu antara icon icon dan text nya tidak terlalu konsisten. ingat ya ini khsuus desktop" (screenshot of the rail on staging).
+- **Found:**
+  - The rail mixed icon sizes: Sparkles and the panel icon at 22px, the Aurelia icons at 24px, the mark at 32px.
+  - Destinations sat in auto-height tiles, while the bottom actions were 44px buttons.
+  - So neighbours read at different sizes.
+- **Changed (`src/layouts/AppLayout.tsx`, desktop only):**
+  - The rail is 72px wide, down from 88px.
+  - One `ICON = 20` for every rail icon. The mark is 28px; New session is a 40px circle.
+  - Every destination is a 56px tile with an 11px medium label.
+  - The bottom actions are 40px buttons.
+  - Padding is even: 20 top, 16 bottom, 12 between blocks.
+  - The expanded desktop sidebar uses 20px icons throughout.
+  - The phone drawer keeps 24px, through the `compact` switch only the desktop aside passes.
+- **Also:** `src/styles/versions.css` sets `--app-sidebar` to 72px for the rail.
+- **Verified:** staging build, v1 and v5 at 1440px:
+  - Rail: 72px; nine icons all 20px; four tiles all 56px.
+  - Expanded: all icons 20px. The only exception is the 14px plus inside New session.
+  - Phone drawer: icons still 24px.
+- **Revert:** `git revert --no-commit 1c2e0f4 && git checkout HEAD -- docs/`.
 
 ### U093 — Sidebar folded by default, tighter when open
 
