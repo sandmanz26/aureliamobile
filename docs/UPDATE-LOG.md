@@ -125,9 +125,56 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U086 | `2913b15` | 2026-11-17 | API contract reads as a team document: an info table and a plain overview replace the long opening; internal review references removed; v4/v5 instead of prod v1/v2. Staging and production. | [patch](patches/U086-2913b15.patch) |
 | U087 | `d14298b` | 2026-11-17 | Knowledge-base export: `scripts/knowledge/export.py` writes the eight wiki documents as Markdown (plus OpenAPI, images, README) for `danielaurelia26/aureliabase_knowledge`; run and pushed only on request. Staging. | [patch](patches/U087-d14298b.patch) |
 | U088 | `92fae15` | 2026-11-18 | Admin: new module Product → User journey (`/admin/user-journey`), the journey map from the owner's blueprint: 4 stages, 10 moments, 3 screens, editable, export/import. Staging and production. | [patch](patches/U088-92fae15.patch) |
+| U089 | `f029a4f` | 2026-11-18 | Admin: new module Product → Journey tags (`/admin/journey-tags`): eight tag groups for every user-journey moment, a proposed first tagging, review status and notes, coverage gaps, an editable taxonomy. Staging only (`RELEASES.journeyTags`). | [patch](patches/U089-f029a4f.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U089 — Admin: Journey tags
+
+- **Commit:** `f029a4f` · pushed 2026-11-18 UTC · `web_app` + `admin_cms`. On staging only: `RELEASES.journeyTags` is off for production until asked.
+- **Patch:** [patches/U089-f029a4f.patch](patches/U089-f029a4f.patch)
+- **Request:** "think as product manager senior. jadi kalau info dari user intinya dia mau ada semacam tagging untuk user journey nya dan klasifikasinya, coba buat menu baru untuk mengakomodir itu agar bisa direview"
+- **Interpretation (as product):**
+  - The user wants every journey moment classified the same way, so the team can filter, compare and prioritise them, and see where the journey is thin.
+  - The same tags later label analytics and recommendations, so they must be one shared vocabulary.
+  - "Agar bisa direview" = the classification is a proposal with a visible review state, not a decision.
+- **Taxonomy proposed (8 groups):**
+  - Time of day (one): Morning, Daytime, Evening, Night, Any time.
+  - Context (several): Home, In bed, Commuting, At work, Anywhere.
+  - Trigger (one): Routine, Transition, A feeling spikes, Something coming up, Something just happened, Progress noticed.
+  - Need (several): Check in, Express or capture, Calm or regulate, Prepare or focus, Process or recover, Wind down for sleep, Celebrate or share.
+  - State going in (several): Calm or neutral, Stressed or activated, Low or tired, Positive.
+  - Time available (one): Under 2 minutes, 2 to 10 minutes, Over 10 minutes.
+  - Product surface (several): Daily check-in, Conversation, Journal, Session player, Progress, Sharing.
+  - Readiness (one): Live, Partly built, Concept, against what exists in the app today.
+- **What the proposal shows:**
+  - Nothing happens in the evening; one moment each at night and with a positive state.
+  - Share has one moment.
+  - Of the ten suggested features, three are Live, five Partly built and two Concept (micro-journaling at work, processing after an event).
+- **Changed:**
+  - `src/admin/data/journeyTags.ts` (new): schema, the groups and the first tagging, and pure helpers:
+    - `taggedMoments` (reads the journey map, so new moments appear untagged);
+    - `toggleTag` (single-choice groups keep one);
+    - `coverage`;
+    - `missingGroups`;
+    - `saveGroup` and `removeGroup` (removed tags leave every moment);
+    - `slug`.
+
+    Test: `journeyTags.test.ts`.
+  - `src/admin/pages/JourneyTagsPage.tsx` (new):
+    - Counts: moments, groups, fully tagged, agreed, needing discussion.
+    - Three views:
+      - Tagged moments: a table with stage, tag and status filters; selecting a moment opens an editor with tag chips, review status and a note.
+      - Coverage: per group, how many moments carry each tag; gaps flagged.
+      - Taxonomy: edit, add and delete groups and tags.
+    - Export, Import, Restore proposal.
+  - `src/versions/releases.ts` (`journeyTags`, staging only); `src/App.tsx` (route only when released); `src/admin/AdminLayout.tsx` (Product → Journey tags, only when released); `src/demo/modules.ts` (flag `adminJourneyTags`).
+- **Verified:**
+  - `npm run check` passes (144 tests).
+  - Staging build at 1440px and 402px: the menu is shown, ten rows, no overflow, no errors. A tag and status change survives a reload, and the coverage view flags gaps.
+  - Production build: no menu, and the route is not registered.
+- **Revert:** `git revert --no-commit f029a4f && git checkout HEAD -- docs/`.
 
 ### U088 — Admin: User journey
 

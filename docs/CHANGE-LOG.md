@@ -19,6 +19,15 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-18 — Admin: Journey tags (U089, J116)
+
+New admin module Product → Journey tags: eight tag groups for every
+user-journey moment, a proposed first tagging with review status and notes,
+coverage gaps and an editable taxonomy. Staging only until released.
+
+Branches: `web_app`, `admin_cms`. On `web_prod` the code arrives with the
+next documents push but stays off (`RELEASES.journeyTags`).
+
 ### 2026-11-18 — Admin: User journey (U088, J115)
 
 New admin module Product → User journey: the journey map in four stages

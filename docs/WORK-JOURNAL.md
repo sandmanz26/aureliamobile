@@ -61,7 +61,9 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O31 | **The 2025 backend code (J109)**: the three sources (Deep Dive, Technical Architecture Documentation, Wiki Aurelia) hold prompts, data shapes and principles, but no code. The wiki lists features as "implemented", so a 2025 Python codebase exists. Ask for the repository and access, then decide what to port (HANDOFF B.12) | J109 | Product owner / Eugene |
 | O32 | **Aurelia Pro / corporate wellness (J110)**: Eugene asks how big an exploration it is to propose features for a B2B2C version (companies buy, employees use). Proposed: a short exploration in the retention-simulation format (employee and HR personas, what changes, what is reused, size) before any build | J110 | Product owner: go ahead, and with whom to validate (a pilot company?) |
 | O33 | **Knowledge-base repository access (J114)**: `danielaurelia26/aureliabase_knowledge` is not reachable from this session (GitHub access covers `sandmanz26/*` only). The export is ready (`scripts/knowledge/export.py`). Needed: the Claude GitHub App installed on that repository (or the repository moved under an account the session can use), then a new session with it selected | J114 | Product owner |
+| O34 | **Journey tags (J116)**: review the eight tag groups and the proposed tagging of the ten moments (Admin → Journey tags on staging); decide the gaps it shows (evening, night, positive state, Share has one moment); then release to production (`RELEASES.journeyTags`) | J116 | Product owner + the user who asked |
 | J115 | 2026-11-18 | Code + Release | Admin "User journey" menu built from the owner's journey-blueprint zip, on staging and production | U088 |
+| J116 | 2026-11-18 | Proposal + Code | Tagging and classification for the user journey, as a new admin menu for review (Journey tags), staging only | U089 |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
 | J112 | 2026-11-17 | Code + Release | Summary of the three 2025 backend documents as two wiki tabs: Backend (old), what we can reuse; Artefact, the lessons | U085 |
 | J113 | 2026-11-17 | Code + Release | API contract: the opening paragraph replaced by a simple info table; the document cleaned to read like an internal team document | U086 |
@@ -1292,3 +1294,18 @@ transcript and the update log. Everything from J018 on was written at the time.
   - Everything the blueprint page does, in the admin's own style: the four stages and their questions, the ten moments with their potential features, the screens in phone frames, editing with image upload, add and delete, filters, zoom, export and import, restore.
   - The source's screenshots were on the wrong stages, and are corrected.
 - **Open:** the wiki's Admin guideline does not cover this module yet. Edits are per browser until a backend exists; Export/Import is the way to share them.
+
+### J116 — Tagging and classification for the user journey
+- **Asked:** "think as product manager senior. jadi kalau info dari user intinya dia mau ada semacam tagging untuk user journey nya dan klasifikasinya, coba buat menu baru untuk mengakomodir itu agar bisa direview"
+- **Thinking:**
+  - A journey map grouped only by stage cannot answer the questions a team prioritises with: when, where, why the person comes, what they need, how they feel, how long they have, which part of Aurelia serves them, and whether it exists.
+  - One shared set of tags answers those questions, shows gaps, and becomes the vocabulary for analytics and recommendations later.
+- **Done:** U089, Admin → Product → Journey tags, on staging only.
+  - Eight tag groups.
+  - A proposed tagging of all ten moments, each marked Proposed, with Agreed / Needs discussion and a note.
+  - Coverage per tag, with gaps.
+  - An editable taxonomy.
+- **What the proposal already shows:**
+  - No evening moment; one night moment; one positive-state moment; Share has a single moment.
+  - Two of the ten feature ideas are pure concept: micro-journaling at work, and processing after an event.
+- **Open:** O34 (review, then release to production).
