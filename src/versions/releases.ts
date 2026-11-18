@@ -27,7 +27,7 @@ export const RELEASES = {
   analysisV2: true,
   /** The session's About page (Chapters, Social Impact, Journal, Insights) in every version, v4+ included (J083). */
   aboutPage: true,
-  /** Admin → Product → Journey tags (U089): the user journey's tagging, for review. Staging only until asked. */
+  /** Tags, review and coverage in Admin → User journey (U089, merged into that page in U092). Staging only until asked. */
   journeyTags: BUILD.environment !== 'production',
   /** Desktop sidebar that folds to an icon rail and expands again (U091, Eugene). Staging only until asked. */
   sidebarRail: BUILD.environment !== 'production',

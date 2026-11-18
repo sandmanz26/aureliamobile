@@ -242,7 +242,6 @@ export const DEMO_MODULES: DemoModule[] = [
   { id: 'adminExperimentation', kind: 'admin', label: 'Experimentation · feedback group', description: 'The 30-person, 8-week study of therapeutic outcomes: criteria, participants, measures, data quality and safety.', route: '/admin/experimentation', built: true },
   { id: 'adminOutcomes', kind: 'admin', label: 'Well-being outcomes', description: 'How much each user’s well-being has changed (WHO-5, check-ins, wearable).', route: '/admin/outcomes', built: true },
   { id: 'adminUserJourney', kind: 'admin', label: 'User journey', description: 'The journey map: four stages (Reflect, Create, Experience, Share), their moments, the feature each suggests, and the screens that serve them.', route: '/admin/user-journey', built: true },
-  { id: 'adminJourneyTags', kind: 'admin', label: 'Journey tags', description: 'Tags and classification for every user-journey moment, with coverage gaps and a review status. Staging only until released.', route: '/admin/journey-tags', built: true },
   { id: 'adminRoles', kind: 'admin', label: 'Roles & permissions', description: 'Permission matrix.', route: '/admin/roles', built: true },
   { id: 'adminSessions', kind: 'admin', label: 'Sessions', description: 'Generated session catalogue.', route: '/admin/sessions', built: true },
   { id: 'adminChallenges', kind: 'admin', label: 'Challenges', description: 'Setup, pacing and reward tiers.', route: '/admin/challenges', built: true },

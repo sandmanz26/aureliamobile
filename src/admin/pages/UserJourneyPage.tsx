@@ -1,14 +1,30 @@
-import { Download, ImagePlus, Minus, Pencil, Plus, RotateCcw, Settings2, Upload } from 'lucide-react'
-import { useEffect, useRef, useState, type ChangeEvent, type CSSProperties } from 'react'
+import { AlertCircle, Download, ImagePlus, MoreHorizontal, Pencil, Plus, RotateCcw, Upload } from 'lucide-react'
+import { useEffect, useMemo, useState, type ChangeEvent, type CSSProperties } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Modal } from '../components/Modal'
-import { Button, FormField, PageHeader, inputClass, textareaClass } from '../components/ui'
+import { SidePanel } from '../components/SidePanel'
+import { Badge, Button, FormField, PageHeader, inputClass, textareaClass, type Tone } from '../components/ui'
+import { parseAnyImport, toBundle } from '../data/journeyBundle'
+import {
+  INITIAL_TAGS,
+  JourneyTagsSchema,
+  STATUS_LABEL,
+  STATUS_TONE,
+  TAGS_STORAGE_KEY,
+  missingGroups,
+  removeGroup,
+  saveGroup,
+  setAssignment,
+  taggedMoments,
+  type Assignment,
+  type JourneyTags,
+  type TagGroup,
+} from '../data/journeyTags'
 import {
   INITIAL_JOURNEY,
   JourneyMapSchema,
+  NEW_MOMENT_IMAGE,
   STORAGE_KEY,
-  addItem,
-  counts,
-  parseImport,
   removeItem,
   updateItem,
   updateStage,
@@ -17,13 +33,29 @@ import {
   type JourneyMap,
 } from '../data/userJourney'
 import { readJson, writeJson } from '../../lib/storage'
+import { RELEASES } from '../../versions/releases'
+import { CoverageView, GroupEditor, TagFields, TagSetupView, TagsTable } from './journey/TagViews'
 
-type Layer = 'all' | 'moments' | 'screens'
-type Editing = { stageId: string; kind: ItemKind; item: JourneyItem }
+type View = 'map' | 'tags' | 'coverage' | 'setup'
+const VIEWS: { id: View; label: string }[] = [
+  { id: 'map', label: 'Map' },
+  { id: 'tags', label: 'Tags & review' },
+  { id: 'coverage', label: 'Coverage' },
+  { id: 'setup', label: 'Tag setup' },
+]
 
-const ZOOM_MIN = 60
-const ZOOM_MAX = 130
-const COL = 248
+/** What the side panel is editing. `isNew`: not in the map until saved. */
+interface Editing {
+  kind: ItemKind
+  stageId: string
+  item: JourneyItem
+  assignment: Assignment
+  isNew: boolean
+}
+
+const READINESS_TONE: Record<string, Tone> = { live: 'good', partial: 'info', concept: 'warning' }
+const EMPTY: Assignment = { tags: [], status: 'proposed', note: '' }
+const uid = () => Math.random().toString(36).slice(2, 10)
 
 /** Shrinks an uploaded image so a few of them fit in browser storage. */
 function readCompressed(file: File, max: number): Promise<string> {
@@ -47,24 +79,29 @@ function readCompressed(file: File, max: number): Promise<string> {
   })
 }
 
-const uid = () => Math.random().toString(36).slice(2, 10)
-
 /**
- * User journey (U088): when people reach for Aurelia, in four stages
- * (Reflect, Create, Experience, Share). Each stage has illustrated moments
- * with the feature each suggests, and the product screens that serve it.
- * Ported from the owner's "Aurelia journey blueprint" page. Edits are saved
- * in this browser; Export and Import move them between browsers.
+ * User journey (U088, reworked in U092 after user feedback): when people
+ * reach for Aurelia, in four stages, with the moments that bring them, the
+ * feature each moment suggests, the screens that serve it, and (on staging,
+ * `RELEASES.journeyTags`) one classification of every moment with a review
+ * status. One page, one panel for everything about a moment.
  */
 export function UserJourneyPage() {
+  const tagsOn = RELEASES.journeyTags
+  const [params, setParams] = useSearchParams()
+  const requested = params.get('view') as View | null
+  const view: View = tagsOn && requested && VIEWS.some((v) => v.id === requested) ? requested : 'map'
+
   const [map, setMap] = useState<JourneyMap>(() => readJson(STORAGE_KEY, JourneyMapSchema, INITIAL_JOURNEY))
-  const [layer, setLayer] = useState<Layer>('all')
+  const [tags, setTags] = useState<JourneyTags>(() => readJson(TAGS_STORAGE_KEY, JourneyTagsSchema, INITIAL_TAGS))
   const [stageFilter, setStageFilter] = useState<string | null>(null)
-  const [zoom, setZoom] = useState(100)
+  const [tagFilter, setTagFilter] = useState('')
+  const [showScreens, setShowScreens] = useState(true)
   const [editing, setEditing] = useState<Editing | null>(null)
-  const [managing, setManaging] = useState(false)
+  const [stagesOpen, setStagesOpen] = useState(false)
+  const [groupEditing, setGroupEditing] = useState<TagGroup | 'new' | null>(null)
+  const [moreOpen, setMoreOpen] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
-  const importInput = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!notice) return
@@ -72,13 +109,69 @@ export function UserJourneyPage() {
     return () => clearTimeout(t)
   }, [notice])
 
-  function commit(next: JourneyMap, message = 'Saved in this browser') {
+  const moments = useMemo(() => taggedMoments(map, tags), [map, tags])
+  const byId = useMemo(() => new Map(moments.map((m) => [m.id, m])), [moments])
+
+  function saveMap(next: JourneyMap) {
     setMap(next)
-    setNotice(writeJson(STORAGE_KEY, next) ? message : 'Browser storage is full. Export a backup, or use smaller images.')
+    return writeJson(STORAGE_KEY, next)
+  }
+  function saveTags(next: JourneyTags) {
+    setTags(next)
+    return writeJson(TAGS_STORAGE_KEY, next)
+  }
+  const report = (ok: boolean, message = 'Saved in this browser') => setNotice(ok ? message : 'Browser storage is full. Export a backup, or use smaller images.')
+
+  function setView(next: View) {
+    setParams(next === 'map' ? {} : { view: next }, { replace: true })
+  }
+
+  function openItem(kind: ItemKind, stageId: string, item: JourneyItem) {
+    setEditing({ kind, stageId, item, assignment: byId.get(item.id)?.assignment ?? EMPTY, isNew: false })
+  }
+
+  function openNew(kind: ItemKind, stageId: string) {
+    setEditing({
+      kind,
+      stageId,
+      item: { id: uid(), title: '', description: '', feature: '', image: kind === 'moments' ? NEW_MOMENT_IMAGE : '' },
+      assignment: EMPTY,
+      isNew: true,
+    })
+  }
+
+  function saveEditing(e: Editing) {
+    const item = { ...e.item, title: e.item.title.trim() || (e.kind === 'moments' ? 'Untitled moment' : 'Untitled screen'), description: e.item.description.trim(), feature: e.item.feature.trim() }
+    let next = map
+    if (e.isNew) {
+      next = { ...map, stages: map.stages.map((s) => (s.id === e.stageId ? { ...s, [e.kind]: [...s[e.kind], item] } : s)) }
+    } else {
+      // The stage may have changed in the panel: move the item.
+      const from = map.stages.find((s) => s[e.kind].some((x) => x.id === item.id))
+      next = from && from.id !== e.stageId ? removeItem(map, from.id, e.kind, item.id) : map
+      next = from && from.id !== e.stageId
+        ? { ...next, stages: next.stages.map((s) => (s.id === e.stageId ? { ...s, [e.kind]: [...s[e.kind], item] } : s)) }
+        : updateItem(next, e.stageId, e.kind, item)
+    }
+    let ok = saveMap(next)
+    if (tagsOn && e.kind === 'moments') ok = saveTags(setAssignment(tags, item.id, { ...e.assignment, note: e.assignment.note.trim() })) && ok
+    report(ok, e.isNew ? 'Added' : 'Saved in this browser')
+    setEditing(null)
+  }
+
+  function deleteEditing(e: Editing) {
+    const ok = saveMap(removeItem(map, e.stageId, e.kind, e.item.id))
+    if (tagsOn && tags.assignments[e.item.id]) {
+      const rest = { ...tags.assignments }
+      delete rest[e.item.id]
+      saveTags({ ...tags, assignments: rest })
+    }
+    report(ok, 'Deleted')
+    setEditing(null)
   }
 
   function exportJson() {
-    const url = URL.createObjectURL(new Blob([JSON.stringify(map, null, 2)], { type: 'application/json' }))
+    const url = URL.createObjectURL(new Blob([JSON.stringify(toBundle(map, tagsOn ? tags : undefined), null, 2)], { type: 'application/json' }))
     const a = document.createElement('a')
     a.href = url
     a.download = 'aurelia-user-journey.json'
@@ -87,218 +180,269 @@ export function UserJourneyPage() {
     setNotice('Exported aurelia-user-journey.json')
   }
 
+  function restoreOriginal() {
+    if (!window.confirm('Restore the original journey and tags? Your edits in this browser will be lost.')) return
+    let ok = saveMap(INITIAL_JOURNEY)
+    if (tagsOn) ok = saveTags(INITIAL_TAGS) && ok
+    report(ok, 'Restored the original')
+  }
+
   async function importJson(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) return
-    const parsed = parseImport(await file.text())
-    if (parsed) {
-      commit(parsed, 'Imported')
-      setManaging(false)
-    } else setNotice('That file is not a user journey export.')
+    const found = parseAnyImport(await file.text())
+    if (!found) return setNotice('That file is not a user journey export.')
+    let ok = true
+    if (found.journey) ok = saveMap(found.journey) && ok
+    if (found.tags && tagsOn) ok = saveTags(found.tags) && ok
+    report(ok, 'Imported')
   }
 
-  function add(stageId: string, kind: ItemKind) {
-    const id = uid()
-    const next = addItem(map, stageId, kind, id)
-    commit(next)
-    const item = next.stages.find((s) => s.id === stageId)?.[kind].find((x) => x.id === id)
-    if (item) setEditing({ stageId, kind, item })
+  const counts = {
+    moments: moments.length,
+    screens: map.stages.reduce((n, s) => n + s.screens.length, 0),
+    agreed: moments.filter((m) => m.assignment.status === 'agreed').length,
+    toTag: moments.filter((m) => missingGroups(tags.groups, m.assignment.tags).length > 0).length,
   }
-
-  const total = counts(map)
   const stages = map.stages.filter((s) => !stageFilter || s.id === stageFilter)
-  const grid: CSSProperties = { gridTemplateColumns: `repeat(${stages.length}, minmax(${COL - 18}px, 1fr))` }
+  const grid: CSSProperties = { gridTemplateColumns: `repeat(${stages.length}, minmax(220px, 1fr))` }
+  const readiness = tags.groups.find((g) => g.id === 'readiness')
 
   return (
     <div className="flex flex-col gap-16">
       <PageHeader
         title="User journey"
-        description="When people reach for Aurelia, in four stages. Each stage has the moments that bring someone to the app, the feature each moment suggests, and the product screens that serve it."
+        description="When people reach for Aurelia, in four stages: the moments that bring them, the feature each moment suggests, and the screens that serve it. Select any moment to edit it."
         actions={
-          <div className="flex flex-wrap gap-8">
-            <Button size="sm" icon={<Upload size={13} />} onClick={() => importInput.current?.click()}>
-              Import
+          <div className="relative flex gap-8">
+            <Button size="sm" variant="primary" icon={<Plus size={13} />} onClick={() => openNew('moments', stageFilter ?? map.stages[0].id)}>
+              Add moment
             </Button>
-            <Button size="sm" icon={<Download size={13} />} onClick={exportJson}>
-              Export
+            <Button size="sm" icon={<MoreHorizontal size={14} />} aria-expanded={moreOpen} onClick={() => setMoreOpen((o) => !o)}>
+              More
             </Button>
-            <Button size="sm" variant="primary" icon={<Settings2 size={13} />} onClick={() => setManaging(true)}>
-              Manage stages
-            </Button>
-            <input ref={importInput} type="file" accept=".json,application/json" hidden onChange={importJson} />
+            {moreOpen && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setMoreOpen(false)} aria-hidden="true" />
+                <div role="menu" className="absolute right-0 top-[calc(100%+6px)] z-40 flex w-[220px] flex-col rounded-12 border border-adm-line bg-adm-surface p-6 shadow-lg">
+                  {[
+                    { label: 'Edit stage names', icon: <Pencil size={13} />, run: () => setStagesOpen(true) },
+                    { label: 'Export (JSON)', icon: <Download size={13} />, run: exportJson },
+                  ].map((a) => (
+                    <button
+                      key={a.label}
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setMoreOpen(false)
+                        a.run()
+                      }}
+                      className="flex items-center gap-8 rounded-8 px-10 py-8 text-left text-13 text-adm-ink hover:bg-adm-hover"
+                    >
+                      <span className="text-adm-muted">{a.icon}</span>
+                      {a.label}
+                    </button>
+                  ))}
+                  <label role="menuitem" className="flex cursor-pointer items-center gap-8 rounded-8 px-10 py-8 text-13 text-adm-ink hover:bg-adm-hover">
+                    <span className="text-adm-muted">
+                      <Upload size={13} />
+                    </span>
+                    Import (JSON)
+                    <input
+                      type="file"
+                      accept=".json,application/json"
+                      hidden
+                      onChange={(e) => {
+                        setMoreOpen(false)
+                        void importJson(e)
+                      }}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setMoreOpen(false)
+                      restoreOriginal()
+                    }}
+                    className="mt-4 flex items-center gap-8 rounded-8 border-t border-adm-line px-10 py-8 text-left text-13 text-adm-critical hover:bg-adm-hover"
+                  >
+                    <RotateCcw size={13} />
+                    Restore the original
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         }
       />
 
-      <div className="flex flex-wrap items-center gap-8 text-12 text-adm-ink-2">
-        <span className="rounded-full border border-adm-line bg-adm-surface px-10 py-4">
-          <b className="tabular-nums text-adm-ink">{total.stages}</b> stages
-        </span>
-        <span className="rounded-full border border-adm-line bg-adm-surface px-10 py-4">
-          <b className="tabular-nums text-adm-ink">{total.moments}</b> moments
-        </span>
-        <span className="rounded-full border border-adm-line bg-adm-surface px-10 py-4">
-          <b className="tabular-nums text-adm-ink">{total.screens}</b> screens
-        </span>
-        <span className="text-adm-muted">Edits are saved in this browser. Export to share them.</span>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-10 rounded-12 border border-adm-line bg-adm-surface p-8">
-        <div className="flex flex-wrap gap-4" role="group" aria-label="Show">
-          {(
-            [
-              ['all', 'All layers'],
-              ['moments', 'Moments'],
-              ['screens', 'Product screens'],
-            ] as const
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              aria-pressed={layer === id}
-              onClick={() => setLayer(id)}
-              className={`rounded-8 px-10 py-6 text-12 font-medium ${layer === id ? 'bg-adm-hover text-adm-ink' : 'text-adm-muted hover:text-adm-ink'}`}
-            >
-              {label}
-            </button>
-          ))}
-          <span className="mx-4 w-px self-stretch bg-adm-line" aria-hidden="true" />
-          <button
-            type="button"
-            aria-pressed={stageFilter === null}
-            onClick={() => setStageFilter(null)}
-            className={`rounded-8 px-10 py-6 text-12 font-medium ${stageFilter === null ? 'bg-adm-hover text-adm-ink' : 'text-adm-muted hover:text-adm-ink'}`}
-          >
-            All stages
-          </button>
-          {map.stages.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              aria-pressed={stageFilter === s.id}
-              onClick={() => setStageFilter(stageFilter === s.id ? null : s.id)}
-              className={`inline-flex items-center gap-6 rounded-8 px-10 py-6 text-12 font-medium ${stageFilter === s.id ? 'bg-adm-hover text-adm-ink' : 'text-adm-muted hover:text-adm-ink'}`}
-            >
-              <span className="size-8 rounded-full" style={{ background: s.color }} aria-hidden="true" />
-              {s.title}
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-4 text-12 text-adm-muted">
-          <span className="mr-4">Zoom</span>
-          <Button size="sm" variant="ghost" aria-label="Zoom out" disabled={zoom <= ZOOM_MIN} onClick={() => setZoom((z) => Math.max(ZOOM_MIN, z - 10))}>
-            <Minus size={13} />
-          </Button>
-          <span className="w-40 text-center tabular-nums text-adm-ink">{zoom}%</span>
-          <Button size="sm" variant="ghost" aria-label="Zoom in" disabled={zoom >= ZOOM_MAX} onClick={() => setZoom((z) => Math.min(ZOOM_MAX, z + 10))}>
-            <Plus size={13} />
-          </Button>
-          <Button size="sm" variant="ghost" aria-label="Reset zoom" onClick={() => setZoom(100)}>
-            <RotateCcw size={13} />
-          </Button>
-        </div>
-      </div>
-
-      <div className="min-w-0 overflow-auto rounded-12 border border-adm-line bg-adm-surface">
-        <div style={{ zoom: zoom / 100, minWidth: stages.length * COL }}>
-          <div className="grid" style={grid}>
-            {stages.map((s) => (
-              <div key={s.id} className="relative border-b border-r border-adm-line px-18 pb-18 pt-20 last:border-r-0">
-                <span className="text-10 font-semibold uppercase tracking-widest text-adm-muted">
-                  Stage {String(map.stages.indexOf(s) + 1).padStart(2, '0')}
-                </span>
-                <h2 className="mt-6 text-22 font-semibold text-adm-ink">{s.title}</h2>
-                <p className="mt-2 text-12 leading-[18px] text-adm-muted">{s.question}</p>
-                <span className="absolute bottom-0 left-18 h-3 w-40 rounded-full" style={{ background: s.color }} aria-hidden="true" />
-              </div>
+      {tagsOn && (
+        <div className="flex flex-wrap items-center justify-between gap-10">
+          <div className="flex flex-wrap gap-2 rounded-12 border border-adm-line bg-adm-surface p-4" role="tablist" aria-label="View">
+            {VIEWS.map((v) => (
+              <button
+                key={v.id}
+                type="button"
+                role="tab"
+                aria-selected={view === v.id}
+                onClick={() => setView(v.id)}
+                className={`rounded-8 px-12 py-6 text-12 font-medium ${view === v.id ? 'bg-adm-hover text-adm-ink' : 'text-adm-muted hover:text-adm-ink'}`}
+              >
+                {v.label}
+              </button>
             ))}
           </div>
+          <p className="text-12 text-adm-ink-2">
+            <b className="tabular-nums text-adm-ink">{counts.moments}</b> moments · <b className="tabular-nums text-adm-ink">{counts.agreed}</b> agreed ·{' '}
+            <b className={`tabular-nums ${counts.toTag ? 'text-adm-critical' : 'text-adm-ink'}`}>{counts.toTag}</b> still to tag
+          </p>
+        </div>
+      )}
 
-          {layer !== 'screens' && (
-            <>
-              <RowHeading title="Moments" hint="Select a moment to edit it" />
-              <div className="grid" style={grid}>
-                {stages.map((s) => (
-                  <div key={s.id} className="flex flex-col gap-16 border-r border-adm-line p-14 last:border-r-0">
-                    {s.moments.map((m) => (
-                      <button
-                        key={m.id}
-                        type="button"
-                        onClick={() => setEditing({ stageId: s.id, kind: 'moments', item: m })}
-                        className="group flex flex-col gap-6 rounded-8 text-left focus-visible:outline-2 focus-visible:outline-adm-accent"
-                      >
-                        <span className="relative block aspect-[16/10] overflow-hidden rounded-8 bg-adm-hover">
-                          {m.image && <img src={m.image} alt="" loading="lazy" className="size-full object-cover transition-transform group-hover:scale-[1.02]" />}
-                          <span className="absolute bottom-6 right-6 hidden items-center gap-4 rounded-8 bg-adm-surface/95 px-8 py-4 text-11 text-adm-ink group-hover:inline-flex">
-                            <Pencil size={11} /> Edit
-                          </span>
-                        </span>
-                        <span className="text-13 font-semibold text-adm-ink">{m.title}</span>
-                        {m.description && <span className="text-12 leading-[18px] text-adm-ink-2">{m.description}</span>}
-                        {m.feature && (
-                          <span className="flex flex-col gap-2 rounded-8 border border-adm-line bg-adm-bg px-10 py-8">
-                            <span className="text-10 font-semibold uppercase tracking-wider text-adm-muted">Potential feature</span>
-                            <span className="text-12 font-medium text-adm-ink">{m.feature}</span>
-                          </span>
-                        )}
-                      </button>
+      {view === 'map' && (
+        <>
+          <div className="flex flex-wrap items-center gap-8">
+            <div className="flex flex-wrap gap-4" role="group" aria-label="Stage">
+              {[{ id: null as string | null, title: 'All stages', color: '' }, ...map.stages].map((s) => (
+                <button
+                  key={s.id ?? 'all'}
+                  type="button"
+                  aria-pressed={stageFilter === s.id}
+                  onClick={() => setStageFilter(s.id)}
+                  className={`inline-flex items-center gap-6 rounded-full border px-10 py-4 text-12 ${stageFilter === s.id ? 'border-adm-ink bg-adm-ink text-adm-surface' : 'border-adm-line bg-adm-surface text-adm-ink-2 hover:text-adm-ink'}`}
+                >
+                  {s.color && <span className="size-8 rounded-full" style={{ background: s.color }} aria-hidden="true" />}
+                  {s.title}
+                </button>
+              ))}
+            </div>
+            {tagsOn && (
+              <select aria-label="Show moments with tag" className={`${inputClass} h-30 w-auto! text-12`} value={tagFilter} onChange={(e) => setTagFilter(e.target.value)}>
+                <option value="">Any tag</option>
+                {tags.groups.map((grp) => (
+                  <optgroup key={grp.id} label={grp.name}>
+                    {grp.tags.map((t) => (
+                      <option key={t.id} value={`${grp.id}:${t.id}`}>
+                        {t.label}
+                      </option>
                     ))}
-                    <button
-                      type="button"
-                      onClick={() => add(s.id, 'moments')}
-                      className="flex h-44 items-center justify-center gap-6 rounded-8 border border-dashed border-adm-line text-12 font-medium text-adm-muted hover:bg-adm-hover hover:text-adm-ink"
-                    >
-                      <Plus size={13} /> Add a moment
-                    </button>
-                  </div>
+                  </optgroup>
                 ))}
-              </div>
-            </>
-          )}
+              </select>
+            )}
+            <label className="ml-auto flex items-center gap-6 text-12 text-adm-ink-2">
+              <input type="checkbox" checked={showScreens} onChange={(e) => setShowScreens(e.target.checked)} />
+              Show product screens
+            </label>
+          </div>
 
-          {layer !== 'moments' && (
-            <>
-              <RowHeading title="Product screens" hint="Select a screen to replace its screenshot" bordered={layer === 'all'} />
-              <div className="grid" style={grid}>
-                {stages.map((s) => (
-                  <div key={s.id} className="flex flex-wrap items-start gap-14 border-r border-adm-line p-14 last:border-r-0">
-                    {s.screens.map((sc) => (
-                      <button
-                        key={sc.id}
-                        type="button"
-                        onClick={() => setEditing({ stageId: s.id, kind: 'screens', item: sc })}
-                        className="group flex w-[112px] flex-col gap-6 text-left"
-                      >
-                        <span className="block h-[224px] w-[108px] rounded-[18px] bg-adm-sidebar p-4 shadow-md transition-transform group-hover:-translate-y-2">
-                          <span className="flex size-full items-center justify-center overflow-hidden rounded-[14px] bg-adm-surface">
-                            {sc.image ? (
-                              <img src={sc.image} alt="" loading="lazy" className="size-full object-cover object-top" />
-                            ) : (
-                              <span className="flex flex-col items-center gap-6 text-10 text-adm-muted">
-                                <ImagePlus size={16} /> Add screenshot
+          <div className="min-w-0 overflow-x-auto rounded-12 border border-adm-line bg-adm-surface">
+            <div className="grid" style={grid}>
+              {stages.map((s) => {
+                const shown = s.moments.filter((m) => !tagFilter || byId.get(m.id)?.assignment.tags.includes(tagFilter))
+                return (
+                  <section key={s.id} className="flex flex-col border-r border-adm-line last:border-r-0" aria-label={`${s.title} stage`}>
+                    <header className="relative border-b border-adm-line px-16 pb-14 pt-16">
+                      <span className="text-10 font-semibold uppercase tracking-widest text-adm-muted">Stage {String(map.stages.indexOf(s) + 1).padStart(2, '0')}</span>
+                      <h2 className="mt-4 text-19 font-semibold text-adm-ink">{s.title}</h2>
+                      <p className="mt-2 text-12 leading-[18px] text-adm-muted">{s.question}</p>
+                      <span className="absolute bottom-0 left-16 h-3 w-40 rounded-full" style={{ background: s.color }} aria-hidden="true" />
+                    </header>
+                    <div className="flex flex-1 flex-col gap-12 p-12">
+                      {shown.map((m) => {
+                        const a = byId.get(m.id)?.assignment ?? EMPTY
+                        const ready = a.tags.find((t) => t.startsWith('readiness:'))?.split(':')[1]
+                        const untagged = tagsOn && missingGroups(tags.groups, a.tags).length > 0
+                        return (
+                          <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => openItem('moments', s.id, m)}
+                            className="group flex flex-col gap-6 rounded-12 border border-adm-line bg-adm-surface p-8 text-left transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-adm-accent"
+                          >
+                            <span className="block aspect-[16/9] overflow-hidden rounded-8 bg-adm-hover">
+                              {m.image && <img src={m.image} alt="" loading="lazy" className="size-full object-cover" />}
+                            </span>
+                            <span className="px-2 text-13 font-semibold text-adm-ink">{m.title}</span>
+                            {m.description && <span className="line-clamp-3 px-2 text-12 leading-[18px] text-adm-ink-2">{m.description}</span>}
+                            {m.feature && (
+                              <span className="rounded-8 bg-adm-bg px-8 py-6 text-12 text-adm-ink">
+                                <span className="block text-10 font-semibold uppercase tracking-wider text-adm-muted">Potential feature</span>
+                                {m.feature}
                               </span>
                             )}
-                          </span>
-                        </span>
-                        <span className="text-12 font-semibold text-adm-ink">{sc.title}</span>
-                        {sc.feature && <span className="text-11 leading-[15px] text-adm-muted">{sc.feature}</span>}
+                            {tagsOn && (
+                              <span className="flex flex-wrap items-center gap-4 px-2">
+                                {ready && readiness && <Badge tone={READINESS_TONE[ready] ?? 'neutral'}>{readiness.tags.find((t) => t.id === ready)?.label ?? ready}</Badge>}
+                                <Badge tone={STATUS_TONE[a.status]}>{STATUS_LABEL[a.status]}</Badge>
+                                {untagged && (
+                                  <span className="inline-flex items-center gap-2 text-11 text-adm-critical">
+                                    <AlertCircle size={11} /> Tags missing
+                                  </span>
+                                )}
+                              </span>
+                            )}
+                          </button>
+                        )
+                      })}
+                      {shown.length === 0 && tagFilter && <p className="py-8 text-center text-12 text-adm-muted">No moment with this tag.</p>}
+                      <button
+                        type="button"
+                        onClick={() => openNew('moments', s.id)}
+                        className="flex h-40 items-center justify-center gap-6 rounded-12 border border-dashed border-adm-line text-12 font-medium text-adm-muted hover:bg-adm-hover hover:text-adm-ink"
+                      >
+                        <Plus size={13} /> Add a moment
                       </button>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => add(s.id, 'screens')}
-                      className="flex h-[224px] w-[108px] flex-col items-center justify-center gap-6 rounded-[18px] border border-dashed border-adm-line text-11 font-medium text-adm-muted hover:bg-adm-hover hover:text-adm-ink"
-                    >
-                      <Plus size={16} /> Add screen
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+                    </div>
+                    {showScreens && (
+                      <div className="border-t border-adm-line p-12">
+                        <p className="mb-8 text-10 font-semibold uppercase tracking-widest text-adm-muted">Screens</p>
+                        <div className="flex flex-wrap gap-10">
+                          {s.screens.map((sc) => (
+                            <button key={sc.id} type="button" onClick={() => openItem('screens', s.id, sc)} className="group flex w-[84px] flex-col gap-4 text-left">
+                              <span className="block h-[168px] w-[80px] rounded-[14px] bg-adm-sidebar p-3 transition-transform group-hover:-translate-y-2">
+                                <span className="flex size-full items-center justify-center overflow-hidden rounded-[11px] bg-adm-surface">
+                                  {sc.image ? <img src={sc.image} alt="" loading="lazy" className="size-full object-cover object-top" /> : <ImagePlus size={14} className="text-adm-muted" />}
+                                </span>
+                              </span>
+                              <span className="text-11 font-medium leading-[14px] text-adm-ink">{sc.title}</span>
+                            </button>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => openNew('screens', s.id)}
+                            aria-label={`Add a screen to ${s.title}`}
+                            className="flex h-[168px] w-[80px] items-center justify-center rounded-[14px] border border-dashed border-adm-line text-adm-muted hover:bg-adm-hover hover:text-adm-ink"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </section>
+                )
+              })}
+            </div>
+          </div>
+          <p className="text-11 text-adm-muted">Edits are saved in this browser. Use More → Export to share them with the team.</p>
+        </>
+      )}
+
+      {view === 'tags' && (
+        <TagsTable
+          moments={moments}
+          groups={tags.groups}
+          stages={map.stages}
+          onOpen={(m) => {
+            const found = map.stages.find((s) => s.id === m.stageId)?.moments.find((x) => x.id === m.id)
+            if (found) openItem('moments', m.stageId, found)
+          }}
+        />
+      )}
+      {view === 'coverage' && <CoverageView moments={moments} groups={tags.groups} />}
+      {view === 'setup' && <TagSetupView groups={tags.groups} onEdit={setGroupEditing} onAdd={() => setGroupEditing('new')} />}
 
       {notice && (
         <div role="status" className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-8 bg-adm-ink px-14 py-10 text-12 text-adm-surface shadow-lg">
@@ -307,31 +451,37 @@ export function UserJourneyPage() {
       )}
 
       {editing && (
-        <ItemEditor
+        <ItemPanel
+          key={editing.item.id}
           editing={editing}
-          stageTitle={map.stages.find((s) => s.id === editing.stageId)?.title ?? ''}
-          onClose={() => setEditing(null)}
-          onSave={(item) => {
-            commit(updateItem(map, editing.stageId, editing.kind, item))
-            setEditing(null)
-          }}
-          onDelete={() => {
-            commit(removeItem(map, editing.stageId, editing.kind, editing.item.id), 'Deleted')
-            setEditing(null)
-          }}
-        />
-      )}
-
-      {managing && (
-        <ManageStages
           map={map}
-          onClose={() => setManaging(false)}
-          onSaveStage={(id, title, question) => commit(updateStage(map, id, { title, question }), 'Stage saved')}
-          onExport={exportJson}
-          onImport={() => importInput.current?.click()}
-          onReset={() => {
-            commit(INITIAL_JOURNEY, 'Restored the original journey')
-            setManaging(false)
+          groups={tagsOn && editing.kind === 'moments' ? tags.groups : null}
+          onClose={() => setEditing(null)}
+          onSave={saveEditing}
+          onDelete={deleteEditing}
+        />
+      )}
+
+      {stagesOpen && (
+        <StageNames
+          map={map}
+          onClose={() => setStagesOpen(false)}
+          onSave={(drafts) => report(saveMap(drafts.reduce((m, d) => updateStage(m, d.id, d), map)), 'Stages saved')}
+        />
+      )}
+
+      {groupEditing && (
+        <GroupEditor
+          group={groupEditing === 'new' ? null : groupEditing}
+          takenIds={tags.groups.map((g) => g.id)}
+          onClose={() => setGroupEditing(null)}
+          onSave={(g) => {
+            report(saveTags(saveGroup(tags, g)), 'Tag group saved')
+            setGroupEditing(null)
+          }}
+          onDelete={(id) => {
+            report(saveTags(removeGroup(tags, id)), 'Tag group deleted')
+            setGroupEditing(null)
           }}
         />
       )}
@@ -339,38 +489,33 @@ export function UserJourneyPage() {
   )
 }
 
-function RowHeading({ title, hint, bordered }: { title: string; hint: string; bordered?: boolean }) {
-  return (
-    <div className={`flex items-center justify-between gap-12 border-b border-adm-line px-18 py-12 ${bordered ? 'border-t' : ''}`}>
-      <span className="text-11 font-semibold uppercase tracking-widest text-adm-ink-2">{title}</span>
-      <span className="text-11 text-adm-muted">{hint}</span>
-    </div>
-  )
-}
-
-function ItemEditor({
+/** Everything about one moment or screen, in one place, saved with one button. */
+function ItemPanel({
   editing,
-  stageTitle,
+  map,
+  groups,
   onClose,
   onSave,
   onDelete,
 }: {
   editing: Editing
-  stageTitle: string
+  map: JourneyMap
+  groups: TagGroup[] | null
   onClose: () => void
-  onSave: (item: JourneyItem) => void
-  onDelete: () => void
+  onSave: (e: Editing) => void
+  onDelete: (e: Editing) => void
 }) {
-  const [draft, setDraft] = useState(editing.item)
+  const [draft, setDraft] = useState(editing)
   const [error, setError] = useState<string | null>(null)
-  const moment = editing.kind === 'moments'
+  const moment = draft.kind === 'moments'
+  const noun = moment ? 'moment' : 'screen'
+  const set = (patch: Partial<JourneyItem>) => setDraft({ ...draft, item: { ...draft.item, ...patch } })
 
   async function pick(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     if (!file) return
     try {
-      const image = await readCompressed(file, moment ? 1100 : 900)
-      setDraft((d) => ({ ...d, image }))
+      set({ image: await readCompressed(file, moment ? 1100 : 900) })
       setError(null)
     } catch {
       setError('That image could not be read.')
@@ -378,140 +523,105 @@ function ItemEditor({
   }
 
   return (
-    <Modal title={moment ? 'Edit moment' : 'Edit product screen'} description={`${stageTitle} stage`} onClose={onClose} width={520}>
+    <SidePanel
+      title={editing.isNew ? `New ${noun}` : editing.item.title || `Untitled ${noun}`}
+      description={!moment ? 'A product screen that serves this stage.' : groups ? 'Details, then tags and review.' : 'What happens, and the feature it suggests.'}
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="primary" onClick={() => onSave(draft)}>
+            {editing.isNew ? `Add ${noun}` : 'Save'}
+          </Button>
+          <Button onClick={onClose}>Cancel</Button>
+          {!editing.isNew && (
+            <Button
+              variant="ghost"
+              className="ml-auto text-adm-critical"
+              onClick={() => {
+                if (window.confirm(`Delete “${editing.item.title}”?`)) onDelete(editing)
+              }}
+            >
+              Delete
+            </Button>
+          )}
+        </>
+      }
+    >
       <div className="flex flex-col gap-14">
-        <FormField label="Title">
-          <input className={inputClass} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
+        <FormField label="Stage">
+          <select className={inputClass} value={draft.stageId} onChange={(e) => setDraft({ ...draft, stageId: e.target.value })}>
+            {map.stages.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.title}
+              </option>
+            ))}
+          </select>
         </FormField>
-        <FormField label="Description">
-          <textarea className={textareaClass} value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
+        <FormField label="Title">
+          <input className={inputClass} value={draft.item.title} placeholder={moment ? 'e.g. Before a difficult call' : 'e.g. Check-in sheet'} onChange={(e) => set({ title: e.target.value })} autoFocus={editing.isNew} />
+        </FormField>
+        <FormField label={moment ? 'What happens' : 'What it shows'}>
+          <textarea className={textareaClass} value={draft.item.description} onChange={(e) => set({ description: e.target.value })} />
         </FormField>
         <FormField label="Potential feature" hint="The opportunity or capability this suggests">
-          <input className={inputClass} value={draft.feature} onChange={(e) => setDraft({ ...draft, feature: e.target.value })} />
+          <input className={inputClass} value={draft.item.feature} onChange={(e) => set({ feature: e.target.value })} />
         </FormField>
         <div className="flex flex-col gap-6">
           <span className="text-12 font-medium text-adm-ink-2">{moment ? 'Illustration' : 'Screenshot'}</span>
-          {draft.image && (
-            <img
-              src={draft.image}
-              alt=""
-              className={`rounded-8 border border-adm-line bg-adm-hover object-contain ${moment ? 'max-h-[200px]' : 'max-h-[260px] self-start'}`}
-            />
-          )}
+          {draft.item.image && <img src={draft.item.image} alt="" className={`rounded-8 border border-adm-line bg-adm-hover object-contain ${moment ? 'max-h-[180px]' : 'max-h-[240px] self-start'}`} />}
           <div className="flex flex-wrap gap-8">
             <label className="inline-flex h-30 cursor-pointer items-center gap-6 rounded-8 border border-adm-line bg-adm-surface px-10 text-12 font-medium text-adm-ink hover:bg-adm-hover">
-              <ImagePlus size={13} /> {draft.image ? 'Replace image' : 'Choose image'}
+              <ImagePlus size={13} /> {draft.item.image ? 'Replace image' : 'Choose image'}
               <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden onChange={pick} />
             </label>
-            {draft.image && (
-              <Button size="sm" variant="ghost" onClick={() => setDraft({ ...draft, image: '' })}>
+            {draft.item.image && (
+              <Button size="sm" variant="ghost" onClick={() => set({ image: '' })}>
                 Remove image
               </Button>
             )}
           </div>
-          <span className="text-11 text-adm-muted">PNG, JPG, WebP or GIF. Resized and kept in this browser.</span>
           {error && <span className="text-11 text-adm-critical">{error}</span>}
         </div>
-        <div className="flex flex-wrap items-center gap-8 border-t border-adm-line pt-14">
-          <Button variant="primary" onClick={() => onSave({ ...draft, title: draft.title.trim() || 'Untitled', description: draft.description.trim(), feature: draft.feature.trim() })}>
-            Save changes
-          </Button>
-          <Button onClick={onClose}>Cancel</Button>
-          <Button
-            variant="ghost"
-            className="ml-auto text-adm-critical"
-            onClick={() => {
-              if (window.confirm(`Delete “${editing.item.title}”?`)) onDelete()
-            }}
-          >
-            Delete
-          </Button>
-        </div>
+        {groups && (
+          <div className="flex flex-col gap-12 border-t border-adm-line pt-16">
+            <div>
+              <h3 className="text-13 font-semibold text-adm-ink">Tags and review</h3>
+              <p className="mt-2 text-12 text-adm-muted">How this moment is classified, and whether the team agrees.</p>
+            </div>
+            <TagFields groups={groups} value={draft.assignment} onChange={(assignment) => setDraft({ ...draft, assignment })} />
+          </div>
+        )}
       </div>
-    </Modal>
+    </SidePanel>
   )
 }
 
-function ManageStages({
-  map,
-  onClose,
-  onSaveStage,
-  onExport,
-  onImport,
-  onReset,
-}: {
-  map: JourneyMap
-  onClose: () => void
-  onSaveStage: (id: string, title: string, question: string) => void
-  onExport: () => void
-  onImport: () => void
-  onReset: () => void
-}) {
-  const [stageId, setStageId] = useState(map.stages[0].id)
-  const stage = map.stages.find((s) => s.id === stageId) ?? map.stages[0]
-  const [title, setTitle] = useState(stage.title)
-  const [question, setQuestion] = useState(stage.question)
-
-  function choose(id: string) {
-    const s = map.stages.find((x) => x.id === id)
-    setStageId(id)
-    setTitle(s?.title ?? '')
-    setQuestion(s?.question ?? '')
-  }
-
+function StageNames({ map, onClose, onSave }: { map: JourneyMap; onClose: () => void; onSave: (stages: { id: string; title: string; question: string }[]) => void }) {
+  const [drafts, setDrafts] = useState(() => map.stages.map((s) => ({ id: s.id, title: s.title, question: s.question, color: s.color })))
   return (
-    <Modal title="Manage stages" description="Rename a stage, back the journey up, or start again." onClose={onClose} width={520}>
-      <div className="flex flex-col gap-18">
-        <section className="flex flex-col gap-12">
-          <h3 className="text-13 font-semibold text-adm-ink">Stage name and question</h3>
-          <FormField label="Stage">
-            <select className={inputClass} value={stageId} onChange={(e) => choose(e.target.value)}>
-              {map.stages.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.title}
-                </option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Title">
-            <input className={inputClass} value={title} onChange={(e) => setTitle(e.target.value)} />
-          </FormField>
-          <FormField label="Guiding question">
-            <input className={inputClass} value={question} onChange={(e) => setQuestion(e.target.value)} />
-          </FormField>
-          <Button variant="primary" className="self-start" onClick={() => onSaveStage(stageId, title, question)}>
-            Save stage
-          </Button>
-        </section>
-        <section className="flex flex-col gap-8 border-t border-adm-line pt-16">
-          <h3 className="text-13 font-semibold text-adm-ink">Back up and move</h3>
-          <p className="text-12 text-adm-muted">
-            Export saves the journey, uploaded images included, as a JSON file. Import restores it in another browser, and also reads a file
-            exported from the original blueprint page.
-          </p>
-          <div className="flex gap-8">
-            <Button size="sm" icon={<Download size={13} />} onClick={onExport}>
-              Export JSON
-            </Button>
-            <Button size="sm" icon={<Upload size={13} />} onClick={onImport}>
-              Import JSON
-            </Button>
+    <Modal title="Stage names" description="The four stages and the question each answers." onClose={onClose} width={560}>
+      <div className="flex flex-col gap-16">
+        {drafts.map((d, i) => (
+          <div key={d.id} className="flex flex-col gap-8">
+            <span className="inline-flex items-center gap-6 text-11 font-semibold uppercase tracking-widest text-adm-muted">
+              <span className="size-8 rounded-full" style={{ background: d.color }} aria-hidden="true" /> Stage {String(i + 1).padStart(2, '0')}
+            </span>
+            <input aria-label={`Stage ${i + 1} name`} className={inputClass} value={d.title} onChange={(e) => setDrafts(drafts.map((x) => (x.id === d.id ? { ...x, title: e.target.value } : x)))} />
+            <input aria-label={`Stage ${i + 1} question`} className={inputClass} value={d.question} onChange={(e) => setDrafts(drafts.map((x) => (x.id === d.id ? { ...x, question: e.target.value } : x)))} />
           </div>
-        </section>
-        <section className="flex flex-col gap-8 border-t border-adm-line pt-16">
-          <h3 className="text-13 font-semibold text-adm-ink">Start again</h3>
-          <p className="text-12 text-adm-muted">Restores the original four stages, moments and screens. Your edits in this browser are lost.</p>
+        ))}
+        <div className="flex gap-8 border-t border-adm-line pt-14">
           <Button
-            size="sm"
-            variant="danger"
-            className="self-start"
+            variant="primary"
             onClick={() => {
-              if (window.confirm('Restore the original journey? Your edits in this browser will be lost.')) onReset()
+              onSave(drafts)
+              onClose()
             }}
           >
-            Restore original
+            Save stages
           </Button>
-        </section>
+          <Button onClick={onClose}>Cancel</Button>
+        </div>
       </div>
     </Modal>
   )

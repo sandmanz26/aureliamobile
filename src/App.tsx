@@ -87,7 +87,6 @@ const SignalSourcesPage = lazy(() => import('./admin/pages/SignalSourcesPage').t
 const AuditPage = lazy(() => import('./admin/pages/AuditPage').then((m) => ({ default: m.AuditPage })))
 const SettingsPage = lazy(() => import('./admin/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })))
 const UserJourneyPage = lazy(() => import('./admin/pages/UserJourneyPage').then((m) => ({ default: m.UserJourneyPage })))
-const JourneyTagsPage = lazy(() => import('./admin/pages/JourneyTagsPage').then((m) => ({ default: m.JourneyTagsPage })))
 
 export default function App() {
   const { pathname } = useLocation()
@@ -185,13 +184,8 @@ export default function App() {
                 <UserJourneyPage />
               </ModuleGuard>
             } />
-            {RELEASES.journeyTags && (
-              <Route path="journey-tags" element={
-                <ModuleGuard module="adminJourneyTags">
-                  <JourneyTagsPage />
-                </ModuleGuard>
-              } />
-            )}
+            {/* Journey tags became tabs of User journey (U092). */}
+            <Route path="journey-tags" element={<Navigate to="/admin/user-journey?view=tags" replace />} />
             <Route path="sessions" element={
               <ModuleGuard module="adminSessions">
                 <AdminSessionsPage />

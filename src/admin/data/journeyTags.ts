@@ -41,6 +41,9 @@ export type JourneyTags = z.infer<typeof JourneyTagsSchema>
 
 export const TAGS_STORAGE_KEY = 'aurelia.admin.journeyTags'
 
+/** Badge tones for the admin's Badge component. */
+export const STATUS_TONE: Record<ReviewStatus, 'neutral' | 'good' | 'warning'> = { proposed: 'neutral', agreed: 'good', discuss: 'warning' }
+
 export const STATUS_LABEL: Record<ReviewStatus, string> = {
   proposed: 'Proposed',
   agreed: 'Agreed',

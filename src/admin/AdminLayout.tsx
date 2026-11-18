@@ -21,7 +21,6 @@ import {
   ShieldAlert,
   ShieldCheck,
   Tag,
-  Tags,
   TrendingUp,
   Trophy,
   Users,
@@ -36,7 +35,6 @@ import { BuildBadge } from '../components/ui/BuildBadge'
 import { PageSkeleton } from '../components/ui/PageSkeleton'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import { readJson, writeJson } from '../lib/storage'
-import { RELEASES } from '../versions/releases'
 import { AdminDataProvider } from './data/AdminDataContext'
 
 interface NavItem {
@@ -68,11 +66,8 @@ const NAV: { section: string; items: NavItem[] }[] = [
   },
   {
     section: 'Product',
-    items: [
-      { to: '/admin/user-journey', label: 'User journey', icon: Route, flag: 'adminUserJourney' },
-      // Staging only until released (RELEASES.journeyTags).
-      ...(RELEASES.journeyTags ? [{ to: '/admin/journey-tags', label: 'Journey tags', icon: Tags, flag: 'adminJourneyTags' }] : []),
-    ],
+    // Tags, review and coverage are tabs inside User journey (U092).
+    items: [{ to: '/admin/user-journey', label: 'User journey', icon: Route, flag: 'adminUserJourney' }],
   },
   {
     section: 'Content',
