@@ -4,7 +4,7 @@ Context for anyone (human or AI) reading this code for the first time. It covers
 what is here, the decisions that are not obvious from the source, and the things
 that will mislead you if nobody tells you.
 
-**Picking this project up cold, or taking it over? Read `docs/HANDOFF.md` first**: the people, the standing rules, the current state of every branch and environment, the recording and release procedure, verification recipes, the traps, and the open decisions, in one place.
+**Picking this project up cold, or taking it over? Read `docs/AI-KNOWLEDGE.md` (short, current) and then `docs/HANDOFF.md`**: the people, the standing rules, the current state of every branch and environment, the recording and release procedure, verification recipes, the traps, and the open decisions, in one place.
 
 **This branch is the React app.** The repository keeps one app per branch:
 
@@ -503,6 +503,11 @@ until decided. No secrets (pairing codes, passwords) in it.
 §17 copies each J row and U row in the same push, and §4 is updated when the
 state moves. `src/guides/records.test.ts` fails `npm run check` when an id in
 the journal or the update log is missing from it.
+
+**What the agent learns goes into `docs/AI-KNOWLEDGE.md`** (owner, J129): the
+short, current knowledge another AI needs: people, release rules, state,
+positions taken, traps. Update it on every request, rewriting stale lines, and
+move its "Covers up to J###" line; the same test fails when it is behind.
 
 ## Design versions (staging, and production since U054)
 

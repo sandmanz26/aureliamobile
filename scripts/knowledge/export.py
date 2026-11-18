@@ -97,6 +97,8 @@ def main(out):
         open(path, 'w').write(text)
         rows.append(f'| [{title}](wiki/{name}.md) | {audience} | `{source}` |')
     shutil.copy(os.path.join(ROOT, 'docs/api/openapi.yaml'), os.path.join(out, 'wiki', 'openapi.yaml'))
+    # The agent's working knowledge, for other AIs (J129).
+    shutil.copy(os.path.join(ROOT, 'docs/AI-KNOWLEDGE.md'), os.path.join(out, 'AI-KNOWLEDGE.md'))
     for src in sorted(images):
         rel = src[len('/guides/'):]
         dst = os.path.join(out, 'assets', rel)
@@ -138,6 +140,7 @@ guides are in `assets/`.
 
 ## For AI agents
 
+- Read `AI-KNOWLEDGE.md` first: people, release rules, current state, positions taken, traps.
 - Treat these documents as the current state of the plan, not as a built system.
 - The app repository is the source of truth; if this copy disagrees, the repository wins.
 - The prompts quoted in Backend (old) are from 2025 and need the changes listed beside them before reuse.
