@@ -6,6 +6,7 @@ import {
   Activity,
   Bell,
   Coins,
+  ChevronRight,
   CreditCard,
   FileText,
   FlaskConical,
@@ -28,11 +29,13 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Suspense, useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { z } from 'zod'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { BuildBadge } from '../components/ui/BuildBadge'
 import { PageSkeleton } from '../components/ui/PageSkeleton'
 import { useFeatureFlags } from '../demo/FeatureFlags'
+import { readJson, writeJson } from '../lib/storage'
 import { RELEASES } from '../versions/releases'
 import { AdminDataProvider } from './data/AdminDataContext'
 
@@ -115,38 +118,79 @@ const NAV: { section: string; items: NavItem[] }[] = [
   },
 ]
 
+const OpenSections = z.array(z.string())
+const OPEN_KEY = 'aurelia.admin.navOpen'
+
+function matches(item: NavItem, pathname: string) {
+  return item.end ? pathname === item.to : pathname === item.to || pathname.startsWith(`${item.to}/`)
+}
+
+/**
+ * The admin menu, grouped. Each group folds (U090: the full list of 22
+ * modules was taller than the screen): the group holding the current page is
+ * always open, and the groups someone opened stay open in this browser.
+ * Overview has one item and no heading.
+ */
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const { isEnabled } = useFeatureFlags()
+  const { pathname } = useLocation()
+  const [opened, setOpened] = useState<string[]>(() => readJson(OPEN_KEY, OpenSections, []))
   const groups = NAV.map((group) => ({
     ...group,
     items: group.items.filter((item) => isEnabled(item.flag)),
   })).filter((group) => group.items.length > 0)
 
+  function toggle(section: string, isOpen: boolean) {
+    const next = isOpen ? opened.filter((x) => x !== section) : [...opened, section]
+    setOpened(next)
+    writeJson(OPEN_KEY, next)
+  }
+
+  const link = (item: NavItem) => {
+    const Icon = item.icon
+    return (
+      <NavLink
+        key={item.to}
+        to={item.to}
+        end={item.end}
+        onClick={onNavigate}
+        className={({ isActive }) =>
+          `flex items-center gap-10 rounded-8 px-10 py-6 text-13 transition-colors ${
+            isActive ? 'bg-white/12 font-medium text-white' : 'text-white/65 hover:bg-white/6 hover:text-white'
+          }`
+        }
+      >
+        <Icon size={15} />
+        {item.label}
+      </NavLink>
+    )
+  }
+
   return (
-    <nav className="flex flex-col gap-18 px-12 py-16" onClick={onNavigate}>
-      {groups.map((group) => (
-        <div key={group.section} className="flex flex-col gap-2">
-          <p className="px-10 pb-4 text-10 font-semibold uppercase tracking-widest text-white/35">{group.section}</p>
-          {group.items.map((item) => {
-            const Icon = item.icon
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  `flex items-center gap-10 rounded-8 px-10 py-8 text-13 transition-colors ${
-                    isActive ? 'bg-white/12 font-medium text-white' : 'text-white/65 hover:bg-white/6 hover:text-white'
-                  }`
-                }
-              >
-                <Icon size={16} />
-                {item.label}
-              </NavLink>
-            )
-          })}
-        </div>
-      ))}
+    <nav className="flex flex-col gap-2 px-12 py-12">
+      {groups.map((group) => {
+        if (group.section === 'Overview') return <div key={group.section} className="mb-6 flex flex-col">{group.items.map(link)}</div>
+        const current = group.items.some((item) => matches(item, pathname))
+        const isOpen = current || opened.includes(group.section)
+        return (
+          <div key={group.section} className="flex flex-col">
+            <button
+              type="button"
+              aria-expanded={isOpen}
+              disabled={current}
+              onClick={() => toggle(group.section, isOpen)}
+              className="flex items-center justify-between rounded-8 px-10 py-6 text-left text-10 font-semibold uppercase tracking-widest text-white/40 hover:bg-white/6 hover:text-white/70 disabled:cursor-default disabled:hover:bg-transparent disabled:hover:text-white/40"
+            >
+              <span>{group.section}</span>
+              <span className="flex items-center gap-6 normal-case tracking-normal">
+                {!isOpen && <span className="text-11 font-medium tabular-nums text-white/30">{group.items.length}</span>}
+                <ChevronRight size={13} className={`transition-transform ${isOpen ? 'rotate-90' : ''}`} aria-hidden="true" />
+              </span>
+            </button>
+            {isOpen && <div className="flex flex-col gap-1 pb-6">{group.items.map(link)}</div>}
+          </div>
+        )
+      })}
     </nav>
   )
 }
@@ -156,7 +200,7 @@ export function AdminLayout() {
 
   return (
     <div className="flex min-h-screen bg-adm-bg">
-      <aside className="hidden w-[232px] shrink-0 flex-col bg-adm-sidebar lg:flex">
+      <aside className="sticky top-[var(--staging-bar,0px)] hidden h-[calc(100dvh-var(--staging-bar,0px))] w-[232px] shrink-0 flex-col self-start bg-adm-sidebar lg:flex">
         <div className="flex h-56 items-center gap-8 border-b border-white/8 px-20">
           <AureliaLogo iconSize={22} markOnly />
           <span className="text-13 font-semibold text-white">Aurelia Admin</span>
@@ -194,7 +238,7 @@ export function AdminLayout() {
         <header className="flex h-56 shrink-0 items-center gap-12 border-b border-adm-line bg-adm-surface px-16 lg:px-24">
           <button
             type="button"
-            aria-label="Open menu"
+            aria-label="Open admin menu"
             onClick={() => setOpen(true)}
             className="flex size-32 items-center justify-center rounded-8 text-adm-ink lg:hidden"
           >
