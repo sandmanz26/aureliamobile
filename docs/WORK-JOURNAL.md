@@ -63,6 +63,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O33 | **Knowledge-base repository access (J114)**: `danielaurelia26/aureliabase_knowledge` is not reachable from this session (GitHub access covers `sandmanz26/*` only). The export is ready (`scripts/knowledge/export.py`). Needed: the Claude GitHub App installed on that repository (or the repository moved under an account the session can use), then a new session with it selected | J114 | Product owner |
 | O34 | **Journey tags (J116)**: review the eight tag groups and the proposed tagging of the ten moments (Admin → Journey tags on staging); decide the gaps it shows (evening, night, positive state, Share has one moment); then release to production (`RELEASES.journeyTags`) | J116 | Product owner + the user who asked |
 | O35 | **Purpose of the user journey (J122)**: confirm it is an internal opportunity map (moment → feature → evidence → decision) and who owns it; if yes, add evidence and a priority decision per moment, a link to the real screen or session, team-wide storage, and the same tags in analytics | J122 | Product owner + Eugene |
+| J123 | 2026-11-18 | Question | How the user journey is actually used: who, when, and three concrete walkthroughs (planning a sprint, after interviews, briefing content) | — |
 | J117 | 2026-11-18 | Question | "I can't see what changed": Journey tags is on staging only (O34); where to find it and how to check the build | — |
 | J118 | 2026-11-18 | Code | Admin sidebar too long: folding groups and a sticky sidebar; the missing phone menu button fixed. Staging; production waits for a request | U090 |
 | J119 | 2026-11-18 | Code | User journey flow simplified as head of product (one page, one panel), and the desktop sidebar that folds to an icon rail (Eugene) | U091, U092 |
@@ -1389,3 +1390,23 @@ transcript and the update log. Everything from J018 on was written at the time.
   - shared storage, like annotations;
   - the tags reused in click insights.
 - **Questions back:** internal planning or client-facing (Aurelia Pro, O32)? Who owns it? Recorded as O35.
+
+### J123 — How the user journey is used, concretely
+- **Asked:** "saya kok masih bingung, jadi usage nya akan seperti apa ini"
+- **Answered:** three walkthroughs.
+  1. **Roadmap planning (monthly, PM + Eugene).**
+     - Open the map.
+     - Find a moment marked Concept or Partly built that matters, e.g. "Before an event".
+     - Decide whether it goes into the next sprint.
+     - Mark it Agreed, with a note.
+  2. **After user interviews or the feedback group (PM).**
+     - A participant says they use Aurelia on the way home.
+     - Add the moment "Decompress after work" (Experience, Evening, Commuting), which fills the evening gap.
+     - Or attach the quote to an existing moment.
+  3. **A brief for content and design (designer, content).**
+     - Open a moment.
+     - Its tags say when, where, the need and the time available.
+     - That is the brief: e.g. a 2–10 minute session at night, in bed, to wind down, with a reminder at 22:00.
+- **In one line:** it decides what to build next, records what we learn from users, and gives each piece of work its brief.
+- **Who:** PM (owner), Eugene (decides), designer and content (read).
+- **Not for:** end users.
