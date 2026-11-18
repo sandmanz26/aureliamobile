@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J129** · updated 18 Nov 2026
+**Covers up to J130** · updated 18 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
@@ -101,7 +101,7 @@ Further rules:
 - Admin guideline (v1–v3)
 - Product requirements
 - API contract (rewritten as a team document in U086)
-- Research (Insight Timer)
+- Research (Insight Timer; v2 round 2 is the default, v1 round 1)
 - Backend (old)
 - Artefact
 - Design system
@@ -152,15 +152,20 @@ Every prompt states that the persona is synthetic.
   - the Deep Dive figures.
 - A 2025 Python codebase exists somewhere; asking for it is O31.
 
-**Insight Timer, round 2 (J126, in progress).**
-- Onboarding is about 36 screens, and the paywall comes **before** sign-up.
-- The trial is 7 days, annual plan only.
-- Cancelling happens in the store; there is no win-back in the app.
-- Streaks: 7 consecutive or 50 total days count as a milestone, with a Streak Saver push.
-- Only about 10% of users go to live events.
-- It has never published a retention figure. The category baseline is about **3–5% 30-day retention**.
-- A mood check-in's pull lasts about a week, and only positive check-ins predicted return.
-- Design implications: streaks that can be repaired, the check-in after the session, and a negative check-in treated as care.
+**Insight Timer, round 2 (J130).** The report is the wiki Research tab, v2.
+- **Usage:** three jobs (sleep, getting through a crisis, the plain timer). People choose by voice, pacing and how much the guide talks.
+- **Retention:** people stay for their history and leave over anything between open and play. Onboarding is about 25 steps, with the paywall before sign-up. The category baseline is 3–5% at day 30.
+- **Adopt now:**
+  - the sentence goes straight to play;
+  - the check-in after the chapter, once a day, skippable;
+  - a low check-in gets care and a "Need help now?" link;
+  - guidance controls (less talking, longer pauses, skip the intro, end with a bell);
+  - "Same as last night";
+  - forgiving consistency ("4 of 7");
+  - one reminder;
+  - a fair-paywall rule.
+- **Avoid:** the quiz, an early paywall, streak alarms, invented co-presence numbers, live events and a teacher marketplace.
+- **Known own-goal:** the demo opens the daily check-in on every sign-in (`src/lib/dailyCheckIn.ts`). Change it before real users (O37).
 
 **Aurelia Pro (J110, O32).** A corporate wellness edition (B2B2C), to be explored
 with employee and HR personas. Not built.
@@ -188,6 +193,7 @@ with employee and HR personas. Not built.
 - **Agent worktrees** live in `.claude/worktrees/`. They are excluded locally
   through `.git/info/exclude`; never commit them. Bring an agent's work in by
   cherry-picking, then re-run `npm run check`.
+- **Mermaid creates ~100 chunks.** It is grouped into `mermaid-vendor` (vite `codeSplitting.groups`) and kept out of the precache. Without that, the service worker grew from 181 to 268 entries.
 - **Mulish ships weights 300–600 only.** 700 and 800 render as faked bold.
 
 ## 8 · Verifying, the short recipe

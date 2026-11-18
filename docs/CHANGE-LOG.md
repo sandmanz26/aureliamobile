@@ -19,6 +19,14 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-18 — Research round 2 (U098, J130)
+
+The wiki's Research tab opens on round 2 of the Insight Timer research
+(behaviour, 11 journey flow charts, what to adopt after a roast); round 1 is
+v1. Flow charts render with Mermaid, loaded only when needed.
+
+Branches: `web_app`, `admin_cms`. Production on request (J076).
+
 ### 2026-11-18 — AI-KNOWLEDGE.md (U097, J129)
 
 `docs/AI-KNOWLEDGE.md` holds the agent's working knowledge for other AIs and

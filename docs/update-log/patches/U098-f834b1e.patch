@@ -1,0 +1,180 @@
+From f834b1ee4ded73ccd115360af7fc0c814df65dc4 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 18 Nov 2026 16:32:12 +0000
+Subject: [PATCH] Wiki Research: round 2 on Insight Timer, with its journeys as
+ diagrams
+
+The Research tab now has two versions, the newer first: v2 Behaviour &
+journeys (docs/research/reports/Insight Timer behaviour and journeys.md:
+how people actually use it from Reddit, Trustpilot and reviews; its whole
+journey as 11 flow charts; why it keeps and loses people; twenty features
+to adopt, a roast, and the recommendations that survive, now/next/later)
+and v1 Features & business (round 1). Markdown versions get the Markdown
+styling.
+
+Flow charts written as ```mermaid blocks render as diagrams in the wiki.
+Mermaid (11.17.1) and everything it pulls in is one lazy chunk, loaded only
+by a document that has a chart, and kept out of the service worker's
+precache (181 entries, as before). A chart that fails to render stays as
+its source text with a red edge.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ package.json             |  1 +
+ src/guides/GuidePage.tsx | 54 ++++++++++++++++++++++++++++++++++++++--
+ src/guides/guides.css    |  5 ++++
+ vite.config.ts           |  5 +++-
+ 4 files changed, 62 insertions(+), 3 deletions(-)
+
+diff --git a/package.json b/package.json
+index c595e8f..7efd8d1 100644
+--- a/package.json
++++ b/package.json
+@@ -21,6 +21,7 @@
+     "@tanstack/react-query": "^5.104.5",
+     "lucide-react": "^1.61.0",
+     "marked": "^18.2.0",
++    "mermaid": "11.17.1",
+     "react": "^19.3.1",
+     "react-dom": "^19.3.1",
+     "react-router-dom": "^7.18.4",
+diff --git a/src/guides/GuidePage.tsx b/src/guides/GuidePage.tsx
+index cc39234..dcae712 100644
+--- a/src/guides/GuidePage.tsx
++++ b/src/guides/GuidePage.tsx
+@@ -13,6 +13,7 @@ import pmPlaybook from './content/pm-playbook.html?raw'
+ import pmPlaybookV2 from './content/pm-playbook-v2.html?raw'
+ import pmPlaybookV3 from './content/pm-playbook-v3.html?raw'
+ import researchInsightTimer from './content/research-insight-timer.html?raw'
++import researchRound2 from '../../docs/research/reports/Insight Timer behaviour and journeys.md?raw'
+ import prdOverview from '../../docs/PRD-OVERVIEW.md?raw'
+ import apiContract from '../../docs/api/API-CONTRACT.md?raw'
+ import backendOld from '../../docs/backend-old/BACKEND-OLD.md?raw'
+@@ -84,7 +85,7 @@ const DOCS = [
+     title: 'Research',
+     blurb: 'What we learn from other products. First: Insight Timer, the biggest free meditation app, and what it means for Aurelia.',
+     audience: 'The product owner, the project manager and anyone shaping what Aurelia builds next',
+-    inside: ['Every Insight Timer feature, and what is free or paid', 'How it makes money and why people stay', 'What went wrong for its users, 2024–2026', 'Where Aurelia overlaps, differs and can win'],
++    inside: ['How people really use Insight Timer, from Reddit and reviews', 'Its whole journey as 11 flow charts', 'What Aurelia should adopt now, next and later, after a roast', 'Round 1: features, business, backlash and competitors'],
+     icon: Telescope,
+     source: 'scripts/guides/research_insight_timer.py',
+     html: () => researchInsightTimer,
+@@ -134,6 +135,8 @@ interface DocVersion {
+   label: string
+   note: string
+   html: () => string
++  /** Rendered from Markdown: styled as a Markdown document, not a generated guide. */
++  markdown?: boolean
+ }
+ const DOC_VERSIONS: Partial<Record<DocId, DocVersion[]>> = {
+   playbook: [
+@@ -146,6 +149,17 @@ const DOC_VERSIONS: Partial<Record<DocId, DocVersion[]>> = {
+     { v: 2, label: 'Task guide', note: 'Organised by what you want to do, in plain words.', html: () => adminGuidelineV2 },
+     { v: 3, label: 'Quick start', note: 'The morning check, the map and the rules, on one page.', html: () => adminGuidelineV3 },
+   ],
++  // Round 2 first, so it is the default (U098).
++  research: [
++    {
++      v: 2,
++      label: 'Behaviour & journeys',
++      note: 'Round 2: how people really use it, 11 flow charts, what to adopt, the roast.',
++      html: () => marked.parse(researchRound2, { async: false }),
++      markdown: true,
++    },
++    { v: 1, label: 'Features & business', note: 'Round 1: features, strategy, backlash, competitors.', html: () => researchInsightTimer },
++  ],
+ }
+ 
+ function DocVersions({ id, current }: { id: DocId; current: number }) {
+@@ -303,6 +317,42 @@ function GuideDoc({ meta, version }: { meta: (typeof DOCS)[number]; version?: Do
+     })
+   }, [query, prepared])
+ 
++  // Flow charts written as ```mermaid blocks become diagrams (U098). The
++  // library is large, so it loads only for a document that has one.
++  useEffect(() => {
++    const root = content.current
++    const blocks = root ? [...root.querySelectorAll<HTMLElement>('pre > code.language-mermaid')] : []
++    if (!blocks.length) return
++    let cancelled = false
++    void import('mermaid').then(async ({ default: mermaid }) => {
++      mermaid.initialize({
++        startOnLoad: false,
++        securityLevel: 'strict',
++        theme: 'base',
++        fontFamily: 'Mulish, system-ui, sans-serif',
++        themeVariables: { primaryColor: '#fff7ec', primaryBorderColor: '#e0a35a', primaryTextColor: '#3c2405', lineColor: '#b4530a', fontSize: '14px' },
++        flowchart: { htmlLabels: false, curve: 'basis' },
++      })
++      for (const [i, code] of blocks.entries()) {
++        if (cancelled) return
++        const pre = code.parentElement
++        if (!pre) continue
++        try {
++          const { svg } = await mermaid.render(`gd-mermaid-${i}`, code.textContent ?? '')
++          const figure = document.createElement('div')
++          figure.className = 'gd-mermaid'
++          figure.innerHTML = svg
++          pre.replaceWith(figure)
++        } catch {
++          pre.classList.add('gd-mermaid-error')
++        }
++      }
++    })
++    return () => {
++      cancelled = true
++    }
++  }, [prepared])
++
+   useEffect(() => {
+     const root = content.current
+     if (!root || !('IntersectionObserver' in window)) return
+@@ -410,7 +460,7 @@ function GuideDoc({ meta, version }: { meta: (typeof DOCS)[number]; version?: Do
+           ) : (
+             <div
+               ref={content}
+-              className={`gd-doc ${meta.id === 'admin' || meta.id === 'playbook' || meta.id === 'research' ? 'is-guideline' : 'is-markdown'}`}
++              className={`gd-doc ${!version?.markdown && (meta.id === 'admin' || meta.id === 'playbook' || meta.id === 'research') ? 'is-guideline' : 'is-markdown'}`}
+               onClick={onContentClick}
+               // Our own documents from the repository, not user input.
+               dangerouslySetInnerHTML={{ __html: prepared.html }}
+diff --git a/src/guides/guides.css b/src/guides/guides.css
+index 69c027f..8d71425 100644
+--- a/src/guides/guides.css
++++ b/src/guides/guides.css
+@@ -261,3 +261,8 @@
+ 
+ /* A key/value table written with an empty header row ("| | |") shows no header. */
+ .gd-doc thead:not(:has(th:not(:empty))) { display: none; }
++
++/* Flow charts rendered from ```mermaid blocks (U098). Wide charts scroll in their own box. */
++.gd-doc .gd-mermaid { margin: 20px 0 28px; padding: 16px; overflow-x: auto; border: 1px solid #ecdfcd; border-radius: 12px; background: #fffdf9; text-align: center; }
++.gd-doc .gd-mermaid svg { max-width: 100%; height: auto; }
++.gd-doc pre.gd-mermaid-error { border-left: 3px solid #d03b3b; }
+diff --git a/vite.config.ts b/vite.config.ts
+index d317766..9cfce66 100644
+--- a/vite.config.ts
++++ b/vite.config.ts
+@@ -96,7 +96,8 @@ export default defineConfig({
+         globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2,webmanifest}'],
+         // three.js behind the off-by-default 3D network, and the /wiki team
+         // documents (180 kB): fetched when first opened, not installed for everyone.
+-        globIgnores: ['**/networkScene-*.js', '**/GuidePage-*'],
++        // Mermaid (the wiki's flow charts, U098) likewise.
++        globIgnores: ['**/networkScene-*.js', '**/GuidePage-*', '**/mermaid-vendor-*'],
+         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+         navigateFallback: '/index.html',
+         navigateFallbackDenylist: [/^\/api\//, /^\/__/],
+@@ -149,6 +150,8 @@ export default defineConfig({
+           groups: [
+             { name: 'react-vendor', test: /node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/ },
+             { name: 'query-vendor', test: /node_modules[\\/](@tanstack|zod)[\\/]/ },
++            // Mermaid and everything it pulls in, for the wiki's flow charts only (U098): one chunk, kept out of the precache below.
++            { name: 'mermaid-vendor', test: /node_modules[\\/](mermaid|@mermaid-js|cytoscape[^\\/]*|katex|d3[^\\/]*|dagre[^\\/]*|khroma|langium|chevrotain[^\\/]*|@chevrotain|roughjs|lodash-es|dayjs|elkjs|stylis|dompurify|internmap|delaunator|robust-predicates|vscode-[^\\/]*|ts-dedent|@iconify|@braintree|uuid|marked-[^\\/]*)[\\/]/ },
+           ],
+         },
+       },
+-- 
+2.43.0
+

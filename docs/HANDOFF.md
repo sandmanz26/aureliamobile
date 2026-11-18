@@ -234,6 +234,7 @@ Level with production (U072, 13 Nov 2026). Everything in `RELEASES` (`src/versio
 
 The full list is §17. Since 13 Nov:
 
+- **J130 / U098:** Insight Timer round 2 in the wiki Research tab (default v2): behaviour, 11 journey flow charts, adopt/avoid after a roast; Mermaid charts.
 - **J129 / U097:** `docs/AI-KNOWLEDGE.md`, the agent's working knowledge for other AIs, updated every request and enforced by a test.
 - **J128 / U096:** admin Product lab (User journey, Personas); 300 seeded synthetic personas for AI-run research (staging only, `RELEASES.personas`).
 - **J121 / U094:** desktop sidebar sizes made consistent (20px icons, 56px rail tiles, 72px rail); staging only.
@@ -487,8 +488,8 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U097**, last J = **J129**, last
-O = **O36**. Before numbering, check the files for anything newer.
+**Numbering as of 17 Nov 2026:** last U = **U098**, last J = **J130**, last
+O = **O37**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
 push. `src/guides/records.test.ts` enforces it.
@@ -933,6 +934,7 @@ history can be read without opening four documents.
 | U095 | `09868db` | 2026-11-18 | User journey: a screen links to the moments it serves and to where it lives (route or Figma); a moment lists its screens or says "No screen yet". Built by a separate agent, reviewed here. Staging. | [patch](update-log/patches/U095-09868db.patch) |
 | U096 | `f655605` | 2026-11-18 | Admin: the Product group becomes Product lab; new Personas module with 300 synthetic, seeded personas, role-play prompts and balanced research panels for AI-run research. Personas staging only. | [patch](update-log/patches/U096-f655605.patch) |
 | U097 | `9ee49e0` | 2026-11-18 | `docs/AI-KNOWLEDGE.md`, the agent's working knowledge for other AIs, kept current on every request; a test fails when it falls behind the journal; included in the knowledge-base export. | [patch](update-log/patches/U097-9ee49e0.patch) |
+| U098 | `f834b1e` | 2026-11-18 | Wiki Research: round 2 on Insight Timer (behaviour, 11 journey flow charts, adopt/avoid after a roast) as the default version; Mermaid charts render lazily, kept out of the precache. Staging; production on request (J076). | [patch](update-log/patches/U098-f834b1e.patch) |
 | J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
@@ -954,6 +956,7 @@ history can be read without opening four documents.
 | J127 | 2026-11-18 | Analysis + Proposal | Eugene on the user journey: product-team driven, every scenario across the 4 stages, an evolving platform like Trello/Asana, readable by Claude to reason about journeys and product logic; the 'AI that builds the AI' plan. Read and turned into a three-phase proposal | — |
 | J128 | 2026-11-18 | Code + Opinion | Product lab menu; Personas with 300 varied synthetic personas as candidates for AI-run research, and a view on using them | U096 |
 | J129 | 2026-11-18 | Code + Docs | Always add what was learned to a file other AIs can read: `docs/AI-KNOWLEDGE.md`, enforced by a test | U097 |
+| J130 | 2026-11-18 | Research + Code | Insight Timer round 2 delivered: behaviour from communities and reviews, its journey as 11 flow charts, retention evidence, what to adopt now/next/later after a roast; in the wiki Research tab | U098 |
 
 ### 17.2 Code changes (U)
 

@@ -64,8 +64,10 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O34 | **Journey tags (J116)**: review the eight tag groups and the proposed tagging of the ten moments (Admin → Journey tags on staging); decide the gaps it shows (evening, night, positive state, Share has one moment); then release to production (`RELEASES.journeyTags`) | J116 | Product owner + the user who asked |
 | O35 | **Purpose of the user journey (J122)**: confirm it is an internal opportunity map (moment → feature → evidence → decision) and who owns it; if yes, add evidence and a priority decision per moment, a link to the real screen or session, team-wide storage, and the same tags in analytics | J122 | Product owner + Eugene — **Answered by Eugene (J127):** internal, driven by the product team; evolving like Trello/Asana; readable by Claude |
 | O36 | **User journey as an evolving platform (J127)**: approve the three phases. (1) Shared storage, a status workflow (Idea → Validated → Planned → Building → Live → Measured), owner, Board view, activity log. (2) A scenario template, evidence and a decision log per card; a structured export to the knowledge base. (3) An AI assist on the page, after a backend exists. | J127 | Product owner + Eugene |
+| O37 | **Insight Timer round 2 recommendations (J130)**: decide the "now" list, including changing the demo's every-sign-in daily check-in before real users, and a "Need help now?" link; and whether to push the wiki (and the app work riding with it) to production | J130 | Product owner + Eugene |
 | J128 | 2026-11-18 | Code + Opinion | Product lab menu; Personas with 300 varied synthetic personas as candidates for AI-run research, and a view on using them | U096 |
 | J129 | 2026-11-18 | Code + Docs | Always add what was learned to a file other AIs can read: `docs/AI-KNOWLEDGE.md`, enforced by a test | U097 |
+| J130 | 2026-11-18 | Research + Code | Insight Timer round 2 delivered: behaviour from communities and reviews, its journey as 11 flow charts, retention evidence, what to adopt now/next/later after a roast; in the wiki Research tab | U098 |
 | J123 | 2026-11-18 | Question | How the user journey is actually used: who, when, and three concrete walkthroughs (planning a sprint, after interviews, briefing content) | — |
 | J124 | 2026-11-18 | Docs | A one-to-two-sentence question for the lead to confirm what the user journey is for | — |
 | J125 | 2026-11-18 | Question | What "Add screen" in the user journey is for, and its weak spot (screens belong to a stage, not to a moment) | — |
@@ -1491,3 +1493,38 @@ transcript and the update log. Everything from J018 on was written at the time.
   - Updated on every request from now on: stale lines are rewritten, and "Covers up to" moves on.
   - `records.test.ts` fails the check (and CI) when it is behind.
   - It is the first thing `CLAUDE.md` tells an agent to read, and part of the knowledge-base export.
+
+### J130 — Insight Timer, round 2
+- **Asked:** J126 (deeper research on behaviour and journeys, what to adopt, a roast, flow charts if possible, a wider search including social media).
+- **Method:**
+  - Three researchers: behaviour from communities and reviews, journey flows, retention mechanics and evidence.
+  - One writer, who drafted the adoption list, roasted it and rewrote it.
+  - Notes are in `docs/research/research_notes/Insight Timer behaviour and journeys/`. The report is `docs/research/reports/Insight Timer behaviour and journeys.md`, shown in the wiki as Research v2 (U098).
+  - Reddit was reached through an archive API: 374 r/InsightTimer posts and the r/yoganidra, r/Mindfulness and r/Anxiety threads. Some subreddits, App Store RSS, Medium, YouTube and TikTok could not be read.
+- **Main findings:**
+  - Three jobs: sleep, getting through a crisis, and the plain timer.
+  - People choose by voice, pacing and how much the guide talks, and the library cannot be searched on any of those.
+  - They stay for history (saved tracks, day count, trusted voices) and leave over anything between open and play.
+  - Onboarding is about 25 steps, with the paywall before sign-up.
+  - No retention figure has ever been published. The category baseline is 3–5% at day 30. Streak, push and check-in effects are small.
+- **The roast caught:**
+  - survivorship bias (word of mouth);
+  - copying the quiz and the early paywall;
+  - Aurelia's demo opening the daily check-in on every sign-in (`src/lib/dailyCheckIn.ts`);
+  - fragile streaks without accounts;
+  - an invented co-presence number;
+  - live events and a marketplace, which would be a second company.
+- **Final recommendations:**
+  - **Now:**
+    - nothing between the sentence and the first play;
+    - the check-in after the chapter, once a day, skippable;
+    - care and a "Need help now?" link after a low check-in;
+    - guidance controls (less talking, longer pauses, skip the intro, end with a bell);
+    - "Same as last night";
+    - forgiving consistency ("4 of 7");
+    - one reminder at a time the person sets;
+    - a fair-paywall rule;
+    - starting without an account.
+  - **Next:** history and export; a tested sleep mode; a trial long enough for a whole journey; scoring on "came back and it helped"; therapist share links.
+  - **Later:** a real co-presence count, licensed voices.
+- **Open:** O37.

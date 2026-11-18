@@ -134,9 +134,33 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U095 | `09868db` | 2026-11-18 | User journey: a screen links to the moments it serves and to where it lives (route or Figma); a moment lists its screens or says "No screen yet". Built by a separate agent, reviewed here. Staging. | [patch](patches/U095-09868db.patch) |
 | U096 | `f655605` | 2026-11-18 | Admin: the Product group becomes Product lab; new Personas module with 300 synthetic, seeded personas, role-play prompts and balanced research panels for AI-run research. Personas staging only. | [patch](patches/U096-f655605.patch) |
 | U097 | `9ee49e0` | 2026-11-18 | `docs/AI-KNOWLEDGE.md`, the agent's working knowledge for other AIs, kept current on every request; a test fails when it falls behind the journal; included in the knowledge-base export. | [patch](patches/U097-9ee49e0.patch) |
+| U098 | `f834b1e` | 2026-11-18 | Wiki Research: round 2 on Insight Timer (behaviour, 11 journey flow charts, adopt/avoid after a roast) as the default version; Mermaid charts render lazily, kept out of the precache. Staging; production on request (J076). | [patch](patches/U098-f834b1e.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U098 — Research tab, round 2, with diagrams
+
+- **Commit:** `f834b1e` · pushed 2026-11-18 UTC · `web_app` + `admin_cms`.
+  - Not on `web_prod` yet. Under J076 the wiki should match production, but a push now would also carry the unflagged app work since U091 (the user journey rework, the "Product lab" name). It waits for the owner's word.
+- **Patch:** [patches/U098-f834b1e.patch](patches/U098-f834b1e.patch) (code only; the report is in `docs/`).
+- **Request:** "terkait ini "Insight Timer, and what it means for Aurelia" tolong saya mau lakukan lebih deep lagi soal research nya, dari user behaviour, user journey nya juga kemudian apa yang bisa kita adopsi. hasil research di roast lagi untuk mendapatkan hasil yang jauh lebih baik. jika kamu ada flow chart atau user journey dari mereka akan lebih baik." (J126). The research itself is J130.
+- **Changed:**
+  - `src/guides/GuidePage.tsx`:
+    - The Research tab has versions:
+      - **v2 Behaviour & journeys** (the default), from `docs/research/reports/Insight Timer behaviour and journeys.md`;
+      - **v1 Features & business** (round 1).
+    - `DocVersion.markdown` gives a Markdown version the Markdown styling.
+    - The index card says what is inside.
+    - A new effect renders `pre > code.language-mermaid` with Mermaid: `securityLevel: 'strict'`, the Aurelia palette, Mulish, and no HTML labels. A failure leaves the source text with a red edge.
+  - `src/guides/guides.css`: `.gd-mermaid`, a bordered box that scrolls when wide.
+  - `package.json`: `mermaid` 11.17.1, pinned.
+  - `vite.config.ts`: Mermaid and its dependencies form one `mermaid-vendor` chunk (3.3 MB, loaded only by a document with a chart), excluded from the precache.
+- **Verified:**
+  - `npm run check` passes.
+  - Production build: the precache has 181 entries (4.2 MB), the same as before Mermaid. Without the chunk group it had been 268 entries (7.5 MB).
+  - `/wiki/research` at 1440px and 402px: title "Copy Insight Timer's quiet path, not its pop-ups"; 11 of 11 charts rendered, 0 failed; 21 contents entries; no overflow; no console errors. `?v=1` shows round 1.
+- **Revert:** `git revert --no-commit f834b1e && git checkout HEAD -- docs/`.
 
 ### U097 — AI-KNOWLEDGE.md
 
