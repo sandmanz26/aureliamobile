@@ -26,6 +26,8 @@ const LATEST = recentSessions()
 function SidebarContent({ onNavigate, onCollapse, compact = false }: { onNavigate?: () => void; onCollapse?: () => void; compact?: boolean }) {
   // compact (U093): the desktop sidebar on staging, tighter than the phone drawer's Figma rows.
   const row = compact ? 'px-14 py-10 text-[15px] leading-[22px]' : 'text-style-body px-20 py-16'
+  // One icon size on desktop (U094); the drawer keeps the Figma 24 (and 22 for the sparkle).
+  const ic = compact ? 20 : 24
   const unread = useHasUnreadNotifications()
   const { isEnabled } = useFeatureFlags()
   const { signedIn } = useAuth()
@@ -41,7 +43,7 @@ function SidebarContent({ onNavigate, onCollapse, compact = false }: { onNavigat
       icon={
         <PhotoCircle
           photo="avatar"
-          size={24}
+          size={ic}
           gradient="conic-gradient(from 180deg, var(--color-blue-300), var(--color-gold-300), var(--color-blue-300))"
         />
       }
@@ -49,7 +51,7 @@ function SidebarContent({ onNavigate, onCollapse, compact = false }: { onNavigat
       disabled={!isEnabled('profile')}
     />
   ) : (
-    <NavItem compact={compact} to="/login" icon={<UserIcon size={24} className="shrink-0" />} label="Sign In" disabled={!isEnabled('auth')} />
+    <NavItem compact={compact} to="/login" icon={<UserIcon size={ic} className="shrink-0" />} label="Sign In" disabled={!isEnabled('auth')} />
   )
 
   return (
@@ -81,13 +83,13 @@ function SidebarContent({ onNavigate, onCollapse, compact = false }: { onNavigat
           >
             {/* The supplied bell pair: with the red dot while there is
                 something unread, plain once Notifications has been opened. */}
-            {unread ? <NotificationActiveIcon size={24} /> : <NotificationIcon size={24} />}
+            {unread ? <NotificationActiveIcon size={ic} /> : <NotificationIcon size={ic} />}
           </button>
         )}
         {/* Desktop only (U091): fold the sidebar to the icon rail. */}
         {onCollapse && (
           <button type="button" aria-label="Collapse sidebar" title="Collapse sidebar" onClick={onCollapse} className="u-press text-icon-default">
-            <PanelLeftClose size={22} strokeWidth={1.5} />
+            <PanelLeftClose size={20} strokeWidth={1.6} />
           </button>
         )}
         </div>
@@ -106,16 +108,16 @@ function SidebarContent({ onNavigate, onCollapse, compact = false }: { onNavigat
              as the mobile tab bar. "Me" is the account item above (Profile is
              Me now); Library, credits, invite and help live inside it. */
           <>
-            <NavItem compact={compact} to="/home" icon={<Sparkles size={22} strokeWidth={1.5} className="shrink-0" />} label="Create" />
-            <NavItem compact={compact} to="/explore" icon={<NoteIcon size={24} className="shrink-0" />} label="Discover" disabled={!isEnabled('explore')} />
-            <NavItem compact={compact} to="/wellness" icon={<ChartMediumIcon size={24} className="shrink-0" />} label="Progress" disabled={!isEnabled('wellness')} />
+            <NavItem compact={compact} to="/home" icon={<Sparkles size={compact ? 20 : 22} strokeWidth={1.5} className="shrink-0" />} label="Create" />
+            <NavItem compact={compact} to="/explore" icon={<NoteIcon size={ic} className="shrink-0" />} label="Discover" disabled={!isEnabled('explore')} />
+            <NavItem compact={compact} to="/wellness" icon={<ChartMediumIcon size={ic} className="shrink-0" />} label="Progress" disabled={!isEnabled('wellness')} />
             {account}
           </>
         ) : (
           <>
-            <NavItem compact={compact} to="/explore" icon={<NoteIcon size={24} className="shrink-0" />} label="Explore" disabled={!isEnabled('explore')} />
-            <NavItem compact={compact} to="/sessions" icon={<PlaylistIcon size={24} className="shrink-0" />} label="Sessions" disabled={!isEnabled('sessions')} />
-            <NavItem compact={compact} to="/wellness" icon={<ChartMediumIcon size={24} className="shrink-0" />} label="My wellness" disabled={!isEnabled('wellness')} />
+            <NavItem compact={compact} to="/explore" icon={<NoteIcon size={ic} className="shrink-0" />} label="Explore" disabled={!isEnabled('explore')} />
+            <NavItem compact={compact} to="/sessions" icon={<PlaylistIcon size={ic} className="shrink-0" />} label="Sessions" disabled={!isEnabled('sessions')} />
+            <NavItem compact={compact} to="/wellness" icon={<ChartMediumIcon size={ic} className="shrink-0" />} label="My wellness" disabled={!isEnabled('wellness')} />
           </>
         )}
       </nav>
@@ -184,7 +186,7 @@ function SidebarContent({ onNavigate, onCollapse, compact = false }: { onNavigat
             }}
             className={`u-press flex items-center gap-12 rounded-12 text-text-primary hover:bg-background-elevated ${row}`}
           >
-            <UserAddIcon size={24} className="shrink-0 text-icon-default" />
+            <UserAddIcon size={ic} className="shrink-0 text-icon-default" />
             Invite a Friend
           </button>
         )}
@@ -197,7 +199,7 @@ function SidebarContent({ onNavigate, onCollapse, compact = false }: { onNavigat
             }}
             className={`u-press flex items-center gap-12 rounded-12 text-text-primary hover:bg-background-elevated ${row}`}
           >
-            <MessageQuestionIcon size={24} className="shrink-0 text-icon-default" />
+            <MessageQuestionIcon size={ic} className="shrink-0 text-icon-default" />
             Help
           </button>
         )}
@@ -214,11 +216,14 @@ function SidebarContent({ onNavigate, onCollapse, compact = false }: { onNavigat
 const RAIL_KEY = 'aurelia.sidebar.rail'
 
 /**
- * The desktop sidebar folded to an icon rail (U091, Eugene's request): the
+ * The desktop sidebar folded to an icon rail (U091, Eugene's request; 72px with one icon size since U094): the
  * same destinations as the full sidebar, each an icon with a short label,
  * New session as the round button on top, and Expand at the foot. Recent
  * sessions and the build badge live only in the full sidebar.
  */
+/** Every icon in the rail is this size, so nothing reads larger than its neighbour (U094). */
+const ICON = 20
+
 function SidebarRail({ onExpand }: { onExpand: () => void }) {
   const unread = useHasUnreadNotifications()
   const { isEnabled } = useFeatureFlags()
@@ -228,39 +233,39 @@ function SidebarRail({ onExpand }: { onExpand: () => void }) {
 
   const items: { to: string; label: string; icon: ReactNode; flag?: string }[] = v4
     ? [
-        { to: '/home', label: 'Create', icon: <Sparkles size={22} strokeWidth={1.5} /> },
-        { to: '/explore', label: 'Discover', icon: <NoteIcon size={24} />, flag: 'explore' },
-        { to: '/wellness', label: 'Progress', icon: <ChartMediumIcon size={24} />, flag: 'wellness' },
+        { to: '/home', label: 'Create', icon: <Sparkles size={ICON} strokeWidth={1.6} /> },
+        { to: '/explore', label: 'Discover', icon: <NoteIcon size={ICON} />, flag: 'explore' },
+        { to: '/wellness', label: 'Progress', icon: <ChartMediumIcon size={ICON} />, flag: 'wellness' },
       ]
     : [
-        { to: '/explore', label: 'Explore', icon: <NoteIcon size={24} />, flag: 'explore' },
-        { to: '/sessions', label: 'Sessions', icon: <PlaylistIcon size={24} />, flag: 'sessions' },
-        { to: '/wellness', label: 'Wellness', icon: <ChartMediumIcon size={24} />, flag: 'wellness' },
+        { to: '/explore', label: 'Explore', icon: <NoteIcon size={ICON} />, flag: 'explore' },
+        { to: '/sessions', label: 'Sessions', icon: <PlaylistIcon size={ICON} />, flag: 'sessions' },
+        { to: '/wellness', label: 'Wellness', icon: <ChartMediumIcon size={ICON} />, flag: 'wellness' },
       ]
   const account = signedIn
-    ? { to: '/profile', label: v4 ? 'Me' : 'Profile', icon: <PhotoCircle photo="avatar" size={24} gradient="conic-gradient(from 180deg, var(--color-blue-300), var(--color-gold-300), var(--color-blue-300))" />, flag: 'profile' }
-    : { to: '/login', label: 'Sign In', icon: <UserIcon size={24} />, flag: 'auth' }
+    ? { to: '/profile', label: v4 ? 'Me' : 'Profile', icon: <PhotoCircle photo="avatar" size={ICON} gradient="conic-gradient(from 180deg, var(--color-blue-300), var(--color-gold-300), var(--color-blue-300))" />, flag: 'profile' }
+    : { to: '/login', label: 'Sign In', icon: <UserIcon size={ICON} />, flag: 'auth' }
   const all = v4 ? [...items, account] : [account, ...items]
 
-  const tile = 'u-press flex w-full flex-col items-center gap-4 rounded-12 px-4 py-10 text-center text-[11px] leading-[14px] text-text-primary'
-  const iconButton = 'u-press relative flex size-44 items-center justify-center rounded-12 text-icon-default hover:bg-background-elevated'
+  const tile = 'u-press flex h-56 w-full flex-col items-center justify-center gap-4 rounded-12 text-[11px] font-medium leading-[14px] text-text-primary'
+  const iconButton = 'u-press relative flex size-40 items-center justify-center rounded-12 text-icon-default hover:bg-background-elevated'
 
   return (
-    <div className="flex h-full flex-col items-center gap-16 px-8 pb-20 pt-24">
+    <div className="flex h-full flex-col items-center gap-12 px-8 pb-16 pt-20">
       <Link to="/home" aria-label="Aurelia home" className="u-press">
-        <AureliaLogo iconSize={32} markOnly />
+        <AureliaLogo iconSize={28} markOnly />
       </Link>
       <button
         type="button"
         aria-label="New session"
         title="New session"
         onClick={() => gate('/chat', { fresh: true })}
-        className="u-press flex size-44 items-center justify-center rounded-full text-text-inverse"
+        className="u-press flex size-40 items-center justify-center rounded-full text-text-inverse"
         style={{ background: 'linear-gradient(90deg, #FF881B, #FFE682)' }}
       >
-        <Plus size={18} />
+        <Plus size={ICON} />
       </button>
-      <nav className="flex w-full flex-col gap-4">
+      <nav className="mt-4 flex w-full flex-col gap-4">
         {all.map((item) =>
           item.flag && !isEnabled(item.flag) ? (
             <span key={item.to} aria-disabled="true" title="Not part of this walkthrough" className={`${tile} pointer-events-none opacity-45`}>
@@ -271,7 +276,7 @@ function SidebarRail({ onExpand }: { onExpand: () => void }) {
             <NavLink
               key={item.to}
               to={item.to}
-              className={({ isActive }) => `${tile} ${isActive ? 'bg-background-elevated font-semibold' : 'hover:bg-background-elevated'}`}
+              className={({ isActive }) => `${tile} ${isActive ? 'bg-background-elevated' : 'hover:bg-background-elevated'}`}
             >
               <span className="text-icon-default">{item.icon}</span>
               {item.label}
@@ -282,22 +287,22 @@ function SidebarRail({ onExpand }: { onExpand: () => void }) {
       <div className="mt-auto flex flex-col items-center gap-4">
         {isEnabled('notifications') && (
           <button type="button" aria-label={unread ? 'Notifications, unread' : 'Notifications'} title="Notifications" onClick={() => gate('/notifications')} className={iconButton}>
-            {unread ? <NotificationActiveIcon size={24} /> : <NotificationIcon size={24} />}
+            {unread ? <NotificationActiveIcon size={ICON} /> : <NotificationIcon size={ICON} />}
           </button>
         )}
         {isEnabled('invite') && (
           <button type="button" aria-label="Invite a Friend" title="Invite a Friend" onClick={() => gate('/invite')} className={iconButton}>
-            <UserAddIcon size={24} />
+            <UserAddIcon size={ICON} />
           </button>
         )}
         {isEnabled('help') && (
           <Link to="/help" aria-label="Help" title="Help" className={iconButton}>
-            <MessageQuestionIcon size={24} />
+            <MessageQuestionIcon size={ICON} />
           </Link>
         )}
-        <div className="mt-8 flex w-full justify-center border-t border-border-default pt-8">
+        <div className="mt-4 flex w-full justify-center border-t border-border-default pt-8">
           <button type="button" aria-label="Expand sidebar" title="Expand sidebar" onClick={onExpand} className={iconButton}>
-            <PanelLeftOpen size={22} strokeWidth={1.5} />
+            <PanelLeftOpen size={ICON} strokeWidth={1.6} />
           </button>
         </div>
       </div>
@@ -363,7 +368,7 @@ export function AppLayout() {
             figure (`lg:left-[313px]`) to sit beside it rather than under it —
             changing one without the other leaves a gap or an overlap. */}
         <aside
-          className={`hidden shrink-0 border-r border-border-subtle bg-surface-default transition-[width] duration-200 lg:sticky lg:top-0 lg:block lg:h-screen ${rail ? 'w-[88px]' : RELEASES.sidebarRail ? 'w-[232px]' : 'w-[260px]'}`}
+          className={`hidden shrink-0 border-r border-border-subtle bg-surface-default transition-[width] duration-200 lg:sticky lg:top-0 lg:block lg:h-screen ${rail ? 'w-[72px]' : RELEASES.sidebarRail ? 'w-[232px]' : 'w-[260px]'}`}
         >
           {rail ? <SidebarRail onExpand={() => setRailMode(false)} /> : <SidebarContent compact={RELEASES.sidebarRail} onCollapse={RELEASES.sidebarRail ? () => setRailMode(true) : undefined} />}
         </aside>
