@@ -71,8 +71,10 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O41 | **Buyer agent v4 and the feedback group (J136)**: approve v4. (1) Each persona walks the feedback group's actual screens, step by step along the user journey, giving a predicted funnel and where people leave. (2) The ten metrics are scored per run, each marked predicted (agent) or measured (humans). (3) A human test plan is exported for the feedback group. (4) Real results are entered after the sessions and compared with the agent's. Needs: the feedback group's date, size, countries and ages, and which design version they will see | J136 | Product owner + Eugene |
 | O42 | **Move v5's wearable question to after the first session (J139)**: the re-run's one design change. It should keep v5's return gain without its onboarding loss. Check it with the feedback group, or build it as a v6 on staging first | J139 | Product owner |
 | O43 | **Eugene's business funnel model (J140)**: confirm the reading, then build in three parts. (1) Admin → Product lab → **Business funnel**: the lighthouse's four stages, adapted to Aurelia, laid over the user journey moments, with the market-fit metrics and the features behind each stage. (2) Buyer agent v5 walks that funnel, reports where people stall, bounce or are blocked per stage, and returns the feature that would move them on. (3) The wiki's Feedback group playbook, rewritten as the dual track (agents and humans, same stages, same metrics). Needs the Gemini deck as text or PDF (the share link is not readable from here) | J140 | Product owner + Eugene |
+| O44 | **Tie screens to tags (J143)**: make each screen the value of the "Product surface" tag, so a moment's surface and its screenshot are one fact. Add the missing screens (journal, progress, sharing), so every surface has a picture. Move readiness onto the screen. Keep moments as the when-and-why map and the business funnel as the how-far map; screens join the two | J143 | Product owner |
 | J141 | 2026-11-19 | Opinion | Is the business funnel a CMS like the user journey, and what is it for | — |
 | J142 | 2026-11-19 | Opinion | How the user journey, the business funnel and the buyer agent connect; what one iteration produces | — |
+| J143 | 2026-11-19 | Opinion | What the current user journey map is, and why screens should be tied to the tags (the Product surface tag) | — |
 | J140 | 2026-11-19 | Opinion | What Eugene wants: a business funnel map (the lighthouse's four stages over the user journey, with market-fit metrics), buyer agents that follow it and return fixes, a dual track with humans, and the feedback playbook updated (explained) | — |
 | J137 | 2026-11-19 | Question | Which production design version the buyer agent runs used | — |
 | J138 | 2026-11-19 | Opinion | The two design versions to test (buyer agent v4 and the feedback group) | — |
@@ -1731,3 +1733,24 @@ transcript and the update log. Everything from J018 on was written at the time.
   6. **After the feedback group,** the human results go in beside the agent's.
 - **On the user journey's role:** today it is 4 stages, 10 moments and 3 screens from Eugene's zip, not the app's real path. Proposed: re-base it on the 8 real steps, grouped into the 4 funnel stages. Then the journey, the funnel and the agent share one map.
 - **Open:** folded into O43.
+
+### J143 — What the user journey map is, and the screenshots
+- **Asked:** "oke berikan saya penjelasan dulu soal user journey map yang sekarnag. oke sepemahaman saya adalah ini untuk mengelompokan state user, kedalam user journey map semacam mapping. betul tidak ? tapi yang membuat saya bingung adalah bagian screenshot nya ? kalau menag ada screenshot harusnya tied ke taging nya ngga sih ? bagaimana menurutmu ?"
+- **Answered:** close, but it maps moments rather than states.
+  - **What it maps:** the situations in a person's day when they open Aurelia. There are 10, such as "Before sleep" or "Before an event", grouped into Reflect / Create / Experience / Share.
+  - **The person's state** is one of the 8 tag groups that classify each moment. The others are time of day, context, trigger, need, time available, product surface and readiness.
+  - **Screens are a third, separate thing:** 3 screenshots, each linked to moments by hand (U095).
+- **The owner is right about the screenshots:**
+  - **Two facts say the same thing:** a moment's "Product surface" tag, and which screen it is linked to.
+  - **They already disagree:**
+    - "In-the-moment conversation" (r2) is tagged Conversation but linked to the check-in screen;
+    - "After an event" (e3) and "Celebrate progress" (h1) have surface tags but no screen;
+    - Journal, Progress and Sharing have no screenshot at all.
+- **Proposed (O44):**
+  - The screen becomes the Product surface tag's value, so tagging a moment Session player shows the player's screenshot.
+  - Add the missing screens.
+  - Readiness belongs to the screen or feature, not the moment.
+- **This refines J142:**
+  - **Keep the moments** as the when-and-why map; personas and tags already use them.
+  - **Put the app's path** in the business funnel tab.
+  - **Screens are the hinge between the two.**

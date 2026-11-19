@@ -488,8 +488,8 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U104**, last J = **J142**, last
-O = **O43**. Before numbering, check the files for anything newer.
+**Numbering as of 17 Nov 2026:** last U = **U104**, last J = **J143**, last
+O = **O44**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
 push. `src/guides/records.test.ts` enforces it.
@@ -975,6 +975,7 @@ history can be read without opening four documents.
 | J140 | 2026-11-19 | Opinion | What Eugene wants: a business funnel map (the lighthouse's four stages over the user journey, with market-fit metrics), buyer agents that follow it and return fixes, a dual track with humans, and the feedback playbook updated (explained) | — |
 | J141 | 2026-11-19 | Opinion | Is the business funnel a CMS like the user journey, and what is it for | — |
 | J142 | 2026-11-19 | Opinion | How the user journey, the business funnel and the buyer agent connect; what one iteration produces | — |
+| J143 | 2026-11-19 | Opinion | What the current user journey map is, and why screens should be tied to the tags (the Product surface tag) | — |
 
 ### 17.2 Code changes (U)
 
