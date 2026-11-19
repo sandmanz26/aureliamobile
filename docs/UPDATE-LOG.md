@@ -141,9 +141,54 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U102 | `32cdc84` | 2026-11-19 | Buyer agent results by version (v1, v2 tabs, `?v=`). Each run states its criteria, the answer definitions and the agent's instructions; persona names open the full profile. v2: 36 personas (6 regions × 6 age bands, seed 2027, v1's incoherent three left out), local prices, language, connection, wellness (struggling / strained / coping), week-one use and day 30, calibration rules, segment tables. Staging only. | [patch](patches/U102-32cdc84.patch) |
 | U103 | `8a99797` | 2026-11-19 | Persona generator 2 (coherent: an `incoherence()` check finds 0 of 300; generator 1 kept byte-identical for runs v1–v2, 144 of 300 broken). Buyer agent v3: an A/B run on 36 generator-2 personas, today's offer against a proposal built from Eugene's documents and the research. Adds references, a control, changes traced to their source, and Try A/B by segment. Staging only. | [patch](patches/U103-8a99797.patch) |
 | U104 | `d229d88` | 2026-11-19 | Buyer agent results → By production version: the three agent rule sets × production v1–v3 (staging v3–v5). That is nine reports, each with a written summary, the ten market-fit metrics (predicted or estimate), a step-by-step funnel, the leave reasons and every persona's walk, plus an overall summary. The rules are written as code and checked against the hand-played runs (21/36 and 20/36 the same, 0 opposite). Staging only. | [patch](patches/U104-d229d88.patch) |
+| U105 | `6f24a04` | 2026-11-19 | User journey: with tags on, screens are tied to the Product surface tag (a moment shows its surfaces' screens), with a Product surfaces strip. Adds three real screenshots (Journal, Progress, Share sheet), persona demand per moment (of 300), saved maps upgraded in place, and a guided overlay tour (9 steps, opens on the first visit, Guide button to replay). | [patch](patches/U105-6f24a04.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U105 — User journey that works, with a guide
+
+- **Commit:** `6f24a04` · pushed 2026-11-19 UTC · `web_app` + `admin_cms`.
+  - The surface link and the surfaces strip are on where `RELEASES.journeyTags` is on (staging).
+  - The guide and the persona demand are not flagged: they reach production with its next push, like the rest of U092/U095.
+- **Patch:** [patches/U105-6f24a04.patch](patches/U105-6f24a04.patch)
+- **Request:** "oke saya rasa setuju tapi roast lagi as head of product, saya mau user journey yang ada sekarang benar benar bisa berfungsi. selain itu karena cukup kompleks ketika visit user journey saya mau ada semacam guide semacam kaya overlay dan ada guideline nya itu. untuk memberikan gambaran cara pakai nya."
+- **The roast:**
+  1. **Two facts said which screen serves a moment:** the Product surface tag and the screen's own checklist. They disagreed: r2 was tagged Conversation but linked to the check-in screen.
+  2. **Screens sat under one stage,** though a screen serves moments in many. The player served four moments across stages.
+  3. **Journal, Progress and Sharing were surfaces with no screenshot,** so three moments showed "no screen".
+  4. **Nothing on the map said which moments matter.** Every card looked equally important, though the personas already record which moments they have.
+  5. **Four tabs, eight tag groups and a side panel, with no explanation.** The owner and Eugene both found it confusing (J122–J127, J143).
+  6. **Edits stay in one browser** (unchanged; it needs a backend, O36). The guide says so, and points to Export.
+  - **Readiness stays on the moment** (reconsidered from O44): it rates the moment's suggested feature, not the screen.
+- **Changed:**
+  - `src/admin/data/userJourney.ts`:
+    - a screen has a `surface` (a Product surface tag id);
+    - three new screens: s4 Journal, s5 Progress, s6 Share sheet, with real screenshots taken from staging v5 at 402px;
+    - `upgradeJourney` gives a saved map its surfaces and adds the new screens, keeping its edits;
+    - `allScreens`, `screensOnSurfaces`, `surfacesOf`.
+  - `public/admin/user-journey/screen-{journal,progress,share}.webp`.
+  - `src/admin/components/GuideTour.tsx`: a generic overlay tour. It dims the page, lights a window around one element at a time (by `data-tour`) and shows a card with Back / Next; Escape and the arrow keys work. It is portaled `adm-root`.
+  - `src/admin/pages/UserJourneyPage.tsx`:
+    - with tags on, a moment's screens come from its surface tags;
+    - each stage shows "Screens these moments use";
+    - a Product surfaces strip shows each surface with its screen, how many moments it serves, and a red "Add its screen" card for a missing one;
+    - the screen panel picks its surface and lists the moments it serves;
+    - "N of 300 personas" on each card and in the panel;
+    - a new description;
+    - the Guide button;
+    - the 9-step tour: what the map is for, stages, reading a moment, tags and coverage, surfaces, filters, saving, a five-step working session, and how to reopen it. It opens on the first visit (`aurelia.admin.journeyGuide`).
+  - `userJourney.test.ts`: six screens, surfaces, and the upgrade keeping edits.
+- **Verified:**
+  - `npm run check` passes (174 tests).
+  - Staging build, 1440px light and dark:
+    - the guide opens on the first visit, walks 9 steps and stays closed after a reload;
+    - the surfaces strip shows 6 screens;
+    - r2 now shows Conversation;
+    - the Journal screen serves c1, c2 and e3;
+    - no errors.
+  - At 402px, the guide fits and the page does not overflow.
+- **Revert:** `git revert --no-commit 6f24a04 && git checkout HEAD -- docs/`.
 
 ### U104 — Buyer agent re-run on production v1–v3
 

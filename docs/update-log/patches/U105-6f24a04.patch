@@ -1,0 +1,1615 @@
+From 6f24a04e256ca7bdedea239ba2d1a62f241ae1b7 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Thu, 19 Nov 2026 16:07:51 +0000
+Subject: [PATCH] User journey: screens tied to the Product surface tag,
+ persona demand per moment, a guided tour
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ public/admin/user-journey/screen-journal.webp | Bin 0 -> 8468 bytes
+ .../admin/user-journey/screen-progress.webp   | Bin 0 -> 12022 bytes
+ public/admin/user-journey/screen-share.webp   | Bin 0 -> 20528 bytes
+ src/admin/components/GuideTour.tsx            | 127 ++++++++
+ src/admin/data/userJourney.test.ts            |  39 ++-
+ src/admin/data/userJourney.ts                 |  58 +++-
+ src/admin/pages/UserJourneyPage.tsx           | 271 ++++++++++++++++--
+ 7 files changed, 464 insertions(+), 31 deletions(-)
+ create mode 100644 public/admin/user-journey/screen-journal.webp
+ create mode 100644 public/admin/user-journey/screen-progress.webp
+ create mode 100644 public/admin/user-journey/screen-share.webp
+ create mode 100644 src/admin/components/GuideTour.tsx
+
+diff --git a/public/admin/user-journey/screen-journal.webp b/public/admin/user-journey/screen-journal.webp
+new file mode 100644
+index 0000000000000000000000000000000000000000..86e365da853c5c4b5a5f28378cce173e5c05bc68
+GIT binary patch
+literal 8468
+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
+Vb?^3gamA4tcN2Or^@S7w_&=GyZ0i63
+
+literal 0
+HcmV?d00001
+
+diff --git a/public/admin/user-journey/screen-progress.webp b/public/admin/user-journey/screen-progress.webp
+new file mode 100644
+index 0000000000000000000000000000000000000000..1d9fc318b0b22d3705fadcd02cb5a382a55fddac
+GIT binary patch
+literal 12022
+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
+N&e;WAd3PY7{{>DHXH)<H
+
+literal 0
+HcmV?d00001
+
+diff --git a/public/admin/user-journey/screen-share.webp b/public/admin/user-journey/screen-share.webp
+new file mode 100644
+index 0000000000000000000000000000000000000000..6294da1c5ddb0280f2d1ecd4caca259e973397d7
+GIT binary patch
+literal 20528
+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
+DqHGln
+
+literal 0
+HcmV?d00001
+
+diff --git a/src/admin/components/GuideTour.tsx b/src/admin/components/GuideTour.tsx
+new file mode 100644
+index 0000000..170797c
+--- /dev/null
++++ b/src/admin/components/GuideTour.tsx
+@@ -0,0 +1,127 @@
++import { ArrowLeft, ArrowRight, X } from 'lucide-react'
++import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
++import { createPortal } from 'react-dom'
++
++export interface TourStep {
++  /** The `data-tour` value of the element to point at; none centres the card. */
++  target?: string
++  title: string
++  body: ReactNode
++}
++
++interface Rect {
++  top: number
++  left: number
++  width: number
++  height: number
++}
++
++const PAD = 6
++const CARD = 360
++
++/**
++ * A guided tour over an admin page (U105): dims the page, cuts a lit window
++ * around one element at a time and explains it in a card beside it. Steps
++ * point at elements by `data-tour`, so the page only marks what to show.
++ * Portaled and `adm-root`, like Modal, for the theme and the dark option
++ * lists. Escape closes it; the arrow keys move between steps.
++ */
++export function GuideTour({ steps, onClose }: { steps: TourStep[]; onClose: () => void }) {
++  const [i, setI] = useState(0)
++  const [rect, setRect] = useState<Rect | null>(null)
++  const [viewport, setViewport] = useState({ w: window.innerWidth, h: window.innerHeight })
++  const step = steps[i]
++  const last = i === steps.length - 1
++
++  useEffect(() => {
++    const el = step.target ? document.querySelector<HTMLElement>(`[data-tour="${step.target}"]`) : null
++    el?.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' })
++    // Measured after scrolling settles; a step without a target centres the card.
++    const measure = () => {
++      if (!el) return setRect(null)
++      const r = el.getBoundingClientRect()
++      setRect({ top: r.top - PAD, left: r.left - PAD, width: r.width + PAD * 2, height: r.height + PAD * 2 })
++      setViewport({ w: window.innerWidth, h: window.innerHeight })
++    }
++    const t = window.setTimeout(measure, 60)
++    window.addEventListener('resize', measure)
++    window.addEventListener('scroll', measure, true)
++    return () => {
++      window.clearTimeout(t)
++      window.removeEventListener('resize', measure)
++      window.removeEventListener('scroll', measure, true)
++    }
++  }, [step.target])
++
++  useEffect(() => {
++    function onKey(e: KeyboardEvent) {
++      if (e.key === 'Escape') onClose()
++      if (e.key === 'ArrowRight') setI((x) => Math.min(steps.length - 1, x + 1))
++      if (e.key === 'ArrowLeft') setI((x) => Math.max(0, x - 1))
++    }
++    document.addEventListener('keydown', onKey)
++    return () => document.removeEventListener('keydown', onKey)
++  }, [onClose, steps.length])
++
++  const width = Math.min(CARD, viewport.w - 32)
++  let cardStyle: CSSProperties = { width, left: (viewport.w - width) / 2, top: Math.max(16, viewport.h / 2 - 160) }
++  if (rect) {
++    const below = rect.top + rect.height + 12
++    const fitsBelow = below + 240 < viewport.h
++    const left = Math.min(Math.max(16, rect.left), viewport.w - width - 16)
++    cardStyle = fitsBelow ? { width, left, top: below } : { width, left, top: Math.max(16, rect.top - 12 - 240) }
++  }
++
++  return createPortal(
++    <div className="adm-root fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label={`Guide: ${step.title}`}>
++      {rect ? (
++        <div
++          className="pointer-events-none fixed rounded-12 ring-2 ring-adm-accent transition-all duration-200"
++          style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height, boxShadow: '0 0 0 9999px rgba(15, 12, 8, 0.55)' }}
++          aria-hidden="true"
++        />
++      ) : (
++        <div className="fixed inset-0 bg-[rgba(15,12,8,0.55)]" aria-hidden="true" />
++      )}
++      {/* Clicks outside the card do nothing, so a stray click does not lose the place. */}
++      <div className="fixed inset-0" aria-hidden="true" />
++      <div className="fixed flex flex-col gap-10 rounded-12 border border-adm-line bg-adm-surface p-16 shadow-2xl" style={cardStyle}>
++        <div className="flex items-start justify-between gap-8">
++          <div>
++            <p className="text-11 font-medium tabular-nums text-adm-muted">
++              Step {i + 1} of {steps.length}
++            </p>
++            <h2 className="mt-2 text-15 font-semibold text-adm-ink">{step.title}</h2>
++          </div>
++          <button type="button" aria-label="Close the guide" onClick={onClose} className="flex size-28 shrink-0 items-center justify-center rounded-8 text-adm-muted hover:bg-adm-hover hover:text-adm-ink">
++            <X size={16} />
++          </button>
++        </div>
++        <div className="text-13 leading-[20px] text-adm-ink-2">{step.body}</div>
++        <div className="flex items-center gap-8 pt-4">
++          <div className="flex gap-4" aria-hidden="true">
++            {steps.map((s, k) => (
++              <span key={s.title} className={`h-6 rounded-full ${k === i ? 'w-16 bg-adm-ink' : 'w-6 bg-adm-line'}`} />
++            ))}
++          </div>
++          <div className="ml-auto flex gap-6">
++            {i > 0 && (
++              <button type="button" onClick={() => setI(i - 1)} className="inline-flex h-30 items-center gap-4 rounded-8 border border-adm-line px-10 text-12 font-medium text-adm-ink hover:bg-adm-hover">
++                <ArrowLeft size={12} /> Back
++              </button>
++            )}
++            <button
++              type="button"
++              onClick={() => (last ? onClose() : setI(i + 1))}
++              className="inline-flex h-30 items-center gap-4 rounded-8 bg-adm-ink px-12 text-12 font-medium text-adm-surface hover:opacity-90"
++              autoFocus
++            >
++              {last ? 'Done' : 'Next'} {!last && <ArrowRight size={12} />}
++            </button>
++          </div>
++        </div>
++      </div>
++    </div>,
++    document.body,
++  )
++}
+diff --git a/src/admin/data/userJourney.test.ts b/src/admin/data/userJourney.test.ts
+index 767f212..7eb45ed 100644
+--- a/src/admin/data/userJourney.test.ts
++++ b/src/admin/data/userJourney.test.ts
+@@ -14,6 +14,9 @@ import {
+   unlinkMoment,
+   updateItem,
+   updateStage,
++  screensOnSurfaces,
++  surfacesOf,
++  upgradeJourney,
+ } from './userJourney'
+ import { toBundle, parseAnyImport } from './journeyBundle'
+ 
+@@ -21,25 +24,25 @@ import { toBundle, parseAnyImport } from './journeyBundle'
+ function oldShape() {
+   return {
+     ...INITIAL_JOURNEY,
+-    stages: INITIAL_JOURNEY.stages.map((s) => ({ ...s, screens: s.screens.map(({ momentIds: _m, link: _l, ...rest }) => rest) })),
++    stages: INITIAL_JOURNEY.stages.map((s) => ({ ...s, screens: s.screens.filter((sc) => ['s1', 's2', 's3'].includes(sc.id)).map(({ momentIds: _m, link: _l, surface: _s, ...rest }) => rest) })),
+   }
+ }
+ 
+ describe('user journey map', () => {
+-  it('starts with four stages, ten moments and three screens', () => {
++  it('starts with four stages, ten moments and six screens', () => {
+     expect(JourneyMapSchema.safeParse(INITIAL_JOURNEY).success).toBe(true)
+-    expect(counts(INITIAL_JOURNEY)).toEqual({ stages: 4, moments: 10, screens: 3 })
++    expect(counts(INITIAL_JOURNEY)).toEqual({ stages: 4, moments: 10, screens: 6 })
+   })
+ 
+   it('adds, edits and removes an item without touching other stages', () => {
+     let map = addItem(INITIAL_JOURNEY, 'share', 'screens', 'x1')
+-    expect(counts(map).screens).toBe(4)
+-    const added = map.stages[3].screens[0]
++    expect(counts(map).screens).toBe(7)
++    const added = map.stages[3].screens[2]
+     map = updateItem(map, 'share', 'screens', { ...added, title: 'Recap card' })
+-    expect(map.stages[3].screens[0].title).toBe('Recap card')
++    expect(map.stages[3].screens[2].title).toBe('Recap card')
+     expect(map.stages[0]).toBe(INITIAL_JOURNEY.stages[0])
+     map = removeItem(map, 'share', 'screens', 'x1')
+-    expect(counts(map).screens).toBe(3)
++    expect(counts(map).screens).toBe(6)
+   })
+ 
+   it('keeps a stage title when the new one is blank', () => {
+@@ -79,7 +82,7 @@ describe('user journey map', () => {
+       for (const id of sc.momentIds ?? []) expect(ids.has(id)).toBe(true)
+     }
+     expect(screensFor(INITIAL_JOURNEY, 'r1').map((x) => x.screen.id)).toEqual(['s1'])
+-    expect(screensFor(INITIAL_JOURNEY, 'e3')).toEqual([])
++    expect(screensFor(INITIAL_JOURNEY, 'e3').map((x) => x.screen.id)).toEqual(['s4'])
+   })
+ 
+   it('links and unlinks a screen to moments in any stage', () => {
+@@ -90,7 +93,7 @@ describe('user journey map', () => {
+     expect(toggleMoment(linked, 'r1', false).momentIds).toEqual(['r2', 'h1'])
+     expect(toggleMoment({ ...s1, momentIds: undefined }, 'c1', true).momentIds).toEqual(['c1'])
+     const map = updateItem(INITIAL_JOURNEY, 'reflect', 'screens', linked)
+-    expect(screensFor(map, 'h1')).toEqual([{ stageId: 'reflect', screen: linked }])
++    expect(screensFor(map, 'h1')).toContainEqual({ stageId: 'reflect', screen: linked })
+   })
+ 
+   it('removes a deleted moment from every screen, and ignores links to moments that are gone', () => {
+@@ -118,4 +121,22 @@ describe('user journey map', () => {
+     expect(linkHref('')).toBeNull()
+     expect(linkHref(undefined)).toBeNull()
+   })
++
++  it('ties screens to the Product surface tag (U105)', () => {
++    const surfaces = new Set(INITIAL_JOURNEY.stages.flatMap((st) => st.screens.map((sc) => sc.surface)))
++    expect([...surfaces].sort()).toEqual(['chat', 'checkin', 'journal', 'player', 'progress', 'share'])
++    expect(surfacesOf(['time:night', 'surface:player', 'surface:journal'])).toEqual(['player', 'journal'])
++    expect(screensOnSurfaces(INITIAL_JOURNEY, ['player']).map((x) => x.screen.id)).toEqual(['s3'])
++    expect(screensOnSurfaces(INITIAL_JOURNEY, ['progress', 'share']).map((x) => x.screen.id)).toEqual(['s5', 's6'])
++  })
++
++  it('upgrades a map saved before surfaces, keeping its edits', () => {
++    const old = oldShape()
++    old.stages[0].screens[0].title = 'My edited check-in'
++    const up = upgradeJourney(JourneyMapSchema.parse(JSON.parse(JSON.stringify(old))))
++    expect(up.stages[0].screens[0]).toMatchObject({ title: 'My edited check-in', surface: 'checkin' })
++    expect(counts(up).screens).toBe(6)
++    expect(upgradeJourney(up)).toEqual(up)
++    expect(upgradeJourney(INITIAL_JOURNEY)).toEqual(INITIAL_JOURNEY)
++  })
+ })
+diff --git a/src/admin/data/userJourney.ts b/src/admin/data/userJourney.ts
+index 50afcf0..1bb02c4 100644
+--- a/src/admin/data/userJourney.ts
++++ b/src/admin/data/userJourney.ts
+@@ -29,6 +29,13 @@ export const JourneyScreenSchema = JourneyItemSchema.extend({
+   momentIds: z.array(z.string()).optional(),
+   /** Where it lives: an app route (`/play/...`) or a Figma URL. */
+   link: z.string().optional(),
++  /**
++   * The Product surface tag this screen shows (U105): a tag id in the
++   * journey tags' `surface` group. With tags on, a moment's screens are the
++   * screens of the surfaces it is tagged with, so the tag and the picture
++   * can no longer disagree. `momentIds` is kept for maps without tags.
++   */
++  surface: z.string().optional(),
+ })
+ 
+ export const JourneyStageSchema = z.object({
+@@ -67,7 +74,7 @@ export const INITIAL_JOURNEY: JourneyMap = {
+         { id: 'r1', title: 'Morning check-in', description: 'Start the day with a lightweight emotional pulse check and a simple recommendation based on mood, energy, or intent.', feature: 'Mood check-in + personalized daily recommendation', image: `${IMG}/scene-01.webp` },
+         { id: 'r2', title: 'In-the-moment conversation', description: 'Reach for support during the day through a conversational flow that helps users name what they feel and respond in context.', feature: 'AI chat support + emotional labeling', image: `${IMG}/scene-02.webp` },
+       ],
+-      screens: [{ id: 's1', title: 'Reflection / check-in', description: 'The daily check-in: how you feel today, whether the last session helped, an optional note.', feature: 'Check-in, journaling, and adaptive guidance', image: `${IMG}/screen-3.webp`, momentIds: ['r1', 'r2'] }],
++      screens: [{ id: 's1', surface: 'checkin', title: 'Reflection / check-in', description: 'The daily check-in: how you feel today, whether the last session helped, an optional note.', feature: 'Check-in, journaling, and adaptive guidance', image: `${IMG}/screen-3.webp`, momentIds: ['r1', 'r2'] }, { id: 's4', surface: 'journal', title: 'Journal', description: 'A session’s Journal tab: the week, today’s check-in and the note under it.', feature: 'Journal under each check-in', image: `${IMG}/screen-journal.webp`, momentIds: ['c1', 'e3'], link: '/progress/dolphins-frequency?tab=journal' }],
+     },
+     {
+       id: 'create',
+@@ -78,7 +85,7 @@ export const INITIAL_JOURNEY: JourneyMap = {
+         { id: 'c1', title: 'Create while commuting', description: 'Use transit time to capture thoughts, respond to prompts, and turn emotional momentum into something tangible inside the app.', feature: 'Prompt-based journaling + quick capture', image: `${IMG}/scene-03.webp` },
+         { id: 'c2', title: 'Create during work breaks', description: 'Dip into a short creative ritual between tasks to reset focus and transform mental load into reflection or expression.', feature: 'Micro-journaling + guided creation', image: `${IMG}/scene-04.webp` },
+       ],
+-      screens: [{ id: 's2', title: 'Create / conversation', description: 'The cockpit: the next chapter and the changes Aurelia proposes for it.', feature: 'Creative prompts + conversational flow', image: `${IMG}/screen-1.webp`, momentIds: ['c1', 'c2'] }],
++      screens: [{ id: 's2', surface: 'chat', title: 'Create / conversation', description: 'The cockpit: the next chapter and the changes Aurelia proposes for it.', feature: 'Creative prompts + conversational flow', image: `${IMG}/screen-1.webp`, momentIds: ['c1', 'c2'] }],
+     },
+     {
+       id: 'experience',
+@@ -92,7 +99,7 @@ export const INITIAL_JOURNEY: JourneyMap = {
+         { id: 'e4', title: 'Support while commuting', description: 'Use transition moments to decompress, reflect, or continue a guided session while on the move.', feature: 'On-the-go listening + session continuation', image: `${IMG}/scene-09.webp` },
+         { id: 'e5', title: 'Before sleep', description: 'Wind down with a gentle end-of-day ritual that helps release the day and prepare the nervous system for sleep.', feature: 'Sleep wind-down + evening reflection', image: `${IMG}/scene-10.webp` },
+       ],
+-      screens: [{ id: 's3', title: 'Experience / session', description: 'The player: a guided session playing, with its cue and progress.', feature: 'Guided experience + progress state', image: `${IMG}/screen-2.webp`, momentIds: ['e1', 'e2', 'e4', 'e5'] }],
++      screens: [{ id: 's3', surface: 'player', title: 'Experience / session', description: 'The player: a guided session playing, with its cue and progress.', feature: 'Guided experience + progress state', image: `${IMG}/screen-2.webp`, momentIds: ['e1', 'e2', 'e4', 'e5'] }],
+     },
+     {
+       id: 'share',
+@@ -102,11 +109,54 @@ export const INITIAL_JOURNEY: JourneyMap = {
+       moments: [
+         { id: 'h1', title: 'Celebrate progress', description: 'When users feel better or notice change, invite them to reflect on progress and share outcomes in a safe, intentional way.', feature: 'Progress recap + optional sharing', image: `${IMG}/scene-11.webp` },
+       ],
+-      screens: [],
++      screens: [
++        { id: 's5', surface: 'progress', title: 'Progress', description: 'Progress in words from your own check-ins (v5), before the first session.', feature: 'Progress told in words, a report every two weeks', image: `${IMG}/screen-progress.webp`, momentIds: ['h1'], link: '/wellness' },
++        { id: 's6', surface: 'share', title: 'Share sheet', description: 'Sharing a session from the player: social targets and a link.', feature: 'Share a session', image: `${IMG}/screen-share.webp`, momentIds: ['h1'], link: '/play/dolphins-frequency' },
++      ],
+     },
+   ],
+ }
+ 
++/** The surface each original screen shows, for maps saved before screens had one. */
++const ORIGINAL_SURFACE: Record<string, string> = { s1: 'checkin', s2: 'chat', s3: 'player', s4: 'journal', s5: 'progress', s6: 'share' }
++
++/**
++ * Brings a map saved in this browser up to date (U105) without losing its
++ * edits: original screens get their surface, and the screens added since
++ * (journal, progress, sharing) are added if no screen shows that surface yet.
++ */
++export function upgradeJourney(map: JourneyMap): JourneyMap {
++  const withSurface: JourneyMap = {
++    ...map,
++    stages: map.stages.map((s) => ({ ...s, screens: s.screens.map((sc) => (sc.surface || !ORIGINAL_SURFACE[sc.id] ? sc : { ...sc, surface: ORIGINAL_SURFACE[sc.id] })) })),
++  }
++  const shown = new Set(withSurface.stages.flatMap((s) => s.screens.map((sc) => sc.surface)))
++  const ids = new Set(withSurface.stages.flatMap((s) => s.screens.map((sc) => sc.id)))
++  let next = withSurface
++  for (const stage of INITIAL_JOURNEY.stages)
++    for (const sc of stage.screens) {
++      if (ids.has(sc.id) || shown.has(sc.surface)) continue
++      const target = next.stages.find((s) => s.id === stage.id) ?? next.stages[next.stages.length - 1]
++      next = { ...next, stages: next.stages.map((s) => (s.id === target.id ? { ...s, screens: [...s.screens, sc] } : s)) }
++    }
++  return next
++}
++
++/** Every screen, with the stage it is filed under. */
++export function allScreens(map: JourneyMap): { stageId: string; screen: JourneyScreen }[] {
++  return map.stages.flatMap((s) => s.screens.map((screen) => ({ stageId: s.id, screen })))
++}
++
++/** The screens that show any of these surfaces (tag ids of the `surface` group). */
++export function screensOnSurfaces(map: JourneyMap, surfaces: string[]): { stageId: string; screen: JourneyScreen }[] {
++  return allScreens(map).filter(({ screen }) => !!screen.surface && surfaces.includes(screen.surface))
++}
++
++/** The surfaces a moment is tagged with, from its tag ids ("surface:player"). */
++export function surfacesOf(tagIds: string[]): string[] {
++  return tagIds.filter((t) => t.startsWith('surface:')).map((t) => t.slice('surface:'.length))
++}
++
+ export function counts(map: JourneyMap) {
+   return {
+     stages: map.stages.length,
+diff --git a/src/admin/pages/UserJourneyPage.tsx b/src/admin/pages/UserJourneyPage.tsx
+index 6c062ca..3bec34f 100644
+--- a/src/admin/pages/UserJourneyPage.tsx
++++ b/src/admin/pages/UserJourneyPage.tsx
+@@ -1,10 +1,12 @@
+-import { AlertCircle, Download, ExternalLink, ImagePlus, MoreHorizontal, Pencil, Plus, RotateCcw, Smartphone, Upload } from 'lucide-react'
++import { AlertCircle, CircleHelp, Download, ExternalLink, ImagePlus, MoreHorizontal, Pencil, Plus, RotateCcw, Smartphone, Upload, Users } from 'lucide-react'
+ import { useEffect, useMemo, useState, type ChangeEvent, type CSSProperties } from 'react'
+ import { useSearchParams } from 'react-router-dom'
++import { GuideTour, type TourStep } from '../components/GuideTour'
+ import { Modal } from '../components/Modal'
+ import { SidePanel } from '../components/SidePanel'
+ import { Badge, Button, FormField, PageHeader, inputClass, textareaClass, type Tone } from '../components/ui'
+ import { parseAnyImport, toBundle } from '../data/journeyBundle'
++import { generatePersonas } from '../data/personas'
+ import {
+   INITIAL_TAGS,
+   JourneyTagsSchema,
+@@ -29,6 +31,10 @@ import {
+   linkHref,
+   removeItem,
+   screensFor,
++  screensOnSurfaces,
++  surfacesOf,
++  upgradeJourney,
++  allScreens,
+   servedMoments,
+   toggleMoment,
+   unlinkMoment,
+@@ -38,7 +44,7 @@ import {
+   type JourneyMap,
+   type JourneyScreen,
+ } from '../data/userJourney'
+-import { readJson, writeJson } from '../../lib/storage'
++import { readJson, readString, writeJson, writeString } from '../../lib/storage'
+ import { RELEASES } from '../../versions/releases'
+ import { CoverageView, GroupEditor, TagFields, TagSetupView, TagsTable } from './journey/TagViews'
+ 
+@@ -60,6 +66,14 @@ interface Editing {
+   isNew: boolean
+ }
+ 
++/** How many of the 300 personas hit each moment: demand, for deciding what matters (U105). */
++const DEMAND = (() => {
++  const m = new Map<string, number>()
++  for (const p of generatePersonas()) for (const id of p.moments) m.set(id, (m.get(id) ?? 0) + 1)
++  return m
++})()
++const GUIDE_KEY = 'aurelia.admin.journeyGuide'
++
+ const READINESS_TONE: Record<string, Tone> = { live: 'good', partial: 'info', concept: 'warning' }
+ const EMPTY: Assignment = { tags: [], status: 'proposed', note: '' }
+ const uid = () => Math.random().toString(36).slice(2, 10)
+@@ -99,7 +113,8 @@ export function UserJourneyPage() {
+   const requested = params.get('view') as View | null
+   const view: View = tagsOn && requested && VIEWS.some((v) => v.id === requested) ? requested : 'map'
+ 
+-  const [map, setMap] = useState<JourneyMap>(() => readJson(STORAGE_KEY, JourneyMapSchema, INITIAL_JOURNEY))
++  const [map, setMap] = useState<JourneyMap>(() => upgradeJourney(readJson(STORAGE_KEY, JourneyMapSchema, INITIAL_JOURNEY)))
++  const [guide, setGuide] = useState(() => readString(GUIDE_KEY) !== 'seen')
+   const [tags, setTags] = useState<JourneyTags>(() => readJson(TAGS_STORAGE_KEY, JourneyTagsSchema, INITIAL_TAGS))
+   const [stageFilter, setStageFilter] = useState<string | null>(null)
+   const [tagFilter, setTagFilter] = useState('')
+@@ -118,6 +133,16 @@ export function UserJourneyPage() {
+ 
+   const moments = useMemo(() => taggedMoments(map, tags), [map, tags])
+   const byId = useMemo(() => new Map(moments.map((m) => [m.id, m])), [moments])
++  const surfaceGroup = tags.groups.find((g) => g.id === 'surface')
++  /** With tags on, a moment's screens come from its Product surface tags (U105); without, from the screen's own list. */
++  const screensOf = (momentId: string, tagIds?: string[]) =>
++    tagsOn ? screensOnSurfaces(map, surfacesOf(tagIds ?? byId.get(momentId)?.assignment.tags ?? [])) : screensFor(map, momentId)
++  const usersOfSurface = (surface: string) => moments.filter((m) => m.assignment.tags.includes(`surface:${surface}`))
++
++  function closeGuide() {
++    setGuide(false)
++    writeString(GUIDE_KEY, 'seen')
++  }
+ 
+   function saveMap(next: JourneyMap) {
+     setMap(next)
+@@ -137,11 +162,11 @@ export function UserJourneyPage() {
+     setEditing({ kind, stageId, item, assignment: byId.get(item.id)?.assignment ?? EMPTY, isNew: false })
+   }
+ 
+-  function openNew(kind: ItemKind, stageId: string) {
++  function openNew(kind: ItemKind, stageId: string, surface?: string) {
+     setEditing({
+       kind,
+       stageId,
+-      item: { id: uid(), title: '', description: '', feature: '', image: kind === 'moments' ? NEW_MOMENT_IMAGE : '' },
++      item: { id: uid(), title: '', description: '', feature: '', image: kind === 'moments' ? NEW_MOMENT_IMAGE : '', ...(surface ? { surface } : {}) },
+       assignment: EMPTY,
+       isNew: true,
+     })
+@@ -150,8 +175,8 @@ export function UserJourneyPage() {
+   function saveEditing(e: Editing) {
+     const base = { ...e.item, title: e.item.title.trim() || (e.kind === 'moments' ? 'Untitled moment' : 'Untitled screen'), description: e.item.description.trim(), feature: e.item.feature.trim() }
+     // Only a screen keeps what it serves and where it lives; a moment saves as it always did.
+-    const { momentIds, link, ...plain } = base
+-    const item: JourneyScreen = e.kind === 'screens' ? { ...plain, momentIds: momentIds ?? [], link: link?.trim() ?? '' } : plain
++    const { momentIds, link, surface, ...plain } = base
++    const item: JourneyScreen = e.kind === 'screens' ? { ...plain, momentIds: momentIds ?? [], link: link?.trim() ?? '', ...(surface ? { surface } : {}) } : plain
+     let next = map
+     if (e.isNew) {
+       next = { ...map, stages: map.stages.map((s) => (s.id === e.stageId ? { ...s, [e.kind]: [...s[e.kind], item] } : s)) }
+@@ -225,13 +250,16 @@ export function UserJourneyPage() {
+     <div className="flex flex-col gap-16">
+       <PageHeader
+         title="User journey"
+-        description="When people reach for Aurelia, in four stages: the moments that bring them, the feature each moment suggests, and the screens that serve it. Select any moment to edit it."
++        description="When, where and why people reach for Aurelia, and what serves each moment. Use it to decide what to design or build next: a moment many personas hit, with no screen or only a concept behind it, is the gap. New here? Open the guide."
+         actions={
+           <div className="relative flex gap-8">
++            <Button size="sm" icon={<CircleHelp size={13} />} onClick={() => setGuide(true)} data-tour="guide">
++              Guide
++            </Button>
+             <Button size="sm" variant="primary" icon={<Plus size={13} />} onClick={() => openNew('moments', stageFilter ?? map.stages[0].id)}>
+               Add moment
+             </Button>
+-            <Button size="sm" icon={<MoreHorizontal size={14} />} aria-expanded={moreOpen} onClick={() => setMoreOpen((o) => !o)}>
++            <Button size="sm" icon={<MoreHorizontal size={14} />} aria-expanded={moreOpen} onClick={() => setMoreOpen((o) => !o)} data-tour="more">
+               More
+             </Button>
+             {moreOpen && (
+@@ -292,7 +320,7 @@ export function UserJourneyPage() {
+ 
+       {tagsOn && (
+         <div className="flex flex-wrap items-center justify-between gap-10">
+-          <div className="flex flex-wrap gap-2 rounded-12 border border-adm-line bg-adm-surface p-4" role="tablist" aria-label="View">
++          <div className="flex flex-wrap gap-2 rounded-12 border border-adm-line bg-adm-surface p-4" role="tablist" aria-label="View" data-tour="views">
+             {VIEWS.map((v) => (
+               <button
+                 key={v.id}
+@@ -315,7 +343,7 @@ export function UserJourneyPage() {
+ 
+       {view === 'map' && (
+         <>
+-          <div className="flex flex-wrap items-center gap-8">
++          <div className="flex flex-wrap items-center gap-8" data-tour="filters">
+             <div className="flex flex-wrap gap-4" role="group" aria-label="Stage">
+               {[{ id: null as string | null, title: 'All stages', color: '' }, ...map.stages].map((s) => (
+                 <button
+@@ -357,7 +385,7 @@ export function UserJourneyPage() {
+                 const shown = s.moments.filter((m) => !tagFilter || byId.get(m.id)?.assignment.tags.includes(tagFilter))
+                 return (
+                   <section key={s.id} className="flex flex-col border-r border-adm-line last:border-r-0" aria-label={`${s.title} stage`}>
+-                    <header className="relative border-b border-adm-line px-16 pb-14 pt-16">
++                    <header className="relative border-b border-adm-line px-16 pb-14 pt-16" data-tour={stages.indexOf(s) === 0 ? 'stage' : undefined}>
+                       <span className="text-10 font-semibold uppercase tracking-widest text-adm-muted">Stage {String(map.stages.indexOf(s) + 1).padStart(2, '0')}</span>
+                       <h2 className="mt-4 text-19 font-semibold text-adm-ink">{s.title}</h2>
+                       <p className="mt-2 text-12 leading-[18px] text-adm-muted">{s.question}</p>
+@@ -368,11 +396,13 @@ export function UserJourneyPage() {
+                         const a = byId.get(m.id)?.assignment ?? EMPTY
+                         const ready = a.tags.find((t) => t.startsWith('readiness:'))?.split(':')[1]
+                         const untagged = tagsOn && missingGroups(tags.groups, a.tags).length > 0
+-                        const served = screensFor(map, m.id).length
++                        const served = screensOf(m.id).length
++                        const demand = DEMAND.get(m.id) ?? 0
+                         return (
+                           <button
+                             key={m.id}
+                             type="button"
++                            data-tour={stages.indexOf(s) === 0 && shown.indexOf(m) === 0 ? 'moment' : undefined}
+                             onClick={() => openItem('moments', s.id, m)}
+                             className="group flex flex-col gap-6 rounded-12 border border-adm-line bg-adm-surface p-8 text-left transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-adm-accent"
+                           >
+@@ -390,6 +420,11 @@ export function UserJourneyPage() {
+                               )}
+                             </span>
+                             {m.description && <span className="line-clamp-3 px-2 text-12 leading-[18px] text-adm-ink-2">{m.description}</span>}
++                            {demand > 0 && (
++                              <span className="inline-flex items-center gap-4 px-2 text-11 tabular-nums text-adm-muted" title="Personas whose day includes this moment, of 300">
++                                <Users size={11} aria-hidden="true" /> {demand} of 300 personas
++                              </span>
++                            )}
+                             {m.feature && (
+                               <span className="rounded-8 bg-adm-bg px-8 py-6 text-12 text-adm-ink">
+                                 <span className="block text-10 font-semibold uppercase tracking-wider text-adm-muted">Potential feature</span>
+@@ -419,7 +454,30 @@ export function UserJourneyPage() {
+                         <Plus size={13} /> Add a moment
+                       </button>
+                     </div>
+-                    {showScreens && (
++                    {showScreens && tagsOn && (
++                      <div className="border-t border-adm-line p-12">
++                        <p className="mb-8 text-10 font-semibold uppercase tracking-widest text-adm-muted">Screens these moments use</p>
++                        <div className="flex flex-wrap gap-10">
++                          {(() => {
++                            const seen = new Map<string, { stageId: string; screen: JourneyScreen }>()
++                            for (const m of shown) for (const x of screensOf(m.id)) seen.set(x.screen.id, x)
++                            const list = [...seen.values()]
++                            if (!list.length) return <p className="text-11 text-adm-critical">No moment here is tagged with a surface that has a screen.</p>
++                            return list.map(({ stageId, screen: sc }) => (
++                              <button key={sc.id} type="button" onClick={() => openItem('screens', stageId, sc)} className="group flex w-[84px] flex-col gap-4 text-left">
++                                <span className="block h-[168px] w-[80px] rounded-[14px] bg-adm-sidebar p-3 transition-transform group-hover:-translate-y-2">
++                                  <span className="flex size-full items-center justify-center overflow-hidden rounded-[11px] bg-adm-surface">
++                                    {sc.image ? <img src={sc.image} alt="" loading="lazy" className="size-full object-cover object-top" /> : <ImagePlus size={14} className="text-adm-muted" />}
++                                  </span>
++                                </span>
++                                <span className="text-11 font-medium leading-[14px] text-adm-ink">{sc.title}</span>
++                              </button>
++                            ))
++                          })()}
++                        </div>
++                      </div>
++                    )}
++                    {showScreens && !tagsOn && (
+                       <div className="border-t border-adm-line p-12">
+                         <p className="mb-8 text-10 font-semibold uppercase tracking-widest text-adm-muted">Screens</p>
+                         <div className="flex flex-wrap gap-10">
+@@ -453,6 +511,49 @@ export function UserJourneyPage() {
+               })}
+             </div>
+           </div>
++          {tagsOn && surfaceGroup && (
++            <section className="flex flex-col gap-12 rounded-12 border border-adm-line bg-adm-surface p-16" data-tour="surfaces" aria-label="Product surfaces">
++              <div>
++                <h2 className="text-15 font-semibold text-adm-ink">Product surfaces</h2>
++                <p className="mt-2 text-12 text-adm-muted">
++                  The parts of the app that serve moments, each with its screen. A moment shows the screen of every surface it is tagged with, so the tag and the picture always agree. Change which surfaces exist in Tag setup.
++                </p>
++              </div>
++              <div className="flex flex-wrap gap-14">
++                {surfaceGroup.tags.map((t) => {
++                  const list = allScreens(map).filter((x) => x.screen.surface === t.id)
++                  const used = usersOfSurface(t.id).length
++                  return (
++                    <div key={t.id} className="flex flex-col gap-6">
++                      <p className="text-12 font-medium text-adm-ink">{t.label}</p>
++                      <div className="flex gap-8">
++                        {list.map(({ stageId, screen: sc }) => (
++                          <button key={sc.id} type="button" onClick={() => openItem('screens', stageId, sc)} className="group flex w-[84px] flex-col gap-4 text-left" aria-label={`${t.label}: ${sc.title}`}>
++                            <span className="block h-[168px] w-[80px] rounded-[14px] bg-adm-sidebar p-3 transition-transform group-hover:-translate-y-2">
++                              <span className="flex size-full items-center justify-center overflow-hidden rounded-[11px] bg-adm-surface">
++                                {sc.image ? <img src={sc.image} alt="" loading="lazy" className="size-full object-cover object-top" /> : <ImagePlus size={14} className="text-adm-muted" />}
++                              </span>
++                            </span>
++                            <span className="text-11 font-medium leading-[14px] text-adm-ink">{sc.title}</span>
++                          </button>
++                        ))}
++                        {list.length === 0 && (
++                          <button
++                            type="button"
++                            onClick={() => openNew('screens', map.stages[0].id, t.id)}
++                            className="flex h-[168px] w-[80px] flex-col items-center justify-center gap-4 rounded-[14px] border border-dashed border-adm-critical px-4 text-center text-10 text-adm-critical hover:bg-adm-hover"
++                          >
++                            <ImagePlus size={14} /> Add its screen
++                          </button>
++                        )}
++                      </div>
++                      <p className={`text-10 ${used ? 'text-adm-muted' : 'text-adm-critical'}`}>{used ? `Serves ${used} moment${used === 1 ? '' : 's'}` : 'No moment tagged'}</p>
++                    </div>
++                  )
++                })}
++              </div>
++            </section>
++          )}
+           <p className="text-11 text-adm-muted">Edits are saved in this browser. Use More → Export to share them with the team.</p>
+         </>
+       )}
+@@ -483,6 +584,10 @@ export function UserJourneyPage() {
+           editing={editing}
+           map={map}
+           groups={tagsOn && editing.kind === 'moments' ? tags.groups : null}
++          surfaces={tagsOn ? (surfaceGroup?.tags ?? []) : null}
++          surfaceUsers={(surface) => usersOfSurface(surface).map((m) => m.title)}
++          screensOf={screensOf}
++          demand={DEMAND}
+           onClose={() => setEditing(null)}
+           onSave={saveEditing}
+           onDelete={deleteEditing}
+@@ -490,6 +595,8 @@ export function UserJourneyPage() {
+         />
+       )}
+ 
++      {guide && <GuideTour steps={guideSteps(tagsOn)} onClose={closeGuide} />}
++
+       {stagesOpen && (
+         <StageNames
+           map={map}
+@@ -522,6 +629,10 @@ function ItemPanel({
+   editing,
+   map,
+   groups,
++  surfaces,
++  surfaceUsers,
++  screensOf,
++  demand,
+   onClose,
+   onSave,
+   onDelete,
+@@ -530,6 +641,11 @@ function ItemPanel({
+   editing: Editing
+   map: JourneyMap
+   groups: TagGroup[] | null
++  /** With tags on: the Product surface tags a screen can show. */
++  surfaces: { id: string; label: string }[] | null
++  surfaceUsers: (surface: string) => string[]
++  screensOf: (momentId: string, tagIds?: string[]) => { stageId: string; screen: JourneyScreen }[]
++  demand: Map<string, number>
+   onClose: () => void
+   onSave: (e: Editing) => void
+   onDelete: (e: Editing) => void
+@@ -612,7 +728,18 @@ function ItemPanel({
+           </div>
+           {error && <span className="text-11 text-adm-critical">{error}</span>}
+         </div>
+-        {moment ? <MomentScreens map={map} momentId={draft.item.id} onOpen={onOpenScreen} /> : <ScreenLinks map={map} draft={draft.item} onChange={set} />}
++        {moment && (
++          <p className="inline-flex items-center gap-6 text-12 text-adm-ink-2">
++            <Users size={13} aria-hidden="true" /> {demand.get(draft.item.id) ?? 0} of the 300 personas have this moment in their day.
++          </p>
++        )}
++        {moment ? (
++          <MomentScreens map={map} screens={screensOf(draft.item.id, draft.assignment.tags)} bySurface={!!surfaces} onOpen={onOpenScreen} />
++        ) : surfaces ? (
++          <ScreenSurface draft={draft.item} surfaces={surfaces} users={draft.item.surface ? surfaceUsers(draft.item.surface) : []} onChange={set} />
++        ) : (
++          <ScreenLinks map={map} draft={draft.item} onChange={set} />
++        )}
+         {groups && (
+           <div className="flex flex-col gap-12 border-t border-adm-line pt-16">
+             <div>
+@@ -628,13 +755,24 @@ function ItemPanel({
+ }
+ 
+ /** Read-only: the screens that serve a moment. None is the signal a design is missing. */
+-function MomentScreens({ map, momentId, onOpen }: { map: JourneyMap; momentId: string; onOpen: (stageId: string, screen: JourneyScreen) => void }) {
+-  const screens = screensFor(map, momentId)
++function MomentScreens({
++  map,
++  screens,
++  bySurface,
++  onOpen,
++}: {
++  map: JourneyMap
++  screens: { stageId: string; screen: JourneyScreen }[]
++  bySurface: boolean
++  onOpen: (stageId: string, screen: JourneyScreen) => void
++}) {
+   return (
+     <div className="flex flex-col gap-8 border-t border-adm-line pt-16">
+       <div>
+         <h3 className="text-13 font-semibold text-adm-ink">Screens</h3>
+-        <p className="mt-2 text-12 text-adm-muted">The product screens that serve this moment. Link one from the screen's own panel.</p>
++        <p className="mt-2 text-12 text-adm-muted">
++          {bySurface ? 'From the Product surface tags below: tag a surface and its screen appears here.' : "The product screens that serve this moment. Link one from the screen's own panel."}
++        </p>
+       </div>
+       {screens.length === 0 ? (
+         <p className="inline-flex items-center gap-6 rounded-8 border border-dashed border-adm-line px-10 py-8 text-12 text-adm-critical">
+@@ -661,6 +799,57 @@ function MomentScreens({ map, momentId, onOpen }: { map: JourneyMap; momentId: s
+   )
+ }
+ 
++/** With tags on (U105): the surface a screen shows, the moments tagged with it, and where it lives. */
++function ScreenSurface({
++  draft,
++  surfaces,
++  users,
++  onChange,
++}: {
++  draft: JourneyScreen
++  surfaces: { id: string; label: string }[]
++  users: string[]
++  onChange: (patch: Partial<JourneyScreen>) => void
++}) {
++  const href = linkHref(draft.link)
++  return (
++    <div className="flex flex-col gap-14 border-t border-adm-line pt-16">
++      <FormField label="Product surface" hint="The part of the app this screen shows. Moments tagged with it show this screen.">
++        <select className={inputClass} value={draft.surface ?? ''} onChange={(e) => onChange({ surface: e.target.value || undefined })}>
++          <option value="">Not chosen</option>
++          {surfaces.map((t) => (
++            <option key={t.id} value={t.id}>
++              {t.label}
++            </option>
++          ))}
++        </select>
++      </FormField>
++      <div className="flex flex-col gap-4">
++        <span className="text-12 font-medium text-adm-ink-2">Serves</span>
++        {users.length ? (
++          <ul className="flex list-disc flex-col gap-2 pl-16 text-12 text-adm-ink">
++            {users.map((u) => (
++              <li key={u}>{u}</li>
++            ))}
++          </ul>
++        ) : (
++          <p className="text-12 text-adm-critical">{draft.surface ? 'No moment is tagged with this surface yet.' : 'Choose a surface to link this screen to moments.'}</p>
++        )}
++      </div>
++      <FormField label="Link" hint="Where it lives: app route or Figma URL">
++        <div className="flex gap-8">
++          <input aria-label="Link" className={`${inputClass} min-w-0 flex-1`} value={draft.link ?? ''} placeholder="/play/… or https://www.figma.com/…" onChange={(e) => onChange({ link: e.target.value })} />
++          {href && (
++            <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex shrink-0 items-center gap-4 rounded-8 border border-adm-line px-10 text-12 font-medium text-adm-ink hover:bg-adm-hover">
++              <ExternalLink size={12} aria-hidden="true" /> Open
++            </a>
++          )}
++        </div>
++      </FormField>
++    </div>
++  )
++}
++
+ /** A screen's moments (any stage) and where it lives. */
+ function ScreenLinks({ map, draft, onChange }: { map: JourneyMap; draft: JourneyScreen; onChange: (patch: Partial<JourneyScreen>) => void }) {
+   const chosen = new Set(draft.momentIds ?? [])
+@@ -734,3 +923,49 @@ function StageNames({ map, onClose, onSave }: { map: JourneyMap; onClose: () =>
+     </Modal>
+   )
+ }
++
++/** The guide for this page (U105). Tag steps only where tags are on. */
++function guideSteps(tagsOn: boolean): TourStep[] {
++  const steps: (TourStep | false)[] = [
++    {
++      title: 'What this map is for',
++      body: (
++        <>
++          It maps the <b>moments</b> people reach for Aurelia: when, where and why. It also shows what in the product serves each one. Use it to decide what to design or build next. A moment that many personas have, with no screen or only a concept behind it, is a gap.
++        </>
++      ),
++    },
++    { target: 'stage', title: 'Four stages', body: 'Moments are grouped by the role they play in someone’s day: Reflect, Create, Experience, Share. Each stage answers the question under its name. Rename the stages from More.' },
++    {
++      target: 'moment',
++      title: 'Reading a moment',
++      body: 'What happens, and the feature it suggests. How many of the 300 personas have it in their day (demand). How ready that feature is (Live, Partly built, Concept). Whether the team has agreed on it, and how many screens serve it. Select a moment to edit everything about it in one panel.',
++    },
++    tagsOn && {
++      target: 'views',
++      title: 'Tags, review and coverage',
++      body: 'Tags & review classifies every moment the same way (time, context, trigger, need, state, time available, surface, readiness), and marks it Agreed or To discuss. Coverage shows the tags no moment covers yet: the gaps. Tag setup holds the groups and their tags.',
++    },
++    tagsOn && {
++      target: 'surfaces',
++      title: 'Screens are product surfaces',
++      body: 'Each surface has its screen. A moment shows the screen of every surface it is tagged with, so the tag and the picture cannot disagree. A red dashed card is a surface with no screenshot yet; a red line under one means no moment uses it.',
++    },
++    { target: 'filters', title: 'Narrow it down', body: tagsOn ? 'Show one stage, or only the moments with one tag (Night, for example), to see everything that serves it. Hide the screens to read the moments alone.' : 'Show one stage at a time, or hide the screens to read the moments alone.' },
++    { target: 'more', title: 'Saving and sharing', body: 'Edits are saved in this browser only, until there is a backend. Export a JSON file to share it with the team, Import theirs, or Restore the original to start again.' },
++    {
++      title: 'A working session, in five steps',
++      body: (
++        <ol className="flex list-decimal flex-col gap-4 pl-18">
++          <li>Pick a stage.</li>
++          <li>Open each moment: check what happens and its feature{tagsOn ? ', tag it, and set Agreed or To discuss with a note' : ''}.</li>
++          <li>{tagsOn ? 'Open Coverage and note the gaps.' : 'Check each moment has a screen.'}</li>
++          <li>{tagsOn ? 'Check every product surface has a real screenshot.' : 'Add the screens that are missing.'}</li>
++          <li>Export, and share the file with the team.</li>
++        </ol>
++      ),
++    },
++    { target: 'guide', title: 'Open this again', body: 'The Guide button runs this tour again whenever you need it.' },
++  ]
++  return steps.filter((x): x is TourStep => !!x)
++}
+-- 
+2.43.0
+

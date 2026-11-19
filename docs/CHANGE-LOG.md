@@ -19,6 +19,14 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-19 — User journey that works, with a guide (U105, J144)
+
+On staging, screens follow the moments' Product surface tags, every surface
+has a real screenshot, and each moment shows how many personas have it. A
+guided overlay explains the page on the first visit.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-19 — Buyer agent re-run on production v1–v3 (U104, J139)
 
 Buyer agent results has a "By production version" view: nine reports (three

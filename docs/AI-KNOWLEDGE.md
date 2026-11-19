@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J143** · updated 19 Nov 2026
+**Covers up to J144** · updated 19 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
@@ -115,6 +115,7 @@ Further rules:
   - One side panel per moment.
   - Screens link to the moments they serve.
   - Edits are saved per browser; Export/Import is the way to share them.
+  - Since U105, with tags on, screens follow the Product surface tag (`screen.surface`). There are 6 screens with real screenshots, "N of 300 personas" on each moment, and a guided tour (`GuideTour`, `data-tour` targets) that opens on the first visit.
 - **Personas** (staging).
   - 300 seeded synthetic personas.
   - Each has a role-play prompt.
@@ -232,6 +233,7 @@ with employee and HR personas. Not built.
 - **Agent worktrees** live in `.claude/worktrees/`. They are excluded locally
   through `.git/info/exclude`; never commit them. Bring an agent's work in by
   cherry-picking, then re-run `npm run check`.
+- **A new admin tour:** mark targets with `data-tour` and reuse `GuideTour`. A `setState` directly inside an effect fails lint (`set-state-in-effect`); measure inside the timeout instead.
 - **Admin selects:** one style in `admin.css` (`.adm-root select`: no native appearance, 32px right padding, an SVG chevron). Do not add per-page select padding.
 - **Admin dark mode and native controls:** without `color-scheme`, a select's option list stays light. `.adm-root` (shell, Modal, SidePanel) handles it. Any new admin portal must carry `adm-root`.
 - **Mermaid creates ~100 chunks.** It is grouped into `mermaid-vendor` (vite `codeSplitting.groups`) and kept out of the precache. Without that, the service worker grew from 181 to 268 entries.

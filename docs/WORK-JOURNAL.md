@@ -71,7 +71,8 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O41 | **Buyer agent v4 and the feedback group (J136)**: approve v4. (1) Each persona walks the feedback group's actual screens, step by step along the user journey, giving a predicted funnel and where people leave. (2) The ten metrics are scored per run, each marked predicted (agent) or measured (humans). (3) A human test plan is exported for the feedback group. (4) Real results are entered after the sessions and compared with the agent's. Needs: the feedback group's date, size, countries and ages, and which design version they will see | J136 | Product owner + Eugene |
 | O42 | **Move v5's wearable question to after the first session (J139)**: the re-run's one design change. It should keep v5's return gain without its onboarding loss. Check it with the feedback group, or build it as a v6 on staging first | J139 | Product owner |
 | O43 | **Eugene's business funnel model (J140)**: confirm the reading, then build in three parts. (1) Admin → Product lab → **Business funnel**: the lighthouse's four stages, adapted to Aurelia, laid over the user journey moments, with the market-fit metrics and the features behind each stage. (2) Buyer agent v5 walks that funnel, reports where people stall, bounce or are blocked per stage, and returns the feature that would move them on. (3) The wiki's Feedback group playbook, rewritten as the dual track (agents and humans, same stages, same metrics). Needs the Gemini deck as text or PDF (the share link is not readable from here) | J140 | Product owner + Eugene |
-| O44 | **Tie screens to tags (J143)**: make each screen the value of the "Product surface" tag, so a moment's surface and its screenshot are one fact. Add the missing screens (journal, progress, sharing), so every surface has a picture. Move readiness onto the screen. Keep moments as the when-and-why map and the business funnel as the how-far map; screens join the two | J143 | Product owner |
+| O44 | **Done in U105 (J144)**, except readiness, which stays on the moment. **Tie screens to tags (J143)**: make each screen the value of the "Product surface" tag, so a moment's surface and its screenshot are one fact. Add the missing screens (journal, progress, sharing), so every surface has a picture. Move readiness onto the screen. Keep moments as the when-and-why map and the business funnel as the how-far map; screens join the two | J143 | Product owner |
+| J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J141 | 2026-11-19 | Opinion | Is the business funnel a CMS like the user journey, and what is it for | — |
 | J142 | 2026-11-19 | Opinion | How the user journey, the business funnel and the buyer agent connect; what one iteration produces | — |
 | J143 | 2026-11-19 | Opinion | What the current user journey map is, and why screens should be tied to the tags (the Product surface tag) | — |
@@ -1754,3 +1755,19 @@ transcript and the update log. Everything from J018 on was written at the time.
   - **Keep the moments** as the when-and-why map; personas and tags already use them.
   - **Put the app's path** in the business funnel tab.
   - **Screens are the hinge between the two.**
+
+### J144 — Roast and fix the user journey; a guide
+- **Asked:** "oke saya rasa setuju tapi roast lagi as head of product, saya mau user journey yang ada sekarang benar benar bisa berfungsi. selain itu karena cukup kompleks ketika visit user journey saya mau ada semacam guide semacam kaya overlay dan ada guideline nya itu. untuk memberikan gambaran cara pakai nya."
+- **Roast and changes:** U105. Six problems were found:
+  - two facts for one link;
+  - screens filed under one stage;
+  - surfaces without screenshots;
+  - no sign of which moments matter;
+  - no explanation;
+  - per-browser edits.
+- **Fixed:** the first five.
+  - Screens are tied to the Product surface tag.
+  - Three real screenshots were added.
+  - Persona demand shows on every moment: "Celebrate progress" is had by only 3 of 300 personas, against 113 for "Morning check-in".
+  - A 9-step guided overlay explains the page and ends with a five-step working session.
+- **Not fixed:** per-browser storage, which needs a backend (O36).
