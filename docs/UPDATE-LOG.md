@@ -138,9 +138,52 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U099 | `61b4abf` | 2026-11-18 | Personas become full profiles (bio, weekday, sleep, stressors, coping, personality, tech, decision style, deal breakers, success, quotes), shown as a profile and carried into the role-play prompt; admin dropdowns follow the dark theme. Staging. | [patch](patches/U099-61b4abf.patch) |
 | U100 | `a6e6f83` | 2026-11-18 | One select style across the admin (no crowded native arrows); persona rows open the drawer; each persona gains test data (jobs, pain, first sentence, spend, alternatives, buy triggers, objections, access, connectivity, three when/does/expect scenarios). Staging. | [patch](patches/U100-a6e6f83.patch) |
 | U101 | `2494223` | 2026-11-19 | Admin → Product lab → Buyer agent results: the first demo run (ten personas, seed 2026, Aurelia Plus at $9.99), with tallies, a price band, objections, every answer in a drawer with its three test cases, and persona problems found. Staging only (`RELEASES.buyerAgent`). | [patch](patches/U101-2494223.patch) |
+| U102 | `32cdc84` | 2026-11-19 | Buyer agent results by version (v1, v2 tabs, `?v=`). Each run states its criteria, the answer definitions and the agent's instructions; persona names open the full profile. v2: 36 personas (6 regions × 6 age bands, seed 2027, v1's incoherent three left out), local prices, language, connection, wellness (struggling / strained / coping), week-one use and day 30, calibration rules, segment tables. Staging only. | [patch](patches/U102-32cdc84.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U102 — Buyer agent results: versions, criteria, v2
+
+- **Commit:** `32cdc84` · pushed 2026-11-19 UTC · `web_app` + `admin_cms`. Staging only (`RELEASES.buyerAgent`).
+- **Patch:** [patches/U102-32cdc84.patch](patches/U102-32cdc84.patch)
+- **Request:** "di versi buyer test agent pertama tadi berikan kriteria yang diberikan sehingga eugene bisa memahami bagaimana dan keadaan user agent berjalan. tambahkan juga persona bisa diklik juga sehingga bisa lebih tahu. di versi ke 2 kali ini tambahkan lebih banyak parameter seperti daerah, kemudian kondisi wellness mereka, tambahkan juga range umur yang digunakan, tambahkan juga lebih banyak persona.  bekerja dan berpikirlah seperti mereka, berikan hasil yang lebih akurat di page buyer test agent saya bisa melihat setiap versi nya"
+- **Interpretation:**
+  - "Criteria" means: how the run was set up, written for Eugene. That covers the question, who was in the panel, what they saw, how the agent ran, what was not taken into account, and how to read it. Also what each answer means, and the agent's instructions.
+  - "More accurate" means calibration rules applied before answering, against the agreeable-buyer bias. The agent looks for the no first, honours deal breakers, sets prices from income and the local price, and fails the first open where language and age make it unusable.
+- **Changed:**
+  - `src/admin/data/buyerRuns.ts`:
+    - `version` and `criteria` on a run, and `DEFINITIONS`;
+    - `week` and `day30` on an answer;
+    - `drawStratified` (one persona per region × age band, leaving out `EXCLUDED`);
+    - `localPlus` (Plus at each country's price from the pricing table, with a USD equivalent);
+    - `wellnessOf`: struggling / strained / coping, from pain, sleep and conditions.
+  - `src/admin/data/buyerRunV2.ts`: run v2, with its own instructions, criteria, findings and 36 answers.
+  - `src/admin/components/PersonaProfile.tsx`: the persona profile, moved out of `PersonasPage.tsx` so both pages use it.
+  - `src/admin/pages/BuyerResultsPage.tsx`:
+    - version tabs (`?v=`);
+    - How this run worked, with definitions and instructions;
+    - Who was in the panel;
+    - By segment (region, age band, wellness);
+    - new table columns and filters;
+    - the drawer has two tabs, Their answer and Who they are;
+    - persona names, in the table and in the problems list, open the profile.
+  - `buyerRuns.test.ts`:
+    - v2 has every region and age band and leaves out the excluded;
+    - week and day 30 are sane;
+    - the tallies are pinned;
+    - every run has criteria.
+- **Result of v2:**
+  - 15 of 36 try (16 maybe, 5 no); 1 pays (16 maybe, 19 no). The fair band is $2.75–5.25.
+  - Struggling: 8 of 10 try. Coping: 0 of 5. 65+: 0 of 6.
+  - Plus is too expensive for 1 of 10 where there is a local price, and for 10 of 14 where $9.99 is charged without one.
+  - Trust and access lead the objections; price comes next.
+  - 13 of 36 personas are incoherent.
+- **Verified:**
+  - `npm run check` passes (167 tests).
+  - Staging build, 1440px light and dark: both versions render, the drawer tabs switch, no errors, no overflow.
+  - At 402px, no page overflow.
+- **Revert:** `git revert --no-commit 32cdc84 && git checkout HEAD -- docs/`.
 
 ### U101 — Buyer agent results (demo run)
 

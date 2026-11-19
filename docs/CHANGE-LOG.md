@@ -19,6 +19,14 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-19 — Buyer agent v2, criteria and versions (U102, J134)
+
+Buyer agent results shows each run as a version with its criteria. Persona
+names open the profile. Run v2 covers 36 personas across every region and age
+band, with local prices and wellness.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-19 — Buyer agent results (U101, J133)
 
 Admin → Product lab gets a Buyer agent results page, with a first demo run on

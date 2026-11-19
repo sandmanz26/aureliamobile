@@ -66,7 +66,8 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O36 | **User journey as an evolving platform (J127)**: approve the three phases. (1) Shared storage, a status workflow (Idea → Validated → Planned → Building → Live → Measured), owner, Board view, activity log. (2) A scenario template, evidence and a decision log per card; a structured export to the knowledge base. (3) An AI assist on the page, after a backend exists. | J127 | Product owner + Eugene |
 | O37 | **Insight Timer round 2 recommendations (J130)**: decide the "now" list, including changing the demo's every-sign-in daily check-in before real users, and a "Need help now?" link; and whether to push the wiki (and the app work riding with it) to production | J130 | Product owner + Eugene |
 | O38 | **Buyer test agent (J132)**: approve the design. The agent reads a persona panel export (profile + test data + prompt) and a stimulus (screens, copy, price, offer); it answers per persona in a fixed schema (would try, would pay, price thresholds, objections, what would flip it, confidence); results aggregate by segment and compare options A vs B. Decide where it runs first: offline from the export now, in the admin with a backend later | J132 | Product owner + Eugene |
-| O39 | **Buyer agent, next step (J133)**: after the demo, decide (a) the stimulus for the next run, for example the yearly plan first, or one reminder and a data line on the first screen, (b) panel size, and (c) whether runs move to a live model call from the admin, which needs a backend or an API key. Also fix the three incoherent personas the demo found | J133 | Product owner |
+| O39 | **Buyer agent, next step (J133)**: after the demo, decide (a) the stimulus for the next run, for example the yearly plan first, or one reminder and a data line on the first screen, (b) panel size, and (c) whether runs move to a live model call from the admin, which needs a backend or an API key. Also fix the incoherent personas the runs found (3 in v1, 13 in v2) | J133 | Product owner |
+| J134 | 2026-11-19 | Code | Criteria for buyer agent v1, clickable personas; v2 with region, wellness, age range and more personas, played more carefully; every version on the page | U102 |
 | J133 | 2026-11-19 | Code | Buyer agent results in Product lab; run the buyer agent on ten personas as a demo | U101 |
 | J131 | 2026-11-18 | Code | Personas too thin: rebuilt as real profiles; a dropdown that looked broken (dark mode) fixed | U099 |
 | J132 | 2026-11-18 | Code + Opinion | Dropdown issues; persona drawer and deeper test data; a buyer test agent that reads the personas (view and proposal) | U100 |
@@ -1578,3 +1579,18 @@ transcript and the update log. Everything from J018 on was written at the time.
   - Three personas turned out incoherent.
 - **Caveat:** one agent playing ten people in one session is a demo of the format, not a measurement.
 - **Open:** O39.
+
+### J134 — Buyer agent v2, criteria and versions
+- **Asked:** "di versi buyer test agent pertama tadi berikan kriteria yang diberikan sehingga eugene bisa memahami bagaimana dan keadaan user agent berjalan. tambahkan juga persona bisa diklik juga sehingga bisa lebih tahu. di versi ke 2 kali ini tambahkan lebih banyak parameter seperti daerah, kemudian kondisi wellness mereka, tambahkan juga range umur yang digunakan, tambahkan juga lebih banyak persona.  bekerja dan berpikirlah seperti mereka, berikan hasil yang lebih akurat di page buyer test agent saya bisa melihat setiap versi nya"
+- **Done:** U102.
+  - Every run now says how it worked: criteria, what the answers mean, the agent's instructions.
+  - Persona names open the full profile.
+  - The page has v1 and v2 tabs.
+  - v2: 36 personas covering every region × age band (ages 19–73, 12 countries), with local prices, language, connection, wellness, week-one use and day 30, played under calibration rules.
+- **Result:**
+  - Far less agreeable than v1: 15 of 36 try, 1 pays outright.
+  - How someone is doing matters most: struggling people try (8 of 10), coping people do not (0 of 5).
+  - Nobody over 65 tries.
+  - Price follows place, and four countries need a local price.
+  - AI distrust and language cost more than price.
+- **Open:** still O39. The generator has more incoherent personas (13 of 36 in v2) and should be fixed before v3.

@@ -1,0 +1,1741 @@
+From 32cdc84e9408936ca8dcc9a9f6bf6d9286d66542 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Thu, 19 Nov 2026 08:56:27 +0000
+Subject: [PATCH] Buyer agent results: versions, criteria, persona profiles, v2
+ run on 36 personas
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/admin/components/PersonaProfile.tsx | 262 +++++++++++++++++
+ src/admin/data/buyerRunV2.ts            | 366 +++++++++++++++++++++++
+ src/admin/data/buyerRuns.test.ts        |  27 +-
+ src/admin/data/buyerRuns.ts             | 113 +++++++
+ src/admin/pages/BuyerResultsPage.tsx    | 376 +++++++++++++++++++-----
+ src/admin/pages/PersonasPage.tsx        | 257 +---------------
+ 6 files changed, 1065 insertions(+), 336 deletions(-)
+ create mode 100644 src/admin/components/PersonaProfile.tsx
+ create mode 100644 src/admin/data/buyerRunV2.ts
+
+diff --git a/src/admin/components/PersonaProfile.tsx b/src/admin/components/PersonaProfile.tsx
+new file mode 100644
+index 0000000..2cd9998
+--- /dev/null
++++ b/src/admin/components/PersonaProfile.tsx
+@@ -0,0 +1,262 @@
++import { Users } from 'lucide-react'
++import type { ReactNode } from 'react'
++import { GOAL_LABEL, personaPrompt, type Persona } from '../data/personas'
++import { INITIAL_JOURNEY } from '../data/userJourney'
++import { Badge } from './ui'
++
++/**
++ * A persona's full profile (U099, U100), shared by Personas and Buyer agent
++ * results (U102) so a buyer's answer can be read next to who they are.
++ */
++
++const MOMENT_TITLE = new Map(INITIAL_JOURNEY.stages.flatMap((s) => s.moments.map((m) => [m.id, m.title] as const)))
++
++const LEVEL_WIDTH = { low: '25%', medium: '55%', high: '90%' } as const
++
++function Section({ title, children }: { title: string; children: ReactNode }) {
++  return (
++    <section className="flex flex-col gap-8 border-t border-adm-line pt-14">
++      <h3 className="text-11 font-semibold uppercase tracking-widest text-adm-muted">{title}</h3>
++      {children}
++    </section>
++  )
++}
++
++function Chips({ items }: { items: string[] }) {
++  return (
++    <div className="flex flex-wrap gap-6">
++      {items.map((x) => (
++        <span key={x} className="rounded-full bg-adm-hover px-8 py-2 text-11 text-adm-ink">
++          {x}
++        </span>
++      ))}
++    </div>
++  )
++}
++
++/** One persona as a person: who they are, a day, how they feel, what wins or loses them. */
++export function PersonaProfile({ p }: { p: Persona }) {
++  const f = p.profile
++  const initials = p.name
++    .split(' ')
++    .map((x) => x[0])
++    .slice(0, 2)
++    .join('')
++  return (
++    <div className="flex flex-col gap-14 text-13 text-adm-ink">
++      <div className="flex items-center gap-12">
++        <span className="flex size-56 shrink-0 items-center justify-center rounded-full bg-adm-hover text-[17px] font-semibold text-adm-ink-2" aria-hidden="true">
++          {initials}
++        </span>
++        <div className="min-w-0">
++          <p className="text-15 font-semibold">
++            {p.name}, {p.age} <span className="text-12 font-normal text-adm-muted">({f.pronouns})</span>
++          </p>
++          <p className="text-12 text-adm-ink-2">
++            {p.occupation} · {p.city}, {p.country}
++          </p>
++          <div className="mt-4 flex flex-wrap gap-4">
++            <Badge tone="info">{GOAL_LABEL[p.goal]}</Badge>
++            <Badge>{p.experience === 'never' ? 'New to meditation' : `Meditation: ${p.experience}`}</Badge>
++            <Badge tone={p.aiAttitude === 'distrustful' || p.aiAttitude === 'skeptical' ? 'warning' : 'good'}>AI: {p.aiAttitude}</Badge>
++          </div>
++        </div>
++      </div>
++      <p className="leading-[20px]">{f.bio}</p>
++      <p className="rounded-8 bg-adm-bg px-12 py-10 italic text-adm-ink-2">“{f.quotes[0]}”</p>
++
++      <Section title="A weekday">
++        <ol className="flex flex-col gap-6">
++          {f.day.map((d) => (
++            <li key={d.time + d.what} className="grid grid-cols-[72px_1fr] gap-8 text-12">
++              <span className="tabular-nums text-adm-muted">{d.time}</span>
++              <span>{d.what}</span>
++            </li>
++          ))}
++        </ol>
++      </Section>
++
++      <Section title="How they are doing">
++        <div className="grid grid-cols-3 gap-8 text-12">
++          <div className="rounded-8 bg-adm-bg p-8">
++            <p className="text-adm-muted">Sleep</p>
++            <p className="font-semibold tabular-nums">
++              {f.sleep.hours} h · {f.sleep.bedtime}–{f.sleep.wake}
++            </p>
++          </div>
++          <div className="rounded-8 bg-adm-bg p-8">
++            <p className="text-adm-muted">Sleep quality</p>
++            <p className="font-semibold tabular-nums">{f.sleep.quality} of 5</p>
++          </div>
++          <div className="rounded-8 bg-adm-bg p-8">
++            <p className="text-adm-muted">Screen time</p>
++            <p className="font-semibold tabular-nums">{f.screenTimeHours} h a day</p>
++          </div>
++        </div>
++        <p className="text-12">
++          <span className="text-adm-muted">Right now: </span>
++          {p.name.split(' ')[0]} {p.struggle}. It hits at: {p.triggers.join('; ')}.
++        </p>
++        <div className="flex flex-col gap-4 text-12">
++          <span className="text-adm-muted">What weighs on them</span>
++          <Chips items={f.stressors} />
++          <span className="mt-4 text-adm-muted">How they cope now</span>
++          <Chips items={f.coping} />
++          {p.flags.length > 0 && (
++            <>
++              <span className="mt-4 text-adm-muted">Circumstances to test for</span>
++              <Chips items={p.flags} />
++            </>
++          )}
++        </div>
++      </Section>
++
++      <Section title="Personality and values">
++        <div className="flex flex-col gap-6">
++          {(Object.entries(f.personality) as [string, keyof typeof LEVEL_WIDTH][]).map(([k, v]) => (
++            <div key={k} className="grid grid-cols-[130px_1fr_56px] items-center gap-8 text-12">
++              <span className="capitalize text-adm-ink-2">{k}</span>
++              <span className="h-6 overflow-hidden rounded-full bg-adm-hover">
++                <span className="block h-full rounded-full bg-adm-s1" style={{ width: LEVEL_WIDTH[v] }} />
++              </span>
++              <span className="text-adm-muted">{v}</span>
++            </div>
++          ))}
++        </div>
++        <p className="text-12">
++          <span className="text-adm-muted">Traits: </span>
++          {f.traits.join(', ')} · <span className="text-adm-muted">Values: </span>
++          {f.values.join(', ')}
++        </p>
++      </Section>
++
++      <Section title="Life and tech">
++        <dl className="grid grid-cols-[130px_1fr] gap-x-12 gap-y-6 text-12">
++          {(
++            [
++              ['Home', p.household],
++              ['Work', `${p.workPattern}; ${p.income} income`],
++              ['Language', p.language],
++              ['Phone', `${f.phone}; mostly ${f.topApps.join(', ')}`],
++              ['Wearable', p.wearable],
++              ['Wellness apps', f.appHistory],
++            ] as const
++          ).map(([k, v]) => (
++            <div key={k} className="contents">
++              <dt className="text-adm-muted">{k}</dt>
++              <dd>{v}</dd>
++            </div>
++          ))}
++        </dl>
++      </Section>
++
++      <Section title="Winning them, losing them">
++        <dl className="grid grid-cols-[130px_1fr] gap-x-12 gap-y-6 text-12">
++          {(
++            [
++              ['Success looks like', f.success],
++              ['Would hear about it', f.wouldHearAbout],
++              ['How they decide', f.decides],
++              ['Would pay', p.willingnessToPay],
++              ['Prefers', `${p.length} min, ${p.voice === 'none' ? 'no voice' : `${p.voice} voice`}, ${p.sound}; spiritual language: ${p.spiritual}`],
++              ['Privacy', p.privacy],
++              ['Barriers', p.barriers.join('; ')],
++              ['Deal breakers', f.dealBreakers.join('; ')],
++            ] as const
++          ).map(([k, v]) => (
++            <div key={k} className="contents">
++              <dt className="text-adm-muted">{k}</dt>
++              <dd>{v}</dd>
++            </div>
++          ))}
++        </dl>
++      </Section>
++
++      <Section title="Buying">
++        <div className="grid grid-cols-[130px_1fr] gap-x-12 gap-y-6 text-12">
++          <span className="text-adm-muted">Pain today</span>
++          <span className="flex items-center gap-8">
++            <span className="h-6 w-120 overflow-hidden rounded-full bg-adm-hover">
++              <span className="block h-full rounded-full bg-adm-critical" style={{ width: `${f.testing.pain * 10}%` }} />
++            </span>
++            <span className="tabular-nums">{f.testing.pain} of 10</span>
++          </span>
++          <span className="text-adm-muted">Spends now</span>
++          <span>{f.testing.spendNow}</span>
++          <span className="text-adm-muted">Uses instead</span>
++          <span>{f.testing.alternatives.join('; ')}</span>
++          <span className="text-adm-muted">Would buy if</span>
++          <span>{f.testing.buyTriggers.join('; ')}</span>
++          <span className="text-adm-muted">Connection</span>
++          <span>{f.testing.connectivity}</span>
++          {f.testing.accessibility.length > 0 && (
++            <>
++              <span className="text-adm-muted">Access needs</span>
++              <span>{f.testing.accessibility.join('; ')}</span>
++            </>
++          )}
++        </div>
++        <div className="flex flex-col gap-4 text-12">
++          <span className="text-adm-muted">Jobs to be done</span>
++          <ul className="flex list-disc flex-col gap-2 pl-16">
++            {f.testing.jobs.map((j) => (
++              <li key={j}>{j}</li>
++            ))}
++          </ul>
++          <span className="mt-4 text-adm-muted">Objections, in their words</span>
++          <ul className="flex flex-col gap-2 italic text-adm-ink-2">
++            {f.testing.objections.map((o) => (
++              <li key={o}>{o}</li>
++            ))}
++          </ul>
++        </div>
++      </Section>
++
++      <Section title="Test cases">
++        <p className="rounded-8 border border-dashed border-adm-line px-10 py-8 text-12">
++          <span className="text-adm-muted">First thing they would type: </span>“{f.testing.firstSentence}”
++        </p>
++        <ol className="flex flex-col gap-8">
++          {f.testing.scenarios.map((sc, i) => (
++            <li key={sc.id} className="rounded-8 border border-adm-line p-10 text-12">
++              <p className="font-semibold">
++                {i + 1}. {sc.title}
++              </p>
++              <p className="mt-4">
++                <span className="text-adm-muted">When: </span>
++                {sc.when}
++              </p>
++              <p>
++                <span className="text-adm-muted">Does: </span>
++                {sc.does}
++              </p>
++              <p className="mt-4 rounded-4 bg-adm-good/10 px-6 py-4">
++                <span className="font-medium">Expect: </span>
++                {sc.expect}
++              </p>
++            </li>
++          ))}
++        </ol>
++      </Section>
++
++      <Section title="In their words">
++        <ul className="flex flex-col gap-6 text-12 italic text-adm-ink-2">
++          {f.quotes.map((q) => (
++            <li key={q}>“{q}”</li>
++          ))}
++        </ul>
++      </Section>
++
++      <Section title="User journey moments">
++        <Chips items={p.moments.map((m) => MOMENT_TITLE.get(m) ?? m)} />
++      </Section>
++
++      <Section title="Role-play prompt">
++        <span className="inline-flex items-center gap-6 text-12 text-adm-muted">
++          <Users size={13} /> For an AI research run. Copy it with the button below.
++        </span>
++        <pre className="max-h-[220px] overflow-auto whitespace-pre-wrap rounded-8 border border-adm-line bg-adm-bg p-10 text-11 leading-[16px] text-adm-ink-2">{personaPrompt(p)}</pre>
++      </Section>
++    </div>
++  )
++}
+diff --git a/src/admin/data/buyerRunV2.ts b/src/admin/data/buyerRunV2.ts
+new file mode 100644
+index 0000000..a545bf8
+--- /dev/null
++++ b/src/admin/data/buyerRunV2.ts
+@@ -0,0 +1,366 @@
++import type { BuyerAnswer, BuyerRun, Outcome, Theme, Verdict } from './buyerRuns'
++
++/**
++ * Buyer agent run v2 (U102, J134): 36 personas, one for every region × age
++ * band, with local prices, language, connection and how each person is doing
++ * taken into account, and calibration rules against the agreeable-buyer bias.
++ */
++
++export const BUYER_INSTRUCTIONS_V2 = `You are a buyer test agent. For each persona in the panel:
++1. Read the persona's profile, test data and role-play prompt. Become them: their money in their currency, their language, their phone and data plan, how they slept, what is wearing them down this month.
++2. Read the stimulus as they would meet it: the app store page in English, then the first screen, at the Plus price shown in their country (or $9.99 where there is no local price).
++3. Answer in the fixed shape: tries, pays, plan, four price answers (USD a month, thinking in their own currency first), main objection and its theme, what would flip it, confidence 1-5, sessions in the first week (0-7), still using at day 30, reasoning, one line in their words.
++4. Walk their three test scenarios against the product as it is today: English only, a personal session needs an account, offline only on Plus, no data statement before typing, no voice or sound controls yet, Free is 5 sessions a month.
++5. Say if the persona itself does not hold together.
++
++Calibration rules, applied before answering:
++- Look for the reason to say no first. A yes needs a reason that comes from the persona.
++- "Free only" means pays is no, unless pain is 8 or more and a named trigger is met; then maybe.
++- A deal breaker the product hits today makes that answer no (or maybe, if the persona's trigger outweighs it).
++- AI "distrustful" does not try an app that leads with AI. "Skeptical" needs reviews or a recommendation first.
++- Not reading English well, at 60+ or with low tech comfort, fails the first open.
++- Price answers follow income and the local price, not the US price.
++- Struggling people use it more in week one and leave faster if it fails them once.`
++
++const sc = (id: string, outcome: Outcome, note: string) => ({ id, outcome, note })
++
++function a(
++  personaId: string,
++  tries: Verdict,
++  pays: Verdict,
++  plan: BuyerAnswer['plan'],
++  [tooCheap, bargain, expensive, tooExpensive]: [number, number, number, number],
++  theme: Theme,
++  objection: string,
++  flip: string,
++  confidence: BuyerAnswer['confidence'],
++  week: number,
++  day30: Verdict,
++  reasoning: string,
++  quote: string,
++  scenarios: BuyerAnswer['scenarios'],
++  personaIssue?: string,
++): BuyerAnswer {
++  return { personaId, tries, pays, plan, prices: { tooCheap, bargain, expensive, tooExpensive }, theme, objection, flip, confidence, week, day30, reasoning, quote, scenarios, personaIssue }
++}
++
++export const RUN_V2: BuyerRun = {
++  id: 'run-2',
++  version: 2,
++  title: 'v2 · Aurelia Plus at local prices, 36 personas',
++  date: '2026-11-19',
++  kind: 'demo',
++  method:
++    'One agent played 36 personas in turn, in one session, from each persona’s export, under the calibration rules below. No backend, no live model call from the app.',
++  panel: {
++    seed: 2027,
++    size: 36,
++    personaIds: [
++      'P300', 'P178', 'P093', 'P077', 'P101', 'P196',
++      'P266', 'P212', 'P231', 'P158', 'P277', 'P162',
++      'P078', 'P187', 'P226', 'P211', 'P164', 'P035',
++      'P062', 'P107', 'P184', 'P197', 'P185', 'P254',
++      'P012', 'P015', 'P198', 'P001', 'P051', 'P183',
++      'P242', 'P270', 'P130', 'P124', 'P180', 'P217',
++    ],
++  },
++  stimulus: {
++    name: 'Aurelia, app store page and first screen, at local prices',
++    pitch:
++      'Tell Aurelia in one sentence how you feel. In about a minute it makes you a guided session of your own: voice, sound and visuals. It continues as short chapters over the next days, with one check-in a day.',
++    offer: [
++      'Free: 5 sessions a month, no card',
++      'Plus: $9.99, £8.99, €9.99, ¥1,500, ₹399, Rp69,000 or R$29.90 a month; $79 a year in the US',
++      'No local price yet in Canada, Australia, Nigeria or South Africa: $9.99',
++      'English only; a personal session needs an account; offline on Plus only',
++    ],
++    priceUsd: 9.99,
++  },
++  criteria: [
++    { label: 'Question', value: 'Same as v1, asked more carefully: who tries Aurelia, who pays for Plus at the price they would actually see, who is still using it at day 30, and what decides it for each kind of person.' },
++    { label: 'Who', value: '36 synthetic personas: one for every region (Asia, Europe, North America, South America, Oceania, Africa) × age band (18–24, 25–34, 35–44, 45–54, 55–64, 65+), drawn with seed 2027. Where a region has nobody in a band, another person from that region fills the place.' },
++    { label: 'Left out', value: 'The three personas v1 found incoherent (P243, P163, P218).' },
++    { label: 'New parameters', value: 'Region and the local Plus price; language; connection (wifi, patchy data); how they are doing (wellness: pain 1–10, sleep hours and quality, conditions such as burnout or chronic pain), grouped as struggling, strained or coping; age band; sessions in the first week; still using at day 30.' },
++    { label: 'Wellness groups', value: 'Struggling: pain 8 or more, or sleep quality 1 of 5, or pain 7 with sleep quality 2. Strained: pain 5 or more, or sleep quality 2 or less. Coping: everyone else.' },
++    { label: 'What they saw', value: 'The app store pitch in English, the first screen, and Plus at their country’s price from the admin’s pricing table.' },
++    { label: 'How the agent ran', value: 'One agent played each persona in turn from the persona’s full export, applying the calibration rules in the instructions before answering: look for the no first, honour deal breakers, follow income and local price.' },
++    { label: 'Read it as', value: 'Directional. 36 is enough to see which segments differ, not to size a market. One agent playing everyone shares one set of blind spots.' },
++  ],
++  instructions: BUYER_INSTRUCTIONS_V2,
++  findings: [
++    'Much less agreeable than v1: 15 of 36 would try it (16 maybe, 5 no), and 1 would pay for Plus without a condition (16 maybe, 19 no). v1’s 8 of 10 was mostly the agreeable-buyer bias the calibration rules now push against.',
++    'How someone is doing decides more than anything else. Struggling people: 8 of 10 try, 3.5 sessions in week one, a fair band of $4–8. Coping people: 0 of 5 try. Aurelia sells to people in a bad patch, so the first session and the first bad check-in carry the business.',
++    'Age is a cliff at 65: 0 of 6 would try, 0.5 sessions in week one. Every reason is the same mix of English only, small text and an account first. Under 55 the bands look alike.',
++    'Price follows place. Where there is a local price (India, Indonesia, Brazil) 1 of 10 finds Plus too expensive; where $9.99 is charged without one (Canada, Australia, Nigeria, South Africa) 10 of 14 do. Local prices for those four are cheap to add.',
++    'Trust and access are the top objections (10 each), ahead of price (9). Three of the four AI-distrustful personas say no at the pitch; leading with the outcome (“a voice that helps you back to sleep”) rather than “AI” is worth testing.',
++    'Five people have an account before a personal session as a deal breaker, and four on patchy data need sessions to work offline on the free plan.',
++    'The generator still makes people who do not hold together: 13 of 36, most often retired people with work stressors, struggles that do not fit the job, and households that do not fit the life. Fix the generator before v3.',
++  ],
++  answers: [
++    a('P300', 'yes', 'no', 'none', [1, 2, 4, 6], 'access',
++      'English only, and it wants an account before it makes his own session.',
++      'Japanese, the first session without an account, and a voice-only mode.',
++      4, 1, 'no',
++      'Installs on impulse and deletes just as fast. Low income in Tokyo, where ¥1,500 is not a PPP price. Sensitive to sound and reads Japanese first; the first screen in English plus a sign-up wall is two reasons to delete.',
++      'I opened it, it asked me to sign up, I closed it.',
++      [sc('first-open', 'fail', 'A personal session needs an account, which is one of his deal breakers.'), sc('moment', 'risk', 'Racing thoughts at night suit a short session, if he ever reaches one.'), sc('access', 'fail', 'No Japanese and no control over music or bells.')]),
++    a('P178', 'maybe', 'maybe', 'plus-monthly', [1.5, 3, 6, 9], 'trust',
++      'An AI writing her meditation, with no reviews to read first.',
++      'Reviews, and named people behind the method. Hindi would help.',
++      3, 2, 'maybe',
++      'Daily meditator, high income, ₹399 (about $4.70) sits inside her “under $5”. But she reads every review first and does not trust AI with feelings. Very protective of data.',
++      'Who wrote this? A person or a model? I need to know before I breathe along.',
++      [sc('first-open', 'risk', 'No reviews and no method page; she may never install.'), sc('moment', 'pass', 'Ten minutes of focus in an open-plan office is exactly the job.'), sc('privacy', 'fail', 'Nothing tells her where what she types goes.')],
++      'Spends $15 a month across two apps but says she would pay up to $5. One of the two should change.'),
++    a('P093', 'yes', 'maybe', 'free', [1, 2.5, 5, 7.5], 'access',
++      'Every session streams on a limited data plan, and it is all in English.',
++      'Bahasa Indonesia and downloads on the free plan.',
++      3, 3, 'maybe',
++      'Single parent with money worries, never meditated, curious about AI. Rp69,000 is fair to her if it clearly works. Medan mobile data is the practical limit: audio and visuals streamed every evening eat the plan.',
++      'Kalau pakai bahasa Indonesia dan tidak habiskan kuota, saya mau coba.',
++      [sc('first-open', 'risk', 'She can type a sentence in English, but not comfortably.'), sc('moment', 'pass', 'Evening money worry after the kids are asleep is a good fit.'), sc('access', 'fail', 'No Indonesian, no offline on Free.')]),
++    a('P077', 'maybe', 'no', 'free', [0.5, 1.5, 3.5, 5], 'trust',
++      'Does not want a machine telling her how she feels, or one more thing to keep up with.',
++      'A friend she trusts using it; five-minute sessions for carers; no streaks.',
++      3, 2, 'no',
++      'Caring for a parent and recovering from burnout on a low income; free only. She asks one friend before anything, and is skeptical of AI. Sleeps 5.5 hours.',
++      'I already look after everyone. I am not going to look after an app.',
++      [sc('first-open', 'risk', 'Only if a friend sends it.'), sc('moment', 'pass', 'A short start on a hard task, if it keeps to five minutes.'), sc('lapse', 'pass', 'No streaks, so coming back after a week carries no guilt.')]),
++    a('P101', 'maybe', 'no', 'free', [0.5, 1.5, 3, 5], 'price',
++      'YouTube is free and so is prayer.',
++      'A free tier that is truly enough, in Hindi, light on data.',
++      4, 1, 'no',
++      'Low income at 61, skeptical of AI, compares in a spreadsheet, and his free alternatives already work well enough. Winter heaviness is real but not urgent enough to pay.',
++      'Show me it is better than what I already have for nothing.',
++      [sc('first-open', 'risk', 'Reads English as a second language.'), sc('moment', 'risk', 'A morning energy session on patchy data may stall.'), sc('access', 'risk', 'English only; no data-light mode.')]),
++    a('P196', 'no', 'no', 'none', [2, 4, 8, 12], 'access',
++      'He cannot read it.',
++      'Japanese, larger text, and a review in a newspaper he reads.',
++      4, 0, 'no',
++      'Retired at 72, low tech comfort, lives alone in Sapporo. A big decision to think through is a real need, but an English app with small text does not reach him.',
++      '英語のアプリは使えません。',
++      [sc('first-open', 'fail', 'English only.'), sc('moment', 'fail', 'Never reaches it.'), sc('access', 'fail', 'No Japanese, no text size setting.')],
++      'Retired, yet his stressors include “workload and long hours”. Stressors should follow the work pattern.'),
++    a('P266', 'yes', 'no', 'free', [1, 3, 6, 9], 'price',
++      '€9.99 a month is a week of groceries.',
++      'A yearly plan under €40, or a student-style price.',
++      4, 4, 'maybe',
++      'At 21 on a low income after a hard year, free only. Tech-savvy and decides within a day, so the free plan gets a fair go. Streak guilt is not triggered because there are none.',
++      'Free, yes. Ten euros a month, no way.',
++      [sc('first-open', 'pass', 'Comfortable in English; one sentence works.'), sc('moment', 'pass', 'A low-motivation morning fits a short energy session.'), sc('lapse', 'pass', 'Coming back after a gap without a broken streak.')]),
++    a('P212', 'yes', 'maybe', 'free', [1.5, 4, 8, 12], 'price',
++      'At 3am it has to just work, and £8.99 is a lot on her wage.',
++      'Three nights where it gets her back to sleep, then a yearly plan around £59.',
++      4, 5, 'yes',
++      'The most exhausted person on the panel: a baby, 4 hours of sleep, pain 10. She already meditates daily and will use whatever helps. Low income keeps the answer a maybe; desperation pushes her price answers up.',
++      'I would pay anything for sleep. I just cannot actually pay anything.',
++      [sc('first-open', 'pass', 'In bed, one sentence, a session.'), sc('moment', 'pass', 'The night feed is exactly the moment.'), sc('privacy', 'risk', 'Very protective; she would not mention the baby until she knows where it goes.')]),
++    a('P231', 'no', 'no', 'none', [1, 2.5, 5, 8], 'trust',
++      'A chatbot pretending to understand how he feels.',
++      'A library of human-written, human-voiced sessions he can pick from, with no AI in the pitch.',
++      4, 0, 'no',
++      'Distrustful of AI and already has Calm and Insight Timer for when he needs them. Drained from caring work, but the pitch leads with the one thing he rejects.',
++      'If it is a robot, I do not want it near my feelings.',
++      [sc('first-open', 'fail', 'Leaves at the word “AI”.'), sc('moment', 'risk', 'Never reaches it.'), sc('privacy', 'pass', 'Relaxed about data; not the issue.')]),
++    a('P158', 'yes', 'maybe', 'free', [2, 4, 7, 10], 'habit',
++      'If the first session is not good, it is gone by morning.',
++      'A strong first session with no account, timed for after a night shift.',
++      3, 3, 'maybe',
++      'Enthusiastic about AI, installs on impulse. Sees a therapist, so it is a supplement, not a lifeline; £8.99 is above his $5. Allergic to therapy talk.',
++      'Give me something good in the first two minutes or I am done.',
++      [sc('first-open', 'risk', 'The account step before his own session is where he could delete it.'), sc('moment', 'pass', 'Winding down after a night shift.'), sc('low-checkin', 'risk', 'A low check-in must not answer in therapist language.')]),
++    a('P277', 'yes', 'maybe', 'plus-yearly', [3, 7, 13, 20], 'voice',
++      'If the voice grates, she deletes it in the same minute.',
++      'Choose the voice first, German, and her Oura sleep data in the session.',
++      3, 4, 'maybe',
++      'High income, pays for Calm already, meditates daily, struggling (pain 8). Money is not the problem; switching from three apps is. Very protective of data and her Oura.',
++      'Wenn die Stimme nervt, ist die App weg.',
++      [sc('first-open', 'risk', 'The first voice decides it, and she cannot choose one yet.'), sc('moment', 'pass', 'Switching off after closing the café.'), sc('privacy', 'fail', 'No statement about data before she connects a ring or types.')]),
++    a('P162', 'maybe', 'maybe', 'plus-monthly', [3, 6, 11, 16], 'access',
++      'Too much English and small letters; she needs her daughter to set it up.',
++      'German, larger text, and her Garmin sleep data.',
++      3, 2, 'maybe',
++      'High income and enthusiastic, so she would pay if it works, but 66 with low tech comfort and German first. Sleep 4.5 hours, quality 1: the need is high.',
++      'Wenn meine Tochter es einrichtet, probiere ich es.',
++      [sc('first-open', 'risk', 'Possible only with help.'), sc('moment', 'risk', 'Waking tired needs a morning session she can start alone.'), sc('access', 'fail', 'No German and no text size setting.')],
++      'A carer for a parent who lives alone. Household should match the caring.'),
++    a('P078', 'maybe', 'no', 'free', [1, 2, 4, 6], 'price',
++      'Ten dollars is a lot on a stipend, and she wants to know where her notes go.',
++      'A student price around $3, or her university paying.',
++      4, 2, 'no',
++      'Graduate student, never meditated, stress headaches in exam season. Free only. Asks one friend first and worries about data. Would use the free plan and forget it.',
++      'If my roommate likes it, I will try it. Paying is another story.',
++      [sc('first-open', 'pass', 'Fine in English; one sentence.'), sc('moment', 'pass', 'Headache before an exam.'), sc('lapse', 'risk', 'Forgets apps; nothing brings her back gently.')]),
++    a('P187', 'yes', 'no', 'free', [1, 2.5, 5, 7], 'price',
++      'Free or nothing, with two small kids and a parent to care for.',
++      'His therapist suggesting it, or a Canadian price.',
++      3, 2, 'maybe',
++      'Tries without an account first, which Quick Start allows. Stress headaches, middle income stretched by caring. Plays only what is free.',
++      'I will use the free one. That is it.',
++      [sc('first-open', 'risk', 'Quick Start works; his own session hits the account wall.'), sc('moment', 'pass', 'Headache after a hard call.'), sc('lapse', 'pass', 'No penalty for coming back.')]),
++    a('P226', 'maybe', 'no', 'free', [0.5, 1.5, 3, 5], 'price',
++      'She just lost her job. Not paying for calm.',
++      'A free tier that is enough, three-minute sessions, a creator she follows.',
++      4, 1, 'no',
++      'Laid off with young kids, skeptical, cannot find ten quiet minutes, irritated by meditation voices. Overwhelmed by notifications, so she would never enable them.',
++      'Maybe when I have a job again.',
++      [sc('first-open', 'risk', 'Only through a creator she follows.'), sc('moment', 'pass', 'Three minutes when the news gets too much.'), sc('paywall', 'fail', 'Hitting the limit on a bad week would end it.')]),
++    a('P211', 'yes', 'maybe', 'free', [1.5, 3.5, 7, 10], 'price',
++      'Every sleep app says it is the one. Ten dollars for another maybe?',
++      'Proof from their own Fitbit sleep after a week, and a $4.99 option.',
++      3, 5, 'maybe',
++      'Pain 10, sleep 4.5 hours of quality 1, ADHD. Desperate enough to use it every day in week one; thinks apps are overpriced and reads reviews.',
++      'If my Fitbit says I slept better, I will pay. Not before.',
++      [sc('first-open', 'pass', 'One sentence at bedtime.'), sc('moment', 'pass', 'A morning session after waking tired.'), sc('access', 'risk', 'With ADHD they need one gentle reminder, not none and not many.')]),
++    a('P164', 'no', 'no', 'none', [1, 2.5, 5, 8], 'trust',
++      'A translator can tell machine-written text, and does not want it reading to her about her feelings.',
++      'Human-written scripts, with AI only arranging them.',
++      4, 0, 'no',
++      'Distrustful of AI and doing fine (pain 3). Works with language, so she hears the seams. No reason to switch.',
++      'I correct machine text all day. I am not going to meditate to it.',
++      [sc('first-open', 'fail', 'Leaves at the pitch.'), sc('moment', 'risk', 'Never reaches it.'), sc('privacy', 'pass', 'Relaxed about data.')]),
++    a('P035', 'no', 'no', 'none', [0.5, 1.5, 3, 5], 'trust',
++      'Burnout is something you talk through with people, not an app.',
++      'Her doctor or therapist recommending it, with human voices.',
++      4, 0, 'no',
++      'Retired teacher at 70, distrustful of AI, free only, reads every review. Recovering from burnout; she would not hand that to a machine.',
++      'I want a person, not a program.',
++      [sc('first-open', 'fail', 'Leaves at “AI”.'), sc('moment', 'risk', 'Never reaches it.'), sc('privacy', 'pass', 'Relaxed about data.')],
++      'Retired, yet her stressors are “job insecurity” and “a long commute”.'),
++    a('P062', 'yes', 'maybe', 'plus-monthly', [1.5, 3.5, 6.5, 10], 'access',
++      'On layovers she has no data: sessions must work offline, and in Portuguese.',
++      'Offline sessions in a free week, and Portuguese.',
++      3, 4, 'maybe',
++      'Cabin crew at 19, anxious (pain 8), meditates daily with three apps. R$29.90 is fair to her. Offline only on Plus could be the reason she pays, or the reason she never gets to try.',
++      'Se funcionar offline no voo, eu pago.',
++      [sc('first-open', 'pass', 'Comfortable with apps; a sentence works.'), sc('moment', 'risk', 'Pre-flight anxiety without data needs offline, which is Plus only.'), sc('access', 'risk', 'English as a second language; plain words help.')],
++      'Spends about $10 a month but says she would pay up to $5.'),
++    a('P107', 'maybe', 'no', 'free', [1, 2.5, 5, 7.5], 'access',
++      'In English she is out in two minutes.',
++      'Portuguese and five-minute “just start” sessions.',
++      3, 1, 'no',
++      'Sales lead with young kids who installs on impulse and prefers talking to a person. English as a second language on patchy data.',
++      'Em inglês? Não.',
++      [sc('first-open', 'risk', 'English first screen.'), sc('moment', 'pass', 'Starting a hard task fits a short session.'), sc('access', 'fail', 'No Portuguese.')]),
++    a('P184', 'yes', 'maybe', 'free', [1.5, 3, 5.5, 8], 'privacy',
++      'Who sees what she writes? And the voice must not sound like an advert.',
++      'A plain data page, voice samples before sign-up, and Portuguese.',
++      3, 3, 'maybe',
++      'Accountant who compares options in a spreadsheet; tried two apps and stopped. Constant low anxiety. Data sharing and a fake voice are both deal breakers.',
++      'Primeiro me diga para onde vão os meus dados.',
++      [sc('first-open', 'risk', 'No data statement before she types.'), sc('moment', 'pass', 'Evening anxiety.'), sc('lapse', 'pass', 'No streak guilt.')]),
++    a('P197', 'maybe', 'no', 'free', [1, 2.5, 5, 7], 'access',
++      'Her English is limited and her tech comfort low.',
++      'Portuguese, and a friend setting it up.',
++      3, 2, 'maybe',
++      'Enthusiastic about AI but low tech comfort; asks one trusted friend. Broken sleep from shifts (5.5 hours, quality 2).',
++      'Meu inglês é pouco. Se minha amiga me mostrar, tento.',
++      [sc('first-open', 'risk', 'Needs help to start.'), sc('moment', 'pass', 'Sleep after a shift.'), sc('low-checkin', 'risk', 'A low check-in in English may not land.')],
++      'An accountant whose sleep is broken by shift work. Struggle should follow occupation.'),
++    a('P185', 'maybe', 'maybe', 'plus-yearly', [2, 4, 7, 10], 'habit',
++      'He will forget it; the gym at least has a schedule.',
++      'One reminder at the hour he usually snaps, and a yearly plan.',
++      3, 2, 'maybe',
++      'Single parent who snaps after long days; follows creators, goes to the gym. Can afford R$29.90 and likes annual discounts, but forgets apps.',
++      'Se me lembrar na hora certa, uso.',
++      [sc('first-open', 'risk', 'English first screen.'), sc('moment', 'pass', 'Calming down before getting home.'), sc('lapse', 'pass', 'No penalty for coming back.')],
++      'A customer support agent on a high income.'),
++    a('P254', 'maybe', 'no', 'none', [0.5, 1.5, 3, 5], 'access',
++      'The app is in English and the text is small.',
++      'Portuguese, larger text, a grandchild setting it up.',
++      4, 0, 'no',
++      'Same answer as v1, which is the point: a persona should answer the same way twice. 73, low tech comfort, low income, Portuguese only.',
++      'Meu neto pode me mostrar. Mas tem que falar português.',
++      [sc('first-open', 'fail', 'English only.'), sc('moment', 'risk', 'After stress he needs one big button.'), sc('access', 'fail', 'No language or text size choice.')],
++      'Retired, yet his stressors include “workload and long hours”.'),
++    a('P012', 'maybe', 'no', 'free', [0.5, 2, 4, 6], 'trust',
++      'An AI pretending to care at 3am is creepy.',
++      'Lead with the outcome (“a voice that helps you back to sleep”), not with AI.',
++      3, 2, 'no',
++      'On a career break, wakes at 3am (pain 9), distrustful of AI, free only, installs and deletes fast. Desperate enough to try once; distrust makes one bad night fatal.',
++      'If it works, fine. If it gets weird, it is gone.',
++      [sc('first-open', 'risk', 'The AI pitch puts him off before the first session.'), sc('moment', 'pass', 'Back to sleep at 3am, if it works.'), sc('privacy', 'pass', 'Relaxed about data.')]),
++    a('P015', 'yes', 'maybe', 'plus-monthly', [2, 5, 10, 14], 'trust',
++      'If it starts sounding like a therapist, she is gone.',
++      'Practical, shift-aware sleep: sessions for sleeping in the day.',
++      3, 4, 'maybe',
++      'Shift work has broken her sleep (pain 8). Can afford $10 and would pay if it works. Skeptical of AI and allergic to therapy talk.',
++      'Just help me sleep at 10am. No feelings talk.',
++      [sc('first-open', 'pass', 'One sentence after a night shift.'), sc('moment', 'pass', 'Daytime sleep.'), sc('low-checkin', 'risk', 'A low check-in must stay practical.')]),
++    a('P198', 'yes', 'maybe', 'plus-yearly', [2, 4.5, 9, 13], 'trust',
++      'What she needs is sleep and someone to talk to, not more content.',
++      'Better sleep showing in her Oura data, and an Australian yearly price.',
++      3, 3, 'maybe',
++      'High income, sleep quality 1 since the baby arrived, prefers talking to a person. Would pay if her ring shows a difference.',
++      'If my ring says it worked, I will keep it.',
++      [sc('first-open', 'pass', 'A sentence at bedtime.'), sc('moment', 'pass', 'Light sleep after night feeds.'), sc('low-checkin', 'risk', 'Lonely; a low check-in needs a human link, not a tip.')],
++      'A new baby while living with flatmates. Household should match the struggle.'),
++    a('P001', 'yes', 'yes', 'plus-monthly', [3, 6, 12, 18], 'voice',
++      'If the voice grates, nothing else matters.',
++      'Already a yes: choosing the voice first would make it certain.',
++      3, 4, 'yes',
++      'High income, never meditated, constant low anxiety, would spend on something that works. Follows a creator she likes. The only deal breaker the product might hit is the voice.',
++      'Pick a voice I like and I am in.',
++      [sc('first-open', 'risk', 'The first voice is not her choice yet.'), sc('moment', 'pass', 'Anxiety in the commute.'), sc('low-checkin', 'pass', 'A gentle answer is enough for her.')]),
++    a('P051', 'maybe', 'maybe', 'free', [1.5, 3, 6, 9], 'trust',
++      'Show her it works in ten minutes, not in a month.',
++      'Five-minute focus sessions that keep their length, and reviews.',
++      2, 2, 'maybe',
++      'Single-parent chef on night shifts, skeptical, reads every review. Would pay more if it clearly works, but has no evidence yet. Low confidence: the profile does not explain her focus problem.',
++      'Ten minutes, and it had better be ten.',
++      [sc('first-open', 'pass', 'English is fine; a sentence works.'), sc('moment', 'risk', 'Her focus moment is unclear from the profile.'), sc('low-checkin', 'pass', 'A gentle answer works.')],
++      'A 56-year-old chef whose struggle is “cannot study for more than ten minutes”.'),
++    a('P183', 'maybe', 'no', 'free', [1, 2, 4, 6], 'trust',
++      'Another app to calm him down about too many apps?',
++      'No notifications at all, large text, reviews from people his age.',
++      3, 1, 'no',
++      'Retired engineer living alone, overwhelmed by news, skeptical, free only, reads reviews. Lonely. Not opposed, just unconvinced.',
++      'I will believe it when someone my age tells me.',
++      [sc('first-open', 'risk', 'Skeptical of the pitch.'), sc('moment', 'pass', 'After the evening news.'), sc('access', 'risk', 'No text size setting.')]),
++    a('P242', 'yes', 'no', 'free', [0.5, 1.5, 3, 5], 'price',
++      '$9.99 in dollars, on her card, with the naira where it is? No.',
++      'A naira price around $2–3, and sessions that work on little data.',
++      4, 3, 'maybe',
++      'Software engineer recovering from burnout, wakes tired. Curious and follows creators, so she would try. A dollar price is out of reach at local wages, and patchy data limits streaming.',
++      'Price it in naira and I will think about it.',
++      [sc('first-open', 'pass', 'Fine in English; a sentence works.'), sc('moment', 'risk', 'Patchy data on a morning session.'), sc('low-checkin', 'risk', 'Burnout makes a low check-in likely; it needs care.')]),
++    a('P270', 'maybe', 'maybe', 'free', [2, 4, 8, 12], 'privacy',
++      'Data costs and power cuts, and he wants to know where his notes go.',
++      'Offline downloads, a rand price and a plain data page.',
++      3, 2, 'maybe',
++      'Architect caring for a parent, skeptical, compares in a spreadsheet, can afford up to $10. Data sharing is a deal breaker and the product says nothing about it.',
++      'Tell me where the data goes and let it work offline.',
++      [sc('first-open', 'risk', 'No data statement.'), sc('moment', 'pass', 'Sorting his thoughts after a caring evening.'), sc('lapse', 'pass', 'No penalty for coming back.')]),
++    a('P130', 'yes', 'maybe', 'free', [2, 4, 8, 12], 'privacy',
++      'She reads terms for a living: show her the data clause.',
++      'Clear data terms, her therapist recommending it, and a rand price.',
++      3, 3, 'maybe',
++      'A single parent sleeping 4.5 hours, sees a therapist, skeptical, would pay more if it clearly works. Sharing data with third parties is her deal breaker.',
++      'Where is the privacy policy? Not a link, the actual words.',
++      [sc('first-open', 'risk', 'No data terms before she types.'), sc('moment', 'pass', 'A short focus session.'), sc('low-checkin', 'pass', 'Already has a therapist; the care link is enough.')],
++      'A 49-year-old lawyer whose struggle is “cannot study for more than ten minutes”.'),
++    a('P124', 'no', 'no', 'none', [1, 2.5, 5, 8], 'access',
++      'If she must make an account before she knows it is any good, no.',
++      'Trying it without an account, through a friend.',
++      3, 0, 'no',
++      'Retired engineer with chronic pain, low tech comfort, skeptical, coping. Having to create an account first is her deal breaker, and she has no urgent need.',
++      'I am not giving my email to find out.',
++      [sc('first-open', 'fail', 'The account step is her deal breaker.'), sc('moment', 'risk', 'A winter morning session, if she ever starts.'), sc('lapse', 'pass', 'No streaks.')],
++      'Retired, yet her stressors include “job insecurity”.'),
++    a('P180', 'maybe', 'no', 'free', [0.5, 2, 4, 6], 'price',
++      'A dollar price on a rand salary.',
++      'A rand price around R60, or his employer paying.',
++      3, 1, 'no',
++      'Junior architect on a low income, skeptical, free only, reads reviews. Focus in an open-plan office is a real but modest need.',
++      'R180 a month for focus? I will use headphones.',
++      [sc('first-open', 'pass', 'Fine in English.'), sc('moment', 'pass', 'Focus at his desk.'), sc('lapse', 'pass', 'No streak guilt.')]),
++    a('P217', 'maybe', 'maybe', 'free', [1.5, 3, 6, 9], 'access',
++      'Make her sign up before she hears anything? Then no.',
++      'The first personal session without an account, and a naira price.',
++      3, 2, 'maybe',
++      'New parent caring for a parent at home, daily meditator, spends $15 a month already. Skeptical and reads reviews. Two deal breakers: an account first and paying before trying.',
++      'Let me hear one first.',
++      [sc('first-open', 'fail', 'An account before her own session.'), sc('moment', 'pass', 'Focus when the phone keeps pulling her.'), sc('low-checkin', 'risk', 'Two people to care for: a low check-in needs care.')],
++      'Spends $15 a month but her trigger is “a price under $5”.'),
++  ],
++}
+diff --git a/src/admin/data/buyerRuns.test.ts b/src/admin/data/buyerRuns.test.ts
+index ac4715f..75f255b 100644
+--- a/src/admin/data/buyerRuns.test.ts
++++ b/src/admin/data/buyerRuns.test.ts
+@@ -1,5 +1,5 @@
+ import { describe, expect, it } from 'vitest'
+-import { BUYER_RUNS, countVerdicts, priceRange, scenarioCounts, themeCounts } from './buyerRuns'
++import { BUYER_RUNS, EXCLUDED, countVerdicts, drawStratified, priceRange, scenarioCounts, themeCounts, wellnessOf } from './buyerRuns'
+ import { drawPanel, generatePersonas } from './personas'
+ 
+ describe('buyer agent runs', () => {
+@@ -8,7 +8,7 @@ describe('buyer agent runs', () => {
+ 
+   it('answers for exactly the panel the seed draws', () => {
+     for (const run of BUYER_RUNS) {
+-      const drawn = drawPanel(all, run.panel.size, run.panel.seed).map((p) => p.id)
++      const drawn = (run.version === 1 ? drawPanel(all, run.panel.size, run.panel.seed) : drawStratified(all, run.panel.seed)).map((p) => p.id)
+       expect(run.panel.personaIds, run.id).toEqual(drawn)
+       expect(run.answers.map((a) => a.personaId)).toEqual(run.panel.personaIds)
+     }
+@@ -36,4 +36,27 @@ describe('buyer agent runs', () => {
+     const s = scenarioCounts(run.answers)
+     expect(s.pass + s.risk + s.fail).toBe(30)
+   })
++
++  it('gives v2 every region and age band, without the excluded, with usage', () => {
++    const run = BUYER_RUNS.find((r) => r.version === 2)!
++    const ps = run.panel.personaIds.map((id) => byId.get(id)!)
++    expect(new Set(ps.map((p) => p.region)).size).toBe(6)
++    expect(new Set(ps.map((p) => p.ageBand)).size).toBe(6)
++    for (const id of EXCLUDED) expect(run.panel.personaIds).not.toContain(id)
++    for (const a of run.answers) {
++      expect(a.week, a.personaId).toBeGreaterThanOrEqual(0)
++      expect(a.week, a.personaId).toBeLessThanOrEqual(7)
++      expect(a.day30, a.personaId).toBeDefined()
++      if (a.tries === 'no') expect(a.week).toBe(0)
++    }
++    expect(countVerdicts(run.answers, 'tries')).toEqual({ yes: 15, maybe: 16, no: 5 })
++    expect(new Set(ps.map((p) => wellnessOf(p).level)).size).toBe(3)
++  })
++
++  it('gives every run criteria and versions in order', () => {
++    BUYER_RUNS.forEach((r, i) => {
++      expect(r.version).toBe(i + 1)
++      expect(r.criteria.length).toBeGreaterThan(4)
++    })
++  })
+ })
+diff --git a/src/admin/data/buyerRuns.ts b/src/admin/data/buyerRuns.ts
+index 564b16f..b6cc80c 100644
+--- a/src/admin/data/buyerRuns.ts
++++ b/src/admin/data/buyerRuns.ts
+@@ -9,6 +9,9 @@
+  * way to form hypotheses and to shape the schema before runs get bigger.
+  */
+ 
++import { RUN_V2 } from './buyerRunV2'
++import type { Persona } from './personas'
++
+ export type Verdict = 'yes' | 'maybe' | 'no'
+ export type Outcome = 'pass' | 'risk' | 'fail'
+ export type Theme = 'price' | 'notifications' | 'privacy' | 'trust' | 'access' | 'voice' | 'habit' | 'switching'
+@@ -59,10 +62,21 @@ export interface BuyerAnswer {
+   scenarios: ScenarioResult[]
+   /** Something wrong with the persona itself, spotted while playing it. */
+   personaIssue?: string
++  /** v2+: sessions they would play in the first week (0–7). */
++  week?: number
++  /** v2+: still using it at day 30. */
++  day30?: Verdict
++}
++
++export interface Criterion {
++  label: string
++  value: string
+ }
+ 
+ export interface BuyerRun {
+   id: string
++  /** Shown as the version tab: v1, v2, … */
++  version: number
+   title: string
+   date: string
+   kind: 'demo' | 'run'
+@@ -70,6 +84,8 @@ export interface BuyerRun {
+   method: string
+   panel: { seed: number; size: number; personaIds: string[] }
+   stimulus: { name: string; pitch: string; offer: string[]; priceUsd: number }
++  /** How the run was set up, in plain words, for someone who was not there. */
++  criteria: Criterion[]
+   /** The instructions the agent followed, so a run can be repeated. */
+   instructions: string
+   findings: string[]
+@@ -84,9 +100,22 @@ export const BUYER_INSTRUCTIONS = `You are a buyer test agent. For each persona
+ 5. If the persona itself does not hold together, say so.
+ Rules: synthetic buyers are too agreeable, so look for the reason to say no first. A "yes" needs a reason that comes from the persona, not from the pitch.`
+ 
++/** What the answers mean, the same in every run. */
++export const DEFINITIONS: Criterion[] = [
++  { label: 'Tries: yes', value: 'Would install and play a first session this week, with what the page and first screen show.' },
++  { label: 'Tries: maybe', value: 'Would, if one named thing changed (it is in “what would flip it”).' },
++  { label: 'Tries: no', value: 'Would not install, or would delete before a first session.' },
++  { label: 'Pays', value: 'The same three answers for paying for Plus at the price they are shown, within the first month.' },
++  { label: 'Price answers', value: 'The four Van Westendorp questions, per month: at what price is it so cheap you would doubt it; a bargain; getting expensive but still worth considering; too expensive to consider. Answered in US dollars so runs add up.' },
++  { label: 'Fair price band', value: 'From the median “a bargain” to the median “getting expensive”.' },
++  { label: 'Test cases', value: 'Each persona has three scenarios (first open, their moment a week in, one edge case). Pass: the product today does what the persona needs. Risk: it could go either way. Fail: the product today loses them there.' },
++  { label: 'Confidence', value: '1 is a guess, 5 is sure. Low confidence means the profile does not say enough to decide.' },
++]
++
+ export const BUYER_RUNS: BuyerRun[] = [
+   {
+     id: 'demo-1',
++    version: 1,
+     title: 'Demo 1 · Aurelia Plus at $9.99',
+     date: '2026-11-19',
+     kind: 'demo',
+@@ -104,6 +133,15 @@ export const BUYER_RUNS: BuyerRun[] = [
+       offer: ['Free: 5 sessions a month, no card', 'Plus: $9.99 a month or $79 a year, unlimited, voice input, offline', 'English only today'],
+       priceUsd: 9.99,
+     },
++    criteria: [
++      { label: 'Question', value: 'Would these people try Aurelia, and would they pay for Plus at $9.99 a month?' },
++      { label: 'Who', value: '10 of the 300 synthetic personas, drawn with seed 2026 and balanced by goal: every one of the six goals has at least one person.' },
++      { label: 'What they saw', value: 'The app store pitch and today’s plans, the same US price for everyone. No regional prices.' },
++      { label: 'How the agent ran', value: 'One agent played each persona in turn, in one session, reading the persona’s full profile, test data and role-play prompt. Instructions below.' },
++      { label: 'What each answered', value: 'Try, pay, which plan, four price answers, the main objection, what would flip it, confidence, reasoning, a quote, and pass / risk / fail on their three test cases.' },
++      { label: 'Not taken into account', value: 'Region and local price, language, connection, how they are doing (wellness), usage after the first week. Added in v2.' },
++      { label: 'Read it as', value: 'A demo of the format. Ten people in one session cannot tell segments apart.' },
++    ],
+     instructions: BUYER_INSTRUCTIONS,
+     findings: [
+       'The free plan with no card does the selling: 8 of 10 would try it, and every no or maybe on paying came after trying, not before.',
+@@ -309,8 +347,83 @@ export const BUYER_RUNS: BuyerRun[] = [
+       },
+     ],
+   },
++  RUN_V2,
+ ]
+ 
++/* ------------------------------------------------------- Panels and prices */
++
++export const REGIONS = ['Asia', 'Europe', 'North America', 'South America', 'Oceania', 'Africa'] as const
++export const AGE_BANDS = ['18–24', '25–34', '35–44', '45–54', '55–64', '65+'] as const
++
++/** Personas a run found incoherent; later runs leave them out (O39). */
++export const EXCLUDED = ['P243', 'P163', 'P218']
++
++function rng(seed: number) {
++  let a = seed >>> 0
++  return () => {
++    a = (a + 0x6d2b79f5) >>> 0
++    let t = a
++    t = Math.imul(t ^ (t >>> 15), t | 1)
++    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
++    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
++  }
++}
++
++/**
++ * One persona for every region × age band (36), picked by seed. A cell with
++ * nobody in it takes another persona from the same region, so every region
++ * still has six. Leaves out EXCLUDED.
++ */
++export function drawStratified(pool: Persona[], seed: number): Persona[] {
++  const r = rng(seed)
++  const pick = (list: Persona[]) => list[Math.floor(r() * list.length)]
++  const ok = pool.filter((p) => !EXCLUDED.includes(p.id))
++  const out: Persona[] = []
++  for (const region of REGIONS) {
++    let short = 0
++    for (const band of AGE_BANDS) {
++      const cell = ok.filter((p) => p.region === region && p.ageBand === band && !out.includes(p))
++      if (cell.length) out.push(pick(cell))
++      else short += 1
++    }
++    for (; short > 0; short--) {
++      const rest = ok.filter((p) => p.region === region && !out.includes(p))
++      if (rest.length) out.push(pick(rest))
++    }
++  }
++  return out
++}
++
++/** Plus monthly as each persona would see it (commerce.ts REGION_PRICING), with a USD equivalent at the run's rates. */
++const LOCAL_PLUS: Record<string, { label: string; usd: number }> = {
++  'United States': { label: '$9.99', usd: 9.99 },
++  'United Kingdom': { label: '£8.99', usd: 11.4 },
++  Spain: { label: '€9.99', usd: 10.8 },
++  Netherlands: { label: '€9.99', usd: 10.8 },
++  Germany: { label: '€9.99', usd: 10.8 },
++  France: { label: '€9.99', usd: 10.8 },
++  Indonesia: { label: 'Rp69,000', usd: 4.35 },
++  India: { label: '₹399', usd: 4.7 },
++  Brazil: { label: 'R$29.90', usd: 5.5 },
++  Japan: { label: '¥1,500', usd: 9.9 },
++}
++
++export function localPlus(country: string) {
++  return LOCAL_PLUS[country] ?? { label: '$9.99 (no local price)', usd: 9.99 }
++}
++
++export type WellnessLevel = 'struggling' | 'strained' | 'coping'
++
++/** A reading of how someone is doing, from their profile: pain, sleep, conditions. */
++export function wellnessOf(p: Persona) {
++  const pain = p.profile.testing.pain
++  const { hours, quality } = p.profile.sleep
++  const level: WellnessLevel = pain >= 8 || quality <= 1 || (pain >= 7 && quality <= 2) ? 'struggling' : pain >= 5 || quality <= 2 ? 'strained' : 'coping'
++  return { level, pain, sleepHours: hours, sleepQuality: quality, conditions: p.flags, stressors: p.profile.stressors }
++}
++
++export const WELLNESS_LABEL: Record<WellnessLevel, string> = { struggling: 'Struggling', strained: 'Strained', coping: 'Coping' }
++
+ /* ------------------------------------------------------------------ Tallies */
+ 
+ const median = (values: number[]): number => {
+diff --git a/src/admin/pages/BuyerResultsPage.tsx b/src/admin/pages/BuyerResultsPage.tsx
+index 0f92682..ca19695 100644
+--- a/src/admin/pages/BuyerResultsPage.tsx
++++ b/src/admin/pages/BuyerResultsPage.tsx
+@@ -1,37 +1,49 @@
+ import { Copy, Download } from 'lucide-react'
+ import { useState, type ReactNode } from 'react'
+-import { Link } from 'react-router-dom'
++import { Link, useSearchParams } from 'react-router-dom'
+ import { DataTable, type Column } from '../components/DataTable'
++import { PersonaProfile } from '../components/PersonaProfile'
+ import { SidePanel } from '../components/SidePanel'
+ import { Badge, Button, PageHeader, Panel, StatCard } from '../components/ui'
+ import {
+   BUYER_RUNS,
++  DEFINITIONS,
+   OUTCOME_TONE,
+   PLAN_LABEL,
+   THEME_LABEL,
+   VERDICT_TONE,
++  WELLNESS_LABEL,
+   countVerdicts,
++  localPlus,
+   priceRange,
+   scenarioCounts,
+   themeCounts,
++  wellnessOf,
+   type BuyerAnswer,
++  type BuyerRun,
+ } from '../data/buyerRuns'
+ import { GOAL_LABEL, generatePersonas, type Persona } from '../data/personas'
+ 
+ const PERSONAS = new Map(generatePersonas().map((p) => [p.id, p]))
+ const SCALE_MAX = 20
++const WELLNESS_TONE = { struggling: 'critical', strained: 'warning', coping: 'good' } as const
+ 
+ interface Row {
+   id: string
+   name: string
+   age: number
++  ageBand: string
++  region: string
+   country: string
+   goal: string
++  wellness: string
++  localPrice: string
+   tries: string
+   pays: string
+   plan: string
+   bargain: number
+   theme: string
++  week: number | string
+   confidence: number
+ }
+ 
+@@ -45,13 +57,16 @@ function download(name: string, text: string) {
+ }
+ 
+ const money = (n: number) => `$${n % 1 ? n.toFixed(2) : n}`
++const persona = (id: string) => PERSONAS.get(id)!
+ 
+ export function BuyerResultsPage() {
+-  const [runId, setRunId] = useState(BUYER_RUNS[0].id)
+-  const [openId, setOpenId] = useState<string | null>(null)
++  const [params, setParams] = useSearchParams()
++  const latest = BUYER_RUNS[BUYER_RUNS.length - 1]
++  const run = BUYER_RUNS.find((r) => String(r.version) === params.get('v')) ?? latest
++  const [open, setOpen] = useState<{ id: string; tab: 'answer' | 'persona' } | null>(null)
+   const [notice, setNotice] = useState('')
+-  const run = BUYER_RUNS.find((r) => r.id === runId) ?? BUYER_RUNS[0]
+   const n = run.answers.length
++  const hasUsage = run.answers.some((a) => a.week !== undefined)
+ 
+   const tries = countVerdicts(run.answers, 'tries')
+   const pays = countVerdicts(run.answers, 'pays')
+@@ -61,34 +76,60 @@ export function BuyerResultsPage() {
+   const issues = run.answers.filter((a) => a.personaIssue)
+ 
+   const rows: Row[] = run.answers.map((a) => {
+-        const p = PERSONAS.get(a.personaId)!
+-        return {
+-          id: a.personaId,
+-          name: p.name,
+-          age: p.age,
+-          country: p.country,
+-          goal: GOAL_LABEL[p.goal],
+-          tries: a.tries,
+-          pays: a.pays,
+-          plan: PLAN_LABEL[a.plan],
+-          bargain: a.prices.bargain,
+-          theme: THEME_LABEL[a.theme],
+-          confidence: a.confidence,
+-        }
+-      })
++    const p = persona(a.personaId)
++    return {
++      id: a.personaId,
++      name: p.name,
++      age: p.age,
++      ageBand: p.ageBand,
++      region: p.region,
++      country: p.country,
++      goal: GOAL_LABEL[p.goal],
++      wellness: WELLNESS_LABEL[wellnessOf(p).level],
++      localPrice: localPlus(p.country).label,
++      tries: a.tries,
++      pays: a.pays,
++      plan: PLAN_LABEL[a.plan],
++      bargain: a.prices.bargain,
++      theme: THEME_LABEL[a.theme],
++      week: a.week ?? '–',
++      confidence: a.confidence,
++    }
++  })
+ 
+   const verdictCell = (v: string) => <Badge tone={VERDICT_TONE[v as keyof typeof VERDICT_TONE]}>{v}</Badge>
+   const columns: Column<Row>[] = [
+-    { key: 'name', header: 'Persona', render: (r) => <span className="font-medium">{r.name}</span> },
++    {
++      key: 'name',
++      header: 'Persona',
++      render: (r) => (
++        <button
++          type="button"
++          onClick={(e) => {
++            e.stopPropagation()
++            setOpen({ id: r.id, tab: 'persona' })
++          }}
++          className="text-left font-medium underline decoration-adm-line underline-offset-2 hover:decoration-adm-ink"
++        >
++          {r.name}
++        </button>
++      ),
++    },
+     { key: 'age', header: 'Age', numeric: true },
++    { key: 'region', header: 'Region' },
+     { key: 'country', header: 'Country' },
+-    { key: 'goal', header: 'Goal' },
++    {
++      key: 'wellness',
++      header: 'Wellness',
++      render: (r) => <Badge tone={WELLNESS_TONE[r.wellness.toLowerCase() as keyof typeof WELLNESS_TONE]}>{r.wellness}</Badge>,
++    },
+     { key: 'tries', header: 'Tries', render: (r) => verdictCell(r.tries) },
+     { key: 'pays', header: 'Pays', render: (r) => verdictCell(r.pays) },
+-    { key: 'plan', header: 'Ends up on' },
++    { key: 'localPrice', header: 'Saw Plus at' },
+     { key: 'bargain', header: 'A bargain at', numeric: true, render: (r) => money(r.bargain) },
++    ...(hasUsage ? [{ key: 'week' as const, header: 'Week 1', numeric: true }] : []),
+     { key: 'theme', header: 'Main objection' },
+-    { key: 'confidence', header: 'Confidence', numeric: true, render: (r) => `${r.confidence} of 5` },
++    { key: 'confidence', header: 'Conf.', numeric: true, render: (r) => `${r.confidence}/5` },
+   ]
+ 
+   async function copy(text: string, what: string) {
+@@ -100,8 +141,10 @@ export function BuyerResultsPage() {
+     }
+   }
+ 
+-  const open = openId ? run.answers.find((a) => a.personaId === openId) : undefined
++  const answer = open ? run.answers.find((a) => a.personaId === open.id) : undefined
+   const pct = (v: number) => `${Math.min(100, (v / SCALE_MAX) * 100)}%`
++  const ages = run.answers.map((a) => persona(a.personaId).age)
++  const people = run.answers.map((a) => persona(a.personaId))
+ 
+   return (
+     <div className="flex flex-col gap-16">
+@@ -110,33 +153,47 @@ export function BuyerResultsPage() {
+         description="A buyer agent reads a panel of synthetic personas and one thing to test (a pitch, a price, a screen) and answers as each of them: would they try it, would they pay, at what price, what stops them and what would change their mind. Use it to compare options and find questions for real people. It is not evidence of demand."
+         actions={
+           <div className="flex flex-wrap items-center gap-8">
+-            {BUYER_RUNS.length > 1 && (
+-              <select aria-label="Run" value={run.id} onChange={(e) => setRunId(e.target.value)} className="h-32 rounded-8 border border-adm-line bg-adm-surface px-10 text-13">
+-                {BUYER_RUNS.map((r) => (
+-                  <option key={r.id} value={r.id}>
+-                    {r.title}
+-                  </option>
+-                ))}
+-              </select>
+-            )}
+             <Button size="sm" icon={<Copy size={13} />} onClick={() => copy(run.instructions, 'Agent instructions')}>
+               Agent instructions
+             </Button>
+-            <Button size="sm" icon={<Download size={13} />} onClick={() => download(`aurelia-buyer-${run.id}.json`, JSON.stringify(run, null, 2))}>
++            <Button size="sm" icon={<Download size={13} />} onClick={() => download(`aurelia-buyer-v${run.version}.json`, JSON.stringify(run, null, 2))}>
+               Run as JSON
+             </Button>
+           </div>
+         }
+       />
+ 
++      <div role="tablist" aria-label="Run version" className="flex flex-wrap gap-8">
++        {BUYER_RUNS.map((r) => {
++          const active = r.id === run.id
++          return (
++            <button
++              key={r.id}
++              type="button"
++              role="tab"
++              aria-selected={active}
++              onClick={() => {
++                setOpen(null)
++                setParams({ v: String(r.version) }, { replace: true })
++              }}
++              className={`flex flex-col items-start rounded-12 border px-14 py-10 text-left ${active ? 'border-adm-ink bg-adm-surface' : 'border-adm-line bg-adm-bg hover:bg-adm-hover'}`}
++            >
++              <span className="text-13 font-semibold text-adm-ink">
++                v{r.version}
++                {r.id === latest.id && <span className="ml-6 text-11 font-medium text-adm-muted">latest</span>}
++              </span>
++              <span className="text-12 text-adm-ink-2">
++                {r.answers.length} personas · {r.date}
++              </span>
++            </button>
++          )
++        })}
++      </div>
++
+       <div className="flex flex-wrap items-center gap-8 text-12 text-adm-ink-2">
+         <Badge tone="warning">{run.kind === 'demo' ? 'Demo' : 'Run'} · synthetic</Badge>
+         <span>
+-          {run.title} · {run.date} · {n} of the{' '}
+-          <Link to="/admin/personas" className="underline hover:text-adm-ink">
+-            personas
+-          </Link>
+-          , seed {run.panel.seed}. {run.method}
++          {run.title}. {run.method}
+         </span>
+         {notice && (
+           <span role="status" className="text-adm-good">
+@@ -145,6 +202,41 @@ export function BuyerResultsPage() {
+         )}
+       </div>
+ 
++      <Panel title="How this run worked" description="The criteria the agent ran under, so anyone can judge how far to trust it.">
++        <dl className="grid gap-x-16 gap-y-10 text-13 lg:grid-cols-[180px_1fr]">
++          {run.criteria.map((c) => (
++            <div key={c.label} className="contents">
++              <dt className="font-medium text-adm-ink">{c.label}</dt>
++              <dd className="max-w-[760px] leading-[20px] text-adm-ink-2">{c.value}</dd>
++            </div>
++          ))}
++        </dl>
++        <details className="rounded-8 bg-adm-bg px-12 py-10 text-12">
++          <summary className="cursor-pointer font-medium text-adm-ink">What the answers mean</summary>
++          <dl className="mt-8 grid gap-x-16 gap-y-6 lg:grid-cols-[160px_1fr]">
++            {DEFINITIONS.map((d) => (
++              <div key={d.label} className="contents">
++                <dt className="font-medium text-adm-ink">{d.label}</dt>
++                <dd className="max-w-[760px] text-adm-ink-2">{d.value}</dd>
++              </div>
++            ))}
++          </dl>
++        </details>
++        <details className="rounded-8 bg-adm-bg px-12 py-10 text-12">
++          <summary className="cursor-pointer font-medium text-adm-ink">The agent’s instructions</summary>
++          <pre className="mt-8 overflow-x-auto whitespace-pre-wrap font-sans text-adm-ink-2">{run.instructions}</pre>
++        </details>
++      </Panel>
++
++      <Panel title="Who was in the panel" description={`${n} personas, aged ${Math.min(...ages)}–${Math.max(...ages)}, from ${new Set(people.map((p) => p.country)).size} countries.`}>
++        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
++          <Mix title="Region" items={count(people.map((p) => p.region))} />
++          <Mix title="Age band" items={count(people.map((p) => p.ageBand)).sort((x, y) => x[0].localeCompare(y[0]))} />
++          <Mix title="Wellness" items={count(people.map((p) => WELLNESS_LABEL[wellnessOf(p).level]))} />
++          <Mix title="Goal" items={count(people.map((p) => GOAL_LABEL[p.goal]))} />
++        </div>
++      </Panel>
++
+       <Panel title="What was tested" description={run.stimulus.name}>
+         <p className="max-w-[720px] text-13 leading-[20px] text-adm-ink">{run.stimulus.pitch}</p>
+         <ul className="flex flex-wrap gap-6">
+@@ -157,9 +249,9 @@ export function BuyerResultsPage() {
+       </Panel>
+ 
+       <div className="grid grid-cols-2 gap-12 lg:grid-cols-4">
+-        <StatCard label="Would try" value={`${tries.yes} of ${n}`} hint={`${tries.maybe} maybe`} />
++        <StatCard label="Would try" value={`${tries.yes} of ${n}`} hint={`${tries.maybe} maybe, ${tries.no} no`} />
+         <StatCard label="Would pay" value={`${pays.yes} of ${n}`} hint={`${pays.maybe} maybe, ${pays.no} no`} />
+-        <StatCard label="Price that feels fair" value={`${money(range.low)}–${money(range.high)}`} hint={`tested at ${money(run.stimulus.priceUsd)}`} />
++        <StatCard label="Price that feels fair" value={`${money(range.low)}–${money(range.high)}`} hint={`Plus is ${money(run.stimulus.priceUsd)} in the US`} />
+         <StatCard label="Test cases" value={`${outcomes.pass} pass`} hint={`${outcomes.risk} at risk, ${outcomes.fail} fail`} />
+       </div>
+ 
+@@ -171,12 +263,20 @@ export function BuyerResultsPage() {
+         </ul>
+       </Panel>
+ 
++      <Panel title="By segment" description="Each group’s answers. Small groups: read the direction, not the number.">
++        <div className="grid gap-16 lg:grid-cols-3">
++          <SegmentTable title="Region" run={run} keyOf={(p) => p.region} />
++          <SegmentTable title="Age band" run={run} keyOf={(p) => p.ageBand} sort />
++          <SegmentTable title="Wellness" run={run} keyOf={(p) => WELLNESS_LABEL[wellnessOf(p).level]} />
++        </div>
++      </Panel>
++
+       <div className="grid gap-16 lg:grid-cols-2">
+         <Panel title="Price" description="Medians of the four price answers, in US dollars a month.">
+           <div className="flex flex-col gap-10">
+             <div className="relative h-28 rounded-8 bg-adm-bg">
+               <div className="absolute inset-y-0 rounded-8 bg-adm-good/20" style={{ left: pct(range.low), width: `calc(${pct(range.high)} - ${pct(range.low)})` }} />
+-              <div className="absolute inset-y-[-4px] w-2 bg-adm-critical" style={{ left: pct(run.stimulus.priceUsd) }} title="Tested price" />
++              <div className="absolute inset-y-[-4px] w-2 bg-adm-critical" style={{ left: pct(run.stimulus.priceUsd) }} title="US price" />
+             </div>
+             <div className="flex justify-between text-11 tabular-nums text-adm-muted">
+               {[0, 5, 10, 15, 20].map((v) => (
+@@ -184,21 +284,21 @@ export function BuyerResultsPage() {
+               ))}
+             </div>
+             <dl className="grid grid-cols-2 gap-8 text-12 sm:grid-cols-4">
+-              {[
+-                ['Too cheap to trust', range.tooCheap],
+-                ['A bargain', range.low],
+-                ['Getting expensive', range.high],
+-                ['Too expensive', range.tooExpensive],
+-              ].map(([label, v]) => (
++              {(
++                [
++                  ['Too cheap to trust', range.tooCheap],
++                  ['A bargain', range.low],
++                  ['Getting expensive', range.high],
++                  ['Too expensive', range.tooExpensive],
++                ] as const
++              ).map(([label, v]) => (
+                 <div key={label} className="rounded-8 bg-adm-bg p-8">
+                   <dt className="text-adm-muted">{label}</dt>
+-                  <dd className="font-semibold tabular-nums">{money(v as number)}</dd>
++                  <dd className="font-semibold tabular-nums">{money(v)}</dd>
+                 </div>
+               ))}
+             </dl>
+-            <p className="text-12 text-adm-ink-2">
+-              Green is the fair band. The red line is the tested price ({money(run.stimulus.priceUsd)}); the yearly plan works out at {money(+(79 / 12).toFixed(2))} a month.
+-            </p>
++            <p className="text-12 text-adm-ink-2">Green is the fair band. The red line is Plus in the US ({money(run.stimulus.priceUsd)}); the US yearly plan works out at $6.58 a month.</p>
+           </div>
+         </Panel>
+ 
+@@ -217,17 +317,20 @@ export function BuyerResultsPage() {
+         </Panel>
+       </div>
+ 
+-      <Panel title="Every answer" description="Select a row for the full answer, the three test cases and the persona.">
++      <Panel title="Every answer" description="Select a name for the persona’s profile, or anywhere else on the row for their answer and test cases.">
+         <DataTable
+           rows={rows}
+           columns={columns}
+-          exportName={`aurelia-buyer-${run.id}`}
+-          pageSize={10}
++          exportName={`aurelia-buyer-v${run.version}`}
++          pageSize={12}
+           filters={[
++            { key: 'region', label: 'Region', options: [...new Set(rows.map((r) => r.region))] },
++            { key: 'ageBand', label: 'Age', options: [...new Set(rows.map((r) => r.ageBand))].sort() },
++            { key: 'wellness', label: 'Wellness', options: Object.values(WELLNESS_LABEL) },
+             { key: 'tries', label: 'Tries', options: ['yes', 'maybe', 'no'] },
+             { key: 'pays', label: 'Pays', options: ['yes', 'maybe', 'no'] },
+           ]}
+-          onRowClick={(r) => setOpenId(r.id)}
++          onRowClick={(r) => setOpen({ id: r.id, tab: 'answer' })}
+         />
+       </Panel>
+ 
+@@ -236,28 +339,116 @@ export function BuyerResultsPage() {
+           <ul className="flex flex-col gap-6 text-12 text-adm-ink">
+             {issues.map((a) => (
+               <li key={a.personaId}>
+-                <span className="font-medium">{PERSONAS.get(a.personaId)!.name}</span> ({a.personaId}): {a.personaIssue}
++                <button type="button" onClick={() => setOpen({ id: a.personaId, tab: 'persona' })} className="font-medium underline decoration-adm-line underline-offset-2 hover:decoration-adm-ink">
++                  {persona(a.personaId).name}
++                </button>{' '}
++                ({a.personaId}): {a.personaIssue}
+               </li>
+             ))}
+           </ul>
+         </Panel>
+       )}
+ 
+-      {open && (
++      {open && answer && (
+         <SidePanel
+           width={600}
+-          title={PERSONAS.get(open.personaId)!.name}
+-          description={`${open.personaId} · ${run.title}`}
+-          onClose={() => setOpenId(null)}
+-          footer={<Button onClick={() => setOpenId(null)}>Close</Button>}
++          title={persona(open.id).name}
++          description={`${open.id} · v${run.version}`}
++          onClose={() => setOpen(null)}
++          footer={<Button onClick={() => setOpen(null)}>Close</Button>}
+         >
+-          <AnswerDetail a={open} p={PERSONAS.get(open.personaId)!} />
++          <div role="tablist" aria-label="Show" className="mb-14 flex gap-4 rounded-8 bg-adm-bg p-4">
++            {(['answer', 'persona'] as const).map((t) => (
++              <button
++                key={t}
++                type="button"
++                role="tab"
++                aria-selected={open.tab === t}
++                onClick={() => setOpen({ id: open.id, tab: t })}
++                className={`flex-1 rounded-8 px-10 py-6 text-12 font-medium ${open.tab === t ? 'bg-adm-surface text-adm-ink shadow-sm' : 'text-adm-ink-2 hover:text-adm-ink'}`}
++              >
++                {t === 'answer' ? 'Their answer' : 'Who they are'}
++              </button>
++            ))}
++          </div>
++          {open.tab === 'answer' ? (
++            <AnswerDetail a={answer} p={persona(open.id)} onPersona={() => setOpen({ id: open.id, tab: 'persona' })} />
++          ) : (
++            <PersonaProfile p={persona(open.id)} />
++          )}
+         </SidePanel>
+       )}
+     </div>
+   )
+ }
+ 
++function count(values: string[]): [string, number][] {
++  const m = new Map<string, number>()
++  for (const v of values) m.set(v, (m.get(v) ?? 0) + 1)
++  return [...m.entries()].sort((a, b) => b[1] - a[1])
++}
++
++function Mix({ title, items }: { title: string; items: [string, number][] }) {
++  return (
++    <div>
++      <h3 className="text-11 font-semibold uppercase tracking-widest text-adm-muted">{title}</h3>
++      <ul className="mt-6 flex flex-col gap-4 text-12">
++        {items.map(([k, v]) => (
++          <li key={k} className="flex justify-between gap-8">
++            <span className="text-adm-ink">{k}</span>
++            <span className="tabular-nums text-adm-muted">{v}</span>
++          </li>
++        ))}
++      </ul>
++    </div>
++  )
++}
++
++function SegmentTable({ title, run, keyOf, sort }: { title: string; run: BuyerRun; keyOf: (p: Persona) => string; sort?: boolean }) {
++  const groups = new Map<string, BuyerAnswer[]>()
++  for (const a of run.answers) {
++    const k = keyOf(PERSONAS.get(a.personaId)!)
++    groups.set(k, [...(groups.get(k) ?? []), a])
++  }
++  const entries = [...groups.entries()]
++  if (sort) entries.sort((x, y) => x[0].localeCompare(y[0]))
++  else entries.sort((x, y) => y[1].length - x[1].length)
++  const usage = run.answers.some((a) => a.week !== undefined)
++  return (
++    <div className="min-w-0 overflow-x-auto">
++      <table className="w-full text-12">
++        <thead>
++          <tr className="text-left text-adm-muted">
++            <th className="py-4 font-medium">{title}</th>
++            <th className="py-4 text-right font-medium">n</th>
++            <th className="py-4 text-right font-medium">Try</th>
++            <th className="py-4 text-right font-medium" title="Pays yes or maybe">Pay?</th>
++            {usage && <th className="py-4 text-right font-medium" title="Average sessions in week one">Wk 1</th>}
++            <th className="py-4 text-right font-medium" title="Fair band, USD a month">Fair</th>
++          </tr>
++        </thead>
++        <tbody className="tabular-nums">
++          {entries.map(([k, as]) => {
++            const r = priceRange(as)
++            return (
++              <tr key={k} className="border-t border-adm-line">
++                <td className="py-6 text-adm-ink">{k}</td>
++                <td className="py-6 text-right text-adm-muted">{as.length}</td>
++                <td className="py-6 text-right">{as.filter((a) => a.tries === 'yes').length}</td>
++                <td className="py-6 text-right">{as.filter((a) => a.pays !== 'no').length}</td>
++                {usage && <td className="py-6 text-right">{(as.reduce((s, a) => s + (a.week ?? 0), 0) / as.length).toFixed(1)}</td>}
++                <td className="whitespace-nowrap py-6 text-right">
++                  {money(r.low)}–{money(r.high)}
++                </td>
++              </tr>
++            )
++          })}
++        </tbody>
++      </table>
++    </div>
++  )
++}
++
+ function Section({ title, children }: { title: string; children: ReactNode }) {
+   return (
+     <section className="flex flex-col gap-8 border-t border-adm-line pt-14">
+@@ -267,12 +458,13 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
+   )
+ }
+ 
+-function AnswerDetail({ a, p }: { a: BuyerAnswer; p: Persona }) {
++function AnswerDetail({ a, p, onPersona }: { a: BuyerAnswer; p: Persona; onPersona: () => void }) {
++  const w = wellnessOf(p)
+   return (
+     <div className="flex flex-col gap-14 text-13 text-adm-ink">
+       <div>
+         <p className="text-12 text-adm-ink-2">
+-          {p.age} · {p.occupation} · {p.city}, {p.country} · {p.income} income · would pay {p.willingnessToPay}
++          {p.age} · {p.occupation} · {p.city}, {p.country} ({p.region}) · {p.language} · {p.income} income · would pay {p.willingnessToPay}
+         </p>
+         <div className="mt-6 flex flex-wrap gap-4">
+           <Badge tone="info">{GOAL_LABEL[p.goal]}</Badge>
+@@ -281,9 +473,25 @@ function AnswerDetail({ a, p }: { a: BuyerAnswer; p: Persona }) {
+           <Badge>{PLAN_LABEL[a.plan]}</Badge>
+           <Badge>Confidence {a.confidence} of 5</Badge>
+         </div>
++        <button type="button" onClick={onPersona} className="mt-8 text-12 underline decoration-adm-line underline-offset-2 hover:decoration-adm-ink">
++          See who {p.name.split(' ')[0]} is
++        </button>
+       </div>
+       <p className="rounded-8 bg-adm-bg px-12 py-10 italic text-adm-ink-2">“{a.quote}”</p>
+ 
++      <Section title="How they are doing">
++        <div className="grid grid-cols-2 gap-8 text-12 sm:grid-cols-4">
++          <Fact label="Wellness" value={WELLNESS_LABEL[w.level]} />
++          <Fact label="Pain" value={`${w.pain} of 10`} />
++          <Fact label="Sleep" value={`${w.sleepHours} h · ${w.sleepQuality} of 5`} />
++          <Fact label="Saw Plus at" value={localPlus(p.country).label} />
++        </div>
++        <p className="text-12 text-adm-ink-2">
++          {w.conditions.length > 0 && <>Conditions: {w.conditions.join(', ')}. </>}
++          Wearing them down: {w.stressors.join(', ')}. Connection: {p.profile.testing.connectivity}.
++        </p>
++      </Section>
++
+       <Section title="Why">
+         <p className="leading-[20px]">{a.reasoning}</p>
+       </Section>
+@@ -299,21 +507,21 @@ function AnswerDetail({ a, p }: { a: BuyerAnswer; p: Persona }) {
+         </p>
+       </Section>
+ 
++      {a.week !== undefined && (
++        <Section title="Use">
++          <div className="grid grid-cols-2 gap-8 text-12">
++            <Fact label="Sessions in week one" value={`${a.week} of 7`} />
++            <Fact label="Still using at day 30" value={a.day30 ?? '–'} />
++          </div>
++        </Section>
++      )}
++
+       <Section title="Price answers (USD a month)">
+         <div className="grid grid-cols-4 gap-8 text-12">
+-          {(
+-            [
+-              ['Too cheap', a.prices.tooCheap],
+-              ['A bargain', a.prices.bargain],
+-              ['Expensive', a.prices.expensive],
+-              ['Too expensive', a.prices.tooExpensive],
+-            ] as const
+-          ).map(([label, v]) => (
+-            <div key={label} className="rounded-8 bg-adm-bg p-8">
+-              <p className="text-adm-muted">{label}</p>
+-              <p className="font-semibold tabular-nums">{money(v)}</p>
+-            </div>
+-          ))}
++          <Fact label="Too cheap" value={money(a.prices.tooCheap)} />
++          <Fact label="A bargain" value={money(a.prices.bargain)} />
++          <Fact label="Expensive" value={money(a.prices.expensive)} />
++          <Fact label="Too expensive" value={money(a.prices.tooExpensive)} />
+         </div>
+       </Section>
+ 
+@@ -341,8 +549,7 @@ function AnswerDetail({ a, p }: { a: BuyerAnswer; p: Persona }) {
+         </Section>
+       )}
+ 
+-      <Section title="Persona">
+-        <p className="text-12 leading-[18px] text-adm-ink-2">{p.profile.bio}</p>
++      <Section title="More">
+         <Link to="/admin/personas" className="text-12 underline hover:text-adm-ink">
+           All personas
+         </Link>
+@@ -350,3 +557,12 @@ function AnswerDetail({ a, p }: { a: BuyerAnswer; p: Persona }) {
+     </div>
+   )
+ }
++
++function Fact({ label, value }: { label: string; value: string }) {
++  return (
++    <div className="rounded-8 bg-adm-bg p-8">
++      <p className="text-adm-muted">{label}</p>
++      <p className="font-semibold tabular-nums">{value}</p>
++    </div>
++  )
++}
+diff --git a/src/admin/pages/PersonasPage.tsx b/src/admin/pages/PersonasPage.tsx
+index fdd80d8..2c27295 100644
+--- a/src/admin/pages/PersonasPage.tsx
++++ b/src/admin/pages/PersonasPage.tsx
+@@ -1,14 +1,13 @@
+-import { Copy, Download, Shuffle, Users } from 'lucide-react'
+-import { useEffect, useMemo, useState, type ReactNode } from 'react'
++import { Copy, Download, Shuffle } from 'lucide-react'
++import { useEffect, useMemo, useState } from 'react'
+ import { Link } from 'react-router-dom'
+ import { DataTable, type Column } from '../components/DataTable'
+ import { SidePanel } from '../components/SidePanel'
+ import { Badge, Button, PageHeader, Panel, inputClass } from '../components/ui'
+ import { GOAL_LABEL, PERSONA_COUNT, SEED, distribution, drawPanel, generatePersonas, personaPrompt, type Persona } from '../data/personas'
+-import { INITIAL_JOURNEY } from '../data/userJourney'
++import { PersonaProfile } from '../components/PersonaProfile'
+ 
+ const PERSONAS = generatePersonas()
+-const MOMENT_TITLE = new Map(INITIAL_JOURNEY.stages.flatMap((s) => s.moments.map((m) => [m.id, m.title] as const)))
+ 
+ interface Row {
+   id: string
+@@ -242,253 +241,3 @@ export function PersonasPage() {
+     </div>
+   )
+ }
+-
+-const LEVEL_WIDTH = { low: '25%', medium: '55%', high: '90%' } as const
+-
+-function Section({ title, children }: { title: string; children: ReactNode }) {
+-  return (
+-    <section className="flex flex-col gap-8 border-t border-adm-line pt-14">
+-      <h3 className="text-11 font-semibold uppercase tracking-widest text-adm-muted">{title}</h3>
+-      {children}
+-    </section>
+-  )
+-}
+-
+-function Chips({ items }: { items: string[] }) {
+-  return (
+-    <div className="flex flex-wrap gap-6">
+-      {items.map((x) => (
+-        <span key={x} className="rounded-full bg-adm-hover px-8 py-2 text-11 text-adm-ink">
+-          {x}
+-        </span>
+-      ))}
+-    </div>
+-  )
+-}
+-
+-/** One persona as a person: who they are, a day, how they feel, what wins or loses them. */
+-function PersonaProfile({ p }: { p: Persona }) {
+-  const f = p.profile
+-  const initials = p.name
+-    .split(' ')
+-    .map((x) => x[0])
+-    .slice(0, 2)
+-    .join('')
+-  return (
+-    <div className="flex flex-col gap-14 text-13 text-adm-ink">
+-      <div className="flex items-center gap-12">
+-        <span className="flex size-56 shrink-0 items-center justify-center rounded-full bg-adm-hover text-[17px] font-semibold text-adm-ink-2" aria-hidden="true">
+-          {initials}
+-        </span>
+-        <div className="min-w-0">
+-          <p className="text-15 font-semibold">
+-            {p.name}, {p.age} <span className="text-12 font-normal text-adm-muted">({f.pronouns})</span>
+-          </p>
+-          <p className="text-12 text-adm-ink-2">
+-            {p.occupation} · {p.city}, {p.country}
+-          </p>
+-          <div className="mt-4 flex flex-wrap gap-4">
+-            <Badge tone="info">{GOAL_LABEL[p.goal]}</Badge>
+-            <Badge>{p.experience === 'never' ? 'New to meditation' : `Meditation: ${p.experience}`}</Badge>
+-            <Badge tone={p.aiAttitude === 'distrustful' || p.aiAttitude === 'skeptical' ? 'warning' : 'good'}>AI: {p.aiAttitude}</Badge>
+-          </div>
+-        </div>
+-      </div>
+-      <p className="leading-[20px]">{f.bio}</p>
+-      <p className="rounded-8 bg-adm-bg px-12 py-10 italic text-adm-ink-2">“{f.quotes[0]}”</p>
+-
+-      <Section title="A weekday">
+-        <ol className="flex flex-col gap-6">
+-          {f.day.map((d) => (
+-            <li key={d.time + d.what} className="grid grid-cols-[72px_1fr] gap-8 text-12">
+-              <span className="tabular-nums text-adm-muted">{d.time}</span>
+-              <span>{d.what}</span>
+-            </li>
+-          ))}
+-        </ol>
+-      </Section>
+-
+-      <Section title="How they are doing">
+-        <div className="grid grid-cols-3 gap-8 text-12">
+-          <div className="rounded-8 bg-adm-bg p-8">
+-            <p className="text-adm-muted">Sleep</p>
+-            <p className="font-semibold tabular-nums">
+-              {f.sleep.hours} h · {f.sleep.bedtime}–{f.sleep.wake}
+-            </p>
+-          </div>
+-          <div className="rounded-8 bg-adm-bg p-8">
+-            <p className="text-adm-muted">Sleep quality</p>
+-            <p className="font-semibold tabular-nums">{f.sleep.quality} of 5</p>
+-          </div>
+-          <div className="rounded-8 bg-adm-bg p-8">
+-            <p className="text-adm-muted">Screen time</p>
+-            <p className="font-semibold tabular-nums">{f.screenTimeHours} h a day</p>
+-          </div>
+-        </div>
+-        <p className="text-12">
+-          <span className="text-adm-muted">Right now: </span>
+-          {p.name.split(' ')[0]} {p.struggle}. It hits at: {p.triggers.join('; ')}.
+-        </p>
+-        <div className="flex flex-col gap-4 text-12">
+-          <span className="text-adm-muted">What weighs on them</span>
+-          <Chips items={f.stressors} />
+-          <span className="mt-4 text-adm-muted">How they cope now</span>
+-          <Chips items={f.coping} />
+-          {p.flags.length > 0 && (
+-            <>
+-              <span className="mt-4 text-adm-muted">Circumstances to test for</span>
+-              <Chips items={p.flags} />
+-            </>
+-          )}
+-        </div>
+-      </Section>
+-
+-      <Section title="Personality and values">
+-        <div className="flex flex-col gap-6">
+-          {(Object.entries(f.personality) as [string, keyof typeof LEVEL_WIDTH][]).map(([k, v]) => (
+-            <div key={k} className="grid grid-cols-[130px_1fr_56px] items-center gap-8 text-12">
+-              <span className="capitalize text-adm-ink-2">{k}</span>
+-              <span className="h-6 overflow-hidden rounded-full bg-adm-hover">
+-                <span className="block h-full rounded-full bg-adm-s1" style={{ width: LEVEL_WIDTH[v] }} />
+-              </span>
+-              <span className="text-adm-muted">{v}</span>
+-            </div>
+-          ))}
+-        </div>
+-        <p className="text-12">
+-          <span className="text-adm-muted">Traits: </span>
+-          {f.traits.join(', ')} · <span className="text-adm-muted">Values: </span>
+-          {f.values.join(', ')}
+-        </p>
+-      </Section>
+-
+-      <Section title="Life and tech">
+-        <dl className="grid grid-cols-[130px_1fr] gap-x-12 gap-y-6 text-12">
+-          {(
+-            [
+-              ['Home', p.household],
+-              ['Work', `${p.workPattern}; ${p.income} income`],
+-              ['Language', p.language],
+-              ['Phone', `${f.phone}; mostly ${f.topApps.join(', ')}`],
+-              ['Wearable', p.wearable],
+-              ['Wellness apps', f.appHistory],
+-            ] as const
+-          ).map(([k, v]) => (
+-            <div key={k} className="contents">
+-              <dt className="text-adm-muted">{k}</dt>
+-              <dd>{v}</dd>
+-            </div>
+-          ))}
+-        </dl>
+-      </Section>
+-
+-      <Section title="Winning them, losing them">
+-        <dl className="grid grid-cols-[130px_1fr] gap-x-12 gap-y-6 text-12">
+-          {(
+-            [
+-              ['Success looks like', f.success],
+-              ['Would hear about it', f.wouldHearAbout],
+-              ['How they decide', f.decides],
+-              ['Would pay', p.willingnessToPay],
+-              ['Prefers', `${p.length} min, ${p.voice === 'none' ? 'no voice' : `${p.voice} voice`}, ${p.sound}; spiritual language: ${p.spiritual}`],
+-              ['Privacy', p.privacy],
+-              ['Barriers', p.barriers.join('; ')],
+-              ['Deal breakers', f.dealBreakers.join('; ')],
+-            ] as const
+-          ).map(([k, v]) => (
+-            <div key={k} className="contents">
+-              <dt className="text-adm-muted">{k}</dt>
+-              <dd>{v}</dd>
+-            </div>
+-          ))}
+-        </dl>
+-      </Section>
+-
+-      <Section title="Buying">
+-        <div className="grid grid-cols-[130px_1fr] gap-x-12 gap-y-6 text-12">
+-          <span className="text-adm-muted">Pain today</span>
+-          <span className="flex items-center gap-8">
+-            <span className="h-6 w-120 overflow-hidden rounded-full bg-adm-hover">
+-              <span className="block h-full rounded-full bg-adm-critical" style={{ width: `${f.testing.pain * 10}%` }} />
+-            </span>
+-            <span className="tabular-nums">{f.testing.pain} of 10</span>
+-          </span>
+-          <span className="text-adm-muted">Spends now</span>
+-          <span>{f.testing.spendNow}</span>
+-          <span className="text-adm-muted">Uses instead</span>
+-          <span>{f.testing.alternatives.join('; ')}</span>
+-          <span className="text-adm-muted">Would buy if</span>
+-          <span>{f.testing.buyTriggers.join('; ')}</span>
+-          <span className="text-adm-muted">Connection</span>
+-          <span>{f.testing.connectivity}</span>
+-          {f.testing.accessibility.length > 0 && (
+-            <>
+-              <span className="text-adm-muted">Access needs</span>
+-              <span>{f.testing.accessibility.join('; ')}</span>
+-            </>
+-          )}
+-        </div>
+-        <div className="flex flex-col gap-4 text-12">
+-          <span className="text-adm-muted">Jobs to be done</span>
+-          <ul className="flex list-disc flex-col gap-2 pl-16">
+-            {f.testing.jobs.map((j) => (
+-              <li key={j}>{j}</li>
+-            ))}
+-          </ul>
+-          <span className="mt-4 text-adm-muted">Objections, in their words</span>
+-          <ul className="flex flex-col gap-2 italic text-adm-ink-2">
+-            {f.testing.objections.map((o) => (
+-              <li key={o}>{o}</li>
+-            ))}
+-          </ul>
+-        </div>
+-      </Section>
+-
+-      <Section title="Test cases">
+-        <p className="rounded-8 border border-dashed border-adm-line px-10 py-8 text-12">
+-          <span className="text-adm-muted">First thing they would type: </span>“{f.testing.firstSentence}”
+-        </p>
+-        <ol className="flex flex-col gap-8">
+-          {f.testing.scenarios.map((sc, i) => (
+-            <li key={sc.id} className="rounded-8 border border-adm-line p-10 text-12">
+-              <p className="font-semibold">
+-                {i + 1}. {sc.title}
+-              </p>
+-              <p className="mt-4">
+-                <span className="text-adm-muted">When: </span>
+-                {sc.when}
+-              </p>
+-              <p>
+-                <span className="text-adm-muted">Does: </span>
+-                {sc.does}
+-              </p>
+-              <p className="mt-4 rounded-4 bg-adm-good/10 px-6 py-4">
+-                <span className="font-medium">Expect: </span>
+-                {sc.expect}
+-              </p>
+-            </li>
+-          ))}
+-        </ol>
+-      </Section>
+-
+-      <Section title="In their words">
+-        <ul className="flex flex-col gap-6 text-12 italic text-adm-ink-2">
+-          {f.quotes.map((q) => (
+-            <li key={q}>“{q}”</li>
+-          ))}
+-        </ul>
+-      </Section>
+-
+-      <Section title="User journey moments">
+-        <Chips items={p.moments.map((m) => MOMENT_TITLE.get(m) ?? m)} />
+-      </Section>
+-
+-      <Section title="Role-play prompt">
+-        <span className="inline-flex items-center gap-6 text-12 text-adm-muted">
+-          <Users size={13} /> For an AI research run. Copy it with the button below.
+-        </span>
+-        <pre className="max-h-[220px] overflow-auto whitespace-pre-wrap rounded-8 border border-adm-line bg-adm-bg p-10 text-11 leading-[16px] text-adm-ink-2">{personaPrompt(p)}</pre>
+-      </Section>
+-    </div>
+-  )
+-}
+-- 
+2.43.0
+

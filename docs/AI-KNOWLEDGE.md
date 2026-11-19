@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J133** · updated 19 Nov 2026
+**Covers up to J134** · updated 19 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
@@ -119,7 +119,7 @@ Further rules:
   - 300 seeded synthetic personas.
   - Each has a role-play prompt.
   - Panels are balanced by goal and can be exported.
-- **Buyer agent results** (staging). One demo run on ten personas.
+- **Buyer agent results** (staging). Version tabs: v1 (10 personas) and v2 (36). Each run shows its criteria; persona names open the profile.
 
 **Knowledge-base export.** `scripts/knowledge/export.py` writes the wiki as Markdown for
 `danielaurelia26/aureliabase_knowledge`. Push it only on request. This session cannot
@@ -138,7 +138,17 @@ evidence → decision. It is not a user feature.
 
 **Buyer test agent (J132, O38).** Eugene's idea. It reads a persona panel export plus a stimulus and answers per persona in a fixed schema: try, pay, price thresholds, objection, what flips it, confidence. Use it to compare A vs B, never as absolute conversion, and validate the winner with real people. First step proposed: an export pack plus a results import, before any backend.
 
-**Buyer agent results (J133, U101).** Admin → Product lab → Buyer agent results. Runs live as data in `src/admin/data/buyerRuns.ts` (schema, instructions, findings). A test pins each run to the panel its seed draws, so a change to the persona generator that reshuffles the panel fails the check: then re-run, or pin the run to its ids. The demo (ten personas, $9.99 Plus) gave 8/10 try, 1 pay + 4 maybe, a fair band of $3–6, and found three incoherent personas (O39). To add a run: play the panel with `BUYER_INSTRUCTIONS`, append a `BuyerRun`.
+**Buyer agent results (J133, U101).** Admin → Product lab → Buyer agent results. Runs live as data in `src/admin/data/buyerRuns.ts` (schema, instructions, findings). A test pins each run to the panel its seed draws, so a change to the persona generator that reshuffles the panel fails the check: then re-run, or pin the run to its ids. The demo (ten personas, $9.99 Plus) gave 8/10 try, 1 pay + 4 maybe, a fair band of $3–6, and found three incoherent personas (O39). To add a run: give it the next `version`, criteria in plain words, and append it to `BUYER_RUNS`. The page shows one tab per version.
+
+**Buyer agent v2 (J134, U102).** 36 personas, one per region × age band (`drawStratified`, seed 2027), leaving out `EXCLUDED`. It adds local prices (`localPlus`), wellness (`wellnessOf`: struggling, strained or coping), week-one use and day 30, and calibration rules in `BUYER_INSTRUCTIONS_V2`.
+- **Lessons:**
+  - v1's 8/10 "would try" was bias. Under the rules it is 15/36.
+  - Wellness predicts trying best.
+  - Nobody 65+ tries, because of English only, text size and the account wall.
+  - Countries without a local price see $9.99 as too expensive.
+  - Distrust of AI and language cost more than price.
+- **The persona generator is the weak link.** It makes retired people with work stressors, struggles that do not fit the job, and households that do not fit the life (13/36). Fix it before v3 (O39).
+- **Keep the agent honest:** look for the no first, honour deal breakers, set price from income and place. Write findings from computed tallies, never from memory.
 
 **The 2025 backend documents (J099, J109–J112).**
 - They contain **no code**: they hold prompts, Pydantic shapes, a rubric and principles.
