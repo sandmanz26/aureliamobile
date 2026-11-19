@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { DataTable, type Column } from '../components/DataTable'
 import { PersonaProfile } from '../components/PersonaProfile'
+import { RerunView } from './buyer/RerunView'
 import { SidePanel } from '../components/SidePanel'
 import { Badge, Button, PageHeader, Panel, StatCard } from '../components/ui'
 import {
@@ -63,6 +64,7 @@ const money = (n: number) => `$${n % 1 ? n.toFixed(2) : n}`
 export function BuyerResultsPage() {
   const [params, setParams] = useSearchParams()
   const latest = BUYER_RUNS[BUYER_RUNS.length - 1]
+  const view = params.get('view') === 'versions' ? 'versions' : 'runs'
   const run = BUYER_RUNS.find((r) => String(r.version) === params.get('v')) ?? latest
   const [open, setOpen] = useState<{ id: string; tab: 'answer' | 'persona' } | null>(null)
   const [notice, setNotice] = useState('')
@@ -178,6 +180,33 @@ export function BuyerResultsPage() {
         }
       />
 
+      <div role="tablist" aria-label="View" className="flex w-fit gap-4 rounded-8 bg-adm-bg p-4">
+        {(
+          [
+            ['runs', 'Runs'],
+            ['versions', 'By production version'],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={view === id}
+            onClick={() => {
+              setOpen(null)
+              setParams(id === 'versions' ? { view: 'versions' } : {}, { replace: true })
+            }}
+            className={`rounded-8 px-12 py-6 text-12 font-medium ${view === id ? 'bg-adm-surface text-adm-ink shadow-sm' : 'text-adm-ink-2 hover:text-adm-ink'}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {view === 'versions' ? (
+        <RerunView />
+      ) : (
+        <>
       <div role="tablist" aria-label="Run version" className="flex flex-wrap gap-8">
         {BUYER_RUNS.map((r) => {
           const active = r.id === run.id
@@ -444,6 +473,8 @@ export function BuyerResultsPage() {
             <PersonaProfile p={persona(open.id)} />
           )}
         </SidePanel>
+      )}
+        </>
       )}
     </div>
   )
