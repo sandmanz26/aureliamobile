@@ -66,6 +66,8 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O36 | **User journey as an evolving platform (J127)**: approve the three phases. (1) Shared storage, a status workflow (Idea → Validated → Planned → Building → Live → Measured), owner, Board view, activity log. (2) A scenario template, evidence and a decision log per card; a structured export to the knowledge base. (3) An AI assist on the page, after a backend exists. | J127 | Product owner + Eugene |
 | O37 | **Insight Timer round 2 recommendations (J130)**: decide the "now" list, including changing the demo's every-sign-in daily check-in before real users, and a "Need help now?" link; and whether to push the wiki (and the app work riding with it) to production | J130 | Product owner + Eugene |
 | O38 | **Buyer test agent (J132)**: approve the design. The agent reads a persona panel export (profile + test data + prompt) and a stimulus (screens, copy, price, offer); it answers per persona in a fixed schema (would try, would pay, price thresholds, objections, what would flip it, confidence); results aggregate by segment and compare options A vs B. Decide where it runs first: offline from the export now, in the admin with a backend later | J132 | Product owner + Eugene |
+| O39 | **Buyer agent, next step (J133)**: after the demo, decide (a) the stimulus for the next run, for example the yearly plan first, or one reminder and a data line on the first screen, (b) panel size, and (c) whether runs move to a live model call from the admin, which needs a backend or an API key. Also fix the three incoherent personas the demo found | J133 | Product owner |
+| J133 | 2026-11-19 | Code | Buyer agent results in Product lab; run the buyer agent on ten personas as a demo | U101 |
 | J131 | 2026-11-18 | Code | Personas too thin: rebuilt as real profiles; a dropdown that looked broken (dark mode) fixed | U099 |
 | J132 | 2026-11-18 | Code + Opinion | Dropdown issues; persona drawer and deeper test data; a buyer test agent that reads the personas (view and proposal) | U100 |
 | J128 | 2026-11-18 | Code + Opinion | Product lab menu; Personas with 300 varied synthetic personas as candidates for AI-run research, and a view on using them | U096 |
@@ -1562,3 +1564,17 @@ transcript and the update log. Everything from J018 on was written at the time.
     1. Now, without a backend: a "buyer test pack" export (panel + stimulus + instructions + answer schema) that any agent (Claude Code, the founder-consumer skill) can run, plus a results import that shows the tallies in the admin.
     2. Later: the run itself from the admin, through the AI gateway.
 - **Open:** O38.
+
+### J133 — Buyer agent results, demo on ten personas
+- **Asked:** "oke saya mau melakukan beberapa percobaan dulu. nanti di admin di bagian product lab perlu ada namanya buyer agent result. goal buyer agent harusnya kamu sudah tau, mari buat jalankan buyer agent dengan menggunakan 10 persona yang ada dulu. kita jadikan demo, nanti pelan pelan kita akan mengerjakan dengan skema dan detail yang lebih rumit"
+- **Done:** U101, a new Product lab page, Buyer agent results.
+  - The agent played ten personas (seed 2026) against Aurelia's pitch and today's plans.
+  - Each answer records try, pay, the four price answers, the main objection and what would flip it, confidence, and pass/risk/fail on the persona's three test cases.
+- **Result:**
+  - 8 of 10 would try it; 1 would pay, 4 maybe.
+  - The fair price is $3–$6 a month against $9.99; the yearly plan lands.
+  - Notifications and privacy come before price.
+  - English only loses an older user in Brazil.
+  - Three personas turned out incoherent.
+- **Caveat:** one agent playing ten people in one session is a demo of the format, not a measurement.
+- **Open:** O39.

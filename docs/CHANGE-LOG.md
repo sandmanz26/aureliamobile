@@ -19,6 +19,13 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-19 — Buyer agent results (U101, J133)
+
+Admin → Product lab gets a Buyer agent results page, with a first demo run on
+ten personas. Staging only (`RELEASES.buyerAgent`).
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-18 — Personas as test cases; admin selects (U100, J132)
 
 All admin selects share one style. Persona rows open the profile drawer, and

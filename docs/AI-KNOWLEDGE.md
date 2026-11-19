@@ -1,13 +1,13 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J132** · updated 18 Nov 2026
+**Covers up to J133** · updated 19 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
 current version. History and detail live elsewhere:
 
 - `docs/HANDOFF.md`: the full handover, including §17, every request (J) and change (U).
-- `docs/WORK-JOURNAL.md`: what was asked and answered; the Open items table (O1–O38).
+- `docs/WORK-JOURNAL.md`: what was asked and answered; the Open items table (O1–O39).
 - `docs/UPDATE-LOG.md`: every code change, with how to revert it.
 - `CLAUDE.md`: engineering conventions.
 
@@ -57,6 +57,7 @@ no real AI, and no persisted sign-in. The admin CMS lives in the same app at
   | `journeyTags` | Tags, review and coverage in the user journey |
   | `sidebarRail` | The desktop icon rail, the default since U093 |
   | `personas` | The personas module |
+  | `buyerAgent` | Buyer agent results |
 
 - **Shipped but not flagged:** the reworked user journey (U092, U095) and the
   "Product lab" sidebar name (U096). They reach production with the next push there.
@@ -118,6 +119,7 @@ Further rules:
   - 300 seeded synthetic personas.
   - Each has a role-play prompt.
   - Panels are balanced by goal and can be exported.
+- **Buyer agent results** (staging). One demo run on ten personas.
 
 **Knowledge-base export.** `scripts/knowledge/export.py` writes the wiki as Markdown for
 `danielaurelia26/aureliabase_knowledge`. Push it only on request. This session cannot
@@ -135,6 +137,8 @@ evidence → decision. It is not a user feature.
 **Personas (J128, J131).** Good for forming hypotheses before real research, never as evidence. Since U099 each is a full profile (bio, weekday, sleep, stressors, coping, Big Five, tech, decision style, deal breakers, success, quotes). Coherence rules live in `personas.ts` and its test. Since U100 each also has `profile.testing`: jobs, pain, first sentence, spend, alternatives, buy triggers, objections, access, connectivity, and three When/Does/Expect scenarios. Every prompt states that the persona is synthetic.
 
 **Buyer test agent (J132, O38).** Eugene's idea. It reads a persona panel export plus a stimulus and answers per persona in a fixed schema: try, pay, price thresholds, objection, what flips it, confidence. Use it to compare A vs B, never as absolute conversion, and validate the winner with real people. First step proposed: an export pack plus a results import, before any backend.
+
+**Buyer agent results (J133, U101).** Admin → Product lab → Buyer agent results. Runs live as data in `src/admin/data/buyerRuns.ts` (schema, instructions, findings). A test pins each run to the panel its seed draws, so a change to the persona generator that reshuffles the panel fails the check: then re-run, or pin the run to its ids. The demo (ten personas, $9.99 Plus) gave 8/10 try, 1 pay + 4 maybe, a fair band of $3–6, and found three incoherent personas (O39). To add a run: play the panel with `BUYER_INSTRUCTIONS`, append a `BuyerRun`.
 
 **The 2025 backend documents (J099, J109–J112).**
 - They contain **no code**: they hold prompts, Pydantic shapes, a rubric and principles.

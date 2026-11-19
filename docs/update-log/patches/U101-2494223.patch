@@ -1,0 +1,862 @@
+From 2494223bc06a08e6a181ffaebc7350f99eb025f6 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Thu, 19 Nov 2026 05:26:55 +0000
+Subject: [PATCH] Product lab: buyer agent results, demo run on ten personas
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/App.tsx                          |   8 +
+ src/admin/AdminLayout.tsx            |   2 +
+ src/admin/data/buyerRuns.test.ts     |  39 +++
+ src/admin/data/buyerRuns.ts          | 361 +++++++++++++++++++++++++++
+ src/admin/pages/BuyerResultsPage.tsx | 352 ++++++++++++++++++++++++++
+ src/demo/modules.ts                  |   1 +
+ src/versions/releases.ts             |   2 +
+ 7 files changed, 765 insertions(+)
+ create mode 100644 src/admin/data/buyerRuns.test.ts
+ create mode 100644 src/admin/data/buyerRuns.ts
+ create mode 100644 src/admin/pages/BuyerResultsPage.tsx
+
+diff --git a/src/App.tsx b/src/App.tsx
+index f8dd959..b1f6c4c 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -87,6 +87,7 @@ const SignalSourcesPage = lazy(() => import('./admin/pages/SignalSourcesPage').t
+ const AuditPage = lazy(() => import('./admin/pages/AuditPage').then((m) => ({ default: m.AuditPage })))
+ const SettingsPage = lazy(() => import('./admin/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })))
+ const UserJourneyPage = lazy(() => import('./admin/pages/UserJourneyPage').then((m) => ({ default: m.UserJourneyPage })))
++const BuyerResultsPage = lazy(() => import('./admin/pages/BuyerResultsPage').then((m) => ({ default: m.BuyerResultsPage })))
+ const PersonasPage = lazy(() => import('./admin/pages/PersonasPage').then((m) => ({ default: m.PersonasPage })))
+ 
+ export default function App() {
+@@ -192,6 +193,13 @@ export default function App() {
+                 </ModuleGuard>
+               } />
+             )}
++            {RELEASES.buyerAgent && (
++              <Route path="buyer-agent" element={
++                <ModuleGuard module="adminBuyerAgent">
++                  <BuyerResultsPage />
++                </ModuleGuard>
++              } />
++            )}
+             {/* Journey tags became tabs of User journey (U092). */}
+             <Route path="journey-tags" element={<Navigate to="/admin/user-journey?view=tags" replace />} />
+             <Route path="sessions" element={
+diff --git a/src/admin/AdminLayout.tsx b/src/admin/AdminLayout.tsx
+index 54384ac..acd516e 100644
+--- a/src/admin/AdminLayout.tsx
++++ b/src/admin/AdminLayout.tsx
+@@ -1,6 +1,7 @@
+ import {
+   BookOpen,
+   Contact,
++  ShoppingBag,
+   HeartPulse,
+   Target,
+   Microscope,
+@@ -74,6 +75,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
+       { to: '/admin/user-journey', label: 'User journey', icon: Route, flag: 'adminUserJourney' },
+       // Staging only until released (RELEASES.personas).
+       ...(RELEASES.personas ? [{ to: '/admin/personas', label: 'Personas', icon: Contact, flag: 'adminPersonas' }] : []),
++      ...(RELEASES.buyerAgent ? [{ to: '/admin/buyer-agent', label: 'Buyer agent results', icon: ShoppingBag, flag: 'adminBuyerAgent' }] : []),
+     ],
+   },
+   {
+diff --git a/src/admin/data/buyerRuns.test.ts b/src/admin/data/buyerRuns.test.ts
+new file mode 100644
+index 0000000..ac4715f
+--- /dev/null
++++ b/src/admin/data/buyerRuns.test.ts
+@@ -0,0 +1,39 @@
++import { describe, expect, it } from 'vitest'
++import { BUYER_RUNS, countVerdicts, priceRange, scenarioCounts, themeCounts } from './buyerRuns'
++import { drawPanel, generatePersonas } from './personas'
++
++describe('buyer agent runs', () => {
++  const all = generatePersonas()
++  const byId = new Map(all.map((p) => [p.id, p]))
++
++  it('answers for exactly the panel the seed draws', () => {
++    for (const run of BUYER_RUNS) {
++      const drawn = drawPanel(all, run.panel.size, run.panel.seed).map((p) => p.id)
++      expect(run.panel.personaIds, run.id).toEqual(drawn)
++      expect(run.answers.map((a) => a.personaId)).toEqual(run.panel.personaIds)
++    }
++  })
++
++  it('walks each persona’s own scenarios, with sane prices', () => {
++    for (const run of BUYER_RUNS)
++      for (const a of run.answers) {
++        const p = byId.get(a.personaId)
++        expect(p, a.personaId).toBeDefined()
++        expect(a.scenarios.map((s) => s.id)).toEqual(p!.profile.testing.scenarios.map((s) => s.id))
++        const { tooCheap, bargain, expensive, tooExpensive } = a.prices
++        expect(tooCheap < bargain && bargain < expensive && expensive < tooExpensive, a.personaId).toBe(true)
++        if (a.pays === 'yes') expect(a.plan).toMatch(/^plus/)
++        if (a.tries === 'no') expect(a.plan).toBe('none')
++      }
++  })
++
++  it('tallies the demo run', () => {
++    const run = BUYER_RUNS[0]
++    expect(countVerdicts(run.answers, 'tries')).toEqual({ yes: 8, maybe: 2, no: 0 })
++    expect(countVerdicts(run.answers, 'pays')).toEqual({ yes: 1, maybe: 4, no: 5 })
++    expect(priceRange(run.answers)).toMatchObject({ low: 3, high: 6 })
++    expect(themeCounts(run.answers)[0][1]).toBeGreaterThanOrEqual(2)
++    const s = scenarioCounts(run.answers)
++    expect(s.pass + s.risk + s.fail).toBe(30)
++  })
++})
+diff --git a/src/admin/data/buyerRuns.ts b/src/admin/data/buyerRuns.ts
+new file mode 100644
+index 0000000..564b16f
+--- /dev/null
++++ b/src/admin/data/buyerRuns.ts
+@@ -0,0 +1,361 @@
++/**
++ * Buyer agent runs (U101, J133): a buyer agent reads a panel of synthetic
++ * personas (src/admin/data/personas.ts) and one stimulus, and answers as each
++ * persona in a fixed shape. Shown in Admin → Product lab → Buyer agent results.
++ *
++ * The first run is a demo. One agent role-played each of ten personas from
++ * their exported profile, test data and role-play prompt, in a single session,
++ * with the instructions stored below. Nothing here is a measurement: it is a
++ * way to form hypotheses and to shape the schema before runs get bigger.
++ */
++
++export type Verdict = 'yes' | 'maybe' | 'no'
++export type Outcome = 'pass' | 'risk' | 'fail'
++export type Theme = 'price' | 'notifications' | 'privacy' | 'trust' | 'access' | 'voice' | 'habit' | 'switching'
++
++export const THEME_LABEL: Record<Theme, string> = {
++  price: 'Price',
++  notifications: 'Notifications',
++  privacy: 'Privacy',
++  trust: 'Does it work for me',
++  access: 'Access and language',
++  voice: 'Voice and sound',
++  habit: 'Forgetting to use it',
++  switching: 'Already has an app',
++}
++
++/** Van Westendorp's four answers, in US dollars a month. */
++export interface PriceAnswers {
++  tooCheap: number
++  bargain: number
++  expensive: number
++  tooExpensive: number
++}
++
++export interface ScenarioResult {
++  /** Matches a scenario id in the persona's test data. */
++  id: string
++  outcome: Outcome
++  note: string
++}
++
++export interface BuyerAnswer {
++  personaId: string
++  tries: Verdict
++  pays: Verdict
++  /** The plan they would end up on if things go as they expect. */
++  plan: 'none' | 'free' | 'plus-monthly' | 'plus-yearly'
++  prices: PriceAnswers
++  theme: Theme
++  objection: string
++  /** What would turn their no (or maybe) into a yes. */
++  flip: string
++  /** 1 (a guess) to 5 (sure). */
++  confidence: 1 | 2 | 3 | 4 | 5
++  /** Why, in the agent's words. */
++  reasoning: string
++  /** What they would say, in their words. */
++  quote: string
++  scenarios: ScenarioResult[]
++  /** Something wrong with the persona itself, spotted while playing it. */
++  personaIssue?: string
++}
++
++export interface BuyerRun {
++  id: string
++  title: string
++  date: string
++  kind: 'demo' | 'run'
++  /** How the run was made, said plainly. */
++  method: string
++  panel: { seed: number; size: number; personaIds: string[] }
++  stimulus: { name: string; pitch: string; offer: string[]; priceUsd: number }
++  /** The instructions the agent followed, so a run can be repeated. */
++  instructions: string
++  findings: string[]
++  answers: BuyerAnswer[]
++}
++
++export const BUYER_INSTRUCTIONS = `You are a buyer test agent. For each persona in the panel:
++1. Read the persona's profile, test data and role-play prompt. Stay in role: their money, their week, their doubts.
++2. Read the stimulus once, as they would meet it: an app store page, then the first screen.
++3. Answer in this shape: tries (yes/maybe/no), pays (yes/maybe/no), plan, the four price answers in USD a month (too cheap, a bargain, getting expensive, too expensive), the main objection and its theme, what would flip it, confidence 1-5, reasoning, and one line in their words.
++4. Walk their three test scenarios against how the product works today and mark each pass, risk or fail, with a note.
++5. If the persona itself does not hold together, say so.
++Rules: synthetic buyers are too agreeable, so look for the reason to say no first. A "yes" needs a reason that comes from the persona, not from the pitch.`
++
++export const BUYER_RUNS: BuyerRun[] = [
++  {
++    id: 'demo-1',
++    title: 'Demo 1 · Aurelia Plus at $9.99',
++    date: '2026-11-19',
++    kind: 'demo',
++    method:
++      'One agent played ten personas in turn, in one session, from each persona’s export. No backend, no live model call from the app. The panel was drawn from the 300 with seed 2026.',
++    panel: {
++      seed: 2026,
++      size: 10,
++      personaIds: ['P273', 'P243', 'P028', 'P209', 'P113', 'P254', 'P163', 'P029', 'P221', 'P218'],
++    },
++    stimulus: {
++      name: 'Aurelia, app store page and first screen',
++      pitch:
++        'Tell Aurelia in one sentence how you feel. In about a minute it makes you a guided session of your own: voice, sound and visuals. It continues as short chapters over the next days, with one check-in a day.',
++      offer: ['Free: 5 sessions a month, no card', 'Plus: $9.99 a month or $79 a year, unlimited, voice input, offline', 'English only today'],
++      priceUsd: 9.99,
++    },
++    instructions: BUYER_INSTRUCTIONS,
++    findings: [
++      'The free plan with no card does the selling: 8 of 10 would try it, and every no or maybe on paying came after trying, not before.',
++      'Plus at $9.99 sits above what this panel calls “getting expensive” (a median of $6). The yearly plan ($6.58 a month) is the one that lands for the people who would pay.',
++      'Two deal breakers come before price: more than one notification a day, and not knowing where what they type goes. Both are cheap to answer on the first screen.',
++      'Access fails outright for one in ten (English only, small text) and is a risk for two more (sound control, a voice they can choose). A language and a voice picker matter more than another feature.',
++      'Grief, a bad check-in and hitting the free limit at 3am are the moments where the product can lose someone it already won. Each needs a designed answer.',
++      'The run found three personas that do not hold together (a 66-year-old parent on leave, a 35-year-old medical student with teenagers, a low-income lawyer). They go back to the generator.',
++    ],
++    answers: [
++      {
++        personaId: 'P273',
++        tries: 'yes',
++        pays: 'maybe',
++        plan: 'plus-yearly',
++        prices: { tooCheap: 2, bargain: 5, expensive: 9, tooExpensive: 14 },
++        theme: 'notifications',
++        objection: 'Afraid of an app that pings every day and a streak he will break.',
++        flip: 'Say on the first screen: one reminder at most, off with one tap, no streaks.',
++        confidence: 4,
++        reasoning:
++          'Calm is his goal and he likes AI, so a session from one sentence is exactly his style. He pays for Balance-like apps only once they stop nagging. The yearly plan fits his “real discount” trigger.',
++        quote: 'If it gets me through Tuesday and leaves me alone on Wednesday, I will pay for the year.',
++        scenarios: [
++          { id: 'first-open', outcome: 'pass', note: 'His sentence goes straight to a session; nothing to fill in first.' },
++          { id: 'moment', outcome: 'pass', note: 'Before calling his mum: a short calming session fits the five minutes he has.' },
++          { id: 'grief', outcome: 'risk', note: 'Nothing in the flow notices loss. A “fix your stress” tone would feel wrong a month after a bereavement.' },
++        ],
++      },
++      {
++        personaId: 'P243',
++        tries: 'maybe',
++        pays: 'no',
++        plan: 'none',
++        prices: { tooCheap: 1, bargain: 3, expensive: 6, tooExpensive: 9 },
++        theme: 'switching',
++        objection: 'Already pays for Calm and uses Insight Timer every day; sees no reason AI would do better.',
++        flip: 'Reviews from people her age, and sessions that never run longer than promised.',
++        confidence: 3,
++        reasoning:
++          'A daily meditator with two apps and low comfort with tech has the highest switching cost on the panel. Skeptical of AI. She reads every review first, and today there are none.',
++        quote: 'I have my teachers already. Why would I want a computer reading to me?',
++        scenarios: [
++          { id: 'first-open', outcome: 'risk', note: 'A blank sentence box is harder for her than a list of named teachers.' },
++          { id: 'moment', outcome: 'pass', note: 'A focus session to start the report works if it is truly short.' },
++          { id: 'low-checkin', outcome: 'risk', note: 'A low check-in needs a gentle answer; a cheery one would confirm her doubt.' },
++        ],
++        personaIssue: '“Parent on leave” at 66 reads wrong. Occupation should follow age.',
++      },
++      {
++        personaId: 'P028',
++        tries: 'yes',
++        pays: 'maybe',
++        plan: 'plus-monthly',
++        prices: { tooCheap: 3, bargain: 6, expensive: 12, tooExpensive: 18 },
++        theme: 'privacy',
++        objection: 'Will type about her kids and her work and does not know where it goes.',
++        flip: 'A plain page: where it is stored, when it is deleted, never used for training.',
++        confidence: 3,
++        reasoning:
++          'High income, enthusiastic about AI and decides within a day, so price is not the gate. Very protective of data and allergic to spiritual language. With ADHD, “I will forget it exists by Thursday” is the real churn risk.',
++        quote: 'Sort my week out, sure. But tell me who else reads it.',
++        scenarios: [
++          { id: 'first-open', outcome: 'pass', note: 'One sentence suits her; no quiz.' },
++          { id: 'moment', outcome: 'risk', note: 'Sunday planning works only if the script avoids “universe” language.' },
++          { id: 'privacy', outcome: 'fail', note: 'The app says nothing about data before she types. She would stop at the first personal sentence.' },
++        ],
++      },
++      {
++        personaId: 'P209',
++        tries: 'yes',
++        pays: 'maybe',
++        plan: 'plus-monthly',
++        prices: { tooCheap: 1.5, bargain: 3, expensive: 6, tooExpensive: 9 },
++        theme: 'privacy',
++        objection: 'Would connect her Whoop only if the data stays with Aurelia.',
++        flip: 'A morning session built from her Whoop recovery, and the price shown in rupiah (Rp69,000 is under her $5).',
++        confidence: 3,
++        reasoning:
++          'Never meditated, but high income, curious about AI and decides within a day. She hates being asked to pay before trying, which the free plan answers. The regional price already fits her.',
++        quote: 'If it knows I slept badly and gives me ten minutes that wake me up, I am in.',
++        scenarios: [
++          { id: 'first-open', outcome: 'pass', note: '“No energy to get out of bed” goes straight to a session.' },
++          { id: 'moment', outcome: 'risk', note: 'The wearable readings are examples until a backend exists; she would notice they are not hers.' },
++          { id: 'privacy', outcome: 'risk', note: 'Connecting a wearable needs a clear “never shared” line.' },
++        ],
++      },
++      {
++        personaId: 'P113',
++        tries: 'yes',
++        pays: 'no',
++        plan: 'free',
++        prices: { tooCheap: 0.5, bargain: 2, expensive: 5, tooExpensive: 7 },
++        theme: 'price',
++        objection: 'Low income and a new baby; anything above a coffee a month is out.',
++        flip: 'Three nights in a row where it gets her back to sleep at 3am. Then she would pay.',
++        confidence: 4,
++        reasoning:
++          'Highest pain on the panel (8) and a clear job: back to sleep at 3am. She compares options in a spreadsheet and tried Insight Timer and Balance already. Five free sessions a month do not cover a month of broken nights.',
++        quote: 'If it can get me back to sleep at 3am, I will pay for it. Prove it first.',
++        scenarios: [
++          { id: 'first-open', outcome: 'pass', note: 'In bed, one sentence, a session: the right shape.' },
++          { id: 'moment', outcome: 'pass', note: 'A night-feed wake-up is exactly the moment.' },
++          { id: 'paywall', outcome: 'fail', note: 'The sixth session of the month would hit the limit at 3am. Blocking a sleep session in the middle of the night loses her for good.' },
++        ],
++      },
++      {
++        personaId: 'P254',
++        tries: 'maybe',
++        pays: 'no',
++        plan: 'none',
++        prices: { tooCheap: 0.5, bargain: 1.5, expensive: 3, tooExpensive: 5 },
++        theme: 'access',
++        objection: 'The app is in English and the text is small; he cannot use it alone.',
++        flip: 'Portuguese, larger text, and a grandchild who sets it up for him.',
++        confidence: 4,
++        reasoning:
++          'Low comfort with tech, low income, 73 and in Brazil. His body stays in fight mode after stress, which a regulating session helps. But he would not get past the first screen in English.',
++        quote: 'My grandson can show me. But it has to speak Portuguese.',
++        scenarios: [
++          { id: 'first-open', outcome: 'fail', note: 'English only. He would not know what to type.' },
++          { id: 'moment', outcome: 'risk', note: 'After a stressful moment he needs one big button, not a text box.' },
++          { id: 'access', outcome: 'fail', note: 'No language choice and no text size setting.' },
++        ],
++      },
++      {
++        personaId: 'P163',
++        tries: 'yes',
++        pays: 'no',
++        plan: 'free',
++        prices: { tooCheap: 1, bargain: 2, expensive: 4, tooExpensive: 6 },
++        theme: 'voice',
++        objection: 'Sensitive to sound; music beds and bells are a problem. Insight Timer is free and already works.',
++        flip: 'A student price and full control of sound: voice only, no music, no bell.',
++        confidence: 3,
++        reasoning:
++          'A daily Insight Timer user on a student budget, enthusiastic about AI. He would try it because a session made for him is new. Without sound control it would make things worse.',
++        quote: 'I want the words. Not the rain, not the gong.',
++        scenarios: [
++          { id: 'first-open', outcome: 'pass', note: '“I feel anxious and I don’t know why” is a natural first sentence.' },
++          { id: 'moment', outcome: 'risk', note: 'An evening money worry needs a calm voice and nothing else.' },
++          { id: 'access', outcome: 'risk', note: 'Guidance controls (less talking, no music) are planned, not built.' },
++        ],
++        personaIssue: 'A 35-year-old medical student living with teenagers is possible but unlikely for a whole persona. Check household against occupation and age.',
++      },
++      {
++        personaId: 'P029',
++        tries: 'yes',
++        pays: 'yes',
++        plan: 'plus-yearly',
++        prices: { tooCheap: 3, bargain: 6, expensive: 10, tooExpensive: 15 },
++        theme: 'habit',
++        objection: 'Gave up on apps with too much choice; would give up again if it asks five questions first.',
++        flip: 'Already a yes. Keep it at one sentence, and check breathing exercises are safe in pregnancy.',
++        confidence: 4,
++        reasoning:
++          'A carer with young kids and pregnant; “just tell me what to do” is exactly Aurelia’s promise. Middle income, $10 a month already in her budget, and her trigger is an annual plan with a real discount.',
++        quote: 'Something short that gets me started. That is all I have ever wanted from one of these.',
++        scenarios: [
++          { id: 'first-open', outcome: 'pass', note: 'One sentence, no library to scroll.' },
++          { id: 'moment', outcome: 'pass', note: 'A focus session before the hour she has.' },
++          { id: 'low-checkin', outcome: 'risk', note: 'A low check-in from a tired carer needs care, not a pep talk.' },
++        ],
++      },
++      {
++        personaId: 'P221',
++        tries: 'yes',
++        pays: 'no',
++        plan: 'free',
++        prices: { tooCheap: 1, bargain: 2.5, expensive: 5, tooExpensive: 8 },
++        theme: 'price',
++        objection: 'Already pays for a therapist; there is no money left for an app.',
++        flip: 'A yearly plan under $40, or her employer paying for it.',
++        confidence: 3,
++        reasoning:
++          'Never meditated, low income, compares in a spreadsheet. The free plan suits her and she would use it, but she forgets to open apps. She would stay free unless someone else pays.',
++        quote: 'Free, fine. I will see if I even remember to open it.',
++        scenarios: [
++          { id: 'first-open', outcome: 'pass', note: 'Weekly planning from one sentence.' },
++          { id: 'moment', outcome: 'pass', note: 'Switching off after a support shift.' },
++          { id: 'lapse', outcome: 'pass', note: 'After two weeks away, coming back without guilt works if there is no streak to lose.' },
++        ],
++      },
++      {
++        personaId: 'P218',
++        tries: 'yes',
++        pays: 'maybe',
++        plan: 'free',
++        prices: { tooCheap: 1.5, bargain: 3, expensive: 6, tooExpensive: 9 },
++        theme: 'voice',
++        objection: 'Most meditation voices irritate her; a breathy one and she is gone.',
++        flip: 'Choose the voice before the first session, and Spanish.',
++        confidence: 3,
++        reasoning:
++          'Enthusiastic about AI and follows creators; she tried apps before and left over voices and too much choice. Quick Start plays before sign-in, which meets her “try it without an account”.',
++        quote: 'Let me pick the voice. And speak to me in Spanish, por favor.',
++        scenarios: [
++          { id: 'first-open', outcome: 'pass', note: 'Plays before sign-in.' },
++          { id: 'moment', outcome: 'pass', note: 'The 3pm slump is a short energy session.' },
++          { id: 'access', outcome: 'risk', note: 'English as a second language: scripts need plain words and no idioms.' },
++        ],
++        personaIssue: 'A lawyer on a low income is unusual. Income should follow occupation more closely.',
++      },
++    ],
++  },
++]
++
++/* ------------------------------------------------------------------ Tallies */
++
++const median = (values: number[]): number => {
++  const s = [...values].sort((a, b) => a - b)
++  const mid = Math.floor(s.length / 2)
++  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2
++}
++
++export function countVerdicts(answers: BuyerAnswer[], key: 'tries' | 'pays'): Record<Verdict, number> {
++  const out: Record<Verdict, number> = { yes: 0, maybe: 0, no: 0 }
++  for (const a of answers) out[a[key]] += 1
++  return out
++}
++
++/**
++ * A simple price range from the four answers: from the median "bargain" to
++ * the median "getting expensive". Enough for ten people; a run of hundreds
++ * should use the full Van Westendorp crossing points.
++ */
++export function priceRange(answers: BuyerAnswer[]) {
++  return {
++    tooCheap: median(answers.map((a) => a.prices.tooCheap)),
++    low: median(answers.map((a) => a.prices.bargain)),
++    high: median(answers.map((a) => a.prices.expensive)),
++    tooExpensive: median(answers.map((a) => a.prices.tooExpensive)),
++  }
++}
++
++export function themeCounts(answers: BuyerAnswer[]): [Theme, number][] {
++  const m = new Map<Theme, number>()
++  for (const a of answers) m.set(a.theme, (m.get(a.theme) ?? 0) + 1)
++  return [...m.entries()].sort((a, b) => b[1] - a[1])
++}
++
++export function scenarioCounts(answers: BuyerAnswer[]): Record<Outcome, number> {
++  const out: Record<Outcome, number> = { pass: 0, risk: 0, fail: 0 }
++  for (const a of answers) for (const s of a.scenarios) out[s.outcome] += 1
++  return out
++}
++
++export const VERDICT_TONE = { yes: 'good', maybe: 'warning', no: 'critical' } as const
++export const OUTCOME_TONE = { pass: 'good', risk: 'warning', fail: 'critical' } as const
++export const PLAN_LABEL: Record<BuyerAnswer['plan'], string> = {
++  none: 'Would not sign up',
++  free: 'Free',
++  'plus-monthly': 'Plus, monthly',
++  'plus-yearly': 'Plus, yearly',
++}
+diff --git a/src/admin/pages/BuyerResultsPage.tsx b/src/admin/pages/BuyerResultsPage.tsx
+new file mode 100644
+index 0000000..0f92682
+--- /dev/null
++++ b/src/admin/pages/BuyerResultsPage.tsx
+@@ -0,0 +1,352 @@
++import { Copy, Download } from 'lucide-react'
++import { useState, type ReactNode } from 'react'
++import { Link } from 'react-router-dom'
++import { DataTable, type Column } from '../components/DataTable'
++import { SidePanel } from '../components/SidePanel'
++import { Badge, Button, PageHeader, Panel, StatCard } from '../components/ui'
++import {
++  BUYER_RUNS,
++  OUTCOME_TONE,
++  PLAN_LABEL,
++  THEME_LABEL,
++  VERDICT_TONE,
++  countVerdicts,
++  priceRange,
++  scenarioCounts,
++  themeCounts,
++  type BuyerAnswer,
++} from '../data/buyerRuns'
++import { GOAL_LABEL, generatePersonas, type Persona } from '../data/personas'
++
++const PERSONAS = new Map(generatePersonas().map((p) => [p.id, p]))
++const SCALE_MAX = 20
++
++interface Row {
++  id: string
++  name: string
++  age: number
++  country: string
++  goal: string
++  tries: string
++  pays: string
++  plan: string
++  bargain: number
++  theme: string
++  confidence: number
++}
++
++function download(name: string, text: string) {
++  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }))
++  const a = document.createElement('a')
++  a.href = url
++  a.download = name
++  a.click()
++  setTimeout(() => URL.revokeObjectURL(url), 1000)
++}
++
++const money = (n: number) => `$${n % 1 ? n.toFixed(2) : n}`
++
++export function BuyerResultsPage() {
++  const [runId, setRunId] = useState(BUYER_RUNS[0].id)
++  const [openId, setOpenId] = useState<string | null>(null)
++  const [notice, setNotice] = useState('')
++  const run = BUYER_RUNS.find((r) => r.id === runId) ?? BUYER_RUNS[0]
++  const n = run.answers.length
++
++  const tries = countVerdicts(run.answers, 'tries')
++  const pays = countVerdicts(run.answers, 'pays')
++  const range = priceRange(run.answers)
++  const themes = themeCounts(run.answers)
++  const outcomes = scenarioCounts(run.answers)
++  const issues = run.answers.filter((a) => a.personaIssue)
++
++  const rows: Row[] = run.answers.map((a) => {
++        const p = PERSONAS.get(a.personaId)!
++        return {
++          id: a.personaId,
++          name: p.name,
++          age: p.age,
++          country: p.country,
++          goal: GOAL_LABEL[p.goal],
++          tries: a.tries,
++          pays: a.pays,
++          plan: PLAN_LABEL[a.plan],
++          bargain: a.prices.bargain,
++          theme: THEME_LABEL[a.theme],
++          confidence: a.confidence,
++        }
++      })
++
++  const verdictCell = (v: string) => <Badge tone={VERDICT_TONE[v as keyof typeof VERDICT_TONE]}>{v}</Badge>
++  const columns: Column<Row>[] = [
++    { key: 'name', header: 'Persona', render: (r) => <span className="font-medium">{r.name}</span> },
++    { key: 'age', header: 'Age', numeric: true },
++    { key: 'country', header: 'Country' },
++    { key: 'goal', header: 'Goal' },
++    { key: 'tries', header: 'Tries', render: (r) => verdictCell(r.tries) },
++    { key: 'pays', header: 'Pays', render: (r) => verdictCell(r.pays) },
++    { key: 'plan', header: 'Ends up on' },
++    { key: 'bargain', header: 'A bargain at', numeric: true, render: (r) => money(r.bargain) },
++    { key: 'theme', header: 'Main objection' },
++    { key: 'confidence', header: 'Confidence', numeric: true, render: (r) => `${r.confidence} of 5` },
++  ]
++
++  async function copy(text: string, what: string) {
++    try {
++      await navigator.clipboard.writeText(text)
++      setNotice(`${what} copied`)
++    } catch {
++      setNotice('Copy failed. Select the text and copy it by hand.')
++    }
++  }
++
++  const open = openId ? run.answers.find((a) => a.personaId === openId) : undefined
++  const pct = (v: number) => `${Math.min(100, (v / SCALE_MAX) * 100)}%`
++
++  return (
++    <div className="flex flex-col gap-16">
++      <PageHeader
++        title="Buyer agent results"
++        description="A buyer agent reads a panel of synthetic personas and one thing to test (a pitch, a price, a screen) and answers as each of them: would they try it, would they pay, at what price, what stops them and what would change their mind. Use it to compare options and find questions for real people. It is not evidence of demand."
++        actions={
++          <div className="flex flex-wrap items-center gap-8">
++            {BUYER_RUNS.length > 1 && (
++              <select aria-label="Run" value={run.id} onChange={(e) => setRunId(e.target.value)} className="h-32 rounded-8 border border-adm-line bg-adm-surface px-10 text-13">
++                {BUYER_RUNS.map((r) => (
++                  <option key={r.id} value={r.id}>
++                    {r.title}
++                  </option>
++                ))}
++              </select>
++            )}
++            <Button size="sm" icon={<Copy size={13} />} onClick={() => copy(run.instructions, 'Agent instructions')}>
++              Agent instructions
++            </Button>
++            <Button size="sm" icon={<Download size={13} />} onClick={() => download(`aurelia-buyer-${run.id}.json`, JSON.stringify(run, null, 2))}>
++              Run as JSON
++            </Button>
++          </div>
++        }
++      />
++
++      <div className="flex flex-wrap items-center gap-8 text-12 text-adm-ink-2">
++        <Badge tone="warning">{run.kind === 'demo' ? 'Demo' : 'Run'} · synthetic</Badge>
++        <span>
++          {run.title} · {run.date} · {n} of the{' '}
++          <Link to="/admin/personas" className="underline hover:text-adm-ink">
++            personas
++          </Link>
++          , seed {run.panel.seed}. {run.method}
++        </span>
++        {notice && (
++          <span role="status" className="text-adm-good">
++            {notice}
++          </span>
++        )}
++      </div>
++
++      <Panel title="What was tested" description={run.stimulus.name}>
++        <p className="max-w-[720px] text-13 leading-[20px] text-adm-ink">{run.stimulus.pitch}</p>
++        <ul className="flex flex-wrap gap-6">
++          {run.stimulus.offer.map((o) => (
++            <li key={o} className="rounded-8 bg-adm-bg px-10 py-6 text-12 text-adm-ink-2">
++              {o}
++            </li>
++          ))}
++        </ul>
++      </Panel>
++
++      <div className="grid grid-cols-2 gap-12 lg:grid-cols-4">
++        <StatCard label="Would try" value={`${tries.yes} of ${n}`} hint={`${tries.maybe} maybe`} />
++        <StatCard label="Would pay" value={`${pays.yes} of ${n}`} hint={`${pays.maybe} maybe, ${pays.no} no`} />
++        <StatCard label="Price that feels fair" value={`${money(range.low)}–${money(range.high)}`} hint={`tested at ${money(run.stimulus.priceUsd)}`} />
++        <StatCard label="Test cases" value={`${outcomes.pass} pass`} hint={`${outcomes.risk} at risk, ${outcomes.fail} fail`} />
++      </div>
++
++      <Panel title="What it tells us" description="The agent’s reading of the panel. Hypotheses to check with real people.">
++        <ul className="flex max-w-[760px] list-disc flex-col gap-8 pl-18 text-13 leading-[20px] text-adm-ink">
++          {run.findings.map((f) => (
++            <li key={f}>{f}</li>
++          ))}
++        </ul>
++      </Panel>
++
++      <div className="grid gap-16 lg:grid-cols-2">
++        <Panel title="Price" description="Medians of the four price answers, in US dollars a month.">
++          <div className="flex flex-col gap-10">
++            <div className="relative h-28 rounded-8 bg-adm-bg">
++              <div className="absolute inset-y-0 rounded-8 bg-adm-good/20" style={{ left: pct(range.low), width: `calc(${pct(range.high)} - ${pct(range.low)})` }} />
++              <div className="absolute inset-y-[-4px] w-2 bg-adm-critical" style={{ left: pct(run.stimulus.priceUsd) }} title="Tested price" />
++            </div>
++            <div className="flex justify-between text-11 tabular-nums text-adm-muted">
++              {[0, 5, 10, 15, 20].map((v) => (
++                <span key={v}>${v}</span>
++              ))}
++            </div>
++            <dl className="grid grid-cols-2 gap-8 text-12 sm:grid-cols-4">
++              {[
++                ['Too cheap to trust', range.tooCheap],
++                ['A bargain', range.low],
++                ['Getting expensive', range.high],
++                ['Too expensive', range.tooExpensive],
++              ].map(([label, v]) => (
++                <div key={label} className="rounded-8 bg-adm-bg p-8">
++                  <dt className="text-adm-muted">{label}</dt>
++                  <dd className="font-semibold tabular-nums">{money(v as number)}</dd>
++                </div>
++              ))}
++            </dl>
++            <p className="text-12 text-adm-ink-2">
++              Green is the fair band. The red line is the tested price ({money(run.stimulus.priceUsd)}); the yearly plan works out at {money(+(79 / 12).toFixed(2))} a month.
++            </p>
++          </div>
++        </Panel>
++
++        <Panel title="Why people hesitate" description="Each persona’s main objection, grouped.">
++          <ul className="flex flex-col gap-8">
++            {themes.map(([t, c]) => (
++              <li key={t} className="grid grid-cols-[150px_1fr_24px] items-center gap-8 text-12">
++                <span className="text-adm-ink">{THEME_LABEL[t]}</span>
++                <span className="h-10 rounded-full bg-adm-bg">
++                  <span className="block h-full rounded-full bg-adm-s1" style={{ width: `${(c / n) * 100}%` }} />
++                </span>
++                <span className="text-right tabular-nums text-adm-muted">{c}</span>
++              </li>
++            ))}
++          </ul>
++        </Panel>
++      </div>
++
++      <Panel title="Every answer" description="Select a row for the full answer, the three test cases and the persona.">
++        <DataTable
++          rows={rows}
++          columns={columns}
++          exportName={`aurelia-buyer-${run.id}`}
++          pageSize={10}
++          filters={[
++            { key: 'tries', label: 'Tries', options: ['yes', 'maybe', 'no'] },
++            { key: 'pays', label: 'Pays', options: ['yes', 'maybe', 'no'] },
++          ]}
++          onRowClick={(r) => setOpenId(r.id)}
++        />
++      </Panel>
++
++      {issues.length > 0 && (
++        <Panel title="Persona problems found" description="Personas that did not hold together while the agent played them. They go back to the generator.">
++          <ul className="flex flex-col gap-6 text-12 text-adm-ink">
++            {issues.map((a) => (
++              <li key={a.personaId}>
++                <span className="font-medium">{PERSONAS.get(a.personaId)!.name}</span> ({a.personaId}): {a.personaIssue}
++              </li>
++            ))}
++          </ul>
++        </Panel>
++      )}
++
++      {open && (
++        <SidePanel
++          width={600}
++          title={PERSONAS.get(open.personaId)!.name}
++          description={`${open.personaId} · ${run.title}`}
++          onClose={() => setOpenId(null)}
++          footer={<Button onClick={() => setOpenId(null)}>Close</Button>}
++        >
++          <AnswerDetail a={open} p={PERSONAS.get(open.personaId)!} />
++        </SidePanel>
++      )}
++    </div>
++  )
++}
++
++function Section({ title, children }: { title: string; children: ReactNode }) {
++  return (
++    <section className="flex flex-col gap-8 border-t border-adm-line pt-14">
++      <h3 className="text-11 font-semibold uppercase tracking-widest text-adm-muted">{title}</h3>
++      {children}
++    </section>
++  )
++}
++
++function AnswerDetail({ a, p }: { a: BuyerAnswer; p: Persona }) {
++  return (
++    <div className="flex flex-col gap-14 text-13 text-adm-ink">
++      <div>
++        <p className="text-12 text-adm-ink-2">
++          {p.age} · {p.occupation} · {p.city}, {p.country} · {p.income} income · would pay {p.willingnessToPay}
++        </p>
++        <div className="mt-6 flex flex-wrap gap-4">
++          <Badge tone="info">{GOAL_LABEL[p.goal]}</Badge>
++          <Badge tone={VERDICT_TONE[a.tries]}>Tries: {a.tries}</Badge>
++          <Badge tone={VERDICT_TONE[a.pays]}>Pays: {a.pays}</Badge>
++          <Badge>{PLAN_LABEL[a.plan]}</Badge>
++          <Badge>Confidence {a.confidence} of 5</Badge>
++        </div>
++      </div>
++      <p className="rounded-8 bg-adm-bg px-12 py-10 italic text-adm-ink-2">“{a.quote}”</p>
++
++      <Section title="Why">
++        <p className="leading-[20px]">{a.reasoning}</p>
++      </Section>
++
++      <Section title="What stops them, what would flip it">
++        <p>
++          <span className="text-adm-muted">{THEME_LABEL[a.theme]}: </span>
++          {a.objection}
++        </p>
++        <p>
++          <span className="text-adm-muted">Would flip it: </span>
++          {a.flip}
++        </p>
++      </Section>
++
++      <Section title="Price answers (USD a month)">
++        <div className="grid grid-cols-4 gap-8 text-12">
++          {(
++            [
++              ['Too cheap', a.prices.tooCheap],
++              ['A bargain', a.prices.bargain],
++              ['Expensive', a.prices.expensive],
++              ['Too expensive', a.prices.tooExpensive],
++            ] as const
++          ).map(([label, v]) => (
++            <div key={label} className="rounded-8 bg-adm-bg p-8">
++              <p className="text-adm-muted">{label}</p>
++              <p className="font-semibold tabular-nums">{money(v)}</p>
++            </div>
++          ))}
++        </div>
++      </Section>
++
++      <Section title="Test cases">
++        <ul className="flex flex-col gap-8">
++          {a.scenarios.map((s) => {
++            const sc = p.profile.testing.scenarios.find((x) => x.id === s.id)
++            return (
++              <li key={s.id} className="rounded-8 border border-adm-line p-10">
++                <div className="flex items-center justify-between gap-8">
++                  <p className="font-medium">{sc?.title ?? s.id}</p>
++                  <Badge tone={OUTCOME_TONE[s.outcome]}>{s.outcome}</Badge>
++                </div>
++                {sc && <p className="mt-4 text-12 text-adm-muted">Expect: {sc.expect}</p>}
++                <p className="mt-4 text-12">{s.note}</p>
++              </li>
++            )
++          })}
++        </ul>
++      </Section>
++
++      {a.personaIssue && (
++        <Section title="Persona problem">
++          <p className="text-12">{a.personaIssue}</p>
++        </Section>
++      )}
++
++      <Section title="Persona">
++        <p className="text-12 leading-[18px] text-adm-ink-2">{p.profile.bio}</p>
++        <Link to="/admin/personas" className="text-12 underline hover:text-adm-ink">
++          All personas
++        </Link>
++      </Section>
++    </div>
++  )
++}
+diff --git a/src/demo/modules.ts b/src/demo/modules.ts
+index e8a5b32..e713874 100644
+--- a/src/demo/modules.ts
++++ b/src/demo/modules.ts
+@@ -243,6 +243,7 @@ export const DEMO_MODULES: DemoModule[] = [
+   { id: 'adminOutcomes', kind: 'admin', label: 'Well-being outcomes', description: 'How much each user’s well-being has changed (WHO-5, check-ins, wearable).', route: '/admin/outcomes', built: true },
+   { id: 'adminUserJourney', kind: 'admin', label: 'User journey', description: 'The journey map: four stages (Reflect, Create, Experience, Share), their moments, the feature each suggests, and the screens that serve them.', route: '/admin/user-journey', built: true },
+   { id: 'adminPersonas', kind: 'admin', label: 'Personas', description: '300 synthetic personas as candidates for AI-run research, with role-play prompts and balanced panels. Staging only until released.', route: '/admin/personas', built: true },
++  { id: 'adminBuyerAgent', kind: 'admin', label: 'Buyer agent results', description: 'What a buyer agent answered as each persona in a panel: try, pay, price, objections, test cases. Demo run on ten personas. Staging only until released.', route: '/admin/buyer-agent', built: true },
+   { id: 'adminRoles', kind: 'admin', label: 'Roles & permissions', description: 'Permission matrix.', route: '/admin/roles', built: true },
+   { id: 'adminSessions', kind: 'admin', label: 'Sessions', description: 'Generated session catalogue.', route: '/admin/sessions', built: true },
+   { id: 'adminChallenges', kind: 'admin', label: 'Challenges', description: 'Setup, pacing and reward tiers.', route: '/admin/challenges', built: true },
+diff --git a/src/versions/releases.ts b/src/versions/releases.ts
+index 8af06b1..b4fbc59 100644
+--- a/src/versions/releases.ts
++++ b/src/versions/releases.ts
+@@ -33,4 +33,6 @@ export const RELEASES = {
+   sidebarRail: BUILD.environment !== 'production',
+   /** Admin → Product lab → Personas (U096): 300 synthetic research personas. Staging only until asked. */
+   personas: BUILD.environment !== 'production',
++  /** Admin → Product lab → Buyer agent results (U101): the first demo run on ten personas. Staging only until asked. */
++  buyerAgent: BUILD.environment !== 'production',
+ } as const
+-- 
+2.43.0
+

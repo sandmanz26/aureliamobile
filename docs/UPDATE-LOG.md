@@ -137,9 +137,48 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U098 | `f834b1e` | 2026-11-18 | Wiki Research: round 2 on Insight Timer (behaviour, 11 journey flow charts, adopt/avoid after a roast) as the default version; Mermaid charts render lazily, kept out of the precache. Staging; production on request (J076). | [patch](patches/U098-f834b1e.patch) |
 | U099 | `61b4abf` | 2026-11-18 | Personas become full profiles (bio, weekday, sleep, stressors, coping, personality, tech, decision style, deal breakers, success, quotes), shown as a profile and carried into the role-play prompt; admin dropdowns follow the dark theme. Staging. | [patch](patches/U099-61b4abf.patch) |
 | U100 | `a6e6f83` | 2026-11-18 | One select style across the admin (no crowded native arrows); persona rows open the drawer; each persona gains test data (jobs, pain, first sentence, spend, alternatives, buy triggers, objections, access, connectivity, three when/does/expect scenarios). Staging. | [patch](patches/U100-a6e6f83.patch) |
+| U101 | `2494223` | 2026-11-19 | Admin → Product lab → Buyer agent results: the first demo run (ten personas, seed 2026, Aurelia Plus at $9.99), with tallies, a price band, objections, every answer in a drawer with its three test cases, and persona problems found. Staging only (`RELEASES.buyerAgent`). | [patch](patches/U101-2494223.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U101 — Buyer agent results (demo run)
+
+- **Commit:** `2494223` · pushed 2026-11-19 UTC · `web_app` + `admin_cms`. Staging only behind `RELEASES.buyerAgent`.
+- **Patch:** [patches/U101-2494223.patch](patches/U101-2494223.patch)
+- **Request:** "oke saya mau melakukan beberapa percobaan dulu. nanti di admin di bagian product lab perlu ada namanya buyer agent result. goal buyer agent harusnya kamu sudah tau, mari buat jalankan buyer agent dengan menggunakan 10 persona yang ada dulu. kita jadikan demo, nanti pelan pelan kita akan mengerjakan dengan skema dan detail yang lebih rumit"
+- **Interpretation:**
+  - "Run the buyer agent" means: the agent played each persona in turn from the persona's export. It ran in this session, with no backend and no model call from the app.
+  - The panel is `drawPanel(all, 10, 2026)`.
+  - The stimulus is Aurelia's pitch and today's plans: Free with 5 sessions and no card, Plus at $9.99 a month or $79 a year, English only.
+  - The result is stored as data and labelled **Demo · synthetic**.
+- **Changed:**
+  - `src/admin/data/buyerRuns.ts`:
+    - the answer schema: tries, pays, plan, four price answers, objection theme, flip, confidence 1–5, reasoning, quote, a pass/risk/fail per test scenario, and a persona issue;
+    - the agent instructions, so a run can be repeated;
+    - the demo run, with six findings;
+    - tallies: verdict counts, a median price band, theme counts, scenario counts.
+  - `src/admin/data/buyerRuns.test.ts`: the run answers exactly the panel the seed draws, walks each persona's own scenarios, gives ordered prices, and pins the tallies.
+  - `src/admin/pages/BuyerResultsPage.tsx`:
+    - what was tested;
+    - four stats;
+    - findings;
+    - a price band against the tested price;
+    - objections grouped;
+    - every answer in a table, with a drawer per persona;
+    - persona problems found;
+    - Copy agent instructions and download the run as JSON.
+  - `releases.ts` (`buyerAgent`), `AdminLayout.tsx` (Product lab item), `App.tsx` (route `/admin/buyer-agent`), `demo/modules.ts` (`adminBuyerAgent`).
+- **Result of the demo:**
+  - 8 of 10 would try it; 1 would pay, 4 maybe.
+  - The fair band is $3–$6 a month, so $9.99 sits above it. The yearly plan is what lands.
+  - Notifications and privacy come before price.
+  - Access fails for 1 persona and is a risk for 2 more.
+  - The run found three incoherent personas, which go back to the generator.
+- **Verified:**
+  - `npm run check` passes (165 tests).
+  - Staging build at 1440px, light and dark: the page renders, the drawer opens with its test cases, no overflow, no errors.
+- **Revert:** `git revert --no-commit 2494223 && git checkout HEAD -- docs/`.
 
 ### U100 — Personas as test cases; admin selects
 
