@@ -142,9 +142,35 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U103 | `8a99797` | 2026-11-19 | Persona generator 2 (coherent: an `incoherence()` check finds 0 of 300; generator 1 kept byte-identical for runs v1–v2, 144 of 300 broken). Buyer agent v3: an A/B run on 36 generator-2 personas, today's offer against a proposal built from Eugene's documents and the research. Adds references, a control, changes traced to their source, and Try A/B by segment. Staging only. | [patch](patches/U103-8a99797.patch) |
 | U104 | `d229d88` | 2026-11-19 | Buyer agent results → By production version: the three agent rule sets × production v1–v3 (staging v3–v5). That is nine reports, each with a written summary, the ten market-fit metrics (predicted or estimate), a step-by-step funnel, the leave reasons and every persona's walk, plus an overall summary. The rules are written as code and checked against the hand-played runs (21/36 and 20/36 the same, 0 opposite). Staging only. | [patch](patches/U104-d229d88.patch) |
 | U105 | `6f24a04` | 2026-11-19 | User journey: with tags on, screens are tied to the Product surface tag (a moment shows its surfaces' screens), with a Product surfaces strip. Adds three real screenshots (Journal, Progress, Share sheet), persona demand per moment (of 300), saved maps upgraded in place, and a guided overlay tour (9 steps, opens on the first visit, Guide button to replay). | [patch](patches/U105-6f24a04.patch) |
+| U106 | `a9feb6a` | 2026-11-19 | A screen from an older build whose code is gone after a deploy now reloads once into the new build (`vite:preloadError`, and the error boundary on a failed dynamic import), with a 30 s guard against loops. Off production, the error screen shows the route and the error message. Not flagged: it is a fix. | [patch](patches/U106-a9feb6a.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U106 — Recover from a stale build; show the error on staging
+
+- **Commit:** `a9feb6a` · pushed 2026-11-19 UTC · `web_app` + `admin_cms`. Not flagged: it is a fix and reaches production with its next push.
+- **Patch:** [patches/U106-a9feb6a.patch](patches/U106-a9feb6a.patch)
+- **Request:** (screenshot: "Something went wrong" on staging, build ecbd3f6, Design v3) ada error
+- **Found:**
+  - The screenshot's build, `ecbd3f6`, was several deploys behind `web_app` at the time.
+  - A crawl of every route on the current build, at Design v3 and v5 and at 1440px and 402px (67 consumer and admin routes), found no crash.
+  - **Most likely cause:** a page loaded before a deploy asked for a lazy route's hashed chunk that the new deployment no longer has. The import fails, and the route's error boundary shows the fallback.
+  - Many deploys landed in a row that evening.
+  - The fallback showed no error text, so the exact route could not be read from the screenshot.
+- **Changed:**
+  - `src/lib/monitoring.ts`:
+    - `isStaleChunkError`;
+    - `reloadForNewBuild`, which reloads once, with a 30 s guard in sessionStorage so a real error cannot loop;
+    - a `vite:preloadError` listener.
+  - `src/components/ErrorBoundary.tsx`:
+    - a failed dynamic import reloads once;
+    - off production, the fallback prints the route and `name: message`, and says when it is an older build.
+  - `src/lib/monitoring.test.ts`.
+- **Verified:**
+  - `npm run check` passes (176 tests).
+  - A staging build with a page's chunk removed after load (the deploy case, with the service worker off): navigating to it reloads once. With the file still missing it shows the fallback, the route and "older build", with no loop. Restored, the page loads.
+- **Revert:** `git revert --no-commit a9feb6a && git checkout HEAD -- docs/`.
 
 ### U105 — User journey that works, with a guide
 

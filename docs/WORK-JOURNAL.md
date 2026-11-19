@@ -73,6 +73,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O43 | **Eugene's business funnel model (J140)**: confirm the reading, then build in three parts. (1) Admin → Product lab → **Business funnel**: the lighthouse's four stages, adapted to Aurelia, laid over the user journey moments, with the market-fit metrics and the features behind each stage. (2) Buyer agent v5 walks that funnel, reports where people stall, bounce or are blocked per stage, and returns the feature that would move them on. (3) The wiki's Feedback group playbook, rewritten as the dual track (agents and humans, same stages, same metrics). Needs the Gemini deck as text or PDF (the share link is not readable from here) | J140 | Product owner + Eugene |
 | O44 | **Done in U105 (J144)**, except readiness, which stays on the moment. **Tie screens to tags (J143)**: make each screen the value of the "Product surface" tag, so a moment's surface and its screenshot are one fact. Add the missing screens (journal, progress, sharing), so every surface has a picture. Move readiness onto the screen. Keep moments as the when-and-why map and the business funnel as the how-far map; screens join the two | J143 | Product owner |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
+| J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
 | J141 | 2026-11-19 | Opinion | Is the business funnel a CMS like the user journey, and what is it for | — |
 | J142 | 2026-11-19 | Opinion | How the user journey, the business funnel and the buyer agent connect; what one iteration produces | — |
 | J143 | 2026-11-19 | Opinion | What the current user journey map is, and why screens should be tied to the tags (the Product surface tag) | — |
@@ -1771,3 +1772,11 @@ transcript and the update log. Everything from J018 on was written at the time.
   - Persona demand shows on every moment: "Celebrate progress" is had by only 3 of 300 personas, against 113 for "Morning check-in".
   - A 9-step guided overlay explains the page and ends with a five-step working session.
 - **Not fixed:** per-browser storage, which needs a backend (O36).
+
+### J145 — An error screen on staging
+- **Asked:** (screenshot: "Something went wrong" on staging, build ecbd3f6, Design v3) ada error
+- **Done:** U106.
+  - **The build in the screenshot was behind,** and no route crashes on the current one.
+  - **The likely cause** is an open page from before a deploy loading a chunk that no longer exists.
+  - **Now it reloads into the new build once.** Staging's error screen also says which route failed and why.
+- **If it happens again:** the screenshot will carry the route and the message. Send it.

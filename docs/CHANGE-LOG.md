@@ -19,6 +19,14 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-19 — Recover from a stale build (U106, J145)
+
+A page left open across a deploy reloads into the new build instead of
+showing "Something went wrong". On staging, the error screen names the route
+and the error.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-19 — User journey that works, with a guide (U105, J144)
 
 On staging, screens follow the moments' Product surface tags, every surface

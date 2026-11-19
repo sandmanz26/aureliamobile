@@ -1,0 +1,137 @@
+From a9feb6a511beb4d1acffd3ea9dbd588b0da4e999 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Thu, 19 Nov 2026 16:49:55 +0000
+Subject: [PATCH] Recover from a stale build after a deploy; show the error on
+ staging
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/components/ErrorBoundary.tsx | 17 ++++++++++++++---
+ src/lib/monitoring.test.ts       | 15 +++++++++++++++
+ src/lib/monitoring.ts            | 26 ++++++++++++++++++++++++++
+ 3 files changed, 55 insertions(+), 3 deletions(-)
+ create mode 100644 src/lib/monitoring.test.ts
+
+diff --git a/src/components/ErrorBoundary.tsx b/src/components/ErrorBoundary.tsx
+index 62afd36..65d784f 100644
+--- a/src/components/ErrorBoundary.tsx
++++ b/src/components/ErrorBoundary.tsx
+@@ -1,7 +1,8 @@
+ import { Component } from 'react'
+ import type { ErrorInfo, ReactNode } from 'react'
+ import { AlertTriangle } from 'lucide-react'
+-import { reportError } from '../lib/monitoring'
++import { BUILD } from '../lib/build'
++import { isStaleChunkError, reloadForNewBuild, reportError } from '../lib/monitoring'
+ import { Button } from './ui/Button'
+ 
+ interface Props {
+@@ -44,18 +45,20 @@ export class ErrorBoundary extends Component<Props, State> {
+   }
+ 
+   componentDidCatch(error: Error, info: ErrorInfo) {
++    // A screen from an older build whose code is gone after a deploy: load the new build once.
++    if (isStaleChunkError(error) && reloadForNewBuild()) return
+     reportError(error, { source: `ErrorBoundary:${this.props.name ?? 'root'}`, componentStack: info.componentStack ?? undefined })
+   }
+ 
+   render() {
+     if (this.state.error) {
+-      return <ErrorFallback onRetry={() => this.setState({ error: null })} />
++      return <ErrorFallback error={this.state.error} onRetry={() => this.setState({ error: null })} />
+     }
+     return this.props.children
+   }
+ }
+ 
+-function ErrorFallback({ onRetry }: { onRetry: () => void }) {
++function ErrorFallback({ error, onRetry }: { error: Error; onRetry: () => void }) {
+   return (
+     <div className="flex min-h-screen flex-col items-center justify-center gap-16 bg-background-default px-24 text-center">
+       <span className="flex size-64 items-center justify-center rounded-full bg-background-elevated text-icon-default">
+@@ -74,6 +77,14 @@ function ErrorFallback({ onRetry }: { onRetry: () => void }) {
+         </Button>
+         <Button onClick={onRetry}>Try again</Button>
+       </div>
++      {/* Off production: what broke and where, so a screenshot is enough to find it (J145). */}
++      {BUILD.environment !== 'production' && (
++        <p className="text-style-caption max-w-[520px] break-words text-text-secondary">
++          {window.location.pathname}
++          {window.location.search} · {error.name}: {error.message}
++          {isStaleChunkError(error) ? ' · This page is from an older build; reload to get the new one.' : ''}
++        </p>
++      )}
+     </div>
+   )
+ }
+diff --git a/src/lib/monitoring.test.ts b/src/lib/monitoring.test.ts
+new file mode 100644
+index 0000000..9e556ed
+--- /dev/null
++++ b/src/lib/monitoring.test.ts
+@@ -0,0 +1,15 @@
++import { describe, expect, it } from 'vitest'
++import { isStaleChunkError } from './monitoring'
++
++describe('stale build detection', () => {
++  it('recognises a lazy chunk from a build that is gone', () => {
++    expect(isStaleChunkError(new TypeError('Failed to fetch dynamically imported module: https://x/assets/AdminLayout-abc.js'))).toBe(true)
++    expect(isStaleChunkError(new TypeError('Importing a module script failed.'))).toBe(true)
++    expect(isStaleChunkError(new Error('error loading dynamically imported module'))).toBe(true)
++    expect(isStaleChunkError(new Error('Unable to preload CSS for /assets/a.css'))).toBe(true)
++  })
++  it('leaves real errors alone', () => {
++    expect(isStaleChunkError(new TypeError("Cannot read properties of undefined (reading 'map')"))).toBe(false)
++    expect(isStaleChunkError(undefined)).toBe(false)
++  })
++})
+diff --git a/src/lib/monitoring.ts b/src/lib/monitoring.ts
+index 9c5a56e..a4726f1 100644
+--- a/src/lib/monitoring.ts
++++ b/src/lib/monitoring.ts
+@@ -1,3 +1,4 @@
++import { readString, writeString } from './storage'
+ /**
+  * Error reporting — the seam for a real service.
+  *
+@@ -28,6 +29,27 @@ export function reportError(error: unknown, context: ErrorContext): void {
+   console.error(`[${context.source}]`, error, context)
+ }
+ 
++/**
++ * A lazy route's file from an older build that is gone after a deploy (J145).
++ * The page was loaded before the deploy, so it asks for a hashed chunk the new
++ * deployment does not have; the fix is to load the new build, not an error.
++ */
++export function isStaleChunkError(error: unknown): boolean {
++  const message = error instanceof Error ? error.message : String(error ?? '')
++  return /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Unable to preload CSS|Loading chunk \S+ failed/i.test(message)
++}
++
++const RELOAD_KEY = 'aurelia.staleChunkReload'
++
++/** Reloads once for a new build; returns false if it just did, so a real error is not hidden by a loop. */
++export function reloadForNewBuild(now = Date.now()): boolean {
++  const last = Number(readString(RELOAD_KEY, 'session') ?? 0)
++  if (now - last < 30_000) return false
++  writeString(RELOAD_KEY, String(now), 'session')
++  window.location.reload()
++  return true
++}
++
+ let installed = false
+ 
+ /** Catch what no boundary can: errors in handlers, timers and unhandled promises. */
+@@ -40,4 +62,8 @@ export function installErrorReporting(): void {
+   window.addEventListener('unhandledrejection', (event) => {
+     reportError(event.reason, { source: 'unhandledrejection' })
+   })
++  // Vite's own signal that a lazy chunk failed to load: after a deploy, load the new build.
++  window.addEventListener('vite:preloadError', (event) => {
++    if (reloadForNewBuild()) event.preventDefault()
++  })
+ }
+-- 
+2.43.0
+

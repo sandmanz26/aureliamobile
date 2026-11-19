@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J144** · updated 19 Nov 2026
+**Covers up to J145** · updated 19 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
@@ -234,6 +234,7 @@ with employee and HR personas. Not built.
   through `.git/info/exclude`; never commit them. Bring an agent's work in by
   cherry-picking, then re-run `npm run check`.
 - **A new admin tour:** mark targets with `data-tour` and reuse `GuideTour`. A `setState` directly inside an effect fails lint (`set-state-in-effect`); measure inside the timeout instead.
+- **"Something went wrong" after many deploys** is usually a stale build: an old page loading a chunk that is gone. Since U106 it reloads once by itself, and staging's error screen prints the route and the message. Read those before debugging.
 - **Admin selects:** one style in `admin.css` (`.adm-root select`: no native appearance, 32px right padding, an SVG chevron). Do not add per-page select padding.
 - **Admin dark mode and native controls:** without `color-scheme`, a select's option list stays light. `.adm-root` (shell, Modal, SidePanel) handles it. Any new admin portal must carry `adm-root`.
 - **Mermaid creates ~100 chunks.** It is grouped into `mermaid-vendor` (vite `codeSplitting.groups`) and kept out of the precache. Without that, the service worker grew from 181 to 268 entries.

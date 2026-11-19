@@ -488,7 +488,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U105**, last J = **J144**, last
+**Numbering as of 17 Nov 2026:** last U = **U106**, last J = **J145**, last
 O = **O44**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -942,6 +942,7 @@ history can be read without opening four documents.
 | U103 | `8a99797` | 2026-11-19 | Persona generator 2 (coherent: an `incoherence()` check finds 0 of 300; generator 1 kept byte-identical for runs v1–v2, 144 of 300 broken). Buyer agent v3: an A/B run on 36 generator-2 personas, today's offer against a proposal built from Eugene's documents and the research. Adds references, a control, changes traced to their source, and Try A/B by segment. Staging only. | [patch](update-log/patches/U103-8a99797.patch) |
 | U104 | `d229d88` | 2026-11-19 | Buyer agent results → By production version: the three agent rule sets × production v1–v3 (staging v3–v5). That is nine reports, each with a written summary, the ten market-fit metrics (predicted or estimate), a step-by-step funnel, the leave reasons and every persona's walk, plus an overall summary. The rules are written as code and checked against the hand-played runs (21/36 and 20/36 the same, 0 opposite). Staging only. | [patch](update-log/patches/U104-d229d88.patch) |
 | U105 | `6f24a04` | 2026-11-19 | User journey: with tags on, screens are tied to the Product surface tag (a moment shows its surfaces' screens), with a Product surfaces strip. Adds three real screenshots (Journal, Progress, Share sheet), persona demand per moment (of 300), saved maps upgraded in place, and a guided overlay tour (9 steps, opens on the first visit, Guide button to replay). | [patch](update-log/patches/U105-6f24a04.patch) |
+| U106 | `a9feb6a` | 2026-11-19 | A screen from an older build whose code is gone after a deploy now reloads once into the new build (`vite:preloadError`, and the error boundary on a failed dynamic import), with a 30 s guard against loops. Off production, the error screen shows the route and the error message. Not flagged: it is a fix. | [patch](update-log/patches/U106-a9feb6a.patch) |
 | J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
@@ -978,6 +979,7 @@ history can be read without opening four documents.
 | J142 | 2026-11-19 | Opinion | How the user journey, the business funnel and the buyer agent connect; what one iteration produces | — |
 | J143 | 2026-11-19 | Opinion | What the current user journey map is, and why screens should be tied to the tags (the Product surface tag) | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
+| J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
 
 ### 17.2 Code changes (U)
 
