@@ -33,4 +33,6 @@ export const RELEASES = {
   sidebarRail: BUILD.environment !== 'production',
   /** Admin → Product lab → Personas (U096): 300 synthetic research personas. Staging only until asked. */
   personas: BUILD.environment !== 'production',
+  /** Admin → Product lab → Buyer agent results (U101): the first demo run on ten personas. Staging only until asked. */
+  buyerAgent: BUILD.environment !== 'production',
 } as const

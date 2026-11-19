@@ -1,6 +1,7 @@
 import {
   BookOpen,
   Contact,
+  ShoppingBag,
   HeartPulse,
   Target,
   Microscope,
@@ -74,6 +75,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
       { to: '/admin/user-journey', label: 'User journey', icon: Route, flag: 'adminUserJourney' },
       // Staging only until released (RELEASES.personas).
       ...(RELEASES.personas ? [{ to: '/admin/personas', label: 'Personas', icon: Contact, flag: 'adminPersonas' }] : []),
+      ...(RELEASES.buyerAgent ? [{ to: '/admin/buyer-agent', label: 'Buyer agent results', icon: ShoppingBag, flag: 'adminBuyerAgent' }] : []),
     ],
   },
   {

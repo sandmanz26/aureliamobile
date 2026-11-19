@@ -243,6 +243,7 @@ export const DEMO_MODULES: DemoModule[] = [
   { id: 'adminOutcomes', kind: 'admin', label: 'Well-being outcomes', description: 'How much each user’s well-being has changed (WHO-5, check-ins, wearable).', route: '/admin/outcomes', built: true },
   { id: 'adminUserJourney', kind: 'admin', label: 'User journey', description: 'The journey map: four stages (Reflect, Create, Experience, Share), their moments, the feature each suggests, and the screens that serve them.', route: '/admin/user-journey', built: true },
   { id: 'adminPersonas', kind: 'admin', label: 'Personas', description: '300 synthetic personas as candidates for AI-run research, with role-play prompts and balanced panels. Staging only until released.', route: '/admin/personas', built: true },
+  { id: 'adminBuyerAgent', kind: 'admin', label: 'Buyer agent results', description: 'What a buyer agent answered as each persona in a panel: try, pay, price, objections, test cases. Demo run on ten personas. Staging only until released.', route: '/admin/buyer-agent', built: true },
   { id: 'adminRoles', kind: 'admin', label: 'Roles & permissions', description: 'Permission matrix.', route: '/admin/roles', built: true },
   { id: 'adminSessions', kind: 'admin', label: 'Sessions', description: 'Generated session catalogue.', route: '/admin/sessions', built: true },
   { id: 'adminChallenges', kind: 'admin', label: 'Challenges', description: 'Setup, pacing and reward tiers.', route: '/admin/challenges', built: true },

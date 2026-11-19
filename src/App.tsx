@@ -87,6 +87,7 @@ const SignalSourcesPage = lazy(() => import('./admin/pages/SignalSourcesPage').t
 const AuditPage = lazy(() => import('./admin/pages/AuditPage').then((m) => ({ default: m.AuditPage })))
 const SettingsPage = lazy(() => import('./admin/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })))
 const UserJourneyPage = lazy(() => import('./admin/pages/UserJourneyPage').then((m) => ({ default: m.UserJourneyPage })))
+const BuyerResultsPage = lazy(() => import('./admin/pages/BuyerResultsPage').then((m) => ({ default: m.BuyerResultsPage })))
 const PersonasPage = lazy(() => import('./admin/pages/PersonasPage').then((m) => ({ default: m.PersonasPage })))
 
 export default function App() {
@@ -189,6 +190,13 @@ export default function App() {
               <Route path="personas" element={
                 <ModuleGuard module="adminPersonas">
                   <PersonasPage />
+                </ModuleGuard>
+              } />
+            )}
+            {RELEASES.buyerAgent && (
+              <Route path="buyer-agent" element={
+                <ModuleGuard module="adminBuyerAgent">
+                  <BuyerResultsPage />
                 </ModuleGuard>
               } />
             )}
