@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { BUYER_RUNS, EXCLUDED, countVerdicts, drawStratified, priceRange, scenarioCounts, themeCounts, wellnessOf } from './buyerRuns'
-import { drawPanel, generatePersonas } from './personas'
+import { BUYER_RUNS, EXCLUDED, countVerdicts, drawStratified, personasOf, priceRange, scenarioCounts, themeCounts, wellnessOf } from './buyerRuns'
+import { V3_CHANGES } from './buyerRunV3'
+import { drawPanel, generatePersonas, incoherence } from './personas'
 
 describe('buyer agent runs', () => {
-  const all = generatePersonas()
+  const all = generatePersonas(undefined, undefined, 1)
   const byId = new Map(all.map((p) => [p.id, p]))
 
   it('answers for exactly the panel the seed draws', () => {
     for (const run of BUYER_RUNS) {
-      const drawn = (run.version === 1 ? drawPanel(all, run.panel.size, run.panel.seed) : drawStratified(all, run.panel.seed)).map((p) => p.id)
+      const pool = [...personasOf(run).values()]
+      const drawn = (run.version === 1 ? drawPanel(pool, run.panel.size, run.panel.seed) : run.version === 2 ? drawStratified(pool, run.panel.seed) : drawStratified(pool, run.panel.seed, [])).map((p) => p.id)
       expect(run.panel.personaIds, run.id).toEqual(drawn)
       expect(run.answers.map((a) => a.personaId)).toEqual(run.panel.personaIds)
     }
@@ -17,7 +19,7 @@ describe('buyer agent runs', () => {
   it('walks each persona’s own scenarios, with sane prices', () => {
     for (const run of BUYER_RUNS)
       for (const a of run.answers) {
-        const p = byId.get(a.personaId)
+        const p = personasOf(run).get(a.personaId)
         expect(p, a.personaId).toBeDefined()
         expect(a.scenarios.map((s) => s.id)).toEqual(p!.profile.testing.scenarios.map((s) => s.id))
         const { tooCheap, bargain, expensive, tooExpensive } = a.prices
@@ -58,5 +60,27 @@ describe('buyer agent runs', () => {
       expect(r.version).toBe(i + 1)
       expect(r.criteria.length).toBeGreaterThan(4)
     })
+  })
+
+  it('runs v3 as an A/B on generator 2, with every change traced', () => {
+    const run = BUYER_RUNS.find((r) => r.version === 3)!
+    expect(run.generator).toBe(2)
+    expect(run.references?.length).toBeGreaterThan(2)
+    const ps = run.answers.map((a) => personasOf(run).get(a.personaId)!)
+    expect(new Set(ps.map((p) => p.region)).size).toBe(6)
+    expect(new Set(ps.map((p) => p.ageBand)).size).toBe(6)
+    for (const p of ps) expect(incoherence(p), p.id).toEqual([])
+    const lv = (v: string) => (v === 'yes' ? 2 : v === 'maybe' ? 1 : 0)
+    for (const a of run.answers) {
+      expect(a.control, a.personaId).toBeDefined()
+      for (const c of a.movedBy ?? []) expect(Object.keys(V3_CHANGES)).toContain(c)
+      if (lv(a.tries) > lv(a.control!.tries) || lv(a.pays) > lv(a.control!.pays)) expect(a.movedBy!.length, a.personaId).toBeGreaterThan(0)
+    }
+    const control = { yes: 0, maybe: 0, no: 0 }
+    for (const a of run.answers) control[a.control!.tries] += 1
+    expect(control).toEqual({ yes: 13, maybe: 15, no: 8 })
+    expect(countVerdicts(run.answers, 'tries')).toEqual({ yes: 25, maybe: 9, no: 2 })
+    expect(countVerdicts(run.answers, 'pays')).toEqual({ yes: 4, maybe: 22, no: 10 })
+    expect(run.answers.filter((a) => a.day30 === 'yes').length / run.answers.length).toBeLessThan(1 / 8)
   })
 })

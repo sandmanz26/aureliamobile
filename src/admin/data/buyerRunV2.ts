@@ -50,6 +50,7 @@ export const RUN_V2: BuyerRun = {
   title: 'v2 · Aurelia Plus at local prices, 36 personas',
   date: '2026-11-19',
   kind: 'demo',
+  generator: 1,
   method:
     'One agent played 36 personas in turn, in one session, from each persona’s export, under the calibration rules below. No backend, no live model call from the app.',
   panel: {
@@ -84,6 +85,7 @@ export const RUN_V2: BuyerRun = {
     { label: 'Wellness groups', value: 'Struggling: pain 8 or more, or sleep quality 1 of 5, or pain 7 with sleep quality 2. Strained: pain 5 or more, or sleep quality 2 or less. Coping: everyone else.' },
     { label: 'What they saw', value: 'The app store pitch in English, the first screen, and Plus at their country’s price from the admin’s pricing table.' },
     { label: 'How the agent ran', value: 'One agent played each persona in turn from the persona’s full export, applying the calibration rules in the instructions before answering: look for the no first, honour deal breakers, follow income and local price.' },
+    { label: 'Persona generator', value: 'Generator 1, the original. Generator 2, which fixes the incoherence this run found, came with v3; this run stays on the people it was played on, so its answers still match their profiles.' },
     { label: 'Read it as', value: 'Directional. 36 is enough to see which segments differ, not to size a market. One agent playing everyone shares one set of blind spots.' },
   ],
   instructions: BUYER_INSTRUCTIONS_V2,

@@ -14,7 +14,8 @@ import {
   VERDICT_TONE,
   WELLNESS_LABEL,
   countVerdicts,
-  localPlus,
+  personasOf,
+  priceSeen,
   priceRange,
   scenarioCounts,
   themeCounts,
@@ -22,9 +23,9 @@ import {
   type BuyerAnswer,
   type BuyerRun,
 } from '../data/buyerRuns'
-import { GOAL_LABEL, generatePersonas, type Persona } from '../data/personas'
+import { V3_CHANGES } from '../data/buyerRunV3'
+import { GOAL_LABEL, type Persona } from '../data/personas'
 
-const PERSONAS = new Map(generatePersonas().map((p) => [p.id, p]))
 const SCALE_MAX = 20
 const WELLNESS_TONE = { struggling: 'critical', strained: 'warning', coping: 'good' } as const
 
@@ -44,6 +45,7 @@ interface Row {
   bargain: number
   theme: string
   week: number | string
+  aTries: string
   confidence: number
 }
 
@@ -57,7 +59,6 @@ function download(name: string, text: string) {
 }
 
 const money = (n: number) => `$${n % 1 ? n.toFixed(2) : n}`
-const persona = (id: string) => PERSONAS.get(id)!
 
 export function BuyerResultsPage() {
   const [params, setParams] = useSearchParams()
@@ -66,6 +67,18 @@ export function BuyerResultsPage() {
   const [open, setOpen] = useState<{ id: string; tab: 'answer' | 'persona' } | null>(null)
   const [notice, setNotice] = useState('')
   const n = run.answers.length
+  const people = personasOf(run)
+  const persona = (id: string) => people.get(id)!
+  const ab = run.answers.some((a) => a.control)
+  const tally = (k: 'tries' | 'pays') => {
+    const o = { yes: 0, maybe: 0, no: 0 }
+    for (const a of run.answers) if (a.control) o[a.control[k]] += 1
+    return o
+  }
+  const ctlTries = tally('tries')
+  const ctlPays = tally('pays')
+  const moved = new Map<string, number>()
+  for (const a of run.answers) for (const c of a.movedBy ?? []) moved.set(c, (moved.get(c) ?? 0) + 1)
   const hasUsage = run.answers.some((a) => a.week !== undefined)
 
   const tries = countVerdicts(run.answers, 'tries')
@@ -86,13 +99,14 @@ export function BuyerResultsPage() {
       country: p.country,
       goal: GOAL_LABEL[p.goal],
       wellness: WELLNESS_LABEL[wellnessOf(p).level],
-      localPrice: localPlus(p.country).label,
+      localPrice: priceSeen(run, p.country).label.split(' · ')[0],
       tries: a.tries,
       pays: a.pays,
       plan: PLAN_LABEL[a.plan],
       bargain: a.prices.bargain,
       theme: THEME_LABEL[a.theme],
       week: a.week ?? '–',
+      aTries: a.control?.tries ?? '',
       confidence: a.confidence,
     }
   })
@@ -123,8 +137,9 @@ export function BuyerResultsPage() {
       header: 'Wellness',
       render: (r) => <Badge tone={WELLNESS_TONE[r.wellness.toLowerCase() as keyof typeof WELLNESS_TONE]}>{r.wellness}</Badge>,
     },
-    { key: 'tries', header: 'Tries', render: (r) => verdictCell(r.tries) },
-    { key: 'pays', header: 'Pays', render: (r) => verdictCell(r.pays) },
+    ...(ab ? [{ key: 'aTries' as const, header: 'Tries A', render: (r: Row) => verdictCell(r.aTries) }] : []),
+    { key: 'tries', header: ab ? 'Tries B' : 'Tries', render: (r) => verdictCell(r.tries) },
+    { key: 'pays', header: ab ? 'Pays B' : 'Pays', render: (r) => verdictCell(r.pays) },
     { key: 'localPrice', header: 'Saw Plus at' },
     { key: 'bargain', header: 'A bargain at', numeric: true, render: (r) => money(r.bargain) },
     ...(hasUsage ? [{ key: 'week' as const, header: 'Week 1', numeric: true }] : []),
@@ -144,7 +159,7 @@ export function BuyerResultsPage() {
   const answer = open ? run.answers.find((a) => a.personaId === open.id) : undefined
   const pct = (v: number) => `${Math.min(100, (v / SCALE_MAX) * 100)}%`
   const ages = run.answers.map((a) => persona(a.personaId).age)
-  const people = run.answers.map((a) => persona(a.personaId))
+  const panel = run.answers.map((a) => persona(a.personaId))
 
   return (
     <div className="flex flex-col gap-16">
@@ -228,12 +243,12 @@ export function BuyerResultsPage() {
         </details>
       </Panel>
 
-      <Panel title="Who was in the panel" description={`${n} personas, aged ${Math.min(...ages)}–${Math.max(...ages)}, from ${new Set(people.map((p) => p.country)).size} countries.`}>
+      <Panel title="Who was in the panel" description={`${n} personas, aged ${Math.min(...ages)}–${Math.max(...ages)}, from ${new Set(panel.map((p) => p.country)).size} countries.`}>
         <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
-          <Mix title="Region" items={count(people.map((p) => p.region))} />
-          <Mix title="Age band" items={count(people.map((p) => p.ageBand)).sort((x, y) => x[0].localeCompare(y[0]))} />
-          <Mix title="Wellness" items={count(people.map((p) => WELLNESS_LABEL[wellnessOf(p).level]))} />
-          <Mix title="Goal" items={count(people.map((p) => GOAL_LABEL[p.goal]))} />
+          <Mix title="Region" items={count(panel.map((p) => p.region))} />
+          <Mix title="Age band" items={count(panel.map((p) => p.ageBand)).sort((x, y) => x[0].localeCompare(y[0]))} />
+          <Mix title="Wellness" items={count(panel.map((p) => WELLNESS_LABEL[wellnessOf(p).level]))} />
+          <Mix title="Goal" items={count(panel.map((p) => GOAL_LABEL[p.goal]))} />
         </div>
       </Panel>
 
@@ -248,9 +263,37 @@ export function BuyerResultsPage() {
         </ul>
       </Panel>
 
+      {run.control && (
+        <Panel title="Compared with" description={run.control.name}>
+          <ul className="flex flex-wrap gap-6">
+            {run.control.offer.map((o) => (
+              <li key={o} className="rounded-8 bg-adm-bg px-10 py-6 text-12 text-adm-ink-2">
+                {o}
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      )}
+
+      {run.references && (
+        <Panel title="What the agent read" description="The documents the agent treated as evidence before answering, and what it took from each.">
+          <ul className="flex flex-col gap-10 text-13">
+            {run.references.map((r) => (
+              <li key={r.title} className="grid gap-2 lg:grid-cols-[260px_1fr] lg:gap-16">
+                <p>
+                  <span className="font-medium text-adm-ink">{r.title}</span>
+                  <span className="block text-12 text-adm-muted">{r.where}</span>
+                </p>
+                <p className="max-w-[760px] leading-[20px] text-adm-ink-2">{r.used}</p>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      )}
+
       <div className="grid grid-cols-2 gap-12 lg:grid-cols-4">
-        <StatCard label="Would try" value={`${tries.yes} of ${n}`} hint={`${tries.maybe} maybe, ${tries.no} no`} />
-        <StatCard label="Would pay" value={`${pays.yes} of ${n}`} hint={`${pays.maybe} maybe, ${pays.no} no`} />
+        <StatCard label={ab ? 'Would try B' : 'Would try'} value={`${tries.yes} of ${n}`} hint={ab ? `today (A): ${ctlTries.yes} of ${n}` : `${tries.maybe} maybe, ${tries.no} no`} />
+        <StatCard label={ab ? 'Would pay B' : 'Would pay'} value={`${pays.yes} of ${n}`} hint={ab ? `${pays.maybe} maybe · A: ${ctlPays.yes} yes, ${ctlPays.maybe} maybe` : `${pays.maybe} maybe, ${pays.no} no`} />
         <StatCard label="Price that feels fair" value={`${money(range.low)}–${money(range.high)}`} hint={`Plus is ${money(run.stimulus.priceUsd)} in the US`} />
         <StatCard label="Test cases" value={`${outcomes.pass} pass`} hint={`${outcomes.risk} at risk, ${outcomes.fail} fail`} />
       </div>
@@ -262,6 +305,30 @@ export function BuyerResultsPage() {
           ))}
         </ul>
       </Panel>
+
+      {moved.size > 0 && (
+        <Panel title="Which changes moved people" description="How many personas answered B differently from A because of each change, as the agent judged it. One persona can name several.">
+          <ul className="flex flex-col gap-8">
+            {[...moved.entries()]
+              .sort((x, y) => y[1] - x[1])
+              .map(([c, k]) => {
+                const info = V3_CHANGES[c as keyof typeof V3_CHANGES]
+                return (
+                  <li key={c} className="grid items-center gap-x-8 gap-y-2 text-12 lg:grid-cols-[260px_1fr_24px]">
+                    <span className="text-adm-ink" title={info?.source}>
+                      {info?.label ?? c}
+                    </span>
+                    <span className="h-10 rounded-full bg-adm-bg">
+                      <span className="block h-full rounded-full bg-adm-s1" style={{ width: `${(k / n) * 100}%` }} />
+                    </span>
+                    <span className="text-right tabular-nums text-adm-muted">{k}</span>
+                    <span className="text-11 text-adm-muted lg:col-span-3">From: {info?.source}</span>
+                  </li>
+                )
+              })}
+          </ul>
+        </Panel>
+      )}
 
       <Panel title="By segment" description="Each group’s answers. Small groups: read the direction, not the number.">
         <div className="grid gap-16 lg:grid-cols-3">
@@ -298,7 +365,7 @@ export function BuyerResultsPage() {
                 </div>
               ))}
             </dl>
-            <p className="text-12 text-adm-ink-2">Green is the fair band. The red line is Plus in the US ({money(run.stimulus.priceUsd)}); the US yearly plan works out at $6.58 a month.</p>
+            <p className="text-12 text-adm-ink-2">Green is the fair band. The red line is Plus in the US ({money(run.stimulus.priceUsd)}); the US yearly plan works out at {run.version >= 3 ? '$5.00' : '$6.58'} a month.</p>
           </div>
         </Panel>
 
@@ -353,7 +420,7 @@ export function BuyerResultsPage() {
         <SidePanel
           width={600}
           title={persona(open.id).name}
-          description={`${open.id} · v${run.version}`}
+          description={`${open.id} · v${run.version} · persona generator ${run.generator}`}
           onClose={() => setOpen(null)}
           footer={<Button onClick={() => setOpen(null)}>Close</Button>}
         >
@@ -372,7 +439,7 @@ export function BuyerResultsPage() {
             ))}
           </div>
           {open.tab === 'answer' ? (
-            <AnswerDetail a={answer} p={persona(open.id)} onPersona={() => setOpen({ id: open.id, tab: 'persona' })} />
+            <AnswerDetail a={answer} p={persona(open.id)} run={run} onPersona={() => setOpen({ id: open.id, tab: 'persona' })} />
           ) : (
             <PersonaProfile p={persona(open.id)} />
           )}
@@ -405,9 +472,11 @@ function Mix({ title, items }: { title: string; items: [string, number][] }) {
 }
 
 function SegmentTable({ title, run, keyOf, sort }: { title: string; run: BuyerRun; keyOf: (p: Persona) => string; sort?: boolean }) {
+  const people = personasOf(run)
+  const ab = run.answers.some((a) => a.control)
   const groups = new Map<string, BuyerAnswer[]>()
   for (const a of run.answers) {
-    const k = keyOf(PERSONAS.get(a.personaId)!)
+    const k = keyOf(people.get(a.personaId)!)
     groups.set(k, [...(groups.get(k) ?? []), a])
   }
   const entries = [...groups.entries()]
@@ -421,7 +490,8 @@ function SegmentTable({ title, run, keyOf, sort }: { title: string; run: BuyerRu
           <tr className="text-left text-adm-muted">
             <th className="py-4 font-medium">{title}</th>
             <th className="py-4 text-right font-medium">n</th>
-            <th className="py-4 text-right font-medium">Try</th>
+            {ab && <th className="py-4 text-right font-medium" title="Tries today's offer (A)">Try A</th>}
+            <th className="py-4 text-right font-medium">{ab ? 'Try B' : 'Try'}</th>
             <th className="py-4 text-right font-medium" title="Pays yes or maybe">Pay?</th>
             {usage && <th className="py-4 text-right font-medium" title="Average sessions in week one">Wk 1</th>}
             <th className="py-4 text-right font-medium" title="Fair band, USD a month">Fair</th>
@@ -434,6 +504,7 @@ function SegmentTable({ title, run, keyOf, sort }: { title: string; run: BuyerRu
               <tr key={k} className="border-t border-adm-line">
                 <td className="py-6 text-adm-ink">{k}</td>
                 <td className="py-6 text-right text-adm-muted">{as.length}</td>
+                {ab && <td className="py-6 text-right text-adm-muted">{as.filter((a) => a.control?.tries === 'yes').length}</td>}
                 <td className="py-6 text-right">{as.filter((a) => a.tries === 'yes').length}</td>
                 <td className="py-6 text-right">{as.filter((a) => a.pays !== 'no').length}</td>
                 {usage && <td className="py-6 text-right">{(as.reduce((s, a) => s + (a.week ?? 0), 0) / as.length).toFixed(1)}</td>}
@@ -458,7 +529,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
-function AnswerDetail({ a, p, onPersona }: { a: BuyerAnswer; p: Persona; onPersona: () => void }) {
+function AnswerDetail({ a, p, run, onPersona }: { a: BuyerAnswer; p: Persona; run: BuyerRun; onPersona: () => void }) {
   const w = wellnessOf(p)
   return (
     <div className="flex flex-col gap-14 text-13 text-adm-ink">
@@ -479,12 +550,37 @@ function AnswerDetail({ a, p, onPersona }: { a: BuyerAnswer; p: Persona; onPerso
       </div>
       <p className="rounded-8 bg-adm-bg px-12 py-10 italic text-adm-ink-2">“{a.quote}”</p>
 
+      {a.control && (
+        <Section title="Today (A) against the proposal (B)">
+          <div className="grid grid-cols-2 gap-8 text-12">
+            <div className="rounded-8 border border-adm-line p-10">
+              <p className="font-medium">A · today</p>
+              <div className="mt-4 flex flex-wrap gap-4">
+                <Badge tone={VERDICT_TONE[a.control.tries]}>Tries: {a.control.tries}</Badge>
+                <Badge tone={VERDICT_TONE[a.control.pays]}>Pays: {a.control.pays}</Badge>
+              </div>
+              <p className="mt-6 text-adm-ink-2">{a.control.why}</p>
+            </div>
+            <div className="rounded-8 border border-adm-ink p-10">
+              <p className="font-medium">B · proposed</p>
+              <div className="mt-4 flex flex-wrap gap-4">
+                <Badge tone={VERDICT_TONE[a.tries]}>Tries: {a.tries}</Badge>
+                <Badge tone={VERDICT_TONE[a.pays]}>Pays: {a.pays}</Badge>
+              </div>
+              <p className="mt-6 text-adm-ink-2">
+                {a.movedBy?.length ? `Moved by: ${a.movedBy.map((c) => V3_CHANGES[c as keyof typeof V3_CHANGES]?.label ?? c).join('; ')}.` : 'Nothing in B changed the answer.'}
+              </p>
+            </div>
+          </div>
+        </Section>
+      )}
+
       <Section title="How they are doing">
         <div className="grid grid-cols-2 gap-8 text-12 sm:grid-cols-4">
           <Fact label="Wellness" value={WELLNESS_LABEL[w.level]} />
           <Fact label="Pain" value={`${w.pain} of 10`} />
           <Fact label="Sleep" value={`${w.sleepHours} h · ${w.sleepQuality} of 5`} />
-          <Fact label="Saw Plus at" value={localPlus(p.country).label} />
+          <Fact label="Saw Plus at" value={priceSeen(run, p.country).label} />
         </div>
         <p className="text-12 text-adm-ink-2">
           {w.conditions.length > 0 && <>Conditions: {w.conditions.join(', ')}. </>}

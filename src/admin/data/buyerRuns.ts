@@ -10,7 +10,8 @@
  */
 
 import { RUN_V2 } from './buyerRunV2'
-import type { Persona } from './personas'
+import { RUN_V3, V3_PRICES } from './buyerRunV3'
+import { generatePersonas, type Generator, type Persona } from './personas'
 
 export type Verdict = 'yes' | 'maybe' | 'no'
 export type Outcome = 'pass' | 'risk' | 'fail'
@@ -66,6 +67,16 @@ export interface BuyerAnswer {
   week?: number
   /** v2+: still using it at day 30. */
   day30?: Verdict
+  /** v3+: the same persona's answer to the control offer (A). */
+  control?: { tries: Verdict; pays: Verdict; why: string }
+  /** v3+: the proposed changes that changed this answer. */
+  movedBy?: string[]
+}
+
+export interface Reference {
+  title: string
+  where: string
+  used: string
 }
 
 export interface Criterion {
@@ -80,10 +91,16 @@ export interface BuyerRun {
   title: string
   date: string
   kind: 'demo' | 'run'
+  /** The persona generator the panel came from; earlier runs stay on the one they were played on. */
+  generator: Generator
   /** How the run was made, said plainly. */
   method: string
   panel: { seed: number; size: number; personaIds: string[] }
   stimulus: { name: string; pitch: string; offer: string[]; priceUsd: number }
+  /** v3+: the offer the stimulus is compared against. */
+  control?: { name: string; offer: string[] }
+  /** v3+: what the agent read before answering. */
+  references?: Reference[]
   /** How the run was set up, in plain words, for someone who was not there. */
   criteria: Criterion[]
   /** The instructions the agent followed, so a run can be repeated. */
@@ -119,6 +136,7 @@ export const BUYER_RUNS: BuyerRun[] = [
     title: 'Demo 1 · Aurelia Plus at $9.99',
     date: '2026-11-19',
     kind: 'demo',
+    generator: 1,
     method:
       'One agent played ten personas in turn, in one session, from each persona’s export. No backend, no live model call from the app. The panel was drawn from the 300 with seed 2026.',
     panel: {
@@ -140,6 +158,7 @@ export const BUYER_RUNS: BuyerRun[] = [
       { label: 'How the agent ran', value: 'One agent played each persona in turn, in one session, reading the persona’s full profile, test data and role-play prompt. Instructions below.' },
       { label: 'What each answered', value: 'Try, pay, which plan, four price answers, the main objection, what would flip it, confidence, reasoning, a quote, and pass / risk / fail on their three test cases.' },
       { label: 'Not taken into account', value: 'Region and local price, language, connection, how they are doing (wellness), usage after the first week. Added in v2.' },
+      { label: 'Persona generator', value: 'Generator 1, the original. Generator 2, which fixes the incoherence these runs found, came with v3; this run stays on the people it was played on, so its answers still match their profiles.' },
       { label: 'Read it as', value: 'A demo of the format. Ten people in one session cannot tell segments apart.' },
     ],
     instructions: BUYER_INSTRUCTIONS,
@@ -348,6 +367,7 @@ export const BUYER_RUNS: BuyerRun[] = [
     ],
   },
   RUN_V2,
+  RUN_V3,
 ]
 
 /* ------------------------------------------------------- Panels and prices */
@@ -374,10 +394,10 @@ function rng(seed: number) {
  * nobody in it takes another persona from the same region, so every region
  * still has six. Leaves out EXCLUDED.
  */
-export function drawStratified(pool: Persona[], seed: number): Persona[] {
+export function drawStratified(pool: Persona[], seed: number, exclude: string[] = EXCLUDED): Persona[] {
   const r = rng(seed)
   const pick = (list: Persona[]) => list[Math.floor(r() * list.length)]
-  const ok = pool.filter((p) => !EXCLUDED.includes(p.id))
+  const ok = pool.filter((p) => !exclude.includes(p.id))
   const out: Persona[] = []
   for (const region of REGIONS) {
     let short = 0
@@ -408,6 +428,11 @@ const LOCAL_PLUS: Record<string, { label: string; usd: number }> = {
   Japan: { label: '¥1,500', usd: 9.9 },
 }
 
+/** The Plus price a persona saw in a given run. */
+export function priceSeen(run: Pick<BuyerRun, 'version'>, country: string) {
+  return run.version >= 3 ? (V3_PRICES[country] ?? { label: '$9.99 · $59.99 a year', usd: 9.99 }) : localPlus(country)
+}
+
 export function localPlus(country: string) {
   return LOCAL_PLUS[country] ?? { label: '$9.99 (no local price)', usd: 9.99 }
 }
@@ -423,6 +448,18 @@ export function wellnessOf(p: Persona) {
 }
 
 export const WELLNESS_LABEL: Record<WellnessLevel, string> = { struggling: 'Struggling', strained: 'Strained', coping: 'Coping' }
+
+const POOLS = new Map<Generator, Map<string, Persona>>()
+
+/** The personas a run was played on, by id. */
+export function personasOf(run: Pick<BuyerRun, 'generator'>): Map<string, Persona> {
+  let m = POOLS.get(run.generator)
+  if (!m) {
+    m = new Map(generatePersonas(undefined, undefined, run.generator).map((p) => [p.id, p]))
+    POOLS.set(run.generator, m)
+  }
+  return m
+}
 
 /* ------------------------------------------------------------------ Tallies */
 

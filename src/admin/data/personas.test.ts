@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { INITIAL_JOURNEY } from './userJourney'
-import { whenPhrase, PERSONA_COUNT, distribution, drawPanel, generatePersonas, personaPrompt } from './personas'
+import { CURRENT_GENERATOR, whenPhrase, PERSONA_COUNT, distribution, drawPanel, generatePersonas, incoherence, personaPrompt } from './personas'
 
 describe('personas', () => {
   const all = generatePersonas()
@@ -85,5 +85,15 @@ describe('personas', () => {
     const prompt = personaPrompt(all[0])
     expect(prompt).toContain(all[0].name)
     expect(prompt).toContain('synthetic research persona')
+  })
+
+  it('makes generator 2 coherent, and keeps generator 1 as it was', () => {
+    expect(CURRENT_GENERATOR).toBe(2)
+    for (const p of all) expect(incoherence(p), p.id).toEqual([])
+    const first = generatePersonas(PERSONA_COUNT, undefined, 1)
+    expect(first.filter((p) => incoherence(p).length).length).toBeGreaterThan(100)
+    // Runs v1 and v2 were played on these people; they must not change.
+    expect(first.find((p) => p.id === 'P254')?.name).toBe('Rafael Silva')
+    expect(first.find((p) => p.id === 'P243')?.occupation).toBe('Parent on leave')
   })
 })

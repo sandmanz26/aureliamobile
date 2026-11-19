@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { DataTable, type Column } from '../components/DataTable'
 import { SidePanel } from '../components/SidePanel'
 import { Badge, Button, PageHeader, Panel, inputClass } from '../components/ui'
-import { GOAL_LABEL, PERSONA_COUNT, SEED, distribution, drawPanel, generatePersonas, personaPrompt, type Persona } from '../data/personas'
+import { CURRENT_GENERATOR, GOAL_LABEL, PERSONA_COUNT, SEED, distribution, drawPanel, generatePersonas, personaPrompt, type Persona } from '../data/personas'
 import { PersonaProfile } from '../components/PersonaProfile'
 
 const PERSONAS = generatePersonas()
@@ -122,7 +122,7 @@ export function PersonasPage() {
       <div className="flex flex-wrap items-center gap-8 text-12 text-adm-ink-2">
         <Badge tone="warning">Synthetic</Badge>
         <span>
-          Generated from seed {SEED}, so everyone sees the same {PERSONA_COUNT}. Each links to the{' '}
+          Generated from seed {SEED} with generator {CURRENT_GENERATOR}, so everyone sees the same {PERSONA_COUNT}; a check keeps every one of them coherent (age, work, household, money). Each links to the{' '}
           <Link to="/admin/user-journey" className="underline hover:text-adm-ink">
             user journey
           </Link>{' '}

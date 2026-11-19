@@ -296,7 +296,7 @@ const SOCIAL = ['WhatsApp', 'Instagram', 'TikTok', 'YouTube', 'Facebook', 'X', '
 
 const hhmm = (h: number, m = 0) => `${String(((h % 24) + 24) % 24).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 
-function makeDay(r: Rand, work: WorkPattern, household: string, goal: GoalId, bed: number, wake: number, coping: string[]): { time: string; what: string }[] {
+function makeDay(r: Rand, work: WorkPattern, household: string, goal: GoalId, bed: number, wake: number, coping: string[], gen: Generator = 1): { time: string; what: string }[] {
   const kids = /kids|teenagers|single parent/.test(household)
   const start: Record<WorkPattern, string> = {
     office: 'commutes to the office',
@@ -305,7 +305,7 @@ function makeDay(r: Rand, work: WorkPattern, household: string, goal: GoalId, be
     shift: 'starts a shift that changes every week',
     'self-employed': 'opens up and deals with whatever comes in',
     student: 'lectures, library, part-time job',
-    caregiver: 'appointments, meals, the school run',
+    caregiver: gen >= 2 && !kids ? 'appointments, meals and medication' : 'appointments, meals, the school run',
     'between jobs': 'applications and a lot of waiting',
     retired: 'a slow start, errands, a walk',
   }
@@ -434,11 +434,52 @@ function makeTesting(r: Rand, x: TestingInput): Testing {
   return { jobs, pain, firstSentence: first, spendNow, alternatives, buyTriggers: some(r, BUY_TRIGGERS, 2, 2), objections, accessibility, connectivity, scenarios }
 }
 
+/**
+ * Generator versions (U103). 1 is the original; buyer agent runs v1 and v2
+ * were played on it and stay pinned to it. 2 fixes what those runs found:
+ * stressors, struggles and triggers that do not fit the person's life,
+ * occupations that do not fit the age or household, income that does not
+ * fit the job, and spending that contradicts willingness to pay.
+ */
+export type Generator = 1 | 2
+export const CURRENT_GENERATOR: Generator = 2
+
+const WORKING: WorkPattern[] = ['office', 'hybrid', 'remote', 'shift', 'self-employed']
+const HIGH_PAY = ['HR business partner', 'Lawyer', 'Software engineer', 'Consultant', 'Architect', 'Bank analyst', 'Project manager', 'Product designer', 'Data analyst', 'Marketing manager']
+const LOW_PAY = ['Customer support agent', 'Virtual assistant', 'Hairdresser', 'Ride-hailing driver', 'Airline cabin crew', 'Warehouse supervisor', 'Factory technician', 'Retail manager', 'Carer for a parent', 'Carer for a partner']
+
+function fitsStruggle(s: string, work: WorkPattern, household: string, age: number) {
+  const kids = /young kids|single parent/.test(household)
+  if (s === 'sleeps lightly since the baby arrived') return kids && age >= 20 && age <= 45
+  if (s === 'shift work has broken their sleep rhythm') return work === 'shift'
+  if (s === 'cannot study for more than ten minutes') return work === 'student'
+  if (s === 'is easily distracted in an open-plan office' || s === 'gets tense before meetings and calls') return work === 'office' || work === 'hybrid'
+  if (s === 'feels foggy after weeks of overwork' || s === 'struggles to switch off from work') return WORKING.includes(work)
+  if (s === 'snaps at family after long days') return !/alone|flatmates/.test(household)
+  if (s === 'is drained after caring for others all day') return work === 'caregiver' || work === 'shift' || /kids|cares for|single parent/.test(household)
+  return true
+}
+
+function fitsTrigger(t: string, work: WorkPattern, household: string) {
+  if (t === 'an email from the boss' || t === 'after a long meeting day' || t === 'the start of a work block') return WORKING.includes(work) || work === 'student'
+  if (t === 'a busy morning with kids') return /kids|single parent|teenagers/.test(household)
+  if (t === 'end of a long shift') return work === 'shift'
+  if (t === 'a crowded commute') return ['office', 'hybrid', 'shift', 'student'].includes(work)
+  return true
+}
+
+function fitsStressor(x: string, work: WorkPattern) {
+  if (x === 'workload and long hours') return work !== 'retired' && work !== 'between jobs'
+  if (x === 'job insecurity') return WORKING.includes(work) || work === 'between jobs'
+  if (x === 'a long commute') return ['office', 'hybrid', 'shift', 'student'].includes(work)
+  return true
+}
+
 function ageBand(age: number) {
   return age < 25 ? '18–24' : age < 35 ? '25–34' : age < 45 ? '35–44' : age < 55 ? '45–54' : age < 65 ? '55–64' : '65+'
 }
 
-function makePersona(r: Rand, n: number): Persona {
+function makePersona(r: Rand, n: number, gen: Generator = 1): Persona {
   const place = weighted(r, PLACES.map((p) => [p, p.weight] as const))
   const gender = weighted<Gender>(r, [['woman', 52], ['man', 44], ['non-binary', 4]])
   const first = pick(r, gender === 'woman' ? place.women : gender === 'man' ? place.men : place.neutral)
@@ -452,18 +493,21 @@ function makePersona(r: Rand, n: number): Persona {
         ? weighted(r, [['retired', 80], ['caregiver', 10], ['self-employed', 10]])
         : weighted(r, [['office', 20], ['hybrid', 22], ['remote', 12], ['shift', 14], ['self-employed', 12], ['student', clamped < 30 ? 8 : clamped < 40 ? 1 : 0], ['caregiver', 7], ['between jobs', 5], ['retired', clamped > 58 ? 10 : 0]])
   const household =
-    clamped < 26
+    gen >= 2 && workPattern === 'student'
+      ? pick(r, ['lives with parents', 'flatmates', 'lives alone', 'with a partner'])
+      : clamped < 26
       ? pick(r, ['lives with parents', 'flatmates', 'lives alone', 'with a partner'])
       : clamped >= 66
         ? pick(r, ['with a partner', 'lives alone', 'lives with adult children'])
         : workPattern === 'caregiver'
           ? pick(r, ['partner and young kids', 'single parent', 'cares for a parent at home'])
           : weighted(r, [['lives alone', 20], ['with a partner', 22], ['partner and young kids', 22], ['partner and teenagers', 12], ['single parent', 9], ['flatmates', 10], ['cares for a parent at home', 5]] as const)
-  const income = workPattern === 'student' || workPattern === 'between jobs' ? weighted(r, [['low', 80], ['middle', 20]] as const) : weighted(r, [['low', 25], ['middle', 50], ['high', 25]] as const)
+  let income = workPattern === 'student' || workPattern === 'between jobs' ? weighted(r, [['low', 80], ['middle', 20]] as const) : weighted(r, [['low', 25], ['middle', 50], ['high', 25]] as const)
 
   const goal = weighted<GoalId>(r, [['sleep', 25], ['calm', 22], ['focus', 15], ['clarity', 12], ['regulate', 14], ['energy', 12]])
-  const struggle = workPattern === 'shift' && goal === 'sleep' ? 'shift work has broken their sleep rhythm' : pick(r, STRUGGLES[goal])
-  const triggers = some(r, TRIGGERS[goal].filter((t) => workPattern === 'student' || t !== 'exam season'), 1, 2)
+  const strugglePool = gen >= 2 ? STRUGGLES[goal].filter((x) => fitsStruggle(x, workPattern, household, clamped)) : STRUGGLES[goal]
+  const struggle = workPattern === 'shift' && goal === 'sleep' ? 'shift work has broken their sleep rhythm' : pick(r, strugglePool.length ? strugglePool : STRUGGLES[goal])
+  const triggers = some(r, TRIGGERS[goal].filter((t) => (workPattern === 'student' || t !== 'exam season') && (gen < 2 || fitsTrigger(t, workPattern, household))), 1, 2)
 
   const moments = new Set(GOAL_MOMENTS[goal])
   if (['office', 'hybrid', 'student'].includes(workPattern) && r() < 0.6) moments.add(r() < 0.5 ? 'c1' : 'e4')
@@ -479,7 +523,10 @@ function makePersona(r: Rand, n: number): Persona {
   const wearable = income === 'high' ? pick(r, ['Apple Watch', 'Oura', 'Whoop', 'Garmin', 'none']) : weighted(r, [['none', 60], ['Apple Watch', 15], ['Fitbit', 15], ['Garmin', 10]] as const)
 
   const flags: string[] = []
-  if (r() < 0.32) flags.push(pick(r, FLAGS))
+  if (r() < 0.32) {
+    const flagPool = gen >= 2 ? FLAGS.filter((f) => (f !== 'pregnant' || (gender === 'woman' && clamped <= 45)) && (f !== 'new parent' || (clamped <= 50 && household !== 'lives alone')) && (f !== 'menopause symptoms' || (gender === 'woman' && clamped >= 42 && clamped <= 60)) && (f !== 'night shift worker' || workPattern === 'shift')) : FLAGS
+    flags.push(pick(r, flagPool))
+  }
   if (workPattern === 'shift' && r() < 0.5 && !flags.includes('night shift worker')) flags.push('night shift worker')
   if (place.language !== 'English' && r() < 0.35 && !flags.includes('reads English as a second language')) flags.push('reads English as a second language')
 
@@ -503,7 +550,7 @@ function makePersona(r: Rand, n: number): Persona {
   const hoursRaw = ((wakeHour - bedHour + 24) % 24) - (goal === 'sleep' ? 1.5 + r() : r() * 0.8)
   const hours = Math.max(4, Math.round(hoursRaw * 2) / 2)
   const quality = (goal === 'sleep' ? weighted(r, [[1, 30], [2, 50], [3, 20]] as const) : weighted(r, [[2, 20], [3, 50], [4, 25], [5, 5]] as const)) as 1 | 2 | 3 | 4 | 5
-  const stressors = some(r, STRESSORS.filter((x) => workPattern === 'student' || x !== 'exams and grades'), 2, 3)
+  const stressors = some(r, STRESSORS.filter((x) => (workPattern === 'student' || x !== 'exams and grades') && (gen < 2 || fitsStressor(x, workPattern))), 2, 3)
   if (workPattern === 'student' && !stressors.includes('exams and grades')) stressors[0] = 'exams and grades'
   if (household.includes('cares for') && !stressors.includes('caring for someone')) stressors[0] = 'caring for someone'
   const firstName = first
@@ -525,7 +572,11 @@ function makePersona(r: Rand, n: number): Persona {
   const they = gender === 'woman' ? 'She' : gender === 'man' ? 'He' : 'They'
   const theyVerb = (v: string, plural: string) => (gender === 'non-binary' ? plural : v)
   const occupationText = OCCUPATIONS[workPattern]
-  const occupationPick = pick(r, occupationText)
+  let occupationPick = pick(r, occupationText)
+  if (gen >= 2 && workPattern === 'caregiver')
+    occupationPick = household === 'cares for a parent at home' ? 'Carer for a parent' : clamped >= 60 ? 'Carer for a partner' : /kids|single parent/.test(household) ? (clamped < 45 ? occupationPick.replace('Carer for a parent', 'Full-time parent') : 'Full-time parent') : 'Carer for a partner'
+  if (gen >= 2 && income === 'low' && clamped >= 28 && HIGH_PAY.includes(occupationPick)) income = 'middle'
+  if (gen >= 2 && income === 'high' && LOW_PAY.includes(occupationPick)) income = 'middle'
   const appHistory =
     experience === 'never'
       ? 'Has never used a wellness app.'
@@ -549,7 +600,7 @@ function makePersona(r: Rand, n: number): Persona {
     personality,
     traits,
     values: [],
-    day: makeDay(r, workPattern, household, goal, bedHour, wakeHour, coping),
+    day: makeDay(r, workPattern, household, goal, bedHour, wakeHour, coping, gen),
     sleep: { bedtime: hhmm(bedHour), wake: hhmm(wakeHour), hours, quality },
     stressors,
     coping,
@@ -573,6 +624,14 @@ function makePersona(r: Rand, n: number): Persona {
     goal, struggle, triggers, workPattern, income, experience, apps, aiAttitude, flags, barriers, privacy, language: place.language, age: clamped,
     length: 0, voice: '', spiritual: '', moments: [...moments], coping, success: profile.success, neuroticism, quality, country: place.country,
   })
+
+  const t = profile.testing
+  const spendsMonthly = /\$1[05] a month|about \$10 a month/.test(t.spendNow)
+  if (gen >= 2 && spendsMonthly && t.buyTriggers.includes('a price under $5 a month'))
+    t.buyTriggers = t.buyTriggers.map((b) => (b === 'a price under $5 a month' ? (t.buyTriggers.includes('an annual plan with a real discount') ? 'a free week that visibly helps' : 'an annual plan with a real discount') : b))
+  // Drawn in the same place as generator 1, so its random sequence is unchanged; only corrected after.
+  const fixWtp = (w: string) =>
+    gen >= 2 && spendsMonthly && (w === 'free only' || w === 'up to $5 a month') ? 'up to $10 a month' : gen >= 2 && /Calm plan/.test(t.spendNow) && w === 'free only' ? 'up to $5 a month' : w
 
   return {
     id: `P${String(n).padStart(3, '0')}`,
@@ -601,8 +660,9 @@ function makePersona(r: Rand, n: number): Persona {
     spiritual: barriers.includes('dislikes spiritual language') ? 'avoid' : weighted(r, [['welcome', 25], ['neutral', 55], ['avoid', 20]] as const),
     techComfort,
     aiAttitude,
-    willingnessToPay:
+    willingnessToPay: fixWtp(
       income === 'low' ? weighted(r, [['free only', 70], ['up to $5 a month', 30]] as const) : weighted(r, [['free only', 25], ['up to $5 a month', 30], ['up to $10 a month', 30], ['more if it clearly works', 15]] as const),
+    ),
     privacy,
     barriers,
     flags,
@@ -612,9 +672,9 @@ function makePersona(r: Rand, n: number): Persona {
 }
 
 /** The 300 personas, identical on every machine and every build. */
-export function generatePersonas(count = PERSONA_COUNT, seed = SEED): Persona[] {
+export function generatePersonas(count = PERSONA_COUNT, seed = SEED, gen: Generator = CURRENT_GENERATOR): Persona[] {
   const r = rng(seed)
-  return Array.from({ length: count }, (_, i) => makePersona(r, i + 1))
+  return Array.from({ length: count }, (_, i) => makePersona(r, i + 1, gen))
 }
 
 /**
@@ -682,4 +742,29 @@ export function distribution<K extends keyof Persona>(ps: Persona[], key: K): [s
     for (const x of Array.isArray(v) ? v : [v]) m.set(String(x), (m.get(String(x)) ?? 0) + 1)
   }
   return [...m.entries()].sort((a, b) => b[1] - a[1])
+}
+
+/**
+ * What makes a persona not hold together (U103): the rules the buyer agent
+ * runs found broken. Generator 2 must return none of these; generator 1 is
+ * kept as it was for the runs pinned to it.
+ */
+export function incoherence(p: Persona): string[] {
+  const out: string[] = []
+  const f = p.profile
+  const t = f.testing
+  const working = WORKING.includes(p.workPattern)
+  if (!fitsStruggle(p.struggle, p.workPattern, p.household, p.age)) out.push(`struggle “${p.struggle}” does not fit ${p.occupation.toLowerCase()}, ${p.household}`)
+  for (const x of f.stressors) if (!fitsStressor(x, p.workPattern)) out.push(`stressor “${x}” for someone ${p.workPattern}`)
+  for (const x of p.triggers) if (!fitsTrigger(x, p.workPattern, p.household)) out.push(`trigger “${x}” for ${p.workPattern}, ${p.household}`)
+  if (p.occupation === 'Carer for a parent' && p.household !== 'cares for a parent at home') out.push(`carer for a parent who ${p.household}`)
+  if (p.occupation === 'Parent on leave' && p.age >= 45) out.push(`parent on leave at ${p.age}`)
+  if (p.workPattern === 'student' && /teenagers/.test(p.household)) out.push(`student living with teenagers`)
+  if (p.income === 'low' && p.age >= 28 && HIGH_PAY.includes(p.occupation)) out.push(`${p.occupation.toLowerCase()} on a low income`)
+  if (p.income === 'high' && LOW_PAY.includes(p.occupation)) out.push(`${p.occupation.toLowerCase()} on a high income`)
+  if (/\$1[05] a month|about \$10 a month/.test(t.spendNow) && /free only|up to \$5/.test(p.willingnessToPay)) out.push(`spends ${t.spendNow} but would pay ${p.willingnessToPay}`)
+  if (/\$1[05] a month|about \$10 a month/.test(t.spendNow) && t.buyTriggers.includes('a price under $5 a month')) out.push('spends $10+ a month but needs a price under $5')
+  if (p.flags.includes('pregnant') && (p.gender !== 'woman' || p.age > 45)) out.push(`pregnant at ${p.age}`)
+  if (p.flags.includes('night shift worker') && p.workPattern !== 'shift' && !working) out.push(`night shift worker who is ${p.workPattern}`)
+  return out
 }
