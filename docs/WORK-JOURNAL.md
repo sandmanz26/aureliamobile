@@ -72,6 +72,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O42 | **Move v5's wearable question to after the first session (J139)**: the re-run's one design change. It should keep v5's return gain without its onboarding loss. Check it with the feedback group, or build it as a v6 on staging first | J139 | Product owner |
 | O43 | **Eugene's business funnel model (J140)**: confirm the reading, then build in three parts. (1) Admin → Product lab → **Business funnel**: the lighthouse's four stages, adapted to Aurelia, laid over the user journey moments, with the market-fit metrics and the features behind each stage. (2) Buyer agent v5 walks that funnel, reports where people stall, bounce or are blocked per stage, and returns the feature that would move them on. (3) The wiki's Feedback group playbook, rewritten as the dual track (agents and humans, same stages, same metrics). Needs the Gemini deck as text or PDF (the share link is not readable from here) | J140 | Product owner + Eugene |
 | J141 | 2026-11-19 | Opinion | Is the business funnel a CMS like the user journey, and what is it for | — |
+| J142 | 2026-11-19 | Opinion | How the user journey, the business funnel and the buyer agent connect; what one iteration produces | — |
 | J140 | 2026-11-19 | Opinion | What Eugene wants: a business funnel map (the lighthouse's four stages over the user journey, with market-fit metrics), buyer agents that follow it and return fixes, a dual track with humans, and the feedback playbook updated (explained) | — |
 | J137 | 2026-11-19 | Question | Which production design version the buyer agent runs used | — |
 | J138 | 2026-11-19 | Opinion | The two design versions to test (buyer agent v4 and the feedback group) | — |
@@ -1708,4 +1709,25 @@ transcript and the update log. Everything from J018 on was written at the time.
   - Make it a tab of User journey, not a second CMS.
   - Make it a fixed set of 4 stages; only targets and human results are editable.
   - Without targets and results it only duplicates the journey.
+- **Open:** folded into O43.
+
+### J142 — How the three connect, and what an iteration does
+- **Asked:** "lalu bgaimana menghubungkan dengan buyer agent katakan saya minta kamu iterasi buyer agent lalu apa yang terjadi, kamu juga membuat report terkait itu ? user journey pun saya sebetulnya juga bingung juga mau dibagaimanakan."
+- **Answered:** three layers, one loop.
+  - **The user journey is the map.** It holds the real steps of the app: the 8 the re-run walked, from Home to coming back. It also holds which screen each step is and which features sit on it.
+  - **The business funnel groups those steps into Eugene's 4 stages,** with a target per stage.
+  - **The buyer agent walks the map.** Every run's numbers roll up per stage. Every blocker it finds is attached to the step where it happened, with the feature that would fix it.
+- **One iteration, when the owner asks:**
+  1. **What is being tested:** a design version or a change, such as v5 with the wearable question moved.
+  2. **The agent walks the panel through the journey's steps.**
+  3. **A new run appears in Buyer agent results,** with its report:
+     - a summary;
+     - per-stage results against the targets;
+     - where people stall, bounce or are blocked;
+     - the fixes, ranked;
+     - the change against the previous run.
+  4. **The business funnel's "agent" column** updates from the latest run.
+  5. **The fixes land on the journey steps as proposals.** The owner decides, the change is built on staging, and the next iteration measures it.
+  6. **After the feedback group,** the human results go in beside the agent's.
+- **On the user journey's role:** today it is 4 stages, 10 moments and 3 screens from Eugene's zip, not the app's real path. Proposed: re-base it on the 8 real steps, grouped into the 4 funnel stages. Then the journey, the funnel and the agent share one map.
 - **Open:** folded into O43.

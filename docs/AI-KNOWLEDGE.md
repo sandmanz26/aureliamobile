@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J141** · updated 19 Nov 2026
+**Covers up to J142** · updated 19 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
@@ -168,6 +168,7 @@ evidence → decision. It is not a user feature.
 - **Version facts** live in `DESIGNS`. Update them when a version's screens change.
 **Eugene's business funnel (J140, O43).** By "business logic" he means business analytics: a business funnel map like the user journey map. The lighthouse's 4 stages (Frictionless entry → AI aha → Usage cap → Upsell to Plus), over journey moments, with market-fit metrics and features. Buyer agents follow it and return fixes; the same model runs with humans (dual track); the wiki feedback playbook follows it.
 - **Its purpose (J141):** the MVP validation scoreboard. Per stage: a target, the agent's prediction and the human result. The biggest miss is what to build next. Recommended as a small tab of User journey, not a second CMS.
+- **How they connect (J142):** the journey is the map of real steps; the funnel groups them into 4 stages with targets; the agent walks the map. Each iteration is a new run with its report; fixes attach to journey steps as proposals. Proposed: re-base the journey on the 8 real steps.
 - **Mapping to Aurelia:** entry = Quick Start + daily check-in; aha = a first session that connects their check-ins; cap = 3 sends / 30 min; upsell = not built.
 - **Caution:** never block mid-session or at night; place the cap after the aha.
 - **Keep the agent honest:** look for the no first, honour deal breakers, set price from income and place. Write findings from computed tallies, never from memory.
