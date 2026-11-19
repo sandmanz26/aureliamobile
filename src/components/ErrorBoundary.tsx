@@ -1,7 +1,8 @@
 import { Component } from 'react'
 import type { ErrorInfo, ReactNode } from 'react'
 import { AlertTriangle } from 'lucide-react'
-import { reportError } from '../lib/monitoring'
+import { BUILD } from '../lib/build'
+import { isStaleChunkError, reloadForNewBuild, reportError } from '../lib/monitoring'
 import { Button } from './ui/Button'
 
 interface Props {
@@ -44,18 +45,20 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
+    // A screen from an older build whose code is gone after a deploy: load the new build once.
+    if (isStaleChunkError(error) && reloadForNewBuild()) return
     reportError(error, { source: `ErrorBoundary:${this.props.name ?? 'root'}`, componentStack: info.componentStack ?? undefined })
   }
 
   render() {
     if (this.state.error) {
-      return <ErrorFallback onRetry={() => this.setState({ error: null })} />
+      return <ErrorFallback error={this.state.error} onRetry={() => this.setState({ error: null })} />
     }
     return this.props.children
   }
 }
 
-function ErrorFallback({ onRetry }: { onRetry: () => void }) {
+function ErrorFallback({ error, onRetry }: { error: Error; onRetry: () => void }) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-16 bg-background-default px-24 text-center">
       <span className="flex size-64 items-center justify-center rounded-full bg-background-elevated text-icon-default">
@@ -74,6 +77,14 @@ function ErrorFallback({ onRetry }: { onRetry: () => void }) {
         </Button>
         <Button onClick={onRetry}>Try again</Button>
       </div>
+      {/* Off production: what broke and where, so a screenshot is enough to find it (J145). */}
+      {BUILD.environment !== 'production' && (
+        <p className="text-style-caption max-w-[520px] break-words text-text-secondary">
+          {window.location.pathname}
+          {window.location.search} · {error.name}: {error.message}
+          {isStaleChunkError(error) ? ' · This page is from an older build; reload to get the new one.' : ''}
+        </p>
+      )}
     </div>
   )
 }
