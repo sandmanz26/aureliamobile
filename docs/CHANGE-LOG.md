@@ -19,6 +19,13 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-18 — Personas as test cases; admin selects (U100, J132)
+
+All admin selects share one style. Persona rows open the profile drawer, and
+each persona carries buying data and three When / Does / Expect test cases.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-18 — Personas as profiles; dark dropdowns (U099, J131)
 
 Personas carry a full profile and show as one. Admin dropdowns and other

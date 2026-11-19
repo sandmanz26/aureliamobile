@@ -65,7 +65,9 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O35 | **Purpose of the user journey (J122)**: confirm it is an internal opportunity map (moment → feature → evidence → decision) and who owns it; if yes, add evidence and a priority decision per moment, a link to the real screen or session, team-wide storage, and the same tags in analytics | J122 | Product owner + Eugene — **Answered by Eugene (J127):** internal, driven by the product team; evolving like Trello/Asana; readable by Claude |
 | O36 | **User journey as an evolving platform (J127)**: approve the three phases. (1) Shared storage, a status workflow (Idea → Validated → Planned → Building → Live → Measured), owner, Board view, activity log. (2) A scenario template, evidence and a decision log per card; a structured export to the knowledge base. (3) An AI assist on the page, after a backend exists. | J127 | Product owner + Eugene |
 | O37 | **Insight Timer round 2 recommendations (J130)**: decide the "now" list, including changing the demo's every-sign-in daily check-in before real users, and a "Need help now?" link; and whether to push the wiki (and the app work riding with it) to production | J130 | Product owner + Eugene |
+| O38 | **Buyer test agent (J132)**: approve the design. The agent reads a persona panel export (profile + test data + prompt) and a stimulus (screens, copy, price, offer); it answers per persona in a fixed schema (would try, would pay, price thresholds, objections, what would flip it, confidence); results aggregate by segment and compare options A vs B. Decide where it runs first: offline from the export now, in the admin with a backend later | J132 | Product owner + Eugene |
 | J131 | 2026-11-18 | Code | Personas too thin: rebuilt as real profiles; a dropdown that looked broken (dark mode) fixed | U099 |
+| J132 | 2026-11-18 | Code + Opinion | Dropdown issues; persona drawer and deeper test data; a buyer test agent that reads the personas (view and proposal) | U100 |
 | J128 | 2026-11-18 | Code + Opinion | Product lab menu; Personas with 300 varied synthetic personas as candidates for AI-run research, and a view on using them | U096 |
 | J129 | 2026-11-18 | Code + Docs | Always add what was learned to a file other AIs can read: `docs/AI-KNOWLEDGE.md`, enforced by a test | U097 |
 | J130 | 2026-11-18 | Research + Code | Insight Timer round 2 delivered: behaviour from communities and reviews, its journey as 11 flow charts, retention evidence, what to adopt now/next/later after a roast; in the wiki Research tab | U098 |
@@ -1535,3 +1537,28 @@ transcript and the update log. Everything from J018 on was written at the time.
 - **Done:** U099.
   - Each persona is now a full profile: bio, weekday, sleep, stressors and coping, personality and values, tech, how they decide, deal breakers, what success looks like, and quotes. It shows as a profile and feeds the role-play prompt.
   - The dropdown bug was dark mode: native option lists stayed light. Fixed across the admin, including dialogs.
+
+### J132 — Dropdowns, persona test data, and a buyer test agent
+- **Asked:** "1. ada banyak dropdown issue disini. 2. kemudian secara persona harus ada bisa lihat detail pake drawer, dan coba lengkapi datanya yang lebih deep lagis ehingga bisa menjadi test case untuk kita nanti 3. kalau yang saya tangkap eugene itu ada mau kita buat buyer test agent. nah nanti bayangan saya buyer test agent akan emmbaca itu. bagaimana menurutmu ?"
+- **Done:** U100.
+  - One select style across the admin.
+  - Any persona row opens the drawer.
+  - Each persona carries test data: jobs, pain, first sentence, spend, alternatives, buy triggers, objections, access needs, connectivity, and three When / Does / Expect scenarios.
+- **Answered (buyer test agent):** yes. This is what the personas are for, and how Eugene's idea should work.
+  - **Inputs:** the agent reads a panel export (each persona's profile, test data and role-play prompt) plus a stimulus: screens, copy, price, offer.
+  - **Output per persona, in a fixed schema:**
+    - would they try it, would they pay;
+    - the Van Westendorp price answers;
+    - their top objection;
+    - what would flip a no;
+    - their confidence.
+  - **Results:** aggregated by segment (goal, age, region, AI attitude).
+  - **Guard rails:**
+    - Synthetic buyers are too agreeable, so compare options A vs B rather than trust absolute rates.
+    - Demand reasons, and ask for the disconfirming case.
+    - Fix the panel and the seed so runs are comparable.
+    - Validate the winner with a real pre-sale or interviews.
+  - **Steps:**
+    1. Now, without a backend: a "buyer test pack" export (panel + stimulus + instructions + answer schema) that any agent (Claude Code, the founder-consumer skill) can run, plus a results import that shows the tallies in the admin.
+    2. Later: the run itself from the admin, through the AI gateway.
+- **Open:** O38.

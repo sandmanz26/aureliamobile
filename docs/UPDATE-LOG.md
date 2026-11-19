@@ -136,9 +136,48 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U097 | `9ee49e0` | 2026-11-18 | `docs/AI-KNOWLEDGE.md`, the agent's working knowledge for other AIs, kept current on every request; a test fails when it falls behind the journal; included in the knowledge-base export. | [patch](patches/U097-9ee49e0.patch) |
 | U098 | `f834b1e` | 2026-11-18 | Wiki Research: round 2 on Insight Timer (behaviour, 11 journey flow charts, adopt/avoid after a roast) as the default version; Mermaid charts render lazily, kept out of the precache. Staging; production on request (J076). | [patch](patches/U098-f834b1e.patch) |
 | U099 | `61b4abf` | 2026-11-18 | Personas become full profiles (bio, weekday, sleep, stressors, coping, personality, tech, decision style, deal breakers, success, quotes), shown as a profile and carried into the role-play prompt; admin dropdowns follow the dark theme. Staging. | [patch](patches/U099-61b4abf.patch) |
+| U100 | `a6e6f83` | 2026-11-18 | One select style across the admin (no crowded native arrows); persona rows open the drawer; each persona gains test data (jobs, pain, first sentence, spend, alternatives, buy triggers, objections, access, connectivity, three when/does/expect scenarios). Staging. | [patch](patches/U100-a6e6f83.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U100 — Personas as test cases; admin selects
+
+- **Commit:** `a6e6f83` · pushed 2026-11-18 UTC · `web_app` + `admin_cms`. Personas stay staging only; the select style is not flagged.
+- **Patch:** [patches/U100-a6e6f83.patch](patches/U100-a6e6f83.patch)
+- **Request:** "1. ada banyak dropdown issue disini. 2. kemudian secara persona harus ada bisa lihat detail pake drawer, dan coba lengkapi datanya yang lebih deep lagis ehingga bisa menjadi test case untuk kita nanti 3. kalau yang saya tangkap eugene itu ada mau kita buat buyer test agent. nah nanti bayangan saya buyer test agent akan emmbaca itu. bagaimana menurutmu ?" (screenshot of the persona filters).
+- **Found (dropdowns):** every admin select used `px-10`, so the browser's own arrow sat against the right edge. Text, arrow and border crowded, differently in each browser. U099 had fixed only the dark option list.
+- **Changed:**
+  - `src/admin/admin.css`: all `.adm-root select` elements:
+    - no native appearance;
+    - 32px right padding;
+    - a muted SVG chevron, 10px from the edge, readable in both themes;
+    - an ellipsis for long values;
+    - a pointer cursor.
+
+    18 selects in the admin pick it up.
+  - `src/admin/components/DataTable.tsx`: `onRowClick`, so the whole row is the target.
+  - `src/admin/pages/PersonasPage.tsx`:
+    - any row opens the profile drawer;
+    - new sections **Buying** (pain bar, spend now, alternatives, buy triggers, connection, access needs, jobs to be done, objections in their words) and **Test cases** (the first sentence they would type, then three scenarios with When / Does / Expect);
+    - names align left.
+  - `src/admin/data/personas.ts`: `profile.testing`.
+    - Jobs to be done, opened naturally by `whenPhrase()`.
+    - Pain 1–10.
+    - First sentence: casual for the young, fuller for 60+, simpler for second-language readers.
+    - What they spend now; alternatives; two buy triggers; objections phrased from their barriers (plus price for low income).
+    - Access needs from their flags and age; connectivity by country and commute.
+    - Three scenarios: first open; their moment a week in; one edge case picked from who they are (grief, privacy, access, a lapse, the free limit, or a bad check-in).
+    - "exam season" is a trigger only for students.
+    - The role-play prompt includes all of it.
+  - `src/admin/data/personas.test.ts`: tests for the test data and the phrasing.
+- **Verified:**
+  - `npm run check` passes (162 tests).
+  - Staging build, light and dark at 1440px:
+    - every select reports `appearance: none` with 32px right padding, and the filter bar looks even;
+    - clicking a row opens the drawer with three test cases;
+    - no errors.
+- **Revert:** `git revert --no-commit a6e6f83 && git checkout HEAD -- docs/`.
 
 ### U099 — Personas as profiles; dark-mode dropdowns
 

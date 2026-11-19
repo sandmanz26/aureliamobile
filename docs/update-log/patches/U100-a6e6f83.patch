@@ -1,0 +1,446 @@
+From a6e6f8386ba9f3374101339d5a2e5847a99c08f7 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Thu, 19 Nov 2026 05:16:02 +0000
+Subject: [PATCH] Personas as test cases; one select style across the admin
+
+Dropdowns: the native arrow sat against the right edge of every admin
+select (px-10), crowding text, arrow and border differently per browser.
+All admin selects now share one style: no native appearance, 32px right
+padding, a muted chevron that reads in both themes.
+
+Personas: a row anywhere in the table opens the profile drawer (DataTable
+gained onRowClick), and each persona carries test data:
+- jobs to be done ('Right before a difficult conversation, I want to feel
+  calmer quickly, so I can get through the day without snapping.')
+- pain today (1-10), what they spend now, what they use instead, what
+  would make them buy, objections in their own words
+- the first sentence they would type into Aurelia (by age and language)
+- access needs and connectivity
+- three scenarios (when / does / expect): first open straight from the
+  problem; their moment a week in; and one edge case chosen from who they
+  are (grief, privacy, access needs, a lapse, the free limit, or a bad
+  check-in), each with a pass condition.
+The drawer shows Buying and Test cases; the role-play prompt includes
+them. Tests cover the new fields and the phrasing.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/admin/admin.css                |  17 ++++
+ src/admin/components/DataTable.tsx |   5 +-
+ src/admin/data/personas.test.ts    |  24 ++++-
+ src/admin/data/personas.ts         | 149 ++++++++++++++++++++++++++++-
+ src/admin/pages/PersonasPage.tsx   |  72 +++++++++++++-
+ 5 files changed, 261 insertions(+), 6 deletions(-)
+
+diff --git a/src/admin/admin.css b/src/admin/admin.css
+index 9922915..6dc04be 100644
+--- a/src/admin/admin.css
++++ b/src/admin/admin.css
+@@ -94,3 +94,20 @@
+ :root[data-theme='dark'] .adm-root { color-scheme: dark; }
+ .adm-root select option,
+ .adm-root select optgroup { background-color: var(--color-adm-surface); color: var(--color-adm-ink); }
++
++/* One select style for the whole admin (U100). The native arrow sat against
++   the right edge (the selects use px-10), so text, arrow and border crowded
++   each other, differently per browser. Unlayered, so it beats the px-10
++   utility. The chevron is the muted ink, readable in both themes. */
++.adm-root select {
++  appearance: none;
++  -webkit-appearance: none;
++  padding-right: 32px;
++  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238a8880' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
++  background-repeat: no-repeat;
++  background-position: right 10px center;
++  background-size: 14px 14px;
++  text-overflow: ellipsis;
++  cursor: pointer;
++}
++.adm-root select:disabled { cursor: not-allowed; opacity: 0.5; }
+diff --git a/src/admin/components/DataTable.tsx b/src/admin/components/DataTable.tsx
+index fdb4a7f..4527465 100644
+--- a/src/admin/components/DataTable.tsx
++++ b/src/admin/components/DataTable.tsx
+@@ -33,6 +33,8 @@ interface DataTableProps<T> {
+   exportName: string
+   pageSize?: number
+   emptyMessage?: string
++  /** Makes each row open something (a drawer, a page); the whole row is the target. */
++  onRowClick?: (row: T) => void
+ }
+ 
+ type SortDir = 'asc' | 'desc'
+@@ -50,6 +52,7 @@ export function DataTable<T>({
+   exportName,
+   pageSize = 12,
+   emptyMessage = 'No rows match these filters.',
++  onRowClick,
+ }: DataTableProps<T>) {
+   const [query, setQuery] = useState('')
+   const [active, setActive] = useState<Partial<Record<ColumnKey<T>, string>>>({})
+@@ -220,7 +223,7 @@ export function DataTable<T>({
+           </thead>
+           <tbody>
+             {visible.map((row, index) => (
+-              <tr key={index} className="border-b border-adm-line last:border-0 hover:bg-adm-hover">
++              <tr key={index} onClick={onRowClick ? () => onRowClick(row) : undefined} className={`border-b border-adm-line last:border-0 hover:bg-adm-hover ${onRowClick ? 'cursor-pointer' : ''}`}>
+                 {columns.map((column, columnIndex) => (
+                   <td
+                     key={`${column.key}-${columnIndex}`}
+diff --git a/src/admin/data/personas.test.ts b/src/admin/data/personas.test.ts
+index 6645b28..f36b5d7 100644
+--- a/src/admin/data/personas.test.ts
++++ b/src/admin/data/personas.test.ts
+@@ -1,6 +1,6 @@
+ import { describe, expect, it } from 'vitest'
+ import { INITIAL_JOURNEY } from './userJourney'
+-import { PERSONA_COUNT, distribution, drawPanel, generatePersonas, personaPrompt } from './personas'
++import { whenPhrase, PERSONA_COUNT, distribution, drawPanel, generatePersonas, personaPrompt } from './personas'
+ 
+ describe('personas', () => {
+   const all = generatePersonas()
+@@ -59,6 +59,28 @@ describe('personas', () => {
+     }
+   })
+ 
++  it('opens job statements naturally', () => {
++    expect(whenPhrase('before a difficult conversation')).toBe('Right before a difficult conversation')
++    expect(whenPhrase('lying in bed awake')).toBe('When I am lying in bed awake')
++    expect(whenPhrase('end of a long shift')).toBe('At the end of a long shift')
++    expect(whenPhrase('exam season')).toBe('During exam season')
++    expect(whenPhrase('the 3pm slump')).toBe('When I face the 3pm slump')
++  })
++
++  it('gives everyone test cases a buyer agent can use', () => {
++    for (const p of all) {
++      const t = p.profile.testing
++      expect(t.scenarios, p.id).toHaveLength(3)
++      for (const sc of t.scenarios) for (const k of ['title', 'when', 'does', 'expect'] as const) expect(sc[k].length, `${p.id} ${sc.id} ${k}`).toBeGreaterThan(5)
++      expect(t.firstSentence.length).toBeGreaterThan(8)
++      expect(t.pain).toBeGreaterThanOrEqual(2)
++      expect(t.pain).toBeLessThanOrEqual(10)
++      expect(t.jobs[0], p.id).toMatch(/^(When I (face|am)|Right|At|During|On) .+, I want to .+, so I can .+\.$/)
++      expect(t.objections.length, p.id).toBeGreaterThan(0)
++      if (p.workPattern !== 'student') expect(p.triggers, p.id).not.toContain('exam season')
++    }
++  })
++
+   it('writes a role-play prompt that says it is synthetic', () => {
+     const prompt = personaPrompt(all[0])
+     expect(prompt).toContain(all[0].name)
+diff --git a/src/admin/data/personas.ts b/src/admin/data/personas.ts
+index d6bcea2..b8b7e6a 100644
+--- a/src/admin/data/personas.ts
++++ b/src/admin/data/personas.ts
+@@ -75,6 +75,36 @@ export interface Profile {
+   dealBreakers: string[]
+   success: string
+   quotes: string[]
++  /** For buyer tests and QA (U100). */
++  testing: Testing
++}
++
++export interface Scenario {
++  id: string
++  title: string
++  /** The situation: when and where. */
++  when: string
++  /** What the person does in Aurelia. */
++  does: string
++  /** What Aurelia should do; the pass condition. */
++  expect: string
++}
++
++export interface Testing {
++  /** "When …, I want …, so I can …" */
++  jobs: string[]
++  /** How much it hurts today, 1–10. */
++  pain: number
++  /** What they would type into Aurelia's first box, in their words. */
++  firstSentence: string
++  spendNow: string
++  alternatives: string[]
++  buyTriggers: string[]
++  /** Objections in the words they would use. */
++  objections: string[]
++  accessibility: string[]
++  connectivity: string
++  scenarios: Scenario[]
+ }
+ 
+ export const SEED = 2026
+@@ -296,6 +326,114 @@ function makeDay(r: Rand, work: WorkPattern, household: string, goal: GoalId, be
+   ]
+ }
+ 
++const FIRST_SENTENCE: Record<GoalId, string[]> = {
++  sleep: ['cant sleep again, my mind wont stop', 'woke up at 3 and I am wide awake', 'I need to fall asleep, work at 7', 'too wired to sleep after my shift', 'help me switch off, I am in bed'],
++  calm: ['big meeting in 20 min and my chest is tight', 'I feel anxious and I dont know why', 'everything is too loud today', 'I need to calm down before I call my mum', 'stressed about money again'],
++  clarity: ['too many thoughts, I cannot think straight', 'I have to decide something big and I am stuck', 'my head is a mess after today', 'help me figure out what matters this week'],
++  focus: ['I need to focus for the next hour', 'cant concentrate, exam tomorrow', 'I keep picking up my phone, help', 'need to start this report and I am procrastinating'],
++  regulate: ['my heart is racing after that argument', 'I am shaking a bit, need to come down', 'my shoulders are up to my ears', 'still wound up hours after work'],
++  energy: ['so tired, 3pm and I have hours left', 'no energy to get out of bed', 'I feel flat and heavy today', 'need a lift before the kids get home'],
++}
++const BUY_TRIGGERS = ['a free week that visibly helps', 'their therapist suggesting it', 'a price under $5 a month', 'a friend swearing by it', 'trying it without an account', 'an annual plan with a real discount', 'their employer paying for it', 'seeing their own sleep or mood improve in the app']
++const OBJECTION_PHRASES: Record<string, string> = {
++  'forgets to open the app': '"I will forget it exists by Thursday."',
++  'does not trust AI with feelings': '"Who reads what I type into this?"',
++  'finds most meditation voices irritating': '"If the voice is breathy and fake, I am out."',
++  'cannot find ten quiet minutes': '"Ten minutes? I do not get ten minutes."',
++  'thinks wellness apps are too expensive': '"Paying monthly to be told to breathe? No."',
++  'gave up on apps that nag with notifications': '"One push too many and I delete it."',
++  'dislikes spiritual language': '"Please, no chakras and no universe."',
++  'worries about data privacy': '"Where does my data go?"',
++  'feels guilty when a streak breaks': '"I do not need another thing to fail at."',
++  'too much choice in other apps': '"I do not want to scroll a library, just tell me what to do."',
++  'prefers to talk to a real person': '"A recording is not the same as a person."',
++  'not sure it would work for them': '"This stuff never works for people like me."',
++}
++
++interface TestingInput {
++  goal: GoalId; struggle: string; triggers: string[]; workPattern: WorkPattern; income: 'low' | 'middle' | 'high'; experience: Experience; apps: string[]; aiAttitude: AiAttitude
++  flags: string[]; barriers: string[]; privacy: string; language: string; age: number; length: number; voice: string; spiritual: string; moments: string[]; coping: string[]
++  success: string; neuroticism: Level; quality: number; country: string
++}
++
++const MOMENT_SITUATION: Record<string, string> = {
++  r1: 'just woken up, still in bed',
++  r2: 'mid-afternoon, a feeling has just spiked',
++  c1: 'on the bus or train home',
++  c2: 'a five-minute break between tasks',
++  e1: 'first thing in the morning',
++  e2: 'ten minutes before a meeting or a hard call',
++  e3: 'right after a tense conversation',
++  e4: 'commuting with headphones in',
++  e5: 'in bed with the lights off',
++  h1: 'on a good day, a few weeks in',
++}
++
++/** Turns a trigger into the opening of a job statement that reads naturally. */
++export function whenPhrase(t: string): string {
++  if (/^(before|after)\b/.test(t)) return `Right ${t}`
++  if (/^right after\b/.test(t)) return t.charAt(0).toUpperCase() + t.slice(1)
++  if (/^\w+ing\b/.test(t)) return `When I am ${t}`
++  if (/^end of\b/.test(t)) return `At the ${t}`
++  if (/season$/.test(t)) return `During ${t}`
++  if (/days$|evening$/.test(t)) return `On ${t}`
++  if (/^the night\b/.test(t)) return `On ${t}`
++  if (/^the start\b/.test(t)) return `At ${t}`
++  return `When I face ${t}`
++}
++
++function makeTesting(r: Rand, x: TestingInput): Testing {
++  const esl = x.flags.includes('reads English as a second language') || (x.language !== 'English' && r() < 0.3)
++  let first = pick(r, FIRST_SENTENCE[x.goal])
++  if (x.age >= 60) first = first.charAt(0).toUpperCase() + first.slice(1).replace(/\bcant\b/, 'cannot').replace(/\bdont\b/, 'do not').replace(/\bwont\b/, 'will not') + '.'
++  if (esl) first = first.replace('I am', 'I').replace('cannot', 'can not')
++  const pain = Math.min(10, Math.max(2, Math.round((x.neuroticism === 'high' ? 7 : x.neuroticism === 'medium' ? 5.5 : 4) + (x.goal === 'sleep' ? 3 - x.quality * 0.6 : 0) + (r() - 0.5) * 2)))
++  const spendNow =
++    x.experience === 'daily' && x.income !== 'low' ? pick(r, ['about $10 a month on a meditation app', 'an annual Calm plan, about $70 a year', '$15 a month across two apps'])
++      : x.coping.includes('seeing a therapist') ? 'pays for a therapist every two weeks; nothing on apps'
++        : x.income === 'high' ? pick(r, ['nothing on apps, a gym membership', 'nothing yet, would spend on something that works'])
++          : 'nothing'
++  const alternatives = [...new Set([...(x.apps.length ? [x.apps[0]] : []), x.coping[0], pick(r, ['doing nothing and pushing through', 'a YouTube video found on the spot', 'a podcast', 'a long shower'])])]
++  const objections = x.barriers.map((b) => OBJECTION_PHRASES[b] ?? `"${b}"`)
++  if (x.income === 'low' && !objections.some((o) => o.includes('Paying'))) objections.push('"If it costs more than a coffee a month, forget it."')
++  const accessibility = [
++    ...x.flags.filter((f) => /vision|hearing|ADHD|autistic|second language/.test(f)).map((f) =>
++      f.startsWith('low vision') ? 'large text, high contrast' : f.startsWith('hard of hearing') ? 'captions or a visual guide' : f === 'ADHD' ? 'very short sessions, no long intros' : f.startsWith('autistic') ? 'no sudden sounds, predictable structure' : 'plain English, short sentences'),
++    ...(x.age >= 70 ? ['bigger tap targets'] : []),
++  ]
++  const connectivity = /Indonesia|India|Philippines|Nigeria|South Africa|Brazil|Mexico/.test(x.country) && r() < 0.6 ? 'patchy mobile data, often on a limited plan' : x.workPattern === 'shift' || x.moments.includes('c1') || x.moments.includes('e4') ? 'drops in and out on the commute' : 'reliable wifi at home'
++  const soICan: Record<GoalId, string> = { sleep: 'wake up rested', calm: 'get through the day without snapping', clarity: 'know what to do next', focus: 'finish what I started', regulate: 'stop carrying the stress in my body', energy: 'have something left for the evening' }
++  const saysGoal: Record<GoalId, string> = { sleep: 'fall asleep and stay asleep', calm: 'feel calmer quickly', clarity: 'clear my head', focus: 'focus on one thing', regulate: 'get my body to settle', energy: 'get some energy back' }
++  const jobs = [
++    `${whenPhrase(x.triggers[0])}, I want to ${saysGoal[x.goal]}, so I can ${soICan[x.goal]}.`,
++    `When I open an app at that moment, I want it to work without setting anything up, so I do not give up before it starts.`,
++  ]
++  const top = x.moments[0]
++  const scenarios: Scenario[] = [
++    {
++      id: 'first-open',
++      title: 'First open, straight from the problem',
++      when: MOMENT_SITUATION[top] ?? 'the moment it hits',
++      does: `opens Aurelia for the first time and types "${first}"`,
++      expect: 'A session starts within two taps, with no account and no paywall before the first play, and it fits the goal and their stated preferences.',
++    },
++    {
++      id: 'moment',
++      title: `The ${x.goal} moment, a week in`,
++      when: MOMENT_SITUATION[x.moments[1] ?? top] ?? 'a usual day',
++      does: 'comes back and taps the last session or asks for "the same as last time"',
++      expect: '"Same as last time" works in one tap; the next chapter is offered after the session, not before.',
++    },
++  ]
++  if (x.flags.includes('recent bereavement')) scenarios.push({ id: 'grief', title: 'Writes about a loss', when: 'late evening', does: 'types that they lost someone close recently', expect: 'A gentle, non-upbeat reply, no gamified prompts, and a "Need help now?" link visible.' })
++  else if (x.aiAttitude === 'distrustful' || x.privacy === 'very protective') scenarios.push({ id: 'privacy', title: 'Asks who reads it', when: 'before typing anything personal', does: 'asks "who can read what I write?"', expect: 'A plain answer about what is stored and who sees it, before any personal data is kept; they can use it without an account.' })
++  else if (accessibility.length) scenarios.push({ id: 'access', title: 'Uses it with their access needs', when: 'a normal day', does: `uses the app with: ${accessibility.join('; ')}`, expect: 'Everything is readable and operable; nothing important depends on sound alone or on fine taps.' })
++  else if (x.barriers.includes('feels guilty when a streak breaks') || x.barriers.includes('forgets to open the app')) scenarios.push({ id: 'lapse', title: 'Misses four days', when: 'a busy week', does: 'opens the app again after four days away', expect: 'No guilt, no reset message; consistency is shown kindly and the next chapter is ready.' })
++  else if (x.income === 'low') scenarios.push({ id: 'paywall', title: 'Hits the free limit', when: 'after the first build', does: 'reaches the end of what is free', expect: 'What is free and what is paid is clear; rewinding, resuming and replaying their own sessions stay free.' })
++  else scenarios.push({ id: 'low-checkin', title: 'A bad check-in', when: 'after a session', does: 'answers the check-in with the lowest mood', expect: 'Care rather than a push to continue; a "Need help now?" link; the next chapter goes gentler.' })
++  return { jobs, pain, firstSentence: first, spendNow, alternatives, buyTriggers: some(r, BUY_TRIGGERS, 2, 2), objections, accessibility, connectivity, scenarios }
++}
++
+ function ageBand(age: number) {
+   return age < 25 ? '18–24' : age < 35 ? '25–34' : age < 45 ? '35–44' : age < 55 ? '45–54' : age < 65 ? '55–64' : '65+'
+ }
+@@ -325,7 +463,7 @@ function makePersona(r: Rand, n: number): Persona {
+ 
+   const goal = weighted<GoalId>(r, [['sleep', 25], ['calm', 22], ['focus', 15], ['clarity', 12], ['regulate', 14], ['energy', 12]])
+   const struggle = workPattern === 'shift' && goal === 'sleep' ? 'shift work has broken their sleep rhythm' : pick(r, STRUGGLES[goal])
+-  const triggers = some(r, TRIGGERS[goal], 1, 2)
++  const triggers = some(r, TRIGGERS[goal].filter((t) => workPattern === 'student' || t !== 'exam season'), 1, 2)
+ 
+   const moments = new Set(GOAL_MOMENTS[goal])
+   if (['office', 'hybrid', 'student'].includes(workPattern) && r() < 0.6) moments.add(r() < 0.5 ? 'c1' : 'e4')
+@@ -348,6 +486,7 @@ function makePersona(r: Rand, n: number): Persona {
+   const barriers = some(r, BARRIERS, 1, 2)
+   if (aiAttitude === 'distrustful' && !barriers.includes('does not trust AI with feelings')) barriers[0] = 'does not trust AI with feelings'
+ 
++  const privacy = weighted(r, [['relaxed', 30], ['careful', 50], ['very protective', 20]] as const)
+   const traits = some(r, TRAITS, 2, 3)
+   const neuroticism: Level = ['calm', 'regulate', 'sleep'].includes(goal) ? weighted(r, [['medium', 45], ['high', 45], ['low', 10]] as const) : weighted(r, [['low', 30], ['medium', 50], ['high', 20]] as const)
+   const personality = {
+@@ -423,12 +562,17 @@ function makePersona(r: Rand, n: number): Persona {
+     dealBreakers: some(r, DEAL_BREAKERS, 1, 2),
+     success: pick(r, SUCCESS[goal]),
+     quotes: [],
++    testing: undefined as unknown as Testing,
+   }
+   profile.values = (profile.bio.match(/most about (.+?) and (.+?)\./) ?? []).slice(1, 3)
+   if (barriers.includes('dislikes spiritual language') && !profile.dealBreakers.includes('religious or spiritual framing')) profile.dealBreakers.push('religious or spiritual framing')
+   const city = pick(r, place.cities)
+   profile.bio = profile.bio.replace('%CITY%', city)
+   profile.quotes = [pick(r, QUOTES[goal]), EXTRA_QUOTES.ai[aiAttitude][0], EXTRA_QUOTES.money[income][0]]
++  profile.testing = makeTesting(r, {
++    goal, struggle, triggers, workPattern, income, experience, apps, aiAttitude, flags, barriers, privacy, language: place.language, age: clamped,
++    length: 0, voice: '', spiritual: '', moments: [...moments], coping, success: profile.success, neuroticism, quality, country: place.country,
++  })
+ 
+   return {
+     id: `P${String(n).padStart(3, '0')}`,
+@@ -459,7 +603,7 @@ function makePersona(r: Rand, n: number): Persona {
+     aiAttitude,
+     willingnessToPay:
+       income === 'low' ? weighted(r, [['free only', 70], ['up to $5 a month', 30]] as const) : weighted(r, [['free only', 25], ['up to $5 a month', 30], ['up to $10 a month', 30], ['more if it clearly works', 15]] as const),
+-    privacy: weighted(r, [['relaxed', 30], ['careful', 50], ['very protective', 20]] as const),
++    privacy,
+     barriers,
+     flags,
+     quote: profile.quotes[0],
+@@ -498,6 +642,7 @@ export function personaPrompt(p: Persona): string {
+     `How you pick an app: you ${p.profile.decides}; you would most likely hear about Aurelia through ${p.profile.wouldHearAbout}. Deal breakers: ${p.profile.dealBreakers.join('; ')}.`,
+     `Success for you looks like: ${p.profile.success}.`,
+     `Things you might say: ${p.profile.quotes.map((q) => `"${q}"`).join(' ')}`,
++    `If you opened Aurelia right now, you would type something like: "${p.profile.testing.firstSentence}". Pain today: ${p.profile.testing.pain} out of 10. You spend ${p.profile.testing.spendNow} on this now and otherwise rely on ${p.profile.testing.alternatives.join(', ')}. You would buy if: ${p.profile.testing.buyTriggers.join('; ')}. Your objections: ${p.profile.testing.objections.join(' ')}`,
+     '',
+     'Answer in the first person, briefly and concretely, as this person would. Be honest about doubts and say when something would not fit your life. Do not invent facts about Aurelia that you have not been shown.',
+   ]
+diff --git a/src/admin/pages/PersonasPage.tsx b/src/admin/pages/PersonasPage.tsx
+index 0acb764..fdd80d8 100644
+--- a/src/admin/pages/PersonasPage.tsx
++++ b/src/admin/pages/PersonasPage.tsx
+@@ -80,7 +80,7 @@ export function PersonasPage() {
+       header: 'Persona',
+       sortable: true,
+       render: (row) => (
+-        <button type="button" className="font-medium text-adm-ink underline-offset-2 hover:underline" onClick={() => setOpen(byId.get(row.id) ?? null)}>
++        <button type="button" className="text-left font-medium text-adm-ink underline-offset-2 hover:underline" onClick={() => setOpen(byId.get(row.id) ?? null)}>
+           {row.name}
+         </button>
+       ),
+@@ -198,7 +198,7 @@ export function PersonasPage() {
+         ))}
+       </div>
+ 
+-      <Panel title="All personas" description="Search, filter and sort. Select a name to read the persona and its role-play prompt.">
++      <Panel title="All personas" description="Search, filter and sort. Select any row to open the full profile, its test cases and its role-play prompt.">
+         <DataTable
+           rows={rows}
+           columns={columns}
+@@ -209,6 +209,7 @@ export function PersonasPage() {
+             { key: 'experience', label: 'Meditation', options: options('experience') },
+             { key: 'ai', label: 'Towards AI', options: options('ai') },
+           ]}
++          onRowClick={(row) => setOpen(byId.get(row.id) ?? null)}
+           exportName="aurelia-personas"
+           pageSize={20}
+         />
+@@ -403,6 +404,73 @@ function PersonaProfile({ p }: { p: Persona }) {
+         </dl>
+       </Section>
+ 
++      <Section title="Buying">
++        <div className="grid grid-cols-[130px_1fr] gap-x-12 gap-y-6 text-12">
++          <span className="text-adm-muted">Pain today</span>
++          <span className="flex items-center gap-8">
++            <span className="h-6 w-120 overflow-hidden rounded-full bg-adm-hover">
++              <span className="block h-full rounded-full bg-adm-critical" style={{ width: `${f.testing.pain * 10}%` }} />
++            </span>
++            <span className="tabular-nums">{f.testing.pain} of 10</span>
++          </span>
++          <span className="text-adm-muted">Spends now</span>
++          <span>{f.testing.spendNow}</span>
++          <span className="text-adm-muted">Uses instead</span>
++          <span>{f.testing.alternatives.join('; ')}</span>
++          <span className="text-adm-muted">Would buy if</span>
++          <span>{f.testing.buyTriggers.join('; ')}</span>
++          <span className="text-adm-muted">Connection</span>
++          <span>{f.testing.connectivity}</span>
++          {f.testing.accessibility.length > 0 && (
++            <>
++              <span className="text-adm-muted">Access needs</span>
++              <span>{f.testing.accessibility.join('; ')}</span>
++            </>
++          )}
++        </div>
++        <div className="flex flex-col gap-4 text-12">
++          <span className="text-adm-muted">Jobs to be done</span>
++          <ul className="flex list-disc flex-col gap-2 pl-16">
++            {f.testing.jobs.map((j) => (
++              <li key={j}>{j}</li>
++            ))}
++          </ul>
++          <span className="mt-4 text-adm-muted">Objections, in their words</span>
++          <ul className="flex flex-col gap-2 italic text-adm-ink-2">
++            {f.testing.objections.map((o) => (
++              <li key={o}>{o}</li>
++            ))}
++          </ul>
++        </div>
++      </Section>
++
++      <Section title="Test cases">
++        <p className="rounded-8 border border-dashed border-adm-line px-10 py-8 text-12">
++          <span className="text-adm-muted">First thing they would type: </span>“{f.testing.firstSentence}”
++        </p>
++        <ol className="flex flex-col gap-8">
++          {f.testing.scenarios.map((sc, i) => (
++            <li key={sc.id} className="rounded-8 border border-adm-line p-10 text-12">
++              <p className="font-semibold">
++                {i + 1}. {sc.title}
++              </p>
++              <p className="mt-4">
++                <span className="text-adm-muted">When: </span>
++                {sc.when}
++              </p>
++              <p>
++                <span className="text-adm-muted">Does: </span>
++                {sc.does}
++              </p>
++              <p className="mt-4 rounded-4 bg-adm-good/10 px-6 py-4">
++                <span className="font-medium">Expect: </span>
++                {sc.expect}
++              </p>
++            </li>
++          ))}
++        </ol>
++      </Section>
++
+       <Section title="In their words">
+         <ul className="flex flex-col gap-6 text-12 italic text-adm-ink-2">
+           {f.quotes.map((q) => (
+-- 
+2.43.0
+

@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J131** · updated 18 Nov 2026
+**Covers up to J132** · updated 18 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
@@ -132,7 +132,9 @@ evidence → decision. It is not a user feature.
 - The blocker is per-browser storage.
 - Phases were proposed in O36 and put on hold by the owner.
 
-**Personas (J128, J131).** Good for forming hypotheses before real research, never as evidence. Since U099 each is a full profile (bio, weekday, sleep, stressors, coping, Big Five, tech, decision style, deal breakers, success, quotes). Coherence rules live in `personas.ts` and its test.
+**Personas (J128, J131).** Good for forming hypotheses before real research, never as evidence. Since U099 each is a full profile (bio, weekday, sleep, stressors, coping, Big Five, tech, decision style, deal breakers, success, quotes). Coherence rules live in `personas.ts` and its test. Since U100 each also has `profile.testing`: jobs, pain, first sentence, spend, alternatives, buy triggers, objections, access, connectivity, and three When/Does/Expect scenarios.
+
+**Buyer test agent (J132, O38).** Eugene's idea. It reads a persona panel export plus a stimulus and answers per persona in a fixed schema: try, pay, price thresholds, objection, what flips it, confidence. Use it to compare A vs B, never as absolute conversion, and validate the winner with real people. First step proposed: an export pack plus a results import, before any backend.
 Every prompt states that the persona is synthetic.
 
 **The 2025 backend documents (J099, J109–J112).**
@@ -193,6 +195,7 @@ with employee and HR personas. Not built.
 - **Agent worktrees** live in `.claude/worktrees/`. They are excluded locally
   through `.git/info/exclude`; never commit them. Bring an agent's work in by
   cherry-picking, then re-run `npm run check`.
+- **Admin selects:** one style in `admin.css` (`.adm-root select`: no native appearance, 32px right padding, an SVG chevron). Do not add per-page select padding.
 - **Admin dark mode and native controls:** without `color-scheme`, a select's option list stays light. `.adm-root` (shell, Modal, SidePanel) handles it. Any new admin portal must carry `adm-root`.
 - **Mermaid creates ~100 chunks.** It is grouped into `mermaid-vendor` (vite `codeSplitting.groups`) and kept out of the precache. Without that, the service worker grew from 181 to 268 entries.
 - **Mulish ships weights 300–600 only.** 700 and 800 render as faked bold.
