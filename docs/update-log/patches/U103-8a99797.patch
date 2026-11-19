@@ -1,0 +1,1213 @@
+From 8a99797f8777a9d874587b2d233834455e9ffadb Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Thu, 19 Nov 2026 10:11:50 +0000
+Subject: [PATCH] Persona generator 2; buyer agent v3: A/B on 36 personas,
+ grounded in Eugene's documents
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/admin/data/buyerRunV2.ts         |   2 +
+ src/admin/data/buyerRunV3.ts         | 433 +++++++++++++++++++++++++++
+ src/admin/data/buyerRuns.test.ts     |  34 ++-
+ src/admin/data/buyerRuns.ts          |  43 ++-
+ src/admin/data/personas.test.ts      |  12 +-
+ src/admin/data/personas.ts           | 113 ++++++-
+ src/admin/pages/BuyerResultsPage.tsx | 140 +++++++--
+ src/admin/pages/PersonasPage.tsx     |   4 +-
+ 8 files changed, 734 insertions(+), 47 deletions(-)
+ create mode 100644 src/admin/data/buyerRunV3.ts
+
+diff --git a/src/admin/data/buyerRunV2.ts b/src/admin/data/buyerRunV2.ts
+index a545bf8..ec19491 100644
+--- a/src/admin/data/buyerRunV2.ts
++++ b/src/admin/data/buyerRunV2.ts
+@@ -50,6 +50,7 @@ export const RUN_V2: BuyerRun = {
+   title: 'v2 · Aurelia Plus at local prices, 36 personas',
+   date: '2026-11-19',
+   kind: 'demo',
++  generator: 1,
+   method:
+     'One agent played 36 personas in turn, in one session, from each persona’s export, under the calibration rules below. No backend, no live model call from the app.',
+   panel: {
+@@ -84,6 +85,7 @@ export const RUN_V2: BuyerRun = {
+     { label: 'Wellness groups', value: 'Struggling: pain 8 or more, or sleep quality 1 of 5, or pain 7 with sleep quality 2. Strained: pain 5 or more, or sleep quality 2 or less. Coping: everyone else.' },
+     { label: 'What they saw', value: 'The app store pitch in English, the first screen, and Plus at their country’s price from the admin’s pricing table.' },
+     { label: 'How the agent ran', value: 'One agent played each persona in turn from the persona’s full export, applying the calibration rules in the instructions before answering: look for the no first, honour deal breakers, follow income and local price.' },
++    { label: 'Persona generator', value: 'Generator 1, the original. Generator 2, which fixes the incoherence this run found, came with v3; this run stays on the people it was played on, so its answers still match their profiles.' },
+     { label: 'Read it as', value: 'Directional. 36 is enough to see which segments differ, not to size a market. One agent playing everyone shares one set of blind spots.' },
+   ],
+   instructions: BUYER_INSTRUCTIONS_V2,
+diff --git a/src/admin/data/buyerRunV3.ts b/src/admin/data/buyerRunV3.ts
+new file mode 100644
+index 0000000..5957e84
+--- /dev/null
++++ b/src/admin/data/buyerRunV3.ts
+@@ -0,0 +1,433 @@
++import type { BuyerAnswer, BuyerRun, Outcome, Theme, Verdict } from './buyerRuns'
++
++/**
++ * Buyer agent run v3 (U103, J135): the first run on the fixed persona
++ * generator (2), and the first A/B run. Each persona answers today's offer
++ * (A, kept short) and a proposed offer (B, answered in full) built from the
++ * documents Eugene supplied and the research done for him. The agent also
++ * calibrates against the figures in those documents.
++ */
++
++/** The changes in offer B, each traced to where it comes from. */
++export const V3_CHANGES = {
++  'outcome-pitch': { label: 'Outcome first, AI explained', source: 'Insight Timer research: “No AI” is sold as a virtue; v2: distrust costs a fifth of the panel' },
++  'no-account': { label: 'First session without an account', source: 'Insight Timer research, “Now”: start without an account; 65 of 168 bad reviews are about prompts before listening' },
++  language: { label: 'Sessions in eight languages', source: 'v2: language was the largest single loss' },
++  'voice-control': { label: 'Choose the voice and how much it talks', source: 'Insight Timer research: people choose by voice, pacing and how much the guide talks; 2025 judge rubric: pacing and pauses' },
++  'data-line': { label: 'A plain data line before typing', source: 'Artefact, lesson 1 (claims match what is built); v2: privacy deal breakers' },
++  'local-price': { label: 'Local prices in seven more countries', source: 'v2: 10 of 14 without a local price found $9.99 too expensive' },
++  'yearly-first': { label: 'Yearly plan first ($59.99)', source: 'Insight Timer research: $59.99 a year; v1: the yearly plan is what lands' },
++  'offline-free': { label: 'One offline session on Free', source: 'v2: patchy data and layovers' },
++  'one-reminder': { label: 'At most one reminder, no streaks', source: 'Insight Timer research: streak and commit screens are a top leave reason (27 of 168)' },
++  'care-link': { label: 'Care after a low check-in', source: 'Artefact, lesson 3: safety is part of the first version' },
++} as const
++export type V3Change = keyof typeof V3_CHANGES
++
++/** Plus a month as each persona sees it in offer B, with a USD equivalent at the run's rates. */
++export const V3_PRICES: Record<string, { label: string; usd: number }> = {
++  'United States': { label: '$9.99 · $59.99 a year', usd: 9.99 },
++  'United Kingdom': { label: '£8.99 · £49.99 a year', usd: 11.4 },
++  Spain: { label: '€9.99 · €54.99 a year', usd: 10.8 },
++  Netherlands: { label: '€9.99 · €54.99 a year', usd: 10.8 },
++  Germany: { label: '€9.99 · €54.99 a year', usd: 10.8 },
++  France: { label: '€9.99 · €54.99 a year', usd: 10.8 },
++  Indonesia: { label: 'Rp69,000 · Rp399,000 a year', usd: 4.35 },
++  India: { label: '₹399 · ₹2,299 a year', usd: 4.7 },
++  Brazil: { label: 'R$29.90 · R$179 a year', usd: 5.5 },
++  Japan: { label: '¥1,500 · ¥8,800 a year', usd: 9.9 },
++  Canada: { label: 'C$12.99 · C$74.99 a year', usd: 9.3 },
++  Australia: { label: 'A$12.99 · A$74.99 a year', usd: 8.4 },
++  Nigeria: { label: '₦4,500 · ₦25,000 a year', usd: 2.9 },
++  'South Africa': { label: 'R89 · R499 a year', usd: 4.9 },
++  Philippines: { label: '₱249 · ₱1,390 a year', usd: 4.3 },
++  Singapore: { label: 'S$9.98 · S$58 a year', usd: 7.4 },
++  Mexico: { label: 'MX$99 · MX$569 a year', usd: 5.4 },
++}
++
++export const BUYER_INSTRUCTIONS_V3 = `You are a buyer test agent. This run is an A/B test on 36 personas from persona generator 2.
++
++Read first, and treat as evidence:
++- The Insight Timer research for Eugene (wiki Research, v2): day-30 retention in mental-health apps is about 3–5% of installs (median 3.3%, Baumel 2019); health and fitness trials convert at a median of about 40%; people leave over prompts before listening, paywalled basics, streaks and nagging; they stay for a quiet path that plays at once.
++- The 2025 documents (wiki Backend (old) and Artefact): the script judge's rules (pacing, pauses, breathing safety), the edit modes, feedback attribution, and the lessons: claims must match what is built, safety comes first, model scores are signals not measurements, rules beat personas.
++- Buyer agent v2: what it found and where it was too generous or too harsh.
++
++For each persona:
++1. Become them, as in v2: their money in their currency, their language, phone and data plan, sleep, what is wearing them down.
++2. Offer A is Aurelia today (as in v2). Answer only: tries, pays, and why in one line.
++3. Offer B is the proposal (listed on the page). B's items are proposals, not built; answer as if they were true on the store page and first screen. Answer in full: tries, pays, plan, four price answers (USD a month), main objection and theme, what would flip it, confidence, week-one sessions, day 30, reasoning, a quote, the three test cases against B, and which of B's changes moved them.
++4. Say if the persona does not hold together.
++
++Calibration rules (v2's, plus):
++- Look for the no first. "Free only" means pays no, unless pain is 8+ and a named trigger is met.
++- Honest disclosure stays: B still says AI writes the words. A distrustful persona does not change because the word moved.
++- Still using at day 30 must stay close to the evidence: a yes is rare (under 1 in 8), even on B.
++- A change counts as "moved them" only if their answer is different because of it.`
++
++const sc = (id: string, outcome: Outcome, note: string) => ({ id, outcome, note })
++
++function a(
++  personaId: string,
++  control: [Verdict, Verdict, string],
++  tries: Verdict,
++  pays: Verdict,
++  plan: BuyerAnswer['plan'],
++  [tooCheap, bargain, expensive, tooExpensive]: [number, number, number, number],
++  theme: Theme,
++  objection: string,
++  flip: string,
++  confidence: BuyerAnswer['confidence'],
++  week: number,
++  day30: Verdict,
++  movedBy: V3Change[],
++  reasoning: string,
++  quote: string,
++  scenarios: BuyerAnswer['scenarios'],
++  personaIssue?: string,
++): BuyerAnswer {
++  return {
++    personaId,
++    control: { tries: control[0], pays: control[1], why: control[2] },
++    tries,
++    pays,
++    plan,
++    prices: { tooCheap, bargain, expensive, tooExpensive },
++    theme,
++    objection,
++    flip,
++    confidence,
++    week,
++    day30,
++    movedBy,
++    reasoning,
++    quote,
++    scenarios,
++    personaIssue,
++  }
++}
++
++export const RUN_V3: BuyerRun = {
++  id: 'run-3',
++  version: 3,
++  title: 'v3 · Today vs the proposed offer, 36 personas, fixed generator',
++  date: '2026-11-19',
++  kind: 'demo',
++  generator: 2,
++  method:
++    'One agent played 36 personas from the fixed generator, each against today’s offer (A) and a proposed offer (B), reading Eugene’s documents and the research first and calibrating against their figures. No backend, no live model call from the app.',
++  panel: {
++    seed: 2028,
++    size: 36,
++    personaIds: [
++      'P043', 'P276', 'P087', 'P027', 'P108', 'P261',
++      'P045', 'P034', 'P232', 'P020', 'P264', 'P220',
++      'P035', 'P136', 'P008', 'P252', 'P139', 'P200',
++      'P187', 'P076', 'P286', 'P241', 'P210', 'P091',
++      'P262', 'P015', 'P036', 'P259', 'P017', 'P001',
++      'P168', 'P092', 'P216', 'P294', 'P127', 'P109',
++    ],
++  },
++  stimulus: {
++    name: 'Offer B: the proposal, built from Eugene’s documents and the research',
++    pitch:
++      'Tell us in one sentence how you feel, and a guided session made for you starts in a minute, in your language. No sign-up for the first one. The words are written for you by AI, following practice rules our wellness team wrote; you choose the voice and how much it talks. Chapters continue over the next days, with one check-in a day that you can skip.',
++    offer: [
++      'First session without an account; the free limit (5 a month) counts after it',
++      'Sessions in English, Spanish, Portuguese, Indonesian, Hindi, German, French and Japanese',
++      'Choose the voice; less talking, longer pauses, no music, end with a bell',
++      '“What you type stays in your account, is never used to train models or shared, and you can delete it.”',
++      'Plus: yearly first ($59.99 in the US, $5 a month), monthly $9.99; local prices in 17 countries',
++      'One session offline on Free; replays, history and export always free',
++      'At most one reminder, set by you; no streaks (“4 of 7 this week”)',
++      'A low check-in gets care and a “Need help now?” link',
++    ],
++    priceUsd: 9.99,
++  },
++  control: {
++    name: 'Offer A: Aurelia today',
++    offer: ['The v2 stimulus: English only, an account before a personal session, Plus $9.99 a month or $79 a year in the US, local prices in 7 countries, offline on Plus only'],
++  },
++  references: [
++    { title: 'Insight Timer, and what it means for Aurelia (round 2)', where: 'Wiki → Research, v2', used: 'Day-30 retention 3–5% (median 3.3%), trial conversion ~40%, the leave triggers (prompts 65, paywalled basics 50, streaks 27 of 168 reviews), the “Now” list, the $59.99 yearly anchor, “No AI” as a selling point.' },
++    { title: 'Backend (old): the 2025 documents', where: 'Wiki → Backend (old)', used: 'The script judge’s rules (pacing, pauses, breathing safety notes) behind “how much it talks” and the pregnancy and grief notes; edit modes behind “make it shorter”; feedback attribution behind “the check-in shapes the next chapter”.' },
++    { title: 'Artefact: what the 2025 backend teaches us', where: 'Wiki → Artefact', used: 'Claims must match what is built (B’s items are marked as proposals); safety in the first version (the care link); model scores are signals (findings in words, confidence stated); rules beat personas (calibration rules over role-play).' },
++    { title: 'Eugene’s briefs', where: 'WhatsApp, J114–J132', used: 'The buyer test agent itself, and adopting what works at Insight Timer.' },
++    { title: 'Buyer agent v1 and v2', where: 'This page', used: 'Which changes to test, and where the agent was too generous (v1) or found the persona data broken (v2).' },
++  ],
++  criteria: [
++    { label: 'Question', value: 'If Aurelia shipped the changes Eugene’s documents and the research point to, how many more people would try it, pay, and still be using it at day 30, and which change matters most to whom?' },
++    { label: 'Who', value: '36 personas from persona generator 2, one for every region × age band (seed 2028), aged 19–71, from 13 countries. Generator 2 fixes the incoherence v1 and v2 found; its check finds 0 of 300 broken (generator 1: 144 of 300).' },
++    { label: 'What they saw', value: 'Offer A (today, as in v2), then offer B (the proposal). Each persona answered both, A in short and B in full.' },
++    { label: 'What the agent read first', value: 'The Insight Timer research, the 2025 backend documents and their lessons, Eugene’s briefs, and runs v1 and v2. Listed under “What the agent read”.' },
++    { label: 'Calibration', value: 'v2’s rules, plus: day-30 use must stay near the category evidence (3–5% of installs); honest AI disclosure stays in B, so distrust does not vanish; a change only counts if it changed the answer.' },
++    { label: 'Not taken into account', value: 'Whether B can be built as described, its cost, and how real people react to an AI-written session they have heard. B is a proposal.' },
++    { label: 'Read it as', value: 'A comparison: B against A on the same people, by the same agent. The difference is more trustworthy than either number.' },
++  ],
++  instructions: BUYER_INSTRUCTIONS_V3,
++  findings: [
++    'Offer B beats today’s offer on the same 36 people. Would try: 13 → 25 (no: 8 → 2). Would pay: 0 → 4 yes, 12 → 22 maybe. Nobody likes B less than A. Read the difference, not the totals: B is a proposal and the agent answered it as if built.',
++    'The first session without an account matters most: it changed 16 answers. Then the languages (13), the data line (11), and the voice choice, yearly-first and local prices (10 each). The outcome-first pitch changed only 4, and the care link 2 (it matters after a bad check-in, not when choosing to try).',
++    'Language is the largest gain by segment: among the 15 whose first language is not English, trying went from 4 to 11. Dutch and Filipino speakers are still on English and still hesitate; those are the next two languages.',
++    'Distrust of AI does not move: 0 of 3 distrustful personas try A or B, because B is honest that AI writes the words. Skeptical people move most (4 → 8 try, 3 → 10 would pay or might). That is the segment the outcome pitch, the data line and the voice choice are for.',
++    'Over 65 barely moves (1 → 1 of 4 try). Larger text and someone to set it up, not a pitch, are what they ask for. Outside the 8 languages and the bigger text, B does nothing for this group.',
++    'Money stays the limit for students and the out-of-work. Yearly-first brings the price into the fair band ($3–6 a month) for most of the panel, but “free only” personas still do not pay: a student price is the next test.',
++    'Use stays within what the research says is real: about 3 sessions in week one on average, and 4 of 36 (11%) still using at day 30 for sure, against a category baseline of 3–5% of installs. B makes people try; it does not make them stay. Staying depends on the first session working, which no buyer agent can test.',
++    'Generator 2 holds together: its check finds 0 of 300 broken (generator 1: 144). Playing it still found 3 that read wrong (winter in Singapore, a 19-year-old hotel night manager, a retired man with a deadline), now listed for the next fix.',
++  ],
++  answers: [
++    a('P043', ['maybe', 'no', 'English and an account before her own session.'], 'yes', 'no', 'free', [0.5, 1.5, 3, 4.5], 'price',
++      'Rp69,000 is a week of lunches on a student allowance.',
++      'A student price around Rp29,000, or her campus paying.',
++      4, 3, 'maybe', ['language', 'no-account', 'offline-free', 'data-line'],
++      'Student in Medan on a low income, free only, patchy data. Bahasa, no sign-up and an offline session remove every reason she had not to try. Pain 7 is below the bar for paying from “free only”.',
++      'Kalau gratis dan bahasa Indonesia, saya pakai waktu pusing.',
++      [sc('first-open', 'pass', 'Bahasa, no account: straight into a session.'), sc('moment', 'pass', 'A headache after a tense moment; the offline session covers a dead data plan.'), sc('paywall', 'risk', 'The sixth session of the month is paid; replays stay free, which softens it.')]),
++    a('P276', ['maybe', 'maybe', 'Having to make an account first is a deal breaker.'], 'yes', 'yes', 'plus-yearly', [1.5, 3, 7, 10], 'trust',
++      'If it starts sounding like her therapist, she stops.',
++      'Already a yes. Keep the tone practical.',
++      3, 4, 'maybe', ['no-account', 'language', 'yearly-first'],
++      'High income, enthusiastic about AI, decides within a day; Rp399,000 a year is far inside her $10. The account wall was the only thing in the way, and B removes it.',
++      'Tanpa daftar dulu? Oke, saya coba sekarang.',
++      [sc('first-open', 'pass', 'No account, Bahasa.'), sc('moment', 'pass', 'The 3pm slump.'), sc('low-checkin', 'pass', 'Care and a link, not a pep talk.')]),
++    a('P087', ['maybe', 'no', 'English, no time, and she has given up on nagging apps.'], 'maybe', 'no', 'free', [0.5, 1, 2.5, 4], 'price',
++      'No job right now: free or nothing.',
++      'A three-minute panic session that works offline, and the free tier being enough.',
++      4, 2, 'maybe', ['language', 'offline-free', 'one-reminder'],
++      'Recently laid off, low tech comfort, panic attacks in crowds. Bahasa and one offline session help, but a text box is still a hurdle for her, and money decides payment.',
++      'Gratis saja. Saya tidak punya uang sekarang.',
++      [sc('first-open', 'risk', 'Low tech comfort: a blank sentence box is still hard.'), sc('moment', 'pass', 'Before a difficult conversation.'), sc('access', 'pass', 'Bahasa and plain words.')]),
++    a('P027', ['maybe', 'maybe', 'Voices irritate her and there are no reviews.'], 'yes', 'maybe', 'plus-monthly', [1.5, 3, 6, 9], 'trust',
++      'No reviews yet, and she reads them all.',
++      'Reviews from Indonesian users.',
++      3, 3, 'maybe', ['voice-control', 'language', 'outcome-pitch'],
++      'Night manager, high income, skeptical, irritated by voices and by spiritual language. Choosing the voice and turning the talking down meets her main objection; Rp69,000 meets her “under $5”. Reviews are what is left.',
++      'Kalau suaranya bisa saya pilih, saya coba.',
++      [sc('first-open', 'pass', 'Picks a voice before the first session.'), sc('moment', 'pass', 'Starting a hard task after lunch.'), sc('low-checkin', 'pass', 'Care without therapy talk.')]),
++    a('P108', ['maybe', 'no', '$9.99 in dollars, and she follows creators before deciding.'], 'maybe', 'maybe', 'free', [1, 2.5, 4.5, 7], 'trust',
++      'Would wait to see a creator she follows use it.',
++      'A Filipino creator she watches.',
++      3, 2, 'maybe', ['local-price', 'data-line'],
++      'Virtual assistant in Manila, works in English, very protective of data, thinks apps are expensive. ₱249 is inside her $5 and the data line answers her privacy worry; Filipino is not among the languages.',
++      'Mura na. Pero hintayin ko muna ang review ng sinusundan ko.',
++      [sc('first-open', 'pass', 'English is workable for her.'), sc('moment', 'pass', 'Afternoon focus.'), sc('privacy', 'pass', 'The data line answers “who reads it” before she types.')]),
++    a('P261', ['yes', 'maybe', 'Tries it; would want a yearly discount and no nagging.'], 'yes', 'yes', 'plus-yearly', [3, 6, 11, 16], 'notifications',
++      'One nag and she uninstalls.',
++      'Already a yes, as long as the one-reminder rule holds.',
++      3, 4, 'yes', ['one-reminder', 'no-account', 'yearly-first'],
++      'Retired, high income, high tech comfort, enthusiastic about AI. Her buy triggers are trying without an account and a yearly discount; B meets both.',
++      'No account, no nagging, a yearly price. That I can do.',
++      [sc('first-open', 'pass', 'No account.'), sc('moment', 'pass', 'A slow morning.'), sc('low-checkin', 'pass', 'Gentle care.')],
++      'Her struggle is feeling heavy “in winter”, in Singapore. Seasonal struggles should follow the climate.'),
++    a('P045', ['maybe', 'maybe', 'English and an account before trying.'], 'yes', 'maybe', 'free', [2, 4, 8, 12], 'notifications',
++      'On night shifts she needs it when she wakes at 3pm, not on a reminder schedule.',
++      'A creator she follows, and a French voice.',
++      3, 3, 'maybe', ['language', 'data-line', 'no-account'],
++      'Night shifts, would pay more if it works, but will not pay before trying or share data. B meets all three of her deal breakers.',
++      'En français et sans compte, d’accord.',
++      [sc('first-open', 'pass', 'French, no account.'), sc('moment', 'pass', 'Starting a task after lunch, her morning.'), sc('low-checkin', 'pass', 'Care and a link.')],
++      'A hotel night manager at 19, living with her parents. Seniority should follow age.'),
++    a('P034', ['yes', 'no', 'Enthusiastic, but €9.99 is beyond a student budget.'], 'yes', 'maybe', 'free', [1, 3, 5.5, 8], 'price',
++      'Even the yearly plan is a lot on a student budget.',
++      'A student price.',
++      3, 4, 'maybe', ['language', 'yearly-first', 'care-link'],
++      'Design student, recently bereaved, enthusiastic about AI, very protective of data. Spanish and €54.99 a year (about $5.40 a month) bring paying within reach.',
++      'Si hay precio de estudiante, lo pago.',
++      [sc('first-open', 'pass', 'Spanish, one sentence.'), sc('moment', 'pass', 'Starting a study block.'), sc('grief', 'risk', 'The care link helps; whether the tone is right after a loss is untested.')]),
++    a('P232', ['no', 'no', 'Leaves at the word “AI”.'], 'maybe', 'no', 'free', [1, 2.5, 5, 8], 'trust',
++      'Smaller print, same robot.',
++      'A library of human-written sessions as an option.',
++      4, 1, 'no', ['outcome-pitch'],
++      'Distrustful of AI. Leading with the outcome gets him to read on, but B still says AI writes the words, honestly, and that is the part he rejects.',
++      'You moved the word. It is still a machine.',
++      [sc('first-open', 'risk', 'He reads to the AI line and hesitates.'), sc('moment', 'risk', 'A slow morning, if he gets there.'), sc('privacy', 'pass', 'The data line is clear.')]),
++    a('P020', ['yes', 'no', 'Tries the free plan; free only, so pays nothing.'], 'yes', 'no', 'free', [1.5, 3.5, 6, 9], 'price',
++      'Free only, until it proves itself on three nights.',
++      'Three good nights, then £49.99 a year.',
++      3, 5, 'maybe', ['no-account', 'data-line'],
++      'Wakes at 3am, sleep quality 1, but free only, and pain 7 is below the bar. No account and the data line get him in; money keeps him on Free.',
++      'Prove it on three nights. Then we talk.',
++      [sc('first-open', 'pass', 'In bed, no account.'), sc('moment', 'pass', 'The 3am wake-up.'), sc('privacy', 'pass', 'The data line, before he types.')]),
++    a('P264', ['maybe', 'maybe', 'An account first is a deal breaker.'], 'yes', 'maybe', 'plus-yearly', [3, 6, 11, 16], 'voice',
++      'One fake-sounding voice and she is out.',
++      'Choosing the voice.',
++      3, 5, 'yes', ['no-account', 'language', 'voice-control', 'yearly-first'],
++      'Burnout, 4 hours of sleep, pain 8, would pay more if it clearly works and likes annual discounts. B removes her account deal breaker and lets her choose the voice.',
++      'Si la voz suena real, me quedo.',
++      [sc('first-open', 'pass', 'Spanish, no account.'), sc('moment', 'pass', 'Waking tired.'), sc('privacy', 'pass', 'Very protective; the data line answers it.')]),
++    a('P220', ['no', 'no', 'English, low tech comfort, no reviews.'], 'maybe', 'maybe', 'free', [2, 4, 7, 10], 'access',
++      'Still English for him, and small print; his grandson would have to help.',
++      'Dutch, larger text.',
++      3, 2, 'maybe', ['no-account', 'yearly-first', 'voice-control'],
++      'Retired teacher, struggling with sleep (pain 8), skeptical, very protective, low tech comfort. Dutch is not among the languages. No account and €54.99 a year (near his “under $5”) move him to maybe.',
++      'Als mijn kleinzoon het instelt, probeer ik het.',
++      [sc('first-open', 'risk', 'English and low tech comfort.'), sc('moment', 'pass', 'Lying awake.'), sc('privacy', 'pass', 'The data line.')]),
++    a('P035', ['yes', 'maybe', 'Tries it; $79 a year might do if the headaches ease.'], 'yes', 'maybe', 'free', [1, 2.5, 5, 7.5], 'price',
++      '$60 a year is still a lot for a student.',
++      'A student price around $29.99 a year.',
++      3, 4, 'maybe', ['voice-control', 'one-reminder', 'yearly-first'],
++      'Student with stress headaches (pain 8), irritated by voices and by nagging. Pain 8 plus his trigger, an annual discount, lifts paying from no to maybe.',
++      'Pick my own voice, no nagging, and a student deal? Maybe.',
++      [sc('first-open', 'pass', 'One sentence.'), sc('moment', 'pass', 'A headache after a tense moment.'), sc('paywall', 'pass', 'Replays stay free; the limit is clear.')]),
++    a('P136', ['maybe', 'no', 'An account first, and free only.'], 'yes', 'no', 'free', [0.5, 2, 4, 6], 'price',
++      'Free only on a factory wage.',
++      'Her employer paying for it.',
++      4, 2, 'no', ['no-account', 'one-reminder'],
++      'Factory technician, low income, skeptical, feels guilty when streaks break. No account and no streaks get her to try; she pays nothing herself.',
++      'Free is fine. I am not paying.',
++      [sc('first-open', 'pass', 'No account.'), sc('moment', 'pass', 'When the news gets too much.'), sc('access', 'pass', 'A Spanish voice and plain words.')]),
++    a('P008', ['maybe', 'no', 'Does not trust AI with feelings.'], 'maybe', 'maybe', 'plus-yearly', [2, 4, 8, 12], 'trust',
++      'Fine for meetings, not for feelings.',
++      'Framing it as a breathing tool before meetings.',
++      3, 3, 'maybe', ['data-line', 'outcome-pitch', 'yearly-first'],
++      'Consultant, high income, very protective, guilty about streaks. The data line and the outcome pitch help; $5 a month yearly meets her $5. She would use it for meetings, not for feelings.',
++      'Five minutes before a big call, sure. Not my feelings.',
++      [sc('first-open', 'pass', 'Tense before a call.'), sc('moment', 'pass', 'A crowded commute.'), sc('privacy', 'pass', 'The data line.')]),
++    a('P252', ['yes', 'no', 'Tries the free plan; $9.99 is out of reach.'], 'yes', 'maybe', 'free', [1, 2.5, 5, 7], 'price',
++      'Spending on calm when money is the worry feels backwards.',
++      'Under $4 a month.',
++      3, 3, 'maybe', ['yearly-first', 'voice-control', 'no-account'],
++      'Full-time parent on a low income, worried about money (pain 7), follows creators, hates fake voices and spiritual framing. B meets her deal breakers; $59.99 a year is the edge of what she could do.',
++      'Five a month, maybe. Ten, no.',
++      [sc('first-open', 'pass', 'No account.'), sc('moment', 'pass', 'A busy morning with the kids.'), sc('paywall', 'pass', 'Replays stay free.')]),
++    a('P139', ['no', 'no', 'Distrustful of AI.'], 'no', 'no', 'none', [0.5, 1.5, 3, 5], 'trust',
++      'Still an AI talking about his headaches.',
++      'Human-made sessions, with captions.',
++      4, 0, 'no', [],
++      'Distrustful, free only, hard of hearing. Nothing in B answers distrust, and captions are not in the offer.',
++      'No.',
++      [sc('first-open', 'fail', 'Leaves at the AI line.'), sc('moment', 'risk', 'Never reaches it.'), sc('privacy', 'pass', 'The data line is clear, for what it is worth.')]),
++    a('P200', ['no', 'no', 'Low tech comfort, and an account wall.'], 'maybe', 'maybe', 'free', [2, 4, 8, 12], 'access',
++      'Small text and too many choices.',
++      'Larger text, and his therapist recommending it.',
++      2, 1, 'maybe', ['no-account', 'voice-control', 'data-line'],
++      'Retired nurse, low tech comfort, sensitive to sound, very protective. No account, no music and the data line help; his access needs are not met. Low confidence: not much in the profile explains his phone problem.',
++      'If my therapist says so, I will try it.',
++      [sc('first-open', 'risk', 'Low tech comfort.'), sc('moment', 'risk', 'The profile’s “deadline tomorrow” does not fit him.'), sc('privacy', 'pass', 'The data line.')],
++      'Retired, with the trigger “a deadline tomorrow”.'),
++    a('P187', ['yes', 'no', 'Tries it; would not pay without knowing where his data goes.'], 'yes', 'maybe', 'plus-monthly', [2, 4, 8, 12], 'trust',
++      'He prefers a person; this is a supplement.',
++      'His Whoop data showing a difference.',
++      3, 3, 'maybe', ['language', 'data-line'],
++      'Project manager, high income, skeptical, follows creators. Portuguese and the data line meet his objections; R$29.90 is cheap for him.',
++      'Em português e sem vender meus dados? Vou testar.',
++      [sc('first-open', 'pass', 'Portuguese.'), sc('moment', 'pass', 'Sunday evening.'), sc('low-checkin', 'pass', 'Care and a link.')]),
++    a('P076', ['yes', 'maybe', 'Curious; wants a real voice.'], 'yes', 'yes', 'plus-monthly', [2, 4, 8, 12], 'voice',
++      'The voice must sound real in Portuguese.',
++      'Already a yes.',
++      3, 5, 'yes', ['language', 'voice-control'],
++      'Nurse on nights, high income, would pay if it works. A Portuguese voice he can choose and sessions for sleeping in the day are what he wanted.',
++      'Uma voz em português que não pareça robô: pago.',
++      [sc('first-open', 'pass', 'Portuguese, after a shift.'), sc('moment', 'pass', 'Daytime sleep.'), sc('low-checkin', 'pass', 'Care and a link.')]),
++    a('P286', ['maybe', 'maybe', 'English, and a recent loss.'], 'yes', 'maybe', 'free', [1.5, 3.5, 6.5, 10], 'trust',
++      'After his loss he needs something gentle, not cheerful.',
++      'A friend using it; a tone that knows about grief.',
++      3, 4, 'maybe', ['language', 'care-link', 'one-reminder'],
++      'Single parent, recently bereaved, wakes at 3am (pain 8), enthusiastic, would pay more if it works. Portuguese and the care link matter most to him.',
++      'Preciso de algo gentil agora.',
++      [sc('first-open', 'pass', 'Portuguese.'), sc('moment', 'pass', 'The 3am wake-up.'), sc('grief', 'risk', 'The care link is there; the tone after a loss is untested.')]),
++    a('P241', ['no', 'no', 'An account first is his deal breaker.'], 'yes', 'maybe', 'free', [2, 4, 7, 10], 'habit',
++      'He has given up on apps with too much choice before.',
++      'A yearly plan under R$200.',
++      3, 3, 'maybe', ['no-account', 'language'],
++      'Architect caring for a parent, enthusiastic, follows creators. No account and Portuguese take away both reasons he had to say no.',
++      'Sem conta e em português. Pode ser.',
++      [sc('first-open', 'pass', 'No account.'), sc('moment', 'pass', 'Wired after a tense moment.'), sc('access', 'pass', 'Portuguese.')]),
++    a('P210', ['yes', 'maybe', 'Tries it; English and data worries hold back paying.'], 'yes', 'maybe', 'plus-monthly', [2, 4.5, 8, 12], 'trust',
++      'Sessions must end when they say they will.',
++      'The length promise kept.',
++      3, 4, 'maybe', ['language', 'data-line', 'one-reminder'],
++      'Recovering from burnout (pain 8), would pay more if it works, guilty about streaks. Portuguese, the data line and no streaks answer her.',
++      'Se terminar na hora certa, eu fico.',
++      [sc('first-open', 'pass', 'Portuguese.'), sc('moment', 'pass', 'Tense after a hard moment.'), sc('privacy', 'pass', 'The data line.')]),
++    a('P091', ['no', 'no', 'English and an account first.'], 'maybe', 'maybe', 'free', [1.5, 3, 5.5, 8], 'access',
++      'A friend must show him first.',
++      'A friend.',
++      3, 2, 'maybe', ['language', 'no-account', 'voice-control'],
++      'Retired nurse at 68, prefers people, would pay more if it works. Portuguese and no account bring him from no to maybe; he still needs someone to show him.',
++      'Se um amigo me mostrar, eu uso.',
++      [sc('first-open', 'risk', 'At 68 he would ask someone to set it up.'), sc('moment', 'pass', 'Waking tired.'), sc('access', 'pass', 'Portuguese.')]),
++    a('P262', ['maybe', 'no', 'An account first, and $9.99.'], 'yes', 'no', 'free', [0.5, 2, 4, 6], 'price',
++      'A$12.99 a month on a student budget.',
++      'A student price, or his employer paying.',
++      4, 2, 'no', ['no-account', 'local-price'],
++      'Design student, low income, free only, compares in a spreadsheet. He tries B; he does not pay.',
++      'Free tier, sure.',
++      [sc('first-open', 'pass', 'No account.'), sc('moment', 'pass', 'After a poor night.'), sc('paywall', 'pass', 'The limit is clear.')]),
++    a('P015', ['yes', 'maybe', 'Tries it for sleep; skeptical about paying.'], 'yes', 'maybe', 'plus-monthly', [2, 5, 9, 13], 'trust',
++      'No therapy talk.',
++      'Practical sessions only.',
++      3, 4, 'maybe', ['outcome-pitch', 'local-price'],
++      'Struggling with sleep (pain 8), can afford $10, skeptical, deletes fast. The outcome pitch and an Australian price help.',
++      'Just help me sleep.',
++      [sc('first-open', 'pass', 'In bed.'), sc('moment', 'pass', 'Scrolling at night.'), sc('low-checkin', 'pass', 'Care, not therapy.')]),
++    a('P036', ['yes', 'no', 'Tries it; $9.99 without a local price is too much.'], 'yes', 'maybe', 'plus-yearly', [1.5, 3.5, 6.5, 9.5], 'price',
++      'Single income, with a baby coming.',
++      'The yearly plan, or her employer.',
++      3, 4, 'maybe', ['no-account', 'local-price', 'yearly-first', 'data-line'],
++      'Shift worker, single parent, pregnant, sleep 4.5 hours (pain 9). A$74.99 a year is under her $5 a month. Breathing guidance in pregnancy needs the safety notes the 2025 judge rules ask for.',
++      'Yearly, under five a month? I can do that.',
++      [sc('first-open', 'pass', 'No account.'), sc('moment', 'risk', 'Breathing exercises need pregnancy-safe guidance.'), sc('privacy', 'pass', 'The data line.')]),
++    a('P259', ['yes', 'no', 'Free only.'], 'yes', 'no', 'free', [1, 2.5, 5, 7.5], 'price',
++      'Free only.',
++      'Her employer paying.',
++      4, 3, 'maybe', ['local-price'],
++      'Software engineer, single parent, enthusiastic, free only. Tries either offer; pays for neither.',
++      'I will use the free one before meetings.',
++      [sc('first-open', 'pass', 'One sentence.'), sc('moment', 'pass', 'Before a difficult call.'), sc('low-checkin', 'pass', 'Care and a link.')]),
++    a('P017', ['no', 'maybe', 'An account first is his deal breaker; he could afford it.'], 'yes', 'maybe', 'plus-yearly', [2, 4.5, 9, 13], 'trust',
++      'He wants reviews from men his age.',
++      'Reviews.',
++      3, 5, 'maybe', ['no-account', 'data-line', 'local-price'],
++      'Wakes at 3am, 4 hours of sleep (pain 9), can afford $10, skeptical, reads every review. B removes his account deal breaker.',
++      'If it gets me back to sleep, I will pay for the year.',
++      [sc('first-open', 'pass', 'No account.'), sc('moment', 'pass', 'The 3am wake-up.'), sc('low-checkin', 'pass', 'Care and a link.')]),
++    a('P001', ['yes', 'maybe', 'Would pay if the voice is right.'], 'yes', 'yes', 'plus-yearly', [3, 6, 12, 18], 'voice',
++      'Nothing left once she can choose the voice.',
++      'Already a yes.',
++      4, 4, 'yes', ['voice-control'],
++      'High income, anxious, would spend on something that works. Her only deal breaker was the voice.',
++      'I picked a voice I like. Done.',
++      [sc('first-open', 'pass', 'Chooses the voice first.'), sc('moment', 'pass', 'An email from the boss.'), sc('low-checkin', 'pass', 'Gentle answer.')]),
++    a('P168', ['yes', 'no', 'Tries the free plan; $9.99 in dollars is out of reach.'], 'yes', 'maybe', 'plus-yearly', [1, 2.5, 5, 8], 'trust',
++      'Does AI really help a 3am wake-up?',
++      'Three good nights.',
++      3, 4, 'maybe', ['local-price', 'no-account', 'yearly-first'],
++      'UX researcher in Abuja, skeptical, can afford up to $10 in dollars; ₦25,000 a year is far below. Her triggers (no account, an annual discount) are both met.',
++      'At that price, if it works, yes.',
++      [sc('first-open', 'pass', 'No account.'), sc('moment', 'pass', 'The 3am wake-up.'), sc('low-checkin', 'pass', 'Care and a link.')]),
++    a('P092', ['maybe', 'no', 'Coping fine; $9.99 and he will not pay first.'], 'maybe', 'maybe', 'free', [1.5, 3, 5.5, 8], 'habit',
++      'He is fine most days and would forget it.',
++      'A friend, and offline sessions for load-shedding.',
++      2, 1, 'no', ['local-price', 'offline-free'],
++      'Coping (pain 4), caring for a parent, enthusiastic, very protective. R89 meets his $5. Low need keeps him a maybe.',
++      'Nice to have. I might forget it.',
++      [sc('first-open', 'pass', 'One sentence.'), sc('moment', 'risk', 'Low need: he may never come back for it.'), sc('privacy', 'pass', 'The data line.')]),
++    a('P216', ['maybe', 'no', 'Privacy, and his therapist is the real help.'], 'yes', 'no', 'free', [1.5, 3, 6, 9], 'trust',
++      'His therapist is the real help; this is extra.',
++      'His therapist recommending it.',
++      3, 2, 'maybe', ['data-line', 'offline-free'],
++      'Account manager on a high income but free only, sees a therapist, careful with data, patchy data. Tries B; does not pay.',
++      'Fine as an extra. Not paying.',
++      [sc('first-open', 'pass', 'The data line first.'), sc('moment', 'pass', 'The 3pm slump.'), sc('low-checkin', 'pass', 'Care and a link.')]),
++    a('P294', ['no', 'no', 'Distrustful of AI.'], 'no', 'no', 'none', [1, 2.5, 5, 8], 'trust',
++      'No matter where the word goes, it is still AI.',
++      'His therapist vouching for it.',
++      4, 0, 'no', [],
++      'Distrustful of AI, dislikes spiritual language. B is honest that AI writes the words, so his answer does not change.',
++      'Still a machine.',
++      [sc('first-open', 'fail', 'Leaves at the AI line.'), sc('moment', 'risk', 'Never reaches it.'), sc('privacy', 'pass', 'Relaxed about data.')]),
++    a('P127', ['maybe', 'no', '$9.99 in dollars, and fake-sounding voices.'], 'yes', 'maybe', 'free', [1, 2.5, 5, 7.5], 'voice',
++      'The voice must sound like a person, not an advert.',
++      'A friend, and choosing the voice.',
++      3, 4, 'maybe', ['local-price', 'voice-control', 'offline-free'],
++      'Lies awake (pain 7, sleep quality 1), skeptical, asks one friend, patchy data. ₦4,500 and voice choice move her.',
++      'If the voice is real and the price is in naira, I will try it.',
++      [sc('first-open', 'pass', 'One sentence.'), sc('moment', 'pass', 'Waking in the night, offline.'), sc('low-checkin', 'pass', 'Care and a link.')]),
++    a('P109', ['maybe', 'no', 'Skeptical, compares, and $9.99.'], 'maybe', 'maybe', 'free', [1.5, 3, 6, 9], 'trust',
++      'He wants to compare it with the free ones first.',
++      'A week where his family notices he is calmer.',
++      3, 2, 'maybe', ['local-price', 'one-reminder'],
++      'Project manager who snaps at family after long days (pain 7), skeptical, compares in a spreadsheet, guilty about streaks. R89 and no streaks help.',
++      'Let me compare it first.',
++      [sc('first-open', 'pass', 'One sentence.'), sc('moment', 'pass', 'Before a difficult conversation.'), sc('lapse', 'pass', 'No streak to lose.')]),
++  ],
++}
+diff --git a/src/admin/data/buyerRuns.test.ts b/src/admin/data/buyerRuns.test.ts
+index 75f255b..fed1185 100644
+--- a/src/admin/data/buyerRuns.test.ts
++++ b/src/admin/data/buyerRuns.test.ts
+@@ -1,14 +1,16 @@
+ import { describe, expect, it } from 'vitest'
+-import { BUYER_RUNS, EXCLUDED, countVerdicts, drawStratified, priceRange, scenarioCounts, themeCounts, wellnessOf } from './buyerRuns'
+-import { drawPanel, generatePersonas } from './personas'
++import { BUYER_RUNS, EXCLUDED, countVerdicts, drawStratified, personasOf, priceRange, scenarioCounts, themeCounts, wellnessOf } from './buyerRuns'
++import { V3_CHANGES } from './buyerRunV3'
++import { drawPanel, generatePersonas, incoherence } from './personas'
+ 
+ describe('buyer agent runs', () => {
+-  const all = generatePersonas()
++  const all = generatePersonas(undefined, undefined, 1)
+   const byId = new Map(all.map((p) => [p.id, p]))
+ 
+   it('answers for exactly the panel the seed draws', () => {
+     for (const run of BUYER_RUNS) {
+-      const drawn = (run.version === 1 ? drawPanel(all, run.panel.size, run.panel.seed) : drawStratified(all, run.panel.seed)).map((p) => p.id)
++      const pool = [...personasOf(run).values()]
++      const drawn = (run.version === 1 ? drawPanel(pool, run.panel.size, run.panel.seed) : run.version === 2 ? drawStratified(pool, run.panel.seed) : drawStratified(pool, run.panel.seed, [])).map((p) => p.id)
+       expect(run.panel.personaIds, run.id).toEqual(drawn)
+       expect(run.answers.map((a) => a.personaId)).toEqual(run.panel.personaIds)
+     }
+@@ -17,7 +19,7 @@ describe('buyer agent runs', () => {
+   it('walks each persona’s own scenarios, with sane prices', () => {
+     for (const run of BUYER_RUNS)
+       for (const a of run.answers) {
+-        const p = byId.get(a.personaId)
++        const p = personasOf(run).get(a.personaId)
+         expect(p, a.personaId).toBeDefined()
+         expect(a.scenarios.map((s) => s.id)).toEqual(p!.profile.testing.scenarios.map((s) => s.id))
+         const { tooCheap, bargain, expensive, tooExpensive } = a.prices
+@@ -59,4 +61,26 @@ describe('buyer agent runs', () => {
+       expect(r.criteria.length).toBeGreaterThan(4)
+     })
+   })
++
++  it('runs v3 as an A/B on generator 2, with every change traced', () => {
++    const run = BUYER_RUNS.find((r) => r.version === 3)!
++    expect(run.generator).toBe(2)
++    expect(run.references?.length).toBeGreaterThan(2)
++    const ps = run.answers.map((a) => personasOf(run).get(a.personaId)!)
++    expect(new Set(ps.map((p) => p.region)).size).toBe(6)
++    expect(new Set(ps.map((p) => p.ageBand)).size).toBe(6)
++    for (const p of ps) expect(incoherence(p), p.id).toEqual([])
++    const lv = (v: string) => (v === 'yes' ? 2 : v === 'maybe' ? 1 : 0)
++    for (const a of run.answers) {
++      expect(a.control, a.personaId).toBeDefined()
++      for (const c of a.movedBy ?? []) expect(Object.keys(V3_CHANGES)).toContain(c)
++      if (lv(a.tries) > lv(a.control!.tries) || lv(a.pays) > lv(a.control!.pays)) expect(a.movedBy!.length, a.personaId).toBeGreaterThan(0)
++    }
++    const control = { yes: 0, maybe: 0, no: 0 }
++    for (const a of run.answers) control[a.control!.tries] += 1
++    expect(control).toEqual({ yes: 13, maybe: 15, no: 8 })
++    expect(countVerdicts(run.answers, 'tries')).toEqual({ yes: 25, maybe: 9, no: 2 })
++    expect(countVerdicts(run.answers, 'pays')).toEqual({ yes: 4, maybe: 22, no: 10 })
++    expect(run.answers.filter((a) => a.day30 === 'yes').length / run.answers.length).toBeLessThan(1 / 8)
++  })
+ })
+diff --git a/src/admin/data/buyerRuns.ts b/src/admin/data/buyerRuns.ts
+index b6cc80c..ab236ee 100644
+--- a/src/admin/data/buyerRuns.ts
++++ b/src/admin/data/buyerRuns.ts
+@@ -10,7 +10,8 @@
+  */
+ 
+ import { RUN_V2 } from './buyerRunV2'
+-import type { Persona } from './personas'
++import { RUN_V3, V3_PRICES } from './buyerRunV3'
++import { generatePersonas, type Generator, type Persona } from './personas'
+ 
+ export type Verdict = 'yes' | 'maybe' | 'no'
+ export type Outcome = 'pass' | 'risk' | 'fail'
+@@ -66,6 +67,16 @@ export interface BuyerAnswer {
+   week?: number
+   /** v2+: still using it at day 30. */
+   day30?: Verdict
++  /** v3+: the same persona's answer to the control offer (A). */
++  control?: { tries: Verdict; pays: Verdict; why: string }
++  /** v3+: the proposed changes that changed this answer. */
++  movedBy?: string[]
++}
++
++export interface Reference {
++  title: string
++  where: string
++  used: string
+ }
+ 
+ export interface Criterion {
+@@ -80,10 +91,16 @@ export interface BuyerRun {
+   title: string
+   date: string
+   kind: 'demo' | 'run'
++  /** The persona generator the panel came from; earlier runs stay on the one they were played on. */
++  generator: Generator
+   /** How the run was made, said plainly. */
+   method: string
+   panel: { seed: number; size: number; personaIds: string[] }
+   stimulus: { name: string; pitch: string; offer: string[]; priceUsd: number }
++  /** v3+: the offer the stimulus is compared against. */
++  control?: { name: string; offer: string[] }
++  /** v3+: what the agent read before answering. */
++  references?: Reference[]
+   /** How the run was set up, in plain words, for someone who was not there. */
+   criteria: Criterion[]
+   /** The instructions the agent followed, so a run can be repeated. */
+@@ -119,6 +136,7 @@ export const BUYER_RUNS: BuyerRun[] = [
+     title: 'Demo 1 · Aurelia Plus at $9.99',
+     date: '2026-11-19',
+     kind: 'demo',
++    generator: 1,
+     method:
+       'One agent played ten personas in turn, in one session, from each persona’s export. No backend, no live model call from the app. The panel was drawn from the 300 with seed 2026.',
+     panel: {
+@@ -140,6 +158,7 @@ export const BUYER_RUNS: BuyerRun[] = [
+       { label: 'How the agent ran', value: 'One agent played each persona in turn, in one session, reading the persona’s full profile, test data and role-play prompt. Instructions below.' },
+       { label: 'What each answered', value: 'Try, pay, which plan, four price answers, the main objection, what would flip it, confidence, reasoning, a quote, and pass / risk / fail on their three test cases.' },
+       { label: 'Not taken into account', value: 'Region and local price, language, connection, how they are doing (wellness), usage after the first week. Added in v2.' },
++      { label: 'Persona generator', value: 'Generator 1, the original. Generator 2, which fixes the incoherence these runs found, came with v3; this run stays on the people it was played on, so its answers still match their profiles.' },
+       { label: 'Read it as', value: 'A demo of the format. Ten people in one session cannot tell segments apart.' },
+     ],
+     instructions: BUYER_INSTRUCTIONS,
+@@ -348,6 +367,7 @@ export const BUYER_RUNS: BuyerRun[] = [
+     ],
+   },
+   RUN_V2,
++  RUN_V3,
+ ]
+ 
+ /* ------------------------------------------------------- Panels and prices */
+@@ -374,10 +394,10 @@ function rng(seed: number) {
+  * nobody in it takes another persona from the same region, so every region
+  * still has six. Leaves out EXCLUDED.
+  */
+-export function drawStratified(pool: Persona[], seed: number): Persona[] {
++export function drawStratified(pool: Persona[], seed: number, exclude: string[] = EXCLUDED): Persona[] {
+   const r = rng(seed)
+   const pick = (list: Persona[]) => list[Math.floor(r() * list.length)]
+-  const ok = pool.filter((p) => !EXCLUDED.includes(p.id))
++  const ok = pool.filter((p) => !exclude.includes(p.id))
+   const out: Persona[] = []
+   for (const region of REGIONS) {
+     let short = 0
+@@ -408,6 +428,11 @@ const LOCAL_PLUS: Record<string, { label: string; usd: number }> = {
+   Japan: { label: '¥1,500', usd: 9.9 },
+ }
+ 
++/** The Plus price a persona saw in a given run. */
++export function priceSeen(run: Pick<BuyerRun, 'version'>, country: string) {
++  return run.version >= 3 ? (V3_PRICES[country] ?? { label: '$9.99 · $59.99 a year', usd: 9.99 }) : localPlus(country)
++}
++
+ export function localPlus(country: string) {
+   return LOCAL_PLUS[country] ?? { label: '$9.99 (no local price)', usd: 9.99 }
+ }
+@@ -424,6 +449,18 @@ export function wellnessOf(p: Persona) {
+ 
+ export const WELLNESS_LABEL: Record<WellnessLevel, string> = { struggling: 'Struggling', strained: 'Strained', coping: 'Coping' }
+ 
++const POOLS = new Map<Generator, Map<string, Persona>>()
++
++/** The personas a run was played on, by id. */
++export function personasOf(run: Pick<BuyerRun, 'generator'>): Map<string, Persona> {
++  let m = POOLS.get(run.generator)
++  if (!m) {
++    m = new Map(generatePersonas(undefined, undefined, run.generator).map((p) => [p.id, p]))
++    POOLS.set(run.generator, m)
++  }
++  return m
++}
++
+ /* ------------------------------------------------------------------ Tallies */
+ 
+ const median = (values: number[]): number => {
+diff --git a/src/admin/data/personas.test.ts b/src/admin/data/personas.test.ts
+index f36b5d7..9c846d2 100644
+--- a/src/admin/data/personas.test.ts
++++ b/src/admin/data/personas.test.ts
+@@ -1,6 +1,6 @@
+ import { describe, expect, it } from 'vitest'
+ import { INITIAL_JOURNEY } from './userJourney'
+-import { whenPhrase, PERSONA_COUNT, distribution, drawPanel, generatePersonas, personaPrompt } from './personas'
++import { CURRENT_GENERATOR, whenPhrase, PERSONA_COUNT, distribution, drawPanel, generatePersonas, incoherence, personaPrompt } from './personas'
+ 
+ describe('personas', () => {
+   const all = generatePersonas()
+@@ -86,4 +86,14 @@ describe('personas', () => {
+     expect(prompt).toContain(all[0].name)
+     expect(prompt).toContain('synthetic research persona')
+   })
++
++  it('makes generator 2 coherent, and keeps generator 1 as it was', () => {
++    expect(CURRENT_GENERATOR).toBe(2)
++    for (const p of all) expect(incoherence(p), p.id).toEqual([])
++    const first = generatePersonas(PERSONA_COUNT, undefined, 1)
++    expect(first.filter((p) => incoherence(p).length).length).toBeGreaterThan(100)
++    // Runs v1 and v2 were played on these people; they must not change.
++    expect(first.find((p) => p.id === 'P254')?.name).toBe('Rafael Silva')
++    expect(first.find((p) => p.id === 'P243')?.occupation).toBe('Parent on leave')
++  })
+ })
+diff --git a/src/admin/data/personas.ts b/src/admin/data/personas.ts
+index b8b7e6a..dce694d 100644
+--- a/src/admin/data/personas.ts
++++ b/src/admin/data/personas.ts
+@@ -296,7 +296,7 @@ const SOCIAL = ['WhatsApp', 'Instagram', 'TikTok', 'YouTube', 'Facebook', 'X', '
+ 
+ const hhmm = (h: number, m = 0) => `${String(((h % 24) + 24) % 24).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+ 
+-function makeDay(r: Rand, work: WorkPattern, household: string, goal: GoalId, bed: number, wake: number, coping: string[]): { time: string; what: string }[] {
++function makeDay(r: Rand, work: WorkPattern, household: string, goal: GoalId, bed: number, wake: number, coping: string[], gen: Generator = 1): { time: string; what: string }[] {
+   const kids = /kids|teenagers|single parent/.test(household)
+   const start: Record<WorkPattern, string> = {
+     office: 'commutes to the office',
+@@ -305,7 +305,7 @@ function makeDay(r: Rand, work: WorkPattern, household: string, goal: GoalId, be
+     shift: 'starts a shift that changes every week',
+     'self-employed': 'opens up and deals with whatever comes in',
+     student: 'lectures, library, part-time job',
+-    caregiver: 'appointments, meals, the school run',
++    caregiver: gen >= 2 && !kids ? 'appointments, meals and medication' : 'appointments, meals, the school run',
+     'between jobs': 'applications and a lot of waiting',
+     retired: 'a slow start, errands, a walk',
+   }
+@@ -434,11 +434,52 @@ function makeTesting(r: Rand, x: TestingInput): Testing {
+   return { jobs, pain, firstSentence: first, spendNow, alternatives, buyTriggers: some(r, BUY_TRIGGERS, 2, 2), objections, accessibility, connectivity, scenarios }
+ }
+ 
++/**
++ * Generator versions (U103). 1 is the original; buyer agent runs v1 and v2
++ * were played on it and stay pinned to it. 2 fixes what those runs found:
++ * stressors, struggles and triggers that do not fit the person's life,
++ * occupations that do not fit the age or household, income that does not
++ * fit the job, and spending that contradicts willingness to pay.
++ */
++export type Generator = 1 | 2
++export const CURRENT_GENERATOR: Generator = 2
++
++const WORKING: WorkPattern[] = ['office', 'hybrid', 'remote', 'shift', 'self-employed']
++const HIGH_PAY = ['HR business partner', 'Lawyer', 'Software engineer', 'Consultant', 'Architect', 'Bank analyst', 'Project manager', 'Product designer', 'Data analyst', 'Marketing manager']
++const LOW_PAY = ['Customer support agent', 'Virtual assistant', 'Hairdresser', 'Ride-hailing driver', 'Airline cabin crew', 'Warehouse supervisor', 'Factory technician', 'Retail manager', 'Carer for a parent', 'Carer for a partner']
++
++function fitsStruggle(s: string, work: WorkPattern, household: string, age: number) {
++  const kids = /young kids|single parent/.test(household)
++  if (s === 'sleeps lightly since the baby arrived') return kids && age >= 20 && age <= 45
++  if (s === 'shift work has broken their sleep rhythm') return work === 'shift'
++  if (s === 'cannot study for more than ten minutes') return work === 'student'
++  if (s === 'is easily distracted in an open-plan office' || s === 'gets tense before meetings and calls') return work === 'office' || work === 'hybrid'
++  if (s === 'feels foggy after weeks of overwork' || s === 'struggles to switch off from work') return WORKING.includes(work)
++  if (s === 'snaps at family after long days') return !/alone|flatmates/.test(household)
++  if (s === 'is drained after caring for others all day') return work === 'caregiver' || work === 'shift' || /kids|cares for|single parent/.test(household)
++  return true
++}
++
++function fitsTrigger(t: string, work: WorkPattern, household: string) {
++  if (t === 'an email from the boss' || t === 'after a long meeting day' || t === 'the start of a work block') return WORKING.includes(work) || work === 'student'
++  if (t === 'a busy morning with kids') return /kids|single parent|teenagers/.test(household)
++  if (t === 'end of a long shift') return work === 'shift'
++  if (t === 'a crowded commute') return ['office', 'hybrid', 'shift', 'student'].includes(work)
++  return true
++}
++
++function fitsStressor(x: string, work: WorkPattern) {
++  if (x === 'workload and long hours') return work !== 'retired' && work !== 'between jobs'
++  if (x === 'job insecurity') return WORKING.includes(work) || work === 'between jobs'
++  if (x === 'a long commute') return ['office', 'hybrid', 'shift', 'student'].includes(work)
++  return true
++}
++
+ function ageBand(age: number) {
+   return age < 25 ? '18–24' : age < 35 ? '25–34' : age < 45 ? '35–44' : age < 55 ? '45–54' : age < 65 ? '55–64' : '65+'
+ }
+ 
+-function makePersona(r: Rand, n: number): Persona {
++function makePersona(r: Rand, n: number, gen: Generator = 1): Persona {
+   const place = weighted(r, PLACES.map((p) => [p, p.weight] as const))
+   const gender = weighted<Gender>(r, [['woman', 52], ['man', 44], ['non-binary', 4]])
+   const first = pick(r, gender === 'woman' ? place.women : gender === 'man' ? place.men : place.neutral)
+@@ -452,18 +493,21 @@ function makePersona(r: Rand, n: number): Persona {
+         ? weighted(r, [['retired', 80], ['caregiver', 10], ['self-employed', 10]])
+         : weighted(r, [['office', 20], ['hybrid', 22], ['remote', 12], ['shift', 14], ['self-employed', 12], ['student', clamped < 30 ? 8 : clamped < 40 ? 1 : 0], ['caregiver', 7], ['between jobs', 5], ['retired', clamped > 58 ? 10 : 0]])
+   const household =
+-    clamped < 26
++    gen >= 2 && workPattern === 'student'
++      ? pick(r, ['lives with parents', 'flatmates', 'lives alone', 'with a partner'])
++      : clamped < 26
+       ? pick(r, ['lives with parents', 'flatmates', 'lives alone', 'with a partner'])
+       : clamped >= 66
+         ? pick(r, ['with a partner', 'lives alone', 'lives with adult children'])
+         : workPattern === 'caregiver'
+           ? pick(r, ['partner and young kids', 'single parent', 'cares for a parent at home'])
+           : weighted(r, [['lives alone', 20], ['with a partner', 22], ['partner and young kids', 22], ['partner and teenagers', 12], ['single parent', 9], ['flatmates', 10], ['cares for a parent at home', 5]] as const)
+-  const income = workPattern === 'student' || workPattern === 'between jobs' ? weighted(r, [['low', 80], ['middle', 20]] as const) : weighted(r, [['low', 25], ['middle', 50], ['high', 25]] as const)
++  let income = workPattern === 'student' || workPattern === 'between jobs' ? weighted(r, [['low', 80], ['middle', 20]] as const) : weighted(r, [['low', 25], ['middle', 50], ['high', 25]] as const)
+ 
+   const goal = weighted<GoalId>(r, [['sleep', 25], ['calm', 22], ['focus', 15], ['clarity', 12], ['regulate', 14], ['energy', 12]])
+-  const struggle = workPattern === 'shift' && goal === 'sleep' ? 'shift work has broken their sleep rhythm' : pick(r, STRUGGLES[goal])
+-  const triggers = some(r, TRIGGERS[goal].filter((t) => workPattern === 'student' || t !== 'exam season'), 1, 2)
++  const strugglePool = gen >= 2 ? STRUGGLES[goal].filter((x) => fitsStruggle(x, workPattern, household, clamped)) : STRUGGLES[goal]
++  const struggle = workPattern === 'shift' && goal === 'sleep' ? 'shift work has broken their sleep rhythm' : pick(r, strugglePool.length ? strugglePool : STRUGGLES[goal])
++  const triggers = some(r, TRIGGERS[goal].filter((t) => (workPattern === 'student' || t !== 'exam season') && (gen < 2 || fitsTrigger(t, workPattern, household))), 1, 2)
+ 
+   const moments = new Set(GOAL_MOMENTS[goal])
+   if (['office', 'hybrid', 'student'].includes(workPattern) && r() < 0.6) moments.add(r() < 0.5 ? 'c1' : 'e4')
+@@ -479,7 +523,10 @@ function makePersona(r: Rand, n: number): Persona {
+   const wearable = income === 'high' ? pick(r, ['Apple Watch', 'Oura', 'Whoop', 'Garmin', 'none']) : weighted(r, [['none', 60], ['Apple Watch', 15], ['Fitbit', 15], ['Garmin', 10]] as const)
+ 
+   const flags: string[] = []
+-  if (r() < 0.32) flags.push(pick(r, FLAGS))
++  if (r() < 0.32) {
++    const flagPool = gen >= 2 ? FLAGS.filter((f) => (f !== 'pregnant' || (gender === 'woman' && clamped <= 45)) && (f !== 'new parent' || (clamped <= 50 && household !== 'lives alone')) && (f !== 'menopause symptoms' || (gender === 'woman' && clamped >= 42 && clamped <= 60)) && (f !== 'night shift worker' || workPattern === 'shift')) : FLAGS
++    flags.push(pick(r, flagPool))
++  }
+   if (workPattern === 'shift' && r() < 0.5 && !flags.includes('night shift worker')) flags.push('night shift worker')
+   if (place.language !== 'English' && r() < 0.35 && !flags.includes('reads English as a second language')) flags.push('reads English as a second language')
+ 
+@@ -503,7 +550,7 @@ function makePersona(r: Rand, n: number): Persona {
+   const hoursRaw = ((wakeHour - bedHour + 24) % 24) - (goal === 'sleep' ? 1.5 + r() : r() * 0.8)
+   const hours = Math.max(4, Math.round(hoursRaw * 2) / 2)
+   const quality = (goal === 'sleep' ? weighted(r, [[1, 30], [2, 50], [3, 20]] as const) : weighted(r, [[2, 20], [3, 50], [4, 25], [5, 5]] as const)) as 1 | 2 | 3 | 4 | 5
+-  const stressors = some(r, STRESSORS.filter((x) => workPattern === 'student' || x !== 'exams and grades'), 2, 3)
++  const stressors = some(r, STRESSORS.filter((x) => (workPattern === 'student' || x !== 'exams and grades') && (gen < 2 || fitsStressor(x, workPattern))), 2, 3)
+   if (workPattern === 'student' && !stressors.includes('exams and grades')) stressors[0] = 'exams and grades'
+   if (household.includes('cares for') && !stressors.includes('caring for someone')) stressors[0] = 'caring for someone'
+   const firstName = first
+@@ -525,7 +572,11 @@ function makePersona(r: Rand, n: number): Persona {
+   const they = gender === 'woman' ? 'She' : gender === 'man' ? 'He' : 'They'
+   const theyVerb = (v: string, plural: string) => (gender === 'non-binary' ? plural : v)
+   const occupationText = OCCUPATIONS[workPattern]
+-  const occupationPick = pick(r, occupationText)
++  let occupationPick = pick(r, occupationText)
++  if (gen >= 2 && workPattern === 'caregiver')
++    occupationPick = household === 'cares for a parent at home' ? 'Carer for a parent' : clamped >= 60 ? 'Carer for a partner' : /kids|single parent/.test(household) ? (clamped < 45 ? occupationPick.replace('Carer for a parent', 'Full-time parent') : 'Full-time parent') : 'Carer for a partner'
++  if (gen >= 2 && income === 'low' && clamped >= 28 && HIGH_PAY.includes(occupationPick)) income = 'middle'
++  if (gen >= 2 && income === 'high' && LOW_PAY.includes(occupationPick)) income = 'middle'
+   const appHistory =
+     experience === 'never'
+       ? 'Has never used a wellness app.'
+@@ -549,7 +600,7 @@ function makePersona(r: Rand, n: number): Persona {
+     personality,
+     traits,
+     values: [],
+-    day: makeDay(r, workPattern, household, goal, bedHour, wakeHour, coping),
++    day: makeDay(r, workPattern, household, goal, bedHour, wakeHour, coping, gen),
+     sleep: { bedtime: hhmm(bedHour), wake: hhmm(wakeHour), hours, quality },
+     stressors,
+     coping,
+@@ -574,6 +625,14 @@ function makePersona(r: Rand, n: number): Persona {
+     length: 0, voice: '', spiritual: '', moments: [...moments], coping, success: profile.success, neuroticism, quality, country: place.country,
+   })
+ 
++  const t = profile.testing
++  const spendsMonthly = /\$1[05] a month|about \$10 a month/.test(t.spendNow)
++  if (gen >= 2 && spendsMonthly && t.buyTriggers.includes('a price under $5 a month'))
++    t.buyTriggers = t.buyTriggers.map((b) => (b === 'a price under $5 a month' ? (t.buyTriggers.includes('an annual plan with a real discount') ? 'a free week that visibly helps' : 'an annual plan with a real discount') : b))
++  // Drawn in the same place as generator 1, so its random sequence is unchanged; only corrected after.
++  const fixWtp = (w: string) =>
++    gen >= 2 && spendsMonthly && (w === 'free only' || w === 'up to $5 a month') ? 'up to $10 a month' : gen >= 2 && /Calm plan/.test(t.spendNow) && w === 'free only' ? 'up to $5 a month' : w
++
+   return {
+     id: `P${String(n).padStart(3, '0')}`,
+     name: `${first} ${pick(r, place.last)}`,
+@@ -601,8 +660,9 @@ function makePersona(r: Rand, n: number): Persona {
+     spiritual: barriers.includes('dislikes spiritual language') ? 'avoid' : weighted(r, [['welcome', 25], ['neutral', 55], ['avoid', 20]] as const),
+     techComfort,
+     aiAttitude,
+-    willingnessToPay:
++    willingnessToPay: fixWtp(
+       income === 'low' ? weighted(r, [['free only', 70], ['up to $5 a month', 30]] as const) : weighted(r, [['free only', 25], ['up to $5 a month', 30], ['up to $10 a month', 30], ['more if it clearly works', 15]] as const),
++    ),
+     privacy,
+     barriers,
+     flags,
+@@ -612,9 +672,9 @@ function makePersona(r: Rand, n: number): Persona {
+ }
+ 
+ /** The 300 personas, identical on every machine and every build. */
+-export function generatePersonas(count = PERSONA_COUNT, seed = SEED): Persona[] {
++export function generatePersonas(count = PERSONA_COUNT, seed = SEED, gen: Generator = CURRENT_GENERATOR): Persona[] {
+   const r = rng(seed)
+-  return Array.from({ length: count }, (_, i) => makePersona(r, i + 1))
++  return Array.from({ length: count }, (_, i) => makePersona(r, i + 1, gen))
+ }
+ 
+ /**
+@@ -683,3 +743,28 @@ export function distribution<K extends keyof Persona>(ps: Persona[], key: K): [s
+   }
+   return [...m.entries()].sort((a, b) => b[1] - a[1])
+ }
++
++/**
++ * What makes a persona not hold together (U103): the rules the buyer agent
++ * runs found broken. Generator 2 must return none of these; generator 1 is
++ * kept as it was for the runs pinned to it.
++ */
++export function incoherence(p: Persona): string[] {
++  const out: string[] = []
++  const f = p.profile
++  const t = f.testing
++  const working = WORKING.includes(p.workPattern)
++  if (!fitsStruggle(p.struggle, p.workPattern, p.household, p.age)) out.push(`struggle “${p.struggle}” does not fit ${p.occupation.toLowerCase()}, ${p.household}`)
++  for (const x of f.stressors) if (!fitsStressor(x, p.workPattern)) out.push(`stressor “${x}” for someone ${p.workPattern}`)
++  for (const x of p.triggers) if (!fitsTrigger(x, p.workPattern, p.household)) out.push(`trigger “${x}” for ${p.workPattern}, ${p.household}`)
++  if (p.occupation === 'Carer for a parent' && p.household !== 'cares for a parent at home') out.push(`carer for a parent who ${p.household}`)
++  if (p.occupation === 'Parent on leave' && p.age >= 45) out.push(`parent on leave at ${p.age}`)
++  if (p.workPattern === 'student' && /teenagers/.test(p.household)) out.push(`student living with teenagers`)
++  if (p.income === 'low' && p.age >= 28 && HIGH_PAY.includes(p.occupation)) out.push(`${p.occupation.toLowerCase()} on a low income`)
++  if (p.income === 'high' && LOW_PAY.includes(p.occupation)) out.push(`${p.occupation.toLowerCase()} on a high income`)
++  if (/\$1[05] a month|about \$10 a month/.test(t.spendNow) && /free only|up to \$5/.test(p.willingnessToPay)) out.push(`spends ${t.spendNow} but would pay ${p.willingnessToPay}`)
++  if (/\$1[05] a month|about \$10 a month/.test(t.spendNow) && t.buyTriggers.includes('a price under $5 a month')) out.push('spends $10+ a month but needs a price under $5')
++  if (p.flags.includes('pregnant') && (p.gender !== 'woman' || p.age > 45)) out.push(`pregnant at ${p.age}`)
++  if (p.flags.includes('night shift worker') && p.workPattern !== 'shift' && !working) out.push(`night shift worker who is ${p.workPattern}`)
++  return out
++}
+diff --git a/src/admin/pages/BuyerResultsPage.tsx b/src/admin/pages/BuyerResultsPage.tsx
+index ca19695..7c36913 100644
+--- a/src/admin/pages/BuyerResultsPage.tsx
++++ b/src/admin/pages/BuyerResultsPage.tsx
+@@ -14,7 +14,8 @@ import {
+   VERDICT_TONE,
+   WELLNESS_LABEL,
+   countVerdicts,
+-  localPlus,
++  personasOf,
++  priceSeen,
+   priceRange,
+   scenarioCounts,
+   themeCounts,
+@@ -22,9 +23,9 @@ import {
+   type BuyerAnswer,
+   type BuyerRun,
+ } from '../data/buyerRuns'
+-import { GOAL_LABEL, generatePersonas, type Persona } from '../data/personas'
++import { V3_CHANGES } from '../data/buyerRunV3'
++import { GOAL_LABEL, type Persona } from '../data/personas'
+ 
+-const PERSONAS = new Map(generatePersonas().map((p) => [p.id, p]))
+ const SCALE_MAX = 20
+ const WELLNESS_TONE = { struggling: 'critical', strained: 'warning', coping: 'good' } as const
+ 
+@@ -44,6 +45,7 @@ interface Row {
+   bargain: number
+   theme: string
+   week: number | string
++  aTries: string
+   confidence: number
+ }
+ 
+@@ -57,7 +59,6 @@ function download(name: string, text: string) {
+ }
+ 
+ const money = (n: number) => `$${n % 1 ? n.toFixed(2) : n}`
+-const persona = (id: string) => PERSONAS.get(id)!
+ 
+ export function BuyerResultsPage() {
+   const [params, setParams] = useSearchParams()
+@@ -66,6 +67,18 @@ export function BuyerResultsPage() {
+   const [open, setOpen] = useState<{ id: string; tab: 'answer' | 'persona' } | null>(null)
+   const [notice, setNotice] = useState('')
+   const n = run.answers.length
++  const people = personasOf(run)
++  const persona = (id: string) => people.get(id)!
++  const ab = run.answers.some((a) => a.control)
++  const tally = (k: 'tries' | 'pays') => {
++    const o = { yes: 0, maybe: 0, no: 0 }
++    for (const a of run.answers) if (a.control) o[a.control[k]] += 1
++    return o
++  }
++  const ctlTries = tally('tries')
++  const ctlPays = tally('pays')
++  const moved = new Map<string, number>()
++  for (const a of run.answers) for (const c of a.movedBy ?? []) moved.set(c, (moved.get(c) ?? 0) + 1)
+   const hasUsage = run.answers.some((a) => a.week !== undefined)
+ 
+   const tries = countVerdicts(run.answers, 'tries')
+@@ -86,13 +99,14 @@ export function BuyerResultsPage() {
+       country: p.country,
+       goal: GOAL_LABEL[p.goal],
+       wellness: WELLNESS_LABEL[wellnessOf(p).level],
+-      localPrice: localPlus(p.country).label,
++      localPrice: priceSeen(run, p.country).label.split(' · ')[0],
+       tries: a.tries,
+       pays: a.pays,
+       plan: PLAN_LABEL[a.plan],
+       bargain: a.prices.bargain,
+       theme: THEME_LABEL[a.theme],
+       week: a.week ?? '–',
++      aTries: a.control?.tries ?? '',
+       confidence: a.confidence,
+     }
+   })
+@@ -123,8 +137,9 @@ export function BuyerResultsPage() {
+       header: 'Wellness',
+       render: (r) => <Badge tone={WELLNESS_TONE[r.wellness.toLowerCase() as keyof typeof WELLNESS_TONE]}>{r.wellness}</Badge>,
+     },
+-    { key: 'tries', header: 'Tries', render: (r) => verdictCell(r.tries) },
+-    { key: 'pays', header: 'Pays', render: (r) => verdictCell(r.pays) },
++    ...(ab ? [{ key: 'aTries' as const, header: 'Tries A', render: (r: Row) => verdictCell(r.aTries) }] : []),
++    { key: 'tries', header: ab ? 'Tries B' : 'Tries', render: (r) => verdictCell(r.tries) },
++    { key: 'pays', header: ab ? 'Pays B' : 'Pays', render: (r) => verdictCell(r.pays) },
+     { key: 'localPrice', header: 'Saw Plus at' },
+     { key: 'bargain', header: 'A bargain at', numeric: true, render: (r) => money(r.bargain) },
+     ...(hasUsage ? [{ key: 'week' as const, header: 'Week 1', numeric: true }] : []),
+@@ -144,7 +159,7 @@ export function BuyerResultsPage() {
+   const answer = open ? run.answers.find((a) => a.personaId === open.id) : undefined
+   const pct = (v: number) => `${Math.min(100, (v / SCALE_MAX) * 100)}%`
+   const ages = run.answers.map((a) => persona(a.personaId).age)
+-  const people = run.answers.map((a) => persona(a.personaId))
++  const panel = run.answers.map((a) => persona(a.personaId))
+ 
+   return (
+     <div className="flex flex-col gap-16">
+@@ -228,12 +243,12 @@ export function BuyerResultsPage() {
+         </details>
+       </Panel>
+ 
+-      <Panel title="Who was in the panel" description={`${n} personas, aged ${Math.min(...ages)}–${Math.max(...ages)}, from ${new Set(people.map((p) => p.country)).size} countries.`}>
++      <Panel title="Who was in the panel" description={`${n} personas, aged ${Math.min(...ages)}–${Math.max(...ages)}, from ${new Set(panel.map((p) => p.country)).size} countries.`}>
+         <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
+-          <Mix title="Region" items={count(people.map((p) => p.region))} />
+-          <Mix title="Age band" items={count(people.map((p) => p.ageBand)).sort((x, y) => x[0].localeCompare(y[0]))} />
+-          <Mix title="Wellness" items={count(people.map((p) => WELLNESS_LABEL[wellnessOf(p).level]))} />
+-          <Mix title="Goal" items={count(people.map((p) => GOAL_LABEL[p.goal]))} />
++          <Mix title="Region" items={count(panel.map((p) => p.region))} />
++          <Mix title="Age band" items={count(panel.map((p) => p.ageBand)).sort((x, y) => x[0].localeCompare(y[0]))} />
++          <Mix title="Wellness" items={count(panel.map((p) => WELLNESS_LABEL[wellnessOf(p).level]))} />
++          <Mix title="Goal" items={count(panel.map((p) => GOAL_LABEL[p.goal]))} />
+         </div>
+       </Panel>
+ 
+@@ -248,9 +263,37 @@ export function BuyerResultsPage() {
+         </ul>
+       </Panel>
+ 
++      {run.control && (
++        <Panel title="Compared with" description={run.control.name}>
++          <ul className="flex flex-wrap gap-6">
++            {run.control.offer.map((o) => (
++              <li key={o} className="rounded-8 bg-adm-bg px-10 py-6 text-12 text-adm-ink-2">
++                {o}
++              </li>
++            ))}
++          </ul>
++        </Panel>
++      )}
++
++      {run.references && (
++        <Panel title="What the agent read" description="The documents the agent treated as evidence before answering, and what it took from each.">
++          <ul className="flex flex-col gap-10 text-13">
++            {run.references.map((r) => (
++              <li key={r.title} className="grid gap-2 lg:grid-cols-[260px_1fr] lg:gap-16">
++                <p>
++                  <span className="font-medium text-adm-ink">{r.title}</span>
++                  <span className="block text-12 text-adm-muted">{r.where}</span>
++                </p>
++                <p className="max-w-[760px] leading-[20px] text-adm-ink-2">{r.used}</p>
++              </li>
++            ))}
++          </ul>
++        </Panel>
++      )}
++
+       <div className="grid grid-cols-2 gap-12 lg:grid-cols-4">
+-        <StatCard label="Would try" value={`${tries.yes} of ${n}`} hint={`${tries.maybe} maybe, ${tries.no} no`} />
+-        <StatCard label="Would pay" value={`${pays.yes} of ${n}`} hint={`${pays.maybe} maybe, ${pays.no} no`} />
++        <StatCard label={ab ? 'Would try B' : 'Would try'} value={`${tries.yes} of ${n}`} hint={ab ? `today (A): ${ctlTries.yes} of ${n}` : `${tries.maybe} maybe, ${tries.no} no`} />
++        <StatCard label={ab ? 'Would pay B' : 'Would pay'} value={`${pays.yes} of ${n}`} hint={ab ? `${pays.maybe} maybe · A: ${ctlPays.yes} yes, ${ctlPays.maybe} maybe` : `${pays.maybe} maybe, ${pays.no} no`} />
+         <StatCard label="Price that feels fair" value={`${money(range.low)}–${money(range.high)}`} hint={`Plus is ${money(run.stimulus.priceUsd)} in the US`} />
+         <StatCard label="Test cases" value={`${outcomes.pass} pass`} hint={`${outcomes.risk} at risk, ${outcomes.fail} fail`} />
+       </div>
+@@ -263,6 +306,30 @@ export function BuyerResultsPage() {
+         </ul>
+       </Panel>
+ 
++      {moved.size > 0 && (
++        <Panel title="Which changes moved people" description="How many personas answered B differently from A because of each change, as the agent judged it. One persona can name several.">
++          <ul className="flex flex-col gap-8">
++            {[...moved.entries()]
++              .sort((x, y) => y[1] - x[1])
++              .map(([c, k]) => {
++                const info = V3_CHANGES[c as keyof typeof V3_CHANGES]
++                return (
++                  <li key={c} className="grid items-center gap-x-8 gap-y-2 text-12 lg:grid-cols-[260px_1fr_24px]">
++                    <span className="text-adm-ink" title={info?.source}>
++                      {info?.label ?? c}
++                    </span>
++                    <span className="h-10 rounded-full bg-adm-bg">
++                      <span className="block h-full rounded-full bg-adm-s1" style={{ width: `${(k / n) * 100}%` }} />
++                    </span>
++                    <span className="text-right tabular-nums text-adm-muted">{k}</span>
++                    <span className="text-11 text-adm-muted lg:col-span-3">From: {info?.source}</span>
++                  </li>
++                )
++              })}
++          </ul>
++        </Panel>
++      )}
++
+       <Panel title="By segment" description="Each group’s answers. Small groups: read the direction, not the number.">
+         <div className="grid gap-16 lg:grid-cols-3">
+           <SegmentTable title="Region" run={run} keyOf={(p) => p.region} />
+@@ -298,7 +365,7 @@ export function BuyerResultsPage() {
+                 </div>
+               ))}
+             </dl>
+-            <p className="text-12 text-adm-ink-2">Green is the fair band. The red line is Plus in the US ({money(run.stimulus.priceUsd)}); the US yearly plan works out at $6.58 a month.</p>
++            <p className="text-12 text-adm-ink-2">Green is the fair band. The red line is Plus in the US ({money(run.stimulus.priceUsd)}); the US yearly plan works out at {run.version >= 3 ? '$5.00' : '$6.58'} a month.</p>
+           </div>
+         </Panel>
+ 
+@@ -353,7 +420,7 @@ export function BuyerResultsPage() {
+         <SidePanel
+           width={600}
+           title={persona(open.id).name}
+-          description={`${open.id} · v${run.version}`}
++          description={`${open.id} · v${run.version} · persona generator ${run.generator}`}
+           onClose={() => setOpen(null)}
+           footer={<Button onClick={() => setOpen(null)}>Close</Button>}
+         >
+@@ -372,7 +439,7 @@ export function BuyerResultsPage() {
+             ))}
+           </div>
+           {open.tab === 'answer' ? (
+-            <AnswerDetail a={answer} p={persona(open.id)} onPersona={() => setOpen({ id: open.id, tab: 'persona' })} />
++            <AnswerDetail a={answer} p={persona(open.id)} run={run} onPersona={() => setOpen({ id: open.id, tab: 'persona' })} />
+           ) : (
+             <PersonaProfile p={persona(open.id)} />
+           )}
+@@ -405,9 +472,11 @@ function Mix({ title, items }: { title: string; items: [string, number][] }) {
+ }
+ 
+ function SegmentTable({ title, run, keyOf, sort }: { title: string; run: BuyerRun; keyOf: (p: Persona) => string; sort?: boolean }) {
++  const people = personasOf(run)
++  const ab = run.answers.some((a) => a.control)
+   const groups = new Map<string, BuyerAnswer[]>()
+   for (const a of run.answers) {
+-    const k = keyOf(PERSONAS.get(a.personaId)!)
++    const k = keyOf(people.get(a.personaId)!)
+     groups.set(k, [...(groups.get(k) ?? []), a])
+   }
+   const entries = [...groups.entries()]
+@@ -421,7 +490,8 @@ function SegmentTable({ title, run, keyOf, sort }: { title: string; run: BuyerRu
+           <tr className="text-left text-adm-muted">
+             <th className="py-4 font-medium">{title}</th>
+             <th className="py-4 text-right font-medium">n</th>
+-            <th className="py-4 text-right font-medium">Try</th>
++            {ab && <th className="py-4 text-right font-medium" title="Tries today's offer (A)">Try A</th>}
++            <th className="py-4 text-right font-medium">{ab ? 'Try B' : 'Try'}</th>
+             <th className="py-4 text-right font-medium" title="Pays yes or maybe">Pay?</th>
+             {usage && <th className="py-4 text-right font-medium" title="Average sessions in week one">Wk 1</th>}
+             <th className="py-4 text-right font-medium" title="Fair band, USD a month">Fair</th>
+@@ -434,6 +504,7 @@ function SegmentTable({ title, run, keyOf, sort }: { title: string; run: BuyerRu
+               <tr key={k} className="border-t border-adm-line">
+                 <td className="py-6 text-adm-ink">{k}</td>
+                 <td className="py-6 text-right text-adm-muted">{as.length}</td>
++                {ab && <td className="py-6 text-right text-adm-muted">{as.filter((a) => a.control?.tries === 'yes').length}</td>}
+                 <td className="py-6 text-right">{as.filter((a) => a.tries === 'yes').length}</td>
+                 <td className="py-6 text-right">{as.filter((a) => a.pays !== 'no').length}</td>
+                 {usage && <td className="py-6 text-right">{(as.reduce((s, a) => s + (a.week ?? 0), 0) / as.length).toFixed(1)}</td>}
+@@ -458,7 +529,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
+   )
+ }
+ 
+-function AnswerDetail({ a, p, onPersona }: { a: BuyerAnswer; p: Persona; onPersona: () => void }) {
++function AnswerDetail({ a, p, run, onPersona }: { a: BuyerAnswer; p: Persona; run: BuyerRun; onPersona: () => void }) {
+   const w = wellnessOf(p)
+   return (
+     <div className="flex flex-col gap-14 text-13 text-adm-ink">
+@@ -479,12 +550,37 @@ function AnswerDetail({ a, p, onPersona }: { a: BuyerAnswer; p: Persona; onPerso
+       </div>
+       <p className="rounded-8 bg-adm-bg px-12 py-10 italic text-adm-ink-2">“{a.quote}”</p>
+ 
++      {a.control && (
++        <Section title="Today (A) against the proposal (B)">
++          <div className="grid grid-cols-2 gap-8 text-12">
++            <div className="rounded-8 border border-adm-line p-10">
++              <p className="font-medium">A · today</p>
++              <div className="mt-4 flex flex-wrap gap-4">
++                <Badge tone={VERDICT_TONE[a.control.tries]}>Tries: {a.control.tries}</Badge>
++                <Badge tone={VERDICT_TONE[a.control.pays]}>Pays: {a.control.pays}</Badge>
++              </div>
++              <p className="mt-6 text-adm-ink-2">{a.control.why}</p>
++            </div>
++            <div className="rounded-8 border border-adm-ink p-10">
++              <p className="font-medium">B · proposed</p>
++              <div className="mt-4 flex flex-wrap gap-4">
++                <Badge tone={VERDICT_TONE[a.tries]}>Tries: {a.tries}</Badge>
++                <Badge tone={VERDICT_TONE[a.pays]}>Pays: {a.pays}</Badge>
++              </div>
++              <p className="mt-6 text-adm-ink-2">
++                {a.movedBy?.length ? `Moved by: ${a.movedBy.map((c) => V3_CHANGES[c as keyof typeof V3_CHANGES]?.label ?? c).join('; ')}.` : 'Nothing in B changed the answer.'}
++              </p>
++            </div>
++          </div>
++        </Section>
++      )}
++
+       <Section title="How they are doing">
+         <div className="grid grid-cols-2 gap-8 text-12 sm:grid-cols-4">
+           <Fact label="Wellness" value={WELLNESS_LABEL[w.level]} />
+           <Fact label="Pain" value={`${w.pain} of 10`} />
+           <Fact label="Sleep" value={`${w.sleepHours} h · ${w.sleepQuality} of 5`} />
+-          <Fact label="Saw Plus at" value={localPlus(p.country).label} />
++          <Fact label="Saw Plus at" value={priceSeen(run, p.country).label} />
+         </div>
+         <p className="text-12 text-adm-ink-2">
+           {w.conditions.length > 0 && <>Conditions: {w.conditions.join(', ')}. </>}
+diff --git a/src/admin/pages/PersonasPage.tsx b/src/admin/pages/PersonasPage.tsx
+index 2c27295..ff0921e 100644
+--- a/src/admin/pages/PersonasPage.tsx
++++ b/src/admin/pages/PersonasPage.tsx
+@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
+ import { DataTable, type Column } from '../components/DataTable'
+ import { SidePanel } from '../components/SidePanel'
+ import { Badge, Button, PageHeader, Panel, inputClass } from '../components/ui'
+-import { GOAL_LABEL, PERSONA_COUNT, SEED, distribution, drawPanel, generatePersonas, personaPrompt, type Persona } from '../data/personas'
++import { CURRENT_GENERATOR, GOAL_LABEL, PERSONA_COUNT, SEED, distribution, drawPanel, generatePersonas, personaPrompt, type Persona } from '../data/personas'
+ import { PersonaProfile } from '../components/PersonaProfile'
+ 
+ const PERSONAS = generatePersonas()
+@@ -122,7 +122,7 @@ export function PersonasPage() {
+       <div className="flex flex-wrap items-center gap-8 text-12 text-adm-ink-2">
+         <Badge tone="warning">Synthetic</Badge>
+         <span>
+-          Generated from seed {SEED}, so everyone sees the same {PERSONA_COUNT}. Each links to the{' '}
++          Generated from seed {SEED} with generator {CURRENT_GENERATOR}, so everyone sees the same {PERSONA_COUNT}; a check keeps every one of them coherent (age, work, household, money). Each links to the{' '}
+           <Link to="/admin/user-journey" className="underline hover:text-adm-ink">
+             user journey
+           </Link>{' '}
+-- 
+2.43.0
+

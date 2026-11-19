@@ -19,6 +19,14 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-19 — Persona generator 2; buyer agent v3 (U103, J135)
+
+Personas now come from a fixed generator, with a coherence check (0 of 300
+broken). Buyer agent v3 is an A/B run: today's offer against a proposal built
+from Eugene's documents, with the agent's sources listed.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-19 — Buyer agent v2, criteria and versions (U102, J134)
 
 Buyer agent results shows each run as a version with its criteria. Persona

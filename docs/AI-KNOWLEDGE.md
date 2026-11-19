@@ -1,13 +1,13 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J134** · updated 19 Nov 2026
+**Covers up to J135** · updated 19 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
 current version. History and detail live elsewhere:
 
 - `docs/HANDOFF.md`: the full handover, including §17, every request (J) and change (U).
-- `docs/WORK-JOURNAL.md`: what was asked and answered; the Open items table (O1–O39).
+- `docs/WORK-JOURNAL.md`: what was asked and answered; the Open items table (O1–O40).
 - `docs/UPDATE-LOG.md`: every code change, with how to revert it.
 - `CLAUDE.md`: engineering conventions.
 
@@ -147,7 +147,14 @@ evidence → decision. It is not a user feature.
   - Nobody 65+ tries, because of English only, text size and the account wall.
   - Countries without a local price see $9.99 as too expensive.
   - Distrust of AI and language cost more than price.
-- **The persona generator is the weak link.** It makes retired people with work stressors, struggles that do not fit the job, and households that do not fit the life (13/36). Fix it before v3 (O39).
+- **Persona generator 2 (J135, U103)** fixed the weak link: `incoherence(p)` finds 0 of 300 broken (generator 1: 144). Generator 1 is kept byte-identical for v1 and v2.
+  - **To change the generator:** add a gen ≥ 3 branch that consumes the random sequence in the same places, compare generator 1's JSON before and after, and pin new runs to the new generator.
+  - **Pages** look personas up with `personasOf(run)`, never with `generatePersonas()` directly.
+**Buyer agent v3 (J135, U103).** An A/B run on generator 2 (36 personas, seed 2028).
+- **Offer B** is built from Eugene's documents: the Insight Timer research, Backend (old), Artefact and his briefs. Each of its 10 changes carries its source (`V3_CHANGES`).
+- **Calibration:** day-30 use near 3–5%, and the AI disclosure stays honest.
+- **Result:** trying 13 → 25. The changes that moved people: no account first (16), languages (13), the data line (11). The AI-distrustful and people over 65 do not move. Which changes to build is O40.
+- **Write A answers by the same standard as the earlier run of A.** The first draft was too strict (5 tries, against v2's 15) and had to be recalibrated.
 - **Keep the agent honest:** look for the no first, honour deal breakers, set price from income and place. Write findings from computed tallies, never from memory.
 
 **The 2025 backend documents (J099, J109–J112).**

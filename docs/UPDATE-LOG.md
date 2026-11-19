@@ -139,9 +139,72 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U100 | `a6e6f83` | 2026-11-18 | One select style across the admin (no crowded native arrows); persona rows open the drawer; each persona gains test data (jobs, pain, first sentence, spend, alternatives, buy triggers, objections, access, connectivity, three when/does/expect scenarios). Staging. | [patch](patches/U100-a6e6f83.patch) |
 | U101 | `2494223` | 2026-11-19 | Admin → Product lab → Buyer agent results: the first demo run (ten personas, seed 2026, Aurelia Plus at $9.99), with tallies, a price band, objections, every answer in a drawer with its three test cases, and persona problems found. Staging only (`RELEASES.buyerAgent`). | [patch](patches/U101-2494223.patch) |
 | U102 | `32cdc84` | 2026-11-19 | Buyer agent results by version (v1, v2 tabs, `?v=`). Each run states its criteria, the answer definitions and the agent's instructions; persona names open the full profile. v2: 36 personas (6 regions × 6 age bands, seed 2027, v1's incoherent three left out), local prices, language, connection, wellness (struggling / strained / coping), week-one use and day 30, calibration rules, segment tables. Staging only. | [patch](patches/U102-32cdc84.patch) |
+| U103 | `8a99797` | 2026-11-19 | Persona generator 2 (coherent: an `incoherence()` check finds 0 of 300; generator 1 kept byte-identical for runs v1–v2, 144 of 300 broken). Buyer agent v3: an A/B run on 36 generator-2 personas, today's offer against a proposal built from Eugene's documents and the research. Adds references, a control, changes traced to their source, and Try A/B by segment. Staging only. | [patch](patches/U103-8a99797.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U103 — Persona generator 2; buyer agent v3 (A/B)
+
+- **Commit:** `8a99797` · pushed 2026-11-19 UTC · `web_app` + `admin_cms`. Staging only (`RELEASES.personas`, `RELEASES.buyerAgent`).
+- **Patch:** [patches/U103-8a99797.patch](patches/U103-8a99797.patch)
+- **Request:** "oke sebelumnya saya sudah pernah memberikan kamu banyak dokmen dari eugene pakah kamu bisa melakukan simulasi buying agent dengan menggunakan itu dalam artian menjadikan itu sebagai referensi. lakukan untuk v3 . dan perbaiki sesuai yang kamu katakan"
+- **Interpretation:**
+  - **"Use Eugene's documents as reference"** means three things:
+    1. The agent reads them first and treats them as evidence. They are the Insight Timer research done for Eugene, the 2025 backend documents and their Artefact lessons, and his briefs.
+    2. The agent calibrates against their figures: day-30 use of 3–5%, trial conversion around 40%, the leave triggers.
+    3. The thing tested, offer B, is built from what they recommend.
+  - **"Fix what you said"** means the persona generator. The lighter fixes (local prices, no-account start, an outcome-first pitch) are tested as part of offer B, not built into the app.
+- **Changed:**
+  - `src/admin/data/personas.ts`:
+    - `Generator` type, with `CURRENT_GENERATOR = 2`.
+    - `generatePersonas(count, seed, gen)`.
+    - Generator 2 rules:
+      - struggles, triggers and stressors must fit the work and the household (`fitsStruggle`, `fitsTrigger`, `fitsStressor`);
+      - students do not live with teenagers;
+      - a caregiver's occupation follows the household;
+      - income follows the occupation;
+      - pregnancy, new parent, menopause and night-shift flags follow age and work;
+      - willingness to pay and buy triggers do not contradict what the persona spends now.
+    - `incoherence(p)`, the check.
+    - Generator 1 stays byte-identical. Every gen-2 change keeps generator 1's random sequence, and that was verified by comparing the JSON output.
+  - `src/admin/data/buyerRuns.ts`:
+    - `generator` on a run;
+    - `personasOf(run)`;
+    - `control`, `references`;
+    - `movedBy` on an answer;
+    - `priceSeen(run, country)`;
+    - `drawStratified(…, exclude)`.
+  - `src/admin/data/buyerRunV3.ts`:
+    - `V3_CHANGES`: ten changes, each with its source;
+    - `V3_PRICES`: local prices in 17 countries, with the yearly price first;
+    - instructions and calibration rules;
+    - the 36 answers, each with A (short) and B (full).
+  - `BuyerResultsPage.tsx`:
+    - looks personas up by the run's generator, so v1 and v2 still show the people they were played on;
+    - new panels: Compared with, What the agent read, Which changes moved people;
+    - A beside B in the stats, the table, the segment tables and the drawer.
+  - `PersonasPage.tsx`: names the generator.
+  - Tests: generator 2 is coherent and generator 1 is unchanged; v3 is A/B on generator 2, every change in `movedBy` is known, any improvement names a change, day-30 "yes" stays under 1 in 8, and the tallies are pinned.
+- **Result of v3:**
+  - Trying: 13 (A) → 25 (B). Paying: 0 → 4 yes, and 12 → 22 maybe. Nobody answered B worse than A.
+  - The changes that moved people:
+    - the first session without an account: 16;
+    - languages: 13;
+    - the data line: 11;
+    - voice choice, yearly-first and local prices: 10 each.
+  - Not moved: the AI-distrustful (0 of 3 try either offer) and people over 65.
+  - Day 30: 4 of 36 say yes, within the evidence.
+- **Verified:**
+  - `npm run check` passes (169 tests).
+  - Staging build at 1440px, light and dark:
+    - three version tabs;
+    - v3's panels render;
+    - the drawer shows A against B and "persona generator 2";
+    - v2's Anna Weber is still the carer she was;
+    - no errors.
+  - At 402px, no overflow on Buyer agent results or Personas.
+- **Revert:** `git revert --no-commit 8a99797 && git checkout HEAD -- docs/`.
 
 ### U102 — Buyer agent results: versions, criteria, v2
 

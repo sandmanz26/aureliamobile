@@ -67,7 +67,9 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O37 | **Insight Timer round 2 recommendations (J130)**: decide the "now" list, including changing the demo's every-sign-in daily check-in before real users, and a "Need help now?" link; and whether to push the wiki (and the app work riding with it) to production | J130 | Product owner + Eugene |
 | O38 | **Buyer test agent (J132)**: approve the design. The agent reads a persona panel export (profile + test data + prompt) and a stimulus (screens, copy, price, offer); it answers per persona in a fixed schema (would try, would pay, price thresholds, objections, what would flip it, confidence); results aggregate by segment and compare options A vs B. Decide where it runs first: offline from the export now, in the admin with a backend later | J132 | Product owner + Eugene |
 | O39 | **Buyer agent, next step (J133)**: after the demo, decide (a) the stimulus for the next run, for example the yearly plan first, or one reminder and a data line on the first screen, (b) panel size, and (c) whether runs move to a live model call from the admin, which needs a backend or an API key. Also fix the incoherent personas the runs found (3 in v1, 13 in v2) | J133 | Product owner |
+| O40 | **Offer B (J135)**: which of buyer agent v3's proposed changes to build first. The agent ranks them by how many answers each changed: first session without an account (16), languages (13), data line (11), then voice choice, yearly-first and local prices (10 each). Also decide: larger text and setup help for 65+, and a student price | J135 | Product owner + Eugene |
 | J134 | 2026-11-19 | Code | Criteria for buyer agent v1, clickable personas; v2 with region, wellness, age range and more personas, played more carefully; every version on the page | U102 |
+| J135 | 2026-11-19 | Code | Buyer agent v3 using Eugene's documents as reference; fix what v1–v2 found (the persona generator) | U103 |
 | J133 | 2026-11-19 | Code | Buyer agent results in Product lab; run the buyer agent on ten personas as a demo | U101 |
 | J131 | 2026-11-18 | Code | Personas too thin: rebuilt as real profiles; a dropdown that looked broken (dark mode) fixed | U099 |
 | J132 | 2026-11-18 | Code + Opinion | Dropdown issues; persona drawer and deeper test data; a buyer test agent that reads the personas (view and proposal) | U100 |
@@ -1594,3 +1596,15 @@ transcript and the update log. Everything from J018 on was written at the time.
   - Price follows place, and four countries need a local price.
   - AI distrust and language cost more than price.
 - **Open:** still O39. The generator has more incoherent personas (13 of 36 in v2) and should be fixed before v3.
+
+### J135 — Buyer agent v3 on Eugene's documents; persona generator fixed
+- **Asked:** "oke sebelumnya saya sudah pernah memberikan kamu banyak dokmen dari eugene pakah kamu bisa melakukan simulasi buying agent dengan menggunakan itu dalam artian menjadikan itu sebagai referensi. lakukan untuk v3 . dan perbaiki sesuai yang kamu katakan"
+- **Done:** U103.
+  - **Persona generator 2:** a check finds 0 of 300 incoherent, against 144 of 300 in generator 1. Generator 1 is kept for v1 and v2, so their answers still match their people.
+  - **Buyer agent v3:** an A/B run on 36 new personas. The agent read the Insight Timer research, the 2025 backend documents and their lessons, and Eugene's briefs as evidence. It compared today's offer (A) with a proposal built from them (B), calibrating against their figures.
+- **Result:**
+  - Trying: 13 → 25. Paying: 0 → 4 yes, and 12 → 22 maybe.
+  - What mattered most: the account wall (16), language (13), the data line (11).
+  - Distrust of AI and age 65+ do not move.
+  - Day 30 stays near the category baseline: B gets people to try, not to stay.
+- **Open:** O40 (which changes to build). O39 is mostly done; 3 small persona oddities remain.
