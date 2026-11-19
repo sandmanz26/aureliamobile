@@ -70,6 +70,8 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O40 | **Offer B (J135)**: which of buyer agent v3's proposed changes to build first. The agent ranks them by how many answers each changed: first session without an account (16), languages (13), data line (11), then voice choice, yearly-first and local prices (10 each). Also decide: larger text and setup help for 65+, and a student price | J135 | Product owner + Eugene |
 | O41 | **Buyer agent v4 and the feedback group (J136)**: approve v4. (1) Each persona walks the feedback group's actual screens, step by step along the user journey, giving a predicted funnel and where people leave. (2) The ten metrics are scored per run, each marked predicted (agent) or measured (humans). (3) A human test plan is exported for the feedback group. (4) Real results are entered after the sessions and compared with the agent's. Needs: the feedback group's date, size, countries and ages, and which design version they will see | J136 | Product owner + Eugene |
 | O42 | **Move v5's wearable question to after the first session (J139)**: the re-run's one design change. It should keep v5's return gain without its onboarding loss. Check it with the feedback group, or build it as a v6 on staging first | J139 | Product owner |
+| O43 | **Eugene's business funnel model (J140)**: confirm the reading, then build in three parts. (1) Admin → Product lab → **Business funnel**: the lighthouse's four stages, adapted to Aurelia, laid over the user journey moments, with the market-fit metrics and the features behind each stage. (2) Buyer agent v5 walks that funnel, reports where people stall, bounce or are blocked per stage, and returns the feature that would move them on. (3) The wiki's Feedback group playbook, rewritten as the dual track (agents and humans, same stages, same metrics). Needs the Gemini deck as text or PDF (the share link is not readable from here) | J140 | Product owner + Eugene |
+| J140 | 2026-11-19 | Opinion | What Eugene wants: a business funnel map (the lighthouse's four stages over the user journey, with market-fit metrics), buyer agents that follow it and return fixes, a dual track with humans, and the feedback playbook updated (explained) | — |
 | J137 | 2026-11-19 | Question | Which production design version the buyer agent runs used | — |
 | J138 | 2026-11-19 | Opinion | The two design versions to test (buyer agent v4 and the feedback group) | — |
 | J139 | 2026-11-19 | Code | Re-run the three buyer agents on production v1, v2 and v3, with a summary for every report | U104 |
@@ -1675,3 +1677,19 @@ transcript and the update log. Everything from J018 on was written at the time.
   - **The gaps in every version:** an account first, no voice choice, English only.
   - **Return is low everywhere:** day 30 at best about 4%, inside the category's 3–5%.
 - **Open:** O42.
+
+### J140 — What Eugene wants (the business funnel)
+- **Asked:** (Eugene, WhatsApp, three screenshots) "This funnel. Including MVP metrics for market fit validation. Business logic needs to be similar to user journey but for hard core business values.. market fit validation metrics.. the funnel to it"; "I mean business analytics. Like user journey map. But business funnel map. Incl metrics for mvp market fit validation"; the "Moving from Bad to Good" lighthouse (1 Frictionless Entry, free tier, quick daily check-ins; 2 The AI Aha moment, free sample; 3 The Usage Cap, the Block; 4 The Upsell, Aurelia Plus); "Pls include all this as guiding data for the Buyers Agents simulation… Connect these in a smart business logic way. User journey map + funnel Stage model. The buyers agents simulation needs to follow the pathways and let us know where on the funnel they get stuck, bounced out, blocked etc and here returning solutions on features that moves them along. This process is the same we will do in real world human users. So we do a Dual, one via agentic buyers and one with real world humans… Pls update the feedback Project in Wiki to this model"; a Gemini link "Psychology of High-Retention Freemium Apps" (Aurelia Creator-Led Cohort Engine, 11 slides). Owner: "saya bingung apa yang dimau eugene"
+- **Answered:** Eugene wants one model used three times.
+  - **A "business funnel map" in the admin,** next to the user journey. Not backend business logic, as he clarified: "business analytics, like user journey map". The lighthouse's four stages (entry → aha → cap → upsell), each tied to the journey moments it covers, the metrics that prove it works, and the features that move people to the next stage.
+  - **Buyer agents that walk those stages,** saying where each persona stalls, bounces or is blocked, and which feature would move them on.
+  - **The same stages and metrics run with real people,** the feedback group, as a dual track, so the agent can be tuned against humans. The wiki's feedback playbook is to be rewritten to that model.
+- **Adapting the lighthouse to Aurelia** (the owner's own instruction to him):
+  - **Entry** is Quick Start without an account plus the daily check-in. Both exist.
+  - **Aha** is the first personal session that connects their check-ins: "why am I waking at 3am" becomes a session and a next chapter. v5's progress in words and its Why are a start.
+  - **The cap** is the existing free limit: 3 sends, then 30 minutes.
+  - **The upsell** does not exist: there is no pricing screen.
+  - **Two cautions from the research:**
+    - Never block mid-session or at 3am: let the session finish, and block only new builds, never replays.
+    - Place the cap after the aha, not before. Prompts and paywalls in the wrong place are the top leave reasons.
+- **Not done:** no code. O43 holds the plan and asks for the Gemini deck.

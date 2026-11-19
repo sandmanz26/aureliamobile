@@ -1,13 +1,13 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J139** · updated 19 Nov 2026
+**Covers up to J140** · updated 19 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
 current version. History and detail live elsewhere:
 
 - `docs/HANDOFF.md`: the full handover, including §17, every request (J) and change (U).
-- `docs/WORK-JOURNAL.md`: what was asked and answered; the Open items table (O1–O42).
+- `docs/WORK-JOURNAL.md`: what was asked and answered; the Open items table (O1–O43).
 - `docs/UPDATE-LOG.md`: every code change, with how to revert it.
 - `CLAUDE.md`: engineering conventions.
 
@@ -166,6 +166,9 @@ evidence → decision. It is not a user feature.
 - **Result:** production v1 is weakest; v2 and v3 roughly tie, because v3's wearable question costs in onboarding. Move it after the first session (O42).
 - **The summaries** are in `buyerRerunSummaries.ts`, and their figures are pinned in `buyerSim.test.ts`. A rule change that moves a figure fails the check: then rewrite the sentence.
 - **Version facts** live in `DESIGNS`. Update them when a version's screens change.
+**Eugene's business funnel (J140, O43).** By "business logic" he means business analytics: a business funnel map like the user journey map. The lighthouse's 4 stages (Frictionless entry → AI aha → Usage cap → Upsell to Plus), over journey moments, with market-fit metrics and features. Buyer agents follow it and return fixes; the same model runs with humans (dual track); the wiki feedback playbook follows it.
+- **Mapping to Aurelia:** entry = Quick Start + daily check-in; aha = a first session that connects their check-ins; cap = 3 sends / 30 min; upsell = not built.
+- **Caution:** never block mid-session or at night; place the cap after the aha.
 - **Keep the agent honest:** look for the no first, honour deal breakers, set price from income and place. Write findings from computed tallies, never from memory.
 
 **The 2025 backend documents (J099, J109–J112).**
