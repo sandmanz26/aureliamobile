@@ -68,6 +68,8 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O38 | **Buyer test agent (J132)**: approve the design. The agent reads a persona panel export (profile + test data + prompt) and a stimulus (screens, copy, price, offer); it answers per persona in a fixed schema (would try, would pay, price thresholds, objections, what would flip it, confidence); results aggregate by segment and compare options A vs B. Decide where it runs first: offline from the export now, in the admin with a backend later | J132 | Product owner + Eugene |
 | O39 | **Buyer agent, next step (J133)**: after the demo, decide (a) the stimulus for the next run, for example the yearly plan first, or one reminder and a data line on the first screen, (b) panel size, and (c) whether runs move to a live model call from the admin, which needs a backend or an API key. Also fix the incoherent personas the runs found (3 in v1, 13 in v2) | J133 | Product owner |
 | O40 | **Offer B (J135)**: which of buyer agent v3's proposed changes to build first. The agent ranks them by how many answers each changed: first session without an account (16), languages (13), data line (11), then voice choice, yearly-first and local prices (10 each). Also decide: larger text and setup help for 65+, and a student price | J135 | Product owner + Eugene |
+| O41 | **Buyer agent v4 and the feedback group (J136)**: approve v4. (1) Each persona walks the feedback group's actual screens, step by step along the user journey, giving a predicted funnel and where people leave. (2) The ten metrics are scored per run, each marked predicted (agent) or measured (humans). (3) A human test plan is exported for the feedback group. (4) Real results are entered after the sessions and compared with the agent's. Needs: the feedback group's date, size, countries and ages, and which design version they will see | J136 | Product owner + Eugene |
+| J136 | 2026-11-19 | Opinion | Eugene: retention metrics, funnel and bounce, what holds back more AI plays, designs close to the feedback group, top 10 MVP market-fit metrics in buyer agent testing (view and plan) | — |
 | J134 | 2026-11-19 | Code | Criteria for buyer agent v1, clickable personas; v2 with region, wellness, age range and more personas, played more carefully; every version on the page | U102 |
 | J135 | 2026-11-19 | Code | Buyer agent v3 using Eugene's documents as reference; fix what v1–v2 found (the persona generator) | U103 |
 | J133 | 2026-11-19 | Code | Buyer agent results in Product lab; run the buyer agent on ten personas as a demo | U101 |
@@ -1608,3 +1610,25 @@ transcript and the update log. Everything from J018 on was written at the time.
   - Distrust of AI and age 65+ do not move.
   - Day 30 stays near the category baseline: B gets people to try, not to stay.
 - **Open:** O40 (which changes to build). O39 is mostly done; 3 small persona oddities remain.
+
+### J136 — Eugene's market-fit metrics for the buyer agent
+- **Asked:** (Eugene, WhatsApp) "Pls play with core retention metrics. As well, to understand user journey map. Bounce rates, where in the funnel they might be blocked or leave. Whats holding them back from doing more AI plays. Etc etc. Just make sure the designs is as close our upcoming real world feedbackgroup testing project. Also its very good if insights of how we need to test on humans via agent buyers comes in. So admin can become stronger for the process to market fit validation. Ask Claude the top 10 MVP market fit validation metrics. And use them in this buyers agents testing. OK?" — owner: "ada feedack ini bagaimana menurutmu ?"
+- **Answered:** yes, with one distinction.
+  - **The buyer agent can predict stated intent:** who tries, where they would stop, what holds them back, price and objections.
+  - **Behaviour has to be measured on people:** retention, bounce, repeat plays. The feedback group measures it with the click-insights events the demo already records (`/api/clicks`).
+  - **So the agent's job before a human test** is to predict the funnel and name the hypotheses. The feedback group then checks them. The gap between the two shows how far to trust the agent next time.
+- **The ten MVP market-fit metrics proposed:**
+  1. Activation (first play on the first visit, and time to it).
+  2. Funnel conversion and drop-off by step.
+  3. First-session completion.
+  4. D1, D7 and D30 return (benchmark: 3–5% at D30).
+  5. Repeat AI plays per active person per week, and second-build rate.
+  6. Felt better after a session (the check-in).
+  7. Sean Ellis "very disappointed" share (40% is the usual bar).
+  8. Willingness to pay (Van Westendorp, and trial-to-paid).
+  9. Would recommend, and actual referrals.
+  10. The leave reasons, ranked.
+  - **The agent can predict** 1, 2, 7, 8, 9 and 10, and can estimate 3, 5 and 6.
+  - **Only people can give** 4 and the real values of all ten.
+- **Proposed:** buyer agent v4 as the rehearsal for the feedback group. O41 lists the steps and the inputs needed.
+- **No code** in this request.

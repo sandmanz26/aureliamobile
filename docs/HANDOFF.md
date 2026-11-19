@@ -488,8 +488,8 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U103**, last J = **J135**, last
-O = **O40**. Before numbering, check the files for anything newer.
+**Numbering as of 17 Nov 2026:** last U = **U103**, last J = **J136**, last
+O = **O41**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
 push. `src/guides/records.test.ts` enforces it.
@@ -967,6 +967,7 @@ history can be read without opening four documents.
 | J133 | 2026-11-19 | Code | Buyer agent results in Product lab; run the buyer agent on ten personas as a demo | U101 |
 | J134 | 2026-11-19 | Code | Criteria for buyer agent v1, clickable personas; v2 with region, wellness, age range and more personas, played more carefully; every version on the page | U102 |
 | J135 | 2026-11-19 | Code | Buyer agent v3 using Eugene's documents as reference; fix what v1–v2 found (the persona generator) | U103 |
+| J136 | 2026-11-19 | Opinion | Eugene: retention metrics, funnel and bounce, what holds back more AI plays, designs close to the feedback group, top 10 MVP market-fit metrics in buyer agent testing (view and plan) | — |
 
 ### 17.2 Code changes (U)
 

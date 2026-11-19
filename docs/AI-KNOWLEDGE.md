@@ -1,13 +1,13 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J135** · updated 19 Nov 2026
+**Covers up to J136** · updated 19 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
 current version. History and detail live elsewhere:
 
 - `docs/HANDOFF.md`: the full handover, including §17, every request (J) and change (U).
-- `docs/WORK-JOURNAL.md`: what was asked and answered; the Open items table (O1–O40).
+- `docs/WORK-JOURNAL.md`: what was asked and answered; the Open items table (O1–O41).
 - `docs/UPDATE-LOG.md`: every code change, with how to revert it.
 - `CLAUDE.md`: engineering conventions.
 
@@ -155,6 +155,9 @@ evidence → decision. It is not a user feature.
 - **Calibration:** day-30 use near 3–5%, and the AI disclosure stays honest.
 - **Result:** trying 13 → 25. The changes that moved people: no account first (16), languages (13), the data line (11). The AI-distrustful and people over 65 do not move. Which changes to build is O40.
 - **Write A answers by the same standard as the earlier run of A.** The first draft was too strict (5 tries, against v2's 15) and had to be recalibrated.
+**Market-fit metrics (J136, O41).** Eugene wants retention, funnel and bounce, "what holds back more AI plays", and the top 10 MVP market-fit metrics used in buyer agent testing, close to the real feedback group.
+- **The distinction:** the agent predicts stated intent and where people stall. Retention and bounce are measured on people, through click insights in the feedback group. Mark every metric as predicted or measured, and compare the two after the sessions.
+- **Proposed next:** v4, where personas walk the feedback group's real screens along the user journey.
 - **Keep the agent honest:** look for the no first, honour deal breakers, set price from income and place. Write findings from computed tallies, never from memory.
 
 **The 2025 backend documents (J099, J109–J112).**
