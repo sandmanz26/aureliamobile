@@ -29,6 +29,13 @@ export const JourneyScreenSchema = JourneyItemSchema.extend({
   momentIds: z.array(z.string()).optional(),
   /** Where it lives: an app route (`/play/...`) or a Figma URL. */
   link: z.string().optional(),
+  /**
+   * The Product surface tag this screen shows (U105): a tag id in the
+   * journey tags' `surface` group. With tags on, a moment's screens are the
+   * screens of the surfaces it is tagged with, so the tag and the picture
+   * can no longer disagree. `momentIds` is kept for maps without tags.
+   */
+  surface: z.string().optional(),
 })
 
 export const JourneyStageSchema = z.object({
@@ -67,7 +74,7 @@ export const INITIAL_JOURNEY: JourneyMap = {
         { id: 'r1', title: 'Morning check-in', description: 'Start the day with a lightweight emotional pulse check and a simple recommendation based on mood, energy, or intent.', feature: 'Mood check-in + personalized daily recommendation', image: `${IMG}/scene-01.webp` },
         { id: 'r2', title: 'In-the-moment conversation', description: 'Reach for support during the day through a conversational flow that helps users name what they feel and respond in context.', feature: 'AI chat support + emotional labeling', image: `${IMG}/scene-02.webp` },
       ],
-      screens: [{ id: 's1', title: 'Reflection / check-in', description: 'The daily check-in: how you feel today, whether the last session helped, an optional note.', feature: 'Check-in, journaling, and adaptive guidance', image: `${IMG}/screen-3.webp`, momentIds: ['r1', 'r2'] }],
+      screens: [{ id: 's1', surface: 'checkin', title: 'Reflection / check-in', description: 'The daily check-in: how you feel today, whether the last session helped, an optional note.', feature: 'Check-in, journaling, and adaptive guidance', image: `${IMG}/screen-3.webp`, momentIds: ['r1', 'r2'] }, { id: 's4', surface: 'journal', title: 'Journal', description: 'A session’s Journal tab: the week, today’s check-in and the note under it.', feature: 'Journal under each check-in', image: `${IMG}/screen-journal.webp`, momentIds: ['c1', 'e3'], link: '/progress/dolphins-frequency?tab=journal' }],
     },
     {
       id: 'create',
@@ -78,7 +85,7 @@ export const INITIAL_JOURNEY: JourneyMap = {
         { id: 'c1', title: 'Create while commuting', description: 'Use transit time to capture thoughts, respond to prompts, and turn emotional momentum into something tangible inside the app.', feature: 'Prompt-based journaling + quick capture', image: `${IMG}/scene-03.webp` },
         { id: 'c2', title: 'Create during work breaks', description: 'Dip into a short creative ritual between tasks to reset focus and transform mental load into reflection or expression.', feature: 'Micro-journaling + guided creation', image: `${IMG}/scene-04.webp` },
       ],
-      screens: [{ id: 's2', title: 'Create / conversation', description: 'The cockpit: the next chapter and the changes Aurelia proposes for it.', feature: 'Creative prompts + conversational flow', image: `${IMG}/screen-1.webp`, momentIds: ['c1', 'c2'] }],
+      screens: [{ id: 's2', surface: 'chat', title: 'Create / conversation', description: 'The cockpit: the next chapter and the changes Aurelia proposes for it.', feature: 'Creative prompts + conversational flow', image: `${IMG}/screen-1.webp`, momentIds: ['c1', 'c2'] }],
     },
     {
       id: 'experience',
@@ -92,7 +99,7 @@ export const INITIAL_JOURNEY: JourneyMap = {
         { id: 'e4', title: 'Support while commuting', description: 'Use transition moments to decompress, reflect, or continue a guided session while on the move.', feature: 'On-the-go listening + session continuation', image: `${IMG}/scene-09.webp` },
         { id: 'e5', title: 'Before sleep', description: 'Wind down with a gentle end-of-day ritual that helps release the day and prepare the nervous system for sleep.', feature: 'Sleep wind-down + evening reflection', image: `${IMG}/scene-10.webp` },
       ],
-      screens: [{ id: 's3', title: 'Experience / session', description: 'The player: a guided session playing, with its cue and progress.', feature: 'Guided experience + progress state', image: `${IMG}/screen-2.webp`, momentIds: ['e1', 'e2', 'e4', 'e5'] }],
+      screens: [{ id: 's3', surface: 'player', title: 'Experience / session', description: 'The player: a guided session playing, with its cue and progress.', feature: 'Guided experience + progress state', image: `${IMG}/screen-2.webp`, momentIds: ['e1', 'e2', 'e4', 'e5'] }],
     },
     {
       id: 'share',
@@ -102,9 +109,52 @@ export const INITIAL_JOURNEY: JourneyMap = {
       moments: [
         { id: 'h1', title: 'Celebrate progress', description: 'When users feel better or notice change, invite them to reflect on progress and share outcomes in a safe, intentional way.', feature: 'Progress recap + optional sharing', image: `${IMG}/scene-11.webp` },
       ],
-      screens: [],
+      screens: [
+        { id: 's5', surface: 'progress', title: 'Progress', description: 'Progress in words from your own check-ins (v5), before the first session.', feature: 'Progress told in words, a report every two weeks', image: `${IMG}/screen-progress.webp`, momentIds: ['h1'], link: '/wellness' },
+        { id: 's6', surface: 'share', title: 'Share sheet', description: 'Sharing a session from the player: social targets and a link.', feature: 'Share a session', image: `${IMG}/screen-share.webp`, momentIds: ['h1'], link: '/play/dolphins-frequency' },
+      ],
     },
   ],
+}
+
+/** The surface each original screen shows, for maps saved before screens had one. */
+const ORIGINAL_SURFACE: Record<string, string> = { s1: 'checkin', s2: 'chat', s3: 'player', s4: 'journal', s5: 'progress', s6: 'share' }
+
+/**
+ * Brings a map saved in this browser up to date (U105) without losing its
+ * edits: original screens get their surface, and the screens added since
+ * (journal, progress, sharing) are added if no screen shows that surface yet.
+ */
+export function upgradeJourney(map: JourneyMap): JourneyMap {
+  const withSurface: JourneyMap = {
+    ...map,
+    stages: map.stages.map((s) => ({ ...s, screens: s.screens.map((sc) => (sc.surface || !ORIGINAL_SURFACE[sc.id] ? sc : { ...sc, surface: ORIGINAL_SURFACE[sc.id] })) })),
+  }
+  const shown = new Set(withSurface.stages.flatMap((s) => s.screens.map((sc) => sc.surface)))
+  const ids = new Set(withSurface.stages.flatMap((s) => s.screens.map((sc) => sc.id)))
+  let next = withSurface
+  for (const stage of INITIAL_JOURNEY.stages)
+    for (const sc of stage.screens) {
+      if (ids.has(sc.id) || shown.has(sc.surface)) continue
+      const target = next.stages.find((s) => s.id === stage.id) ?? next.stages[next.stages.length - 1]
+      next = { ...next, stages: next.stages.map((s) => (s.id === target.id ? { ...s, screens: [...s.screens, sc] } : s)) }
+    }
+  return next
+}
+
+/** Every screen, with the stage it is filed under. */
+export function allScreens(map: JourneyMap): { stageId: string; screen: JourneyScreen }[] {
+  return map.stages.flatMap((s) => s.screens.map((screen) => ({ stageId: s.id, screen })))
+}
+
+/** The screens that show any of these surfaces (tag ids of the `surface` group). */
+export function screensOnSurfaces(map: JourneyMap, surfaces: string[]): { stageId: string; screen: JourneyScreen }[] {
+  return allScreens(map).filter(({ screen }) => !!screen.surface && surfaces.includes(screen.surface))
+}
+
+/** The surfaces a moment is tagged with, from its tag ids ("surface:player"). */
+export function surfacesOf(tagIds: string[]): string[] {
+  return tagIds.filter((t) => t.startsWith('surface:')).map((t) => t.slice('surface:'.length))
 }
 
 export function counts(map: JourneyMap) {

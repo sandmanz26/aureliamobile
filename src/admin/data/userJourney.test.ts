@@ -14,6 +14,9 @@ import {
   unlinkMoment,
   updateItem,
   updateStage,
+  screensOnSurfaces,
+  surfacesOf,
+  upgradeJourney,
 } from './userJourney'
 import { toBundle, parseAnyImport } from './journeyBundle'
 
@@ -21,25 +24,25 @@ import { toBundle, parseAnyImport } from './journeyBundle'
 function oldShape() {
   return {
     ...INITIAL_JOURNEY,
-    stages: INITIAL_JOURNEY.stages.map((s) => ({ ...s, screens: s.screens.map(({ momentIds: _m, link: _l, ...rest }) => rest) })),
+    stages: INITIAL_JOURNEY.stages.map((s) => ({ ...s, screens: s.screens.filter((sc) => ['s1', 's2', 's3'].includes(sc.id)).map(({ momentIds: _m, link: _l, surface: _s, ...rest }) => rest) })),
   }
 }
 
 describe('user journey map', () => {
-  it('starts with four stages, ten moments and three screens', () => {
+  it('starts with four stages, ten moments and six screens', () => {
     expect(JourneyMapSchema.safeParse(INITIAL_JOURNEY).success).toBe(true)
-    expect(counts(INITIAL_JOURNEY)).toEqual({ stages: 4, moments: 10, screens: 3 })
+    expect(counts(INITIAL_JOURNEY)).toEqual({ stages: 4, moments: 10, screens: 6 })
   })
 
   it('adds, edits and removes an item without touching other stages', () => {
     let map = addItem(INITIAL_JOURNEY, 'share', 'screens', 'x1')
-    expect(counts(map).screens).toBe(4)
-    const added = map.stages[3].screens[0]
+    expect(counts(map).screens).toBe(7)
+    const added = map.stages[3].screens[2]
     map = updateItem(map, 'share', 'screens', { ...added, title: 'Recap card' })
-    expect(map.stages[3].screens[0].title).toBe('Recap card')
+    expect(map.stages[3].screens[2].title).toBe('Recap card')
     expect(map.stages[0]).toBe(INITIAL_JOURNEY.stages[0])
     map = removeItem(map, 'share', 'screens', 'x1')
-    expect(counts(map).screens).toBe(3)
+    expect(counts(map).screens).toBe(6)
   })
 
   it('keeps a stage title when the new one is blank', () => {
@@ -79,7 +82,7 @@ describe('user journey map', () => {
       for (const id of sc.momentIds ?? []) expect(ids.has(id)).toBe(true)
     }
     expect(screensFor(INITIAL_JOURNEY, 'r1').map((x) => x.screen.id)).toEqual(['s1'])
-    expect(screensFor(INITIAL_JOURNEY, 'e3')).toEqual([])
+    expect(screensFor(INITIAL_JOURNEY, 'e3').map((x) => x.screen.id)).toEqual(['s4'])
   })
 
   it('links and unlinks a screen to moments in any stage', () => {
@@ -90,7 +93,7 @@ describe('user journey map', () => {
     expect(toggleMoment(linked, 'r1', false).momentIds).toEqual(['r2', 'h1'])
     expect(toggleMoment({ ...s1, momentIds: undefined }, 'c1', true).momentIds).toEqual(['c1'])
     const map = updateItem(INITIAL_JOURNEY, 'reflect', 'screens', linked)
-    expect(screensFor(map, 'h1')).toEqual([{ stageId: 'reflect', screen: linked }])
+    expect(screensFor(map, 'h1')).toContainEqual({ stageId: 'reflect', screen: linked })
   })
 
   it('removes a deleted moment from every screen, and ignores links to moments that are gone', () => {
@@ -117,5 +120,23 @@ describe('user journey map', () => {
     expect(linkHref('javascript:alert(1)')).toBeNull()
     expect(linkHref('')).toBeNull()
     expect(linkHref(undefined)).toBeNull()
+  })
+
+  it('ties screens to the Product surface tag (U105)', () => {
+    const surfaces = new Set(INITIAL_JOURNEY.stages.flatMap((st) => st.screens.map((sc) => sc.surface)))
+    expect([...surfaces].sort()).toEqual(['chat', 'checkin', 'journal', 'player', 'progress', 'share'])
+    expect(surfacesOf(['time:night', 'surface:player', 'surface:journal'])).toEqual(['player', 'journal'])
+    expect(screensOnSurfaces(INITIAL_JOURNEY, ['player']).map((x) => x.screen.id)).toEqual(['s3'])
+    expect(screensOnSurfaces(INITIAL_JOURNEY, ['progress', 'share']).map((x) => x.screen.id)).toEqual(['s5', 's6'])
+  })
+
+  it('upgrades a map saved before surfaces, keeping its edits', () => {
+    const old = oldShape()
+    old.stages[0].screens[0].title = 'My edited check-in'
+    const up = upgradeJourney(JourneyMapSchema.parse(JSON.parse(JSON.stringify(old))))
+    expect(up.stages[0].screens[0]).toMatchObject({ title: 'My edited check-in', surface: 'checkin' })
+    expect(counts(up).screens).toBe(6)
+    expect(upgradeJourney(up)).toEqual(up)
+    expect(upgradeJourney(INITIAL_JOURNEY)).toEqual(INITIAL_JOURNEY)
   })
 })

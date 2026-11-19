@@ -1,10 +1,12 @@
-import { AlertCircle, Download, ExternalLink, ImagePlus, MoreHorizontal, Pencil, Plus, RotateCcw, Smartphone, Upload } from 'lucide-react'
+import { AlertCircle, CircleHelp, Download, ExternalLink, ImagePlus, MoreHorizontal, Pencil, Plus, RotateCcw, Smartphone, Upload, Users } from 'lucide-react'
 import { useEffect, useMemo, useState, type ChangeEvent, type CSSProperties } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { GuideTour, type TourStep } from '../components/GuideTour'
 import { Modal } from '../components/Modal'
 import { SidePanel } from '../components/SidePanel'
 import { Badge, Button, FormField, PageHeader, inputClass, textareaClass, type Tone } from '../components/ui'
 import { parseAnyImport, toBundle } from '../data/journeyBundle'
+import { generatePersonas } from '../data/personas'
 import {
   INITIAL_TAGS,
   JourneyTagsSchema,
@@ -29,6 +31,10 @@ import {
   linkHref,
   removeItem,
   screensFor,
+  screensOnSurfaces,
+  surfacesOf,
+  upgradeJourney,
+  allScreens,
   servedMoments,
   toggleMoment,
   unlinkMoment,
@@ -38,7 +44,7 @@ import {
   type JourneyMap,
   type JourneyScreen,
 } from '../data/userJourney'
-import { readJson, writeJson } from '../../lib/storage'
+import { readJson, readString, writeJson, writeString } from '../../lib/storage'
 import { RELEASES } from '../../versions/releases'
 import { CoverageView, GroupEditor, TagFields, TagSetupView, TagsTable } from './journey/TagViews'
 
@@ -59,6 +65,14 @@ interface Editing {
   assignment: Assignment
   isNew: boolean
 }
+
+/** How many of the 300 personas hit each moment: demand, for deciding what matters (U105). */
+const DEMAND = (() => {
+  const m = new Map<string, number>()
+  for (const p of generatePersonas()) for (const id of p.moments) m.set(id, (m.get(id) ?? 0) + 1)
+  return m
+})()
+const GUIDE_KEY = 'aurelia.admin.journeyGuide'
 
 const READINESS_TONE: Record<string, Tone> = { live: 'good', partial: 'info', concept: 'warning' }
 const EMPTY: Assignment = { tags: [], status: 'proposed', note: '' }
@@ -99,7 +113,8 @@ export function UserJourneyPage() {
   const requested = params.get('view') as View | null
   const view: View = tagsOn && requested && VIEWS.some((v) => v.id === requested) ? requested : 'map'
 
-  const [map, setMap] = useState<JourneyMap>(() => readJson(STORAGE_KEY, JourneyMapSchema, INITIAL_JOURNEY))
+  const [map, setMap] = useState<JourneyMap>(() => upgradeJourney(readJson(STORAGE_KEY, JourneyMapSchema, INITIAL_JOURNEY)))
+  const [guide, setGuide] = useState(() => readString(GUIDE_KEY) !== 'seen')
   const [tags, setTags] = useState<JourneyTags>(() => readJson(TAGS_STORAGE_KEY, JourneyTagsSchema, INITIAL_TAGS))
   const [stageFilter, setStageFilter] = useState<string | null>(null)
   const [tagFilter, setTagFilter] = useState('')
@@ -118,6 +133,16 @@ export function UserJourneyPage() {
 
   const moments = useMemo(() => taggedMoments(map, tags), [map, tags])
   const byId = useMemo(() => new Map(moments.map((m) => [m.id, m])), [moments])
+  const surfaceGroup = tags.groups.find((g) => g.id === 'surface')
+  /** With tags on, a moment's screens come from its Product surface tags (U105); without, from the screen's own list. */
+  const screensOf = (momentId: string, tagIds?: string[]) =>
+    tagsOn ? screensOnSurfaces(map, surfacesOf(tagIds ?? byId.get(momentId)?.assignment.tags ?? [])) : screensFor(map, momentId)
+  const usersOfSurface = (surface: string) => moments.filter((m) => m.assignment.tags.includes(`surface:${surface}`))
+
+  function closeGuide() {
+    setGuide(false)
+    writeString(GUIDE_KEY, 'seen')
+  }
 
   function saveMap(next: JourneyMap) {
     setMap(next)
@@ -137,11 +162,11 @@ export function UserJourneyPage() {
     setEditing({ kind, stageId, item, assignment: byId.get(item.id)?.assignment ?? EMPTY, isNew: false })
   }
 
-  function openNew(kind: ItemKind, stageId: string) {
+  function openNew(kind: ItemKind, stageId: string, surface?: string) {
     setEditing({
       kind,
       stageId,
-      item: { id: uid(), title: '', description: '', feature: '', image: kind === 'moments' ? NEW_MOMENT_IMAGE : '' },
+      item: { id: uid(), title: '', description: '', feature: '', image: kind === 'moments' ? NEW_MOMENT_IMAGE : '', ...(surface ? { surface } : {}) },
       assignment: EMPTY,
       isNew: true,
     })
@@ -150,8 +175,8 @@ export function UserJourneyPage() {
   function saveEditing(e: Editing) {
     const base = { ...e.item, title: e.item.title.trim() || (e.kind === 'moments' ? 'Untitled moment' : 'Untitled screen'), description: e.item.description.trim(), feature: e.item.feature.trim() }
     // Only a screen keeps what it serves and where it lives; a moment saves as it always did.
-    const { momentIds, link, ...plain } = base
-    const item: JourneyScreen = e.kind === 'screens' ? { ...plain, momentIds: momentIds ?? [], link: link?.trim() ?? '' } : plain
+    const { momentIds, link, surface, ...plain } = base
+    const item: JourneyScreen = e.kind === 'screens' ? { ...plain, momentIds: momentIds ?? [], link: link?.trim() ?? '', ...(surface ? { surface } : {}) } : plain
     let next = map
     if (e.isNew) {
       next = { ...map, stages: map.stages.map((s) => (s.id === e.stageId ? { ...s, [e.kind]: [...s[e.kind], item] } : s)) }
@@ -225,13 +250,16 @@ export function UserJourneyPage() {
     <div className="flex flex-col gap-16">
       <PageHeader
         title="User journey"
-        description="When people reach for Aurelia, in four stages: the moments that bring them, the feature each moment suggests, and the screens that serve it. Select any moment to edit it."
+        description="When, where and why people reach for Aurelia, and what serves each moment. Use it to decide what to design or build next: a moment many personas hit, with no screen or only a concept behind it, is the gap. New here? Open the guide."
         actions={
           <div className="relative flex gap-8">
+            <Button size="sm" icon={<CircleHelp size={13} />} onClick={() => setGuide(true)} data-tour="guide">
+              Guide
+            </Button>
             <Button size="sm" variant="primary" icon={<Plus size={13} />} onClick={() => openNew('moments', stageFilter ?? map.stages[0].id)}>
               Add moment
             </Button>
-            <Button size="sm" icon={<MoreHorizontal size={14} />} aria-expanded={moreOpen} onClick={() => setMoreOpen((o) => !o)}>
+            <Button size="sm" icon={<MoreHorizontal size={14} />} aria-expanded={moreOpen} onClick={() => setMoreOpen((o) => !o)} data-tour="more">
               More
             </Button>
             {moreOpen && (
@@ -292,7 +320,7 @@ export function UserJourneyPage() {
 
       {tagsOn && (
         <div className="flex flex-wrap items-center justify-between gap-10">
-          <div className="flex flex-wrap gap-2 rounded-12 border border-adm-line bg-adm-surface p-4" role="tablist" aria-label="View">
+          <div className="flex flex-wrap gap-2 rounded-12 border border-adm-line bg-adm-surface p-4" role="tablist" aria-label="View" data-tour="views">
             {VIEWS.map((v) => (
               <button
                 key={v.id}
@@ -315,7 +343,7 @@ export function UserJourneyPage() {
 
       {view === 'map' && (
         <>
-          <div className="flex flex-wrap items-center gap-8">
+          <div className="flex flex-wrap items-center gap-8" data-tour="filters">
             <div className="flex flex-wrap gap-4" role="group" aria-label="Stage">
               {[{ id: null as string | null, title: 'All stages', color: '' }, ...map.stages].map((s) => (
                 <button
@@ -357,7 +385,7 @@ export function UserJourneyPage() {
                 const shown = s.moments.filter((m) => !tagFilter || byId.get(m.id)?.assignment.tags.includes(tagFilter))
                 return (
                   <section key={s.id} className="flex flex-col border-r border-adm-line last:border-r-0" aria-label={`${s.title} stage`}>
-                    <header className="relative border-b border-adm-line px-16 pb-14 pt-16">
+                    <header className="relative border-b border-adm-line px-16 pb-14 pt-16" data-tour={stages.indexOf(s) === 0 ? 'stage' : undefined}>
                       <span className="text-10 font-semibold uppercase tracking-widest text-adm-muted">Stage {String(map.stages.indexOf(s) + 1).padStart(2, '0')}</span>
                       <h2 className="mt-4 text-19 font-semibold text-adm-ink">{s.title}</h2>
                       <p className="mt-2 text-12 leading-[18px] text-adm-muted">{s.question}</p>
@@ -368,11 +396,13 @@ export function UserJourneyPage() {
                         const a = byId.get(m.id)?.assignment ?? EMPTY
                         const ready = a.tags.find((t) => t.startsWith('readiness:'))?.split(':')[1]
                         const untagged = tagsOn && missingGroups(tags.groups, a.tags).length > 0
-                        const served = screensFor(map, m.id).length
+                        const served = screensOf(m.id).length
+                        const demand = DEMAND.get(m.id) ?? 0
                         return (
                           <button
                             key={m.id}
                             type="button"
+                            data-tour={stages.indexOf(s) === 0 && shown.indexOf(m) === 0 ? 'moment' : undefined}
                             onClick={() => openItem('moments', s.id, m)}
                             className="group flex flex-col gap-6 rounded-12 border border-adm-line bg-adm-surface p-8 text-left transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-adm-accent"
                           >
@@ -390,6 +420,11 @@ export function UserJourneyPage() {
                               )}
                             </span>
                             {m.description && <span className="line-clamp-3 px-2 text-12 leading-[18px] text-adm-ink-2">{m.description}</span>}
+                            {demand > 0 && (
+                              <span className="inline-flex items-center gap-4 px-2 text-11 tabular-nums text-adm-muted" title="Personas whose day includes this moment, of 300">
+                                <Users size={11} aria-hidden="true" /> {demand} of 300 personas
+                              </span>
+                            )}
                             {m.feature && (
                               <span className="rounded-8 bg-adm-bg px-8 py-6 text-12 text-adm-ink">
                                 <span className="block text-10 font-semibold uppercase tracking-wider text-adm-muted">Potential feature</span>
@@ -419,7 +454,30 @@ export function UserJourneyPage() {
                         <Plus size={13} /> Add a moment
                       </button>
                     </div>
-                    {showScreens && (
+                    {showScreens && tagsOn && (
+                      <div className="border-t border-adm-line p-12">
+                        <p className="mb-8 text-10 font-semibold uppercase tracking-widest text-adm-muted">Screens these moments use</p>
+                        <div className="flex flex-wrap gap-10">
+                          {(() => {
+                            const seen = new Map<string, { stageId: string; screen: JourneyScreen }>()
+                            for (const m of shown) for (const x of screensOf(m.id)) seen.set(x.screen.id, x)
+                            const list = [...seen.values()]
+                            if (!list.length) return <p className="text-11 text-adm-critical">No moment here is tagged with a surface that has a screen.</p>
+                            return list.map(({ stageId, screen: sc }) => (
+                              <button key={sc.id} type="button" onClick={() => openItem('screens', stageId, sc)} className="group flex w-[84px] flex-col gap-4 text-left">
+                                <span className="block h-[168px] w-[80px] rounded-[14px] bg-adm-sidebar p-3 transition-transform group-hover:-translate-y-2">
+                                  <span className="flex size-full items-center justify-center overflow-hidden rounded-[11px] bg-adm-surface">
+                                    {sc.image ? <img src={sc.image} alt="" loading="lazy" className="size-full object-cover object-top" /> : <ImagePlus size={14} className="text-adm-muted" />}
+                                  </span>
+                                </span>
+                                <span className="text-11 font-medium leading-[14px] text-adm-ink">{sc.title}</span>
+                              </button>
+                            ))
+                          })()}
+                        </div>
+                      </div>
+                    )}
+                    {showScreens && !tagsOn && (
                       <div className="border-t border-adm-line p-12">
                         <p className="mb-8 text-10 font-semibold uppercase tracking-widest text-adm-muted">Screens</p>
                         <div className="flex flex-wrap gap-10">
@@ -453,6 +511,49 @@ export function UserJourneyPage() {
               })}
             </div>
           </div>
+          {tagsOn && surfaceGroup && (
+            <section className="flex flex-col gap-12 rounded-12 border border-adm-line bg-adm-surface p-16" data-tour="surfaces" aria-label="Product surfaces">
+              <div>
+                <h2 className="text-15 font-semibold text-adm-ink">Product surfaces</h2>
+                <p className="mt-2 text-12 text-adm-muted">
+                  The parts of the app that serve moments, each with its screen. A moment shows the screen of every surface it is tagged with, so the tag and the picture always agree. Change which surfaces exist in Tag setup.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-14">
+                {surfaceGroup.tags.map((t) => {
+                  const list = allScreens(map).filter((x) => x.screen.surface === t.id)
+                  const used = usersOfSurface(t.id).length
+                  return (
+                    <div key={t.id} className="flex flex-col gap-6">
+                      <p className="text-12 font-medium text-adm-ink">{t.label}</p>
+                      <div className="flex gap-8">
+                        {list.map(({ stageId, screen: sc }) => (
+                          <button key={sc.id} type="button" onClick={() => openItem('screens', stageId, sc)} className="group flex w-[84px] flex-col gap-4 text-left" aria-label={`${t.label}: ${sc.title}`}>
+                            <span className="block h-[168px] w-[80px] rounded-[14px] bg-adm-sidebar p-3 transition-transform group-hover:-translate-y-2">
+                              <span className="flex size-full items-center justify-center overflow-hidden rounded-[11px] bg-adm-surface">
+                                {sc.image ? <img src={sc.image} alt="" loading="lazy" className="size-full object-cover object-top" /> : <ImagePlus size={14} className="text-adm-muted" />}
+                              </span>
+                            </span>
+                            <span className="text-11 font-medium leading-[14px] text-adm-ink">{sc.title}</span>
+                          </button>
+                        ))}
+                        {list.length === 0 && (
+                          <button
+                            type="button"
+                            onClick={() => openNew('screens', map.stages[0].id, t.id)}
+                            className="flex h-[168px] w-[80px] flex-col items-center justify-center gap-4 rounded-[14px] border border-dashed border-adm-critical px-4 text-center text-10 text-adm-critical hover:bg-adm-hover"
+                          >
+                            <ImagePlus size={14} /> Add its screen
+                          </button>
+                        )}
+                      </div>
+                      <p className={`text-10 ${used ? 'text-adm-muted' : 'text-adm-critical'}`}>{used ? `Serves ${used} moment${used === 1 ? '' : 's'}` : 'No moment tagged'}</p>
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+          )}
           <p className="text-11 text-adm-muted">Edits are saved in this browser. Use More → Export to share them with the team.</p>
         </>
       )}
@@ -483,12 +584,18 @@ export function UserJourneyPage() {
           editing={editing}
           map={map}
           groups={tagsOn && editing.kind === 'moments' ? tags.groups : null}
+          surfaces={tagsOn ? (surfaceGroup?.tags ?? []) : null}
+          surfaceUsers={(surface) => usersOfSurface(surface).map((m) => m.title)}
+          screensOf={screensOf}
+          demand={DEMAND}
           onClose={() => setEditing(null)}
           onSave={saveEditing}
           onDelete={deleteEditing}
           onOpenScreen={(stageId, screen) => openItem('screens', stageId, screen)}
         />
       )}
+
+      {guide && <GuideTour steps={guideSteps(tagsOn)} onClose={closeGuide} />}
 
       {stagesOpen && (
         <StageNames
@@ -522,6 +629,10 @@ function ItemPanel({
   editing,
   map,
   groups,
+  surfaces,
+  surfaceUsers,
+  screensOf,
+  demand,
   onClose,
   onSave,
   onDelete,
@@ -530,6 +641,11 @@ function ItemPanel({
   editing: Editing
   map: JourneyMap
   groups: TagGroup[] | null
+  /** With tags on: the Product surface tags a screen can show. */
+  surfaces: { id: string; label: string }[] | null
+  surfaceUsers: (surface: string) => string[]
+  screensOf: (momentId: string, tagIds?: string[]) => { stageId: string; screen: JourneyScreen }[]
+  demand: Map<string, number>
   onClose: () => void
   onSave: (e: Editing) => void
   onDelete: (e: Editing) => void
@@ -612,7 +728,18 @@ function ItemPanel({
           </div>
           {error && <span className="text-11 text-adm-critical">{error}</span>}
         </div>
-        {moment ? <MomentScreens map={map} momentId={draft.item.id} onOpen={onOpenScreen} /> : <ScreenLinks map={map} draft={draft.item} onChange={set} />}
+        {moment && (
+          <p className="inline-flex items-center gap-6 text-12 text-adm-ink-2">
+            <Users size={13} aria-hidden="true" /> {demand.get(draft.item.id) ?? 0} of the 300 personas have this moment in their day.
+          </p>
+        )}
+        {moment ? (
+          <MomentScreens map={map} screens={screensOf(draft.item.id, draft.assignment.tags)} bySurface={!!surfaces} onOpen={onOpenScreen} />
+        ) : surfaces ? (
+          <ScreenSurface draft={draft.item} surfaces={surfaces} users={draft.item.surface ? surfaceUsers(draft.item.surface) : []} onChange={set} />
+        ) : (
+          <ScreenLinks map={map} draft={draft.item} onChange={set} />
+        )}
         {groups && (
           <div className="flex flex-col gap-12 border-t border-adm-line pt-16">
             <div>
@@ -628,13 +755,24 @@ function ItemPanel({
 }
 
 /** Read-only: the screens that serve a moment. None is the signal a design is missing. */
-function MomentScreens({ map, momentId, onOpen }: { map: JourneyMap; momentId: string; onOpen: (stageId: string, screen: JourneyScreen) => void }) {
-  const screens = screensFor(map, momentId)
+function MomentScreens({
+  map,
+  screens,
+  bySurface,
+  onOpen,
+}: {
+  map: JourneyMap
+  screens: { stageId: string; screen: JourneyScreen }[]
+  bySurface: boolean
+  onOpen: (stageId: string, screen: JourneyScreen) => void
+}) {
   return (
     <div className="flex flex-col gap-8 border-t border-adm-line pt-16">
       <div>
         <h3 className="text-13 font-semibold text-adm-ink">Screens</h3>
-        <p className="mt-2 text-12 text-adm-muted">The product screens that serve this moment. Link one from the screen's own panel.</p>
+        <p className="mt-2 text-12 text-adm-muted">
+          {bySurface ? 'From the Product surface tags below: tag a surface and its screen appears here.' : "The product screens that serve this moment. Link one from the screen's own panel."}
+        </p>
       </div>
       {screens.length === 0 ? (
         <p className="inline-flex items-center gap-6 rounded-8 border border-dashed border-adm-line px-10 py-8 text-12 text-adm-critical">
@@ -657,6 +795,57 @@ function MomentScreens({ map, momentId, onOpen }: { map: JourneyMap; momentId: s
           ))}
         </ul>
       )}
+    </div>
+  )
+}
+
+/** With tags on (U105): the surface a screen shows, the moments tagged with it, and where it lives. */
+function ScreenSurface({
+  draft,
+  surfaces,
+  users,
+  onChange,
+}: {
+  draft: JourneyScreen
+  surfaces: { id: string; label: string }[]
+  users: string[]
+  onChange: (patch: Partial<JourneyScreen>) => void
+}) {
+  const href = linkHref(draft.link)
+  return (
+    <div className="flex flex-col gap-14 border-t border-adm-line pt-16">
+      <FormField label="Product surface" hint="The part of the app this screen shows. Moments tagged with it show this screen.">
+        <select className={inputClass} value={draft.surface ?? ''} onChange={(e) => onChange({ surface: e.target.value || undefined })}>
+          <option value="">Not chosen</option>
+          {surfaces.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.label}
+            </option>
+          ))}
+        </select>
+      </FormField>
+      <div className="flex flex-col gap-4">
+        <span className="text-12 font-medium text-adm-ink-2">Serves</span>
+        {users.length ? (
+          <ul className="flex list-disc flex-col gap-2 pl-16 text-12 text-adm-ink">
+            {users.map((u) => (
+              <li key={u}>{u}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-12 text-adm-critical">{draft.surface ? 'No moment is tagged with this surface yet.' : 'Choose a surface to link this screen to moments.'}</p>
+        )}
+      </div>
+      <FormField label="Link" hint="Where it lives: app route or Figma URL">
+        <div className="flex gap-8">
+          <input aria-label="Link" className={`${inputClass} min-w-0 flex-1`} value={draft.link ?? ''} placeholder="/play/… or https://www.figma.com/…" onChange={(e) => onChange({ link: e.target.value })} />
+          {href && (
+            <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex shrink-0 items-center gap-4 rounded-8 border border-adm-line px-10 text-12 font-medium text-adm-ink hover:bg-adm-hover">
+              <ExternalLink size={12} aria-hidden="true" /> Open
+            </a>
+          )}
+        </div>
+      </FormField>
     </div>
   )
 }
@@ -733,4 +922,50 @@ function StageNames({ map, onClose, onSave }: { map: JourneyMap; onClose: () => 
       </div>
     </Modal>
   )
+}
+
+/** The guide for this page (U105). Tag steps only where tags are on. */
+function guideSteps(tagsOn: boolean): TourStep[] {
+  const steps: (TourStep | false)[] = [
+    {
+      title: 'What this map is for',
+      body: (
+        <>
+          It maps the <b>moments</b> people reach for Aurelia: when, where and why. It also shows what in the product serves each one. Use it to decide what to design or build next. A moment that many personas have, with no screen or only a concept behind it, is a gap.
+        </>
+      ),
+    },
+    { target: 'stage', title: 'Four stages', body: 'Moments are grouped by the role they play in someone’s day: Reflect, Create, Experience, Share. Each stage answers the question under its name. Rename the stages from More.' },
+    {
+      target: 'moment',
+      title: 'Reading a moment',
+      body: 'What happens, and the feature it suggests. How many of the 300 personas have it in their day (demand). How ready that feature is (Live, Partly built, Concept). Whether the team has agreed on it, and how many screens serve it. Select a moment to edit everything about it in one panel.',
+    },
+    tagsOn && {
+      target: 'views',
+      title: 'Tags, review and coverage',
+      body: 'Tags & review classifies every moment the same way (time, context, trigger, need, state, time available, surface, readiness), and marks it Agreed or To discuss. Coverage shows the tags no moment covers yet: the gaps. Tag setup holds the groups and their tags.',
+    },
+    tagsOn && {
+      target: 'surfaces',
+      title: 'Screens are product surfaces',
+      body: 'Each surface has its screen. A moment shows the screen of every surface it is tagged with, so the tag and the picture cannot disagree. A red dashed card is a surface with no screenshot yet; a red line under one means no moment uses it.',
+    },
+    { target: 'filters', title: 'Narrow it down', body: tagsOn ? 'Show one stage, or only the moments with one tag (Night, for example), to see everything that serves it. Hide the screens to read the moments alone.' : 'Show one stage at a time, or hide the screens to read the moments alone.' },
+    { target: 'more', title: 'Saving and sharing', body: 'Edits are saved in this browser only, until there is a backend. Export a JSON file to share it with the team, Import theirs, or Restore the original to start again.' },
+    {
+      title: 'A working session, in five steps',
+      body: (
+        <ol className="flex list-decimal flex-col gap-4 pl-18">
+          <li>Pick a stage.</li>
+          <li>Open each moment: check what happens and its feature{tagsOn ? ', tag it, and set Agreed or To discuss with a note' : ''}.</li>
+          <li>{tagsOn ? 'Open Coverage and note the gaps.' : 'Check each moment has a screen.'}</li>
+          <li>{tagsOn ? 'Check every product surface has a real screenshot.' : 'Add the screens that are missing.'}</li>
+          <li>Export, and share the file with the team.</li>
+        </ol>
+      ),
+    },
+    { target: 'guide', title: 'Open this again', body: 'The Guide button runs this tour again whenever you need it.' },
+  ]
+  return steps.filter((x): x is TourStep => !!x)
 }
