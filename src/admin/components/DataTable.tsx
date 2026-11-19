@@ -33,6 +33,8 @@ interface DataTableProps<T> {
   exportName: string
   pageSize?: number
   emptyMessage?: string
+  /** Makes each row open something (a drawer, a page); the whole row is the target. */
+  onRowClick?: (row: T) => void
 }
 
 type SortDir = 'asc' | 'desc'
@@ -50,6 +52,7 @@ export function DataTable<T>({
   exportName,
   pageSize = 12,
   emptyMessage = 'No rows match these filters.',
+  onRowClick,
 }: DataTableProps<T>) {
   const [query, setQuery] = useState('')
   const [active, setActive] = useState<Partial<Record<ColumnKey<T>, string>>>({})
@@ -220,7 +223,7 @@ export function DataTable<T>({
           </thead>
           <tbody>
             {visible.map((row, index) => (
-              <tr key={index} className="border-b border-adm-line last:border-0 hover:bg-adm-hover">
+              <tr key={index} onClick={onRowClick ? () => onRowClick(row) : undefined} className={`border-b border-adm-line last:border-0 hover:bg-adm-hover ${onRowClick ? 'cursor-pointer' : ''}`}>
                 {columns.map((column, columnIndex) => (
                   <td
                     key={`${column.key}-${columnIndex}`}

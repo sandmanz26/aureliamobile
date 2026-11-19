@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { INITIAL_JOURNEY } from './userJourney'
-import { PERSONA_COUNT, distribution, drawPanel, generatePersonas, personaPrompt } from './personas'
+import { whenPhrase, PERSONA_COUNT, distribution, drawPanel, generatePersonas, personaPrompt } from './personas'
 
 describe('personas', () => {
   const all = generatePersonas()
@@ -56,6 +56,28 @@ describe('personas', () => {
       expect(f.sleep.hours).toBeGreaterThanOrEqual(4)
       if (p.workPattern !== 'student') expect(f.stressors, p.id).not.toContain('exams and grades')
       if (!/kids|teenagers|single parent/.test(p.household)) expect(f.day[0].what, p.id).not.toMatch(/kids/)
+    }
+  })
+
+  it('opens job statements naturally', () => {
+    expect(whenPhrase('before a difficult conversation')).toBe('Right before a difficult conversation')
+    expect(whenPhrase('lying in bed awake')).toBe('When I am lying in bed awake')
+    expect(whenPhrase('end of a long shift')).toBe('At the end of a long shift')
+    expect(whenPhrase('exam season')).toBe('During exam season')
+    expect(whenPhrase('the 3pm slump')).toBe('When I face the 3pm slump')
+  })
+
+  it('gives everyone test cases a buyer agent can use', () => {
+    for (const p of all) {
+      const t = p.profile.testing
+      expect(t.scenarios, p.id).toHaveLength(3)
+      for (const sc of t.scenarios) for (const k of ['title', 'when', 'does', 'expect'] as const) expect(sc[k].length, `${p.id} ${sc.id} ${k}`).toBeGreaterThan(5)
+      expect(t.firstSentence.length).toBeGreaterThan(8)
+      expect(t.pain).toBeGreaterThanOrEqual(2)
+      expect(t.pain).toBeLessThanOrEqual(10)
+      expect(t.jobs[0], p.id).toMatch(/^(When I (face|am)|Right|At|During|On) .+, I want to .+, so I can .+\.$/)
+      expect(t.objections.length, p.id).toBeGreaterThan(0)
+      if (p.workPattern !== 'student') expect(p.triggers, p.id).not.toContain('exam season')
     }
   })
 

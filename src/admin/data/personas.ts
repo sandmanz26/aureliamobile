@@ -75,6 +75,36 @@ export interface Profile {
   dealBreakers: string[]
   success: string
   quotes: string[]
+  /** For buyer tests and QA (U100). */
+  testing: Testing
+}
+
+export interface Scenario {
+  id: string
+  title: string
+  /** The situation: when and where. */
+  when: string
+  /** What the person does in Aurelia. */
+  does: string
+  /** What Aurelia should do; the pass condition. */
+  expect: string
+}
+
+export interface Testing {
+  /** "When …, I want …, so I can …" */
+  jobs: string[]
+  /** How much it hurts today, 1–10. */
+  pain: number
+  /** What they would type into Aurelia's first box, in their words. */
+  firstSentence: string
+  spendNow: string
+  alternatives: string[]
+  buyTriggers: string[]
+  /** Objections in the words they would use. */
+  objections: string[]
+  accessibility: string[]
+  connectivity: string
+  scenarios: Scenario[]
 }
 
 export const SEED = 2026
@@ -296,6 +326,114 @@ function makeDay(r: Rand, work: WorkPattern, household: string, goal: GoalId, be
   ]
 }
 
+const FIRST_SENTENCE: Record<GoalId, string[]> = {
+  sleep: ['cant sleep again, my mind wont stop', 'woke up at 3 and I am wide awake', 'I need to fall asleep, work at 7', 'too wired to sleep after my shift', 'help me switch off, I am in bed'],
+  calm: ['big meeting in 20 min and my chest is tight', 'I feel anxious and I dont know why', 'everything is too loud today', 'I need to calm down before I call my mum', 'stressed about money again'],
+  clarity: ['too many thoughts, I cannot think straight', 'I have to decide something big and I am stuck', 'my head is a mess after today', 'help me figure out what matters this week'],
+  focus: ['I need to focus for the next hour', 'cant concentrate, exam tomorrow', 'I keep picking up my phone, help', 'need to start this report and I am procrastinating'],
+  regulate: ['my heart is racing after that argument', 'I am shaking a bit, need to come down', 'my shoulders are up to my ears', 'still wound up hours after work'],
+  energy: ['so tired, 3pm and I have hours left', 'no energy to get out of bed', 'I feel flat and heavy today', 'need a lift before the kids get home'],
+}
+const BUY_TRIGGERS = ['a free week that visibly helps', 'their therapist suggesting it', 'a price under $5 a month', 'a friend swearing by it', 'trying it without an account', 'an annual plan with a real discount', 'their employer paying for it', 'seeing their own sleep or mood improve in the app']
+const OBJECTION_PHRASES: Record<string, string> = {
+  'forgets to open the app': '"I will forget it exists by Thursday."',
+  'does not trust AI with feelings': '"Who reads what I type into this?"',
+  'finds most meditation voices irritating': '"If the voice is breathy and fake, I am out."',
+  'cannot find ten quiet minutes': '"Ten minutes? I do not get ten minutes."',
+  'thinks wellness apps are too expensive': '"Paying monthly to be told to breathe? No."',
+  'gave up on apps that nag with notifications': '"One push too many and I delete it."',
+  'dislikes spiritual language': '"Please, no chakras and no universe."',
+  'worries about data privacy': '"Where does my data go?"',
+  'feels guilty when a streak breaks': '"I do not need another thing to fail at."',
+  'too much choice in other apps': '"I do not want to scroll a library, just tell me what to do."',
+  'prefers to talk to a real person': '"A recording is not the same as a person."',
+  'not sure it would work for them': '"This stuff never works for people like me."',
+}
+
+interface TestingInput {
+  goal: GoalId; struggle: string; triggers: string[]; workPattern: WorkPattern; income: 'low' | 'middle' | 'high'; experience: Experience; apps: string[]; aiAttitude: AiAttitude
+  flags: string[]; barriers: string[]; privacy: string; language: string; age: number; length: number; voice: string; spiritual: string; moments: string[]; coping: string[]
+  success: string; neuroticism: Level; quality: number; country: string
+}
+
+const MOMENT_SITUATION: Record<string, string> = {
+  r1: 'just woken up, still in bed',
+  r2: 'mid-afternoon, a feeling has just spiked',
+  c1: 'on the bus or train home',
+  c2: 'a five-minute break between tasks',
+  e1: 'first thing in the morning',
+  e2: 'ten minutes before a meeting or a hard call',
+  e3: 'right after a tense conversation',
+  e4: 'commuting with headphones in',
+  e5: 'in bed with the lights off',
+  h1: 'on a good day, a few weeks in',
+}
+
+/** Turns a trigger into the opening of a job statement that reads naturally. */
+export function whenPhrase(t: string): string {
+  if (/^(before|after)\b/.test(t)) return `Right ${t}`
+  if (/^right after\b/.test(t)) return t.charAt(0).toUpperCase() + t.slice(1)
+  if (/^\w+ing\b/.test(t)) return `When I am ${t}`
+  if (/^end of\b/.test(t)) return `At the ${t}`
+  if (/season$/.test(t)) return `During ${t}`
+  if (/days$|evening$/.test(t)) return `On ${t}`
+  if (/^the night\b/.test(t)) return `On ${t}`
+  if (/^the start\b/.test(t)) return `At ${t}`
+  return `When I face ${t}`
+}
+
+function makeTesting(r: Rand, x: TestingInput): Testing {
+  const esl = x.flags.includes('reads English as a second language') || (x.language !== 'English' && r() < 0.3)
+  let first = pick(r, FIRST_SENTENCE[x.goal])
+  if (x.age >= 60) first = first.charAt(0).toUpperCase() + first.slice(1).replace(/\bcant\b/, 'cannot').replace(/\bdont\b/, 'do not').replace(/\bwont\b/, 'will not') + '.'
+  if (esl) first = first.replace('I am', 'I').replace('cannot', 'can not')
+  const pain = Math.min(10, Math.max(2, Math.round((x.neuroticism === 'high' ? 7 : x.neuroticism === 'medium' ? 5.5 : 4) + (x.goal === 'sleep' ? 3 - x.quality * 0.6 : 0) + (r() - 0.5) * 2)))
+  const spendNow =
+    x.experience === 'daily' && x.income !== 'low' ? pick(r, ['about $10 a month on a meditation app', 'an annual Calm plan, about $70 a year', '$15 a month across two apps'])
+      : x.coping.includes('seeing a therapist') ? 'pays for a therapist every two weeks; nothing on apps'
+        : x.income === 'high' ? pick(r, ['nothing on apps, a gym membership', 'nothing yet, would spend on something that works'])
+          : 'nothing'
+  const alternatives = [...new Set([...(x.apps.length ? [x.apps[0]] : []), x.coping[0], pick(r, ['doing nothing and pushing through', 'a YouTube video found on the spot', 'a podcast', 'a long shower'])])]
+  const objections = x.barriers.map((b) => OBJECTION_PHRASES[b] ?? `"${b}"`)
+  if (x.income === 'low' && !objections.some((o) => o.includes('Paying'))) objections.push('"If it costs more than a coffee a month, forget it."')
+  const accessibility = [
+    ...x.flags.filter((f) => /vision|hearing|ADHD|autistic|second language/.test(f)).map((f) =>
+      f.startsWith('low vision') ? 'large text, high contrast' : f.startsWith('hard of hearing') ? 'captions or a visual guide' : f === 'ADHD' ? 'very short sessions, no long intros' : f.startsWith('autistic') ? 'no sudden sounds, predictable structure' : 'plain English, short sentences'),
+    ...(x.age >= 70 ? ['bigger tap targets'] : []),
+  ]
+  const connectivity = /Indonesia|India|Philippines|Nigeria|South Africa|Brazil|Mexico/.test(x.country) && r() < 0.6 ? 'patchy mobile data, often on a limited plan' : x.workPattern === 'shift' || x.moments.includes('c1') || x.moments.includes('e4') ? 'drops in and out on the commute' : 'reliable wifi at home'
+  const soICan: Record<GoalId, string> = { sleep: 'wake up rested', calm: 'get through the day without snapping', clarity: 'know what to do next', focus: 'finish what I started', regulate: 'stop carrying the stress in my body', energy: 'have something left for the evening' }
+  const saysGoal: Record<GoalId, string> = { sleep: 'fall asleep and stay asleep', calm: 'feel calmer quickly', clarity: 'clear my head', focus: 'focus on one thing', regulate: 'get my body to settle', energy: 'get some energy back' }
+  const jobs = [
+    `${whenPhrase(x.triggers[0])}, I want to ${saysGoal[x.goal]}, so I can ${soICan[x.goal]}.`,
+    `When I open an app at that moment, I want it to work without setting anything up, so I do not give up before it starts.`,
+  ]
+  const top = x.moments[0]
+  const scenarios: Scenario[] = [
+    {
+      id: 'first-open',
+      title: 'First open, straight from the problem',
+      when: MOMENT_SITUATION[top] ?? 'the moment it hits',
+      does: `opens Aurelia for the first time and types "${first}"`,
+      expect: 'A session starts within two taps, with no account and no paywall before the first play, and it fits the goal and their stated preferences.',
+    },
+    {
+      id: 'moment',
+      title: `The ${x.goal} moment, a week in`,
+      when: MOMENT_SITUATION[x.moments[1] ?? top] ?? 'a usual day',
+      does: 'comes back and taps the last session or asks for "the same as last time"',
+      expect: '"Same as last time" works in one tap; the next chapter is offered after the session, not before.',
+    },
+  ]
+  if (x.flags.includes('recent bereavement')) scenarios.push({ id: 'grief', title: 'Writes about a loss', when: 'late evening', does: 'types that they lost someone close recently', expect: 'A gentle, non-upbeat reply, no gamified prompts, and a "Need help now?" link visible.' })
+  else if (x.aiAttitude === 'distrustful' || x.privacy === 'very protective') scenarios.push({ id: 'privacy', title: 'Asks who reads it', when: 'before typing anything personal', does: 'asks "who can read what I write?"', expect: 'A plain answer about what is stored and who sees it, before any personal data is kept; they can use it without an account.' })
+  else if (accessibility.length) scenarios.push({ id: 'access', title: 'Uses it with their access needs', when: 'a normal day', does: `uses the app with: ${accessibility.join('; ')}`, expect: 'Everything is readable and operable; nothing important depends on sound alone or on fine taps.' })
+  else if (x.barriers.includes('feels guilty when a streak breaks') || x.barriers.includes('forgets to open the app')) scenarios.push({ id: 'lapse', title: 'Misses four days', when: 'a busy week', does: 'opens the app again after four days away', expect: 'No guilt, no reset message; consistency is shown kindly and the next chapter is ready.' })
+  else if (x.income === 'low') scenarios.push({ id: 'paywall', title: 'Hits the free limit', when: 'after the first build', does: 'reaches the end of what is free', expect: 'What is free and what is paid is clear; rewinding, resuming and replaying their own sessions stay free.' })
+  else scenarios.push({ id: 'low-checkin', title: 'A bad check-in', when: 'after a session', does: 'answers the check-in with the lowest mood', expect: 'Care rather than a push to continue; a "Need help now?" link; the next chapter goes gentler.' })
+  return { jobs, pain, firstSentence: first, spendNow, alternatives, buyTriggers: some(r, BUY_TRIGGERS, 2, 2), objections, accessibility, connectivity, scenarios }
+}
+
 function ageBand(age: number) {
   return age < 25 ? '18–24' : age < 35 ? '25–34' : age < 45 ? '35–44' : age < 55 ? '45–54' : age < 65 ? '55–64' : '65+'
 }
@@ -325,7 +463,7 @@ function makePersona(r: Rand, n: number): Persona {
 
   const goal = weighted<GoalId>(r, [['sleep', 25], ['calm', 22], ['focus', 15], ['clarity', 12], ['regulate', 14], ['energy', 12]])
   const struggle = workPattern === 'shift' && goal === 'sleep' ? 'shift work has broken their sleep rhythm' : pick(r, STRUGGLES[goal])
-  const triggers = some(r, TRIGGERS[goal], 1, 2)
+  const triggers = some(r, TRIGGERS[goal].filter((t) => workPattern === 'student' || t !== 'exam season'), 1, 2)
 
   const moments = new Set(GOAL_MOMENTS[goal])
   if (['office', 'hybrid', 'student'].includes(workPattern) && r() < 0.6) moments.add(r() < 0.5 ? 'c1' : 'e4')
@@ -348,6 +486,7 @@ function makePersona(r: Rand, n: number): Persona {
   const barriers = some(r, BARRIERS, 1, 2)
   if (aiAttitude === 'distrustful' && !barriers.includes('does not trust AI with feelings')) barriers[0] = 'does not trust AI with feelings'
 
+  const privacy = weighted(r, [['relaxed', 30], ['careful', 50], ['very protective', 20]] as const)
   const traits = some(r, TRAITS, 2, 3)
   const neuroticism: Level = ['calm', 'regulate', 'sleep'].includes(goal) ? weighted(r, [['medium', 45], ['high', 45], ['low', 10]] as const) : weighted(r, [['low', 30], ['medium', 50], ['high', 20]] as const)
   const personality = {
@@ -423,12 +562,17 @@ function makePersona(r: Rand, n: number): Persona {
     dealBreakers: some(r, DEAL_BREAKERS, 1, 2),
     success: pick(r, SUCCESS[goal]),
     quotes: [],
+    testing: undefined as unknown as Testing,
   }
   profile.values = (profile.bio.match(/most about (.+?) and (.+?)\./) ?? []).slice(1, 3)
   if (barriers.includes('dislikes spiritual language') && !profile.dealBreakers.includes('religious or spiritual framing')) profile.dealBreakers.push('religious or spiritual framing')
   const city = pick(r, place.cities)
   profile.bio = profile.bio.replace('%CITY%', city)
   profile.quotes = [pick(r, QUOTES[goal]), EXTRA_QUOTES.ai[aiAttitude][0], EXTRA_QUOTES.money[income][0]]
+  profile.testing = makeTesting(r, {
+    goal, struggle, triggers, workPattern, income, experience, apps, aiAttitude, flags, barriers, privacy, language: place.language, age: clamped,
+    length: 0, voice: '', spiritual: '', moments: [...moments], coping, success: profile.success, neuroticism, quality, country: place.country,
+  })
 
   return {
     id: `P${String(n).padStart(3, '0')}`,
@@ -459,7 +603,7 @@ function makePersona(r: Rand, n: number): Persona {
     aiAttitude,
     willingnessToPay:
       income === 'low' ? weighted(r, [['free only', 70], ['up to $5 a month', 30]] as const) : weighted(r, [['free only', 25], ['up to $5 a month', 30], ['up to $10 a month', 30], ['more if it clearly works', 15]] as const),
-    privacy: weighted(r, [['relaxed', 30], ['careful', 50], ['very protective', 20]] as const),
+    privacy,
     barriers,
     flags,
     quote: profile.quotes[0],
@@ -498,6 +642,7 @@ export function personaPrompt(p: Persona): string {
     `How you pick an app: you ${p.profile.decides}; you would most likely hear about Aurelia through ${p.profile.wouldHearAbout}. Deal breakers: ${p.profile.dealBreakers.join('; ')}.`,
     `Success for you looks like: ${p.profile.success}.`,
     `Things you might say: ${p.profile.quotes.map((q) => `"${q}"`).join(' ')}`,
+    `If you opened Aurelia right now, you would type something like: "${p.profile.testing.firstSentence}". Pain today: ${p.profile.testing.pain} out of 10. You spend ${p.profile.testing.spendNow} on this now and otherwise rely on ${p.profile.testing.alternatives.join(', ')}. You would buy if: ${p.profile.testing.buyTriggers.join('; ')}. Your objections: ${p.profile.testing.objections.join(' ')}`,
     '',
     'Answer in the first person, briefly and concretely, as this person would. Be honest about doubts and say when something would not fit your life. Do not invent facts about Aurelia that you have not been shown.',
   ]

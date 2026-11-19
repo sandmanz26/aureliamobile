@@ -80,7 +80,7 @@ export function PersonasPage() {
       header: 'Persona',
       sortable: true,
       render: (row) => (
-        <button type="button" className="font-medium text-adm-ink underline-offset-2 hover:underline" onClick={() => setOpen(byId.get(row.id) ?? null)}>
+        <button type="button" className="text-left font-medium text-adm-ink underline-offset-2 hover:underline" onClick={() => setOpen(byId.get(row.id) ?? null)}>
           {row.name}
         </button>
       ),
@@ -198,7 +198,7 @@ export function PersonasPage() {
         ))}
       </div>
 
-      <Panel title="All personas" description="Search, filter and sort. Select a name to read the persona and its role-play prompt.">
+      <Panel title="All personas" description="Search, filter and sort. Select any row to open the full profile, its test cases and its role-play prompt.">
         <DataTable
           rows={rows}
           columns={columns}
@@ -209,6 +209,7 @@ export function PersonasPage() {
             { key: 'experience', label: 'Meditation', options: options('experience') },
             { key: 'ai', label: 'Towards AI', options: options('ai') },
           ]}
+          onRowClick={(row) => setOpen(byId.get(row.id) ?? null)}
           exportName="aurelia-personas"
           pageSize={20}
         />
@@ -401,6 +402,73 @@ function PersonaProfile({ p }: { p: Persona }) {
             </div>
           ))}
         </dl>
+      </Section>
+
+      <Section title="Buying">
+        <div className="grid grid-cols-[130px_1fr] gap-x-12 gap-y-6 text-12">
+          <span className="text-adm-muted">Pain today</span>
+          <span className="flex items-center gap-8">
+            <span className="h-6 w-120 overflow-hidden rounded-full bg-adm-hover">
+              <span className="block h-full rounded-full bg-adm-critical" style={{ width: `${f.testing.pain * 10}%` }} />
+            </span>
+            <span className="tabular-nums">{f.testing.pain} of 10</span>
+          </span>
+          <span className="text-adm-muted">Spends now</span>
+          <span>{f.testing.spendNow}</span>
+          <span className="text-adm-muted">Uses instead</span>
+          <span>{f.testing.alternatives.join('; ')}</span>
+          <span className="text-adm-muted">Would buy if</span>
+          <span>{f.testing.buyTriggers.join('; ')}</span>
+          <span className="text-adm-muted">Connection</span>
+          <span>{f.testing.connectivity}</span>
+          {f.testing.accessibility.length > 0 && (
+            <>
+              <span className="text-adm-muted">Access needs</span>
+              <span>{f.testing.accessibility.join('; ')}</span>
+            </>
+          )}
+        </div>
+        <div className="flex flex-col gap-4 text-12">
+          <span className="text-adm-muted">Jobs to be done</span>
+          <ul className="flex list-disc flex-col gap-2 pl-16">
+            {f.testing.jobs.map((j) => (
+              <li key={j}>{j}</li>
+            ))}
+          </ul>
+          <span className="mt-4 text-adm-muted">Objections, in their words</span>
+          <ul className="flex flex-col gap-2 italic text-adm-ink-2">
+            {f.testing.objections.map((o) => (
+              <li key={o}>{o}</li>
+            ))}
+          </ul>
+        </div>
+      </Section>
+
+      <Section title="Test cases">
+        <p className="rounded-8 border border-dashed border-adm-line px-10 py-8 text-12">
+          <span className="text-adm-muted">First thing they would type: </span>“{f.testing.firstSentence}”
+        </p>
+        <ol className="flex flex-col gap-8">
+          {f.testing.scenarios.map((sc, i) => (
+            <li key={sc.id} className="rounded-8 border border-adm-line p-10 text-12">
+              <p className="font-semibold">
+                {i + 1}. {sc.title}
+              </p>
+              <p className="mt-4">
+                <span className="text-adm-muted">When: </span>
+                {sc.when}
+              </p>
+              <p>
+                <span className="text-adm-muted">Does: </span>
+                {sc.does}
+              </p>
+              <p className="mt-4 rounded-4 bg-adm-good/10 px-6 py-4">
+                <span className="font-medium">Expect: </span>
+                {sc.expect}
+              </p>
+            </li>
+          ))}
+        </ol>
       </Section>
 
       <Section title="In their words">
