@@ -70,6 +70,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O40 | **Offer B (J135)**: which of buyer agent v3's proposed changes to build first. The agent ranks them by how many answers each changed: first session without an account (16), languages (13), data line (11), then voice choice, yearly-first and local prices (10 each). Also decide: larger text and setup help for 65+, and a student price | J135 | Product owner + Eugene |
 | O41 | **Buyer agent v4 and the feedback group (J136)**: approve v4. (1) Each persona walks the feedback group's actual screens, step by step along the user journey, giving a predicted funnel and where people leave. (2) The ten metrics are scored per run, each marked predicted (agent) or measured (humans). (3) A human test plan is exported for the feedback group. (4) Real results are entered after the sessions and compared with the agent's. Needs: the feedback group's date, size, countries and ages, and which design version they will see | J136 | Product owner + Eugene |
 | J137 | 2026-11-19 | Question | Which production design version the buyer agent runs used | — |
+| J138 | 2026-11-19 | Opinion | The two design versions to test (buyer agent v4 and the feedback group) | — |
 | J136 | 2026-11-19 | Opinion | Eugene: retention metrics, funnel and bounce, what holds back more AI plays, designs close to the feedback group, top 10 MVP market-fit metrics in buyer agent testing (view and plan) | — |
 | J134 | 2026-11-19 | Code | Criteria for buyer agent v1, clickable personas; v2 with region, wellness, age range and more personas, played more carefully; every version on the page | U102 |
 | J135 | 2026-11-19 | Code | Buyer agent v3 using Eugene's documents as reference; fix what v1–v2 found (the persona generator) | U103 |
@@ -1644,3 +1645,17 @@ transcript and the update log. Everything from J018 on was written at the time.
   - **The consumer app has no pricing screen**, so no tester has seen a price.
   - **Effect:** the price and paywall answers in v1–v3 are about a planned offer, not the app as built.
 - **Consequence for v4 (O41):** pin the run to one design version, the one the feedback group will see. Make the stimulus that version's real screens and the free limit as built, and state both in the run's criteria.
+
+### J138 — The two versions to test
+- **Asked:** "okay berikan 2version yang menurutmu most prominent ?"
+- **Answered:** production v3 (staging v5) against production v2 (staging v4).
+- **Why these two:**
+  - **Both are live on production** and pickable from the version bar, so the feedback group can use either without a build.
+  - **They share the same core path:** onboarding, a first session from your own words, the five-chapter journey, four tabs.
+  - **They differ in what drives coming back,** which is exactly Eugene's retention question: v5 tells progress in words from your own check-ins instead of sample scores, gives a Why? on each suggestion, asks for the wearable in onboarding, adds a journal, and keeps community without rankings.
+  - **The difference therefore isolates one hypothesis:** does the post-interview rework (v5) make people come back and play again more than v4?
+- **Why not the others:**
+  - **Production v1 (staging v3)** has no onboarding and no tabs. It differs from the other two in too many ways at once to say what caused a difference.
+  - **Staging v1–v2** are older still and not on production.
+- **Caveat:** v5 asks for a wearable in onboarding, one step more before the first play. Watch that step's drop-off; it is the one place v5 could lose people v4 keeps.
+- **Next:** feeds O41. Buyer agent v4 would play both versions on the same panel, as an A/B on real screens.

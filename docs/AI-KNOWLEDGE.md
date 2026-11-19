@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J137** · updated 19 Nov 2026
+**Covers up to J138** · updated 19 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
@@ -161,6 +161,7 @@ evidence → decision. It is not a user feature.
 **Version used (J137).** Runs v1–v3 were not pinned to a design version: the stimulus was text, and the test cases were judged against staging's default behaviour, closest to v5 (production v3).
 - **Their price and limit came from the admin's mock `PLANS`**, not from the app. The app's real free limit is 3 sends, then a 30-minute wait. No pricing screen exists.
 - **From v4 on:** pin a run to a version, and use that version's real screens.
+**Versions to test (J138).** Recommended A/B: production v3 (staging v5) against production v2 (staging v4). Both are live, they share the core path, and they differ in what drives coming back. Watch v5's extra wearable step in onboarding.
 - **Keep the agent honest:** look for the no first, honour deal breakers, set price from income and place. Write findings from computed tallies, never from memory.
 
 **The 2025 backend documents (J099, J109–J112).**
