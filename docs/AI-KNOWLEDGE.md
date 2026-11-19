@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J136** · updated 19 Nov 2026
+**Covers up to J137** · updated 19 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
@@ -158,6 +158,9 @@ evidence → decision. It is not a user feature.
 **Market-fit metrics (J136, O41).** Eugene wants retention, funnel and bounce, "what holds back more AI plays", and the top 10 MVP market-fit metrics used in buyer agent testing, close to the real feedback group.
 - **The distinction:** the agent predicts stated intent and where people stall. Retention and bounce are measured on people, through click insights in the feedback group. Mark every metric as predicted or measured, and compare the two after the sessions.
 - **Proposed next:** v4, where personas walk the feedback group's real screens along the user journey.
+**Version used (J137).** Runs v1–v3 were not pinned to a design version: the stimulus was text, and the test cases were judged against staging's default behaviour, closest to v5 (production v3).
+- **Their price and limit came from the admin's mock `PLANS`**, not from the app. The app's real free limit is 3 sends, then a 30-minute wait. No pricing screen exists.
+- **From v4 on:** pin a run to a version, and use that version's real screens.
 - **Keep the agent honest:** look for the no first, honour deal breakers, set price from income and place. Write findings from computed tallies, never from memory.
 
 **The 2025 backend documents (J099, J109–J112).**

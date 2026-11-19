@@ -69,6 +69,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O39 | **Buyer agent, next step (J133)**: after the demo, decide (a) the stimulus for the next run, for example the yearly plan first, or one reminder and a data line on the first screen, (b) panel size, and (c) whether runs move to a live model call from the admin, which needs a backend or an API key. Also fix the incoherent personas the runs found (3 in v1, 13 in v2) | J133 | Product owner |
 | O40 | **Offer B (J135)**: which of buyer agent v3's proposed changes to build first. The agent ranks them by how many answers each changed: first session without an account (16), languages (13), data line (11), then voice choice, yearly-first and local prices (10 each). Also decide: larger text and setup help for 65+, and a student price | J135 | Product owner + Eugene |
 | O41 | **Buyer agent v4 and the feedback group (J136)**: approve v4. (1) Each persona walks the feedback group's actual screens, step by step along the user journey, giving a predicted funnel and where people leave. (2) The ten metrics are scored per run, each marked predicted (agent) or measured (humans). (3) A human test plan is exported for the feedback group. (4) Real results are entered after the sessions and compared with the agent's. Needs: the feedback group's date, size, countries and ages, and which design version they will see | J136 | Product owner + Eugene |
+| J137 | 2026-11-19 | Question | Which production design version the buyer agent runs used | — |
 | J136 | 2026-11-19 | Opinion | Eugene: retention metrics, funnel and bounce, what holds back more AI plays, designs close to the feedback group, top 10 MVP market-fit metrics in buyer agent testing (view and plan) | — |
 | J134 | 2026-11-19 | Code | Criteria for buyer agent v1, clickable personas; v2 with region, wellness, age range and more personas, played more carefully; every version on the page | U102 |
 | J135 | 2026-11-19 | Code | Buyer agent v3 using Eugene's documents as reference; fix what v1–v2 found (the persona generator) | U103 |
@@ -1632,3 +1633,14 @@ transcript and the update log. Everything from J018 on was written at the time.
   - **Only people can give** 4 and the real values of all ten.
 - **Proposed:** buyer agent v4 as the rehearsal for the feedback group. O41 lists the steps and the inputs needed.
 - **No code** in this request.
+
+### J137 — Which version the buyer agent used
+- **Asked:** "klo buyer agent yang kamu pake itu dia mengerjakan production v berapa ?"
+- **Answered:** none, strictly. Runs v1–v3 did not walk the screens of any design version.
+  - **What the agent got:** the pitch and offer, written as text ("app store page and first screen").
+  - **How it judged the test cases:** against how the app behaves on staging's default path today. That is closest to staging v5 (production v3, the production default): Quick Start plays before sign-in, a personal session asks for sign-in on send, there is a daily check-in, and it is English only.
+- **Found while checking:**
+  - **The free limit** in the stimulus ("5 sessions a month", Plus at $9.99) came from the admin's mock pricing (`src/admin/data/commerce.ts`, `PLANS`). It is not what the consumer app does. The cockpit's free limit is 3 sends, then a 30-minute wait (`chat.freeLimit`, `ChatPage.tsx`).
+  - **The consumer app has no pricing screen**, so no tester has seen a price.
+  - **Effect:** the price and paywall answers in v1–v3 are about a planned offer, not the app as built.
+- **Consequence for v4 (O41):** pin the run to one design version, the one the feedback group will see. Make the stimulus that version's real screens and the free limit as built, and state both in the run's criteria.
