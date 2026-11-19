@@ -69,8 +69,10 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O39 | **Buyer agent, next step (J133)**: after the demo, decide (a) the stimulus for the next run, for example the yearly plan first, or one reminder and a data line on the first screen, (b) panel size, and (c) whether runs move to a live model call from the admin, which needs a backend or an API key. Also fix the incoherent personas the runs found (3 in v1, 13 in v2) | J133 | Product owner |
 | O40 | **Offer B (J135)**: which of buyer agent v3's proposed changes to build first. The agent ranks them by how many answers each changed: first session without an account (16), languages (13), data line (11), then voice choice, yearly-first and local prices (10 each). Also decide: larger text and setup help for 65+, and a student price | J135 | Product owner + Eugene |
 | O41 | **Buyer agent v4 and the feedback group (J136)**: approve v4. (1) Each persona walks the feedback group's actual screens, step by step along the user journey, giving a predicted funnel and where people leave. (2) The ten metrics are scored per run, each marked predicted (agent) or measured (humans). (3) A human test plan is exported for the feedback group. (4) Real results are entered after the sessions and compared with the agent's. Needs: the feedback group's date, size, countries and ages, and which design version they will see | J136 | Product owner + Eugene |
+| O42 | **Move v5's wearable question to after the first session (J139)**: the re-run's one design change. It should keep v5's return gain without its onboarding loss. Check it with the feedback group, or build it as a v6 on staging first | J139 | Product owner |
 | J137 | 2026-11-19 | Question | Which production design version the buyer agent runs used | — |
 | J138 | 2026-11-19 | Opinion | The two design versions to test (buyer agent v4 and the feedback group) | — |
+| J139 | 2026-11-19 | Code | Re-run the three buyer agents on production v1, v2 and v3, with a summary for every report | U104 |
 | J136 | 2026-11-19 | Opinion | Eugene: retention metrics, funnel and bounce, what holds back more AI plays, designs close to the feedback group, top 10 MVP market-fit metrics in buyer agent testing (view and plan) | — |
 | J134 | 2026-11-19 | Code | Criteria for buyer agent v1, clickable personas; v2 with region, wellness, age range and more personas, played more carefully; every version on the page | U102 |
 | J135 | 2026-11-19 | Code | Buyer agent v3 using Eugene's documents as reference; fix what v1–v2 found (the persona generator) | U103 |
@@ -1659,3 +1661,17 @@ transcript and the update log. Everything from J018 on was written at the time.
   - **Staging v1–v2** are older still and not on production.
 - **Caveat:** v5 asks for a wearable in onboarding, one step more before the first play. Watch that step's drop-off; it is the one place v5 could lose people v4 keeps.
 - **Next:** feeds O41. Buyer agent v4 would play both versions on the same panel, as an A/B on real screens.
+
+### J139 — Buyer agent re-run on production v1, v2, v3
+- **Asked:** "oke klo begitu saya mau km re reun 3 version agent buyer kamu dengan menggunakan production v 1, v2, v3 goal akhirnya saya bisa mengetahui summary dari setiap agent buyer untuk setiap version. jangan lupa untuk setiap report berikan summary yang ada"
+- **Done:** U104, Buyer agent results → **By production version**.
+  - Three agent rule sets × production v1–v3: nine reports, each with a summary, the ten market-fit metrics, the funnel and every persona's walk.
+  - One summary across all nine.
+  - The rules are coded from the hand-played runs and agree with them: 21 of 36 and 20 of 36 answers are the same, and none is opposite.
+- **Result:**
+  - **Production v1 is weakest:** nothing plays before an account.
+  - **Production v2 and v3 roughly tie.** v3 brings people back more, but its wearable question costs impatient people in onboarding.
+  - **Recommendation:** v3 with the question moved after the first session (O42).
+  - **The gaps in every version:** an account first, no voice choice, English only.
+  - **Return is low everywhere:** day 30 at best about 4%, inside the category's 3–5%.
+- **Open:** O42.

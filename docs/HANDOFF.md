@@ -488,8 +488,8 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U103**, last J = **J138**, last
-O = **O41**. Before numbering, check the files for anything newer.
+**Numbering as of 17 Nov 2026:** last U = **U104**, last J = **J139**, last
+O = **O42**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
 push. `src/guides/records.test.ts` enforces it.
@@ -940,6 +940,7 @@ history can be read without opening four documents.
 | U101 | `2494223` | 2026-11-19 | Admin → Product lab → Buyer agent results: the first demo run (ten personas, seed 2026, Aurelia Plus at $9.99), with tallies, a price band, objections, every answer in a drawer with its three test cases, and persona problems found. Staging only (`RELEASES.buyerAgent`). | [patch](update-log/patches/U101-2494223.patch) |
 | U102 | `32cdc84` | 2026-11-19 | Buyer agent results by version (v1, v2 tabs, `?v=`). Each run states its criteria, the answer definitions and the agent's instructions; persona names open the full profile. v2: 36 personas (6 regions × 6 age bands, seed 2027, v1's incoherent three left out), local prices, language, connection, wellness (struggling / strained / coping), week-one use and day 30, calibration rules, segment tables. Staging only. | [patch](update-log/patches/U102-32cdc84.patch) |
 | U103 | `8a99797` | 2026-11-19 | Persona generator 2 (coherent: an `incoherence()` check finds 0 of 300; generator 1 kept byte-identical for runs v1–v2, 144 of 300 broken). Buyer agent v3: an A/B run on 36 generator-2 personas, today's offer against a proposal built from Eugene's documents and the research. Adds references, a control, changes traced to their source, and Try A/B by segment. Staging only. | [patch](update-log/patches/U103-8a99797.patch) |
+| U104 | `d229d88` | 2026-11-19 | Buyer agent results → By production version: the three agent rule sets × production v1–v3 (staging v3–v5). That is nine reports, each with a written summary, the ten market-fit metrics (predicted or estimate), a step-by-step funnel, the leave reasons and every persona's walk, plus an overall summary. The rules are written as code and checked against the hand-played runs (21/36 and 20/36 the same, 0 opposite). Staging only. | [patch](update-log/patches/U104-d229d88.patch) |
 | J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
@@ -970,6 +971,7 @@ history can be read without opening four documents.
 | J136 | 2026-11-19 | Opinion | Eugene: retention metrics, funnel and bounce, what holds back more AI plays, designs close to the feedback group, top 10 MVP market-fit metrics in buyer agent testing (view and plan) | — |
 | J137 | 2026-11-19 | Question | Which production design version the buyer agent runs used | — |
 | J138 | 2026-11-19 | Opinion | The two design versions to test (buyer agent v4 and the feedback group) | — |
+| J139 | 2026-11-19 | Code | Re-run the three buyer agents on production v1, v2 and v3, with a summary for every report | U104 |
 
 ### 17.2 Code changes (U)
 

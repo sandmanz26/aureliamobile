@@ -1,13 +1,13 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J138** · updated 19 Nov 2026
+**Covers up to J139** · updated 19 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
 current version. History and detail live elsewhere:
 
 - `docs/HANDOFF.md`: the full handover, including §17, every request (J) and change (U).
-- `docs/WORK-JOURNAL.md`: what was asked and answered; the Open items table (O1–O41).
+- `docs/WORK-JOURNAL.md`: what was asked and answered; the Open items table (O1–O42).
 - `docs/UPDATE-LOG.md`: every code change, with how to revert it.
 - `CLAUDE.md`: engineering conventions.
 
@@ -162,6 +162,10 @@ evidence → decision. It is not a user feature.
 - **Their price and limit came from the admin's mock `PLANS`**, not from the app. The app's real free limit is 3 sends, then a 30-minute wait. No pricing screen exists.
 - **From v4 on:** pin a run to a version, and use that version's real screens.
 **Versions to test (J138).** Recommended A/B: production v3 (staging v5) against production v2 (staging v4). Both are live, they share the core path, and they differ in what drives coming back. Watch v5's extra wearable step in onboarding.
+**Re-run by production version (J139, U104).** `buyerSim.ts` turns the agent's rules into code (`walk`, `report`). It walks every persona through 8 steps of each version's real screens, and `agreement()` checks the result against the hand-played runs.
+- **Result:** production v1 is weakest; v2 and v3 roughly tie, because v3's wearable question costs in onboarding. Move it after the first session (O42).
+- **The summaries** are in `buyerRerunSummaries.ts`, and their figures are pinned in `buyerSim.test.ts`. A rule change that moves a figure fails the check: then rewrite the sentence.
+- **Version facts** live in `DESIGNS`. Update them when a version's screens change.
 - **Keep the agent honest:** look for the no first, honour deal breakers, set price from income and place. Write findings from computed tallies, never from memory.
 
 **The 2025 backend documents (J099, J109–J112).**

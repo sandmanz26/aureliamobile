@@ -19,6 +19,14 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-19 — Buyer agent re-run on production v1–v3 (U104, J139)
+
+Buyer agent results has a "By production version" view: nine reports (three
+agent rule sets × three versions), each with a summary, the ten market-fit
+metrics and every persona's walk through the screens.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-19 — Persona generator 2; buyer agent v3 (U103, J135)
 
 Personas now come from a fixed generator, with a coherence check (0 of 300

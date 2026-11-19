@@ -140,9 +140,52 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U101 | `2494223` | 2026-11-19 | Admin → Product lab → Buyer agent results: the first demo run (ten personas, seed 2026, Aurelia Plus at $9.99), with tallies, a price band, objections, every answer in a drawer with its three test cases, and persona problems found. Staging only (`RELEASES.buyerAgent`). | [patch](patches/U101-2494223.patch) |
 | U102 | `32cdc84` | 2026-11-19 | Buyer agent results by version (v1, v2 tabs, `?v=`). Each run states its criteria, the answer definitions and the agent's instructions; persona names open the full profile. v2: 36 personas (6 regions × 6 age bands, seed 2027, v1's incoherent three left out), local prices, language, connection, wellness (struggling / strained / coping), week-one use and day 30, calibration rules, segment tables. Staging only. | [patch](patches/U102-32cdc84.patch) |
 | U103 | `8a99797` | 2026-11-19 | Persona generator 2 (coherent: an `incoherence()` check finds 0 of 300; generator 1 kept byte-identical for runs v1–v2, 144 of 300 broken). Buyer agent v3: an A/B run on 36 generator-2 personas, today's offer against a proposal built from Eugene's documents and the research. Adds references, a control, changes traced to their source, and Try A/B by segment. Staging only. | [patch](patches/U103-8a99797.patch) |
+| U104 | `d229d88` | 2026-11-19 | Buyer agent results → By production version: the three agent rule sets × production v1–v3 (staging v3–v5). That is nine reports, each with a written summary, the ten market-fit metrics (predicted or estimate), a step-by-step funnel, the leave reasons and every persona's walk, plus an overall summary. The rules are written as code and checked against the hand-played runs (21/36 and 20/36 the same, 0 opposite). Staging only. | [patch](patches/U104-d229d88.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U104 — Buyer agent re-run on production v1–v3
+
+- **Commit:** `d229d88` · pushed 2026-11-19 UTC · `web_app` + `admin_cms`. Staging only (`RELEASES.buyerAgent`).
+- **Patch:** [patches/U104-d229d88.patch](patches/U104-d229d88.patch)
+- **Request:** "oke klo begitu saya mau km re reun 3 version agent buyer kamu dengan menggunakan production v 1, v2, v3 goal akhirnya saya bisa mengetahui summary dari setiap agent buyer untuk setiap version. jangan lupa untuk setiap report berikan summary yang ada"
+- **Interpretation:**
+  - "Re-run the 3 agent versions on production v1, v2, v3" is a 3 × 3 matrix:
+    - each agent version, with its panel (v1: 10 personas; v2 and v3: 36 each) and its rules;
+    - walking each production design version's real screens.
+  - Each of the nine cells is a report with a summary, plus one summary across all of them.
+  - 246 walks cannot be played by hand consistently. So the agent's rules are written as code from the hand-played runs, and checked against them.
+- **Changed:**
+  - `src/admin/data/buyerSim.ts`:
+    - `DESIGNS`: what differs on screen in each version, read from the code;
+    - `ALL_VERSIONS`;
+    - eight funnel steps;
+    - `AGENT_RULES`;
+    - `walk(persona, design, agent)`, which gives each step's pass / stall / leave with a reason, activation, completion, predicted day 1 / 7 / 30, week-one sessions, felt better, Sean Ellis, pays (asked as a question: no pricing screen exists), recommends, and the leave theme;
+    - `report(agent, design)` with the ten metrics (J136);
+    - `agreement()`.
+  - `src/admin/data/buyerRerunSummaries.ts`: the overall summary and the nine report summaries, written from the computed tallies.
+  - `src/admin/data/buyerSim.test.ts`:
+    - every walk covers every step and gives the same answer every time;
+    - agreement is above 50%, with no opposite answers;
+    - the figures the summaries quote are pinned.
+  - `src/admin/pages/buyer/RerunView.tsx`:
+    - How the re-run worked;
+    - Summary across the versions;
+    - the matrix;
+    - the selected report: summary, the ten metrics, the funnel, why they leave, every persona, and a drawer with their walk and who they are.
+  - `BuyerResultsPage.tsx`: a Runs / By production version switch (`?view=versions&agent=&design=`).
+- **Result:**
+  - Production v1 is the weakest under every set of rules: 53–61% hear a session on the first visit against 81–89%, and about 3% come back on day 7 against 6–10%.
+  - Production v2 and v3 roughly tie. v3's return features help: under the v2 rules, day 7 is 10% against 8%. Its extra wearable question costs 3 impatient people under the v3 rules, and completion drops from 63% to 53%.
+  - Recommendation: v3, with the wearable question after the first session.
+  - The same gaps appear in every version: an account first, the voice, English only.
+- **Verified:**
+  - `npm run check` passes (172 tests).
+  - Staging build at 1440px, light and dark: the switch works, all 9 cells open their report, the walk drawer has 8 steps, Runs still works, no errors.
+  - At 402px, no overflow.
+- **Revert:** `git revert --no-commit d229d88 && git checkout HEAD -- docs/`.
 
 ### U103 — Persona generator 2; buyer agent v3 (A/B)
 
