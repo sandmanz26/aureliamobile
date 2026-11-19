@@ -9,6 +9,9 @@
  * way to form hypotheses and to shape the schema before runs get bigger.
  */
 
+import { RUN_V2 } from './buyerRunV2'
+import type { Persona } from './personas'
+
 export type Verdict = 'yes' | 'maybe' | 'no'
 export type Outcome = 'pass' | 'risk' | 'fail'
 export type Theme = 'price' | 'notifications' | 'privacy' | 'trust' | 'access' | 'voice' | 'habit' | 'switching'
@@ -59,10 +62,21 @@ export interface BuyerAnswer {
   scenarios: ScenarioResult[]
   /** Something wrong with the persona itself, spotted while playing it. */
   personaIssue?: string
+  /** v2+: sessions they would play in the first week (0–7). */
+  week?: number
+  /** v2+: still using it at day 30. */
+  day30?: Verdict
+}
+
+export interface Criterion {
+  label: string
+  value: string
 }
 
 export interface BuyerRun {
   id: string
+  /** Shown as the version tab: v1, v2, … */
+  version: number
   title: string
   date: string
   kind: 'demo' | 'run'
@@ -70,6 +84,8 @@ export interface BuyerRun {
   method: string
   panel: { seed: number; size: number; personaIds: string[] }
   stimulus: { name: string; pitch: string; offer: string[]; priceUsd: number }
+  /** How the run was set up, in plain words, for someone who was not there. */
+  criteria: Criterion[]
   /** The instructions the agent followed, so a run can be repeated. */
   instructions: string
   findings: string[]
@@ -84,9 +100,22 @@ export const BUYER_INSTRUCTIONS = `You are a buyer test agent. For each persona 
 5. If the persona itself does not hold together, say so.
 Rules: synthetic buyers are too agreeable, so look for the reason to say no first. A "yes" needs a reason that comes from the persona, not from the pitch.`
 
+/** What the answers mean, the same in every run. */
+export const DEFINITIONS: Criterion[] = [
+  { label: 'Tries: yes', value: 'Would install and play a first session this week, with what the page and first screen show.' },
+  { label: 'Tries: maybe', value: 'Would, if one named thing changed (it is in “what would flip it”).' },
+  { label: 'Tries: no', value: 'Would not install, or would delete before a first session.' },
+  { label: 'Pays', value: 'The same three answers for paying for Plus at the price they are shown, within the first month.' },
+  { label: 'Price answers', value: 'The four Van Westendorp questions, per month: at what price is it so cheap you would doubt it; a bargain; getting expensive but still worth considering; too expensive to consider. Answered in US dollars so runs add up.' },
+  { label: 'Fair price band', value: 'From the median “a bargain” to the median “getting expensive”.' },
+  { label: 'Test cases', value: 'Each persona has three scenarios (first open, their moment a week in, one edge case). Pass: the product today does what the persona needs. Risk: it could go either way. Fail: the product today loses them there.' },
+  { label: 'Confidence', value: '1 is a guess, 5 is sure. Low confidence means the profile does not say enough to decide.' },
+]
+
 export const BUYER_RUNS: BuyerRun[] = [
   {
     id: 'demo-1',
+    version: 1,
     title: 'Demo 1 · Aurelia Plus at $9.99',
     date: '2026-11-19',
     kind: 'demo',
@@ -104,6 +133,15 @@ export const BUYER_RUNS: BuyerRun[] = [
       offer: ['Free: 5 sessions a month, no card', 'Plus: $9.99 a month or $79 a year, unlimited, voice input, offline', 'English only today'],
       priceUsd: 9.99,
     },
+    criteria: [
+      { label: 'Question', value: 'Would these people try Aurelia, and would they pay for Plus at $9.99 a month?' },
+      { label: 'Who', value: '10 of the 300 synthetic personas, drawn with seed 2026 and balanced by goal: every one of the six goals has at least one person.' },
+      { label: 'What they saw', value: 'The app store pitch and today’s plans, the same US price for everyone. No regional prices.' },
+      { label: 'How the agent ran', value: 'One agent played each persona in turn, in one session, reading the persona’s full profile, test data and role-play prompt. Instructions below.' },
+      { label: 'What each answered', value: 'Try, pay, which plan, four price answers, the main objection, what would flip it, confidence, reasoning, a quote, and pass / risk / fail on their three test cases.' },
+      { label: 'Not taken into account', value: 'Region and local price, language, connection, how they are doing (wellness), usage after the first week. Added in v2.' },
+      { label: 'Read it as', value: 'A demo of the format. Ten people in one session cannot tell segments apart.' },
+    ],
     instructions: BUYER_INSTRUCTIONS,
     findings: [
       'The free plan with no card does the selling: 8 of 10 would try it, and every no or maybe on paying came after trying, not before.',
@@ -309,7 +347,82 @@ export const BUYER_RUNS: BuyerRun[] = [
       },
     ],
   },
+  RUN_V2,
 ]
+
+/* ------------------------------------------------------- Panels and prices */
+
+export const REGIONS = ['Asia', 'Europe', 'North America', 'South America', 'Oceania', 'Africa'] as const
+export const AGE_BANDS = ['18–24', '25–34', '35–44', '45–54', '55–64', '65+'] as const
+
+/** Personas a run found incoherent; later runs leave them out (O39). */
+export const EXCLUDED = ['P243', 'P163', 'P218']
+
+function rng(seed: number) {
+  let a = seed >>> 0
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0
+    let t = a
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+/**
+ * One persona for every region × age band (36), picked by seed. A cell with
+ * nobody in it takes another persona from the same region, so every region
+ * still has six. Leaves out EXCLUDED.
+ */
+export function drawStratified(pool: Persona[], seed: number): Persona[] {
+  const r = rng(seed)
+  const pick = (list: Persona[]) => list[Math.floor(r() * list.length)]
+  const ok = pool.filter((p) => !EXCLUDED.includes(p.id))
+  const out: Persona[] = []
+  for (const region of REGIONS) {
+    let short = 0
+    for (const band of AGE_BANDS) {
+      const cell = ok.filter((p) => p.region === region && p.ageBand === band && !out.includes(p))
+      if (cell.length) out.push(pick(cell))
+      else short += 1
+    }
+    for (; short > 0; short--) {
+      const rest = ok.filter((p) => p.region === region && !out.includes(p))
+      if (rest.length) out.push(pick(rest))
+    }
+  }
+  return out
+}
+
+/** Plus monthly as each persona would see it (commerce.ts REGION_PRICING), with a USD equivalent at the run's rates. */
+const LOCAL_PLUS: Record<string, { label: string; usd: number }> = {
+  'United States': { label: '$9.99', usd: 9.99 },
+  'United Kingdom': { label: '£8.99', usd: 11.4 },
+  Spain: { label: '€9.99', usd: 10.8 },
+  Netherlands: { label: '€9.99', usd: 10.8 },
+  Germany: { label: '€9.99', usd: 10.8 },
+  France: { label: '€9.99', usd: 10.8 },
+  Indonesia: { label: 'Rp69,000', usd: 4.35 },
+  India: { label: '₹399', usd: 4.7 },
+  Brazil: { label: 'R$29.90', usd: 5.5 },
+  Japan: { label: '¥1,500', usd: 9.9 },
+}
+
+export function localPlus(country: string) {
+  return LOCAL_PLUS[country] ?? { label: '$9.99 (no local price)', usd: 9.99 }
+}
+
+export type WellnessLevel = 'struggling' | 'strained' | 'coping'
+
+/** A reading of how someone is doing, from their profile: pain, sleep, conditions. */
+export function wellnessOf(p: Persona) {
+  const pain = p.profile.testing.pain
+  const { hours, quality } = p.profile.sleep
+  const level: WellnessLevel = pain >= 8 || quality <= 1 || (pain >= 7 && quality <= 2) ? 'struggling' : pain >= 5 || quality <= 2 ? 'strained' : 'coping'
+  return { level, pain, sleepHours: hours, sleepQuality: quality, conditions: p.flags, stressors: p.profile.stressors }
+}
+
+export const WELLNESS_LABEL: Record<WellnessLevel, string> = { struggling: 'Struggling', strained: 'Strained', coping: 'Coping' }
 
 /* ------------------------------------------------------------------ Tallies */
 

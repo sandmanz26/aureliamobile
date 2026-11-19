@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BUYER_RUNS, countVerdicts, priceRange, scenarioCounts, themeCounts } from './buyerRuns'
+import { BUYER_RUNS, EXCLUDED, countVerdicts, drawStratified, priceRange, scenarioCounts, themeCounts, wellnessOf } from './buyerRuns'
 import { drawPanel, generatePersonas } from './personas'
 
 describe('buyer agent runs', () => {
@@ -8,7 +8,7 @@ describe('buyer agent runs', () => {
 
   it('answers for exactly the panel the seed draws', () => {
     for (const run of BUYER_RUNS) {
-      const drawn = drawPanel(all, run.panel.size, run.panel.seed).map((p) => p.id)
+      const drawn = (run.version === 1 ? drawPanel(all, run.panel.size, run.panel.seed) : drawStratified(all, run.panel.seed)).map((p) => p.id)
       expect(run.panel.personaIds, run.id).toEqual(drawn)
       expect(run.answers.map((a) => a.personaId)).toEqual(run.panel.personaIds)
     }
@@ -35,5 +35,28 @@ describe('buyer agent runs', () => {
     expect(themeCounts(run.answers)[0][1]).toBeGreaterThanOrEqual(2)
     const s = scenarioCounts(run.answers)
     expect(s.pass + s.risk + s.fail).toBe(30)
+  })
+
+  it('gives v2 every region and age band, without the excluded, with usage', () => {
+    const run = BUYER_RUNS.find((r) => r.version === 2)!
+    const ps = run.panel.personaIds.map((id) => byId.get(id)!)
+    expect(new Set(ps.map((p) => p.region)).size).toBe(6)
+    expect(new Set(ps.map((p) => p.ageBand)).size).toBe(6)
+    for (const id of EXCLUDED) expect(run.panel.personaIds).not.toContain(id)
+    for (const a of run.answers) {
+      expect(a.week, a.personaId).toBeGreaterThanOrEqual(0)
+      expect(a.week, a.personaId).toBeLessThanOrEqual(7)
+      expect(a.day30, a.personaId).toBeDefined()
+      if (a.tries === 'no') expect(a.week).toBe(0)
+    }
+    expect(countVerdicts(run.answers, 'tries')).toEqual({ yes: 15, maybe: 16, no: 5 })
+    expect(new Set(ps.map((p) => wellnessOf(p).level)).size).toBe(3)
+  })
+
+  it('gives every run criteria and versions in order', () => {
+    BUYER_RUNS.forEach((r, i) => {
+      expect(r.version).toBe(i + 1)
+      expect(r.criteria.length).toBeGreaterThan(4)
+    })
   })
 })
