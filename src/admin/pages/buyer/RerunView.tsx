@@ -5,6 +5,8 @@ import { PersonaProfile } from '../../components/PersonaProfile'
 import { SidePanel } from '../../components/SidePanel'
 import { Badge, Button, Panel } from '../../components/ui'
 import { OVERALL_SUMMARY, SUMMARIES } from '../../data/buyerRerunSummaries'
+import { Finding, HeatLegend } from './BuyerCharts'
+import { shade } from './shade'
 import { VERDICT_TONE, WELLNESS_LABEL, personasOf, wellnessOf } from '../../data/buyerRuns'
 import { AGENT_RULES, ALL_VERSIONS, DESIGNS, STEP_LABEL, agreement, report, type AgentId, type DesignId, type Walk } from '../../data/buyerSim'
 
@@ -85,51 +87,15 @@ export function RerunView() {
 
   return (
     <div className="flex flex-col gap-16">
-      <Panel title="How the re-run worked" description="Every persona from runs v1, v2 and v3, walked step by step through the real screens of production v1, v2 and v3, under the rules each agent version played by.">
-        <div className="grid gap-12 lg:grid-cols-3">
-          {DESIGNS.map((d) => (
-            <div key={d.id} className="rounded-8 bg-adm-bg p-12 text-12">
-              <p className="font-semibold text-adm-ink">{d.name}</p>
-              <ul className="mt-6 flex list-disc flex-col gap-4 pl-16 text-adm-ink-2">
-                {d.facts.map((f) => (
-                  <li key={f}>{f}</li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-        <p className="text-12 text-adm-ink-2">
-          <span className="font-medium text-adm-ink">In all three: </span>
-          {ALL_VERSIONS.join(' ')}
-        </p>
-        <dl className="grid gap-x-16 gap-y-8 text-12 lg:grid-cols-[140px_1fr]">
-          {([1, 2, 3] as const).map((a) => (
-            <div key={a} className="contents">
-              <dt className="font-medium text-adm-ink">{AGENT_RULES[a].name}</dt>
-              <dd className="max-w-[760px] text-adm-ink-2">
-                {AGENT_RULES[a].rules} Panel: run v{a}’s {a === 1 ? 10 : 36} personas.
-              </dd>
-            </div>
-          ))}
-          <div className="contents">
-            <dt className="font-medium text-adm-ink">How the walks are made</dt>
-            <dd className="max-w-[760px] text-adm-ink-2">
-              The agent’s rules are written as code (246 walks would not be answered the same way twice by hand), from the runs played by hand, and checked against them on today’s app:{' '}
-              {AGREEMENT.map((x) => `${x.label}: same answer for ${x.exact} of ${x.n}, opposite (yes against no) for ${x.opposite}`).join('; ')}. Every figure is a prediction; only the feedback group can measure them.
-            </dd>
-          </div>
-        </dl>
-      </Panel>
-
       <Panel title="Summary across the versions" description="The agent’s reading of all nine reports.">
-        <ul className="flex max-w-[820px] list-disc flex-col gap-8 pl-18 text-13 leading-[20px] text-adm-ink">
-          {OVERALL_SUMMARY.map((s) => (
-            <li key={s}>{s}</li>
+        <ol className="flex flex-col gap-14">
+          {OVERALL_SUMMARY.map((s, i) => (
+            <Finding key={s} text={s} index={i} />
           ))}
-        </ul>
+        </ol>
       </Panel>
 
-      <Panel title="Nine reports" description="Rows: whose rules. Columns: which production version. Each cell: hears a session on the first visit · back on day 7 · back on day 30. Select one to open its report.">
+      <Panel title="Nine reports" description="Rows: whose rules. Columns: which production version. Big number: hears a session on the first visit. Shade: back on day 7, darker is more. Select a cell to open its report." actions={<HeatLegend />}>
         <div className="min-w-0 overflow-x-auto">
           <table className="w-full min-w-[640px] text-12">
             <thead>
@@ -149,16 +115,19 @@ export function RerunView() {
                   {DESIGNS.map((d) => {
                     const c = report(a, d.id)
                     const active = a === agent && d.id === design
+                    // Day 7 runs 0–25% here; scale it so the differences show.
+                    const tone = shade(Math.min(1, c.d7 / 0.25))
                     return (
                       <td key={d.id} className="px-6 py-6">
                         <button
                           type="button"
                           aria-pressed={active}
                           onClick={() => select(a, d.id)}
-                          className={`w-full rounded-8 border px-10 py-8 text-left tabular-nums ${active ? 'border-adm-ink bg-adm-surface' : 'border-adm-line bg-adm-bg hover:bg-adm-hover'}`}
+                          style={{ background: tone.background }}
+                          className={`w-full rounded-8 px-10 py-8 text-left tabular-nums ring-offset-2 ring-offset-adm-surface ${active ? 'ring-2 ring-adm-ink' : 'hover:opacity-90'} ${tone.dark ? 'text-white' : 'text-adm-ink'}`}
                         >
-                          <span className="block text-15 font-semibold text-adm-ink">{pct(c.activation)}</span>
-                          <span className="text-adm-ink-2">
+                          <span className="block text-15 font-semibold">{pct(c.activation)} hear one</span>
+                          <span className={tone.dark ? 'text-white/90' : 'text-adm-ink-2'}>
                             day 7 {pct(c.d7)} · day 30 {pct(c.d30)}
                           </span>
                         </button>
@@ -184,29 +153,25 @@ export function RerunView() {
         </div>
 
         <Panel title="Summary" description="What this report says.">
-          <ul className="flex max-w-[820px] list-disc flex-col gap-8 pl-18 text-13 leading-[20px] text-adm-ink">
-            {SUMMARIES[agent][design].map((s) => (
-              <li key={s}>{s}</li>
+            <ol className="flex flex-col gap-14">
+            {SUMMARIES[agent][design].map((s, i) => (
+              <Finding key={s} text={s} index={i} />
             ))}
-          </ul>
+          </ol>
         </Panel>
 
         <Panel title="The ten MVP market-fit metrics" description="Eugene’s list (J136). Predicted: what the agent expects people to do. Estimate: a figure only people can give; the agent’s guess for the feedback group to check.">
-          <div className="min-w-0 overflow-x-auto">
-            <table className="w-full min-w-[640px] text-12">
-              <tbody>
-                {r.metrics.map((m) => (
-                  <tr key={m.id} className="border-t border-adm-line first:border-t-0">
-                    <td className="py-8 pr-12 text-adm-ink">{m.label}</td>
-                    <td className="py-8 pr-12 font-semibold tabular-nums text-adm-ink">{m.value}</td>
-                    <td className="py-8 pr-12 text-adm-muted">{m.benchmark}</td>
-                    <td className="py-8 text-right">
-                      <Badge tone={m.kind === 'predicted' ? 'info' : 'warning'}>{m.kind}</Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
+            {r.metrics.map((m) => (
+              <div key={m.id} className="flex flex-col gap-4 rounded-8 border border-adm-line p-10">
+                <div className="flex items-start justify-between gap-6">
+                  <span className="text-11 leading-[15px] text-adm-muted">{m.label}</span>
+                  <Badge tone={m.kind === 'predicted' ? 'info' : 'warning'}>{m.kind}</Badge>
+                </div>
+                <span className="text-15 font-semibold leading-[20px] tabular-nums text-adm-ink">{m.value}</span>
+                {m.benchmark && <span className="text-11 leading-[15px] text-adm-ink-2">{m.benchmark}</span>}
+              </div>
+            ))}
           </div>
         </Panel>
 
@@ -258,6 +223,51 @@ export function RerunView() {
           />
         </Panel>
       </div>
+
+      <details className="rounded-12 border border-adm-line bg-adm-surface">
+        <summary className="cursor-pointer list-none px-16 py-14">
+          <span className="text-15 font-semibold text-adm-ink">How the re-run worked</span>
+          <span className="ml-8 text-12 text-adm-muted">What differs between the versions, the agents’ rules, and how the walks are checked. Select to open.</span>
+        </summary>
+        <div className="border-t border-adm-line p-16">
+      <Panel title="How the re-run worked" description="Every persona from runs v1, v2 and v3, walked step by step through the real screens of production v1, v2 and v3, under the rules each agent version played by.">
+        <div className="grid gap-12 lg:grid-cols-3">
+          {DESIGNS.map((d) => (
+            <div key={d.id} className="rounded-8 bg-adm-bg p-12 text-12">
+              <p className="font-semibold text-adm-ink">{d.name}</p>
+              <ul className="mt-6 flex list-disc flex-col gap-4 pl-16 text-adm-ink-2">
+                {d.facts.map((f) => (
+                  <li key={f}>{f}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <p className="text-12 text-adm-ink-2">
+          <span className="font-medium text-adm-ink">In all three: </span>
+          {ALL_VERSIONS.join(' ')}
+        </p>
+        <dl className="grid gap-x-16 gap-y-8 text-12 lg:grid-cols-[140px_1fr]">
+          {([1, 2, 3] as const).map((a) => (
+            <div key={a} className="contents">
+              <dt className="font-medium text-adm-ink">{AGENT_RULES[a].name}</dt>
+              <dd className="max-w-[760px] text-adm-ink-2">
+                {AGENT_RULES[a].rules} Panel: run v{a}’s {a === 1 ? 10 : 36} personas.
+              </dd>
+            </div>
+          ))}
+          <div className="contents">
+            <dt className="font-medium text-adm-ink">How the walks are made</dt>
+            <dd className="max-w-[760px] text-adm-ink-2">
+              The agent’s rules are written as code (246 walks would not be answered the same way twice by hand), from the runs played by hand, and checked against them on today’s app:{' '}
+              {AGREEMENT.map((x) => `${x.label}: same answer for ${x.exact} of ${x.n}, opposite (yes against no) for ${x.opposite}`).join('; ')}. Every figure is a prediction; only the feedback group can measure them.
+            </dd>
+          </div>
+        </dl>
+      </Panel>
+
+        </div>
+      </details>
 
       {open && walkOpen && (
         <SidePanel

@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { DataTable, type Column } from '../components/DataTable'
 import { PersonaProfile } from '../components/PersonaProfile'
+import { Finding, HeatLegend, HeatTable, RankBars, VerdictChart } from './buyer/BuyerCharts'
 import { RerunView } from './buyer/RerunView'
 import { SidePanel } from '../components/SidePanel'
 import { Badge, Button, PageHeader, Panel, StatCard } from '../components/ui'
@@ -246,6 +247,150 @@ export function BuyerResultsPage() {
         )}
       </div>
 
+      <div className="grid grid-cols-2 gap-12 lg:grid-cols-4" aria-label="At a glance">
+        <StatCard label={ab ? 'Would try B' : 'Would try'} value={`${tries.yes} of ${n}`} hint={ab ? `today (A): ${ctlTries.yes} of ${n}` : `${tries.maybe} maybe, ${tries.no} no`} />
+        <StatCard label={ab ? 'Would pay B' : 'Would pay'} value={`${pays.yes} of ${n}`} hint={ab ? `${pays.maybe} maybe · A: ${ctlPays.yes} yes, ${ctlPays.maybe} maybe` : `${pays.maybe} maybe, ${pays.no} no`} />
+        <StatCard label="Price that feels fair" value={`${money(range.low)}–${money(range.high)}`} hint={`Plus is ${money(run.stimulus.priceUsd)} in the US`} />
+        <StatCard label="Test cases" value={`${outcomes.pass} pass`} hint={`${outcomes.risk} at risk, ${outcomes.fail} fail`} />
+      </div>
+
+      <div className="grid gap-16 lg:grid-cols-2">
+        <Panel title={ab ? 'Today (A) against the proposal (B)' : 'Would they try it, would they pay'} description={`Personas out of ${n}. Hover a segment for its share.`}>
+          <VerdictChart
+            groups={
+              ab
+                ? [
+                    { label: 'A · today', tries: ctlTries, pays: ctlPays },
+                    { label: 'B · proposed', tries, pays },
+                  ]
+                : [{ label: 'All', tries, pays }]
+            }
+          />
+        </Panel>
+        <Panel title="Why people hesitate" description="Each persona’s main objection, grouped.">
+          <RankBars rows={themes.map(([t, c]) => ({ label: THEME_LABEL[t], value: c }))} total={n} note={(v) => `${v} of ${n}`} />
+        </Panel>
+      </div>
+
+      <Panel title="Who says yes, by segment" description={`Share of each group that would try it, and that would pay (yes or maybe)${ab ? ', with today’s offer (A) beside the proposal (B)' : ''}. Darker is more. Small groups: read the direction, not the number.`} actions={<HeatLegend />}>
+        <div className="grid gap-16 lg:grid-cols-3">
+          {(
+            [
+              ['Wellness', (p: Persona) => WELLNESS_LABEL[wellnessOf(p).level], false],
+              ['Age band', (p: Persona) => p.ageBand, true],
+              ['Region', (p: Persona) => p.region, false],
+            ] as const
+          ).map(([title, keyOf, sort]) => (
+            <HeatTable key={title} title={title} cols={ab ? ['Try A', 'Try B', 'Pay B'] : ['Try', 'Pay']} rows={segmentRows(run, people, keyOf, sort, ab)} />
+          ))}
+        </div>
+      </Panel>
+
+      <div className="grid gap-16 lg:grid-cols-2">
+        <Panel title="Price" description="Medians of the four price answers, in US dollars a month.">
+          <div className="flex flex-col gap-10">
+            <div className="relative h-28 rounded-8 bg-adm-bg">
+              <div className="absolute inset-y-0 rounded-8 bg-adm-good/20" style={{ left: pct(range.low), width: `calc(${pct(range.high)} - ${pct(range.low)})` }} />
+              <div className="absolute inset-y-[-4px] w-2 bg-adm-critical" style={{ left: pct(run.stimulus.priceUsd) }} title="US price" />
+            </div>
+            <div className="flex justify-between text-11 tabular-nums text-adm-muted">
+              {[0, 5, 10, 15, 20].map((v) => (
+                <span key={v}>${v}</span>
+              ))}
+            </div>
+            <dl className="grid grid-cols-2 gap-8 text-12 sm:grid-cols-4">
+              {(
+                [
+                  ['Too cheap to trust', range.tooCheap],
+                  ['A bargain', range.low],
+                  ['Getting expensive', range.high],
+                  ['Too expensive', range.tooExpensive],
+                ] as const
+              ).map(([label, v]) => (
+                <div key={label} className="rounded-8 bg-adm-bg p-8">
+                  <dt className="text-adm-muted">{label}</dt>
+                  <dd className="font-semibold tabular-nums">{money(v)}</dd>
+                </div>
+              ))}
+            </dl>
+            <p className="text-12 text-adm-ink-2">Green is the fair band. The red line is Plus in the US ({money(run.stimulus.priceUsd)}); the US yearly plan works out at {run.version >= 3 ? '$5.00' : '$6.58'} a month.</p>
+          </div>
+        </Panel>
+
+        {moved.size > 0 ? (
+          <Panel title="Which changes moved people" description="Personas who answered B better than A because of each change. One persona can name several. Hover for the source.">
+            <RankBars
+              rows={[...moved.entries()]
+                .sort((x, y) => y[1] - x[1])
+                .map(([c, k]) => {
+                  const info = V3_CHANGES[c as keyof typeof V3_CHANGES]
+                  return { label: info?.label ?? c, value: k, hint: info?.source }
+                })}
+              total={n}
+              note={(v) => `${v} of ${n}`}
+            />
+          </Panel>
+        ) : (
+          <Panel title="Test cases" description="Each persona’s three scenarios against the product, pass / at risk / fail.">
+            <RankBars
+              rows={[
+                { label: 'Pass', value: outcomes.pass },
+                { label: 'At risk', value: outcomes.risk },
+                { label: 'Fail', value: outcomes.fail },
+              ]}
+              total={outcomes.pass + outcomes.risk + outcomes.fail}
+              note={(v) => `${v} of ${outcomes.pass + outcomes.risk + outcomes.fail}`}
+            />
+          </Panel>
+        )}
+      </div>
+
+      <Panel title="What it tells us" description="The agent’s reading of the panel. Hypotheses to check with real people.">
+        <ol className="flex flex-col gap-14">
+          {run.findings.map((f, i) => (
+            <Finding key={f} text={f} index={i} />
+          ))}
+        </ol>
+      </Panel>
+
+      <Panel title="Every answer" description="Select a name for the persona’s profile, or anywhere else on the row for their answer and test cases.">
+        <DataTable
+          rows={rows}
+          columns={columns}
+          exportName={`aurelia-buyer-v${run.version}`}
+          pageSize={12}
+          filters={[
+            { key: 'region', label: 'Region', options: [...new Set(rows.map((r) => r.region))] },
+            { key: 'ageBand', label: 'Age', options: [...new Set(rows.map((r) => r.ageBand))].sort() },
+            { key: 'wellness', label: 'Wellness', options: Object.values(WELLNESS_LABEL) },
+            { key: 'tries', label: 'Tries', options: ['yes', 'maybe', 'no'] },
+            { key: 'pays', label: 'Pays', options: ['yes', 'maybe', 'no'] },
+          ]}
+          onRowClick={(r) => setOpen({ id: r.id, tab: 'answer' })}
+        />
+      </Panel>
+
+      {issues.length > 0 && (
+        <Panel title="Persona problems found" description="Personas that did not hold together while the agent played them. They go back to the generator.">
+          <ul className="flex flex-col gap-6 text-12 text-adm-ink">
+            {issues.map((a) => (
+              <li key={a.personaId}>
+                <button type="button" onClick={() => setOpen({ id: a.personaId, tab: 'persona' })} className="font-medium underline decoration-adm-line underline-offset-2 hover:decoration-adm-ink">
+                  {persona(a.personaId).name}
+                </button>{' '}
+                ({a.personaId}): {a.personaIssue}
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      )}
+
+      <details className="group rounded-12 border border-adm-line bg-adm-surface">
+        <summary className="cursor-pointer list-none px-16 py-14">
+          <span className="text-15 font-semibold text-adm-ink">About this run</span>
+          <span className="ml-8 text-12 text-adm-muted">How it worked, who was in the panel, what they saw{run.references ? ', what the agent read' : ''}. Select to open.</span>
+        </summary>
+        <div className="flex flex-col gap-16 border-t border-adm-line p-16">
       <Panel title="How this run worked" description="The criteria the agent ran under, so anyone can judge how far to trust it.">
         <dl className="grid gap-x-16 gap-y-10 text-13 lg:grid-cols-[180px_1fr]">
           {run.criteria.map((c) => (
@@ -320,130 +465,8 @@ export function BuyerResultsPage() {
         </Panel>
       )}
 
-      <div className="grid grid-cols-2 gap-12 lg:grid-cols-4">
-        <StatCard label={ab ? 'Would try B' : 'Would try'} value={`${tries.yes} of ${n}`} hint={ab ? `today (A): ${ctlTries.yes} of ${n}` : `${tries.maybe} maybe, ${tries.no} no`} />
-        <StatCard label={ab ? 'Would pay B' : 'Would pay'} value={`${pays.yes} of ${n}`} hint={ab ? `${pays.maybe} maybe · A: ${ctlPays.yes} yes, ${ctlPays.maybe} maybe` : `${pays.maybe} maybe, ${pays.no} no`} />
-        <StatCard label="Price that feels fair" value={`${money(range.low)}–${money(range.high)}`} hint={`Plus is ${money(run.stimulus.priceUsd)} in the US`} />
-        <StatCard label="Test cases" value={`${outcomes.pass} pass`} hint={`${outcomes.risk} at risk, ${outcomes.fail} fail`} />
-      </div>
-
-      <Panel title="What it tells us" description="The agent’s reading of the panel. Hypotheses to check with real people.">
-        <ul className="flex max-w-[760px] list-disc flex-col gap-8 pl-18 text-13 leading-[20px] text-adm-ink">
-          {run.findings.map((f) => (
-            <li key={f}>{f}</li>
-          ))}
-        </ul>
-      </Panel>
-
-      {moved.size > 0 && (
-        <Panel title="Which changes moved people" description="How many personas answered B differently from A because of each change, as the agent judged it. One persona can name several.">
-          <ul className="flex flex-col gap-8">
-            {[...moved.entries()]
-              .sort((x, y) => y[1] - x[1])
-              .map(([c, k]) => {
-                const info = V3_CHANGES[c as keyof typeof V3_CHANGES]
-                return (
-                  <li key={c} className="grid items-center gap-x-8 gap-y-2 text-12 lg:grid-cols-[260px_1fr_24px]">
-                    <span className="text-adm-ink" title={info?.source}>
-                      {info?.label ?? c}
-                    </span>
-                    <span className="h-10 rounded-full bg-adm-bg">
-                      <span className="block h-full rounded-full bg-adm-s1" style={{ width: `${(k / n) * 100}%` }} />
-                    </span>
-                    <span className="text-right tabular-nums text-adm-muted">{k}</span>
-                    <span className="text-11 text-adm-muted lg:col-span-3">From: {info?.source}</span>
-                  </li>
-                )
-              })}
-          </ul>
-        </Panel>
-      )}
-
-      <Panel title="By segment" description="Each group’s answers. Small groups: read the direction, not the number.">
-        <div className="grid gap-16 lg:grid-cols-3">
-          <SegmentTable title="Region" run={run} keyOf={(p) => p.region} />
-          <SegmentTable title="Age band" run={run} keyOf={(p) => p.ageBand} sort />
-          <SegmentTable title="Wellness" run={run} keyOf={(p) => WELLNESS_LABEL[wellnessOf(p).level]} />
         </div>
-      </Panel>
-
-      <div className="grid gap-16 lg:grid-cols-2">
-        <Panel title="Price" description="Medians of the four price answers, in US dollars a month.">
-          <div className="flex flex-col gap-10">
-            <div className="relative h-28 rounded-8 bg-adm-bg">
-              <div className="absolute inset-y-0 rounded-8 bg-adm-good/20" style={{ left: pct(range.low), width: `calc(${pct(range.high)} - ${pct(range.low)})` }} />
-              <div className="absolute inset-y-[-4px] w-2 bg-adm-critical" style={{ left: pct(run.stimulus.priceUsd) }} title="US price" />
-            </div>
-            <div className="flex justify-between text-11 tabular-nums text-adm-muted">
-              {[0, 5, 10, 15, 20].map((v) => (
-                <span key={v}>${v}</span>
-              ))}
-            </div>
-            <dl className="grid grid-cols-2 gap-8 text-12 sm:grid-cols-4">
-              {(
-                [
-                  ['Too cheap to trust', range.tooCheap],
-                  ['A bargain', range.low],
-                  ['Getting expensive', range.high],
-                  ['Too expensive', range.tooExpensive],
-                ] as const
-              ).map(([label, v]) => (
-                <div key={label} className="rounded-8 bg-adm-bg p-8">
-                  <dt className="text-adm-muted">{label}</dt>
-                  <dd className="font-semibold tabular-nums">{money(v)}</dd>
-                </div>
-              ))}
-            </dl>
-            <p className="text-12 text-adm-ink-2">Green is the fair band. The red line is Plus in the US ({money(run.stimulus.priceUsd)}); the US yearly plan works out at {run.version >= 3 ? '$5.00' : '$6.58'} a month.</p>
-          </div>
-        </Panel>
-
-        <Panel title="Why people hesitate" description="Each persona’s main objection, grouped.">
-          <ul className="flex flex-col gap-8">
-            {themes.map(([t, c]) => (
-              <li key={t} className="grid grid-cols-[150px_1fr_24px] items-center gap-8 text-12">
-                <span className="text-adm-ink">{THEME_LABEL[t]}</span>
-                <span className="h-10 rounded-full bg-adm-bg">
-                  <span className="block h-full rounded-full bg-adm-s1" style={{ width: `${(c / n) * 100}%` }} />
-                </span>
-                <span className="text-right tabular-nums text-adm-muted">{c}</span>
-              </li>
-            ))}
-          </ul>
-        </Panel>
-      </div>
-
-      <Panel title="Every answer" description="Select a name for the persona’s profile, or anywhere else on the row for their answer and test cases.">
-        <DataTable
-          rows={rows}
-          columns={columns}
-          exportName={`aurelia-buyer-v${run.version}`}
-          pageSize={12}
-          filters={[
-            { key: 'region', label: 'Region', options: [...new Set(rows.map((r) => r.region))] },
-            { key: 'ageBand', label: 'Age', options: [...new Set(rows.map((r) => r.ageBand))].sort() },
-            { key: 'wellness', label: 'Wellness', options: Object.values(WELLNESS_LABEL) },
-            { key: 'tries', label: 'Tries', options: ['yes', 'maybe', 'no'] },
-            { key: 'pays', label: 'Pays', options: ['yes', 'maybe', 'no'] },
-          ]}
-          onRowClick={(r) => setOpen({ id: r.id, tab: 'answer' })}
-        />
-      </Panel>
-
-      {issues.length > 0 && (
-        <Panel title="Persona problems found" description="Personas that did not hold together while the agent played them. They go back to the generator.">
-          <ul className="flex flex-col gap-6 text-12 text-adm-ink">
-            {issues.map((a) => (
-              <li key={a.personaId}>
-                <button type="button" onClick={() => setOpen({ id: a.personaId, tab: 'persona' })} className="font-medium underline decoration-adm-line underline-offset-2 hover:decoration-adm-ink">
-                  {persona(a.personaId).name}
-                </button>{' '}
-                ({a.personaId}): {a.personaIssue}
-              </li>
-            ))}
-          </ul>
-        </Panel>
-      )}
+      </details>
 
       {open && answer && (
         <SidePanel
@@ -502,53 +525,21 @@ function Mix({ title, items }: { title: string; items: [string, number][] }) {
   )
 }
 
-function SegmentTable({ title, run, keyOf, sort }: { title: string; run: BuyerRun; keyOf: (p: Persona) => string; sort?: boolean }) {
-  const people = personasOf(run)
-  const ab = run.answers.some((a) => a.control)
+/** Per segment: share who would try (A, if any, then B) and share who would pay yes or maybe. */
+function segmentRows(run: BuyerRun, people: Map<string, Persona>, keyOf: (p: Persona) => string, sort: boolean, ab: boolean) {
   const groups = new Map<string, BuyerAnswer[]>()
   for (const a of run.answers) {
     const k = keyOf(people.get(a.personaId)!)
     groups.set(k, [...(groups.get(k) ?? []), a])
   }
   const entries = [...groups.entries()]
-  if (sort) entries.sort((x, y) => x[0].localeCompare(y[0]))
-  else entries.sort((x, y) => y[1].length - x[1].length)
-  const usage = run.answers.some((a) => a.week !== undefined)
-  return (
-    <div className="min-w-0 overflow-x-auto">
-      <table className="w-full text-12">
-        <thead>
-          <tr className="text-left text-adm-muted">
-            <th className="py-4 font-medium">{title}</th>
-            <th className="py-4 text-right font-medium">n</th>
-            {ab && <th className="py-4 text-right font-medium" title="Tries today's offer (A)">Try A</th>}
-            <th className="py-4 text-right font-medium">{ab ? 'Try B' : 'Try'}</th>
-            <th className="py-4 text-right font-medium" title="Pays yes or maybe">Pay?</th>
-            {usage && <th className="py-4 text-right font-medium" title="Average sessions in week one">Wk 1</th>}
-            <th className="py-4 text-right font-medium" title="Fair band, USD a month">Fair</th>
-          </tr>
-        </thead>
-        <tbody className="tabular-nums">
-          {entries.map(([k, as]) => {
-            const r = priceRange(as)
-            return (
-              <tr key={k} className="border-t border-adm-line">
-                <td className="py-6 text-adm-ink">{k}</td>
-                <td className="py-6 text-right text-adm-muted">{as.length}</td>
-                {ab && <td className="py-6 text-right text-adm-muted">{as.filter((a) => a.control?.tries === 'yes').length}</td>}
-                <td className="py-6 text-right">{as.filter((a) => a.tries === 'yes').length}</td>
-                <td className="py-6 text-right">{as.filter((a) => a.pays !== 'no').length}</td>
-                {usage && <td className="py-6 text-right">{(as.reduce((s, a) => s + (a.week ?? 0), 0) / as.length).toFixed(1)}</td>}
-                <td className="whitespace-nowrap py-6 text-right">
-                  {money(r.low)}–{money(r.high)}
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-    </div>
-  )
+  entries.sort(sort ? (x, y) => x[0].localeCompare(y[0]) : (x, y) => y[1].length - x[1].length)
+  return entries.map(([label, as]) => {
+    const share = (f: (a: BuyerAnswer) => boolean) => as.filter(f).length / as.length
+    const tryB = share((a) => a.tries === 'yes')
+    const pay = share((a) => a.pays !== 'no')
+    return { label, n: as.length, values: ab ? [share((a) => a.control?.tries === 'yes'), tryB, pay] : [tryB, pay] }
+  })
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
