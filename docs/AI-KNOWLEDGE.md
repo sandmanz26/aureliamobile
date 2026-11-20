@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J145** · updated 19 Nov 2026
+**Covers up to J146** · updated 20 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
@@ -173,6 +173,10 @@ evidence → decision. It is not a user feature.
 - **The journey map, exactly (J143):** 10 moments (when and why someone opens the app) in 4 stages, classified by 8 tag groups (state is one). The 3 screens link to moments separately, and already contradict the Product surface tag (r2, e3, h1). Proposed (O44): the screen is the surface tag's value. This refines J142: moments stay the when-and-why map, the funnel is the how-far map, and screens join them.
 - **Mapping to Aurelia:** entry = Quick Start + daily check-in; aha = a first session that connects their check-ins; cap = 3 sends / 30 min; upsell = not built.
 - **Caution:** never block mid-session or at night; place the cap after the aha.
+**Reading experience (J146, U107).** The owner's users found the results hard to read.
+- **Order:** results first, method last and folded. Findings are a bold first sentence plus detail.
+- **Charts** live in `pages/buyer/BuyerCharts.tsx`. Yes / maybe / no uses one hue in three steps (`shade.ts`), never the status colours. Numbers are always written on bars and cells.
+- **A new finding** should open with a short sentence that stands alone, because that sentence becomes the lead.
 - **Keep the agent honest:** look for the no first, honour deal breakers, set price from income and place. Write findings from computed tallies, never from memory.
 
 **The 2025 backend documents (J099, J109–J112).**

@@ -143,9 +143,52 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U104 | `d229d88` | 2026-11-19 | Buyer agent results → By production version: the three agent rule sets × production v1–v3 (staging v3–v5). That is nine reports, each with a written summary, the ten market-fit metrics (predicted or estimate), a step-by-step funnel, the leave reasons and every persona's walk, plus an overall summary. The rules are written as code and checked against the hand-played runs (21/36 and 20/36 the same, 0 opposite). Staging only. | [patch](patches/U104-d229d88.patch) |
 | U105 | `6f24a04` | 2026-11-19 | User journey: with tags on, screens are tied to the Product surface tag (a moment shows its surfaces' screens), with a Product surfaces strip. Adds three real screenshots (Journal, Progress, Share sheet), persona demand per moment (of 300), saved maps upgraded in place, and a guided overlay tour (9 steps, opens on the first visit, Guide button to replay). | [patch](patches/U105-6f24a04.patch) |
 | U106 | `a9feb6a` | 2026-11-19 | A screen from an older build whose code is gone after a deploy now reloads once into the new build (`vite:preloadError`, and the error boundary on a failed dynamic import), with a 30 s guard against loops. Off production, the error screen shows the route and the error message. Not flagged: it is a fix. | [patch](patches/U106-a9feb6a.patch) |
+| U107 | `a23faa8` | 2026-11-20 | Buyer agent results reworked as a dashboard. Numbers and charts come first: yes/maybe/no bars, with A against B, objections and changes as ranked bars, a who-says-yes heat table by wellness, age and region, and the price band. Findings read as a numbered bold lead with its detail. The method is folded into "About this run". In the re-run view: a shaded matrix, metric tiles, findings the same way, and the method folded away. Staging only. | [patch](patches/U107-a23faa8.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U107 — Buyer agent results as a dashboard
+
+- **Commit:** `a23faa8` · pushed 2026-11-20 UTC · `web_app` + `admin_cms`. Staging only (`RELEASES.buyerAgent`).
+- **Patch:** [patches/U107-a23faa8.patch](patches/U107-a23faa8.patch)
+- **Request:** "secara buyer agent result nya tolong berikan semacam grafik dashboard agar mudah memahami. dari user bilang secara reading experience masih susah dan tidak nyaman dibaca. tolong diperbaiki"
+- **What made it hard to read:**
+  - The page opened on the method: four panels of criteria, panel mix, offer and sources before a single result.
+  - Findings were long bullets with no hierarchy.
+  - Segments were three dense tables of counts.
+  - The re-run matrix was nine identical grey cards, and the ten metrics were a table.
+- **Changed:**
+  - `src/admin/pages/buyer/BuyerCharts.tsx`:
+    - `VerdictChart`: yes / maybe / no as 100% bars, counts written in the segments, the share on hover;
+    - `RankBars`;
+    - `HeatTable` and `HeatLegend`;
+    - `Finding`: the first sentence as a bold lead, the rest as detail, about 68 characters wide.
+  - `src/admin/pages/buyer/shade.ts`: one hue, light to dark, with white text on the dark steps.
+  - `BuyerResultsPage.tsx`, Runs view, in this order:
+    1. the stats;
+    2. the verdict chart (A against B for v3), beside why people hesitate;
+    3. who says yes, by segment, as heat tables: try and pay, plus try A for v3;
+    4. price, beside the changes that moved people (v3) or the test cases;
+    5. what it tells us;
+    6. every answer;
+    7. persona problems;
+    8. "About this run", folded: criteria, panel, offer, sources.
+
+    The three segment tables were replaced.
+  - `RerunView.tsx`:
+    - the summaries as findings;
+    - the nine-report matrix shaded by day 7;
+    - the ten metrics as tiles with their predicted / estimate chip;
+    - "How the re-run worked" folded at the bottom.
+- **Chart rules followed:**
+  - Yes / maybe / no is one ordered measure, so it takes one hue in three steps; the status colours stay reserved.
+  - Every bar and cell writes its number; colour is never the only carrier.
+  - A legend for each chart, one axis, hover on the verdict bars.
+- **Verified:**
+  - `npm run check` passes (176 tests).
+  - Staging build at 1440px light and dark and at 402px: Runs (v1, v3) and By production version render, no overflow, no errors.
+- **Revert:** `git revert --no-commit a23faa8 && git checkout HEAD -- docs/`.
 
 ### U106 — Recover from a stale build; show the error on staging
 

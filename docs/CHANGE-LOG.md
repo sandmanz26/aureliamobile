@@ -19,6 +19,14 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-20 — Buyer agent results as a dashboard (U107, J146)
+
+Results and charts first (verdicts, A against B, objections, a heat table by
+segment, price, the changes that moved people), findings as a bold lead with
+detail, and the method folded away. Staging only.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-19 — Recover from a stale build (U106, J145)
 
 A page left open across a deploy reloads into the new build instead of

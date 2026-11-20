@@ -74,6 +74,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O44 | **Done in U105 (J144)**, except readiness, which stays on the moment. **Tie screens to tags (J143)**: make each screen the value of the "Product surface" tag, so a moment's surface and its screenshot are one fact. Add the missing screens (journal, progress, sharing), so every surface has a picture. Move readiness onto the screen. Keep moments as the when-and-why map and the business funnel as the how-far map; screens join the two | J143 | Product owner |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
+| J146 | 2026-11-20 | Code | Buyer agent results: a dashboard with charts, easier and more comfortable to read | U107 |
 | J141 | 2026-11-19 | Opinion | Is the business funnel a CMS like the user journey, and what is it for | — |
 | J142 | 2026-11-19 | Opinion | How the user journey, the business funnel and the buyer agent connect; what one iteration produces | — |
 | J143 | 2026-11-19 | Opinion | What the current user journey map is, and why screens should be tied to the tags (the Product surface tag) | — |
@@ -1780,3 +1781,10 @@ transcript and the update log. Everything from J018 on was written at the time.
   - **The likely cause** is an open page from before a deploy loading a chunk that no longer exists.
   - **Now it reloads into the new build once.** Staging's error screen also says which route failed and why.
 - **If it happens again:** the screenshot will carry the route and the message. Send it.
+
+### J146 — Buyer agent results as a dashboard
+- **Asked:** "secara buyer agent result nya tolong berikan semacam grafik dashboard agar mudah memahami. dari user bilang secara reading experience masih susah dan tidak nyaman dibaca. tolong diperbaiki"
+- **Done:** U107. Results come first: stats, then charts (verdicts, A against B, objections, a heat table by segment, price, the changes that moved people).
+  - **Findings:** each is a numbered bold lead with its detail under it.
+  - **The method:** folded under "About this run".
+  - **The re-run view:** a shaded matrix and metric tiles.

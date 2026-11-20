@@ -1,0 +1,781 @@
+From a23faa867cc58f8dbb5a3ecac0ed2ab0f672fc07 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 20 Nov 2026 04:51:28 +0000
+Subject: [PATCH] Buyer agent results as a dashboard: verdict, segment and
+ ranking charts, findings that scan, method folded away
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/admin/pages/BuyerResultsPage.tsx  | 317 +++++++++++++-------------
+ src/admin/pages/buyer/BuyerCharts.tsx | 181 +++++++++++++++
+ src/admin/pages/buyer/RerunView.tsx   | 136 ++++++-----
+ src/admin/pages/buyer/shade.ts        |   5 +
+ 4 files changed, 413 insertions(+), 226 deletions(-)
+ create mode 100644 src/admin/pages/buyer/BuyerCharts.tsx
+ create mode 100644 src/admin/pages/buyer/shade.ts
+
+diff --git a/src/admin/pages/BuyerResultsPage.tsx b/src/admin/pages/BuyerResultsPage.tsx
+index c3aeee1..dba51fd 100644
+--- a/src/admin/pages/BuyerResultsPage.tsx
++++ b/src/admin/pages/BuyerResultsPage.tsx
+@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react'
+ import { Link, useSearchParams } from 'react-router-dom'
+ import { DataTable, type Column } from '../components/DataTable'
+ import { PersonaProfile } from '../components/PersonaProfile'
++import { Finding, HeatLegend, HeatTable, RankBars, VerdictChart } from './buyer/BuyerCharts'
+ import { RerunView } from './buyer/RerunView'
+ import { SidePanel } from '../components/SidePanel'
+ import { Badge, Button, PageHeader, Panel, StatCard } from '../components/ui'
+@@ -246,124 +247,42 @@ export function BuyerResultsPage() {
+         )}
+       </div>
+ 
+-      <Panel title="How this run worked" description="The criteria the agent ran under, so anyone can judge how far to trust it.">
+-        <dl className="grid gap-x-16 gap-y-10 text-13 lg:grid-cols-[180px_1fr]">
+-          {run.criteria.map((c) => (
+-            <div key={c.label} className="contents">
+-              <dt className="font-medium text-adm-ink">{c.label}</dt>
+-              <dd className="max-w-[760px] leading-[20px] text-adm-ink-2">{c.value}</dd>
+-            </div>
+-          ))}
+-        </dl>
+-        <details className="rounded-8 bg-adm-bg px-12 py-10 text-12">
+-          <summary className="cursor-pointer font-medium text-adm-ink">What the answers mean</summary>
+-          <dl className="mt-8 grid gap-x-16 gap-y-6 lg:grid-cols-[160px_1fr]">
+-            {DEFINITIONS.map((d) => (
+-              <div key={d.label} className="contents">
+-                <dt className="font-medium text-adm-ink">{d.label}</dt>
+-                <dd className="max-w-[760px] text-adm-ink-2">{d.value}</dd>
+-              </div>
+-            ))}
+-          </dl>
+-        </details>
+-        <details className="rounded-8 bg-adm-bg px-12 py-10 text-12">
+-          <summary className="cursor-pointer font-medium text-adm-ink">The agent’s instructions</summary>
+-          <pre className="mt-8 overflow-x-auto whitespace-pre-wrap font-sans text-adm-ink-2">{run.instructions}</pre>
+-        </details>
+-      </Panel>
+-
+-      <Panel title="Who was in the panel" description={`${n} personas, aged ${Math.min(...ages)}–${Math.max(...ages)}, from ${new Set(panel.map((p) => p.country)).size} countries.`}>
+-        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
+-          <Mix title="Region" items={count(panel.map((p) => p.region))} />
+-          <Mix title="Age band" items={count(panel.map((p) => p.ageBand)).sort((x, y) => x[0].localeCompare(y[0]))} />
+-          <Mix title="Wellness" items={count(panel.map((p) => WELLNESS_LABEL[wellnessOf(p).level]))} />
+-          <Mix title="Goal" items={count(panel.map((p) => GOAL_LABEL[p.goal]))} />
+-        </div>
+-      </Panel>
+-
+-      <Panel title="What was tested" description={run.stimulus.name}>
+-        <p className="max-w-[720px] text-13 leading-[20px] text-adm-ink">{run.stimulus.pitch}</p>
+-        <ul className="flex flex-wrap gap-6">
+-          {run.stimulus.offer.map((o) => (
+-            <li key={o} className="rounded-8 bg-adm-bg px-10 py-6 text-12 text-adm-ink-2">
+-              {o}
+-            </li>
+-          ))}
+-        </ul>
+-      </Panel>
+-
+-      {run.control && (
+-        <Panel title="Compared with" description={run.control.name}>
+-          <ul className="flex flex-wrap gap-6">
+-            {run.control.offer.map((o) => (
+-              <li key={o} className="rounded-8 bg-adm-bg px-10 py-6 text-12 text-adm-ink-2">
+-                {o}
+-              </li>
+-            ))}
+-          </ul>
+-        </Panel>
+-      )}
+-
+-      {run.references && (
+-        <Panel title="What the agent read" description="The documents the agent treated as evidence before answering, and what it took from each.">
+-          <ul className="flex flex-col gap-10 text-13">
+-            {run.references.map((r) => (
+-              <li key={r.title} className="grid gap-2 lg:grid-cols-[260px_1fr] lg:gap-16">
+-                <p>
+-                  <span className="font-medium text-adm-ink">{r.title}</span>
+-                  <span className="block text-12 text-adm-muted">{r.where}</span>
+-                </p>
+-                <p className="max-w-[760px] leading-[20px] text-adm-ink-2">{r.used}</p>
+-              </li>
+-            ))}
+-          </ul>
+-        </Panel>
+-      )}
+-
+-      <div className="grid grid-cols-2 gap-12 lg:grid-cols-4">
++      <div className="grid grid-cols-2 gap-12 lg:grid-cols-4" aria-label="At a glance">
+         <StatCard label={ab ? 'Would try B' : 'Would try'} value={`${tries.yes} of ${n}`} hint={ab ? `today (A): ${ctlTries.yes} of ${n}` : `${tries.maybe} maybe, ${tries.no} no`} />
+         <StatCard label={ab ? 'Would pay B' : 'Would pay'} value={`${pays.yes} of ${n}`} hint={ab ? `${pays.maybe} maybe · A: ${ctlPays.yes} yes, ${ctlPays.maybe} maybe` : `${pays.maybe} maybe, ${pays.no} no`} />
+         <StatCard label="Price that feels fair" value={`${money(range.low)}–${money(range.high)}`} hint={`Plus is ${money(run.stimulus.priceUsd)} in the US`} />
+         <StatCard label="Test cases" value={`${outcomes.pass} pass`} hint={`${outcomes.risk} at risk, ${outcomes.fail} fail`} />
+       </div>
+ 
+-      <Panel title="What it tells us" description="The agent’s reading of the panel. Hypotheses to check with real people.">
+-        <ul className="flex max-w-[760px] list-disc flex-col gap-8 pl-18 text-13 leading-[20px] text-adm-ink">
+-          {run.findings.map((f) => (
+-            <li key={f}>{f}</li>
+-          ))}
+-        </ul>
+-      </Panel>
+-
+-      {moved.size > 0 && (
+-        <Panel title="Which changes moved people" description="How many personas answered B differently from A because of each change, as the agent judged it. One persona can name several.">
+-          <ul className="flex flex-col gap-8">
+-            {[...moved.entries()]
+-              .sort((x, y) => y[1] - x[1])
+-              .map(([c, k]) => {
+-                const info = V3_CHANGES[c as keyof typeof V3_CHANGES]
+-                return (
+-                  <li key={c} className="grid items-center gap-x-8 gap-y-2 text-12 lg:grid-cols-[260px_1fr_24px]">
+-                    <span className="text-adm-ink" title={info?.source}>
+-                      {info?.label ?? c}
+-                    </span>
+-                    <span className="h-10 rounded-full bg-adm-bg">
+-                      <span className="block h-full rounded-full bg-adm-s1" style={{ width: `${(k / n) * 100}%` }} />
+-                    </span>
+-                    <span className="text-right tabular-nums text-adm-muted">{k}</span>
+-                    <span className="text-11 text-adm-muted lg:col-span-3">From: {info?.source}</span>
+-                  </li>
+-                )
+-              })}
+-          </ul>
++      <div className="grid gap-16 lg:grid-cols-2">
++        <Panel title={ab ? 'Today (A) against the proposal (B)' : 'Would they try it, would they pay'} description={`Personas out of ${n}. Hover a segment for its share.`}>
++          <VerdictChart
++            groups={
++              ab
++                ? [
++                    { label: 'A · today', tries: ctlTries, pays: ctlPays },
++                    { label: 'B · proposed', tries, pays },
++                  ]
++                : [{ label: 'All', tries, pays }]
++            }
++          />
+         </Panel>
+-      )}
++        <Panel title="Why people hesitate" description="Each persona’s main objection, grouped.">
++          <RankBars rows={themes.map(([t, c]) => ({ label: THEME_LABEL[t], value: c }))} total={n} note={(v) => `${v} of ${n}`} />
++        </Panel>
++      </div>
+ 
+-      <Panel title="By segment" description="Each group’s answers. Small groups: read the direction, not the number.">
++      <Panel title="Who says yes, by segment" description={`Share of each group that would try it, and that would pay (yes or maybe)${ab ? ', with today’s offer (A) beside the proposal (B)' : ''}. Darker is more. Small groups: read the direction, not the number.`} actions={<HeatLegend />}>
+         <div className="grid gap-16 lg:grid-cols-3">
+-          <SegmentTable title="Region" run={run} keyOf={(p) => p.region} />
+-          <SegmentTable title="Age band" run={run} keyOf={(p) => p.ageBand} sort />
+-          <SegmentTable title="Wellness" run={run} keyOf={(p) => WELLNESS_LABEL[wellnessOf(p).level]} />
++          {(
++            [
++              ['Wellness', (p: Persona) => WELLNESS_LABEL[wellnessOf(p).level], false],
++              ['Age band', (p: Persona) => p.ageBand, true],
++              ['Region', (p: Persona) => p.region, false],
++            ] as const
++          ).map(([title, keyOf, sort]) => (
++            <HeatTable key={title} title={title} cols={ab ? ['Try A', 'Try B', 'Pay B'] : ['Try', 'Pay']} rows={segmentRows(run, people, keyOf, sort, ab)} />
++          ))}
+         </div>
+       </Panel>
+ 
+@@ -398,21 +317,42 @@ export function BuyerResultsPage() {
+           </div>
+         </Panel>
+ 
+-        <Panel title="Why people hesitate" description="Each persona’s main objection, grouped.">
+-          <ul className="flex flex-col gap-8">
+-            {themes.map(([t, c]) => (
+-              <li key={t} className="grid grid-cols-[150px_1fr_24px] items-center gap-8 text-12">
+-                <span className="text-adm-ink">{THEME_LABEL[t]}</span>
+-                <span className="h-10 rounded-full bg-adm-bg">
+-                  <span className="block h-full rounded-full bg-adm-s1" style={{ width: `${(c / n) * 100}%` }} />
+-                </span>
+-                <span className="text-right tabular-nums text-adm-muted">{c}</span>
+-              </li>
+-            ))}
+-          </ul>
+-        </Panel>
++        {moved.size > 0 ? (
++          <Panel title="Which changes moved people" description="Personas who answered B better than A because of each change. One persona can name several. Hover for the source.">
++            <RankBars
++              rows={[...moved.entries()]
++                .sort((x, y) => y[1] - x[1])
++                .map(([c, k]) => {
++                  const info = V3_CHANGES[c as keyof typeof V3_CHANGES]
++                  return { label: info?.label ?? c, value: k, hint: info?.source }
++                })}
++              total={n}
++              note={(v) => `${v} of ${n}`}
++            />
++          </Panel>
++        ) : (
++          <Panel title="Test cases" description="Each persona’s three scenarios against the product, pass / at risk / fail.">
++            <RankBars
++              rows={[
++                { label: 'Pass', value: outcomes.pass },
++                { label: 'At risk', value: outcomes.risk },
++                { label: 'Fail', value: outcomes.fail },
++              ]}
++              total={outcomes.pass + outcomes.risk + outcomes.fail}
++              note={(v) => `${v} of ${outcomes.pass + outcomes.risk + outcomes.fail}`}
++            />
++          </Panel>
++        )}
+       </div>
+ 
++      <Panel title="What it tells us" description="The agent’s reading of the panel. Hypotheses to check with real people.">
++        <ol className="flex flex-col gap-14">
++          {run.findings.map((f, i) => (
++            <Finding key={f} text={f} index={i} />
++          ))}
++        </ol>
++      </Panel>
++
+       <Panel title="Every answer" description="Select a name for the persona’s profile, or anywhere else on the row for their answer and test cases.">
+         <DataTable
+           rows={rows}
+@@ -445,6 +385,89 @@ export function BuyerResultsPage() {
+         </Panel>
+       )}
+ 
++      <details className="group rounded-12 border border-adm-line bg-adm-surface">
++        <summary className="cursor-pointer list-none px-16 py-14">
++          <span className="text-15 font-semibold text-adm-ink">About this run</span>
++          <span className="ml-8 text-12 text-adm-muted">How it worked, who was in the panel, what they saw{run.references ? ', what the agent read' : ''}. Select to open.</span>
++        </summary>
++        <div className="flex flex-col gap-16 border-t border-adm-line p-16">
++      <Panel title="How this run worked" description="The criteria the agent ran under, so anyone can judge how far to trust it.">
++        <dl className="grid gap-x-16 gap-y-10 text-13 lg:grid-cols-[180px_1fr]">
++          {run.criteria.map((c) => (
++            <div key={c.label} className="contents">
++              <dt className="font-medium text-adm-ink">{c.label}</dt>
++              <dd className="max-w-[760px] leading-[20px] text-adm-ink-2">{c.value}</dd>
++            </div>
++          ))}
++        </dl>
++        <details className="rounded-8 bg-adm-bg px-12 py-10 text-12">
++          <summary className="cursor-pointer font-medium text-adm-ink">What the answers mean</summary>
++          <dl className="mt-8 grid gap-x-16 gap-y-6 lg:grid-cols-[160px_1fr]">
++            {DEFINITIONS.map((d) => (
++              <div key={d.label} className="contents">
++                <dt className="font-medium text-adm-ink">{d.label}</dt>
++                <dd className="max-w-[760px] text-adm-ink-2">{d.value}</dd>
++              </div>
++            ))}
++          </dl>
++        </details>
++        <details className="rounded-8 bg-adm-bg px-12 py-10 text-12">
++          <summary className="cursor-pointer font-medium text-adm-ink">The agent’s instructions</summary>
++          <pre className="mt-8 overflow-x-auto whitespace-pre-wrap font-sans text-adm-ink-2">{run.instructions}</pre>
++        </details>
++      </Panel>
++
++      <Panel title="Who was in the panel" description={`${n} personas, aged ${Math.min(...ages)}–${Math.max(...ages)}, from ${new Set(panel.map((p) => p.country)).size} countries.`}>
++        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
++          <Mix title="Region" items={count(panel.map((p) => p.region))} />
++          <Mix title="Age band" items={count(panel.map((p) => p.ageBand)).sort((x, y) => x[0].localeCompare(y[0]))} />
++          <Mix title="Wellness" items={count(panel.map((p) => WELLNESS_LABEL[wellnessOf(p).level]))} />
++          <Mix title="Goal" items={count(panel.map((p) => GOAL_LABEL[p.goal]))} />
++        </div>
++      </Panel>
++
++      <Panel title="What was tested" description={run.stimulus.name}>
++        <p className="max-w-[720px] text-13 leading-[20px] text-adm-ink">{run.stimulus.pitch}</p>
++        <ul className="flex flex-wrap gap-6">
++          {run.stimulus.offer.map((o) => (
++            <li key={o} className="rounded-8 bg-adm-bg px-10 py-6 text-12 text-adm-ink-2">
++              {o}
++            </li>
++          ))}
++        </ul>
++      </Panel>
++
++      {run.control && (
++        <Panel title="Compared with" description={run.control.name}>
++          <ul className="flex flex-wrap gap-6">
++            {run.control.offer.map((o) => (
++              <li key={o} className="rounded-8 bg-adm-bg px-10 py-6 text-12 text-adm-ink-2">
++                {o}
++              </li>
++            ))}
++          </ul>
++        </Panel>
++      )}
++
++      {run.references && (
++        <Panel title="What the agent read" description="The documents the agent treated as evidence before answering, and what it took from each.">
++          <ul className="flex flex-col gap-10 text-13">
++            {run.references.map((r) => (
++              <li key={r.title} className="grid gap-2 lg:grid-cols-[260px_1fr] lg:gap-16">
++                <p>
++                  <span className="font-medium text-adm-ink">{r.title}</span>
++                  <span className="block text-12 text-adm-muted">{r.where}</span>
++                </p>
++                <p className="max-w-[760px] leading-[20px] text-adm-ink-2">{r.used}</p>
++              </li>
++            ))}
++          </ul>
++        </Panel>
++      )}
++
++        </div>
++      </details>
++
+       {open && answer && (
+         <SidePanel
+           width={600}
+@@ -502,53 +525,21 @@ function Mix({ title, items }: { title: string; items: [string, number][] }) {
+   )
+ }
+ 
+-function SegmentTable({ title, run, keyOf, sort }: { title: string; run: BuyerRun; keyOf: (p: Persona) => string; sort?: boolean }) {
+-  const people = personasOf(run)
+-  const ab = run.answers.some((a) => a.control)
++/** Per segment: share who would try (A, if any, then B) and share who would pay yes or maybe. */
++function segmentRows(run: BuyerRun, people: Map<string, Persona>, keyOf: (p: Persona) => string, sort: boolean, ab: boolean) {
+   const groups = new Map<string, BuyerAnswer[]>()
+   for (const a of run.answers) {
+     const k = keyOf(people.get(a.personaId)!)
+     groups.set(k, [...(groups.get(k) ?? []), a])
+   }
+   const entries = [...groups.entries()]
+-  if (sort) entries.sort((x, y) => x[0].localeCompare(y[0]))
+-  else entries.sort((x, y) => y[1].length - x[1].length)
+-  const usage = run.answers.some((a) => a.week !== undefined)
+-  return (
+-    <div className="min-w-0 overflow-x-auto">
+-      <table className="w-full text-12">
+-        <thead>
+-          <tr className="text-left text-adm-muted">
+-            <th className="py-4 font-medium">{title}</th>
+-            <th className="py-4 text-right font-medium">n</th>
+-            {ab && <th className="py-4 text-right font-medium" title="Tries today's offer (A)">Try A</th>}
+-            <th className="py-4 text-right font-medium">{ab ? 'Try B' : 'Try'}</th>
+-            <th className="py-4 text-right font-medium" title="Pays yes or maybe">Pay?</th>
+-            {usage && <th className="py-4 text-right font-medium" title="Average sessions in week one">Wk 1</th>}
+-            <th className="py-4 text-right font-medium" title="Fair band, USD a month">Fair</th>
+-          </tr>
+-        </thead>
+-        <tbody className="tabular-nums">
+-          {entries.map(([k, as]) => {
+-            const r = priceRange(as)
+-            return (
+-              <tr key={k} className="border-t border-adm-line">
+-                <td className="py-6 text-adm-ink">{k}</td>
+-                <td className="py-6 text-right text-adm-muted">{as.length}</td>
+-                {ab && <td className="py-6 text-right text-adm-muted">{as.filter((a) => a.control?.tries === 'yes').length}</td>}
+-                <td className="py-6 text-right">{as.filter((a) => a.tries === 'yes').length}</td>
+-                <td className="py-6 text-right">{as.filter((a) => a.pays !== 'no').length}</td>
+-                {usage && <td className="py-6 text-right">{(as.reduce((s, a) => s + (a.week ?? 0), 0) / as.length).toFixed(1)}</td>}
+-                <td className="whitespace-nowrap py-6 text-right">
+-                  {money(r.low)}–{money(r.high)}
+-                </td>
+-              </tr>
+-            )
+-          })}
+-        </tbody>
+-      </table>
+-    </div>
+-  )
++  entries.sort(sort ? (x, y) => x[0].localeCompare(y[0]) : (x, y) => y[1].length - x[1].length)
++  return entries.map(([label, as]) => {
++    const share = (f: (a: BuyerAnswer) => boolean) => as.filter(f).length / as.length
++    const tryB = share((a) => a.tries === 'yes')
++    const pay = share((a) => a.pays !== 'no')
++    return { label, n: as.length, values: ab ? [share((a) => a.control?.tries === 'yes'), tryB, pay] : [tryB, pay] }
++  })
+ }
+ 
+ function Section({ title, children }: { title: string; children: ReactNode }) {
+diff --git a/src/admin/pages/buyer/BuyerCharts.tsx b/src/admin/pages/buyer/BuyerCharts.tsx
+new file mode 100644
+index 0000000..ad228f7
+--- /dev/null
++++ b/src/admin/pages/buyer/BuyerCharts.tsx
+@@ -0,0 +1,181 @@
++import { useState } from 'react'
++import { shade } from './shade'
++
++/*
++ * Dashboard charts for Buyer agent results (U107, J146). Plain HTML on the
++ * admin tokens so light and dark resolve from one definition.
++ * - Verdicts (yes / maybe / no) are one ordered measure, so they take one hue
++ *   in three steps (sequential), not three status colours: the status palette
++ *   stays reserved for state.
++ * - Every bar shows its count as text; colour is never the only carrier, and
++ *   the legend names each step. Hover shows the exact share.
++ */
++
++export interface Counts {
++  yes: number
++  maybe: number
++  no: number
++}
++
++const STEP = {
++  yes: 'var(--color-adm-s1)',
++  maybe: 'color-mix(in oklab, var(--color-adm-s1) 50%, var(--color-adm-surface))',
++  no: 'color-mix(in oklab, var(--color-adm-s1) 16%, var(--color-adm-surface))',
++} as const
++const STEP_INK = { yes: 'text-white', maybe: 'text-adm-ink', no: 'text-adm-ink-2' } as const
++const LABEL = { yes: 'Yes', maybe: 'Maybe', no: 'No' } as const
++const KEYS = ['yes', 'maybe', 'no'] as const
++
++export function VerdictLegend() {
++  return (
++    <div className="flex flex-wrap gap-12 text-12 text-adm-ink-2" aria-hidden="true">
++      {KEYS.map((k) => (
++        <span key={k} className="inline-flex items-center gap-6">
++          <span className="size-10 rounded-2 ring-1 ring-adm-line" style={{ background: STEP[k] }} />
++          {LABEL[k]}
++        </span>
++      ))}
++    </div>
++  )
++}
++
++/** One 100% bar of yes / maybe / no, counts written in the segments, the exact share on hover. */
++function VerdictBar({ label, counts }: { label: string; counts: Counts }) {
++  const [hover, setHover] = useState<(typeof KEYS)[number] | null>(null)
++  const total = counts.yes + counts.maybe + counts.no || 1
++  return (
++    <div className="grid grid-cols-[96px_1fr] items-center gap-10">
++      <span className="text-12 text-adm-ink-2">{label}</span>
++      <div className="relative">
++        <div className="flex h-28 gap-2 overflow-hidden rounded-4" role="img" aria-label={`${label}: ${counts.yes} yes, ${counts.maybe} maybe, ${counts.no} no, of ${total}`}>
++          {KEYS.map((k) =>
++            counts[k] > 0 ? (
++              <div
++                key={k}
++                onMouseEnter={() => setHover(k)}
++                onMouseLeave={() => setHover(null)}
++                className={`flex items-center justify-center text-12 font-semibold tabular-nums ${STEP_INK[k]} transition-opacity`}
++                style={{ width: `${(counts[k] / total) * 100}%`, background: STEP[k], opacity: hover && hover !== k ? 0.6 : 1 }}
++              >
++                {counts[k] / total >= 0.07 ? counts[k] : ''}
++              </div>
++            ) : null,
++          )}
++        </div>
++        {hover && (
++          <div className="pointer-events-none absolute -top-34 left-0 z-10 rounded-8 border border-adm-line bg-adm-surface px-8 py-4 text-12 text-adm-ink shadow-lg">
++            {LABEL[hover]}: <b className="tabular-nums">{counts[hover]}</b> of {total} ({Math.round((counts[hover] / total) * 100)}%)
++          </div>
++        )}
++      </div>
++    </div>
++  )
++}
++
++/** Would try / would pay, for one offer or for A against B. */
++export function VerdictChart({ groups }: { groups: { label: string; tries: Counts; pays: Counts }[] }) {
++  return (
++    <div className="flex flex-col gap-14">
++      {groups.map((g) => (
++        <div key={g.label} className="flex flex-col gap-6">
++          {groups.length > 1 && <p className="text-12 font-semibold text-adm-ink">{g.label}</p>}
++          <VerdictBar label="Would try" counts={g.tries} />
++          <VerdictBar label="Would pay" counts={g.pays} />
++        </div>
++      ))}
++      <VerdictLegend />
++    </div>
++  )
++}
++
++/** Horizontal bars with the value written beside each, longest first. */
++export function RankBars({ rows, total, note }: { rows: { label: string; value: number; hint?: string }[]; total: number; note?: (value: number) => string }) {
++  return (
++    <ul className="flex flex-col gap-8">
++      {rows.map((r) => (
++        <li key={r.label} className="grid grid-cols-[minmax(110px,180px)_1fr_auto] items-center gap-10 text-12" title={r.hint}>
++          <span className="text-adm-ink">{r.label}</span>
++          <span className="h-12 rounded-4 bg-adm-bg">
++            <span className="block h-full rounded-4 bg-adm-s1" style={{ width: `${(r.value / Math.max(1, total)) * 100}%` }} />
++          </span>
++          <span className="min-w-[44px] text-right tabular-nums text-adm-ink-2">{note ? note(r.value) : r.value}</span>
++        </li>
++      ))}
++    </ul>
++  )
++}
++
++/** Segments × measures as a heat table: darker is more. */
++export function HeatTable({
++  title,
++  cols,
++  rows,
++}: {
++  title: string
++  cols: string[]
++  rows: { label: string; n: number; values: number[] }[]
++}) {
++  return (
++    <div className="min-w-0 overflow-x-auto">
++      <table className="w-full border-separate border-spacing-[2px] text-12">
++        <thead>
++          <tr className="text-left text-adm-muted">
++            <th className="px-6 py-4 font-medium">{title}</th>
++            <th className="px-6 py-4 text-right font-medium">n</th>
++            {cols.map((c) => (
++              <th key={c} className="px-6 py-4 text-center font-medium">
++                {c}
++              </th>
++            ))}
++          </tr>
++        </thead>
++        <tbody className="tabular-nums">
++          {rows.map((r) => (
++            <tr key={r.label}>
++              <td className="whitespace-nowrap px-6 py-6 text-adm-ink">{r.label}</td>
++              <td className="px-6 py-6 text-right text-adm-muted">{r.n}</td>
++              {r.values.map((v, i) => {
++                const s = shade(v)
++                return (
++                  <td key={cols[i]} className={`rounded-4 px-6 py-6 text-center font-medium ${s.dark ? 'text-white' : 'text-adm-ink'}`} style={{ background: s.background }} title={`${r.label} · ${cols[i]}: ${Math.round(v * 100)}%`}>
++                    {Math.round(v * 100)}%
++                  </td>
++                )
++              })}
++            </tr>
++          ))}
++        </tbody>
++      </table>
++    </div>
++  )
++}
++
++export function HeatLegend() {
++  return (
++    <div className="flex items-center gap-8 text-11 text-adm-muted" aria-hidden="true">
++      <span>0%</span>
++      <span className="flex h-8 w-120 overflow-hidden rounded-2">
++        {[0, 0.25, 0.5, 0.75, 1].map((v) => (
++          <span key={v} className="flex-1" style={{ background: shade(v).background }} />
++        ))}
++      </span>
++      <span>100%</span>
++    </div>
++  )
++}
++
++/** A finding as a short bold lead (its first sentence) and the detail under it. */
++export function Finding({ text, index }: { text: string; index?: number }) {
++  const cut = text.search(/[.:](\s|$)/)
++  const lead = cut > 0 ? text.slice(0, cut + 1) : text
++  const rest = cut > 0 ? text.slice(cut + 1).trim() : ''
++  return (
++    <li className="flex gap-10">
++      {index !== undefined && <span className="mt-1 flex size-20 shrink-0 items-center justify-center rounded-full bg-adm-hover text-11 font-semibold tabular-nums text-adm-ink">{index + 1}</span>}
++      <div className="min-w-0">
++        <p className="text-13 font-semibold leading-[20px] text-adm-ink">{lead}</p>
++        {rest && <p className="mt-2 max-w-[68ch] text-13 leading-[21px] text-adm-ink-2">{rest}</p>}
++      </div>
++    </li>
++  )
++}
+diff --git a/src/admin/pages/buyer/RerunView.tsx b/src/admin/pages/buyer/RerunView.tsx
+index 849e91a..ea3c9d7 100644
+--- a/src/admin/pages/buyer/RerunView.tsx
++++ b/src/admin/pages/buyer/RerunView.tsx
+@@ -5,6 +5,8 @@ import { PersonaProfile } from '../../components/PersonaProfile'
+ import { SidePanel } from '../../components/SidePanel'
+ import { Badge, Button, Panel } from '../../components/ui'
+ import { OVERALL_SUMMARY, SUMMARIES } from '../../data/buyerRerunSummaries'
++import { Finding, HeatLegend } from './BuyerCharts'
++import { shade } from './shade'
+ import { VERDICT_TONE, WELLNESS_LABEL, personasOf, wellnessOf } from '../../data/buyerRuns'
+ import { AGENT_RULES, ALL_VERSIONS, DESIGNS, STEP_LABEL, agreement, report, type AgentId, type DesignId, type Walk } from '../../data/buyerSim'
+ 
+@@ -85,51 +87,15 @@ export function RerunView() {
+ 
+   return (
+     <div className="flex flex-col gap-16">
+-      <Panel title="How the re-run worked" description="Every persona from runs v1, v2 and v3, walked step by step through the real screens of production v1, v2 and v3, under the rules each agent version played by.">
+-        <div className="grid gap-12 lg:grid-cols-3">
+-          {DESIGNS.map((d) => (
+-            <div key={d.id} className="rounded-8 bg-adm-bg p-12 text-12">
+-              <p className="font-semibold text-adm-ink">{d.name}</p>
+-              <ul className="mt-6 flex list-disc flex-col gap-4 pl-16 text-adm-ink-2">
+-                {d.facts.map((f) => (
+-                  <li key={f}>{f}</li>
+-                ))}
+-              </ul>
+-            </div>
+-          ))}
+-        </div>
+-        <p className="text-12 text-adm-ink-2">
+-          <span className="font-medium text-adm-ink">In all three: </span>
+-          {ALL_VERSIONS.join(' ')}
+-        </p>
+-        <dl className="grid gap-x-16 gap-y-8 text-12 lg:grid-cols-[140px_1fr]">
+-          {([1, 2, 3] as const).map((a) => (
+-            <div key={a} className="contents">
+-              <dt className="font-medium text-adm-ink">{AGENT_RULES[a].name}</dt>
+-              <dd className="max-w-[760px] text-adm-ink-2">
+-                {AGENT_RULES[a].rules} Panel: run v{a}’s {a === 1 ? 10 : 36} personas.
+-              </dd>
+-            </div>
+-          ))}
+-          <div className="contents">
+-            <dt className="font-medium text-adm-ink">How the walks are made</dt>
+-            <dd className="max-w-[760px] text-adm-ink-2">
+-              The agent’s rules are written as code (246 walks would not be answered the same way twice by hand), from the runs played by hand, and checked against them on today’s app:{' '}
+-              {AGREEMENT.map((x) => `${x.label}: same answer for ${x.exact} of ${x.n}, opposite (yes against no) for ${x.opposite}`).join('; ')}. Every figure is a prediction; only the feedback group can measure them.
+-            </dd>
+-          </div>
+-        </dl>
+-      </Panel>
+-
+       <Panel title="Summary across the versions" description="The agent’s reading of all nine reports.">
+-        <ul className="flex max-w-[820px] list-disc flex-col gap-8 pl-18 text-13 leading-[20px] text-adm-ink">
+-          {OVERALL_SUMMARY.map((s) => (
+-            <li key={s}>{s}</li>
++        <ol className="flex flex-col gap-14">
++          {OVERALL_SUMMARY.map((s, i) => (
++            <Finding key={s} text={s} index={i} />
+           ))}
+-        </ul>
++        </ol>
+       </Panel>
+ 
+-      <Panel title="Nine reports" description="Rows: whose rules. Columns: which production version. Each cell: hears a session on the first visit · back on day 7 · back on day 30. Select one to open its report.">
++      <Panel title="Nine reports" description="Rows: whose rules. Columns: which production version. Big number: hears a session on the first visit. Shade: back on day 7, darker is more. Select a cell to open its report." actions={<HeatLegend />}>
+         <div className="min-w-0 overflow-x-auto">
+           <table className="w-full min-w-[640px] text-12">
+             <thead>
+@@ -149,16 +115,19 @@ export function RerunView() {
+                   {DESIGNS.map((d) => {
+                     const c = report(a, d.id)
+                     const active = a === agent && d.id === design
++                    // Day 7 runs 0–25% here; scale it so the differences show.
++                    const tone = shade(Math.min(1, c.d7 / 0.25))
+                     return (
+                       <td key={d.id} className="px-6 py-6">
+                         <button
+                           type="button"
+                           aria-pressed={active}
+                           onClick={() => select(a, d.id)}
+-                          className={`w-full rounded-8 border px-10 py-8 text-left tabular-nums ${active ? 'border-adm-ink bg-adm-surface' : 'border-adm-line bg-adm-bg hover:bg-adm-hover'}`}
++                          style={{ background: tone.background }}
++                          className={`w-full rounded-8 px-10 py-8 text-left tabular-nums ring-offset-2 ring-offset-adm-surface ${active ? 'ring-2 ring-adm-ink' : 'hover:opacity-90'} ${tone.dark ? 'text-white' : 'text-adm-ink'}`}
+                         >
+-                          <span className="block text-15 font-semibold text-adm-ink">{pct(c.activation)}</span>
+-                          <span className="text-adm-ink-2">
++                          <span className="block text-15 font-semibold">{pct(c.activation)} hear one</span>
++                          <span className={tone.dark ? 'text-white/90' : 'text-adm-ink-2'}>
+                             day 7 {pct(c.d7)} · day 30 {pct(c.d30)}
+                           </span>
+                         </button>
+@@ -184,29 +153,25 @@ export function RerunView() {
+         </div>
+ 
+         <Panel title="Summary" description="What this report says.">
+-          <ul className="flex max-w-[820px] list-disc flex-col gap-8 pl-18 text-13 leading-[20px] text-adm-ink">
+-            {SUMMARIES[agent][design].map((s) => (
+-              <li key={s}>{s}</li>
++            <ol className="flex flex-col gap-14">
++            {SUMMARIES[agent][design].map((s, i) => (
++              <Finding key={s} text={s} index={i} />
+             ))}
+-          </ul>
++          </ol>
+         </Panel>
+ 
+         <Panel title="The ten MVP market-fit metrics" description="Eugene’s list (J136). Predicted: what the agent expects people to do. Estimate: a figure only people can give; the agent’s guess for the feedback group to check.">
+-          <div className="min-w-0 overflow-x-auto">
+-            <table className="w-full min-w-[640px] text-12">
+-              <tbody>
+-                {r.metrics.map((m) => (
+-                  <tr key={m.id} className="border-t border-adm-line first:border-t-0">
+-                    <td className="py-8 pr-12 text-adm-ink">{m.label}</td>
+-                    <td className="py-8 pr-12 font-semibold tabular-nums text-adm-ink">{m.value}</td>
+-                    <td className="py-8 pr-12 text-adm-muted">{m.benchmark}</td>
+-                    <td className="py-8 text-right">
+-                      <Badge tone={m.kind === 'predicted' ? 'info' : 'warning'}>{m.kind}</Badge>
+-                    </td>
+-                  </tr>
+-                ))}
+-              </tbody>
+-            </table>
++          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
++            {r.metrics.map((m) => (
++              <div key={m.id} className="flex flex-col gap-4 rounded-8 border border-adm-line p-10">
++                <div className="flex items-start justify-between gap-6">
++                  <span className="text-11 leading-[15px] text-adm-muted">{m.label}</span>
++                  <Badge tone={m.kind === 'predicted' ? 'info' : 'warning'}>{m.kind}</Badge>
++                </div>
++                <span className="text-15 font-semibold leading-[20px] tabular-nums text-adm-ink">{m.value}</span>
++                {m.benchmark && <span className="text-11 leading-[15px] text-adm-ink-2">{m.benchmark}</span>}
++              </div>
++            ))}
+           </div>
+         </Panel>
+ 
+@@ -259,6 +224,51 @@ export function RerunView() {
+         </Panel>
+       </div>
+ 
++      <details className="rounded-12 border border-adm-line bg-adm-surface">
++        <summary className="cursor-pointer list-none px-16 py-14">
++          <span className="text-15 font-semibold text-adm-ink">How the re-run worked</span>
++          <span className="ml-8 text-12 text-adm-muted">What differs between the versions, the agents’ rules, and how the walks are checked. Select to open.</span>
++        </summary>
++        <div className="border-t border-adm-line p-16">
++      <Panel title="How the re-run worked" description="Every persona from runs v1, v2 and v3, walked step by step through the real screens of production v1, v2 and v3, under the rules each agent version played by.">
++        <div className="grid gap-12 lg:grid-cols-3">
++          {DESIGNS.map((d) => (
++            <div key={d.id} className="rounded-8 bg-adm-bg p-12 text-12">
++              <p className="font-semibold text-adm-ink">{d.name}</p>
++              <ul className="mt-6 flex list-disc flex-col gap-4 pl-16 text-adm-ink-2">
++                {d.facts.map((f) => (
++                  <li key={f}>{f}</li>
++                ))}
++              </ul>
++            </div>
++          ))}
++        </div>
++        <p className="text-12 text-adm-ink-2">
++          <span className="font-medium text-adm-ink">In all three: </span>
++          {ALL_VERSIONS.join(' ')}
++        </p>
++        <dl className="grid gap-x-16 gap-y-8 text-12 lg:grid-cols-[140px_1fr]">
++          {([1, 2, 3] as const).map((a) => (
++            <div key={a} className="contents">
++              <dt className="font-medium text-adm-ink">{AGENT_RULES[a].name}</dt>
++              <dd className="max-w-[760px] text-adm-ink-2">
++                {AGENT_RULES[a].rules} Panel: run v{a}’s {a === 1 ? 10 : 36} personas.
++              </dd>
++            </div>
++          ))}
++          <div className="contents">
++            <dt className="font-medium text-adm-ink">How the walks are made</dt>
++            <dd className="max-w-[760px] text-adm-ink-2">
++              The agent’s rules are written as code (246 walks would not be answered the same way twice by hand), from the runs played by hand, and checked against them on today’s app:{' '}
++              {AGREEMENT.map((x) => `${x.label}: same answer for ${x.exact} of ${x.n}, opposite (yes against no) for ${x.opposite}`).join('; ')}. Every figure is a prediction; only the feedback group can measure them.
++            </dd>
++          </div>
++        </dl>
++      </Panel>
++
++        </div>
++      </details>
++
+       {open && walkOpen && (
+         <SidePanel
+           width={600}
+diff --git a/src/admin/pages/buyer/shade.ts b/src/admin/pages/buyer/shade.ts
+new file mode 100644
+index 0000000..7e888e2
+--- /dev/null
++++ b/src/admin/pages/buyer/shade.ts
+@@ -0,0 +1,5 @@
++/** A share (0–1) as a cell shade (U107): one hue, light to dark; `dark` says to write on it in white. */
++export function shade(v: number) {
++  const p = Math.round(12 + Math.max(0, Math.min(1, v)) * 80)
++  return { background: `color-mix(in oklab, var(--color-adm-s1) ${p}%, var(--color-adm-surface))`, dark: p >= 56 }
++}
+-- 
+2.43.0
+
