@@ -145,9 +145,27 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U106 | `a9feb6a` | 2026-11-19 | A screen from an older build whose code is gone after a deploy now reloads once into the new build (`vite:preloadError`, and the error boundary on a failed dynamic import), with a 30 s guard against loops. Off production, the error screen shows the route and the error message. Not flagged: it is a fix. | [patch](patches/U106-a9feb6a.patch) |
 | U107 | `a23faa8` | 2026-11-20 | Buyer agent results reworked as a dashboard. Numbers and charts come first: yes/maybe/no bars, with A against B, objections and changes as ranked bars, a who-says-yes heat table by wellness, age and region, and the price band. Findings read as a numbered bold lead with its detail. The method is folded into "About this run". In the re-run view: a shaded matrix, metric tiles, findings the same way, and the method folded away. Staging only. | [patch](patches/U107-a23faa8.patch) |
 | U108 | `3639fcf` | 2026-11-23 | Admin → Product lab → **Business funnel** (`/admin/business-funnel`): Eugene's four stages plus staying, each with targets the team can edit, the buyer agents' prediction for a chosen production version beside the feedback group's measurement (a ceiling), the biggest gap ringed, moments linked to the user journey, a decision log (proposed → measured) and a guide. The buyer re-run now walks the free limit and the Upgrade screen (metric 8). Every staging-only flag released: journey tags, the folding sidebar rail, personas, buyer agent results and the funnel are on production. | [patch](patches/U108-3639fcf.patch) |
+| U109 | `cdb7225` | 2026-11-23 | Business funnel after a roast as Eugene: a **Fix next** panel under the stage cards (the biggest gap in one sentence, why agents leave across the funnel, and the change proposed for that stage), a real proposed decision for staying (d7: the next chapter's time set in the check-in, no streaks; new defaults merge into a saved log), the shortlist metrics each stage still needs a backend for, and the feedback group labelled sample data. Staging and production. | [patch](patches/U109-cdb7225.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U109 — Business funnel, after the roast
+
+- **Commit:** `cdb7225` · pushed 2026-11-23 UTC · `web_app` + `admin_cms` + `web_prod`.
+- **Patch:** [patches/U109-cdb7225.patch](patches/U109-cdb7225.patch)
+- **Request:** the second half of J153: "setelah selesai roast ulang lagi dan lakukan improvement, saya tidak mau eugene ada complain."
+- **Roast, read as Eugene:**
+  1. The page named the biggest gap but not what to do about it. His loop is find, change, re-measure.
+  2. The biggest gap (staying) had no proposed change in the log.
+  3. Five of his ten approved metrics (J150) appeared nowhere.
+  4. The feedback group's 87–100% bars sat beside the agents' 6% without saying they are sample data.
+- **Changed:**
+  - `BusinessFunnelPage.tsx`: `FixNext` panel (gap in one sentence; the run's top leave reasons; the stage's open decisions, or Propose one); the legend says "Feedback group (sample data)"; each stage lists its shortlist metrics still waiting on a backend.
+  - `businessFunnel.ts`: `Stage.later`; decision d7 for staying, from the re-run's top leave reason ("Nothing brings them back", 8 of 36); `withNewDefaults` so a log saved earlier gains new defaults without losing its edits.
+  - Tests: d7's figure is pinned to the re-run; the merge keeps edits.
+- **Verified:** `npm run check` (183 tests); production build at 1440px and 402px: the panel renders, a decision can be added, no horizontal scroll, no console errors.
+- **Revert:** `git revert --no-commit cdb7225` then `git checkout HEAD -- docs/`.
 
 ### U108 — Business funnel, the cap in the re-run, and everything released
 

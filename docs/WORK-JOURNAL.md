@@ -84,10 +84,10 @@ transcript and the update log. Everything from J018 on was written at the time.
 Later, and separately:
 - an upgrade offer at the cap that names the person's own progress (staging flag);
 - the Retreat cockpit once O45 is answered | J152 | Product owner |
-| O48 | **Funnel targets and proposed decisions (J153)**: the default targets (activation 70%, own session finished 60%, feels better 60%, free limit 30%, Plus 15%, back after a week 15%, a month 5%, "very disappointed" 40%) are the agent's, from the research. Eugene and the owner confirm or change them; then pick which proposed decision (d1–d4) to build first | J153 | Product owner + Eugene |
+| O48 | **Funnel targets and proposed decisions (J153)**: the default targets (activation 70%, own session finished 60%, feels better 60%, free limit 30%, Plus 15%, back after a week 15%, a month 5%, "very disappointed" 40%) are the agent's, from the research. Eugene and the owner confirm or change them; then pick which proposed decision (d1–d4, d7) to build first | J153 | Product owner + Eugene |
 | J151 | 2026-11-23 | Opinion | What Eugene is asking for, in plain words: one goal (market fit), one loop (dual track), three tools in the admin | — |
 | J152 | 2026-11-23 | Opinion + fix | What the machine still lacks: the business funnel as the hub (with measured human numbers and a decision log); correction: an upgrade screen does exist | — |
-| J153 | 2026-11-23 | Code + release | Does the buyer agent need redoing? Build the Business funnel; put every decision on staging and production; roast again and improve so Eugene has nothing to complain about | U108 |
+| J153 | 2026-11-23 | Code + release | Does the buyer agent need redoing? Build the Business funnel; put every decision on staging and production; roast again and improve so Eugene has nothing to complain about | U108, U109 |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
@@ -1922,5 +1922,6 @@ Later, and separately:
 - **Built (U108):** Admin → Product lab → Business funnel. Eugene's four stages plus staying, eight metrics with editable targets, the agents beside the feedback group (shown as a ceiling, not used for the status), the biggest gap, moments linked to the user journey, a decision log and a guide.
 - **Released:** on request, every staging-only flag is on production: journey tags, the folding sidebar rail, personas, buyer agent results and the funnel. `web_prod` fast-forwarded.
 - **Assumption:** "animasi" = the folding sidebar rail, and "semua keputusan" = all staging-only flags. Recorded so it can be undone flag by flag.
-- **Then:** roast again, as Eugene would, and fix what he would complain about (see U109 if a fix followed).
+- **Roast, as Eugene (U109):** the page named the gap but not the next move; staying had no proposed change; five of his ten metrics were missing; the sample feedback group was not labelled. Fixed: a Fix next panel, decision d7 for staying (from the re-run's top leave reason, 8 of 36), the metrics still waiting on a backend per stage, and "sample data" on the feedback group.
+- **What is left that Eugene may still raise:** the targets are ours, not his (O48); the human numbers stay sample until a backend or a real cohort exists; the Retreat cockpit waits on O45.
 - **Open:** O48.

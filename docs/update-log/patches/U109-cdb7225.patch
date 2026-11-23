@@ -1,0 +1,237 @@
+From cdb7225b2b0da9dfaa5ad909a7fd7253c173e0f7 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Mon, 23 Nov 2026 23:20:13 +0000
+Subject: [PATCH] Business funnel roast: Fix next panel with leave reasons and
+ the proposed change, a real staying decision (d7), the 10 metrics still to
+ measure per stage, feedback group marked sample (U109, J153)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/admin/data/businessFunnel.test.ts  | 18 ++++++++-
+ src/admin/data/businessFunnel.ts       | 24 ++++++++++++
+ src/admin/pages/BusinessFunnelPage.tsx | 53 ++++++++++++++++++++++++--
+ 3 files changed, 90 insertions(+), 5 deletions(-)
+
+diff --git a/src/admin/data/businessFunnel.test.ts b/src/admin/data/businessFunnel.test.ts
+index b8495cb..eb3d970 100644
+--- a/src/admin/data/businessFunnel.test.ts
++++ b/src/admin/data/businessFunnel.test.ts
+@@ -1,6 +1,6 @@
+ import { describe, expect, it } from 'vitest'
+-import { STEPS } from './buyerSim'
+-import { DEFAULT_DECISIONS, DecisionsSchema, STAGES, biggestLeak, funnelMetrics, stageStatus } from './businessFunnel'
++import { STEPS, report } from './buyerSim'
++import { DEFAULT_DECISIONS, DecisionsSchema, STAGES, biggestLeak, funnelMetrics, stageStatus, withNewDefaults } from './businessFunnel'
+ import { INITIAL_JOURNEY } from './userJourney'
+ 
+ describe('business funnel', () => {
+@@ -41,4 +41,18 @@ describe('business funnel', () => {
+   it('ships a valid decision log', () => {
+     expect(DecisionsSchema.safeParse(DEFAULT_DECISIONS).success).toBe(true)
+   })
++
++  it('keeps d7 true to the re-run: nothing brings them back leads, 8 of 36', () => {
++    const r = report(3, 3)
++    expect(r.walks.length).toBe(36)
++    expect(r.leaveReasons[0]).toEqual(['Nothing brings them back', 8])
++  })
++
++  it('adds new default decisions to a stored log without touching its edits', () => {
++    const stored = DEFAULT_DECISIONS.filter((d) => d.id !== 'd7').map((d) => ({ ...d, status: 'decided' as const }))
++    const merged = withNewDefaults(stored)
++    expect(merged.find((d) => d.id === 'd7')).toBeTruthy()
++    expect(merged.find((d) => d.id === 'd1')!.status).toBe('decided')
++    expect(merged.length).toBe(DEFAULT_DECISIONS.length)
++  })
+ })
+diff --git a/src/admin/data/businessFunnel.ts b/src/admin/data/businessFunnel.ts
+index 9264e39..6e7184f 100644
+--- a/src/admin/data/businessFunnel.ts
++++ b/src/admin/data/businessFunnel.ts
+@@ -25,6 +25,8 @@ export interface Stage {
+   steps: StepId[]
+   /** User journey moments where it happens (userJourney.ts ids). */
+   moments: string[]
++  /** Metrics from the J150 shortlist that belong here but need a backend to measure. */
++  later: string[]
+ }
+ 
+ export const STAGES: Stage[] = [
+@@ -35,6 +37,7 @@ export const STAGES: Stage[] = [
+     aurelia: 'Home, a Quick Start session before any account, then the daily check-in.',
+     steps: ['land', 'quick-play', 'sign-in'],
+     moments: ['r1'],
++    later: ['Time to first play'],
+   },
+   {
+     id: 'aha',
+@@ -43,6 +46,7 @@ export const STAGES: Stage[] = [
+     aurelia: 'One sentence becomes their own session; they finish it, and the check-in says they feel better.',
+     steps: ['onboarding', 'first-build', 'finish', 'check-in'],
+     moments: ['r2', 'e2', 'e5'],
++    later: ['Drop-off point inside a session', 'Building-block effect (which voice, technique or length helps)'],
+   },
+   {
+     id: 'cap',
+@@ -51,6 +55,7 @@ export const STAGES: Stage[] = [
+     aurelia: 'The free limit: 3 sends, then 30 minutes, counted after the first build (production v2 and v3).',
+     steps: ['hits-cap'],
+     moments: ['c1', 'c2'],
++    later: [],
+   },
+   {
+     id: 'upsell',
+@@ -59,6 +64,7 @@ export const STAGES: Stage[] = [
+     aurelia: 'The Upgrade screen, “Aurelia AI Plus”: $10 a month or $100 a year. Nothing can be bought yet.',
+     steps: ['upgrade'],
+     moments: ['h1'],
++    later: ['Subscribes within 7 days of the limit (once Plus can be bought)'],
+   },
+   {
+     id: 'stay',
+@@ -67,6 +73,7 @@ export const STAGES: Stage[] = [
+     aurelia: 'The next chapter, progress told in their own words, and the check-in, week after week.',
+     steps: ['come-back'],
+     moments: ['e1', 'r1'],
++    later: ['Day 1 return, measured', '7-day consistency (“4 of 7”)', 'Time to flip: first low check-in to a steady good one'],
+   },
+ ]
+ 
+@@ -213,6 +220,17 @@ export const DEFAULT_DECISIONS: Decision[] = [
+     version: '',
+     result: '',
+   },
++  {
++    id: 'd7',
++    date: '2026-11-23',
++    stage: 'stay',
++    finding: 'Nothing brings them back is the top reason agents leave after a good first week (8 of 36, agent v3 × production v3). The calendar reminder is offered once, in the player, and easy to pass.',
++    change: 'Make the next chapter’s time part of the check-in: they pick it, and a calendar or notification reminder is set. Forgiving, no streaks.',
++    source: 'Re-run leave reasons (J139, J153); research on streaks (J094)',
++    status: 'proposed',
++    version: '',
++    result: '',
++  },
+   {
+     id: 'd5',
+     date: '2026-10-27',
+@@ -237,6 +255,12 @@ export const DEFAULT_DECISIONS: Decision[] = [
+   },
+ ]
+ 
++/** A stored log keeps its edits; defaults added since it was saved are appended. */
++export function withNewDefaults(stored: Decision[]): Decision[] {
++  const have = new Set(stored.map((d) => d.id))
++  return [...stored, ...DEFAULT_DECISIONS.filter((d) => !have.has(d.id))]
++}
++
+ export const STATUS_LABEL: Record<DecisionStatus, string> = {
+   proposed: 'Proposed',
+   decided: 'Decided',
+diff --git a/src/admin/pages/BusinessFunnelPage.tsx b/src/admin/pages/BusinessFunnelPage.tsx
+index 204d1f9..49af58f 100644
+--- a/src/admin/pages/BusinessFunnelPage.tsx
++++ b/src/admin/pages/BusinessFunnelPage.tsx
+@@ -16,11 +16,12 @@ import {
+   biggestLeak,
+   funnelMetrics,
+   stageStatus,
++  withNewDefaults,
+   type Decision,
+   type FunnelMetric,
+   type StageId,
+ } from '../data/businessFunnel'
+-import { AGENT_RULES, DESIGNS, type AgentId, type DesignId } from '../data/buyerSim'
++import { AGENT_RULES, DESIGNS, report, type AgentId, type DesignId } from '../data/buyerSim'
+ import { studyWeek } from '../data/study'
+ import { INITIAL_JOURNEY, JourneyMapSchema, STORAGE_KEY, upgradeJourney } from '../data/userJourney'
+ import { readJson, readString, writeJson, writeString } from '../../lib/storage'
+@@ -41,7 +42,7 @@ export function BusinessFunnelPage() {
+   const [now] = useState(() => Date.now())
+   const week = Math.max(1, Math.min(8, studyWeek(now)))
+   const [targets, setTargets] = useState<Record<string, number>>(() => readJson(TARGETS_KEY, TargetsSchema, {}))
+-  const [decisions, setDecisions] = useState<Decision[]>(() => readJson(DECISIONS_KEY, DecisionsSchema, DEFAULT_DECISIONS))
++  const [decisions, setDecisions] = useState<Decision[]>(() => withNewDefaults(readJson(DECISIONS_KEY, DecisionsSchema, DEFAULT_DECISIONS)))
+   const [adding, setAdding] = useState<StageId | null>(null)
+   const [guide, setGuide] = useState(() => readString(GUIDE_KEY) !== 'seen')
+   const [notice, setNotice] = useState<string | null>(null)
+@@ -145,6 +146,8 @@ export function BusinessFunnelPage() {
+         })}
+       </ol>
+ 
++      {leak && <FixNext stage={leak} metrics={metrics} targets={targets} decisions={decisions} leaveReasons={report(agent, design).leaveReasons} onAdd={() => setAdding(leak)} />}
++
+       <Panel title="Stage by stage" description="Bars: the agent’s prediction (solid) and the feedback group (outlined), with the target as a line. The feedback group is recruited and supported, so read it as the ceiling, not the open funnel. Change a target and the gaps move." actions={<FunnelLegend />}>
+         <div className="flex flex-col gap-18" data-tour="metrics">
+           {STAGES.map((s) => (
+@@ -175,6 +178,11 @@ export function BusinessFunnelPage() {
+                   </Link>
+                 ))}
+               </p>
++              {s.later.length > 0 && (
++                <p className="text-11 leading-[16px] text-adm-muted">
++                  Also from the 10 metrics (J150), measured once there is a backend: <span className="text-adm-ink-2">{s.later.join(' · ')}</span>
++                </p>
++              )}
+             </section>
+           ))}
+         </div>
+@@ -265,6 +273,45 @@ export function BusinessFunnelPage() {
+   )
+ }
+ 
++/** The loop's next move: the biggest gap, why the agents leave, and what is proposed for that stage. */
++function FixNext({ stage, metrics, targets, decisions, leaveReasons, onAdd }: { stage: StageId; metrics: FunnelMetric[]; targets: Record<string, number>; decisions: Decision[]; leaveReasons: [string, number][]; onAdd: () => void }) {
++  const s = STAGES.find((x) => x.id === stage)!
++  const worst = metrics
++    .filter((m) => m.stage === stage)
++    .map((m) => ({ m, t: targets[m.id] ?? m.target }))
++    .sort((a, b) => a.m.agent / a.t - b.m.agent / b.t)[0]
++  const proposed = decisions.filter((d) => d.stage === stage && d.status !== 'measured')
++  return (
++    <section aria-label="Fix next" className="flex flex-col gap-8 rounded-12 border border-adm-critical bg-adm-surface p-14">
++      <p className="text-11 font-semibold uppercase tracking-[0.06em] text-adm-critical">Fix next</p>
++      <p className="text-14 leading-[20px] text-adm-ink">
++        <b>{s.title}.</b> {worst.m.label}: {pct(worst.m.agent)} against a target of {pct(worst.t)}, {Math.round((worst.t - worst.m.agent) * 100)} points short.
++      </p>
++      {leaveReasons.length > 0 && (
++        <p className="text-12 leading-[17px] text-adm-ink-2">
++          Why agents leave, across the whole funnel: {leaveReasons.slice(0, 3).map(([k, v]) => `${k.toLowerCase()} (${v})`).join(', ')}.
++        </p>
++      )}
++      {proposed.length > 0 ? (
++        <ul className="flex flex-col gap-4 text-12 leading-[17px] text-adm-ink">
++          {proposed.map((d) => (
++            <li key={d.id}>
++              <Badge tone="neutral">{STATUS_LABEL[d.status]}</Badge> <span className="ml-4">{d.change}</span>
++            </li>
++          ))}
++        </ul>
++      ) : (
++        <p className="flex flex-wrap items-center gap-8 text-12 text-adm-ink-2">
++          No change is proposed for this stage yet.
++          <Button size="sm" icon={<Plus size={13} />} onClick={onAdd}>
++            Propose one
++          </Button>
++        </p>
++      )}
++    </section>
++  )
++}
++
+ function FunnelLegend() {
+   return (
+     <div className="flex flex-wrap items-center gap-12 text-11 text-adm-ink-2" aria-hidden="true">
+@@ -272,7 +319,7 @@ function FunnelLegend() {
+         <span className="h-8 w-14 rounded-2 bg-adm-s1" /> Agent
+       </span>
+       <span className="inline-flex items-center gap-4">
+-        <span className="h-8 w-14 rounded-2 border-2 border-adm-s3" /> Feedback group
++        <span className="h-8 w-14 rounded-2 border-2 border-adm-s3" /> Feedback group (sample data)
+       </span>
+       <span className="inline-flex items-center gap-4">
+         <span className="h-12 w-2 bg-adm-ink" /> Target
+-- 
+2.43.0
+

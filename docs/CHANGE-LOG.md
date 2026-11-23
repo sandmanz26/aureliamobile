@@ -19,6 +19,14 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-23 — Business funnel: Fix next (U109, J153)
+
+After a roast: a Fix next panel (the biggest gap, why agents leave, the
+proposed change), a proposed change for staying, the metrics still waiting on
+a backend per stage, and the feedback group marked as sample data.
+
+Branches: `web_app`, `admin_cms`, `web_prod`.
+
 ### 2026-11-23 — Business funnel, and every staging-only feature released (U108, J153)
 
 Admin → Product lab → Business funnel: entry, aha, the usage cap, Plus and
