@@ -71,7 +71,7 @@ export const ALL_VERSIONS = [
   'A personal session needs an account, asked for when the sentence is sent.',
   'The daily check-in sheet opens on every sign-in while the app is a demo.',
   'No voice or sound choice before the first session, and no data statement before typing.',
-  'No pricing screen: paying is asked as a question, at the planned price.',
+  'Hitting the free limit offers Upgrade: an “Aurelia AI Plus” screen at $10 a month or $100 a year. Paying is answered as a question, since nothing can be bought.',
 ]
 
 export const STEP_LABEL: Record<StepId, string> = {
@@ -344,7 +344,7 @@ export function report(agent: AgentId, design: DesignId): Report {
     { id: 'plays', label: '5 · Sessions in week one', value: plays.toFixed(1), benchmark: 'per person who heard one', kind: 'estimate' },
     { id: 'felt', label: '6 · Feels better after the session', value: pct(felt), benchmark: 'of those who finished', kind: 'estimate' },
     { id: 'ellis', label: '7 · “Very disappointed” without it', value: pct(ellis), benchmark: '40% is the usual product–market fit bar', kind: 'estimate' },
-    { id: 'pay', label: '8 · Would pay, if asked after a week', value: `${paysYes} yes, ${paysMaybe} maybe of ${n}`, benchmark: `fair band $${median(walks.map((w) => w.prices.bargain)).toFixed(2)}–$${median(walks.map((w) => w.prices.expensive)).toFixed(2)} a month; no pricing screen exists`, kind: 'predicted' },
+    { id: 'pay', label: '8 · Would pay, if asked after a week', value: `${paysYes} yes, ${paysMaybe} maybe of ${n}`, benchmark: `fair band $${median(walks.map((w) => w.prices.bargain)).toFixed(2)}–$${median(walks.map((w) => w.prices.expensive)).toFixed(2)} a month; the upgrade screen asks $10 a month`, kind: 'predicted' },
     { id: 'recommend', label: '9 · Would recommend it', value: pct(rec), benchmark: 'of those who finished', kind: 'predicted' },
     { id: 'reasons', label: '10 · Top reasons they leave', value: leaveReasons.slice(0, 3).map(([k, v]) => `${k} (${v})`).join(', ') || 'none', kind: 'predicted' },
   ]

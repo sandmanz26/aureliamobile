@@ -74,7 +74,18 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O44 | **Done in U105 (J144)**, except readiness, which stays on the moment. **Tie screens to tags (J143)**: make each screen the value of the "Product surface" tag, so a moment's surface and its screenshot are one fact. Add the missing screens (journal, progress, sharing), so every surface has a picture. Move readiness onto the screen. Keep moments as the when-and-why map and the business funnel as the how-far map; screens join the two | J143 | Product owner |
 | O45 | **Retreat-in-a-Box (J149)**. First, answer the five questions for Eugene in `docs/briefs/2026-11-23-retreat-in-a-box-reading.md`: who the prototype is for, the founding creators, the box, what €19.99 includes, and the curriculum against the journey. Then decide the order: (1) admin prototype Sprint 1 on staging, with sample data marked as targets, in our design system; (2) buyer agent v5 testing the €19.99 retreat; (3) the wiki feedback project as the first paid cohort; (4) backend only after validation | J149 | Product owner + Eugene |
 | O46 | **The 10 metrics (J150)**: approve the shortlist in `docs/briefs/2026-11-23-measurement-system-review.md`. Then decide whether to add them: to the buyer agent reports (predicted) and to the admin pages named there (measured, from click insights now, the backend later). Also send Eugene the staging admin link for the backend team, with the password given privately | J150 | Product owner + Eugene |
+| O47 | **Build the Business funnel (J152)** as the hub of the loop, in Product lab:
+- the 4 stages mapped to the journey's real steps, each with a target;
+- an agent column filled from the latest buyer agent run;
+- a human column from the feedback group (Experimentation) and click insights, sample until real;
+- the biggest leak highlighted;
+- a short decision log (finding → change → shipped in which version → re-measured).
+
+Later, and separately:
+- an upgrade offer at the cap that names the person's own progress (staging flag);
+- the Retreat cockpit once O45 is answered | J152 | Product owner |
 | J151 | 2026-11-23 | Opinion | What Eugene is asking for, in plain words: one goal (market fit), one loop (dual track), three tools in the admin | — |
+| J152 | 2026-11-23 | Opinion + fix | What the machine still lacks: the business funnel as the hub (with measured human numbers and a decision log); correction: an upgrade screen does exist | — |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
@@ -1818,7 +1829,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 - **It also notes three points for whoever acts on it:**
   - the research disagrees with streak protection and with blocking at peak momentum;
   - a "+14%" preview would be an invented number;
-  - the cap already exists, but the upsell screen does not.
+  - the cap already exists, but the upsell screen does not. (Corrected in J152: `/upgrade` exists.)
 - **Open:** O43.
 
 ### J149 — Retreat-in-a-Box, read as head of product
@@ -1877,3 +1888,26 @@ transcript and the update log. Everything from J018 on was written at the time.
     - buyer agent results: the prediction, set beside the retreat's measurement.
   - **Further out:** an AI that builds the AI, which is why every pipeline needs clear logic.
 - **Where Eugene's documents need adapting:** invented KPIs; borrowed mechanics (streaks, cold paywalls) the research warns against; the 2025 sheet.
+
+### J152 — What is still missing
+- **Asked:** "jadi apa yang kita belum punya ? sepertinya business funnel ya ? atau menurutmu ada yang harus ditambahkan lagi ?"
+- **Answered:** yes, the business funnel, but as the hub that joins what already exists, not as one more page.
+  - **What exists:**
+    - the user journey;
+    - personas;
+    - buyer agent results with re-runs by version;
+    - click insights (raw views and taps);
+    - the feedback group study (Experimentation v1/v2: WHO-5, adherence);
+    - Outcomes, Revenue and Pricing;
+    - in the app, the free-limit cap and an Upgrade screen.
+  - **What is missing:**
+    1. the funnel itself (4 stages, targets, agent beside human, the biggest leak);
+    2. measured human numbers per stage (click insights are not yet rolled up);
+    3. a decision log that closes the loop;
+    4. later, an upgrade offer that shows the person's own progress;
+    5. the Retreat cockpit (after O45).
+  - **Not to add:** no second CMS, and no more metrics than the 10.
+- **Correction:**
+  - J137 and J148 said there was no pricing or upsell screen. `/upgrade` ("Aurelia AI Plus", $10 a month or $100 a year) is reached from the free-limit notice.
+  - Fixed in the re-run's version facts and metric 8, the brief and AI-KNOWLEDGE.
+- **Open:** O47.

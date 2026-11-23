@@ -488,8 +488,8 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U107**, last J = **J151**, last
-O = **O46**. Before numbering, check the files for anything newer.
+**Numbering as of 17 Nov 2026:** last U = **U107**, last J = **J152**, last
+O = **O47**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
 push. `src/guides/records.test.ts` enforces it.
@@ -987,6 +987,7 @@ history can be read without opening four documents.
 | J149 | 2026-11-23 | Opinion | Retreat-in-a-Box: what Eugene actually wants (a paid creator-led 8-week retreat feeding Aurelia Plus, with an admin cockpit), what not to take at face value, and the order to build it | — |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J151 | 2026-11-23 | Opinion | What Eugene is asking for, in plain words: one goal (market fit), one loop (dual track), three tools in the admin | — |
+| J152 | 2026-11-23 | Opinion + fix | What the machine still lacks: the business funnel as the hub (with measured human numbers and a decision log); correction: an upgrade screen does exist | — |
 
 ### 17.2 Code changes (U)
 

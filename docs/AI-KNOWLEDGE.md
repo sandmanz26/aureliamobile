@@ -1,13 +1,13 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J151** · updated 23 Nov 2026
+**Covers up to J152** · updated 23 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
 current version. History and detail live elsewhere:
 
 - `docs/HANDOFF.md`: the full handover, including §17, every request (J) and change (U).
-- `docs/WORK-JOURNAL.md`: what was asked and answered; the Open items table (O1–O46).
+- `docs/WORK-JOURNAL.md`: what was asked and answered; the Open items table (O1–O47).
 - `docs/UPDATE-LOG.md`: every code change, with how to revert it.
 - `CLAUDE.md`: engineering conventions.
 
@@ -160,7 +160,7 @@ evidence → decision. It is not a user feature.
 - **The distinction:** the agent predicts stated intent and where people stall. Retention and bounce are measured on people, through click insights in the feedback group. Mark every metric as predicted or measured, and compare the two after the sessions.
 - **Proposed next:** v4, where personas walk the feedback group's real screens along the user journey.
 **Version used (J137).** Runs v1–v3 were not pinned to a design version: the stimulus was text, and the test cases were judged against staging's default behaviour, closest to v5 (production v3).
-- **Their price and limit came from the admin's mock `PLANS`**, not from the app. The app's real free limit is 3 sends, then a 30-minute wait. No pricing screen exists.
+- **Their price and limit came from the admin's mock `PLANS`**, not from the app. The app's real free limit is 3 sends, then a 30-minute wait (`ChatPage.tsx`). **Correction (J152):** an upgrade screen does exist. `/upgrade`, "Aurelia AI Plus", asks $10 a month or $100 a year, and the free-limit notice links to it. J137 wrongly said there was none.
 - **From v4 on:** pin a run to a version, and use that version's real screens.
 **Versions to test (J138).** Recommended A/B: production v3 (staging v5) against production v2 (staging v4). Both are live, they share the core path, and they differ in what drives coming back. Watch v5's extra wearable step in onboarding.
 **Re-run by production version (J139, U104).** `buyerSim.ts` turns the agent's rules into code (`walk`, `report`). It walks every persona through 8 steps of each version's real screens, and `agreement()` checks the result against the hand-played runs.
@@ -171,7 +171,7 @@ evidence → decision. It is not a user feature.
 - **Its purpose (J141):** the MVP validation scoreboard. Per stage: a target, the agent's prediction and the human result. The biggest miss is what to build next. Recommended as a small tab of User journey, not a second CMS.
 - **How they connect (J142):** the journey is the map of real steps; the funnel groups them into 4 stages with targets; the agent walks the map. Each iteration is a new run with its report; fixes attach to journey steps as proposals. Proposed: re-base the journey on the 8 real steps.
 - **The journey map, exactly (J143):** 10 moments (when and why someone opens the app) in 4 stages, classified by 8 tag groups (state is one). The 3 screens link to moments separately, and already contradict the Product surface tag (r2, e3, h1). Proposed (O44): the screen is the surface tag's value. This refines J142: moments stay the when-and-why map, the funnel is the how-far map, and screens join them.
-- **Mapping to Aurelia:** entry = Quick Start + daily check-in; aha = a first session that connects their check-ins; cap = 3 sends / 30 min; upsell = not built.
+- **Mapping to Aurelia:** entry = Quick Start + daily check-in; aha = a first session that connects their check-ins; cap = 3 sends / 30 min; upsell = `/upgrade` exists ($10/mo, $100/yr, from the free-limit notice), with nothing to buy and no personal progress in the offer (corrected in J152).
 - **Caution:** never block mid-session or at night; place the cap after the aha.
 **Reading experience (J146, U107).** The owner's users found the results hard to read.
 - **Order:** results first, method last and folded. Findings are a bold first sentence plus detail.
@@ -195,6 +195,7 @@ evidence → decision. It is not a user feature.
 - **Eugene wants it simple:** add no more than these.
 - **His frame:** an "AI that builds the AI", dual-track validation looped daily, and the user journey as the product team's board.
 **Eugene in one line (J151):** prove market fit fast, through a daily dual-track loop (paid digital retreats with people, plus buyer agents), measured the same way. The admin's user journey, business funnel and buyer agent results are the tools that run that loop.
+**Next build (J152, O47):** the Business funnel as the hub. It shows 4 stages with targets, the agent column from buyer agent runs, the human column from Experimentation and click insights, the biggest leak, and a decision log. Check the app before claiming something does not exist: `/upgrade` was missed in J137.
 - **Keep the agent honest:** look for the no first, honour deal breakers, set price from income and place. Write findings from computed tallies, never from memory.
 
 **The 2025 backend documents (J099, J109–J112).**
