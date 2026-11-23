@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J150** · updated 23 Nov 2026
+**Covers up to J151** · updated 23 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
@@ -194,6 +194,7 @@ evidence → decision. It is not a user feature.
   - cap → Plus, CAC and LTV:CAC by channel.
 - **Eugene wants it simple:** add no more than these.
 - **His frame:** an "AI that builds the AI", dual-track validation looped daily, and the user journey as the product team's board.
+**Eugene in one line (J151):** prove market fit fast, through a daily dual-track loop (paid digital retreats with people, plus buyer agents), measured the same way. The admin's user journey, business funnel and buyer agent results are the tools that run that loop.
 - **Keep the agent honest:** look for the no first, honour deal breakers, set price from income and place. Write findings from computed tallies, never from memory.
 
 **The 2025 backend documents (J099, J109–J112).**

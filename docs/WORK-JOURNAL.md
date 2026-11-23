@@ -74,6 +74,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O44 | **Done in U105 (J144)**, except readiness, which stays on the moment. **Tie screens to tags (J143)**: make each screen the value of the "Product surface" tag, so a moment's surface and its screenshot are one fact. Add the missing screens (journal, progress, sharing), so every surface has a picture. Move readiness onto the screen. Keep moments as the when-and-why map and the business funnel as the how-far map; screens join the two | J143 | Product owner |
 | O45 | **Retreat-in-a-Box (J149)**. First, answer the five questions for Eugene in `docs/briefs/2026-11-23-retreat-in-a-box-reading.md`: who the prototype is for, the founding creators, the box, what €19.99 includes, and the curriculum against the journey. Then decide the order: (1) admin prototype Sprint 1 on staging, with sample data marked as targets, in our design system; (2) buyer agent v5 testing the €19.99 retreat; (3) the wiki feedback project as the first paid cohort; (4) backend only after validation | J149 | Product owner + Eugene |
 | O46 | **The 10 metrics (J150)**: approve the shortlist in `docs/briefs/2026-11-23-measurement-system-review.md`. Then decide whether to add them: to the buyer agent reports (predicted) and to the admin pages named there (measured, from click insights now, the backend later). Also send Eugene the staging admin link for the backend team, with the password given privately | J150 | Product owner + Eugene |
+| J151 | 2026-11-23 | Opinion | What Eugene is asking for, in plain words: one goal (market fit), one loop (dual track), three tools in the admin | — |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
@@ -1860,3 +1861,19 @@ transcript and the update log. Everything from J018 on was written at the time.
     - what works: building-block effect, supply against demand;
     - paying and cost: cap → Plus, CAC and LTV:CAC by channel.
 - **Open:** O46.
+
+### J151 — Eugene's requests, in plain words
+- **Asked:** "coba jelaskan apa yang kamu pahami dari ermintaan eugene ?"
+- **Answered:** one goal, one loop, three tools.
+  - **The goal:** prove market fit quickly. Do people pay to move from a bad state to a good one, and stay?
+  - **The loop, every day, on two tracks:**
+    - digital retreats with real people (paid, 8 weeks, creator-led, feeding Plus);
+    - buyer agents with personas.
+
+    Both are measured the same way. The product team fixes the biggest leak, and the loop runs again.
+  - **The three admin tools that run the loop:**
+    - the user journey: when and why people use Aurelia, and the product team's board;
+    - the business funnel: entry → aha → cap → Plus, with targets and the 10 metrics;
+    - buyer agent results: the prediction, set beside the retreat's measurement.
+  - **Further out:** an AI that builds the AI, which is why every pipeline needs clear logic.
+- **Where Eugene's documents need adapting:** invented KPIs; borrowed mechanics (streaks, cold paywalls) the research warns against; the 2025 sheet.
