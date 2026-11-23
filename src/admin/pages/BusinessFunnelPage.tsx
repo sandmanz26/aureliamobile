@@ -16,11 +16,12 @@ import {
   biggestLeak,
   funnelMetrics,
   stageStatus,
+  withNewDefaults,
   type Decision,
   type FunnelMetric,
   type StageId,
 } from '../data/businessFunnel'
-import { AGENT_RULES, DESIGNS, type AgentId, type DesignId } from '../data/buyerSim'
+import { AGENT_RULES, DESIGNS, report, type AgentId, type DesignId } from '../data/buyerSim'
 import { studyWeek } from '../data/study'
 import { INITIAL_JOURNEY, JourneyMapSchema, STORAGE_KEY, upgradeJourney } from '../data/userJourney'
 import { readJson, readString, writeJson, writeString } from '../../lib/storage'
@@ -41,7 +42,7 @@ export function BusinessFunnelPage() {
   const [now] = useState(() => Date.now())
   const week = Math.max(1, Math.min(8, studyWeek(now)))
   const [targets, setTargets] = useState<Record<string, number>>(() => readJson(TARGETS_KEY, TargetsSchema, {}))
-  const [decisions, setDecisions] = useState<Decision[]>(() => readJson(DECISIONS_KEY, DecisionsSchema, DEFAULT_DECISIONS))
+  const [decisions, setDecisions] = useState<Decision[]>(() => withNewDefaults(readJson(DECISIONS_KEY, DecisionsSchema, DEFAULT_DECISIONS)))
   const [adding, setAdding] = useState<StageId | null>(null)
   const [guide, setGuide] = useState(() => readString(GUIDE_KEY) !== 'seen')
   const [notice, setNotice] = useState<string | null>(null)
@@ -145,6 +146,8 @@ export function BusinessFunnelPage() {
         })}
       </ol>
 
+      {leak && <FixNext stage={leak} metrics={metrics} targets={targets} decisions={decisions} leaveReasons={report(agent, design).leaveReasons} onAdd={() => setAdding(leak)} />}
+
       <Panel title="Stage by stage" description="Bars: the agent’s prediction (solid) and the feedback group (outlined), with the target as a line. The feedback group is recruited and supported, so read it as the ceiling, not the open funnel. Change a target and the gaps move." actions={<FunnelLegend />}>
         <div className="flex flex-col gap-18" data-tour="metrics">
           {STAGES.map((s) => (
@@ -175,6 +178,11 @@ export function BusinessFunnelPage() {
                   </Link>
                 ))}
               </p>
+              {s.later.length > 0 && (
+                <p className="text-11 leading-[16px] text-adm-muted">
+                  Also from the 10 metrics (J150), measured once there is a backend: <span className="text-adm-ink-2">{s.later.join(' · ')}</span>
+                </p>
+              )}
             </section>
           ))}
         </div>
@@ -265,6 +273,45 @@ export function BusinessFunnelPage() {
   )
 }
 
+/** The loop's next move: the biggest gap, why the agents leave, and what is proposed for that stage. */
+function FixNext({ stage, metrics, targets, decisions, leaveReasons, onAdd }: { stage: StageId; metrics: FunnelMetric[]; targets: Record<string, number>; decisions: Decision[]; leaveReasons: [string, number][]; onAdd: () => void }) {
+  const s = STAGES.find((x) => x.id === stage)!
+  const worst = metrics
+    .filter((m) => m.stage === stage)
+    .map((m) => ({ m, t: targets[m.id] ?? m.target }))
+    .sort((a, b) => a.m.agent / a.t - b.m.agent / b.t)[0]
+  const proposed = decisions.filter((d) => d.stage === stage && d.status !== 'measured')
+  return (
+    <section aria-label="Fix next" className="flex flex-col gap-8 rounded-12 border border-adm-critical bg-adm-surface p-14">
+      <p className="text-11 font-semibold uppercase tracking-[0.06em] text-adm-critical">Fix next</p>
+      <p className="text-14 leading-[20px] text-adm-ink">
+        <b>{s.title}.</b> {worst.m.label}: {pct(worst.m.agent)} against a target of {pct(worst.t)}, {Math.round((worst.t - worst.m.agent) * 100)} points short.
+      </p>
+      {leaveReasons.length > 0 && (
+        <p className="text-12 leading-[17px] text-adm-ink-2">
+          Why agents leave, across the whole funnel: {leaveReasons.slice(0, 3).map(([k, v]) => `${k.toLowerCase()} (${v})`).join(', ')}.
+        </p>
+      )}
+      {proposed.length > 0 ? (
+        <ul className="flex flex-col gap-4 text-12 leading-[17px] text-adm-ink">
+          {proposed.map((d) => (
+            <li key={d.id}>
+              <Badge tone="neutral">{STATUS_LABEL[d.status]}</Badge> <span className="ml-4">{d.change}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="flex flex-wrap items-center gap-8 text-12 text-adm-ink-2">
+          No change is proposed for this stage yet.
+          <Button size="sm" icon={<Plus size={13} />} onClick={onAdd}>
+            Propose one
+          </Button>
+        </p>
+      )}
+    </section>
+  )
+}
+
 function FunnelLegend() {
   return (
     <div className="flex flex-wrap items-center gap-12 text-11 text-adm-ink-2" aria-hidden="true">
@@ -272,7 +319,7 @@ function FunnelLegend() {
         <span className="h-8 w-14 rounded-2 bg-adm-s1" /> Agent
       </span>
       <span className="inline-flex items-center gap-4">
-        <span className="h-8 w-14 rounded-2 border-2 border-adm-s3" /> Feedback group
+        <span className="h-8 w-14 rounded-2 border-2 border-adm-s3" /> Feedback group (sample data)
       </span>
       <span className="inline-flex items-center gap-4">
         <span className="h-12 w-2 bg-adm-ink" /> Target

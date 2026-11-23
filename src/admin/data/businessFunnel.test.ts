@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { STEPS } from './buyerSim'
-import { DEFAULT_DECISIONS, DecisionsSchema, STAGES, biggestLeak, funnelMetrics, stageStatus } from './businessFunnel'
+import { STEPS, report } from './buyerSim'
+import { DEFAULT_DECISIONS, DecisionsSchema, STAGES, biggestLeak, funnelMetrics, stageStatus, withNewDefaults } from './businessFunnel'
 import { INITIAL_JOURNEY } from './userJourney'
 
 describe('business funnel', () => {
@@ -40,5 +40,19 @@ describe('business funnel', () => {
 
   it('ships a valid decision log', () => {
     expect(DecisionsSchema.safeParse(DEFAULT_DECISIONS).success).toBe(true)
+  })
+
+  it('keeps d7 true to the re-run: nothing brings them back leads, 8 of 36', () => {
+    const r = report(3, 3)
+    expect(r.walks.length).toBe(36)
+    expect(r.leaveReasons[0]).toEqual(['Nothing brings them back', 8])
+  })
+
+  it('adds new default decisions to a stored log without touching its edits', () => {
+    const stored = DEFAULT_DECISIONS.filter((d) => d.id !== 'd7').map((d) => ({ ...d, status: 'decided' as const }))
+    const merged = withNewDefaults(stored)
+    expect(merged.find((d) => d.id === 'd7')).toBeTruthy()
+    expect(merged.find((d) => d.id === 'd1')!.status).toBe('decided')
+    expect(merged.length).toBe(DEFAULT_DECISIONS.length)
   })
 })

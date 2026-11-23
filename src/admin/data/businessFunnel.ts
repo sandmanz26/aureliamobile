@@ -25,6 +25,8 @@ export interface Stage {
   steps: StepId[]
   /** User journey moments where it happens (userJourney.ts ids). */
   moments: string[]
+  /** Metrics from the J150 shortlist that belong here but need a backend to measure. */
+  later: string[]
 }
 
 export const STAGES: Stage[] = [
@@ -35,6 +37,7 @@ export const STAGES: Stage[] = [
     aurelia: 'Home, a Quick Start session before any account, then the daily check-in.',
     steps: ['land', 'quick-play', 'sign-in'],
     moments: ['r1'],
+    later: ['Time to first play'],
   },
   {
     id: 'aha',
@@ -43,6 +46,7 @@ export const STAGES: Stage[] = [
     aurelia: 'One sentence becomes their own session; they finish it, and the check-in says they feel better.',
     steps: ['onboarding', 'first-build', 'finish', 'check-in'],
     moments: ['r2', 'e2', 'e5'],
+    later: ['Drop-off point inside a session', 'Building-block effect (which voice, technique or length helps)'],
   },
   {
     id: 'cap',
@@ -51,6 +55,7 @@ export const STAGES: Stage[] = [
     aurelia: 'The free limit: 3 sends, then 30 minutes, counted after the first build (production v2 and v3).',
     steps: ['hits-cap'],
     moments: ['c1', 'c2'],
+    later: [],
   },
   {
     id: 'upsell',
@@ -59,6 +64,7 @@ export const STAGES: Stage[] = [
     aurelia: 'The Upgrade screen, “Aurelia AI Plus”: $10 a month or $100 a year. Nothing can be bought yet.',
     steps: ['upgrade'],
     moments: ['h1'],
+    later: ['Subscribes within 7 days of the limit (once Plus can be bought)'],
   },
   {
     id: 'stay',
@@ -67,6 +73,7 @@ export const STAGES: Stage[] = [
     aurelia: 'The next chapter, progress told in their own words, and the check-in, week after week.',
     steps: ['come-back'],
     moments: ['e1', 'r1'],
+    later: ['Day 1 return, measured', '7-day consistency (“4 of 7”)', 'Time to flip: first low check-in to a steady good one'],
   },
 ]
 
@@ -214,6 +221,17 @@ export const DEFAULT_DECISIONS: Decision[] = [
     result: '',
   },
   {
+    id: 'd7',
+    date: '2026-11-23',
+    stage: 'stay',
+    finding: 'Nothing brings them back is the top reason agents leave after a good first week (8 of 36, agent v3 × production v3). The calendar reminder is offered once, in the player, and easy to pass.',
+    change: 'Make the next chapter’s time part of the check-in: they pick it, and a calendar or notification reminder is set. Forgiving, no streaks.',
+    source: 'Re-run leave reasons (J139, J153); research on streaks (J094)',
+    status: 'proposed',
+    version: '',
+    result: '',
+  },
+  {
     id: 'd5',
     date: '2026-10-27',
     stage: 'cap',
@@ -236,6 +254,12 @@ export const DEFAULT_DECISIONS: Decision[] = [
     result: 'Re-run, v2 rules: back after a week 10% on production v3 against 8% on v2.',
   },
 ]
+
+/** A stored log keeps its edits; defaults added since it was saved are appended. */
+export function withNewDefaults(stored: Decision[]): Decision[] {
+  const have = new Set(stored.map((d) => d.id))
+  return [...stored, ...DEFAULT_DECISIONS.filter((d) => !have.has(d.id))]
+}
 
 export const STATUS_LABEL: Record<DecisionStatus, string> = {
   proposed: 'Proposed',
