@@ -2,6 +2,7 @@ import {
   BookOpen,
   Contact,
   ShoppingBag,
+  Filter,
   HeartPulse,
   Target,
   Microscope,
@@ -34,6 +35,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { z } from 'zod'
 import { AureliaLogo } from '../components/ui/AureliaLogo'
 import { BuildBadge } from '../components/ui/BuildBadge'
+import { BUILD } from '../lib/build'
 import { PageSkeleton } from '../components/ui/PageSkeleton'
 import { useFeatureFlags } from '../demo/FeatureFlags'
 import { readJson, writeJson } from '../lib/storage'
@@ -73,8 +75,9 @@ const NAV: { section: string; items: NavItem[] }[] = [
     // Tags, review and coverage are tabs inside User journey (U092).
     items: [
       { to: '/admin/user-journey', label: 'User journey', icon: Route, flag: 'adminUserJourney' },
-      // Staging only until released (RELEASES.personas).
+      // On both sites since J153 (RELEASES).
       ...(RELEASES.personas ? [{ to: '/admin/personas', label: 'Personas', icon: Contact, flag: 'adminPersonas' }] : []),
+      ...(RELEASES.businessFunnel ? [{ to: '/admin/business-funnel', label: 'Business funnel', icon: Filter, flag: 'adminBusinessFunnel' }] : []),
       ...(RELEASES.buyerAgent ? [{ to: '/admin/buyer-agent', label: 'Buyer agent results', icon: ShoppingBag, flag: 'adminBuyerAgent' }] : []),
     ],
   },
@@ -249,7 +252,7 @@ export function AdminLayout() {
             <Menu size={18} />
           </button>
           <span className="text-12 text-adm-muted">
-            Environment: <span className="font-medium text-adm-ink">staging</span> · Data is mock
+            Environment: <span className="font-medium text-adm-ink">{BUILD.label}</span> · Data is mock
           </span>
         </header>
 

@@ -1,5 +1,3 @@
-import { BUILD } from '../lib/build'
-
 /**
  * Changes that are on staging but not yet on production (U066).
  *
@@ -12,7 +10,8 @@ import { BUILD } from '../lib/build'
  * Every design version gets these: they are not a version of their own.
  */
 // Every release is on for production since J083 ("nyalakan semua ke production").
-// A new one that should wait uses BUILD.environment !== 'production'.
+// A new one that should wait imports BUILD from '../lib/build' and uses
+// BUILD.environment !== 'production'. Since J153 nothing is waiting.
 
 export const RELEASES = {
   /** Figma "Changes" (16906:4947) item 1: one Chapter card + a Review sheet instead of the fanned deck. */
@@ -27,12 +26,14 @@ export const RELEASES = {
   analysisV2: true,
   /** The session's About page (Chapters, Social Impact, Journal, Insights) in every version, v4+ included (J083). */
   aboutPage: true,
-  /** Tags, review and coverage in Admin → User journey (U089, merged into that page in U092). Staging only until asked. */
-  journeyTags: BUILD.environment !== 'production',
-  /** Desktop sidebar that folds to an icon rail and expands again (U091, Eugene). Staging only until asked. */
-  sidebarRail: BUILD.environment !== 'production',
-  /** Admin → Product lab → Personas (U096): 300 synthetic research personas. Staging only until asked. */
-  personas: BUILD.environment !== 'production',
-  /** Admin → Product lab → Buyer agent results (U101): the first demo run on ten personas. Staging only until asked. */
-  buyerAgent: BUILD.environment !== 'production',
+  /** Tags, review and coverage in Admin → User journey (U089, merged into that page in U092). On both sites since J153 (owner: staging and production). */
+  journeyTags: true,
+  /** Desktop sidebar that folds to an icon rail and expands again (U091, Eugene). On both sites since J153. */
+  sidebarRail: true,
+  /** Admin → Product lab → Personas (U096): 300 synthetic research personas. On both sites since J153. */
+  personas: true,
+  /** Admin → Product lab → Buyer agent results (U101): the first demo run on ten personas. On both sites since J153. */
+  buyerAgent: true,
+  /** Admin → Product lab → Business funnel (U108): Eugene's stages as the market-fit scoreboard. On both sites (J153). */
+  businessFunnel: true,
 } as const

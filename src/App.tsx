@@ -87,6 +87,7 @@ const SignalSourcesPage = lazy(() => import('./admin/pages/SignalSourcesPage').t
 const AuditPage = lazy(() => import('./admin/pages/AuditPage').then((m) => ({ default: m.AuditPage })))
 const SettingsPage = lazy(() => import('./admin/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })))
 const UserJourneyPage = lazy(() => import('./admin/pages/UserJourneyPage').then((m) => ({ default: m.UserJourneyPage })))
+const BusinessFunnelPage = lazy(() => import('./admin/pages/BusinessFunnelPage').then((m) => ({ default: m.BusinessFunnelPage })))
 const BuyerResultsPage = lazy(() => import('./admin/pages/BuyerResultsPage').then((m) => ({ default: m.BuyerResultsPage })))
 const PersonasPage = lazy(() => import('./admin/pages/PersonasPage').then((m) => ({ default: m.PersonasPage })))
 
@@ -190,6 +191,13 @@ export default function App() {
               <Route path="personas" element={
                 <ModuleGuard module="adminPersonas">
                   <PersonasPage />
+                </ModuleGuard>
+              } />
+            )}
+            {RELEASES.businessFunnel && (
+              <Route path="business-funnel" element={
+                <ModuleGuard module="adminBusinessFunnel">
+                  <BusinessFunnelPage />
                 </ModuleGuard>
               } />
             )}

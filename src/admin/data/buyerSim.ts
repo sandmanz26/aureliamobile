@@ -15,7 +15,7 @@ import type { Persona } from './personas'
 
 export type DesignId = 1 | 2 | 3
 export type AgentId = 1 | 2 | 3
-export type StepId = 'land' | 'quick-play' | 'sign-in' | 'onboarding' | 'first-build' | 'finish' | 'check-in' | 'come-back'
+export type StepId = 'land' | 'quick-play' | 'sign-in' | 'onboarding' | 'first-build' | 'finish' | 'check-in' | 'hits-cap' | 'upgrade' | 'come-back'
 export type StepOutcome = 'pass' | 'stall' | 'leave' | 'skip'
 
 export interface Design {
@@ -71,7 +71,7 @@ export const ALL_VERSIONS = [
   'A personal session needs an account, asked for when the sentence is sent.',
   'The daily check-in sheet opens on every sign-in while the app is a demo.',
   'No voice or sound choice before the first session, and no data statement before typing.',
-  'Hitting the free limit offers Upgrade: an “Aurelia AI Plus” screen at $10 a month or $100 a year. Paying is answered as a question, since nothing can be bought.',
+  'Hitting the free limit (3 sends, then 30 minutes) offers Upgrade: an “Aurelia AI Plus” screen at $10 a month or $100 a year. Nothing can be bought yet, so choosing Plus there is intent, not a sale.',
 ]
 
 export const STEP_LABEL: Record<StepId, string> = {
@@ -82,9 +82,11 @@ export const STEP_LABEL: Record<StepId, string> = {
   'first-build': 'Builds their own session',
   finish: 'Finishes the first session',
   'check-in': 'The check-in',
+  'hits-cap': 'Hits the free limit',
+  upgrade: 'Sees Upgrade (Plus)',
   'come-back': 'Comes back',
 }
-export const STEPS: StepId[] = ['land', 'quick-play', 'sign-in', 'onboarding', 'first-build', 'finish', 'check-in', 'come-back']
+export const STEPS: StepId[] = ['land', 'quick-play', 'sign-in', 'onboarding', 'first-build', 'finish', 'check-in', 'hits-cap', 'upgrade', 'come-back']
 
 export const AGENT_RULES: Record<AgentId, { name: string; rules: string }> = {
   1: { name: 'Agent v1 rules', rules: 'As in run v1: no calibration. Only someone who cannot read the screen leaves; every other problem only slows them down. Kept to show how far an uncalibrated agent overstates.' },
@@ -116,6 +118,10 @@ export interface Walk {
   pays: Verdict
   prices: { tooCheap: number; bargain: number; expensive: number; tooExpensive: number }
   recommends: boolean
+  /** U108: chance of hitting the free limit in week one (3 sends, then 30 minutes). */
+  capChance: number
+  /** U108: chance of choosing Plus on the Upgrade screen, if they hit the limit. */
+  plusChance: number
   /** Why they left or stopped coming back. */
   leaveReason: string
   leaveTheme: LeaveTheme
@@ -258,10 +264,38 @@ export function walk(p: Persona, design: DesignId, agent: AgentId, run: Pick<Buy
   const firstVisit = steps.filter((x) => STEPS.indexOf(x.id) <= STEPS.indexOf('finish'))
   const tries: Verdict = !activated ? 'no' : (gone && leftAt !== 'check-in') || firstVisit.filter((x) => x.outcome === 'stall').length >= 2 ? 'maybe' : 'yes'
 
+  // U108 · The free limit and the Upgrade screen ($10 a month, $100 a year), both in every version.
+  // Production v1 counts the limit from the first message, so it can hit before their own session.
+  const capChance = !activated || (gone && !completed) ? 0 : clamp(0.12 + 0.6 * d1 + (w.level === 'struggling' ? 0.12 : 0) + (design === 1 ? 0.2 : 0), 0, 0.9)
+  const plusChance = capChance === 0 ? 0 : clamp((pays === 'yes' ? 0.35 : pays === 'maybe' ? 0.12 : 0.02) * (design === 1 ? 0.6 : 1) * (design === 3 && wantsProof ? 1.15 : 1), 0, 0.6)
+  if (gone) {
+    steps.push({ id: 'hits-cap', outcome: 'skip', reason: 'Left earlier.' }, { id: 'upgrade', outcome: 'skip', reason: 'Left earlier.' })
+  } else if (capChance < 0.35) {
+    steps.push(
+      { id: 'hits-cap', outcome: 'skip', reason: `Unlikely to use it enough to reach the limit in week one (${Math.round(capChance * 100)}%).` },
+      { id: 'upgrade', outcome: 'skip', reason: 'Does not reach the Upgrade screen.' },
+    )
+  } else {
+    steps.push({
+      id: 'hits-cap',
+      outcome: design === 1 && !completed ? 'stall' : 'pass',
+      reason: design === 1 ? 'The limit counts from the first message, so it can stop them before their own session.' : `Likely to reach the limit while asking for changes (${Math.round(capChance * 100)}%).`,
+    })
+    steps.push({
+      id: 'upgrade',
+      outcome: plusChance >= 0.25 ? 'pass' : 'stall',
+      reason:
+        plusChance >= 0.25
+          ? `Would consider Plus at $10 a month (${Math.round(plusChance * 100)}%).`
+          : freeOnly
+            ? 'Free only: waits out the 30 minutes instead.'
+            : `$10 a month, with nothing on the screen about their own progress; waits instead (${Math.round(plusChance * 100)}%).`,
+    })
+  }
   steps.push({ id: 'come-back', outcome: gone ? 'skip' : d7 >= 0.12 ? 'pass' : 'stall', reason: gone ? 'Left earlier.' : leaveReason })
   if (gone && !leaveReason) leaveReason = 'Left.'
   if (!gone && pays === 'no' && leaveTheme === 'Stays' && local > prices.tooExpensive) leaveTheme = 'Price'
-  return { personaId: p.id, steps, activated, tries, completed, d1: r2(d1), d7: r2(d7), d30: r2(d30), plays, feltBetter, ellis, pays, prices, recommends, leaveReason, leaveTheme, leftAt }
+  return { personaId: p.id, steps, activated, tries, completed, d1: r2(d1), d7: r2(d7), d30: r2(d30), plays, feltBetter, ellis, pays, prices, recommends, capChance: r2(capChance), plusChance: r2(plusChance), leaveReason, leaveTheme, leftAt }
 }
 
 /* ---------------------------------------------------------------- Reports */
@@ -292,6 +326,9 @@ export interface Report {
   plays: number
   ellis: number
   paysYes: number
+  /** U108: share expected to hit the free limit in week one, and of those, to choose Plus. */
+  capHit: number
+  capToPlus: number
   paysMaybe: number
 }
 
@@ -331,6 +368,9 @@ export function report(agent: AgentId, design: DesignId): Report {
   const felt = mean(done.map((w) => w.feltBetter))
   const paysYes = walks.filter((w) => w.pays === 'yes').length
   const paysMaybe = walks.filter((w) => w.pays === 'maybe').length
+  const capHit = mean(walks.map((w) => w.capChance))
+  const capWeight = walks.reduce((sum, w) => sum + w.capChance, 0)
+  const capToPlus = capWeight ? walks.reduce((sum, w) => sum + w.capChance * w.plusChance, 0) / capWeight : 0
   const rec = done.length ? done.filter((w) => w.recommends).length / done.length : 0
   const reasons = new Map<LeaveTheme, number>()
   for (const w of walks) if (w.leaveTheme !== 'Stays') reasons.set(w.leaveTheme, (reasons.get(w.leaveTheme) ?? 0) + 1)
@@ -344,11 +384,17 @@ export function report(agent: AgentId, design: DesignId): Report {
     { id: 'plays', label: '5 · Sessions in week one', value: plays.toFixed(1), benchmark: 'per person who heard one', kind: 'estimate' },
     { id: 'felt', label: '6 · Feels better after the session', value: pct(felt), benchmark: 'of those who finished', kind: 'estimate' },
     { id: 'ellis', label: '7 · “Very disappointed” without it', value: pct(ellis), benchmark: '40% is the usual product–market fit bar', kind: 'estimate' },
-    { id: 'pay', label: '8 · Would pay, if asked after a week', value: `${paysYes} yes, ${paysMaybe} maybe of ${n}`, benchmark: `fair band $${median(walks.map((w) => w.prices.bargain)).toFixed(2)}–$${median(walks.map((w) => w.prices.expensive)).toFixed(2)} a month; the upgrade screen asks $10 a month`, kind: 'predicted' },
+    {
+      id: 'pay',
+      label: '8 · Hits the free limit → chooses Plus',
+      value: `${pct(capHit)} hit it · ${pct(capToPlus)} of them choose Plus`,
+      benchmark: `the Upgrade screen asks $10 a month or $100 a year; nothing can be bought yet. Asked directly after a week: ${paysYes} yes, ${paysMaybe} maybe of ${n}; fair band $${median(walks.map((w) => w.prices.bargain)).toFixed(2)}–$${median(walks.map((w) => w.prices.expensive)).toFixed(2)} a month`,
+      kind: 'predicted',
+    },
     { id: 'recommend', label: '9 · Would recommend it', value: pct(rec), benchmark: 'of those who finished', kind: 'predicted' },
     { id: 'reasons', label: '10 · Top reasons they leave', value: leaveReasons.slice(0, 3).map(([k, v]) => `${k} (${v})`).join(', ') || 'none', kind: 'predicted' },
   ]
-  return { agent, design, run, walks, funnel, metrics, leaveReasons, activation, completion, d1, d7, d30, plays, ellis, paysYes, paysMaybe }
+  return { agent, design, run, walks, funnel, metrics, leaveReasons, activation, completion, d1, d7, d30, plays, ellis, paysYes, paysMaybe, capHit, capToPlus }
 }
 
 /**
