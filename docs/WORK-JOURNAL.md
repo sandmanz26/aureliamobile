@@ -75,6 +75,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
 | J146 | 2026-11-20 | Code | Buyer agent results: a dashboard with charts, easier and more comfortable to read | U107 |
+| J147 | 2026-11-23 | Question | Eugene's "retreat in a box": not in any record or this session's history; asked for the brief | — |
 | J141 | 2026-11-19 | Opinion | Is the business funnel a CMS like the user journey, and what is it for | — |
 | J142 | 2026-11-19 | Opinion | How the user journey, the business funnel and the buyer agent connect; what one iteration produces | — |
 | J143 | 2026-11-19 | Opinion | What the current user journey map is, and why screens should be tied to the tags (the Product surface tag) | — |
@@ -1788,3 +1789,10 @@ transcript and the update log. Everything from J018 on was written at the time.
   - **Findings:** each is a numbered bold lead with its detail under it.
   - **The method:** folded under "About this run".
   - **The re-run view:** a shaded matrix and metric tiles.
+
+### J147 — "Retreat in a box"
+- **Asked:** "kamu masi ingat yan diminta eugene soal retreat a box ?"
+- **Answered:** there is no record of it.
+  - **Searched:** the journal, the handoff, AI-KNOWLEDGE, the update log, the PRD and this session's history all hold no request from Eugene about a "retreat in a box".
+  - **The only retreat material** is the Insight Timer research: in-person and virtual retreats booked through teachers, with Insight Timer keeping about 10%.
+  - **Likely explanation:** the brief was sent somewhere this agent never saw. The owner was asked to resend it.
