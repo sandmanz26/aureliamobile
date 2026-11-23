@@ -1,13 +1,13 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J149** · updated 23 Nov 2026
+**Covers up to J150** · updated 23 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
 current version. History and detail live elsewhere:
 
 - `docs/HANDOFF.md`: the full handover, including §17, every request (J) and change (U).
-- `docs/WORK-JOURNAL.md`: what was asked and answered; the Open items table (O1–O45).
+- `docs/WORK-JOURNAL.md`: what was asked and answered; the Open items table (O1–O46).
 - `docs/UPDATE-LOG.md`: every code change, with how to revert it.
 - `CLAUDE.md`: engineering conventions.
 
@@ -185,6 +185,15 @@ evidence → decision. It is not a user feature.
 - **Specs and a reading** are in `docs/briefs/`.
 - **Treat its KPIs as targets, not facts:** they are invented, and they contradict each other.
 - **Build only the spec's Sprint 1 (sample data) until the owner decides.** Use our admin design system, not the spec's fonts and colours.
+**Measurement (J150, O46).** The 2025 sheet (`docs/briefs/2025-measurement-system.xlsx`) is mostly obsolete.
+- **The 10 metrics that matter** and that the admin lacks are listed in `2026-11-23-measurement-system-review.md`:
+  - time to first play, drop-off inside a session;
+  - measured D1/7/30, 7-day consistency;
+  - before → after, time to flip;
+  - building-block effect, supply against demand;
+  - cap → Plus, CAC and LTV:CAC by channel.
+- **Eugene wants it simple:** add no more than these.
+- **His frame:** an "AI that builds the AI", dual-track validation looped daily, and the user journey as the product team's board.
 - **Keep the agent honest:** look for the no first, honour deal breakers, set price from income and place. Write findings from computed tallies, never from memory.
 
 **The 2025 backend documents (J099, J109–J112).**

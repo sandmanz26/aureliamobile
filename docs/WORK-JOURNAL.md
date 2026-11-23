@@ -73,6 +73,8 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O43 | **Brief kept in `docs/briefs/2026-11-23-eugene-freemium-state-transition.md` (J148); more context to come.** **Eugene's business funnel model (J140)**: confirm the reading, then build in three parts. (1) Admin → Product lab → **Business funnel**: the lighthouse's four stages, adapted to Aurelia, laid over the user journey moments, with the market-fit metrics and the features behind each stage. (2) Buyer agent v5 walks that funnel, reports where people stall, bounce or are blocked per stage, and returns the feature that would move them on. (3) The wiki's Feedback group playbook, rewritten as the dual track (agents and humans, same stages, same metrics). Needs the Gemini deck as text or PDF (the share link is not readable from here) | J140 | Product owner + Eugene |
 | O44 | **Done in U105 (J144)**, except readiness, which stays on the moment. **Tie screens to tags (J143)**: make each screen the value of the "Product surface" tag, so a moment's surface and its screenshot are one fact. Add the missing screens (journal, progress, sharing), so every surface has a picture. Move readiness onto the screen. Keep moments as the when-and-why map and the business funnel as the how-far map; screens join the two | J143 | Product owner |
 | O45 | **Retreat-in-a-Box (J149)**. First, answer the five questions for Eugene in `docs/briefs/2026-11-23-retreat-in-a-box-reading.md`: who the prototype is for, the founding creators, the box, what €19.99 includes, and the curriculum against the journey. Then decide the order: (1) admin prototype Sprint 1 on staging, with sample data marked as targets, in our design system; (2) buyer agent v5 testing the €19.99 retreat; (3) the wiki feedback project as the first paid cohort; (4) backend only after validation | J149 | Product owner + Eugene |
+| O46 | **The 10 metrics (J150)**: approve the shortlist in `docs/briefs/2026-11-23-measurement-system-review.md`. Then decide whether to add them: to the buyer agent reports (predicted) and to the admin pages named there (measured, from click insights now, the backend later). Also send Eugene the staging admin link for the backend team, with the password given privately | J150 | Product owner + Eugene |
+| J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
 | J146 | 2026-11-20 | Code | Buyer agent results: a dashboard with charts, easier and more comfortable to read | U107 |
@@ -1837,3 +1839,24 @@ transcript and the update log. Everything from J018 on was written at the time.
   - design tokens that clash with ours;
   - safety that must stay fixed.
 - **Open:** O45. There are five questions for Eugene, and a proposed order.
+
+### J150 — Eugene's latest messages, and the measurement sheet
+- **Asked:** (five WhatsApp screenshots: Eugene approving the tagging plus multi-persona buyer test plan; building the feedback playbook as Digital Retreats while the owner takes user journey and business logic funnel, as a workflow for the product team; the user journey as a product-team evolving platform like Trello or Asana; the grand master plan, an AI that builds the AI, pipelines with clear logic, dual tracks via digital retreats and buyer agents looping daily; the 2025 "Measurement system" sheet to check against the admin, scored by importance, only the critical ones the admin does not cover, keep it simple; asking for the admin link for the backend team; the earlier retention and top-10 metrics messages; plus the workbook Measurement_system.xlsx) "saya kirimkan ss lain lagi. apa yang menurutmu harus dilakukan dan apa yang kamu terima"
+- **Received:**
+  - Eugene agrees with the owner's plan: tag every step, then run buyer agents on many personas.
+  - Division of work: Eugene writes the feedback playbook as Digital Retreats; the owner owns the user journey and the business funnel, as a fast workflow for the product team.
+  - The user journey is the product team's evolving board (as in J127).
+  - The grand plan: an AI that builds the AI, so data and functions need clear logic and pathways.
+  - The dual track (digital retreats and buyer agents), looped daily, toward market fit.
+  - The 2025 measurement sheet, to be reviewed.
+  - A request for the admin link for the backend team.
+- **Done:** the sheet is kept in `docs/briefs/2025-measurement-system.xlsx`, and reviewed in `2026-11-23-measurement-system-review.md`.
+  - **What fits:** of about 250 rows, most measure 2025 (campaigns, podcasts, skill mastery, entropy).
+  - **What the admin already covers:** money and outcomes.
+  - **The shortlist:** 10 metrics the admin lacks, in 5 groups, all scored and mapped to the business funnel and to an admin page:
+    - getting started: time to first play, drop-off inside a session;
+    - coming back: measured day 1/7/30, a forgiving 7-day consistency;
+    - the state flip: before → after, time to flip;
+    - what works: building-block effect, supply against demand;
+    - paying and cost: cap → Plus, CAC and LTV:CAC by channel.
+- **Open:** O46.
