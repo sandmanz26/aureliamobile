@@ -1,0 +1,968 @@
+From 3639fcffba50dedb60c79d25a0ef3249868a37fe Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Mon, 23 Nov 2026 23:15:04 +0000
+Subject: [PATCH] Business funnel in Product lab; buyer re-run models the cap
+ and Upgrade; release every staging-only flag to production (U108, J153)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/App.tsx                            |   8 +
+ src/admin/AdminLayout.tsx              |   7 +-
+ src/admin/data/businessFunnel.test.ts  |  44 +++
+ src/admin/data/businessFunnel.ts       | 246 ++++++++++++++++
+ src/admin/data/buyerSim.ts             |  58 +++-
+ src/admin/pages/BusinessFunnelPage.tsx | 384 +++++++++++++++++++++++++
+ src/demo/modules.ts                    |   5 +-
+ src/versions/releases.ts               |  23 +-
+ 8 files changed, 754 insertions(+), 21 deletions(-)
+ create mode 100644 src/admin/data/businessFunnel.test.ts
+ create mode 100644 src/admin/data/businessFunnel.ts
+ create mode 100644 src/admin/pages/BusinessFunnelPage.tsx
+
+diff --git a/src/App.tsx b/src/App.tsx
+index b1f6c4c..dcad288 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -87,6 +87,7 @@ const SignalSourcesPage = lazy(() => import('./admin/pages/SignalSourcesPage').t
+ const AuditPage = lazy(() => import('./admin/pages/AuditPage').then((m) => ({ default: m.AuditPage })))
+ const SettingsPage = lazy(() => import('./admin/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })))
+ const UserJourneyPage = lazy(() => import('./admin/pages/UserJourneyPage').then((m) => ({ default: m.UserJourneyPage })))
++const BusinessFunnelPage = lazy(() => import('./admin/pages/BusinessFunnelPage').then((m) => ({ default: m.BusinessFunnelPage })))
+ const BuyerResultsPage = lazy(() => import('./admin/pages/BuyerResultsPage').then((m) => ({ default: m.BuyerResultsPage })))
+ const PersonasPage = lazy(() => import('./admin/pages/PersonasPage').then((m) => ({ default: m.PersonasPage })))
+ 
+@@ -193,6 +194,13 @@ export default function App() {
+                 </ModuleGuard>
+               } />
+             )}
++            {RELEASES.businessFunnel && (
++              <Route path="business-funnel" element={
++                <ModuleGuard module="adminBusinessFunnel">
++                  <BusinessFunnelPage />
++                </ModuleGuard>
++              } />
++            )}
+             {RELEASES.buyerAgent && (
+               <Route path="buyer-agent" element={
+                 <ModuleGuard module="adminBuyerAgent">
+diff --git a/src/admin/AdminLayout.tsx b/src/admin/AdminLayout.tsx
+index acd516e..0fc28db 100644
+--- a/src/admin/AdminLayout.tsx
++++ b/src/admin/AdminLayout.tsx
+@@ -2,6 +2,7 @@ import {
+   BookOpen,
+   Contact,
+   ShoppingBag,
++  Filter,
+   HeartPulse,
+   Target,
+   Microscope,
+@@ -34,6 +35,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
+ import { z } from 'zod'
+ import { AureliaLogo } from '../components/ui/AureliaLogo'
+ import { BuildBadge } from '../components/ui/BuildBadge'
++import { BUILD } from '../lib/build'
+ import { PageSkeleton } from '../components/ui/PageSkeleton'
+ import { useFeatureFlags } from '../demo/FeatureFlags'
+ import { readJson, writeJson } from '../lib/storage'
+@@ -73,8 +75,9 @@ const NAV: { section: string; items: NavItem[] }[] = [
+     // Tags, review and coverage are tabs inside User journey (U092).
+     items: [
+       { to: '/admin/user-journey', label: 'User journey', icon: Route, flag: 'adminUserJourney' },
+-      // Staging only until released (RELEASES.personas).
++      // On both sites since J153 (RELEASES).
+       ...(RELEASES.personas ? [{ to: '/admin/personas', label: 'Personas', icon: Contact, flag: 'adminPersonas' }] : []),
++      ...(RELEASES.businessFunnel ? [{ to: '/admin/business-funnel', label: 'Business funnel', icon: Filter, flag: 'adminBusinessFunnel' }] : []),
+       ...(RELEASES.buyerAgent ? [{ to: '/admin/buyer-agent', label: 'Buyer agent results', icon: ShoppingBag, flag: 'adminBuyerAgent' }] : []),
+     ],
+   },
+@@ -249,7 +252,7 @@ export function AdminLayout() {
+             <Menu size={18} />
+           </button>
+           <span className="text-12 text-adm-muted">
+-            Environment: <span className="font-medium text-adm-ink">staging</span> · Data is mock
++            Environment: <span className="font-medium text-adm-ink">{BUILD.label}</span> · Data is mock
+           </span>
+         </header>
+ 
+diff --git a/src/admin/data/businessFunnel.test.ts b/src/admin/data/businessFunnel.test.ts
+new file mode 100644
+index 0000000..b8495cb
+--- /dev/null
++++ b/src/admin/data/businessFunnel.test.ts
+@@ -0,0 +1,44 @@
++import { describe, expect, it } from 'vitest'
++import { STEPS } from './buyerSim'
++import { DEFAULT_DECISIONS, DecisionsSchema, STAGES, biggestLeak, funnelMetrics, stageStatus } from './businessFunnel'
++import { INITIAL_JOURNEY } from './userJourney'
++
++describe('business funnel', () => {
++  it('maps every buyer-agent step to exactly one stage, and every moment to the journey', () => {
++    const steps = STAGES.flatMap((s) => s.steps)
++    expect([...steps].sort()).toEqual([...STEPS].sort())
++    const moments = new Set(INITIAL_JOURNEY.stages.flatMap((s) => s.moments.map((m) => m.id)))
++    for (const s of STAGES) for (const m of s.moments) expect(moments.has(m), `${s.id} ${m}`).toBe(true)
++  })
++
++  it('gives every stage a metric, all as shares with a target', () => {
++    const ms = funnelMetrics(3, 3, 6)
++    for (const s of STAGES) expect(ms.some((m) => m.stage === s.id), s.id).toBe(true)
++    for (const m of ms) {
++      expect(m.agent).toBeGreaterThanOrEqual(0)
++      expect(m.agent).toBeLessThanOrEqual(1)
++      if (m.human !== null) expect(m.human).toBeLessThanOrEqual(1)
++      expect(m.target).toBeGreaterThan(0)
++      expect(m.humanNote.length).toBeGreaterThan(10)
++    }
++  })
++
++  it('finds the stage furthest below target, and none when all are met', () => {
++    const ms = funnelMetrics(3, 3, 6)
++    const leak = biggestLeak(ms, {})
++    expect(leak).not.toBeNull()
++    const all = Object.fromEntries(ms.map((m) => [m.id, 0.0001]))
++    expect(biggestLeak(ms, all)).toBeNull()
++    expect(stageStatus(ms, all, 'entry').status).toBe('on-track')
++  })
++
++  it('agrees with the re-run: production v1 leaks at entry more than v3', () => {
++    const v1 = funnelMetrics(3, 1, 6).find((m) => m.id === 'activation')!.agent
++    const v3 = funnelMetrics(3, 3, 6).find((m) => m.id === 'activation')!.agent
++    expect(v1).toBeLessThan(v3)
++  })
++
++  it('ships a valid decision log', () => {
++    expect(DecisionsSchema.safeParse(DEFAULT_DECISIONS).success).toBe(true)
++  })
++})
+diff --git a/src/admin/data/businessFunnel.ts b/src/admin/data/businessFunnel.ts
+new file mode 100644
+index 0000000..9264e39
+--- /dev/null
++++ b/src/admin/data/businessFunnel.ts
+@@ -0,0 +1,246 @@
++import { z } from 'zod'
++import { report, type AgentId, type DesignId, type StepId } from './buyerSim'
++import { buildParticipants } from './study'
++
++/**
++ * Business funnel (U108, J153): Eugene's lighthouse, "Moving from Bad to
++ * Good" (entry → AI aha → usage cap → Aurelia Plus), adapted to the app as it
++ * is, plus the result all four serve (staying). Each stage carries the
++ * metrics from the measurement review (J150) with a target, the buyer agents'
++ * prediction (buyerSim) and the feedback group's measurement (study.ts,
++ * sample until there is a backend). The stage furthest below target is what
++ * to fix next; the decision log is the loop's memory.
++ */
++
++export type StageId = 'entry' | 'aha' | 'cap' | 'upsell' | 'stay'
++
++export interface Stage {
++  id: StageId
++  title: string
++  /** Eugene's description, from the lighthouse. */
++  eugene: string
++  /** What the stage is in Aurelia today. */
++  aurelia: string
++  /** The buyer agents' steps it covers (buyerSim). */
++  steps: StepId[]
++  /** User journey moments where it happens (userJourney.ts ids). */
++  moments: string[]
++}
++
++export const STAGES: Stage[] = [
++  {
++    id: 'entry',
++    title: 'Frictionless entry',
++    eugene: 'Quick daily check-ins and basic tracking. Zero barrier to start.',
++    aurelia: 'Home, a Quick Start session before any account, then the daily check-in.',
++    steps: ['land', 'quick-play', 'sign-in'],
++    moments: ['r1'],
++  },
++  {
++    id: 'aha',
++    title: 'The AI “aha” moment',
++    eugene: 'The AI connects the dots during a bad state and gives a tailored micro-plan.',
++    aurelia: 'One sentence becomes their own session; they finish it, and the check-in says they feel better.',
++    steps: ['onboarding', 'first-build', 'finish', 'check-in'],
++    moments: ['r2', 'e2', 'e5'],
++  },
++  {
++    id: 'cap',
++    title: 'The usage cap',
++    eugene: 'After X free AI messages, the user hits a usage threshold mid-momentum.',
++    aurelia: 'The free limit: 3 sends, then 30 minutes, counted after the first build (production v2 and v3).',
++    steps: ['hits-cap'],
++    moments: ['c1', 'c2'],
++  },
++  {
++    id: 'upsell',
++    title: 'The upsell: Aurelia Plus',
++    eugene: 'A prompt right at the limit; paying removes the cap so they can reach the good state.',
++    aurelia: 'The Upgrade screen, “Aurelia AI Plus”: $10 a month or $100 a year. Nothing can be bought yet.',
++    steps: ['upgrade'],
++    moments: ['h1'],
++  },
++  {
++    id: 'stay',
++    title: 'Staying in the good state',
++    eugene: 'The result the four stages serve: they keep coming back as things improve.',
++    aurelia: 'The next chapter, progress told in their own words, and the check-in, week after week.',
++    steps: ['come-back'],
++    moments: ['e1', 'r1'],
++  },
++]
++
++export interface FunnelMetric {
++  id: string
++  stage: StageId
++  label: string
++  /** Default target, 0–1; the team can change it. */
++  target: number
++  agent: number
++  /** The feedback group's measurement; null when the study does not measure it. */
++  human: number | null
++  /** Where the human number comes from, or why there is none. */
++  humanNote: string
++  /** How to read it, where below target does not mean what it seems. */
++  reading?: string
++}
++
++/** The feedback group study's participants at a given study week (sample data, 30 people). */
++function study(week: number) {
++  const ps = buildParticipants(Math.max(1, week))
++  const enrolled = ps.filter((p) => p.status !== 'withdrawn' || p.sessionsByWeek.some((n) => n > 0))
++  const share = (f: (p: (typeof ps)[number]) => boolean) => (enrolled.length ? enrolled.filter(f).length / enrolled.length : 0)
++  const w = Math.max(1, Math.min(8, week))
++  return {
++    n: enrolled.length,
++    playedWeek1: share((p) => (p.sessionsByWeek[0] ?? 0) > 0),
++    feltBetter: share((p) => (p.moodLift ?? 0) > 0),
++    activeLatest: share((p) => (p.sessionsByWeek[w - 1] ?? 0) > 0),
++    activeWeek5: w >= 5 ? share((p) => p.sessionsByWeek.slice(4).some((n) => n > 0)) : null,
++  }
++}
++
++/** Every metric, with the chosen buyer agent run and the study at `week`. */
++export function funnelMetrics(agent: AgentId, design: DesignId, week: number): FunnelMetric[] {
++  const r = report(agent, design)
++  const s = study(week)
++  const done = r.walks.filter((w) => w.completed && w.activated)
++  const felt = done.length ? done.reduce((sum, w) => sum + w.feltBetter, 0) / done.length : 0
++  const fg = `Feedback group (sample, ${s.n} people, study week ${Math.max(1, Math.min(8, week))})`
++  return [
++    { id: 'activation', stage: 'entry', label: 'Hears a session on the first visit', target: 0.7, agent: r.activation, human: s.playedWeek1, humanNote: `${fg}: played a session in week 1` },
++    { id: 'completion', stage: 'aha', label: 'Finishes their own first session', target: 0.6, agent: r.completion, human: null, humanNote: 'Needs session-end events; click insights records taps, not listening' },
++    { id: 'felt', stage: 'aha', label: 'Feels better after a session', target: 0.6, agent: felt, human: s.feltBetter, humanNote: `${fg}: average check-in after minus before is above zero` },
++    { id: 'cap', stage: 'cap', label: 'Hits the free limit in week one', target: 0.3, agent: r.capHit, human: null, humanNote: 'Not measured: the study does not use the free plan', reading: 'Below target means too few use it enough to want more, so the aha is not strong enough yet.' },
++    { id: 'plus', stage: 'upsell', label: 'Chooses Plus at the limit', target: 0.15, agent: r.capToPlus, human: null, humanNote: 'Not measured: nothing can be bought yet' },
++    { id: 'd7', stage: 'stay', label: 'Back after a week', target: 0.15, agent: r.d7, human: s.activeLatest, humanNote: `${fg}: played this study week` },
++    { id: 'd30', stage: 'stay', label: 'Still using after a month', target: 0.05, agent: r.d30, human: s.activeWeek5, humanNote: s.activeWeek5 === null ? 'The study has not reached week 5 yet' : `${fg}: played in week 5 or later` },
++    { id: 'ellis', stage: 'stay', label: '“Very disappointed” without it', target: 0.4, agent: r.ellis, human: null, humanNote: 'Not asked yet: add the question to the week-8 survey' },
++  ]
++}
++
++export type Status = 'on-track' | 'below' | 'unmeasured'
++
++/**
++ * How a stage stands: the worst of its metrics against target, on the buyer
++ * agents' prediction for the chosen version. The feedback group is shown
++ * beside it but not used here: it is a recruited, supported group, so its
++ * numbers run far above an app's open funnel and would hide the leaks.
++ */
++export function stageStatus(metrics: FunnelMetric[], targets: Record<string, number>, stage: StageId) {
++  const own = metrics.filter((m) => m.stage === stage)
++  const ratios = own.map((m) => m.agent / Math.max(0.0001, targets[m.id] ?? m.target))
++  const worst = Math.min(...ratios)
++  const status: Status = worst >= 1 ? 'on-track' : 'below'
++  return { worst, status, measuredByPeople: own.some((m) => m.human !== null) }
++}
++
++/** The stage furthest below its target: what to fix next. */
++export function biggestLeak(metrics: FunnelMetric[], targets: Record<string, number>): StageId | null {
++  let best: { id: StageId; worst: number } | null = null
++  for (const s of STAGES) {
++    const { worst } = stageStatus(metrics, targets, s.id)
++    if (worst < 1 && (!best || worst < best.worst)) best = { id: s.id, worst }
++  }
++  return best?.id ?? null
++}
++
++/* ------------------------------------------------------------ Decision log */
++
++export const DECISION_STATUSES = ['proposed', 'decided', 'building', 'shipped', 'measured'] as const
++export type DecisionStatus = (typeof DECISION_STATUSES)[number]
++
++export const DecisionSchema = z.object({
++  id: z.string(),
++  date: z.string(),
++  stage: z.enum(['entry', 'aha', 'cap', 'upsell', 'stay']),
++  finding: z.string(),
++  change: z.string(),
++  source: z.string(),
++  status: z.enum(DECISION_STATUSES),
++  version: z.string(),
++  result: z.string(),
++})
++export type Decision = z.infer<typeof DecisionSchema>
++export const DecisionsSchema = z.array(DecisionSchema)
++export const DECISIONS_KEY = 'aurelia.admin.funnelDecisions'
++export const TARGETS_KEY = 'aurelia.admin.funnelTargets'
++export const TargetsSchema = z.record(z.string(), z.number().min(0).max(1))
++
++/** The loop so far: real findings from the buyer agents, the research and the shipped versions. */
++export const DEFAULT_DECISIONS: Decision[] = [
++  {
++    id: 'd1',
++    date: '2026-11-19',
++    stage: 'entry',
++    finding: 'An account before their own session loses 5–7 people in every version; it moved the most answers in run v3 (16 of 36).',
++    change: 'Let the first personal session start without an account.',
++    source: 'Buyer agent v3 and the re-run (J135, J139)',
++    status: 'proposed',
++    version: '',
++    result: '',
++  },
++  {
++    id: 'd2',
++    date: '2026-11-19',
++    stage: 'aha',
++    finding: 'Production v3’s extra onboarding question (the wearable) costs impatient people before their own session: completion 53% against 63%.',
++    change: 'Ask for the wearable after the first session.',
++    source: 'Re-run, agent v3 × production v3 (O42)',
++    status: 'proposed',
++    version: '',
++    result: '',
++  },
++  {
++    id: 'd3',
++    date: '2026-11-19',
++    stage: 'entry',
++    finding: 'English only fails people over 65 who read another language first, and slows most non-English speakers.',
++    change: 'Sessions in the panel’s main languages, starting with Spanish, Portuguese and Indonesian.',
++    source: 'Buyer agent v2 and v3 (J134, J135)',
++    status: 'proposed',
++    version: '',
++    result: '',
++  },
++  {
++    id: 'd4',
++    date: '2026-11-23',
++    stage: 'upsell',
++    finding: 'The Upgrade screen lists features; nothing on it is about the person. Eugene’s model sells the relief of reaching the good state.',
++    change: 'At the limit, show their own progress from their check-ins (never an invented number), then the offer.',
++    source: 'Eugene’s brief and the lighthouse (J148)',
++    status: 'proposed',
++    version: '',
++    result: '',
++  },
++  {
++    id: 'd5',
++    date: '2026-10-27',
++    stage: 'cap',
++    finding: 'The free limit counted from the first message, so it could stop people before their own session.',
++    change: 'Count the limit only from the first build.',
++    source: 'First-time review (J039)',
++    status: 'shipped',
++    version: 'Production v2 and v3',
++    result: 'The re-run sees the cap stop people before their session only in production v1.',
++  },
++  {
++    id: 'd6',
++    date: '2026-11-13',
++    stage: 'stay',
++    finding: 'Interviewed users distrusted sample analytics; skeptical people want proof that is theirs.',
++    change: 'Tell progress in words from their own check-ins; a Why on every suggestion.',
++    source: 'First user interviews (J049)',
++    status: 'measured',
++    version: 'Production v3',
++    result: 'Re-run, v2 rules: back after a week 10% on production v3 against 8% on v2.',
++  },
++]
++
++export const STATUS_LABEL: Record<DecisionStatus, string> = {
++  proposed: 'Proposed',
++  decided: 'Decided',
++  building: 'Building',
++  shipped: 'Shipped',
++  measured: 'Measured',
++}
+diff --git a/src/admin/data/buyerSim.ts b/src/admin/data/buyerSim.ts
+index ec3fc65..7696651 100644
+--- a/src/admin/data/buyerSim.ts
++++ b/src/admin/data/buyerSim.ts
+@@ -15,7 +15,7 @@ import type { Persona } from './personas'
+ 
+ export type DesignId = 1 | 2 | 3
+ export type AgentId = 1 | 2 | 3
+-export type StepId = 'land' | 'quick-play' | 'sign-in' | 'onboarding' | 'first-build' | 'finish' | 'check-in' | 'come-back'
++export type StepId = 'land' | 'quick-play' | 'sign-in' | 'onboarding' | 'first-build' | 'finish' | 'check-in' | 'hits-cap' | 'upgrade' | 'come-back'
+ export type StepOutcome = 'pass' | 'stall' | 'leave' | 'skip'
+ 
+ export interface Design {
+@@ -71,7 +71,7 @@ export const ALL_VERSIONS = [
+   'A personal session needs an account, asked for when the sentence is sent.',
+   'The daily check-in sheet opens on every sign-in while the app is a demo.',
+   'No voice or sound choice before the first session, and no data statement before typing.',
+-  'Hitting the free limit offers Upgrade: an “Aurelia AI Plus” screen at $10 a month or $100 a year. Paying is answered as a question, since nothing can be bought.',
++  'Hitting the free limit (3 sends, then 30 minutes) offers Upgrade: an “Aurelia AI Plus” screen at $10 a month or $100 a year. Nothing can be bought yet, so choosing Plus there is intent, not a sale.',
+ ]
+ 
+ export const STEP_LABEL: Record<StepId, string> = {
+@@ -82,9 +82,11 @@ export const STEP_LABEL: Record<StepId, string> = {
+   'first-build': 'Builds their own session',
+   finish: 'Finishes the first session',
+   'check-in': 'The check-in',
++  'hits-cap': 'Hits the free limit',
++  upgrade: 'Sees Upgrade (Plus)',
+   'come-back': 'Comes back',
+ }
+-export const STEPS: StepId[] = ['land', 'quick-play', 'sign-in', 'onboarding', 'first-build', 'finish', 'check-in', 'come-back']
++export const STEPS: StepId[] = ['land', 'quick-play', 'sign-in', 'onboarding', 'first-build', 'finish', 'check-in', 'hits-cap', 'upgrade', 'come-back']
+ 
+ export const AGENT_RULES: Record<AgentId, { name: string; rules: string }> = {
+   1: { name: 'Agent v1 rules', rules: 'As in run v1: no calibration. Only someone who cannot read the screen leaves; every other problem only slows them down. Kept to show how far an uncalibrated agent overstates.' },
+@@ -116,6 +118,10 @@ export interface Walk {
+   pays: Verdict
+   prices: { tooCheap: number; bargain: number; expensive: number; tooExpensive: number }
+   recommends: boolean
++  /** U108: chance of hitting the free limit in week one (3 sends, then 30 minutes). */
++  capChance: number
++  /** U108: chance of choosing Plus on the Upgrade screen, if they hit the limit. */
++  plusChance: number
+   /** Why they left or stopped coming back. */
+   leaveReason: string
+   leaveTheme: LeaveTheme
+@@ -258,10 +264,38 @@ export function walk(p: Persona, design: DesignId, agent: AgentId, run: Pick<Buy
+   const firstVisit = steps.filter((x) => STEPS.indexOf(x.id) <= STEPS.indexOf('finish'))
+   const tries: Verdict = !activated ? 'no' : (gone && leftAt !== 'check-in') || firstVisit.filter((x) => x.outcome === 'stall').length >= 2 ? 'maybe' : 'yes'
+ 
++  // U108 · The free limit and the Upgrade screen ($10 a month, $100 a year), both in every version.
++  // Production v1 counts the limit from the first message, so it can hit before their own session.
++  const capChance = !activated || (gone && !completed) ? 0 : clamp(0.12 + 0.6 * d1 + (w.level === 'struggling' ? 0.12 : 0) + (design === 1 ? 0.2 : 0), 0, 0.9)
++  const plusChance = capChance === 0 ? 0 : clamp((pays === 'yes' ? 0.35 : pays === 'maybe' ? 0.12 : 0.02) * (design === 1 ? 0.6 : 1) * (design === 3 && wantsProof ? 1.15 : 1), 0, 0.6)
++  if (gone) {
++    steps.push({ id: 'hits-cap', outcome: 'skip', reason: 'Left earlier.' }, { id: 'upgrade', outcome: 'skip', reason: 'Left earlier.' })
++  } else if (capChance < 0.35) {
++    steps.push(
++      { id: 'hits-cap', outcome: 'skip', reason: `Unlikely to use it enough to reach the limit in week one (${Math.round(capChance * 100)}%).` },
++      { id: 'upgrade', outcome: 'skip', reason: 'Does not reach the Upgrade screen.' },
++    )
++  } else {
++    steps.push({
++      id: 'hits-cap',
++      outcome: design === 1 && !completed ? 'stall' : 'pass',
++      reason: design === 1 ? 'The limit counts from the first message, so it can stop them before their own session.' : `Likely to reach the limit while asking for changes (${Math.round(capChance * 100)}%).`,
++    })
++    steps.push({
++      id: 'upgrade',
++      outcome: plusChance >= 0.25 ? 'pass' : 'stall',
++      reason:
++        plusChance >= 0.25
++          ? `Would consider Plus at $10 a month (${Math.round(plusChance * 100)}%).`
++          : freeOnly
++            ? 'Free only: waits out the 30 minutes instead.'
++            : `$10 a month, with nothing on the screen about their own progress; waits instead (${Math.round(plusChance * 100)}%).`,
++    })
++  }
+   steps.push({ id: 'come-back', outcome: gone ? 'skip' : d7 >= 0.12 ? 'pass' : 'stall', reason: gone ? 'Left earlier.' : leaveReason })
+   if (gone && !leaveReason) leaveReason = 'Left.'
+   if (!gone && pays === 'no' && leaveTheme === 'Stays' && local > prices.tooExpensive) leaveTheme = 'Price'
+-  return { personaId: p.id, steps, activated, tries, completed, d1: r2(d1), d7: r2(d7), d30: r2(d30), plays, feltBetter, ellis, pays, prices, recommends, leaveReason, leaveTheme, leftAt }
++  return { personaId: p.id, steps, activated, tries, completed, d1: r2(d1), d7: r2(d7), d30: r2(d30), plays, feltBetter, ellis, pays, prices, recommends, capChance: r2(capChance), plusChance: r2(plusChance), leaveReason, leaveTheme, leftAt }
+ }
+ 
+ /* ---------------------------------------------------------------- Reports */
+@@ -292,6 +326,9 @@ export interface Report {
+   plays: number
+   ellis: number
+   paysYes: number
++  /** U108: share expected to hit the free limit in week one, and of those, to choose Plus. */
++  capHit: number
++  capToPlus: number
+   paysMaybe: number
+ }
+ 
+@@ -331,6 +368,9 @@ export function report(agent: AgentId, design: DesignId): Report {
+   const felt = mean(done.map((w) => w.feltBetter))
+   const paysYes = walks.filter((w) => w.pays === 'yes').length
+   const paysMaybe = walks.filter((w) => w.pays === 'maybe').length
++  const capHit = mean(walks.map((w) => w.capChance))
++  const capWeight = walks.reduce((sum, w) => sum + w.capChance, 0)
++  const capToPlus = capWeight ? walks.reduce((sum, w) => sum + w.capChance * w.plusChance, 0) / capWeight : 0
+   const rec = done.length ? done.filter((w) => w.recommends).length / done.length : 0
+   const reasons = new Map<LeaveTheme, number>()
+   for (const w of walks) if (w.leaveTheme !== 'Stays') reasons.set(w.leaveTheme, (reasons.get(w.leaveTheme) ?? 0) + 1)
+@@ -344,11 +384,17 @@ export function report(agent: AgentId, design: DesignId): Report {
+     { id: 'plays', label: '5 · Sessions in week one', value: plays.toFixed(1), benchmark: 'per person who heard one', kind: 'estimate' },
+     { id: 'felt', label: '6 · Feels better after the session', value: pct(felt), benchmark: 'of those who finished', kind: 'estimate' },
+     { id: 'ellis', label: '7 · “Very disappointed” without it', value: pct(ellis), benchmark: '40% is the usual product–market fit bar', kind: 'estimate' },
+-    { id: 'pay', label: '8 · Would pay, if asked after a week', value: `${paysYes} yes, ${paysMaybe} maybe of ${n}`, benchmark: `fair band $${median(walks.map((w) => w.prices.bargain)).toFixed(2)}–$${median(walks.map((w) => w.prices.expensive)).toFixed(2)} a month; the upgrade screen asks $10 a month`, kind: 'predicted' },
++    {
++      id: 'pay',
++      label: '8 · Hits the free limit → chooses Plus',
++      value: `${pct(capHit)} hit it · ${pct(capToPlus)} of them choose Plus`,
++      benchmark: `the Upgrade screen asks $10 a month or $100 a year; nothing can be bought yet. Asked directly after a week: ${paysYes} yes, ${paysMaybe} maybe of ${n}; fair band $${median(walks.map((w) => w.prices.bargain)).toFixed(2)}–$${median(walks.map((w) => w.prices.expensive)).toFixed(2)} a month`,
++      kind: 'predicted',
++    },
+     { id: 'recommend', label: '9 · Would recommend it', value: pct(rec), benchmark: 'of those who finished', kind: 'predicted' },
+     { id: 'reasons', label: '10 · Top reasons they leave', value: leaveReasons.slice(0, 3).map(([k, v]) => `${k} (${v})`).join(', ') || 'none', kind: 'predicted' },
+   ]
+-  return { agent, design, run, walks, funnel, metrics, leaveReasons, activation, completion, d1, d7, d30, plays, ellis, paysYes, paysMaybe }
++  return { agent, design, run, walks, funnel, metrics, leaveReasons, activation, completion, d1, d7, d30, plays, ellis, paysYes, paysMaybe, capHit, capToPlus }
+ }
+ 
+ /**
+diff --git a/src/admin/pages/BusinessFunnelPage.tsx b/src/admin/pages/BusinessFunnelPage.tsx
+new file mode 100644
+index 0000000..204d1f9
+--- /dev/null
++++ b/src/admin/pages/BusinessFunnelPage.tsx
+@@ -0,0 +1,384 @@
++import { CircleHelp, Download, ExternalLink, Plus } from 'lucide-react'
++import { useState } from 'react'
++import { Link, useSearchParams } from 'react-router-dom'
++import { GuideTour, type TourStep } from '../components/GuideTour'
++import { Modal } from '../components/Modal'
++import { Badge, Button, FormField, PageHeader, Panel, inputClass, textareaClass } from '../components/ui'
++import {
++  DECISIONS_KEY,
++  DECISION_STATUSES,
++  DEFAULT_DECISIONS,
++  DecisionsSchema,
++  STAGES,
++  STATUS_LABEL,
++  TARGETS_KEY,
++  TargetsSchema,
++  biggestLeak,
++  funnelMetrics,
++  stageStatus,
++  type Decision,
++  type FunnelMetric,
++  type StageId,
++} from '../data/businessFunnel'
++import { AGENT_RULES, DESIGNS, type AgentId, type DesignId } from '../data/buyerSim'
++import { studyWeek } from '../data/study'
++import { INITIAL_JOURNEY, JourneyMapSchema, STORAGE_KEY, upgradeJourney } from '../data/userJourney'
++import { readJson, readString, writeJson, writeString } from '../../lib/storage'
++
++const GUIDE_KEY = 'aurelia.admin.funnelGuide'
++const pct = (v: number) => `${Math.round(v * 100)}%`
++
++/**
++ * Business funnel (U108, J153): Eugene's "Moving from Bad to Good" stages,
++ * adapted to the app, as the scoreboard of the dual-track loop. Targets per
++ * stage, the buyer agents' prediction for a chosen version, the feedback
++ * group beside it, the biggest gap, and a decision log that closes the loop.
++ */
++export function BusinessFunnelPage() {
++  const [params, setParams] = useSearchParams()
++  const agent = (Number(params.get('agent')) || 3) as AgentId
++  const design = (Number(params.get('design')) || 3) as DesignId
++  const [now] = useState(() => Date.now())
++  const week = Math.max(1, Math.min(8, studyWeek(now)))
++  const [targets, setTargets] = useState<Record<string, number>>(() => readJson(TARGETS_KEY, TargetsSchema, {}))
++  const [decisions, setDecisions] = useState<Decision[]>(() => readJson(DECISIONS_KEY, DecisionsSchema, DEFAULT_DECISIONS))
++  const [adding, setAdding] = useState<StageId | null>(null)
++  const [guide, setGuide] = useState(() => readString(GUIDE_KEY) !== 'seen')
++  const [notice, setNotice] = useState<string | null>(null)
++
++  const metrics = funnelMetrics(agent, design, week)
++  const leak = biggestLeak(metrics, targets)
++  const journey = upgradeJourney(readJson(STORAGE_KEY, JourneyMapSchema, INITIAL_JOURNEY))
++  const momentTitle = new Map(journey.stages.flatMap((s) => s.moments.map((m) => [m.id, m.title] as const)))
++  const targetOf = (m: FunnelMetric) => targets[m.id] ?? m.target
++
++  function setSource(a: AgentId, d: DesignId) {
++    setParams({ agent: String(a), design: String(d) }, { replace: true })
++  }
++  function saveTargets(next: Record<string, number>) {
++    setTargets(next)
++    writeJson(TARGETS_KEY, next)
++  }
++  function saveDecisions(next: Decision[], message: string) {
++    setDecisions(next)
++    setNotice(writeJson(DECISIONS_KEY, next) ? message : 'Browser storage is full. Export a backup.')
++    window.setTimeout(() => setNotice(null), 3000)
++  }
++  function exportJson() {
++    const body = { exportedAt: new Date().toISOString(), source: { agent: AGENT_RULES[agent].name, design: DESIGNS[design - 1].name, studyWeek: week }, targets, metrics, decisions }
++    const url = URL.createObjectURL(new Blob([JSON.stringify(body, null, 2)], { type: 'application/json' }))
++    const a = document.createElement('a')
++    a.href = url
++    a.download = 'aurelia-business-funnel.json'
++    a.click()
++    setTimeout(() => URL.revokeObjectURL(url), 1000)
++  }
++
++  return (
++    <div className="flex flex-col gap-16">
++      <PageHeader
++        title="Business funnel"
++        description="Eugene’s four stages from a bad state to Aurelia Plus, as they work in the app today, and the result they serve. Each stage has a target, the buyer agents’ prediction and the feedback group beside it. The stage furthest below its target is what to fix next."
++        actions={
++          <div className="flex flex-wrap gap-8">
++            <Button size="sm" icon={<CircleHelp size={13} />} onClick={() => setGuide(true)} data-tour="guide">
++              Guide
++            </Button>
++            <Button size="sm" icon={<Download size={13} />} onClick={exportJson}>
++              Export (JSON)
++            </Button>
++          </div>
++        }
++      />
++
++      <div className="flex flex-wrap items-end gap-12" data-tour="source">
++        <FormField label="Agent prediction for">
++          <select aria-label="Production version" className={`${inputClass} w-auto!`} value={design} onChange={(e) => setSource(agent, Number(e.target.value) as DesignId)}>
++            {DESIGNS.map((d) => (
++              <option key={d.id} value={d.id}>
++                {d.name}
++              </option>
++            ))}
++          </select>
++        </FormField>
++        <FormField label="Played by">
++          <select aria-label="Agent rules" className={`${inputClass} w-auto!`} value={agent} onChange={(e) => setSource(Number(e.target.value) as AgentId, design)}>
++            {([3, 2, 1] as const).map((a) => (
++              <option key={a} value={a}>
++                {AGENT_RULES[a].name}
++                {a === 3 ? ' (best estimate)' : a === 1 ? ' (uncalibrated)' : ''}
++              </option>
++            ))}
++          </select>
++        </FormField>
++        <Link to={`/admin/buyer-agent?view=versions&agent=${agent}&design=${design}`} className="mb-6 inline-flex items-center gap-4 text-12 text-adm-ink-2 underline decoration-adm-line underline-offset-2 hover:text-adm-ink">
++          See every persona’s walk <ExternalLink size={11} aria-hidden="true" />
++        </Link>
++        {notice && (
++          <span role="status" className="mb-6 text-12 text-adm-good">
++            {notice}
++          </span>
++        )}
++      </div>
++
++      <ol className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5" data-tour="stages" aria-label="Stages">
++        {STAGES.map((s, i) => {
++          const own = metrics.filter((m) => m.stage === s.id)
++          const head = own[0]
++          const st = stageStatus(metrics, targets, s.id)
++          const isLeak = leak === s.id
++          return (
++            <li key={s.id} className={`flex flex-col gap-6 rounded-12 border bg-adm-surface p-12 ${isLeak ? 'border-adm-critical ring-1 ring-adm-critical' : 'border-adm-line'}`}>
++              <div className="flex items-center justify-between gap-6">
++                <span className="text-11 font-semibold tabular-nums text-adm-muted">{i < 4 ? `Stage ${i + 1}` : 'Result'}</span>
++                {isLeak ? <Badge tone="critical">Biggest gap</Badge> : <Badge tone={st.status === 'on-track' ? 'good' : 'warning'}>{st.status === 'on-track' ? 'On target' : 'Below target'}</Badge>}
++              </div>
++              <h2 className="text-14 font-semibold leading-[19px] text-adm-ink">{s.title}</h2>
++              <p className="line-clamp-3 text-12 leading-[17px] text-adm-ink-2">{s.aurelia}</p>
++              <div className="mt-auto pt-4">
++                <p className="text-11 text-adm-muted">{head.label}</p>
++                <p className="text-[22px] font-semibold leading-[28px] tabular-nums text-adm-ink">{pct(head.agent)}</p>
++                <p className="text-11 tabular-nums text-adm-muted">target {pct(targetOf(head))}</p>
++              </div>
++            </li>
++          )
++        })}
++      </ol>
++
++      <Panel title="Stage by stage" description="Bars: the agent’s prediction (solid) and the feedback group (outlined), with the target as a line. The feedback group is recruited and supported, so read it as the ceiling, not the open funnel. Change a target and the gaps move." actions={<FunnelLegend />}>
++        <div className="flex flex-col gap-18" data-tour="metrics">
++          {STAGES.map((s) => (
++            <section key={s.id} aria-label={s.title} className="flex flex-col gap-8 border-t border-adm-line pt-12 first:border-t-0 first:pt-0">
++              <div className="flex flex-wrap items-baseline justify-between gap-8">
++                <h3 className="text-13 font-semibold text-adm-ink">
++                  {s.title}
++                  {leak === s.id && (
++                    <span className="ml-8">
++                      <Badge tone="critical">Biggest gap</Badge>
++                    </span>
++                  )}
++                </h3>
++                <p className="text-11 text-adm-muted">
++                  Eugene: <span className="text-adm-ink-2">{s.eugene}</span>
++                </p>
++              </div>
++              {metrics
++                .filter((m) => m.stage === s.id)
++                .map((m) => (
++                  <MetricRow key={m.id} m={m} target={targetOf(m)} onTarget={(v) => saveTargets({ ...targets, [m.id]: v })} />
++                ))}
++              <p className="flex flex-wrap items-center gap-6 text-11 text-adm-muted">
++                Where it happens:
++                {s.moments.map((id) => (
++                  <Link key={id} to="/admin/user-journey" className="rounded-full border border-adm-line px-8 py-2 text-adm-ink-2 hover:bg-adm-hover hover:text-adm-ink">
++                    {momentTitle.get(id) ?? id}
++                  </Link>
++                ))}
++              </p>
++            </section>
++          ))}
++        </div>
++      </Panel>
++
++      <Panel
++        title="Decision log"
++        description="The loop’s memory: what a track found, the change it led to, and whether it was shipped and measured again. Saved in this browser; export to share."
++        actions={
++          <Button size="sm" variant="primary" icon={<Plus size={13} />} onClick={() => setAdding(leak ?? 'entry')}>
++            Add a decision
++          </Button>
++        }
++      >
++        <ul className="flex flex-col gap-10" data-tour="log">
++          {[...decisions]
++            .sort((a, b) => STAGES.findIndex((s) => s.id === a.stage) - STAGES.findIndex((s) => s.id === b.stage))
++            .map((d) => (
++              <li key={d.id} className="grid gap-8 rounded-8 border border-adm-line p-12 lg:grid-cols-[150px_1fr_150px]">
++                <div className="flex flex-col gap-4">
++                  <span className="text-11 font-medium text-adm-muted">{STAGES.find((s) => s.id === d.stage)?.title}</span>
++                  <span className="text-11 tabular-nums text-adm-muted">{d.date}</span>
++                </div>
++                <div className="min-w-0">
++                  <p className="text-13 font-semibold leading-[19px] text-adm-ink">{d.change}</p>
++                  <p className="mt-2 max-w-[70ch] text-12 leading-[18px] text-adm-ink-2">{d.finding}</p>
++                  <p className="mt-4 text-11 text-adm-muted">
++                    From: {d.source}
++                    {d.version && ` · In: ${d.version}`}
++                  </p>
++                  {d.result && <p className="mt-4 text-12 text-adm-ink">Result: {d.result}</p>}
++                </div>
++                <div className="flex flex-col gap-6 lg:items-end">
++                  <select
++                    aria-label={`Status of “${d.change}”`}
++                    className={`${inputClass} h-28 w-auto! text-12 ${d.status === 'shipped' || d.status === 'measured' ? 'text-adm-good' : ''}`}
++                    value={d.status}
++                    onChange={(e) => saveDecisions(decisions.map((x) => (x.id === d.id ? { ...x, status: e.target.value as Decision['status'] } : x)), 'Status saved in this browser')}
++                  >
++                    {DECISION_STATUSES.map((st) => (
++                      <option key={st} value={st}>
++                        {STATUS_LABEL[st]}
++                      </option>
++                    ))}
++                  </select>
++                </div>
++              </li>
++            ))}
++        </ul>
++      </Panel>
++
++      <details className="rounded-12 border border-adm-line bg-adm-surface">
++        <summary className="cursor-pointer list-none px-16 py-14">
++          <span className="text-15 font-semibold text-adm-ink">Where the numbers come from</span>
++          <span className="ml-8 text-12 text-adm-muted">Select to open.</span>
++        </summary>
++        <div className="flex flex-col gap-8 border-t border-adm-line p-16 text-13 leading-[20px] text-adm-ink-2">
++          <p>
++            <b className="text-adm-ink">Agent:</b> {AGENT_RULES[agent].name} walking every persona of run v{agent} through {DESIGNS[design - 1].name}, step by step (Buyer agent results → By production version). A prediction, not a measurement.
++          </p>
++          <p>
++            <b className="text-adm-ink">Feedback group:</b> the study in Experimentation (sample data until there is a backend). It is a recruited, supported group, so it runs far above an open app; read it as the ceiling, not the funnel. Stages it does not measure say why.
++          </p>
++          <p>
++            <b className="text-adm-ink">Biggest gap:</b> the stage whose worst metric is furthest below its target, on the agent’s prediction.
++          </p>
++          <ul className="flex list-disc flex-col gap-2 pl-18 text-12">
++            {metrics.map((m) => (
++              <li key={m.id}>
++                {m.label}: {m.humanNote}.
++              </li>
++            ))}
++          </ul>
++        </div>
++      </details>
++
++      {adding && <DecisionForm stage={adding} onClose={() => setAdding(null)} onSave={(d) => saveDecisions([...decisions, d], 'Decision added')} />}
++      {guide && (
++        <GuideTour
++          steps={GUIDE}
++          onClose={() => {
++            setGuide(false)
++            writeString(GUIDE_KEY, 'seen')
++          }}
++        />
++      )}
++    </div>
++  )
++}
++
++function FunnelLegend() {
++  return (
++    <div className="flex flex-wrap items-center gap-12 text-11 text-adm-ink-2" aria-hidden="true">
++      <span className="inline-flex items-center gap-4">
++        <span className="h-8 w-14 rounded-2 bg-adm-s1" /> Agent
++      </span>
++      <span className="inline-flex items-center gap-4">
++        <span className="h-8 w-14 rounded-2 border-2 border-adm-s3" /> Feedback group
++      </span>
++      <span className="inline-flex items-center gap-4">
++        <span className="h-12 w-2 bg-adm-ink" /> Target
++      </span>
++    </div>
++  )
++}
++
++function MetricRow({ m, target, onTarget }: { m: FunnelMetric; target: number; onTarget: (v: number) => void }) {
++  const below = m.agent < target
++  return (
++    <div className="grid items-center gap-x-12 gap-y-4 text-12 lg:grid-cols-[220px_1fr_150px]">
++      <span className="text-adm-ink">
++        {m.label}
++        {m.reading && <span className="mt-2 block text-11 leading-[15px] text-adm-muted">{m.reading}</span>}
++      </span>
++      <div className="flex flex-col gap-3">
++        <Bar value={m.agent} target={target} kind="agent" />
++        {m.human !== null ? <Bar value={m.human} target={target} kind="human" /> : <span className="text-11 text-adm-muted">Feedback group: {m.humanNote}.</span>}
++      </div>
++      <label className="flex items-center gap-6 justify-self-start text-11 text-adm-muted lg:justify-self-end">
++        <span className={below ? 'font-semibold text-adm-critical' : 'text-adm-good'}>{below ? `${Math.round((target - m.agent) * 100)} pts short` : 'On target'}</span>
++        target
++        <input
++          type="number"
++          min={1}
++          max={100}
++          aria-label={`Target for ${m.label}, percent`}
++          className={`${inputClass} h-26 w-56! px-6 text-right text-12 tabular-nums`}
++          value={Math.round(target * 100)}
++          onChange={(e) => {
++            const v = Number(e.target.value)
++            if (v >= 1 && v <= 100) onTarget(v / 100)
++          }}
++        />
++        %
++      </label>
++    </div>
++  )
++}
++
++function Bar({ value, target, kind }: { value: number; target: number; kind: 'agent' | 'human' }) {
++  return (
++    <div className="flex items-center gap-8">
++      <div className="relative h-12 flex-1 rounded-4 bg-adm-bg">
++        <div
++          className={`h-full rounded-4 ${kind === 'agent' ? 'bg-adm-s1' : 'border-2 border-adm-s3'}`}
++          style={{ width: `${Math.max(1.5, Math.min(100, value * 100))}%` }}
++        />
++        <div className="absolute -inset-y-3 w-2 bg-adm-ink" style={{ left: `calc(${Math.min(100, target * 100)}% - 1px)` }} title={`Target ${pct(target)}`} />
++      </div>
++      <span className="w-40 text-right tabular-nums text-adm-ink">{pct(value)}</span>
++    </div>
++  )
++}
++
++function DecisionForm({ stage, onClose, onSave }: { stage: StageId; onClose: () => void; onSave: (d: Decision) => void }) {
++  const [d, setD] = useState<Decision>(() => ({ id: Math.random().toString(36).slice(2, 9), date: new Date().toISOString().slice(0, 10), stage, finding: '', change: '', source: '', status: 'proposed', version: '', result: '' }))
++  const set = (patch: Partial<Decision>) => setD({ ...d, ...patch })
++  return (
++    <Modal title="Add a decision" description="One finding, the change it leads to, and where it came from." onClose={onClose} width={560}>
++      <div className="flex flex-col gap-12">
++        <FormField label="Stage">
++          <select className={inputClass} value={d.stage} onChange={(e) => set({ stage: e.target.value as StageId })}>
++            {STAGES.map((s) => (
++              <option key={s.id} value={s.id}>
++                {s.title}
++              </option>
++            ))}
++          </select>
++        </FormField>
++        <FormField label="The change" hint="What we will do, in one line">
++          <input className={inputClass} value={d.change} onChange={(e) => set({ change: e.target.value })} autoFocus />
++        </FormField>
++        <FormField label="The finding" hint="What a track showed, with its number">
++          <textarea className={textareaClass} value={d.finding} onChange={(e) => set({ finding: e.target.value })} />
++        </FormField>
++        <FormField label="Where it came from" hint="Buyer agent run, feedback group week, interview…">
++          <input className={inputClass} value={d.source} onChange={(e) => set({ source: e.target.value })} />
++        </FormField>
++        <div className="flex gap-8 border-t border-adm-line pt-12">
++          <Button
++            variant="primary"
++            onClick={() => {
++              if (!d.change.trim()) return
++              onSave({ ...d, change: d.change.trim(), finding: d.finding.trim(), source: d.source.trim() })
++              onClose()
++            }}
++          >
++            Add decision
++          </Button>
++          <Button onClick={onClose}>Cancel</Button>
++        </div>
++      </div>
++    </Modal>
++  )
++}
++
++const GUIDE: TourStep[] = [
++  {
++    title: 'What this page is for',
++    body: 'It is the scoreboard for proving market fit. Eugene’s four stages run from a free start to Aurelia Plus, and a fifth is the result they serve. Two tracks feed it: buyer agents predict, the feedback group and the digital retreats measure. The stage furthest below its target is what to fix next.',
++  },
++  { target: 'source', title: 'Pick what the agents predict', body: 'Choose a production version and whose rules play it. Agent v3’s rules are the best estimate. Switch to production v1 to see how much the older design leaks.' },
++  { target: 'stages', title: 'The five stages at a glance', body: 'Each card shows what the stage is in Aurelia today and its main number against the target. A red card is the biggest gap.' },
++  { target: 'metrics', title: 'Stage by stage', body: 'Every metric shows the agent’s prediction (solid bar) and the feedback group (outlined bar) against the target (the line). Edit a target and the gaps move. Where the group cannot measure something yet, the row says why.' },
++  { target: 'log', title: 'Close the loop', body: 'Each decision records the finding, the change, its source and its status: proposed, decided, building, shipped, measured. When a change ships, run the agents again and write the result here.' },
++  { target: 'guide', title: 'Open this again', body: 'The Guide button runs this tour again. Targets and decisions are saved in this browser; Export shares them.' },
++]
+diff --git a/src/demo/modules.ts b/src/demo/modules.ts
+index e713874..982a187 100644
+--- a/src/demo/modules.ts
++++ b/src/demo/modules.ts
+@@ -242,8 +242,9 @@ export const DEMO_MODULES: DemoModule[] = [
+   { id: 'adminExperimentation', kind: 'admin', label: 'Experimentation · feedback group', description: 'The 30-person, 8-week study of therapeutic outcomes: criteria, participants, measures, data quality and safety.', route: '/admin/experimentation', built: true },
+   { id: 'adminOutcomes', kind: 'admin', label: 'Well-being outcomes', description: 'How much each user’s well-being has changed (WHO-5, check-ins, wearable).', route: '/admin/outcomes', built: true },
+   { id: 'adminUserJourney', kind: 'admin', label: 'User journey', description: 'The journey map: four stages (Reflect, Create, Experience, Share), their moments, the feature each suggests, and the screens that serve them.', route: '/admin/user-journey', built: true },
+-  { id: 'adminPersonas', kind: 'admin', label: 'Personas', description: '300 synthetic personas as candidates for AI-run research, with role-play prompts and balanced panels. Staging only until released.', route: '/admin/personas', built: true },
+-  { id: 'adminBuyerAgent', kind: 'admin', label: 'Buyer agent results', description: 'What a buyer agent answered as each persona in a panel: try, pay, price, objections, test cases. Demo run on ten personas. Staging only until released.', route: '/admin/buyer-agent', built: true },
++  { id: 'adminPersonas', kind: 'admin', label: 'Personas', description: '300 synthetic personas as candidates for AI-run research, with role-play prompts and balanced panels.', route: '/admin/personas', built: true },
++  { id: 'adminBusinessFunnel', kind: 'admin', label: 'Business funnel', description: 'Eugene’s stages from a free start to Aurelia Plus, with targets, the buyer agents’ prediction, the feedback group and a decision log.', route: '/admin/business-funnel', built: true },
++  { id: 'adminBuyerAgent', kind: 'admin', label: 'Buyer agent results', description: 'What a buyer agent answered as each persona in a panel: try, pay, price, objections, test cases. Runs v1–v3 and the re-run by production version.', route: '/admin/buyer-agent', built: true },
+   { id: 'adminRoles', kind: 'admin', label: 'Roles & permissions', description: 'Permission matrix.', route: '/admin/roles', built: true },
+   { id: 'adminSessions', kind: 'admin', label: 'Sessions', description: 'Generated session catalogue.', route: '/admin/sessions', built: true },
+   { id: 'adminChallenges', kind: 'admin', label: 'Challenges', description: 'Setup, pacing and reward tiers.', route: '/admin/challenges', built: true },
+diff --git a/src/versions/releases.ts b/src/versions/releases.ts
+index b4fbc59..947396e 100644
+--- a/src/versions/releases.ts
++++ b/src/versions/releases.ts
+@@ -1,5 +1,3 @@
+-import { BUILD } from '../lib/build'
+-
+ /**
+  * Changes that are on staging but not yet on production (U066).
+  *
+@@ -12,7 +10,8 @@ import { BUILD } from '../lib/build'
+  * Every design version gets these: they are not a version of their own.
+  */
+ // Every release is on for production since J083 ("nyalakan semua ke production").
+-// A new one that should wait uses BUILD.environment !== 'production'.
++// A new one that should wait imports BUILD from '../lib/build' and uses
++// BUILD.environment !== 'production'. Since J153 nothing is waiting.
+ 
+ export const RELEASES = {
+   /** Figma "Changes" (16906:4947) item 1: one Chapter card + a Review sheet instead of the fanned deck. */
+@@ -27,12 +26,14 @@ export const RELEASES = {
+   analysisV2: true,
+   /** The session's About page (Chapters, Social Impact, Journal, Insights) in every version, v4+ included (J083). */
+   aboutPage: true,
+-  /** Tags, review and coverage in Admin → User journey (U089, merged into that page in U092). Staging only until asked. */
+-  journeyTags: BUILD.environment !== 'production',
+-  /** Desktop sidebar that folds to an icon rail and expands again (U091, Eugene). Staging only until asked. */
+-  sidebarRail: BUILD.environment !== 'production',
+-  /** Admin → Product lab → Personas (U096): 300 synthetic research personas. Staging only until asked. */
+-  personas: BUILD.environment !== 'production',
+-  /** Admin → Product lab → Buyer agent results (U101): the first demo run on ten personas. Staging only until asked. */
+-  buyerAgent: BUILD.environment !== 'production',
++  /** Tags, review and coverage in Admin → User journey (U089, merged into that page in U092). On both sites since J153 (owner: staging and production). */
++  journeyTags: true,
++  /** Desktop sidebar that folds to an icon rail and expands again (U091, Eugene). On both sites since J153. */
++  sidebarRail: true,
++  /** Admin → Product lab → Personas (U096): 300 synthetic research personas. On both sites since J153. */
++  personas: true,
++  /** Admin → Product lab → Buyer agent results (U101): the first demo run on ten personas. On both sites since J153. */
++  buyerAgent: true,
++  /** Admin → Product lab → Business funnel (U108): Eugene's stages as the market-fit scoreboard. On both sites (J153). */
++  businessFunnel: true,
+ } as const
+-- 
+2.43.0
+

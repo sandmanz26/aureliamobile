@@ -74,7 +74,7 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O44 | **Done in U105 (J144)**, except readiness, which stays on the moment. **Tie screens to tags (J143)**: make each screen the value of the "Product surface" tag, so a moment's surface and its screenshot are one fact. Add the missing screens (journal, progress, sharing), so every surface has a picture. Move readiness onto the screen. Keep moments as the when-and-why map and the business funnel as the how-far map; screens join the two | J143 | Product owner |
 | O45 | **Retreat-in-a-Box (J149)**. First, answer the five questions for Eugene in `docs/briefs/2026-11-23-retreat-in-a-box-reading.md`: who the prototype is for, the founding creators, the box, what €19.99 includes, and the curriculum against the journey. Then decide the order: (1) admin prototype Sprint 1 on staging, with sample data marked as targets, in our design system; (2) buyer agent v5 testing the €19.99 retreat; (3) the wiki feedback project as the first paid cohort; (4) backend only after validation | J149 | Product owner + Eugene |
 | O46 | **The 10 metrics (J150)**: approve the shortlist in `docs/briefs/2026-11-23-measurement-system-review.md`. Then decide whether to add them: to the buyer agent reports (predicted) and to the admin pages named there (measured, from click insights now, the backend later). Also send Eugene the staging admin link for the backend team, with the password given privately | J150 | Product owner + Eugene |
-| O47 | **Build the Business funnel (J152)** as the hub of the loop, in Product lab:
+| O47 | **Done in U108 (J153)**, except the upgrade offer with their own progress (decision d4 in the funnel) and the Retreat cockpit (O45). **Build the Business funnel (J152)** as the hub of the loop, in Product lab:
 - the 4 stages mapped to the journey's real steps, each with a target;
 - an agent column filled from the latest buyer agent run;
 - a human column from the feedback group (Experimentation) and click insights, sample until real;
@@ -84,8 +84,10 @@ transcript and the update log. Everything from J018 on was written at the time.
 Later, and separately:
 - an upgrade offer at the cap that names the person's own progress (staging flag);
 - the Retreat cockpit once O45 is answered | J152 | Product owner |
+| O48 | **Funnel targets and proposed decisions (J153)**: the default targets (activation 70%, own session finished 60%, feels better 60%, free limit 30%, Plus 15%, back after a week 15%, a month 5%, "very disappointed" 40%) are the agent's, from the research. Eugene and the owner confirm or change them; then pick which proposed decision (d1–d4) to build first | J153 | Product owner + Eugene |
 | J151 | 2026-11-23 | Opinion | What Eugene is asking for, in plain words: one goal (market fit), one loop (dual track), three tools in the admin | — |
 | J152 | 2026-11-23 | Opinion + fix | What the machine still lacks: the business funnel as the hub (with measured human numbers and a decision log); correction: an upgrade screen does exist | — |
+| J153 | 2026-11-23 | Code + release | Does the buyer agent need redoing? Build the Business funnel; put every decision on staging and production; roast again and improve so Eugene has nothing to complain about | U108 |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
@@ -1911,3 +1913,14 @@ Later, and separately:
   - J137 and J148 said there was no pricing or upsell screen. `/upgrade` ("Aurelia AI Plus", $10 a month or $100 a year) is reached from the free-limit notice.
   - Fixed in the re-run's version facts and metric 8, the brief and AI-KNOWLEDGE.
 - **Open:** O47.
+
+### J153 — Business funnel, and everything to production
+- **Asked:** "1. oke dengan kesalahan tersebut berati kamu harus mengulang buyer agent ? 2. oke lanjutkan untuk business funnel. semua keputusan diatas termasuk yang sebelumnya animasi taruh langsung di staging production tidak ada masalah. setelah selesai roast ulang lagi dan lakukan improvement, saya tidak mau eugene ada complain."
+- **Q1, redo the buyer agent?** No.
+  - The hand-played runs v1–v3 priced Plus at $9.99; the app asks $10. Their answers stand.
+  - What the error hid was a missing step: the re-run never hit the free limit or saw Upgrade. It does now (metric 8). Agent v3 × production v3: 15% hit the limit, 9% of them choose Plus. Activation and back-after-a-week are unchanged.
+- **Built (U108):** Admin → Product lab → Business funnel. Eugene's four stages plus staying, eight metrics with editable targets, the agents beside the feedback group (shown as a ceiling, not used for the status), the biggest gap, moments linked to the user journey, a decision log and a guide.
+- **Released:** on request, every staging-only flag is on production: journey tags, the folding sidebar rail, personas, buyer agent results and the funnel. `web_prod` fast-forwarded.
+- **Assumption:** "animasi" = the folding sidebar rail, and "semua keputusan" = all staging-only flags. Recorded so it can be undone flag by flag.
+- **Then:** roast again, as Eugene would, and fix what he would complain about (see U109 if a fix followed).
+- **Open:** O48.

@@ -144,9 +144,26 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U105 | `6f24a04` | 2026-11-19 | User journey: with tags on, screens are tied to the Product surface tag (a moment shows its surfaces' screens), with a Product surfaces strip. Adds three real screenshots (Journal, Progress, Share sheet), persona demand per moment (of 300), saved maps upgraded in place, and a guided overlay tour (9 steps, opens on the first visit, Guide button to replay). | [patch](patches/U105-6f24a04.patch) |
 | U106 | `a9feb6a` | 2026-11-19 | A screen from an older build whose code is gone after a deploy now reloads once into the new build (`vite:preloadError`, and the error boundary on a failed dynamic import), with a 30 s guard against loops. Off production, the error screen shows the route and the error message. Not flagged: it is a fix. | [patch](patches/U106-a9feb6a.patch) |
 | U107 | `a23faa8` | 2026-11-20 | Buyer agent results reworked as a dashboard. Numbers and charts come first: yes/maybe/no bars, with A against B, objections and changes as ranked bars, a who-says-yes heat table by wellness, age and region, and the price band. Findings read as a numbered bold lead with its detail. The method is folded into "About this run". In the re-run view: a shaded matrix, metric tiles, findings the same way, and the method folded away. Staging only. | [patch](patches/U107-a23faa8.patch) |
+| U108 | `3639fcf` | 2026-11-23 | Admin → Product lab → **Business funnel** (`/admin/business-funnel`): Eugene's four stages plus staying, each with targets the team can edit, the buyer agents' prediction for a chosen production version beside the feedback group's measurement (a ceiling), the biggest gap ringed, moments linked to the user journey, a decision log (proposed → measured) and a guide. The buyer re-run now walks the free limit and the Upgrade screen (metric 8). Every staging-only flag released: journey tags, the folding sidebar rail, personas, buyer agent results and the funnel are on production. | [patch](patches/U108-3639fcf.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U108 — Business funnel, the cap in the re-run, and everything released
+
+- **Commit:** `3639fcf` · pushed 2026-11-23 UTC · `web_app` + `admin_cms` + `web_prod` (released on request).
+- **Patch:** [patches/U108-3639fcf.patch](patches/U108-3639fcf.patch)
+- **Request:** "1. oke dengan kesalahan tersebut berati kamu harus mengulang buyer agent ? 2. oke lanjutkan untuk business funnel. semua keputusan diatas termasuk yang sebelumnya animasi taruh langsung di staging production tidak ada masalah. setelah selesai roast ulang lagi dan lakukan improvement, saya tidak mau eugene ada complain."
+- **Interpretation:**
+  - Q1 needs no redo. The hand-played runs v1–v3 used $9.99 Plus, close to the app's real $10. The re-run never walked the free limit or the Upgrade screen, so that step was added; the pinned numbers stay the same.
+  - "Semua keputusan diatas termasuk yang sebelumnya animasi" was read as every flag still staging-only: journey tags, the folding desktop sidebar rail (the animation), personas and buyer agent results, plus the new funnel. All are set to `true`, so they show on production. If "animasi" meant something narrower, turn the flag back off in `src/versions/releases.ts`.
+- **Changed:**
+  - `src/admin/data/buyerSim.ts`: steps `hits-cap` and `upgrade` between check-in and come-back; `capHit` and `capToPlus` in the report; metric 8 is now "Hits the free limit → chooses Plus". Agent v3 × production v3: 15% hit the limit, 9% of them choose Plus.
+  - `src/admin/data/businessFunnel.ts` (new) and its test: the five stages, eight metrics with default targets, the stage status and biggest gap (from the agents only; the feedback group is recruited and supported, so it is a ceiling), and a decision log with six real entries.
+  - `src/admin/pages/BusinessFunnelPage.tsx` (new): source selectors, stage cards, stage-by-stage bars with an editable target, moment chips, the decision log with a status per row and an Add form, sources, Export JSON and a six-step guide.
+  - `src/versions/releases.ts`: every flag `true`, `businessFunnel` added. `src/App.tsx`, `src/admin/AdminLayout.tsx` (nav item; the header now says the real environment, it said "staging" on production), `src/demo/modules.ts`.
+- **Verified:** `npm run check` (181 tests). A production build at 1440px (light and dark) and 402px: the funnel renders, the guide steps through, a decision can be added, no horizontal scroll, no console errors; user journey, personas, buyer agent and versions pages load on production.
+- **Revert:** `git revert --no-commit 3639fcf` then `git checkout HEAD -- docs/`. To take only the release back, set the flags to `BUILD.environment !== 'production'` again.
 
 ### U107 — Buyer agent results as a dashboard
 

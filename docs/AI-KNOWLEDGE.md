@@ -1,13 +1,13 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J152** · updated 23 Nov 2026
+**Covers up to J153** · updated 23 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
 current version. History and detail live elsewhere:
 
 - `docs/HANDOFF.md`: the full handover, including §17, every request (J) and change (U).
-- `docs/WORK-JOURNAL.md`: what was asked and answered; the Open items table (O1–O47).
+- `docs/WORK-JOURNAL.md`: what was asked and answered; the Open items table (O1–O48).
 - `docs/UPDATE-LOG.md`: every code change, with how to revert it.
 - `CLAUDE.md`: engineering conventions.
 
@@ -195,7 +195,9 @@ evidence → decision. It is not a user feature.
 - **Eugene wants it simple:** add no more than these.
 - **His frame:** an "AI that builds the AI", dual-track validation looped daily, and the user journey as the product team's board.
 **Eugene in one line (J151):** prove market fit fast, through a daily dual-track loop (paid digital retreats with people, plus buyer agents), measured the same way. The admin's user journey, business funnel and buyer agent results are the tools that run that loop.
-**Next build (J152, O47):** the Business funnel as the hub. It shows 4 stages with targets, the agent column from buyer agent runs, the human column from Experimentation and click insights, the biggest leak, and a decision log. Check the app before claiming something does not exist: `/upgrade` was missed in J137.
+**Business funnel (J153, U108), built:** `/admin/business-funnel`, data in `src/admin/data/businessFunnel.ts`. Stages entry → aha → cap → Plus → staying; eight metrics with editable targets (stored per browser); status and biggest gap come from the **agents only**, because the feedback group is recruited and supported and sits far above an open funnel (show it as a ceiling). The decision log's six entries are real; d1–d4 are proposed. Targets are the agent's defaults until Eugene confirms (O48). Check the app before claiming something does not exist: `/upgrade` was missed in J137.
+**The re-run walks the cap (J153):** steps `hits-cap` and `upgrade` in `buyerSim.ts`; metric 8 = hit the limit → choose Plus. The hand-played runs did not need redoing.
+**Release state (J153):** every `RELEASES` flag is `true`; staging and production show the same features. New app work that should wait still goes behind a flag set to `BUILD.environment !== 'production'`. "Animasi" in the owner's message was read as the folding sidebar rail.
 - **Keep the agent honest:** look for the no first, honour deal breakers, set price from income and place. Write findings from computed tallies, never from memory.
 
 **The 2025 backend documents (J099, J109–J112).**

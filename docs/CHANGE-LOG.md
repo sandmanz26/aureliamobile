@@ -19,6 +19,16 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-23 — Business funnel, and every staging-only feature released (U108, J153)
+
+Admin → Product lab → Business funnel: entry, aha, the usage cap, Plus and
+staying, each with targets, the buyer agents' prediction beside the feedback
+group, the biggest gap, and a decision log. The buyer re-run walks the free
+limit and Upgrade. Journey tags, the folding sidebar rail, personas, buyer
+agent results and the funnel are now on production, on request.
+
+Branches: `web_app`, `admin_cms`, `web_prod`.
+
 ### 2026-11-20 — Buyer agent results as a dashboard (U107, J146)
 
 Results and charts first (verdicts, A against B, objections, a heat table by
