@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J147** · updated 23 Nov 2026
+**Covers up to J148** · updated 23 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
@@ -178,6 +178,9 @@ evidence → decision. It is not a user feature.
 - **Charts** live in `pages/buyer/BuyerCharts.tsx`. Yes / maybe / no uses one hue in three steps (`shade.ts`), never the status colours. Numbers are always written on bars and cells.
 - **A new finding** should open with a short sentence that stands alone, because that sentence becomes the lead.
 **"Retreat in a box" (J147).** Mentioned by the owner as an earlier Eugene request, but it is in no record. If it comes up, ask for the brief; do not reconstruct it from memory.
+**Eugene's briefs are kept in `docs/briefs/` (J148).** The 23 Nov brief (freemium psychology, state-transition model, AI metering paywall, lighthouse, dual track) is context for buyer agent v5 and the business funnel (O43).
+- **Do not act on it** until the owner sends the rest.
+- **Read its notes first:** do not block mid-crisis; no invented "+14%"; streaks contradict the research.
 - **Keep the agent honest:** look for the no first, honour deal breakers, set price from income and place. Write findings from computed tallies, never from memory.
 
 **The 2025 backend documents (J099, J109–J112).**

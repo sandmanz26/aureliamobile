@@ -488,7 +488,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U107**, last J = **J147**, last
+**Numbering as of 17 Nov 2026:** last U = **U107**, last J = **J148**, last
 O = **O44**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -983,6 +983,7 @@ history can be read without opening four documents.
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
 | J146 | 2026-11-20 | Code | Buyer agent results: a dashboard with charts, easier and more comfortable to read | U107 |
 | J147 | 2026-11-23 | Question | Eugene's "retreat in a box": not in any record or this session's history; asked for the brief | — |
+| J148 | 2026-11-23 | Record | Eugene's freemium and state-transition brief kept as context (docs/briefs), not acted on until the rest arrives | — |
 
 ### 17.2 Code changes (U)
 

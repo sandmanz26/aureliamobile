@@ -70,12 +70,13 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O40 | **Offer B (J135)**: which of buyer agent v3's proposed changes to build first. The agent ranks them by how many answers each changed: first session without an account (16), languages (13), data line (11), then voice choice, yearly-first and local prices (10 each). Also decide: larger text and setup help for 65+, and a student price | J135 | Product owner + Eugene |
 | O41 | **Buyer agent v4 and the feedback group (J136)**: approve v4. (1) Each persona walks the feedback group's actual screens, step by step along the user journey, giving a predicted funnel and where people leave. (2) The ten metrics are scored per run, each marked predicted (agent) or measured (humans). (3) A human test plan is exported for the feedback group. (4) Real results are entered after the sessions and compared with the agent's. Needs: the feedback group's date, size, countries and ages, and which design version they will see | J136 | Product owner + Eugene |
 | O42 | **Move v5's wearable question to after the first session (J139)**: the re-run's one design change. It should keep v5's return gain without its onboarding loss. Check it with the feedback group, or build it as a v6 on staging first | J139 | Product owner |
-| O43 | **Eugene's business funnel model (J140)**: confirm the reading, then build in three parts. (1) Admin → Product lab → **Business funnel**: the lighthouse's four stages, adapted to Aurelia, laid over the user journey moments, with the market-fit metrics and the features behind each stage. (2) Buyer agent v5 walks that funnel, reports where people stall, bounce or are blocked per stage, and returns the feature that would move them on. (3) The wiki's Feedback group playbook, rewritten as the dual track (agents and humans, same stages, same metrics). Needs the Gemini deck as text or PDF (the share link is not readable from here) | J140 | Product owner + Eugene |
+| O43 | **Brief kept in `docs/briefs/2026-11-23-eugene-freemium-state-transition.md` (J148); more context to come.** **Eugene's business funnel model (J140)**: confirm the reading, then build in three parts. (1) Admin → Product lab → **Business funnel**: the lighthouse's four stages, adapted to Aurelia, laid over the user journey moments, with the market-fit metrics and the features behind each stage. (2) Buyer agent v5 walks that funnel, reports where people stall, bounce or are blocked per stage, and returns the feature that would move them on. (3) The wiki's Feedback group playbook, rewritten as the dual track (agents and humans, same stages, same metrics). Needs the Gemini deck as text or PDF (the share link is not readable from here) | J140 | Product owner + Eugene |
 | O44 | **Done in U105 (J144)**, except readiness, which stays on the moment. **Tie screens to tags (J143)**: make each screen the value of the "Product surface" tag, so a moment's surface and its screenshot are one fact. Add the missing screens (journal, progress, sharing), so every surface has a picture. Move readiness onto the screen. Keep moments as the when-and-why map and the business funnel as the how-far map; screens join the two | J143 | Product owner |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
 | J146 | 2026-11-20 | Code | Buyer agent results: a dashboard with charts, easier and more comfortable to read | U107 |
 | J147 | 2026-11-23 | Question | Eugene's "retreat in a box": not in any record or this session's history; asked for the brief | — |
+| J148 | 2026-11-23 | Record | Eugene's freemium and state-transition brief kept as context (docs/briefs), not acted on until the rest arrives | — |
 | J141 | 2026-11-19 | Opinion | Is the business funnel a CMS like the user journey, and what is it for | — |
 | J142 | 2026-11-19 | Opinion | How the user journey, the business funnel and the buyer agent connect; what one iteration produces | — |
 | J143 | 2026-11-19 | Opinion | What the current user journey map is, and why screens should be tied to the tags (the Product surface tag) | — |
@@ -1796,3 +1797,21 @@ transcript and the update log. Everything from J018 on was written at the time.
   - **Searched:** the journal, the handoff, AI-KNOWLEDGE, the update log, the PRD and this session's history all hold no request from Eugene about a "retreat in a box".
   - **The only retreat material** is the Insight Timer research: in-person and virtual retreats booked through teachers, with Insight Timer keeping about 10%.
   - **Likely explanation:** the brief was sent somewhere this agent never saw. The owner was asked to resend it.
+
+### J148 — Eugene's brief, kept for later
+- **Asked:** (five WhatsApp screenshots from Eugene: replica agents extracting Insight Timer's successful features; why high-retention freemium apps work, five verticals and the common formula; Aurelia as a state-transition freemium model with an AI metering paywall, parts 3 and 4; the Bad-to-Good lighthouse; dual track) "keep dulu itu nanti saya berikan lagi supaya lengkap context nya" — after "tolong update ini ya dan kerjakan di background"
+- **Done:** the five screenshots are transcribed into `docs/briefs/2026-11-23-eugene-freemium-state-transition.md`. Nothing was built, as asked. The file covers:
+  - replica agents for Insight Timer's features;
+  - the freemium psychology of five verticals and their common formula;
+  - Aurelia as a state-transition model with an AI metering paywall, parts 3 and 4;
+  - the lighthouse;
+  - the dual track.
+- **The file lists what is still missing:**
+  - the rest the owner will send;
+  - parts 1 and 2 of the breakdown;
+  - the Gemini deck.
+- **It also notes three points for whoever acts on it:**
+  - the research disagrees with streak protection and with blocking at peak momentum;
+  - a "+14%" preview would be an invented number;
+  - the cap already exists, but the upsell screen does not.
+- **Open:** O43.
