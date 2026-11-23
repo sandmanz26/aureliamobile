@@ -72,11 +72,13 @@ transcript and the update log. Everything from J018 on was written at the time.
 | O42 | **Move v5's wearable question to after the first session (J139)**: the re-run's one design change. It should keep v5's return gain without its onboarding loss. Check it with the feedback group, or build it as a v6 on staging first | J139 | Product owner |
 | O43 | **Brief kept in `docs/briefs/2026-11-23-eugene-freemium-state-transition.md` (J148); more context to come.** **Eugene's business funnel model (J140)**: confirm the reading, then build in three parts. (1) Admin → Product lab → **Business funnel**: the lighthouse's four stages, adapted to Aurelia, laid over the user journey moments, with the market-fit metrics and the features behind each stage. (2) Buyer agent v5 walks that funnel, reports where people stall, bounce or are blocked per stage, and returns the feature that would move them on. (3) The wiki's Feedback group playbook, rewritten as the dual track (agents and humans, same stages, same metrics). Needs the Gemini deck as text or PDF (the share link is not readable from here) | J140 | Product owner + Eugene |
 | O44 | **Done in U105 (J144)**, except readiness, which stays on the moment. **Tie screens to tags (J143)**: make each screen the value of the "Product surface" tag, so a moment's surface and its screenshot are one fact. Add the missing screens (journal, progress, sharing), so every surface has a picture. Move readiness onto the screen. Keep moments as the when-and-why map and the business funnel as the how-far map; screens join the two | J143 | Product owner |
+| O45 | **Retreat-in-a-Box (J149)**. First, answer the five questions for Eugene in `docs/briefs/2026-11-23-retreat-in-a-box-reading.md`: who the prototype is for, the founding creators, the box, what €19.99 includes, and the curriculum against the journey. Then decide the order: (1) admin prototype Sprint 1 on staging, with sample data marked as targets, in our design system; (2) buyer agent v5 testing the €19.99 retreat; (3) the wiki feedback project as the first paid cohort; (4) backend only after validation | J149 | Product owner + Eugene |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
 | J146 | 2026-11-20 | Code | Buyer agent results: a dashboard with charts, easier and more comfortable to read | U107 |
 | J147 | 2026-11-23 | Question | Eugene's "retreat in a box": not in any record or this session's history; asked for the brief | — |
 | J148 | 2026-11-23 | Record | Eugene's freemium and state-transition brief kept as context (docs/briefs), not acted on until the rest arrives | — |
+| J149 | 2026-11-23 | Opinion | Retreat-in-a-Box: what Eugene actually wants (a paid creator-led 8-week retreat feeding Aurelia Plus, with an admin cockpit), what not to take at face value, and the order to build it | — |
 | J141 | 2026-11-19 | Opinion | Is the business funnel a CMS like the user journey, and what is it for | — |
 | J142 | 2026-11-19 | Opinion | How the user journey, the business funnel and the buyer agent connect; what one iteration produces | — |
 | J143 | 2026-11-19 | Opinion | What the current user journey map is, and why screens should be tied to the tags (the Product surface tag) | — |
@@ -1815,3 +1817,23 @@ transcript and the update log. Everything from J018 on was written at the time.
   - a "+14%" preview would be an invented number;
   - the cap already exists, but the upsell screen does not.
 - **Open:** O43.
+
+### J149 — Retreat-in-a-Box, read as head of product
+- **Asked:** (two PDFs from Eugene: Retreat-in-a-Box PO Specification & Prototype Blueprint, and Prototype Functional Requirements & UI Spec; WhatsApp: the Gemini deck card, "Pls update the feedback Project in Wiki to this model", "So its commercially aligned", the box mock-up, "Retreat-in-a-Box concept... a physical 'Welcome' card and an elegant gold activation piece to give the 8-week digital journey a tactile sense of occasion", "And here is how I wish you to build the prototype in Admin.." with a Google Doc link) "jujur saya kadang bingung yang dimaksud si eugene. tolong work as head of product, jangan ditangkap mentah mentah tapi coba artikulasi goal apa yang sbeetulnya dia mau buat."
+- **Done:** the PDFs are kept in `docs/briefs/`, with a reading in `2026-11-23-retreat-in-a-box-reading.md`. No code.
+- **The goal:** prove Aurelia can be sold as a paid, creator-led, 8-week "bad to good" retreat that feeds Aurelia Plus.
+  - **How it works:** €19.99 a seat, cohorts of up to 200, 50 creators, a 60/40 split, about 30% of graduates subscribing.
+  - **The box** makes the digital programme a premium, giftable occasion.
+  - **The admin prototype** is the cockpit that shows this business.
+  - **It ties together** the state-transition model (J148), the dual track (J136/J140) and the feedback group, which becomes the first paid cohort.
+- **Not to take at face value:**
+  - "validated" (nothing is);
+  - invented KPIs and a health claim (+85.7% sleep);
+  - numbers that disagree: 31.4% is of enrollees (41% of graduates); ARR ignores the €7.99 graduate price; 444 runs → 15,000 means about 20% conversion;
+  - targets optimistic against the research;
+  - about €8 a seat to Aurelia before costs, so the model rests on Plus conversion;
+  - an undefined box;
+  - mostly backend;
+  - design tokens that clash with ours;
+  - safety that must stay fixed.
+- **Open:** O45. There are five questions for Eugene, and a proposed order.

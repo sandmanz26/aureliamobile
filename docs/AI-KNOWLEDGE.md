@@ -1,13 +1,13 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J148** · updated 23 Nov 2026
+**Covers up to J149** · updated 23 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
 current version. History and detail live elsewhere:
 
 - `docs/HANDOFF.md`: the full handover, including §17, every request (J) and change (U).
-- `docs/WORK-JOURNAL.md`: what was asked and answered; the Open items table (O1–O44).
+- `docs/WORK-JOURNAL.md`: what was asked and answered; the Open items table (O1–O45).
 - `docs/UPDATE-LOG.md`: every code change, with how to revert it.
 - `CLAUDE.md`: engineering conventions.
 
@@ -181,6 +181,10 @@ evidence → decision. It is not a user feature.
 **Eugene's briefs are kept in `docs/briefs/` (J148).** The 23 Nov brief (freemium psychology, state-transition model, AI metering paywall, lighthouse, dual track) is context for buyer agent v5 and the business funnel (O43).
 - **Do not act on it** until the owner sends the rest.
 - **Read its notes first:** do not block mid-crisis; no invented "+14%"; streaks contradict the research.
+**Retreat-in-a-Box (J149, O45).** Eugene's main commercial idea: a paid, creator-led, 8-week "Moving from Bad to Good" retreat at €19.99 (cohorts of 200, 50 creators, a 60/40 split) that converts graduates into Aurelia Plus. It comes with a physical welcome box, and an admin cockpit to run it.
+- **Specs and a reading** are in `docs/briefs/`.
+- **Treat its KPIs as targets, not facts:** they are invented, and they contradict each other.
+- **Build only the spec's Sprint 1 (sample data) until the owner decides.** Use our admin design system, not the spec's fonts and colours.
 - **Keep the agent honest:** look for the no first, honour deal breakers, set price from income and place. Write findings from computed tallies, never from memory.
 
 **The 2025 backend documents (J099, J109–J112).**
