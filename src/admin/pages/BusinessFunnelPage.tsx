@@ -25,6 +25,7 @@ import { AGENT_RULES, DESIGNS, report, type AgentId, type DesignId } from '../da
 import { studyWeek } from '../data/study'
 import { INITIAL_JOURNEY, JourneyMapSchema, STORAGE_KEY, upgradeJourney } from '../data/userJourney'
 import { readJson, readString, writeJson, writeString } from '../../lib/storage'
+import { RetreatFunnel } from './funnel/RetreatFunnel'
 
 const GUIDE_KEY = 'aurelia.admin.funnelGuide'
 const pct = (v: number) => `${Math.round(v * 100)}%`
@@ -39,6 +40,7 @@ export function BusinessFunnelPage() {
   const [params, setParams] = useSearchParams()
   const agent = (Number(params.get('agent')) || 3) as AgentId
   const design = (Number(params.get('design')) || 3) as DesignId
+  const view = params.get('view') === 'retreat' ? 'retreat' : 'app'
   const [now] = useState(() => Date.now())
   const week = Math.max(1, Math.min(8, studyWeek(now)))
   const [targets, setTargets] = useState<Record<string, number>>(() => readJson(TARGETS_KEY, TargetsSchema, {}))
@@ -91,6 +93,31 @@ export function BusinessFunnelPage() {
           </div>
         }
       />
+
+      <div role="tablist" aria-label="Funnel" className="flex w-fit flex-wrap gap-4 rounded-8 bg-adm-bg p-4">
+        {(
+          [
+            ['app', 'App: freemium to Plus'],
+            ['retreat', 'Creator retreat (B2B2C)'],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={view === id}
+            onClick={() => setParams(id === 'retreat' ? { view: 'retreat' } : {}, { replace: true })}
+            className={`rounded-8 px-12 py-6 text-12 font-medium ${view === id ? 'bg-adm-surface text-adm-ink shadow-sm' : 'text-adm-ink-2 hover:text-adm-ink'}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {view === 'retreat' ? (
+        <RetreatFunnel />
+      ) : (
+        <>
 
       <div className="flex flex-wrap items-end gap-12" data-tour="source">
         <FormField label="Agent prediction for">
@@ -259,8 +286,11 @@ export function BusinessFunnelPage() {
         </div>
       </details>
 
+        </>
+      )}
+
       {adding && <DecisionForm stage={adding} onClose={() => setAdding(null)} onSave={(d) => saveDecisions([...decisions, d], 'Decision added')} />}
-      {guide && (
+      {guide && view === 'app' && (
         <GuideTour
           steps={GUIDE}
           onClose={() => {

@@ -232,6 +232,17 @@ export const DEFAULT_DECISIONS: Decision[] = [
     result: '',
   },
   {
+    id: 'd8',
+    date: '2026-11-24',
+    stage: 'entry',
+    finding: 'Retreat-in-a-Box as written loses money on every ticket (24 personalised sessions and a physical box cost more than Aurelia’s €6.45 share), asks creators to give up 40% where course platforms take 0–10%, and plans on 76.5% active at week 8 where mindfulness apps keep 4.7% at day 30.',
+    change: 'Redesign the offer: 70/30 plus a share of the Plus each cohort drives, a journey produced once in the creator’s voice with personal inserts, a digital kit, €39 tested against €19.99; plan on 20–50% at week 8 and measure Plus per ticket buyer.',
+    source: 'B2B2C research (J154, /wiki/b2b2c); approved by the product owner (J159)',
+    status: 'decided',
+    version: '',
+    result: '',
+  },
+  {
     id: 'd5',
     date: '2026-10-27',
     stage: 'cap',
