@@ -4,7 +4,7 @@
 
 ## The answer in one paragraph
 
-Aurelia should go to market through people who already have the customer, because buying users with ads does not pay back. The median Health & Fitness app turns 2.9% of installs into payers, which puts a paying subscriber at about $100–170 in media alone. **The best first bet is Eugene's creator cohort, Retreat-in-a-Box, but redesigned.** As specified, it breaks on four numbers:
+Aurelia should go to market through people who already have the customer, because buying users with ads does not pay back. The median Health & Fitness app turns 2.9% of installs into payers, which puts a paying subscriber at about $100–170 in media alone. **The best first bet is Eugene's creator cohort, Retreat-in-a-Box, but with redesigned terms.** "Redesign" here means the business model, not the app's screens: the price, the split, how the sessions are made and the box. As specified, it breaks on four numbers:
 
 - **The split.** Creators keep 87–97% on course platforms; 60% will be resisted.
 - **AI cost against the ticket.** Aurelia's €6.45 share of a €19.99 web ticket is less than 24 fully personalised sessions with a premium voice cost (about $13).

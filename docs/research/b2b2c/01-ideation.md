@@ -49,6 +49,8 @@ Each question scores 1 (poor) to 3 (good). The total is out of 18.
 
 ## What the redesign changes in Retreat-in-a-Box
 
+The redesign is of the offer and the business model, not of any screen. The idea stays the same: a creator sells an 8-week bad-to-good journey to their followers, and graduates move to Plus. What changes is the terms.
+
 | Spec | Redesign | Why |
 | --- | --- | --- |
 | €19.99 ticket | Test €19.99 against a higher ticket (for example €39) in the buyer agents first | At €19.99 a full cohort earns a creator about €1,936; big creators will not bother, small ones cannot fill 200 seats |

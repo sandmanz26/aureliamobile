@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J154** · updated 23 Nov 2026
+**Covers up to J155** · updated 23 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
@@ -198,7 +198,7 @@ evidence → decision. It is not a user feature.
 **Business funnel (J153, U108), built:** `/admin/business-funnel`, data in `src/admin/data/businessFunnel.ts`. Stages entry → aha → cap → Plus → staying; eight metrics with editable targets (stored per browser); status and biggest gap come from the **agents only**, because the feedback group is recruited and supported and sits far above an open funnel (show it as a ceiling). The decision log's seven entries are real; d1–d4 and d7 are proposed (d7, staying, from the re-run's top leave reason). The Fix next panel (U109) states the gap, the leave reasons and the open change; Eugene's loop is find → change → re-measure, so never show a gap without a next move. Targets are the agent's defaults until Eugene confirms (O48). Check the app before claiming something does not exist: `/upgrade` was missed in J137.
 **The re-run walks the cap (J153):** steps `hits-cap` and `upgrade` in `buyerSim.ts`; metric 8 = hit the limit → choose Plus. The hand-played runs did not need redoing.
 **Release state (J153):** every `RELEASES` flag is `true`; staging and production show the same features. New app work that should wait still goes behind a flag set to `BUILD.environment !== 'production'`. "Animasi" in the owner's message was read as the folding sidebar rail.
-**B2B2C research (J154, U110):** `/wiki/b2b2c` summary + nine pages from `docs/research/b2b2c/` (`src/guides/docPages.ts`; a test checks files and links). The position: redesign Retreat-in-a-Box (70/30 plus a Plus share, a pre-produced creator journey, a digital kit, test €39), measure Plus per ticket buyer, run a $50–70/seat team tier and trial codes beside it, leave insurers and clinical claims out. Never use the spec's invented outcome percentages. Partners last when the user owns the card. A wiki document can now have detail pages: add a `DocPage` list to `DOC_PAGES` in `GuidePage.tsx`.
+**B2B2C research (J154, U110):** `/wiki/b2b2c` summary + nine pages from `docs/research/b2b2c/` (`src/guides/docPages.ts`; a test checks files and links). The position: redesign Retreat-in-a-Box (70/30 plus a Plus share, a pre-produced creator journey, a digital kit, test €39), measure Plus per ticket buyer, run a $50–70/seat team tier and trial codes beside it, leave insurers and clinical claims out. Never use the spec's invented outcome percentages. Partners last when the user owns the card. "Redesign" in that research means the offer's terms (split, how sessions are made, box, price, targets), never the UI; say so when using the word (J155). A wiki document can now have detail pages: add a `DocPage` list to `DOC_PAGES` in `GuidePage.tsx`.
 - **Keep the agent honest:** look for the no first, honour deal breakers, set price from income and place. Write findings from computed tallies, never from memory.
 
 **The 2025 backend documents (J099, J109–J112).**

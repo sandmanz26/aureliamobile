@@ -90,6 +90,7 @@ Later, and separately:
 | J152 | 2026-11-23 | Opinion + fix | What the machine still lacks: the business funnel as the hub (with measured human numbers and a decision log); correction: an upgrade screen does exist | — |
 | J153 | 2026-11-23 | Code + release | Does the buyer agent need redoing? Build the Business funnel; put every decision on staging and production; roast again and improve so Eugene has nothing to complain about | U108, U109 |
 | J154 | 2026-11-24 | Research + code | Eugene's "B2B2C ideation, plan, research": deep research and analysis into the wiki, a summary linking detail pages so readers see the coverage, then a roast | U110 |
+| J155 | 2026-11-24 | Question + doc fix | What "desain ulang" (redesign) in the B2B2C research means | — |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
@@ -1946,3 +1947,14 @@ Later, and separately:
   - The spec's "+85.7% sleep" and "stress −50%" must never be used.
 - **Roast:** nine fixes, listed on `/wiki/b2b2c/roast`. Limits that stay: no public benchmark exists for paid programme → subscription, or for follower → buyer; partner terms are private; several figures are search-summary leads.
 - **Open:** O49.
+
+### J155 — What the "redesign" means
+- **Asked:** "desain ulang ini desain ulang apa ya ?"
+- **Answered:** it redesigns the business model of Retreat-in-a-Box, not the app's screens. The idea stays the same. What changes is the terms:
+  - the split: 60/40 becomes 70/30 plus a share of the Plus each cohort drives;
+  - how sessions are made: 24 fully personalised sessions become one journey produced in the creator's voice, plus personal inserts;
+  - the box: physical becomes a digital kit, with a physical box only as a paid add-on;
+  - the price: test €39 alongside €19.99;
+  - the targets: 76.5% at week 8 becomes 20–50%, with Plus measured per ticket buyer;
+  - the claims: no invented percentages.
+- **Doc fix:** the wiki summary and ideation now say so, because "redesigned" alone read as a UI redesign. Docs only, no code; on both sites.
