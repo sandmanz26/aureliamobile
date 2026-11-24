@@ -13,7 +13,6 @@
 // A new one that should wait imports BUILD from '../lib/build' and uses
 // BUILD.environment !== 'production'. Since J153 nothing is waiting.
 
-import { BUILD } from '../lib/build'
 
 export const RELEASES = {
   /** Figma "Changes" (16906:4947) item 1: one Chapter card + a Review sheet instead of the fanned deck. */
@@ -38,6 +37,6 @@ export const RELEASES = {
   buyerAgent: true,
   /** Admin → Product lab → Business funnel (U108): Eugene's stages as the market-fit scoreboard. On both sites (J153). */
   businessFunnel: true,
-  /** Admin → Reports (U116, J167): the Buyer agent report and the Combination report, each with a source graph. Staging only until asked. */
-  reports: BUILD.environment !== 'production',
+  /** Admin → Reports (U116, J167): the Buyer agent report and the Combination report, each with a source graph. On both sites since J173. */
+  reports: true,
 } as const
