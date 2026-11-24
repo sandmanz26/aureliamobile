@@ -97,6 +97,7 @@ Later, and separately:
 
 See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | O52 | **Reports menu (J161)**: confirm what "combination report" means: (a) every offer × version × agent × segment combination, simulated now, or (b) agents and real people side by side, once people exist. Recommended: (a) now, (b) as a column when real data arrives. Also confirm that Buyer agent results moves under Reports rather than staying beside it | J161 | Product owner |
+| O53 | **Backend Change Plan v2 (J162)**: confirm whether the old API is deployed; if it is, fix its open refund, card and `user_id` routes now. Ask the backend team for a v2 with a Pilot slice phase, the creator-retreat payments kept (one-off tickets, Stripe Connect payouts), safety in P1, infrastructure, migrations, data migration, observability, estimates and owners. Our side: add the retreat to the API contract, decide C1/C3/C4/C5, name a safety escalation owner. Review in `docs/api/CHANGE-PLAN-REVIEW.md` | J162 | Product owner + backend team |
 | J151 | 2026-11-23 | Opinion | What Eugene is asking for, in plain words: one goal (market fit), one loop (dual track), three tools in the admin | — |
 | J152 | 2026-11-23 | Opinion + fix | What the machine still lacks: the business funnel as the hub (with measured human numbers and a decision log); correction: an upgrade screen does exist | — |
 | J153 | 2026-11-23 | Code + release | Does the buyer agent need redoing? Build the Business funnel; put every decision on staging and production; roast again and improve so Eugene has nothing to complain about | U108, U109 |
@@ -108,6 +109,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | J159 | 2026-11-24 | Decision + code + record | Redesign approved; build the B2B2C business funnel in the admin; keep every piece of Eugene's context in one file | U113, U114 |
 | J160 | 2026-11-24 | Summary | The owner felt lost: a plain summary of what Eugene wants and where we are | — |
 | J161 | 2026-11-24 | Opinion | A Reports menu: buyer agent report (every iteration) and combination report; use the buyer agents to simulate and iterate | — |
+| J162 | 2026-11-24 | Review | The backend Change Plan (18 Nov) reviewed as head of engineering: approve it as an inventory, not yet as an implementation plan | — |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
@@ -2055,3 +2057,27 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
   - Every number is labelled a prediction.
   - "Combination report" was ambiguous. The recommendation: build the combination matrix now (offer × production version × agent rules × segment, ranking the best), and add real people as a column once they exist.
 - **Not built yet:** waiting for confirmation (O52).
+
+### J162 — The backend Change Plan, reviewed
+- **Asked:** (PDF "Aurelia - Change Plan", 16 pages, 18 Nov 2026) "this is doc from backend are you feel its ok ? think as head of engineer because later we will need to implement"
+- **Kept:** `docs/api/2026-11-18-backend-change-plan.pdf`. The review is in `docs/api/CHANGE-PLAN-REVIEW.md`.
+- **Verdict:** approve it as an inventory, but it is not yet an implementation plan.
+  - **What is good:**
+    - an honest route-by-route gap analysis;
+    - PostgreSQL;
+    - a `/v1` strangler migration;
+    - the "port is not unchanged" checklist;
+    - the defect list;
+    - reuse of the generation pipeline.
+  - **Must change:**
+    1. Hotfix the unauthenticated refund, card and WebSocket defects now, if the old API is live.
+    2. Add a Pilot slice before the full P0–P4 (237 endpoints): accounts, merchant-of-record payments, consented storage, the core loop, crisis handling, a creator dashboard.
+    3. Do not retire one-off payments or Stripe Connect payouts: the approved creator retreat needs them. Add creator, cohort, ticket and payout entities.
+    4. Move safety and crisis handling into P1.
+    5. Add infrastructure, migrations, data migration, observability, testing and CI, estimates and owners.
+  - **Should change:**
+    - one voice vendor plus a fallback, and no video in the MVP;
+    - builds that are produced once and personalised with inserts;
+    - the model policy in Foundation;
+    - no "mastery" in outcomes.
+- **Open:** O53.
