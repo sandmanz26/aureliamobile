@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J162** · updated 23 Nov 2026
+**Covers up to J163** · updated 23 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
@@ -201,7 +201,7 @@ evidence → decision. It is not a user feature.
 **Release state (J153):** every `RELEASES` flag is `true`; staging and production show the same features. New app work that should wait still goes behind a flag set to `BUILD.environment !== 'production'`. "Animasi" in the owner's message was read as the folding sidebar rail; in J156 the owner asked for an "animated text" that was never requested or built in this repository (O50); it turned out to be Eugene's "Headline in Motion", built in J157/U111: Home's desktop headline cycles peace, mind, energy and state (`ui/RotatingWord`, 500ms ease-in-out), in every version and, since J158/U112 (asked), on phones too. Before acting on a reference to earlier work, search the journal, the update log and git; if it is not there, say so and ask.
 **B2B2C research (J154, U110):** `/wiki/b2b2c` summary + nine pages from `docs/research/b2b2c/` (`src/guides/docPages.ts`; a test checks files and links). The position: redesign Retreat-in-a-Box (70/30 plus a Plus share, a pre-produced creator journey, a digital kit, test €39), measure Plus per ticket buyer, run a $50–70/seat team tier and trial codes beside it, leave insurers and clinical claims out. Never use the spec's invented outcome percentages. Partners last when the user owns the card. "Redesign" in that research means the offer's terms (split, how sessions are made, box, price, targets), never the UI; say so when using the word (J155). A wiki document can now have detail pages: add a `DocPage` list to `DOC_PAGES` in `GuidePage.tsx`.
 **Redesign approved (J159):** Retreat-in-a-Box runs on the redesigned terms. The admin's Business funnel → Creator retreat view (`retreatFunnel.ts`, tested against the wiki's figures) shows the offers, outcomes, pilot gates and money. Open risk: a creator keeps about €300 more per cohort on a course platform. **Never name Eugene on a shared surface** (wiki, admin texts, documents): write "the business owner" or "the brief" (J078; U114 cleaned up the misses).
-**Backend Change Plan (J162):** the backend team's 18 Nov gap analysis (`docs/api/2026-11-18-backend-change-plan.pdf`). It was approved as an inventory, not as a build plan (`docs/api/CHANGE-PLAN-REVIEW.md`). The old FastAPI/Mongo code has unauthenticated payment routes. Our position:
+**Backend Change Plan (J162):** the backend team's 18 Nov gap analysis (`docs/api/2026-11-18-backend-change-plan.pdf`). It was approved as an inventory, not as a build plan (`docs/api/CHANGE-PLAN-REVIEW.md`; as a PDF to send: `docs/api/2026-11-24-change-plan-feedback.pdf`, J163). The old FastAPI/Mongo code has unauthenticated payment routes. Our position:
 - PostgreSQL;
 - a `/v1` strangler migration;
 - a Pilot slice first;

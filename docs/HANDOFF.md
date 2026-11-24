@@ -500,7 +500,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U114**, last J = **J162**, last
+**Numbering as of 17 Nov 2026:** last U = **U114**, last J = **J163**, last
 O = **O53**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -1017,6 +1017,7 @@ history can be read without opening four documents.
 | J160 | 2026-11-24 | Summary | The owner felt lost: a plain summary of what Eugene wants and where we are | — |
 | J161 | 2026-11-24 | Opinion | A Reports menu: buyer agent report (every iteration) and combination report; use the buyer agents to simulate and iterate | — |
 | J162 | 2026-11-24 | Review | The backend Change Plan (18 Nov) reviewed as head of engineering: approve it as an inventory, not yet as an implementation plan | — |
+| J163 | 2026-11-24 | Doc | Feedback on the backend Change Plan as a PDF to send to the backend team | — |
 
 ### 17.2 Code changes (U)
 

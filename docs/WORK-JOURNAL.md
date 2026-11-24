@@ -110,6 +110,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | J160 | 2026-11-24 | Summary | The owner felt lost: a plain summary of what Eugene wants and where we are | — |
 | J161 | 2026-11-24 | Opinion | A Reports menu: buyer agent report (every iteration) and combination report; use the buyer agents to simulate and iterate | — |
 | J162 | 2026-11-24 | Review | The backend Change Plan (18 Nov) reviewed as head of engineering: approve it as an inventory, not yet as an implementation plan | — |
+| J163 | 2026-11-24 | Doc | Feedback on the backend Change Plan as a PDF to send to the backend team | — |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
@@ -2081,3 +2082,13 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
     - the model policy in Foundation;
     - no "mastery" in outcomes.
 - **Open:** O53.
+
+### J163 — Feedback on the Change Plan, as a PDF
+- **Asked:** "give feedback on pdf file."
+- **Done:** `docs/api/2026-11-24-change-plan-feedback.pdf` (4 pages). It follows the plan's own section numbers, and each comment is typed Must, Should, Keep or Ask:
+  - 5 Must;
+  - 7 Should;
+  - 8 Keep;
+  - 5 Ask.
+
+  It ends with the Pilot slice we ask for and what we do on our side. It names no person and no internal ids, so it is ready to send. Its content matches `docs/api/CHANGE-PLAN-REVIEW.md` (J162).
