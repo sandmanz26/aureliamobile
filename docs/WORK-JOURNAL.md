@@ -86,11 +86,13 @@ Later, and separately:
 - the Retreat cockpit once O45 is answered | J152 | Product owner |
 | O48 | **Funnel targets and proposed decisions (J153)**: the default targets (activation 70%, own session finished 60%, feels better 60%, free limit 30%, Plus 15%, back after a week 15%, a month 5%, "very disappointed" 40%) are the agent's, from the research. Eugene and the owner confirm or change them; then pick which proposed decision (d1–d4, d7) to build first | J153 | Product owner + Eugene |
 | O49 | **B2B2C plan (J154)**, in `/wiki/b2b2c/plan`: approve Phase 0 (buyer agent v5 on the redesigned retreat, €19.99 against €39; 5–10 creator interviews; the claims pack and creator contract; the admin prototype). Decide the redesign (70/30 plus a Plus share, a pre-produced journey in the creator's voice, a digital kit), the pilot's first market, and who builds the minimum backend. Confirm insurers and clinical claims are out of scope | J154 | Eugene + product owner |
+| O50 | **The "animated text" (J156)**: no request, commit or flag for it exists in this session or on any branch, so it was probably discussed elsewhere. Owner to say where it should appear and what it does (or share the earlier conversation); then build it, on both sites as asked in J153. J153's reading of "animasi" as the sidebar rail may have been wrong | J156 | Product owner |
 | J151 | 2026-11-23 | Opinion | What Eugene is asking for, in plain words: one goal (market fit), one loop (dual track), three tools in the admin | — |
 | J152 | 2026-11-23 | Opinion + fix | What the machine still lacks: the business funnel as the hub (with measured human numbers and a decision log); correction: an upgrade screen does exist | — |
 | J153 | 2026-11-23 | Code + release | Does the buyer agent need redoing? Build the Business funnel; put every decision on staging and production; roast again and improve so Eugene has nothing to complain about | U108, U109 |
 | J154 | 2026-11-24 | Research + code | Eugene's "B2B2C ideation, plan, research": deep research and analysis into the wiki, a summary linking detail pages so readers see the coverage, then a roast | U110 |
 | J155 | 2026-11-24 | Question + doc fix | What "desain ulang" (redesign) in the B2B2C research means | — |
+| J156 | 2026-11-24 | Question | Where is the animated text from yesterday? Not on production or staging | — |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
@@ -1958,3 +1960,17 @@ Later, and separately:
   - the targets: 76.5% at week 8 becomes 20–50%, with Plus measured per ticket buyer;
   - the claims: no invented percentages.
 - **Doc fix:** the wiki summary and ideation now say so, because "redesigned" alone read as a UI redesign. Docs only, no code; on both sites.
+
+### J156 — Where is the animated text?
+- **Asked:** "owh ya kemarin yang animated text itu ada dimana ya ? saya cek kok di prod dan stag tidak ada"
+- **Checked:**
+  - every user message in this session;
+  - the update log and work journal;
+  - the commit history of every branch since 15 Nov.
+
+  None of them has a request, a build or a flag for animated text.
+- **Answered:** it was never built here. It was probably discussed in another conversation that did not reach this repository.
+  - The only text animation in the app is the typing example prompts in Home's Ask field (U008, v2 and later).
+  - J153 read "animasi" as the folding sidebar rail; that may have been the wrong guess.
+  - Asked the owner where the text should appear and what it should do.
+- **Open:** O50.

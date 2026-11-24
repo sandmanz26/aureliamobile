@@ -496,8 +496,8 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U110**, last J = **J155**, last
-O = **O49**. Before numbering, check the files for anything newer.
+**Numbering as of 17 Nov 2026:** last U = **U110**, last J = **J156**, last
+O = **O50**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
 push. `src/guides/records.test.ts` enforces it.
@@ -1002,6 +1002,7 @@ history can be read without opening four documents.
 | J153 | 2026-11-23 | Code + release | Does the buyer agent need redoing? Build the Business funnel; put every decision on staging and production; roast again and improve so Eugene has nothing to complain about | U108, U109 |
 | J154 | 2026-11-24 | Research + code | Eugene's "B2B2C ideation, plan, research": deep research and analysis into the wiki, a summary linking detail pages so readers see the coverage, then a roast | U110 |
 | J155 | 2026-11-24 | Question + doc fix | What "desain ulang" (redesign) in the B2B2C research means | — |
+| J156 | 2026-11-24 | Question | Where is the animated text from yesterday? Not on production or staging | — |
 
 ### 17.2 Code changes (U)
 
