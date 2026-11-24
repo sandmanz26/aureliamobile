@@ -19,6 +19,14 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-24 — Headline in Motion (U111, J157)
+
+Home's headline on desktop: "Create the peace / mind / energy / state you
+imagine.", the word changing every 2.6 s with a 500ms ease-in-out. Every
+design version on desktop; mobile unchanged. Staging and production.
+
+Branches: `web_app`, `admin_cms`, `web_prod`.
+
 ### 2026-11-24 — B2B2C research in the wiki (U110, J154)
 
 New wiki tab B2B2C: a summary of a five-track deep research, with a coverage

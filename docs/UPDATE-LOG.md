@@ -147,9 +147,36 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U108 | `3639fcf` | 2026-11-23 | Admin → Product lab → **Business funnel** (`/admin/business-funnel`): Eugene's four stages plus staying, each with targets the team can edit, the buyer agents' prediction for a chosen production version beside the feedback group's measurement (a ceiling), the biggest gap ringed, moments linked to the user journey, a decision log (proposed → measured) and a guide. The buyer re-run now walks the free limit and the Upgrade screen (metric 8). Every staging-only flag released: journey tags, the folding sidebar rail, personas, buyer agent results and the funnel are on production. | [patch](patches/U108-3639fcf.patch) |
 | U109 | `cdb7225` | 2026-11-23 | Business funnel after a roast as Eugene: a **Fix next** panel under the stage cards (the biggest gap in one sentence, why agents leave across the funnel, and the change proposed for that stage), a real proposed decision for staying (d7: the next chapter's time set in the check-in, no streaks; new defaults merge into a saved log), the shortlist metrics each stage still needs a backend for, and the feedback group labelled sample data. Staging and production. | [patch](patches/U109-cdb7225.patch) |
 | U110 | `37f0d7b` | 2026-11-24 | Wiki tab **B2B2C** (`/wiki/b2b2c`): a summary with a coverage table linking nine detail pages at `/wiki/b2b2c/:page` (Ideation, Creators and cohorts, Employers and insurers, Partners, Unit economics, Claims and regulation, Plan, Roast, Full report and sources), from a five-track deep research (notes and report in `docs/research/`). A pages strip on every page; a test checks every page file exists and every link resolves. Staging and production (wiki rule J076). | [patch](patches/U110-37f0d7b.patch) |
+| U111 | `bde496b` | 2026-11-24 | Home's headline on desktop is Eugene's Headline in Motion: "Create the ___ you imagine." with the gold italic word cycling peace → mind → energy → state, a 500ms ease-in-out cross-fade, the line sliding to fit, still under reduced motion. Every version on desktop, v5 included; below lg each version keeps its static headline (mobile frozen). New `ui/RotatingWord`. Staging and production. | [patch](patches/U111-bde496b.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U111 — Headline in Motion
+
+- **Commit:** `bde496b` · pushed 2026-11-24 UTC · `web_app` + `admin_cms` + `web_prod` (staging and production, as allowed in J153).
+- **Patch:** [patches/U111-bde496b.patch](patches/U111-bde496b.patch)
+- **Request:** (screenshot from Eugene: "Headline in Motion (Well-being Variations)", four frames of "Create the peace / mind / energy / state you imagine.", "Make this animated…", and his note: 500ms with a gentle ease-in-out) "kerjakan ini tolong"
+- **Interpretation:**
+  - It is the Home headline. The word after "Create the" changes in place: peace, mind, energy, state. Each word shows for 2.6 s, and the change takes 500ms ease-in-out, as Eugene's note asked.
+  - **Desktop only.** The headline sits on the mobile layout too, which is frozen unless a mobile change is asked for. Mobile can follow on request.
+  - **v5 too, on desktop.** v5 had dropped "Create the space you imagine" because an interviewed user read "space" as a co-working space (U053). The cycle has no "space", so it answers that reason; v5's mobile keeps "Sessions made for how you feel today."
+  - The word keeps the app's Mulish italic in the brand gold. The mock's serif italic is not in the design system.
+- **Changed:**
+  - `src/components/ui/RotatingWord.tsx` (new):
+    - one grid cell, so the words cross-fade with a small rise without moving the line;
+    - the box's width follows the word over the same 500ms;
+    - screen readers get "peace, mind, energy and state";
+    - under reduced motion it stays on "peace".
+  - `src/pages/HomePage.tsx`: the desktop headline, and the mobile headlines as `lg:hidden`.
+  - `src/designsystem/catalogue.ts`: the component's entry.
+- **Verified:**
+  - `npm run check` (185 tests);
+  - a production build at 1440px in versions 3, 4 and 5: the word cycles (frames captured: peace, energy), with no sideways scroll;
+  - at 402px, v4 still reads "Create the space you imagine." and v5 "Sessions made for how you feel today.";
+  - no console errors.
+- **Follow-up:** a story for `RotatingWord` on the `storybook` branch.
+- **Revert:** `git revert --no-commit bde496b` then `git checkout HEAD -- docs/`.
 
 ### U110 — B2B2C research in the wiki
 

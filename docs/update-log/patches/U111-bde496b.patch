@@ -1,0 +1,145 @@
+From bde496b5f2d630677d73a8d96ab208b19c986445 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 24 Nov 2026 08:06:47 +0000
+Subject: [PATCH] Home: Headline in Motion on desktop (peace, mind, energy,
+ state; 500ms ease-in-out) (U111, J157)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/components/ui/RotatingWord.tsx | 55 ++++++++++++++++++++++++++++++
+ src/designsystem/catalogue.ts      |  1 +
+ src/pages/HomePage.tsx             | 22 ++++++++++--
+ 3 files changed, 76 insertions(+), 2 deletions(-)
+ create mode 100644 src/components/ui/RotatingWord.tsx
+
+diff --git a/src/components/ui/RotatingWord.tsx b/src/components/ui/RotatingWord.tsx
+new file mode 100644
+index 0000000..8807d0e
+--- /dev/null
++++ b/src/components/ui/RotatingWord.tsx
+@@ -0,0 +1,55 @@
++import { useEffect, useLayoutEffect, useRef, useState } from 'react'
++
++/**
++ * One word that changes in place (U111, J157: Eugene's "Headline in Motion").
++ * The words share one grid cell, so they cross-fade without moving the line;
++ * the box's width follows the word on screen over the same 500ms ease-in-out,
++ * so the rest of the sentence slides instead of jumping. Under reduced motion
++ * it stays on the first word. Screen readers get `label`, not the cycle.
++ */
++export function RotatingWord({ words, label, holdMs = 2600, className = '' }: { words: string[]; label: string; holdMs?: number; className?: string }) {
++  const [i, setI] = useState(0)
++  const box = useRef<HTMLSpanElement>(null)
++
++  useEffect(() => {
++    if (words.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
++    const id = window.setInterval(() => setI((n) => (n + 1) % words.length), holdMs)
++    return () => window.clearInterval(id)
++  }, [words.length, holdMs])
++
++  // Width is written to the DOM, not to state: it is a measurement of what is
++  // already rendered. Skipped while hidden (display: none measures 0).
++  useLayoutEffect(() => {
++    const el = box.current
++    if (!el) return
++    const fit = () => {
++      const w = el.querySelector<HTMLElement>(`[data-word="${i}"]`)?.offsetWidth ?? 0
++      if (w > 0) el.style.width = `${w}px`
++    }
++    fit()
++    void document.fonts?.ready.then(fit)
++  }, [i])
++
++  const prev = (i - 1 + words.length) % words.length
++  return (
++    <>
++      <span className="sr-only">{label}</span>
++      <span
++        ref={box}
++        aria-hidden="true"
++        className={`relative inline-grid justify-items-start align-bottom transition-[width] duration-500 ease-in-out motion-reduce:transition-none ${className}`}
++      >
++        {words.map((w, k) => (
++          <span
++            key={w}
++            data-word={k}
++            className="col-start-1 row-start-1 whitespace-nowrap pr-[0.08em] transition-[opacity,transform] duration-500 ease-in-out motion-reduce:transition-none"
++            style={{ opacity: k === i ? 1 : 0, transform: k === i ? 'none' : k === prev ? 'translateY(-0.3em)' : 'translateY(0.3em)' }}
++          >
++            {w}
++          </span>
++        ))}
++      </span>
++    </>
++  )
++}
+diff --git a/src/designsystem/catalogue.ts b/src/designsystem/catalogue.ts
+index 1e2406c..a59103e 100644
+--- a/src/designsystem/catalogue.ts
++++ b/src/designsystem/catalogue.ts
+@@ -58,6 +58,7 @@ export const CATALOGUE: CatalogueEntry[] = [
+   { file: 'ui/NavItem.tsx', name: 'NavItem', pattern: 'navigation', purpose: 'One row of the drawer or desktop sidebar.', useWhen: 'Menu lists.', states: ['active', 'disabled (module off)', 'end (exact match)'], where: 'Drawer, desktop sidebar', figma: 'Menu List Item (16651:12647)' },
+ 
+   // Cards and content
++  { file: 'ui/RotatingWord.tsx', name: 'RotatingWord', pattern: 'brand', purpose: 'One word of a headline that changes in place: a 500ms ease-in-out cross-fade, the line sliding to fit.', useWhen: 'A headline that names several outcomes in one slot (Headline in Motion).', states: ['cycling', 'reduced motion (first word, still)'], where: 'Home headline (desktop)' },
+   { file: 'ui/FeatureCard.tsx', name: 'FeatureCard', pattern: 'content', purpose: 'A benefit with an icon, a title and one line.', useWhen: 'Explaining what Aurelia does on marketing surfaces.', states: ['default'], where: 'Home (signed out)' },
+   { file: 'ui/SessionGridCard.tsx', name: 'SessionGridCard', pattern: 'content', purpose: 'The tall session card: leads with Play and credits the creator by face.', useWhen: 'Grids of sessions.', states: ['with or without author', 'guarded (asks to sign in)'], where: 'See All, challenge shelf, profile' },
+   { file: 'journeys/JourneyCard.tsx', name: 'JourneyCard', pattern: 'content', purpose: 'A personal journey story: photo under a dark gradient, the story’s words as the title.', useWhen: 'The Personal Journeys shelf.', states: ['loading (gradient floor)', 'loaded'], where: 'Discover, /journeys', figma: '16906:5645' },
+diff --git a/src/pages/HomePage.tsx b/src/pages/HomePage.tsx
+index 5291dc3..be7e969 100644
+--- a/src/pages/HomePage.tsx
++++ b/src/pages/HomePage.tsx
+@@ -21,6 +21,7 @@ import aureliaNetwork from '../assets/aurelia-network.png'
+ import liveSessionsMap from '../assets/live-sessions-map.png'
+ import { FEELINGS, MAX_FEELINGS, feelingSentence } from '../lib/feelings'
+ import { useUiVersion } from '../versions/useUiVersion'
++import { RotatingWord } from '../components/ui/RotatingWord'
+ import { useTypewriterPlaceholder } from '../versions/useTypewriterPlaceholder'
+ import { PageMeta } from '../components/PageMeta'
+ import { Chip } from '../components/ui/Chip'
+@@ -126,6 +127,10 @@ function PlayGlyph() {
+  * The one unavoidable difference is the header: a visitor has no coin balance,
+  * so the pill is replaced by Sign in until there is an account behind it.
+  */
++
++/** Eugene's Headline in Motion (J157): the states a session is made for. */
++const HEADLINE_WORDS = ['peace', 'mind', 'energy', 'state']
++
+ export function HomePage() {
+   const { openDrawer } = useDrawer()
+   const { isEnabled } = useFeatureFlags()
+@@ -366,15 +371,28 @@ export function HomePage() {
+               48px bitmap scaled up, which is what made the mark blurry. */}
+           <img src={logoHomepage} alt="Aurelia" width={64} height={64} className="relative mx-auto block size-64" />
+ 
++          {/* Desktop (lg) since U111, J157: Eugene's "Headline in Motion". The
++              word cycles peace → mind → energy → state, 500ms ease-in-out, in
++              every version. It also answers v5's reason for dropping the line
++              (Olivia read "space" as a co-working space): no word in the cycle
++              is "space". Below lg the mobile layout is frozen, so each version
++              keeps its own static headline there. */}
++          <h1 className="text-style-title-large relative mt-26 hidden text-text-primary lg:block">
++            Create the{' '}
++            <em className="italic" style={{ color: '#E9A93A' }}>
++              <RotatingWord words={HEADLINE_WORDS} label="peace, mind, energy and state" />
++            </em>{' '}
++            you imagine.
++          </h1>
+           {v5 ? (
+             /* v5 (U053): says what Aurelia is. An interviewed user (Olivia)
+                read "Create the space you imagine" over the live map as a
+                co-working space with locations. */
+-            <h1 className="text-style-title-large relative mt-26 text-text-primary">
++            <h1 className="text-style-title-large relative mt-26 text-text-primary lg:hidden">
+               Sessions made for how you feel <em className="italic" style={{ color: '#E9A93A' }}>today</em>.
+             </h1>
+           ) : (
+-          <h1 className="text-style-title-large relative mt-26 text-text-primary">
++          <h1 className="text-style-title-large relative mt-26 text-text-primary lg:hidden">
+             Create the{' '}
+             {/* "space" is the product's whole promise, so the sentence points
+                 at it — italic and in the brand gold, the way the design does. */}
+-- 
+2.43.0
+
