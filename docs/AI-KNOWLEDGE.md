@@ -1,16 +1,16 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J160** · updated 23 Nov 2026
+**Covers up to J161** · updated 23 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
 current version. History and detail live elsewhere:
 
 - `docs/HANDOFF.md`: the full handover, including §17, every request (J) and change (U).
-- `docs/WORK-JOURNAL.md`: what was asked and answered; the Open items table (O1–O51).
+- `docs/WORK-JOURNAL.md`: what was asked and answered; the Open items table (O1–O52).
 - `docs/UPDATE-LOG.md`: every code change, with how to revert it.
 - `CLAUDE.md`: engineering conventions.
-- `docs/briefs/EUGENE-CONTEXT.md`: everything about Eugene (the business owner): timeline, models, decisions, open items. Add a row for every new input (J159). When the owner feels lost, answer from it in three parts: what he wants, what is built, what waits on whom (J160).
+- `docs/briefs/EUGENE-CONTEXT.md`: everything about Eugene (the business owner): timeline, models, decisions, open items. Add a row for every new input (J159). When the owner feels lost, answer from it in three parts: what he wants, what is built, what waits on whom (J160). Proposed next (J161, O52): a Reports menu where the buyer agents act as the iteration engine. It has a Buyer agent report (every iteration: hypothesis → change → run → delta → decision) and a Combination report (offer × version × agent × segment); people get a column later.
 
 **Rule (owner, J129):** every request adds what was learned to this file, in the
 same push. Rewrite stale lines rather than appending contradictions, and move

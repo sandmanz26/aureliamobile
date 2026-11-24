@@ -96,6 +96,7 @@ Later, and separately:
 - one screenshot relayed about 11 Nov, never recorded.
 
 See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
+| O52 | **Reports menu (J161)**: confirm what "combination report" means: (a) every offer × version × agent × segment combination, simulated now, or (b) agents and real people side by side, once people exist. Recommended: (a) now, (b) as a column when real data arrives. Also confirm that Buyer agent results moves under Reports rather than staying beside it | J161 | Product owner |
 | J151 | 2026-11-23 | Opinion | What Eugene is asking for, in plain words: one goal (market fit), one loop (dual track), three tools in the admin | — |
 | J152 | 2026-11-23 | Opinion + fix | What the machine still lacks: the business funnel as the hub (with measured human numbers and a decision log); correction: an upgrade screen does exist | — |
 | J153 | 2026-11-23 | Code + release | Does the buyer agent need redoing? Build the Business funnel; put every decision on staging and production; roast again and improve so Eugene has nothing to complain about | U108, U109 |
@@ -106,6 +107,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | J158 | 2026-11-24 | Code (mobile, on request) | Headline in Motion on phones as well, and on production | U112 |
 | J159 | 2026-11-24 | Decision + code + record | Redesign approved; build the B2B2C business funnel in the admin; keep every piece of Eugene's context in one file | U113, U114 |
 | J160 | 2026-11-24 | Summary | The owner felt lost: a plain summary of what Eugene wants and where we are | — |
+| J161 | 2026-11-24 | Opinion | A Reports menu: buyer agent report (every iteration) and combination report; use the buyer agents to simulate and iterate | — |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
@@ -2044,3 +2046,12 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
   - **Not built:** a backend, so nothing real is measured yet; the Retreat admin prototype; buyer agent v5 on the retreat offer; the feedback group as the first paid cohort.
   - **Five decisions are waiting:** O45, O49, O48, O46, O51.
   - **Suggested next step:** send Eugene the questions, and start Phase 0.
+
+### J161 — A Reports menu
+- **Asked:** "saya rasa kita bisa menggunakan buyer agent kita untuk simulasi dan iterasi. kalau dari saya mungkin kita perlu ada menu report, report berisikan beberapa sub menu 1. buyer agent report : berisikan iterasi dari setiap buyer agent 2. combination report : berisikan untuk hasil gabungan combination and buyer. bagaimana menurutmu ?"
+- **Opinion:** agreed. The buyer agents are the only track that runs without a backend, so they should be the iteration engine of Phase 0. Conditions:
+  - Reports is the reading layer, so it does not copy the numbers into a third place. Buyer agent results moves under it.
+  - Each iteration records: the hypothesis, what changed, the run, the result against the previous one, and the decision it led to (linked to the funnel's decision log).
+  - Every number is labelled a prediction.
+  - "Combination report" was ambiguous. The recommendation: build the combination matrix now (offer × production version × agent rules × segment, ranking the best), and add real people as a column once they exist.
+- **Not built yet:** waiting for confirmation (O52).
