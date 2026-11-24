@@ -500,7 +500,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U114**, last J = **J159**, last
+**Numbering as of 17 Nov 2026:** last U = **U114**, last J = **J160**, last
 O = **O51**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -1014,6 +1014,7 @@ history can be read without opening four documents.
 | J157 | 2026-11-24 | Code | Eugene's animated headline ("Headline in Motion"), the animated text asked about in J156 | U111 |
 | J158 | 2026-11-24 | Code (mobile, on request) | Headline in Motion on phones as well, and on production | U112 |
 | J159 | 2026-11-24 | Decision + code + record | Redesign approved; build the B2B2C business funnel in the admin; keep every piece of Eugene's context in one file | U113, U114 |
+| J160 | 2026-11-24 | Summary | The owner felt lost: a plain summary of what Eugene wants and where we are | — |
 
 ### 17.2 Code changes (U)
 
