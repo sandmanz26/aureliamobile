@@ -15,12 +15,10 @@ import pmPlaybookV3 from './content/pm-playbook-v3.html?raw'
 import researchInsightTimer from './content/research-insight-timer.html?raw'
 import researchRound2 from '../../docs/research/reports/Insight Timer behaviour and journeys.md?raw'
 import prdOverview from '../../docs/PRD-OVERVIEW.md?raw'
-import apiContract from '../../docs/api/API-CONTRACT.md?raw'
-import apiContractV2 from '../../docs/api/API-CONTRACT-V2.md?raw'
 import backendOld from '../../docs/backend-old/BACKEND-OLD.md?raw'
 import artefact from '../../docs/backend-old/ARTEFACT.md?raw'
 import { DS_TOC } from '../designsystem/toc'
-import { B2B2C_PAGES, pageMarkdown, type DocPage } from './docPages'
+import { API_PAGES, B2B2C_PAGES, pageMarkdown, type DocPage } from './docPages'
 import { filterToc, prepareDoc } from './prepareDoc'
 import './guides.css'
 import './content/pm-playbook.css'
@@ -79,8 +77,8 @@ const DOCS = [
     audience: 'Engineers',
     inside: ['v2: the Pilot slice, the smallest API for the first paid creator pilot', 'Creator retreat payments, the compute ledger and outcomes', 'v1: every endpoint, the data model and the AI system', 'The feature lock and the decisions still open'],
     icon: Server,
-    source: 'docs/api/API-CONTRACT.md',
-    html: () => marked.parse(apiContract, { async: false }),
+    source: 'docs/api/v2/',
+    html: () => marked.parse(pageMarkdown(API_PAGES[0]), { async: false }),
   },
   {
     id: 'research',
@@ -137,7 +135,7 @@ const DOCS = [
 type DocId = (typeof DOCS)[number]['id']
 
 /** Documents made of a summary and detail pages at /wiki/:doc/:page (U110). */
-const DOC_PAGES: Partial<Record<DocId, DocPage[]>> = { b2b2c: B2B2C_PAGES }
+const DOC_PAGES: Partial<Record<DocId, DocPage[]>> = { b2b2c: B2B2C_PAGES, api: API_PAGES }
 
 function DocPages({ id, pages, current }: { id: DocId; pages: DocPage[]; current: string }) {
   // On a phone the strip scrolls sideways: bring the open page into view.
@@ -148,8 +146,8 @@ function DocPages({ id, pages, current }: { id: DocId; pages: DocPage[]; current
     if (el && card && el.scrollWidth > el.clientWidth) el.scrollLeft = card.offsetLeft - el.offsetLeft - 10
   }, [current])
   return (
-    <nav ref={nav} className="gd-versions gd-pages" aria-label="Pages in this research">
-      <span className="gd-versions-label">Pages in this research</span>
+    <nav ref={nav} className="gd-versions gd-pages" aria-label={id === 'api' ? 'Pages' : 'Pages in this research'}>
+      <span className="gd-versions-label">{id === 'api' ? 'Pages' : 'Pages in this research'}</span>
       {pages.map((p, i) => (
         <Link key={p.slug} to={i === 0 ? `/wiki/${id}` : `/wiki/${id}/${p.slug}`} aria-current={p.slug === current ? 'page' : undefined}>
           <b>{p.title}</b>
@@ -197,22 +195,6 @@ const DOC_VERSIONS: Partial<Record<DocId, DocVersion[]>> = {
     { v: 1, label: 'Features & business', note: 'Round 1: features, strategy, backlash, competitors.', html: () => researchInsightTimer },
   ],
   // v2 first, so it is the default; v1 stays unchanged at ?v=1.
-  api: [
-    {
-      v: 2,
-      label: 'Pilot slice (draft)',
-      note: 'The smallest API for the first paid creator pilot, for the feature lock.',
-      html: () => marked.parse(apiContractV2, { async: false }),
-      markdown: true,
-    },
-    {
-      v: 1,
-      label: 'Full contract',
-      note: 'Every endpoint, the data model, the AI system and the phasing.',
-      html: () => marked.parse(apiContract, { async: false }),
-      markdown: true,
-    },
-  ],
 }
 
 function DocVersions({ id, current }: { id: DocId; current: number }) {

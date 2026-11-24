@@ -9,8 +9,10 @@ export interface DocPage {
   title: string
   /** One line under the title in the page strip. */
   note: string
-  /** The Markdown file in docs/research/b2b2c/, without the folder. */
+  /** The Markdown file, relative to its folder in docs/. */
   file: string
+  /** The folder under docs/; defaults to research/b2b2c. */
+  dir?: string
 }
 
 export const B2B2C_PAGES: DocPage[] = [
@@ -26,10 +28,19 @@ export const B2B2C_PAGES: DocPage[] = [
   { slug: 'sources', title: 'Full report and sources', note: 'The deep research report, every source.', file: '09-full-report.md' },
 ]
 
-const files = import.meta.glob('../../docs/research/b2b2c/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
+/** API contract (U120, J175): v2 split into General, Apps and Admin; v1 kept. */
+export const API_PAGES: DocPage[] = [
+  { slug: 'general', title: 'General', note: 'What v2 is, conventions, data model, decisions.', file: 'general.md', dir: 'api/v2' },
+  { slug: 'apps', title: 'Apps', note: 'What the web and Flutter apps call.', file: 'apps.md', dir: 'api/v2' },
+  { slug: 'admin', title: 'Admin', note: 'Cost, outcomes and the minimum admin.', file: 'admin.md', dir: 'api/v2' },
+  { slug: 'v1', title: 'v1 · Full contract', note: 'The earlier full contract, unchanged.', file: 'API-CONTRACT.md', dir: 'api' },
+]
+
+const files = import.meta.glob(['../../docs/research/b2b2c/*.md', '../../docs/api/v2/*.md', '../../docs/api/API-CONTRACT.md'], { query: '?raw', import: 'default', eager: true }) as Record<string, string>
 
 export function pageMarkdown(p: DocPage): string {
-  return files[`../../docs/research/b2b2c/${p.file}`] ?? `# ${p.title}\n\nThis page is missing: \`docs/research/b2b2c/${p.file}\`.`
+  const path = `docs/${p.dir ?? 'research/b2b2c'}/${p.file}`
+  return files[`../../${path}`] ?? `# ${p.title}\n\nThis page is missing: \`${path}\`.`
 }
 
 /** Every `/wiki/b2b2c/<slug>` link in a text, for the link check. */
