@@ -266,3 +266,13 @@
 .gd-doc .gd-mermaid { margin: 20px 0 28px; padding: 16px; overflow-x: auto; border: 1px solid #ecdfcd; border-radius: 12px; background: #fffdf9; text-align: center; }
 .gd-doc .gd-mermaid svg { max-width: 100%; height: auto; }
 .gd-doc pre.gd-mermaid-error { border-left: 3px solid #d03b3b; }
+
+/* Research pages strip (U110): ten short links, so tighter than the version cards. */
+.gd-pages a { flex: 1 1 150px; }
+.gd-pages a span { font-size: 12px; }
+@media (max-width: 640px) {
+  .gd-pages { flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x proximity; }
+  /* The nav keeps its aria-label; the visible label would take a whole row of the scroller. */
+  .gd-pages .gd-versions-label { display: none; }
+  .gd-pages a { flex: 0 0 160px; scroll-snap-align: start; }
+}

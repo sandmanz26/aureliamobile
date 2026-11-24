@@ -115,6 +115,7 @@ export default function App() {
               the site lock, outside sign-in, on every site. */}
           <Route path="/wiki" element={<Suspense fallback={null}><GuideIndexPage /></Suspense>} />
           <Route path="/wiki/:doc" element={<Suspense fallback={null}><GuidePage /></Suspense>} />
+          <Route path="/wiki/:doc/:page" element={<Suspense fallback={null}><GuidePage /></Suspense>} />
           {/* /guide was the wiki's address until U083; shared links keep working. */}
           <Route path="/guide" element={<LegacyGuideRedirect />} />
           <Route path="/guide/:doc" element={<LegacyGuideRedirect />} />

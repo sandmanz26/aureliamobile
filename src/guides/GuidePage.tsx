@@ -1,4 +1,4 @@
-import { Archive, ArrowLeft, BookOpen, FileText, Lightbulb, Map as MapIcon, Palette, Search, Server, Telescope, X } from 'lucide-react'
+import { Archive, ArrowLeft, BookOpen, FileText, Handshake, Lightbulb, Map as MapIcon, Palette, Search, Server, Telescope, X } from 'lucide-react'
 import { marked } from 'marked'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -19,6 +19,7 @@ import apiContract from '../../docs/api/API-CONTRACT.md?raw'
 import backendOld from '../../docs/backend-old/BACKEND-OLD.md?raw'
 import artefact from '../../docs/backend-old/ARTEFACT.md?raw'
 import { DS_TOC } from '../designsystem/toc'
+import { B2B2C_PAGES, pageMarkdown, type DocPage } from './docPages'
 import { filterToc, prepareDoc } from './prepareDoc'
 import './guides.css'
 import './content/pm-playbook.css'
@@ -34,7 +35,7 @@ const DesignSystemContent = lazy(() =>
 /**
  * /wiki (was /guide until U083; old links redirect) — the team's documents,
  * readable on any site (production included) behind the same site password as
- * the app. One shell, eight documents: generated HTML guides, Markdown files
+ * the app. One shell, nine documents: generated HTML guides, Markdown files
  * rendered as they stand in docs/, and the design system, which is a React
  * view read live from the Figma export and the components, so no page can
  * drift from its source.
@@ -91,6 +92,16 @@ const DOCS = [
     html: () => researchInsightTimer,
   },
   {
+    id: 'b2b2c',
+    title: 'B2B2C',
+    blurb: 'Selling Aurelia through people who already have the customer: creators, employers, insurers and partners. Ideas, evidence and a plan.',
+    audience: 'Eugene, the product owner and anyone deciding how Aurelia goes to market',
+    inside: ['Every B2B2C model for Aurelia, scored', 'Creators and cohorts, employers, insurers and partners, with sources', 'Unit economics of the €19.99 retreat, and what may be claimed', 'The plan, its gates, and a roast'],
+    icon: Handshake,
+    source: 'docs/research/b2b2c/',
+    html: () => marked.parse(pageMarkdown(B2B2C_PAGES[0]), { async: false }),
+  },
+  {
     id: 'backend-old',
     title: 'Backend (old)',
     blurb: 'The 2025 backend, from its three documents: how it worked, and the prompts, data shapes and rubric we can reuse.',
@@ -123,6 +134,30 @@ const DOCS = [
 ] as const
 
 type DocId = (typeof DOCS)[number]['id']
+
+/** Documents made of a summary and detail pages at /wiki/:doc/:page (U110). */
+const DOC_PAGES: Partial<Record<DocId, DocPage[]>> = { b2b2c: B2B2C_PAGES }
+
+function DocPages({ id, pages, current }: { id: DocId; pages: DocPage[]; current: string }) {
+  // On a phone the strip scrolls sideways: bring the open page into view.
+  const nav = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const el = nav.current
+    const card = el?.querySelector<HTMLElement>('[aria-current="page"]')
+    if (el && card && el.scrollWidth > el.clientWidth) el.scrollLeft = card.offsetLeft - el.offsetLeft - 10
+  }, [current])
+  return (
+    <nav ref={nav} className="gd-versions gd-pages" aria-label="Pages in this research">
+      <span className="gd-versions-label">Pages in this research</span>
+      {pages.map((p, i) => (
+        <Link key={p.slug} to={i === 0 ? `/wiki/${id}` : `/wiki/${id}/${p.slug}`} aria-current={p.slug === current ? 'page' : undefined}>
+          <b>{p.title}</b>
+          <span>{p.note}</span>
+        </Link>
+      ))}
+    </nav>
+  )
+}
 
 /**
  * Documents that come in more than one version. The same goal told different
@@ -181,7 +216,7 @@ function DocVersions({ id, current }: { id: DocId; current: number }) {
 }
 
 function DocTabs({ current }: { current?: DocId }) {
-  // Eight tabs overflow a phone's width: bring the open one into view.
+  // Nine tabs overflow a phone's width: bring the open one into view.
   const nav = useRef<HTMLElement>(null)
   useEffect(() => {
     const el = nav.current
@@ -228,13 +263,13 @@ export function GuideIndexPage() {
           <img src={markSvg} alt="" aria-hidden="true" width={52} height={52} className="gd-hero-mark" />
           <p className="gd-eyebrow">Aurelia · wiki</p>
           <h1>
-            Everything about Aurelia, <span className="gd-grad">in eight documents</span>
+            Everything about Aurelia, <span className="gd-grad">in nine documents</span>
           </h1>
           <p className="gd-lede">
             Aurelia builds personal wellness sessions from one sentence: someone says how they feel, and Aurelia makes a
             session for it. These documents explain the product, the admin the team runs it from, the backend still to
             be built, the eight-week study that will show whether Aurelia really helps people, what we learn
-            from other products, what the 2025 backend left us, and the design system every screen is built from.
+            from other products, how Aurelia could sell through partners, what the 2025 backend left us, and the design system every screen is built from.
           </p>
           <p className="gd-note">
             The app runs on realistic sample data until the backend exists, so no figure in it is a real result yet.
@@ -269,16 +304,23 @@ export function GuideIndexPage() {
 }
 
 export function GuidePage() {
-  const { doc: docParam } = useParams()
+  const { doc: docParam, page: pageParam } = useParams()
   const [params] = useSearchParams()
   const meta = DOCS.find((d) => d.id === docParam)
   if (!meta) return <Navigate to="/wiki" replace />
+  const pages = DOC_PAGES[meta.id]
+  if (pageParam && !pages?.some((p) => p.slug === pageParam)) return <Navigate to={`/wiki/${meta.id}`} replace />
+  if (pages) {
+    const page = pages.find((p) => p.slug === pageParam) ?? pages[0]
+    const pv: DocVersion = { v: 0, label: page.title, note: page.note, html: () => marked.parse(pageMarkdown(page), { async: false }), markdown: true }
+    return <GuideDoc key={`${meta.id}-${page.slug}`} meta={meta} version={pv} pages={{ list: pages, current: page.slug }} />
+  }
   const versions = DOC_VERSIONS[meta.id]
   const version = versions?.find((x) => String(x.v) === params.get('v')) ?? versions?.[0]
   return <GuideDoc key={`${meta.id}-${version?.v ?? 0}`} meta={meta} version={version} />
 }
 
-function GuideDoc({ meta, version }: { meta: (typeof DOCS)[number]; version?: DocVersion }) {
+function GuideDoc({ meta, version, pages }: { meta: (typeof DOCS)[number]; version?: DocVersion; pages?: { list: DocPage[]; current: string } }) {
   const navigate = useNavigate()
   const isDs = meta.id === 'design-system'
   const prepared = useMemo(() => (isDs ? { html: '', toc: DS_TOC } : prepareDoc((version ?? meta).html())), [isDs, meta, version])
@@ -296,8 +338,8 @@ function GuideDoc({ meta, version }: { meta: (typeof DOCS)[number]; version?: Do
   const toc = useMemo(() => filterToc(prepared.toc, query), [prepared, query])
 
   useEffect(() => {
-    document.title = `${meta.title} · Aurelia`
-  }, [meta])
+    document.title = `${pages && pages.current !== pages.list[0].slug ? `${version?.label} · ` : ''}${meta.title} · Aurelia`
+  }, [meta, pages, version])
 
   // Open on the section in the address, as a shared link expects.
   useEffect(() => {
@@ -449,7 +491,7 @@ function GuideDoc({ meta, version }: { meta: (typeof DOCS)[number]; version?: Do
           </p>
         </aside>
         <main className="gd-main">
-          {version && <DocVersions id={meta.id} current={version.v} />}
+          {pages ? <DocPages id={meta.id} pages={pages.list} current={pages.current} /> : version && <DocVersions id={meta.id} current={version.v} />}
           {isDs ? (
             // Not under .gd-doc: the documents' typography must not restyle live components.
             <div ref={content}>
