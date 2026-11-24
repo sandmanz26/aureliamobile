@@ -21,6 +21,7 @@ import aureliaNetwork from '../assets/aurelia-network.png'
 import liveSessionsMap from '../assets/live-sessions-map.png'
 import { FEELINGS, MAX_FEELINGS, feelingSentence } from '../lib/feelings'
 import { useUiVersion } from '../versions/useUiVersion'
+import { RotatingWord } from '../components/ui/RotatingWord'
 import { useTypewriterPlaceholder } from '../versions/useTypewriterPlaceholder'
 import { PageMeta } from '../components/PageMeta'
 import { Chip } from '../components/ui/Chip'
@@ -126,6 +127,10 @@ function PlayGlyph() {
  * The one unavoidable difference is the header: a visitor has no coin balance,
  * so the pill is replaced by Sign in until there is an account behind it.
  */
+
+/** Eugene's Headline in Motion (J157): the states a session is made for. */
+const HEADLINE_WORDS = ['peace', 'mind', 'energy', 'state']
+
 export function HomePage() {
   const { openDrawer } = useDrawer()
   const { isEnabled } = useFeatureFlags()
@@ -366,15 +371,28 @@ export function HomePage() {
               48px bitmap scaled up, which is what made the mark blurry. */}
           <img src={logoHomepage} alt="Aurelia" width={64} height={64} className="relative mx-auto block size-64" />
 
+          {/* Desktop (lg) since U111, J157: Eugene's "Headline in Motion". The
+              word cycles peace → mind → energy → state, 500ms ease-in-out, in
+              every version. It also answers v5's reason for dropping the line
+              (Olivia read "space" as a co-working space): no word in the cycle
+              is "space". Below lg the mobile layout is frozen, so each version
+              keeps its own static headline there. */}
+          <h1 className="text-style-title-large relative mt-26 hidden text-text-primary lg:block">
+            Create the{' '}
+            <em className="italic" style={{ color: '#E9A93A' }}>
+              <RotatingWord words={HEADLINE_WORDS} label="peace, mind, energy and state" />
+            </em>{' '}
+            you imagine.
+          </h1>
           {v5 ? (
             /* v5 (U053): says what Aurelia is. An interviewed user (Olivia)
                read "Create the space you imagine" over the live map as a
                co-working space with locations. */
-            <h1 className="text-style-title-large relative mt-26 text-text-primary">
+            <h1 className="text-style-title-large relative mt-26 text-text-primary lg:hidden">
               Sessions made for how you feel <em className="italic" style={{ color: '#E9A93A' }}>today</em>.
             </h1>
           ) : (
-          <h1 className="text-style-title-large relative mt-26 text-text-primary">
+          <h1 className="text-style-title-large relative mt-26 text-text-primary lg:hidden">
             Create the{' '}
             {/* "space" is the product's whole promise, so the sentence points
                 at it — italic and in the brand gold, the way the design does. */}
