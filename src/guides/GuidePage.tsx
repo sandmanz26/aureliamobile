@@ -252,53 +252,105 @@ function TopBar({ current }: { current?: DocId }) {
   )
 }
 
+/**
+ * The desktop sidebar's own parts (U115). Below lg they are hidden (`.gd-sb`)
+ * and the top bar's tabs carry the documents instead, as before.
+ */
+function SideHead() {
+  return (
+    <div className="gd-sb gd-sb-head">
+      <Link to="/wiki" className="gd-brand" aria-label="Aurelia wiki">
+        <AureliaLogo iconSize={26} />
+        <span className="gd-brand-label">Wiki</span>
+      </Link>
+    </div>
+  )
+}
+
+function SideDocs({ current }: { current?: DocId }) {
+  return (
+    <nav className="gd-sb gd-sb-docs" aria-label="Documents">
+      <p className="gd-sb-label" aria-hidden="true">
+        Documents
+      </p>
+      <ul>
+        {DOCS.map((d) => (
+          <li key={d.id}>
+            <Link to={`/wiki/${d.id}`} aria-current={d.id === current ? 'page' : undefined}>
+              <d.icon size={16} aria-hidden="true" />
+              <span>{d.title}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}
+
+function SideFoot() {
+  return (
+    <div className="gd-sb gd-sb-foot">
+      <Link to="/admin" className="gd-sb-back">
+        <ArrowLeft size={14} aria-hidden="true" /> Admin
+      </Link>
+    </div>
+  )
+}
+
 export function GuideIndexPage() {
   return (
     <div className="gd">
       <TopBar />
-      <main className="gd-index">
-        <section className="gd-hero">
-          <div className="gd-glow" aria-hidden="true" />
-          <img src={networkArt} alt="" aria-hidden="true" className="gd-net" />
-          <img src={markSvg} alt="" aria-hidden="true" width={52} height={52} className="gd-hero-mark" />
-          <p className="gd-eyebrow">Aurelia · wiki</p>
-          <h1>
-            Everything about Aurelia, <span className="gd-grad">in nine documents</span>
-          </h1>
-          <p className="gd-lede">
-            Aurelia builds personal wellness sessions from one sentence: someone says how they feel, and Aurelia makes a
-            session for it. These documents explain the product, the admin the team runs it from, the backend still to
-            be built, the eight-week study that will show whether Aurelia really helps people, what we learn
-            from other products, how Aurelia could sell through partners, what the 2025 backend left us, and the design system every screen is built from.
+      <div className="gd-index-layout">
+        <aside className="gd-side gd-sb" aria-label="Wiki">
+          <SideHead />
+          <SideDocs />
+          <SideFoot />
+        </aside>
+        <main className="gd-index">
+          <section className="gd-hero">
+            <div className="gd-glow" aria-hidden="true" />
+            <img src={networkArt} alt="" aria-hidden="true" className="gd-net" />
+            <img src={markSvg} alt="" aria-hidden="true" width={52} height={52} className="gd-hero-mark" />
+            <p className="gd-eyebrow">Aurelia · wiki</p>
+            <h1>
+              Everything about Aurelia, <span className="gd-grad">in nine documents</span>
+            </h1>
+            <p className="gd-lede">
+              Aurelia builds personal wellness sessions from one sentence: someone says how they feel, and Aurelia makes a
+              session for it. These documents explain the product, the admin the team runs it from, the backend still to
+              be built, the eight-week study that will show whether Aurelia really helps people, what we learn
+              from other products, how Aurelia could sell through partners, what the 2025 backend left us, and the design system every screen is built from.
+            </p>
+            <p className="gd-note">
+              The app runs on realistic sample data until the backend exists, so no figure in it is a real result yet.
+            </p>
+          </section>
+          <div className="gd-cards">
+            {DOCS.map((d) => (
+              <Link key={d.id} to={`/wiki/${d.id}`} className="gd-card">
+                <span className="gd-card-icon" aria-hidden="true">
+                  <d.icon size={18} />
+                </span>
+                <b>{d.title}</b>
+                <span className="gd-card-blurb">{d.blurb}</span>
+                <ul>
+                  {d.inside.map((i) => (
+                    <li key={i}>{i}</li>
+                  ))}
+                </ul>
+                <span className="gd-card-for">
+                  <b>For</b> {d.audience}
+                </span>
+                <span className="gd-card-open">Open →</span>
+              </Link>
+            ))}
+          </div>
+          <p className="gd-foot">
+            {BUILD.label} · {BUILD.version} · {BUILD.commit}
           </p>
-          <p className="gd-note">
-            The app runs on realistic sample data until the backend exists, so no figure in it is a real result yet.
-          </p>
-        </section>
-        <div className="gd-cards">
-          {DOCS.map((d) => (
-            <Link key={d.id} to={`/wiki/${d.id}`} className="gd-card">
-              <span className="gd-card-icon" aria-hidden="true">
-                <d.icon size={18} />
-              </span>
-              <b>{d.title}</b>
-              <span className="gd-card-blurb">{d.blurb}</span>
-              <ul>
-                {d.inside.map((i) => (
-                  <li key={i}>{i}</li>
-                ))}
-              </ul>
-              <span className="gd-card-for">
-                <b>For</b> {d.audience}
-              </span>
-              <span className="gd-card-open">Open →</span>
-            </Link>
-          ))}
-        </div>
-        <p className="gd-foot">
-          {BUILD.label} · {BUILD.version} · {BUILD.commit}
-        </p>
-      </main>
+        </main>
+      </div>
     </div>
   )
 }
@@ -334,6 +386,7 @@ function GuideDoc({ meta, version, pages }: { meta: (typeof DOCS)[number]; versi
   const [active, setActive] = useState<string | null>(null)
   const [shot, setShot] = useState<{ src: string; caption: string } | null>(null)
   const content = useRef<HTMLDivElement>(null)
+  const side = useRef<HTMLElement>(null)
   const viewer = useRef<HTMLDialogElement>(null)
   const toc = useMemo(() => filterToc(prepared.toc, query), [prepared, query])
 
@@ -412,6 +465,19 @@ function GuideDoc({ meta, version, pages }: { meta: (typeof DOCS)[number]; versi
     return () => io.disconnect()
   }, [prepared, dsReady])
 
+  // On desktop the contents share one scrolling sidebar with the documents:
+  // keep the highlighted section in view inside it, without moving the page.
+  useEffect(() => {
+    const aside = side.current
+    const link = aside?.querySelector<HTMLElement>('.gd-toc a[aria-current="location"]')
+    if (!aside || !link || !window.matchMedia('(min-width: 1024px)').matches) return
+    const a = aside.getBoundingClientRect()
+    const l = link.getBoundingClientRect()
+    const head = aside.querySelector<HTMLElement>('.gd-sb-head')?.offsetHeight ?? 0
+    if (l.top < a.top + head + 8) aside.scrollTop -= a.top + head + 8 - l.top
+    else if (l.bottom > a.bottom - 8) aside.scrollTop += l.bottom - (a.bottom - 8)
+  }, [active])
+
   useEffect(() => {
     const d = viewer.current
     if (!d) return
@@ -449,7 +515,12 @@ function GuideDoc({ meta, version, pages }: { meta: (typeof DOCS)[number]; versi
     <div className="gd">
       <TopBar current={meta.id} />
       <div className="gd-layout">
-        <aside className={`gd-side${tocOpen ? ' open' : ''}`} aria-label="Contents">
+        <aside ref={side} className={`gd-side${tocOpen ? ' open' : ''}`} aria-label="Contents">
+          <SideHead />
+          <SideDocs current={meta.id} />
+          <p className="gd-sb gd-sb-label gd-sb-on" aria-hidden="true">
+            On this page
+          </p>
           <button type="button" className="gd-toggle" aria-expanded={tocOpen} onClick={() => setTocOpen((o) => !o)}>
             Contents and search
           </button>
@@ -489,6 +560,7 @@ function GuideDoc({ meta, version, pages }: { meta: (typeof DOCS)[number]; versi
             <br />
             {BUILD.label} · {BUILD.commit}
           </p>
+          <SideFoot />
         </aside>
         <main className="gd-main">
           {pages ? <DocPages id={meta.id} pages={pages.list} current={pages.current} /> : version && <DocVersions id={meta.id} current={version.v} />}

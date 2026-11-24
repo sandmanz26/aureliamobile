@@ -276,3 +276,34 @@
   .gd-pages .gd-versions-label { display: none; }
   .gd-pages a { flex: 0 0 160px; scroll-snap-align: start; }
 }
+
+/* Desktop sidebar (U115). From lg up the top bar goes and one sidebar holds
+   the brand, the documents and, on a document, its search and contents. Below
+   lg nothing here applies: the parts are hidden and the top bar's tabs and
+   the folding "Contents and search" stay exactly as they were. */
+@media (max-width: 1023px) {
+  .gd .gd-sb { display: none; }
+}
+@media (min-width: 1024px) {
+  .gd { --gd-top-h: 0px; }
+  .gd-top { display: none; }
+  .gd-layout,
+  .gd-index-layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); }
+  .gd-side { display: flex; flex-direction: column; padding: 0 12px 16px; scrollbar-width: thin; scrollbar-color: var(--gd-line) transparent; }
+  .gd-side > * { flex-shrink: 0; }
+  .gd-sb-head { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; height: 64px; margin: 0 -12px 14px; padding: 3px 18px 0; background: var(--gd-chrome-2); border-bottom: 1px solid var(--gd-line); }
+  .gd-sb-head::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--gd-brand); }
+  .gd-sb-head .gd-brand { border-radius: 8px; }
+  .gd-sb-label { margin: 0 0 6px; padding: 0 10px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gd-muted); }
+  .gd-sb-on { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--gd-line); margin-bottom: 10px; }
+  .gd-sb-docs ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .gd-sb-docs a { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; font-size: 13.5px; font-weight: 600; line-height: 1.35; color: var(--gd-ink2); text-decoration: none; }
+  .gd-sb-docs a svg { flex: none; color: var(--gd-muted); }
+  .gd-sb-docs a:hover { background: var(--gd-chrome-hover); color: var(--gd-ink); }
+  .gd-sb-docs a[aria-current='page'] { background: var(--gd-chrome-active); box-shadow: inset 3px 0 0 #ff8514; color: var(--gd-ink); }
+  .gd-sb-docs a[aria-current='page'] svg { color: #c25e0a; }
+  .gd-sb-foot { margin-top: auto; padding: 14px 10px 0; }
+  .gd-sb-back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--gd-muted); text-decoration: none; border-radius: 6px; }
+  .gd-sb-back:hover { color: var(--gd-ink); }
+  .gd-index { min-width: 0; width: 100%; padding-left: 40px; padding-right: 40px; }
+}
