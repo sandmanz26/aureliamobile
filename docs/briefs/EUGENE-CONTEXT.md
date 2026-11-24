@@ -113,7 +113,7 @@ Also: investor visuals (wellness refinery, TeraPhenoms, ping-pong, the Chronal R
 - a **therapeutic map in Product lab**, a Product/Business/Wellness triangle with targets;
 - a v2 unified wiki and admin knowledge base.
 
-Also: his "mathematical inevitability" thesis (meta-AI, momondo of AI, 5B state-flips, $1 per flip floor); the "MVP, Causal AI & Admin Spec" (simulated stages 42→32→22 chapters, $4.98→$0.58 per flip); the 2025 "AI vision"; the old admin's cost analytics (€40.27 across 5 media). "Pls Prio all these tasks today" | `docs/briefs/2026-11-24-cost-causal-ai-chat-part1.md`, `2026-11-24-mvp-causal-ai-admin-spec.pdf`, `2025-ai-vision-aurelia.pdf` | J168 | **received, more parts coming**; Gemini "chat nr 2" unreadable |
+Also: his "mathematical inevitability" thesis (meta-AI, momondo of AI, 5B state-flips, $1 per flip floor); the "MVP, Causal AI & Admin Spec" (simulated stages 42→32→22 chapters, $4.98→$0.58 per flip); the 2025 "AI vision"; the old admin's cost analytics (€40.27 across 5 media). "Pls Prio all these tasks today" | `docs/briefs/2026-11-24-cost-causal-ai-chat-part1.md`, `2026-11-24-mvp-causal-ai-admin-spec.pdf`, `2025-ai-vision-aurelia.pdf` | J168 | **received, more parts coming**; Gemini "chat nr 2" = the spec PDF (J171) |
 
 **36 rows.**
 

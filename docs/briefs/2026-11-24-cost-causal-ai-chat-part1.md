@@ -1,5 +1,7 @@
 # Cost, Causal AI and the therapeutic map: the business owner's chat of 24 Nov 2026, part 1
 
+> **Update (J171):** the owner confirmed that the Gemini "chat nr 2" is the PDF "Aurelia MVP, Causal AI & Admin Spec" (`2026-11-24-mvp-causal-ai-admin-spec.pdf`), so it has been read. The two Vimeo videos are skipped on the owner's decision ("tidak terlalu berguna").
+
 **Received:** 24 Nov 2026 from the product owner, as `Aurelia_Chat_24_Nov-2.zip`. It holds:
 - 15 WhatsApp screenshots, 19.26–22.25 on 24 Nov;
 - two PDFs, now kept beside this file:

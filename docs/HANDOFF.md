@@ -500,7 +500,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U116**, last J = **J170**, last
+**Numbering as of 17 Nov 2026:** last U = **U116**, last J = **J171**, last
 O = **O56**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -1027,6 +1027,7 @@ history can be read without opening four documents.
 | J168 | 2026-11-24 | Record | The business owner's cost and Causal AI chat, part 1 (zip: 15 screenshots plus 2 PDFs) read in full and kept; more parts to combine | — |
 | J169 | 2026-11-24 | Record | The business owner's chat, part 0 (12 screenshots, 18.08–18.51): retreat purpose, icon, Google Analytics against the admin, Insight Timer quick wins, the Healing Map; kept, waiting for the last part | — |
 | J170 | 2026-11-24 | Record + plan | The chat's last part read; all three parts combined into one task list (A–K) for the owner to confirm | — |
+| J171 | 2026-11-24 | Record | The Gemini chat is the MVP, Causal AI & Admin Spec PDF (already read); the Vimeo videos are skipped | — |
 
 ### 17.2 Code changes (U)
 

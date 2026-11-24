@@ -1,5 +1,7 @@
 # The business owner's chat of 24 Nov 2026: combined, with one task list
 
+> **Update (J171):** the owner confirmed that the Gemini "chat nr 2" is the PDF "Aurelia MVP, Causal AI & Admin Spec" (`2026-11-24-mvp-causal-ai-admin-spec.pdf`), so it has been read. The two Vimeo videos are skipped on the owner's decision ("tidak terlalu berguna").
+
 All three zips, read in full and put in order. The full detail of each part is in its own file:
 
 | Part | Time | Content | File |
