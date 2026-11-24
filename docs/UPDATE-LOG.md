@@ -155,9 +155,28 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U116 | `fa3c7f6` | 2026-11-24 | Admin → Reports (staging only, `RELEASES.reports`). **Buyer agent report:** every iteration (v1, v2, v3, the re-run) with its question, what changed, results, change from the one before, and the decision it fed. **Combination report:** each funnel stage read across agents, the funnel, the retreat model, personas, v5 features, interviews, the PRD and the backend wiki, with agreements, conflicts, a verdict and a next move, plus an offer × version × rules matrix. Both start with a clickable source graph and end with Sources (16 in one registry, each labelled), Built on and Limits. | [patch](patches/U116-fa3c7f6.patch) |
 | U117 | `bd2daaf` | 2026-11-24 | Buyer agent report: every iteration shows the **price tested** (v1 the admin's mock $9.99, v2 mock regional prices, v3 offers A and B, the re-run the app's $10 or $100), with a table and a warning where it differs from the app. New **Cost report** (`/admin/reports/cost`, staging): a supplier catalogue per media with price, source, label and pros and cons; Lean, Balanced and Premium presets plus the 2025 measured baseline; a bad-to-good model with the user's starting condition, adherence, chapter length, personalisation, models and the Causal AI stage; a connected, interactive graph; a cost-against-uplift chart and profit per flip. | [patch](patches/U117-bd2daaf.patch) |
 | U118 | `e77935a` | 2026-11-24 | `RELEASES.reports` is now on for both sites, so the buyer agent, combination and cost reports show on production. Production fast-forwarded with everything since U112. | [patch](patches/U118-e77935a.patch) |
+| U119 | `76a2890` | 2026-11-24 | Wiki → API contract **v2, the Pilot slice** (draft for the feature lock), now the default; v1 stays at `?v=1`. 76 endpoints and 35 PostgreSQL tables: accounts and consent, the core loop, safety, the creator retreat (ticket, 70/30, Connect payouts, cohort aggregates), Plus, a compute ledger, therapeutic outcomes, minimum admin. Includes `openapi-v2.yaml`. Staging and production. | [patch](patches/U119-76a2890.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U119 — API contract v2
+
+- **Commit:** `76a2890` · 2026-11-24 · all three branches.
+- **Patch:** [patches/U119-76a2890.patch](patches/U119-76a2890.patch)
+- **Request:** "tolong buatkan API contract untuk wiki kita. taruh di prod dan staging"
+- **Interpretation:** the wiki already had v1. v2 is the Pilot slice the Change Plan review asked for, written as a draft for the feature lock.
+- **Placeholders to sign off:**
+  - a minimum group of 10;
+  - the creator's Plus share of 20%;
+  - a flip = a post score of at least 75 on two chapters in a row;
+  - a minimum age of 16;
+  - 5 checkouts an hour.
+- **Verified:**
+  - `npm run check`;
+  - `/wiki/api` (v2, with the mermaid chart) and `?v=1` at 1440px and 402px;
+  - the YAML parses.
+- **Revert:** `git revert --no-commit 76a2890`.
 
 ### U118 — Reports and everything since U112 on production
 

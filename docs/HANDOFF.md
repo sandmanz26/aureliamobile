@@ -500,7 +500,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U118**, last J = **J173**, last
+**Numbering as of 17 Nov 2026:** last U = **U119**, last J = **J174**, last
 O = **O56**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -967,6 +967,7 @@ history can be read without opening four documents.
 | U116 | `fa3c7f6` | 2026-11-24 | Admin → Reports (staging only, `RELEASES.reports`). **Buyer agent report:** every iteration (v1, v2, v3, the re-run) with its question, what changed, results, change from the one before, and the decision it fed. **Combination report:** each funnel stage read across agents, the funnel, the retreat model, personas, v5 features, interviews, the PRD and the backend wiki, with agreements, conflicts, a verdict and a next move, plus an offer × version × rules matrix. Both start with a clickable source graph and end with Sources (16 in one registry, each labelled), Built on and Limits. | [patch](update-log/patches/U116-fa3c7f6.patch) |
 | U117 | `bd2daaf` | 2026-11-24 | Buyer agent report: every iteration shows the **price tested** (v1 the admin's mock $9.99, v2 mock regional prices, v3 offers A and B, the re-run the app's $10 or $100), with a table and a warning where it differs from the app. New **Cost report** (`/admin/reports/cost`, staging): a supplier catalogue per media with price, source, label and pros and cons; Lean, Balanced and Premium presets plus the 2025 measured baseline; a bad-to-good model with the user's starting condition, adherence, chapter length, personalisation, models and the Causal AI stage; a connected, interactive graph; a cost-against-uplift chart and profit per flip. | [patch](update-log/patches/U117-bd2daaf.patch) |
 | U118 | `e77935a` | 2026-11-24 | `RELEASES.reports` is now on for both sites, so the buyer agent, combination and cost reports show on production. Production fast-forwarded with everything since U112. | [patch](update-log/patches/U118-e77935a.patch) |
+| U119 | `76a2890` | 2026-11-24 | Wiki → API contract **v2, the Pilot slice** (draft for the feature lock), now the default; v1 stays at `?v=1`. 76 endpoints and 35 PostgreSQL tables: accounts and consent, the core loop, safety, the creator retreat (ticket, 70/30, Connect payouts, cohort aggregates), Plus, a compute ledger, therapeutic outcomes, minimum admin. Includes `openapi-v2.yaml`. Staging and production. | [patch](update-log/patches/U119-76a2890.patch) |
 | J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
@@ -1032,6 +1033,7 @@ history can be read without opening four documents.
 | J171 | 2026-11-24 | Record | The Gemini chat is the MVP, Causal AI & Admin Spec PDF (already read); the Vimeo videos are skipped | — |
 | J172 | 2026-11-24 | Code | Mark the price each buyer-agent iteration tested; Cost report with supplier pros and cons, variations, the user's condition and a connected graph | U117 |
 | J173 | 2026-11-24 | Release | Update production, with the reports on production too | U118 |
+| J174 | 2026-11-24 | Doc | An API contract for the wiki, on production and staging | U119 |
 
 ### 17.2 Code changes (U)
 

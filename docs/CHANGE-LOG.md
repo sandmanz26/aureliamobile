@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-24 — API contract v2 (U119, J174)
+
+The wiki's API contract opens on v2: the Pilot slice, a draft for the feature lock. It ships with OpenAPI.
+
+Branches: `web_app`, `admin_cms`, `web_prod`.
+
 ### 2026-11-24 — Production updated; reports live (U118, J173)
 
 Production now matches staging. It includes the retreat funnel, the wiki sidebar and the three reports.

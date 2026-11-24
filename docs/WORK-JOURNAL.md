@@ -124,6 +124,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | J171 | 2026-11-24 | Record | The Gemini chat is the MVP, Causal AI & Admin Spec PDF (already read); the Vimeo videos are skipped | — |
 | J172 | 2026-11-24 | Code | Mark the price each buyer-agent iteration tested; Cost report with supplier pros and cons, variations, the user's condition and a connected graph | U117 |
 | J173 | 2026-11-24 | Release | Update production, with the reports on production too | U118 |
+| J174 | 2026-11-24 | Doc | An API contract for the wiki, on production and staging | U119 |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
@@ -2182,3 +2183,8 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 ### J173 — Production updated
 - **Asked:** "update ke production. report juga update di production"
 - **Done (U118):** the reports flag is on; `web_prod` was fast-forwarded to `web_app`, on explicit request.
+
+### J174 — API contract v2
+- **Asked:** "tolong buatkan API contract untuk wiki kita. taruh di prod dan staging"
+- **Done (U119):** v2 is the Pilot slice, the default tab on both sites. Its placeholders are listed in U119 and go to the feature lock (O54).
+- **Also discussed:** Vercel deployments stopped after U116. The likely cause is the Hobby plan's 100 deployments a day, so from now on code and logs are pushed together.
