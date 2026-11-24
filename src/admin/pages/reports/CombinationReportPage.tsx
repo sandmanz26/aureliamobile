@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Badge, PageHeader, Panel } from '../../components/ui'
 import { DESIGNS } from '../../data/buyerSim'
-import { MATRIX_SEATS, buildMatrix, buildStages, type StageReading } from '../../data/combinationReport'
+import { MATRIX_SEATS, buildComposition, buildMatrix, buildStages, type StageReading } from '../../data/combinationReport'
 import { COMBINATION_FINDINGS } from '../../data/reportSources'
 import { OUTCOMES, eur } from '../../data/retreatFunnel'
 import { studyWeek } from '../../data/study'
-import { LabelBadge, SourceChip, SourceGraph, SourcesSection } from './ReportParts'
+import { CompositionGraph } from './CompositionGraph'
+import { LabelBadge, SourceChip, SourcesSection } from './ReportParts'
 
 const STATUS = { 'on-track': { tone: 'good', text: 'On track (prediction)' }, below: { tone: 'critical', text: 'Below target (prediction)' }, unmeasured: { tone: 'neutral', text: 'Unmeasured' } } as const
 
@@ -76,6 +77,7 @@ export function CombinationReportPage() {
   const [week] = useState(() => Math.max(1, Math.min(8, studyWeek(Date.now()))))
   const [stages] = useState(() => buildStages(week))
   const [matrix] = useState(() => buildMatrix())
+  const [composition] = useState(() => buildComposition(stages))
   const middle = OUTCOMES.find((o) => o.id === 'middle')!
 
   return (
@@ -85,8 +87,8 @@ export function CombinationReportPage() {
         description="Aurelia read stage by stage of the business funnel, with every source side by side: the 2025 backend, what production v3 offers, what real users said, the personas and buyer agents, the funnels and the PRD. For each stage: what each source says, where they agree and conflict, and one verdict with a next move."
       />
 
-      <Panel title="How this report was made" description="Which source feeds which part of the report. The colour of a line is the kind of source it comes from.">
-        <SourceGraph findings={COMBINATION_FINDINGS} label="Graph: the sources on the left feed the funnel stages and the matrix on the right." />
+      <Panel title="How this report was made" description="Built in four levels, read left to right: the sources, the building blocks read or computed from them, a reading of each funnel stage, and the verdict with its next moves. The colour of a line from a source is the kind of source it is.">
+        <CompositionGraph nodes={composition} />
       </Panel>
 
       <Panel title="How to read it" description="The version and rules every stage is read on.">

@@ -3,7 +3,7 @@ import appSource from '../../App.tsx?raw'
 import guideSource from '../../guides/GuidePage.tsx?raw'
 import { B2B2C_PAGES } from '../../guides/docPages'
 import { buildIterations } from './buyerAgentReport'
-import { buildMatrix, buildStages } from './combinationReport'
+import { BUILDING_BLOCKS, blockOfSource, buildComposition, buildMatrix, buildStages } from './combinationReport'
 import { BUYER_REPORT_FINDINGS, COMBINATION_FINDINGS, SOURCES, sourcesOf } from './reportSources'
 
 const adminRoutes = new Set([...appSource.matchAll(/<Route path="([^"/:][^"]*)"/g)].map((m) => `/admin/${m[1]}`))
@@ -51,6 +51,24 @@ describe('report sources', () => {
   it('never names the business owner in report text', () => {
     const text = JSON.stringify([SOURCES, buildIterations(), buildStages(1)])
     expect(text).not.toMatch(/Eugene/)
+  })
+
+  it('builds the layered composition: each level cites only the level below, every source is used', () => {
+    const nodes = buildComposition(buildStages(1))
+    const byId = new Map(nodes.map((n) => [n.id, n]))
+    expect(byId.size, 'node ids are unique').toBe(nodes.length)
+    for (const n of nodes) {
+      if (n.level === 1) expect(n.inputs).toHaveLength(0)
+      else expect(n.inputs.length, n.id).toBeGreaterThan(0)
+      for (const i of n.inputs) expect(byId.get(i)?.level, `${n.id} cites ${i}`).toBe(n.level - 1)
+    }
+    const l1 = nodes.filter((n) => n.level === 1)
+    expect(l1.map((n) => n.id).sort()).toEqual(sourcesOf(COMBINATION_FINDINGS).map((s) => s.id).sort())
+    for (const n of nodes.filter((x) => x.level < 4)) expect(nodes.some((m) => m.inputs.includes(n.id)), `${n.id} feeds something`).toBe(true)
+    // Every stage line's source reaches its stage through exactly one block.
+    for (const s of buildStages(1)) for (const l of s.lines) expect(blockOfSource(l.source), `${s.id}: ${l.source}`).toBeDefined()
+    expect([...BUILDING_BLOCKS.find((b) => b.id === 'matrix')!.sources].sort()).toEqual([...COMBINATION_FINDINGS.find((f) => f.id === 'matrix')!.sources].sort())
+    expect(JSON.stringify(nodes)).not.toMatch(/Eugene/)
   })
 
   it('builds the matrix from the models: 3 offers × 2 rule sets × 3 versions', () => {

@@ -2,7 +2,7 @@ import { DEFAULT_DECISIONS, STAGES, funnelMetrics, stageStatus, type Status, typ
 import { BUYER_RUNS, personasOf, priceRange, wellnessOf } from './buyerRuns'
 import { DESIGNS, report, type AgentId, type DesignId } from './buyerSim'
 import { OFFERS, OUTCOMES, PLUS_NET_YEAR1, cohort, eur, perTicket } from './retreatFunnel'
-import type { SourceId } from './reportSources'
+import { COMBINATION_FINDINGS, LABEL_TEXT, SOURCE_KIND, SOURCE_KINDS, sourcesOf, type SourceId, type SourceKind, type SourceLabel } from './reportSources'
 
 /**
  * Admin → Reports → Combination report (U116, J167): one reading of Aurelia,
@@ -238,4 +238,132 @@ export function buildMatrix(): MatrixRow[] {
       rows.push({ offerId: o.id, offer: o.name, agent, margin: perTicket(o).margin, cells })
     }
   return rows
+}
+
+/* ------------------------------------------------- The layered composition */
+
+/**
+ * U121 (J176): how the Combination report is built, layer by layer, for the
+ * "How this report was made" graph and its text version. Level 1 is the
+ * sources the report cites (COMBINATION_FINDINGS), level 2 the building
+ * blocks read or computed from them, level 3 the stage readings (buildStages),
+ * level 4 the verdict and next moves. Only the building blocks are declared
+ * here; every other level and every edge is derived from the data above, and
+ * reportSources.test.ts checks that each node cites only the level below and
+ * that every source is used.
+ */
+
+export type BlockId =
+  | 'agent-prediction'
+  | 'funnel-targets'
+  | 'group-sample'
+  | 'v5-features'
+  | 'interview-signal'
+  | 'prd-expectation'
+  | 'backend-readiness'
+  | 'retreat-economics'
+  | 'decision-log'
+  | 'matrix'
+
+export interface BuildingBlock {
+  id: BlockId
+  title: string
+  /** What it is, in one plain sentence. */
+  what: string
+  sources: SourceId[]
+  /** Where on the page it is shown, when it has its own section. */
+  anchor?: string
+}
+
+export const BUILDING_BLOCKS: BuildingBlock[] = [
+  { id: 'agent-prediction', title: 'Agent prediction', what: 'What the buyer agents predict synthetic people do at each stage, on production v3 with agent v3’s rules, split by segment.', sources: ['buyer-rerun', 'buyer-v1', 'buyer-v2', 'buyer-v3', 'personas'] },
+  { id: 'funnel-targets', title: 'Funnel targets', what: 'Each stage’s metrics and targets, and the journey moments the stage covers.', sources: ['app-funnel', 'user-journey'] },
+  { id: 'group-sample', title: 'Feedback-group sample', what: 'The people column of the funnel from the 30-person study. Sample data until it runs on a backend.', sources: ['feedback-group'] },
+  { id: 'v5-features', title: 'What production v3 offers', what: 'What the production default (staging v5) shows a person at each stage.', sources: ['versions'] },
+  { id: 'interview-signal', title: 'Interview signal', what: 'What three real users said matters. Words, not numbers.', sources: ['interviews'] },
+  { id: 'prd-expectation', title: 'PRD expectation', what: 'What the PRD bets on and predicts for each stage, from an older simulation.', sources: ['prd'] },
+  { id: 'backend-readiness', title: 'Backend readiness', what: 'What the 2025 backend had for each stage and the lessons it leaves for the new one.', sources: ['backend-old', 'artefact'] },
+  { id: 'retreat-economics', title: 'Retreat economics', what: 'The creator retreat as another way in: Aurelia’s share, week-8 activity and Plus per ticket buyer.', sources: ['retreat', 'b2b2c'] },
+  { id: 'decision-log', title: 'Decisions already taken', what: 'Entries in the funnel decision log that a stage already points to, with their status.', sources: ['decisions'] },
+  { id: 'matrix', title: 'Offer × version × rules', what: 'The retreat’s three offers against the Plus rate each production version predicts, under agent v2 and v3 rules.', sources: ['retreat', 'buyer-rerun', 'b2b2c'], anchor: 'matrix' },
+]
+
+/** The stage the matrix feeds: it reads the upsell through the retreat. */
+export const MATRIX_FEEDS: StageId = 'upsell'
+
+/** The building block a stage line comes from: the one non-matrix block that lists its source. */
+export function blockOfSource(source: SourceId): BlockId | undefined {
+  return BUILDING_BLOCKS.find((b) => b.id !== 'matrix' && b.sources.includes(source))?.id
+}
+
+export type CompLevel = 1 | 2 | 3 | 4
+
+export interface CompNode {
+  /** Unique across levels: source, block, finding and outcome ids do not collide. */
+  id: string
+  level: CompLevel
+  title: string
+  /** A short tag on the node: the source's label, a stage status, a decision id. */
+  tag: string
+  detail: string
+  /** Ids of the nodes one level down that this one is made of. */
+  inputs: string[]
+  /** Level 1: the source's label and kind. */
+  label?: SourceLabel
+  kind?: SourceKind
+  status?: Status
+  /** In-app address: a source page, a section anchor (#…) or the decision log. */
+  link?: string
+}
+
+export const LEVELS: { level: CompLevel; title: string; description: string }[] = [
+  { level: 1, title: 'Level 1 · Sources', description: 'The evidence: runs, models, documents and what real people said.' },
+  { level: 2, title: 'Level 2 · Building blocks', description: 'What we compute or read from the sources.' },
+  { level: 3, title: 'Level 3 · Stage readings', description: 'Each funnel stage: where the blocks agree and conflict.' },
+  { level: 4, title: 'Level 4 · Verdict', description: 'What it adds up to, and the next move per stage.' },
+]
+
+const STATUS_TEXT: Record<Status, string> = { 'on-track': 'on track', below: 'below target', unmeasured: 'unmeasured' }
+
+/** Every node of the four levels, in display order. */
+export function buildComposition(stages: StageReading[]): CompNode[] {
+  const sources = sourcesOf(COMBINATION_FINDINGS).sort((a, b) => SOURCE_KINDS.indexOf(SOURCE_KIND[a.id]) - SOURCE_KINDS.indexOf(SOURCE_KIND[b.id]))
+  const l1: CompNode[] = sources.map((s) => ({ id: s.id, level: 1, title: s.name, tag: LABEL_TEXT[s.label].toLowerCase(), detail: s.what, inputs: [], label: s.label, kind: SOURCE_KIND[s.id], link: s.link }))
+  const l2: CompNode[] = BUILDING_BLOCKS.map((b) => ({ id: b.id, level: 2, title: b.title, tag: `${b.sources.length} source${b.sources.length > 1 ? 's' : ''}`, detail: b.what, inputs: [...b.sources], link: b.anchor ? `#${b.anchor}` : undefined }))
+  const l3: CompNode[] = stages.map((s) => {
+    const blocks = new Set<string>(s.lines.map((l) => blockOfSource(l.source)).filter((b): b is BlockId => !!b))
+    if (s.id === MATRIX_FEEDS) blocks.add('matrix')
+    return {
+      id: s.findingId,
+      level: 3,
+      title: s.title,
+      tag: STATUS_TEXT[s.status],
+      detail: s.verdict,
+      inputs: BUILDING_BLOCKS.filter((b) => blocks.has(b.id)).map((b) => b.id),
+      status: s.status,
+      link: `#${s.findingId}`,
+    }
+  })
+  const by = (st: Status) => stages.filter((s) => s.status === st).map((s) => s.title.toLowerCase())
+  const onTrack = by('on-track')
+  const below = by('below')
+  const verb = (xs: string[]) => (xs.length > 1 ? 'are' : 'is')
+  const verdict: CompNode = {
+    id: 'verdict',
+    level: 4,
+    title: 'Overall verdict',
+    tag: `${below.length} of ${stages.length} below`,
+    detail: `By prediction, ${onTrack.length ? `${onTrack.join(', ')} ${verb(onTrack)} on track` : 'no stage is on track'}${below.length ? `; ${below.join(', ')} ${verb(below)} below target` : ''}. Nothing here is measured on real use yet.`,
+    inputs: l3.map((n) => n.id),
+  }
+  const moves: CompNode[] = stages.map((s) => ({
+    id: `next-${s.id}`,
+    level: 4,
+    title: `Next: ${s.title}`,
+    tag: s.decision ?? 'open',
+    detail: s.next,
+    inputs: [s.findingId],
+    link: s.decision ? '/admin/business-funnel' : `#${s.findingId}`,
+  }))
+  return [...l1, ...l2, ...l3, verdict, ...moves]
 }

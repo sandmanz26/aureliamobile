@@ -252,6 +252,33 @@ export const SOURCES: Record<SourceId, ReportSource> = {
   },
 }
 
+/** The kind of evidence a source is, for grouping it on a graph (U121). Coarse on purpose: a handful of groups a reader can scan. */
+export const SOURCE_KINDS = ['Buyer agents', 'Funnels and models', 'Product', 'Real people', '2025 backend wiki', 'Costs', 'The business owner'] as const
+export type SourceKind = (typeof SOURCE_KINDS)[number]
+
+export const SOURCE_KIND: Record<SourceId, SourceKind> = {
+  'buyer-v1': 'Buyer agents',
+  'buyer-v2': 'Buyer agents',
+  'buyer-v3': 'Buyer agents',
+  'buyer-rerun': 'Buyer agents',
+  personas: 'Buyer agents',
+  'app-funnel': 'Funnels and models',
+  'feedback-group': 'Funnels and models',
+  retreat: 'Funnels and models',
+  b2b2c: 'Funnels and models',
+  decisions: 'Funnels and models',
+  versions: 'Product',
+  prd: 'Product',
+  'user-journey': 'Product',
+  interviews: 'Real people',
+  'backend-old': '2025 backend wiki',
+  artefact: '2025 backend wiki',
+  'cost-2025': 'Costs',
+  'supplier-prices': 'Costs',
+  'spec-causal': 'The business owner',
+  'owner-chat': 'The business owner',
+}
+
 export interface Finding {
   /** Also the section's anchor id on the page. */
   id: string
