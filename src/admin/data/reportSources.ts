@@ -8,7 +8,7 @@
  */
 
 /** How far a source's numbers can be trusted. Only `measured` comes from real use. */
-export type SourceLabel = 'measured' | 'prediction' | 'sample' | 'estimate' | 'document'
+export type SourceLabel = 'measured' | 'prediction' | 'sample' | 'estimate' | 'document' | 'company-price' | 'third-party' | 'scenario'
 
 export const LABEL_TEXT: Record<SourceLabel, string> = {
   measured: 'Measured',
@@ -16,6 +16,9 @@ export const LABEL_TEXT: Record<SourceLabel, string> = {
   sample: 'Sample',
   estimate: 'Estimate',
   document: 'Document',
+  'company-price': 'Company price',
+  'third-party': 'Third-party',
+  scenario: 'Scenario',
 }
 
 export const LABEL_MEANING: Record<SourceLabel, string> = {
@@ -24,6 +27,9 @@ export const LABEL_MEANING: Record<SourceLabel, string> = {
   sample: 'Invented data that looks real, so the screens can be reasoned about.',
   estimate: 'A calculation on assumed inputs. Changes when the inputs do.',
   document: 'Written knowledge: a plan, a review, notes from people. No figures of its own.',
+  'company-price': 'A price as the supplier states it on its own page, with the date it was read.',
+  'third-party': 'A figure from someone other than the supplier, not confirmed at the source.',
+  scenario: 'The business owner’s assumptions (the spec PDF), shown to see where they lead. Not measured.',
 }
 
 export type SourceId =
@@ -43,6 +49,10 @@ export type SourceId =
   | 'artefact'
   | 'prd'
   | 'user-journey'
+  | 'cost-2025'
+  | 'supplier-prices'
+  | 'spec-causal'
+  | 'owner-chat'
 
 export interface ReportSource {
   id: SourceId
@@ -204,6 +214,42 @@ export const SOURCES: Record<SourceId, ReportSource> = {
     link: '/admin/user-journey',
     label: 'document',
   },
+  'cost-2025': {
+    id: 'cost-2025',
+    name: '2025 old admin costs',
+    what: 'The 2025 backend’s vendor cost analytics: what the test sessions (“campaigns”) really cost, by media.',
+    version: '8 Mar 2025 – 20 Apr 2026; screenshot in the chat of 24 Nov 2026',
+    taken: '€40.27 in total, split by media, and the ten costliest campaigns.',
+    link: '/wiki/backend-old',
+    label: 'measured',
+  },
+  'supplier-prices': {
+    id: 'supplier-prices',
+    name: 'Supplier price pages',
+    what: 'Anthropic, OpenAI, ElevenLabs, Google, Black Forest Labs and Stability AI, as each states its API prices; plus the wiki’s AI cost table.',
+    version: 'Read 24 Nov 2026; Anthropic and OpenAI TTS from the wiki notes (Nov 2026)',
+    taken: 'The price, unit and date of every model in the catalogue. Google TTS and OpenAI’s per-image price are estimates.',
+    link: '/wiki/b2b2c/economics',
+    label: 'company-price',
+  },
+  'spec-causal': {
+    id: 'spec-causal',
+    name: 'MVP, Causal AI & Admin spec',
+    what: 'The business owner’s 9-page spec PDF: the bad-to-good sleep flip, the three Causal AI stages and the three metric lines.',
+    version: 'Spec PDF received 24 Nov 2026 (J171)',
+    taken: 'Stage uplift, success rate and cost factor; 25 → 85 as the target; $19.99 per flip; density and velocity.',
+    link: '/admin/reports/cost#goal-stages',
+    label: 'scenario',
+  },
+  'owner-chat': {
+    id: 'owner-chat',
+    name: 'The business owner’s chat, 24 Nov',
+    what: 'The request for this report: cost per 3, 5 and 10 minute chapter across script, voice, music and image, the bad-to-good journey and three metric lines.',
+    version: 'Chat of 24 Nov 2026, parts 0–1, task A/B/C',
+    taken: 'What to compute, the media, the lengths, and the profit graph.',
+    link: '/admin/reports/cost',
+    label: 'document',
+  },
 }
 
 export interface Finding {
@@ -214,6 +260,7 @@ export interface Finding {
 }
 
 export const BUYER_REPORT_FINDINGS: Finding[] = [
+  { id: 'price-used', title: 'Price used per iteration', sources: ['buyer-v1', 'buyer-v2', 'buyer-v3', 'buyer-rerun', 'versions'] },
   { id: 'it-v1', title: 'Run v1: the format', sources: ['buyer-v1', 'personas'] },
   { id: 'it-v2', title: 'Run v2: calibrated, 36 people', sources: ['buyer-v2', 'buyer-v1', 'personas'] },
   { id: 'it-v3', title: 'Run v3: today vs the proposal', sources: ['buyer-v3', 'buyer-v2', 'personas', 'backend-old', 'artefact'] },
@@ -229,6 +276,14 @@ export const COMBINATION_FINDINGS: Finding[] = [
   { id: 'stage-upsell', title: 'The upsell', sources: ['versions', 'buyer-v3', 'buyer-rerun', 'retreat', 'b2b2c', 'prd', 'decisions'] },
   { id: 'stage-stay', title: 'Staying', sources: ['artefact', 'versions', 'interviews', 'buyer-rerun', 'personas', 'app-funnel', 'feedback-group', 'retreat', 'prd'] },
   { id: 'matrix', title: 'Offer × version × rules', sources: ['retreat', 'buyer-rerun', 'b2b2c'] },
+]
+
+export const COST_FINDINGS: Finding[] = [
+  { id: 'cost-catalogue', title: 'Supplier catalogue', sources: ['supplier-prices', 'b2b2c'] },
+  { id: 'cost-variations', title: 'Cost per chapter, variations', sources: ['supplier-prices', 'b2b2c', 'cost-2025', 'owner-chat'] },
+  { id: 'goal-graph', title: 'Bad to good: the graph', sources: ['spec-causal', 'supplier-prices', 'owner-chat', 'versions'] },
+  { id: 'goal-stages', title: 'Cost falls, uplift rises', sources: ['spec-causal', 'supplier-prices', 'cost-2025'] },
+  { id: 'metric-lines', title: 'Three metric lines', sources: ['spec-causal', 'cost-2025', 'owner-chat'] },
 ]
 
 /** The sources a set of findings uses, in registry order. */

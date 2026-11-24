@@ -19,6 +19,22 @@ export interface Figure {
   note?: string
 }
 
+/** The price an iteration showed its personas: part of the result (U117). */
+export interface PriceTested {
+  /** Amount and period, as shown. */
+  amount: string
+  currency: string
+  period: string
+  /** Where the price came from. */
+  origin: string
+  /** True when it is not today's app price ($10 a month or $100 a year). */
+  differsFromApp: boolean
+  warning?: string
+}
+
+/** Today's price in the app: the Upgrade screen after the free limit (src/pages/UpgradePage.tsx). */
+export const APP_PRICE = { amount: '$10 a month or $100 a year', where: 'the app’s Upgrade screen, shown after the free limit' }
+
 export interface Iteration {
   /** Matches the finding id in reportSources. */
   id: 'it-v1' | 'it-v2' | 'it-v3' | 'it-rerun'
@@ -32,6 +48,7 @@ export interface Iteration {
   /** Why no decision is listed, when none is. */
   decisionNote?: string
   findings: string[]
+  priceTested: PriceTested
   link: string
   sources: SourceId[]
 }
@@ -122,6 +139,14 @@ export function buildIterations(): Iteration[] {
       decisions: [],
       decisionNote: 'No entry in the decision log. It fed run v2: the agent was too agreeable, so v2 added calibration rules.',
       findings: r1.findings.slice(0, 3),
+      priceTested: {
+        amount: r1.stimulus.offer.find((o) => o.startsWith('Plus')) ?? money(r1.stimulus.priceUsd),
+        currency: 'US dollars, the same for everyone',
+        period: 'a month, or a year',
+        origin: 'The admin’s mock plan table (Commerce → PLANS: Plus $9.99 a month, $79 a year). Not the app’s price.',
+        differsFromApp: true,
+        warning: `Not today’s app price (${APP_PRICE.amount}): $0.01 lower a month and $21 lower a year, and no regional prices.`,
+      },
       link: '/admin/buyer-agent?v=1',
       sources: ['buyer-v1', 'personas'],
     },
@@ -145,6 +170,14 @@ export function buildIterations(): Iteration[] {
       ],
       decisions: decisions(['d3']),
       findings: r2.findings.slice(0, 4),
+      priceTested: {
+        amount: r2.stimulus.offer.filter((o) => o.includes('$9.99')).join(' · '),
+        currency: 'Local currency where there is a local price; US dollars elsewhere. Answers in USD.',
+        period: 'a month (a year in the US only)',
+        origin: 'The admin’s regional pricing table (Commerce → REGION_PRICING, mock), as each persona’s country would see it.',
+        differsFromApp: true,
+        warning: `The app has no regional prices today; it asks ${APP_PRICE.amount} everywhere.`,
+      },
       link: '/admin/buyer-agent?v=2',
       sources: ['buyer-v2', 'buyer-v1', 'personas'],
     },
@@ -168,6 +201,14 @@ export function buildIterations(): Iteration[] {
       ],
       decisions: decisions(['d1', 'd3']),
       findings: r3.findings.slice(0, 4),
+      priceTested: {
+        amount: `A (today): ${r3.control?.offer[0].match(/Plus [^,]+/)?.[0] ?? 'as in v2'} · B (proposal): ${r3.stimulus.offer.find((o) => o.startsWith('Plus')) ?? ''}`,
+        currency: 'Local currency in 7 (A) or 17 (B) countries; US dollars elsewhere. Answers in USD.',
+        period: 'A: a month or a year. B: yearly first, then monthly',
+        origin: 'A: the v2 stimulus (admin mock table). B: a proposed price list (buyerRunV3 V3_PRICES), anchored on Insight Timer’s $59.99 a year.',
+        differsFromApp: true,
+        warning: `Neither A nor B is today’s app price (${APP_PRICE.amount}). B’s $59.99 a year is $40 below the app’s yearly price.`,
+      },
       link: '/admin/buyer-agent?v=3',
       sources: ['buyer-v3', 'buyer-v2', 'personas', 'backend-old', 'artefact'],
     },
@@ -195,6 +236,13 @@ export function buildIterations(): Iteration[] {
       ],
       decisions: decisions(['d1', 'd2', 'd7', 'd5', 'd6']),
       findings: OVERALL_SUMMARY.slice(0, 3),
+      priceTested: {
+        amount: `${APP_PRICE.amount}, after the free limit`,
+        currency: 'US dollars',
+        period: 'a month or a year',
+        origin: `The real Upgrade screen of production v1–v3 (${APP_PRICE.where}). Whether a persona would pay is still judged against the price it saw in its own run (v1/v2 local Plus, v3 offer B), about $9.99 in the US.`,
+        differsFromApp: false,
+      },
       link: '/admin/buyer-agent?view=versions',
       sources: ['buyer-rerun', 'versions', 'personas'],
     },

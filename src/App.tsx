@@ -90,6 +90,7 @@ const UserJourneyPage = lazy(() => import('./admin/pages/UserJourneyPage').then(
 const BusinessFunnelPage = lazy(() => import('./admin/pages/BusinessFunnelPage').then((m) => ({ default: m.BusinessFunnelPage })))
 const BuyerResultsPage = lazy(() => import('./admin/pages/BuyerResultsPage').then((m) => ({ default: m.BuyerResultsPage })))
 const BuyerAgentReportPage = lazy(() => import('./admin/pages/reports/BuyerAgentReportPage').then((m) => ({ default: m.BuyerAgentReportPage })))
+const CostReportPage = lazy(() => import('./admin/pages/reports/CostReportPage').then((m) => ({ default: m.CostReportPage })))
 const CombinationReportPage = lazy(() => import('./admin/pages/reports/CombinationReportPage').then((m) => ({ default: m.CombinationReportPage })))
 const PersonasPage = lazy(() => import('./admin/pages/PersonasPage').then((m) => ({ default: m.PersonasPage })))
 
@@ -221,6 +222,11 @@ export default function App() {
                 <Route path="reports/combination" element={
                   <ModuleGuard module="adminReportCombination">
                     <CombinationReportPage />
+                  </ModuleGuard>
+                } />
+                <Route path="reports/cost" element={
+                  <ModuleGuard module="adminReportCost">
+                    <CostReportPage />
                   </ModuleGuard>
                 } />
               </>

@@ -5,6 +5,7 @@ import {
   Filter,
   FileChartColumn,
   Combine,
+  Calculator,
   HeartPulse,
   Target,
   Microscope,
@@ -90,6 +91,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
       ? [
           { to: '/admin/reports/buyer-agent', label: 'Buyer agent report', icon: FileChartColumn, flag: 'adminReportBuyerAgent' },
           { to: '/admin/reports/combination', label: 'Combination report', icon: Combine, flag: 'adminReportCombination' },
+          { to: '/admin/reports/cost', label: 'Cost report', icon: Calculator, flag: 'adminReportCost' },
         ]
       : [],
   },

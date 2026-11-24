@@ -11,7 +11,7 @@ import { LABEL_MEANING, LABEL_TEXT, SOURCES, sourcesOf, type Finding, type Sourc
  * the one registry in data/reportSources.ts.
  */
 
-const LABEL_TONE: Record<SourceLabel, Tone> = { measured: 'good', prediction: 'info', sample: 'neutral', estimate: 'serious', document: 'warning' }
+const LABEL_TONE: Record<SourceLabel, Tone> = { measured: 'good', prediction: 'info', sample: 'neutral', estimate: 'serious', document: 'warning', 'company-price': 'good', 'third-party': 'neutral', scenario: 'critical' }
 /** Edge and dot colour per label; admin series tokens, so both themes work. */
 const LABEL_STROKE: Record<SourceLabel, string> = {
   measured: 'stroke-adm-good',
@@ -19,6 +19,9 @@ const LABEL_STROKE: Record<SourceLabel, string> = {
   sample: 'stroke-adm-s3',
   estimate: 'stroke-adm-s2',
   document: 'stroke-adm-s4',
+  'company-price': 'stroke-adm-good',
+  'third-party': 'stroke-adm-muted',
+  scenario: 'stroke-adm-critical',
 }
 const LABEL_FILL: Record<SourceLabel, string> = {
   measured: 'fill-adm-good',
@@ -26,6 +29,9 @@ const LABEL_FILL: Record<SourceLabel, string> = {
   sample: 'fill-adm-s3',
   estimate: 'fill-adm-s2',
   document: 'fill-adm-s4',
+  'company-price': 'fill-adm-good',
+  'third-party': 'fill-adm-muted',
+  scenario: 'fill-adm-critical',
 }
 
 export function LabelBadge({ label }: { label: SourceLabel }) {
@@ -161,7 +167,7 @@ export function SourceGraph({ findings, label }: { findings: Finding[]; label: s
 }
 
 /** The fixed-format Sources section, the build it was made on, and its limits. */
-export function SourcesSection({ findings, limits }: { findings: Finding[]; limits: ReactNode[] }) {
+export function SourcesSection({ findings, limits, labels = ['measured', 'prediction', 'sample', 'estimate', 'document'] }: { findings: Finding[]; limits: ReactNode[]; labels?: SourceLabel[] }) {
   const sources = sourcesOf(findings)
   return (
     <>
@@ -192,7 +198,7 @@ export function SourcesSection({ findings, limits }: { findings: Finding[]; limi
           ))}
         </ul>
         <dl className="grid gap-6 border-t border-adm-line pt-12 text-12 sm:grid-cols-2 lg:grid-cols-3">
-          {(Object.keys(LABEL_TEXT) as SourceLabel[]).map((l) => (
+          {(Object.keys(LABEL_TEXT) as SourceLabel[]).filter((l) => labels.includes(l)).map((l) => (
             <div key={l} className="flex items-start gap-8">
               <dt className="shrink-0">
                 <LabelBadge label={l} />

@@ -1,9 +1,9 @@
-import { ArrowRight } from 'lucide-react'
+import { AlertTriangle, ArrowRight, Tag } from 'lucide-react'
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Badge, PageHeader, Panel } from '../../components/ui'
 import { STATUS_LABEL } from '../../data/businessFunnel'
-import { buildIterations } from '../../data/buyerAgentReport'
+import { APP_PRICE, buildIterations } from '../../data/buyerAgentReport'
 import { OVERALL_SUMMARY } from '../../data/buyerRerunSummaries'
 import { BUYER_REPORT_FINDINGS } from '../../data/reportSources'
 import { LabelBadge, SourceChip, SourceGraph, SourcesSection } from './ReportParts'
@@ -37,6 +37,39 @@ export function BuyerAgentReportPage() {
         <SourceGraph findings={BUYER_REPORT_FINDINGS} label="Graph: the sources on the left feed the report’s sections on the right." />
       </Panel>
 
+      <section id="price-used" className="scroll-mt-16">
+        <Panel title="Price used per iteration" description={`The price the personas saw is part of each result. Today the app asks ${APP_PRICE.amount} (${APP_PRICE.where}).`}>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-left text-12">
+              <thead className="text-11 uppercase tracking-wider text-adm-muted">
+                <tr className="border-b border-adm-line">
+                  <th className="py-6 pr-12 font-semibold">Iteration</th>
+                  <th className="py-6 pr-12 font-semibold">Price tested</th>
+                  <th className="py-6 pr-12 font-semibold">Currency · period</th>
+                  <th className="py-6 pr-12 font-semibold">Where it came from</th>
+                  <th className="py-6 font-semibold">Against today’s app</th>
+                </tr>
+              </thead>
+              <tbody>
+                {iterations.map((it) => (
+                  <tr key={it.id} className="border-b border-adm-line align-top last:border-0">
+                    <td className="py-8 pr-12 font-medium whitespace-nowrap text-adm-ink">
+                      <a href={`#${it.id}`} className="underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink">{it.name}</a>
+                    </td>
+                    <td className="py-8 pr-12 font-semibold text-adm-ink">{it.priceTested.amount}</td>
+                    <td className="py-8 pr-12 text-adm-ink-2">{it.priceTested.currency} · {it.priceTested.period}</td>
+                    <td className="py-8 pr-12 text-adm-ink-2">{it.priceTested.origin}</td>
+                    <td className="py-8">
+                      <Badge tone={it.priceTested.differsFromApp ? 'serious' : 'good'}>{it.priceTested.differsFromApp ? 'Differs' : 'Same as the app'}</Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Panel>
+      </section>
+
       <section aria-label="Iterations" className="flex flex-col">
         {iterations.map((it, i) => (
           <div key={it.id} className="relative flex gap-12 pb-16 lg:gap-16">
@@ -52,6 +85,24 @@ export function BuyerAgentReportPage() {
                 </div>
                 <LabelBadge label="prediction" />
               </header>
+
+              <div className="flex flex-col gap-6 rounded-8 border border-adm-s1/40 bg-adm-s1/6 p-12">
+                <div className="flex flex-wrap items-baseline gap-x-10 gap-y-4">
+                  <span className="inline-flex items-center gap-6 text-11 font-semibold uppercase tracking-wider text-adm-s1">
+                    <Tag size={12} aria-hidden="true" /> Price tested
+                  </span>
+                  <span className="text-14 font-semibold text-adm-ink">{it.priceTested.amount}</span>
+                </div>
+                <p className="text-12 text-adm-ink-2">
+                  {it.priceTested.currency} · {it.priceTested.period}. {it.priceTested.origin}
+                </p>
+                {it.priceTested.warning && (
+                  <p className="flex items-start gap-6 text-12 font-medium text-adm-ink">
+                    <AlertTriangle size={13} className="mt-2 shrink-0 text-adm-serious" aria-hidden="true" />
+                    {it.priceTested.warning}
+                  </p>
+                )}
+              </div>
 
               <div className="grid gap-14 lg:grid-cols-2">
                 <div className="flex min-w-0 flex-col gap-4">
@@ -182,6 +233,7 @@ export function BuyerAgentReportPage() {
           'Runs v1 and v2 used persona generator 1, which made incoherent people (the run found them); comparisons across runs are approximate.',
           'Offer B in run v3 is a proposal answered as if built. Nothing can be bought yet, so “would pay” is intent.',
           'No agent can tell whether the first session actually works for someone; staying depends on that.',
+          `Runs v1–v3 tested prices that are not today’s app price (${APP_PRICE.amount}): v1 the admin’s mock $9.99 / $79, v2 mock regional prices, v3 those and a proposed $59.99 a year. Their price answers and “would pay” hold for those prices only.`,
         ]}
       />
     </div>
