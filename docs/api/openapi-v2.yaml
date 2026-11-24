@@ -1,0 +1,3615 @@
+# Aurelia API contract v2: the Pilot slice (OpenAPI 3.1). Draft; API-CONTRACT-V2.md wins.
+openapi: 3.1.0
+info:
+  title: 'Aurelia API: the Pilot slice'
+  version: 2.0.0-draft
+  description: Contract v2 (draft for the v1 feature lock). The prose in docs/api/API-CONTRACT-V2.md wins over this file.
+    x-status marks each operation v1, new in v2 or changed in v2.
+servers:
+- url: https://api.aurelia.care/v1
+- url: https://api.staging.aurelia.care/v1
+tags:
+- name: Accounts
+- name: Core loop
+- name: Safety
+- name: Creator retreat
+- name: Plus
+- name: Compute
+- name: Outcomes
+- name: Admin
+paths:
+  /auth/signup:
+    post:
+      tags:
+      - Accounts
+      summary: Create an account (age gate)
+      operationId: post_auth_signup
+      x-status: changed in v2
+      x-auth: public
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+  /auth/signin:
+    post:
+      tags:
+      - Accounts
+      summary: Sign in
+      operationId: post_auth_signin
+      x-status: v1 (in v1 contract)
+      x-auth: public
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SigninRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+  /auth/oauth/{provider}:
+    post:
+      tags:
+      - Accounts
+      summary: Sign up or in with Google
+      operationId: post_auth_oauth_provider
+      x-status: v1 (in v1 contract)
+      x-auth: public
+      security: []
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OAuthRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+  /auth/refresh:
+    post:
+      tags:
+      - Accounts
+      summary: Refresh tokens
+      operationId: post_auth_refresh
+      x-status: v1 (in v1 contract)
+      x-auth: public
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokens'
+        default:
+          $ref: '#/components/responses/Problem'
+  /auth/signout:
+    post:
+      tags:
+      - Accounts
+      summary: Sign out
+      operationId: post_auth_signout
+      x-status: v1 (in v1 contract)
+      x-auth: user
+      security:
+      - bearer: []
+      responses:
+        '204':
+          description: OK
+        default:
+          $ref: '#/components/responses/Problem'
+  /auth/password-reset:
+    post:
+      tags:
+      - Accounts
+      summary: Ask for a reset link (always 202)
+      operationId: post_auth_password_reset
+      x-status: v1 (in v1 contract)
+      x-auth: public
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+      responses:
+        '202':
+          description: Accepted
+        default:
+          $ref: '#/components/responses/Problem'
+  /me:
+    get:
+      tags:
+      - Accounts
+      summary: The signed-in person
+      operationId: get_me
+      x-status: v1 (in v1 contract)
+      x-auth: user
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+        default:
+          $ref: '#/components/responses/Problem'
+    patch:
+      tags:
+      - Accounts
+      summary: Update profile
+      operationId: patch_me
+      x-status: v1 (in v1 contract)
+      x-auth: user
+      security:
+      - bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MePatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      tags:
+      - Accounts
+      summary: Delete the account
+      operationId: delete_me
+      x-status: v1 (in v1 contract)
+      x-auth: user
+      security:
+      - bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteMeRequest'
+      responses:
+        '202':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataRequest'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/consents:
+    get:
+      tags:
+      - Accounts
+      summary: List consents
+      operationId: get_me_consents
+      x-status: changed in v2
+      x-auth: user
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentList'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/consents/{purpose}:
+    put:
+      tags:
+      - Accounts
+      summary: Give or withdraw a consent
+      operationId: put_me_consents_purpose
+      x-status: changed in v2
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - name: purpose
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentPut'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Consent'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/export:
+    post:
+      tags:
+      - Accounts
+      summary: Request a data export
+      operationId: post_me_export
+      x-status: v1 (in v1 contract)
+      x-auth: user
+      security:
+      - bearer: []
+      responses:
+        '202':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataRequest'
+        default:
+          $ref: '#/components/responses/Problem'
+  /conversations:
+    post:
+      tags:
+      - Core loop
+      summary: Start a conversation
+      operationId: post_conversations
+      x-status: v1 (in v1 contract)
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversationCreate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        default:
+          $ref: '#/components/responses/Problem'
+    get:
+      tags:
+      - Core loop
+      summary: List conversations
+      operationId: get_conversations
+      x-status: v1 (in v1 contract)
+      x-auth: user
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationPage'
+        default:
+          $ref: '#/components/responses/Problem'
+  /conversations/{id}:
+    get:
+      tags:
+      - Core loop
+      summary: One conversation with messages
+      operationId: get_conversations_id
+      x-status: v1 (in v1 contract)
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationDetail'
+        default:
+          $ref: '#/components/responses/Problem'
+  /conversations/{id}/messages:
+    post:
+      tags:
+      - Core loop
+      summary: Send a message; reply streams as SSE
+      operationId: post_conversations_id_messages
+      x-status: v1 (in v1 contract)
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageCreate'
+      responses:
+        '200':
+          description: Event stream
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/SseStream'
+        default:
+          $ref: '#/components/responses/Problem'
+  /builds:
+    post:
+      tags:
+      - Core loop
+      summary: Build a session or a new version
+      operationId: post_builds
+      x-status: changed in v2
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuildCreate'
+      responses:
+        '202':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Build'
+        default:
+          $ref: '#/components/responses/Problem'
+  /builds/{id}:
+    get:
+      tags:
+      - Core loop
+      summary: Build state
+      operationId: get_builds_id
+      x-status: v1 (in v1 contract)
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Build'
+        default:
+          $ref: '#/components/responses/Problem'
+  /builds/{id}/events:
+    get:
+      tags:
+      - Core loop
+      summary: Build progress (SSE)
+      operationId: get_builds_id_events
+      x-status: v1 (in v1 contract)
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Event stream
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/SseStream'
+        default:
+          $ref: '#/components/responses/Problem'
+  /sessions:
+    get:
+      tags:
+      - Core loop
+      summary: My sessions
+      operationId: get_sessions
+      x-status: v1 (in v1 contract)
+      x-auth: user
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionPage'
+        default:
+          $ref: '#/components/responses/Problem'
+  /sessions/{id}:
+    get:
+      tags:
+      - Core loop
+      summary: One session
+      operationId: get_sessions_id
+      x-status: v1 (in v1 contract)
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        default:
+          $ref: '#/components/responses/Problem'
+  /sessions/{id}/chapters:
+    get:
+      tags:
+      - Core loop
+      summary: Chapters of a version
+      operationId: get_sessions_id_chapters
+      x-status: new in v2
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChapterList'
+        default:
+          $ref: '#/components/responses/Problem'
+  /sessions/{id}/versions:
+    get:
+      tags:
+      - Core loop
+      summary: Versions of a session
+      operationId: get_sessions_id_versions
+      x-status: v1 (in v1 contract)
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionList'
+        default:
+          $ref: '#/components/responses/Problem'
+  /sessions/{id}/bites:
+    get:
+      tags:
+      - Core loop
+      summary: 'Change this session: Lego bites'
+      operationId: get_sessions_id_bites
+      x-status: new in v2
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegoBiteList'
+        default:
+          $ref: '#/components/responses/Problem'
+  /sessions/{id}/versions/{versionId}/rollback:
+    post:
+      tags:
+      - Core loop
+      summary: Roll back to a version
+      operationId: post_sessions_id_versions_versionId_rollback
+      x-status: new in v2
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: versionId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        default:
+          $ref: '#/components/responses/Problem'
+  /chapters/{id}/playback:
+    get:
+      tags:
+      - Core loop
+      summary: Signed playback URLs
+      operationId: get_chapters_id_playback
+      x-status: v1 (in v1 contract)
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Playback'
+        default:
+          $ref: '#/components/responses/Problem'
+  /plays:
+    post:
+      tags:
+      - Core loop
+      summary: Start a play
+      operationId: post_plays
+      x-status: changed in v2
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlayCreate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Play'
+        default:
+          $ref: '#/components/responses/Problem'
+  /plays/{id}:
+    patch:
+      tags:
+      - Core loop
+      summary: Play progress, completion, report
+      operationId: patch_plays_id
+      x-status: changed in v2
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlayPatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Play'
+        default:
+          $ref: '#/components/responses/Problem'
+  /checkins:
+    post:
+      tags:
+      - Core loop
+      summary: Pre or post score 0-100
+      operationId: post_checkins
+      x-status: changed in v2
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckInCreate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckIn'
+        default:
+          $ref: '#/components/responses/Problem'
+    get:
+      tags:
+      - Core loop
+      summary: My check-ins
+      operationId: get_checkins
+      x-status: v1 (in v1 contract)
+      x-auth: user
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckInPage'
+        default:
+          $ref: '#/components/responses/Problem'
+  /journeys:
+    post:
+      tags:
+      - Core loop
+      summary: Start a state-flip journey
+      operationId: post_journeys
+      x-status: changed in v2
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JourneyCreate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Journey'
+        default:
+          $ref: '#/components/responses/Problem'
+  /journeys/current:
+    get:
+      tags:
+      - Core loop
+      summary: Active journey
+      operationId: get_journeys_current
+      x-status: v1 (in v1 contract)
+      x-auth: user
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Journey'
+        default:
+          $ref: '#/components/responses/Problem'
+  /journeys/{id}:
+    get:
+      tags:
+      - Core loop
+      summary: One journey
+      operationId: get_journeys_id
+      x-status: changed in v2
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Journey'
+        default:
+          $ref: '#/components/responses/Problem'
+    patch:
+      tags:
+      - Core loop
+      summary: Pause, resume, end
+      operationId: patch_journeys_id
+      x-status: v1 (in v1 contract)
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JourneyPatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Journey'
+        default:
+          $ref: '#/components/responses/Problem'
+  /safety/resources:
+    get:
+      tags:
+      - Safety
+      summary: Crisis lines by country
+      operationId: get_safety_resources
+      x-status: new in v2
+      x-auth: public
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SafetyResourceList'
+        default:
+          $ref: '#/components/responses/Problem'
+  /safety/reports:
+    post:
+      tags:
+      - Safety
+      summary: Report harmful content
+      operationId: post_safety_reports
+      x-status: new in v2
+      x-auth: user
+      security:
+      - bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SafetyReportCreate'
+      responses:
+        '202':
+          description: Accepted
+        default:
+          $ref: '#/components/responses/Problem'
+  /creators/{handle}:
+    get:
+      tags:
+      - Creator retreat
+      summary: Creator public page
+      operationId: get_creators_handle
+      x-status: new in v2
+      x-auth: public
+      security: []
+      parameters:
+      - name: handle
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatorPublic'
+        default:
+          $ref: '#/components/responses/Problem'
+  /retreats/{id}:
+    get:
+      tags:
+      - Creator retreat
+      summary: Retreat with open cohorts
+      operationId: get_retreats_id
+      x-status: new in v2
+      x-auth: public
+      security: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetreatDetail'
+        default:
+          $ref: '#/components/responses/Problem'
+  /checkout/tickets:
+    post:
+      tags:
+      - Creator retreat
+      summary: Start a ticket checkout
+      operationId: post_checkout_tickets
+      x-status: new in v2
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketCheckoutCreate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckoutStarted'
+        default:
+          $ref: '#/components/responses/Problem'
+  /orders/{id}:
+    get:
+      tags:
+      - Creator retreat
+      summary: One order
+      operationId: get_orders_id
+      x-status: new in v2
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/orders:
+    get:
+      tags:
+      - Creator retreat
+      summary: My orders
+      operationId: get_me_orders
+      x-status: new in v2
+      x-auth: user
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderPage'
+        default:
+          $ref: '#/components/responses/Problem'
+  /orders/{id}/withdrawal:
+    post:
+      tags:
+      - Creator retreat
+      summary: Use the withdrawal right
+      operationId: post_orders_id_withdrawal
+      x-status: new in v2
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WithdrawalRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Refund'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/enrolments:
+    get:
+      tags:
+      - Creator retreat
+      summary: My enrolments
+      operationId: get_me_enrolments
+      x-status: new in v2
+      x-auth: user
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrolmentList'
+        default:
+          $ref: '#/components/responses/Problem'
+  /creator/me:
+    get:
+      tags:
+      - Creator retreat
+      summary: Creator profile and payout status
+      operationId: get_creator_me
+      x-status: new in v2
+      x-auth: creator
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Creator'
+        default:
+          $ref: '#/components/responses/Problem'
+  /creator/connect/onboarding-link:
+    post:
+      tags:
+      - Creator retreat
+      summary: Stripe Connect onboarding link
+      operationId: post_creator_connect_onboarding_link
+      x-status: new in v2
+      x-auth: creator
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+  /creator/retreats:
+    get:
+      tags:
+      - Creator retreat
+      summary: Creator's retreats
+      operationId: get_creator_retreats
+      x-status: new in v2
+      x-auth: creator
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetreatDetailList'
+        default:
+          $ref: '#/components/responses/Problem'
+  /creator/cohorts/{id}/metrics:
+    get:
+      tags:
+      - Creator retreat
+      summary: Cohort aggregates
+      operationId: get_creator_cohorts_id_metrics
+      x-status: new in v2
+      x-auth: creator
+      security:
+      - bearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CohortMetrics'
+        default:
+          $ref: '#/components/responses/Problem'
+  /creator/payouts:
+    get:
+      tags:
+      - Creator retreat
+      summary: Payout ledger
+      operationId: get_creator_payouts
+      x-status: new in v2
+      x-auth: creator
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayoutPage'
+        default:
+          $ref: '#/components/responses/Problem'
+  /creator/split-rules:
+    get:
+      tags:
+      - Creator retreat
+      summary: Split rules
+      operationId: get_creator_split_rules
+      x-status: new in v2
+      x-auth: creator
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SplitRuleList'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/creators:
+    post:
+      tags:
+      - Creator retreat
+      summary: Onboard a creator
+      operationId: post_admin_creators
+      x-status: new in v2
+      x-auth: staff
+      security:
+      - adminBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatorCreate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Creator'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/retreats:
+    post:
+      tags:
+      - Creator retreat
+      summary: Create a retreat
+      operationId: post_admin_retreats
+      x-status: new in v2
+      x-auth: staff
+      security:
+      - adminBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetreatCreate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Retreat'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/retreats/{id}/cohorts:
+    post:
+      tags:
+      - Creator retreat
+      summary: Open a cohort
+      operationId: post_admin_retreats_id_cohorts
+      x-status: new in v2
+      x-auth: staff
+      security:
+      - adminBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CohortCreate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cohort'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/split-rules/{id}:
+    put:
+      tags:
+      - Creator retreat
+      summary: Set a split (new version)
+      operationId: put_admin_split_rules_id
+      x-status: new in v2
+      x-auth: staff
+      security:
+      - adminBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SplitRulePut'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SplitRule'
+        default:
+          $ref: '#/components/responses/Problem'
+  /plans:
+    get:
+      tags:
+      - Plus
+      summary: Plans and prices
+      operationId: get_plans
+      x-status: v1 (in v1 contract)
+      x-auth: public
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanList'
+        default:
+          $ref: '#/components/responses/Problem'
+  /checkout/subscription:
+    post:
+      tags:
+      - Plus
+      summary: Start Plus
+      operationId: post_checkout_subscription
+      x-status: changed in v2
+      x-auth: user
+      security:
+      - bearer: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionCheckoutCreate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckoutStarted'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/subscription/portal:
+    post:
+      tags:
+      - Plus
+      summary: Customer portal link
+      operationId: post_me_subscription_portal
+      x-status: new in v2
+      x-auth: user
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/entitlements:
+    get:
+      tags:
+      - Plus
+      summary: Entitlements and free limit
+      operationId: get_me_entitlements
+      x-status: v1 (in v1 contract)
+      x-auth: user
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entitlements'
+        default:
+          $ref: '#/components/responses/Problem'
+  /webhooks/stripe:
+    post:
+      tags:
+      - Plus
+      summary: Stripe and Connect events
+      operationId: post_webhooks_stripe
+      x-status: changed in v2
+      x-auth: stripe
+      security:
+      - stripeSignature: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StripeEvent'
+      responses:
+        '200':
+          description: OK
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/subscription:
+    get:
+      tags:
+      - Plus
+      summary: Current subscription
+      operationId: get_me_subscription
+      x-status: v1 (in v1 contract)
+      x-auth: user
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/compute/ledger:
+    get:
+      tags:
+      - Compute
+      summary: Compute ledger rows
+      operationId: get_admin_compute_ledger
+      x-status: new in v2
+      x-auth: staff
+      security:
+      - adminBearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComputeLinePage'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/compute/summary:
+    get:
+      tags:
+      - Compute
+      summary: Cost summary
+      operationId: get_admin_compute_summary
+      x-status: new in v2
+      x-auth: staff
+      security:
+      - adminBearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CostSummary'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/builds/{id}/cost:
+    get:
+      tags:
+      - Compute
+      summary: One build's cost
+      operationId: get_admin_builds_id_cost
+      x-status: new in v2
+      x-auth: staff
+      security:
+      - adminBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildCost'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/suppliers:
+    get:
+      tags:
+      - Compute
+      summary: Suppliers and prices
+      operationId: get_admin_suppliers
+      x-status: new in v2
+      x-auth: staff
+      security:
+      - adminBearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierEndpointList'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/suppliers/{id}:
+    put:
+      tags:
+      - Compute
+      summary: Update a supplier price
+      operationId: put_admin_suppliers_id
+      x-status: new in v2
+      x-auth: staff
+      security:
+      - adminBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierEndpointPut'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierEndpoint'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/outcomes/journeys:
+    get:
+      tags:
+      - Outcomes
+      summary: Flip summary (aggregate)
+      operationId: get_admin_outcomes_journeys
+      x-status: new in v2
+      x-auth: staff
+      security:
+      - adminBearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlipSummary'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/outcomes/uplift:
+    get:
+      tags:
+      - Outcomes
+      summary: Uplift per chapter (aggregate)
+      operationId: get_admin_outcomes_uplift
+      x-status: new in v2
+      x-auth: staff
+      security:
+      - adminBearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpliftSummary'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/cohorts/{id}/metrics:
+    get:
+      tags:
+      - Outcomes
+      summary: Cohort aggregates with cost
+      operationId: get_admin_cohorts_id_metrics
+      x-status: new in v2
+      x-auth: staff
+      security:
+      - adminBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCohortMetrics'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/users:
+    get:
+      tags:
+      - Admin
+      summary: Find users
+      operationId: get_admin_users
+      x-status: v1 (in v1 contract)
+      x-auth: staff
+      security:
+      - adminBearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserPage'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/users/{id}:
+    get:
+      tags:
+      - Admin
+      summary: One user
+      operationId: get_admin_users_id
+      x-status: v1 (in v1 contract)
+      x-auth: staff
+      security:
+      - adminBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+        default:
+          $ref: '#/components/responses/Problem'
+    patch:
+      tags:
+      - Admin
+      summary: Suspend or reactivate
+      operationId: patch_admin_users_id
+      x-status: v1 (in v1 contract)
+      x-auth: staff
+      security:
+      - adminBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminUserPatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/transactions:
+    get:
+      tags:
+      - Admin
+      summary: Transactions
+      operationId: get_admin_transactions
+      x-status: changed in v2
+      x-auth: staff
+      security:
+      - adminBearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionPage'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/orders/{id}/refunds:
+    post:
+      tags:
+      - Admin
+      summary: Refund an order
+      operationId: post_admin_orders_id_refunds
+      x-status: new in v2
+      x-auth: staff
+      security:
+      - adminBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundCreate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Refund'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/payouts:
+    get:
+      tags:
+      - Admin
+      summary: Creator payouts
+      operationId: get_admin_payouts
+      x-status: new in v2
+      x-auth: staff
+      security:
+      - adminBearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayoutPage'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/safety/events:
+    get:
+      tags:
+      - Admin
+      summary: Safety events
+      operationId: get_admin_safety_events
+      x-status: new in v2
+      x-auth: staff
+      security:
+      - adminBearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SafetyEventPage'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/safety/events/{id}:
+    patch:
+      tags:
+      - Admin
+      summary: Acknowledge, escalate, close
+      operationId: patch_admin_safety_events_id
+      x-status: new in v2
+      x-auth: staff
+      security:
+      - adminBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SafetyEventPatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SafetyEvent'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/audit:
+    get:
+      tags:
+      - Admin
+      summary: Audit log
+      operationId: get_admin_audit
+      x-status: v1 (in v1 contract)
+      x-auth: staff
+      security:
+      - adminBearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditPage'
+        default:
+          $ref: '#/components/responses/Problem'
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    adminBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Staff token, aud=admin
+    stripeSignature:
+      type: apiKey
+      in: header
+      name: Stripe-Signature
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    Problem:
+      description: RFC 9457 problem details
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  schemas:
+    Money:
+      type: object
+      properties:
+        amount:
+          type: integer
+        currency:
+          type: string
+          enum:
+          - EUR
+          - USD
+          - IDR
+      required:
+      - amount
+      - currency
+    Problem:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        code:
+          type: string
+        detail:
+          type: string
+        retryable:
+          type: boolean
+        requestId:
+          type: string
+      required:
+      - type
+      - title
+      - status
+      - code
+    SignupRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        name:
+          type: string
+        birthYear:
+          type: integer
+        country:
+          type: string
+        acceptTermsVersion:
+          type: string
+      required:
+      - email
+      - password
+      - name
+      - birthYear
+      - country
+      - acceptTermsVersion
+    SigninRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+      - email
+      - password
+    OAuthRequest:
+      type: object
+      properties:
+        code:
+          type: string
+        redirectUri:
+          type: string
+        birthYear:
+          type: integer
+        country:
+          type: string
+      required:
+      - code
+      - redirectUri
+    RefreshRequest:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+    PasswordResetRequest:
+      type: object
+      properties:
+        email:
+          type: string
+      required:
+      - email
+    AuthTokens:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        expiresIn:
+          type: integer
+        refreshToken:
+          type: string
+      required:
+      - accessToken
+      - expiresIn
+    AuthResponse:
+      allOf:
+      - $ref: '#/components/schemas/AuthTokens'
+      - type: object
+        properties:
+          user:
+            $ref: '#/components/schemas/Me'
+          needsAgeGate:
+            type: boolean
+        required:
+        - user
+    Me:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        locale:
+          type: string
+        timeZone:
+          type: string
+        country:
+          type: string
+        ageBand:
+          type: string
+          enum:
+          - 16-17
+          - 18+
+        roles:
+          type: array
+          items:
+            type: string
+            enum:
+            - user
+            - creator
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - email
+      - name
+      - roles
+    MePatch:
+      type: object
+      properties:
+        name:
+          type: string
+        locale:
+          type: string
+        timeZone:
+          type: string
+        birthYear:
+          type: integer
+    Consent:
+      type: object
+      properties:
+        purpose:
+          type: string
+          enum:
+          - health_data
+          - ai_processing
+          - outcome_research
+          - marketing_email
+        granted:
+          type: boolean
+        textVersion:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+      - purpose
+      - granted
+      - textVersion
+    ConsentList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Consent'
+      required:
+      - data
+    ConsentPut:
+      type: object
+      properties:
+        granted:
+          type: boolean
+        textVersion:
+          type: string
+      required:
+      - granted
+      - textVersion
+    DataRequest:
+      type: object
+      properties:
+        requestId:
+          type: string
+        kind:
+          type: string
+          enum:
+          - export
+          - delete
+        readyBy:
+          type: string
+          format: date-time
+      required:
+      - requestId
+      - kind
+    DeleteMeRequest:
+      type: object
+      properties:
+        confirm:
+          const: DELETE
+      required:
+      - confirm
+    ConversationCreate:
+      type: object
+      properties:
+        firstMessage:
+          type: string
+        source:
+          type: string
+          enum:
+          - home
+          - onboarding
+          - retreat
+          - session
+          - new
+      required:
+      - source
+    Conversation:
+      type: object
+      properties:
+        id:
+          type: string
+        sessionId:
+          type:
+          - string
+          - 'null'
+        title:
+          type: string
+        source:
+          type: string
+        lastMessageAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - title
+      - source
+    ConversationPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Conversation'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - data
+      - nextCursor
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+        conversationId:
+          type: string
+        role:
+          type: string
+          enum:
+          - user
+          - assistant
+          - system_event
+        text:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        attachment:
+          type: object
+        safety:
+          type: object
+          properties:
+            crisis:
+              type: boolean
+      required:
+      - id
+      - conversationId
+      - role
+      - text
+    ConversationDetail:
+      allOf:
+      - $ref: '#/components/schemas/Conversation'
+      - type: object
+        properties:
+          messages:
+            type: array
+            items:
+              $ref: '#/components/schemas/Message'
+        required:
+        - messages
+    MessageCreate:
+      type: object
+      properties:
+        text:
+          type: string
+      required:
+      - text
+    SseStream:
+      type: string
+      description: text/event-stream; events message.delta, message.completed, safety.crisis, build.step, build.completed,
+        build.failed, error
+    BuildCreate:
+      type: object
+      properties:
+        conversationId:
+          type: string
+        sessionId:
+          type: string
+        baseVersionId:
+          type: string
+        chapterMinutes:
+          type: integer
+          enum:
+          - 3
+          - 5
+          - 10
+        biteIds:
+          type: array
+          items:
+            type: string
+      required:
+      - conversationId
+      - chapterMinutes
+    Build:
+      type: object
+      properties:
+        id:
+          type: string
+        sessionId:
+          type: string
+        versionId:
+          type: string
+        state:
+          type: string
+          enum:
+          - queued
+          - running
+          - ready
+          - failed
+        steps:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                enum:
+                - script
+                - voice
+                - music
+                - image
+                - mix
+              state:
+                type: string
+        reusedSegments:
+          type: integer
+        counted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - state
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        summary:
+          type: string
+        ownerId:
+          type: string
+        retreatId:
+          type: string
+        currentVersionId:
+          type: string
+        versions:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - title
+      - currentVersionId
+    SessionPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Session'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - data
+      - nextCursor
+    Version:
+      type: object
+      properties:
+        id:
+          type: string
+        sessionId:
+          type: string
+        label:
+          type: string
+        parentVersionId:
+          type: string
+        biteIds:
+          type: array
+          items:
+            type: string
+        state:
+          type: string
+          enum:
+          - building
+          - ready
+          - failed
+          - rolled_back
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - sessionId
+      - label
+      - state
+    VersionList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Version'
+      required:
+      - data
+    Chapter:
+      type: object
+      properties:
+        id:
+          type: string
+        versionId:
+          type: string
+        index:
+          type: integer
+        title:
+          type: string
+        durationSec:
+          type: integer
+        minutes:
+          type: integer
+          enum:
+          - 3
+          - 5
+          - 10
+      required:
+      - id
+      - versionId
+      - index
+    ChapterList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Chapter'
+      required:
+      - data
+    LegoBite:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        kind:
+          type: string
+          enum:
+          - voice
+          - music
+          - pace
+          - script
+          - image
+          - length
+        what:
+          type: string
+        why:
+          type: string
+        preselected:
+          type: boolean
+      required:
+      - id
+      - title
+      - kind
+      - what
+      - why
+    LegoBiteList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LegoBite'
+      required:
+      - data
+    Playback:
+      type: object
+      properties:
+        audioUrl:
+          type: string
+        imageUrl:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        durationSec:
+          type: integer
+      required:
+      - audioUrl
+      - expiresAt
+    PlayCreate:
+      type: object
+      properties:
+        chapterId:
+          type: string
+        versionId:
+          type: string
+      required:
+      - chapterId
+      - versionId
+    PlayPatch:
+      type: object
+      properties:
+        positionSec:
+          type: number
+        completionRatio:
+          type: number
+          minimum: 0
+          maximum: 1
+        ended:
+          type: boolean
+        report:
+          type: string
+          enum:
+          - adverse
+          - quality
+    Play:
+      type: object
+      properties:
+        id:
+          type: string
+        chapterId:
+          type: string
+        versionId:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+        positionSec:
+          type: number
+        completionRatio:
+          type: number
+        completed:
+          type: boolean
+      required:
+      - id
+      - chapterId
+      - completionRatio
+      - completed
+    CheckInCreate:
+      type: object
+      properties:
+        chapterId:
+          type: string
+        journeyId:
+          type: string
+        phase:
+          type: string
+          enum:
+          - pre
+          - post
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        feeling:
+          type: string
+      required:
+      - phase
+      - score
+    CheckIn:
+      type: object
+      properties:
+        id:
+          type: string
+        phase:
+          type: string
+          enum:
+          - pre
+          - post
+        score:
+          type: integer
+        chapterId:
+          type: string
+        journeyId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - phase
+      - score
+    CheckInPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CheckIn'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - data
+      - nextCursor
+    JourneyCreate:
+      type: object
+      properties:
+        domain:
+          type: string
+          enum:
+          - sleep
+          - stress
+          - focus
+          - mood
+          - other
+        fromState:
+          type: string
+        toState:
+          type: string
+        startScore:
+          type: integer
+        targetScore:
+          type: integer
+      required:
+      - domain
+      - fromState
+      - toState
+      - startScore
+    JourneyPatch:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - active
+          - paused
+          - ended
+      required:
+      - status
+    Journey:
+      type: object
+      properties:
+        id:
+          type: string
+        domain:
+          type: string
+        fromState:
+          type: string
+        toState:
+          type: string
+        startScore:
+          type: integer
+        targetScore:
+          type: integer
+        latestScore:
+          type: integer
+        chaptersPlayed:
+          type: integer
+        status:
+          type: string
+          enum:
+          - active
+          - paused
+          - flipped
+          - ended
+        nextChapterId:
+          type: string
+        reminderAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - domain
+      - startScore
+      - targetScore
+      - status
+    SafetyResource:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        url:
+          type: string
+        hours:
+          type: string
+      required:
+      - name
+    SafetyResourceList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SafetyResource'
+      required:
+      - data
+    SafetyReportCreate:
+      type: object
+      properties:
+        messageId:
+          type: string
+        chapterId:
+          type: string
+        reason:
+          type: string
+        note:
+          type: string
+      required:
+      - reason
+    CrisisReply:
+      type: object
+      properties:
+        code:
+          const: unsafe_content
+        category:
+          type: string
+          enum:
+          - self_harm
+          - harm_to_others
+          - medical_emergency
+        message:
+          type: string
+        resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/SafetyResource'
+      required:
+      - code
+      - category
+      - resources
+    CreatorPublic:
+      type: object
+      properties:
+        handle:
+          type: string
+        displayName:
+          type: string
+        bio:
+          type: string
+        retreats:
+          type: array
+          items:
+            $ref: '#/components/schemas/Retreat'
+      required:
+      - handle
+      - displayName
+    Creator:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        handle:
+          type: string
+        displayName:
+          type: string
+        country:
+          type: string
+        payoutsEnabled:
+          type: boolean
+      required:
+      - id
+      - handle
+      - payoutsEnabled
+    CreatorCreate:
+      type: object
+      properties:
+        userId:
+          type: string
+        handle:
+          type: string
+        displayName:
+          type: string
+        country:
+          type: string
+      required:
+      - userId
+      - handle
+      - displayName
+      - country
+    Retreat:
+      type: object
+      properties:
+        id:
+          type: string
+        creatorId:
+          type: string
+        title:
+          type: string
+        summary:
+          type: string
+        price:
+          $ref: '#/components/schemas/Money'
+        weeks:
+          type: integer
+        chapterCount:
+          type: integer
+        status:
+          type: string
+          enum:
+          - draft
+          - on_sale
+          - closed
+      required:
+      - id
+      - creatorId
+      - title
+      - price
+      - status
+    RetreatCreate:
+      type: object
+      properties:
+        creatorId:
+          type: string
+        title:
+          type: string
+        priceAmount:
+          type: integer
+        currency:
+          type: string
+        splitRuleId:
+          type: string
+        chapterPlan:
+          type: object
+      required:
+      - creatorId
+      - title
+      - priceAmount
+      - currency
+      - splitRuleId
+    Cohort:
+      type: object
+      properties:
+        id:
+          type: string
+        retreatId:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        enrolUntil:
+          type: string
+          format: date-time
+        capacity:
+          type: integer
+        enrolled:
+          type: integer
+        status:
+          type: string
+          enum:
+          - open
+          - running
+          - finished
+      required:
+      - id
+      - retreatId
+      - startsAt
+      - status
+    CohortCreate:
+      type: object
+      properties:
+        startsAt:
+          type: string
+          format: date-time
+        capacity:
+          type: integer
+        enrolUntil:
+          type: string
+          format: date-time
+      required:
+      - startsAt
+      - capacity
+      - enrolUntil
+    RetreatDetail:
+      allOf:
+      - $ref: '#/components/schemas/Retreat'
+      - type: object
+        properties:
+          cohorts:
+            type: array
+            items:
+              $ref: '#/components/schemas/Cohort'
+        required:
+        - cohorts
+    RetreatDetailList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RetreatDetail'
+      required:
+      - data
+    TicketCheckoutCreate:
+      type: object
+      properties:
+        cohortId:
+          type: string
+        withdrawalConsent:
+          type: object
+          properties:
+            startNow:
+              type: boolean
+            acknowledged:
+              type: boolean
+            textVersion:
+              type: string
+          required:
+          - startNow
+          - acknowledged
+          - textVersion
+      required:
+      - cohortId
+    SubscriptionCheckoutCreate:
+      type: object
+      properties:
+        planId:
+          type: string
+        priceId:
+          type: string
+      required:
+      - planId
+      - priceId
+    CheckoutStarted:
+      type: object
+      properties:
+        orderId:
+          type: string
+        checkoutUrl:
+          type: string
+      required:
+      - checkoutUrl
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        cohortId:
+          type: string
+        price:
+          $ref: '#/components/schemas/Money'
+        vat:
+          $ref: '#/components/schemas/Money'
+        fees:
+          $ref: '#/components/schemas/Money'
+        net:
+          $ref: '#/components/schemas/Money'
+        state:
+          type: string
+          enum:
+          - pending
+          - paid
+          - refunded
+          - partially_refunded
+          - failed
+        withdrawal:
+          type: object
+          properties:
+            waived:
+              type: boolean
+            consentAt:
+              type: string
+            textVersion:
+              type: string
+        receiptUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - cohortId
+      - price
+      - state
+    OrderPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - data
+      - nextCursor
+    WithdrawalRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+    Refund:
+      type: object
+      properties:
+        id:
+          type: string
+        orderId:
+          type: string
+        amount:
+          $ref: '#/components/schemas/Money'
+        reason:
+          type: string
+        state:
+          type: string
+          enum:
+          - pending
+          - succeeded
+          - failed
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - orderId
+      - amount
+      - state
+    RefundCreate:
+      type: object
+      properties:
+        amount:
+          $ref: '#/components/schemas/Money'
+        reason:
+          type: string
+      required:
+      - reason
+    Enrolment:
+      type: object
+      properties:
+        id:
+          type: string
+        cohortId:
+          type: string
+        retreatId:
+          type: string
+        orderId:
+          type: string
+        journeyId:
+          type: string
+        status:
+          type: string
+          enum:
+          - active
+          - finished
+          - refunded
+      required:
+      - id
+      - cohortId
+      - status
+    EnrolmentList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Enrolment'
+      required:
+      - data
+    LinkResponse:
+      type: object
+      properties:
+        url:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+      required:
+      - url
+    CohortMetrics:
+      type: object
+      properties:
+        cohortId:
+          type: string
+        minGroupSize:
+          type: integer
+        suppressed:
+          type: boolean
+        enrolled:
+          type: integer
+        activeWeek1:
+          type: integer
+        activeWeek4:
+          type: integer
+        activeWeek8:
+          type: integer
+        chaptersPlayedMedian:
+          type: number
+        plusConversions:
+          type: integer
+        refunds:
+          type: integer
+        revenue:
+          $ref: '#/components/schemas/Money'
+        creatorEarnings:
+          $ref: '#/components/schemas/Money'
+      required:
+      - cohortId
+      - minGroupSize
+      - suppressed
+    AdminCohortMetrics:
+      allOf:
+      - $ref: '#/components/schemas/CohortMetrics'
+      - type: object
+        properties:
+          cost:
+            $ref: '#/components/schemas/Money'
+          flipRate:
+            type: number
+    PayoutLine:
+      type: object
+      properties:
+        id:
+          type: string
+        creatorId:
+          type: string
+        source:
+          type: string
+          enum:
+          - ticket
+          - plus_share
+          - refund_reversal
+        orderId:
+          type: string
+        subscriptionId:
+          type: string
+        gross:
+          $ref: '#/components/schemas/Money'
+        creatorAmount:
+          $ref: '#/components/schemas/Money'
+        state:
+          type: string
+          enum:
+          - pending
+          - available
+          - paid
+          - reversed
+        stripeTransferId:
+          type: string
+        availableAt:
+          type: string
+          format: date-time
+        paidAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - creatorId
+      - source
+      - creatorAmount
+      - state
+    PayoutPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PayoutLine'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - data
+      - nextCursor
+    SplitRule:
+      type: object
+      properties:
+        id:
+          type: string
+        version:
+          type: integer
+        creatorTicketShare:
+          type: number
+        creatorPlusShare:
+          type: number
+        plusAttributionDays:
+          type: integer
+        effectiveFrom:
+          type: string
+          format: date-time
+      required:
+      - id
+      - version
+      - creatorTicketShare
+      - creatorPlusShare
+    SplitRuleList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SplitRule'
+      required:
+      - data
+    SplitRulePut:
+      type: object
+      properties:
+        creatorTicketShare:
+          type: number
+        creatorPlusShare:
+          type: number
+        plusAttributionDays:
+          type: integer
+      required:
+      - creatorTicketShare
+      - creatorPlusShare
+      - plusAttributionDays
+    Plan:
+      type: object
+      properties:
+        id:
+          type: string
+          enum:
+          - free
+          - plus
+        prices:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              interval:
+                type: string
+                enum:
+                - month
+                - year
+              price:
+                $ref: '#/components/schemas/Money'
+        limits:
+          type: object
+      required:
+      - id
+      - prices
+    PlanList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Plan'
+      required:
+      - data
+    Entitlements:
+      type: object
+      properties:
+        plan:
+          type: string
+          enum:
+          - free
+          - plus
+        source:
+          type: string
+          enum:
+          - free
+          - subscription
+          - retreat
+        limit:
+          type: object
+          properties:
+            unit:
+              type: string
+            perDay:
+              type: integer
+            used:
+              type: integer
+            resetAt:
+              type: string
+              format: date-time
+        chapterMinutesAllowed:
+          type: array
+          items:
+            type: integer
+      required:
+      - plan
+      - source
+      - limit
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: string
+        plan:
+          const: plus
+        interval:
+          type: string
+          enum:
+          - month
+          - year
+        status:
+          type: string
+          enum:
+          - active
+          - past_due
+          - canceled
+        currentPeriodEnd:
+          type: string
+          format: date-time
+        attributedCohortId:
+          type: string
+      required:
+      - id
+      - plan
+      - status
+    StripeEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        data:
+          type: object
+      required:
+      - id
+      - type
+      - data
+    ComputeLine:
+      type: object
+      properties:
+        id:
+          type: string
+        buildId:
+          type: string
+        chapterId:
+          type: string
+        versionId:
+          type: string
+        media:
+          type: string
+          enum:
+          - script
+          - voice
+          - music
+          - image
+          - video
+        supplier:
+          type: string
+        model:
+          type: string
+        unit:
+          type: string
+          enum:
+          - token_in
+          - token_out
+          - char
+          - second
+          - image
+          - generation
+        units:
+          type: number
+        unitPrice:
+          type: number
+        cost:
+          $ref: '#/components/schemas/Money'
+        cacheHit:
+          type: boolean
+        reused:
+          type: boolean
+        latencyMs:
+          type: integer
+        attempt:
+          type: integer
+        fallbackFrom:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - buildId
+      - media
+      - supplier
+      - model
+      - unit
+      - units
+      - cost
+      - cacheHit
+    ComputeLinePage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComputeLine'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - data
+      - nextCursor
+    CostSummary:
+      type: object
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        groupBy:
+          type: string
+        rows:
+          type: array
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              builds:
+                type: integer
+              chapters:
+                type: integer
+              cost:
+                $ref: '#/components/schemas/Money'
+              costPerChapter:
+                $ref: '#/components/schemas/Money'
+              cacheHitRate:
+                type: number
+      required:
+      - rows
+    BuildCost:
+      type: object
+      properties:
+        buildId:
+          type: string
+        total:
+          $ref: '#/components/schemas/Money'
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComputeLine'
+      required:
+      - buildId
+      - total
+      - lines
+    SupplierEndpoint:
+      type: object
+      properties:
+        id:
+          type: string
+        supplier:
+          type: string
+        model:
+          type: string
+        media:
+          type: string
+        unit:
+          type: string
+        unitPrice:
+          type: number
+        active:
+          type: boolean
+        validFrom:
+          type: string
+          format: date-time
+      required:
+      - id
+      - supplier
+      - model
+      - media
+      - unitPrice
+      - active
+    SupplierEndpointList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupplierEndpoint'
+      required:
+      - data
+    SupplierEndpointPut:
+      type: object
+      properties:
+        unitPrice:
+          type: number
+        active:
+          type: boolean
+    FlipSummary:
+      type: object
+      properties:
+        n:
+          type: integer
+        suppressed:
+          type: boolean
+        flipRate:
+          type: number
+        chaptersToFlipMedian:
+          type: number
+        costPerFlip:
+          $ref: '#/components/schemas/Money'
+        startScoreMedian:
+          type: number
+      required:
+      - n
+      - suppressed
+    UpliftSummary:
+      type: object
+      properties:
+        n:
+          type: integer
+        rows:
+          type: array
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              n:
+                type: integer
+              upliftMean:
+                type: number
+              suppressed:
+                type: boolean
+      required:
+      - n
+      - rows
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        plan:
+          type: string
+        status:
+          type: string
+          enum:
+          - active
+          - suspended
+          - deleted
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - email
+      - status
+    AdminUserPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminUser'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - data
+      - nextCursor
+    AdminUserPatch:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - active
+          - suspended
+        reason:
+          type: string
+      required:
+      - status
+      - reason
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum:
+          - order
+          - subscription_invoice
+          - refund
+          - payout
+        userId:
+          type: string
+        amount:
+          $ref: '#/components/schemas/Money'
+        state:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - type
+      - amount
+    TransactionPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - data
+      - nextCursor
+    SafetyEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        source:
+          type: string
+          enum:
+          - message
+          - checkin
+          - intake
+          - report
+          - play
+        category:
+          type: string
+        severity:
+          type: string
+          enum:
+          - low
+          - high
+          - crisis
+        action:
+          type: string
+          enum:
+          - blocked
+          - resources_shown
+          - rolled_back
+        state:
+          type: string
+          enum:
+          - open
+          - acknowledged
+          - escalated
+          - closed
+        ownerId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - source
+      - severity
+      - state
+    SafetyEventPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SafetyEvent'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - data
+      - nextCursor
+    SafetyEventPatch:
+      type: object
+      properties:
+        state:
+          type: string
+          enum:
+          - acknowledged
+          - escalated
+          - closed
+        note:
+          type: string
+      required:
+      - state
+    AuditEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        actorId:
+          type: string
+        action:
+          type: string
+        target:
+          type: string
+        before:
+          type: object
+        after:
+          type: object
+        at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - actorId
+      - action
+      - target
+      - at
+    AuditPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEntry'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - data
+      - nextCursor

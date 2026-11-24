@@ -16,6 +16,7 @@ import researchInsightTimer from './content/research-insight-timer.html?raw'
 import researchRound2 from '../../docs/research/reports/Insight Timer behaviour and journeys.md?raw'
 import prdOverview from '../../docs/PRD-OVERVIEW.md?raw'
 import apiContract from '../../docs/api/API-CONTRACT.md?raw'
+import apiContractV2 from '../../docs/api/API-CONTRACT-V2.md?raw'
 import backendOld from '../../docs/backend-old/BACKEND-OLD.md?raw'
 import artefact from '../../docs/backend-old/ARTEFACT.md?raw'
 import { DS_TOC } from '../designsystem/toc'
@@ -76,7 +77,7 @@ const DOCS = [
     title: 'API contract',
     blurb: 'The plan for the backend that will replace today\'s sample data, including how the AI features work and are kept safe.',
     audience: 'Engineers',
-    inside: ['Every endpoint the apps need', 'The data model', 'The AI system: routes, models, safety and cost', 'The order to build it in'],
+    inside: ['v2: the Pilot slice, the smallest API for the first paid creator pilot', 'Creator retreat payments, the compute ledger and outcomes', 'v1: every endpoint, the data model and the AI system', 'The feature lock and the decisions still open'],
     icon: Server,
     source: 'docs/api/API-CONTRACT.md',
     html: () => marked.parse(apiContract, { async: false }),
@@ -194,6 +195,23 @@ const DOC_VERSIONS: Partial<Record<DocId, DocVersion[]>> = {
       markdown: true,
     },
     { v: 1, label: 'Features & business', note: 'Round 1: features, strategy, backlash, competitors.', html: () => researchInsightTimer },
+  ],
+  // v2 first, so it is the default; v1 stays unchanged at ?v=1.
+  api: [
+    {
+      v: 2,
+      label: 'Pilot slice (draft)',
+      note: 'The smallest API for the first paid creator pilot, for the feature lock.',
+      html: () => marked.parse(apiContractV2, { async: false }),
+      markdown: true,
+    },
+    {
+      v: 1,
+      label: 'Full contract',
+      note: 'Every endpoint, the data model, the AI system and the phasing.',
+      html: () => marked.parse(apiContract, { async: false }),
+      markdown: true,
+    },
   ],
 }
 
