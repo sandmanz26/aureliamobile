@@ -154,9 +154,18 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U115 | `3bcb6cf` | 2026-11-24 | Wiki on desktop (1024px and up): one sticky left sidebar replaces the top tab bar. It holds the brand, the document list, then the open document's search and contents, and Admin. Phones are unchanged. | [patch](patches/U115-3bcb6cf.patch) |
 | U116 | `fa3c7f6` | 2026-11-24 | Admin → Reports (staging only, `RELEASES.reports`). **Buyer agent report:** every iteration (v1, v2, v3, the re-run) with its question, what changed, results, change from the one before, and the decision it fed. **Combination report:** each funnel stage read across agents, the funnel, the retreat model, personas, v5 features, interviews, the PRD and the backend wiki, with agreements, conflicts, a verdict and a next move, plus an offer × version × rules matrix. Both start with a clickable source graph and end with Sources (16 in one registry, each labelled), Built on and Limits. | [patch](patches/U116-fa3c7f6.patch) |
 | U117 | `bd2daaf` | 2026-11-24 | Buyer agent report: every iteration shows the **price tested** (v1 the admin's mock $9.99, v2 mock regional prices, v3 offers A and B, the re-run the app's $10 or $100), with a table and a warning where it differs from the app. New **Cost report** (`/admin/reports/cost`, staging): a supplier catalogue per media with price, source, label and pros and cons; Lean, Balanced and Premium presets plus the 2025 measured baseline; a bad-to-good model with the user's starting condition, adherence, chapter length, personalisation, models and the Causal AI stage; a connected, interactive graph; a cost-against-uplift chart and profit per flip. | [patch](patches/U117-bd2daaf.patch) |
+| U118 | `e77935a` | 2026-11-24 | `RELEASES.reports` is now on for both sites, so the buyer agent, combination and cost reports show on production. Production fast-forwarded with everything since U112. | [patch](patches/U118-e77935a.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U118 — Reports and everything since U112 on production
+
+- **Commit:** `e77935a` · 2026-11-24 · `web_app` + `admin_cms` + `web_prod`.
+- **Patch:** [patches/U118-e77935a.patch](patches/U118-e77935a.patch)
+- **Request:** "update ke production. report juga update di production"
+- **Changed:** `src/versions/releases.ts`: `reports: true`, and the unused `BUILD` import removed. `web_prod` fast-forwarded: U113–U118, the wiki sidebar, B2B2C and the Eugene docs.
+- **Revert:** set `reports` back to `BUILD.environment !== 'production'`.
 
 ### U117 — Price tested, and the Cost report
 

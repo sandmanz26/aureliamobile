@@ -123,6 +123,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | J170 | 2026-11-24 | Record + plan | The chat's last part read; all three parts combined into one task list (A–K) for the owner to confirm | — |
 | J171 | 2026-11-24 | Record | The Gemini chat is the MVP, Causal AI & Admin Spec PDF (already read); the Vimeo videos are skipped | — |
 | J172 | 2026-11-24 | Code | Mark the price each buyer-agent iteration tested; Cost report with supplier pros and cons, variations, the user's condition and a connected graph | U117 |
+| J173 | 2026-11-24 | Release | Update production, with the reports on production too | U118 |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
@@ -2177,3 +2178,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
   - The price tested is now part of each buyer-agent result. v1 to v3 tested the admin's mock prices ($9.99, regional), not the app's $10 or $100, which is worth knowing when reading them.
   - Cost report: costs first, as presets; then bad to good as a connected graph with the user's condition as a variable.
 - **Finding:** at stage 1, with Balanced models and fully personal chapters, a flip costs about $36.55 against $19.99, a loss. Lean models, or produced-once journeys, are what make the early stage viable.
+
+### J173 — Production updated
+- **Asked:** "update ke production. report juga update di production"
+- **Done (U118):** the reports flag is on; `web_prod` was fast-forwarded to `web_app`, on explicit request.

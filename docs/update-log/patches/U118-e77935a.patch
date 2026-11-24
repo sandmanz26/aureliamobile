@@ -1,0 +1,35 @@
+From e77935a48d22ac4b161f2807e4765e3938deb7b5 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 24 Nov 2026 17:27:04 +0000
+Subject: [PATCH] Reports on production too (U118, J173)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/versions/releases.ts | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/src/versions/releases.ts b/src/versions/releases.ts
+index c984cea..03abec7 100644
+--- a/src/versions/releases.ts
++++ b/src/versions/releases.ts
+@@ -13,7 +13,6 @@
+ // A new one that should wait imports BUILD from '../lib/build' and uses
+ // BUILD.environment !== 'production'. Since J153 nothing is waiting.
+ 
+-import { BUILD } from '../lib/build'
+ 
+ export const RELEASES = {
+   /** Figma "Changes" (16906:4947) item 1: one Chapter card + a Review sheet instead of the fanned deck. */
+@@ -38,6 +37,6 @@ export const RELEASES = {
+   buyerAgent: true,
+   /** Admin → Product lab → Business funnel (U108): Eugene's stages as the market-fit scoreboard. On both sites (J153). */
+   businessFunnel: true,
+-  /** Admin → Reports (U116, J167): the Buyer agent report and the Combination report, each with a source graph. Staging only until asked. */
+-  reports: BUILD.environment !== 'production',
++  /** Admin → Reports (U116, J167): the Buyer agent report and the Combination report, each with a source graph. On both sites since J173. */
++  reports: true,
+ } as const
+-- 
+2.43.0
+
