@@ -152,9 +152,29 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U113 | `d719cef` | 2026-11-24 | Business funnel → **Creator retreat (B2B2C)** view (`/admin/business-funnel?view=retreat`): Retreat-in-a-Box as a funnel under three offers (the spec, the approved redesign at €19.99, at €39) and three outcomes (low, middle, spec). It shows one cohort step by step, the pilot's five gates, money per cohort and across creators (with what a creator keeps on a course platform), a per-ticket comparison, and editable assumptions. Numbers match the wiki's Unit economics (tested). Decision d8 (the redesign, decided) in the log. Staging and production. | [patch](patches/U113-d719cef.patch) |
 | U114 | `4c89df1` | 2026-11-24 | No personal names on shared surfaces (the J078 rule): the B2B2C wiki pages, the funnel and buyer-agent admin texts, the wiki card and the /__demo description now say "the business owner" or "the brief"; the plan page drops internal ids. | [patch](patches/U114-4c89df1.patch) |
 | U115 | `3bcb6cf` | 2026-11-24 | Wiki on desktop (1024px and up): one sticky left sidebar replaces the top tab bar. It holds the brand, the document list, then the open document's search and contents, and Admin. Phones are unchanged. | [patch](patches/U115-3bcb6cf.patch) |
+| U116 | `fa3c7f6` | 2026-11-24 | Admin → Reports (staging only, `RELEASES.reports`). **Buyer agent report:** every iteration (v1, v2, v3, the re-run) with its question, what changed, results, change from the one before, and the decision it fed. **Combination report:** each funnel stage read across agents, the funnel, the retreat model, personas, v5 features, interviews, the PRD and the backend wiki, with agreements, conflicts, a verdict and a next move, plus an offer × version × rules matrix. Both start with a clickable source graph and end with Sources (16 in one registry, each labelled), Built on and Limits. | [patch](patches/U116-fa3c7f6.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U116 — Reports
+
+- **Commit:** `fa3c7f6` · 2026-11-24 · `web_app` + `admin_cms`. Staging only.
+- **Patch:** [patches/U116-fa3c7f6.patch](patches/U116-fa3c7f6.patch)
+- **Request:** "secara UX saya mau ketika eugene membaca dia mudah memahami dan mengetahui … resource apa saja yang digunakan … memberikan semacam graph … source … backend wiki, product feature (versi 3), user feedback, persona, business funnel, PRD"
+- **Changed:** `reportSources.ts` (the registry, tested), `buyerAgentReport.ts`, `combinationReport.ts`, `pages/reports/*`, routes, nav, modules, and the `reports` release flag.
+- **Conflicts it surfaces:**
+  - three free-limit definitions;
+  - three Plus prices;
+  - activation: PRD 57% against re-run 89%;
+  - back after a week: PRD 11.4% against re-run 6%;
+  - active at week 8: retreat spec 76.5% against model 35%;
+  - the stale line in PRD-OVERVIEW, "v5 = prod v2".
+- **Verified:**
+  - `npm run check` (195 tests);
+  - 1440px and 402px: no sideways scroll, graph nodes clickable, nav visible.
+  - Not checked: admin dark theme, keyboard focus on the graph.
+- **Revert:** `git revert --no-commit fa3c7f6`.
 
 ### U115 — Wiki sidebar
 

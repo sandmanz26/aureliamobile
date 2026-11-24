@@ -1,0 +1,1499 @@
+From fa3c7f6c13b73ce0791b4e609a8aeb6a4c3d9558 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 24 Nov 2026 15:51:51 +0000
+Subject: [PATCH] Admin Reports: Buyer agent report and Combination report,
+ each with a source graph and Sources (U116, J167)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/App.tsx                                   |  16 ++
+ src/admin/AdminLayout.tsx                     |  12 +
+ src/admin/data/buyerAgentReport.ts            | 202 +++++++++++++++
+ src/admin/data/combinationReport.ts           | 241 ++++++++++++++++++
+ src/admin/data/reportSources.test.ts          |  63 +++++
+ src/admin/data/reportSources.ts               | 238 +++++++++++++++++
+ .../pages/reports/BuyerAgentReportPage.tsx    | 189 ++++++++++++++
+ .../pages/reports/CombinationReportPage.tsx   | 167 ++++++++++++
+ src/admin/pages/reports/ReportParts.tsx       | 228 +++++++++++++++++
+ src/demo/modules.ts                           |   2 +
+ src/versions/releases.ts                      |   4 +
+ 11 files changed, 1362 insertions(+)
+ create mode 100644 src/admin/data/buyerAgentReport.ts
+ create mode 100644 src/admin/data/combinationReport.ts
+ create mode 100644 src/admin/data/reportSources.test.ts
+ create mode 100644 src/admin/data/reportSources.ts
+ create mode 100644 src/admin/pages/reports/BuyerAgentReportPage.tsx
+ create mode 100644 src/admin/pages/reports/CombinationReportPage.tsx
+ create mode 100644 src/admin/pages/reports/ReportParts.tsx
+
+diff --git a/src/App.tsx b/src/App.tsx
+index ab54dc3..8760201 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -89,6 +89,8 @@ const SettingsPage = lazy(() => import('./admin/pages/SettingsPage').then((m) =>
+ const UserJourneyPage = lazy(() => import('./admin/pages/UserJourneyPage').then((m) => ({ default: m.UserJourneyPage })))
+ const BusinessFunnelPage = lazy(() => import('./admin/pages/BusinessFunnelPage').then((m) => ({ default: m.BusinessFunnelPage })))
+ const BuyerResultsPage = lazy(() => import('./admin/pages/BuyerResultsPage').then((m) => ({ default: m.BuyerResultsPage })))
++const BuyerAgentReportPage = lazy(() => import('./admin/pages/reports/BuyerAgentReportPage').then((m) => ({ default: m.BuyerAgentReportPage })))
++const CombinationReportPage = lazy(() => import('./admin/pages/reports/CombinationReportPage').then((m) => ({ default: m.CombinationReportPage })))
+ const PersonasPage = lazy(() => import('./admin/pages/PersonasPage').then((m) => ({ default: m.PersonasPage })))
+ 
+ export default function App() {
+@@ -209,6 +211,20 @@ export default function App() {
+                 </ModuleGuard>
+               } />
+             )}
++            {RELEASES.reports && (
++              <>
++                <Route path="reports/buyer-agent" element={
++                  <ModuleGuard module="adminReportBuyerAgent">
++                    <BuyerAgentReportPage />
++                  </ModuleGuard>
++                } />
++                <Route path="reports/combination" element={
++                  <ModuleGuard module="adminReportCombination">
++                    <CombinationReportPage />
++                  </ModuleGuard>
++                } />
++              </>
++            )}
+             {/* Journey tags became tabs of User journey (U092). */}
+             <Route path="journey-tags" element={<Navigate to="/admin/user-journey?view=tags" replace />} />
+             <Route path="sessions" element={
+diff --git a/src/admin/AdminLayout.tsx b/src/admin/AdminLayout.tsx
+index 0fc28db..69a2d83 100644
+--- a/src/admin/AdminLayout.tsx
++++ b/src/admin/AdminLayout.tsx
+@@ -3,6 +3,8 @@ import {
+   Contact,
+   ShoppingBag,
+   Filter,
++  FileChartColumn,
++  Combine,
+   HeartPulse,
+   Target,
+   Microscope,
+@@ -81,6 +83,16 @@ const NAV: { section: string; items: NavItem[] }[] = [
+       ...(RELEASES.buyerAgent ? [{ to: '/admin/buyer-agent', label: 'Buyer agent results', icon: ShoppingBag, flag: 'adminBuyerAgent' }] : []),
+     ],
+   },
++  {
++    // U116 (J167): readable reports for the business owner, each showing its sources. Staging only (RELEASES).
++    section: 'Reports',
++    items: RELEASES.reports
++      ? [
++          { to: '/admin/reports/buyer-agent', label: 'Buyer agent report', icon: FileChartColumn, flag: 'adminReportBuyerAgent' },
++          { to: '/admin/reports/combination', label: 'Combination report', icon: Combine, flag: 'adminReportCombination' },
++        ]
++      : [],
++  },
+   {
+     section: 'Content',
+     items: [
+diff --git a/src/admin/data/buyerAgentReport.ts b/src/admin/data/buyerAgentReport.ts
+new file mode 100644
+index 0000000..d563aec
+--- /dev/null
++++ b/src/admin/data/buyerAgentReport.ts
+@@ -0,0 +1,202 @@
++import { DEFAULT_DECISIONS, type Decision } from './businessFunnel'
++import { BUYER_RUNS, countVerdicts, personasOf, priceRange, type BuyerAnswer, type BuyerRun } from './buyerRuns'
++import { AGENT_RULES, DESIGNS, agreement, report } from './buyerSim'
++import { V3_CHANGES, type V3Change } from './buyerRunV3'
++import { OVERALL_SUMMARY } from './buyerRerunSummaries'
++import type { SourceId } from './reportSources'
++
++/**
++ * Admin → Reports → Buyer agent report (U116, J167). Every buyer-agent
++ * iteration as one timeline entry, with every figure computed from the run
++ * data (buyerRuns, buyerRunV2, buyerRunV3) or the re-run (buyerSim). The
++ * sentences around the figures are fixed; the figures are not typed in.
++ * All of it is prediction: synthetic people, answered by an agent.
++ */
++
++export interface Figure {
++  label: string
++  value: string
++  note?: string
++}
++
++export interface Iteration {
++  /** Matches the finding id in reportSources. */
++  id: 'it-v1' | 'it-v2' | 'it-v3' | 'it-rerun'
++  name: string
++  date: string
++  question: string
++  changed: string[]
++  headline: Figure[]
++  delta: string[]
++  decisions: Decision[]
++  /** Why no decision is listed, when none is. */
++  decisionNote?: string
++  findings: string[]
++  link: string
++  sources: SourceId[]
++}
++
++export const pct = (x: number) => `${Math.round(x * 100)}%`
++const share = (k: number, n: number) => (n ? k / n : 0)
++const pts = (a: number, b: number) => {
++  const d = Math.round((b - a) * 100)
++  return `${d > 0 ? '+' : d < 0 ? '−' : '±'}${Math.abs(d)} points`
++}
++const money = (v: number) => `$${v.toFixed(v % 1 ? 2 : 0)}`
++const mean = (xs: number[]) => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : 0)
++
++function criterion(run: BuyerRun, label: string) {
++  return run.criteria.find((c) => c.label === label)?.value ?? ''
++}
++
++function decisions(ids: string[]) {
++  return ids.map((id) => DEFAULT_DECISIONS.find((d) => d.id === id)).filter((d): d is Decision => Boolean(d))
++}
++
++/** The tallies one run's answers give. */
++export function runTallies(answers: BuyerAnswer[]) {
++  const n = answers.length
++  const tries = countVerdicts(answers, 'tries')
++  const pays = countVerdicts(answers, 'pays')
++  const band = priceRange(answers)
++  const weeks = answers.map((a) => a.week).filter((w): w is number => typeof w === 'number')
++  const sureDay30 = answers.filter((a) => a.day30 === 'yes').length
++  return { n, tries, pays, band, week: weeks.length ? mean(weeks) : null, sureDay30 }
++}
++
++/** v3's control answers (offer A, today), in the same shape for the tallies that apply. */
++function controlTallies(run: BuyerRun) {
++  const ctl = run.answers.filter((a) => a.control)
++  const tries = { yes: 0, maybe: 0, no: 0 }
++  const pays = { yes: 0, maybe: 0, no: 0 }
++  for (const a of ctl) {
++    tries[a.control!.tries] += 1
++    pays[a.control!.pays] += 1
++  }
++  return { n: ctl.length, tries, pays }
++}
++
++/** How many answers each proposed change moved in run v3, most first. */
++export function movedBy(run: BuyerRun): [V3Change, number][] {
++  const m = new Map<V3Change, number>()
++  for (const a of run.answers) for (const c of a.movedBy ?? []) m.set(c as V3Change, (m.get(c as V3Change) ?? 0) + 1)
++  return [...m.entries()].sort((a, b) => b[1] - a[1])
++}
++
++/** Answers from people aged 65 or over in a run (by persona profile). */
++function olderShare(run: BuyerRun) {
++  const people = personasOf(run)
++  const old = run.answers.filter((a) => (people.get(a.personaId)?.age ?? 0) >= 65)
++  return { n: old.length, tries: old.filter((a) => a.tries === 'yes').length }
++}
++
++export function buildIterations(): Iteration[] {
++  const [r1, r2, r3] = [1, 2, 3].map((v) => BUYER_RUNS.find((r) => r.version === v)!)
++  const t1 = runTallies(r1.answers)
++  const t2 = runTallies(r2.answers)
++  const t3 = runTallies(r3.answers)
++  const a3 = controlTallies(r3)
++  const moved = movedBy(r3)
++  const old2 = olderShare(r2)
++  const best = report(3, 3)
++  const prodV1 = report(3, 1)
++  const prodV2 = report(3, 2)
++  const v2rules = [report(2, 2), report(2, 3)]
++  const agree = agreement()
++  const walks = ([1, 2, 3] as const).reduce((s, a) => s + report(a, 1).walks.length * DESIGNS.length, 0)
++  const top = best.leaveReasons[0]
++
++  return [
++    {
++      id: 'it-v1',
++      name: 'Run v1',
++      date: r1.date,
++      question: criterion(r1, 'Question'),
++      changed: ['The first run: it set the format every later run keeps (try, pay, four price answers, objection, test cases).', criterion(r1, 'Who')],
++      headline: [
++        { label: 'Would try', value: `${t1.tries.yes} of ${t1.n}`, note: `${t1.tries.maybe} maybe, ${t1.tries.no} no` },
++        { label: 'Would pay for Plus', value: `${t1.pays.yes} of ${t1.n}`, note: `${t1.pays.maybe} maybe` },
++        { label: 'Fair price band', value: `${money(t1.band.low)}–${money(t1.band.high)} a month`, note: `Plus was shown at ${money(r1.stimulus.priceUsd)}` },
++      ],
++      delta: ['The first iteration: nothing to compare with.'],
++      decisions: [],
++      decisionNote: 'No entry in the decision log. It fed run v2: the agent was too agreeable, so v2 added calibration rules.',
++      findings: r1.findings.slice(0, 3),
++      link: '/admin/buyer-agent?v=1',
++      sources: ['buyer-v1', 'personas'],
++    },
++    {
++      id: 'it-v2',
++      name: 'Run v2',
++      date: r2.date,
++      question: criterion(r2, 'Question'),
++      changed: [criterion(r2, 'Who'), criterion(r2, 'New parameters'), 'Calibration rules: look for the reason to say no first; a deal breaker the product hits today makes the answer no.'],
++      headline: [
++        { label: 'Would try', value: `${t2.tries.yes} of ${t2.n}`, note: `${t2.tries.maybe} maybe, ${t2.tries.no} no` },
++        { label: 'Would pay for Plus', value: `${t2.pays.yes} of ${t2.n}`, note: `${t2.pays.maybe} maybe` },
++        { label: 'Fair price band', value: `${money(t2.band.low)}–${money(t2.band.high)} a month` },
++        { label: 'Sessions in week one', value: (t2.week ?? 0).toFixed(1), note: 'average per person' },
++        { label: 'Aged 65 or over who would try', value: `${old2.tries} of ${old2.n}` },
++      ],
++      delta: [
++        `Would try: ${pct(share(t1.tries.yes, t1.n))} → ${pct(share(t2.tries.yes, t2.n))} of the panel (${pts(share(t1.tries.yes, t1.n), share(t2.tries.yes, t2.n))}). Mostly the calibration, not a different product.`,
++        `Fair band moved from ${money(t1.band.low)}–${money(t1.band.high)} to ${money(t2.band.low)}–${money(t2.band.high)}, now at local prices.`,
++        `A different panel (${t1.n} → ${t2.n} people), so compare shares, not counts.`,
++      ],
++      decisions: decisions(['d3']),
++      findings: r2.findings.slice(0, 4),
++      link: '/admin/buyer-agent?v=2',
++      sources: ['buyer-v2', 'buyer-v1', 'personas'],
++    },
++    {
++      id: 'it-v3',
++      name: 'Run v3',
++      date: r3.date,
++      question: criterion(r3, 'Question'),
++      changed: [criterion(r3, 'Who'), criterion(r3, 'What they saw'), criterion(r3, 'What the agent read first')],
++      headline: [
++        { label: 'Would try, today’s offer (A)', value: `${a3.tries.yes} of ${a3.n}`, note: `${a3.tries.no} no` },
++        { label: 'Would try, proposed offer (B)', value: `${t3.tries.yes} of ${t3.n}`, note: `${t3.tries.no} no` },
++        { label: 'Would pay, B', value: `${t3.pays.yes} yes, ${t3.pays.maybe} maybe`, note: `A: ${a3.pays.yes} yes, ${a3.pays.maybe} maybe` },
++        { label: 'Sure to use at day 30, B', value: `${t3.sureDay30} of ${t3.n}`, note: `${pct(share(t3.sureDay30, t3.n))}; the category keeps 3–5%` },
++        { label: 'Change that moved most answers', value: moved[0] ? V3_CHANGES[moved[0][0]].label : '—', note: moved[0] ? `${moved[0][1]} of ${t3.n} answers` : undefined },
++      ],
++      delta: [
++        `B against A on the same people: would try ${a3.tries.yes} → ${t3.tries.yes} (${pts(share(a3.tries.yes, a3.n), share(t3.tries.yes, t3.n))}). This is the reliable comparison: same people, same agent.`,
++        `Today’s offer against run v2: ${pct(share(t2.tries.yes, t2.n))} → ${pct(share(a3.tries.yes, a3.n))} would try, on a new generator and panel.`,
++        `Next most moving changes: ${moved.slice(1, 4).map(([c, k]) => `${V3_CHANGES[c].label.toLowerCase()} (${k})`).join(', ')}.`,
++      ],
++      decisions: decisions(['d1', 'd3']),
++      findings: r3.findings.slice(0, 4),
++      link: '/admin/buyer-agent?v=3',
++      sources: ['buyer-v3', 'buyer-v2', 'personas', 'backend-old', 'artefact'],
++    },
++    {
++      id: 'it-rerun',
++      name: 'Re-run by production version',
++      date: r3.date,
++      question: 'If each persona walks through the real screens of production v1, v2 and v3, step by step, which version keeps the most people, and where does each lose them?',
++      changed: [
++        `The answers are no longer played by hand: the rules of the three agents are written as code and walked through ${DESIGNS.length} production versions, ${walks} walks in all.`,
++        `Checked against the hand-played runs: ${agree.map((x) => `${x.label} ${x.exact} of ${x.n} the same, ${x.opposite} opposite`).join('; ')}.`,
++        `Read ${AGENT_RULES[3].name.toLowerCase()} as the best estimate; ${AGENT_RULES[1].name.toLowerCase()} were not calibrated.`,
++      ],
++      headline: [
++        { label: 'Hears a session on the first visit', value: pct(best.activation), note: 'agent v3 rules × production v3' },
++        { label: 'Finishes their own first session', value: pct(best.completion), note: 'of those who heard one' },
++        { label: 'Back after a week / a month', value: `${pct(best.d7)} / ${pct(best.d30)}`, note: 'the category keeps 3–5% at day 30' },
++        { label: '“Very disappointed” without it', value: pct(best.ellis), note: 'among those still active; 40% is the usual bar' },
++        { label: 'Top reason they leave', value: top ? top[0] : '—', note: top ? `${top[1]} of ${best.walks.length}` : undefined },
++      ],
++      delta: [
++        `Against run v3’s offer B, which was a proposal: ${pct(share(t3.sureDay30, t3.n))} sure at day 30 there, ${pct(best.d30)} here on the real screens.`,
++        `Production v1 → v3 (agent v3 rules): first-visit listening ${pct(prodV1.activation)} → ${pct(best.activation)}; back after a week ${pct(prodV1.d7)} → ${pct(best.d7)}.`,
++        `Production v2 → v3: completion ${pct(prodV2.completion)} → ${pct(best.completion)} (agent v3 rules); back after a week ${pct(v2rules[0].d7)} → ${pct(v2rules[1].d7)} (agent v2 rules).`,
++      ],
++      decisions: decisions(['d1', 'd2', 'd7', 'd5', 'd6']),
++      findings: OVERALL_SUMMARY.slice(0, 3),
++      link: '/admin/buyer-agent?view=versions',
++      sources: ['buyer-rerun', 'versions', 'personas'],
++    },
++  ]
++}
+diff --git a/src/admin/data/combinationReport.ts b/src/admin/data/combinationReport.ts
+new file mode 100644
+index 0000000..2907672
+--- /dev/null
++++ b/src/admin/data/combinationReport.ts
+@@ -0,0 +1,241 @@
++import { DEFAULT_DECISIONS, STAGES, funnelMetrics, stageStatus, type Status, type StageId } from './businessFunnel'
++import { BUYER_RUNS, personasOf, priceRange, wellnessOf } from './buyerRuns'
++import { DESIGNS, report, type AgentId, type DesignId } from './buyerSim'
++import { OFFERS, OUTCOMES, PLUS_NET_YEAR1, cohort, eur, perTicket } from './retreatFunnel'
++import type { SourceId } from './reportSources'
++
++/**
++ * Admin → Reports → Combination report (U116, J167): one reading of Aurelia,
++ * stage by stage of the business funnel, joining every source the team has.
++ * Each line names its source (reportSources) and, for documents, the section
++ * it comes from. Figures are computed from the models (buyerSim, businessFunnel,
++ * retreatFunnel, personas); the words around them are fixed. Production v3
++ * (staging v5, the default) is the version read throughout, with agent v3's
++ * rules, the calibrated ones.
++ */
++
++export interface SourceLine {
++  source: SourceId
++  /** Where in the source, for documents: a section or a lesson. */
++  cite?: string
++  text: string
++}
++
++export interface StageReading {
++  id: StageId
++  findingId: string
++  title: string
++  brief: string
++  /** The stage against its targets, on agent v3 × production v3 (businessFunnel.stageStatus). */
++  status: Status
++  lines: SourceLine[]
++  agree: string
++  conflict: string
++  verdict: string
++  next: string
++  /** The decision-log entry the next move is, when there is one. */
++  decision?: string
++}
++
++const pct = (x: number) => `${Math.round(x * 100)}%`
++const AGENT: AgentId = 3
++const DESIGN: DesignId = 3
++
++function bySegment<T extends string>(design: DesignId, key: (id: string) => T | undefined) {
++  const r = report(AGENT, design)
++  const groups = new Map<T, typeof r.walks>()
++  for (const w of r.walks) {
++    const k = key(w.personaId)
++    if (!k) continue
++    groups.set(k, [...(groups.get(k) ?? []), w])
++  }
++  return groups
++}
++
++/** Every stage's reading. `week` is the feedback group's study week (sample data). */
++export function buildStages(week: number): StageReading[] {
++  const r = report(AGENT, DESIGN)
++  const r2 = report(AGENT, 2)
++  const r1 = report(AGENT, 1)
++  const metrics = funnelMetrics(AGENT, DESIGN, week)
++  const m = (id: string) => metrics.find((x) => x.id === id)!
++  const people = personasOf(r.run)
++  const wellness = bySegment(DESIGN, (id) => {
++    const p = people.get(id)
++    return p ? wellnessOf(p).level : undefined
++  })
++  const attitude = bySegment(DESIGN, (id) => people.get(id)?.aiAttitude)
++  const rate = (ws: typeof r.walks | undefined, f: (w: (typeof r.walks)[number]) => number) => (ws && ws.length ? ws.reduce((s, w) => s + f(w), 0) / ws.length : 0)
++  const signIn = r.funnel.find((f) => f.step === 'sign-in')!
++  const onboarding = r.funnel.find((f) => f.step === 'onboarding')!
++  const run2 = BUYER_RUNS.find((x) => x.version === 2)!
++  const run3 = BUYER_RUNS.find((x) => x.version === 3)!
++  const p2 = personasOf(run2)
++  const old = run2.answers.filter((a) => (p2.get(a.personaId)?.age ?? 0) >= 65)
++  const band3 = priceRange(run3.answers)
++  const middle = OUTCOMES.find((o) => o.id === 'middle')!
++  const specOutcome = OUTCOMES.find((o) => o.id === 'spec')!
++  const human = (id: string) => {
++    const x = m(id)
++    return x.human === null ? `${x.humanNote}.` : `${pct(x.human)}. ${x.humanNote}.`
++  }
++  const stage = (id: StageId) => STAGES.find((s) => s.id === id)!
++  const dec = (id: string) => DEFAULT_DECISIONS.find((d) => d.id === id)!
++  const status = (id: StageId) => stageStatus(metrics, {}, id).status
++  const usd = (v: number) => `$${v % 1 ? v.toFixed(2) : v}`
++
++  return [
++    {
++      id: 'entry',
++      findingId: 'stage-entry',
++      title: stage('entry').title,
++      brief: stage('entry').eugene,
++      status: status('entry'),
++      lines: [
++        { source: 'backend-old', cite: 'How the 2025 system worked', text: 'No entry for a person: a professional assembled a campaign from a taxonomy. Nothing to reuse at this stage.' },
++        { source: 'artefact', cite: 'Lesson 9', text: 'Today’s loop starts from the person’s own sentence (onboarding → build → play → check-in).' },
++        { source: 'versions', text: 'Production v3: Quick Start plays before sign-in; a personal session still needs an account, asked for when the sentence is sent.' },
++        { source: 'interviews', text: 'Little input, with Aurelia deciding; the landing’s “space” and map read as co-working.' },
++        { source: 'buyer-rerun', text: `Agent v3 × production v3: ${pct(r.activation)} hear a session on the first visit (production v1: ${pct(r1.activation)}). Sign-in still loses ${signIn.left} of ${r.walks.length}.` },
++        { source: 'buyer-v2', text: `Aged 65 or over: ${old.filter((a) => a.tries === 'yes').length} of ${old.length} would try (English only, small text, an account first).` },
++        { source: 'app-funnel', text: `Target ${pct(m('activation').target)} hearing a session on the first visit; predicted ${pct(m('activation').agent)}.` },
++        { source: 'feedback-group', text: `Played in week 1: ${human('activation')}` },
++        { source: 'prd', cite: '§1 Summary, §9', text: 'The bet: a conversation is a better way in than a library. §9 predicts activation of 57% on v5, from an older simulation.' },
++        { source: 'user-journey', text: `The stage covers journey moment ${stage('entry').moments.join(', ')}.` },
++      ],
++      agree: 'Every source wants the first session before any effort, and production v3 delivers it for Quick Start.',
++      conflict: `The PRD’s 57% and the re-run’s ${pct(r.activation)} come from different models and different definitions; neither is measured. The account before a personal session is the gap no version closes.`,
++      verdict: 'On track by prediction; the leak is the account before their own session.',
++      next: dec('d1').change,
++      decision: 'd1',
++    },
++    {
++      id: 'aha',
++      findingId: 'stage-aha',
++      title: stage('aha').title,
++      brief: stage('aha').eugene,
++      status: status('aha'),
++      lines: [
++        { source: 'backend-old', cite: 'Feedback attribution; Script quality judge', text: 'A prompt that reads feedback against each building block of the session, and a nine-criterion judge. Neither is built today.' },
++        { source: 'artefact', cite: 'Lessons 3 and 5', text: 'Safety is part of the first version; model scores are signals, not measurements.' },
++        { source: 'versions', text: 'Production v3: “How do you feel now?” after listening, a Why on every suggested change, and a wearable question in onboarding.' },
++        { source: 'interviews', text: '“Why is it suggesting this?”; voice quality named; wearables wanted, with consent.' },
++        { source: 'buyer-rerun', text: `Completion ${pct(r.completion)} on production v3 against ${pct(r2.completion)} on v2; onboarding loses ${onboarding.left} impatient people.` },
++        { source: 'personas', text: `Feels better after a session, by how they are doing: struggling ${pct(rate(wellness.get('struggling'), (w) => w.feltBetter))}, coping ${pct(rate(wellness.get('coping'), (w) => w.feltBetter))}.` },
++        { source: 'app-funnel', text: `Finishes their first session: target ${pct(m('completion').target)}, predicted ${pct(m('completion').agent)}. Feels better: predicted ${pct(m('felt').agent)}.` },
++        { source: 'feedback-group', text: `Felt better: ${human('felt')}` },
++        { source: 'prd', cite: '§5.2 The core loop', text: 'One sentence → onboarding → a build → play → “How do you feel now?” → the next chapter.' },
++        { source: 'user-journey', text: `The stage covers moments ${stage('aha').moments.join(', ')}.` },
++      ],
++      agree: 'Interviews, the old backend and v3 all point to the same thing: tell the person why, and learn from their check-in.',
++      conflict: 'The interviews asked for the wearable; the agents say asking for it before the first session costs completion. Both can hold if the question moves.',
++      verdict: 'Below target by prediction: the extra onboarding question is the cost.',
++      next: dec('d2').change,
++      decision: 'd2',
++    },
++    {
++      id: 'cap',
++      findingId: 'stage-cap',
++      title: stage('cap').title,
++      brief: stage('cap').eugene,
++      status: status('cap'),
++      lines: [
++        { source: 'backend-old', cite: 'The three sources', text: 'The 2025 documents have no free plan or limit.' },
++        { source: 'versions', text: 'Every version: 3 sends, then 30 minutes. From production v2 the limit counts only after the first build.' },
++        { source: 'buyer-v1', text: 'Hitting the free limit at 3am is a moment the product can lose someone it already won.' },
++        { source: 'buyer-rerun', text: `${pct(r.capHit)} expected to hit the limit in week one on production v3.` },
++        { source: 'app-funnel', text: `Target ${pct(m('cap').target)}. ${m('cap').reading ?? ''}` },
++        { source: 'prd', cite: '§8 Business model', text: 'The limit counts builds, the number is a placeholder; the API contract suggests 5 builds a day.' },
++        { source: 'decisions', text: `${dec('d5').change} Shipped in ${dec('d5').version}.` },
++      ],
++      agree: 'Counting from the first build, not the first message, is settled and shipped.',
++      conflict: 'Three definitions of the limit: sends then minutes (the app), builds a day (the PRD, the API contract) and 5 sessions a month (the offer the buyer agents saw).',
++      verdict: 'Below target: too few reach the limit, which says the aha is not strong enough yet.',
++      next: 'Pick one definition of the free limit, then fix the aha first; raising the cap would not help people who never reach it.',
++    },
++    {
++      id: 'upsell',
++      findingId: 'stage-upsell',
++      title: stage('upsell').title,
++      brief: stage('upsell').eugene,
++      status: status('upsell'),
++      lines: [
++        { source: 'versions', text: 'The Upgrade screen, “Aurelia AI Plus”: $10 a month or $100 a year. Nothing can be bought yet.' },
++        { source: 'buyer-v3', text: `Fair price band under offer B: ${usd(band3.low)}–${usd(band3.high)} a month; yearly-first moved answers.` },
++        { source: 'buyer-rerun', text: `Of those who hit the limit, ${pct(r.capToPlus)} choose Plus (target ${pct(m('plus').target)}). Asked directly: ${r.paysYes} yes, ${r.paysMaybe} maybe of ${r.walks.length}.` },
++        { source: 'retreat', text: `Another way in: redesigned retreat, middle outcome, gives ${(middle.activeWeek8 * middle.gradToPlus * 100).toFixed(1)}% Plus per ticket buyer, ${eur(PLUS_NET_YEAR1)} net each in year one.` },
++        { source: 'b2b2c', cite: 'Unit economics', text: 'Course platforms take 0–10%, which sets what a creator will accept.' },
++        { source: 'prd', cite: '§8 Business model', text: 'Not decided; the client’s pricing is awaited.' },
++        { source: 'decisions', text: dec('d4').change },
++      ],
++      agree: 'The price people call fair sits below $10 a month; the yearly plan is what lands.',
++      conflict: 'Three prices in play: $10 / $100 on the Upgrade screen, $9.99 / $79 in runs v1–v2, and $59.99 a year in offer B. The PRD has none.',
++      verdict: 'Below target by prediction, and nothing can be bought yet, so every number here is intent, not a sale.',
++      next: dec('d4').change,
++      decision: 'd4',
++    },
++    {
++      id: 'stay',
++      findingId: 'stage-stay',
++      title: stage('stay').title,
++      brief: stage('stay').eugene,
++      status: status('stay'),
++      lines: [
++        { source: 'artefact', cite: 'Lesson 9', text: 'Today optimises whether this person feels better and comes back for the next chapter.' },
++        { source: 'versions', text: 'Production v3: progress in words from their own check-ins, a journal, the next chapter with a calendar reminder.' },
++        { source: 'interviews', text: 'Scores can make people anxious; a report every two weeks; stories and friends, not rankings.' },
++        { source: 'buyer-rerun', text: `Back after a week ${pct(r.d7)}, after a month ${pct(r.d30)}; “very disappointed” ${pct(r.ellis)}. Top reason to stop: ${r.leaveReasons[0]?.[0] ?? '—'}.` },
++        { source: 'personas', text: `Back after a week, by attitude to AI: curious ${pct(rate(attitude.get('curious'), (w) => w.d7))}, skeptical ${pct(rate(attitude.get('skeptical'), (w) => w.d7))}.` },
++        { source: 'app-funnel', text: `Targets: ${pct(m('d7').target)} back after a week, ${pct(m('d30').target)} after a month, ${pct(m('ellis').target)} very disappointed.` },
++        { source: 'feedback-group', text: `Active in the latest week: ${human('d7')}` },
++        { source: 'retreat', text: `The retreat spec plans on ${(specOutcome.activeWeek8 * 100).toFixed(1)}% active at week 8; the model plans on ${pct(middle.activeWeek8)}.` },
++        { source: 'prd', cite: '§9 How success is measured', text: 'Predicts day 7 of 11.4% on v5, from the October simulation.' },
++      ],
++      agree: 'Every source puts staying on the person’s own progress, not on scores or streaks.',
++      conflict: `The PRD’s 11.4% at day 7 against the re-run’s ${pct(r.d7)}, and the retreat spec’s ${(specOutcome.activeWeek8 * 100).toFixed(1)}% at week 8 against the category’s 3–5% at day 30. The higher numbers are older and less calibrated.`,
++      verdict: 'Below target: the stage that decides the business, and the one no buyer agent can test.',
++      next: dec('d7').change,
++      decision: 'd7',
++    },
++  ]
++}
++
++/* ------------------------------------------------------------ The matrix */
++
++export interface MatrixCell {
++  design: DesignId
++  plusRate: number
++  /** Aurelia's total from a 100-seat cohort, euros. */
++  total: number
++}
++
++export interface MatrixRow {
++  offerId: string
++  offer: string
++  agent: AgentId
++  margin: number
++  cells: MatrixCell[]
++}
++
++export const MATRIX_SEATS = 100
++
++/**
++ * Offer × production version × agent rules. The retreat model has no design
++ * version, and the buyer agents have no retreat, so the join is one
++ * assumption, stated on the page: a week-8 graduate chooses Plus at the rate
++ * the agents predict for someone who hits the free limit on that version.
++ * Everything else is the retreat model's middle outcome.
++ */
++export function buildMatrix(): MatrixRow[] {
++  const middle = OUTCOMES.find((o) => o.id === 'middle')!
++  const rows: MatrixRow[] = []
++  for (const o of OFFERS)
++    for (const agent of [2, 3] as AgentId[]) {
++      const cells = DESIGNS.map((d) => {
++        const plusRate = report(agent, d.id).capToPlus
++        return { design: d.id, plusRate, total: cohort(o, { ...middle, gradToPlus: plusRate }, MATRIX_SEATS).aureliaTotal }
++      })
++      rows.push({ offerId: o.id, offer: o.name, agent, margin: perTicket(o).margin, cells })
++    }
++  return rows
++}
+diff --git a/src/admin/data/reportSources.test.ts b/src/admin/data/reportSources.test.ts
+new file mode 100644
+index 0000000..a23bf2b
+--- /dev/null
++++ b/src/admin/data/reportSources.test.ts
+@@ -0,0 +1,63 @@
++import { describe, expect, it } from 'vitest'
++import appSource from '../../App.tsx?raw'
++import guideSource from '../../guides/GuidePage.tsx?raw'
++import { B2B2C_PAGES } from '../../guides/docPages'
++import { buildIterations } from './buyerAgentReport'
++import { buildMatrix, buildStages } from './combinationReport'
++import { BUYER_REPORT_FINDINGS, COMBINATION_FINDINGS, SOURCES, sourcesOf } from './reportSources'
++
++const adminRoutes = new Set([...appSource.matchAll(/<Route path="([^"/:][^"]*)"/g)].map((m) => `/admin/${m[1]}`))
++const wikiDocs = new Set([...guideSource.matchAll(/^\s{4}id: '([a-z0-9-]+)',$/gm)].map((m) => m[1]))
++
++function resolves(link: string) {
++  const path = link.split(/[?#]/)[0]
++  if (path.startsWith('/wiki/')) {
++    const [doc, page] = path.slice(6).split('/')
++    if (!wikiDocs.has(doc)) return false
++    return !page || (doc === 'b2b2c' && B2B2C_PAGES.some((p) => p.slug === page))
++  }
++  return adminRoutes.has(path)
++}
++
++describe('report sources', () => {
++  it('finds the routes and wiki documents it checks against', () => {
++    expect(adminRoutes.has('/admin/buyer-agent')).toBe(true)
++    expect(wikiDocs.has('backend-old')).toBe(true)
++  })
++
++  it('links every source to an existing route or wiki document', () => {
++    for (const s of Object.values(SOURCES)) expect(resolves(s.link), `${s.id} → ${s.link}`).toBe(true)
++  })
++
++  it('cites at least one known source in every finding', () => {
++    for (const f of [...BUYER_REPORT_FINDINGS, ...COMBINATION_FINDINGS]) {
++      expect(f.sources.length, f.id).toBeGreaterThan(0)
++      for (const id of f.sources) expect(SOURCES[id], `${f.id} cites ${id}`).toBeDefined()
++    }
++  })
++
++  it('cites in every line only sources its finding lists, and lists the report links that exist', () => {
++    for (const s of buildStages(1)) {
++      const finding = COMBINATION_FINDINGS.find((f) => f.id === s.findingId)!
++      for (const l of s.lines) expect(finding.sources, `${s.id}: ${l.source}`).toContain(l.source)
++    }
++    for (const it of buildIterations()) {
++      expect(BUYER_REPORT_FINDINGS.find((f) => f.id === it.id)).toBeDefined()
++      expect(resolves(it.link)).toBe(true)
++    }
++    expect(sourcesOf(COMBINATION_FINDINGS).length).toBeGreaterThan(10)
++  })
++
++  it('never names the business owner in report text', () => {
++    const text = JSON.stringify([SOURCES, buildIterations(), buildStages(1)])
++    expect(text).not.toMatch(/Eugene/)
++  })
++
++  it('builds the matrix from the models: 3 offers × 2 rule sets × 3 versions', () => {
++    const m = buildMatrix()
++    expect(m).toHaveLength(6)
++    for (const r of m) expect(r.cells).toHaveLength(3)
++    // The page's reading of the matrix: the spec loses money everywhere, both redesigns stay positive.
++    for (const r of m) for (const c of r.cells) expect(c.total < 0, `${r.offerId} agent ${r.agent} v${c.design}`).toBe(r.offerId === 'spec')
++  })
++})
+diff --git a/src/admin/data/reportSources.ts b/src/admin/data/reportSources.ts
+new file mode 100644
+index 0000000..6945ade
+--- /dev/null
++++ b/src/admin/data/reportSources.ts
+@@ -0,0 +1,238 @@
++/**
++ * Admin → Reports (U116, J167): the one registry of sources the reports are
++ * made from, and the findings each report draws from them. The Buyer agent
++ * report, the Combination report and their "How this report was made" graph
++ * all read this module, so a source is named, dated, labelled and linked once.
++ * `reportSources.test.ts` checks every link resolves to a route or a wiki
++ * document and every finding cites at least one source.
++ */
++
++/** How far a source's numbers can be trusted. Only `measured` comes from real use. */
++export type SourceLabel = 'measured' | 'prediction' | 'sample' | 'estimate' | 'document'
++
++export const LABEL_TEXT: Record<SourceLabel, string> = {
++  measured: 'Measured',
++  prediction: 'Prediction',
++  sample: 'Sample',
++  estimate: 'Estimate',
++  document: 'Document',
++}
++
++export const LABEL_MEANING: Record<SourceLabel, string> = {
++  measured: 'Counted from real people using the product.',
++  prediction: 'What a buyer agent expects synthetic people to do. Not a measurement.',
++  sample: 'Invented data that looks real, so the screens can be reasoned about.',
++  estimate: 'A calculation on assumed inputs. Changes when the inputs do.',
++  document: 'Written knowledge: a plan, a review, notes from people. No figures of its own.',
++}
++
++export type SourceId =
++  | 'buyer-v1'
++  | 'buyer-v2'
++  | 'buyer-v3'
++  | 'buyer-rerun'
++  | 'decisions'
++  | 'app-funnel'
++  | 'feedback-group'
++  | 'retreat'
++  | 'b2b2c'
++  | 'personas'
++  | 'versions'
++  | 'interviews'
++  | 'backend-old'
++  | 'artefact'
++  | 'prd'
++  | 'user-journey'
++
++export interface ReportSource {
++  id: SourceId
++  /** Short name, shown on the graph. */
++  name: string
++  /** What it is, in one sentence. */
++  what: string
++  /** Version or date of the source as used. */
++  version: string
++  /** What the report takes from it. */
++  taken: string
++  /** In-app address: an admin page or a wiki document. */
++  link: string
++  label: SourceLabel
++}
++
++export const SOURCES: Record<SourceId, ReportSource> = {
++  'buyer-v1': {
++    id: 'buyer-v1',
++    name: 'Buyer agent run v1',
++    what: 'One agent played 10 synthetic personas against the app store page and Plus at $9.99.',
++    version: 'Run v1 (demo), 19 Nov 2026, persona generator 1',
++    taken: 'The question, the try / pay answers, the fair price band and the findings.',
++    link: '/admin/buyer-agent?v=1',
++    label: 'prediction',
++  },
++  'buyer-v2': {
++    id: 'buyer-v2',
++    name: 'Buyer agent run v2',
++    what: '36 personas, one per region × age band, at local prices, with calibration rules against agreeable answers.',
++    version: 'Run v2, 19 Nov 2026, persona generator 1',
++    taken: 'The new parameters, the answers by segment (age, wellness, price by country) and the findings.',
++    link: '/admin/buyer-agent?v=2',
++    label: 'prediction',
++  },
++  'buyer-v3': {
++    id: 'buyer-v3',
++    name: 'Buyer agent run v3',
++    what: 'The same 36-place panel from the fixed generator, each person answering today’s offer (A) and a proposed offer (B).',
++    version: 'Run v3, 19 Nov 2026, persona generator 2',
++    taken: 'A against B on the same people, which proposed change moved how many answers, and the findings.',
++    link: '/admin/buyer-agent?v=3',
++    label: 'prediction',
++  },
++  'buyer-rerun': {
++    id: 'buyer-rerun',
++    name: 'Re-run by production version',
++    what: 'Each persona walked step by step through production v1, v2 and v3 under the rules of agent v1, v2 and v3, written as code.',
++    version: 'Re-run (U104), rules checked against runs v2 and v3',
++    taken: 'Activation, completion, return on day 7 and 30, “very disappointed”, the free limit and Plus, leave reasons.',
++    link: '/admin/buyer-agent?view=versions',
++    label: 'prediction',
++  },
++  decisions: {
++    id: 'decisions',
++    name: 'Funnel decision log',
++    what: 'The decisions the findings fed: finding, change, source and status.',
++    version: 'Defaults as of 24 Nov 2026 (d1–d8)',
++    taken: 'Which decision each iteration or stage leads to, and its status.',
++    link: '/admin/business-funnel',
++    label: 'document',
++  },
++  'app-funnel': {
++    id: 'app-funnel',
++    name: 'Business funnel (app)',
++    what: 'The brief’s stages from a free start to Aurelia Plus, with a target per metric and the buyer agents’ prediction.',
++    version: 'U108; targets as set in the code',
++    taken: 'The five stages, their metrics and targets, and which stage is furthest below target.',
++    link: '/admin/business-funnel',
++    label: 'prediction',
++  },
++  'feedback-group': {
++    id: 'feedback-group',
++    name: 'Feedback group study',
++    what: 'The planned 30-person, 8-week study. Until there is a backend its participants and numbers are sample data.',
++    version: 'Study starting 13 Oct 2026 (sample data)',
++    taken: 'The people column of the funnel: played in week 1, felt better, active in the latest week.',
++    link: '/admin/experimentation',
++    label: 'sample',
++  },
++  retreat: {
++    id: 'retreat',
++    name: 'Creator retreat funnel',
++    what: 'Retreat-in-a-Box as a B2B2C funnel: three offers (the terms) and three outcome scenarios, on the wiki’s unit economics.',
++    version: 'U113 (J159), redesign approved 24 Nov 2026',
++    taken: 'Aurelia’s share and margin per ticket, week-8 activity and Plus per ticket buyer.',
++    link: '/admin/business-funnel?view=retreat',
++    label: 'estimate',
++  },
++  b2b2c: {
++    id: 'b2b2c',
++    name: 'B2B2C research',
++    what: 'The wiki’s research on selling through creators, employers and partners, with the unit economics and the pilot plan.',
++    version: 'Wiki → B2B2C (J154)',
++    taken: 'Course-platform fees, category retention and the pilot’s gates, as the retreat model uses them.',
++    link: '/wiki/b2b2c/economics',
++    label: 'document',
++  },
++  personas: {
++    id: 'personas',
++    name: 'Personas',
++    what: '300 synthetic research personas from a seeded generator; the buyer agents play them.',
++    version: 'Generator 2 (current); runs v1 and v2 stay on generator 1',
++    taken: 'Who was in each panel (10, 36, 36), and the segments the answers are split by.',
++    link: '/admin/personas',
++    label: 'sample',
++  },
++  versions: {
++    id: 'versions',
++    name: 'Production versions',
++    what: 'What each production design version shows on screen. Production v3 is staging v5, the production default.',
++    version: 'Production v3 = staging v5, default since 13 Nov 2026',
++    taken: 'What production v3 offers at each stage, and what every version shares.',
++    link: '/admin/buyer-agent?view=versions',
++    label: 'document',
++  },
++  interviews: {
++    id: 'interviews',
++    name: 'User interviews',
++    what: 'Interviews with three real users, late October 2026. Staging v5 was built from them. The only source here from real people.',
++    version: 'Three interviews, late Oct 2026 (J049, U053)',
++    taken: 'What people said about numbers, reasons, wearables, challenges and the landing page.',
++    link: '/wiki/prd',
++    label: 'document',
++  },
++  'backend-old': {
++    id: 'backend-old',
++    name: 'Backend (old)',
++    what: 'A summary of the 2025 backend’s documents: how it worked, its prompts, data shapes and what to reuse.',
++    version: 'Wiki → Backend (old), 2025 documents',
++    taken: 'What the 2025 system had for each stage, by section.',
++    link: '/wiki/backend-old',
++    label: 'document',
++  },
++  artefact: {
++    id: 'artefact',
++    name: 'Artefact (lessons)',
++    what: 'Eleven lessons the 2025 backend teaches the new one.',
++    version: 'Wiki → Artefact',
++    taken: 'The lessons that apply to a stage (claims, safety, scores as signals, the person’s loop).',
++    link: '/wiki/artefact',
++    label: 'document',
++  },
++  prd: {
++    id: 'prd',
++    name: 'PRD overview',
++    what: 'The whole product on one page: problem, who it is for, what is built, business model, how success is measured.',
++    version: 'Draft written 11 Nov 2026',
++    taken: 'The product’s bet, the business model, the success metrics and their predicted values.',
++    link: '/wiki/prd',
++    label: 'document',
++  },
++  'user-journey': {
++    id: 'user-journey',
++    name: 'User journey',
++    what: 'The journey map: each moment a person goes through, which the funnel stages point to.',
++    version: 'Admin → User journey (stored map)',
++    taken: 'Which moments each funnel stage covers.',
++    link: '/admin/user-journey',
++    label: 'document',
++  },
++}
++
++export interface Finding {
++  /** Also the section's anchor id on the page. */
++  id: string
++  title: string
++  sources: SourceId[]
++}
++
++export const BUYER_REPORT_FINDINGS: Finding[] = [
++  { id: 'it-v1', title: 'Run v1: the format', sources: ['buyer-v1', 'personas'] },
++  { id: 'it-v2', title: 'Run v2: calibrated, 36 people', sources: ['buyer-v2', 'buyer-v1', 'personas'] },
++  { id: 'it-v3', title: 'Run v3: today vs the proposal', sources: ['buyer-v3', 'buyer-v2', 'personas', 'backend-old', 'artefact'] },
++  { id: 'it-rerun', title: 'Re-run on production versions', sources: ['buyer-rerun', 'versions', 'personas'] },
++  { id: 'decisions', title: 'Decisions it fed', sources: ['decisions', 'buyer-v3', 'buyer-rerun'] },
++  { id: 'reading', title: 'What it adds up to', sources: ['buyer-rerun', 'buyer-v3', 'buyer-v2'] },
++]
++
++export const COMBINATION_FINDINGS: Finding[] = [
++  { id: 'stage-entry', title: 'Entry', sources: ['backend-old', 'artefact', 'versions', 'interviews', 'buyer-rerun', 'buyer-v2', 'personas', 'app-funnel', 'feedback-group', 'prd', 'user-journey'] },
++  { id: 'stage-aha', title: 'The aha moment', sources: ['backend-old', 'artefact', 'versions', 'interviews', 'buyer-rerun', 'personas', 'app-funnel', 'feedback-group', 'prd', 'user-journey'] },
++  { id: 'stage-cap', title: 'The usage cap', sources: ['backend-old', 'versions', 'buyer-v1', 'buyer-rerun', 'app-funnel', 'prd', 'decisions'] },
++  { id: 'stage-upsell', title: 'The upsell', sources: ['versions', 'buyer-v3', 'buyer-rerun', 'retreat', 'b2b2c', 'prd', 'decisions'] },
++  { id: 'stage-stay', title: 'Staying', sources: ['artefact', 'versions', 'interviews', 'buyer-rerun', 'personas', 'app-funnel', 'feedback-group', 'retreat', 'prd'] },
++  { id: 'matrix', title: 'Offer × version × rules', sources: ['retreat', 'buyer-rerun', 'b2b2c'] },
++]
++
++/** The sources a set of findings uses, in registry order. */
++export function sourcesOf(findings: Finding[]): ReportSource[] {
++  const used = new Set(findings.flatMap((f) => f.sources))
++  return Object.values(SOURCES).filter((s) => used.has(s.id))
++}
+diff --git a/src/admin/pages/reports/BuyerAgentReportPage.tsx b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+new file mode 100644
+index 0000000..d628e48
+--- /dev/null
++++ b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+@@ -0,0 +1,189 @@
++import { ArrowRight } from 'lucide-react'
++import { useMemo } from 'react'
++import { Link } from 'react-router-dom'
++import { Badge, PageHeader, Panel } from '../../components/ui'
++import { STATUS_LABEL } from '../../data/businessFunnel'
++import { buildIterations } from '../../data/buyerAgentReport'
++import { OVERALL_SUMMARY } from '../../data/buyerRerunSummaries'
++import { BUYER_REPORT_FINDINGS } from '../../data/reportSources'
++import { LabelBadge, SourceChip, SourceGraph, SourcesSection } from './ReportParts'
++
++const fmtDate = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
++
++/**
++ * Admin → Reports → Buyer agent report (U116, J167): every buyer-agent
++ * iteration as a timeline, for the business owner. The full answers stay on
++ * Buyer agent results; this page says what each run asked, what changed,
++ * what came out, how it moved from the one before, and what it led to.
++ */
++export function BuyerAgentReportPage() {
++  const iterations = useMemo(() => buildIterations(), [])
++  const fed = iterations.flatMap((it) => it.decisions.map((d) => ({ d, it: it.name })))
++  const decisions = [...new Map(fed.map((x) => [x.d.id, x.d])).values()]
++
++  return (
++    <div className="flex flex-col gap-16">
++      <PageHeader
++        title="Buyer agent report"
++        description="Every time the buyer agent was run, in order: the question, what changed, what came out, how it moved from the run before, and the decision it fed. Every figure is a prediction: synthetic people answered by an AI agent. Nothing here was measured on real users."
++        actions={
++          <Link to="/admin/buyer-agent" className="inline-flex items-center gap-6 rounded-8 border border-adm-line bg-adm-surface px-12 py-6 text-12 font-medium text-adm-ink hover:bg-adm-hover">
++            Full detail: Buyer agent results <ArrowRight size={13} aria-hidden="true" />
++          </Link>
++        }
++      />
++
++      <Panel title="How this report was made" description="Where each part of this report comes from. Each line is a source feeding a section.">
++        <SourceGraph findings={BUYER_REPORT_FINDINGS} label="Graph: the sources on the left feed the report’s sections on the right." />
++      </Panel>
++
++      <section aria-label="Iterations" className="flex flex-col">
++        {iterations.map((it, i) => (
++          <div key={it.id} className="relative flex gap-12 pb-16 lg:gap-16">
++            <div className="flex w-28 shrink-0 flex-col items-center" aria-hidden="true">
++              <span className="flex h-28 w-28 items-center justify-center rounded-full bg-adm-ink text-12 font-semibold text-adm-surface">{i + 1}</span>
++              {i < iterations.length - 1 && <span className="mt-4 w-2 flex-1 bg-adm-line" />}
++            </div>
++            <article id={it.id} className="flex min-w-0 flex-1 scroll-mt-16 flex-col gap-14 rounded-12 border border-adm-line bg-adm-surface p-16">
++              <header className="flex flex-wrap items-center justify-between gap-8">
++                <div className="flex flex-wrap items-baseline gap-8">
++                  <h2 className="text-15 font-semibold text-adm-ink">{it.name}</h2>
++                  <span className="text-12 text-adm-muted">{fmtDate(it.date)}</span>
++                </div>
++                <LabelBadge label="prediction" />
++              </header>
++
++              <div className="grid gap-14 lg:grid-cols-2">
++                <div className="flex min-w-0 flex-col gap-4">
++                  <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">The question</h3>
++                  <p className="text-13 text-adm-ink">{it.question}</p>
++                </div>
++                <div className="flex min-w-0 flex-col gap-4">
++                  <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">What changed from the one before</h3>
++                  <ul className="flex list-disc flex-col gap-4 pl-16 text-12 text-adm-ink-2">
++                    {it.changed.map((c) => (
++                      <li key={c}>{c}</li>
++                    ))}
++                  </ul>
++                </div>
++              </div>
++
++              <div className="flex flex-col gap-6">
++                <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">Headline results (prediction)</h3>
++                <dl className="grid grid-cols-2 gap-8 md:grid-cols-3 xl:grid-cols-5">
++                  {it.headline.map((f) => (
++                    <div key={f.label} className="flex min-w-0 flex-col gap-2 rounded-8 bg-adm-bg p-10">
++                      <dt className="text-11 text-adm-muted">{f.label}</dt>
++                      <dd className="text-15 font-semibold tabular-nums text-adm-ink">{f.value}</dd>
++                      {f.note && <dd className="text-11 text-adm-ink-2">{f.note}</dd>}
++                    </div>
++                  ))}
++                </dl>
++              </div>
++
++              <div className="grid gap-14 lg:grid-cols-2">
++                <div className="flex min-w-0 flex-col gap-4">
++                  <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">Change from the one before</h3>
++                  <ul className="flex list-disc flex-col gap-4 pl-16 text-12 text-adm-ink-2">
++                    {it.delta.map((d) => (
++                      <li key={d}>{d}</li>
++                    ))}
++                  </ul>
++                </div>
++                <div className="flex min-w-0 flex-col gap-4">
++                  <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">The decision it fed</h3>
++                  {it.decisions.length ? (
++                    <ul className="flex flex-col gap-6 text-12">
++                      {it.decisions.map((d) => (
++                        <li key={d.id} className="flex flex-wrap items-start gap-6">
++                          <Badge tone={d.status === 'shipped' || d.status === 'measured' ? 'good' : d.status === 'decided' ? 'info' : 'neutral'}>{STATUS_LABEL[d.status]}</Badge>
++                          <span className="min-w-0 flex-1 text-adm-ink-2">{d.change}</span>
++                        </li>
++                      ))}
++                    </ul>
++                  ) : (
++                    <p className="text-12 text-adm-ink-2">{it.decisionNote}</p>
++                  )}
++                </div>
++              </div>
++
++              <details className="group text-12">
++                <summary className="cursor-pointer font-medium text-adm-ink-2 hover:text-adm-ink">What the run found, in its own words</summary>
++                <ul className="mt-8 flex list-disc flex-col gap-4 pl-16 text-adm-ink-2">
++                  {it.findings.map((f) => (
++                    <li key={f}>{f}</li>
++                  ))}
++                </ul>
++              </details>
++
++              <footer className="flex flex-wrap items-center justify-between gap-8 border-t border-adm-line pt-10">
++                <div className="flex flex-wrap gap-6">
++                  {it.sources.map((s) => (
++                    <SourceChip key={s} id={s} />
++                  ))}
++                </div>
++                <Link to={it.link} className="inline-flex items-center gap-4 text-12 font-medium text-adm-ink underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink">
++                  Full detail <ArrowRight size={12} aria-hidden="true" />
++                </Link>
++              </footer>
++            </article>
++          </div>
++        ))}
++      </section>
++
++      <section id="decisions" className="scroll-mt-16">
++        <Panel title="Decisions it fed" description="Entries in the business funnel’s decision log that cite the buyer agent. Their status is the log’s, as written in the code.">
++          <div className="overflow-x-auto">
++            <table className="w-full min-w-[640px] text-left text-12">
++              <thead className="text-11 uppercase tracking-wider text-adm-muted">
++                <tr className="border-b border-adm-line">
++                  <th className="py-6 pr-12 font-semibold">Stage</th>
++                  <th className="py-6 pr-12 font-semibold">Finding</th>
++                  <th className="py-6 pr-12 font-semibold">Change</th>
++                  <th className="py-6 pr-12 font-semibold">From</th>
++                  <th className="py-6 font-semibold">Status</th>
++                </tr>
++              </thead>
++              <tbody>
++                {decisions.map((d) => (
++                  <tr key={d.id} className="border-b border-adm-line align-top last:border-0">
++                    <td className="py-8 pr-12 capitalize text-adm-ink">{d.stage}</td>
++                    <td className="py-8 pr-12 text-adm-ink-2">{d.finding}</td>
++                    <td className="py-8 pr-12 text-adm-ink">{d.change}</td>
++                    <td className="py-8 pr-12 text-adm-ink-2">{fed.filter((x) => x.d.id === d.id).map((x) => x.it).join(', ')}</td>
++                    <td className="py-8">
++                      <Badge tone={d.status === 'shipped' || d.status === 'measured' ? 'good' : 'neutral'}>{STATUS_LABEL[d.status]}</Badge>
++                      {d.result && <p className="mt-4 text-11 text-adm-muted">{d.result}</p>}
++                    </td>
++                  </tr>
++                ))}
++              </tbody>
++            </table>
++          </div>
++        </Panel>
++      </section>
++
++      <section id="reading" className="scroll-mt-16">
++        <Panel title="What it adds up to" description="The agent’s own reading of the re-run, written from its computed tallies (tests pin the figures it quotes).">
++          <ul className="flex list-disc flex-col gap-8 pl-18 text-13 text-adm-ink-2">
++            {OVERALL_SUMMARY.slice(3).map((s) => (
++              <li key={s}>{s}</li>
++            ))}
++          </ul>
++        </Panel>
++      </section>
++
++      <SourcesSection
++        findings={BUYER_REPORT_FINDINGS}
++        limits={[
++          'Every person in every run is synthetic. The agent plays them; nobody real answered.',
++          'One agent plays the whole panel, so all answers share its blind spots.',
++          'Panels of 10 and 36 show which segments differ; they cannot size a market.',
++          'Runs v1 and v2 used persona generator 1, which made incoherent people (the run found them); comparisons across runs are approximate.',
++          'Offer B in run v3 is a proposal answered as if built. Nothing can be bought yet, so “would pay” is intent.',
++          'No agent can tell whether the first session actually works for someone; staying depends on that.',
++        ]}
++      />
++    </div>
++  )
++}
+diff --git a/src/admin/pages/reports/CombinationReportPage.tsx b/src/admin/pages/reports/CombinationReportPage.tsx
+new file mode 100644
+index 0000000..87794e4
+--- /dev/null
++++ b/src/admin/pages/reports/CombinationReportPage.tsx
+@@ -0,0 +1,167 @@
++import { useState } from 'react'
++import { Link } from 'react-router-dom'
++import { Badge, PageHeader, Panel } from '../../components/ui'
++import { DESIGNS } from '../../data/buyerSim'
++import { MATRIX_SEATS, buildMatrix, buildStages, type StageReading } from '../../data/combinationReport'
++import { COMBINATION_FINDINGS } from '../../data/reportSources'
++import { OUTCOMES, eur } from '../../data/retreatFunnel'
++import { studyWeek } from '../../data/study'
++import { LabelBadge, SourceChip, SourceGraph, SourcesSection } from './ReportParts'
++
++const STATUS = { 'on-track': { tone: 'good', text: 'On track (prediction)' }, below: { tone: 'critical', text: 'Below target (prediction)' }, unmeasured: { tone: 'neutral', text: 'Unmeasured' } } as const
++
++function Stage({ s, n }: { s: StageReading; n: number }) {
++  return (
++    <section id={s.findingId} className="flex min-w-0 scroll-mt-16 flex-col gap-14 rounded-12 border border-adm-line bg-adm-surface p-16">
++      <header className="flex flex-wrap items-start justify-between gap-8">
++        <div className="min-w-0">
++          <h2 className="text-15 font-semibold text-adm-ink">
++            {n}. {s.title}
++          </h2>
++          <p className="mt-2 text-12 text-adm-muted">The brief: {s.brief}</p>
++        </div>
++        <Badge tone={STATUS[s.status].tone}>{STATUS[s.status].text}</Badge>
++      </header>
++
++      <div className="flex flex-col gap-6">
++        <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">What each source says</h3>
++        <ul className="flex flex-col divide-y divide-adm-line">
++          {s.lines.map((l) => (
++            <li key={`${l.source}-${l.text}`} className="flex flex-col gap-4 py-8 lg:flex-row lg:items-start lg:gap-12">
++              <div className="lg:w-[280px] lg:shrink-0">
++                <SourceChip id={l.source} cite={l.cite} />
++              </div>
++              <p className="min-w-0 flex-1 text-13 text-adm-ink-2">{l.text}</p>
++            </li>
++          ))}
++        </ul>
++      </div>
++
++      <dl className="grid gap-10 md:grid-cols-2">
++        <div className="rounded-8 bg-adm-bg p-12">
++          <dt className="text-11 font-semibold uppercase tracking-wider text-adm-good">Where they agree</dt>
++          <dd className="mt-4 text-13 text-adm-ink">{s.agree}</dd>
++        </div>
++        <div className="rounded-8 bg-adm-bg p-12">
++          <dt className="text-11 font-semibold uppercase tracking-wider text-adm-critical">Where they conflict</dt>
++          <dd className="mt-4 text-13 text-adm-ink">{s.conflict}</dd>
++        </div>
++        <div className="rounded-8 border border-adm-line p-12">
++          <dt className="text-11 font-semibold uppercase tracking-wider text-adm-muted">Combined verdict</dt>
++          <dd className="mt-4 text-13 font-medium text-adm-ink">{s.verdict}</dd>
++        </div>
++        <div className="rounded-8 border border-adm-line p-12">
++          <dt className="text-11 font-semibold uppercase tracking-wider text-adm-muted">Next move</dt>
++          <dd className="mt-4 text-13 font-medium text-adm-ink">
++            {s.next}
++            {s.decision && (
++              <Link to="/admin/business-funnel" className="ml-6 text-12 font-normal text-adm-ink-2 underline decoration-adm-axis underline-offset-2 hover:text-adm-ink">
++                Decision {s.decision} in the log
++              </Link>
++            )}
++          </dd>
++        </div>
++      </dl>
++    </section>
++  )
++}
++
++/**
++ * Admin → Reports → Combination report (U116, J167): one reading of Aurelia,
++ * stage by stage of the business funnel, joining the 2025 backend, the
++ * production version, the interviews, the personas and buyer agents, the
++ * funnels and the PRD. Production v3 (staging v5) with agent v3's rules.
++ */
++export function CombinationReportPage() {
++  const [week] = useState(() => Math.max(1, Math.min(8, studyWeek(Date.now()))))
++  const [stages] = useState(() => buildStages(week))
++  const [matrix] = useState(() => buildMatrix())
++  const middle = OUTCOMES.find((o) => o.id === 'middle')!
++
++  return (
++    <div className="flex flex-col gap-16">
++      <PageHeader
++        title="Combination report"
++        description="Aurelia read stage by stage of the business funnel, with every source side by side: the 2025 backend, what production v3 offers, what real users said, the personas and buyer agents, the funnels and the PRD. For each stage: what each source says, where they agree and conflict, and one verdict with a next move."
++      />
++
++      <Panel title="How this report was made" description="Which source feeds which part of the report. The colour of a line is the kind of source it comes from.">
++        <SourceGraph findings={COMBINATION_FINDINGS} label="Graph: the sources on the left feed the funnel stages and the matrix on the right." />
++      </Panel>
++
++      <Panel title="How to read it" description="The version and rules every stage is read on.">
++        <ul className="flex list-disc flex-col gap-4 pl-18 text-13 text-adm-ink-2">
++          <li>The product is production v3 (staging v5), the production default. The buyer-agent figures are agent v3’s rules, the calibrated ones.</li>
++          <li>
++            Only the user interviews come from real people, and they are words, not numbers. Every figure is labelled: <LabelBadge label="prediction" /> <LabelBadge label="sample" /> <LabelBadge label="estimate" />.
++          </li>
++          <li>The feedback group column is sample data at study week {week}; it runs far above an open app because the group is recruited and supported.</li>
++        </ul>
++      </Panel>
++
++      {stages.map((s, i) => (
++        <Stage key={s.id} s={s} n={i + 1} />
++      ))}
++
++      <section id="matrix" className="scroll-mt-16">
++        <Panel
++          title="Offer × production version × agent rules"
++          description={`The creator retreat’s three offers, each with the Plus rate the agents predict on each production version. Aurelia’s total from a ${MATRIX_SEATS}-seat cohort, year one, in euros.`}
++        >
++          <div className="flex flex-wrap items-center gap-8 text-12 text-adm-ink-2">
++            <LabelBadge label="estimate" />
++            <span>
++              One assumption joins the two models: a week-8 graduate chooses Plus at the rate the agents predict for someone who hits the free limit on that version. Everything else is the retreat model’s “{middle.name}” outcome ({Math.round(middle.activeWeek8 * 100)}% active at week 8, {Math.round(middle.refundRate * 1000) / 10}% refunds).
++            </span>
++          </div>
++          <div className="overflow-x-auto">
++            <table className="w-full min-w-[720px] text-left text-12">
++              <thead className="text-11 uppercase tracking-wider text-adm-muted">
++                <tr className="border-b border-adm-line">
++                  <th className="py-6 pr-12 font-semibold">Offer</th>
++                  <th className="py-6 pr-12 font-semibold">Rules</th>
++                  <th className="py-6 pr-12 text-right font-semibold">Margin a ticket</th>
++                  {DESIGNS.map((d) => (
++                    <th key={d.id} className="py-6 pr-12 text-right font-semibold">
++                      Prod v{d.id}
++                    </th>
++                  ))}
++                </tr>
++              </thead>
++              <tbody>
++                {matrix.map((r) => (
++                  <tr key={`${r.offerId}-${r.agent}`} className="border-b border-adm-line last:border-0">
++                    <td className="py-8 pr-12 font-medium text-adm-ink">{r.offer}</td>
++                    <td className="py-8 pr-12 text-adm-ink-2">Agent v{r.agent}</td>
++                    <td className={`py-8 pr-12 text-right tabular-nums ${r.margin < 0 ? 'text-adm-critical' : 'text-adm-ink'}`}>{eur(r.margin)}</td>
++                    {r.cells.map((c) => (
++                      <td key={c.design} className="py-8 pr-12 text-right tabular-nums">
++                        <span className={c.total < 0 ? 'font-semibold text-adm-critical' : 'font-semibold text-adm-ink'}>{eur(c.total)}</span>
++                        <span className="block text-11 text-adm-muted">Plus {(c.plusRate * 100).toFixed(1)}%</span>
++                      </td>
++                    ))}
++                  </tr>
++                ))}
++              </tbody>
++            </table>
++          </div>
++          <p className="text-12 text-adm-ink-2">
++            Read across a row: the production version changes the Plus rate, which moves the total, but the offer’s terms decide its sign. The spec loses money on every ticket under every version and rule set; both redesigns stay positive. Agent v1’s rules are left out as uncalibrated.
++          </p>
++        </Panel>
++      </section>
++
++      <SourcesSection
++        findings={COMBINATION_FINDINGS}
++        limits={[
++          'Nothing here is measured on real use: there is no backend, sign-in does not persist and nothing can be bought.',
++          'The user interviews are three people, on an older build (they describe the v2 sample conversation); they say what matters, not how many.',
++          'Buyer-agent numbers are synthetic people played by one agent; the feedback group column is sample data until the study runs on a backend.',
++          'The PRD’s predicted figures come from an earlier simulation than the re-run, so the two disagree by design, not by error.',
++          'The matrix joins two models with one stated assumption; it ranks options, it does not forecast revenue.',
++          'The 2025 backend documents came without code; what they say it did is unverified.',
++        ]}
++      />
++    </div>
++  )
++}
+diff --git a/src/admin/pages/reports/ReportParts.tsx b/src/admin/pages/reports/ReportParts.tsx
+new file mode 100644
+index 0000000..82ddca2
+--- /dev/null
++++ b/src/admin/pages/reports/ReportParts.tsx
+@@ -0,0 +1,228 @@
++import { ExternalLink } from 'lucide-react'
++import { useState, type ReactNode } from 'react'
++import { Link } from 'react-router-dom'
++import { BUILD } from '../../../lib/build'
++import { Badge, Panel, type Tone } from '../../components/ui'
++import { LABEL_MEANING, LABEL_TEXT, SOURCES, sourcesOf, type Finding, type SourceId, type SourceLabel } from '../../data/reportSources'
++
++/*
++ * Shared parts of Admin → Reports (U116, J167): the "How this report was
++ * made" graph, the label badge and the Sources section. Everything reads
++ * the one registry in data/reportSources.ts.
++ */
++
++const LABEL_TONE: Record<SourceLabel, Tone> = { measured: 'good', prediction: 'info', sample: 'neutral', estimate: 'serious', document: 'warning' }
++/** Edge and dot colour per label; admin series tokens, so both themes work. */
++const LABEL_STROKE: Record<SourceLabel, string> = {
++  measured: 'stroke-adm-good',
++  prediction: 'stroke-adm-s1',
++  sample: 'stroke-adm-s3',
++  estimate: 'stroke-adm-s2',
++  document: 'stroke-adm-s4',
++}
++const LABEL_FILL: Record<SourceLabel, string> = {
++  measured: 'fill-adm-good',
++  prediction: 'fill-adm-s1',
++  sample: 'fill-adm-s3',
++  estimate: 'fill-adm-s2',
++  document: 'fill-adm-s4',
++}
++
++export function LabelBadge({ label }: { label: SourceLabel }) {
++  return <Badge tone={LABEL_TONE[label]}>{LABEL_TEXT[label]}</Badge>
++}
++
++/** A source named inline, linking to it. */
++export function SourceChip({ id, cite }: { id: SourceId; cite?: string }) {
++  const s = SOURCES[id]
++  return (
++    <Link to={s.link} className="inline-flex items-center gap-4 whitespace-nowrap rounded-full border border-adm-line px-8 py-2 text-11 font-medium text-adm-ink-2 hover:bg-adm-hover hover:text-adm-ink">
++      <svg width="6" height="6" aria-hidden="true">
++        <circle cx="3" cy="3" r="3" className={LABEL_FILL[s.label]} />
++      </svg>
++      {s.name}
++      {cite && <span className="font-normal text-adm-muted">· {cite}</span>}
++    </Link>
++  )
++}
++
++const W = 880
++const NODE_W_LEFT = 230
++const NODE_W_RIGHT = 250
++const NODE_H = 30
++const ROW = 40
++const PAD = 26
++
++/**
++ * Sources on the left, the report's findings on the right, an edge for every
++ * citation. Hovering or focusing a node keeps its edges and dims the rest.
++ * Source nodes open the source; finding nodes jump to that section.
++ */
++export function SourceGraph({ findings, label }: { findings: Finding[]; label: string }) {
++  const [active, setActive] = useState<string | null>(null)
++  const sources = sourcesOf(findings)
++  const rows = Math.max(sources.length, findings.length)
++  const H = rows * ROW + PAD * 2
++  const leftY = (i: number) => PAD + (rows - sources.length) * (ROW / 2) + i * ROW
++  const rightStep = (rows * ROW) / findings.length
++  const rightY = (i: number) => PAD + i * rightStep + (rightStep - ROW) / 2
++  const x1 = 8 + NODE_W_LEFT
++  const x2 = W - 8 - NODE_W_RIGHT
++  const edges = findings.flatMap((f, fi) =>
++    f.sources.map((sid) => ({ sid, fid: f.id, from: leftY(sources.findIndex((s) => s.id === sid)) + NODE_H / 2, to: rightY(fi) + NODE_H / 2 })),
++  )
++  const lit = (sid: string, fid: string) => !active || active === sid || active === fid
++  const nodeLit = (id: string) => !active || active === id || edges.some((e) => (e.sid === id && e.fid === active) || (e.fid === id && e.sid === active))
++
++  return (
++    <div className="flex flex-col gap-10">
++      <div className="overflow-x-auto rounded-8 border border-adm-line bg-adm-bg">
++        <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="img" aria-label={label} className="block min-w-[760px] max-w-none">
++          <text x={8} y={16} className="fill-adm-muted text-11 font-semibold uppercase tracking-wider">
++            Sources ({sources.length})
++          </text>
++          <text x={x2} y={16} className="fill-adm-muted text-11 font-semibold uppercase tracking-wider">
++            What this report says ({findings.length})
++          </text>
++          {edges.map((e) => {
++            const s = SOURCES[e.sid]
++            const mid = (x1 + x2) / 2
++            return (
++              <path
++                key={`${e.sid}-${e.fid}`}
++                d={`M ${x1} ${e.from} C ${mid} ${e.from}, ${mid} ${e.to}, ${x2} ${e.to}`}
++                fill="none"
++                strokeWidth={lit(e.sid, e.fid) && active ? 2 : 1.25}
++                className={`${LABEL_STROKE[s.label]} transition-opacity`}
++                opacity={lit(e.sid, e.fid) ? (active ? 0.9 : 0.45) : 0.06}
++              />
++            )
++          })}
++          {sources.map((s, i) => (
++            <Link
++              key={s.id}
++              to={s.link}
++              aria-label={`${s.name} (${LABEL_TEXT[s.label]}): open the source`}
++              onMouseEnter={() => setActive(s.id)}
++              onMouseLeave={() => setActive(null)}
++              onFocus={() => setActive(s.id)}
++              onBlur={() => setActive(null)}
++            >
++              <g opacity={nodeLit(s.id) ? 1 : 0.35} className="cursor-pointer">
++                <rect x={8} y={leftY(i)} width={NODE_W_LEFT} height={NODE_H} rx={8} className="fill-adm-surface stroke-adm-line" />
++                <circle cx={22} cy={leftY(i) + NODE_H / 2} r={4} className={LABEL_FILL[s.label]} />
++                <text x={34} y={leftY(i) + NODE_H / 2 + 4} className="fill-adm-ink text-12 font-medium">
++                  {s.name}
++                </text>
++                <text x={8 + NODE_W_LEFT - 10} y={leftY(i) + NODE_H / 2 + 4} textAnchor="end" className="fill-adm-muted text-10">
++                  {LABEL_TEXT[s.label].toLowerCase()}
++                </text>
++              </g>
++            </Link>
++          ))}
++          {findings.map((f, i) => (
++            <a
++              key={f.id}
++              href={`#${f.id}`}
++              aria-label={`${f.title}: go to the section`}
++              onMouseEnter={() => setActive(f.id)}
++              onMouseLeave={() => setActive(null)}
++              onFocus={() => setActive(f.id)}
++              onBlur={() => setActive(null)}
++            >
++              <g opacity={nodeLit(f.id) ? 1 : 0.35} className="cursor-pointer">
++                <rect x={x2} y={rightY(i)} width={NODE_W_RIGHT} height={NODE_H} rx={8} className="fill-adm-surface stroke-adm-ink-2" />
++                <text x={x2 + 12} y={rightY(i) + NODE_H / 2 + 4} className="fill-adm-ink text-12 font-semibold">
++                  {f.title}
++                </text>
++                <text x={x2 + NODE_W_RIGHT - 10} y={rightY(i) + NODE_H / 2 + 4} textAnchor="end" className="fill-adm-muted text-10">
++                  {f.sources.length} sources
++                </text>
++              </g>
++            </a>
++          ))}
++        </svg>
++      </div>
++      <div className="flex flex-wrap items-center gap-x-14 gap-y-6 text-11 text-adm-ink-2">
++        {(Object.keys(LABEL_TEXT) as SourceLabel[])
++          .filter((l) => sources.some((s) => s.label === l))
++          .map((l) => (
++            <span key={l} className="inline-flex items-center gap-6" title={LABEL_MEANING[l]}>
++              <svg width="8" height="8" aria-hidden="true">
++                <circle cx="4" cy="4" r="4" className={LABEL_FILL[l]} />
++              </svg>
++              {LABEL_TEXT[l]}
++            </span>
++          ))}
++        <span className="text-adm-muted">Hover a box to follow its lines. A source opens it; a finding jumps to its section.</span>
++      </div>
++    </div>
++  )
++}
++
++/** The fixed-format Sources section, the build it was made on, and its limits. */
++export function SourcesSection({ findings, limits }: { findings: Finding[]; limits: ReactNode[] }) {
++  const sources = sourcesOf(findings)
++  return (
++    <>
++      <Panel title="Sources" description="Every source this report uses, in one format. The label says how far its numbers can be trusted.">
++        <ul className="grid gap-12 lg:grid-cols-2">
++          {sources.map((s) => (
++            <li key={s.id} className="flex min-w-0 flex-col gap-8 rounded-8 border border-adm-line p-12">
++              <div className="flex flex-wrap items-center justify-between gap-8">
++                <span className="text-13 font-semibold text-adm-ink">{s.name}</span>
++                <LabelBadge label={s.label} />
++              </div>
++              <dl className="grid grid-cols-[96px_1fr] gap-x-10 gap-y-4 text-12">
++                <dt className="text-adm-muted">What it is</dt>
++                <dd className="text-adm-ink-2">{s.what}</dd>
++                <dt className="text-adm-muted">Version</dt>
++                <dd className="text-adm-ink-2">{s.version}</dd>
++                <dt className="text-adm-muted">Taken from it</dt>
++                <dd className="text-adm-ink-2">{s.taken}</dd>
++                <dt className="text-adm-muted">Link</dt>
++                <dd>
++                  <Link to={s.link} className="inline-flex items-center gap-4 break-all font-medium text-adm-ink underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink">
++                    {s.link}
++                    <ExternalLink size={11} aria-hidden="true" />
++                  </Link>
++                </dd>
++              </dl>
++            </li>
++          ))}
++        </ul>
++        <dl className="grid gap-6 border-t border-adm-line pt-12 text-12 sm:grid-cols-2 lg:grid-cols-3">
++          {(Object.keys(LABEL_TEXT) as SourceLabel[]).map((l) => (
++            <div key={l} className="flex items-start gap-8">
++              <dt className="shrink-0">
++                <LabelBadge label={l} />
++              </dt>
++              <dd className="text-adm-ink-2">{LABEL_MEANING[l]}</dd>
++            </div>
++          ))}
++        </dl>
++      </Panel>
++      <div className="grid gap-16 lg:grid-cols-[1fr_2fr]">
++        <Panel title="Built on" description="The build this page was computed in. The figures follow the data in this commit.">
++          <dl className="grid grid-cols-[96px_1fr] gap-x-10 gap-y-4 text-12">
++            <dt className="text-adm-muted">Commit</dt>
++            <dd className="font-mono text-adm-ink">{BUILD.commit}</dd>
++            <dt className="text-adm-muted">Built</dt>
++            <dd className="text-adm-ink-2">{BUILD.builtAt}</dd>
++            <dt className="text-adm-muted">Environment</dt>
++            <dd className="text-adm-ink-2">
++              {BUILD.label} · {BUILD.version}
++            </dd>
++          </dl>
++        </Panel>
++        <Panel title="Limits" description="What this report cannot say.">
++          <ul className="flex list-disc flex-col gap-6 pl-18 text-13 text-adm-ink-2">
++            {limits.map((l, i) => (
++              <li key={i}>{l}</li>
++            ))}
++          </ul>
++        </Panel>
++      </div>
++    </>
++  )
++}
+diff --git a/src/demo/modules.ts b/src/demo/modules.ts
+index ffcb467..1be2275 100644
+--- a/src/demo/modules.ts
++++ b/src/demo/modules.ts
+@@ -245,6 +245,8 @@ export const DEMO_MODULES: DemoModule[] = [
+   { id: 'adminPersonas', kind: 'admin', label: 'Personas', description: '300 synthetic personas as candidates for AI-run research, with role-play prompts and balanced panels.', route: '/admin/personas', built: true },
+   { id: 'adminBusinessFunnel', kind: 'admin', label: 'Business funnel', description: 'The brief’s stages from a free start to Aurelia Plus, with targets, the buyer agents’ prediction, the feedback group and a decision log.', route: '/admin/business-funnel', built: true },
+   { id: 'adminBuyerAgent', kind: 'admin', label: 'Buyer agent results', description: 'What a buyer agent answered as each persona in a panel: try, pay, price, objections, test cases. Runs v1–v3 and the re-run by production version.', route: '/admin/buyer-agent', built: true },
++  { id: 'adminReportBuyerAgent', kind: 'admin', label: 'Buyer agent report', description: 'Every buyer agent iteration as a timeline: question, what changed, results, the change from the one before, and the decision it fed. With a source graph.', route: '/admin/reports/buyer-agent', built: true },
++  { id: 'adminReportCombination', kind: 'admin', label: 'Combination report', description: 'One reading of Aurelia stage by stage of the business funnel, joining the old backend, the product versions, user feedback, personas, the funnels and the PRD.', route: '/admin/reports/combination', built: true },
+   { id: 'adminRoles', kind: 'admin', label: 'Roles & permissions', description: 'Permission matrix.', route: '/admin/roles', built: true },
+   { id: 'adminSessions', kind: 'admin', label: 'Sessions', description: 'Generated session catalogue.', route: '/admin/sessions', built: true },
+   { id: 'adminChallenges', kind: 'admin', label: 'Challenges', description: 'Setup, pacing and reward tiers.', route: '/admin/challenges', built: true },
+diff --git a/src/versions/releases.ts b/src/versions/releases.ts
+index 947396e..c984cea 100644
+--- a/src/versions/releases.ts
++++ b/src/versions/releases.ts
+@@ -13,6 +13,8 @@
+ // A new one that should wait imports BUILD from '../lib/build' and uses
+ // BUILD.environment !== 'production'. Since J153 nothing is waiting.
+ 
++import { BUILD } from '../lib/build'
++
+ export const RELEASES = {
+   /** Figma "Changes" (16906:4947) item 1: one Chapter card + a Review sheet instead of the fanned deck. */
+   chapterCard: true,
+@@ -36,4 +38,6 @@ export const RELEASES = {
+   buyerAgent: true,
+   /** Admin → Product lab → Business funnel (U108): Eugene's stages as the market-fit scoreboard. On both sites (J153). */
+   businessFunnel: true,
++  /** Admin → Reports (U116, J167): the Buyer agent report and the Combination report, each with a source graph. Staging only until asked. */
++  reports: BUILD.environment !== 'production',
+ } as const
+-- 
+2.43.0
+

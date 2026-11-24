@@ -116,6 +116,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | J164 | 2026-11-24 | Doc | Feedback PDF rewritten: the Change Plan maps last year's (2025) backend, so build new and reuse parts; features must be locked before the final API; how frontend, API and backend fit | — |
 | J165 | 2026-11-24 | Code | Wiki: a sidebar instead of the top bar, done in the background | U115 |
 | J166 | 2026-11-24 | Analysis | What the Business funnel still lacks against Eugene's asks, how to align, and sources on every report | — |
+| J167 | 2026-11-24 | Code | Reports: buyer agent and combination reports, each with sources and a graph of how they connect | U116 |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
@@ -2131,3 +2132,8 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 ### J165 — Wiki sidebar
 - **Asked:** "di menu wiki pastikan menggunakan sidebar instead of top bar. kerjakan itu di background karena saya mau menanyakan hal lain"
 - **Done (U115):** done in the background, desktop only (phones are frozen). It is on staging.
+
+### J167 — Reports with sources
+- **Asked:** the business owner should easily see which resources a report uses and how they connect, with a graph. Combination sources: the backend wiki, product features (prod v3), user feedback, personas, the business funnel and the PRD. A Cost report comes later, from a chat to be sent.
+- **Done (U116):** on staging. "Combination" is read as all the sources joined per funnel stage (answering part of O52). Buyer agent results stays where it is.
+- **Waiting:** the Cost report, until the chat or screenshot zip arrives.

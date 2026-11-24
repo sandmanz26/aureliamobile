@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-24 — Reports (U116, J167)
+
+Admin gains Reports: a buyer agent report and a combination report, each showing its sources as a graph and a list. Staging only.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-24 — Wiki sidebar (U115, J165)
 
 On desktop the wiki's documents and contents sit in one left sidebar instead of a top tab bar. Phones are unchanged.
