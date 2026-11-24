@@ -500,7 +500,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U114**, last J = **J166**, last
+**Numbering as of 17 Nov 2026:** last U = **U115**, last J = **J166**, last
 O = **O55**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -963,6 +963,7 @@ history can be read without opening four documents.
 | U112 | `8865802` | 2026-11-24 | Headline in Motion on phones too, on request: Home's headline is "Create the peace / mind / energy / state you imagine." at every width, in every version. This replaces the static mobile headlines (v1–v4 "space", v5 "Sessions made for how you feel today."). An explicit mobile change. Staging and production. | [patch](update-log/patches/U112-8865802.patch) |
 | U113 | `d719cef` | 2026-11-24 | Business funnel → **Creator retreat (B2B2C)** view (`/admin/business-funnel?view=retreat`): Retreat-in-a-Box as a funnel under three offers (the spec, the approved redesign at €19.99, at €39) and three outcomes (low, middle, spec). It shows one cohort step by step, the pilot's five gates, money per cohort and across creators (with what a creator keeps on a course platform), a per-ticket comparison, and editable assumptions. Numbers match the wiki's Unit economics (tested). Decision d8 (the redesign, decided) in the log. Staging and production. | [patch](update-log/patches/U113-d719cef.patch) |
 | U114 | `4c89df1` | 2026-11-24 | No personal names on shared surfaces (the J078 rule): the B2B2C wiki pages, the funnel and buyer-agent admin texts, the wiki card and the /__demo description now say "the business owner" or "the brief"; the plan page drops internal ids. | [patch](update-log/patches/U114-4c89df1.patch) |
+| U115 | `3bcb6cf` | 2026-11-24 | Wiki on desktop (1024px and up): one sticky left sidebar replaces the top tab bar. It holds the brand, the document list, then the open document's search and contents, and Admin. Phones are unchanged. | [patch](update-log/patches/U115-3bcb6cf.patch) |
 | J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
@@ -1019,6 +1020,7 @@ history can be read without opening four documents.
 | J162 | 2026-11-24 | Review | The backend Change Plan (18 Nov) reviewed as head of engineering: approve it as an inventory, not yet as an implementation plan | — |
 | J163 | 2026-11-24 | Doc | Feedback on the backend Change Plan as a PDF to send to the backend team | — |
 | J164 | 2026-11-24 | Doc | Feedback PDF rewritten: the Change Plan maps last year's (2025) backend, so build new and reuse parts; features must be locked before the final API; how frontend, API and backend fit | — |
+| J165 | 2026-11-24 | Code | Wiki: a sidebar instead of the top bar, done in the background | U115 |
 | J166 | 2026-11-24 | Analysis | What the Business funnel still lacks against Eugene's asks, how to align, and sources on every report | — |
 
 ### 17.2 Code changes (U)

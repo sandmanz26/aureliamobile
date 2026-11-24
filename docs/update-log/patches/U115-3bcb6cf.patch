@@ -1,0 +1,257 @@
+From 3bcb6cfe3f8706f87f4c15cdba10a0a04594ea01 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 24 Nov 2026 15:38:48 +0000
+Subject: [PATCH] Wiki: a left sidebar replaces the top tab bar on desktop
+ (U115, J165)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/guides/GuidePage.tsx | 158 ++++++++++++++++++++++++++++-----------
+ src/guides/guides.css    |  31 ++++++++
+ 2 files changed, 146 insertions(+), 43 deletions(-)
+
+diff --git a/src/guides/GuidePage.tsx b/src/guides/GuidePage.tsx
+index d13af87..878d767 100644
+--- a/src/guides/GuidePage.tsx
++++ b/src/guides/GuidePage.tsx
+@@ -252,53 +252,105 @@ function TopBar({ current }: { current?: DocId }) {
+   )
+ }
+ 
++/**
++ * The desktop sidebar's own parts (U115). Below lg they are hidden (`.gd-sb`)
++ * and the top bar's tabs carry the documents instead, as before.
++ */
++function SideHead() {
++  return (
++    <div className="gd-sb gd-sb-head">
++      <Link to="/wiki" className="gd-brand" aria-label="Aurelia wiki">
++        <AureliaLogo iconSize={26} />
++        <span className="gd-brand-label">Wiki</span>
++      </Link>
++    </div>
++  )
++}
++
++function SideDocs({ current }: { current?: DocId }) {
++  return (
++    <nav className="gd-sb gd-sb-docs" aria-label="Documents">
++      <p className="gd-sb-label" aria-hidden="true">
++        Documents
++      </p>
++      <ul>
++        {DOCS.map((d) => (
++          <li key={d.id}>
++            <Link to={`/wiki/${d.id}`} aria-current={d.id === current ? 'page' : undefined}>
++              <d.icon size={16} aria-hidden="true" />
++              <span>{d.title}</span>
++            </Link>
++          </li>
++        ))}
++      </ul>
++    </nav>
++  )
++}
++
++function SideFoot() {
++  return (
++    <div className="gd-sb gd-sb-foot">
++      <Link to="/admin" className="gd-sb-back">
++        <ArrowLeft size={14} aria-hidden="true" /> Admin
++      </Link>
++    </div>
++  )
++}
++
+ export function GuideIndexPage() {
+   return (
+     <div className="gd">
+       <TopBar />
+-      <main className="gd-index">
+-        <section className="gd-hero">
+-          <div className="gd-glow" aria-hidden="true" />
+-          <img src={networkArt} alt="" aria-hidden="true" className="gd-net" />
+-          <img src={markSvg} alt="" aria-hidden="true" width={52} height={52} className="gd-hero-mark" />
+-          <p className="gd-eyebrow">Aurelia · wiki</p>
+-          <h1>
+-            Everything about Aurelia, <span className="gd-grad">in nine documents</span>
+-          </h1>
+-          <p className="gd-lede">
+-            Aurelia builds personal wellness sessions from one sentence: someone says how they feel, and Aurelia makes a
+-            session for it. These documents explain the product, the admin the team runs it from, the backend still to
+-            be built, the eight-week study that will show whether Aurelia really helps people, what we learn
+-            from other products, how Aurelia could sell through partners, what the 2025 backend left us, and the design system every screen is built from.
+-          </p>
+-          <p className="gd-note">
+-            The app runs on realistic sample data until the backend exists, so no figure in it is a real result yet.
++      <div className="gd-index-layout">
++        <aside className="gd-side gd-sb" aria-label="Wiki">
++          <SideHead />
++          <SideDocs />
++          <SideFoot />
++        </aside>
++        <main className="gd-index">
++          <section className="gd-hero">
++            <div className="gd-glow" aria-hidden="true" />
++            <img src={networkArt} alt="" aria-hidden="true" className="gd-net" />
++            <img src={markSvg} alt="" aria-hidden="true" width={52} height={52} className="gd-hero-mark" />
++            <p className="gd-eyebrow">Aurelia · wiki</p>
++            <h1>
++              Everything about Aurelia, <span className="gd-grad">in nine documents</span>
++            </h1>
++            <p className="gd-lede">
++              Aurelia builds personal wellness sessions from one sentence: someone says how they feel, and Aurelia makes a
++              session for it. These documents explain the product, the admin the team runs it from, the backend still to
++              be built, the eight-week study that will show whether Aurelia really helps people, what we learn
++              from other products, how Aurelia could sell through partners, what the 2025 backend left us, and the design system every screen is built from.
++            </p>
++            <p className="gd-note">
++              The app runs on realistic sample data until the backend exists, so no figure in it is a real result yet.
++            </p>
++          </section>
++          <div className="gd-cards">
++            {DOCS.map((d) => (
++              <Link key={d.id} to={`/wiki/${d.id}`} className="gd-card">
++                <span className="gd-card-icon" aria-hidden="true">
++                  <d.icon size={18} />
++                </span>
++                <b>{d.title}</b>
++                <span className="gd-card-blurb">{d.blurb}</span>
++                <ul>
++                  {d.inside.map((i) => (
++                    <li key={i}>{i}</li>
++                  ))}
++                </ul>
++                <span className="gd-card-for">
++                  <b>For</b> {d.audience}
++                </span>
++                <span className="gd-card-open">Open →</span>
++              </Link>
++            ))}
++          </div>
++          <p className="gd-foot">
++            {BUILD.label} · {BUILD.version} · {BUILD.commit}
+           </p>
+-        </section>
+-        <div className="gd-cards">
+-          {DOCS.map((d) => (
+-            <Link key={d.id} to={`/wiki/${d.id}`} className="gd-card">
+-              <span className="gd-card-icon" aria-hidden="true">
+-                <d.icon size={18} />
+-              </span>
+-              <b>{d.title}</b>
+-              <span className="gd-card-blurb">{d.blurb}</span>
+-              <ul>
+-                {d.inside.map((i) => (
+-                  <li key={i}>{i}</li>
+-                ))}
+-              </ul>
+-              <span className="gd-card-for">
+-                <b>For</b> {d.audience}
+-              </span>
+-              <span className="gd-card-open">Open →</span>
+-            </Link>
+-          ))}
+-        </div>
+-        <p className="gd-foot">
+-          {BUILD.label} · {BUILD.version} · {BUILD.commit}
+-        </p>
+-      </main>
++        </main>
++      </div>
+     </div>
+   )
+ }
+@@ -334,6 +386,7 @@ function GuideDoc({ meta, version, pages }: { meta: (typeof DOCS)[number]; versi
+   const [active, setActive] = useState<string | null>(null)
+   const [shot, setShot] = useState<{ src: string; caption: string } | null>(null)
+   const content = useRef<HTMLDivElement>(null)
++  const side = useRef<HTMLElement>(null)
+   const viewer = useRef<HTMLDialogElement>(null)
+   const toc = useMemo(() => filterToc(prepared.toc, query), [prepared, query])
+ 
+@@ -412,6 +465,19 @@ function GuideDoc({ meta, version, pages }: { meta: (typeof DOCS)[number]; versi
+     return () => io.disconnect()
+   }, [prepared, dsReady])
+ 
++  // On desktop the contents share one scrolling sidebar with the documents:
++  // keep the highlighted section in view inside it, without moving the page.
++  useEffect(() => {
++    const aside = side.current
++    const link = aside?.querySelector<HTMLElement>('.gd-toc a[aria-current="location"]')
++    if (!aside || !link || !window.matchMedia('(min-width: 1024px)').matches) return
++    const a = aside.getBoundingClientRect()
++    const l = link.getBoundingClientRect()
++    const head = aside.querySelector<HTMLElement>('.gd-sb-head')?.offsetHeight ?? 0
++    if (l.top < a.top + head + 8) aside.scrollTop -= a.top + head + 8 - l.top
++    else if (l.bottom > a.bottom - 8) aside.scrollTop += l.bottom - (a.bottom - 8)
++  }, [active])
++
+   useEffect(() => {
+     const d = viewer.current
+     if (!d) return
+@@ -449,7 +515,12 @@ function GuideDoc({ meta, version, pages }: { meta: (typeof DOCS)[number]; versi
+     <div className="gd">
+       <TopBar current={meta.id} />
+       <div className="gd-layout">
+-        <aside className={`gd-side${tocOpen ? ' open' : ''}`} aria-label="Contents">
++        <aside ref={side} className={`gd-side${tocOpen ? ' open' : ''}`} aria-label="Contents">
++          <SideHead />
++          <SideDocs current={meta.id} />
++          <p className="gd-sb gd-sb-label gd-sb-on" aria-hidden="true">
++            On this page
++          </p>
+           <button type="button" className="gd-toggle" aria-expanded={tocOpen} onClick={() => setTocOpen((o) => !o)}>
+             Contents and search
+           </button>
+@@ -489,6 +560,7 @@ function GuideDoc({ meta, version, pages }: { meta: (typeof DOCS)[number]; versi
+             <br />
+             {BUILD.label} · {BUILD.commit}
+           </p>
++          <SideFoot />
+         </aside>
+         <main className="gd-main">
+           {pages ? <DocPages id={meta.id} pages={pages.list} current={pages.current} /> : version && <DocVersions id={meta.id} current={version.v} />}
+diff --git a/src/guides/guides.css b/src/guides/guides.css
+index d7506a2..5c903df 100644
+--- a/src/guides/guides.css
++++ b/src/guides/guides.css
+@@ -276,3 +276,34 @@
+   .gd-pages .gd-versions-label { display: none; }
+   .gd-pages a { flex: 0 0 160px; scroll-snap-align: start; }
+ }
++
++/* Desktop sidebar (U115). From lg up the top bar goes and one sidebar holds
++   the brand, the documents and, on a document, its search and contents. Below
++   lg nothing here applies: the parts are hidden and the top bar's tabs and
++   the folding "Contents and search" stay exactly as they were. */
++@media (max-width: 1023px) {
++  .gd .gd-sb { display: none; }
++}
++@media (min-width: 1024px) {
++  .gd { --gd-top-h: 0px; }
++  .gd-top { display: none; }
++  .gd-layout,
++  .gd-index-layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); }
++  .gd-side { display: flex; flex-direction: column; padding: 0 12px 16px; scrollbar-width: thin; scrollbar-color: var(--gd-line) transparent; }
++  .gd-side > * { flex-shrink: 0; }
++  .gd-sb-head { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; height: 64px; margin: 0 -12px 14px; padding: 3px 18px 0; background: var(--gd-chrome-2); border-bottom: 1px solid var(--gd-line); }
++  .gd-sb-head::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--gd-brand); }
++  .gd-sb-head .gd-brand { border-radius: 8px; }
++  .gd-sb-label { margin: 0 0 6px; padding: 0 10px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gd-muted); }
++  .gd-sb-on { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--gd-line); margin-bottom: 10px; }
++  .gd-sb-docs ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
++  .gd-sb-docs a { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; font-size: 13.5px; font-weight: 600; line-height: 1.35; color: var(--gd-ink2); text-decoration: none; }
++  .gd-sb-docs a svg { flex: none; color: var(--gd-muted); }
++  .gd-sb-docs a:hover { background: var(--gd-chrome-hover); color: var(--gd-ink); }
++  .gd-sb-docs a[aria-current='page'] { background: var(--gd-chrome-active); box-shadow: inset 3px 0 0 #ff8514; color: var(--gd-ink); }
++  .gd-sb-docs a[aria-current='page'] svg { color: #c25e0a; }
++  .gd-sb-foot { margin-top: auto; padding: 14px 10px 0; }
++  .gd-sb-back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--gd-muted); text-decoration: none; border-radius: 6px; }
++  .gd-sb-back:hover { color: var(--gd-ink); }
++  .gd-index { min-width: 0; width: 100%; padding-left: 40px; padding-right: 40px; }
++}
+-- 
+2.43.0
+

@@ -114,6 +114,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | J162 | 2026-11-24 | Review | The backend Change Plan (18 Nov) reviewed as head of engineering: approve it as an inventory, not yet as an implementation plan | — |
 | J163 | 2026-11-24 | Doc | Feedback on the backend Change Plan as a PDF to send to the backend team | — |
 | J164 | 2026-11-24 | Doc | Feedback PDF rewritten: the Change Plan maps last year's (2025) backend, so build new and reuse parts; features must be locked before the final API; how frontend, API and backend fit | — |
+| J165 | 2026-11-24 | Code | Wiki: a sidebar instead of the top bar, done in the background | U115 |
 | J166 | 2026-11-24 | Analysis | What the Business funnel still lacks against Eugene's asks, how to align, and sources on every report | — |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
@@ -2126,3 +2127,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
   - Reports as the time dimension (iterations).
 - **Sources on reports:** each report ends with a fixed Sources block. It lists the data (run, seed, persona generator, n), the rules version, the app version and offer tested, the research (wiki links), the business owner's documents by title and date, the assumptions labelled as estimates, the limits, and the build commit and date.
 - **Open:** O55.
+
+### J165 — Wiki sidebar
+- **Asked:** "di menu wiki pastikan menggunakan sidebar instead of top bar. kerjakan itu di background karena saya mau menanyakan hal lain"
+- **Done (U115):** done in the background, desktop only (phones are frozen). It is on staging.

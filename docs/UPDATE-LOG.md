@@ -151,9 +151,22 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U112 | `8865802` | 2026-11-24 | Headline in Motion on phones too, on request: Home's headline is "Create the peace / mind / energy / state you imagine." at every width, in every version. This replaces the static mobile headlines (v1–v4 "space", v5 "Sessions made for how you feel today."). An explicit mobile change. Staging and production. | [patch](patches/U112-8865802.patch) |
 | U113 | `d719cef` | 2026-11-24 | Business funnel → **Creator retreat (B2B2C)** view (`/admin/business-funnel?view=retreat`): Retreat-in-a-Box as a funnel under three offers (the spec, the approved redesign at €19.99, at €39) and three outcomes (low, middle, spec). It shows one cohort step by step, the pilot's five gates, money per cohort and across creators (with what a creator keeps on a course platform), a per-ticket comparison, and editable assumptions. Numbers match the wiki's Unit economics (tested). Decision d8 (the redesign, decided) in the log. Staging and production. | [patch](patches/U113-d719cef.patch) |
 | U114 | `4c89df1` | 2026-11-24 | No personal names on shared surfaces (the J078 rule): the B2B2C wiki pages, the funnel and buyer-agent admin texts, the wiki card and the /__demo description now say "the business owner" or "the brief"; the plan page drops internal ids. | [patch](patches/U114-4c89df1.patch) |
+| U115 | `3bcb6cf` | 2026-11-24 | Wiki on desktop (1024px and up): one sticky left sidebar replaces the top tab bar. It holds the brand, the document list, then the open document's search and contents, and Admin. Phones are unchanged. | [patch](patches/U115-3bcb6cf.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U115 — Wiki sidebar
+
+- **Commit:** `3bcb6cf` · 2026-11-24 · `web_app` + `admin_cms`.
+- **Patch:** [patches/U115-3bcb6cf.patch](patches/U115-3bcb6cf.patch)
+- **Request:** "di menu wiki pastikan menggunakan sidebar instead of top bar. kerjakan itu di background"
+- **Changed:** `src/guides/GuidePage.tsx` and `guides.css`. Desktop rules sit only in a 1024px-and-up media query.
+- **Verified:**
+  - `npm run check`;
+  - six wiki pages at 1440px: navigation, scroll-spy, the mermaid chart and the viewer work, with no sideways scroll;
+  - at 402px, the same pages match the previous build element for element.
+- **Revert:** `git revert --no-commit 3bcb6cf`.
 
 ### U114 — No personal names on shared surfaces
 
