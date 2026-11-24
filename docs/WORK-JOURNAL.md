@@ -99,6 +99,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | O52 | **Reports menu (J161)**: confirm what "combination report" means: (a) every offer × version × agent × segment combination, simulated now, or (b) agents and real people side by side, once people exist. Recommended: (a) now, (b) as a column when real data arrives. Also confirm that Buyer agent results moves under Reports rather than staying beside it | J161 | Product owner |
 | O53 | **Backend Change Plan v2 (J162)**: confirm whether the old API is deployed; if it is, fix its open refund, card and `user_id` routes now. Ask the backend team for a v2 with a Pilot slice phase, the creator-retreat payments kept (one-off tickets, Stripe Connect payouts), safety in P1, infrastructure, migrations, data migration, observability, estimates and owners. Our side: add the retreat to the API contract, decide C1/C3/C4/C5, name a safety escalation owner. Review in `docs/api/CHANGE-PLAN-REVIEW.md` | J162 | Product owner + backend team |
 | O54 | **Feature lock for API v1 (J164)**: write a one-page list of what API v1 serves (the Pilot slice plus anything agreed), signed off by the product owner and the business owner. After the lock, new ideas go to a backlog, and any change gets an engineering impact note before the product owner decides. Engineering plans the final API only after the sign-off | J164 | Product owner + business owner |
+| O55 | **Funnel alignment and Reports (J166)**: approve the order. (1) One metric dictionary, merging J136's ten and J150's ten, used by the funnel, the agents and the reports. (2) A funnel map: stage × moments × features × metrics × leave reasons. (3) Step-level drop-off and leave reasons per stage. (4) The retreat funnel to the spec's steps: first session, week 4, week 8, Plus, Day 1 vs Day 56, ARR per wave. (5) Buyer agent v5 walks both funnels. (6) Reports (buyer agent report, combination report), each with a Sources section. Also answer O52 (what "combination" means) and O48 (targets) | J166 | Product owner |
 | J151 | 2026-11-23 | Opinion | What Eugene is asking for, in plain words: one goal (market fit), one loop (dual track), three tools in the admin | — |
 | J152 | 2026-11-23 | Opinion + fix | What the machine still lacks: the business funnel as the hub (with measured human numbers and a decision log); correction: an upgrade screen does exist | — |
 | J153 | 2026-11-23 | Code + release | Does the buyer agent need redoing? Build the Business funnel; put every decision on staging and production; roast again and improve so Eugene has nothing to complain about | U108, U109 |
@@ -113,6 +114,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | J162 | 2026-11-24 | Review | The backend Change Plan (18 Nov) reviewed as head of engineering: approve it as an inventory, not yet as an implementation plan | — |
 | J163 | 2026-11-24 | Doc | Feedback on the backend Change Plan as a PDF to send to the backend team | — |
 | J164 | 2026-11-24 | Doc | Feedback PDF rewritten: the Change Plan maps last year's (2025) backend, so build new and reuse parts; features must be locked before the final API; how frontend, API and backend fit | — |
+| J166 | 2026-11-24 | Analysis | What the Business funnel still lacks against Eugene's asks, how to align, and sources on every report | — |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
@@ -2103,3 +2105,24 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
   3. **How frontend, API and backend fit together, in plain words.** It explains why a feature that looks finished on screen is not finished.
 - **No names:** the document says "the business owner", following the J078 rule.
 - **Open:** O54.
+
+### J166 — The funnel's gaps, alignment, and sources on reports
+- **Asked:** "oke sekaran saya mau kamu cek dari business funnel apa saja yang kurang ? dan bagaimana untuk align dengan apa yang eugene minta ? saya mau untuk report yang kita buat tadi kita sertakan source, source ini berfungsi untuk memberitahu eugene bahwa report ini dibuat dengan dasar apa saja."
+- **Gaps against his asks** (from `docs/briefs/EUGENE-CONTEXT.md`, rows 26–27 and §4):
+  1. **It is not a map.** He asked for "a business funnel map, like the user journey map", with the features behind each stage. Ours shows stage cards and bars, with no features per stage.
+  2. **Two lists of "10 metrics" and a third set on the funnel.** J136 (for the agents), J150 (from his sheet) and the funnel's own eight.
+  3. **No step-level bounce.** He asked where people are blocked or leave, and what holds back more AI plays. The funnel shows stages; the step drop-off lives only in the buyer re-run. There is no repeat-plays or second-build metric.
+  4. **Dual track only on paper.** The human column is sample data. The agents have not walked the retreat (v5).
+  5. **The retreat view is not his funnel shape.** It lacks week 4, Day 1 vs Day 56 outcomes, ARR per wave and the metered trigger (15+ weekly AI interactions).
+  6. **No time dimension.** It is a snapshot, not a daily loop over iterations.
+  7. **The targets are ours** (O48).
+  8. **No money in the app funnel** (LTV:CAC, metric 10).
+- **Alignment proposed:**
+  - one metric dictionary;
+  - a funnel map;
+  - step drop-off and leave reasons per stage;
+  - the retreat funnel to the spec's steps;
+  - buyer agent v5 on both funnels;
+  - Reports as the time dimension (iterations).
+- **Sources on reports:** each report ends with a fixed Sources block. It lists the data (run, seed, persona generator, n), the rules version, the app version and offer tested, the research (wiki links), the business owner's documents by title and date, the assumptions labelled as estimates, the limits, and the build commit and date.
+- **Open:** O55.
