@@ -1,0 +1,1070 @@
+From dfe36fb26fb96356c58ab43b186c30bf5cbf57cb Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 24 Nov 2026 17:58:51 +0000
+Subject: [PATCH] Wiki: API contract v2 in three pages, General (default), Apps
+ and Admin; v1 kept as a page (U120, J175)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ docs/api/API-CONTRACT-V2.md | 448 ------------------------------------
+ docs/api/v2/admin.md        |  74 ++++++
+ docs/api/v2/apps.md         | 187 +++++++++++++++
+ docs/api/v2/general.md      | 203 ++++++++++++++++
+ src/guides/GuidePage.tsx    |  30 +--
+ src/guides/docPages.ts      |  17 +-
+ 6 files changed, 484 insertions(+), 475 deletions(-)
+ delete mode 100644 docs/api/API-CONTRACT-V2.md
+ create mode 100644 docs/api/v2/admin.md
+ create mode 100644 docs/api/v2/apps.md
+ create mode 100644 docs/api/v2/general.md
+
+diff --git a/docs/api/API-CONTRACT-V2.md b/docs/api/API-CONTRACT-V2.md
+deleted file mode 100644
+index 6a89e6c..0000000
+--- a/docs/api/API-CONTRACT-V2.md
++++ /dev/null
+@@ -1,448 +0,0 @@
+-# API contract v2: the Pilot slice (draft for the v1 feature lock)
+-
+-| | |
+-| --- | --- |
+-| Version | 2.0 (draft) |
+-| Status | For review and sign-off at the feature lock. Not implemented; both apps still run on sample data. |
+-| Replaces | Nothing yet. The [full contract (v1)](/wiki/api?v=1) stays as the long-term map; v2 is what gets built first. |
+-| Machine-readable form | [`openapi-v2.yaml`](openapi-v2.yaml) (OpenAPI 3.1) |
+-| Last updated | 24 November 2026 |
+-
+-## 1 · In one minute
+-
+-**What v2 is.** The smallest API that lets Aurelia run its **first paid creator pilot**: 3 to 5 creators each sell a retreat ticket to their audience, buyers sign up, build and play sessions, check in before and after, and some move on to Plus. Everything the pilot does not need waits.
+-
+-**What changed since v1, and why.** The v1 contract described the whole product: community, challenges, coins, invites and 18 admin modules, built in five phases. Since then four decisions changed what the backend must serve first:
+-
+-- **The business needs a paid pilot before the whole product.** So v2 is one "Pilot slice" phase after Foundation, not P0 to P4.
+-- **The creator retreat was redesigned and approved.** A one-off ticket (€19.99 or €39), Aurelia as the seller (merchant of record), a 70/30 split paid to creators in money, plus a share of the Plus revenue each cohort brings. That needs one-off payments and Stripe Connect payouts, which the backend plan wanted to retire. v2 keeps them.
+-- **Safety cannot wait for the last phase.** People type how they feel into free text, so crisis messages are certain. The safety check, the crisis response and the safety log are part of the core loop.
+-- **The business wants to know what moving someone from a bad state to a good one costs, and whether it works.** Every build now records what it bought from which AI supplier and at what cost (the compute ledger), and every chapter records a check-in score before and after (therapeutic outcomes). This is internal measurement, aggregate only, never public claims.
+-
+-**The rule: features are locked before the final API.** Every feature that stores data costs an endpoint, a table, backend logic with tests, and changes in both apps. So:
+-
+-1. The product owner and the business owner sign off a one-page list of what API v1 serves (this slice, plus anything agreed) **before** engineering plans the final API.
+-2. A change after the lock first gets an **impact note** from engineering (endpoints, tables, screens, days added). Then the product owner decides.
+-3. Once live, the API changes by **versions, not edits**: new fields and endpoints are added; anything breaking goes to the next version.
+-4. The prototype may keep moving on sample data. The API does not.
+-
+-## 2 · How the pieces fit
+-
+-```mermaid
+-flowchart LR
+-  W[Web app] --> API[Aurelia API v1]
+-  F[Flutter app] --> API
+-  A[Admin] --> API
+-  API --> B[Backend services]
+-  B --> DB[(PostgreSQL)]
+-  B --> Q[Job queue and workers]
+-  Q --> AI[AI suppliers: script, voice, music, image]
+-  Q --> OS[Object storage for audio]
+-  B --> S[Stripe: payments and Connect payouts]
+-  S -->|webhooks| API
+-  B --> L[Compute ledger and outcomes]
+-  L --> DB
+-```
+-
+-| Piece | What it is | Today |
+-| --- | --- | --- |
+-| The apps (web, Flutter, admin) | What people see and tap | Built, on sample data |
+-| The API | The list of questions the apps may ask, and the exact shape of each answer | This document |
+-| The backend | Stores accounts and check-ins, runs the AI, takes payments, keeps data safe | Not built for 2026 |
+-| Database and suppliers | PostgreSQL, AI models (script, voice, music, image), object storage, Stripe | Chosen, not set up |
+-
+-All AI runs on the server. The apps never hold a model key or a payment secret.
+-
+-## 3 · Conventions
+-
+-Carried from v1 (§3 there), trimmed to what the slice uses.
+-
+-- **Base path** `https://api.aurelia.care/v1` (staging `https://api.staging.aurelia.care/v1`). The API's own first version is `/v1`; "contract v2" is the second draft of the document, not a `/v2` path.
+-- **JSON, camelCase** field names, RFC 3339 UTC timestamps, durations in seconds, money as **integer minor units with a currency** (`{ amount: 1999, currency: "EUR" }`).
+-- **Ids** are opaque strings with a type prefix: `usr_`, `cns_`, `cnv_`, `msg_`, `bld_`, `ses_`, `chp_`, `ver_`, `bit_`, `ply_`, `chk_`, `jrn_`, `crt_`, `ret_`, `coh_`, `enr_`, `ord_`, `ref_`, `spl_`, `pay_`, `sub_`, `cmp_`, `sfe_`, `aud_`.
+-- **Auth:** `Authorization: Bearer <JWT>`, 15-minute access token; an opaque rotating refresh token (30 days rolling) in an httpOnly cookie on web and secure storage on mobile. Roles: `user`, `creator`, and staff roles on a separate admin audience (`aud: admin`).
+-- **Errors:** RFC 9457 problem details with a stable `code` the apps switch on, and `retryable`. Codes used by the slice: `invalid_request` (400), `unauthenticated` (401), `forbidden` (403), `not_found` (404), `conflict`, `build_in_progress`, `already_enrolled` (409), `unsafe_content`, `consent_required`, `age_restricted`, `withdrawal_consent_required` (422), `rate_limited`, `build_limit_reached` (429), `ai_unavailable`, `payment_unavailable` (503).
+-- **Pagination:** cursor, `?limit=20&cursor=…` → `{ data: T[], nextCursor: string | null }`, `limit` ≤ 100.
+-- **Idempotency-Key** (a UUID) is **required** on every payment, refund, build, check-in and message POST; webhook handlers deduplicate on the supplier's event id. A replay returns the first result for 24 h.
+-- **Rate limits** per token: 60 requests/min general, 20 messages/min, 10 builds/hour, 5 checkouts/hour. `RateLimit-*` headers; `Retry-After` on 429.
+-- **Streaming:** Server-Sent Events for the assistant's reply and a build's progress. Streams end with a terminal event; the resource fetched by id is always the truth.
+-- **Versioning:** additive changes (new fields, new enum values) are not breaking; apps ignore unknown fields and treat unknown enum values as "other". Breaking changes need a new path version.
+-- **Headers:** `Aurelia-Client: web/<version>+<commit>` or `ios/…`, `android/…` on every request.
+-
+-**Status labels below:** **v1** = in the v1 contract as it was; **changed in v2** = in v1, with a different shape or rule; **new in v2** = not in v1.
+-
+-## 4 · The Pilot slice, area by area
+-
+-Shapes are TypeScript-like. `?` is optional. Auth: **public**, **user**, **creator**, **staff**, **Stripe** (signature).
+-
+-### 4.1 Accounts and consent (12 endpoints)
+-
+-| Method | Path | Purpose | Request → Response | Auth | Status |
+-| --- | --- | --- | --- | --- | --- |
+-| POST | `/auth/signup` | Create an account with email and password | `{ email, password, name, birthYear, country, acceptTermsVersion }` → `AuthTokens & { user: Me }` | public | changed in v2 (age gate, country) |
+-| POST | `/auth/signin` | Sign in | `{ email, password }` → `AuthTokens & { user: Me }` | public | v1 |
+-| POST | `/auth/oauth/google` | Sign up or in with Google; the code exchange runs on the server | `{ code, redirectUri, birthYear?, country? }` → `AuthTokens & { user: Me, needsAgeGate: boolean }` | public | v1 (Google only in the slice) |
+-| POST | `/auth/refresh` | Swap the refresh token for a new pair | cookie or `{ refreshToken }` → `AuthTokens` | public | v1 |
+-| POST | `/auth/signout` | Revoke the refresh token | — → `204` | user | v1 |
+-| POST | `/auth/password-reset` | Ask for a reset link; never reveals whether the address exists | `{ email }` → `202` | public | v1 |
+-| GET | `/me` | The signed-in person | → `Me` | user | v1 |
+-| PATCH | `/me` | Name, locale, time zone, birth year (once) | `Partial<{ name, locale, timeZone, birthYear }>` → `Me` | user | v1 |
+-| GET | `/me/consents` | Every consent and its state | → `{ data: Consent[] }` | user | changed in v2 (purposes below) |
+-| PUT | `/me/consents/{purpose}` | Give or withdraw one consent | `{ granted: boolean, textVersion }` → `Consent` | user | changed in v2 |
+-| POST | `/me/export` | Ask for a copy of all one's data (GDPR access) | — → `202 { requestId, readyBy }` | user | v1 |
+-| DELETE | `/me` | Delete the account and its data (30-day grace, then gone) | `{ confirm: "DELETE" }` → `202 { deleteAt }` | user | v1 |
+-
+-```ts
+-type AuthTokens = { accessToken: string; expiresIn: number; refreshToken?: string } // refreshToken only to mobile
+-type Me = { id: string; email: string; name: string; locale: string; timeZone: string;
+-            country: string; ageBand: "16-17" | "18+"; roles: ("user" | "creator")[]; createdAt: string }
+-type Consent = { purpose: "health_data" | "ai_processing" | "outcome_research" | "marketing_email";
+-                 granted: boolean; textVersion: string; updatedAt: string }
+-```
+-
+-**Age gate.** Sign-up asks for a birth year. Under 16 is refused (`422 age_restricted`); 16 and 17 get the account with marketing off and stricter safety thresholds. Google sign-in without a birth year returns `needsAgeGate: true` and the app asks before anything else.
+-
+-**Consent.** `health_data` (explicit, GDPR Art. 9) is required before the first check-in or free-text feeling is stored; without it those calls return `422 consent_required`. `outcome_research` lets the person's scores count in internal aggregate outcomes; it is separate and optional. Consent texts are versioned; a new text version re-asks.
+-
+-### 4.2 Core loop (22 endpoints)
+-
+-The loop: a check-in score before → a conversation → a build creates a session with chapters → play → a check-in score after → "Change this session" with Lego bites makes a new version → the next chapter, inside a journey from a bad state toward a good one.
+-
+-| Method | Path | Purpose | Request → Response | Auth | Status |
+-| --- | --- | --- | --- | --- | --- |
+-| POST | `/conversations` | Start a thread, optionally from the first sentence | `{ firstMessage?, source }` → `Conversation` | user | v1 |
+-| GET | `/conversations` | My threads | → `Page<Conversation>` | user | v1 |
+-| GET | `/conversations/{id}` | One thread with its messages | → `Conversation & { messages: Message[] }` | user | v1 |
+-| POST | `/conversations/{id}/messages` | Send a message; the reply streams (SSE) | `{ text }` → `text/event-stream`: `message.delta`, `message.completed`, `safety.crisis`, `error` | user | v1, safety now blocking |
+-| POST | `/builds` | Build a new session or a new version of one | `{ conversationId, sessionId?, baseVersionId?, chapterMinutes: 3 \| 5 \| 10, biteIds?: string[] }` → `202 Build` | user | changed in v2 (bites, chapter length) |
+-| GET | `/builds/{id}` | Build state | → `Build` | user | v1 |
+-| GET | `/builds/{id}/events` | Build progress (SSE) | → `build.step`, `build.completed`, `build.failed` | user | v1 |
+-| GET | `/sessions` | My sessions (created and played) | `?filter=created\|played` → `Page<SessionSummary>` | user | v1 |
+-| GET | `/sessions/{id}` | One session with its current version | → `Session` | user | v1 |
+-| GET | `/sessions/{id}/chapters` | The chapters of the current (or a given) version | `?versionId` → `{ data: Chapter[] }` | user | new in v2 |
+-| GET | `/sessions/{id}/versions` | Every version, newest first | → `{ data: Version[] }` | user | v1 |
+-| GET | `/sessions/{id}/bites` | "Change this session": the Lego bites on offer for this version, each with a Why | → `{ data: LegoBite[] }` | user | new in v2 (replaces v1 proposals) |
+-| POST | `/sessions/{id}/versions/{versionId}/rollback` | Make an earlier version current again (no cost) | — → `Session` | user | new in v2 |
+-| GET | `/chapters/{id}/playback` | Signed, short-lived audio and image URLs | → `Playback` | user | v1 (per chapter now) |
+-| POST | `/plays` | A play starts | `{ chapterId, versionId }` → `Play` | user | changed in v2 |
+-| PATCH | `/plays/{id}` | Progress and end of a play | `{ positionSec, completionRatio, ended?: boolean, report?: "adverse" \| "quality" }` → `Play` | user | changed in v2 (completion ratio, report) |
+-| POST | `/checkins` | A pre- or post-session score | `{ chapterId?, journeyId?, phase: "pre" \| "post", score: 0-100, feeling?: string }` → `CheckIn` | user | changed in v2 (pre and post, 0–100) |
+-| GET | `/checkins` | My check-ins | `?journeyId` → `Page<CheckIn>` | user | v1 |
+-| POST | `/journeys` | Start a journey from a bad state toward a good one | `{ domain, fromState, toState, startScore, targetScore? }` → `Journey` | user | changed in v2 |
+-| GET | `/journeys/current` | The active journey and its next chapter | → `Journey \| null` | user | v1 |
+-| GET | `/journeys/{id}` | One journey with its scores | → `Journey` | user | changed in v2 |
+-| PATCH | `/journeys/{id}` | Pause, resume or end | `{ status }` → `Journey` | user | v1 |
+-
+-```ts
+-type Conversation = { id; sessionId: string | null; title; source: "home" | "onboarding" | "retreat" | "session" | "new"; lastMessageAt }
+-type Message = { id; conversationId; role: "user" | "assistant" | "system_event"; text; createdAt;
+-                 attachment?: { type: "bites"; sessionId } | { type: "build"; buildId; versionId; label };
+-                 safety?: { crisis: boolean } }
+-type Build = { id; sessionId; versionId; state: "queued" | "running" | "ready" | "failed";
+-               steps: { name: "script" | "voice" | "music" | "image" | "mix"; state }[];
+-               reusedSegments: number;            // "produced once, personalised inserts"
+-               counted: boolean; createdAt; finishedAt? }
+-type Session = { id; title; summary; ownerId; retreatId?: string; currentVersionId; versions: number; createdAt }
+-type Version = { id; sessionId; label: "v1.0"; parentVersionId?: string; biteIds: string[];
+-                 state: "building" | "ready" | "failed" | "rolled_back"; createdAt }
+-type Chapter = { id; versionId; index; title; durationSec; minutes: 3 | 5 | 10 }
+-type LegoBite = { id; title; kind: "voice" | "music" | "pace" | "script" | "image" | "length";
+-                  what: string; why: string; preselected: boolean }
+-type Playback = { audioUrl; imageUrl?; expiresAt; durationSec }   // URLs live 15 minutes
+-type Play = { id; chapterId; versionId; startedAt; positionSec; completionRatio: number; completed: boolean }
+-type CheckIn = { id; phase: "pre" | "post"; score: number; chapterId?; journeyId?; createdAt }
+-type Journey = { id; domain: "sleep" | "stress" | "focus" | "mood" | "other"; fromState; toState;
+-                 startScore; targetScore; latestScore?; chaptersPlayed; status: "active" | "paused" | "flipped" | "ended";
+-                 nextChapterId?; reminderAt? }
+-```
+-
+-**Rules the server owns.**
+-- A build is refused while another build of the same session runs (`409 build_in_progress`).
+-- Applying bites always makes a **new version**; the previous one is kept. Closing the sheet without applying costs nothing.
+-- A play with `completionRatio` below 0.3 never counts as complete.
+-- An `adverse` report on a play rolls the session back to the previous version and writes a safety event.
+-- A missing post score stays `null`; the server never fills it in.
+-- `targetScore` defaults to 75. A journey is **flipped** when a post score reaches the target on two chapters in a row (internal definition, see §4.7).
+-
+-### 4.3 Safety (2 endpoints, plus a check inside every text endpoint)
+-
+-Safety is **P1**, inside the core loop.
+-
+-- **Every user text** (a message, a first sentence, a check-in's `feeling`, a retreat intake) passes a mandatory safety check **before** any generation. There is no endpoint for it; it is part of those calls.
+-- On a **crisis** signal the server stops generation, does not build, returns the reply as `safety.crisis` (or `422 unsafe_content` on non-streaming calls) with local crisis resources, and writes a `safety_events` row. A creator persona can never override this.
+-- Every safety event has a named **escalation owner** (open decision, §8) and appears in the admin (§4.8).
+-
+-| Method | Path | Purpose | Request → Response | Auth | Status |
+-| --- | --- | --- | --- | --- | --- |
+-| GET | `/safety/resources` | Crisis lines for a country | `?country=ID` → `{ data: { name, phone?, url?, hours? }[] }` | public | new in v2 |
+-| POST | `/safety/reports` | Report a reply or a session as harmful | `{ messageId? , chapterId?, reason, note? }` → `202` | user | new in v2 |
+-
+-```ts
+-type CrisisReply = { code: "unsafe_content"; category: "self_harm" | "harm_to_others" | "medical_emergency";
+-                     message: string; resources: { name; phone?; url? }[] }
+-```
+-
+-### 4.4 Creator retreat (17 endpoints)
+-
+-The approved redesign: a creator sells a retreat (a journey produced once in the creator's voice, with short personal inserts per buyer) to a **cohort**. **Aurelia is the merchant of record**: it sells the ticket, charges VAT, handles refunds and the EU withdrawal right, and pays the creator through Stripe Connect.
+-
+-**The split** (default, per retreat in `split_rules`): of the ticket's net after VAT and card fees, **70% to the creator, 30% to Aurelia**; plus a **share of year-1 Plus revenue** (proposed 20%) from buyers in the creator's cohorts who subscribe within the attribution window. Ticket price €19.99 or €39.
+-
+-**Creators see aggregates only.** No names, no scores, no feelings. Cohort numbers are hidden for any group smaller than the minimum group size (proposed 10; below it the response says `suppressed: true`).
+-
+-| Method | Path | Purpose | Request → Response | Auth | Status |
+-| --- | --- | --- | --- | --- | --- |
+-| GET | `/creators/{handle}` | A creator's public page | → `CreatorPublic` | public | new in v2 |
+-| GET | `/retreats/{id}` | A retreat's public page and its open cohorts | → `Retreat & { cohorts: Cohort[] }` | public | new in v2 |
+-| POST | `/checkout/tickets` | Start a ticket purchase (Stripe Checkout) | `{ cohortId, withdrawalConsent: { startNow: true, acknowledged: true, textVersion }? }` → `{ orderId, checkoutUrl }` | user | new in v2 |
+-| GET | `/orders/{id}` | One order and its state | → `Order` | user | new in v2 |
+-| GET | `/me/orders` | My orders | → `Page<Order>` | user | new in v2 |
+-| POST | `/orders/{id}/withdrawal` | Use the 14-day withdrawal right, if it still applies | `{ reason? }` → `Refund` | user | new in v2 |
+-| GET | `/me/enrolments` | My retreats and where I am in each | → `{ data: Enrolment[] }` | user | new in v2 |
+-| GET | `/creator/me` | The creator's own profile and payout status | → `Creator` | creator | new in v2 |
+-| POST | `/creator/connect/onboarding-link` | A Stripe Connect onboarding link | — → `{ url, expiresAt }` | creator | new in v2 |
+-| GET | `/creator/retreats` | The creator's retreats and cohorts | → `{ data: (Retreat & { cohorts: Cohort[] })[] }` | creator | new in v2 |
+-| GET | `/creator/cohorts/{id}/metrics` | Aggregate cohort numbers | → `CohortMetrics` | creator | new in v2 |
+-| GET | `/creator/payouts` | The creator's payout ledger | → `Page<PayoutLine>` | creator | new in v2 |
+-| GET | `/creator/split-rules` | The terms that apply to each retreat | → `{ data: SplitRule[] }` | creator | new in v2 |
+-| POST | `/admin/creators` | Onboard a creator (pilot: by hand) | `{ userId, handle, displayName, country }` → `Creator` | staff | new in v2 |
+-| POST | `/admin/retreats` | Create a retreat with its price and split | `{ creatorId, title, priceAmount, currency, splitRuleId, chapterPlan }` → `Retreat` | staff | new in v2 |
+-| POST | `/admin/retreats/{id}/cohorts` | Open a cohort | `{ startsAt, capacity, enrolUntil }` → `Cohort` | staff | new in v2 |
+-| PUT | `/admin/split-rules/{id}` | Set or change a split (new version, never an edit in place) | `{ creatorTicketShare, creatorPlusShare, plusAttributionDays }` → `SplitRule` | staff | new in v2 |
+-
+-```ts
+-type Money = { amount: number; currency: "EUR" | "USD" | "IDR" }
+-type Retreat = { id; creatorId; title; summary; price: Money; weeks: number; chapterCount; status: "draft" | "on_sale" | "closed" }
+-type Cohort = { id; retreatId; startsAt; enrolUntil; capacity; enrolled: number; status: "open" | "running" | "finished" }
+-type Order = { id; userId; cohortId; price: Money; vat: Money; fees: Money; net: Money;
+-               state: "pending" | "paid" | "refunded" | "partially_refunded" | "failed";
+-               withdrawal: { waived: boolean; consentAt?: string; textVersion?: string };
+-               receiptUrl?; createdAt }
+-type Enrolment = { id; cohortId; retreatId; orderId; journeyId; status: "active" | "finished" | "refunded" }
+-type SplitRule = { id; version: number; creatorTicketShare: 0.7; creatorPlusShare: 0.2; plusAttributionDays: 365; effectiveFrom }
+-type PayoutLine = { id; creatorId; source: "ticket" | "plus_share" | "refund_reversal"; orderId?; subscriptionId?;
+-                    gross: Money; creatorAmount: Money; state: "pending" | "available" | "paid" | "reversed";
+-                    stripeTransferId?; availableAt; paidAt? }
+-type CohortMetrics = { cohortId; minGroupSize: number; suppressed: boolean; enrolled?: number;
+-                       activeWeek1?: number; activeWeek4?: number; activeWeek8?: number;
+-                       chaptersPlayedMedian?: number; plusConversions?: number; refunds?: number;
+-                       revenue?: Money; creatorEarnings?: Money }   // never per-person data
+-```
+-
+-**Withdrawal.** For EU buyers, checkout refuses to start an instantly-delivered retreat without the express consent to start now and the acknowledgement that the right is then lost (`422 withdrawal_consent_required`). Without that consent the buyer keeps the 14-day right and access starts at the cohort start. The confirmation goes out by email (a durable medium).
+-
+-**Payouts.** A paid order writes a `pending` payout line; it becomes `available` after the refund window, then a scheduled transfer pays it through Stripe Connect. A refund after payout writes a `refund_reversal` line against the creator's next payout.
+-
+-### 4.5 Plus subscription (6 endpoints)
+-
+-| Method | Path | Purpose | Request → Response | Auth | Status |
+-| --- | --- | --- | --- | --- | --- |
+-| GET | `/plans` | Plans and prices for the person's country | → `{ data: Plan[] }` | public | v1 |
+-| POST | `/checkout/subscription` | Start Plus (Stripe Checkout on web; store billing on mobile later) | `{ planId, priceId }` → `{ checkoutUrl }` | user | changed in v2 (cohort attribution) |
+-| POST | `/me/subscription/portal` | Manage or cancel (Stripe customer portal) | — → `{ url }` | user | new in v2 |
+-| GET | `/me/entitlements` | What the plan allows and how much is left | → `Entitlements` | user | v1 |
+-| POST | `/webhooks/stripe` | Payments, subscriptions, refunds and Connect events | Stripe event → `200` | Stripe | changed in v2 (tickets and Connect) |
+-| GET | `/me/subscription` | The current subscription | → `Subscription \| null` | user | v1 |
+-
+-```ts
+-type Plan = { id: "free" | "plus"; prices: { id; interval: "month" | "year"; price: Money }[]; limits: Limits }
+-type Entitlements = { plan: "free" | "plus"; source: "free" | "subscription" | "retreat";
+-                      limit: { unit: "build"; perDay: number; used: number; resetAt } ; // unit is an open decision (§8)
+-                      chapterMinutesAllowed: (3 | 5 | 10)[] }
+-type Subscription = { id; plan: "plus"; interval; status: "active" | "past_due" | "canceled"; currentPeriodEnd;
+-                      attributedCohortId?: string }   // drives the creator's Plus share
+-```
+-
+-**Free limit.** The server counts; the app only shows `entitlements`. The first build never counts. A retreat ticket grants its own chapters for the cohort's length (`source: "retreat"`).
+-
+-**Attribution.** A subscription started by someone enrolled in a cohort within `plusAttributionDays` of enrolment records `attributedCohortId`. Each paid invoice then writes a `plus_share` payout line.
+-
+-### 4.6 Compute ledger and cost (5 endpoints)
+-
+-Every build writes one ledger row **per supplier call**: what was bought, from whom, how much, at what cost, and whether a cached or reused segment made it free. This is how the business sees what a chapter, a session and a journey cost, and how that falls over time.
+-
+-There is no public write endpoint: the build workers write the ledger. The reads are admin only.
+-
+-| Method | Path | Purpose | Request → Response | Auth | Status |
+-| --- | --- | --- | --- | --- | --- |
+-| GET | `/admin/compute/ledger` | Raw ledger rows | `?from&to&media&supplier&buildId&cursor` → `Page<ComputeLine>` | staff | new in v2 |
+-| GET | `/admin/compute/summary` | Cost per chapter, session, journey; by media, supplier, chapter length | `?from&to&groupBy=media\|supplier\|model\|chapterMinutes\|day` → `CostSummary` | staff | new in v2 |
+-| GET | `/admin/builds/{id}/cost` | One build's cost breakdown | → `{ buildId; total: Money; lines: ComputeLine[] }` | staff | new in v2 |
+-| GET | `/admin/suppliers` | Suppliers, models and their current unit prices | → `{ data: SupplierEndpoint[] }` | staff | new in v2 |
+-| PUT | `/admin/suppliers/{id}` | Update a unit price or switch a supplier off (versioned) | `{ unitPrice, active }` → `SupplierEndpoint` | staff | new in v2 |
+-
+-```ts
+-type ComputeLine = { id; buildId; chapterId?; versionId; media: "script" | "voice" | "music" | "image" | "video";
+-                     supplier: string; model: string; unit: "token_in" | "token_out" | "char" | "second" | "image" | "generation";
+-                     units: number; unitPrice: number; cost: Money; cacheHit: boolean; reused: boolean;
+-                     latencyMs: number; attempt: number; fallbackFrom?: string; createdAt }
+-type CostSummary = { from; to; groupBy; rows: { key: string; builds: number; chapters: number; cost: Money;
+-                     costPerChapter: Money; cacheHitRate: number }[] }
+-```
+-
+-Video is in the enum but not generated in the pilot.
+-
+-### 4.7 Therapeutic outcomes (3 endpoints, internal)
+-
+-Internal metric names; **never** public or partner copy, which stays wellness. Aggregate only, only from people who gave `outcome_research` consent, and suppressed below the minimum group size.
+-
+-- **State-flip journey:** a journey from a bad state to a good one (for example bad sleep to good sleep), with a start score, a target, the chapters played and whether it **flipped**.
+-- **Uplift per chapter:** post score minus pre score on the same chapter.
+-
+-| Method | Path | Purpose | Request → Response | Auth | Status |
+-| --- | --- | --- | --- | --- | --- |
+-| GET | `/admin/outcomes/journeys` | Flip rate, chapters to flip, cost per flip | `?domain&from&to&retreatId` → `FlipSummary` | staff | new in v2 |
+-| GET | `/admin/outcomes/uplift` | Average uplift per chapter, by chapter index, length or bite | `?domain&groupBy=chapterIndex\|chapterMinutes\|bite` → `UpliftSummary` | staff | new in v2 |
+-| GET | `/admin/cohorts/{id}/metrics` | A cohort's aggregates (the creator's view, plus cost) | → `CohortMetrics & { cost: Money; flipRate?: number }` | staff | new in v2 |
+-
+-```ts
+-type FlipSummary = { n: number; suppressed: boolean; flipRate?: number; chaptersToFlipMedian?: number;
+-                     costPerFlip?: Money; startScoreMedian?: number }
+-type UpliftSummary = { n: number; rows: { key: string; n: number; upliftMean?: number; suppressed: boolean }[] }
+-```
+-
+-### 4.8 Minimum admin (9 endpoints)
+-
+-Staff accounts only, separate token audience, roles `super_admin`, `ops`, `moderator`, `analyst`. **Every mutation writes the audit log.** This closes the admin's missing authentication.
+-
+-| Method | Path | Purpose | Request → Response | Auth | Status |
+-| --- | --- | --- | --- | --- | --- |
+-| GET | `/admin/users` | Find users | `?q&plan&status&cursor` → `Page<AdminUser>` | staff | v1 |
+-| GET | `/admin/users/{id}` | One user: account, orders, subscription, safety events (no check-in content) | → `AdminUser & {…}` | staff | v1 |
+-| PATCH | `/admin/users/{id}` | Suspend or reactivate | `{ status, reason }` → `AdminUser` | staff | v1 |
+-| GET | `/admin/transactions` | Orders, subscriptions, refunds, payouts | `?type&from&to&cursor` → `Page<Transaction>` | staff | changed in v2 |
+-| POST | `/admin/orders/{id}/refunds` | Refund all or part of an order | `{ amount?: Money, reason }` → `Refund` | staff | new in v2 |
+-| GET | `/admin/payouts` | Creator payouts and their state | `?creatorId&state` → `Page<PayoutLine>` | staff | new in v2 |
+-| GET | `/admin/safety/events` | Safety events, newest first | `?severity&state&cursor` → `Page<SafetyEvent>` | staff | new in v2 (moved up from the last phase) |
+-| PATCH | `/admin/safety/events/{id}` | Acknowledge, escalate or close | `{ state: "acknowledged" \| "escalated" \| "closed", note }` → `SafetyEvent` | staff | new in v2 |
+-| GET | `/admin/audit` | The audit log | `?actor&action&from&to` → `Page<AuditEntry>` | staff | v1 |
+-
+-AI spend lives in §4.6 and cohort metrics in §4.7; both count as admin.
+-
+-```ts
+-type SafetyEvent = { id; userId; source: "message" | "checkin" | "intake" | "report" | "play";
+-                     category; severity: "low" | "high" | "crisis"; action: "blocked" | "resources_shown" | "rolled_back";
+-                     state: "open" | "acknowledged" | "escalated" | "closed"; ownerId?; createdAt }
+-type AuditEntry = { id; actorId; action: string; target: string; before?: object; after?: object; at }
+-```
+-
+-### Endpoint count
+-
+-| Area | Endpoints |
+-| --- | --- |
+-| Accounts and consent | 12 |
+-| Core loop | 22 |
+-| Safety | 2 |
+-| Creator retreat | 17 |
+-| Plus subscription | 6 |
+-| Compute ledger and cost | 5 |
+-| Therapeutic outcomes | 3 |
+-| Minimum admin | 9 |
+-| **Total** | **76** |
+-
+-## 5 · Data model (PostgreSQL)
+-
+-UUID-backed ids with the prefixes above; `created_at` and `updated_at` on every table; money as `bigint` minor units plus `char(3)` currency. Health data (check-ins, feelings, messages) sits in its own schema with stricter access and is never joined into creator views.
+-
+-| Table | Key fields | Notes |
+-| --- | --- | --- |
+-| `users` | id, email (unique), password_hash?, name, birth_year, country, locale, time_zone, status, deleted_at | Age band derived from birth year |
+-| `auth_identities` | user_id, provider, provider_user_id (unique pair) | Google in the slice |
+-| `refresh_tokens` | id, user_id, hash, family_id, expires_at, revoked_at | Rotation with reuse detection |
+-| `consents` | user_id, purpose, granted, text_version, updated_at | Append-only history in `consent_events` |
+-| `consent_events` | user_id, purpose, granted, text_version, at, ip_country | Proof of consent |
+-| `data_requests` | id, user_id, kind (export, delete), state, ready_at | GDPR requests |
+-| `conversations` | id, user_id, session_id?, source, title | |
+-| `messages` | id, conversation_id, role, text, safety_flag, attachment jsonb | Health schema |
+-| `sessions` | id, owner_id, retreat_id?, title, summary, current_version_id | |
+-| `session_versions` | id, session_id, label, parent_version_id?, bite_ids, state, build_id | Rollback flips `current_version_id` |
+-| `chapters` | id, version_id, index, minutes, duration_sec, audio_key, image_key, segment_ids | Segments may be reused across buyers |
+-| `media_segments` | id, retreat_id?, kind, object_key, hash | "Produced once": shared creator-voice segments |
+-| `lego_bites` | id, kind, title, what, why, params jsonb, active | The catalogue of changes |
+-| `builds` | id, session_id, version_id, user_id, state, counted, idempotency_key (unique), started_at, finished_at | |
+-| `compute_ledger` | id, build_id, chapter_id?, media, supplier, model, unit, units, unit_price, cost, currency, cache_hit, reused, latency_ms, attempt, fallback_from | One row per supplier call; append-only |
+-| `supplier_endpoints` | id, supplier, model, media, unit, unit_price, active, valid_from | Versioned prices |
+-| `plays` | id, user_id, chapter_id, version_id, started_at, position_sec, completion_ratio, completed, report | Complete only at ≥ 0.3 |
+-| `checkins` | id, user_id, journey_id?, chapter_id?, phase (pre, post), score (0–100), feeling? | Health schema |
+-| `journeys` | id, user_id, domain, from_state, to_state, start_score, target_score, status, flipped_at? | State-flip journeys |
+-| `therapeutic_outcomes` | id, journey_id, chapter_id, pre_score, post_score, uplift, consented | Derived per chapter; only with `outcome_research` consent |
+-| `safety_events` | id, user_id, source, source_id, category, severity, action, state, owner_id, escalated_at | Kept even after account deletion, de-identified |
+-| `creators` | id, user_id, handle (unique), display_name, country, stripe_account_id, payouts_enabled | |
+-| `retreats` | id, creator_id, title, price_amount, currency, split_rule_id, weeks, status | |
+-| `cohorts` | id, retreat_id, starts_at, enrol_until, capacity, status | |
+-| `enrolments` | id, cohort_id, user_id, order_id, journey_id, status | Unique (cohort_id, user_id) |
+-| `orders` | id, user_id, cohort_id, amount, vat, fees, net, currency, state, stripe_payment_intent_id, withdrawal_waived, withdrawal_consent_at, withdrawal_text_version, idempotency_key | Aurelia is merchant of record |
+-| `refunds` | id, order_id, amount, reason, state, stripe_refund_id, actor_id | |
+-| `split_rules` | id, version, creator_ticket_share, creator_plus_share, plus_attribution_days, effective_from | Never edited in place |
+-| `payout_ledger` | id, creator_id, source, order_id?, subscription_invoice_id?, gross, creator_amount, state, available_at, stripe_transfer_id?, paid_at? | Append-only; reversals are new rows |
+-| `subscriptions` | id, user_id, plan, interval, status, current_period_end, stripe_subscription_id, attributed_cohort_id? | |
+-| `usage_counters` | user_id, day, builds_used | Free-limit counter |
+-| `webhook_events` | id (supplier event id, unique), source, type, received_at, processed_at, error? | Deduplication |
+-| `staff_users` | id, email, role, status | Admin audience |
+-| `audit_log` | id, actor_id, action, target, before jsonb, after jsonb, at | Append-only |
+-| `idempotency_keys` | key, user_id, route, response_hash, created_at | 24 h replay |
+-
+-## 6 · Webhooks and events
+-
+-**Inbound** (to the API):
+-
+-| Source | Event | What the server does |
+-| --- | --- | --- |
+-| Stripe | `checkout.session.completed` (ticket) | Order → paid; enrolment, journey and pending payout line created; receipt and withdrawal confirmation emailed |
+-| Stripe | `checkout.session.completed` (subscription), `invoice.paid` | Subscription active; entitlements updated; `plus_share` payout line if attributed |
+-| Stripe | `customer.subscription.updated` / `.deleted` | Status and entitlements updated |
+-| Stripe | `charge.refunded` | Refund row; enrolment refunded; payout reversal line |
+-| Stripe Connect | `account.updated` | `payouts_enabled` on the creator |
+-| Stripe Connect | `transfer.created`, `payout.failed` | Payout line → paid, or flagged in admin |
+-
+-Every handler verifies the Stripe signature, deduplicates on the event id in `webhook_events`, and is safe to replay.
+-
+-**Internal events** (queue topics, not public): `build.completed`, `build.failed`, `checkin.created`, `journey.flipped`, `safety.flagged` (pages the escalation owner when severity is `crisis`), `order.paid`, `payout.due`. Outbound partner webhooks are out of v2.
+-
+-## 7 · Explicitly out of v2 (later)
+-
+-| Out | Why it waits |
+-| --- | --- |
+-| Community: publish, recreate, shelves, creator follow | Not needed to sell or deliver a retreat |
+-| Challenges, coins, wallet, invites | The economy follows the pilot's results |
+-| Most admin modules (moderation queue, AI policy console, experiments, notifications broadcast, signal sources, compliance dashboard) | The pilot runs by hand; the slice keeps only §4.8 |
+-| Wearables and signal sources (Apple Health, Whoop, Oura) | Check-in scores are enough to measure the pilot |
+-| Healing Map and the learning graph (Causal AI reinforcement, pruning, tournaments) | Needs real outcomes first; the ledger and outcomes tables collect them |
+-| Insurer, employer and clinical reporting | A separate regulatory track |
+-| Apple sign-in, store billing on mobile | Web checkout first; Apple sign-in becomes required when the iOS app offers Google |
+-| Video generation | Cost (37% of measured 2025 spend) for little gain |
+-| Voice input, push notifications, outbound webhooks | After the pilot |
+-
+-## 8 · Open decisions before the lock
+-
+-| Decision | Options on the table | Blocks |
+-| --- | --- | --- |
+-| Price anchors | Retreat ticket €19.99 or €39; Plus $10 a month or $100 a year; the cost model's $19.99 per flip | Plans, checkout, the split examples |
+-| Free-limit unit | Builds per day (v1), chapters, or minutes of audio | Entitlements, usage counters |
+-| First pilot market | EU (withdrawal, VAT, GDPR) or Indonesia | Currencies, VAT, crisis lines, data region |
+-| Safety escalation owner | A named person or rota who receives crisis events, with hours and a backup | Going live at all |
+-| Data region | EU only, or EU plus a second region for Indonesia | Hosting, suppliers, the DPIA |
+-| Minimum group size | 10 (proposed) or 5 | Creator and admin aggregates |
+-| Creator share of Plus | 20% of year-1 Plus (proposed), and the attribution window | Split rules, payouts |
+-| One voice supplier and one fallback | From the cost model's shortlist | Build pipeline, ledger prices |
+-
+-## 9 · Change from v1
+-
+-| | What | Detail |
+-| --- | --- | --- |
+-| **Moved** | Safety | From the last phase (admin monitoring) into the core loop: blocking check, crisis reply, events, escalation |
+-| **Moved** | Phasing | P0 to P4 → Foundation, then one Pilot slice; the rest after the pilot |
+-| **Moved** | One-off payments, Stripe Connect | Kept for the creator retreat instead of retired |
+-| **Changed** | Proposals | "Change this session" is now a list of Lego bites; applying makes a new version, with rollback |
+-| **Changed** | Sessions | Chapters (3, 5 or 10 minutes) inside versions; playback per chapter |
+-| **Changed** | Check-ins | A pre and a post score from 0 to 100 on each chapter |
+-| **Changed** | Journeys | Start score, target and a flipped state |
+-| **Changed** | Plays | Completion ratio and an adverse report |
+-| **Changed** | Sign-up | Age gate and country |
+-| **Added** | Creator retreat | Creators, retreats, cohorts, enrolments, ticket orders, withdrawal consent, split rules, payout ledger, refunds, Plus attribution, cohort aggregates |
+-| **Added** | Compute ledger | Per supplier call: media, supplier, model, units, cost, cache hit, reuse, latency |
+-| **Added** | Therapeutic outcomes | Flip rate, chapters to flip, uplift per chapter, aggregate only |
+-| **Added** | Feature lock | Changes after the lock need an impact note and a decision |
+-| **Dropped from the first build** | Community, challenges, coins, wallet, invites, signal sources, notifications, studies, most admin modules, Apple sign-in, store billing, video | Still in the [v1 contract](/wiki/api?v=1) as the long-term map |
+-
+-Where this document and `openapi-v2.yaml` disagree, this document is right.
+diff --git a/docs/api/v2/admin.md b/docs/api/v2/admin.md
+new file mode 100644
+index 0000000..381dd2d
+--- /dev/null
++++ b/docs/api/v2/admin.md
+@@ -0,0 +1,74 @@
++# API contract v2: Admin
++
++*API contract v2, the Pilot slice (draft for the feature lock). Three pages: [General](/wiki/api) · [Apps](/wiki/api/apps) · [Admin](/wiki/api/admin). The older full contract: [v1](/wiki/api/v1).*
++
++What staff and internal tools call: cost, outcomes and the minimum admin. Every read here is aggregate where it touches people, never one person's feelings.
++
++### 4.6 Compute ledger and cost (5 endpoints)
++
++Every build writes one ledger row **per supplier call**: what was bought, from whom, how much, at what cost, and whether a cached or reused segment made it free. This is how the business sees what a chapter, a session and a journey cost, and how that falls over time.
++
++There is no public write endpoint: the build workers write the ledger. The reads are admin only.
++
++| Method | Path | Purpose | Request → Response | Auth | Status |
++| --- | --- | --- | --- | --- | --- |
++| GET | `/admin/compute/ledger` | Raw ledger rows | `?from&to&media&supplier&buildId&cursor` → `Page<ComputeLine>` | staff | new in v2 |
++| GET | `/admin/compute/summary` | Cost per chapter, session, journey; by media, supplier, chapter length | `?from&to&groupBy=media\|supplier\|model\|chapterMinutes\|day` → `CostSummary` | staff | new in v2 |
++| GET | `/admin/builds/{id}/cost` | One build's cost breakdown | → `{ buildId; total: Money; lines: ComputeLine[] }` | staff | new in v2 |
++| GET | `/admin/suppliers` | Suppliers, models and their current unit prices | → `{ data: SupplierEndpoint[] }` | staff | new in v2 |
++| PUT | `/admin/suppliers/{id}` | Update a unit price or switch a supplier off (versioned) | `{ unitPrice, active }` → `SupplierEndpoint` | staff | new in v2 |
++
++```ts
++type ComputeLine = { id; buildId; chapterId?; versionId; media: "script" | "voice" | "music" | "image" | "video";
++                     supplier: string; model: string; unit: "token_in" | "token_out" | "char" | "second" | "image" | "generation";
++                     units: number; unitPrice: number; cost: Money; cacheHit: boolean; reused: boolean;
++                     latencyMs: number; attempt: number; fallbackFrom?: string; createdAt }
++type CostSummary = { from; to; groupBy; rows: { key: string; builds: number; chapters: number; cost: Money;
++                     costPerChapter: Money; cacheHitRate: number }[] }
++```
++
++Video is in the enum but not generated in the pilot.
++
++### 4.7 Therapeutic outcomes (3 endpoints, internal)
++
++Internal metric names; **never** public or partner copy, which stays wellness. Aggregate only, only from people who gave `outcome_research` consent, and suppressed below the minimum group size.
++
++- **State-flip journey:** a journey from a bad state to a good one (for example bad sleep to good sleep), with a start score, a target, the chapters played and whether it **flipped**.
++- **Uplift per chapter:** post score minus pre score on the same chapter.
++
++| Method | Path | Purpose | Request → Response | Auth | Status |
++| --- | --- | --- | --- | --- | --- |
++| GET | `/admin/outcomes/journeys` | Flip rate, chapters to flip, cost per flip | `?domain&from&to&retreatId` → `FlipSummary` | staff | new in v2 |
++| GET | `/admin/outcomes/uplift` | Average uplift per chapter, by chapter index, length or bite | `?domain&groupBy=chapterIndex\|chapterMinutes\|bite` → `UpliftSummary` | staff | new in v2 |
++| GET | `/admin/cohorts/{id}/metrics` | A cohort's aggregates (the creator's view, plus cost) | → `CohortMetrics & { cost: Money; flipRate?: number }` | staff | new in v2 |
++
++```ts
++type FlipSummary = { n: number; suppressed: boolean; flipRate?: number; chaptersToFlipMedian?: number;
++                     costPerFlip?: Money; startScoreMedian?: number }
++type UpliftSummary = { n: number; rows: { key: string; n: number; upliftMean?: number; suppressed: boolean }[] }
++```
++
++### 4.8 Minimum admin (9 endpoints)
++
++Staff accounts only, separate token audience, roles `super_admin`, `ops`, `moderator`, `analyst`. **Every mutation writes the audit log.** This closes the admin's missing authentication.
++
++| Method | Path | Purpose | Request → Response | Auth | Status |
++| --- | --- | --- | --- | --- | --- |
++| GET | `/admin/users` | Find users | `?q&plan&status&cursor` → `Page<AdminUser>` | staff | v1 |
++| GET | `/admin/users/{id}` | One user: account, orders, subscription, safety events (no check-in content) | → `AdminUser & {…}` | staff | v1 |
++| PATCH | `/admin/users/{id}` | Suspend or reactivate | `{ status, reason }` → `AdminUser` | staff | v1 |
++| GET | `/admin/transactions` | Orders, subscriptions, refunds, payouts | `?type&from&to&cursor` → `Page<Transaction>` | staff | changed in v2 |
++| POST | `/admin/orders/{id}/refunds` | Refund all or part of an order | `{ amount?: Money, reason }` → `Refund` | staff | new in v2 |
++| GET | `/admin/payouts` | Creator payouts and their state | `?creatorId&state` → `Page<PayoutLine>` | staff | new in v2 |
++| GET | `/admin/safety/events` | Safety events, newest first | `?severity&state&cursor` → `Page<SafetyEvent>` | staff | new in v2 (moved up from the last phase) |
++| PATCH | `/admin/safety/events/{id}` | Acknowledge, escalate or close | `{ state: "acknowledged" \| "escalated" \| "closed", note }` → `SafetyEvent` | staff | new in v2 |
++| GET | `/admin/audit` | The audit log | `?actor&action&from&to` → `Page<AuditEntry>` | staff | v1 |
++
++AI spend lives in §4.6 and cohort metrics in §4.7; both count as admin.
++
++```ts
++type SafetyEvent = { id; userId; source: "message" | "checkin" | "intake" | "report" | "play";
++                     category; severity: "low" | "high" | "crisis"; action: "blocked" | "resources_shown" | "rolled_back";
++                     state: "open" | "acknowledged" | "escalated" | "closed"; ownerId?; createdAt }
++type AuditEntry = { id; actorId; action: string; target: string; before?: object; after?: object; at }
++```
+diff --git a/docs/api/v2/apps.md b/docs/api/v2/apps.md
+new file mode 100644
+index 0000000..a0a1699
+--- /dev/null
++++ b/docs/api/v2/apps.md
+@@ -0,0 +1,187 @@
++# API contract v2: Apps
++
++*API contract v2, the Pilot slice (draft for the feature lock). Three pages: [General](/wiki/api) · [Apps](/wiki/api/apps) · [Admin](/wiki/api/admin). The older full contract: [v1](/wiki/api/v1).*
++
++What the web and Flutter apps call. Conventions (auth, errors, pagination, idempotency) are on [General](/wiki/api).
++
++### 4.1 Accounts and consent (12 endpoints)
++
++| Method | Path | Purpose | Request → Response | Auth | Status |
++| --- | --- | --- | --- | --- | --- |
++| POST | `/auth/signup` | Create an account with email and password | `{ email, password, name, birthYear, country, acceptTermsVersion }` → `AuthTokens & { user: Me }` | public | changed in v2 (age gate, country) |
++| POST | `/auth/signin` | Sign in | `{ email, password }` → `AuthTokens & { user: Me }` | public | v1 |
++| POST | `/auth/oauth/google` | Sign up or in with Google; the code exchange runs on the server | `{ code, redirectUri, birthYear?, country? }` → `AuthTokens & { user: Me, needsAgeGate: boolean }` | public | v1 (Google only in the slice) |
++| POST | `/auth/refresh` | Swap the refresh token for a new pair | cookie or `{ refreshToken }` → `AuthTokens` | public | v1 |
++| POST | `/auth/signout` | Revoke the refresh token | — → `204` | user | v1 |
++| POST | `/auth/password-reset` | Ask for a reset link; never reveals whether the address exists | `{ email }` → `202` | public | v1 |
++| GET | `/me` | The signed-in person | → `Me` | user | v1 |
++| PATCH | `/me` | Name, locale, time zone, birth year (once) | `Partial<{ name, locale, timeZone, birthYear }>` → `Me` | user | v1 |
++| GET | `/me/consents` | Every consent and its state | → `{ data: Consent[] }` | user | changed in v2 (purposes below) |
++| PUT | `/me/consents/{purpose}` | Give or withdraw one consent | `{ granted: boolean, textVersion }` → `Consent` | user | changed in v2 |
++| POST | `/me/export` | Ask for a copy of all one's data (GDPR access) | — → `202 { requestId, readyBy }` | user | v1 |
++| DELETE | `/me` | Delete the account and its data (30-day grace, then gone) | `{ confirm: "DELETE" }` → `202 { deleteAt }` | user | v1 |
++
++```ts
++type AuthTokens = { accessToken: string; expiresIn: number; refreshToken?: string } // refreshToken only to mobile
++type Me = { id: string; email: string; name: string; locale: string; timeZone: string;
++            country: string; ageBand: "16-17" | "18+"; roles: ("user" | "creator")[]; createdAt: string }
++type Consent = { purpose: "health_data" | "ai_processing" | "outcome_research" | "marketing_email";
++                 granted: boolean; textVersion: string; updatedAt: string }
++```
++
++**Age gate.** Sign-up asks for a birth year. Under 16 is refused (`422 age_restricted`); 16 and 17 get the account with marketing off and stricter safety thresholds. Google sign-in without a birth year returns `needsAgeGate: true` and the app asks before anything else.
++
++**Consent.** `health_data` (explicit, GDPR Art. 9) is required before the first check-in or free-text feeling is stored; without it those calls return `422 consent_required`. `outcome_research` lets the person's scores count in internal aggregate outcomes; it is separate and optional. Consent texts are versioned; a new text version re-asks.
++
++### 4.2 Core loop (22 endpoints)
++
++The loop: a check-in score before → a conversation → a build creates a session with chapters → play → a check-in score after → "Change this session" with Lego bites makes a new version → the next chapter, inside a journey from a bad state toward a good one.
++
++| Method | Path | Purpose | Request → Response | Auth | Status |
++| --- | --- | --- | --- | --- | --- |
++| POST | `/conversations` | Start a thread, optionally from the first sentence | `{ firstMessage?, source }` → `Conversation` | user | v1 |
++| GET | `/conversations` | My threads | → `Page<Conversation>` | user | v1 |
++| GET | `/conversations/{id}` | One thread with its messages | → `Conversation & { messages: Message[] }` | user | v1 |
++| POST | `/conversations/{id}/messages` | Send a message; the reply streams (SSE) | `{ text }` → `text/event-stream`: `message.delta`, `message.completed`, `safety.crisis`, `error` | user | v1, safety now blocking |
++| POST | `/builds` | Build a new session or a new version of one | `{ conversationId, sessionId?, baseVersionId?, chapterMinutes: 3 \| 5 \| 10, biteIds?: string[] }` → `202 Build` | user | changed in v2 (bites, chapter length) |
++| GET | `/builds/{id}` | Build state | → `Build` | user | v1 |
++| GET | `/builds/{id}/events` | Build progress (SSE) | → `build.step`, `build.completed`, `build.failed` | user | v1 |
++| GET | `/sessions` | My sessions (created and played) | `?filter=created\|played` → `Page<SessionSummary>` | user | v1 |
++| GET | `/sessions/{id}` | One session with its current version | → `Session` | user | v1 |
++| GET | `/sessions/{id}/chapters` | The chapters of the current (or a given) version | `?versionId` → `{ data: Chapter[] }` | user | new in v2 |
++| GET | `/sessions/{id}/versions` | Every version, newest first | → `{ data: Version[] }` | user | v1 |
++| GET | `/sessions/{id}/bites` | "Change this session": the Lego bites on offer for this version, each with a Why | → `{ data: LegoBite[] }` | user | new in v2 (replaces v1 proposals) |
++| POST | `/sessions/{id}/versions/{versionId}/rollback` | Make an earlier version current again (no cost) | — → `Session` | user | new in v2 |
++| GET | `/chapters/{id}/playback` | Signed, short-lived audio and image URLs | → `Playback` | user | v1 (per chapter now) |
++| POST | `/plays` | A play starts | `{ chapterId, versionId }` → `Play` | user | changed in v2 |
++| PATCH | `/plays/{id}` | Progress and end of a play | `{ positionSec, completionRatio, ended?: boolean, report?: "adverse" \| "quality" }` → `Play` | user | changed in v2 (completion ratio, report) |
++| POST | `/checkins` | A pre- or post-session score | `{ chapterId?, journeyId?, phase: "pre" \| "post", score: 0-100, feeling?: string }` → `CheckIn` | user | changed in v2 (pre and post, 0–100) |
++| GET | `/checkins` | My check-ins | `?journeyId` → `Page<CheckIn>` | user | v1 |
++| POST | `/journeys` | Start a journey from a bad state toward a good one | `{ domain, fromState, toState, startScore, targetScore? }` → `Journey` | user | changed in v2 |
++| GET | `/journeys/current` | The active journey and its next chapter | → `Journey \| null` | user | v1 |
++| GET | `/journeys/{id}` | One journey with its scores | → `Journey` | user | changed in v2 |
++| PATCH | `/journeys/{id}` | Pause, resume or end | `{ status }` → `Journey` | user | v1 |
++
++```ts
++type Conversation = { id; sessionId: string | null; title; source: "home" | "onboarding" | "retreat" | "session" | "new"; lastMessageAt }
++type Message = { id; conversationId; role: "user" | "assistant" | "system_event"; text; createdAt;
++                 attachment?: { type: "bites"; sessionId } | { type: "build"; buildId; versionId; label };
++                 safety?: { crisis: boolean } }
++type Build = { id; sessionId; versionId; state: "queued" | "running" | "ready" | "failed";
++               steps: { name: "script" | "voice" | "music" | "image" | "mix"; state }[];
++               reusedSegments: number;            // "produced once, personalised inserts"
++               counted: boolean; createdAt; finishedAt? }
++type Session = { id; title; summary; ownerId; retreatId?: string; currentVersionId; versions: number; createdAt }
++type Version = { id; sessionId; label: "v1.0"; parentVersionId?: string; biteIds: string[];
++                 state: "building" | "ready" | "failed" | "rolled_back"; createdAt }
++type Chapter = { id; versionId; index; title; durationSec; minutes: 3 | 5 | 10 }
++type LegoBite = { id; title; kind: "voice" | "music" | "pace" | "script" | "image" | "length";
++                  what: string; why: string; preselected: boolean }
++type Playback = { audioUrl; imageUrl?; expiresAt; durationSec }   // URLs live 15 minutes
++type Play = { id; chapterId; versionId; startedAt; positionSec; completionRatio: number; completed: boolean }
++type CheckIn = { id; phase: "pre" | "post"; score: number; chapterId?; journeyId?; createdAt }
++type Journey = { id; domain: "sleep" | "stress" | "focus" | "mood" | "other"; fromState; toState;
++                 startScore; targetScore; latestScore?; chaptersPlayed; status: "active" | "paused" | "flipped" | "ended";
++                 nextChapterId?; reminderAt? }
++```
++
++**Rules the server owns.**
++- A build is refused while another build of the same session runs (`409 build_in_progress`).
++- Applying bites always makes a **new version**; the previous one is kept. Closing the sheet without applying costs nothing.
++- A play with `completionRatio` below 0.3 never counts as complete.
++- An `adverse` report on a play rolls the session back to the previous version and writes a safety event.
++- A missing post score stays `null`; the server never fills it in.
++- `targetScore` defaults to 75. A journey is **flipped** when a post score reaches the target on two chapters in a row (internal definition, see §4.7).
++
++### 4.3 Safety (2 endpoints, plus a check inside every text endpoint)
++
++Safety is **P1**, inside the core loop.
++
++- **Every user text** (a message, a first sentence, a check-in's `feeling`, a retreat intake) passes a mandatory safety check **before** any generation. There is no endpoint for it; it is part of those calls.
++- On a **crisis** signal the server stops generation, does not build, returns the reply as `safety.crisis` (or `422 unsafe_content` on non-streaming calls) with local crisis resources, and writes a `safety_events` row. A creator persona can never override this.
++- Every safety event has a named **escalation owner** (open decision, §8) and appears in the admin (§4.8).
++
++| Method | Path | Purpose | Request → Response | Auth | Status |
++| --- | --- | --- | --- | --- | --- |
++| GET | `/safety/resources` | Crisis lines for a country | `?country=ID` → `{ data: { name, phone?, url?, hours? }[] }` | public | new in v2 |
++| POST | `/safety/reports` | Report a reply or a session as harmful | `{ messageId? , chapterId?, reason, note? }` → `202` | user | new in v2 |
++
++```ts
++type CrisisReply = { code: "unsafe_content"; category: "self_harm" | "harm_to_others" | "medical_emergency";
++                     message: string; resources: { name; phone?; url? }[] }
++```
++
++### 4.4 Creator retreat (17 endpoints)
++
++The approved redesign: a creator sells a retreat (a journey produced once in the creator's voice, with short personal inserts per buyer) to a **cohort**. **Aurelia is the merchant of record**: it sells the ticket, charges VAT, handles refunds and the EU withdrawal right, and pays the creator through Stripe Connect.
++
++**The split** (default, per retreat in `split_rules`): of the ticket's net after VAT and card fees, **70% to the creator, 30% to Aurelia**; plus a **share of year-1 Plus revenue** (proposed 20%) from buyers in the creator's cohorts who subscribe within the attribution window. Ticket price €19.99 or €39.
++
++**Creators see aggregates only.** No names, no scores, no feelings. Cohort numbers are hidden for any group smaller than the minimum group size (proposed 10; below it the response says `suppressed: true`).
++
++| Method | Path | Purpose | Request → Response | Auth | Status |
++| --- | --- | --- | --- | --- | --- |
++| GET | `/creators/{handle}` | A creator's public page | → `CreatorPublic` | public | new in v2 |
++| GET | `/retreats/{id}` | A retreat's public page and its open cohorts | → `Retreat & { cohorts: Cohort[] }` | public | new in v2 |
++| POST | `/checkout/tickets` | Start a ticket purchase (Stripe Checkout) | `{ cohortId, withdrawalConsent: { startNow: true, acknowledged: true, textVersion }? }` → `{ orderId, checkoutUrl }` | user | new in v2 |
++| GET | `/orders/{id}` | One order and its state | → `Order` | user | new in v2 |
++| GET | `/me/orders` | My orders | → `Page<Order>` | user | new in v2 |
++| POST | `/orders/{id}/withdrawal` | Use the 14-day withdrawal right, if it still applies | `{ reason? }` → `Refund` | user | new in v2 |
++| GET | `/me/enrolments` | My retreats and where I am in each | → `{ data: Enrolment[] }` | user | new in v2 |
++| GET | `/creator/me` | The creator's own profile and payout status | → `Creator` | creator | new in v2 |
++| POST | `/creator/connect/onboarding-link` | A Stripe Connect onboarding link | — → `{ url, expiresAt }` | creator | new in v2 |
++| GET | `/creator/retreats` | The creator's retreats and cohorts | → `{ data: (Retreat & { cohorts: Cohort[] })[] }` | creator | new in v2 |
++| GET | `/creator/cohorts/{id}/metrics` | Aggregate cohort numbers | → `CohortMetrics` | creator | new in v2 |
++| GET | `/creator/payouts` | The creator's payout ledger | → `Page<PayoutLine>` | creator | new in v2 |
++| GET | `/creator/split-rules` | The terms that apply to each retreat | → `{ data: SplitRule[] }` | creator | new in v2 |
++| POST | `/admin/creators` | Onboard a creator (pilot: by hand) | `{ userId, handle, displayName, country }` → `Creator` | staff | new in v2 |
++| POST | `/admin/retreats` | Create a retreat with its price and split | `{ creatorId, title, priceAmount, currency, splitRuleId, chapterPlan }` → `Retreat` | staff | new in v2 |
++| POST | `/admin/retreats/{id}/cohorts` | Open a cohort | `{ startsAt, capacity, enrolUntil }` → `Cohort` | staff | new in v2 |
++| PUT | `/admin/split-rules/{id}` | Set or change a split (new version, never an edit in place) | `{ creatorTicketShare, creatorPlusShare, plusAttributionDays }` → `SplitRule` | staff | new in v2 |
++
++```ts
++type Money = { amount: number; currency: "EUR" | "USD" | "IDR" }
++type Retreat = { id; creatorId; title; summary; price: Money; weeks: number; chapterCount; status: "draft" | "on_sale" | "closed" }
++type Cohort = { id; retreatId; startsAt; enrolUntil; capacity; enrolled: number; status: "open" | "running" | "finished" }
++type Order = { id; userId; cohortId; price: Money; vat: Money; fees: Money; net: Money;
++               state: "pending" | "paid" | "refunded" | "partially_refunded" | "failed";
++               withdrawal: { waived: boolean; consentAt?: string; textVersion?: string };
++               receiptUrl?; createdAt }
++type Enrolment = { id; cohortId; retreatId; orderId; journeyId; status: "active" | "finished" | "refunded" }
++type SplitRule = { id; version: number; creatorTicketShare: 0.7; creatorPlusShare: 0.2; plusAttributionDays: 365; effectiveFrom }
++type PayoutLine = { id; creatorId; source: "ticket" | "plus_share" | "refund_reversal"; orderId?; subscriptionId?;
++                    gross: Money; creatorAmount: Money; state: "pending" | "available" | "paid" | "reversed";
++                    stripeTransferId?; availableAt; paidAt? }
++type CohortMetrics = { cohortId; minGroupSize: number; suppressed: boolean; enrolled?: number;
++                       activeWeek1?: number; activeWeek4?: number; activeWeek8?: number;
++                       chaptersPlayedMedian?: number; plusConversions?: number; refunds?: number;
++                       revenue?: Money; creatorEarnings?: Money }   // never per-person data
++```
++
++**Withdrawal.** For EU buyers, checkout refuses to start an instantly-delivered retreat without the express consent to start now and the acknowledgement that the right is then lost (`422 withdrawal_consent_required`). Without that consent the buyer keeps the 14-day right and access starts at the cohort start. The confirmation goes out by email (a durable medium).
++
++**Payouts.** A paid order writes a `pending` payout line; it becomes `available` after the refund window, then a scheduled transfer pays it through Stripe Connect. A refund after payout writes a `refund_reversal` line against the creator's next payout.
++
++### 4.5 Plus subscription (6 endpoints)
++
++| Method | Path | Purpose | Request → Response | Auth | Status |
++| --- | --- | --- | --- | --- | --- |
++| GET | `/plans` | Plans and prices for the person's country | → `{ data: Plan[] }` | public | v1 |
++| POST | `/checkout/subscription` | Start Plus (Stripe Checkout on web; store billing on mobile later) | `{ planId, priceId }` → `{ checkoutUrl }` | user | changed in v2 (cohort attribution) |
++| POST | `/me/subscription/portal` | Manage or cancel (Stripe customer portal) | — → `{ url }` | user | new in v2 |
++| GET | `/me/entitlements` | What the plan allows and how much is left | → `Entitlements` | user | v1 |
++| POST | `/webhooks/stripe` | Payments, subscriptions, refunds and Connect events | Stripe event → `200` | Stripe | changed in v2 (tickets and Connect) |
++| GET | `/me/subscription` | The current subscription | → `Subscription \| null` | user | v1 |
++
++```ts
++type Plan = { id: "free" | "plus"; prices: { id; interval: "month" | "year"; price: Money }[]; limits: Limits }
++type Entitlements = { plan: "free" | "plus"; source: "free" | "subscription" | "retreat";
++                      limit: { unit: "build"; perDay: number; used: number; resetAt } ; // unit is an open decision (§8)
++                      chapterMinutesAllowed: (3 | 5 | 10)[] }
++type Subscription = { id; plan: "plus"; interval; status: "active" | "past_due" | "canceled"; currentPeriodEnd;
++                      attributedCohortId?: string }   // drives the creator's Plus share
++```
++
++**Free limit.** The server counts; the app only shows `entitlements`. The first build never counts. A retreat ticket grants its own chapters for the cohort's length (`source: "retreat"`).
++
++**Attribution.** A subscription started by someone enrolled in a cohort within `plusAttributionDays` of enrolment records `attributedCohortId`. Each paid invoice then writes a `plus_share` payout line.
+diff --git a/docs/api/v2/general.md b/docs/api/v2/general.md
+new file mode 100644
+index 0000000..6fe8017
+--- /dev/null
++++ b/docs/api/v2/general.md
+@@ -0,0 +1,203 @@
++# API contract v2: General
++
++*API contract v2, the Pilot slice (draft for the feature lock). Three pages: [General](/wiki/api) · [Apps](/wiki/api/apps) · [Admin](/wiki/api/admin). The older full contract: [v1](/wiki/api/v1).*
++
++
++| | |
++| --- | --- |
++| Version | 2.0 (draft) |
++| Status | For review and sign-off at the feature lock. Not implemented; both apps still run on sample data. |
++| Replaces | Nothing yet. The [full contract (v1)](/wiki/api?v=1) stays as the long-term map; v2 is what gets built first. |
++| Machine-readable form | [`openapi-v2.yaml`](openapi-v2.yaml) (OpenAPI 3.1) |
++| Last updated | 24 November 2026 |
++
++## 1 · In one minute
++
++**What v2 is.** The smallest API that lets Aurelia run its **first paid creator pilot**: 3 to 5 creators each sell a retreat ticket to their audience, buyers sign up, build and play sessions, check in before and after, and some move on to Plus. Everything the pilot does not need waits.
++
++**What changed since v1, and why.** The v1 contract described the whole product: community, challenges, coins, invites and 18 admin modules, built in five phases. Since then four decisions changed what the backend must serve first:
++
++- **The business needs a paid pilot before the whole product.** So v2 is one "Pilot slice" phase after Foundation, not P0 to P4.
++- **The creator retreat was redesigned and approved.** A one-off ticket (€19.99 or €39), Aurelia as the seller (merchant of record), a 70/30 split paid to creators in money, plus a share of the Plus revenue each cohort brings. That needs one-off payments and Stripe Connect payouts, which the backend plan wanted to retire. v2 keeps them.
++- **Safety cannot wait for the last phase.** People type how they feel into free text, so crisis messages are certain. The safety check, the crisis response and the safety log are part of the core loop.
++- **The business wants to know what moving someone from a bad state to a good one costs, and whether it works.** Every build now records what it bought from which AI supplier and at what cost (the compute ledger), and every chapter records a check-in score before and after (therapeutic outcomes). This is internal measurement, aggregate only, never public claims.
++
++**The rule: features are locked before the final API.** Every feature that stores data costs an endpoint, a table, backend logic with tests, and changes in both apps. So:
++
++1. The product owner and the business owner sign off a one-page list of what API v1 serves (this slice, plus anything agreed) **before** engineering plans the final API.
++2. A change after the lock first gets an **impact note** from engineering (endpoints, tables, screens, days added). Then the product owner decides.
++3. Once live, the API changes by **versions, not edits**: new fields and endpoints are added; anything breaking goes to the next version.
++4. The prototype may keep moving on sample data. The API does not.
++
++## 2 · How the pieces fit
++
++```mermaid
++flowchart LR
++  W[Web app] --> API[Aurelia API v1]
++  F[Flutter app] --> API
++  A[Admin] --> API
++  API --> B[Backend services]
++  B --> DB[(PostgreSQL)]
++  B --> Q[Job queue and workers]
++  Q --> AI[AI suppliers: script, voice, music, image]
++  Q --> OS[Object storage for audio]
++  B --> S[Stripe: payments and Connect payouts]
++  S -->|webhooks| API
++  B --> L[Compute ledger and outcomes]
++  L --> DB
++```
++
++| Piece | What it is | Today |
++| --- | --- | --- |
++| The apps (web, Flutter, admin) | What people see and tap | Built, on sample data |
++| The API | The list of questions the apps may ask, and the exact shape of each answer | This document |
++| The backend | Stores accounts and check-ins, runs the AI, takes payments, keeps data safe | Not built for 2026 |
++| Database and suppliers | PostgreSQL, AI models (script, voice, music, image), object storage, Stripe | Chosen, not set up |
++
++All AI runs on the server. The apps never hold a model key or a payment secret.
++
++## 3 · Conventions
++
++Carried from v1 (§3 there), trimmed to what the slice uses.
++
++- **Base path** `https://api.aurelia.care/v1` (staging `https://api.staging.aurelia.care/v1`). The API's own first version is `/v1`; "contract v2" is the second draft of the document, not a `/v2` path.
++- **JSON, camelCase** field names, RFC 3339 UTC timestamps, durations in seconds, money as **integer minor units with a currency** (`{ amount: 1999, currency: "EUR" }`).
++- **Ids** are opaque strings with a type prefix: `usr_`, `cns_`, `cnv_`, `msg_`, `bld_`, `ses_`, `chp_`, `ver_`, `bit_`, `ply_`, `chk_`, `jrn_`, `crt_`, `ret_`, `coh_`, `enr_`, `ord_`, `ref_`, `spl_`, `pay_`, `sub_`, `cmp_`, `sfe_`, `aud_`.
++- **Auth:** `Authorization: Bearer <JWT>`, 15-minute access token; an opaque rotating refresh token (30 days rolling) in an httpOnly cookie on web and secure storage on mobile. Roles: `user`, `creator`, and staff roles on a separate admin audience (`aud: admin`).
++- **Errors:** RFC 9457 problem details with a stable `code` the apps switch on, and `retryable`. Codes used by the slice: `invalid_request` (400), `unauthenticated` (401), `forbidden` (403), `not_found` (404), `conflict`, `build_in_progress`, `already_enrolled` (409), `unsafe_content`, `consent_required`, `age_restricted`, `withdrawal_consent_required` (422), `rate_limited`, `build_limit_reached` (429), `ai_unavailable`, `payment_unavailable` (503).
++- **Pagination:** cursor, `?limit=20&cursor=…` → `{ data: T[], nextCursor: string | null }`, `limit` ≤ 100.
++- **Idempotency-Key** (a UUID) is **required** on every payment, refund, build, check-in and message POST; webhook handlers deduplicate on the supplier's event id. A replay returns the first result for 24 h.
++- **Rate limits** per token: 60 requests/min general, 20 messages/min, 10 builds/hour, 5 checkouts/hour. `RateLimit-*` headers; `Retry-After` on 429.
++- **Streaming:** Server-Sent Events for the assistant's reply and a build's progress. Streams end with a terminal event; the resource fetched by id is always the truth.
++- **Versioning:** additive changes (new fields, new enum values) are not breaking; apps ignore unknown fields and treat unknown enum values as "other". Breaking changes need a new path version.
++- **Headers:** `Aurelia-Client: web/<version>+<commit>` or `ios/…`, `android/…` on every request.
++
++**Status labels below:** **v1** = in the v1 contract as it was; **changed in v2** = in v1, with a different shape or rule; **new in v2** = not in v1.
++
++
++## 4 · The Pilot slice, where to find it
++
++The endpoints are split into two pages:
++- [Apps](/wiki/api/apps): what the web and Flutter apps call. Accounts and consent, the core loop, safety, the creator retreat, Plus.
++- [Admin](/wiki/api/admin): what staff and internal tools call. The compute ledger and cost, therapeutic outcomes, minimum admin.
++
++### Endpoint count
++
++| Area | Endpoints |
++| --- | --- |
++| Accounts and consent | 12 |
++| Core loop | 22 |
++| Safety | 2 |
++| Creator retreat | 17 |
++| Plus subscription | 6 |
++| Compute ledger and cost | 5 |
++| Therapeutic outcomes | 3 |
++| Minimum admin | 9 |
++| **Total** | **76** |
++
++## 5 · Data model (PostgreSQL)
++
++UUID-backed ids with the prefixes above; `created_at` and `updated_at` on every table; money as `bigint` minor units plus `char(3)` currency. Health data (check-ins, feelings, messages) sits in its own schema with stricter access and is never joined into creator views.
++
++| Table | Key fields | Notes |
++| --- | --- | --- |
++| `users` | id, email (unique), password_hash?, name, birth_year, country, locale, time_zone, status, deleted_at | Age band derived from birth year |
++| `auth_identities` | user_id, provider, provider_user_id (unique pair) | Google in the slice |
++| `refresh_tokens` | id, user_id, hash, family_id, expires_at, revoked_at | Rotation with reuse detection |
++| `consents` | user_id, purpose, granted, text_version, updated_at | Append-only history in `consent_events` |
++| `consent_events` | user_id, purpose, granted, text_version, at, ip_country | Proof of consent |
++| `data_requests` | id, user_id, kind (export, delete), state, ready_at | GDPR requests |
++| `conversations` | id, user_id, session_id?, source, title | |
++| `messages` | id, conversation_id, role, text, safety_flag, attachment jsonb | Health schema |
++| `sessions` | id, owner_id, retreat_id?, title, summary, current_version_id | |
++| `session_versions` | id, session_id, label, parent_version_id?, bite_ids, state, build_id | Rollback flips `current_version_id` |
++| `chapters` | id, version_id, index, minutes, duration_sec, audio_key, image_key, segment_ids | Segments may be reused across buyers |
++| `media_segments` | id, retreat_id?, kind, object_key, hash | "Produced once": shared creator-voice segments |
++| `lego_bites` | id, kind, title, what, why, params jsonb, active | The catalogue of changes |
++| `builds` | id, session_id, version_id, user_id, state, counted, idempotency_key (unique), started_at, finished_at | |
++| `compute_ledger` | id, build_id, chapter_id?, media, supplier, model, unit, units, unit_price, cost, currency, cache_hit, reused, latency_ms, attempt, fallback_from | One row per supplier call; append-only |
++| `supplier_endpoints` | id, supplier, model, media, unit, unit_price, active, valid_from | Versioned prices |
++| `plays` | id, user_id, chapter_id, version_id, started_at, position_sec, completion_ratio, completed, report | Complete only at ≥ 0.3 |
++| `checkins` | id, user_id, journey_id?, chapter_id?, phase (pre, post), score (0–100), feeling? | Health schema |
++| `journeys` | id, user_id, domain, from_state, to_state, start_score, target_score, status, flipped_at? | State-flip journeys |
++| `therapeutic_outcomes` | id, journey_id, chapter_id, pre_score, post_score, uplift, consented | Derived per chapter; only with `outcome_research` consent |
++| `safety_events` | id, user_id, source, source_id, category, severity, action, state, owner_id, escalated_at | Kept even after account deletion, de-identified |
++| `creators` | id, user_id, handle (unique), display_name, country, stripe_account_id, payouts_enabled | |
++| `retreats` | id, creator_id, title, price_amount, currency, split_rule_id, weeks, status | |
++| `cohorts` | id, retreat_id, starts_at, enrol_until, capacity, status | |
++| `enrolments` | id, cohort_id, user_id, order_id, journey_id, status | Unique (cohort_id, user_id) |
++| `orders` | id, user_id, cohort_id, amount, vat, fees, net, currency, state, stripe_payment_intent_id, withdrawal_waived, withdrawal_consent_at, withdrawal_text_version, idempotency_key | Aurelia is merchant of record |
++| `refunds` | id, order_id, amount, reason, state, stripe_refund_id, actor_id | |
++| `split_rules` | id, version, creator_ticket_share, creator_plus_share, plus_attribution_days, effective_from | Never edited in place |
++| `payout_ledger` | id, creator_id, source, order_id?, subscription_invoice_id?, gross, creator_amount, state, available_at, stripe_transfer_id?, paid_at? | Append-only; reversals are new rows |
++| `subscriptions` | id, user_id, plan, interval, status, current_period_end, stripe_subscription_id, attributed_cohort_id? | |
++| `usage_counters` | user_id, day, builds_used | Free-limit counter |
++| `webhook_events` | id (supplier event id, unique), source, type, received_at, processed_at, error? | Deduplication |
++| `staff_users` | id, email, role, status | Admin audience |
++| `audit_log` | id, actor_id, action, target, before jsonb, after jsonb, at | Append-only |
++| `idempotency_keys` | key, user_id, route, response_hash, created_at | 24 h replay |
++
++## 6 · Webhooks and events
++
++**Inbound** (to the API):
++
++| Source | Event | What the server does |
++| --- | --- | --- |
++| Stripe | `checkout.session.completed` (ticket) | Order → paid; enrolment, journey and pending payout line created; receipt and withdrawal confirmation emailed |
++| Stripe | `checkout.session.completed` (subscription), `invoice.paid` | Subscription active; entitlements updated; `plus_share` payout line if attributed |
++| Stripe | `customer.subscription.updated` / `.deleted` | Status and entitlements updated |
++| Stripe | `charge.refunded` | Refund row; enrolment refunded; payout reversal line |
++| Stripe Connect | `account.updated` | `payouts_enabled` on the creator |
++| Stripe Connect | `transfer.created`, `payout.failed` | Payout line → paid, or flagged in admin |
++
++Every handler verifies the Stripe signature, deduplicates on the event id in `webhook_events`, and is safe to replay.
++
++**Internal events** (queue topics, not public): `build.completed`, `build.failed`, `checkin.created`, `journey.flipped`, `safety.flagged` (pages the escalation owner when severity is `crisis`), `order.paid`, `payout.due`. Outbound partner webhooks are out of v2.
++
++## 7 · Explicitly out of v2 (later)
++
++| Out | Why it waits |
++| --- | --- |
++| Community: publish, recreate, shelves, creator follow | Not needed to sell or deliver a retreat |
++| Challenges, coins, wallet, invites | The economy follows the pilot's results |
++| Most admin modules (moderation queue, AI policy console, experiments, notifications broadcast, signal sources, compliance dashboard) | The pilot runs by hand; the slice keeps only §4.8 |
++| Wearables and signal sources (Apple Health, Whoop, Oura) | Check-in scores are enough to measure the pilot |
++| Healing Map and the learning graph (Causal AI reinforcement, pruning, tournaments) | Needs real outcomes first; the ledger and outcomes tables collect them |
++| Insurer, employer and clinical reporting | A separate regulatory track |
++| Apple sign-in, store billing on mobile | Web checkout first; Apple sign-in becomes required when the iOS app offers Google |
++| Video generation | Cost (37% of measured 2025 spend) for little gain |
++| Voice input, push notifications, outbound webhooks | After the pilot |
++
++## 8 · Open decisions before the lock
++
++| Decision | Options on the table | Blocks |
++| --- | --- | --- |
++| Price anchors | Retreat ticket €19.99 or €39; Plus $10 a month or $100 a year; the cost model's $19.99 per flip | Plans, checkout, the split examples |
++| Free-limit unit | Builds per day (v1), chapters, or minutes of audio | Entitlements, usage counters |
++| First pilot market | EU (withdrawal, VAT, GDPR) or Indonesia | Currencies, VAT, crisis lines, data region |
++| Safety escalation owner | A named person or rota who receives crisis events, with hours and a backup | Going live at all |
++| Data region | EU only, or EU plus a second region for Indonesia | Hosting, suppliers, the DPIA |
++| Minimum group size | 10 (proposed) or 5 | Creator and admin aggregates |
++| Creator share of Plus | 20% of year-1 Plus (proposed), and the attribution window | Split rules, payouts |
++| One voice supplier and one fallback | From the cost model's shortlist | Build pipeline, ledger prices |
++
++## 9 · Change from v1
++
++| | What | Detail |
++| --- | --- | --- |
++| **Moved** | Safety | From the last phase (admin monitoring) into the core loop: blocking check, crisis reply, events, escalation |
++| **Moved** | Phasing | P0 to P4 → Foundation, then one Pilot slice; the rest after the pilot |
++| **Moved** | One-off payments, Stripe Connect | Kept for the creator retreat instead of retired |
++| **Changed** | Proposals | "Change this session" is now a list of Lego bites; applying makes a new version, with rollback |
++| **Changed** | Sessions | Chapters (3, 5 or 10 minutes) inside versions; playback per chapter |
++| **Changed** | Check-ins | A pre and a post score from 0 to 100 on each chapter |
++| **Changed** | Journeys | Start score, target and a flipped state |
++| **Changed** | Plays | Completion ratio and an adverse report |
++| **Changed** | Sign-up | Age gate and country |
++| **Added** | Creator retreat | Creators, retreats, cohorts, enrolments, ticket orders, withdrawal consent, split rules, payout ledger, refunds, Plus attribution, cohort aggregates |
++| **Added** | Compute ledger | Per supplier call: media, supplier, model, units, cost, cache hit, reuse, latency |
++| **Added** | Therapeutic outcomes | Flip rate, chapters to flip, uplift per chapter, aggregate only |
++| **Added** | Feature lock | Changes after the lock need an impact note and a decision |
++| **Dropped from the first build** | Community, challenges, coins, wallet, invites, signal sources, notifications, studies, most admin modules, Apple sign-in, store billing, video | Still in the [v1 contract](/wiki/api?v=1) as the long-term map |
++
++Where this document and `openapi-v2.yaml` disagree, this document is right.
+diff --git a/src/guides/GuidePage.tsx b/src/guides/GuidePage.tsx
+index e30ccb7..314b7a5 100644
+--- a/src/guides/GuidePage.tsx
++++ b/src/guides/GuidePage.tsx
+@@ -15,12 +15,10 @@ import pmPlaybookV3 from './content/pm-playbook-v3.html?raw'
+ import researchInsightTimer from './content/research-insight-timer.html?raw'
+ import researchRound2 from '../../docs/research/reports/Insight Timer behaviour and journeys.md?raw'
+ import prdOverview from '../../docs/PRD-OVERVIEW.md?raw'
+-import apiContract from '../../docs/api/API-CONTRACT.md?raw'
+-import apiContractV2 from '../../docs/api/API-CONTRACT-V2.md?raw'
+ import backendOld from '../../docs/backend-old/BACKEND-OLD.md?raw'
+ import artefact from '../../docs/backend-old/ARTEFACT.md?raw'
+ import { DS_TOC } from '../designsystem/toc'
+-import { B2B2C_PAGES, pageMarkdown, type DocPage } from './docPages'
++import { API_PAGES, B2B2C_PAGES, pageMarkdown, type DocPage } from './docPages'
+ import { filterToc, prepareDoc } from './prepareDoc'
+ import './guides.css'
+ import './content/pm-playbook.css'
+@@ -79,8 +77,8 @@ const DOCS = [
+     audience: 'Engineers',
+     inside: ['v2: the Pilot slice, the smallest API for the first paid creator pilot', 'Creator retreat payments, the compute ledger and outcomes', 'v1: every endpoint, the data model and the AI system', 'The feature lock and the decisions still open'],
+     icon: Server,
+-    source: 'docs/api/API-CONTRACT.md',
+-    html: () => marked.parse(apiContract, { async: false }),
++    source: 'docs/api/v2/',
++    html: () => marked.parse(pageMarkdown(API_PAGES[0]), { async: false }),
+   },
+   {
+     id: 'research',
+@@ -137,7 +135,7 @@ const DOCS = [
+ type DocId = (typeof DOCS)[number]['id']
+ 
+ /** Documents made of a summary and detail pages at /wiki/:doc/:page (U110). */
+-const DOC_PAGES: Partial<Record<DocId, DocPage[]>> = { b2b2c: B2B2C_PAGES }
++const DOC_PAGES: Partial<Record<DocId, DocPage[]>> = { b2b2c: B2B2C_PAGES, api: API_PAGES }
+ 
+ function DocPages({ id, pages, current }: { id: DocId; pages: DocPage[]; current: string }) {
+   // On a phone the strip scrolls sideways: bring the open page into view.
+@@ -148,8 +146,8 @@ function DocPages({ id, pages, current }: { id: DocId; pages: DocPage[]; current
+     if (el && card && el.scrollWidth > el.clientWidth) el.scrollLeft = card.offsetLeft - el.offsetLeft - 10
+   }, [current])
+   return (
+-    <nav ref={nav} className="gd-versions gd-pages" aria-label="Pages in this research">
+-      <span className="gd-versions-label">Pages in this research</span>
++    <nav ref={nav} className="gd-versions gd-pages" aria-label={id === 'api' ? 'Pages' : 'Pages in this research'}>
++      <span className="gd-versions-label">{id === 'api' ? 'Pages' : 'Pages in this research'}</span>
+       {pages.map((p, i) => (
+         <Link key={p.slug} to={i === 0 ? `/wiki/${id}` : `/wiki/${id}/${p.slug}`} aria-current={p.slug === current ? 'page' : undefined}>
+           <b>{p.title}</b>
+@@ -197,22 +195,6 @@ const DOC_VERSIONS: Partial<Record<DocId, DocVersion[]>> = {
+     { v: 1, label: 'Features & business', note: 'Round 1: features, strategy, backlash, competitors.', html: () => researchInsightTimer },
+   ],
+   // v2 first, so it is the default; v1 stays unchanged at ?v=1.
+-  api: [
+-    {
+-      v: 2,
+-      label: 'Pilot slice (draft)',
+-      note: 'The smallest API for the first paid creator pilot, for the feature lock.',
+-      html: () => marked.parse(apiContractV2, { async: false }),
+-      markdown: true,
+-    },
+-    {
+-      v: 1,
+-      label: 'Full contract',
+-      note: 'Every endpoint, the data model, the AI system and the phasing.',
+-      html: () => marked.parse(apiContract, { async: false }),
+-      markdown: true,
+-    },
+-  ],
+ }
+ 
+ function DocVersions({ id, current }: { id: DocId; current: number }) {
+diff --git a/src/guides/docPages.ts b/src/guides/docPages.ts
+index fcfa9b1..1d98a2e 100644
+--- a/src/guides/docPages.ts
++++ b/src/guides/docPages.ts
+@@ -9,8 +9,10 @@ export interface DocPage {
+   title: string
+   /** One line under the title in the page strip. */
+   note: string
+-  /** The Markdown file in docs/research/b2b2c/, without the folder. */
++  /** The Markdown file, relative to its folder in docs/. */
+   file: string
++  /** The folder under docs/; defaults to research/b2b2c. */
++  dir?: string
+ }
+ 
+ export const B2B2C_PAGES: DocPage[] = [
+@@ -26,10 +28,19 @@ export const B2B2C_PAGES: DocPage[] = [
+   { slug: 'sources', title: 'Full report and sources', note: 'The deep research report, every source.', file: '09-full-report.md' },
+ ]
+ 
+-const files = import.meta.glob('../../docs/research/b2b2c/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
++/** API contract (U120, J175): v2 split into General, Apps and Admin; v1 kept. */
++export const API_PAGES: DocPage[] = [
++  { slug: 'general', title: 'General', note: 'What v2 is, conventions, data model, decisions.', file: 'general.md', dir: 'api/v2' },
++  { slug: 'apps', title: 'Apps', note: 'What the web and Flutter apps call.', file: 'apps.md', dir: 'api/v2' },
++  { slug: 'admin', title: 'Admin', note: 'Cost, outcomes and the minimum admin.', file: 'admin.md', dir: 'api/v2' },
++  { slug: 'v1', title: 'v1 · Full contract', note: 'The earlier full contract, unchanged.', file: 'API-CONTRACT.md', dir: 'api' },
++]
++
++const files = import.meta.glob(['../../docs/research/b2b2c/*.md', '../../docs/api/v2/*.md', '../../docs/api/API-CONTRACT.md'], { query: '?raw', import: 'default', eager: true }) as Record<string, string>
+ 
+ export function pageMarkdown(p: DocPage): string {
+-  return files[`../../docs/research/b2b2c/${p.file}`] ?? `# ${p.title}\n\nThis page is missing: \`docs/research/b2b2c/${p.file}\`.`
++  const path = `docs/${p.dir ?? 'research/b2b2c'}/${p.file}`
++  return files[`../../${path}`] ?? `# ${p.title}\n\nThis page is missing: \`${path}\`.`
+ }
+ 
+ /** Every `/wiki/b2b2c/<slug>` link in a text, for the link check. */
+-- 
+2.43.0
+

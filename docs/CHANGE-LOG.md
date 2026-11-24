@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-24 — API contract in three pages; levelled combination graph (U120, U121, J175, J176)
+
+The wiki's API contract opens on General, with Apps, Admin and v1 as their own pages. The Combination report's graph now shows its four levels and what each is made of.
+
+Branches: `web_app`, `admin_cms`, `web_prod`.
+
 ### 2026-11-24 — API contract v2 (U119, J174)
 
 The wiki's API contract opens on v2: the Pilot slice, a draft for the feature lock. It ships with OpenAPI.

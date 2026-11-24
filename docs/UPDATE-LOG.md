@@ -156,9 +156,25 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U117 | `bd2daaf` | 2026-11-24 | Buyer agent report: every iteration shows the **price tested** (v1 the admin's mock $9.99, v2 mock regional prices, v3 offers A and B, the re-run the app's $10 or $100), with a table and a warning where it differs from the app. New **Cost report** (`/admin/reports/cost`, staging): a supplier catalogue per media with price, source, label and pros and cons; Lean, Balanced and Premium presets plus the 2025 measured baseline; a bad-to-good model with the user's starting condition, adherence, chapter length, personalisation, models and the Causal AI stage; a connected, interactive graph; a cost-against-uplift chart and profit per flip. | [patch](patches/U117-bd2daaf.patch) |
 | U118 | `e77935a` | 2026-11-24 | `RELEASES.reports` is now on for both sites, so the buyer agent, combination and cost reports show on production. Production fast-forwarded with everything since U112. | [patch](patches/U118-e77935a.patch) |
 | U119 | `76a2890` | 2026-11-24 | Wiki → API contract **v2, the Pilot slice** (draft for the feature lock), now the default; v1 stays at `?v=1`. 76 endpoints and 35 PostgreSQL tables: accounts and consent, the core loop, safety, the creator retreat (ticket, 70/30, Connect payouts, cohort aggregates), Plus, a compute ledger, therapeutic outcomes, minimum admin. Includes `openapi-v2.yaml`. Staging and production. | [patch](patches/U119-76a2890.patch) |
+| U120 | `dfe36fb` | 2026-11-24 | Wiki API contract split into pages: **General** (the default: what v2 is, conventions, data model, decisions), **Apps**, **Admin**, and **v1** (the earlier full contract). | [patch](patches/U120-dfe36fb.patch) |
+| U121 | `7bfc4e4` | 2026-11-24 | Combination report graph in four levels: Sources (16) → Building blocks (10) → Stage readings (5) → Verdict (6). Click a node to highlight its path and see "Made of" and "Feeds"; a text version sits below the graph. | [patch](patches/U121-7bfc4e4.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U121 — The Combination report's levelled graph
+
+- **Commit:** `7bfc4e4` · 2026-11-24 · all branches.
+- **Request:** "untuk combination report saya mau graph nya diperjelas. misalnya report version 1 ada apa saja element penyusunya, report level 2 ada apa saja penyusunya"
+- **Changed:** `CompositionGraph.tsx`, `reportColors.ts`, and `buildComposition` in `combinationReport.ts`, with a test that each level cites only the level before it.
+- **Revert:** `git revert --no-commit 7bfc4e4`.
+
+### U120 — The API contract in three pages
+
+- **Commit:** `dfe36fb` · 2026-11-24 · all branches.
+- **Request:** "API contract saya mau bagi menjadi 3 General , Apps, Admin agar lebih ringkas by default yang open adalah General"
+- **Changed:** `docs/api/v2/{general,apps,admin}.md` replace `API-CONTRACT-V2.md`; `docPages.ts` adds `API_PAGES`; `GuidePage.tsx`. An old `?v=1` link now opens General, and v1 is at `/wiki/api/v1`.
+- **Revert:** `git revert --no-commit dfe36fb`.
 
 ### U119 — API contract v2
 
