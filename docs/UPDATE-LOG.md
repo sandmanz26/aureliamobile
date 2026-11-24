@@ -149,9 +149,55 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U110 | `37f0d7b` | 2026-11-24 | Wiki tab **B2B2C** (`/wiki/b2b2c`): a summary with a coverage table linking nine detail pages at `/wiki/b2b2c/:page` (Ideation, Creators and cohorts, Employers and insurers, Partners, Unit economics, Claims and regulation, Plan, Roast, Full report and sources), from a five-track deep research (notes and report in `docs/research/`). A pages strip on every page; a test checks every page file exists and every link resolves. Staging and production (wiki rule J076). | [patch](patches/U110-37f0d7b.patch) |
 | U111 | `bde496b` | 2026-11-24 | Home's headline on desktop is Eugene's Headline in Motion: "Create the ___ you imagine." with the gold italic word cycling peace → mind → energy → state, a 500ms ease-in-out cross-fade, the line sliding to fit, still under reduced motion. Every version on desktop, v5 included; below lg each version keeps its static headline (mobile frozen). New `ui/RotatingWord`. Staging and production. | [patch](patches/U111-bde496b.patch) |
 | U112 | `8865802` | 2026-11-24 | Headline in Motion on phones too, on request: Home's headline is "Create the peace / mind / energy / state you imagine." at every width, in every version. This replaces the static mobile headlines (v1–v4 "space", v5 "Sessions made for how you feel today."). An explicit mobile change. Staging and production. | [patch](patches/U112-8865802.patch) |
+| U113 | `d719cef` | 2026-11-24 | Business funnel → **Creator retreat (B2B2C)** view (`/admin/business-funnel?view=retreat`): Retreat-in-a-Box as a funnel under three offers (the spec, the approved redesign at €19.99, at €39) and three outcomes (low, middle, spec). It shows one cohort step by step, the pilot's five gates, money per cohort and across creators (with what a creator keeps on a course platform), a per-ticket comparison, and editable assumptions. Numbers match the wiki's Unit economics (tested). Decision d8 (the redesign, decided) in the log. Staging and production. | [patch](patches/U113-d719cef.patch) |
+| U114 | `4c89df1` | 2026-11-24 | No personal names on shared surfaces (the J078 rule): the B2B2C wiki pages, the funnel and buyer-agent admin texts, the wiki card and the /__demo description now say "the business owner" or "the brief"; the plan page drops internal ids. | [patch](patches/U114-4c89df1.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U114 — No personal names on shared surfaces
+
+- **Commit:** `4c89df1` · pushed 2026-11-24 UTC · `web_app` + `admin_cms` + `web_prod`.
+- **Patch:** [patches/U114-4c89df1.patch](patches/U114-4c89df1.patch)
+- **Request:** found while compiling `docs/briefs/EUGENE-CONTEXT.md` for J159. The owner's J078 rule: "harusnya kamu tidak perlu memasukan nama eugene di dokumen".
+- **Changed:** "the business owner" or "the brief" replaces the name in:
+  - the B2B2C wiki pages and the wiki card;
+  - the Business funnel and the retreat view;
+  - the buyer-agent v3 run text and the re-run panel;
+  - the /__demo module description.
+
+  The plan page also drops its O-number. Code comments and the internal logs keep the name, as J078 allows.
+- **Verified:** `npm run check`; a search finds no visible "Eugene" in `src/` outside comments.
+- **Revert:** `git revert --no-commit 4c89df1` then `git checkout HEAD -- docs/`.
+
+### U113 — Creator retreat (B2B2C) funnel
+
+- **Commit:** `d719cef` · pushed 2026-11-24 UTC · `web_app` + `admin_cms` + `web_prod`.
+- **Patch:** [patches/U113-d719cef.patch](patches/U113-d719cef.patch)
+- **Request:** "oke saya setuju untuk desain ulang, kemudian lakukan pembuatan untuk business funnel nya. harusnya itu akan ada tambahan di admin kan ? tolong simpan semua context eugene yang sudah ada. jangan sampai terlewatkan, taruh dalam md file atau apapun itu."
+- **Interpretation:**
+  - "Setuju untuk desain ulang" approves the redesigned Retreat-in-a-Box (J155):
+    - 70/30, plus a share of Plus;
+    - a pre-produced journey in the creator's voice;
+    - a digital kit;
+    - €39 tested against €19.99.
+  - "Business funnel nya" is that redesign as a funnel in the admin, beside the app funnel (U108), rather than a new page: one hub.
+  - Two parameters in the redesign are our proposals, labelled as such:
+    - the creator's 20% share of year-1 Plus;
+    - about €0.50 of AI per buyer.
+- **Changed:**
+  - `src/admin/data/retreatFunnel.ts` and its test, with the offers, outcomes, `perTicket`, `cohort` and `pilotGates`. The test pins the wiki's Model 1 and Model 2 figures.
+  - `src/admin/pages/funnel/RetreatFunnel.tsx`, the view.
+  - `BusinessFunnelPage.tsx`: tabs "App: freemium to Plus" / "Creator retreat (B2B2C)" (`?view=retreat`); the guide is shown only on the app view.
+  - `businessFunnel.ts`: decision d8.
+- **What it shows:**
+  - At middle outcomes the redesign at €19.99 passes all five gates. Per cohort of 200 it gives Aurelia about €1,985 (ticket €795 + Plus €1,190) and the creator about €2,386.
+  - On a course platform the creator would keep about €2,685. Aurelia must still beat that on value; it is the open risk for creator interviews.
+  - The spec fails the cost gate, losing about €10.57 a ticket.
+- **Verified:**
+  - `npm run check` (189 tests);
+  - a production build at 1440px and 402px: the tabs switch, the gates change with the offer (spec 4 of 5, redesign 5 of 5, low outcome with 80 seats 1 of 5), edits show Reset, the app view and log are intact (d8 present), there is no sideways scroll, and no console errors.
+- **Revert:** `git revert --no-commit d719cef` then `git checkout HEAD -- docs/`.
 
 ### U112 — Headline in Motion on phones
 

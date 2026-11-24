@@ -189,6 +189,10 @@ Repository: **`sandmanz26/aureliamobile`** (GitHub). One app per branch:
 
 ## 4 · Where things stand right now
 
+### 24 Nov 2026 (J159)
+
+**Everything about Eugene is in `docs/briefs/EUGENE-CONTEXT.md`**: read it before acting on anything he sends, and add a timeline row for each new input. The B2B2C redesign of Retreat-in-a-Box is approved; the admin's Business funnel has a Creator retreat view (U113).
+
 ### 24 Nov 2026 (J154)
 
 The wiki has a ninth tab, **B2B2C** (`/wiki/b2b2c`, U110): Eugene's B2B2C research as a summary linking nine detail pages, including a plan (O49). Detail pages live at `/wiki/b2b2c/:page`, from `docs/research/b2b2c/`.
@@ -496,8 +500,8 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U112**, last J = **J158**, last
-O = **O50**. Before numbering, check the files for anything newer.
+**Numbering as of 17 Nov 2026:** last U = **U114**, last J = **J159**, last
+O = **O51**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
 push. `src/guides/records.test.ts` enforces it.
@@ -957,6 +961,8 @@ history can be read without opening four documents.
 | U110 | `37f0d7b` | 2026-11-24 | Wiki tab **B2B2C** (`/wiki/b2b2c`): a summary with a coverage table linking nine detail pages at `/wiki/b2b2c/:page` (Ideation, Creators and cohorts, Employers and insurers, Partners, Unit economics, Claims and regulation, Plan, Roast, Full report and sources), from a five-track deep research (notes and report in `docs/research/`). A pages strip on every page; a test checks every page file exists and every link resolves. Staging and production (wiki rule J076). | [patch](update-log/patches/U110-37f0d7b.patch) |
 | U111 | `bde496b` | 2026-11-24 | Home's headline on desktop is Eugene's Headline in Motion: "Create the ___ you imagine." with the gold italic word cycling peace → mind → energy → state, a 500ms ease-in-out cross-fade, the line sliding to fit, still under reduced motion. Every version on desktop, v5 included; below lg each version keeps its static headline (mobile frozen). New `ui/RotatingWord`. Staging and production. | [patch](update-log/patches/U111-bde496b.patch) |
 | U112 | `8865802` | 2026-11-24 | Headline in Motion on phones too, on request: Home's headline is "Create the peace / mind / energy / state you imagine." at every width, in every version. This replaces the static mobile headlines (v1–v4 "space", v5 "Sessions made for how you feel today."). An explicit mobile change. Staging and production. | [patch](update-log/patches/U112-8865802.patch) |
+| U113 | `d719cef` | 2026-11-24 | Business funnel → **Creator retreat (B2B2C)** view (`/admin/business-funnel?view=retreat`): Retreat-in-a-Box as a funnel under three offers (the spec, the approved redesign at €19.99, at €39) and three outcomes (low, middle, spec). It shows one cohort step by step, the pilot's five gates, money per cohort and across creators (with what a creator keeps on a course platform), a per-ticket comparison, and editable assumptions. Numbers match the wiki's Unit economics (tested). Decision d8 (the redesign, decided) in the log. Staging and production. | [patch](update-log/patches/U113-d719cef.patch) |
+| U114 | `4c89df1` | 2026-11-24 | No personal names on shared surfaces (the J078 rule): the B2B2C wiki pages, the funnel and buyer-agent admin texts, the wiki card and the /__demo description now say "the business owner" or "the brief"; the plan page drops internal ids. | [patch](update-log/patches/U114-4c89df1.patch) |
 | J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
@@ -1007,6 +1013,7 @@ history can be read without opening four documents.
 | J156 | 2026-11-24 | Question | Where is the animated text from yesterday? Not on production or staging | — |
 | J157 | 2026-11-24 | Code | Eugene's animated headline ("Headline in Motion"), the animated text asked about in J156 | U111 |
 | J158 | 2026-11-24 | Code (mobile, on request) | Headline in Motion on phones as well, and on production | U112 |
+| J159 | 2026-11-24 | Decision + code + record | Redesign approved; build the B2B2C business funnel in the admin; keep every piece of Eugene's context in one file | U113, U114 |
 
 ### 17.2 Code changes (U)
 

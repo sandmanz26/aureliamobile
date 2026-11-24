@@ -1,0 +1,329 @@
+From 4c89df12d2e36a9fab0adc22ece43f4fe156ea31 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 24 Nov 2026 09:00:47 +0000
+Subject: [PATCH] No personal names on shared surfaces: B2B2C wiki pages and
+ admin texts say 'the business owner' or 'the brief' (J078 rule) (U114, J159)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ docs/research/b2b2c/00-summary.md        | 10 +++++-----
+ docs/research/b2b2c/01-ideation.md       |  4 ++--
+ docs/research/b2b2c/07-plan.md           | 12 ++++++------
+ docs/research/b2b2c/08-roast.md          |  6 +++---
+ docs/research/b2b2c/09-full-report.md    |  2 +-
+ src/admin/data/businessFunnel.ts         |  4 ++--
+ src/admin/data/buyerRunV3.ts             | 12 ++++++------
+ src/admin/data/retreatFunnel.ts          |  2 +-
+ src/admin/pages/BusinessFunnelPage.tsx   |  6 +++---
+ src/admin/pages/buyer/RerunView.tsx      |  2 +-
+ src/admin/pages/funnel/RetreatFunnel.tsx |  2 +-
+ src/demo/modules.ts                      |  2 +-
+ src/guides/GuidePage.tsx                 |  2 +-
+ 13 files changed, 33 insertions(+), 33 deletions(-)
+
+diff --git a/docs/research/b2b2c/00-summary.md b/docs/research/b2b2c/00-summary.md
+index b1c0d29..99ea076 100644
+--- a/docs/research/b2b2c/00-summary.md
++++ b/docs/research/b2b2c/00-summary.md
+@@ -1,10 +1,10 @@
+ # B2B2C: ideation, plan and research
+ 
+-*Asked by Eugene: "B2B2C ideation, plan, research". Researched 23–24 Nov 2026 in five research tracks: about 330 links in the research notes, 184 of them cited on the detail pages. This page is the summary. Every claim on it is backed on a detail page, linked below, and every detail page lists its own sources.*
++*Asked by the business owner: "B2B2C ideation, plan, research". Researched 23–24 Nov 2026 in five research tracks: about 330 links in the research notes, 184 of them cited on the detail pages. This page is the summary. Every claim on it is backed on a detail page, linked below, and every detail page lists its own sources.*
+ 
+ ## The answer in one paragraph
+ 
+-Aurelia should go to market through people who already have the customer, because buying users with ads does not pay back. The median Health & Fitness app turns 2.9% of installs into payers, which puts a paying subscriber at about $100–170 in media alone. **The best first bet is Eugene's creator cohort, Retreat-in-a-Box, but with redesigned terms.** "Redesign" here means the business model, not the app's screens: the price, the split, how the sessions are made and the box. As specified, it breaks on four numbers:
++Aurelia should go to market through people who already have the customer, because buying users with ads does not pay back. The median Health & Fitness app turns 2.9% of installs into payers, which puts a paying subscriber at about $100–170 in media alone. **The best first bet is the business owner's creator cohort, Retreat-in-a-Box, but with redesigned terms.** "Redesign" here means the business model, not the app's screens: the price, the split, how the sessions are made and the box. As specified, it breaks on four numbers:
+ 
+ - **The split.** Creators keep 87–97% on course platforms; 60% will be resisted.
+ - **AI cost against the ticket.** Aurelia's €6.45 share of a €19.99 web ticket is less than 24 fully personalised sessions with a premium voice cost (about $13).
+@@ -24,7 +24,7 @@ Beside it, test a cheap self-serve team tier for small employers and one trial-c
+ | [Unit economics](/wiki/b2b2c/economics) | Conversion, retention, prices, store and payment fees, VAT, AI cost per session, acquisition cost; the €19.99 ticket and a per-100-buyers model | 30 |
+ | [Claims and regulation](/wiki/b2b2c/regulation) | Wellness against medical device (EU, UK, US, Indonesia); the EU AI Act; creator advertising; health data; payments; crisis handling; what a creator may say | 34 |
+ | [Plan](/wiki/b2b2c/plan) | Phases, gates and the five numbers that decide the pilot; how it plugs into the admin | From the pages above |
+-| [Roast](/wiki/b2b2c/roast) | What a sceptical investor, a creator, a regulator and Eugene attack in this research, and what changed | — |
++| [Roast](/wiki/b2b2c/roast) | What a sceptical investor, a creator, a regulator and the business owner attack in this research, and what changed | — |
+ | [Full report and sources](/wiki/b2b2c/sources) | The deep research report, unedited, with its inline sources | All five tracks |
+ 
+ **Not covered, and why:**
+@@ -86,7 +86,7 @@ The full plan, with gates, is on [Plan](/wiki/b2b2c/plan).
+ 
+ 1. **Phase 0, now, no backend.**
+    - Buyer agents test the redesigned retreat (€19.99 against €39).
+-   - Eugene interviews five to ten creators.
++   - The business owner interviews five to ten creators.
+    - Draft the claims pack and the creator contract.
+    - Build the admin prototype on sample data marked as targets.
+ 2. **Phase 1, after a minimum backend** (accounts, payments with Aurelia as merchant of record, consented storage, crisis flow): a paid pilot with three to five creators. In parallel, a team tier with two or three small employers and one trial-code partner.
+@@ -98,7 +98,7 @@ The full plan, with gates, is on [Plan](/wiki/b2b2c/plan).
+    - AI and payment cost under a third of Aurelia's share.
+ 4. **Then widen:** 20 creators, then 50; a wearable integration; carrier billing in Indonesia.
+ 
+-## Decisions for Eugene
++## Decisions for the business owner
+ 
+ 1. Approve Phase 0, and who interviews creators.
+ 2. The redesign: 70/30 plus a share of the Plus each cohort drives, a pre-produced journey in the creator's voice, a digital welcome kit.
+diff --git a/docs/research/b2b2c/01-ideation.md b/docs/research/b2b2c/01-ideation.md
+index f1c012f..edc1d33 100644
+--- a/docs/research/b2b2c/01-ideation.md
++++ b/docs/research/b2b2c/01-ideation.md
+@@ -8,7 +8,7 @@
+ - We listed 15 models and scored each on six questions. The four that score best share two traits: the partner pays for acquisition, and the end user ends up paying Aurelia directly.
+ - **Highest scores:** trial codes and gifting (16), a redesigned creator cohort (15, not the spec as written), retreat and studio aftercare (14), then the self-serve team tier for small employers (13).
+ - **Lowest:** reimbursed clinical routes (6), insurers (7), enterprise employer contracts (9), and free whole-base perks and universities (10). They need clinical evidence, a sales team or a wholesale price Aurelia cannot afford yet.
+-- Eugene's Retreat-in-a-Box as specified scores lower than the same idea redesigned. The idea is right; the €19.99 ticket, the 60/40 split, 24 fully personalised sessions per buyer and a physical box are what break it ([Unit economics](/wiki/b2b2c/economics), [Creators](/wiki/b2b2c/creators)).
++- Retreat-in-a-Box as specified scores lower than the same idea redesigned. The idea is right; the €19.99 ticket, the 60/40 split, 24 fully personalised sessions per buyer and a physical box are what break it ([Unit economics](/wiki/b2b2c/economics), [Creators](/wiki/b2b2c/creators)).
+ 
+ ## How each model is scored
+ 
+@@ -45,7 +45,7 @@ Each question scores 1 (poor) to 3 (good). The total is out of 18.
+ 
+ **Why model 7 scores 13 but should not be built as written.** Its channel scores are good; its arithmetic is not. Aurelia's 40% of a €19.99 web ticket is about €6.45, while 24 personalised sessions with a premium voice cost about $13 per buyer, so each buyer can lose money before anyone converts to Plus. The split is also far above the 0–10% creators pay course platforms. See [Unit economics](/wiki/b2b2c/economics) and [Creators](/wiki/b2b2c/creators).
+ 
+-**Why trial codes score highest but come second.** They are cheap and low risk, but they bring users one at a time and teach us little about the product. The creator cohort is the bigger bet and the better test of Eugene's model, so it leads the [plan](/wiki/b2b2c/plan), with codes run beside it.
++**Why trial codes score highest but come second.** They are cheap and low risk, but they bring users one at a time and teach us little about the product. The creator cohort is the bigger bet and the better test of the business owner's model, so it leads the [plan](/wiki/b2b2c/plan), with codes run beside it.
+ 
+ ## What the redesign changes in Retreat-in-a-Box
+ 
+diff --git a/docs/research/b2b2c/07-plan.md b/docs/research/b2b2c/07-plan.md
+index 0d62ba4..eb315a8 100644
+--- a/docs/research/b2b2c/07-plan.md
++++ b/docs/research/b2b2c/07-plan.md
+@@ -1,6 +1,6 @@
+ # Plan: what to test first, in what order, and the gates
+ 
+-*Part of the [B2B2C research](/wiki/b2b2c). A proposal for Eugene and the product owner to decide. The thresholds are our judgement, set in advance so the results cannot be argued after the fact; none is a published benchmark.*
++*Part of the [B2B2C research](/wiki/b2b2c). A proposal for the business owner and the product owner to decide. The thresholds are our judgement, set in advance so the results cannot be argued after the fact; none is a published benchmark.*
+ 
+ ## In one minute
+ 
+@@ -29,10 +29,10 @@ flowchart TD
+ | Work | Output | Owner | Where it lives |
+ | --- | --- | --- | --- |
+ | **Buyer agent v5**: test the redesigned retreat against plain freemium, with a creator-follower framing. Variants: €19.99 against €39; with and without a digital welcome kit | Which offer the panel prefers, by segment, with objections | Product | Admin → Buyer agent results |
+-| **Creator interviews**: five to ten wellness creators across two or three countries, Indonesia included | Would they sell it, at what split, at what price, how many seats they can fill; what they need from Aurelia | Eugene | Decision log in Business funnel |
++| **Creator interviews**: five to ten wellness creators across two or three countries, Indonesia included | Would they sell it, at what split, at what price, how many seats they can fill; what they need from Aurelia | Business owner | Decision log in Business funnel |
+ | **Claims pack**: an intended-purpose statement (wellness only), an approved-claims list with no mock percentages, the creator contract terms | Ready before any ticket is sold | Product owner, with counsel | Wiki, this research |
+-| **Admin prototype**: the network overview, the curriculum view and outcomes, on sample data marked as targets, in our design system (O45) | Something to show creators and investors | Product | Admin, staging first |
+-| **Answer O45**: who the prototype is for, the founding creators, the box, what the ticket includes, the curriculum against the five-chapter journey | Decisions | Eugene | Work journal, O45 |
++| **Admin prototype**: the network overview, the curriculum view and outcomes, on sample data marked as targets, in our design system | Something to show creators and investors | Product | Admin, staging first |
++| **Answer the open questions**: who the prototype is for, the founding creators, the box, what the ticket includes, the curriculum against the five-chapter journey | Decisions | Business owner | Work journal |
+ 
+ **Gate 0.** At least three creators say they would sell a pilot cohort on terms Aurelia can afford, and the buyer agents prefer one offer variant clearly enough to pick it. If creators refuse every split under 70/30, move to 70/30 plus a Plus share. If none will sell at any terms, the retreat is not the first channel, and the team tier and trial codes lead instead.
+ 
+@@ -77,10 +77,10 @@ flowchart TD
+ | **Business funnel** | The pilot's scoreboard: entry is a ticket sold, aha is the first session, the cap and Plus are the graduation offer, staying is week 8. The pilot's real numbers replace the agents' prediction in the human column. |
+ | **Buyer agent results** | Phase 0's offer test (v5), and later a prediction to compare with each real cohort |
+ | **User journey** | The retreat's moments, with the creator's touchpoints tagged |
+-| **Experimentation (feedback group)** | Becomes the first paid cohort, per Eugene's "commercially aligned" note |
++| **Experimentation (feedback group)** | Becomes the first paid cohort, per the business owner's "commercially aligned" note |
+ | **Decision log** | Each gate's result and what changed |
+ 
+-## Decisions needed from Eugene and the product owner
++## Decisions needed from the business owner and the product owner
+ 
+ 1. Approve Phase 0, and name who interviews creators.
+ 2. Is the redesign acceptable: 70/30 plus a Plus share, a pre-produced journey, a digital kit?
+diff --git a/docs/research/b2b2c/08-roast.md b/docs/research/b2b2c/08-roast.md
+index b60a4e7..d405e7b 100644
+--- a/docs/research/b2b2c/08-roast.md
++++ b/docs/research/b2b2c/08-roast.md
+@@ -1,6 +1,6 @@
+ # Roast: what a sceptic attacks, and what changed
+ 
+-*Part of the [B2B2C research](/wiki/b2b2c). After the pages were written, we read them as four hard readers would: Eugene, a sceptical investor, a creator deciding whether to sign, and a regulator. Each finding below either changed the pages or is listed as a limit that stays.*
++*Part of the [B2B2C research](/wiki/b2b2c). After the pages were written, we read them as four hard readers would: the business owner, a sceptical investor, a creator deciding whether to sign, and a regulator. Each finding below either changed the pages or is listed as a limit that stays.*
+ 
+ ## In one minute
+ 
+@@ -12,8 +12,8 @@
+ 
+ | # | Who would say it | The attack | What we changed |
+ | --- | --- | --- | --- |
+-| 1 | Eugene | "You tell me my numbers are wrong. What is the answer for Retreat-in-a-Box?" | The summary opens with the answer: do it, redesigned, and lists the four numbers that break as specified. [Ideation](/wiki/b2b2c/ideation) has a spec-against-redesign table. |
+-| 2 | Eugene | "What does a full wave of 50 creators give us?" | Added to the summary: roughly 300, 1,050 or 2,300 Plus subscribers in the low, middle and spec cases (estimates). |
++| 1 | Business owner | "You tell me my numbers are wrong. What is the answer for Retreat-in-a-Box?" | The summary opens with the answer: do it, redesigned, and lists the four numbers that break as specified. [Ideation](/wiki/b2b2c/ideation) has a spec-against-redesign table. |
++| 2 | Business owner | "What does a full wave of 50 creators give us?" | Added to the summary: roughly 300, 1,050 or 2,300 Plus subscribers in the low, middle and spec cases (estimates). |
+ | 3 | Investor | "330 sources? I count fewer." | The summary now says what is true: about 330 links in the research notes, 184 cited on the detail pages. |
+ | 4 | Investor | "Which of these numbers can I put in a deck?" | Added "How sure we are" to the summary: firm, leads (marked "search summary", 24 places), and our judgement. |
+ | 5 | Investor | "The box costs 40–90% of the ticket on one page and $14–28 on another." | Both are right and now say so: fulfilment alone is $9–18, a modest kit delivered is $14–28. The summary and ideation use the same words as the detail pages. |
+diff --git a/docs/research/b2b2c/09-full-report.md b/docs/research/b2b2c/09-full-report.md
+index b4bb5ca..ece90c8 100644
+--- a/docs/research/b2b2c/09-full-report.md
++++ b/docs/research/b2b2c/09-full-report.md
+@@ -4,7 +4,7 @@
+ 
+ ## Report: Test creator cohorts first, then sell to employers
+ 
+-Aurelia's most promising B2B2C route is **creator-led cohorts, but not at the assumptions in Eugene's Retreat-in-a-Box spec**. Creators bring buyers at close to zero media cost to Aurelia, and that matters because paid acquisition for a wellness subscription costs roughly $100–$400 per payer against about $36 of median first-year payer revenue in Health & Fitness. The spec's headline numbers do not survive contact with the evidence, though. **76.5% still active at week 8 is about 16 times the measured day-30 retention of mindfulness apps (4.7%)**, a 60/40 split is far richer for the platform than the 0–10% creators pay on Kajabi, Maven or Teachable, and **Aurelia's 40% of a €19.99 web ticket comes to about €6.45, which premium AI voice generation for 24 sessions can wipe out on its own**. Employers are the second real channel. A content-only app sits at about $50–70 per seat per year (Wysa, Calm Teams), not at the "double digits per member per month" that clinical-care vendors charge, and buyers now judge renewal on activation dashboards. Insurers and health systems are closed to Aurelia until it has clinical evidence, and pursuing that evidence would turn Aurelia into a regulated medical device. Of the partner channels, the evidence favours deals where the end user enters their own card: trial codes that renew at retail, carrier billing, and wearable data integrations. Free placements on airline seatbacks and hotel TVs mostly lapsed. Underneath every channel sits a compliance floor that is not optional. The spec's "+85.7% sleep improvement" and "stress −50%" are invented figures and cannot be used in any market, creators' social posts can turn the product into a medical device under UK guidance, and a free-text "how I feel" input guarantees crisis disclosures. The first test should be a small, instrumented, digital-only cohort pilot with three to five creators, judged on fill rate, week-by-week activity and Plus conversion per ticket buyer rather than per graduate.
++Aurelia's most promising B2B2C route is **creator-led cohorts, but not at the assumptions in the Retreat-in-a-Box spec**. Creators bring buyers at close to zero media cost to Aurelia, and that matters because paid acquisition for a wellness subscription costs roughly $100–$400 per payer against about $36 of median first-year payer revenue in Health & Fitness. The spec's headline numbers do not survive contact with the evidence, though. **76.5% still active at week 8 is about 16 times the measured day-30 retention of mindfulness apps (4.7%)**, a 60/40 split is far richer for the platform than the 0–10% creators pay on Kajabi, Maven or Teachable, and **Aurelia's 40% of a €19.99 web ticket comes to about €6.45, which premium AI voice generation for 24 sessions can wipe out on its own**. Employers are the second real channel. A content-only app sits at about $50–70 per seat per year (Wysa, Calm Teams), not at the "double digits per member per month" that clinical-care vendors charge, and buyers now judge renewal on activation dashboards. Insurers and health systems are closed to Aurelia until it has clinical evidence, and pursuing that evidence would turn Aurelia into a regulated medical device. Of the partner channels, the evidence favours deals where the end user enters their own card: trial codes that renew at retail, carrier billing, and wearable data integrations. Free placements on airline seatbacks and hotel TVs mostly lapsed. Underneath every channel sits a compliance floor that is not optional. The spec's "+85.7% sleep improvement" and "stress −50%" are invented figures and cannot be used in any market, creators' social posts can turn the product into a medical device under UK guidance, and a free-text "how I feel" input guarantees crisis disclosures. The first test should be a small, instrumented, digital-only cohort pilot with three to five creators, judged on fill rate, week-by-week activity and Plus conversion per ticket buyer rather than per graduate.
+ 
+ ## Paid acquisition cannot pay back, which is why B2B2C matters
+ 
+diff --git a/src/admin/data/businessFunnel.ts b/src/admin/data/businessFunnel.ts
+index 9758212..6a40524 100644
+--- a/src/admin/data/businessFunnel.ts
++++ b/src/admin/data/businessFunnel.ts
+@@ -213,9 +213,9 @@ export const DEFAULT_DECISIONS: Decision[] = [
+     id: 'd4',
+     date: '2026-11-23',
+     stage: 'upsell',
+-    finding: 'The Upgrade screen lists features; nothing on it is about the person. Eugene’s model sells the relief of reaching the good state.',
++    finding: 'The Upgrade screen lists features; nothing on it is about the person. The brief’s model sells the relief of reaching the good state.',
+     change: 'At the limit, show their own progress from their check-ins (never an invented number), then the offer.',
+-    source: 'Eugene’s brief and the lighthouse (J148)',
++    source: 'The freemium brief and the lighthouse (J148)',
+     status: 'proposed',
+     version: '',
+     result: '',
+diff --git a/src/admin/data/buyerRunV3.ts b/src/admin/data/buyerRunV3.ts
+index 5957e84..2dc7d5d 100644
+--- a/src/admin/data/buyerRunV3.ts
++++ b/src/admin/data/buyerRunV3.ts
+@@ -47,7 +47,7 @@ export const V3_PRICES: Record<string, { label: string; usd: number }> = {
+ export const BUYER_INSTRUCTIONS_V3 = `You are a buyer test agent. This run is an A/B test on 36 personas from persona generator 2.
+ 
+ Read first, and treat as evidence:
+-- The Insight Timer research for Eugene (wiki Research, v2): day-30 retention in mental-health apps is about 3–5% of installs (median 3.3%, Baumel 2019); health and fitness trials convert at a median of about 40%; people leave over prompts before listening, paywalled basics, streaks and nagging; they stay for a quiet path that plays at once.
++- The Insight Timer research (wiki Research, v2): day-30 retention in mental-health apps is about 3–5% of installs (median 3.3%, Baumel 2019); health and fitness trials convert at a median of about 40%; people leave over prompts before listening, paywalled basics, streaks and nagging; they stay for a quiet path that plays at once.
+ - The 2025 documents (wiki Backend (old) and Artefact): the script judge's rules (pacing, pauses, breathing safety), the edit modes, feedback attribution, and the lessons: claims must match what is built, safety comes first, model scores are signals not measurements, rules beat personas.
+ - Buyer agent v2: what it found and where it was too generous or too harsh.
+ 
+@@ -113,7 +113,7 @@ export const RUN_V3: BuyerRun = {
+   kind: 'demo',
+   generator: 2,
+   method:
+-    'One agent played 36 personas from the fixed generator, each against today’s offer (A) and a proposed offer (B), reading Eugene’s documents and the research first and calibrating against their figures. No backend, no live model call from the app.',
++    'One agent played 36 personas from the fixed generator, each against today’s offer (A) and a proposed offer (B), reading the business owner’s documents and the research first and calibrating against their figures. No backend, no live model call from the app.',
+   panel: {
+     seed: 2028,
+     size: 36,
+@@ -127,7 +127,7 @@ export const RUN_V3: BuyerRun = {
+     ],
+   },
+   stimulus: {
+-    name: 'Offer B: the proposal, built from Eugene’s documents and the research',
++    name: 'Offer B: the proposal, built from the business owner’s documents and the research',
+     pitch:
+       'Tell us in one sentence how you feel, and a guided session made for you starts in a minute, in your language. No sign-up for the first one. The words are written for you by AI, following practice rules our wellness team wrote; you choose the voice and how much it talks. Chapters continue over the next days, with one check-in a day that you can skip.',
+     offer: [
+@@ -150,14 +150,14 @@ export const RUN_V3: BuyerRun = {
+     { title: 'Insight Timer, and what it means for Aurelia (round 2)', where: 'Wiki → Research, v2', used: 'Day-30 retention 3–5% (median 3.3%), trial conversion ~40%, the leave triggers (prompts 65, paywalled basics 50, streaks 27 of 168 reviews), the “Now” list, the $59.99 yearly anchor, “No AI” as a selling point.' },
+     { title: 'Backend (old): the 2025 documents', where: 'Wiki → Backend (old)', used: 'The script judge’s rules (pacing, pauses, breathing safety notes) behind “how much it talks” and the pregnancy and grief notes; edit modes behind “make it shorter”; feedback attribution behind “the check-in shapes the next chapter”.' },
+     { title: 'Artefact: what the 2025 backend teaches us', where: 'Wiki → Artefact', used: 'Claims must match what is built (B’s items are marked as proposals); safety in the first version (the care link); model scores are signals (findings in words, confidence stated); rules beat personas (calibration rules over role-play).' },
+-    { title: 'Eugene’s briefs', where: 'WhatsApp, J114–J132', used: 'The buyer test agent itself, and adopting what works at Insight Timer.' },
++    { title: 'The business owner’s briefs', where: 'WhatsApp', used: 'The buyer test agent itself, and adopting what works at Insight Timer.' },
+     { title: 'Buyer agent v1 and v2', where: 'This page', used: 'Which changes to test, and where the agent was too generous (v1) or found the persona data broken (v2).' },
+   ],
+   criteria: [
+-    { label: 'Question', value: 'If Aurelia shipped the changes Eugene’s documents and the research point to, how many more people would try it, pay, and still be using it at day 30, and which change matters most to whom?' },
++    { label: 'Question', value: 'If Aurelia shipped the changes the business owner’s documents and the research point to, how many more people would try it, pay, and still be using it at day 30, and which change matters most to whom?' },
+     { label: 'Who', value: '36 personas from persona generator 2, one for every region × age band (seed 2028), aged 19–71, from 13 countries. Generator 2 fixes the incoherence v1 and v2 found; its check finds 0 of 300 broken (generator 1: 144 of 300).' },
+     { label: 'What they saw', value: 'Offer A (today, as in v2), then offer B (the proposal). Each persona answered both, A in short and B in full.' },
+-    { label: 'What the agent read first', value: 'The Insight Timer research, the 2025 backend documents and their lessons, Eugene’s briefs, and runs v1 and v2. Listed under “What the agent read”.' },
++    { label: 'What the agent read first', value: 'The Insight Timer research, the 2025 backend documents and their lessons, the business owner’s briefs, and runs v1 and v2. Listed under “What the agent read”.' },
+     { label: 'Calibration', value: 'v2’s rules, plus: day-30 use must stay near the category evidence (3–5% of installs); honest AI disclosure stays in B, so distrust does not vanish; a change only counts if it changed the answer.' },
+     { label: 'Not taken into account', value: 'Whether B can be built as described, its cost, and how real people react to an AI-written session they have heard. B is a proposal.' },
+     { label: 'Read it as', value: 'A comparison: B against A on the same people, by the same agent. The difference is more trustworthy than either number.' },
+diff --git a/src/admin/data/retreatFunnel.ts b/src/admin/data/retreatFunnel.ts
+index c4fdae5..86b1e9d 100644
+--- a/src/admin/data/retreatFunnel.ts
++++ b/src/admin/data/retreatFunnel.ts
+@@ -48,7 +48,7 @@ export const COURSE_PLATFORM_KEEP = 0.9
+ export const OFFERS: Offer[] = [
+   {
+     id: 'spec',
+-    name: 'Spec (Eugene, as written)',
++    name: 'Spec, as written',
+     note: '€19.99, 60/40, 24 personalised sessions, a physical box in every ticket.',
+     price: 19.99,
+     creatorShare: 0.6,
+diff --git a/src/admin/pages/BusinessFunnelPage.tsx b/src/admin/pages/BusinessFunnelPage.tsx
+index e684a89..913cfb0 100644
+--- a/src/admin/pages/BusinessFunnelPage.tsx
++++ b/src/admin/pages/BusinessFunnelPage.tsx
+@@ -81,7 +81,7 @@ export function BusinessFunnelPage() {
+     <div className="flex flex-col gap-16">
+       <PageHeader
+         title="Business funnel"
+-        description="Eugene’s four stages from a bad state to Aurelia Plus, as they work in the app today, and the result they serve. Each stage has a target, the buyer agents’ prediction and the feedback group beside it. The stage furthest below its target is what to fix next."
++        description="The brief’s four stages from a bad state to Aurelia Plus, as they work in the app today, and the result they serve. Each stage has a target, the buyer agents’ prediction and the feedback group beside it. The stage furthest below its target is what to fix next."
+         actions={
+           <div className="flex flex-wrap gap-8">
+             <Button size="sm" icon={<CircleHelp size={13} />} onClick={() => setGuide(true)} data-tour="guide">
+@@ -189,7 +189,7 @@ export function BusinessFunnelPage() {
+                   )}
+                 </h3>
+                 <p className="text-11 text-adm-muted">
+-                  Eugene: <span className="text-adm-ink-2">{s.eugene}</span>
++                  The brief: <span className="text-adm-ink-2">{s.eugene}</span>
+                 </p>
+               </div>
+               {metrics
+@@ -451,7 +451,7 @@ function DecisionForm({ stage, onClose, onSave }: { stage: StageId; onClose: ()
+ const GUIDE: TourStep[] = [
+   {
+     title: 'What this page is for',
+-    body: 'It is the scoreboard for proving market fit. Eugene’s four stages run from a free start to Aurelia Plus, and a fifth is the result they serve. Two tracks feed it: buyer agents predict, the feedback group and the digital retreats measure. The stage furthest below its target is what to fix next.',
++    body: 'It is the scoreboard for proving market fit. The brief’s four stages run from a free start to Aurelia Plus, and a fifth is the result they serve. Two tracks feed it: buyer agents predict, the feedback group and the digital retreats measure. The stage furthest below its target is what to fix next.',
+   },
+   { target: 'source', title: 'Pick what the agents predict', body: 'Choose a production version and whose rules play it. Agent v3’s rules are the best estimate. Switch to production v1 to see how much the older design leaks.' },
+   { target: 'stages', title: 'The five stages at a glance', body: 'Each card shows what the stage is in Aurelia today and its main number against the target. A red card is the biggest gap.' },
+diff --git a/src/admin/pages/buyer/RerunView.tsx b/src/admin/pages/buyer/RerunView.tsx
+index ea3c9d7..1befed4 100644
+--- a/src/admin/pages/buyer/RerunView.tsx
++++ b/src/admin/pages/buyer/RerunView.tsx
+@@ -160,7 +160,7 @@ export function RerunView() {
+           </ol>
+         </Panel>
+ 
+-        <Panel title="The ten MVP market-fit metrics" description="Eugene’s list (J136). Predicted: what the agent expects people to do. Estimate: a figure only people can give; the agent’s guess for the feedback group to check.">
++        <Panel title="The ten MVP market-fit metrics" description="The business owner’s list. Predicted: what the agent expects people to do. Estimate: a figure only people can give; the agent’s guess for the feedback group to check.">
+           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
+             {r.metrics.map((m) => (
+               <div key={m.id} className="flex flex-col gap-4 rounded-8 border border-adm-line p-10">
+diff --git a/src/admin/pages/funnel/RetreatFunnel.tsx b/src/admin/pages/funnel/RetreatFunnel.tsx
+index d82f469..53848a9 100644
+--- a/src/admin/pages/funnel/RetreatFunnel.tsx
++++ b/src/admin/pages/funnel/RetreatFunnel.tsx
+@@ -73,7 +73,7 @@ export function RetreatFunnel() {
+           </Button>
+         )}
+       </div>
+-      <p className="-mt-8 text-11 text-adm-muted">{offer.note} Pilot: 3–5 creators. Eugene’s full wave: 50 creators × 200 seats.</p>
++      <p className="-mt-8 text-11 text-adm-muted">{offer.note} Pilot: 3–5 creators. The spec’s full wave: 50 creators × 200 seats.</p>
+ 
+       <div className="grid gap-12 lg:grid-cols-[1.1fr_1fr]">
+         <Panel title="One cohort, step by step" description={`${seats} paid seats under “${baseOffer.name}”, outcome “${baseOutcome.name}”${edited ? ', with your edits' : ''}. Each bar is a share of buyers.`}>
+diff --git a/src/demo/modules.ts b/src/demo/modules.ts
+index 982a187..ffcb467 100644
+--- a/src/demo/modules.ts
++++ b/src/demo/modules.ts
+@@ -243,7 +243,7 @@ export const DEMO_MODULES: DemoModule[] = [
+   { id: 'adminOutcomes', kind: 'admin', label: 'Well-being outcomes', description: 'How much each user’s well-being has changed (WHO-5, check-ins, wearable).', route: '/admin/outcomes', built: true },
+   { id: 'adminUserJourney', kind: 'admin', label: 'User journey', description: 'The journey map: four stages (Reflect, Create, Experience, Share), their moments, the feature each suggests, and the screens that serve them.', route: '/admin/user-journey', built: true },
+   { id: 'adminPersonas', kind: 'admin', label: 'Personas', description: '300 synthetic personas as candidates for AI-run research, with role-play prompts and balanced panels.', route: '/admin/personas', built: true },
+-  { id: 'adminBusinessFunnel', kind: 'admin', label: 'Business funnel', description: 'Eugene’s stages from a free start to Aurelia Plus, with targets, the buyer agents’ prediction, the feedback group and a decision log.', route: '/admin/business-funnel', built: true },
++  { id: 'adminBusinessFunnel', kind: 'admin', label: 'Business funnel', description: 'The brief’s stages from a free start to Aurelia Plus, with targets, the buyer agents’ prediction, the feedback group and a decision log.', route: '/admin/business-funnel', built: true },
+   { id: 'adminBuyerAgent', kind: 'admin', label: 'Buyer agent results', description: 'What a buyer agent answered as each persona in a panel: try, pay, price, objections, test cases. Runs v1–v3 and the re-run by production version.', route: '/admin/buyer-agent', built: true },
+   { id: 'adminRoles', kind: 'admin', label: 'Roles & permissions', description: 'Permission matrix.', route: '/admin/roles', built: true },
+   { id: 'adminSessions', kind: 'admin', label: 'Sessions', description: 'Generated session catalogue.', route: '/admin/sessions', built: true },
+diff --git a/src/guides/GuidePage.tsx b/src/guides/GuidePage.tsx
+index 02e6bfd..d13af87 100644
+--- a/src/guides/GuidePage.tsx
++++ b/src/guides/GuidePage.tsx
+@@ -95,7 +95,7 @@ const DOCS = [
+     id: 'b2b2c',
+     title: 'B2B2C',
+     blurb: 'Selling Aurelia through people who already have the customer: creators, employers, insurers and partners. Ideas, evidence and a plan.',
+-    audience: 'Eugene, the product owner and anyone deciding how Aurelia goes to market',
++    audience: 'The business owner, the product owner and anyone deciding how Aurelia goes to market',
+     inside: ['Every B2B2C model for Aurelia, scored', 'Creators and cohorts, employers, insurers and partners, with sources', 'Unit economics of the €19.99 retreat, and what may be claimed', 'The plan, its gates, and a roast'],
+     icon: Handshake,
+     source: 'docs/research/b2b2c/',
+-- 
+2.43.0
+

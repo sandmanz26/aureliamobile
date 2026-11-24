@@ -1,0 +1,567 @@
+From d719cefacde3e55e22583c62605313a542edebd0 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 24 Nov 2026 08:57:37 +0000
+Subject: [PATCH] Business funnel: Creator retreat (B2B2C) view, the redesigned
+ Retreat-in-a-Box against the spec, pilot gates, decision d8 (U113, J159)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/admin/data/businessFunnel.ts         |  11 ++
+ src/admin/data/retreatFunnel.test.ts     |  38 ++++
+ src/admin/data/retreatFunnel.ts          | 161 +++++++++++++++
+ src/admin/pages/BusinessFunnelPage.tsx   |  32 ++-
+ src/admin/pages/funnel/RetreatFunnel.tsx | 241 +++++++++++++++++++++++
+ 5 files changed, 482 insertions(+), 1 deletion(-)
+ create mode 100644 src/admin/data/retreatFunnel.test.ts
+ create mode 100644 src/admin/data/retreatFunnel.ts
+ create mode 100644 src/admin/pages/funnel/RetreatFunnel.tsx
+
+diff --git a/src/admin/data/businessFunnel.ts b/src/admin/data/businessFunnel.ts
+index 6e7184f..9758212 100644
+--- a/src/admin/data/businessFunnel.ts
++++ b/src/admin/data/businessFunnel.ts
+@@ -231,6 +231,17 @@ export const DEFAULT_DECISIONS: Decision[] = [
+     version: '',
+     result: '',
+   },
++  {
++    id: 'd8',
++    date: '2026-11-24',
++    stage: 'entry',
++    finding: 'Retreat-in-a-Box as written loses money on every ticket (24 personalised sessions and a physical box cost more than Aurelia’s €6.45 share), asks creators to give up 40% where course platforms take 0–10%, and plans on 76.5% active at week 8 where mindfulness apps keep 4.7% at day 30.',
++    change: 'Redesign the offer: 70/30 plus a share of the Plus each cohort drives, a journey produced once in the creator’s voice with personal inserts, a digital kit, €39 tested against €19.99; plan on 20–50% at week 8 and measure Plus per ticket buyer.',
++    source: 'B2B2C research (J154, /wiki/b2b2c); approved by the product owner (J159)',
++    status: 'decided',
++    version: '',
++    result: '',
++  },
+   {
+     id: 'd5',
+     date: '2026-10-27',
+diff --git a/src/admin/data/retreatFunnel.test.ts b/src/admin/data/retreatFunnel.test.ts
+new file mode 100644
+index 0000000..16a9578
+--- /dev/null
++++ b/src/admin/data/retreatFunnel.test.ts
+@@ -0,0 +1,38 @@
++import { describe, expect, it } from 'vitest'
++import { OFFERS, OUTCOMES, cohort, perTicket, pilotGates } from './retreatFunnel'
++
++const offer = (id: string) => OFFERS.find((o) => o.id === id)!
++const outcome = (id: string) => OUTCOMES.find((o) => o.id === id)!
++
++describe('retreat funnel', () => {
++  it('matches the wiki’s Unit economics, Model 1 (one €19.99 web ticket, 60/40 on net)', () => {
++    const t = perTicket(offer('spec'))
++    expect(t.net).toBeCloseTo(16.13, 2)
++    expect(t.creator).toBeCloseTo(9.68, 2)
++    expect(t.aurelia).toBeCloseTo(6.45, 2)
++    expect(t.margin).toBeCloseTo(-10.57, 2) // middle AI tier and the $14 box, as on the wiki
++  })
++
++  it('matches Model 2 per 100 buyers (middle AI, no box)', () => {
++    const noBox = { ...offer('spec'), boxPerBuyer: 0 }
++    const low = cohort(noBox, outcome('low'), 100)
++    const mid = cohort(noBox, outcome('middle'), 100)
++    const spec = cohort(noBox, outcome('spec'), 100)
++    expect([low.plus, mid.plus, spec.plus].map((n) => Math.round(n * 100) / 100)).toEqual([3, 10.5, 22.95])
++    // The wiki rounds the per-ticket share to €6.45 first, so allow €1.
++    for (const [c, wiki] of [[low, 278], [mid, 294], [spec, 310]] as const) expect(Math.abs(c.aureliaTicket - wiki)).toBeLessThanOrEqual(1)
++  })
++
++  it('makes the redesign profitable on the ticket where the spec is not', () => {
++    expect(perTicket(offer('spec')).margin).toBeLessThan(0)
++    expect(perTicket(offer('redesign')).margin).toBeGreaterThan(0)
++    expect(perTicket(offer('redesign39')).margin).toBeGreaterThan(perTicket(offer('redesign')).margin)
++  })
++
++  it('judges the pilot gates: the spec fails on cost, the middle redesign passes all five', () => {
++    const spec = pilotGates(offer('spec'), outcome('middle'), 200)
++    expect(spec.find((g) => g.id === 'cost')!.pass).toBe(false)
++    expect(pilotGates(offer('redesign'), outcome('middle'), 200).every((g) => g.pass)).toBe(true)
++    expect(pilotGates(offer('redesign'), outcome('low'), 80).filter((g) => !g.pass).map((g) => g.id)).toEqual(['seats', 'active', 'plus', 'refunds'])
++  })
++})
+diff --git a/src/admin/data/retreatFunnel.ts b/src/admin/data/retreatFunnel.ts
+new file mode 100644
+index 0000000..c4fdae5
+--- /dev/null
++++ b/src/admin/data/retreatFunnel.ts
+@@ -0,0 +1,161 @@
++/**
++ * Creator retreat funnel (U113, J159): Eugene's Retreat-in-a-Box as a
++ * B2B2C funnel, on the inputs of the wiki's Unit economics page
++ * (/wiki/b2b2c/economics) so the admin and the research cannot disagree.
++ * Two things vary separately: the OFFER (the terms: price, split, how the
++ * sessions are made, the box) and the OUTCOME scenario (how many stay to
++ * week 8 and move to Plus). Every figure here is an estimate until a pilot
++ * measures it; none is a result.
++ */
++
++export type Channel = 'web' | 'store15' | 'store30'
++
++export interface Offer {
++  id: string
++  name: string
++  note: string
++  /** Ticket price in euros, VAT included. */
++  price: number
++  /** The creator's share of the ticket, 0–1, applied to the net after VAT and fees. */
++  creatorShare: number
++  /** The creator's share of year-1 Plus revenue from their cohort, 0–1 (redesign: a proposal to negotiate). */
++  creatorPlusShare: number
++  /** AI cost per buyer for the whole retreat, in euros ($1 = €1, as on the wiki). */
++  aiPerBuyer: number
++  aiNote: string
++  /** Physical box cost per buyer paid by Aurelia, euros; 0 for a digital kit. */
++  boxPerBuyer: number
++  channel: Channel
++}
++
++export interface Outcome {
++  id: 'low' | 'middle' | 'spec'
++  name: string
++  /** Share of buyers still active at week 8. */
++  activeWeek8: number
++  /** Share of week-8 graduates who choose Plus. */
++  gradToPlus: number
++  refundRate: number
++}
++
++export const VAT = 0.2
++export const CARD = { pct: 0.014, fixed: 0.25 }
++/** Year-1 net of an annual Plus subscriber to Aurelia: $100 ÷ 1.2 VAT × 0.85 after a 15% store fee. */
++export const PLUS_NET_YEAR1 = 70.83
++/** What a creator keeps selling the same ticket on a course platform (about 90%, after card fees). */
++export const COURSE_PLATFORM_KEEP = 0.9
++
++export const OFFERS: Offer[] = [
++  {
++    id: 'spec',
++    name: 'Spec (Eugene, as written)',
++    note: '€19.99, 60/40, 24 personalised sessions, a physical box in every ticket.',
++    price: 19.99,
++    creatorShare: 0.6,
++    creatorPlusShare: 0,
++    aiPerBuyer: 3.02,
++    aiNote: '24 personalised sessions, middle voice tier (24 × $0.13)',
++    boxPerBuyer: 14,
++    channel: 'web',
++  },
++  {
++    id: 'redesign',
++    name: 'Redesign at €19.99',
++    note: 'Approved 24 Nov 2026: 70/30 plus a share of the Plus each cohort drives, a journey produced once in the creator’s voice with personal inserts, a digital kit.',
++    price: 19.99,
++    creatorShare: 0.7,
++    creatorPlusShare: 0.2,
++    aiPerBuyer: 0.5,
++    aiNote: 'Journey produced once per creator; about 24 short personal inserts per buyer (estimate)',
++    boxPerBuyer: 0,
++    channel: 'web',
++  },
++  {
++    id: 'redesign39',
++    name: 'Redesign at €39',
++    note: 'The same terms at the higher ticket the plan tests against €19.99.',
++    price: 39,
++    creatorShare: 0.7,
++    creatorPlusShare: 0.2,
++    aiPerBuyer: 0.5,
++    aiNote: 'As the €19.99 redesign',
++    boxPerBuyer: 0,
++    channel: 'web',
++  },
++]
++
++export const OUTCOMES: Outcome[] = [
++  { id: 'low', name: 'Low', activeWeek8: 0.2, gradToPlus: 0.15, refundRate: 0.1 },
++  { id: 'middle', name: 'Middle (plan on this)', activeWeek8: 0.35, gradToPlus: 0.3, refundRate: 0.075 },
++  { id: 'spec', name: 'Spec', activeWeek8: 0.765, gradToPlus: 0.3, refundRate: 0.05 },
++]
++
++export function storeFee(channel: Channel) {
++  return channel === 'store15' ? 0.15 : channel === 'store30' ? 0.3 : 0
++}
++
++/** One ticket, in euros. */
++export function perTicket(o: Offer) {
++  const exVat = o.price / (1 + VAT)
++  const fees = o.channel === 'web' ? o.price * CARD.pct + CARD.fixed : exVat * storeFee(o.channel)
++  const net = exVat - fees
++  const creator = net * o.creatorShare
++  const aurelia = net - creator
++  const margin = aurelia - o.aiPerBuyer - o.boxPerBuyer
++  return { exVat, fees, net, creator, aurelia, ai: o.aiPerBuyer, box: o.boxPerBuyer, margin }
++}
++
++/** A cohort of `seats` buyers under an offer and an outcome. */
++export function cohort(o: Offer, s: Outcome, seats: number) {
++  const t = perTicket(o)
++  const refunded = seats * s.refundRate
++  const kept = seats - refunded
++  const graduates = seats * s.activeWeek8
++  const plus = graduates * s.gradToPlus
++  const plusNet = plus * PLUS_NET_YEAR1
++  const creatorPlus = plusNet * o.creatorPlusShare
++  // AI is spent on every buyer, refunded or not (an upper bound); the box ships to every buyer.
++  const aureliaTicket = kept * t.aurelia - seats * (t.ai + t.box)
++  const aureliaPlus = plusNet - creatorPlus
++  const creatorTicket = kept * t.creator
++  return {
++    seats,
++    refunded,
++    kept,
++    graduates,
++    plus,
++    plusPerBuyer: seats ? plus / seats : 0,
++    aureliaTicket,
++    aureliaPlus,
++    aureliaTotal: aureliaTicket + aureliaPlus,
++    creatorTicket,
++    creatorPlus,
++    creatorTotal: creatorTicket + creatorPlus,
++    /** What the creator would keep selling the same seats on a course platform. */
++    creatorElsewhere: kept * t.net * COURSE_PLATFORM_KEEP,
++  }
++}
++
++/** The pilot's five numbers, with thresholds set in advance (/wiki/b2b2c/plan). */
++export function pilotGates(o: Offer, s: Outcome, seats: number) {
++  const t = perTicket(o)
++  const c = cohort(o, s, seats)
++  const payment = o.channel === 'web' ? o.price * CARD.pct + CARD.fixed : t.fees
++  return [
++    { id: 'seats', label: 'Median paid seats per cohort', target: 'at least 100', value: `${Math.round(seats)}`, pass: seats >= 100 },
++    { id: 'active', label: 'Active at week 8', target: 'at least 35%', value: pct(s.activeWeek8), pass: s.activeWeek8 >= 0.35 },
++    { id: 'plus', label: 'Plus per ticket buyer', target: 'at least 8%', value: pct(c.plusPerBuyer, 1), pass: c.plusPerBuyer >= 0.08 },
++    { id: 'refunds', label: 'Refunds', target: 'under 10%', value: pct(s.refundRate, 1), pass: s.refundRate < 0.1 },
++    { id: 'cost', label: 'AI and payment cost per buyer', target: `under a third of Aurelia’s share (€${(t.aurelia / 3).toFixed(2)})`, value: `€${(t.ai + payment).toFixed(2)}`, pass: t.ai + payment < t.aurelia / 3 },
++  ]
++}
++
++export function pct(v: number, digits = 0) {
++  return `${(v * 100).toFixed(digits).replace(/\.0$/, '')}%`
++}
++
++export const eur = (v: number) => {
++  const a = Math.abs(v)
++  const d = a < 100 ? 2 : 0
++  return `${v < 0 ? '−' : ''}€${a.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d })}`
++}
+diff --git a/src/admin/pages/BusinessFunnelPage.tsx b/src/admin/pages/BusinessFunnelPage.tsx
+index 49af58f..e684a89 100644
+--- a/src/admin/pages/BusinessFunnelPage.tsx
++++ b/src/admin/pages/BusinessFunnelPage.tsx
+@@ -25,6 +25,7 @@ import { AGENT_RULES, DESIGNS, report, type AgentId, type DesignId } from '../da
+ import { studyWeek } from '../data/study'
+ import { INITIAL_JOURNEY, JourneyMapSchema, STORAGE_KEY, upgradeJourney } from '../data/userJourney'
+ import { readJson, readString, writeJson, writeString } from '../../lib/storage'
++import { RetreatFunnel } from './funnel/RetreatFunnel'
+ 
+ const GUIDE_KEY = 'aurelia.admin.funnelGuide'
+ const pct = (v: number) => `${Math.round(v * 100)}%`
+@@ -39,6 +40,7 @@ export function BusinessFunnelPage() {
+   const [params, setParams] = useSearchParams()
+   const agent = (Number(params.get('agent')) || 3) as AgentId
+   const design = (Number(params.get('design')) || 3) as DesignId
++  const view = params.get('view') === 'retreat' ? 'retreat' : 'app'
+   const [now] = useState(() => Date.now())
+   const week = Math.max(1, Math.min(8, studyWeek(now)))
+   const [targets, setTargets] = useState<Record<string, number>>(() => readJson(TARGETS_KEY, TargetsSchema, {}))
+@@ -92,6 +94,31 @@ export function BusinessFunnelPage() {
+         }
+       />
+ 
++      <div role="tablist" aria-label="Funnel" className="flex w-fit flex-wrap gap-4 rounded-8 bg-adm-bg p-4">
++        {(
++          [
++            ['app', 'App: freemium to Plus'],
++            ['retreat', 'Creator retreat (B2B2C)'],
++          ] as const
++        ).map(([id, label]) => (
++          <button
++            key={id}
++            type="button"
++            role="tab"
++            aria-selected={view === id}
++            onClick={() => setParams(id === 'retreat' ? { view: 'retreat' } : {}, { replace: true })}
++            className={`rounded-8 px-12 py-6 text-12 font-medium ${view === id ? 'bg-adm-surface text-adm-ink shadow-sm' : 'text-adm-ink-2 hover:text-adm-ink'}`}
++          >
++            {label}
++          </button>
++        ))}
++      </div>
++
++      {view === 'retreat' ? (
++        <RetreatFunnel />
++      ) : (
++        <>
++
+       <div className="flex flex-wrap items-end gap-12" data-tour="source">
+         <FormField label="Agent prediction for">
+           <select aria-label="Production version" className={`${inputClass} w-auto!`} value={design} onChange={(e) => setSource(agent, Number(e.target.value) as DesignId)}>
+@@ -259,8 +286,11 @@ export function BusinessFunnelPage() {
+         </div>
+       </details>
+ 
++        </>
++      )}
++
+       {adding && <DecisionForm stage={adding} onClose={() => setAdding(null)} onSave={(d) => saveDecisions([...decisions, d], 'Decision added')} />}
+-      {guide && (
++      {guide && view === 'app' && (
+         <GuideTour
+           steps={GUIDE}
+           onClose={() => {
+diff --git a/src/admin/pages/funnel/RetreatFunnel.tsx b/src/admin/pages/funnel/RetreatFunnel.tsx
+new file mode 100644
+index 0000000..d82f469
+--- /dev/null
++++ b/src/admin/pages/funnel/RetreatFunnel.tsx
+@@ -0,0 +1,241 @@
++import { Check, RotateCcw, X } from 'lucide-react'
++import { useState } from 'react'
++import { Link } from 'react-router-dom'
++import { Badge, Button, FormField, Panel, inputClass } from '../../components/ui'
++import { OFFERS, OUTCOMES, PLUS_NET_YEAR1, cohort, eur, pct, perTicket, pilotGates, type Offer, type Outcome } from '../../data/retreatFunnel'
++
++/**
++ * The creator retreat (B2B2C) view of the Business funnel (U113, J159):
++ * Eugene's Retreat-in-a-Box, as written and as redesigned (approved
++ * 24 Nov 2026), on the wiki's unit-economics inputs. Pick the terms (offer)
++ * and how people behave (outcome); every assumption can be changed here and
++ * reset. Estimates until the pilot measures them.
++ */
++export function RetreatFunnel() {
++  const [offerId, setOfferId] = useState('redesign')
++  const [outcomeId, setOutcomeId] = useState<Outcome['id']>('middle')
++  const [seats, setSeats] = useState(200)
++  const [creators, setCreators] = useState(5)
++  const [edits, setEdits] = useState<Partial<Offer & Outcome>>({})
++
++  const baseOffer = OFFERS.find((o) => o.id === offerId) ?? OFFERS[1]
++  const baseOutcome = OUTCOMES.find((o) => o.id === outcomeId) ?? OUTCOMES[1]
++  const offer: Offer = { ...baseOffer, ...pick(edits, ['price', 'creatorShare', 'creatorPlusShare', 'aiPerBuyer', 'boxPerBuyer']) }
++  const outcome: Outcome = { ...baseOutcome, ...pick(edits, ['activeWeek8', 'gradToPlus', 'refundRate']) }
++  const edited = Object.keys(edits).length > 0
++  const c = cohort(offer, outcome, seats)
++  const gates = pilotGates(offer, outcome, seats)
++  const passed = gates.filter((g) => g.pass).length
++
++  const set = (k: keyof (Offer & Outcome), v: number) => setEdits((e) => ({ ...e, [k]: v }))
++
++  return (
++    <div className="flex flex-col gap-16">
++      <section aria-label="About this view" className="rounded-12 border border-adm-line bg-adm-surface p-14 text-12 leading-[18px] text-adm-ink-2">
++        <p>
++          <b className="text-adm-ink">Retreat-in-a-Box as a funnel.</b> A creator sells an 8-week paid journey to their followers; graduates move to Aurelia Plus. The{' '}
++          <b className="text-adm-ink">redesign was approved on 24 Nov 2026</b>: 70/30 plus a share of the Plus each cohort drives, a journey produced once in the creator’s voice with personal inserts, a digital kit, and €39 tested against €19.99. Every number is an estimate from the{' '}
++          <Link to="/wiki/b2b2c/economics" className="underline decoration-adm-line underline-offset-2 hover:text-adm-ink">
++            B2B2C research
++          </Link>{' '}
++          until a pilot measures it.
++        </p>
++      </section>
++
++      <div className="flex flex-wrap items-end gap-12">
++        <FormField label="Terms (offer)">
++          <select aria-label="Offer" className={`${inputClass} w-auto!`} value={offerId} onChange={(e) => (setOfferId(e.target.value), setEdits({}))}>
++            {OFFERS.map((o) => (
++              <option key={o.id} value={o.id}>
++                {o.name}
++              </option>
++            ))}
++          </select>
++        </FormField>
++        <FormField label="How people behave (outcome)">
++          <select aria-label="Outcome" className={`${inputClass} w-auto!`} value={outcomeId} onChange={(e) => (setOutcomeId(e.target.value as Outcome['id']), setEdits({}))}>
++            {OUTCOMES.map((o) => (
++              <option key={o.id} value={o.id}>
++                {o.name}
++              </option>
++            ))}
++          </select>
++        </FormField>
++        <FormField label="Paid seats per cohort">
++          <input type="number" min={1} max={1000} aria-label="Paid seats per cohort" className={`${inputClass} w-96!`} value={seats} onChange={(e) => setSeats(clampNum(e.target.value, 1, 1000))} />
++        </FormField>
++        <FormField label="Creators (one cohort each)">
++          <input type="number" min={1} max={500} aria-label="Creators" className={`${inputClass} w-96!`} value={creators} onChange={(e) => setCreators(clampNum(e.target.value, 1, 500))} />
++        </FormField>
++        {edited && (
++          <Button size="sm" icon={<RotateCcw size={13} />} onClick={() => setEdits({})}>
++            Reset assumptions
++          </Button>
++        )}
++      </div>
++      <p className="-mt-8 text-11 text-adm-muted">{offer.note} Pilot: 3–5 creators. Eugene’s full wave: 50 creators × 200 seats.</p>
++
++      <div className="grid gap-12 lg:grid-cols-[1.1fr_1fr]">
++        <Panel title="One cohort, step by step" description={`${seats} paid seats under “${baseOffer.name}”, outcome “${baseOutcome.name}”${edited ? ', with your edits' : ''}. Each bar is a share of buyers.`}>
++          <ol className="flex flex-col gap-10" aria-label="Retreat funnel">
++            <Step label="Buys a ticket" stage="Entry" n={seats} of={seats} />
++            <Step label="Keeps it (not refunded)" stage="Entry" n={c.kept} of={seats} />
++            <Step label="Still active at week 8" stage="Staying" n={c.graduates} of={seats} />
++            <Step label="Chooses Plus at graduation" stage="Upsell" n={c.plus} of={seats} strong />
++          </ol>
++          <p className="mt-12 text-11 leading-[16px] text-adm-muted">
++            Plus per ticket buyer is the number that decides the plan: {pct(c.plusPerBuyer, 1)} here ({pct(outcome.gradToPlus)} of graduates). The spec’s 30% is per graduate.
++          </p>
++        </Panel>
++
++        <Panel title="Pilot gates" description="The five numbers set in advance in the plan. Each miss points to a different fix." actions={<Badge tone={passed === 5 ? 'good' : passed >= 3 ? 'warning' : 'critical'}>{passed} of 5 pass</Badge>}>
++          <ul className="flex flex-col gap-8">
++            {gates.map((g) => (
++              <li key={g.id} className="grid grid-cols-[18px_1fr_auto] items-start gap-8 text-12">
++                {g.pass ? <Check size={15} className="mt-1 text-adm-good" aria-label="Passes" /> : <X size={15} className="mt-1 text-adm-critical" aria-label="Misses" />}
++                <span className="text-adm-ink">
++                  {g.label}
++                  <span className="block text-11 text-adm-muted">{g.target}</span>
++                </span>
++                <span className={`tabular-nums font-semibold ${g.pass ? 'text-adm-ink' : 'text-adm-critical'}`}>{g.value}</span>
++              </li>
++            ))}
++          </ul>
++          <p className="mt-12 text-11 text-adm-muted">
++            From{' '}
++            <Link to="/wiki/b2b2c/plan" className="underline decoration-adm-line underline-offset-2 hover:text-adm-ink">
++              the plan
++            </Link>
++            . The seat gate reads the seats you entered.
++          </p>
++        </Panel>
++      </div>
++
++      <Panel title="Money" description="Per cohort, then across all creators. Year-1 Plus counts an annual subscriber at about $70.83 net ($1 = €1). Aurelia’s ticket line already subtracts AI and the box for every buyer.">
++        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
++          <Money label="Aurelia, per cohort" value={eur(c.aureliaTotal)} hint={`ticket ${eur(c.aureliaTicket)} · Plus ${eur(c.aureliaPlus)}`} bad={c.aureliaTotal < 0} />
++          <Money label="Creator, per cohort" value={eur(c.creatorTotal)} hint={`ticket ${eur(c.creatorTicket)} · Plus share ${eur(c.creatorPlus)}`} />
++          <Money label="Creator on a course platform" value={eur(c.creatorElsewhere)} hint="same seats, keeping about 90%: what Aurelia must beat" />
++          <Money label={`Across ${creators} creator${creators === 1 ? '' : 's'}`} value={eur(c.aureliaTotal * creators)} hint={`${Math.round(c.plus * creators).toLocaleString('en-GB')} Plus subscribers for Aurelia`} bad={c.aureliaTotal < 0} />
++        </div>
++        <div className="mt-14 overflow-x-auto">
++          <table className="w-full min-w-[560px] text-left text-12">
++            <caption className="sr-only">One ticket under each offer</caption>
++            <thead className="text-11 text-adm-muted">
++              <tr>
++                <th className="py-6 pr-12 font-medium">One ticket (€)</th>
++                {OFFERS.map((o) => (
++                  <th key={o.id} className={`py-6 pr-12 font-medium ${o.id === offerId ? 'text-adm-ink' : ''}`}>
++                    {o.name}
++                  </th>
++                ))}
++              </tr>
++            </thead>
++            <tbody className="tabular-nums">
++              {(
++                [
++                  ['Price, VAT included', (o: Offer) => eur(o.price)],
++                  ['Net after 20% VAT and card fees', (o: Offer) => eur(perTicket(o).net)],
++                  ['Creator', (o: Offer) => `${eur(perTicket(o).creator)} (${pct(o.creatorShare)})`],
++                  ['Aurelia, before AI', (o: Offer) => eur(perTicket(o).aurelia)],
++                  ['AI per buyer', (o: Offer) => eur(-o.aiPerBuyer)],
++                  ['Box per buyer', (o: Offer) => (o.boxPerBuyer ? eur(-o.boxPerBuyer) : 'digital kit')],
++                  ['Aurelia, after AI and box', (o: Offer) => eur(perTicket(o).margin)],
++                ] as const
++              ).map(([label, f]) => (
++                <tr key={label} className="border-t border-adm-line">
++                  <th scope="row" className="py-6 pr-12 font-normal text-adm-ink-2">
++                    {label}
++                  </th>
++                  {OFFERS.map((o) => {
++                    const shown = o.id === offerId ? offer : o
++                    const v = f(shown)
++                    return (
++                      <td key={o.id} className={`py-6 pr-12 ${o.id === offerId ? 'font-semibold text-adm-ink' : 'text-adm-ink-2'} ${v.startsWith('−') && label.startsWith('Aurelia, after') ? 'text-adm-critical' : ''}`}>
++                        {v}
++                      </td>
++                    )
++                  })}
++                </tr>
++              ))}
++            </tbody>
++          </table>
++        </div>
++        <p className="mt-10 text-11 text-adm-muted">
++          The spec loses money on every ticket once 24 personalised sessions and a physical box are paid for. The redesign keeps a margin because the journey is produced once per creator. AI: {offer.aiNote}.
++        </p>
++      </Panel>
++
++      <details className="rounded-12 border border-adm-line bg-adm-surface p-14 text-12">
++        <summary className="cursor-pointer font-semibold text-adm-ink">Change the assumptions</summary>
++        <p className="mt-6 text-11 text-adm-muted">Edits apply to the chosen offer and outcome until you reset or pick another.</p>
++        <div className="mt-12 grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
++          <NumField label="Ticket price (€)" value={offer.price} step={1} onChange={(v) => set('price', v)} />
++          <NumField label="Creator share of ticket (%)" value={offer.creatorShare * 100} onChange={(v) => set('creatorShare', v / 100)} />
++          <NumField label="Creator share of year-1 Plus (%)" value={offer.creatorPlusShare * 100} onChange={(v) => set('creatorPlusShare', v / 100)} />
++          <NumField label="AI per buyer (€)" value={offer.aiPerBuyer} step={0.1} onChange={(v) => set('aiPerBuyer', v)} />
++          <NumField label="Box per buyer (€)" value={offer.boxPerBuyer} step={1} onChange={(v) => set('boxPerBuyer', v)} />
++          <NumField label="Active at week 8 (%)" value={outcome.activeWeek8 * 100} onChange={(v) => set('activeWeek8', v / 100)} />
++          <NumField label="Graduates choosing Plus (%)" value={outcome.gradToPlus * 100} onChange={(v) => set('gradToPlus', v / 100)} />
++          <NumField label="Refunds (%)" value={outcome.refundRate * 100} step={0.5} onChange={(v) => set('refundRate', v / 100)} />
++        </div>
++      </details>
++
++      <details className="rounded-12 border border-adm-line bg-adm-surface p-14 text-12 leading-[18px] text-adm-ink-2">
++        <summary className="cursor-pointer font-semibold text-adm-ink">Where the numbers come from</summary>
++        <ul className="mt-8 flex list-disc flex-col gap-4 pl-18">
++          <li>Ticket maths: 20% VAT, card fees 1.4% + €0.25, the split on the net, as on the wiki’s Unit economics page.</li>
++          <li>Outcomes: low 20% / middle 35% / spec 76.5% active at week 8; mindfulness apps keep 4.7% at day 30 (Baumel et al., 2019). Graduates to Plus 15% / 30% / 30%; health and fitness trials convert 37.7% (RevenueCat 2026).</li>
++          <li>Plus year 1: $100 ÷ 1.2 VAT × 0.85 after a 15% store fee = ${PLUS_NET_YEAR1}.</li>
++          <li>Creator elsewhere: course platforms keep 0–10% when the creator brings the buyers (Maven 10%, Teachable 0–7.5%, Kajabi 0%).</li>
++          <li>The redesign’s AI per buyer (€0.50) and the creator’s 20% Plus share are proposals to test, not research figures.</li>
++        </ul>
++      </details>
++    </div>
++  )
++}
++
++function Step({ label, stage, n, of, strong }: { label: string; stage: string; n: number; of: number; strong?: boolean }) {
++  const share = of ? n / of : 0
++  return (
++    <li className="grid grid-cols-[1fr_auto] items-center gap-x-12 gap-y-4 text-12">
++      <span className="text-adm-ink">
++        {label} <span className="text-11 text-adm-muted">· {stage}</span>
++      </span>
++      <span className="tabular-nums text-adm-ink">
++        <b>{n < 10 && n % 1 ? n.toFixed(1) : Math.round(n)}</b> <span className="text-adm-muted">({pct(share, strong || (share < 0.1 && share > 0) ? 1 : 0)})</span>
++      </span>
++      <span className="col-span-2 h-10 overflow-hidden rounded-full bg-adm-bg">
++        <span className={`block h-full rounded-full ${strong ? 'bg-adm-s1' : 'bg-adm-s3'}`} style={{ width: `${Math.max(share * 100, share > 0 ? 1 : 0)}%` }} />
++      </span>
++    </li>
++  )
++}
++
++function Money({ label, value, hint, bad }: { label: string; value: string; hint: string; bad?: boolean }) {
++  return (
++    <div className="flex flex-col gap-4 rounded-8 border border-adm-line p-12">
++      <span className="text-11 text-adm-muted">{label}</span>
++      <span className={`text-[22px] font-semibold leading-[28px] tabular-nums ${bad ? 'text-adm-critical' : 'text-adm-ink'}`}>{value}</span>
++      <span className="text-11 leading-[15px] text-adm-muted">{hint}</span>
++    </div>
++  )
++}
++
++function NumField({ label, value, step = 1, onChange }: { label: string; value: number; step?: number; onChange: (v: number) => void }) {
++  return (
++    <FormField label={label}>
++      <input type="number" min={0} step={step} aria-label={label} className={inputClass} value={Math.round(value * 100) / 100} onChange={(e) => onChange(Math.max(0, Number(e.target.value) || 0))} />
++    </FormField>
++  )
++}
++
++function clampNum(v: string, lo: number, hi: number) {
++  return Math.min(hi, Math.max(lo, Math.round(Number(v) || lo)))
++}
++
++function pick<T extends object, K extends keyof T>(o: Partial<T>, keys: K[]): Partial<Pick<T, K>> {
++  const out: Partial<Pick<T, K>> = {}
++  for (const k of keys) if (o[k] !== undefined) out[k] = o[k]
++  return out
++}
+-- 
+2.43.0
+

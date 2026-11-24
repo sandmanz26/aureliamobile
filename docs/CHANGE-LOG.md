@@ -19,6 +19,15 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-24 — Creator retreat funnel; no names on shared surfaces (U113, U114, J159)
+
+Business funnel gains a Creator retreat (B2B2C) view: the approved redesign
+of Retreat-in-a-Box against the spec, with pilot gates, money per cohort and
+editable assumptions. Shared pages and admin texts no longer name the
+business owner. Eugene's full context kept in `docs/briefs/EUGENE-CONTEXT.md`.
+
+Branches: `web_app`, `admin_cms`, `web_prod`.
+
 ### 2026-11-24 — Headline in Motion on phones (U112, J158)
 
 The moving headline now shows on phones too, in every version, on request.
