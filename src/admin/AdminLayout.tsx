@@ -3,6 +3,8 @@ import {
   Contact,
   ShoppingBag,
   Filter,
+  FileChartColumn,
+  Combine,
   HeartPulse,
   Target,
   Microscope,
@@ -80,6 +82,16 @@ const NAV: { section: string; items: NavItem[] }[] = [
       ...(RELEASES.businessFunnel ? [{ to: '/admin/business-funnel', label: 'Business funnel', icon: Filter, flag: 'adminBusinessFunnel' }] : []),
       ...(RELEASES.buyerAgent ? [{ to: '/admin/buyer-agent', label: 'Buyer agent results', icon: ShoppingBag, flag: 'adminBuyerAgent' }] : []),
     ],
+  },
+  {
+    // U116 (J167): readable reports for the business owner, each showing its sources. Staging only (RELEASES).
+    section: 'Reports',
+    items: RELEASES.reports
+      ? [
+          { to: '/admin/reports/buyer-agent', label: 'Buyer agent report', icon: FileChartColumn, flag: 'adminReportBuyerAgent' },
+          { to: '/admin/reports/combination', label: 'Combination report', icon: Combine, flag: 'adminReportCombination' },
+        ]
+      : [],
   },
   {
     section: 'Content',

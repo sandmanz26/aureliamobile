@@ -89,6 +89,8 @@ const SettingsPage = lazy(() => import('./admin/pages/SettingsPage').then((m) =>
 const UserJourneyPage = lazy(() => import('./admin/pages/UserJourneyPage').then((m) => ({ default: m.UserJourneyPage })))
 const BusinessFunnelPage = lazy(() => import('./admin/pages/BusinessFunnelPage').then((m) => ({ default: m.BusinessFunnelPage })))
 const BuyerResultsPage = lazy(() => import('./admin/pages/BuyerResultsPage').then((m) => ({ default: m.BuyerResultsPage })))
+const BuyerAgentReportPage = lazy(() => import('./admin/pages/reports/BuyerAgentReportPage').then((m) => ({ default: m.BuyerAgentReportPage })))
+const CombinationReportPage = lazy(() => import('./admin/pages/reports/CombinationReportPage').then((m) => ({ default: m.CombinationReportPage })))
 const PersonasPage = lazy(() => import('./admin/pages/PersonasPage').then((m) => ({ default: m.PersonasPage })))
 
 export default function App() {
@@ -208,6 +210,20 @@ export default function App() {
                   <BuyerResultsPage />
                 </ModuleGuard>
               } />
+            )}
+            {RELEASES.reports && (
+              <>
+                <Route path="reports/buyer-agent" element={
+                  <ModuleGuard module="adminReportBuyerAgent">
+                    <BuyerAgentReportPage />
+                  </ModuleGuard>
+                } />
+                <Route path="reports/combination" element={
+                  <ModuleGuard module="adminReportCombination">
+                    <CombinationReportPage />
+                  </ModuleGuard>
+                } />
+              </>
             )}
             {/* Journey tags became tabs of User journey (U092). */}
             <Route path="journey-tags" element={<Navigate to="/admin/user-journey?view=tags" replace />} />
