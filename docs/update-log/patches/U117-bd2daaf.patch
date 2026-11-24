@@ -1,0 +1,1688 @@
+From bd2daaf9d92b4651855708fb842a93824ff17d1e Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 24 Nov 2026 17:12:38 +0000
+Subject: [PATCH] Reports: the price each buyer-agent iteration tested; Cost
+ report with supplier pros and cons, variations and a connected bad-to-good
+ graph (U117, J172)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/App.tsx                                   |   6 +
+ src/admin/AdminLayout.tsx                     |   2 +
+ src/admin/data/buyerAgentReport.test.ts       |  24 +
+ src/admin/data/buyerAgentReport.ts            |  48 ++
+ src/admin/data/costModel.test.ts              |  68 ++
+ src/admin/data/costModel.ts                   | 492 +++++++++++++
+ src/admin/data/reportSources.ts               |  57 +-
+ .../pages/reports/BuyerAgentReportPage.tsx    |  56 +-
+ src/admin/pages/reports/CostReportPage.tsx    | 650 ++++++++++++++++++
+ src/admin/pages/reports/ReportParts.tsx       |  12 +-
+ src/demo/modules.ts                           |   1 +
+ 11 files changed, 1410 insertions(+), 6 deletions(-)
+ create mode 100644 src/admin/data/buyerAgentReport.test.ts
+ create mode 100644 src/admin/data/costModel.test.ts
+ create mode 100644 src/admin/data/costModel.ts
+ create mode 100644 src/admin/pages/reports/CostReportPage.tsx
+
+diff --git a/src/App.tsx b/src/App.tsx
+index 8760201..b9a0b77 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -90,6 +90,7 @@ const UserJourneyPage = lazy(() => import('./admin/pages/UserJourneyPage').then(
+ const BusinessFunnelPage = lazy(() => import('./admin/pages/BusinessFunnelPage').then((m) => ({ default: m.BusinessFunnelPage })))
+ const BuyerResultsPage = lazy(() => import('./admin/pages/BuyerResultsPage').then((m) => ({ default: m.BuyerResultsPage })))
+ const BuyerAgentReportPage = lazy(() => import('./admin/pages/reports/BuyerAgentReportPage').then((m) => ({ default: m.BuyerAgentReportPage })))
++const CostReportPage = lazy(() => import('./admin/pages/reports/CostReportPage').then((m) => ({ default: m.CostReportPage })))
+ const CombinationReportPage = lazy(() => import('./admin/pages/reports/CombinationReportPage').then((m) => ({ default: m.CombinationReportPage })))
+ const PersonasPage = lazy(() => import('./admin/pages/PersonasPage').then((m) => ({ default: m.PersonasPage })))
+ 
+@@ -223,6 +224,11 @@ export default function App() {
+                     <CombinationReportPage />
+                   </ModuleGuard>
+                 } />
++                <Route path="reports/cost" element={
++                  <ModuleGuard module="adminReportCost">
++                    <CostReportPage />
++                  </ModuleGuard>
++                } />
+               </>
+             )}
+             {/* Journey tags became tabs of User journey (U092). */}
+diff --git a/src/admin/AdminLayout.tsx b/src/admin/AdminLayout.tsx
+index 69a2d83..a311bfa 100644
+--- a/src/admin/AdminLayout.tsx
++++ b/src/admin/AdminLayout.tsx
+@@ -5,6 +5,7 @@ import {
+   Filter,
+   FileChartColumn,
+   Combine,
++  Calculator,
+   HeartPulse,
+   Target,
+   Microscope,
+@@ -90,6 +91,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
+       ? [
+           { to: '/admin/reports/buyer-agent', label: 'Buyer agent report', icon: FileChartColumn, flag: 'adminReportBuyerAgent' },
+           { to: '/admin/reports/combination', label: 'Combination report', icon: Combine, flag: 'adminReportCombination' },
++          { to: '/admin/reports/cost', label: 'Cost report', icon: Calculator, flag: 'adminReportCost' },
+         ]
+       : [],
+   },
+diff --git a/src/admin/data/buyerAgentReport.test.ts b/src/admin/data/buyerAgentReport.test.ts
+new file mode 100644
+index 0000000..9c283bb
+--- /dev/null
++++ b/src/admin/data/buyerAgentReport.test.ts
+@@ -0,0 +1,24 @@
++import { describe, expect, it } from 'vitest'
++import { APP_PRICE, buildIterations } from './buyerAgentReport'
++
++describe('buyer agent report: the price each iteration tested', () => {
++  it('gives every iteration a price-tested entry with amount, currency, period and origin', () => {
++    const its = buildIterations()
++    expect(its.map((i) => i.id)).toEqual(['it-v1', 'it-v2', 'it-v3', 'it-rerun'])
++    for (const it of its) {
++      for (const k of ['amount', 'currency', 'period', 'origin'] as const) expect(it.priceTested[k].length, `${it.id} ${k}`).toBeGreaterThan(3)
++      if (it.priceTested.differsFromApp) expect(it.priceTested.warning, it.id).toBeTruthy()
++    }
++  })
++
++  it('reads the prices from the run data, not a guess', () => {
++    const [v1, v2, v3, rerun] = buildIterations()
++    expect(v1.priceTested.amount).toContain('$9.99')
++    expect(v1.priceTested.amount).toContain('$79')
++    expect(v2.priceTested.amount).toContain('₹399')
++    expect(v3.priceTested.amount).toContain('$59.99')
++    expect(v3.priceTested.amount).toContain('$79')
++    expect(rerun.priceTested.amount).toContain(APP_PRICE.amount)
++    expect(rerun.priceTested.differsFromApp).toBe(false)
++  })
++})
+diff --git a/src/admin/data/buyerAgentReport.ts b/src/admin/data/buyerAgentReport.ts
+index d563aec..522860f 100644
+--- a/src/admin/data/buyerAgentReport.ts
++++ b/src/admin/data/buyerAgentReport.ts
+@@ -19,6 +19,22 @@ export interface Figure {
+   note?: string
+ }
+ 
++/** The price an iteration showed its personas: part of the result (U117). */
++export interface PriceTested {
++  /** Amount and period, as shown. */
++  amount: string
++  currency: string
++  period: string
++  /** Where the price came from. */
++  origin: string
++  /** True when it is not today's app price ($10 a month or $100 a year). */
++  differsFromApp: boolean
++  warning?: string
++}
++
++/** Today's price in the app: the Upgrade screen after the free limit (src/pages/UpgradePage.tsx). */
++export const APP_PRICE = { amount: '$10 a month or $100 a year', where: 'the app’s Upgrade screen, shown after the free limit' }
++
+ export interface Iteration {
+   /** Matches the finding id in reportSources. */
+   id: 'it-v1' | 'it-v2' | 'it-v3' | 'it-rerun'
+@@ -32,6 +48,7 @@ export interface Iteration {
+   /** Why no decision is listed, when none is. */
+   decisionNote?: string
+   findings: string[]
++  priceTested: PriceTested
+   link: string
+   sources: SourceId[]
+ }
+@@ -122,6 +139,14 @@ export function buildIterations(): Iteration[] {
+       decisions: [],
+       decisionNote: 'No entry in the decision log. It fed run v2: the agent was too agreeable, so v2 added calibration rules.',
+       findings: r1.findings.slice(0, 3),
++      priceTested: {
++        amount: r1.stimulus.offer.find((o) => o.startsWith('Plus')) ?? money(r1.stimulus.priceUsd),
++        currency: 'US dollars, the same for everyone',
++        period: 'a month, or a year',
++        origin: 'The admin’s mock plan table (Commerce → PLANS: Plus $9.99 a month, $79 a year). Not the app’s price.',
++        differsFromApp: true,
++        warning: `Not today’s app price (${APP_PRICE.amount}): $0.01 lower a month and $21 lower a year, and no regional prices.`,
++      },
+       link: '/admin/buyer-agent?v=1',
+       sources: ['buyer-v1', 'personas'],
+     },
+@@ -145,6 +170,14 @@ export function buildIterations(): Iteration[] {
+       ],
+       decisions: decisions(['d3']),
+       findings: r2.findings.slice(0, 4),
++      priceTested: {
++        amount: r2.stimulus.offer.filter((o) => o.includes('$9.99')).join(' · '),
++        currency: 'Local currency where there is a local price; US dollars elsewhere. Answers in USD.',
++        period: 'a month (a year in the US only)',
++        origin: 'The admin’s regional pricing table (Commerce → REGION_PRICING, mock), as each persona’s country would see it.',
++        differsFromApp: true,
++        warning: `The app has no regional prices today; it asks ${APP_PRICE.amount} everywhere.`,
++      },
+       link: '/admin/buyer-agent?v=2',
+       sources: ['buyer-v2', 'buyer-v1', 'personas'],
+     },
+@@ -168,6 +201,14 @@ export function buildIterations(): Iteration[] {
+       ],
+       decisions: decisions(['d1', 'd3']),
+       findings: r3.findings.slice(0, 4),
++      priceTested: {
++        amount: `A (today): ${r3.control?.offer[0].match(/Plus [^,]+/)?.[0] ?? 'as in v2'} · B (proposal): ${r3.stimulus.offer.find((o) => o.startsWith('Plus')) ?? ''}`,
++        currency: 'Local currency in 7 (A) or 17 (B) countries; US dollars elsewhere. Answers in USD.',
++        period: 'A: a month or a year. B: yearly first, then monthly',
++        origin: 'A: the v2 stimulus (admin mock table). B: a proposed price list (buyerRunV3 V3_PRICES), anchored on Insight Timer’s $59.99 a year.',
++        differsFromApp: true,
++        warning: `Neither A nor B is today’s app price (${APP_PRICE.amount}). B’s $59.99 a year is $40 below the app’s yearly price.`,
++      },
+       link: '/admin/buyer-agent?v=3',
+       sources: ['buyer-v3', 'buyer-v2', 'personas', 'backend-old', 'artefact'],
+     },
+@@ -195,6 +236,13 @@ export function buildIterations(): Iteration[] {
+       ],
+       decisions: decisions(['d1', 'd2', 'd7', 'd5', 'd6']),
+       findings: OVERALL_SUMMARY.slice(0, 3),
++      priceTested: {
++        amount: `${APP_PRICE.amount}, after the free limit`,
++        currency: 'US dollars',
++        period: 'a month or a year',
++        origin: `The real Upgrade screen of production v1–v3 (${APP_PRICE.where}). Whether a persona would pay is still judged against the price it saw in its own run (v1/v2 local Plus, v3 offer B), about $9.99 in the US.`,
++        differsFromApp: false,
++      },
+       link: '/admin/buyer-agent?view=versions',
+       sources: ['buyer-rerun', 'versions', 'personas'],
+     },
+diff --git a/src/admin/data/costModel.test.ts b/src/admin/data/costModel.test.ts
+new file mode 100644
+index 0000000..7771784
+--- /dev/null
++++ b/src/admin/data/costModel.test.ts
+@@ -0,0 +1,68 @@
++import { describe, expect, it } from 'vitest'
++import {
++  DEFAULT_GOAL, GRAPH_EDGES, GRAPH_NODES, LENGTHS, MEASURED_2025, MEDIA, PRESETS, SUPPLIERS,
++  chapterCost, downstream, goal, presetInputs, total, type Stage,
++} from './costModel'
++
++const balanced = PRESETS.find((p) => p.id === 'balanced')!
++const tenMin = presetInputs(balanced, 10)
++
++describe('cost model', () => {
++  it('gives every supplier a price, a label, a source and pros and cons', () => {
++    for (const s of SUPPLIERS) {
++      expect(s.price, s.id).not.toBe('')
++      expect(s.sourceUrl, s.id).toMatch(/^(https:\/\/|\/wiki\/)/)
++      expect(s.pros.length, s.id).toBeGreaterThan(0)
++      expect(s.cons.length, s.id).toBeGreaterThan(0)
++    }
++    for (const m of MEDIA) expect(SUPPLIERS.filter((s) => s.media === m).length, m).toBeGreaterThanOrEqual(2)
++  })
++
++  it('prices a 10-minute chapter as the wiki notes do: Haiku about $0.001, tts-1 about $0.10', () => {
++    const c = chapterCost({ minutes: 10, wordsPerMinute: 105, models: { script: 'haiku-5.5', voice: 'tts-1', music: 'music-library', image: 'flux-dev', video: 'none-video' }, personalisation: 'full', cacheHit: 1 })
++    expect(c.script).toBeCloseTo(0.0012, 3)
++    expect(c.voice).toBeCloseTo(0.0945, 3)
++    expect(c.music + c.image + c.video).toBe(0)
++  })
++
++  it('orders the presets Lean < Balanced < Premium at every length, and longer costs more', () => {
++    for (const m of LENGTHS) {
++      const [l, b, p] = PRESETS.map((x) => total(chapterCost(presetInputs(x, m))))
++      expect(l).toBeLessThan(b)
++      expect(b).toBeLessThan(p)
++    }
++    expect(total(chapterCost(presetInputs(balanced, 3)))).toBeLessThan(total(chapterCost(tenMin)))
++  })
++
++  it('keeps the 2025 measured baseline adding up to €40.27', () => {
++    expect(MEDIA.reduce((s, m) => s + MEASURED_2025.byMedia[m], 0)).toBeCloseTo(40.28, 1)
++    for (const c of MEASURED_2025.campaigns) expect(c.script + c.voice + c.image + c.music + c.video).toBeCloseTo(c.total, 1)
++  })
++
++  it('reproduces the spec’s chapters to flip at the default (25 → 85, 10 min, fully personal)', () => {
++    expect(([1, 2, 3] as Stage[]).map((stage) => goal({ ...DEFAULT_GOAL, stage }, tenMin).chapters)).toEqual([42, 32, 22])
++  })
++
++  it('makes cost per flip fall and profit per flip rise across the stages', () => {
++    const r = ([1, 2, 3] as Stage[]).map((stage) => goal({ ...DEFAULT_GOAL, stage }, tenMin))
++    expect(r[0].costPerFlip).toBeGreaterThan(r[1].costPerFlip)
++    expect(r[1].costPerFlip).toBeGreaterThan(r[2].costPerFlip)
++    expect(r[2].profitPerFlip).toBeGreaterThan(r[0].profitPerFlip)
++  })
++
++  it('needs more chapters from a worse start and fewer chapters a week lowers the flip chance', () => {
++    const severe = goal({ ...DEFAULT_GOAL, baseline: 10 }, tenMin)
++    const mild = goal({ ...DEFAULT_GOAL, baseline: 60 }, tenMin)
++    expect(severe.chapters).toBeGreaterThan(goal(DEFAULT_GOAL, tenMin).chapters)
++    expect(mild.chapters).toBeLessThan(goal(DEFAULT_GOAL, tenMin).chapters)
++    expect(goal({ ...DEFAULT_GOAL, chaptersPerWeek: 1 }, tenMin).flipProbability).toBeLessThan(goal(DEFAULT_GOAL, tenMin).flipProbability)
++  })
++
++  it('connects every graph edge to known nodes, and a model change reaches profit but not uplift', () => {
++    const ids = new Set(GRAPH_NODES.map((n) => n.id))
++    for (const [a, b] of GRAPH_EDGES) expect(ids.has(a) && ids.has(b), `${a}→${b}`).toBe(true)
++    const d = downstream('models')
++    expect(d.has('profit')).toBe(true)
++    expect(d.has('uplift')).toBe(false)
++  })
++})
+diff --git a/src/admin/data/costModel.ts b/src/admin/data/costModel.ts
+new file mode 100644
+index 0000000..4299dc4
+--- /dev/null
++++ b/src/admin/data/costModel.ts
+@@ -0,0 +1,492 @@
++/**
++ * Admin → Reports → Cost report (U117, J172). Pure model: the supplier
++ * catalogue, the cost of one chapter by media, the report's presets, the
++ * 2025 measured baseline, and the bad-to-good journey (uplift, chapters to a
++ * flip, flip probability, cost and profit per flip) across the Causal AI
++ * stages. No React here, so `costModel.test.ts` can pin every formula.
++ *
++ * Every number carries a label: measured (the 2025 old admin), company price
++ * (the supplier's own page), third-party, estimate (our calculation on
++ * assumed inputs) or scenario (the business owner's assumptions in the spec
++ * PDF, not measured). Nothing therapeutic is measured: there are no real users.
++ */
++
++export type NumberLabel = 'measured' | 'company-price' | 'third-party' | 'estimate' | 'scenario'
++
++export const NUMBER_LABEL_TEXT: Record<NumberLabel, string> = {
++  measured: 'Measured',
++  'company-price': 'Company price',
++  'third-party': 'Third-party',
++  estimate: 'Estimate',
++  scenario: 'Scenario',
++}
++
++export type Media = 'script' | 'voice' | 'music' | 'image' | 'video'
++export const MEDIA: Media[] = ['script', 'voice', 'music', 'image', 'video']
++export const MEDIA_LABEL: Record<Media, string> = { script: 'Script (LLM)', voice: 'Voice (TTS)', music: 'Music', image: 'Image', video: 'Video' }
++
++/** How a supplier bills. Every price is in US dollars. */
++export type Billing =
++  | { kind: 'tokens'; inPerM: number; outPerM: number }
++  | { kind: 'chars'; perM: number }
++  | { kind: 'minute'; perMin: number }
++  | { kind: 'generation'; perGen: number; minutesPerGen: number }
++  | { kind: 'image'; perImage: number }
++  | { kind: 'second'; perSec: number }
++  | { kind: 'free' }
++
++export interface Supplier {
++  id: string
++  media: Media
++  name: string
++  vendor: string
++  /** The price as the supplier states it. */
++  price: string
++  billing: Billing
++  label: NumberLabel
++  /** When the price was read. */
++  date: string
++  source: string
++  sourceUrl: string
++  pros: string[]
++  cons: string[]
++}
++
++const ANTHROPIC = 'https://platform.claude.com/docs/en/about-claude/pricing'
++const ELEVEN = 'https://elevenlabs.io/pricing/api'
++
++export const SUPPLIERS: Supplier[] = [
++  // Script
++  {
++    id: 'haiku-5.5', media: 'script', name: 'Claude Haiku 5.5', vendor: 'Anthropic',
++    price: '$0.10 in / $0.50 out per million tokens', billing: { kind: 'tokens', inPerM: 0.1, outPerM: 0.5 },
++    label: 'company-price', date: 'Nov 2026 (wiki research notes)', source: 'Anthropic pricing', sourceUrl: ANTHROPIC,
++    pros: ['Cheapest by far: about a tenth of a cent per chapter', 'Fast: a script in seconds', 'Commercial use under the API terms; no training on API data by default'],
++    cons: ['Weaker at long, paced, gentle writing; needs the script judge’s rules more', 'Prompts up to 100k tokens only', 'Single vendor; same as the other Claude tiers'],
++  },
++  {
++    id: 'sonnet-5', media: 'script', name: 'Claude Sonnet 5', vendor: 'Anthropic',
++    price: '$2 in / $10 out per million tokens', billing: { kind: 'tokens', inPerM: 2, outPerM: 10 },
++    label: 'company-price', date: 'Nov 2026 (wiki research notes)', source: 'Anthropic pricing', sourceUrl: ANTHROPIC,
++    pros: ['Good pacing and tone for guided sessions', 'Follows safety notes (breathing, pregnancy, grief) reliably', 'Still about 3 cents for a 10-minute chapter'],
++    cons: ['20× Haiku’s price, for a part of the cost that is small anyway', 'Slower than Haiku'],
++  },
++  {
++    id: 'opus-5.5', media: 'script', name: 'Claude Opus 5.5', vendor: 'Anthropic',
++    price: '$4 in / $20 out per million tokens', billing: { kind: 'tokens', inPerM: 4, outPerM: 20 },
++    label: 'company-price', date: 'Nov 2026 (wiki research notes)', source: 'Anthropic pricing', sourceUrl: ANTHROPIC,
++    pros: ['The best tier the business owner asked to test “to see the uplift”', 'Best at personal, coherent chapters across a journey'],
++    cons: ['Twice Sonnet; the script is still under 10% of a chapter’s cost', 'Slowest; a live chapter waits longer', 'Whether it lifts outcomes is unmeasured'],
++  },
++  // Voice
++  {
++    id: 'tts-1', media: 'voice', name: 'OpenAI tts-1', vendor: 'OpenAI',
++    price: '$15 per million characters', billing: { kind: 'chars', perM: 15 },
++    label: 'company-price', date: 'Nov 2026 (wiki research notes; not in today’s pricing page summary)', source: 'OpenAI pricing', sourceUrl: 'https://developers.openai.com/api/docs/pricing',
++    pros: ['Cheapest usable voice: about 10 cents per 10 minutes', 'Fast; billed per character, so pauses are free', 'Many languages'],
++    cons: ['Flatter, less calm delivery for meditation', 'No voice cloning: no creator voice', 'Fixed preset voices; OpenAI may retire the model'],
++  },
++  {
++    id: 'tts-1-hd', media: 'voice', name: 'OpenAI tts-1-hd', vendor: 'OpenAI',
++    price: '$30 per million characters', billing: { kind: 'chars', perM: 30 },
++    label: 'company-price', date: 'Nov 2026 (wiki research notes; not in today’s pricing page summary)', source: 'OpenAI pricing', sourceUrl: 'https://developers.openai.com/api/docs/pricing',
++    pros: ['Cleaner audio than tts-1 at twice the price', 'Same simple API, many languages'],
++    cons: ['Same preset voices, no cloning', 'Slower than tts-1'],
++  },
++  {
++    id: 'eleven-flash', media: 'voice', name: 'ElevenLabs Flash / Turbo', vendor: 'ElevenLabs',
++    price: '$0.04 per 1,000 characters', billing: { kind: 'chars', perM: 40 },
++    label: 'company-price', date: '24 Nov 2026 (read on elevenlabs.io)', source: 'ElevenLabs API pricing', sourceUrl: ELEVEN,
++    pros: ['Natural voice, low latency', 'Voice cloning: a creator’s or retreat host’s own voice', '30+ languages'],
++    cons: ['About 2.7× tts-1', 'Cloning a real person needs their consent and a licence', 'Voice is the biggest line of cost, so a price change hits hardest'],
++  },
++  {
++    id: 'eleven-v3', media: 'voice', name: 'ElevenLabs v3 / Multilingual v2 (expressive)', vendor: 'ElevenLabs',
++    price: '$0.08 per 1,000 characters', billing: { kind: 'chars', perM: 80 },
++    label: 'company-price', date: '24 Nov 2026 (read on elevenlabs.io)', source: 'ElevenLabs API pricing', sourceUrl: ELEVEN,
++    pros: ['The most expressive: breath, warmth, slow pacing', 'Creator voice cloning', 'What a premium session would sound like'],
++    cons: ['The most expensive voice: about 50 cents per 10 minutes', 'Slower; less consistent take to take', 'Same vendor risk as Flash'],
++  },
++  {
++    id: 'google-chirp', media: 'voice', name: 'Google Cloud TTS, Chirp 3 HD', vendor: 'Google',
++    price: 'about $30 per million characters', billing: { kind: 'chars', perM: 30 },
++    label: 'estimate', date: '24 Nov 2026 (pricing page did not load; last known list price)', source: 'Google Cloud TTS pricing', sourceUrl: 'https://cloud.google.com/text-to-speech/pricing',
++    pros: ['Natural voices, many languages and locales', 'Enterprise data terms; EU regions', 'A second vendor beside OpenAI'],
++    cons: ['Price not confirmed on Google’s page today (estimate)', 'Custom voice needs a separate, gated product', 'More setup (Cloud project, billing)'],
++  },
++  // Music
++  {
++    id: 'music-library', media: 'music', name: 'Licensed loop library, reused', vendor: 'Stock library',
++    price: 'about $0 per chapter after a one-off licence', billing: { kind: 'free' },
++    label: 'estimate', date: 'Nov 2026 (wiki research notes)', source: 'Wiki → B2B2C → Economics', sourceUrl: '/wiki/b2b2c/economics',
++    pros: ['Near-zero marginal cost: a licence, storage and CDN', 'Consistent quality; no generation wait', 'Licence terms are clear before launch'],
++    cons: ['Not personal: the same loops for everyone', 'The licence fee is a fixed cost not counted here', 'Limited variety; heavy users hear repeats'],
++  },
++  {
++    id: 'stable-audio', media: 'music', name: 'Stable Audio 2.5', vendor: 'Stability AI',
++    price: '8 credits ($0.08) per generation', billing: { kind: 'generation', perGen: 0.08, minutesPerGen: 3 },
++    label: 'company-price', date: '24 Nov 2026 (read on docs.stability.ai)', source: 'Stability AI pricing', sourceUrl: 'https://docs.stability.ai/pricing',
++    pros: ['Generated to the chapter’s mood', 'Cheap per track', 'Trained on licensed music (AudioSparx), commercial use on paid plans'],
++    cons: ['One generation is assumed to cover 3 minutes (estimate); longer chapters need loops or several', 'Quality varies; needs a check', 'Smaller vendor: higher vendor risk'],
++  },
++  {
++    id: 'eleven-music', media: 'music', name: 'ElevenLabs Music', vendor: 'ElevenLabs',
++    price: '$0.15 per minute', billing: { kind: 'minute', perMin: 0.15 },
++    label: 'company-price', date: '24 Nov 2026 (read on elevenlabs.io)', source: 'ElevenLabs API pricing', sourceUrl: ELEVEN,
++    pros: ['Full-length, generated per chapter', 'Cleared for commercial use', 'One vendor with the voice'],
++    cons: ['The dearest music: $1.50 per 10 minutes', 'Adds to the ElevenLabs dependency'],
++  },
++  // Image
++  {
++    id: 'flux-dev', media: 'image', name: 'FLUX.1 [dev]', vendor: 'Black Forest Labs',
++    price: '$0.025 per image', billing: { kind: 'image', perImage: 0.025 },
++    label: 'company-price', date: '24 Nov 2026 (read on bfl.ai)', source: 'BFL pricing', sourceUrl: 'https://bfl.ai/pricing',
++    pros: ['Cheapest good image', 'Fast'],
++    cons: ['Weaker on fine detail than the pro tiers', 'Licence of the open weights differs from the API’s; use the API'],
++  },
++  {
++    id: 'flux-pro', media: 'image', name: 'FLUX 1.1 [pro]', vendor: 'Black Forest Labs',
++    price: '$0.04 per image', billing: { kind: 'image', perImage: 0.04 },
++    label: 'company-price', date: '24 Nov 2026 (read on bfl.ai)', source: 'BFL pricing', sourceUrl: 'https://bfl.ai/pricing',
++    pros: ['High quality, consistent style', 'Commercial use through the API'],
++    cons: ['Smaller vendor than Google or OpenAI'],
++  },
++  {
++    id: 'nano-banana-2', media: 'image', name: 'Google Nano Banana 2', vendor: 'Google',
++    price: 'about $0.034–0.067 per 1K image', billing: { kind: 'image', perImage: 0.067 },
++    label: 'company-price', date: '24 Nov 2026 (read on aistudio.google.com; the top of the range used)', source: 'Gemini API pricing', sourceUrl: 'https://aistudio.google.com/docs/pricing',
++    pros: ['Good at following a scene description', 'Enterprise data terms on the paid tier'],
++    cons: ['Priced per output token, so the cost moves with the image', 'Google’s model names and prices change often'],
++  },
++  {
++    id: 'nano-banana-pro', media: 'image', name: 'Google Nano Banana Pro', vendor: 'Google',
++    price: 'about $0.134 per 1K/2K image', billing: { kind: 'image', perImage: 0.134 },
++    label: 'company-price', date: '24 Nov 2026 (read on aistudio.google.com)', source: 'Gemini API pricing', sourceUrl: 'https://aistudio.google.com/docs/pricing',
++    pros: ['Google’s best image tier'],
++    cons: ['Twice to five times the others for a cover image'],
++  },
++  {
++    id: 'gpt-image-2', media: 'image', name: 'OpenAI gpt-image-2', vendor: 'OpenAI',
++    price: '$30 per million output image tokens (about $0.04 an image)', billing: { kind: 'image', perImage: 0.04 },
++    label: 'estimate', date: '24 Nov 2026 (token price read on OpenAI; ~1,300 tokens an image assumed)', source: 'OpenAI pricing', sourceUrl: 'https://developers.openai.com/api/docs/pricing',
++    pros: ['Strong at text in images and edits', 'Same vendor as the cheap voice'],
++    cons: ['Per-image cost is our estimate from the token price', 'Slower than FLUX'],
++  },
++  // Video (off by default)
++  {
++    id: 'none-video', media: 'video', name: 'No video', vendor: '—',
++    price: '$0', billing: { kind: 'free' },
++    label: 'estimate', date: '—', source: 'The Change Plan: no video in the MVP', sourceUrl: '/wiki/backend-old',
++    pros: ['Video was 37% of the 2025 measured cost; leaving it out saves most of that'],
++    cons: ['No moving picture; audio-first only'],
++  },
++  {
++    id: 'omni-video', media: 'video', name: 'Gemini Omni 1.2 Flash, 10 s clip', vendor: 'Google',
++    price: 'about $0.07 per second at 720p', billing: { kind: 'second', perSec: 0.07 },
++    label: 'company-price', date: '24 Nov 2026 (read on aistudio.google.com)', source: 'Gemini API pricing', sourceUrl: 'https://aistudio.google.com/docs/pricing',
++    pros: ['A short moving cover per chapter'],
++    cons: ['$0.70 for 10 seconds: more than all the rest of a chapter', 'Little evidence it helps someone sleep'],
++  },
++]
++
++export const supplier = (id: string) => SUPPLIERS.find((s) => s.id === id)!
++
++export type Personalisation = 'full' | 'inserts' | 'cached'
++export const PERSONALISATION_LABEL: Record<Personalisation, string> = {
++  full: 'Fully generated per user',
++  inserts: 'Produced once + personal inserts',
++  cached: 'Cached reuse',
++}
++
++export interface CostInputs {
++  minutes: number
++  wordsPerMinute: number
++  models: Record<Media, string>
++  personalisation: Personalisation
++  /** Share of music and image served from cache, 0–1. */
++  cacheHit: number
++}
++
++/** Assumptions behind the formulas (estimates; see the notes on the page). */
++export const ASSUME = {
++  charsPerWord: 6,
++  tokensPerWord: 1.75,
++  promptTokens: 3000,
++  /** People one produced chapter is shared with, when reused. */
++  reuseAcross: 50,
++  /** The share of a chapter's words that is personal in "inserts" mode. */
++  insertShare: 0.2,
++  imagesPerChapter: 1,
++  videoSeconds: 10,
++  usdPerEur: 1.08,
++}
++
++/** What share of the per-user generation one user pays for, by personalisation level. */
++export function generatedShare(p: Personalisation) {
++  if (p === 'full') return 1
++  if (p === 'inserts') return ASSUME.insertShare + (1 - ASSUME.insertShare) / ASSUME.reuseAcross
++  return 1 / ASSUME.reuseAcross
++}
++
++function rawCost(s: Supplier, minutes: number, words: number) {
++  const b = s.billing
++  switch (b.kind) {
++    case 'tokens':
++      return (ASSUME.promptTokens * b.inPerM + words * ASSUME.tokensPerWord * b.outPerM) / 1e6
++    case 'chars':
++      return (words * ASSUME.charsPerWord * b.perM) / 1e6
++    case 'minute':
++      return minutes * b.perMin
++    case 'generation':
++      return Math.ceil(minutes / b.minutesPerGen) * b.perGen
++    case 'image':
++      return ASSUME.imagesPerChapter * b.perImage
++    case 'second':
++      return ASSUME.videoSeconds * b.perSec
++    case 'free':
++      return 0
++  }
++}
++
++export type MediaCost = Record<Media, number>
++
++/** The cost of one chapter for one user, by media, in US dollars (estimate). */
++export function chapterCost(i: CostInputs): MediaCost {
++  const words = i.minutes * i.wordsPerMinute
++  const gen = generatedShare(i.personalisation)
++  const out = {} as MediaCost
++  for (const m of MEDIA) {
++    const c = rawCost(supplier(i.models[m]), i.minutes, words)
++    // Script and voice follow the personalisation; music, image and video follow the cache.
++    out[m] = m === 'script' || m === 'voice' ? c * gen : c * (1 - i.cacheHit) * (i.personalisation === 'cached' ? gen : 1)
++  }
++  return out
++}
++
++export const total = (c: MediaCost) => MEDIA.reduce((s, m) => s + c[m], 0)
++
++/** The media with the largest share, and that share. */
++export function dominant(c: MediaCost): { media: Media; share: number } {
++  const t = total(c)
++  const media = MEDIA.reduce((a, b) => (c[b] > c[a] ? b : a))
++  return { media, share: t ? c[media] / t : 0 }
++}
++
++export interface Preset {
++  id: 'lean' | 'balanced' | 'premium'
++  name: string
++  blurb: string
++  models: Record<Media, string>
++  personalisation: Personalisation
++  cacheHit: number
++}
++
++export const PRESETS: Preset[] = [
++  {
++    id: 'lean', name: 'Lean', blurb: 'Budget models, chapters produced once with personal inserts, most music and images reused.',
++    models: { script: 'haiku-5.5', voice: 'tts-1', music: 'music-library', image: 'flux-dev', video: 'none-video' },
++    personalisation: 'inserts', cacheHit: 0.8,
++  },
++  {
++    id: 'balanced', name: 'Balanced', blurb: 'Good script and natural voice per user; generated music and images, half reused.',
++    models: { script: 'sonnet-5', voice: 'eleven-flash', music: 'stable-audio', image: 'nano-banana-2', video: 'none-video' },
++    personalisation: 'full', cacheHit: 0.5,
++  },
++  {
++    id: 'premium', name: 'Premium', blurb: 'The best tier of every media, fully generated for each person, nothing reused.',
++    models: { script: 'opus-5.5', voice: 'eleven-v3', music: 'eleven-music', image: 'nano-banana-pro', video: 'none-video' },
++    personalisation: 'full', cacheHit: 0,
++  },
++]
++
++export const LENGTHS = [3, 5, 10] as const
++export const DEFAULT_WPM = 105
++
++export function presetInputs(p: Preset, minutes: number, wordsPerMinute = DEFAULT_WPM): CostInputs {
++  return { minutes, wordsPerMinute, models: p.models, personalisation: p.personalisation, cacheHit: p.cacheHit }
++}
++
++/* ---------------------------------------------- The 2025 measured baseline */
++
++/** The 2025 old admin's vendor costs, 8 Mar 2025 – 20 Apr 2026, in euros (measured). A campaign is a session. */
++export const MEASURED_2025 = {
++  total: 40.27,
++  byMedia: { script: 3.07, voice: 16.64, music: 1.99, image: 3.59, video: 14.99 } as MediaCost,
++  campaigns: [
++    { name: 'Sylvie C…eam', script: 0.26, voice: 3.2, image: 0.23, music: 0.06, video: 1.0, total: 4.76 },
++    { name: 'welness test', script: 0.25, voice: 0.96, image: 0.51, music: 0.24, video: 2.2, total: 4.15 },
++    { name: 'Harmony', script: 0.14, voice: 1.82, image: 0.18, music: 0.06, video: 0.48, total: 2.68 },
++    { name: 'Credit Test', script: 0.07, voice: 1.56, image: 0.03, music: 0.6, video: 0.41, total: 2.67 },
++    { name: 'Script 2', script: 0.08, voice: 1.53, image: 0.3, music: 0.06, video: 0.48, total: 2.45 },
++    { name: 'New Campaign', script: 0.05, voice: 0, image: 0, music: 0.06, video: 2.0, total: 2.12 },
++    { name: 'Script 3', script: 0.08, voice: 1.48, image: 0.03, music: 0.06, video: 0.21, total: 1.86 },
++    { name: 'Script 1', script: 0.07, voice: 1.34, image: 0.18, music: 0.06, video: 0.21, total: 1.85 },
++    { name: 'One Script', script: 0.05, voice: 0.87, image: 0.28, music: 0.06, video: 0.48, total: 1.75 },
++    { name: 'New Campaign', script: 0.06, voice: 1.47, image: 0, music: 0, video: 0, total: 1.53 },
++  ],
++}
++
++export function measuredAverage() {
++  const c = MEASURED_2025.campaigns
++  return c.reduce((s, x) => s + x.total, 0) / c.length
++}
++
++/* ------------------------------------------------- From bad to good (goal) */
++
++export type Stage = 1 | 2 | 3
++
++/** The spec PDF's Causal AI stages (SCENARIO: the business owner's assumptions). */
++export const STAGES: Record<Stage, { name: string; sessions: string; costFactor: number; uplift: number; success: number; density: number; velocity: number; specChapters: number; specCostPerFlip: number }> = {
++  1: { name: 'Stage 1', sessions: 'under 1,000 sessions', costFactor: 1, uplift: 1.43, success: 0.54, density: 0.22, velocity: 0.35, specChapters: 42, specCostPerFlip: 4.98 },
++  2: { name: 'Stage 2', sessions: '10,000+ sessions', costFactor: 0.58, uplift: 1.88, success: 0.745, density: 0.61, velocity: 0.72, specChapters: 32, specCostPerFlip: 2.04 },
++  3: { name: 'Stage 3', sessions: '100,000+ sessions', costFactor: 0.26, uplift: 2.73, success: 0.89, density: 0.91, velocity: 0.94, specChapters: 22, specCostPerFlip: 0.58 },
++}
++
++export type Anchor = 'flip' | 'plus-month' | 'plus-year' | 'retreat-low' | 'retreat-high'
++export const ANCHORS: Record<Anchor, { label: string; note: string }> = {
++  flip: { label: '$19.99 per flip (spec)', note: 'Paid only when the flip happens: revenue = $19.99 × flip probability.' },
++  'plus-month': { label: 'Plus $10 a month (app)', note: 'The Upgrade screen’s monthly price, paid for every month the journey lasts.' },
++  'plus-year': { label: 'Plus $100 a year (app)', note: 'The Upgrade screen’s yearly price; one year covers the journey.' },
++  'retreat-low': { label: 'Retreat ticket €19.99', note: 'The whole ticket, at $1.08 a euro; Aurelia’s share would be less.' },
++  'retreat-high': { label: 'Retreat ticket €39', note: 'The whole ticket, at $1.08 a euro; Aurelia’s share would be less.' },
++}
++
++export interface GoalInputs {
++  baseline: number
++  target: number
++  chaptersPerWeek: number
++  stage: Stage
++  anchor: Anchor
++}
++
++export const DEFAULT_GOAL: GoalInputs = { baseline: 25, target: 85, chaptersPerWeek: 3, stage: 1, anchor: 'flip' }
++
++export const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x))
++
++/** Condition: lower scores are worse. A worse start moves more slowly per chapter (scenario). */
++export function conditionFactor(baseline: number) {
++  return clamp(1 + (0.6 * (baseline - 25)) / 100, 0.7, 1.3)
++}
++export function conditionName(baseline: number) {
++  return baseline < 30 ? 'severe' : baseline < 55 ? 'moderate' : 'mild'
++}
++/** Longer chapters do more, with diminishing returns; 10 minutes = 1 (scenario). */
++export const lengthFactor = (minutes: number) => Math.sqrt(minutes / 10)
++/** Less personal chapters do less (scenario). */
++export const PERSONAL_FACTOR: Record<Personalisation, number> = { full: 1, inserts: 0.9, cached: 0.75 }
++/** Fewer than 3 chapters a week lowers the chance of a flip; more helps a little (scenario). */
++export const adherenceFactor = (perWeek: number) => clamp(Math.pow(perWeek / 3, 0.4), 0, 1.1)
++
++export interface GoalResult {
++  gap: number
++  uplift: number
++  chapters: number
++  flipProbability: number
++  weeks: number
++  costPerChapter: number
++  costPerJourney: number
++  costPerFlip: number
++  revenuePerJourney: number
++  profitPerJourney: number
++  profitPerFlip: number
++  costPerPoint: number
++}
++
++export function revenue(anchor: Anchor, weeks: number, p: number) {
++  switch (anchor) {
++    case 'flip':
++      return 19.99 * p
++    case 'plus-month':
++      return 10 * Math.max(1, Math.ceil(weeks / 4.345))
++    case 'plus-year':
++      return 100
++    case 'retreat-low':
++      return 19.99 * ASSUME.usdPerEur
++    case 'retreat-high':
++      return 39 * ASSUME.usdPerEur
++  }
++}
++
++/**
++ * The journey from the starting level to the target.
++ * uplift/chapter = stage uplift × condition × length × personalisation
++ * chapters = ⌈gap ÷ uplift⌉ · P(flip) = stage success × adherence
++ * cost/chapter = chapter cost × stage cost factor · cost/flip = cost/journey ÷ P(flip)
++ * profit/journey = revenue − cost/journey · profit/flip = profit/journey ÷ P(flip)
++ */
++export function goal(g: GoalInputs, c: CostInputs): GoalResult {
++  const s = STAGES[g.stage]
++  const gap = Math.max(0, g.target - g.baseline)
++  const uplift = s.uplift * conditionFactor(g.baseline) * lengthFactor(c.minutes) * PERSONAL_FACTOR[c.personalisation]
++  const chapters = gap === 0 ? 0 : Math.ceil(gap / uplift)
++  const flipProbability = clamp(s.success * adherenceFactor(g.chaptersPerWeek), 0, 0.97)
++  const weeks = chapters / g.chaptersPerWeek
++  const costPerChapter = total(chapterCost(c)) * s.costFactor
++  const costPerJourney = costPerChapter * chapters
++  const costPerFlip = flipProbability ? costPerJourney / flipProbability : Infinity
++  const revenuePerJourney = revenue(g.anchor, weeks, flipProbability)
++  const profitPerJourney = revenuePerJourney - costPerJourney
++  const profitPerFlip = flipProbability ? profitPerJourney / flipProbability : -Infinity
++  return { gap, uplift, chapters, flipProbability, weeks, costPerChapter, costPerJourney, costPerFlip, revenuePerJourney, profitPerJourney, profitPerFlip, costPerPoint: gap ? costPerFlip / gap : 0 }
++}
++
++/* ----------------------------------------------------- The connected graph */
++
++export type NodeId =
++  | 'condition' | 'adherence' | 'length' | 'personalisation' | 'models' | 'stage'
++  | 'uplift' | 'chapters' | 'flip' | 'costChapter' | 'weeks'
++  | 'costJourney' | 'costFlip' | 'anchor' | 'profit'
++
++export interface GraphNode {
++  id: NodeId
++  label: string
++  col: number
++  row: number
++  input: boolean
++  label2: NumberLabel
++  formula: string
++  source: string
++}
++
++export const GRAPH_NODES: GraphNode[] = [
++  { id: 'condition', label: 'User condition', col: 0, row: 0, input: true, label2: 'scenario', formula: 'Starting score 0–100 (lower is worse). Condition factor = 1 + 0.6 × (start − 25) ÷ 100, kept between 0.7 and 1.3: a worse start moves more slowly per chapter.', source: 'Assumption of this report; the spec’s default 25 → 85.' },
++  { id: 'adherence', label: 'Adherence', col: 0, row: 1, input: true, label2: 'scenario', formula: 'Chapters a week. Adherence factor = (per week ÷ 3)^0.4, at most 1.1. It scales the chance of a flip and sets the weeks.', source: 'Assumption of this report.' },
++  { id: 'length', label: 'Chapter length', col: 0, row: 2, input: true, label2: 'estimate', formula: 'Minutes. Words = minutes × words per minute. Length factor on uplift = √(minutes ÷ 10).', source: 'Wiki research notes: 10 minutes ≈ 900–1,200 words.' },
++  { id: 'personalisation', label: 'Personalisation', col: 0, row: 3, input: true, label2: 'scenario', formula: 'Share generated per user: full 1, inserts 0.2 + 0.8 ÷ 50, cached 1 ÷ 50. Uplift factor: 1 / 0.9 / 0.75.', source: 'Assumption of this report.' },
++  { id: 'models', label: 'Model choice', col: 0, row: 4, input: true, label2: 'company-price', formula: 'Script, voice, music, image and video suppliers, priced from the catalogue above.', source: 'Supplier pages, read 24 Nov 2026 or the wiki notes.' },
++  { id: 'stage', label: 'Causal AI stage', col: 0, row: 5, input: true, label2: 'scenario', formula: 'Stage 1 / 2 / 3: base uplift 1.43 / 1.88 / 2.73 points a chapter, success 54 / 74.5 / 89%, cost factor 1 / 0.58 / 0.26.', source: 'The spec PDF (the business owner’s assumptions, not measured).' },
++  { id: 'uplift', label: 'Uplift per chapter', col: 1, row: 0.5, input: false, label2: 'scenario', formula: 'Stage uplift × condition × length × personalisation.', source: 'Spec stage uplift; factors assumed here.' },
++  { id: 'chapters', label: 'Chapters to flip', col: 2, row: 0.5, input: false, label2: 'scenario', formula: '⌈(target − start) ÷ uplift per chapter⌉.', source: 'Spec §6 equations.' },
++  { id: 'flip', label: 'Flip probability', col: 1, row: 1.75, input: false, label2: 'scenario', formula: 'Stage success × adherence factor, at most 97%.', source: 'Spec stage success rates.' },
++  { id: 'weeks', label: 'Weeks to flip', col: 2, row: 1.75, input: false, label2: 'scenario', formula: 'Chapters to flip ÷ chapters a week.', source: 'Derived.' },
++  { id: 'costChapter', label: 'Cost per chapter', col: 1, row: 4, input: false, label2: 'estimate', formula: 'Σ media cost (catalogue price × words, characters, minutes or images) × personalisation or cache share × stage cost factor.', source: 'Supplier prices × our assumptions × spec cost factor.' },
++  { id: 'costJourney', label: 'Cost per journey', col: 2, row: 3, input: false, label2: 'estimate', formula: 'Cost per chapter × chapters to flip.', source: 'Derived.' },
++  { id: 'costFlip', label: 'Cost per flip', col: 3, row: 3, input: false, label2: 'estimate', formula: 'Cost per journey ÷ flip probability: the journeys that fail are paid for too.', source: 'Derived.' },
++  { id: 'anchor', label: 'Price anchor', col: 3, row: 4.5, input: true, label2: 'company-price', formula: '$19.99 per flip × P(flip); Plus $10 × months; Plus $100 a year; or a retreat ticket (€ at $1.08).', source: 'Spec PDF; the app’s Upgrade screen; the retreat funnel.' },
++  { id: 'profit', label: 'Profit per flip', col: 4, row: 3, input: false, label2: 'scenario', formula: '(Revenue per journey − cost per journey) ÷ P(flip). Before fees, CAC and fixed costs.', source: 'Derived; spec §3 “net per flip” is the same idea per journey.' },
++]
++
++export const GRAPH_EDGES: [NodeId, NodeId][] = [
++  ['condition', 'uplift'], ['length', 'uplift'], ['personalisation', 'uplift'], ['stage', 'uplift'],
++  ['uplift', 'chapters'], ['condition', 'chapters'],
++  ['stage', 'flip'], ['adherence', 'flip'],
++  ['chapters', 'weeks'], ['adherence', 'weeks'],
++  ['length', 'costChapter'], ['personalisation', 'costChapter'], ['models', 'costChapter'], ['stage', 'costChapter'],
++  ['costChapter', 'costJourney'], ['chapters', 'costJourney'],
++  ['costJourney', 'costFlip'], ['flip', 'costFlip'],
++  ['costFlip', 'profit'], ['anchor', 'profit'], ['weeks', 'anchor'], ['flip', 'anchor'],
++]
++
++/** Every node downstream of a node, itself included. */
++export function downstream(id: NodeId): Set<NodeId> {
++  const out = new Set<NodeId>([id])
++  let grew = true
++  while (grew) {
++    grew = false
++    for (const [a, b] of GRAPH_EDGES) if (out.has(a) && !out.has(b)) {
++        out.add(b)
++        grew = true
++      }
++  }
++  return out
++}
+diff --git a/src/admin/data/reportSources.ts b/src/admin/data/reportSources.ts
+index 6945ade..e6839c6 100644
+--- a/src/admin/data/reportSources.ts
++++ b/src/admin/data/reportSources.ts
+@@ -8,7 +8,7 @@
+  */
+ 
+ /** How far a source's numbers can be trusted. Only `measured` comes from real use. */
+-export type SourceLabel = 'measured' | 'prediction' | 'sample' | 'estimate' | 'document'
++export type SourceLabel = 'measured' | 'prediction' | 'sample' | 'estimate' | 'document' | 'company-price' | 'third-party' | 'scenario'
+ 
+ export const LABEL_TEXT: Record<SourceLabel, string> = {
+   measured: 'Measured',
+@@ -16,6 +16,9 @@ export const LABEL_TEXT: Record<SourceLabel, string> = {
+   sample: 'Sample',
+   estimate: 'Estimate',
+   document: 'Document',
++  'company-price': 'Company price',
++  'third-party': 'Third-party',
++  scenario: 'Scenario',
+ }
+ 
+ export const LABEL_MEANING: Record<SourceLabel, string> = {
+@@ -24,6 +27,9 @@ export const LABEL_MEANING: Record<SourceLabel, string> = {
+   sample: 'Invented data that looks real, so the screens can be reasoned about.',
+   estimate: 'A calculation on assumed inputs. Changes when the inputs do.',
+   document: 'Written knowledge: a plan, a review, notes from people. No figures of its own.',
++  'company-price': 'A price as the supplier states it on its own page, with the date it was read.',
++  'third-party': 'A figure from someone other than the supplier, not confirmed at the source.',
++  scenario: 'The business owner’s assumptions (the spec PDF), shown to see where they lead. Not measured.',
+ }
+ 
+ export type SourceId =
+@@ -43,6 +49,10 @@ export type SourceId =
+   | 'artefact'
+   | 'prd'
+   | 'user-journey'
++  | 'cost-2025'
++  | 'supplier-prices'
++  | 'spec-causal'
++  | 'owner-chat'
+ 
+ export interface ReportSource {
+   id: SourceId
+@@ -204,6 +214,42 @@ export const SOURCES: Record<SourceId, ReportSource> = {
+     link: '/admin/user-journey',
+     label: 'document',
+   },
++  'cost-2025': {
++    id: 'cost-2025',
++    name: '2025 old admin costs',
++    what: 'The 2025 backend’s vendor cost analytics: what the test sessions (“campaigns”) really cost, by media.',
++    version: '8 Mar 2025 – 20 Apr 2026; screenshot in the chat of 24 Nov 2026',
++    taken: '€40.27 in total, split by media, and the ten costliest campaigns.',
++    link: '/wiki/backend-old',
++    label: 'measured',
++  },
++  'supplier-prices': {
++    id: 'supplier-prices',
++    name: 'Supplier price pages',
++    what: 'Anthropic, OpenAI, ElevenLabs, Google, Black Forest Labs and Stability AI, as each states its API prices; plus the wiki’s AI cost table.',
++    version: 'Read 24 Nov 2026; Anthropic and OpenAI TTS from the wiki notes (Nov 2026)',
++    taken: 'The price, unit and date of every model in the catalogue. Google TTS and OpenAI’s per-image price are estimates.',
++    link: '/wiki/b2b2c/economics',
++    label: 'company-price',
++  },
++  'spec-causal': {
++    id: 'spec-causal',
++    name: 'MVP, Causal AI & Admin spec',
++    what: 'The business owner’s 9-page spec PDF: the bad-to-good sleep flip, the three Causal AI stages and the three metric lines.',
++    version: 'Spec PDF received 24 Nov 2026 (J171)',
++    taken: 'Stage uplift, success rate and cost factor; 25 → 85 as the target; $19.99 per flip; density and velocity.',
++    link: '/admin/reports/cost#goal-stages',
++    label: 'scenario',
++  },
++  'owner-chat': {
++    id: 'owner-chat',
++    name: 'The business owner’s chat, 24 Nov',
++    what: 'The request for this report: cost per 3, 5 and 10 minute chapter across script, voice, music and image, the bad-to-good journey and three metric lines.',
++    version: 'Chat of 24 Nov 2026, parts 0–1, task A/B/C',
++    taken: 'What to compute, the media, the lengths, and the profit graph.',
++    link: '/admin/reports/cost',
++    label: 'document',
++  },
+ }
+ 
+ export interface Finding {
+@@ -214,6 +260,7 @@ export interface Finding {
+ }
+ 
+ export const BUYER_REPORT_FINDINGS: Finding[] = [
++  { id: 'price-used', title: 'Price used per iteration', sources: ['buyer-v1', 'buyer-v2', 'buyer-v3', 'buyer-rerun', 'versions'] },
+   { id: 'it-v1', title: 'Run v1: the format', sources: ['buyer-v1', 'personas'] },
+   { id: 'it-v2', title: 'Run v2: calibrated, 36 people', sources: ['buyer-v2', 'buyer-v1', 'personas'] },
+   { id: 'it-v3', title: 'Run v3: today vs the proposal', sources: ['buyer-v3', 'buyer-v2', 'personas', 'backend-old', 'artefact'] },
+@@ -231,6 +278,14 @@ export const COMBINATION_FINDINGS: Finding[] = [
+   { id: 'matrix', title: 'Offer × version × rules', sources: ['retreat', 'buyer-rerun', 'b2b2c'] },
+ ]
+ 
++export const COST_FINDINGS: Finding[] = [
++  { id: 'cost-catalogue', title: 'Supplier catalogue', sources: ['supplier-prices', 'b2b2c'] },
++  { id: 'cost-variations', title: 'Cost per chapter, variations', sources: ['supplier-prices', 'b2b2c', 'cost-2025', 'owner-chat'] },
++  { id: 'goal-graph', title: 'Bad to good: the graph', sources: ['spec-causal', 'supplier-prices', 'owner-chat', 'versions'] },
++  { id: 'goal-stages', title: 'Cost falls, uplift rises', sources: ['spec-causal', 'supplier-prices', 'cost-2025'] },
++  { id: 'metric-lines', title: 'Three metric lines', sources: ['spec-causal', 'cost-2025', 'owner-chat'] },
++]
++
+ /** The sources a set of findings uses, in registry order. */
+ export function sourcesOf(findings: Finding[]): ReportSource[] {
+   const used = new Set(findings.flatMap((f) => f.sources))
+diff --git a/src/admin/pages/reports/BuyerAgentReportPage.tsx b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+index d628e48..1794f78 100644
+--- a/src/admin/pages/reports/BuyerAgentReportPage.tsx
++++ b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+@@ -1,9 +1,9 @@
+-import { ArrowRight } from 'lucide-react'
++import { AlertTriangle, ArrowRight, Tag } from 'lucide-react'
+ import { useMemo } from 'react'
+ import { Link } from 'react-router-dom'
+ import { Badge, PageHeader, Panel } from '../../components/ui'
+ import { STATUS_LABEL } from '../../data/businessFunnel'
+-import { buildIterations } from '../../data/buyerAgentReport'
++import { APP_PRICE, buildIterations } from '../../data/buyerAgentReport'
+ import { OVERALL_SUMMARY } from '../../data/buyerRerunSummaries'
+ import { BUYER_REPORT_FINDINGS } from '../../data/reportSources'
+ import { LabelBadge, SourceChip, SourceGraph, SourcesSection } from './ReportParts'
+@@ -37,6 +37,39 @@ export function BuyerAgentReportPage() {
+         <SourceGraph findings={BUYER_REPORT_FINDINGS} label="Graph: the sources on the left feed the report’s sections on the right." />
+       </Panel>
+ 
++      <section id="price-used" className="scroll-mt-16">
++        <Panel title="Price used per iteration" description={`The price the personas saw is part of each result. Today the app asks ${APP_PRICE.amount} (${APP_PRICE.where}).`}>
++          <div className="overflow-x-auto">
++            <table className="w-full min-w-[720px] text-left text-12">
++              <thead className="text-11 uppercase tracking-wider text-adm-muted">
++                <tr className="border-b border-adm-line">
++                  <th className="py-6 pr-12 font-semibold">Iteration</th>
++                  <th className="py-6 pr-12 font-semibold">Price tested</th>
++                  <th className="py-6 pr-12 font-semibold">Currency · period</th>
++                  <th className="py-6 pr-12 font-semibold">Where it came from</th>
++                  <th className="py-6 font-semibold">Against today’s app</th>
++                </tr>
++              </thead>
++              <tbody>
++                {iterations.map((it) => (
++                  <tr key={it.id} className="border-b border-adm-line align-top last:border-0">
++                    <td className="py-8 pr-12 font-medium whitespace-nowrap text-adm-ink">
++                      <a href={`#${it.id}`} className="underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink">{it.name}</a>
++                    </td>
++                    <td className="py-8 pr-12 font-semibold text-adm-ink">{it.priceTested.amount}</td>
++                    <td className="py-8 pr-12 text-adm-ink-2">{it.priceTested.currency} · {it.priceTested.period}</td>
++                    <td className="py-8 pr-12 text-adm-ink-2">{it.priceTested.origin}</td>
++                    <td className="py-8">
++                      <Badge tone={it.priceTested.differsFromApp ? 'serious' : 'good'}>{it.priceTested.differsFromApp ? 'Differs' : 'Same as the app'}</Badge>
++                    </td>
++                  </tr>
++                ))}
++              </tbody>
++            </table>
++          </div>
++        </Panel>
++      </section>
++
+       <section aria-label="Iterations" className="flex flex-col">
+         {iterations.map((it, i) => (
+           <div key={it.id} className="relative flex gap-12 pb-16 lg:gap-16">
+@@ -53,6 +86,24 @@ export function BuyerAgentReportPage() {
+                 <LabelBadge label="prediction" />
+               </header>
+ 
++              <div className="flex flex-col gap-6 rounded-8 border border-adm-s1/40 bg-adm-s1/6 p-12">
++                <div className="flex flex-wrap items-baseline gap-x-10 gap-y-4">
++                  <span className="inline-flex items-center gap-6 text-11 font-semibold uppercase tracking-wider text-adm-s1">
++                    <Tag size={12} aria-hidden="true" /> Price tested
++                  </span>
++                  <span className="text-14 font-semibold text-adm-ink">{it.priceTested.amount}</span>
++                </div>
++                <p className="text-12 text-adm-ink-2">
++                  {it.priceTested.currency} · {it.priceTested.period}. {it.priceTested.origin}
++                </p>
++                {it.priceTested.warning && (
++                  <p className="flex items-start gap-6 text-12 font-medium text-adm-ink">
++                    <AlertTriangle size={13} className="mt-2 shrink-0 text-adm-serious" aria-hidden="true" />
++                    {it.priceTested.warning}
++                  </p>
++                )}
++              </div>
++
+               <div className="grid gap-14 lg:grid-cols-2">
+                 <div className="flex min-w-0 flex-col gap-4">
+                   <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">The question</h3>
+@@ -182,6 +233,7 @@ export function BuyerAgentReportPage() {
+           'Runs v1 and v2 used persona generator 1, which made incoherent people (the run found them); comparisons across runs are approximate.',
+           'Offer B in run v3 is a proposal answered as if built. Nothing can be bought yet, so “would pay” is intent.',
+           'No agent can tell whether the first session actually works for someone; staying depends on that.',
++          `Runs v1–v3 tested prices that are not today’s app price (${APP_PRICE.amount}): v1 the admin’s mock $9.99 / $79, v2 mock regional prices, v3 those and a proposed $59.99 a year. Their price answers and “would pay” hold for those prices only.`,
+         ]}
+       />
+     </div>
+diff --git a/src/admin/pages/reports/CostReportPage.tsx b/src/admin/pages/reports/CostReportPage.tsx
+new file mode 100644
+index 0000000..8638edf
+--- /dev/null
++++ b/src/admin/pages/reports/CostReportPage.tsx
+@@ -0,0 +1,650 @@
++import { AlertTriangle, ExternalLink } from 'lucide-react'
++import { useState, type ReactNode } from 'react'
++import { Badge, PageHeader, Panel, inputClass, type Tone } from '../../components/ui'
++import {
++  ANCHORS, ASSUME, DEFAULT_GOAL, DEFAULT_WPM, GRAPH_EDGES, GRAPH_NODES, LENGTHS, MEASURED_2025, MEDIA, MEDIA_LABEL,
++  NUMBER_LABEL_TEXT, PERSONALISATION_LABEL, PRESETS, STAGES, SUPPLIERS, chapterCost, conditionName, dominant, downstream,
++  goal, measuredAverage, presetInputs, supplier, total,
++  type Anchor, type CostInputs, type GoalInputs, type Media, type MediaCost, type NodeId, type NumberLabel, type Personalisation, type Stage,
++} from '../../data/costModel'
++import { COST_FINDINGS } from '../../data/reportSources'
++import { SourceGraph, SourcesSection } from './ReportParts'
++
++/*
++ * Admin → Reports → Cost report (U117, J172). Part 1: what a chapter costs,
++ * by media and supplier, in several variations, against the 2025 measured
++ * costs. Part 2: the bad-to-good sleep journey as a connected graph. Every
++ * formula lives in data/costModel.ts; this page only lays it out.
++ */
++
++const MEDIA_FILL: Record<Media, string> = { script: 'fill-adm-s1', voice: 'fill-adm-s2', music: 'fill-adm-s3', image: 'fill-adm-s4', video: 'fill-adm-ink-2' }
++const MEDIA_BG: Record<Media, string> = { script: 'bg-adm-s1', voice: 'bg-adm-s2', music: 'bg-adm-s3', image: 'bg-adm-s4', video: 'bg-adm-ink-2' }
++const NUM_TONE: Record<NumberLabel, Tone> = { measured: 'good', 'company-price': 'info', 'third-party': 'neutral', estimate: 'serious', scenario: 'critical' }
++
++function NumBadge({ label }: { label: NumberLabel }) {
++  return <Badge tone={NUM_TONE[label]}>{NUMBER_LABEL_TEXT[label]}</Badge>
++}
++
++const usd = (x: number) => (!isFinite(x) ? '—' : `${x < 0 ? '−' : ''}$${Math.abs(x) < 0.1 && x !== 0 ? Math.abs(x).toFixed(4) : Math.abs(x).toFixed(2)}`)
++const eur = (x: number) => `€${x.toFixed(2)}`
++const pct = (x: number) => `${Math.round(x * 100)}%`
++
++interface State {
++  cost: CostInputs
++  goal: GoalInputs
++}
++
++const INITIAL: State = {
++  cost: { minutes: 10, wordsPerMinute: DEFAULT_WPM, models: PRESETS[1].models, personalisation: 'full', cacheHit: 0.5 },
++  goal: DEFAULT_GOAL,
++}
++
++function nodeValues(s: State): Record<NodeId, string> {
++  const r = goal(s.goal, s.cost)
++  const m = s.cost.models
++  return {
++    condition: `${s.goal.baseline} → ${s.goal.target} (${conditionName(s.goal.baseline)})`,
++    adherence: `${s.goal.chaptersPerWeek} a week`,
++    length: `${s.cost.minutes} min · ${s.cost.minutes * s.cost.wordsPerMinute} words`,
++    personalisation: PERSONALISATION_LABEL[s.cost.personalisation],
++    models: `${supplier(m.script).name.replace('Claude ', '')} · ${supplier(m.voice).name.split(' (')[0]}`,
++    stage: `${STAGES[s.goal.stage].name}, ${STAGES[s.goal.stage].sessions}`,
++    uplift: `+${r.uplift.toFixed(2)} points`,
++    chapters: `${r.chapters} chapters`,
++    flip: pct(r.flipProbability),
++    weeks: `${r.weeks.toFixed(1)} weeks`,
++    costChapter: usd(r.costPerChapter),
++    costJourney: usd(r.costPerJourney),
++    costFlip: usd(r.costPerFlip),
++    anchor: `${ANCHORS[s.goal.anchor].label} → ${usd(r.revenuePerJourney)}`,
++    profit: usd(r.profitPerFlip),
++  }
++}
++
++export function CostReportPage() {
++  const [state, setState] = useState<State>(INITIAL)
++  const [changed, setChanged] = useState<{ from: NodeId | null; nodes: Set<NodeId> }>({ from: null, nodes: new Set() })
++  const [selected, setSelected] = useState<NodeId>('costFlip')
++
++  function update(from: NodeId, next: State) {
++    const before = nodeValues(state)
++    const after = nodeValues(next)
++    const nodes = new Set((Object.keys(after) as NodeId[]).filter((k) => after[k] !== before[k] && downstream(from).has(k)))
++    setChanged({ from, nodes })
++    setState(next)
++  }
++  const setCost = (from: NodeId, patch: Partial<CostInputs>) => update(from, { ...state, cost: { ...state.cost, ...patch } })
++  const setGoal = (from: NodeId, patch: Partial<GoalInputs>) => update(from, { ...state, goal: { ...state.goal, ...patch } })
++  const setModel = (m: Media, id: string) => setCost('models', { models: { ...state.cost.models, [m]: id } })
++
++  const result = goal(state.goal, state.cost)
++  const values = nodeValues(state)
++  const stages = ([1, 2, 3] as Stage[]).map((st) => ({ st, r: goal({ ...state.goal, stage: st }, state.cost) }))
++
++  return (
++    <div className="flex flex-col gap-16">
++      <PageHeader
++        title="Cost report"
++        description="What it costs Aurelia to make a chapter, by media and supplier, and what it might cost to move someone from bad sleep to good sleep. Prices are the suppliers’ own where we could read them; everything about uplift, flips and the Causal AI stages is the business owner’s scenario, not measured. There are no real users yet."
++      />
++
++      <div className="flex flex-wrap items-center gap-8 text-12 text-adm-ink-2">
++        <span className="font-medium text-adm-ink">Every number is labelled:</span>
++        {(Object.keys(NUMBER_LABEL_TEXT) as NumberLabel[]).map((l) => (
++          <NumBadge key={l} label={l} />
++        ))}
++      </div>
++
++      <Panel title="How this report was made" description="Where each part of this report comes from. Each line is a source feeding a section.">
++        <SourceGraph findings={COST_FINDINGS} label="Graph: the sources on the left feed the report’s sections on the right." />
++      </Panel>
++
++      <h2 className="mt-8 text-18 font-semibold text-adm-ink">Part 1 · Cost</h2>
++
++      <section id="cost-catalogue" className="scroll-mt-16">
++        <Panel title="Supplier catalogue" description="Candidate models for each media element of a chapter, with the price as stated, its date and source, and what each is good and bad at. “Use” puts it in your selection below.">
++          <div className="flex flex-col gap-16">
++            {MEDIA.map((m) => (
++              <div key={m} className="flex flex-col gap-8">
++                <h3 className="flex items-center gap-8 text-13 font-semibold text-adm-ink">
++                  <span className={`size-10 rounded-2 ${MEDIA_BG[m]}`} aria-hidden="true" />
++                  {MEDIA_LABEL[m]}
++                  {m === 'video' && <span className="text-11 font-normal text-adm-muted">optional, off by default</span>}
++                </h3>
++                <ul className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
++                  {SUPPLIERS.filter((s) => s.media === m).map((s) => {
++                    const on = state.cost.models[m] === s.id
++                    return (
++                      <li key={s.id} className={`flex min-w-0 flex-col gap-6 rounded-8 border p-12 ${on ? 'border-adm-ink bg-adm-bg' : 'border-adm-line'}`}>
++                        <div className="flex flex-wrap items-start justify-between gap-6">
++                          <div className="min-w-0">
++                            <p className="text-13 font-semibold text-adm-ink">{s.name}</p>
++                            <p className="text-11 text-adm-muted">{s.vendor}</p>
++                          </div>
++                          <NumBadge label={s.label} />
++                        </div>
++                        <p className="text-12 font-semibold tabular-nums text-adm-ink">{s.price}</p>
++                        <p className="text-11 text-adm-muted">
++                          {s.date} ·{' '}
++                          <a href={s.sourceUrl} target={s.sourceUrl.startsWith('http') ? '_blank' : undefined} rel="noreferrer" className="inline-flex items-center gap-2 underline decoration-adm-axis underline-offset-2 hover:text-adm-ink">
++                            {s.source} <ExternalLink size={10} aria-hidden="true" />
++                          </a>
++                        </p>
++                        <div className="grid grid-cols-2 gap-8 text-11">
++                          <ul className="flex flex-col gap-2 text-adm-ink-2">
++                            <li className="font-semibold text-adm-good">Pros</li>
++                            {s.pros.map((p) => <li key={p}>+ {p}</li>)}
++                          </ul>
++                          <ul className="flex flex-col gap-2 text-adm-ink-2">
++                            <li className="font-semibold text-adm-critical">Cons</li>
++                            {s.cons.map((p) => <li key={p}>− {p}</li>)}
++                          </ul>
++                        </div>
++                        <button
++                          type="button"
++                          onClick={() => setModel(m, s.id)}
++                          aria-pressed={on}
++                          className={`mt-auto self-start rounded-8 border px-10 py-4 text-11 font-medium ${on ? 'border-adm-ink bg-adm-ink text-adm-surface' : 'border-adm-line text-adm-ink hover:bg-adm-hover'}`}
++                        >
++                          {on ? 'In your selection' : 'Use'}
++                        </button>
++                      </li>
++                    )
++                  })}
++                </ul>
++              </div>
++            ))}
++          </div>
++        </Panel>
++      </section>
++
++      <section id="cost-variations" className="scroll-mt-16 flex flex-col gap-16">
++        <Panel title="Your selection" description="Change the variables; the chapter cost, the variations and Part 2 all follow. Estimates: supplier prices × the assumptions listed under the chart.">
++          <div className="grid gap-12 md:grid-cols-2 xl:grid-cols-3">
++            <Field label="Chapter length">
++              <Segmented options={LENGTHS.map((l) => ({ v: l, t: `${l} min` }))} value={state.cost.minutes} onChange={(v) => setCost('length', { minutes: v })} />
++            </Field>
++            <Field label={`Words per minute: ${state.cost.wordsPerMinute}`} hint="Spoken slowly with pauses; the wiki notes put a 10-minute session at 900–1,200 words.">
++              <input type="range" min={70} max={150} step={5} value={state.cost.wordsPerMinute} onChange={(e) => setCost('length', { wordsPerMinute: Number(e.target.value) })} className="w-full accent-adm-ink" aria-label="Words per minute" />
++            </Field>
++            <Field label="Personalisation" hint={`Inserts: ${pct(ASSUME.insertShare)} of the words personal, the rest shared by ${ASSUME.reuseAcross} people. Cached: one chapter for ${ASSUME.reuseAcross}.`}>
++              <select className={inputClass} value={state.cost.personalisation} onChange={(e) => setCost('personalisation', { personalisation: e.target.value as Personalisation })} aria-label="Personalisation">
++                {(Object.keys(PERSONALISATION_LABEL) as Personalisation[]).map((p) => (
++                  <option key={p} value={p}>{PERSONALISATION_LABEL[p]}</option>
++                ))}
++              </select>
++            </Field>
++            <Field label={`Cache hit, music and image: ${pct(state.cost.cacheHit)}`} hint="The share of music and images served again instead of generated.">
++              <input type="range" min={0} max={1} step={0.05} value={state.cost.cacheHit} onChange={(e) => setCost('models', { cacheHit: Number(e.target.value) })} className="w-full accent-adm-ink" aria-label="Cache hit rate" />
++            </Field>
++            {MEDIA.map((m) => (
++              <Field key={m} label={MEDIA_LABEL[m]}>
++                <select className={inputClass} value={state.cost.models[m]} onChange={(e) => setModel(m, e.target.value)} aria-label={`Model for ${MEDIA_LABEL[m]}`}>
++                  {SUPPLIERS.filter((s) => s.media === m).map((s) => (
++                    <option key={s.id} value={s.id}>{s.name}</option>
++                  ))}
++                </select>
++              </Field>
++            ))}
++          </div>
++          <SelectionSummary cost={state.cost} />
++        </Panel>
++
++        <Panel title="Cost per chapter, several variations" description="One chapter for one person, split by media, at 3, 5 and 10 minutes. Lean, Balanced and Premium are fixed presets at your words per minute; “Your selection” follows the controls. Estimates.">
++          <div className="grid gap-12 md:grid-cols-2 xl:grid-cols-4">
++            {[...PRESETS.map((p) => ({ id: p.id, name: p.name, blurb: p.blurb, make: (min: number) => presetInputs(p, min, state.cost.wordsPerMinute) })), { id: 'yours', name: 'Your selection', blurb: `${PERSONALISATION_LABEL[state.cost.personalisation]}, ${pct(state.cost.cacheHit)} cache hit.`, make: (min: number) => ({ ...state.cost, minutes: min }) }].map((v) => (
++              <VariationCard key={v.id} name={v.name} blurb={v.blurb} costs={LENGTHS.map((min) => ({ min, c: chapterCost(v.make(min)) }))} />
++            ))}
++          </div>
++          <MediaLegend />
++          <Measured2025 />
++          <p className="text-12 text-adm-ink-2">
++            Assumptions (estimates): {ASSUME.charsPerWord} characters and {ASSUME.tokensPerWord} output tokens a word, {ASSUME.promptTokens.toLocaleString('en-US')} prompt tokens, {ASSUME.imagesPerChapter} image a chapter, one Stable Audio generation covers 3 minutes, a video clip is {ASSUME.videoSeconds} seconds. TTS bills characters, so pauses are free. Hosting, storage, CDN, licences and payment fees are not included.
++          </p>
++        </Panel>
++      </section>
++
++      <h2 className="mt-8 text-18 font-semibold text-adm-ink">Part 2 · From bad to good (the goal)</h2>
++
++      <section id="goal-graph" className="scroll-mt-16">
++        <Panel title="Bad sleep to good sleep, as a connected graph" description="Use case: sleep on a 0–100 scale, default 25 → 85 (+60) from the spec. Change a variable: every node downstream updates and the changed path lights up. Click a node for its formula and source. Chapter length, personalisation and models come from Part 1.">
++          <div className="grid gap-12 md:grid-cols-2 xl:grid-cols-5">
++            <Field label={`Starting level: ${state.goal.baseline} (${conditionName(state.goal.baseline)})`} hint="The user’s condition today, 0 = worst sleep.">
++              <input type="range" min={0} max={80} step={5} value={state.goal.baseline} onChange={(e) => setGoal('condition', { baseline: Number(e.target.value) })} className="w-full accent-adm-ink" aria-label="Starting level" />
++            </Field>
++            <Field label={`Target: ${state.goal.target}`} hint="Good sleep. The spec uses 85.">
++              <input type="range" min={50} max={100} step={5} value={state.goal.target} onChange={(e) => setGoal('condition', { target: Number(e.target.value) })} className="w-full accent-adm-ink" aria-label="Target level" />
++            </Field>
++            <Field label={`Adherence: ${state.goal.chaptersPerWeek} chapters a week`}>
++              <input type="range" min={1} max={7} step={1} value={state.goal.chaptersPerWeek} onChange={(e) => setGoal('adherence', { chaptersPerWeek: Number(e.target.value) })} className="w-full accent-adm-ink" aria-label="Chapters a week" />
++            </Field>
++            <Field label="Causal AI stage (scenario)">
++              <Segmented options={([1, 2, 3] as Stage[]).map((s) => ({ v: s, t: `Stage ${s}` }))} value={state.goal.stage} onChange={(v) => setGoal('stage', { stage: v })} />
++            </Field>
++            <Field label="Price anchor">
++              <select className={inputClass} value={state.goal.anchor} onChange={(e) => setGoal('anchor', { anchor: e.target.value as Anchor })} aria-label="Price anchor">
++                {(Object.keys(ANCHORS) as Anchor[]).map((a) => (
++                  <option key={a} value={a}>{ANCHORS[a].label}</option>
++                ))}
++              </select>
++            </Field>
++          </div>
++          <div className="flex flex-wrap gap-8 text-12">
++            <span className="text-adm-muted">Quick condition:</span>
++            {[{ t: 'Severe (15)', v: 15 }, { t: 'Moderate (40)', v: 40 }, { t: 'Mild (60)', v: 60 }, { t: 'Spec default (25)', v: 25 }].map((q) => (
++              <button key={q.t} type="button" onClick={() => setGoal('condition', { baseline: q.v })} className="rounded-full border border-adm-line px-10 py-2 text-adm-ink hover:bg-adm-hover">{q.t}</button>
++            ))}
++          </div>
++          <ConnectedGraph values={values} changed={changed.nodes} from={changed.from} selected={selected} onSelect={setSelected} />
++          <NodeExplain id={selected} value={values[selected]} />
++          <dl className="grid grid-cols-2 gap-8 md:grid-cols-4">
++            <Stat label="Chapters to flip" value={`${result.chapters}`} note={`${result.weeks.toFixed(1)} weeks`} lab="scenario" />
++            <Stat label="Flip probability" value={pct(result.flipProbability)} lab="scenario" />
++            <Stat label="Cost per flip" value={usd(result.costPerFlip)} note={`journey ${usd(result.costPerJourney)}`} lab="estimate" />
++            <Stat label="Profit per flip" value={usd(result.profitPerFlip)} note={`${ANCHORS[state.goal.anchor].label}; before fees, CAC, fixed costs`} lab="scenario" />
++          </dl>
++        </Panel>
++      </section>
++
++      <section id="goal-stages" className="scroll-mt-16">
++        <Panel title="As the Causal AI learns: cost falls, uplift rises, profit appears" description="The same journey at the three stages of the spec (scenario: the business owner’s assumptions until real sessions exist), with your variables. The spec’s own figures are beside ours for comparison.">
++          <StageChart stages={stages} />
++          <div className="overflow-x-auto">
++            <table className="w-full min-w-[720px] text-left text-12">
++              <thead className="text-11 uppercase tracking-wider text-adm-muted">
++                <tr className="border-b border-adm-line">
++                  <th className="py-6 pr-12 font-semibold">Stage</th>
++                  <th className="py-6 pr-12 font-semibold">Uplift / chapter</th>
++                  <th className="py-6 pr-12 font-semibold">Chapters (spec)</th>
++                  <th className="py-6 pr-12 font-semibold">Flip probability</th>
++                  <th className="py-6 pr-12 font-semibold">Cost / chapter</th>
++                  <th className="py-6 pr-12 font-semibold">Cost / flip (spec)</th>
++                  <th className="py-6 font-semibold">Profit / flip</th>
++                </tr>
++              </thead>
++              <tbody>
++                {stages.map(({ st, r }) => (
++                  <tr key={st} className="border-b border-adm-line last:border-0 tabular-nums">
++                    <td className="py-8 pr-12 text-adm-ink">{STAGES[st].name} <span className="text-adm-muted">· {STAGES[st].sessions}</span></td>
++                    <td className="py-8 pr-12">+{r.uplift.toFixed(2)}</td>
++                    <td className="py-8 pr-12">{r.chapters} <span className="text-adm-muted">({STAGES[st].specChapters})</span></td>
++                    <td className="py-8 pr-12">{pct(r.flipProbability)}</td>
++                    <td className="py-8 pr-12">{usd(r.costPerChapter)}</td>
++                    <td className="py-8 pr-12">{usd(r.costPerFlip)} <span className="text-adm-muted">({usd(STAGES[st].specCostPerFlip)})</span></td>
++                    <td className="py-8 font-semibold">{usd(r.profitPerFlip)}</td>
++                  </tr>
++                ))}
++              </tbody>
++            </table>
++          </div>
++          <p className="text-12 text-adm-ink-2">
++            The spec’s cost per flip is lower or higher than ours because its chapter cost is fixed at its own model mix ($0.059–0.178 a chapter); ours follows your selection. {ANCHORS[state.goal.anchor].note}
++          </p>
++        </Panel>
++      </section>
++
++      <section id="metric-lines" className="scroll-mt-16">
++        <MetricLines stages={stages} />
++      </section>
++
++      <Panel title="Read this first" description="Plain-language notes.">
++        <ul className="flex list-disc flex-col gap-6 pl-18 text-13 text-adm-ink-2">
++          <li>“Therapeutic”, “flip” and “medical range” are internal metric names. Nothing on this page is a medical claim; public copy stays wellness.</li>
++          <li>The stage curve (uplift 1.43 → 2.73, success 54 → 89%, cost × 1 → 0.26) is the business owner’s assumption from the spec until real sessions exist. It is shown to see where it leads, not as a finding.</li>
++          <li>The only measured costs are the 2025 test sessions (€40.27). Every 2026 cost is a supplier price times our assumptions.</li>
++          <li>Voice is the largest cost in almost every variation: TTS is billed per character and a chapter is mostly words. Choosing the voice decides more than choosing the script model.</li>
++        </ul>
++      </Panel>
++
++      <SourcesSection
++        findings={COST_FINDINGS}
++        labels={['measured', 'company-price', 'third-party', 'estimate', 'scenario', 'document']}
++        limits={[
++          'No real user has heard a chapter, so no uplift, flip or therapeutic figure here is measured.',
++          'Prices change often; each is dated. Google TTS and OpenAI’s per-image price could not be read and are estimates.',
++          'Cost covers model calls only: not hosting, storage, CDN, music licences, people, payment or store fees, or CAC.',
++          'The 2025 campaigns did not record their length, so the measured baseline is per session, not per minute.',
++          'The condition, length, personalisation and adherence factors are this report’s assumptions, chosen to be simple and visible.',
++          'Profit per flip uses the whole price; a retreat ticket is shared with the creator.',
++        ]}
++      />
++    </div>
++  )
++}
++
++/* ----------------------------------------------------------------- Parts */
++
++function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
++  return (
++    <label className="flex min-w-0 flex-col gap-4 text-12">
++      <span className="font-medium text-adm-ink">{label}</span>
++      {children}
++      {hint && <span className="text-11 text-adm-muted">{hint}</span>}
++    </label>
++  )
++}
++
++function Segmented<T extends number>({ options, value, onChange }: { options: { v: T; t: string }[]; value: T; onChange: (v: T) => void }) {
++  return (
++    <div className="inline-flex rounded-8 border border-adm-line p-2" role="group">
++      {options.map((o) => (
++        <button
++          key={o.v}
++          type="button"
++          aria-pressed={o.v === value}
++          onClick={() => onChange(o.v)}
++          className={`rounded-4 px-10 py-4 text-12 font-medium ${o.v === value ? 'bg-adm-ink text-adm-surface' : 'text-adm-ink-2 hover:bg-adm-hover'}`}
++        >
++          {o.t}
++        </button>
++      ))}
++    </div>
++  )
++}
++
++function Stat({ label, value, note, lab }: { label: string; value: string; note?: string; lab: NumberLabel }) {
++  return (
++    <div className="flex min-w-0 flex-col gap-2 rounded-8 bg-adm-bg p-10">
++      <dt className="flex flex-wrap items-center justify-between gap-4 text-11 text-adm-muted">
++        {label} <NumBadge label={lab} />
++      </dt>
++      <dd className="text-18 font-semibold tabular-nums text-adm-ink">{value}</dd>
++      {note && <dd className="text-11 text-adm-ink-2">{note}</dd>}
++    </div>
++  )
++}
++
++function SelectionSummary({ cost }: { cost: CostInputs }) {
++  const c = chapterCost(cost)
++  const d = dominant(c)
++  return (
++    <div className="flex flex-wrap items-baseline gap-x-16 gap-y-4 border-t border-adm-line pt-12 text-13">
++      <span className="text-adm-ink">
++        One {cost.minutes}-minute chapter: <strong className="tabular-nums">{usd(total(c))}</strong> <NumBadge label="estimate" />
++      </span>
++      <span className="text-adm-ink-2">
++        {MEDIA.filter((m) => c[m] > 0).map((m) => `${MEDIA_LABEL[m].split(' ')[0]} ${usd(c[m])}`).join(' · ')}
++      </span>
++      {total(c) > 0 && <span className="text-adm-ink-2">Largest: {MEDIA_LABEL[d.media]} at {pct(d.share)}.</span>}
++    </div>
++  )
++}
++
++function MediaLegend() {
++  return (
++    <div className="flex flex-wrap gap-x-14 gap-y-4 text-12 text-adm-ink-2">
++      {MEDIA.map((m) => (
++        <span key={m} className="inline-flex items-center gap-6">
++          <span className={`size-8 rounded-2 ${MEDIA_BG[m]}`} aria-hidden="true" />
++          {MEDIA_LABEL[m]}
++        </span>
++      ))}
++    </div>
++  )
++}
++
++function StackedBar({ c, max, label }: { c: MediaCost; max: number; label: string }) {
++  const W = 200
++  const xs = MEDIA.map((_, i) => MEDIA.slice(0, i).reduce((s, m) => s + (max ? (c[m] / max) * W : 0), 0))
++  return (
++    <svg viewBox={`0 0 ${W} 14`} className="block h-14 w-full" role="img" aria-label={label} preserveAspectRatio="none">
++      <rect x={0} y={0} width={W} height={14} rx={2} className="fill-adm-hover" />
++      {MEDIA.map((m, i) => (
++        <rect key={m} x={xs[i]} y={0} width={max ? (c[m] / max) * W : 0} height={14} className={MEDIA_FILL[m]} />
++      ))}
++    </svg>
++  )
++}
++
++function VariationCard({ name, blurb, costs }: { name: string; blurb: string; costs: { min: number; c: MediaCost }[] }) {
++  const max = Math.max(...costs.map((x) => total(x.c)))
++  const d = dominant(costs[costs.length - 1].c)
++  return (
++    <div className="flex min-w-0 flex-col gap-8 rounded-8 border border-adm-line p-12">
++      <div className="flex items-center justify-between gap-6">
++        <h3 className="text-13 font-semibold text-adm-ink">{name}</h3>
++        <NumBadge label="estimate" />
++      </div>
++      <p className="text-11 text-adm-ink-2">{blurb}</p>
++      {costs.map(({ min, c }) => (
++        <div key={min} className="flex flex-col gap-2">
++          <div className="flex justify-between text-12">
++            <span className="text-adm-muted">{min} min</span>
++            <span className="font-semibold tabular-nums text-adm-ink">{usd(total(c))}</span>
++          </div>
++          <StackedBar c={c} max={max} label={`${name}, ${min} minutes: ${usd(total(c))}`} />
++        </div>
++      ))}
++      <p className="text-11 text-adm-ink-2">
++        {total(costs[0].c) > 0 ? `Dominated by ${MEDIA_LABEL[d.media].toLowerCase()} (${pct(d.share)} at ${costs[costs.length - 1].min} min).` : 'Nothing generated.'}
++      </p>
++    </div>
++  )
++}
++
++function Measured2025() {
++  const avg = measuredAverage()
++  const t = MEASURED_2025.total
++  return (
++    <div className="flex flex-col gap-8 rounded-8 border border-adm-good/40 p-12">
++      <div className="flex flex-wrap items-center justify-between gap-6">
++        <h3 className="text-13 font-semibold text-adm-ink">2025 measured: the real baseline from the old admin</h3>
++        <NumBadge label="measured" />
++      </div>
++      <p className="text-12 text-adm-ink-2">
++        {eur(t)} for all 2025 test sessions; the ten costliest averaged {eur(avg)} a session. Length was not recorded. Voice {pct(MEASURED_2025.byMedia.voice / t)} and video {pct(MEASURED_2025.byMedia.video / t)} of the total: the 2026 variations above leave video out by default for that reason.
++      </p>
++      <StackedBar c={MEASURED_2025.byMedia} max={t} label={`2025 measured, ${eur(t)} by media`} />
++      <p className="text-11 text-adm-ink-2">{MEDIA.map((m) => `${MEDIA_LABEL[m].split(' ')[0]} ${eur(MEASURED_2025.byMedia[m])}`).join(' · ')}</p>
++      <details className="text-12">
++        <summary className="cursor-pointer font-medium text-adm-ink-2 hover:text-adm-ink">The ten costliest campaigns (a campaign is a session)</summary>
++        <div className="mt-8 overflow-x-auto">
++          <table className="w-full min-w-[520px] text-left tabular-nums">
++            <thead className="text-11 uppercase tracking-wider text-adm-muted">
++              <tr className="border-b border-adm-line">
++                {['Campaign', 'Text', 'Voice', 'Image', 'Music', 'Video', 'Total'].map((h) => <th key={h} className="py-4 pr-10 font-semibold">{h}</th>)}
++              </tr>
++            </thead>
++            <tbody>
++              {MEASURED_2025.campaigns.map((c, i) => (
++                <tr key={i} className="border-b border-adm-line last:border-0">
++                  <td className="py-4 pr-10 text-adm-ink">{c.name}</td>
++                  {[c.script, c.voice, c.image, c.music, c.video].map((v, j) => <td key={j} className="py-4 pr-10 text-adm-ink-2">{eur(v)}</td>)}
++                  <td className="py-4 font-semibold text-adm-ink">{eur(c.total)}</td>
++                </tr>
++              ))}
++            </tbody>
++          </table>
++        </div>
++      </details>
++    </div>
++  )
++}
++
++/* ------------------------------------------------------ The connected graph */
++
++const GW = 1180
++const NW = 196
++const NH = 54
++const COLX = [8, 262, 516, 770, 980]
++const rowY = (r: number) => 40 + r * 70
++
++function ConnectedGraph({ values, changed, from, selected, onSelect }: { values: Record<NodeId, string>; changed: Set<NodeId>; from: NodeId | null; selected: NodeId; onSelect: (id: NodeId) => void }) {
++  const pos = new Map(GRAPH_NODES.map((n) => [n.id, { x: COLX[n.col], y: rowY(n.row) }]))
++  const H = rowY(5) + NH + 16
++  const hot = (id: NodeId) => changed.has(id) || id === from
++  return (
++    <div className="overflow-x-auto rounded-8 border border-adm-line bg-adm-bg">
++      <svg viewBox={`0 0 ${GW} ${H}`} width={GW} height={H} role="img" aria-label="Graph: the variables on the left feed uplift, chapters, flip probability and cost, then cost per flip, the price anchor and profit per flip." className="block min-w-[1100px] max-w-none">
++        <text x={8} y={22} className="fill-adm-muted text-11 font-semibold uppercase tracking-wider">Variables</text>
++        <text x={COLX[1]} y={22} className="fill-adm-muted text-11 font-semibold uppercase tracking-wider">Per chapter</text>
++        <text x={COLX[2]} y={22} className="fill-adm-muted text-11 font-semibold uppercase tracking-wider">Per journey</text>
++        <text x={COLX[3]} y={22} className="fill-adm-muted text-11 font-semibold uppercase tracking-wider">Per flip</text>
++        <text x={COLX[4]} y={22} className="fill-adm-muted text-11 font-semibold uppercase tracking-wider">Outcome</text>
++        {GRAPH_EDGES.map(([a, b]) => {
++          const p = pos.get(a)!
++          const q = pos.get(b)!
++          const back = q.x <= p.x
++          const x1 = back ? p.x + NW / 2 : p.x + NW
++          const y1 = back ? p.y : p.y + NH / 2
++          const x2 = back ? q.x + NW / 2 : q.x
++          const y2 = back ? q.y + NH : q.y + NH / 2
++          const mid = (x1 + x2) / 2
++          const lit = hot(a) && hot(b)
++          const d = back ? `M ${x1} ${y1} C ${x1} ${y1 - 30}, ${x2} ${y2 + 30}, ${x2} ${y2}` : `M ${x1} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${x2} ${y2}`
++          return <path key={`${a}-${b}`} d={d} fill="none" className={lit ? 'stroke-adm-s2' : 'stroke-adm-axis'} strokeWidth={lit ? 2.5 : 1.25} opacity={lit ? 1 : 0.8} />
++        })}
++        {GRAPH_NODES.map((n) => {
++          const p = pos.get(n.id)!
++          const isHot = hot(n.id)
++          const isSel = selected === n.id
++          return (
++            <g
++              key={n.id}
++              role="button"
++              tabIndex={0}
++              aria-label={`${n.label}: ${values[n.id]}. Show its formula.`}
++              aria-pressed={isSel}
++              onClick={() => onSelect(n.id)}
++              onKeyDown={(e) => {
++                if (e.key === 'Enter' || e.key === ' ') {
++                  e.preventDefault()
++                  onSelect(n.id)
++                }
++              }}
++              className="cursor-pointer outline-none"
++            >
++              <rect x={p.x} y={p.y} width={NW} height={NH} rx={8} className={`${n.input ? 'fill-adm-surface' : 'fill-adm-hover'} ${isHot ? 'stroke-adm-s2' : isSel ? 'stroke-adm-ink' : 'stroke-adm-line'}`} strokeWidth={isHot || isSel ? 2 : 1} />
++              <text x={p.x + 10} y={p.y + 20} className="fill-adm-muted text-11 font-semibold">{n.label}</text>
++              <text x={p.x + 10} y={p.y + 40} className="fill-adm-ink text-12 font-semibold">{values[n.id].length > 28 ? `${values[n.id].slice(0, 27)}…` : values[n.id]}</text>
++            </g>
++          )
++        })}
++      </svg>
++    </div>
++  )
++}
++
++function NodeExplain({ id, value }: { id: NodeId; value: string }) {
++  const n = GRAPH_NODES.find((x) => x.id === id)!
++  return (
++    <div className="flex flex-col gap-4 rounded-8 border border-adm-line p-12 text-12" aria-live="polite">
++      <div className="flex flex-wrap items-center gap-8">
++        <span className="text-13 font-semibold text-adm-ink">{n.label}</span>
++        <span className="font-semibold tabular-nums text-adm-ink">{value}</span>
++        <NumBadge label={n.label2} />
++      </div>
++      <p className="text-adm-ink-2"><span className="font-medium text-adm-ink">Formula: </span>{n.formula}</p>
++      <p className="text-adm-muted">Source: {n.source}</p>
++      <p className="text-11 text-adm-muted">Orange boxes and lines: what your last change moved.</p>
++    </div>
++  )
++}
++
++/* ------------------------------------------------------------ Stage chart */
++
++function StageChart({ stages }: { stages: { st: Stage; r: ReturnType<typeof goal> }[] }) {
++  const W = 640
++  const H = 220
++  const L = 56
++  const R = 48
++  const B = 30
++  const T = 16
++  const vals = stages.flatMap(({ r }) => [r.costPerFlip, r.profitPerFlip].filter(isFinite))
++  const maxV = Math.max(1, ...vals)
++  const minV = Math.min(0, ...vals)
++  const y = (v: number) => T + ((maxV - v) / (maxV - minV)) * (H - T - B)
++  const maxU = Math.max(...stages.map((s) => s.r.uplift)) * 1.2
++  const yU = (u: number) => T + (1 - u / maxU) * (H - T - B)
++  const slot = (W - L - R) / stages.length
++  const bw = 34
++  return (
++    <div className="flex flex-col gap-8">
++      <div className="overflow-x-auto">
++        <svg viewBox={`0 0 ${W} ${H}`} className="block w-full max-w-[720px] min-w-[480px]" role="img" aria-label="Chart: cost per flip and profit per flip in dollars as bars, uplift per chapter as a line, for stages 1 to 3.">
++          {[minV, 0, maxV / 2, maxV].map((v, i) => (
++            <g key={i}>
++              <line x1={L} x2={W - R} y1={y(v)} y2={y(v)} className={v === 0 ? 'stroke-adm-axis' : 'stroke-adm-grid'} />
++              <text x={L - 6} y={y(v) + 4} textAnchor="end" className="fill-adm-muted text-10 tabular-nums">{usd(v)}</text>
++            </g>
++          ))}
++          <text x={W - R + 6} y={T + 4} className="fill-adm-muted text-10">pts</text>
++          {stages.map(({ st, r }, i) => {
++            const cx = L + slot * i + slot / 2
++            const cost = isFinite(r.costPerFlip) ? r.costPerFlip : 0
++            const prof = isFinite(r.profitPerFlip) ? r.profitPerFlip : 0
++            return (
++              <g key={st}>
++                <rect x={cx - bw - 2} y={Math.min(y(cost), y(0))} width={bw} height={Math.abs(y(0) - y(cost))} className="fill-adm-s2" />
++                <rect x={cx + 2} y={Math.min(y(prof), y(0))} width={bw} height={Math.abs(y(0) - y(prof))} className={prof >= 0 ? 'fill-adm-s3' : 'fill-adm-critical'} />
++                <text x={cx} y={H - 10} textAnchor="middle" className="fill-adm-ink text-11 font-medium">{STAGES[st].name}</text>
++              </g>
++            )
++          })}
++          <polyline
++            fill="none"
++            className="stroke-adm-s1"
++            strokeWidth={2.5}
++            points={stages.map(({ r }, i) => `${L + slot * i + slot / 2},${yU(r.uplift)}`).join(' ')}
++          />
++          {stages.map(({ st, r }, i) => (
++            <g key={st}>
++              <circle cx={L + slot * i + slot / 2} cy={yU(r.uplift)} r={4} className="fill-adm-s1" />
++              <text x={L + slot * i + slot / 2 + 8} y={yU(r.uplift) - 6} className="fill-adm-s1 text-11 font-semibold">+{r.uplift.toFixed(2)}</text>
++            </g>
++          ))}
++        </svg>
++      </div>
++      <div className="flex flex-wrap gap-x-14 gap-y-4 text-12 text-adm-ink-2">
++        <span className="inline-flex items-center gap-6"><span className="size-8 rounded-2 bg-adm-s2" aria-hidden="true" />Cost per flip (estimate × scenario)</span>
++        <span className="inline-flex items-center gap-6"><span className="size-8 rounded-2 bg-adm-s3" aria-hidden="true" />Profit per flip (scenario)</span>
++        <span className="inline-flex items-center gap-6"><span className="h-2 w-12 bg-adm-s1" aria-hidden="true" />Uplift per chapter, points (scenario)</span>
++      </div>
++    </div>
++  )
++}
++
++/* ------------------------------------------------------------ Metric lines */
++
++function MetricLines({ stages }: { stages: { st: Stage; r: ReturnType<typeof goal> }[] }) {
++  const s = (f: (x: (typeof stages)[number]) => string) => stages.map(f).join(' → ')
++  const rows: { line: string; metric: string; now: string; target: string; measurable: string; lab: NumberLabel }[] = [
++    { line: '1 · Compute cost', metric: 'Cost per chapter', now: s((x) => usd(x.r.costPerChapter)), target: 'Falls with the stage cost factor 1 → 0.58 → 0.26', measurable: 'Yes, once the backend logs supplier calls (2025 admin did: €40.27)', lab: 'estimate' },
++    { line: '1 · Compute cost', metric: 'Cost per flip', now: s((x) => usd(x.r.costPerFlip)), target: 'Spec: $4.98 → $2.04 → $0.58', measurable: 'Cost yes; “per flip” needs real flips', lab: 'estimate' },
++    { line: '1 · Compute cost', metric: 'Cost per uplift point', now: s((x) => usd(x.r.costPerPoint)), target: 'Spec: $0.0829 → $0.0340 → $0.0097', measurable: 'No: needs real check-ins', lab: 'scenario' },
++    { line: '2 · Causal AI', metric: 'Chapters to flip', now: s((x) => `${x.r.chapters}`), target: 'Spec: 42 → 32 → 22', measurable: 'No: needs real journeys', lab: 'scenario' },
++    { line: '2 · Causal AI', metric: 'Density (DCI, 0–1)', now: s((x) => STAGES[x.st].density.toFixed(2)), target: 'Spec: 0.22 → 0.61 → 0.91 (assumed; no definition we can compute yet)', measurable: 'No: not defined', lab: 'scenario' },
++    { line: '2 · Causal AI', metric: 'Velocity (VCI, 0–1)', now: s((x) => STAGES[x.st].velocity.toFixed(2)), target: 'Spec: 0.35 → 0.72 → 0.94 (assumed)', measurable: 'No: not defined', lab: 'scenario' },
++    { line: '3 · Therapeutic', metric: 'Flip rate', now: s((x) => pct(x.r.flipProbability)), target: 'Spec: 54% → 74.5% → 89%', measurable: 'No: no real users yet', lab: 'scenario' },
++    { line: '3 · Therapeutic', metric: 'Uplift per chapter', now: s((x) => `+${x.r.uplift.toFixed(2)}`), target: 'Spec: +1.43 → +1.88 → +2.73', measurable: 'No: needs pre- and post-session scores', lab: 'scenario' },
++    { line: '3 · Therapeutic', metric: 'Real-user outcome', now: '—', target: 'A measured flip in the feedback group', measurable: 'No: the study’s numbers are sample data', lab: 'scenario' },
++  ]
++  return (
++    <Panel title="Three metric lines, with targets" description="Compute cost, Causal AI and therapeutic, as the business owner asked. Values at stage 1 → 2 → 3 with your variables. None of the therapeutic line is measurable yet.">
++      <div className="overflow-x-auto">
++        <table className="w-full min-w-[820px] text-left text-12">
++          <thead className="text-11 uppercase tracking-wider text-adm-muted">
++            <tr className="border-b border-adm-line">
++              {['Line', 'Metric', 'This model, stage 1 → 2 → 3', 'Target', 'Measurable now?', 'Label'].map((h) => <th key={h} className="py-6 pr-12 font-semibold">{h}</th>)}
++            </tr>
++          </thead>
++          <tbody>
++            {rows.map((r) => (
++              <tr key={r.metric} className="border-b border-adm-line align-top last:border-0">
++                <td className="py-8 pr-12 text-adm-muted">{r.line}</td>
++                <td className="py-8 pr-12 font-medium text-adm-ink">{r.metric}</td>
++                <td className="py-8 pr-12 tabular-nums text-adm-ink">{r.now}</td>
++                <td className="py-8 pr-12 text-adm-ink-2">{r.target}</td>
++                <td className="py-8 pr-12 text-adm-ink-2">
++                  {r.measurable.startsWith('No') && <AlertTriangle size={11} className="mr-4 inline text-adm-serious" aria-hidden="true" />}
++                  {r.measurable}
++                </td>
++                <td className="py-8"><NumBadge label={r.lab} /></td>
++              </tr>
++            ))}
++          </tbody>
++        </table>
++      </div>
++    </Panel>
++  )
++}
+diff --git a/src/admin/pages/reports/ReportParts.tsx b/src/admin/pages/reports/ReportParts.tsx
+index 82ddca2..4a02c5a 100644
+--- a/src/admin/pages/reports/ReportParts.tsx
++++ b/src/admin/pages/reports/ReportParts.tsx
+@@ -11,7 +11,7 @@ import { LABEL_MEANING, LABEL_TEXT, SOURCES, sourcesOf, type Finding, type Sourc
+  * the one registry in data/reportSources.ts.
+  */
+ 
+-const LABEL_TONE: Record<SourceLabel, Tone> = { measured: 'good', prediction: 'info', sample: 'neutral', estimate: 'serious', document: 'warning' }
++const LABEL_TONE: Record<SourceLabel, Tone> = { measured: 'good', prediction: 'info', sample: 'neutral', estimate: 'serious', document: 'warning', 'company-price': 'good', 'third-party': 'neutral', scenario: 'critical' }
+ /** Edge and dot colour per label; admin series tokens, so both themes work. */
+ const LABEL_STROKE: Record<SourceLabel, string> = {
+   measured: 'stroke-adm-good',
+@@ -19,6 +19,9 @@ const LABEL_STROKE: Record<SourceLabel, string> = {
+   sample: 'stroke-adm-s3',
+   estimate: 'stroke-adm-s2',
+   document: 'stroke-adm-s4',
++  'company-price': 'stroke-adm-good',
++  'third-party': 'stroke-adm-muted',
++  scenario: 'stroke-adm-critical',
+ }
+ const LABEL_FILL: Record<SourceLabel, string> = {
+   measured: 'fill-adm-good',
+@@ -26,6 +29,9 @@ const LABEL_FILL: Record<SourceLabel, string> = {
+   sample: 'fill-adm-s3',
+   estimate: 'fill-adm-s2',
+   document: 'fill-adm-s4',
++  'company-price': 'fill-adm-good',
++  'third-party': 'fill-adm-muted',
++  scenario: 'fill-adm-critical',
+ }
+ 
+ export function LabelBadge({ label }: { label: SourceLabel }) {
+@@ -161,7 +167,7 @@ export function SourceGraph({ findings, label }: { findings: Finding[]; label: s
+ }
+ 
+ /** The fixed-format Sources section, the build it was made on, and its limits. */
+-export function SourcesSection({ findings, limits }: { findings: Finding[]; limits: ReactNode[] }) {
++export function SourcesSection({ findings, limits, labels = ['measured', 'prediction', 'sample', 'estimate', 'document'] }: { findings: Finding[]; limits: ReactNode[]; labels?: SourceLabel[] }) {
+   const sources = sourcesOf(findings)
+   return (
+     <>
+@@ -192,7 +198,7 @@ export function SourcesSection({ findings, limits }: { findings: Finding[]; limi
+           ))}
+         </ul>
+         <dl className="grid gap-6 border-t border-adm-line pt-12 text-12 sm:grid-cols-2 lg:grid-cols-3">
+-          {(Object.keys(LABEL_TEXT) as SourceLabel[]).map((l) => (
++          {(Object.keys(LABEL_TEXT) as SourceLabel[]).filter((l) => labels.includes(l)).map((l) => (
+             <div key={l} className="flex items-start gap-8">
+               <dt className="shrink-0">
+                 <LabelBadge label={l} />
+diff --git a/src/demo/modules.ts b/src/demo/modules.ts
+index 1be2275..5bc7b43 100644
+--- a/src/demo/modules.ts
++++ b/src/demo/modules.ts
+@@ -247,6 +247,7 @@ export const DEMO_MODULES: DemoModule[] = [
+   { id: 'adminBuyerAgent', kind: 'admin', label: 'Buyer agent results', description: 'What a buyer agent answered as each persona in a panel: try, pay, price, objections, test cases. Runs v1–v3 and the re-run by production version.', route: '/admin/buyer-agent', built: true },
+   { id: 'adminReportBuyerAgent', kind: 'admin', label: 'Buyer agent report', description: 'Every buyer agent iteration as a timeline: question, what changed, results, the change from the one before, and the decision it fed. With a source graph.', route: '/admin/reports/buyer-agent', built: true },
+   { id: 'adminReportCombination', kind: 'admin', label: 'Combination report', description: 'One reading of Aurelia stage by stage of the business funnel, joining the old backend, the product versions, user feedback, personas, the funnels and the PRD.', route: '/admin/reports/combination', built: true },
++  { id: 'adminReportCost', kind: 'admin', label: 'Cost report', description: 'What a chapter costs by media and supplier (with pros and cons), in several variations and against the 2025 measured costs; then the bad-to-good sleep journey as a connected graph: uplift, chapters and cost per flip across the Causal AI stages (scenario).', route: '/admin/reports/cost', built: true },
+   { id: 'adminRoles', kind: 'admin', label: 'Roles & permissions', description: 'Permission matrix.', route: '/admin/roles', built: true },
+   { id: 'adminSessions', kind: 'admin', label: 'Sessions', description: 'Generated session catalogue.', route: '/admin/sessions', built: true },
+   { id: 'adminChallenges', kind: 'admin', label: 'Challenges', description: 'Setup, pacing and reward tiers.', route: '/admin/challenges', built: true },
+-- 
+2.43.0
+

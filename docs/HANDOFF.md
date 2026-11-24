@@ -500,7 +500,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U116**, last J = **J171**, last
+**Numbering as of 17 Nov 2026:** last U = **U117**, last J = **J172**, last
 O = **O56**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -965,6 +965,7 @@ history can be read without opening four documents.
 | U114 | `4c89df1` | 2026-11-24 | No personal names on shared surfaces (the J078 rule): the B2B2C wiki pages, the funnel and buyer-agent admin texts, the wiki card and the /__demo description now say "the business owner" or "the brief"; the plan page drops internal ids. | [patch](update-log/patches/U114-4c89df1.patch) |
 | U115 | `3bcb6cf` | 2026-11-24 | Wiki on desktop (1024px and up): one sticky left sidebar replaces the top tab bar. It holds the brand, the document list, then the open document's search and contents, and Admin. Phones are unchanged. | [patch](update-log/patches/U115-3bcb6cf.patch) |
 | U116 | `fa3c7f6` | 2026-11-24 | Admin → Reports (staging only, `RELEASES.reports`). **Buyer agent report:** every iteration (v1, v2, v3, the re-run) with its question, what changed, results, change from the one before, and the decision it fed. **Combination report:** each funnel stage read across agents, the funnel, the retreat model, personas, v5 features, interviews, the PRD and the backend wiki, with agreements, conflicts, a verdict and a next move, plus an offer × version × rules matrix. Both start with a clickable source graph and end with Sources (16 in one registry, each labelled), Built on and Limits. | [patch](update-log/patches/U116-fa3c7f6.patch) |
+| U117 | `bd2daaf` | 2026-11-24 | Buyer agent report: every iteration shows the **price tested** (v1 the admin's mock $9.99, v2 mock regional prices, v3 offers A and B, the re-run the app's $10 or $100), with a table and a warning where it differs from the app. New **Cost report** (`/admin/reports/cost`, staging): a supplier catalogue per media with price, source, label and pros and cons; Lean, Balanced and Premium presets plus the 2025 measured baseline; a bad-to-good model with the user's starting condition, adherence, chapter length, personalisation, models and the Causal AI stage; a connected, interactive graph; a cost-against-uplift chart and profit per flip. | [patch](update-log/patches/U117-bd2daaf.patch) |
 | J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
@@ -1028,6 +1029,7 @@ history can be read without opening four documents.
 | J169 | 2026-11-24 | Record | The business owner's chat, part 0 (12 screenshots, 18.08–18.51): retreat purpose, icon, Google Analytics against the admin, Insight Timer quick wins, the Healing Map; kept, waiting for the last part | — |
 | J170 | 2026-11-24 | Record + plan | The chat's last part read; all three parts combined into one task list (A–K) for the owner to confirm | — |
 | J171 | 2026-11-24 | Record | The Gemini chat is the MVP, Causal AI & Admin Spec PDF (already read); the Vimeo videos are skipped | — |
+| J172 | 2026-11-24 | Code | Mark the price each buyer-agent iteration tested; Cost report with supplier pros and cons, variations, the user's condition and a connected graph | U117 |
 
 ### 17.2 Code changes (U)
 

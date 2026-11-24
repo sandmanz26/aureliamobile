@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-24 — Price tested; Cost report (U117, J172)
+
+The buyer agent report says which price each iteration tested. A new Cost report gives supplier prices with pros and cons, cost presets, and a connected bad-to-good graph in which the user's condition is a variable. Staging only.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-24 — Reports (U116, J167)
 
 Admin gains Reports: a buyer agent report and a combination report, each showing its sources as a graph and a list. Staging only.

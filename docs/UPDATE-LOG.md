@@ -153,9 +153,38 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U114 | `4c89df1` | 2026-11-24 | No personal names on shared surfaces (the J078 rule): the B2B2C wiki pages, the funnel and buyer-agent admin texts, the wiki card and the /__demo description now say "the business owner" or "the brief"; the plan page drops internal ids. | [patch](patches/U114-4c89df1.patch) |
 | U115 | `3bcb6cf` | 2026-11-24 | Wiki on desktop (1024px and up): one sticky left sidebar replaces the top tab bar. It holds the brand, the document list, then the open document's search and contents, and Admin. Phones are unchanged. | [patch](patches/U115-3bcb6cf.patch) |
 | U116 | `fa3c7f6` | 2026-11-24 | Admin → Reports (staging only, `RELEASES.reports`). **Buyer agent report:** every iteration (v1, v2, v3, the re-run) with its question, what changed, results, change from the one before, and the decision it fed. **Combination report:** each funnel stage read across agents, the funnel, the retreat model, personas, v5 features, interviews, the PRD and the backend wiki, with agreements, conflicts, a verdict and a next move, plus an offer × version × rules matrix. Both start with a clickable source graph and end with Sources (16 in one registry, each labelled), Built on and Limits. | [patch](patches/U116-fa3c7f6.patch) |
+| U117 | `bd2daaf` | 2026-11-24 | Buyer agent report: every iteration shows the **price tested** (v1 the admin's mock $9.99, v2 mock regional prices, v3 offers A and B, the re-run the app's $10 or $100), with a table and a warning where it differs from the app. New **Cost report** (`/admin/reports/cost`, staging): a supplier catalogue per media with price, source, label and pros and cons; Lean, Balanced and Premium presets plus the 2025 measured baseline; a bad-to-good model with the user's starting condition, adherence, chapter length, personalisation, models and the Causal AI stage; a connected, interactive graph; a cost-against-uplift chart and profit per flip. | [patch](patches/U117-bd2daaf.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U117 — Price tested, and the Cost report
+
+- **Commit:** `bd2daaf` · 2026-11-24 · `web_app` + `admin_cms`. Staging only (`RELEASES.reports`).
+- **Patch:** [patches/U117-bd2daaf.patch](patches/U117-bd2daaf.patch)
+- **Request:** "pada buyer agent, harga menjadi hasil dari report nya juga kan … di buyer agent report saya mau kita perlu menandai harga yang digunakan … untuk task A … lebih cerdas … beberapa variable … pro dan cons setiap model … breakdown … cost dulu … beberapa variasi report … from bad to good … variable dari tingkat kondisi user … graph yang saling terkoneksi"
+- **Cost per chapter by preset** (estimates):
+
+  | Preset | 3 min | 5 min | 10 min |
+  | --- | --- | --- | --- |
+  | Lean | $0.011 | $0.015 | $0.026 |
+  | Balanced | $0.16 | $0.25 | $0.47 |
+  | Premium | $0.76 | $1.17 | $2.19 |
+
+  Voice dominates; in Premium, generative music does.
+- **Bad to good, Balanced defaults** (sleep 25 → 85, 10-minute chapters, fully personal, $19.99 per flip). The stages are the spec's assumptions, labelled scenario:
+
+  | Stage | Chapters | Flip rate | Cost per flip | Profit per flip |
+  | --- | --- | --- | --- | --- |
+  | 1 | 42 | 54% | $36.55 | −$16.56 |
+  | 2 | 32 | 75% | $11.71 | +$8.28 |
+  | 3 | 22 | 89% | $3.02 | +$16.97 |
+
+  The spec's own per-flip costs are lower ($4.98 → $0.58) because its chapters cost $0.06–0.18.
+- **Estimates, not prices:** Google TTS and OpenAI image prices. The condition, adherence and personalisation adjustments are our assumptions, labelled.
+- **Verified:** `npm run check` (205 tests), and both pages at 1440px and 402px with no sideways scroll and no errors.
+- **Not checked:** a 402px screenshot, keyboard use of the graph, dark theme.
+- **Revert:** `git revert --no-commit bd2daaf`.
 
 ### U116 — Reports
 
