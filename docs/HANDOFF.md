@@ -496,7 +496,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U111**, last J = **J157**, last
+**Numbering as of 17 Nov 2026:** last U = **U112**, last J = **J158**, last
 O = **O50**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -956,6 +956,7 @@ history can be read without opening four documents.
 | U109 | `cdb7225` | 2026-11-23 | Business funnel after a roast as Eugene: a **Fix next** panel under the stage cards (the biggest gap in one sentence, why agents leave across the funnel, and the change proposed for that stage), a real proposed decision for staying (d7: the next chapter's time set in the check-in, no streaks; new defaults merge into a saved log), the shortlist metrics each stage still needs a backend for, and the feedback group labelled sample data. Staging and production. | [patch](update-log/patches/U109-cdb7225.patch) |
 | U110 | `37f0d7b` | 2026-11-24 | Wiki tab **B2B2C** (`/wiki/b2b2c`): a summary with a coverage table linking nine detail pages at `/wiki/b2b2c/:page` (Ideation, Creators and cohorts, Employers and insurers, Partners, Unit economics, Claims and regulation, Plan, Roast, Full report and sources), from a five-track deep research (notes and report in `docs/research/`). A pages strip on every page; a test checks every page file exists and every link resolves. Staging and production (wiki rule J076). | [patch](update-log/patches/U110-37f0d7b.patch) |
 | U111 | `bde496b` | 2026-11-24 | Home's headline on desktop is Eugene's Headline in Motion: "Create the ___ you imagine." with the gold italic word cycling peace → mind → energy → state, a 500ms ease-in-out cross-fade, the line sliding to fit, still under reduced motion. Every version on desktop, v5 included; below lg each version keeps its static headline (mobile frozen). New `ui/RotatingWord`. Staging and production. | [patch](update-log/patches/U111-bde496b.patch) |
+| U112 | `8865802` | 2026-11-24 | Headline in Motion on phones too, on request: Home's headline is "Create the peace / mind / energy / state you imagine." at every width, in every version. This replaces the static mobile headlines (v1–v4 "space", v5 "Sessions made for how you feel today."). An explicit mobile change. Staging and production. | [patch](update-log/patches/U112-8865802.patch) |
 | J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
@@ -1005,6 +1006,7 @@ history can be read without opening four documents.
 | J155 | 2026-11-24 | Question + doc fix | What "desain ulang" (redesign) in the B2B2C research means | — |
 | J156 | 2026-11-24 | Question | Where is the animated text from yesterday? Not on production or staging | — |
 | J157 | 2026-11-24 | Code | Eugene's animated headline ("Headline in Motion"), the animated text asked about in J156 | U111 |
+| J158 | 2026-11-24 | Code (mobile, on request) | Headline in Motion on phones as well, and on production | U112 |
 
 ### 17.2 Code changes (U)
 

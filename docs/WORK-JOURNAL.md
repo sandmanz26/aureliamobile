@@ -86,7 +86,7 @@ Later, and separately:
 - the Retreat cockpit once O45 is answered | J152 | Product owner |
 | O48 | **Funnel targets and proposed decisions (J153)**: the default targets (activation 70%, own session finished 60%, feels better 60%, free limit 30%, Plus 15%, back after a week 15%, a month 5%, "very disappointed" 40%) are the agent's, from the research. Eugene and the owner confirm or change them; then pick which proposed decision (d1–d4, d7) to build first | J153 | Product owner + Eugene |
 | O49 | **B2B2C plan (J154)**, in `/wiki/b2b2c/plan`: approve Phase 0 (buyer agent v5 on the redesigned retreat, €19.99 against €39; 5–10 creator interviews; the claims pack and creator contract; the admin prototype). Decide the redesign (70/30 plus a Plus share, a pre-produced journey in the creator's voice, a digital kit), the pilot's first market, and who builds the minimum backend. Confirm insurers and clinical claims are out of scope | J154 | Eugene + product owner |
-| O50 | **Done in U111 (J157)**: it was Eugene's Headline in Motion. Left: mobile, on request. **The "animated text" (J156)**: no request, commit or flag for it exists in this session or on any branch, so it was probably discussed elsewhere. Owner to say where it should appear and what it does (or share the earlier conversation); then build it, on both sites as asked in J153. J153's reading of "animasi" as the sidebar rail may have been wrong | J156 | Product owner |
+| O50 | **Done in U111 and U112 (J157, J158)**: it was Eugene's Headline in Motion, now at every width. **The "animated text" (J156)**: no request, commit or flag for it exists in this session or on any branch, so it was probably discussed elsewhere. Owner to say where it should appear and what it does (or share the earlier conversation); then build it, on both sites as asked in J153. J153's reading of "animasi" as the sidebar rail may have been wrong | J156 | Product owner |
 | J151 | 2026-11-23 | Opinion | What Eugene is asking for, in plain words: one goal (market fit), one loop (dual track), three tools in the admin | — |
 | J152 | 2026-11-23 | Opinion + fix | What the machine still lacks: the business funnel as the hub (with measured human numbers and a decision log); correction: an upgrade screen does exist | — |
 | J153 | 2026-11-23 | Code + release | Does the buyer agent need redoing? Build the Business funnel; put every decision on staging and production; roast again and improve so Eugene has nothing to complain about | U108, U109 |
@@ -94,6 +94,7 @@ Later, and separately:
 | J155 | 2026-11-24 | Question + doc fix | What "desain ulang" (redesign) in the B2B2C research means | — |
 | J156 | 2026-11-24 | Question | Where is the animated text from yesterday? Not on production or staging | — |
 | J157 | 2026-11-24 | Code | Eugene's animated headline ("Headline in Motion"), the animated text asked about in J156 | U111 |
+| J158 | 2026-11-24 | Code (mobile, on request) | Headline in Motion on phones as well, and on production | U112 |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
@@ -1984,3 +1985,8 @@ Later, and separately:
   - Under reduced motion the word stays still.
 - **Not done, and why:** mobile keeps its static headline because the mobile layout is frozen unless a mobile change is asked for. If Eugene wants it on phones too, it is one class change.
 - **Note for v5:** its desktop headline returns to "Create the … you imagine." The cycle never says "space", the word that misled an interviewed user (U053).
+
+### J158 — Headline in Motion on phones
+- **Asked:** "sekalian di HP juga deh" then "untuk headline motion update juga di prod ya"
+- **Done (U112):** an explicit mobile change. Home's moving headline now shows at every width and in every version, replacing the static mobile headlines. It is on staging and production.
+- **Note:** v5 on phones no longer says "Sessions made for how you feel today." The cycle never says "space", the word that misled an interviewed user (U053).

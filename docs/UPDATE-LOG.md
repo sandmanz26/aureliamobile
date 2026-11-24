@@ -148,9 +148,25 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U109 | `cdb7225` | 2026-11-23 | Business funnel after a roast as Eugene: a **Fix next** panel under the stage cards (the biggest gap in one sentence, why agents leave across the funnel, and the change proposed for that stage), a real proposed decision for staying (d7: the next chapter's time set in the check-in, no streaks; new defaults merge into a saved log), the shortlist metrics each stage still needs a backend for, and the feedback group labelled sample data. Staging and production. | [patch](patches/U109-cdb7225.patch) |
 | U110 | `37f0d7b` | 2026-11-24 | Wiki tab **B2B2C** (`/wiki/b2b2c`): a summary with a coverage table linking nine detail pages at `/wiki/b2b2c/:page` (Ideation, Creators and cohorts, Employers and insurers, Partners, Unit economics, Claims and regulation, Plan, Roast, Full report and sources), from a five-track deep research (notes and report in `docs/research/`). A pages strip on every page; a test checks every page file exists and every link resolves. Staging and production (wiki rule J076). | [patch](patches/U110-37f0d7b.patch) |
 | U111 | `bde496b` | 2026-11-24 | Home's headline on desktop is Eugene's Headline in Motion: "Create the ___ you imagine." with the gold italic word cycling peace → mind → energy → state, a 500ms ease-in-out cross-fade, the line sliding to fit, still under reduced motion. Every version on desktop, v5 included; below lg each version keeps its static headline (mobile frozen). New `ui/RotatingWord`. Staging and production. | [patch](patches/U111-bde496b.patch) |
+| U112 | `8865802` | 2026-11-24 | Headline in Motion on phones too, on request: Home's headline is "Create the peace / mind / energy / state you imagine." at every width, in every version. This replaces the static mobile headlines (v1–v4 "space", v5 "Sessions made for how you feel today."). An explicit mobile change. Staging and production. | [patch](patches/U112-8865802.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U112 — Headline in Motion on phones
+
+- **Commit:** `8865802` · pushed 2026-11-24 UTC · `web_app` + `admin_cms` + `web_prod`.
+- **Patch:** [patches/U112-8865802.patch](patches/U112-8865802.patch)
+- **Request:** "sekalian di HP juga deh" then "untuk headline motion update juga di prod ya"
+- **Interpretation:**
+  - This is an explicit mobile change, so the frozen-mobile rule does not apply.
+  - One headline at every width and in every version, which removes the two static mobile headlines.
+- **Changed:** `src/pages/HomePage.tsx` now has one `h1` with `RotatingWord`.
+- **Verified:**
+  - `npm run check` (185 tests);
+  - a production build at 402px (v4, v5) and 360px (v5): the word cycles with no sideways scroll, and "energy", the longest word, keeps the line whole at 402px;
+  - at 1440px it is unchanged.
+- **Revert:** `git revert --no-commit 8865802` then `git checkout HEAD -- docs/`.
 
 ### U111 — Headline in Motion
 

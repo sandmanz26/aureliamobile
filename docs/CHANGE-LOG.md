@@ -19,6 +19,13 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-24 — Headline in Motion on phones (U112, J158)
+
+The moving headline now shows on phones too, in every version, on request.
+Staging and production.
+
+Branches: `web_app`, `admin_cms`, `web_prod`.
+
 ### 2026-11-24 — Headline in Motion (U111, J157)
 
 Home's headline on desktop: "Create the peace / mind / energy / state you
