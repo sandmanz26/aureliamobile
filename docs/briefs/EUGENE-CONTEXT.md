@@ -1,6 +1,6 @@
 # Eugene: everything known about him and his requests
 
-**Last updated 2026-11-24** (covers inputs up to the owner's 24 Nov approval of the B2B2C redesign, journal J159; retreat funnel U113, names cleaned U114).
+**Last updated 2026-11-24, part 1 of the cost chat received (J168)** (covers inputs up to the owner's 24 Nov approval of the B2B2C redesign, journal J159; retreat funnel U113, names cleaned U114).
 
 **Why this file exists.** The product owner asked on 24 Nov 2026: "tolong simpan semua context eugene yang sudah ada. jangan sampai terlewatkan, taruh dalam md file atau apapun itu." Eugene's material is spread across the work journal, four briefs, the B2B2C research, the handoff, AI-KNOWLEDGE and the session transcript. This is the single place to read it.
 
@@ -90,6 +90,15 @@ Dates are the journal's; UTC times are from the transcript where it has the mess
 | 34 | 2026-11-24 07:52 → 08:01 | Owner asks for the "animated text"; then Eugene's frame "Headline in Motion (Well-being Variations)": "Create the peace / mind / energy / state you imagine.", "Make this animated…", note: 500ms, gentle ease-in-out | `src/components/ui/RotatingWord.tsx` (Home headline) | J156, J157 / U111 | **done** (desktop, both sites); O50 closed |
 | 35 | 2026-11-24 08:08 → 08:49 | "sekalian di HP juga deh", "untuk headline motion update juga di prod ya" | same | J158 / U112 | **done** (phones, both sites; explicit mobile request) |
 | 36 | 2026-11-24 08:52 | Owner: "oke saya setuju untuk desain ulang, kemudian lakukan pembuatan untuk business funnel nya. harusnya itu akan ada tambahan di admin kan ? tolong simpan semua context eugene yang sudah ada…" Approves the B2B2C redesign of Retreat-in-a-Box; asks for its funnel in the admin and this file | `src/admin/data/retreatFunnel.ts` (header says U113, J159), this file | J159 / U113 (in progress when this file was written; verify in the journal) | redesign **decided**; build in progress |
+| 37 | 2026-11-24 19.26–22.25 | Long chat (zip part 1: 15 screenshots plus 2 PDFs). He asks for:
+- a compute **Cost** model across text, voice, music, image and video, "how much does it cost to move Bad to Good", current model first then the best tier to see the uplift;
+- three metric lines: compute cost, Causal AI velocity and density, therapeutic;
+- a graph of cost down against impact up, showing profit;
+- the bad-to-good stage process;
+- a **therapeutic map in Product lab**, a Product/Business/Wellness triangle with targets;
+- a v2 unified wiki and admin knowledge base.
+
+Also: his "mathematical inevitability" thesis (meta-AI, momondo of AI, 5B state-flips, $1 per flip floor); the "MVP, Causal AI & Admin Spec" (simulated stages 42→32→22 chapters, $4.98→$0.58 per flip); the 2025 "AI vision"; the old admin's cost analytics (€40.27 across 5 media). "Pls Prio all these tasks today" | `docs/briefs/2026-11-24-cost-causal-ai-chat-part1.md`, `2026-11-24-mvp-causal-ai-admin-spec.pdf`, `2025-ai-vision-aurelia.pdf` | J168 | **received, more parts coming**; Gemini "chat nr 2" unreadable |
 
 **36 rows.**
 

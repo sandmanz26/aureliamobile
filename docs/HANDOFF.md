@@ -500,8 +500,8 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U116**, last J = **J167**, last
-O = **O55**. Before numbering, check the files for anything newer.
+**Numbering as of 17 Nov 2026:** last U = **U116**, last J = **J168**, last
+O = **O56**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
 push. `src/guides/records.test.ts` enforces it.
@@ -1024,6 +1024,7 @@ history can be read without opening four documents.
 | J165 | 2026-11-24 | Code | Wiki: a sidebar instead of the top bar, done in the background | U115 |
 | J166 | 2026-11-24 | Analysis | What the Business funnel still lacks against Eugene's asks, how to align, and sources on every report | — |
 | J167 | 2026-11-24 | Code | Reports: buyer agent and combination reports, each with sources and a graph of how they connect | U116 |
+| J168 | 2026-11-24 | Record | The business owner's cost and Causal AI chat, part 1 (zip: 15 screenshots plus 2 PDFs) read in full and kept; more parts to combine | — |
 
 ### 17.2 Code changes (U)
 

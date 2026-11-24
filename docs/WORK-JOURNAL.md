@@ -100,6 +100,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | O53 | **Backend Change Plan v2 (J162)**: confirm whether the old API is deployed; if it is, fix its open refund, card and `user_id` routes now. Ask the backend team for a v2 with a Pilot slice phase, the creator-retreat payments kept (one-off tickets, Stripe Connect payouts), safety in P1, infrastructure, migrations, data migration, observability, estimates and owners. Our side: add the retreat to the API contract, decide C1/C3/C4/C5, name a safety escalation owner. Review in `docs/api/CHANGE-PLAN-REVIEW.md` | J162 | Product owner + backend team |
 | O54 | **Feature lock for API v1 (J164)**: write a one-page list of what API v1 serves (the Pilot slice plus anything agreed), signed off by the product owner and the business owner. After the lock, new ideas go to a backlog, and any change gets an engineering impact note before the product owner decides. Engineering plans the final API only after the sign-off | J164 | Product owner + business owner |
 | O55 | **Funnel alignment and Reports (J166)**: approve the order. (1) One metric dictionary, merging J136's ten and J150's ten, used by the funnel, the agents and the reports. (2) A funnel map: stage × moments × features × metrics × leave reasons. (3) Step-level drop-off and leave reasons per stage. (4) The retreat funnel to the spec's steps: first session, week 4, week 8, Plus, Day 1 vs Day 56, ARR per wave. (5) Buyer agent v5 walks both funnels. (6) Reports (buyer agent report, combination report), each with a Sources section. Also answer O52 (what "combination" means) and O48 (targets) | J166 | Product owner |
+| O56 | **Cost report and the therapeutic map (J168)**: wait for the remaining chat parts and the Gemini "chat nr 2" as text or PDF, then confirm the task list in `docs/briefs/2026-11-24-cost-causal-ai-chat-part1.md` §6. Decide: which price anchors the model ($10 Plus, a $19.99 flip, or the €19.99/€39 ticket); the spec's progression numbers shown as targets, not results; wellness wording outside, therapeutic metrics inside | J168 | Product owner + business owner |
 | J151 | 2026-11-23 | Opinion | What Eugene is asking for, in plain words: one goal (market fit), one loop (dual track), three tools in the admin | — |
 | J152 | 2026-11-23 | Opinion + fix | What the machine still lacks: the business funnel as the hub (with measured human numbers and a decision log); correction: an upgrade screen does exist | — |
 | J153 | 2026-11-23 | Code + release | Does the buyer agent need redoing? Build the Business funnel; put every decision on staging and production; roast again and improve so Eugene has nothing to complain about | U108, U109 |
@@ -117,6 +118,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | J165 | 2026-11-24 | Code | Wiki: a sidebar instead of the top bar, done in the background | U115 |
 | J166 | 2026-11-24 | Analysis | What the Business funnel still lacks against Eugene's asks, how to align, and sources on every report | — |
 | J167 | 2026-11-24 | Code | Reports: buyer agent and combination reports, each with sources and a graph of how they connect | U116 |
+| J168 | 2026-11-24 | Record | The business owner's cost and Causal AI chat, part 1 (zip: 15 screenshots plus 2 PDFs) read in full and kept; more parts to combine | — |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
@@ -2137,3 +2139,13 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 - **Asked:** the business owner should easily see which resources a report uses and how they connect, with a graph. Combination sources: the backend wiki, product features (prod v3), user feedback, personas, the business funnel and the PRD. A Cost report comes later, from a chat to be sent.
 - **Done (U116):** on staging. "Combination" is read as all the sources joined per funnel stage (answering part of O52). Buyer agent results stays where it is.
 - **Waiting:** the Cost report, until the chat or screenshot zip arrives.
+
+### J168 — The cost and Causal AI chat, part 1
+- **Asked:** "saya kirim 1 dulu nanti tolong combine. ada 1 zip. tolong baca dengan lengkap dan detail saya, simpan dalam memori."
+- **Done:**
+  - Read every screenshot (15, 19.26–22.25) and both PDFs (the 9-page MVP, Causal AI & Admin Spec, and the 2-page 2025 AI vision).
+  - Kept as `docs/briefs/2026-11-24-cost-causal-ai-chat-part1.md`, with the PDFs beside it. It holds the messages verbatim, his thesis, the old admin's cost table, every number in the spec, the tasks as read, and first cautions.
+  - Screenshots are not stored: they show a phone number.
+  - Added as row 37 of `EUGENE-CONTEXT.md`.
+- **Not yet:** later parts, the Gemini chat, and messages before 19.26. Nothing is built until they arrive and the owner confirms.
+- **Open:** O56.
