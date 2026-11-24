@@ -371,37 +371,18 @@ export function HomePage() {
               48px bitmap scaled up, which is what made the mark blurry. */}
           <img src={logoHomepage} alt="Aurelia" width={64} height={64} className="relative mx-auto block size-64" />
 
-          {/* Desktop (lg) since U111, J157: Eugene's "Headline in Motion". The
-              word cycles peace → mind → energy → state, 500ms ease-in-out, in
-              every version. It also answers v5's reason for dropping the line
-              (Olivia read "space" as a co-working space): no word in the cycle
-              is "space". Below lg the mobile layout is frozen, so each version
-              keeps its own static headline there. */}
-          <h1 className="text-style-title-large relative mt-26 hidden text-text-primary lg:block">
+          {/* Eugene's "Headline in Motion" (U111 desktop, J157; U112 phones,
+              J158 on request). The word cycles peace → mind → energy → state,
+              500ms ease-in-out, in every version and at every width. It also
+              answers why v5 had dropped the line (Olivia read "space" as a
+              co-working space, U053): no word in the cycle is "space". */}
+          <h1 className="text-style-title-large relative mt-26 text-text-primary">
             Create the{' '}
             <em className="italic" style={{ color: '#E9A93A' }}>
               <RotatingWord words={HEADLINE_WORDS} label="peace, mind, energy and state" />
             </em>{' '}
             you imagine.
           </h1>
-          {v5 ? (
-            /* v5 (U053): says what Aurelia is. An interviewed user (Olivia)
-               read "Create the space you imagine" over the live map as a
-               co-working space with locations. */
-            <h1 className="text-style-title-large relative mt-26 text-text-primary lg:hidden">
-              Sessions made for how you feel <em className="italic" style={{ color: '#E9A93A' }}>today</em>.
-            </h1>
-          ) : (
-          <h1 className="text-style-title-large relative mt-26 text-text-primary lg:hidden">
-            Create the{' '}
-            {/* "space" is the product's whole promise, so the sentence points
-                at it — italic and in the brand gold, the way the design does. */}
-            <em className="italic" style={{ color: '#E9A93A' }}>
-              space
-            </em>{' '}
-            you imagine.
-          </h1>
-          )}
 
           {/* A composer, not a search field: it is sized for a sentence about
               how you want to feel, and the actions sit under what you typed
