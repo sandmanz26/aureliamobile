@@ -91,6 +91,15 @@ Dates are the journal's; UTC times are from the transcript where it has the mess
 | 35 | 2026-11-24 08:08 → 08:49 | "sekalian di HP juga deh", "untuk headline motion update juga di prod ya" | same | J158 / U112 | **done** (phones, both sites; explicit mobile request) |
 | 36 | 2026-11-24 08:52 | Owner: "oke saya setuju untuk desain ulang, kemudian lakukan pembuatan untuk business funnel nya. harusnya itu akan ada tambahan di admin kan ? tolong simpan semua context eugene yang sudah ada…" Approves the B2B2C redesign of Retreat-in-a-Box; asks for its funnel in the admin and this file | `src/admin/data/retreatFunnel.ts` (header says U113, J159), this file | J159 / U113 (in progress when this file was written; verify in the journal) | redesign **decided**; build in progress |
 | 37 | 2026-11-24 19.26–22.25 | Long chat (zip part 1: 15 screenshots plus 2 PDFs). He asks for:
+| 38 | 2026-11-24 18.08–18.51 | Chat part 0 (12 screenshots), earlier the same day. **Retreat purpose:** build a global influencer network: 1) reach through retreat leaders, 2) funnel participants into the app, 3) convert to paid plans. Mock-up: "Sahaj Kaur × Aurelia Nervous System Retreat" (box kit, AI companion, live cohort).
+
+**Tasks:**
+- make the icon correct;
+- research Google Analytics against our admin;
+- Insight Timer quick wins, as a list and then an app version;
+- a dynamic **Healing Map**, like Insight Timer's Map of Healing but "ours": a Wellness State Graph that learns from results, "the math of healing… as medical foundation for our AI".
+
+Also: investor visuals (wellness refinery, TeraPhenoms, ping-pong, the Chronal Recalibration game) and two Vimeo videos | `docs/briefs/2026-11-24-chat-part0-healing-map.md` | J169 | **received**; Healing Map in the backlog |
 - a compute **Cost** model across text, voice, music, image and video, "how much does it cost to move Bad to Good", current model first then the best tier to see the uplift;
 - three metric lines: compute cost, Causal AI velocity and density, therapeutic;
 - a graph of cost down against impact up, showing profit;

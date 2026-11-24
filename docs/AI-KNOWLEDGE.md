@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J168** · updated 23 Nov 2026
+**Covers up to J169** · updated 23 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
@@ -15,7 +15,7 @@ current version. History and detail live elsewhere:
 - three metric lines: compute cost, Causal AI (velocity and density), therapeutic;
 - a therapeutic map in Product lab: the Product/Business/Wellness triangle.
 
-The spec's progression numbers are simulated; show them as targets. The only measured costs are the 2025 old-admin figures (€40.27, voice 41%, video 37%).
+The spec's progression numbers are simulated; show them as targets. The only measured costs are the 2025 old-admin figures (€40.27, voice 41%, video 37%). Part 0 (J169, `docs/briefs/2026-11-24-chat-part0-healing-map.md`): the retreat is a reach engine (influencers → app → paid), plus a dynamic Healing Map like Insight Timer's but on our learning state graph. Label any non-measured link honestly.
 
 **Rule (owner, J129):** every request adds what was learned to this file, in the
 same push. Rewrite stale lines rather than appending contradictions, and move
