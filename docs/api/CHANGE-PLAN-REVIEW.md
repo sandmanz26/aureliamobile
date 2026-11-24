@@ -1,20 +1,63 @@
 # Review of the backend Change Plan (18 Nov 2026)
 
+**Sent as a PDF:** `docs/api/2026-11-24-change-plan-feedback.pdf` (J163, rewritten in J164).
+
 **Reviewed:** `docs/api/2026-11-18-backend-change-plan.pdf`, "Aurelia Backend: Current APIs vs. the Backend API Plan" (16 pages), on 24 Nov 2026, from the engineering lead's point of view. It is read against:
 - `docs/api/API-CONTRACT.md`;
 - the B2B2C research (`/wiki/b2b2c`);
 - the decision approved on 24 Nov 2026 to redesign the creator retreat.
 
+## What the Change Plan is
+
+The Change Plan compares two things:
+- **Last year's (2025) backend code.** It was built for an earlier product: campaigns, script versions, user-built agents, a wellness taxonomy and creator payouts, on MongoDB with Google sign-in only.
+- **The 2026 API plan.** That is the contract the web and Flutter apps were designed against.
+
+It is an inventory of what in the 2025 code is still useful. It is not a plan for building the 2026 backend.
+
 ## Verdict
 
-**Approve the plan as an inventory. It is not yet an implementation plan.**
+**Build the 2026 backend new, and use the 2025 code only as a box of parts.** The plan's own numbers show how little of it fits:
+- no endpoint matches as specified;
+- 18 of 127 consumer endpoints can be ported, and 73 are new;
+- about 100 of about 110 admin endpoints are new;
+- everything that is ported still changes path, authentication, database and shape.
 
-The gap analysis is good: it is honest, it goes route by route, it lists the defects it found, and it migrates in safe steps (`/v1` beside the old routes, removed router by router). It is the right base.
+**The parts worth taking:**
+- the generation pipeline;
+- the queue;
+- the model wrapper with cost tracking;
+- the Stripe client.
 
-It cannot be started as written, for three reasons:
-1. It builds the whole product, about 237 endpoints, before the first paid pilot.
-2. It retires the payment pieces that the approved creator-retreat model needs.
-3. It leaves out infrastructure, estimates, owners and a data-migration plan.
+**Before implementation the work needs two things:** a locked feature list, and a v2 of the plan built around the first paid pilot.
+
+## Features must be locked before the final API is planned
+
+This is the most important point.
+- **Every feature that stores or reads data costs four pieces of work:**
+  1. an endpoint;
+  2. a table;
+  3. backend logic and tests;
+  4. changes in both apps.
+- **The feature list still changes almost weekly.** While it moves, a final API will be out of date before it is built.
+
+The rules we propose:
+- **Lock:** a one-page list of what API v1 serves (the Pilot slice plus anything agreed), signed off by the product owner and the business owner, before engineering plans the final API.
+- **Backlog:** new ideas after the lock go to the next version, not into v1.
+- **Price tag:** a change after the lock first gets an impact note from engineering (endpoints, tables, screens, days added). Then the product owner decides.
+- **The prototype may keep moving; the API does not.** The web app runs on sample data, so screens can change daily at almost no cost. That speed does not carry over to the backend.
+- **Versions, not edits:** once v1 is live, changes are additive or go into v2.
+
+## How the app, the API and the backend fit together (for readers outside engineering)
+
+| Piece | What it is | Today |
+| --- | --- | --- |
+| Frontend (the apps) | What people see and tap | Built (web and Flutter), on sample data: nothing is saved for real, nobody can pay |
+| API (the contract) | The list of questions the apps may ask the server, and the exact shape of each answer | A written plan; this is what must be locked |
+| Backend (the server) | Stores accounts and check-ins, runs the AI, takes payments, keeps data safe | Not built for 2026 |
+| Database and services | PostgreSQL, AI models, voice, Stripe | Chosen, not set up |
+
+A feature that looks finished in the prototype is a screen with sample data. For real users it still needs the API, the backend, a table, tests and both apps reconnected.
 
 ## What is good, keep it
 
@@ -102,6 +145,7 @@ Our own `API-CONTRACT.md` does not have these yet either. We update it first (se
 
 ## Our side (frontend and product)
 
+0. Write the one-page locked feature list for API v1, and get it signed off.
 1. Add the creator retreat to `API-CONTRACT.md` and `openapi.yaml`: entities, endpoints, the split, payouts and cohort metrics.
 2. Mark the Pilot slice in the contract, so the backend can build exactly that.
 3. Decide C1, C3, C4 and C5.

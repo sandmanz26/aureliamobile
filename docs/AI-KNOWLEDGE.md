@@ -1,13 +1,13 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J163** · updated 23 Nov 2026
+**Covers up to J164** · updated 23 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
 current version. History and detail live elsewhere:
 
 - `docs/HANDOFF.md`: the full handover, including §17, every request (J) and change (U).
-- `docs/WORK-JOURNAL.md`: what was asked and answered; the Open items table (O1–O53).
+- `docs/WORK-JOURNAL.md`: what was asked and answered; the Open items table (O1–O54).
 - `docs/UPDATE-LOG.md`: every code change, with how to revert it.
 - `CLAUDE.md`: engineering conventions.
 - `docs/briefs/EUGENE-CONTEXT.md`: everything about Eugene (the business owner): timeline, models, decisions, open items. Add a row for every new input (J159). When the owner feels lost, answer from it in three parts: what he wants, what is built, what waits on whom (J160). Proposed next (J161, O52): a Reports menu where the buyer agents act as the iteration engine. It has a Buyer agent report (every iteration: hypothesis → change → run → delta → decision) and a Combination report (offer × version × agent × segment); people get a column later.
@@ -202,6 +202,8 @@ evidence → decision. It is not a user feature.
 **B2B2C research (J154, U110):** `/wiki/b2b2c` summary + nine pages from `docs/research/b2b2c/` (`src/guides/docPages.ts`; a test checks files and links). The position: redesign Retreat-in-a-Box (70/30 plus a Plus share, a pre-produced creator journey, a digital kit, test €39), measure Plus per ticket buyer, run a $50–70/seat team tier and trial codes beside it, leave insurers and clinical claims out. Never use the spec's invented outcome percentages. Partners last when the user owns the card. "Redesign" in that research means the offer's terms (split, how sessions are made, box, price, targets), never the UI; say so when using the word (J155). A wiki document can now have detail pages: add a `DocPage` list to `DOC_PAGES` in `GuidePage.tsx`.
 **Redesign approved (J159):** Retreat-in-a-Box runs on the redesigned terms. The admin's Business funnel → Creator retreat view (`retreatFunnel.ts`, tested against the wiki's figures) shows the offers, outcomes, pilot gates and money. Open risk: a creator keeps about €300 more per cohort on a course platform. **Never name Eugene on a shared surface** (wiki, admin texts, documents): write "the business owner" or "the brief" (J078; U114 cleaned up the misses).
 **Backend Change Plan (J162):** the backend team's 18 Nov gap analysis (`docs/api/2026-11-18-backend-change-plan.pdf`). It was approved as an inventory, not as a build plan (`docs/api/CHANGE-PLAN-REVIEW.md`; as a PDF to send: `docs/api/2026-11-24-change-plan-feedback.pdf`, J163). The old FastAPI/Mongo code has unauthenticated payment routes. Our position:
+- build the 2026 backend new, and use the 2025 code as a box of parts;
+- **lock the features before the final API** (O54): the business owner keeps adding requests and does not separate the frontend, the API and the backend, so explain that in plain words;
 - PostgreSQL;
 - a `/v1` strangler migration;
 - a Pilot slice first;

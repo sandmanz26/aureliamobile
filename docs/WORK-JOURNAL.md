@@ -98,6 +98,7 @@ Later, and separately:
 See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | O52 | **Reports menu (J161)**: confirm what "combination report" means: (a) every offer × version × agent × segment combination, simulated now, or (b) agents and real people side by side, once people exist. Recommended: (a) now, (b) as a column when real data arrives. Also confirm that Buyer agent results moves under Reports rather than staying beside it | J161 | Product owner |
 | O53 | **Backend Change Plan v2 (J162)**: confirm whether the old API is deployed; if it is, fix its open refund, card and `user_id` routes now. Ask the backend team for a v2 with a Pilot slice phase, the creator-retreat payments kept (one-off tickets, Stripe Connect payouts), safety in P1, infrastructure, migrations, data migration, observability, estimates and owners. Our side: add the retreat to the API contract, decide C1/C3/C4/C5, name a safety escalation owner. Review in `docs/api/CHANGE-PLAN-REVIEW.md` | J162 | Product owner + backend team |
+| O54 | **Feature lock for API v1 (J164)**: write a one-page list of what API v1 serves (the Pilot slice plus anything agreed), signed off by the product owner and the business owner. After the lock, new ideas go to a backlog, and any change gets an engineering impact note before the product owner decides. Engineering plans the final API only after the sign-off | J164 | Product owner + business owner |
 | J151 | 2026-11-23 | Opinion | What Eugene is asking for, in plain words: one goal (market fit), one loop (dual track), three tools in the admin | — |
 | J152 | 2026-11-23 | Opinion + fix | What the machine still lacks: the business funnel as the hub (with measured human numbers and a decision log); correction: an upgrade screen does exist | — |
 | J153 | 2026-11-23 | Code + release | Does the buyer agent need redoing? Build the Business funnel; put every decision on staging and production; roast again and improve so Eugene has nothing to complain about | U108, U109 |
@@ -111,6 +112,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | J161 | 2026-11-24 | Opinion | A Reports menu: buyer agent report (every iteration) and combination report; use the buyer agents to simulate and iterate | — |
 | J162 | 2026-11-24 | Review | The backend Change Plan (18 Nov) reviewed as head of engineering: approve it as an inventory, not yet as an implementation plan | — |
 | J163 | 2026-11-24 | Doc | Feedback on the backend Change Plan as a PDF to send to the backend team | — |
+| J164 | 2026-11-24 | Doc | Feedback PDF rewritten: the Change Plan maps last year's (2025) backend, so build new and reuse parts; features must be locked before the final API; how frontend, API and backend fit | — |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
@@ -2092,3 +2094,12 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
   - 5 Ask.
 
   It ends with the Pilot slice we ask for and what we do on our side. It names no person and no internal ids, so it is ready to send. Its content matches `docs/api/CHANGE-PLAN-REVIEW.md` (J162).
+
+### J164 — Feedback rewritten: build new, lock features first
+- **Asked:** "ini agak aneh, karena itu adalah backend plan last year yang asaya rasa ngga begitu oke dengan yang kita punya. pastikan km tulis dengan jelas ya. saya mau di dokuemn juga dituliskan bahwa feature must be locked so final APi can be planned, soalnya ini uegene minta ada update terus dan as engineer saya khawatir dengan API nya juga. dan sepertinya eugene tidak begitu paham dengan konsep backend front end dan api."
+- **Done:** `docs/api/2026-11-24-change-plan-feedback.pdf` (6 pages) and `docs/api/CHANGE-PLAN-REVIEW.md` were rewritten with three new opening sections.
+  1. **What the Change Plan is.** It maps last year's 2025 code, built for a different product, against the 2026 API plan. The verdict changes to "build the 2026 backend new; use the 2025 code as a box of parts" (pipeline, queue, model wrapper, Stripe client).
+  2. **Features must be locked before the final API is planned.** A one-page v1 list, signed off; a backlog after the lock; an impact note before any change; the prototype may move, the API does not; versions, not edits.
+  3. **How frontend, API and backend fit together, in plain words.** It explains why a feature that looks finished on screen is not finished.
+- **No names:** the document says "the business owner", following the J078 rule.
+- **Open:** O54.
