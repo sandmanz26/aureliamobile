@@ -8,7 +8,7 @@
 - We listed 15 models and scored each on six questions. The four that score best share two traits: the partner pays for acquisition, and the end user ends up paying Aurelia directly.
 - **Highest scores:** trial codes and gifting (16), a redesigned creator cohort (15, not the spec as written), retreat and studio aftercare (14), then the self-serve team tier for small employers (13).
 - **Lowest:** reimbursed clinical routes (6), insurers (7), enterprise employer contracts (9), and free whole-base perks and universities (10). They need clinical evidence, a sales team or a wholesale price Aurelia cannot afford yet.
-- Eugene's Retreat-in-a-Box as specified scores lower than the same idea redesigned. The idea is right; the €19.99 ticket, the 60/40 split, 24 fully personalised sessions per buyer and a physical box are what break it ([Unit economics](/wiki/b2b2c/economics), [Creators](/wiki/b2b2c/creators)).
+- Retreat-in-a-Box as specified scores lower than the same idea redesigned. The idea is right; the €19.99 ticket, the 60/40 split, 24 fully personalised sessions per buyer and a physical box are what break it ([Unit economics](/wiki/b2b2c/economics), [Creators](/wiki/b2b2c/creators)).
 
 ## How each model is scored
 
@@ -45,7 +45,7 @@ Each question scores 1 (poor) to 3 (good). The total is out of 18.
 
 **Why model 7 scores 13 but should not be built as written.** Its channel scores are good; its arithmetic is not. Aurelia's 40% of a €19.99 web ticket is about €6.45, while 24 personalised sessions with a premium voice cost about $13 per buyer, so each buyer can lose money before anyone converts to Plus. The split is also far above the 0–10% creators pay course platforms. See [Unit economics](/wiki/b2b2c/economics) and [Creators](/wiki/b2b2c/creators).
 
-**Why trial codes score highest but come second.** They are cheap and low risk, but they bring users one at a time and teach us little about the product. The creator cohort is the bigger bet and the better test of Eugene's model, so it leads the [plan](/wiki/b2b2c/plan), with codes run beside it.
+**Why trial codes score highest but come second.** They are cheap and low risk, but they bring users one at a time and teach us little about the product. The creator cohort is the bigger bet and the better test of the business owner's model, so it leads the [plan](/wiki/b2b2c/plan), with codes run beside it.
 
 ## What the redesign changes in Retreat-in-a-Box
 

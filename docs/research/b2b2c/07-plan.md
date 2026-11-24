@@ -1,6 +1,6 @@
 # Plan: what to test first, in what order, and the gates
 
-*Part of the [B2B2C research](/wiki/b2b2c). A proposal for Eugene and the product owner to decide. The thresholds are our judgement, set in advance so the results cannot be argued after the fact; none is a published benchmark.*
+*Part of the [B2B2C research](/wiki/b2b2c). A proposal for the business owner and the product owner to decide. The thresholds are our judgement, set in advance so the results cannot be argued after the fact; none is a published benchmark.*
 
 ## In one minute
 
@@ -29,10 +29,10 @@ flowchart TD
 | Work | Output | Owner | Where it lives |
 | --- | --- | --- | --- |
 | **Buyer agent v5**: test the redesigned retreat against plain freemium, with a creator-follower framing. Variants: €19.99 against €39; with and without a digital welcome kit | Which offer the panel prefers, by segment, with objections | Product | Admin → Buyer agent results |
-| **Creator interviews**: five to ten wellness creators across two or three countries, Indonesia included | Would they sell it, at what split, at what price, how many seats they can fill; what they need from Aurelia | Eugene | Decision log in Business funnel |
+| **Creator interviews**: five to ten wellness creators across two or three countries, Indonesia included | Would they sell it, at what split, at what price, how many seats they can fill; what they need from Aurelia | Business owner | Decision log in Business funnel |
 | **Claims pack**: an intended-purpose statement (wellness only), an approved-claims list with no mock percentages, the creator contract terms | Ready before any ticket is sold | Product owner, with counsel | Wiki, this research |
-| **Admin prototype**: the network overview, the curriculum view and outcomes, on sample data marked as targets, in our design system (O45) | Something to show creators and investors | Product | Admin, staging first |
-| **Answer O45**: who the prototype is for, the founding creators, the box, what the ticket includes, the curriculum against the five-chapter journey | Decisions | Eugene | Work journal, O45 |
+| **Admin prototype**: the network overview, the curriculum view and outcomes, on sample data marked as targets, in our design system | Something to show creators and investors | Product | Admin, staging first |
+| **Answer the open questions**: who the prototype is for, the founding creators, the box, what the ticket includes, the curriculum against the five-chapter journey | Decisions | Business owner | Work journal |
 
 **Gate 0.** At least three creators say they would sell a pilot cohort on terms Aurelia can afford, and the buyer agents prefer one offer variant clearly enough to pick it. If creators refuse every split under 70/30, move to 70/30 plus a Plus share. If none will sell at any terms, the retreat is not the first channel, and the team tier and trial codes lead instead.
 
@@ -77,10 +77,10 @@ flowchart TD
 | **Business funnel** | The pilot's scoreboard: entry is a ticket sold, aha is the first session, the cap and Plus are the graduation offer, staying is week 8. The pilot's real numbers replace the agents' prediction in the human column. |
 | **Buyer agent results** | Phase 0's offer test (v5), and later a prediction to compare with each real cohort |
 | **User journey** | The retreat's moments, with the creator's touchpoints tagged |
-| **Experimentation (feedback group)** | Becomes the first paid cohort, per Eugene's "commercially aligned" note |
+| **Experimentation (feedback group)** | Becomes the first paid cohort, per the business owner's "commercially aligned" note |
 | **Decision log** | Each gate's result and what changed |
 
-## Decisions needed from Eugene and the product owner
+## Decisions needed from the business owner and the product owner
 
 1. Approve Phase 0, and name who interviews creators.
 2. Is the redesign acceptable: 70/30 plus a Plus share, a pre-produced journey, a digital kit?

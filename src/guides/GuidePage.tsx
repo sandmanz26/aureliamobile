@@ -95,7 +95,7 @@ const DOCS = [
     id: 'b2b2c',
     title: 'B2B2C',
     blurb: 'Selling Aurelia through people who already have the customer: creators, employers, insurers and partners. Ideas, evidence and a plan.',
-    audience: 'Eugene, the product owner and anyone deciding how Aurelia goes to market',
+    audience: 'The business owner, the product owner and anyone deciding how Aurelia goes to market',
     inside: ['Every B2B2C model for Aurelia, scored', 'Creators and cohorts, employers, insurers and partners, with sources', 'Unit economics of the €19.99 retreat, and what may be claimed', 'The plan, its gates, and a roast'],
     icon: Handshake,
     source: 'docs/research/b2b2c/',

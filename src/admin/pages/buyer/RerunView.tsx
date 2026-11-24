@@ -160,7 +160,7 @@ export function RerunView() {
           </ol>
         </Panel>
 
-        <Panel title="The ten MVP market-fit metrics" description="Eugene’s list (J136). Predicted: what the agent expects people to do. Estimate: a figure only people can give; the agent’s guess for the feedback group to check.">
+        <Panel title="The ten MVP market-fit metrics" description="The business owner’s list. Predicted: what the agent expects people to do. Estimate: a figure only people can give; the agent’s guess for the feedback group to check.">
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
             {r.metrics.map((m) => (
               <div key={m.id} className="flex flex-col gap-4 rounded-8 border border-adm-line p-10">

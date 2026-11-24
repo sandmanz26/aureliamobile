@@ -73,7 +73,7 @@ export function RetreatFunnel() {
           </Button>
         )}
       </div>
-      <p className="-mt-8 text-11 text-adm-muted">{offer.note} Pilot: 3–5 creators. Eugene’s full wave: 50 creators × 200 seats.</p>
+      <p className="-mt-8 text-11 text-adm-muted">{offer.note} Pilot: 3–5 creators. The spec’s full wave: 50 creators × 200 seats.</p>
 
       <div className="grid gap-12 lg:grid-cols-[1.1fr_1fr]">
         <Panel title="One cohort, step by step" description={`${seats} paid seats under “${baseOffer.name}”, outcome “${baseOutcome.name}”${edited ? ', with your edits' : ''}. Each bar is a share of buyers.`}>

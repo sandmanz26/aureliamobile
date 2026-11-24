@@ -47,7 +47,7 @@ export const V3_PRICES: Record<string, { label: string; usd: number }> = {
 export const BUYER_INSTRUCTIONS_V3 = `You are a buyer test agent. This run is an A/B test on 36 personas from persona generator 2.
 
 Read first, and treat as evidence:
-- The Insight Timer research for Eugene (wiki Research, v2): day-30 retention in mental-health apps is about 3–5% of installs (median 3.3%, Baumel 2019); health and fitness trials convert at a median of about 40%; people leave over prompts before listening, paywalled basics, streaks and nagging; they stay for a quiet path that plays at once.
+- The Insight Timer research (wiki Research, v2): day-30 retention in mental-health apps is about 3–5% of installs (median 3.3%, Baumel 2019); health and fitness trials convert at a median of about 40%; people leave over prompts before listening, paywalled basics, streaks and nagging; they stay for a quiet path that plays at once.
 - The 2025 documents (wiki Backend (old) and Artefact): the script judge's rules (pacing, pauses, breathing safety), the edit modes, feedback attribution, and the lessons: claims must match what is built, safety comes first, model scores are signals not measurements, rules beat personas.
 - Buyer agent v2: what it found and where it was too generous or too harsh.
 
@@ -113,7 +113,7 @@ export const RUN_V3: BuyerRun = {
   kind: 'demo',
   generator: 2,
   method:
-    'One agent played 36 personas from the fixed generator, each against today’s offer (A) and a proposed offer (B), reading Eugene’s documents and the research first and calibrating against their figures. No backend, no live model call from the app.',
+    'One agent played 36 personas from the fixed generator, each against today’s offer (A) and a proposed offer (B), reading the business owner’s documents and the research first and calibrating against their figures. No backend, no live model call from the app.',
   panel: {
     seed: 2028,
     size: 36,
@@ -127,7 +127,7 @@ export const RUN_V3: BuyerRun = {
     ],
   },
   stimulus: {
-    name: 'Offer B: the proposal, built from Eugene’s documents and the research',
+    name: 'Offer B: the proposal, built from the business owner’s documents and the research',
     pitch:
       'Tell us in one sentence how you feel, and a guided session made for you starts in a minute, in your language. No sign-up for the first one. The words are written for you by AI, following practice rules our wellness team wrote; you choose the voice and how much it talks. Chapters continue over the next days, with one check-in a day that you can skip.',
     offer: [
@@ -150,14 +150,14 @@ export const RUN_V3: BuyerRun = {
     { title: 'Insight Timer, and what it means for Aurelia (round 2)', where: 'Wiki → Research, v2', used: 'Day-30 retention 3–5% (median 3.3%), trial conversion ~40%, the leave triggers (prompts 65, paywalled basics 50, streaks 27 of 168 reviews), the “Now” list, the $59.99 yearly anchor, “No AI” as a selling point.' },
     { title: 'Backend (old): the 2025 documents', where: 'Wiki → Backend (old)', used: 'The script judge’s rules (pacing, pauses, breathing safety notes) behind “how much it talks” and the pregnancy and grief notes; edit modes behind “make it shorter”; feedback attribution behind “the check-in shapes the next chapter”.' },
     { title: 'Artefact: what the 2025 backend teaches us', where: 'Wiki → Artefact', used: 'Claims must match what is built (B’s items are marked as proposals); safety in the first version (the care link); model scores are signals (findings in words, confidence stated); rules beat personas (calibration rules over role-play).' },
-    { title: 'Eugene’s briefs', where: 'WhatsApp, J114–J132', used: 'The buyer test agent itself, and adopting what works at Insight Timer.' },
+    { title: 'The business owner’s briefs', where: 'WhatsApp', used: 'The buyer test agent itself, and adopting what works at Insight Timer.' },
     { title: 'Buyer agent v1 and v2', where: 'This page', used: 'Which changes to test, and where the agent was too generous (v1) or found the persona data broken (v2).' },
   ],
   criteria: [
-    { label: 'Question', value: 'If Aurelia shipped the changes Eugene’s documents and the research point to, how many more people would try it, pay, and still be using it at day 30, and which change matters most to whom?' },
+    { label: 'Question', value: 'If Aurelia shipped the changes the business owner’s documents and the research point to, how many more people would try it, pay, and still be using it at day 30, and which change matters most to whom?' },
     { label: 'Who', value: '36 personas from persona generator 2, one for every region × age band (seed 2028), aged 19–71, from 13 countries. Generator 2 fixes the incoherence v1 and v2 found; its check finds 0 of 300 broken (generator 1: 144 of 300).' },
     { label: 'What they saw', value: 'Offer A (today, as in v2), then offer B (the proposal). Each persona answered both, A in short and B in full.' },
-    { label: 'What the agent read first', value: 'The Insight Timer research, the 2025 backend documents and their lessons, Eugene’s briefs, and runs v1 and v2. Listed under “What the agent read”.' },
+    { label: 'What the agent read first', value: 'The Insight Timer research, the 2025 backend documents and their lessons, the business owner’s briefs, and runs v1 and v2. Listed under “What the agent read”.' },
     { label: 'Calibration', value: 'v2’s rules, plus: day-30 use must stay near the category evidence (3–5% of installs); honest AI disclosure stays in B, so distrust does not vanish; a change only counts if it changed the answer.' },
     { label: 'Not taken into account', value: 'Whether B can be built as described, its cost, and how real people react to an AI-written session they have heard. B is a proposal.' },
     { label: 'Read it as', value: 'A comparison: B against A on the same people, by the same agent. The difference is more trustworthy than either number.' },

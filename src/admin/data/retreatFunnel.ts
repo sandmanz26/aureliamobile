@@ -48,7 +48,7 @@ export const COURSE_PLATFORM_KEEP = 0.9
 export const OFFERS: Offer[] = [
   {
     id: 'spec',
-    name: 'Spec (Eugene, as written)',
+    name: 'Spec, as written',
     note: '€19.99, 60/40, 24 personalised sessions, a physical box in every ticket.',
     price: 19.99,
     creatorShare: 0.6,

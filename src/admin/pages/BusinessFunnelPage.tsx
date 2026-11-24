@@ -81,7 +81,7 @@ export function BusinessFunnelPage() {
     <div className="flex flex-col gap-16">
       <PageHeader
         title="Business funnel"
-        description="Eugene’s four stages from a bad state to Aurelia Plus, as they work in the app today, and the result they serve. Each stage has a target, the buyer agents’ prediction and the feedback group beside it. The stage furthest below its target is what to fix next."
+        description="The brief’s four stages from a bad state to Aurelia Plus, as they work in the app today, and the result they serve. Each stage has a target, the buyer agents’ prediction and the feedback group beside it. The stage furthest below its target is what to fix next."
         actions={
           <div className="flex flex-wrap gap-8">
             <Button size="sm" icon={<CircleHelp size={13} />} onClick={() => setGuide(true)} data-tour="guide">
@@ -189,7 +189,7 @@ export function BusinessFunnelPage() {
                   )}
                 </h3>
                 <p className="text-11 text-adm-muted">
-                  Eugene: <span className="text-adm-ink-2">{s.eugene}</span>
+                  The brief: <span className="text-adm-ink-2">{s.eugene}</span>
                 </p>
               </div>
               {metrics
@@ -451,7 +451,7 @@ function DecisionForm({ stage, onClose, onSave }: { stage: StageId; onClose: () 
 const GUIDE: TourStep[] = [
   {
     title: 'What this page is for',
-    body: 'It is the scoreboard for proving market fit. Eugene’s four stages run from a free start to Aurelia Plus, and a fifth is the result they serve. Two tracks feed it: buyer agents predict, the feedback group and the digital retreats measure. The stage furthest below its target is what to fix next.',
+    body: 'It is the scoreboard for proving market fit. The brief’s four stages run from a free start to Aurelia Plus, and a fifth is the result they serve. Two tracks feed it: buyer agents predict, the feedback group and the digital retreats measure. The stage furthest below its target is what to fix next.',
   },
   { target: 'source', title: 'Pick what the agents predict', body: 'Choose a production version and whose rules play it. Agent v3’s rules are the best estimate. Switch to production v1 to see how much the older design leaks.' },
   { target: 'stages', title: 'The five stages at a glance', body: 'Each card shows what the stage is in Aurelia today and its main number against the target. A red card is the biggest gap.' },

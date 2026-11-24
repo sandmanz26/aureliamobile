@@ -1,6 +1,6 @@
 # Roast: what a sceptic attacks, and what changed
 
-*Part of the [B2B2C research](/wiki/b2b2c). After the pages were written, we read them as four hard readers would: Eugene, a sceptical investor, a creator deciding whether to sign, and a regulator. Each finding below either changed the pages or is listed as a limit that stays.*
+*Part of the [B2B2C research](/wiki/b2b2c). After the pages were written, we read them as four hard readers would: the business owner, a sceptical investor, a creator deciding whether to sign, and a regulator. Each finding below either changed the pages or is listed as a limit that stays.*
 
 ## In one minute
 
@@ -12,8 +12,8 @@
 
 | # | Who would say it | The attack | What we changed |
 | --- | --- | --- | --- |
-| 1 | Eugene | "You tell me my numbers are wrong. What is the answer for Retreat-in-a-Box?" | The summary opens with the answer: do it, redesigned, and lists the four numbers that break as specified. [Ideation](/wiki/b2b2c/ideation) has a spec-against-redesign table. |
-| 2 | Eugene | "What does a full wave of 50 creators give us?" | Added to the summary: roughly 300, 1,050 or 2,300 Plus subscribers in the low, middle and spec cases (estimates). |
+| 1 | Business owner | "You tell me my numbers are wrong. What is the answer for Retreat-in-a-Box?" | The summary opens with the answer: do it, redesigned, and lists the four numbers that break as specified. [Ideation](/wiki/b2b2c/ideation) has a spec-against-redesign table. |
+| 2 | Business owner | "What does a full wave of 50 creators give us?" | Added to the summary: roughly 300, 1,050 or 2,300 Plus subscribers in the low, middle and spec cases (estimates). |
 | 3 | Investor | "330 sources? I count fewer." | The summary now says what is true: about 330 links in the research notes, 184 cited on the detail pages. |
 | 4 | Investor | "Which of these numbers can I put in a deck?" | Added "How sure we are" to the summary: firm, leads (marked "search summary", 24 places), and our judgement. |
 | 5 | Investor | "The box costs 40–90% of the ticket on one page and $14–28 on another." | Both are right and now say so: fulfilment alone is $9–18, a modest kit delivered is $14–28. The summary and ideation use the same words as the detail pages. |

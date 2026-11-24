@@ -1,10 +1,10 @@
 # B2B2C: ideation, plan and research
 
-*Asked by Eugene: "B2B2C ideation, plan, research". Researched 23–24 Nov 2026 in five research tracks: about 330 links in the research notes, 184 of them cited on the detail pages. This page is the summary. Every claim on it is backed on a detail page, linked below, and every detail page lists its own sources.*
+*Asked by the business owner: "B2B2C ideation, plan, research". Researched 23–24 Nov 2026 in five research tracks: about 330 links in the research notes, 184 of them cited on the detail pages. This page is the summary. Every claim on it is backed on a detail page, linked below, and every detail page lists its own sources.*
 
 ## The answer in one paragraph
 
-Aurelia should go to market through people who already have the customer, because buying users with ads does not pay back. The median Health & Fitness app turns 2.9% of installs into payers, which puts a paying subscriber at about $100–170 in media alone. **The best first bet is Eugene's creator cohort, Retreat-in-a-Box, but with redesigned terms.** "Redesign" here means the business model, not the app's screens: the price, the split, how the sessions are made and the box. As specified, it breaks on four numbers:
+Aurelia should go to market through people who already have the customer, because buying users with ads does not pay back. The median Health & Fitness app turns 2.9% of installs into payers, which puts a paying subscriber at about $100–170 in media alone. **The best first bet is the business owner's creator cohort, Retreat-in-a-Box, but with redesigned terms.** "Redesign" here means the business model, not the app's screens: the price, the split, how the sessions are made and the box. As specified, it breaks on four numbers:
 
 - **The split.** Creators keep 87–97% on course platforms; 60% will be resisted.
 - **AI cost against the ticket.** Aurelia's €6.45 share of a €19.99 web ticket is less than 24 fully personalised sessions with a premium voice cost (about $13).
@@ -24,7 +24,7 @@ Beside it, test a cheap self-serve team tier for small employers and one trial-c
 | [Unit economics](/wiki/b2b2c/economics) | Conversion, retention, prices, store and payment fees, VAT, AI cost per session, acquisition cost; the €19.99 ticket and a per-100-buyers model | 30 |
 | [Claims and regulation](/wiki/b2b2c/regulation) | Wellness against medical device (EU, UK, US, Indonesia); the EU AI Act; creator advertising; health data; payments; crisis handling; what a creator may say | 34 |
 | [Plan](/wiki/b2b2c/plan) | Phases, gates and the five numbers that decide the pilot; how it plugs into the admin | From the pages above |
-| [Roast](/wiki/b2b2c/roast) | What a sceptical investor, a creator, a regulator and Eugene attack in this research, and what changed | — |
+| [Roast](/wiki/b2b2c/roast) | What a sceptical investor, a creator, a regulator and the business owner attack in this research, and what changed | — |
 | [Full report and sources](/wiki/b2b2c/sources) | The deep research report, unedited, with its inline sources | All five tracks |
 
 **Not covered, and why:**
@@ -86,7 +86,7 @@ The full plan, with gates, is on [Plan](/wiki/b2b2c/plan).
 
 1. **Phase 0, now, no backend.**
    - Buyer agents test the redesigned retreat (€19.99 against €39).
-   - Eugene interviews five to ten creators.
+   - The business owner interviews five to ten creators.
    - Draft the claims pack and the creator contract.
    - Build the admin prototype on sample data marked as targets.
 2. **Phase 1, after a minimum backend** (accounts, payments with Aurelia as merchant of record, consented storage, crisis flow): a paid pilot with three to five creators. In parallel, a team tier with two or three small employers and one trial-code partner.
@@ -98,7 +98,7 @@ The full plan, with gates, is on [Plan](/wiki/b2b2c/plan).
    - AI and payment cost under a third of Aurelia's share.
 4. **Then widen:** 20 creators, then 50; a wearable integration; carrier billing in Indonesia.
 
-## Decisions for Eugene
+## Decisions for the business owner
 
 1. Approve Phase 0, and who interviews creators.
 2. The redesign: 70/30 plus a share of the Plus each cohort drives, a pre-produced journey in the creator's voice, a digital welcome kit.
