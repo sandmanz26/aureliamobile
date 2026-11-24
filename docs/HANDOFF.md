@@ -189,6 +189,10 @@ Repository: **`sandmanz26/aureliamobile`** (GitHub). One app per branch:
 
 ## 4 · Where things stand right now
 
+### 24 Nov 2026 (J154)
+
+The wiki has a ninth tab, **B2B2C** (`/wiki/b2b2c`, U110): Eugene's B2B2C research as a summary linking nine detail pages, including a plan (O49). Detail pages live at `/wiki/b2b2c/:page`, from `docs/research/b2b2c/`.
+
 ### 23 Nov 2026 (J153)
 
 On request, **nothing waits behind `RELEASES` any more**: journey tags, the folding desktop sidebar rail, personas, buyer agent results and the new Business funnel are on staging and production, and `web_prod` was fast-forwarded (U108). The funnel (`/admin/business-funnel`) is the hub of Eugene's loop: stages, targets, agents beside people, the biggest gap, the decision log, and since U109 a Fix next panel. Open: O43, O45, O46, O48.
@@ -492,8 +496,8 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U109**, last J = **J153**, last
-O = **O48**. Before numbering, check the files for anything newer.
+**Numbering as of 17 Nov 2026:** last U = **U110**, last J = **J154**, last
+O = **O49**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
 push. `src/guides/records.test.ts` enforces it.
@@ -950,6 +954,7 @@ history can be read without opening four documents.
 | U107 | `a23faa8` | 2026-11-20 | Buyer agent results reworked as a dashboard. Numbers and charts come first: yes/maybe/no bars, with A against B, objections and changes as ranked bars, a who-says-yes heat table by wellness, age and region, and the price band. Findings read as a numbered bold lead with its detail. The method is folded into "About this run". In the re-run view: a shaded matrix, metric tiles, findings the same way, and the method folded away. Staging only. | [patch](update-log/patches/U107-a23faa8.patch) |
 | U108 | `3639fcf` | 2026-11-23 | Admin → Product lab → **Business funnel** (`/admin/business-funnel`): Eugene's four stages plus staying, each with targets the team can edit, the buyer agents' prediction for a chosen production version beside the feedback group's measurement (a ceiling), the biggest gap ringed, moments linked to the user journey, a decision log (proposed → measured) and a guide. The buyer re-run now walks the free limit and the Upgrade screen (metric 8). Every staging-only flag released: journey tags, the folding sidebar rail, personas, buyer agent results and the funnel are on production. | [patch](update-log/patches/U108-3639fcf.patch) |
 | U109 | `cdb7225` | 2026-11-23 | Business funnel after a roast as Eugene: a **Fix next** panel under the stage cards (the biggest gap in one sentence, why agents leave across the funnel, and the change proposed for that stage), a real proposed decision for staying (d7: the next chapter's time set in the check-in, no streaks; new defaults merge into a saved log), the shortlist metrics each stage still needs a backend for, and the feedback group labelled sample data. Staging and production. | [patch](update-log/patches/U109-cdb7225.patch) |
+| U110 | `37f0d7b` | 2026-11-24 | Wiki tab **B2B2C** (`/wiki/b2b2c`): a summary with a coverage table linking nine detail pages at `/wiki/b2b2c/:page` (Ideation, Creators and cohorts, Employers and insurers, Partners, Unit economics, Claims and regulation, Plan, Roast, Full report and sources), from a five-track deep research (notes and report in `docs/research/`). A pages strip on every page; a test checks every page file exists and every link resolves. Staging and production (wiki rule J076). | [patch](update-log/patches/U110-37f0d7b.patch) |
 | J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
@@ -995,6 +1000,7 @@ history can be read without opening four documents.
 | J151 | 2026-11-23 | Opinion | What Eugene is asking for, in plain words: one goal (market fit), one loop (dual track), three tools in the admin | — |
 | J152 | 2026-11-23 | Opinion + fix | What the machine still lacks: the business funnel as the hub (with measured human numbers and a decision log); correction: an upgrade screen does exist | — |
 | J153 | 2026-11-23 | Code + release | Does the buyer agent need redoing? Build the Business funnel; put every decision on staging and production; roast again and improve so Eugene has nothing to complain about | U108, U109 |
+| J154 | 2026-11-24 | Research + code | Eugene's "B2B2C ideation, plan, research": deep research and analysis into the wiki, a summary linking detail pages so readers see the coverage, then a roast | U110 |
 
 ### 17.2 Code changes (U)
 

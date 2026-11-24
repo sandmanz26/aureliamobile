@@ -146,9 +146,41 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U107 | `a23faa8` | 2026-11-20 | Buyer agent results reworked as a dashboard. Numbers and charts come first: yes/maybe/no bars, with A against B, objections and changes as ranked bars, a who-says-yes heat table by wellness, age and region, and the price band. Findings read as a numbered bold lead with its detail. The method is folded into "About this run". In the re-run view: a shaded matrix, metric tiles, findings the same way, and the method folded away. Staging only. | [patch](patches/U107-a23faa8.patch) |
 | U108 | `3639fcf` | 2026-11-23 | Admin → Product lab → **Business funnel** (`/admin/business-funnel`): Eugene's four stages plus staying, each with targets the team can edit, the buyer agents' prediction for a chosen production version beside the feedback group's measurement (a ceiling), the biggest gap ringed, moments linked to the user journey, a decision log (proposed → measured) and a guide. The buyer re-run now walks the free limit and the Upgrade screen (metric 8). Every staging-only flag released: journey tags, the folding sidebar rail, personas, buyer agent results and the funnel are on production. | [patch](patches/U108-3639fcf.patch) |
 | U109 | `cdb7225` | 2026-11-23 | Business funnel after a roast as Eugene: a **Fix next** panel under the stage cards (the biggest gap in one sentence, why agents leave across the funnel, and the change proposed for that stage), a real proposed decision for staying (d7: the next chapter's time set in the check-in, no streaks; new defaults merge into a saved log), the shortlist metrics each stage still needs a backend for, and the feedback group labelled sample data. Staging and production. | [patch](patches/U109-cdb7225.patch) |
+| U110 | `37f0d7b` | 2026-11-24 | Wiki tab **B2B2C** (`/wiki/b2b2c`): a summary with a coverage table linking nine detail pages at `/wiki/b2b2c/:page` (Ideation, Creators and cohorts, Employers and insurers, Partners, Unit economics, Claims and regulation, Plan, Roast, Full report and sources), from a five-track deep research (notes and report in `docs/research/`). A pages strip on every page; a test checks every page file exists and every link resolves. Staging and production (wiki rule J076). | [patch](patches/U110-37f0d7b.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U110 — B2B2C research in the wiki
+
+- **Commit:** `37f0d7b` · pushed 2026-11-24 UTC · `web_app` + `admin_cms` + `web_prod` (the wiki is identical on both sites, J076).
+- **Patch:** [patches/U110-37f0d7b.patch](patches/U110-37f0d7b.patch)
+- **Request:** "setelah selesai, ada permintaan dari eugene untuk "B2B2C ideation, plan, research", hasil research kamu bisa tambahkan di wiki ya untuk itu.  lakukan deep research dan deep analysis. di wiki kamu taruh seluruh hasil research nya secara summary tapi sertakan juga link untuk menuju page yang berisikan detailnya, jadi user bisa tau apa yang menjadi coverage research nya. roast kembali agar hasilnya lebih sempurna"
+- **Interpretation:**
+  - "B2B2C" is read as every route where someone who already has the customer brings Aurelia to them: creators (Eugene's Retreat-in-a-Box), employers, insurers, partners.
+  - The research covers five tracks: creators and cohorts; employers and insurers; partners; conversion and cost; claims and regulation.
+  - "Summary with links to detail pages" became a new wiki tab whose summary has a coverage table (page, what it covers, source count) and links to nine pages, each with its own sources.
+  - The roast reads the pages as Eugene, an investor, a creator and a regulator would, and is itself a page.
+- **Changed:**
+  - `docs/research/research_notes/Aurelia B2B2C models and plan/` (five sourced notes);
+  - `docs/research/reports/Aurelia B2B2C models and plan.md`;
+  - `docs/research/b2b2c/00–09` (the wiki pages);
+  - `src/guides/docPages.ts` and its test;
+  - `src/guides/GuidePage.tsx` (the B2B2C tab, `DocPages` strip, page routing, "nine documents");
+  - `src/App.tsx` (route `/wiki/:doc/:page`);
+  - `src/guides/guides.css`.
+- **Roast fixes:**
+  - the source count stated truthfully;
+  - a "How sure we are" block;
+  - box cost and creator figures made consistent across pages;
+  - a 50-creator wave estimate;
+  - the split tied to a Plus share;
+  - the mobile strip (overlapping label, current page off screen).
+- **Verified:**
+  - `npm run check` (185 tests);
+  - a production build at 1440px and 402px: the summary, ideation, economics, plan (chart renders), regulation and an unknown page (redirects to the summary) all load, with no sideways scroll;
+  - links from the summary open detail pages; no console errors.
+- **Revert:** `git revert --no-commit 37f0d7b` then `git checkout HEAD -- docs/`.
 
 ### U109 — Business funnel, after the roast
 

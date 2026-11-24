@@ -85,9 +85,11 @@ Later, and separately:
 - an upgrade offer at the cap that names the person's own progress (staging flag);
 - the Retreat cockpit once O45 is answered | J152 | Product owner |
 | O48 | **Funnel targets and proposed decisions (J153)**: the default targets (activation 70%, own session finished 60%, feels better 60%, free limit 30%, Plus 15%, back after a week 15%, a month 5%, "very disappointed" 40%) are the agent's, from the research. Eugene and the owner confirm or change them; then pick which proposed decision (d1–d4, d7) to build first | J153 | Product owner + Eugene |
+| O49 | **B2B2C plan (J154)**, in `/wiki/b2b2c/plan`: approve Phase 0 (buyer agent v5 on the redesigned retreat, €19.99 against €39; 5–10 creator interviews; the claims pack and creator contract; the admin prototype). Decide the redesign (70/30 plus a Plus share, a pre-produced journey in the creator's voice, a digital kit), the pilot's first market, and who builds the minimum backend. Confirm insurers and clinical claims are out of scope | J154 | Eugene + product owner |
 | J151 | 2026-11-23 | Opinion | What Eugene is asking for, in plain words: one goal (market fit), one loop (dual track), three tools in the admin | — |
 | J152 | 2026-11-23 | Opinion + fix | What the machine still lacks: the business funnel as the hub (with measured human numbers and a decision log); correction: an upgrade screen does exist | — |
 | J153 | 2026-11-23 | Code + release | Does the buyer agent need redoing? Build the Business funnel; put every decision on staging and production; roast again and improve so Eugene has nothing to complain about | U108, U109 |
+| J154 | 2026-11-24 | Research + code | Eugene's "B2B2C ideation, plan, research": deep research and analysis into the wiki, a summary linking detail pages so readers see the coverage, then a roast | U110 |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
@@ -1925,3 +1927,22 @@ Later, and separately:
 - **Roast, as Eugene (U109):** the page named the gap but not the next move; staying had no proposed change; five of his ten metrics were missing; the sample feedback group was not labelled. Fixed: a Fix next panel, decision d7 for staying (from the re-run's top leave reason, 8 of 36), the metrics still waiting on a backend per stage, and "sample data" on the feedback group.
 - **What is left that Eugene may still raise:** the targets are ours, not his (O48); the human numbers stay sample until a backend or a real cohort exists; the Retreat cockpit waits on O45.
 - **Open:** O48.
+
+### J154 — B2B2C ideation, plan and research
+- **Asked:** "setelah selesai, ada permintaan dari eugene untuk "B2B2C ideation, plan, research", hasil research kamu bisa tambahkan di wiki ya untuk itu.  lakukan deep research dan deep analysis. di wiki kamu taruh seluruh hasil research nya secara summary tapi sertakan juga link untuk menuju page yang berisikan detailnya, jadi user bisa tau apa yang menjadi coverage research nya. roast kembali agar hasilnya lebih sempurna"
+- **Done (U110):**
+  - Five research tracks ran in parallel, about 330 links in the notes:
+    1. creators and cohorts;
+    2. employers and insurers;
+    3. partners;
+    4. conversion and cost;
+    5. claims and regulation.
+  - One report was written from all five.
+  - The wiki tab B2B2C has a summary with a coverage table, plus nine detail pages, each with its sources.
+- **The answer:** go to market through people who already have the customer; paid ads cannot pay back (about $100–170 of media per payer).
+  - First bet: Retreat-in-a-Box, but redesigned. As specified it breaks on the split (creators keep 87–97% elsewhere), on the AI cost against Aurelia's €6.45 share of the ticket, on the box ($14–28), and on 76.5% at week 8 (mindfulness apps keep 4.7% at day 30).
+  - Beside it: a self-serve team tier at about $50–70 a seat a year, and trial codes.
+  - Insurers and clinical routes last, if ever.
+  - The spec's "+85.7% sleep" and "stress −50%" must never be used.
+- **Roast:** nine fixes, listed on `/wiki/b2b2c/roast`. Limits that stay: no public benchmark exists for paid programme → subscription, or for follower → buyer; partner terms are private; several figures are search-summary leads.
+- **Open:** O49.

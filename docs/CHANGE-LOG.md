@@ -19,6 +19,14 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-24 — B2B2C research in the wiki (U110, J154)
+
+New wiki tab B2B2C: a summary of a five-track deep research, with a coverage
+table linking nine detail pages (ideation, creators, employers, partners,
+unit economics, regulation, plan, roast, full report). On both sites.
+
+Branches: `web_app`, `admin_cms`, `web_prod`.
+
 ### 2026-11-23 — Business funnel: Fix next (U109, J153)
 
 After a roast: a Fix next panel (the biggest gap, why agents leave, the
