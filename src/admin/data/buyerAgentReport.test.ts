@@ -5,7 +5,7 @@ import { APP_PRICE, INPUT_KINDS, INPUT_LABEL, NOT_RECORDED, buildIterations, cha
 describe('buyer agent report: the price each iteration tested', () => {
   it('gives every iteration a price-tested entry with amount, currency, period and origin', () => {
     const its = buildIterations()
-    expect(its.map((i) => i.id)).toEqual(['it-v1', 'it-v2', 'it-v3', 'it-rerun'])
+    expect(its.map((i) => i.id)).toEqual(['it-v1', 'it-v2', 'it-v3', 'it-rerun', 'it-v5', 'it-v6', 'it-v7'])
     for (const it of its) {
       for (const k of ['amount', 'currency', 'period', 'origin'] as const) expect(it.priceTested[k].length, `${it.id} ${k}`).toBeGreaterThan(3)
       if (it.priceTested.differsFromApp) expect(it.priceTested.warning, it.id).toBeTruthy()
@@ -47,6 +47,23 @@ describe('buyer agent report: five inputs → report versions (U122)', () => {
     expect(v1.inputs.price.short).toContain('$79')
     expect(v4.inputs.product.short).toContain('staging v3, v4, v5')
     expect(v3.inputs.ownerDocs.detail).toContain('Backend (old)')
+  })
+
+  it('records all five inputs for reports v5–v7, the PRD included (U124)', () => {
+    const later = buildIterations().filter((i) => ['it-v5', 'it-v6', 'it-v7'].includes(i.id))
+    expect(later).toHaveLength(3)
+    for (const it of later) for (const k of INPUT_KINDS) expect(it.inputs[k].recorded, `${it.id} ${k}`).toBe(true)
+    const [v5, v6, v7] = later
+    expect(v5.inputs.personas.short).toBe('36 personas · generator 2 · seed 2028 · 4 variables')
+    expect(v6.inputs.personas.short).toBe('60 personas · generator 2 · seed 2031 · 8 variables')
+    expect(v7.inputs.personas.short).toBe('100 personas · generator 2 · seed 2032 · 13 variables')
+    expect(v5.inputs.price.short).toContain('$10/mo, $100/yr')
+    expect(v6.inputs.price.short).toContain('€19.99 vs €39')
+    expect(v6.inputs.ownerDocs.detail).toContain('Retreat-in-a-Box')
+    expect(v7.inputs.ownerDocs.detail).toContain('quick wins')
+    expect(v5.priceTested.differsFromApp).toBe(false)
+    expect(changedFrom(buildIterations(), 4, 'prd')).toBe(true)
+    for (const it of later) for (const f of it.headline) expect(f.value, `${it.id} ${f.label}`).not.toMatch(/NaN|undefined/)
   })
 
   it('draws every edge from an input to a report that used it', () => {

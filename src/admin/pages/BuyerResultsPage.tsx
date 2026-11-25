@@ -83,6 +83,16 @@ export function BuyerResultsPage() {
   const moved = new Map<string, number>()
   for (const a of run.answers) for (const c of a.movedBy ?? []) moved.set(c, (moved.get(c) ?? 0) + 1)
   const hasUsage = run.answers.some((a) => a.week !== undefined)
+  const changes: Record<string, { label: string; source: string }> = run.changes ?? V3_CHANGES
+  const [labelA, labelB] = run.abLabels ?? ['A · today', 'B · proposed']
+  const hasAlt = run.answers.some((a) => a.alt)
+  const altTries = { yes: 0, maybe: 0, no: 0 }
+  const altPays = { yes: 0, maybe: 0, no: 0 }
+  for (const a of run.answers)
+    if (a.alt) {
+      altTries[a.alt.tries] += 1
+      altPays[a.alt.pays] += 1
+    }
 
   const tries = countVerdicts(run.answers, 'tries')
   const pays = countVerdicts(run.answers, 'pays')
@@ -236,7 +246,7 @@ export function BuyerResultsPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-8 text-12 text-adm-ink-2">
-        <Badge tone="warning">{run.kind === 'demo' ? 'Demo' : 'Run'} · synthetic</Badge>
+        <Badge tone="warning">{run.kind === 'demo' ? 'Demo' : 'Run'} · synthetic · prediction</Badge>
         <span>
           {run.title}. {run.method}
         </span>
@@ -255,13 +265,14 @@ export function BuyerResultsPage() {
       </div>
 
       <div className="grid gap-16 lg:grid-cols-2">
-        <Panel title={ab ? 'Today (A) against the proposal (B)' : 'Would they try it, would they pay'} description={`Personas out of ${n}. Hover a segment for its share.`}>
+        <Panel title={ab ? `${labelA} against ${labelB}` : 'Would they try it, would they pay'} description={`Personas out of ${n}. Hover a segment for its share.${hasAlt ? ` Also answered: ${run.altLabel}.` : ''}`}>
           <VerdictChart
             groups={
               ab
                 ? [
-                    { label: 'A · today', tries: ctlTries, pays: ctlPays },
-                    { label: 'B · proposed', tries, pays },
+                    { label: labelA, tries: ctlTries, pays: ctlPays },
+                    { label: labelB, tries, pays },
+                    ...(hasAlt ? [{ label: run.altLabel ?? 'Alternative', tries: altTries, pays: altPays }] : []),
                   ]
                 : [{ label: 'All', tries, pays }]
             }
@@ -285,6 +296,16 @@ export function BuyerResultsPage() {
           ))}
         </div>
       </Panel>
+
+      {run.variables && (
+        <Panel title="By this run’s persona variables" description={`Share of each group that would try${ab ? ' (A, then B)' : ''} and would pay (yes or maybe). Each run adds variables; earlier runs’ variables are kept. Small groups: read the direction.`} actions={<HeatLegend />}>
+          <div className="grid gap-16 lg:grid-cols-3">
+            {run.variables.map((v) => (
+              <HeatTable key={v.key} title={v.label} cols={ab ? ['Try A', 'Try B', 'Pay B'] : ['Try', 'Pay']} rows={segmentRows(run, people, (p) => run.answers.find((a) => a.personaId === p.id)?.vars?.[v.key] ?? '–', false, ab)} />
+            ))}
+          </div>
+        </Panel>
+      )}
 
       <div className="grid gap-16 lg:grid-cols-2">
         <Panel title="Price" description="Medians of the four price answers, in US dollars a month.">
@@ -313,7 +334,7 @@ export function BuyerResultsPage() {
                 </div>
               ))}
             </dl>
-            <p className="text-12 text-adm-ink-2">Green is the fair band. The red line is Plus in the US ({money(run.stimulus.priceUsd)}); the US yearly plan works out at {run.version >= 3 ? '$5.00' : '$6.58'} a month.</p>
+            <p className="text-12 text-adm-ink-2">Green is the fair band. The red line is Plus in the US ({money(run.stimulus.priceUsd)}); the US yearly plan works out at {money(Math.round((run.usYearlyMonthly ?? (run.version >= 3 ? 5 : 6.58)) * 100) / 100)} a month.</p>
           </div>
         </Panel>
 
@@ -323,7 +344,7 @@ export function BuyerResultsPage() {
               rows={[...moved.entries()]
                 .sort((x, y) => y[1] - x[1])
                 .map(([c, k]) => {
-                  const info = V3_CHANGES[c as keyof typeof V3_CHANGES]
+                  const info = changes[c]
                   return { label: info?.label ?? c, value: k, hint: info?.source }
                 })}
               total={n}
@@ -491,7 +512,7 @@ export function BuyerResultsPage() {
             ))}
           </div>
           {open.tab === 'answer' ? (
-            <AnswerDetail a={answer} p={persona(open.id)} run={run} onPersona={() => setOpen({ id: open.id, tab: 'persona' })} />
+            <AnswerDetail a={answer} p={persona(open.id)} run={run} changes={changes} labels={[labelA, labelB]} onPersona={() => setOpen({ id: open.id, tab: 'persona' })} />
           ) : (
             <PersonaProfile p={persona(open.id)} />
           )}
@@ -551,7 +572,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
-function AnswerDetail({ a, p, run, onPersona }: { a: BuyerAnswer; p: Persona; run: BuyerRun; onPersona: () => void }) {
+function AnswerDetail({ a, p, run, changes, labels, onPersona }: { a: BuyerAnswer; p: Persona; run: BuyerRun; changes: Record<string, { label: string; source: string }>; labels: [string, string]; onPersona: () => void }) {
   const w = wellnessOf(p)
   return (
     <div className="flex flex-col gap-14 text-13 text-adm-ink">
@@ -573,10 +594,10 @@ function AnswerDetail({ a, p, run, onPersona }: { a: BuyerAnswer; p: Persona; ru
       <p className="rounded-8 bg-adm-bg px-12 py-10 italic text-adm-ink-2">“{a.quote}”</p>
 
       {a.control && (
-        <Section title="Today (A) against the proposal (B)">
+        <Section title={`${labels[0]} against ${labels[1]}`}>
           <div className="grid grid-cols-2 gap-8 text-12">
             <div className="rounded-8 border border-adm-line p-10">
-              <p className="font-medium">A · today</p>
+              <p className="font-medium">{labels[0]}</p>
               <div className="mt-4 flex flex-wrap gap-4">
                 <Badge tone={VERDICT_TONE[a.control.tries]}>Tries: {a.control.tries}</Badge>
                 <Badge tone={VERDICT_TONE[a.control.pays]}>Pays: {a.control.pays}</Badge>
@@ -584,15 +605,35 @@ function AnswerDetail({ a, p, run, onPersona }: { a: BuyerAnswer; p: Persona; ru
               <p className="mt-6 text-adm-ink-2">{a.control.why}</p>
             </div>
             <div className="rounded-8 border border-adm-ink p-10">
-              <p className="font-medium">B · proposed</p>
+              <p className="font-medium">{labels[1]}</p>
               <div className="mt-4 flex flex-wrap gap-4">
                 <Badge tone={VERDICT_TONE[a.tries]}>Tries: {a.tries}</Badge>
                 <Badge tone={VERDICT_TONE[a.pays]}>Pays: {a.pays}</Badge>
               </div>
               <p className="mt-6 text-adm-ink-2">
-                {a.movedBy?.length ? `Moved by: ${a.movedBy.map((c) => V3_CHANGES[c as keyof typeof V3_CHANGES]?.label ?? c).join('; ')}.` : 'Nothing in B changed the answer.'}
+                {a.movedBy?.length ? `Moved by: ${a.movedBy.map((c) => changes[c]?.label ?? c).join('; ')}.` : 'Nothing in B changed the answer.'}
               </p>
             </div>
+          </div>
+          {a.alt && (
+            <div className="rounded-8 border border-adm-line p-10 text-12">
+              <p className="font-medium">{run.altLabel ?? 'Alternative'}</p>
+              <div className="mt-4 flex flex-wrap gap-4">
+                <Badge tone={VERDICT_TONE[a.alt.tries]}>Tries: {a.alt.tries}</Badge>
+                <Badge tone={VERDICT_TONE[a.alt.pays]}>Pays: {a.alt.pays}</Badge>
+              </div>
+              <p className="mt-6 text-adm-ink-2">{a.alt.why}</p>
+            </div>
+          )}
+        </Section>
+      )}
+
+      {a.vars && run.variables && (
+        <Section title="This run’s variables">
+          <div className="grid grid-cols-1 gap-8 text-12 sm:grid-cols-2">
+            {run.variables.map((v) => (
+              <Fact key={v.key} label={v.label} value={a.vars?.[v.key] ?? '–'} />
+            ))}
           </div>
         </Section>
       )}

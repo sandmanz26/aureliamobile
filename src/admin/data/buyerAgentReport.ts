@@ -3,6 +3,10 @@ import { BUYER_RUNS, countVerdicts, personasOf, priceRange, type BuyerAnswer, ty
 import { AGENT_RULES, DESIGNS, agreement, report } from './buyerSim'
 import { V3_CHANGES, type V3Change } from './buyerRunV3'
 import { OVERALL_SUMMARY } from './buyerRerunSummaries'
+import { RUN_V5, v5Tallies } from './buyerRunV5'
+import { RUN_V6, V6_CHANGES, v6Best, v6Tallies } from './buyerRunV6'
+import { RUN_V7, v7Tallies } from './buyerRunV7'
+import type { Reference } from './buyerRuns'
 import { PLANS } from './commerce'
 import type { SourceId } from './reportSources'
 
@@ -38,7 +42,7 @@ export const APP_PRICE = { amount: '$10 a month or $100 a year', where: 'the app
 
 export interface Iteration {
   /** Matches the finding id in reportSources. */
-  id: 'it-v1' | 'it-v2' | 'it-v3' | 'it-rerun'
+  id: 'it-v1' | 'it-v2' | 'it-v3' | 'it-rerun' | 'it-v5' | 'it-v6' | 'it-v7'
   name: string
   date: string
   question: string
@@ -254,6 +258,114 @@ function buildBase(): Omit<Iteration, 'inputs'>[] {
       link: '/admin/buyer-agent?view=versions',
       sources: ['buyer-rerun', 'versions', 'personas'],
     },
+    ...buildLater(best),
+  ]
+}
+
+/** Reports v5–v7 (U124, J178): every figure from the run files' computed tallies. */
+function buildLater(rerunBest: ReturnType<typeof report>): Omit<Iteration, 'inputs'>[] {
+  const x5 = v5Tallies()
+  const x6 = v6Tallies()
+  const x7 = v7Tallies()
+  const best6 = v6Best()
+  const bestNames = [...new Set(Object.values(best6).map((o) => o.name))]
+  const allFreemium = Object.values(best6).every((o) => o.entry === 'freemium')
+  const n5 = x5.t.n
+  const top = (rows: [string, number][], n: number) => (rows[0] ? `${rows[0][0]} (${rows[0][1]} of ${n})` : '—')
+  const label = (k: string) => V6_CHANGES[k]?.label ?? k
+  return [
+    {
+      id: 'it-v5',
+      name: 'Report v5',
+      date: RUN_V5.date,
+      question: criterion(RUN_V5, 'Question'),
+      changed: [criterion(RUN_V5, 'New variables'), criterion(RUN_V5, 'Product version'), criterion(RUN_V5, 'Price'), 'The PRD and the business owner’s documents read explicitly, and listed under “What the agent read”.'],
+      headline: [
+        { label: 'Would try (prediction)', value: `${x5.t.tries.yes} of ${n5}`, note: `${x5.t.tries.maybe} maybe, ${x5.t.tries.no} no` },
+        { label: 'Would pay $10 / $100 (prediction)', value: `${x5.t.pays.yes} of ${n5}`, note: `${x5.t.pays.maybe} maybe` },
+        { label: 'Fair price band', value: `${money(x5.band.low)}–${money(x5.band.high)} a month`, note: `yearly plan ($8.33) past “getting expensive” for ${x5.overYearly} of ${n5}` },
+        { label: 'Top objection', value: top(x5.themes, n5) },
+        { label: 'Sure at day 30 (prediction)', value: `${x5.day30} of ${n5}` },
+      ],
+      delta: [
+        `Same 36 people as run v3: would try ${x5.v3A.tries.yes} (v3, today as text) → ${x5.t.tries.yes} (the product as built); v3’s proposal B had ${x5.v3B.tries.yes}.`,
+        `Against the re-run (v4, agent v3 rules × production v3): first-visit listening ${pct(rerunBest.activation)} there; here ${pct(share(x5.t.tries.yes, n5))} would try. The price is now the app’s, not the run’s own.`,
+        'Four persona variables added: starting condition, wearable, device, language.',
+      ],
+      decisions: decisions(['d3', 'd1']),
+      findings: RUN_V5.findings.slice(0, 4),
+      priceTested: {
+        amount: `$${10} a month or $${100} a year`,
+        currency: 'US dollars, the same in every country',
+        period: 'a month or a year',
+        origin: `The app’s own Upgrade screen (${APP_PRICE.where}).`,
+        differsFromApp: false,
+      },
+      link: '/admin/buyer-agent?v=5',
+      sources: ['buyer-v5', 'personas', 'versions', 'prd', 'owner-docs', 'buyer-prices'],
+    },
+    {
+      id: 'it-v6',
+      name: 'Report v6',
+      date: RUN_V6.date,
+      question: criterion(RUN_V6, 'Question'),
+      changed: [criterion(RUN_V6, 'Who'), criterion(RUN_V6, 'New variables'), criterion(RUN_V6, 'Product version'), criterion(RUN_V6, 'Price')],
+      headline: [
+        { label: 'Would try: freemium / retreat €19.99', value: `${x6.A.tries.yes} / ${x6.B.tries.yes} of ${x6.A.n}`, note: `retreat at €39: ${x6.ALT.tries.yes}` },
+        { label: 'Expected Plus (yes 1, maybe ½)', value: `${x6.plus.A} / ${x6.plus.B} / ${x6.plus.ALT}`, note: 'freemium / €19.99 / €39' },
+        { label: 'Creator followers', value: `${x6.followers.n} of ${x6.A.n}`, note: `freemium ${x6.followers.A.tries.yes} try, retreat ${x6.followers.B.tries.yes} buy` },
+        { label: 'Followers refusing daily check-ins', value: `${x6.notifHit} of ${x6.followers.n}`, note: 'a deal breaker the retreat as specified hits' },
+        { label: 'Best offer, followers (prediction)', value: best6['creator follower'].name },
+      ],
+      delta: [
+        `A larger panel (${n5} → ${x6.A.n}) on a new seed, with four more variables: compare shares. Freemium: ${pct(share(x5.t.tries.yes, n5))} → ${pct(share(x6.A.tries.yes, x6.A.n))} would try.`,
+        `The first run to test a different way in: the creator retreat. Moved answers from A to B: ${x6.moved.length ? x6.moved.slice(0, 3).map(([k, c]) => `${label(k).toLowerCase()} (${c})`).join(', ') : 'none'}.`,
+        `€19.99 against €39 among followers: ${x6.followers.B.tries.yes} yes, ${x6.followers.B.tries.maybe} maybe → ${x6.followers.ALT.tries.yes} yes, ${x6.followers.ALT.tries.maybe} maybe.`,
+      ],
+      decisions: decisions(['d8']),
+      findings: RUN_V6.findings.slice(0, 4),
+      priceTested: {
+        amount: 'Retreat ticket €19.99, and €39 · then Plus $10 a month or $100 a year',
+        currency: 'Euros for the ticket (at €1 = $1.08); US dollars for Plus',
+        period: '8 weeks for the ticket; a month or a year for Plus',
+        origin: 'The approved retreat redesign (Admin → Business funnel → Creator retreat) for the ticket; the app’s Upgrade screen for Plus.',
+        differsFromApp: true,
+        warning: `The app sells no ticket today; Plus after it is the app’s price (${APP_PRICE.amount}).`,
+      },
+      link: '/admin/buyer-agent?v=6',
+      sources: ['buyer-v6', 'personas', 'versions', 'prd', 'owner-docs', 'buyer-prices', 'retreat'],
+    },
+    {
+      id: 'it-v7',
+      name: 'Report v7',
+      date: RUN_V7.date,
+      question: criterion(RUN_V7, 'Question'),
+      changed: [criterion(RUN_V7, 'Who'), criterion(RUN_V7, 'New variables'), criterion(RUN_V7, 'Product version')],
+      headline: [
+        { label: 'Would try: v6’s best → + quick wins', value: `${x7.A.tries.yes} → ${x7.B.tries.yes} of ${x7.A.n}`, note: `no: ${x7.A.tries.no} → ${x7.B.tries.no}` },
+        { label: 'Expected Plus (yes 1, maybe ½)', value: `${x7.plus.A} → ${x7.plus.B}`, note: `${x7.lostPay} stop paying because the free core is enough` },
+        { label: 'Quick win that moved most', value: x7.moved[0] ? label(x7.moved[0][0]) : 'none', note: x7.moved[0] ? `${x7.moved[0][1]} of ${x7.A.n} answers` : undefined },
+        { label: 'Indonesia: would try', value: `${x7.indo.A.tries.yes} → ${x7.indo.B.tries.yes} of ${x7.indo.n}` },
+        { label: 'Sure at day 30 (prediction)', value: `${x7.day30A} → ${x7.day30B} of ${x7.A.n}` },
+      ],
+      delta: [
+        `A larger panel (${x6.A.n} → ${x7.A.n}) on a new seed, five more variables (13 in all). Offer A is v6’s best: ${bestNames.join('; ')}.`,
+        `Quick wins: would try ${pct(share(x7.A.tries.yes, x7.A.n))} → ${pct(share(x7.B.tries.yes, x7.B.n))}; expected Plus ${x7.plus.A} → ${x7.plus.B}.`,
+        `The retreat with quick wins, among ${x7.followers.n} creator followers: ${x7.followers.ALT.tries.yes} buy, expected Plus ${x7.followers.plusALT} against ${x7.followers.plusB} on freemium with quick wins.`,
+      ],
+      decisions: decisions(['d3', 'd4']),
+      findings: RUN_V7.findings.slice(0, 4),
+      priceTested: {
+        amount: allFreemium ? `${APP_PRICE.amount} (v6’s best is freemium for every channel)` : `As v6’s best per channel, then ${APP_PRICE.amount}`,
+        currency: 'US dollars',
+        period: 'a month or a year',
+        origin: `The app’s Upgrade screen (${APP_PRICE.where}); the quick wins add no price.`,
+        differsFromApp: !allFreemium,
+        warning: allFreemium ? undefined : 'Where v6’s best is the retreat, the ticket is not an app price.',
+      },
+      link: '/admin/buyer-agent?v=7',
+      sources: ['buyer-v7', 'personas', 'versions', 'prd', 'owner-docs', 'buyer-prices'],
+    },
   ]
 }
 
@@ -321,7 +433,41 @@ export function buildInputs(): Record<ReportId, Record<InputKind, InputValue>> {
     'Buyer-test-agent idea only; no document read',
     'The run exists because of the business owner’s idea of a buyer test agent (J133; context timeline row 24). The agent read none of their documents as evidence: the run lists no references.',
   )
+  const prdRead = rec(
+    'PRD overview, draft of 11 Nov 2026',
+    'Read first and listed among what the agent read: docs/PRD-OVERVIEW.md (Wiki → PRD overview), for what production v3 does and does not do: built, built on sample data, not built.',
+  )
+  const ownerOf = (refs: Reference[] = []) => refs.filter((x) => /business owner|Retreat-in-a-Box|B2B2C/.test(x.title))
+  const docs = (refs: Reference[] | undefined, short: string) => {
+    const o = ownerOf(refs)
+    return rec(short, o.map((x) => `${x.title} (${x.where}): ${x.used}`).join(' '))
+  }
+  const later = [RUN_V5, RUN_V6, RUN_V7]
+  const panelVars = (r: BuyerRun) => rec(`${r.panel.size} personas · generator ${r.generator} · seed ${r.panel.seed} · ${r.variables?.length ?? 0} variables`, `${criterion(r, 'Who')} Variables: ${(r.variables ?? []).map((v) => v.label.toLowerCase()).join(', ')}.`)
+  const best6 = v6Best()
+  const allFreemium = Object.values(best6).every((o) => o.entry === 'freemium')
   return {
+    'it-v5': {
+      personas: panelVars(later[0]),
+      product: rec('Production v3 (staging v5), as it is', `${criterion(RUN_V5, 'Product version')} ${RUN_V5.stimulus.offer.join('; ')}.`),
+      prd: prdRead,
+      ownerDocs: docs(RUN_V5.references, 'Freemium brief · lighthouse · measurement review'),
+      price: rec('App: $10/mo, $100/yr (Upgrade screen)', `${APP_PRICE.amount}, on ${APP_PRICE.where}; US dollars in every country.`),
+    },
+    'it-v6': {
+      personas: panelVars(later[1]),
+      product: rec('A: production v3 · B: creator retreat (proposal)', `${criterion(RUN_V6, 'Product version')} B: ${RUN_V6.stimulus.offer.join('; ')}.`),
+      prd: prdRead,
+      ownerDocs: docs(RUN_V6.references, '+ Retreat-in-a-Box spec · B2B2C redesign · chat 24 Nov'),
+      price: rec('Ticket €19.99 vs €39 · then Plus $10/$100', criterion(RUN_V6, 'Price')),
+    },
+    'it-v7': {
+      personas: panelVars(later[2]),
+      product: rec('A: v6’s best per channel · B: + quick wins', `${criterion(RUN_V7, 'Product version')} A: ${RUN_V7.control?.offer.join('; ')}. B adds: ${RUN_V7.stimulus.offer.join('; ')}.`),
+      prd: prdRead,
+      ownerDocs: docs(RUN_V7.references, '+ chat 24 Nov: Insight Timer quick wins'),
+      price: rec(allFreemium ? 'v6’s best: app $10/mo, $100/yr' : 'v6’s best per channel · Plus $10/$100', criterion(RUN_V7, 'Price')),
+    },
     'it-v1': {
       personas: panel(r1),
       product: textOnly,

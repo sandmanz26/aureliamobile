@@ -11,6 +11,9 @@
 
 import { RUN_V2 } from './buyerRunV2'
 import { RUN_V3, V3_PRICES } from './buyerRunV3'
+import { RUN_V5 } from './buyerRunV5'
+import { RUN_V6 } from './buyerRunV6'
+import { RUN_V7 } from './buyerRunV7'
 import { generatePersonas, type Generator, type Persona } from './personas'
 
 export type Verdict = 'yes' | 'maybe' | 'no'
@@ -71,6 +74,10 @@ export interface BuyerAnswer {
   control?: { tries: Verdict; pays: Verdict; why: string }
   /** v3+: the proposed changes that changed this answer. */
   movedBy?: string[]
+  /** v5+: the run's persona variables for this persona, by key (see BuyerRun.variables). */
+  vars?: Record<string, string>
+  /** v6+: the same persona's answer to a second price of offer B (BuyerRun.altLabel). */
+  alt?: { tries: Verdict; pays: Verdict; why: string }
 }
 
 export interface Reference {
@@ -101,6 +108,19 @@ export interface BuyerRun {
   control?: { name: string; offer: string[] }
   /** v3+: what the agent read before answering. */
   references?: Reference[]
+  /** v5+: labels for what movedBy names; without it, run v3's changes are used. */
+  changes?: Record<string, { label: string; source: string }>
+  /** v5+: the price each country saw; countries not listed see defaultPrice. */
+  prices?: Record<string, { label: string; usd: number }>
+  defaultPrice?: { label: string; usd: number }
+  /** v5+: the US yearly plan, per month, for the price chart. */
+  usYearlyMonthly?: number
+  /** v5+: the persona variables this run added, shown per answer and by segment. */
+  variables?: { key: string; label: string }[]
+  /** v5+: short names of offer A and offer B. */
+  abLabels?: [string, string]
+  /** v6+: what the alt answer is to (a second price of B). */
+  altLabel?: string
   /** How the run was set up, in plain words, for someone who was not there. */
   criteria: Criterion[]
   /** The instructions the agent followed, so a run can be repeated. */
@@ -368,6 +388,9 @@ export const BUYER_RUNS: BuyerRun[] = [
   },
   RUN_V2,
   RUN_V3,
+  RUN_V5,
+  RUN_V6,
+  RUN_V7,
 ]
 
 /* ------------------------------------------------------- Panels and prices */
@@ -429,7 +452,8 @@ const LOCAL_PLUS: Record<string, { label: string; usd: number }> = {
 }
 
 /** The Plus price a persona saw in a given run. */
-export function priceSeen(run: Pick<BuyerRun, 'version'>, country: string) {
+export function priceSeen(run: Pick<BuyerRun, 'version'> & Partial<Pick<BuyerRun, 'prices' | 'defaultPrice'>>, country: string) {
+  if (run.defaultPrice) return run.prices?.[country] ?? run.defaultPrice
   return run.version >= 3 ? (V3_PRICES[country] ?? { label: '$9.99 · $59.99 a year', usd: 9.99 }) : localPlus(country)
 }
 

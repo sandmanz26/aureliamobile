@@ -37,6 +37,9 @@ export type SourceId =
   | 'buyer-v2'
   | 'buyer-v3'
   | 'buyer-rerun'
+  | 'buyer-v5'
+  | 'buyer-v6'
+  | 'buyer-v7'
   | 'decisions'
   | 'app-funnel'
   | 'feedback-group'
@@ -106,6 +109,33 @@ export const SOURCES: Record<SourceId, ReportSource> = {
     version: 'Re-run (U104), rules checked against runs v2 and v3',
     taken: 'Activation, completion, return on day 7 and 30, “very disappointed”, the free limit and Plus, leave reasons.',
     link: '/admin/buyer-agent?view=versions',
+    label: 'prediction',
+  },
+  'buyer-v5': {
+    id: 'buyer-v5',
+    name: 'Buyer agent run v5',
+    what: 'The same 36 personas as run v3 on production v3 as it is, at the app’s price, with four new persona variables and the PRD and the business owner’s documents read first.',
+    version: 'Run v5, 25 Nov 2026, persona generator 2, written rules (U124)',
+    taken: 'Try / pay on the product as built, the price band, the losses by language, condition, wearable and device.',
+    link: '/admin/buyer-agent?v=5',
+    label: 'prediction',
+  },
+  'buyer-v6': {
+    id: 'buyer-v6',
+    name: 'Buyer agent run v6',
+    what: '60 personas on a new seed answering plain freemium and the creator retreat at €19.99 and €39, with four more variables (channel, prior app and churn, budget).',
+    version: 'Run v6, 25 Nov 2026, persona generator 2, written rules (U124)',
+    taken: 'Freemium against the retreat, followers against the rest, €19.99 against €39, the best offer per channel.',
+    link: '/admin/buyer-agent?v=6',
+    label: 'prediction',
+  },
+  'buyer-v7': {
+    id: 'buyer-v7',
+    name: 'Buyer agent run v7',
+    what: '100 personas on a new seed answering v6’s best offer and the same with Insight-Timer-style quick wins, with five more variables (life stage, time of need, AI trust, privacy, culture).',
+    version: 'Run v7, 25 Nov 2026, persona generator 2, written rules (U124)',
+    taken: 'What each quick win moves, what the free library costs in payers, and the segments (Indonesia included).',
+    link: '/admin/buyer-agent?v=7',
     label: 'prediction',
   },
   decisions: {
@@ -281,6 +311,9 @@ export const SOURCE_KIND: Record<SourceId, SourceKind> = {
   'buyer-v2': 'Buyer agents',
   'buyer-v3': 'Buyer agents',
   'buyer-rerun': 'Buyer agents',
+  'buyer-v5': 'Buyer agents',
+  'buyer-v6': 'Buyer agents',
+  'buyer-v7': 'Buyer agents',
   personas: 'Buyer agents',
   'app-funnel': 'Funnels and models',
   'feedback-group': 'Funnels and models',
@@ -315,6 +348,9 @@ export const BUYER_REPORT_FINDINGS: Finding[] = [
   { id: 'it-v2', title: 'Report v2', sources: ['personas', 'versions', 'owner-docs', 'buyer-prices', 'buyer-v2'] },
   { id: 'it-v3', title: 'Report v3', sources: ['personas', 'versions', 'owner-docs', 'buyer-prices', 'buyer-v3'] },
   { id: 'it-rerun', title: 'Report v4 · re-run', sources: ['personas', 'versions', 'owner-docs', 'buyer-prices', 'buyer-rerun'] },
+  { id: 'it-v5', title: 'Report v5', sources: ['personas', 'versions', 'prd', 'owner-docs', 'buyer-prices', 'buyer-v5'] },
+  { id: 'it-v6', title: 'Report v6', sources: ['personas', 'versions', 'prd', 'owner-docs', 'buyer-prices', 'buyer-v6', 'retreat'] },
+  { id: 'it-v7', title: 'Report v7', sources: ['personas', 'versions', 'prd', 'owner-docs', 'buyer-prices', 'buyer-v7'] },
 ]
 
 export const COMBINATION_FINDINGS: Finding[] = [

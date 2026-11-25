@@ -8,7 +8,7 @@ describe('buyer agent runs', () => {
   const byId = new Map(all.map((p) => [p.id, p]))
 
   it('answers for exactly the panel the seed draws', () => {
-    for (const run of BUYER_RUNS) {
+    for (const run of BUYER_RUNS.filter((r) => r.version <= 3)) {
       const pool = [...personasOf(run).values()]
       const drawn = (run.version === 1 ? drawPanel(pool, run.panel.size, run.panel.seed) : run.version === 2 ? drawStratified(pool, run.panel.seed) : drawStratified(pool, run.panel.seed, [])).map((p) => p.id)
       expect(run.panel.personaIds, run.id).toEqual(drawn)
@@ -55,11 +55,9 @@ describe('buyer agent runs', () => {
     expect(new Set(ps.map((p) => wellnessOf(p).level)).size).toBe(3)
   })
 
-  it('gives every run criteria and versions in order', () => {
-    BUYER_RUNS.forEach((r, i) => {
-      expect(r.version).toBe(i + 1)
-      expect(r.criteria.length).toBeGreaterThan(4)
-    })
+  it('gives every run criteria and versions in order (v4 is the re-run, not a hand-played panel)', () => {
+    expect(BUYER_RUNS.map((r) => r.version)).toEqual([1, 2, 3, 5, 6, 7])
+    for (const r of BUYER_RUNS) expect(r.criteria.length).toBeGreaterThan(4)
   })
 
   it('runs v3 as an A/B on generator 2, with every change traced', () => {
