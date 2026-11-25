@@ -160,10 +160,20 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U121 | `7bfc4e4` | 2026-11-24 | Combination report graph in four levels: Sources (16) → Building blocks (10) → Stage readings (5) → Verdict (6). Click a node to highlight its path and see "Made of" and "Feeds"; a text version sits below the graph. | [patch](patches/U121-7bfc4e4.patch) |
 | U122 | `5ffceb2` | 2026-11-25 | Buyer agent report rebuilt around five inputs (personas, product version, PRD, the business owner's documents, price) → Report v1, v2, v3, v4 (the re-run). Includes an input graph (click a report or an input), a what-changed table, and a card per report. The PRD is "not recorded" for every report. | [patch](patches/U122-5ffceb2.patch) |
 | U123 | `b99372f` | 2026-11-25 | Admin sidebar: a menu search box (the `/` key, arrow keys, Enter); icons on the top-level groups only, with nested items indented; Experimentation's two feedback groups moved into Product lab; Buyer agent results hidden from the menu (the route still works). | [patch](patches/U123-b99372f.patch) |
+| U124 | `ba6eff3` | 2026-11-25 | Buyer agent runs v5 (36 personas, the app as it is at $10/$100, PRD read), v6 (60, the creator retreat at €19.99 or €39 against freemium), v7 (100, Insight-Timer-style quick wins), each adding persona variables. Played by written rules (`buyerPlay.ts`), not typed by hand. Report v5–v7 record all five inputs. | [patch](patches/U124-ba6eff3.patch) |
 | U125 | `933b07e` | 2026-11-25 | Wiki Research v3 (now the default), Insight Timer round 3: 21 features mapped to the funnel and journey; 14 ranked quick wins; what not to copy; Map of Healing against our Healing Map; their Retreats (a 10% listing fee) against Retreat-in-a-Box; a roast; 23 sources. | [patch](patches/U125-933b07e.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U124 — Buyer agent v5–v7
+
+- **Commit:** `ba6eff3` · 2026-11-25.
+- **Findings (predictions):**
+  - **v5:** 16 of 36 would try and 6 would pay; nobody who needs their own language tries.
+  - **v6:** freemium beats the retreat in every channel. Expected Plus is 17.5 on freemium, 1 on the €19.99 retreat and 0.5 on the €39 retreat. Trust is the main objection, and 21 of 60 want their employer to pay.
+  - **v7:** quick wins lift trying from 51 to 61 of 100, but paying stays flat. Only the free library moved anyone.
+- **Revert:** `git revert --no-commit ba6eff3`.
 
 ### U125 — Insight Timer round 3
 
