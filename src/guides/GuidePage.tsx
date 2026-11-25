@@ -14,6 +14,7 @@ import pmPlaybookV2 from './content/pm-playbook-v2.html?raw'
 import pmPlaybookV3 from './content/pm-playbook-v3.html?raw'
 import researchInsightTimer from './content/research-insight-timer.html?raw'
 import researchRound2 from '../../docs/research/reports/Insight Timer behaviour and journeys.md?raw'
+import researchRound3 from '../../docs/research/reports/Insight Timer round 3.md?raw'
 import prdOverview from '../../docs/PRD-OVERVIEW.md?raw'
 import backendOld from '../../docs/backend-old/BACKEND-OLD.md?raw'
 import artefact from '../../docs/backend-old/ARTEFACT.md?raw'
@@ -85,7 +86,7 @@ const DOCS = [
     title: 'Research',
     blurb: 'What we learn from other products. First: Insight Timer, the biggest free meditation app, and what it means for Aurelia.',
     audience: 'The product owner, the project manager and anyone shaping what Aurelia builds next',
-    inside: ['How people really use Insight Timer, from Reddit and reviews', 'Its whole journey as 11 flow charts', 'What Aurelia should adopt now, next and later, after a roast', 'Round 1: features, business, backlash and competitors'],
+    inside: ['Round 3: quick wins ranked against our business funnel', 'Map of Healing against our Healing Map, and their Retreats against ours', 'How people really use Insight Timer, from Reddit and reviews', 'Its whole journey as 11 flow charts', 'What Aurelia should adopt now, next and later, after a roast', 'Round 1: features, business, backlash and competitors'],
     icon: Telescope,
     source: 'scripts/guides/research_insight_timer.py',
     html: () => researchInsightTimer,
@@ -183,8 +184,15 @@ const DOC_VERSIONS: Partial<Record<DocId, DocVersion[]>> = {
     { v: 2, label: 'Task guide', note: 'Organised by what you want to do, in plain words.', html: () => adminGuidelineV2 },
     { v: 3, label: 'Quick start', note: 'The morning check, the map and the rules, on one page.', html: () => adminGuidelineV3 },
   ],
-  // Round 2 first, so it is the default (U098).
+  // Newest round first, so it is the default; older rounds stay at ?v=2 and ?v=1.
   research: [
+    {
+      v: 3,
+      label: 'Round 3: quick wins and the healing map',
+      note: 'Features mapped to our funnel, Map of Healing against ours, retreats.',
+      html: () => marked.parse(researchRound3, { async: false }),
+      markdown: true,
+    },
     {
       v: 2,
       label: 'Behaviour & journeys',
