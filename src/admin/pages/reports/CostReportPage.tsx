@@ -9,6 +9,9 @@ import {
 } from '../../data/costModel'
 import { COST_FINDINGS } from '../../data/reportSources'
 import { SourceGraph, SourcesSection } from './ReportParts'
+import { Details, SummaryBlock } from './ReportSummary'
+import { CostFunctionPanel } from './SummaryCharts'
+import { costFunction, costSummary } from '../../data/reportSummaries'
 
 /*
  * Admin → Reports → Cost report (U117, J172). Part 1: what a chapter costs,
@@ -65,6 +68,8 @@ export function CostReportPage() {
   const [state, setState] = useState<State>(INITIAL)
   const [changed, setChanged] = useState<{ from: NodeId | null; nodes: Set<NodeId> }>({ from: null, nodes: new Set() })
   const [selected, setSelected] = useState<NodeId>('costFlip')
+  const [summary] = useState(() => costSummary())
+  const [fn] = useState(() => costFunction(1))
 
   function update(from: NodeId, next: State) {
     const before = nodeValues(state)
@@ -85,21 +90,18 @@ export function CostReportPage() {
     <div className="flex flex-col gap-16">
       <PageHeader
         title="Cost report"
-        description="What it costs Aurelia to make a chapter, by media and supplier, and what it might cost to move someone from bad sleep to good sleep. Prices are the suppliers’ own where we could read them; everything about uplift, flips and the Causal AI stages is the business owner’s scenario, not measured. There are no real users yet."
+        description="What a chapter costs to make, and what moving one person from bad sleep to good sleep costs and earns. Prices are suppliers’ own; uplift and flips are the business owner’s scenario."
       />
 
-      <div className="flex flex-wrap items-center gap-8 text-12 text-adm-ink-2">
-        <span className="font-medium text-adm-ink">Every number is labelled:</span>
-        {(Object.keys(NUMBER_LABEL_TEXT) as NumberLabel[]).map((l) => (
-          <NumBadge key={l} label={l} />
-        ))}
-      </div>
+      <SummaryBlock s={summary} />
 
-      <Panel title="How this report was made" description="Where each part of this report comes from. Each line is a source feeding a section.">
-        <SourceGraph findings={COST_FINDINGS} label="Graph: the sources on the left feed the report’s sections on the right." />
-      </Panel>
+      <section id="cost-function" className="scroll-mt-16">
+        <Panel title="The cost function" description="Which sources feed it, the formula, and what comes out. Click a term to see its source.">
+          <CostFunctionPanel f={fn} />
+        </Panel>
+      </section>
 
-      <h2 className="mt-8 text-18 font-semibold text-adm-ink">Part 1 · Cost</h2>
+      <Details title="Part 1 · Cost per chapter" hint="supplier catalogue, your selection, presets, 2025 measured">
 
       <section id="cost-catalogue" className="scroll-mt-16">
         <Panel title="Supplier catalogue" description="Candidate models for each media element of a chapter, with the price as stated, its date and source, and what each is good and bad at. “Use” puts it in your selection below.">
@@ -204,7 +206,9 @@ export function CostReportPage() {
         </Panel>
       </section>
 
-      <h2 className="mt-8 text-18 font-semibold text-adm-ink">Part 2 · From bad to good (the goal)</h2>
+      </Details>
+
+      <Details title="Part 2 · From bad to good" hint="the connected graph, the three stages, the metric lines">
 
       <section id="goal-graph" className="scroll-mt-16">
         <Panel title="Bad sleep to good sleep, as a connected graph" description="Use case: sleep on a 0–100 scale, default 25 → 85 (+60) from the spec. Change a variable: every node downstream updates and the changed path lights up. Click a node for its formula and source. Chapter length, personalisation and models come from Part 1.">
@@ -287,6 +291,20 @@ export function CostReportPage() {
         <MetricLines stages={stages} />
       </section>
 
+      </Details>
+
+      <Details title="Notes, sources and limits">
+      <div className="flex flex-wrap items-center gap-8 text-12 text-adm-ink-2">
+        <span className="font-medium text-adm-ink">Every number is labelled:</span>
+        {(Object.keys(NUMBER_LABEL_TEXT) as NumberLabel[]).map((l) => (
+          <NumBadge key={l} label={l} />
+        ))}
+      </div>
+
+      <Panel title="How this report was made" description="Where each part of this report comes from. Each line is a source feeding a section.">
+        <SourceGraph findings={COST_FINDINGS} label="Graph: the sources on the left feed the report’s sections on the right." />
+      </Panel>
+
       <Panel title="Read this first" description="Plain-language notes.">
         <ul className="flex list-disc flex-col gap-6 pl-18 text-13 text-adm-ink-2">
           <li>“Therapeutic”, “flip” and “medical range” are internal metric names. Nothing on this page is a medical claim; public copy stays wellness.</li>
@@ -308,6 +326,7 @@ export function CostReportPage() {
           'Profit per flip uses the whole price; a retreat ticket is shared with the creator.',
         ]}
       />
+      </Details>
     </div>
   )
 }

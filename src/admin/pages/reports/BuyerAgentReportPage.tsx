@@ -7,6 +7,9 @@ import { BUYER_REPORT_FINDINGS } from '../../data/reportSources'
 import { InputGraph } from './InputGraph'
 import { INPUT_DOT } from './reportColors'
 import { LabelBadge, SourcesSection } from './ReportParts'
+import { Details, SummaryBlock } from './ReportSummary'
+import { SuccessTrend, WhatMoves } from './SummaryCharts'
+import { buyerLevers, buyerSummary, buyerTrend } from '../../data/reportSummaries'
 
 const fmtDate = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
 
@@ -20,12 +23,15 @@ const fmtDate = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString('en
  */
 export function BuyerAgentReportPage() {
   const iterations = useMemo(() => buildIterations(), [])
+  const summary = useMemo(() => buyerSummary(), [])
+  const trend = useMemo(() => buyerTrend(), [])
+  const levers = useMemo(() => buyerLevers(), [])
 
   return (
     <div className="flex flex-col gap-16">
       <PageHeader
         title="Buyer agent report"
-        description="A buyer report is what synthetic personas say when an AI agent plays each of them against Aurelia: who would try it, who would pay, and why not. Each report version is made from five inputs: the personas, the product version, the PRD, the business owner’s documents and the price given at the time. Everything here is a prediction, not a measurement: nobody real answered."
+        description="What synthetic buyers, played by an AI agent, say about trying and paying for Aurelia. Every figure is a prediction."
         actions={
           <Link to="/admin/buyer-agent" className="inline-flex items-center gap-6 rounded-8 border border-adm-line bg-adm-surface px-12 py-6 text-12 font-medium text-adm-ink hover:bg-adm-hover">
             Full detail: Buyer agent results <ArrowRight size={13} aria-hidden="true" />
@@ -33,6 +39,20 @@ export function BuyerAgentReportPage() {
         }
       />
 
+      <SummaryBlock s={summary} />
+
+      <div className="grid gap-16 lg:grid-cols-[3fr_2fr]">
+        <Panel title="Success trend, report v1 → v7" description="Would try, would pay and sure at day 30, on the offer each report led with. Hover a report for what changed.">
+          <SuccessTrend points={trend} />
+        </Panel>
+        <section id="what-moves" className="min-w-0 scroll-mt-16">
+          <Panel title="What moves success" description="Share of a report’s answers each change moved (v3, v6, v7).">
+            <WhatMoves levers={levers} />
+          </Panel>
+        </section>
+      </div>
+
+      <Details title="How each report was made" hint="the five inputs and what changed between reports">
       <section id="input-graph" className="scroll-mt-16">
         <Panel title="Inputs → report versions" description="Each row is one of the five inputs, each column a report version. A cell is the exact value that report used.">
           <InputGraph iterations={iterations} />
@@ -81,6 +101,9 @@ export function BuyerAgentReportPage() {
         </Panel>
       </section>
 
+      </Details>
+
+      <Details title="Every report, one card each" hint="question, inputs and headline results">
       <section aria-label="Report versions" className="grid gap-16 lg:grid-cols-2">
         {iterations.map((it) => (
           <article key={it.id} id={it.id} className="flex min-w-0 scroll-mt-16 flex-col gap-12 rounded-12 border border-adm-line bg-adm-surface p-16">
@@ -133,7 +156,9 @@ export function BuyerAgentReportPage() {
           </article>
         ))}
       </section>
+      </Details>
 
+      <Details title="Sources and limits">
       <SourcesSection
         findings={BUYER_REPORT_FINDINGS}
         labels={['prediction', 'sample', 'document']}
@@ -146,6 +171,7 @@ export function BuyerAgentReportPage() {
           'Reports v1 and v2 used persona generator 1, which made incoherent people; comparisons across reports are approximate.',
         ]}
       />
+      </Details>
     </div>
   )
 }

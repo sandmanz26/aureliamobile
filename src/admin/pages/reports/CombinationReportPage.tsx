@@ -8,6 +8,9 @@ import { OUTCOMES, eur } from '../../data/retreatFunnel'
 import { studyWeek } from '../../data/study'
 import { CompositionGraph } from './CompositionGraph'
 import { LabelBadge, SourceChip, SourcesSection } from './ReportParts'
+import { Details, SummaryBlock } from './ReportSummary'
+import { StageStrip } from './SummaryCharts'
+import { combinationSummary, stageStrip } from '../../data/reportSummaries'
 
 const STATUS = { 'on-track': { tone: 'good', text: 'On track (prediction)' }, below: { tone: 'critical', text: 'Below target (prediction)' }, unmeasured: { tone: 'neutral', text: 'Unmeasured' } } as const
 
@@ -78,19 +81,35 @@ export function CombinationReportPage() {
   const [stages] = useState(() => buildStages(week))
   const [matrix] = useState(() => buildMatrix())
   const [composition] = useState(() => buildComposition(stages))
+  const [summary] = useState(() => combinationSummary(week))
+  const [strip] = useState(() => stageStrip(week))
   const middle = OUTCOMES.find((o) => o.id === 'middle')!
 
   return (
     <div className="flex flex-col gap-16">
       <PageHeader
         title="Combination report"
-        description="Aurelia read stage by stage of the business funnel, with every source side by side: the 2025 backend, what production v3 offers, what real users said, the personas and buyer agents, the funnels and the PRD. For each stage: what each source says, where they agree and conflict, and one verdict with a next move."
+        description="Aurelia read stage by stage of the business funnel, every source side by side, with one verdict and one next move per stage."
       />
 
-      <Panel title="How this report was made" description="Built in four levels, read left to right: the sources, the building blocks read or computed from them, a reading of each funnel stage, and the verdict with its next moves. The colour of a line from a source is the kind of source it is.">
-        <CompositionGraph nodes={composition} />
-      </Panel>
+      <SummaryBlock
+        s={summary}
+        aside={
+          <div className="flex flex-col gap-10">
+            <StageStrip cells={strip} />
+            <div className="rounded-8 bg-adm-bg p-12">
+              <h2 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">How to read this</h2>
+              <ul className="mt-4 flex list-disc flex-col gap-2 pl-18 text-12 text-adm-ink-2">
+                <li>Five stages, left to right: a person enters, has an “aha”, hits the free limit, is offered Plus, and stays.</li>
+                <li>Each box is the stage’s weakest number against its target; green is on target, red is below, the thick border is what to fix first.</li>
+                <li>All numbers are predictions from buyer agents on production v3; click a stage for every source behind it.</li>
+              </ul>
+            </div>
+          </div>
+        }
+      />
 
+      <Details id="stages" title="Stage by stage" hint="what each source says, where they agree and conflict">
       <Panel title="How to read it" description="The version and rules every stage is read on.">
         <ul className="flex list-disc flex-col gap-4 pl-18 text-13 text-adm-ink-2">
           <li>The product is production v3 (staging v5), the production default. The buyer-agent figures are agent v3’s rules, the calibrated ones.</li>
@@ -105,6 +124,9 @@ export function CombinationReportPage() {
         <Stage key={s.id} s={s} n={i + 1} />
       ))}
 
+      </Details>
+
+      <Details title="Retreat offers × production versions" hint="the matrix">
       <section id="matrix" className="scroll-mt-16">
         <Panel
           title="Offer × production version × agent rules"
@@ -152,7 +174,16 @@ export function CombinationReportPage() {
           </p>
         </Panel>
       </section>
+      </Details>
 
+      <Details title="How this was built" hint="sources → building blocks → stages → verdict">
+      <Panel title="How this report was made" description="Built in four levels, read left to right: the sources, the building blocks read or computed from them, a reading of each funnel stage, and the verdict with its next moves. The colour of a line from a source is the kind of source it is.">
+        <CompositionGraph nodes={composition} />
+      </Panel>
+
+      </Details>
+
+      <Details title="Sources and limits">
       <SourcesSection
         findings={COMBINATION_FINDINGS}
         limits={[
@@ -164,6 +195,7 @@ export function CombinationReportPage() {
           'The 2025 backend documents came without code; what they say it did is unverified.',
         ]}
       />
+      </Details>
     </div>
   )
 }
