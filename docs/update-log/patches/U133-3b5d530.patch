@@ -1,0 +1,855 @@
+From 3b5d5301c032ef87dd5c33c104205b81924ea9de Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 25 Nov 2026 11:35:41 +0000
+Subject: [PATCH] =?UTF-8?q?B2B2C:=20how=20it=20works=20=E2=80=94=20big=20p?=
+ =?UTF-8?q?icture,=20a=20journey=20per=20channel,=20before=20vs=20after,?=
+ =?UTF-8?q?=20phases;=20diagrams=20in=20the=20report=20and=20the=20wiki=20?=
+ =?UTF-8?q?(U133,=20J184)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ docs/research/b2b2c/00-summary.md           |  17 +
+ docs/research/b2b2c/10-round-2.md           |  76 +++-
+ src/admin/data/b2b2cReport.test.ts          |  41 +-
+ src/admin/data/b2b2cReport.ts               | 198 ++++++++++
+ src/admin/pages/reports/B2b2cHowItWorks.tsx | 403 ++++++++++++++++++++
+ src/admin/pages/reports/B2b2cReportPage.tsx |   9 +-
+ 6 files changed, 736 insertions(+), 8 deletions(-)
+ create mode 100644 src/admin/pages/reports/B2b2cHowItWorks.tsx
+
+diff --git a/docs/research/b2b2c/00-summary.md b/docs/research/b2b2c/00-summary.md
+index 95eb36b..f59d2ee 100644
+--- a/docs/research/b2b2c/00-summary.md
++++ b/docs/research/b2b2c/00-summary.md
+@@ -4,6 +4,23 @@
+ 
+ > **Round 2 changes the answer's first step.** Build the creator journey first, but with a **free first week**: people pay for the creator's journey or the paid plan after it has helped, not before. Two buyer tests with simulated people found that freemium beat a ticket paid up front in every channel, and that trust, not price, was the main objection. The **self-serve team plan for small employers moves up to second**, because 21 of 60 simulated people would buy if their employer paid. Partner codes and gifting move to third, built as one code system. Read [Round 2](/wiki/b2b2c/round-2) and the [feature list](/wiki/b2b2c/features). The round 1 answer below stands except where round 2 says otherwise.
+ 
++## The big picture
++
++Creators, employers and partners already have the people. Aurelia gives those people a free start they can trust; they pay once it has helped, and the money is shared with the creator. The same picture, with every box explained, is at the top of the B2B2C report in the admin.
++
++```mermaid
++flowchart LR
++  C[Creators: followers who trust them] -->|followers| A[Aurelia: app, AI sessions, check-ins]
++  E[Employers: staff and a budget] -->|staff, seat fees| A
++  P[Partners and gift buyers] -->|customers, codes| A
++  A -->|free week, sample in the creator's voice, refund to week 4| U[People: followers, staff, gift receivers]
++  U -->|once it has helped| PP[Paid plan or the creator's full journey]
++  PP -.->|money: ticket, seats or paid plan| A
++  A -.->|70% of the ticket, plus a share of paid plans| C
++```
++
++Solid arrows are people and reach; dotted arrows are money.
++
+ ## The answer in one paragraph
+ 
+ Aurelia should go to market through people who already have the customer, because buying users with ads does not pay back. The median Health & Fitness app turns 2.9% of installs into payers, which puts a paying subscriber at about $100–170 in media alone. **The best first bet is the business owner's creator cohort, Retreat-in-a-Box, but with redesigned terms.** "Redesign" here means the business model, not the app's screens: the price, the split, how the sessions are made and the box. As specified, it breaks on four numbers:
+diff --git a/docs/research/b2b2c/10-round-2.md b/docs/research/b2b2c/10-round-2.md
+index 0969131..770b8b1 100644
+--- a/docs/research/b2b2c/10-round-2.md
++++ b/docs/research/b2b2c/10-round-2.md
+@@ -42,6 +42,69 @@ flowchart LR
+   J --> PL
+ ```
+ 
++## How it works, channel by channel
++
++What the person sees at each step, and where people drop off. Numbers marked "test" come from simulated people, not real buyers; "judgement" is a pilot threshold we set; "not tested" is what the pilot has to measure. The admin's B2B2C report draws the same journeys, with every step explained.
++
++**Creator journey, free first week**
++
++```mermaid
++flowchart LR
++  C1[Sees the creator's post] --> C2[Creator page and a 60-second voice sample]
++  C2 --> C3[Free first week in the app, no card]
++  C3 --> C4[Check-ins after each session]
++  C4 --> C5[Pay after week 1: the journey or the paid plan]
++  C5 --> C6[Weeks 2 to 8, live group sessions]
++  C6 --> C7[Graduation: their own words]
++  C7 --> C8[Paid plan]
++  C3 -.-> D3[Test: 9 of 35 followers would not try the free app]
++  C5 -.-> D5[Test: 10 of 35 would pay, 5 maybe]
++  C6 -.-> D6[Judgement: at least 35% active at week 8]
++```
++
++**Team plan**
++
++```mermaid
++flowchart LR
++  E1[HR signs up: 5 to 200 seats with a card] --> E2[One invite link or a code per person]
++  E2 --> E3[Staff start: their own sessions and check-ins]
++  E3 --> E4[Team report: counts only, groups of 10 or more]
++  E4 --> E5[Renewal]
++  E1 -.-> F1[Test: 21 of 60 would use it if work paid]
++  E3 -.-> F3[Measured elsewhere: only 38% of enrolled staff used any tool]
++  E5 -.-> F5[Not tested: teams that renew at month 12]
++```
++
++**Codes and gifts**
++
++```mermaid
++flowchart LR
++  G1[Partner or gift buyer pays for a code] --> G2[Code in an email, a card or a booking]
++  G2 --> G3[Redeem on one page]
++  G3 --> G4[Free period]
++  G4 --> G5[Own card on file]
++  G5 --> G6[Paid plan]
++  G3 -.-> H3[Not tested: how many redeem]
++  G5 -.-> H5[Not tested: card on file at day 30]
++```
++
++## Before and after: ticket up front against a free first week
++
++```mermaid
++flowchart LR
++  subgraph R1[Round 1: ticket paid up front]
++    B1[Pay 19.99 euros, then try] --> B2[2 of 60 would buy the ticket]
++    B2 --> B3[1 expected to pay, of 60]
++  end
++  subgraph R2[Round 2: free first week, then pay]
++    A1[Try free, no card] --> A2[25 of 60 would try the free app]
++    A2 --> A3[17.5 expected to pay, of 60]
++  end
++  R1 -->|the tests rejected paying first| R2
++```
++
++Among 35 creator followers in test 7: 4 expected to pay with the ticket up front, 12.5 with the free app. The free week itself is not tested yet; the free app is the nearest thing that was. Across 115,000 apps, trials of 17–32 days turn 42.5% into payers against 25.5% for trials under 4 days.
++
+ ## What the new research found
+ 
+ ### 1. Employers: the small, self-serve tier is still open
+@@ -86,15 +149,16 @@ flowchart LR
+ ## The phased plan, tied to the pilot gates
+ 
+ ```mermaid
+-flowchart TD
+-  P0[Phase 0, now, no backend: claims checklist, real quotes rule, data line, ask-my-employer, buyer test of the free-week offer] --> G0{Gate 0}
+-  G0 -->|free week beats the free app among followers, 3 creators agree| P1[Phase 1: minimum backend, creator pilot]
++flowchart LR
++  P0[Phase 0, now, no backend: data line, real quotes only, claims checklist, ask my employer] --> G0{Gate 0: free week wins the buyer test, 3 creators agree}
++  G0 -->|pass| P1[Phase 1, creator pilot: free week, Need help now, voice sample, pay after week 1, refund to week 4, creator dashboard]
+   G0 -->|fails| R0[Team plan leads instead]
+-  P1 --> P1b[Phase 1b, alongside: code system, team plan with 2-3 small employers]
++  P1 --> P1b[Phase 1b, alongside: code system, buy seats online, invite link, team report]
++  P1b --> G1b{More than 38% of seats active in 30 days}
+   P1 --> G1{Gate 1: the five pilot numbers}
+-  G1 -->|pass| P2[Phase 2: payouts view, live calendar, real scoreboard]
++  G1 -->|pass| P2[Phase 2, repeat: payouts view, live calendar, real scoreboard]
+   P2 --> G2{Gate 2: holds across creators}
+-  G2 -->|pass| P3[Phase 3: paid-plan share, gifts, aftercare, Indonesia]
++  G2 -->|pass| P3[Phase 3, widen: paid-plan share, gifts, aftercare, Bahasa and rupiah, Indonesian team pack]
+ ```
+ 
+ | Phase | When | What is built | Gate |
+diff --git a/src/admin/data/b2b2cReport.test.ts b/src/admin/data/b2b2cReport.test.ts
+index 377178a..6e39b46 100644
+--- a/src/admin/data/b2b2cReport.test.ts
++++ b/src/admin/data/b2b2cReport.test.ts
+@@ -1,6 +1,7 @@
+ import { describe, expect, it } from 'vitest'
+ import { B2B2C_PAGES, pageMarkdown } from '../../guides/docPages'
+-import { B2B2C_SOURCES, CHANNELS, CHANNEL_ORDER, FEATURES, PHASES, PRIORITIES, b2b2cSummary, citedSources, featuresBy, sourceById, topFeatures } from './b2b2cReport'
++import { B2B2C_SOURCES, CHANNELS, CHANNEL_ORDER, FEATURES, PHASES, PRIORITIES, b2b2cSummary, beforeAfter, bigPicture, citedSources, endpointsOf, featuresBy, howNumbers, journeys, shortTitle, sourceById, topFeatures, wrapWords } from './b2b2cReport'
++import { JARGON } from './glossary'
+ import { GLOSSARY, markedIds, unmarkedJargon } from './glossary'
+ 
+ describe('B2B2C report data', () => {
+@@ -64,4 +65,42 @@ describe('B2B2C report data', () => {
+       expect(md, slug).not.toMatch(/\b[JUO]\d{2,3}\b/)
+     }
+   })
++
++  it('derives the diagram numbers from the buyer tests, matching the wiki', () => {
++    const n = howNumbers()
++    expect(n.t6).toMatchObject({ n: 60, freeTry: 25, freePlus: 17.5, ticketTry: 2, ticketPlus: 1, ticket39Plus: 0.5, employer: 21, trust: 25 })
++    expect(n.t7).toMatchObject({ followers: 35, freeTry: 26, freeNot: 9, freePayYes: 10, freePayMaybe: 5, freePlus: 12.5, ticketTry: 7, ticketPlus: 4 })
++    const round2 = pageMarkdown(B2B2C_PAGES.find((x) => x.slug === 'round-2')!)
++    expect(round2).toContain(`Among ${n.t7.followers} creator followers, ${n.t7.ticketTry} would buy the ticket against ${n.t7.freeTry} trying the free app; expected paying people ${n.t7.ticketPlus} against ${n.t7.freePlus}`)
++    const { before, after } = beforeAfter()
++    expect(before.rows.map((r) => r.value)).toEqual(['2', '1', '4'])
++    expect(after.rows.map((r) => r.value)).toEqual(['25', '17.5', '12.5'])
++  })
++
++  it('gives the diagrams real features, plain labels and no internal ids', () => {
++    const b = bigPicture()
++    const boxes = [...b.partners, b.aurelia, b.people, b.paid, b.money, b.trust]
++    const js = journeys()
++    expect(js.map((j) => j.id)).toEqual(['creator', 'employer', 'partner'])
++    expect(js[0].steps).toHaveLength(8)
++    const all = [...boxes, ...js.flatMap((j) => j.steps), beforeAfter().after]
++    const ids = new Set(FEATURES.map((f) => f.id))
++    for (const x of all) {
++      for (const f of x.features) expect(ids, `${x.id}: ${f}`).toContain(f)
++      for (const id of markedIds(x.explain)) expect(Object.keys(GLOSSARY)).toContain(id)
++      expect(unmarkedJargon(x.explain), x.explain).toEqual([])
++    }
++    // Labels drawn inside the SVG cannot carry a glossary tooltip, so they carry no jargon at all.
++    const drawn = [...boxes.flatMap((x) => [x.title, x.sub]), ...js.flatMap((j) => [j.title, ...j.steps.flatMap((s) => [s.title, s.sees, s.drop?.text ?? ''])]), ...PHASES.flatMap((p) => [p.name, p.when, p.gate, ...p.build.map(shortTitle)])]
++    for (const t of drawn) for (const re of JARGON) expect(re.test(t), `${t} ~ ${re}`).toBe(false)
++    expect(JSON.stringify({ b, js, ba: beforeAfter() })).not.toMatch(/Eugene|\b[JUO]\d{2,3}\b/)
++  })
++
++  it('wraps diagram text and lists endpoints once', () => {
++    expect(wrapWords('Pay after week one: the journey', 12)).toEqual(['Pay after', 'week one:', 'the journey'])
++    expect(wrapWords('', 10)).toEqual([])
++    expect(wrapWords('supercalifragilistic word', 5)).toEqual(['supercalifragilistic', 'word'])
++    expect(endpointsOf(['free-week', 'free-week', 'real-quotes'])).toEqual(['POST /journeys', 'GET /me/entitlements'])
++    expect(shortTitle('help-now')).toBe('Need help now? on every feelings screen')
++  })
+ })
+diff --git a/src/admin/data/b2b2cReport.ts b/src/admin/data/b2b2cReport.ts
+index 284b772..68fafc3 100644
+--- a/src/admin/data/b2b2cReport.ts
++++ b/src/admin/data/b2b2cReport.ts
+@@ -292,3 +292,201 @@ export function b2b2cSummary(): ReportSummary {
+     },
+   }
+ }
++
++/* ------------------------------------------------------------ How it works */
++
++/**
++ * The "How it works" diagrams on the report (and their twins in mermaid on
++ * the wiki): the big picture, one journey per channel, before and after,
++ * the phases. Labels and every number come from here; the numbers are
++ * derived from the buyer tests, never typed twice. Diagram labels are plain
++ * words (no glossary marks: SVG text cannot carry a tooltip); the drawer
++ * text may carry `{{term|shown}}` marks.
++ */
++
++export interface DiagramBox {
++  id: string
++  title: string
++  /** One short line under the title. */
++  sub: string
++  /** The drawer's plain explanation. May carry glossary marks. */
++  explain: string
++  /** Feature ids involved, shown with their endpoints in the drawer. */
++  features: string[]
++}
++
++/** The numbers the diagrams show, all derived from buyer tests 6 and 7. */
++export function howNumbers() {
++  const x6 = v6Tallies()
++  const x7 = v7Tallies()
++  return {
++    t6: {
++      n: x6.A.n,
++      freeTry: x6.A.tries.yes,
++      freePlus: x6.plus.A,
++      ticketTry: x6.B.tries.yes,
++      ticketPlus: x6.plus.B,
++      ticket39Plus: x6.plus.ALT,
++      employer: x6.employerTrigger,
++      trust: x6.themes.find(([t]) => t === 'trust')?.[1] ?? 0,
++    },
++    t7: {
++      followers: x7.followers.n,
++      freeTry: x7.followers.B.tries.yes,
++      freeNot: x7.followers.n - x7.followers.B.tries.yes,
++      freePayYes: x7.followers.B.pays.yes,
++      freePayMaybe: x7.followers.B.pays.maybe,
++      freePlus: x7.followers.plusB,
++      ticketTry: x7.followers.ALT.tries.yes,
++      ticketPlus: x7.followers.plusALT,
++    },
++  }
++}
++
++/** Unique API v2 endpoints of a set of features, in feature order. */
++export const endpointsOf = (ids: string[]) => [...new Set(ids.flatMap((id) => FEATURES.find((f) => f.id === id)?.endpoints ?? []))]
++
++/** Splits text into lines of at most `max` characters, on spaces. A longer word gets its own line. */
++export function wrapWords(text: string, max: number): string[] {
++  const lines: string[] = []
++  let line = ''
++  for (const w of text.split(/\s+/).filter(Boolean)) {
++    if (line && line.length + 1 + w.length > max) {
++      lines.push(line)
++      line = w
++    } else line = line ? `${line} ${w}` : w
++  }
++  if (line) lines.push(line)
++  return lines
++}
++
++/** 1. The big picture: who has the people, what Aurelia adds, where the money goes. */
++export function bigPicture(): { partners: DiagramBox[]; aurelia: DiagramBox; people: DiagramBox; paid: DiagramBox; money: DiagramBox; trust: DiagramBox } {
++  const n = howNumbers()
++  return {
++    partners: [
++      { id: 'creators', title: 'Creators', sub: 'Followers who trust them', explain: 'Wellness creators and retreat leaders. Their followers already trust them, so Aurelia does not have to buy that reach with ads. The creator records a journey in their own voice and sells it; they keep 70% of the ticket and, later, a share of the paid plans they bring.', features: ['voice-sample', 'claims-check', 'creator-dashboard', 'payouts', 'plus-share'] },
++      { id: 'employers', title: 'Employers', sub: 'Staff, and a budget', explain: `Small employers buy seats for their staff online with a card, about $50 a seat a year at other apps. The person no longer pays, which is why ${n.t6.employer} of ${n.t6.n} {{simulated|simulated people}} said they would use it if work paid. The employer sees counts only, never one person’s feelings.`, features: ['ask-employer', 'team-buy', 'team-link', 'team-report'] },
++      { id: 'partners', title: 'Partners, gift buyers', sub: 'Codes for their customers', explain: 'Hotels, brands and people buying a gift pay for a code. The person redeems it, gets a free period and then enters their own card, which is how the partner deals that lasted worked.', features: ['codes', 'gift'] },
++    ],
++    aurelia: { id: 'aurelia', title: 'Aurelia', sub: 'App, AI sessions, check-ins', explain: 'The app every channel lands in. Sessions are made by AI from the creator’s journey or from what the person says; short check-ins ask how they feel, and that shapes the next session. The free plan is the base: every channel starts there.', features: ['free-week', 'help-now', 'data-line', 'live-calendar'] },
++    people: { id: 'people', title: 'People', sub: 'Followers, staff, gift receivers', explain: 'The person who uses the app: a creator’s follower, an employee with a seat, or someone who got a code or a gift. They start free and pay only after it has helped.', features: ['free-week', 'help-now', 'data-line', 'local-price'] },
++    paid: { id: 'paid', title: 'Paid plan', sub: 'After it has helped', explain: 'What turns reach into a business: the {{paid-plan|paid plan}} (or the creator’s full journey) bought after the free week, or seats renewed by the employer.', features: ['pay-after-week', 'plus-share'] },
++    money: { id: 'money', title: 'Money', sub: 'Ticket, seats, paid plan', explain: 'Money comes in three ways: a person pays for the creator’s journey or the paid plan after the free week; an employer pays for seats; a partner or gift buyer pays for codes. On a creator’s journey the split is 70% to the creator and 30% to Aurelia, and the creator also earns a share of the paid plans they bring.', features: ['pay-after-week', 'payouts', 'plus-share', 'team-buy', 'codes'] },
++    trust: { id: 'trust', title: 'Trust', sub: 'Free week, voice, refund', explain: `Trust, not price, was the main objection (${n.t6.trust} mentions in a test of ${n.t6.n} {{simulated|simulated people}}). So people get a free first week with no card, hear a 60-second sample in the creator’s own voice before they start, and can get a full refund until week 4.`, features: ['free-week', 'voice-sample', 'refund-window', 'real-quotes'] },
++  }
++}
++
++export type DropLabel = 'test' | 'measured' | 'judgement' | 'not tested'
++
++export interface JourneyStep {
++  id: string
++  title: string
++  /** What the person sees at this step. */
++  sees: string
++  /** Where people drop off here; `label` says what kind of number it is. */
++  drop?: { text: string; label: DropLabel }
++  explain: string
++  features: string[]
++}
++
++export interface Journey {
++  id: ChannelId
++  title: string
++  steps: JourneyStep[]
++}
++
++export const DROP_LABEL_TEXT: Record<DropLabel, string> = {
++  test: 'From a test',
++  measured: 'Measured elsewhere',
++  judgement: 'Our judgement',
++  'not tested': 'Not tested',
++}
++
++/** 2. One journey per channel, step by step, with where people drop off. */
++export function journeys(): Journey[] {
++  const n = howNumbers()
++  const t7 = n.t7
++  return [
++    {
++      id: 'creator',
++      title: 'Creator journey, free first week',
++      steps: [
++        { id: 'c-post', title: 'Sees a post', sees: 'The creator’s post or story about the journey', drop: { text: 'Unknown: no share of followers who click is published', label: 'not tested' }, explain: 'It starts where the creator already is: a post, a story or a live stream. Aurelia does not pay for this reach. What the creator may say is set by a checklist they sign first.', features: ['claims-check'] },
++        { id: 'c-page', title: 'Creator page', sees: 'The journey, a 60-second sample in their voice, the refund promise', explain: 'One page per creator. The sample in the creator’s own voice answers “is this really them?”, the top worry. The refund to week 4 is shown before anyone pays.', features: ['voice-sample', 'refund-window', 'real-quotes'] },
++        { id: 'c-free', title: 'Free week', sees: 'The first week of the journey in the app, no card', drop: { text: `${t7.freeNot} of ${t7.followers} followers would not try the free app`, label: 'test' }, explain: `The first week is free with no card. In test 7, ${t7.freeTry} of ${t7.followers} creator followers would try the free app, the nearest thing to the free week that was tested; ${t7.freeNot} would not. These are {{simulated|simulated people}}.`, features: ['free-week', 'help-now', 'data-line'] },
++        { id: 'c-check', title: 'Check-ins', sees: '“How do you feel now?” after each session', explain: 'A short question after each session. The answers shape the next session and become the person’s own record of progress. The creator sees totals for groups of 10 or more, never one person.', features: ['help-now', 'creator-dashboard'] },
++        { id: 'c-pay', title: 'Pay after week 1', sees: 'The creator’s full journey, or the paid plan', drop: { text: `${t7.freePayYes} of ${t7.followers} would pay, ${t7.freePayMaybe} maybe`, label: 'test' }, explain: `After the first week has helped, the person chooses: the creator’s full journey or the {{paid-plan|paid plan}}. In test 7, ${t7.freePayYes} of ${t7.followers} creator followers ({{simulated|simulated people}}) said they would pay for the app and ${t7.freePayMaybe} maybe. The pilot asks for at least 15% of free-week starters to pay by day 10 (our judgement).`, features: ['pay-after-week', 'refund-window'] },
++        { id: 'c-weeks', title: 'Weeks 2–8', sees: 'The journey, live group sessions in the calendar', drop: { text: 'The pilot needs at least 35% still active at week 8', label: 'judgement' }, explain: 'The rest of the journey, with the creator’s weekly live session in the calendar. Wellness apps lose most people in the first month, so the pilot needs at least 35% still active at week 8.', features: ['live-calendar', 'creator-dashboard', 'scoreboard'] },
++        { id: 'c-grad', title: 'Graduation', sees: 'What changed, in their own words from the check-ins', explain: 'The journey ends with the person’s own check-ins played back: how they felt in week 1 and now. No invented results: only what they said.', features: ['real-quotes'] },
++        { id: 'c-plus', title: 'Paid plan', sees: 'Keep going on the paid plan', drop: { text: 'The pilot needs at least 8% of starters on the paid plan', label: 'judgement' }, explain: 'After the journey, the {{paid-plan|paid plan}} keeps the sessions coming. The creator earns a share of each paid plan they bring, so they keep selling.', features: ['plus-share', 'pay-after-week'] },
++      ],
++    },
++    {
++      id: 'employer',
++      title: 'Team plan',
++      steps: [
++        { id: 'e-sign', title: 'HR signs up', sees: 'Buy 5–200 seats online with a card, no sales call', drop: { text: `${n.t6.employer} of ${n.t6.n} would use it if work paid`, label: 'test' }, explain: `A small employer buys seats online. Many people would use Aurelia if work paid (${n.t6.employer} of ${n.t6.n} {{simulated|simulated people}} in test 6), but nobody asks HR, so the app gives them a one-page request to forward.`, features: ['ask-employer', 'team-buy'] },
++        { id: 'e-invite', title: 'Invite link', sees: 'One link to share, or a code per person', explain: 'HR shares one link with the team, or gives each person a code. The same code system serves gifts and partners later.', features: ['team-link', 'codes'] },
++        { id: 'e-start', title: 'Staff start', sees: 'Their own sessions and check-ins, free to them', drop: { text: 'Elsewhere only 38% of enrolled staff used any tool', label: 'measured' }, explain: 'Seats are worthless if nobody joins. In one measured study only 38% of enrolled staff used any digital tool, so the pilot needs more than that in 30 days.', features: ['team-link', 'free-week', 'help-now', 'data-line'] },
++        { id: 'e-report', title: 'Team report', sees: 'Joined, active, back after 30 days, for groups of 10 or more', explain: 'The employer sees counts only: how many joined, are active and came back. Never feelings, and never a group under 10; the EU bans inferring staff emotions at work.', features: ['team-report'] },
++        { id: 'e-renew', title: 'Renewal', sees: 'Renew the seats for another year', drop: { text: 'Teams that renew at month 12: not tested yet', label: 'not tested' }, explain: 'Employers renew on proof of use, not on promises. The team report is that proof.', features: ['team-report', 'team-buy'] },
++      ],
++    },
++    {
++      id: 'partner',
++      title: 'Codes and gifts',
++      steps: [
++        { id: 'p-buy', title: 'Partner or gift buyer', sees: 'A hotel, a brand or a friend buys a code', explain: 'Someone else pays for the reach: a partner for its customers, or a person buying a gift.', features: ['codes', 'gift'] },
++        { id: 'p-code', title: 'Code', sees: 'A code in an email, a card or a booking', explain: 'One code system for gifts, partner trials and team seats, built once.', features: ['codes'] },
++        { id: 'p-redeem', title: 'Redeem', sees: 'One page: enter the code, start', drop: { text: 'How many redeem: not tested yet', label: 'not tested' }, explain: 'One page to redeem any code. A code cannot be stacked on a live subscription.', features: ['codes'] },
++        { id: 'p-free', title: 'Free period', sees: 'The app or the creator’s journey, free for a while', explain: 'The receiver uses the app free for the period the code gives.', features: ['free-week', 'help-now', 'data-line'] },
++        { id: 'p-card', title: 'Card on file', sees: 'Add your own card to keep going', drop: { text: 'Redeemers with a card at day 30: not tested yet', label: 'not tested' }, explain: 'The deals that lasted were the ones where the person enters their own card after the free period.', features: ['codes'] },
++        { id: 'p-plus', title: 'Paid plan', sees: 'The paid plan on their own card', explain: 'The receiver pays for the {{paid-plan|paid plan}} themselves.', features: ['pay-after-week', 'gift'] },
++      ],
++    },
++  ]
++}
++
++/** 3. Before and after: round 1’s ticket up front against round 2’s free first week. */
++export function beforeAfter(): { before: BeforeAfterSide; after: BeforeAfterSide } {
++  const n = howNumbers()
++  return {
++    before: {
++      id: 'before',
++      title: 'Ticket paid up front',
++      sub: 'Round 1: pay €19.99, then try',
++      rows: [
++        { value: `${n.t6.ticketTry}`, label: `of ${n.t6.n} would buy the ticket` },
++        { value: `${n.t6.ticketPlus}`, label: `expected to pay, of ${n.t6.n}` },
++        { value: `${n.t7.ticketPlus}`, label: `expected to pay, of ${n.t7.followers} followers` },
++      ],
++      explain: `Round 1’s plan: a €19.99 ticket for the creator’s 8-week journey, paid before anything has helped. In test 6, ${n.t6.ticketTry} of ${n.t6.n} {{simulated|simulated people}} would buy it and about ${n.t6.ticketPlus} would end on the {{paid-plan|paid plan}} (${n.t6.ticket39Plus} at €39). Trust was the top objection (${n.t6.trust} mentions). Among ${n.t7.followers} creator followers in test 7, ${n.t7.ticketTry} would buy the ticket.`,
++      features: [],
++    },
++    after: {
++      id: 'after',
++      title: 'Free first week, then pay',
++      sub: 'Round 2: try free, pay once it helped',
++      rows: [
++        { value: `${n.t6.freeTry}`, label: `of ${n.t6.n} would try the free app` },
++        { value: `${n.t6.freePlus}`, label: `expected to pay, of ${n.t6.n}` },
++        { value: `${n.t7.freePlus}`, label: `expected to pay, of ${n.t7.followers} followers` },
++      ],
++      explain: `Round 2’s plan: the first week free with no card, then the creator’s journey or the {{paid-plan|paid plan}}. The free week itself is not tested yet; the free app is the nearest thing that was. In test 6, ${n.t6.freeTry} of ${n.t6.n} {{simulated|simulated people}} would try it and about ${n.t6.freePlus} would pay; among ${n.t7.followers} creator followers in test 7, ${n.t7.freeTry} would try it. Across 115,000 apps, trials of 17–32 days turn 42.5% into payers, against 25.5% for trials under 4 days.`,
++      features: ['free-week', 'voice-sample', 'pay-after-week', 'refund-window'],
++    },
++  }
++}
++
++export interface BeforeAfterSide {
++  id: string
++  title: string
++  sub: string
++  rows: { value: string; label: string }[]
++  explain: string
++  features: string[]
++}
++
++/** Short feature name for a diagram: the title up to its first comma or colon, quotes dropped. */
++export const shortTitle = (id: string) => (FEATURES.find((f) => f.id === id)?.title ?? id).split(/[,:]/)[0].replace(/[“”]/g, '').trim()
+diff --git a/src/admin/pages/reports/B2b2cHowItWorks.tsx b/src/admin/pages/reports/B2b2cHowItWorks.tsx
+new file mode 100644
+index 0000000..b1e8776
+--- /dev/null
++++ b/src/admin/pages/reports/B2b2cHowItWorks.tsx
+@@ -0,0 +1,403 @@
++import type { KeyboardEvent, ReactNode } from 'react'
++import { Badge, type Tone } from '../../components/ui'
++import {
++  DROP_LABEL_TEXT,
++  EFFORT_TEXT,
++  FEATURES,
++  PHASES,
++  WIKI_ROUND_2,
++  beforeAfter,
++  bigPicture,
++  endpointsOf,
++  journeys,
++  shortTitle,
++  wrapWords,
++  type DiagramBox,
++  type DropLabel,
++  type Priority,
++} from '../../data/b2b2cReport'
++import { useDetail, type DetailItem } from './DetailDrawer'
++import { Term } from './Term'
++
++/*
++ * Admin → Reports → B2B2C report → How it works (U133, J184): four
++ * hand-laid SVG diagrams that carry the idea before the numbers do. The big
++ * picture, a journey per channel, before vs after, and the phases. Every box
++ * opens the drawer with a plain explanation and the features and API v2
++ * endpoints behind it. Labels and numbers come from data/b2b2cReport.ts.
++ * Each diagram keeps its own width and scrolls inside its box below lg,
++ * so the page itself never scrolls sideways at 402px.
++ */
++
++const PRIORITY_TONE: Record<Priority, Tone> = { Now: 'critical', Next: 'serious', Later: 'neutral' }
++const PRIORITY_FILL: Record<Priority, string> = { Now: 'fill-adm-critical', Next: 'fill-adm-serious', Later: 'fill-adm-axis' }
++const DROP_TONE: Record<DropLabel, string> = { test: 'fill-adm-s2', measured: 'fill-adm-good', judgement: 'fill-adm-serious', 'not tested': 'fill-adm-axis' }
++
++function FeatureList({ ids }: { ids: string[] }) {
++  const features = ids.map((id) => FEATURES.find((f) => f.id === id)).filter((f) => f !== undefined)
++  const endpoints = endpointsOf(ids)
++  if (!features.length) return null
++  return (
++    <div className="flex flex-col gap-10 border-t border-adm-line pt-10">
++      <span className="text-11 font-semibold uppercase tracking-wider text-adm-muted">Features involved</span>
++      <ul className="flex flex-col gap-6">
++        {features.map((f) => (
++          <li key={f.id} className="flex flex-col gap-2 text-12">
++            <span className="font-medium text-adm-ink">{f.title}</span>
++            <span className="flex flex-wrap gap-4">
++              <Badge tone={PRIORITY_TONE[f.priority]}>{f.priority}</Badge>
++              <Badge tone="neutral">{EFFORT_TEXT[f.effort]}</Badge>
++            </span>
++          </li>
++        ))}
++      </ul>
++      <span className="text-11 font-semibold uppercase tracking-wider text-adm-muted">API v2 endpoints</span>
++      {endpoints.length ? (
++        <ul className="flex flex-col gap-2">
++          {endpoints.map((e) => (
++            <li key={e} className="break-words font-mono text-11 text-adm-ink-2">{e}</li>
++          ))}
++        </ul>
++      ) : (
++        <p className="text-12 text-adm-muted">None yet: frontend only, or a new endpoint the backend still has to add.</p>
++      )}
++    </div>
++  )
++}
++
++function boxItem(kicker: string, b: { title: string; explain: string; features: string[] }, numbers?: DetailItem['numbers']): DetailItem {
++  return { kicker, title: b.title, summary: b.explain, numbers, extra: <FeatureList ids={b.features} />, to: WIKI_ROUND_2, toLabel: 'Round 2 on the wiki' }
++}
++
++/** A clickable group in a diagram: Enter or Space opens it like a click. */
++function Hit({ label, onOpen, children, id }: { label: string; onOpen: () => void; children: ReactNode; id: string }) {
++  const onKey = (e: KeyboardEvent) => {
++    if (e.key === 'Enter' || e.key === ' ') {
++      e.preventDefault()
++      onOpen()
++    }
++  }
++  return (
++    <g
++      tabIndex={0}
++      role="button"
++      data-how={id}
++      aria-label={`${label}. Show details`}
++      className="cursor-pointer outline-none [&:focus-visible>rect:first-of-type]:stroke-adm-accent [&:focus-visible>rect:first-of-type]:stroke-2 [&:hover>rect:first-of-type]:stroke-adm-ink-2"
++      onClick={onOpen}
++      onKeyDown={onKey}
++    >
++      <title>{label}</title>
++      {children}
++    </g>
++  )
++}
++
++function Lines({ x, y, lines, step, className }: { x: number; y: number; lines: string[]; step: number; className: string }) {
++  return (
++    <text x={x} y={y} className={className}>
++      {lines.map((l, i) => (
++        <tspan key={i} x={x} dy={i === 0 ? 0 : step}>
++          {l}
++        </tspan>
++      ))}
++    </text>
++  )
++}
++
++/** The scroll box every diagram sits in: its own width below lg, fitted to the column above it. */
++function Frame({ w, h, label, children, name }: { w: number; h: number; label: string; children: ReactNode; name: string }) {
++  return (
++    <div className="min-w-0 overflow-x-auto rounded-8 border border-adm-line bg-adm-bg" data-how-diagram={name}>
++      <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h} role="group" aria-label={label} className="block h-auto max-w-none lg:max-w-full">
++        <defs>
++          <marker id={`${name}-ink`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
++            <path d="M0 0 L10 5 L0 10 z" className="fill-adm-ink-2" />
++          </marker>
++          <marker id={`${name}-good`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
++            <path d="M0 0 L10 5 L0 10 z" className="fill-adm-good" />
++          </marker>
++          <marker id={`${name}-trust`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
++            <path d="M0 0 L10 5 L0 10 z" className="fill-adm-s2" />
++          </marker>
++        </defs>
++        {children}
++      </svg>
++    </div>
++  )
++}
++
++function Legend({ items }: { items: { swatch: string; text: string }[] }) {
++  return (
++    <div className="flex flex-wrap items-center gap-12 text-11 text-adm-muted" aria-hidden="true">
++      {items.map((i) => (
++        <span key={i.text} className="inline-flex items-center gap-4">
++          <span className={`h-[3px] w-16 rounded-2 ${i.swatch}`} /> {i.text}
++        </span>
++      ))}
++    </div>
++  )
++}
++
++function DiagramTitle({ n, title, children }: { n: number; title: string; children?: ReactNode }) {
++  return (
++    <div className="flex flex-col gap-2">
++      <h3 className="text-14 font-semibold text-adm-ink">
++        <span className="mr-6 tabular-nums text-adm-muted">{n}.</span>
++        {title}
++      </h3>
++      {children && <p className="text-12 text-adm-ink-2">{children}</p>}
++    </div>
++  )
++}
++
++/* ------------------------------------------------------------ 1. The big picture */
++
++function BigPicture() {
++  const open = useDetail()
++  const b = bigPicture()
++  const W = 1110
++  const H = 470
++  const P = { x: 16, w: 196, h: 78, ys: [60, 180, 300] }
++  const A = { x: 310, y: 150, w: 200, h: 136 }
++  const PE = { x: 650, y: 160, w: 190, h: 116 }
++  const PD = { x: 936, y: 178, w: 158, h: 80 }
++  const cy = 218
++  const reach = ['followers', 'staff, seat fees', 'customers, codes']
++  const box = (d: DiagramBox, x: number, y: number, w: number, h: number, kicker: string, strong = false) => (
++    <Hit key={d.id} id={d.id} label={`${d.title}: ${d.sub}`} onOpen={() => open(boxItem(kicker, d))}>
++      <rect x={x} y={y} width={w} height={h} rx={10} strokeWidth={strong ? 2 : 1} className={`fill-adm-surface ${strong ? 'stroke-adm-ink' : 'stroke-adm-line'}`} />
++      <text x={x + w / 2} y={y + h / 2 - 4} textAnchor="middle" className={`fill-adm-ink font-semibold ${strong ? 'text-16' : 'text-13'}`}>
++        {d.title}
++      </text>
++      <text x={x + w / 2} y={y + h / 2 + 14} textAnchor="middle" className="fill-adm-muted text-11">
++        {d.sub}
++      </text>
++    </Hit>
++  )
++  const pill = (d: DiagramBox, x: number, y: number, w: number, tone: 'good' | 'trust') => (
++    <Hit id={d.id} label={`${d.title}: ${d.sub}`} onOpen={() => open(boxItem('How it works', d))}>
++      <rect x={x} y={y} width={w} height={52} rx={26} strokeWidth={1.5} className={`fill-adm-surface ${tone === 'good' ? 'stroke-adm-good' : 'stroke-adm-s2'}`} />
++      <text x={x + w / 2} y={y + 22} textAnchor="middle" className={`font-semibold text-12 ${tone === 'good' ? 'fill-adm-good' : 'fill-adm-s2'}`}>
++        {d.title}
++      </text>
++      <text x={x + w / 2} y={y + 38} textAnchor="middle" className="fill-adm-ink-2 text-11">
++        {d.sub}
++      </text>
++    </Hit>
++  )
++  return (
++    <Frame w={W} h={H} name="how-big" label="The big picture: creators, employers and partners bring people to Aurelia; people start free, then pay; money flows back to Aurelia and the creator.">
++      <text x={P.x} y={44} className="fill-adm-muted text-11 font-semibold uppercase">They have the people</text>
++      <text x={A.x + A.w / 2} y={A.y - 12} textAnchor="middle" className="fill-adm-muted text-11 font-semibold uppercase">What we add</text>
++      <text x={PE.x + PE.w / 2} y={PE.y - 12} textAnchor="middle" className="fill-adm-muted text-11 font-semibold uppercase">Who it helps</text>
++      {/* Reach: each partner to Aurelia. */}
++      {P.ys.map((y, i) => {
++        const y1 = y + P.h / 2
++        const y2 = A.y + 30 + i * 38
++        return (
++          <g key={i}>
++            <path d={`M ${P.x + P.w} ${y1} C ${P.x + P.w + 50} ${y1}, ${A.x - 50} ${y2}, ${A.x - 2} ${y2}`} fill="none" strokeWidth={1.5} className="stroke-adm-ink-2" markerEnd="url(#how-big-ink)" />
++            <text x={P.x + P.w + 6} y={y1 - 6} className="fill-adm-ink-2 text-10">{reach[i]}</text>
++          </g>
++        )
++      })}
++      {/* Aurelia to people, and people to the paid plan. */}
++      <path d={`M ${A.x + A.w} ${cy} L ${PE.x - 2} ${cy}`} strokeWidth={2} className="stroke-adm-s2" markerEnd="url(#how-big-trust)" />
++      <text x={(A.x + A.w + PE.x) / 2} y={cy + 18} textAnchor="middle" className="fill-adm-ink-2 text-10">starts free</text>
++      <path d={`M ${PE.x + PE.w} ${cy} L ${PD.x - 2} ${cy}`} strokeWidth={2} className="stroke-adm-ink-2" markerEnd="url(#how-big-ink)" />
++      <text x={(PE.x + PE.w + PD.x) / 2} y={cy - 8} textAnchor="middle" className="fill-adm-ink-2 text-10">once it helped</text>
++      {/* Trust: what Aurelia gives the person before they pay. */}
++      <path d={`M ${(A.x + A.w + PE.x) / 2} ${118} L ${(A.x + A.w + PE.x) / 2} ${cy - 4}`} strokeWidth={1.5} strokeDasharray="3 3" className="stroke-adm-s2" />
++      {/* Money: the person pays Aurelia; Aurelia pays the creator. */}
++      <path d={`M ${PD.x + PD.w / 2} ${PD.y + PD.h} C ${PD.x + PD.w / 2} ${H - 30}, ${A.x + A.w / 2} ${H - 30}, ${A.x + A.w / 2} ${A.y + A.h + 2}`} fill="none" strokeWidth={2} strokeDasharray="6 4" className="stroke-adm-good" markerEnd="url(#how-big-good)" />
++      <path d={`M ${A.x + 40} ${A.y} C ${A.x + 40} ${20}, ${P.x + P.w - 24} ${14}, ${P.x + P.w - 24} ${P.ys[0] - 2}`} fill="none" strokeWidth={2} strokeDasharray="6 4" className="stroke-adm-good" markerEnd="url(#how-big-good)" />
++      <text x={A.x + 54} y={30} className="fill-adm-good text-11 font-semibold">70% of the ticket to the creator, plus a share of paid plans</text>
++      {b.partners.map((d, i) => box(d, P.x, P.ys[i], P.w, P.h, 'They already have the people'))}
++      {box(b.aurelia, A.x, A.y, A.w, A.h, 'What we add', true)}
++      {box(b.people, PE.x, PE.y, PE.w, PE.h, 'Who it helps')}
++      {box(b.paid, PD.x, PD.y, PD.w, PD.h, 'Where it ends')}
++      {pill(b.trust, A.x + A.w + 4, 66, PE.x - A.x - A.w - 8, 'trust')}
++      {pill(b.money, 600, H - 100, 230, 'good')}
++      <text x={600 + 115} y={H - 36} textAnchor="middle" className="fill-adm-ink-2 text-10">on a creator’s journey: 70% creator, 30% Aurelia</text>
++    </Frame>
++  )
++}
++
++/* ------------------------------------------------------------ 2. Journeys */
++
++const SW = 128
++const SG = 24
++
++function JourneyStrip({ j }: { j: ReturnType<typeof journeys>[number] }) {
++  const open = useDetail()
++  const W = 16 * 2 + j.steps.length * SW + (j.steps.length - 1) * SG
++  const BY = 10
++  const BH = 156
++  const DY = BY + BH + 22
++  const H = DY + 96
++  return (
++    <Frame w={W} h={H} name={`how-j-${j.id}`} label={`${j.title}: ${j.steps.map((s) => s.title).join(', then ')}.`}>
++      {j.steps.map((s, i) => {
++        const x = 16 + i * (SW + SG)
++        const title = wrapWords(s.title, 16).slice(0, 2)
++        const sees = wrapWords(s.sees, 20).slice(0, 5)
++        const drop = s.drop ? wrapWords(s.drop.text, 20).slice(0, 4) : []
++        return (
++          <g key={s.id}>
++            {i < j.steps.length - 1 && <path d={`M ${x + SW + 2} ${BY + 26} L ${x + SW + SG - 3} ${BY + 26}`} strokeWidth={1.5} className="stroke-adm-ink-2" markerEnd={`url(#how-j-${j.id}-ink)`} />}
++            <Hit id={s.id} label={`Step ${i + 1}, ${s.title}: ${s.sees}`} onOpen={() => open(boxItem(`${j.title} · step ${i + 1}`, s, s.drop ? [{ label: `Drop-off (${DROP_LABEL_TEXT[s.drop.label].toLowerCase()})`, value: s.drop.text }] : undefined))}>
++              <rect x={x} y={BY} width={SW} height={BH} rx={10} className="fill-adm-surface stroke-adm-line" />
++              <circle cx={x + 16} cy={BY + 20} r={9} className="fill-adm-ink" />
++              <text x={x + 16} y={BY + 24} textAnchor="middle" className="fill-adm-surface text-10 font-semibold">{i + 1}</text>
++              <Lines x={x + 30} y={BY + 24} lines={title} step={15} className="fill-adm-ink text-12 font-semibold" />
++              <text x={x + 10} y={BY + 66} className="fill-adm-muted text-10 font-semibold uppercase">They see</text>
++              <Lines x={x + 10} y={BY + 82} lines={sees} step={14} className="fill-adm-ink-2 text-11" />
++            </Hit>
++            {s.drop && (
++              <Hit id={`${s.id}-drop`} label={`Drop-off at ${s.title}: ${s.drop.text} (${DROP_LABEL_TEXT[s.drop.label]})`} onOpen={() => open(boxItem(`${j.title} · where people drop off`, s, [{ label: `Drop-off (${DROP_LABEL_TEXT[s.drop!.label].toLowerCase()})`, value: s.drop!.text }]))}>
++                <rect x={x} y={DY} width={SW} height={90} rx={8} strokeDasharray="4 3" className="fill-adm-surface stroke-adm-critical" />
++                <path d={`M ${x + SW / 2} ${BY + BH + 2} L ${x + SW / 2} ${DY - 3}`} strokeWidth={1.25} strokeDasharray="3 3" className="stroke-adm-critical" />
++                <circle cx={x + 14} cy={DY + 14} r={4} className={DROP_TONE[s.drop.label]} />
++                <text x={x + 24} y={DY + 18} className="fill-adm-muted text-10 font-semibold">{DROP_LABEL_TEXT[s.drop.label]}</text>
++                <Lines x={x + 10} y={DY + 36} lines={drop} step={14} className="fill-adm-ink text-11" />
++              </Hit>
++            )}
++          </g>
++        )
++      })}
++    </Frame>
++  )
++}
++
++/* ------------------------------------------------------------ 3. Before vs after */
++
++function BeforeAfter() {
++  const open = useDetail()
++  const { before, after } = beforeAfter()
++  const W = 1000
++  const H = 236
++  const side = (s: typeof before, x: number, good: boolean) => (
++    <Hit id={s.id} label={`${s.title}: ${s.rows.map((r) => `${r.value} ${r.label}`).join('; ')}`} onOpen={() => open(boxItem(good ? 'Round 2, the new plan' : 'Round 1, what the tests rejected', s))}>
++      <rect x={x} y={12} width={440} height={H - 24} rx={12} strokeWidth={good ? 2 : 1} className={`fill-adm-surface ${good ? 'stroke-adm-good' : 'stroke-adm-line'}`} />
++      <text x={x + 20} y={44} className={`text-16 font-semibold ${good ? 'fill-adm-ink' : 'fill-adm-ink-2'}`}>{s.title}</text>
++      <text x={x + 20} y={64} className="fill-adm-muted text-12">{s.sub}</text>
++      {s.rows.map((r, i) => (
++        <g key={r.label}>
++          <text x={x + 92} y={110 + i * 42} textAnchor="end" className={`text-24 font-semibold tabular-nums ${good ? 'fill-adm-good' : 'fill-adm-critical'}`}>{r.value}</text>
++          <text x={x + 104} y={110 + i * 42} className="fill-adm-ink-2 text-12">{r.label}</text>
++        </g>
++      ))}
++    </Hit>
++  )
++  return (
++    <Frame w={W} h={H} name="how-ba" label={`Before: ${before.title}. After: ${after.title}.`}>
++      {side(before, 16, false)}
++      <path d={`M ${464} ${H / 2} L ${536} ${H / 2}`} strokeWidth={2} className="stroke-adm-ink-2" markerEnd="url(#how-ba-ink)" />
++      <text x={500} y={H / 2 - 10} textAnchor="middle" className="fill-adm-muted text-10 font-semibold uppercase">round 2</text>
++      {side(after, 544, true)}
++    </Frame>
++  )
++}
++
++/* ------------------------------------------------------------ 4. Phases */
++
++function Phases() {
++  const open = useDetail()
++  const CW = 200
++  const CG = 26
++  const W = 16 * 2 + PHASES.length * CW + (PHASES.length - 1) * CG
++  const TOP = 64
++  const cols = PHASES.map((p) => {
++    const name = wrapWords(p.name, 24)
++    let y = TOP + 22 + (name.length - 1) * 16 + 24
++    const feats = p.build.map((id) => {
++      const f = FEATURES.find((x) => x.id === id)!
++      const lines = wrapWords(shortTitle(id), 28)
++      const at = y
++      y += lines.length * 14 + 6
++      return { id, lines, at, priority: f.priority }
++    })
++    const gate = wrapWords(p.gate, 30)
++    const gateY = y + 8
++    const end = gateY + 14 + gate.length * 14 + 12
++    return { p, name, feats, gate, gateY, end }
++  })
++  const H = Math.max(...cols.map((c) => c.end)) + 14
++  return (
++    <Frame w={W} h={H} name="how-ph" label={`The phases: ${PHASES.map((p) => p.name).join(', then ')}.`}>
++      <path d={`M ${16} ${30} L ${W - 16} ${30}`} strokeWidth={2} className="stroke-adm-axis" markerEnd="url(#how-ph-ink)" />
++      {cols.map((c, i) => {
++        const x = 16 + i * (CW + CG)
++        return (
++          <g key={c.p.id}>
++            <circle cx={x + 10} cy={30} r={6} className={i === 0 ? 'fill-adm-accent' : 'fill-adm-surface stroke-adm-ink-2'} strokeWidth={1.5} />
++            <text x={x + 22} y={22} className={`text-11 font-semibold ${i === 0 ? 'fill-adm-ink' : 'fill-adm-muted'}`}>{c.p.when}</text>
++            <Hit id={c.p.id} label={`${c.p.name}, ${c.p.when}. ${c.p.gate}`} onOpen={() => open({ ...boxItem('The phased plan', { title: c.p.name, explain: c.p.gate, features: c.p.build }, [{ label: 'When', value: c.p.when }]), to: '#b2b2c-plan', toLabel: 'The phased plan' })}>
++              <rect x={x} y={TOP} width={CW} height={c.end - TOP} rx={10} strokeWidth={i === 0 ? 2 : 1} className={`fill-adm-surface ${i === 0 ? 'stroke-adm-accent' : 'stroke-adm-line'}`} />
++              <Lines x={x + 12} y={TOP + 22} lines={c.name} step={16} className="fill-adm-ink text-13 font-semibold" />
++              {c.feats.map((f) => (
++                <g key={f.id}>
++                  <circle cx={x + 16} cy={f.at - 4} r={3.5} className={PRIORITY_FILL[f.priority]} />
++                  <Lines x={x + 26} y={f.at} lines={f.lines} step={14} className="fill-adm-ink-2 text-11" />
++                </g>
++              ))}
++              <rect x={x + 8} y={c.gateY} width={CW - 16} height={c.end - c.gateY - 8} rx={6} strokeDasharray="4 3" className="fill-adm-bg stroke-adm-ink-2" />
++              <Lines x={x + 16} y={c.gateY + 18} lines={c.gate} step={14} className="fill-adm-ink text-11 font-medium" />
++            </Hit>
++            {i < cols.length - 1 && <path d={`M ${x + CW + 2} ${TOP + 22} L ${x + CW + CG - 3} ${TOP + 22}`} strokeWidth={1.5} className="stroke-adm-ink-2" markerEnd="url(#how-ph-ink)" />}
++          </g>
++        )
++      })}
++    </Frame>
++  )
++}
++
++/* ------------------------------------------------------------ The section */
++
++export function B2b2cHowItWorks() {
++  const js = journeys()
++  return (
++    <div className="flex min-w-0 flex-col gap-24">
++      <div className="flex min-w-0 flex-col gap-10">
++        <DiagramTitle n={1} title="The big picture">
++          Creators, employers and partners already have the people. Aurelia gives those people a free start they can trust; they pay once it has helped, and the money is shared with the creator.
++        </DiagramTitle>
++        <Legend items={[{ swatch: 'bg-adm-ink-2', text: 'People and reach' }, { swatch: 'bg-adm-s2', text: 'Trust: what people get before paying' }, { swatch: 'bg-adm-good', text: 'Money' }]} />
++        <BigPicture />
++      </div>
++
++      <div className="flex min-w-0 flex-col gap-10">
++        <DiagramTitle n={2} title="One journey per channel">
++          What the person sees at each step, and where people drop off. Numbers marked “From a test” come from <Term id="simulated">simulated people</Term>, not real buyers.
++        </DiagramTitle>
++        <div className="flex flex-wrap items-center gap-12 text-11 text-adm-muted" aria-hidden="true">
++          {(['test', 'measured', 'judgement', 'not tested'] as DropLabel[]).map((l) => (
++            <span key={l} className="inline-flex items-center gap-4">
++              <svg width="8" height="8" className="shrink-0"><circle cx="4" cy="4" r="4" className={DROP_TONE[l]} /></svg> {DROP_LABEL_TEXT[l]}
++            </span>
++          ))}
++        </div>
++        {js.map((j) => (
++          <div key={j.id} className="flex min-w-0 flex-col gap-6">
++            <span className="text-13 font-semibold text-adm-ink">{j.title}</span>
++            <JourneyStrip j={j} />
++          </div>
++        ))}
++      </div>
++
++      <div className="flex min-w-0 flex-col gap-10">
++        <DiagramTitle n={3} title="Before and after">
++          Round 1 asked people to pay before anything had helped; the tests with <Term id="simulated">simulated people</Term> rejected it. Round 2 starts free. The free week itself is not tested yet: the free app is the nearest thing that was.
++        </DiagramTitle>
++        <BeforeAfter />
++      </div>
++
++      <div className="flex min-w-0 flex-col gap-10">
++        <DiagramTitle n={4} title="The phases">Each phase builds its features, then must pass its gate before the next one starts.</DiagramTitle>
++        <Legend items={[{ swatch: 'bg-adm-critical', text: 'Now' }, { swatch: 'bg-adm-serious', text: 'Next' }, { swatch: 'bg-adm-axis', text: 'Later' }]} />
++        <Phases />
++      </div>
++    </div>
++  )
++}
+diff --git a/src/admin/pages/reports/B2b2cReportPage.tsx b/src/admin/pages/reports/B2b2cReportPage.tsx
+index 1b009d7..19ca062 100644
+--- a/src/admin/pages/reports/B2b2cReportPage.tsx
++++ b/src/admin/pages/reports/B2b2cReportPage.tsx
+@@ -24,13 +24,14 @@ import {
+ } from '../../data/b2b2cReport'
+ import { plainText } from '../../data/glossary'
+ import { buildIterationMap, mapFor } from '../../data/iterationMap'
++import { B2b2cHowItWorks } from './B2b2cHowItWorks'
+ import { DetailDrawerProvider, useDetail, type DetailItem } from './DetailDrawer'
+ import { IterationMapView } from './IterationMapView'
+ import { Details, SummaryBlock } from './ReportSummary'
+ 
+ /**
+  * Admin → Reports → B2B2C report: B2B2C research round 2 for the business
+- * owner. Summary first; then the channels compared, the feature board
++ * owner. Summary first; then How it works (four diagrams); then the channels compared, the feature board
+  * (channel × priority, each card opens the drawer) and the phased plan.
+  * All data lives in data/b2b2cReport.ts; the wiki's round-2 and features
+  * pages say the same in prose.
+@@ -251,6 +252,12 @@ export function B2b2cReportPage() {
+ 
+         <SummaryBlock s={summary} />
+ 
++        <section id="b2b2c-how" className="min-w-0 scroll-mt-16">
++          <Panel title="How it works" description="The idea in four pictures: who is involved, each channel step by step, what changed from round 1, and the phases. Click any box for a plain explanation and the features behind it.">
++            <B2b2cHowItWorks />
++          </Panel>
++        </section>
++
+         <section id="b2b2c-channels" className="min-w-0 scroll-mt-16">
+           <Panel title="The channels compared" description="Each channel scored on round 1’s six questions plus what the simulations say. Click a row for why it moved.">
+             <ChannelChart />
+-- 
+2.43.0
+

@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-25 — B2B2C diagrams (U133, J184)
+
+The B2B2C report and wiki show how the channels work as diagrams.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-25 — Buyer visuals, therapeutic and healing maps, B2B2C round 2 (U130–U132, J183)
 
 The buyer agent report is now charts. Product lab gains the Therapeutic map and the Healing Map (staging only). B2B2C round 2 adds the feature list and a report.
