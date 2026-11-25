@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-25 — Buyer agent report by inputs (U122, J177)
+
+Each buyer report version shows the personas, product version, PRD, documents and price it used.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-24 — API contract in three pages; levelled combination graph (U120, U121, J175, J176)
 
 The wiki's API contract opens on General, with Apps, Admin and v1 as their own pages. The Combination report's graph now shows its four levels and what each is made of.

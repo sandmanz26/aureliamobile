@@ -500,7 +500,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U121**, last J = **J176**, last
+**Numbering as of 17 Nov 2026:** last U = **U122**, last J = **J177**, last
 O = **O56**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -970,6 +970,7 @@ history can be read without opening four documents.
 | U119 | `76a2890` | 2026-11-24 | Wiki → API contract **v2, the Pilot slice** (draft for the feature lock), now the default; v1 stays at `?v=1`. 76 endpoints and 35 PostgreSQL tables: accounts and consent, the core loop, safety, the creator retreat (ticket, 70/30, Connect payouts, cohort aggregates), Plus, a compute ledger, therapeutic outcomes, minimum admin. Includes `openapi-v2.yaml`. Staging and production. | [patch](update-log/patches/U119-76a2890.patch) |
 | U120 | `dfe36fb` | 2026-11-24 | Wiki API contract split into pages: **General** (the default: what v2 is, conventions, data model, decisions), **Apps**, **Admin**, and **v1** (the earlier full contract). | [patch](update-log/patches/U120-dfe36fb.patch) |
 | U121 | `7bfc4e4` | 2026-11-24 | Combination report graph in four levels: Sources (16) → Building blocks (10) → Stage readings (5) → Verdict (6). Click a node to highlight its path and see "Made of" and "Feeds"; a text version sits below the graph. | [patch](update-log/patches/U121-7bfc4e4.patch) |
+| U122 | `5ffceb2` | 2026-11-25 | Buyer agent report rebuilt around five inputs (personas, product version, PRD, the business owner's documents, price) → Report v1, v2, v3, v4 (the re-run). Includes an input graph (click a report or an input), a what-changed table, and a card per report. The PRD is "not recorded" for every report. | [patch](update-log/patches/U122-5ffceb2.patch) |
 | J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
@@ -1038,6 +1039,7 @@ history can be read without opening four documents.
 | J174 | 2026-11-24 | Doc | An API contract for the wiki, on production and staging | U119 |
 | J175 | 2026-11-24 | Code | The API contract in three pages: General (the default), Apps, Admin | U120 |
 | J176 | 2026-11-24 | Code + answer | Where the Cost report is (Reports → Cost report; not yet deployed because of the Vercel quota); a clearer, levelled Combination report graph | U121 |
+| J177 | 2026-11-25 | Code | Redo the buyer report: its sources are personas, current product, PRD, the business owner's documents and his pricing at the time, producing report v1, v2…; the graph shows what each report used | U122 |
 
 ### 17.2 Code changes (U)
 

@@ -158,9 +158,17 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U119 | `76a2890` | 2026-11-24 | Wiki → API contract **v2, the Pilot slice** (draft for the feature lock), now the default; v1 stays at `?v=1`. 76 endpoints and 35 PostgreSQL tables: accounts and consent, the core loop, safety, the creator retreat (ticket, 70/30, Connect payouts, cohort aggregates), Plus, a compute ledger, therapeutic outcomes, minimum admin. Includes `openapi-v2.yaml`. Staging and production. | [patch](patches/U119-76a2890.patch) |
 | U120 | `dfe36fb` | 2026-11-24 | Wiki API contract split into pages: **General** (the default: what v2 is, conventions, data model, decisions), **Apps**, **Admin**, and **v1** (the earlier full contract). | [patch](patches/U120-dfe36fb.patch) |
 | U121 | `7bfc4e4` | 2026-11-24 | Combination report graph in four levels: Sources (16) → Building blocks (10) → Stage readings (5) → Verdict (6). Click a node to highlight its path and see "Made of" and "Feeds"; a text version sits below the graph. | [patch](patches/U121-7bfc4e4.patch) |
+| U122 | `5ffceb2` | 2026-11-25 | Buyer agent report rebuilt around five inputs (personas, product version, PRD, the business owner's documents, price) → Report v1, v2, v3, v4 (the re-run). Includes an input graph (click a report or an input), a what-changed table, and a card per report. The PRD is "not recorded" for every report. | [patch](patches/U122-5ffceb2.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U122 — Buyer agent report by inputs
+
+- **Commit:** `5ffceb2` · 2026-11-25.
+- **Patch:** [patches/U122-5ffceb2.patch](patches/U122-5ffceb2.patch)
+- **Finding:** no run recorded reading the PRD, and v1–v2 read none of the business owner's documents (J133).
+- **Revert:** `git revert --no-commit 5ffceb2`.
 
 ### U121 — The Combination report's levelled graph
 

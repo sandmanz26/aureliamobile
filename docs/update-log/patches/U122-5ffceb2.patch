@@ -1,0 +1,859 @@
+From 5ffceb2fd2eadb3811ad4a433a6921011435a79c Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 25 Nov 2026 00:34:32 +0000
+Subject: [PATCH] =?UTF-8?q?Buyer=20agent=20report=20rebuilt:=20five=20inpu?=
+ =?UTF-8?q?ts=20(personas,=20product=20version,=20PRD,=20the=20business=20?=
+ =?UTF-8?q?owner's=20documents,=20price)=20=E2=86=92=20report=20versions,?=
+ =?UTF-8?q?=20with=20an=20input=20graph=20and=20a=20what-changed=20table?=
+ =?UTF-8?q?=20(U122,=20J177)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/admin/data/buyerAgentReport.test.ts       |  56 +++-
+ src/admin/data/buyerAgentReport.ts            | 141 ++++++++-
+ src/admin/data/reportSources.ts               |  35 ++-
+ .../pages/reports/BuyerAgentReportPage.tsx    | 286 ++++++------------
+ src/admin/pages/reports/InputGraph.tsx        | 129 ++++++++
+ src/admin/pages/reports/reportColors.ts       |  10 +
+ 6 files changed, 457 insertions(+), 200 deletions(-)
+ create mode 100644 src/admin/pages/reports/InputGraph.tsx
+
+diff --git a/src/admin/data/buyerAgentReport.test.ts b/src/admin/data/buyerAgentReport.test.ts
+index 9c283bb..769231c 100644
+--- a/src/admin/data/buyerAgentReport.test.ts
++++ b/src/admin/data/buyerAgentReport.test.ts
+@@ -1,5 +1,6 @@
+ import { describe, expect, it } from 'vitest'
+-import { APP_PRICE, buildIterations } from './buyerAgentReport'
++import pageSource from '../pages/reports/BuyerAgentReportPage.tsx?raw'
++import { APP_PRICE, INPUT_KINDS, INPUT_LABEL, NOT_RECORDED, buildIterations, changedFrom, inputEdges } from './buyerAgentReport'
+ 
+ describe('buyer agent report: the price each iteration tested', () => {
+   it('gives every iteration a price-tested entry with amount, currency, period and origin', () => {
+@@ -22,3 +23,56 @@ describe('buyer agent report: the price each iteration tested', () => {
+     expect(rerun.priceTested.differsFromApp).toBe(false)
+   })
+ })
++
++describe('buyer agent report: five inputs → report versions (U122)', () => {
++  it('gives every report version all five inputs, a value or “not recorded”', () => {
++    for (const it of buildIterations()) {
++      expect(Object.keys(it.inputs).sort(), it.id).toEqual([...INPUT_KINDS].sort())
++      for (const k of INPUT_KINDS) {
++        const v = it.inputs[k]
++        expect(v.short.length, `${it.id} ${k}`).toBeGreaterThan(3)
++        expect(v.detail.length, `${it.id} ${k}`).toBeGreaterThan(10)
++        expect(v.recorded, `${it.id} ${k}`).toBe(v.short !== NOT_RECORDED)
++      }
++    }
++  })
++
++  it('reads the inputs from the run data', () => {
++    const [v1, v2, v3, v4] = buildIterations()
++    expect(v1.inputs.personas.short).toBe('10 personas · generator 1 · seed 2026')
++    expect(v2.inputs.personas.short).toBe('36 personas · generator 1 · seed 2027')
++    expect(v3.inputs.personas.short).toBe('36 personas · generator 2 · seed 2028')
++    expect(v4.inputs.personas.short).toContain('10 + 36 + 36')
++    expect(v1.inputs.price.short).toContain('$9.99')
++    expect(v1.inputs.price.short).toContain('$79')
++    expect(v4.inputs.product.short).toContain('staging v3, v4, v5')
++    expect(v3.inputs.ownerDocs.detail).toContain('Backend (old)')
++  })
++
++  it('draws every edge from an input to a report that used it', () => {
++    const its = buildIterations()
++    const edges = inputEdges(its)
++    expect(edges.length).toBeGreaterThan(0)
++    for (const e of edges) {
++      const it = its.find((x) => x.id === e.report)
++      expect(it, e.report).toBeDefined()
++      expect(it!.inputs[e.input].recorded, `${e.input} → ${e.report}`).toBe(true)
++      expect(it!.inputs[e.input]).toBe(e.value)
++    }
++    const recorded = its.reduce((n, it) => n + INPUT_KINDS.filter((k) => it.inputs[k].recorded).length, 0)
++    expect(edges).toHaveLength(recorded)
++  })
++
++  it('marks what changed against the report before', () => {
++    const its = buildIterations()
++    expect(changedFrom(its, 0, 'personas')).toBe(false)
++    expect(changedFrom(its, 1, 'personas')).toBe(true)
++    expect(changedFrom(its, 1, 'product')).toBe(false)
++    expect(changedFrom(its, 3, 'product')).toBe(true)
++  })
++
++  it('never names the business owner in UI strings', () => {
++    expect(JSON.stringify([buildIterations(), INPUT_LABEL])).not.toMatch(/Eugene/)
++    expect(pageSource).not.toMatch(/Eugene/)
++  })
++})
+diff --git a/src/admin/data/buyerAgentReport.ts b/src/admin/data/buyerAgentReport.ts
+index 522860f..964846e 100644
+--- a/src/admin/data/buyerAgentReport.ts
++++ b/src/admin/data/buyerAgentReport.ts
+@@ -3,6 +3,7 @@ import { BUYER_RUNS, countVerdicts, personasOf, priceRange, type BuyerAnswer, ty
+ import { AGENT_RULES, DESIGNS, agreement, report } from './buyerSim'
+ import { V3_CHANGES, type V3Change } from './buyerRunV3'
+ import { OVERALL_SUMMARY } from './buyerRerunSummaries'
++import { PLANS } from './commerce'
+ import type { SourceId } from './reportSources'
+ 
+ /**
+@@ -51,6 +52,8 @@ export interface Iteration {
+   priceTested: PriceTested
+   link: string
+   sources: SourceId[]
++  /** The five inputs this report version was made from (U122, J177). */
++  inputs: Record<InputKind, InputValue>
+ }
+ 
+ export const pct = (x: number) => `${Math.round(x * 100)}%`
+@@ -108,6 +111,11 @@ function olderShare(run: BuyerRun) {
+ }
+ 
+ export function buildIterations(): Iteration[] {
++  const inputs = buildInputs()
++  return buildBase().map((it) => ({ ...it, inputs: inputs[it.id] }))
++}
++
++function buildBase(): Omit<Iteration, 'inputs'>[] {
+   const [r1, r2, r3] = [1, 2, 3].map((v) => BUYER_RUNS.find((r) => r.version === v)!)
+   const t1 = runTallies(r1.answers)
+   const t2 = runTallies(r2.answers)
+@@ -126,7 +134,7 @@ export function buildIterations(): Iteration[] {
+   return [
+     {
+       id: 'it-v1',
+-      name: 'Run v1',
++      name: 'Report v1',
+       date: r1.date,
+       question: criterion(r1, 'Question'),
+       changed: ['The first run: it set the format every later run keeps (try, pay, four price answers, objection, test cases).', criterion(r1, 'Who')],
+@@ -152,7 +160,7 @@ export function buildIterations(): Iteration[] {
+     },
+     {
+       id: 'it-v2',
+-      name: 'Run v2',
++      name: 'Report v2',
+       date: r2.date,
+       question: criterion(r2, 'Question'),
+       changed: [criterion(r2, 'Who'), criterion(r2, 'New parameters'), 'Calibration rules: look for the reason to say no first; a deal breaker the product hits today makes the answer no.'],
+@@ -183,7 +191,7 @@ export function buildIterations(): Iteration[] {
+     },
+     {
+       id: 'it-v3',
+-      name: 'Run v3',
++      name: 'Report v3',
+       date: r3.date,
+       question: criterion(r3, 'Question'),
+       changed: [criterion(r3, 'Who'), criterion(r3, 'What they saw'), criterion(r3, 'What the agent read first')],
+@@ -214,7 +222,7 @@ export function buildIterations(): Iteration[] {
+     },
+     {
+       id: 'it-rerun',
+-      name: 'Re-run by production version',
++      name: 'Report v4 · re-run on production versions',
+       date: r3.date,
+       question: 'If each persona walks through the real screens of production v1, v2 and v3, step by step, which version keeps the most people, and where does each lose them?',
+       changed: [
+@@ -248,3 +256,128 @@ export function buildIterations(): Iteration[] {
+     },
+   ]
+ }
++
++/*
++ * U122 (J177): what a buyer report is made of. The business owner named five
++ * inputs: the personas, the product version, the PRD, the business owner's
++ * documents, and the price given at the time. Each report version records
++ * the value it used for each. Values come from the run data where the data
++ * holds them; where it does not, the journal entry that does is cited; where
++ * nothing does, the value is NOT_RECORDED rather than a guess.
++ */
++
++export const INPUT_KINDS = ['personas', 'product', 'prd', 'ownerDocs', 'price'] as const
++export type InputKind = (typeof INPUT_KINDS)[number]
++
++export const INPUT_LABEL: Record<InputKind, string> = {
++  personas: 'Personas',
++  product: 'Product version',
++  prd: 'PRD',
++  ownerDocs: 'Business owner’s documents',
++  price: 'Pricing',
++}
++
++/** The source in reportSources each input kind points to. */
++export const INPUT_SOURCE: Record<InputKind, SourceId> = {
++  personas: 'personas',
++  product: 'versions',
++  prd: 'prd',
++  ownerDocs: 'owner-docs',
++  price: 'buyer-prices',
++}
++
++export const NOT_RECORDED = 'not recorded'
++
++export interface InputValue {
++  /** The value in a few words, for the graph and the table. */
++  short: string
++  /** The value in full, with where it comes from. */
++  detail: string
++  recorded: boolean
++}
++
++const rec = (short: string, detail: string): InputValue => ({ short, detail, recorded: true })
++const gap = (detail: string): InputValue => ({ short: NOT_RECORDED, detail, recorded: false })
++
++export type ReportId = Iteration['id']
++
++export function buildInputs(): Record<ReportId, Record<InputKind, InputValue>> {
++  const runs = [1, 2, 3].map((v) => BUYER_RUNS.find((r) => r.version === v)!)
++  const [r1, r2, r3] = runs
++  const plus = PLANS.find((p) => p.id === 'plus')!
++  const panel = (r: BuyerRun) => rec(`${r.panel.size} personas · generator ${r.generator} · seed ${r.panel.seed}`, criterion(r, 'Who'))
++  const walks = ([1, 2, 3] as const).map((a) => report(a, 1).walks.length)
++  const ownerRefs = (r3.references ?? []).filter((x) => !x.title.startsWith('Buyer agent'))
++  // J137: runs v1–v3 walked no design version's screens; they read the pitch and
++  // offer as text and judged test cases against today's app, closest to staging v5.
++  const textOnly = rec(
++    'Text pitch, no screens · cases judged on today’s app (≈ production v3)',
++    'No design version’s screens were walked: the agent read the pitch and offer as text. Its test cases were judged against how the app behaves today, closest to staging v5 (production v3, the production default). Recorded in J137.',
++  )
++  // No run lists the PRD among what it read: not in the run data, nor in J133–J139 / U101–U104.
++  const prd = gap('No run lists the PRD among what it read (checked: the run data, J133–J139, U101–U104). The PRD overview draft of 11 Nov 2026 existed at the time, but nothing says it was used.')
++  // J133 and context timeline row 24: the buyer agent was the business owner's idea; v1 and v2 read none of their documents.
++  const ideaOnly = rec(
++    'Buyer-test-agent idea only; no document read',
++    'The run exists because of the business owner’s idea of a buyer test agent (J133; context timeline row 24). The agent read none of their documents as evidence: the run lists no references.',
++  )
++  return {
++    'it-v1': {
++      personas: panel(r1),
++      product: textOnly,
++      prd,
++      ownerDocs: ideaOnly,
++      price: rec(
++        `$${plus.monthlyUsd}/mo · $${plus.yearlyUsd}/yr (admin mock)`,
++        `Plus at $${plus.monthlyUsd} a month or $${plus.yearlyUsd} a year, the same in US dollars for everyone, from the admin’s mock plan table (Commerce → PLANS), as J137 found. Not the app’s price (${APP_PRICE.amount}).`,
++      ),
++    },
++    'it-v2': {
++      personas: panel(r2),
++      product: textOnly,
++      prd,
++      ownerDocs: ideaOnly,
++      price: rec('Regional mock: $9.99, £8.99, €9.99, ₹399…', `${r2.stimulus.offer.slice(1, 3).join('. ')}. From the admin’s regional pricing table (mock). The app has no regional prices.`),
++    },
++    'it-v3': {
++      personas: panel(r3),
++      product: rec('A: today, as text · B: a proposal, not built', `Offer A: ${r3.control?.offer[0] ?? ''}. Offer B: ${r3.stimulus.name.replace(/^Offer B: /, '')}; its items are proposals answered as if built. No screens walked (J137).`),
++      prd,
++      ownerDocs: rec(
++        `${ownerRefs.length} read first: ${ownerRefs.map((x) => x.title.split(/[,:]/)[0].trim()).join(' · ')}`,
++        ownerRefs.map((x) => `${x.title} (${x.where}): ${x.used}`).join(' '),
++      ),
++      price: rec('A: regional mock · B: $9.99/mo, $59.99/yr', `A: as in run v2. B: ${r3.stimulus.offer.find((o) => o.startsWith('Plus')) ?? ''}. Neither is the app’s price (${APP_PRICE.amount}).`),
++    },
++    'it-rerun': {
++      personas: rec(
++        `Panels of runs v1–v3: ${walks.join(' + ')}`,
++        `Each agent’s rules walk that agent’s own panel: ${runs.map((r, i) => `agent v${i + 1}, ${walks[i]} people (generator ${r.generator}, seed ${r.panel.seed})`).join('; ')}. ${walks.reduce((a, b) => a + b, 0) * DESIGNS.length} walks in all.`,
++      ),
++      product: rec(`Production v1, v2, v3 (staging ${DESIGNS.map((d) => `v${d.staging}`).join(', ')})`, `The real screens of ${DESIGNS.map((d) => d.name).join('; ')}, walked step by step (U104).`),
++      prd,
++      // J136 / J139, context timeline row 26: the business owner's brief of 19 Nov.
++      ownerDocs: rec(
++        'Market-fit brief of 19 Nov (top 10 metrics)',
++        'The business owner’s brief of 19 Nov 2026: core retention metrics, where in the funnel people leave, what holds back more AI plays, and the top 10 market-fit metrics (J136, J139; context timeline row 26). Agent v3’s rules carry run v3’s reading of their documents.',
++      ),
++      price: rec('App: $10/mo, $100/yr (Upgrade screen)', `${APP_PRICE.amount}, on ${APP_PRICE.where}. Whether a persona would pay is still judged against the price it saw in its own run (about $9.99 in the US).`),
++    },
++  }
++}
++
++export interface InputEdge {
++  input: InputKind
++  report: ReportId
++  value: InputValue
++}
++
++/** One edge per input a report recorded using; a value not recorded draws no edge. */
++export function inputEdges(its: Iteration[]): InputEdge[] {
++  return its.flatMap((it) => INPUT_KINDS.filter((k) => it.inputs[k].recorded).map((k) => ({ input: k, report: it.id, value: it.inputs[k] })))
++}
++
++/** True when a report's value for an input differs from the report before it. */
++export function changedFrom(its: Iteration[], i: number, k: InputKind) {
++  return i > 0 && its[i].inputs[k].short !== its[i - 1].inputs[k].short
++}
+diff --git a/src/admin/data/reportSources.ts b/src/admin/data/reportSources.ts
+index 1c1e19f..f14f1a2 100644
+--- a/src/admin/data/reportSources.ts
++++ b/src/admin/data/reportSources.ts
+@@ -53,6 +53,8 @@ export type SourceId =
+   | 'supplier-prices'
+   | 'spec-causal'
+   | 'owner-chat'
++  | 'owner-docs'
++  | 'buyer-prices'
+ 
+ export interface ReportSource {
+   id: SourceId
+@@ -250,6 +252,24 @@ export const SOURCES: Record<SourceId, ReportSource> = {
+     link: '/admin/reports/cost',
+     label: 'document',
+   },
++  'owner-docs': {
++    id: 'owner-docs',
++    name: 'The business owner’s documents',
++    what: 'The briefs and documents the business owner sent: the buyer-test-agent idea, the 2025 backend documents, the market-fit brief.',
++    version: 'As of each run, 19 Nov 2026 (context timeline rows 17, 24–26)',
++    taken: 'Which of them each buyer report version read, or that it read none.',
++    link: '/wiki/backend-old',
++    label: 'document',
++  },
++  'buyer-prices': {
++    id: 'buyer-prices',
++    name: 'Prices shown to the personas',
++    what: 'The price each run showed: the admin’s mock plans, its mock regional table, a proposed list, and the app’s Upgrade screen.',
++    version: 'Admin mock PLANS and regional table; offer B (run v3); Upgrade screen $10 / $100',
++    taken: 'The price in each buyer report version, and whether it is the app’s.',
++    link: '/admin/pricing',
++    label: 'document',
++  },
+ }
+ 
+ /** The kind of evidence a source is, for grouping it on a graph (U121). Coarse on purpose: a handful of groups a reader can scan. */
+@@ -277,6 +297,8 @@ export const SOURCE_KIND: Record<SourceId, SourceKind> = {
+   'supplier-prices': 'Costs',
+   'spec-causal': 'The business owner',
+   'owner-chat': 'The business owner',
++  'owner-docs': 'The business owner',
++  'buyer-prices': 'Product',
+ }
+ 
+ export interface Finding {
+@@ -287,13 +309,12 @@ export interface Finding {
+ }
+ 
+ export const BUYER_REPORT_FINDINGS: Finding[] = [
+-  { id: 'price-used', title: 'Price used per iteration', sources: ['buyer-v1', 'buyer-v2', 'buyer-v3', 'buyer-rerun', 'versions'] },
+-  { id: 'it-v1', title: 'Run v1: the format', sources: ['buyer-v1', 'personas'] },
+-  { id: 'it-v2', title: 'Run v2: calibrated, 36 people', sources: ['buyer-v2', 'buyer-v1', 'personas'] },
+-  { id: 'it-v3', title: 'Run v3: today vs the proposal', sources: ['buyer-v3', 'buyer-v2', 'personas', 'backend-old', 'artefact'] },
+-  { id: 'it-rerun', title: 'Re-run on production versions', sources: ['buyer-rerun', 'versions', 'personas'] },
+-  { id: 'decisions', title: 'Decisions it fed', sources: ['decisions', 'buyer-v3', 'buyer-rerun'] },
+-  { id: 'reading', title: 'What it adds up to', sources: ['buyer-rerun', 'buyer-v3', 'buyer-v2'] },
++  { id: 'input-graph', title: 'Inputs → report versions', sources: ['personas', 'versions', 'prd', 'owner-docs', 'buyer-prices'] },
++  { id: 'what-changed', title: 'What changed between reports', sources: ['personas', 'versions', 'prd', 'owner-docs', 'buyer-prices'] },
++  { id: 'it-v1', title: 'Report v1', sources: ['personas', 'versions', 'owner-docs', 'buyer-prices', 'buyer-v1'] },
++  { id: 'it-v2', title: 'Report v2', sources: ['personas', 'versions', 'owner-docs', 'buyer-prices', 'buyer-v2'] },
++  { id: 'it-v3', title: 'Report v3', sources: ['personas', 'versions', 'owner-docs', 'buyer-prices', 'buyer-v3'] },
++  { id: 'it-rerun', title: 'Report v4 · re-run', sources: ['personas', 'versions', 'owner-docs', 'buyer-prices', 'buyer-rerun'] },
+ ]
+ 
+ export const COMBINATION_FINDINGS: Finding[] = [
+diff --git a/src/admin/pages/reports/BuyerAgentReportPage.tsx b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+index 1794f78..0aa7924 100644
+--- a/src/admin/pages/reports/BuyerAgentReportPage.tsx
++++ b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+@@ -1,31 +1,31 @@
+-import { AlertTriangle, ArrowRight, Tag } from 'lucide-react'
++import { ArrowRight } from 'lucide-react'
+ import { useMemo } from 'react'
+ import { Link } from 'react-router-dom'
+-import { Badge, PageHeader, Panel } from '../../components/ui'
+-import { STATUS_LABEL } from '../../data/businessFunnel'
+-import { APP_PRICE, buildIterations } from '../../data/buyerAgentReport'
+-import { OVERALL_SUMMARY } from '../../data/buyerRerunSummaries'
++import { PageHeader, Panel } from '../../components/ui'
++import { APP_PRICE, INPUT_KINDS, INPUT_LABEL, buildIterations, changedFrom } from '../../data/buyerAgentReport'
+ import { BUYER_REPORT_FINDINGS } from '../../data/reportSources'
+-import { LabelBadge, SourceChip, SourceGraph, SourcesSection } from './ReportParts'
++import { InputGraph } from './InputGraph'
++import { INPUT_DOT } from './reportColors'
++import { LabelBadge, SourcesSection } from './ReportParts'
+ 
+ const fmtDate = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+ 
+ /**
+- * Admin → Reports → Buyer agent report (U116, J167): every buyer-agent
+- * iteration as a timeline, for the business owner. The full answers stay on
+- * Buyer agent results; this page says what each run asked, what changed,
+- * what came out, how it moved from the one before, and what it led to.
++ * Admin → Reports → Buyer agent report, rebuilt in U122 (J177). A buyer
++ * report is made from five inputs: the personas, the product version, the
++ * PRD, the business owner's documents and the price given at the time. Each
++ * report version is shown with the value it used for each; every value comes
++ * from buildInputs() in data/buyerAgentReport.ts, which cites the journal
++ * where the run data is silent and says "not recorded" where nothing says.
+  */
+ export function BuyerAgentReportPage() {
+   const iterations = useMemo(() => buildIterations(), [])
+-  const fed = iterations.flatMap((it) => it.decisions.map((d) => ({ d, it: it.name })))
+-  const decisions = [...new Map(fed.map((x) => [x.d.id, x.d])).values()]
+ 
+   return (
+     <div className="flex flex-col gap-16">
+       <PageHeader
+         title="Buyer agent report"
+-        description="Every time the buyer agent was run, in order: the question, what changed, what came out, how it moved from the run before, and the decision it fed. Every figure is a prediction: synthetic people answered by an AI agent. Nothing here was measured on real users."
++        description="A buyer report is what synthetic personas say when an AI agent plays each of them against Aurelia: who would try it, who would pay, and why not. Each report version is made from five inputs: the personas, the product version, the PRD, the business owner’s documents and the price given at the time. Everything here is a prediction, not a measurement: nobody real answered."
+         actions={
+           <Link to="/admin/buyer-agent" className="inline-flex items-center gap-6 rounded-8 border border-adm-line bg-adm-surface px-12 py-6 text-12 font-medium text-adm-ink hover:bg-adm-hover">
+             Full detail: Buyer agent results <ArrowRight size={13} aria-hidden="true" />
+@@ -33,35 +33,46 @@ export function BuyerAgentReportPage() {
+         }
+       />
+ 
+-      <Panel title="How this report was made" description="Where each part of this report comes from. Each line is a source feeding a section.">
+-        <SourceGraph findings={BUYER_REPORT_FINDINGS} label="Graph: the sources on the left feed the report’s sections on the right." />
+-      </Panel>
++      <section id="input-graph" className="scroll-mt-16">
++        <Panel title="Inputs → report versions" description="Each row is one of the five inputs, each column a report version. A cell is the exact value that report used.">
++          <InputGraph iterations={iterations} />
++        </Panel>
++      </section>
+ 
+-      <section id="price-used" className="scroll-mt-16">
+-        <Panel title="Price used per iteration" description={`The price the personas saw is part of each result. Today the app asks ${APP_PRICE.amount} (${APP_PRICE.where}).`}>
++      <section id="what-changed" className="scroll-mt-16">
++        <Panel title="What changed between reports" description="The same five inputs, with the cells that differ from the report before highlighted.">
+           <div className="overflow-x-auto">
+-            <table className="w-full min-w-[720px] text-left text-12">
++            <table className="w-full min-w-[760px] text-left text-12">
+               <thead className="text-11 uppercase tracking-wider text-adm-muted">
+                 <tr className="border-b border-adm-line">
+-                  <th className="py-6 pr-12 font-semibold">Iteration</th>
+-                  <th className="py-6 pr-12 font-semibold">Price tested</th>
+-                  <th className="py-6 pr-12 font-semibold">Currency · period</th>
+-                  <th className="py-6 pr-12 font-semibold">Where it came from</th>
+-                  <th className="py-6 font-semibold">Against today’s app</th>
++                  <th className="py-6 pr-12 font-semibold">Input</th>
++                  {iterations.map((it) => (
++                    <th key={it.id} className="py-6 pr-12 font-semibold">
++                      <a href={`#${it.id}`} className="underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink">
++                        {it.name}
++                      </a>
++                    </th>
++                  ))}
+                 </tr>
+               </thead>
+               <tbody>
+-                {iterations.map((it) => (
+-                  <tr key={it.id} className="border-b border-adm-line align-top last:border-0">
+-                    <td className="py-8 pr-12 font-medium whitespace-nowrap text-adm-ink">
+-                      <a href={`#${it.id}`} className="underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink">{it.name}</a>
+-                    </td>
+-                    <td className="py-8 pr-12 font-semibold text-adm-ink">{it.priceTested.amount}</td>
+-                    <td className="py-8 pr-12 text-adm-ink-2">{it.priceTested.currency} · {it.priceTested.period}</td>
+-                    <td className="py-8 pr-12 text-adm-ink-2">{it.priceTested.origin}</td>
+-                    <td className="py-8">
+-                      <Badge tone={it.priceTested.differsFromApp ? 'serious' : 'good'}>{it.priceTested.differsFromApp ? 'Differs' : 'Same as the app'}</Badge>
+-                    </td>
++                {INPUT_KINDS.map((k) => (
++                  <tr key={k} className="border-b border-adm-line align-top last:border-0">
++                    <th scope="row" className="py-8 pr-12 font-semibold whitespace-nowrap text-adm-ink">
++                      <span className="inline-flex items-center gap-6">
++                        <span className={`h-8 w-8 rounded-full ${INPUT_DOT[k]}`} aria-hidden="true" />
++                        {INPUT_LABEL[k]}
++                      </span>
++                    </th>
++                    {iterations.map((it, i) => {
++                      const v = it.inputs[k]
++                      const changed = changedFrom(iterations, i, k)
++                      return (
++                        <td key={it.id} className={`py-8 pr-12 ${changed ? 'bg-adm-s2/10 font-semibold text-adm-ink' : v.recorded ? 'text-adm-ink-2' : 'italic text-adm-muted'}`}>
++                          {i > 0 && !changed ? <span className="text-adm-muted">= {v.short}</span> : v.short}
++                        </td>
++                      )
++                    })}
+                   </tr>
+                 ))}
+               </tbody>
+@@ -70,170 +81,69 @@ export function BuyerAgentReportPage() {
+         </Panel>
+       </section>
+ 
+-      <section aria-label="Iterations" className="flex flex-col">
+-        {iterations.map((it, i) => (
+-          <div key={it.id} className="relative flex gap-12 pb-16 lg:gap-16">
+-            <div className="flex w-28 shrink-0 flex-col items-center" aria-hidden="true">
+-              <span className="flex h-28 w-28 items-center justify-center rounded-full bg-adm-ink text-12 font-semibold text-adm-surface">{i + 1}</span>
+-              {i < iterations.length - 1 && <span className="mt-4 w-2 flex-1 bg-adm-line" />}
+-            </div>
+-            <article id={it.id} className="flex min-w-0 flex-1 scroll-mt-16 flex-col gap-14 rounded-12 border border-adm-line bg-adm-surface p-16">
+-              <header className="flex flex-wrap items-center justify-between gap-8">
+-                <div className="flex flex-wrap items-baseline gap-8">
+-                  <h2 className="text-15 font-semibold text-adm-ink">{it.name}</h2>
+-                  <span className="text-12 text-adm-muted">{fmtDate(it.date)}</span>
+-                </div>
+-                <LabelBadge label="prediction" />
+-              </header>
+-
+-              <div className="flex flex-col gap-6 rounded-8 border border-adm-s1/40 bg-adm-s1/6 p-12">
+-                <div className="flex flex-wrap items-baseline gap-x-10 gap-y-4">
+-                  <span className="inline-flex items-center gap-6 text-11 font-semibold uppercase tracking-wider text-adm-s1">
+-                    <Tag size={12} aria-hidden="true" /> Price tested
+-                  </span>
+-                  <span className="text-14 font-semibold text-adm-ink">{it.priceTested.amount}</span>
+-                </div>
+-                <p className="text-12 text-adm-ink-2">
+-                  {it.priceTested.currency} · {it.priceTested.period}. {it.priceTested.origin}
+-                </p>
+-                {it.priceTested.warning && (
+-                  <p className="flex items-start gap-6 text-12 font-medium text-adm-ink">
+-                    <AlertTriangle size={13} className="mt-2 shrink-0 text-adm-serious" aria-hidden="true" />
+-                    {it.priceTested.warning}
+-                  </p>
+-                )}
+-              </div>
+-
+-              <div className="grid gap-14 lg:grid-cols-2">
+-                <div className="flex min-w-0 flex-col gap-4">
+-                  <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">The question</h3>
+-                  <p className="text-13 text-adm-ink">{it.question}</p>
+-                </div>
+-                <div className="flex min-w-0 flex-col gap-4">
+-                  <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">What changed from the one before</h3>
+-                  <ul className="flex list-disc flex-col gap-4 pl-16 text-12 text-adm-ink-2">
+-                    {it.changed.map((c) => (
+-                      <li key={c}>{c}</li>
+-                    ))}
+-                  </ul>
+-                </div>
+-              </div>
+-
+-              <div className="flex flex-col gap-6">
+-                <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">Headline results (prediction)</h3>
+-                <dl className="grid grid-cols-2 gap-8 md:grid-cols-3 xl:grid-cols-5">
+-                  {it.headline.map((f) => (
+-                    <div key={f.label} className="flex min-w-0 flex-col gap-2 rounded-8 bg-adm-bg p-10">
+-                      <dt className="text-11 text-adm-muted">{f.label}</dt>
+-                      <dd className="text-15 font-semibold tabular-nums text-adm-ink">{f.value}</dd>
+-                      {f.note && <dd className="text-11 text-adm-ink-2">{f.note}</dd>}
+-                    </div>
+-                  ))}
+-                </dl>
+-              </div>
+-
+-              <div className="grid gap-14 lg:grid-cols-2">
+-                <div className="flex min-w-0 flex-col gap-4">
+-                  <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">Change from the one before</h3>
+-                  <ul className="flex list-disc flex-col gap-4 pl-16 text-12 text-adm-ink-2">
+-                    {it.delta.map((d) => (
+-                      <li key={d}>{d}</li>
+-                    ))}
+-                  </ul>
+-                </div>
+-                <div className="flex min-w-0 flex-col gap-4">
+-                  <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">The decision it fed</h3>
+-                  {it.decisions.length ? (
+-                    <ul className="flex flex-col gap-6 text-12">
+-                      {it.decisions.map((d) => (
+-                        <li key={d.id} className="flex flex-wrap items-start gap-6">
+-                          <Badge tone={d.status === 'shipped' || d.status === 'measured' ? 'good' : d.status === 'decided' ? 'info' : 'neutral'}>{STATUS_LABEL[d.status]}</Badge>
+-                          <span className="min-w-0 flex-1 text-adm-ink-2">{d.change}</span>
+-                        </li>
+-                      ))}
+-                    </ul>
+-                  ) : (
+-                    <p className="text-12 text-adm-ink-2">{it.decisionNote}</p>
+-                  )}
+-                </div>
++      <section aria-label="Report versions" className="grid gap-16 lg:grid-cols-2">
++        {iterations.map((it) => (
++          <article key={it.id} id={it.id} className="flex min-w-0 scroll-mt-16 flex-col gap-12 rounded-12 border border-adm-line bg-adm-surface p-16">
++            <header className="flex flex-wrap items-center justify-between gap-8">
++              <div className="flex flex-wrap items-baseline gap-8">
++                <h2 className="text-15 font-semibold text-adm-ink">{it.name}</h2>
++                <span className="text-12 text-adm-muted">{fmtDate(it.date)}</span>
+               </div>
++              <LabelBadge label="prediction" />
++            </header>
+ 
+-              <details className="group text-12">
+-                <summary className="cursor-pointer font-medium text-adm-ink-2 hover:text-adm-ink">What the run found, in its own words</summary>
+-                <ul className="mt-8 flex list-disc flex-col gap-4 pl-16 text-adm-ink-2">
+-                  {it.findings.map((f) => (
+-                    <li key={f}>{f}</li>
+-                  ))}
+-                </ul>
+-              </details>
++            <div className="flex flex-col gap-4">
++              <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">The question it answered</h3>
++              <p className="text-13 text-adm-ink">{it.question}</p>
++            </div>
+ 
+-              <footer className="flex flex-wrap items-center justify-between gap-8 border-t border-adm-line pt-10">
+-                <div className="flex flex-wrap gap-6">
+-                  {it.sources.map((s) => (
+-                    <SourceChip key={s} id={s} />
+-                  ))}
+-                </div>
+-                <Link to={it.link} className="inline-flex items-center gap-4 text-12 font-medium text-adm-ink underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink">
+-                  Full detail <ArrowRight size={12} aria-hidden="true" />
+-                </Link>
+-              </footer>
+-            </article>
+-          </div>
+-        ))}
+-      </section>
++            <div className="flex flex-col gap-6">
++              <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">Inputs used</h3>
++              <dl className="grid grid-cols-[130px_1fr] gap-x-10 gap-y-4 text-12">
++                {INPUT_KINDS.map((k) => (
++                  <div key={k} className="contents">
++                    <dt className="flex items-center gap-6 text-adm-muted">
++                      <span className={`h-6 w-6 shrink-0 rounded-full ${INPUT_DOT[k]}`} aria-hidden="true" />
++                      {INPUT_LABEL[k]}
++                    </dt>
++                    <dd className={it.inputs[k].recorded ? 'min-w-0 text-adm-ink' : 'min-w-0 italic text-adm-muted'}>{it.inputs[k].short}</dd>
++                  </div>
++                ))}
++              </dl>
++            </div>
+ 
+-      <section id="decisions" className="scroll-mt-16">
+-        <Panel title="Decisions it fed" description="Entries in the business funnel’s decision log that cite the buyer agent. Their status is the log’s, as written in the code.">
+-          <div className="overflow-x-auto">
+-            <table className="w-full min-w-[640px] text-left text-12">
+-              <thead className="text-11 uppercase tracking-wider text-adm-muted">
+-                <tr className="border-b border-adm-line">
+-                  <th className="py-6 pr-12 font-semibold">Stage</th>
+-                  <th className="py-6 pr-12 font-semibold">Finding</th>
+-                  <th className="py-6 pr-12 font-semibold">Change</th>
+-                  <th className="py-6 pr-12 font-semibold">From</th>
+-                  <th className="py-6 font-semibold">Status</th>
+-                </tr>
+-              </thead>
+-              <tbody>
+-                {decisions.map((d) => (
+-                  <tr key={d.id} className="border-b border-adm-line align-top last:border-0">
+-                    <td className="py-8 pr-12 capitalize text-adm-ink">{d.stage}</td>
+-                    <td className="py-8 pr-12 text-adm-ink-2">{d.finding}</td>
+-                    <td className="py-8 pr-12 text-adm-ink">{d.change}</td>
+-                    <td className="py-8 pr-12 text-adm-ink-2">{fed.filter((x) => x.d.id === d.id).map((x) => x.it).join(', ')}</td>
+-                    <td className="py-8">
+-                      <Badge tone={d.status === 'shipped' || d.status === 'measured' ? 'good' : 'neutral'}>{STATUS_LABEL[d.status]}</Badge>
+-                      {d.result && <p className="mt-4 text-11 text-adm-muted">{d.result}</p>}
+-                    </td>
+-                  </tr>
++            <div className="flex flex-col gap-6">
++              <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">Headline results (prediction)</h3>
++              <dl className="grid grid-cols-2 gap-8">
++                {it.headline.slice(0, 4).map((f) => (
++                  <div key={f.label} className="flex min-w-0 flex-col gap-2 rounded-8 bg-adm-bg p-10">
++                    <dt className="text-11 text-adm-muted">{f.label}</dt>
++                    <dd className="text-14 font-semibold tabular-nums text-adm-ink">{f.value}</dd>
++                    {f.note && <dd className="text-11 text-adm-ink-2">{f.note}</dd>}
++                  </div>
+                 ))}
+-              </tbody>
+-            </table>
+-          </div>
+-        </Panel>
+-      </section>
++              </dl>
++            </div>
+ 
+-      <section id="reading" className="scroll-mt-16">
+-        <Panel title="What it adds up to" description="The agent’s own reading of the re-run, written from its computed tallies (tests pin the figures it quotes).">
+-          <ul className="flex list-disc flex-col gap-8 pl-18 text-13 text-adm-ink-2">
+-            {OVERALL_SUMMARY.slice(3).map((s) => (
+-              <li key={s}>{s}</li>
+-            ))}
+-          </ul>
+-        </Panel>
++            <footer className="mt-auto flex justify-end border-t border-adm-line pt-10">
++              <Link to={it.link} className="inline-flex items-center gap-4 text-12 font-medium text-adm-ink underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink">
++                Full detail <ArrowRight size={12} aria-hidden="true" />
++              </Link>
++            </footer>
++          </article>
++        ))}
+       </section>
+ 
+       <SourcesSection
+         findings={BUYER_REPORT_FINDINGS}
++        labels={['prediction', 'sample', 'document']}
+         limits={[
+-          'Every person in every run is synthetic. The agent plays them; nobody real answered.',
+-          'One agent plays the whole panel, so all answers share its blind spots.',
+-          'Panels of 10 and 36 show which segments differ; they cannot size a market.',
+-          'Runs v1 and v2 used persona generator 1, which made incoherent people (the run found them); comparisons across runs are approximate.',
+-          'Offer B in run v3 is a proposal answered as if built. Nothing can be bought yet, so “would pay” is intent.',
+-          'No agent can tell whether the first session actually works for someone; staying depends on that.',
+-          `Runs v1–v3 tested prices that are not today’s app price (${APP_PRICE.amount}): v1 the admin’s mock $9.99 / $79, v2 mock regional prices, v3 those and a proposed $59.99 a year. Their price answers and “would pay” hold for those prices only.`,
++          'Every person in every report is synthetic. The agent plays them; nobody real answered.',
++          'One agent plays the whole panel, so all answers share its blind spots. Panels of 10 and 36 show which segments differ; they cannot size a market.',
++          'No report records reading the PRD, so the PRD input is “not recorded” for all four.',
++          'Reports v1–v3 walked no screens: they read the offer as text. Only report v4 walked real production versions.',
++          `Reports v1–v3 tested prices that are not today’s app price (${APP_PRICE.amount}); their price answers hold for those prices only.`,
++          'Reports v1 and v2 used persona generator 1, which made incoherent people; comparisons across reports are approximate.',
+         ]}
+       />
+     </div>
+diff --git a/src/admin/pages/reports/InputGraph.tsx b/src/admin/pages/reports/InputGraph.tsx
+new file mode 100644
+index 0000000..7c4900f
+--- /dev/null
++++ b/src/admin/pages/reports/InputGraph.tsx
+@@ -0,0 +1,129 @@
++import { useState } from 'react'
++import { INPUT_DOT } from './reportColors'
++import { INPUT_KINDS, INPUT_LABEL, changedFrom, inputEdges, type InputKind, type Iteration, type ReportId } from '../../data/buyerAgentReport'
++
++/*
++ * U122 (J177): the buyer report's inputs as a matrix-like graph. Rows are the
++ * five input kinds, columns the report versions; each cell is the value that
++ * report used, on a line from its input. A line is drawn only where the data
++ * records the input (inputEdges); "not recorded" cells sit on a dashed gap.
++ * Click a report to light its five inputs; click an input to follow it across
++ * the reports and see where it changed.
++ */
++
++const INPUT_LINE: Record<InputKind, string> = {
++  personas: 'border-adm-s1',
++  product: 'border-adm-s2',
++  prd: 'border-adm-s3',
++  ownerDocs: 'border-adm-s4',
++  price: 'border-adm-good',
++}
++
++type Pick = { kind: 'report'; id: ReportId } | { kind: 'input'; id: InputKind } | null
++
++export function InputGraph({ iterations }: { iterations: Iteration[] }) {
++  const [pick, setPick] = useState<Pick>(null)
++  const edges = inputEdges(iterations)
++  const hasEdge = (k: InputKind, r: ReportId) => edges.some((e) => e.input === k && e.report === r)
++  const lit = (k: InputKind, r: ReportId) => !pick || (pick.kind === 'report' ? pick.id === r : pick.id === k)
++  const toggle = (p: NonNullable<Pick>) => setPick((cur) => (cur && cur.kind === p.kind && cur.id === p.id ? null : p))
++  const selected = pick?.kind === 'report' ? iterations.find((it) => it.id === pick.id) : undefined
++
++  return (
++    <div className="flex flex-col gap-12">
++      <div className="overflow-x-auto rounded-8 border border-adm-line bg-adm-bg p-12">
++        <div className="grid min-w-[880px] gap-x-12 gap-y-10" style={{ gridTemplateColumns: `170px repeat(${iterations.length}, minmax(170px, 1fr))` }} role="group" aria-label="Inputs on the left, report versions across the top; each cell is the value that report used.">
++          <div className="self-end text-11 font-semibold uppercase tracking-wider text-adm-muted">Inputs ↓ · Reports →</div>
++          {iterations.map((it) => {
++            const on = pick?.kind === 'report' && pick.id === it.id
++            return (
++              <button
++                key={it.id}
++                type="button"
++                aria-pressed={on}
++                onClick={() => toggle({ kind: 'report', id: it.id })}
++                data-report={it.id}
++                className={`flex flex-col items-start gap-2 rounded-8 border px-10 py-8 text-left transition-colors ${on ? 'border-adm-ink bg-adm-ink text-adm-surface' : 'border-adm-ink-2 bg-adm-surface text-adm-ink hover:bg-adm-hover'}`}
++              >
++                <span className="text-13 font-semibold">{it.name}</span>
++                <span className={`text-11 ${on ? 'text-adm-surface/80' : 'text-adm-muted'}`}>{INPUT_KINDS.filter((k) => it.inputs[k].recorded).length} of 5 inputs recorded</span>
++              </button>
++            )
++          })}
++          {INPUT_KINDS.map((k) => {
++            const on = pick?.kind === 'input' && pick.id === k
++            return [
++              <button
++                key={k}
++                type="button"
++                aria-pressed={on}
++                onClick={() => toggle({ kind: 'input', id: k })}
++                data-input={k}
++                className={`flex items-center gap-8 rounded-8 border px-10 py-8 text-left text-12 font-semibold transition-colors ${on ? 'border-adm-ink bg-adm-ink text-adm-surface' : 'border-adm-line bg-adm-surface text-adm-ink hover:bg-adm-hover'}`}
++              >
++                <span className={`h-8 w-8 shrink-0 rounded-full ${INPUT_DOT[k]}`} aria-hidden="true" />
++                {INPUT_LABEL[k]}
++              </button>,
++              ...iterations.map((it, i) => {
++                const v = it.inputs[k]
++                const edge = hasEdge(k, it.id)
++                const changed = changedFrom(iterations, i, k)
++                const bright = lit(k, it.id)
++                return (
++                  <div key={`${k}-${it.id}`} data-cell={`${k}:${it.id}`} data-lit={bright && pick ? 'true' : undefined} className={`relative flex items-center transition-opacity ${bright ? 'opacity-100' : 'opacity-25'}`}>
++                    <span aria-hidden="true" className={`absolute top-1/2 -left-12 w-12 border-t-2 ${edge ? INPUT_LINE[k] : 'border-dashed border-adm-axis'}`} />
++                    <div
++                      className={`relative w-full rounded-8 border px-10 py-6 text-12 ${edge ? 'border-adm-line bg-adm-surface text-adm-ink' : 'border-dashed border-adm-axis bg-transparent italic text-adm-muted'} ${bright && pick ? 'ring-2 ring-adm-ink' : ''}`}
++                    >
++                      {v.short}
++                      {changed && <span className="ml-6 inline-block rounded-4 bg-adm-s2/15 px-4 text-10 font-semibold not-italic text-adm-ink">changed</span>}
++                    </div>
++                  </div>
++                )
++              }),
++            ]
++          })}
++        </div>
++      </div>
++
++      <div className="min-h-[72px] rounded-8 border border-adm-line bg-adm-surface p-12 text-12" aria-live="polite">
++        {!pick && <p className="text-adm-muted">Click a report to see its five inputs in full, or an input to follow it across the reports. A solid line means the input is recorded; a dashed gap means the data does not say.</p>}
++        {selected && (
++          <div className="flex flex-col gap-8">
++            <p className="text-13 font-semibold text-adm-ink">{selected.name} was made from</p>
++            <dl className="grid gap-x-12 gap-y-6 lg:grid-cols-[180px_1fr]">
++              {INPUT_KINDS.map((k) => (
++                <div key={k} className="contents">
++                  <dt className="flex items-center gap-6 font-semibold text-adm-ink">
++                    <span className={`h-8 w-8 rounded-full ${INPUT_DOT[k]}`} aria-hidden="true" />
++                    {INPUT_LABEL[k]}
++                  </dt>
++                  <dd className={selected.inputs[k].recorded ? 'text-adm-ink-2' : 'italic text-adm-muted'}>
++                    {selected.inputs[k].recorded ? '' : 'Not recorded. '}
++                    {selected.inputs[k].detail}
++                  </dd>
++                </div>
++              ))}
++            </dl>
++          </div>
++        )}
++        {pick?.kind === 'input' && (
++          <div className="flex flex-col gap-8">
++            <p className="text-13 font-semibold text-adm-ink">{INPUT_LABEL[pick.id]}, report by report</p>
++            <ol className="flex flex-col gap-6">
++              {iterations.map((it, i) => (
++                <li key={it.id} className="flex flex-col gap-2 lg:flex-row lg:gap-12">
++                  <span className="shrink-0 font-semibold text-adm-ink lg:w-[260px]">
++                    {it.name}
++                    {changedFrom(iterations, i, pick.id) && <span className="ml-6 rounded-4 bg-adm-s2/15 px-4 text-10 font-semibold">changed</span>}
++                  </span>
++                  <span className={it.inputs[pick.id].recorded ? 'text-adm-ink-2' : 'italic text-adm-muted'}>{it.inputs[pick.id].detail}</span>
++                </li>
++              ))}
++            </ol>
++          </div>
++        )}
++      </div>
++    </div>
++  )
++}
+diff --git a/src/admin/pages/reports/reportColors.ts b/src/admin/pages/reports/reportColors.ts
+index 66c4656..5d0ac1d 100644
+--- a/src/admin/pages/reports/reportColors.ts
++++ b/src/admin/pages/reports/reportColors.ts
+@@ -1,3 +1,4 @@
++import type { InputKind } from '../../data/buyerAgentReport'
+ import type { SourceLabel } from '../../data/reportSources'
+ 
+ /** Edge and dot colour per label; admin series tokens, so both themes work. Shared by the report graphs. */
+@@ -21,3 +22,12 @@ export const LABEL_FILL: Record<SourceLabel, string> = {
+   'third-party': 'fill-adm-muted',
+   scenario: 'fill-adm-critical',
+ }
++
++/** Dot colour per buyer-report input (U122). */
++export const INPUT_DOT: Record<InputKind, string> = {
++  personas: 'bg-adm-s1',
++  product: 'bg-adm-s2',
++  prd: 'bg-adm-s3',
++  ownerDocs: 'bg-adm-s4',
++  price: 'bg-adm-good',
++}
+-- 
+2.43.0
+
