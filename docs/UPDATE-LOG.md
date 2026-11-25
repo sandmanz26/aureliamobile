@@ -159,9 +159,22 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U120 | `dfe36fb` | 2026-11-24 | Wiki API contract split into pages: **General** (the default: what v2 is, conventions, data model, decisions), **Apps**, **Admin**, and **v1** (the earlier full contract). | [patch](patches/U120-dfe36fb.patch) |
 | U121 | `7bfc4e4` | 2026-11-24 | Combination report graph in four levels: Sources (16) → Building blocks (10) → Stage readings (5) → Verdict (6). Click a node to highlight its path and see "Made of" and "Feeds"; a text version sits below the graph. | [patch](patches/U121-7bfc4e4.patch) |
 | U122 | `5ffceb2` | 2026-11-25 | Buyer agent report rebuilt around five inputs (personas, product version, PRD, the business owner's documents, price) → Report v1, v2, v3, v4 (the re-run). Includes an input graph (click a report or an input), a what-changed table, and a card per report. The PRD is "not recorded" for every report. | [patch](patches/U122-5ffceb2.patch) |
+| U123 | `b99372f` | 2026-11-25 | Admin sidebar: a menu search box (the `/` key, arrow keys, Enter); icons on the top-level groups only, with nested items indented; Experimentation's two feedback groups moved into Product lab; Buyer agent results hidden from the menu (the route still works). | [patch](patches/U123-b99372f.patch) |
+| U125 | `933b07e` | 2026-11-25 | Wiki Research v3 (now the default), Insight Timer round 3: 21 features mapped to the funnel and journey; 14 ranked quick wins; what not to copy; Map of Healing against our Healing Map; their Retreats (a 10% listing fee) against Retreat-in-a-Box; a roast; 23 sources. | [patch](patches/U125-933b07e.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U125 — Insight Timer round 3
+
+- **Commit:** `933b07e` · 2026-11-25.
+- **Finding:** none of round 2's "Now" quick wins has been built; ranks 1–10 are frontend-only but change mobile screens, so building them needs an explicit mobile request.
+- **Revert:** `git revert --no-commit 933b07e`.
+
+### U123 — Admin sidebar search and groups
+
+- **Commit:** `b99372f` · 2026-11-25.
+- **Revert:** `git revert --no-commit b99372f`.
 
 ### U122 — Buyer agent report by inputs
 

@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-25 — Sidebar search; Insight Timer round 3 (U123, U125, J178)
+
+The admin menu is searchable, icons sit on the groups only, Product lab now holds the feedback groups, and wiki Research opens on round 3.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-25 — Buyer agent report by inputs (U122, J177)
 
 Each buyer report version shows the personas, product version, PRD, documents and price it used.
