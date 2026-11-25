@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-25 — Persona set v4 (U134, J185)
+
+Admin Personas default to set v4: 1,000 realistic people with age, mental-state scenarios and wellness condition. Sets v1/v2 unchanged.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-25 — B2B2C diagrams (U133, J184)
 
 The B2B2C report and wiki show how the channels work as diagrams.

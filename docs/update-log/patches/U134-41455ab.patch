@@ -1,0 +1,1403 @@
+commit 41455abb4f3c6bbd092f1aee41e25794f6fbfe39
+Author: Claude <noreply@anthropic.com>
+Date:   Wed Nov 25 15:41:48 2026 +0000
+
+    Personas v4: 1,000 realistic people with mental-state scenarios, wellness condition and age from cited distributions; coherence checked (U134, J185)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+
+diff --git a/src/admin/data/glossary.ts b/src/admin/data/glossary.ts
+index aab787c..67405c2 100644
+--- a/src/admin/data/glossary.ts
++++ b/src/admin/data/glossary.ts
+@@ -32,6 +32,10 @@ export const GLOSSARY = {
+   sample: { term: 'Sample data', plain: 'Invented numbers that look real, so the screens can be read before a real study runs. Not measured.' },
+   'feedback-group': { term: 'Feedback group', plain: 'A planned study: 30 real people use Aurelia for 8 weeks and tell us how they feel. It has not started yet.' },
+   preset: { term: 'Middle option', plain: 'The middle of three ready-made choices of AI suppliers: cheap, middle and best quality.' },
++  'life-situation': { term: 'Life situation', plain: 'What is happening in a person’s life right now, like exams, a new baby or losing a job.' },
++  'wellness-score': { term: 'Wellness score', plain: 'Where a person starts on our 0–100 scale, higher is better. Below 40 is severe, 40–64 moderate, 65 and up mild.' },
++  screening: { term: 'Screening band', plain: 'A rough sort from a few short questions, like the PHQ-2 or GAD-2 forms. It is never a diagnosis.' },
++  'risk-flag': { term: 'Risk flag', plain: 'The person may be in danger, for example very low mood with thoughts of self-harm. Aurelia shows Need help now? and never sells to them.' },
+ } satisfies Record<string, GlossaryEntry>
+ 
+ export type TermId = keyof typeof GLOSSARY
+diff --git a/src/admin/data/personas.ts b/src/admin/data/personas.ts
+index dce694d..8d215ae 100644
+--- a/src/admin/data/personas.ts
++++ b/src/admin/data/personas.ts
+@@ -6,6 +6,8 @@
+ // (age fits life stage, work and household; goal fits struggle, triggers and
+ // the user-journey moments they would hit).
+ 
++import { incoherenceV4, type PersonaV4 } from './personasV4'
++
+ export type GoalId = 'sleep' | 'calm' | 'clarity' | 'focus' | 'regulate' | 'energy'
+ export type Gender = 'woman' | 'man' | 'non-binary'
+ export type WorkPattern = 'office' | 'hybrid' | 'remote' | 'shift' | 'self-employed' | 'student' | 'caregiver' | 'between jobs' | 'retired'
+@@ -749,7 +751,11 @@ export function distribution<K extends keyof Persona>(ps: Persona[], key: K): [s
+  * runs found broken. Generator 2 must return none of these; generator 1 is
+  * kept as it was for the runs pinned to it.
+  */
+-export function incoherence(p: Persona): string[] {
++export function incoherence(p: Persona | PersonaV4): string[] {
++  // Set v4 (U134) adds its own rules: age vs life stage and situation,
++  // menopause by age and sex, income by country, shift work vs sleep timing,
++  // severe scores vs daily functioning, and the safety routing.
++  if ('set' in p) return incoherenceV4(p)
+   const out: string[] = []
+   const f = p.profile
+   const t = f.testing
+@@ -768,3 +774,12 @@ export function incoherence(p: Persona): string[] {
+   if (p.flags.includes('night shift worker') && p.workPattern !== 'shift' && !working) out.push(`night shift worker who is ${p.workPattern}`)
+   return out
+ }
++
++/*
++ * Persona set v4 (generator 3, U134): 1,000 people from cited distributions,
++ * with a life situation and a wellness condition each. It lives in
++ * personasV4.ts so generators 1 and 2 above stay byte-identical; exported
++ * here for future buyer-agent runs.
++ */
++export { PERSONA_COUNT_V4, SEED_V4, SOURCES as PERSONA_SOURCES_V4, buyerVarsV4, generatePersonasV4, incoherenceV4 } from './personasV4'
++export type { PersonaV4 } from './personasV4'
+diff --git a/src/admin/data/personasV4.test.ts b/src/admin/data/personasV4.test.ts
+new file mode 100644
+index 0000000..4060325
+--- /dev/null
++++ b/src/admin/data/personasV4.test.ts
+@@ -0,0 +1,122 @@
++import { describe, expect, it } from 'vitest'
++import { generatePersonas, incoherence } from './personas'
++import { AGE_BANDS, AGE_PROFILES, PERSONA_COUNT_V4, PLACES_V4, SCENARIO_IDS, SOURCES, TARGETS, buyerVarsV4, generatePersonasV4, incoherenceV4, type PersonaV4 } from './personasV4'
++
++const all = generatePersonasV4()
++const share = (f: (p: PersonaV4) => boolean, base: PersonaV4[] = all) => base.filter(f).length / base.length
++
++describe('persona set v4', () => {
++  it('makes 1,000 with unique ids, the same every time from its seed', () => {
++    expect(all).toHaveLength(PERSONA_COUNT_V4)
++    expect(new Set(all.map((p) => p.id)).size).toBe(PERSONA_COUNT_V4)
++    expect(generatePersonasV4(PERSONA_COUNT_V4, 20264)).toEqual(all)
++    expect(generatePersonasV4(50, 7)).toEqual(generatePersonasV4(50, 7))
++    expect(generatePersonasV4(50, 7)).not.toEqual(generatePersonasV4(50, 8))
++  })
++
++  it('leaves generators 1 and 2 as they were', () => {
++    expect(generatePersonas(undefined, undefined, 1)[0].id).toBe('P001')
++    expect(generatePersonas(undefined, undefined, 2).every((p) => incoherence(p).length === 0)).toBe(true)
++  })
++
++  it('is coherent: incoherence() finds nothing in any of the 1,000', () => {
++    const bad = all.flatMap((p) => incoherence(p).map((x) => `${p.id}: ${x}`))
++    expect(bad).toEqual([])
++  })
++
++  it('catches the new kinds of contradiction', () => {
++    const p = all.find((x) => x.sex === 'man' && x.age > 40 && x.age < 55 && x.work === 'employed' && !x.nightShift)!
++    expect(incoherenceV4({ ...p, scenario: 'menopause' }).join()).toMatch(/menopause/)
++    expect(incoherenceV4({ ...p, work: 'student' }).join()).toMatch(/student/)
++    expect(incoherenceV4({ ...p, incomeUsdMonth: p.incomeUsdMonth * 20 }).join()).toMatch(/income/)
++    expect(incoherenceV4({ ...p, nightShift: true, shiftWork: true }).join()).toMatch(/night shift worker going to bed/)
++    expect(incoherenceV4({ ...p, wellness: { ...p.wellness, band: 'severe', score: 20, functioning: 'mostly fine day to day, a bad night now and then' } }).join()).toMatch(/fine day to day/)
++    expect(incoherenceV4({ ...p, riskFlag: true }).join()).toMatch(/risk/)
++  })
++
++  it('gives every persona an age, a life situation and a wellness condition', () => {
++    for (const p of all) {
++      expect(p.age, p.id).toBeGreaterThanOrEqual(18)
++      expect(SCENARIO_IDS).toContain(p.scenario)
++      expect(p.badNightTriggers.length).toBeGreaterThan(0)
++      expect(p.wellness.score).toBeGreaterThanOrEqual(0)
++      expect(p.wellness.score).toBeLessThanOrEqual(100)
++      expect(p.story).toHaveLength(3)
++      expect(p.name).not.toMatch(/eugene/i)
++    }
++    expect(new Set(all.map((p) => p.scenario)).size).toBe(SCENARIO_IDS.length)
++    expect(new Set(all.map((p) => p.wellness.band)).size).toBe(3)
++  })
++
++  it('keeps the country mix within 3 percentage points of the market weights', () => {
++    for (const pl of PLACES_V4) expect(Math.abs(share((p) => p.country === pl.country) - pl.weight / 100), pl.country).toBeLessThan(0.03)
++  })
++
++  it('matches UN age shares by country group and an even sex split', () => {
++    for (const [group, prof] of Object.entries(AGE_PROFILES)) {
++      const countries = PLACES_V4.filter((x) => x.ageGroup === group).map((x) => x.country)
++      const ps = all.filter((p) => countries.includes(p.country))
++      if (ps.length < 150) continue
++      AGE_BANDS.forEach((b, i) => expect(Math.abs(share((p) => p.ageBand === b, ps) - prof[i] / 100), `${group} ${b}`).toBeLessThan(0.07))
++    }
++    expect(Math.abs(share((p) => p.sex === 'woman') - 0.5)).toBeLessThan(0.04)
++    expect(share((p) => p.age >= 65)).toBeGreaterThan(0.1)
++  })
++
++  it('follows phone share by country', () => {
++    const ios = (c: string) => share((p) => p.device === 'iPhone', all.filter((p) => p.country === c))
++    expect(ios('United States')).toBeGreaterThan(0.42)
++    expect(ios('Indonesia')).toBeLessThan(0.2)
++    expect(ios('India')).toBeLessThan(0.15)
++  })
++
++  it('hits the cited wellness shares', () => {
++    expect(Math.abs(share((p) => p.wellness.sleep.band !== 'good') - TARGETS.insomniaSymptoms)).toBeLessThan(0.01)
++    expect(Math.abs(share((p) => p.wellness.sleep.band === 'very poor') - TARGETS.insomniaDisorder)).toBeLessThan(0.01)
++    expect(Math.abs(share((p) => p.wellness.stress.stressedYesterday) - TARGETS.stressedYesterday)).toBeLessThan(0.01)
++    expect(Math.abs(share((p) => p.wellness.mood !== 'none') - TARGETS.lowMoodAny)).toBeLessThan(0.01)
++    expect(Math.abs(share((p) => p.wellness.anxiety !== 'none') - TARGETS.anxietyAny)).toBeLessThan(0.01)
++    expect(Math.abs(share((p) => p.wellness.activeMinutesWeek < 150) - TARGETS.insufficientActivity)).toBeLessThan(0.01)
++    const women = all.filter((p) => p.sex === 'woman')
++    const men = all.filter((p) => p.sex === 'man')
++    expect(share((p) => p.wellness.mood !== 'none', women)).toBeGreaterThan(share((p) => p.wellness.mood !== 'none', men))
++    expect(share((p) => p.wellness.anxiety !== 'none', all.filter((p) => p.age < 25))).toBeGreaterThan(share((p) => p.wellness.anxiety !== 'none', all.filter((p) => p.age >= 65)))
++  })
++
++  it('hits the cited life-circumstance shares within tolerance', () => {
++    const workers = all.filter((p) => p.work === 'employed' || p.work === 'self-employed')
++    expect(Math.abs(share((p) => p.shiftWork, workers) - TARGETS.shiftOfWorkers)).toBeLessThan(0.05)
++    expect(Math.abs(share((p) => p.caregiving) - TARGETS.caregiving)).toBeLessThan(0.04)
++    expect(Math.abs(share((p) => p.chronicPain) - TARGETS.chronicPain)).toBeLessThan(0.04)
++    expect(Math.abs(share((p) => p.priorApp !== 'none') - TARGETS.priorApp)).toBeLessThan(0.04)
++    const wear = share((p) => p.wearable !== 'none')
++    expect(wear).toBeGreaterThan(0.12)
++    expect(wear).toBeLessThan(0.3)
++  })
++
++  it('flags a small, sane share for help, and never markets to them', () => {
++    const flagged = all.filter((p) => p.riskFlag)
++    expect(flagged.length / all.length).toBeGreaterThanOrEqual(0.015)
++    expect(flagged.length / all.length).toBeLessThanOrEqual(0.05)
++    for (const p of flagged) {
++      expect(p.routing).toBe('Need help now?')
++      expect(p.marketable).toBe(false)
++      expect(['moderate', 'severe']).toContain(p.wellness.mood)
++    }
++    expect(all.filter((p) => !p.riskFlag).every((p) => p.marketable && p.routing === 'normal')).toBe(true)
++  })
++
++  it('cites every source with a URL and a year, labelled measured or assumption', () => {
++    for (const s of SOURCES) {
++      expect(s.url, s.id).toMatch(/^https:\/\//)
++      expect(s.year).toBeGreaterThan(1999)
++      expect(['measured', 'assumption']).toContain(s.kind)
++    }
++    expect(SOURCES.filter((s) => s.kind === 'measured').length).toBeGreaterThan(10)
++  })
++
++  it('gives buyer runs every variable they read', () => {
++    const v = buyerVarsV4(all[0])
++    for (const k of ['condition', 'wearable', 'device', 'language', 'found', 'priorApp', 'churn', 'budget', 'lifeStage', 'needTime', 'aiTrust', 'privacy', 'culture']) expect(v[k as keyof typeof v], k).toBeTruthy()
++  })
++})
+diff --git a/src/admin/data/personasV4.ts b/src/admin/data/personasV4.ts
+new file mode 100644
+index 0000000..3471227
+--- /dev/null
++++ b/src/admin/data/personasV4.ts
+@@ -0,0 +1,674 @@
++// Persona set v4 (generator 3, U134): 1,000 synthetic people whose ages,
++// sexes, countries, phones and wellness mix are drawn from cited figures, each
++// with a current life situation (what is happening to them now) and a
++// starting wellness condition for the bad-to-good model. None of them is
++// real. Generators 1 and 2 (personas.ts) are untouched so earlier runs stay
++// reproducible; this file has its own copy of the PRNG for the same reason.
++//
++// Every figure the generator aims for sits in SOURCES below with its URL and
++// year, labelled either a measured statistic (someone counted it) or our
++// assumption (a choice we made, often informed by a measured figure). The
++// wellness measures are screening-style bands for research role-play only:
++// never a diagnosis.
++
++import type { VarKey } from './buyerPlay'
++
++export const SEED_V4 = 20264
++export const PERSONA_COUNT_V4 = 1000
++
++/* --------------------------------------------------------------- Sources */
++
++export type SourceKind = 'measured' | 'assumption'
++
++export interface Source {
++  id: string
++  what: string
++  figure: string
++  kind: SourceKind
++  cite: string
++  url: string
++  year: number
++}
++
++export const SOURCES: Source[] = [
++  { id: 'wpp', what: 'Age of adults by country', figure: 'Adult age shares per country group, rounded to whole percent (e.g. Indonesia: 16% are 18–24, 10% are 65+; Japan: 31% are 65+)', kind: 'measured', cite: 'UN DESA, World Population Prospects 2024 (2025 estimates)', url: 'https://population.un.org/wpp/', year: 2024 },
++  { id: 'wpp-sex', what: 'Sex by age', figure: 'About 50% women up to 54, 51% at 55–64, 55% at 65+', kind: 'measured', cite: 'UN DESA, World Population Prospects 2024', url: 'https://population.un.org/wpp/', year: 2024 },
++  { id: 'markets', what: 'Country mix', figure: 'Indonesia 20%, United States 14%, India 9%, United Kingdom 7%, then 11 more markets at 4–6% each', kind: 'assumption', cite: 'Aurelia target markets (Indonesia first, then English-speaking and large mobile markets)', url: 'https://population.un.org/wpp/', year: 2026 },
++  { id: 'statcounter', what: 'iPhone vs Android by country', figure: 'iPhone share of phones: US 57%, Japan 66%, UK 50%, Germany 37%, Indonesia 12%, India 5%, Nigeria 12%', kind: 'measured', cite: 'StatCounter Global Stats, mobile operating system market share by country (rounded)', url: 'https://gs.statcounter.com/os-market-share/mobile/', year: 2025 },
++  { id: 'ohayon', what: 'Sleep problems', figure: 'About 30% of adults have insomnia symptoms; about 10% meet the bar for an insomnia disorder', kind: 'measured', cite: 'Ohayon, Epidemiology of insomnia, Sleep Medicine Reviews 6(2)', url: 'https://doi.org/10.1053/smrv.2002.0186', year: 2002 },
++  { id: 'gallup', what: 'Daily stress', figure: '37% of adults worldwide felt stress during a lot of the previous day', kind: 'measured', cite: 'Gallup, Global Emotions report (2023 fieldwork)', url: 'https://www.gallup.com/analytics/349280/state-of-the-world-emotional-health.aspx', year: 2024 },
++  { id: 'nhis-dep', what: 'Low mood symptoms', figure: '18.5% of adults had depression symptoms in the last two weeks: 11.5% mild, 4.2% moderate, 2.8% severe; more in women (21.8%) than men (15.0%)', kind: 'measured', cite: 'Villarroel & Terlizzi, NCHS Data Brief 379 (US, PHQ-8)', url: 'https://www.cdc.gov/nchs/products/databriefs/db379.htm', year: 2020 },
++  { id: 'nhis-anx', what: 'Anxiety symptoms', figure: '15.6% of adults had anxiety symptoms: 9.5% mild, 3.4% moderate, 2.7% severe; highest at 18–29, lowest at 65+; more in women', kind: 'measured', cite: 'Terlizzi & Villarroel, NCHS Data Brief 378 (US, GAD-7)', url: 'https://www.cdc.gov/nchs/products/databriefs/db378.htm', year: 2020 },
++  { id: 'who-dep', what: 'Depression worldwide', figure: 'About 5% of adults live with depression; it is about 50% more common in women', kind: 'measured', cite: 'WHO, Depressive disorder fact sheet', url: 'https://www.who.int/news-room/fact-sheets/detail/depression', year: 2023 },
++  { id: 'nsduh', what: 'Thoughts of suicide', figure: '5.2% of US adults seriously thought about suicide in the past year', kind: 'measured', cite: 'SAMHSA, National Survey on Drug Use and Health 2022', url: 'https://www.samhsa.gov/data/report/2022-nsduh-annual-national-report', year: 2023 },
++  { id: 'risk', what: 'Risk flag share', figure: '2.5% carry a risk flag right now (a point in time, so below the 5.2% past-year figure)', kind: 'assumption', cite: 'Our assumption, set below the NSDUH past-year figure', url: 'https://www.samhsa.gov/data/report/2022-nsduh-annual-national-report', year: 2026 },
++  { id: 'eurofound', what: 'Shift work', figure: '21% of workers do shift work', kind: 'measured', cite: 'Eurofound, Sixth European Working Conditions Survey', url: 'https://www.eurofound.europa.eu/en/publications/2016/sixth-european-working-conditions-survey-overview-report', year: 2016 },
++  { id: 'aarp', what: 'Caregiving', figure: '21% of adults give unpaid care to an adult or a child with special needs', kind: 'measured', cite: 'AARP and National Alliance for Caregiving, Caregiving in the U.S. 2020', url: 'https://www.aarp.org/ppi/info-2020/caregiving-in-the-united-states.html', year: 2020 },
++  { id: 'cdc-pain', what: 'Chronic pain', figure: '20.9% of adults had chronic pain; it rises with age', kind: 'measured', cite: 'Rikard et al., CDC MMWR 72(15), 2021 data', url: 'https://www.cdc.gov/mmwr/volumes/72/wr/mm7215a1.htm', year: 2023 },
++  { id: 'pew', what: 'Wearables', figure: '21% of US adults regularly wear a smartwatch or fitness tracker', kind: 'measured', cite: 'Pew Research Center', url: 'https://www.pewresearch.org/short-reads/2020/01/09/about-one-in-five-americans-use-a-smart-watch-or-fitness-tracker/', year: 2020 },
++  { id: 'wear-income', what: 'Wearables by income', figure: 'Owned by 35% of higher-income, 20% of middle-income and 8% of lower-income people in our set', kind: 'assumption', cite: 'Our assumption, scaled around the Pew figure', url: 'https://www.pewresearch.org/short-reads/2020/01/09/about-one-in-five-americans-use-a-smart-watch-or-fitness-tracker/', year: 2026 },
++  { id: 'nhis-med', what: 'Meditation', figure: '14.2% of US adults meditated in the past year (up from 4.1% in 2012)', kind: 'measured', cite: 'Clarke et al., NCHS Data Brief 325', url: 'https://www.cdc.gov/nchs/products/databriefs/db325.htm', year: 2018 },
++  { id: 'baumel', what: 'Wellness app churn', figure: 'Median 15-day retention of mental-health apps was 3.9%; 30-day 3.3%', kind: 'measured', cite: 'Baumel et al., JMIR 21(9):e14567 (also in docs/research)', url: 'https://www.jmir.org/2019/9/e14567/', year: 2019 },
++  { id: 'prior-app', what: 'Meditation app before', figure: '22% have used a meditation or sleep app; 85% of those stopped', kind: 'assumption', cite: 'Our assumption, informed by NCHS meditation use and Baumel retention', url: 'https://www.jmir.org/2019/9/e14567/', year: 2026 },
++  { id: 'who-pa', what: 'Physical activity', figure: '31% of adults do less than 150 minutes of moderate activity a week', kind: 'measured', cite: 'WHO, Physical activity fact sheet (2022 data)', url: 'https://www.who.int/news-room/fact-sheets/detail/physical-activity', year: 2024 },
++  { id: 'who-meno', what: 'Menopause', figure: 'Usually happens between 45 and 55', kind: 'measured', cite: 'WHO, Menopause fact sheet', url: 'https://www.who.int/news-room/fact-sheets/detail/menopause', year: 2024 },
++  { id: 'income', what: 'Income by country', figure: 'Monthly household income bands per country, around a typical local figure (e.g. Indonesia ~$450, US ~$6,000)', kind: 'assumption', cite: 'Our assumption, informed by World Bank GNI per capita', url: 'https://data.worldbank.org/indicator/NY.GNP.PCAP.CD', year: 2026 },
++  { id: 'situations', what: 'Life situations and habits', figure: 'How often each life situation, caffeine, alcohol and screen habit occurs', kind: 'assumption', cite: 'Our assumption, kept consistent with the measured figures above', url: 'https://population.un.org/wpp/', year: 2026 },
++]
++
++/** The targets the generator aims for; tests hold the set to them. */
++export const TARGETS = {
++  insomniaSymptoms: 0.3,
++  insomniaDisorder: 0.1,
++  stressedYesterday: 0.37,
++  lowMoodAny: 0.185,
++  lowMoodModerateOrWorse: 0.07,
++  anxietyAny: 0.156,
++  riskFlag: 0.025,
++  shiftOfWorkers: 0.21,
++  caregiving: 0.21,
++  chronicPain: 0.209,
++  insufficientActivity: 0.31,
++  priorApp: 0.22,
++} as const
++
++/* ----------------------------------------------------------------- Types */
++
++export type SexV4 = 'woman' | 'man' | 'non-binary'
++export type WorkV4 = 'employed' | 'self-employed' | 'student' | 'between jobs' | 'home and family' | 'retired'
++export type IncomeTier = 'low' | 'middle' | 'high'
++export type Band3 = 'mild' | 'moderate' | 'severe'
++export type ScreenBand = 'none' | 'mild' | 'moderate' | 'severe'
++export type SleepBand = 'good' | 'poor' | 'very poor'
++export type StressBand = 'low' | 'moderate' | 'high'
++export type AgeBandV4 = '18–24' | '25–34' | '35–44' | '45–54' | '55–64' | '65+'
++
++export type ScenarioId =
++  | 'exams'
++  | 'new-parent'
++  | 'job-loss'
++  | 'burnout'
++  | 'grief'
++  | 'shift-rota'
++  | 'pain-flare'
++  | 'relationship'
++  | 'menopause'
++  | 'retirement-lonely'
++  | 'money'
++  | 'post-illness'
++  | 'caring'
++  | 'moved'
++  | 'busy-life'
++
++export interface ScenarioInfo {
++  label: string
++  /** One sentence, after the person's first name. */
++  story: string
++  triggers: string[]
++  strain: number
++}
++
++export const SCENARIOS: Record<ScenarioId, ScenarioInfo> = {
++  exams: { label: 'Exam season', story: 'is in the middle of exams and revises late most nights', triggers: ['the night before an exam', 'checking grades online', 'caffeine after 4pm'], strain: 0.5 },
++  'new-parent': { label: 'New parent', story: 'had a baby a few months ago and has not slept a full night since', triggers: ['night feeds', 'lying awake listening for the baby', 'being too tired to fall asleep'], strain: 0.6 },
++  'job-loss': { label: 'Job loss', story: 'lost their job and is applying for new ones', triggers: ['a rejection email', 'checking the bank balance at night', 'having no reason to get up'], strain: 0.65 },
++  burnout: { label: 'Burnout at work', story: 'has been running on empty at work for months', triggers: ['emails after 10pm', 'Sunday evenings', 'replaying meetings in bed'], strain: 0.7 },
++  grief: { label: 'Grief', story: 'lost someone close this year', triggers: ['anniversaries', 'quiet evenings at home', 'waking at the hour it happened'], strain: 0.7 },
++  'shift-rota': { label: 'Shift work', story: 'works rotating shifts and sleeps at different times every week', triggers: ['switching from nights to days', 'daylight in the bedroom', 'noise while sleeping by day'], strain: 0.55 },
++  'pain-flare': { label: 'Chronic pain flare', story: 'is going through a flare of a long-term pain condition', triggers: ['pain when turning over', 'cold weather', 'a day on their feet'], strain: 0.65 },
++  relationship: { label: 'Relationship conflict', story: 'is in a hard stretch with their partner, or just after a break-up', triggers: ['an argument before bed', 'their phone lighting up', 'an empty side of the bed'], strain: 0.55 },
++  menopause: { label: 'Menopause', story: 'is going through menopause, with night sweats and broken sleep', triggers: ['night sweats', 'a warm bedroom', 'waking at 3am and not dropping off again'], strain: 0.5 },
++  'retirement-lonely': { label: 'Lonely after retiring', story: 'retired recently and misses the people and the structure of work', triggers: ['long empty afternoons', 'napping in the day', 'going to bed early with nothing to do'], strain: 0.5 },
++  money: { label: 'Money worries', story: 'is worried about money, with bills rising faster than income', triggers: ['bills arriving', 'end of the month', 'doing sums in bed'], strain: 0.55 },
++  'post-illness': { label: 'Recovering after illness', story: 'is recovering from a serious illness and still gets tired easily', triggers: ['a day that was too busy', 'worrying it will come back', 'medicines that disturb sleep'], strain: 0.5 },
++  caring: { label: 'Caring for family', story: 'looks after a parent or partner who needs daily care', triggers: ['being called in the night', 'a hospital appointment', 'no time for themselves'], strain: 0.6 },
++  moved: { label: 'New city', story: 'moved to a new city and does not know many people yet', triggers: ['a strange bedroom', 'weekends alone', 'street noise'], strain: 0.4 },
++  'busy-life': { label: 'Ordinary busy life', story: 'has no single big event, just a busy life that leaves little time to rest', triggers: ['scrolling in bed', 'a late coffee', 'a long day'], strain: 0.25 },
++}
++
++export const SCENARIO_IDS = Object.keys(SCENARIOS) as ScenarioId[]
++
++export interface WellnessV4 {
++  sleep: { hours: number; latencyMin: number; wakeUps: number; band: SleepBand; bedtime: string; wake: string }
++  stress: { band: StressBand; stressedYesterday: boolean }
++  /** PHQ-2-like low-mood screening band. Screening only, never a diagnosis. */
++  mood: ScreenBand
++  /** GAD-2-like worry screening band. Screening only, never a diagnosis. */
++  anxiety: ScreenBand
++  energy: 1 | 2 | 3 | 4 | 5
++  activeMinutesWeek: number
++  caffeineCups: number
++  alcoholDrinksWeek: number
++  screenInBedMin: number
++  /** 0–100, higher is better: where the person starts on the bad-to-good scale. */
++  score: number
++  band: Band3
++  functioning: string
++}
++
++export interface PersonaV4 {
++  id: string
++  set: 'v4'
++  name: string
++  age: number
++  ageBand: AgeBandV4
++  sex: SexV4
++  country: string
++  region: string
++  city: string
++  language: string
++  readsEnglish: boolean
++  device: 'iPhone' | 'Android'
++  deviceAge: 'new' | 'a few years old'
++  work: WorkV4
++  occupation: string
++  shiftWork: boolean
++  nightShift: boolean
++  household: string
++  lifeStage: string
++  income: IncomeTier
++  incomeUsdMonth: number
++  caregiving: boolean
++  chronicPain: boolean
++  wearable: string
++  priorApp: string
++  priorAppOutcome: 'never used one' | 'still uses it' | 'stopped'
++  aiAttitude: 'enthusiastic' | 'curious' | 'skeptical' | 'distrustful'
++  scenario: ScenarioId
++  onsetWeeksAgo: number
++  duration: string
++  badNightTriggers: string[]
++  wellness: WellnessV4
++  riskFlag: boolean
++  /** Where the AI sends this person first. Risk-flagged people get the help screen, never a sale. */
++  routing: 'Need help now?' | 'normal'
++  marketable: boolean
++  story: string[]
++  mightTry: string
++  mightNot: string
++}
++
++/* ------------------------------------------------------------------ PRNG */
++
++/** mulberry32, a copy of the one in personas.ts so that file stays untouched. */
++function rng(seed: number) {
++  let a = seed >>> 0
++  return () => {
++    a = (a + 0x6d2b79f5) >>> 0
++    let t = a
++    t = Math.imul(t ^ (t >>> 15), t | 1)
++    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
++    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
++  }
++}
++type Rand = () => number
++const pick = <T,>(r: Rand, xs: readonly T[]): T => xs[Math.floor(r() * xs.length)]
++function weighted<T>(r: Rand, xs: readonly (readonly [T, number])[]): T {
++  const total = xs.reduce((n, [, w]) => n + w, 0)
++  let x = r() * total
++  for (const [v, w] of xs) {
++    x -= w
++    if (x < 0) return v
++  }
++  return xs[xs.length - 1][0]
++}
++const between = (r: Rand, lo: number, hi: number) => lo + r() * (hi - lo)
++const roundTo = (x: number, step: number) => Math.round(x / step) * step
++
++/* ---------------------------------------------------------------- Places */
++
++type AgeProfile = readonly [number, number, number, number, number, number]
++/** Adult age shares (18–24 … 65+), rounded from UN WPP 2024. */
++export const AGE_PROFILES: Record<string, AgeProfile> = {
++  'West Africa': [25, 27, 19, 13, 9, 7],
++  'South and Southeast Asia': [16, 22, 21, 18, 13, 10],
++  'Latin America': [14, 20, 20, 17, 14, 15],
++  'English-speaking West': [11, 17, 17, 15, 16, 24],
++  Singapore: [9, 16, 18, 18, 17, 22],
++  'Japan and Western Europe': [8, 14, 14, 15, 18, 31],
++}
++export const AGE_BANDS: AgeBandV4[] = ['18–24', '25–34', '35–44', '45–54', '55–64', '65+']
++
++interface PlaceV4 {
++  country: string
++  weight: number
++  ageGroup: keyof typeof AGE_PROFILES
++  region: string
++  iosShare: number
++  language: string
++  englishShare: number
++  medianUsd: number
++  cities: string[]
++  women: string[]
++  men: string[]
++  surnames: string[]
++  muslimMajority?: boolean
++}
++
++export const PLACES_V4: PlaceV4[] = [
++  { country: 'Indonesia', weight: 20, ageGroup: 'South and Southeast Asia', region: 'Southeast Asia', iosShare: 0.12, language: 'Indonesian', englishShare: 0.35, medianUsd: 450, cities: ['Jakarta', 'Surabaya', 'Bandung', 'Medan', 'Yogyakarta', 'Denpasar', 'Makassar', 'Semarang'], women: ['Siti', 'Dewi', 'Putri', 'Ayu', 'Rina', 'Nur', 'Intan', 'Wulan'], men: ['Budi', 'Agus', 'Rizky', 'Dimas', 'Andi', 'Fajar', 'Hendra', 'Yusuf'], surnames: ['S.', 'W.', 'P.', 'H.', 'R.', 'K.'], muslimMajority: true },
++  { country: 'United States', weight: 14, ageGroup: 'English-speaking West', region: 'North America', iosShare: 0.57, language: 'English', englishShare: 1, medianUsd: 6000, cities: ['Austin', 'Chicago', 'Atlanta', 'Denver', 'Phoenix', 'Columbus', 'Seattle', 'Tampa'], women: ['Jessica', 'Ashley', 'Maria', 'Emily', 'Keisha', 'Linda'], men: ['Michael', 'Chris', 'Jose', 'Tyler', 'Darnell', 'Robert'], surnames: ['Miller', 'Johnson', 'Garcia', 'Brown', 'Lee', 'Davis'] },
++  { country: 'India', weight: 9, ageGroup: 'South and Southeast Asia', region: 'South Asia', iosShare: 0.05, language: 'Hindi', englishShare: 0.45, medianUsd: 300, cities: ['Bengaluru', 'Pune', 'Delhi', 'Mumbai', 'Hyderabad', 'Jaipur'], women: ['Priya', 'Anjali', 'Kavya', 'Sunita', 'Neha', 'Meera'], men: ['Rahul', 'Arjun', 'Vikram', 'Rohan', 'Amit', 'Suresh'], surnames: ['Sharma', 'Iyer', 'Patel', 'Reddy', 'Gupta', 'Nair'] },
++  { country: 'United Kingdom', weight: 7, ageGroup: 'English-speaking West', region: 'Europe', iosShare: 0.5, language: 'English', englishShare: 1, medianUsd: 4500, cities: ['Manchester', 'Leeds', 'Bristol', 'Glasgow', 'Birmingham', 'London'], women: ['Sophie', 'Emma', 'Aisha', 'Claire', 'Megan', 'Joanne'], men: ['James', 'Tom', 'Callum', 'Imran', 'Gareth', 'David'], surnames: ['Smith', 'Taylor', 'Khan', 'Wilson', 'Evans', 'Murphy'] },
++  { country: 'Philippines', weight: 6, ageGroup: 'South and Southeast Asia', region: 'Southeast Asia', iosShare: 0.15, language: 'Filipino', englishShare: 0.75, medianUsd: 450, cities: ['Quezon City', 'Cebu City', 'Davao', 'Manila', 'Iloilo'], women: ['Maria', 'Angelica', 'Kristine', 'Joy', 'Rowena'], men: ['Juan', 'Mark', 'Paolo', 'Rodel', 'Jerome'], surnames: ['Santos', 'Reyes', 'Cruz', 'Bautista', 'Garcia'] },
++  { country: 'Malaysia', weight: 5, ageGroup: 'South and Southeast Asia', region: 'Southeast Asia', iosShare: 0.22, language: 'Malay', englishShare: 0.7, medianUsd: 1300, cities: ['Kuala Lumpur', 'Penang', 'Johor Bahru', 'Ipoh', 'Kuching'], women: ['Nurul', 'Mei Ling', 'Aishah', 'Priya', 'Farah'], men: ['Ahmad', 'Wei Jie', 'Hafiz', 'Ravi', 'Amir'], surnames: ['A.', 'Tan', 'Lim', 'R.', 'H.'], muslimMajority: true },
++  { country: 'Australia', weight: 5, ageGroup: 'English-speaking West', region: 'Oceania', iosShare: 0.55, language: 'English', englishShare: 1, medianUsd: 5500, cities: ['Melbourne', 'Brisbane', 'Perth', 'Adelaide', 'Sydney'], women: ['Chloe', 'Olivia', 'Mia', 'Sarah', 'Kylie'], men: ['Jack', 'Liam', 'Nathan', 'Ben', 'Lachlan'], surnames: ['Wilson', 'Nguyen', 'Smith', 'Jones', 'Kelly'] },
++  { country: 'Germany', weight: 5, ageGroup: 'Japan and Western Europe', region: 'Europe', iosShare: 0.37, language: 'German', englishShare: 0.6, medianUsd: 4500, cities: ['Berlin', 'Hamburg', 'Cologne', 'Leipzig', 'Munich'], women: ['Anna', 'Lena', 'Katrin', 'Sabine', 'Elif'], men: ['Jonas', 'Lukas', 'Thomas', 'Mehmet', 'Stefan'], surnames: ['Müller', 'Schmidt', 'Weber', 'Yilmaz', 'Fischer'] },
++  { country: 'Brazil', weight: 5, ageGroup: 'Latin America', region: 'Latin America', iosShare: 0.18, language: 'Portuguese', englishShare: 0.15, medianUsd: 900, cities: ['São Paulo', 'Recife', 'Belo Horizonte', 'Curitiba', 'Salvador'], women: ['Ana', 'Juliana', 'Fernanda', 'Camila', 'Luciana'], men: ['João', 'Lucas', 'Rafael', 'Thiago', 'Marcos'], surnames: ['Silva', 'Souza', 'Oliveira', 'Costa', 'Lima'] },
++  { country: 'Mexico', weight: 4, ageGroup: 'Latin America', region: 'Latin America', iosShare: 0.22, language: 'Spanish', englishShare: 0.2, medianUsd: 900, cities: ['Mexico City', 'Guadalajara', 'Monterrey', 'Puebla', 'Mérida'], women: ['Guadalupe', 'Sofía', 'Daniela', 'Mariana', 'Rosa'], men: ['José', 'Luis', 'Diego', 'Alejandro', 'Miguel'], surnames: ['Hernández', 'López', 'Martínez', 'Ramírez', 'Flores'] },
++  { country: 'Canada', weight: 4, ageGroup: 'English-speaking West', region: 'North America', iosShare: 0.58, language: 'English', englishShare: 0.95, medianUsd: 5000, cities: ['Toronto', 'Calgary', 'Ottawa', 'Vancouver', 'Halifax'], women: ['Emily', 'Amélie', 'Harpreet', 'Jennifer', 'Grace'], men: ['Ryan', 'Étienne', 'Gurpreet', 'Kevin', 'Matthew'], surnames: ['Tremblay', 'Singh', 'Wong', 'Martin', 'Roy'] },
++  { country: 'Singapore', weight: 4, ageGroup: 'Singapore', region: 'Southeast Asia', iosShare: 0.4, language: 'English', englishShare: 0.95, medianUsd: 6500, cities: ['Singapore'], women: ['Hui Min', 'Siew Ling', 'Nur Aisyah', 'Kavitha', 'Rachel'], men: ['Jun Wei', 'Marcus', 'Hafiz', 'Arun', 'Daniel'], surnames: ['Tan', 'Lim', 'Ng', 'Rahman', 'Pillai'] },
++  { country: 'Nigeria', weight: 4, ageGroup: 'West Africa', region: 'Africa', iosShare: 0.12, language: 'English', englishShare: 0.85, medianUsd: 200, cities: ['Lagos', 'Abuja', 'Ibadan', 'Port Harcourt', 'Kano'], women: ['Chiamaka', 'Funke', 'Aisha', 'Ngozi', 'Blessing'], men: ['Chinedu', 'Tunde', 'Ibrahim', 'Emeka', 'Segun'], surnames: ['Okafor', 'Adeyemi', 'Bello', 'Eze', 'Balogun'] },
++  { country: 'Japan', weight: 4, ageGroup: 'Japan and Western Europe', region: 'East Asia', iosShare: 0.66, language: 'Japanese', englishShare: 0.15, medianUsd: 3800, cities: ['Tokyo', 'Osaka', 'Fukuoka', 'Sapporo', 'Nagoya'], women: ['Yuki', 'Haruka', 'Aiko', 'Keiko', 'Mai'], men: ['Hiroshi', 'Takumi', 'Kenji', 'Daiki', 'Satoshi'], surnames: ['Sato', 'Suzuki', 'Tanaka', 'Watanabe', 'Ito'] },
++  { country: 'Netherlands', weight: 4, ageGroup: 'Japan and Western Europe', region: 'Europe', iosShare: 0.45, language: 'Dutch', englishShare: 0.9, medianUsd: 4800, cities: ['Amsterdam', 'Rotterdam', 'Utrecht', 'Eindhoven', 'Groningen'], women: ['Sanne', 'Fleur', 'Fatima', 'Lotte', 'Ingrid'], men: ['Daan', 'Bram', 'Youssef', 'Joost', 'Pieter'], surnames: ['de Vries', 'Jansen', 'Bakker', 'El Amrani', 'Visser'] },
++]
++
++/** Share of women by age band (UN WPP 2024, rounded). */
++const WOMEN_SHARE: Record<AgeBandV4, number> = { '18–24': 0.49, '25–34': 0.49, '35–44': 0.5, '45–54': 0.5, '55–64': 0.51, '65+': 0.55 }
++/** Chronic pain by age, shaped like CDC 2021 and centred on its 20.9%. */
++const PAIN_BY_AGE: Record<AgeBandV4, number> = { '18–24': 0.08, '25–34': 0.13, '35–44': 0.19, '45–54': 0.25, '55–64': 0.3, '65+': 0.3 }
++const CARE_BY_AGE: Record<AgeBandV4, number> = { '18–24': 0.12, '25–34': 0.17, '35–44': 0.22, '45–54': 0.28, '55–64': 0.28, '65+': 0.19 }
++/** Income tiers: monthly household income as a multiple of the local typical figure. */
++export const INCOME_RANGE: Record<IncomeTier, [number, number]> = { low: [0.3, 0.7], middle: [0.7, 1.6], high: [1.6, 4] }
++
++const JOBS = {
++  low: ['Warehouse picker', 'Shop assistant', 'Ride-hailing driver', 'Cleaner', 'Call-centre agent', 'Kitchen hand', 'Security guard', 'Factory worker'],
++  middle: ['Teacher', 'Nurse', 'Bank clerk', 'Office administrator', 'Electrician', 'Sales rep', 'Bus driver', 'Pharmacist assistant', 'Junior accountant'],
++  high: ['Software engineer', 'Doctor', 'Lawyer', 'Product manager', 'Finance manager', 'Consultant', 'Architect'],
++} as const
++const SHIFT_JOBS = ['Nurse', 'Hospital porter', 'Factory worker', 'Security guard', 'Call-centre agent', 'Paramedic', 'Hotel night manager', 'Care-home worker']
++const SELF_JOBS = ['Online seller', 'Hairdresser', 'Freelance designer', 'Warung owner', 'Tutor', 'Market trader', 'Photographer', 'Plumber']
++const APPS = ['Calm', 'Headspace', 'Insight Timer', 'BetterSleep', 'a YouTube sleep channel', 'Balance']
++
++export function ageBandOf(age: number): AgeBandV4 {
++  return age < 25 ? '18–24' : age < 35 ? '25–34' : age < 45 ? '35–44' : age < 55 ? '45–54' : age < 65 ? '55–64' : '65+'
++}
++const hhmm = (h: number) => {
++  const x = ((h % 24) + 24) % 24
++  const m = Math.round((x % 1) * 4) * 15
++  const hh = Math.floor(x) + (m === 60 ? 1 : 0)
++  return `${String(hh % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
++}
++
++/* ------------------------------------------------------- Draft (pass 1) */
++
++interface Draft extends Omit<PersonaV4, 'wellness' | 'riskFlag' | 'routing' | 'marketable' | 'story' | 'mightTry' | 'mightNot'> {
++  latent: { sleep: number; stress: number; mood: number; anxiety: number; hopeless: number; activity: number; energy: number }
++  place: PlaceV4
++}
++
++function eligible(s: ScenarioId, d: Pick<Draft, 'age' | 'sex' | 'work' | 'shiftWork' | 'caregiving' | 'chronicPain' | 'income'>): number {
++  const { age, sex, work } = d
++  switch (s) {
++    case 'exams':
++      return work === 'student' ? 45 : 0
++    case 'new-parent':
++      return age >= 20 && age <= (sex === 'woman' ? 42 : 47) && work !== 'student' && work !== 'retired' ? 9 : 0
++    case 'job-loss':
++      return work === 'between jobs' ? 70 : 0
++    case 'burnout':
++      return work === 'employed' || work === 'self-employed' ? (age < 65 ? 14 : 0) : 0
++    case 'grief':
++      return age >= 55 ? 9 : 5
++    case 'shift-rota':
++      return d.shiftWork ? 45 : 0
++    case 'pain-flare':
++      return d.chronicPain ? 22 : 0
++    case 'relationship':
++      return age < 65 ? 8 : 3
++    case 'menopause':
++      return sex === 'woman' && age >= 45 && age <= 55 ? 30 : 0
++    case 'retirement-lonely':
++      return work === 'retired' && age >= 60 ? 30 : 0
++    case 'money':
++      return d.income === 'high' ? 0 : d.income === 'low' ? 16 : 7
++    case 'post-illness':
++      return age >= 30 ? (age >= 55 ? 8 : 4) : 0
++    case 'caring':
++      return d.caregiving && age >= 25 ? 22 : 0
++    case 'moved':
++      return age <= 45 && work !== 'retired' ? 5 : 0
++    case 'busy-life':
++      return 20
++  }
++}
++
++function draft(r: Rand, n: number): Draft {
++  const place = weighted(r, PLACES_V4.map((p) => [p, p.weight] as const))
++  const prof = AGE_PROFILES[place.ageGroup]
++  const ageBand = weighted(r, AGE_BANDS.map((b, i) => [b, prof[i]] as const))
++  const [lo, hi] = { '18–24': [18, 24], '25–34': [25, 34], '35–44': [35, 44], '45–54': [45, 54], '55–64': [55, 64], '65+': [65, 84] }[ageBand]
++  const age = Math.floor(between(r, lo, hi + 1))
++  const sexDraw = r()
++  const sex: SexV4 = sexDraw < 0.01 ? 'non-binary' : sexDraw < 0.01 + WOMEN_SHARE[ageBand] * 0.99 ? 'woman' : 'man'
++  const firstPool = sex === 'woman' ? place.women : sex === 'man' ? place.men : r() < 0.5 ? place.women : place.men
++  const name = `${pick(r, firstPool)} ${pick(r, place.surnames)}`
++
++  const work: WorkV4 =
++    age < 25
++      ? weighted(r, [['student', 45], ['employed', 38], ['self-employed', 5], ['between jobs', 9], ['home and family', 3]])
++      : age < 35
++        ? weighted(r, [['student', 6], ['employed', 62], ['self-employed', 13], ['between jobs', 7], ['home and family', 12]])
++        : age < 55
++          ? weighted(r, [['employed', 64], ['self-employed', 17], ['between jobs', 6], ['home and family', 13]])
++          : age < 65
++            ? weighted(r, [['employed', 44], ['self-employed', 14], ['between jobs', 5], ['home and family', 10], ['retired', 27]])
++            : weighted(r, [['retired', 84], ['self-employed', 8], ['employed', 5], ['home and family', 3]])
++  const shiftWork = work === 'employed' && r() < 0.26
++  const nightShift = shiftWork && r() < 0.35
++
++  const income: IncomeTier =
++    work === 'student' || work === 'between jobs' ? weighted(r, [['low', 60], ['middle', 40]]) : work === 'retired' ? weighted(r, [['low', 40], ['middle', 45], ['high', 15]]) : weighted(r, [['low', 28], ['middle', 50], ['high', 22]])
++  const [mLo, mHi] = INCOME_RANGE[income]
++  const incomeUsdMonth = roundTo(place.medianUsd * between(r, mLo + 0.02, mHi - 0.02), place.medianUsd < 1000 ? 10 : 50)
++  const occupation =
++    work === 'student'
++      ? pick(r, ['University student', 'College student', 'Nursing student', 'Postgraduate student'])
++      : work === 'retired'
++        ? `Retired ${pick(r, JOBS.middle).toLowerCase()}`
++        : work === 'between jobs'
++          ? `Looking for work (was ${pick(r, income === 'low' ? JOBS.low : JOBS.middle).toLowerCase()})`
++          : work === 'home and family'
++            ? 'Runs the home and family'
++            : work === 'self-employed'
++              ? pick(r, SELF_JOBS)
++              : shiftWork
++                ? pick(r, SHIFT_JOBS)
++                : pick(r, JOBS[income])
++
++  const caregiving = r() < CARE_BY_AGE[ageBand] * (work === 'home and family' ? 1.6 : 1)
++  const chronicPain = r() < PAIN_BY_AGE[ageBand]
++  const wearable = r() < (income === 'high' ? 0.35 : income === 'middle' ? 0.2 : 0.08) ? pick(r, income === 'high' ? ['Apple Watch', 'Oura ring', 'Garmin watch', 'Apple Watch'] : ['Fitbit', 'Xiaomi band', 'Samsung Galaxy Watch', 'Huawei band']) : 'none'
++
++  const base = { age, sex, work, shiftWork, caregiving, chronicPain, income }
++  const scenario = weighted(r, SCENARIO_IDS.map((s) => [s, eligible(s, base)] as const))
++
++  const household =
++    scenario === 'new-parent'
++      ? pick(r, ['with a partner and a new baby', 'with a partner and a new baby', 'single parent of a new baby'])
++      : scenario === 'retirement-lonely'
++        ? pick(r, ['lives alone', 'with a partner'])
++        : work === 'student'
++          ? pick(r, ['with parents', 'flatmates', 'student housing'])
++          : age < 25
++            ? pick(r, ['with parents', 'flatmates', 'with a partner'])
++            : age < 45
++              ? pick(r, ['lives alone', 'with a partner', 'with a partner and young kids', 'single parent', 'with parents', 'with extended family'])
++              : age < 65
++                ? pick(r, ['with a partner', 'with a partner and teenagers', 'lives alone', 'with adult children', 'with extended family'])
++                : pick(r, ['with a partner', 'lives alone', 'with adult children', 'with extended family'])
++  const lifeStage =
++    work === 'student' ? 'student' : work === 'retired' ? 'retired' : /baby|young kids/.test(household) ? 'young family' : age < 30 ? 'early adult life' : age < 55 ? 'mid-life' : 'late working life'
++
++  const info = SCENARIOS[scenario]
++  const onsetWeeksAgo = scenario === 'busy-life' ? Math.floor(between(r, 26, 156)) : scenario === 'exams' ? Math.floor(between(r, 1, 7)) : scenario === 'menopause' || scenario === 'shift-rota' || scenario === 'caring' ? Math.floor(between(r, 12, 160)) : Math.floor(between(r, 2, 40))
++  const duration = scenario === 'exams' ? 'ends with the last exam' : onsetWeeksAgo < 8 ? 'a few weeks so far' : onsetWeeksAgo < 26 ? 'a few months so far' : onsetWeeksAgo < 52 ? 'most of this year' : 'more than a year, and ongoing'
++
++  const youth = age < 30 ? 0.06 : age >= 65 ? -0.05 : 0
++  const strain = info.strain
++  const n1 = () => r() - 0.5
++  const latent = {
++    sleep: strain + 0.45 * n1() + (nightShift ? 0.25 : shiftWork ? 0.12 : 0) + (chronicPain ? 0.15 : 0) + (age >= 55 ? 0.05 : 0),
++    stress: strain + 0.5 * n1() + (caregiving ? 0.1 : 0) + (income === 'low' ? 0.08 : 0) + (age >= 65 ? -0.1 : 0),
++    mood: strain + 0.6 * n1() + (sex === 'woman' ? 0.08 : 0) + (scenario === 'grief' || scenario === 'job-loss' ? 0.1 : 0),
++    anxiety: strain + 0.6 * n1() + (sex === 'woman' ? 0.1 : 0) + youth,
++    hopeless: r(),
++    activity: r() - 0.3 * strain + (chronicPain ? -0.15 : 0) + (age >= 65 ? -0.1 : 0),
++    energy: r(),
++  }
++
++  const priorDraw = r()
++  const priorAppOutcome: PersonaV4['priorAppOutcome'] = priorDraw < TARGETS.priorApp * (income === 'low' ? 0.6 : income === 'high' ? 1.4 : 1) ? (r() < 0.15 ? 'still uses it' : 'stopped') : 'never used one'
++  const priorApp = priorAppOutcome === 'never used one' ? 'none' : pick(r, APPS)
++  const aiAttitude = weighted(r, [['enthusiastic', age < 35 ? 22 : 12], ['curious', 40], ['skeptical', 30], ['distrustful', age >= 55 ? 18 : 10]] as const)
++  const readsEnglish = place.englishShare >= 1 || r() < place.englishShare * (age >= 55 ? 0.6 : 1)
++
++  return {
++    id: `P4-${String(n).padStart(4, '0')}`,
++    set: 'v4',
++    name,
++    age,
++    ageBand,
++    sex,
++    country: place.country,
++    region: place.region,
++    city: pick(r, place.cities),
++    language: place.language,
++    readsEnglish,
++    device: r() < place.iosShare ? 'iPhone' : 'Android',
++    deviceAge: r() < (income === 'high' ? 0.6 : income === 'middle' ? 0.35 : 0.15) ? 'new' : 'a few years old',
++    work,
++    occupation,
++    shiftWork,
++    nightShift,
++    household,
++    lifeStage,
++    income,
++    incomeUsdMonth,
++    caregiving: caregiving || scenario === 'caring',
++    chronicPain,
++    wearable,
++    priorApp,
++    priorAppOutcome,
++    aiAttitude,
++    scenario,
++    onsetWeeksAgo,
++    duration,
++    badNightTriggers: info.triggers,
++    latent,
++    place,
++  }
++}
++
++/* ------------------------------------------------ Calibration (pass 2) */
++
++/** Ranks a latent score across the set and cuts it at the cited shares, worst first. */
++function bandsByRank<T extends string>(ds: Draft[], score: (d: Draft) => number, cuts: readonly (readonly [T, number])[], rest: T): Map<Draft, T> {
++  const sorted = [...ds].sort((a, b) => score(b) - score(a))
++  const out = new Map<Draft, T>()
++  let i = 0
++  for (const [band, share] of cuts) {
++    const end = i + Math.round(share * ds.length)
++    for (; i < end && i < sorted.length; i++) out.set(sorted[i], band)
++  }
++  for (; i < sorted.length; i++) out.set(sorted[i], rest)
++  return out
++}
++
++const FUNCTIONING: Record<Band3, string[]> = {
++  mild: ['mostly fine day to day, a bad night now and then', 'gets on with the day; sleep could be better'],
++  moderate: ['gets through the day but is tired and short-tempered', 'copes at work or study but has little left in the evening'],
++  severe: ['struggles to get through the day', 'has cut back on work, study or seeing people because of it'],
++}
++
++export const bandOfScore = (score: number): Band3 => (score < 40 ? 'severe' : score < 65 ? 'moderate' : 'mild')
++
++function finish(r: Rand, d: Draft, sleepB: SleepBand, stressB: StressBand, stressed: boolean, mood: ScreenBand, anxiety: ScreenBand, inactive: boolean, risk: boolean): PersonaV4 {
++  const hours = Math.round((sleepB === 'good' ? between(r, 6.8, 8.3) : sleepB === 'poor' ? between(r, 5.5, 7) : between(r, 4, 6)) * 4) / 4 - (d.nightShift ? 0.5 : 0)
++  const latencyMin = Math.round(sleepB === 'good' ? between(r, 5, 20) : sleepB === 'poor' ? between(r, 20, 45) : between(r, 35, 90))
++  const wakeUps = Math.floor(sleepB === 'good' ? between(r, 0, 2) : sleepB === 'poor' ? between(r, 1, 4) : between(r, 2, 6)) + (d.scenario === 'new-parent' ? 2 : 0)
++  const bedH = d.nightShift ? between(r, 7.5, 9.5) : d.work === 'student' ? between(r, 23, 26.5) : d.age >= 65 ? between(r, 21, 23.5) : between(r, 22, 25)
++  const bedtime = hhmm(bedH)
++  const wake = hhmm(bedH + hours + latencyMin / 60 + wakeUps * 0.15)
++  const energyScore = 5 - (sleepB === 'very poor' ? 2 : sleepB === 'poor' ? 1 : 0) - (mood === 'moderate' || mood === 'severe' ? 1 : 0) - (d.latent.energy < 0.3 ? 1 : 0)
++  const energy = Math.max(1, Math.min(5, energyScore)) as WellnessV4['energy']
++  const activeMinutesWeek = roundTo(inactive ? between(r, 0, 140) : between(r, 150, 420), 10)
++  const caffeineCups = Math.floor(between(r, 0, d.work === 'student' || d.shiftWork ? 5 : 4))
++  const alcoholDrinksWeek = d.place.muslimMajority && r() < 0.85 ? 0 : Math.floor(between(r, 0, d.age < 25 ? 9 : 7))
++  const screenInBedMin = roundTo(between(r, d.age < 35 ? 20 : 0, d.age < 35 ? 90 : 50), 5)
++
++  const SCREEN_PEN = { none: 0, mild: 8, moderate: 16, severe: 24 }
++  const penalty = { good: 0, poor: 15, 'very poor': 28 }[sleepB] + { low: 0, moderate: 7, high: 15 }[stressB] + (stressed ? 4 : 0) + SCREEN_PEN[mood] + SCREEN_PEN[anxiety] * 0.75 + (5 - energy) * 3 + (d.chronicPain ? 4 : 0)
++  const score = Math.max(4, Math.min(96, Math.round(100 - penalty - between(r, 0, 4))))
++  const band = bandOfScore(score)
++  const routing = risk ? 'Need help now?' : 'normal'
++  const first = d.name.split(' ')[0]
++  const info = SCENARIOS[d.scenario]
++  const they = d.sex === 'woman' ? 'she' : d.sex === 'man' ? 'he' : 'they'
++  const They = they[0].toUpperCase() + they.slice(1)
++  const is = they === 'they' ? 'are' : 'is'
++  const sleepLine =
++    sleepB === 'good'
++      ? `${They} still ${they === 'they' ? 'sleep' : 'sleeps'} about ${hours} hours most nights, but ${info.triggers[0]} can cost a night.`
++      : `${They} ${is} sleeping about ${hours} hours, takes ${latencyMin} minutes to fall asleep and wakes ${wakeUps === 1 ? 'once' : `${wakeUps} times`} a night; ${info.triggers[0]} can set off a bad night.`
++  const story = [`${first}, ${d.age}: ${d.occupation.toLowerCase()} in ${d.city}, ${d.country}; ${d.household}.`, `${first} ${info.story} (${d.duration}).`, sleepLine]
++
++  const pull: string[] = []
++  if (sleepB !== 'good') pull.push('wants their nights back')
++  if (d.priorAppOutcome === 'stopped') pull.push(`liked parts of ${d.priorApp} before dropping it`)
++  if (d.aiAttitude === 'enthusiastic' || d.aiAttitude === 'curious') pull.push('is open to something made just for them')
++  if (d.wearable !== 'none') pull.push(`could see the change on their ${d.wearable}`)
++  if (!pull.length) pull.push('might try it if a friend shares one')
++  const push: string[] = []
++  if (d.income === 'low') push.push('has a tight budget, so any price is a hurdle')
++  if (!d.readsEnglish) push.push(`needs it in ${d.language}`)
++  if (d.aiAttitude === 'distrustful' || d.aiAttitude === 'skeptical') push.push('does not trust AI with feelings')
++  if (d.priorAppOutcome === 'stopped') push.push('has already quit one app like this')
++  if (d.device === 'Android' && d.deviceAge !== 'new') push.push('has an older Android phone with little storage')
++  if (band === 'mild' && sleepB === 'good') push.push('may not feel they need it')
++  if (!push.length) push.push('is busy enough to forget it after day two')
++
++  const { latent: _l, place: _p, ...rest } = d
++  void _l
++  void _p
++  return {
++    ...rest,
++    wellness: {
++      sleep: { hours, latencyMin, wakeUps, band: sleepB, bedtime, wake },
++      stress: { band: stressB, stressedYesterday: stressed },
++      mood,
++      anxiety,
++      energy,
++      activeMinutesWeek,
++      caffeineCups,
++      alcoholDrinksWeek,
++      screenInBedMin,
++      score,
++      band,
++      functioning: pick(r, FUNCTIONING[band]),
++    },
++    riskFlag: risk,
++    routing,
++    marketable: !risk,
++    story,
++    mightTry: risk ? 'Not a buyer right now. Aurelia shows Need help now? first and does not sell to them.' : `${first} ${pull.slice(0, 2).join(' and ')}.`,
++    mightNot: risk ? 'Needs real help from a person before any wellness app.' : `${first} ${push.slice(0, 2).join(' and ')}.`,
++  }
++}
++
++let CACHE: PersonaV4[] | undefined
++
++/** The 1,000 people of persona set v4, identical on every machine and every build. */
++export function generatePersonasV4(count = PERSONA_COUNT_V4, seed = SEED_V4): PersonaV4[] {
++  if (count === PERSONA_COUNT_V4 && seed === SEED_V4 && CACHE) return CACHE
++  const r = rng(seed)
++  const ds = Array.from({ length: count }, (_, i) => draft(r, i + 1))
++  const sleep = bandsByRank<SleepBand>(ds, (d) => d.latent.sleep, [['very poor', TARGETS.insomniaDisorder], ['poor', TARGETS.insomniaSymptoms - TARGETS.insomniaDisorder]], 'good')
++  const stressBand = bandsByRank<StressBand>(ds, (d) => d.latent.stress, [['high', 0.12], ['moderate', 0.46]], 'low')
++  const mood = bandsByRank<ScreenBand>(ds, (d) => d.latent.mood, [['severe', 0.028], ['moderate', 0.042], ['mild', 0.115]], 'none')
++  const anxiety = bandsByRank<ScreenBand>(ds, (d) => d.latent.anxiety, [['severe', 0.027], ['moderate', 0.034], ['mild', 0.095]], 'none')
++  const stressedCount = Math.round(TARGETS.stressedYesterday * count)
++  const stressedSet = new Set([...ds].sort((a, b) => b.latent.stress - a.latent.stress).slice(0, stressedCount))
++  const inactiveSet = new Set([...ds].sort((a, b) => a.latent.activity - b.latent.activity).slice(0, Math.round(TARGETS.insufficientActivity * count)))
++  // Risk flag: among people whose low mood screens moderate or severe, the
++  // ones with the most hopelessness, up to the assumed share.
++  const riskCount = Math.round(TARGETS.riskFlag * count)
++  const riskSet = new Set(
++    ds
++      .filter((d) => mood.get(d) === 'severe' || mood.get(d) === 'moderate')
++      .sort((a, b) => b.latent.mood + b.latent.hopeless * 0.6 - (a.latent.mood + a.latent.hopeless * 0.6))
++      .slice(0, riskCount),
++  )
++  const out = ds.map((d) => finish(r, d, sleep.get(d)!, stressBand.get(d)!, stressedSet.has(d), mood.get(d)!, anxiety.get(d)!, inactiveSet.has(d), riskSet.has(d)))
++  if (count === PERSONA_COUNT_V4 && seed === SEED_V4) CACHE = out
++  return out
++}
++
++/* ------------------------------------------------------------ Coherence */
++
++const WORKING_V4: WorkV4[] = ['employed', 'self-employed']
++const toHours = (t: string) => Number(t.slice(0, 2)) + Number(t.slice(3)) / 60
++
++/** What makes a v4 persona not hold together. Must be empty for all 1,000. */
++export function incoherenceV4(p: PersonaV4): string[] {
++  const out: string[] = []
++  const w = p.wellness
++  if (p.age < 18 || p.age > 90) out.push(`age ${p.age} outside 18–90`)
++  if (ageBandOf(p.age) !== p.ageBand) out.push(`age ${p.age} in band ${p.ageBand}`)
++  // Age vs life stage and situation
++  if (p.work === 'student' && p.age > 34) out.push(`student at ${p.age}`)
++  if (p.work === 'retired' && p.age < 55) out.push(`retired at ${p.age}`)
++  if (p.lifeStage === 'student' && p.work !== 'student') out.push(`life stage student but ${p.work}`)
++  if (p.lifeStage === 'retired' && p.work !== 'retired') out.push(`life stage retired but ${p.work}`)
++  if (p.scenario === 'exams' && p.work !== 'student') out.push(`exam season for someone ${p.work}`)
++  if (p.scenario === 'new-parent' && (p.age < 18 || p.age > (p.sex === 'woman' ? 45 : 50) || !/baby/.test(p.household))) out.push(`new parent at ${p.age}, ${p.household}`)
++  if (p.scenario === 'retirement-lonely' && (p.work !== 'retired' || p.age < 58)) out.push(`lonely after retiring at ${p.age}, ${p.work}`)
++  if (p.scenario === 'job-loss' && p.work !== 'between jobs') out.push(`job loss but ${p.work}`)
++  if (p.scenario === 'burnout' && !WORKING_V4.includes(p.work)) out.push(`burnout at work but ${p.work}`)
++  // Menopause by age and sex
++  if (p.scenario === 'menopause' && (p.sex !== 'woman' || p.age < 42 || p.age > 58)) out.push(`menopause for a ${p.age}-year-old ${p.sex}`)
++  // Situations that need a matching fact
++  if (p.scenario === 'shift-rota' && !p.shiftWork) out.push('shift work situation without shift work')
++  if (p.scenario === 'caring' && !p.caregiving) out.push('caring situation without caregiving')
++  if (p.scenario === 'pain-flare' && !p.chronicPain) out.push('pain flare without chronic pain')
++  if (p.shiftWork && p.work !== 'employed') out.push(`shift work while ${p.work}`)
++  if (p.nightShift && !p.shiftWork) out.push('night shift without shift work')
++  // Income by country
++  const place = PLACES_V4.find((x) => x.country === p.country)
++  if (!place) out.push(`unknown country ${p.country}`)
++  else {
++    const ratio = p.incomeUsdMonth / place.medianUsd
++    const [lo, hi] = INCOME_RANGE[p.income]
++    if (ratio < lo || ratio > hi) out.push(`${p.income} income of $${p.incomeUsdMonth} a month in ${p.country}`)
++    if (!place.cities.includes(p.city)) out.push(`${p.city} is not in ${p.country}`)
++  }
++  if (p.work === 'student' && p.income === 'high') out.push('student on a high income')
++  // Shift work vs sleep timing
++  const bed = toHours(w.sleep.bedtime)
++  if (p.nightShift && !(bed >= 6 && bed <= 12)) out.push(`night shift worker going to bed at ${w.sleep.bedtime}`)
++  if (!p.nightShift && bed > 3.5 && bed < 20) out.push(`goes to bed at ${w.sleep.bedtime} without night shifts`)
++  // Sleep numbers vs sleep band
++  if (w.sleep.band === 'very poor' && w.sleep.hours > 6.5) out.push(`very poor sleep with ${w.sleep.hours} hours`)
++  if (w.sleep.band === 'good' && (w.sleep.latencyMin > 30 || w.sleep.hours < 6)) out.push(`good sleep with ${w.sleep.hours} h and ${w.sleep.latencyMin} min to fall asleep`)
++  // Severe scores vs daily functioning
++  if (bandOfScore(w.score) !== w.band) out.push(`score ${w.score} in band ${w.band}`)
++  if (w.band === 'severe' && FUNCTIONING.mild.includes(w.functioning)) out.push('severe band but fine day to day')
++  if (w.band === 'mild' && FUNCTIONING.severe.includes(w.functioning)) out.push('mild band but struggling to get through the day')
++  if ((w.mood === 'severe' || w.sleep.band === 'very poor') && w.energy >= 5) out.push('severe low mood or very poor sleep with full energy')
++  // Safety
++  if (p.riskFlag && !(w.mood === 'severe' || w.mood === 'moderate')) out.push(`risk flag with ${w.mood} low mood`)
++  if (p.riskFlag && (p.routing !== 'Need help now?' || p.marketable)) out.push('risk-flagged person is marketed to')
++  if (!p.riskFlag && p.routing !== 'normal') out.push('routed to help without a risk flag')
++  // Prior app
++  if (p.priorAppOutcome === 'never used one' && p.priorApp !== 'none') out.push(`never used an app but lists ${p.priorApp}`)
++  return out
++}
++
++/* ------------------------------------------------------- For buyer runs */
++
++/** The buyer-run variables (buyerPlay VarKey) for a v4 persona, so a later run can use this set. */
++export function buyerVarsV4(p: PersonaV4): Record<VarKey, string> {
++  const churn = p.priorAppOutcome === 'never used one' ? 'never used one' : p.priorAppOutcome === 'still uses it' ? 'still uses it' : p.income === 'low' ? 'paywall' : 'lost interest'
++  return {
++    condition: p.wellness.band,
++    wearable: p.wearable,
++    device: p.deviceAge === 'new' ? p.device : `older ${p.device}`,
++    language: p.language === 'English' ? 'English first' : p.readsEnglish ? 'reads English' : 'needs own language',
++    found: 'organic',
++    priorApp: p.priorApp,
++    churn,
++    budget: p.income === 'low' ? 'high' : p.income === 'high' ? 'low' : 'medium',
++    lifeStage: p.lifeStage,
++    needTime: p.nightShift ? 'irregular hours' : p.wellness.sleep.band === 'good' ? 'evening' : 'at night, in bed',
++    aiTrust: { enthusiastic: 'high', curious: 'medium', skeptical: 'low', distrustful: 'none' }[p.aiAttitude],
++    privacy: p.aiAttitude === 'distrustful' ? 'very protective' : 'careful',
++    culture: p.country,
++  }
++}
++
++/** Counts of a value across the set, largest first. */
++export function countBy<T>(ps: PersonaV4[], f: (p: PersonaV4) => T): [T, number][] {
++  const m = new Map<T, number>()
++  for (const p of ps) m.set(f(p), (m.get(f(p)) ?? 0) + 1)
++  return [...m.entries()].sort((a, b) => b[1] - a[1])
++}
+diff --git a/src/admin/pages/PersonasPage.tsx b/src/admin/pages/PersonasPage.tsx
+index ff0921e..ff29514 100644
+--- a/src/admin/pages/PersonasPage.tsx
++++ b/src/admin/pages/PersonasPage.tsx
+@@ -4,10 +4,16 @@ import { Link } from 'react-router-dom'
+ import { DataTable, type Column } from '../components/DataTable'
+ import { SidePanel } from '../components/SidePanel'
+ import { Badge, Button, PageHeader, Panel, inputClass } from '../components/ui'
+-import { CURRENT_GENERATOR, GOAL_LABEL, PERSONA_COUNT, SEED, distribution, drawPanel, generatePersonas, personaPrompt, type Persona } from '../data/personas'
++import { GOAL_LABEL, PERSONA_COUNT, SEED, distribution, drawPanel, generatePersonas, personaPrompt, type Generator, type Persona } from '../data/personas'
+ import { PersonaProfile } from '../components/PersonaProfile'
++import { PersonasV4View } from './personas/PersonasV4View'
+ 
+-const PERSONAS = generatePersonas()
++type SetId = 'v4' | 'v2' | 'v1'
++const SETS: { id: SetId; label: string }[] = [
++  { id: 'v4', label: 'Set v4 · 1,000' },
++  { id: 'v2', label: 'Set v2 · 300' },
++  { id: 'v1', label: 'Set v1 · 300' },
++]
+ 
+ interface Row {
+   id: string
+@@ -45,17 +51,50 @@ function download(name: string, text: string, type: string) {
+ }
+ 
+ /**
+- * Personas (U096): 300 synthetic people as candidates for AI-run research.
+- * Browse and filter them, read one with its role-play prompt, or draw a
+- * balanced panel and export it for a research run.
++ * Personas: a switch between persona sets. Set v4 (U134, the default) is
++ * 1,000 people from cited distributions; sets v1 and v2 (U096, U103) are the
++ * 300 from generators 1 and 2, kept as they were for the runs pinned to them.
+  */
+ export function PersonasPage() {
++  const [set, setSet] = useState<SetId>('v4')
++  return (
++    <div className="flex flex-col gap-16">
++      <PageHeader
++        title="Personas"
++        description="Made-up people with different lives, goals and doubts, as candidates for research run by AI: interviews in role, concept and copy tests, pricing checks. Use them to form and sharpen ideas before real users are asked, not as evidence."
++      />
++      <div role="tablist" aria-label="Persona set" className="flex w-fit max-w-full flex-wrap gap-4 rounded-8 border border-adm-line bg-adm-surface p-4">
++        {SETS.map((x) => (
++          <button
++            key={x.id}
++            type="button"
++            role="tab"
++            aria-selected={set === x.id}
++            onClick={() => setSet(x.id)}
++            className={`rounded-4 px-10 py-6 text-12 font-medium ${set === x.id ? 'bg-adm-ink text-adm-surface' : 'text-adm-ink-2 hover:bg-adm-hover'}`}
++          >
++            {x.label}
++          </button>
++        ))}
++      </div>
++      {set === 'v4' ? <PersonasV4View /> : <LegacyPersonas key={set} gen={set === 'v1' ? 1 : 2} />}
++    </div>
++  )
++}
++
++/**
++ * Sets v1 and v2 (U096): 300 synthetic people as candidates for AI-run
++ * research. Browse and filter them, read one with its role-play prompt, or
++ * draw a balanced panel and export it for a research run.
++ */
++function LegacyPersonas({ gen }: { gen: Generator }) {
++  const PERSONAS = useMemo(() => generatePersonas(undefined, undefined, gen), [gen])
+   const [open, setOpen] = useState<Persona | null>(null)
+   const [size, setSize] = useState(20)
+   const [panelSeed, setPanelSeed] = useState(1)
+   const [notice, setNotice] = useState<string | null>(null)
+-  const byId = useMemo(() => new Map(PERSONAS.map((p) => [p.id, p])), [])
+-  const panel = useMemo(() => drawPanel(PERSONAS, size, panelSeed), [size, panelSeed])
++  const byId = useMemo(() => new Map(PERSONAS.map((p) => [p.id, p])), [PERSONAS])
++  const panel = useMemo(() => drawPanel(PERSONAS, size, panelSeed), [PERSONAS, size, panelSeed])
+ 
+   useEffect(() => {
+     if (!notice) return
+@@ -108,11 +147,11 @@ export function PersonasPage() {
+   return (
+     <div className="flex flex-col gap-16">
+       <PageHeader
+-        title="Personas"
++        title={`Set v${gen}`}
+         description={`${PERSONA_COUNT} synthetic people with different lives, goals and doubts, as candidates for research run by AI: interviews in role, concept and copy tests, pricing checks. Use them to form and sharpen hypotheses before real users are asked, not as evidence.`}
+         actions={
+           <div className="flex flex-wrap gap-8">
+-            <Button size="sm" icon={<Download size={13} />} onClick={() => download('aurelia-personas.json', JSON.stringify(PERSONAS, null, 2), 'application/json')}>
++            <Button size="sm" icon={<Download size={13} />} onClick={() => download(`aurelia-personas-v${gen}.json`, JSON.stringify(PERSONAS, null, 2), 'application/json')}>
+               All as JSON
+             </Button>
+           </div>
+@@ -122,7 +161,7 @@ export function PersonasPage() {
+       <div className="flex flex-wrap items-center gap-8 text-12 text-adm-ink-2">
+         <Badge tone="warning">Synthetic</Badge>
+         <span>
+-          Generated from seed {SEED} with generator {CURRENT_GENERATOR}, so everyone sees the same {PERSONA_COUNT}; a check keeps every one of them coherent (age, work, household, money). Each links to the{' '}
++          Generated from seed {SEED} with generator {gen}, so everyone sees the same {PERSONA_COUNT}; a check keeps every one of them coherent (age, work, household, money). Each links to the{' '}
+           <Link to="/admin/user-journey" className="underline hover:text-adm-ink">
+             user journey
+           </Link>{' '}
+diff --git a/src/admin/pages/personas/PersonasV4View.tsx b/src/admin/pages/personas/PersonasV4View.tsx
+new file mode 100644
+index 0000000..90e4abf
+--- /dev/null
++++ b/src/admin/pages/personas/PersonasV4View.tsx
+@@ -0,0 +1,424 @@
++import { Download, LifeBuoy } from 'lucide-react'
++import { useMemo, useState, type ReactNode } from 'react'
++import { Badge, Button, Panel, inputClass } from '../../components/ui'
++import { AGE_BANDS, PERSONA_COUNT_V4, SCENARIOS, SCENARIO_IDS, SEED_V4, SOURCES, TARGETS, countBy, generatePersonasV4, type Band3, type PersonaV4, type ScenarioId } from '../../data/personasV4'
++import { DetailDrawerProvider, useDetail } from '../reports/DetailDrawer'
++import { Term } from '../reports/Term'
++
++/*
++ * Persona set v4 (U134): 1,000 people from cited distributions. Charts of the
++ * mix, filters, a paged card grid (24 at a time, so 1,000 never render at
++ * once) and the shared detail drawer for one person's full profile.
++ */
++
++const PAGE = 24
++const BAND_TONE = { mild: 'good', moderate: 'warning', severe: 'critical' } as const
++const BAND_BG: Record<Band3, string> = { mild: 'bg-adm-good', moderate: 'bg-adm-warning', severe: 'bg-adm-critical' }
++const pct = (n: number, d: number) => `${Math.round((n / d) * 1000) / 10}%`
++
++function download(name: string, text: string) {
++  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }))
++  const a = document.createElement('a')
++  a.href = url
++  a.download = name
++  a.click()
++  setTimeout(() => URL.revokeObjectURL(url), 1000)
++}
++
++function Bars({ data, total }: { data: [string, number][]; total: number }) {
++  const max = Math.max(...data.map(([, n]) => n), 1)
++  return (
++    <ul className="flex flex-col gap-6">
++      {data.map(([label, n]) => (
++        <li key={label} className="flex flex-col gap-2">
++          <div className="flex justify-between gap-8 text-12">
++            <span className="min-w-0 truncate text-adm-ink">{label}</span>
++            <span className="shrink-0 tabular-nums text-adm-muted">
++              {n} · {pct(n, total)}
++            </span>
++          </div>
++          <div className="h-4 overflow-hidden rounded-full bg-adm-hover">
++            <div className="h-full rounded-full bg-adm-s1" style={{ width: `${(n / max) * 100}%` }} />
++          </div>
++        </li>
++      ))}
++    </ul>
++  )
++}
++
++function Pyramid({ ps }: { ps: PersonaV4[] }) {
++  const rows = [...AGE_BANDS].reverse().map((b) => ({ b, w: ps.filter((p) => p.ageBand === b && p.sex === 'woman').length, m: ps.filter((p) => p.ageBand === b && p.sex === 'man').length }))
++  const max = Math.max(...rows.flatMap((r) => [r.w, r.m]), 1)
++  return (
++    <div className="flex flex-col gap-4" role="img" aria-label="Age pyramid: women left, men right">
++      <div className="grid grid-cols-[1fr_48px_1fr] text-11 text-adm-muted">
++        <span className="text-right">Women</span>
++        <span />
++        <span>Men</span>
++      </div>
++      {rows.map((r) => (
++        <div key={r.b} className="grid grid-cols-[1fr_48px_1fr] items-center gap-4 text-11">
++          <div className="flex items-center justify-end gap-4">
++            <span className="tabular-nums text-adm-muted">{r.w}</span>
++            <div className="h-12 rounded-l-4 bg-adm-s2" style={{ width: `${(r.w / max) * 80}%` }} />
++          </div>
++          <span className="text-center text-adm-ink-2">{r.b}</span>
++          <div className="flex items-center gap-4">
++            <div className="h-12 rounded-r-4 bg-adm-s1" style={{ width: `${(r.m / max) * 80}%` }} />
++            <span className="tabular-nums text-adm-muted">{r.m}</span>
++          </div>
++        </div>
++      ))}
++      <p className="text-11 text-adm-muted">{ps.filter((p) => p.sex === 'non-binary').length} non-binary people are not shown in the pyramid.</p>
++    </div>
++  )
++}
++
++function BandMix({ ps }: { ps: PersonaV4[] }) {
++  const n = (b: Band3) => ps.filter((p) => p.wellness.band === b).length
++  const bands: Band3[] = ['severe', 'moderate', 'mild']
++  return (
++    <div className="flex flex-col gap-10">
++      <div className="flex h-16 overflow-hidden rounded-full" role="img" aria-label={bands.map((b) => `${b} ${n(b)}`).join(', ')}>
++        {bands.map((b) => (
++          <div key={b} className={BAND_BG[b]} style={{ width: `${(n(b) / Math.max(ps.length, 1)) * 100}%` }} />
++        ))}
++      </div>
++      <ul className="flex flex-col gap-4 text-12">
++        {bands.map((b) => (
++          <li key={b} className="flex justify-between gap-8">
++            <span className="flex items-center gap-6 text-adm-ink">
++              <span className={`size-8 rounded-full ${BAND_BG[b]}`} aria-hidden="true" />
++              {b[0].toUpperCase() + b.slice(1)}
++            </span>
++            <span className="tabular-nums text-adm-muted">
++              {n(b)} · {pct(n(b), Math.max(ps.length, 1))}
++            </span>
++          </li>
++        ))}
++      </ul>
++      <p className="text-11 text-adm-muted">
++        From the <Term id="wellness-score" />: below 40 severe, 40–64 moderate, 65 and up mild.
++      </p>
++    </div>
++  )
++}
++
++function Row({ k, children }: { k: string; children: ReactNode }) {
++  return (
++    <div className="grid grid-cols-[120px_1fr] gap-8 border-b border-adm-line py-6 text-12 last:border-0">
++      <dt className="text-adm-muted">{k}</dt>
++      <dd className="min-w-0 text-adm-ink">{children}</dd>
++    </div>
++  )
++}
++
++function Profile({ p }: { p: PersonaV4 }) {
++  const w = p.wellness
++  return (
++    <div className="flex flex-col gap-12">
++      {p.riskFlag && (
++        <div className="flex gap-8 rounded-8 border border-adm-critical/40 bg-adm-critical/8 p-10 text-12 text-adm-ink">
++          <LifeBuoy size={16} className="shrink-0 text-adm-critical" aria-hidden="true" />
++          <span>
++            <Term id="risk-flag" />: the AI routes {p.name.split(' ')[0]} to “Need help now?” and offers nothing for sale.
++          </span>
++        </div>
++      )}
++      <section>
++        <h3 className="mb-4 text-12 font-semibold text-adm-ink">Why they might try Aurelia</h3>
++        <p className="text-12 text-adm-ink-2">{p.mightTry}</p>
++        <h3 className="mt-8 mb-4 text-12 font-semibold text-adm-ink">Why they might not</h3>
++        <p className="text-12 text-adm-ink-2">{p.mightNot}</p>
++      </section>
++      <dl>
++        <Row k="Who">
++          {p.age}, {p.sex}, {p.city}, {p.country} ({p.region})
++        </Row>
++        <Row k="Language">
++          {p.language}
++          {p.language !== 'English' && (p.readsEnglish ? ', reads English' : ', needs the app in their own language')}
++        </Row>
++        <Row k="Work">
++          {p.occupation} ({p.work}
++          {p.shiftWork ? (p.nightShift ? ', night shifts' : ', rotating shifts') : ''})
++        </Row>
++        <Row k="Home">
++          {p.household}; {p.lifeStage}
++        </Row>
++        <Row k="Income">
++          {p.income} for {p.country}, about ${p.incomeUsdMonth.toLocaleString('en-US')} a month
++        </Row>
++        <Row k="Also">{[p.caregiving && 'gives unpaid care', p.chronicPain && 'chronic pain'].filter(Boolean).join(', ') || 'nothing else noted'}</Row>
++        <Row k={'Life situation'}>
++          {SCENARIOS[p.scenario].label}: started {p.onsetWeeksAgo} weeks ago, {p.duration}
++        </Row>
++        <Row k="Bad nights after">{p.badNightTriggers.join('; ')}</Row>
++        <Row k="Sleep">
++          {w.sleep.band} · {w.sleep.hours} h · {w.sleep.latencyMin} min to fall asleep · wakes {w.sleep.wakeUps}× · bed {w.sleep.bedtime}, up {w.sleep.wake}
++        </Row>
++        <Row k="Stress">
++          {w.stress.band}
++          {w.stress.stressedYesterday ? '; stressed a lot of yesterday' : ''}
++        </Row>
++        <Row k="Mood / worry">
++          low mood {w.mood}, worry {w.anxiety} (<Term id="screening">screening only</Term>)
++        </Row>
++        <Row k="Energy">{w.energy} of 5</Row>
++        <Row k="Habits">
++          {w.activeMinutesWeek} active min a week · {w.caffeineCups} coffees or teas a day · {w.alcoholDrinksWeek} drinks a week · {w.screenInBedMin} min on the phone in bed
++        </Row>
++        <Row k="Day to day">{w.functioning}</Row>
++        <Row k="Phone">
++          {p.device}, {p.deviceAge}
++          {p.wearable !== 'none' ? `; wears a ${p.wearable}` : '; no wearable'}
++        </Row>
++        <Row k="Apps before">{p.priorApp === 'none' ? 'never used a meditation or sleep app' : `${p.priorApp} (${p.priorAppOutcome})`}</Row>
++        <Row k="Towards AI">{p.aiAttitude}</Row>
++      </dl>
++    </div>
++  )
++}
++
++function Card({ p }: { p: PersonaV4 }) {
++  const open = useDetail()
++  return (
++    <button
++      type="button"
++      data-persona={p.id}
++      onClick={() =>
++        open({
++          kicker: `${p.id} · made-up person`,
++          title: p.name,
++          summary: p.story.join(' '),
++          numbers: [
++            { label: '{{wellness-score}}', value: `${p.wellness.score} (${p.wellness.band})` },
++            { label: '{{life-situation}}', value: SCENARIOS[p.scenario].label },
++            { label: 'Age', value: String(p.age) },
++            { label: 'Country', value: p.country },
++          ],
++          extra: <Profile p={p} />,
++        })
++      }
++      className="flex min-w-0 flex-col gap-6 rounded-12 border border-adm-line bg-adm-surface p-12 text-left hover:bg-adm-hover"
++    >
++      <div className="flex items-start justify-between gap-8">
++        <span className="min-w-0 truncate text-13 font-semibold text-adm-ink">{p.name}</span>
++        <Badge tone={BAND_TONE[p.wellness.band]}>{p.wellness.score}</Badge>
++      </div>
++      <span className="text-12 text-adm-ink-2">
++        {p.age} · {p.sex} · {p.country}
++      </span>
++      <span className="text-12 text-adm-muted">{SCENARIOS[p.scenario].label}</span>
++      {p.riskFlag && (
++        <span className="flex items-center gap-4 text-11 font-medium text-adm-critical">
++          <LifeBuoy size={12} aria-hidden="true" /> Need help now?
++        </span>
++      )}
++    </button>
++  )
++}
++
++function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: [string, string][] }) {
++  return (
++    <label className="flex min-w-0 flex-col gap-4 text-12 text-adm-ink-2">
++      {label}
++      <select className={`${inputClass} h-32 text-12`} value={value} onChange={(e) => onChange(e.target.value)}>
++        <option value="">All</option>
++        {options.map(([v, l]) => (
++          <option key={v} value={v}>
++            {l}
++          </option>
++        ))}
++      </select>
++    </label>
++  )
++}
++
++function View() {
++  const all = useMemo(() => generatePersonasV4(), [])
++  const [region, setRegion] = useState('')
++  const [age, setAge] = useState('')
++  const [scenario, setScenario] = useState('')
++  const [band, setBand] = useState('')
++  const [riskOnly, setRiskOnly] = useState(false)
++  const [page, setPage] = useState(0)
++
++  const shown = useMemo(
++    () => all.filter((p) => (!region || p.region === region) && (!age || p.ageBand === age) && (!scenario || p.scenario === scenario) && (!band || p.wellness.band === band) && (!riskOnly || p.riskFlag)),
++    [all, region, age, scenario, band, riskOnly],
++  )
++  const pages = Math.max(1, Math.ceil(shown.length / PAGE))
++  const cur = Math.min(page, pages - 1)
++  const set = (f: (v: string) => void) => (v: string) => {
++    f(v)
++    setPage(0)
++  }
++
++  const n = all.length
++  const risk = all.filter((p) => p.riskFlag).length
++  const workers = all.filter((p) => p.work === 'employed' || p.work === 'self-employed')
++  const s = (f: (p: PersonaV4) => boolean, base = all) => base.filter(f).length / base.length
++  const checks: { what: string; target: number; got: number; src: string }[] = [
++    { what: 'Sleep problems (insomnia symptoms)', target: TARGETS.insomniaSymptoms, got: s((p) => p.wellness.sleep.band !== 'good'), src: 'ohayon' },
++    { what: 'Very poor sleep (insomnia disorder level)', target: TARGETS.insomniaDisorder, got: s((p) => p.wellness.sleep.band === 'very poor'), src: 'ohayon' },
++    { what: 'Stressed a lot of yesterday', target: TARGETS.stressedYesterday, got: s((p) => p.wellness.stress.stressedYesterday), src: 'gallup' },
++    { what: 'Any low-mood symptoms', target: TARGETS.lowMoodAny, got: s((p) => p.wellness.mood !== 'none'), src: 'nhis-dep' },
++    { what: 'Any worry (anxiety) symptoms', target: TARGETS.anxietyAny, got: s((p) => p.wellness.anxiety !== 'none'), src: 'nhis-anx' },
++    { what: 'Shift work (of people in work)', target: TARGETS.shiftOfWorkers, got: s((p) => p.shiftWork, workers), src: 'eurofound' },
++    { what: 'Gives unpaid care', target: TARGETS.caregiving, got: s((p) => p.caregiving), src: 'aarp' },
++    { what: 'Chronic pain', target: TARGETS.chronicPain, got: s((p) => p.chronicPain), src: 'cdc-pain' },
++    { what: 'Less than 150 active minutes a week', target: TARGETS.insufficientActivity, got: s((p) => p.wellness.activeMinutesWeek < 150), src: 'who-pa' },
++    { what: 'Used a meditation or sleep app before', target: TARGETS.priorApp, got: s((p) => p.priorApp !== 'none'), src: 'prior-app' },
++    { what: 'Wears a smartwatch or tracker', target: 0.21, got: s((p) => p.wearable !== 'none'), src: 'pew' },
++    { what: 'Risk flag', target: TARGETS.riskFlag, got: risk / n, src: 'risk' },
++  ]
++  const kindOf = (id: string) => SOURCES.find((x) => x.id === id)?.kind ?? 'assumption'
++  const regions = [...new Set(all.map((p) => p.region))].sort()
++
++  return (
++    <div className="flex flex-col gap-16">
++      <div className="flex flex-wrap items-center gap-8 text-12 text-adm-ink-2">
++        <Badge tone="warning">Made up</Badge>
++        <span className="min-w-0">
++          {PERSONA_COUNT_V4.toLocaleString('en-US')} made-up people, the same on every machine (start number {SEED_V4}). Their ages, countries, phones, sleep, stress and mood follow the figures in “Where these numbers come from” below. Each has a{' '}
++          <Term id="life-situation" />, a starting <Term id="wellness-score" /> and a short story. They are for research by AI, not evidence.
++        </span>
++        <Button size="sm" icon={<Download size={13} />} onClick={() => download('aurelia-personas-v4.json', JSON.stringify(all, null, 2))}>
++          All 1,000 as JSON
++        </Button>
++      </div>
++
++      <div className="grid grid-cols-2 gap-12 lg:grid-cols-4">
++        {[
++          ['People', n.toLocaleString('en-US')],
++          ['Countries', String(new Set(all.map((p) => p.country)).size)],
++          ['Severe at the start', String(all.filter((p) => p.wellness.band === 'severe').length)],
++          ['Risk flag (sent to help)', String(risk)],
++        ].map(([k, v]) => (
++          <div key={k} className="flex min-w-0 flex-col gap-4 rounded-12 border border-adm-line bg-adm-surface p-12">
++            <span className="text-12 text-adm-muted">{k}</span>
++            <span className="text-20 font-semibold text-adm-ink tabular-nums">{v}</span>
++          </div>
++        ))}
++      </div>
++
++      <div className="grid grid-cols-1 gap-12 md:grid-cols-2 xl:grid-cols-3">
++        <Panel title="Age and sex" description="Women left, men right. From UN population figures per country.">
++          <Pyramid ps={all} />
++        </Panel>
++        <Panel title="Countries" description="Weighted to Aurelia’s markets, Indonesia first.">
++          <Bars data={countBy(all, (p) => p.country)} total={n} />
++        </Panel>
++        <Panel title="Starting wellness" description="How bad things are at the start.">
++          <BandMix ps={all} />
++        </Panel>
++        <Panel title="Life situations" description="What is going on for each person right now.">
++          <Bars data={countBy(all, (p) => SCENARIOS[p.scenario].label)} total={n} />
++        </Panel>
++        <Panel title="Sleep" description="Screening-style sleep bands, like a short sleep questionnaire.">
++          <Bars data={countBy(all, (p) => p.wellness.sleep.band)} total={n} />
++        </Panel>
++        <Panel title="Risk flag" description="People the AI must send to “Need help now?” instead of selling.">
++          <p className="text-28 font-semibold text-adm-critical tabular-nums">{risk}</p>
++          <p className="text-12 text-adm-ink-2">
++            {pct(risk, n)} of the set have a <Term id="risk-flag" />. They are counted here, kept in every study, and never marketed to.
++          </p>
++        </Panel>
++      </div>
++
++      <Panel title="This set against the figures it aims for" description="Each row: the figure we aimed for, what the 1,000 came out at, and whether the figure was measured or is our own assumption.">
++        <div className="overflow-x-auto">
++          <table className="w-full min-w-[520px] text-12">
++            <thead>
++              <tr className="text-left text-adm-muted">
++                <th className="py-6 pr-8 font-medium">What</th>
++                <th className="py-6 pr-8 text-right font-medium">Aimed for</th>
++                <th className="py-6 pr-8 text-right font-medium">This set</th>
++                <th className="py-6 font-medium">Kind</th>
++              </tr>
++            </thead>
++            <tbody>
++              {checks.map((c) => (
++                <tr key={c.what} className="border-t border-adm-line">
++                  <td className="py-6 pr-8 text-adm-ink">{c.what}</td>
++                  <td className="py-6 pr-8 text-right tabular-nums">{pct(c.target, 1)}</td>
++                  <td className="py-6 pr-8 text-right tabular-nums">{pct(c.got, 1)}</td>
++                  <td className="py-6">{kindOf(c.src) === 'measured' ? <Term id="measured">measured statistic</Term> : <Term id="assumption">our assumption</Term>}</td>
++                </tr>
++              ))}
++            </tbody>
++          </table>
++        </div>
++      </Panel>
++
++      <Panel title="All 1,000 people" description={`Filter, then select a card for the full profile. ${shown.length} match.`}>
++        <div className="grid grid-cols-2 gap-8 lg:grid-cols-5">
++          <Select label="Region" value={region} onChange={set(setRegion)} options={regions.map((r) => [r, r])} />
++          <Select label="Age" value={age} onChange={set(setAge)} options={AGE_BANDS.map((b) => [b, b])} />
++          <Select label="Life situation" value={scenario} onChange={set(setScenario)} options={SCENARIO_IDS.map((id: ScenarioId) => [id, SCENARIOS[id].label])} />
++          <Select label="Wellness band" value={band} onChange={set(setBand)} options={[['mild', 'Mild'], ['moderate', 'Moderate'], ['severe', 'Severe']]} />
++          <label className="flex items-center gap-6 self-end pb-6 text-12 text-adm-ink-2">
++            <input
++              type="checkbox"
++              checked={riskOnly}
++              onChange={(e) => {
++                setRiskOnly(e.target.checked)
++                setPage(0)
++              }}
++            />
++            Risk flag only
++          </label>
++        </div>
++        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" data-testid="persona-grid">
++          {shown.slice(cur * PAGE, cur * PAGE + PAGE).map((p) => (
++            <Card key={p.id} p={p} />
++          ))}
++        </div>
++        {shown.length === 0 && <p className="text-12 text-adm-muted">Nobody matches these filters.</p>}
++        <div className="flex flex-wrap items-center justify-between gap-8 text-12 text-adm-ink-2">
++          <span>
++            Page {cur + 1} of {pages}
++          </span>
++          <div className="flex gap-8">
++            <Button size="sm" disabled={cur === 0} onClick={() => setPage(cur - 1)}>
++              Previous
++            </Button>
++            <Button size="sm" disabled={cur >= pages - 1} onClick={() => setPage(cur + 1)}>
++              Next
++            </Button>
++          </div>
++        </div>
++      </Panel>
++
++      <Panel title="Where these numbers come from" description="Measured statistics were counted by someone else; our assumptions are choices we made, often guided by a measured figure.">
++        <ul className="flex flex-col gap-8">
++          {SOURCES.map((src) => (
++            <li key={src.id} className="flex flex-col gap-2 border-b border-adm-line pb-8 text-12 last:border-0">
++              <div className="flex flex-wrap items-center gap-6">
++                <span className="font-semibold text-adm-ink">{src.what}</span>
++                <Badge tone={src.kind === 'measured' ? 'good' : 'neutral'}>{src.kind === 'measured' ? 'Measured statistic' : 'Our assumption'}</Badge>
++              </div>
++              <span className="text-adm-ink-2">{src.figure}</span>
++              <a href={src.url} target="_blank" rel="noreferrer" className="break-words text-adm-muted underline hover:text-adm-ink">
++                {src.cite} ({src.year})
++              </a>
++            </li>
++          ))}
++        </ul>
++        <p className="text-11 text-adm-muted">
++          Mood and worry use <Term id="screening">screening bands</Term> for role-play only. Nothing here diagnoses anyone.
++        </p>
++      </Panel>
++    </div>
++  )
++}
++
++/** Persona set v4, with the shared detail drawer. */
++export function PersonasV4View() {
++  return (
++    <DetailDrawerProvider>
++      <View />
++    </DetailDrawerProvider>
++  )
++}

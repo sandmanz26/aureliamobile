@@ -500,7 +500,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U133**, last J = **J184**, last
+**Numbering as of 17 Nov 2026:** last U = **U134**, last J = **J185**, last
 O = **O56**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -981,6 +981,7 @@ history can be read without opening four documents.
 | U130 | `9a6c520` | 2026-11-25 | Buyer agent report made visual. It has funnels per test (5, 6, 7), a people grid (one mark per simulated person, which opens a drawer), a who-says-yes heat map, a price ladder against $10, ranked reasons for no with quotes, a slope chart of what moved people, and a cleaner trend across tests. | [patch](update-log/patches/U130-9a6c520.patch) |
 | U131 | `1634d0c` | 2026-11-25 | Product lab, staging only (`RELEASES.therapeuticMaps`). The **Therapeutic map** shows the Product, Business and Wellness triangle with targets, the 7-step sleep process and five worlds. The **Healing Map** has three rings (9 bad states, 14 building blocks, 9 good states) and 45 links: 36 design samples, 9 research-cited, 0 learned. It has filters, zoom and a drawer. | [patch](update-log/patches/U131-1634d0c.patch) |
 | U132 | `542ade2` | 2026-11-25 | B2B2C round 2. It adds 28 new web sources and the buyer tests, and re-ranks the channels: creator journey with a free first week, then a self-serve team plan, then codes and gifting. It lists 22 features (10 Now), on wiki pages round-2 and features and in Reports → B2B2C report (a feature board with a drawer). | [patch](update-log/patches/U132-542ade2.patch) |
+| U134 | `41455ab` | 2026-11-25 | Persona set v4: 1,000 seeded people with cited age/sex/country, sleep, stress, low-mood and anxiety screening bands, 15 life situations, starting wellness score, 25 risk-flagged routed to Need help now. Personas page switch (v4 default), charts, filters, drawer cards. Gen 1/2 unchanged. | [patch](update-log/patches/U134-41455ab.patch) |
 | U133 | `3b5d530` | 2026-11-25 | B2B2C "How it works": the big picture (who, people flow, money and trust), a journey per channel (creator with a free week, team plan, codes and gifts) with labelled drop-offs, before against after (ticket up front against a free week), and phases with gates. 44 boxes open the drawer. Matching mermaid diagrams in wiki summary and round 2. | [patch](update-log/patches/U133-3b5d530.patch) |
 | J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
@@ -1057,6 +1058,7 @@ history can be read without opening four documents.
 | J181 | 2026-11-25 | Review + code | Review whether the reports are understandable even to a layperson, and fix them | U128 |
 | J182 | 2026-11-25 | Code | UX feedback report from the latest feedback group; drop "what this report says"; a goal on every report; make "many sources → iterations → product" visible; drawers instead of page changes | U129 |
 | J183 | 2026-11-25 | Code + research | Better buyer agent visualisation; therapeutic map and interactive Healing Map; B2B2C research using everything known, with the features to build, in a report | U130, U131, U132 |
+| J185 | 2026-11-25 | Code | User persona v4: more people, mental-state scenarios, wellness condition, age, as real as possible | U134 |
 | J184 | 2026-11-25 | Code | B2B2C needs visuals: a diagram of the idea so nothing is missed | U133 |
 
 ### 17.2 Code changes (U)
