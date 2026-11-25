@@ -1,0 +1,1084 @@
+From fedab336b67abd32f73df58f213b9ca9a3667e1a Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 25 Nov 2026 09:07:18 +0000
+Subject: [PATCH] Reports summary-first: answer, KPI tiles, next steps and
+ confidence on top; success trend for buyer agents; stage strip for
+ combination; a cost-function panel (U126, J179)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/admin/data/reportSummaries.test.ts        |  75 ++++
+ src/admin/data/reportSummaries.ts             | 333 ++++++++++++++++++
+ .../pages/reports/BuyerAgentReportPage.tsx    |  28 +-
+ .../pages/reports/CombinationReportPage.tsx   |  40 ++-
+ src/admin/pages/reports/CostReportPage.tsx    |  43 ++-
+ src/admin/pages/reports/ReportSummary.tsx     | 124 +++++++
+ src/admin/pages/reports/SummaryCharts.tsx     | 240 +++++++++++++
+ 7 files changed, 866 insertions(+), 17 deletions(-)
+ create mode 100644 src/admin/data/reportSummaries.test.ts
+ create mode 100644 src/admin/data/reportSummaries.ts
+ create mode 100644 src/admin/pages/reports/ReportSummary.tsx
+ create mode 100644 src/admin/pages/reports/SummaryCharts.tsx
+
+diff --git a/src/admin/data/reportSummaries.test.ts b/src/admin/data/reportSummaries.test.ts
+new file mode 100644
+index 0000000..8db2d8d
+--- /dev/null
++++ b/src/admin/data/reportSummaries.test.ts
+@@ -0,0 +1,75 @@
++import { describe, expect, it } from 'vitest'
++import { funnelMetrics } from './businessFunnel'
++import { v5Tallies } from './buyerRunV5'
++import { v7Tallies } from './buyerRunV7'
++import { goal, presetInputs, PRESETS, DEFAULT_GOAL } from './costModel'
++import { breakEvenStage, buyerLevers, buyerSummary, buyerTrend, combinationSummary, costFunction, costSummary, stageStrip } from './reportSummaries'
++
++const pct = (x: number) => `${Math.round(x * 100)}%`
++
++describe('buyer summary', () => {
++  it('derives its tiles from run v5 and v7', () => {
++    const s = buyerSummary()
++    const x5 = v5Tallies()
++    const x7 = v7Tallies()
++    expect(s.tiles[0].value).toBe(pct(x5.t.tries.yes / x5.t.n))
++    expect(s.tiles[1].value).toBe(pct(x5.t.pays.yes / x5.t.n))
++    expect(s.tiles[3].value).toBe(`${pct(x7.A.tries.yes / x7.A.n)} → ${pct(x7.B.tries.yes / x7.B.n)}`)
++    expect(s.headline).toContain(pct(x5.t.tries.yes / x5.t.n))
++    expect(s.tiles).toHaveLength(4)
++  })
++  it('has one trend point per report, v4 without try and pay', () => {
++    const t = buyerTrend()
++    expect(t.map((p) => p.name)).toEqual(['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7'])
++    expect(t[3].tries).toBeNull()
++    for (const p of t) for (const v of [p.tries, p.pays, p.sure30]) if (v !== null) expect(v).toBeGreaterThanOrEqual(0)
++  })
++  it('sorts levers by the share of answers they moved', () => {
++    const l = buyerLevers()
++    expect(l[0].share).toBeGreaterThanOrEqual(l[l.length - 1].share)
++    expect(l.find((x) => x.theme === 'Account-first')?.moved).toBe(16)
++  })
++})
++
++describe('combination summary', () => {
++  it('marks exactly one stage as the biggest gap, and it is below target', () => {
++    const strip = stageStrip(1)
++    const gaps = strip.filter((s) => s.isGap)
++    expect(gaps).toHaveLength(1)
++    expect(gaps[0].status).toBe('below')
++    expect(gaps[0].value).toBeLessThan(gaps[0].target)
++  })
++  it('counts stages on track from the funnel metrics', () => {
++    const s = combinationSummary(1)
++    const on = stageStrip(1).filter((x) => x.status === 'on-track').length
++    expect(s.tiles[0].value).toBe(`${on} of 5`)
++    expect(s.tiles[2].value).toBe(pct(funnelMetrics(3, 3, 1).find((m) => m.id === 'plus')!.agent))
++    expect(s.actions.length).toBeGreaterThanOrEqual(1)
++  })
++})
++
++describe('cost summary', () => {
++  it('matches the cost model on the Balanced preset', () => {
++    const f = costFunction(1)
++    const g = goal(DEFAULT_GOAL, presetInputs(PRESETS[1], 10))
++    expect(f.chapter).toBeCloseTo(g.costPerChapter)
++    expect(f.costPerFlip).toBeCloseTo(g.costPerFlip)
++    expect(f.costPerFlip).toBeCloseTo(f.journey / f.flip)
++    expect(f.profitPerFlip).toBeCloseTo((f.revenue - f.journey) / f.flip)
++  })
++  it('finds the first profitable stage', () => {
++    const be = breakEvenStage()
++    if (be) expect(costFunction(be).profitPerFlip).toBeGreaterThanOrEqual(0)
++    const s = costSummary()
++    expect(s.tiles[3].value).toBe(be ? `Stage ${be}` : 'None')
++  })
++})
++
++it('gives every report a headline, 3–4 tiles and at least one next move', () => {
++  for (const s of [buyerSummary(), combinationSummary(1), costSummary()]) {
++    expect(s.headline.length).toBeGreaterThan(20)
++    expect(s.tiles.length).toBeGreaterThanOrEqual(3)
++    expect(s.tiles.length).toBeLessThanOrEqual(4)
++    expect(s.actions.length).toBeGreaterThanOrEqual(1)
++  }
++})
+diff --git a/src/admin/data/reportSummaries.ts b/src/admin/data/reportSummaries.ts
+new file mode 100644
+index 0000000..27b74a9
+--- /dev/null
++++ b/src/admin/data/reportSummaries.ts
+@@ -0,0 +1,333 @@
++import { DEFAULT_DECISIONS, STAGES as FUNNEL_STAGES, biggestLeak, funnelMetrics, stageStatus, type StageId } from './businessFunnel'
++import { movedBy, runTallies } from './buyerAgentReport'
++import { BUYER_RUNS } from './buyerRuns'
++import { V3_CHANGES } from './buyerRunV3'
++import { v5Tallies } from './buyerRunV5'
++import { V6_CHANGES, v6Tallies } from './buyerRunV6'
++import { v7Tallies } from './buyerRunV7'
++import { report } from './buyerSim'
++import { ANCHORS, ASSUME, DEFAULT_GOAL, MEASURED_2025, MEDIA, PRESETS, STAGES as COST_STAGES, chapterCost, goal, measuredAverage, presetInputs, supplier, total, type Media, type Stage } from './costModel'
++import type { SourceLabel } from './reportSources'
++
++/**
++ * Admin → Reports, summary first (U126, J179). The answer, the KPI tiles,
++ * the next moves and the confidence strip of each report, derived from the
++ * same models the details read. Nothing in a headline is typed in: every
++ * number comes from a run, a funnel metric or the cost model, so a change in
++ * the data changes the summary. `reportSummaries.test.ts` pins that.
++ */
++
++export type SummaryStatus = 'on-track' | 'at-risk' | 'not-measured'
++
++export interface Tile {
++  label: string
++  value: string
++  badge: SourceLabel
++  /** Against the previous comparable figure; omitted when there is none. */
++  delta?: string
++  /** True when the delta is good news. */
++  deltaGood?: boolean
++  note?: string
++}
++
++export interface NextAction {
++  text: string
++  to: string
++  linkLabel: string
++}
++
++export interface Confidence {
++  measured: string
++  predicted: string
++  assumed: string
++}
++
++export interface ReportSummary {
++  question: string
++  headline: string
++  status: SummaryStatus
++  statusNote: string
++  tiles: Tile[]
++  actions: NextAction[]
++  confidence: Confidence
++}
++
++const pct = (x: number) => `${Math.round(x * 100)}%`
++const share = (k: number, n: number) => (n ? k / n : 0)
++const pts = (a: number, b: number) => {
++  const d = Math.round((b - a) * 100)
++  return `${d > 0 ? '+' : d < 0 ? '−' : '±'}${Math.abs(d)} pts`
++}
++const money = (v: number) => `$${v % 1 ? v.toFixed(2) : v}`
++const decision = (id: string) => DEFAULT_DECISIONS.find((d) => d.id === id)!
++
++/* ------------------------------------------------------------ Buyer agents */
++
++export interface TrendPoint {
++  id: string
++  name: string
++  /** Share of the panel, 0–1; null when the report did not ask it. */
++  tries: number | null
++  pays: number | null
++  sure30: number | null
++  n: number
++  /** What changed in this report's inputs, in a few words. */
++  change: string
++}
++
++/** Try, pay and sure-at-day-30 per report, on the offer each report led with. */
++export function buyerTrend(): TrendPoint[] {
++  const run = (v: number) => runTallies(BUYER_RUNS.find((r) => r.version === v)!.answers)
++  const [t1, t2, t3] = [run(1), run(2), run(3)]
++  const x5 = v5Tallies()
++  const x6 = v6Tallies()
++  const x7 = v7Tallies()
++  const best = report(3, 3)
++  return [
++    { id: 'it-v1', name: 'v1', n: t1.n, tries: share(t1.tries.yes, t1.n), pays: share(t1.pays.yes, t1.n), sure30: share(t1.sureDay30, t1.n), change: 'First run, 10 people, agent too agreeable' },
++    { id: 'it-v2', name: 'v2', n: t2.n, tries: share(t2.tries.yes, t2.n), pays: share(t2.pays.yes, t2.n), sure30: share(t2.sureDay30, t2.n), change: 'Calibrated agent, 36 people, local prices' },
++    { id: 'it-v3', name: 'v3', n: t3.n, tries: share(t3.tries.yes, t3.n), pays: share(t3.pays.yes, t3.n), sure30: share(t3.sureDay30, t3.n), change: 'Proposal B (not built): no account, languages' },
++    { id: 'it-rerun', name: 'v4', n: best.walks.length, tries: null, pays: null, sure30: best.d30, change: 'Walked real screens; day 30 = back after a month' },
++    { id: 'it-v5', name: 'v5', n: x5.t.n, tries: share(x5.t.tries.yes, x5.t.n), pays: share(x5.t.pays.yes, x5.t.n), sure30: share(x5.day30, x5.t.n), change: 'Today’s product at today’s $10 price' },
++    { id: 'it-v6', name: 'v6', n: x6.A.n, tries: share(x6.A.tries.yes, x6.A.n), pays: share(x6.A.pays.yes, x6.A.n), sure30: null, change: '60 people; freemium beat the creator retreat' },
++    { id: 'it-v7', name: 'v7', n: x7.B.n, tries: share(x7.B.tries.yes, x7.B.n), pays: share(x7.B.pays.yes, x7.B.n), sure30: share(x7.day30B, x7.B.n), change: '100 people; + free library and quick wins' },
++  ]
++}
++
++export interface Lever {
++  theme: string
++  change: string
++  report: string
++  moved: number
++  n: number
++  share: number
++}
++
++/** The changes that moved most answers, one per theme, from reports v3, v6 and v7. */
++export function buyerLevers(): Lever[] {
++  const r3 = BUYER_RUNS.find((r) => r.version === 3)!
++  const n3 = r3.answers.length
++  const m3 = new Map(movedBy(r3))
++  const x6 = v6Tallies()
++  const x7 = v7Tallies()
++  const m6 = new Map(x6.moved)
++  const m7 = new Map(x7.moved)
++  const rows: Omit<Lever, 'share'>[] = [
++    { theme: 'Account-first', change: V3_CHANGES['no-account'].label, report: 'v3', moved: m3.get('no-account') ?? 0, n: n3 },
++    { theme: 'Language', change: V3_CHANGES.language.label, report: 'v3', moved: m3.get('language') ?? 0, n: n3 },
++    { theme: 'Trust', change: V3_CHANGES['data-line'].label, report: 'v3', moved: m3.get('data-line') ?? 0, n: n3 },
++    { theme: 'Price / regional', change: V3_CHANGES['local-price'].label, report: 'v3', moved: m3.get('local-price') ?? 0, n: n3 },
++    { theme: 'Free library', change: V6_CHANGES['free-library']?.label ?? 'Free core library', report: 'v7', moved: m7.get('free-library') ?? 0, n: x7.B.n },
++    { theme: 'Creator voice', change: V6_CHANGES['creator-voice']?.label ?? 'Creator voice', report: 'v6', moved: m6.get('creator-voice') ?? 0, n: x6.A.n },
++  ]
++  return rows.map((r) => ({ ...r, share: share(r.moved, r.n) })).sort((a, b) => b.share - a.share)
++}
++
++export function buyerSummary(): ReportSummary {
++  const x5 = v5Tallies()
++  const x7 = v7Tallies()
++  const n = x5.t.n
++  const tryShare = share(x5.t.tries.yes, n)
++  const payShare = share(x5.t.pays.yes, n)
++  const v3ATry = share(x5.v3A.tries.yes, x5.v3A.n)
++  const v3APay = share(x5.v3A.pays.yes, x5.v3A.n)
++  const tryA7 = share(x7.A.tries.yes, x7.A.n)
++  const tryB7 = share(x7.B.tries.yes, x7.B.n)
++  const lift = x7.moved[0]
++  const liftLabel = lift ? (V6_CHANGES[lift[0]]?.label ?? lift[0]).replace(/^A /, '').split(',')[0] : 'none'
++  const objection = x5.themes[0]?.[0] ?? '—'
++  const lever = buyerLevers()[0]
++  const status: SummaryStatus = payShare >= 0.15 && x5.band.high >= 10 ? 'on-track' : 'at-risk'
++  return {
++    question: 'How likely is Aurelia to succeed with what we have now?',
++    headline: `On today’s product, ${pct(tryShare)} of buyer agents would try Aurelia and ${pct(payShare)} would pay $10 a month, but they call ${money(x5.band.low)}–${money(x5.band.high)} fair; a ${liftLabel.toLowerCase()} (report v7) lifts trying to ${pct(tryB7)} in the best tested alternative.`,
++    status,
++    statusNote: status === 'at-risk' ? `Pay intent below 15%; fair price under $10` : 'Pay intent and price on target',
++    tiles: [
++      { label: 'Would try today (v5)', value: pct(tryShare), badge: 'prediction', delta: `${pts(v3ATry, tryShare)} vs v3 offer A`, deltaGood: tryShare >= v3ATry, note: `${x5.t.tries.yes} of ${n}` },
++      { label: 'Would pay $10 (v5)', value: pct(payShare), badge: 'prediction', delta: `${pts(v3APay, payShare)} vs v3 offer A`, deltaGood: payShare >= v3APay, note: `${x5.t.pays.yes} of ${n}; top objection: ${objection}` },
++      { label: 'Fair price band vs $10', value: `${money(x5.band.low)}–${money(x5.band.high)}`, badge: 'prediction', note: 'a month; $10 is above the band' },
++      { label: 'Best tested lift (v7)', value: `${pct(tryA7)} → ${pct(tryB7)}`, badge: 'prediction', delta: pts(tryA7, tryB7), deltaGood: tryB7 >= tryA7, note: `would try with a ${liftLabel.toLowerCase()}` },
++    ],
++    actions: [
++      { text: `${decision('d1').change} (${lever.theme.toLowerCase()} moved ${lever.moved} of ${lever.n} answers)`, to: '/admin/business-funnel', linkLabel: 'Decision d1' },
++      { text: decision('d3').change, to: '/admin/business-funnel', linkLabel: 'Decision d3' },
++      { text: `Test a price inside the fair band (${money(x5.band.low)}–${money(x5.band.high)}) or regional prices before charging $10.`, to: '#what-moves', linkLabel: 'What moves success' },
++    ],
++    confidence: {
++      measured: 'Nothing: no real person answered.',
++      predicted: 'Every try, pay and price figure: synthetic personas played by one agent.',
++      assumed: 'Inputs differ between reports (panel, product, price), so compare shares, not counts.',
++    },
++  }
++}
++
++/* ------------------------------------------------------------ Combination */
++
++export interface StageCell {
++  id: StageId
++  title: string
++  status: 'on-track' | 'below'
++  metric: string
++  value: number
++  target: number
++  isGap: boolean
++}
++
++/** One cell per funnel stage: its worst metric against target (agent v3 × production v3). */
++export function stageStrip(week: number): StageCell[] {
++  const metrics = funnelMetrics(3, 3, week)
++  const leak = biggestLeak(metrics, {})
++  return FUNNEL_STAGES.map((s) => {
++    const own = metrics.filter((m) => m.stage === s.id)
++    const worst = own.reduce((a, b) => (b.agent / b.target < a.agent / a.target ? b : a))
++    return { id: s.id, title: s.title, status: stageStatus(metrics, {}, s.id).status === 'on-track' ? 'on-track' : 'below', metric: worst.label, value: worst.agent, target: worst.target, isGap: s.id === leak }
++  })
++}
++
++const SHORT: Record<StageId, string> = { entry: 'Entry', aha: 'Aha', cap: 'Cap', upsell: 'Upsell', stay: 'Stay' }
++export const stageShort = (id: StageId) => SHORT[id]
++
++/** The next move per stage, from the combination report's readings. */
++const STAGE_DECISION: Partial<Record<StageId, string>> = { entry: 'd1', aha: 'd2', upsell: 'd4', stay: 'd7' }
++
++export function combinationSummary(week: number): ReportSummary {
++  const strip = stageStrip(week)
++  const on = strip.filter((s) => s.status === 'on-track')
++  const gap = strip.find((s) => s.isGap)
++  const metrics = funnelMetrics(3, 3, week)
++  const m = (id: string) => metrics.find((x) => x.id === id)!
++  const gapDecision = gap && STAGE_DECISION[gap.id] ? decision(STAGE_DECISION[gap.id]!) : null
++  const below = strip.filter((s) => s.status === 'below' && !s.isGap && STAGE_DECISION[s.id]).slice(0, 2)
++  return {
++    question: 'Where does Aurelia stand, stage by stage, and what do we fix first?',
++    headline: gap
++      ? `${on.length} of ${strip.length} stages are on track by prediction; the biggest gap is ${gap.title.toLowerCase()} (${gap.metric.toLowerCase()}: ${pct(gap.value)} against ${pct(gap.target)}), so fix that first.`
++      : `All ${strip.length} stages are on track by prediction.`,
++    status: on.length === strip.length ? 'on-track' : 'at-risk',
++    statusNote: `${strip.length - on.length} of ${strip.length} stages below target`,
++    tiles: [
++      { label: 'Stages on track', value: `${on.length} of ${strip.length}`, badge: 'prediction', note: on.map((s) => stageShort(s.id)).join(', ') || 'none' },
++      { label: 'Hears a session, first visit', value: pct(m('activation').agent), badge: 'prediction', delta: `target ${pct(m('activation').target)}`, deltaGood: m('activation').agent >= m('activation').target },
++      { label: 'Chooses Plus at the limit', value: pct(m('plus').agent), badge: 'prediction', delta: `target ${pct(m('plus').target)}`, deltaGood: m('plus').agent >= m('plus').target },
++      { label: 'Still using after a month', value: pct(m('d30').agent), badge: 'prediction', delta: `target ${pct(m('d30').target)}`, deltaGood: m('d30').agent >= m('d30').target },
++    ],
++    actions: [
++      ...(gap ? [{ text: gapDecision ? gapDecision.change : 'Pick one definition of the free limit, then fix the aha first.', to: gapDecision ? '/admin/business-funnel' : `#stage-${gap.id}`, linkLabel: gapDecision ? `Decision ${gapDecision.id}` : `Stage: ${stageShort(gap.id)}` }] : []),
++      ...below.map((s) => ({ text: decision(STAGE_DECISION[s.id]!).change, to: `#stage-${s.id}`, linkLabel: `Stage: ${stageShort(s.id)}` })),
++    ],
++    confidence: {
++      measured: 'Nothing on real use; three interviews say what matters, not how many.',
++      predicted: 'Every stage figure: buyer agents (v3 rules) on production v3.',
++      assumed: 'Targets are the team’s defaults; the feedback group is sample data.',
++    },
++  }
++}
++
++/* ------------------------------------------------------------------- Cost */
++
++const BALANCED = PRESETS.find((p) => p.id === 'balanced')!
++
++export type CostSourceId = 'suppliers' | 'estimates' | 'measured-2025' | 'spec'
++
++export interface CostTerm {
++  id: string
++  label: string
++  value: string
++  source: CostSourceId
++  /** Where in that source, in a few words. */
++  from: string
++  /** A result term (right column) rather than an input (middle). */
++  result?: boolean
++}
++
++export interface CostFunction {
++  terms: CostTerm[]
++  chapter: number
++  chapters: number
++  journey: number
++  flip: number
++  costPerFlip: number
++  revenue: number
++  profitPerFlip: number
++  measuredPerSessionEur: number
++}
++
++const usd = (x: number) => (!isFinite(x) ? '—' : `${x < 0 ? '−' : ''}$${Math.abs(x) < 0.1 && x !== 0 ? Math.abs(x).toFixed(3) : Math.abs(x).toFixed(2)}`)
++
++/** The cost function on the Balanced preset, 10-minute chapters, the spec's 25 → 85 journey at a stage. */
++export function costFunction(stage: Stage = 1): CostFunction {
++  const inputs = presetInputs(BALANCED, 10)
++  const media = chapterCost(inputs)
++  const noCache = chapterCost({ ...inputs, cacheHit: 0 })
++  const g = goal({ ...DEFAULT_GOAL, stage }, inputs)
++  const term = (m: Media): CostTerm => {
++    const s = supplier(BALANCED.models[m])
++    return { id: m, label: m === 'script' ? 'Script' : m === 'voice' ? 'Voice' : m === 'music' ? 'Music' : 'Image', value: usd(media[m]), source: s.label === 'estimate' ? 'estimates' : 'suppliers', from: `${s.name}, ${s.date.split(' (')[0]}` }
++  }
++  const saving = total(noCache) - total(media)
++  const terms: CostTerm[] = [
++    ...(['script', 'voice', 'music', 'image'] as Media[]).map(term),
++    { id: 'cache', label: 'Minus cache / reuse', value: `−${usd(saving)}`, source: 'estimates', from: `${pct(BALANCED.cacheHit)} of music and images reused` },
++    { id: 'stage', label: 'Stage cost factor', value: `× ${COST_STAGES[stage].costFactor}`, source: 'spec', from: `${COST_STAGES[stage].name}, the spec PDF` },
++    { id: 'chapters', label: 'Chapters to flip', value: `${g.chapters}`, source: 'spec', from: `${DEFAULT_GOAL.baseline} → ${DEFAULT_GOAL.target}, uplift ${COST_STAGES[stage].uplift} a chapter` },
++    { id: 'flip', label: 'Flip probability', value: pct(g.flipProbability), source: 'spec', from: `stage success ${pct(COST_STAGES[stage].success)}` },
++    { id: 'price', label: 'Price', value: usd(g.revenuePerJourney), source: 'spec', from: `${ANCHORS[DEFAULT_GOAL.anchor].label} × P(flip)` },
++    { id: 'fees', label: 'Fees', value: '$0 (not modelled)', source: 'estimates', from: 'store, payment and creator fees not counted yet' },
++    { id: 'r-chapter', label: 'Chapter cost', value: usd(g.costPerChapter), source: 'estimates', from: 'script + voice + music + image − reuse', result: true },
++    { id: 'r-journey', label: 'Journey cost', value: usd(g.costPerJourney), source: 'estimates', from: 'chapters × chapter cost', result: true },
++    { id: 'r-flip', label: 'Cost per flip', value: usd(g.costPerFlip), source: 'estimates', from: 'journey ÷ flip probability', result: true },
++    { id: 'r-profit', label: 'Profit per flip', value: usd(g.profitPerFlip), source: 'spec', from: 'price − cost per flip − fees, per flip', result: true },
++    { id: 'r-2025', label: '2025 measured, per session', value: `€${measuredAverage().toFixed(2)}`, source: 'measured-2025', from: `top ${MEASURED_2025.campaigns.length} old-admin campaigns, incl. video`, result: true },
++  ]
++  return { terms, chapter: g.costPerChapter, chapters: g.chapters, journey: g.costPerJourney, flip: g.flipProbability, costPerFlip: g.costPerFlip, revenue: g.revenuePerJourney, profitPerFlip: g.profitPerFlip, measuredPerSessionEur: measuredAverage() }
++}
++
++export const COST_SOURCES: { id: CostSourceId; title: string; label: SourceLabel; lines: string[] }[] = [
++  {
++    id: 'suppliers',
++    title: 'Supplier price pages',
++    label: 'company-price',
++    lines: MEDIA.filter((m) => m !== 'video').map((m) => {
++      const s = supplier(BALANCED.models[m])
++      return `${s.name}: ${s.price} (${s.date.split(' (')[0]})`
++    }),
++  },
++  { id: 'estimates', title: 'Our estimates', label: 'estimate', lines: [`${ASSUME.charsPerWord} characters and ${ASSUME.tokensPerWord} tokens a word; 105 words a minute`, `Reuse: one chapter shared by ${ASSUME.reuseAcross}; cache share per preset`, 'Fees, hosting and CAC not counted'] },
++  { id: 'measured-2025', title: '2025 old admin (measured)', label: 'measured', lines: [`€${MEASURED_2025.total.toFixed(2)} vendor cost, Mar 2025 – Apr 2026`, `Voice €${MEASURED_2025.byMedia.voice.toFixed(2)}, video €${MEASURED_2025.byMedia.video.toFixed(2)} of it`] },
++  { id: 'spec', title: 'The business owner’s spec (scenario)', label: 'scenario', lines: ['Causal AI stages 1–3: uplift, success, cost factor', `$19.99 per flip; journey ${DEFAULT_GOAL.baseline} → ${DEFAULT_GOAL.target}`] },
++]
++
++/** The first stage at which a flip makes money, or null. */
++export function breakEvenStage(): Stage | null {
++  return ([1, 2, 3] as Stage[]).find((s) => costFunction(s).profitPerFlip >= 0) ?? null
++}
++
++export function costSummary(): ReportSummary {
++  const s1 = costFunction(1)
++  const s3 = costFunction(3)
++  const be = breakEvenStage()
++  const status: SummaryStatus = s1.profitPerFlip >= 0 ? 'on-track' : 'at-risk'
++  return {
++    question: 'What does it cost to move someone from bad to good, and when does it pay?',
++    headline: `A 10-minute chapter costs about ${usd(s1.chapter)}, so one successful flip costs ${usd(s1.costPerFlip)} today and ${usd(s3.costPerFlip)} once the AI has learned; at ${ANCHORS[DEFAULT_GOAL.anchor].label} ${be ? `it pays from stage ${be}` : 'it never pays'}.`,
++    status,
++    statusNote: status === 'on-track' ? `Profitable from stage 1 (scenario)` : `Loses money at stage 1 (scenario)`,
++    tiles: [
++      { label: 'Cost per 10-min chapter (Balanced)', value: usd(s1.chapter), badge: 'estimate', note: `2025 measured: €${s1.measuredPerSessionEur.toFixed(2)} a session` },
++      { label: 'Cost per flip, stage 1 → 3', value: `${usd(s1.costPerFlip)} → ${usd(s3.costPerFlip)}`, badge: 'estimate', note: `${s1.chapters} → ${s3.chapters} chapters` },
++      { label: 'Profit per flip, stage 1', value: usd(s1.profitPerFlip), badge: 'scenario', delta: `stage 3: ${usd(s3.profitPerFlip)}`, deltaGood: s3.profitPerFlip >= s1.profitPerFlip, note: ANCHORS[DEFAULT_GOAL.anchor].label },
++      { label: 'Break-even stage', value: be ? `Stage ${be}` : 'None', badge: 'scenario', note: be ? COST_STAGES[be].sessions : 'at this price' },
++    ],
++    actions: [
++      { text: 'Pick the voice first: it is the largest line of every chapter.', to: '#cost-function', linkLabel: 'Cost function' },
++      { text: 'Measure real flips on the first cohort: every uplift and success rate here is the spec’s scenario.', to: '#goal-graph', linkLabel: 'Bad-to-good graph' },
++      { text: 'Choose the price anchor (per flip, Plus or retreat) before comparing profit.', to: '#goal-stages', linkLabel: 'Stages' },
++    ],
++    confidence: {
++      measured: `Only the 2025 vendor costs (€${MEASURED_2025.total.toFixed(2)}).`,
++      predicted: 'Chapter cost: supplier prices × our word and reuse estimates.',
++      assumed: 'Uplift, flip rate and stage cost factor: the spec’s scenario.',
++    },
++  }
++}
+diff --git a/src/admin/pages/reports/BuyerAgentReportPage.tsx b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+index 0aa7924..6c99ed6 100644
+--- a/src/admin/pages/reports/BuyerAgentReportPage.tsx
++++ b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+@@ -7,6 +7,9 @@ import { BUYER_REPORT_FINDINGS } from '../../data/reportSources'
+ import { InputGraph } from './InputGraph'
+ import { INPUT_DOT } from './reportColors'
+ import { LabelBadge, SourcesSection } from './ReportParts'
++import { Details, SummaryBlock } from './ReportSummary'
++import { SuccessTrend, WhatMoves } from './SummaryCharts'
++import { buyerLevers, buyerSummary, buyerTrend } from '../../data/reportSummaries'
+ 
+ const fmtDate = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+ 
+@@ -20,12 +23,15 @@ const fmtDate = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString('en
+  */
+ export function BuyerAgentReportPage() {
+   const iterations = useMemo(() => buildIterations(), [])
++  const summary = useMemo(() => buyerSummary(), [])
++  const trend = useMemo(() => buyerTrend(), [])
++  const levers = useMemo(() => buyerLevers(), [])
+ 
+   return (
+     <div className="flex flex-col gap-16">
+       <PageHeader
+         title="Buyer agent report"
+-        description="A buyer report is what synthetic personas say when an AI agent plays each of them against Aurelia: who would try it, who would pay, and why not. Each report version is made from five inputs: the personas, the product version, the PRD, the business owner’s documents and the price given at the time. Everything here is a prediction, not a measurement: nobody real answered."
++        description="What synthetic buyers, played by an AI agent, say about trying and paying for Aurelia. Every figure is a prediction."
+         actions={
+           <Link to="/admin/buyer-agent" className="inline-flex items-center gap-6 rounded-8 border border-adm-line bg-adm-surface px-12 py-6 text-12 font-medium text-adm-ink hover:bg-adm-hover">
+             Full detail: Buyer agent results <ArrowRight size={13} aria-hidden="true" />
+@@ -33,6 +39,20 @@ export function BuyerAgentReportPage() {
+         }
+       />
+ 
++      <SummaryBlock s={summary} />
++
++      <div className="grid gap-16 lg:grid-cols-[3fr_2fr]">
++        <Panel title="Success trend, report v1 → v7" description="Would try, would pay and sure at day 30, on the offer each report led with. Hover a report for what changed.">
++          <SuccessTrend points={trend} />
++        </Panel>
++        <section id="what-moves" className="min-w-0 scroll-mt-16">
++          <Panel title="What moves success" description="Share of a report’s answers each change moved (v3, v6, v7).">
++            <WhatMoves levers={levers} />
++          </Panel>
++        </section>
++      </div>
++
++      <Details title="How each report was made" hint="the five inputs and what changed between reports">
+       <section id="input-graph" className="scroll-mt-16">
+         <Panel title="Inputs → report versions" description="Each row is one of the five inputs, each column a report version. A cell is the exact value that report used.">
+           <InputGraph iterations={iterations} />
+@@ -81,6 +101,9 @@ export function BuyerAgentReportPage() {
+         </Panel>
+       </section>
+ 
++      </Details>
++
++      <Details title="Every report, one card each" hint="question, inputs and headline results">
+       <section aria-label="Report versions" className="grid gap-16 lg:grid-cols-2">
+         {iterations.map((it) => (
+           <article key={it.id} id={it.id} className="flex min-w-0 scroll-mt-16 flex-col gap-12 rounded-12 border border-adm-line bg-adm-surface p-16">
+@@ -133,7 +156,9 @@ export function BuyerAgentReportPage() {
+           </article>
+         ))}
+       </section>
++      </Details>
+ 
++      <Details title="Sources and limits">
+       <SourcesSection
+         findings={BUYER_REPORT_FINDINGS}
+         labels={['prediction', 'sample', 'document']}
+@@ -146,6 +171,7 @@ export function BuyerAgentReportPage() {
+           'Reports v1 and v2 used persona generator 1, which made incoherent people; comparisons across reports are approximate.',
+         ]}
+       />
++      </Details>
+     </div>
+   )
+ }
+diff --git a/src/admin/pages/reports/CombinationReportPage.tsx b/src/admin/pages/reports/CombinationReportPage.tsx
+index 3b7e4a2..9f2d48f 100644
+--- a/src/admin/pages/reports/CombinationReportPage.tsx
++++ b/src/admin/pages/reports/CombinationReportPage.tsx
+@@ -8,6 +8,9 @@ import { OUTCOMES, eur } from '../../data/retreatFunnel'
+ import { studyWeek } from '../../data/study'
+ import { CompositionGraph } from './CompositionGraph'
+ import { LabelBadge, SourceChip, SourcesSection } from './ReportParts'
++import { Details, SummaryBlock } from './ReportSummary'
++import { StageStrip } from './SummaryCharts'
++import { combinationSummary, stageStrip } from '../../data/reportSummaries'
+ 
+ const STATUS = { 'on-track': { tone: 'good', text: 'On track (prediction)' }, below: { tone: 'critical', text: 'Below target (prediction)' }, unmeasured: { tone: 'neutral', text: 'Unmeasured' } } as const
+ 
+@@ -78,19 +81,35 @@ export function CombinationReportPage() {
+   const [stages] = useState(() => buildStages(week))
+   const [matrix] = useState(() => buildMatrix())
+   const [composition] = useState(() => buildComposition(stages))
++  const [summary] = useState(() => combinationSummary(week))
++  const [strip] = useState(() => stageStrip(week))
+   const middle = OUTCOMES.find((o) => o.id === 'middle')!
+ 
+   return (
+     <div className="flex flex-col gap-16">
+       <PageHeader
+         title="Combination report"
+-        description="Aurelia read stage by stage of the business funnel, with every source side by side: the 2025 backend, what production v3 offers, what real users said, the personas and buyer agents, the funnels and the PRD. For each stage: what each source says, where they agree and conflict, and one verdict with a next move."
++        description="Aurelia read stage by stage of the business funnel, every source side by side, with one verdict and one next move per stage."
+       />
+ 
+-      <Panel title="How this report was made" description="Built in four levels, read left to right: the sources, the building blocks read or computed from them, a reading of each funnel stage, and the verdict with its next moves. The colour of a line from a source is the kind of source it is.">
+-        <CompositionGraph nodes={composition} />
+-      </Panel>
++      <SummaryBlock
++        s={summary}
++        aside={
++          <div className="flex flex-col gap-10">
++            <StageStrip cells={strip} />
++            <div className="rounded-8 bg-adm-bg p-12">
++              <h2 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">How to read this</h2>
++              <ul className="mt-4 flex list-disc flex-col gap-2 pl-18 text-12 text-adm-ink-2">
++                <li>Five stages, left to right: a person enters, has an “aha”, hits the free limit, is offered Plus, and stays.</li>
++                <li>Each box is the stage’s weakest number against its target; green is on target, red is below, the thick border is what to fix first.</li>
++                <li>All numbers are predictions from buyer agents on production v3; click a stage for every source behind it.</li>
++              </ul>
++            </div>
++          </div>
++        }
++      />
+ 
++      <Details id="stages" title="Stage by stage" hint="what each source says, where they agree and conflict">
+       <Panel title="How to read it" description="The version and rules every stage is read on.">
+         <ul className="flex list-disc flex-col gap-4 pl-18 text-13 text-adm-ink-2">
+           <li>The product is production v3 (staging v5), the production default. The buyer-agent figures are agent v3’s rules, the calibrated ones.</li>
+@@ -105,6 +124,9 @@ export function CombinationReportPage() {
+         <Stage key={s.id} s={s} n={i + 1} />
+       ))}
+ 
++      </Details>
++
++      <Details title="Retreat offers × production versions" hint="the matrix">
+       <section id="matrix" className="scroll-mt-16">
+         <Panel
+           title="Offer × production version × agent rules"
+@@ -152,7 +174,16 @@ export function CombinationReportPage() {
+           </p>
+         </Panel>
+       </section>
++      </Details>
++
++      <Details title="How this was built" hint="sources → building blocks → stages → verdict">
++      <Panel title="How this report was made" description="Built in four levels, read left to right: the sources, the building blocks read or computed from them, a reading of each funnel stage, and the verdict with its next moves. The colour of a line from a source is the kind of source it is.">
++        <CompositionGraph nodes={composition} />
++      </Panel>
++
++      </Details>
+ 
++      <Details title="Sources and limits">
+       <SourcesSection
+         findings={COMBINATION_FINDINGS}
+         limits={[
+@@ -164,6 +195,7 @@ export function CombinationReportPage() {
+           'The 2025 backend documents came without code; what they say it did is unverified.',
+         ]}
+       />
++      </Details>
+     </div>
+   )
+ }
+diff --git a/src/admin/pages/reports/CostReportPage.tsx b/src/admin/pages/reports/CostReportPage.tsx
+index 8638edf..8ecad11 100644
+--- a/src/admin/pages/reports/CostReportPage.tsx
++++ b/src/admin/pages/reports/CostReportPage.tsx
+@@ -9,6 +9,9 @@ import {
+ } from '../../data/costModel'
+ import { COST_FINDINGS } from '../../data/reportSources'
+ import { SourceGraph, SourcesSection } from './ReportParts'
++import { Details, SummaryBlock } from './ReportSummary'
++import { CostFunctionPanel } from './SummaryCharts'
++import { costFunction, costSummary } from '../../data/reportSummaries'
+ 
+ /*
+  * Admin → Reports → Cost report (U117, J172). Part 1: what a chapter costs,
+@@ -65,6 +68,8 @@ export function CostReportPage() {
+   const [state, setState] = useState<State>(INITIAL)
+   const [changed, setChanged] = useState<{ from: NodeId | null; nodes: Set<NodeId> }>({ from: null, nodes: new Set() })
+   const [selected, setSelected] = useState<NodeId>('costFlip')
++  const [summary] = useState(() => costSummary())
++  const [fn] = useState(() => costFunction(1))
+ 
+   function update(from: NodeId, next: State) {
+     const before = nodeValues(state)
+@@ -85,21 +90,18 @@ export function CostReportPage() {
+     <div className="flex flex-col gap-16">
+       <PageHeader
+         title="Cost report"
+-        description="What it costs Aurelia to make a chapter, by media and supplier, and what it might cost to move someone from bad sleep to good sleep. Prices are the suppliers’ own where we could read them; everything about uplift, flips and the Causal AI stages is the business owner’s scenario, not measured. There are no real users yet."
++        description="What a chapter costs to make, and what moving one person from bad sleep to good sleep costs and earns. Prices are suppliers’ own; uplift and flips are the business owner’s scenario."
+       />
+ 
+-      <div className="flex flex-wrap items-center gap-8 text-12 text-adm-ink-2">
+-        <span className="font-medium text-adm-ink">Every number is labelled:</span>
+-        {(Object.keys(NUMBER_LABEL_TEXT) as NumberLabel[]).map((l) => (
+-          <NumBadge key={l} label={l} />
+-        ))}
+-      </div>
++      <SummaryBlock s={summary} />
+ 
+-      <Panel title="How this report was made" description="Where each part of this report comes from. Each line is a source feeding a section.">
+-        <SourceGraph findings={COST_FINDINGS} label="Graph: the sources on the left feed the report’s sections on the right." />
+-      </Panel>
++      <section id="cost-function" className="scroll-mt-16">
++        <Panel title="The cost function" description="Which sources feed it, the formula, and what comes out. Click a term to see its source.">
++          <CostFunctionPanel f={fn} />
++        </Panel>
++      </section>
+ 
+-      <h2 className="mt-8 text-18 font-semibold text-adm-ink">Part 1 · Cost</h2>
++      <Details title="Part 1 · Cost per chapter" hint="supplier catalogue, your selection, presets, 2025 measured">
+ 
+       <section id="cost-catalogue" className="scroll-mt-16">
+         <Panel title="Supplier catalogue" description="Candidate models for each media element of a chapter, with the price as stated, its date and source, and what each is good and bad at. “Use” puts it in your selection below.">
+@@ -204,7 +206,9 @@ export function CostReportPage() {
+         </Panel>
+       </section>
+ 
+-      <h2 className="mt-8 text-18 font-semibold text-adm-ink">Part 2 · From bad to good (the goal)</h2>
++      </Details>
++
++      <Details title="Part 2 · From bad to good" hint="the connected graph, the three stages, the metric lines">
+ 
+       <section id="goal-graph" className="scroll-mt-16">
+         <Panel title="Bad sleep to good sleep, as a connected graph" description="Use case: sleep on a 0–100 scale, default 25 → 85 (+60) from the spec. Change a variable: every node downstream updates and the changed path lights up. Click a node for its formula and source. Chapter length, personalisation and models come from Part 1.">
+@@ -287,6 +291,20 @@ export function CostReportPage() {
+         <MetricLines stages={stages} />
+       </section>
+ 
++      </Details>
++
++      <Details title="Notes, sources and limits">
++      <div className="flex flex-wrap items-center gap-8 text-12 text-adm-ink-2">
++        <span className="font-medium text-adm-ink">Every number is labelled:</span>
++        {(Object.keys(NUMBER_LABEL_TEXT) as NumberLabel[]).map((l) => (
++          <NumBadge key={l} label={l} />
++        ))}
++      </div>
++
++      <Panel title="How this report was made" description="Where each part of this report comes from. Each line is a source feeding a section.">
++        <SourceGraph findings={COST_FINDINGS} label="Graph: the sources on the left feed the report’s sections on the right." />
++      </Panel>
++
+       <Panel title="Read this first" description="Plain-language notes.">
+         <ul className="flex list-disc flex-col gap-6 pl-18 text-13 text-adm-ink-2">
+           <li>“Therapeutic”, “flip” and “medical range” are internal metric names. Nothing on this page is a medical claim; public copy stays wellness.</li>
+@@ -308,6 +326,7 @@ export function CostReportPage() {
+           'Profit per flip uses the whole price; a retreat ticket is shared with the creator.',
+         ]}
+       />
++      </Details>
+     </div>
+   )
+ }
+diff --git a/src/admin/pages/reports/ReportSummary.tsx b/src/admin/pages/reports/ReportSummary.tsx
+new file mode 100644
+index 0000000..e648f26
+--- /dev/null
++++ b/src/admin/pages/reports/ReportSummary.tsx
+@@ -0,0 +1,124 @@
++import { ArrowRight, ChevronRight } from 'lucide-react'
++import type { ReactNode } from 'react'
++import { Link } from 'react-router-dom'
++import { Badge, type Tone } from '../../components/ui'
++import type { ReportSummary, SummaryStatus } from '../../data/reportSummaries'
++import { LabelBadge } from './ReportParts'
++
++/*
++ * The summary-first top of every Admin → Report (U126, J179): the question,
++ * a one-sentence answer, 3–4 KPI tiles, the next moves and how sure we are.
++ * Everything below it folds into closed <Details> sections.
++ */
++
++const STATUS: Record<SummaryStatus, { tone: Tone; text: string }> = {
++  'on-track': { tone: 'good', text: 'On track' },
++  'at-risk': { tone: 'critical', text: 'At risk' },
++  'not-measured': { tone: 'neutral', text: 'Not measured' },
++}
++
++function ActionLink({ to, children }: { to: string; children: ReactNode }) {
++  const cls = 'inline-flex shrink-0 items-center gap-4 text-12 font-medium text-adm-ink underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink'
++  if (to.startsWith('#')) {
++    const open = () => {
++      const el = document.getElementById(to.slice(1))
++      const det = el?.closest('details') ?? (el instanceof HTMLDetailsElement ? el : null)
++      if (det) det.open = true
++    }
++    return (
++      <a href={to} onClick={open} className={cls}>
++        {children} <ArrowRight size={12} aria-hidden="true" />
++      </a>
++    )
++  }
++  return (
++    <Link to={to} className={cls}>
++      {children} <ArrowRight size={12} aria-hidden="true" />
++    </Link>
++  )
++}
++
++export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode }) {
++  const st = STATUS[s.status]
++  return (
++    <section aria-label="Summary" className="flex min-w-0 flex-col gap-14 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20">
++      <div className="flex flex-col gap-6">
++        <div className="flex flex-wrap items-center gap-8">
++          <span className="text-11 font-semibold uppercase tracking-wider text-adm-muted">The question</span>
++          <span className="text-12 text-adm-ink-2">{s.question}</span>
++        </div>
++        <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-16">
++          <p className="max-w-[860px] text-18 font-semibold leading-snug text-adm-ink">{s.headline}</p>
++          <div className="flex shrink-0 flex-col items-start gap-2 lg:items-end">
++            <Badge tone={st.tone}>{st.text}</Badge>
++            <span className="text-11 text-adm-muted">{s.statusNote}</span>
++          </div>
++        </div>
++      </div>
++
++      <dl className="grid grid-cols-2 gap-8 lg:grid-cols-4">
++        {s.tiles.map((t) => (
++          <div key={t.label} className="flex min-w-0 flex-col gap-4 rounded-8 border border-adm-line bg-adm-bg p-12">
++            <dt className="flex flex-wrap items-center justify-between gap-4 text-11 font-medium text-adm-muted">
++              <span>{t.label}</span>
++              <LabelBadge label={t.badge} />
++            </dt>
++            <dd className="text-24 font-semibold leading-tight tabular-nums text-adm-ink">{t.value}</dd>
++            {t.delta && <dd className={`text-12 font-medium tabular-nums ${t.deltaGood ? 'text-adm-good' : 'text-adm-critical'}`}>{t.delta}</dd>}
++            {t.note && <dd className="text-11 text-adm-ink-2">{t.note}</dd>}
++          </div>
++        ))}
++      </dl>
++
++      {aside}
++
++      <div className="grid gap-12 lg:grid-cols-[3fr_2fr]">
++        <div className="flex min-w-0 flex-col gap-6">
++          <h2 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">What to do next</h2>
++          <ol className="flex flex-col gap-6">
++            {s.actions.map((a, i) => (
++              <li key={a.text} className="flex flex-col gap-4 rounded-8 border border-adm-line p-10 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
++                <span className="text-13 text-adm-ink">
++                  <span className="mr-6 font-semibold tabular-nums">{i + 1}.</span>
++                  {a.text}
++                </span>
++                <ActionLink to={a.to}>{a.linkLabel}</ActionLink>
++              </li>
++            ))}
++          </ol>
++        </div>
++        <div className="flex min-w-0 flex-col gap-6">
++          <h2 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">How sure are we</h2>
++          <dl className="flex flex-col overflow-hidden rounded-8 border border-adm-line text-12">
++            {([
++              ['Measured', 'good', s.confidence.measured],
++              ['Predicted', 'info', s.confidence.predicted],
++              ['Assumed', 'serious', s.confidence.assumed],
++            ] as const).map(([k, tone, v]) => (
++              <div key={k} className="flex items-start gap-8 border-b border-adm-line p-8 last:border-0">
++                <dt className="w-[76px] shrink-0">
++                  <Badge tone={tone}>{k}</Badge>
++                </dt>
++                <dd className="min-w-0 text-adm-ink-2">{v}</dd>
++              </div>
++            ))}
++          </dl>
++        </div>
++      </div>
++    </section>
++  )
++}
++
++/** A collapsible block below the summary, closed by default. */
++export function Details({ id, title, hint, children }: { id?: string; title: string; hint?: string; children: ReactNode }) {
++  return (
++    <details id={id} className="group min-w-0 scroll-mt-16 rounded-12 border border-adm-line bg-adm-surface">
++      <summary className="flex cursor-pointer list-none items-center gap-8 p-14 text-14 font-semibold text-adm-ink hover:bg-adm-hover [&::-webkit-details-marker]:hidden">
++        <ChevronRight size={16} aria-hidden="true" className="shrink-0 transition-transform group-open:rotate-90" />
++        <span>{title}</span>
++        {hint && <span className="hidden text-12 font-normal text-adm-muted lg:inline">· {hint}</span>}
++      </summary>
++      <div className="flex min-w-0 flex-col gap-16 border-t border-adm-line p-12 lg:p-16">{children}</div>
++    </details>
++  )
++}
+diff --git a/src/admin/pages/reports/SummaryCharts.tsx b/src/admin/pages/reports/SummaryCharts.tsx
+new file mode 100644
+index 0000000..20b5f1c
+--- /dev/null
++++ b/src/admin/pages/reports/SummaryCharts.tsx
+@@ -0,0 +1,240 @@
++import { useState } from 'react'
++import { Badge } from '../../components/ui'
++import { COST_SOURCES, stageShort, type CostFunction, type CostSourceId, type Lever, type StageCell, type TrendPoint } from '../../data/reportSummaries'
++import { LabelBadge } from './ReportParts'
++
++/*
++ * The charts of the summary-first reports (U126, J179): the buyer agents'
++ * success trend, what moves success, the funnel stage strip and the cost
++ * function. Series colours are the admin series tokens, fixed per series.
++ */
++
++const pct = (x: number) => `${Math.round(x * 100)}%`
++
++const SERIES = [
++  { key: 'tries', label: 'Would try', stroke: 'stroke-adm-s1', fill: 'fill-adm-s1', dot: 'bg-adm-s1' },
++  { key: 'pays', label: 'Would pay', stroke: 'stroke-adm-s2', fill: 'fill-adm-s2', dot: 'bg-adm-s2' },
++  { key: 'sure30', label: 'Sure at day 30', stroke: 'stroke-adm-s3', fill: 'fill-adm-s3', dot: 'bg-adm-s3' },
++] as const
++
++const TW = 880
++const TH = 250
++const L = 40
++const R = 24
++const T = 16
++const B = 34
++
++/** Try, pay and sure-at-day-30 across reports v1–v7, each point annotated by what changed. */
++export function SuccessTrend({ points }: { points: TrendPoint[] }) {
++  const [hover, setHover] = useState<number | null>(null)
++  const x = (i: number) => L + (i * (TW - L - R)) / (points.length - 1)
++  const y = (v: number) => T + (1 - v) * (TH - T - B)
++  const path = (k: (typeof SERIES)[number]['key']) => {
++    let d = ''
++    let pen = false
++    points.forEach((p, i) => {
++      const v = p[k]
++      if (v === null) {
++        pen = false
++        return
++      }
++      d += `${pen ? 'L' : 'M'} ${x(i)} ${y(v)} `
++      pen = true
++    })
++    return d
++  }
++  const h = hover === null ? null : points[hover]
++  return (
++    <div className="flex min-w-0 flex-col gap-10">
++      <div className="flex flex-wrap items-center gap-x-14 gap-y-4 text-12 text-adm-ink-2">
++        {SERIES.map((s) => (
++          <span key={s.key} className="inline-flex items-center gap-6">
++            <span className={`h-2 w-14 rounded-full ${s.dot}`} aria-hidden="true" />
++            {s.label}
++          </span>
++        ))}
++        <span className="text-adm-muted">Share of each report’s panel · inputs differ between reports</span>
++      </div>
++      <div className="relative overflow-x-auto">
++        <svg viewBox={`0 0 ${TW} ${TH}`} className="block w-full min-w-[640px]" role="img" aria-label="Line chart: would try, would pay and sure at day 30, report v1 to v7">
++          {[0, 0.25, 0.5, 0.75, 1].map((v) => (
++            <g key={v}>
++              <line x1={L} x2={TW - R} y1={y(v)} y2={y(v)} className="stroke-adm-grid" strokeWidth={1} />
++              <text x={L - 6} y={y(v) + 4} textAnchor="end" className="fill-adm-muted text-11 tabular-nums">
++                {pct(v)}
++              </text>
++            </g>
++          ))}
++          {points.map((p, i) => (
++            <text key={p.id} x={x(i)} y={TH - 12} textAnchor="middle" className={`text-12 ${hover === i ? 'fill-adm-ink font-semibold' : 'fill-adm-ink-2'}`}>
++              Report {p.name}
++            </text>
++          ))}
++          {hover !== null && <line x1={x(hover)} x2={x(hover)} y1={T} y2={TH - B} className="stroke-adm-axis" strokeWidth={1} />}
++          {SERIES.map((s) => (
++            <path key={s.key} d={path(s.key)} fill="none" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" className={s.stroke} />
++          ))}
++          {SERIES.map((s) =>
++            points.map((p, i) =>
++              p[s.key] === null ? null : <circle key={`${s.key}-${p.id}`} cx={x(i)} cy={y(p[s.key]!)} r={4} strokeWidth={2} className={`${s.fill} stroke-adm-surface`} />,
++            ),
++          )}
++          {points.map((p, i) => (
++            <rect
++              key={`hit-${p.id}`}
++              x={x(i) - (TW - L - R) / (points.length - 1) / 2}
++              y={0}
++              width={(TW - L - R) / (points.length - 1)}
++              height={TH}
++              fill="transparent"
++              onMouseEnter={() => setHover(i)}
++              onMouseLeave={() => setHover(null)}
++            />
++          ))}
++        </svg>
++        {h && (
++          <div className="pointer-events-none absolute top-0 right-0 max-w-[260px] rounded-8 border border-adm-line bg-adm-surface p-10 text-12 shadow-sm">
++            <p className="font-semibold text-adm-ink">Report {h.name} · {h.n} people</p>
++            <p className="text-adm-ink-2">{h.change}</p>
++            {SERIES.map((s) => (
++              <p key={s.key} className="tabular-nums text-adm-ink">
++                {s.label}: {h[s.key] === null ? 'not asked' : pct(h[s.key]!)}
++              </p>
++            ))}
++          </div>
++        )}
++      </div>
++      <ol className="grid gap-x-12 gap-y-4 text-11 text-adm-ink-2 sm:grid-cols-2 lg:grid-cols-4">
++        {points.map((p) => (
++          <li key={p.id}>
++            <span className="font-semibold text-adm-ink">{p.name}</span> · {p.change}
++          </li>
++        ))}
++      </ol>
++    </div>
++  )
++}
++
++/** Horizontal bars: the share of a report's answers each change moved. */
++export function WhatMoves({ levers }: { levers: Lever[] }) {
++  const max = Math.max(...levers.map((l) => l.share), 0.01)
++  return (
++    <ul className="flex flex-col gap-8">
++      {levers.map((l) => (
++        <li key={l.theme} className="grid grid-cols-[110px_1fr] items-center gap-x-10 gap-y-2" title={`${l.change}: ${l.moved} of ${l.n} answers, report ${l.report}`}>
++          <span className="text-12 font-semibold text-adm-ink">{l.theme}</span>
++          <span className="flex items-center gap-8">
++            <span className="h-14 rounded-r-4 bg-adm-s1" style={{ width: `${(l.share / max) * 70}%` }} aria-hidden="true" />
++            <span className="text-12 tabular-nums text-adm-ink">
++              {pct(l.share)} <span className="text-adm-muted">({l.moved} of {l.n}, {l.report})</span>
++            </span>
++          </span>
++          <span className="col-start-2 text-11 text-adm-muted">{l.change}</span>
++        </li>
++      ))}
++    </ul>
++  )
++}
++
++/** The five funnel stages, coloured by status, with the one key number each. */
++export function StageStrip({ cells }: { cells: StageCell[] }) {
++  return (
++    <ol className="grid gap-6 lg:grid-cols-5">
++      {cells.map((c, i) => (
++        <li key={c.id}>
++          <a
++            href={`#stage-${c.id}`}
++            onClick={() => {
++              const d = document.getElementById(`stage-${c.id}`)?.closest('details')
++              if (d) d.open = true
++            }}
++            className={`flex h-full flex-col gap-4 rounded-8 border p-12 hover:bg-adm-hover ${c.isGap ? 'border-2 border-adm-critical' : 'border-adm-line'} ${c.status === 'on-track' ? 'bg-adm-good/8' : 'bg-adm-critical/6'}`}
++          >
++            <span className="flex items-center justify-between gap-6">
++              <span className="text-11 font-semibold uppercase tracking-wider text-adm-muted">
++                {i + 1}. {stageShort(c.id)}
++              </span>
++              {c.isGap ? <Badge tone="critical">Biggest gap</Badge> : <Badge tone={c.status === 'on-track' ? 'good' : 'serious'}>{c.status === 'on-track' ? 'On track' : 'Below'}</Badge>}
++            </span>
++            <span className="text-24 font-semibold tabular-nums text-adm-ink">{pct(c.value)}</span>
++            <span className="text-12 text-adm-ink-2">
++              {c.metric} <span className="text-adm-muted">· target {pct(c.target)}</span>
++            </span>
++          </a>
++        </li>
++      ))}
++    </ol>
++  )
++}
++
++function TermRow({ t, on, onToggle }: { t: CostFunction['terms'][number]; on: boolean; onToggle: () => void }) {
++  return (
++    <li>
++      <button
++        type="button"
++        onClick={onToggle}
++        aria-pressed={on}
++        className={`flex w-full items-start justify-between gap-8 rounded-8 border p-8 text-left ${on ? 'border-adm-ink bg-adm-bg' : 'border-adm-line hover:bg-adm-hover'}`}
++      >
++        <span className="min-w-0">
++          <span className="block text-12 font-semibold text-adm-ink">{t.label}</span>
++          <span className="block text-11 text-adm-muted">{t.from}</span>
++        </span>
++        <span className="flex shrink-0 flex-col items-end gap-2">
++          <span className="text-13 font-semibold tabular-nums text-adm-ink">{t.value}</span>
++          <LabelBadge label={COST_SOURCES.find((s) => s.id === t.source)!.label} />
++        </span>
++      </button>
++    </li>
++  )
++}
++
++/** Sources → the formula → the result, each term naming its source; clicking a term lights its source. */
++export function CostFunctionPanel({ f }: { f: CostFunction }) {
++  const [active, setActive] = useState<CostSourceId | null>(null)
++  const inputs = f.terms.filter((t) => !t.result)
++  const results = f.terms.filter((t) => t.result)
++  return (
++    <div className="grid gap-12 lg:grid-cols-[1fr_1.3fr_1fr]">
++      <div className="flex min-w-0 flex-col gap-8">
++        <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">1 · Sources</h3>
++        {COST_SOURCES.map((s) => (
++          <div key={s.id} className={`rounded-8 border p-10 transition-colors ${active === s.id ? 'border-2 border-adm-ink bg-adm-bg' : active ? 'border-adm-line opacity-50' : 'border-adm-line'}`}>
++            <div className="flex flex-wrap items-center justify-between gap-6">
++              <span className="text-12 font-semibold text-adm-ink">{s.title}</span>
++              <LabelBadge label={s.label} />
++            </div>
++            <ul className="mt-4 flex flex-col gap-2 text-11 text-adm-ink-2">
++              {s.lines.map((l) => (
++                <li key={l}>{l}</li>
++              ))}
++            </ul>
++          </div>
++        ))}
++      </div>
++      <div className="flex min-w-0 flex-col gap-8">
++        <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">2 · The formula (click a term)</h3>
++        <div className="rounded-8 bg-adm-bg p-10 font-mono text-11 leading-relaxed text-adm-ink">
++          <p>chapter = (script + voice + music + image − reuse) × stage factor</p>
++          <p>journey = chapters × chapter</p>
++          <p>cost per flip = journey ÷ P(flip)</p>
++          <p>profit per flip = (price − journey − fees) ÷ P(flip)</p>
++        </div>
++        <ul className="flex flex-col gap-6">
++          {inputs.map((t) => (
++            <TermRow key={t.id} t={t} on={active === t.source} onToggle={() => setActive(active === t.source ? null : t.source)} />
++          ))}
++        </ul>
++      </div>
++      <div className="flex min-w-0 flex-col gap-8">
++        <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">3 · The result (stage 1)</h3>
++        <ul className="flex flex-col gap-6">
++          {results.map((t) => (
++            <TermRow key={t.id} t={t} on={active === t.source} onToggle={() => setActive(active === t.source ? null : t.source)} />
++          ))}
++        </ul>
++        <p className="text-11 text-adm-muted">Balanced preset, 10-minute chapters, the spec’s 25 → 85 journey at 3 chapters a week.</p>
++      </div>
++    </div>
++  )
++}
+-- 
+2.43.0
+

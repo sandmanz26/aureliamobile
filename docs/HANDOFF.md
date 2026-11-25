@@ -500,7 +500,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U125**, last J = **J178**, last
+**Numbering as of 17 Nov 2026:** last U = **U126**, last J = **J179**, last
 O = **O56**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -974,6 +974,7 @@ history can be read without opening four documents.
 | U123 | `b99372f` | 2026-11-25 | Admin sidebar: a menu search box (the `/` key, arrow keys, Enter); icons on the top-level groups only, with nested items indented; Experimentation's two feedback groups moved into Product lab; Buyer agent results hidden from the menu (the route still works). | [patch](update-log/patches/U123-b99372f.patch) |
 | U124 | `ba6eff3` | 2026-11-25 | Buyer agent runs v5 (36 personas, the app as it is at $10/$100, PRD read), v6 (60, the creator retreat at €19.99 or €39 against freemium), v7 (100, Insight-Timer-style quick wins), each adding persona variables. Played by written rules (`buyerPlay.ts`), not typed by hand. Report v5–v7 record all five inputs. | [patch](update-log/patches/U124-ba6eff3.patch) |
 | U125 | `933b07e` | 2026-11-25 | Wiki Research v3 (now the default), Insight Timer round 3: 21 features mapped to the funnel and journey; 14 ranked quick wins; what not to copy; Map of Healing against our Healing Map; their Retreats (a 10% listing fee) against Retreat-in-a-Box; a roast; 23 sources. | [patch](update-log/patches/U125-933b07e.patch) |
+| U126 | `fedab33` | 2026-11-25 | The three reports lead with a summary: the question, a one-sentence answer, four labelled KPI tiles, status, next steps and confidence, with details folded. Buyer agent: a success trend from v1 to v7 and "what moves success". Combination: a five-stage strip. Cost: a cost-function panel (sources → formula → result). | [patch](update-log/patches/U126-fedab33.patch) |
 | J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
@@ -1044,6 +1045,7 @@ history can be read without opening four documents.
 | J176 | 2026-11-24 | Code + answer | Where the Cost report is (Reports → Cost report; not yet deployed because of the Vercel quota); a clearer, levelled Combination report graph | U121 |
 | J177 | 2026-11-25 | Code | Redo the buyer report: its sources are personas, current product, PRD, the business owner's documents and his pricing at the time, producing report v1, v2…; the graph shows what each report used | U122 |
 | J178 | 2026-11-25 | Code + research | Sidebar search and icons on groups; hide buyer agent results; Experimentation into Product lab; 2–3 more buyer-agent iterations; Insight Timer research again, deeper | U123, U124, U125 |
+| J179 | 2026-11-25 | Code | As head of design, AI and product: reports clear at a glance; buyer agent shows the success likelihood; combination clear for a new admin; cost shows the sources → cost function → result; aligned with what the business owner wants | U126 |
 
 ### 17.2 Code changes (U)
 

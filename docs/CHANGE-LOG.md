@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-25 — Reports summary-first (U126, J179)
+
+Each report opens with its answer, its KPIs and the next step; the details sit below.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-25 — Buyer agent v5–v7 (U124, J178)
 
 Three more runs, with more persona variables each time, and in the Buyer agent report.

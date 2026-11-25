@@ -129,6 +129,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | J176 | 2026-11-24 | Code + answer | Where the Cost report is (Reports → Cost report; not yet deployed because of the Vercel quota); a clearer, levelled Combination report graph | U121 |
 | J177 | 2026-11-25 | Code | Redo the buyer report: its sources are personas, current product, PRD, the business owner's documents and his pricing at the time, producing report v1, v2…; the graph shows what each report used | U122 |
 | J178 | 2026-11-25 | Code + research | Sidebar search and icons on groups; hide buyer agent results; Experimentation into Product lab; 2–3 more buyer-agent iterations; Insight Timer research again, deeper | U123, U124, U125 |
+| J179 | 2026-11-25 | Code | As head of design, AI and product: reports clear at a glance; buyer agent shows the success likelihood; combination clear for a new admin; cost shows the sources → cost function → result; aligned with what the business owner wants | U126 |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
@@ -2208,3 +2209,6 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 - **Done:** U123 (sidebar), U125 (research).
 - **Done:** buyer agent v5–v7 (U124). They challenge the retreat. In v6, freemium beats a stranger-sold retreat ticket in every channel, trust is the main objection, and the employer channel shows up (21 of 60).
 - **Context:** the business owner's chat screenshots 18.11–18.22 were already recorded (J169).
+
+### J179 — Reports, summary first
+- **Done (U126).** The shared summary block is `ReportSummary.tsx`, and every number in it is derived from the data in `reportSummaries.ts`.

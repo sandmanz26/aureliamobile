@@ -162,9 +162,20 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U123 | `b99372f` | 2026-11-25 | Admin sidebar: a menu search box (the `/` key, arrow keys, Enter); icons on the top-level groups only, with nested items indented; Experimentation's two feedback groups moved into Product lab; Buyer agent results hidden from the menu (the route still works). | [patch](patches/U123-b99372f.patch) |
 | U124 | `ba6eff3` | 2026-11-25 | Buyer agent runs v5 (36 personas, the app as it is at $10/$100, PRD read), v6 (60, the creator retreat at €19.99 or €39 against freemium), v7 (100, Insight-Timer-style quick wins), each adding persona variables. Played by written rules (`buyerPlay.ts`), not typed by hand. Report v5–v7 record all five inputs. | [patch](patches/U124-ba6eff3.patch) |
 | U125 | `933b07e` | 2026-11-25 | Wiki Research v3 (now the default), Insight Timer round 3: 21 features mapped to the funnel and journey; 14 ranked quick wins; what not to copy; Map of Healing against our Healing Map; their Retreats (a 10% listing fee) against Retreat-in-a-Box; a roast; 23 sources. | [patch](patches/U125-933b07e.patch) |
+| U126 | `fedab33` | 2026-11-25 | The three reports lead with a summary: the question, a one-sentence answer, four labelled KPI tiles, status, next steps and confidence, with details folded. Buyer agent: a success trend from v1 to v7 and "what moves success". Combination: a five-stage strip. Cost: a cost-function panel (sources → formula → result). | [patch](patches/U126-fedab33.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U126 — Reports summary-first
+
+- **Commit:** `fedab33` · 2026-11-25.
+- **Headlines:**
+  - **Buyer agent:** 44% would try and 17% would pay $10, against a fair band of $3–5.75.
+  - **Combination:** 1 of 5 stages is on track, and staying is the biggest gap.
+  - **Cost:** a 10-minute chapter costs $0.47, a flip $36.55 falling to $3.02, and the model pays from stage 2.
+- **Fees:** shown as "not modelled".
+- **Revert:** `git revert --no-commit fedab33`.
 
 ### U124 — Buyer agent v5–v7
 
