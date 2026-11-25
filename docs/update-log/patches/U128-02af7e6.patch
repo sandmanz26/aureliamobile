@@ -1,0 +1,1079 @@
+From 02af7e6d8d29ebaace05562adb3b1929f3941236 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 25 Nov 2026 09:38:21 +0000
+Subject: [PATCH] Reports in plain language: what each report is, plain
+ headlines with units and bases, a glossary with tooltips, internal ids out of
+ the summary (U128, J181)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/admin/data/glossary.test.ts               |  26 +++
+ src/admin/data/glossary.ts                    | 104 +++++++++
+ src/admin/data/reportSummaries.test.ts        |  30 ++-
+ src/admin/data/reportSummaries.ts             | 205 +++++++++++-------
+ .../pages/reports/BuyerAgentReportPage.tsx    |   8 +-
+ .../pages/reports/CombinationReportPage.tsx   |   8 +-
+ src/admin/pages/reports/CostReportPage.tsx    |   4 +-
+ src/admin/pages/reports/ReportParts.tsx       |   6 +-
+ src/admin/pages/reports/ReportSummary.tsx     |  62 +++++-
+ src/admin/pages/reports/SummaryCharts.tsx     |  52 +++--
+ src/admin/pages/reports/Term.tsx              |  99 +++++++++
+ src/admin/pages/reports/reportColors.ts       |   4 +
+ 12 files changed, 484 insertions(+), 124 deletions(-)
+ create mode 100644 src/admin/data/glossary.test.ts
+ create mode 100644 src/admin/data/glossary.ts
+ create mode 100644 src/admin/pages/reports/Term.tsx
+
+diff --git a/src/admin/data/glossary.test.ts b/src/admin/data/glossary.test.ts
+new file mode 100644
+index 0000000..3d92376
+--- /dev/null
++++ b/src/admin/data/glossary.test.ts
+@@ -0,0 +1,26 @@
++import { describe, expect, it } from 'vitest'
++import { GLOSSARY, markedIds, plainText, segments, unmarkedJargon } from './glossary'
++import { buyerSummary, combinationSummary, costSummary } from './reportSummaries'
++
++const summaries = () => [buyerSummary(), combinationSummary(1), costSummary()]
++
++describe('glossary', () => {
++  it('defines every entry in plain words', () => {
++    for (const [id, e] of Object.entries(GLOSSARY)) {
++      expect(e.term, id).not.toBe('')
++      expect(e.plain.length, id).toBeGreaterThan(20)
++      for (const sentence of e.plain.split(/(?<=[.:])\s/)) expect(sentence.split(/\s+/).length, `${id}: ${sentence}`).toBeLessThanOrEqual(20)
++    }
++  })
++  it('splits marked text into plain runs and terms', () => {
++    expect(segments('a {{points}} b {{test|round}} c')).toEqual([{ text: 'a ' }, { text: 'points', term: 'points' }, { text: ' b ' }, { text: 'round', term: 'test' }, { text: ' c' }])
++    expect(plainText('16 of 36 {{simulated|simulated people}}')).toBe('16 of 36 simulated people')
++    expect(unmarkedJargon('the funnel and {{journey|the funnel}}')).toEqual(['funnel'])
++  })
++  it('has a definition for every term a summary marks', () => {
++    for (const s of summaries()) {
++      const texts = [s.intro ?? '', s.question, s.headline, s.statusNote, s.sure ?? '', ...s.tiles.flatMap((t) => [t.label, t.value, t.delta ?? '', t.note ?? '']), ...s.actions.map((a) => a.text), ...Object.values(s.confidence)]
++      for (const t of texts) for (const id of markedIds(t)) expect(Object.keys(GLOSSARY), `${id} in “${t}”`).toContain(id)
++    }
++  })
++})
+diff --git a/src/admin/data/glossary.ts b/src/admin/data/glossary.ts
+new file mode 100644
+index 0000000..b2a4cd6
+--- /dev/null
++++ b/src/admin/data/glossary.ts
+@@ -0,0 +1,104 @@
++/**
++ * Admin → Reports, in plain language (U128, J181). The words the reports
++ * cannot avoid, each with a definition a person with no product, AI or
++ * finance background can read. Report text marks a glossary word as
++ * `{{id|shown text}}` (or `{{id}}` to show the term itself); `RichText`
++ * renders it as a `Term` with a dotted underline and this definition as its
++ * tooltip. `glossary.test.ts` fails when a marked id has no entry, and
++ * `reportSummaries.test.ts` fails when a jargon word in a summary is not
++ * marked.
++ */
++
++export interface GlossaryEntry {
++  term: string
++  plain: string
++}
++
++export const GLOSSARY = {
++  simulated: { term: 'Simulated people', plain: 'Made-up people played by an AI. Each has an age, a country and a life. They are not real users.' },
++  'paid-plan': { term: 'Paid plan', plain: 'Aurelia Plus: the subscription that removes the free limit. It costs $10 a month in the app today.' },
++  'free-limit': { term: 'Free limit', plain: 'How many sessions a person can make for free before Aurelia asks them to pay.' },
++  points: { term: 'Points', plain: 'The difference between two percentages. 44% is 8 points more than 36%.' },
++  'fair-price': { term: 'Fair price range', plain: 'The monthly prices the simulated people called fair: not suspiciously cheap, not too expensive.' },
++  test: { term: 'Test', plain: 'One round of asking the simulated people. We ran seven, changing the product, price or people between rounds.' },
++  target: { term: 'Target', plain: 'The share the team hopes for at this step. A goal we set, not a result.' },
++  journey: { term: 'Customer journey', plain: 'The five steps a person takes: arrives, enjoys a first session, uses up the free sessions, starts paying, keeps using.' },
++  chapter: { term: 'Audio session', plain: 'One audio session made by AI for one person: words, voice, music and a picture. The data calls it a chapter.' },
++  'person-helped': { term: 'Person helped', plain: 'One person whose sleep goes from bad to good: from 25 to 85 on a 0–100 scale.' },
++  'learning-stage': { term: 'Learning stage', plain: 'How much the AI has learned from use. Stage 1 is today; stage 3 is after 100,000+ sessions.' },
++  estimate: { term: 'Estimate', plain: 'A calculation from suppliers’ prices and our own guesses. It changes when the guesses do.' },
++  assumption: { term: 'Assumption', plain: 'A number from the business owner’s plan, used to see where it leads. Nobody has measured it.' },
++  measured: { term: 'Measured', plain: 'Counted from real people or real bills. The only kind of number we can fully trust.' },
++  preset: { term: 'Middle option', plain: 'The middle of three ready-made choices of AI suppliers: cheap, middle and best quality.' },
++} satisfies Record<string, GlossaryEntry>
++
++export type TermId = keyof typeof GLOSSARY
++
++export const isTermId = (id: string): id is TermId => Object.hasOwn(GLOSSARY, id)
++
++/**
++ * Words a layperson stumbles on. Any of them in summary text must sit inside
++ * a `{{…}}` mark, or be rewritten.
++ */
++export const JARGON: RegExp[] = [
++  /\bprediction\b/i,
++  /\bpersonas?\b/i,
++  /\bbuyer agents?\b/i,
++  /\bfunnel\b/i,
++  /\bcap\b/i,
++  /\bupsell\b/i,
++  /\baha\b/i,
++  /\bflips?\b/i,
++  /\bstate-flip\b/i,
++  /\bcohort\b/i,
++  /\bPlus\b/,
++  /\b(Balanced|Lean|Premium)\b/,
++  /\bstage [123]\b/i,
++  /\bbreak-even\b/i,
++  /\bKPI\b/,
++  /\bpts\b/,
++  /\bfair band\b/i,
++  /\bd\d\b/,
++  /\bv\d\b/,
++  /\bseed\b/i,
++  /\bgenerator\b/i,
++  /\bledger\b/i,
++  /\bscenario\b/i,
++  /\bspec\b/i,
++  /\b[JU]\d{2,3}\b/,
++  /\bchapters?\b/i,
++  /\bpoints\b/i,
++  /\btarget\b/i,
++  /\bsimulated\b/i,
++]
++
++const MARK = /\{\{([a-z-]+)(?:\|([^}]*))?\}\}/g
++
++export type Segment = { text: string; term?: TermId }
++
++/** Splits marked text into plain runs and glossary terms. Unknown ids render as plain text. */
++export function segments(s: string): Segment[] {
++  const out: Segment[] = []
++  let last = 0
++  for (const m of s.matchAll(MARK)) {
++    if (m.index > last) out.push({ text: s.slice(last, m.index) })
++    const id = m[1]
++    const shown = m[2] ?? (isTermId(id) ? GLOSSARY[id].term.toLowerCase() : id)
++    out.push(isTermId(id) ? { text: shown, term: id } : { text: shown })
++    last = m.index + m[0].length
++  }
++  if (last < s.length) out.push({ text: s.slice(last) })
++  return out
++}
++
++/** The text as a reader sees it, marks removed. */
++export const plainText = (s: string) => segments(s).map((x) => x.text).join('')
++
++/** The ids a text marks, known or not. */
++export const markedIds = (s: string) => [...s.matchAll(MARK)].map((m) => m[1])
++
++/** Jargon left in the unmarked runs of a text. */
++export function unmarkedJargon(s: string): string[] {
++  const bare = segments(s).filter((x) => !x.term).map((x) => x.text).join(' ')
++  return JARGON.filter((re) => re.test(bare)).map((re) => bare.match(re)![0])
++}
+diff --git a/src/admin/data/reportSummaries.test.ts b/src/admin/data/reportSummaries.test.ts
+index 8db2d8d..39eb3b8 100644
+--- a/src/admin/data/reportSummaries.test.ts
++++ b/src/admin/data/reportSummaries.test.ts
+@@ -3,6 +3,7 @@ import { funnelMetrics } from './businessFunnel'
+ import { v5Tallies } from './buyerRunV5'
+ import { v7Tallies } from './buyerRunV7'
+ import { goal, presetInputs, PRESETS, DEFAULT_GOAL } from './costModel'
++import { plainText, unmarkedJargon } from './glossary'
+ import { breakEvenStage, buyerLevers, buyerSummary, buyerTrend, combinationSummary, costFunction, costSummary, stageStrip } from './reportSummaries'
+ 
+ const pct = (x: number) => `${Math.round(x * 100)}%`
+@@ -15,19 +16,20 @@ describe('buyer summary', () => {
+     expect(s.tiles[0].value).toBe(pct(x5.t.tries.yes / x5.t.n))
+     expect(s.tiles[1].value).toBe(pct(x5.t.pays.yes / x5.t.n))
+     expect(s.tiles[3].value).toBe(`${pct(x7.A.tries.yes / x7.A.n)} → ${pct(x7.B.tries.yes / x7.B.n)}`)
+-    expect(s.headline).toContain(pct(x5.t.tries.yes / x5.t.n))
++    expect(s.headline).toContain(`${x5.t.tries.yes} of ${x5.t.n}`)
+     expect(s.tiles).toHaveLength(4)
+   })
+   it('has one trend point per report, v4 without try and pay', () => {
+     const t = buyerTrend()
+     expect(t.map((p) => p.name)).toEqual(['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7'])
++    expect(t.map((p) => p.label)).toEqual(t.map((_, i) => `Test ${i + 1}`))
+     expect(t[3].tries).toBeNull()
+     for (const p of t) for (const v of [p.tries, p.pays, p.sure30]) if (v !== null) expect(v).toBeGreaterThanOrEqual(0)
+   })
+   it('sorts levers by the share of answers they moved', () => {
+     const l = buyerLevers()
+     expect(l[0].share).toBeGreaterThanOrEqual(l[l.length - 1].share)
+-    expect(l.find((x) => x.theme === 'Account-first')?.moved).toBe(16)
++    expect(l.find((x) => x.theme === 'No account needed')?.moved).toBe(16)
+   })
+ })
+ 
+@@ -61,7 +63,7 @@ describe('cost summary', () => {
+     const be = breakEvenStage()
+     if (be) expect(costFunction(be).profitPerFlip).toBeGreaterThanOrEqual(0)
+     const s = costSummary()
+-    expect(s.tiles[3].value).toBe(be ? `Stage ${be}` : 'None')
++    expect(plainText(s.tiles[3].value)).toBe(be ? `Stage ${be} of 3` : 'Never')
+   })
+ })
+ 
+@@ -73,3 +75,25 @@ it('gives every report a headline, 3–4 tiles and at least one next move', () =
+     expect(s.actions.length).toBeGreaterThanOrEqual(1)
+   }
+ })
++
++describe('plain language (U128)', () => {
++  const all = () => [buyerSummary(), combinationSummary(1), costSummary()]
++  it('says what each report is', () => {
++    for (const s of all()) expect(s.intro?.length ?? 0).toBeGreaterThan(30)
++  })
++  it('keeps glossary jargon out of the headline and tiles unless it is a marked term', () => {
++    for (const s of all()) {
++      const texts = [s.intro ?? '', s.question, s.headline, s.statusNote, s.sure ?? '', ...s.tiles.flatMap((t) => [t.label, t.value, t.delta ?? '', t.note ?? '']), ...s.actions.flatMap((a) => [a.text, a.linkLabel])]
++      for (const t of texts) expect(unmarkedJargon(t), t).toEqual([])
++    }
++  })
++  it('writes the headline and intro in sentences of 20 words or fewer', () => {
++    for (const s of all())
++      for (const t of [s.headline, s.intro ?? '', s.sure ?? ''])
++        for (const sentence of plainText(t).split(/(?<=\.)\s+/)) expect(sentence.split(/\s+/).length, sentence).toBeLessThanOrEqual(20)
++  })
++  it('gives every number in the headline its base', () => {
++    expect(plainText(buyerSummary().headline)).toMatch(/^\d+ of \d+ simulated people/)
++    expect(plainText(combinationSummary(1).headline)).toMatch(/^\d of 5 steps/)
++  })
++})
+diff --git a/src/admin/data/reportSummaries.ts b/src/admin/data/reportSummaries.ts
+index 27b74a9..05d9b62 100644
+--- a/src/admin/data/reportSummaries.ts
++++ b/src/admin/data/reportSummaries.ts
+@@ -1,4 +1,4 @@
+-import { DEFAULT_DECISIONS, STAGES as FUNNEL_STAGES, biggestLeak, funnelMetrics, stageStatus, type StageId } from './businessFunnel'
++import { STAGES as FUNNEL_STAGES, biggestLeak, funnelMetrics, stageStatus, type StageId } from './businessFunnel'
+ import { movedBy, runTallies } from './buyerAgentReport'
+ import { BUYER_RUNS } from './buyerRuns'
+ import { V3_CHANGES } from './buyerRunV3'
+@@ -43,6 +43,11 @@ export interface Confidence {
+ }
+ 
+ export interface ReportSummary {
++  /**
++   * "What is this report?" in one everyday line (U128). Text fields of a
++   * summary may carry `{{termId|shown}}` glossary marks; see data/glossary.ts.
++   */
++  intro?: string
+   question: string
+   headline: string
+   status: SummaryStatus
+@@ -50,6 +55,8 @@ export interface ReportSummary {
+   tiles: Tile[]
+   actions: NextAction[]
+   confidence: Confidence
++  /** "How sure are we", in one plain sentence (U128). */
++  sure?: string
+ }
+ 
+ const pct = (x: number) => `${Math.round(x * 100)}%`
+@@ -59,13 +66,14 @@ const pts = (a: number, b: number) => {
+   return `${d > 0 ? '+' : d < 0 ? '−' : '±'}${Math.abs(d)} pts`
+ }
+ const money = (v: number) => `$${v % 1 ? v.toFixed(2) : v}`
+-const decision = (id: string) => DEFAULT_DECISIONS.find((d) => d.id === id)!
+ 
+ /* ------------------------------------------------------------ Buyer agents */
+ 
+ export interface TrendPoint {
+   id: string
+   name: string
++  /** The name a reader sees: "Test 1" rather than "v1" (U128). */
++  label: string
+   /** Share of the panel, 0–1; null when the report did not ask it. */
+   tries: number | null
+   pays: number | null
+@@ -84,13 +92,13 @@ export function buyerTrend(): TrendPoint[] {
+   const x7 = v7Tallies()
+   const best = report(3, 3)
+   return [
+-    { id: 'it-v1', name: 'v1', n: t1.n, tries: share(t1.tries.yes, t1.n), pays: share(t1.pays.yes, t1.n), sure30: share(t1.sureDay30, t1.n), change: 'First run, 10 people, agent too agreeable' },
+-    { id: 'it-v2', name: 'v2', n: t2.n, tries: share(t2.tries.yes, t2.n), pays: share(t2.pays.yes, t2.n), sure30: share(t2.sureDay30, t2.n), change: 'Calibrated agent, 36 people, local prices' },
+-    { id: 'it-v3', name: 'v3', n: t3.n, tries: share(t3.tries.yes, t3.n), pays: share(t3.pays.yes, t3.n), sure30: share(t3.sureDay30, t3.n), change: 'Proposal B (not built): no account, languages' },
+-    { id: 'it-rerun', name: 'v4', n: best.walks.length, tries: null, pays: null, sure30: best.d30, change: 'Walked real screens; day 30 = back after a month' },
+-    { id: 'it-v5', name: 'v5', n: x5.t.n, tries: share(x5.t.tries.yes, x5.t.n), pays: share(x5.t.pays.yes, x5.t.n), sure30: share(x5.day30, x5.t.n), change: 'Today’s product at today’s $10 price' },
+-    { id: 'it-v6', name: 'v6', n: x6.A.n, tries: share(x6.A.tries.yes, x6.A.n), pays: share(x6.A.pays.yes, x6.A.n), sure30: null, change: '60 people; freemium beat the creator retreat' },
+-    { id: 'it-v7', name: 'v7', n: x7.B.n, tries: share(x7.B.tries.yes, x7.B.n), pays: share(x7.B.pays.yes, x7.B.n), sure30: share(x7.day30B, x7.B.n), change: '100 people; + free library and quick wins' },
++    { id: 'it-v1', name: 'v1', label: 'Test 1', n: t1.n, tries: share(t1.tries.yes, t1.n), pays: share(t1.pays.yes, t1.n), sure30: share(t1.sureDay30, t1.n), change: 'First try: 10 people. The AI was too eager to say yes.' },
++    { id: 'it-v2', name: 'v2', label: 'Test 2', n: t2.n, tries: share(t2.tries.yes, t2.n), pays: share(t2.pays.yes, t2.n), sure30: share(t2.sureDay30, t2.n), change: 'A stricter AI, 36 people, prices in local money.' },
++    { id: 'it-v3', name: 'v3', label: 'Test 3', n: t3.n, tries: share(t3.tries.yes, t3.n), pays: share(t3.pays.yes, t3.n), sure30: share(t3.sureDay30, t3.n), change: 'An idea not yet built: no account, more languages.' },
++    { id: 'it-rerun', name: 'v4', label: 'Test 4', n: best.walks.length, tries: null, pays: null, sure30: best.d30, change: 'The AI used the real app screens. Asked only: back after a month?' },
++    { id: 'it-v5', name: 'v5', label: 'Test 5', n: x5.t.n, tries: share(x5.t.tries.yes, x5.t.n), pays: share(x5.t.pays.yes, x5.t.n), sure30: share(x5.day30, x5.t.n), change: 'Today’s app at today’s $10 a month.' },
++    { id: 'it-v6', name: 'v6', label: 'Test 6', n: x6.A.n, tries: share(x6.A.tries.yes, x6.A.n), pays: share(x6.A.pays.yes, x6.A.n), sure30: null, change: '60 people. A free basic app beat a paid retreat.' },
++    { id: 'it-v7', name: 'v7', label: 'Test 7', n: x7.B.n, tries: share(x7.B.tries.yes, x7.B.n), pays: share(x7.B.pays.yes, x7.B.n), sure30: share(x7.day30B, x7.B.n), change: '100 people. Added a free library of sessions.' },
+   ]
+ }
+ 
+@@ -113,16 +121,38 @@ export function buyerLevers(): Lever[] {
+   const m6 = new Map(x6.moved)
+   const m7 = new Map(x7.moved)
+   const rows: Omit<Lever, 'share'>[] = [
+-    { theme: 'Account-first', change: V3_CHANGES['no-account'].label, report: 'v3', moved: m3.get('no-account') ?? 0, n: n3 },
+-    { theme: 'Language', change: V3_CHANGES.language.label, report: 'v3', moved: m3.get('language') ?? 0, n: n3 },
+-    { theme: 'Trust', change: V3_CHANGES['data-line'].label, report: 'v3', moved: m3.get('data-line') ?? 0, n: n3 },
+-    { theme: 'Price / regional', change: V3_CHANGES['local-price'].label, report: 'v3', moved: m3.get('local-price') ?? 0, n: n3 },
++    { theme: 'No account needed', change: V3_CHANGES['no-account'].label, report: 'v3', moved: m3.get('no-account') ?? 0, n: n3 },
++    { theme: 'Own language', change: V3_CHANGES.language.label, report: 'v3', moved: m3.get('language') ?? 0, n: n3 },
++    { theme: 'Clear data promise', change: V3_CHANGES['data-line'].label, report: 'v3', moved: m3.get('data-line') ?? 0, n: n3 },
++    { theme: 'Local prices', change: V3_CHANGES['local-price'].label, report: 'v3', moved: m3.get('local-price') ?? 0, n: n3 },
+     { theme: 'Free library', change: V6_CHANGES['free-library']?.label ?? 'Free core library', report: 'v7', moved: m7.get('free-library') ?? 0, n: x7.B.n },
+-    { theme: 'Creator voice', change: V6_CHANGES['creator-voice']?.label ?? 'Creator voice', report: 'v6', moved: m6.get('creator-voice') ?? 0, n: x6.A.n },
++    { theme: 'Coach’s own voice', change: V6_CHANGES['creator-voice']?.label ?? 'Creator voice', report: 'v6', moved: m6.get('creator-voice') ?? 0, n: x6.A.n },
+   ]
+   return rows.map((r) => ({ ...r, share: share(r.moved, r.n) })).sort((a, b) => b.share - a.share)
+ }
+ 
++/** The main reasons not to try, in everyday words. */
++const OBJECTION: Record<string, string> = {
++  access: 'the app is only in English, or hard to set up',
++  price: 'the price',
++  trust: 'what happens to their data',
++}
++
++/** The tested changes, in everyday words (the run's own labels stay in Details). */
++const LIFT_PLAIN: Record<string, string> = {
++  'free-library': 'free library of ready-made sessions',
++  'creator-voice': '8-week programme in a coach’s own voice',
++}
++
++/** Plain next moves, keyed by the decision log's ids (the ids stay in the log). */
++const PLAIN_MOVE: Record<string, string> = {
++  d1: 'Let people start their first session without making an account.',
++  d2: 'Ask about a sleep tracker only after the first session.',
++  d3: 'Offer sessions in Spanish, Portuguese and Indonesian first.',
++  d4: 'When the free sessions run out, show the person their own progress, then the price.',
++  d7: 'After each session, let people pick the time of the next one and set a reminder.',
++}
++
+ export function buyerSummary(): ReportSummary {
+   const x5 = v5Tallies()
+   const x7 = v7Tallies()
+@@ -134,30 +164,34 @@ export function buyerSummary(): ReportSummary {
+   const tryA7 = share(x7.A.tries.yes, x7.A.n)
+   const tryB7 = share(x7.B.tries.yes, x7.B.n)
+   const lift = x7.moved[0]
+-  const liftLabel = lift ? (V6_CHANGES[lift[0]]?.label ?? lift[0]).replace(/^A /, '').split(',')[0] : 'none'
+-  const objection = x5.themes[0]?.[0] ?? '—'
++  const liftLabel = lift ? (LIFT_PLAIN[lift[0]] ?? (V6_CHANGES[lift[0]]?.label ?? lift[0]).replace(/^A /, '').split(',')[0].toLowerCase()) : 'change'
++  const objection = OBJECTION[x5.themes[0]?.[0] ?? ''] ?? x5.themes[0]?.[0] ?? 'none given'
+   const lever = buyerLevers()[0]
++  const fair = `${money(x5.band.low)}–${money(x5.band.high)}`
+   const status: SummaryStatus = payShare >= 0.15 && x5.band.high >= 10 ? 'on-track' : 'at-risk'
++  const points = (a: number, b: number) => `${pts(a, b).replace(' pts', '')} {{points}}`
+   return {
+-    question: 'How likely is Aurelia to succeed with what we have now?',
+-    headline: `On today’s product, ${pct(tryShare)} of buyer agents would try Aurelia and ${pct(payShare)} would pay $10 a month, but they call ${money(x5.band.low)}–${money(x5.band.high)} fair; a ${liftLabel.toLowerCase()} (report v7) lifts trying to ${pct(tryB7)} in the best tested alternative.`,
++    intro: 'We asked made-up people, played by AI, whether they would use and pay for Aurelia. They are not real users.',
++    question: 'Would people try Aurelia, and would they pay for it?',
++    headline: `${x5.t.tries.yes} of ${n} {{simulated|simulated people}} would try Aurelia today. Only ${x5.t.pays.yes} of ${n} would pay $10 a month. Most called ${fair} a month {{fair-price|a fair price}}. A ${liftLabel} raised trying from ${pct(tryA7)} to ${pct(tryB7)} in a later {{test}}.`,
+     status,
+-    statusNote: status === 'at-risk' ? `Pay intent below 15%; fair price under $10` : 'Pay intent and price on target',
++    statusNote: status === 'at-risk' ? 'Too few would pay, and $10 is above the fair price.' : 'Enough would pay, at a price they call fair.',
++    sure: 'Nothing here is measured on real users yet. Every figure is an AI simulation.',
+     tiles: [
+-      { label: 'Would try today (v5)', value: pct(tryShare), badge: 'prediction', delta: `${pts(v3ATry, tryShare)} vs v3 offer A`, deltaGood: tryShare >= v3ATry, note: `${x5.t.tries.yes} of ${n}` },
+-      { label: 'Would pay $10 (v5)', value: pct(payShare), badge: 'prediction', delta: `${pts(v3APay, payShare)} vs v3 offer A`, deltaGood: payShare >= v3APay, note: `${x5.t.pays.yes} of ${n}; top objection: ${objection}` },
+-      { label: 'Fair price band vs $10', value: `${money(x5.band.low)}–${money(x5.band.high)}`, badge: 'prediction', note: 'a month; $10 is above the band' },
+-      { label: 'Best tested lift (v7)', value: `${pct(tryA7)} → ${pct(tryB7)}`, badge: 'prediction', delta: pts(tryA7, tryB7), deltaGood: tryB7 >= tryA7, note: `would try with a ${liftLabel.toLowerCase()}` },
++      { label: 'Would try Aurelia today', value: pct(tryShare), badge: 'prediction', delta: `${points(v3ATry, tryShare)} vs. the offer in {{test}} 3`, deltaGood: tryShare >= v3ATry, note: `${x5.t.tries.yes} of ${n} {{simulated|simulated people}}` },
++      { label: 'Would pay $10 a month', value: pct(payShare), badge: 'prediction', delta: `${points(v3APay, payShare)} vs. the offer in {{test}} 3`, deltaGood: payShare >= v3APay, note: `${x5.t.pays.yes} of ${n} {{simulated|simulated people}}. Main worry: ${objection}.` },
++      { label: 'Price they call fair, per month', value: fair, badge: 'prediction', note: 'Our planned $10 a month is above this range.' },
++      { label: 'Would try, if we add a free library', value: `${pct(tryA7)} → ${pct(tryB7)}`, badge: 'prediction', delta: `${points(tryA7, tryB7)}`, deltaGood: tryB7 >= tryA7, note: `${x7.B.n} {{simulated|simulated people}}, without → with the ${liftLabel}.` },
+     ],
+     actions: [
+-      { text: `${decision('d1').change} (${lever.theme.toLowerCase()} moved ${lever.moved} of ${lever.n} answers)`, to: '/admin/business-funnel', linkLabel: 'Decision d1' },
+-      { text: decision('d3').change, to: '/admin/business-funnel', linkLabel: 'Decision d3' },
+-      { text: `Test a price inside the fair band (${money(x5.band.low)}–${money(x5.band.high)}) or regional prices before charging $10.`, to: '#what-moves', linkLabel: 'What moves success' },
++      { text: `${PLAIN_MOVE.d1} It changed ${lever.moved} of ${lever.n} answers.`, to: '/admin/business-funnel', linkLabel: 'See the decision' },
++      { text: PLAIN_MOVE.d3, to: '/admin/business-funnel', linkLabel: 'See the decision' },
++      { text: `Try a price between ${fair} a month, or prices per country, before charging $10.`, to: '#what-moves', linkLabel: 'What changes answers' },
+     ],
+     confidence: {
+-      measured: 'Nothing: no real person answered.',
+-      predicted: 'Every try, pay and price figure: synthetic personas played by one agent.',
+-      assumed: 'Inputs differ between reports (panel, product, price), so compare shares, not counts.',
++      measured: 'Nothing. No real person has answered yet.',
++      predicted: 'Every try, pay and price figure. AI played each made-up person.',
++      assumed: 'The people, product and price changed between tests. Compare percentages, not head counts.',
+     },
+   }
+ }
+@@ -174,6 +208,18 @@ export interface StageCell {
+   isGap: boolean
+ }
+ 
++/** Each funnel metric as what a person does, in everyday words (U128); the funnel's own labels stay in Details. */
++const METRIC_PLAIN: Record<string, string> = {
++  activation: 'Listen to a session on the first visit',
++  completion: 'Finish their own first session',
++  felt: 'Feel better after a session',
++  cap: 'Use up the free sessions in week one',
++  plus: 'Start paying when the free sessions run out',
++  d7: 'Come back after a week',
++  d30: 'Still using after a month',
++  ellis: 'Would be very disappointed without it',
++}
++
+ /** One cell per funnel stage: its worst metric against target (agent v3 × production v3). */
+ export function stageStrip(week: number): StageCell[] {
+   const metrics = funnelMetrics(3, 3, week)
+@@ -181,11 +227,12 @@ export function stageStrip(week: number): StageCell[] {
+   return FUNNEL_STAGES.map((s) => {
+     const own = metrics.filter((m) => m.stage === s.id)
+     const worst = own.reduce((a, b) => (b.agent / b.target < a.agent / a.target ? b : a))
+-    return { id: s.id, title: s.title, status: stageStatus(metrics, {}, s.id).status === 'on-track' ? 'on-track' : 'below', metric: worst.label, value: worst.agent, target: worst.target, isGap: s.id === leak }
++    return { id: s.id, title: s.title, status: stageStatus(metrics, {}, s.id).status === 'on-track' ? 'on-track' : 'below', metric: METRIC_PLAIN[worst.id] ?? worst.label, value: worst.agent, target: worst.target, isGap: s.id === leak }
+   })
+ }
+ 
+-const SHORT: Record<StageId, string> = { entry: 'Entry', aha: 'Aha', cap: 'Cap', upsell: 'Upsell', stay: 'Stay' }
++/** Each funnel stage as the step a person takes, in everyday words (U128). */
++const SHORT: Record<StageId, string> = { entry: 'Arrives', aha: 'Enjoys a first session', cap: 'Uses up the free sessions', upsell: 'Starts paying', stay: 'Keeps using' }
+ export const stageShort = (id: StageId) => SHORT[id]
+ 
+ /** The next move per stage, from the combination report's readings. */
+@@ -197,29 +244,35 @@ export function combinationSummary(week: number): ReportSummary {
+   const gap = strip.find((s) => s.isGap)
+   const metrics = funnelMetrics(3, 3, week)
+   const m = (id: string) => metrics.find((x) => x.id === id)!
+-  const gapDecision = gap && STAGE_DECISION[gap.id] ? decision(STAGE_DECISION[gap.id]!) : null
++  const gapDecision = gap && STAGE_DECISION[gap.id] ? STAGE_DECISION[gap.id]! : null
+   const below = strip.filter((s) => s.status === 'below' && !s.isGap && STAGE_DECISION[s.id]).slice(0, 2)
++  const vsTarget = (id: string) => {
++    const x = m(id)
++    return `{{target|Target}} ${pct(x.target)}: ${x.agent >= x.target ? 'reached' : 'not reached'}`
++  }
+   return {
+-    question: 'Where does Aurelia stand, stage by stage, and what do we fix first?',
++    intro: 'We follow made-up people, played by AI, through five steps of using Aurelia. We compare each step with our goal.',
++    question: 'At which step do we lose people, and what do we fix first?',
+     headline: gap
+-      ? `${on.length} of ${strip.length} stages are on track by prediction; the biggest gap is ${gap.title.toLowerCase()} (${gap.metric.toLowerCase()}: ${pct(gap.value)} against ${pct(gap.target)}), so fix that first.`
+-      : `All ${strip.length} stages are on track by prediction.`,
++      ? `${on.length} of ${strip.length} steps of the {{journey|customer journey}} reach their {{target}}. The weakest step is “${stageShort(gap.id).toLowerCase()}”: ${pct(gap.value)} ${gap.metric.toLowerCase()}, against a goal of ${pct(gap.target)}. Fix that first.`
++      : `All ${strip.length} steps of the {{journey|customer journey}} reach their {{target}}.`,
+     status: on.length === strip.length ? 'on-track' : 'at-risk',
+-    statusNote: `${strip.length - on.length} of ${strip.length} stages below target`,
++    statusNote: `${strip.length - on.length} of ${strip.length} steps miss their goal`,
++    sure: 'Nothing here is measured on real users yet. Three real interviews tell us what matters, not how many.',
+     tiles: [
+-      { label: 'Stages on track', value: `${on.length} of ${strip.length}`, badge: 'prediction', note: on.map((s) => stageShort(s.id)).join(', ') || 'none' },
+-      { label: 'Hears a session, first visit', value: pct(m('activation').agent), badge: 'prediction', delta: `target ${pct(m('activation').target)}`, deltaGood: m('activation').agent >= m('activation').target },
+-      { label: 'Chooses Plus at the limit', value: pct(m('plus').agent), badge: 'prediction', delta: `target ${pct(m('plus').target)}`, deltaGood: m('plus').agent >= m('plus').target },
+-      { label: 'Still using after a month', value: pct(m('d30').agent), badge: 'prediction', delta: `target ${pct(m('d30').target)}`, deltaGood: m('d30').agent >= m('d30').target },
++      { label: 'Steps that reach their goal', value: `${on.length} of ${strip.length}`, badge: 'prediction', note: on.length ? `Reached: ${on.map((s) => stageShort(s.id)).join(', ')}` : 'None reached' },
++      { label: 'Listen to a session on their first visit', value: pct(m('activation').agent), badge: 'prediction', delta: vsTarget('activation'), deltaGood: m('activation').agent >= m('activation').target, note: 'Of all {{simulated|simulated people}} who arrive' },
++      { label: 'Start paying when the free sessions run out', value: pct(m('plus').agent), badge: 'prediction', delta: vsTarget('plus'), deltaGood: m('plus').agent >= m('plus').target, note: 'Of those who reach the {{free-limit|free limit}}' },
++      { label: 'Still using Aurelia after a month', value: pct(m('d30').agent), badge: 'prediction', delta: vsTarget('d30'), deltaGood: m('d30').agent >= m('d30').target, note: 'Of all {{simulated|simulated people}} who arrive' },
+     ],
+     actions: [
+-      ...(gap ? [{ text: gapDecision ? gapDecision.change : 'Pick one definition of the free limit, then fix the aha first.', to: gapDecision ? '/admin/business-funnel' : `#stage-${gap.id}`, linkLabel: gapDecision ? `Decision ${gapDecision.id}` : `Stage: ${stageShort(gap.id)}` }] : []),
+-      ...below.map((s) => ({ text: decision(STAGE_DECISION[s.id]!).change, to: `#stage-${s.id}`, linkLabel: `Stage: ${stageShort(s.id)}` })),
++      ...(gap ? [{ text: gapDecision ? PLAIN_MOVE[gapDecision] : 'Agree what the free limit is, then make the first session feel good.', to: gapDecision ? '/admin/business-funnel' : `#stage-${gap.id}`, linkLabel: gapDecision ? 'See the decision' : `Step: ${stageShort(gap.id)}` }] : []),
++      ...below.map((s) => ({ text: PLAIN_MOVE[STAGE_DECISION[s.id]!], to: `#stage-${s.id}`, linkLabel: `Step: ${stageShort(s.id)}` })),
+     ],
+     confidence: {
+-      measured: 'Nothing on real use; three interviews say what matters, not how many.',
+-      predicted: 'Every stage figure: buyer agents (v3 rules) on production v3.',
+-      assumed: 'Targets are the team’s defaults; the feedback group is sample data.',
++      measured: 'Nothing on real use. Three real interviews say what matters, not how many.',
++      predicted: 'Every step figure. AI played made-up people on today’s app.',
++      assumed: 'The goals are the team’s own. The test-group figures are invented examples.',
+     },
+   }
+ }
+@@ -263,22 +316,22 @@ export function costFunction(stage: Stage = 1): CostFunction {
+   const g = goal({ ...DEFAULT_GOAL, stage }, inputs)
+   const term = (m: Media): CostTerm => {
+     const s = supplier(BALANCED.models[m])
+-    return { id: m, label: m === 'script' ? 'Script' : m === 'voice' ? 'Voice' : m === 'music' ? 'Music' : 'Image', value: usd(media[m]), source: s.label === 'estimate' ? 'estimates' : 'suppliers', from: `${s.name}, ${s.date.split(' (')[0]}` }
++    return { id: m, label: m === 'script' ? 'Script (written by AI)' : m === 'voice' ? 'Voice' : m === 'music' ? 'Music' : 'Picture', value: usd(media[m]), source: s.label === 'estimate' ? 'estimates' : 'suppliers', from: `${s.name}, ${s.date.split(' (')[0]}` }
+   }
+   const saving = total(noCache) - total(media)
+   const terms: CostTerm[] = [
+     ...(['script', 'voice', 'music', 'image'] as Media[]).map(term),
+-    { id: 'cache', label: 'Minus cache / reuse', value: `−${usd(saving)}`, source: 'estimates', from: `${pct(BALANCED.cacheHit)} of music and images reused` },
+-    { id: 'stage', label: 'Stage cost factor', value: `× ${COST_STAGES[stage].costFactor}`, source: 'spec', from: `${COST_STAGES[stage].name}, the spec PDF` },
+-    { id: 'chapters', label: 'Chapters to flip', value: `${g.chapters}`, source: 'spec', from: `${DEFAULT_GOAL.baseline} → ${DEFAULT_GOAL.target}, uplift ${COST_STAGES[stage].uplift} a chapter` },
+-    { id: 'flip', label: 'Flip probability', value: pct(g.flipProbability), source: 'spec', from: `stage success ${pct(COST_STAGES[stage].success)}` },
+-    { id: 'price', label: 'Price', value: usd(g.revenuePerJourney), source: 'spec', from: `${ANCHORS[DEFAULT_GOAL.anchor].label} × P(flip)` },
+-    { id: 'fees', label: 'Fees', value: '$0 (not modelled)', source: 'estimates', from: 'store, payment and creator fees not counted yet' },
+-    { id: 'r-chapter', label: 'Chapter cost', value: usd(g.costPerChapter), source: 'estimates', from: 'script + voice + music + image − reuse', result: true },
+-    { id: 'r-journey', label: 'Journey cost', value: usd(g.costPerJourney), source: 'estimates', from: 'chapters × chapter cost', result: true },
+-    { id: 'r-flip', label: 'Cost per flip', value: usd(g.costPerFlip), source: 'estimates', from: 'journey ÷ flip probability', result: true },
+-    { id: 'r-profit', label: 'Profit per flip', value: usd(g.profitPerFlip), source: 'spec', from: 'price − cost per flip − fees, per flip', result: true },
+-    { id: 'r-2025', label: '2025 measured, per session', value: `€${measuredAverage().toFixed(2)}`, source: 'measured-2025', from: `top ${MEASURED_2025.campaigns.length} old-admin campaigns, incl. video`, result: true },
++    { id: 'cache', label: 'Minus reused music and pictures', value: `−${usd(saving)}`, source: 'estimates', from: `${pct(BALANCED.cacheHit)} of music and pictures made once, used again` },
++    { id: 'stage', label: 'Discount as the AI learns', value: `× ${COST_STAGES[stage].costFactor}`, source: 'spec', from: `Learning stage ${stage}, from the business owner’s plan` },
++    { id: 'chapters', label: 'Sessions until sleep is good', value: `${g.chapters}`, source: 'spec', from: `Sleep score ${DEFAULT_GOAL.baseline} → ${DEFAULT_GOAL.target} of 100, +${COST_STAGES[stage].uplift} a session` },
++    { id: 'flip', label: 'Chance it works', value: pct(g.flipProbability), source: 'spec', from: `${pct(COST_STAGES[stage].success)} success at this learning stage` },
++    { id: 'price', label: 'Price', value: usd(g.revenuePerJourney), source: 'spec', from: `${ANCHORS[DEFAULT_GOAL.anchor].label.replace('per flip (spec)', 'per person helped')} × chance it works` },
++    { id: 'fees', label: 'Fees', value: '$0 (not modelled)', source: 'estimates', from: 'App store, payment and coach fees not counted yet' },
++    { id: 'r-chapter', label: 'Cost per session', value: usd(g.costPerChapter), source: 'estimates', from: 'Script + voice + music + picture − reuse', result: true },
++    { id: 'r-journey', label: 'Cost of all sessions, one person', value: usd(g.costPerJourney), source: 'estimates', from: 'Sessions × cost per session', result: true },
++    { id: 'r-flip', label: 'Cost per person helped', value: usd(g.costPerFlip), source: 'estimates', from: 'All sessions ÷ chance it works', result: true },
++    { id: 'r-profit', label: 'Profit per person helped', value: usd(g.profitPerFlip), source: 'spec', from: 'Price − cost − fees, per person helped', result: true },
++    { id: 'r-2025', label: 'Last year’s real bills, per session', value: `€${measuredAverage().toFixed(2)}`, source: 'measured-2025', from: `The ${MEASURED_2025.campaigns.length} biggest batches in the old system, video included`, result: true },
+   ]
+   return { terms, chapter: g.costPerChapter, chapters: g.chapters, journey: g.costPerJourney, flip: g.flipProbability, costPerFlip: g.costPerFlip, revenue: g.revenuePerJourney, profitPerFlip: g.profitPerFlip, measuredPerSessionEur: measuredAverage() }
+ }
+@@ -286,16 +339,16 @@ export function costFunction(stage: Stage = 1): CostFunction {
+ export const COST_SOURCES: { id: CostSourceId; title: string; label: SourceLabel; lines: string[] }[] = [
+   {
+     id: 'suppliers',
+-    title: 'Supplier price pages',
++    title: 'Suppliers’ own price pages',
+     label: 'company-price',
+     lines: MEDIA.filter((m) => m !== 'video').map((m) => {
+       const s = supplier(BALANCED.models[m])
+       return `${s.name}: ${s.price} (${s.date.split(' (')[0]})`
+     }),
+   },
+-  { id: 'estimates', title: 'Our estimates', label: 'estimate', lines: [`${ASSUME.charsPerWord} characters and ${ASSUME.tokensPerWord} tokens a word; 105 words a minute`, `Reuse: one chapter shared by ${ASSUME.reuseAcross}; cache share per preset`, 'Fees, hosting and CAC not counted'] },
+-  { id: 'measured-2025', title: '2025 old admin (measured)', label: 'measured', lines: [`€${MEASURED_2025.total.toFixed(2)} vendor cost, Mar 2025 – Apr 2026`, `Voice €${MEASURED_2025.byMedia.voice.toFixed(2)}, video €${MEASURED_2025.byMedia.video.toFixed(2)} of it`] },
+-  { id: 'spec', title: 'The business owner’s spec (scenario)', label: 'scenario', lines: ['Causal AI stages 1–3: uplift, success, cost factor', `$19.99 per flip; journey ${DEFAULT_GOAL.baseline} → ${DEFAULT_GOAL.target}`] },
++  { id: 'estimates', title: 'Our estimates', label: 'estimate', lines: [`${ASSUME.charsPerWord} characters and ${ASSUME.tokensPerWord} AI text units a word; 105 words a minute`, `Reuse: one session shared by ${ASSUME.reuseAcross} people; some music and pictures made once`, 'Fees, hosting and advertising not counted'] },
++  { id: 'measured-2025', title: 'Last year’s real bills (measured)', label: 'measured', lines: [`€${MEASURED_2025.total.toFixed(2)} paid to suppliers, Mar 2025 – Apr 2026`, `Of it: voice €${MEASURED_2025.byMedia.voice.toFixed(2)}, video €${MEASURED_2025.byMedia.video.toFixed(2)}`] },
++  { id: 'spec', title: 'The business owner’s plan (assumptions)', label: 'scenario', lines: ['Learning stages 1–3: how fast sleep improves, how often it works, the cost discount', `$19.99 per person helped; sleep score ${DEFAULT_GOAL.baseline} → ${DEFAULT_GOAL.target} of 100`] },
+ ]
+ 
+ /** The first stage at which a flip makes money, or null. */
+@@ -308,26 +361,30 @@ export function costSummary(): ReportSummary {
+   const s3 = costFunction(3)
+   const be = breakEvenStage()
+   const status: SummaryStatus = s1.profitPerFlip >= 0 ? 'on-track' : 'at-risk'
++  const price = usd(s1.revenue / s1.flip)
++  const pays = be === 1 ? 'We make money from the start.' : be ? `We lose money today and make money from {{learning-stage|learning stage}} ${be}.` : 'We never make money at this price.'
+   return {
+-    question: 'What does it cost to move someone from bad to good, and when does it pay?',
+-    headline: `A 10-minute chapter costs about ${usd(s1.chapter)}, so one successful flip costs ${usd(s1.costPerFlip)} today and ${usd(s3.costPerFlip)} once the AI has learned; at ${ANCHORS[DEFAULT_GOAL.anchor].label} ${be ? `it pays from stage ${be}` : 'it never pays'}.`,
++    intro: 'What the AI suppliers charge us to make Aurelia’s audio sessions. And whether helping one person sleep well earns more than it costs.',
++    question: 'What does it cost to help one person sleep well, and when do we make money?',
++    headline: `One 10-minute {{chapter|audio session}} costs us about ${usd(s1.chapter)} to make. Helping one person sleep well costs ${usd(s1.costPerFlip)} today. It falls to ${usd(s3.costPerFlip)} once the AI has learned. At ${price} per {{person-helped|person helped}}, ${pays.charAt(0).toLowerCase()}${pays.slice(1)}`,
+     status,
+-    statusNote: status === 'on-track' ? `Profitable from stage 1 (scenario)` : `Loses money at stage 1 (scenario)`,
++    statusNote: status === 'on-track' ? 'Makes money from the start (business owner’s assumptions)' : 'Loses money today (business owner’s assumptions)',
++    sure: 'Only last year’s supplier bills are measured. Everything else is an estimate or an assumption.',
+     tiles: [
+-      { label: 'Cost per 10-min chapter (Balanced)', value: usd(s1.chapter), badge: 'estimate', note: `2025 measured: €${s1.measuredPerSessionEur.toFixed(2)} a session` },
+-      { label: 'Cost per flip, stage 1 → 3', value: `${usd(s1.costPerFlip)} → ${usd(s3.costPerFlip)}`, badge: 'estimate', note: `${s1.chapters} → ${s3.chapters} chapters` },
+-      { label: 'Profit per flip, stage 1', value: usd(s1.profitPerFlip), badge: 'scenario', delta: `stage 3: ${usd(s3.profitPerFlip)}`, deltaGood: s3.profitPerFlip >= s1.profitPerFlip, note: ANCHORS[DEFAULT_GOAL.anchor].label },
+-      { label: 'Break-even stage', value: be ? `Stage ${be}` : 'None', badge: 'scenario', note: be ? COST_STAGES[be].sessions : 'at this price' },
++      { label: 'Cost to make one 10-minute session', value: usd(s1.chapter), badge: 'estimate', note: `With the {{preset|middle option}} of AI suppliers. Last year’s real bills: €${s1.measuredPerSessionEur.toFixed(2)} a session.` },
++      { label: 'Cost to help one person sleep well', value: `${usd(s1.costPerFlip)} → ${usd(s3.costPerFlip)}`, badge: 'estimate', note: `Today → once the AI has learned. ${s1.chapters} → ${s3.chapters} sessions per person.` },
++      { label: 'Profit per person helped, today', value: usd(s1.profitPerFlip), badge: 'scenario', delta: `Once the AI has learned: ${usd(s3.profitPerFlip)}`, deltaGood: s3.profitPerFlip >= s1.profitPerFlip, note: `If each {{person-helped|person helped}} pays ${price}.` },
++      { label: 'When we start making money', value: be ? `{{learning-stage|Stage}} ${be} of 3` : 'Never', badge: 'scenario', note: be ? `{{learning-stage|Learning stage}} ${be}: after ${COST_STAGES[be].sessions.replace(/ sessions$/, '')} sessions` : 'Not at this price' },
+     ],
+     actions: [
+-      { text: 'Pick the voice first: it is the largest line of every chapter.', to: '#cost-function', linkLabel: 'Cost function' },
+-      { text: 'Measure real flips on the first cohort: every uplift and success rate here is the spec’s scenario.', to: '#goal-graph', linkLabel: 'Bad-to-good graph' },
+-      { text: 'Choose the price anchor (per flip, Plus or retreat) before comparing profit.', to: '#goal-stages', linkLabel: 'Stages' },
++      { text: 'Choose the voice supplier first. The voice is the biggest cost in every session.', to: '#cost-function', linkLabel: 'How the cost adds up' },
++      { text: 'Measure how many real people sleep better. Today every success rate here is assumed.', to: '#goal-graph', linkLabel: 'Bad-to-good sleep graph' },
++      { text: 'Decide how people pay: per result, monthly, or a retreat ticket. Then compare profit.', to: '#goal-stages', linkLabel: 'The three learning stages' },
+     ],
+     confidence: {
+-      measured: `Only the 2025 vendor costs (€${MEASURED_2025.total.toFixed(2)}).`,
+-      predicted: 'Chapter cost: supplier prices × our word and reuse estimates.',
+-      assumed: 'Uplift, flip rate and stage cost factor: the spec’s scenario.',
++      measured: `Only last year’s supplier bills (€${MEASURED_2025.total.toFixed(2)} in total).`,
++      predicted: 'The session cost: suppliers’ prices times our guesses about length and reuse.',
++      assumed: 'How fast sleep improves and how often it works: the business owner’s plan.',
+     },
+   }
+ }
+diff --git a/src/admin/pages/reports/BuyerAgentReportPage.tsx b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+index 6c99ed6..dd631b9 100644
+--- a/src/admin/pages/reports/BuyerAgentReportPage.tsx
++++ b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+@@ -31,10 +31,10 @@ export function BuyerAgentReportPage() {
+     <div className="flex flex-col gap-16">
+       <PageHeader
+         title="Buyer agent report"
+-        description="What synthetic buyers, played by an AI agent, say about trying and paying for Aurelia. Every figure is a prediction."
++        description={summary.intro ?? ''}
+         actions={
+           <Link to="/admin/buyer-agent" className="inline-flex items-center gap-6 rounded-8 border border-adm-line bg-adm-surface px-12 py-6 text-12 font-medium text-adm-ink hover:bg-adm-hover">
+-            Full detail: Buyer agent results <ArrowRight size={13} aria-hidden="true" />
++            Every answer, in detail <ArrowRight size={13} aria-hidden="true" />
+           </Link>
+         }
+       />
+@@ -42,11 +42,11 @@ export function BuyerAgentReportPage() {
+       <SummaryBlock s={summary} />
+ 
+       <div className="grid gap-16 lg:grid-cols-[3fr_2fr]">
+-        <Panel title="Success trend, report v1 → v7" description="Would try, would pay and sure at day 30, on the offer each report led with. Hover a report for what changed.">
++        <Panel title="In every test, far fewer would pay than would try" description="Seven rounds of asking simulated people, oldest on the left. Hover a test to see what we changed.">
+           <SuccessTrend points={trend} />
+         </Panel>
+         <section id="what-moves" className="min-w-0 scroll-mt-16">
+-          <Panel title="What moves success" description="Share of a report’s answers each change moved (v3, v6, v7).">
++          <Panel title={`“${levers[0]?.theme ?? '—'}” changed the most answers`} description="Each bar: the share of simulated people whose answer changed when we added that idea. Longer bar, bigger effect.">
+             <WhatMoves levers={levers} />
+           </Panel>
+         </section>
+diff --git a/src/admin/pages/reports/CombinationReportPage.tsx b/src/admin/pages/reports/CombinationReportPage.tsx
+index 9f2d48f..60b8756 100644
+--- a/src/admin/pages/reports/CombinationReportPage.tsx
++++ b/src/admin/pages/reports/CombinationReportPage.tsx
+@@ -89,7 +89,7 @@ export function CombinationReportPage() {
+     <div className="flex flex-col gap-16">
+       <PageHeader
+         title="Combination report"
+-        description="Aurelia read stage by stage of the business funnel, every source side by side, with one verdict and one next move per stage."
++        description={summary.intro ?? ''}
+       />
+ 
+       <SummaryBlock
+@@ -100,9 +100,9 @@ export function CombinationReportPage() {
+             <div className="rounded-8 bg-adm-bg p-12">
+               <h2 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">How to read this</h2>
+               <ul className="mt-4 flex list-disc flex-col gap-2 pl-18 text-12 text-adm-ink-2">
+-                <li>Five stages, left to right: a person enters, has an “aha”, hits the free limit, is offered Plus, and stays.</li>
+-                <li>Each box is the stage’s weakest number against its target; green is on target, red is below, the thick border is what to fix first.</li>
+-                <li>All numbers are predictions from buyer agents on production v3; click a stage for every source behind it.</li>
++                <li>Five steps, left to right: a person arrives, enjoys a first session, uses up the free sessions, starts paying, and keeps using.</li>
++                <li>Each box shows the step’s weakest number and our goal. Green: goal reached. Red: below goal. Thick red border: fix first.</li>
++                <li>Every number is simulated: AI played made-up people on today’s app. Click a step to see every source.</li>
+               </ul>
+             </div>
+           </div>
+diff --git a/src/admin/pages/reports/CostReportPage.tsx b/src/admin/pages/reports/CostReportPage.tsx
+index 8ecad11..ea85953 100644
+--- a/src/admin/pages/reports/CostReportPage.tsx
++++ b/src/admin/pages/reports/CostReportPage.tsx
+@@ -90,13 +90,13 @@ export function CostReportPage() {
+     <div className="flex flex-col gap-16">
+       <PageHeader
+         title="Cost report"
+-        description="What a chapter costs to make, and what moving one person from bad sleep to good sleep costs and earns. Prices are suppliers’ own; uplift and flips are the business owner’s scenario."
++        description={summary.intro ?? ''}
+       />
+ 
+       <SummaryBlock s={summary} />
+ 
+       <section id="cost-function" className="scroll-mt-16">
+-        <Panel title="The cost function" description="Which sources feed it, the formula, and what comes out. Click a term to see its source.">
++        <Panel title="How the cost of helping one person adds up" description="Left: where each number comes from. Middle: the sum. Right: the result. Click a line to see its source.">
+           <CostFunctionPanel f={fn} />
+         </Panel>
+       </section>
+diff --git a/src/admin/pages/reports/ReportParts.tsx b/src/admin/pages/reports/ReportParts.tsx
+index 3f436ba..f3e0a85 100644
+--- a/src/admin/pages/reports/ReportParts.tsx
++++ b/src/admin/pages/reports/ReportParts.tsx
+@@ -2,8 +2,8 @@ import { ExternalLink } from 'lucide-react'
+ import { useState, type ReactNode } from 'react'
+ import { Link } from 'react-router-dom'
+ import { BUILD } from '../../../lib/build'
+-import { Badge, Panel, type Tone } from '../../components/ui'
+-import { LABEL_FILL, LABEL_STROKE } from './reportColors'
++import { Badge, Panel } from '../../components/ui'
++import { LABEL_FILL, LABEL_STROKE, LABEL_TONE } from './reportColors'
+ import { LABEL_MEANING, LABEL_TEXT, SOURCES, sourcesOf, type Finding, type SourceId, type SourceLabel } from '../../data/reportSources'
+ 
+ /*
+@@ -12,8 +12,6 @@ import { LABEL_MEANING, LABEL_TEXT, SOURCES, sourcesOf, type Finding, type Sourc
+  * the one registry in data/reportSources.ts.
+  */
+ 
+-const LABEL_TONE: Record<SourceLabel, Tone> = { measured: 'good', prediction: 'info', sample: 'neutral', estimate: 'serious', document: 'warning', 'company-price': 'good', 'third-party': 'neutral', scenario: 'critical' }
+-
+ export function LabelBadge({ label }: { label: SourceLabel }) {
+   return <Badge tone={LABEL_TONE[label]}>{LABEL_TEXT[label]}</Badge>
+ }
+diff --git a/src/admin/pages/reports/ReportSummary.tsx b/src/admin/pages/reports/ReportSummary.tsx
+index e648f26..0b4e8dd 100644
+--- a/src/admin/pages/reports/ReportSummary.tsx
++++ b/src/admin/pages/reports/ReportSummary.tsx
+@@ -2,8 +2,11 @@ import { ArrowRight, ChevronRight } from 'lucide-react'
+ import type { ReactNode } from 'react'
+ import { Link } from 'react-router-dom'
+ import { Badge, type Tone } from '../../components/ui'
++import type { TermId } from '../../data/glossary'
+ import type { ReportSummary, SummaryStatus } from '../../data/reportSummaries'
+-import { LabelBadge } from './ReportParts'
++import { LABEL_TEXT, type SourceLabel } from '../../data/reportSources'
++import { LABEL_TONE } from './reportColors'
++import { RichText, Term } from './Term'
+ 
+ /*
+  * The summary-first top of every Admin → Report (U126, J179): the question,
+@@ -17,6 +20,20 @@ const STATUS: Record<SummaryStatus, { tone: Tone; text: string }> = {
+   'not-measured': { tone: 'neutral', text: 'Not measured' },
+ }
+ 
++/** What kind of number a tile is, in words, with the glossary behind it (U128). */
++const TILE_LABEL: Partial<Record<SourceLabel, { text: string; term: TermId }>> = {
++  prediction: { text: 'Simulated', term: 'simulated' },
++  estimate: { text: 'Estimate', term: 'estimate' },
++  scenario: { text: 'Assumption', term: 'assumption' },
++  measured: { text: 'Measured', term: 'measured' },
++}
++
++function TileLabel({ label }: { label: SourceLabel }) {
++  const t = TILE_LABEL[label]
++  const badge = <Badge tone={LABEL_TONE[label]}>{t?.text ?? LABEL_TEXT[label]}</Badge>
++  return t ? <Term id={t.term}>{badge}</Term> : badge
++}
++
+ function ActionLink({ to, children }: { to: string; children: ReactNode }) {
+   const cls = 'inline-flex shrink-0 items-center gap-4 text-12 font-medium text-adm-ink underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink'
+   if (to.startsWith('#')) {
+@@ -45,10 +62,14 @@ export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode
+       <div className="flex flex-col gap-6">
+         <div className="flex flex-wrap items-center gap-8">
+           <span className="text-11 font-semibold uppercase tracking-wider text-adm-muted">The question</span>
+-          <span className="text-12 text-adm-ink-2">{s.question}</span>
++          <span className="text-12 text-adm-ink-2">
++            <RichText text={s.question} />
++          </span>
+         </div>
+         <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-16">
+-          <p className="max-w-[860px] text-18 font-semibold leading-snug text-adm-ink">{s.headline}</p>
++          <p className="max-w-[860px] text-18 font-semibold leading-snug text-adm-ink">
++            <RichText text={s.headline} />
++          </p>
+           <div className="flex shrink-0 flex-col items-start gap-2 lg:items-end">
+             <Badge tone={st.tone}>{st.text}</Badge>
+             <span className="text-11 text-adm-muted">{s.statusNote}</span>
+@@ -60,12 +81,24 @@ export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode
+         {s.tiles.map((t) => (
+           <div key={t.label} className="flex min-w-0 flex-col gap-4 rounded-8 border border-adm-line bg-adm-bg p-12">
+             <dt className="flex flex-wrap items-center justify-between gap-4 text-11 font-medium text-adm-muted">
+-              <span>{t.label}</span>
+-              <LabelBadge label={t.badge} />
++              <span>
++                <RichText text={t.label} />
++              </span>
++              <TileLabel label={t.badge} />
+             </dt>
+-            <dd className="text-24 font-semibold leading-tight tabular-nums text-adm-ink">{t.value}</dd>
+-            {t.delta && <dd className={`text-12 font-medium tabular-nums ${t.deltaGood ? 'text-adm-good' : 'text-adm-critical'}`}>{t.delta}</dd>}
+-            {t.note && <dd className="text-11 text-adm-ink-2">{t.note}</dd>}
++            <dd className="text-24 font-semibold leading-tight tabular-nums text-adm-ink">
++              <RichText text={t.value} />
++            </dd>
++            {t.delta && (
++              <dd className={`text-12 font-medium tabular-nums ${t.deltaGood ? 'text-adm-good' : 'text-adm-critical'}`}>
++                <RichText text={t.delta} />
++              </dd>
++            )}
++            {t.note && (
++              <dd className="text-11 text-adm-ink-2">
++                <RichText text={t.note} />
++              </dd>
++            )}
+           </div>
+         ))}
+       </dl>
+@@ -80,7 +113,7 @@ export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode
+               <li key={a.text} className="flex flex-col gap-4 rounded-8 border border-adm-line p-10 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
+                 <span className="text-13 text-adm-ink">
+                   <span className="mr-6 font-semibold tabular-nums">{i + 1}.</span>
+-                  {a.text}
++                  <RichText text={a.text} />
+                 </span>
+                 <ActionLink to={a.to}>{a.linkLabel}</ActionLink>
+               </li>
+@@ -89,17 +122,24 @@ export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode
+         </div>
+         <div className="flex min-w-0 flex-col gap-6">
+           <h2 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">How sure are we</h2>
++          {s.sure && (
++            <p className="text-13 font-medium text-adm-ink">
++              <RichText text={s.sure} />
++            </p>
++          )}
+           <dl className="flex flex-col overflow-hidden rounded-8 border border-adm-line text-12">
+             {([
+               ['Measured', 'good', s.confidence.measured],
+-              ['Predicted', 'info', s.confidence.predicted],
++              [s.sure ? 'Simulated' : 'Predicted', 'info', s.confidence.predicted],
+               ['Assumed', 'serious', s.confidence.assumed],
+             ] as const).map(([k, tone, v]) => (
+               <div key={k} className="flex items-start gap-8 border-b border-adm-line p-8 last:border-0">
+                 <dt className="w-[76px] shrink-0">
+                   <Badge tone={tone}>{k}</Badge>
+                 </dt>
+-                <dd className="min-w-0 text-adm-ink-2">{v}</dd>
++                <dd className="min-w-0 text-adm-ink-2">
++                  <RichText text={v} />
++                </dd>
+               </div>
+             ))}
+           </dl>
+diff --git a/src/admin/pages/reports/SummaryCharts.tsx b/src/admin/pages/reports/SummaryCharts.tsx
+index 20b5f1c..25c12b9 100644
+--- a/src/admin/pages/reports/SummaryCharts.tsx
++++ b/src/admin/pages/reports/SummaryCharts.tsx
+@@ -14,15 +14,15 @@ const pct = (x: number) => `${Math.round(x * 100)}%`
+ const SERIES = [
+   { key: 'tries', label: 'Would try', stroke: 'stroke-adm-s1', fill: 'fill-adm-s1', dot: 'bg-adm-s1' },
+   { key: 'pays', label: 'Would pay', stroke: 'stroke-adm-s2', fill: 'fill-adm-s2', dot: 'bg-adm-s2' },
+-  { key: 'sure30', label: 'Sure at day 30', stroke: 'stroke-adm-s3', fill: 'fill-adm-s3', dot: 'bg-adm-s3' },
++  { key: 'sure30', label: 'Still sure after a month', stroke: 'stroke-adm-s3', fill: 'fill-adm-s3', dot: 'bg-adm-s3' },
+ ] as const
+ 
+ const TW = 880
+ const TH = 250
+-const L = 40
++const L = 56
+ const R = 24
+ const T = 16
+-const B = 34
++const B = 52
+ 
+ /** Try, pay and sure-at-day-30 across reports v1–v7, each point annotated by what changed. */
+ export function SuccessTrend({ points }: { points: TrendPoint[] }) {
+@@ -53,10 +53,16 @@ export function SuccessTrend({ points }: { points: TrendPoint[] }) {
+             {s.label}
+           </span>
+         ))}
+-        <span className="text-adm-muted">Share of each report’s panel · inputs differ between reports</span>
++        <span className="text-adm-muted">Each point: the share of that test’s simulated people. A missing point was not asked.</span>
+       </div>
+       <div className="relative overflow-x-auto">
+-        <svg viewBox={`0 0 ${TW} ${TH}`} className="block w-full min-w-[640px]" role="img" aria-label="Line chart: would try, would pay and sure at day 30, report v1 to v7">
++        <svg viewBox={`0 0 ${TW} ${TH}`} className="block w-full min-w-[640px]" role="img" aria-label="Line chart: share of simulated people who would try, would pay and would still be sure after a month, test 1 to test 7">
++          <text x={14} y={T + (TH - T - B) / 2} transform={`rotate(-90 14 ${T + (TH - T - B) / 2})`} textAnchor="middle" className="fill-adm-muted text-11">
++            Share of simulated people
++          </text>
++          <text x={L + (TW - L - R) / 2} y={TH - 4} textAnchor="middle" className="fill-adm-muted text-11">
++            Test, oldest to newest
++          </text>
+           {[0, 0.25, 0.5, 0.75, 1].map((v) => (
+             <g key={v}>
+               <line x1={L} x2={TW - R} y1={y(v)} y2={y(v)} className="stroke-adm-grid" strokeWidth={1} />
+@@ -66,8 +72,8 @@ export function SuccessTrend({ points }: { points: TrendPoint[] }) {
+             </g>
+           ))}
+           {points.map((p, i) => (
+-            <text key={p.id} x={x(i)} y={TH - 12} textAnchor="middle" className={`text-12 ${hover === i ? 'fill-adm-ink font-semibold' : 'fill-adm-ink-2'}`}>
+-              Report {p.name}
++            <text key={p.id} x={x(i)} y={TH - B + 18} textAnchor="middle" className={`text-12 ${hover === i ? 'fill-adm-ink font-semibold' : 'fill-adm-ink-2'}`}>
++              {p.label}
+             </text>
+           ))}
+           {hover !== null && <line x1={x(hover)} x2={x(hover)} y1={T} y2={TH - B} className="stroke-adm-axis" strokeWidth={1} />}
+@@ -94,7 +100,9 @@ export function SuccessTrend({ points }: { points: TrendPoint[] }) {
+         </svg>
+         {h && (
+           <div className="pointer-events-none absolute top-0 right-0 max-w-[260px] rounded-8 border border-adm-line bg-adm-surface p-10 text-12 shadow-sm">
+-            <p className="font-semibold text-adm-ink">Report {h.name} · {h.n} people</p>
++            <p className="font-semibold text-adm-ink">
++              {h.label} · {h.n} simulated people
++            </p>
+             <p className="text-adm-ink-2">{h.change}</p>
+             {SERIES.map((s) => (
+               <p key={s.key} className="tabular-nums text-adm-ink">
+@@ -107,7 +115,7 @@ export function SuccessTrend({ points }: { points: TrendPoint[] }) {
+       <ol className="grid gap-x-12 gap-y-4 text-11 text-adm-ink-2 sm:grid-cols-2 lg:grid-cols-4">
+         {points.map((p) => (
+           <li key={p.id}>
+-            <span className="font-semibold text-adm-ink">{p.name}</span> · {p.change}
++            <span className="font-semibold text-adm-ink">{p.label}</span> · {p.change}
+           </li>
+         ))}
+       </ol>
+@@ -121,12 +129,12 @@ export function WhatMoves({ levers }: { levers: Lever[] }) {
+   return (
+     <ul className="flex flex-col gap-8">
+       {levers.map((l) => (
+-        <li key={l.theme} className="grid grid-cols-[110px_1fr] items-center gap-x-10 gap-y-2" title={`${l.change}: ${l.moved} of ${l.n} answers, report ${l.report}`}>
++        <li key={l.theme} className="grid grid-cols-[110px_1fr] items-center gap-x-10 gap-y-2" title={`${l.change}: changed ${l.moved} of ${l.n} answers, test ${l.report.replace('v', '')}`}>
+           <span className="text-12 font-semibold text-adm-ink">{l.theme}</span>
+           <span className="flex items-center gap-8">
+             <span className="h-14 rounded-r-4 bg-adm-s1" style={{ width: `${(l.share / max) * 70}%` }} aria-hidden="true" />
+             <span className="text-12 tabular-nums text-adm-ink">
+-              {pct(l.share)} <span className="text-adm-muted">({l.moved} of {l.n}, {l.report})</span>
++              {pct(l.share)} <span className="text-adm-muted">({l.moved} of {l.n} people, test {l.report.replace('v', '')})</span>
+             </span>
+           </span>
+           <span className="col-start-2 text-11 text-adm-muted">{l.change}</span>
+@@ -154,11 +162,11 @@ export function StageStrip({ cells }: { cells: StageCell[] }) {
+               <span className="text-11 font-semibold uppercase tracking-wider text-adm-muted">
+                 {i + 1}. {stageShort(c.id)}
+               </span>
+-              {c.isGap ? <Badge tone="critical">Biggest gap</Badge> : <Badge tone={c.status === 'on-track' ? 'good' : 'serious'}>{c.status === 'on-track' ? 'On track' : 'Below'}</Badge>}
++              {c.isGap ? <Badge tone="critical">Fix first</Badge> : <Badge tone={c.status === 'on-track' ? 'good' : 'serious'}>{c.status === 'on-track' ? 'Goal reached' : 'Below goal'}</Badge>}
+             </span>
+             <span className="text-24 font-semibold tabular-nums text-adm-ink">{pct(c.value)}</span>
+             <span className="text-12 text-adm-ink-2">
+-              {c.metric} <span className="text-adm-muted">· target {pct(c.target)}</span>
++              {c.metric} <span className="text-adm-muted">· goal {pct(c.target)}</span>
+             </span>
+           </a>
+         </li>
+@@ -197,7 +205,7 @@ export function CostFunctionPanel({ f }: { f: CostFunction }) {
+   return (
+     <div className="grid gap-12 lg:grid-cols-[1fr_1.3fr_1fr]">
+       <div className="flex min-w-0 flex-col gap-8">
+-        <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">1 · Sources</h3>
++        <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">1 · Where the numbers come from</h3>
+         {COST_SOURCES.map((s) => (
+           <div key={s.id} className={`rounded-8 border p-10 transition-colors ${active === s.id ? 'border-2 border-adm-ink bg-adm-bg' : active ? 'border-adm-line opacity-50' : 'border-adm-line'}`}>
+             <div className="flex flex-wrap items-center justify-between gap-6">
+@@ -213,12 +221,12 @@ export function CostFunctionPanel({ f }: { f: CostFunction }) {
+         ))}
+       </div>
+       <div className="flex min-w-0 flex-col gap-8">
+-        <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">2 · The formula (click a term)</h3>
+-        <div className="rounded-8 bg-adm-bg p-10 font-mono text-11 leading-relaxed text-adm-ink">
+-          <p>chapter = (script + voice + music + image − reuse) × stage factor</p>
+-          <p>journey = chapters × chapter</p>
+-          <p>cost per flip = journey ÷ P(flip)</p>
+-          <p>profit per flip = (price − journey − fees) ÷ P(flip)</p>
++        <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">2 · How we add it up (click a line to see its source)</h3>
++        <div className="rounded-8 bg-adm-bg p-10 text-12 leading-relaxed text-adm-ink">
++          <p>Cost per session = (script + voice + music + picture − reuse) × learning discount</p>
++          <p>Cost for one person = sessions until sleep is good × cost per session</p>
++          <p>Cost per person helped = cost for one person ÷ chance it works</p>
++          <p>Profit per person helped = (price − cost for one person − fees) ÷ chance it works</p>
+         </div>
+         <ul className="flex flex-col gap-6">
+           {inputs.map((t) => (
+@@ -227,13 +235,13 @@ export function CostFunctionPanel({ f }: { f: CostFunction }) {
+         </ul>
+       </div>
+       <div className="flex min-w-0 flex-col gap-8">
+-        <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">3 · The result (stage 1)</h3>
++        <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">3 · The result, today (learning stage 1)</h3>
+         <ul className="flex flex-col gap-6">
+           {results.map((t) => (
+             <TermRow key={t.id} t={t} on={active === t.source} onToggle={() => setActive(active === t.source ? null : t.source)} />
+           ))}
+         </ul>
+-        <p className="text-11 text-adm-muted">Balanced preset, 10-minute chapters, the spec’s 25 → 85 journey at 3 chapters a week.</p>
++        <p className="text-11 text-adm-muted">Middle choice of AI suppliers, 10-minute sessions, sleep score from 25 to 85 of 100, 3 sessions a week.</p>
+       </div>
+     </div>
+   )
+diff --git a/src/admin/pages/reports/Term.tsx b/src/admin/pages/reports/Term.tsx
+new file mode 100644
+index 0000000..480f95b
+--- /dev/null
++++ b/src/admin/pages/reports/Term.tsx
+@@ -0,0 +1,99 @@
++import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
++import { createPortal } from 'react-dom'
++import { GLOSSARY, segments, type TermId } from '../../data/glossary'
++
++/*
++ * A glossary word in a report (U128, J181): dotted underline, and its plain
++ * definition in a tooltip on hover, keyboard focus or tap (a tap
++ * elsewhere, Escape or a scroll closes it). The tooltip goes
++ * through a portal (a transformed page would pin a fixed box to itself) and
++ * is clamped to the viewport, so it never adds a horizontal scroll at 402px.
++ */
++
++const TIP_W = 260
++
++export function Term({ id, children }: { id: TermId; children?: ReactNode }) {
++  const [pos, setPos] = useState<{ left: number; top: number; width: number } | null>(null)
++  const ref = useRef<HTMLSpanElement>(null)
++  const tipId = useId()
++  const entry = GLOSSARY[id]
++
++  const show = () => {
++    const r = ref.current?.getBoundingClientRect()
++    if (!r) return
++    const w = Math.min(TIP_W, window.innerWidth - 16)
++    setPos({ left: Math.max(8, Math.min(r.left, window.innerWidth - w - 8)), top: r.bottom + 6, width: w })
++  }
++  const hide = () => setPos(null)
++
++  useEffect(() => {
++    if (!pos) return
++    const close = (e: Event) => {
++      if (e instanceof KeyboardEvent && e.key !== 'Escape') return
++      if (e.type === 'pointerdown' && ref.current?.contains(e.target as Node)) return
++      setPos(null)
++    }
++    window.addEventListener('keydown', close)
++    window.addEventListener('scroll', close, true)
++    window.addEventListener('pointerdown', close)
++    return () => {
++      window.removeEventListener('keydown', close)
++      window.removeEventListener('scroll', close, true)
++      window.removeEventListener('pointerdown', close)
++    }
++  }, [pos])
++
++  return (
++    <>
++      <span
++        ref={ref}
++        data-term={id}
++        tabIndex={0}
++        role="button"
++        aria-describedby={pos ? tipId : undefined}
++        onPointerEnter={(e) => e.pointerType === 'mouse' && show()}
++        onPointerLeave={(e) => e.pointerType === 'mouse' && hide()}
++        onFocus={show}
++        onBlur={hide}
++        onClick={(e) => {
++          e.preventDefault()
++          e.stopPropagation()
++          show()
++        }}
++        className="cursor-help underline decoration-adm-muted decoration-dotted decoration-1 underline-offset-[3px] outline-none focus-visible:rounded-2 focus-visible:ring-2 focus-visible:ring-adm-ink"
++      >
++        {children ?? entry.term.toLowerCase()}
++      </span>
++      {pos &&
++        createPortal(
++          <span
++            id={tipId}
++            role="tooltip"
++            style={{ left: pos.left, top: pos.top, width: pos.width }}
++            className="pointer-events-none fixed z-50 block rounded-8 border border-adm-line bg-adm-surface p-10 text-left text-12 font-normal leading-snug text-adm-ink-2 normal-case tracking-normal shadow-md"
++          >
++            <span className="block font-semibold text-adm-ink">{entry.term}</span>
++            {entry.plain}
++          </span>,
++          document.body,
++        )}
++    </>
++  )
++}
++
++/** Text with `{{id|shown}}` glossary marks, rendered with a `Term` for each. */
++export function RichText({ text }: { text: string }) {
++  return (
++    <>
++      {segments(text).map((s, i) =>
++        s.term ? (
++          <Term key={i} id={s.term}>
++            {s.text}
++          </Term>
++        ) : (
++          <span key={i}>{s.text}</span>
++        ),
++      )}
++    </>
++  )
++}
+diff --git a/src/admin/pages/reports/reportColors.ts b/src/admin/pages/reports/reportColors.ts
+index 5d0ac1d..0eb12b2 100644
+--- a/src/admin/pages/reports/reportColors.ts
++++ b/src/admin/pages/reports/reportColors.ts
+@@ -1,5 +1,6 @@
+ import type { InputKind } from '../../data/buyerAgentReport'
+ import type { SourceLabel } from '../../data/reportSources'
++import type { Tone } from '../../components/ui'
+ 
+ /** Edge and dot colour per label; admin series tokens, so both themes work. Shared by the report graphs. */
+ export const LABEL_STROKE: Record<SourceLabel, string> = {
+@@ -31,3 +32,6 @@ export const INPUT_DOT: Record<InputKind, string> = {
+   ownerDocs: 'bg-adm-s4',
+   price: 'bg-adm-good',
+ }
++
++/** Badge tone per label. */
++export const LABEL_TONE: Record<SourceLabel, Tone> = { measured: 'good', prediction: 'info', sample: 'neutral', estimate: 'serious', document: 'warning', 'company-price': 'good', 'third-party': 'neutral', scenario: 'critical' }
+-- 
+2.43.0
+

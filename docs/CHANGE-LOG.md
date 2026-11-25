@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-25 — Lighter funnel; reports in plain language (U127, U128, J180, J181)
+
+The Business funnel shows less text. The reports read for someone with no background: plain headlines, a glossary on hover, no internal codes.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-25 — Reports summary-first (U126, J179)
 
 Each report opens with its answer, its KPIs and the next step; the details sit below.

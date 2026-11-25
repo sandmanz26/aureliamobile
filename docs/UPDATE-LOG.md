@@ -163,9 +163,27 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U124 | `ba6eff3` | 2026-11-25 | Buyer agent runs v5 (36 personas, the app as it is at $10/$100, PRD read), v6 (60, the creator retreat at €19.99 or €39 against freemium), v7 (100, Insight-Timer-style quick wins), each adding persona variables. Played by written rules (`buyerPlay.ts`), not typed by hand. Report v5–v7 record all five inputs. | [patch](patches/U124-ba6eff3.patch) |
 | U125 | `933b07e` | 2026-11-25 | Wiki Research v3 (now the default), Insight Timer round 3: 21 features mapped to the funnel and journey; 14 ranked quick wins; what not to copy; Map of Healing against our Healing Map; their Retreats (a 10% listing fee) against Retreat-in-a-Box; a roast; 23 sources. | [patch](patches/U125-933b07e.patch) |
 | U126 | `fedab33` | 2026-11-25 | The three reports lead with a summary: the question, a one-sentence answer, four labelled KPI tiles, status, next steps and confidence, with details folded. Buyer agent: a success trend from v1 to v7 and "what moves success". Combination: a five-stage strip. Cost: a cost-function panel (sources → formula → result). | [patch](patches/U126-fedab33.patch) |
+| U127 | `68ac248` | 2026-11-25 | Business funnel lighter to read. The summary card has a five-stage strip and "Fix next"; rows are compact; explanations sit in ⓘ tooltips and folded Details. Words in the first screen at 1440px: 366 → 210 (app) and 365 → 147 (retreat). | [patch](patches/U127-68ac248.patch) |
+| U128 | `02af7e6` | 2026-11-25 | Reports in plain language. Each report says what it is; headlines give bases and units ("16 of 36 simulated people…"); a 15-term glossary appears as tooltips; ids are removed from the summaries; charts carry takeaway titles; badges read Simulated, Estimate, Assumption or Measured. Tests keep jargon out of the summaries. | [patch](patches/U128-02af7e6.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U128 — Reports in plain language
+
+- **Commit:** `02af7e6` · 2026-11-25.
+- **Barriers found:**
+  - jargon: buyer agent, flip, stage, cap or upsell, Plus, pts;
+  - internal ids: v1–v7, d1;
+  - numbers without a base;
+  - colour-only status;
+  - headlines of 35–40 words.
+- **Revert:** `git revert --no-commit 02af7e6`.
+
+### U127 — Business funnel, lighter
+
+- **Commit:** `68ac248` · 2026-11-25.
+- **Revert:** `git revert --no-commit 68ac248`.
 
 ### U126 — Reports summary-first
 

@@ -130,6 +130,8 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | J177 | 2026-11-25 | Code | Redo the buyer report: its sources are personas, current product, PRD, the business owner's documents and his pricing at the time, producing report v1, v2…; the graph shows what each report used | U122 |
 | J178 | 2026-11-25 | Code + research | Sidebar search and icons on groups; hide buyer agent results; Experimentation into Product lab; 2–3 more buyer-agent iterations; Insight Timer research again, deeper | U123, U124, U125 |
 | J179 | 2026-11-25 | Code | As head of design, AI and product: reports clear at a glance; buyer agent shows the success likelihood; combination clear for a new admin; cost shows the sources → cost function → result; aligned with what the business owner wants | U126 |
+| J180 | 2026-11-25 | Code | Business funnel UI less text-heavy, for reading experience | U127 |
+| J181 | 2026-11-25 | Review + code | Review whether the reports are understandable even to a layperson, and fix them | U128 |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
@@ -2212,3 +2214,10 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 
 ### J179 — Reports, summary first
 - **Done (U126).** The shared summary block is `ReportSummary.tsx`, and every number in it is derived from the data in `reportSummaries.ts`.
+
+### J180 — Business funnel, lighter
+- **Done (U127).**
+
+### J181 — Reports for a layperson
+- **Answered:** not yet; jargon, codes and numbers without a base stood in the way.
+- **Done (U128):** the reports were rewritten in plain language, with a glossary on hover.
