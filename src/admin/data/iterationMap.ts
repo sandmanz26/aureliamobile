@@ -1,7 +1,7 @@
 import { DEFAULT_DECISIONS, STATUS_LABEL, type Decision } from './businessFunnel'
 import { buildIterations } from './buyerAgentReport'
 import { buildStages } from './combinationReport'
-import { BUYER_REPORT_FINDINGS, COMBINATION_FINDINGS, COST_FINDINGS, SOURCES, UX_FEEDBACK_FINDINGS, type Finding, type SourceId, type SourceLabel } from './reportSources'
+import { B2B2C_FINDINGS, BUYER_REPORT_FINDINGS, COMBINATION_FINDINGS, COST_FINDINGS, SOURCES, UX_FEEDBACK_FINDINGS, type Finding, type SourceId, type SourceLabel } from './reportSources'
 import { buyerTrend } from './reportSummaries'
 import { PRODUCTION_VERSIONS } from '../../versions/versions'
 
@@ -16,7 +16,7 @@ import { PRODUCTION_VERSIONS } from '../../versions/versions'
  */
 
 export type MapColumn = 'source' | 'report' | 'outcome'
-export type ReportKey = 'buyer' | 'combination' | 'cost' | 'ux'
+export type ReportKey = 'buyer' | 'combination' | 'cost' | 'ux' | 'b2b2c'
 
 export interface MapNode {
   id: string
@@ -56,6 +56,7 @@ const REPORT_PAGES: Record<ReportKey, { title: string; to: string; findings: Fin
   combination: { title: 'Combination report', to: '/admin/reports/combination', findings: COMBINATION_FINDINGS },
   cost: { title: 'Cost report', to: '/admin/reports/cost', findings: COST_FINDINGS },
   ux: { title: 'UX feedback report', to: '/admin/reports/ux-feedback', findings: UX_FEEDBACK_FINDINGS },
+  b2b2c: { title: 'B2B2C report', to: '/admin/reports/b2b2c', findings: B2B2C_FINDINGS },
 }
 
 const pct = (x: number | null) => (x === null ? '—' : `${Math.round(x * 100)}%`)
@@ -117,6 +118,7 @@ export function buildIterationMap(week = 1): IterationMap {
   const others: [ReportKey, string, string, SourceLabel[]][] = [
     ['ux', 'How the feedback group is doing, week by week. Sample data until the real study runs.', 'Feedback group', ['sample']],
     ['cost', 'What one audio session costs to make, and what helping one person sleep well costs.', 'Costs and profit', ['estimate', 'measured', 'scenario']],
+    ['b2b2c', 'Which partner channel to build first, and the features it needs.', 'Channels and features', ['document', 'prediction', 'estimate']],
     ['combination', 'Every source joined, step by step of the customer journey, to pick what to fix first.', 'All sources joined', ['prediction', 'document', 'sample']],
   ]
   for (const [key, summary, tag, labels] of others) {

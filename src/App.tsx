@@ -92,6 +92,7 @@ const BuyerResultsPage = lazy(() => import('./admin/pages/BuyerResultsPage').the
 const BuyerAgentReportPage = lazy(() => import('./admin/pages/reports/BuyerAgentReportPage').then((m) => ({ default: m.BuyerAgentReportPage })))
 const TherapeuticMapPage = lazy(() => import('./admin/pages/lab/TherapeuticMapPage').then((m) => ({ default: m.TherapeuticMapPage })))
 const HealingMapPage = lazy(() => import('./admin/pages/lab/HealingMapPage').then((m) => ({ default: m.HealingMapPage })))
+const B2b2cReportPage = lazy(() => import('./admin/pages/reports/B2b2cReportPage').then((m) => ({ default: m.B2b2cReportPage })))
 const CostReportPage = lazy(() => import('./admin/pages/reports/CostReportPage').then((m) => ({ default: m.CostReportPage })))
 const ReportsOverviewPage = lazy(() => import('./admin/pages/reports/ReportsOverviewPage').then((m) => ({ default: m.ReportsOverviewPage })))
 const UxFeedbackReportPage = lazy(() => import('./admin/pages/reports/UxFeedbackReportPage').then((m) => ({ default: m.UxFeedbackReportPage })))
@@ -258,6 +259,11 @@ export default function App() {
                 <Route path="reports/cost" element={
                   <ModuleGuard module="adminReportCost">
                     <CostReportPage />
+                  </ModuleGuard>
+                } />
+                <Route path="reports/b2b2c" element={
+                  <ModuleGuard module="adminReportB2b2c">
+                    <B2b2cReportPage />
                   </ModuleGuard>
                 } />
               </>

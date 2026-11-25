@@ -1,6 +1,7 @@
 import { PanelRightOpen } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { PageHeader, Panel } from '../../components/ui'
+import { b2b2cSummary } from '../../data/b2b2cReport'
 import { buildIterationMap } from '../../data/iterationMap'
 import { buyerSummary, combinationSummary, costSummary, uxFeedbackSummary } from '../../data/reportSummaries'
 import { buildParticipants, studyWeek } from '../../data/study'
@@ -33,6 +34,7 @@ function Overview() {
       { title: 'Buyer agent report', to: '/admin/reports/buyer-agent', s: buyerSummary() },
       { title: 'UX feedback report', to: '/admin/reports/ux-feedback', s: uxFeedbackSummary(participants, week) },
       { title: 'Cost report', to: '/admin/reports/cost', s: costSummary() },
+      { title: 'B2B2C report', to: '/admin/reports/b2b2c', s: b2b2cSummary() },
       { title: 'Combination report', to: '/admin/reports/combination', s: combinationSummary(week) },
     ]
   }, [week])
@@ -51,7 +53,7 @@ function Overview() {
         </p>
       </section>
 
-      <section aria-label="The reports" className="grid gap-12 lg:grid-cols-2 2xl:grid-cols-4">
+      <section aria-label="The reports" className="grid gap-12 lg:grid-cols-2 2xl:grid-cols-3">
         {reports.map((r) => (
           <button
             key={r.to}

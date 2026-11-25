@@ -370,6 +370,12 @@ export const COST_FINDINGS: Finding[] = [
   { id: 'metric-lines', title: 'Three metric lines', sources: ['spec-causal', 'cost-2025', 'owner-chat'] },
 ]
 
+/** The B2B2C report: round 2 research, the business owner’s retreat brief and the buyer tests. */
+export const B2B2C_FINDINGS: Finding[] = [
+  { id: 'b2b2c-channels', title: 'The channels compared', sources: ['b2b2c', 'owner-docs', 'owner-chat', 'buyer-v6', 'buyer-v7', 'personas'] },
+  { id: 'b2b2c-features', title: 'What we must build', sources: ['b2b2c', 'retreat', 'buyer-v6', 'buyer-v7', 'personas'] },
+]
+
 /** The UX feedback report (U129): the latest feedback group view, on the study's sample data. */
 export const UX_FEEDBACK_FINDINGS: Finding[] = [{ id: 'ux-views', title: 'Wins, this week and how much they use it', sources: ['feedback-group'] }]
 

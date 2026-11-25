@@ -87,6 +87,7 @@ const NAV: { section: string; icon: LucideIcon; items: NavItem[] }[] = [
           { to: '/admin/reports/ux-feedback', label: 'UX feedback report', flag: 'adminReportUxFeedback' },
           { to: '/admin/reports/combination', label: 'Combination report', flag: 'adminReportCombination' },
           { to: '/admin/reports/cost', label: 'Cost report', flag: 'adminReportCost' },
+          { to: '/admin/reports/b2b2c', label: 'B2B2C report', flag: 'adminReportB2b2c' },
         ]
       : [],
   },

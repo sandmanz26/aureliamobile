@@ -4,15 +4,15 @@ import { DEFAULT_DECISIONS } from './businessFunnel'
 import { buildIterations } from './buyerAgentReport'
 import { buildStages } from './combinationReport'
 import { SOURCE_GROUPS, buildIterationMap, mapFor, versionsOf } from './iterationMap'
-import { BUYER_REPORT_FINDINGS, COMBINATION_FINDINGS, COST_FINDINGS, SOURCES, UX_FEEDBACK_FINDINGS } from './reportSources'
+import { B2B2C_FINDINGS, BUYER_REPORT_FINDINGS, COMBINATION_FINDINGS, COST_FINDINGS, SOURCES, UX_FEEDBACK_FINDINGS } from './reportSources'
 
 const map = buildIterationMap(1)
 const node = (id: string) => map.nodes.find((n) => n.id === id)
 
 describe('iteration map (U129)', () => {
-  it('has the six source kinds, ten reports and tests, the decisions and the versions', () => {
+  it('has the six source kinds, eleven reports and tests, the decisions and the versions', () => {
     expect(map.nodes.filter((n) => n.column === 'source').map((n) => n.title)).toEqual(['Personas', 'The business owner’s documents', 'Knowledge (wiki)', 'User feedback', 'Cost data', 'Product versions'])
-    expect(map.nodes.filter((n) => n.column === 'report')).toHaveLength(10)
+    expect(map.nodes.filter((n) => n.column === 'report')).toHaveLength(11)
     expect(map.nodes.filter((n) => n.column === 'outcome')).toHaveLength(DEFAULT_DECISIONS.length + PRODUCTION_VERSIONS.length)
     expect(new Set(map.nodes.map((n) => n.id)).size).toBe(map.nodes.length)
   })
@@ -26,6 +26,7 @@ describe('iteration map (U129)', () => {
     const stages = buildStages(1)
     const findingsOf: Record<string, string[]> = {
       'r-ux': UX_FEEDBACK_FINDINGS.flatMap((f) => f.sources),
+      'r-b2b2c': B2B2C_FINDINGS.flatMap((f) => f.sources),
       'r-cost': COST_FINDINGS.flatMap((f) => f.sources),
       'r-combination': COMBINATION_FINDINGS.flatMap((f) => f.sources),
       ...Object.fromEntries(BUYER_REPORT_FINDINGS.filter((f) => f.id.startsWith('it-')).map((f) => [`r-${f.id}`, f.sources])),

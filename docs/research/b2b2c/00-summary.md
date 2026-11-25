@@ -1,6 +1,8 @@
 # B2B2C: ideation, plan and research
 
-*Asked by the business owner: "B2B2C ideation, plan, research". Researched 23–24 Nov 2026 in five research tracks: about 330 links in the research notes, 184 of them cited on the detail pages. This page is the summary. Every claim on it is backed on a detail page, linked below, and every detail page lists its own sources.*
+*Asked by the business owner: "B2B2C ideation, plan, research". Round 1 was researched 23–24 Nov 2026 in five research tracks: about 330 links in the research notes, 184 of them cited on the detail pages. **Round 2** (25 Nov 2026) added 28 new web sources and the results of two buyer tests, re-ranked the channels and listed the features to build. This page is the summary. Every claim on it is backed on a detail page, linked below, and every detail page lists its own sources.*
+
+> **Round 2 changes the answer's first step.** Build the creator journey first, but with a **free first week**: people pay for the creator's journey or the paid plan after it has helped, not before. Two buyer tests with simulated people found that freemium beat a ticket paid up front in every channel, and that trust, not price, was the main objection. The **self-serve team plan for small employers moves up to second**, because 21 of 60 simulated people would buy if their employer paid. Partner codes and gifting move to third, built as one code system. Read [Round 2](/wiki/b2b2c/round-2) and the [feature list](/wiki/b2b2c/features). The round 1 answer below stands except where round 2 says otherwise.
 
 ## The answer in one paragraph
 
@@ -26,6 +28,8 @@ Beside it, test a cheap self-serve team tier for small employers and one trial-c
 | [Plan](/wiki/b2b2c/plan) | Phases, gates and the five numbers that decide the pilot; how it plugs into the admin | From the pages above |
 | [Roast](/wiki/b2b2c/roast) | What a sceptical investor, a creator, a regulator and the business owner attack in this research, and what changed | — |
 | [Full report and sources](/wiki/b2b2c/sources) | The deep research report, unedited, with its inline sources | All five tracks |
+| [Round 2](/wiki/b2b2c/round-2) | What changed since round 1 and why; the channels re-scored with the simulations; employer, Indonesia, creator-platform and trust research of 2025–2026; the phased plan tied to the gates | 28 new, plus our own documents |
+| [Features to build](/wiki/b2b2c/features) | Every feature per channel (free plan, creator journey, team plan, codes and gifts): who, the problem, evidence, priority, effort against API v2, success number | From round 2 |
 
 **Not covered, and why:**
 - **Exact deal terms.** Partner wholesale prices and creator contracts are private.
