@@ -6,6 +6,8 @@
 // (age fits life stage, work and household; goal fits struggle, triggers and
 // the user-journey moments they would hit).
 
+import { incoherenceV4, type PersonaV4 } from './personasV4'
+
 export type GoalId = 'sleep' | 'calm' | 'clarity' | 'focus' | 'regulate' | 'energy'
 export type Gender = 'woman' | 'man' | 'non-binary'
 export type WorkPattern = 'office' | 'hybrid' | 'remote' | 'shift' | 'self-employed' | 'student' | 'caregiver' | 'between jobs' | 'retired'
@@ -749,7 +751,11 @@ export function distribution<K extends keyof Persona>(ps: Persona[], key: K): [s
  * runs found broken. Generator 2 must return none of these; generator 1 is
  * kept as it was for the runs pinned to it.
  */
-export function incoherence(p: Persona): string[] {
+export function incoherence(p: Persona | PersonaV4): string[] {
+  // Set v4 (U134) adds its own rules: age vs life stage and situation,
+  // menopause by age and sex, income by country, shift work vs sleep timing,
+  // severe scores vs daily functioning, and the safety routing.
+  if ('set' in p) return incoherenceV4(p)
   const out: string[] = []
   const f = p.profile
   const t = f.testing
@@ -768,3 +774,12 @@ export function incoherence(p: Persona): string[] {
   if (p.flags.includes('night shift worker') && p.workPattern !== 'shift' && !working) out.push(`night shift worker who is ${p.workPattern}`)
   return out
 }
+
+/*
+ * Persona set v4 (generator 3, U134): 1,000 people from cited distributions,
+ * with a life situation and a wellness condition each. It lives in
+ * personasV4.ts so generators 1 and 2 above stay byte-identical; exported
+ * here for future buyer-agent runs.
+ */
+export { PERSONA_COUNT_V4, SEED_V4, SOURCES as PERSONA_SOURCES_V4, buyerVarsV4, generatePersonasV4, incoherenceV4 } from './personasV4'
+export type { PersonaV4 } from './personasV4'

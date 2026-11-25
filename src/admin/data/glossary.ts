@@ -32,6 +32,10 @@ export const GLOSSARY = {
   sample: { term: 'Sample data', plain: 'Invented numbers that look real, so the screens can be read before a real study runs. Not measured.' },
   'feedback-group': { term: 'Feedback group', plain: 'A planned study: 30 real people use Aurelia for 8 weeks and tell us how they feel. It has not started yet.' },
   preset: { term: 'Middle option', plain: 'The middle of three ready-made choices of AI suppliers: cheap, middle and best quality.' },
+  'life-situation': { term: 'Life situation', plain: 'What is happening in a person’s life right now, like exams, a new baby or losing a job.' },
+  'wellness-score': { term: 'Wellness score', plain: 'Where a person starts on our 0–100 scale, higher is better. Below 40 is severe, 40–64 moderate, 65 and up mild.' },
+  screening: { term: 'Screening band', plain: 'A rough sort from a few short questions, like the PHQ-2 or GAD-2 forms. It is never a diagnosis.' },
+  'risk-flag': { term: 'Risk flag', plain: 'The person may be in danger, for example very low mood with thoughts of self-harm. Aurelia shows Need help now? and never sells to them.' },
 } satisfies Record<string, GlossaryEntry>
 
 export type TermId = keyof typeof GLOSSARY

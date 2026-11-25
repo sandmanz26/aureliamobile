@@ -4,10 +4,16 @@ import { Link } from 'react-router-dom'
 import { DataTable, type Column } from '../components/DataTable'
 import { SidePanel } from '../components/SidePanel'
 import { Badge, Button, PageHeader, Panel, inputClass } from '../components/ui'
-import { CURRENT_GENERATOR, GOAL_LABEL, PERSONA_COUNT, SEED, distribution, drawPanel, generatePersonas, personaPrompt, type Persona } from '../data/personas'
+import { GOAL_LABEL, PERSONA_COUNT, SEED, distribution, drawPanel, generatePersonas, personaPrompt, type Generator, type Persona } from '../data/personas'
 import { PersonaProfile } from '../components/PersonaProfile'
+import { PersonasV4View } from './personas/PersonasV4View'
 
-const PERSONAS = generatePersonas()
+type SetId = 'v4' | 'v2' | 'v1'
+const SETS: { id: SetId; label: string }[] = [
+  { id: 'v4', label: 'Set v4 · 1,000' },
+  { id: 'v2', label: 'Set v2 · 300' },
+  { id: 'v1', label: 'Set v1 · 300' },
+]
 
 interface Row {
   id: string
@@ -45,17 +51,50 @@ function download(name: string, text: string, type: string) {
 }
 
 /**
- * Personas (U096): 300 synthetic people as candidates for AI-run research.
- * Browse and filter them, read one with its role-play prompt, or draw a
- * balanced panel and export it for a research run.
+ * Personas: a switch between persona sets. Set v4 (U134, the default) is
+ * 1,000 people from cited distributions; sets v1 and v2 (U096, U103) are the
+ * 300 from generators 1 and 2, kept as they were for the runs pinned to them.
  */
 export function PersonasPage() {
+  const [set, setSet] = useState<SetId>('v4')
+  return (
+    <div className="flex flex-col gap-16">
+      <PageHeader
+        title="Personas"
+        description="Made-up people with different lives, goals and doubts, as candidates for research run by AI: interviews in role, concept and copy tests, pricing checks. Use them to form and sharpen ideas before real users are asked, not as evidence."
+      />
+      <div role="tablist" aria-label="Persona set" className="flex w-fit max-w-full flex-wrap gap-4 rounded-8 border border-adm-line bg-adm-surface p-4">
+        {SETS.map((x) => (
+          <button
+            key={x.id}
+            type="button"
+            role="tab"
+            aria-selected={set === x.id}
+            onClick={() => setSet(x.id)}
+            className={`rounded-4 px-10 py-6 text-12 font-medium ${set === x.id ? 'bg-adm-ink text-adm-surface' : 'text-adm-ink-2 hover:bg-adm-hover'}`}
+          >
+            {x.label}
+          </button>
+        ))}
+      </div>
+      {set === 'v4' ? <PersonasV4View /> : <LegacyPersonas key={set} gen={set === 'v1' ? 1 : 2} />}
+    </div>
+  )
+}
+
+/**
+ * Sets v1 and v2 (U096): 300 synthetic people as candidates for AI-run
+ * research. Browse and filter them, read one with its role-play prompt, or
+ * draw a balanced panel and export it for a research run.
+ */
+function LegacyPersonas({ gen }: { gen: Generator }) {
+  const PERSONAS = useMemo(() => generatePersonas(undefined, undefined, gen), [gen])
   const [open, setOpen] = useState<Persona | null>(null)
   const [size, setSize] = useState(20)
   const [panelSeed, setPanelSeed] = useState(1)
   const [notice, setNotice] = useState<string | null>(null)
-  const byId = useMemo(() => new Map(PERSONAS.map((p) => [p.id, p])), [])
-  const panel = useMemo(() => drawPanel(PERSONAS, size, panelSeed), [size, panelSeed])
+  const byId = useMemo(() => new Map(PERSONAS.map((p) => [p.id, p])), [PERSONAS])
+  const panel = useMemo(() => drawPanel(PERSONAS, size, panelSeed), [PERSONAS, size, panelSeed])
 
   useEffect(() => {
     if (!notice) return
@@ -108,11 +147,11 @@ export function PersonasPage() {
   return (
     <div className="flex flex-col gap-16">
       <PageHeader
-        title="Personas"
+        title={`Set v${gen}`}
         description={`${PERSONA_COUNT} synthetic people with different lives, goals and doubts, as candidates for research run by AI: interviews in role, concept and copy tests, pricing checks. Use them to form and sharpen hypotheses before real users are asked, not as evidence.`}
         actions={
           <div className="flex flex-wrap gap-8">
-            <Button size="sm" icon={<Download size={13} />} onClick={() => download('aurelia-personas.json', JSON.stringify(PERSONAS, null, 2), 'application/json')}>
+            <Button size="sm" icon={<Download size={13} />} onClick={() => download(`aurelia-personas-v${gen}.json`, JSON.stringify(PERSONAS, null, 2), 'application/json')}>
               All as JSON
             </Button>
           </div>
@@ -122,7 +161,7 @@ export function PersonasPage() {
       <div className="flex flex-wrap items-center gap-8 text-12 text-adm-ink-2">
         <Badge tone="warning">Synthetic</Badge>
         <span>
-          Generated from seed {SEED} with generator {CURRENT_GENERATOR}, so everyone sees the same {PERSONA_COUNT}; a check keeps every one of them coherent (age, work, household, money). Each links to the{' '}
+          Generated from seed {SEED} with generator {gen}, so everyone sees the same {PERSONA_COUNT}; a check keeps every one of them coherent (age, work, household, money). Each links to the{' '}
           <Link to="/admin/user-journey" className="underline hover:text-adm-ink">
             user journey
           </Link>{' '}
