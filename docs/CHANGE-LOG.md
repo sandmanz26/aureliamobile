@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-25 — Report metrics (U135, J186)
+
+Reports gain Report metrics (staging only): every headline number recomputed from its data, with trend and quality.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-25 — Persona set v4 (U134, J185)
 
 Admin Personas default to set v4: 1,000 realistic people with age, mental-state scenarios and wellness condition. Sets v1/v2 unchanged.

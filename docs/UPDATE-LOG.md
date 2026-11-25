@@ -169,11 +169,19 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U130 | `9a6c520` | 2026-11-25 | Buyer agent report made visual. It has funnels per test (5, 6, 7), a people grid (one mark per simulated person, which opens a drawer), a who-says-yes heat map, a price ladder against $10, ranked reasons for no with quotes, a slope chart of what moved people, and a cleaner trend across tests. | [patch](patches/U130-9a6c520.patch) |
 | U131 | `1634d0c` | 2026-11-25 | Product lab, staging only (`RELEASES.therapeuticMaps`). The **Therapeutic map** shows the Product, Business and Wellness triangle with targets, the 7-step sleep process and five worlds. The **Healing Map** has three rings (9 bad states, 14 building blocks, 9 good states) and 45 links: 36 design samples, 9 research-cited, 0 learned. It has filters, zoom and a drawer. | [patch](patches/U131-1634d0c.patch) |
 | U132 | `542ade2` | 2026-11-25 | B2B2C round 2. It adds 28 new web sources and the buyer tests, and re-ranks the channels: creator journey with a free first week, then a self-serve team plan, then codes and gifting. It lists 22 features (10 Now), on wiki pages round-2 and features and in Reports → B2B2C report (a feature board with a drawer). | [patch](patches/U132-542ade2.patch) |
+| U135 | `689207d` | 2026-11-25 | Report metrics (staging only): 70 headline numbers from every report re-derived from raw data (personas, agent answers, cost parts), with trend vs previous iteration, quality (65 consistent, 1 mismatch, 4 assumptions, 18 warnings), drawer with formula, inputs, worked calculation and per-persona breakdown. | [patch](patches/U135-689207d.patch) |
 | U134 | `41455ab` | 2026-11-25 | Persona set v4: 1,000 seeded people with cited age/sex/country, sleep, stress, low-mood and anxiety screening bands, 15 life situations, starting wellness score, 25 risk-flagged routed to Need help now. Personas page switch (v4 default), charts, filters, drawer cards. Gen 1/2 unchanged. | [patch](patches/U134-41455ab.patch) |
 | U133 | `3b5d530` | 2026-11-25 | B2B2C "How it works": the big picture (who, people flow, money and trust), a journey per channel (creator with a free week, team plan, codes and gifts) with labelled drop-offs, before against after (ticket up front against a free week), and phases with gates. 44 boxes open the drawer. Matching mermaid diagrams in wiki summary and round 2. | [patch](patches/U133-3b5d530.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U135 — Report metrics
+
+- **Commit:** `689207d` · 2026-11-25.
+- **Request:** a table of results and quality, improving or not; every number must have a formula and be breakable-down.
+- **Revert:** `git revert --no-commit 689207d`.
+- **Open:** retreat spec AI cost 3.02 vs its own note 24×$0.13 = $3.12 (and USD/EUR mixed); buyerPlay priceAnswers scales stated WTP by country/income so test 7 fair price $4.75 sits below every stated limit; cost per person helped $36.55/$11.71/$3.02 vs the plan's $4.98/$2.04/$0.58.
 
 ### U134 — Persona set v4
 

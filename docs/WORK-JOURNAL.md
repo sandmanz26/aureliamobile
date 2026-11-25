@@ -134,6 +134,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | J181 | 2026-11-25 | Review + code | Review whether the reports are understandable even to a layperson, and fix them | U128 |
 | J182 | 2026-11-25 | Code | UX feedback report from the latest feedback group; drop "what this report says"; a goal on every report; make "many sources → iterations → product" visible; drawers instead of page changes | U129 |
 | J183 | 2026-11-25 | Code + research | Better buyer agent visualisation; therapeutic map and interactive Healing Map; B2B2C research using everything known, with the features to build, in a report | U130, U131, U132 |
+| J186 | 2026-11-25 | Code | Report metrics menu: results and quality table, improving or not, every number traceable to a formula | U135 |
 | J185 | 2026-11-25 | Code | User persona v4: more people, mental-state scenarios, wellness condition, age, as real as possible | U134 |
 | J184 | 2026-11-25 | Code | B2B2C needs visuals: a diagram of the idea so nothing is missed | U133 |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
@@ -2235,6 +2236,9 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 ### J183 — Visuals, maps, B2B2C round 2
 - **Done:** U130, U131, U132.
 - **Key finding of round 2:** lead with a free first week, then charge. Trust beats price as the barrier, and a self-serve team plan comes second.
+
+### J186 — Report metrics
+- **Done (U135).** One mismatch and the WTP scaling left for the owner to decide (see U135).
 
 ### J185 — Persona set v4
 - **Done (U134).** 1,000 personas, cited distributions, 15 life situations, 25 risk flags, zero incoherence. No buyer test run on them yet (could be test 8).

@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J185** · updated 25 Nov 2026
+**Covers up to J186** · updated 25 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
@@ -134,6 +134,7 @@ reach that repository yet (O33).
 
 ## 6 · Positions taken (and why), newest first
 
+- **Report metrics (U135) recomputes every headline number from raw data; a new report number must be added there with its formula.** Known open: retreat AI cost 3.02 vs $3.12, priceAnswers WTP scaling.
 - **Persona set v4 (U134) is the default; gen 1/2 stay byte-identical** so buyer runs 1–7 reproduce. v4 risk-flagged people (2.5%) are never marketed to. Source figures are from model knowledge and need a link check.
 
 **User journey (J122–J127).** An internal opportunity map: moment → feature →
