@@ -53,6 +53,8 @@ export type SourceId =
   | 'supplier-prices'
   | 'spec-causal'
   | 'owner-chat'
+  | 'owner-docs'
+  | 'buyer-prices'
 
 export interface ReportSource {
   id: SourceId
@@ -250,6 +252,24 @@ export const SOURCES: Record<SourceId, ReportSource> = {
     link: '/admin/reports/cost',
     label: 'document',
   },
+  'owner-docs': {
+    id: 'owner-docs',
+    name: 'The business owner’s documents',
+    what: 'The briefs and documents the business owner sent: the buyer-test-agent idea, the 2025 backend documents, the market-fit brief.',
+    version: 'As of each run, 19 Nov 2026 (context timeline rows 17, 24–26)',
+    taken: 'Which of them each buyer report version read, or that it read none.',
+    link: '/wiki/backend-old',
+    label: 'document',
+  },
+  'buyer-prices': {
+    id: 'buyer-prices',
+    name: 'Prices shown to the personas',
+    what: 'The price each run showed: the admin’s mock plans, its mock regional table, a proposed list, and the app’s Upgrade screen.',
+    version: 'Admin mock PLANS and regional table; offer B (run v3); Upgrade screen $10 / $100',
+    taken: 'The price in each buyer report version, and whether it is the app’s.',
+    link: '/admin/pricing',
+    label: 'document',
+  },
 }
 
 /** The kind of evidence a source is, for grouping it on a graph (U121). Coarse on purpose: a handful of groups a reader can scan. */
@@ -277,6 +297,8 @@ export const SOURCE_KIND: Record<SourceId, SourceKind> = {
   'supplier-prices': 'Costs',
   'spec-causal': 'The business owner',
   'owner-chat': 'The business owner',
+  'owner-docs': 'The business owner',
+  'buyer-prices': 'Product',
 }
 
 export interface Finding {
@@ -287,13 +309,12 @@ export interface Finding {
 }
 
 export const BUYER_REPORT_FINDINGS: Finding[] = [
-  { id: 'price-used', title: 'Price used per iteration', sources: ['buyer-v1', 'buyer-v2', 'buyer-v3', 'buyer-rerun', 'versions'] },
-  { id: 'it-v1', title: 'Run v1: the format', sources: ['buyer-v1', 'personas'] },
-  { id: 'it-v2', title: 'Run v2: calibrated, 36 people', sources: ['buyer-v2', 'buyer-v1', 'personas'] },
-  { id: 'it-v3', title: 'Run v3: today vs the proposal', sources: ['buyer-v3', 'buyer-v2', 'personas', 'backend-old', 'artefact'] },
-  { id: 'it-rerun', title: 'Re-run on production versions', sources: ['buyer-rerun', 'versions', 'personas'] },
-  { id: 'decisions', title: 'Decisions it fed', sources: ['decisions', 'buyer-v3', 'buyer-rerun'] },
-  { id: 'reading', title: 'What it adds up to', sources: ['buyer-rerun', 'buyer-v3', 'buyer-v2'] },
+  { id: 'input-graph', title: 'Inputs → report versions', sources: ['personas', 'versions', 'prd', 'owner-docs', 'buyer-prices'] },
+  { id: 'what-changed', title: 'What changed between reports', sources: ['personas', 'versions', 'prd', 'owner-docs', 'buyer-prices'] },
+  { id: 'it-v1', title: 'Report v1', sources: ['personas', 'versions', 'owner-docs', 'buyer-prices', 'buyer-v1'] },
+  { id: 'it-v2', title: 'Report v2', sources: ['personas', 'versions', 'owner-docs', 'buyer-prices', 'buyer-v2'] },
+  { id: 'it-v3', title: 'Report v3', sources: ['personas', 'versions', 'owner-docs', 'buyer-prices', 'buyer-v3'] },
+  { id: 'it-rerun', title: 'Report v4 · re-run', sources: ['personas', 'versions', 'owner-docs', 'buyer-prices', 'buyer-rerun'] },
 ]
 
 export const COMBINATION_FINDINGS: Finding[] = [

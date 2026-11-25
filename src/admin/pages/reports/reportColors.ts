@@ -1,3 +1,4 @@
+import type { InputKind } from '../../data/buyerAgentReport'
 import type { SourceLabel } from '../../data/reportSources'
 
 /** Edge and dot colour per label; admin series tokens, so both themes work. Shared by the report graphs. */
@@ -20,4 +21,13 @@ export const LABEL_FILL: Record<SourceLabel, string> = {
   'company-price': 'fill-adm-good',
   'third-party': 'fill-adm-muted',
   scenario: 'fill-adm-critical',
+}
+
+/** Dot colour per buyer-report input (U122). */
+export const INPUT_DOT: Record<InputKind, string> = {
+  personas: 'bg-adm-s1',
+  product: 'bg-adm-s2',
+  prd: 'bg-adm-s3',
+  ownerDocs: 'bg-adm-s4',
+  price: 'bg-adm-good',
 }

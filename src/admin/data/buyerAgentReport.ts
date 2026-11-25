@@ -3,6 +3,7 @@ import { BUYER_RUNS, countVerdicts, personasOf, priceRange, type BuyerAnswer, ty
 import { AGENT_RULES, DESIGNS, agreement, report } from './buyerSim'
 import { V3_CHANGES, type V3Change } from './buyerRunV3'
 import { OVERALL_SUMMARY } from './buyerRerunSummaries'
+import { PLANS } from './commerce'
 import type { SourceId } from './reportSources'
 
 /**
@@ -51,6 +52,8 @@ export interface Iteration {
   priceTested: PriceTested
   link: string
   sources: SourceId[]
+  /** The five inputs this report version was made from (U122, J177). */
+  inputs: Record<InputKind, InputValue>
 }
 
 export const pct = (x: number) => `${Math.round(x * 100)}%`
@@ -108,6 +111,11 @@ function olderShare(run: BuyerRun) {
 }
 
 export function buildIterations(): Iteration[] {
+  const inputs = buildInputs()
+  return buildBase().map((it) => ({ ...it, inputs: inputs[it.id] }))
+}
+
+function buildBase(): Omit<Iteration, 'inputs'>[] {
   const [r1, r2, r3] = [1, 2, 3].map((v) => BUYER_RUNS.find((r) => r.version === v)!)
   const t1 = runTallies(r1.answers)
   const t2 = runTallies(r2.answers)
@@ -126,7 +134,7 @@ export function buildIterations(): Iteration[] {
   return [
     {
       id: 'it-v1',
-      name: 'Run v1',
+      name: 'Report v1',
       date: r1.date,
       question: criterion(r1, 'Question'),
       changed: ['The first run: it set the format every later run keeps (try, pay, four price answers, objection, test cases).', criterion(r1, 'Who')],
@@ -152,7 +160,7 @@ export function buildIterations(): Iteration[] {
     },
     {
       id: 'it-v2',
-      name: 'Run v2',
+      name: 'Report v2',
       date: r2.date,
       question: criterion(r2, 'Question'),
       changed: [criterion(r2, 'Who'), criterion(r2, 'New parameters'), 'Calibration rules: look for the reason to say no first; a deal breaker the product hits today makes the answer no.'],
@@ -183,7 +191,7 @@ export function buildIterations(): Iteration[] {
     },
     {
       id: 'it-v3',
-      name: 'Run v3',
+      name: 'Report v3',
       date: r3.date,
       question: criterion(r3, 'Question'),
       changed: [criterion(r3, 'Who'), criterion(r3, 'What they saw'), criterion(r3, 'What the agent read first')],
@@ -214,7 +222,7 @@ export function buildIterations(): Iteration[] {
     },
     {
       id: 'it-rerun',
-      name: 'Re-run by production version',
+      name: 'Report v4 · re-run on production versions',
       date: r3.date,
       question: 'If each persona walks through the real screens of production v1, v2 and v3, step by step, which version keeps the most people, and where does each lose them?',
       changed: [
@@ -247,4 +255,129 @@ export function buildIterations(): Iteration[] {
       sources: ['buyer-rerun', 'versions', 'personas'],
     },
   ]
+}
+
+/*
+ * U122 (J177): what a buyer report is made of. The business owner named five
+ * inputs: the personas, the product version, the PRD, the business owner's
+ * documents, and the price given at the time. Each report version records
+ * the value it used for each. Values come from the run data where the data
+ * holds them; where it does not, the journal entry that does is cited; where
+ * nothing does, the value is NOT_RECORDED rather than a guess.
+ */
+
+export const INPUT_KINDS = ['personas', 'product', 'prd', 'ownerDocs', 'price'] as const
+export type InputKind = (typeof INPUT_KINDS)[number]
+
+export const INPUT_LABEL: Record<InputKind, string> = {
+  personas: 'Personas',
+  product: 'Product version',
+  prd: 'PRD',
+  ownerDocs: 'Business owner’s documents',
+  price: 'Pricing',
+}
+
+/** The source in reportSources each input kind points to. */
+export const INPUT_SOURCE: Record<InputKind, SourceId> = {
+  personas: 'personas',
+  product: 'versions',
+  prd: 'prd',
+  ownerDocs: 'owner-docs',
+  price: 'buyer-prices',
+}
+
+export const NOT_RECORDED = 'not recorded'
+
+export interface InputValue {
+  /** The value in a few words, for the graph and the table. */
+  short: string
+  /** The value in full, with where it comes from. */
+  detail: string
+  recorded: boolean
+}
+
+const rec = (short: string, detail: string): InputValue => ({ short, detail, recorded: true })
+const gap = (detail: string): InputValue => ({ short: NOT_RECORDED, detail, recorded: false })
+
+export type ReportId = Iteration['id']
+
+export function buildInputs(): Record<ReportId, Record<InputKind, InputValue>> {
+  const runs = [1, 2, 3].map((v) => BUYER_RUNS.find((r) => r.version === v)!)
+  const [r1, r2, r3] = runs
+  const plus = PLANS.find((p) => p.id === 'plus')!
+  const panel = (r: BuyerRun) => rec(`${r.panel.size} personas · generator ${r.generator} · seed ${r.panel.seed}`, criterion(r, 'Who'))
+  const walks = ([1, 2, 3] as const).map((a) => report(a, 1).walks.length)
+  const ownerRefs = (r3.references ?? []).filter((x) => !x.title.startsWith('Buyer agent'))
+  // J137: runs v1–v3 walked no design version's screens; they read the pitch and
+  // offer as text and judged test cases against today's app, closest to staging v5.
+  const textOnly = rec(
+    'Text pitch, no screens · cases judged on today’s app (≈ production v3)',
+    'No design version’s screens were walked: the agent read the pitch and offer as text. Its test cases were judged against how the app behaves today, closest to staging v5 (production v3, the production default). Recorded in J137.',
+  )
+  // No run lists the PRD among what it read: not in the run data, nor in J133–J139 / U101–U104.
+  const prd = gap('No run lists the PRD among what it read (checked: the run data, J133–J139, U101–U104). The PRD overview draft of 11 Nov 2026 existed at the time, but nothing says it was used.')
+  // J133 and context timeline row 24: the buyer agent was the business owner's idea; v1 and v2 read none of their documents.
+  const ideaOnly = rec(
+    'Buyer-test-agent idea only; no document read',
+    'The run exists because of the business owner’s idea of a buyer test agent (J133; context timeline row 24). The agent read none of their documents as evidence: the run lists no references.',
+  )
+  return {
+    'it-v1': {
+      personas: panel(r1),
+      product: textOnly,
+      prd,
+      ownerDocs: ideaOnly,
+      price: rec(
+        `$${plus.monthlyUsd}/mo · $${plus.yearlyUsd}/yr (admin mock)`,
+        `Plus at $${plus.monthlyUsd} a month or $${plus.yearlyUsd} a year, the same in US dollars for everyone, from the admin’s mock plan table (Commerce → PLANS), as J137 found. Not the app’s price (${APP_PRICE.amount}).`,
+      ),
+    },
+    'it-v2': {
+      personas: panel(r2),
+      product: textOnly,
+      prd,
+      ownerDocs: ideaOnly,
+      price: rec('Regional mock: $9.99, £8.99, €9.99, ₹399…', `${r2.stimulus.offer.slice(1, 3).join('. ')}. From the admin’s regional pricing table (mock). The app has no regional prices.`),
+    },
+    'it-v3': {
+      personas: panel(r3),
+      product: rec('A: today, as text · B: a proposal, not built', `Offer A: ${r3.control?.offer[0] ?? ''}. Offer B: ${r3.stimulus.name.replace(/^Offer B: /, '')}; its items are proposals answered as if built. No screens walked (J137).`),
+      prd,
+      ownerDocs: rec(
+        `${ownerRefs.length} read first: ${ownerRefs.map((x) => x.title.split(/[,:]/)[0].trim()).join(' · ')}`,
+        ownerRefs.map((x) => `${x.title} (${x.where}): ${x.used}`).join(' '),
+      ),
+      price: rec('A: regional mock · B: $9.99/mo, $59.99/yr', `A: as in run v2. B: ${r3.stimulus.offer.find((o) => o.startsWith('Plus')) ?? ''}. Neither is the app’s price (${APP_PRICE.amount}).`),
+    },
+    'it-rerun': {
+      personas: rec(
+        `Panels of runs v1–v3: ${walks.join(' + ')}`,
+        `Each agent’s rules walk that agent’s own panel: ${runs.map((r, i) => `agent v${i + 1}, ${walks[i]} people (generator ${r.generator}, seed ${r.panel.seed})`).join('; ')}. ${walks.reduce((a, b) => a + b, 0) * DESIGNS.length} walks in all.`,
+      ),
+      product: rec(`Production v1, v2, v3 (staging ${DESIGNS.map((d) => `v${d.staging}`).join(', ')})`, `The real screens of ${DESIGNS.map((d) => d.name).join('; ')}, walked step by step (U104).`),
+      prd,
+      // J136 / J139, context timeline row 26: the business owner's brief of 19 Nov.
+      ownerDocs: rec(
+        'Market-fit brief of 19 Nov (top 10 metrics)',
+        'The business owner’s brief of 19 Nov 2026: core retention metrics, where in the funnel people leave, what holds back more AI plays, and the top 10 market-fit metrics (J136, J139; context timeline row 26). Agent v3’s rules carry run v3’s reading of their documents.',
+      ),
+      price: rec('App: $10/mo, $100/yr (Upgrade screen)', `${APP_PRICE.amount}, on ${APP_PRICE.where}. Whether a persona would pay is still judged against the price it saw in its own run (about $9.99 in the US).`),
+    },
+  }
+}
+
+export interface InputEdge {
+  input: InputKind
+  report: ReportId
+  value: InputValue
+}
+
+/** One edge per input a report recorded using; a value not recorded draws no edge. */
+export function inputEdges(its: Iteration[]): InputEdge[] {
+  return its.flatMap((it) => INPUT_KINDS.filter((k) => it.inputs[k].recorded).map((k) => ({ input: k, report: it.id, value: it.inputs[k] })))
+}
+
+/** True when a report's value for an input differs from the report before it. */
+export function changedFrom(its: Iteration[], i: number, k: InputKind) {
+  return i > 0 && its[i].inputs[k].short !== its[i - 1].inputs[k].short
 }
