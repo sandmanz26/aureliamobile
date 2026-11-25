@@ -14,15 +14,15 @@ const pct = (x: number) => `${Math.round(x * 100)}%`
 const SERIES = [
   { key: 'tries', label: 'Would try', stroke: 'stroke-adm-s1', fill: 'fill-adm-s1', dot: 'bg-adm-s1' },
   { key: 'pays', label: 'Would pay', stroke: 'stroke-adm-s2', fill: 'fill-adm-s2', dot: 'bg-adm-s2' },
-  { key: 'sure30', label: 'Sure at day 30', stroke: 'stroke-adm-s3', fill: 'fill-adm-s3', dot: 'bg-adm-s3' },
+  { key: 'sure30', label: 'Still sure after a month', stroke: 'stroke-adm-s3', fill: 'fill-adm-s3', dot: 'bg-adm-s3' },
 ] as const
 
 const TW = 880
 const TH = 250
-const L = 40
+const L = 56
 const R = 24
 const T = 16
-const B = 34
+const B = 52
 
 /** Try, pay and sure-at-day-30 across reports v1–v7, each point annotated by what changed. */
 export function SuccessTrend({ points }: { points: TrendPoint[] }) {
@@ -53,10 +53,16 @@ export function SuccessTrend({ points }: { points: TrendPoint[] }) {
             {s.label}
           </span>
         ))}
-        <span className="text-adm-muted">Share of each report’s panel · inputs differ between reports</span>
+        <span className="text-adm-muted">Each point: the share of that test’s simulated people. A missing point was not asked.</span>
       </div>
       <div className="relative overflow-x-auto">
-        <svg viewBox={`0 0 ${TW} ${TH}`} className="block w-full min-w-[640px]" role="img" aria-label="Line chart: would try, would pay and sure at day 30, report v1 to v7">
+        <svg viewBox={`0 0 ${TW} ${TH}`} className="block w-full min-w-[640px]" role="img" aria-label="Line chart: share of simulated people who would try, would pay and would still be sure after a month, test 1 to test 7">
+          <text x={14} y={T + (TH - T - B) / 2} transform={`rotate(-90 14 ${T + (TH - T - B) / 2})`} textAnchor="middle" className="fill-adm-muted text-11">
+            Share of simulated people
+          </text>
+          <text x={L + (TW - L - R) / 2} y={TH - 4} textAnchor="middle" className="fill-adm-muted text-11">
+            Test, oldest to newest
+          </text>
           {[0, 0.25, 0.5, 0.75, 1].map((v) => (
             <g key={v}>
               <line x1={L} x2={TW - R} y1={y(v)} y2={y(v)} className="stroke-adm-grid" strokeWidth={1} />
@@ -66,8 +72,8 @@ export function SuccessTrend({ points }: { points: TrendPoint[] }) {
             </g>
           ))}
           {points.map((p, i) => (
-            <text key={p.id} x={x(i)} y={TH - 12} textAnchor="middle" className={`text-12 ${hover === i ? 'fill-adm-ink font-semibold' : 'fill-adm-ink-2'}`}>
-              Report {p.name}
+            <text key={p.id} x={x(i)} y={TH - B + 18} textAnchor="middle" className={`text-12 ${hover === i ? 'fill-adm-ink font-semibold' : 'fill-adm-ink-2'}`}>
+              {p.label}
             </text>
           ))}
           {hover !== null && <line x1={x(hover)} x2={x(hover)} y1={T} y2={TH - B} className="stroke-adm-axis" strokeWidth={1} />}
@@ -94,7 +100,9 @@ export function SuccessTrend({ points }: { points: TrendPoint[] }) {
         </svg>
         {h && (
           <div className="pointer-events-none absolute top-0 right-0 max-w-[260px] rounded-8 border border-adm-line bg-adm-surface p-10 text-12 shadow-sm">
-            <p className="font-semibold text-adm-ink">Report {h.name} · {h.n} people</p>
+            <p className="font-semibold text-adm-ink">
+              {h.label} · {h.n} simulated people
+            </p>
             <p className="text-adm-ink-2">{h.change}</p>
             {SERIES.map((s) => (
               <p key={s.key} className="tabular-nums text-adm-ink">
@@ -107,7 +115,7 @@ export function SuccessTrend({ points }: { points: TrendPoint[] }) {
       <ol className="grid gap-x-12 gap-y-4 text-11 text-adm-ink-2 sm:grid-cols-2 lg:grid-cols-4">
         {points.map((p) => (
           <li key={p.id}>
-            <span className="font-semibold text-adm-ink">{p.name}</span> · {p.change}
+            <span className="font-semibold text-adm-ink">{p.label}</span> · {p.change}
           </li>
         ))}
       </ol>
@@ -121,12 +129,12 @@ export function WhatMoves({ levers }: { levers: Lever[] }) {
   return (
     <ul className="flex flex-col gap-8">
       {levers.map((l) => (
-        <li key={l.theme} className="grid grid-cols-[110px_1fr] items-center gap-x-10 gap-y-2" title={`${l.change}: ${l.moved} of ${l.n} answers, report ${l.report}`}>
+        <li key={l.theme} className="grid grid-cols-[110px_1fr] items-center gap-x-10 gap-y-2" title={`${l.change}: changed ${l.moved} of ${l.n} answers, test ${l.report.replace('v', '')}`}>
           <span className="text-12 font-semibold text-adm-ink">{l.theme}</span>
           <span className="flex items-center gap-8">
             <span className="h-14 rounded-r-4 bg-adm-s1" style={{ width: `${(l.share / max) * 70}%` }} aria-hidden="true" />
             <span className="text-12 tabular-nums text-adm-ink">
-              {pct(l.share)} <span className="text-adm-muted">({l.moved} of {l.n}, {l.report})</span>
+              {pct(l.share)} <span className="text-adm-muted">({l.moved} of {l.n} people, test {l.report.replace('v', '')})</span>
             </span>
           </span>
           <span className="col-start-2 text-11 text-adm-muted">{l.change}</span>
@@ -154,11 +162,11 @@ export function StageStrip({ cells }: { cells: StageCell[] }) {
               <span className="text-11 font-semibold uppercase tracking-wider text-adm-muted">
                 {i + 1}. {stageShort(c.id)}
               </span>
-              {c.isGap ? <Badge tone="critical">Biggest gap</Badge> : <Badge tone={c.status === 'on-track' ? 'good' : 'serious'}>{c.status === 'on-track' ? 'On track' : 'Below'}</Badge>}
+              {c.isGap ? <Badge tone="critical">Fix first</Badge> : <Badge tone={c.status === 'on-track' ? 'good' : 'serious'}>{c.status === 'on-track' ? 'Goal reached' : 'Below goal'}</Badge>}
             </span>
             <span className="text-24 font-semibold tabular-nums text-adm-ink">{pct(c.value)}</span>
             <span className="text-12 text-adm-ink-2">
-              {c.metric} <span className="text-adm-muted">· target {pct(c.target)}</span>
+              {c.metric} <span className="text-adm-muted">· goal {pct(c.target)}</span>
             </span>
           </a>
         </li>
@@ -197,7 +205,7 @@ export function CostFunctionPanel({ f }: { f: CostFunction }) {
   return (
     <div className="grid gap-12 lg:grid-cols-[1fr_1.3fr_1fr]">
       <div className="flex min-w-0 flex-col gap-8">
-        <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">1 · Sources</h3>
+        <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">1 · Where the numbers come from</h3>
         {COST_SOURCES.map((s) => (
           <div key={s.id} className={`rounded-8 border p-10 transition-colors ${active === s.id ? 'border-2 border-adm-ink bg-adm-bg' : active ? 'border-adm-line opacity-50' : 'border-adm-line'}`}>
             <div className="flex flex-wrap items-center justify-between gap-6">
@@ -213,12 +221,12 @@ export function CostFunctionPanel({ f }: { f: CostFunction }) {
         ))}
       </div>
       <div className="flex min-w-0 flex-col gap-8">
-        <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">2 · The formula (click a term)</h3>
-        <div className="rounded-8 bg-adm-bg p-10 font-mono text-11 leading-relaxed text-adm-ink">
-          <p>chapter = (script + voice + music + image − reuse) × stage factor</p>
-          <p>journey = chapters × chapter</p>
-          <p>cost per flip = journey ÷ P(flip)</p>
-          <p>profit per flip = (price − journey − fees) ÷ P(flip)</p>
+        <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">2 · How we add it up (click a line to see its source)</h3>
+        <div className="rounded-8 bg-adm-bg p-10 text-12 leading-relaxed text-adm-ink">
+          <p>Cost per session = (script + voice + music + picture − reuse) × learning discount</p>
+          <p>Cost for one person = sessions until sleep is good × cost per session</p>
+          <p>Cost per person helped = cost for one person ÷ chance it works</p>
+          <p>Profit per person helped = (price − cost for one person − fees) ÷ chance it works</p>
         </div>
         <ul className="flex flex-col gap-6">
           {inputs.map((t) => (
@@ -227,13 +235,13 @@ export function CostFunctionPanel({ f }: { f: CostFunction }) {
         </ul>
       </div>
       <div className="flex min-w-0 flex-col gap-8">
-        <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">3 · The result (stage 1)</h3>
+        <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">3 · The result, today (learning stage 1)</h3>
         <ul className="flex flex-col gap-6">
           {results.map((t) => (
             <TermRow key={t.id} t={t} on={active === t.source} onToggle={() => setActive(active === t.source ? null : t.source)} />
           ))}
         </ul>
-        <p className="text-11 text-adm-muted">Balanced preset, 10-minute chapters, the spec’s 25 → 85 journey at 3 chapters a week.</p>
+        <p className="text-11 text-adm-muted">Middle choice of AI suppliers, 10-minute sessions, sleep score from 25 to 85 of 100, 3 sessions a week.</p>
       </div>
     </div>
   )

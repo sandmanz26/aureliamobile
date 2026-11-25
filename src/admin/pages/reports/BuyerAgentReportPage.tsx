@@ -31,10 +31,10 @@ export function BuyerAgentReportPage() {
     <div className="flex flex-col gap-16">
       <PageHeader
         title="Buyer agent report"
-        description="What synthetic buyers, played by an AI agent, say about trying and paying for Aurelia. Every figure is a prediction."
+        description={summary.intro ?? ''}
         actions={
           <Link to="/admin/buyer-agent" className="inline-flex items-center gap-6 rounded-8 border border-adm-line bg-adm-surface px-12 py-6 text-12 font-medium text-adm-ink hover:bg-adm-hover">
-            Full detail: Buyer agent results <ArrowRight size={13} aria-hidden="true" />
+            Every answer, in detail <ArrowRight size={13} aria-hidden="true" />
           </Link>
         }
       />
@@ -42,11 +42,11 @@ export function BuyerAgentReportPage() {
       <SummaryBlock s={summary} />
 
       <div className="grid gap-16 lg:grid-cols-[3fr_2fr]">
-        <Panel title="Success trend, report v1 → v7" description="Would try, would pay and sure at day 30, on the offer each report led with. Hover a report for what changed.">
+        <Panel title="In every test, far fewer would pay than would try" description="Seven rounds of asking simulated people, oldest on the left. Hover a test to see what we changed.">
           <SuccessTrend points={trend} />
         </Panel>
         <section id="what-moves" className="min-w-0 scroll-mt-16">
-          <Panel title="What moves success" description="Share of a report’s answers each change moved (v3, v6, v7).">
+          <Panel title={`“${levers[0]?.theme ?? '—'}” changed the most answers`} description="Each bar: the share of simulated people whose answer changed when we added that idea. Longer bar, bigger effect.">
             <WhatMoves levers={levers} />
           </Panel>
         </section>

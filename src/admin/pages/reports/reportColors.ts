@@ -1,5 +1,6 @@
 import type { InputKind } from '../../data/buyerAgentReport'
 import type { SourceLabel } from '../../data/reportSources'
+import type { Tone } from '../../components/ui'
 
 /** Edge and dot colour per label; admin series tokens, so both themes work. Shared by the report graphs. */
 export const LABEL_STROKE: Record<SourceLabel, string> = {
@@ -31,3 +32,6 @@ export const INPUT_DOT: Record<InputKind, string> = {
   ownerDocs: 'bg-adm-s4',
   price: 'bg-adm-good',
 }
+
+/** Badge tone per label. */
+export const LABEL_TONE: Record<SourceLabel, Tone> = { measured: 'good', prediction: 'info', sample: 'neutral', estimate: 'serious', document: 'warning', 'company-price': 'good', 'third-party': 'neutral', scenario: 'critical' }

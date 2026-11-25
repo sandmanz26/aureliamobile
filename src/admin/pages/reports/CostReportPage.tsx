@@ -90,13 +90,13 @@ export function CostReportPage() {
     <div className="flex flex-col gap-16">
       <PageHeader
         title="Cost report"
-        description="What a chapter costs to make, and what moving one person from bad sleep to good sleep costs and earns. Prices are suppliers’ own; uplift and flips are the business owner’s scenario."
+        description={summary.intro ?? ''}
       />
 
       <SummaryBlock s={summary} />
 
       <section id="cost-function" className="scroll-mt-16">
-        <Panel title="The cost function" description="Which sources feed it, the formula, and what comes out. Click a term to see its source.">
+        <Panel title="How the cost of helping one person adds up" description="Left: where each number comes from. Middle: the sum. Right: the result. Click a line to see its source.">
           <CostFunctionPanel f={fn} />
         </Panel>
       </section>

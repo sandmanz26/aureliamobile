@@ -89,7 +89,7 @@ export function CombinationReportPage() {
     <div className="flex flex-col gap-16">
       <PageHeader
         title="Combination report"
-        description="Aurelia read stage by stage of the business funnel, every source side by side, with one verdict and one next move per stage."
+        description={summary.intro ?? ''}
       />
 
       <SummaryBlock
@@ -100,9 +100,9 @@ export function CombinationReportPage() {
             <div className="rounded-8 bg-adm-bg p-12">
               <h2 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">How to read this</h2>
               <ul className="mt-4 flex list-disc flex-col gap-2 pl-18 text-12 text-adm-ink-2">
-                <li>Five stages, left to right: a person enters, has an “aha”, hits the free limit, is offered Plus, and stays.</li>
-                <li>Each box is the stage’s weakest number against its target; green is on target, red is below, the thick border is what to fix first.</li>
-                <li>All numbers are predictions from buyer agents on production v3; click a stage for every source behind it.</li>
+                <li>Five steps, left to right: a person arrives, enjoys a first session, uses up the free sessions, starts paying, and keeps using.</li>
+                <li>Each box shows the step’s weakest number and our goal. Green: goal reached. Red: below goal. Thick red border: fix first.</li>
+                <li>Every number is simulated: AI played made-up people on today’s app. Click a step to see every source.</li>
               </ul>
             </div>
           </div>

@@ -2,8 +2,8 @@ import { ExternalLink } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { BUILD } from '../../../lib/build'
-import { Badge, Panel, type Tone } from '../../components/ui'
-import { LABEL_FILL, LABEL_STROKE } from './reportColors'
+import { Badge, Panel } from '../../components/ui'
+import { LABEL_FILL, LABEL_STROKE, LABEL_TONE } from './reportColors'
 import { LABEL_MEANING, LABEL_TEXT, SOURCES, sourcesOf, type Finding, type SourceId, type SourceLabel } from '../../data/reportSources'
 
 /*
@@ -11,8 +11,6 @@ import { LABEL_MEANING, LABEL_TEXT, SOURCES, sourcesOf, type Finding, type Sourc
  * made" graph, the label badge and the Sources section. Everything reads
  * the one registry in data/reportSources.ts.
  */
-
-const LABEL_TONE: Record<SourceLabel, Tone> = { measured: 'good', prediction: 'info', sample: 'neutral', estimate: 'serious', document: 'warning', 'company-price': 'good', 'third-party': 'neutral', scenario: 'critical' }
 
 export function LabelBadge({ label }: { label: SourceLabel }) {
   return <Badge tone={LABEL_TONE[label]}>{LABEL_TEXT[label]}</Badge>
