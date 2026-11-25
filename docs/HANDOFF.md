@@ -500,7 +500,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U129**, last J = **J182**, last
+**Numbering as of 17 Nov 2026:** last U = **U132**, last J = **J183**, last
 O = **O56**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -978,6 +978,9 @@ history can be read without opening four documents.
 | U127 | `68ac248` | 2026-11-25 | Business funnel lighter to read. The summary card has a five-stage strip and "Fix next"; rows are compact; explanations sit in ⓘ tooltips and folded Details. Words in the first screen at 1440px: 366 → 210 (app) and 365 → 147 (retreat). | [patch](update-log/patches/U127-68ac248.patch) |
 | U128 | `02af7e6` | 2026-11-25 | Reports in plain language. Each report says what it is; headlines give bases and units ("16 of 36 simulated people…"); a 15-term glossary appears as tooltips; ids are removed from the summaries; charts carry takeaway titles; badges read Simulated, Estimate, Assumption or Measured. Tests keep jargon out of the summaries. | [patch](update-log/patches/U128-02af7e6.patch) |
 | U129 | `fc167de` | 2026-11-25 | Reports overview (`/admin/reports`) with an iteration map: sources (6) → reports and tests (10) → decisions and versions (11). Every report opens with a Goal line. Details open in a shared drawer instead of a new page. The latest feedback group becomes Reports → UX feedback report (the old URL redirects). "What this report says" is removed. The buyer summary is split by test (5, 6, 7) with bases. | [patch](update-log/patches/U129-fc167de.patch) |
+| U130 | `9a6c520` | 2026-11-25 | Buyer agent report made visual. It has funnels per test (5, 6, 7), a people grid (one mark per simulated person, which opens a drawer), a who-says-yes heat map, a price ladder against $10, ranked reasons for no with quotes, a slope chart of what moved people, and a cleaner trend across tests. | [patch](update-log/patches/U130-9a6c520.patch) |
+| U131 | `1634d0c` | 2026-11-25 | Product lab, staging only (`RELEASES.therapeuticMaps`). The **Therapeutic map** shows the Product, Business and Wellness triangle with targets, the 7-step sleep process and five worlds. The **Healing Map** has three rings (9 bad states, 14 building blocks, 9 good states) and 45 links: 36 design samples, 9 research-cited, 0 learned. It has filters, zoom and a drawer. | [patch](update-log/patches/U131-1634d0c.patch) |
+| U132 | `542ade2` | 2026-11-25 | B2B2C round 2. It adds 28 new web sources and the buyer tests, and re-ranks the channels: creator journey with a free first week, then a self-serve team plan, then codes and gifting. It lists 22 features (10 Now), on wiki pages round-2 and features and in Reports → B2B2C report (a feature board with a drawer). | [patch](update-log/patches/U132-542ade2.patch) |
 | J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
@@ -1052,6 +1055,7 @@ history can be read without opening four documents.
 | J180 | 2026-11-25 | Code | Business funnel UI less text-heavy, for reading experience | U127 |
 | J181 | 2026-11-25 | Review + code | Review whether the reports are understandable even to a layperson, and fix them | U128 |
 | J182 | 2026-11-25 | Code | UX feedback report from the latest feedback group; drop "what this report says"; a goal on every report; make "many sources → iterations → product" visible; drawers instead of page changes | U129 |
+| J183 | 2026-11-25 | Code + research | Better buyer agent visualisation; therapeutic map and interactive Healing Map; B2B2C research using everything known, with the features to build, in a report | U130, U131, U132 |
 
 ### 17.2 Code changes (U)
 

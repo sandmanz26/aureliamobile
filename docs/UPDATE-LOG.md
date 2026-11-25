@@ -166,9 +166,29 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U127 | `68ac248` | 2026-11-25 | Business funnel lighter to read. The summary card has a five-stage strip and "Fix next"; rows are compact; explanations sit in ⓘ tooltips and folded Details. Words in the first screen at 1440px: 366 → 210 (app) and 365 → 147 (retreat). | [patch](patches/U127-68ac248.patch) |
 | U128 | `02af7e6` | 2026-11-25 | Reports in plain language. Each report says what it is; headlines give bases and units ("16 of 36 simulated people…"); a 15-term glossary appears as tooltips; ids are removed from the summaries; charts carry takeaway titles; badges read Simulated, Estimate, Assumption or Measured. Tests keep jargon out of the summaries. | [patch](patches/U128-02af7e6.patch) |
 | U129 | `fc167de` | 2026-11-25 | Reports overview (`/admin/reports`) with an iteration map: sources (6) → reports and tests (10) → decisions and versions (11). Every report opens with a Goal line. Details open in a shared drawer instead of a new page. The latest feedback group becomes Reports → UX feedback report (the old URL redirects). "What this report says" is removed. The buyer summary is split by test (5, 6, 7) with bases. | [patch](patches/U129-fc167de.patch) |
+| U130 | `9a6c520` | 2026-11-25 | Buyer agent report made visual. It has funnels per test (5, 6, 7), a people grid (one mark per simulated person, which opens a drawer), a who-says-yes heat map, a price ladder against $10, ranked reasons for no with quotes, a slope chart of what moved people, and a cleaner trend across tests. | [patch](patches/U130-9a6c520.patch) |
+| U131 | `1634d0c` | 2026-11-25 | Product lab, staging only (`RELEASES.therapeuticMaps`). The **Therapeutic map** shows the Product, Business and Wellness triangle with targets, the 7-step sleep process and five worlds. The **Healing Map** has three rings (9 bad states, 14 building blocks, 9 good states) and 45 links: 36 design samples, 9 research-cited, 0 learned. It has filters, zoom and a drawer. | [patch](patches/U131-1634d0c.patch) |
+| U132 | `542ade2` | 2026-11-25 | B2B2C round 2. It adds 28 new web sources and the buyer tests, and re-ranks the channels: creator journey with a free first week, then a self-serve team plan, then codes and gifting. It lists 22 features (10 Now), on wiki pages round-2 and features and in Reports → B2B2C report (a feature board with a drawer). | [patch](patches/U132-542ade2.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U132 — B2B2C round 2
+
+- **Commit:** `542ade2` · 2026-11-25.
+- **Revert:** `git revert --no-commit 542ade2`.
+
+### U131 — Therapeutic map and Healing Map
+
+- **To confirm:** the five research citations (Zaccaro 2018, Balban 2023, Rusch 2019, Jespersen 2022, Zeng 2015) came from model knowledge; open the DOIs before showing outside. The wellness targets are the stage-3 scenario.
+
+- **Commit:** `1634d0c` · 2026-11-25.
+- **Revert:** `git revert --no-commit 1634d0c`.
+
+### U130 — Buyer agent visual
+
+- **Commit:** `9a6c520` · 2026-11-25.
+- **Revert:** `git revert --no-commit 9a6c520`.
 
 ### U129 — Reports overview, goals, drawer
 

@@ -1,0 +1,1243 @@
+From 1634d0cf574bee6f8a87b722dae98788e731b59c Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 25 Nov 2026 11:17:27 +0000
+Subject: [PATCH] Product lab: Therapeutic map (product, business, wellness
+ triangle; the bad-to-good process) and an interactive Healing Map with honest
+ provenance (U131, J183)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/App.tsx                                |  16 +
+ src/admin/AdminLayout.tsx                  |   7 +
+ src/admin/data/healingMap.test.ts          |  48 +++
+ src/admin/data/healingMap.ts               | 235 ++++++++++++++
+ src/admin/data/therapeuticMap.test.ts      |  27 ++
+ src/admin/data/therapeuticMap.ts           | 156 +++++++++
+ src/admin/pages/lab/HealingMapPage.tsx     | 349 +++++++++++++++++++++
+ src/admin/pages/lab/TherapeuticMapPage.tsx | 276 ++++++++++++++++
+ src/demo/modules.ts                        |   2 +
+ src/versions/releases.ts                   |   4 +
+ 10 files changed, 1120 insertions(+)
+ create mode 100644 src/admin/data/healingMap.test.ts
+ create mode 100644 src/admin/data/healingMap.ts
+ create mode 100644 src/admin/data/therapeuticMap.test.ts
+ create mode 100644 src/admin/data/therapeuticMap.ts
+ create mode 100644 src/admin/pages/lab/HealingMapPage.tsx
+ create mode 100644 src/admin/pages/lab/TherapeuticMapPage.tsx
+
+diff --git a/src/App.tsx b/src/App.tsx
+index 3ab4e79..19cb424 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -90,6 +90,8 @@ const UserJourneyPage = lazy(() => import('./admin/pages/UserJourneyPage').then(
+ const BusinessFunnelPage = lazy(() => import('./admin/pages/BusinessFunnelPage').then((m) => ({ default: m.BusinessFunnelPage })))
+ const BuyerResultsPage = lazy(() => import('./admin/pages/BuyerResultsPage').then((m) => ({ default: m.BuyerResultsPage })))
+ const BuyerAgentReportPage = lazy(() => import('./admin/pages/reports/BuyerAgentReportPage').then((m) => ({ default: m.BuyerAgentReportPage })))
++const TherapeuticMapPage = lazy(() => import('./admin/pages/lab/TherapeuticMapPage').then((m) => ({ default: m.TherapeuticMapPage })))
++const HealingMapPage = lazy(() => import('./admin/pages/lab/HealingMapPage').then((m) => ({ default: m.HealingMapPage })))
+ const CostReportPage = lazy(() => import('./admin/pages/reports/CostReportPage').then((m) => ({ default: m.CostReportPage })))
+ const ReportsOverviewPage = lazy(() => import('./admin/pages/reports/ReportsOverviewPage').then((m) => ({ default: m.ReportsOverviewPage })))
+ const UxFeedbackReportPage = lazy(() => import('./admin/pages/reports/UxFeedbackReportPage').then((m) => ({ default: m.UxFeedbackReportPage })))
+@@ -210,6 +212,20 @@ export default function App() {
+                 </ModuleGuard>
+               } />
+             )}
++            {RELEASES.therapeuticMaps && (
++              <Route path="therapeutic-map" element={
++                <ModuleGuard module="adminTherapeuticMap">
++                  <TherapeuticMapPage />
++                </ModuleGuard>
++              } />
++            )}
++            {RELEASES.therapeuticMaps && (
++              <Route path="healing-map" element={
++                <ModuleGuard module="adminHealingMap">
++                  <HealingMapPage />
++                </ModuleGuard>
++              } />
++            )}
+             {RELEASES.buyerAgent && (
+               <Route path="buyer-agent" element={
+                 <ModuleGuard module="adminBuyerAgent">
+diff --git a/src/admin/AdminLayout.tsx b/src/admin/AdminLayout.tsx
+index bd58084..84cb41d 100644
+--- a/src/admin/AdminLayout.tsx
++++ b/src/admin/AdminLayout.tsx
+@@ -66,6 +66,13 @@ const NAV: { section: string; icon: LucideIcon; items: NavItem[] }[] = [
+       // On both sites since J153 (RELEASES).
+       ...(RELEASES.personas ? [{ to: '/admin/personas', label: 'Personas', flag: 'adminPersonas' }] : []),
+       ...(RELEASES.businessFunnel ? [{ to: '/admin/business-funnel', label: 'Business funnel', flag: 'adminBusinessFunnel' }] : []),
++      // U131 (J183): staging only (RELEASES).
++      ...(RELEASES.therapeuticMaps
++        ? [
++            { to: '/admin/therapeutic-map', label: 'Therapeutic map', flag: 'adminTherapeuticMap' },
++            { to: '/admin/healing-map', label: 'Healing Map', flag: 'adminHealingMap' },
++          ]
++        : []),
+       // Buyer agent results (/admin/buyer-agent) is off the menu since U123; the route stays and Reports links to it.
+     ],
+   },
+diff --git a/src/admin/data/healingMap.test.ts b/src/admin/data/healingMap.test.ts
+new file mode 100644
+index 0000000..9abec1d
+--- /dev/null
++++ b/src/admin/data/healingMap.test.ts
+@@ -0,0 +1,48 @@
++import { describe, expect, it } from 'vitest'
++import { LEARNED_FROM_REAL_RESULTS, LINKS, MIN_PEOPLE_FOR_LEARNED, NODES, PROVENANCE_TEXT, linkCounts, node, pathsThrough, visibleLinks } from './healingMap'
++
++describe('healing map', () => {
++  it('gives every link a provenance label', () => {
++    for (const l of LINKS) expect(PROVENANCE_TEXT[l.provenance], `${l.from}>${l.to}`).toBeTruthy()
++  })
++  it('gives every research-backed link a citation and no invented strength', () => {
++    for (const l of LINKS.filter((x) => x.provenance === 'research')) {
++      expect(l.citation?.text, `${l.from}>${l.to}`).toBeTruthy()
++      expect(l.citation?.url).toMatch(/^https:\/\//)
++      expect(l.strength).toBeUndefined()
++    }
++  })
++  it('claims no learned link while there are no real results', () => {
++    expect(LEARNED_FROM_REAL_RESULTS).toBe(false)
++    expect(LINKS.filter((l) => l.provenance === 'learned')).toEqual([])
++  })
++  it('would require enough people behind any learned link', () => {
++    for (const l of LINKS.filter((x) => x.provenance === 'learned')) expect(l.people ?? 0).toBeGreaterThanOrEqual(MIN_PEOPLE_FOR_LEARNED)
++  })
++  it('links only bad → block → good, between nodes that exist', () => {
++    for (const l of LINKS) {
++      const pair = `${node(l.from)?.ring}>${node(l.to)?.ring}`
++      expect(['bad>block', 'block>good'], `${l.from}>${l.to}`).toContain(pair)
++    }
++    expect(new Set(NODES.map((n) => n.id)).size).toBe(NODES.length)
++    for (const n of NODES) expect(LINKS.some((l) => l.from === n.id || l.to === n.id), n.id).toBe(true)
++  })
++  it('keeps sample strengths in 0–1 and has both kinds of link', () => {
++    for (const l of LINKS.filter((x) => x.provenance === 'sample')) {
++      expect(l.strength).toBeGreaterThan(0)
++      expect(l.strength).toBeLessThanOrEqual(1)
++    }
++    const c = linkCounts()
++    expect(c.sample).toBeGreaterThan(0)
++    expect(c.research).toBeGreaterThan(0)
++  })
++  it('filters by world and to research-backed links', () => {
++    expect(visibleLinks({ world: 'all', researchOnly: true }).every((l) => l.provenance === 'research')).toBe(true)
++    expect(visibleLinks({ world: 'sleep', researchOnly: false }).length).toBeLessThan(LINKS.length)
++    expect(pathsThrough('poor-sleep', LINKS).some((l) => l.to === 'deep-sleep')).toBe(true)
++  })
++  it('uses wellness words, never cure or treatment', () => {
++    const text = JSON.stringify({ NODES, PROVENANCE_TEXT })
++    expect(text).not.toMatch(/\b(cure|cures|treat|treatment|diagnos|disorder|insomnia)/i)
++  })
++})
+diff --git a/src/admin/data/healingMap.ts b/src/admin/data/healingMap.ts
+new file mode 100644
+index 0000000..26cefa6
+--- /dev/null
++++ b/src/admin/data/healingMap.ts
+@@ -0,0 +1,235 @@
++/**
++ * Admin → Product lab → Healing Map (U131, J183). Which building blocks help
++ * which bad state, and how sure we are. Three rings: bad states (inner),
++ * building blocks, the app's "Change this session" Lego bites (middle), and
++ * good states (outer). Every link says where its strength comes from:
++ *
++ * - `sample`: a design sample. The number is invented so the map can be read
++ *   before any real results exist.
++ * - `research`: a published review says this kind of practice is often
++ *   followed by this kind of change. It carries a citation and no number: a
++ *   citation is not a strength (Insight Timer round 3, honesty rule 6).
++ * - `learned`: learned from Aurelia's own check-ins. There are none yet, so
++ *   there are no such links; `healingMap.test.ts` fails if one appears while
++ *   `LEARNED_FROM_REAL_RESULTS` is false.
++ *
++ * Wellness wording only: links describe association ("often followed by"),
++ * never cause or cure.
++ */
++
++export type WorldId = 'sleep' | 'mental' | 'emotional' | 'relational' | 'spiritual'
++
++export const WORLDS: { id: WorldId; label: string; short: string }[] = [
++  { id: 'sleep', label: 'Sleep and body', short: 'Sleep' },
++  { id: 'mental', label: 'Mind and focus', short: 'Mental' },
++  { id: 'emotional', label: 'Feelings', short: 'Emotional' },
++  { id: 'relational', label: 'Relationships', short: 'Relational' },
++  { id: 'spiritual', label: 'Meaning', short: 'Spiritual' },
++]
++
++export type Ring = 'bad' | 'block' | 'good'
++export const RING_LABEL: Record<Ring, string> = { bad: 'Bad state', block: 'Building block', good: 'Good state' }
++
++export interface HealingNode {
++  id: string
++  ring: Ring
++  label: string
++  world: WorldId
++  /** One plain sentence: what it is. */
++  about: string
++  /** For a building block: where it lives in the app today. */
++  inApp?: string
++}
++
++export type Provenance = 'sample' | 'research' | 'learned'
++
++export const PROVENANCE_TEXT: Record<Provenance, string> = {
++  sample: 'Design sample (no real results yet)',
++  research: 'Research evidence (cited)',
++  learned: 'Learned from users (none yet)',
++}
++
++export const PROVENANCE_MEANING: Record<Provenance, string> = {
++  sample: 'An invented strength so the map can be read. Nobody has measured it.',
++  research: 'A published review reports this kind of practice is often followed by this kind of change. The citation is shown; it is not a strength score.',
++  learned: 'How often this block was followed by a better check-in for real people. Appears only once real check-ins exist, with how many people it is based on.',
++}
++
++export interface Citation {
++  text: string
++  url: string
++}
++
++export interface HealingLink {
++  from: string
++  to: string
++  provenance: Provenance
++  /** 0–1, only for sample links (invented). Research links carry no number. */
++  strength?: number
++  citation?: Citation
++  /** Distinct people behind a learned link; required for `learned`. */
++  people?: number
++}
++
++/** False until real check-ins exist. Flip only with real data behind it. */
++export const LEARNED_FROM_REAL_RESULTS = false
++/** Honesty rule 2: a learned link shows only above this many distinct people. */
++export const MIN_PEOPLE_FOR_LEARNED = 20
++
++export const NODES: HealingNode[] = [
++  // Inner ring: bad states (from the app's feelings on Home and the five worlds).
++  { id: 'poor-sleep', ring: 'bad', label: 'Poor sleep', world: 'sleep', about: 'Hard to fall or stay asleep. Home’s “Hard to sleep”.' },
++  { id: 'wired-body', ring: 'bad', label: 'Wired body', world: 'sleep', about: 'Tense and restless, the body will not settle.' },
++  { id: 'racing-mind', ring: 'bad', label: 'Racing mind', world: 'mental', about: 'Thoughts keep going round. Home’s “Overthinking”.' },
++  { id: 'brain-fog', ring: 'bad', label: 'Can’t focus', world: 'mental', about: 'Foggy, scattered attention. Home’s “Can’t focus”.' },
++  { id: 'stress', ring: 'bad', label: 'Stress', world: 'emotional', about: 'Under pressure, on edge. Home’s “Stressed”.' },
++  { id: 'low-mood', ring: 'bad', label: 'Low mood', world: 'emotional', about: 'Drained and low. Home’s “Feeling low”.' },
++  { id: 'conflict', ring: 'bad', label: 'After a conflict', world: 'relational', about: 'Hurt or angry after a clash with someone close.' },
++  { id: 'lonely', ring: 'bad', label: 'Lonely', world: 'relational', about: 'Feeling cut off from people.' },
++  { id: 'disconnected', ring: 'bad', label: 'Disconnected', world: 'spiritual', about: 'Going through the motions, no sense of meaning.' },
++
++  // Middle ring: building blocks, the "Change this session" Lego bites (chat/firstSession.ts, lib/wellnessAnalysis.ts).
++  { id: 'slow-breath', ring: 'block', label: 'Slow breath', world: 'sleep', about: 'Breath cues slow down toward a long exhale.', inApp: 'Sleep deck in “Change this session”' },
++  { id: 'warm-dim', ring: 'block', label: 'Warm, dim', world: 'sleep', about: 'The picture darkens and warms as it goes.', inApp: 'Sleep deck' },
++  { id: 'voice-fades', ring: 'block', label: 'Voice fades', world: 'sleep', about: 'The voice stops for the last minutes.', inApp: 'Sleep deck' },
++  { id: 'body-scan', ring: 'block', label: 'Body scan', world: 'sleep', about: 'Attention moves through the body, head to feet.', inApp: 'Regulate deck' },
++  { id: 'low-tones', ring: 'block', label: 'Low tones', world: 'sleep', about: 'Deep, slow sound the body can rest against.', inApp: 'Regulate deck' },
++  { id: 'more-silence', ring: 'block', label: 'More silence', world: 'mental', about: 'Long quiet stretches so thoughts can settle.', inApp: 'Clarity deck' },
++  { id: 'gentle-noting', ring: 'block', label: 'Gentle noting', world: 'mental', about: 'Name a thought, let it go, come back to the breath.', inApp: 'Clarity deck' },
++  { id: 'no-melody', ring: 'block', label: 'No melody', world: 'mental', about: 'An even sound bed that never pulls attention.', inApp: 'Focus deck' },
++  { id: 'longer-exhale', ring: 'block', label: 'Longer exhale', world: 'emotional', about: 'Out-breath longer than the in-breath.', inApp: 'Calm and Regulate decks' },
++  { id: 'steady-pulse', ring: 'block', label: 'Steady pulse', world: 'emotional', about: 'A slow, even rhythm with nothing sudden in it.', inApp: 'Calm deck' },
++  { id: 'fewer-words', ring: 'block', label: 'Fewer words', world: 'emotional', about: 'Short, plain guidance with room between the lines.', inApp: 'Calm deck' },
++  { id: 'kind-words', ring: 'block', label: 'Kind wishes', world: 'relational', about: 'Wishing yourself and others well, one person at a time.', inApp: 'Not in the app yet (a candidate)' },
++  { id: 'gratitude', ring: 'block', label: 'Gratitude note', world: 'spiritual', about: 'Naming a few things that went well.', inApp: 'Not in the app yet (a candidate)' },
++  { id: 'warm-light', ring: 'block', label: 'Warm light', world: 'spiritual', about: 'Warm, rising light through the session.', inApp: 'Energy deck' },
++
++  // Outer ring: good states.
++  { id: 'deep-sleep', ring: 'good', label: 'Restful sleep', world: 'sleep', about: 'Falls asleep more easily and wakes rested.' },
++  { id: 'settled-body', ring: 'good', label: 'Settled body', world: 'sleep', about: 'Loose, heavy, at rest.' },
++  { id: 'clear-mind', ring: 'good', label: 'Quiet mind', world: 'mental', about: 'Thoughts slow down and leave room.' },
++  { id: 'focus', ring: 'good', label: 'Focused', world: 'mental', about: 'Attention stays on one thing.' },
++  { id: 'calm', ring: 'good', label: 'Calm', world: 'emotional', about: 'Steady, not on edge.' },
++  { id: 'lighter-mood', ring: 'good', label: 'Lighter mood', world: 'emotional', about: 'A bit more energy and warmth.' },
++  { id: 'repair', ring: 'good', label: 'Ready to repair', world: 'relational', about: 'Open to talking it through.' },
++  { id: 'connected', ring: 'good', label: 'Connected', world: 'relational', about: 'Feels close to others.' },
++  { id: 'purpose', ring: 'good', label: 'Sense of purpose', world: 'spiritual', about: 'Feels what matters again.' },
++]
++
++const ZACCARO: Citation = {
++  text: 'Zaccaro et al. (2018), How breath-control can change your life: a systematic review on psycho-physiological correlates of slow breathing. Frontiers in Human Neuroscience 12:353.',
++  url: 'https://doi.org/10.3389/fnhum.2018.00353',
++}
++const BALBAN: Citation = {
++  text: 'Balban et al. (2023), Brief structured respiration practices enhance mood and reduce physiological arousal. Cell Reports Medicine 4(1):100895.',
++  url: 'https://doi.org/10.1016/j.xcrm.2022.100895',
++}
++const RUSCH: Citation = {
++  text: 'Rusch et al. (2019), The effect of mindfulness meditation on sleep quality: a systematic review and meta-analysis of randomized controlled trials. Annals of the New York Academy of Sciences 1445(1):5–16.',
++  url: 'https://doi.org/10.1111/nyas.13996',
++}
++const JESPERSEN: Citation = {
++  text: 'Jespersen et al. (2022), Listening to music for insomnia in adults. Cochrane Database of Systematic Reviews, CD010459.',
++  url: 'https://doi.org/10.1002/14651858.CD010459.pub3',
++}
++const ZENG: Citation = {
++  text: 'Zeng et al. (2015), The effect of loving-kindness meditation on positive emotions: a meta-analytic review. Frontiers in Psychology 6:1693.',
++  url: 'https://doi.org/10.3389/fpsyg.2015.01693',
++}
++
++const s = (from: string, to: string, strength: number): HealingLink => ({ from, to, provenance: 'sample', strength })
++const r = (from: string, to: string, citation: Citation): HealingLink => ({ from, to, provenance: 'research', citation })
++
++export const LINKS: HealingLink[] = [
++  // bad → block
++  s('poor-sleep', 'slow-breath', 0.7),
++  s('poor-sleep', 'warm-dim', 0.5),
++  s('poor-sleep', 'voice-fades', 0.6),
++  r('poor-sleep', 'body-scan', RUSCH),
++  r('poor-sleep', 'low-tones', JESPERSEN),
++  s('wired-body', 'body-scan', 0.6),
++  s('wired-body', 'low-tones', 0.5),
++  s('wired-body', 'longer-exhale', 0.6),
++  s('racing-mind', 'gentle-noting', 0.6),
++  s('racing-mind', 'more-silence', 0.5),
++  s('racing-mind', 'slow-breath', 0.4),
++  s('brain-fog', 'no-melody', 0.5),
++  s('brain-fog', 'more-silence', 0.4),
++  r('stress', 'longer-exhale', ZACCARO),
++  s('stress', 'steady-pulse', 0.5),
++  s('stress', 'fewer-words', 0.4),
++  r('low-mood', 'longer-exhale', BALBAN),
++  s('low-mood', 'warm-light', 0.4),
++  s('low-mood', 'gratitude', 0.4),
++  s('conflict', 'longer-exhale', 0.5),
++  s('conflict', 'kind-words', 0.5),
++  s('lonely', 'kind-words', 0.5),
++  s('disconnected', 'gratitude', 0.4),
++  s('disconnected', 'more-silence', 0.3),
++  // block → good
++  s('slow-breath', 'deep-sleep', 0.6),
++  s('warm-dim', 'deep-sleep', 0.4),
++  s('voice-fades', 'deep-sleep', 0.5),
++  r('body-scan', 'deep-sleep', RUSCH),
++  s('body-scan', 'settled-body', 0.6),
++  r('low-tones', 'deep-sleep', JESPERSEN),
++  s('low-tones', 'settled-body', 0.5),
++  s('more-silence', 'clear-mind', 0.5),
++  s('gentle-noting', 'clear-mind', 0.6),
++  s('no-melody', 'focus', 0.5),
++  s('gentle-noting', 'focus', 0.4),
++  r('longer-exhale', 'calm', ZACCARO),
++  r('longer-exhale', 'lighter-mood', BALBAN),
++  s('steady-pulse', 'calm', 0.5),
++  s('fewer-words', 'calm', 0.4),
++  s('longer-exhale', 'repair', 0.4),
++  r('kind-words', 'connected', ZENG),
++  s('kind-words', 'repair', 0.4),
++  s('warm-light', 'lighter-mood', 0.4),
++  s('gratitude', 'lighter-mood', 0.4),
++  s('gratitude', 'purpose', 0.4),
++]
++
++export const node = (id: string) => NODES.find((n) => n.id === id)
++export const linkKey = (l: HealingLink) => `${l.from}>${l.to}`
++
++/** A link belongs to the worlds of the states at its ends. */
++export function linkWorlds(l: HealingLink): Set<WorldId> {
++  return new Set([node(l.from)?.world, node(l.to)?.world].filter((w): w is WorldId => !!w))
++}
++
++export interface MapFilter {
++  world: WorldId | 'all'
++  researchOnly: boolean
++}
++
++export function visibleLinks(f: MapFilter): HealingLink[] {
++  return LINKS.filter((l) => (!f.researchOnly || l.provenance === 'research') && (f.world === 'all' || linkWorlds(l).has(f.world)))
++}
++
++/** Every path through a node: its own links plus the links one step further along the same direction. */
++export function pathsThrough(id: string, links: HealingLink[]): HealingLink[] {
++  const direct = links.filter((l) => l.from === id || l.to === id)
++  const n = node(id)
++  if (!n || n.ring === 'block') return direct
++  const blocks = new Set(direct.map((l) => (l.from === id ? l.to : l.from)))
++  const onward = links.filter((l) => (n.ring === 'bad' ? blocks.has(l.from) : blocks.has(l.to)))
++  return [...direct, ...onward]
++}
++
++export function countsBy<K extends string>(items: { key: K }[]): Record<K, number> {
++  const out = {} as Record<K, number>
++  for (const { key } of items) out[key] = (out[key] ?? 0) + 1
++  return out
++}
++
++export const nodeCounts = () => countsBy(NODES.map((n) => ({ key: n.ring })))
++export const linkCounts = () => countsBy<Provenance>(LINKS.map((l) => ({ key: l.provenance })))
++
++/** Words for a link's strength, never a number that looks like evidence. */
++export function strengthText(l: HealingLink): string {
++  if (l.provenance === 'research') return 'Cited in a published review (not a score)'
++  if (l.provenance === 'learned') return `Learned from ${l.people ?? 0} people`
++  const v = l.strength ?? 0
++  return `${v >= 0.6 ? 'Strong' : v >= 0.45 ? 'Medium' : 'Light'} (sample ${v.toFixed(1)})`
++}
+diff --git a/src/admin/data/therapeuticMap.test.ts b/src/admin/data/therapeuticMap.test.ts
+new file mode 100644
+index 0000000..51c5765
+--- /dev/null
++++ b/src/admin/data/therapeuticMap.test.ts
+@@ -0,0 +1,27 @@
++import { describe, expect, it } from 'vitest'
++import { VALUE_KIND_TEXT, WORLDS, sleepProcess, triangle } from './therapeuticMap'
++
++describe('therapeutic map', () => {
++  it('gives each corner core targets, each labelled by kind and source', () => {
++    const { corners, links } = triangle()
++    expect(corners.map((c) => c.id)).toEqual(['product', 'business', 'wellness'])
++    for (const c of corners) {
++      expect(c.targets.length).toBeGreaterThan(0)
++      for (const t of c.targets) {
++        expect(VALUE_KIND_TEXT[t.kind]).toBeTruthy()
++        expect(t.source).not.toBe('')
++      }
++    }
++    expect(links).toHaveLength(3)
++  })
++  it('walks the sleep process from check-in to next chapter', () => {
++    const p = sleepProcess()
++    expect(p[0].id).toBe('pre')
++    expect(p.at(-1)?.id).toBe('next')
++    expect(p.find((x) => x.id === 'bites')?.inApp).toMatch(/Slow breath/)
++  })
++  it('has the five worlds with stage 1 above stage 3', () => {
++    expect(WORLDS).toHaveLength(5)
++    for (const w of WORLDS) expect(w.chapters[0]).toBeGreaterThan(w.chapters[1])
++  })
++})
+diff --git a/src/admin/data/therapeuticMap.ts b/src/admin/data/therapeuticMap.ts
+new file mode 100644
+index 0000000..6048c12
+--- /dev/null
++++ b/src/admin/data/therapeuticMap.ts
+@@ -0,0 +1,156 @@
++import { DEFAULT_GOAL, PRESETS, STAGES, goal, presetInputs } from './costModel'
++import { funnelMetrics } from './businessFunnel'
++
++/**
++ * Admin → Product lab → Therapeutic map (U131, J183). How a person moves from
++ * a bad state to a good one, and how that ties to the product and the
++ * business: the Product · Business · Wellness triangle, each corner with its
++ * core targets, the links between corners, the bad-to-good process for sleep
++ * as the app runs it, and the five wellness worlds. "Therapeutic" is an
++ * internal metric name only; every claim here is wellness.
++ *
++ * Numbers come from the existing models and are labelled by kind: the buyer
++ * agents' run (simulated), the cost model's stage 1 (assumption), the app's
++ * own prices (measured, in the sense of "this is what the app says"), or
++ * not measured.
++ */
++
++export type ValueKind = 'measured' | 'simulated' | 'assumption' | 'not-measured'
++
++export const VALUE_KIND_TEXT: Record<ValueKind, string> = {
++  measured: 'Measured',
++  simulated: 'Simulated',
++  assumption: 'Assumption',
++  'not-measured': 'Not measured',
++}
++
++export type CornerId = 'product' | 'business' | 'wellness'
++
++export interface CoreTarget {
++  label: string
++  target: string
++  value: string
++  kind: ValueKind
++  source: string
++}
++
++export interface Corner {
++  id: CornerId
++  title: string
++  /** One line: what this corner is about. */
++  about: string
++  parts: string[]
++  targets: CoreTarget[]
++}
++
++export interface CornerLink {
++  from: CornerId
++  to: CornerId
++  title: string
++  how: string
++}
++
++const pct = (x: number) => `${Math.round(x * 100)}%`
++
++/** The middle supplier option, 10-minute chapters, the default sleep goal (25 → 85). */
++export function sleepJourney() {
++  return goal(DEFAULT_GOAL, presetInputs(PRESETS[1], 10))
++}
++
++export function triangle(): { corners: Corner[]; links: CornerLink[] } {
++  // The buyer agents' latest run on production v3, as Business funnel defaults to.
++  const m = Object.fromEntries(funnelMetrics(3, 3, 1).map((x) => [x.id, x]))
++  const j = sleepJourney()
++  const sim = (id: string, label: string): CoreTarget => ({
++    label,
++    target: pct(m[id].target),
++    value: pct(m[id].agent),
++    kind: 'simulated',
++    source: 'Buyer agents, run 3 on production v3 (Business funnel)',
++  })
++  const corners: Corner[] = [
++    {
++      id: 'product',
++      title: 'Product',
++      about: 'What the person does in the app: the moments of the user journey and the features that serve them.',
++      parts: ['Check-in before', 'One sentence → a session', 'Change this session (building blocks)', 'Listen to the end', 'Check-in after', 'Next chapter'],
++      targets: [
++        sim('activation', 'Hears a session on the first visit'),
++        sim('completion', 'Finishes their own first session'),
++        { label: 'Checks in after a session', target: 'not set yet', value: '—', kind: 'not-measured', source: 'Needs session-end events; nothing records them yet' },
++      ],
++    },
++    {
++      id: 'business',
++      title: 'Business',
++      about: 'How Aurelia earns: the funnel from a free start to Aurelia Plus, and the revenue behind it.',
++      parts: ['Frictionless entry', 'The aha moment', 'The free limit', 'Aurelia Plus', 'Staying'],
++      targets: [
++        sim('plus', 'Chooses Plus at the limit'),
++        sim('d7', 'Back after a week'),
++        { label: 'Plus price', target: '$10 a month', value: '$10 a month · $100 a year', kind: 'measured', source: 'The app’s Upgrade screen (nothing can be bought yet)' },
++        { label: 'Revenue per flip', target: '$19.99', value: `$${(19.99 * j.flipProbability).toFixed(2)} expected`, kind: 'assumption', source: 'The spec’s $19.99 per flip × the stage 1 flip chance' },
++      ],
++    },
++    {
++      id: 'wellness',
++      title: 'Wellness',
++      about: 'The state the person is in: bad → building blocks → good, told by their own check-ins.',
++      parts: ['Bad state (check-in 25/100)', 'Building blocks', 'Good state (85/100)'],
++      targets: [
++        { label: 'Uplift per chapter', target: `+${STAGES[3].uplift.toFixed(2)} points (stage 3)`, value: `+${j.uplift.toFixed(2)} points`, kind: 'assumption', source: 'Cost model, stage 1 (the business owner’s scenario)' },
++        { label: 'Chapters to flip', target: `${STAGES[3].specChapters} (stage 3)`, value: `${j.chapters}`, kind: 'assumption', source: 'Cost model: gap ÷ uplift per chapter' },
++        { label: 'Flip chance', target: `${pct(STAGES[3].success)} (stage 3)`, value: pct(j.flipProbability), kind: 'assumption', source: 'Cost model, stage 1 success × three chapters a week' },
++        { label: 'Real people feel better', target: pct(m.felt.target), value: '—', kind: 'not-measured', source: 'The feedback group has not started' },
++      ],
++    },
++  ]
++  const links: CornerLink[] = [
++    { from: 'wellness', to: 'product', title: 'A session that helps is a reason to come back', how: `Each chapter's uplift (+${j.uplift.toFixed(2)} points, assumption) shows in the check-in after. A better check-in is the aha moment: the person finishes, checks in and plays the next chapter.` },
++    { from: 'product', to: 'business', title: 'Coming back fills the free limit', how: 'Finishing sessions and returning uses up the free sends. At the limit, the offer is Plus, so the user journey feeds the business funnel.' },
++    { from: 'business', to: 'wellness', title: 'Plus pays for the rest of the journey', how: `Plus removes the limit so the person can reach the good state: ${j.chapters} chapters at stage 1 (assumption). Revenue only lasts while they keep feeling better.` },
++  ]
++  return { corners, links }
++}
++
++export interface ProcessStep {
++  id: string
++  title: string
++  inApp: string
++  metric: string
++  value: string
++  kind: ValueKind
++}
++
++/** The bad-to-good process for sleep, as the app runs it today. */
++export function sleepProcess(): ProcessStep[] {
++  const j = sleepJourney()
++  return [
++    { id: 'pre', title: 'Check-in before', inApp: 'Daily check-in: “How do you feel?” on a 0–100 scale', metric: 'Starting score', value: `${DEFAULT_GOAL.baseline}/100`, kind: 'assumption' },
++    { id: 'session', title: 'Session, chapter 1', inApp: 'One sentence on Home becomes a session; a journey has chapters', metric: 'Cost per chapter', value: `$${j.costPerChapter.toFixed(2)}`, kind: 'assumption' },
++    { id: 'bites', title: 'Change this session', inApp: 'Building blocks for sleep: Slow breath, Warm, dim, Voice fades', metric: 'Blocks tried per chapter', value: '—', kind: 'not-measured' },
++    { id: 'version', title: 'New version', inApp: 'The chosen blocks make a new version of the chapter', metric: 'Versions per chapter', value: '—', kind: 'not-measured' },
++    { id: 'listen', title: 'Listen', inApp: 'The player, to the end', metric: 'Finishes the session', value: pct(funnelMetrics(3, 3, 1).find((x) => x.id === 'completion')!.agent), kind: 'simulated' },
++    { id: 'post', title: 'Check-in after', inApp: '“How do you feel now?”', metric: 'Uplift per chapter', value: `+${j.uplift.toFixed(2)} points`, kind: 'assumption' },
++    { id: 'next', title: 'Next chapter', inApp: 'The next chapter uses what helped; repeat until the flip', metric: 'Chapters to flip · flip chance', value: `${j.chapters} · ${pct(j.flipProbability)}`, kind: 'assumption' },
++  ]
++}
++
++export interface World {
++  id: 'sleep' | 'mental' | 'emotional' | 'relational' | 'spiritual'
++  title: string
++  bad: string
++  good: string
++  chapters: [number, number]
++  costPerFlip: [number, number]
++  success: [number, number]
++}
++
++/** The spec PDF §5, stage 1 → stage 3: the business owner's scenario, not measured. */
++export const WORLDS: World[] = [
++  { id: 'sleep', title: 'Physical and sleep', bad: 'Poor sleep', good: 'Deep sleep', chapters: [42, 22], costPerFlip: [4.62, 0.63], success: [0.54, 0.89] },
++  { id: 'mental', title: 'Mental', bad: 'Brain fog', good: 'Focus', chapters: [18, 9], costPerFlip: [1.52, 0.2], success: [0.62, 0.92] },
++  { id: 'emotional', title: 'Emotional', bad: 'Acute stress', good: 'Calm', chapters: [24, 12], costPerFlip: [2.23, 0.29], success: [0.58, 0.905] },
++  { id: 'relational', title: 'Relational', bad: 'Conflict', good: 'Repair', chapters: [30, 15], costPerFlip: [3.04, 0.4], success: [0.51, 0.85] },
++  { id: 'spiritual', title: 'Spiritual', bad: 'Disconnection', good: 'Purpose', chapters: [36, 18], costPerFlip: [4.27, 0.56], success: [0.49, 0.84] },
++]
+diff --git a/src/admin/pages/lab/HealingMapPage.tsx b/src/admin/pages/lab/HealingMapPage.tsx
+new file mode 100644
+index 0000000..ce7b378
+--- /dev/null
++++ b/src/admin/pages/lab/HealingMapPage.tsx
+@@ -0,0 +1,349 @@
++import { ExternalLink, Minus, Plus } from 'lucide-react'
++import { useState } from 'react'
++import { Badge, PageHeader, Panel, type Tone } from '../../components/ui'
++import {
++  LINKS, MIN_PEOPLE_FOR_LEARNED, NODES, PROVENANCE_MEANING, PROVENANCE_TEXT, RING_LABEL, WORLDS,
++  linkCounts, linkKey, node, nodeCounts, pathsThrough, strengthText, visibleLinks,
++  type HealingLink, type HealingNode, type MapFilter, type Provenance, type Ring, type WorldId,
++} from '../../data/healingMap'
++import { DetailDrawerProvider, useDetail } from '../reports/DetailDrawer'
++import { Details, GoalLine } from '../reports/ReportSummary'
++import { Term } from '../reports/Term'
++
++/*
++ * Admin → Product lab → Healing Map (U131, J183). Rings like Insight Timer's
++ * Map of Healing, but ours: bad states inside, the app's building blocks in
++ * the middle, good states outside. Every link says where its strength comes
++ * from. All data lives in data/healingMap.ts.
++ */
++
++const WORLD_FILL: Record<WorldId, string> = { sleep: 'fill-adm-s1', mental: 'fill-adm-s2', emotional: 'fill-adm-s3', relational: 'fill-adm-s4', spiritual: 'fill-adm-accent' }
++const WORLD_BG: Record<WorldId, string> = { sleep: 'bg-adm-s1', mental: 'bg-adm-s2', emotional: 'bg-adm-s3', relational: 'bg-adm-s4', spiritual: 'bg-adm-accent' }
++const PROV_TONE: Record<Provenance, Tone> = { sample: 'neutral', research: 'good', learned: 'info' }
++const RADIUS: Record<Ring, number> = { bad: 120, block: 235, good: 335 }
++const RINGS: Ring[] = ['bad', 'block', 'good']
++
++interface Pos {
++  x: number
++  y: number
++  angle: number
++}
++
++/** Each world gets a fifth of the circle; its nodes spread evenly inside it on every ring. */
++function layout(): Record<string, Pos> {
++  const out: Record<string, Pos> = {}
++  const sector = (Math.PI * 2) / WORLDS.length
++  WORLDS.forEach((w, i) => {
++    for (const ring of RINGS) {
++      const own = NODES.filter((n) => n.world === w.id && n.ring === ring)
++      own.forEach((n, k) => {
++        const angle = -Math.PI / 2 + i * sector + ((k + 0.5) * sector) / own.length
++        out[n.id] = { x: Math.cos(angle) * RADIUS[ring], y: Math.sin(angle) * RADIUS[ring], angle }
++      })
++    }
++  })
++  return out
++}
++const POS = layout()
++
++function linkPath(l: HealingLink) {
++  const a = POS[l.from]
++  const b = POS[l.to]
++  const ra = Math.hypot(a.x, a.y)
++  const rb = Math.hypot(b.x, b.y)
++  const mid = (ra + rb) / 2
++  const c1 = { x: Math.cos(a.angle) * mid, y: Math.sin(a.angle) * mid }
++  const c2 = { x: Math.cos(b.angle) * mid, y: Math.sin(b.angle) * mid }
++  return `M${a.x.toFixed(1)},${a.y.toFixed(1)} C${c1.x.toFixed(1)},${c1.y.toFixed(1)} ${c2.x.toFixed(1)},${c2.y.toFixed(1)} ${b.x.toFixed(1)},${b.y.toFixed(1)}`
++}
++
++export function HealingMapPage() {
++  return (
++    <DetailDrawerProvider>
++      <HealingMap />
++    </DetailDrawerProvider>
++  )
++}
++
++function ProvBadge({ p }: { p: Provenance }) {
++  return <Badge tone={PROV_TONE[p]}>{PROVENANCE_TEXT[p]}</Badge>
++}
++
++function NodeLinks({ n, links }: { n: HealingNode; links: HealingLink[] }) {
++  return (
++    <div className="flex flex-col gap-8">
++      <h3 className="text-12 font-semibold uppercase tracking-wider text-adm-muted">Links ({links.length})</h3>
++      <ul className="flex flex-col gap-8">
++        {links.map((l) => {
++          const other = node(l.from === n.id ? l.to : l.from)
++          return (
++            <li key={linkKey(l)} className="flex flex-col gap-4 rounded-8 border border-adm-line p-10" data-link-provenance={l.provenance}>
++              <p className="text-13 font-semibold text-adm-ink">
++                {l.from === n.id ? '→ ' : '← '}
++                {other?.label}
++                <span className="font-normal text-adm-muted"> · {other ? RING_LABEL[other.ring].toLowerCase() : ''}</span>
++              </p>
++              <div className="flex flex-wrap items-center gap-6">
++                <ProvBadge p={l.provenance} />
++                <span className="text-12 text-adm-ink-2">{strengthText(l)}</span>
++              </div>
++              {l.citation && (
++                <a href={l.citation.url} target="_blank" rel="noreferrer" className="inline-flex items-start gap-4 text-11 text-adm-muted underline decoration-adm-axis underline-offset-2 hover:text-adm-ink">
++                  <span>{l.citation.text}</span>
++                  <ExternalLink size={10} aria-hidden="true" className="mt-2 shrink-0" />
++                </a>
++              )}
++            </li>
++          )
++        })}
++      </ul>
++      <p className="text-11 text-adm-muted">
++        A link means “often followed by”, never “causes” or “cures”. No link is learned from users yet: the map learns once real check-in results exist, and a learned link shows only with at least {MIN_PEOPLE_FOR_LEARNED} people behind it.
++      </p>
++    </div>
++  )
++}
++
++function HealingMap() {
++  const open = useDetail()
++  const [filter, setFilter] = useState<MapFilter>({ world: 'all', researchOnly: false })
++  const [selected, setSelected] = useState<string | null>(null)
++  const [zoom, setZoom] = useState(1)
++
++  const links = visibleLinks(filter)
++  const active = new Set(links.flatMap((l) => [l.from, l.to]))
++  const path = selected ? pathsThrough(selected, links) : []
++  const pathKeys = new Set(path.map(linkKey))
++  const pathNodes = new Set(path.flatMap((l) => [l.from, l.to]))
++  const nc = nodeCounts()
++  const lc = linkCounts()
++
++  function choose(n: HealingNode) {
++    setSelected(n.id)
++    const own = LINKS.filter((l) => l.from === n.id || l.to === n.id)
++    const world = WORLDS.find((w) => w.id === n.world)
++    open({
++      kicker: `${RING_LABEL[n.ring]} · ${world?.label ?? ''}`,
++      title: n.label,
++      summary: n.about,
++      numbers: [
++        { label: 'Links', value: String(own.length) },
++        { label: 'Research-backed', value: String(own.filter((l) => l.provenance === 'research').length) },
++        ...(n.inApp ? [{ label: 'In the app', value: n.inApp }] : []),
++        { label: 'Learned from users', value: 'None yet' },
++      ],
++      extra: <NodeLinks n={n} links={own} />,
++    })
++  }
++
++  const chip = (on: boolean) =>
++    `inline-flex items-center gap-6 rounded-full border px-10 py-4 text-12 font-medium ${on ? 'border-adm-ink bg-adm-ink text-adm-surface' : 'border-adm-line bg-adm-surface text-adm-ink-2 hover:bg-adm-hover'}`
++
++  return (
++    <div className="flex flex-col gap-16">
++      <PageHeader title="Healing Map" description="Which building blocks of a session tend to help which bad state, and where each link comes from." />
++      <GoalLine goal="Shows which building blocks help which bad state, and how sure we are." />
++
++      <section className="flex flex-col gap-10 rounded-12 border border-adm-line bg-adm-surface p-16" data-summary>
++        <p className="text-15 font-semibold text-adm-ink">
++          {nc.bad} bad states · {nc.block} building blocks · {nc.good} good states · {LINKS.length} links
++        </p>
++        <p className="text-13 text-adm-ink-2">
++          Like Insight Timer’s Map of Healing, but ours is meant to learn from results: how often a building block was followed by a better check-in. There are no real results yet, so {lc.sample ?? 0} links are a{' '}
++          <Term id="sample">design sample</Term>, {lc.research ?? 0} are backed by a cited published review, and {lc.learned ?? 0} are learned from users.
++        </p>
++        <div className="flex flex-wrap gap-6">
++          {(['sample', 'research', 'learned'] as Provenance[]).map((p) => (
++            <span key={p} title={PROVENANCE_MEANING[p]}>
++              <ProvBadge p={p} /> <span className="text-12 tabular-nums text-adm-muted">{lc[p] ?? 0}</span>
++            </span>
++          ))}
++        </div>
++      </section>
++
++      <Panel title="The map" description="Tap a state or a building block to see its paths and where each link comes from.">
++        <div className="flex flex-col gap-10">
++          <div className="flex flex-wrap items-center gap-6" role="group" aria-label="Filter by wellness world">
++            <button type="button" className={chip(filter.world === 'all')} aria-pressed={filter.world === 'all'} onClick={() => setFilter({ ...filter, world: 'all' })}>
++              All worlds
++            </button>
++            {WORLDS.map((w) => (
++              <button key={w.id} type="button" data-world={w.id} className={chip(filter.world === w.id)} aria-pressed={filter.world === w.id} onClick={() => setFilter({ ...filter, world: w.id })}>
++                <span className={`size-8 rounded-full ${WORLD_BG[w.id]}`} aria-hidden="true" />
++                {w.label}
++              </button>
++            ))}
++          </div>
++          <div className="flex flex-wrap items-center justify-between gap-8">
++            <label className="inline-flex items-center gap-8 text-13 text-adm-ink">
++              <input type="checkbox" data-research-only checked={filter.researchOnly} onChange={(e) => setFilter({ ...filter, researchOnly: e.target.checked })} />
++              Show only research-backed links
++            </label>
++            <div className="flex items-center gap-4" role="group" aria-label="Zoom">
++              <button type="button" aria-label="Zoom out" disabled={zoom <= 1} onClick={() => setZoom(Math.max(1, zoom - 0.5))} className="rounded-8 border border-adm-line p-6 text-adm-ink hover:bg-adm-hover disabled:opacity-40">
++                <Minus size={14} aria-hidden="true" />
++              </button>
++              <span className="w-40 text-center text-12 tabular-nums text-adm-muted">{Math.round(zoom * 100)}%</span>
++              <button type="button" aria-label="Zoom in" disabled={zoom >= 2.5} onClick={() => setZoom(Math.min(2.5, zoom + 0.5))} className="rounded-8 border border-adm-line p-6 text-adm-ink hover:bg-adm-hover disabled:opacity-40">
++                <Plus size={14} aria-hidden="true" />
++              </button>
++            </div>
++          </div>
++
++          <div className="max-h-[80vh] w-full overflow-auto rounded-12 border border-adm-line bg-adm-bg" data-map-scroll>
++            <svg
++              viewBox="-470 -420 940 840"
++              style={{ width: `${zoom * 100}%`, maxWidth: zoom === 1 ? 820 : undefined }}
++              className="mx-auto block h-auto max-w-none"
++              role="img"
++              aria-label="Healing Map: bad states inside, building blocks in the middle, good states outside"
++            >
++              {RINGS.map((ring) => (
++                <circle key={ring} r={RADIUS[ring]} className="fill-none stroke-adm-line" strokeDasharray="2 6" />
++              ))}
++              <text x={0} y={-6} textAnchor="middle" className="fill-adm-muted text-[12px] font-semibold">
++                Inside: bad states
++              </text>
++              <text x={0} y={10} textAnchor="middle" className="fill-adm-muted text-[11px]">
++                middle: building blocks
++              </text>
++              <text x={0} y={25} textAnchor="middle" className="fill-adm-muted text-[11px]">
++                outside: good states
++              </text>
++              <g>
++                {links.map((l) => {
++                  const on = !selected || pathKeys.has(linkKey(l))
++                  const w = l.provenance === 'research' ? 2.5 : 0.8 + (l.strength ?? 0) * 2.5
++                  return (
++                    <path
++                      key={linkKey(l)}
++                      d={linkPath(l)}
++                      data-link={linkKey(l)}
++                      className={`fill-none ${l.provenance === 'research' ? 'stroke-adm-good' : 'stroke-adm-axis'} transition-opacity`}
++                      strokeWidth={selected && on ? w + 1 : w}
++                      strokeDasharray={l.provenance === 'sample' ? '5 4' : undefined}
++                      opacity={on ? 0.9 : 0.08}
++                    />
++                  )
++                })}
++              </g>
++              {NODES.map((n) => {
++                const p = POS[n.id]
++                const visible = active.has(n.id)
++                const lit = selected ? pathNodes.has(n.id) : visible
++                const right = Math.cos(p.angle) >= 0
++                const lx = p.x + Math.cos(p.angle) * 14
++                const ly = p.y + Math.sin(p.angle) * 14
++                const isSel = selected === n.id
++                return (
++                  <g
++                    key={n.id}
++                    role="button"
++                    tabIndex={visible ? 0 : -1}
++                    aria-label={`${n.label}, ${RING_LABEL[n.ring].toLowerCase()}`}
++                    aria-pressed={isSel}
++                    data-node={n.id}
++                    className="cursor-pointer outline-none"
++                    opacity={lit ? 1 : 0.2}
++                    onClick={() => choose(n)}
++                    onKeyDown={(e) => {
++                      if (e.key === 'Enter' || e.key === ' ') {
++                        e.preventDefault()
++                        choose(n)
++                      }
++                    }}
++                  >
++                    <circle cx={p.x} cy={p.y} r={18} className="fill-transparent" />
++                    <circle cx={p.x} cy={p.y} r={n.ring === 'block' ? 7 : 9} className={`${WORLD_FILL[n.world]} ${isSel ? 'stroke-adm-ink' : 'stroke-adm-surface'}`} strokeWidth={isSel ? 3 : 2} />
++                    <text
++                      x={lx}
++                      y={ly}
++                      dy="0.35em"
++                      textAnchor={Math.abs(Math.cos(p.angle)) < 0.2 ? 'middle' : right ? 'start' : 'end'}
++                      className={`fill-adm-ink text-[13px] ${n.ring === 'block' ? 'font-normal' : 'font-semibold'}`}
++                      style={{ paintOrder: 'stroke' }}
++                      stroke="var(--color-adm-bg)"
++                      strokeWidth={4}
++                      strokeLinejoin="round"
++                    >
++                      {n.label}
++                    </text>
++                  </g>
++                )
++              })}
++            </svg>
++          </div>
++
++          <div className="flex flex-wrap items-center gap-12 text-11 text-adm-muted">
++            <span className="inline-flex items-center gap-6">
++              <svg width="28" height="6" aria-hidden="true">
++                <line x1="0" y1="3" x2="28" y2="3" className="stroke-adm-axis" strokeWidth={2} strokeDasharray="5 4" />
++              </svg>
++              Design sample (width = invented strength)
++            </span>
++            <span className="inline-flex items-center gap-6">
++              <svg width="28" height="6" aria-hidden="true">
++                <line x1="0" y1="3" x2="28" y2="3" className="stroke-adm-good" strokeWidth={2.5} />
++              </svg>
++              Research evidence (cited, no score)
++            </span>
++            {selected && (
++              <button type="button" onClick={() => setSelected(null)} className="text-12 font-medium text-adm-ink underline underline-offset-2">
++                Clear selection
++              </button>
++            )}
++          </div>
++
++          <div className="grid gap-10 md:grid-cols-3">
++            {RINGS.map((ring) => (
++              <div key={ring} className="flex min-w-0 flex-col gap-6">
++                <h3 className="text-12 font-semibold uppercase tracking-wider text-adm-muted">{RING_LABEL[ring]}s</h3>
++                <div className="flex flex-wrap gap-6">
++                  {NODES.filter((n) => n.ring === ring && active.has(n.id)).map((n) => (
++                    <button key={n.id} type="button" data-node-chip={n.id} onClick={() => choose(n)} className={chip(selected === n.id)}>
++                      <span className={`size-8 rounded-full ${WORLD_BG[n.world]}`} aria-hidden="true" />
++                      {n.label}
++                    </button>
++                  ))}
++                </div>
++              </div>
++            ))}
++          </div>
++        </div>
++      </Panel>
++
++      <Details title="How the map will learn" hint="the loop, the honesty rules">
++        <ol className="grid gap-8 md:grid-cols-5">
++          {['Check-in before', 'Session building blocks', 'Check-in after', 'The map updates', 'Next chapter uses what helped'].map((t, i) => (
++            <li key={t} className="flex flex-col gap-4 rounded-8 border border-adm-line p-10">
++              <span className="text-11 font-semibold text-adm-muted">Step {i + 1}</span>
++              <span className="text-13 font-semibold text-adm-ink">{t}</span>
++            </li>
++          ))}
++        </ol>
++        <ul className="flex list-disc flex-col gap-4 pl-18 text-13 text-adm-ink-2">
++          <li>Until there are real users, every strength on the map is a design sample and says so.</li>
++          <li>A learned link appears only with at least {MIN_PEOPLE_FOR_LEARNED} distinct people behind it, and shows how many.</li>
++          <li>Words describe association, never cause: “often followed by a better check-in”, not “works”.</li>
++          <li>Research links are shown as citations, kept apart from learned results, and never turned into a score.</li>
++          <li>Public wording stays wellness: no claim that anything treats or cures.</li>
++        </ul>
++      </Details>
++
++      <Details title="Theirs and ours" hint="Insight Timer’s Map of Healing">
++        <div className="grid gap-10 md:grid-cols-2">
++          <div className="flex flex-col gap-4 rounded-8 border border-adm-line p-12">
++            <p className="text-13 font-semibold text-adm-ink">Insight Timer’s Map of Healing</p>
++            <p className="text-13 text-adm-ink-2">933 practices, 75 mechanisms, 340 body changes and 131 conditions from 250,000 papers (company claim). A link counts documented connections; it does not learn from anyone’s results.</p>
++          </div>
++          <div className="flex flex-col gap-4 rounded-8 border border-adm-line p-12">
++            <p className="text-13 font-semibold text-adm-ink">Aurelia’s Healing Map</p>
++            <p className="text-13 text-adm-ink-2">
++              {nc.bad} bad states, {nc.block} building blocks, {nc.good} good states. A link will mean how often a block was followed by a better check-in, for you first and for everyone once enough people share. Today it is a design sample with {lc.research ?? 0} cited links.
++            </p>
++          </div>
++        </div>
++      </Details>
++    </div>
++  )
++}
+diff --git a/src/admin/pages/lab/TherapeuticMapPage.tsx b/src/admin/pages/lab/TherapeuticMapPage.tsx
+new file mode 100644
+index 0000000..a0789fc
+--- /dev/null
++++ b/src/admin/pages/lab/TherapeuticMapPage.tsx
+@@ -0,0 +1,276 @@
++import { ArrowRight } from 'lucide-react'
++import { useState } from 'react'
++import { Badge, PageHeader, Panel, type Tone } from '../../components/ui'
++import { VALUE_KIND_TEXT, WORLDS, sleepJourney, sleepProcess, triangle, type Corner, type CornerId, type CornerLink, type ValueKind, type World } from '../../data/therapeuticMap'
++import { DetailDrawerProvider, useDetail } from '../reports/DetailDrawer'
++import { Details, GoalLine } from '../reports/ReportSummary'
++import { Term } from '../reports/Term'
++
++/*
++ * Admin → Product lab → Therapeutic map (U131, J183). The Product · Business
++ * · Wellness triangle with each corner's core targets, the bad-to-good
++ * process for sleep as the app runs it, and the five wellness worlds.
++ * "Therapeutic" is the internal metric name; the content is wellness. Data in
++ * data/therapeuticMap.ts.
++ */
++
++const KIND_TONE: Record<ValueKind, Tone> = { measured: 'good', simulated: 'info', assumption: 'critical', 'not-measured': 'neutral' }
++const CORNER_FILL: Record<CornerId, string> = { product: 'fill-adm-s1', business: 'fill-adm-s2', wellness: 'fill-adm-s3' }
++const CORNER_BG: Record<CornerId, string> = { product: 'bg-adm-s1', business: 'bg-adm-s2', wellness: 'bg-adm-s3' }
++const CORNER_XY: Record<CornerId, { x: number; y: number }> = { wellness: { x: 300, y: 50 }, product: { x: 90, y: 330 }, business: { x: 510, y: 330 } }
++
++function KindBadge({ kind }: { kind: ValueKind }) {
++  return <Badge tone={KIND_TONE[kind]}>{VALUE_KIND_TEXT[kind]}</Badge>
++}
++
++export function TherapeuticMapPage() {
++  return (
++    <DetailDrawerProvider>
++      <TherapeuticMap />
++    </DetailDrawerProvider>
++  )
++}
++
++function TargetList({ c }: { c: Corner }) {
++  return (
++    <ul className="flex flex-col gap-6">
++      {c.targets.map((t) => (
++        <li key={t.label} className="flex flex-col gap-2 rounded-8 border border-adm-line p-8">
++          <div className="flex flex-wrap items-center justify-between gap-6">
++            <span className="text-12 font-semibold text-adm-ink">{t.label}</span>
++            <KindBadge kind={t.kind} />
++          </div>
++          <span className="text-12 tabular-nums text-adm-ink-2">
++            Now {t.value} · target {t.target}
++          </span>
++          <span className="text-11 text-adm-muted">{t.source}</span>
++        </li>
++      ))}
++    </ul>
++  )
++}
++
++function TherapeuticMap() {
++  const open = useDetail()
++  const [{ corners, links }] = useState(() => triangle())
++  const [steps] = useState(() => sleepProcess())
++  const [j] = useState(() => sleepJourney())
++  const [world, setWorld] = useState<World['id']>('sleep')
++  const w = WORLDS.find((x) => x.id === world) ?? WORLDS[0]
++  const byId = Object.fromEntries(corners.map((c) => [c.id, c])) as Record<CornerId, Corner>
++
++  const openCorner = (c: Corner) =>
++    open({
++      kicker: 'Triangle corner',
++      title: c.title,
++      summary: c.about,
++      numbers: c.targets.map((t) => ({ label: t.label, value: `${t.value} (${VALUE_KIND_TEXT[t.kind].toLowerCase()})` })),
++      extra: (
++        <div className="flex flex-col gap-8">
++          <h3 className="text-12 font-semibold uppercase tracking-wider text-adm-muted">Core targets</h3>
++          <TargetList c={c} />
++          <h3 className="text-12 font-semibold uppercase tracking-wider text-adm-muted">What it covers</h3>
++          <p className="text-13 text-adm-ink-2">{c.parts.join(' → ')}</p>
++        </div>
++      ),
++    })
++  const openLink = (l: CornerLink) =>
++    open({ kicker: `${byId[l.from].title} → ${byId[l.to].title}`, title: l.title, summary: l.how })
++
++  return (
++    <div className="flex flex-col gap-16">
++      <PageHeader title="Therapeutic map" description="Product, business and wellness as one triangle, and the steps from a bad state to a good one." />
++      <GoalLine goal="Shows how a person moves from a bad state to a good one, and how that ties to the product and the business." />
++
++      <section className="flex flex-col gap-10 rounded-12 border border-adm-line bg-adm-surface p-16" data-summary>
++        <p className="text-15 font-semibold text-adm-ink">
++          A better check-in after each chapter is what keeps a person coming back, and coming back is what Plus is paid for.
++        </p>
++        <p className="text-13 text-adm-ink-2">
++          For sleep, the business owner’s stage 1 scenario takes someone from 25 to 85 in {j.chapters} chapters at +{j.uplift.toFixed(2)} points each, with a {Math.round(j.flipProbability * 100)}% chance of getting there. Those are <Term id="assumption">assumptions</Term>; the product numbers are <Term id="simulated">simulated</Term>, and no real person’s result is measured yet.
++        </p>
++      </section>
++
++      <Panel title="The triangle" description="Each corner has its core targets. Tap a corner or a link for details.">
++        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
++          <svg viewBox="0 0 600 400" className="h-auto w-full" role="img" aria-label="Product, Business and Wellness triangle">
++            {links.map((l, i) => {
++              const a = CORNER_XY[l.from]
++              const b = CORNER_XY[l.to]
++              const mx = (a.x + b.x) / 2
++              const my = (a.y + b.y) / 2
++              return (
++                <g
++                  key={`${l.from}-${l.to}`}
++                  role="button"
++                  tabIndex={0}
++                  aria-label={l.title}
++                  data-corner-link={`${l.from}-${l.to}`}
++                  className="cursor-pointer outline-none"
++                  onClick={() => openLink(l)}
++                  onKeyDown={(e) => {
++                    if (e.key === 'Enter' || e.key === ' ') {
++                      e.preventDefault()
++                      openLink(l)
++                    }
++                  }}
++                >
++                  <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} className="stroke-transparent" strokeWidth={24} />
++                  <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} className="stroke-adm-axis" strokeWidth={2} />
++                  <circle cx={mx} cy={my} r={14} className="fill-adm-surface stroke-adm-ink" strokeWidth={1.5} />
++                  <text x={mx} y={my} dy="0.35em" textAnchor="middle" className="fill-adm-ink text-[13px] font-semibold">
++                    {i + 1}
++                  </text>
++                </g>
++              )
++            })}
++            {corners.map((c) => {
++              const p = CORNER_XY[c.id]
++              return (
++                <g
++                  key={c.id}
++                  role="button"
++                  tabIndex={0}
++                  aria-label={`${c.title} corner`}
++                  data-corner={c.id}
++                  className="cursor-pointer outline-none"
++                  onClick={() => openCorner(c)}
++                  onKeyDown={(e) => {
++                    if (e.key === 'Enter' || e.key === ' ') {
++                      e.preventDefault()
++                      openCorner(c)
++                    }
++                  }}
++                >
++                  <circle cx={p.x} cy={p.y} r={40} className={CORNER_FILL[c.id]} />
++                  <text x={p.x} y={p.y} dy="0.35em" textAnchor="middle" className="fill-white text-[16px] font-semibold">
++                    {c.title}
++                  </text>
++                </g>
++              )
++            })}
++            <text x={300} y={235} textAnchor="middle" className="fill-adm-muted text-[13px]">
++              uplift → coming back → Plus
++            </text>
++          </svg>
++          <ul className="flex flex-col gap-8">
++            {links.map((l, i) => (
++              <li key={`${l.from}-${l.to}`}>
++                <button type="button" onClick={() => openLink(l)} className="flex w-full flex-col gap-2 rounded-8 border border-adm-line p-10 text-left hover:bg-adm-hover">
++                  <span className="flex items-center gap-6 text-11 font-semibold uppercase tracking-wider text-adm-muted">
++                    {i + 1}. {byId[l.from].title} <ArrowRight size={12} aria-hidden="true" /> {byId[l.to].title}
++                  </span>
++                  <span className="text-13 font-semibold text-adm-ink">{l.title}</span>
++                </button>
++              </li>
++            ))}
++          </ul>
++        </div>
++        <div className="grid gap-10 md:grid-cols-3">
++          {corners.map((c) => (
++            <div key={c.id} className="flex min-w-0 flex-col gap-8 rounded-12 border border-adm-line p-12" data-corner-card={c.id}>
++              <button type="button" onClick={() => openCorner(c)} className="flex items-center gap-8 text-left text-14 font-semibold text-adm-ink hover:underline">
++                <span className={`size-10 rounded-full ${CORNER_BG[c.id]}`} aria-hidden="true" />
++                {c.title}
++              </button>
++              <p className="text-12 text-adm-muted">{c.about}</p>
++              <TargetList c={c} />
++            </div>
++          ))}
++        </div>
++      </Panel>
++
++      <Panel title="From bad sleep to good sleep, step by step" description="How the app runs it today, with the number we watch at each step. Tap a step.">
++        <ol className="grid gap-8 md:grid-cols-4 xl:grid-cols-7">
++          {steps.map((s, i) => (
++            <li key={s.id} className="min-w-0">
++              <button
++                type="button"
++                data-step={s.id}
++                onClick={() =>
++                  open({
++                    kicker: `Step ${i + 1} of ${steps.length}`,
++                    title: s.title,
++                    summary: s.inApp,
++                    numbers: [{ label: s.metric, value: s.value }, { label: 'Kind of number', value: VALUE_KIND_TEXT[s.kind] }],
++                  })
++                }
++                className="flex h-full w-full flex-col gap-4 rounded-8 border border-adm-line p-10 text-left hover:bg-adm-hover"
++              >
++                <span className="text-11 font-semibold text-adm-muted">Step {i + 1}</span>
++                <span className="text-13 font-semibold text-adm-ink">{s.title}</span>
++                <span className="text-11 text-adm-ink-2">{s.inApp}</span>
++                <span className="mt-auto pt-4 text-12 font-semibold tabular-nums text-adm-ink">{s.value}</span>
++                <span className="text-11 text-adm-muted">{s.metric}</span>
++                <KindBadge kind={s.kind} />
++              </button>
++            </li>
++          ))}
++        </ol>
++        <p className="text-12 text-adm-muted">After the check-in, the next chapter starts again at step 2 until the score reaches 85. The cost model behind these numbers is in Reports → Cost report.</p>
++      </Panel>
++
++      <Panel title="Five wellness worlds" description="The business owner’s scenario from the spec: stage 1 (today) → stage 3 (after 100,000+ sessions). Not measured.">
++        <div className="flex flex-wrap gap-6" role="tablist" aria-label="Wellness world">
++          {WORLDS.map((x) => (
++            <button
++              key={x.id}
++              type="button"
++              role="tab"
++              aria-selected={x.id === world}
++              data-world-tab={x.id}
++              onClick={() => setWorld(x.id)}
++              className={`rounded-full border px-12 py-4 text-12 font-medium ${x.id === world ? 'border-adm-ink bg-adm-ink text-adm-surface' : 'border-adm-line text-adm-ink-2 hover:bg-adm-hover'}`}
++            >
++              {x.title}
++            </button>
++          ))}
++        </div>
++        <button
++          type="button"
++          data-world-card={w.id}
++          onClick={() =>
++            open({
++              kicker: 'The business owner’s scenario',
++              title: `${w.title}: ${w.bad} → ${w.good}`,
++              summary: 'Figures from the spec PDF, §5. They are design assumptions, not results; the only measured costs are the 2025 test sessions.',
++              labels: ['scenario'],
++              numbers: [
++                { label: 'Chapters to flip', value: `${w.chapters[0]} → ${w.chapters[1]}` },
++                { label: 'Cost per flip', value: `$${w.costPerFlip[0].toFixed(2)} → $${w.costPerFlip[1].toFixed(2)}` },
++                { label: 'Flip chance', value: `${Math.round(w.success[0] * 1000) / 10}% → ${Math.round(w.success[1] * 1000) / 10}%` },
++              ],
++            })
++          }
++          className="flex flex-col gap-8 rounded-12 border border-adm-line p-12 text-left hover:bg-adm-hover"
++        >
++          <span className="flex flex-wrap items-center gap-8 text-14 font-semibold text-adm-ink">
++            {w.bad} <ArrowRight size={14} aria-hidden="true" /> {w.good}
++            <Badge tone="critical">The business owner’s scenario</Badge>
++          </span>
++          <dl className="grid grid-cols-1 gap-8 sm:grid-cols-3">
++            {[
++              ['Chapters to flip', `${w.chapters[0]} → ${w.chapters[1]}`],
++              ['Cost per flip', `$${w.costPerFlip[0].toFixed(2)} → $${w.costPerFlip[1].toFixed(2)}`],
++              ['Flip chance', `${Math.round(w.success[0] * 1000) / 10}% → ${Math.round(w.success[1] * 1000) / 10}%`],
++            ].map(([k, v]) => (
++              <div key={k} className="flex flex-col gap-2 rounded-8 bg-adm-bg p-10">
++                <dt className="text-11 text-adm-muted">{k}</dt>
++                <dd className="text-14 font-semibold tabular-nums text-adm-ink">{v}</dd>
++              </div>
++            ))}
++          </dl>
++        </button>
++      </Panel>
++
++      <Details title="What the words mean here" hint="flip, uplift, chapter">
++        <ul className="flex list-disc flex-col gap-4 pl-18 text-13 text-adm-ink-2">
++          <li><strong>Flip</strong>: one person going from a bad state (25 out of 100 on their own check-in) to a good one (85).</li>
++          <li><strong>Uplift per chapter</strong>: how many points the check-in after a chapter rises over the one before.</li>
++          <li><strong>Chapter</strong>: one AI-made audio session in a person’s journey.</li>
++          <li>“Therapeutic” is only the internal name of this metric line. What the product says to people stays wellness: no claim that anything treats a condition.</li>
++        </ul>
++      </Details>
++    </div>
++  )
++}
+diff --git a/src/demo/modules.ts b/src/demo/modules.ts
+index 58211bc..967b9ca 100644
+--- a/src/demo/modules.ts
++++ b/src/demo/modules.ts
+@@ -244,6 +244,8 @@ export const DEMO_MODULES: DemoModule[] = [
+   { id: 'adminUserJourney', kind: 'admin', label: 'User journey', description: 'The journey map: four stages (Reflect, Create, Experience, Share), their moments, the feature each suggests, and the screens that serve them.', route: '/admin/user-journey', built: true },
+   { id: 'adminPersonas', kind: 'admin', label: 'Personas', description: '300 synthetic personas as candidates for AI-run research, with role-play prompts and balanced panels.', route: '/admin/personas', built: true },
+   { id: 'adminBusinessFunnel', kind: 'admin', label: 'Business funnel', description: 'The brief’s stages from a free start to Aurelia Plus, with targets, the buyer agents’ prediction, the feedback group and a decision log.', route: '/admin/business-funnel', built: true },
++  { id: 'adminTherapeuticMap', kind: 'admin', label: 'Therapeutic map', description: 'Product, business and wellness as one triangle with each corner’s core targets; the bad-to-good sleep process as the app runs it; the five wellness worlds (scenario).', route: '/admin/therapeutic-map', built: true },
++  { id: 'adminHealingMap', kind: 'admin', label: 'Healing Map', description: 'Rings of bad states, building blocks and good states; every link says where its strength comes from: design sample, cited research, or learned from users (none yet).', route: '/admin/healing-map', built: true },
+   { id: 'adminBuyerAgent', kind: 'admin', label: 'Buyer agent results', description: 'What a buyer agent answered as each persona in a panel: try, pay, price, objections, test cases. Runs v1–v3 and the re-run by production version.', route: '/admin/buyer-agent', built: true },
+   { id: 'adminReportsOverview', kind: 'admin', label: 'Reports overview', description: 'How Aurelia improves, as one map: the sources we learn from, the reports and tests that read them, and the decisions and versions that came out. Details open in a drawer.', route: '/admin/reports', built: true },
+   { id: 'adminReportUxFeedback', kind: 'admin', label: 'UX feedback report', description: 'The latest feedback group view (was Feedback group · v2) with a summary-first top: goal, headline, key numbers, next steps. Sample data until the study runs.', route: '/admin/reports/ux-feedback', built: true },
+diff --git a/src/versions/releases.ts b/src/versions/releases.ts
+index 03abec7..66460e1 100644
+--- a/src/versions/releases.ts
++++ b/src/versions/releases.ts
+@@ -14,6 +14,8 @@
+ // BUILD.environment !== 'production'. Since J153 nothing is waiting.
+ 
+ 
++import { BUILD } from '../lib/build'
++
+ export const RELEASES = {
+   /** Figma "Changes" (16906:4947) item 1: one Chapter card + a Review sheet instead of the fanned deck. */
+   chapterCard: true,
+@@ -39,4 +41,6 @@ export const RELEASES = {
+   businessFunnel: true,
+   /** Admin → Reports (U116, J167): the Buyer agent report and the Combination report, each with a source graph. On both sites since J173. */
+   reports: true,
++  /** Admin → Product lab → Therapeutic map and Healing Map (U131, J183). Staging only. */
++  therapeuticMaps: BUILD.environment !== 'production',
+ } as const
+-- 
+2.43.0
+

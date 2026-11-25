@@ -1,0 +1,907 @@
+From 9a6c520e09689220523fa946878c9c8e4b320449 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 25 Nov 2026 11:15:13 +0000
+Subject: [PATCH] =?UTF-8?q?Buyer=20agent=20report:=20visual=20=E2=80=94=20?=
+ =?UTF-8?q?funnels=20per=20test,=20a=20people=20grid,=20who=20says=20yes,?=
+ =?UTF-8?q?=20price=20ladder,=20why=20no,=20what=20moves=20people=20(U130,?=
+ =?UTF-8?q?=20J183)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ src/admin/data/buyerViz.test.ts               |  67 +++
+ src/admin/data/buyerViz.ts                    | 208 ++++++++
+ .../pages/reports/BuyerAgentReportPage.tsx    |  67 ++-
+ src/admin/pages/reports/BuyerViz.tsx          | 451 ++++++++++++++++++
+ src/admin/pages/reports/SummaryCharts.tsx     |  12 +-
+ 5 files changed, 796 insertions(+), 9 deletions(-)
+ create mode 100644 src/admin/data/buyerViz.test.ts
+ create mode 100644 src/admin/data/buyerViz.ts
+ create mode 100644 src/admin/pages/reports/BuyerViz.tsx
+
+diff --git a/src/admin/data/buyerViz.test.ts b/src/admin/data/buyerViz.test.ts
+new file mode 100644
+index 0000000..3c6e0d3
+--- /dev/null
++++ b/src/admin/data/buyerViz.test.ts
+@@ -0,0 +1,67 @@
++import { describe, expect, it } from 'vitest'
++import { RUN_V5 } from './buyerRunV5'
++import { v6Tallies } from './buyerRunV6'
++import { v7Tallies } from './buyerRunV7'
++import { funnel, heat, objections, priceLadder, slopes, vizTests } from './buyerViz'
++
++describe('buyer report charts (U130)', () => {
++  const tests = vizTests()
++  const [t5, t6, t7] = tests
++
++  it('covers tests 5, 6 and 7 with their full panels', () => {
++    expect(tests.map((t) => t.rows.length)).toEqual([36, 60, 100])
++    expect(t5.rows.length).toBe(RUN_V5.answers.length)
++  })
++
++  it('funnels agree with the runs’ own tallies', () => {
++    const f6 = funnel(t6)
++    expect(f6[1].count).toBe(v6Tallies().A.tries.yes)
++    expect(f6[2].count).toBe(v6Tallies().A.pays.yes)
++    expect(f6[3].count).toBeNull()
++    const f7 = funnel(t7)
++    expect(f7[1].count).toBe(v7Tallies().B.tries.yes)
++    expect(f7[3].count).toBe(v7Tallies().day30B)
++    for (const t of tests) expect(funnel(t)[0].count).toBe(t.rows.length)
++  })
++
++  it('every segment of the heat map adds back to the panel', () => {
++    for (const t of [t6, t7]) {
++      const cells = heat(t)
++      for (const seg of new Set(cells.map((c) => c.segment))) {
++        const rows = cells.filter((c) => c.segment === seg)
++        expect(rows.reduce((s, c) => s + c.n, 0)).toBe(t.rows.length)
++        expect(rows.reduce((s, c) => s + c.tries, 0)).toBe(funnel(t)[1].count)
++      }
++    }
++    expect(new Set(heat(t7).map((c) => c.segment))).toEqual(new Set(['ageBand', 'region', 'condition', 'found', 'aiTrust']))
++  })
++
++  it('the price ladder climbs', () => {
++    for (const t of tests) {
++      const p = priceLadder(t)
++      expect(p.tooCheap).toBeLessThanOrEqual(p.bargain)
++      expect(p.bargain).toBeLessThanOrEqual(p.expensive)
++      expect(p.expensive).toBeLessThanOrEqual(p.tooExpensive)
++    }
++  })
++
++  it('objections count everyone who would not pay, ranked', () => {
++    for (const t of tests) {
++      const o = objections(t)
++      const notPaying = t.rows.filter((r) => r.pays !== 'yes').length
++      expect(o.reduce((s, x) => s + x.count, 0)).toBe(notPaying)
++      expect(o.map((x) => x.count)).toEqual([...o.map((x) => x.count)].sort((a, b) => b - a))
++      for (const x of o) expect(x.quotes.length).toBeGreaterThan(0)
++    }
++  })
++
++  it('slopes never lose people and name six changes', () => {
++    const s = slopes()
++    expect(s).toHaveLength(6)
++    for (const x of s) {
++      expect(x.before).toBeLessThanOrEqual(x.moved)
++      expect(x.after).toBeLessThanOrEqual(x.moved)
++    }
++    expect(s.some((x) => x.moved > 0)).toBe(true)
++  })
++})
+diff --git a/src/admin/data/buyerViz.ts b/src/admin/data/buyerViz.ts
+new file mode 100644
+index 0000000..6d63eaa
+--- /dev/null
++++ b/src/admin/data/buyerViz.ts
+@@ -0,0 +1,208 @@
++import { THEME_LABEL, type BuyerAnswer, type Theme, type Verdict } from './buyerRuns'
++import { APP_PLUS, byId2 } from './buyerPlay'
++import { RUN_V3, V3_CHANGES } from './buyerRunV3'
++import { RUN_V5 } from './buyerRunV5'
++import { RUN_V6, V6_CHANGES } from './buyerRunV6'
++import { RUN_V7 } from './buyerRunV7'
++import type { Persona } from './personas'
++
++/*
++ * The buyer agent report's charts (U130, J183), as data. Every figure here
++ * is counted from the run modules' answers; nothing is typed. All of it is
++ * about simulated people: a prediction, never a measurement.
++ */
++
++export type VizTestId = 'v5' | 'v6' | 'v7'
++
++/** One answer as a chart reads it: the verdicts on the offer the test led with. */
++export interface VizRow {
++  personaId: string
++  persona: Persona
++  tries: Verdict
++  pays: Verdict
++  /** null when the test did not ask it for this offer. */
++  day30: Verdict | null
++  answer: BuyerAnswer
++}
++
++export interface VizTest {
++  id: VizTestId
++  label: string
++  /** The offer the test led with, in plain words. */
++  offer: string
++  rows: VizRow[]
++}
++
++const rowsOf = (answers: BuyerAnswer[], pick: (a: BuyerAnswer) => { tries: Verdict; pays: Verdict; day30: Verdict | null }): VizRow[] =>
++  answers.map((a) => ({ personaId: a.personaId, persona: byId2(a.personaId), answer: a, ...pick(a) }))
++
++/** Tests 5–7 on the offer each led with (the same choice as the success trend). */
++export function vizTests(): VizTest[] {
++  return [
++    { id: 'v5', label: 'Test 5', offer: `Today’s app at $${APP_PLUS.monthly} a month`, rows: rowsOf(RUN_V5.answers, (a) => ({ tries: a.tries, pays: a.pays, day30: a.day30 ?? null })) },
++    // Test 6 led with plain freemium (its offer A); day 30 was only asked of the retreat.
++    { id: 'v6', label: 'Test 6', offer: 'Today’s app, free to start', rows: rowsOf(RUN_V6.answers, (a) => ({ tries: a.control!.tries, pays: a.control!.pays, day30: null })) },
++    { id: 'v7', label: 'Test 7', offer: 'Free to start, plus a free library', rows: rowsOf(RUN_V7.answers, (a) => ({ tries: a.tries, pays: a.pays, day30: a.day30 ?? null })) },
++  ]
++}
++
++/* ---------------------------------------------------------------- Funnel */
++
++export interface FunnelStep {
++  key: 'saw' | 'tries' | 'pays' | 'day30'
++  label: string
++  /** null: not asked in this test. */
++  count: number | null
++  n: number
++}
++
++export function funnel(t: VizTest): FunnelStep[] {
++  const n = t.rows.length
++  const asked30 = t.rows.some((r) => r.day30 !== null)
++  return [
++    { key: 'saw', label: 'Saw it', count: n, n },
++    { key: 'tries', label: 'Would try', count: t.rows.filter((r) => r.tries === 'yes').length, n },
++    { key: 'pays', label: 'Would pay', count: t.rows.filter((r) => r.pays === 'yes').length, n },
++    { key: 'day30', label: 'Still using at day 30', count: asked30 ? t.rows.filter((r) => r.day30 === 'yes').length : null, n },
++  ]
++}
++
++/* ------------------------------------------------------------- Heat map */
++
++export type SegmentKey = 'ageBand' | 'region' | 'condition' | 'found' | 'aiTrust'
++
++export const SEGMENT_LABEL: Record<SegmentKey, string> = {
++  ageBand: 'Age',
++  region: 'Region',
++  condition: 'Sleep / stress at the start',
++  found: 'How they found Aurelia',
++  aiTrust: 'Trust in AI',
++}
++
++const ORDER: Partial<Record<SegmentKey, string[]>> = {
++  condition: ['mild', 'moderate', 'severe'],
++  aiTrust: ['high', 'medium', 'low', 'none'],
++  found: ['creator follower', 'organic', 'employer'],
++}
++
++export interface HeatCell {
++  segment: SegmentKey
++  value: string
++  n: number
++  tries: number
++  pays: number
++}
++
++const valueOf = (r: VizRow, k: SegmentKey) => (k === 'ageBand' || k === 'region' ? r.persona[k] : (r.answer.vars?.[k] ?? '–'))
++
++/** Who would try and who would pay (yes), per segment value; only the segments the test recorded. */
++export function heat(t: VizTest): HeatCell[] {
++  const keys = (Object.keys(SEGMENT_LABEL) as SegmentKey[]).filter((k) => k === 'ageBand' || k === 'region' || t.rows.some((r) => r.answer.vars?.[k]))
++  return keys.flatMap((k) => {
++    const m = new Map<string, VizRow[]>()
++    for (const r of t.rows) m.set(valueOf(r, k), [...(m.get(valueOf(r, k)) ?? []), r])
++    const order = ORDER[k]
++    return [...m.entries()]
++      .sort(([a], [b]) => (order ? order.indexOf(a) - order.indexOf(b) : a.localeCompare(b)))
++      .map(([value, rs]) => ({ segment: k, value, n: rs.length, tries: rs.filter((r) => r.tries === 'yes').length, pays: rs.filter((r) => r.pays === 'yes').length }))
++  })
++}
++
++/* ---------------------------------------------------------------- Price */
++
++const median = (xs: number[]) => {
++  const s = [...xs].sort((a, b) => a - b)
++  const m = Math.floor(s.length / 2)
++  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2
++}
++
++export interface PriceLadder {
++  tooCheap: number
++  bargain: number
++  expensive: number
++  tooExpensive: number
++  /** How many put Aurelia's monthly price at or past "getting expensive". */
++  overExpensive: number
++  n: number
++}
++
++/** The middle answer to each of the four price questions, in US dollars a month. */
++export function priceLadder(t: VizTest): PriceLadder {
++  const ps = t.rows.map((r) => r.answer.prices)
++  return {
++    tooCheap: median(ps.map((p) => p.tooCheap)),
++    bargain: median(ps.map((p) => p.bargain)),
++    expensive: median(ps.map((p) => p.expensive)),
++    tooExpensive: median(ps.map((p) => p.tooExpensive)),
++    overExpensive: ps.filter((p) => p.expensive <= APP_PLUS.monthly).length,
++    n: ps.length,
++  }
++}
++
++/* ---------------------------------------------------------- Objections */
++
++export interface Objection {
++  theme: Theme
++  label: string
++  count: number
++  /** Of the people who would not pay (said no or maybe). */
++  n: number
++  quotes: { personaId: string; name: string; quote: string; objection: string }[]
++}
++
++/** The main reason given by everyone who would not pay yes, ranked. */
++export function objections(t: VizTest): Objection[] {
++  const no = t.rows.filter((r) => r.pays !== 'yes')
++  const m = new Map<Theme, VizRow[]>()
++  for (const r of no) m.set(r.answer.theme, [...(m.get(r.answer.theme) ?? []), r])
++  return [...m.entries()]
++    .map(([theme, rs]) => ({
++      theme,
++      label: THEME_LABEL[theme],
++      count: rs.length,
++      n: no.length,
++      quotes: rs.slice(0, 3).map((r) => ({ personaId: r.personaId, name: r.persona.name, quote: r.answer.quote, objection: r.answer.objection })),
++    }))
++    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
++}
++
++/* ------------------------------------------------------- What moves people */
++
++export interface Slope {
++  key: string
++  theme: string
++  change: string
++  test: string
++  /** People whose answer this change moved. */
++  moved: number
++  n: number
++  /** Of the moved people: how many would try (yes) without it, and with it. */
++  before: number
++  after: number
++}
++
++const slopeOf = (answers: BuyerAnswer[], key: string, theme: string, change: string, test: string): Slope => {
++  const moved = answers.filter((a) => a.movedBy?.includes(key))
++  return {
++    key,
++    theme,
++    change,
++    test,
++    moved: moved.length,
++    n: answers.length,
++    before: moved.filter((a) => a.control?.tries === 'yes').length,
++    after: moved.filter((a) => a.tries === 'yes').length,
++  }
++}
++
++/** The six changes that flipped answers, each before and after, among the people it moved. */
++export function slopes(): Slope[] {
++  return [
++    slopeOf(RUN_V3.answers, 'no-account', 'No account for the first session', V3_CHANGES['no-account'].label, 'Test 3'),
++    slopeOf(RUN_V3.answers, 'language', 'Their own language', V3_CHANGES.language.label, 'Test 3'),
++    slopeOf(RUN_V3.answers, 'data-line', 'A clear data promise', V3_CHANGES['data-line'].label, 'Test 3'),
++    slopeOf(RUN_V3.answers, 'local-price', 'A price in local money', V3_CHANGES['local-price'].label, 'Test 3'),
++    slopeOf(RUN_V7.answers, 'free-library', 'A free library', V6_CHANGES['free-library']?.label ?? 'Free core library', 'Test 7'),
++    slopeOf(RUN_V6.answers, 'creator-voice', 'A coach’s own voice', V6_CHANGES['creator-voice']?.label ?? 'Creator voice', 'Test 6'),
++  ].sort((a, b) => b.moved / b.n - a.moved / a.n)
++}
+diff --git a/src/admin/pages/reports/BuyerAgentReportPage.tsx b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+index 536834b..4a1c222 100644
+--- a/src/admin/pages/reports/BuyerAgentReportPage.tsx
++++ b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+@@ -13,6 +13,9 @@ import { LabelBadge, SourcesSection } from './ReportParts'
+ import { Details, SummaryBlock } from './ReportSummary'
+ import { SuccessTrend, WhatMoves } from './SummaryCharts'
+ import { buyerLevers, buyerSummary, buyerTrend } from '../../data/reportSummaries'
++import { SEGMENT_LABEL, funnel, heat, objections, priceLadder, slopes as buildSlopes, vizTests } from '../../data/buyerViz'
++import { PeopleGrid, PriceLadderChart, TestFunnels, WhatMovesSlope, WhoSaysYes, WhyNo } from './BuyerViz'
++import { RichText } from './Term'
+ 
+ const fmtDate = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+ 
+@@ -39,6 +42,15 @@ function BuyerAgentReport() {
+   const levers = useMemo(() => buyerLevers(), [])
+   const map = useMemo(() => mapFor(buildIterationMap(), 'buyer'), [])
+   const open = useDetail()
++  const tests = useMemo(() => vizTests(), [])
++  const slopes = useMemo(() => buildSlopes(), [])
++  const t7 = tests[tests.length - 1]
++  const f7 = funnel(t7)
++  const best = [...heat(t7)].filter((c) => c.n >= 10).sort((a, b) => b.tries / b.n - a.tries / a.n)[0]
++  const worst = [...heat(t7)].filter((c) => c.n >= 10).sort((a, b) => a.tries / a.n - b.tries / b.n)[0]
++  const p7 = priceLadder(t7)
++  const no7 = objections(t7)[0]
++  const pc = (k: number, n: number) => `${Math.round((k / n) * 100)}%`
+ 
+   return (
+     <div className="flex flex-col gap-16">
+@@ -54,17 +66,60 @@ function BuyerAgentReport() {
+ 
+       <SummaryBlock s={summary} />
+ 
+-      <div className="grid gap-16 lg:grid-cols-[3fr_2fr]">
+-        <Panel title="In every test, far fewer would pay than would try" description="Seven rounds of asking simulated people, oldest on the left. Hover a test to see what we changed.">
+-          <SuccessTrend points={trend} />
++      <p className="text-12 text-adm-muted">
++        <RichText text="Every chart below is about {{simulated|simulated people}}: a prediction, not a measurement." />
++      </p>
++
++      <section id="funnels" className="min-w-0 scroll-mt-16">
++        <Panel title={`Most drop out before paying: in test 7, ${f7[1].count} of ${f7[0].count} would try, ${f7[2].count} would pay, ${f7[3].count ?? 0} still use it at day 30`} description="Simulated. For each recent test: how many saw the offer, would try it, would pay for it and would still be using it a month later.">
++          <TestFunnels tests={tests} />
+         </Panel>
+-        <section id="what-moves" className="min-w-0 scroll-mt-16">
+-          <Panel title={`“${levers[0]?.theme ?? '—'}” changed the most answers`} description="Each bar: the share of simulated people whose answer changed when we added that idea. Longer bar, bigger effect.">
+-            <WhatMoves levers={levers} />
++      </section>
++
++      <div className="grid gap-16 lg:grid-cols-2 lg:items-start">
++        <section id="people" className="min-w-0 scroll-mt-16">
++          <Panel title="Every simulated person, one mark each" description="Switch the test or the question. Tap a mark to read who that person is and why they answered as they did.">
++            <PeopleGrid tests={tests} />
++          </Panel>
++        </section>
++        <section id="who-says-yes" className="min-w-0 scroll-mt-16">
++          <Panel
++            title={best && worst ? `Most likely to try in test 7: ${SEGMENT_LABEL[best.segment].toLowerCase()} “${best.value}” (${pc(best.tries, best.n)}); least: ${SEGMENT_LABEL[worst.segment].toLowerCase()} “${worst.value}” (${pc(worst.tries, worst.n)})` : 'Who says yes'}
++            description="Simulated. Test 7 by default; switch to test 6. Darker means more of that group said yes."
++          >
++            <WhoSaysYes tests={tests.slice(1)} />
++          </Panel>
++        </section>
++      </div>
++
++      <div className="grid gap-16 lg:grid-cols-2">
++        <section id="price" className="min-w-0 scroll-mt-16">
++          <Panel title={`$10 a month sits past what most call fair: in test 7, ${p7.overExpensive} of ${p7.n} already call it expensive`} description="Simulated. What people called too cheap, a bargain, getting expensive and too expensive, against Aurelia’s price.">
++            <PriceLadderChart tests={tests} />
++          </Panel>
++        </section>
++        <section id="why-no" className="min-w-0 scroll-mt-16">
++          <Panel title={no7 ? `“${no7.label}” is the top reason not to pay in test 7 (${no7.count} of ${no7.n})` : 'Why people say no'} description="Simulated. The main reason each person gave for not paying, ranked. Tap a bar for what they said.">
++            <WhyNo tests={tests} />
+           </Panel>
+         </section>
+       </div>
+ 
++      <section id="what-moves" className="grid min-w-0 scroll-mt-16 gap-16 lg:grid-cols-[3fr_2fr]">
++        <Panel title={`“${slopes[0]?.theme ?? '—'}” changed the most answers`} description="Simulated. For each change we tested: among the people it moved, how many would try without it and with it.">
++          <WhatMovesSlope slopes={slopes} />
++        </Panel>
++        <Panel title="How much of each panel a change moved" description="Each bar: the share of that test’s simulated people whose answer changed when we added the idea.">
++          <WhatMoves levers={levers} />
++        </Panel>
++      </section>
++
++      <section id="across-tests" className="min-w-0 scroll-mt-16">
++        <Panel title="Across all seven tests, far fewer would pay than would try" description="Simulated. Oldest on the left. The people, offer and price changed between tests (written under each one), so read it as a story, not like for like. Hover or tap a test for details.">
++          <SuccessTrend points={trend} />
++        </Panel>
++      </section>
++
+       <Details title="How each report was made" hint="the five inputs and what changed between reports">
+       <section id="input-graph" className="scroll-mt-16">
+         <Panel title="Inputs → report versions" description="Each row is one of the five inputs, each column a report version. A cell is the exact value that report used.">
+diff --git a/src/admin/pages/reports/BuyerViz.tsx b/src/admin/pages/reports/BuyerViz.tsx
+new file mode 100644
+index 0000000..394ead1
+--- /dev/null
++++ b/src/admin/pages/reports/BuyerViz.tsx
+@@ -0,0 +1,451 @@
++import { useState, type ReactNode } from 'react'
++import type { Verdict } from '../../data/buyerRuns'
++import { APP_PLUS } from '../../data/buyerPlay'
++import { SEGMENT_LABEL, funnel, heat, objections, priceLadder, type Slope, type VizRow, type VizTest, type VizTestId } from '../../data/buyerViz'
++import { useDetail } from './DetailDrawer'
++
++/*
++ * The buyer agent report, drawn (U130, J183): funnels per test, a people
++ * grid, who says yes, the price ladder, why people say no and what moves
++ * them. Every number comes from data/buyerViz.ts. Colour never works alone:
++ * each verdict also has its own shape, every bar and cell carries its number.
++ */
++
++const pct = (k: number, n: number) => (n ? `${Math.round((k / n) * 100)}%` : '–')
++const money = (x: number) => `$${x % 1 ? x.toFixed(2) : x}`
++
++/** A row of buttons for picking a test or a measure; one row, above the chart. */
++export function Toggle<T extends string>({ value, options, onChange, label }: { value: T; options: { id: T; label: string }[]; onChange: (v: T) => void; label: string }) {
++  return (
++    <div role="group" aria-label={label} className="inline-flex flex-wrap gap-4 rounded-8 bg-adm-bg p-2">
++      {options.map((o) => (
++        <button
++          key={o.id}
++          type="button"
++          aria-pressed={value === o.id}
++          onClick={() => onChange(o.id)}
++          className={`rounded-4 px-10 py-4 text-12 font-medium ${value === o.id ? 'bg-adm-surface text-adm-ink shadow-sm' : 'text-adm-ink-2 hover:text-adm-ink'}`}
++        >
++          {o.label}
++        </button>
++      ))}
++    </div>
++  )
++}
++
++function Caption({ children }: { children: ReactNode }) {
++  return <p className="text-11 text-adm-muted">{children}</p>
++}
++
++/* ---------------------------------------------------------------- Funnels */
++
++/** “Saw it → would try → would pay → still using at day 30”, one column per test. */
++export function TestFunnels({ tests }: { tests: VizTest[] }) {
++  return (
++    <div className="flex flex-col gap-10">
++      <div className="grid gap-12 lg:grid-cols-3">
++        {tests.map((t) => (
++          <figure key={t.id} className="flex min-w-0 flex-col gap-8 rounded-8 border border-adm-line p-12">
++            <figcaption className="flex flex-col">
++              <span className="text-13 font-semibold text-adm-ink">
++                {t.label} · {t.rows.length} simulated people
++              </span>
++              <span className="text-11 text-adm-muted">{t.offer}</span>
++            </figcaption>
++            <ol className="flex flex-col gap-6">
++              {funnel(t).map((s) => (
++                <li key={s.key} className="grid grid-cols-[112px_1fr] items-center gap-8">
++                  <span className="text-12 text-adm-ink-2">{s.label}</span>
++                  {s.count === null ? (
++                    <span className="text-11 italic text-adm-muted">not asked for this offer</span>
++                  ) : (
++                    <span className="flex min-w-0 items-center gap-6">
++                      <span className="h-14 min-w-2 rounded-r-4 bg-adm-s1" style={{ width: `${(s.count / s.n) * 62}%`, opacity: s.key === 'saw' ? 0.35 : 1 }} aria-hidden="true" />
++                      <span className="shrink-0 text-12 tabular-nums text-adm-ink">
++                        {s.count} <span className="text-adm-muted">· {pct(s.count, s.n)}</span>
++                      </span>
++                    </span>
++                  )}
++                </li>
++              ))}
++            </ol>
++          </figure>
++        ))}
++      </div>
++      <Caption>Each bar is the share of that test’s simulated people. The offer and the people differ between tests, so compare the shape, not only the numbers.</Caption>
++    </div>
++  )
++}
++
++/* ------------------------------------------------------------ People grid */
++
++const VERDICT_TEXT: Record<Verdict, string> = { yes: 'Yes', maybe: 'Maybe', no: 'No' }
++const RANK: Record<Verdict, number> = { yes: 0, maybe: 1, no: 2 }
++
++/** Yes: a filled dot. Maybe: a ring with a dot. No: a small hollow ring. Shape and colour both say it. */
++function VerdictMark({ v, size = 16 }: { v: Verdict; size?: number }) {
++  const c = size / 2
++  return (
++    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true" className="block">
++      {v === 'yes' && <circle cx={c} cy={c} r={c - 1} className="fill-adm-s3" />}
++      {v === 'maybe' && (
++        <>
++          <circle cx={c} cy={c} r={c - 2} fill="none" strokeWidth={2.5} className="stroke-adm-s4" />
++          <circle cx={c} cy={c} r={c / 3} className="fill-adm-s4" />
++        </>
++      )}
++      {v === 'no' && <circle cx={c} cy={c} r={c / 2} fill="none" strokeWidth={1.5} className="stroke-adm-muted" />}
++    </svg>
++  )
++}
++
++export function VerdictLegend() {
++  return (
++    <div className="flex flex-wrap items-center gap-x-14 gap-y-4 text-12 text-adm-ink-2">
++      {(['yes', 'maybe', 'no'] as const).map((v) => (
++        <span key={v} className="inline-flex items-center gap-6">
++          <VerdictMark v={v} size={14} />
++          {VERDICT_TEXT[v]}
++        </span>
++      ))}
++    </div>
++  )
++}
++
++function useOpenPerson() {
++  const open = useDetail()
++  return (r: VizRow, t: VizTest) => {
++    const p = r.persona
++    const a = r.answer
++    open({
++      kicker: `Simulated person · ${t.label}`,
++      title: `${p.name}, ${p.age}`,
++      summary: `{{simulated|A simulated person}}: ${p.occupation} in ${p.city}, ${p.country}. In their words: “${a.quote}”`,
++      numbers: [
++        { label: 'Would try', value: VERDICT_TEXT[r.tries] },
++        { label: 'Would pay', value: VERDICT_TEXT[r.pays] },
++        { label: 'Still using at day 30', value: r.day30 ? VERDICT_TEXT[r.day30] : 'Not asked' },
++        { label: 'Fair price, a month', value: `${money(a.prices.bargain)}–${money(a.prices.expensive)}` },
++      ],
++      labels: ['prediction'],
++      extra: (
++        <dl className="flex flex-col gap-8 text-12">
++          {[
++            ['Who they are', `${p.ageBand} · ${p.region} · ${p.workPattern} · ${p.household}`],
++            ['Main reason against', a.objection],
++            ['What would change their mind', a.flip],
++            ['Why, as the AI played them', a.reasoning],
++          ].map(([k, v]) => (
++            <div key={k} className="flex flex-col gap-2">
++              <dt className="text-11 font-semibold uppercase tracking-wider text-adm-muted">{k}</dt>
++              <dd className="text-adm-ink">{v}</dd>
++            </div>
++          ))}
++        </dl>
++      ),
++      to: `/admin/buyer-agent?v=${t.id.slice(1)}`,
++      toLabel: 'Every answer in this test',
++    })
++  }
++}
++
++/** One dot per simulated person, sorted yes → maybe → no; a tap opens who they are and what they said. */
++export function PeopleGrid({ tests }: { tests: VizTest[] }) {
++  const [id, setId] = useState<VizTestId>(tests[tests.length - 1].id)
++  const [measure, setMeasure] = useState<'tries' | 'pays'>('tries')
++  const openPerson = useOpenPerson()
++  const t = tests.find((x) => x.id === id) ?? tests[0]
++  const rows = [...t.rows].sort((a, b) => RANK[a[measure]] - RANK[b[measure]])
++  const count = (v: Verdict) => t.rows.filter((r) => r[measure] === v).length
++  return (
++    <div className="flex flex-col gap-10">
++      <div className="flex flex-wrap items-center gap-8">
++        <Toggle label="Test" value={id} onChange={setId} options={tests.map((x) => ({ id: x.id, label: x.label }))} />
++        <Toggle label="Question" value={measure} onChange={setMeasure} options={[{ id: 'tries', label: 'Would try' }, { id: 'pays', label: 'Would pay' }]} />
++      </div>
++      <p className="text-13 text-adm-ink">
++        <span className="font-semibold">
++          {count('yes')} of {t.rows.length}
++        </span>{' '}
++        say yes, {count('maybe')} maybe, {count('no')} no ({measure === 'tries' ? 'would try' : 'would pay'}).
++      </p>
++      <VerdictLegend />
++      <ul className="flex flex-wrap gap-4" aria-label={`${t.label}: one mark per simulated person`}>
++        {rows.map((r) => (
++          <li key={r.personaId}>
++            <button
++              type="button"
++              onClick={() => openPerson(r, t)}
++              title={`${r.persona.name}, ${r.persona.age}, ${r.persona.country}: ${VERDICT_TEXT[r[measure]]}`}
++              aria-label={`${r.persona.name}, ${r.persona.age}, ${r.persona.country}: ${measure === 'tries' ? 'would try' : 'would pay'} ${VERDICT_TEXT[r[measure]]}. Open details`}
++              data-person-dot
++              className="flex size-24 items-center justify-center rounded-4 hover:bg-adm-hover focus-visible:outline-2 focus-visible:outline-adm-ink"
++            >
++              <VerdictMark v={r[measure]} />
++            </button>
++          </li>
++        ))}
++      </ul>
++      <Caption>Each mark is one simulated person in {t.label} ({t.offer.toLowerCase()}). Tap one for their profile, their answer and their reasons.</Caption>
++    </div>
++  )
++}
++
++/* ---------------------------------------------------------------- Heat map */
++
++function cellStyle(share: number) {
++  const p = Math.round(share * 100)
++  return { background: `color-mix(in oklab, var(--color-adm-s1) ${Math.round(8 + share * 80)}%, var(--color-adm-surface))`, color: p >= 50 ? '#ffffff' : 'var(--color-adm-ink)' }
++}
++
++/** Share who would try and who would pay (yes), by segment, darker = more. */
++export function WhoSaysYes({ tests }: { tests: VizTest[] }) {
++  const [id, setId] = useState<VizTestId>(tests[tests.length - 1].id)
++  const t = tests.find((x) => x.id === id) ?? tests[0]
++  const cells = heat(t)
++  const segs = [...new Set(cells.map((c) => c.segment))]
++  return (
++    <div className="flex flex-col gap-10">
++      <div className="flex flex-wrap items-center justify-between gap-8">
++        <Toggle label="Test" value={id} onChange={setId} options={tests.map((x) => ({ id: x.id, label: x.label }))} />
++        <span className="inline-flex items-center gap-6 text-11 text-adm-muted">
++          0%
++          <span className="h-8 w-80 rounded-full" style={{ background: 'linear-gradient(to right, color-mix(in oklab, var(--color-adm-s1) 8%, var(--color-adm-surface)), var(--color-adm-s1))' }} aria-hidden="true" />
++          100%
++        </span>
++      </div>
++      <div className="overflow-x-auto">
++        <table className="w-full min-w-[300px] border-separate border-spacing-2 text-left text-12">
++          <thead>
++            <tr className="text-11 text-adm-muted">
++              <th className="py-4 pr-8 font-semibold">Group</th>
++              <th className="py-4 text-center font-semibold">Would try</th>
++              <th className="py-4 text-center font-semibold">Would pay</th>
++              <th className="py-4 pl-6 text-right font-semibold">People</th>
++            </tr>
++          </thead>
++          {segs.map((s) => (
++            <tbody key={s}>
++              <tr>
++                <th colSpan={4} scope="colgroup" className="pt-10 pb-2 text-11 font-semibold uppercase tracking-wider text-adm-muted">
++                  {SEGMENT_LABEL[s]}
++                </th>
++              </tr>
++              {cells
++                .filter((c) => c.segment === s)
++                .map((c) => (
++                  <tr key={c.value}>
++                    <th scope="row" className="py-4 pr-8 font-normal text-adm-ink">
++                      {c.value}
++                    </th>
++                    {([c.tries, c.pays] as const).map((k, i) => (
++                      <td key={i} className="w-[30%] rounded-4 px-8 py-6 text-center font-semibold tabular-nums" style={cellStyle(k / c.n)} title={`${c.value}: ${k} of ${c.n}`}>
++                        {pct(k, c.n)}
++                      </td>
++                    ))}
++                    <td className="py-4 pl-6 text-right tabular-nums text-adm-muted">{c.n}</td>
++                  </tr>
++                ))}
++            </tbody>
++          ))}
++        </table>
++      </div>
++      <Caption>Each cell: the share of that group who said yes. Groups under 10 people are too small to read much into.</Caption>
++    </div>
++  )
++}
++
++/* ------------------------------------------------------------ Price ladder */
++
++const PW = 640
++const PL = 72
++const PR = 24
++const ROW = 46
++
++/** The middle answer to the four price questions per test, against Aurelia’s price. */
++export function PriceLadderChart({ tests }: { tests: VizTest[] }) {
++  const ladders = tests.map((t) => ({ t, p: priceLadder(t) }))
++  const max = Math.ceil(Math.max(APP_PLUS.monthly, ...ladders.map((l) => l.p.tooExpensive)) / 2) * 2 + 2
++  const x = (v: number) => PL + (v / max) * (PW - PL - PR)
++  const H = 34 + ladders.length * ROW + 28
++  const ticks = Array.from({ length: max / 2 + 1 }, (_, i) => i * 2)
++  return (
++    <div className="flex flex-col gap-10">
++      <div className="flex flex-wrap items-center gap-x-14 gap-y-4 text-12 text-adm-ink-2">
++        <span className="inline-flex items-center gap-6">
++          <span className="h-10 w-16 rounded-2 bg-adm-s3" aria-hidden="true" /> Fair: a bargain to getting expensive
++        </span>
++        <span className="inline-flex items-center gap-6">
++          <span className="h-10 w-16 rounded-2 bg-adm-axis" aria-hidden="true" /> Too cheap to trust, or too expensive
++        </span>
++        <span className="inline-flex items-center gap-6">
++          <span className="h-12 w-0 border-l-2 border-dashed border-adm-critical" aria-hidden="true" /> Aurelia today, {money(APP_PLUS.monthly)} a month
++        </span>
++      </div>
++      <div className="overflow-x-auto">
++        <svg viewBox={`0 0 ${PW} ${H}`} className="block w-full min-w-[520px]" role="img" aria-label={`Price ladder per test: ${ladders.map(({ t, p }) => `${t.label} fair ${money(p.bargain)} to ${money(p.expensive)}`).join('; ')}; Aurelia costs ${money(APP_PLUS.monthly)}.`}>
++          {ticks.map((v) => (
++            <g key={v}>
++              <line x1={x(v)} x2={x(v)} y1={22} y2={H - 24} className="stroke-adm-grid" strokeWidth={1} />
++              <text x={x(v)} y={H - 8} textAnchor="middle" className="fill-adm-muted text-11 tabular-nums">
++                {money(v)}
++              </text>
++            </g>
++          ))}
++          <line x1={x(APP_PLUS.monthly)} x2={x(APP_PLUS.monthly)} y1={14} y2={H - 24} strokeDasharray="4 3" strokeWidth={2} className="stroke-adm-critical" />
++          <text x={x(APP_PLUS.monthly)} y={11} textAnchor="middle" className="fill-adm-ink text-11 font-semibold">
++            Aurelia {money(APP_PLUS.monthly)}
++          </text>
++          {ladders.map(({ t, p }, i) => {
++            const cy = 34 + i * ROW + 10
++            return (
++              <g key={t.id}>
++                <text x={0} y={cy + 4} className="fill-adm-ink text-12 font-semibold">
++                  {t.label}
++                </text>
++                <rect x={x(p.tooCheap)} y={cy - 6} width={x(p.bargain) - x(p.tooCheap) - 1} height={12} rx={2} className="fill-adm-axis" />
++                <rect x={x(p.bargain) + 1} y={cy - 6} width={x(p.expensive) - x(p.bargain) - 2} height={12} rx={2} className="fill-adm-s3" />
++                <rect x={x(p.expensive) + 1} y={cy - 6} width={x(p.tooExpensive) - x(p.expensive) - 1} height={12} rx={2} className="fill-adm-axis" />
++                {[p.tooCheap, p.bargain, p.expensive, p.tooExpensive].map((v, k) => (
++                  <text key={k} x={x(v)} y={cy + 22} textAnchor="middle" className={`text-11 tabular-nums ${k === 1 || k === 2 ? 'fill-adm-ink' : 'fill-adm-muted'}`}>
++                    {money(v)}
++                  </text>
++                ))}
++              </g>
++            )
++          })}
++        </svg>
++      </div>
++      <ul className="flex flex-col gap-2 text-12 text-adm-ink-2">
++        {ladders.map(({ t, p }) => (
++          <li key={t.id}>
++            <span className="font-semibold text-adm-ink">{t.label}:</span> {p.overExpensive} of {p.n} ({pct(p.overExpensive, p.n)}) already call {money(APP_PLUS.monthly)} a month expensive.
++          </li>
++        ))}
++      </ul>
++      <Caption>Each row: the middle answer of that test’s simulated people to “too cheap to trust”, “a bargain”, “getting expensive” and “too expensive”, in US dollars a month.</Caption>
++    </div>
++  )
++}
++
++/* --------------------------------------------------------------- Why no */
++
++/** The main reason of everyone who would not pay, ranked; a bar opens example quotes. */
++export function WhyNo({ tests }: { tests: VizTest[] }) {
++  const [id, setId] = useState<VizTestId>(tests[tests.length - 1].id)
++  const open = useDetail()
++  const t = tests.find((x) => x.id === id) ?? tests[0]
++  const rows = objections(t)
++  const max = Math.max(...rows.map((r) => r.count), 1)
++  return (
++    <div className="flex flex-col gap-10">
++      <Toggle label="Test" value={id} onChange={setId} options={tests.map((x) => ({ id: x.id, label: x.label }))} />
++      <ul className="flex flex-col gap-6">
++        {rows.map((r) => (
++          <li key={r.theme}>
++            <button
++              type="button"
++              onClick={() =>
++                open({
++                  kicker: `Why people say no · ${t.label}`,
++                  title: r.label,
++                  summary: `The main reason for ${r.count} of the ${r.n} {{simulated|simulated people}} who would not pay yes.`,
++                  labels: ['prediction'],
++                  extra: (
++                    <ul className="flex flex-col gap-10">
++                      {r.quotes.map((q) => (
++                        <li key={q.personaId} className="rounded-8 border border-adm-line bg-adm-bg p-10 text-12">
++                          <p className="text-adm-ink">“{q.quote}”</p>
++                          <p className="mt-4 text-adm-muted">
++                            {q.name} · {q.objection}
++                          </p>
++                        </li>
++                      ))}
++                    </ul>
++                  ),
++                })
++              }
++              className="grid w-full grid-cols-[minmax(96px,150px)_1fr] items-center gap-8 rounded-4 py-2 text-left hover:bg-adm-hover"
++            >
++              <span className="text-12 font-semibold text-adm-ink">{r.label}</span>
++              <span className="flex min-w-0 items-center gap-6">
++                <span className="h-14 rounded-r-4 bg-adm-s2" style={{ width: `${(r.count / max) * 65}%` }} aria-hidden="true" />
++                <span className="shrink-0 text-12 tabular-nums text-adm-ink">
++                  {r.count} <span className="text-adm-muted">· {pct(r.count, r.n)}</span>
++                </span>
++              </span>
++            </button>
++          </li>
++        ))}
++      </ul>
++      <Caption>Counted over the {rows[0]?.n ?? 0} people in {t.label} who would not pay yes; each gave one main reason. Tap a bar for what they said.</Caption>
++    </div>
++  )
++}
++
++/* ------------------------------------------------------- What moves people */
++
++const SW = 640
++const SX1 = 150
++const SX2 = 330
++const ST = 30
++const SH = 220
++
++/** Before and after each change, among the people it moved: how many would try. */
++export function WhatMovesSlope({ slopes }: { slopes: Slope[] }) {
++  const [hover, setHover] = useState<string | null>(null)
++  const max = Math.max(...slopes.map((s) => s.moved), 1)
++  const y = (v: number) => ST + (1 - v / max) * (SH - ST - 20)
++  // Right-hand labels, nudged apart so none overlap.
++  const placed = [...slopes].sort((a, b) => y(a.after) - y(b.after))
++  const labelY = new Map<string, number>()
++  let last = -Infinity
++  for (const s of placed) {
++    const v = Math.max(y(s.after), last + 16)
++    labelY.set(s.key, v)
++    last = v
++  }
++  const H = Math.max(SH, last + 14)
++  return (
++    <div className="flex flex-col gap-10">
++      <div className="overflow-x-auto">
++        <svg viewBox={`0 0 ${SW} ${H}`} className="block w-full min-w-[560px]" role="img" aria-label={`Slope chart: ${slopes.map((s) => `${s.theme}, ${s.before} to ${s.after} would try among ${s.moved} moved`).join('; ')}`}>
++          <text x={SX1} y={14} textAnchor="middle" className="fill-adm-muted text-11 font-semibold">
++            Without it
++          </text>
++          <text x={SX2} y={14} textAnchor="middle" className="fill-adm-muted text-11 font-semibold">
++            With it
++          </text>
++          <line x1={SX1} x2={SX1} y1={ST - 6} y2={SH - 14} className="stroke-adm-axis" />
++          <line x1={SX2} x2={SX2} y1={ST - 6} y2={SH - 14} className="stroke-adm-axis" />
++          {[0, Math.round(max / 2), max].map((v) => (
++            <text key={v} x={SX1 - 10} y={y(v) + 4} textAnchor="end" className="fill-adm-muted text-11 tabular-nums">
++              {v} people
++            </text>
++          ))}
++          {slopes.map((s) => {
++            const on = hover === null || hover === s.key
++            const ly = labelY.get(s.key)!
++            return (
++              <g key={s.key} onMouseEnter={() => setHover(s.key)} onMouseLeave={() => setHover(null)} opacity={on ? 1 : 0.25}>
++                <line x1={SX1} y1={y(s.before)} x2={SX2} y2={y(s.after)} strokeWidth={2} strokeLinecap="round" className="stroke-adm-s1" />
++                <circle cx={SX1} cy={y(s.before)} r={4} strokeWidth={2} className="fill-adm-s1 stroke-adm-surface" />
++                <circle cx={SX2} cy={y(s.after)} r={4} strokeWidth={2} className="fill-adm-s1 stroke-adm-surface" />
++                <line x1={SX2 + 6} y1={y(s.after)} x2={SX2 + 16} y2={ly} className="stroke-adm-axis" />
++                <text x={SX2 + 20} y={ly + 4} className="fill-adm-ink text-12">
++                  <tspan className="font-semibold">{s.theme}</tspan>
++                  <tspan className="fill-adm-muted">
++                    {' '}
++                    {s.before} → {s.after} of {s.moved} · {s.test}
++                  </tspan>
++                </text>
++                <rect x={SX1 - 6} y={Math.min(y(s.before), y(s.after)) - 6} width={SW - SX1} height={Math.abs(y(s.after) - y(s.before)) + 12} fill="transparent" />
++              </g>
++            )
++          })}
++        </svg>
++      </div>
++      <Caption>Each line is one change, among the simulated people whose answer it changed: how many would try without it (left) and with it (right). Only these changes were tested; the panels differ by test.</Caption>
++    </div>
++  )
++}
+diff --git a/src/admin/pages/reports/SummaryCharts.tsx b/src/admin/pages/reports/SummaryCharts.tsx
+index 25c12b9..e22fb40 100644
+--- a/src/admin/pages/reports/SummaryCharts.tsx
++++ b/src/admin/pages/reports/SummaryCharts.tsx
+@@ -18,11 +18,11 @@ const SERIES = [
+ ] as const
+ 
+ const TW = 880
+-const TH = 250
++const TH = 266
+ const L = 56
+-const R = 24
++const R = 44
+ const T = 16
+-const B = 52
++const B = 68
+ 
+ /** Try, pay and sure-at-day-30 across reports v1–v7, each point annotated by what changed. */
+ export function SuccessTrend({ points }: { points: TrendPoint[] }) {
+@@ -76,6 +76,11 @@ export function SuccessTrend({ points }: { points: TrendPoint[] }) {
+               {p.label}
+             </text>
+           ))}
++          {points.map((p, i) => (
++            <text key={`n-${p.id}`} x={x(i)} y={TH - B + 32} textAnchor="middle" className="fill-adm-muted text-11 tabular-nums">
++              {p.n} people
++            </text>
++          ))}
+           {hover !== null && <line x1={x(hover)} x2={x(hover)} y1={T} y2={TH - B} className="stroke-adm-axis" strokeWidth={1} />}
+           {SERIES.map((s) => (
+             <path key={s.key} d={path(s.key)} fill="none" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" className={s.stroke} />
+@@ -95,6 +100,7 @@ export function SuccessTrend({ points }: { points: TrendPoint[] }) {
+               fill="transparent"
+               onMouseEnter={() => setHover(i)}
+               onMouseLeave={() => setHover(null)}
++              onClick={() => setHover(hover === i ? null : i)}
+             />
+           ))}
+         </svg>
+-- 
+2.43.0
+

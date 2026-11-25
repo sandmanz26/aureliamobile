@@ -1,0 +1,1207 @@
+From 542ade2edc636f419d947596d679bf9062ee67ca Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 25 Nov 2026 11:19:30 +0000
+Subject: [PATCH] B2B2C round 2: new research, channels re-ranked, the features
+ to build; B2B2C report in admin (U132, J183)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ docs/research/b2b2c/00-summary.md             |   6 +-
+ docs/research/b2b2c/10-round-2.md             | 126 ++++++++
+ docs/research/b2b2c/11-features.md            |  94 ++++++
+ .../round_2_web_research.md                   |  72 +++++
+ src/App.tsx                                   |   6 +
+ src/admin/AdminLayout.tsx                     |   1 +
+ src/admin/data/b2b2cReport.test.ts            |  67 ++++
+ src/admin/data/b2b2cReport.ts                 | 294 ++++++++++++++++++
+ src/admin/data/iterationMap.test.ts           |   7 +-
+ src/admin/data/iterationMap.ts                |   6 +-
+ src/admin/data/reportSources.ts               |   6 +
+ src/admin/pages/reports/B2b2cReportPage.tsx   | 284 +++++++++++++++++
+ .../pages/reports/ReportsOverviewPage.tsx     |   4 +-
+ src/demo/modules.ts                           |   1 +
+ src/guides/docPages.ts                        |   2 +
+ 15 files changed, 969 insertions(+), 7 deletions(-)
+ create mode 100644 docs/research/b2b2c/10-round-2.md
+ create mode 100644 docs/research/b2b2c/11-features.md
+ create mode 100644 docs/research/research_notes/Aurelia B2B2C round 2/round_2_web_research.md
+ create mode 100644 src/admin/data/b2b2cReport.test.ts
+ create mode 100644 src/admin/data/b2b2cReport.ts
+ create mode 100644 src/admin/pages/reports/B2b2cReportPage.tsx
+
+diff --git a/docs/research/b2b2c/00-summary.md b/docs/research/b2b2c/00-summary.md
+index 99ea076..95eb36b 100644
+--- a/docs/research/b2b2c/00-summary.md
++++ b/docs/research/b2b2c/00-summary.md
+@@ -1,6 +1,8 @@
+ # B2B2C: ideation, plan and research
+ 
+-*Asked by the business owner: "B2B2C ideation, plan, research". Researched 23–24 Nov 2026 in five research tracks: about 330 links in the research notes, 184 of them cited on the detail pages. This page is the summary. Every claim on it is backed on a detail page, linked below, and every detail page lists its own sources.*
++*Asked by the business owner: "B2B2C ideation, plan, research". Round 1 was researched 23–24 Nov 2026 in five research tracks: about 330 links in the research notes, 184 of them cited on the detail pages. **Round 2** (25 Nov 2026) added 28 new web sources and the results of two buyer tests, re-ranked the channels and listed the features to build. This page is the summary. Every claim on it is backed on a detail page, linked below, and every detail page lists its own sources.*
++
++> **Round 2 changes the answer's first step.** Build the creator journey first, but with a **free first week**: people pay for the creator's journey or the paid plan after it has helped, not before. Two buyer tests with simulated people found that freemium beat a ticket paid up front in every channel, and that trust, not price, was the main objection. The **self-serve team plan for small employers moves up to second**, because 21 of 60 simulated people would buy if their employer paid. Partner codes and gifting move to third, built as one code system. Read [Round 2](/wiki/b2b2c/round-2) and the [feature list](/wiki/b2b2c/features). The round 1 answer below stands except where round 2 says otherwise.
+ 
+ ## The answer in one paragraph
+ 
+@@ -26,6 +28,8 @@ Beside it, test a cheap self-serve team tier for small employers and one trial-c
+ | [Plan](/wiki/b2b2c/plan) | Phases, gates and the five numbers that decide the pilot; how it plugs into the admin | From the pages above |
+ | [Roast](/wiki/b2b2c/roast) | What a sceptical investor, a creator, a regulator and the business owner attack in this research, and what changed | — |
+ | [Full report and sources](/wiki/b2b2c/sources) | The deep research report, unedited, with its inline sources | All five tracks |
++| [Round 2](/wiki/b2b2c/round-2) | What changed since round 1 and why; the channels re-scored with the simulations; employer, Indonesia, creator-platform and trust research of 2025–2026; the phased plan tied to the gates | 28 new, plus our own documents |
++| [Features to build](/wiki/b2b2c/features) | Every feature per channel (free plan, creator journey, team plan, codes and gifts): who, the problem, evidence, priority, effort against API v2, success number | From round 2 |
+ 
+ **Not covered, and why:**
+ - **Exact deal terms.** Partner wholesale prices and creator contracts are private.
+diff --git a/docs/research/b2b2c/10-round-2.md b/docs/research/b2b2c/10-round-2.md
+new file mode 100644
+index 0000000..0969131
+--- /dev/null
++++ b/docs/research/b2b2c/10-round-2.md
+@@ -0,0 +1,126 @@
++# Round 2: what changed, what to build
++
++*Part of the [B2B2C research](/wiki/b2b2c). Researched 25 Nov 2026: 28 new web sources, read as of late 2026, plus everything already known: round 1, the business owner's retreat brief and mock-up, Insight Timer round 3, buyer tests 6 and 7, the retreat funnel, the cost report and API v2. Every new fact carries its link, its date and one label: **measured**, **company claim**, **third-party** or **estimate**. The scores and priorities are our judgement. The feature list is on [Features](/wiki/b2b2c/features); the same answer is in the admin under Reports → B2B2C report.*
++
++## The answer in one paragraph
++
++**Build the creator journey first, but make the first week free.** People pay for the creator's journey, or for the paid plan, after it has helped them, not before. Round 1 put a ticket paid up front at the door. Two tests with simulated people say almost nobody pays a stranger's ticket before trying, and that freemium brought more paying people in every channel. The creator stays the right first partner, because the business owner's purpose for the retreat is reach (creators → people using Aurelia → paid plans), and because "trust" was the top objection: followers trust their creator, not an unknown AI app. **Second, a self-serve team plan for small employers**, which moves up from fourth: 21 of 60 simulated people named "my employer pays" as a reason to buy, and Wysa, Calm and Headspace all still sell small teams online at about $50–70 a seat a year. **Third, partner codes and gifting**, built once as one code system that the team plan needs first.
++
++## What changed from round 1, and why
++
++| Round 1 said | Round 2 says | Why it changed |
++| --- | --- | --- |
++| The creator retreat, redesigned: a €19.99 ticket up front, then the paid plan at week 8 | The creator journey with a **free first week**; the ticket or the paid plan after it | Test 6 (60 simulated people): the free app gave 17.5 expected paying people, the €19.99 ticket 1, the €39 ticket 0.5. Test 7 (100): among 35 creator followers, the free app 12.5, the ticket 4. Simulated, not measured. |
++| Trial codes and gifting first (16 of 18) | Third, and built as one code system | Nothing tested it; API v2 has no code endpoints; the free placements in round 1 lapsed. Still cheap, still the person's own card. |
++| Team tier for small employers fourth (13 of 18) | **Second** | 21 of 60 simulated people would buy if work paid, more than any offer moved. The big apps keep the small self-serve tier while moving up-market. |
++| Retreat and studio aftercare third | Later | A real gap (Insight Timer's retreats end at the retreat), but it needs in-person retreat leaders and the same backend first. |
++| Price was the main problem | **Trust** is the main problem | Test 6's top objection to the retreat was trust (25), before access (11) and price (10). The creator's own voice moved 5 answers, more than any other change. |
++| Insurers and clinical routes out | Still out, more clearly | Headspace is being sold to an AI care company for up to $300M; Calm Health sells through health plans to 39M+ people. That market now buys clinical care. |
++
++## The channels, re-scored
++
++Round 1 scored fifteen models on six questions (out of 18): who pays to find the user, who owns the card, time to revenue, build, risk, fit. Round 2 keeps those six and adds a seventh, **what the simulations say** (0–3), so the total is out of 21.
++
++| Rank | Channel | Six questions (of 18) | Simulations (of 3) | Total (of 21) | Round 1 |
++| --- | --- | --- | --- | --- | --- |
++| 1 | **Creator journey, free first week** | 15 | 2 | **17** | 2nd, 15 |
++| 2 | **Self-serve team plan for small employers** | 13 | 3 | **16** | 4th, 13 |
++| 3 | **Partner codes and gifting** | 15 (build drops 3 → 2: no endpoints yet) | 0 (not tested) | **15** | 1st, 16 |
++| — | Creator ticket paid up front | 15 | 0 | 15 | became an upgrade inside rank 1 |
++| — | Retreat and studio aftercare | 14 | 0 (not tested) | 14 | 3rd, 14 |
++| — | Insurers, clinical routes | 6–7 | — | out | out |
++
++**The free plan is not ranked: it is the base.** Every channel lands people in it, and the simulations favoured it in every channel. Its own features (the free first week, "Need help now?", one line on data) come first on the [feature list](/wiki/b2b2c/features).
++
++```mermaid
++flowchart LR
++  C[Creator's audience] -->|voice sample, free week| F[Free plan: the base]
++  E[Employer pays seats] -->|invite link or code| F
++  P[Gift or partner code] -->|code, own card| F
++  F -->|after it helps| J[Creator's journey ticket]
++  F -->|after it helps| PL[Paid plan]
++  J --> PL
++```
++
++## What the new research found
++
++### 1. Employers: the small, self-serve tier is still open
++
++- **The big apps are moving up-market.** Sword Health agreed to buy Headspace for up to $300M ([crypto briefing](https://cryptobriefing.com/sword-health-acquires-headspace/), 2026, third-party). Headspace reaches 7M+ people through Cigna from 1 Jan 2026 ([Cigna](https://newsroom.cigna.com/2025-11-10-Headspace-for-Cigna-Healthcare-Enhances-Everyday-Mental-Health-Support-Through-Self-Guided,-Science-Backed-Resources), 10 Nov 2025, company claim). Calm Health joined the Solera Network and says it reaches 39M+ people ([Calm](https://www.calm.com/blog/calm-health-solera-press), Jan 2026, company claim).
++- **The small tier stays self-serve.** Wysa for Teams: $50 per employee per year, up to 200 people, a code per person ([Wysa](https://wysa.com/for-teams), read 25 Nov 2026, company claim). Calm: groups of 5–300, cheaper per seat as the group grows ([Calm support](https://support.calm.com/hc/en-us/articles/360038432493), company claim). Headspace: buy online, share one link ([Headspace](https://organizations.headspace.com/small-business), company claim). Median Calm buyer about $7,880 a year over 51 purchases ([Vendr](https://www.vendr.com/marketplace/calm), third-party): small teams, not enterprises.
++- **Budgets exist but must show use.** Only 16% of US employers are cutting wellbeing spend, and buyers now ask for outcomes ([WTW](https://www.wtwco.com/en-us/insights/2026/10/employee-wellbeing-enters-its-next-chapter-smarter-investments-greater-impact), Oct 2026, third-party). 66% plan to invest more in stress and resilience in 2026 ([Wellable](https://www.wellable.co/resources/employee-well-being-industry-trends-report/2026/), third-party). But average spend on mental-health resources fell about 7% in NFP's data ([Insurance Business](https://www.insurancebusinessmag.com/us/news/benefits/nearly-half-of-us-employers-expect-healthcare-budget-increases--nfp-562773.aspx), 2025, third-party). Sources disagree: price low and report activation.
++
++### 2. Indonesia and Southeast Asia
++
++- 48% of Indonesian companies already include an employee assistance programme ([Mercer Marsh Benefits](https://www.marsh.com/id/en/services/employee-health-benefits/insights/id-indonesia-health-and-benefits-study-2025.html), 2025, 400 organisations, third-party). Aurelia goes beside it, not instead of it.
++- The corporate wellness market is about $968M in 2025 ([IMARC](https://www.imarcgroup.com/indonesia-corporate-wellness-market), estimate). Another firm says twice that; neither is a fact.
++- Creators already sell for commission. Content commerce was 32% of Southeast Asia's e-commerce in 2025 ([Jakarta Post](https://thejakartapost.com/business/2026/06/27/businesses-tap-tiktoks-creator-economy-to-boost-sales), 27 Jun 2026, third-party, summary only). Tokopedia and TikTok Shop train Indonesian creators to earn per sale ([Tokopedia](https://www.tokopedia.com/blog/creators-lab-bali-eng/), Jun 2025, company claim). A creator share is a familiar deal there.
++- No count of Indonesian meditation or yoga creators exists. Interviews have to find them.
++
++### 3. Creator platforms in 2026
++
++- Insight Timer keeps growing free-first: India launch, 35M+ users, local teachers ([press release](https://m.thewire.in/article/ptiprnews/worlds-largest-free-wellness-app-insight-timer-launches-in-india/amp), 11 Mar 2026, company claim), and AI recommendations on 16M intentions ([GlobeNewswire](https://www.globenewswire.com/news-release/2026/01/06/3213643/0/en/insight-timer-launches-new-year-s-resolution-and-intention-setting-features-with-ai-recommendation-engine.html), 6 Jan 2026, company claim). Personal recommendations are no longer a moat; a journey in the creator's own voice still is.
++- Its retreats take a 10% non-refundable fee and stop at the retreat ([Insight Timer FAQ](https://insight-timer.freshdesk.com/support/solutions/articles/67000739470-insight-timer-retreats-faqs-for-teachers), company claim). Community platforms take 0.5–2% plus card fees ([Circle pricing](https://schoolmaker.com/blog/circle-so-pricing), 2026, third-party). Aurelia's 30% must be visible and earned by the "after".
++
++### 4. Trust: how creator-sold programmes earn it
++
++- **Free first.** Trials of 17–32 days convert 42.5%, under 4 days 25.5%; freemium apps turn 2.1% of downloads into payers by day 35 ([RevenueCat](https://www.revenuecat.com/blog/growth/subscription-app-trends-benchmarks-2026), 2026, measured on 115,000+ apps). Health & Fitness has the best trial-to-paid rate, 35% ([Adapty](https://adapty.io/state-of-in-app-subscriptions-2026), Mar 2026, measured on 16,000 apps).
++- **A refund window shown before paying.** Maven refunds in full to the course midpoint and shows it as a badge ([Maven](https://help.maven.com/en/articles/8705540-maven-s-satisfaction-guarantee), company claim); a refund returns both the creator's and the platform's share ([Maven](https://help.maven.com/en/articles/5597391-issuing-refunds-to-students)). For an 8-week journey, that is week 4.
++- **People trust people.** 83% trust recommendations from people they know ([Nielsen](https://www.nielsen.com/global-trust-in-advertising), 2021 data, third-party); 26% say they do not trust influencers ([BBB National Programs](https://bbbprograms.org/media/insights/blog/influencer-trust-index), Feb 2025, third-party). The creator's own voice is the bridge.
++- **Testimonials only when real.** The US rule on reviews and testimonials, in force since 21 Oct 2024, fines each fake or AI-made testimonial ([FTC](https://www.ftc.gov/news-events/news/press-releases/2024/08/federal-trade-commission-announces-final-rule-banning-fake-reviews-testimonials)). Until the pilot has real participants, the page shows none, and never the spec's mock "+85.7% sleep".
++
++### 5. Creator dashboards
++
++- Kajabi shows revenue, new customers, active members, completion and last activity ([Kajabi](https://kajabi.com/features/analytics), company claim). Teachable shows sales, refunds, fees, payouts and drop-off per lesson ([Teachable](https://teachable.com/blog/new-teachable-reporting-tools-2024), company claim). Aurelia's adds how the group feels, as totals only, for groups of 10 or more.
++
++### 6. Codes and gifting
++
++- Headspace runs gifts, promos and partner vouchers through one code page ([Headspace help](https://help.headspace.com/hc/en-us/articles/215057448-I-have-a-promo-gift-code-How-do-I-redeem-activate-it), company claim). One system serves all three channels.
++
++## What the simulations say, and what they cannot
++
++- **Test 6 (60 simulated people).** Free app: 25 would try, 12 pay, 17.5 expected paying people. The €19.99 retreat: 2 buy a ticket, 1 reaches the paid plan. The €39 retreat: 0.5. Top objections to the retreat: trust (25), access (11), price (10). 21 of 60 would buy if their employer paid; only 4 heard of Aurelia through work.
++- **Test 7 (100 simulated people).** A free library raised trying from 51 to 61. Among 35 creator followers, 7 would buy the ticket against 26 trying the free app; expected paying people 4 against 12.5.
++- **What they cannot say.** They are AI playing made-up people. They cannot say how many of a real creator's followers buy, or whether a free week is abused. That is the pilot's job.
++
++## The phased plan, tied to the pilot gates
++
++```mermaid
++flowchart TD
++  P0[Phase 0, now, no backend: claims checklist, real quotes rule, data line, ask-my-employer, buyer test of the free-week offer] --> G0{Gate 0}
++  G0 -->|free week beats the free app among followers, 3 creators agree| P1[Phase 1: minimum backend, creator pilot]
++  G0 -->|fails| R0[Team plan leads instead]
++  P1 --> P1b[Phase 1b, alongside: code system, team plan with 2-3 small employers]
++  P1 --> G1{Gate 1: the five pilot numbers}
++  G1 -->|pass| P2[Phase 2: payouts view, live calendar, real scoreboard]
++  P2 --> G2{Gate 2: holds across creators}
++  G2 -->|pass| P3[Phase 3: paid-plan share, gifts, aftercare, Indonesia]
++```
++
++| Phase | When | What is built | Gate |
++| --- | --- | --- | --- |
++| **0: prove the offer** | Now, no backend | One plain line on data; real quotes only; the creator claims checklist; "Ask my employer to pay"; a buyer test of the free-week creator offer | **Gate 0.** The free-week creator offer beats the free app among followers in the buyer test, and at least 3 creators accept the terms in interviews |
++| **1: the creator pilot** | After the minimum backend | Free first week; "Need help now?"; the creator's page with a voice sample; pay after week one; refund to week 4; the creator dashboard | **Gate 1.** The five pilot numbers, with "paid after the free week" (our judgement: at least 15%) in place of "seats sold"; active at week 8 at least 35%; paid plan from at least 8% of starters; refunds under 10%; cost under a third of Aurelia's share |
++| **1b: the team plan** | Alongside, 2–3 small employers | The code system; buy 5–200 seats online; one link or code per person; the team report | More than 38% of seats active in 30 days, and one team buys without a call |
++| **2: repeat** | Gate 1 passed | Payouts and the split in plain view; live sessions in the calendar; the pilot scoreboard on real numbers | **Gate 2.** The numbers hold across creators, not only the best one |
++| **3: widen** | Gate 2 passed | The creator's share of paid plans; gifting; retreat aftercare; Bahasa and rupiah; the Indonesian team pack | Only with retention data to show |
++
++The free week changes one number in round 1's gates: "median paid seats per cohort" becomes "share of free-week starters who pay". The rest stand.
++
++## Decisions for the business owner
++
++1. Approve the free first week for the creator journey, with the ticket or the paid plan after it.
++2. Approve a refund to week 4, shown on the page. The creator's share is refunded too.
++3. Build the team plan beside the creator pilot, or only after Gate 1?
++4. Is the physical box from the mock-up a paid add-on (as round 1 proposed), or dropped for the pilot?
++5. The pilot's first market. Indonesia changes the language, the price and who the employers are.
++
++## What we still do not know
++
++- How many of a real creator's followers start a free week, and how many pay after it.
++- Whether a free week is abused (people starting many free weeks). The code system can limit it.
++- Real team-plan prices beyond the three public ones; enterprise prices are private.
++- Indonesian creator numbers and payout rules: no independent source exists.
++- Whether Headspace's sale has closed, and what it does to its small-business tier.
++
++*Sources: the 28 links above, all read on 25 Nov 2026, with notes in `docs/research/research_notes/Aurelia B2B2C round 2/`. Our own documents: [round 1](/wiki/b2b2c), [Insight Timer round 3](/wiki/research), [API v2](/wiki/api), the buyer tests and the retreat funnel in the admin.*
+diff --git a/docs/research/b2b2c/11-features.md b/docs/research/b2b2c/11-features.md
+new file mode 100644
+index 0000000..04eca60
+--- /dev/null
++++ b/docs/research/b2b2c/11-features.md
+@@ -0,0 +1,94 @@
++# Features: what we must build
++
++*Part of the [B2B2C research](/wiki/b2b2c), from [Round 2](/wiki/b2b2c/round-2). The same list is in the admin under Reports → B2B2C report, as a board you can filter by channel and priority; both are made from one data file, so they cannot disagree. Priorities and success numbers are our judgement, set before anything is built.*
++
++## In one minute
++
++- **The free plan is the base.** Every channel lands people in it, so its features come first: a free first week with no card, "Need help now?" on every feelings screen, and one plain line on data.
++- **The top three features all answer "can I trust this?"**: (1) a free first week, (2) the creator's page with a 60-second sample in their own voice, (3) a full refund until week 4, said before paying.
++- **Now** = needed for the creator pilot or doable today. **Next** = the team plan and what the pilot needs once it runs. **Later** = after Gate 2.
++- **Effort** says whether it is frontend only, uses an endpoint already in [API v2](/wiki/api/apps), or needs a backend API v2 does not have yet (codes and teams). The team plan needs new endpoints; the creator pilot mostly does not.
++- **Who uses it:** the creator, the participant, the employer admin, or Aurelia staff.
++
++## How to read a row
++
++| Column | Meaning |
++| --- | --- |
++| For | Who uses the feature |
++| The problem it solves | In the user's terms |
++| Evidence | What says it matters, with the source; simulated results are AI playing made-up people, not measurements |
++| Priority | Now, Next or Later |
++| Effort | Frontend only · Needs the backend (in API v2), with the endpoints · Needs new backend (not in API v2) |
++| Success number | What we count to know it worked |
++
++## Free plan (the base)
++
++| Feature | For | The problem it solves | Evidence | Priority | Effort | Success number |
++| --- | --- | --- | --- | --- | --- | --- |
++| **A free first week of every journey, no card** *(trust)* *(top 1)* | participant | People will not pay before anything has helped. A ticket up front lost almost everyone in the simulations. | Test 6: free app 17.5 expected paid plans, the €19.99 ticket 1. Longer trials convert better: 42.5% for 17–32 days against 25.5% under 4 days. Sources: [Buyer agent test 6 (60 simulated people)](/admin/buyer-agent?v=6); [RevenueCat: subscription app benchmarks 2026](https://www.revenuecat.com/blog/growth/subscription-app-trends-benchmarks-2026) | Now | Needs the backend (in API v2): `POST /journeys`, `GET /me/entitlements` | Share of starters who reach day 7, and who then pay |
++| **“Need help now?” on every feelings screen** *(trust)* | participant | A creator or employer cannot vouch for an AI that has no safety net. Crisis handling is required by law in some markets. | Round 1 regulation: California’s companion-AI law needs a crisis protocol. Test 7 kept the link; it moved nobody but it is a floor, not a feature. Sources: [B2B2C research, round 1](/wiki/b2b2c); [Buyer agent test 7 (100 simulated people)](/admin/buyer-agent?v=7) | Now | Needs the backend (in API v2): `GET /safety/resources`, `POST /safety/reports` | Shown on 100% of check-in and session screens; local numbers in every pilot country |
++| **One plain line on what we keep and who sees it** *(trust)* | participant | Privacy is the first question of protective people, and no quick win answered it. | Test 7: 8 of 17 very protective people would try, and “what happens to my data” was still their first question. Sources: [Buyer agent test 7 (100 simulated people)](/admin/buyer-agent?v=7); [B2B2C research, round 1](/wiki/b2b2c) | Now | Frontend only | Privacy as an objection in the next buyer test, down from test 7 |
++| **Bahasa Indonesia and a rupiah price** | participant | In Indonesia, language and a local price mattered more than any feature. | Test 7: Indonesian simulated people barely moved on quick wins; Bahasa and rupiah were their condition. Sources: [Buyer agent test 7 (100 simulated people)](/admin/buyer-agent?v=7); [Mercer Marsh Benefits: Indonesia health and benefits study 2025](https://www.marsh.com/id/en/services/employee-health-benefits/insights/id-indonesia-health-and-benefits-study-2025.html) | Later | Needs the backend (in API v2): `GET /plans` | Indonesian starters who pay, against the rest |
++
++## Creator journey
++
++| Feature | For | The problem it solves | Evidence | Priority | Effort | Success number |
++| --- | --- | --- | --- | --- | --- | --- |
++| **The creator’s page with a 60-second sample in their own voice** *(trust)* *(top 2)* | participant | Trust was the top objection to the retreat. Followers trust the creator, not an unknown AI app. | Test 6: trust was the top objection (25 mentions); the creator’s own voice moved 5 answers, more than any other change. 83% trust recommendations from people they know. Sources: [Buyer agent test 6 (60 simulated people)](/admin/buyer-agent?v=6); [Nielsen: global trust in advertising](https://www.nielsen.com/global-trust-in-advertising) | Now | Needs the backend (in API v2): `GET /creators/{handle}`, `GET /retreats/{id}` | Page visitors who start the free week |
++| **Pay after week one: the creator’s journey or the paid plan** | participant | The ticket must come after the first help, not before it. | Tests 6 and 7: the ticket up front lost to the free app among creator followers both times. Sources: [Buyer agent test 6 (60 simulated people)](/admin/buyer-agent?v=6); [Buyer agent test 7 (100 simulated people)](/admin/buyer-agent?v=7); [Creator retreat funnel](/admin/business-funnel?view=retreat) | Now | Needs the backend (in API v2): `POST /checkout/tickets`, `POST /checkout/subscription` | Paid by day 10 among free-week starters (judgement: at least 15%) |
++| **Full refund until week 4, said on the page before paying** *(trust)* *(top 3)* | participant | Paying for an 8-week journey is a risk. A visible guarantee lowers it, and the EU withdrawal rules must be met anyway. | Maven refunds in full to the midpoint and shows it as a badge. A refund returns both shares, so the creator must agree to it. Sources: [Maven satisfaction guarantee](https://help.maven.com/en/articles/8705540-maven-s-satisfaction-guarantee); [Maven: issuing refunds to students](https://help.maven.com/en/articles/5597391-issuing-refunds-to-students); [B2B2C research, round 1](/wiki/b2b2c) | Now | Needs the backend (in API v2): `POST /orders/{id}/withdrawal`, `POST /admin/orders/{id}/refunds` | Refunds under 10% (the pilot number) |
++| **Quotes from real participants only, with consent and date** *(trust)* | Aurelia staff | Invented quotes and numbers would break trust and the law. The spec’s “+85.7% sleep” is mock data. | The US fake-reviews rule fines each fake or AI-made testimonial. Until the pilot, the page shows none. Sources: [FTC final rule banning fake reviews and testimonials](https://www.ftc.gov/news-events/news/press-releases/2024/08/federal-trade-commission-announces-final-rule-banning-fake-reviews-testimonials); [BBB National Programs: Influencer Trust Index 2025](https://bbbprograms.org/media/insights/blog/influencer-trust-index); [The business owner’s retreat brief and mock-up](/wiki/b2b2c/round-2) | Now | Frontend only | Invented quotes or results on any page: zero |
++| **What a creator may say: a checklist in onboarding** *(trust)* | creator | A creator’s post can make Aurelia a medical device by implying it treats something. | Round 1: under UK guidance, social posts implying the app reduces depression can do it. Sources: [B2B2C research, round 1](/wiki/b2b2c) | Now | Frontend only | Every pilot creator signs it before their first post |
++| **Creator dashboard: totals only, groups of 10 or more** | creator | Creators need to see their journey work. They must never see one person’s feelings. | Kajabi and Teachable show revenue, active members, completion and drop-off. Round 1: aggregate only, minimum group sizes. Sources: [Kajabi analytics](https://kajabi.com/features/analytics); [Teachable reporting tools](https://teachable.com/blog/new-teachable-reporting-tools-2024); [B2B2C research, round 1](/wiki/b2b2c) | Now | Needs the backend (in API v2): `GET /creator/retreats`, `GET /creator/cohorts/{id}/metrics` | Creators who open it weekly; no screen shows a group under 10 |
++| **Payouts and the split, in plain view** | creator | Creators compare our 30% to Insight Timer’s 10% and Circle’s 2%. Hiding it costs trust. | Insight Timer Retreats: 10% fee. Community platforms: 0.5–2% plus card fees. Sources: [Insight Timer Retreats FAQ for teachers](https://insight-timer.freshdesk.com/support/solutions/articles/67000739470-insight-timer-retreats-faqs-for-teachers); [Circle pricing 2026 and transaction fees](https://schoolmaker.com/blog/circle-so-pricing); [API contract v2, the pilot slice](/wiki/api) | Next | Needs the backend (in API v2): `POST /creator/connect/onboarding-link`, `GET /creator/payouts`, `GET /creator/split-rules` | Payout questions to staff per creator per month |
++| **The live group sessions in the calendar** | participant | The live group is part of what the creator sells; people miss it without a reminder. | The business owner’s mock-up: weekly live meditations with the creator. The app already makes calendar reminders. Sources: [The business owner’s retreat brief and mock-up](/wiki/b2b2c/round-2) | Next | Frontend only | Participants at the week-1 live session |
++| **The creator earns a share of the paid plans they bring** | creator | With the ticket later, creators earn less up front; the paid-plan share keeps them selling. | Round 1: 70/30 plus a share of the paid plan was the answer to “why not Kajabi?”. Sources: [B2B2C research, round 1](/wiki/b2b2c); [API contract v2, the pilot slice](/wiki/api) | Later | Needs the backend (in API v2): `PUT /admin/split-rules/{id}` | Paid plans per creator, 90 days after the journey |
++| **The pilot scoreboard in the admin, on real numbers** | Aurelia staff | The gates need real numbers, not the simulated ones. | Round 1 plan: five pilot numbers set in advance; API v2 has cohort metrics for staff. Sources: [B2B2C research, round 1](/wiki/b2b2c); [API contract v2, the pilot slice](/wiki/api) | Next | Needs the backend (in API v2): `GET /admin/cohorts/{id}/metrics`, `GET /admin/outcomes/journeys` | All five pilot numbers shown weekly from real data |
++
++## Team plan
++
++| Feature | For | The problem it solves | Evidence | Priority | Effort | Success number |
++| --- | --- | --- | --- | --- | --- | --- |
++| **“Ask my employer to pay”: a one-page request to forward** | participant | Many would use it if work paid, but nobody asks HR. | Test 6: 21 of 60 named their employer paying as a reason to buy; only 4 heard of Aurelia through work. Sources: [Buyer agent test 6 (60 simulated people)](/admin/buyer-agent?v=6) | Now | Frontend only | Requests sent, and teams that buy from one |
++| **Buy 5–200 seats online with a card** | employer admin | Small employers will not sit through a sales process. | Wysa: $50 a seat a year up to 200 people. Calm: 5–300 seats, discounted with size. Vendr: median Calm buyer about $7,880 a year. Sources: [Wysa for Teams](https://wysa.com/for-teams); [Calm for Organizations, groups of 5–300](https://support.calm.com/hc/en-us/articles/360038432493); [Vendr: Calm buyer data](https://www.vendr.com/marketplace/calm) | Next | Needs new backend (not in API v2) | Teams bought without a call |
++| **One invite link or a code per person** | employer admin | Seats bought are worthless if nobody joins. | Headspace: one enrolment link. Wysa: a unique code per person. Round 1: only 38% of enrolled staff used any tool. Sources: [Headspace for small business](https://organizations.headspace.com/small-business); [Wysa for Teams](https://wysa.com/for-teams); [B2B2C research, round 1](/wiki/b2b2c) | Next | Needs new backend (not in API v2) | Seats activated in 30 days (judgement: above 38%) |
++| **Team report: joined, active, back after 30 days** | employer admin | Employers renew on proof of use. The law bans inferring staff emotions at work. | WTW: buyers want outcomes. EU AI Act: no emotion inference at work, so counts only, groups of 10 or more. Sources: [WTW: employee wellbeing enters a new phase](https://www.wtwco.com/en-us/insights/2026/10/employee-wellbeing-enters-its-next-chapter-smarter-investments-greater-impact); [B2B2C research, round 1](/wiki/b2b2c) | Next | Needs new backend (not in API v2) | Teams that renew at month 12 |
++| **An Indonesian team pack beside the company’s assistance programme** | employer admin | Half of Indonesian employers already have a programme; Aurelia must fit beside it, not replace it. | Mercer Marsh 2025: 48% include an employee assistance programme. Market estimates differ by 2×. Sources: [Mercer Marsh Benefits: Indonesia health and benefits study 2025](https://www.marsh.com/id/en/services/employee-health-benefits/insights/id-indonesia-health-and-benefits-study-2025.html); [IMARC: Indonesia corporate wellness market](https://www.imarcgroup.com/indonesia-corporate-wellness-market) | Later | Needs new backend (not in API v2) | Indonesian teams signed |
++
++## Codes and gifts
++
++| Feature | For | The problem it solves | Evidence | Priority | Effort | Success number |
++| --- | --- | --- | --- | --- | --- | --- |
++| **One code system: gift, partner trial, team seat** | Aurelia staff | Three channels need codes; building three systems wastes the backend. | Headspace runs gifts, promos and partner vouchers through one code page. API v2 has no code endpoints yet. Sources: [Headspace: redeem a promo, voucher or gift code](https://help.headspace.com/hc/en-us/articles/215057448-I-have-a-promo-gift-code-How-do-I-redeem-activate-it); [API contract v2, the pilot slice](/wiki/api) | Next | Needs new backend (not in API v2) | Codes redeemed; redeemers with their own card on file at day 30 |
++| **Gift a creator’s journey** | participant | A journey makes a natural gift, and the gift buyer pays the reach. | Round 1: gifting scored highest because the receiver keeps their own card after. Sources: [B2B2C research, round 1](/wiki/b2b2c); [Headspace: redeem a promo, voucher or gift code](https://help.headspace.com/hc/en-us/articles/215057448-I-have-a-promo-gift-code-How-do-I-redeem-activate-it) | Later | Needs new backend (not in API v2) | Gifts redeemed, and receivers who pay after |
++| **Retreat aftercare: a retreat continues as a journey** | creator | In-person retreats end and nothing follows; Insight Timer does not fill this either. | Insight Timer Retreats: 10% fee, teacher-run, nothing after. Sources: [Insight Timer Retreats FAQ for teachers](https://insight-timer.freshdesk.com/support/solutions/articles/67000739470-insight-timer-retreats-faqs-for-teachers); [Insight Timer research, round 3](/wiki/research) | Later | Needs the backend (in API v2): `POST /admin/retreats`, `POST /admin/retreats/{id}/cohorts` | Retreat guests still active 8 weeks later |
++
++## Trust features, together
++
++| Feature | What it promises | Rule |
++| --- | --- | --- |
++| Free first week, no card | You pay only after it has helped | Pre-made creator journey with personal inserts, so the week stays cheap to run |
++| The creator's own voice sample | You know whose journey it is | Recorded or licensed with the creator's written consent |
++| Refund until week 4 | You can leave halfway | Said on the page before paying; the creator's share is refunded too |
++| Real quotes only | What others say is true | Real participants, with consent and a date; none until the pilot |
++| One line on data | Nobody sees how you feel | Creators and employers see totals only, groups of 10 or more |
++| "Need help now?" | Someone real is one tap away | Local crisis numbers in every pilot country |
++
++## The build order
++
++| Phase | When | Features | Gate |
++| --- | --- | --- | --- |
++| Phase 0: prove the offer | Now, no backend | One plain line on what we keep and who sees it; Quotes from real participants only, with consent and date; What a creator may say: a checklist in onboarding; “Ask my employer to pay”: a one-page request to forward | Gate 0: a buyer test of the creator journey with a free first week beats the free app among followers, and at least 3 creators agree to the terms. |
++| Phase 1: the creator pilot | After the minimum backend | A free first week of every journey, no card; “Need help now?” on every feelings screen; The creator’s page with a 60-second sample in their own voice; Pay after week one: the creator’s journey or the paid plan; Full refund until week 4, said on the page before paying; Creator dashboard: totals only, groups of 10 or more | Gate 1: the five pilot numbers, with “paid after the free week” in place of “seats sold”. |
++| Phase 1b: the team plan, beside it | Same time, 2–3 small employers | One code system: gift, partner trial, team seat; Buy 5–200 seats online with a card; One invite link or a code per person; Team report: joined, active, back after 30 days | Seats activated in 30 days above 38%, and at least one team buys without a call. |
++| Phase 2: repeat | Gate 1 passed | Payouts and the split, in plain view; The live group sessions in the calendar; The pilot scoreboard in the admin, on real numbers | Gate 2: the numbers hold across creators, not only the best one. |
++| Phase 3: widen | Gate 2 passed | The creator earns a share of the paid plans they bring; Gift a creator’s journey; Retreat aftercare: a retreat continues as a journey; Bahasa Indonesia and a rupiah price; An Indonesian team pack beside the company’s assistance programme | Indonesia and gifting only with retention data to show. |
++
++## What is deliberately not on the list
++
++- **A physical box for every participant.** At $14–28 delivered it costs most of a ticket ([Unit economics](/wiki/b2b2c/economics)). A paid add-on at most.
++- **Per-person reports for creators or employers.** Health data; and in the EU, AI that infers staff emotions at work is banned ([Claims and regulation](/wiki/b2b2c/regulation)).
++- **Ranks, streak pressure or ads on feelings screens.** Tests 6 and 7 found daily pressure was a deal breaker for many followers.
++- **Clinical claims or insurer reporting.** Out of scope, as in round 1.
++
++*Sources: each row names its own. The new web sources were read on 25 Nov 2026; notes in `docs/research/research_notes/Aurelia B2B2C round 2/`.*
+diff --git a/docs/research/research_notes/Aurelia B2B2C round 2/round_2_web_research.md b/docs/research/research_notes/Aurelia B2B2C round 2/round_2_web_research.md
+new file mode 100644
+index 0000000..040bcc4
+--- /dev/null
++++ b/docs/research/research_notes/Aurelia B2B2C round 2/round_2_web_research.md	
+@@ -0,0 +1,72 @@
++# B2B2C round 2: web research notes
++
++Researched 25 Nov 2026 by web search, as of late 2026. Each finding has its link, the date of the source, and a label: **measured** (a count anyone can repeat), **company** (the company's own page or press release), **third-party** (analysts, press, aggregators), **estimate** (a market-research or our own calculation). Where a search summary was all we had, it says so.
++
++## 1. Employer and health-plan moves by the big apps
++
++- **Headspace is being sold.** Sword Health agreed to buy Headspace in an all-cash deal of up to $300M, closing expected at the start of Q4 2026; closing not confirmed in what we found. Third-party. https://cryptobriefing.com/sword-health-acquires-headspace/ (2026)
++- **Headspace via Cigna.** From 1 Jan 2026, "Headspace for Cigna Healthcare" is offered to more than 7 million people through their employers' Cigna plans. Company. https://newsroom.cigna.com/2025-11-10-Headspace-for-Cigna-Healthcare-Enhances-Everyday-Mental-Health-Support-Through-Self-Guided,-Science-Backed-Resources (10 Nov 2025)
++- **Calm Health in the Solera Network** (Jan 2026); Calm says Calm Health reaches 39M+ people through plans, providers and employers. Company. https://www.calm.com/blog/calm-health-solera-press
++- **Calm team plans.** Groups of 5 to 300, discount grows with size, price via a calculator. Company. https://support.calm.com/hc/en-us/articles/360038432493 ; Calm's own team page says 5–100: https://business.calm.com/team-plan/ (read 25 Nov 2026)
++- **What Calm buyers pay.** Vendr: median $7,880 a year over 51 purchases. Third-party. https://www.vendr.com/marketplace/calm
++- **Wysa for Teams.** $50 per employee per year, teams of 200 or fewer, unique access code per person. Company. https://wysa.com/for-teams
++- **Headspace small business.** Buy seats online; one enrolment link to share. Company. https://organizations.headspace.com/small-business
++
++**Reading.** The large players are moving up-market into clinical care and health plans. The small-team, card-paid, self-serve tier is still sold by all three, at about $50–70 a seat a year. That is the gap a cheap Aurelia team plan sits in, without clinical claims.
++
++## 2. Employer wellbeing budgets, 2026
++
++- WTW (Oct 2026): only 16% of US employers postponing or reducing wellbeing spend; the shift is from more programmes to measured outcomes. Third-party. https://www.wtwco.com/en-us/insights/2026/10/employee-wellbeing-enters-its-next-chapter-smarter-investments-greater-impact
++- Wellable 2026: 66% plan to invest more in stress management and resilience (70% in 2025). Third-party. https://www.wellable.co/resources/employee-well-being-industry-trends-report/2026/
++- NFP (2025 data): average employer spend on mental-health resources down about 7% year on year. Third-party, via Insurance Business. https://www.insurancebusinessmag.com/us/news/benefits/nearly-half-of-us-employers-expect-healthcare-budget-increases--nfp-562773.aspx
++- Mercer (2025): more employers likely to reduce benefits in 2026 to control health costs. Third-party, search summary. https://mercer.com/en-us/insights/us-health-news/as-benefit-costs-surge-employers-face-tough-decisions-for-2026
++
++**Reading.** Budgets exist but are judged on use. Price low, report activation, never individuals.
++
++## 3. Indonesia and Southeast Asia
++
++- Mercer Marsh Benefits, Indonesia health and benefits study 2025 (400 organisations, 500,000 employees): 48% of companies include an employee assistance programme. Third-party. https://www.marsh.com/id/en/services/employee-health-benefits/insights/id-indonesia-health-and-benefits-study-2025.html
++- Market size, corporate wellness Indonesia: IMARC about $968M in 2025, 5.58% a year to 2034. Estimate. https://www.imarcgroup.com/indonesia-corporate-wellness-market . Another firm says $1.9B (platforms). Estimates disagree by about 2×; do not quote either as fact.
++- Local players: Riliv (corporate wellbeing and EAP), Mindtera. Search summary. https://meditopia.com/en/forwork/articles/top-eap-providers-in-indonesia
++- Content commerce was 32% of Southeast Asia's e-commerce GMV in 2025 (Momentum Works, via Jakarta Post, 27 Jun 2026; paywalled, summary only). Third-party. https://thejakartapost.com/business/2026/06/27/businesses-tap-tiktoks-creator-economy-to-boost-sales
++- Tokopedia × TikTok Shop Creators Lab, Bali (Jun 2025): creators trained to earn commission per sale from short videos and live streams. Company. https://www.tokopedia.com/blog/creators-lab-bali-eng/
++- No independent count of Indonesian meditation or yoga creators exists; influencer rate pages (Heepsy, Elev8or) are vendor estimates. Gap.
++
++**Reading.** In Indonesia creators already sell through commission, which fits a creator share. Employers have assistance programmes; Aurelia goes beside them, in Bahasa, priced in rupiah.
++
++## 4. Creator-led cohorts and platforms
++
++- Insight Timer launched in India (11 Mar 2026), 35M+ users, recruiting local teachers. Company. https://m.thewire.in/article/ptiprnews/worlds-largest-free-wellness-app-insight-timer-launches-in-india/amp
++- Insight Timer added intention-setting with an AI recommendation engine (6 Jan 2026), "16M intentions set in 2025". Company. https://www.globenewswire.com/news-release/2026/01/06/3213643/0/en/insight-timer-launches-new-year-s-resolution-and-intention-setting-features-with-ai-recommendation-engine.html
++- Insight Timer Retreats: 10% non-refundable booking fee, teacher runs the rest. Company. https://insight-timer.freshdesk.com/support/solutions/articles/67000739470-insight-timer-retreats-faqs-for-teachers
++- Circle: platform fee 2% / 1% / 0.5% by plan, plus card fees. Third-party. https://schoolmaker.com/blog/circle-so-pricing
++- Insight Timer revenue and payout figures on business-model template sites disagree ($18.6M against $72M); not used.
++
++## 5. Trust patterns for creator-sold programmes
++
++- Maven Guarantee: full refund until the course midpoint, shown as a badge. Company. https://help.maven.com/en/articles/8705540-maven-s-satisfaction-guarantee
++- Maven refunds return the expert's share and Maven's fee; Stripe fees are not refunded. Company. https://help.maven.com/en/articles/5597391-issuing-refunds-to-students
++- Free trial length: trials of 17–32 days convert 42.5% against 25.5% under 4 days; hard paywall 10.7% against freemium 2.1% of downloads by day 35. Measured, 115,000+ apps. https://www.revenuecat.com/blog/growth/subscription-app-trends-benchmarks-2026
++- Health & Fitness trial-to-paid 35.0%, highest category. Measured, 16,000 apps. https://adapty.io/state-of-in-app-subscriptions-2026
++- FTC rule on consumer reviews and testimonials, in force 21 Oct 2024: bans fake and AI-generated reviews and testimonials and fake social-media indicators; civil penalties per violation (launch figure $51,744). Company (regulator). https://www.ftc.gov/news-events/news/press-releases/2024/08/federal-trade-commission-announces-final-rule-banning-fake-reviews-testimonials
++- Nielsen: 83% globally trust recommendations from friends and family (2021 data). Third-party. https://www.nielsen.com/global-trust-in-advertising
++- BBB National Programs Influencer Trust Index (Feb 2025): 26% do not trust influencers; the report's own toplines conflict (87% vs 74%). Third-party. https://bbbprograms.org/media/insights/blog/influencer-trust-index
++
++**Reading.** The working pattern is: free first, a visible refund window to the midpoint, the creator's own voice, and only real, consented testimonials.
++
++## 6. Creator dashboards
++
++- Kajabi: net revenue, new customers, active members, lesson completion, progress, last activity. Company. https://kajabi.com/features/analytics
++- Teachable: sales, earnings, refunds, fees, payouts; lesson-level drop-off. Company. https://teachable.com/blog/new-teachable-reporting-tools-2024
++- Metabase guide (Jul 2026): course platforms have no warehouse connectors; cohort completion is built by hand. Third-party. https://www.metabase.com/analytics/creator-analytics
++
++**Reading.** Every creator tool shows money, members and completion. Aurelia's version adds "how they feel", as totals only, groups of 10 or more.
++
++## 7. Gifting and codes
++
++- Headspace runs gift, promo and voucher codes through one page; a code cannot activate on a live subscription. Company. https://help.headspace.com/hc/en-us/articles/215057448-I-have-a-promo-gift-code-How-do-I-redeem-activate-it
++- Headspace 30-day guest pass for sharing. Company. https://www.headspace.com/share-headspace
++
++## Count
++
++33 web links in these notes; 28 of them are cited in the report and on the wiki pages (the other five are second copies or background). Our own documents used: 8 (round 1 with its five note files, the business owner's retreat brief and chat parts, Insight Timer round 3, buyer tests 6 and 7, the retreat funnel, the cost report, API v2).
+diff --git a/src/App.tsx b/src/App.tsx
+index 19cb424..4743c2c 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -92,6 +92,7 @@ const BuyerResultsPage = lazy(() => import('./admin/pages/BuyerResultsPage').the
+ const BuyerAgentReportPage = lazy(() => import('./admin/pages/reports/BuyerAgentReportPage').then((m) => ({ default: m.BuyerAgentReportPage })))
+ const TherapeuticMapPage = lazy(() => import('./admin/pages/lab/TherapeuticMapPage').then((m) => ({ default: m.TherapeuticMapPage })))
+ const HealingMapPage = lazy(() => import('./admin/pages/lab/HealingMapPage').then((m) => ({ default: m.HealingMapPage })))
++const B2b2cReportPage = lazy(() => import('./admin/pages/reports/B2b2cReportPage').then((m) => ({ default: m.B2b2cReportPage })))
+ const CostReportPage = lazy(() => import('./admin/pages/reports/CostReportPage').then((m) => ({ default: m.CostReportPage })))
+ const ReportsOverviewPage = lazy(() => import('./admin/pages/reports/ReportsOverviewPage').then((m) => ({ default: m.ReportsOverviewPage })))
+ const UxFeedbackReportPage = lazy(() => import('./admin/pages/reports/UxFeedbackReportPage').then((m) => ({ default: m.UxFeedbackReportPage })))
+@@ -260,6 +261,11 @@ export default function App() {
+                     <CostReportPage />
+                   </ModuleGuard>
+                 } />
++                <Route path="reports/b2b2c" element={
++                  <ModuleGuard module="adminReportB2b2c">
++                    <B2b2cReportPage />
++                  </ModuleGuard>
++                } />
+               </>
+             )}
+             {/* Journey tags became tabs of User journey (U092). */}
+diff --git a/src/admin/AdminLayout.tsx b/src/admin/AdminLayout.tsx
+index 84cb41d..43f8218 100644
+--- a/src/admin/AdminLayout.tsx
++++ b/src/admin/AdminLayout.tsx
+@@ -87,6 +87,7 @@ const NAV: { section: string; icon: LucideIcon; items: NavItem[] }[] = [
+           { to: '/admin/reports/ux-feedback', label: 'UX feedback report', flag: 'adminReportUxFeedback' },
+           { to: '/admin/reports/combination', label: 'Combination report', flag: 'adminReportCombination' },
+           { to: '/admin/reports/cost', label: 'Cost report', flag: 'adminReportCost' },
++          { to: '/admin/reports/b2b2c', label: 'B2B2C report', flag: 'adminReportB2b2c' },
+         ]
+       : [],
+   },
+diff --git a/src/admin/data/b2b2cReport.test.ts b/src/admin/data/b2b2cReport.test.ts
+new file mode 100644
+index 0000000..377178a
+--- /dev/null
++++ b/src/admin/data/b2b2cReport.test.ts
+@@ -0,0 +1,67 @@
++import { describe, expect, it } from 'vitest'
++import { B2B2C_PAGES, pageMarkdown } from '../../guides/docPages'
++import { B2B2C_SOURCES, CHANNELS, CHANNEL_ORDER, FEATURES, PHASES, PRIORITIES, b2b2cSummary, citedSources, featuresBy, sourceById, topFeatures } from './b2b2cReport'
++import { GLOSSARY, markedIds, unmarkedJargon } from './glossary'
++
++describe('B2B2C report data', () => {
++  it('gives every feature a source, a priority, an effort and a metric', () => {
++    for (const f of FEATURES) {
++      expect(f.sources.length, f.id).toBeGreaterThan(0)
++      for (const s of f.sources) expect(sourceById(s), `${f.id} cites ${s}`).toBeDefined()
++      expect(PRIORITIES, f.id).toContain(f.priority)
++      expect(['frontend', 'backend', 'new-backend'], f.id).toContain(f.effort)
++      expect(f.metric.length, f.id).toBeGreaterThan(10)
++      expect(f.problem.length, f.id).toBeGreaterThan(10)
++      expect(f.evidence.length, f.id).toBeGreaterThan(10)
++      // Endpoints are named exactly when the feature uses the backend API v2 already describes.
++      if (f.effort === 'backend') expect(f.endpoints.length, f.id).toBeGreaterThan(0)
++      else expect(f.endpoints, f.id).toEqual([])
++    }
++    expect(new Set(FEATURES.map((f) => f.id)).size).toBe(FEATURES.length)
++  })
++
++  it('names only endpoints that exist in the API v2 pages', () => {
++    const api = ['general', 'apps', 'admin'].map((slug) => pageMarkdown({ slug, title: '', note: '', file: `${slug}.md`, dir: 'api/v2' })).join('\n')
++    for (const f of FEATURES) for (const e of f.endpoints) expect(api, `${f.id}: ${e}`).toContain(`\`${e.split(' ')[1]}\``)
++  })
++
++  it('cites every source with a link, a date and a label', () => {
++    for (const s of B2B2C_SOURCES) {
++      expect(s.url, s.id).toMatch(/^(https:\/\/|\/)/)
++      expect(s.date, s.id).not.toBe('')
++      expect(s.used.length, s.id).toBeGreaterThan(10)
++    }
++    expect(B2B2C_SOURCES.filter((s) => s.url.startsWith('https')).length).toBe(28)
++    expect(citedSources().length).toBeGreaterThanOrEqual(20)
++  })
++
++  it('covers every channel and priority, has three top features and puts each feature in one phase', () => {
++    for (const c of CHANNEL_ORDER) expect(featuresBy(c, 'all').length, c).toBeGreaterThan(0)
++    for (const p of PRIORITIES) expect(featuresBy('all', p).length, p).toBeGreaterThan(0)
++    expect(topFeatures().map((f) => f.top)).toEqual([1, 2, 3])
++    expect(PHASES.flatMap((p) => p.build).sort()).toEqual(FEATURES.map((f) => f.id).sort())
++    expect(CHANNELS.map((c) => c.rank)).toEqual([1, 2, 3])
++  })
++
++  it('writes the summary in plain words, and no internal ids or names anywhere', () => {
++    const s = b2b2cSummary()
++    const texts = [s.intro ?? '', s.question, s.headline, s.statusNote, s.sure ?? '', ...s.tiles.flatMap((t) => [t.label, t.value, t.note ?? '']), ...s.actions.map((a) => a.text), ...Object.values(s.confidence)]
++    for (const t of texts) {
++      expect(unmarkedJargon(t), t).toEqual([])
++      for (const id of markedIds(t)) expect(Object.keys(GLOSSARY)).toContain(id)
++    }
++    const all = JSON.stringify({ FEATURES, CHANNELS, PHASES, B2B2C_SOURCES, s })
++    expect(all).not.toMatch(/Eugene/)
++    expect(all).not.toMatch(/\b[JUO]\d{2,3}\b/)
++  })
++
++  it('has the two round-2 wiki pages, without the business owner’s name or internal ids', () => {
++    for (const slug of ['round-2', 'features']) {
++      const p = B2B2C_PAGES.find((x) => x.slug === slug)
++      expect(p, slug).toBeDefined()
++      const md = pageMarkdown(p!)
++      expect(md, slug).not.toMatch(/Eugene/)
++      expect(md, slug).not.toMatch(/\b[JUO]\d{2,3}\b/)
++    }
++  })
++})
+diff --git a/src/admin/data/b2b2cReport.ts b/src/admin/data/b2b2cReport.ts
+new file mode 100644
+index 0000000..284b772
+--- /dev/null
++++ b/src/admin/data/b2b2cReport.ts
+@@ -0,0 +1,294 @@
++import { v6Tallies } from './buyerRunV6'
++import { v7Tallies } from './buyerRunV7'
++import type { ReportSummary } from './reportSummaries'
++
++/**
++ * Admin → Reports → B2B2C report: B2B2C research round 2, as data. The
++ * channels re-ranked with the new research and buyer tests 6 and 7, the
++ * features each channel needs (who, what problem, the evidence, priority,
++ * effort, the API v2 endpoints, the success number) and the phased plan.
++ * The wiki pages /wiki/b2b2c/round-2 and /wiki/b2b2c/features say the same
++ * in prose; `b2b2cReport.test.ts` checks every feature carries a source,
++ * a priority, an effort and a metric. Pure, so the page stays thin.
++ */
++
++export type EvidenceLabel = 'measured' | 'company' | 'third-party' | 'estimate' | 'simulated' | 'internal'
++
++export const EVIDENCE_LABEL_TEXT: Record<EvidenceLabel, string> = {
++  measured: 'Measured',
++  company: 'Company claim',
++  'third-party': 'Third party',
++  estimate: 'Estimate',
++  simulated: 'Simulated',
++  internal: 'Our documents',
++}
++
++export interface B2b2cSource {
++  id: string
++  title: string
++  /** A web address, or a wiki / admin route for our own documents. */
++  url: string
++  /** When it was published or read. */
++  date: string
++  label: EvidenceLabel
++  /** What we took from it, in one line. */
++  used: string
++}
++
++/** Every source round 2 uses: new web research (read 25 Nov 2026) and our own documents. */
++export const B2B2C_SOURCES: B2b2cSource[] = [
++  // New web research, round 2
++  { id: 'sword-headspace', title: 'Sword Health to acquire Headspace', url: 'https://cryptobriefing.com/sword-health-acquires-headspace/', date: '2026', label: 'third-party', used: 'Headspace sold for up to $300M, folded into an AI care platform: the content-only employer app is consolidating.' },
++  { id: 'cigna-headspace', title: 'Headspace for Cigna Healthcare', url: 'https://newsroom.cigna.com/2025-11-10-Headspace-for-Cigna-Healthcare-Enhances-Everyday-Mental-Health-Support-Through-Self-Guided,-Science-Backed-Resources', date: '10 Nov 2025', label: 'company', used: 'From 1 Jan 2026, Headspace reaches 7M+ people through a health plan: big buyers buy through payers, not apps.' },
++  { id: 'calm-solera', title: 'Calm Health joins the Solera Network', url: 'https://www.calm.com/blog/calm-health-solera-press', date: 'Jan 2026', label: 'company', used: 'Calm Health says it reaches 39M+ people through plans, providers and employers. Enterprise is quote-only.' },
++  { id: 'calm-teams', title: 'Calm for Organizations, groups of 5–300', url: 'https://support.calm.com/hc/en-us/articles/360038432493', date: 'read 25 Nov 2026', label: 'company', used: 'A self-serve team plan from 5 seats, cheaper per seat as the group grows.' },
++  { id: 'vendr-calm', title: 'Vendr: Calm buyer data', url: 'https://www.vendr.com/marketplace/calm', date: 'read 25 Nov 2026', label: 'third-party', used: 'Median buyer pays about $7,880 a year (51 purchases): small teams, not enterprises.' },
++  { id: 'wysa-teams', title: 'Wysa for Teams', url: 'https://wysa.com/for-teams', date: 'read 25 Nov 2026', label: 'company', used: '$50 per employee per year, teams of 200 or fewer, a unique access code per person.' },
++  { id: 'headspace-smb', title: 'Headspace for small business', url: 'https://organizations.headspace.com/small-business', date: 'read 25 Nov 2026', label: 'company', used: 'Buy seats online and share one enrolment link with the team.' },
++  { id: 'wtw-2026', title: 'WTW: employee wellbeing enters a new phase', url: 'https://www.wtwco.com/en-us/insights/2026/10/employee-wellbeing-enters-its-next-chapter-smarter-investments-greater-impact', date: 'Oct 2026', label: 'third-party', used: 'Only 16% of US employers are cutting wellbeing spend; buyers now ask for outcomes, not more programmes.' },
++  { id: 'wellable-2026', title: 'Wellable: employee well-being trends 2026', url: 'https://www.wellable.co/resources/employee-well-being-industry-trends-report/2026/', date: '2026', label: 'third-party', used: '66% plan to invest more in stress and resilience in 2026 (70% in 2025).' },
++  { id: 'nfp-2026', title: 'NFP benefits trends, via Insurance Business', url: 'https://www.insurancebusinessmag.com/us/news/benefits/nearly-half-of-us-employers-expect-healthcare-budget-increases--nfp-562773.aspx', date: '2025', label: 'third-party', used: 'Average spend on mental health resources fell about 7%: the budgets disagree, so price low and prove use.' },
++  { id: 'mmb-indonesia', title: 'Mercer Marsh Benefits: Indonesia health and benefits study 2025', url: 'https://www.marsh.com/id/en/services/employee-health-benefits/insights/id-indonesia-health-and-benefits-study-2025.html', date: '2025', label: 'third-party', used: '400 organisations: 48% of Indonesian companies already include an employee assistance programme.' },
++  { id: 'imarc-indonesia', title: 'IMARC: Indonesia corporate wellness market', url: 'https://www.imarcgroup.com/indonesia-corporate-wellness-market', date: '2025', label: 'estimate', used: 'About $968M in 2025, 5.6% a year. Market-research estimates disagree by 2×.' },
++  { id: 'jakpost-tiktok', title: 'Jakarta Post: businesses tap TikTok’s creator economy', url: 'https://thejakartapost.com/business/2026/06/27/businesses-tap-tiktoks-creator-economy-to-boost-sales', date: '27 Jun 2026', label: 'third-party', used: 'Content commerce was 32% of Southeast Asia’s e-commerce in 2025 (Momentum Works): creators sell there.' },
++  { id: 'tokopedia-creators', title: 'Tokopedia × TikTok Shop Creators Lab, Bali', url: 'https://www.tokopedia.com/blog/creators-lab-bali-eng/', date: 'Jun 2025', label: 'company', used: 'Indonesian creators are trained to earn commission per sale from short videos and live streams.' },
++  { id: 'it-india', title: 'Insight Timer launches in India', url: 'https://m.thewire.in/article/ptiprnews/worlds-largest-free-wellness-app-insight-timer-launches-in-india/amp', date: '11 Mar 2026', label: 'company', used: '35M+ users; local teachers recruited to reach a global audience. The free-first library keeps expanding.' },
++  { id: 'it-ai', title: 'Insight Timer: intentions with an AI recommendation engine', url: 'https://www.globenewswire.com/news-release/2026/01/06/3213643/0/en/insight-timer-launches-new-year-s-resolution-and-intention-setting-features-with-ai-recommendation-engine.html', date: '6 Jan 2026', label: 'company', used: '16M intentions set in 2025; personal recommendations are now table stakes, not a moat.' },
++  { id: 'it-retreats', title: 'Insight Timer Retreats FAQ for teachers', url: 'https://insight-timer.freshdesk.com/support/solutions/articles/67000739470-insight-timer-retreats-faqs-for-teachers', date: 'read 25 Nov 2026', label: 'company', used: '10% non-refundable booking fee; the teacher runs everything; nothing continues after the retreat.' },
++  { id: 'maven-guarantee', title: 'Maven satisfaction guarantee', url: 'https://help.maven.com/en/articles/8705540-maven-s-satisfaction-guarantee', date: 'read 25 Nov 2026', label: 'company', used: 'Full refund up to the course midpoint, shown as a badge on the course page.' },
++  { id: 'maven-refunds', title: 'Maven: issuing refunds to students', url: 'https://help.maven.com/en/articles/5597391-issuing-refunds-to-students', date: 'read 25 Nov 2026', label: 'company', used: 'A refund returns both the creator’s share and the platform fee; card fees are lost.' },
++  { id: 'revenuecat-2026', title: 'RevenueCat: subscription app benchmarks 2026', url: 'https://www.revenuecat.com/blog/growth/subscription-app-trends-benchmarks-2026', date: '2026', label: 'measured', used: '115,000+ apps: trials of 17–32 days convert 42.5%, under 4 days 25.5%; freemium 2.1% of downloads pay by day 35.' },
++  { id: 'adapty-2026', title: 'Adapty: state of in-app subscriptions 2026', url: 'https://adapty.io/state-of-in-app-subscriptions-2026', date: 'Mar 2026', label: 'measured', used: 'Health & Fitness trial-to-paid 35%, the highest category (16,000 apps).' },
++  { id: 'ftc-reviews', title: 'FTC final rule banning fake reviews and testimonials', url: 'https://www.ftc.gov/news-events/news/press-releases/2024/08/federal-trade-commission-announces-final-rule-banning-fake-reviews-testimonials', date: 'Aug 2024, in force 21 Oct 2024', label: 'company', used: 'Civil penalties per fake or AI-made review or testimonial, and for fake social proof.' },
++  { id: 'nielsen-trust', title: 'Nielsen: global trust in advertising', url: 'https://www.nielsen.com/global-trust-in-advertising', date: '2021 data, read 25 Nov 2026', label: 'third-party', used: '83% trust recommendations from people they know, far above ads.' },
++  { id: 'bbb-influencer', title: 'BBB National Programs: Influencer Trust Index 2025', url: 'https://bbbprograms.org/media/insights/blog/influencer-trust-index', date: 'Feb 2025', label: 'third-party', used: '26% say they do not trust influencers; disclosure and honesty drive trust.' },
++  { id: 'kajabi-analytics', title: 'Kajabi analytics', url: 'https://kajabi.com/features/analytics', date: 'read 25 Nov 2026', label: 'company', used: 'A creator dashboard: revenue, new customers, active members, lesson completion and last activity.' },
++  { id: 'teachable-reports', title: 'Teachable reporting tools', url: 'https://teachable.com/blog/new-teachable-reporting-tools-2024', date: '2024', label: 'company', used: 'Sales, earnings, refunds, fees and payouts in one view; lesson drop-off per course.' },
++  { id: 'circle-pricing', title: 'Circle pricing 2026 and transaction fees', url: 'https://schoolmaker.com/blog/circle-so-pricing', date: '2026', label: 'third-party', used: 'Community platforms take 0.5–2% plus card fees: creators compare Aurelia’s 30% to this.' },
++  { id: 'headspace-gift', title: 'Headspace: redeem a promo, voucher or gift code', url: 'https://help.headspace.com/hc/en-us/articles/215057448-I-have-a-promo-gift-code-How-do-I-redeem-activate-it', date: 'read 25 Nov 2026', label: 'company', used: 'One code page for gifts, promos and partner vouchers; a code cannot stack on a live subscription.' },
++  // Our own documents
++  { id: 'buyer-v6', title: 'Buyer agent test 6 (60 simulated people)', url: '/admin/buyer-agent?v=6', date: '25 Nov 2026', label: 'simulated', used: 'Freemium beat the €19.99 retreat ticket in every channel; trust was the top objection; 21 of 60 would buy if their employer paid.' },
++  { id: 'buyer-v7', title: 'Buyer agent test 7 (100 simulated people)', url: '/admin/buyer-agent?v=7', date: '25 Nov 2026', label: 'simulated', used: 'A free library lifted trying; among creator followers, freemium still beat the ticket on expected paid plans.' },
++  { id: 'round-1', title: 'B2B2C research, round 1', url: '/wiki/b2b2c', date: '23–24 Nov 2026', label: 'internal', used: 'The 15 models and scores, the redesign, the five pilot numbers, the claims rules.' },
++  { id: 'it-round-3', title: 'Insight Timer research, round 3', url: '/wiki/research', date: '25 Nov 2026', label: 'internal', used: 'Insight Timer Retreats against Retreat-in-a-Box: their 10% fee, our “after”.' },
++  { id: 'owner-retreat', title: 'The business owner’s retreat brief and mock-up', url: '/wiki/b2b2c/round-2', date: '23–24 Nov 2026', label: 'internal', used: 'The retreat’s purpose: reach through creators, then usage, then paid plans; the co-branded box, AI companion and live group.' },
++  { id: 'retreat-funnel', title: 'Creator retreat funnel', url: '/admin/business-funnel?view=retreat', date: '24 Nov 2026', label: 'estimate', used: 'Aurelia’s share per ticket and paid plans per ticket buyer, in three outcome cases.' },
++  { id: 'cost-model', title: 'Cost report', url: '/admin/reports/cost', date: '25 Nov 2026', label: 'estimate', used: 'What a session costs to make: the free week must stay cheap, so it reuses the creator’s pre-made journey.' },
++  { id: 'api-v2', title: 'API contract v2, the pilot slice', url: '/wiki/api', date: 'Nov 2026', label: 'internal', used: 'Which features already have endpoints (tickets, refunds, creator metrics, payouts) and which need new ones (codes, teams).' },
++]
++
++export const sourceById = (id: string) => B2B2C_SOURCES.find((s) => s.id === id)
++
++/* ------------------------------------------------------------ Channels */
++
++export type ChannelId = 'creator' | 'employer' | 'partner' | 'free'
++
++export interface Channel {
++  id: ChannelId
++  name: string
++  short: string
++  rank: number
++  /** Round 1 score out of 18, or null when it was not scored. */
++  round1: number | null
++  round1Rank: number | null
++  /** Round 2: the same six questions (out of 18) plus “what the simulations say” (0–3). */
++  score18: number
++  sim: number
++  why: string
++  changed: string
++  sources: string[]
++}
++
++/** The free plan is the base every channel lands on, so it is not ranked against them. */
++export const CHANNELS: Channel[] = [
++  {
++    id: 'creator',
++    name: 'Creator journey, free first week',
++    short: 'Creator journey',
++    rank: 1,
++    round1: 15,
++    round1Rank: 2,
++    score18: 15,
++    sim: 2,
++    why: 'Creators bring people who already trust them. The journey in the creator’s own voice is what a course tool cannot do. People start free and pay after the first week, not before.',
++    changed: 'Was a ticket paid up front. The simulations say almost nobody pays a stranger’s ticket before anything has helped, so the ticket moves after a free week.',
++    sources: ['buyer-v6', 'buyer-v7', 'owner-retreat', 'revenuecat-2026', 'jakpost-tiktok'],
++  },
++  {
++    id: 'employer',
++    name: 'Self-serve team plan for small employers',
++    short: 'Team plan',
++    rank: 2,
++    round1: 13,
++    round1Rank: 4,
++    score18: 13,
++    sim: 3,
++    why: 'The employer pays, so price stops being the person’s problem. Small teams buy online with a card: Wysa at $50 a seat, Calm from 5 seats, Headspace with one link.',
++    changed: 'Moved up from fourth. In test 6, 21 of 60 people named “my employer pays” as a reason to buy, more than any single offer we tested.',
++    sources: ['buyer-v6', 'wysa-teams', 'calm-teams', 'headspace-smb', 'vendr-calm', 'wtw-2026'],
++  },
++  {
++    id: 'partner',
++    name: 'Partner codes and gifting',
++    short: 'Codes and gifts',
++    rank: 3,
++    round1: 16,
++    round1Rank: 1,
++    score18: 15,
++    sim: 0,
++    why: 'Cheap reach where the person still enters their own card. One code system serves gifts, partner trials and team seats.',
++    changed: 'Was first. Nothing tested it yet, and API v2 has no code endpoints, so it is built once, for the team plan first, then reused.',
++    sources: ['headspace-gift', 'round-1', 'api-v2'],
++  },
++]
++
++/** Models from round 1 that round 2 moved out of the top three, with why. */
++export const MOVED_DOWN: { name: string; round1: string; now: string; why: string; sources: string[] }[] = [
++  { name: 'Creator retreat with a ticket paid up front', round1: '2nd (as the redesign)', now: 'An upgrade inside the creator journey', why: 'Test 6: 1 expected paid plan from the €19.99 ticket against 17.5 from the free app. Test 7: still behind among creator followers.', sources: ['buyer-v6', 'buyer-v7'] },
++  { name: 'Retreat and studio aftercare', round1: '3rd (14 of 18)', now: 'Later', why: 'Still a real gap: Insight Timer’s retreats end when the retreat does. But it needs in-person retreat leaders and the same backend; it follows the creator pilot.', sources: ['it-retreats', 'it-round-3'] },
++  { name: 'Insurers and clinical routes', round1: 'Out (6–7)', now: 'Still out', why: 'The buyers there now want clinical care: Headspace goes to an AI care company, Calm Health sells through health plans.', sources: ['sword-headspace', 'cigna-headspace', 'calm-solera'] },
++]
++
++/* ------------------------------------------------------------ Features */
++
++export type Priority = 'Now' | 'Next' | 'Later'
++export type Effort = 'frontend' | 'backend' | 'new-backend'
++export type FeatureUser = 'creator' | 'participant' | 'employer admin' | 'Aurelia staff'
++
++export const EFFORT_TEXT: Record<Effort, string> = {
++  frontend: 'Frontend only',
++  backend: 'Needs the backend (in API v2)',
++  'new-backend': 'Needs new backend (not in API v2)',
++}
++
++export const CHANNEL_NAME: Record<ChannelId, string> = {
++  free: 'Free plan (the base)',
++  creator: 'Creator journey',
++  employer: 'Team plan',
++  partner: 'Codes and gifts',
++}
++
++export interface Feature {
++  id: string
++  channel: ChannelId
++  title: string
++  user: FeatureUser
++  problem: string
++  evidence: string
++  /** Ids in B2B2C_SOURCES. */
++  sources: string[]
++  priority: Priority
++  effort: Effort
++  /** API v2 endpoints it uses; empty for frontend-only or new endpoints. */
++  endpoints: string[]
++  metric: string
++  /** A trust feature: it answers “can I trust this?”. */
++  trust?: boolean
++  /** Rank among all features, 1–3 for the top three. */
++  top?: 1 | 2 | 3
++}
++
++export const FEATURES: Feature[] = [
++  // The free plan, the base
++  { id: 'free-week', channel: 'free', title: 'A free first week of every journey, no card', user: 'participant', problem: 'People will not pay before anything has helped. A ticket up front lost almost everyone in the simulations.', evidence: 'Test 6: free app 17.5 expected paid plans, the €19.99 ticket 1. Longer trials convert better: 42.5% for 17–32 days against 25.5% under 4 days.', sources: ['buyer-v6', 'revenuecat-2026'], priority: 'Now', effort: 'backend', endpoints: ['POST /journeys', 'GET /me/entitlements'], metric: 'Share of starters who reach day 7, and who then pay', trust: true, top: 1 },
++  { id: 'help-now', channel: 'free', title: '“Need help now?” on every feelings screen', user: 'participant', problem: 'A creator or employer cannot vouch for an AI that has no safety net. Crisis handling is required by law in some markets.', evidence: 'Round 1 regulation: California’s companion-AI law needs a crisis protocol. Test 7 kept the link; it moved nobody but it is a floor, not a feature.', sources: ['round-1', 'buyer-v7'], priority: 'Now', effort: 'backend', endpoints: ['GET /safety/resources', 'POST /safety/reports'], metric: 'Shown on 100% of check-in and session screens; local numbers in every pilot country', trust: true },
++  { id: 'data-line', channel: 'free', title: 'One plain line on what we keep and who sees it', user: 'participant', problem: 'Privacy is the first question of protective people, and no quick win answered it.', evidence: 'Test 7: 8 of 17 very protective people would try, and “what happens to my data” was still their first question.', sources: ['buyer-v7', 'round-1'], priority: 'Now', effort: 'frontend', endpoints: [], metric: 'Privacy as an objection in the next buyer test, down from test 7', trust: true },
++  { id: 'local-price', channel: 'free', title: 'Bahasa Indonesia and a rupiah price', user: 'participant', problem: 'In Indonesia, language and a local price mattered more than any feature.', evidence: 'Test 7: Indonesian simulated people barely moved on quick wins; Bahasa and rupiah were their condition.', sources: ['buyer-v7', 'mmb-indonesia'], priority: 'Later', effort: 'backend', endpoints: ['GET /plans'], metric: 'Indonesian starters who pay, against the rest' },
++
++  // Creator journey
++  { id: 'voice-sample', channel: 'creator', title: 'The creator’s page with a 60-second sample in their own voice', user: 'participant', problem: 'Trust was the top objection to the retreat. Followers trust the creator, not an unknown AI app.', evidence: 'Test 6: trust was the top objection (25 mentions); the creator’s own voice moved 5 answers, more than any other change. 83% trust recommendations from people they know.', sources: ['buyer-v6', 'nielsen-trust'], priority: 'Now', effort: 'backend', endpoints: ['GET /creators/{handle}', 'GET /retreats/{id}'], metric: 'Page visitors who start the free week', trust: true, top: 2 },
++  { id: 'pay-after-week', channel: 'creator', title: 'Pay after week one: the creator’s journey or the paid plan', user: 'participant', problem: 'The ticket must come after the first help, not before it.', evidence: 'Tests 6 and 7: the ticket up front lost to the free app among creator followers both times.', sources: ['buyer-v6', 'buyer-v7', 'retreat-funnel'], priority: 'Now', effort: 'backend', endpoints: ['POST /checkout/tickets', 'POST /checkout/subscription'], metric: 'Paid by day 10 among free-week starters (judgement: at least 15%)' },
++  { id: 'refund-window', channel: 'creator', title: 'Full refund until week 4, said on the page before paying', user: 'participant', problem: 'Paying for an 8-week journey is a risk. A visible guarantee lowers it, and the EU withdrawal rules must be met anyway.', evidence: 'Maven refunds in full to the midpoint and shows it as a badge. A refund returns both shares, so the creator must agree to it.', sources: ['maven-guarantee', 'maven-refunds', 'round-1'], priority: 'Now', effort: 'backend', endpoints: ['POST /orders/{id}/withdrawal', 'POST /admin/orders/{id}/refunds'], metric: 'Refunds under 10% (the pilot number)', trust: true, top: 3 },
++  { id: 'real-quotes', channel: 'creator', title: 'Quotes from real participants only, with consent and date', user: 'Aurelia staff', problem: 'Invented quotes and numbers would break trust and the law. The spec’s “+85.7% sleep” is mock data.', evidence: 'The US fake-reviews rule fines each fake or AI-made testimonial. Until the pilot, the page shows none.', sources: ['ftc-reviews', 'bbb-influencer', 'owner-retreat'], priority: 'Now', effort: 'frontend', endpoints: [], metric: 'Invented quotes or results on any page: zero', trust: true },
++  { id: 'claims-check', channel: 'creator', title: 'What a creator may say: a checklist in onboarding', user: 'creator', problem: 'A creator’s post can make Aurelia a medical device by implying it treats something.', evidence: 'Round 1: under UK guidance, social posts implying the app reduces depression can do it.', sources: ['round-1'], priority: 'Now', effort: 'frontend', endpoints: [], metric: 'Every pilot creator signs it before their first post', trust: true },
++  { id: 'creator-dashboard', channel: 'creator', title: 'Creator dashboard: totals only, groups of 10 or more', user: 'creator', problem: 'Creators need to see their journey work. They must never see one person’s feelings.', evidence: 'Kajabi and Teachable show revenue, active members, completion and drop-off. Round 1: aggregate only, minimum group sizes.', sources: ['kajabi-analytics', 'teachable-reports', 'round-1'], priority: 'Now', effort: 'backend', endpoints: ['GET /creator/retreats', 'GET /creator/cohorts/{id}/metrics'], metric: 'Creators who open it weekly; no screen shows a group under 10' },
++  { id: 'payouts', channel: 'creator', title: 'Payouts and the split, in plain view', user: 'creator', problem: 'Creators compare our 30% to Insight Timer’s 10% and Circle’s 2%. Hiding it costs trust.', evidence: 'Insight Timer Retreats: 10% fee. Community platforms: 0.5–2% plus card fees.', sources: ['it-retreats', 'circle-pricing', 'api-v2'], priority: 'Next', effort: 'backend', endpoints: ['POST /creator/connect/onboarding-link', 'GET /creator/payouts', 'GET /creator/split-rules'], metric: 'Payout questions to staff per creator per month' },
++  { id: 'live-calendar', channel: 'creator', title: 'The live group sessions in the calendar', user: 'participant', problem: 'The live group is part of what the creator sells; people miss it without a reminder.', evidence: 'The business owner’s mock-up: weekly live meditations with the creator. The app already makes calendar reminders.', sources: ['owner-retreat'], priority: 'Next', effort: 'frontend', endpoints: [], metric: 'Participants at the week-1 live session' },
++  { id: 'plus-share', channel: 'creator', title: 'The creator earns a share of the paid plans they bring', user: 'creator', problem: 'With the ticket later, creators earn less up front; the paid-plan share keeps them selling.', evidence: 'Round 1: 70/30 plus a share of the paid plan was the answer to “why not Kajabi?”.', sources: ['round-1', 'api-v2'], priority: 'Later', effort: 'backend', endpoints: ['PUT /admin/split-rules/{id}'], metric: 'Paid plans per creator, 90 days after the journey' },
++
++  // Team plan
++  { id: 'ask-employer', channel: 'employer', title: '“Ask my employer to pay”: a one-page request to forward', user: 'participant', problem: 'Many would use it if work paid, but nobody asks HR.', evidence: 'Test 6: 21 of 60 named their employer paying as a reason to buy; only 4 heard of Aurelia through work.', sources: ['buyer-v6'], priority: 'Now', effort: 'frontend', endpoints: [], metric: 'Requests sent, and teams that buy from one' },
++  { id: 'team-buy', channel: 'employer', title: 'Buy 5–200 seats online with a card', user: 'employer admin', problem: 'Small employers will not sit through a sales process.', evidence: 'Wysa: $50 a seat a year up to 200 people. Calm: 5–300 seats, discounted with size. Vendr: median Calm buyer about $7,880 a year.', sources: ['wysa-teams', 'calm-teams', 'vendr-calm'], priority: 'Next', effort: 'new-backend', endpoints: [], metric: 'Teams bought without a call' },
++  { id: 'team-link', channel: 'employer', title: 'One invite link or a code per person', user: 'employer admin', problem: 'Seats bought are worthless if nobody joins.', evidence: 'Headspace: one enrolment link. Wysa: a unique code per person. Round 1: only 38% of enrolled staff used any tool.', sources: ['headspace-smb', 'wysa-teams', 'round-1'], priority: 'Next', effort: 'new-backend', endpoints: [], metric: 'Seats activated in 30 days (judgement: above 38%)' },
++  { id: 'team-report', channel: 'employer', title: 'Team report: joined, active, back after 30 days', user: 'employer admin', problem: 'Employers renew on proof of use. The law bans inferring staff emotions at work.', evidence: 'WTW: buyers want outcomes. EU AI Act: no emotion inference at work, so counts only, groups of 10 or more.', sources: ['wtw-2026', 'round-1'], priority: 'Next', effort: 'new-backend', endpoints: [], metric: 'Teams that renew at month 12' },
++  { id: 'eap-indonesia', channel: 'employer', title: 'An Indonesian team pack beside the company’s assistance programme', user: 'employer admin', problem: 'Half of Indonesian employers already have a programme; Aurelia must fit beside it, not replace it.', evidence: 'Mercer Marsh 2025: 48% include an employee assistance programme. Market estimates differ by 2×.', sources: ['mmb-indonesia', 'imarc-indonesia'], priority: 'Later', effort: 'new-backend', endpoints: [], metric: 'Indonesian teams signed' },
++
++  // Codes and gifts
++  { id: 'codes', channel: 'partner', title: 'One code system: gift, partner trial, team seat', user: 'Aurelia staff', problem: 'Three channels need codes; building three systems wastes the backend.', evidence: 'Headspace runs gifts, promos and partner vouchers through one code page. API v2 has no code endpoints yet.', sources: ['headspace-gift', 'api-v2'], priority: 'Next', effort: 'new-backend', endpoints: [], metric: 'Codes redeemed; redeemers with their own card on file at day 30' },
++  { id: 'gift', channel: 'partner', title: 'Gift a creator’s journey', user: 'participant', problem: 'A journey makes a natural gift, and the gift buyer pays the reach.', evidence: 'Round 1: gifting scored highest because the receiver keeps their own card after.', sources: ['round-1', 'headspace-gift'], priority: 'Later', effort: 'new-backend', endpoints: [], metric: 'Gifts redeemed, and receivers who pay after' },
++  { id: 'aftercare', channel: 'partner', title: 'Retreat aftercare: a retreat continues as a journey', user: 'creator', problem: 'In-person retreats end and nothing follows; Insight Timer does not fill this either.', evidence: 'Insight Timer Retreats: 10% fee, teacher-run, nothing after.', sources: ['it-retreats', 'it-round-3'], priority: 'Later', effort: 'backend', endpoints: ['POST /admin/retreats', 'POST /admin/retreats/{id}/cohorts'], metric: 'Retreat guests still active 8 weeks later' },
++
++  // Staff
++  { id: 'scoreboard', channel: 'creator', title: 'The pilot scoreboard in the admin, on real numbers', user: 'Aurelia staff', problem: 'The gates need real numbers, not the simulated ones.', evidence: 'Round 1 plan: five pilot numbers set in advance; API v2 has cohort metrics for staff.', sources: ['round-1', 'api-v2'], priority: 'Next', effort: 'backend', endpoints: ['GET /admin/cohorts/{id}/metrics', 'GET /admin/outcomes/journeys'], metric: 'All five pilot numbers shown weekly from real data' },
++]
++
++export const PRIORITIES: Priority[] = ['Now', 'Next', 'Later']
++export const CHANNEL_ORDER: ChannelId[] = ['free', 'creator', 'employer', 'partner']
++
++export const featuresBy = (channel: ChannelId | 'all', priority: Priority | 'all') =>
++  FEATURES.filter((f) => (channel === 'all' || f.channel === channel) && (priority === 'all' || f.priority === priority))
++
++export const topFeatures = () => FEATURES.filter((f) => f.top).sort((a, b) => (a.top ?? 9) - (b.top ?? 9))
++
++/** Every source a feature or channel cites, in registry order: the page’s “Sources used”. */
++export function citedSources(): B2b2cSource[] {
++  const used = new Set([...FEATURES.flatMap((f) => f.sources), ...CHANNELS.flatMap((c) => c.sources), ...MOVED_DOWN.flatMap((m) => m.sources)])
++  return B2B2C_SOURCES.filter((s) => used.has(s.id))
++}
++
++/* ------------------------------------------------------------ The plan */
++
++export interface Phase {
++  id: string
++  name: string
++  when: string
++  build: string[]
++  gate: string
++}
++
++export const PHASES: Phase[] = [
++  { id: 'p0', name: 'Phase 0: prove the offer', when: 'Now, no backend', build: ['data-line', 'real-quotes', 'claims-check', 'ask-employer'], gate: 'Gate 0: a buyer test of the creator journey with a free first week beats the free app among followers, and at least 3 creators agree to the terms.' },
++  { id: 'p1', name: 'Phase 1: the creator pilot', when: 'After the minimum backend', build: ['free-week', 'help-now', 'voice-sample', 'pay-after-week', 'refund-window', 'creator-dashboard'], gate: 'Gate 1: the five pilot numbers, with “paid after the free week” in place of “seats sold”.' },
++  { id: 'p1b', name: 'Phase 1b: the team plan, beside it', when: 'Same time, 2–3 small employers', build: ['codes', 'team-buy', 'team-link', 'team-report'], gate: 'Seats activated in 30 days above 38%, and at least one team buys without a call.' },
++  { id: 'p2', name: 'Phase 2: repeat', when: 'Gate 1 passed', build: ['payouts', 'live-calendar', 'scoreboard'], gate: 'Gate 2: the numbers hold across creators, not only the best one.' },
++  { id: 'p3', name: 'Phase 3: widen', when: 'Gate 2 passed', build: ['plus-share', 'gift', 'aftercare', 'local-price', 'eap-indonesia'], gate: 'Indonesia and gifting only with retention data to show.' },
++]
++
++/* ------------------------------------------------------------ Summary */
++
++export const WIKI_ROUND_2 = '/wiki/b2b2c/round-2'
++export const WIKI_FEATURES = '/wiki/b2b2c/features'
++
++export function b2b2cSummary(): ReportSummary {
++  const x6 = v6Tallies()
++  const x7 = v7Tallies()
++  const best = CHANNELS[0]
++  const top = topFeatures()
++  const now = featuresBy('all', 'Now').length
++  return {
++    intro: 'Which partner to sell Aurelia through first, a creator, an employer or a gift, and what we must build for it.',
++    goal: 'Helps the business owner choose which partner channel to build first and which features it needs.',
++    detail: { to: WIKI_ROUND_2, label: 'Round 2 on the wiki' },
++    question: 'Which partner channel do we build first, and what does it need?',
++    headline: `Build the creator journey first, but free for the first week: people pay after it has helped, not before. Next, a self-serve team plan, because many people want their employer to pay. ${now} features are needed now; most need the backend.`,
++    status: 'not-measured',
++    statusNote: 'No real creator or employer has tried it yet',
++    sure: 'The ranking rests on public research and on tests with {{simulated|simulated people}}. Nothing here is measured on real buyers yet.',
++    tiles: [
++      { label: 'Best channel', value: best.short, badge: 'estimate', note: `Scored ${best.score18 + best.sim} of 21. Free first week, then the creator’s journey or the {{paid-plan|paid plan}}.` },
++      { label: 'Top 3 features', value: top.map((f, i) => `${i + 1}. ${f.title.split(/[,:]/)[0]}`).join(' · '), badge: 'estimate', note: 'All three answer “can I trust this?”.' },
++      { label: 'What the tests with {{simulated|simulated people}} say', value: `${x6.plus.A} vs ${x6.plus.B}`, badge: 'prediction', note: `Expected paying people: free app against the ticket paid up front, ${x6.A.n} people. ${x6.employerTrigger} of ${x6.A.n} would buy if work paid. Next test, ${x7.followers.n} creator followers: free app ${x7.followers.plusB}, ticket ${x7.followers.plusALT}.` },
++      { label: 'How sure', value: 'Low to medium', badge: 'scenario', note: 'Public prices and benchmarks are firm. The ranking is our judgement; the tests are not real buyers.' },
++    ],
++    actions: [
++      { text: 'Run the next buyer test on the creator journey with a free first week.', to: '#b2b2c-plan', linkLabel: 'The phased plan' },
++      { text: 'Ask five creators: would you sell it free for a week, with a refund to week 4?', to: '#b2b2c-features', linkLabel: 'The feature board' },
++      { text: 'Decide whether the team plan is built beside the pilot or after it.', to: '#b2b2c-channels', linkLabel: 'The channels compared' },
++    ],
++    confidence: {
++      measured: 'Benchmarks across 115,000 apps (trial length, freemium conversion). Nothing about Aurelia.',
++      predicted: `Two buyer tests with ${x6.A.n} and ${x7.A.n} {{simulated|simulated people}}.`,
++      assumed: 'The scores, the priorities and the pilot thresholds are our judgement.',
++    },
++  }
++}
+diff --git a/src/admin/data/iterationMap.test.ts b/src/admin/data/iterationMap.test.ts
+index 3572fd6..86fc2c9 100644
+--- a/src/admin/data/iterationMap.test.ts
++++ b/src/admin/data/iterationMap.test.ts
+@@ -4,15 +4,15 @@ import { DEFAULT_DECISIONS } from './businessFunnel'
+ import { buildIterations } from './buyerAgentReport'
+ import { buildStages } from './combinationReport'
+ import { SOURCE_GROUPS, buildIterationMap, mapFor, versionsOf } from './iterationMap'
+-import { BUYER_REPORT_FINDINGS, COMBINATION_FINDINGS, COST_FINDINGS, SOURCES, UX_FEEDBACK_FINDINGS } from './reportSources'
++import { B2B2C_FINDINGS, BUYER_REPORT_FINDINGS, COMBINATION_FINDINGS, COST_FINDINGS, SOURCES, UX_FEEDBACK_FINDINGS } from './reportSources'
+ 
+ const map = buildIterationMap(1)
+ const node = (id: string) => map.nodes.find((n) => n.id === id)
+ 
+ describe('iteration map (U129)', () => {
+-  it('has the six source kinds, ten reports and tests, the decisions and the versions', () => {
++  it('has the six source kinds, eleven reports and tests, the decisions and the versions', () => {
+     expect(map.nodes.filter((n) => n.column === 'source').map((n) => n.title)).toEqual(['Personas', 'The business owner’s documents', 'Knowledge (wiki)', 'User feedback', 'Cost data', 'Product versions'])
+-    expect(map.nodes.filter((n) => n.column === 'report')).toHaveLength(10)
++    expect(map.nodes.filter((n) => n.column === 'report')).toHaveLength(11)
+     expect(map.nodes.filter((n) => n.column === 'outcome')).toHaveLength(DEFAULT_DECISIONS.length + PRODUCTION_VERSIONS.length)
+     expect(new Set(map.nodes.map((n) => n.id)).size).toBe(map.nodes.length)
+   })
+@@ -26,6 +26,7 @@ describe('iteration map (U129)', () => {
+     const stages = buildStages(1)
+     const findingsOf: Record<string, string[]> = {
+       'r-ux': UX_FEEDBACK_FINDINGS.flatMap((f) => f.sources),
++      'r-b2b2c': B2B2C_FINDINGS.flatMap((f) => f.sources),
+       'r-cost': COST_FINDINGS.flatMap((f) => f.sources),
+       'r-combination': COMBINATION_FINDINGS.flatMap((f) => f.sources),
+       ...Object.fromEntries(BUYER_REPORT_FINDINGS.filter((f) => f.id.startsWith('it-')).map((f) => [`r-${f.id}`, f.sources])),
+diff --git a/src/admin/data/iterationMap.ts b/src/admin/data/iterationMap.ts
+index e470a60..dd8b695 100644
+--- a/src/admin/data/iterationMap.ts
++++ b/src/admin/data/iterationMap.ts
+@@ -1,7 +1,7 @@
+ import { DEFAULT_DECISIONS, STATUS_LABEL, type Decision } from './businessFunnel'
+ import { buildIterations } from './buyerAgentReport'
+ import { buildStages } from './combinationReport'
+-import { BUYER_REPORT_FINDINGS, COMBINATION_FINDINGS, COST_FINDINGS, SOURCES, UX_FEEDBACK_FINDINGS, type Finding, type SourceId, type SourceLabel } from './reportSources'
++import { B2B2C_FINDINGS, BUYER_REPORT_FINDINGS, COMBINATION_FINDINGS, COST_FINDINGS, SOURCES, UX_FEEDBACK_FINDINGS, type Finding, type SourceId, type SourceLabel } from './reportSources'
+ import { buyerTrend } from './reportSummaries'
+ import { PRODUCTION_VERSIONS } from '../../versions/versions'
+ 
+@@ -16,7 +16,7 @@ import { PRODUCTION_VERSIONS } from '../../versions/versions'
+  */
+ 
+ export type MapColumn = 'source' | 'report' | 'outcome'
+-export type ReportKey = 'buyer' | 'combination' | 'cost' | 'ux'
++export type ReportKey = 'buyer' | 'combination' | 'cost' | 'ux' | 'b2b2c'
+ 
+ export interface MapNode {
+   id: string
+@@ -56,6 +56,7 @@ const REPORT_PAGES: Record<ReportKey, { title: string; to: string; findings: Fin
+   combination: { title: 'Combination report', to: '/admin/reports/combination', findings: COMBINATION_FINDINGS },
+   cost: { title: 'Cost report', to: '/admin/reports/cost', findings: COST_FINDINGS },
+   ux: { title: 'UX feedback report', to: '/admin/reports/ux-feedback', findings: UX_FEEDBACK_FINDINGS },
++  b2b2c: { title: 'B2B2C report', to: '/admin/reports/b2b2c', findings: B2B2C_FINDINGS },
+ }
+ 
+ const pct = (x: number | null) => (x === null ? '—' : `${Math.round(x * 100)}%`)
+@@ -117,6 +118,7 @@ export function buildIterationMap(week = 1): IterationMap {
+   const others: [ReportKey, string, string, SourceLabel[]][] = [
+     ['ux', 'How the feedback group is doing, week by week. Sample data until the real study runs.', 'Feedback group', ['sample']],
+     ['cost', 'What one audio session costs to make, and what helping one person sleep well costs.', 'Costs and profit', ['estimate', 'measured', 'scenario']],
++    ['b2b2c', 'Which partner channel to build first, and the features it needs.', 'Channels and features', ['document', 'prediction', 'estimate']],
+     ['combination', 'Every source joined, step by step of the customer journey, to pick what to fix first.', 'All sources joined', ['prediction', 'document', 'sample']],
+   ]
+   for (const [key, summary, tag, labels] of others) {
+diff --git a/src/admin/data/reportSources.ts b/src/admin/data/reportSources.ts
+index 0d7fe67..e427b82 100644
+--- a/src/admin/data/reportSources.ts
++++ b/src/admin/data/reportSources.ts
+@@ -370,6 +370,12 @@ export const COST_FINDINGS: Finding[] = [
+   { id: 'metric-lines', title: 'Three metric lines', sources: ['spec-causal', 'cost-2025', 'owner-chat'] },
+ ]
+ 
++/** The B2B2C report: round 2 research, the business owner’s retreat brief and the buyer tests. */
++export const B2B2C_FINDINGS: Finding[] = [
++  { id: 'b2b2c-channels', title: 'The channels compared', sources: ['b2b2c', 'owner-docs', 'owner-chat', 'buyer-v6', 'buyer-v7', 'personas'] },
++  { id: 'b2b2c-features', title: 'What we must build', sources: ['b2b2c', 'retreat', 'buyer-v6', 'buyer-v7', 'personas'] },
++]
++
+ /** The UX feedback report (U129): the latest feedback group view, on the study's sample data. */
+ export const UX_FEEDBACK_FINDINGS: Finding[] = [{ id: 'ux-views', title: 'Wins, this week and how much they use it', sources: ['feedback-group'] }]
+ 
+diff --git a/src/admin/pages/reports/B2b2cReportPage.tsx b/src/admin/pages/reports/B2b2cReportPage.tsx
+new file mode 100644
+index 0000000..1b009d7
+--- /dev/null
++++ b/src/admin/pages/reports/B2b2cReportPage.tsx
+@@ -0,0 +1,284 @@
++import { ExternalLink, PanelRightOpen } from 'lucide-react'
++import { useMemo, useState } from 'react'
++import { Badge, PageHeader, Panel, type Tone } from '../../components/ui'
++import {
++  B2B2C_SOURCES,
++  CHANNELS,
++  CHANNEL_NAME,
++  CHANNEL_ORDER,
++  EFFORT_TEXT,
++  EVIDENCE_LABEL_TEXT,
++  FEATURES,
++  MOVED_DOWN,
++  PHASES,
++  PRIORITIES,
++  WIKI_FEATURES,
++  WIKI_ROUND_2,
++  b2b2cSummary,
++  featuresBy,
++  sourceById,
++  type ChannelId,
++  type EvidenceLabel,
++  type Feature,
++  type Priority,
++} from '../../data/b2b2cReport'
++import { plainText } from '../../data/glossary'
++import { buildIterationMap, mapFor } from '../../data/iterationMap'
++import { DetailDrawerProvider, useDetail, type DetailItem } from './DetailDrawer'
++import { IterationMapView } from './IterationMapView'
++import { Details, SummaryBlock } from './ReportSummary'
++
++/**
++ * Admin → Reports → B2B2C report: B2B2C research round 2 for the business
++ * owner. Summary first; then the channels compared, the feature board
++ * (channel × priority, each card opens the drawer) and the phased plan.
++ * All data lives in data/b2b2cReport.ts; the wiki's round-2 and features
++ * pages say the same in prose.
++ */
++
++const LABEL_TONE: Record<EvidenceLabel, Tone> = { measured: 'good', company: 'warning', 'third-party': 'neutral', estimate: 'serious', simulated: 'info', internal: 'neutral' }
++const PRIORITY_TONE: Record<Priority, Tone> = { Now: 'critical', Next: 'serious', Later: 'neutral' }
++
++function SourceLinks({ ids }: { ids: string[] }) {
++  return (
++    <ul className="flex flex-col gap-6 border-t border-adm-line pt-10">
++      {ids.map((id) => {
++        const s = sourceById(id)!
++        const external = s.url.startsWith('http')
++        return (
++          <li key={id} className="flex min-w-0 flex-col gap-2 text-12">
++            <span className="flex flex-wrap items-center gap-6">
++              <Badge tone={LABEL_TONE[s.label]}>{EVIDENCE_LABEL_TEXT[s.label]}</Badge>
++              <a href={s.url} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} className="inline-flex min-w-0 items-center gap-4 break-words font-medium text-adm-ink underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink">
++                {s.title}
++                {external && <ExternalLink size={11} aria-hidden="true" className="shrink-0" />}
++              </a>
++            </span>
++            <span className="text-adm-muted">
++              {s.date} · {s.used}
++            </span>
++          </li>
++        )
++      })}
++    </ul>
++  )
++}
++
++function featureItem(f: Feature): DetailItem {
++  return {
++    kicker: `${CHANNEL_NAME[f.channel]} · ${f.priority}`,
++    title: f.title,
++    summary: `The problem: ${f.problem}`,
++    numbers: [
++      { label: 'For', value: f.user },
++      { label: 'Priority', value: f.priority },
++      { label: 'Effort', value: EFFORT_TEXT[f.effort] },
++      { label: 'Success number', value: f.metric },
++      ...(f.endpoints.length ? [{ label: 'API v2 endpoints', value: f.endpoints.join(' · ') }] : []),
++    ],
++    extra: (
++      <div className="flex flex-col gap-8">
++        <p className="text-13 leading-relaxed text-adm-ink-2">
++          <span className="font-semibold text-adm-ink">Evidence: </span>
++          {f.evidence}
++        </p>
++        <SourceLinks ids={f.sources} />
++      </div>
++    ),
++    to: WIKI_FEATURES,
++    toLabel: 'The feature list on the wiki',
++  }
++}
++
++function ChannelChart() {
++  const open = useDetail()
++  const rows = [
++    ...CHANNELS.map((c) => ({ key: c.id, name: c.name, rank: `${c.rank}`, base: c.score18, sim: c.sim, round1: c.round1Rank ? `Round 1: ${c.round1Rank}${['st', 'nd', 'rd'][c.round1Rank - 1] ?? 'th'}, ${c.round1} of 18` : 'Not in round 1', item: { kicker: `Channel · rank ${c.rank}`, title: c.name, summary: c.why, numbers: [{ label: 'Score', value: `${c.score18 + c.sim} of 21` }, { label: 'Round 1', value: c.round1 ? `${c.round1} of 18, rank ${c.round1Rank}` : '—' }], extra: <div className="flex flex-col gap-8"><p className="text-13 text-adm-ink-2"><span className="font-semibold text-adm-ink">What changed: </span>{c.changed}</p><SourceLinks ids={c.sources} /></div>, to: WIKI_ROUND_2, toLabel: 'Round 2 on the wiki' } as DetailItem })),
++    { key: 'ticket', name: MOVED_DOWN[0].name, rank: '—', base: 15, sim: 0, round1: `Round 1: ${MOVED_DOWN[0].round1}`, item: { kicker: 'Moved down', title: MOVED_DOWN[0].name, summary: MOVED_DOWN[0].why, numbers: [{ label: 'Now', value: MOVED_DOWN[0].now }], extra: <SourceLinks ids={MOVED_DOWN[0].sources} />, to: WIKI_ROUND_2, toLabel: 'Round 2 on the wiki' } as DetailItem },
++    { key: 'aftercare', name: MOVED_DOWN[1].name, rank: '—', base: 14, sim: 0, round1: `Round 1: ${MOVED_DOWN[1].round1}`, item: { kicker: 'Moved down', title: MOVED_DOWN[1].name, summary: MOVED_DOWN[1].why, numbers: [{ label: 'Now', value: MOVED_DOWN[1].now }], extra: <SourceLinks ids={MOVED_DOWN[1].sources} />, to: WIKI_ROUND_2, toLabel: 'Round 2 on the wiki' } as DetailItem },
++  ]
++  return (
++    <div className="flex flex-col gap-10">
++      <div className="flex flex-wrap items-center gap-12 text-11 text-adm-muted" aria-hidden="true">
++        <span className="inline-flex items-center gap-4"><span className="h-8 w-12 rounded-2 bg-adm-s1" /> Six questions from round 1 (of 18)</span>
++        <span className="inline-flex items-center gap-4"><span className="h-8 w-12 rounded-2 bg-adm-s2" /> What the simulations say (of 3)</span>
++      </div>
++      <ul className="flex flex-col gap-8">
++        {rows.map((r) => (
++          <li key={r.key}>
++            <button
++              type="button"
++              data-channel={r.key}
++              onClick={() => open(r.item)}
++              aria-label={`${r.name}: ${r.base + r.sim} of 21. Show details`}
++              className="group flex w-full min-w-0 flex-col gap-6 rounded-8 border border-adm-line p-10 text-left hover:bg-adm-hover focus-visible:outline-2 focus-visible:outline-adm-accent lg:flex-row lg:items-center lg:gap-16"
++            >
++              <span className="flex min-w-0 items-baseline gap-8 lg:w-[320px] lg:shrink-0">
++                <span className="w-16 shrink-0 text-13 font-semibold tabular-nums text-adm-muted">{r.rank}</span>
++                <span className="min-w-0 text-13 font-semibold text-adm-ink">{r.name}</span>
++              </span>
++              <span className="flex min-w-0 flex-1 items-center gap-8">
++                <span className="flex h-16 min-w-0 flex-1 overflow-hidden rounded-4 bg-adm-bg">
++                  <span className="h-full bg-adm-s1" style={{ width: `${(r.base / 21) * 100}%` }} />
++                  <span className="h-full bg-adm-s2" style={{ width: `${(r.sim / 21) * 100}%` }} />
++                </span>
++                <span className="w-48 shrink-0 text-right text-13 font-semibold tabular-nums text-adm-ink">{r.base + r.sim}/21</span>
++                <PanelRightOpen size={14} aria-hidden="true" className="shrink-0 text-adm-muted group-hover:text-adm-ink" />
++              </span>
++              <span className="text-11 text-adm-muted lg:w-[180px] lg:shrink-0">{r.round1}</span>
++            </button>
++          </li>
++        ))}
++      </ul>
++      <p className="text-12 text-adm-muted">The free plan is not ranked: every channel lands people in it. Insurers and clinical routes stay out (6–7 of 18 in round 1).</p>
++    </div>
++  )
++}
++
++function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: string }) {
++  return (
++    <button
++      type="button"
++      aria-pressed={on}
++      onClick={onClick}
++      className={`rounded-full border px-10 py-4 text-12 font-medium ${on ? 'border-adm-ink bg-adm-ink text-adm-surface' : 'border-adm-line text-adm-ink-2 hover:bg-adm-hover'}`}
++    >
++      {children}
++    </button>
++  )
++}
++
++function FeatureBoard() {
++  const open = useDetail()
++  const [channel, setChannel] = useState<ChannelId | 'all'>('all')
++  const [priority, setPriority] = useState<Priority | 'all'>('all')
++  const shown = featuresBy(channel, priority)
++  const columns = priority === 'all' ? PRIORITIES : [priority]
++  return (
++    <div className="flex flex-col gap-12">
++      <div className="flex flex-col gap-8" role="group" aria-label="Filter features">
++        <div className="flex flex-wrap items-center gap-6">
++          <span className="w-64 text-11 font-semibold uppercase tracking-wider text-adm-muted">Channel</span>
++          <Chip on={channel === 'all'} onClick={() => setChannel('all')}>All</Chip>
++          {CHANNEL_ORDER.map((c) => (
++            <Chip key={c} on={channel === c} onClick={() => setChannel(c)}>{CHANNEL_NAME[c]}</Chip>
++          ))}
++        </div>
++        <div className="flex flex-wrap items-center gap-6">
++          <span className="w-64 text-11 font-semibold uppercase tracking-wider text-adm-muted">Priority</span>
++          <Chip on={priority === 'all'} onClick={() => setPriority('all')}>All</Chip>
++          {PRIORITIES.map((p) => (
++            <Chip key={p} on={priority === p} onClick={() => setPriority(p)}>{p}</Chip>
++          ))}
++        </div>
++        <p className="text-12 text-adm-muted" aria-live="polite">
++          {shown.length} of {FEATURES.length} features
++        </p>
++      </div>
++      <div className={`grid min-w-0 gap-12 ${columns.length === 3 ? 'lg:grid-cols-3' : ''}`}>
++        {columns.map((p) => {
++          const list = shown.filter((f) => f.priority === p)
++          return (
++            <section key={p} aria-label={`${p}: ${list.length} features`} className="flex min-w-0 flex-col gap-8 rounded-12 bg-adm-bg p-10">
++              <h3 className="flex items-center justify-between text-13 font-semibold text-adm-ink">
++                <Badge tone={PRIORITY_TONE[p]}>{p}</Badge>
++                <span className="text-11 font-normal text-adm-muted">{list.length}</span>
++              </h3>
++              {list.length === 0 && <p className="text-12 text-adm-muted">Nothing here with this filter.</p>}
++              {list.map((f) => (
++                <button
++                  key={f.id}
++                  type="button"
++                  data-feature={f.id}
++                  onClick={() => open(featureItem(f))}
++                  className="group flex min-w-0 flex-col gap-6 rounded-8 border border-adm-line bg-adm-surface p-10 text-left hover:border-adm-ink-2 focus-visible:outline-2 focus-visible:outline-adm-accent"
++                >
++                  <span className="flex items-start justify-between gap-8">
++                    <span className="text-13 font-semibold text-adm-ink">
++                      {f.top && <span className="mr-4 tabular-nums text-adm-muted">#{f.top}</span>}
++                      {f.title}
++                    </span>
++                    <PanelRightOpen size={14} aria-hidden="true" className="mt-2 shrink-0 text-adm-muted group-hover:text-adm-ink" />
++                  </span>
++                  <span className="text-12 text-adm-ink-2">{f.problem}</span>
++                  <span className="flex flex-wrap gap-4">
++                    <Badge tone="neutral">{CHANNEL_NAME[f.channel]}</Badge>
++                    <Badge tone="neutral">{f.user}</Badge>
++                    <Badge tone={f.effort === 'frontend' ? 'good' : f.effort === 'backend' ? 'info' : 'serious'}>{EFFORT_TEXT[f.effort]}</Badge>
++                    {f.trust && <Badge tone="warning">Trust</Badge>}
++                  </span>
++                </button>
++              ))}
++            </section>
++          )
++        })}
++      </div>
++    </div>
++  )
++}
++
++function Plan() {
++  const name = (id: string) => FEATURES.find((f) => f.id === id)?.title ?? id
++  return (
++    <ol className="flex flex-col gap-8">
++      {PHASES.map((p) => (
++        <li key={p.id} className="flex min-w-0 flex-col gap-6 rounded-8 border border-adm-line p-12">
++          <span className="flex flex-wrap items-baseline justify-between gap-8">
++            <span className="text-14 font-semibold text-adm-ink">{p.name}</span>
++            <span className="text-12 text-adm-muted">{p.when}</span>
++          </span>
++          <ul className="flex list-disc flex-col gap-2 pl-18 text-12 text-adm-ink-2">
++            {p.build.map((id) => (
++              <li key={id}>{name(id)}</li>
++            ))}
++          </ul>
++          <p className="text-12 font-medium text-adm-ink">{p.gate}</p>
++        </li>
++      ))}
++    </ol>
++  )
++}
++
++export function B2b2cReportPage() {
++  const summary = useMemo(() => b2b2cSummary(), [])
++  const map = useMemo(() => mapFor(buildIterationMap(1), 'b2b2c'), [])
++  const web = B2B2C_SOURCES.filter((s) => s.url.startsWith('http'))
++  const own = B2B2C_SOURCES.filter((s) => !s.url.startsWith('http'))
++  return (
++    <DetailDrawerProvider>
++      <div className="flex flex-col gap-16">
++        <PageHeader title="B2B2C report" description={plainText(summary.intro ?? '')} />
++
++        <SummaryBlock s={summary} />
++
++        <section id="b2b2c-channels" className="min-w-0 scroll-mt-16">
++          <Panel title="The channels compared" description="Each channel scored on round 1’s six questions plus what the simulations say. Click a row for why it moved.">
++            <ChannelChart />
++          </Panel>
++        </section>
++
++        <section id="b2b2c-features" className="min-w-0 scroll-mt-16">
++          <Panel title="What we must build" description="Every feature by channel and priority. Click a card for the problem, the evidence, the effort and how we will know it worked.">
++            <FeatureBoard />
++          </Panel>
++        </section>
++
++        <Details id="b2b2c-plan" title="The phased plan" hint="what is built before each gate">
++          <Plan />
++        </Details>
++
++        <Details title="Sources used" hint={`${web.length} web sources and ${own.length} of our own documents`}>
++          <Panel title="Sources used" description="Left: the kinds of source this report reads. Right: what it has led to so far. Click a box for details.">
++            <IterationMapView map={map} label="Sources used by the B2B2C report." />
++          </Panel>
++          <Panel title={`New web research (${web.length})`} description="Read on 25 Nov 2026. The label says how far each can be trusted.">
++            <SourceLinks ids={web.map((s) => s.id)} />
++          </Panel>
++          <Panel title={`Our own documents (${own.length})`} description="What was already known.">
++            <SourceLinks ids={own.map((s) => s.id)} />
++          </Panel>
++        </Details>
++      </div>
++    </DetailDrawerProvider>
++  )
++}
+diff --git a/src/admin/pages/reports/ReportsOverviewPage.tsx b/src/admin/pages/reports/ReportsOverviewPage.tsx
+index 58b89a3..7a58f89 100644
+--- a/src/admin/pages/reports/ReportsOverviewPage.tsx
++++ b/src/admin/pages/reports/ReportsOverviewPage.tsx
+@@ -1,6 +1,7 @@
+ import { PanelRightOpen } from 'lucide-react'
+ import { useMemo, useState } from 'react'
+ import { PageHeader, Panel } from '../../components/ui'
++import { b2b2cSummary } from '../../data/b2b2cReport'
+ import { buildIterationMap } from '../../data/iterationMap'
+ import { buyerSummary, combinationSummary, costSummary, uxFeedbackSummary } from '../../data/reportSummaries'
+ import { buildParticipants, studyWeek } from '../../data/study'
+@@ -33,6 +34,7 @@ function Overview() {
+       { title: 'Buyer agent report', to: '/admin/reports/buyer-agent', s: buyerSummary() },
+       { title: 'UX feedback report', to: '/admin/reports/ux-feedback', s: uxFeedbackSummary(participants, week) },
+       { title: 'Cost report', to: '/admin/reports/cost', s: costSummary() },
++      { title: 'B2B2C report', to: '/admin/reports/b2b2c', s: b2b2cSummary() },
+       { title: 'Combination report', to: '/admin/reports/combination', s: combinationSummary(week) },
+     ]
+   }, [week])
+@@ -51,7 +53,7 @@ function Overview() {
+         </p>
+       </section>
+ 
+-      <section aria-label="The reports" className="grid gap-12 lg:grid-cols-2 2xl:grid-cols-4">
++      <section aria-label="The reports" className="grid gap-12 lg:grid-cols-2 2xl:grid-cols-3">
+         {reports.map((r) => (
+           <button
+             key={r.to}
+diff --git a/src/demo/modules.ts b/src/demo/modules.ts
+index 967b9ca..a449904 100644
+--- a/src/demo/modules.ts
++++ b/src/demo/modules.ts
+@@ -252,6 +252,7 @@ export const DEMO_MODULES: DemoModule[] = [
+   { id: 'adminReportBuyerAgent', kind: 'admin', label: 'Buyer agent report', description: 'Every buyer agent iteration as a timeline: question, what changed, results, the change from the one before, and the decision it fed. With a source graph.', route: '/admin/reports/buyer-agent', built: true },
+   { id: 'adminReportCombination', kind: 'admin', label: 'Combination report', description: 'One reading of Aurelia stage by stage of the business funnel, joining the old backend, the product versions, user feedback, personas, the funnels and the PRD.', route: '/admin/reports/combination', built: true },
+   { id: 'adminReportCost', kind: 'admin', label: 'Cost report', description: 'What a chapter costs by media and supplier (with pros and cons), in several variations and against the 2025 measured costs; then the bad-to-good sleep journey as a connected graph: uplift, chapters and cost per flip across the Causal AI stages (scenario).', route: '/admin/reports/cost', built: true },
++  { id: 'adminReportB2b2c', kind: 'admin', label: 'B2B2C report', description: 'Which partner channel to build first (creator journey, team plan, codes and gifts), re-ranked with round 2 research and the buyer tests; the features to build as a board by channel and priority, each with problem, evidence, effort and success number; the phased plan.', route: '/admin/reports/b2b2c', built: true },
+   { id: 'adminRoles', kind: 'admin', label: 'Roles & permissions', description: 'Permission matrix.', route: '/admin/roles', built: true },
+   { id: 'adminSessions', kind: 'admin', label: 'Sessions', description: 'Generated session catalogue.', route: '/admin/sessions', built: true },
+   { id: 'adminChallenges', kind: 'admin', label: 'Challenges', description: 'Setup, pacing and reward tiers.', route: '/admin/challenges', built: true },
+diff --git a/src/guides/docPages.ts b/src/guides/docPages.ts
+index 1d98a2e..9807f92 100644
+--- a/src/guides/docPages.ts
++++ b/src/guides/docPages.ts
+@@ -26,6 +26,8 @@ export const B2B2C_PAGES: DocPage[] = [
+   { slug: 'plan', title: 'Plan', note: 'What to test first, in what order, and the gates.', file: '07-plan.md' },
+   { slug: 'roast', title: 'Roast', note: 'What a sceptic attacks, and what changed.', file: '08-roast.md' },
+   { slug: 'sources', title: 'Full report and sources', note: 'The deep research report, every source.', file: '09-full-report.md' },
++  { slug: 'round-2', title: 'Round 2', note: 'What changed, the channels re-ranked, the plan.', file: '10-round-2.md' },
++  { slug: 'features', title: 'Features to build', note: 'Per channel: who, why, evidence, priority, effort.', file: '11-features.md' },
+ ]
+ 
+ /** API contract (U120, J175): v2 split into General, Apps and Admin; v1 kept. */
+-- 
+2.43.0
+
