@@ -500,7 +500,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U128**, last J = **J181**, last
+**Numbering as of 17 Nov 2026:** last U = **U129**, last J = **J182**, last
 O = **O56**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -977,6 +977,7 @@ history can be read without opening four documents.
 | U126 | `fedab33` | 2026-11-25 | The three reports lead with a summary: the question, a one-sentence answer, four labelled KPI tiles, status, next steps and confidence, with details folded. Buyer agent: a success trend from v1 to v7 and "what moves success". Combination: a five-stage strip. Cost: a cost-function panel (sources → formula → result). | [patch](update-log/patches/U126-fedab33.patch) |
 | U127 | `68ac248` | 2026-11-25 | Business funnel lighter to read. The summary card has a five-stage strip and "Fix next"; rows are compact; explanations sit in ⓘ tooltips and folded Details. Words in the first screen at 1440px: 366 → 210 (app) and 365 → 147 (retreat). | [patch](update-log/patches/U127-68ac248.patch) |
 | U128 | `02af7e6` | 2026-11-25 | Reports in plain language. Each report says what it is; headlines give bases and units ("16 of 36 simulated people…"); a 15-term glossary appears as tooltips; ids are removed from the summaries; charts carry takeaway titles; badges read Simulated, Estimate, Assumption or Measured. Tests keep jargon out of the summaries. | [patch](update-log/patches/U128-02af7e6.patch) |
+| U129 | `fc167de` | 2026-11-25 | Reports overview (`/admin/reports`) with an iteration map: sources (6) → reports and tests (10) → decisions and versions (11). Every report opens with a Goal line. Details open in a shared drawer instead of a new page. The latest feedback group becomes Reports → UX feedback report (the old URL redirects). "What this report says" is removed. The buyer summary is split by test (5, 6, 7) with bases. | [patch](update-log/patches/U129-fc167de.patch) |
 | J109 | 2026-11-17 | Analysis + Docs | "Docs" still on screen (an old cached build); gaps between the three 2025 backend sources and today, and what can be reused (they hold no code); every request and change now kept in HANDOFF.md §17 | U084 |
 | J110 | 2026-11-17 | Question | What Eugene means by "Aurelia Pro – corporate wellness, B2B2C" and the forwarded retention-simulation PDF: a scoped exploration of feature propositions for companies | — |
 | J111 | 2026-11-17 | Question | What a Pydantic model is, and confirmation that the Notion wiki holds no runnable code (only prompts with data shapes written into them) | — |
@@ -1050,6 +1051,7 @@ history can be read without opening four documents.
 | J179 | 2026-11-25 | Code | As head of design, AI and product: reports clear at a glance; buyer agent shows the success likelihood; combination clear for a new admin; cost shows the sources → cost function → result; aligned with what the business owner wants | U126 |
 | J180 | 2026-11-25 | Code | Business funnel UI less text-heavy, for reading experience | U127 |
 | J181 | 2026-11-25 | Review + code | Review whether the reports are understandable even to a layperson, and fix them | U128 |
+| J182 | 2026-11-25 | Code | UX feedback report from the latest feedback group; drop "what this report says"; a goal on every report; make "many sources → iterations → product" visible; drawers instead of page changes | U129 |
 
 ### 17.2 Code changes (U)
 

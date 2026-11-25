@@ -132,6 +132,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | J179 | 2026-11-25 | Code | As head of design, AI and product: reports clear at a glance; buyer agent shows the success likelihood; combination clear for a new admin; cost shows the sources → cost function → result; aligned with what the business owner wants | U126 |
 | J180 | 2026-11-25 | Code | Business funnel UI less text-heavy, for reading experience | U127 |
 | J181 | 2026-11-25 | Review + code | Review whether the reports are understandable even to a layperson, and fix them | U128 |
+| J182 | 2026-11-25 | Code | UX feedback report from the latest feedback group; drop "what this report says"; a goal on every report; make "many sources → iterations → product" visible; drawers instead of page changes | U129 |
 | J150 | 2026-11-23 | Opinion | Eugene's latest messages read; the 2025 measurement system reviewed against the admin: 10 critical metrics in 5 groups that the admin does not cover | — |
 | J144 | 2026-11-19 | Code | Roast the user journey as head of product, make it work, add a guided overlay with a guideline | U105 |
 | J145 | 2026-11-19 | Code | "Something went wrong" on staging (build ecbd3f6) | U106 |
@@ -2221,3 +2222,9 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 ### J181 — Reports for a layperson
 - **Answered:** not yet; jargon, codes and numbers without a base stood in the way.
 - **Done (U128):** the reports were rewritten in plain language, with a glossary on hover.
+
+### J182 — The iteration concept, made visible
+- **Done (U129).**
+- **Also answered:**
+  - The Cost report summary exists on staging since U126; the owner was viewing an older build.
+  - Open asks from the business owner: the therapeutic map (triangle), Healing Map, quick-win app version, competitor research, Google Analytics, wiki v2, the thesis in the wiki, and the icon.

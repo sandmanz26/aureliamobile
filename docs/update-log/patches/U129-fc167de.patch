@@ -1,0 +1,1987 @@
+From fc167de23101e3d249b11b9e411b7d83f43159b2 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 25 Nov 2026 10:57:44 +0000
+Subject: [PATCH] Reports: an overview with the iteration map, a goal on every
+ report, details in a drawer, UX feedback report from the latest feedback
+ group, buyer summary split by test (U129, J182)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+---
+ .oxlintrc.json                                |   1 +
+ src/App.tsx                                   |  21 +-
+ src/admin/AdminLayout.tsx                     |  11 +-
+ src/admin/components/Drawer.tsx               |  91 ++++++++
+ src/admin/data/glossary.ts                    |   2 +
+ src/admin/data/iterationMap.test.ts           |  80 +++++++
+ src/admin/data/iterationMap.ts                | 203 ++++++++++++++++++
+ src/admin/data/reportSources.ts               |   3 +
+ src/admin/data/reportSummaries.test.ts        |  54 ++++-
+ src/admin/data/reportSummaries.ts             | 111 +++++++++-
+ src/admin/pages/ExperimentationV2Page.tsx     |  20 +-
+ .../pages/reports/BuyerAgentReportPage.tsx    |  43 +++-
+ .../pages/reports/CombinationReportPage.tsx   |  27 ++-
+ src/admin/pages/reports/CostReportPage.tsx    |  18 +-
+ src/admin/pages/reports/DetailDrawer.tsx      | 138 ++++++++++++
+ src/admin/pages/reports/IterationMapView.tsx  | 199 +++++++++++++++++
+ src/admin/pages/reports/ReportParts.tsx       | 136 ++----------
+ src/admin/pages/reports/ReportSummary.tsx     |  87 ++++++--
+ .../pages/reports/ReportsOverviewPage.tsx     |  86 ++++++++
+ .../pages/reports/UxFeedbackReportPage.tsx    |  54 +++++
+ src/admin/pages/reports/detailItems.ts        |  63 ++++++
+ src/demo/modules.ts                           |   2 +
+ 22 files changed, 1281 insertions(+), 169 deletions(-)
+ create mode 100644 src/admin/components/Drawer.tsx
+ create mode 100644 src/admin/data/iterationMap.test.ts
+ create mode 100644 src/admin/data/iterationMap.ts
+ create mode 100644 src/admin/pages/reports/DetailDrawer.tsx
+ create mode 100644 src/admin/pages/reports/IterationMapView.tsx
+ create mode 100644 src/admin/pages/reports/ReportsOverviewPage.tsx
+ create mode 100644 src/admin/pages/reports/UxFeedbackReportPage.tsx
+ create mode 100644 src/admin/pages/reports/detailItems.ts
+
+diff --git a/.oxlintrc.json b/.oxlintrc.json
+index 80aec4a..125e490 100644
+--- a/.oxlintrc.json
++++ b/.oxlintrc.json
+@@ -16,6 +16,7 @@
+           "useAdminData",
+           "useAudioPlayer",
+           "useChatSession",
++          "useDetail",
+           "useFeatureFlags",
+           "usePullToRefresh",
+           "useSheetDrag"
+diff --git a/src/App.tsx b/src/App.tsx
+index b9a0b77..3ab4e79 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -91,6 +91,8 @@ const BusinessFunnelPage = lazy(() => import('./admin/pages/BusinessFunnelPage')
+ const BuyerResultsPage = lazy(() => import('./admin/pages/BuyerResultsPage').then((m) => ({ default: m.BuyerResultsPage })))
+ const BuyerAgentReportPage = lazy(() => import('./admin/pages/reports/BuyerAgentReportPage').then((m) => ({ default: m.BuyerAgentReportPage })))
+ const CostReportPage = lazy(() => import('./admin/pages/reports/CostReportPage').then((m) => ({ default: m.CostReportPage })))
++const ReportsOverviewPage = lazy(() => import('./admin/pages/reports/ReportsOverviewPage').then((m) => ({ default: m.ReportsOverviewPage })))
++const UxFeedbackReportPage = lazy(() => import('./admin/pages/reports/UxFeedbackReportPage').then((m) => ({ default: m.UxFeedbackReportPage })))
+ const CombinationReportPage = lazy(() => import('./admin/pages/reports/CombinationReportPage').then((m) => ({ default: m.CombinationReportPage })))
+ const PersonasPage = lazy(() => import('./admin/pages/PersonasPage').then((m) => ({ default: m.PersonasPage })))
+ 
+@@ -166,10 +168,13 @@ export default function App() {
+                 <ExperimentationPage />
+               </ModuleGuard>
+             } />
++            {/* U129: the latest feedback group is Reports → UX feedback report where Reports exist. */}
+             <Route path="experimentation/v2" element={
+-              <ModuleGuard module="adminExperimentation">
+-                <ExperimentationV2Page />
+-              </ModuleGuard>
++              RELEASES.reports ? <Navigate to="/admin/reports/ux-feedback" replace /> : (
++                <ModuleGuard module="adminExperimentation">
++                  <ExperimentationV2Page />
++                </ModuleGuard>
++              )
+             } />
+             <Route path="experimentation/:pid" element={
+               <ModuleGuard module="adminExperimentation">
+@@ -214,6 +219,16 @@ export default function App() {
+             )}
+             {RELEASES.reports && (
+               <>
++                <Route path="reports" element={
++                  <ModuleGuard module="adminReportsOverview">
++                    <ReportsOverviewPage />
++                  </ModuleGuard>
++                } />
++                <Route path="reports/ux-feedback" element={
++                  <ModuleGuard module="adminReportUxFeedback">
++                    <UxFeedbackReportPage />
++                  </ModuleGuard>
++                } />
+                 <Route path="reports/buyer-agent" element={
+                   <ModuleGuard module="adminReportBuyerAgent">
+                     <BuyerAgentReportPage />
+diff --git a/src/admin/AdminLayout.tsx b/src/admin/AdminLayout.tsx
+index 148092f..bd58084 100644
+--- a/src/admin/AdminLayout.tsx
++++ b/src/admin/AdminLayout.tsx
+@@ -55,8 +55,13 @@ const NAV: { section: string; icon: LucideIcon; items: NavItem[] }[] = [
+     icon: FlaskConical,
+     // Tags, review and coverage are tabs inside User journey (U092).
+     items: [
+-      { to: '/admin/experimentation', label: 'Feedback group · v1', end: true, flag: 'adminExperimentation' },
+-      { to: '/admin/experimentation/v2', label: 'Feedback group · v2', flag: 'adminExperimentation' },
++      // Since U129 the latest feedback group is Reports → UX feedback report; v1 keeps its route, off the menu.
++      ...(RELEASES.reports
++        ? []
++        : [
++            { to: '/admin/experimentation', label: 'Feedback group · v1', end: true, flag: 'adminExperimentation' },
++            { to: '/admin/experimentation/v2', label: 'Feedback group · v2', flag: 'adminExperimentation' },
++          ]),
+       { to: '/admin/user-journey', label: 'User journey', flag: 'adminUserJourney' },
+       // On both sites since J153 (RELEASES).
+       ...(RELEASES.personas ? [{ to: '/admin/personas', label: 'Personas', flag: 'adminPersonas' }] : []),
+@@ -70,7 +75,9 @@ const NAV: { section: string; icon: LucideIcon; items: NavItem[] }[] = [
+     icon: FileChartColumn,
+     items: RELEASES.reports
+       ? [
++          { to: '/admin/reports', label: 'Overview', end: true, flag: 'adminReportsOverview' },
+           { to: '/admin/reports/buyer-agent', label: 'Buyer agent report', flag: 'adminReportBuyerAgent' },
++          { to: '/admin/reports/ux-feedback', label: 'UX feedback report', flag: 'adminReportUxFeedback' },
+           { to: '/admin/reports/combination', label: 'Combination report', flag: 'adminReportCombination' },
+           { to: '/admin/reports/cost', label: 'Cost report', flag: 'adminReportCost' },
+         ]
+diff --git a/src/admin/components/Drawer.tsx b/src/admin/components/Drawer.tsx
+new file mode 100644
+index 0000000..db38f2a
+--- /dev/null
++++ b/src/admin/components/Drawer.tsx
+@@ -0,0 +1,91 @@
++import { X } from 'lucide-react'
++import { useEffect, useId, useRef, type ReactNode } from 'react'
++import { createPortal } from 'react-dom'
++
++/**
++ * The one right-side drawer of Admin → Reports (U129, J182): a click shows
++ * the detail beside the page instead of leaving it. Portaled (a transformed
++ * page would pin a fixed box to itself), modal, with focus kept inside while
++ * it is open and given back on close. Escape, the overlay and the close
++ * button all close it. Below `lg` it is a full-width sheet.
++ */
++export function Drawer({ open, title, kicker, onClose, footer, children }: { open: boolean; title: string; kicker?: string; onClose: () => void; footer?: ReactNode; children: ReactNode }) {
++  const panel = useRef<HTMLDivElement>(null)
++  const closeRef = useRef(onClose)
++  const titleId = useId()
++
++  useEffect(() => {
++    closeRef.current = onClose
++  }, [onClose])
++
++  useEffect(() => {
++    if (!open) return
++    const before = document.activeElement instanceof HTMLElement ? document.activeElement : null
++    const overflow = document.body.style.overflow
++    document.body.style.overflow = 'hidden'
++    panel.current?.querySelector<HTMLElement>('[data-drawer-close]')?.focus()
++    const onKey = (e: KeyboardEvent) => {
++      if (e.key === 'Escape') {
++        e.preventDefault()
++        closeRef.current()
++        return
++      }
++      if (e.key !== 'Tab' || !panel.current) return
++      const items = [...panel.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])')]
++      if (!items.length) return
++      const first = items[0]
++      const last = items[items.length - 1]
++      if (e.shiftKey && document.activeElement === first) {
++        e.preventDefault()
++        last.focus()
++      } else if (!e.shiftKey && document.activeElement === last) {
++        e.preventDefault()
++        first.focus()
++      } else if (!panel.current.contains(document.activeElement)) {
++        e.preventDefault()
++        first.focus()
++      }
++    }
++    document.addEventListener('keydown', onKey)
++    return () => {
++      document.removeEventListener('keydown', onKey)
++      document.body.style.overflow = overflow
++      before?.focus()
++    }
++  }, [open])
++
++  if (!open) return null
++  return createPortal(
++    <div className="adm-root fixed inset-0 z-50 flex justify-end">
++      <div aria-hidden="true" data-drawer-overlay className="absolute inset-0 bg-black/30" onClick={onClose} />
++      <div
++        ref={panel}
++        role="dialog"
++        aria-modal="true"
++        aria-labelledby={titleId}
++        className="relative flex h-full w-full flex-col bg-adm-surface shadow-2xl lg:max-w-[460px]"
++      >
++        <div className="flex items-start justify-between gap-12 border-b border-adm-line px-16 py-14 lg:px-20">
++          <div className="flex min-w-0 flex-col gap-2">
++            {kicker && <span className="text-11 font-semibold uppercase tracking-wider text-adm-muted">{kicker}</span>}
++            <h2 id={titleId} className="text-15 font-semibold text-adm-ink">
++              {title}
++            </h2>
++          </div>
++          <button
++            type="button"
++            aria-label="Close"
++            data-drawer-close
++            onClick={onClose}
++            className="flex size-32 shrink-0 items-center justify-center rounded-8 text-adm-muted hover:bg-adm-hover hover:text-adm-ink focus-visible:outline-2 focus-visible:outline-adm-accent"
++          >
++            <X size={16} aria-hidden="true" />
++          </button>
++        </div>
++        <div className="flex min-w-0 flex-1 flex-col gap-14 overflow-y-auto px-16 py-14 lg:px-20">{children}</div>
++        {footer && <div className="flex flex-wrap items-center gap-8 border-t border-adm-line px-16 py-12 lg:px-20">{footer}</div>}
++      </div>
++    </div>,
++    document.body,
++  )
++}
+diff --git a/src/admin/data/glossary.ts b/src/admin/data/glossary.ts
+index b2a4cd6..aab787c 100644
+--- a/src/admin/data/glossary.ts
++++ b/src/admin/data/glossary.ts
+@@ -29,6 +29,8 @@ export const GLOSSARY = {
+   estimate: { term: 'Estimate', plain: 'A calculation from suppliers’ prices and our own guesses. It changes when the guesses do.' },
+   assumption: { term: 'Assumption', plain: 'A number from the business owner’s plan, used to see where it leads. Nobody has measured it.' },
+   measured: { term: 'Measured', plain: 'Counted from real people or real bills. The only kind of number we can fully trust.' },
++  sample: { term: 'Sample data', plain: 'Invented numbers that look real, so the screens can be read before a real study runs. Not measured.' },
++  'feedback-group': { term: 'Feedback group', plain: 'A planned study: 30 real people use Aurelia for 8 weeks and tell us how they feel. It has not started yet.' },
+   preset: { term: 'Middle option', plain: 'The middle of three ready-made choices of AI suppliers: cheap, middle and best quality.' },
+ } satisfies Record<string, GlossaryEntry>
+ 
+diff --git a/src/admin/data/iterationMap.test.ts b/src/admin/data/iterationMap.test.ts
+new file mode 100644
+index 0000000..3572fd6
+--- /dev/null
++++ b/src/admin/data/iterationMap.test.ts
+@@ -0,0 +1,80 @@
++import { describe, expect, it } from 'vitest'
++import { PRODUCTION_VERSIONS } from '../../versions/versions'
++import { DEFAULT_DECISIONS } from './businessFunnel'
++import { buildIterations } from './buyerAgentReport'
++import { buildStages } from './combinationReport'
++import { SOURCE_GROUPS, buildIterationMap, mapFor, versionsOf } from './iterationMap'
++import { BUYER_REPORT_FINDINGS, COMBINATION_FINDINGS, COST_FINDINGS, SOURCES, UX_FEEDBACK_FINDINGS } from './reportSources'
++
++const map = buildIterationMap(1)
++const node = (id: string) => map.nodes.find((n) => n.id === id)
++
++describe('iteration map (U129)', () => {
++  it('has the six source kinds, ten reports and tests, the decisions and the versions', () => {
++    expect(map.nodes.filter((n) => n.column === 'source').map((n) => n.title)).toEqual(['Personas', 'The business owner’s documents', 'Knowledge (wiki)', 'User feedback', 'Cost data', 'Product versions'])
++    expect(map.nodes.filter((n) => n.column === 'report')).toHaveLength(10)
++    expect(map.nodes.filter((n) => n.column === 'outcome')).toHaveLength(DEFAULT_DECISIONS.length + PRODUCTION_VERSIONS.length)
++    expect(new Set(map.nodes.map((n) => n.id)).size).toBe(map.nodes.length)
++  })
++
++  it('groups only real registry sources', () => {
++    for (const g of SOURCE_GROUPS) for (const s of g.sources) expect(SOURCES[s], `${g.id}: ${s}`).toBeDefined()
++  })
++
++  it('backs every edge with data', () => {
++    const iterations = buildIterations()
++    const stages = buildStages(1)
++    const findingsOf: Record<string, string[]> = {
++      'r-ux': UX_FEEDBACK_FINDINGS.flatMap((f) => f.sources),
++      'r-cost': COST_FINDINGS.flatMap((f) => f.sources),
++      'r-combination': COMBINATION_FINDINGS.flatMap((f) => f.sources),
++      ...Object.fromEntries(BUYER_REPORT_FINDINGS.filter((f) => f.id.startsWith('it-')).map((f) => [`r-${f.id}`, f.sources])),
++    }
++    expect(map.edges.length).toBeGreaterThan(20)
++    for (const e of map.edges) {
++      expect(node(e.from), e.from).toBeDefined()
++      expect(node(e.to), e.to).toBeDefined()
++      if (e.from.startsWith('g-')) {
++        // A source kind feeds a report only when that report's findings cite a source of that kind.
++        const g = SOURCE_GROUPS.find((x) => x.id === e.from)!
++        expect(findingsOf[e.to].some((s) => (g.sources as string[]).includes(s)), `${e.from} → ${e.to}`).toBe(true)
++      } else if (e.from.startsWith('r-') && e.to.startsWith('d-')) {
++        // A report leads to a decision only when its own data names that decision.
++        const d = e.to.slice(2)
++        const it = iterations.find((x) => `r-${x.id}` === e.from)
++        if (it) expect(it.decisions.map((x) => x.id), `${e.from} → ${e.to}`).toContain(d)
++        else {
++          expect(e.from).toBe('r-combination')
++          expect(stages.map((s) => s.decision)).toContain(d)
++        }
++      } else if (e.from.startsWith('d-') && e.to.startsWith('v-')) {
++        // A decision reaches a version only when the decision log says it shipped there.
++        const d = DEFAULT_DECISIONS.find((x) => `d-${x.id}` === e.from)!
++        expect(versionsOf(d)).toContain(Number(e.to.slice(2)))
++      } else throw new Error(`unexpected edge ${e.from} → ${e.to}`)
++    }
++  })
++
++  it('connects every report to a source, and every decision to the report that found it', () => {
++    for (const n of map.nodes.filter((x) => x.column === 'report')) expect(map.edges.some((e) => e.to === n.id), n.id).toBe(true)
++    for (const d of DEFAULT_DECISIONS) expect(map.edges.some((e) => e.to === `d-${d.id}`), d.id).toBe(true)
++  })
++
++  it('reads the shipped decisions into versions', () => {
++    expect(versionsOf(DEFAULT_DECISIONS.find((d) => d.id === 'd5')!)).toEqual([2, 3])
++    expect(map.edges.some((e) => e.to === 'v-3')).toBe(true)
++  })
++
++  it('cuts the map down to one report', () => {
++    const cost = mapFor(map, 'cost')
++    expect(cost.nodes.filter((n) => n.column === 'report').map((n) => n.id)).toEqual(['r-cost'])
++    expect(cost.nodes.some((n) => n.id === 'g-cost')).toBe(true)
++    const buyer = mapFor(map, 'buyer')
++    expect(buyer.nodes.filter((n) => n.column === 'report')).toHaveLength(7)
++    for (const e of buyer.edges) expect(buyer.nodes.some((n) => n.id === e.from) && buyer.nodes.some((n) => n.id === e.to)).toBe(true)
++  })
++
++  it('never names the business owner', () => {
++    expect(JSON.stringify(map)).not.toMatch(/Eugene/)
++  })
++})
+diff --git a/src/admin/data/iterationMap.ts b/src/admin/data/iterationMap.ts
+new file mode 100644
+index 0000000..e470a60
+--- /dev/null
++++ b/src/admin/data/iterationMap.ts
+@@ -0,0 +1,203 @@
++import { DEFAULT_DECISIONS, STATUS_LABEL, type Decision } from './businessFunnel'
++import { buildIterations } from './buyerAgentReport'
++import { buildStages } from './combinationReport'
++import { BUYER_REPORT_FINDINGS, COMBINATION_FINDINGS, COST_FINDINGS, SOURCES, UX_FEEDBACK_FINDINGS, type Finding, type SourceId, type SourceLabel } from './reportSources'
++import { buyerTrend } from './reportSummaries'
++import { PRODUCTION_VERSIONS } from '../../versions/versions'
++
++/**
++ * Admin → Reports → Overview (U129, J182): how Aurelia improves, as one map.
++ * Left, the kinds of source we learn from; middle, the reports and tests
++ * that read them; right, what came out: the decisions in the funnel's
++ * decision log and the production versions they shipped in. Nothing here is
++ * typed in by hand: every node and every edge is derived from the registry
++ * (reportSources), the buyer iterations, the combination stages, the
++ * decision log and versions.ts. `iterationMap.test.ts` re-derives each edge.
++ */
++
++export type MapColumn = 'source' | 'report' | 'outcome'
++export type ReportKey = 'buyer' | 'combination' | 'cost' | 'ux'
++
++export interface MapNode {
++  id: string
++  column: MapColumn
++  title: string
++  /** A few words under the title. */
++  tag: string
++  /** The drawer's short summary. */
++  summary: string
++  numbers: { label: string; value: string }[]
++  labels: SourceLabel[]
++  to: string
++  toLabel: string
++  /** The reports this node belongs to, for the per-report map. */
++  reports: ReportKey[]
++}
++
++export interface MapEdge {
++  from: string
++  to: string
++  /** Why the edge is there, in a few words: the data that backs it. */
++  why: string
++}
++
++/** The six kinds of source, in the owner's words, and the registry entries each covers. */
++export const SOURCE_GROUPS: { id: string; title: string; summary: string; sources: SourceId[]; to: string }[] = [
++  { id: 'g-personas', title: 'Personas', summary: 'Made-up people, each with an age, a country and a life. AI plays them in the tests.', sources: ['personas'], to: '/admin/personas' },
++  { id: 'g-owner', title: 'The business owner’s documents', summary: 'The briefs, the spec and the chats the business owner sent.', sources: ['owner-docs', 'spec-causal', 'owner-chat'], to: '/wiki/backend-old' },
++  { id: 'g-wiki', title: 'Knowledge (wiki)', summary: 'What the team has written down: the product plan, research and the old backend.', sources: ['prd', 'backend-old', 'artefact', 'b2b2c', 'user-journey'], to: '/wiki/prd' },
++  { id: 'g-feedback', title: 'User feedback', summary: 'What people told us: three real interviews, and the feedback group study (sample data until it runs).', sources: ['interviews', 'feedback-group'], to: '/admin/reports/ux-feedback' },
++  { id: 'g-cost', title: 'Cost data', summary: 'What AI suppliers charge, and last year’s real bills.', sources: ['cost-2025', 'supplier-prices'], to: '/admin/reports/cost' },
++  { id: 'g-versions', title: 'Product versions', summary: 'What each version of the app shows on screen, and the prices it shows.', sources: ['versions', 'buyer-prices'], to: '/admin/buyer-agent?view=versions' },
++]
++
++const REPORT_PAGES: Record<ReportKey, { title: string; to: string; findings: Finding[] }> = {
++  buyer: { title: 'Buyer agent report', to: '/admin/reports/buyer-agent', findings: BUYER_REPORT_FINDINGS },
++  combination: { title: 'Combination report', to: '/admin/reports/combination', findings: COMBINATION_FINDINGS },
++  cost: { title: 'Cost report', to: '/admin/reports/cost', findings: COST_FINDINGS },
++  ux: { title: 'UX feedback report', to: '/admin/reports/ux-feedback', findings: UX_FEEDBACK_FINDINGS },
++}
++
++const pct = (x: number | null) => (x === null ? '—' : `${Math.round(x * 100)}%`)
++const uniq = <T>(xs: T[]) => [...new Set(xs)]
++
++/** The sources one middle node reads, from the registry's findings. */
++function sourcesFor(findings: Finding[]): SourceId[] {
++  return uniq(findings.flatMap((f) => f.sources))
++}
++
++/** The production versions a decision names ("Production v2 and v3"). */
++export function versionsOf(d: Decision): number[] {
++  if (!/production/i.test(d.version)) return []
++  return [...d.version.matchAll(/v(\d)/g)].map((m) => Number(m[1])).filter((v) => PRODUCTION_VERSIONS.some((p) => p.id === v))
++}
++
++export interface IterationMap {
++  nodes: MapNode[]
++  edges: MapEdge[]
++  /** What each middle node reads, for the test. */
++  reads: Record<string, SourceId[]>
++  /** What each middle node led to, for the test. */
++  leadsTo: Record<string, string[]>
++}
++
++export function buildIterationMap(week = 1): IterationMap {
++  const trend = buyerTrend()
++  const iterations = buildIterations()
++  const stages = buildStages(week)
++  const nodes: MapNode[] = []
++  const edges: MapEdge[] = []
++  const reads: Record<string, SourceId[]> = {}
++  const leadsTo: Record<string, string[]> = {}
++
++  // Middle: each buyer test, then the three other reports.
++  for (const it of iterations) {
++    const t = trend.find((p) => p.id === it.id)!
++    const id = `r-${it.id}`
++    reads[id] = sourcesFor(BUYER_REPORT_FINDINGS.filter((f) => f.id === it.id))
++    leadsTo[id] = it.decisions.map((d) => d.id)
++    nodes.push({
++      id,
++      column: 'report',
++      title: `Buyer agent ${t.label.toLowerCase()}`,
++      tag: `${t.n} people · ${it.date.slice(8, 10)} Nov`,
++      summary: t.change,
++      numbers: [
++        { label: 'People asked', value: `${t.n}` },
++        { label: 'Would try', value: pct(t.tries) },
++        { label: 'Would pay', value: pct(t.pays) },
++        { label: 'Back after a month', value: pct(t.sure30) },
++      ],
++      labels: ['prediction'],
++      to: it.link,
++      toLabel: 'Every answer in this test',
++      reports: ['buyer'],
++    })
++  }
++  const others: [ReportKey, string, string, SourceLabel[]][] = [
++    ['ux', 'How the feedback group is doing, week by week. Sample data until the real study runs.', 'Feedback group', ['sample']],
++    ['cost', 'What one audio session costs to make, and what helping one person sleep well costs.', 'Costs and profit', ['estimate', 'measured', 'scenario']],
++    ['combination', 'Every source joined, step by step of the customer journey, to pick what to fix first.', 'All sources joined', ['prediction', 'document', 'sample']],
++  ]
++  for (const [key, summary, tag, labels] of others) {
++    const page = REPORT_PAGES[key]
++    const id = `r-${key}`
++    reads[id] = sourcesFor(page.findings)
++    leadsTo[id] = key === 'combination' ? uniq(stages.map((s) => s.decision).filter((d): d is string => !!d)) : []
++    nodes.push({ id, column: 'report', title: page.title, tag, summary, numbers: [{ label: 'Sources read', value: `${reads[id].length}` }, { label: 'Decisions it led to', value: `${leadsTo[id].length}` }], labels, to: page.to, toLabel: `Open the ${page.title.toLowerCase()}`, reports: [key] })
++  }
++
++  // Left: a source kind is on the map when some report reads it.
++  for (const g of SOURCE_GROUPS) {
++    const users = nodes.filter((n) => n.column === 'report' && reads[n.id].some((s) => g.sources.includes(s)))
++    nodes.push({
++      id: g.id,
++      column: 'source',
++      title: g.title,
++      tag: `${users.length} ${users.length === 1 ? 'report' : 'reports and tests'}`,
++      summary: g.summary,
++      numbers: [{ label: 'Sources of this kind', value: `${g.sources.length}` }, { label: 'Used by', value: `${users.length}` }],
++      labels: uniq(g.sources.map((s) => SOURCES[s].label)),
++      to: g.to,
++      toLabel: 'Open the source',
++      reports: uniq(users.flatMap((u) => u.reports)),
++    })
++    for (const u of users) {
++      const used = g.sources.filter((s) => reads[u.id].includes(s))
++      edges.push({ from: g.id, to: u.id, why: `Reads ${used.map((s) => SOURCES[s].name).join(', ')}` })
++    }
++  }
++
++  // Right: the decisions, then the production versions they shipped in.
++  for (const d of DEFAULT_DECISIONS) {
++    const id = `d-${d.id}`
++    const from = nodes.filter((n) => n.column === 'report' && leadsTo[n.id].includes(d.id))
++    nodes.push({
++      id,
++      column: 'outcome',
++      title: d.change.length > 60 ? `${d.change.slice(0, 57).trimEnd()}…` : d.change,
++      tag: `Decision · ${STATUS_LABEL[d.status]}`,
++      summary: `${d.change} Why: ${d.finding}`,
++      numbers: [{ label: 'Status', value: STATUS_LABEL[d.status] }, { label: 'Logged', value: d.date }, ...(d.version ? [{ label: 'Shipped in', value: d.version }] : []), ...(d.result ? [{ label: 'Result', value: d.result }] : [])],
++      labels: ['document'],
++      to: '/admin/business-funnel',
++      toLabel: 'Open the decision log',
++      reports: uniq(from.flatMap((n) => n.reports)),
++    })
++    for (const n of from) edges.push({ from: n.id, to: id, why: `${n.title} led to this decision` })
++  }
++  for (const v of PRODUCTION_VERSIONS) {
++    const id = `v-${v.id}`
++    const from = DEFAULT_DECISIONS.filter((d) => versionsOf(d).includes(v.id))
++    nodes.push({
++      id,
++      column: 'outcome',
++      title: `Product version ${v.id}`,
++      tag: v.id === PRODUCTION_VERSIONS.length ? 'Live today' : 'Earlier version',
++      summary: v.summary,
++      numbers: [{ label: 'Decisions in it', value: `${from.length}` }],
++      labels: ['document'],
++      to: '/admin/buyer-agent?view=versions',
++      toLabel: 'What each version shows',
++      reports: uniq(from.flatMap((d) => nodes.find((n) => n.id === `d-${d.id}`)!.reports)),
++    })
++    for (const d of from) edges.push({ from: `d-${d.id}`, to: id, why: `Shipped in ${d.version}` })
++  }
++
++  return { nodes, edges, reads, leadsTo }
++}
++
++/** The map cut down to one report: its own middle node(s), what feeds them and what came out of them. */
++export function mapFor(map: IterationMap, report: ReportKey): IterationMap {
++  const keep = new Set(map.nodes.filter((n) => n.column === 'report' && n.reports.includes(report)).map((n) => n.id))
++  for (const e of map.edges) if (keep.has(e.to) && e.from.startsWith('g-')) keep.add(e.from)
++  for (const e of map.edges) if (keep.has(e.from) && !e.from.startsWith('g-')) keep.add(e.to)
++  for (const e of map.edges) if (keep.has(e.from) && e.from.startsWith('d-')) keep.add(e.to)
++  return { ...map, nodes: map.nodes.filter((n) => keep.has(n.id)), edges: map.edges.filter((e) => keep.has(e.from) && keep.has(e.to)) }
++}
++
++export const COLUMN_TITLE: Record<MapColumn, string> = {
++  source: 'What we learn from',
++  report: 'Reports and tests',
++  outcome: 'What came out',
++}
+diff --git a/src/admin/data/reportSources.ts b/src/admin/data/reportSources.ts
+index 0be6793..0d7fe67 100644
+--- a/src/admin/data/reportSources.ts
++++ b/src/admin/data/reportSources.ts
+@@ -370,6 +370,9 @@ export const COST_FINDINGS: Finding[] = [
+   { id: 'metric-lines', title: 'Three metric lines', sources: ['spec-causal', 'cost-2025', 'owner-chat'] },
+ ]
+ 
++/** The UX feedback report (U129): the latest feedback group view, on the study's sample data. */
++export const UX_FEEDBACK_FINDINGS: Finding[] = [{ id: 'ux-views', title: 'Wins, this week and how much they use it', sources: ['feedback-group'] }]
++
+ /** The sources a set of findings uses, in registry order. */
+ export function sourcesOf(findings: Finding[]): ReportSource[] {
+   const used = new Set(findings.flatMap((f) => f.sources))
+diff --git a/src/admin/data/reportSummaries.test.ts b/src/admin/data/reportSummaries.test.ts
+index 39eb3b8..dac82d9 100644
+--- a/src/admin/data/reportSummaries.test.ts
++++ b/src/admin/data/reportSummaries.test.ts
+@@ -4,7 +4,9 @@ import { v5Tallies } from './buyerRunV5'
+ import { v7Tallies } from './buyerRunV7'
+ import { goal, presetInputs, PRESETS, DEFAULT_GOAL } from './costModel'
+ import { plainText, unmarkedJargon } from './glossary'
+-import { breakEvenStage, buyerLevers, buyerSummary, buyerTrend, combinationSummary, costFunction, costSummary, stageStrip } from './reportSummaries'
++import { v6Tallies } from './buyerRunV6'
++import { breakEvenStage, buyerLevers, buyerSummary, buyerTrend, combinationSummary, costFunction, costSummary, stageStrip, uxFeedbackSummary } from './reportSummaries'
++import { buildParticipants, winStatus } from './study'
+ 
+ const pct = (x: number) => `${Math.round(x * 100)}%`
+ 
+@@ -67,8 +69,50 @@ describe('cost summary', () => {
+   })
+ })
+ 
++const ux = () => uxFeedbackSummary(buildParticipants(3), 3)
++
++describe('buyer summary by test (U129)', () => {
++  it('splits the figures into test 5, test 6 and test 7, each with its own base', () => {
++    const rows = buyerSummary().rows!
++    const x5 = v5Tallies()
++    const x6 = v6Tallies()
++    const x7 = v7Tallies()
++    expect(rows.map((r) => plainText(r.label))).toEqual([`Today’s app (test 5, ${x5.t.n} people)`, `Retreat vs free plan (test 6, ${x6.A.n} people)`, `Latest test (test 7, ${x7.B.n} people)`])
++    expect(rows.map((r) => plainText(r.base))).toEqual([x5.t.n, x6.A.n, x7.B.n].map((n) => `${n} simulated people`))
++    expect(rows[0].figures[0].value).toBe(pct(x5.t.tries.yes / x5.t.n))
++    expect(rows[1].figures[0].value).toBe(pct(x6.A.tries.yes / x6.A.n))
++    expect(rows[2].figures[0].value).toBe(`${pct(x7.A.tries.yes / x7.A.n)} → ${pct(x7.B.tries.yes / x7.B.n)}`)
++  })
++  it('names the test behind every tile', () => {
++    for (const t of buyerSummary().tiles) expect(plainText(t.note ?? '')).toMatch(/^Test [57]/)
++  })
++})
++
++describe('UX feedback summary (U129)', () => {
++  it('counts wins from the study data and says it is sample data', () => {
++    const ps = buildParticipants(3)
++    const s = uxFeedbackSummary(ps, 3)
++    const won = ps.filter((p) => winStatus(p) === 'won').length
++    expect(s.tiles[0].value.startsWith(`${won} of `)).toBe(true)
++    expect(s.tiles.every((t) => t.badge === 'sample')).toBe(true)
++    expect(s.status).toBe('not-measured')
++    expect(plainText(s.headline)).toMatch(/sample data/)
++  })
++})
++
++describe('goal lines (U129)', () => {
++  it('gives every report one goal sentence that says what it helps decide', () => {
++    for (const s of [buyerSummary(), combinationSummary(1), costSummary(), ux()]) {
++      expect(s.goal).toMatch(/^Helps .+ decide|^Helps .+ choose/)
++      expect(plainText(s.goal).split(/(?<=\.)\s+/)).toHaveLength(1)
++      expect(plainText(s.goal).split(/\s+/).length).toBeLessThanOrEqual(22)
++      expect(s.detail.to.length).toBeGreaterThan(1)
++    }
++  })
++})
++
+ it('gives every report a headline, 3–4 tiles and at least one next move', () => {
+-  for (const s of [buyerSummary(), combinationSummary(1), costSummary()]) {
++  for (const s of [buyerSummary(), combinationSummary(1), costSummary(), ux()]) {
+     expect(s.headline.length).toBeGreaterThan(20)
+     expect(s.tiles.length).toBeGreaterThanOrEqual(3)
+     expect(s.tiles.length).toBeLessThanOrEqual(4)
+@@ -77,13 +121,13 @@ it('gives every report a headline, 3–4 tiles and at least one next move', () =
+ })
+ 
+ describe('plain language (U128)', () => {
+-  const all = () => [buyerSummary(), combinationSummary(1), costSummary()]
++  const all = () => [buyerSummary(), combinationSummary(1), costSummary(), ux()]
+   it('says what each report is', () => {
+     for (const s of all()) expect(s.intro?.length ?? 0).toBeGreaterThan(30)
+   })
+   it('keeps glossary jargon out of the headline and tiles unless it is a marked term', () => {
+     for (const s of all()) {
+-      const texts = [s.intro ?? '', s.question, s.headline, s.statusNote, s.sure ?? '', ...s.tiles.flatMap((t) => [t.label, t.value, t.delta ?? '', t.note ?? '']), ...s.actions.flatMap((a) => [a.text, a.linkLabel])]
++      const texts = [s.intro ?? '', s.goal, ...(s.rows ?? []).flatMap((r) => [r.label, r.base, ...r.figures.map((f) => f.label)]), s.question, s.headline, s.statusNote, s.sure ?? '', ...s.tiles.flatMap((t) => [t.label, t.value, t.delta ?? '', t.note ?? '']), ...s.actions.flatMap((a) => [a.text, a.linkLabel])]
+       for (const t of texts) expect(unmarkedJargon(t), t).toEqual([])
+     }
+   })
+@@ -93,7 +137,7 @@ describe('plain language (U128)', () => {
+         for (const sentence of plainText(t).split(/(?<=\.)\s+/)) expect(sentence.split(/\s+/).length, sentence).toBeLessThanOrEqual(20)
+   })
+   it('gives every number in the headline its base', () => {
+-    expect(plainText(buyerSummary().headline)).toMatch(/^\d+ of \d+ simulated people/)
++    expect(plainText(buyerSummary().headline)).toMatch(/^In today’s app \(test 5\), \d+ of \d+ simulated people/)
+     expect(plainText(combinationSummary(1).headline)).toMatch(/^\d of 5 steps/)
+   })
+ })
+diff --git a/src/admin/data/reportSummaries.ts b/src/admin/data/reportSummaries.ts
+index 05d9b62..07b926d 100644
+--- a/src/admin/data/reportSummaries.ts
++++ b/src/admin/data/reportSummaries.ts
+@@ -6,6 +6,7 @@ import { v5Tallies } from './buyerRunV5'
+ import { V6_CHANGES, v6Tallies } from './buyerRunV6'
+ import { v7Tallies } from './buyerRunV7'
+ import { report } from './buyerSim'
++import { evaluateCriteria, weekTasks, winStatus, type Participant } from './study'
+ import { ANCHORS, ASSUME, DEFAULT_GOAL, MEASURED_2025, MEDIA, PRESETS, STAGES as COST_STAGES, chapterCost, goal, measuredAverage, presetInputs, supplier, total, type Media, type Stage } from './costModel'
+ import type { SourceLabel } from './reportSources'
+ 
+@@ -34,6 +35,8 @@ export interface NextAction {
+   text: string
+   to: string
+   linkLabel: string
++  /** A decision-log id: the drawer shows that decision (U129). */
++  decision?: string
+ }
+ 
+ export interface Confidence {
+@@ -42,7 +45,20 @@ export interface Confidence {
+   assumed: string
+ }
+ 
++/** One clearly based row of figures: which test, how many people (U129). */
++export interface SummaryRow {
++  label: string
++  base: string
++  figures: { label: string; value: string }[]
++}
++
+ export interface ReportSummary {
++  /** The decision this report helps make, and for whom, in one sentence (U129). Shown above the answer as "Goal". */
++  goal: string
++  /** Where the full detail lives, for the drawer's "Open full page" (U129). */
++  detail: { to: string; label: string }
++  /** Separate rows when the figures come from different tests (U129). */
++  rows?: SummaryRow[]
+   /**
+    * "What is this report?" in one everyday line (U128). Text fields of a
+    * summary may carry `{{termId|shown}}` glossary marks; see data/glossary.ts.
+@@ -155,6 +171,7 @@ const PLAIN_MOVE: Record<string, string> = {
+ 
+ export function buyerSummary(): ReportSummary {
+   const x5 = v5Tallies()
++  const x6 = v6Tallies()
+   const x7 = v7Tallies()
+   const n = x5.t.n
+   const tryShare = share(x5.t.tries.yes, n)
+@@ -170,22 +187,54 @@ export function buyerSummary(): ReportSummary {
+   const fair = `${money(x5.band.low)}–${money(x5.band.high)}`
+   const status: SummaryStatus = payShare >= 0.15 && x5.band.high >= 10 ? 'on-track' : 'at-risk'
+   const points = (a: number, b: number) => `${pts(a, b).replace(' pts', '')} {{points}}`
++  const people = (k: number) => `${k} {{simulated|simulated people}}`
+   return {
+     intro: 'We asked made-up people, played by AI, whether they would use and pay for Aurelia. They are not real users.',
++    goal: 'Helps the business owner decide whether people would pay for Aurelia, and at what price, before real users arrive.',
++    detail: { to: '/admin/buyer-agent', label: 'Every answer, in detail' },
+     question: 'Would people try Aurelia, and would they pay for it?',
+-    headline: `${x5.t.tries.yes} of ${n} {{simulated|simulated people}} would try Aurelia today. Only ${x5.t.pays.yes} of ${n} would pay $10 a month. Most called ${fair} a month {{fair-price|a fair price}}. A ${liftLabel} raised trying from ${pct(tryA7)} to ${pct(tryB7)} in a later {{test}}.`,
++    headline: `In today’s app ({{test}} 5), ${x5.t.tries.yes} of ${n} {{simulated|simulated people}} would try Aurelia. Only ${x5.t.pays.yes} would pay $10 a month. Most called ${fair} a month {{fair-price|a fair price}}. In the latest {{test}} (7, ${x7.B.n} people), a ${liftLabel} raised trying from ${pct(tryA7)} to ${pct(tryB7)}.`,
+     status,
+     statusNote: status === 'at-risk' ? 'Too few would pay, and $10 is above the fair price.' : 'Enough would pay, at a price they call fair.',
+     sure: 'Nothing here is measured on real users yet. Every figure is an AI simulation.',
++    rows: [
++      {
++        label: `Today’s app ({{test}} 5, ${n} people)`,
++        base: people(n),
++        figures: [
++          { label: 'Would try', value: pct(tryShare) },
++          { label: 'Would pay $10 a month', value: pct(payShare) },
++          { label: 'Fair price, per month', value: fair },
++        ],
++      },
++      {
++        label: `Retreat vs free plan ({{test}} 6, ${x6.A.n} people)`,
++        base: people(x6.A.n),
++        figures: [
++          { label: 'Would try the free plan', value: pct(share(x6.A.tries.yes, x6.A.n)) },
++          { label: 'Would try the €19.99 retreat', value: pct(share(x6.B.tries.yes, x6.B.n)) },
++          { label: 'Would buy the retreat', value: pct(share(x6.B.pays.yes, x6.B.n)) },
++        ],
++      },
++      {
++        label: `Latest {{test}} ({{test}} 7, ${x7.B.n} people)`,
++        base: people(x7.B.n),
++        figures: [
++          { label: 'Would try, without → with a free library', value: `${pct(tryA7)} → ${pct(tryB7)}` },
++          { label: 'Would pay, with the free library', value: pct(share(x7.B.pays.yes, x7.B.n)) },
++          { label: 'Back after a month', value: pct(share(x7.day30B, x7.B.n)) },
++        ],
++      },
++    ],
+     tiles: [
+-      { label: 'Would try Aurelia today', value: pct(tryShare), badge: 'prediction', delta: `${points(v3ATry, tryShare)} vs. the offer in {{test}} 3`, deltaGood: tryShare >= v3ATry, note: `${x5.t.tries.yes} of ${n} {{simulated|simulated people}}` },
+-      { label: 'Would pay $10 a month', value: pct(payShare), badge: 'prediction', delta: `${points(v3APay, payShare)} vs. the offer in {{test}} 3`, deltaGood: payShare >= v3APay, note: `${x5.t.pays.yes} of ${n} {{simulated|simulated people}}. Main worry: ${objection}.` },
+-      { label: 'Price they call fair, per month', value: fair, badge: 'prediction', note: 'Our planned $10 a month is above this range.' },
+-      { label: 'Would try, if we add a free library', value: `${pct(tryA7)} → ${pct(tryB7)}`, badge: 'prediction', delta: `${points(tryA7, tryB7)}`, deltaGood: tryB7 >= tryA7, note: `${x7.B.n} {{simulated|simulated people}}, without → with the ${liftLabel}.` },
++      { label: 'Would try Aurelia today', value: pct(tryShare), badge: 'prediction', delta: `${points(v3ATry, tryShare)} vs. the offer in {{test}} 3`, deltaGood: tryShare >= v3ATry, note: `{{test|Test}} 5: ${x5.t.tries.yes} of ${n} {{simulated|simulated people}}` },
++      { label: 'Would pay $10 a month', value: pct(payShare), badge: 'prediction', delta: `${points(v3APay, payShare)} vs. the offer in {{test}} 3`, deltaGood: payShare >= v3APay, note: `{{test|Test}} 5: ${x5.t.pays.yes} of ${n} {{simulated|simulated people}}. Main worry: ${objection}.` },
++      { label: 'Price they call fair, per month', value: fair, badge: 'prediction', note: '{{test|Test}} 5. Our planned $10 a month is above this range.' },
++      { label: 'Would try, if we add a free library', value: `${pct(tryA7)} → ${pct(tryB7)}`, badge: 'prediction', delta: `${points(tryA7, tryB7)}`, deltaGood: tryB7 >= tryA7, note: `{{test|Test}} 7: ${x7.B.n} {{simulated|simulated people}}, without → with the ${liftLabel}.` },
+     ],
+     actions: [
+-      { text: `${PLAIN_MOVE.d1} It changed ${lever.moved} of ${lever.n} answers.`, to: '/admin/business-funnel', linkLabel: 'See the decision' },
+-      { text: PLAIN_MOVE.d3, to: '/admin/business-funnel', linkLabel: 'See the decision' },
++      { text: `${PLAIN_MOVE.d1} It changed ${lever.moved} of ${lever.n} answers.`, to: '/admin/business-funnel', linkLabel: 'See the decision', decision: 'd1' },
++      { text: PLAIN_MOVE.d3, to: '/admin/business-funnel', linkLabel: 'See the decision', decision: 'd3' },
+       { text: `Try a price between ${fair} a month, or prices per country, before charging $10.`, to: '#what-moves', linkLabel: 'What changes answers' },
+     ],
+     confidence: {
+@@ -252,6 +301,8 @@ export function combinationSummary(week: number): ReportSummary {
+   }
+   return {
+     intro: 'We follow made-up people, played by AI, through five steps of using Aurelia. We compare each step with our goal.',
++    goal: 'Helps the team decide which step of the customer journey to fix first, by joining every source we have.',
++    detail: { to: '/admin/business-funnel', label: 'The business funnel and its decision log' },
+     question: 'At which step do we lose people, and what do we fix first?',
+     headline: gap
+       ? `${on.length} of ${strip.length} steps of the {{journey|customer journey}} reach their {{target}}. The weakest step is “${stageShort(gap.id).toLowerCase()}”: ${pct(gap.value)} ${gap.metric.toLowerCase()}, against a goal of ${pct(gap.target)}. Fix that first.`
+@@ -266,7 +317,7 @@ export function combinationSummary(week: number): ReportSummary {
+       { label: 'Still using Aurelia after a month', value: pct(m('d30').agent), badge: 'prediction', delta: vsTarget('d30'), deltaGood: m('d30').agent >= m('d30').target, note: 'Of all {{simulated|simulated people}} who arrive' },
+     ],
+     actions: [
+-      ...(gap ? [{ text: gapDecision ? PLAIN_MOVE[gapDecision] : 'Agree what the free limit is, then make the first session feel good.', to: gapDecision ? '/admin/business-funnel' : `#stage-${gap.id}`, linkLabel: gapDecision ? 'See the decision' : `Step: ${stageShort(gap.id)}` }] : []),
++      ...(gap ? [{ text: gapDecision ? PLAIN_MOVE[gapDecision] : 'Agree what the free limit is, then make the first session feel good.', to: gapDecision ? '/admin/business-funnel' : `#stage-${gap.id}`, linkLabel: gapDecision ? 'See the decision' : `Step: ${stageShort(gap.id)}`, ...(gapDecision ? { decision: gapDecision } : {}) }] : []),
+       ...below.map((s) => ({ text: PLAIN_MOVE[STAGE_DECISION[s.id]!], to: `#stage-${s.id}`, linkLabel: `Step: ${stageShort(s.id)}` })),
+     ],
+     confidence: {
+@@ -365,6 +416,8 @@ export function costSummary(): ReportSummary {
+   const pays = be === 1 ? 'We make money from the start.' : be ? `We lose money today and make money from {{learning-stage|learning stage}} ${be}.` : 'We never make money at this price.'
+   return {
+     intro: 'What the AI suppliers charge us to make Aurelia’s audio sessions. And whether helping one person sleep well earns more than it costs.',
++    goal: 'Helps the business owner choose AI suppliers and a price, by showing what helping one person sleep well costs.',
++    detail: { to: '#cost-function', label: 'How the cost adds up' },
+     question: 'What does it cost to help one person sleep well, and when do we make money?',
+     headline: `One 10-minute {{chapter|audio session}} costs us about ${usd(s1.chapter)} to make. Helping one person sleep well costs ${usd(s1.costPerFlip)} today. It falls to ${usd(s3.costPerFlip)} once the AI has learned. At ${price} per {{person-helped|person helped}}, ${pays.charAt(0).toLowerCase()}${pays.slice(1)}`,
+     status,
+@@ -388,3 +441,45 @@ export function costSummary(): ReportSummary {
+     },
+   }
+ }
++
++/* ------------------------------------------------------------ UX feedback */
++
++/** How the feedback group is doing, for the UX feedback report (U129). Sample data until the study runs. */
++export function uxFeedbackSummary(participants: Participant[], week: number): ReportSummary {
++  const statuses = participants.map(winStatus)
++  const count = (st: ReturnType<typeof winStatus>) => statuses.filter((x) => x === st).length
++  const judged = statuses.filter((st) => st !== 'too early' && st !== 'started healthy').length
++  const won = count('won')
++  const improving = count('improving')
++  const criteria = evaluateCriteria(participants, week)
++  const c = (id: string) => criteria.find((x) => x.id === id)!
++  const retention = c('retention')
++  const adherence = c('adherence')
++  const tasks = weekTasks(participants, week).length
++  return {
++    intro: 'How the people in the {{feedback-group|feedback group}} are doing with Aurelia, week by week. Every figure is {{sample|sample data}} for now.',
++    goal: 'Helps the product team decide what to change in the app, from how real people feel while using it.',
++    detail: { to: '/admin/experimentation', label: 'The study plan and every person' },
++    question: 'Does Aurelia help the people who use it, and do they keep using it?',
++    headline: `${won} of ${judged} people with a later score reached the healthy range. ${improving} more are getting better. All of it is {{sample|sample data}} until the real study runs.`,
++    status: 'not-measured',
++    statusNote: 'Sample data. The real study has not started.',
++    sure: 'Nothing here is real yet. Every person and score is made up to look real.',
++    tiles: [
++      { label: 'Reached the healthy range', value: `${won} of ${judged}`, badge: 'sample', note: 'People with a score after their first one' },
++      { label: 'Getting better, not there yet', value: `${improving}`, badge: 'sample', note: 'A change that matters, still below healthy' },
++      { label: 'Still in the study', value: retention.display, badge: 'sample', note: `Goal: 70% or more. ${retention.note}.` },
++      { label: 'Use it three times a week or more', value: adherence.display, badge: 'sample', note: 'Goal: 60% or more' },
++    ],
++    actions: [
++      { text: 'Recruit 30 real people and run the study with real accounts, so these numbers become real.', to: '/admin/experimentation', linkLabel: 'The study plan' },
++      { text: `Do the ${tasks} follow-ups due in week ${week}: calls first, then missed check-ins.`, to: '#ux-views', linkLabel: 'This week' },
++      { text: 'Check whether people who use it more also feel better. It hints, it does not prove.', to: '#ux-views', linkLabel: 'How much they use it' },
++    ],
++    confidence: {
++      measured: 'Nothing. No real person has joined the study yet.',
++      predicted: 'None. These are not AI answers either.',
++      assumed: 'All 30 people, their scores and their sessions are invented to look real.',
++    },
++  }
++}
+diff --git a/src/admin/pages/ExperimentationV2Page.tsx b/src/admin/pages/ExperimentationV2Page.tsx
+index cb53265..98463d1 100644
+--- a/src/admin/pages/ExperimentationV2Page.tsx
++++ b/src/admin/pages/ExperimentationV2Page.tsx
+@@ -6,6 +6,7 @@ import type { Tone } from '../components/ui'
+ import { Badge, PageHeader, Panel, StatCard } from '../components/ui'
+ import { isoDay, overdueContacts } from '../data/coachingLog'
+ import { useCoachingLog } from '../data/useCoachingLog'
++import { RELEASES } from '../../versions/releases'
+ import type { Band, Milestone, Participant, TaskKind, WeekTask, WinStatus } from '../data/study'
+ import {
+   COHORTS,
+@@ -47,7 +48,7 @@ export function StudyVersionSwitch({ current }: { current: 1 | 2 }) {
+       {[1, 2].map((v) => (
+         <Link
+           key={v}
+-          to={v === 1 ? '/admin/experimentation' : '/admin/experimentation/v2'}
++          to={v === 1 ? '/admin/experimentation' : RELEASES.reports ? '/admin/reports/ux-feedback' : '/admin/experimentation/v2'}
+           aria-current={current === v ? 'page' : undefined}
+           className={`rounded-4 px-10 py-4 font-medium ${current === v ? 'bg-adm-ink text-adm-surface' : 'text-adm-ink-2 hover:bg-adm-hover'}`}
+         >
+@@ -61,7 +62,7 @@ export function StudyVersionSwitch({ current }: { current: 1 | 2 }) {
+ /**
+  * Experimentation · feedback group, version 2 (U060), for review beside v1.
+  * v1 is the researcher's view (criteria, completeness, protocol). v2 reads the
+- * same study the way Eugene framed it — "solve and win them" — and as the
++ * same study the way the business owner framed it — "solve and win them" — and as the
+  * study team's week: who won, who is improving, what has to happen this week,
+  * and whether use goes with change.
+  */
+@@ -69,7 +70,6 @@ export function ExperimentationV2Page() {
+   const [now] = useState(() => Date.now())
+   const week = studyWeek(now)
+   const participants = useMemo(() => buildParticipants(week), [week])
+-  const [tab, setTab] = useState<Tab>('plan')
+ 
+   return (
+     <>
+@@ -92,6 +92,20 @@ export function ExperimentationV2Page() {
+         </ul>
+       </details>
+ 
++      <FeedbackGroupViews participants={participants} week={week} />
++    </>
++  )
++}
++
++/**
++ * The four views of the latest feedback group (v2): milestones, wins, this
++ * week and engagement. Since U129 they are also the body of Reports → UX
++ * feedback report.
++ */
++export function FeedbackGroupViews({ participants, week }: { participants: Participant[]; week: number }) {
++  const [tab, setTab] = useState<Tab>('plan')
++  return (
++    <>
+       <div role="tablist" aria-label="Version 2 views" className="flex flex-wrap gap-6 border-b border-adm-line">
+         {([['plan', 'Milestones'], ['wins', 'Wins'], ['week', `This week (${week})`], ['engagement', 'Engagement']] as const).map(([id, label]) => (
+           <button
+diff --git a/src/admin/pages/reports/BuyerAgentReportPage.tsx b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+index dd631b9..536834b 100644
+--- a/src/admin/pages/reports/BuyerAgentReportPage.tsx
++++ b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+@@ -1,9 +1,12 @@
+-import { ArrowRight } from 'lucide-react'
++import { ArrowRight, PanelRightOpen } from 'lucide-react'
+ import { useMemo } from 'react'
+ import { Link } from 'react-router-dom'
+ import { PageHeader, Panel } from '../../components/ui'
+ import { APP_PRICE, INPUT_KINDS, INPUT_LABEL, buildIterations, changedFrom } from '../../data/buyerAgentReport'
+ import { BUYER_REPORT_FINDINGS } from '../../data/reportSources'
++import { buildIterationMap, mapFor } from '../../data/iterationMap'
++import { DetailDrawerProvider, useDetail } from './DetailDrawer'
++import { IterationMapView } from './IterationMapView'
+ import { InputGraph } from './InputGraph'
+ import { INPUT_DOT } from './reportColors'
+ import { LabelBadge, SourcesSection } from './ReportParts'
+@@ -22,10 +25,20 @@ const fmtDate = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString('en
+  * where the run data is silent and says "not recorded" where nothing says.
+  */
+ export function BuyerAgentReportPage() {
++  return (
++    <DetailDrawerProvider>
++      <BuyerAgentReport />
++    </DetailDrawerProvider>
++  )
++}
++
++function BuyerAgentReport() {
+   const iterations = useMemo(() => buildIterations(), [])
+   const summary = useMemo(() => buyerSummary(), [])
+   const trend = useMemo(() => buyerTrend(), [])
+   const levers = useMemo(() => buyerLevers(), [])
++  const map = useMemo(() => mapFor(buildIterationMap(), 'buyer'), [])
++  const open = useDetail()
+ 
+   return (
+     <div className="flex flex-col gap-16">
+@@ -149,15 +162,37 @@ export function BuyerAgentReportPage() {
+             </div>
+ 
+             <footer className="mt-auto flex justify-end border-t border-adm-line pt-10">
+-              <Link to={it.link} className="inline-flex items-center gap-4 text-12 font-medium text-adm-ink underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink">
+-                Full detail <ArrowRight size={12} aria-hidden="true" />
+-              </Link>
++              <button
++                type="button"
++                onClick={() => {
++                  const node = map.nodes.find((n) => n.id === `r-${it.id}`)
++                  open({
++                    kicker: 'Buyer agent test',
++                    title: it.name,
++                    summary: it.question,
++                    numbers: it.headline.slice(0, 4).map((f) => ({ label: f.label, value: f.value })),
++                    labels: ['prediction'],
++                    extra: node && it.decisions.length ? <p className="text-12 text-adm-ink-2">Led to: {it.decisions.map((d) => d.change).join(' · ')}</p> : undefined,
++                    to: it.link,
++                    toLabel: 'Every answer in this test',
++                  })
++                }}
++                className="inline-flex items-center gap-4 text-12 font-medium text-adm-ink underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink"
++              >
++                Details <PanelRightOpen size={12} aria-hidden="true" />
++              </button>
+             </footer>
+           </article>
+         ))}
+       </section>
+       </Details>
+ 
++      <Details title="Sources used" hint="what each test learns from, and what came out of it">
++        <Panel title="Sources used" description="Left: the kinds of source the tests read. Middle: the seven tests. Right: the decisions and versions they led to. Click a box for details.">
++          <IterationMapView map={map} label="Sources used by the buyer agent tests, and the decisions and versions they led to." />
++        </Panel>
++      </Details>
++
+       <Details title="Sources and limits">
+       <SourcesSection
+         findings={BUYER_REPORT_FINDINGS}
+diff --git a/src/admin/pages/reports/CombinationReportPage.tsx b/src/admin/pages/reports/CombinationReportPage.tsx
+index 60b8756..e77c10c 100644
+--- a/src/admin/pages/reports/CombinationReportPage.tsx
++++ b/src/admin/pages/reports/CombinationReportPage.tsx
+@@ -1,12 +1,15 @@
+ import { useState } from 'react'
+-import { Link } from 'react-router-dom'
+ import { Badge, PageHeader, Panel } from '../../components/ui'
+ import { DESIGNS } from '../../data/buyerSim'
+ import { MATRIX_SEATS, buildComposition, buildMatrix, buildStages, type StageReading } from '../../data/combinationReport'
+ import { COMBINATION_FINDINGS } from '../../data/reportSources'
+ import { OUTCOMES, eur } from '../../data/retreatFunnel'
+ import { studyWeek } from '../../data/study'
++import { buildIterationMap, mapFor } from '../../data/iterationMap'
+ import { CompositionGraph } from './CompositionGraph'
++import { DetailDrawerProvider, useDetail } from './DetailDrawer'
++import { decisionItem } from './detailItems'
++import { IterationMapView } from './IterationMapView'
+ import { LabelBadge, SourceChip, SourcesSection } from './ReportParts'
+ import { Details, SummaryBlock } from './ReportSummary'
+ import { StageStrip } from './SummaryCharts'
+@@ -15,6 +18,7 @@ import { combinationSummary, stageStrip } from '../../data/reportSummaries'
+ const STATUS = { 'on-track': { tone: 'good', text: 'On track (prediction)' }, below: { tone: 'critical', text: 'Below target (prediction)' }, unmeasured: { tone: 'neutral', text: 'Unmeasured' } } as const
+ 
+ function Stage({ s, n }: { s: StageReading; n: number }) {
++  const open = useDetail()
+   return (
+     <section id={s.findingId} className="flex min-w-0 scroll-mt-16 flex-col gap-14 rounded-12 border border-adm-line bg-adm-surface p-16">
+       <header className="flex flex-wrap items-start justify-between gap-8">
+@@ -59,9 +63,9 @@ function Stage({ s, n }: { s: StageReading; n: number }) {
+           <dd className="mt-4 text-13 font-medium text-adm-ink">
+             {s.next}
+             {s.decision && (
+-              <Link to="/admin/business-funnel" className="ml-6 text-12 font-normal text-adm-ink-2 underline decoration-adm-axis underline-offset-2 hover:text-adm-ink">
+-                Decision {s.decision} in the log
+-              </Link>
++              <button type="button" onClick={() => open(decisionItem(s.decision!))} className="ml-6 text-12 font-normal text-adm-ink-2 underline decoration-adm-axis underline-offset-2 hover:text-adm-ink">
++                See the decision
++              </button>
+             )}
+           </dd>
+         </div>
+@@ -77,12 +81,21 @@ function Stage({ s, n }: { s: StageReading; n: number }) {
+  * funnels and the PRD. Production v3 (staging v5) with agent v3's rules.
+  */
+ export function CombinationReportPage() {
++  return (
++    <DetailDrawerProvider>
++      <CombinationReport />
++    </DetailDrawerProvider>
++  )
++}
++
++function CombinationReport() {
+   const [week] = useState(() => Math.max(1, Math.min(8, studyWeek(Date.now()))))
+   const [stages] = useState(() => buildStages(week))
+   const [matrix] = useState(() => buildMatrix())
+   const [composition] = useState(() => buildComposition(stages))
+   const [summary] = useState(() => combinationSummary(week))
+   const [strip] = useState(() => stageStrip(week))
++  const [map] = useState(() => mapFor(buildIterationMap(week), 'combination'))
+   const middle = OUTCOMES.find((o) => o.id === 'middle')!
+ 
+   return (
+@@ -183,6 +196,12 @@ export function CombinationReportPage() {
+ 
+       </Details>
+ 
++      <Details title="Sources used" hint="what this report learns from, and what came out of it">
++        <Panel title="Sources used" description="Left: the kinds of source this report joins. Right: the decisions and versions it led to. Click a box for details.">
++          <IterationMapView map={map} label="Sources used by the Combination report, and what it led to." />
++        </Panel>
++      </Details>
++
+       <Details title="Sources and limits">
+       <SourcesSection
+         findings={COMBINATION_FINDINGS}
+diff --git a/src/admin/pages/reports/CostReportPage.tsx b/src/admin/pages/reports/CostReportPage.tsx
+index ea85953..b09d423 100644
+--- a/src/admin/pages/reports/CostReportPage.tsx
++++ b/src/admin/pages/reports/CostReportPage.tsx
+@@ -8,7 +8,10 @@ import {
+   type Anchor, type CostInputs, type GoalInputs, type Media, type MediaCost, type NodeId, type NumberLabel, type Personalisation, type Stage,
+ } from '../../data/costModel'
+ import { COST_FINDINGS } from '../../data/reportSources'
+-import { SourceGraph, SourcesSection } from './ReportParts'
++import { SourcesSection } from './ReportParts'
++import { buildIterationMap, mapFor } from '../../data/iterationMap'
++import { DetailDrawerProvider } from './DetailDrawer'
++import { IterationMapView } from './IterationMapView'
+ import { Details, SummaryBlock } from './ReportSummary'
+ import { CostFunctionPanel } from './SummaryCharts'
+ import { costFunction, costSummary } from '../../data/reportSummaries'
+@@ -65,7 +68,16 @@ function nodeValues(s: State): Record<NodeId, string> {
+ }
+ 
+ export function CostReportPage() {
++  return (
++    <DetailDrawerProvider>
++      <CostReport />
++    </DetailDrawerProvider>
++  )
++}
++
++function CostReport() {
+   const [state, setState] = useState<State>(INITIAL)
++  const [map] = useState(() => mapFor(buildIterationMap(), 'cost'))
+   const [changed, setChanged] = useState<{ from: NodeId | null; nodes: Set<NodeId> }>({ from: null, nodes: new Set() })
+   const [selected, setSelected] = useState<NodeId>('costFlip')
+   const [summary] = useState(() => costSummary())
+@@ -301,8 +313,8 @@ export function CostReportPage() {
+         ))}
+       </div>
+ 
+-      <Panel title="How this report was made" description="Where each part of this report comes from. Each line is a source feeding a section.">
+-        <SourceGraph findings={COST_FINDINGS} label="Graph: the sources on the left feed the report’s sections on the right." />
++      <Panel title="Sources used" description="Left: the kinds of source this report reads. Right: what it has led to so far: nothing yet. Click a box for details.">
++        <IterationMapView map={map} label="Sources used by the Cost report. It has not led to a decision yet." />
+       </Panel>
+ 
+       <Panel title="Read this first" description="Plain-language notes.">
+diff --git a/src/admin/pages/reports/DetailDrawer.tsx b/src/admin/pages/reports/DetailDrawer.tsx
+new file mode 100644
+index 0000000..cdb0211
+--- /dev/null
++++ b/src/admin/pages/reports/DetailDrawer.tsx
+@@ -0,0 +1,138 @@
++import { ArrowRight } from 'lucide-react'
++import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
++import { Link } from 'react-router-dom'
++import { Drawer } from '../../components/Drawer'
++import { LABEL_MEANING, LABEL_TEXT, type SourceLabel } from '../../data/reportSources'
++import { LabelBadge } from './ReportParts'
++import { RichText } from './Term'
++
++/*
++ * One drawer for every click in Admin → Reports (U129, J182). A node, a
++ * source, a decision, a report card or a tile opens a short summary here,
++ * with its key numbers and labels, and "Open full page →" for whoever wants
++ * the whole thing. The page underneath does not change.
++ */
++
++export interface DetailItem {
++  kicker?: string
++  title: string
++  /** May carry `{{term|shown}}` glossary marks. */
++  summary?: string
++  numbers?: { label: string; value: string }[]
++  labels?: SourceLabel[]
++  /** A route, or `#id` for a section on this page. */
++  to?: string
++  toLabel?: string
++  extra?: ReactNode
++}
++
++const Ctx = createContext<(item: DetailItem) => void>(() => {})
++
++/** Opens the reports drawer with an item. */
++export const useDetail = () => useContext(Ctx)
++
++/** Scrolls to a section on this page, opening its closed <details> first. */
++function goToSection(hash: string) {
++  const el = document.getElementById(hash.slice(1))
++  const det = el?.closest('details') ?? (el instanceof HTMLDetailsElement ? el : null)
++  if (det) det.open = true
++  el?.scrollIntoView({ block: 'start' })
++}
++
++function FullPageLink({ to, label, onClose }: { to: string; label: string; onClose: () => void }) {
++  const aria = `Open full page: ${label}`
++  const cls = 'inline-flex items-center gap-6 rounded-8 bg-adm-ink px-12 py-8 text-13 font-medium text-adm-surface hover:opacity-90'
++  const text = (
++    <>
++      Open full page <ArrowRight size={14} aria-hidden="true" />
++    </>
++  )
++  if (to.startsWith('#'))
++    return (
++      <a
++        href={to}
++        data-open-full
++        aria-label={aria}
++        className={cls}
++        onClick={(e) => {
++          e.preventDefault()
++          onClose()
++          window.setTimeout(() => goToSection(to), 0)
++        }}
++      >
++        {text}
++      </a>
++    )
++  return (
++    <Link to={to} data-open-full aria-label={aria} className={cls}>
++      {text}
++    </Link>
++  )
++}
++
++export function DetailDrawerProvider({ children }: { children: ReactNode }) {
++  const [item, setItem] = useState<DetailItem | null>(null)
++  const close = useCallback(() => setItem(null), [])
++  return (
++    <Ctx.Provider value={setItem}>
++      {children}
++      <Drawer
++        open={!!item}
++        title={item?.title ?? ''}
++        kicker={item?.kicker}
++        onClose={close}
++        footer={
++          item?.to ? (
++            <>
++              <FullPageLink to={item.to} label={item.toLabel ?? 'Open full page'} onClose={close} />
++              {item.toLabel && <span className="text-12 text-adm-muted">{item.toLabel}</span>}
++            </>
++          ) : undefined
++        }
++      >
++        {item && (
++          <>
++            {item.labels && item.labels.length > 0 && (
++              <div className="flex flex-wrap gap-6">
++                {item.labels.map((l) => (
++                  <span key={l} title={LABEL_MEANING[l]}>
++                    <LabelBadge label={l} />
++                  </span>
++                ))}
++              </div>
++            )}
++            {item.summary && (
++              <p className="text-13 leading-relaxed text-adm-ink-2">
++                <RichText text={item.summary} />
++              </p>
++            )}
++            {item.numbers && item.numbers.length > 0 && (
++              <dl className="grid grid-cols-2 gap-8">
++                {item.numbers.map((n) => (
++                  <div key={n.label} className="flex min-w-0 flex-col gap-2 rounded-8 border border-adm-line bg-adm-bg p-10">
++                    <dt className="text-11 text-adm-muted">
++                      <RichText text={n.label} />
++                    </dt>
++                    <dd className="text-14 font-semibold break-words text-adm-ink">
++                      <RichText text={n.value} />
++                    </dd>
++                  </div>
++                ))}
++              </dl>
++            )}
++            {item.extra}
++            {item.labels && item.labels.length > 0 && (
++              <ul className="flex flex-col gap-4 border-t border-adm-line pt-10 text-11 text-adm-muted">
++                {item.labels.map((l) => (
++                  <li key={l}>
++                    <span className="font-semibold text-adm-ink-2">{LABEL_TEXT[l]}:</span> {LABEL_MEANING[l]}
++                  </li>
++                ))}
++              </ul>
++            )}
++          </>
++        )}
++      </Drawer>
++    </Ctx.Provider>
++  )
++}
+diff --git a/src/admin/pages/reports/IterationMapView.tsx b/src/admin/pages/reports/IterationMapView.tsx
+new file mode 100644
+index 0000000..a8048d3
+--- /dev/null
++++ b/src/admin/pages/reports/IterationMapView.tsx
+@@ -0,0 +1,199 @@
++import { useMemo, useState, type KeyboardEvent } from 'react'
++import { COLUMN_TITLE, type IterationMap, type MapColumn, type MapNode } from '../../data/iterationMap'
++import { useDetail } from './DetailDrawer'
++import { nodeItem } from './detailItems'
++
++/*
++ * The iteration map (U129, J182): sources → reports and tests → decisions
++ * and versions. Hover or focus a box to light its whole path; click it (or
++ * Enter) to open its summary in the drawer. Under the picture the same map
++ * is written out as a list, which is also how it reads on a phone.
++ */
++
++const W = 1040
++const NW = 250
++const NH = 38
++const ROW = 46
++const PAD = 10
++const COLS: MapColumn[] = ['source', 'report', 'outcome']
++const ARC = 40
++/** Room on the right for the arcs from a decision down to the version it shipped in. */
++const GAP = (W - 8 - ARC - 3 * NW) / 2
++const colX = (c: MapColumn) => 8 + COLS.indexOf(c) * (NW + GAP)
++
++const FILL: Record<MapColumn, string> = { source: 'fill-adm-s1', report: 'fill-adm-s2', outcome: 'fill-adm-good' }
++
++function clip(s: string, n = 34) {
++  return s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s
++}
++
++function closure(start: string, next: (id: string) => string[]) {
++  const seen = new Set<string>()
++  const stack = [start]
++  while (stack.length) {
++    const id = stack.pop()!
++    for (const n of next(id))
++      if (!seen.has(n)) {
++        seen.add(n)
++        stack.push(n)
++      }
++  }
++  return seen
++}
++
++export function IterationMapView({ map, label }: { map: IterationMap; label: string }) {
++  const open = useDetail()
++  const [active, setActive] = useState<string | null>(null)
++  const { nodes, edges } = map
++
++  const rows = Math.max(1, ...COLS.map((c) => nodes.filter((n) => n.column === c).length))
++  const H = rows * ROW + PAD * 2
++  const pos = useMemo(() => {
++    const m = new Map<string, number>()
++    for (const c of COLS) {
++      const ns = nodes.filter((n) => n.column === c)
++      const step = Math.min((H - 2 * PAD) / Math.max(ns.length, 1), ROW * 1.6)
++      const top = (H - step * ns.length) / 2
++      ns.forEach((n, i) => m.set(n.id, top + i * step + (step - NH) / 2))
++    }
++    return m
++  }, [nodes, H])
++
++  const path = useMemo(() => {
++    if (!active) return null
++    const up = closure(active, (id) => edges.filter((e) => e.to === id).map((e) => e.from))
++    const down = closure(active, (id) => edges.filter((e) => e.from === id).map((e) => e.to))
++    return new Set([active, ...up, ...down])
++  }, [active, edges])
++  const lit = (id: string) => !path || path.has(id)
++  const byId = new Map(nodes.map((n) => [n.id, n]))
++
++  const onKey = (e: KeyboardEvent, n: MapNode) => {
++    if (e.key === 'Enter' || e.key === ' ') {
++      e.preventDefault()
++      open(nodeItem(n))
++    }
++  }
++
++  return (
++    <div className="flex min-w-0 flex-col gap-12">
++      <div className="min-w-0 overflow-x-auto rounded-8 border border-adm-line bg-adm-bg" data-iteration-map>
++        <div style={{ width: W }} className="flex flex-col">
++          <div className="grid border-b border-adm-line py-10" style={{ gridTemplateColumns: `${NW}px 1fr ${NW}px 1fr ${NW}px`, paddingLeft: 8, paddingRight: ARC }}>
++            {COLS.map((c, i) => [
++              <div key={c} className="flex flex-col gap-2">
++                <span className="text-12 font-semibold text-adm-ink">{COLUMN_TITLE[c]}</span>
++                <span className="text-11 text-adm-muted">
++                  {nodes.filter((n) => n.column === c).length || 'Nothing yet'}
++                  {nodes.some((n) => n.column === c) ? (c === 'source' ? ' kinds of source' : c === 'report' ? ' reports and tests' : ' decisions and versions') : ''}
++                </span>
++              </div>,
++              i < 2 ? <span key={`${c}-gap`} aria-hidden="true" className="self-center text-center text-14 text-adm-muted">→</span> : null,
++            ])}
++          </div>
++          <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="group" aria-label={label} className="block max-w-none" onMouseLeave={() => setActive(null)}>
++            {edges.map((e) => {
++              const a = byId.get(e.from)
++              const b = byId.get(e.to)
++              if (!a || !b) return null
++              const x1 = colX(a.column) + NW
++              const y1 = (pos.get(a.id) ?? 0) + NH / 2
++              const y2 = (pos.get(b.id) ?? 0) + NH / 2
++              // Same column (decision → version): an arc out to the right and back.
++              const same = a.column === b.column
++              const x2 = same ? x1 : colX(b.column)
++              const mid = same ? x1 + ARC - 4 : (x1 + x2) / 2
++              const on = !!path && path.has(e.from) && path.has(e.to)
++              return (
++                <path
++                  key={`${e.from}>${e.to}`}
++                  d={`M ${x1} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${x2} ${y2}`}
++                  fill="none"
++                  strokeWidth={on ? 2 : 1.25}
++                  className="stroke-adm-ink-2 transition-opacity"
++                  opacity={path ? (on ? 0.85 : 0.05) : 0.3}
++                >
++                  <title>{e.why}</title>
++                </path>
++              )
++            })}
++            {nodes.map((n) => {
++              const x = colX(n.column)
++              const y = pos.get(n.id) ?? 0
++              return (
++                <g
++                  key={n.id}
++                  tabIndex={0}
++                  role="button"
++                  data-node={n.id}
++                  aria-label={`${COLUMN_TITLE[n.column]}: ${n.title}, ${n.tag}. Open details`}
++                  className="cursor-pointer outline-none [&:focus-visible>rect:first-of-type]:stroke-adm-accent"
++                  opacity={lit(n.id) ? 1 : 0.3}
++                  onMouseEnter={() => setActive(n.id)}
++                  onFocus={() => setActive(n.id)}
++                  onBlur={() => setActive(null)}
++                  onClick={() => open(nodeItem(n))}
++                  onKeyDown={(e) => onKey(e, n)}
++                >
++                  <title>{n.title}</title>
++                  <rect x={x} y={y} width={NW} height={NH} rx={8} strokeWidth={active === n.id ? 2 : 1} className={`fill-adm-surface ${n.column === 'report' ? 'stroke-adm-ink-2' : 'stroke-adm-line'}`} />
++                  <circle cx={x + 13} cy={y + NH / 2} r={4} className={FILL[n.column]} />
++                  <text x={x + 24} y={y + 16} className="fill-adm-ink text-12 font-semibold">
++                    {clip(n.title, 31)}
++                  </text>
++                  <text x={x + 24} y={y + 30} className="fill-adm-muted text-10">
++                    {clip(n.tag, 40)}
++                  </text>
++                </g>
++              )
++            })}
++          </svg>
++        </div>
++      </div>
++
++      <MapInWords map={map} />
++    </div>
++  )
++}
++
++/** The map written out: each report, what it reads and what it led to. Readable without the picture, and on a phone. */
++function MapInWords({ map }: { map: IterationMap }) {
++  const open = useDetail()
++  const byId = new Map(map.nodes.map((n) => [n.id, n]))
++  const chip = (n: MapNode) => (
++    <button
++      key={n.id}
++      type="button"
++      onClick={() => open(nodeItem(n))}
++      className="max-w-full rounded-full border border-adm-line px-8 py-2 text-left text-11 font-medium text-adm-ink-2 hover:bg-adm-hover hover:text-adm-ink"
++    >
++      {n.title}
++    </button>
++  )
++  return (
++    <details className="group rounded-8 border border-adm-line">
++      <summary className="cursor-pointer list-none p-10 text-12 font-semibold text-adm-ink hover:bg-adm-hover [&::-webkit-details-marker]:hidden">The same map, in words</summary>
++      <ul className="flex flex-col divide-y divide-adm-line border-t border-adm-line">
++        {map.nodes
++          .filter((n) => n.column === 'report')
++          .map((n) => {
++            const from = map.edges.filter((e) => e.to === n.id).map((e) => byId.get(e.from)!)
++            const to = map.edges.filter((e) => e.from === n.id).map((e) => byId.get(e.to)!)
++            return (
++              <li key={n.id} className="flex flex-col gap-6 p-10">
++                <div>{chip(n)}</div>
++                <div className="flex flex-wrap items-center gap-4 text-11 text-adm-muted">
++                  <span>Learns from:</span>
++                  {from.length ? from.map(chip) : <span>nothing recorded</span>}
++                </div>
++                <div className="flex flex-wrap items-center gap-4 text-11 text-adm-muted">
++                  <span>Led to:</span>
++                  {to.length ? to.map(chip) : <span>no decision yet</span>}
++                </div>
++              </li>
++            )
++          })}
++      </ul>
++    </details>
++  )
++}
+diff --git a/src/admin/pages/reports/ReportParts.tsx b/src/admin/pages/reports/ReportParts.tsx
+index f3e0a85..fe29fef 100644
+--- a/src/admin/pages/reports/ReportParts.tsx
++++ b/src/admin/pages/reports/ReportParts.tsx
+@@ -1,14 +1,17 @@
+ import { ExternalLink } from 'lucide-react'
+-import { useState, type ReactNode } from 'react'
++import type { ReactNode } from 'react'
+ import { Link } from 'react-router-dom'
+ import { BUILD } from '../../../lib/build'
+ import { Badge, Panel } from '../../components/ui'
+-import { LABEL_FILL, LABEL_STROKE, LABEL_TONE } from './reportColors'
++import { LABEL_FILL, LABEL_TONE } from './reportColors'
+ import { LABEL_MEANING, LABEL_TEXT, SOURCES, sourcesOf, type Finding, type SourceId, type SourceLabel } from '../../data/reportSources'
++import { useDetail } from './DetailDrawer'
++import { sourceItem } from './detailItems'
+ 
+ /*
+- * Shared parts of Admin → Reports (U116, J167): the "How this report was
+- * made" graph, the label badge and the Sources section. Everything reads
++ * Shared parts of Admin → Reports (U116, J167): the label badge, the source
++ * chip and the Sources section. The old source graph ("What this report
++ * says") gave way to the iteration map in U129. Everything reads
+  * the one registry in data/reportSources.ts.
+  */
+ 
+@@ -16,131 +19,22 @@ export function LabelBadge({ label }: { label: SourceLabel }) {
+   return <Badge tone={LABEL_TONE[label]}>{LABEL_TEXT[label]}</Badge>
+ }
+ 
+-/** A source named inline, linking to it. */
++/** A source named inline; a click shows it in the drawer (U129), with a link to open it. */
+ export function SourceChip({ id, cite }: { id: SourceId; cite?: string }) {
+   const s = SOURCES[id]
++  const open = useDetail()
+   return (
+-    <Link to={s.link} className="inline-flex items-center gap-4 whitespace-nowrap rounded-full border border-adm-line px-8 py-2 text-11 font-medium text-adm-ink-2 hover:bg-adm-hover hover:text-adm-ink">
++    <button
++      type="button"
++      onClick={() => open(sourceItem(id, cite))}
++      className="inline-flex max-w-full items-center gap-4 rounded-full border border-adm-line px-8 py-2 text-left text-11 font-medium text-adm-ink-2 hover:bg-adm-hover hover:text-adm-ink"
++    >
+       <svg width="6" height="6" aria-hidden="true">
+         <circle cx="3" cy="3" r="3" className={LABEL_FILL[s.label]} />
+       </svg>
+       {s.name}
+       {cite && <span className="font-normal text-adm-muted">· {cite}</span>}
+-    </Link>
+-  )
+-}
+-
+-const W = 880
+-const NODE_W_LEFT = 230
+-const NODE_W_RIGHT = 250
+-const NODE_H = 30
+-const ROW = 40
+-const PAD = 26
+-
+-/**
+- * Sources on the left, the report's findings on the right, an edge for every
+- * citation. Hovering or focusing a node keeps its edges and dims the rest.
+- * Source nodes open the source; finding nodes jump to that section.
+- */
+-export function SourceGraph({ findings, label }: { findings: Finding[]; label: string }) {
+-  const [active, setActive] = useState<string | null>(null)
+-  const sources = sourcesOf(findings)
+-  const rows = Math.max(sources.length, findings.length)
+-  const H = rows * ROW + PAD * 2
+-  const leftY = (i: number) => PAD + (rows - sources.length) * (ROW / 2) + i * ROW
+-  const rightStep = (rows * ROW) / findings.length
+-  const rightY = (i: number) => PAD + i * rightStep + (rightStep - ROW) / 2
+-  const x1 = 8 + NODE_W_LEFT
+-  const x2 = W - 8 - NODE_W_RIGHT
+-  const edges = findings.flatMap((f, fi) =>
+-    f.sources.map((sid) => ({ sid, fid: f.id, from: leftY(sources.findIndex((s) => s.id === sid)) + NODE_H / 2, to: rightY(fi) + NODE_H / 2 })),
+-  )
+-  const lit = (sid: string, fid: string) => !active || active === sid || active === fid
+-  const nodeLit = (id: string) => !active || active === id || edges.some((e) => (e.sid === id && e.fid === active) || (e.fid === id && e.sid === active))
+-
+-  return (
+-    <div className="flex flex-col gap-10">
+-      <div className="overflow-x-auto rounded-8 border border-adm-line bg-adm-bg">
+-        <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="img" aria-label={label} className="block min-w-[760px] max-w-none">
+-          <text x={8} y={16} className="fill-adm-muted text-11 font-semibold uppercase tracking-wider">
+-            Sources ({sources.length})
+-          </text>
+-          <text x={x2} y={16} className="fill-adm-muted text-11 font-semibold uppercase tracking-wider">
+-            What this report says ({findings.length})
+-          </text>
+-          {edges.map((e) => {
+-            const s = SOURCES[e.sid]
+-            const mid = (x1 + x2) / 2
+-            return (
+-              <path
+-                key={`${e.sid}-${e.fid}`}
+-                d={`M ${x1} ${e.from} C ${mid} ${e.from}, ${mid} ${e.to}, ${x2} ${e.to}`}
+-                fill="none"
+-                strokeWidth={lit(e.sid, e.fid) && active ? 2 : 1.25}
+-                className={`${LABEL_STROKE[s.label]} transition-opacity`}
+-                opacity={lit(e.sid, e.fid) ? (active ? 0.9 : 0.45) : 0.06}
+-              />
+-            )
+-          })}
+-          {sources.map((s, i) => (
+-            <Link
+-              key={s.id}
+-              to={s.link}
+-              aria-label={`${s.name} (${LABEL_TEXT[s.label]}): open the source`}
+-              onMouseEnter={() => setActive(s.id)}
+-              onMouseLeave={() => setActive(null)}
+-              onFocus={() => setActive(s.id)}
+-              onBlur={() => setActive(null)}
+-            >
+-              <g opacity={nodeLit(s.id) ? 1 : 0.35} className="cursor-pointer">
+-                <rect x={8} y={leftY(i)} width={NODE_W_LEFT} height={NODE_H} rx={8} className="fill-adm-surface stroke-adm-line" />
+-                <circle cx={22} cy={leftY(i) + NODE_H / 2} r={4} className={LABEL_FILL[s.label]} />
+-                <text x={34} y={leftY(i) + NODE_H / 2 + 4} className="fill-adm-ink text-12 font-medium">
+-                  {s.name}
+-                </text>
+-                <text x={8 + NODE_W_LEFT - 10} y={leftY(i) + NODE_H / 2 + 4} textAnchor="end" className="fill-adm-muted text-10">
+-                  {LABEL_TEXT[s.label].toLowerCase()}
+-                </text>
+-              </g>
+-            </Link>
+-          ))}
+-          {findings.map((f, i) => (
+-            <a
+-              key={f.id}
+-              href={`#${f.id}`}
+-              aria-label={`${f.title}: go to the section`}
+-              onMouseEnter={() => setActive(f.id)}
+-              onMouseLeave={() => setActive(null)}
+-              onFocus={() => setActive(f.id)}
+-              onBlur={() => setActive(null)}
+-            >
+-              <g opacity={nodeLit(f.id) ? 1 : 0.35} className="cursor-pointer">
+-                <rect x={x2} y={rightY(i)} width={NODE_W_RIGHT} height={NODE_H} rx={8} className="fill-adm-surface stroke-adm-ink-2" />
+-                <text x={x2 + 12} y={rightY(i) + NODE_H / 2 + 4} className="fill-adm-ink text-12 font-semibold">
+-                  {f.title}
+-                </text>
+-                <text x={x2 + NODE_W_RIGHT - 10} y={rightY(i) + NODE_H / 2 + 4} textAnchor="end" className="fill-adm-muted text-10">
+-                  {f.sources.length} sources
+-                </text>
+-              </g>
+-            </a>
+-          ))}
+-        </svg>
+-      </div>
+-      <div className="flex flex-wrap items-center gap-x-14 gap-y-6 text-11 text-adm-ink-2">
+-        {(Object.keys(LABEL_TEXT) as SourceLabel[])
+-          .filter((l) => sources.some((s) => s.label === l))
+-          .map((l) => (
+-            <span key={l} className="inline-flex items-center gap-6" title={LABEL_MEANING[l]}>
+-              <svg width="8" height="8" aria-hidden="true">
+-                <circle cx="4" cy="4" r="4" className={LABEL_FILL[l]} />
+-              </svg>
+-              {LABEL_TEXT[l]}
+-            </span>
+-          ))}
+-        <span className="text-adm-muted">Hover a box to follow its lines. A source opens it; a finding jumps to its section.</span>
+-      </div>
+-    </div>
++    </button>
+   )
+ }
+ 
+diff --git a/src/admin/pages/reports/ReportSummary.tsx b/src/admin/pages/reports/ReportSummary.tsx
+index 0b4e8dd..9bcf5de 100644
+--- a/src/admin/pages/reports/ReportSummary.tsx
++++ b/src/admin/pages/reports/ReportSummary.tsx
+@@ -1,9 +1,10 @@
+-import { ArrowRight, ChevronRight } from 'lucide-react'
++import { ArrowRight, ChevronRight, PanelRightOpen } from 'lucide-react'
+ import type { ReactNode } from 'react'
+-import { Link } from 'react-router-dom'
+ import { Badge, type Tone } from '../../components/ui'
+-import type { TermId } from '../../data/glossary'
+-import type { ReportSummary, SummaryStatus } from '../../data/reportSummaries'
++import { plainText, type TermId } from '../../data/glossary'
++import type { NextAction, ReportSummary, SummaryStatus } from '../../data/reportSummaries'
++import { useDetail } from './DetailDrawer'
++import { decisionItem, tileItem } from './detailItems'
+ import { LABEL_TEXT, type SourceLabel } from '../../data/reportSources'
+ import { LABEL_TONE } from './reportColors'
+ import { RichText, Term } from './Term'
+@@ -26,6 +27,7 @@ const TILE_LABEL: Partial<Record<SourceLabel, { text: string; term: TermId }>> =
+   estimate: { text: 'Estimate', term: 'estimate' },
+   scenario: { text: 'Assumption', term: 'assumption' },
+   measured: { text: 'Measured', term: 'measured' },
++  sample: { text: 'Sample', term: 'sample' },
+ }
+ 
+ function TileLabel({ label }: { label: SourceLabel }) {
+@@ -34,31 +36,51 @@ function TileLabel({ label }: { label: SourceLabel }) {
+   return t ? <Term id={t.term}>{badge}</Term> : badge
+ }
+ 
+-function ActionLink({ to, children }: { to: string; children: ReactNode }) {
++/** A next move's link: a section on this page scrolls; anything else opens the drawer (U129), never a new page. */
++function ActionLink({ a }: { a: NextAction }) {
++  const open = useDetail()
+   const cls = 'inline-flex shrink-0 items-center gap-4 text-12 font-medium text-adm-ink underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink'
+-  if (to.startsWith('#')) {
+-    const open = () => {
+-      const el = document.getElementById(to.slice(1))
++  if (a.to.startsWith('#')) {
++    const go = () => {
++      const el = document.getElementById(a.to.slice(1))
+       const det = el?.closest('details') ?? (el instanceof HTMLDetailsElement ? el : null)
+       if (det) det.open = true
+     }
+     return (
+-      <a href={to} onClick={open} className={cls}>
+-        {children} <ArrowRight size={12} aria-hidden="true" />
++      <a href={a.to} onClick={go} className={cls}>
++        {a.linkLabel} <ArrowRight size={12} aria-hidden="true" />
+       </a>
+     )
+   }
+   return (
+-    <Link to={to} className={cls}>
+-      {children} <ArrowRight size={12} aria-hidden="true" />
+-    </Link>
++    <button
++      type="button"
++      onClick={() => open(a.decision ? decisionItem(a.decision) : { kicker: 'Next move', title: a.linkLabel, summary: a.text, to: a.to, toLabel: 'Open full page' })}
++      className={cls}
++    >
++      {a.linkLabel} <PanelRightOpen size={12} aria-hidden="true" />
++    </button>
++  )
++}
++
++/** "Goal": what decision a report helps make, and for whom (U129). */
++export function GoalLine({ goal }: { goal: string }) {
++  return (
++    <p className="flex flex-col gap-2 rounded-8 border-l-4 border-adm-ink bg-adm-bg px-12 py-8 lg:flex-row lg:items-baseline lg:gap-10" data-goal>
++      <span className="shrink-0 text-11 font-semibold uppercase tracking-wider text-adm-ink">Goal</span>
++      <span className="text-14 font-medium text-adm-ink">
++        <RichText text={goal} />
++      </span>
++    </p>
+   )
+ }
+ 
+ export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode }) {
+   const st = STATUS[s.status]
++  const open = useDetail()
+   return (
+     <section aria-label="Summary" className="flex min-w-0 flex-col gap-14 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20">
++      <GoalLine goal={s.goal} />
+       <div className="flex flex-col gap-6">
+         <div className="flex flex-wrap items-center gap-8">
+           <span className="text-11 font-semibold uppercase tracking-wider text-adm-muted">The question</span>
+@@ -77,6 +99,31 @@ export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode
+         </div>
+       </div>
+ 
++      {s.rows && (
++        <div className="flex flex-col gap-8" aria-label="By test">
++          {s.rows.map((r) => (
++            <div key={r.label} data-summary-row className="flex min-w-0 flex-col gap-8 rounded-8 border border-adm-line p-10 lg:flex-row lg:items-center lg:gap-16">
++              <div className="flex min-w-0 flex-col gap-2 lg:w-[260px] lg:shrink-0">
++                <span className="text-13 font-semibold text-adm-ink">
++                  <RichText text={r.label} />
++                </span>
++                <span className="text-11 text-adm-muted">
++                  Base: <RichText text={r.base} />
++                </span>
++              </div>
++              <dl className="grid min-w-0 flex-1 grid-cols-3 gap-8">
++                {r.figures.map((f) => (
++                  <div key={f.label} className="flex min-w-0 flex-col gap-2">
++                    <dt className="text-11 text-adm-muted">{f.label}</dt>
++                    <dd className="text-15 font-semibold tabular-nums text-adm-ink">{f.value}</dd>
++                  </div>
++                ))}
++              </dl>
++            </div>
++          ))}
++        </div>
++      )}
++
+       <dl className="grid grid-cols-2 gap-8 lg:grid-cols-4">
+         {s.tiles.map((t) => (
+           <div key={t.label} className="flex min-w-0 flex-col gap-4 rounded-8 border border-adm-line bg-adm-bg p-12">
+@@ -86,8 +133,16 @@ export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode
+               </span>
+               <TileLabel label={t.badge} />
+             </dt>
+-            <dd className="text-24 font-semibold leading-tight tabular-nums text-adm-ink">
+-              <RichText text={t.value} />
++            <dd>
++              <button
++                type="button"
++                onClick={() => open(tileItem(t, s))}
++                aria-label={`${plainText(t.label)}: ${plainText(t.value)}. Show details`}
++                className="group inline-flex items-center gap-6 rounded-4 text-left text-24 font-semibold leading-tight tabular-nums text-adm-ink hover:underline hover:decoration-adm-axis focus-visible:outline-2 focus-visible:outline-adm-accent"
++              >
++                {plainText(t.value)}
++                <PanelRightOpen size={14} aria-hidden="true" className="shrink-0 text-adm-muted group-hover:text-adm-ink" />
++              </button>
+             </dd>
+             {t.delta && (
+               <dd className={`text-12 font-medium tabular-nums ${t.deltaGood ? 'text-adm-good' : 'text-adm-critical'}`}>
+@@ -115,7 +170,7 @@ export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode
+                   <span className="mr-6 font-semibold tabular-nums">{i + 1}.</span>
+                   <RichText text={a.text} />
+                 </span>
+-                <ActionLink to={a.to}>{a.linkLabel}</ActionLink>
++                <ActionLink a={a} />
+               </li>
+             ))}
+           </ol>
+diff --git a/src/admin/pages/reports/ReportsOverviewPage.tsx b/src/admin/pages/reports/ReportsOverviewPage.tsx
+new file mode 100644
+index 0000000..58b89a3
+--- /dev/null
++++ b/src/admin/pages/reports/ReportsOverviewPage.tsx
+@@ -0,0 +1,86 @@
++import { PanelRightOpen } from 'lucide-react'
++import { useMemo, useState } from 'react'
++import { PageHeader, Panel } from '../../components/ui'
++import { buildIterationMap } from '../../data/iterationMap'
++import { buyerSummary, combinationSummary, costSummary, uxFeedbackSummary } from '../../data/reportSummaries'
++import { buildParticipants, studyWeek } from '../../data/study'
++import { DetailDrawerProvider, useDetail } from './DetailDrawer'
++import { reportItem } from './detailItems'
++import { IterationMapView } from './IterationMapView'
++import { plainText } from '../../data/glossary'
++
++/**
++ * Admin → Reports → Overview (U129, J182). How Aurelia improves, in one
++ * paragraph and one map: the sources we learn from, the reports and tests
++ * that read them, and the decisions and versions that came out. A click on
++ * a report card or a box opens the drawer; the page does not change.
++ */
++export function ReportsOverviewPage() {
++  return (
++    <DetailDrawerProvider>
++      <Overview />
++    </DetailDrawerProvider>
++  )
++}
++
++function Overview() {
++  const open = useDetail()
++  const [week] = useState(() => Math.max(1, Math.min(8, studyWeek(Date.now()))))
++  const map = useMemo(() => buildIterationMap(week), [week])
++  const reports = useMemo(() => {
++    const participants = buildParticipants(week)
++    return [
++      { title: 'Buyer agent report', to: '/admin/reports/buyer-agent', s: buyerSummary() },
++      { title: 'UX feedback report', to: '/admin/reports/ux-feedback', s: uxFeedbackSummary(participants, week) },
++      { title: 'Cost report', to: '/admin/reports/cost', s: costSummary() },
++      { title: 'Combination report', to: '/admin/reports/combination', s: combinationSummary(week) },
++    ]
++  }, [week])
++  const count = (c: string) => map.nodes.filter((n) => n.column === c).length
++
++  return (
++    <div className="flex flex-col gap-16">
++      <PageHeader title="Reports" description="Every report in one place, and how they connect. Click anything to see it in a side panel." />
++
++      <section aria-labelledby="how-title" className="flex flex-col gap-8 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20">
++        <h2 id="how-title" className="text-15 font-semibold text-adm-ink">
++          How Aurelia improves: sources → tests → decisions → a new version
++        </h2>
++        <p className="max-w-[860px] text-14 leading-relaxed text-adm-ink-2">
++          We learn from many sources: made-up people played by AI, the business owner’s documents, what the team has written in the wiki, what users tell us, and what things cost. Each report or test reads some of them and finds something. A finding becomes a decision in the decision log. Decisions that are built go into a new version of the app, and the next test starts from that version.
++        </p>
++      </section>
++
++      <section aria-label="The reports" className="grid gap-12 lg:grid-cols-2 2xl:grid-cols-4">
++        {reports.map((r) => (
++          <button
++            key={r.to}
++            type="button"
++            data-report-card={r.to}
++            onClick={() => open(reportItem(r.title, r.to, r.s))}
++            className="group flex min-w-0 flex-col gap-8 rounded-12 border border-adm-line bg-adm-surface p-16 text-left hover:border-adm-ink-2 hover:bg-adm-hover focus-visible:outline-2 focus-visible:outline-adm-accent"
++          >
++            <span className="flex items-center justify-between gap-8">
++              <span className="text-15 font-semibold text-adm-ink">{r.title}</span>
++              <PanelRightOpen size={14} aria-hidden="true" className="shrink-0 text-adm-muted group-hover:text-adm-ink" />
++            </span>
++            <span className="text-12 text-adm-ink">
++              <span className="font-semibold uppercase tracking-wider text-adm-muted">Goal </span>
++              {r.s.goal}
++            </span>
++            <span className="text-12 text-adm-ink-2">
++              {plainText(r.s.question)}
++            </span>
++          </button>
++        ))}
++      </section>
++
++      <Panel
++        title="The iteration map"
++        description={`${count('source')} kinds of source → ${count('report')} reports and tests → ${count('outcome')} decisions and versions. Hover a box to follow its lines; click it for details.`}
++      >
++        <IterationMapView map={map} label="Iteration map: the sources on the left feed the reports and tests in the middle, which led to the decisions and product versions on the right." />
++      </Panel>
++    </div>
++  )
++}
+diff --git a/src/admin/pages/reports/UxFeedbackReportPage.tsx b/src/admin/pages/reports/UxFeedbackReportPage.tsx
+new file mode 100644
+index 0000000..4f26933
+--- /dev/null
++++ b/src/admin/pages/reports/UxFeedbackReportPage.tsx
+@@ -0,0 +1,54 @@
++import { useMemo, useState } from 'react'
++import { PageHeader, Panel } from '../../components/ui'
++import { plainText } from '../../data/glossary'
++import { buildIterationMap, mapFor } from '../../data/iterationMap'
++import { UX_FEEDBACK_FINDINGS } from '../../data/reportSources'
++import { uxFeedbackSummary } from '../../data/reportSummaries'
++import { buildParticipants, studyWeek } from '../../data/study'
++import { FeedbackGroupViews } from '../ExperimentationV2Page'
++import { DetailDrawerProvider } from './DetailDrawer'
++import { IterationMapView } from './IterationMapView'
++import { SourcesSection } from './ReportParts'
++import { Details, SummaryBlock } from './ReportSummary'
++
++/**
++ * Admin → Reports → UX feedback report (U129, J182): the latest feedback
++ * group view (it was Product lab → Feedback group · v2) under the same
++ * summary-first top as the other reports. Every figure is sample data until
++ * the study runs on real accounts.
++ */
++export function UxFeedbackReportPage() {
++  const [week] = useState(() => Math.max(0, Math.min(8, studyWeek(Date.now()))))
++  const participants = useMemo(() => buildParticipants(week), [week])
++  const summary = useMemo(() => uxFeedbackSummary(participants, week), [participants, week])
++  const map = useMemo(() => mapFor(buildIterationMap(Math.max(1, week)), 'ux'), [week])
++
++  return (
++    <DetailDrawerProvider>
++      <div className="flex flex-col gap-16">
++        <PageHeader title="UX feedback report" description={plainText(summary.intro ?? '')} />
++
++        <SummaryBlock s={summary} />
++
++        <section id="ux-views" className="flex min-w-0 scroll-mt-16 flex-col gap-16">
++          <FeedbackGroupViews participants={participants} week={week} />
++        </section>
++
++        <Details title="Sources used" hint="what this report learns from, and what came out of it">
++          <Panel title="Sources used" description="Left: the kinds of source this report reads. Right: what it has led to so far. Click a box for details.">
++            <IterationMapView map={map} label="Sources used by the UX feedback report, and what it led to." />
++          </Panel>
++          <SourcesSection
++            findings={UX_FEEDBACK_FINDINGS}
++            labels={['sample']}
++            limits={[
++              'Every person, score and session here is sample data, made up to look real. The study has not started.',
++              'Wins can only show at week 8: the questionnaires are asked at weeks 0, 4 and 8.',
++              'More use going with more change is a hint, not proof.',
++            ]}
++          />
++        </Details>
++      </div>
++    </DetailDrawerProvider>
++  )
++}
+diff --git a/src/admin/pages/reports/detailItems.ts b/src/admin/pages/reports/detailItems.ts
+new file mode 100644
+index 0000000..7d50909
+--- /dev/null
++++ b/src/admin/pages/reports/detailItems.ts
+@@ -0,0 +1,63 @@
++import { DEFAULT_DECISIONS, STATUS_LABEL } from '../../data/businessFunnel'
++import type { MapNode } from '../../data/iterationMap'
++import { COLUMN_TITLE } from '../../data/iterationMap'
++import { SOURCES, type SourceId } from '../../data/reportSources'
++import type { ReportSummary, Tile } from '../../data/reportSummaries'
++import type { DetailItem } from './DetailDrawer'
++
++/* What the reports drawer shows for each kind of thing (U129, J182). Pure, so it stays out of the component files. */
++
++export function decisionItem(id: string): DetailItem {
++  const d = DEFAULT_DECISIONS.find((x) => x.id === id)
++  if (!d) return { title: 'Decision not found', to: '/admin/business-funnel', toLabel: 'Open the decision log' }
++  return {
++    kicker: 'Decision',
++    title: d.change,
++    summary: `Why: ${d.finding}`,
++    numbers: [{ label: 'Status', value: STATUS_LABEL[d.status] }, { label: 'Logged', value: d.date }, { label: 'Where it came from', value: d.source }, ...(d.version ? [{ label: 'Shipped in', value: d.version }] : [])],
++    labels: ['document'],
++    to: '/admin/business-funnel',
++    toLabel: 'Open the decision log',
++  }
++}
++
++export function sourceItem(id: SourceId, cite?: string): DetailItem {
++  const s = SOURCES[id]
++  return {
++    kicker: 'Source',
++    title: s.name,
++    summary: s.what,
++    numbers: [{ label: 'Version', value: s.version }, { label: 'Taken from it', value: s.taken }, ...(cite ? [{ label: 'Cited here', value: cite }] : [])],
++    labels: [s.label],
++    to: s.link,
++    toLabel: 'Open the source',
++  }
++}
++
++export function nodeItem(n: MapNode): DetailItem {
++  return { kicker: COLUMN_TITLE[n.column], title: n.title, summary: n.summary, numbers: n.numbers, labels: n.labels, to: n.to, toLabel: n.toLabel }
++}
++
++export function tileItem(t: Tile, s: ReportSummary): DetailItem {
++  return {
++    kicker: 'Key number',
++    title: t.label,
++    summary: t.note,
++    numbers: [{ label: 'Value', value: t.value }, ...(t.delta ? [{ label: 'Change', value: t.delta }] : [])],
++    labels: [t.badge],
++    to: s.detail.to,
++    toLabel: s.detail.label,
++  }
++}
++
++export function reportItem(title: string, to: string, s: ReportSummary): DetailItem {
++  return {
++    kicker: 'Report',
++    title,
++    summary: `Goal: ${s.goal} ${s.headline}`,
++    numbers: s.tiles.map((t) => ({ label: t.label, value: t.value })),
++    labels: [...new Set(s.tiles.map((t) => t.badge))],
++    to,
++    toLabel: 'Open full page',
++  }
++}
+diff --git a/src/demo/modules.ts b/src/demo/modules.ts
+index 5bc7b43..58211bc 100644
+--- a/src/demo/modules.ts
++++ b/src/demo/modules.ts
+@@ -245,6 +245,8 @@ export const DEMO_MODULES: DemoModule[] = [
+   { id: 'adminPersonas', kind: 'admin', label: 'Personas', description: '300 synthetic personas as candidates for AI-run research, with role-play prompts and balanced panels.', route: '/admin/personas', built: true },
+   { id: 'adminBusinessFunnel', kind: 'admin', label: 'Business funnel', description: 'The brief’s stages from a free start to Aurelia Plus, with targets, the buyer agents’ prediction, the feedback group and a decision log.', route: '/admin/business-funnel', built: true },
+   { id: 'adminBuyerAgent', kind: 'admin', label: 'Buyer agent results', description: 'What a buyer agent answered as each persona in a panel: try, pay, price, objections, test cases. Runs v1–v3 and the re-run by production version.', route: '/admin/buyer-agent', built: true },
++  { id: 'adminReportsOverview', kind: 'admin', label: 'Reports overview', description: 'How Aurelia improves, as one map: the sources we learn from, the reports and tests that read them, and the decisions and versions that came out. Details open in a drawer.', route: '/admin/reports', built: true },
++  { id: 'adminReportUxFeedback', kind: 'admin', label: 'UX feedback report', description: 'The latest feedback group view (was Feedback group · v2) with a summary-first top: goal, headline, key numbers, next steps. Sample data until the study runs.', route: '/admin/reports/ux-feedback', built: true },
+   { id: 'adminReportBuyerAgent', kind: 'admin', label: 'Buyer agent report', description: 'Every buyer agent iteration as a timeline: question, what changed, results, the change from the one before, and the decision it fed. With a source graph.', route: '/admin/reports/buyer-agent', built: true },
+   { id: 'adminReportCombination', kind: 'admin', label: 'Combination report', description: 'One reading of Aurelia stage by stage of the business funnel, joining the old backend, the product versions, user feedback, personas, the funnels and the PRD.', route: '/admin/reports/combination', built: true },
+   { id: 'adminReportCost', kind: 'admin', label: 'Cost report', description: 'What a chapter costs by media and supplier (with pros and cons), in several variations and against the 2025 measured costs; then the bad-to-good sleep journey as a connected graph: uplift, chapters and cost per flip across the Causal AI stages (scenario).', route: '/admin/reports/cost', built: true },
+-- 
+2.43.0
+

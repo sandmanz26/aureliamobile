@@ -165,9 +165,16 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U126 | `fedab33` | 2026-11-25 | The three reports lead with a summary: the question, a one-sentence answer, four labelled KPI tiles, status, next steps and confidence, with details folded. Buyer agent: a success trend from v1 to v7 and "what moves success". Combination: a five-stage strip. Cost: a cost-function panel (sources → formula → result). | [patch](patches/U126-fedab33.patch) |
 | U127 | `68ac248` | 2026-11-25 | Business funnel lighter to read. The summary card has a five-stage strip and "Fix next"; rows are compact; explanations sit in ⓘ tooltips and folded Details. Words in the first screen at 1440px: 366 → 210 (app) and 365 → 147 (retreat). | [patch](patches/U127-68ac248.patch) |
 | U128 | `02af7e6` | 2026-11-25 | Reports in plain language. Each report says what it is; headlines give bases and units ("16 of 36 simulated people…"); a 15-term glossary appears as tooltips; ids are removed from the summaries; charts carry takeaway titles; badges read Simulated, Estimate, Assumption or Measured. Tests keep jargon out of the summaries. | [patch](patches/U128-02af7e6.patch) |
+| U129 | `fc167de` | 2026-11-25 | Reports overview (`/admin/reports`) with an iteration map: sources (6) → reports and tests (10) → decisions and versions (11). Every report opens with a Goal line. Details open in a shared drawer instead of a new page. The latest feedback group becomes Reports → UX feedback report (the old URL redirects). "What this report says" is removed. The buyer summary is split by test (5, 6, 7) with bases. | [patch](patches/U129-fc167de.patch) |
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U129 — Reports overview, goals, drawer
+
+- **Commit:** `fc167de` · 2026-11-25.
+- **Also:** `useDetail` is allowed in `.oxlintrc.json`, the same way `useAuth` is.
+- **Revert:** `git revert --no-commit fc167de`.
 
 ### U128 — Reports in plain language
 
