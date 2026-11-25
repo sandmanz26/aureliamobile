@@ -6,6 +6,7 @@ import { v5Tallies } from './buyerRunV5'
 import { V6_CHANGES, v6Tallies } from './buyerRunV6'
 import { v7Tallies } from './buyerRunV7'
 import { report } from './buyerSim'
+import { evaluateCriteria, weekTasks, winStatus, type Participant } from './study'
 import { ANCHORS, ASSUME, DEFAULT_GOAL, MEASURED_2025, MEDIA, PRESETS, STAGES as COST_STAGES, chapterCost, goal, measuredAverage, presetInputs, supplier, total, type Media, type Stage } from './costModel'
 import type { SourceLabel } from './reportSources'
 
@@ -34,6 +35,8 @@ export interface NextAction {
   text: string
   to: string
   linkLabel: string
+  /** A decision-log id: the drawer shows that decision (U129). */
+  decision?: string
 }
 
 export interface Confidence {
@@ -42,7 +45,20 @@ export interface Confidence {
   assumed: string
 }
 
+/** One clearly based row of figures: which test, how many people (U129). */
+export interface SummaryRow {
+  label: string
+  base: string
+  figures: { label: string; value: string }[]
+}
+
 export interface ReportSummary {
+  /** The decision this report helps make, and for whom, in one sentence (U129). Shown above the answer as "Goal". */
+  goal: string
+  /** Where the full detail lives, for the drawer's "Open full page" (U129). */
+  detail: { to: string; label: string }
+  /** Separate rows when the figures come from different tests (U129). */
+  rows?: SummaryRow[]
   /**
    * "What is this report?" in one everyday line (U128). Text fields of a
    * summary may carry `{{termId|shown}}` glossary marks; see data/glossary.ts.
@@ -155,6 +171,7 @@ const PLAIN_MOVE: Record<string, string> = {
 
 export function buyerSummary(): ReportSummary {
   const x5 = v5Tallies()
+  const x6 = v6Tallies()
   const x7 = v7Tallies()
   const n = x5.t.n
   const tryShare = share(x5.t.tries.yes, n)
@@ -170,22 +187,54 @@ export function buyerSummary(): ReportSummary {
   const fair = `${money(x5.band.low)}–${money(x5.band.high)}`
   const status: SummaryStatus = payShare >= 0.15 && x5.band.high >= 10 ? 'on-track' : 'at-risk'
   const points = (a: number, b: number) => `${pts(a, b).replace(' pts', '')} {{points}}`
+  const people = (k: number) => `${k} {{simulated|simulated people}}`
   return {
     intro: 'We asked made-up people, played by AI, whether they would use and pay for Aurelia. They are not real users.',
+    goal: 'Helps the business owner decide whether people would pay for Aurelia, and at what price, before real users arrive.',
+    detail: { to: '/admin/buyer-agent', label: 'Every answer, in detail' },
     question: 'Would people try Aurelia, and would they pay for it?',
-    headline: `${x5.t.tries.yes} of ${n} {{simulated|simulated people}} would try Aurelia today. Only ${x5.t.pays.yes} of ${n} would pay $10 a month. Most called ${fair} a month {{fair-price|a fair price}}. A ${liftLabel} raised trying from ${pct(tryA7)} to ${pct(tryB7)} in a later {{test}}.`,
+    headline: `In today’s app ({{test}} 5), ${x5.t.tries.yes} of ${n} {{simulated|simulated people}} would try Aurelia. Only ${x5.t.pays.yes} would pay $10 a month. Most called ${fair} a month {{fair-price|a fair price}}. In the latest {{test}} (7, ${x7.B.n} people), a ${liftLabel} raised trying from ${pct(tryA7)} to ${pct(tryB7)}.`,
     status,
     statusNote: status === 'at-risk' ? 'Too few would pay, and $10 is above the fair price.' : 'Enough would pay, at a price they call fair.',
     sure: 'Nothing here is measured on real users yet. Every figure is an AI simulation.',
+    rows: [
+      {
+        label: `Today’s app ({{test}} 5, ${n} people)`,
+        base: people(n),
+        figures: [
+          { label: 'Would try', value: pct(tryShare) },
+          { label: 'Would pay $10 a month', value: pct(payShare) },
+          { label: 'Fair price, per month', value: fair },
+        ],
+      },
+      {
+        label: `Retreat vs free plan ({{test}} 6, ${x6.A.n} people)`,
+        base: people(x6.A.n),
+        figures: [
+          { label: 'Would try the free plan', value: pct(share(x6.A.tries.yes, x6.A.n)) },
+          { label: 'Would try the €19.99 retreat', value: pct(share(x6.B.tries.yes, x6.B.n)) },
+          { label: 'Would buy the retreat', value: pct(share(x6.B.pays.yes, x6.B.n)) },
+        ],
+      },
+      {
+        label: `Latest {{test}} ({{test}} 7, ${x7.B.n} people)`,
+        base: people(x7.B.n),
+        figures: [
+          { label: 'Would try, without → with a free library', value: `${pct(tryA7)} → ${pct(tryB7)}` },
+          { label: 'Would pay, with the free library', value: pct(share(x7.B.pays.yes, x7.B.n)) },
+          { label: 'Back after a month', value: pct(share(x7.day30B, x7.B.n)) },
+        ],
+      },
+    ],
     tiles: [
-      { label: 'Would try Aurelia today', value: pct(tryShare), badge: 'prediction', delta: `${points(v3ATry, tryShare)} vs. the offer in {{test}} 3`, deltaGood: tryShare >= v3ATry, note: `${x5.t.tries.yes} of ${n} {{simulated|simulated people}}` },
-      { label: 'Would pay $10 a month', value: pct(payShare), badge: 'prediction', delta: `${points(v3APay, payShare)} vs. the offer in {{test}} 3`, deltaGood: payShare >= v3APay, note: `${x5.t.pays.yes} of ${n} {{simulated|simulated people}}. Main worry: ${objection}.` },
-      { label: 'Price they call fair, per month', value: fair, badge: 'prediction', note: 'Our planned $10 a month is above this range.' },
-      { label: 'Would try, if we add a free library', value: `${pct(tryA7)} → ${pct(tryB7)}`, badge: 'prediction', delta: `${points(tryA7, tryB7)}`, deltaGood: tryB7 >= tryA7, note: `${x7.B.n} {{simulated|simulated people}}, without → with the ${liftLabel}.` },
+      { label: 'Would try Aurelia today', value: pct(tryShare), badge: 'prediction', delta: `${points(v3ATry, tryShare)} vs. the offer in {{test}} 3`, deltaGood: tryShare >= v3ATry, note: `{{test|Test}} 5: ${x5.t.tries.yes} of ${n} {{simulated|simulated people}}` },
+      { label: 'Would pay $10 a month', value: pct(payShare), badge: 'prediction', delta: `${points(v3APay, payShare)} vs. the offer in {{test}} 3`, deltaGood: payShare >= v3APay, note: `{{test|Test}} 5: ${x5.t.pays.yes} of ${n} {{simulated|simulated people}}. Main worry: ${objection}.` },
+      { label: 'Price they call fair, per month', value: fair, badge: 'prediction', note: '{{test|Test}} 5. Our planned $10 a month is above this range.' },
+      { label: 'Would try, if we add a free library', value: `${pct(tryA7)} → ${pct(tryB7)}`, badge: 'prediction', delta: `${points(tryA7, tryB7)}`, deltaGood: tryB7 >= tryA7, note: `{{test|Test}} 7: ${x7.B.n} {{simulated|simulated people}}, without → with the ${liftLabel}.` },
     ],
     actions: [
-      { text: `${PLAIN_MOVE.d1} It changed ${lever.moved} of ${lever.n} answers.`, to: '/admin/business-funnel', linkLabel: 'See the decision' },
-      { text: PLAIN_MOVE.d3, to: '/admin/business-funnel', linkLabel: 'See the decision' },
+      { text: `${PLAIN_MOVE.d1} It changed ${lever.moved} of ${lever.n} answers.`, to: '/admin/business-funnel', linkLabel: 'See the decision', decision: 'd1' },
+      { text: PLAIN_MOVE.d3, to: '/admin/business-funnel', linkLabel: 'See the decision', decision: 'd3' },
       { text: `Try a price between ${fair} a month, or prices per country, before charging $10.`, to: '#what-moves', linkLabel: 'What changes answers' },
     ],
     confidence: {
@@ -252,6 +301,8 @@ export function combinationSummary(week: number): ReportSummary {
   }
   return {
     intro: 'We follow made-up people, played by AI, through five steps of using Aurelia. We compare each step with our goal.',
+    goal: 'Helps the team decide which step of the customer journey to fix first, by joining every source we have.',
+    detail: { to: '/admin/business-funnel', label: 'The business funnel and its decision log' },
     question: 'At which step do we lose people, and what do we fix first?',
     headline: gap
       ? `${on.length} of ${strip.length} steps of the {{journey|customer journey}} reach their {{target}}. The weakest step is “${stageShort(gap.id).toLowerCase()}”: ${pct(gap.value)} ${gap.metric.toLowerCase()}, against a goal of ${pct(gap.target)}. Fix that first.`
@@ -266,7 +317,7 @@ export function combinationSummary(week: number): ReportSummary {
       { label: 'Still using Aurelia after a month', value: pct(m('d30').agent), badge: 'prediction', delta: vsTarget('d30'), deltaGood: m('d30').agent >= m('d30').target, note: 'Of all {{simulated|simulated people}} who arrive' },
     ],
     actions: [
-      ...(gap ? [{ text: gapDecision ? PLAIN_MOVE[gapDecision] : 'Agree what the free limit is, then make the first session feel good.', to: gapDecision ? '/admin/business-funnel' : `#stage-${gap.id}`, linkLabel: gapDecision ? 'See the decision' : `Step: ${stageShort(gap.id)}` }] : []),
+      ...(gap ? [{ text: gapDecision ? PLAIN_MOVE[gapDecision] : 'Agree what the free limit is, then make the first session feel good.', to: gapDecision ? '/admin/business-funnel' : `#stage-${gap.id}`, linkLabel: gapDecision ? 'See the decision' : `Step: ${stageShort(gap.id)}`, ...(gapDecision ? { decision: gapDecision } : {}) }] : []),
       ...below.map((s) => ({ text: PLAIN_MOVE[STAGE_DECISION[s.id]!], to: `#stage-${s.id}`, linkLabel: `Step: ${stageShort(s.id)}` })),
     ],
     confidence: {
@@ -365,6 +416,8 @@ export function costSummary(): ReportSummary {
   const pays = be === 1 ? 'We make money from the start.' : be ? `We lose money today and make money from {{learning-stage|learning stage}} ${be}.` : 'We never make money at this price.'
   return {
     intro: 'What the AI suppliers charge us to make Aurelia’s audio sessions. And whether helping one person sleep well earns more than it costs.',
+    goal: 'Helps the business owner choose AI suppliers and a price, by showing what helping one person sleep well costs.',
+    detail: { to: '#cost-function', label: 'How the cost adds up' },
     question: 'What does it cost to help one person sleep well, and when do we make money?',
     headline: `One 10-minute {{chapter|audio session}} costs us about ${usd(s1.chapter)} to make. Helping one person sleep well costs ${usd(s1.costPerFlip)} today. It falls to ${usd(s3.costPerFlip)} once the AI has learned. At ${price} per {{person-helped|person helped}}, ${pays.charAt(0).toLowerCase()}${pays.slice(1)}`,
     status,
@@ -385,6 +438,48 @@ export function costSummary(): ReportSummary {
       measured: `Only last year’s supplier bills (€${MEASURED_2025.total.toFixed(2)} in total).`,
       predicted: 'The session cost: suppliers’ prices times our guesses about length and reuse.',
       assumed: 'How fast sleep improves and how often it works: the business owner’s plan.',
+    },
+  }
+}
+
+/* ------------------------------------------------------------ UX feedback */
+
+/** How the feedback group is doing, for the UX feedback report (U129). Sample data until the study runs. */
+export function uxFeedbackSummary(participants: Participant[], week: number): ReportSummary {
+  const statuses = participants.map(winStatus)
+  const count = (st: ReturnType<typeof winStatus>) => statuses.filter((x) => x === st).length
+  const judged = statuses.filter((st) => st !== 'too early' && st !== 'started healthy').length
+  const won = count('won')
+  const improving = count('improving')
+  const criteria = evaluateCriteria(participants, week)
+  const c = (id: string) => criteria.find((x) => x.id === id)!
+  const retention = c('retention')
+  const adherence = c('adherence')
+  const tasks = weekTasks(participants, week).length
+  return {
+    intro: 'How the people in the {{feedback-group|feedback group}} are doing with Aurelia, week by week. Every figure is {{sample|sample data}} for now.',
+    goal: 'Helps the product team decide what to change in the app, from how real people feel while using it.',
+    detail: { to: '/admin/experimentation', label: 'The study plan and every person' },
+    question: 'Does Aurelia help the people who use it, and do they keep using it?',
+    headline: `${won} of ${judged} people with a later score reached the healthy range. ${improving} more are getting better. All of it is {{sample|sample data}} until the real study runs.`,
+    status: 'not-measured',
+    statusNote: 'Sample data. The real study has not started.',
+    sure: 'Nothing here is real yet. Every person and score is made up to look real.',
+    tiles: [
+      { label: 'Reached the healthy range', value: `${won} of ${judged}`, badge: 'sample', note: 'People with a score after their first one' },
+      { label: 'Getting better, not there yet', value: `${improving}`, badge: 'sample', note: 'A change that matters, still below healthy' },
+      { label: 'Still in the study', value: retention.display, badge: 'sample', note: `Goal: 70% or more. ${retention.note}.` },
+      { label: 'Use it three times a week or more', value: adherence.display, badge: 'sample', note: 'Goal: 60% or more' },
+    ],
+    actions: [
+      { text: 'Recruit 30 real people and run the study with real accounts, so these numbers become real.', to: '/admin/experimentation', linkLabel: 'The study plan' },
+      { text: `Do the ${tasks} follow-ups due in week ${week}: calls first, then missed check-ins.`, to: '#ux-views', linkLabel: 'This week' },
+      { text: 'Check whether people who use it more also feel better. It hints, it does not prove.', to: '#ux-views', linkLabel: 'How much they use it' },
+    ],
+    confidence: {
+      measured: 'Nothing. No real person has joined the study yet.',
+      predicted: 'None. These are not AI answers either.',
+      assumed: 'All 30 people, their scores and their sessions are invented to look real.',
     },
   }
 }

@@ -29,6 +29,8 @@ export const GLOSSARY = {
   estimate: { term: 'Estimate', plain: 'A calculation from suppliers’ prices and our own guesses. It changes when the guesses do.' },
   assumption: { term: 'Assumption', plain: 'A number from the business owner’s plan, used to see where it leads. Nobody has measured it.' },
   measured: { term: 'Measured', plain: 'Counted from real people or real bills. The only kind of number we can fully trust.' },
+  sample: { term: 'Sample data', plain: 'Invented numbers that look real, so the screens can be read before a real study runs. Not measured.' },
+  'feedback-group': { term: 'Feedback group', plain: 'A planned study: 30 real people use Aurelia for 8 weeks and tell us how they feel. It has not started yet.' },
   preset: { term: 'Middle option', plain: 'The middle of three ready-made choices of AI suppliers: cheap, middle and best quality.' },
 } satisfies Record<string, GlossaryEntry>
 

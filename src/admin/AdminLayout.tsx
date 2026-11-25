@@ -55,8 +55,13 @@ const NAV: { section: string; icon: LucideIcon; items: NavItem[] }[] = [
     icon: FlaskConical,
     // Tags, review and coverage are tabs inside User journey (U092).
     items: [
-      { to: '/admin/experimentation', label: 'Feedback group · v1', end: true, flag: 'adminExperimentation' },
-      { to: '/admin/experimentation/v2', label: 'Feedback group · v2', flag: 'adminExperimentation' },
+      // Since U129 the latest feedback group is Reports → UX feedback report; v1 keeps its route, off the menu.
+      ...(RELEASES.reports
+        ? []
+        : [
+            { to: '/admin/experimentation', label: 'Feedback group · v1', end: true, flag: 'adminExperimentation' },
+            { to: '/admin/experimentation/v2', label: 'Feedback group · v2', flag: 'adminExperimentation' },
+          ]),
       { to: '/admin/user-journey', label: 'User journey', flag: 'adminUserJourney' },
       // On both sites since J153 (RELEASES).
       ...(RELEASES.personas ? [{ to: '/admin/personas', label: 'Personas', flag: 'adminPersonas' }] : []),
@@ -70,7 +75,9 @@ const NAV: { section: string; icon: LucideIcon; items: NavItem[] }[] = [
     icon: FileChartColumn,
     items: RELEASES.reports
       ? [
+          { to: '/admin/reports', label: 'Overview', end: true, flag: 'adminReportsOverview' },
           { to: '/admin/reports/buyer-agent', label: 'Buyer agent report', flag: 'adminReportBuyerAgent' },
+          { to: '/admin/reports/ux-feedback', label: 'UX feedback report', flag: 'adminReportUxFeedback' },
           { to: '/admin/reports/combination', label: 'Combination report', flag: 'adminReportCombination' },
           { to: '/admin/reports/cost', label: 'Cost report', flag: 'adminReportCost' },
         ]

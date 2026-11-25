@@ -1,9 +1,12 @@
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, PanelRightOpen } from 'lucide-react'
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { PageHeader, Panel } from '../../components/ui'
 import { APP_PRICE, INPUT_KINDS, INPUT_LABEL, buildIterations, changedFrom } from '../../data/buyerAgentReport'
 import { BUYER_REPORT_FINDINGS } from '../../data/reportSources'
+import { buildIterationMap, mapFor } from '../../data/iterationMap'
+import { DetailDrawerProvider, useDetail } from './DetailDrawer'
+import { IterationMapView } from './IterationMapView'
 import { InputGraph } from './InputGraph'
 import { INPUT_DOT } from './reportColors'
 import { LabelBadge, SourcesSection } from './ReportParts'
@@ -22,10 +25,20 @@ const fmtDate = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString('en
  * where the run data is silent and says "not recorded" where nothing says.
  */
 export function BuyerAgentReportPage() {
+  return (
+    <DetailDrawerProvider>
+      <BuyerAgentReport />
+    </DetailDrawerProvider>
+  )
+}
+
+function BuyerAgentReport() {
   const iterations = useMemo(() => buildIterations(), [])
   const summary = useMemo(() => buyerSummary(), [])
   const trend = useMemo(() => buyerTrend(), [])
   const levers = useMemo(() => buyerLevers(), [])
+  const map = useMemo(() => mapFor(buildIterationMap(), 'buyer'), [])
+  const open = useDetail()
 
   return (
     <div className="flex flex-col gap-16">
@@ -149,13 +162,35 @@ export function BuyerAgentReportPage() {
             </div>
 
             <footer className="mt-auto flex justify-end border-t border-adm-line pt-10">
-              <Link to={it.link} className="inline-flex items-center gap-4 text-12 font-medium text-adm-ink underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink">
-                Full detail <ArrowRight size={12} aria-hidden="true" />
-              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  const node = map.nodes.find((n) => n.id === `r-${it.id}`)
+                  open({
+                    kicker: 'Buyer agent test',
+                    title: it.name,
+                    summary: it.question,
+                    numbers: it.headline.slice(0, 4).map((f) => ({ label: f.label, value: f.value })),
+                    labels: ['prediction'],
+                    extra: node && it.decisions.length ? <p className="text-12 text-adm-ink-2">Led to: {it.decisions.map((d) => d.change).join(' · ')}</p> : undefined,
+                    to: it.link,
+                    toLabel: 'Every answer in this test',
+                  })
+                }}
+                className="inline-flex items-center gap-4 text-12 font-medium text-adm-ink underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink"
+              >
+                Details <PanelRightOpen size={12} aria-hidden="true" />
+              </button>
             </footer>
           </article>
         ))}
       </section>
+      </Details>
+
+      <Details title="Sources used" hint="what each test learns from, and what came out of it">
+        <Panel title="Sources used" description="Left: the kinds of source the tests read. Middle: the seven tests. Right: the decisions and versions they led to. Click a box for details.">
+          <IterationMapView map={map} label="Sources used by the buyer agent tests, and the decisions and versions they led to." />
+        </Panel>
       </Details>
 
       <Details title="Sources and limits">

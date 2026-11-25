@@ -8,7 +8,10 @@ import {
   type Anchor, type CostInputs, type GoalInputs, type Media, type MediaCost, type NodeId, type NumberLabel, type Personalisation, type Stage,
 } from '../../data/costModel'
 import { COST_FINDINGS } from '../../data/reportSources'
-import { SourceGraph, SourcesSection } from './ReportParts'
+import { SourcesSection } from './ReportParts'
+import { buildIterationMap, mapFor } from '../../data/iterationMap'
+import { DetailDrawerProvider } from './DetailDrawer'
+import { IterationMapView } from './IterationMapView'
 import { Details, SummaryBlock } from './ReportSummary'
 import { CostFunctionPanel } from './SummaryCharts'
 import { costFunction, costSummary } from '../../data/reportSummaries'
@@ -65,7 +68,16 @@ function nodeValues(s: State): Record<NodeId, string> {
 }
 
 export function CostReportPage() {
+  return (
+    <DetailDrawerProvider>
+      <CostReport />
+    </DetailDrawerProvider>
+  )
+}
+
+function CostReport() {
   const [state, setState] = useState<State>(INITIAL)
+  const [map] = useState(() => mapFor(buildIterationMap(), 'cost'))
   const [changed, setChanged] = useState<{ from: NodeId | null; nodes: Set<NodeId> }>({ from: null, nodes: new Set() })
   const [selected, setSelected] = useState<NodeId>('costFlip')
   const [summary] = useState(() => costSummary())
@@ -301,8 +313,8 @@ export function CostReportPage() {
         ))}
       </div>
 
-      <Panel title="How this report was made" description="Where each part of this report comes from. Each line is a source feeding a section.">
-        <SourceGraph findings={COST_FINDINGS} label="Graph: the sources on the left feed the report’s sections on the right." />
+      <Panel title="Sources used" description="Left: the kinds of source this report reads. Right: what it has led to so far: nothing yet. Click a box for details.">
+        <IterationMapView map={map} label="Sources used by the Cost report. It has not led to a decision yet." />
       </Panel>
 
       <Panel title="Read this first" description="Plain-language notes.">

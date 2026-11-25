@@ -370,6 +370,9 @@ export const COST_FINDINGS: Finding[] = [
   { id: 'metric-lines', title: 'Three metric lines', sources: ['spec-causal', 'cost-2025', 'owner-chat'] },
 ]
 
+/** The UX feedback report (U129): the latest feedback group view, on the study's sample data. */
+export const UX_FEEDBACK_FINDINGS: Finding[] = [{ id: 'ux-views', title: 'Wins, this week and how much they use it', sources: ['feedback-group'] }]
+
 /** The sources a set of findings uses, in registry order. */
 export function sourcesOf(findings: Finding[]): ReportSource[] {
   const used = new Set(findings.flatMap((f) => f.sources))

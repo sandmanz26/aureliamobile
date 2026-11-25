@@ -6,6 +6,7 @@ import type { Tone } from '../components/ui'
 import { Badge, PageHeader, Panel, StatCard } from '../components/ui'
 import { isoDay, overdueContacts } from '../data/coachingLog'
 import { useCoachingLog } from '../data/useCoachingLog'
+import { RELEASES } from '../../versions/releases'
 import type { Band, Milestone, Participant, TaskKind, WeekTask, WinStatus } from '../data/study'
 import {
   COHORTS,
@@ -47,7 +48,7 @@ export function StudyVersionSwitch({ current }: { current: 1 | 2 }) {
       {[1, 2].map((v) => (
         <Link
           key={v}
-          to={v === 1 ? '/admin/experimentation' : '/admin/experimentation/v2'}
+          to={v === 1 ? '/admin/experimentation' : RELEASES.reports ? '/admin/reports/ux-feedback' : '/admin/experimentation/v2'}
           aria-current={current === v ? 'page' : undefined}
           className={`rounded-4 px-10 py-4 font-medium ${current === v ? 'bg-adm-ink text-adm-surface' : 'text-adm-ink-2 hover:bg-adm-hover'}`}
         >
@@ -61,7 +62,7 @@ export function StudyVersionSwitch({ current }: { current: 1 | 2 }) {
 /**
  * Experimentation · feedback group, version 2 (U060), for review beside v1.
  * v1 is the researcher's view (criteria, completeness, protocol). v2 reads the
- * same study the way Eugene framed it — "solve and win them" — and as the
+ * same study the way the business owner framed it — "solve and win them" — and as the
  * study team's week: who won, who is improving, what has to happen this week,
  * and whether use goes with change.
  */
@@ -69,7 +70,6 @@ export function ExperimentationV2Page() {
   const [now] = useState(() => Date.now())
   const week = studyWeek(now)
   const participants = useMemo(() => buildParticipants(week), [week])
-  const [tab, setTab] = useState<Tab>('plan')
 
   return (
     <>
@@ -92,6 +92,20 @@ export function ExperimentationV2Page() {
         </ul>
       </details>
 
+      <FeedbackGroupViews participants={participants} week={week} />
+    </>
+  )
+}
+
+/**
+ * The four views of the latest feedback group (v2): milestones, wins, this
+ * week and engagement. Since U129 they are also the body of Reports → UX
+ * feedback report.
+ */
+export function FeedbackGroupViews({ participants, week }: { participants: Participant[]; week: number }) {
+  const [tab, setTab] = useState<Tab>('plan')
+  return (
+    <>
       <div role="tablist" aria-label="Version 2 views" className="flex flex-wrap gap-6 border-b border-adm-line">
         {([['plan', 'Milestones'], ['wins', 'Wins'], ['week', `This week (${week})`], ['engagement', 'Engagement']] as const).map(([id, label]) => (
           <button

@@ -16,6 +16,7 @@
           "useAdminData",
           "useAudioPlayer",
           "useChatSession",
+          "useDetail",
           "useFeatureFlags",
           "usePullToRefresh",
           "useSheetDrag"

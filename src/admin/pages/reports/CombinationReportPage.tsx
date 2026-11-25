@@ -1,12 +1,15 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { Badge, PageHeader, Panel } from '../../components/ui'
 import { DESIGNS } from '../../data/buyerSim'
 import { MATRIX_SEATS, buildComposition, buildMatrix, buildStages, type StageReading } from '../../data/combinationReport'
 import { COMBINATION_FINDINGS } from '../../data/reportSources'
 import { OUTCOMES, eur } from '../../data/retreatFunnel'
 import { studyWeek } from '../../data/study'
+import { buildIterationMap, mapFor } from '../../data/iterationMap'
 import { CompositionGraph } from './CompositionGraph'
+import { DetailDrawerProvider, useDetail } from './DetailDrawer'
+import { decisionItem } from './detailItems'
+import { IterationMapView } from './IterationMapView'
 import { LabelBadge, SourceChip, SourcesSection } from './ReportParts'
 import { Details, SummaryBlock } from './ReportSummary'
 import { StageStrip } from './SummaryCharts'
@@ -15,6 +18,7 @@ import { combinationSummary, stageStrip } from '../../data/reportSummaries'
 const STATUS = { 'on-track': { tone: 'good', text: 'On track (prediction)' }, below: { tone: 'critical', text: 'Below target (prediction)' }, unmeasured: { tone: 'neutral', text: 'Unmeasured' } } as const
 
 function Stage({ s, n }: { s: StageReading; n: number }) {
+  const open = useDetail()
   return (
     <section id={s.findingId} className="flex min-w-0 scroll-mt-16 flex-col gap-14 rounded-12 border border-adm-line bg-adm-surface p-16">
       <header className="flex flex-wrap items-start justify-between gap-8">
@@ -59,9 +63,9 @@ function Stage({ s, n }: { s: StageReading; n: number }) {
           <dd className="mt-4 text-13 font-medium text-adm-ink">
             {s.next}
             {s.decision && (
-              <Link to="/admin/business-funnel" className="ml-6 text-12 font-normal text-adm-ink-2 underline decoration-adm-axis underline-offset-2 hover:text-adm-ink">
-                Decision {s.decision} in the log
-              </Link>
+              <button type="button" onClick={() => open(decisionItem(s.decision!))} className="ml-6 text-12 font-normal text-adm-ink-2 underline decoration-adm-axis underline-offset-2 hover:text-adm-ink">
+                See the decision
+              </button>
             )}
           </dd>
         </div>
@@ -77,12 +81,21 @@ function Stage({ s, n }: { s: StageReading; n: number }) {
  * funnels and the PRD. Production v3 (staging v5) with agent v3's rules.
  */
 export function CombinationReportPage() {
+  return (
+    <DetailDrawerProvider>
+      <CombinationReport />
+    </DetailDrawerProvider>
+  )
+}
+
+function CombinationReport() {
   const [week] = useState(() => Math.max(1, Math.min(8, studyWeek(Date.now()))))
   const [stages] = useState(() => buildStages(week))
   const [matrix] = useState(() => buildMatrix())
   const [composition] = useState(() => buildComposition(stages))
   const [summary] = useState(() => combinationSummary(week))
   const [strip] = useState(() => stageStrip(week))
+  const [map] = useState(() => mapFor(buildIterationMap(week), 'combination'))
   const middle = OUTCOMES.find((o) => o.id === 'middle')!
 
   return (
@@ -181,6 +194,12 @@ export function CombinationReportPage() {
         <CompositionGraph nodes={composition} />
       </Panel>
 
+      </Details>
+
+      <Details title="Sources used" hint="what this report learns from, and what came out of it">
+        <Panel title="Sources used" description="Left: the kinds of source this report joins. Right: the decisions and versions it led to. Click a box for details.">
+          <IterationMapView map={map} label="Sources used by the Combination report, and what it led to." />
+        </Panel>
       </Details>
 
       <Details title="Sources and limits">
