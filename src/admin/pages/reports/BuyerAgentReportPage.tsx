@@ -13,6 +13,9 @@ import { LabelBadge, SourcesSection } from './ReportParts'
 import { Details, SummaryBlock } from './ReportSummary'
 import { SuccessTrend, WhatMoves } from './SummaryCharts'
 import { buyerLevers, buyerSummary, buyerTrend } from '../../data/reportSummaries'
+import { SEGMENT_LABEL, funnel, heat, objections, priceLadder, slopes as buildSlopes, vizTests } from '../../data/buyerViz'
+import { PeopleGrid, PriceLadderChart, TestFunnels, WhatMovesSlope, WhoSaysYes, WhyNo } from './BuyerViz'
+import { RichText } from './Term'
 
 const fmtDate = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
 
@@ -39,6 +42,15 @@ function BuyerAgentReport() {
   const levers = useMemo(() => buyerLevers(), [])
   const map = useMemo(() => mapFor(buildIterationMap(), 'buyer'), [])
   const open = useDetail()
+  const tests = useMemo(() => vizTests(), [])
+  const slopes = useMemo(() => buildSlopes(), [])
+  const t7 = tests[tests.length - 1]
+  const f7 = funnel(t7)
+  const best = [...heat(t7)].filter((c) => c.n >= 10).sort((a, b) => b.tries / b.n - a.tries / a.n)[0]
+  const worst = [...heat(t7)].filter((c) => c.n >= 10).sort((a, b) => a.tries / a.n - b.tries / b.n)[0]
+  const p7 = priceLadder(t7)
+  const no7 = objections(t7)[0]
+  const pc = (k: number, n: number) => `${Math.round((k / n) * 100)}%`
 
   return (
     <div className="flex flex-col gap-16">
@@ -54,16 +66,59 @@ function BuyerAgentReport() {
 
       <SummaryBlock s={summary} />
 
-      <div className="grid gap-16 lg:grid-cols-[3fr_2fr]">
-        <Panel title="In every test, far fewer would pay than would try" description="Seven rounds of asking simulated people, oldest on the left. Hover a test to see what we changed.">
-          <SuccessTrend points={trend} />
+      <p className="text-12 text-adm-muted">
+        <RichText text="Every chart below is about {{simulated|simulated people}}: a prediction, not a measurement." />
+      </p>
+
+      <section id="funnels" className="min-w-0 scroll-mt-16">
+        <Panel title={`Most drop out before paying: in test 7, ${f7[1].count} of ${f7[0].count} would try, ${f7[2].count} would pay, ${f7[3].count ?? 0} still use it at day 30`} description="Simulated. For each recent test: how many saw the offer, would try it, would pay for it and would still be using it a month later.">
+          <TestFunnels tests={tests} />
         </Panel>
-        <section id="what-moves" className="min-w-0 scroll-mt-16">
-          <Panel title={`“${levers[0]?.theme ?? '—'}” changed the most answers`} description="Each bar: the share of simulated people whose answer changed when we added that idea. Longer bar, bigger effect.">
-            <WhatMoves levers={levers} />
+      </section>
+
+      <div className="grid gap-16 lg:grid-cols-2 lg:items-start">
+        <section id="people" className="min-w-0 scroll-mt-16">
+          <Panel title="Every simulated person, one mark each" description="Switch the test or the question. Tap a mark to read who that person is and why they answered as they did.">
+            <PeopleGrid tests={tests} />
+          </Panel>
+        </section>
+        <section id="who-says-yes" className="min-w-0 scroll-mt-16">
+          <Panel
+            title={best && worst ? `Most likely to try in test 7: ${SEGMENT_LABEL[best.segment].toLowerCase()} “${best.value}” (${pc(best.tries, best.n)}); least: ${SEGMENT_LABEL[worst.segment].toLowerCase()} “${worst.value}” (${pc(worst.tries, worst.n)})` : 'Who says yes'}
+            description="Simulated. Test 7 by default; switch to test 6. Darker means more of that group said yes."
+          >
+            <WhoSaysYes tests={tests.slice(1)} />
           </Panel>
         </section>
       </div>
+
+      <div className="grid gap-16 lg:grid-cols-2">
+        <section id="price" className="min-w-0 scroll-mt-16">
+          <Panel title={`$10 a month sits past what most call fair: in test 7, ${p7.overExpensive} of ${p7.n} already call it expensive`} description="Simulated. What people called too cheap, a bargain, getting expensive and too expensive, against Aurelia’s price.">
+            <PriceLadderChart tests={tests} />
+          </Panel>
+        </section>
+        <section id="why-no" className="min-w-0 scroll-mt-16">
+          <Panel title={no7 ? `“${no7.label}” is the top reason not to pay in test 7 (${no7.count} of ${no7.n})` : 'Why people say no'} description="Simulated. The main reason each person gave for not paying, ranked. Tap a bar for what they said.">
+            <WhyNo tests={tests} />
+          </Panel>
+        </section>
+      </div>
+
+      <section id="what-moves" className="grid min-w-0 scroll-mt-16 gap-16 lg:grid-cols-[3fr_2fr]">
+        <Panel title={`“${slopes[0]?.theme ?? '—'}” changed the most answers`} description="Simulated. For each change we tested: among the people it moved, how many would try without it and with it.">
+          <WhatMovesSlope slopes={slopes} />
+        </Panel>
+        <Panel title="How much of each panel a change moved" description="Each bar: the share of that test’s simulated people whose answer changed when we added the idea.">
+          <WhatMoves levers={levers} />
+        </Panel>
+      </section>
+
+      <section id="across-tests" className="min-w-0 scroll-mt-16">
+        <Panel title="Across all seven tests, far fewer would pay than would try" description="Simulated. Oldest on the left. The people, offer and price changed between tests (written under each one), so read it as a story, not like for like. Hover or tap a test for details.">
+          <SuccessTrend points={trend} />
+        </Panel>
+      </section>
 
       <Details title="How each report was made" hint="the five inputs and what changed between reports">
       <section id="input-graph" className="scroll-mt-16">

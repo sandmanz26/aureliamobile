@@ -18,11 +18,11 @@ const SERIES = [
 ] as const
 
 const TW = 880
-const TH = 250
+const TH = 266
 const L = 56
-const R = 24
+const R = 44
 const T = 16
-const B = 52
+const B = 68
 
 /** Try, pay and sure-at-day-30 across reports v1–v7, each point annotated by what changed. */
 export function SuccessTrend({ points }: { points: TrendPoint[] }) {
@@ -76,6 +76,11 @@ export function SuccessTrend({ points }: { points: TrendPoint[] }) {
               {p.label}
             </text>
           ))}
+          {points.map((p, i) => (
+            <text key={`n-${p.id}`} x={x(i)} y={TH - B + 32} textAnchor="middle" className="fill-adm-muted text-11 tabular-nums">
+              {p.n} people
+            </text>
+          ))}
           {hover !== null && <line x1={x(hover)} x2={x(hover)} y1={T} y2={TH - B} className="stroke-adm-axis" strokeWidth={1} />}
           {SERIES.map((s) => (
             <path key={s.key} d={path(s.key)} fill="none" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" className={s.stroke} />
@@ -95,6 +100,7 @@ export function SuccessTrend({ points }: { points: TrendPoint[] }) {
               fill="transparent"
               onMouseEnter={() => setHover(i)}
               onMouseLeave={() => setHover(null)}
+              onClick={() => setHover(hover === i ? null : i)}
             />
           ))}
         </svg>
