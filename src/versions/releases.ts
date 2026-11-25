@@ -43,4 +43,6 @@ export const RELEASES = {
   reports: true,
   /** Admin → Product lab → Therapeutic map and Healing Map (U131, J183). Staging only. */
   therapeuticMaps: BUILD.environment !== 'production',
+  /** Admin → Reports → Report metrics (U135, J186): every report number traced to its data and formula. Staging only. */
+  reportMetrics: BUILD.environment !== 'production',
 } as const

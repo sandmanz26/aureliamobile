@@ -9,6 +9,8 @@ import { DetailDrawerProvider, useDetail } from './DetailDrawer'
 import { reportItem } from './detailItems'
 import { IterationMapView } from './IterationMapView'
 import { plainText } from '../../data/glossary'
+import { buildMetrics, metricsReportSummary } from '../../data/reportMetrics'
+import { RELEASES } from '../../../versions/releases'
 
 /**
  * Admin → Reports → Overview (U129, J182). How Aurelia improves, in one
@@ -36,6 +38,8 @@ function Overview() {
       { title: 'Cost report', to: '/admin/reports/cost', s: costSummary() },
       { title: 'B2B2C report', to: '/admin/reports/b2b2c', s: b2b2cSummary() },
       { title: 'Combination report', to: '/admin/reports/combination', s: combinationSummary(week) },
+      // U135 (J186): staging only (RELEASES).
+      ...(RELEASES.reportMetrics ? [{ title: 'Report metrics', to: '/admin/reports/metrics', s: metricsReportSummary(buildMetrics(week)) }] : []),
     ]
   }, [week])
   const count = (c: string) => map.nodes.filter((n) => n.column === c).length

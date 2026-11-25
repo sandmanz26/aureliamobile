@@ -88,6 +88,8 @@ const NAV: { section: string; icon: LucideIcon; items: NavItem[] }[] = [
           { to: '/admin/reports/combination', label: 'Combination report', flag: 'adminReportCombination' },
           { to: '/admin/reports/cost', label: 'Cost report', flag: 'adminReportCost' },
           { to: '/admin/reports/b2b2c', label: 'B2B2C report', flag: 'adminReportB2b2c' },
+          // U135 (J186): staging only (RELEASES).
+          ...(RELEASES.reportMetrics ? [{ to: '/admin/reports/metrics', label: 'Report metrics', flag: 'adminReportMetrics' }] : []),
         ]
       : [],
   },

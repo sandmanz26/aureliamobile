@@ -35,6 +35,10 @@ export const GLOSSARY = {
   'life-situation': { term: 'Life situation', plain: 'What is happening in a person’s life right now, like exams, a new baby or losing a job.' },
   'wellness-score': { term: 'Wellness score', plain: 'Where a person starts on our 0–100 scale, higher is better. Below 40 is severe, 40–64 moderate, 65 and up mild.' },
   screening: { term: 'Screening band', plain: 'A rough sort from a few short questions, like the PHQ-2 or GAD-2 forms. It is never a diagnosis.' },
+  traceable: { term: 'Traces back to data', plain: 'We can work the number out again from the answers, people or prices behind it. We get the same result.' },
+  recomputed: { term: 'Worked out again', plain: 'The number calculated a second time, here, straight from the underlying data. Not copied from the report.' },
+  median: { term: 'Median', plain: 'The middle value when all answers are sorted from low to high. One extreme answer cannot pull it.' },
+  'stated-wtp': { term: 'Stated willingness to pay', plain: 'What each made-up person says they would pay a month, written in their profile: free only, up to $5, up to $10, or more.' },
   'risk-flag': { term: 'Risk flag', plain: 'The person may be in danger, for example very low mood with thoughts of self-harm. Aurelia shows Need help now? and never sells to them.' },
 } satisfies Record<string, GlossaryEntry>
 
