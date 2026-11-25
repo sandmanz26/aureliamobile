@@ -24,13 +24,14 @@ import {
 } from '../../data/b2b2cReport'
 import { plainText } from '../../data/glossary'
 import { buildIterationMap, mapFor } from '../../data/iterationMap'
+import { B2b2cHowItWorks } from './B2b2cHowItWorks'
 import { DetailDrawerProvider, useDetail, type DetailItem } from './DetailDrawer'
 import { IterationMapView } from './IterationMapView'
 import { Details, SummaryBlock } from './ReportSummary'
 
 /**
  * Admin → Reports → B2B2C report: B2B2C research round 2 for the business
- * owner. Summary first; then the channels compared, the feature board
+ * owner. Summary first; then How it works (four diagrams); then the channels compared, the feature board
  * (channel × priority, each card opens the drawer) and the phased plan.
  * All data lives in data/b2b2cReport.ts; the wiki's round-2 and features
  * pages say the same in prose.
@@ -250,6 +251,12 @@ export function B2b2cReportPage() {
         <PageHeader title="B2B2C report" description={plainText(summary.intro ?? '')} />
 
         <SummaryBlock s={summary} />
+
+        <section id="b2b2c-how" className="min-w-0 scroll-mt-16">
+          <Panel title="How it works" description="The idea in four pictures: who is involved, each channel step by step, what changed from round 1, and the phases. Click any box for a plain explanation and the features behind it.">
+            <B2b2cHowItWorks />
+          </Panel>
+        </section>
 
         <section id="b2b2c-channels" className="min-w-0 scroll-mt-16">
           <Panel title="The channels compared" description="Each channel scored on round 1’s six questions plus what the simulations say. Click a row for why it moved.">

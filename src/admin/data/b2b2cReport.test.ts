@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { B2B2C_PAGES, pageMarkdown } from '../../guides/docPages'
-import { B2B2C_SOURCES, CHANNELS, CHANNEL_ORDER, FEATURES, PHASES, PRIORITIES, b2b2cSummary, citedSources, featuresBy, sourceById, topFeatures } from './b2b2cReport'
+import { B2B2C_SOURCES, CHANNELS, CHANNEL_ORDER, FEATURES, PHASES, PRIORITIES, b2b2cSummary, beforeAfter, bigPicture, citedSources, endpointsOf, featuresBy, howNumbers, journeys, shortTitle, sourceById, topFeatures, wrapWords } from './b2b2cReport'
+import { JARGON } from './glossary'
 import { GLOSSARY, markedIds, unmarkedJargon } from './glossary'
 
 describe('B2B2C report data', () => {
@@ -63,5 +64,43 @@ describe('B2B2C report data', () => {
       expect(md, slug).not.toMatch(/Eugene/)
       expect(md, slug).not.toMatch(/\b[JUO]\d{2,3}\b/)
     }
+  })
+
+  it('derives the diagram numbers from the buyer tests, matching the wiki', () => {
+    const n = howNumbers()
+    expect(n.t6).toMatchObject({ n: 60, freeTry: 25, freePlus: 17.5, ticketTry: 2, ticketPlus: 1, ticket39Plus: 0.5, employer: 21, trust: 25 })
+    expect(n.t7).toMatchObject({ followers: 35, freeTry: 26, freeNot: 9, freePayYes: 10, freePayMaybe: 5, freePlus: 12.5, ticketTry: 7, ticketPlus: 4 })
+    const round2 = pageMarkdown(B2B2C_PAGES.find((x) => x.slug === 'round-2')!)
+    expect(round2).toContain(`Among ${n.t7.followers} creator followers, ${n.t7.ticketTry} would buy the ticket against ${n.t7.freeTry} trying the free app; expected paying people ${n.t7.ticketPlus} against ${n.t7.freePlus}`)
+    const { before, after } = beforeAfter()
+    expect(before.rows.map((r) => r.value)).toEqual(['2', '1', '4'])
+    expect(after.rows.map((r) => r.value)).toEqual(['25', '17.5', '12.5'])
+  })
+
+  it('gives the diagrams real features, plain labels and no internal ids', () => {
+    const b = bigPicture()
+    const boxes = [...b.partners, b.aurelia, b.people, b.paid, b.money, b.trust]
+    const js = journeys()
+    expect(js.map((j) => j.id)).toEqual(['creator', 'employer', 'partner'])
+    expect(js[0].steps).toHaveLength(8)
+    const all = [...boxes, ...js.flatMap((j) => j.steps), beforeAfter().after]
+    const ids = new Set(FEATURES.map((f) => f.id))
+    for (const x of all) {
+      for (const f of x.features) expect(ids, `${x.id}: ${f}`).toContain(f)
+      for (const id of markedIds(x.explain)) expect(Object.keys(GLOSSARY)).toContain(id)
+      expect(unmarkedJargon(x.explain), x.explain).toEqual([])
+    }
+    // Labels drawn inside the SVG cannot carry a glossary tooltip, so they carry no jargon at all.
+    const drawn = [...boxes.flatMap((x) => [x.title, x.sub]), ...js.flatMap((j) => [j.title, ...j.steps.flatMap((s) => [s.title, s.sees, s.drop?.text ?? ''])]), ...PHASES.flatMap((p) => [p.name, p.when, p.gate, ...p.build.map(shortTitle)])]
+    for (const t of drawn) for (const re of JARGON) expect(re.test(t), `${t} ~ ${re}`).toBe(false)
+    expect(JSON.stringify({ b, js, ba: beforeAfter() })).not.toMatch(/Eugene|\b[JUO]\d{2,3}\b/)
+  })
+
+  it('wraps diagram text and lists endpoints once', () => {
+    expect(wrapWords('Pay after week one: the journey', 12)).toEqual(['Pay after', 'week one:', 'the journey'])
+    expect(wrapWords('', 10)).toEqual([])
+    expect(wrapWords('supercalifragilistic word', 5)).toEqual(['supercalifragilistic', 'word'])
+    expect(endpointsOf(['free-week', 'free-week', 'real-quotes'])).toEqual(['POST /journeys', 'GET /me/entitlements'])
+    expect(shortTitle('help-now')).toBe('Need help now? on every feelings screen')
   })
 })

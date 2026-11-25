@@ -292,3 +292,201 @@ export function b2b2cSummary(): ReportSummary {
     },
   }
 }
+
+/* ------------------------------------------------------------ How it works */
+
+/**
+ * The "How it works" diagrams on the report (and their twins in mermaid on
+ * the wiki): the big picture, one journey per channel, before and after,
+ * the phases. Labels and every number come from here; the numbers are
+ * derived from the buyer tests, never typed twice. Diagram labels are plain
+ * words (no glossary marks: SVG text cannot carry a tooltip); the drawer
+ * text may carry `{{term|shown}}` marks.
+ */
+
+export interface DiagramBox {
+  id: string
+  title: string
+  /** One short line under the title. */
+  sub: string
+  /** The drawer's plain explanation. May carry glossary marks. */
+  explain: string
+  /** Feature ids involved, shown with their endpoints in the drawer. */
+  features: string[]
+}
+
+/** The numbers the diagrams show, all derived from buyer tests 6 and 7. */
+export function howNumbers() {
+  const x6 = v6Tallies()
+  const x7 = v7Tallies()
+  return {
+    t6: {
+      n: x6.A.n,
+      freeTry: x6.A.tries.yes,
+      freePlus: x6.plus.A,
+      ticketTry: x6.B.tries.yes,
+      ticketPlus: x6.plus.B,
+      ticket39Plus: x6.plus.ALT,
+      employer: x6.employerTrigger,
+      trust: x6.themes.find(([t]) => t === 'trust')?.[1] ?? 0,
+    },
+    t7: {
+      followers: x7.followers.n,
+      freeTry: x7.followers.B.tries.yes,
+      freeNot: x7.followers.n - x7.followers.B.tries.yes,
+      freePayYes: x7.followers.B.pays.yes,
+      freePayMaybe: x7.followers.B.pays.maybe,
+      freePlus: x7.followers.plusB,
+      ticketTry: x7.followers.ALT.tries.yes,
+      ticketPlus: x7.followers.plusALT,
+    },
+  }
+}
+
+/** Unique API v2 endpoints of a set of features, in feature order. */
+export const endpointsOf = (ids: string[]) => [...new Set(ids.flatMap((id) => FEATURES.find((f) => f.id === id)?.endpoints ?? []))]
+
+/** Splits text into lines of at most `max` characters, on spaces. A longer word gets its own line. */
+export function wrapWords(text: string, max: number): string[] {
+  const lines: string[] = []
+  let line = ''
+  for (const w of text.split(/\s+/).filter(Boolean)) {
+    if (line && line.length + 1 + w.length > max) {
+      lines.push(line)
+      line = w
+    } else line = line ? `${line} ${w}` : w
+  }
+  if (line) lines.push(line)
+  return lines
+}
+
+/** 1. The big picture: who has the people, what Aurelia adds, where the money goes. */
+export function bigPicture(): { partners: DiagramBox[]; aurelia: DiagramBox; people: DiagramBox; paid: DiagramBox; money: DiagramBox; trust: DiagramBox } {
+  const n = howNumbers()
+  return {
+    partners: [
+      { id: 'creators', title: 'Creators', sub: 'Followers who trust them', explain: 'Wellness creators and retreat leaders. Their followers already trust them, so Aurelia does not have to buy that reach with ads. The creator records a journey in their own voice and sells it; they keep 70% of the ticket and, later, a share of the paid plans they bring.', features: ['voice-sample', 'claims-check', 'creator-dashboard', 'payouts', 'plus-share'] },
+      { id: 'employers', title: 'Employers', sub: 'Staff, and a budget', explain: `Small employers buy seats for their staff online with a card, about $50 a seat a year at other apps. The person no longer pays, which is why ${n.t6.employer} of ${n.t6.n} {{simulated|simulated people}} said they would use it if work paid. The employer sees counts only, never one person’s feelings.`, features: ['ask-employer', 'team-buy', 'team-link', 'team-report'] },
+      { id: 'partners', title: 'Partners, gift buyers', sub: 'Codes for their customers', explain: 'Hotels, brands and people buying a gift pay for a code. The person redeems it, gets a free period and then enters their own card, which is how the partner deals that lasted worked.', features: ['codes', 'gift'] },
+    ],
+    aurelia: { id: 'aurelia', title: 'Aurelia', sub: 'App, AI sessions, check-ins', explain: 'The app every channel lands in. Sessions are made by AI from the creator’s journey or from what the person says; short check-ins ask how they feel, and that shapes the next session. The free plan is the base: every channel starts there.', features: ['free-week', 'help-now', 'data-line', 'live-calendar'] },
+    people: { id: 'people', title: 'People', sub: 'Followers, staff, gift receivers', explain: 'The person who uses the app: a creator’s follower, an employee with a seat, or someone who got a code or a gift. They start free and pay only after it has helped.', features: ['free-week', 'help-now', 'data-line', 'local-price'] },
+    paid: { id: 'paid', title: 'Paid plan', sub: 'After it has helped', explain: 'What turns reach into a business: the {{paid-plan|paid plan}} (or the creator’s full journey) bought after the free week, or seats renewed by the employer.', features: ['pay-after-week', 'plus-share'] },
+    money: { id: 'money', title: 'Money', sub: 'Ticket, seats, paid plan', explain: 'Money comes in three ways: a person pays for the creator’s journey or the paid plan after the free week; an employer pays for seats; a partner or gift buyer pays for codes. On a creator’s journey the split is 70% to the creator and 30% to Aurelia, and the creator also earns a share of the paid plans they bring.', features: ['pay-after-week', 'payouts', 'plus-share', 'team-buy', 'codes'] },
+    trust: { id: 'trust', title: 'Trust', sub: 'Free week, voice, refund', explain: `Trust, not price, was the main objection (${n.t6.trust} mentions in a test of ${n.t6.n} {{simulated|simulated people}}). So people get a free first week with no card, hear a 60-second sample in the creator’s own voice before they start, and can get a full refund until week 4.`, features: ['free-week', 'voice-sample', 'refund-window', 'real-quotes'] },
+  }
+}
+
+export type DropLabel = 'test' | 'measured' | 'judgement' | 'not tested'
+
+export interface JourneyStep {
+  id: string
+  title: string
+  /** What the person sees at this step. */
+  sees: string
+  /** Where people drop off here; `label` says what kind of number it is. */
+  drop?: { text: string; label: DropLabel }
+  explain: string
+  features: string[]
+}
+
+export interface Journey {
+  id: ChannelId
+  title: string
+  steps: JourneyStep[]
+}
+
+export const DROP_LABEL_TEXT: Record<DropLabel, string> = {
+  test: 'From a test',
+  measured: 'Measured elsewhere',
+  judgement: 'Our judgement',
+  'not tested': 'Not tested',
+}
+
+/** 2. One journey per channel, step by step, with where people drop off. */
+export function journeys(): Journey[] {
+  const n = howNumbers()
+  const t7 = n.t7
+  return [
+    {
+      id: 'creator',
+      title: 'Creator journey, free first week',
+      steps: [
+        { id: 'c-post', title: 'Sees a post', sees: 'The creator’s post or story about the journey', drop: { text: 'Unknown: no share of followers who click is published', label: 'not tested' }, explain: 'It starts where the creator already is: a post, a story or a live stream. Aurelia does not pay for this reach. What the creator may say is set by a checklist they sign first.', features: ['claims-check'] },
+        { id: 'c-page', title: 'Creator page', sees: 'The journey, a 60-second sample in their voice, the refund promise', explain: 'One page per creator. The sample in the creator’s own voice answers “is this really them?”, the top worry. The refund to week 4 is shown before anyone pays.', features: ['voice-sample', 'refund-window', 'real-quotes'] },
+        { id: 'c-free', title: 'Free week', sees: 'The first week of the journey in the app, no card', drop: { text: `${t7.freeNot} of ${t7.followers} followers would not try the free app`, label: 'test' }, explain: `The first week is free with no card. In test 7, ${t7.freeTry} of ${t7.followers} creator followers would try the free app, the nearest thing to the free week that was tested; ${t7.freeNot} would not. These are {{simulated|simulated people}}.`, features: ['free-week', 'help-now', 'data-line'] },
+        { id: 'c-check', title: 'Check-ins', sees: '“How do you feel now?” after each session', explain: 'A short question after each session. The answers shape the next session and become the person’s own record of progress. The creator sees totals for groups of 10 or more, never one person.', features: ['help-now', 'creator-dashboard'] },
+        { id: 'c-pay', title: 'Pay after week 1', sees: 'The creator’s full journey, or the paid plan', drop: { text: `${t7.freePayYes} of ${t7.followers} would pay, ${t7.freePayMaybe} maybe`, label: 'test' }, explain: `After the first week has helped, the person chooses: the creator’s full journey or the {{paid-plan|paid plan}}. In test 7, ${t7.freePayYes} of ${t7.followers} creator followers ({{simulated|simulated people}}) said they would pay for the app and ${t7.freePayMaybe} maybe. The pilot asks for at least 15% of free-week starters to pay by day 10 (our judgement).`, features: ['pay-after-week', 'refund-window'] },
+        { id: 'c-weeks', title: 'Weeks 2–8', sees: 'The journey, live group sessions in the calendar', drop: { text: 'The pilot needs at least 35% still active at week 8', label: 'judgement' }, explain: 'The rest of the journey, with the creator’s weekly live session in the calendar. Wellness apps lose most people in the first month, so the pilot needs at least 35% still active at week 8.', features: ['live-calendar', 'creator-dashboard', 'scoreboard'] },
+        { id: 'c-grad', title: 'Graduation', sees: 'What changed, in their own words from the check-ins', explain: 'The journey ends with the person’s own check-ins played back: how they felt in week 1 and now. No invented results: only what they said.', features: ['real-quotes'] },
+        { id: 'c-plus', title: 'Paid plan', sees: 'Keep going on the paid plan', drop: { text: 'The pilot needs at least 8% of starters on the paid plan', label: 'judgement' }, explain: 'After the journey, the {{paid-plan|paid plan}} keeps the sessions coming. The creator earns a share of each paid plan they bring, so they keep selling.', features: ['plus-share', 'pay-after-week'] },
+      ],
+    },
+    {
+      id: 'employer',
+      title: 'Team plan',
+      steps: [
+        { id: 'e-sign', title: 'HR signs up', sees: 'Buy 5–200 seats online with a card, no sales call', drop: { text: `${n.t6.employer} of ${n.t6.n} would use it if work paid`, label: 'test' }, explain: `A small employer buys seats online. Many people would use Aurelia if work paid (${n.t6.employer} of ${n.t6.n} {{simulated|simulated people}} in test 6), but nobody asks HR, so the app gives them a one-page request to forward.`, features: ['ask-employer', 'team-buy'] },
+        { id: 'e-invite', title: 'Invite link', sees: 'One link to share, or a code per person', explain: 'HR shares one link with the team, or gives each person a code. The same code system serves gifts and partners later.', features: ['team-link', 'codes'] },
+        { id: 'e-start', title: 'Staff start', sees: 'Their own sessions and check-ins, free to them', drop: { text: 'Elsewhere only 38% of enrolled staff used any tool', label: 'measured' }, explain: 'Seats are worthless if nobody joins. In one measured study only 38% of enrolled staff used any digital tool, so the pilot needs more than that in 30 days.', features: ['team-link', 'free-week', 'help-now', 'data-line'] },
+        { id: 'e-report', title: 'Team report', sees: 'Joined, active, back after 30 days, for groups of 10 or more', explain: 'The employer sees counts only: how many joined, are active and came back. Never feelings, and never a group under 10; the EU bans inferring staff emotions at work.', features: ['team-report'] },
+        { id: 'e-renew', title: 'Renewal', sees: 'Renew the seats for another year', drop: { text: 'Teams that renew at month 12: not tested yet', label: 'not tested' }, explain: 'Employers renew on proof of use, not on promises. The team report is that proof.', features: ['team-report', 'team-buy'] },
+      ],
+    },
+    {
+      id: 'partner',
+      title: 'Codes and gifts',
+      steps: [
+        { id: 'p-buy', title: 'Partner or gift buyer', sees: 'A hotel, a brand or a friend buys a code', explain: 'Someone else pays for the reach: a partner for its customers, or a person buying a gift.', features: ['codes', 'gift'] },
+        { id: 'p-code', title: 'Code', sees: 'A code in an email, a card or a booking', explain: 'One code system for gifts, partner trials and team seats, built once.', features: ['codes'] },
+        { id: 'p-redeem', title: 'Redeem', sees: 'One page: enter the code, start', drop: { text: 'How many redeem: not tested yet', label: 'not tested' }, explain: 'One page to redeem any code. A code cannot be stacked on a live subscription.', features: ['codes'] },
+        { id: 'p-free', title: 'Free period', sees: 'The app or the creator’s journey, free for a while', explain: 'The receiver uses the app free for the period the code gives.', features: ['free-week', 'help-now', 'data-line'] },
+        { id: 'p-card', title: 'Card on file', sees: 'Add your own card to keep going', drop: { text: 'Redeemers with a card at day 30: not tested yet', label: 'not tested' }, explain: 'The deals that lasted were the ones where the person enters their own card after the free period.', features: ['codes'] },
+        { id: 'p-plus', title: 'Paid plan', sees: 'The paid plan on their own card', explain: 'The receiver pays for the {{paid-plan|paid plan}} themselves.', features: ['pay-after-week', 'gift'] },
+      ],
+    },
+  ]
+}
+
+/** 3. Before and after: round 1’s ticket up front against round 2’s free first week. */
+export function beforeAfter(): { before: BeforeAfterSide; after: BeforeAfterSide } {
+  const n = howNumbers()
+  return {
+    before: {
+      id: 'before',
+      title: 'Ticket paid up front',
+      sub: 'Round 1: pay €19.99, then try',
+      rows: [
+        { value: `${n.t6.ticketTry}`, label: `of ${n.t6.n} would buy the ticket` },
+        { value: `${n.t6.ticketPlus}`, label: `expected to pay, of ${n.t6.n}` },
+        { value: `${n.t7.ticketPlus}`, label: `expected to pay, of ${n.t7.followers} followers` },
+      ],
+      explain: `Round 1’s plan: a €19.99 ticket for the creator’s 8-week journey, paid before anything has helped. In test 6, ${n.t6.ticketTry} of ${n.t6.n} {{simulated|simulated people}} would buy it and about ${n.t6.ticketPlus} would end on the {{paid-plan|paid plan}} (${n.t6.ticket39Plus} at €39). Trust was the top objection (${n.t6.trust} mentions). Among ${n.t7.followers} creator followers in test 7, ${n.t7.ticketTry} would buy the ticket.`,
+      features: [],
+    },
+    after: {
+      id: 'after',
+      title: 'Free first week, then pay',
+      sub: 'Round 2: try free, pay once it helped',
+      rows: [
+        { value: `${n.t6.freeTry}`, label: `of ${n.t6.n} would try the free app` },
+        { value: `${n.t6.freePlus}`, label: `expected to pay, of ${n.t6.n}` },
+        { value: `${n.t7.freePlus}`, label: `expected to pay, of ${n.t7.followers} followers` },
+      ],
+      explain: `Round 2’s plan: the first week free with no card, then the creator’s journey or the {{paid-plan|paid plan}}. The free week itself is not tested yet; the free app is the nearest thing that was. In test 6, ${n.t6.freeTry} of ${n.t6.n} {{simulated|simulated people}} would try it and about ${n.t6.freePlus} would pay; among ${n.t7.followers} creator followers in test 7, ${n.t7.freeTry} would try it. Across 115,000 apps, trials of 17–32 days turn 42.5% into payers, against 25.5% for trials under 4 days.`,
+      features: ['free-week', 'voice-sample', 'pay-after-week', 'refund-window'],
+    },
+  }
+}
+
+export interface BeforeAfterSide {
+  id: string
+  title: string
+  sub: string
+  rows: { value: string; label: string }[]
+  explain: string
+  features: string[]
+}
+
+/** Short feature name for a diagram: the title up to its first comma or colon, quotes dropped. */
+export const shortTitle = (id: string) => (FEATURES.find((f) => f.id === id)?.title ?? id).split(/[,:]/)[0].replace(/[“”]/g, '').trim()

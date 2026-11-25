@@ -4,6 +4,23 @@
 
 > **Round 2 changes the answer's first step.** Build the creator journey first, but with a **free first week**: people pay for the creator's journey or the paid plan after it has helped, not before. Two buyer tests with simulated people found that freemium beat a ticket paid up front in every channel, and that trust, not price, was the main objection. The **self-serve team plan for small employers moves up to second**, because 21 of 60 simulated people would buy if their employer paid. Partner codes and gifting move to third, built as one code system. Read [Round 2](/wiki/b2b2c/round-2) and the [feature list](/wiki/b2b2c/features). The round 1 answer below stands except where round 2 says otherwise.
 
+## The big picture
+
+Creators, employers and partners already have the people. Aurelia gives those people a free start they can trust; they pay once it has helped, and the money is shared with the creator. The same picture, with every box explained, is at the top of the B2B2C report in the admin.
+
+```mermaid
+flowchart LR
+  C[Creators: followers who trust them] -->|followers| A[Aurelia: app, AI sessions, check-ins]
+  E[Employers: staff and a budget] -->|staff, seat fees| A
+  P[Partners and gift buyers] -->|customers, codes| A
+  A -->|free week, sample in the creator's voice, refund to week 4| U[People: followers, staff, gift receivers]
+  U -->|once it has helped| PP[Paid plan or the creator's full journey]
+  PP -.->|money: ticket, seats or paid plan| A
+  A -.->|70% of the ticket, plus a share of paid plans| C
+```
+
+Solid arrows are people and reach; dotted arrows are money.
+
 ## The answer in one paragraph
 
 Aurelia should go to market through people who already have the customer, because buying users with ads does not pay back. The median Health & Fitness app turns 2.9% of installs into payers, which puts a paying subscriber at about $100–170 in media alone. **The best first bet is the business owner's creator cohort, Retreat-in-a-Box, but with redesigned terms.** "Redesign" here means the business model, not the app's screens: the price, the split, how the sessions are made and the box. As specified, it breaks on four numbers:

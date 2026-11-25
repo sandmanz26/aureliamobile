@@ -42,6 +42,69 @@ flowchart LR
   J --> PL
 ```
 
+## How it works, channel by channel
+
+What the person sees at each step, and where people drop off. Numbers marked "test" come from simulated people, not real buyers; "judgement" is a pilot threshold we set; "not tested" is what the pilot has to measure. The admin's B2B2C report draws the same journeys, with every step explained.
+
+**Creator journey, free first week**
+
+```mermaid
+flowchart LR
+  C1[Sees the creator's post] --> C2[Creator page and a 60-second voice sample]
+  C2 --> C3[Free first week in the app, no card]
+  C3 --> C4[Check-ins after each session]
+  C4 --> C5[Pay after week 1: the journey or the paid plan]
+  C5 --> C6[Weeks 2 to 8, live group sessions]
+  C6 --> C7[Graduation: their own words]
+  C7 --> C8[Paid plan]
+  C3 -.-> D3[Test: 9 of 35 followers would not try the free app]
+  C5 -.-> D5[Test: 10 of 35 would pay, 5 maybe]
+  C6 -.-> D6[Judgement: at least 35% active at week 8]
+```
+
+**Team plan**
+
+```mermaid
+flowchart LR
+  E1[HR signs up: 5 to 200 seats with a card] --> E2[One invite link or a code per person]
+  E2 --> E3[Staff start: their own sessions and check-ins]
+  E3 --> E4[Team report: counts only, groups of 10 or more]
+  E4 --> E5[Renewal]
+  E1 -.-> F1[Test: 21 of 60 would use it if work paid]
+  E3 -.-> F3[Measured elsewhere: only 38% of enrolled staff used any tool]
+  E5 -.-> F5[Not tested: teams that renew at month 12]
+```
+
+**Codes and gifts**
+
+```mermaid
+flowchart LR
+  G1[Partner or gift buyer pays for a code] --> G2[Code in an email, a card or a booking]
+  G2 --> G3[Redeem on one page]
+  G3 --> G4[Free period]
+  G4 --> G5[Own card on file]
+  G5 --> G6[Paid plan]
+  G3 -.-> H3[Not tested: how many redeem]
+  G5 -.-> H5[Not tested: card on file at day 30]
+```
+
+## Before and after: ticket up front against a free first week
+
+```mermaid
+flowchart LR
+  subgraph R1[Round 1: ticket paid up front]
+    B1[Pay 19.99 euros, then try] --> B2[2 of 60 would buy the ticket]
+    B2 --> B3[1 expected to pay, of 60]
+  end
+  subgraph R2[Round 2: free first week, then pay]
+    A1[Try free, no card] --> A2[25 of 60 would try the free app]
+    A2 --> A3[17.5 expected to pay, of 60]
+  end
+  R1 -->|the tests rejected paying first| R2
+```
+
+Among 35 creator followers in test 7: 4 expected to pay with the ticket up front, 12.5 with the free app. The free week itself is not tested yet; the free app is the nearest thing that was. Across 115,000 apps, trials of 17–32 days turn 42.5% into payers against 25.5% for trials under 4 days.
+
 ## What the new research found
 
 ### 1. Employers: the small, self-serve tier is still open
@@ -86,15 +149,16 @@ flowchart LR
 ## The phased plan, tied to the pilot gates
 
 ```mermaid
-flowchart TD
-  P0[Phase 0, now, no backend: claims checklist, real quotes rule, data line, ask-my-employer, buyer test of the free-week offer] --> G0{Gate 0}
-  G0 -->|free week beats the free app among followers, 3 creators agree| P1[Phase 1: minimum backend, creator pilot]
+flowchart LR
+  P0[Phase 0, now, no backend: data line, real quotes only, claims checklist, ask my employer] --> G0{Gate 0: free week wins the buyer test, 3 creators agree}
+  G0 -->|pass| P1[Phase 1, creator pilot: free week, Need help now, voice sample, pay after week 1, refund to week 4, creator dashboard]
   G0 -->|fails| R0[Team plan leads instead]
-  P1 --> P1b[Phase 1b, alongside: code system, team plan with 2-3 small employers]
+  P1 --> P1b[Phase 1b, alongside: code system, buy seats online, invite link, team report]
+  P1b --> G1b{More than 38% of seats active in 30 days}
   P1 --> G1{Gate 1: the five pilot numbers}
-  G1 -->|pass| P2[Phase 2: payouts view, live calendar, real scoreboard]
+  G1 -->|pass| P2[Phase 2, repeat: payouts view, live calendar, real scoreboard]
   P2 --> G2{Gate 2: holds across creators}
-  G2 -->|pass| P3[Phase 3: paid-plan share, gifts, aftercare, Indonesia]
+  G2 -->|pass| P3[Phase 3, widen: paid-plan share, gifts, aftercare, Bahasa and rupiah, Indonesian team pack]
 ```
 
 | Phase | When | What is built | Gate |
