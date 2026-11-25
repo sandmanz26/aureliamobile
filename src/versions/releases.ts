@@ -14,6 +14,8 @@
 // BUILD.environment !== 'production'. Since J153 nothing is waiting.
 
 
+import { BUILD } from '../lib/build'
+
 export const RELEASES = {
   /** Figma "Changes" (16906:4947) item 1: one Chapter card + a Review sheet instead of the fanned deck. */
   chapterCard: true,
@@ -39,4 +41,6 @@ export const RELEASES = {
   businessFunnel: true,
   /** Admin → Reports (U116, J167): the Buyer agent report and the Combination report, each with a source graph. On both sites since J173. */
   reports: true,
+  /** Admin → Product lab → Therapeutic map and Healing Map (U131, J183). Staging only. */
+  therapeuticMaps: BUILD.environment !== 'production',
 } as const

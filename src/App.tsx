@@ -90,6 +90,8 @@ const UserJourneyPage = lazy(() => import('./admin/pages/UserJourneyPage').then(
 const BusinessFunnelPage = lazy(() => import('./admin/pages/BusinessFunnelPage').then((m) => ({ default: m.BusinessFunnelPage })))
 const BuyerResultsPage = lazy(() => import('./admin/pages/BuyerResultsPage').then((m) => ({ default: m.BuyerResultsPage })))
 const BuyerAgentReportPage = lazy(() => import('./admin/pages/reports/BuyerAgentReportPage').then((m) => ({ default: m.BuyerAgentReportPage })))
+const TherapeuticMapPage = lazy(() => import('./admin/pages/lab/TherapeuticMapPage').then((m) => ({ default: m.TherapeuticMapPage })))
+const HealingMapPage = lazy(() => import('./admin/pages/lab/HealingMapPage').then((m) => ({ default: m.HealingMapPage })))
 const CostReportPage = lazy(() => import('./admin/pages/reports/CostReportPage').then((m) => ({ default: m.CostReportPage })))
 const ReportsOverviewPage = lazy(() => import('./admin/pages/reports/ReportsOverviewPage').then((m) => ({ default: m.ReportsOverviewPage })))
 const UxFeedbackReportPage = lazy(() => import('./admin/pages/reports/UxFeedbackReportPage').then((m) => ({ default: m.UxFeedbackReportPage })))
@@ -207,6 +209,20 @@ export default function App() {
               <Route path="business-funnel" element={
                 <ModuleGuard module="adminBusinessFunnel">
                   <BusinessFunnelPage />
+                </ModuleGuard>
+              } />
+            )}
+            {RELEASES.therapeuticMaps && (
+              <Route path="therapeutic-map" element={
+                <ModuleGuard module="adminTherapeuticMap">
+                  <TherapeuticMapPage />
+                </ModuleGuard>
+              } />
+            )}
+            {RELEASES.therapeuticMaps && (
+              <Route path="healing-map" element={
+                <ModuleGuard module="adminHealingMap">
+                  <HealingMapPage />
                 </ModuleGuard>
               } />
             )}

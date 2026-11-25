@@ -66,6 +66,13 @@ const NAV: { section: string; icon: LucideIcon; items: NavItem[] }[] = [
       // On both sites since J153 (RELEASES).
       ...(RELEASES.personas ? [{ to: '/admin/personas', label: 'Personas', flag: 'adminPersonas' }] : []),
       ...(RELEASES.businessFunnel ? [{ to: '/admin/business-funnel', label: 'Business funnel', flag: 'adminBusinessFunnel' }] : []),
+      // U131 (J183): staging only (RELEASES).
+      ...(RELEASES.therapeuticMaps
+        ? [
+            { to: '/admin/therapeutic-map', label: 'Therapeutic map', flag: 'adminTherapeuticMap' },
+            { to: '/admin/healing-map', label: 'Healing Map', flag: 'adminHealingMap' },
+          ]
+        : []),
       // Buyer agent results (/admin/buyer-agent) is off the menu since U123; the route stays and Reports links to it.
     ],
   },
