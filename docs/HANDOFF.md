@@ -500,7 +500,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U135**, last J = **J186**, last
+**Numbering as of 17 Nov 2026:** last U = **U135**, last J = **J187**, last
 O = **O56**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -1059,6 +1059,7 @@ history can be read without opening four documents.
 | J181 | 2026-11-25 | Review + code | Review whether the reports are understandable even to a layperson, and fix them | U128 |
 | J182 | 2026-11-25 | Code | UX feedback report from the latest feedback group; drop "what this report says"; a goal on every report; make "many sources → iterations → product" visible; drawers instead of page changes | U129 |
 | J183 | 2026-11-25 | Code + research | Better buyer agent visualisation; therapeutic map and interactive Healing Map; B2B2C research using everything known, with the features to build, in a report | U130, U131, U132 |
+| J187 | 2026-11-26 | Discussion | Owner's AI brain (Product, Wellness, Business): 5 dimensions bad-to-good cost first, therapeutic funnel, feature ranking to MVP targets; AI retreat is an event, so app cost vs retreat cost clarified; DOJO workbook saved in docs/briefs | — |
 | J186 | 2026-11-25 | Code | Report metrics menu: results and quality table, improving or not, every number traceable to a formula | U135 |
 | J185 | 2026-11-25 | Code | User persona v4: more people, mental-state scenarios, wellness condition, age, as real as possible | U134 |
 | J184 | 2026-11-25 | Code | B2B2C needs visuals: a diagram of the idea so nothing is missed | U133 |
