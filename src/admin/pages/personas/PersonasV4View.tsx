@@ -2,6 +2,7 @@ import { Download, LifeBuoy } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { Badge, Button, Panel, inputClass } from '../../components/ui'
 import { AGE_BANDS, PERSONA_COUNT_V4, SCENARIOS, SCENARIO_IDS, SEED_V4, SOURCES, TARGETS, countBy, generatePersonasV4, type Band3, type PersonaV4, type ScenarioId } from '../../data/personasV4'
+import { COND_BANDS, DIMENSIONS, DIMENSION_LABEL, DIMENSION_PLAIN, READINESS, conditionSummary, conditionsV4, issueOf, populationCost, type CondBand, type ConditionV4 } from '../../data/personaConditionV4'
 import { DetailDrawerProvider, useDetail } from '../reports/DetailDrawer'
 import { Term } from '../reports/Term'
 
@@ -14,6 +15,8 @@ import { Term } from '../reports/Term'
 const PAGE = 24
 const BAND_TONE = { mild: 'good', moderate: 'warning', severe: 'critical' } as const
 const BAND_BG: Record<Band3, string> = { mild: 'bg-adm-good', moderate: 'bg-adm-warning', severe: 'bg-adm-critical' }
+const COND_BG: Record<CondBand, string> = { severe: 'bg-adm-critical', moderate: 'bg-adm-s2', mild: 'bg-adm-warning', good: 'bg-adm-good' }
+const cap = (x: string) => x[0].toUpperCase() + x.slice(1)
 const pct = (n: number, d: number) => `${Math.round((n / d) * 1000) / 10}%`
 
 function download(name: string, text: string) {
@@ -113,8 +116,66 @@ function Row({ k, children }: { k: string; children: ReactNode }) {
   )
 }
 
+function ConditionBlock({ p, c }: { p: PersonaV4; c: ConditionV4 }) {
+  const first = p.name.split(' ')[0]
+  return (
+    <section className="flex flex-col gap-8 rounded-12 border border-adm-line p-12" data-testid="condition">
+      <h3 className="text-12 font-semibold text-adm-ink">
+        <Term id="condition">Current condition</Term>: {c.overall} of 100, {c.overallBand}
+      </h3>
+      <p className="text-12 text-adm-ink-2">
+        <Term id="main-need">Main need</Term>: <strong className="font-semibold text-adm-ink">{DIMENSION_LABEL[c.mainNeed].toLowerCase()}</strong>, mostly “{issueOf(c.mainNeed, c.dims[c.mainNeed].issue).label.toLowerCase()}”. In {first}’s words: “{c.goal}”
+      </p>
+      <ul className="flex flex-col gap-6" aria-label="Five dimensions, 0 worst to 100 best">
+        {DIMENSIONS.map((d) => {
+          const x = c.dims[d]
+          return (
+            <li key={d} className="flex flex-col gap-2">
+              <div className="flex justify-between gap-8 text-12">
+                <span className="min-w-0 text-adm-ink">
+                  {DIMENSION_LABEL[d]} <span className="text-adm-muted">· {issueOf(d, x.issue).label.toLowerCase()}</span>
+                </span>
+                <span className="shrink-0 tabular-nums text-adm-muted">
+                  {x.score} → {x.target}
+                </span>
+              </div>
+              <div className="relative h-6 overflow-hidden rounded-full bg-adm-hover">
+                <div className={`h-full rounded-full ${COND_BG[x.band]}`} style={{ width: `${x.score}%` }} />
+                <div className="absolute top-0 h-full w-2 bg-adm-ink" style={{ left: `${Math.min(x.target, 99)}%` }} aria-hidden="true" />
+              </div>
+            </li>
+          )
+        })}
+      </ul>
+      <p className="text-11 text-adm-muted">Bar: where they are now. Dark tick: their target. 0 is worst, 100 best.</p>
+      <dl>
+        <Row k="How long">
+          <Term id="acuity">{c.acuity}</Term>, {c.howLong}; {c.course}
+        </Row>
+        <Row k="Day to day">{c.impact === 'none' ? 'no real effect' : c.impact === 'some' ? 'some effect' : 'a marked effect'} on work, study or seeing people</Row>
+        <Row k="Readiness">
+          <Term id="readiness">{c.readiness}</Term> · <Term id="confidence">confidence</Term> {c.confidence} of 10
+        </Row>
+        <Row k="Support">
+          {c.support === 'alone' ? 'mostly alone' : c.support === 'some' ? 'some people around' : 'strong support'}; help now: {c.help.length ? c.help.join(', ') : 'none'}
+          {c.soughtHelp ? '' : '; has never asked for help'}
+        </Row>
+        <Row k="Copes by">{COPING_TEXT[c.coping]}</Row>
+        <Row k="What helps">{c.helpers.join(', ')}</Row>
+        <Row k="Time">
+          about {c.minutesPerDay} min a day, best {c.bestTime}
+        </Row>
+      </dl>
+      {c.excluded && <p className="text-11 font-medium text-adm-critical">Left out of every offer and of cost: Need help now? comes first.</p>}
+    </section>
+  )
+}
+
+const COPING_TEXT = { avoid: 'avoiding it', distract: 'distracting themselves', talk: 'talking to someone', move: 'moving, exercise', substances: 'coffee or alcohol' } as const
+
 function Profile({ p }: { p: PersonaV4 }) {
   const w = p.wellness
+  const c = conditionsV4().get(p.id)!
   return (
     <div className="flex flex-col gap-12">
       {p.riskFlag && (
@@ -125,6 +186,7 @@ function Profile({ p }: { p: PersonaV4 }) {
           </span>
         </div>
       )}
+      <ConditionBlock p={p} c={c} />
       <section>
         <h3 className="mb-4 text-12 font-semibold text-adm-ink">Why they might try Aurelia</h3>
         <p className="text-12 text-adm-ink-2">{p.mightTry}</p>
@@ -194,6 +256,7 @@ function Card({ p }: { p: PersonaV4 }) {
           numbers: [
             { label: '{{wellness-score}}', value: `${p.wellness.score} (${p.wellness.band})` },
             { label: '{{life-situation}}', value: SCENARIOS[p.scenario].label },
+            { label: '{{main-need}}', value: DIMENSION_LABEL[conditionsV4().get(p.id)!.mainNeed] },
             { label: 'Age', value: String(p.age) },
             { label: 'Country', value: p.country },
           ],
@@ -216,6 +279,74 @@ function Card({ p }: { p: PersonaV4 }) {
         </span>
       )}
     </button>
+  )
+}
+
+function ConditionPanel() {
+  const s = conditionSummary()
+  const cost = populationCost()
+  const n = 1000
+  const topNeed = [...DIMENSIONS].sort((a, b) => s.mainNeed[b] - s.mainNeed[a])[0]
+  return (
+    <Panel title="Current condition" description="How each person is doing right now across five dimensions, scored 0 (worst) to 100 (best). Wellness language, never a diagnosis.">
+      <p className="text-13 text-adm-ink" data-testid="condition-summary">
+        The average <Term id="condition">overall condition</Term> is {s.meanOverall} of 100. The most common <Term id="main-need" /> is {DIMENSION_LABEL[topNeed].toLowerCase()} ({pct(s.mainNeed[topNeed], n)}). {pct(s.readyShare * n, n)} are preparing, acting or keeping up a habit (<Term id="readiness" />). Reaching their targets would cost about ${cost.averageCost.toFixed(2)} a person (Balanced media, stage 1), with the {cost.excluded} people who have a <Term id="risk-flag" /> left out.
+      </p>
+      <div className="grid grid-cols-1 gap-16 md:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-10">
+          <h3 className="text-12 font-semibold text-adm-ink">
+            The <Term id="dimensions" />
+          </h3>
+          {DIMENSIONS.map((d) => (
+            <div key={d} className="flex flex-col gap-4">
+              <div className="flex justify-between gap-8 text-12">
+                <span className="min-w-0 text-adm-ink">
+                  {DIMENSION_LABEL[d]} <span className="text-adm-muted">({DIMENSION_PLAIN[d]})</span>
+                </span>
+                <span className="shrink-0 tabular-nums text-adm-muted">avg {s.meanByDim[d]}</span>
+              </div>
+              <div className="flex h-10 overflow-hidden rounded-full" role="img" aria-label={`${DIMENSION_LABEL[d]}: ${COND_BANDS.map((b) => `${b} ${s.bandsByDim[d][b]}`).join(', ')}`}>
+                {COND_BANDS.map((b) => (
+                  <div key={b} className={COND_BG[b]} style={{ width: `${(s.bandsByDim[d][b] / n) * 100}%` }} />
+                ))}
+              </div>
+            </div>
+          ))}
+          <ul className="flex flex-wrap gap-x-12 gap-y-4 text-11 text-adm-muted">
+            {COND_BANDS.map((b) => (
+              <li key={b} className="flex items-center gap-4">
+                <span className={`size-8 rounded-full ${COND_BG[b]}`} aria-hidden="true" />
+                {cap(b)}
+              </li>
+            ))}
+          </ul>
+          <p className="text-11 text-adm-muted">Severe below 28, moderate 28–49, mild 50–72, good 73 and up: halfway between the Cost report’s quick conditions (15, 40, 60, 85).</p>
+        </div>
+        <div className="flex min-w-0 flex-col gap-16">
+          <div className="flex flex-col gap-8">
+            <h3 className="text-12 font-semibold text-adm-ink">
+              <Term id="main-need">Main need</Term> (the weakest dimension)
+            </h3>
+            <Bars data={DIMENSIONS.map((d) => [DIMENSION_LABEL[d], s.mainNeed[d]] as [string, number]).sort((a, b) => b[1] - a[1])} total={n} />
+          </div>
+          <div className="flex flex-col gap-8">
+            <h3 className="text-12 font-semibold text-adm-ink">
+              <Term id="readiness">Readiness to change</Term>
+            </h3>
+            <Bars data={READINESS.map((r) => [cap(r), s.readiness[r]] as [string, number])} total={n} />
+          </div>
+          <div className="flex flex-col gap-8">
+            <h3 className="text-12 font-semibold text-adm-ink">
+              How long (<Term id="acuity">acuity</Term>)
+            </h3>
+            <Bars data={(['acute', 'ongoing', 'long-standing'] as const).map((a) => [`${cap(a)} (${a === 'acute' ? 'weeks' : a === 'ongoing' ? 'months' : 'a year or more'})`, s.acuity[a]] as [string, number])} total={n} />
+          </div>
+        </div>
+      </div>
+      <p className="text-11 text-adm-muted">
+        Worked out from each person’s existing facts (sleep, stress, mood and worry bands, life situation, pain, caring, home) with our own rules. The issues come from the DOJO workbook’s issue-to-wellness pairs. The buyer agent and the cost model read this same profile.
+      </p>
+    </Panel>
   )
 }
 
@@ -242,11 +373,14 @@ function View() {
   const [scenario, setScenario] = useState('')
   const [band, setBand] = useState('')
   const [riskOnly, setRiskOnly] = useState(false)
+  const [need, setNeed] = useState('')
+  const [ready, setReady] = useState('')
+  const conds = useMemo(() => conditionsV4(), [])
   const [page, setPage] = useState(0)
 
   const shown = useMemo(
-    () => all.filter((p) => (!region || p.region === region) && (!age || p.ageBand === age) && (!scenario || p.scenario === scenario) && (!band || p.wellness.band === band) && (!riskOnly || p.riskFlag)),
-    [all, region, age, scenario, band, riskOnly],
+    () => all.filter((p) => (!region || p.region === region) && (!age || p.ageBand === age) && (!scenario || p.scenario === scenario) && (!band || p.wellness.band === band) && (!riskOnly || p.riskFlag) && (!need || conds.get(p.id)!.mainNeed === need) && (!ready || conds.get(p.id)!.readiness === ready)),
+    [all, conds, region, age, scenario, band, riskOnly, need, ready],
   )
   const pages = Math.max(1, Math.ceil(shown.length / PAGE))
   const cur = Math.min(page, pages - 1)
@@ -284,7 +418,7 @@ function View() {
           {PERSONA_COUNT_V4.toLocaleString('en-US')} made-up people, the same on every machine (start number {SEED_V4}). Their ages, countries, phones, sleep, stress and mood follow the figures in “Where these numbers come from” below. Each has a{' '}
           <Term id="life-situation" />, a starting <Term id="wellness-score" /> and a short story. They are for research by AI, not evidence.
         </span>
-        <Button size="sm" icon={<Download size={13} />} onClick={() => download('aurelia-personas-v4.json', JSON.stringify(all, null, 2))}>
+        <Button size="sm" icon={<Download size={13} />} onClick={() => download('aurelia-personas-v4.json', JSON.stringify(all.map((p) => ({ ...p, condition: conds.get(p.id) })), null, 2))}>
           All 1,000 as JSON
         </Button>
       </div>
@@ -327,6 +461,8 @@ function View() {
         </Panel>
       </div>
 
+      <ConditionPanel />
+
       <Panel title="This set against the figures it aims for" description="Each row: the figure we aimed for, what the 1,000 came out at, and whether the figure was measured or is our own assumption.">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[520px] text-12">
@@ -353,11 +489,13 @@ function View() {
       </Panel>
 
       <Panel title="All 1,000 people" description={`Filter, then select a card for the full profile. ${shown.length} match.`}>
-        <div className="grid grid-cols-2 gap-8 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
           <Select label="Region" value={region} onChange={set(setRegion)} options={regions.map((r) => [r, r])} />
           <Select label="Age" value={age} onChange={set(setAge)} options={AGE_BANDS.map((b) => [b, b])} />
           <Select label="Life situation" value={scenario} onChange={set(setScenario)} options={SCENARIO_IDS.map((id: ScenarioId) => [id, SCENARIOS[id].label])} />
           <Select label="Wellness band" value={band} onChange={set(setBand)} options={[['mild', 'Mild'], ['moderate', 'Moderate'], ['severe', 'Severe']]} />
+          <Select label="Main need" value={need} onChange={set(setNeed)} options={DIMENSIONS.map((d) => [d, DIMENSION_LABEL[d]])} />
+          <Select label="Readiness" value={ready} onChange={set(setReady)} options={READINESS.map((r) => [r, cap(r)])} />
           <label className="flex items-center gap-6 self-end pb-6 text-12 text-adm-ink-2">
             <input
               type="checkbox"

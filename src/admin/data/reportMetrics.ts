@@ -10,6 +10,7 @@ import { DEFAULT_DECISIONS } from './businessFunnel'
 import { ASSUME, DEFAULT_GOAL, MEASURED_2025, PERSONAL_FACTOR, PRESETS, STAGES, adherenceFactor, chapterCost, conditionFactor, lengthFactor, presetInputs, type Media, type Stage } from './costModel'
 import { generatePersonas, incoherence, type Persona } from './personas'
 import { TARGETS, generatePersonasV4, type PersonaV4 } from './personasV4'
+import { DIMENSIONS, DIMENSION_LABEL, DIMENSION_WEIGHT, conditionForCost, conditionIncoherence, conditionSummary, conditionsV4, populationCost, type Dimension } from './personaConditionV4'
 import { buyerSummary, combinationSummary, costSummary, uxFeedbackSummary, type ReportSummary } from './reportSummaries'
 import { CARD, OFFERS, OUTCOMES, PLUS_NET_YEAR1, VAT } from './retreatFunnel'
 import { buildParticipants, type Participant } from './study'
@@ -743,6 +744,83 @@ function personaV4Metrics(): MetricDef[] {
   ]
 }
 
+/* ----------------------------------------------- Personas v4: current condition */
+
+function conditionMetrics(): MetricDef[] {
+  const src = 'src/admin/data/personaConditionV4.ts'
+  const people = () => generatePersonasV4()
+  const cond = (p: PersonaV4) => conditionsV4().get(p.id)!
+  const shown = 'Personas, set v4: Current condition'
+  const dimMean = (d: Dimension): MetricDef => ({
+    id: `personas-v4-cond-${d}`, report: 'personas', label: `${DIMENSION_LABEL[d]} score, average · Persona set v4`, unit: 'number', good: 'up',
+    formula: `Mean of the ${d} score (0–100, 0 worst) over all 1,000 people.`, shownAt: shown, source: src,
+    displayed: () => conditionSummary().meanByDim[d], tolerance: 0.05,
+    compute: () => {
+      const ps = people()
+      const sum = ps.reduce((t, p) => t + cond(p).dims[d].score, 0)
+      return { value: sum / ps.length, n: ps.length, inputs: [{ label: 'People', value: `${ps.length}`, source: src }, { label: `Sum of ${d} scores`, value: `${sum}`, source: 'conditionOf()' }], steps: [`${sum} ÷ ${ps.length} = ${(sum / ps.length).toFixed(1)}.`] }
+    },
+  })
+  return [
+    ...DIMENSIONS.map(dimMean),
+    {
+      id: 'personas-v4-cond-overall', report: 'personas', label: 'Overall condition, average · Persona set v4', unit: 'number', good: 'up',
+      formula: `Overall = ${DIMENSIONS.map((d) => `${DIMENSION_WEIGHT[d]} × ${d}`).join(' + ')} per person (rounded), then the mean over 1,000.`, shownAt: shown, source: src,
+      displayed: () => conditionSummary().meanOverall, tolerance: 0.05,
+      compute: () => {
+        const ps = people()
+        const sum = ps.reduce((t, p) => t + cond(p).overall, 0)
+        return { value: sum / ps.length, n: ps.length, inputs: [{ label: 'People', value: `${ps.length}`, source: src }, { label: 'Sum of overall scores', value: `${sum}`, source: 'overallOf()' }], steps: [`Weighted overall per person, summed: ${sum}.`, `${sum} ÷ ${ps.length} = ${(sum / ps.length).toFixed(1)}.`] }
+      },
+    },
+    {
+      id: 'personas-v4-cond-main-physical', report: 'personas', label: 'Main need is physical · Persona set v4', unit: 'share', good: 'none',
+      formula: 'People whose weakest dimension is physical ÷ 1,000 (ties go to the earlier of mental, emotional, relational, spiritual, physical).', shownAt: shown, source: src,
+      displayed: () => conditionSummary().mainNeed.physical / 1000,
+      compute: () => {
+        const ps = people()
+        const counts = DIMENSIONS.map((d) => [d, ps.filter((p) => cond(p).mainNeed === d).length] as const)
+        const k = counts.find(([d]) => d === 'physical')![1]
+        return { value: k / ps.length, n: ps.length, inputs: counts.map(([d, n]) => ({ label: `Main need ${d}`, value: `${n}`, source: 'mainNeedOf()' })), steps: [`${k} ÷ ${ps.length} = ${pctText(k / ps.length)}.`] }
+      },
+    },
+    {
+      id: 'personas-v4-cond-ready', report: 'personas', label: 'Ready to change (preparing, acting or maintaining) · Persona set v4', unit: 'share', good: 'up',
+      formula: 'People at the preparing, acting or maintaining stage ÷ 1,000.', shownAt: shown, source: src,
+      displayed: () => conditionSummary().readyShare,
+      compute: () => {
+        const ps = people()
+        const k = ps.filter((p) => ['preparing', 'acting', 'maintaining'].includes(cond(p).readiness)).length
+        return { value: k / ps.length, n: ps.length, inputs: [{ label: 'People', value: `${ps.length}`, source: src }, { label: 'Preparing, acting or maintaining', value: `${k}`, source: 'readinessOf()' }], steps: [`${k} ÷ ${ps.length} = ${pctText(k / ps.length)}.`] }
+      },
+    },
+    {
+      id: 'personas-v4-cond-cost', report: 'personas', label: 'Average cost per person to reach the target · Persona set v4', unit: 'usd', good: 'down',
+      formula: 'Per person: chapters = main need’s costModel.goal() chapters + 0.5 × the other dimensions’; cost = chapters × the Balanced chapter cost at stage 1. Mean over people without a risk flag.', shownAt: `${shown} (not yet on the Cost report)`, source: src,
+      displayed: () => populationCost().averageCost, tolerance: 0.01,
+      compute: () => {
+        const rows = people().filter((p) => !p.riskFlag).map((p) => ({ p, c: conditionForCost(p, cond(p)) }))
+        const sum = rows.reduce((t, r) => t + r.c.costPerPerson, 0)
+        return {
+          value: sum / rows.length, n: rows.length,
+          inputs: [{ label: 'People counted (no risk flag)', value: `${rows.length}`, source: src }, { label: 'Left out (risk flag)', value: `${people().length - rows.length}`, source: 'personasV4.ts riskFlag' }, { label: 'Sum of cost per person', value: `$${sum.toFixed(2)}`, source: 'conditionForCost()' }],
+          steps: [`Sum $${sum.toFixed(2)} ÷ ${rows.length} people = $${(sum / rows.length).toFixed(2)}.`],
+          breakdown: { title: 'First 25 people', columns: ['Persona', 'Main need', 'Chapters', 'Cost'], rows: rows.slice(0, 25).map(({ p, c }) => ({ id: p.id, cells: [p.id, c.mainNeed, `${c.chapters}`, `$${c.costPerPerson.toFixed(2)}`] })) },
+        }
+      },
+    },
+    {
+      id: 'personas-v4-cond-broken', report: 'personas', label: 'Conditions that contradict their person · Persona set v4', unit: 'count', good: 'down',
+      formula: 'People whose condition fails a coherence rule (issue fits the person, bands, caps, safety, readiness, coping). Tests hold it at zero.', shownAt: shown, source: src,
+      displayed: () => conditionSummary().incoherent,
+      compute: () => {
+        const bad = people().filter((p) => conditionIncoherence(p, cond(p)).length)
+        return { value: bad.length, n: people().length, inputs: [{ label: 'People checked', value: `${people().length}`, source: src }, { label: 'With a contradiction', value: `${bad.length}`, source: 'conditionIncoherence()', ids: bad.map((p) => p.id) }], steps: [`Check each of the ${people().length} conditions; ${bad.length} contradict their person.`] }
+      },
+    },
+  ]
+}
+
 /* --------------------------------------------------------------- Combination */
 
 function combinationMetrics(week: number): MetricDef[] {
@@ -1075,7 +1153,7 @@ function uxMetrics(week: number): MetricDef[] {
 /* ------------------------------------------------------------ The registry */
 
 export function metricDefs(week = 1): MetricDef[] {
-  return [...buyerMetrics(), ...typedMetrics(), ...personaV4Metrics(), ...combinationMetrics(week), ...costMetrics(), ...b2b2cMetrics(), ...retreatMetrics(), ...uxMetrics(week)]
+  return [...buyerMetrics(), ...typedMetrics(), ...personaV4Metrics(), ...conditionMetrics(), ...combinationMetrics(week), ...costMetrics(), ...b2b2cMetrics(), ...retreatMetrics(), ...uxMetrics(week)]
 }
 
 /** Audits one metric: displayed against recomputed, plus its sanity checks. */

@@ -45,6 +45,12 @@ export const GLOSSARY = {
   'like-for-like': { term: 'Like for like', plain: 'Both numbers measure the same offer. Only then is a rise or fall a trend.' },
   bridge: { term: 'Bridge chart', plain: 'Starts at the old number, adds each cause as a step up or down, and ends at the new number.' },
   'risk-flag': { term: 'Risk flag', plain: 'The person may be in danger, for example very low mood with thoughts of self-harm. Aurelia shows Need help now? and never sells to them.' },
+  condition: { term: 'Current condition', plain: 'How a person is doing right now across five areas of life, each scored 0–100. Higher is better. It is never a diagnosis.' },
+  dimensions: { term: 'Five dimensions', plain: 'The five areas the business owner named: mental, emotional, relational (people), spiritual (meaning and purpose) and physical.' },
+  'main-need': { term: 'Main need', plain: 'The weakest of a person’s five dimensions. It is what Aurelia would work on first.' },
+  readiness: { term: 'Readiness to change', plain: 'How close a person is to acting: not yet, thinking, preparing, acting or maintaining. From the stages-of-change model.' },
+  confidence: { term: 'Confidence to change', plain: 'How sure a person is that they can change things, from 1 to 10. Psychologists call it self-efficacy.' },
+  acuity: { term: 'Acute, ongoing or long-standing', plain: 'How long it has been going on. Acute means weeks, ongoing means months, long-standing means a year or more.' },
 } satisfies Record<string, GlossaryEntry>
 
 export type TermId = keyof typeof GLOSSARY
