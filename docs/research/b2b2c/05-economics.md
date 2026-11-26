@@ -134,9 +134,9 @@ Every input, with its source:
 | **Aurelia 40%, before AI** | **6.45** |
 | AI, shared creator script (about $0) | 6.45 |
 | AI, budget tier (24 × $0.10 = $2.40) | 4.05 |
-| AI, middle tier (24 × $0.13 ≈ $3.02) | 3.43 |
+| AI, middle tier (24 × $0.13 = $3.12) | 3.33 |
 | AI, premium tier (24 × $0.55 = $13.20) | −6.75 |
-| Optional physical box paid by Aurelia, middle AI ($14–28) | −10.57 to −24.57 |
+| Optional physical box paid by Aurelia, middle AI ($14–28) | −10.67 to −24.67 |
 
 VAT sensitivity (estimate): at 17% VAT Aurelia's pre-AI share is €6.62; at 27% it is €6.08. With a card fee of about 3% + €0.30 instead, it is €6.30.
 
@@ -144,10 +144,10 @@ VAT sensitivity (estimate): at 17% VAT Aurelia's pre-AI share is €6.62; at 27%
 
 | Channel | Before AI | Shared script | Budget | Middle | Premium |
 | --- | --- | --- | --- | --- | --- |
-| Web, split on net | 6.45 | 6.45 | 4.05 | 3.43 | −6.75 |
-| Web, creator paid 60% of gross (€11.99) | 4.13 | 4.13 | 1.73 | 1.11 | −9.07 |
-| In-app, 15% store fee | 5.66 | 5.66 | 3.26 | 2.64 | −7.54 |
-| In-app, 30% store fee | 4.66 | 4.66 | 2.26 | 1.64 | −8.54 |
+| Web, split on net | 6.45 | 6.45 | 4.05 | 3.33 | −6.75 |
+| Web, creator paid 60% of gross (€11.99) | 4.13 | 4.13 | 1.73 | 1.01 | −9.07 |
+| In-app, 15% store fee | 5.66 | 5.66 | 3.26 | 2.54 | −7.54 |
+| In-app, 30% store fee | 4.66 | 4.66 | 2.26 | 1.54 | −8.54 |
 
 The creator's share is €9.68 on the web, €8.50 in-app at 15% and €7.00 at 30%. A full cohort of 200 web tickets pays the creator about €1,936 (estimate). See [Creators and cohorts](/wiki/b2b2c/creators).
 
@@ -163,7 +163,7 @@ Refunds are not in this table. With a Maven-style refund until the halfway point
 | Graduate → Plus | 15% | 30% | 30% | Spec value 30%; low is a sensitivity case (estimate). For reference, H&F trial-to-paid is 37.7% ([RevenueCat 2026][rc26]) |
 | Refunds | 10% | 7.5% | 5% | Estimate (5–10% placeholder) |
 | Aurelia ticket net | €6.45 | €6.45 | €6.45 | Model 1, web, split on net |
-| AI cost per buyer | $3.02 | $3.02 | $3.02 | Model 1, middle tier; assumes every buyer generates all 24 sessions, an upper bound |
+| AI cost per buyer | $3.12 | $3.12 | $3.12 | Model 1, middle tier; assumes every buyer generates all 24 sessions, an upper bound |
 | Plus net revenue, year 1, annual plan | $70.83 | $70.83 | $70.83 | Estimate: $100 ÷ 1.2 VAT × 0.85 after a 15% store fee |
 
 | Per 100 buyers | Low | Middle | Spec |
@@ -174,19 +174,19 @@ Refunds are not in this table. With a Maven-style refund until the halfway point
 | **Plus conversion per buyer** | **3%** | **10.5%** | **23%** |
 | Plus conversion per graduate | 15% | 30% | 30% |
 | Aurelia ticket net after refunds | €581 | €597 | €613 |
-| AI cost (100 × $3.02, at $1 = €1) | −€302 | −€302 | −€302 |
-| **Aurelia ticket margin after AI** | **€278** | **€294** | **€310** |
+| AI cost (100 × $3.12, at $1 = €1) | −€312 | −€312 | −€312 |
+| **Aurelia ticket margin after AI** | **€269** | **€285** | **€301** |
 | Plus net revenue, year 1, if all choose annual | $212 | $744 | $1,626 |
-| AI cost per Plus subscriber, covered by the ticket | About $101 | About $29 | About $13 |
+| AI cost per Plus subscriber, covered by the ticket | About $104 | About $30 | About $14 |
 
 All figures in this table are estimates built from the inputs above.
 
-**At full scale** (50 creators × 200 = 10,000 buyers, which assumes every cohort fills, unlikely): 300, 1,050 or 2,295 Plus subscribers, and a ticket margin after AI of about €27,800–31,000 (estimate).
+**At full scale** (50 creators × 200 = 10,000 buyers, which assumes every cohort fills, unlikely): 300, 1,050 or 2,295 Plus subscribers, and a ticket margin after AI of about €26,900–30,100 (estimate).
 
 What the funnel shows:
 
 - **The spec's headline is per graduate.** Per buyer it is 23%, and only if 76.5% graduate. The middle case is less than half of that.
-- **The ticket margin barely moves between scenarios** (€278–310). Plus conversion is what changes the outcome.
+- **The ticket margin barely moves between scenarios** (€269–301). Plus conversion is what changes the outcome.
 - **Even the low case acquires Plus subscribers at no media cost,** because the ticket margin covers the AI. That compares with about $100–170 of media per paying subscriber from paid ads (estimate).
 - **Plus AI cost after the retreat is not deducted here.** At 4 sessions a month it is about $5–26 a year per subscriber (estimate).
 - **The premium voice tier turns every case negative** on the ticket: −€6.75 per buyer, or about −€710 to −€740 per 100 buyers after refunds (100 × $13.20 of AI against €581–613 of ticket net), before any Plus revenue.

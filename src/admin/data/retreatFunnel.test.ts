@@ -10,7 +10,7 @@ describe('retreat funnel', () => {
     expect(t.net).toBeCloseTo(16.13, 2)
     expect(t.creator).toBeCloseTo(9.68, 2)
     expect(t.aurelia).toBeCloseTo(6.45, 2)
-    expect(t.margin).toBeCloseTo(-10.57, 2) // middle AI tier and the $14 box, as on the wiki
+    expect(t.margin).toBeCloseTo(-10.67, 2) // middle AI tier and the $14 box, as on the wiki
   })
 
   it('matches Model 2 per 100 buyers (middle AI, no box)', () => {
@@ -20,7 +20,7 @@ describe('retreat funnel', () => {
     const spec = cohort(noBox, outcome('spec'), 100)
     expect([low.plus, mid.plus, spec.plus].map((n) => Math.round(n * 100) / 100)).toEqual([3, 10.5, 22.95])
     // The wiki rounds the per-ticket share to €6.45 first, so allow €1.
-    for (const [c, wiki] of [[low, 278], [mid, 294], [spec, 310]] as const) expect(Math.abs(c.aureliaTicket - wiki)).toBeLessThanOrEqual(1)
+    for (const [c, wiki] of [[low, 269], [mid, 285], [spec, 301]] as const) expect(Math.abs(c.aureliaTicket - wiki)).toBeLessThanOrEqual(1)
   })
 
   it('makes the redesign profitable on the ticket where the spec is not', () => {

@@ -41,7 +41,7 @@ describe('report metrics', () => {
 
   it('lists the mismatches it found, each with both numbers', () => {
     const mism = rows.filter((r) => r.quality === 'mismatch')
-    expect(mism.map((r) => r.def.id)).toEqual(['retreat-ai-spec'])
+    expect(mism.map((r) => r.def.id)).toEqual([])
     for (const r of mism) expect(r.checks[0].text).toMatch(/Shown .* but the data gives/)
   })
 

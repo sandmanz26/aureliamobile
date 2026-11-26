@@ -53,7 +53,7 @@ export const OFFERS: Offer[] = [
     price: 19.99,
     creatorShare: 0.6,
     creatorPlusShare: 0,
-    aiPerBuyer: 3.02,
+    aiPerBuyer: 3.12,
     aiNote: '24 personalised sessions, middle voice tier (24 × $0.13)',
     boxPerBuyer: 14,
     channel: 'web',
