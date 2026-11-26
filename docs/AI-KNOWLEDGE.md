@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J187** · updated 25 Nov 2026
+**Covers up to J188** · updated 25 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
@@ -134,6 +134,7 @@ reach that repository yet (O33).
 
 ## 6 · Positions taken (and why), newest first
 
+- **Every business-owner ask lives in `docs/briefs/EUGENE-CONTEXT.md` §0 (J188)**: add each new chat there and as a brief file the same day; the owner gets confused by long chats and wants nothing lost.
 - **"AI retreat" is a physical event (J187).** All retreat/B2B2C economics so far modelled a digital cohort; event costs are not in them. DOJO workbook (`docs/briefs/2026-11-26-dojo-objective-learning.xlsx`) is the therapeutic KB: VES chakras/meridians, ~170 DOJO concepts, ~620 duals, causal layers skill/habit/mood.
 - **Report metrics (U135) recomputes every headline number from raw data; a new report number must be added there with its formula.** Known open: retreat AI cost 3.02 vs $3.12, priceAnswers WTP scaling.
 - **Persona set v4 (U134) is the default; gen 1/2 stay byte-identical** so buyer runs 1–7 reproduce. v4 risk-flagged people (2.5%) are never marketed to. Source figures are from model knowledge and need a link check.

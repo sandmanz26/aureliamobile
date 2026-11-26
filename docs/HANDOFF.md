@@ -500,7 +500,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U135**, last J = **J187**, last
+**Numbering as of 17 Nov 2026:** last U = **U136**, last J = **J188**, last
 O = **O56**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -981,6 +981,7 @@ history can be read without opening four documents.
 | U130 | `9a6c520` | 2026-11-25 | Buyer agent report made visual. It has funnels per test (5, 6, 7), a people grid (one mark per simulated person, which opens a drawer), a who-says-yes heat map, a price ladder against $10, ranked reasons for no with quotes, a slope chart of what moved people, and a cleaner trend across tests. | [patch](update-log/patches/U130-9a6c520.patch) |
 | U131 | `1634d0c` | 2026-11-25 | Product lab, staging only (`RELEASES.therapeuticMaps`). The **Therapeutic map** shows the Product, Business and Wellness triangle with targets, the 7-step sleep process and five worlds. The **Healing Map** has three rings (9 bad states, 14 building blocks, 9 good states) and 45 links: 36 design samples, 9 research-cited, 0 learned. It has filters, zoom and a drawer. | [patch](update-log/patches/U131-1634d0c.patch) |
 | U132 | `542ade2` | 2026-11-25 | B2B2C round 2. It adds 28 new web sources and the buyer tests, and re-ranks the channels: creator journey with a free first week, then a self-serve team plan, then codes and gifting. It lists 22 features (10 Now), on wiki pages round-2 and features and in Reports → B2B2C report (a feature board with a drawer). | [patch](update-log/patches/U132-542ade2.patch) |
+| U136 | `45b42be` | 2026-11-26 | Retreat spec AI cost per buyer $3.12 (24 × $0.13), not 3.02: retreat model, wiki Unit economics (middle tier €3.33, margins €269/285/301 per 100), tests. Report metrics now shows no mismatch. | [patch](update-log/patches/U136-45b42be.patch) |
 | U135 | `689207d` | 2026-11-25 | Report metrics (staging only): 70 headline numbers from every report re-derived from raw data (personas, agent answers, cost parts), with trend vs previous iteration, quality (65 consistent, 1 mismatch, 4 assumptions, 18 warnings), drawer with formula, inputs, worked calculation and per-persona breakdown. | [patch](update-log/patches/U135-689207d.patch) |
 | U134 | `41455ab` | 2026-11-25 | Persona set v4: 1,000 seeded people with cited age/sex/country, sleep, stress, low-mood and anxiety screening bands, 15 life situations, starting wellness score, 25 risk-flagged routed to Need help now. Personas page switch (v4 default), charts, filters, drawer cards. Gen 1/2 unchanged. | [patch](update-log/patches/U134-41455ab.patch) |
 | U133 | `3b5d530` | 2026-11-25 | B2B2C "How it works": the big picture (who, people flow, money and trust), a journey per channel (creator with a free week, team plan, codes and gifts) with labelled drop-offs, before against after (ticket up front against a free week), and phases with gates. 44 boxes open the drawer. Matching mermaid diagrams in wiki summary and round 2. | [patch](update-log/patches/U133-3b5d530.patch) |
@@ -1059,6 +1060,7 @@ history can be read without opening four documents.
 | J181 | 2026-11-25 | Review + code | Review whether the reports are understandable even to a layperson, and fix them | U128 |
 | J182 | 2026-11-25 | Code | UX feedback report from the latest feedback group; drop "what this report says"; a goal on every report; make "many sources → iterations → product" visible; drawers instead of page changes | U129 |
 | J183 | 2026-11-25 | Code + research | Better buyer agent visualisation; therapeutic map and interactive Healing Map; B2B2C research using everything known, with the features to build, in a report | U130, U131, U132 |
+| J188 | 2026-11-26 | Code | Use $3.12; keep every business-owner ask and file so nothing is lost; say briefly what the AI brain update changes and what can be promised | U136 |
 | J187 | 2026-11-26 | Discussion | Owner's AI brain (Product, Wellness, Business): 5 dimensions bad-to-good cost first, therapeutic funnel, feature ranking to MVP targets; AI retreat is an event, so app cost vs retreat cost clarified; DOJO workbook saved in docs/briefs | — |
 | J186 | 2026-11-25 | Code | Report metrics menu: results and quality table, improving or not, every number traceable to a formula | U135 |
 | J185 | 2026-11-25 | Code | User persona v4: more people, mental-state scenarios, wellness condition, age, as real as possible | U134 |

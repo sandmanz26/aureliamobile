@@ -134,6 +134,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | J181 | 2026-11-25 | Review + code | Review whether the reports are understandable even to a layperson, and fix them | U128 |
 | J182 | 2026-11-25 | Code | UX feedback report from the latest feedback group; drop "what this report says"; a goal on every report; make "many sources → iterations → product" visible; drawers instead of page changes | U129 |
 | J183 | 2026-11-25 | Code + research | Better buyer agent visualisation; therapeutic map and interactive Healing Map; B2B2C research using everything known, with the features to build, in a report | U130, U131, U132 |
+| J188 | 2026-11-26 | Code | Use $3.12; keep every business-owner ask and file so nothing is lost; say briefly what the AI brain update changes and what can be promised | U136 |
 | J187 | 2026-11-26 | Discussion | Owner's AI brain (Product, Wellness, Business): 5 dimensions bad-to-good cost first, therapeutic funnel, feature ranking to MVP targets; AI retreat is an event, so app cost vs retreat cost clarified; DOJO workbook saved in docs/briefs | — |
 | J186 | 2026-11-25 | Code | Report metrics menu: results and quality table, improving or not, every number traceable to a formula | U135 |
 | J185 | 2026-11-25 | Code | User persona v4: more people, mental-state scenarios, wellness condition, age, as real as possible | U134 |
@@ -2237,6 +2238,10 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 ### J183 — Visuals, maps, B2B2C round 2
 - **Done:** U130, U131, U132.
 - **Key finding of round 2:** lead with a free first week, then charge. Trust beats price as the barrier, and a self-serve team plan comes second.
+
+### J188 — $3.12, and nothing of his lost
+- **Done (U136).** Retreat AI cost $3.12 everywhere. Chat of 25 Nov transcribed to `docs/briefs/2026-11-25-chat-ai-brain.md`; `EUGENE-CONTEXT.md` gains §0, one list of every ask with status, and rows 40–41.
+- **Proposed:** AI Brain v1, steps 1–5 (5 dimensions, therapeutic funnel, product/business prediction, brain board with weekly report, backend follows). Waiting on go-ahead.
 
 ### J187 — AI brain and the DOJO workbook
 - **Answered.** Cost report is app cost (AI per session per flip); the retreat funnel modelled a digital 8-week cohort, not a physical event. Proposed AI Brain v1 in 4 steps (5 dimensions, therapeutic funnel, product/business prediction, brain board). **Waiting on:** Gemini link, event retreat details, go-ahead.

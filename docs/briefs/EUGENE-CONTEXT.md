@@ -15,6 +15,36 @@
 
 ---
 
+## 0. Everything he has asked, one list (keep this current)
+
+*Every ask from his chats and files, newest first, with where it stands. If a new chat adds an ask, add a line here and a row in §3 the same day. Statuses: done, on staging, planned, waiting on him, open.*
+
+| # | Ask | From | Status |
+| --- | --- | --- | --- |
+| A1 | AI brain: Product, Wellness, Business, each with metrics, MVP targets and a prediction model, connected | row 40 | planned (step 3–4) |
+| A2 | 5 dimensions × top 10 issues, cost of bad to good each, baseline then real figures | rows 39–40 | planned (step 1, first) |
+| A3 | Bad-to-good slider dynamics for every scenario, not only sleep | row 40 | planned (step 1) |
+| A4 | Therapeutic funnel in Product lab (next to user journey and business funnel) | rows 39–40 | planned (step 2); Therapeutic map and Healing Map on staging (U131) |
+| A5 | Every feature ranked against MVP targets; buyer agents populate the ranking; "x% chance to reach targets if x,y,z ship" | row 40 | planned (step 4) |
+| A6 | Backend follows product: endpoints derived from the flows | row 40 | planned (step 5); API contract v2 exists |
+| A7 | Weekly summary report to him | row 40 | planned (step 4) |
+| A8 | AI retreat as an event: cost it | 26 Nov clarification | waiting on event details |
+| A9 | Cost of moving bad to good across text, voice, music, image, video; cost down vs impact up | row 37 | on staging and production (Cost report) |
+| A10 | Reports with sources, summary first | rows 37–39 | done (Reports, Report metrics on staging) |
+| A11 | B2B2C features as an HTML draft with diagrams | J184 | done (artifact, shared by the owner) |
+| A12 | Healing Map ("the math of healing") | row 38 | on staging (U131); citations to verify |
+| A13 | Competitor research Calm, Headspace, Waking Up (G) | row 37 | open |
+| A14 | Google Analytics against our admin (H) | row 38 | open |
+| A15 | Wiki v2 unified knowledge base (I) | row 37 | open |
+| A16 | Make the icon correct (J) | row 38 | open, unclear which icon |
+| A17 | His thesis (meta-AI, $1 per flip floor) in the wiki (K) | row 37 | open |
+| A18 | Insight Timer quick wins as an app version | row 38 | needs permission to change mobile |
+| A19 | Feature lock so the final API can be planned | J164 | open (O54) |
+| A20 | The 10 metrics approved and shown | row 31 | open (O46) |
+| A21 | Retreat-in-a-Box questions; B2B2C Phase 0 decisions | rows 30, 35 | waiting on him (O45, O49) |
+
+---
+
 ## 1. Who Eugene is and how to read him
 
 **Role.** Co-founder and business lead of Aurelia. The records name him differently: "lead or founder" (AI-KNOWLEDGE §2), "Owner / stakeholder" (HANDOFF §1), "eugene (owner)" and "client / eugene" in the owner's own messages (13 Nov, 18 Nov). He decides on product direction and commercial model; the session owner runs the build day to day. In the user-journey walkthrough (J123) he is the one who **decides**, the PM owns, design and content read.
@@ -114,8 +144,10 @@ Also: investor visuals (wellness refinery, TeraPhenoms, ping-pong, the Chronal R
 - a v2 unified wiki and admin knowledge base.
 
 Also: his "mathematical inevitability" thesis (meta-AI, momondo of AI, 5B state-flips, $1 per flip floor); the "MVP, Causal AI & Admin Spec" (simulated stages 42→32→22 chapters, $4.98→$0.58 per flip); the 2025 "AI vision"; the old admin's cost analytics (€40.27 across 5 media). "Pls Prio all these tasks today" | `docs/briefs/2026-11-24-cost-causal-ai-chat-part1.md`, `2026-11-24-mvp-causal-ai-admin-spec.pdf`, `2025-ai-vision-aurelia.pdf` | J168 | **received, more parts coming**; Gemini "chat nr 2" = the spec PDF (J171) |
+| 40 | 2026-11-25 19.05–23.19 | **The AI brain.** 5 dimensions (mental, emotional, relational, spiritual, physical): top 10 issues each and the cost of moving bad to good, as a baseline adjusted by real figures ("our golden standard"); connect to the bad-to-good slider graph for every scenario; a **therapeutic funnel in Product lab**; Product, Wellness and Business each with core metrics, MVP targets and a prediction model "in the same manner as wellness", talking to each other like departments; every update ranked against the MVP targets, buyer agents populating the feature ranking; backend follows by reverse engineering; weekly summary as a report. "Use our time and compute wisely" | `docs/briefs/2026-11-25-chat-ai-brain.md` | J187, J188 | **planned** (AI Brain v1, steps 1–5) |
+| 41 | 2026-11-26 | The DOJO objective-learning workbook (17 sheets: VES, DOJO concepts, duals and nuances, causal layers, skills) | `docs/briefs/2026-11-26-dojo-objective-learning.xlsx` | J187 | **saved**; source for the 5 dimensions |
 
-**36 rows.**
+**41 rows.**
 
 ---
 
@@ -327,6 +359,9 @@ Deep Dive (10 slides), Technical Architecture Documentation (6 pages), Wiki Aure
 - `2026-11-23-retreat-in-a-box-po-spec.pdf`, `2026-11-23-retreat-in-a-box-functional-spec.pdf`: his PDFs (row 30).
 - `2026-11-23-retreat-in-a-box-reading.md`: head-of-product reading, five questions.
 - `2025-measurement-system.xlsx`: his workbook (row 31); `2026-11-23-measurement-system-review.md`: the 10 metrics.
+- `2026-11-24-chat-*.md`, `2026-11-24-mvp-causal-ai-admin-spec.pdf`, `2025-ai-vision-aurelia.pdf`: the 24 Nov chats and PDFs (rows 37–39).
+- `2026-11-25-chat-ai-brain.md`: the AI brain chat (row 40).
+- `2026-11-26-dojo-objective-learning.xlsx`: the DOJO workbook (row 41).
 - `EUGENE-CONTEXT.md`: this file.
 
 **Research for him:** `docs/research/b2b2c/00-summary.md` … `09-full-report.md`; `docs/research/reports/Aurelia B2B2C models and plan.md`, `Insight Timer deep research.md`, `Insight Timer behaviour and journeys.md`, `Aurelia-Insight-Timer-Deep-Research-2026-11-15.pdf`, `insight-timer-deep-research.html`; notes in `docs/research/research_notes/`.
