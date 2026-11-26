@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-26 — What changed and why (U137, J189)
+
+Buyer agent results explain every headline change between runs: offer, panel and rules effects, with the personas that flipped.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-26 — Retreat AI cost $3.12 (U136, J188)
 
 The spec offer's AI cost per buyer is $3.12 (24 × $0.13) in the retreat model and the wiki; Report metrics has no mismatch left.
