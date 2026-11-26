@@ -134,6 +134,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | J181 | 2026-11-25 | Review + code | Review whether the reports are understandable even to a layperson, and fix them | U128 |
 | J182 | 2026-11-25 | Code | UX feedback report from the latest feedback group; drop "what this report says"; a goal on every report; make "many sources → iterations → product" visible; drawers instead of page changes | U129 |
 | J183 | 2026-11-25 | Code + research | Better buyer agent visualisation; therapeutic map and interactive Healing Map; B2B2C research using everything known, with the features to build, in a report | U130, U131, U132 |
+| J190 | 2026-11-26 | Code | Add a current-condition variable to personas (mental health now and what else is needed, as head of design and wellness expert), for the next buyer iteration and for cost | U138 |
 | J189 | 2026-11-26 | Code | Head-of-design note: numbers fall between buyer runs with no reason given; every change must carry its reasoning. Also confirmed the Cost report is independent of buyers and personas | U137 |
 | J188 | 2026-11-26 | Code | Use $3.12; keep every business-owner ask and file so nothing is lost; say briefly what the AI brain update changes and what can be promised | U136 |
 | J187 | 2026-11-26 | Discussion | Owner's AI brain (Product, Wellness, Business): 5 dimensions bad-to-good cost first, therapeutic funnel, feature ranking to MVP targets; AI retreat is an event, so app cost vs retreat cost clarified; DOJO workbook saved in docs/briefs | — |
@@ -2239,6 +2240,9 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 ### J183 — Visuals, maps, B2B2C round 2
 - **Done:** U130, U131, U132.
 - **Key finding of round 2:** lead with a free first week, then charge. Trust beats price as the barrier, and a self-serve team plan comes second.
+
+### J190 — Current condition
+- **Done (U138).** Next: buyer test 8 using `conditionForBuyer`; wire `populationCost` into the Cost report with the 5-dimensions step.
 
 ### J189 — Reasons for every change
 - **Done (U137).** Cost report stays independent of buyer agents and personas (cost, not price); a population-weighted cost from persona v4 condition mix is proposed for the 5-dimensions step.

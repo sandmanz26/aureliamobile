@@ -169,6 +169,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U130 | `9a6c520` | 2026-11-25 | Buyer agent report made visual. It has funnels per test (5, 6, 7), a people grid (one mark per simulated person, which opens a drawer), a who-says-yes heat map, a price ladder against $10, ranked reasons for no with quotes, a slope chart of what moved people, and a cleaner trend across tests. | [patch](patches/U130-9a6c520.patch) |
 | U131 | `1634d0c` | 2026-11-25 | Product lab, staging only (`RELEASES.therapeuticMaps`). The **Therapeutic map** shows the Product, Business and Wellness triangle with targets, the 7-step sleep process and five worlds. The **Healing Map** has three rings (9 bad states, 14 building blocks, 9 good states) and 45 links: 36 design samples, 9 research-cited, 0 learned. It has filters, zoom and a drawer. | [patch](patches/U131-1634d0c.patch) |
 | U132 | `542ade2` | 2026-11-25 | B2B2C round 2. It adds 28 new web sources and the buyer tests, and re-ranks the channels: creator journey with a free first week, then a self-serve team plan, then codes and gifting. It lists 22 features (10 Now), on wiki pages round-2 and features and in Reports → B2B2C report (a feature board with a drawer). | [patch](patches/U132-542ade2.patch) |
+| U138 | `cdc5ef7` | 2026-11-26 | Persona v4 current condition: five dimensions (mental, emotional, relational, spiritual, physical) 0–100 with a 5×10 issue list from DOJO duals and prevalence, main need, acuity, readiness, confidence, support, coping, time, goal and targets; `conditionForBuyer` and `conditionForCost` with written formulas; population cost about $15.13 per person (stage 1, risk-flagged excluded). Personas drawer, section and filters; 10 Report metrics. Existing persona data unchanged. | [patch](patches/U138-cdc5ef7.patch) |
 | U137 | `d117a31` | 2026-11-26 | Buyer agent "What changed and why": every run declares what changed (offer, panel, rules); each headline gets a delta line and a bridge chart split into offer, panel and rules/price effects (counterfactual replay for v5–v7, documented for v1–v3), flipped personas in the drawer, "not like for like" warnings; reasons also in the Buyer agent report and Report metrics. A run without a change record fails the check. | [patch](patches/U137-d117a31.patch) |
 | U136 | `45b42be` | 2026-11-26 | Retreat spec AI cost per buyer $3.12 (24 × $0.13), not 3.02: retreat model, wiki Unit economics (middle tier €3.33, margins €269/285/301 per 100), tests. Report metrics now shows no mismatch. | [patch](patches/U136-45b42be.patch) |
 | U135 | `689207d` | 2026-11-25 | Report metrics (staging only): 70 headline numbers from every report re-derived from raw data (personas, agent answers, cost parts), with trend vs previous iteration, quality (65 consistent, 1 mismatch, 4 assumptions, 18 warnings), drawer with formula, inputs, worked calculation and per-persona breakdown. | [patch](patches/U135-689207d.patch) |
@@ -177,6 +178,13 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U138 — Persona current condition
+
+- **Commit:** `cdc5ef7` · 2026-11-26.
+- **Request:** a current-condition variable (mental health now, and what else is needed) for the next buyer run and for cost.
+- **Revert:** `git revert --no-commit cdc5ef7`.
+- **Assumptions:** dimension weights, 0.5 spillover, sessions a week, readiness and time rules. Not yet wired into the Cost report page or a buyer run.
 
 ### U137 — What changed and why
 

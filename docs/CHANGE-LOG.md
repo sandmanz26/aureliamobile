@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-26 — Persona current condition (U138, J190)
+
+Persona set v4 carries a five-dimension current condition, readiness and support, shared by the buyer agent and the cost model.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-26 — What changed and why (U137, J189)
 
 Buyer agent results explain every headline change between runs: offer, panel and rules effects, with the personas that flipped.

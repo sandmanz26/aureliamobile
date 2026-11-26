@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J189** · updated 25 Nov 2026
+**Covers up to J190** · updated 25 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
@@ -134,6 +134,7 @@ reach that repository yet (O33).
 
 ## 6 · Positions taken (and why), newest first
 
+- **Persona condition (U138, `personaConditionV4.ts`)** is the one shared input for buyer runs and cost: five dimensions 0–100, bands at 28/50/73, separate seed so v4 facts never shift. Risk-flagged people are excluded from both.
 - **Every buyer run must declare what changed (U137, `runChanges.ts`)**; the check fails otherwise. Never present A/B of different runs as a trend unless the offer is the same. Cost report never reads buyer or persona answers.
 - **Every business-owner ask lives in `docs/briefs/EUGENE-CONTEXT.md` §0 (J188)**: add each new chat there and as a brief file the same day; the owner gets confused by long chats and wants nothing lost.
 - **"AI retreat" is a physical event (J187).** All retreat/B2B2C economics so far modelled a digital cohort; event costs are not in them. DOJO workbook (`docs/briefs/2026-11-26-dojo-objective-learning.xlsx`) is the therapeutic KB: VES chakras/meridians, ~170 DOJO concepts, ~620 duals, causal layers skill/habit/mood.
