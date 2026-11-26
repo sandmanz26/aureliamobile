@@ -220,10 +220,26 @@ const WTP_BASE: Record<string, number> = { 'free only': 1.5, 'up to $5 a month':
 const INCOME: Record<Persona['income'], number> = { low: 0.8, middle: 1, high: 1.25 }
 const q = (x: number) => Math.round(x * 4) / 4
 
+/** The purchasing level the price rule applies to a country (1 for the US and anywhere unlisted). */
+export const placeFactor = (country: string) => PLACE[country] ?? 1
+/** The income multiplier the price rule applies. */
+export const incomeFactor = (income: Persona['income']) => INCOME[income]
+
 /** The four price answers (USD a month), set from willingness to pay, income and place; pain 8+ stretches them. */
 export function priceAnswers(p: Persona): PriceAnswers {
+  return priceAnswersWith(p)
+}
+
+/**
+ * The same rule with the place or income scaling switched off, so a change in
+ * the fair price can be split into what the panel's country and income mix
+ * did through the rule (U137) and what its stated willingness to pay did.
+ */
+export function priceAnswersWith(p: Persona, use: { place?: boolean; income?: boolean } = {}): PriceAnswers {
   const stretch = p.profile.testing.pain >= 8 ? 1.15 : 1
-  const bargain = Math.max(0.75, q((WTP_BASE[p.willingnessToPay] ?? 3) * (PLACE[p.country] ?? 1) * INCOME[p.income] * stretch))
+  const place = use.place === false ? 1 : (PLACE[p.country] ?? 1)
+  const income = use.income === false ? 1 : INCOME[p.income]
+  const bargain = Math.max(0.75, q((WTP_BASE[p.willingnessToPay] ?? 3) * place * income * stretch))
   const tooCheap = Math.min(bargain - 0.25, Math.max(0.25, q(bargain * 0.4)))
   const expensive = Math.max(bargain + 0.5, q(bargain * 1.9))
   const tooExpensive = Math.max(expensive + 0.5, q(bargain * 2.8))

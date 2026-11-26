@@ -16,6 +16,8 @@ import {
   type Quality,
 } from '../../data/reportMetrics'
 import { studyWeek } from '../../data/study'
+import { trendHeadline } from '../../data/runChanges'
+import { RunChangeReasons } from '../buyer/RunChanges'
 import { DetailDrawerProvider, useDetail, type DetailItem } from './DetailDrawer'
 import { SummaryBlock } from './ReportSummary'
 import { RichText, Term } from './Term'
@@ -81,8 +83,17 @@ function detailOf(r: MetricResult): DetailItem {
 
 function MetricDetail({ r }: { r: MetricResult }) {
   const d = r.derivation
+  const cause = trendHeadline(r.def.id)
+  const prevStep = r.trend ? Number(/\d+/.exec(r.trend.previousStep)?.[0]) : NaN
   return (
     <div className="flex min-w-0 flex-col gap-14 text-13">
+      {cause && (
+        <RunChangeReasons
+          version={cause.version}
+          id={cause.id}
+          note={r.trend && prevStep !== cause.previous ? `The trend column compares with ${r.trend.previousStep}; the reasons here are against the run just before this one.` : undefined}
+        />
+      )}
       <section className="flex flex-col gap-6">
         <h3 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">Quality checks</h3>
         <ul className="flex flex-col gap-6">

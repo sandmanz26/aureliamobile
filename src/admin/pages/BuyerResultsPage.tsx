@@ -5,6 +5,8 @@ import { DataTable, type Column } from '../components/DataTable'
 import { PersonaProfile } from '../components/PersonaProfile'
 import { Finding, HeatLegend, HeatTable, RankBars, VerdictChart } from './buyer/BuyerCharts'
 import { RerunView } from './buyer/RerunView'
+import { ChangeLine, RunChangesSection } from './buyer/RunChanges'
+import { DetailDrawerProvider } from './reports/DetailDrawer'
 import { SidePanel } from '../components/SidePanel'
 import { Badge, Button, PageHeader, Panel, StatCard } from '../components/ui'
 import {
@@ -27,6 +29,7 @@ import {
 } from '../data/buyerRuns'
 import { V3_CHANGES } from '../data/buyerRunV3'
 import { GOAL_LABEL, type Persona } from '../data/personas'
+import type { HeadlineId } from '../data/runChanges'
 
 const SCALE_MAX = 20
 const WELLNESS_TONE = { struggling: 'critical', strained: 'warning', coping: 'good' } as const
@@ -60,9 +63,31 @@ function download(name: string, text: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
+/** A headline tile with its change since the previous run under it (U137). */
+function Tile({ version, lines, children }: { version: number; lines: readonly HeadlineId[]; children: ReactNode }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-6">
+      {children}
+      <div className="flex flex-col gap-2 px-4">
+        {lines.map((id) => (
+          <ChangeLine key={id} version={version} id={id} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 const money = (n: number) => `$${n % 1 ? n.toFixed(2) : n}`
 
 export function BuyerResultsPage() {
+  return (
+    <DetailDrawerProvider>
+      <BuyerResults />
+    </DetailDrawerProvider>
+  )
+}
+
+function BuyerResults() {
   const [params, setParams] = useSearchParams()
   const latest = BUYER_RUNS[BUYER_RUNS.length - 1]
   const view = params.get('view') === 'versions' ? 'versions' : 'runs'
@@ -258,11 +283,21 @@ export function BuyerResultsPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-12 lg:grid-cols-4" aria-label="At a glance">
-        <StatCard label={ab ? 'Would try B' : 'Would try'} value={`${tries.yes} of ${n}`} hint={ab ? `today (A): ${ctlTries.yes} of ${n}` : `${tries.maybe} maybe, ${tries.no} no`} />
-        <StatCard label={ab ? 'Would pay B' : 'Would pay'} value={`${pays.yes} of ${n}`} hint={ab ? `${pays.maybe} maybe · A: ${ctlPays.yes} yes, ${ctlPays.maybe} maybe` : `${pays.maybe} maybe, ${pays.no} no`} />
-        <StatCard label="Price that feels fair" value={`${money(range.low)}–${money(range.high)}`} hint={`Plus is ${money(run.stimulus.priceUsd)} in the US`} />
-        <StatCard label="Test cases" value={`${outcomes.pass} pass`} hint={`${outcomes.risk} at risk, ${outcomes.fail} fail`} />
+        <Tile lines={[...(ab ? (['tryA'] as const) : []), 'tryB']} version={run.version}>
+          <StatCard label={ab ? 'Would try B' : 'Would try'} value={`${tries.yes} of ${n}`} hint={ab ? `today (A): ${ctlTries.yes} of ${n}` : `${tries.maybe} maybe, ${tries.no} no`} />
+        </Tile>
+        <Tile lines={[...(ab ? (['payA'] as const) : []), 'payB']} version={run.version}>
+          <StatCard label={ab ? 'Would pay B' : 'Would pay'} value={`${pays.yes} of ${n}`} hint={ab ? `${pays.maybe} maybe · A: ${ctlPays.yes} yes, ${ctlPays.maybe} maybe` : `${pays.maybe} maybe, ${pays.no} no`} />
+        </Tile>
+        <Tile lines={['fairLow', 'fairHigh']} version={run.version}>
+          <StatCard label="Price that feels fair" value={`${money(range.low)}–${money(range.high)}`} hint={`Plus is ${money(run.stimulus.priceUsd)} in the US`} />
+        </Tile>
+        <Tile lines={['pass', 'risk', 'fail']} version={run.version}>
+          <StatCard label="Test cases" value={`${outcomes.pass} pass`} hint={`${outcomes.risk} at risk, ${outcomes.fail} fail`} />
+        </Tile>
       </div>
+
+      <RunChangesSection version={run.version} />
 
       <div className="grid gap-16 lg:grid-cols-2">
         <Panel title={ab ? `${labelA} against ${labelB}` : 'Would they try it, would they pay'} description={`Personas out of ${n}. Hover a segment for its share.${hasAlt ? ` Also answered: ${run.altLabel}.` : ''}`}>
@@ -279,7 +314,10 @@ export function BuyerResultsPage() {
           />
         </Panel>
         <Panel title="Why people hesitate" description="Each persona’s main objection, grouped.">
-          <RankBars rows={themes.map(([t, c]) => ({ label: THEME_LABEL[t], value: c }))} total={n} note={(v) => `${v} of ${n}`} />
+          <div className="flex flex-col gap-10">
+            <RankBars rows={themes.map(([t, c]) => ({ label: THEME_LABEL[t], value: c }))} total={n} note={(v) => `${v} of ${n}`} />
+            <ChangeLine version={run.version} id="objection" />
+          </div>
         </Panel>
       </div>
 

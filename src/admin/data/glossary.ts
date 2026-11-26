@@ -39,6 +39,11 @@ export const GLOSSARY = {
   recomputed: { term: 'Worked out again', plain: 'The number calculated a second time, here, straight from the underlying data. Not copied from the report.' },
   median: { term: 'Median', plain: 'The middle value when all answers are sorted from low to high. One extreme answer cannot pull it.' },
   'stated-wtp': { term: 'Stated willingness to pay', plain: 'What each made-up person says they would pay a month, written in their profile: free only, up to $5, up to $10, or more.' },
+  'offer-effect': { term: 'What was tested', plain: 'How much of a change comes from showing a different offer. We replay the old offer on the new people to measure it.' },
+  'panel-effect': { term: 'Who was asked', plain: 'How much of a change comes from asking different made-up people. Same offer, other people.' },
+  'rules-effect': { term: 'The rules', plain: 'How much comes from the AI counting more facts about each person, with everything else held still.' },
+  'like-for-like': { term: 'Like for like', plain: 'Both numbers measure the same offer. Only then is a rise or fall a trend.' },
+  bridge: { term: 'Bridge chart', plain: 'Starts at the old number, adds each cause as a step up or down, and ends at the new number.' },
   'risk-flag': { term: 'Risk flag', plain: 'The person may be in danger, for example very low mood with thoughts of self-harm. Aurelia shows Need help now? and never sells to them.' },
 } satisfies Record<string, GlossaryEntry>
 

@@ -11,6 +11,8 @@ import { InputGraph } from './InputGraph'
 import { INPUT_DOT } from './reportColors'
 import { LabelBadge, SourcesSection } from './ReportParts'
 import { Details, SummaryBlock } from './ReportSummary'
+import { LatestChangeAside } from '../buyer/RunChanges'
+import { BUYER_RUNS } from '../../data/buyerRuns'
 import { SuccessTrend, WhatMoves } from './SummaryCharts'
 import { buyerLevers, buyerSummary, buyerTrend } from '../../data/reportSummaries'
 import { SEGMENT_LABEL, funnel, heat, objections, priceLadder, slopes as buildSlopes, vizTests } from '../../data/buyerViz'
@@ -64,7 +66,7 @@ function BuyerAgentReport() {
         }
       />
 
-      <SummaryBlock s={summary} />
+      <SummaryBlock s={summary} aside={<LatestChangeAside version={BUYER_RUNS[BUYER_RUNS.length - 1].version} />} />
 
       <p className="text-12 text-adm-muted">
         <RichText text="Every chart below is about {{simulated|simulated people}}: a prediction, not a measurement." />
