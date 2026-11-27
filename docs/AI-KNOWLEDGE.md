@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J193** · updated 25 Nov 2026
+**Covers up to J194** · updated 25 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
@@ -134,6 +134,7 @@ reach that repository yet (O33).
 
 ## 6 · Positions taken (and why), newest first
 
+- **Objective Learning (J194):** goal AKPs = 5 dimensions → universal needs → bad-to-good StateFlips; strategy/tactic AKPs = Grand 4 layers sheet; scripts are assembled per BAR / ELEMENTS. Sources in `docs/briefs/2026-11-27-*`.
 - **AKPs (J192):** about 120,000 Atomic Knowledge Points (entities are their gateways) build chapters; AKPs compete in tournaments for therapeutic impact, AI models for quality and cost. Deck figures (10B insights, 1.5M links) are his claims.
 - **Wiki and admin read in Source Sans 3 (U139); the app stays Mulish.** Do not move the app or the Figma variable; the scope is `:root:has(.adm-root, .gd)`.
 - **Persona condition (U138, `personaConditionV4.ts`)** is the one shared input for buyer runs and cost: five dimensions 0–100, bands at 28/50/73, separate seed so v4 facts never shift. Risk-flagged people are excluded from both.

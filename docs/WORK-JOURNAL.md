@@ -134,6 +134,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | J181 | 2026-11-25 | Review + code | Review whether the reports are understandable even to a layperson, and fix them | U128 |
 | J182 | 2026-11-25 | Code | UX feedback report from the latest feedback group; drop "what this report says"; a goal on every report; make "many sources → iterations → product" visible; drawers instead of page changes | U129 |
 | J183 | 2026-11-25 | Code + research | Better buyer agent visualisation; therapeutic map and interactive Healing Map; B2B2C research using everything known, with the features to build, in a report | U130, U131, U132 |
+| J194 | 2026-11-27 | Received | Business owner chat: the Objective Learning structure (universal needs, StateFlips, goal vs strategy AKPs), BAR / ELEMENTS operating model, Notion backend LLM overview. Saved; more coming | — |
 | J193 | 2026-11-27 | Received | Business owner chat: personas into Wellness Identity dimensions, five worlds deepened from Deeksha pillars; three workbooks saved. More coming | — |
 | J192 | 2026-11-27 | Received | Business owner chat: cohort graph per chapter to the sleep StateFlip, how chance it works is calculated, AKPs and tournaments, AKP master sheet. Saved; more coming | — |
 | J191 | 2026-11-27 | Code | Wiki and admin font hard to read and tiring; use a more comfortable font | U139 |
@@ -2243,6 +2244,9 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 ### J183 — Visuals, maps, B2B2C round 2
 - **Done:** U130, U131, U132.
 - **Key finding of round 2:** lead with a free first week, then charge. Trust beats price as the barrier, and a self-serve team plan comes second.
+
+### J194 — Objective Learning
+- **Saved** to `docs/briefs/2026-11-27-chat-objective-learning.md`, the workbook, the Notion PDF, EUGENE-CONTEXT A27 and row 44.
 
 ### J193 — Personas as their own AI system
 - **Saved** to `docs/briefs/2026-11-27-chat-persona-dimensions.md`, three workbooks, EUGENE-CONTEXT A25–A26 and row 43. Waiting for "The structure is…".

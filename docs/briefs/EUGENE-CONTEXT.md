@@ -24,8 +24,9 @@
 | A22 | Graph over time, cohort view: how each of the 42 chapters adds up to the sleep StateFlip (25 → 85) and what drives each step | row 42 | received, waiting for the rest of his message |
 | A23 | Explain how "chance it works" (54%) is calculated, as a transparent prediction | row 42 | received |
 | A24 | Understand AKPs (about 120,000 building blocks) and entities, the AKP and AI-model tournaments; read the "Grand 4 layers - APK - master knowledge" sheet | row 42 | received; sheet saved (row 43) |
-| A25 | Expand personas into the 12 Wellness Identity dimensions (Grand tab): each persona as its own AI system | row 43 | received, structure message still coming |
+| A25 | Expand personas into the 12 Wellness Identity dimensions (Grand tab): each persona as its own AI system | row 43 | received; structure came in row 44 |
 | A26 | Five wellness worlds with more depth, using Deeksha pillars (4 + 11) and 151 universal needs | row 43 | received |
+| A27 | Objective Learning knowledge base: 5 dimensions → hundreds/thousands of universal needs → concrete bad-to-good StateFlips (goal AKPs), linked to strategy/tactic AKPs (Grand 4 layers) and to script building (BAR / ELEMENTS). "Everything I sent today is very important to get right" | row 44 | received, more coming |
 | A1 | AI brain: Product, Wellness, Business, each with metrics, MVP targets and a prediction model, connected | row 40 | planned (step 3–4) |
 | A2 | 5 dimensions × top 10 issues, cost of bad to good each, baseline then real figures | rows 39–40 | planned (step 1, first) |
 | A3 | Bad-to-good slider dynamics for every scenario, not only sleep | row 40 | planned (step 1) |
@@ -153,8 +154,9 @@ Also: his "mathematical inevitability" thesis (meta-AI, momondo of AI, 5B state-
 | 41 | 2026-11-26 | The DOJO objective-learning workbook (17 sheets: VES, DOJO concepts, duals and nuances, causal layers, skills) | `docs/briefs/2026-11-26-dojo-objective-learning.xlsx` | J187 | **saved**; source for the 5 dimensions |
 | 42 | 2026-11-26 20.54–21.24 | Cohort graph of how each chapter adds to the sleep StateFlip; how "chance it works" 54% is calculated; AKPs (120,000 building blocks, entities as gateways), tournaments of AKPs and AI models, old admin's AKP Graph Explorer, and the Google Sheet "Grand 4 layers - APK - master knowledge" | `docs/briefs/2026-11-27-chat-chapters-akp.md` + folder | J192 | **received, more coming** |
 | 43 | 2026-11-26 21.26–21.35 | Personas as their own AI system: the Wellness Identity AKP dimensions (Grand 12, Light 35); five wellness worlds deepened from the Deeksha 12P pillars and UN universal needs; plus the Grand 4 layers AKP master sheet | `docs/briefs/2026-11-27-chat-persona-dimensions.md` + three .xlsx | J193 | **received, more coming** |
+| 44 | 2026-11-26 21.35–21.45 | The structure: universal needs in 5 dimensions with 100s of concrete StateFlips; goal AKPs vs strategy/tactic AKPs; BAR / ELEMENTS operating model for building scripts; plus a Notion export on the 2025 backend's LLM prompting | `docs/briefs/2026-11-27-chat-objective-learning.md`, `2026-11-27-bar-elements-operating-model.xlsx`, `2026-11-27-notion-wiki-aurelia-backend-llm.pdf` | J194 | **received, more coming** |
 
-**43 rows.**
+**44 rows.**
 
 ---
 
@@ -369,6 +371,7 @@ Deep Dive (10 slides), Technical Architecture Documentation (6 pages), Wiki Aure
 - `2026-11-24-chat-*.md`, `2026-11-24-mvp-causal-ai-admin-spec.pdf`, `2025-ai-vision-aurelia.pdf`: the 24 Nov chats and PDFs (rows 37–39).
 - `2026-11-25-chat-ai-brain.md`: the AI brain chat (row 40).
 - `2026-11-26-dojo-objective-learning.xlsx`: the DOJO workbook (row 41).
+- `2026-11-27-chat-objective-learning.md`, `2026-11-27-bar-elements-operating-model.xlsx`, `2026-11-27-notion-wiki-aurelia-backend-llm.pdf` (row 44).
 - `2026-11-27-chat-persona-dimensions.md`, `2026-11-27-grand-4-layers-akp-master-knowledge.xlsx`, `2026-11-27-wellness-identity-akp-first-view.xlsx`, `2026-11-27-deeksha-objective-learning.xlsx` (row 43).
 - `2026-11-27-chat-chapters-akp.md` and `2026-11-27-chat-chapters-akp/` (5 screenshots): chapters, chance it works, AKPs (row 42).
 - `EUGENE-CONTEXT.md`: this file.
