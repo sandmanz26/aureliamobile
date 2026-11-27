@@ -3,6 +3,8 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { Badge, Button, Panel, inputClass } from '../../components/ui'
 import { AGE_BANDS, PERSONA_COUNT_V4, SCENARIOS, SCENARIO_IDS, SEED_V4, SOURCES, TARGETS, countBy, generatePersonasV4, type Band3, type PersonaV4, type ScenarioId } from '../../data/personasV4'
 import { COND_BANDS, DIMENSIONS, DIMENSION_LABEL, DIMENSION_PLAIN, READINESS, conditionSummary, conditionsV4, issueOf, populationCost, type CondBand, type ConditionV4 } from '../../data/personaConditionV4'
+import { IDENTITY_DIMENSIONS, identitiesV4 } from '../../data/personaIdentityV4'
+import { RELEASES } from '../../../versions/releases'
 import { DetailDrawerProvider, useDetail } from '../reports/DetailDrawer'
 import { Term } from '../reports/Term'
 
@@ -171,6 +173,43 @@ function ConditionBlock({ p, c }: { p: PersonaV4; c: ConditionV4 }) {
   )
 }
 
+/** The persona's Wellness Identity (Grand 12) and mindspace across four functions (U141, J203). Staging only. */
+function IdentityBlock({ p }: { p: PersonaV4 }) {
+  const id = identitiesV4().get(p.id)!
+  const fns = [
+    ['Wellness', id.mindspace.wellness],
+    ['Product', id.mindspace.product],
+    ['Business', id.mindspace.business],
+    ['Brand', id.mindspace.brand],
+  ] as const
+  return (
+    <section className="flex flex-col gap-8 rounded-12 border border-adm-line p-12" data-testid="wellness-identity">
+      <h3 className="text-12 font-semibold text-adm-ink">Wellness identity</h3>
+      <p className="text-12 text-adm-ink-2">
+        {id.archetype}, values {id.value}, {id.dims.cognitive.value}. Twelve dimensions from the identity workbook, worked out from the profile and condition above; rules drafted by us — to review.
+      </p>
+      <dl>
+        {IDENTITY_DIMENSIONS.map((d) => (
+          <Row key={d.key} k={d.name}>
+            <span className="font-medium">{id.dims[d.key].value}</span> <span className="text-adm-muted">· {id.dims[d.key].detail}</span>
+          </Row>
+        ))}
+      </dl>
+      <h3 className="text-12 font-semibold text-adm-ink">Mindspace across four functions</h3>
+      <ul className="grid gap-6 lg:grid-cols-2">
+        {fns.map(([label, m]) => (
+          <li key={label} className="flex min-w-0 flex-col gap-2 rounded-8 bg-adm-bg p-8 text-12">
+            <span className="font-semibold text-adm-ink">{label}</span>
+            <span className="text-adm-ink-2">{m.headline}</span>
+            {m.facts.length > 0 && <span className="text-11 text-adm-muted">{m.facts.map((f) => `${f.label}: ${f.value}`).join(' · ')}</span>}
+            {m.akps.length > 0 && <span className="text-11 break-words text-adm-muted">AKPs: {m.akps.join(', ')}</span>}
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
 const COPING_TEXT = { avoid: 'avoiding it', distract: 'distracting themselves', talk: 'talking to someone', move: 'moving, exercise', substances: 'coffee or alcohol' } as const
 
 function Profile({ p }: { p: PersonaV4 }) {
@@ -187,6 +226,7 @@ function Profile({ p }: { p: PersonaV4 }) {
         </div>
       )}
       <ConditionBlock p={p} c={c} />
+      {RELEASES.stateFlips && <IdentityBlock p={p} />}
       <section>
         <h3 className="mb-4 text-12 font-semibold text-adm-ink">Why they might try Aurelia</h3>
         <p className="text-12 text-adm-ink-2">{p.mightTry}</p>

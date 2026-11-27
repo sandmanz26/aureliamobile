@@ -351,3 +351,36 @@ export const calibrationChapters = (stage: Stage = 1) => chaptersToFlip(BAD_SCOR
 export function driverOf(layer: Layer) {
   return MILESTONES.find((m) => m.layer === layer)!
 }
+
+/* ------------------------------------------------ Any StateFlip (U141, J203) */
+
+/** The headline numbers of any StateFlip's group, from its people alone (no chapter-by-chapter rows). */
+export interface FlipSummary {
+  people: number
+  medianChapters: number
+  meanChance: number
+  /** Expected chapters played per person who starts. */
+  chaptersPlayed: number
+  costPerChapter: number
+  costPerFlip: number
+}
+
+/**
+ * The same formulas as `sleepCohort`, generalised to any StateFlip: the
+ * median of each person's chapters to 85, the mean chance, chapters played
+ * (Σ survival to each chapter) and cost per flip. On the sleep group it gives
+ * sleepCohort's numbers exactly (pinned in stateFlips.test.ts).
+ */
+export function summarise(people: PersonFlip[], stage: Stage = 1): FlipSummary {
+  const costPerChapter = total(chapterCost(presetInputs(BALANCED, 10))) * STAGES[stage].costFactor
+  const n = people.length
+  if (!n) return { people: 0, medianChapters: NaN, meanChance: NaN, chaptersPlayed: NaN, costPerChapter, costPerFlip: NaN }
+  const meanChance = people.reduce((t, p) => t + p.chance.chance, 0) / n
+  const chaptersPlayed = people.reduce((t, p) => {
+    const q = 1 - p.hazard
+    let played = 0
+    for (let k = 1; k <= p.chapters; k++) played += q ** k
+    return t + played
+  }, 0) / n
+  return { people: n, medianChapters: median(people.map((p) => p.chapters)), meanChance, chaptersPlayed, costPerChapter, costPerFlip: (costPerChapter * chaptersPlayed) / meanChance }
+}

@@ -16,6 +16,9 @@ import { CARD, OFFERS, OUTCOMES, PLUS_NET_YEAR1, VAT } from './retreatFunnel'
 import { buildParticipants, type Participant } from './study'
 import { CHANCE_CAP, CHANCE_FLOOR, DROPOUT_SHARE, calibrationChapters, chanceOf, chaptersToFlip, sleepCohort } from './stateFlipFormulas'
 import { isSleepNeed, personaSleepScore, severityOf } from './stateFlipSleep'
+import { akpSummary, akps } from './akps'
+import { identitiesV4, identityIncoherence, identitySummary } from './personaIdentityV4'
+import { stateFlipSummary, stateFlips } from './stateFlips'
 
 /**
  * Admin → Reports → Report metrics (U135, J186). Every headline number the
@@ -1249,6 +1252,51 @@ function stateFlipMetrics(): MetricDef[] {
         }, 0) / c.people.length
         const v = (c.costPerChapter * played) / c.meanChance
         return { value: v, n: c.people.length, inputs: [{ label: 'Cost per chapter', value: usd(c.costPerChapter), source: 'costModel.ts (balanced, 10 min, stage 1)' }, { label: 'Chapters played', value: played.toFixed(1), source: 'stateFlipFormulas.ts' }, { label: 'Average chance', value: pctText(c.meanChance), source: 'stateFlipFormulas.ts' }], steps: [`${usd(c.costPerChapter)} × ${played.toFixed(1)} ÷ ${pctText(c.meanChance)} = ${usd(v)}.`] }
+      },
+    },
+    // U141 (J203): all 125 StateFlips, the draft AKP catalogue and the personas' wellness identity.
+    {
+      id: 'sf-all', report: 'stateflips', label: 'StateFlips defined (5 dimensions × 25)', unit: 'count', good: 'none',
+      formula: 'The 50 persona condition issues plus 15 per dimension from the Deeksha universal needs or the DOJO duals.', shownAt: 'StateFlips, All StateFlips summary', source: 'src/admin/data/stateFlips.ts',
+      displayed: () => stateFlipSummary().total,
+      compute: () => {
+        const fs = stateFlips()
+        const by = (o: string) => fs.filter((f) => f.origin === o).length
+        return { value: fs.length, inputs: [{ label: 'From condition issues', value: `${by('issue')}`, source: 'personaConditionV4.ts ISSUES' }, { label: 'From workbook rows', value: `${by('workbook')}`, source: 'Deeksha UN, DOJO_C_Duals' }], steps: [`${by('issue')} + ${by('workbook')} = ${fs.length}.`] }
+      },
+    },
+    {
+      id: 'akp-total', report: 'stateflips', label: 'Draft AKPs in the catalogue', unit: 'count', good: 'none',
+      formula: 'Goal AKPs (125 StateFlips, their 375 steps, 47 identity dimensions) plus strategy and tactic AKPs (script, music, image, video, product).', shownAt: 'StateFlips, AKP catalogue summary', source: 'src/admin/data/akps.ts',
+      displayed: () => akpSummary().total,
+      compute: () => {
+        const as = akps()
+        const goal = as.filter((a) => a.kind === 'goal').length
+        const file = as.filter((a) => a.source.startsWith('from ')).length
+        return { value: as.length, inputs: [{ label: 'Goal AKPs', value: `${goal}`, source: 'akps.ts' }, { label: 'Strategy and tactic AKPs', value: `${as.length - goal}`, source: 'akps.ts' }, { label: 'From the workbooks', value: `${file}`, source: 'generated/akpSource.ts' }], steps: [`${goal} + ${as.length - goal} = ${as.length}; ${file} from files, ${as.length - file} drafted by us.`] }
+      },
+    },
+    {
+      id: 'akp-coverage', report: 'stateflips', label: 'StateFlips served by a strategy AKP', unit: 'share', good: 'up',
+      formula: 'StateFlips that at least one strategy or tactic AKP lists among the goals it serves ÷ 125.', shownAt: 'StateFlips, AKP catalogue summary', source: 'src/admin/data/akps.ts',
+      displayed: () => akpSummary().flipsCovered / akpSummary().flips,
+      compute: () => {
+        const fs = stateFlips()
+        const served = new Set(akps().filter((a) => a.kind === 'strategy').flatMap((a) => a.flips))
+        const v = fs.filter((f) => served.has(f.id)).length / fs.length
+        return { value: v, n: fs.length, inputs: [{ label: 'StateFlips served', value: `${served.size}`, source: 'akps.ts' }], steps: [`${served.size} ÷ ${fs.length} = ${pctText(v)}.`] }
+      },
+    },
+    {
+      id: 'identity-incoherent', report: 'stateflips', label: 'Persona identities that do not hold together', unit: 'count', good: 'down',
+      formula: 'v4 personas whose wellness identity contradicts their profile or condition (risk flag, chapter length, caregiver, spiritual language, StateFlip).', shownAt: 'Personas, Wellness identity in the drawer', source: 'src/admin/data/personaIdentityV4.ts',
+      displayed: () => identitySummary().incoherent,
+      compute: () => {
+        const ps = generatePersonasV4()
+        const cs = conditionsV4()
+        const ids = identitiesV4()
+        const bad = ps.filter((p) => identityIncoherence(p, cs.get(p.id)!, ids.get(p.id)!).length)
+        return { value: bad.length, n: ps.length, inputs: [{ label: 'Identities', value: `${ids.size}`, source: 'personaIdentityV4.ts' }], steps: [`${bad.length} of ${ps.length} fail a coherence rule.`] }
       },
     },
   ]

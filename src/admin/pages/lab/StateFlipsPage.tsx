@@ -10,6 +10,7 @@ import { CHANCE_CAP, driverOf, examplePeople, factors, sleepCohort, specFlat, ty
 import { DetailDrawerProvider, useDetail } from '../reports/DetailDrawer'
 import { Details, GoalLine } from '../reports/ReportSummary'
 import { RichText, Term } from '../reports/Term'
+import { AkpCatalogue, AllStateFlips } from './StateFlipsCatalogue'
 
 /*
  * Admin → Product lab → StateFlips (U140, J202), for the business owner:
@@ -44,7 +45,14 @@ export function StateFlipsPage() {
   )
 }
 
+const TABS = [
+  { id: 'sleep', label: 'Sleep, in full' },
+  { id: 'all', label: 'All StateFlips' },
+  { id: 'akps', label: 'AKP catalogue' },
+] as const
+
 function StateFlips() {
+  const [tab, setTab] = useState<(typeof TABS)[number]['id']>('sleep')
   const open = useDetail()
   const who = whoHasIt()
   const c = sleepCohort()
@@ -74,9 +82,21 @@ function StateFlips() {
 
   return (
     <div className="flex flex-col gap-16" data-stateflips>
-      <PageHeader title="StateFlips" description="How Aurelia moves a person from a bad state to a good one, built out in full for sleep: what bad and good mean, the steps, how we measure them, who has it, and how many chapters it takes." />
+      <PageHeader title="StateFlips" description="How Aurelia moves a person from a bad state to a good one: sleep built out in full (what bad and good mean, the steps, how we measure them, who has it, how many chapters), all 125 StateFlips, and the draft catalogue of about 1,000 AKPs." />
       <GoalLine goal="Explain, in numbers anyone can check, how chapters add up to the sleep StateFlip (25 → 85) and how “chance it works” is calculated." />
 
+      <div className="flex flex-wrap gap-2 self-start rounded-12 border border-adm-line bg-adm-surface p-4" role="tablist" aria-label="View">
+        {TABS.map((t) => (
+          <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)} className={`rounded-8 px-12 py-6 text-12 font-medium ${tab === t.id ? 'bg-adm-hover text-adm-ink' : 'text-adm-muted hover:text-adm-ink'}`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'all' && <AllStateFlips />}
+      {tab === 'akps' && <AkpCatalogue />}
+      {tab === 'sleep' && (
+      <>
       <section aria-label="Summary" className="flex min-w-0 flex-col gap-14 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20" data-summary>
         <p className="max-w-[860px] text-18 font-semibold leading-snug text-adm-ink">
           {who.cohort.length} of the 1,000 <Term id="simulated">simulated people</Term> have sleep as their main need. Followed chapter by chapter, half would reach good sleep within {c.medianChapters} <Term id="chapter">chapters</Term> if it works for them, and {pct(last.flipped)} of them get there in the end: less than the plan’s flat 54%, because half the group starts with severe sleep problems.
@@ -118,6 +138,8 @@ function StateFlips() {
       <HowWorkedOut examples={ex} />
       <CohortView />
       <Trajectories examples={ex} />
+      </>
+      )}
     </div>
   )
 }
