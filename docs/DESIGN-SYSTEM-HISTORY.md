@@ -14,6 +14,10 @@ Append to the log when you change any of:
 
 ---
 
+## 2026-11-27 — Reading face for internal surfaces (U139)
+
+The wiki and the admin read in Source Sans 3; Mulish remains the only brand and app face and the Figma `font-family/base` variable is unchanged. Scoped in `src/index.css` with `:root:has(.adm-root, .gd)`. Secondary text darkened for contrast.
+
 ## Current state
 
 Audited against the live file on **2026-09-17**.

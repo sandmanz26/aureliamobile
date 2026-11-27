@@ -1,0 +1,133 @@
+commit 4522f7c2bdde759bda9b6edf9fed501bdf88d699
+Author: Claude <noreply@anthropic.com>
+Date:   Fri Nov 27 08:24:12 2026 +0000
+
+    Wiki and admin read in Source Sans 3, with darker secondary text and one pixel larger admin sizes; the app keeps Mulish (U139, J191)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+
+diff --git a/public/fonts/source-sans-3-latin-wght-italic.woff2 b/public/fonts/source-sans-3-latin-wght-italic.woff2
+new file mode 100644
+index 0000000..7c4bc85
+Binary files /dev/null and b/public/fonts/source-sans-3-latin-wght-italic.woff2 differ
+diff --git a/public/fonts/source-sans-3-latin-wght-normal.woff2 b/public/fonts/source-sans-3-latin-wght-normal.woff2
+new file mode 100644
+index 0000000..2622b13
+Binary files /dev/null and b/public/fonts/source-sans-3-latin-wght-normal.woff2 differ
+diff --git a/src/admin/admin.css b/src/admin/admin.css
+index 6dc04be..031df8f 100644
+--- a/src/admin/admin.css
++++ b/src/admin/admin.css
+@@ -11,8 +11,8 @@
+   --color-adm-hover: #f4f3f0;
+   --color-adm-line: #e4e2dc;
+   --color-adm-ink: #1c1a17;
+-  --color-adm-ink-2: #52514e;
+-  --color-adm-muted: #8a8880;
++  --color-adm-ink-2: #45443f;
++  --color-adm-muted: #6b6962;
+   --color-adm-accent: #3c2405;
+   --color-adm-sidebar: #241503;
+ 
+diff --git a/src/guides/GuidePage.tsx b/src/guides/GuidePage.tsx
+index e443211..d7a67ea 100644
+--- a/src/guides/GuidePage.tsx
++++ b/src/guides/GuidePage.tsx
+@@ -432,7 +432,7 @@ function GuideDoc({ meta, version, pages }: { meta: (typeof DOCS)[number]; versi
+         startOnLoad: false,
+         securityLevel: 'strict',
+         theme: 'base',
+-        fontFamily: 'Mulish, system-ui, sans-serif',
++        fontFamily: "'Source Sans 3', system-ui, sans-serif",
+         themeVariables: { primaryColor: '#fff7ec', primaryBorderColor: '#e0a35a', primaryTextColor: '#3c2405', lineColor: '#b4530a', fontSize: '14px' },
+         flowchart: { htmlLabels: false, curve: 'basis' },
+       })
+diff --git a/src/guides/guides.css b/src/guides/guides.css
+index 5c903df..922339f 100644
+--- a/src/guides/guides.css
++++ b/src/guides/guides.css
+@@ -5,8 +5,8 @@
+   --gd-bg: #f7f4ef;
+   --gd-surface: #ffffff;
+   --gd-ink: #24150a;
+-  --gd-ink2: #5a4a3c;
+-  --gd-muted: #8a7a6b;
++  --gd-ink2: #4d3e31;
++  --gd-muted: #6e5f51;
+   --gd-line: #e7ded3;
+   --gd-side: #1b1006;
+   --gd-side-ink: #f3e9de;
+@@ -29,7 +29,7 @@
+   min-height: 100dvh;
+   background: var(--gd-bg);
+   color: var(--gd-ink);
+-  font: 15px/1.6 'Mulish', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
++  font: 16px/1.6 'Source Sans 3', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+ }
+ .gd *,
+ .gd *::before,
+@@ -106,14 +106,14 @@
+ .gd-main::before { content: ''; position: absolute; top: -120px; right: -60px; width: 320px; height: 320px; border-radius: 50%; background: #ffe682; opacity: 0.45; filter: blur(90px); pointer-events: none; }
+ .gd-doc { position: relative; max-width: 1080px; margin: 0 auto; }
+ 
+-/* Type, shared by every document (U082). Mulish is self-hosted at 300–600
++/* Type, shared by every document (U082). Mulish was the face until U139 (now Source Sans 3, self-hosted); it is self-hosted at 300–600
+    only, so nothing here asks for 700 or 800: the browser would fake the bold
+    and headings would smear. Body text is a size up from the app's (16.5px on
+    desktop) with a 1.7 leading and a 68-character measure, the range that
+    reads comfortably for long documents. One spacing rhythm: paragraphs and
+    lists end on 1em, headings take more space above than below so each one
+    belongs to the text it introduces. */
+-.gd-doc { --gd-body: #3a2a1c; --gd-link: #b4530a; color: var(--gd-body); font-size: 16.5px; line-height: 1.7; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; font-variant-numeric: tabular-nums; }
++.gd-doc { --gd-body: #2f2216; --gd-link: #b4530a; color: var(--gd-body); font-size: 17.5px; line-height: 1.7; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; font-variant-numeric: tabular-nums; }
+ .gd-doc h1, .gd-doc h2, .gd-doc h3, .gd-doc h4 { color: var(--gd-ink); font-weight: 600; text-wrap: balance; }
+ .gd-doc h1 { font-size: clamp(30px, 4vw, 42px); line-height: 1.15; letter-spacing: -0.015em; margin: 8px 0 16px; }
+ .gd-doc h2 { font-size: 26px; line-height: 1.3; letter-spacing: -0.01em; margin: 64px 0 14px; padding-top: 22px; border-top: 3px solid transparent; border-image: linear-gradient(90deg, #ff8514, #ffe270 60%, transparent) 1; }
+diff --git a/src/index.css b/src/index.css
+index cc7392d..d27ca5a 100644
+--- a/src/index.css
++++ b/src/index.css
+@@ -43,6 +43,42 @@
+   src: url('/fonts/mulish-variable.woff2') format('woff2');
+ }
+ 
++/* Reading font for the wiki and the admin (U139, J191): Mulish stays the
++   app's brand face, but its wide, light letters tired the eyes over long
++   admin tables and wiki pages. Source Sans 3 is built for long reading.
++   Scoped with :has() so drawers portalled to <body> follow it too; the
++   consumer app never renders .adm-root or .gd, so it is untouched. */
++@font-face {
++  font-family: 'Source Sans 3';
++  font-style: normal;
++  font-weight: 200 900;
++  font-display: swap;
++  src: url('/fonts/source-sans-3-latin-wght-normal.woff2') format('woff2');
++}
++@font-face {
++  font-family: 'Source Sans 3';
++  font-style: italic;
++  font-weight: 200 900;
++  font-display: swap;
++  src: url('/fonts/source-sans-3-latin-wght-italic.woff2') format('woff2');
++}
++:root:has(.adm-root, .gd) {
++  --font-sans: 'Source Sans 3', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
++}
++/* Source Sans runs narrower than Mulish, so the admin's dense sizes step
++   up one pixel to keep the same reading size. */
++:root:has(.adm-root) {
++  --text-11: 12px;
++  --text-12: 13px;
++  --text-13: 14px;
++  --text-15: 16px;
++}
++:root:has(.adm-root, .gd) body {
++  font-family: var(--font-sans);
++  -webkit-font-smoothing: antialiased;
++  text-rendering: optimizeLegibility;
++}
++
+ * {
+   box-sizing: border-box;
+ }

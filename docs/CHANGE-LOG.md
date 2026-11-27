@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-27 — Reading font for wiki and admin (U139, J191)
+
+Wiki and admin use Source Sans 3 with darker secondary text; the app keeps Mulish.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-26 — Persona current condition (U138, J190)
 
 Persona set v4 carries a five-dimension current condition, readiness and support, shared by the buyer agent and the cost model.
