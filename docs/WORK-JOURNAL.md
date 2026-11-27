@@ -2254,6 +2254,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 - **Key finding of round 2:** lead with a free first week, then charge. Trust beats price as the barrier, and a self-serve team plan comes second.
 
 ### J202 — Point A done
+- **Admin audit done:** `docs/briefs/2026-11-27-admin-ux-audit.md` (top 10 issues, direction, phases 8–10h / 20–28h / 30–45h); waiting for the product owner to choose.
 - **Done (U140).** Next: point B (125 StateFlips, ~1,000 draft AKPs, personas in Wellness Identity) and the admin UX audit.
 
 ### J201 — Product AKPs sheet
