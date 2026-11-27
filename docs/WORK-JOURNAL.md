@@ -134,6 +134,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | J181 | 2026-11-25 | Review + code | Review whether the reports are understandable even to a layperson, and fix them | U128 |
 | J182 | 2026-11-25 | Code | UX feedback report from the latest feedback group; drop "what this report says"; a goal on every report; make "many sources → iterations → product" visible; drawers instead of page changes | U129 |
 | J183 | 2026-11-25 | Code + research | Better buyer agent visualisation; therapeutic map and interactive Healing Map; B2B2C research using everything known, with the features to build, in a report | U130, U131, U132 |
+| J201 | 2026-11-27 | Received | Business owner's last messages (Figma versions, extract its code; parked) and the UI/UX Product AKPs workbook. Saved | — |
 | J200 | 2026-11-27 | Received | Business owner: product AKPs sheet, 4-function persona mindspace; product owner committed 1k AKPs + 5 items by Monday. Saved | — |
 | J199 | 2026-11-27 | Received | Business owner: AI brain prototype with 5 functions (Wellness, Brand, Product, Business, Analysis), move into our admin; predefined AKP values first. Figma parked. Saved | — |
 | J198 | 2026-11-27 | Analysis | Re-read every brief and file and checked the system against them: gap check with closeness per pillar, 9 missed asks (now A31–A39), top gaps and backlog B10–B14 | — |
@@ -2250,6 +2251,9 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 ### J183 — Visuals, maps, B2B2C round 2
 - **Done:** U130, U131, U132.
 - **Key finding of round 2:** lead with a free first week, then charge. Trust beats price as the barrier, and a self-serve team plan comes second.
+
+### J201 — Product AKPs sheet
+- **Saved** `2026-11-27-uiux-product-akps.xlsx`, A46, row 49. Still waiting: marketing AKPs .xlsx, persona screenshots, AKP priority.
 
 ### J200 — Commitment for Monday
 - **Saved.** The product owner promised: first 1,000 AKPs + the five items (graph, sleep detail, calculation, AKPs in the agent, persona) by Monday 30 Nov. Waiting on: UI/UX Product AKPs .xlsx, marketing AKPs .xlsx, persona screenshots, AKP priority.
