@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-27 — Report sources and API healing model (U146, J206)
+
+Every report ends with its data sources; the buyer summary is short; the API contract describes StateFlips and AKPs; metric lines and the business owner's thesis page added.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-27 — Released to production (U144, J205)
 
 Therapeutic map, Healing Map, Report metrics, StateFlips and the new admin menu are now on production too.

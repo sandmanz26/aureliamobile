@@ -1,0 +1,1931 @@
+commit 0d0683d38495fafd0d8d4c2419603b4c328e1f5f
+Author: Claude <noreply@anthropic.com>
+Date:   Fri Nov 27 23:23:58 2026 +0000
+
+    Data sources on every report, short Buyer summary, healing-model API, metric lines and the owner's thesis (U146, J206)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+
+diff --git a/docs/api/openapi-v2.yaml b/docs/api/openapi-v2.yaml
+index c070507..6d3c2d6 100644
+--- a/docs/api/openapi-v2.yaml
++++ b/docs/api/openapi-v2.yaml
+@@ -17,6 +17,8 @@ tags:
+ - name: Compute
+ - name: Outcomes
+ - name: Admin
++- name: Healing model
++  description: StateFlips, AKPs, chapters, check-ins (U146). x-admin-only marks what never reaches an app.
+ paths:
+   /auth/signup:
+     post:
+@@ -1801,6 +1803,389 @@ paths:
+                 $ref: '#/components/schemas/AuditPage'
+         default:
+           $ref: '#/components/responses/Problem'
++  /stateflips:
++    get:
++      tags:
++      - Healing model
++      summary: Published StateFlips
++      operationId: get_stateflips
++      x-status: new in v2
++      x-auth: user
++      x-admin-only: false
++      security:
++      - bearer: []
++      parameters:
++      - name: dimension
++        in: query
++        required: false
++        schema:
++          type: string
++      responses:
++        '200':
++          description: OK
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/StateFlipPublicList'
++        default:
++          $ref: '#/components/responses/Problem'
++  /stateflips/{id}:
++    get:
++      tags:
++      - Healing model
++      summary: One published StateFlip
++      operationId: get_stateflip
++      x-status: new in v2
++      x-auth: user
++      x-admin-only: false
++      security:
++      - bearer: []
++      parameters:
++      - name: id
++        in: path
++        required: true
++        schema:
++          type: string
++      responses:
++        '200':
++          description: OK
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/StateFlipPublic'
++        default:
++          $ref: '#/components/responses/Problem'
++  /admin/stateflips/{id}:
++    put:
++      tags:
++      - Healing model
++      summary: Create or update a StateFlip (versioned)
++      operationId: put_admin_stateflip
++      x-status: new in v2
++      x-auth: staff
++      x-admin-only: true
++      security:
++      - adminBearer: []
++      parameters:
++      - name: id
++        in: path
++        required: true
++        schema:
++          type: string
++      requestBody:
++        required: true
++        content:
++          application/json:
++            schema:
++              $ref: '#/components/schemas/StateFlip'
++      responses:
++        '200':
++          description: OK
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/StateFlip'
++        default:
++          $ref: '#/components/responses/Problem'
++  /admin/akps:
++    get:
++      tags:
++      - Healing model
++      summary: AKP catalogue
++      operationId: get_admin_akps
++      x-status: new in v2
++      x-auth: staff
++      x-admin-only: true
++      security:
++      - adminBearer: []
++      parameters:
++      - name: family
++        in: query
++        required: false
++        schema:
++          type: string
++      - name: kind
++        in: query
++        required: false
++        schema:
++          type: string
++      - name: fn
++        in: query
++        required: false
++        schema:
++          type: string
++      - name: flip
++        in: query
++        required: false
++        schema:
++          type: string
++      - name: cursor
++        in: query
++        required: false
++        schema:
++          type: string
++      responses:
++        '200':
++          description: OK
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/AkpPage'
++        default:
++          $ref: '#/components/responses/Problem'
++  /admin/akps/{id}:
++    get:
++      tags:
++      - Healing model
++      summary: One AKP with its links both ways
++      operationId: get_admin_akp
++      x-status: new in v2
++      x-auth: staff
++      x-admin-only: true
++      security:
++      - adminBearer: []
++      parameters:
++      - name: id
++        in: path
++        required: true
++        schema:
++          type: string
++      responses:
++        '200':
++          description: OK
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/AkpWithLinks'
++        default:
++          $ref: '#/components/responses/Problem'
++    put:
++      tags:
++      - Healing model
++      summary: Create or update an AKP and its links
++      operationId: put_admin_akp
++      x-status: new in v2
++      x-auth: staff
++      x-admin-only: true
++      security:
++      - adminBearer: []
++      parameters:
++      - name: id
++        in: path
++        required: true
++        schema:
++          type: string
++      requestBody:
++        required: true
++        content:
++          application/json:
++            schema:
++              $ref: '#/components/schemas/Akp'
++      responses:
++        '200':
++          description: OK
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/Akp'
++        default:
++          $ref: '#/components/responses/Problem'
++  /journeys/{id}/chapters:
++    get:
++      tags:
++      - Healing model
++      summary: The person's chapters in order
++      operationId: get_journey_chapters
++      x-status: new in v2
++      x-auth: user
++      x-admin-only: false
++      security:
++      - bearer: []
++      parameters:
++      - name: id
++        in: path
++        required: true
++        schema:
++          type: string
++      responses:
++        '200':
++          description: OK
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/ChapterPublicList'
++        default:
++          $ref: '#/components/responses/Problem'
++  /admin/chapters/{id}:
++    get:
++      tags:
++      - Healing model
++      summary: One chapter with its ordered AKPs
++      operationId: get_admin_chapter
++      x-status: new in v2
++      x-auth: staff
++      x-admin-only: true
++      security:
++      - adminBearer: []
++      parameters:
++      - name: id
++        in: path
++        required: true
++        schema:
++          type: string
++      responses:
++        '200':
++          description: OK
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/Chapter'
++        default:
++          $ref: '#/components/responses/Problem'
++  /journeys/{id}/checkins:
++    get:
++      tags:
++      - Healing model
++      summary: The person's check-ins with marker scores
++      operationId: get_journey_checkins
++      x-status: new in v2
++      x-auth: user
++      x-admin-only: false
++      security:
++      - bearer: []
++      parameters:
++      - name: id
++        in: path
++        required: true
++        schema:
++          type: string
++      responses:
++        '200':
++          description: OK
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/CheckinList'
++        default:
++          $ref: '#/components/responses/Problem'
++  /admin/outcomes/cohorts:
++    get:
++      tags:
++      - Outcomes
++      summary: Cohort results per StateFlip
++      operationId: get_admin_outcomes_cohorts
++      x-status: new in v2
++      x-auth: staff
++      x-admin-only: true
++      security:
++      - adminBearer: []
++      parameters:
++      - name: flip
++        in: query
++        required: false
++        schema:
++          type: string
++      - name: retreatId
++        in: query
++        required: false
++        schema:
++          type: string
++      - name: stage
++        in: query
++        required: false
++        schema:
++          type: string
++      - name: from
++        in: query
++        required: false
++        schema:
++          type: string
++      - name: to
++        in: query
++        required: false
++        schema:
++          type: string
++      responses:
++        '200':
++          description: OK
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/CohortOutcomeList'
++        default:
++          $ref: '#/components/responses/Problem'
++  /admin/tournaments:
++    get:
++      tags:
++      - Healing model
++      summary: AKP tournament results
++      operationId: get_admin_tournaments
++      x-status: new in v2
++      x-auth: staff
++      x-admin-only: true
++      security:
++      - adminBearer: []
++      parameters:
++      - name: flip
++        in: query
++        required: false
++        schema:
++          type: string
++      - name: media
++        in: query
++        required: false
++        schema:
++          type: string
++      - name: from
++        in: query
++        required: false
++        schema:
++          type: string
++      - name: to
++        in: query
++        required: false
++        schema:
++          type: string
++      - name: cursor
++        in: query
++        required: false
++        schema:
++          type: string
++      responses:
++        '200':
++          description: OK
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/TournamentResultPage'
++        default:
++          $ref: '#/components/responses/Problem'
++  /admin/personas/{id}/identity:
++    get:
++      tags:
++      - Healing model
++      summary: A synthetic persona's identity and mindspace
++      operationId: get_admin_persona_identity
++      x-status: new in v2
++      x-auth: staff
++      x-admin-only: true
++      security:
++      - adminBearer: []
++      parameters:
++      - name: id
++        in: path
++        required: true
++        schema:
++          type: string
++      responses:
++        '200':
++          description: OK
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/PersonaIdentity'
++        default:
++          $ref: '#/components/responses/Problem'
+ components:
+   securitySchemes:
+     bearer:
+@@ -3613,3 +3998,281 @@ components:
+       required:
+       - data
+       - nextCursor
++    Dimension:
++      type: string
++      enum: [mental, emotional, relational, spiritual, physical]
++    Milestone:
++      type: object
++      properties:
++        id: {type: string, enum: [X, Y, Z]}
++        title: {type: string}
++        threshold: {type: number}
++        layer: {type: string, enum: [mood, habit, skill]}
++        what: {type: string}
++      required: [id, title, threshold, layer, what]
++    FlipMarker:
++      type: object
++      properties:
++        label: {type: string}
++        question: {type: string}
++        bad: {type: string}
++        good: {type: string}
++      required: [label, question, bad, good]
++    StateFlip:
++      type: object
++      properties:
++        id: {type: string, description: SF-…}
++        n: {type: integer}
++        dimension: {$ref: '#/components/schemas/Dimension'}
++        title: {type: string}
++        need:
++          type: object
++          properties:
++            id: {type: string}
++            kind: {type: string, enum: [UN, dual, none]}
++            label: {type: string}
++            source: {type: string}
++        bad: {type: string}
++        good: {type: string}
++        milestones: {type: array, items: {$ref: '#/components/schemas/Milestone'}}
++        measure:
++          type: object
++          properties:
++            scale: {type: string}
++            markers: {type: array, items: {$ref: '#/components/schemas/FlipMarker'}}
++            source: {type: string}
++        issues: {type: array, items: {type: string}}
++        layer: {type: string, enum: [mood, habit, skill]}
++        prevalence: {type: string}
++        source: {type: string}
++        status: {type: string, enum: [draft, reviewed, published]}
++        version: {type: integer}
++      required: [id, dimension, title, bad, good, milestones, measure, status, version]
++    StateFlipPublic:
++      type: object
++      properties:
++        id: {type: string}
++        dimension: {$ref: '#/components/schemas/Dimension'}
++        title: {type: string}
++        bad: {type: string}
++        good: {type: string}
++        milestones: {type: array, items: {$ref: '#/components/schemas/Milestone'}}
++        questions:
++          type: array
++          items:
++            type: object
++            properties:
++              label: {type: string}
++              question: {type: string}
++      required: [id, dimension, title, bad, good, milestones, questions]
++    StateFlipPublicList:
++      type: object
++      properties:
++        data: {type: array, items: {$ref: '#/components/schemas/StateFlipPublic'}}
++      required: [data]
++    AkpLinkType:
++      type: string
++      enum: [step-of, feeds, part-of, supports, fed-by, mirrors]
++    AkpLink:
++      type: object
++      properties:
++        from: {type: string}
++        to: {type: string}
++        type: {$ref: '#/components/schemas/AkpLinkType'}
++      required: [from, to, type]
++    Akp:
++      type: object
++      properties:
++        id: {type: string, description: WG- ID- WS- WM- WI- WV- PR- prefix by family}
++        name: {type: string}
++        family: {type: string, enum: [goal, identity, product, script, music, image, video]}
++        fn: {type: string, enum: [wellness, product, identity, brand]}
++        kind: {type: string, enum: [goal, strategy]}
++        layer: {type: string}
++        modality: {type: [string, 'null'], enum: [Script, Music, Image, Video, null]}
++        description: {type: string}
++        causalRole: {type: string}
++        flips: {type: array, items: {type: string}}
++        links:
++          type: array
++          items:
++            type: object
++            properties:
++              to: {type: string}
++              type: {$ref: '#/components/schemas/AkpLinkType'}
++        source: {type: string}
++        status: {type: string, enum: [draft, reviewed]}
++        version: {type: integer}
++      required: [id, name, family, fn, kind, flips, links, status]
++    AkpWithLinks:
++      allOf:
++      - $ref: '#/components/schemas/Akp'
++      - type: object
++        properties:
++          linkedFrom: {type: array, items: {$ref: '#/components/schemas/AkpLink'}}
++    AkpPage:
++      type: object
++      properties:
++        data: {type: array, items: {$ref: '#/components/schemas/Akp'}}
++        nextCursor: {type: [string, 'null']}
++      required: [data, nextCursor]
++    Chapter:
++      type: object
++      properties:
++        id: {type: string}
++        versionId: {type: string}
++        journeyId: {type: string}
++        flipId: {type: string}
++        index: {type: integer}
++        minutes: {type: integer, enum: [3, 5, 10]}
++        milestone: {type: string, enum: [X, Y, Z]}
++        akps:
++          type: array
++          description: Ordered by `order`.
++          items:
++            type: object
++            properties:
++              akpId: {type: string}
++              order: {type: integer}
++              kind: {type: string, enum: [goal, strategy]}
++            required: [akpId, order, kind]
++      required: [id, versionId, index, minutes, akps]
++    ChapterPublic:
++      type: object
++      properties:
++        id: {type: string}
++        versionId: {type: string}
++        journeyId: {type: string}
++        flipId: {type: string}
++        index: {type: integer}
++        minutes: {type: integer, enum: [3, 5, 10]}
++        milestone: {type: string, enum: [X, Y, Z]}
++        title: {type: string}
++        durationSec: {type: integer}
++      required: [id, index, minutes, title]
++    ChapterPublicList:
++      type: object
++      properties:
++        data: {type: array, items: {$ref: '#/components/schemas/ChapterPublic'}}
++      required: [data]
++    CheckinMeasured:
++      type: object
++      properties:
++        id: {type: string}
++        journeyId: {type: string}
++        chapterId: {type: string}
++        phase: {type: string, enum: [pre, post]}
++        measures:
++          type: array
++          items:
++            type: object
++            properties:
++              marker: {type: string}
++              value: {type: number}
++              max: {type: number, const: 25}
++            required: [marker, value]
++        score: {type: number, minimum: 0, maximum: 100, description: The sum of the markers}
++        milestone: {type: string, enum: [X, Y, Z]}
++        at: {type: string, format: date-time}
++      required: [id, journeyId, phase, measures, score, at]
++    CheckinList:
++      type: object
++      properties:
++        data: {type: array, items: {$ref: '#/components/schemas/CheckinMeasured'}}
++      required: [data]
++    CohortOutcome:
++      type: object
++      properties:
++        flipId: {type: string}
++        retreatId: {type: string}
++        stage: {type: integer, enum: [1, 2, 3]}
++        n: {type: integer}
++        suppressed: {type: boolean}
++        flipRate: {type: number}
++        reached:
++          type: object
++          properties:
++            X: {type: number}
++            Y: {type: number}
++            Z: {type: number}
++        chaptersToFlipMedian: {type: number}
++        meanChance: {type: number}
++        costPerFlip: {$ref: '#/components/schemas/Money'}
++        startScoreMedian: {type: number}
++      required: [flipId, n, suppressed]
++    CohortOutcomeList:
++      type: object
++      properties:
++        data: {type: array, items: {$ref: '#/components/schemas/CohortOutcome'}}
++      required: [data]
++    TournamentResult:
++      type: object
++      properties:
++        id: {type: string}
++        flipId: {type: string}
++        chapterId: {type: string}
++        media: {type: string, enum: [script, voice, music, image, video]}
++        judge: {type: string, description: Causal AI model version}
++        candidates:
++          type: array
++          items:
++            type: object
++            properties:
++              supplier: {type: string}
++              model: {type: string}
++              akpIds: {type: array, items: {type: string}}
++              score: {type: number}
++              cost: {$ref: '#/components/schemas/Money'}
++            required: [supplier, model, akpIds, score, cost]
++        winner: {type: integer, description: Index into candidates}
++        baselineScore: {type: number}
++        upliftAfter: {type: number}
++        decidedAt: {type: string, format: date-time}
++      required: [id, flipId, media, judge, candidates, winner, decidedAt]
++    TournamentResultPage:
++      type: object
++      properties:
++        data: {type: array, items: {$ref: '#/components/schemas/TournamentResult'}}
++        nextCursor: {type: [string, 'null']}
++      required: [data, nextCursor]
++    Mindspace:
++      type: object
++      properties:
++        headline: {type: string}
++        facts:
++          type: array
++          items:
++            type: object
++            properties:
++              label: {type: string}
++              value: {type: string}
++        akps: {type: array, items: {type: string}}
++      required: [headline, facts, akps]
++    PersonaIdentity:
++      type: object
++      description: Synthetic personas only; a real person's identity profile is out of v2.
++      properties:
++        id: {type: string}
++        dims:
++          type: object
++          description: The Grand 12, keyed outcomes, emotional, cognitive, regulation, capacity, archetype, preferences, relational, values, risks, culture, meta.
++          additionalProperties:
++            type: object
++            properties:
++              key: {type: string}
++              value: {type: string}
++              detail: {type: string}
++        archetype: {type: string, enum: [Explorer, Caregiver, Achiever, Seeker, Rebuilder, Guardian]}
++        cogStyle: {type: string, enum: [analytic, intuitive, narrative, somatic]}
++        value: {type: string, enum: [purpose, compassion, growth, balance, security, belonging]}
++        spiritual: {type: string, enum: [welcome, neutral, secular only]}
++        flags: {type: array, items: {type: string}}
++        flip: {type: string}
++        mindspace:
++          type: object
++          properties:
++            wellness: {$ref: '#/components/schemas/Mindspace'}
++            product: {$ref: '#/components/schemas/Mindspace'}
++            business: {$ref: '#/components/schemas/Mindspace'}
++            brand: {$ref: '#/components/schemas/Mindspace'}
++      required: [id, dims, archetype, flip, mindspace]
+diff --git a/docs/api/v2/admin.md b/docs/api/v2/admin.md
+index 381dd2d..688ff42 100644
+--- a/docs/api/v2/admin.md
++++ b/docs/api/v2/admin.md
+@@ -72,3 +72,71 @@ type SafetyEvent = { id; userId; source: "message" | "checkin" | "intake" | "rep
+                      state: "open" | "acknowledged" | "escalated" | "closed"; ownerId?; createdAt }
+ type AuditEntry = { id; actorId; action: string; target: string; before?: object; after?: object; at }
+ ```
++
++### 4.9 Healing model: StateFlips, AKPs, chapters, check-ins (12 endpoints, U146)
++
++The shapes the admin already models in `src/admin/data/` (`stateFlips.ts`, `akps.ts`, `stateFlipSleep.ts`, `personaIdentityV4.ts`), as the backend will serve them. A **StateFlip** is a bad → good state in one dimension with milestones X → Y → Z and a measure; an **AKP** is a building block, either a *goal* (what to reach) or a *strategy* (how: script, music, image, video, product), linked to other AKPs and to the StateFlips it serves; a **chapter** is an ordered list of AKPs; a **check-in** scores the measure's markers after each chapter.
++
++**Admin-only** (staff token, `aud=admin`) unless the Auth column says `user`. The apps read a published StateFlip and their own chapters and check-ins; AKP ids, tournament results, cohort outcomes and persona identities never reach an app. Outcome reads are aggregate, consented and suppressed below the minimum group size, as in §4.7.
++
++| Method | Path | Purpose | Request → Response | Auth | Status |
++| --- | --- | --- | --- | --- | --- |
++| GET | `/stateflips` | Published StateFlips, for intake and the journey screen | `?dimension` → `{ data: StateFlipPublic[] }` | user | new in v2 |
++| GET | `/stateflips/{id}` | One published StateFlip: bad, good, milestones, the check-in questions | → `StateFlipPublic` | user | new in v2 |
++| PUT | `/admin/stateflips/{id}` | Create or update a StateFlip (versioned; `draft` until reviewed) | `StateFlip` → `StateFlip` | staff, admin-only | new in v2 |
++| GET | `/admin/akps` | The AKP catalogue | `?family&kind=goal\|strategy&fn&flip&cursor` → `Page<Akp>` | staff, admin-only | new in v2 |
++| GET | `/admin/akps/{id}` | One AKP with its links both ways | → `Akp & { linkedFrom: AkpLink[] }` | staff, admin-only | new in v2 |
++| PUT | `/admin/akps/{id}` | Create or update an AKP and its links (versioned) | `Akp` → `Akp` | staff, admin-only | new in v2 |
++| GET | `/journeys/{id}/chapters` | The person's chapters in order, with the milestone each aims at | → `{ data: ChapterPublic[] }` | user (own journey) | new in v2 |
++| GET | `/admin/chapters/{id}` | One chapter with its ordered AKPs | → `Chapter` | staff, admin-only | new in v2 |
++| GET | `/journeys/{id}/checkins` | The person's check-ins with each marker's score | → `{ data: Checkin[] }` | user (own journey) | new in v2 |
++| GET | `/admin/outcomes/cohorts` | Cohort results per StateFlip: flip rate, milestones reached, chapters, cost per flip | `?flip&retreatId&stage&from&to` → `{ data: CohortOutcome[] }` | staff, admin-only | new in v2 |
++| GET | `/admin/tournaments` | AKP tournament results: candidates, the Causal AI judge's scores, the winner | `?flip&media&from&to&cursor` → `Page<TournamentResult>` | staff, admin-only | new in v2 |
++| GET | `/admin/personas/{id}/identity` | A synthetic persona's identity (the Grand 12) and mindspace per function | → `PersonaIdentity` | staff, admin-only | new in v2 |
++
++`POST /checkins` (§4.2) is **changed in v2**: it takes the markers of the StateFlip's measure (`measures`) and the server sums them into `score`.
++
++```ts
++type Dimension = "mental" | "emotional" | "relational" | "spiritual" | "physical"   // codes MEN EMO REL SPI PHY
++type Layer = "mood" | "habit" | "skill"
++type StateFlip = { id: string /* SF-… */; n: number; dimension: Dimension; title: string;
++                   need: { id: string; kind: "UN" | "dual" | "none"; label: string; source: string };
++                   bad: string; good: string;
++                   milestones: { id: "X" | "Y" | "Z"; title: string; threshold: number; layer: Layer; what: string }[];
++                   measure: { scale: string; markers: { label: string; question: string; bad: string; good: string }[]; source: string };
++                   issues: string[]; layer: Layer; prevalence: string; source: string;
++                   status: "draft" | "reviewed" | "published"; version: number }
++type StateFlipPublic = Pick<StateFlip, "id" | "dimension" | "title" | "bad" | "good" | "milestones"> &
++                   { questions: { label: string; question: string }[] }          // no sources, no issues
++type AkpLink = { from: string; to: string; type: "step-of" | "feeds" | "part-of" | "supports" | "fed-by" | "mirrors" }
++type Akp = { id: string /* WG- ID- WS- WM- WI- WV- PR- */; name: string;
++             family: "goal" | "identity" | "product" | "script" | "music" | "image" | "video";
++             fn: "wellness" | "product" | "identity" | "brand"; kind: "goal" | "strategy";
++             layer: string; modality: "Script" | "Music" | "Image" | "Video" | null;
++             description: string; causalRole: string; flips: string[]; links: { to: string; type: AkpLink["type"] }[];
++             source: string; status: "draft" | "reviewed"; version: number }
++type Chapter = { id; versionId; journeyId?; flipId?; index: number; minutes: 3 | 5 | 10; milestone?: "X" | "Y" | "Z";
++                 akps: { akpId: string; order: number; kind: "goal" | "strategy" }[] }   // ordered by `order`
++type ChapterPublic = Omit<Chapter, "akps"> & { title: string; durationSec: number }
++type Checkin = { id; journeyId; chapterId?; phase: "pre" | "post";
++                 measures: { marker: string; value: number; max: 25 }[]; score: number /* 0–100, the sum */;
++                 milestone?: "X" | "Y" | "Z"; at }   // milestone from the mean of the last two scores ≥ 45 / 65 / 85
++type CohortOutcome = { flipId: string; retreatId?: string; stage?: 1 | 2 | 3; n: number; suppressed: boolean;
++                       flipRate?: number; reached?: { X: number; Y: number; Z: number };
++                       chaptersToFlipMedian?: number; meanChance?: number; costPerFlip?: Money; startScoreMedian?: number }
++type TournamentResult = { id; flipId: string; chapterId?: string; media: "script" | "voice" | "music" | "image" | "video";
++                          judge: string /* Causal AI model version */;
++                          candidates: { supplier: string; model: string; akpIds: string[]; score: number; cost: Money }[];
++                          winner: number /* index into candidates */; baselineScore?: number; upliftAfter?: number; decidedAt }
++type IdentityKey = "outcomes" | "emotional" | "cognitive" | "regulation" | "capacity" | "archetype" |
++                   "preferences" | "relational" | "values" | "risks" | "culture" | "meta"
++type PersonaIdentity = { id: string; dims: Record<IdentityKey, { key: IdentityKey; value: string; detail: string }>;
++                         archetype: "Explorer" | "Caregiver" | "Achiever" | "Seeker" | "Rebuilder" | "Guardian";
++                         cogStyle: "analytic" | "intuitive" | "narrative" | "somatic";
++                         value: "purpose" | "compassion" | "growth" | "balance" | "security" | "belonging";
++                         spiritual: "welcome" | "neutral" | "secular only"; flags: string[]; flip: string;
++                         mindspace: Record<"wellness" | "product" | "business" | "brand",
++                                           { headline: string; facts: { label: string; value: string }[]; akps: string[] }> }
++```
++
++Persona identity is for the **synthetic** personas the buyer agents play; a real person's identity profile is out of v2 (it needs its own consent and is listed in §7 of General). Tournament results stay empty until the meta-AI tournament is built; the endpoint exists so the admin and the cost ledger agree on one shape from the start.
+diff --git a/docs/api/v2/apps.md b/docs/api/v2/apps.md
+index a0a1699..992d3d1 100644
+--- a/docs/api/v2/apps.md
++++ b/docs/api/v2/apps.md
+@@ -185,3 +185,7 @@ type Subscription = { id; plan: "plus"; interval; status: "active" | "past_due"
+ **Free limit.** The server counts; the app only shows `entitlements`. The first build never counts. A retreat ticket grants its own chapters for the cohort's length (`source: "retreat"`).
+ 
+ **Attribution.** A subscription started by someone enrolled in a cohort within `plusAttributionDays` of enrolment records `attributedCohortId`. Each paid invoice then writes a `plus_share` payout line.
++
++### Healing model reads (U146)
++
++The apps read a published StateFlip (`GET /stateflips`, `GET /stateflips/{id}`), the person's own chapters (`GET /journeys/{id}/chapters`) and check-ins (`GET /journeys/{id}/checkins`), and send each check-in's marker scores to `POST /checkins`. The shapes, and everything that is admin-only (AKPs, tournaments, cohort outcomes, persona identity), are in [Admin §4.9](/wiki/api/admin).
+diff --git a/docs/api/v2/general.md b/docs/api/v2/general.md
+index 6fe8017..5d41219 100644
+--- a/docs/api/v2/general.md
++++ b/docs/api/v2/general.md
+@@ -93,7 +93,8 @@ The endpoints are split into two pages:
+ | Compute ledger and cost | 5 |
+ | Therapeutic outcomes | 3 |
+ | Minimum admin | 9 |
+-| **Total** | **76** |
++| Healing model (StateFlips, AKPs, chapters, check-ins; mostly admin-only) | 12 |
++| **Total** | **88** |
+ 
+ ## 5 · Data model (PostgreSQL)
+ 
+@@ -133,6 +134,15 @@ UUID-backed ids with the prefixes above; `created_at` and `updated_at` on every
+ | `subscriptions` | id, user_id, plan, interval, status, current_period_end, stripe_subscription_id, attributed_cohort_id? | |
+ | `usage_counters` | user_id, day, builds_used | Free-limit counter |
+ | `webhook_events` | id (supplier event id, unique), source, type, received_at, processed_at, error? | Deduplication |
++| `stateflips` | id (SF-…), n, dimension, title, need jsonb, bad, good, milestones jsonb, measure jsonb, issues, layer, status, version | Versioned; apps see `published` only (§4.9) |
++| `akps` | id (WG-/ID-/WS-/WM-/WI-/WV-/PR-…), name, family, fn, kind (goal, strategy), layer, modality, description, causal_role, source, status, version | Admin-only |
++| `akp_links` | from_akp, to_akp, type (step-of, feeds, part-of, supports, fed-by, mirrors) | Unique triple |
++| `akp_flips` | akp_id, flip_id | Which StateFlips an AKP serves |
++| `chapter_akps` | chapter_id, akp_id, order, kind | A chapter is its AKPs in order |
++| `checkin_measures` | checkin_id, marker, value | Health schema; `checkins.score` is their sum |
++| `tournaments` | id, flip_id, chapter_id?, media, judge, winner_candidate_id, baseline_score?, uplift_after?, decided_at | Admin-only |
++| `tournament_candidates` | id, tournament_id, supplier, model, akp_ids, score, cost, currency | |
++| `persona_identities` | persona_id, dims jsonb, archetype, cog_style, value, spiritual, flags, flip_id, mindspace jsonb | Synthetic personas only |
+ | `staff_users` | id, email, role, status | Admin audience |
+ | `audit_log` | id, actor_id, action, target, before jsonb, after jsonb, at | Append-only |
+ | `idempotency_keys` | key, user_id, route, response_hash, created_at | 24 h replay |
+diff --git a/docs/research/b2b2c/00-summary.md b/docs/research/b2b2c/00-summary.md
+index f59d2ee..db4e856 100644
+--- a/docs/research/b2b2c/00-summary.md
++++ b/docs/research/b2b2c/00-summary.md
+@@ -105,6 +105,8 @@ The full table of 15, with the scores per question, is on [Ideation](/wiki/b2b2c
+ 
+ The full plan, with gates, is on [Plan](/wiki/b2b2c/plan).
+ 
++The business owner's scale claims (120,000 AKPs, 500 billion variations, 5 billion StateFlips, $1 per flip) are recorded as [his thesis, not measured](/wiki/b2b2c/owner-thesis), each with what would make it measurable.
++
+ 1. **Phase 0, now, no backend.**
+    - Buyer agents test the redesigned retreat (€19.99 against €39).
+    - The business owner interviews five to ten creators.
+diff --git a/docs/research/b2b2c/12-owner-thesis.md b/docs/research/b2b2c/12-owner-thesis.md
+new file mode 100644
+index 0000000..18ddb46
+--- /dev/null
++++ b/docs/research/b2b2c/12-owner-thesis.md
+@@ -0,0 +1,26 @@
++# The business owner's thesis
++
++*Part of the [B2B2C research](/wiki/b2b2c). **This page is his thesis, not a measurement.** It records the scale claims from the business owner's deck and chats (24 and 27 Nov 2026) in his words, so they are not lost and not mistaken for evidence. Next to each claim is our note on what would make it measurable. Nothing on this page has been measured on Aurelia users: there are none yet.*
++
++## In one minute
++
++- **The idea:** Aurelia as a "meta-AI engine for your wellness quests". Thousands of text, image, audio, voice and video models compete in internal tournaments, judged by the Causal AI, to deliver "the proven pathway to a state change" (a StateFlip). His comparison is momondo or Skyscanner for airlines: Aurelia is the logic layer, the models are the carriers.
++- **The scale he describes:** about 120,000 AKPs ("legos", building blocks), combining into more than 500 billion unique variations; 500 million people in need; 10 StateFlips a year each, so 5 billion StateFlips a year; a valuation that holds "even at a radical floor of $1.00 per flip".
++- **Where we stand:** each of these is a target or a belief. The admin computes what it can from stated assumptions (the [Cost report](/admin/reports/cost) and the three metric lines on [Reports](/admin/reports)), and labels them Assumed.
++
++## The claims, and what would make each measurable
++
++| His claim (his words, not measured) | Status today | What would make it measurable |
++| --- | --- | --- |
++| **A meta-AI engine**: many suppliers' models compete in tournaments judged by the Causal AI | Not built. The cost model picks one model per media by preset; no tournament runs. | Log every tournament: candidates, the judge's score, the winner, the cost. A winner that beats a fixed baseline on the next check-in, more often than chance, is the measurement. |
++| **About 120,000 AKPs** (building blocks, "everything called entities") | The admin's AKP catalogue holds a small hand-made set; the 2025 documents describe the taxonomy but came without data. | An exported AKP table with ids, kind (goal or strategy) and links, counted by the backend. The count is then a fact; how many are ever *used* in a winning chapter is the more useful number. |
++| **500 billion unique variations** of those AKPs | A combinatorial upper bound, not a count of anything that exists. | Report the variations actually generated and played, and how many reached a check-in. The bound is fine as a picture; it is not a metric. |
++| **5 billion StateFlips a year** (500 million people × 10) | Market sizing by assumption. No flip has been measured yet. | Count flips: a person whose check-in score crosses the good threshold and stays there (the sleep StateFlip's 85). Then flips per active person per year, from real accounts. |
++| **A $1 per flip floor** | The cost model puts cost per flip between about $2 and $27 by Causal AI stage on its assumptions (see Reports → Three metric lines). | Real compute bills per chapter (the 2025 test sessions are the only measured costs so far), divided by measured flips. Price per flip can then be compared to cost per flip. |
++| **Compute cost trends toward zero by 2028** | A forecast. | Track the supplier price table over time (prices are dated in the Cost report) and the real cost per chapter month by month. |
++| **Living Intelligence tiles** (500+ learnings a day, 10B+ insights, 1.5M+ links, 100M+ pathways, 300M+ state possibilities) | Investor visuals. No data behind them in anything we have received. | Each needs a definition and a counter in the backend before it can be shown as a number. Until then they stay off any screen that reads as a measurement. |
++
++## How we use it
++
++- In the admin, a figure that comes from this thesis is labelled **Business owner's document** in the report's Data sources, never Measured.
++- When a claim gets a counter in the backend, its row above moves to "measured" with the date, and the admin shows the measured value next to his.
+diff --git a/src/admin/data/dataSources.test.ts b/src/admin/data/dataSources.test.ts
+new file mode 100644
+index 0000000..b452bac
+--- /dev/null
++++ b/src/admin/data/dataSources.test.ts
+@@ -0,0 +1,30 @@
++import { describe, expect, it } from 'vitest'
++import appSource from '../../App.tsx?raw'
++import { REPORT_DATA_SOURCES, SOURCE_META, dataSourcesFor } from './dataSources'
++import { SOURCES, type SourceId } from './reportSources'
++
++// Every report route, plus the lab pages that show numbers (StateFlips has its own sources panel).
++const reportRoutes = [...appSource.matchAll(/<Route path="(reports[^"]*)"/g)].map((m) => `/admin/${m[1]}`)
++const LAB_ROUTES = ['/admin/personas', '/admin/business-funnel', '/admin/user-journey']
++
++describe('data sources per report (U146)', () => {
++  it('finds the report routes', () => {
++    expect(reportRoutes).toContain('/admin/reports')
++    expect(reportRoutes).toContain('/admin/reports/buyer-agent')
++  })
++  it('registers at least one source for every report route and lab page', () => {
++    for (const r of [...reportRoutes, ...LAB_ROUTES]) expect(dataSourcesFor(r).length, r).toBeGreaterThan(0)
++  })
++  it('names only known sources, each with a type, file, date, link and what it feeds', () => {
++    for (const [route, page] of Object.entries(REPORT_DATA_SOURCES)) {
++      for (const u of page.uses) {
++        expect(SOURCES[u.id], `${route}: ${u.id}`).toBeDefined()
++        expect(u.feeds.length, `${route}: ${u.id}`).toBeGreaterThan(0)
++      }
++    }
++    for (const id of Object.keys(SOURCES) as SourceId[]) {
++      const m = SOURCE_META[id]
++      expect(m.file && m.date && SOURCES[id].link, id).toBeTruthy()
++    }
++  })
++})
+diff --git a/src/admin/data/dataSources.ts b/src/admin/data/dataSources.ts
+new file mode 100644
+index 0000000..431bcaa
+--- /dev/null
++++ b/src/admin/data/dataSources.ts
+@@ -0,0 +1,179 @@
++/**
++ * Data sources per report (U146, J206). The business owner wants the source
++ * of every report's data clear, so each report and lab page that shows
++ * numbers ends its Summary with a compact "Data sources" block and its Detail
++ * with the full one. Both read this module: one entry per page, each naming
++ * sources from the registry in reportSources.ts and saying what they feed on
++ * that page. `dataSources.test.ts` checks every report route registers at
++ * least one source.
++ */
++import { SOURCES, type ReportSource, type SourceId } from './reportSources'
++
++/** The five kinds of source a reader is asked to tell apart. */
++export type DataSourceType = 'measured' | 'simulated' | 'assumed' | 'owner' | 'research'
++
++export const DATA_SOURCE_TYPE_TEXT: Record<DataSourceType, string> = {
++  measured: 'Measured',
++  simulated: 'Simulated',
++  assumed: 'Assumed',
++  owner: 'Business owner’s document',
++  research: 'Research',
++}
++
++export const DATA_SOURCE_TYPE_MEANING: Record<DataSourceType, string> = {
++  measured: 'Counted from real use or real bills.',
++  simulated: 'Made-up people or sample data, played or generated by code or AI. Not a measurement.',
++  assumed: 'A calculation on stated assumptions. Changes when they do.',
++  owner: 'What the business owner sent or said: plans, specs, briefs, his thesis.',
++  research: 'Our own written research, interviews and suppliers’ published prices.',
++}
++
++/** Type, file or document name, and date, per registered source. */
++export const SOURCE_META: Record<SourceId, { type: DataSourceType; file: string; date: string }> = {
++  'buyer-v1': { type: 'simulated', file: 'src/admin/data/buyerRuns.ts (run v1)', date: '19 Nov 2026' },
++  'buyer-v2': { type: 'simulated', file: 'src/admin/data/buyerRunV2.ts', date: '19 Nov 2026' },
++  'buyer-v3': { type: 'simulated', file: 'src/admin/data/buyerRunV3.ts', date: '19 Nov 2026' },
++  'buyer-rerun': { type: 'simulated', file: 'src/admin/data/buyerSim.ts', date: 'Re-run U104' },
++  'buyer-v5': { type: 'simulated', file: 'src/admin/data/buyerRunV5.ts', date: '25 Nov 2026' },
++  'buyer-v6': { type: 'simulated', file: 'src/admin/data/buyerRunV6.ts', date: '25 Nov 2026' },
++  'buyer-v7': { type: 'simulated', file: 'src/admin/data/buyerRunV7.ts', date: '25 Nov 2026' },
++  decisions: { type: 'research', file: 'src/admin/data/businessFunnel.ts (decision log)', date: '24 Nov 2026' },
++  'app-funnel': { type: 'simulated', file: 'src/admin/data/businessFunnel.ts', date: 'U108' },
++  'feedback-group': { type: 'simulated', file: 'src/admin/data/study.ts (sample data)', date: 'Study from 13 Oct 2026' },
++  retreat: { type: 'assumed', file: 'src/admin/data/retreatFunnel.ts', date: '24 Nov 2026' },
++  b2b2c: { type: 'research', file: 'Wiki → B2B2C (docs/research/b2b2c/)', date: '25 Nov 2026' },
++  personas: { type: 'simulated', file: 'src/admin/data/personasV4.ts (sets v1, v2 in personas.ts)', date: 'Set v4 (current)' },
++  versions: { type: 'research', file: 'src/versions/versions.ts', date: '13 Nov 2026' },
++  interviews: { type: 'research', file: 'Wiki → Product requirements (three interviews)', date: 'Late Oct 2026' },
++  'backend-old': { type: 'research', file: 'docs/backend-old/BACKEND-OLD.md', date: '2025 documents' },
++  artefact: { type: 'research', file: 'docs/backend-old/ARTEFACT.md', date: '2025 documents' },
++  prd: { type: 'research', file: 'docs/PRD-OVERVIEW.md', date: '11 Nov 2026' },
++  'user-journey': { type: 'research', file: 'src/admin/data/userJourney.ts', date: 'Stored map' },
++  'cost-2025': { type: 'measured', file: '2025 admin cost screenshot (chat of 24 Nov 2026)', date: '8 Mar 2025 – 20 Apr 2026' },
++  'supplier-prices': { type: 'research', file: 'src/admin/data/costModel.ts (SUPPLIERS)', date: 'Read 24 Nov 2026' },
++  'spec-causal': { type: 'owner', file: 'MVP, Causal AI & Admin spec (PDF, 9 pages)', date: '24 Nov 2026' },
++  'owner-chat': { type: 'owner', file: 'docs/briefs/2026-11-24-cost-causal-ai-chat-part1.md', date: '24 Nov 2026' },
++  'owner-docs': { type: 'owner', file: 'Buyer-test-agent idea, 2025 backend docs, market-fit brief', date: '19 Nov 2026' },
++  'buyer-prices': { type: 'assumed', file: 'src/admin/data/mock.ts (PLANS) and the Upgrade screen', date: 'As of each run' },
++  'cost-model': { type: 'assumed', file: 'src/admin/data/costModel.ts', date: '27 Nov 2026' },
++  'sleep-cohort': { type: 'simulated', file: 'src/admin/data/stateFlipSleep.ts', date: 'U140 (J202)' },
++  'owner-thesis': { type: 'owner', file: 'His deck; chats of 24 and 27 Nov 2026', date: '27 Nov 2026' },
++}
++
++export interface DataSourceUse {
++  id: SourceId
++  /** What this source feeds on this page. */
++  feeds: string
++}
++
++export interface ReportDataSources {
++  title: string
++  uses: DataSourceUse[]
++}
++
++/** Every report and lab page that shows numbers, by route. */
++export const REPORT_DATA_SOURCES: Record<string, ReportDataSources> = {
++  '/admin/reports': {
++    title: 'All reports overview',
++    uses: [
++      { id: 'cost-model', feeds: 'Cost per flip by Causal AI stage, and the top drivers.' },
++      { id: 'spec-causal', feeds: 'The three stages: cost factor, uplift, success, density, velocity.' },
++      { id: 'supplier-prices', feeds: 'The price of each model in the chapter cost.' },
++      { id: 'sleep-cohort', feeds: 'The people and starting scores behind “share of the sleep cohort flipped”.' },
++      { id: 'buyer-v7', feeds: 'The Buyer agent report card.' },
++      { id: 'feedback-group', feeds: 'The UX feedback report card and the map’s study week.' },
++      { id: 'decisions', feeds: 'The decisions column of the iteration map.' },
++    ],
++  },
++  '/admin/reports/buyer-agent': {
++    title: 'Buyer agent report',
++    uses: [
++      { id: 'buyer-v5', feeds: 'Would try, would pay, the fair price.' },
++      { id: 'buyer-v7', feeds: 'Trying with and without a free library.' },
++      { id: 'buyer-v6', feeds: 'Free plan against the creator retreat (Detail).' },
++      { id: 'personas', feeds: 'Who was in each panel.' },
++      { id: 'buyer-prices', feeds: 'The price each test showed.' },
++      { id: 'owner-docs', feeds: 'Which of his documents each test read.' },
++    ],
++  },
++  '/admin/reports/ux-feedback': {
++    title: 'UX feedback report',
++    uses: [{ id: 'feedback-group', feeds: 'Every participant, score and session (sample data).' }],
++  },
++  '/admin/reports/combination': {
++    title: 'Combination report',
++    uses: [
++      { id: 'app-funnel', feeds: 'The five stages, their targets and the biggest gap.' },
++      { id: 'buyer-rerun', feeds: 'The predicted value of each stage.' },
++      { id: 'feedback-group', feeds: 'The people column.' },
++      { id: 'interviews', feeds: 'What real people said at each stage.' },
++      { id: 'backend-old', feeds: 'What the 2025 system had for each stage.' },
++      { id: 'decisions', feeds: 'The decision each stage leads to.' },
++    ],
++  },
++  '/admin/reports/cost': {
++    title: 'Cost report',
++    uses: [
++      { id: 'supplier-prices', feeds: 'Every model price.' },
++      { id: 'cost-2025', feeds: 'The only measured costs.' },
++      { id: 'spec-causal', feeds: 'The three Causal AI stages.' },
++      { id: 'owner-chat', feeds: 'What to compute.' },
++    ],
++  },
++  '/admin/reports/b2b2c': {
++    title: 'B2B2C report',
++    uses: [
++      { id: 'b2b2c', feeds: 'The channels, their scores and the features.' },
++      { id: 'buyer-v6', feeds: 'Retreat against freemium.' },
++      { id: 'buyer-v7', feeds: 'Quick wins by segment.' },
++      { id: 'retreat', feeds: 'Aurelia’s share and margin per ticket.' },
++      { id: 'owner-chat', feeds: 'The retreat brief.' },
++    ],
++  },
++  '/admin/reports/metrics': {
++    title: 'Report metrics',
++    uses: [
++      { id: 'buyer-v5', feeds: 'Buyer figures, worked out again.' },
++      { id: 'buyer-v6', feeds: 'Retreat figures, worked out again.' },
++      { id: 'buyer-v7', feeds: 'Latest test figures, worked out again.' },
++      { id: 'personas', feeds: 'Panel sizes and segments.' },
++      { id: 'feedback-group', feeds: 'UX feedback figures.' },
++      { id: 'cost-model', feeds: 'Cost figures.' },
++    ],
++  },
++  '/admin/personas': {
++    title: 'Personas',
++    uses: [
++      { id: 'personas', feeds: 'Every person, country and risk flag.' },
++      { id: 'interviews', feeds: 'The worries and needs the generator draws on.' },
++    ],
++  },
++  '/admin/business-funnel': {
++    title: 'Business funnel',
++    uses: [
++      { id: 'app-funnel', feeds: 'Stages, metrics and targets.' },
++      { id: 'buyer-rerun', feeds: 'The predicted value of each metric.' },
++      { id: 'retreat', feeds: 'The creator retreat funnel.' },
++      { id: 'b2b2c', feeds: 'Course-platform fees and category retention.' },
++      { id: 'decisions', feeds: 'The decision log.' },
++    ],
++  },
++  '/admin/user-journey': {
++    title: 'User journey',
++    uses: [
++      { id: 'user-journey', feeds: 'Moments, stages and screens.' },
++      { id: 'personas', feeds: 'Demand: how many personas hit each moment.' },
++    ],
++  },
++}
++
++export interface ResolvedDataSource extends DataSourceUse {
++  source: ReportSource
++  type: DataSourceType
++  file: string
++  date: string
++}
++
++export function dataSourcesFor(route: string): ResolvedDataSource[] {
++  return (REPORT_DATA_SOURCES[route]?.uses ?? []).map((u) => ({ ...u, source: SOURCES[u.id], ...SOURCE_META[u.id] }))
++}
+diff --git a/src/admin/data/metricLines.test.ts b/src/admin/data/metricLines.test.ts
+new file mode 100644
+index 0000000..224ae30
+--- /dev/null
++++ b/src/admin/data/metricLines.test.ts
+@@ -0,0 +1,28 @@
++import { describe, expect, it } from 'vitest'
++import { STAGES } from './costModel'
++import { metricLines, topDrivers } from './metricLines'
++
++describe('metric lines (A31)', () => {
++  it('has one point per Causal AI stage, density and velocity from the spec', () => {
++    const l = metricLines()
++    expect(l.map((p) => p.stage)).toEqual([1, 2, 3])
++    for (const p of l) {
++      expect(p.density).toBe(STAGES[p.stage].density)
++      expect(p.velocity).toBe(STAGES[p.stage].velocity)
++      expect(p.flipped).toBeGreaterThanOrEqual(0)
++      expect(p.flipped).toBeLessThanOrEqual(1)
++      expect(Number.isFinite(p.costPerFlip)).toBe(true)
++    }
++    expect(l[0].costIndex).toBe(1)
++  })
++  it('gets cheaper and flips more people as the stages advance', () => {
++    const l = metricLines()
++    expect(l[2].costPerFlip).toBeLessThan(l[0].costPerFlip)
++    expect(l[2].flipped).toBeGreaterThanOrEqual(l[0].flipped)
++  })
++  it('ranks the drivers by how far they move cost per flip', () => {
++    const d = topDrivers()
++    expect(d).toHaveLength(6)
++    for (let i = 1; i < d.length; i++) expect(Math.abs(d[i - 1].change)).toBeGreaterThanOrEqual(Math.abs(d[i].change))
++  })
++})
+diff --git a/src/admin/data/metricLines.ts b/src/admin/data/metricLines.ts
+new file mode 100644
+index 0000000..328a303
+--- /dev/null
++++ b/src/admin/data/metricLines.ts
+@@ -0,0 +1,80 @@
++/**
++ * The three metric lines over time (A31; U146, J206), as the spec asks: compute
++ * cost (cost per flip), Causal AI (density and velocity) and therapeutic (the
++ * share of the sleep cohort that flips). "Time" is the spec's three Causal AI
++ * stages, from under 1,000 sessions to 100,000+: there is no calendar data yet.
++ *
++ * Everything is worked out from costModel.ts (STAGES, goal(), the Balanced
++ * preset at 10 minutes, 3 chapters a week) and the sleep cohort in
++ * stateFlipSleep.ts. Nothing here is measured: the stage figures are the
++ * business owner's spec and the people are simulated.
++ */
++import { DEFAULT_GOAL, PRESETS, STAGES, goal, presetInputs, type GoalInputs, type Stage } from './costModel'
++import { GOOD_SCORE, whoHasIt } from './stateFlipSleep'
++
++export const LINE_STAGES: Stage[] = [1, 2, 3]
++/** A cohort member counts as flipped when the journey fits the 8-week study; weighted by the chance it works. */
++export const FLIP_WINDOW_WEEKS = 8
++
++export interface MetricPoint {
++  stage: Stage
++  sessions: string
++  /** Mean cost per flip over the sleep cohort, in US dollars. */
++  costPerFlip: number
++  /** Cost per flip as a share of stage 1's, 0–1, so it shares the chart's axis. */
++  costIndex: number
++  density: number
++  velocity: number
++  /** Expected share of the sleep cohort that flips within the window, 0–1. */
++  flipped: number
++}
++
++const balanced10 = () => presetInputs(PRESETS.find((p) => p.id === 'balanced')!, 10)
++
++export function metricLines(): MetricPoint[] {
++  const cohort = whoHasIt().cohort
++  const c = balanced10()
++  const raw = LINE_STAGES.map((stage) => {
++    let cost = 0
++    let flipped = 0
++    for (const m of cohort) {
++      const g = goal({ ...DEFAULT_GOAL, baseline: m.score, target: GOOD_SCORE, stage }, c)
++      cost += g.costPerFlip
++      if (g.weeks <= FLIP_WINDOW_WEEKS) flipped += g.flipProbability
++    }
++    const n = Math.max(1, cohort.length)
++    return { stage, sessions: STAGES[stage].sessions, costPerFlip: cost / n, density: STAGES[stage].density, velocity: STAGES[stage].velocity, flipped: flipped / n }
++  })
++  return raw.map((p) => ({ ...p, costIndex: p.costPerFlip / raw[0].costPerFlip }))
++}
++
++export interface Driver {
++  id: string
++  label: string
++  /** The two settings compared, worst first. */
++  from: string
++  to: string
++  /** Cost per flip at each, US dollars. */
++  costFrom: number
++  costTo: number
++  /** Relative change, −1 to +∞; negative is cheaper. */
++  change: number
++}
++
++/** Top Causal AI drivers: how far each input of goal() moves cost per flip from the default journey, largest first. */
++export function topDrivers(): Driver[] {
++  const base: GoalInputs = { ...DEFAULT_GOAL }
++  const c = balanced10()
++  const cost = (g: Partial<GoalInputs>, ci = c) => goal({ ...base, ...g }, ci).costPerFlip
++  const lean = presetInputs(PRESETS.find((p) => p.id === 'lean')!, 10)
++  const premium = presetInputs(PRESETS.find((p) => p.id === 'premium')!, 10)
++  const rows: Omit<Driver, 'change'>[] = [
++    { id: 'stage', label: 'Causal AI stage (cost factor, uplift, success)', from: 'Stage 1', to: 'Stage 3', costFrom: cost({ stage: 1 }), costTo: cost({ stage: 3 }) },
++    { id: 'models', label: 'Model tier and reuse', from: 'Premium', to: 'Lean', costFrom: cost({}, premium), costTo: cost({}, lean) },
++    { id: 'personal', label: 'Personalisation', from: 'Fully generated', to: 'Personal inserts', costFrom: cost({}, { ...c, personalisation: 'full' }), costTo: cost({}, { ...c, personalisation: 'inserts' }) },
++    { id: 'adherence', label: 'Chapters a week (adherence)', from: '1 a week', to: '3 a week', costFrom: cost({ chaptersPerWeek: 1 }), costTo: cost({ chaptersPerWeek: 3 }) },
++    { id: 'severity', label: 'Starting severity', from: 'Score 15', to: 'Score 45', costFrom: cost({ baseline: 15 }), costTo: cost({ baseline: 45 }) },
++    { id: 'length', label: 'Chapter length', from: '3 minutes', to: '10 minutes', costFrom: cost({}, { ...c, minutes: 3 }), costTo: cost({}, c) },
++  ]
++  return rows.map((r) => ({ ...r, change: r.costTo / r.costFrom - 1 })).sort((a, b) => Math.abs(b.change) - Math.abs(a.change))
++}
+diff --git a/src/admin/data/reportSources.ts b/src/admin/data/reportSources.ts
+index e427b82..d9e13cc 100644
+--- a/src/admin/data/reportSources.ts
++++ b/src/admin/data/reportSources.ts
+@@ -58,6 +58,9 @@ export type SourceId =
+   | 'owner-chat'
+   | 'owner-docs'
+   | 'buyer-prices'
++  | 'cost-model'
++  | 'sleep-cohort'
++  | 'owner-thesis'
+ 
+ export interface ReportSource {
+   id: SourceId
+@@ -300,6 +303,33 @@ export const SOURCES: Record<SourceId, ReportSource> = {
+     link: '/admin/pricing',
+     label: 'document',
+   },
++  'cost-model': {
++    id: 'cost-model',
++    name: 'Cost model',
++    what: 'The chapter cost and the bad-to-good journey worked out from the supplier prices and the spec’s three Causal AI stages (cost factor, uplift, success, density, velocity).',
++    version: 'costModel.ts as of 27 Nov 2026 (U131 onwards)',
++    taken: 'Cost per chapter and per flip by stage, and how much each driver moves it.',
++    link: '/admin/reports/cost',
++    label: 'estimate',
++  },
++  'sleep-cohort': {
++    id: 'sleep-cohort',
++    name: 'Sleep cohort (StateFlips)',
++    what: 'The simulated people in the 1,000 v4 personas with a sleep need and no risk flag, each with a sleep score from the check-in formula.',
++    version: 'StateFlips U140 (J202), persona set v4',
++    taken: 'Who is in the sleep cohort and their starting score, for the share expected to flip.',
++    link: '/admin/stateflips',
++    label: 'sample',
++  },
++  'owner-thesis': {
++    id: 'owner-thesis',
++    name: 'The business owner’s thesis (deck)',
++    what: 'His deck and chat: the meta-AI engine, 120,000 AKPs, 500 billion variations, 5 billion state-flips a year, a $1 per flip floor. His thesis, not measured.',
++    version: 'Chats of 24 and 27 Nov 2026',
++    taken: 'The scale claims, each with what would make it measurable.',
++    link: '/wiki/b2b2c/owner-thesis',
++    label: 'scenario',
++  },
+ }
+ 
+ /** The kind of evidence a source is, for grouping it on a graph (U121). Coarse on purpose: a handful of groups a reader can scan. */
+@@ -332,6 +362,9 @@ export const SOURCE_KIND: Record<SourceId, SourceKind> = {
+   'owner-chat': 'The business owner',
+   'owner-docs': 'The business owner',
+   'buyer-prices': 'Product',
++  'cost-model': 'Costs',
++  'sleep-cohort': 'Funnels and models',
++  'owner-thesis': 'The business owner',
+ }
+ 
+ export interface Finding {
+diff --git a/src/admin/data/reportSummaries.ts b/src/admin/data/reportSummaries.ts
+index 07b926d..86fca6e 100644
+--- a/src/admin/data/reportSummaries.ts
++++ b/src/admin/data/reportSummaries.ts
+@@ -66,6 +66,8 @@ export interface ReportSummary {
+   intro?: string
+   question: string
+   headline: string
++  /** The headline for a compact Summary tab (U146, B6); the full one stays in Detail. */
++  shortHeadline?: string
+   status: SummaryStatus
+   statusNote: string
+   tiles: Tile[]
+@@ -194,6 +196,7 @@ export function buyerSummary(): ReportSummary {
+     detail: { to: '/admin/buyer-agent', label: 'Every answer, in detail' },
+     question: 'Would people try Aurelia, and would they pay for it?',
+     headline: `In today’s app ({{test}} 5), ${x5.t.tries.yes} of ${n} {{simulated|simulated people}} would try Aurelia. Only ${x5.t.pays.yes} would pay $10 a month. Most called ${fair} a month {{fair-price|a fair price}}. In the latest {{test}} (7, ${x7.B.n} people), a ${liftLabel} raised trying from ${pct(tryA7)} to ${pct(tryB7)}.`,
++    shortHeadline: `In today’s app, ${x5.t.tries.yes} of ${n} {{simulated|simulated people}} would try Aurelia and ${x5.t.pays.yes} would pay $10 a month; most call ${fair} {{fair-price|fair}}.`,
+     status,
+     statusNote: status === 'at-risk' ? 'Too few would pay, and $10 is above the fair price.' : 'Enough would pay, at a price they call fair.',
+     sure: 'Nothing here is measured on real users yet. Every figure is an AI simulation.',
+diff --git a/src/admin/pages/BusinessFunnelPage.tsx b/src/admin/pages/BusinessFunnelPage.tsx
+index eecfb61..a960965 100644
+--- a/src/admin/pages/BusinessFunnelPage.tsx
++++ b/src/admin/pages/BusinessFunnelPage.tsx
+@@ -1,3 +1,4 @@
++import { DataSources } from './reports/DataSources'
+ import { ChevronRight, CircleHelp, Download, ExternalLink, MapPin, Plus } from 'lucide-react'
+ import { useState } from 'react'
+ import { Link, useSearchParams } from 'react-router-dom'
+@@ -121,6 +122,7 @@ export function BusinessFunnelPage() {
+ 
+       <PageTabs
+         summary={
++          <div className="flex min-w-0 flex-col gap-12">
+           <PageSummary
+             purpose="seeing how many people get from a first visit to paying for Aurelia Plus, and which stage loses the most."
+             question="Where does the funnel leak most, and what do we fix first?"
+@@ -142,6 +144,8 @@ export function BusinessFunnelPage() {
+             note={`Predicted by the buyer agents (${AGENT_RULES[agent].name}, ${DESIGNS[design - 1].name}); not measured on real users.`}
+             onDetail={() => setPageTab('detail')}
+           />
++            <DataSources route="/admin/business-funnel" />
++          </div>
+         }
+       >
+       <div className="flex flex-wrap items-center justify-between gap-12">
+@@ -312,6 +316,7 @@ export function BusinessFunnelPage() {
+           </Details>
+         </>
+       )}
++      <DataSources route="/admin/business-funnel" full />
+       </PageTabs>
+ 
+       {adding && <DecisionForm stage={adding} onClose={() => setAdding(null)} onSave={(d) => saveDecisions([...decisions, d], 'Decision added')} />}
+diff --git a/src/admin/pages/PersonasPage.tsx b/src/admin/pages/PersonasPage.tsx
+index 90fbe37..37d0815 100644
+--- a/src/admin/pages/PersonasPage.tsx
++++ b/src/admin/pages/PersonasPage.tsx
+@@ -1,3 +1,4 @@
++import { DataSources } from './reports/DataSources'
+ import { Copy, Download, Shuffle } from 'lucide-react'
+ import { useEffect, useMemo, useState } from 'react'
+ import { Link } from 'react-router-dom'
+@@ -82,6 +83,7 @@ export function PersonasPage() {
+       />
+       <PageTabs
+         summary={
++          <div className="flex min-w-0 flex-col gap-12">
+           <PageSummary
+             purpose="choosing made-up people to run AI research on (interviews in role, concept, copy and price tests) before real users are asked."
+             question="Who do our tests run on, and who must never be sold to?"
+@@ -99,6 +101,8 @@ export function PersonasPage() {
+             note="Synthetic people for forming ideas, not evidence. Sets v1 and v2 (300 each) stay for the runs pinned to them."
+             onDetail={() => setTab('detail')}
+           />
++            <DataSources route="/admin/personas" />
++          </div>
+         }
+       >
+       <div role="tablist" aria-label="Persona set" className="flex w-fit max-w-full flex-wrap gap-4 rounded-8 border border-adm-line bg-adm-surface p-4">
+@@ -116,6 +120,7 @@ export function PersonasPage() {
+         ))}
+       </div>
+       {set === 'v4' ? <PersonasV4View /> : <LegacyPersonas key={set} gen={set === 'v1' ? 1 : 2} />}
++      <DataSources route="/admin/personas" full />
+       </PageTabs>
+     </div>
+   )
+diff --git a/src/admin/pages/UserJourneyPage.tsx b/src/admin/pages/UserJourneyPage.tsx
+index b055560..1be9eca 100644
+--- a/src/admin/pages/UserJourneyPage.tsx
++++ b/src/admin/pages/UserJourneyPage.tsx
+@@ -1,3 +1,4 @@
++import { DataSources } from './reports/DataSources'
+ import { AlertCircle, CircleHelp, Download, ExternalLink, ImagePlus, MoreHorizontal, Pencil, Plus, RotateCcw, Smartphone, Upload, Users } from 'lucide-react'
+ import { useEffect, useMemo, useState, type ChangeEvent, type CSSProperties } from 'react'
+ import { useSearchParams } from 'react-router-dom'
+@@ -338,6 +339,7 @@ export function UserJourneyPage() {
+ 
+       <PageTabs
+         summary={
++          <div className="flex min-w-0 flex-col gap-12">
+           <PageSummary
+             purpose="seeing when people reach for Aurelia, and which of those moments still has no screen."
+             question="Which moment should we design or build for next?"
+@@ -359,6 +361,8 @@ export function UserJourneyPage() {
+             note="Demand counts the 300 synthetic personas, not real users. Edits are saved in this browser only."
+             onDetail={() => setTab('detail')}
+           />
++            <DataSources route="/admin/user-journey" />
++          </div>
+         }
+       >
+       {tagsOn && (
+@@ -614,6 +618,7 @@ export function UserJourneyPage() {
+       )}
+       {view === 'coverage' && <CoverageView moments={moments} groups={tags.groups} />}
+       {view === 'setup' && <TagSetupView groups={tags.groups} onEdit={setGroupEditing} onAdd={() => setGroupEditing('new')} />}
++      <DataSources route="/admin/user-journey" full />
+       </PageTabs>
+ 
+       {notice && (
+diff --git a/src/admin/pages/reports/B2b2cReportPage.tsx b/src/admin/pages/reports/B2b2cReportPage.tsx
+index 8efc044..7741e81 100644
+--- a/src/admin/pages/reports/B2b2cReportPage.tsx
++++ b/src/admin/pages/reports/B2b2cReportPage.tsx
+@@ -32,6 +32,7 @@ import { B2b2cHowItWorks } from './B2b2cHowItWorks'
+ import { DetailDrawerProvider, useDetail, type DetailItem } from './DetailDrawer'
+ import { IterationMapView } from './IterationMapView'
+ import { Details, SummaryBlock } from './ReportSummary'
++import { DataSources } from './DataSources'
+ 
+ /**
+  * Admin → Reports → B2B2C report: B2B2C research round 2 for the business
+@@ -260,7 +261,7 @@ export function B2b2cReportPage() {
+         <PageHeader title="B2B2C report" description={plainText(summary.intro ?? '')} />
+ 
+         {!RELEASES.adminNav2 && summaryBlock}
+-        <PageTabs summary={<ReportSummaryTab purpose="choosing which partner channel (creators, employers, partners) to test first." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
++        <PageTabs summary={<ReportSummaryTab purpose="choosing which partner channel (creators, employers, partners) to test first." onDetail={() => setPageTab('detail')}>{summaryBlock}<DataSources route="/admin/reports/b2b2c" /></ReportSummaryTab>}>
+ 
+         <section id="b2b2c-how" className="min-w-0 scroll-mt-16">
+           <Panel title="How it works" description="The idea in four pictures: who is involved, each channel step by step, what changed from round 1, and the phases. Click any box for a plain explanation and the features behind it.">
+@@ -295,6 +296,7 @@ export function B2b2cReportPage() {
+             <SourceLinks ids={own.map((s) => s.id)} />
+           </Panel>
+         </Details>
++        <DataSources route="/admin/reports/b2b2c" full />
+         </PageTabs>
+       </div>
+     </DetailDrawerProvider>
+diff --git a/src/admin/pages/reports/BuyerAgentReportPage.tsx b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+index 9979c6e..2cb9301 100644
+--- a/src/admin/pages/reports/BuyerAgentReportPage.tsx
++++ b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+@@ -14,6 +14,7 @@ import { InputGraph } from './InputGraph'
+ import { INPUT_DOT } from './reportColors'
+ import { LabelBadge, SourcesSection } from './ReportParts'
+ import { Details, SummaryBlock } from './ReportSummary'
++import { DataSources } from './DataSources'
+ import { LatestChangeAside } from '../buyer/RunChanges'
+ import { BUYER_RUNS } from '../../data/buyerRuns'
+ import { SuccessTrend, WhatMoves } from './SummaryCharts'
+@@ -58,9 +59,9 @@ function BuyerAgentReport() {
+   const pc = (k: number, n: number) => `${Math.round((k / n) * 100)}%`
+ 
+   const [, setPageTab] = usePageTab()
+-  const summaryBlock = (
+-      <SummaryBlock s={summary} aside={<LatestChangeAside version={BUYER_RUNS[BUYER_RUNS.length - 1].version} />} />
+-  )
++  const fullSummary = <SummaryBlock s={summary} aside={<LatestChangeAside version={BUYER_RUNS[BUYER_RUNS.length - 1].version} />} />
++  // B6 (U146): the Summary tab stays under 150 words; the full block opens Detail.
++  const summaryBlock = RELEASES.adminNav2 ? <SummaryBlock s={summary} compact /> : fullSummary
+ 
+   return (
+     <div className="flex flex-col gap-16">
+@@ -75,7 +76,12 @@ function BuyerAgentReport() {
+       />
+ 
+       {!RELEASES.adminNav2 && summaryBlock}
+-      <PageTabs summary={<ReportSummaryTab purpose="deciding whether simulated buyers would pay for Aurelia, and at what price." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
++      <PageTabs summary={<ReportSummaryTab purpose="deciding whether simulated buyers would pay for Aurelia, and at what price." onDetail={() => setPageTab('detail')}>{summaryBlock}<DataSources route="/admin/reports/buyer-agent" /></ReportSummaryTab>}>
++      {RELEASES.adminNav2 && (
++        <Details id="full-summary" title="Full summary" hint="each test’s figures, the tile notes and how sure we are">
++          {fullSummary}
++        </Details>
++      )}
+ 
+       <p className="text-12 text-adm-muted">
+         <RichText text="Every chart below is about {{simulated|simulated people}}: a prediction, not a measurement." />
+@@ -273,6 +279,7 @@ function BuyerAgentReport() {
+         ]}
+       />
+       </Details>
++      <DataSources route="/admin/reports/buyer-agent" full />
+       </PageTabs>
+     </div>
+   )
+diff --git a/src/admin/pages/reports/CombinationReportPage.tsx b/src/admin/pages/reports/CombinationReportPage.tsx
+index 97c17ef..8172da3 100644
+--- a/src/admin/pages/reports/CombinationReportPage.tsx
++++ b/src/admin/pages/reports/CombinationReportPage.tsx
+@@ -15,6 +15,7 @@ import { decisionItem } from './detailItems'
+ import { IterationMapView } from './IterationMapView'
+ import { LabelBadge, SourceChip, SourcesSection } from './ReportParts'
+ import { Details, SummaryBlock } from './ReportSummary'
++import { DataSources } from './DataSources'
+ import { StageStrip } from './SummaryCharts'
+ import { combinationSummary, stageStrip } from '../../data/reportSummaries'
+ 
+@@ -129,7 +130,7 @@ function CombinationReport() {
+       />
+ 
+       {!RELEASES.adminNav2 && summaryBlock}
+-      <PageTabs summary={<ReportSummaryTab purpose="reading the journey, the personas and the buyer agents together to find the one funnel step to fix first." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
++      <PageTabs summary={<ReportSummaryTab purpose="reading the journey, the personas and the buyer agents together to find the one funnel step to fix first." onDetail={() => setPageTab('detail')}>{summaryBlock}<DataSources route="/admin/reports/combination" /></ReportSummaryTab>}>
+ 
+       <Details id="stages" title="Stage by stage" hint="what each source says, where they agree and conflict">
+       <Panel title="How to read it" description="The version and rules every stage is read on.">
+@@ -224,6 +225,7 @@ function CombinationReport() {
+         ]}
+       />
+       </Details>
++      <DataSources route="/admin/reports/combination" full />
+       </PageTabs>
+     </div>
+   )
+diff --git a/src/admin/pages/reports/DataSources.tsx b/src/admin/pages/reports/DataSources.tsx
+new file mode 100644
+index 0000000..3a045e4
+--- /dev/null
++++ b/src/admin/pages/reports/DataSources.tsx
+@@ -0,0 +1,90 @@
++import { ExternalLink } from 'lucide-react'
++import { Link } from 'react-router-dom'
++import { Badge, type Tone } from '../../components/ui'
++import { DATA_SOURCE_TYPE_MEANING, DATA_SOURCE_TYPE_TEXT, dataSourcesFor, type DataSourceType } from '../../data/dataSources'
++
++/*
++ * "Data sources" (U146, J206): the one block that closes every report's
++ * Summary (compact) and Detail (full). Each source says what kind it is, what
++ * it feeds on this page, its file or document, its date and a link.
++ */
++
++const TYPE_TONE: Record<DataSourceType, Tone> = { measured: 'good', simulated: 'info', assumed: 'serious', owner: 'critical', research: 'warning' }
++
++export function DataSourceTypeBadge({ type }: { type: DataSourceType }) {
++  return <Badge tone={TYPE_TONE[type]}>{DATA_SOURCE_TYPE_TEXT[type]}</Badge>
++}
++
++const linkCls = 'inline-flex min-w-0 items-center gap-4 break-all font-medium text-adm-ink underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink'
++
++export function DataSources({ route, full = false }: { route: string; full?: boolean }) {
++  const items = dataSourcesFor(route)
++  if (!items.length) return null
++  const types = [...new Set(items.map((i) => i.type))]
++  return (
++    <section aria-label="Data sources" data-sources={full ? 'full' : 'compact'} className="flex min-w-0 flex-col gap-10 rounded-12 border border-adm-line bg-adm-surface p-14 lg:p-16">
++      <div className="flex flex-col gap-2">
++        <h2 className="text-14 font-semibold text-adm-ink">Data sources</h2>
++        <p className="text-12 text-adm-muted">Where every number on this page comes from, and how far it can be trusted.</p>
++      </div>
++      <ul className={full ? 'grid gap-12 lg:grid-cols-2' : 'flex flex-col'}>
++        {items.map((s) =>
++          full ? (
++            <li key={s.id} data-source={s.id} className="flex min-w-0 flex-col gap-8 rounded-8 border border-adm-line p-12">
++              <div className="flex flex-wrap items-center justify-between gap-8">
++                <span className="text-13 font-semibold text-adm-ink">{s.source.name}</span>
++                <DataSourceTypeBadge type={s.type} />
++              </div>
++              <dl className="grid grid-cols-[88px_1fr] gap-x-10 gap-y-4 text-12">
++                <dt className="text-adm-muted">Feeds</dt>
++                <dd className="min-w-0 text-adm-ink-2">{s.feeds}</dd>
++                <dt className="text-adm-muted">What it is</dt>
++                <dd className="min-w-0 text-adm-ink-2">{s.source.what}</dd>
++                <dt className="text-adm-muted">File</dt>
++                <dd className="min-w-0 break-words font-mono text-11 text-adm-ink-2">{s.file}</dd>
++                <dt className="text-adm-muted">Date</dt>
++                <dd className="min-w-0 text-adm-ink-2">{s.date}</dd>
++                <dt className="text-adm-muted">Version</dt>
++                <dd className="min-w-0 text-adm-ink-2">{s.source.version}</dd>
++                <dt className="text-adm-muted">Link</dt>
++                <dd className="min-w-0">
++                  <Link to={s.source.link} className={linkCls}>
++                    {s.source.link}
++                    <ExternalLink size={11} aria-hidden="true" />
++                  </Link>
++                </dd>
++              </dl>
++            </li>
++          ) : (
++            <li key={s.id} data-source={s.id} className="flex min-w-0 flex-col gap-4 border-t border-adm-line py-8 first:border-0 first:pt-0 lg:flex-row lg:items-baseline lg:gap-12">
++              <span className="flex min-w-0 flex-wrap items-center gap-6 lg:w-[300px] lg:shrink-0">
++                <span className="text-13 font-semibold text-adm-ink">{s.source.name}</span>
++                <DataSourceTypeBadge type={s.type} />
++              </span>
++              <span className="min-w-0 flex-1 text-12 text-adm-ink-2">{s.feeds}</span>
++              <span className="flex min-w-0 flex-wrap items-baseline gap-x-8 gap-y-2 text-12 text-adm-muted lg:max-w-[420px] lg:justify-end">
++                <span className="min-w-0 break-words">{s.file}</span>
++                <span>· {s.date}</span>
++                <Link to={s.source.link} className={linkCls} aria-label={`Open ${s.source.name}`}>
++                  Open <ExternalLink size={11} aria-hidden="true" />
++                </Link>
++              </span>
++            </li>
++          ),
++        )}
++      </ul>
++      {full && (
++        <dl className="grid gap-6 border-t border-adm-line pt-10 text-12 lg:grid-cols-2">
++          {types.map((t) => (
++            <div key={t} className="flex items-start gap-8">
++              <dt className="shrink-0">
++                <DataSourceTypeBadge type={t} />
++              </dt>
++              <dd className="text-adm-ink-2">{DATA_SOURCE_TYPE_MEANING[t]}</dd>
++            </div>
++          ))}
++        </dl>
++      )}
++    </section>
++  )
++}
+diff --git a/src/admin/pages/reports/MetricLinesChart.tsx b/src/admin/pages/reports/MetricLinesChart.tsx
+new file mode 100644
+index 0000000..79f936a
+--- /dev/null
++++ b/src/admin/pages/reports/MetricLinesChart.tsx
+@@ -0,0 +1,137 @@
++import { useMemo } from 'react'
++import { Badge, Panel } from '../../components/ui'
++import { FLIP_WINDOW_WEEKS, metricLines, topDrivers } from '../../data/metricLines'
++import { SourceChip } from './ReportParts'
++
++/*
++ * A31 (U146, J206): the spec's three metric lines on one chart, over the three
++ * Causal AI stages, and the drivers that move cost per flip most. All values
++ * come from data/metricLines.ts; nothing is typed in.
++ */
++
++const W = 640
++const H = 260
++const L = 76
++const R = 150
++const T = 16
++const B = 40
++const pct = (v: number) => `${Math.round(v * 100)}%`
++const usd = (v: number) => `$${v.toFixed(2)}`
++
++type Key = 'costIndex' | 'density' | 'velocity' | 'flipped'
++const SERIES: { key: Key; label: string; line: string; dot: string; dash?: string }[] = [
++  { key: 'costIndex', label: 'Cost per flip (vs stage 1)', line: 'stroke-adm-s1', dot: 'fill-adm-s1' },
++  { key: 'density', label: 'Causal AI density', line: 'stroke-adm-s2', dot: 'fill-adm-s2' },
++  { key: 'velocity', label: 'Causal AI velocity', line: 'stroke-adm-s3', dot: 'fill-adm-s3', dash: '6 4' },
++  { key: 'flipped', label: 'Sleep cohort flipped', line: 'stroke-adm-good', dot: 'fill-adm-good' },
++]
++
++export function MetricLinesPanel() {
++  const points = useMemo(() => metricLines(), [])
++  const drivers = useMemo(() => topDrivers(), [])
++  const x = (i: number) => L + (i * (W - L - R)) / (points.length - 1)
++  const y = (v: number) => T + (1 - v) * (H - T - B)
++  // Direct labels at the right end, nudged apart so they do not overlap.
++  const ends = SERIES.map((s) => ({ s, y: y(points[points.length - 1][s.key]) })).sort((a, b) => a.y - b.y)
++  for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 14) ends[i].y = ends[i - 1].y + 14
++
++  return (
++    <Panel
++      title="Three metric lines over time"
++      description="Compute cost, Causal AI and therapeutic, as the spec asks, across its three Causal AI stages (there is no calendar data yet). Assumed: the stage figures are the business owner’s spec, the people are simulated."
++    >
++      <div className="flex flex-wrap items-center gap-6 text-12 text-adm-ink-2">
++        <Badge tone="serious">Assumed</Badge>
++        <span>Read from</span>
++        <SourceChip id="cost-model" />
++        <SourceChip id="spec-causal" />
++        <SourceChip id="sleep-cohort" />
++      </div>
++      <div className="min-w-0 overflow-x-auto">
++        <svg viewBox={`0 0 ${W} ${H}`} className="block w-full min-w-[560px] max-w-[760px]" role="img" aria-label="Line chart: cost per flip as a share of stage 1, Causal AI density, Causal AI velocity and the share of the sleep cohort that flips, at Causal AI stages 1, 2 and 3">
++          {[0, 0.25, 0.5, 0.75, 1].map((v) => (
++            <g key={v}>
++              <line x1={L} x2={W - R} y1={y(v)} y2={y(v)} className="stroke-adm-grid" strokeWidth={1} />
++              <text x={L - 6} y={y(v) + 4} textAnchor="end" className="fill-adm-muted text-11 tabular-nums">
++                {pct(v)}
++              </text>
++            </g>
++          ))}
++          {points.map((p, i) => (
++            <text key={p.stage} x={x(i)} y={H - B + 18} textAnchor="middle" className="fill-adm-ink-2 text-11">
++              <tspan>Stage {p.stage}</tspan>
++              <tspan x={x(i)} dy={13} className="fill-adm-muted">
++                {p.sessions}
++              </tspan>
++            </text>
++          ))}
++          {SERIES.map((s) => (
++            <g key={s.key}>
++              <polyline points={points.map((p, i) => `${x(i)},${y(p[s.key])}`).join(' ')} fill="none" strokeWidth={2} strokeDasharray={s.dash} className={s.line} />
++              {points.map((p, i) => (
++                <circle key={p.stage} cx={x(i)} cy={y(p[s.key])} r={3.5} className={s.dot}>
++                  <title>{`${s.label}, stage ${p.stage}: ${pct(p[s.key])}${s.key === 'costIndex' ? ` (${usd(p.costPerFlip)})` : ''}`}</title>
++                </circle>
++              ))}
++            </g>
++          ))}
++          {ends.map(({ s, y: ly }) => (
++            <text key={s.key} x={W - R + 8} y={ly + 4} className="fill-adm-ink text-11">
++              {s.label}
++            </text>
++          ))}
++        </svg>
++      </div>
++      <div className="min-w-0 overflow-x-auto">
++        <table className="w-full min-w-[520px] text-left text-12">
++          <thead className="text-adm-muted">
++            <tr>
++              <th className="py-4 pr-12 font-medium">Stage</th>
++              <th className="py-4 pr-12 font-medium">Cost per flip</th>
++              <th className="py-4 pr-12 font-medium">Density</th>
++              <th className="py-4 pr-12 font-medium">Velocity</th>
++              <th className="py-4 font-medium">Sleep cohort flipped in {FLIP_WINDOW_WEEKS} weeks</th>
++            </tr>
++          </thead>
++          <tbody className="tabular-nums text-adm-ink">
++            {points.map((p) => (
++              <tr key={p.stage} className="border-t border-adm-line">
++                <td className="py-4 pr-12">
++                  Stage {p.stage} <span className="text-adm-muted">· {p.sessions}</span>
++                </td>
++                <td className="py-4 pr-12">{usd(p.costPerFlip)}</td>
++                <td className="py-4 pr-12">{pct(p.density)}</td>
++                <td className="py-4 pr-12">{pct(p.velocity)}</td>
++                <td className="py-4">{pct(p.flipped)}</td>
++              </tr>
++            ))}
++          </tbody>
++        </table>
++      </div>
++      <p className="text-12 text-adm-muted">
++        Cost per flip is the mean over the sleep cohort, Balanced models at 10 minutes, 3 chapters a week. A person counts as flipped when the journey fits {FLIP_WINDOW_WEEKS} weeks, weighted by the stage’s chance it works.
++      </p>
++      <div className="flex flex-col gap-6 border-t border-adm-line pt-12">
++        <h3 className="text-13 font-semibold text-adm-ink">Top Causal AI drivers of cost per flip</h3>
++        <ol className="flex flex-col gap-6">
++          {drivers.map((d, i) => (
++            <li key={d.id} data-driver={d.id} className="flex flex-col gap-2 text-13 lg:flex-row lg:items-baseline lg:justify-between lg:gap-12">
++              <span className="text-adm-ink">
++                <span className="mr-6 font-semibold tabular-nums">{i + 1}.</span>
++                {d.label}: {d.from} → {d.to}
++              </span>
++              <span className="tabular-nums text-adm-ink-2">
++                {usd(d.costFrom)} → {usd(d.costTo)}{' '}
++                <span className={d.change < 0 ? 'text-adm-good' : 'text-adm-critical'}>
++                  ({d.change < 0 ? '−' : '+'}
++                  {Math.abs(Math.round(d.change * 100))}%)
++                </span>
++              </span>
++            </li>
++          ))}
++        </ol>
++        <p className="text-12 text-adm-muted">Each driver is changed alone from the default journey (score 25 to 85, stage 1, Balanced, 10 minutes, 3 a week). Worked out, not measured.</p>
++      </div>
++    </Panel>
++  )
++}
+diff --git a/src/admin/pages/reports/ReportMetricsPage.tsx b/src/admin/pages/reports/ReportMetricsPage.tsx
+index 5a1c032..ba477d1 100644
+--- a/src/admin/pages/reports/ReportMetricsPage.tsx
++++ b/src/admin/pages/reports/ReportMetricsPage.tsx
+@@ -1,3 +1,4 @@
++import { DataSources } from './DataSources'
+ import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
+ import { usePageTab } from '../../components/pageTab'
+ import { RELEASES } from '../../../versions/releases'
+@@ -223,7 +224,7 @@ function MetricsView() {
+     <div className="flex min-w-0 flex-col gap-16">
+       <PageHeader title="Report metrics" description={plainText(summary.intro ?? '')} />
+       {!RELEASES.adminNav2 && summaryBlock}
+-      <PageTabs summary={<ReportSummaryTab purpose="checking where each number in the reports comes from and how it is worked out, before trusting it." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
++      <PageTabs summary={<ReportSummaryTab purpose="checking where each number in the reports comes from and how it is worked out, before trusting it." onDetail={() => setPageTab('detail')}>{summaryBlock}<DataSources route="/admin/reports/metrics" /></ReportSummaryTab>}>
+ 
+       <Panel title="How to read the quality" description="Each number gets one of three labels, plus checks for things that look wrong.">
+         <dl className="grid gap-8 text-12 lg:grid-cols-3">
+@@ -378,6 +379,7 @@ function MetricsView() {
+       <p className="text-11 text-adm-muted">
+         <RichText text="Every value in the table is read from the report itself, then {{recomputed|worked out again}} here from the answers, personas and prices underneath. Nothing on this page is typed in." />
+       </p>
++      <DataSources route="/admin/reports/metrics" full />
+       </PageTabs>
+     </div>
+   )
+diff --git a/src/admin/pages/reports/ReportSummary.tsx b/src/admin/pages/reports/ReportSummary.tsx
+index c45f691..0e01f17 100644
+--- a/src/admin/pages/reports/ReportSummary.tsx
++++ b/src/admin/pages/reports/ReportSummary.tsx
+@@ -76,11 +76,15 @@ export function GoalLine({ goal }: { goal: string }) {
+   )
+ }
+ 
+-export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode }) {
++/**
++ * `compact` (U146, B6) keeps a Summary tab short: no per-test rows, no tile
++ * notes or deltas, no confidence breakdown. The full block lives in Detail.
++ */
++export function SummaryBlock({ s, aside, compact = false }: { s: ReportSummary; aside?: ReactNode; compact?: boolean }) {
+   const st = STATUS[s.status]
+   const open = useDetail()
+   return (
+-    <section aria-label="Summary" className="flex min-w-0 flex-col gap-14 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20">
++    <section aria-label="Summary" data-compact={compact || undefined} className="flex min-w-0 flex-col gap-14 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20">
+       <GoalLine goal={s.goal} />
+       <div className="flex flex-col gap-6">
+         <div className="flex flex-wrap items-center gap-8">
+@@ -91,16 +95,16 @@ export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode
+         </div>
+         <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-16">
+           <p className="max-w-[860px] text-18 font-semibold leading-snug text-adm-ink">
+-            <RichText text={s.headline} />
++            <RichText text={compact ? (s.shortHeadline ?? s.headline) : s.headline} />
+           </p>
+           <div className="flex shrink-0 flex-col items-start gap-2 lg:items-end">
+             <Badge tone={st.tone}>{st.text}</Badge>
+-            <span className="text-11 text-adm-muted">{s.statusNote}</span>
++            {!compact && <span className="text-11 text-adm-muted">{s.statusNote}</span>}
+           </div>
+         </div>
+       </div>
+ 
+-      {s.rows && (
++      {s.rows && !compact && (
+         <div className="flex flex-col gap-8" aria-label="By test">
+           {s.rows.map((r) => (
+             <div key={r.label} data-summary-row className="flex min-w-0 flex-col gap-8 rounded-8 border border-adm-line p-10 lg:flex-row lg:items-center lg:gap-16">
+@@ -145,12 +149,12 @@ export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode
+                 <DetailsCue />
+               </button>
+             </dd>
+-            {t.delta && (
++            {t.delta && !compact && (
+               <dd className={`text-12 font-medium tabular-nums ${t.deltaGood ? 'text-adm-good' : 'text-adm-critical'}`}>
+                 <RichText text={t.delta} />
+               </dd>
+             )}
+-            {t.note && (
++            {t.note && !compact && (
+               <dd className="text-11 text-adm-ink-2">
+                 <RichText text={t.note} />
+               </dd>
+@@ -165,7 +169,7 @@ export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode
+         <div className="flex min-w-0 flex-col gap-6">
+           <h2 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">What to do next</h2>
+           <ol className="flex flex-col gap-6">
+-            {s.actions.map((a, i) => (
++            {(compact ? s.actions.slice(0, 2) : s.actions).map((a, i) => (
+               <li key={a.text} className="flex flex-col gap-4 rounded-8 border border-adm-line p-10 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
+                 <span className="text-13 text-adm-ink">
+                   <span className="mr-6 font-semibold tabular-nums">{i + 1}.</span>
+@@ -183,7 +187,7 @@ export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode
+               <RichText text={s.sure} />
+             </p>
+           )}
+-          <dl className="flex flex-col overflow-hidden rounded-8 border border-adm-line text-12">
++          {!compact && <dl className="flex flex-col overflow-hidden rounded-8 border border-adm-line text-12">
+             {([
+               ['Measured', 'good', s.confidence.measured],
+               [s.sure ? 'Simulated' : 'Predicted', 'info', s.confidence.predicted],
+@@ -198,7 +202,7 @@ export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode
+                 </dd>
+               </div>
+             ))}
+-          </dl>
++          </dl>}
+         </div>
+       </div>
+     </section>
+diff --git a/src/admin/pages/reports/ReportsOverviewPage.tsx b/src/admin/pages/reports/ReportsOverviewPage.tsx
+index 97f070b..0209a87 100644
+--- a/src/admin/pages/reports/ReportsOverviewPage.tsx
++++ b/src/admin/pages/reports/ReportsOverviewPage.tsx
+@@ -11,6 +11,8 @@ import { IterationMapView } from './IterationMapView'
+ import { plainText } from '../../data/glossary'
+ import { buildMetrics, metricsReportSummary } from '../../data/reportMetrics'
+ import { RELEASES } from '../../../versions/releases'
++import { DataSources } from './DataSources'
++import { MetricLinesPanel } from './MetricLinesChart'
+ 
+ /**
+  * Admin → Reports → Overview (U129, J182). How Aurelia improves, in one
+@@ -81,12 +83,16 @@ function Overview() {
+         ))}
+       </section>
+ 
++      <MetricLinesPanel />
++
+       <Panel
+         title="The iteration map"
+         description={`${count('source')} kinds of source → ${count('report')} reports and tests → ${count('outcome')} decisions and versions. Hover a box to follow its lines; click it for details.`}
+       >
+         <IterationMapView map={map} label="Iteration map: the sources on the left feed the reports and tests in the middle, which led to the decisions and product versions on the right." />
+       </Panel>
++
++      <DataSources route="/admin/reports" full />
+     </div>
+   )
+ }
+diff --git a/src/admin/pages/reports/UxFeedbackReportPage.tsx b/src/admin/pages/reports/UxFeedbackReportPage.tsx
+index 68757b7..bfd96d5 100644
+--- a/src/admin/pages/reports/UxFeedbackReportPage.tsx
++++ b/src/admin/pages/reports/UxFeedbackReportPage.tsx
+@@ -13,6 +13,7 @@ import { DetailDrawerProvider } from './DetailDrawer'
+ import { IterationMapView } from './IterationMapView'
+ import { SourcesSection } from './ReportParts'
+ import { Details, SummaryBlock } from './ReportSummary'
++import { DataSources } from './DataSources'
+ 
+ /**
+  * Admin → Reports → UX feedback report (U129, J182): the latest feedback
+@@ -37,7 +38,7 @@ export function UxFeedbackReportPage() {
+         <PageHeader title="UX feedback report" description={plainText(summary.intro ?? '')} />
+ 
+         {!RELEASES.adminNav2 && summaryBlock}
+-        <PageTabs summary={<ReportSummaryTab purpose="seeing what the feedback group tells us about the app, and what to change next." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
++        <PageTabs summary={<ReportSummaryTab purpose="seeing what the feedback group tells us about the app, and what to change next." onDetail={() => setPageTab('detail')}>{summaryBlock}<DataSources route="/admin/reports/ux-feedback" /></ReportSummaryTab>}>
+ 
+         <section id="ux-views" className="flex min-w-0 scroll-mt-16 flex-col gap-16">
+           <FeedbackGroupViews participants={participants} week={week} />
+@@ -57,6 +58,7 @@ export function UxFeedbackReportPage() {
+             ]}
+           />
+         </Details>
++        <DataSources route="/admin/reports/ux-feedback" full />
+         </PageTabs>
+       </div>
+     </DetailDrawerProvider>
+diff --git a/src/admin/pages/reports/buyerSummaryLength.test.tsx b/src/admin/pages/reports/buyerSummaryLength.test.tsx
+new file mode 100644
+index 0000000..91c8075
+--- /dev/null
++++ b/src/admin/pages/reports/buyerSummaryLength.test.tsx
+@@ -0,0 +1,21 @@
++import { render } from '@testing-library/react'
++import { MemoryRouter } from 'react-router-dom'
++import { describe, expect, it } from 'vitest'
++import { buyerSummary } from '../../data/reportSummaries'
++import { DetailDrawerProvider } from './DetailDrawer'
++import { SummaryBlock } from './ReportSummary'
++
++// B6 (U146, J206): the Buyer agent report's Summary tab says it in 150 words or fewer.
++describe('buyer agent summary', () => {
++  it('is 150 words or fewer in its compact form', () => {
++    const { container } = render(
++      <MemoryRouter>
++        <DetailDrawerProvider>
++          <SummaryBlock s={buyerSummary()} compact />
++        </DetailDrawerProvider>
++      </MemoryRouter>,
++    )
++    const words = (container.textContent ?? '').replace(/([a-z?%)])([A-Z])/g, '$1 $2').split(/\s+/).filter(Boolean)
++    expect(words.length, words.join(' ')).toBeLessThanOrEqual(150)
++  })
++})
+diff --git a/src/guides/docPages.ts b/src/guides/docPages.ts
+index 9807f92..f162352 100644
+--- a/src/guides/docPages.ts
++++ b/src/guides/docPages.ts
+@@ -28,6 +28,7 @@ export const B2B2C_PAGES: DocPage[] = [
+   { slug: 'sources', title: 'Full report and sources', note: 'The deep research report, every source.', file: '09-full-report.md' },
+   { slug: 'round-2', title: 'Round 2', note: 'What changed, the channels re-ranked, the plan.', file: '10-round-2.md' },
+   { slug: 'features', title: 'Features to build', note: 'Per channel: who, why, evidence, priority, effort.', file: '11-features.md' },
++  { slug: 'owner-thesis', title: 'His thesis', note: 'The business owner’s scale claims. Not measured.', file: '12-owner-thesis.md' },
+ ]
+ 
+ /** API contract (U120, J175): v2 split into General, Apps and Admin; v1 kept. */

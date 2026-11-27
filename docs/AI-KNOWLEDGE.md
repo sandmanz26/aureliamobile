@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J205** · updated 25 Nov 2026
+**Covers up to J206** · updated 25 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
@@ -134,6 +134,7 @@ reach that repository yet (O33).
 
 ## 6 · Positions taken (and why), newest first
 
+- **Every report registers its sources (U146, `dataSources.ts`)**; a test fails a report route without one.
 - **Production (U144, 27 Nov):** everything through U143 is live; no flag is staging-only now. Admin design phase 2 was dropped by the product owner.
 - **Admin nav v2 (U142, flag adminNav2):** new pages use `PageTabs` (Summary default, `?tab=detail`). Production keeps the old nav until the flag is shipped.
 - **StateFlips and AKPs (U141):** `stateFlips.ts` (125), `akps.ts` + `generated/akpSource.ts` from `scripts/akp/extract.py` (1,046, all draft). Regenerate from the workbooks, never hand-edit the generated file.

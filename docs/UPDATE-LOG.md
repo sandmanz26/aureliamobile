@@ -169,6 +169,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U130 | `9a6c520` | 2026-11-25 | Buyer agent report made visual. It has funnels per test (5, 6, 7), a people grid (one mark per simulated person, which opens a drawer), a who-says-yes heat map, a price ladder against $10, ranked reasons for no with quotes, a slope chart of what moved people, and a cleaner trend across tests. | [patch](patches/U130-9a6c520.patch) |
 | U131 | `1634d0c` | 2026-11-25 | Product lab, staging only (`RELEASES.therapeuticMaps`). The **Therapeutic map** shows the Product, Business and Wellness triangle with targets, the 7-step sleep process and five worlds. The **Healing Map** has three rings (9 bad states, 14 building blocks, 9 good states) and 45 links: 36 design samples, 9 research-cited, 0 learned. It has filters, zoom and a drawer. | [patch](patches/U131-1634d0c.patch) |
 | U132 | `542ade2` | 2026-11-25 | B2B2C round 2. It adds 28 new web sources and the buyer tests, and re-ranks the channels: creator journey with a free first week, then a self-serve team plan, then codes and gifting. It lists 22 features (10 Now), on wiki pages round-2 and features and in Reports → B2B2C report (a feature board with a drawer). | [patch](patches/U132-542ade2.patch) |
+| U146 | `0d0683d` | 2026-11-27 | Data sources on every report (shared DataSources block + registry, test that every report route has a source); Buyer agent summary ≤150 words; API contract v2 §4.9 healing model (StateFlip, AKP, chapter, check-in, cohort, tournament, persona identity; 12 endpoints, OpenAPI); metric lines over Causal AI stages with top drivers on the Reports overview; wiki page of the business owner's thesis, labelled not measured. | [patch](patches/U146-0d0683d.patch) |
 | U144 | `ba6c091` | 2026-11-27 | Released to production on request ("push ke prod"): flags therapeuticMaps, reportMetrics, stateFlips and adminNav2 set to true; web_prod fast-forwarded. Production build smoke-tested (Start here, StateFlips, Report metrics, Healing Map, Cost: no errors). | [patch](patches/U144-ba6c091.patch) |
 | U143 | `38a9a5e` | 2026-11-27 | Admin rail redesigned (nav v2, staging only): Start here pinned; AI brain, Reports, Research, Operations (sample data, collapsed); only the current section opens; 36px single-line rows, no group descriptions (tooltips), no sub-labels or guide lines, white/10 active fill with a 2px gold indicator, gold focus ring; older pages off the rail but in search; one build badge. Production nav unchanged. | [patch](patches/U143-38a9a5e.patch) |
 | U142 | `286d996` | 2026-11-27 | Admin nav v2 (flag adminNav2, staging only): menu review of 34 items (13 renamed, 6 groups: Start here, AI brain, Reports & decisions, Research, Operations — sample data, Wiki; 3 duplicates labelled), Summary | Detail tabs on 13 pages (URL ?tab=detail), Start here page, design picker hidden on /admin, compact header, 12px minimum, tours on a button, labelled Details icon. Production unchanged. | [patch](patches/U142-286d996.patch) |
@@ -184,6 +185,13 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U146 — Report sources, short buyer summary, API healing model, metric lines, thesis page
+
+- **Commit:** `0d0683d` · 2026-11-27.
+- **Request:** B6, B7, B8 and "every report's data source must be clear".
+- **Not done:** A32, A33 (2025→2026 story), A34 (Digital Retreats rename), A35–A38.
+- **Revert:** `git revert --no-commit 0d0683d`.
 
 ### U144 — Release to production
 
