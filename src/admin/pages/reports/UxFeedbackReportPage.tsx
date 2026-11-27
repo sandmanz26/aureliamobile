@@ -13,6 +13,7 @@ import { DetailDrawerProvider } from './DetailDrawer'
 import { IterationMapView } from './IterationMapView'
 import { SourcesSection } from './ReportParts'
 import { Details, SummaryBlock } from './ReportSummary'
+import { DataSources } from './DataSources'
 
 /**
  * Admin → Reports → UX feedback report (U129, J182): the latest feedback
@@ -37,7 +38,7 @@ export function UxFeedbackReportPage() {
         <PageHeader title="UX feedback report" description={plainText(summary.intro ?? '')} />
 
         {!RELEASES.adminNav2 && summaryBlock}
-        <PageTabs summary={<ReportSummaryTab purpose="seeing what the feedback group tells us about the app, and what to change next." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
+        <PageTabs summary={<ReportSummaryTab purpose="seeing what the feedback group tells us about the app, and what to change next." onDetail={() => setPageTab('detail')}>{summaryBlock}<DataSources route="/admin/reports/ux-feedback" /></ReportSummaryTab>}>
 
         <section id="ux-views" className="flex min-w-0 scroll-mt-16 flex-col gap-16">
           <FeedbackGroupViews participants={participants} week={week} />
@@ -57,6 +58,7 @@ export function UxFeedbackReportPage() {
             ]}
           />
         </Details>
+        <DataSources route="/admin/reports/ux-feedback" full />
         </PageTabs>
       </div>
     </DetailDrawerProvider>

@@ -66,6 +66,8 @@ export interface ReportSummary {
   intro?: string
   question: string
   headline: string
+  /** The headline for a compact Summary tab (U146, B6); the full one stays in Detail. */
+  shortHeadline?: string
   status: SummaryStatus
   statusNote: string
   tiles: Tile[]
@@ -194,6 +196,7 @@ export function buyerSummary(): ReportSummary {
     detail: { to: '/admin/buyer-agent', label: 'Every answer, in detail' },
     question: 'Would people try Aurelia, and would they pay for it?',
     headline: `In today’s app ({{test}} 5), ${x5.t.tries.yes} of ${n} {{simulated|simulated people}} would try Aurelia. Only ${x5.t.pays.yes} would pay $10 a month. Most called ${fair} a month {{fair-price|a fair price}}. In the latest {{test}} (7, ${x7.B.n} people), a ${liftLabel} raised trying from ${pct(tryA7)} to ${pct(tryB7)}.`,
+    shortHeadline: `In today’s app, ${x5.t.tries.yes} of ${n} {{simulated|simulated people}} would try Aurelia and ${x5.t.pays.yes} would pay $10 a month; most call ${fair} {{fair-price|fair}}.`,
     status,
     statusNote: status === 'at-risk' ? 'Too few would pay, and $10 is above the fair price.' : 'Enough would pay, at a price they call fair.',
     sure: 'Nothing here is measured on real users yet. Every figure is an AI simulation.',

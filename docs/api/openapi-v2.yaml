@@ -17,6 +17,8 @@ tags:
 - name: Compute
 - name: Outcomes
 - name: Admin
+- name: Healing model
+  description: StateFlips, AKPs, chapters, check-ins (U146). x-admin-only marks what never reaches an app.
 paths:
   /auth/signup:
     post:
@@ -1799,6 +1801,389 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuditPage'
+        default:
+          $ref: '#/components/responses/Problem'
+  /stateflips:
+    get:
+      tags:
+      - Healing model
+      summary: Published StateFlips
+      operationId: get_stateflips
+      x-status: new in v2
+      x-auth: user
+      x-admin-only: false
+      security:
+      - bearer: []
+      parameters:
+      - name: dimension
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StateFlipPublicList'
+        default:
+          $ref: '#/components/responses/Problem'
+  /stateflips/{id}:
+    get:
+      tags:
+      - Healing model
+      summary: One published StateFlip
+      operationId: get_stateflip
+      x-status: new in v2
+      x-auth: user
+      x-admin-only: false
+      security:
+      - bearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StateFlipPublic'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/stateflips/{id}:
+    put:
+      tags:
+      - Healing model
+      summary: Create or update a StateFlip (versioned)
+      operationId: put_admin_stateflip
+      x-status: new in v2
+      x-auth: staff
+      x-admin-only: true
+      security:
+      - adminBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StateFlip'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StateFlip'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/akps:
+    get:
+      tags:
+      - Healing model
+      summary: AKP catalogue
+      operationId: get_admin_akps
+      x-status: new in v2
+      x-auth: staff
+      x-admin-only: true
+      security:
+      - adminBearer: []
+      parameters:
+      - name: family
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: kind
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: fn
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: flip
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AkpPage'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/akps/{id}:
+    get:
+      tags:
+      - Healing model
+      summary: One AKP with its links both ways
+      operationId: get_admin_akp
+      x-status: new in v2
+      x-auth: staff
+      x-admin-only: true
+      security:
+      - adminBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AkpWithLinks'
+        default:
+          $ref: '#/components/responses/Problem'
+    put:
+      tags:
+      - Healing model
+      summary: Create or update an AKP and its links
+      operationId: put_admin_akp
+      x-status: new in v2
+      x-auth: staff
+      x-admin-only: true
+      security:
+      - adminBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Akp'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Akp'
+        default:
+          $ref: '#/components/responses/Problem'
+  /journeys/{id}/chapters:
+    get:
+      tags:
+      - Healing model
+      summary: The person's chapters in order
+      operationId: get_journey_chapters
+      x-status: new in v2
+      x-auth: user
+      x-admin-only: false
+      security:
+      - bearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChapterPublicList'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/chapters/{id}:
+    get:
+      tags:
+      - Healing model
+      summary: One chapter with its ordered AKPs
+      operationId: get_admin_chapter
+      x-status: new in v2
+      x-auth: staff
+      x-admin-only: true
+      security:
+      - adminBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chapter'
+        default:
+          $ref: '#/components/responses/Problem'
+  /journeys/{id}/checkins:
+    get:
+      tags:
+      - Healing model
+      summary: The person's check-ins with marker scores
+      operationId: get_journey_checkins
+      x-status: new in v2
+      x-auth: user
+      x-admin-only: false
+      security:
+      - bearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckinList'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/outcomes/cohorts:
+    get:
+      tags:
+      - Outcomes
+      summary: Cohort results per StateFlip
+      operationId: get_admin_outcomes_cohorts
+      x-status: new in v2
+      x-auth: staff
+      x-admin-only: true
+      security:
+      - adminBearer: []
+      parameters:
+      - name: flip
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: retreatId
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: stage
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CohortOutcomeList'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/tournaments:
+    get:
+      tags:
+      - Healing model
+      summary: AKP tournament results
+      operationId: get_admin_tournaments
+      x-status: new in v2
+      x-auth: staff
+      x-admin-only: true
+      security:
+      - adminBearer: []
+      parameters:
+      - name: flip
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: media
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentResultPage'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/personas/{id}/identity:
+    get:
+      tags:
+      - Healing model
+      summary: A synthetic persona's identity and mindspace
+      operationId: get_admin_persona_identity
+      x-status: new in v2
+      x-auth: staff
+      x-admin-only: true
+      security:
+      - adminBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonaIdentity'
         default:
           $ref: '#/components/responses/Problem'
 components:
@@ -3613,3 +3998,281 @@ components:
       required:
       - data
       - nextCursor
+    Dimension:
+      type: string
+      enum: [mental, emotional, relational, spiritual, physical]
+    Milestone:
+      type: object
+      properties:
+        id: {type: string, enum: [X, Y, Z]}
+        title: {type: string}
+        threshold: {type: number}
+        layer: {type: string, enum: [mood, habit, skill]}
+        what: {type: string}
+      required: [id, title, threshold, layer, what]
+    FlipMarker:
+      type: object
+      properties:
+        label: {type: string}
+        question: {type: string}
+        bad: {type: string}
+        good: {type: string}
+      required: [label, question, bad, good]
+    StateFlip:
+      type: object
+      properties:
+        id: {type: string, description: SF-…}
+        n: {type: integer}
+        dimension: {$ref: '#/components/schemas/Dimension'}
+        title: {type: string}
+        need:
+          type: object
+          properties:
+            id: {type: string}
+            kind: {type: string, enum: [UN, dual, none]}
+            label: {type: string}
+            source: {type: string}
+        bad: {type: string}
+        good: {type: string}
+        milestones: {type: array, items: {$ref: '#/components/schemas/Milestone'}}
+        measure:
+          type: object
+          properties:
+            scale: {type: string}
+            markers: {type: array, items: {$ref: '#/components/schemas/FlipMarker'}}
+            source: {type: string}
+        issues: {type: array, items: {type: string}}
+        layer: {type: string, enum: [mood, habit, skill]}
+        prevalence: {type: string}
+        source: {type: string}
+        status: {type: string, enum: [draft, reviewed, published]}
+        version: {type: integer}
+      required: [id, dimension, title, bad, good, milestones, measure, status, version]
+    StateFlipPublic:
+      type: object
+      properties:
+        id: {type: string}
+        dimension: {$ref: '#/components/schemas/Dimension'}
+        title: {type: string}
+        bad: {type: string}
+        good: {type: string}
+        milestones: {type: array, items: {$ref: '#/components/schemas/Milestone'}}
+        questions:
+          type: array
+          items:
+            type: object
+            properties:
+              label: {type: string}
+              question: {type: string}
+      required: [id, dimension, title, bad, good, milestones, questions]
+    StateFlipPublicList:
+      type: object
+      properties:
+        data: {type: array, items: {$ref: '#/components/schemas/StateFlipPublic'}}
+      required: [data]
+    AkpLinkType:
+      type: string
+      enum: [step-of, feeds, part-of, supports, fed-by, mirrors]
+    AkpLink:
+      type: object
+      properties:
+        from: {type: string}
+        to: {type: string}
+        type: {$ref: '#/components/schemas/AkpLinkType'}
+      required: [from, to, type]
+    Akp:
+      type: object
+      properties:
+        id: {type: string, description: WG- ID- WS- WM- WI- WV- PR- prefix by family}
+        name: {type: string}
+        family: {type: string, enum: [goal, identity, product, script, music, image, video]}
+        fn: {type: string, enum: [wellness, product, identity, brand]}
+        kind: {type: string, enum: [goal, strategy]}
+        layer: {type: string}
+        modality: {type: [string, 'null'], enum: [Script, Music, Image, Video, null]}
+        description: {type: string}
+        causalRole: {type: string}
+        flips: {type: array, items: {type: string}}
+        links:
+          type: array
+          items:
+            type: object
+            properties:
+              to: {type: string}
+              type: {$ref: '#/components/schemas/AkpLinkType'}
+        source: {type: string}
+        status: {type: string, enum: [draft, reviewed]}
+        version: {type: integer}
+      required: [id, name, family, fn, kind, flips, links, status]
+    AkpWithLinks:
+      allOf:
+      - $ref: '#/components/schemas/Akp'
+      - type: object
+        properties:
+          linkedFrom: {type: array, items: {$ref: '#/components/schemas/AkpLink'}}
+    AkpPage:
+      type: object
+      properties:
+        data: {type: array, items: {$ref: '#/components/schemas/Akp'}}
+        nextCursor: {type: [string, 'null']}
+      required: [data, nextCursor]
+    Chapter:
+      type: object
+      properties:
+        id: {type: string}
+        versionId: {type: string}
+        journeyId: {type: string}
+        flipId: {type: string}
+        index: {type: integer}
+        minutes: {type: integer, enum: [3, 5, 10]}
+        milestone: {type: string, enum: [X, Y, Z]}
+        akps:
+          type: array
+          description: Ordered by `order`.
+          items:
+            type: object
+            properties:
+              akpId: {type: string}
+              order: {type: integer}
+              kind: {type: string, enum: [goal, strategy]}
+            required: [akpId, order, kind]
+      required: [id, versionId, index, minutes, akps]
+    ChapterPublic:
+      type: object
+      properties:
+        id: {type: string}
+        versionId: {type: string}
+        journeyId: {type: string}
+        flipId: {type: string}
+        index: {type: integer}
+        minutes: {type: integer, enum: [3, 5, 10]}
+        milestone: {type: string, enum: [X, Y, Z]}
+        title: {type: string}
+        durationSec: {type: integer}
+      required: [id, index, minutes, title]
+    ChapterPublicList:
+      type: object
+      properties:
+        data: {type: array, items: {$ref: '#/components/schemas/ChapterPublic'}}
+      required: [data]
+    CheckinMeasured:
+      type: object
+      properties:
+        id: {type: string}
+        journeyId: {type: string}
+        chapterId: {type: string}
+        phase: {type: string, enum: [pre, post]}
+        measures:
+          type: array
+          items:
+            type: object
+            properties:
+              marker: {type: string}
+              value: {type: number}
+              max: {type: number, const: 25}
+            required: [marker, value]
+        score: {type: number, minimum: 0, maximum: 100, description: The sum of the markers}
+        milestone: {type: string, enum: [X, Y, Z]}
+        at: {type: string, format: date-time}
+      required: [id, journeyId, phase, measures, score, at]
+    CheckinList:
+      type: object
+      properties:
+        data: {type: array, items: {$ref: '#/components/schemas/CheckinMeasured'}}
+      required: [data]
+    CohortOutcome:
+      type: object
+      properties:
+        flipId: {type: string}
+        retreatId: {type: string}
+        stage: {type: integer, enum: [1, 2, 3]}
+        n: {type: integer}
+        suppressed: {type: boolean}
+        flipRate: {type: number}
+        reached:
+          type: object
+          properties:
+            X: {type: number}
+            Y: {type: number}
+            Z: {type: number}
+        chaptersToFlipMedian: {type: number}
+        meanChance: {type: number}
+        costPerFlip: {$ref: '#/components/schemas/Money'}
+        startScoreMedian: {type: number}
+      required: [flipId, n, suppressed]
+    CohortOutcomeList:
+      type: object
+      properties:
+        data: {type: array, items: {$ref: '#/components/schemas/CohortOutcome'}}
+      required: [data]
+    TournamentResult:
+      type: object
+      properties:
+        id: {type: string}
+        flipId: {type: string}
+        chapterId: {type: string}
+        media: {type: string, enum: [script, voice, music, image, video]}
+        judge: {type: string, description: Causal AI model version}
+        candidates:
+          type: array
+          items:
+            type: object
+            properties:
+              supplier: {type: string}
+              model: {type: string}
+              akpIds: {type: array, items: {type: string}}
+              score: {type: number}
+              cost: {$ref: '#/components/schemas/Money'}
+            required: [supplier, model, akpIds, score, cost]
+        winner: {type: integer, description: Index into candidates}
+        baselineScore: {type: number}
+        upliftAfter: {type: number}
+        decidedAt: {type: string, format: date-time}
+      required: [id, flipId, media, judge, candidates, winner, decidedAt]
+    TournamentResultPage:
+      type: object
+      properties:
+        data: {type: array, items: {$ref: '#/components/schemas/TournamentResult'}}
+        nextCursor: {type: [string, 'null']}
+      required: [data, nextCursor]
+    Mindspace:
+      type: object
+      properties:
+        headline: {type: string}
+        facts:
+          type: array
+          items:
+            type: object
+            properties:
+              label: {type: string}
+              value: {type: string}
+        akps: {type: array, items: {type: string}}
+      required: [headline, facts, akps]
+    PersonaIdentity:
+      type: object
+      description: Synthetic personas only; a real person's identity profile is out of v2.
+      properties:
+        id: {type: string}
+        dims:
+          type: object
+          description: The Grand 12, keyed outcomes, emotional, cognitive, regulation, capacity, archetype, preferences, relational, values, risks, culture, meta.
+          additionalProperties:
+            type: object
+            properties:
+              key: {type: string}
+              value: {type: string}
+              detail: {type: string}
+        archetype: {type: string, enum: [Explorer, Caregiver, Achiever, Seeker, Rebuilder, Guardian]}
+        cogStyle: {type: string, enum: [analytic, intuitive, narrative, somatic]}
+        value: {type: string, enum: [purpose, compassion, growth, balance, security, belonging]}
+        spiritual: {type: string, enum: [welcome, neutral, secular only]}
+        flags: {type: array, items: {type: string}}
+        flip: {type: string}
+        mindspace:
+          type: object
+          properties:
+            wellness: {$ref: '#/components/schemas/Mindspace'}
+            product: {$ref: '#/components/schemas/Mindspace'}
+            business: {$ref: '#/components/schemas/Mindspace'}
+            brand: {$ref: '#/components/schemas/Mindspace'}
+      required: [id, dims, archetype, flip, mindspace]

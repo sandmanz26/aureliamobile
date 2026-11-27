@@ -1,3 +1,4 @@
+import { DataSources } from './reports/DataSources'
 import { ChevronRight, CircleHelp, Download, ExternalLink, MapPin, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -121,6 +122,7 @@ export function BusinessFunnelPage() {
 
       <PageTabs
         summary={
+          <div className="flex min-w-0 flex-col gap-12">
           <PageSummary
             purpose="seeing how many people get from a first visit to paying for Aurelia Plus, and which stage loses the most."
             question="Where does the funnel leak most, and what do we fix first?"
@@ -142,6 +144,8 @@ export function BusinessFunnelPage() {
             note={`Predicted by the buyer agents (${AGENT_RULES[agent].name}, ${DESIGNS[design - 1].name}); not measured on real users.`}
             onDetail={() => setPageTab('detail')}
           />
+            <DataSources route="/admin/business-funnel" />
+          </div>
         }
       >
       <div className="flex flex-wrap items-center justify-between gap-12">
@@ -312,6 +316,7 @@ export function BusinessFunnelPage() {
           </Details>
         </>
       )}
+      <DataSources route="/admin/business-funnel" full />
       </PageTabs>
 
       {adding && <DecisionForm stage={adding} onClose={() => setAdding(null)} onSave={(d) => saveDecisions([...decisions, d], 'Decision added')} />}

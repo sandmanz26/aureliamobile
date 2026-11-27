@@ -32,6 +32,7 @@ import { B2b2cHowItWorks } from './B2b2cHowItWorks'
 import { DetailDrawerProvider, useDetail, type DetailItem } from './DetailDrawer'
 import { IterationMapView } from './IterationMapView'
 import { Details, SummaryBlock } from './ReportSummary'
+import { DataSources } from './DataSources'
 
 /**
  * Admin → Reports → B2B2C report: B2B2C research round 2 for the business
@@ -260,7 +261,7 @@ export function B2b2cReportPage() {
         <PageHeader title="B2B2C report" description={plainText(summary.intro ?? '')} />
 
         {!RELEASES.adminNav2 && summaryBlock}
-        <PageTabs summary={<ReportSummaryTab purpose="choosing which partner channel (creators, employers, partners) to test first." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
+        <PageTabs summary={<ReportSummaryTab purpose="choosing which partner channel (creators, employers, partners) to test first." onDetail={() => setPageTab('detail')}>{summaryBlock}<DataSources route="/admin/reports/b2b2c" /></ReportSummaryTab>}>
 
         <section id="b2b2c-how" className="min-w-0 scroll-mt-16">
           <Panel title="How it works" description="The idea in four pictures: who is involved, each channel step by step, what changed from round 1, and the phases. Click any box for a plain explanation and the features behind it.">
@@ -295,6 +296,7 @@ export function B2b2cReportPage() {
             <SourceLinks ids={own.map((s) => s.id)} />
           </Panel>
         </Details>
+        <DataSources route="/admin/reports/b2b2c" full />
         </PageTabs>
       </div>
     </DetailDrawerProvider>

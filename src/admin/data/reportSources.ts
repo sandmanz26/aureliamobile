@@ -58,6 +58,9 @@ export type SourceId =
   | 'owner-chat'
   | 'owner-docs'
   | 'buyer-prices'
+  | 'cost-model'
+  | 'sleep-cohort'
+  | 'owner-thesis'
 
 export interface ReportSource {
   id: SourceId
@@ -300,6 +303,33 @@ export const SOURCES: Record<SourceId, ReportSource> = {
     link: '/admin/pricing',
     label: 'document',
   },
+  'cost-model': {
+    id: 'cost-model',
+    name: 'Cost model',
+    what: 'The chapter cost and the bad-to-good journey worked out from the supplier prices and the spec’s three Causal AI stages (cost factor, uplift, success, density, velocity).',
+    version: 'costModel.ts as of 27 Nov 2026 (U131 onwards)',
+    taken: 'Cost per chapter and per flip by stage, and how much each driver moves it.',
+    link: '/admin/reports/cost',
+    label: 'estimate',
+  },
+  'sleep-cohort': {
+    id: 'sleep-cohort',
+    name: 'Sleep cohort (StateFlips)',
+    what: 'The simulated people in the 1,000 v4 personas with a sleep need and no risk flag, each with a sleep score from the check-in formula.',
+    version: 'StateFlips U140 (J202), persona set v4',
+    taken: 'Who is in the sleep cohort and their starting score, for the share expected to flip.',
+    link: '/admin/stateflips',
+    label: 'sample',
+  },
+  'owner-thesis': {
+    id: 'owner-thesis',
+    name: 'The business owner’s thesis (deck)',
+    what: 'His deck and chat: the meta-AI engine, 120,000 AKPs, 500 billion variations, 5 billion state-flips a year, a $1 per flip floor. His thesis, not measured.',
+    version: 'Chats of 24 and 27 Nov 2026',
+    taken: 'The scale claims, each with what would make it measurable.',
+    link: '/wiki/b2b2c/owner-thesis',
+    label: 'scenario',
+  },
 }
 
 /** The kind of evidence a source is, for grouping it on a graph (U121). Coarse on purpose: a handful of groups a reader can scan. */
@@ -332,6 +362,9 @@ export const SOURCE_KIND: Record<SourceId, SourceKind> = {
   'owner-chat': 'The business owner',
   'owner-docs': 'The business owner',
   'buyer-prices': 'Product',
+  'cost-model': 'Costs',
+  'sleep-cohort': 'Funnels and models',
+  'owner-thesis': 'The business owner',
 }
 
 export interface Finding {

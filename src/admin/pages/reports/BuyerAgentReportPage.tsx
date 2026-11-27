@@ -14,6 +14,7 @@ import { InputGraph } from './InputGraph'
 import { INPUT_DOT } from './reportColors'
 import { LabelBadge, SourcesSection } from './ReportParts'
 import { Details, SummaryBlock } from './ReportSummary'
+import { DataSources } from './DataSources'
 import { LatestChangeAside } from '../buyer/RunChanges'
 import { BUYER_RUNS } from '../../data/buyerRuns'
 import { SuccessTrend, WhatMoves } from './SummaryCharts'
@@ -58,9 +59,9 @@ function BuyerAgentReport() {
   const pc = (k: number, n: number) => `${Math.round((k / n) * 100)}%`
 
   const [, setPageTab] = usePageTab()
-  const summaryBlock = (
-      <SummaryBlock s={summary} aside={<LatestChangeAside version={BUYER_RUNS[BUYER_RUNS.length - 1].version} />} />
-  )
+  const fullSummary = <SummaryBlock s={summary} aside={<LatestChangeAside version={BUYER_RUNS[BUYER_RUNS.length - 1].version} />} />
+  // B6 (U146): the Summary tab stays under 150 words; the full block opens Detail.
+  const summaryBlock = RELEASES.adminNav2 ? <SummaryBlock s={summary} compact /> : fullSummary
 
   return (
     <div className="flex flex-col gap-16">
@@ -75,7 +76,12 @@ function BuyerAgentReport() {
       />
 
       {!RELEASES.adminNav2 && summaryBlock}
-      <PageTabs summary={<ReportSummaryTab purpose="deciding whether simulated buyers would pay for Aurelia, and at what price." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
+      <PageTabs summary={<ReportSummaryTab purpose="deciding whether simulated buyers would pay for Aurelia, and at what price." onDetail={() => setPageTab('detail')}>{summaryBlock}<DataSources route="/admin/reports/buyer-agent" /></ReportSummaryTab>}>
+      {RELEASES.adminNav2 && (
+        <Details id="full-summary" title="Full summary" hint="each test’s figures, the tile notes and how sure we are">
+          {fullSummary}
+        </Details>
+      )}
 
       <p className="text-12 text-adm-muted">
         <RichText text="Every chart below is about {{simulated|simulated people}}: a prediction, not a measurement." />
@@ -273,6 +279,7 @@ function BuyerAgentReport() {
         ]}
       />
       </Details>
+      <DataSources route="/admin/reports/buyer-agent" full />
       </PageTabs>
     </div>
   )

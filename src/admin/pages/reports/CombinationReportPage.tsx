@@ -15,6 +15,7 @@ import { decisionItem } from './detailItems'
 import { IterationMapView } from './IterationMapView'
 import { LabelBadge, SourceChip, SourcesSection } from './ReportParts'
 import { Details, SummaryBlock } from './ReportSummary'
+import { DataSources } from './DataSources'
 import { StageStrip } from './SummaryCharts'
 import { combinationSummary, stageStrip } from '../../data/reportSummaries'
 
@@ -129,7 +130,7 @@ function CombinationReport() {
       />
 
       {!RELEASES.adminNav2 && summaryBlock}
-      <PageTabs summary={<ReportSummaryTab purpose="reading the journey, the personas and the buyer agents together to find the one funnel step to fix first." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
+      <PageTabs summary={<ReportSummaryTab purpose="reading the journey, the personas and the buyer agents together to find the one funnel step to fix first." onDetail={() => setPageTab('detail')}>{summaryBlock}<DataSources route="/admin/reports/combination" /></ReportSummaryTab>}>
 
       <Details id="stages" title="Stage by stage" hint="what each source says, where they agree and conflict">
       <Panel title="How to read it" description="The version and rules every stage is read on.">
@@ -224,6 +225,7 @@ function CombinationReport() {
         ]}
       />
       </Details>
+      <DataSources route="/admin/reports/combination" full />
       </PageTabs>
     </div>
   )

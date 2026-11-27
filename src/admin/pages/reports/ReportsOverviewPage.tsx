@@ -11,6 +11,8 @@ import { IterationMapView } from './IterationMapView'
 import { plainText } from '../../data/glossary'
 import { buildMetrics, metricsReportSummary } from '../../data/reportMetrics'
 import { RELEASES } from '../../../versions/releases'
+import { DataSources } from './DataSources'
+import { MetricLinesPanel } from './MetricLinesChart'
 
 /**
  * Admin → Reports → Overview (U129, J182). How Aurelia improves, in one
@@ -81,12 +83,16 @@ function Overview() {
         ))}
       </section>
 
+      <MetricLinesPanel />
+
       <Panel
         title="The iteration map"
         description={`${count('source')} kinds of source → ${count('report')} reports and tests → ${count('outcome')} decisions and versions. Hover a box to follow its lines; click it for details.`}
       >
         <IterationMapView map={map} label="Iteration map: the sources on the left feed the reports and tests in the middle, which led to the decisions and product versions on the right." />
       </Panel>
+
+      <DataSources route="/admin/reports" full />
     </div>
   )
 }

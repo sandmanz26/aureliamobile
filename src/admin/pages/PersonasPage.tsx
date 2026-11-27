@@ -1,3 +1,4 @@
+import { DataSources } from './reports/DataSources'
 import { Copy, Download, Shuffle } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -82,6 +83,7 @@ export function PersonasPage() {
       />
       <PageTabs
         summary={
+          <div className="flex min-w-0 flex-col gap-12">
           <PageSummary
             purpose="choosing made-up people to run AI research on (interviews in role, concept, copy and price tests) before real users are asked."
             question="Who do our tests run on, and who must never be sold to?"
@@ -99,6 +101,8 @@ export function PersonasPage() {
             note="Synthetic people for forming ideas, not evidence. Sets v1 and v2 (300 each) stay for the runs pinned to them."
             onDetail={() => setTab('detail')}
           />
+            <DataSources route="/admin/personas" />
+          </div>
         }
       >
       <div role="tablist" aria-label="Persona set" className="flex w-fit max-w-full flex-wrap gap-4 rounded-8 border border-adm-line bg-adm-surface p-4">
@@ -116,6 +120,7 @@ export function PersonasPage() {
         ))}
       </div>
       {set === 'v4' ? <PersonasV4View /> : <LegacyPersonas key={set} gen={set === 'v1' ? 1 : 2} />}
+      <DataSources route="/admin/personas" full />
       </PageTabs>
     </div>
   )

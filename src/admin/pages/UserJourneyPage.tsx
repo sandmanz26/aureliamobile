@@ -1,3 +1,4 @@
+import { DataSources } from './reports/DataSources'
 import { AlertCircle, CircleHelp, Download, ExternalLink, ImagePlus, MoreHorizontal, Pencil, Plus, RotateCcw, Smartphone, Upload, Users } from 'lucide-react'
 import { useEffect, useMemo, useState, type ChangeEvent, type CSSProperties } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -338,6 +339,7 @@ export function UserJourneyPage() {
 
       <PageTabs
         summary={
+          <div className="flex min-w-0 flex-col gap-12">
           <PageSummary
             purpose="seeing when people reach for Aurelia, and which of those moments still has no screen."
             question="Which moment should we design or build for next?"
@@ -359,6 +361,8 @@ export function UserJourneyPage() {
             note="Demand counts the 300 synthetic personas, not real users. Edits are saved in this browser only."
             onDetail={() => setTab('detail')}
           />
+            <DataSources route="/admin/user-journey" />
+          </div>
         }
       >
       {tagsOn && (
@@ -614,6 +618,7 @@ export function UserJourneyPage() {
       )}
       {view === 'coverage' && <CoverageView moments={moments} groups={tags.groups} />}
       {view === 'setup' && <TagSetupView groups={tags.groups} onEdit={setGroupEditing} onAdd={() => setGroupEditing('new')} />}
+      <DataSources route="/admin/user-journey" full />
       </PageTabs>
 
       {notice && (

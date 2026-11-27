@@ -1,3 +1,4 @@
+import { DataSources } from './DataSources'
 import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
 import { usePageTab } from '../../components/pageTab'
 import { RELEASES } from '../../../versions/releases'
@@ -223,7 +224,7 @@ function MetricsView() {
     <div className="flex min-w-0 flex-col gap-16">
       <PageHeader title="Report metrics" description={plainText(summary.intro ?? '')} />
       {!RELEASES.adminNav2 && summaryBlock}
-      <PageTabs summary={<ReportSummaryTab purpose="checking where each number in the reports comes from and how it is worked out, before trusting it." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
+      <PageTabs summary={<ReportSummaryTab purpose="checking where each number in the reports comes from and how it is worked out, before trusting it." onDetail={() => setPageTab('detail')}>{summaryBlock}<DataSources route="/admin/reports/metrics" /></ReportSummaryTab>}>
 
       <Panel title="How to read the quality" description="Each number gets one of three labels, plus checks for things that look wrong.">
         <dl className="grid gap-8 text-12 lg:grid-cols-3">
@@ -378,6 +379,7 @@ function MetricsView() {
       <p className="text-11 text-adm-muted">
         <RichText text="Every value in the table is read from the report itself, then {{recomputed|worked out again}} here from the answers, personas and prices underneath. Nothing on this page is typed in." />
       </p>
+      <DataSources route="/admin/reports/metrics" full />
       </PageTabs>
     </div>
   )

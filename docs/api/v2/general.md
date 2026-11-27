@@ -93,7 +93,8 @@ The endpoints are split into two pages:
 | Compute ledger and cost | 5 |
 | Therapeutic outcomes | 3 |
 | Minimum admin | 9 |
-| **Total** | **76** |
+| Healing model (StateFlips, AKPs, chapters, check-ins; mostly admin-only) | 12 |
+| **Total** | **88** |
 
 ## 5 · Data model (PostgreSQL)
 
@@ -133,6 +134,15 @@ UUID-backed ids with the prefixes above; `created_at` and `updated_at` on every 
 | `subscriptions` | id, user_id, plan, interval, status, current_period_end, stripe_subscription_id, attributed_cohort_id? | |
 | `usage_counters` | user_id, day, builds_used | Free-limit counter |
 | `webhook_events` | id (supplier event id, unique), source, type, received_at, processed_at, error? | Deduplication |
+| `stateflips` | id (SF-…), n, dimension, title, need jsonb, bad, good, milestones jsonb, measure jsonb, issues, layer, status, version | Versioned; apps see `published` only (§4.9) |
+| `akps` | id (WG-/ID-/WS-/WM-/WI-/WV-/PR-…), name, family, fn, kind (goal, strategy), layer, modality, description, causal_role, source, status, version | Admin-only |
+| `akp_links` | from_akp, to_akp, type (step-of, feeds, part-of, supports, fed-by, mirrors) | Unique triple |
+| `akp_flips` | akp_id, flip_id | Which StateFlips an AKP serves |
+| `chapter_akps` | chapter_id, akp_id, order, kind | A chapter is its AKPs in order |
+| `checkin_measures` | checkin_id, marker, value | Health schema; `checkins.score` is their sum |
+| `tournaments` | id, flip_id, chapter_id?, media, judge, winner_candidate_id, baseline_score?, uplift_after?, decided_at | Admin-only |
+| `tournament_candidates` | id, tournament_id, supplier, model, akp_ids, score, cost, currency | |
+| `persona_identities` | persona_id, dims jsonb, archetype, cog_style, value, spiritual, flags, flip_id, mindspace jsonb | Synthetic personas only |
 | `staff_users` | id, email, role, status | Admin audience |
 | `audit_log` | id, actor_id, action, target, before jsonb, after jsonb, at | Append-only |
 | `idempotency_keys` | key, user_id, route, response_hash, created_at | 24 h replay |

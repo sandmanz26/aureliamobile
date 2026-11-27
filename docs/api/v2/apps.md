@@ -185,3 +185,7 @@ type Subscription = { id; plan: "plus"; interval; status: "active" | "past_due" 
 **Free limit.** The server counts; the app only shows `entitlements`. The first build never counts. A retreat ticket grants its own chapters for the cohort's length (`source: "retreat"`).
 
 **Attribution.** A subscription started by someone enrolled in a cohort within `plusAttributionDays` of enrolment records `attributedCohortId`. Each paid invoice then writes a `plus_share` payout line.
+
+### Healing model reads (U146)
+
+The apps read a published StateFlip (`GET /stateflips`, `GET /stateflips/{id}`), the person's own chapters (`GET /journeys/{id}/chapters`) and check-ins (`GET /journeys/{id}/checkins`), and send each check-in's marker scores to `POST /checkins`. The shapes, and everything that is admin-only (AKPs, tournaments, cohort outcomes, persona identity), are in [Admin §4.9](/wiki/api/admin).

@@ -76,11 +76,15 @@ export function GoalLine({ goal }: { goal: string }) {
   )
 }
 
-export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode }) {
+/**
+ * `compact` (U146, B6) keeps a Summary tab short: no per-test rows, no tile
+ * notes or deltas, no confidence breakdown. The full block lives in Detail.
+ */
+export function SummaryBlock({ s, aside, compact = false }: { s: ReportSummary; aside?: ReactNode; compact?: boolean }) {
   const st = STATUS[s.status]
   const open = useDetail()
   return (
-    <section aria-label="Summary" className="flex min-w-0 flex-col gap-14 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20">
+    <section aria-label="Summary" data-compact={compact || undefined} className="flex min-w-0 flex-col gap-14 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20">
       <GoalLine goal={s.goal} />
       <div className="flex flex-col gap-6">
         <div className="flex flex-wrap items-center gap-8">
@@ -91,16 +95,16 @@ export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode
         </div>
         <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-16">
           <p className="max-w-[860px] text-18 font-semibold leading-snug text-adm-ink">
-            <RichText text={s.headline} />
+            <RichText text={compact ? (s.shortHeadline ?? s.headline) : s.headline} />
           </p>
           <div className="flex shrink-0 flex-col items-start gap-2 lg:items-end">
             <Badge tone={st.tone}>{st.text}</Badge>
-            <span className="text-11 text-adm-muted">{s.statusNote}</span>
+            {!compact && <span className="text-11 text-adm-muted">{s.statusNote}</span>}
           </div>
         </div>
       </div>
 
-      {s.rows && (
+      {s.rows && !compact && (
         <div className="flex flex-col gap-8" aria-label="By test">
           {s.rows.map((r) => (
             <div key={r.label} data-summary-row className="flex min-w-0 flex-col gap-8 rounded-8 border border-adm-line p-10 lg:flex-row lg:items-center lg:gap-16">
@@ -145,12 +149,12 @@ export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode
                 <DetailsCue />
               </button>
             </dd>
-            {t.delta && (
+            {t.delta && !compact && (
               <dd className={`text-12 font-medium tabular-nums ${t.deltaGood ? 'text-adm-good' : 'text-adm-critical'}`}>
                 <RichText text={t.delta} />
               </dd>
             )}
-            {t.note && (
+            {t.note && !compact && (
               <dd className="text-11 text-adm-ink-2">
                 <RichText text={t.note} />
               </dd>
@@ -165,7 +169,7 @@ export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode
         <div className="flex min-w-0 flex-col gap-6">
           <h2 className="text-11 font-semibold uppercase tracking-wider text-adm-muted">What to do next</h2>
           <ol className="flex flex-col gap-6">
-            {s.actions.map((a, i) => (
+            {(compact ? s.actions.slice(0, 2) : s.actions).map((a, i) => (
               <li key={a.text} className="flex flex-col gap-4 rounded-8 border border-adm-line p-10 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
                 <span className="text-13 text-adm-ink">
                   <span className="mr-6 font-semibold tabular-nums">{i + 1}.</span>
@@ -183,7 +187,7 @@ export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode
               <RichText text={s.sure} />
             </p>
           )}
-          <dl className="flex flex-col overflow-hidden rounded-8 border border-adm-line text-12">
+          {!compact && <dl className="flex flex-col overflow-hidden rounded-8 border border-adm-line text-12">
             {([
               ['Measured', 'good', s.confidence.measured],
               [s.sure ? 'Simulated' : 'Predicted', 'info', s.confidence.predicted],
@@ -198,7 +202,7 @@ export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode
                 </dd>
               </div>
             ))}
-          </dl>
+          </dl>}
         </div>
       </div>
     </section>
