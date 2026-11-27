@@ -169,6 +169,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U130 | `9a6c520` | 2026-11-25 | Buyer agent report made visual. It has funnels per test (5, 6, 7), a people grid (one mark per simulated person, which opens a drawer), a who-says-yes heat map, a price ladder against $10, ranked reasons for no with quotes, a slope chart of what moved people, and a cleaner trend across tests. | [patch](patches/U130-9a6c520.patch) |
 | U131 | `1634d0c` | 2026-11-25 | Product lab, staging only (`RELEASES.therapeuticMaps`). The **Therapeutic map** shows the Product, Business and Wellness triangle with targets, the 7-step sleep process and five worlds. The **Healing Map** has three rings (9 bad states, 14 building blocks, 9 good states) and 45 links: 36 design samples, 9 research-cited, 0 learned. It has filters, zoom and a drawer. | [patch](patches/U131-1634d0c.patch) |
 | U132 | `542ade2` | 2026-11-25 | B2B2C round 2. It adds 28 new web sources and the buyer tests, and re-ranks the channels: creator journey with a free first week, then a self-serve team plan, then codes and gifting. It lists 22 features (10 Now), on wiki pages round-2 and features and in Reports → B2B2C report (a feature board with a drawer). | [patch](patches/U132-542ade2.patch) |
+| U141 | `7e6156e` | 2026-11-27 | Point B (staging only): 125 StateFlips (25 per dimension; 98 tied to a Deeksha universal need), a draft AKP catalogue of 1,046 (547 goal, 499 strategy/tactic; 637 from the workbooks, 409 drafted; 653 links; brand empty pending the marketing sheet), personas with 12 Wellness Identity dimensions and a 4-function mindspace. StateFlips page gains All StateFlips and AKP catalogue tabs. Sleep numbers unchanged. | [patch](patches/U141-7e6156e.patch) |
 | U140 | `cef90fc` | 2026-11-27 | StateFlips page (Product lab, staging only) and wiki "How Aurelia heals": key terms; the sleep StateFlip (bad 25 / good 85 from four check-in markers, X ≥45 / Y ≥65 / Z ≥85, 90 personas, DOJO links); transparent chapters-to-flip (layer speeds mood/habit/skill calibrated to the spec's 42) and chance it works (spec 54% × adherence × readiness × severity × fit); cohort view per chapter; 7 Report metrics. costModel unchanged. | [patch](patches/U140-cef90fc.patch) |
 | U139 | `4522f7c` | 2026-11-27 | Wiki and admin switch to Source Sans 3 (self-hosted, scoped with :root:has(.adm-root, .gd) so portalled drawers follow; the consumer app keeps Mulish). Darker muted and secondary text (admin #6b6962, wiki #6e5f51), admin text sizes +1px, wiki body 17.5px. | [patch](patches/U139-4522f7c.patch) |
 | U138 | `cdc5ef7` | 2026-11-26 | Persona v4 current condition: five dimensions (mental, emotional, relational, spiritual, physical) 0–100 with a 5×10 issue list from DOJO duals and prevalence, main need, acuity, readiness, confidence, support, coping, time, goal and targets; `conditionForBuyer` and `conditionForCost` with written formulas; population cost about $15.13 per person (stage 1, risk-flagged excluded). Personas drawer, section and filters; 10 Report metrics. Existing persona data unchanged. | [patch](patches/U138-cdc5ef7.patch) |
@@ -180,6 +181,13 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U141 — 125 StateFlips, 1,046 draft AKPs, persona identity
+
+- **Commit:** `7e6156e` · 2026-11-27.
+- **Request:** point B.
+- **Caveats:** StateFlips 11–25 borrow the people of their closest issue; steps and check-ins except sleep are one drafted template; links come from keyword matching; medical universal needs left out; all AKPs are draft for the business owner to review. The identity "dynamic risk" dimension (392 people) is not the safety risk flag (25).
+- **Revert:** `git revert --no-commit 7e6156e`.
 
 ### U140 — StateFlips and How Aurelia heals
 

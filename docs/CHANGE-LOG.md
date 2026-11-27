@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-27 — 125 StateFlips and draft AKPs (U141, J203)
+
+StateFlips lists 125 bad-to-good goals and a draft catalogue of 1,046 AKPs; personas gain a wellness identity.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-27 — StateFlips and How Aurelia heals (U140, J202)
 
 Product lab gains StateFlips (staging only): the sleep StateFlip, transparent formulas and a cohort graph; the wiki gains How Aurelia heals.

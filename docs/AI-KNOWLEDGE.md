@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J202** · updated 25 Nov 2026
+**Covers up to J203** · updated 25 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
@@ -134,6 +134,7 @@ reach that repository yet (O33).
 
 ## 6 · Positions taken (and why), newest first
 
+- **StateFlips and AKPs (U141):** `stateFlips.ts` (125), `akps.ts` + `generated/akpSource.ts` from `scripts/akp/extract.py` (1,046, all draft). Regenerate from the workbooks, never hand-edit the generated file.
 - **StateFlip formulas (U140, `stateFlipFormulas.ts`)** calibrate layer speeds so the average case reproduces the spec's 42 chapters; never change costModel outputs.
 - **Deadline (J200): Monday 30 Nov** — first 1,000 AKPs + graph over time, sleep detail, calculation, AKPs in the agent, persona. The product owner invoices after.
 - **AI brain = 5 functions (J199):** Wellness, Brand, Product, Business, Analysis (Maxwell, TheraGPS), each its own AKP universe, interconnected, all into our admin. His Figma Make prototype has no logic; its AKP counts are not data.

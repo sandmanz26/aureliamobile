@@ -134,6 +134,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | J181 | 2026-11-25 | Review + code | Review whether the reports are understandable even to a layperson, and fix them | U128 |
 | J182 | 2026-11-25 | Code | UX feedback report from the latest feedback group; drop "what this report says"; a goal on every report; make "many sources → iterations → product" visible; drawers instead of page changes | U129 |
 | J183 | 2026-11-25 | Code + research | Better buyer agent visualisation; therapeutic map and interactive Healing Map; B2B2C research using everything known, with the features to build, in a report | U130, U131, U132 |
+| J203 | 2026-11-27 | Code | Point B, then a head-of-design check of every menu with Summary / Detail tabs so users are not confused | U141 |
 | J202 | 2026-11-27 | Code | Point A: key terms, the sleep StateFlip, how it is calculated, cohort graph over time; then B and an admin workflow/UI/UX evaluation | U140 |
 | J201 | 2026-11-27 | Received | Business owner's last messages (Figma versions, extract its code; parked) and the UI/UX Product AKPs workbook. Saved | — |
 | J200 | 2026-11-27 | Received | Business owner: product AKPs sheet, 4-function persona mindspace; product owner committed 1k AKPs + 5 items by Monday. Saved | — |
@@ -2252,6 +2253,9 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 ### J183 — Visuals, maps, B2B2C round 2
 - **Done:** U130, U131, U132.
 - **Key finding of round 2:** lead with a free first week, then charge. Trust beats price as the barrier, and a self-serve team plan comes second.
+
+### J203 — Point B done; menu review next
+- **Done (U141).** Next: menu review, Summary / Detail tabs, audit phase 1 (U142).
 
 ### J202 — Point A done
 - **Admin audit done:** `docs/briefs/2026-11-27-admin-ux-audit.md` (top 10 issues, direction, phases 8–10h / 20–28h / 30–45h); waiting for the product owner to choose.
