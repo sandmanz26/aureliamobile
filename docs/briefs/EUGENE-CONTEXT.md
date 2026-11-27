@@ -39,6 +39,8 @@
 | A37 | An admin version of the old AKP Graph Explorer | gap check J198 (was missing here) | open |
 | A38 | Map his entities as gateways to AKPs and the Notion entity model | gap check J198 (was missing here) | open |
 | A39 | His deck's scale claims shown as his thesis, labelled | gap check J198 (was missing here) | open |
+| A40 | One unified admin AI brain with 5 interconnected functions, each its own AKP universe and causal network: Wellness, Brand, Product (18 dimensions), Business, Analysis (MicroBite "Maxwell", TheraGPS "Governor"); move his Figma Make prototype (display only, no logic) into our admin | row 47 | received, more context coming; Figma parked by the product owner |
+| A41 | Agreed: define predefined base values (AKPs as lego pieces) first, no media generation; AI improves them later | row 47 | agreed |
 | A1 | AI brain: Product, Wellness, Business, each with metrics, MVP targets and a prediction model, connected | row 40 | planned (step 3–4) |
 | A2 | 5 dimensions × top 10 issues, cost of bad to good each, baseline then real figures | rows 39–40 | planned (step 1, first) |
 | A3 | Bad-to-good slider dynamics for every scenario, not only sleep | row 40 | planned (step 1) |
@@ -169,8 +171,9 @@ Also: his "mathematical inevitability" thesis (meta-AI, momondo of AI, 5B state-
 | 44 | 2026-11-26 21.35–21.45 | The structure: universal needs in 5 dimensions with 100s of concrete StateFlips; goal AKPs vs strategy/tactic AKPs; BAR / ELEMENTS operating model for building scripts; plus a Notion export on the 2025 backend's LLM prompting | `docs/briefs/2026-11-27-chat-objective-learning.md`, `2026-11-27-bar-elements-operating-model.xlsx`, `2026-11-27-notion-wiki-aurelia-backend-llm.pdf` | J194 | **received, more coming** |
 | 45 | 2026-11-26 21.46–22.23 | "Check this tab" (cascading logic Meta → Path → Script), admin must get the system logic right; 25 × 5 = 125 bad-to-good states to start, 100,000+ in the real world; purpose: make sessions and chapters via AKPs and solve them on real humans | `docs/briefs/2026-11-27-plan-objective-learning.md` | J195 | **complete; plan proposed** |
 | 46 | 2026-11-26 22.34 | Marketing AKPs sheet, ReadMe tab; "upload the whole doc to Claude to understand AKPs better, like the wellness AKPs" | `docs/briefs/2026-11-27-plan-objective-learning.md` (addition) | J196 | **waiting for the file** |
+| 47 | 2026-11-27 22.52–23.05 | AI brain prototype: 20-AKP chapter simulation, 120,000 AKPs → 500B variations, 5 brain functions with their own AKP universes, API Hub of suppliers, Product's 18 dimensions; Figma Make "Wellness-Campaign-Setup-Interface" is display only | `docs/briefs/2026-11-27-chat-ai-brain-prototype.md` + screenshots 14–18 | J199 | **received, more coming** |
 
-**46 rows.**
+**47 rows.**
 
 ---
 

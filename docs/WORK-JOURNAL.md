@@ -134,6 +134,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | J181 | 2026-11-25 | Review + code | Review whether the reports are understandable even to a layperson, and fix them | U128 |
 | J182 | 2026-11-25 | Code | UX feedback report from the latest feedback group; drop "what this report says"; a goal on every report; make "many sources → iterations → product" visible; drawers instead of page changes | U129 |
 | J183 | 2026-11-25 | Code + research | Better buyer agent visualisation; therapeutic map and interactive Healing Map; B2B2C research using everything known, with the features to build, in a report | U130, U131, U132 |
+| J199 | 2026-11-27 | Received | Business owner: AI brain prototype with 5 functions (Wellness, Brand, Product, Business, Analysis), move into our admin; predefined AKP values first. Figma parked. Saved | — |
 | J198 | 2026-11-27 | Analysis | Re-read every brief and file and checked the system against them: gap check with closeness per pillar, 9 missed asks (now A31–A39), top gaps and backlog B10–B14 | — |
 | J197 | 2026-11-27 | Discussion | Product owner's 5-point summary cross-checked against A22–A30; backlog B1–B9 added to the plan brief | — |
 | J196 | 2026-11-27 | Received | Business owner: marketing AKPs sheet (ReadMe tab) to understand AKPs better; saved, file export requested | — |
@@ -2248,6 +2249,9 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 ### J183 — Visuals, maps, B2B2C round 2
 - **Done:** U130, U131, U132.
 - **Key finding of round 2:** lead with a free first week, then charge. Trust beats price as the barrier, and a self-serve team plan comes second.
+
+### J199 — AI brain prototype
+- **Saved** `docs/briefs/2026-11-27-chat-ai-brain-prototype.md`, A40–A41, row 47. Figma ignored for now, per the product owner.
 
 ### J198 — Gap check
 - `docs/briefs/2026-11-27-gap-check.md`. Nothing from 26 Nov (AKPs, StateFlips, Wellness Identity, Meta → Path → Script) is in code yet; cost and business are closest.
