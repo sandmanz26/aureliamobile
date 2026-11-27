@@ -2256,6 +2256,9 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 - **Done:** U130, U131, U132.
 - **Key finding of round 2:** lead with a free first week, then charge. Trust beats price as the barrier, and a self-serve team plan comes second.
 
+### J206 — B1–B8, AKP graph, sources, point C, evaluation (in progress)
+- Head-of-product review: `docs/briefs/2026-11-27-product-opportunities.md` (19 forgotten/half-done, 8 confidence, 12 risks, 10 decisions; top 10).
+
 ### J205 — Production release
 - **Done (U144).** web_prod fast-forwarded. Admin design phase 2 dropped by the product owner.
 
