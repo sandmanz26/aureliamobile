@@ -46,6 +46,8 @@ interface NavItem {
   external?: boolean
   /** adminNav2: one line shown as the link's tooltip. */
   hint?: string
+  /** adminNav2 (U143): off the rail; found by search, shown while it is the current page, cross-linked from its sibling. */
+  hidden?: boolean
 }
 
 interface NavGroup {
@@ -60,6 +62,8 @@ interface NavGroup {
   flat?: boolean
   /** adminNav2: quieter heading (Operations — sample data). */
   quiet?: boolean
+  /** adminNav2 (U143): a small chip beside the heading. */
+  chip?: string
 }
 
 /** Since U123 the icons sit on the top-level entries (groups and Dashboard); nested items have none. */
@@ -187,27 +191,27 @@ const NAV2: NavGroup[] = [
   {
     section: 'AI brain',
     icon: BrainCircuit,
-    description: 'What the AI knows: wellness, product, business, brand',
+    description: 'What the AI knows: wellness, product, business and brand',
     defaultOpen: true,
     items: [
-      ...(RELEASES.stateFlips ? [{ to: '/admin/stateflips', label: 'StateFlips', flag: 'adminStateFlips', sub: 'Wellness', hint: 'The product: a bad state turned into a good one' }] : []),
+      ...(RELEASES.stateFlips ? [{ to: '/admin/stateflips', label: 'StateFlips', flag: 'adminStateFlips', hint: 'The product: a bad state turned into a good one' }] : []),
+      ...(RELEASES.personas ? [{ to: '/admin/personas', label: 'Personas', flag: 'adminPersonas', hint: 'Made-up research people the tests run on' }] : []),
+      { to: '/admin/user-journey', label: 'User journey', flag: 'adminUserJourney', hint: 'When people reach for Aurelia, and what serves each moment' },
+      ...(RELEASES.businessFunnel ? [{ to: '/admin/business-funnel', label: 'Business funnel', flag: 'adminBusinessFunnel', hint: 'How many people get from first visit to paying' }] : []),
       ...(RELEASES.therapeuticMaps
         ? [
-            { to: '/admin/healing-map', label: 'Healing map', flag: 'adminHealingMap', sub: 'Wellness', hint: 'Which building blocks help which state, and how it learns' },
-            { to: '/admin/therapeutic-map', label: 'Therapeutic map · older version', flag: 'adminTherapeuticMap', sub: 'Wellness', hint: 'The first state-to-technique map; the Healing map replaces it' },
+            { to: '/admin/healing-map', label: 'Healing map', flag: 'adminHealingMap', hint: 'Which building blocks help which state, and how it learns' },
+            // Older version: off the rail since U143; the Healing map links to it and search finds it.
+            { to: '/admin/therapeutic-map', label: 'Therapeutic map (older version)', flag: 'adminTherapeuticMap', hidden: true, hint: 'The first state-to-technique map; the Healing map replaces it' },
           ]
         : []),
-      { to: '/admin/user-journey', label: 'User journey', flag: 'adminUserJourney', sub: 'Product', hint: 'When people reach for Aurelia, and what serves each moment' },
-      ...(RELEASES.personas ? [{ to: '/admin/personas', label: 'Personas', flag: 'adminPersonas', sub: 'Product', hint: 'Made-up research people the tests run on' }] : []),
-      ...(RELEASES.businessFunnel ? [{ to: '/admin/business-funnel', label: 'Business funnel', flag: 'adminBusinessFunnel', sub: 'Business', hint: 'How many people get from first visit to paying' }] : []),
-      { to: '/admin/brand', label: 'Brand guide', flag: 'admin', sub: 'Brand', coming: true },
+      { to: '/admin/brand', label: 'Brand', flag: 'admin', coming: true },
     ],
   },
   {
-    section: 'Reports & decisions',
+    section: 'Reports',
     icon: FileChartColumn,
-    description: 'One report per decision, with its sources',
-    defaultOpen: true,
+    description: 'One report per decision, each with its sources',
     items: RELEASES.reports
       ? [
           { to: '/admin/reports', label: 'All reports', end: true, flag: 'adminReportsOverview', hint: 'Every report, and the loop from sources to decisions' },
@@ -215,9 +219,9 @@ const NAV2: NavGroup[] = [
           { to: '/admin/reports/ux-feedback', label: 'UX feedback', flag: 'adminReportUxFeedback', hint: 'What the feedback group says about the app' },
           { to: '/admin/reports/combination', label: 'Combination', flag: 'adminReportCombination', hint: 'Journey, personas and buyers read together' },
           { to: '/admin/reports/cost', label: 'Cost', flag: 'adminReportCost', hint: 'What one user costs to serve' },
-          { to: '/admin/reports/b2b2c', label: 'B2B2C channels', flag: 'adminReportB2b2c', hint: 'Which partner channels to test first' },
+          { to: '/admin/reports/b2b2c', label: 'B2B2C', flag: 'adminReportB2b2c', hint: 'Which partner channels to test first' },
           ...(RELEASES.reportMetrics ? [{ to: '/admin/reports/metrics', label: 'How numbers are made', flag: 'adminReportMetrics', hint: 'Report metrics: each number traced to its data and formula' }] : []),
-          ...(RELEASES.buyerAgent ? [{ to: '/admin/buyer-agent', label: 'Buyer agent runs · older version', flag: 'adminBuyerAgent', hint: 'Every buyer agent run in full; the Buyer agent report summarises it' }] : []),
+          ...(RELEASES.buyerAgent ? [{ to: '/admin/buyer-agent', label: 'Buyer agent runs (older version)', flag: 'adminBuyerAgent', hidden: true, hint: 'Every buyer agent run in full; the Buyer agent report summarises it' }] : []),
         ]
       : [],
   },
@@ -225,17 +229,17 @@ const NAV2: NavGroup[] = [
     section: 'Research',
     icon: BookOpen,
     description: 'The desk research behind the reports (wiki)',
-    defaultOpen: true,
     items: [
-      { to: '/wiki/research', label: 'Research overview', flag: 'admin', external: true },
-      { to: '/wiki/b2b2c', label: 'B2B2C research', flag: 'admin', external: true },
+      { to: '/wiki/research', label: 'Research', flag: 'admin', external: true, hint: 'The desk research behind the reports, in the wiki' },
+      { to: '/wiki/b2b2c', label: 'B2B2C research', flag: 'admin', external: true, hint: 'Partner-channel research, in the wiki' },
     ],
   },
   {
-    section: 'Operations — sample data',
+    section: 'Operations',
     icon: Server,
     description: 'CMS modules for a backend that does not exist yet; every figure is made up',
     quiet: true,
+    chip: 'sample data',
     items: [
       ...(RELEASES.reports
         ? []
@@ -315,7 +319,9 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const navRef = useRef<HTMLElement>(null)
   const q = query.trim().toLowerCase()
   const groups = MENU.map((group) => {
-    const enabled = group.items.filter((item) => isEnabled(item.flag) && (!item.coming || q === ''))
+    const enabled = group.items.filter(
+      (item) => isEnabled(item.flag) && (!item.coming || q === '') && (!item.hidden || q !== '' || matches(item, pathname)),
+    )
     const sectionHit = q !== '' && group.section.toLowerCase().includes(q)
     return {
       ...group,
@@ -415,6 +421,95 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
     </NavLink>
   )
 
+  if (RELEASES.adminNav2) {
+    // U143 (J204): the tidied rail. One 36px row height, 12px padding, no
+    // indentation or guide lines; sections are small muted labels with space
+    // between them, each folding with a chevron. The Team wiki lives in the
+    // rail footer (AdminLayout) and only joins the list while searching.
+    const visible = q === '' ? groups.filter((g) => g.section !== 'Wiki') : groups
+    const row = 'flex h-36 items-center gap-10 rounded-8 px-12 text-13 outline-none focus-visible:ring-2 focus-visible:ring-adm-gold/70'
+    const item2 = (item: NavItem, Icon?: LucideIcon) =>
+      item.coming ? (
+        <span key={item.to} className={`${row} text-white/45`} title="Planned, not built yet">
+          <span className="truncate">{item.label} · coming soon</span>
+        </span>
+      ) : (
+        <NavLink
+          key={item.to}
+          to={item.to}
+          end={item.end}
+          data-nav-item=""
+          onClick={onPick}
+          title={item.hint ? `${item.label}: ${item.hint}` : item.label}
+          className={({ isActive }) =>
+            `${row} relative transition-colors ${
+              isActive
+                ? 'bg-white/10 font-semibold text-white before:absolute before:inset-y-10 before:left-0 before:w-2 before:rounded-full before:bg-adm-gold'
+                : 'text-white/75 hover:bg-white/6 hover:text-white'
+            }`
+          }
+        >
+          {Icon && <Icon size={16} aria-hidden="true" className="shrink-0" />}
+          <span className="min-w-0 flex-1 truncate">{item.label}</span>
+          {item.external && <ExternalLink size={13} aria-label="opens the wiki" className="shrink-0 text-white/45" />}
+        </NavLink>
+      )
+    return (
+      <div className="flex flex-col">
+        <div className="px-12 pt-12">
+          <label className="flex h-36 items-center gap-8 rounded-8 bg-white/6 px-12 text-white/55 focus-within:bg-white/10 focus-within:text-white/80 focus-within:ring-2 focus-within:ring-adm-gold/70">
+            <Search size={14} aria-hidden="true" />
+            <input
+              ref={inputRef}
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={onInputKey}
+              placeholder="Search menu"
+              aria-label="Search the admin menu"
+              className="min-w-0 flex-1 bg-transparent text-13 text-white outline-none placeholder:text-white/50 [&::-webkit-search-cancel-button]:hidden"
+            />
+            {query ? (
+              <button type="button" aria-label="Clear search" onClick={() => setQuery('')} className="text-white/55 hover:text-white">
+                <X size={13} />
+              </button>
+            ) : (
+              <kbd className="rounded-4 border border-white/15 px-4 font-sans text-12 text-white/50">/</kbd>
+            )}
+          </label>
+        </div>
+        <nav ref={navRef} onKeyDown={onNavKey} aria-label="Admin" className="flex flex-col px-12 pb-16 pt-12">
+          {visible.length === 0 && <p className="px-12 py-8 text-13 text-white/55">No menu matches</p>}
+          {visible.map((group) => {
+            // A section folds open by default only while no section holds the page (Start here, the wiki).
+            const anyCurrent = visible.some((g) => !g.flat && g.items.some((item) => matches(item, pathname)))
+            if (group.flat) return <div key={group.section} className="flex flex-col">{group.items.map((item) => item2(item, group.icon))}</div>
+            const current = group.items.some((item) => matches(item, pathname))
+            const isOpen = q !== '' || current || (folds[group.section] ?? (!anyCurrent && !!group.defaultOpen))
+            const locked = q !== '' || current
+            return (
+              <section key={group.section} className="mt-20 flex flex-col" aria-label={group.section}>
+                <button
+                  type="button"
+                  aria-expanded={isOpen}
+                  aria-disabled={locked || undefined}
+                  onClick={() => !locked && toggle(group.section, isOpen)}
+                  title={group.description}
+                  className={`flex h-28 items-center gap-8 rounded-8 px-12 text-left text-12 font-semibold text-white/55 outline-none focus-visible:ring-2 focus-visible:ring-adm-gold/70 ${locked ? 'cursor-default' : 'hover:text-white/85'}`}
+                >
+                  <span className="truncate">{group.section}</span>
+                  {group.chip && <span className="shrink-0 rounded-full bg-white/8 px-6 text-11 font-medium leading-[18px] text-white/60">{group.chip}</span>}
+                  <ChevronRight size={14} aria-hidden="true" className={`ml-auto shrink-0 transition-transform ${isOpen ? 'rotate-90' : ''} ${locked ? 'opacity-40' : ''}`} />
+                </button>
+                {isOpen && <div className="mt-2 flex flex-col">{group.items.map((item) => item2(item))}</div>}
+              </section>
+            )
+          })}
+        </nav>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col">
       <div className="px-12 pt-12">
@@ -494,6 +589,29 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
+/** adminNav2 (U143): the Team wiki and who is signed in. The build badge stays in the staging bar only. */
+function RailFooter({ onNavigate }: { onNavigate?: () => void }) {
+  return (
+    <div className="flex flex-col gap-4 border-t border-white/8 px-12 py-12">
+      <NavLink
+        to="/wiki/admin"
+        onClick={onNavigate}
+        title="Team wiki: guides, the PRD, the API contract and research"
+        className="flex h-36 items-center gap-10 rounded-8 px-12 text-13 text-white/75 outline-none transition-colors hover:bg-white/6 hover:text-white focus-visible:ring-2 focus-visible:ring-adm-gold/70"
+      >
+        <BookMarked size={16} aria-hidden="true" className="shrink-0" />
+        <span className="min-w-0 flex-1 truncate">Team wiki</span>
+        <ExternalLink size={13} aria-label="opens the wiki" className="shrink-0 text-white/45" />
+      </NavLink>
+      <div className="flex items-center gap-10 px-12 pt-4">
+        <span aria-hidden="true" className="flex size-24 shrink-0 items-center justify-center rounded-full bg-white/10 text-11 font-semibold text-white">W</span>
+        <span className="min-w-0 truncate text-12 font-medium text-white">Werner S.</span>
+        <span className="ml-auto shrink-0 text-12 text-white/55">Super Admin</span>
+      </div>
+    </div>
+  )
+}
+
 export function AdminLayout() {
   const [open, setOpen] = useState(false)
   const { pathname } = useLocation()
@@ -510,13 +628,17 @@ export function AdminLayout() {
         <div className="flex-1 overflow-y-auto">
           <SidebarNav />
         </div>
-        <div className="border-t border-white/8 px-20 py-12">
-          <p className="text-12 font-medium text-white">Werner S.</p>
-          <p className="text-11 text-white/45">Super Admin</p>
-          <div className="mt-10">
-            <BuildBadge dark />
+        {nav2 ? (
+          <RailFooter />
+        ) : (
+          <div className="border-t border-white/8 px-20 py-12">
+            <p className="text-12 font-medium text-white">Werner S.</p>
+            <p className="text-11 text-white/45">Super Admin</p>
+            <div className="mt-10">
+              <BuildBadge dark />
+            </div>
           </div>
-        </div>
+        )}
       </aside>
 
       {open && (
@@ -524,7 +646,10 @@ export function AdminLayout() {
           <div className="absolute inset-0 bg-black/50" onClick={() => setOpen(false)} />
           <div className="relative flex h-full w-[232px] flex-col bg-adm-sidebar">
             <div className="flex h-56 items-center justify-between border-b border-white/8 px-20">
-              <span className="text-13 font-semibold text-white">Aurelia Admin</span>
+              <span className="flex items-center gap-8 text-13 font-semibold text-white">
+                {nav2 && <AureliaLogo iconSize={22} markOnly />}
+                Aurelia Admin
+              </span>
               <button type="button" aria-label="Close menu" onClick={() => setOpen(false)} className="text-white/60">
                 <X size={18} />
               </button>
@@ -532,6 +657,7 @@ export function AdminLayout() {
             <div className="flex-1 overflow-y-auto">
               <SidebarNav onNavigate={() => setOpen(false)} />
             </div>
+            {nav2 && <RailFooter onNavigate={() => setOpen(false)} />}
           </div>
         </div>
       )}
