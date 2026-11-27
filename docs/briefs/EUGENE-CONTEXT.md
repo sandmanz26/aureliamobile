@@ -29,6 +29,7 @@
 | A27 | Objective Learning knowledge base: 5 dimensions → hundreds/thousands of universal needs → concrete bad-to-good StateFlips (goal AKPs), linked to strategy/tactic AKPs (Grand 4 layers) and to script building (BAR / ELEMENTS). "Everything I sent today is very important to get right" | row 44 | received, more coming |
 | A28 | Admin shows the system logic right: the Meta → Path → Script cascade ("snapshots of our own Causal AI") | row 45 | planned (plan step 2) |
 | A29 | Start with 125 bad-to-good states (25 × 5); used to make sessions and chapters via AKPs and solve them on real humans | row 45 | planned (plan step 1) |
+| A30 | Marketing AKPs sheet (ReadMe tab: campaign goals, levers, audience states, growth vectors, strategies, tactics, story arcs, voices, aesthetics, anchors, channels, adaptive knobs): read the whole doc to understand AKPs better; same logic for Business | row 46 | waiting for the .xlsx export |
 | A1 | AI brain: Product, Wellness, Business, each with metrics, MVP targets and a prediction model, connected | row 40 | planned (step 3–4) |
 | A2 | 5 dimensions × top 10 issues, cost of bad to good each, baseline then real figures | rows 39–40 | planned (step 1, first) |
 | A3 | Bad-to-good slider dynamics for every scenario, not only sleep | row 40 | planned (step 1) |
@@ -158,8 +159,9 @@ Also: his "mathematical inevitability" thesis (meta-AI, momondo of AI, 5B state-
 | 43 | 2026-11-26 21.26–21.35 | Personas as their own AI system: the Wellness Identity AKP dimensions (Grand 12, Light 35); five wellness worlds deepened from the Deeksha 12P pillars and UN universal needs; plus the Grand 4 layers AKP master sheet | `docs/briefs/2026-11-27-chat-persona-dimensions.md` + three .xlsx | J193 | **received, more coming** |
 | 44 | 2026-11-26 21.35–21.45 | The structure: universal needs in 5 dimensions with 100s of concrete StateFlips; goal AKPs vs strategy/tactic AKPs; BAR / ELEMENTS operating model for building scripts; plus a Notion export on the 2025 backend's LLM prompting | `docs/briefs/2026-11-27-chat-objective-learning.md`, `2026-11-27-bar-elements-operating-model.xlsx`, `2026-11-27-notion-wiki-aurelia-backend-llm.pdf` | J194 | **received, more coming** |
 | 45 | 2026-11-26 21.46–22.23 | "Check this tab" (cascading logic Meta → Path → Script), admin must get the system logic right; 25 × 5 = 125 bad-to-good states to start, 100,000+ in the real world; purpose: make sessions and chapters via AKPs and solve them on real humans | `docs/briefs/2026-11-27-plan-objective-learning.md` | J195 | **complete; plan proposed** |
+| 46 | 2026-11-26 22.34 | Marketing AKPs sheet, ReadMe tab; "upload the whole doc to Claude to understand AKPs better, like the wellness AKPs" | `docs/briefs/2026-11-27-plan-objective-learning.md` (addition) | J196 | **waiting for the file** |
 
-**45 rows.**
+**46 rows.**
 
 ---
 
