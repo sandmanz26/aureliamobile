@@ -169,6 +169,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U130 | `9a6c520` | 2026-11-25 | Buyer agent report made visual. It has funnels per test (5, 6, 7), a people grid (one mark per simulated person, which opens a drawer), a who-says-yes heat map, a price ladder against $10, ranked reasons for no with quotes, a slope chart of what moved people, and a cleaner trend across tests. | [patch](patches/U130-9a6c520.patch) |
 | U131 | `1634d0c` | 2026-11-25 | Product lab, staging only (`RELEASES.therapeuticMaps`). The **Therapeutic map** shows the Product, Business and Wellness triangle with targets, the 7-step sleep process and five worlds. The **Healing Map** has three rings (9 bad states, 14 building blocks, 9 good states) and 45 links: 36 design samples, 9 research-cited, 0 learned. It has filters, zoom and a drawer. | [patch](patches/U131-1634d0c.patch) |
 | U132 | `542ade2` | 2026-11-25 | B2B2C round 2. It adds 28 new web sources and the buyer tests, and re-ranks the channels: creator journey with a free first week, then a self-serve team plan, then codes and gifting. It lists 22 features (10 Now), on wiki pages round-2 and features and in Reports → B2B2C report (a feature board with a drawer). | [patch](patches/U132-542ade2.patch) |
+| U140 | `cef90fc` | 2026-11-27 | StateFlips page (Product lab, staging only) and wiki "How Aurelia heals": key terms; the sleep StateFlip (bad 25 / good 85 from four check-in markers, X ≥45 / Y ≥65 / Z ≥85, 90 personas, DOJO links); transparent chapters-to-flip (layer speeds mood/habit/skill calibrated to the spec's 42) and chance it works (spec 54% × adherence × readiness × severity × fit); cohort view per chapter; 7 Report metrics. costModel unchanged. | [patch](patches/U140-cef90fc.patch) |
 | U139 | `4522f7c` | 2026-11-27 | Wiki and admin switch to Source Sans 3 (self-hosted, scoped with :root:has(.adm-root, .gd) so portalled drawers follow; the consumer app keeps Mulish). Darker muted and secondary text (admin #6b6962, wiki #6e5f51), admin text sizes +1px, wiki body 17.5px. | [patch](patches/U139-4522f7c.patch) |
 | U138 | `cdc5ef7` | 2026-11-26 | Persona v4 current condition: five dimensions (mental, emotional, relational, spiritual, physical) 0–100 with a 5×10 issue list from DOJO duals and prevalence, main need, acuity, readiness, confidence, support, coping, time, goal and targets; `conditionForBuyer` and `conditionForCost` with written formulas; population cost about $15.13 per person (stage 1, risk-flagged excluded). Personas drawer, section and filters; 10 Report metrics. Existing persona data unchanged. | [patch](patches/U138-cdc5ef7.patch) |
 | U137 | `d117a31` | 2026-11-26 | Buyer agent "What changed and why": every run declares what changed (offer, panel, rules); each headline gets a delta line and a bridge chart split into offer, panel and rules/price effects (counterfactual replay for v5–v7, documented for v1–v3), flipped personas in the drawer, "not like for like" warnings; reasons also in the Buyer agent report and Report metrics. A run without a change record fails the check. | [patch](patches/U137-d117a31.patch) |
@@ -179,6 +180,13 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U140 — StateFlips and How Aurelia heals
+
+- **Commit:** `cef90fc` · 2026-11-27.
+- **Request:** point A: shared vocabulary, the sleep StateFlip in full, how chance it works and chapters are calculated, graph over time (cohort).
+- **Results:** median 34 chapters (10–58); chance 48.8% vs spec 54%; 33% flipped by chapter 42; about 31% stop; cost per flip $26.46 vs spec $36.55. All assumptions on synthetic people.
+- **Revert:** `git revert --no-commit cef90fc`.
 
 ### U139 — Reading font for wiki and admin
 

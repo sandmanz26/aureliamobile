@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-27 — StateFlips and How Aurelia heals (U140, J202)
+
+Product lab gains StateFlips (staging only): the sleep StateFlip, transparent formulas and a cohort graph; the wiki gains How Aurelia heals.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-27 — Reading font for wiki and admin (U139, J191)
 
 Wiki and admin use Source Sans 3 with darker secondary text; the app keeps Mulish.

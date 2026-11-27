@@ -1,0 +1,1902 @@
+commit cef90fcff37a9b7cfdb459d42f99258cba36c33c
+Author: Claude <noreply@anthropic.com>
+Date:   Fri Nov 27 16:53:03 2026 +0000
+
+    Product lab → StateFlips: the sleep StateFlip, transparent chapters and chance, the cohort over time, and How Aurelia heals in the wiki (U140, J202)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+
+diff --git a/docs/how-aurelia-heals/HOW-AURELIA-HEALS.md b/docs/how-aurelia-heals/HOW-AURELIA-HEALS.md
+new file mode 100644
+index 0000000..6304d15
+--- /dev/null
++++ b/docs/how-aurelia-heals/HOW-AURELIA-HEALS.md
+@@ -0,0 +1,52 @@
++# How Aurelia heals
++
++Aurelia moves a person from a bad state to a good one, one chapter at a time. This page explains the words we use for that, and walks through the first example built out in full: going from bad sleep to good sleep. The numbers behind it are in the admin under **Product lab → StateFlips** (staging only for now).
++
++Nothing here is measured on real users yet. Every number is labelled: **Spec** (from the business owner's plan), **Assumption** (our own stated choice), **Computed** (worked out from the others) or **Research** (a published sleep scale).
++
++## Key terms
++
++- **Dimension.** One of the five areas of life Aurelia works on: mental (thoughts), emotional (feelings), relational (people), spiritual (meaning and purpose) and physical (sleep, energy, body). Every person has a score in each.
++- **Universal need.** Something every person needs inside a dimension, like restful sleep (physical) or feeling connected (relational). There are hundreds; each can be in a bad or a good state.
++- **StateFlip.** One concrete change of a universal need from a bad state to a good one, with steps on the way: X, then Y, then Z. The plan starts with 125 of them, 25 in each dimension, and grows towards thousands.
++- **DOJO.** The business owner's knowledge workbook. *VES* lists body areas (7 chakras, 12 meridians). Each has *concepts* arranged by *evolutionary frame*, like belt levels (0-1, 0-2 … 2-3). *Duals* pair an issue with its wellness state (insomnia → restful sleep). *Causal layers* say how fast things change: moods in hours to days, habits in days to weeks, skills in weeks to months.
++- **AKP (atomic knowledge point).** One small building block of a chapter, like a breath pattern, a mood, a story or a music tempo. *Goal AKPs* say what to reach (the StateFlips). *Strategy and tactic AKPs* say how (concepts, skills, methods, techniques). In *tournaments* the blocks compete, and the ones that move people further are used more; AI models compete the same way on quality and cost.
++- **Chapter.** One sitting: a single audio of about 10 minutes, made for one person. (The Cost report calls it a session.)
++- **Session.** A programme of chapters towards one goal, like better sleep.
++- **Check-in.** Four questions the morning after each chapter. Their answers add up to the sleep score.
++- **Chance it works.** Our prediction of the share of people who reach the good state.
++- **Cost per flip.** The AI cost of the chapters for one person who reaches the good state, counting the chapters of the people it does not help.
++- **Causal AI stage.** How much the AI has learned from real use: stage 1 today (under 1,000 sessions), stage 2 after 10,000, stage 3 after 100,000.
++
++## The sleep StateFlip
++
++**Bad sleep, score 25 of 100.** Lies awake for most of an hour, wakes three times or more, gets five or six hours and drags through the morning. That matches a PSQI score of 10 or more and an ISI score of 15–21 (moderate insomnia).
++
++**Good sleep, score 85.** Falls asleep within 20 minutes, sleeps through or wakes once, gets 7–9 hours and wakes rested. That matches PSQI 5 or less and ISI 0–7.
++
++The sleep score is the sum of four check-in answers, 25 points each:
++
++| Check-in question | Bad | Good | Based on |
++| --- | --- | --- | --- |
++| How long did it take to fall asleep? | 45–60 minutes | 20 minutes or less | ISI and PSQI; National Sleep Foundation (Research) |
++| How many times did you wake for more than 5 minutes? | 3 or more | 1 or none | National Sleep Foundation (Research) |
++| How many hours did you sleep? | under 6 | 7–9 | AASM / Sleep Research Society (Research) |
++| How rested did you feel this morning, 1–5? | 1–2 | 4–5 | Our own question (Assumption) |
++
++### The path: X → Y → Z
++
++1. **X, winds down before bed (score 45).** The evening feels calmer. This is the *mood* layer, which moves first and fastest. DOJO: Respiratory Awareness and Breath Synchronization (Lung meridian), Relaxation Routines (Bladder meridian), nuance N5 Restorative Routines.
++2. **Y, falls asleep faster (score 65).** A wind-down routine and a regular bedtime most nights. This is the *habit* layer. DOJO: Sleep Hygiene (Heart meridian, frame 0-3), dual DI003 Improving Sleep Quality (insomnia → restful sleep).
++3. **Z, sleeps through and wakes rested (score 85): the StateFlip.** Settles back after a waking without effort. This is the *skill* layer, the slowest. DOJO: Sleep Quality and Sleep Optimization (Heart meridian), dual DI005 Achieving Restful Recovery, skills SK9 Stress Recovery and SK10 Mind-Body Synchronization.
++
++## How many chapters, and how likely
++
++**Chapters to flip.** Each chapter adds the plan's 1.43 points, faster in the mood stretch (×1.6), about average in the habit stretch (×1.05) and slower in the skill stretch (×0.72), adjusted for where the person starts and how long the problem has lasted. With everything average, 25 → 85 takes 42 chapters, exactly the plan's figure; a milder start takes far fewer, a severe one more.
++
++**Chance it works.** The plan's 54%, multiplied by how often the person would use it, how ready they are to change, how bad their sleep is, and whether audio suits them; kept between 5% and 90%.
++
++**The group over time.** Of the 1,000 simulated people, 90 have sleep as their main need once the risk-flagged are left out (they are shown *Need help now?*, never a programme). Followed chapter by chapter, half would reach good sleep within about 34 chapters if it works for them, and just under half of the group gets there in the end. Most of the rest stop along the way. The admin page shows this as charts, with what drives each stretch and a breakdown for every chapter.
++
++## What this is for
++
++The StateFlips are the goals the Causal AI works towards. Each one links to the strategy building blocks that reach it, so sessions and chapters can be assembled for a person and then tested on real people. When real check-ins arrive, they replace the assumptions here, and the chance it works becomes a measured number.
+diff --git a/src/App.tsx b/src/App.tsx
+index 7ffd300..79d811f 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -90,6 +90,7 @@ const UserJourneyPage = lazy(() => import('./admin/pages/UserJourneyPage').then(
+ const BusinessFunnelPage = lazy(() => import('./admin/pages/BusinessFunnelPage').then((m) => ({ default: m.BusinessFunnelPage })))
+ const BuyerResultsPage = lazy(() => import('./admin/pages/BuyerResultsPage').then((m) => ({ default: m.BuyerResultsPage })))
+ const BuyerAgentReportPage = lazy(() => import('./admin/pages/reports/BuyerAgentReportPage').then((m) => ({ default: m.BuyerAgentReportPage })))
++const StateFlipsPage = lazy(() => import('./admin/pages/lab/StateFlipsPage').then((m) => ({ default: m.StateFlipsPage })))
+ const TherapeuticMapPage = lazy(() => import('./admin/pages/lab/TherapeuticMapPage').then((m) => ({ default: m.TherapeuticMapPage })))
+ const HealingMapPage = lazy(() => import('./admin/pages/lab/HealingMapPage').then((m) => ({ default: m.HealingMapPage })))
+ const B2b2cReportPage = lazy(() => import('./admin/pages/reports/B2b2cReportPage').then((m) => ({ default: m.B2b2cReportPage })))
+@@ -228,6 +229,14 @@ export default function App() {
+                 </ModuleGuard>
+               } />
+             )}
++            {/* U140 (J202): staging only (RELEASES). */}
++            {RELEASES.stateFlips && (
++              <Route path="stateflips" element={
++                <ModuleGuard module="adminStateFlips">
++                  <StateFlipsPage />
++                </ModuleGuard>
++              } />
++            )}
+             {RELEASES.buyerAgent && (
+               <Route path="buyer-agent" element={
+                 <ModuleGuard module="adminBuyerAgent">
+diff --git a/src/admin/AdminLayout.tsx b/src/admin/AdminLayout.tsx
+index 9a558fd..4e624e8 100644
+--- a/src/admin/AdminLayout.tsx
++++ b/src/admin/AdminLayout.tsx
+@@ -73,6 +73,8 @@ const NAV: { section: string; icon: LucideIcon; items: NavItem[] }[] = [
+             { to: '/admin/healing-map', label: 'Healing Map', flag: 'adminHealingMap' },
+           ]
+         : []),
++      // U140 (J202): staging only (RELEASES).
++      ...(RELEASES.stateFlips ? [{ to: '/admin/stateflips', label: 'StateFlips', flag: 'adminStateFlips' }] : []),
+       // Buyer agent results (/admin/buyer-agent) is off the menu since U123; the route stays and Reports links to it.
+     ],
+   },
+diff --git a/src/admin/data/glossary.ts b/src/admin/data/glossary.ts
+index fa4f73b..48c4da5 100644
+--- a/src/admin/data/glossary.ts
++++ b/src/admin/data/glossary.ts
+@@ -51,6 +51,20 @@ export const GLOSSARY = {
+   readiness: { term: 'Readiness to change', plain: 'How close a person is to acting: not yet, thinking, preparing, acting or maintaining. From the stages-of-change model.' },
+   confidence: { term: 'Confidence to change', plain: 'How sure a person is that they can change things, from 1 to 10. Psychologists call it self-efficacy.' },
+   acuity: { term: 'Acute, ongoing or long-standing', plain: 'How long it has been going on. Acute means weeks, ongoing means months, long-standing means a year or more.' },
++  // U140 (J202): the words of Product lab → StateFlips and the wiki's "How Aurelia heals".
++  stateflip: { term: 'StateFlip', plain: 'One concrete change from a bad state to a good one, like bad sleep (25 of 100) to good (85).' },
++  'universal-need': { term: 'Universal need', plain: 'Something every person needs, like restful sleep or feeling connected. Each of the five dimensions holds many.' },
++  dojo: { term: 'DOJO', plain: 'The business owner’s knowledge workbook. It links body areas to concepts, issue-to-wellness pairs, skills, habits and moods.' },
++  akp: { term: 'AKP', plain: 'Atomic knowledge point: one small building block of a session, like a breath pattern, a mood or a story. Goal AKPs say what to reach; strategy AKPs say how.' },
++  tournament: { term: 'Tournament', plain: 'Building blocks compete for a place in a session. The ones that move people further win and are used more.' },
++  session: { term: 'Session', plain: 'A journey towards one goal, like better sleep. It is made of many chapters, one per sitting.' },
++  'check-in': { term: 'Check-in', plain: 'Four short questions the morning after each chapter. The answers give the sleep score.' },
++  'sleep-score': { term: 'Sleep score', plain: 'Our 0–100 sleep measure from the check-in, higher is better. 25 is bad sleep, 85 is good sleep.' },
++  'chance-it-works': { term: 'Chance it works', plain: 'Our prediction of the share of people who reach the good state. It is calculated, not measured yet.' },
++  'cost-per-flip': { term: 'Cost per flip', plain: 'What it costs to make the chapters for one person who reaches the good state. It includes the people it does not help.' },
++  'causal-stage': { term: 'Causal AI stage', plain: 'How much the AI has learned from real use. Stage 1 is under 1,000 sessions; stage 3 is 100,000 or more.' },
++  'causal-layer': { term: 'Causal layer', plain: 'DOJO’s three speeds of change. Moods move in days, habits in weeks, skills in months.' },
++  dropout: { term: 'Stopped', plain: 'People who stop using Aurelia before reaching the good state. Our model assumes most failures look like this.' },
+ } satisfies Record<string, GlossaryEntry>
+ 
+ export type TermId = keyof typeof GLOSSARY
+diff --git a/src/admin/data/reportMetrics.ts b/src/admin/data/reportMetrics.ts
+index a87a242..524f8ef 100644
+--- a/src/admin/data/reportMetrics.ts
++++ b/src/admin/data/reportMetrics.ts
+@@ -10,10 +10,12 @@ import { DEFAULT_DECISIONS } from './businessFunnel'
+ import { ASSUME, DEFAULT_GOAL, MEASURED_2025, PERSONAL_FACTOR, PRESETS, STAGES, adherenceFactor, chapterCost, conditionFactor, lengthFactor, presetInputs, type Media, type Stage } from './costModel'
+ import { generatePersonas, incoherence, type Persona } from './personas'
+ import { TARGETS, generatePersonasV4, type PersonaV4 } from './personasV4'
+-import { DIMENSIONS, DIMENSION_LABEL, DIMENSION_WEIGHT, conditionForCost, conditionIncoherence, conditionSummary, conditionsV4, populationCost, type Dimension } from './personaConditionV4'
++import { DIMENSIONS, DIMENSION_LABEL, DIMENSION_WEIGHT, conditionForBuyer, perWeekOf, conditionForCost, conditionIncoherence, conditionSummary, conditionsV4, populationCost, type Dimension } from './personaConditionV4'
+ import { buyerSummary, combinationSummary, costSummary, uxFeedbackSummary, type ReportSummary } from './reportSummaries'
+ import { CARD, OFFERS, OUTCOMES, PLUS_NET_YEAR1, VAT } from './retreatFunnel'
+ import { buildParticipants, type Participant } from './study'
++import { CHANCE_CAP, CHANCE_FLOOR, DROPOUT_SHARE, calibrationChapters, chanceOf, chaptersToFlip, sleepCohort } from './stateFlipFormulas'
++import { isSleepNeed, personaSleepScore, severityOf } from './stateFlipSleep'
+ 
+ /**
+  * Admin → Reports → Report metrics (U135, J186). Every headline number the
+@@ -26,7 +28,7 @@ import { buildParticipants, type Participant } from './study'
+  * an assumption. Pure: no React, so it can be tested and reused.
+  */
+ 
+-export type MetricReport = 'buyer' | 'personas' | 'combination' | 'cost' | 'b2b2c' | 'retreat' | 'ux'
++export type MetricReport = 'buyer' | 'personas' | 'combination' | 'cost' | 'b2b2c' | 'retreat' | 'ux' | 'stateflips'
+ 
+ export const REPORT_NAME: Record<MetricReport, string> = {
+   buyer: 'Buyer agent report',
+@@ -36,6 +38,7 @@ export const REPORT_NAME: Record<MetricReport, string> = {
+   b2b2c: 'B2B2C report',
+   retreat: 'Creator retreat (business funnel)',
+   ux: 'UX feedback report',
++  stateflips: 'StateFlips (sleep)',
+ }
+ 
+ export const REPORT_LINK: Record<MetricReport, string> = {
+@@ -46,6 +49,7 @@ export const REPORT_LINK: Record<MetricReport, string> = {
+   b2b2c: '/admin/reports/b2b2c',
+   retreat: '/admin/business-funnel',
+   ux: '/admin/reports/ux-feedback',
++  stateflips: '/admin/stateflips',
+ }
+ 
+ export type Unit = 'share' | 'count' | 'usd' | 'eur' | 'number'
+@@ -1150,10 +1154,110 @@ function uxMetrics(week: number): MetricDef[] {
+   ]
+ }
+ 
++/* ------------------------------------------------------------ StateFlips */
++
++/**
++ * Product lab → StateFlips (U140, J202). The page's headline numbers, each
++ * worked out again here from the personas with the formulas called one by one,
++ * not read from the cohort object.
++ */
++function stateFlipMetrics(): MetricDef[] {
++  const SRC = 'src/admin/data/stateFlipFormulas.ts; stateFlipSleep.ts'
++  const rows = () => {
++    const ps = generatePersonasV4()
++    const cs = conditionsV4()
++    return ps.filter((p) => isSleepNeed(p, cs.get(p.id)!) && !cs.get(p.id)!.excluded).map((p) => {
++      const c = cs.get(p.id)!
++      const start = personaSleepScore(p)
++      const b = conditionForBuyer(p, c)
++      const chance = chanceOf({ perWeek: perWeekOf(c.minutesPerDay), readiness: b.readiness, severity: severityOf(start), topHelper: c.helpers[0] }).chance
++      return { p, c, start, chapters: chaptersToFlip(start, 1, c.acuity), chance }
++    })
++  }
++  return [
++    {
++      id: 'sf-cohort', report: 'stateflips', label: 'People whose main need is sleep (risk-flagged left out)', unit: 'count', good: 'none',
++      formula: 'v4 personas with poor or very poor sleep, main need physical with a sleep issue (poor sleep, body clock, habits), sleep score under 85, no risk flag.', shownAt: 'StateFlips summary and Who has it', source: SRC,
++      displayed: () => sleepCohort().people.length,
++      compute: () => {
++        const ps = generatePersonasV4()
++        const cs = conditionsV4()
++        const need = ps.filter((p) => isSleepNeed(p, cs.get(p.id)!))
++        const ok = need.filter((p) => !cs.get(p.id)!.excluded)
++        return { value: ok.length, n: ps.length, inputs: [{ label: 'v4 personas', value: `${ps.length}`, source: 'personasV4.ts' }, { label: 'Sleep is the main need', value: `${need.length}`, source: 'personaConditionV4.ts (main need, physical issue)' }, { label: 'Risk-flagged, left out', value: `${need.length - ok.length}`, source: 'personaConditionV4.ts (excluded)', ids: need.filter((p) => cs.get(p.id)!.excluded).map((p) => p.id) }], steps: [`${need.length} with sleep as the main need − ${need.length - ok.length} risk-flagged = ${ok.length}.`] }
++      },
++    },
++    {
++      id: 'sf-calibration', report: 'stateflips', label: 'Chapters from 25 to 85, everything average', unit: 'count', good: 'down',
++      formula: 'Add one chapter at a time: 1.43 × layer speed (mood 1.6 below 45, habit 1.05 to 65, skill 0.72 to 85) until the score passes 85.', shownAt: 'StateFlips, how it is worked out', source: SRC,
++      displayed: () => STAGES[1].specChapters,
++      compute: () => {
++        const v = calibrationChapters()
++        return { value: v, inputs: [{ label: 'Spec uplift', value: `${STAGES[1].uplift}`, source: 'costModel.ts STAGES (spec)' }, { label: 'Layer speeds', value: '1.6 / 1.05 / 0.72', source: 'stateFlipFormulas.ts PHASE_MULT (assumption)' }], steps: [`20 ÷ (1.43 × 1.6) + 20 ÷ (1.43 × 1.05) + 20 ÷ (1.43 × 0.72) ≈ 8.7 + 13.3 + 19.4, stepped chapter by chapter = ${v}.`, `The spec says ${STAGES[1].specChapters}.`] }
++      },
++    },
++    {
++      id: 'sf-median-chapters', report: 'stateflips', label: 'Chapters to flip, middle person', unit: 'count', good: 'down',
++      formula: 'The median, over the sleep group, of each person’s chapters from their own starting score to 85 on the layered curve.', shownAt: 'StateFlips summary tile', source: SRC,
++      displayed: () => sleepCohort().medianChapters,
++      compute: () => {
++        const xs = rows()
++        const v = median(xs.map((r) => r.chapters))
++        return { value: v, n: xs.length, inputs: [{ label: 'People', value: `${xs.length}`, source: 'personasV4.ts + personaConditionV4.ts' }], steps: ['Each person: starting score from their sleep facts; chapters = chaptersToFlip(start, stage 1, acuity).', `Median of ${xs.length} = ${v}.`], breakdown: { title: 'Each person', columns: ['Persona', 'Start', 'Acuity', 'Chapters'], rows: xs.map((r) => ({ id: r.p.id, cells: [r.p.id, `${r.start}`, r.c.acuity, `${r.chapters}`] })) } }
++      },
++    },
++    {
++      id: 'sf-mean-chance', report: 'stateflips', label: 'Chance it works, sleep group average', unit: 'share', good: 'up',
++      formula: `Mean of each person’s 54% × adherence × readiness × severity × fit, kept between ${CHANCE_FLOOR * 100}% and ${CHANCE_CAP * 100}%.`, shownAt: 'StateFlips summary tile', source: SRC,
++      displayed: () => sleepCohort().meanChance,
++      compute: () => {
++        const xs = rows()
++        const v = xs.reduce((t, r) => t + r.chance, 0) / xs.length
++        return { value: v, n: xs.length, inputs: [{ label: 'Base (spec)', value: pctText(STAGES[1].success), source: 'costModel.ts STAGES' }, { label: 'People', value: `${xs.length}`, source: 'personasV4.ts' }], steps: [`Σ chance ÷ ${xs.length} = ${pctText(v)}.`], breakdown: { title: 'Each person', columns: ['Persona', 'Start', 'Chance'], rows: xs.map((r) => ({ id: r.p.id, cells: [r.p.id, `${r.start}`, pctText(r.chance)] })) } }
++      },
++    },
++    {
++      id: 'sf-flipped-42', report: 'stateflips', label: 'Sleeping well by chapter 42 (share of the group)', unit: 'share', good: 'up',
++      formula: 'Mean over people of: chance it works if their chapters to flip ≤ 42, else 0 (a responder flips exactly at their chapters to flip).', shownAt: 'StateFlips summary tile and chart', source: SRC,
++      displayed: () => sleepCohort().flippedAt(42),
++      compute: () => {
++        const xs = rows()
++        const v = xs.reduce((t, r) => t + (r.chapters <= 42 ? r.chance : 0), 0) / xs.length
++        return { value: v, n: xs.length, inputs: [{ label: 'Flip by 42', value: `${xs.filter((r) => r.chapters <= 42).length} people`, source: 'stateFlipFormulas.ts' }], steps: [`Σ chance of those with chapters ≤ 42 ÷ ${xs.length} = ${pctText(v)}.`] }
++      },
++    },
++    {
++      id: 'sf-dropped', report: 'stateflips', label: 'Stopped before the end (share of the group)', unit: 'share', good: 'down',
++      formula: `Mean of ${DROPOUT_SHARE} × (1 − chance it works): the drop-out share of the people it does not help (assumption).`, shownAt: 'StateFlips summary tile and chart', source: SRC,
++      displayed: () => sleepCohort().rows[sleepCohort().rows.length - 1].dropped,
++      compute: () => {
++        const xs = rows()
++        const v = xs.reduce((t, r) => t + DROPOUT_SHARE * (1 - r.chance), 0) / xs.length
++        return { value: v, n: xs.length, inputs: [{ label: 'Drop-out share of failures', value: pctText(DROPOUT_SHARE), source: 'stateFlipFormulas.ts (assumption)' }], steps: [`Σ ${DROPOUT_SHARE} × (1 − chance) ÷ ${xs.length} = ${pctText(v)}.`] }
++      },
++    },
++    {
++      id: 'sf-cost-flip', report: 'stateflips', label: 'Cost per flip, sleep group (stage 1)', unit: 'usd', good: 'down',
++      formula: 'Cost per chapter (middle option, 10 min) × chapters played per person on average ÷ average chance it works.', shownAt: 'StateFlips, under the cohort table', source: SRC,
++      displayed: () => sleepCohort().costPerFlip,
++      compute: () => {
++        const c = sleepCohort()
++        const played = c.people.reduce((t, p) => {
++          let k = 0
++          for (let i = 1; i <= p.chapters; i++) k += (1 - p.hazard) ** i
++          return t + k
++        }, 0) / c.people.length
++        const v = (c.costPerChapter * played) / c.meanChance
++        return { value: v, n: c.people.length, inputs: [{ label: 'Cost per chapter', value: usd(c.costPerChapter), source: 'costModel.ts (balanced, 10 min, stage 1)' }, { label: 'Chapters played', value: played.toFixed(1), source: 'stateFlipFormulas.ts' }, { label: 'Average chance', value: pctText(c.meanChance), source: 'stateFlipFormulas.ts' }], steps: [`${usd(c.costPerChapter)} × ${played.toFixed(1)} ÷ ${pctText(c.meanChance)} = ${usd(v)}.`] }
++      },
++    },
++  ]
++}
++
+ /* ------------------------------------------------------------ The registry */
+ 
+ export function metricDefs(week = 1): MetricDef[] {
+-  return [...buyerMetrics(), ...typedMetrics(), ...personaV4Metrics(), ...conditionMetrics(), ...combinationMetrics(week), ...costMetrics(), ...b2b2cMetrics(), ...retreatMetrics(), ...uxMetrics(week)]
++  return [...buyerMetrics(), ...typedMetrics(), ...personaV4Metrics(), ...conditionMetrics(), ...combinationMetrics(week), ...costMetrics(), ...b2b2cMetrics(), ...retreatMetrics(), ...uxMetrics(week), ...stateFlipMetrics()]
+ }
+ 
+ /** Audits one metric: displayed against recomputed, plus its sanity checks. */
+diff --git a/src/admin/data/stateFlipFormulas.test.ts b/src/admin/data/stateFlipFormulas.test.ts
+new file mode 100644
+index 0000000..d44856b
+--- /dev/null
++++ b/src/admin/data/stateFlipFormulas.test.ts
+@@ -0,0 +1,116 @@
++import { describe, expect, it } from 'vitest'
++import { DEFAULT_GOAL, PRESETS, STAGES, goal, presetInputs } from './costModel'
++import { populationCost } from './personaConditionV4'
++import { CHANCE_CAP, CHANCE_FLOOR, calibrationChapters, chanceOf, chaptersToFlip, examplePeople, factors, sleepCohort, specFlat, trajectory } from './stateFlipFormulas'
++import { whoHasIt } from './stateFlipSleep'
++
++const tenMin = presetInputs(PRESETS.find((p) => p.id === 'balanced')!, 10)
++
++describe('chapters to flip and chance it works', () => {
++  it('matches the spec’s 42 chapters at the spec’s own assumptions', () => {
++    expect(calibrationChapters()).toBe(STAGES[1].specChapters)
++    expect(specFlat().chapters).toBe(42)
++    expect(specFlat().chance).toBe(0.54)
++  })
++
++  it('is deterministic', () => {
++    expect(trajectory(30)).toEqual(trajectory(30))
++    expect(chaptersToFlip(30)).toBe(chaptersToFlip(30))
++    const a = sleepCohort()
++    expect(a.meanChance).toBe(sleepCohort().meanChance)
++  })
++
++  it('takes longer from a worse start and for a long-standing problem', () => {
++    expect(chaptersToFlip(15)).toBeGreaterThan(chaptersToFlip(40))
++    expect(chaptersToFlip(40)).toBeGreaterThan(chaptersToFlip(70))
++    expect(chaptersToFlip(30, 1, 'long-standing')).toBeGreaterThan(chaptersToFlip(30, 1, 'acute'))
++    expect(chaptersToFlip(25, 3)).toBeLessThan(chaptersToFlip(25, 1))
++  })
++
++  it('moves fastest in the mood stretch and slowest in the skill stretch', () => {
++    const t = trajectory(25)
++    const step = (from: number) => {
++      const i = t.findIndex((s) => s >= from)
++      return t[i + 1] - t[i]
++    }
++    expect(step(25)).toBeGreaterThan(step(50))
++    expect(step(50)).toBeGreaterThan(step(70))
++  })
++
++  it('combines the factors into a capped chance', () => {
++    const avg = chanceOf({ perWeek: 3, readiness: 0.5, severity: 'moderate', topHelper: 'journaling' })
++    expect(avg.raw).toBeCloseTo(0.54 * 1 * 1 * 1 * 0.95, 6)
++    const top = chanceOf({ stage: 3, perWeek: 7, readiness: 1, severity: 'mild', topHelper: 'sleep audio' })
++    expect(top.chance).toBe(CHANCE_CAP)
++    expect(top.capped).toBe(true)
++    const low = chanceOf({ perWeek: 1, readiness: 0, severity: 'severe', topHelper: 'movement' })
++    expect(low.chance).toBeGreaterThanOrEqual(CHANCE_FLOOR)
++    expect(low.chance).toBeLessThan(avg.chance)
++  })
++
++  it('labels every factor', () => {
++    for (const f of factors()) expect(['spec', 'assumption', 'computed']).toContain(f.label)
++  })
++})
++
++describe('the sleep cohort over time', () => {
++  const c = sleepCohort()
++
++  it('follows exactly the risk-free sleep group', () => {
++    const w = whoHasIt()
++    expect(c.people.length).toBe(w.cohort.length)
++    const ids = new Set(c.people.map((p) => p.id))
++    for (const x of w.cohort) expect(ids.has(x.p.id)).toBe(true)
++    expect(w.cohort.some((x) => x.p.riskFlag)).toBe(false)
++  })
++
++  it('adds up every chapter', () => {
++    for (const r of c.rows) {
++      expect(r.active + r.dropped + r.flipped + r.notHelped).toBeCloseTo(1, 9)
++      for (const v of [r.active, r.dropped, r.flipped, r.reached.X, r.reached.Y, r.reached.Z]) {
++        expect(v).toBeGreaterThanOrEqual(-1e-9)
++        expect(v).toBeLessThanOrEqual(1 + 1e-9)
++      }
++      expect(r.reached.Z).toBeCloseTo(r.flipped, 9)
++      expect(r.reached.Y).toBeGreaterThanOrEqual(r.reached.Z - 1e-9)
++      expect(r.reached.X).toBeGreaterThanOrEqual(r.reached.Y - 1e-9)
++      const mix = r.layerMix.mood + r.layerMix.habit + r.layerMix.skill
++      if (r.active > 0) expect(mix).toBeCloseTo(1, 9)
++    }
++    for (let i = 1; i < c.rows.length; i++) {
++      expect(c.rows[i].flipped).toBeGreaterThanOrEqual(c.rows[i - 1].flipped - 1e-12)
++      expect(c.rows[i].dropped).toBeGreaterThanOrEqual(c.rows[i - 1].dropped - 1e-12)
++    }
++  })
++
++  it('ends with the share flipped equal to the average chance it works', () => {
++    const last = c.rows[c.rows.length - 1]
++    expect(last.active).toBeCloseTo(0, 9)
++    expect(last.flipped).toBeCloseTo(c.meanChance, 9)
++    expect(last.dropped).toBeCloseTo(c.people.reduce((t, p) => t + 0.6 * (1 - p.chance.chance), 0) / c.people.length, 9)
++    for (const p of c.people) expect(p.responder * p.survival).toBeCloseTo(p.chance.chance, 9)
++  })
++
++  it('starts everyone at their own score', () => {
++    const mean = c.people.reduce((t, p) => t + p.start, 0) / c.people.length
++    expect(c.rows[0].scoreActive).toBeCloseTo(mean, 6)
++    expect(c.rows[0].scoreAll).toBeCloseTo(mean, 6)
++  })
++
++  it('gives one worked example per severity', () => {
++    const ex = examplePeople(c)
++    expect(ex.map((e) => e.severity)).toEqual(['mild', 'moderate', 'severe'])
++    expect(ex[2].person.chapters).toBeGreaterThan(ex[0].person.chapters)
++  })
++})
++
++describe('costModel is unchanged', () => {
++  it('keeps the spec journey and the population cost as they were', () => {
++    expect(([1, 2, 3] as const).map((stage) => goal({ ...DEFAULT_GOAL, stage }, tenMin).chapters)).toEqual([42, 32, 22])
++    expect(goal(DEFAULT_GOAL, tenMin).flipProbability).toBe(0.54)
++    expect(STAGES[1]).toMatchObject({ uplift: 1.43, success: 0.54, specChapters: 42 })
++    const before = populationCost()
++    sleepCohort()
++    expect(populationCost()).toEqual(before)
++  })
++})
+diff --git a/src/admin/data/stateFlipFormulas.ts b/src/admin/data/stateFlipFormulas.ts
+new file mode 100644
+index 0000000..27b8712
+--- /dev/null
++++ b/src/admin/data/stateFlipFormulas.ts
+@@ -0,0 +1,353 @@
++/**
++ * The sleep StateFlip's formulas (U140, J202): "chapters to flip" and "chance
++ * it works", made transparent, and a cohort of the v4 personas whose need is
++ * sleep, followed chapter by chapter. It explains and improves on the spec's
++ * flat constants (42 chapters, 54%) without changing costModel: it reads
++ * costModel and personaConditionV4, never writes to them.
++ *
++ * Every constant here carries a label (Spec, Assumption, Computed) in FACTORS,
++ * and every per-person number comes with the formula filled in (`why`).
++ * Pure: no React, deterministic, no randomness. The cohort is an expected-value
++ * model: each person contributes probabilities, not coin flips, so the same
++ * code gives the same chart on every machine.
++ */
++
++import { DEFAULT_GOAL, PRESETS, STAGES, adherenceFactor, clamp, conditionFactor, goal, presetInputs, total, chapterCost, type Stage } from './costModel'
++import { conditionForBuyer, perWeekOf, type Acuity, type ConditionV4, type Helper } from './personaConditionV4'
++import type { PersonaV4 } from './personasV4'
++import { BAD_SCORE, GOOD_SCORE, MILESTONES, layerAt, whoHasIt, type Layer, type MilestoneId, type NumLabel, type Severity } from './stateFlipSleep'
++
++/* ------------------------------------------------------------- The factors */
++
++/** How much faster or slower each causal layer moves than the spec's average uplift (assumption, from the DOJO layers' time scales). */
++export const PHASE_MULT: Record<Layer, number> = { mood: 1.6, habit: 1.05, skill: 0.72 }
++/** A recent problem shifts faster than a long-standing one (assumption). */
++export const ACUITY_SPEED: Record<Acuity, number> = { acute: 1.1, ongoing: 1, 'long-standing': 0.9 }
++/** Worse sleep makes a flip less likely (assumption). */
++export const SEVERITY_CHANCE: Record<Severity, number> = { mild: 1.1, moderate: 1, severe: 0.85 }
++/** An audio programme suits people whom audio, breath or music already helps (assumption). */
++export const AUDIO_HELPERS: Helper[] = ['sleep audio', 'voice guidance', 'breath', 'music']
++export const FIT = { audio: 1.05, other: 0.95 }
++/** Readiness factor = READY_BASE + READY_SLOPE × readiness (0–1, from conditionForBuyer). */
++export const READY_BASE = 0.75
++export const READY_SLOPE = 0.5
++/** No prediction is allowed above 90% or below 5% (assumption). */
++export const CHANCE_CAP = 0.9
++export const CHANCE_FLOOR = 0.05
++/** Share of the people a journey fails who fail by stopping, not by staying without improving (assumption). */
++export const DROPOUT_SHARE = 0.6
++/** People who stay but do not respond improve at this share of the speed and stall below Y (assumption). */
++export const NONRESPONDER_SPEED = 0.5
++export const NONRESPONDER_CEILING = 64
++/** The chart follows the cohort this many chapters at most. */
++export const HORIZON = 80
++
++export interface Factor {
++  id: string
++  name: string
++  value: string
++  label: NumLabel
++  why: string
++}
++
++export function factors(stage: Stage = 1): Factor[] {
++  const s = STAGES[stage]
++  return [
++    { id: 'uplift', name: 'Average uplift per chapter', value: `${s.uplift} points`, label: 'spec', why: `The spec’s ${s.name} figure: on average a chapter adds ${s.uplift} points to the sleep score.` },
++    { id: 'success', name: 'Base chance it works', value: `${Math.round(s.success * 100)}%`, label: 'spec', why: `The spec’s ${s.name} success rate. Used as the starting point, then adjusted per person.` },
++    { id: 'phase', name: 'Speed by causal layer', value: `mood ×${PHASE_MULT.mood}, habit ×${PHASE_MULT.habit}, skill ×${PHASE_MULT.skill}`, label: 'assumption', why: 'DOJO says moods move in hours to days, habits in days to weeks, skills in weeks to months. The three numbers are set so that 25 → 85 with everything else average still takes the spec’s 42 chapters.' },
++    { id: 'condition', name: 'Starting point', value: '1 + 0.6 × (start − 25) ÷ 100, 0.7–1.3', label: 'assumption', why: 'costModel’s condition factor, reused unchanged: a better start moves a little faster per chapter.' },
++    { id: 'acuity', name: 'How long it has gone on', value: 'acute ×1.1, ongoing ×1, long-standing ×0.9', label: 'assumption', why: 'From the persona’s condition (acuity). A problem of weeks shifts faster than one of years.' },
++    { id: 'adherence', name: 'Adherence', value: '(chapters a week ÷ 3)^0.4, at most 1.1', label: 'assumption', why: 'costModel’s adherence factor, reused unchanged. Chapters a week come from the persona’s daily minutes.' },
++    { id: 'readiness', name: 'Readiness to change', value: `${READY_BASE} + ${READY_SLOPE} × readiness`, label: 'assumption', why: 'Readiness (0–1) is the persona’s stage of change × confidence, as the buyer agent reads it. Half-ready gives ×1.' },
++    { id: 'severity', name: 'Severity', value: 'mild ×1.1, moderate ×1, severe ×0.85', label: 'assumption', why: 'From the starting sleep score: under 40 severe, 40–64 moderate, 65–84 mild.' },
++    { id: 'fit', name: 'Fit', value: `×${FIT.audio} if audio, breath or music helps them, else ×${FIT.other}`, label: 'assumption', why: 'Aurelia is audio. The persona’s top helper says whether that suits them.' },
++    { id: 'cap', name: 'Limits', value: `${Math.round(CHANCE_FLOOR * 100)}%–${Math.round(CHANCE_CAP * 100)}%`, label: 'assumption', why: 'No prediction this early may promise more than 90%, or write anyone off below 5%.' },
++    { id: 'dropout', name: 'Failures that are drop-outs', value: `${Math.round(DROPOUT_SHARE * 100)}%`, label: 'assumption', why: 'Of the people a journey does not help, 6 in 10 stop using it; the rest stay but stall below Y. App retention studies show most failures are people stopping.' },
++    { id: 'stall', name: 'People who stay but do not respond', value: `half speed, stall at ${NONRESPONDER_CEILING}`, label: 'assumption', why: 'They reach X but not Y. After the chapters a responder would need, the journey stops and they are offered something else.' },
++  ]
++}
++
++/* ----------------------------------------------------- Chapters to flip */
++
++export const upliftAt = (score: number, stageUplift: number, cond: number, acuity: number) => stageUplift * PHASE_MULT[layerAt(score)] * cond * acuity
++
++/** Score after each chapter, 0 = the start; stops when the target is reached or at the horizon. */
++export function trajectory(start: number, opts: { stage?: Stage; acuity?: Acuity; speed?: number; ceiling?: number; target?: number; maxChapters?: number } = {}): number[] {
++  const stage = opts.stage ?? 1
++  const target = opts.target ?? GOOD_SCORE
++  const ceiling = opts.ceiling ?? 100
++  const cond = conditionFactor(start)
++  const ac = ACUITY_SPEED[opts.acuity ?? 'ongoing']
++  const speed = opts.speed ?? 1
++  const max = opts.maxChapters ?? 200
++  const out = [start]
++  let s = start
++  while (s < target && out.length <= max) {
++    s = Math.min(ceiling, s + upliftAt(s, STAGES[stage].uplift, cond, ac) * speed)
++    out.push(Math.round(s * 100) / 100)
++    if (s >= ceiling && ceiling < target) {
++      while (out.length <= max) out.push(s)
++      break
++    }
++  }
++  return out
++}
++
++/** The first chapter at which a trajectory reaches a score; Infinity if never. */
++export function chapterReaching(traj: number[], threshold: number): number {
++  const i = traj.findIndex((s) => s >= threshold)
++  return i < 0 ? Infinity : i
++}
++
++/** Chapters from start to the good state, by the layered curve. */
++export const chaptersToFlip = (start: number, stage: Stage = 1, acuity: Acuity = 'ongoing') => chapterReaching(trajectory(start, { stage, acuity }), GOOD_SCORE)
++
++/* ------------------------------------------------------------ Chance it works */
++
++export interface ChanceParts {
++  base: number
++  adherence: number
++  readiness: number
++  severity: number
++  fit: number
++  raw: number
++  chance: number
++  capped: boolean
++}
++
++export function chanceOf(input: { stage?: Stage; perWeek: number; readiness: number; severity: Severity; topHelper: Helper }): ChanceParts {
++  const base = STAGES[input.stage ?? 1].success
++  const adherence = adherenceFactor(input.perWeek)
++  const readiness = READY_BASE + READY_SLOPE * input.readiness
++  const severity = SEVERITY_CHANCE[input.severity]
++  const fit = AUDIO_HELPERS.includes(input.topHelper) ? FIT.audio : FIT.other
++  const raw = base * adherence * readiness * severity * fit
++  const chance = clamp(raw, CHANCE_FLOOR, CHANCE_CAP)
++  return { base, adherence, readiness, severity, fit, raw, chance, capped: chance !== raw }
++}
++
++/* ------------------------------------------------------------- One person */
++
++export interface PersonFlip {
++  id: string
++  name: string
++  age: number
++  country: string
++  scenario: string
++  start: number
++  severity: Severity
++  acuity: Acuity
++  perWeek: number
++  readiness: number
++  topHelper: Helper
++  chance: ChanceParts
++  /** Responder's chapters to reach X, Y, Z (Z = the flip). */
++  reach: Record<MilestoneId, number>
++  chapters: number
++  weeks: number
++  /** Probability of still being in the journey at its end. */
++  survival: number
++  /** Per-chapter chance of stopping. */
++  hazard: number
++  /** Share of those who stay to the end who flip. */
++  responder: number
++  responderPath: number[]
++  stallPath: number[]
++  why: string[]
++}
++
++const r2 = (x: number) => Math.round(x * 100) / 100
++const pct = (x: number) => `${Math.round(x * 100)}%`
++
++export function personFlip(p: PersonaV4, c: ConditionV4, start: number, severity: Severity, stage: Stage = 1): PersonFlip {
++  const buyer = conditionForBuyer(p, c)
++  const perWeek = perWeekOf(c.minutesPerDay)
++  const chance = chanceOf({ stage, perWeek, readiness: buyer.readiness, severity, topHelper: c.helpers[0] })
++  const responderPath = trajectory(start, { stage, acuity: c.acuity })
++  const chapters = chapterReaching(responderPath, GOOD_SCORE)
++  const stallPath = trajectory(start, { stage, acuity: c.acuity, speed: NONRESPONDER_SPEED, ceiling: Math.max(NONRESPONDER_CEILING, Math.min(GOOD_SCORE - 1, start + 5)), maxChapters: chapters })
++  const survival = 1 - DROPOUT_SHARE * (1 - chance.chance)
++  const hazard = chapters > 0 ? 1 - Math.pow(survival, 1 / chapters) : 0
++  const responder = chance.chance / survival
++  const reach = Object.fromEntries(MILESTONES.map((m) => [m.id, chapterReaching(responderPath, m.threshold)])) as Record<MilestoneId, number>
++  const cond = conditionFactor(start)
++  const ac = ACUITY_SPEED[c.acuity]
++  const u = STAGES[stage].uplift
++  return {
++    id: p.id, name: p.name, age: p.age, country: p.country, scenario: p.scenario, start, severity, acuity: c.acuity, perWeek, readiness: buyer.readiness, topHelper: c.helpers[0],
++    chance, reach, chapters, weeks: chapters / perWeek, survival, hazard, responder, responderPath, stallPath,
++    why: [
++      `Uplift per chapter = ${u} (spec) × layer (mood ${PHASE_MULT.mood} / habit ${PHASE_MULT.habit} / skill ${PHASE_MULT.skill}) × start ${r2(cond)} × ${c.acuity} ${ac} = ${r2(u * PHASE_MULT.mood * cond * ac)} / ${r2(u * PHASE_MULT.habit * cond * ac)} / ${r2(u * PHASE_MULT.skill * cond * ac)} points`,
++      `Chapters: ${start} → 45 (X) in ${reach.X}, → 65 (Y) in ${reach.Y}, → 85 (Z, the flip) in ${chapters}; at ${perWeek} a week that is ${r2(chapters / perWeek)} weeks`,
++      `Chance = ${chance.base} (spec) × adherence ${r2(chance.adherence)} (${perWeek} a week) × readiness ${r2(chance.readiness)} (${buyer.readiness}) × severity ${chance.severity} (${severity}) × fit ${chance.fit} (${c.helpers[0]}) = ${r2(chance.raw)}${chance.capped ? `, limited to ${r2(chance.chance)}` : ''} → ${pct(chance.chance)}`,
++      `Still going at the end = 1 − ${DROPOUT_SHARE} × (1 − ${r2(chance.chance)}) = ${pct(survival)}, so ${(hazard * 100).toFixed(2)}% stop at each chapter; of those who stay, ${pct(responder)} flip`,
++    ],
++  }
++}
++
++/* --------------------------------------------------------- The spec, flat */
++
++const BALANCED = PRESETS.find((x) => x.id === 'balanced')!
++
++/** The spec's journey as costModel computes it today (unchanged): 25 → 85, 10-minute chapters, 3 a week, Stage 1. */
++export function specFlat(stage: Stage = 1) {
++  const g = goal({ ...DEFAULT_GOAL, stage }, presetInputs(BALANCED, 10))
++  return { chapters: g.chapters, chance: g.flipProbability, costPerChapter: g.costPerChapter, costPerFlip: g.costPerFlip, specChapters: STAGES[stage].specChapters }
++}
++
++/* ---------------------------------------------------------------- Cohort */
++
++export interface ChapterRow {
++  chapter: number
++  /** Still in the journey (not flipped, not stopped), share of everyone who started. */
++  active: number
++  /** Stopped using it before the end. */
++  dropped: number
++  /** Played every chapter a responder would need without flipping, and was offered something else. */
++  notHelped: number
++  flipped: number
++  reached: Record<MilestoneId, number>
++  /** Average score of the people still in the journey. */
++  scoreActive: number
++  /** Average score of everyone who started: stopped people at their last score, flipped people at their flip score. */
++  scoreAll: number
++  layer: Layer
++  /** Of the people still going, the share in each layer's stretch. */
++  layerMix: Record<Layer, number>
++}
++
++export interface Cohort {
++  people: PersonFlip[]
++  rows: ChapterRow[]
++  horizon: number
++  meanChance: number
++  medianChapters: number
++  meanChapters: number
++  /** Expected chapters played per person who starts. */
++  chaptersPlayed: number
++  costPerChapter: number
++  /** Cost per chapter × chapters played ÷ share flipped. */
++  costPerFlip: number
++  flippedAt: (n: number) => number
++}
++
++const median = (xs: number[]) => {
++  const s = [...xs].sort((a, b) => a - b)
++  const m = Math.floor(s.length / 2)
++  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2
++}
++
++let cohortCache: Cohort | null = null
++
++/**
++ * Follow the sleep cohort chapter by chapter. For each person, each chapter:
++ *   stays with probability (1 − hazard); a responder (share `responder`) follows
++ *   the layered curve and flips at `chapters`; a non-responder improves at half
++ *   speed, stalls below Y, and stops being offered chapters at `chapters`.
++ * Every share is the cohort mean of those per-person probabilities.
++ */
++export function sleepCohort(stage: Stage = 1): Cohort {
++  if (stage === 1 && cohortCache) return cohortCache
++  const who = whoHasIt()
++  const people = who.cohort.map((x) => personFlip(x.p, x.c, x.score, x.severity, stage))
++  const horizon = Math.min(HORIZON, Math.max(...people.map((p) => p.chapters)))
++  const n = people.length
++  const rows: ChapterRow[] = []
++  for (let t = 0; t <= horizon; t++) {
++    let active = 0
++    let flipped = 0
++    let notHelped = 0
++    let wScore = 0
++    let allScore = 0
++    const reached = { X: 0, Y: 0, Z: 0 } as Record<MilestoneId, number>
++    const mix = { mood: 0, habit: 0, skill: 0 } as Record<Layer, number>
++    for (const p of people) {
++      const q = 1 - p.hazard
++      const N = p.chapters
++      const sR = (k: number) => p.responderPath[Math.min(k, p.responderPath.length - 1)]
++      const sN = (k: number) => p.stallPath[Math.min(k, p.stallPath.length - 1)]
++      const inR = t < N ? p.responder * q ** t : 0
++      const inN = t < N ? (1 - p.responder) * q ** t : 0
++      active += inR + inN
++      wScore += inR * sR(t) + inN * sN(t)
++      mix[layerAt(sR(t))] += inR
++      mix[layerAt(sN(t))] += inN
++      const fl = t >= N ? p.responder * q ** N : 0
++      flipped += fl
++      if (t >= N) notHelped += (1 - p.responder) * q ** N
++      for (const m of MILESTONES) {
++        const kR = chapterReaching(p.responderPath, m.threshold)
++        const kN = chapterReaching(p.stallPath, m.threshold)
++        if (t >= kR) reached[m.id] += p.responder * q ** kR
++        if (t >= kN && kN <= N) reached[m.id] += (1 - p.responder) * q ** kN
++      }
++      // Everyone who started: still going at today's score, flipped at the flip score, stopped at the score they stopped on;
++      // non-responders who reached the end without flipping keep their last score.
++      let all = inR * sR(t) + inN * sN(t) + fl * sR(N)
++      const last = Math.min(t, N)
++      for (let k = 1; k <= last; k++) {
++        const stop = q ** (k - 1) * (1 - q)
++        all += stop * (p.responder * sR(k - 1) + (1 - p.responder) * sN(k - 1))
++      }
++      if (t >= N) all += (1 - p.responder) * q ** N * sN(N)
++      allScore += all
++    }
++    const reachedShare = { X: reached.X / n, Y: reached.Y / n, Z: reached.Z / n }
++    const scoreActive = active > 0 ? wScore / active : NaN
++    rows.push({
++      chapter: t,
++      active: active / n,
++      flipped: flipped / n,
++      dropped: 1 - active / n - flipped / n - notHelped / n,
++      notHelped: notHelped / n,
++      reached: reachedShare,
++      scoreActive,
++      scoreAll: allScore / n,
++      layer: layerAt(Number.isFinite(scoreActive) ? scoreActive : GOOD_SCORE),
++      layerMix: { mood: active ? mix.mood / active : 0, habit: active ? mix.habit / active : 0, skill: active ? mix.skill / active : 0 },
++    })
++  }
++  const meanChance = people.reduce((t, p) => t + p.chance.chance, 0) / n
++  const chaptersPlayed = people.reduce((t, p) => {
++    const q = 1 - p.hazard
++    let played = 0
++    for (let k = 1; k <= p.chapters; k++) played += q ** k
++    return t + played
++  }, 0) / n
++  const costPerChapter = total(chapterCost(presetInputs(BALANCED, 10))) * STAGES[stage].costFactor
++  const out: Cohort = {
++    people, rows, horizon, meanChance,
++    medianChapters: median(people.map((p) => p.chapters)),
++    meanChapters: people.reduce((t, p) => t + p.chapters, 0) / n,
++    chaptersPlayed,
++    costPerChapter,
++    costPerFlip: (costPerChapter * chaptersPlayed) / meanChance,
++    flippedAt: (k: number) => rows[Math.min(k, rows.length - 1)].flipped,
++  }
++  if (stage === 1) cohortCache = out
++  return out
++}
++
++/* -------------------------------------------------------- Worked examples */
++
++/** One person per severity (mild, moderate, severe): the one whose chance is nearest their group's median. */
++export function examplePeople(c: Cohort = sleepCohort()): { severity: Severity; person: PersonFlip }[] {
++  const out: { severity: Severity; person: PersonFlip }[] = []
++  for (const sev of ['mild', 'moderate', 'severe'] as Severity[]) {
++    const group = c.people.filter((p) => p.severity === sev)
++    if (!group.length) continue
++    const m = median(group.map((p) => p.chance.chance))
++    const person = [...group].sort((a, b) => Math.abs(a.chance.chance - m) - Math.abs(b.chance.chance - m) || a.id.localeCompare(b.id))[0]
++    out.push({ severity: sev, person })
++  }
++  return out
++}
++
++/** The spec's 25 → 85 journey through the layered curve with every person factor at 1 (computed calibration). */
++export const calibrationChapters = (stage: Stage = 1) => chaptersToFlip(BAD_SCORE, stage, 'ongoing')
++
++/** What drives each stretch of the journey, for the chart's annotations. */
++export function driverOf(layer: Layer) {
++  return MILESTONES.find((m) => m.layer === layer)!
++}
+diff --git a/src/admin/data/stateFlipSleep.test.ts b/src/admin/data/stateFlipSleep.test.ts
+new file mode 100644
+index 0000000..c145ec6
+--- /dev/null
++++ b/src/admin/data/stateFlipSleep.test.ts
+@@ -0,0 +1,48 @@
++import { describe, expect, it } from 'vitest'
++import {
++  BAD_NIGHT, BAD_SCORE, DOJO_LINKS, GOOD_NIGHT, GOOD_SCORE, KEY_TERMS, MILESTONES, layerAt, milestoneOf, severityOf, sleepScore, whoHasIt,
++} from './stateFlipSleep'
++
++describe('the sleep StateFlip', () => {
++  it('scores the concrete bad and good nights at 25 and 85', () => {
++    expect(sleepScore(BAD_NIGHT)).toBe(BAD_SCORE)
++    expect(sleepScore(GOOD_NIGHT)).toBe(GOOD_SCORE)
++    expect(sleepScore({ latency: 5, wakings: 0, hours: 8, energy: 5 })).toBeLessThanOrEqual(100)
++    expect(sleepScore({ latency: 120, wakings: 6, hours: 3, energy: 1 })).toBeGreaterThanOrEqual(0)
++  })
++
++  it('orders X < Y < Z, ending at the good state', () => {
++    expect(MILESTONES.map((m) => m.threshold)).toEqual([45, 65, 85])
++    expect(milestoneOf(44)).toBeNull()
++    expect(milestoneOf(45)).toBe('X')
++    expect(milestoneOf(85)).toBe('Z')
++    expect([layerAt(30), layerAt(50), layerAt(70)]).toEqual(['mood', 'habit', 'skill'])
++    expect(severityOf(39)).toBe('severe')
++    expect(severityOf(64)).toBe('moderate')
++  })
++
++  it('cites every milestone’s DOJO ids from the links list', () => {
++    const ids = new Set(DOJO_LINKS.map((d) => d.id))
++    for (const m of MILESTONES) for (const d of m.dojo) expect(ids, d).toContain(d)
++    expect(new Set(DOJO_LINKS.map((d) => d.layer))).toEqual(new Set(['mood', 'habit', 'skill']))
++  })
++
++  it('finds the sleep group in the v4 personas and leaves the risk-flagged out', () => {
++    const w = whoHasIt()
++    expect(w.cohort.length).toBe(w.sleepNeed - w.sleepNeedRisk)
++    expect(w.cohort.length).toBeGreaterThan(30)
++    expect(w.sleepNeedRisk).toBeGreaterThan(0)
++    for (const x of w.cohort) {
++      expect(x.c.excluded).toBe(false)
++      expect(x.p.riskFlag).toBe(false)
++      expect(x.score).toBeLessThan(GOOD_SCORE)
++    }
++    expect(w.bySeverity.severe + w.bySeverity.moderate + w.bySeverity.mild).toBe(w.cohort.length)
++    expect(Object.values(w.byIssue).reduce((a, b) => a + b, 0)).toBe(w.cohort.length)
++  })
++
++  it('defines every key term the brief asks for', () => {
++    const names = KEY_TERMS.map((k) => k.term)
++    for (const t of ['Dimension', 'StateFlip', 'Universal need', 'DOJO', 'AKP', 'Chapter', 'Session', 'Check-in', 'Chance it works', 'Cost per flip', 'Causal AI stage']) expect(names).toContain(t)
++  })
++})
+diff --git a/src/admin/data/stateFlipSleep.ts b/src/admin/data/stateFlipSleep.ts
+new file mode 100644
+index 0000000..5463cf4
+--- /dev/null
++++ b/src/admin/data/stateFlipSleep.ts
+@@ -0,0 +1,292 @@
++/**
++ * Admin → Product lab → StateFlips (U140, J202). The sleep StateFlip, complete:
++ * the bad and the good state in measurable terms, the path X → Y → Z with its
++ * score thresholds, the per-chapter check-in that measures it, who has it in
++ * the 1,000 v4 personas, and the DOJO workbook rows it draws on (cited by ID).
++ *
++ * Pure data and functions, no React, so `stateFlipSleep.test.ts` can pin them.
++ * The formulas that turn this into chapters, chance and a cohort live in
++ * `stateFlipFormulas.ts`. Nothing here is measured on Aurelia users: there are
++ * none yet. Ranges from published scales are labelled Research, our own
++ * choices Assumption, the business owner's plan Spec, and anything worked out
++ * from those Computed.
++ */
++
++import { generatePersonasV4, type PersonaV4 } from './personasV4'
++import { conditionsV4, type ConditionV4 } from './personaConditionV4'
++
++export type NumLabel = 'spec' | 'assumption' | 'computed' | 'research'
++export const NUM_LABEL_TEXT: Record<NumLabel, string> = { spec: 'Spec', assumption: 'Assumption', computed: 'Computed', research: 'Research' }
++export const NUM_LABEL_MEANING: Record<NumLabel, string> = {
++  spec: 'From the business owner’s plan (the spec PDF). Not measured.',
++  assumption: 'Our own choice, stated so it can be argued with and changed.',
++  computed: 'Worked out here from the other numbers and the 1,000 personas.',
++  research: 'A range from a published sleep scale or guideline.',
++}
++
++/* ------------------------------------------------------------- The score */
++
++/** The sleep score: 0–100, higher is better, the sum of four 25-point markers a check-in asks about. */
++export const BAD_SCORE = 25
++export const GOOD_SCORE = 85
++
++export interface Marker {
++  id: 'latency' | 'wakings' | 'hours' | 'energy'
++  label: string
++  question: string
++  unit: string
++  bad: string
++  good: string
++  /** The published range the bad/good descriptions follow. */
++  basis: string
++  label2: NumLabel
++  /** Points out of 25 for an answer. */
++  points: (x: number) => number
++}
++
++export const MARKERS: Marker[] = [
++  {
++    id: 'latency', label: 'Time to fall asleep', question: 'Last night, about how long did it take you to fall asleep?', unit: 'minutes',
++    bad: '45–60 minutes most nights', good: '20 minutes or less',
++    basis: 'More than 30 minutes is the usual insomnia cut-off (ISI, PSQI component 2); 30 minutes or less is good sleep quality (National Sleep Foundation, Ohayon 2017).',
++    label2: 'research',
++    points: (m) => (m <= 20 ? 22 : m <= 30 ? 18 : m <= 45 ? 10 : m <= 60 ? 5 : 0),
++  },
++  {
++    id: 'wakings', label: 'Night wakings', question: 'How many times did you wake up for more than 5 minutes?', unit: 'times',
++    bad: '3 or more', good: '1 or none',
++    basis: 'One or no awakening longer than 5 minutes is good sleep quality (National Sleep Foundation, Ohayon 2017).',
++    label2: 'research',
++    points: (n) => (n <= 0 ? 25 : n === 1 ? 19 : n === 2 ? 12 : n === 3 ? 6 : 0),
++  },
++  {
++    id: 'hours', label: 'Hours asleep', question: 'About how many hours did you actually sleep?', unit: 'hours',
++    bad: 'Under 6 hours', good: '7–9 hours',
++    basis: 'Adults need 7 hours or more (AASM and Sleep Research Society, Watson 2015); under 6 hours scores 2–3 on PSQI component 3.',
++    label2: 'research',
++    points: (h) => (h >= 7 ? 25 : h >= 6 ? 17 : h >= 5 ? 8 : 3),
++  },
++  {
++    id: 'energy', label: 'Morning energy', question: 'How rested did you feel this morning? (1 = exhausted, 5 = fully rested)', unit: '1–5',
++    bad: '1–2: dragging through the morning', good: '4–5: rested',
++    basis: 'Our own 1–5 check-in question, like PSQI component 7 (daytime dysfunction). The cut-offs are ours.',
++    label2: 'assumption',
++    points: (e) => ((Math.min(5, Math.max(1, e)) - 1) / 4) * 25,
++  },
++]
++
++export interface Answers {
++  latency: number
++  wakings: number
++  hours: number
++  energy: number
++}
++
++/** The sleep score from one check-in's four answers. */
++export function sleepScore(a: Answers): number {
++  const by = { latency: a.latency, wakings: a.wakings, hours: a.hours, energy: a.energy }
++  return Math.round(MARKERS.reduce((t, m) => t + m.points(by[m.id]), 0))
++}
++
++/** The bad and the good state as a concrete night, and their scores. */
++export const BAD_NIGHT: Answers = { latency: 50, wakings: 3, hours: 5.5, energy: 2 }
++export const GOOD_NIGHT: Answers = { latency: 20, wakings: 1, hours: 7.5, energy: 4 }
++
++export const STATES = {
++  bad: {
++    title: 'Bad sleep',
++    story: 'Lies awake for most of an hour, mind going over the day. Wakes three times or more. Gets five or six hours and drags through the morning.',
++    scales: 'Matches PSQI global 10 or more (poor sleep is above 5) and ISI 15–21 (moderate insomnia).',
++  },
++  good: {
++    title: 'Good sleep',
++    story: 'Falls asleep within 20 minutes, sleeps through or wakes once, gets 7–9 hours and wakes rested most days.',
++    scales: 'Matches PSQI global 5 or less and ISI 0–7 (no insomnia worth treating).',
++  },
++}
++
++export const SCALE_SOURCES = [
++  { id: 'psqi', name: 'Pittsburgh Sleep Quality Index (PSQI)', cite: 'Buysse et al., 1989. Global 0–21; above 5 means poor sleep.', url: 'https://doi.org/10.1016/0165-1781(89)90047-4' },
++  { id: 'isi', name: 'Insomnia Severity Index (ISI)', cite: 'Morin et al., 2011. 0–7 none, 8–14 subthreshold, 15–21 moderate, 22–28 severe.', url: 'https://doi.org/10.1093/sleep/34.5.601' },
++  { id: 'nsf', name: 'National Sleep Foundation sleep quality', cite: 'Ohayon et al., 2017. Good: asleep within 30 min, at most 1 waking over 5 min, efficiency 85% or more.', url: 'https://doi.org/10.1016/j.sleh.2016.11.006' },
++  { id: 'aasm', name: 'AASM / Sleep Research Society', cite: 'Watson et al., 2015. Adults should sleep 7 hours or more a night.', url: 'https://doi.org/10.5665/sleep.4716' },
++]
++
++/* -------------------------------------------------------- The path X → Y → Z */
++
++export type Layer = 'mood' | 'habit' | 'skill'
++export type MilestoneId = 'X' | 'Y' | 'Z'
++
++export interface Milestone {
++  id: MilestoneId
++  title: string
++  /** The score from which this step counts as reached. */
++  threshold: number
++  what: string
++  /** What the check-in shows at this step. */
++  shows: string
++  /** The DOJO causal layer that moves most in the stretch leading to it. */
++  layer: Layer
++  /** DOJO ids, see DOJO_LINKS. */
++  dojo: string[]
++  /** The therapeutic metric that moves in this stretch. */
++  metric: string
++}
++
++export const MILESTONES: Milestone[] = [
++  {
++    id: 'X', title: 'Winds down before bed', threshold: 45, layer: 'mood',
++    what: 'Relaxes in the hour before bed instead of carrying the day into it.',
++    shows: 'Falls asleep within about 30–45 minutes; morning energy 2–3.',
++    dojo: ['DOJO_M LU 0-1', 'DOJO_M LU 0-2', 'DOJO_M BL 1-1', 'Causal layering N5'],
++    metric: 'Minutes to fall asleep, and how calm the evening feels',
++  },
++  {
++    id: 'Y', title: 'Falls asleep faster', threshold: 65, layer: 'habit',
++    what: 'Keeps a wind-down routine and a regular bedtime most nights.',
++    shows: 'Asleep within 20–30 minutes on most nights; wakings down to about 2.',
++    dojo: ['DOJO_M HT 0-3', 'DOJO_C_Duals DI003', 'Causal layering P002'],
++    metric: 'Minutes to fall asleep, nights a week with the routine',
++  },
++  {
++    id: 'Z', title: 'Sleeps through and wakes rested', threshold: 85, layer: 'skill',
++    what: 'Settles back after a waking without effort; sleep is steady even on a stressful day.',
++    shows: 'At most 1 waking, 7 hours or more, morning energy 4–5. This is the StateFlip.',
++    dojo: ['DOJO_M HT 1-3', 'DOJO_M HT 2-3', 'Causal layering DI005', 'DB-skills SK9', 'DB-skills SK10'],
++    metric: 'Night wakings, hours asleep, morning energy',
++  },
++]
++
++export const LAYER_TEXT: Record<Layer, { name: string; pace: string; plain: string }> = {
++  mood: { name: 'Mood', pace: 'hours to days', plain: 'How the evening feels: calmer, less wound up. Moves first and fastest.' },
++  habit: { name: 'Habit', pace: 'days to weeks', plain: 'What the person does every night: a routine, a regular bedtime. Moves steadily.' },
++  skill: { name: 'Skill', pace: 'weeks to months', plain: 'What they can now do without trying: settle back to sleep, sleep well under stress. Slowest.' },
++}
++
++/** The step a score has reached; null below X. */
++export const milestoneOf = (score: number): MilestoneId | null => (score >= 85 ? 'Z' : score >= 65 ? 'Y' : score >= 45 ? 'X' : null)
++
++/** The causal layer that moves most at a score: mood below X, habit from X to Y, skill from Y to Z. */
++export const layerAt = (score: number): Layer => (score < 45 ? 'mood' : score < 65 ? 'habit' : 'skill')
++
++/* --------------------------------------------------- The per-chapter check-in */
++
++export const CHECK_IN = {
++  when: 'The morning after each chapter, before the next one starts (about 20 seconds).',
++  how: 'The four questions above, each scored out of 25; the sleep score is their sum. A person is at X, Y or Z when the score of their last two check-ins (averaged) passes 45, 65 or 85.',
++  weekly: 'Once a week the full 7-question ISI as a cross-check (Research, Morin 2011): the 4-question score should fall as ISI falls.',
++}
++
++/* ------------------------------------------------------------ The DOJO links */
++
++export interface DojoLink {
++  id: string
++  sheet: string
++  name: string
++  /** The issue → wellness dual or objective as the workbook states it. */
++  says: string
++  layer: Layer
++  milestone: MilestoneId
++}
++
++/**
++ * Rows of docs/briefs/2026-11-26-dojo-objective-learning.xlsx that apply to
++ * sleep, cited by sheet and ID. Evolutionary frames are written as the sheet
++ * means them (0-1, 1-3…); Excel had stored some as dates.
++ */
++export const DOJO_LINKS: DojoLink[] = [
++  { id: 'DOJO_M LU 0-1', sheet: 'DOJO_M', name: 'Respiratory Awareness (Lung meridian, frame 0-1)', says: 'Inattention → Awareness: notice the breath. The first wind-down step.', layer: 'mood', milestone: 'X' },
++  { id: 'DOJO_M LU 0-2', sheet: 'DOJO_M', name: 'Breath Synchronization (Lung meridian, frame 0-2)', says: 'Disruption → Synchronization: slow, even breathing that calms the body before bed.', layer: 'mood', milestone: 'X' },
++  { id: 'DOJO_M BL 1-1', sheet: 'DOJO_M', name: 'Relaxation Routines (Bladder meridian, frame 1-1)', says: 'Embed relaxation into the daily routine.', layer: 'mood', milestone: 'X' },
++  { id: 'Causal layering N5', sheet: 'Causal layering', name: 'Nuance N5 Restorative Routines', says: 'Hindered by inconsistent sleep habits and stress carry-over; helped by sleep hygiene, relaxation, a dark room.', layer: 'mood', milestone: 'X' },
++  { id: 'DOJO_M HT 0-3', sheet: 'DOJO_M', name: 'Sleep Hygiene (Heart meridian, frame 0-3)', says: 'Chronic insomnia → sleep hygiene: establish a healthy sleep pattern.', layer: 'habit', milestone: 'Y' },
++  { id: 'DOJO_C_Duals DI003', sheet: 'DOJO_C_Duals', name: 'Dual DI003 Improving Sleep Quality (Root, frame 0-1)', says: 'Insomnia → restful sleep; emotional fatigue → resilience. Obstacle: poor sleep hygiene. Melatonin and circadian rhythm.', layer: 'habit', milestone: 'Y' },
++  { id: 'Causal layering P002', sheet: 'Causal layering', name: 'P002 Restorative Routines (nuance)', says: 'Tension → relaxation through sleep hygiene, stretching, progressive relaxation.', layer: 'habit', milestone: 'Y' },
++  { id: 'DOJO_M HT 1-3', sheet: 'DOJO_M', name: 'Sleep Quality (Heart meridian, frame 1-3)', says: 'Sleep disorders → sleep quality: improve the quality of sleep.', layer: 'skill', milestone: 'Z' },
++  { id: 'DOJO_M HT 2-3', sheet: 'DOJO_M', name: 'Sleep Optimization (Heart meridian, frame 2-3)', says: 'Sleep abnormalities → optimal sleep for overall wellness.', layer: 'skill', milestone: 'Z' },
++  { id: 'Causal layering DI005', sheet: 'Causal layering', name: 'Dual DI005 / P001 Achieving Restful Recovery', says: 'Physical stress and poor recovery → physical restfulness: circadian stabilisation, melatonin, lower cortisol at night.', layer: 'skill', milestone: 'Z' },
++  { id: 'DB-skills SK9', sheet: 'DB-skills', name: 'Skill SK9 Stress Recovery', says: 'Restoration through focused relaxation and recovery techniques.', layer: 'skill', milestone: 'Z' },
++  { id: 'DB-skills SK10', sheet: 'DB-skills', name: 'Skill SK10 Mind-Body Synchronization', says: 'Calm and ready under pressure: keeps sleep steady on hard days.', layer: 'skill', milestone: 'Z' },
++]
++
++/** The workbook's own definition of the layers (Objective Learning System KB). */
++export const DOJO_LAYER_SOURCE = 'DOJO workbook, sheet “Objective Learning System KB”: States seconds to hours, Moods hours to days, Habits days to weeks, Skills weeks to months; ranked Skills > Habits > Moods > States.'
++
++/* ------------------------------------------------------------- Who has it */
++
++/** The physical-dimension issues that are about sleep (personaConditionV4 ISSUES.physical). */
++export const SLEEP_ISSUES = ['poor-sleep', 'body-clock', 'habits'] as const
++
++export type Severity = 'severe' | 'moderate' | 'mild'
++/** Sleep severity from the sleep score (assumption, the same cut-offs as the wellness score). */
++export const severityOf = (score: number): Severity => (score < 40 ? 'severe' : score < 65 ? 'moderate' : 'mild')
++
++/** A persona's sleep score from the sleep facts their profile already has. */
++export const personaSleepScore = (p: PersonaV4) => sleepScore({ latency: p.wellness.sleep.latencyMin, wakings: p.wellness.sleep.wakeUps, hours: p.wellness.sleep.hours, energy: p.wellness.energy })
++
++/** In the sleep cohort: poor or very poor sleep, main need physical with a sleep issue, a score under 85. Risk-flag is checked separately. */
++export const isSleepNeed = (p: PersonaV4, c: ConditionV4) =>
++  p.wellness.sleep.band !== 'good' && c.mainNeed === 'physical' && (SLEEP_ISSUES as readonly string[]).includes(c.dims.physical.issue) && personaSleepScore(p) < GOOD_SCORE
++
++export interface WhoHasIt {
++  personas: number
++  poorSleepBand: number
++  poorSleepBandRisk: number
++  sleepNeed: number
++  sleepNeedRisk: number
++  /** The cohort: sleep need, risk-flagged excluded. */
++  cohort: { p: PersonaV4; c: ConditionV4; score: number; severity: Severity }[]
++  bySeverity: Record<Severity, number>
++  byIssue: Record<(typeof SLEEP_ISSUES)[number], number>
++  meanScore: number
++}
++
++let whoCache: WhoHasIt | null = null
++
++/** Who has the sleep StateFlip in the 1,000 v4 personas (computed). */
++export function whoHasIt(): WhoHasIt {
++  if (whoCache) return whoCache
++  const ps = generatePersonasV4()
++  const cs = conditionsV4()
++  const poor = ps.filter((p) => p.wellness.sleep.band !== 'good')
++  const need = ps.filter((p) => isSleepNeed(p, cs.get(p.id)!))
++  const cohort = need.filter((p) => !cs.get(p.id)!.excluded).map((p) => {
++    const score = personaSleepScore(p)
++    return { p, c: cs.get(p.id)!, score, severity: severityOf(score) }
++  })
++  const bySeverity = { severe: 0, moderate: 0, mild: 0 } as Record<Severity, number>
++  const byIssue = { 'poor-sleep': 0, 'body-clock': 0, habits: 0 } as WhoHasIt['byIssue']
++  for (const x of cohort) {
++    bySeverity[x.severity]++
++    byIssue[x.c.dims.physical.issue as keyof typeof byIssue]++
++  }
++  whoCache = {
++    personas: ps.length,
++    poorSleepBand: poor.length,
++    poorSleepBandRisk: poor.filter((p) => cs.get(p.id)!.excluded).length,
++    sleepNeed: need.length,
++    sleepNeedRisk: need.length - cohort.length,
++    cohort,
++    bySeverity,
++    byIssue,
++    meanScore: cohort.reduce((t, x) => t + x.score, 0) / Math.max(1, cohort.length),
++  }
++  return whoCache
++}
++
++/* ------------------------------------------------------------- Key terms */
++
++/** The shared vocabulary, shown as "Key terms" on the page and repeated in the wiki's How Aurelia heals. */
++export const KEY_TERMS: { term: string; plain: string }[] = [
++  { term: 'Dimension', plain: 'One of the five areas of life Aurelia works on: mental (thoughts), emotional (feelings), relational (people), spiritual (meaning and purpose) and physical (sleep, energy, body). Every person has a score in each.' },
++  { term: 'Universal need', plain: 'Something every person needs inside a dimension, like restful sleep (physical) or feeling connected (relational). There are hundreds; each can be in a bad or a good state.' },
++  { term: 'StateFlip', plain: 'One concrete change of a universal need from a bad state to a good one, with steps on the way: X, then Y, then Z. Bad sleep (25 of 100) to good sleep (85) is the first one built out in full. The plan starts with 125: 25 in each dimension.' },
++  { term: 'DOJO', plain: 'The business owner’s knowledge workbook. VES lists body areas (7 chakras, 12 meridians). Each has concepts arranged by evolutionary frame, like belt levels (0-1, 0-2 … 2-3). Duals pair an issue with its wellness state (insomnia → restful sleep). Causal layers say how fast things change: moods in days, habits in weeks, skills in months.' },
++  { term: 'AKP', plain: 'Atomic knowledge point: one small building block of a chapter, like a breath pattern, a mood, a story or a music tempo. Goal AKPs say what to reach (the StateFlips). Strategy and tactic AKPs say how (concepts, skills, methods, techniques). In tournaments the blocks compete, and the ones that move people further are used more.' },
++  { term: 'Chapter', plain: 'One sitting: a single audio of about 10 minutes, made for one person. The Cost report calls it a session.' },
++  { term: 'Session', plain: 'A programme of chapters towards one goal, like better sleep. In this page a sleep session has about 10 to 50 chapters.' },
++  { term: 'Check-in', plain: 'Four questions the morning after each chapter (how long to fall asleep, wakings, hours, morning energy). Their answers add up to the sleep score.' },
++  { term: 'Chance it works', plain: 'Our prediction of the share of people who reach the good state. It starts from the plan’s 54% and is adjusted per person for how often they use it, how ready they are, how bad their sleep is, and whether audio suits them.' },
++  { term: 'Cost per flip', plain: 'The AI cost of the chapters for one person who reaches the good state, counting the chapters of the people it does not help: cost per chapter × chapters played ÷ chance it works.' },
++  { term: 'Causal AI stage', plain: 'How much the AI has learned from real use. Stage 1 is today (under 1,000 sessions), stage 2 after 10,000, stage 3 after 100,000. The plan expects chapters to work better and cost less at each stage.' },
++]
+diff --git a/src/admin/pages/lab/StateFlipsPage.tsx b/src/admin/pages/lab/StateFlipsPage.tsx
+new file mode 100644
+index 0000000..fbca506
+--- /dev/null
++++ b/src/admin/pages/lab/StateFlipsPage.tsx
+@@ -0,0 +1,700 @@
++import { PanelRightOpen } from 'lucide-react'
++import { useState, type ReactNode } from 'react'
++import { Badge, PageHeader, Panel, type Tone } from '../../components/ui'
++import {
++  BAD_NIGHT, BAD_SCORE, CHECK_IN, DOJO_LAYER_SOURCE, DOJO_LINKS, GOOD_NIGHT, GOOD_SCORE, KEY_TERMS, LAYER_TEXT, MARKERS, MILESTONES,
++  NUM_LABEL_MEANING, NUM_LABEL_TEXT, SCALE_SOURCES, STATES, sleepScore, whoHasIt,
++  type Layer, type NumLabel,
++} from '../../data/stateFlipSleep'
++import { CHANCE_CAP, driverOf, examplePeople, factors, sleepCohort, specFlat, type ChapterRow, type PersonFlip } from '../../data/stateFlipFormulas'
++import { DetailDrawerProvider, useDetail } from '../reports/DetailDrawer'
++import { Details, GoalLine } from '../reports/ReportSummary'
++import { RichText, Term } from '../reports/Term'
++
++/*
++ * Admin → Product lab → StateFlips (U140, J202), for the business owner:
++ * summary first, then the shared words, the sleep StateFlip in full, how
++ * "chapters to flip" and "chance it works" are worked out, and the cohort of
++ * sleep personas followed chapter by chapter. All numbers come from
++ * data/stateFlipSleep.ts and data/stateFlipFormulas.ts; costModel is read,
++ * never changed.
++ */
++
++const LABEL_TONE: Record<NumLabel, Tone> = { spec: 'critical', assumption: 'serious', computed: 'info', research: 'good' }
++const pct = (x: number) => `${Math.round(x * 100)}%`
++const usd = (x: number) => `$${x.toFixed(2)}`
++const r1 = (x: number) => (Math.round(x * 10) / 10).toString()
++
++function L({ l }: { l: NumLabel }) {
++  return (
++    <span title={NUM_LABEL_MEANING[l]}>
++      <Badge tone={LABEL_TONE[l]}>{NUM_LABEL_TEXT[l]}</Badge>
++    </span>
++  )
++}
++
++const LAYER_FILL: Record<Layer, string> = { mood: 'fill-adm-s3', habit: 'fill-adm-s4', skill: 'fill-adm-s1' }
++const LAYER_DOT: Record<Layer, string> = { mood: 'bg-adm-s3', habit: 'bg-adm-s4', skill: 'bg-adm-s1' }
++
++export function StateFlipsPage() {
++  return (
++    <DetailDrawerProvider>
++      <StateFlips />
++    </DetailDrawerProvider>
++  )
++}
++
++function StateFlips() {
++  const open = useDetail()
++  const who = whoHasIt()
++  const c = sleepCohort()
++  const spec = specFlat()
++  const last = c.rows[c.rows.length - 1]
++  const at42 = c.flippedAt(42)
++  const ex = examplePeople(c)
++
++  const tiles: { label: string; value: string; vs: string; badge: NumLabel; open: () => void }[] = [
++    {
++      label: 'Chapters to flip (middle person)', value: `${c.medianChapters}`, vs: `Spec: ${spec.specChapters} for everyone`, badge: 'computed',
++      open: () => open({ kicker: 'Computed', title: 'Chapters to flip', summary: `Half of the ${c.people.length} people with a sleep need reach good sleep in ${c.medianChapters} chapters or fewer, if it works for them. It ranges from ${Math.min(...c.people.map((p) => p.chapters))} (a mild start) to ${Math.max(...c.people.map((p) => p.chapters))} (a severe start). The spec gives 42 to everyone because it assumes everyone starts at 25.`, numbers: [{ label: 'Middle person', value: `${c.medianChapters}` }, { label: 'Average', value: r1(c.meanChapters) }, { label: 'Spec, 25 → 85', value: `${spec.specChapters}` }, { label: 'Our curve, 25 → 85', value: '42' }] }),
++    },
++    {
++      label: 'Chance it works (average)', value: pct(c.meanChance), vs: `Spec: ${pct(spec.chance)} for everyone`, badge: 'computed',
++      open: () => open({ kicker: 'Computed', title: 'Chance it works', summary: `The average of each person’s own chance: the spec’s 54% × how often they would use it × how ready they are × how bad their sleep is × whether audio suits them, kept between 5% and ${pct(CHANCE_CAP)}. Lower than 54% mostly because half the group is severe and few are ready to act.`, numbers: [{ label: 'Average', value: pct(c.meanChance) }, { label: 'Lowest', value: pct(Math.min(...c.people.map((p) => p.chance.chance))) }, { label: 'Highest', value: pct(Math.max(...c.people.map((p) => p.chance.chance))) }, { label: 'Spec', value: pct(spec.chance) }] }),
++    },
++    {
++      label: 'Sleeping well by chapter 42', value: pct(at42), vs: `${pct(last.flipped)} by the end (chapter ${c.horizon})`, badge: 'computed',
++      open: () => open({ kicker: 'Computed', title: 'Share sleeping well, by chapter', summary: `Of everyone in the group who starts. People who start nearer good sleep get there first; the severe starts need up to ${c.horizon} chapters.`, numbers: [10, 20, 30, 42, c.horizon].map((k) => ({ label: `By chapter ${k}`, value: pct(c.flippedAt(k)) })) }),
++    },
++    {
++      label: 'Stopped before the end', value: pct(last.dropped), vs: `${pct(c.rows[Math.min(20, c.horizon)].dropped)} by chapter 20`, badge: 'assumption',
++      open: () => open({ kicker: 'Assumption', title: 'People who stop', summary: `We assume 6 in 10 of the people a journey does not help simply stop using it; the rest stay but stall (${pct(last.notHelped)} finish without flipping). So the share who stop follows from each person’s chance it works. No real person has used Aurelia for sleep yet.`, numbers: [10, 20, 30, c.horizon].map((k) => ({ label: `By chapter ${k}`, value: pct(c.rows[Math.min(k, c.horizon)].dropped) })) }),
++    },
++  ]
++
++  return (
++    <div className="flex flex-col gap-16" data-stateflips>
++      <PageHeader title="StateFlips" description="How Aurelia moves a person from a bad state to a good one, built out in full for sleep: what bad and good mean, the steps, how we measure them, who has it, and how many chapters it takes." />
++      <GoalLine goal="Explain, in numbers anyone can check, how chapters add up to the sleep StateFlip (25 → 85) and how “chance it works” is calculated." />
++
++      <section aria-label="Summary" className="flex min-w-0 flex-col gap-14 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20" data-summary>
++        <p className="max-w-[860px] text-18 font-semibold leading-snug text-adm-ink">
++          {who.cohort.length} of the 1,000 <Term id="simulated">simulated people</Term> have sleep as their main need. Followed chapter by chapter, half would reach good sleep within {c.medianChapters} <Term id="chapter">chapters</Term> if it works for them, and {pct(last.flipped)} of them get there in the end: less than the plan’s flat 54%, because half the group starts with severe sleep problems.
++        </p>
++        <dl className="grid grid-cols-2 gap-8 lg:grid-cols-4">
++          {tiles.map((t) => (
++            <div key={t.label} className="flex min-w-0 flex-col gap-4 rounded-8 border border-adm-line bg-adm-bg p-12">
++              <dt className="flex flex-wrap items-center justify-between gap-4 text-11 font-medium text-adm-muted">
++                <span>{t.label}</span>
++                <L l={t.badge} />
++              </dt>
++              <dd>
++                <button type="button" onClick={t.open} aria-label={`${t.label}: ${t.value}. Show details`} className="group inline-flex items-center gap-6 rounded-4 text-left text-24 font-semibold leading-tight tabular-nums text-adm-ink hover:underline hover:decoration-adm-axis">
++                  {t.value}
++                  <PanelRightOpen size={14} aria-hidden="true" className="shrink-0 text-adm-muted group-hover:text-adm-ink" />
++                </button>
++              </dd>
++              <dd className="text-11 text-adm-ink-2">{t.vs}</dd>
++            </div>
++          ))}
++        </dl>
++        <p className="text-12 text-adm-ink-2">
++          Nothing here is measured: there are no real users yet. Each number is labelled <L l="spec" /> (the business owner’s plan), <L l="assumption" /> (our stated choice), <L l="computed" /> (worked out here) or <L l="research" /> (a published sleep scale).
++        </p>
++      </section>
++
++      <Panel title="Key terms" description="The words this page and the wiki use, in plain English.">
++        <dl className="grid gap-10 lg:grid-cols-2" data-key-terms>
++          {KEY_TERMS.map((k) => (
++            <div key={k.term} className="flex min-w-0 flex-col gap-2 rounded-8 border border-adm-line p-10">
++              <dt className="text-13 font-semibold text-adm-ink">{k.term}</dt>
++              <dd className="text-12 leading-relaxed text-adm-ink-2">{k.plain}</dd>
++            </div>
++          ))}
++        </dl>
++      </Panel>
++
++      <SleepFlip />
++      <HowWorkedOut examples={ex} />
++      <CohortView />
++      <Trajectories examples={ex} />
++    </div>
++  )
++}
++
++/* ------------------------------------------------------------ The StateFlip */
++
++function SleepFlip() {
++  const who = whoHasIt()
++  const bad = sleepScore(BAD_NIGHT)
++  const good = sleepScore(GOOD_NIGHT)
++  const ans = (n: typeof BAD_NIGHT, id: string) => ({ latency: `${n.latency} min`, wakings: `${n.wakings}`, hours: `${n.hours} h`, energy: `${n.energy} of 5` })[id]
++  return (
++    <Panel title="The sleep StateFlip, complete" description={`Physical dimension · universal need: restful sleep · from ${BAD_SCORE} to ${GOOD_SCORE} on the 0–100 sleep score.`}>
++      <div className="grid gap-10 lg:grid-cols-2">
++        {(['bad', 'good'] as const).map((k) => (
++          <div key={k} className={`flex min-w-0 flex-col gap-6 rounded-8 border p-12 ${k === 'bad' ? 'border-adm-critical/40 bg-adm-critical/6' : 'border-adm-good/40 bg-adm-good/8'}`}>
++            <div className="flex items-center justify-between gap-8">
++              <span className="text-14 font-semibold text-adm-ink">{STATES[k].title}</span>
++              <span className="text-20 font-semibold tabular-nums text-adm-ink">{k === 'bad' ? bad : good}</span>
++            </div>
++            <p className="text-13 text-adm-ink-2">{STATES[k].story}</p>
++            <p className="text-11 text-adm-muted">{STATES[k].scales}</p>
++          </div>
++        ))}
++      </div>
++
++      <div className="overflow-x-auto">
++        <table className="w-full min-w-[620px] text-left text-12">
++          <thead className="text-11 text-adm-muted">
++            <tr className="border-b border-adm-line">
++              <th className="py-6 pr-10 font-medium">Marker (check-in question)</th>
++              <th className="py-6 pr-10 font-medium">Bad</th>
++              <th className="py-6 pr-10 font-medium">Good</th>
++              <th className="py-6 pr-10 font-medium">Points of 25</th>
++              <th className="py-6 font-medium">Based on</th>
++            </tr>
++          </thead>
++          <tbody>
++            {MARKERS.map((m) => (
++              <tr key={m.id} className="border-b border-adm-line align-top last:border-0">
++                <td className="py-6 pr-10">
++                  <span className="font-semibold text-adm-ink">{m.label}</span>
++                  <span className="block text-11 text-adm-muted">{m.question}</span>
++                </td>
++                <td className="py-6 pr-10 text-adm-ink-2">{m.bad}</td>
++                <td className="py-6 pr-10 text-adm-ink-2">{m.good}</td>
++                <td className="py-6 pr-10 tabular-nums text-adm-ink-2">
++                  {ans(BAD_NIGHT, m.id)} → {r1(m.points(BAD_NIGHT[m.id]))}; {ans(GOOD_NIGHT, m.id)} → {r1(m.points(GOOD_NIGHT[m.id]))}
++                </td>
++                <td className="py-6 text-adm-ink-2">
++                  <span className="mr-4">
++                    <L l={m.label2} />
++                  </span>
++                  {m.basis}
++                </td>
++              </tr>
++            ))}
++          </tbody>
++        </table>
++      </div>
++      <p className="text-11 text-adm-muted">
++        <L l="assumption" /> The points per answer are ours, chosen so a typical bad night scores {bad} and a typical good night {good}.{' '}
++        {SCALE_SOURCES.map((s, i) => (
++          <span key={s.id}>
++            {i ? ' · ' : ''}
++            <a href={s.url} target="_blank" rel="noreferrer" className="underline decoration-adm-axis underline-offset-2">
++              {s.name}
++            </a>
++            : {s.cite}
++          </span>
++        ))}
++      </p>
++
++      <h3 className="text-13 font-semibold text-adm-ink">The path: X → Y → Z</h3>
++      <ol className="grid gap-8 lg:grid-cols-3" data-milestones>
++        {MILESTONES.map((m) => (
++          <li key={m.id} className="flex min-w-0 flex-col gap-4 rounded-8 border border-adm-line p-12">
++            <span className="flex items-center justify-between gap-6">
++              <span className="text-14 font-semibold text-adm-ink">
++                {m.id} · {m.title}
++              </span>
++              <span className="text-12 tabular-nums text-adm-muted">score ≥ {m.threshold}</span>
++            </span>
++            <span className="text-12 text-adm-ink-2">{m.what}</span>
++            <span className="text-12 text-adm-ink-2">
++              <span className="font-medium text-adm-ink">Check-in shows: </span>
++              {m.shows}
++            </span>
++            <span className="inline-flex items-center gap-6 text-11 text-adm-muted">
++              <span className={`size-8 rounded-full ${LAYER_DOT[m.layer]}`} aria-hidden="true" />
++              {LAYER_TEXT[m.layer].name} layer ({LAYER_TEXT[m.layer].pace}) · DOJO {m.dojo.join(', ')}
++            </span>
++          </li>
++        ))}
++      </ol>
++      <p className="text-11 text-adm-muted">
++        <L l="assumption" /> Thresholds 45, 65 and 85 split the 60 points from bad to good into three equal steps, one per DOJO <Term id="causal-layer">causal layer</Term>.
++      </p>
++
++      <div className="grid gap-10 lg:grid-cols-2">
++        <div className="flex min-w-0 flex-col gap-6 rounded-8 border border-adm-line p-12">
++          <h3 className="text-13 font-semibold text-adm-ink">How it is measured</h3>
++          <p className="text-12 text-adm-ink-2">{CHECK_IN.when}</p>
++          <p className="text-12 text-adm-ink-2">{CHECK_IN.how}</p>
++          <p className="text-12 text-adm-ink-2">{CHECK_IN.weekly}</p>
++        </div>
++        <div className="flex min-w-0 flex-col gap-6 rounded-8 border border-adm-line p-12" data-who>
++          <h3 className="flex items-center justify-between gap-6 text-13 font-semibold text-adm-ink">
++            Who has it <L l="computed" />
++          </h3>
++          <p className="text-12 text-adm-ink-2">
++            Of the {who.personas} v4 personas, {who.poorSleepBand} sleep poorly or very poorly ({who.poorSleepBandRisk} of them <Term id="risk-flag">risk-flagged</Term>). For {who.sleepNeed} sleep is the <Term id="main-need">main need</Term>: weakest dimension physical, with poor sleep, a body clock out of sync, or habits costing sleep. {who.sleepNeedRisk} of those are risk-flagged and left out: they are shown Need help now?, never a programme.
++          </p>
++          <dl className="grid grid-cols-3 gap-6 text-12">
++            {(['severe', 'moderate', 'mild'] as const).map((s) => (
++              <div key={s} className="rounded-8 bg-adm-bg p-8">
++                <dt className="text-11 capitalize text-adm-muted">{s}</dt>
++                <dd className="text-16 font-semibold tabular-nums text-adm-ink">{who.bySeverity[s]}</dd>
++              </div>
++            ))}
++          </dl>
++          <p className="text-11 text-adm-muted">
++            The group: {who.cohort.length} people, average starting score {r1(who.meanScore)}. Severity from the starting score: under 40 severe, 40–64 moderate, 65–84 mild. By issue: poor sleep {who.byIssue['poor-sleep']}, body clock {who.byIssue['body-clock']}, habits {who.byIssue.habits}.
++          </p>
++        </div>
++      </div>
++
++      <Details id="dojo" title={`DOJO links (${DOJO_LINKS.length})`} hint="the workbook rows this StateFlip draws on, by ID">
++        <p className="text-12 text-adm-ink-2">{DOJO_LAYER_SOURCE}</p>
++        <ul className="grid gap-8 lg:grid-cols-2" data-dojo-links>
++          {DOJO_LINKS.map((d) => (
++            <li key={d.id} className="flex min-w-0 flex-col gap-2 rounded-8 border border-adm-line p-10">
++              <span className="flex flex-wrap items-center justify-between gap-6">
++                <code className="text-11 text-adm-muted">{d.id}</code>
++                <span className="inline-flex items-center gap-4 text-11 text-adm-muted">
++                  <span className={`size-8 rounded-full ${LAYER_DOT[d.layer]}`} aria-hidden="true" />
++                  {LAYER_TEXT[d.layer].name} · toward {d.milestone}
++                </span>
++              </span>
++              <span className="text-12 font-semibold text-adm-ink">{d.name}</span>
++              <span className="text-12 text-adm-ink-2">{d.says}</span>
++            </li>
++          ))}
++        </ul>
++        <p className="text-11 text-adm-muted">Source: docs/briefs/2026-11-26-dojo-objective-learning.xlsx (sheets DOJO_M, DOJO_C_Duals, Causal layering, DB-skills, Objective Learning System KB).</p>
++      </Details>
++    </Panel>
++  )
++}
++
++/* ------------------------------------------------------- How it is worked out */
++
++function HowWorkedOut({ examples }: { examples: { severity: string; person: PersonFlip }[] }) {
++  const spec = specFlat()
++  const rows: { label: string; spec: string; get: (p: PersonFlip) => string }[] = [
++    { label: 'Starting sleep score', spec: '25', get: (p) => `${p.start} (${p.severity})` },
++    { label: 'Chapters a week', spec: '3', get: (p) => `${p.perWeek}` },
++    { label: 'How long it has gone on', spec: '—', get: (p) => p.acuity },
++    { label: 'Chapters to X (45)', spec: '—', get: (p) => `${p.reach.X}` },
++    { label: 'Chapters to Y (65)', spec: '—', get: (p) => `${p.reach.Y}` },
++    { label: 'Chapters to flip (85)', spec: `${spec.chapters}`, get: (p) => `${p.chapters}` },
++    { label: 'Weeks to flip', spec: `${r1(spec.chapters / 3)}`, get: (p) => r1(p.weeks) },
++    { label: 'Base chance (spec)', spec: pct(spec.chance), get: (p) => pct(p.chance.base) },
++    { label: '× adherence', spec: '1', get: (p) => r1(p.chance.adherence) },
++    { label: '× readiness', spec: '—', get: (p) => `${p.chance.readiness.toFixed(2)} (from ${p.readiness})` },
++    { label: '× severity', spec: '—', get: (p) => `${p.chance.severity}` },
++    { label: '× fit', spec: '—', get: (p) => `${p.chance.fit} (${p.topHelper})` },
++    { label: '= chance it works', spec: pct(spec.chance), get: (p) => pct(p.chance.chance) },
++    { label: 'Still going at the end', spec: '—', get: (p) => pct(p.survival) },
++  ]
++  return (
++    <Panel title="How “chapters to flip” and “chance it works” are worked out" description="The spec gives everyone 42 chapters and 54%. Here both depend on the person, with every factor shown.">
++      <div className="grid gap-10 lg:grid-cols-2">
++        <div className="flex min-w-0 flex-col gap-6 rounded-8 bg-adm-bg p-12 text-12 leading-relaxed text-adm-ink" data-formulas>
++          <p className="font-semibold">Chapters to flip</p>
++          <p>Each chapter adds: 1.43 (spec) × layer speed × starting point × how long it has gone on.</p>
++          <p>Layer speed: mood ×1.6 below 45, habit ×1.05 from 45 to 65, skill ×0.72 from 65 to 85. Early chapters move the score fastest; the last stretch, a new skill, is slowest.</p>
++          <p>Chapters to flip = the chapters it takes for the score to pass 85, adding one chapter at a time.</p>
++          <p className="pt-6 font-semibold">Chance it works</p>
++          <p>54% (spec) × adherence × readiness × severity × fit, kept between 5% and 90%.</p>
++          <p className="text-adm-ink-2">With everything average (start 25, 3 a week) the curve gives exactly the spec’s 42 chapters, so the two agree where the spec’s assumptions hold.</p>
++        </div>
++        <ul className="flex min-w-0 flex-col gap-6">
++          {factors().map((f) => (
++            <li key={f.id} className="flex flex-col gap-2 rounded-8 border border-adm-line p-8">
++              <span className="flex flex-wrap items-center justify-between gap-6">
++                <span className="text-12 font-semibold text-adm-ink">{f.name}</span>
++                <L l={f.label} />
++              </span>
++              <span className="text-12 tabular-nums text-adm-ink">{f.value}</span>
++              <span className="text-11 text-adm-muted">{f.why}</span>
++            </li>
++          ))}
++        </ul>
++      </div>
++
++      <h3 className="text-13 font-semibold text-adm-ink">Worked example: three people from the group</h3>
++      <div className="overflow-x-auto">
++        <table className="w-full min-w-[640px] text-left text-12" data-worked-example>
++          <thead className="text-11 text-adm-muted">
++            <tr className="border-b border-adm-line">
++              <th className="py-6 pr-10 font-medium">
++                <L l="computed" />
++              </th>
++              <th className="py-6 pr-10 font-medium">
++                Spec, flat <L l="spec" />
++              </th>
++              {examples.map((e) => (
++                <th key={e.person.id} className="py-6 pr-10 font-medium">
++                  <span className="block font-semibold capitalize text-adm-ink">{e.severity}</span>
++                  {e.person.name}, {e.person.age}, {e.person.country}
++                </th>
++              ))}
++            </tr>
++          </thead>
++          <tbody>
++            {rows.map((r) => (
++              <tr key={r.label} className={`border-b border-adm-line last:border-0 ${r.label.startsWith('=') || r.label.startsWith('Chapters to flip') ? 'font-semibold text-adm-ink' : 'text-adm-ink-2'}`}>
++                <td className="py-6 pr-10">{r.label}</td>
++                <td className="py-6 pr-10 tabular-nums">{r.spec}</td>
++                {examples.map((e) => (
++                  <td key={e.person.id} className="py-6 pr-10 tabular-nums">
++                    {r.get(e.person)}
++                  </td>
++                ))}
++              </tr>
++            ))}
++          </tbody>
++        </table>
++      </div>
++      <Details title="Each formula with the numbers in it" hint="for the three people">
++        {examples.map((e) => (
++          <div key={e.person.id} className="flex flex-col gap-4">
++            <p className="text-12 font-semibold capitalize text-adm-ink">
++              {e.severity}: {e.person.name} ({e.person.id})
++            </p>
++            <ul className="flex flex-col gap-2 text-12 text-adm-ink-2">
++              {e.person.why.map((w) => (
++                <li key={w}>{w}</li>
++              ))}
++            </ul>
++          </div>
++        ))}
++      </Details>
++      <p className="text-12 text-adm-ink-2">
++        <span className="font-semibold text-adm-ink">Why it differs from the spec. </span>
++        The spec assumes everyone starts at 25, uses Aurelia 3 times a week and is equally likely to succeed. Real starting points range from about 15 to 80: a mild start needs far fewer chapters, a severe one more. People who are not yet ready, or whom audio does not suit, are less likely to get there; people who use it more often are a little more likely. Averaged over the group, the chance comes out at {pct(sleepCohort().meanChance)} rather than 54%.
++      </p>
++    </Panel>
++  )
++}
++
++/* -------------------------------------------------------------- The cohort */
++
++const W = 880
++const H = 300
++const PL = 52
++const PR = 40
++const PT = 16
++const PB = 44
++
++function useChapterDrawer() {
++  const open = useDetail()
++  const c = sleepCohort()
++  return (row: ChapterRow) => {
++    const d = driverOf(row.layer)
++    const links = DOJO_LINKS.filter((x) => x.layer === row.layer)
++    open({
++      kicker: `Chapter ${row.chapter} · ${LAYER_TEXT[row.layer].name} layer`,
++      title: `After chapter ${row.chapter}`,
++      summary: `Of the ${c.people.length} people who started. What drives this stretch: the ${LAYER_TEXT[row.layer].name.toLowerCase()} layer (${LAYER_TEXT[row.layer].pace}). ${LAYER_TEXT[row.layer].plain} Therapeutic metric that moves: ${d.metric.toLowerCase()}.`,
++      numbers: [
++        { label: 'Still going', value: pct(row.active) },
++        { label: 'Stopped', value: pct(row.dropped) },
++        { label: 'Sleeping well (flipped)', value: pct(row.flipped) },
++        { label: 'Finished, not helped', value: pct(row.notHelped) },
++        { label: 'Average score, still going', value: Number.isFinite(row.scoreActive) ? r1(row.scoreActive) : '—' },
++        { label: 'Reached X (45)', value: pct(row.reached.X) },
++        { label: 'Reached Y (65)', value: pct(row.reached.Y) },
++        { label: 'Average score, everyone', value: r1(row.scoreAll) },
++        { label: 'Of those going: mood / habit / skill', value: `${pct(row.layerMix.mood)} / ${pct(row.layerMix.habit)} / ${pct(row.layerMix.skill)}` },
++      ],
++      extra: (
++        <div className="flex flex-col gap-6">
++          <h3 className="text-12 font-semibold uppercase tracking-wider text-adm-muted">DOJO concepts at work</h3>
++          <ul className="flex flex-col gap-4 text-12 text-adm-ink-2">
++            {links.map((x) => (
++              <li key={x.id}>
++                <span className="font-semibold text-adm-ink">{x.name}</span> · {x.says}
++              </li>
++            ))}
++          </ul>
++        </div>
++      ),
++    })
++  }
++}
++
++function Legend({ items }: { items: { label: string; cls: string; dash?: boolean }[] }) {
++  return (
++    <div className="flex flex-wrap items-center gap-x-14 gap-y-4 text-12 text-adm-ink-2">
++      {items.map((i) => (
++        <span key={i.label} className="inline-flex items-center gap-6">
++          <svg width="16" height="4" aria-hidden="true">
++            <line x1="0" x2="16" y1="2" y2="2" strokeWidth="3" strokeDasharray={i.dash ? '4 3' : undefined} className={i.cls} />
++          </svg>
++          {i.label}
++        </span>
++      ))}
++    </div>
++  )
++}
++
++function ChapterChart({ yLabel, yTicks, yFmt, series, bands, aria, children }: {
++  yLabel: string
++  yTicks: number[]
++  yFmt: (v: number) => string
++  series: { key: string; cls: string; dash?: boolean; values: (number | null)[] }[]
++  bands?: ReactNode
++  aria: string
++  children?: (x: (i: number) => number, y: (v: number) => number) => ReactNode
++}) {
++  const c = sleepCohort()
++  const openChapter = useChapterDrawer()
++  const [hover, setHover] = useState<number | null>(null)
++  const n = c.rows.length
++  const max = yTicks[yTicks.length - 1]
++  const x = (i: number) => PL + (i * (W - PL - PR)) / (n - 1)
++  const y = (v: number) => PT + (1 - v / max) * (H - PT - PB)
++  const path = (vs: (number | null)[]) => {
++    let d = ''
++    let pen = false
++    vs.forEach((v, i) => {
++      if (v === null || !Number.isFinite(v)) {
++        pen = false
++        return
++      }
++      d += `${pen ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)} `
++      pen = true
++    })
++    return d
++  }
++  const step = (W - PL - PR) / (n - 1)
++  return (
++    <div className="relative overflow-x-auto">
++      <svg viewBox={`0 0 ${W} ${H}`} className="block w-full min-w-[640px]" role="img" aria-label={aria}>
++        {bands}
++        <text x={12} y={PT + (H - PT - PB) / 2} transform={`rotate(-90 12 ${PT + (H - PT - PB) / 2})`} textAnchor="middle" className="fill-adm-muted text-11">
++          {yLabel}
++        </text>
++        <text x={PL + (W - PL - PR) / 2} y={H - 4} textAnchor="middle" className="fill-adm-muted text-11">
++          Chapter (tap one for the breakdown)
++        </text>
++        {yTicks.map((v) => (
++          <g key={v}>
++            <line x1={PL} x2={W - PR} y1={y(v)} y2={y(v)} className="stroke-adm-grid" strokeWidth={1} />
++            <text x={PL - 6} y={y(v) + 4} textAnchor="end" className="fill-adm-muted text-11 tabular-nums">
++              {yFmt(v)}
++            </text>
++          </g>
++        ))}
++        {c.rows.filter((r) => r.chapter % 10 === 0 || r.chapter === c.horizon).map((r) => (
++          <text key={r.chapter} x={x(r.chapter)} y={H - PB + 16} textAnchor="middle" className="fill-adm-ink-2 text-11 tabular-nums">
++            {r.chapter}
++          </text>
++        ))}
++        {children?.(x, y)}
++        {hover !== null && <line x1={x(hover)} x2={x(hover)} y1={PT} y2={H - PB} className="stroke-adm-axis" strokeWidth={1} />}
++        {series.map((s) => (
++          <path key={s.key} d={path(s.values)} fill="none" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" strokeDasharray={s.dash ? '5 4' : undefined} className={s.cls} />
++        ))}
++        {c.rows.map((r) => (
++          <rect
++            key={r.chapter}
++            x={x(r.chapter) - step / 2}
++            y={0}
++            width={step}
++            height={H - PB}
++            fill="transparent"
++            data-chapter={r.chapter}
++            className="cursor-pointer"
++            onMouseEnter={() => setHover(r.chapter)}
++            onMouseLeave={() => setHover(null)}
++            onClick={() => openChapter(r)}
++          />
++        ))}
++      </svg>
++      {hover !== null && (
++        <div className="pointer-events-none absolute top-0 right-0 max-w-[240px] rounded-8 border border-adm-line bg-adm-surface p-8 text-12 shadow-sm">
++          <p className="font-semibold text-adm-ink">Chapter {hover}</p>
++          {series.map((s) => (
++            <p key={s.key} className="tabular-nums text-adm-ink-2">
++              {s.key}: {s.values[hover] === null || !Number.isFinite(s.values[hover]!) ? '—' : yFmt(s.values[hover]!)}
++            </p>
++          ))}
++        </div>
++      )}
++    </div>
++  )
++}
++
++function CohortView() {
++  const c = sleepCohort()
++  const openChapter = useChapterDrawer()
++  const spec = specFlat()
++  const specLine = c.rows.map((r) => (r.chapter <= spec.chapters ? BAD_SCORE + ((GOOD_SCORE - BAD_SCORE) * r.chapter) / spec.chapters : null))
++  // Stretches of chapters by the layer the average person still going is in.
++  const phases: { layer: Layer; from: number; to: number }[] = []
++  for (const r of c.rows) {
++    if (!Number.isFinite(r.scoreActive)) break
++    const lastP = phases[phases.length - 1]
++    if (lastP && lastP.layer === r.layer) lastP.to = r.chapter
++    else phases.push({ layer: r.layer, from: r.chapter, to: r.chapter })
++  }
++  const pick = [1, 5, 10, 20, 30, 42, c.horizon].filter((k, i, a) => k <= c.horizon && a.indexOf(k) === i)
++  return (
++    <Panel title="The group over time: chapter by chapter" description={`${c.people.length} people whose main need is sleep (risk-flagged left out), followed through ${c.horizon} chapters with the formulas above. Each line is a share or an average of the whole group.`}>
++      <h3 className="text-13 font-semibold text-adm-ink">Average sleep score</h3>
++      <Legend items={[{ label: 'Still going', cls: 'stroke-adm-s1' }, { label: 'Everyone who started (stopped people at their last score)', cls: 'stroke-adm-s2' }, { label: 'Spec: a straight 1.43 a chapter', cls: 'stroke-adm-muted', dash: true }]} />
++      <ChapterChart
++        yLabel="Sleep score (0–100)"
++        yTicks={[0, 25, 45, 65, 85, 100]}
++        yFmt={(v) => r1(v)}
++        aria="Line chart: average sleep score by chapter, still going and everyone, against the spec’s straight line"
++        series={[
++          { key: 'Still going', cls: 'stroke-adm-s1', values: c.rows.map((r) => r.scoreActive) },
++          { key: 'Everyone', cls: 'stroke-adm-s2', values: c.rows.map((r) => r.scoreAll) },
++          { key: 'Spec', cls: 'stroke-adm-muted', dash: true, values: specLine },
++        ]}
++      >
++        {(x, y) => (
++          <g aria-hidden="true">
++            {([['mood', 0, 45], ['habit', 45, 65], ['skill', 65, 85]] as [Layer, number, number][]).map(([l, a, b]) => (
++              <rect key={l} x={x(0)} width={x(c.horizon) - x(0)} y={y(b)} height={y(a) - y(b)} className={LAYER_FILL[l]} opacity={0.08} />
++            ))}
++            {MILESTONES.map((m) => (
++              <text key={m.id} x={x(c.horizon) + 6} y={y(m.threshold) + 4} className="fill-adm-ink-2 text-11 font-semibold">
++                {m.id}
++              </text>
++            ))}
++          </g>
++        )}
++      </ChapterChart>
++
++      <h3 className="text-13 font-semibold text-adm-ink">Where the group is</h3>
++      <Legend items={[{ label: 'Still going', cls: 'stroke-adm-s1' }, { label: 'Reached X', cls: 'stroke-adm-s3' }, { label: 'Reached Y', cls: 'stroke-adm-s4' }, { label: 'Flipped (Z)', cls: 'stroke-adm-good' }, { label: 'Stopped', cls: 'stroke-adm-critical', dash: true }, { label: 'Finished, not helped', cls: 'stroke-adm-muted', dash: true }]} />
++      <ChapterChart
++        yLabel="Share of the group"
++        yTicks={[0, 0.25, 0.5, 0.75, 1]}
++        yFmt={pct}
++        aria="Line chart: share still going, reached X, reached Y, flipped and stopped, by chapter"
++        series={[
++          { key: 'Still going', cls: 'stroke-adm-s1', values: c.rows.map((r) => r.active) },
++          { key: 'Reached X', cls: 'stroke-adm-s3', values: c.rows.map((r) => r.reached.X) },
++          { key: 'Reached Y', cls: 'stroke-adm-s4', values: c.rows.map((r) => r.reached.Y) },
++          { key: 'Flipped', cls: 'stroke-adm-good', values: c.rows.map((r) => r.flipped) },
++          { key: 'Stopped', cls: 'stroke-adm-critical', dash: true, values: c.rows.map((r) => r.dropped) },
++          { key: 'Not helped', cls: 'stroke-adm-muted', dash: true, values: c.rows.map((r) => r.notHelped) },
++        ]}
++      />
++      <p className="text-11 text-adm-muted">
++        Reached X and Y include people who started above those scores (chapter 0). Flipped people leave the journey, so “still going” falls both as people stop and as people succeed. “Finished, not helped”: people who played all the chapters a responder would need without reaching good sleep; Aurelia would then offer them something else.
++      </p>
++
++      <h3 className="text-13 font-semibold text-adm-ink">What drives each step</h3>
++      <ol className="grid gap-8 lg:grid-cols-3" data-phases>
++        {phases.map((p) => {
++          const d = driverOf(p.layer)
++          return (
++            <li key={p.layer} className="flex min-w-0 flex-col gap-4 rounded-8 border border-adm-line p-12">
++              <span className="inline-flex items-center gap-6 text-12 font-semibold text-adm-ink">
++                <span className={`size-8 rounded-full ${LAYER_DOT[p.layer]}`} aria-hidden="true" />
++                Chapters {p.from}–{p.to}: {LAYER_TEXT[p.layer].name} layer, toward {d.id}
++              </span>
++              <span className="text-12 text-adm-ink-2">{LAYER_TEXT[p.layer].plain}</span>
++              <span className="text-12 text-adm-ink-2">
++                <span className="font-medium text-adm-ink">Metric that moves: </span>
++                {d.metric}
++              </span>
++              <span className="text-11 text-adm-muted">DOJO: {d.dojo.join(', ')}</span>
++            </li>
++          )
++        })}
++      </ol>
++      <p className="text-11 text-adm-muted">
++        <L l="assumption" /> The stretch is set by the average score of the people still going. Individuals move through the layers at their own pace.
++      </p>
++
++      <div className="overflow-x-auto">
++        <table className="w-full min-w-[600px] text-left text-12" data-cohort-table>
++          <thead className="text-11 text-adm-muted">
++            <tr className="border-b border-adm-line">
++              {['Chapter', 'Average score (still going)', 'Still going', 'Reached X', 'Reached Y', 'Flipped', 'Stopped', 'Not helped', ''].map((h) => (
++                <th key={h} className="py-6 pr-10 font-medium">
++                  {h}
++                </th>
++              ))}
++            </tr>
++          </thead>
++          <tbody>
++            {pick.map((k) => {
++              const r = c.rows[k]
++              return (
++                <tr key={k} className="border-b border-adm-line tabular-nums text-adm-ink-2 last:border-0">
++                  <td className="py-6 pr-10 font-semibold text-adm-ink">{k}</td>
++                  <td className="py-6 pr-10">{Number.isFinite(r.scoreActive) ? r1(r.scoreActive) : '—'}</td>
++                  <td className="py-6 pr-10">{pct(r.active)}</td>
++                  <td className="py-6 pr-10">{pct(r.reached.X)}</td>
++                  <td className="py-6 pr-10">{pct(r.reached.Y)}</td>
++                  <td className="py-6 pr-10">{pct(r.flipped)}</td>
++                  <td className="py-6 pr-10">{pct(r.dropped)}</td>
++                  <td className="py-6 pr-10">{pct(r.notHelped)}</td>
++                  <td className="py-6">
++                    <button type="button" onClick={() => openChapter(r)} className="inline-flex items-center gap-4 text-12 font-medium text-adm-ink underline decoration-adm-axis underline-offset-2">
++                      Breakdown <PanelRightOpen size={12} aria-hidden="true" />
++                    </button>
++                  </td>
++                </tr>
++              )
++            })}
++          </tbody>
++        </table>
++      </div>
++      <p className="text-12 text-adm-ink-2">
++        <span className="font-semibold text-adm-ink">Cost per flip for this group: {usd(c.costPerFlip)}</span> <L l="computed" /> = {usd(c.costPerChapter)} a chapter (Cost report, middle option, 10 minutes, stage 1) × {r1(c.chaptersPlayed)} chapters played per person on average ÷ {pct(c.meanChance)}. The spec journey costs {usd(spec.costPerFlip)} per flip on the same prices (42 chapters ÷ 54%).
++      </p>
++    </Panel>
++  )
++}
++
++/* -------------------------------------------------------- Per-person paths */
++
++const PERSON_CLS = ['stroke-adm-s1', 'stroke-adm-s2', 'stroke-adm-s3']
++
++function Trajectories({ examples }: { examples: { severity: string; person: PersonFlip }[] }) {
++  const max = Math.max(...examples.map((e) => e.person.chapters))
++  const w = 880
++  const h = 260
++  const x = (i: number) => PL + (i * (w - PL - PR)) / max
++  const y = (v: number) => PT + (1 - v / 100) * (h - PT - PB)
++  return (
++    <Panel title="Three people, chapter by chapter" description="If it works for them: the score each check-in would show, from their own start to good sleep.">
++      <Legend items={examples.map((e, i) => ({ label: `${e.severity}: ${e.person.name} (${e.person.start} → 85 in ${e.person.chapters}, chance ${pct(e.person.chance.chance)})`, cls: PERSON_CLS[i] }))} />
++      <div className="overflow-x-auto">
++        <svg viewBox={`0 0 ${w} ${h}`} className="block w-full min-w-[640px]" role="img" aria-label="Line chart: sleep score by chapter for three example people">
++          <text x={12} y={PT + (h - PT - PB) / 2} transform={`rotate(-90 12 ${PT + (h - PT - PB) / 2})`} textAnchor="middle" className="fill-adm-muted text-11">
++            Sleep score
++          </text>
++          <text x={PL + (w - PL - PR) / 2} y={h - 4} textAnchor="middle" className="fill-adm-muted text-11">
++            Chapter
++          </text>
++          {[0, 25, 45, 65, 85, 100].map((v) => (
++            <g key={v}>
++              <line x1={PL} x2={w - PR} y1={y(v)} y2={y(v)} className="stroke-adm-grid" strokeWidth={1} />
++              <text x={PL - 6} y={y(v) + 4} textAnchor="end" className="fill-adm-muted text-11 tabular-nums">
++                {v}
++              </text>
++            </g>
++          ))}
++          {MILESTONES.map((m) => (
++            <text key={m.id} x={w - PR + 6} y={y(m.threshold) + 4} className="fill-adm-ink-2 text-11 font-semibold">
++              {m.id}
++            </text>
++          ))}
++          {Array.from({ length: Math.floor(max / 10) + 1 }, (_, i) => i * 10).map((k) => (
++            <text key={k} x={x(k)} y={h - PB + 16} textAnchor="middle" className="fill-adm-ink-2 text-11 tabular-nums">
++              {k}
++            </text>
++          ))}
++          {examples.map((e, i) => (
++            <path key={e.person.id} d={e.person.responderPath.map((s, k) => `${k ? 'L' : 'M'}${x(k).toFixed(1)},${y(s).toFixed(1)}`).join(' ')} fill="none" strokeWidth={2} strokeLinejoin="round" className={PERSON_CLS[i]} />
++          ))}
++        </svg>
++      </div>
++      <p className="text-12 text-adm-ink-2">
++        <RichText text="Each line bends where the person moves from the mood stretch to the habit stretch (at 45) and to the skill stretch (at 65): the curve flattens because skills take longest. A person this does not help would improve at half the speed and stall below Y; that is part of {{chance-it-works|chance it works}}, not of this line." />
++      </p>
++    </Panel>
++  )
++}
+diff --git a/src/demo/modules.ts b/src/demo/modules.ts
+index f138869..d850237 100644
+--- a/src/demo/modules.ts
++++ b/src/demo/modules.ts
+@@ -246,6 +246,7 @@ export const DEMO_MODULES: DemoModule[] = [
+   { id: 'adminBusinessFunnel', kind: 'admin', label: 'Business funnel', description: 'The brief’s stages from a free start to Aurelia Plus, with targets, the buyer agents’ prediction, the feedback group and a decision log.', route: '/admin/business-funnel', built: true },
+   { id: 'adminTherapeuticMap', kind: 'admin', label: 'Therapeutic map', description: 'Product, business and wellness as one triangle with each corner’s core targets; the bad-to-good sleep process as the app runs it; the five wellness worlds (scenario).', route: '/admin/therapeutic-map', built: true },
+   { id: 'adminHealingMap', kind: 'admin', label: 'Healing Map', description: 'Rings of bad states, building blocks and good states; every link says where its strength comes from: design sample, cited research, or learned from users (none yet).', route: '/admin/healing-map', built: true },
++  { id: 'adminStateFlips', kind: 'admin', label: 'StateFlips', description: 'The sleep StateFlip from bad (25) to good (85): markers, the path X → Y → Z, how it is measured, who has it, the DOJO links; chapters to flip and chance it works as transparent formulas; the cohort over time. Staging only.', route: '/admin/stateflips', built: true },
+   { id: 'adminBuyerAgent', kind: 'admin', label: 'Buyer agent results', description: 'What a buyer agent answered as each persona in a panel: try, pay, price, objections, test cases. Runs v1–v3 and the re-run by production version.', route: '/admin/buyer-agent', built: true },
+   { id: 'adminReportsOverview', kind: 'admin', label: 'Reports overview', description: 'How Aurelia improves, as one map: the sources we learn from, the reports and tests that read them, and the decisions and versions that came out. Details open in a drawer.', route: '/admin/reports', built: true },
+   { id: 'adminReportUxFeedback', kind: 'admin', label: 'UX feedback report', description: 'The latest feedback group view (was Feedback group · v2) with a summary-first top: goal, headline, key numbers, next steps. Sample data until the study runs.', route: '/admin/reports/ux-feedback', built: true },
+diff --git a/src/guides/GuidePage.tsx b/src/guides/GuidePage.tsx
+index d7a67ea..e2d911b 100644
+--- a/src/guides/GuidePage.tsx
++++ b/src/guides/GuidePage.tsx
+@@ -1,4 +1,4 @@
+-import { Archive, ArrowLeft, BookOpen, FileText, Handshake, Lightbulb, Map as MapIcon, Palette, Search, Server, Telescope, X } from 'lucide-react'
++import { Archive, ArrowLeft, BookOpen, FileText, Handshake, Lightbulb, Map as MapIcon, Palette, Search, Server, Sprout, Telescope, X } from 'lucide-react'
+ import { marked } from 'marked'
+ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
+ import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+@@ -18,6 +18,7 @@ import researchRound3 from '../../docs/research/reports/Insight Timer round 3.md
+ import prdOverview from '../../docs/PRD-OVERVIEW.md?raw'
+ import backendOld from '../../docs/backend-old/BACKEND-OLD.md?raw'
+ import artefact from '../../docs/backend-old/ARTEFACT.md?raw'
++import howAureliaHeals from '../../docs/how-aurelia-heals/HOW-AURELIA-HEALS.md?raw'
+ import { DS_TOC } from '../designsystem/toc'
+ import { API_PAGES, B2B2C_PAGES, pageMarkdown, type DocPage } from './docPages'
+ import { filterToc, prepareDoc } from './prepareDoc'
+@@ -35,7 +36,7 @@ const DesignSystemContent = lazy(() =>
+ /**
+  * /wiki (was /guide until U083; old links redirect) — the team's documents,
+  * readable on any site (production included) behind the same site password as
+- * the app. One shell, nine documents: generated HTML guides, Markdown files
++ * the app. One shell, ten documents: generated HTML guides, Markdown files
+  * rendered as they stand in docs/, and the design system, which is a React
+  * view read live from the Figma export and the components, so no page can
+  * drift from its source.
+@@ -121,6 +122,16 @@ const DOCS = [
+     source: 'docs/backend-old/ARTEFACT.md',
+     html: () => marked.parse(artefact, { async: false }),
+   },
++  {
++    id: 'heals',
++    title: 'How Aurelia heals',
++    blurb: 'The words behind Aurelia’s healing model, and the first example in full: from bad sleep to good sleep, step by step, with how many chapters it takes and how likely it is to work.',
++    audience: 'The business owner, the product owner and anyone explaining how Aurelia helps people',
++    inside: ['Key terms: dimension, StateFlip, universal need, DOJO, AKP, chapter, check-in', 'The sleep StateFlip: bad and good in numbers, the path X → Y → Z', 'How chapters to flip and chance it works are calculated', 'The group of simulated people with a sleep need, over time'],
++    icon: Sprout,
++    source: 'docs/how-aurelia-heals/HOW-AURELIA-HEALS.md',
++    html: () => marked.parse(howAureliaHeals, { async: false }),
++  },
+   {
+     id: 'design-system',
+     title: 'Design system',
+@@ -322,7 +333,7 @@ export function GuideIndexPage() {
+             <img src={markSvg} alt="" aria-hidden="true" width={52} height={52} className="gd-hero-mark" />
+             <p className="gd-eyebrow">Aurelia · wiki</p>
+             <h1>
+-              Everything about Aurelia, <span className="gd-grad">in nine documents</span>
++              Everything about Aurelia, <span className="gd-grad">in ten documents</span>
+             </h1>
+             <p className="gd-lede">
+               Aurelia builds personal wellness sessions from one sentence: someone says how they feel, and Aurelia makes a
+diff --git a/src/versions/releases.ts b/src/versions/releases.ts
+index 9384cf2..72dcf74 100644
+--- a/src/versions/releases.ts
++++ b/src/versions/releases.ts
+@@ -45,4 +45,6 @@ export const RELEASES = {
+   therapeuticMaps: BUILD.environment !== 'production',
+   /** Admin → Reports → Report metrics (U135, J186): every report number traced to its data and formula. Staging only. */
+   reportMetrics: BUILD.environment !== 'production',
++  /** Admin → Product lab → StateFlips (U140, J202): the sleep StateFlip, transparent chapters and chance, the cohort over time. Staging only. */
++  stateFlips: BUILD.environment !== 'production',
+ } as const
