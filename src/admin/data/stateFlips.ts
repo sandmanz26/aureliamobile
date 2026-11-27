@@ -8,7 +8,8 @@
  * "from <workbook / tab / ID>" or "drafted by us — to review". The bad and the
  * good state of 01–10 come from our issue list (which quotes the DOJO duals);
  * of 11–25 from the workbook row itself. The X → Y → Z steps and the check-in
- * questions of every StateFlip but sleep are drafted by us from a template.
+ * questions of every StateFlip but sleep are drafted by us, one set per
+ * StateFlip (stateFlipDetails.ts, U145), and 11–25 follow their own cohort.
  * Sleep (SF-PHY-01) is the one built out in full in stateFlipSleep.ts and keeps
  * its own markers, steps, DOJO links and numbers, unchanged.
  *
@@ -20,6 +21,8 @@
 import { AKP_SOURCE } from './generated/akpSource'
 import { DIMENSIONS, DIMENSION_LABEL, DIMENSION_PLAIN, ISSUES, conditionsV4, type ConditionV4, type Dimension } from './personaConditionV4'
 import { generatePersonasV4, type PersonaV4 } from './personasV4'
+import { FLIP_DETAILS, WHO } from './stateFlipDetails'
+import { FIVE_DIMENSIONS, type DimCode } from './dimensions'
 import { personFlip, sleepCohort, summarise, type FlipSummary } from './stateFlipFormulas'
 import { DOJO_LINKS, MARKERS, MILESTONES, SLEEP_ISSUES, STATES, severityOf, whoHasIt, type Layer, type MilestoneId } from './stateFlipSleep'
 
@@ -28,19 +31,15 @@ export const from = (...parts: string[]) => `from ${parts.join(' / ')}`
 
 /* ------------------------------------------------------- The 5 dimensions */
 
-export type DimCode = 'MEN' | 'EMO' | 'REL' | 'SPI' | 'PHY'
+export type { DimCode }
 
 /**
- * The one shared dimension list for StateFlips, AKPs and personas' identity,
- * built on personaConditionV4's five. Mapping note (not refactored): the
- * healing map's worlds are the same five with physical called "sleep"
- * (healingMap.ts WorldId 'sleep' = physical); the therapeutic map's corners
- * (product, business, wellness) are functions, not dimensions: all five sit
- * under its "wellness" corner.
+ * The shared five dimensions (dimensions.ts, U145) with the world each map
+ * calls them: the Healing Map and the Therapeutic map name physical "sleep".
  */
 export const STATEFLIP_DIMENSIONS: { id: Dimension; code: DimCode; label: string; plain: string; healingWorld: string }[] = DIMENSIONS.map((d) => ({
   id: d,
-  code: ({ mental: 'MEN', emotional: 'EMO', relational: 'REL', spiritual: 'SPI', physical: 'PHY' } as const)[d],
+  code: FIVE_DIMENSIONS.find((x) => x.id === d)!.code,
   label: DIMENSION_LABEL[d],
   plain: DIMENSION_PLAIN[d],
   healingWorld: d === 'physical' ? 'sleep' : d,
@@ -77,8 +76,10 @@ export interface StateFlip {
   measure: { scale: string; markers: FlipMarker[]; source: string }
   /** The persona-condition issues whose people this StateFlip is for. */
   issues: string[]
-  /** True when the issues are a related issue, not this StateFlip's own (11–25). */
+  /** True when the issues are related issues, not this StateFlip's own (11–25). */
   sharedIssue: boolean
+  /** 11–25: the identity fact (stateFlipDetails WHO) its cohort must also have. */
+  who?: keyof typeof WHO
   prevalence: string
   prevalenceSource: string
   layer: Layer
@@ -103,10 +104,10 @@ const overlap = (a: Set<string>, b: Set<string>) => {
   return n
 }
 /** The best `k` rows by token overlap (ties keep sheet order); rows scoring 0 are dropped. */
-function best<T>(rows: readonly T[], text: (r: T) => string, want: Set<string>, k: number): T[] {
+function best<T>(rows: readonly T[], text: (r: T) => string, want: Set<string>, k: number, min = 1): T[] {
   return rows
     .map((r, i) => ({ r, i, s: overlap(want, tokens(text(r))) }))
-    .filter((x) => x.s > 0)
+    .filter((x) => x.s >= min)
     .sort((a, b) => b.s - a.s || a.i - b.i)
     .slice(0, k)
     .map((x) => x.r)
@@ -168,24 +169,38 @@ export function layerFor(d: Dimension, bad: string, good: string): Layer {
   return LAYER_DEFAULT[d]
 }
 
-function steps(bad: string, good: string): FlipMilestone[] {
-  const b = lower(bad)
-  const g = lower(good)
+const STRENGTH: Record<Dimension, string> = {
+  mental: 'When it happened, how much did it take over your thinking? (0 = not at all, 10 = completely)',
+  emotional: 'When the feeling came, how strong was it? (0 = barely there, 10 = as strong as it gets)',
+  relational: 'When it happened, how much did it hurt or upset you? (0 = not at all, 10 = a great deal)',
+  spiritual: 'How heavily did it weigh on you this week? (0 = not at all, 10 = very heavily)',
+  physical: 'How much did your body feel it? (0 = not at all, 10 = as bad as it gets)',
+}
+const IMPACT: Record<Dimension, string> = {
+  mental: 'How much did it get in the way of work, study or getting things done? (not at all, a little, a lot)',
+  emotional: 'How much did it get in the way of your day and the people in it? (not at all, a little, a lot)',
+  relational: 'How much did it get in the way of time with the people who matter to you? (not at all, a little, a lot)',
+  spiritual: 'How much did it take the meaning out of your week? (not at all, a little, a lot)',
+  physical: 'How much did it stop you doing what you wanted, day or night? (not at all, a little, a lot)',
+}
+
+/** The per-StateFlip X / Y / Z (stateFlipDetails.ts); thresholds and layers are the shared ones. */
+function steps(id: string, good: string): FlipMilestone[] {
+  const d = FLIP_DETAILS[id]
   return [
-    { id: 'X', title: 'Feels some relief', threshold: 45, layer: 'mood', what: `Notices ${b} sooner and can ease it for a while; a few better days a week.` },
-    { id: 'Y', title: 'Has a routine that helps', threshold: 65, layer: 'habit', what: `Keeps a short daily practice that brings ${g} on most days.` },
-    { id: 'Z', title: `${cap(g)} holds`, threshold: 85, layer: 'skill', what: `${cap(g)} holds without effort, even in a hard week. This is the StateFlip.` },
+    { id: 'X', title: 'First relief', threshold: 45, layer: 'mood', what: d.x },
+    { id: 'Y', title: 'A routine that helps', threshold: 65, layer: 'habit', what: d.y },
+    { id: 'Z', title: `${cap(lower(good))} holds`, threshold: 85, layer: 'skill', what: `${d.z} This is the StateFlip.` },
   ]
 }
 
-function markers(bad: string, good: string): FlipMarker[] {
-  const b = lower(bad)
-  const g = lower(good)
+function markers(id: string, dim: Dimension): FlipMarker[] {
+  const d = FLIP_DETAILS[id]
   return [
-    { label: 'How often', question: `On how many of the last 7 days did you have ${b}?`, bad: '5–7 days', good: '0–1 days' },
-    { label: 'How strong', question: 'When it came, how strong was it? (0 = not at all, 10 = as bad as it gets)', bad: '7–10', good: '0–2' },
-    { label: 'Got in the way', question: 'How much did it get in the way of your day? (not at all, a little, a lot)', bad: 'a lot', good: 'not at all' },
-    { label: `How close to ${g}`, question: `How close did you feel to ${g} this week? (1 = far, 5 = there)`, bad: '1–2', good: '4–5' },
+    { label: 'How often', question: `On how many of the last 7 days did you ${d.often}?`, bad: '5–7 days', good: '0–1 days' },
+    { label: 'How strong', question: STRENGTH[dim], bad: '7–10', good: '0–2' },
+    { label: 'Got in the way', question: IMPACT[dim], bad: 'a lot', good: 'not at all' },
+    { label: 'Good sign', question: `${d.sign} (1 = not at all, 5 = fully)`, bad: '1–2', good: '4–5' },
   ]
 }
 const MEASURE_SCALE = '0–100, higher is better: four questions, 25 points each, after each chapter. X at 45, Y at 65, Z (the flip) at 85.'
@@ -201,10 +216,29 @@ export const conceptId = (c: { sheet: string; id: string }) => `${c.sheet} ${c.i
 
 function dojoFor(d: Dimension, bad: string, good: string) {
   const want = tokens(bad, good)
-  const concepts = best(CONCEPTS, conceptText, want, 2).map(conceptId)
-  const duals = best(S.duals, (x) => dualText(x, d), want, 2).map((x) => x.id)
+  // Two shared words at least: one shared word linked "tension" to anything with "tension" in it (U145).
+  const concepts = best(CONCEPTS, conceptText, want, 2, 2).map(conceptId)
+  const duals = best(S.duals, (x) => dualText(x, d), want, 2, 2).map((x) => x.id)
   const skills = best(S.skills, (x) => `${x.name} ${x.role}`, want, 2).map((x) => x.id)
   return { concepts, duals, skills: skills.length ? skills : [SKILL_FALLBACK[d]] }
+}
+
+/**
+ * Needs checked by hand for StateFlips 01–10 (U145): `null` drops a keyword
+ * match that was wrong (pain matched “Stomach comfort”, low mood “Self-esteem”);
+ * a label fixes a row whose columns are shifted in the sheet. None beats wrong.
+ */
+const NEED_FIX: Record<string, null | { id: string; label: string }> = {
+  'SF-MEN-05': null, 'SF-EMO-01': null, 'SF-EMO-04': null, 'SF-EMO-05': null, 'SF-EMO-07': null,
+  'SF-SPI-03': null, 'SF-SPI-08': null, 'SF-PHY-04': null, 'SF-PHY-05': null, 'SF-PHY-06': null, 'SF-PHY-07': null,
+  'SF-PHY-01': { id: 'DI003', label: 'Improving Sleep Quality (Sleep disturbances, insomnia → Restful sleep)' },
+  'SF-PHY-10': { id: 'DI003', label: 'Improving Sleep Quality (Poor sleep hygiene → Sleep hygiene)' },
+}
+
+function fixedNeed(id: string, need: StateFlip['need'], good: string): StateFlip['need'] {
+  if (!(id in NEED_FIX)) return need
+  const f = NEED_FIX[id]
+  return f ? { id: f.id, kind: 'dual', label: f.label, source: from('DOJO workbook', 'DOJO_C_Duals', f.id) } : { id: '', kind: 'none', label: `${good} (no workbook row matches well enough)`, source: DRAFTED }
 }
 
 function needFor(d: Dimension, bad: string, good: string): StateFlip['need'] {
@@ -224,8 +258,8 @@ function issueFlip(d: Dimension, i: number): StateFlip {
   const bad = issue.label
   const good = goodOf(issue.dojo)
   const base: StateFlip = {
-    id, n: i + 1, dimension: d, title: `${bad} → ${lower(good)}`, need: needFor(d, bad, good), bad, good,
-    milestones: steps(bad, good), measure: { scale: MEASURE_SCALE, markers: markers(bad, good), source: DRAFTED },
+    id, n: i + 1, dimension: d, title: `${bad} → ${lower(good)}`, need: fixedNeed(id, needFor(d, bad, good), good), bad, good,
+    milestones: id === 'SF-PHY-01' ? [] : steps(id, good), measure: { scale: MEASURE_SCALE, markers: id === 'SF-PHY-01' ? [] : markers(id, d), source: DRAFTED },
     issues: [issue.id], sharedIssue: false, prevalence: issue.prevalence, prevalenceSource: issue.kind === 'measured' ? `${issue.source} (measured, personasV4 / personaConditionV4 sources)` : 'assumption (personaConditionV4)',
     layer: layerFor(d, bad, good), layerSource: DRAFTED, dojo: dojoFor(d, bad, good), origin: 'issue',
     source: `${from('DOJO workbook', 'DOJO_C_Duals', issue.dojo)}, via the persona condition issue “${issue.id}”`,
@@ -260,11 +294,16 @@ function extraFlips(d: Dimension, taken: Set<string>): StateFlip[] {
     if (!key || seen.has(key) || out.length >= 15) return
     seen.add(key)
     const n = 11 + out.length
+    const id = `SF-${dimCode(d)}-${n}`
+    const det = FLIP_DETAILS[id]
     const related = best(ISSUES[d], (i) => `${i.label} ${i.dojo} ${i.goal}`, tokens(bad, good), 1)[0] ?? ISSUES[d].find((i) => i.id === FALLBACK_ISSUE[d])!
+    const issues = det?.issues ?? [related.id]
+    const names = issues.map((x) => ISSUES[d].find((i) => i.id === x)?.label.toLowerCase() ?? x).join(', ')
     out.push({
-      id: `SF-${dimCode(d)}-${n}`, n, dimension: d, title: `${bad} → ${good.toLowerCase()}`, need, bad, good,
-      milestones: steps(bad, good), measure: { scale: MEASURE_SCALE, markers: markers(bad, good), source: DRAFTED },
-      issues: [related.id], sharedIssue: true, prevalence: `No population figure. Counted here as the people with the related issue “${related.label.toLowerCase()}”.`, prevalenceSource: DRAFTED,
+      id, n, dimension: d, title: `${bad} → ${good.toLowerCase()}`, need, bad, good,
+      milestones: steps(id, good), measure: { scale: MEASURE_SCALE, markers: markers(id, d), source: DRAFTED },
+      issues, sharedIssue: true, who: det?.who,
+      prevalence: `No population figure. Its own cohort: people whose ${DIMENSION_LABEL[d].toLowerCase()} issue is one of ${names}${det?.who ? `, who are ${WHO[det.who].label}` : ''}.`, prevalenceSource: DRAFTED,
       layer: layerFor(d, bad, good), layerSource: DRAFTED, dojo: dojoFor(d, bad, good), origin: 'workbook', source: src,
     })
   }
@@ -327,10 +366,10 @@ function groupOf(d: Dimension, issues: string[]) {
 
 /** Who has a StateFlip in the 1,000 v4 personas, and its chapters, chance and cost (computed). */
 export function flipNumbers(f: StateFlip): FlipNumbers {
-  const key = `${f.dimension}:${f.issues.join(',')}:${f.id === 'SF-PHY-01'}`
+  const key = `${f.dimension}:${f.issues.join(',')}:${f.who ?? ''}:${f.id === 'SF-PHY-01'}`
   const hit = NUM_CACHE.get(key)
   if (hit) return hit
-  const withIssue = groupOf(f.dimension, f.issues)
+  const withIssue = groupOf(f.dimension, f.issues).filter(({ p, c }) => !f.who || WHO[f.who].test(p, c))
   let out: FlipNumbers
   if (f.id === 'SF-PHY-01') {
     const w = whoHasIt()
@@ -348,7 +387,7 @@ export function flipNumbers(f: StateFlip): FlipNumbers {
     })
     out = {
       ...summarise(people), withIssue: withIssue.length, mainNeed: withIssue.filter(({ c }) => c.mainNeed === f.dimension).length, group: group.length, ids: group.map(({ p }) => p.id),
-      basis: `v4 personas whose ${DIMENSION_LABEL[f.dimension].toLowerCase()} issue is ${f.issues.join(', ')}, band not good, no risk flag. Start = their ${DIMENSION_LABEL[f.dimension].toLowerCase()} score. Same formulas as sleep.`,
+      basis: `v4 personas whose ${DIMENSION_LABEL[f.dimension].toLowerCase()} issue is ${f.issues.join(', ')}${f.who ? ` and who are ${WHO[f.who].label}` : ''}, band not good, no risk flag. Start = their ${DIMENSION_LABEL[f.dimension].toLowerCase()} score. Same formulas as sleep.`,
     }
   }
   NUM_CACHE.set(key, out)

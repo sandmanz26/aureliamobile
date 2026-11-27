@@ -17,22 +17,18 @@
 // Mild 60, Good 85): the cut points sit halfway between them.
 
 import { LENGTHS, PRESETS, clamp, goal, presetInputs, type CostInputs, type Stage } from './costModel'
+import { DIMENSION_IDS, FIVE_DIMENSIONS, type Dimension } from './dimensions'
 import { SCENARIOS, generatePersonasV4, type PersonaV4, type ScenarioId } from './personasV4'
 
 export const CONDITION_SEED = 20265
 
 /* ----------------------------------------------------------------- Types */
 
-export type Dimension = 'mental' | 'emotional' | 'relational' | 'spiritual' | 'physical'
-export const DIMENSIONS: Dimension[] = ['mental', 'emotional', 'relational', 'spiritual', 'physical']
-export const DIMENSION_LABEL: Record<Dimension, string> = { mental: 'Mental', emotional: 'Emotional', relational: 'Relational', spiritual: 'Meaning and purpose', physical: 'Physical' }
-export const DIMENSION_PLAIN: Record<Dimension, string> = {
-  mental: 'thinking, focus and worry',
-  emotional: 'feelings and mood',
-  relational: 'people around them',
-  spiritual: 'what makes life feel worthwhile',
-  physical: 'sleep, energy and body',
-}
+export type { Dimension }
+/** The shared five (dimensions.ts, U145): one list for StateFlips, personas, the Healing Map and the Therapeutic map. */
+export const DIMENSIONS: Dimension[] = DIMENSION_IDS
+export const DIMENSION_LABEL = Object.fromEntries(FIVE_DIMENSIONS.map((d) => [d.id, d.label])) as Record<Dimension, string>
+export const DIMENSION_PLAIN = Object.fromEntries(FIVE_DIMENSIONS.map((d) => [d.id, d.plain])) as Record<Dimension, string>
 
 export type CondBand = 'severe' | 'moderate' | 'mild' | 'good'
 export const COND_BANDS: CondBand[] = ['severe', 'moderate', 'mild', 'good']

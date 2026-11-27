@@ -19,6 +19,7 @@ import { isSleepNeed, personaSleepScore, severityOf } from './stateFlipSleep'
 import { akpSummary, akps } from './akps'
 import { identitiesV4, identityIncoherence, identitySummary } from './personaIdentityV4'
 import { stateFlipSummary, stateFlips } from './stateFlips'
+import { stateFlipCosts } from './stateFlipCosts'
 
 /**
  * Admin → Reports → Report metrics (U135, J186). Every headline number the
@@ -1022,6 +1023,46 @@ function costMetrics(): MetricDef[] {
       formula: 'Taken from the business owner’s plan; no data behind it yet.', shownAt: 'Cost report, the three learning stages', source: 'src/admin/data/costModel.ts (STAGES)',
       displayed: () => STAGES[1].success,
       assumption: 'The plan states 54% success at stage 1. Nobody has measured it: no real person has used Aurelia to sleep better yet.',
+    },
+    // U145 (J206): cost per StateFlip, per dimension, and the population-weighted cost per person.
+    {
+      id: 'cost-sf-flip-avg', report: 'cost', label: 'Average cost per flip, all 125 StateFlips (people-weighted)', unit: 'usd', good: 'down',
+      formula: 'Per StateFlip: cost per chapter × chapters played per person ÷ mean chance it works. Then Σ (group × cost per flip) ÷ Σ group over the 125.', shownAt: 'Cost report, Cost per StateFlip', source: 'src/admin/data/stateFlipCosts.ts',
+      displayed: () => stateFlipCosts().overallCostPerFlip,
+      compute: () => {
+        const c = stateFlipCosts()
+        const n = c.rows.reduce((t, r) => t + r.group, 0)
+        const s = c.rows.reduce((t, r) => t + r.group * r.costPerFlip, 0)
+        return {
+          value: s / n, n: c.rows.length,
+          inputs: [{ label: 'Cost per chapter', value: usd(c.costPerChapter), source: 'costModel.ts (Balanced, 10 min, stage 1)' }, { label: 'StateFlips with a group', value: `${c.rows.length}`, source: 'stateFlips.ts flipNumbers' }, { label: 'People across groups', value: `${n}`, source: 'personasV4.ts + personaConditionV4.ts' }],
+          steps: [`Σ group × cost per flip = ${usd(s)}; ÷ ${n} people = ${usd(s / n)}.`],
+          breakdown: { title: 'Each StateFlip', columns: ['StateFlip', 'People', 'Played', 'Chance', 'Cost per flip'], rows: c.rows.map((r) => ({ id: r.flip.id, cells: [r.flip.id, `${r.group}`, r.chaptersPlayed.toFixed(1), pctText(r.meanChance), usd(r.costPerFlip)] })) },
+        }
+      },
+    },
+    ...DIMENSIONS.map((d): MetricDef => ({
+      id: `cost-sf-dim-${d}`, report: 'cost', label: `Cost per flip · ${DIMENSION_LABEL[d]} StateFlips (people-weighted)`, unit: 'usd', good: 'down',
+      formula: 'Σ (group × cost per flip) ÷ Σ group over the dimension’s 25 StateFlips.', shownAt: 'Cost report, Cost per StateFlip by dimension', source: 'src/admin/data/stateFlipCosts.ts',
+      displayed: () => stateFlipCosts().byDimension.find((x) => x.dimension === d)!.costPerFlip,
+      compute: () => {
+        const rs = stateFlipCosts().rows.filter((r) => r.flip.dimension === d)
+        const n = rs.reduce((t, r) => t + r.group, 0)
+        const s = rs.reduce((t, r) => t + r.group * r.costPerFlip, 0)
+        return { value: s / n, n: rs.length, inputs: [{ label: 'StateFlips', value: `${rs.length}`, source: 'stateFlips.ts' }, { label: 'People across groups', value: `${n}`, source: 'stateFlips.ts flipNumbers' }], steps: [`${usd(s)} ÷ ${n} = ${usd(s / n)}.`] }
+      },
+    })),
+    {
+      id: 'cost-sf-population', report: 'cost', label: 'Average cost per person to reach the target (population-weighted)', unit: 'usd', good: 'down',
+      formula: 'Per person: (main need’s chapters + 0.5 × the other dimensions’) × the Balanced chapter cost, stage 1. Mean over people without a risk flag; the set is drawn from population weights.', shownAt: 'Cost report, Cost per StateFlip', source: 'src/admin/data/personaConditionV4.ts populationCost',
+      displayed: () => stateFlipCosts().population.averageCost, tolerance: 0.01,
+      compute: () => {
+        const ps = generatePersonasV4()
+        const cs = conditionsV4()
+        const xs = ps.map((p) => conditionForCost(p, cs.get(p.id)!)).filter((x) => !x.excluded)
+        const v = xs.reduce((t, x) => t + x.costPerPerson, 0) / xs.length
+        return { value: v, n: xs.length, inputs: [{ label: 'People included', value: `${xs.length}`, source: 'personasV4.ts' }, { label: 'Risk-flagged, left out', value: `${ps.length - xs.length}`, source: 'personaConditionV4.ts' }], steps: [`Σ cost per person ÷ ${xs.length} = ${usd(v)}.`] }
+      },
     },
   ]
 }

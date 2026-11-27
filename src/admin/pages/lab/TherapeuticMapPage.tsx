@@ -4,6 +4,7 @@ import { usePageTab } from '../../components/pageTab'
 import { RELEASES } from '../../../versions/releases'
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
+import { worldMappingLine } from '../../data/dimensions'
 import { Badge, PageHeader, Panel, type Tone } from '../../components/ui'
 import { VALUE_KIND_TEXT, WORLDS, sleepJourney, sleepProcess, triangle, type Corner, type CornerId, type CornerLink, type ValueKind, type World } from '../../data/therapeuticMap'
 import { DetailDrawerProvider, useDetail } from '../reports/DetailDrawer'
@@ -100,6 +101,9 @@ function TherapeuticMap() {
   return (
     <div className="flex flex-col gap-16">
       <PageHeader title="Therapeutic map" description="Product, business and wellness as one triangle, and the steps from a bad state to a good one." />
+      <p className="text-12 text-adm-muted" data-dimension-mapping>
+        Worlds on the shared five dimensions (dimensions.ts): {worldMappingLine(WORLDS.map((w) => ({ id: w.id, label: w.title })))}. All five sit under the wellness corner.
+      </p>
       {!RELEASES.adminNav2 && summaryBlock}
       <PageTabs
         summary={

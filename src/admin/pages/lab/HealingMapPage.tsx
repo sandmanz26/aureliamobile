@@ -4,6 +4,7 @@ import { usePageTab } from '../../components/pageTab'
 import { RELEASES } from '../../../versions/releases'
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
+import { worldMappingLine } from '../../data/dimensions'
 import { Badge, PageHeader, Panel, type Tone } from '../../components/ui'
 import {
   LINKS, MIN_PEOPLE_FOR_LEARNED, NODES, PROVENANCE_MEANING, PROVENANCE_TEXT, RING_LABEL, WORLDS,
@@ -170,6 +171,9 @@ function HealingMap() {
   return (
     <div className="flex flex-col gap-16">
       <PageHeader title="Healing Map" description="Which building blocks of a session tend to help which bad state, and where each link comes from." />
+      <p className="text-12 text-adm-muted" data-dimension-mapping>
+        Worlds on the shared five dimensions (dimensions.ts): {worldMappingLine(WORLDS.map((w) => ({ id: w.id, label: w.short })))}.
+      </p>
       {!RELEASES.adminNav2 && summaryBlock}
       <PageTabs
         summary={

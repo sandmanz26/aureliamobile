@@ -3,6 +3,7 @@ import { DIMENSIONS, ISSUES } from './personaConditionV4'
 import { sleepCohort, summarise } from './stateFlipFormulas'
 import { DOJO_LINKS, MILESTONES } from './stateFlipSleep'
 import { AKP_SOURCE } from './generated/akpSource'
+import { FLIP_DETAILS, WHO } from './stateFlipDetails'
 import { DRAFTED, STATEFLIP_DIMENSIONS, flipNumbers, stateFlipById, stateFlipSummary, stateFlips } from './stateFlips'
 
 const fs = stateFlips()
@@ -87,5 +88,40 @@ describe('the 125 StateFlips (U141)', () => {
         expect(n.costPerFlip, f.id).toBeGreaterThan(0)
       }
     }
+  })
+})
+
+describe('per-StateFlip steps, check-ins and cohorts (U145)', () => {
+  it('gives no two StateFlips the same milestone or check-in text', () => {
+    const whats = fs.flatMap((f) => f.milestones.map((m) => m.what))
+    expect(new Set(whats).size).toBe(whats.length)
+    expect(new Set(fs.map((f) => f.measure.markers[0].question)).size).toBe(125)
+    expect(new Set(fs.map((f) => f.measure.markers[3].question)).size).toBe(125)
+  })
+
+  it('has a written detail for every StateFlip but sleep, with cohort issues from its own dimension', () => {
+    for (const f of fs) {
+      if (f.id === 'SF-PHY-01') continue
+      const d = FLIP_DETAILS[f.id]
+      expect(d, f.id).toBeDefined()
+      if (f.n > 10) {
+        expect(d.issues?.length, f.id).toBeGreaterThan(0)
+        for (const i of d.issues!) expect(ISSUES[f.dimension].map((x) => x.id), `${f.id} ${i}`).toContain(i)
+        if (d.who) expect(WHO[d.who]).toBeDefined()
+      }
+    }
+  })
+
+  it('gives StateFlips 11–25 their own cohorts, so their numbers differ', () => {
+    for (const d of DIMENSIONS) {
+      const extra = fs.filter((f) => f.dimension === d && f.n > 10).map((f) => flipNumbers(f))
+      expect(new Set(extra.map((n) => n.ids.join(','))).size, d).toBeGreaterThanOrEqual(13)
+      for (const n of extra) expect(n.group).toBeGreaterThan(4)
+    }
+  })
+
+  it('drops keyword needs that were wrong and fixes shifted labels', () => {
+    expect(stateFlipById('SF-PHY-04')!.need.kind).toBe('none')
+    expect(stateFlipById('SF-PHY-01')!.need.id).toBe('DI003')
   })
 })

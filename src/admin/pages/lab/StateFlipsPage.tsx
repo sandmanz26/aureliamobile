@@ -15,6 +15,7 @@ import { DetailDrawerProvider, useDetail } from '../reports/DetailDrawer'
 import { Details, GoalLine } from '../reports/ReportSummary'
 import { RichText, Term } from '../reports/Term'
 import { AkpCatalogue, AllStateFlips } from './StateFlipsCatalogue'
+import { CHAPTER_PHASES, chapterNodeById } from '../../data/akpChapterGraph'
 
 /*
  * Admin → Product lab → StateFlips (U140, J202), for the business owner:
@@ -645,6 +646,21 @@ function CohortView() {
                 {d.metric}
               </span>
               <span className="text-11 text-adm-muted">DOJO: {d.dojo.join(', ')}</span>
+              {p.layer === 'mood' ? (
+                <span className="flex flex-col gap-4 text-12 text-adm-ink-2" data-akp-drivers>
+                  <span className="font-medium text-adm-ink">AKP drivers (chapter 1 as the template):</span>
+                  {CHAPTER_PHASES.map((ph) => (
+                    <span key={ph.id}>
+                      <span className="font-medium text-adm-ink">{ph.name}</span> ({pct(ph.share)}): {ph.drivers.map((id) => chapterNodeById(id)!.name).join(', ')}
+                    </span>
+                  ))}
+                  <span className="text-11 text-adm-muted">The 20 AKPs and 30 links are in AKP catalogue → How AKPs relate. Shares per phase: assumption.</span>
+                </span>
+              ) : (
+                <span className="text-11 text-adm-muted">
+                  <L l="assumption" /> No AKP drivers defined for this stretch yet: the curve here is the assumed {LAYER_TEXT[p.layer].name.toLowerCase()}-layer pace.
+                </span>
+              )}
             </li>
           )
         })}

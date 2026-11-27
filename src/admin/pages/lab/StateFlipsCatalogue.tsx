@@ -7,6 +7,8 @@ import { generatePersonasV4 } from '../../data/personasV4'
 import { DRAFTED, STATEFLIP_DIMENSIONS, flipNumbers, stateFlipById, stateFlipSummary, stateFlips, type StateFlip } from '../../data/stateFlips'
 import { LAYER_TEXT, type Layer } from '../../data/stateFlipSleep'
 import { useDetail } from '../reports/DetailDrawer'
+import { CHAPTER_GOAL, CHAPTER_LINKS, CHAPTER_LINK_TEXT, CHAPTER_MODALITIES, CHAPTER_PHASES, chapterNodeById, chapterNodes, type ChapterModality } from '../../data/akpChapterGraph'
+import { AkpGraph, type GraphLink, type GraphNode, type LinkStyle } from './AkpGraph'
 
 /*
  * Admin → Product lab → StateFlips, tabs "All StateFlips" and "AKP catalogue"
@@ -304,154 +306,348 @@ export function AllStateFlips() {
 
 /* -------------------------------------------------------- AKP catalogue */
 
-function FlipGraph({ flipId }: { flipId: string }) {
-  const open = useDetail()
-  const f = stateFlipById(flipId)!
-  const linked = akpsForFlip(flipId).filter((a) => a.kind === 'strategy' || a.id.startsWith(flipId.replace(/^SF-/, 'WG-') + '-'))
-  const groups = FAMILIES.map((fam) => ({ fam, items: linked.filter((a) => a.family === fam) })).filter((g) => g.items.length)
-  const W = 520
-  const H = 300
-  const cx = W / 2
-  const cy = H / 2
-  const n = linked.length || 1
-  let k = 0
-  const nodes = groups.flatMap((g) =>
-    g.items.map((a) => {
-      const t = (k++ / n) * Math.PI * 2 - Math.PI / 2
-      return { a, x: cx + Math.cos(t) * 200, y: cy + Math.sin(t) * 115 }
-    }),
-  )
+const MOD_BG: Record<ChapterModality, string> = { Script: 'bg-adm-s1', Music: 'bg-adm-s2', Voice: 'bg-adm-s3', Image: 'bg-adm-s4' }
+const MOD_FILL: Record<ChapterModality, string> = { Script: 'fill-adm-s1', Music: 'fill-adm-s2', Voice: 'fill-adm-s3', Image: 'fill-adm-s4' }
+
+const LINK_STYLES: Record<string, LinkStyle> = {
+  drives: { label: 'Drives', cls: 'stroke-adm-ink', width: 2 },
+  serves: { label: 'Serves', cls: 'stroke-adm-ink', width: 1.5 },
+  'part-of': { label: 'Part of', cls: 'stroke-adm-muted', width: 1.5 },
+  'step-of': { label: 'Step of', cls: 'stroke-adm-muted', width: 1.5 },
+  syncs: { label: 'Keeps time with', cls: 'stroke-adm-muted', width: 1.5, dash: '6 4' },
+  reinforces: { label: 'Reinforces', cls: 'stroke-adm-muted', width: 1.25, dash: '2 3' },
+  cues: { label: 'Cues', cls: 'stroke-adm-axis', width: 1.5, dash: '1 4' },
+  supports: { label: 'Supports', cls: 'stroke-adm-muted', width: 1.25, dash: '2 3' },
+  feeds: { label: 'Feeds', cls: 'stroke-adm-muted', width: 1.25 },
+  'fed-by': { label: 'Is fed by', cls: 'stroke-adm-muted', width: 1.25, dash: '6 4' },
+  mirrors: { label: 'Mirrors', cls: 'stroke-adm-axis', width: 1.5, dash: '1 4' },
+}
+
+const CHAPTER = 'chapter-1'
+const MAX_FLIP_NODES = 40
+
+function chapterItem(id: string) {
+  const n = chapterNodeById(id)!
+  const out = CHAPTER_LINKS.filter((l) => l.from === id)
+  const inc = CHAPTER_LINKS.filter((l) => l.to === id)
+  const phases = CHAPTER_PHASES.filter((p) => p.drivers.includes(id))
+  const name = (x: string) => (x === CHAPTER_GOAL.id ? CHAPTER_GOAL.name : chapterNodeById(x)?.name ?? x)
+  return {
+    kicker: `${n.id} · ${n.modality} · Sleep, chapter 1`,
+    title: n.name,
+    numbers: [
+      { label: 'Layer', value: n.layer },
+      { label: 'Modality', value: n.modality },
+      { label: 'Links', value: `${out.length + inc.length}` },
+      { label: 'Source', value: n.inCatalogue ? 'Catalogue' : 'Drafted' },
+    ],
+    extra: (
+      <div className="flex flex-col gap-10 text-12 text-adm-ink-2" data-chapter-node>
+        <p>{n.role}</p>
+        <p className="text-11 text-adm-muted">Source: {n.source}</p>
+        <Sub title="Drives the uplift in">
+          <p>{phases.map((p) => `${p.name} (minutes ${p.minutes[0]}–${p.minutes[1]})`).join(', ')}</p>
+        </Sub>
+        <Sub title="Links">
+          <ul className="flex flex-col gap-2">
+            {out.map((l) => (
+              <li key={`o${l.to}`}>
+                {CHAPTER_LINK_TEXT[l.type].verb} <span className="font-medium text-adm-ink">{name(l.to)}</span>
+              </li>
+            ))}
+            {inc.map((l) => (
+              <li key={`i${l.from}`}>
+                <span className="font-medium text-adm-ink">{name(l.from)}</span> {CHAPTER_LINK_TEXT[l.type].verb} this
+              </li>
+            ))}
+          </ul>
+        </Sub>
+      </div>
+    ),
+  }
+}
+
+function chapterGraph(): { nodes: GraphNode[]; links: GraphLink[] } {
+  return {
+    nodes: [
+      { id: CHAPTER_GOAL.id, label: CHAPTER_GOAL.name, group: 'Goal', fill: 'fill-adm-ink', dot: 'bg-adm-ink', goal: true },
+      ...chapterNodes().map((n) => ({ id: n.id, label: n.name, group: `${n.modality} · ${n.layer}`, fill: MOD_FILL[n.modality], dot: MOD_BG[n.modality], draft: !n.inCatalogue })),
+    ],
+    links: CHAPTER_LINKS.map((l) => ({ ...l })),
+  }
+}
+
+function flipGraph(flipId: string): { nodes: GraphNode[]; links: GraphLink[] } {
+  const goalId = flipId.replace(/^SF-/, 'WG-')
+  const goal = akpById(goalId)!
+  const steps = ['X', 'Y', 'Z'].map((m) => akpById(`${goalId}-${m}`)).filter((a): a is Akp => !!a)
+  const strategy = akps().filter((a) => a.kind === 'strategy' && a.flips.includes(flipId)).slice(0, MAX_FLIP_NODES)
+  const set = new Set([goalId, ...steps.map((a) => a.id), ...strategy.map((a) => a.id)])
+  const node = (a: Akp, isGoal = false): GraphNode => ({ id: a.id, label: isGoal ? a.id.replace('WG-', '') : a.name, group: `${FAMILY[a.family].label} · ${a.layer}`, fill: FAMILY_FILL[a.family], dot: FAMILY_BG[a.family], goal: isGoal, draft: !a.fromFile })
+  const links: GraphLink[] = [
+    ...steps.map((a) => ({ from: a.id, to: goalId, type: 'step-of' })),
+    ...strategy.map((a) => ({ from: a.id, to: goalId, type: 'serves' })),
+    ...strategy.flatMap((a) => a.links.filter((l) => set.has(l.to)).map((l) => ({ from: a.id, to: l.to, type: l.type }))),
+  ]
+  return { nodes: [node(goal, true), ...steps.map((a) => node(a)), ...strategy.map((a) => node(a))], links }
+}
+
+function Chip({ on, onClick, dot, children }: { on: boolean; onClick: () => void; dot?: string; children: ReactNode }) {
   return (
-    <div className="flex min-w-0 flex-col gap-8" data-flip-graph>
-      <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full max-w-[640px]" role="img" aria-label={`${linked.length} AKPs linked to ${f.id}, grouped by family`}>
-        {nodes.map(({ a, x, y }) => (
-          <line key={`l${a.id}`} x1={cx} y1={cy} x2={x} y2={y} className="stroke-adm-grid" strokeWidth={1} />
-        ))}
-        <circle cx={cx} cy={cy} r={30} className="fill-adm-ink" />
-        <text x={cx} y={cy + 4} textAnchor="middle" className="fill-adm-surface text-11 font-semibold">
-          {f.id.replace('SF-', '')}
-        </text>
-        {nodes.map(({ a, x, y }) => (
-          <g key={a.id} role="button" tabIndex={0} aria-label={`${a.id} ${a.name}`} className="cursor-pointer" onClick={() => open(akpItem(a))} onKeyDown={(e) => e.key === 'Enter' && open(akpItem(a))}>
-            <title>{`${a.id} ${a.name}`}</title>
-            <circle cx={x} cy={y} r={9} className={FAMILY_FILL[a.family]} />
-          </g>
-        ))}
-      </svg>
-      <ul className="flex flex-wrap gap-8 text-11 text-adm-ink-2">
-        {groups.map((g) => (
-          <li key={g.fam} className="inline-flex items-center gap-4">
-            <span className={`size-8 rounded-full ${FAMILY_BG[g.fam]}`} aria-hidden="true" />
-            {FAMILY[g.fam].label} {g.items.length}
-          </li>
-        ))}
-      </ul>
+    <button type="button" aria-pressed={on} onClick={onClick} className={`inline-flex items-center gap-4 rounded-full border px-10 py-4 text-11 font-medium ${on ? 'border-adm-ink bg-adm-ink text-adm-surface' : 'border-adm-line text-adm-ink-2 hover:bg-adm-hover'}`}>
+      {dot && <span className={`size-8 rounded-full ${dot}`} aria-hidden="true" />}
+      {children}
+    </button>
+  )
+}
+
+function StatCard({ dot, label, value, sub }: { dot?: string; label: string; value: number; sub?: string }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-2 rounded-8 border border-adm-line bg-adm-bg p-10">
+      <dt className="inline-flex min-w-0 items-center gap-4 text-11 text-adm-muted">
+        {dot && <span className={`size-8 shrink-0 rounded-full ${dot}`} aria-hidden="true" />}
+        <span className="truncate">{label}</span>
+      </dt>
+      <dd className="text-20 font-semibold tabular-nums text-adm-ink">{value.toLocaleString('en')}</dd>
+      {sub && <dd className="text-11 text-adm-muted">{sub}</dd>}
     </div>
   )
 }
 
-const PAGE = 50
+function ChapterPhases() {
+  const open = useDetail()
+  return (
+    <ol className="grid gap-8 lg:grid-cols-4" data-chapter-phases>
+      {CHAPTER_PHASES.map((p) => (
+        <li key={p.id} className="flex min-w-0 flex-col gap-6 rounded-8 border border-adm-line p-12">
+          <span className="text-12 font-semibold text-adm-ink">
+            {p.name} · minutes {p.minutes[0]}–{p.minutes[1]}
+          </span>
+          <span className="text-12 text-adm-ink-2">{p.what}</span>
+          <span className="text-11 text-adm-muted">About {pct(p.share)} of the chapter’s uplift (assumption)</span>
+          <ul className="flex flex-wrap gap-4">
+            {p.drivers.map((id) => {
+              const n = chapterNodeById(id)!
+              return (
+                <li key={id}>
+                  <button type="button" onClick={() => open(chapterItem(id))} className="inline-flex items-center gap-4 rounded-full border border-adm-line px-8 py-2 text-11 text-adm-ink hover:bg-adm-hover">
+                    <span className={`size-8 rounded-full ${MOD_BG[n.modality]}`} aria-hidden="true" />
+                    {n.name}
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+function RelationshipGraph() {
+  const open = useDetail()
+  const [focus, setFocus] = useState(CHAPTER)
+  const [mods, setMods] = useState<string[]>([])
+  const [layer, setLayer] = useState('all')
+  const isChapter = focus === CHAPTER
+  const base = useMemo(() => (isChapter ? chapterGraph() : flipGraph(focus)), [focus, isChapter])
+  const modOf = (n: GraphNode) => n.group.split(' · ')[0]
+  const layerOf = (n: GraphNode) => n.group.split(' · ').slice(1).join(' · ')
+  const modalities = [...new Set(base.nodes.filter((n) => !n.goal).map(modOf))]
+  const layers = [...new Set(base.nodes.filter((n) => !n.goal).map(layerOf))].sort()
+  const data = useMemo(() => {
+    const nodes = base.nodes.filter((n) => n.goal || ((!mods.length || mods.includes(modOf(n))) && (layer === 'all' || layerOf(n) === layer)))
+    const ids = new Set(nodes.map((n) => n.id))
+    return { nodes, links: base.links.filter((l) => ids.has(l.from) && ids.has(l.to)) }
+  }, [base, mods, layer])
+  const legend = isChapter ? CHAPTER_MODALITIES.map((m) => ({ label: m, dot: MOD_BG[m] })) : modalities.map((m) => ({ label: m, dot: FAMILY_BG[FAMILIES.find((f) => FAMILY[f].label === m)!] }))
+  const onOpen = (id: string) => {
+    if (isChapter && id !== CHAPTER_GOAL.id) return open(chapterItem(id))
+    const a = akpById(id)
+    if (a) open(akpItem(a))
+  }
+  const f = isChapter ? stateFlipById(CHAPTER_GOAL.flip)! : stateFlipById(focus)!
+  return (
+    <Panel
+      title="How AKPs relate"
+      description="Pick a StateFlip, or sleep chapter 1, to see its goal AKP in the middle and the strategy AKPs serving it around it. Hover a dot to light up its links; click it for the definition, links and source."
+    >
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,420px)_minmax(0,220px)]">
+        <Select
+          label="Focus"
+          value={focus}
+          onChange={(v) => {
+            setFocus(v)
+            setMods([])
+            setLayer('all')
+          }}
+          options={[[CHAPTER, 'Sleep · chapter 1 (AKP Graph Explorer)'], ...stateFlips().map((x) => [x.id, `${x.id} ${x.title}`] as [string, string])]}
+        />
+        <Select label="Layer" value={layer} onChange={setLayer} options={[['all', 'All layers'], ...layers.map((l) => [l, l] as [string, string])]} />
+      </div>
+      <div className="flex flex-wrap items-center gap-6" role="group" aria-label="Modality">
+        <span className="text-11 font-medium text-adm-muted">{isChapter ? 'Modality' : 'Family'}</span>
+        <Chip on={!mods.length} onClick={() => setMods([])}>
+          All
+        </Chip>
+        {modalities.map((m) => (
+          <Chip key={m} on={mods.includes(m)} dot={legend.find((g) => g.label === m)?.dot} onClick={() => setMods(mods.includes(m) ? mods.filter((x) => x !== m) : [...mods, m])}>
+            {m}
+          </Chip>
+        ))}
+      </div>
+      <p className="text-12 text-adm-ink-2">
+        {isChapter ? (
+          <>
+            <span className="font-semibold text-adm-ink">Sleep, chapter 1:</span> 20 strategy AKPs and 30 typed links across script, music, voice and image, all driving the first step of {f.id} ({f.title}). Script, music and image AKPs come from the catalogue; the four voice AKPs are drafted (dashed outline). Links and timings are drafted by us — to review.
+          </>
+        ) : (
+          <>
+            <span className="font-semibold text-adm-ink">{f.id}</span> {f.title}: its goal AKP, its X / Y / Z steps and the strategy AKPs linked to it by the catalogue
+            {base.nodes.length - 4 >= MAX_FLIP_NODES ? ` (first ${MAX_FLIP_NODES})` : ''}. Dashed outline: drafted by us.
+          </>
+        )}
+      </p>
+      <AkpGraph key={focus} nodes={data.nodes} links={data.links} linkStyles={LINK_STYLES} legend={legend} onOpen={onOpen} aria={`Network graph of ${data.nodes.length} AKPs and ${data.links.length} links for ${isChapter ? 'sleep chapter 1' : focus}`} />
+      {isChapter && (
+        <>
+          <h3 className="text-13 font-semibold text-adm-ink">Which AKPs drive each phase of the chapter</h3>
+          <ChapterPhases />
+        </>
+      )}
+    </Panel>
+  )
+}
+
+const PAGE = 40
+const MODALITY_LIST = ['Script', 'Music', 'Image', 'Video', '—'] as const
 
 export function AkpCatalogue() {
   const open = useDetail()
   const all = akps()
   const s = akpSummary()
-  const [family, setFamily] = useState('all')
+  const [families, setFamilies] = useState<AkpFamily[]>([])
   const [layer, setLayer] = useState('all')
   const [modality, setModality] = useState('all')
   const [src, setSrc] = useState('all')
   const [q, setQ] = useState('')
   const [limit, setLimit] = useState(PAGE)
-  const [flip, setFlip] = useState('SF-PHY-01')
-  const layers = useMemo(() => [...new Set(all.filter((a) => family === 'all' || a.family === family).map((a) => a.layer))].sort(), [all, family])
+  const layers = useMemo(() => [...new Set(all.filter((a) => !families.length || families.includes(a.family)).map((a) => a.layer))].sort(), [all, families])
+  const topLayers = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const a of all) if (a.kind === 'strategy') m.set(a.layer, (m.get(a.layer) ?? 0) + 1)
+    return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8)
+  }, [all])
+  const ql = q.trim().toLowerCase()
   const shown = all.filter(
     (a) =>
-      (family === 'all' || a.family === family) && (layer === 'all' || a.layer === layer) && (modality === 'all' || a.modality === modality) &&
-      (src === 'all' || (src === 'file') === a.fromFile) && (!q || `${a.id} ${a.name} ${a.description}`.toLowerCase().includes(q.toLowerCase())),
+      (!families.length || families.includes(a.family)) && (layer === 'all' || a.layer === layer) && (modality === 'all' || a.modality === modality) &&
+      (src === 'all' || (src === 'file') === a.fromFile) && (!ql || `${a.id} ${a.name} ${a.description}`.toLowerCase().includes(ql)),
   )
-  const reset = (f: (v: string) => void) => (v: string) => {
+  const reset = <T,>(f: (v: T) => void) => (v: T) => {
     f(v)
+    setLimit(PAGE)
+  }
+  const toggleFamily = (f: AkpFamily) => {
+    setFamilies(families.includes(f) ? families.filter((x) => x !== f) : [...families, f])
+    setLayer('all')
     setLimit(PAGE)
   }
   return (
     <div className="flex min-w-0 flex-col gap-16" data-akp-catalogue>
-      <section aria-label="Summary" className="flex min-w-0 flex-col gap-10 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20">
+      <section aria-label="Summary" className="flex min-w-0 flex-col gap-12 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20">
         <p className="max-w-[860px] text-16 font-semibold leading-snug text-adm-ink">
-          {s.total.toLocaleString('en')} draft AKPs: {s.byKind.goal} goal AKPs (what to reach) and {s.byKind.strategy} strategy and tactic AKPs (how). {s.fromFile} come straight from the workbooks; {s.drafted} are drafted by us, mostly the X / Y / Z steps. Every StateFlip is served by at least one strategy AKP ({s.flipsCovered} of {s.flips}; {s.flipsCoveredBeyondSkills} by more than a skill).
+          {s.total.toLocaleString('en')} draft AKPs: {s.byKind.goal} goal AKPs (what to reach) and {s.byKind.strategy} strategy and tactic AKPs (how). {s.fromFile} come straight from the workbooks; {s.drafted} are drafted by us, mostly the X / Y / Z steps. {s.flipsCovered} of {s.flips} StateFlips are served by at least one strategy AKP ({s.flipsCoveredBeyondSkills} by more than a skill).
         </p>
+        <h3 className="text-12 font-semibold text-adm-ink">By family</h3>
         <dl className="grid grid-cols-2 gap-8 lg:grid-cols-7">
           {FAMILIES.map((f) => (
-            <div key={f} className="flex min-w-0 flex-col gap-2 rounded-8 border border-adm-line bg-adm-bg p-10">
-              <dt className="inline-flex items-center gap-4 text-11 text-adm-muted">
-                <span className={`size-8 rounded-full ${FAMILY_BG[f]}`} aria-hidden="true" />
-                {FAMILY[f].label} ({FAMILY[f].prefix}-)
-              </dt>
-              <dd className="text-20 font-semibold tabular-nums text-adm-ink">{s.byFamily[f]}</dd>
-            </div>
+            <StatCard key={f} dot={FAMILY_BG[f]} label={`${FAMILY[f].label} (${FAMILY[f].prefix}-)`} value={s.byFamily[f]} sub={FAMILY[f].kind === 'goal' ? 'goal' : 'strategy'} />
           ))}
         </dl>
+        <div className="grid min-w-0 gap-12 lg:grid-cols-2">
+          <div className="flex min-w-0 flex-col gap-8">
+            <h3 className="text-12 font-semibold text-adm-ink">By modality (strategy AKPs)</h3>
+            <dl className="grid grid-cols-2 gap-8 lg:grid-cols-4">
+              {(['Script', 'Music', 'Image', 'Video'] as const).map((m) => (
+                <StatCard key={m} label={m} value={all.filter((a) => a.modality === m).length} />
+              ))}
+            </dl>
+          </div>
+          <div className="flex min-w-0 flex-col gap-8">
+            <h3 className="text-12 font-semibold text-adm-ink">Biggest strategy layers</h3>
+            <ul className="flex flex-col gap-4" data-layer-bars>
+              {topLayers.map(([l, n]) => (
+                <li key={l} className="grid grid-cols-[minmax(0,140px)_minmax(0,1fr)_36px] items-center gap-8 text-11 text-adm-ink-2">
+                  <span className="truncate" title={l}>
+                    {l}
+                  </span>
+                  <span className="h-8 rounded-full bg-adm-hover">
+                    <span className="block h-8 rounded-full bg-adm-s1" style={{ width: `${(n / topLayers[0][1]) * 100}%` }} />
+                  </span>
+                  <span className="text-right tabular-nums">{n}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
         <p className="text-12 text-adm-ink-2">
           By function: wellness {s.byFunction.wellness}, product {s.byFunction.product}, identity {s.byFunction.identity}, brand {s.byFunction.brand} (waiting for the marketing sheet). {s.links} typed links between AKPs. All are status “draft”.
         </p>
       </section>
 
-      <Panel title="One StateFlip’s AKPs" description="The strategy AKPs linked to one StateFlip, and its own steps, coloured by family. Tap a dot for its detail.">
-        <div className="max-w-[420px]">
-          <Select label="StateFlip" value={flip} onChange={setFlip} options={stateFlips().map((f) => [f.id, `${f.id} ${f.title}`] as [string, string])} />
-        </div>
-        <FlipGraph flipId={flip} />
-      </Panel>
+      <RelationshipGraph />
 
-      <Panel title="AKP catalogue" description="Filter by family, layer, modality and source, or search. Open a row for its links and the StateFlips it serves.">
-        <div className="grid grid-cols-2 gap-8 lg:grid-cols-5">
-          <Select label="Family" value={family} onChange={(v) => { reset(setFamily)(v); setLayer('all') }} options={[['all', 'All'], ...FAMILIES.map((f) => [f, FAMILY[f].label] as [string, string])]} />
+      <Panel title="All AKPs" description="Search, or narrow by family, layer, modality and source. Open one for its definition, links, the StateFlips it serves and its source.">
+        <label className="flex min-w-0 flex-col gap-4 text-11 font-medium text-adm-muted">
+          Search
+          <input value={q} onChange={(e) => reset(setQ)(e.target.value)} placeholder="e.g. breath, rain, calm" className={inputClass} />
+        </label>
+        <div className="flex flex-wrap items-center gap-6" role="group" aria-label="Family">
+          <Chip on={!families.length} onClick={() => reset(setFamilies)([])}>
+            All families
+          </Chip>
+          {FAMILIES.map((f) => (
+            <Chip key={f} on={families.includes(f)} dot={FAMILY_BG[f]} onClick={() => toggleFamily(f)}>
+              {FAMILY[f].label}
+            </Chip>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <Select label="Layer" value={layer} onChange={reset(setLayer)} options={[['all', 'All'], ...layers.map((l) => [l, l] as [string, string])]} />
-          <Select label="Modality" value={modality} onChange={reset(setModality)} options={[['all', 'All'], ['Script', 'Script'], ['Music', 'Music'], ['Image', 'Image'], ['Video', 'Video'], ['—', 'None']]} />
+          <Select label="Modality" value={modality} onChange={reset(setModality)} options={[['all', 'All'], ...MODALITY_LIST.map((m) => [m, m === '—' ? 'None' : m] as [string, string])]} />
           <Select label="Source" value={src} onChange={reset(setSrc)} options={[['all', 'All'], ['file', 'From file'], ['drafted', 'Drafted by us']]} />
-          <label className="col-span-2 flex min-w-0 flex-col gap-4 text-11 font-medium text-adm-muted lg:col-span-1">
-            Search
-            <input value={q} onChange={(e) => reset(setQ)(e.target.value)} placeholder="e.g. breath" className={inputClass} />
-          </label>
         </div>
         <p className="text-12 text-adm-muted" aria-live="polite">
-          {shown.length} of {all.length}
+          {shown.length.toLocaleString('en')} of {all.length.toLocaleString('en')}
         </p>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[680px] text-left text-12" data-akp-table>
-            <thead>
-              <tr className="border-b border-adm-line text-11 text-adm-muted">
-                <th className="py-6 pr-10 font-medium">AKP</th>
-                <th className="py-6 pr-10 font-medium">Family</th>
-                <th className="py-6 pr-10 font-medium">Layer</th>
-                <th className="py-6 pr-10 text-right font-medium">Goals served</th>
-                <th className="py-6 font-medium">Source</th>
-              </tr>
-            </thead>
-            <tbody>
-              {shown.slice(0, limit).map((a) => (
-                <tr key={a.id} className="border-b border-adm-line last:border-0">
-                  <td className="py-6 pr-10">
-                    <button type="button" onClick={() => open(akpItem(a))} className="inline-flex items-start gap-6 text-left text-adm-ink hover:underline">
-                      <span className="shrink-0 tabular-nums text-adm-muted">{a.id}</span>
-                      <span>{a.name}</span>
-                    </button>
-                  </td>
-                  <td className="py-6 pr-10 text-adm-ink-2">
-                    <span className="inline-flex items-center gap-4">
-                      <span className={`size-8 shrink-0 rounded-full ${FAMILY_BG[a.family]}`} aria-hidden="true" />
-                      {FAMILY[a.family].label}
-                    </span>
-                  </td>
-                  <td className="py-6 pr-10 text-adm-ink-2">{a.layer}</td>
-                  <td className="py-6 pr-10 text-right tabular-nums">{a.flips.length}</td>
-                  <td className="py-6">
-                    <SourceBadge source={a.source} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ul className="flex flex-col divide-y divide-adm-line rounded-8 border border-adm-line" data-akp-list>
+          {shown.slice(0, limit).map((a) => (
+            <li key={a.id}>
+              <button type="button" onClick={() => open(akpItem(a))} className="flex w-full min-w-0 flex-col gap-6 px-12 py-10 text-left hover:bg-adm-hover lg:flex-row lg:items-center lg:gap-12">
+                <span className="flex min-w-0 flex-1 flex-col gap-2">
+                  <span className="inline-flex min-w-0 items-center gap-6 text-13 font-semibold text-adm-ink">
+                    <span className={`size-8 shrink-0 rounded-full ${FAMILY_BG[a.family]}`} aria-hidden="true" />
+                    <span className="min-w-0 truncate">{a.name}</span>
+                  </span>
+                  <span className="truncate text-11 text-adm-muted">
+                    {a.id} · {a.description}
+                  </span>
+                </span>
+                <span className="flex flex-wrap items-center gap-4 lg:justify-end">
+                  <span className="rounded-full bg-adm-hover px-8 py-2 text-11 text-adm-ink-2">{FAMILY[a.family].label}</span>
+                  <span className="max-w-[200px] truncate rounded-full bg-adm-hover px-8 py-2 text-11 text-adm-ink-2" title={a.layer}>
+                    {a.layer}
+                  </span>
+                  {a.modality !== '—' && <span className="rounded-full bg-adm-hover px-8 py-2 text-11 text-adm-ink-2">{a.modality}</span>}
+                  {a.flips.length > 0 && <span className="rounded-full bg-adm-hover px-8 py-2 text-11 tabular-nums text-adm-ink-2">{a.flips.length} {a.flips.length === 1 ? 'goal' : 'goals'}</span>}
+                  <SourceBadge source={a.source} />
+                </span>
+              </button>
+            </li>
+          ))}
+          {!shown.length && <li className="px-12 py-10 text-12 text-adm-muted">No AKP matches. Clear a filter or the search.</li>}
+        </ul>
         {shown.length > limit && (
           <button type="button" onClick={() => setLimit(limit + PAGE)} className="self-start rounded-8 border border-adm-line px-12 py-6 text-12 font-medium text-adm-ink hover:bg-adm-hover">
             Show {Math.min(PAGE, shown.length - limit)} more

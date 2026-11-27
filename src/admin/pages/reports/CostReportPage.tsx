@@ -11,6 +11,8 @@ import {
   type Anchor, type CostInputs, type GoalInputs, type Media, type MediaCost, type NodeId, type NumberLabel, type Personalisation, type Stage,
 } from '../../data/costModel'
 import { COST_FINDINGS } from '../../data/reportSources'
+import { DIMENSIONS, DIMENSION_LABEL, type Dimension } from '../../data/personaConditionV4'
+import { stateFlipCosts } from '../../data/stateFlipCosts'
 import { SourcesSection } from './ReportParts'
 import { buildIterationMap, mapFor } from '../../data/iterationMap'
 import { DetailDrawerProvider } from './DetailDrawer'
@@ -310,6 +312,10 @@ function CostReport() {
 
       <section id="metric-lines" className="scroll-mt-16">
         <MetricLines stages={stages} />
+      </section>
+
+      <section id="cost-per-stateflip" className="scroll-mt-16">
+        <StateFlipCostSection />
       </section>
 
       </Details>
@@ -685,6 +691,146 @@ function MetricLines({ stages }: { stages: { st: Stage; r: ReturnType<typeof goa
             ))}
           </tbody>
         </table>
+      </div>
+    </Panel>
+  )
+}
+
+/* ------------------------------------------- Cost per StateFlip (U145, J206) */
+
+const FLIP_SOURCES: { what: string; where: string }[] = [
+  { what: 'The 125 StateFlips and who each is for', where: 'src/admin/data/stateFlips.ts and stateFlipDetails.ts (cohorts of StateFlips 11–25)' },
+  { what: 'The 1,000 people and their condition', where: 'src/admin/data/personasV4.ts and personaConditionV4.ts (population-weighted draw)' },
+  { what: 'Chapters, chance it works, drop-out', where: 'src/admin/data/stateFlipFormulas.ts (the sleep formulas, generalised); sleep itself from stateFlipSleep.ts' },
+  { what: 'Population-weighted cost per person', where: 'personaConditionV4.populationCost (main need’s chapters + half of the others’, Balanced, stage 1)' },
+  { what: 'Cost per chapter', where: 'src/admin/data/costModel.ts: Balanced preset, 10 minutes, stage 1, from the supplier catalogue above' },
+  { what: 'Supplier prices', where: 'costModel.ts SUPPLIERS: each price as stated, with its date and link (the Supplier catalogue panel)' },
+  { what: 'Stage uplift, success and cost factor', where: 'The spec PDF (the business owner’s plan, §5): scenario, not measured' },
+  { what: 'StateFlip names, needs and DOJO links', where: 'The business owner’s workbooks in docs/briefs/*.xlsx (DOJO, Deeksha, Grand 4 layers), read by scripts/akp/extract.py' },
+]
+
+function StateFlipCostSection() {
+  const c = stateFlipCosts()
+  const [dim, setDim] = useState<Dimension | 'all'>('all')
+  const [sort, setSort] = useState<'id' | 'cost'>('cost')
+  const rows = c.rows.filter((r) => dim === 'all' || r.flip.dimension === dim).sort((a, b) => (sort === 'cost' ? a.costPerFlip - b.costPerFlip : a.flip.id.localeCompare(b.flip.id)))
+  const max = Math.max(...c.rows.map((r) => r.costPerFlip))
+  const p = c.population
+  return (
+    <Panel title="Cost per StateFlip" description="What it costs to flip one person, for each of the 125 StateFlips, by dimension, and the average cost per person across the population. Stage 1, Balanced, 10-minute chapters. Computed from the persona set; nothing measured.">
+      <dl className="grid grid-cols-2 gap-8 lg:grid-cols-4">
+        <Stat label="Average cost per flip, all 125" value={usd(c.overallCostPerFlip)} note="Weighted by the people in each StateFlip’s group" lab="estimate" />
+        <Stat label="Average cost per person (population)" value={usd(p.averageCost)} note={`${p.people} people, ${p.excluded} risk-flagged left out`} lab="estimate" />
+        <Stat label="Cost per chapter" value={usd(c.costPerChapter)} note="Balanced, 10 minutes, stage 1" lab="estimate" />
+        <Stat label="Cheapest → dearest StateFlip" value={`${usd(Math.min(...c.rows.map((r) => r.costPerFlip)))} → ${usd(max)}`} note="Per flip" lab="estimate" />
+      </dl>
+
+      <h3 className="text-13 font-semibold text-adm-ink">By dimension</h3>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px] text-left text-12" data-flip-cost-dims>
+          <thead className="text-11 uppercase tracking-wider text-adm-muted">
+            <tr className="border-b border-adm-line">
+              {['Dimension', 'StateFlips', 'People in groups', 'Cost per flip (weighted)', 'Cheapest', 'Dearest', 'Population cost per person, main need here'].map((h) => (
+                <th key={h} className="py-6 pr-12 font-semibold">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {c.byDimension.map((d) => (
+              <tr key={d.dimension} className="border-b border-adm-line tabular-nums last:border-0">
+                <td className="py-8 pr-12 font-semibold text-adm-ink">{DIMENSION_LABEL[d.dimension]}</td>
+                <td className="py-8 pr-12">{d.flips}</td>
+                <td className="py-8 pr-12">{d.people.toLocaleString('en')}</td>
+                <td className="py-8 pr-12 font-semibold">{usd(d.costPerFlip)}</td>
+                <td className="py-8 pr-12" title={d.cheapest.flip.title}>
+                  {d.cheapest.flip.id} {usd(d.cheapest.costPerFlip)}
+                </td>
+                <td className="py-8 pr-12" title={d.dearest.flip.title}>
+                  {d.dearest.flip.id} {usd(d.dearest.costPerFlip)}
+                </td>
+                <td className="py-8">
+                  {usd(p.byNeed[d.dimension].averageCost)} <span className="text-adm-muted">({p.byNeed[d.dimension].people} people)</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <h3 className="text-13 font-semibold text-adm-ink">Every StateFlip</h3>
+      <div className="flex flex-wrap items-end gap-8">
+        <label className="flex flex-col gap-4 text-11 font-medium text-adm-muted">
+          Dimension
+          <select value={dim} onChange={(e) => setDim(e.target.value as Dimension | 'all')} className={inputClass}>
+            <option value="all">All five</option>
+            {DIMENSIONS.map((d) => (
+              <option key={d} value={d}>
+                {DIMENSION_LABEL[d]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <Segmented<number> options={[{ v: 0, t: 'Cheapest first' }, { v: 1, t: 'By id' }]} value={sort === 'cost' ? 0 : 1} onChange={(v) => setSort(v === 0 ? 'cost' : 'id')} />
+      </div>
+      <div className="max-h-[480px] overflow-auto rounded-8 border border-adm-line">
+        <table className="w-full min-w-[680px] text-left text-12" data-flip-cost-table>
+          <thead className="sticky top-0 bg-adm-surface text-11 text-adm-muted">
+            <tr className="border-b border-adm-line">
+              {['StateFlip', 'People', 'Chapters (middle)', 'Played', 'Chance', 'Cost per flip'].map((h) => (
+                <th key={h} className="px-8 py-6 font-medium">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.flip.id} className="border-b border-adm-line tabular-nums last:border-0">
+                <td className="px-8 py-6 text-adm-ink">
+                  <span className="text-adm-muted">{r.flip.id}</span> {r.flip.title}
+                </td>
+                <td className="px-8 py-6">{r.group}</td>
+                <td className="px-8 py-6">{r.medianChapters}</td>
+                <td className="px-8 py-6">{r.chaptersPlayed.toFixed(1)}</td>
+                <td className="px-8 py-6">{pct(r.meanChance)}</td>
+                <td className="px-8 py-6">
+                  <span className="flex items-center gap-6">
+                    <span className="h-6 rounded-full bg-adm-s1" style={{ width: `${Math.max(4, (r.costPerFlip / max) * 80)}px` }} aria-hidden="true" />
+                    <span className="font-semibold">{usd(r.costPerFlip)}</span>
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="flex flex-col gap-6 rounded-8 border border-adm-line bg-adm-bg p-12 text-12 text-adm-ink-2" data-flip-cost-formulas>
+        <h3 className="text-13 font-semibold text-adm-ink">Formulas</h3>
+        <p>
+          <span className="font-semibold text-adm-ink">Cost per flip</span> = cost per chapter ({usd(c.costPerChapter)}) × chapters played per person on average ÷ the group’s mean chance it works. Chapters played counts each chapter a person is still going at, so people who stop cost what they used.
+        </p>
+        <p>
+          <span className="font-semibold text-adm-ink">Per dimension</span> = Σ (people in a StateFlip’s group × its cost per flip) ÷ Σ people, over its 25 StateFlips. A person in two groups counts in both.
+        </p>
+        <p>
+          <span className="font-semibold text-adm-ink">Average cost per person (population)</span> = Σ each person’s cost to reach their target ÷ {p.people} people (risk-flagged left out). Each person’s cost = (their main need’s chapters + 0.5 × the other dimensions’) × the Balanced chapter cost. The persona set is drawn from population weights, so the plain mean is the population-weighted mean. It answers a different question from cost per flip: one person’s whole journey, without dividing by the chance it works.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-6" data-flip-cost-sources>
+        <h3 className="text-13 font-semibold text-adm-ink">Where these numbers come from</h3>
+        <ul className="flex flex-col gap-4 text-12 text-adm-ink-2">
+          {FLIP_SOURCES.map((s) => (
+            <li key={s.what} className="grid gap-2 lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)] lg:gap-12">
+              <span className="font-medium text-adm-ink">{s.what}</span>
+              <span>{s.where}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="text-11 text-adm-muted">No real person has used Aurelia yet: chapters and chance are modelled, the stage figures are the spec’s scenario, prices are suppliers’ list prices.</p>
       </div>
     </Panel>
   )
