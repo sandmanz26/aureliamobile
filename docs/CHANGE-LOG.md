@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-27 — Released to production (U144, J205)
+
+Therapeutic map, Healing Map, Report metrics, StateFlips and the new admin menu are now on production too.
+
+Branches: `web_app`, `admin_cms`, `web_prod`.
+
 ### 2026-11-27 — Tidy admin sidebar (U143, J204)
 
 On staging the admin rail is shorter and calmer: four sections, only the current one open, one style for every row.

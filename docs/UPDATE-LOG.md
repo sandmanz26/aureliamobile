@@ -169,6 +169,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U130 | `9a6c520` | 2026-11-25 | Buyer agent report made visual. It has funnels per test (5, 6, 7), a people grid (one mark per simulated person, which opens a drawer), a who-says-yes heat map, a price ladder against $10, ranked reasons for no with quotes, a slope chart of what moved people, and a cleaner trend across tests. | [patch](patches/U130-9a6c520.patch) |
 | U131 | `1634d0c` | 2026-11-25 | Product lab, staging only (`RELEASES.therapeuticMaps`). The **Therapeutic map** shows the Product, Business and Wellness triangle with targets, the 7-step sleep process and five worlds. The **Healing Map** has three rings (9 bad states, 14 building blocks, 9 good states) and 45 links: 36 design samples, 9 research-cited, 0 learned. It has filters, zoom and a drawer. | [patch](patches/U131-1634d0c.patch) |
 | U132 | `542ade2` | 2026-11-25 | B2B2C round 2. It adds 28 new web sources and the buyer tests, and re-ranks the channels: creator journey with a free first week, then a self-serve team plan, then codes and gifting. It lists 22 features (10 Now), on wiki pages round-2 and features and in Reports → B2B2C report (a feature board with a drawer). | [patch](patches/U132-542ade2.patch) |
+| U144 | `ba6c091` | 2026-11-27 | Released to production on request ("push ke prod"): flags therapeuticMaps, reportMetrics, stateFlips and adminNav2 set to true; web_prod fast-forwarded. Production build smoke-tested (Start here, StateFlips, Report metrics, Healing Map, Cost: no errors). | [patch](patches/U144-ba6c091.patch) |
 | U143 | `38a9a5e` | 2026-11-27 | Admin rail redesigned (nav v2, staging only): Start here pinned; AI brain, Reports, Research, Operations (sample data, collapsed); only the current section opens; 36px single-line rows, no group descriptions (tooltips), no sub-labels or guide lines, white/10 active fill with a 2px gold indicator, gold focus ring; older pages off the rail but in search; one build badge. Production nav unchanged. | [patch](patches/U143-38a9a5e.patch) |
 | U142 | `286d996` | 2026-11-27 | Admin nav v2 (flag adminNav2, staging only): menu review of 34 items (13 renamed, 6 groups: Start here, AI brain, Reports & decisions, Research, Operations — sample data, Wiki; 3 duplicates labelled), Summary | Detail tabs on 13 pages (URL ?tab=detail), Start here page, design picker hidden on /admin, compact header, 12px minimum, tours on a button, labelled Details icon. Production unchanged. | [patch](patches/U142-286d996.patch) |
 | U141 | `7e6156e` | 2026-11-27 | Point B (staging only): 125 StateFlips (25 per dimension; 98 tied to a Deeksha universal need), a draft AKP catalogue of 1,046 (547 goal, 499 strategy/tactic; 637 from the workbooks, 409 drafted; 653 links; brand empty pending the marketing sheet), personas with 12 Wellness Identity dimensions and a 4-function mindspace. StateFlips page gains All StateFlips and AKP catalogue tabs. Sleep numbers unchanged. | [patch](patches/U141-7e6156e.patch) |
@@ -183,6 +184,13 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U144 — Release to production
+
+- **Commit:** `ba6c091` · 2026-11-27.
+- **Request:** "push ke prod".
+- **Interpretation:** release everything waiting on staging so the business owner sees it: the four staging-only flags on, then fast-forward web_prod.
+- **Revert:** set the four flags back to `BUILD.environment !== 'production'`.
 
 ### U143 — Tidy admin sidebar
 
