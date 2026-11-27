@@ -23,3 +23,20 @@ A structured knowledge base the Causal AI navigates: **goals** (5 dimensions →
 - Screenshot of another Google Sheet (name and link not visible in the forward; tabs: Brand outcomes, Audience Development Skills, Marketing m…, …s & States, Brand Archetypes, **ReadMe**, Campaign Contexts). The ReadMe lists AKP types for **marketing**, mirroring the wellness AKPs: 40 high-level campaign goals (awareness, trust, engagement…); 80 cognitive/emotional levers (authority, relatability, storytelling…); 80 functional causal levers (pattern interrupt, timing hacks…); 120 audience affect/cognitive states (curiosity…); 200 long-term growth vectors (trust consistency, community…); 40 macro strategies (educational, narrative, testimonial…); 300 tactical units (CTA phrasing, metaphor, meme formats…); 100 story arcs (hero's journey, problem → solution, case study…); 60 persona voices (guide, mentor, rebel, sage, healer…); 100 emotional aesthetics (warm, authoritative, playful, satiric…); 80 situational anchors (seasonal events, cultural rituals…); 80 delivery ecosystems (LinkedIn, Instagram, TikTok, YouTube…); 150 real-time adaptive knobs (length, CTA intensity, persona…).
 - His words: "In this link… check read me tab. And upload those whole doc to Claude and let it understand AKPs better. Like these wellness AKPs we already have" (pointing at the Grand 4 layers strategy/tactics sheet).
 - Our reading: the same goal → strategy → tactic AKP logic applies to Business (marketing), which fits the AI brain (A1): Business gets its own AKPs and StateFlips like Wellness. **Needs the file exported as .xlsx** (the link is not in the forward).
+
+## Product owner's summary and the cross-checked backlog (J197)
+The product owner's five points (27 Nov): 1 graph over time with therapeutic metrics; 2 better explanation and detail for bad to good sleep; 3 detail how it is calculated; 4 AKPs added to our agent as the main item (the owner sets priority and how it is used; partly added from the Notion export); 5 improve the persona system (screenshots to come).
+
+Cross-check against his asks A22–A30: all five map to them. Not in the five, so added: the 125 StateFlips (A27, A29), the Meta → Path → Script system logic in the admin (A28), the five worlds deepened from Deeksha (A26), marketing AKPs (A30). Still open from before: A1–A8 (AI brain, therapeutic funnel, feature ranking, weekly report), O-items.
+
+| # | Backlog item | His ask | Owner's point | Needs |
+|---|---|---|---|---|
+| B1 | Chapter graph over time (cohort view) for bad to good sleep: score per chapter 25 → 85, therapeutic metrics, drivers | A22 | 1, 2 | — |
+| B2 | "Chance it works" and "chapters to flip" rebuilt as transparent formulas with a worked example | A23 | 3 | — |
+| B3 | AKPs as the main item: goal AKPs vs strategy AKPs, tournaments, the Grand 4 layers map | A24, A27 | 4 | owner's priority and usage |
+| B4 | Personas as their own AI system: 12 Wellness Identity dimensions + Light sub-dimensions, joined to the condition model | A25 | 5 | owner's screenshots |
+| B5 | 125 StateFlips (25 per dimension), each with need, bad/good, X → Y → Z, measures, AKPs, chapters, chance, cost | A27, A29 | (new) | — |
+| B6 | System logic in the admin: Meta → Path → Script cascade and BAR / ELEMENTS | A28 | (new) | — |
+| B7 | Five worlds deepened with Deeksha pillars and 151 universal needs | A26 | (new, feeds B5) | — |
+| B8 | Marketing AKPs for Business | A30 | (new) | the .xlsx |
+| B9 | Then: therapeutic funnel, cost per StateFlip, buyer test 8, AI brain and weekly report | A1–A7 | (later) | — |
