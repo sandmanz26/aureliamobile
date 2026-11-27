@@ -23,7 +23,9 @@
 | --- | --- | --- | --- |
 | A22 | Graph over time, cohort view: how each of the 42 chapters adds up to the sleep StateFlip (25 → 85) and what drives each step | row 42 | received, waiting for the rest of his message |
 | A23 | Explain how "chance it works" (54%) is calculated, as a transparent prediction | row 42 | received |
-| A24 | Understand AKPs (about 120,000 building blocks) and entities, the AKP and AI-model tournaments; read the "Grand 4 layers - APK - master knowledge" sheet | row 42 | received; sheet needs an export or access |
+| A24 | Understand AKPs (about 120,000 building blocks) and entities, the AKP and AI-model tournaments; read the "Grand 4 layers - APK - master knowledge" sheet | row 42 | received; sheet saved (row 43) |
+| A25 | Expand personas into the 12 Wellness Identity dimensions (Grand tab): each persona as its own AI system | row 43 | received, structure message still coming |
+| A26 | Five wellness worlds with more depth, using Deeksha pillars (4 + 11) and 151 universal needs | row 43 | received |
 | A1 | AI brain: Product, Wellness, Business, each with metrics, MVP targets and a prediction model, connected | row 40 | planned (step 3–4) |
 | A2 | 5 dimensions × top 10 issues, cost of bad to good each, baseline then real figures | rows 39–40 | planned (step 1, first) |
 | A3 | Bad-to-good slider dynamics for every scenario, not only sleep | row 40 | planned (step 1) |
@@ -150,8 +152,9 @@ Also: his "mathematical inevitability" thesis (meta-AI, momondo of AI, 5B state-
 | 40 | 2026-11-25 19.05–23.19 | **The AI brain.** 5 dimensions (mental, emotional, relational, spiritual, physical): top 10 issues each and the cost of moving bad to good, as a baseline adjusted by real figures ("our golden standard"); connect to the bad-to-good slider graph for every scenario; a **therapeutic funnel in Product lab**; Product, Wellness and Business each with core metrics, MVP targets and a prediction model "in the same manner as wellness", talking to each other like departments; every update ranked against the MVP targets, buyer agents populating the feature ranking; backend follows by reverse engineering; weekly summary as a report. "Use our time and compute wisely" | `docs/briefs/2026-11-25-chat-ai-brain.md` | J187, J188 | **planned** (AI Brain v1, steps 1–5) |
 | 41 | 2026-11-26 | The DOJO objective-learning workbook (17 sheets: VES, DOJO concepts, duals and nuances, causal layers, skills) | `docs/briefs/2026-11-26-dojo-objective-learning.xlsx` | J187 | **saved**; source for the 5 dimensions |
 | 42 | 2026-11-26 20.54–21.24 | Cohort graph of how each chapter adds to the sleep StateFlip; how "chance it works" 54% is calculated; AKPs (120,000 building blocks, entities as gateways), tournaments of AKPs and AI models, old admin's AKP Graph Explorer, and the Google Sheet "Grand 4 layers - APK - master knowledge" | `docs/briefs/2026-11-27-chat-chapters-akp.md` + folder | J192 | **received, more coming** |
+| 43 | 2026-11-26 21.26–21.35 | Personas as their own AI system: the Wellness Identity AKP dimensions (Grand 12, Light 35); five wellness worlds deepened from the Deeksha 12P pillars and UN universal needs; plus the Grand 4 layers AKP master sheet | `docs/briefs/2026-11-27-chat-persona-dimensions.md` + three .xlsx | J193 | **received, more coming** |
 
-**42 rows.**
+**43 rows.**
 
 ---
 
@@ -366,6 +369,7 @@ Deep Dive (10 slides), Technical Architecture Documentation (6 pages), Wiki Aure
 - `2026-11-24-chat-*.md`, `2026-11-24-mvp-causal-ai-admin-spec.pdf`, `2025-ai-vision-aurelia.pdf`: the 24 Nov chats and PDFs (rows 37–39).
 - `2026-11-25-chat-ai-brain.md`: the AI brain chat (row 40).
 - `2026-11-26-dojo-objective-learning.xlsx`: the DOJO workbook (row 41).
+- `2026-11-27-chat-persona-dimensions.md`, `2026-11-27-grand-4-layers-akp-master-knowledge.xlsx`, `2026-11-27-wellness-identity-akp-first-view.xlsx`, `2026-11-27-deeksha-objective-learning.xlsx` (row 43).
 - `2026-11-27-chat-chapters-akp.md` and `2026-11-27-chat-chapters-akp/` (5 screenshots): chapters, chance it works, AKPs (row 42).
 - `EUGENE-CONTEXT.md`: this file.
 

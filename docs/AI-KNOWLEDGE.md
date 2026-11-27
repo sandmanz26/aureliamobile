@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J192** · updated 25 Nov 2026
+**Covers up to J193** · updated 25 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
