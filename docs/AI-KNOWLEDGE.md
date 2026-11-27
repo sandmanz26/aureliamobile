@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J199** · updated 25 Nov 2026
+**Covers up to J200** · updated 25 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
@@ -134,6 +134,7 @@ reach that repository yet (O33).
 
 ## 6 · Positions taken (and why), newest first
 
+- **Deadline (J200): Monday 30 Nov** — first 1,000 AKPs + graph over time, sleep detail, calculation, AKPs in the agent, persona. The product owner invoices after.
 - **AI brain = 5 functions (J199):** Wellness, Brand, Product, Business, Analysis (Maxwell, TheraGPS), each its own AKP universe, interconnected, all into our admin. His Figma Make prototype has no logic; its AKP counts are not data.
 - **Purpose of the StateFlips (J195):** they are the product: sessions and chapters are made from them via AKPs, then tested on real people. Start: 125 (25 per dimension). Plan in `docs/briefs/2026-11-27-plan-objective-learning.md`.
 - **Objective Learning (J194):** goal AKPs = 5 dimensions → universal needs → bad-to-good StateFlips; strategy/tactic AKPs = Grand 4 layers sheet; scripts are assembled per BAR / ELEMENTS. Sources in `docs/briefs/2026-11-27-*`.
