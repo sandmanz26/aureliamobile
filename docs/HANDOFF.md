@@ -500,7 +500,7 @@ the work.
 | `HANDOFF.md` §17 | every request and every code change | Copy the J index row into §17.1 and the U index row into §17.2 (patch links as `update-log/patches/…`). Update §4 when the state moves. |
 | `CHANGE-LOG.md` | every change | Newest entry **at the top of the entries**. The entries sit inside the fenced block that starts under "## Entry format": an old quirk, so keep inserting there. Each ends with `Branches: …` saying which branches it reached. |
 
-**Numbering as of 17 Nov 2026:** last U = **U139**, last J = **J197**, last
+**Numbering as of 17 Nov 2026:** last U = **U139**, last J = **J198**, last
 O = **O56**. Before numbering, check the files for anything newer.
 
 **And this file:** every J row and every U row is copied into §17 in the same
@@ -1063,6 +1063,7 @@ history can be read without opening four documents.
 | J181 | 2026-11-25 | Review + code | Review whether the reports are understandable even to a layperson, and fix them | U128 |
 | J182 | 2026-11-25 | Code | UX feedback report from the latest feedback group; drop "what this report says"; a goal on every report; make "many sources → iterations → product" visible; drawers instead of page changes | U129 |
 | J183 | 2026-11-25 | Code + research | Better buyer agent visualisation; therapeutic map and interactive Healing Map; B2B2C research using everything known, with the features to build, in a report | U130, U131, U132 |
+| J198 | 2026-11-27 | Analysis | Re-read every brief and file and checked the system against them: gap check with closeness per pillar, 9 missed asks (now A31–A39), top gaps and backlog B10–B14 | — |
 | J197 | 2026-11-27 | Discussion | Product owner's 5-point summary cross-checked against A22–A30; backlog B1–B9 added to the plan brief | — |
 | J196 | 2026-11-27 | Received | Business owner: marketing AKPs sheet (ReadMe tab) to understand AKPs better; saved, file export requested | — |
 | J195 | 2026-11-27 | Discussion | Last part of the 26 Nov chat (cascading logic tab, 125 states, purpose: sessions and chapters on real humans); summary of what the business owner wants and a 5-step plan | — |

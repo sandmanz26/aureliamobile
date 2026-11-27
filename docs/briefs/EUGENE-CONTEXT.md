@@ -30,6 +30,15 @@
 | A28 | Admin shows the system logic right: the Meta → Path → Script cascade ("snapshots of our own Causal AI") | row 45 | planned (plan step 2) |
 | A29 | Start with 125 bad-to-good states (25 × 5); used to make sessions and chapters via AKPs and solve them on real humans | row 45 | planned (plan step 1) |
 | A30 | Marketing AKPs sheet (ReadMe tab: campaign goals, levers, audience states, growth vectors, strategies, tactics, story arcs, voices, aesthetics, anchors, channels, adaptive knobs): read the whole doc to understand AKPs better; same logic for Business | row 46 | waiting for the .xlsx export |
+| A31 | Three metric lines over time (compute cost, Causal AI density and velocity, therapeutic) and top Causal AI drivers | gap check J198 (was missing here) | open |
+| A32 | AI speed and quality appendix (30–60 s, Spotify-level quality) (O25) | gap check J198 (was missing here) | open |
+| A33 | 2025 backend wiki: black logo, his diagram, the 2025 → 2026 story (O25) | gap check J198 (was missing here) | open |
+| A34 | Feedback project rewritten as Digital Retreats in the wiki (O43 part 3) | gap check J198 (was missing here) | open |
+| A35 | Aurelia Pro, corporate wellness exploration (O32) | gap check J198 (was missing here) | open |
+| A36 | Cross-split dialogues as a standing rule | gap check J198 (was missing here) | open |
+| A37 | An admin version of the old AKP Graph Explorer | gap check J198 (was missing here) | open |
+| A38 | Map his entities as gateways to AKPs and the Notion entity model | gap check J198 (was missing here) | open |
+| A39 | His deck's scale claims shown as his thesis, labelled | gap check J198 (was missing here) | open |
 | A1 | AI brain: Product, Wellness, Business, each with metrics, MVP targets and a prediction model, connected | row 40 | planned (step 3–4) |
 | A2 | 5 dimensions × top 10 issues, cost of bad to good each, baseline then real figures | rows 39–40 | planned (step 1, first) |
 | A3 | Bad-to-good slider dynamics for every scenario, not only sleep | row 40 | planned (step 1) |
