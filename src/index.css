@@ -43,6 +43,42 @@
   src: url('/fonts/mulish-variable.woff2') format('woff2');
 }
 
+/* Reading font for the wiki and the admin (U139, J191): Mulish stays the
+   app's brand face, but its wide, light letters tired the eyes over long
+   admin tables and wiki pages. Source Sans 3 is built for long reading.
+   Scoped with :has() so drawers portalled to <body> follow it too; the
+   consumer app never renders .adm-root or .gd, so it is untouched. */
+@font-face {
+  font-family: 'Source Sans 3';
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url('/fonts/source-sans-3-latin-wght-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Source Sans 3';
+  font-style: italic;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url('/fonts/source-sans-3-latin-wght-italic.woff2') format('woff2');
+}
+:root:has(.adm-root, .gd) {
+  --font-sans: 'Source Sans 3', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+/* Source Sans runs narrower than Mulish, so the admin's dense sizes step
+   up one pixel to keep the same reading size. */
+:root:has(.adm-root) {
+  --text-11: 12px;
+  --text-12: 13px;
+  --text-13: 14px;
+  --text-15: 16px;
+}
+:root:has(.adm-root, .gd) body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
 * {
   box-sizing: border-box;
 }

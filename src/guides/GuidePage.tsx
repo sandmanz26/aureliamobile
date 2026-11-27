@@ -432,7 +432,7 @@ function GuideDoc({ meta, version, pages }: { meta: (typeof DOCS)[number]; versi
         startOnLoad: false,
         securityLevel: 'strict',
         theme: 'base',
-        fontFamily: 'Mulish, system-ui, sans-serif',
+        fontFamily: "'Source Sans 3', system-ui, sans-serif",
         themeVariables: { primaryColor: '#fff7ec', primaryBorderColor: '#e0a35a', primaryTextColor: '#3c2405', lineColor: '#b4530a', fontSize: '14px' },
         flowchart: { htmlLabels: false, curve: 'basis' },
       })
