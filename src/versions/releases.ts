@@ -14,7 +14,6 @@
 // BUILD.environment !== 'production'. Since J153 nothing is waiting.
 
 
-import { BUILD } from '../lib/build'
 
 export const RELEASES = {
   /** Figma "Changes" (16906:4947) item 1: one Chapter card + a Review sheet instead of the fanned deck. */
@@ -41,17 +40,17 @@ export const RELEASES = {
   businessFunnel: true,
   /** Admin → Reports (U116, J167): the Buyer agent report and the Combination report, each with a source graph. On both sites since J173. */
   reports: true,
-  /** Admin → Product lab → Therapeutic map and Healing Map (U131, J183). Staging only. */
-  therapeuticMaps: BUILD.environment !== 'production',
-  /** Admin → Reports → Report metrics (U135, J186): every report number traced to its data and formula. Staging only. */
-  reportMetrics: BUILD.environment !== 'production',
-  /** Admin → Product lab → StateFlips (U140, J202): the sleep StateFlip, transparent chapters and chance, the cohort over time. Staging only. */
-  stateFlips: BUILD.environment !== 'production',
+  /** Admin → Product lab → Therapeutic map and Healing Map (U131, J183).. On both sites since U144. */
+  therapeuticMaps: true, // released to production 27 Nov 2026 (U144)
+  /** Admin → Reports → Report metrics (U135, J186): every report number traced to its data and formula.. On both sites since U144. */
+  reportMetrics: true, // released to production 27 Nov 2026 (U144)
+  /** Admin → Product lab → StateFlips (U140, J202): the sleep StateFlip, transparent chapters and chance, the cohort over time.. On both sites since U144. */
+  stateFlips: true, // released to production 27 Nov 2026 (U144)
   /**
    * Admin menu review (U142, J203): the sidebar regrouped around the owners' work (Start here, AI brain,
    * Reports & decisions, Research, Operations — sample data, Wiki), a Summary | Detail tab on the lab and
    * report pages, and the audit's phase 1 quick wins (no design picker on /admin, compact header, sentence-case
-   * stat labels, a 12px text floor, no automatic tour, labelled details buttons). Staging only.
+   * stat labels, a 12px text floor, no automatic tour, labelled details buttons). On both sites since U144.
    */
-  adminNav2: BUILD.environment !== 'production',
+  adminNav2: true, // released to production 27 Nov 2026 (U144)
 } as const
