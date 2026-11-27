@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-27 — Tidy admin sidebar (U143, J204)
+
+On staging the admin rail is shorter and calmer: four sections, only the current one open, one style for every row.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-27 — Admin nav v2 and Summary | Detail (U142, J203)
 
 On staging the admin menu is regrouped around the AI brain and 13 pages open on a one-screen summary with the full detail a tab away.
