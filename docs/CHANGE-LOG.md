@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-27 — Admin nav v2 and Summary | Detail (U142, J203)
+
+On staging the admin menu is regrouped around the AI brain and 13 pages open on a one-screen summary with the full detail a tab away.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-27 — 125 StateFlips and draft AKPs (U141, J203)
 
 StateFlips lists 125 bad-to-good goals and a draft catalogue of 1,046 AKPs; personas gain a wellness identity.

@@ -1,0 +1,1851 @@
+commit 286d9967a0dcbf99735fe11a2ce9a0710657e74b
+Author: Claude <noreply@anthropic.com>
+Date:   Fri Nov 27 17:36:02 2026 +0000
+
+    Admin menu review: regrouped nav, Summary | Detail tabs, phase 1 quick wins behind adminNav2 (U142, J203)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+
+diff --git a/docs/briefs/2026-11-27-menu-review.md b/docs/briefs/2026-11-27-menu-review.md
+new file mode 100644
+index 0000000..d4edda8
+--- /dev/null
++++ b/docs/briefs/2026-11-27-menu-review.md
+@@ -0,0 +1,96 @@
++# Admin menu review: is every item easy to understand?
++
++Date: 2026-11-27 · Branch: `web_app` · Author: head of design pass (AI) · U142, J203
++Builds on: `docs/briefs/2026-11-27-admin-ux-audit.md` (section 1, IA; section 5, phase 1).
++Shipped behind `RELEASES.adminNav2` (`src/versions/releases.ts`): staging only, production keeps today's menu.
++
++## How it was judged
++
++"Understandable in 5 seconds" means: someone who owns the business, seeing only the label and its group,
++can say what is on the page and whether they need it today. Partly = they can guess the topic but not the
++purpose or whether it is real data. No = the label names an internal term or collides with another item.
++
++## The table (every sidebar item, 32 before + 1 placeholder)
++
++| # | Current name (group) | What it is for, in one sentence | 5 seconds? | Duplicate of? | Proposed name | Proposed group | Action |
++|---|---|---|---|---|---|---|---|
++| 1 | Dashboard (Overview) | Platform health of a live operation that does not exist yet (users, AI spend, moderation queue). | Partly: reads as "the real numbers", they are sample | - | Start here | Start here | Renamed; page leads with three cards (AI brain, Reports, Research) and labels the health figures sample; "Open reports" tile renamed "Open moderation reports" |
++| 2 | Users (People) | Lists of end-user accounts. | Yes, but not that it is mock | - | Users | Operations — sample data | Regrouped |
++| 3 | Well-being outcomes (People) | Outcome scores per user. | Partly: sounds like the product result, is sample | - | Well-being outcomes | Operations — sample data | Regrouped |
++| 4 | Roles & permissions (People) | Staff roles. | Yes | - | Roles & permissions | Operations — sample data | Regrouped |
++| 5 | User journey (Product lab) | When people reach for Aurelia and which moments have no screen. | Partly: "journey" is clear, the decision is not | Overlaps Combination report (reads it) | User journey | AI brain › Product | Regrouped; Summary tab answers "which moment next" |
++| 6 | Personas (Product lab) | The made-up people every AI test runs on. | Partly: not obvious they are synthetic | - | Personas | AI brain › Product | Regrouped; Summary states "made-up" and risk flags |
++| 7 | Business funnel (Product lab) | How many people get from first visit to paying, and the biggest leak. | Yes | Overlaps Combination report | Business funnel | AI brain › Business | Regrouped |
++| 8 | Therapeutic map (Product lab) | First map of bad state → good state with the product/business triangle. | No: in-house term, unclear which map is current | Healing Map (older version of the same idea) | Therapeutic map · older version | AI brain › Wellness | Labelled older version; both pages link to each other |
++| 9 | Healing Map (Product lab) | Which session building blocks help which bad state, and how sure we are. | Partly | Therapeutic map (newer) | Healing map | AI brain › Wellness | Renamed (sentence case), regrouped |
++| 10 | StateFlips (Product lab) | The product itself: turning a bad state into a good one, with chance it works. | No: in-house term with no hint | - | StateFlips (tooltip: "The product: a bad state turned into a good one") | AI brain › Wellness | Regrouped, tooltip added, first in group |
++| 11 | (none) | Brand function of the AI brain. | - | - | Brand guide (coming) | AI brain › Brand | Added as a non-link placeholder marked "coming" |
++| 12 | Overview (Reports) | All reports and the sources → decisions loop. | Partly: "Overview" twice in the menu | Dashboard ("Overview" group) | All reports | Reports & decisions | Renamed |
++| 13 | Buyer agent report (Reports) | Would simulated buyers pay, and at what price. | Partly: "agent" is jargon | Buyer agent results (off menu, item 19) | Buyer agent | Reports & decisions | "report" suffix dropped (the group says it) |
++| 14 | UX feedback report (Reports) | What the feedback group says about the app. | Yes | Feedback group v1/v2 (old routes) | UX feedback | Reports & decisions | Suffix dropped |
++| 15 | Combination report (Reports) | Journey, personas and buyers read together: the one funnel step to fix. | No: "Combination" says nothing | - | Combination (tooltip explains) | Reports & decisions | Suffix dropped, tooltip; Summary tab carries "This page is for…" |
++| 16 | Cost report (Reports) | What a user and a StateFlip cost to serve. | Yes | - | Cost | Reports & decisions | Suffix dropped |
++| 17 | B2B2C report (Reports) | Which partner channel to test first. | Partly: acronym | Wiki B2B2C research (source) | B2B2C channels | Reports & decisions | Renamed; Research group links the source |
++| 18 | Report metrics (Reports) | Where each report number comes from and how it is worked out. | No: reads like another report | - | How numbers are made | Reports & decisions | Renamed, last in group |
++| 19 | (off menu) Buyer agent results `/admin/buyer-agent` | Every buyer agent run in full. | No: unreachable from the menu | Buyer agent report (item 13) | Buyer agent runs · older version | Reports & decisions | Back on the menu, labelled older version; Summary links to the report |
++| 20 | Sessions (Content) | Catalogue CMS. | Yes, mock | - | Sessions | Operations — sample data | Regrouped |
++| 21 | Challenges (Content) | Challenge CMS. | Yes, mock | - | Challenges | Operations — sample data | Regrouped |
++| 22 | Moderation (Content) | Report queue for user content. | Yes, mock; collides with "Reports" | - | Moderation | Operations — sample data | Regrouped |
++| 23 | AI monitoring (Intelligence) | Model calls, spend and errors. | Yes, mock | - | AI monitoring | Operations — sample data | Regrouped (not AI brain: it is ops telemetry, all sample) |
++| 24 | Cockpit rules (Intelligence) | Rules the chat cockpit follows. | Partly | - | Cockpit rules | Operations — sample data | Regrouped |
++| 25 | Revenue (Revenue) | Revenue charts. | Yes, mock | - | Revenue | Operations — sample data | Regrouped |
++| 26 | Pricing (Revenue) | Plans and prices. | Yes, mock | Cost report (different question) | Pricing | Operations — sample data | Regrouped |
++| 27 | Payments (Revenue) | Transactions. | Yes, mock | - | Payments | Operations — sample data | Regrouped |
++| 28 | Coins & rewards (Revenue) | Coin economy. | Yes, mock | - | Coins & rewards | Operations — sample data | Regrouped |
++| 29 | Experiments (Growth) | A/B tests. | No: third word for testing beside Product lab and Feedback group | - | A/B experiments | Operations — sample data | Renamed, regrouped |
++| 30 | Notifications (Growth) | Push and email campaigns. | Yes, mock | - | Notifications | Operations — sample data | Regrouped |
++| 31 | Compliance (Platform) | Consent, data requests. | Yes, mock | - | Compliance | Operations — sample data | Regrouped |
++| 32 | Signal sources (Platform) | Wearable and data integrations. | Partly | - | Signal sources | Operations — sample data | Regrouped |
++| 33 | Audit log (Platform) | Staff actions. | Yes, mock | - | Audit log | Operations — sample data | Regrouped |
++| 34 | Settings (Platform) | Admin settings. | Yes | - | Settings | Operations — sample data | Regrouped |
++| 35 | Wiki (Platform) | The team wiki, outside the admin shell. | Partly: hidden under Platform, leaves the shell silently | - | Team wiki ↗ | Wiki | Own group, arrow-out icon |
++| 36 | (none) | The research documents behind the reports. | - | - | Research overview ↗, B2B2C research ↗ | Research | Added as links to `/wiki/research`, `/wiki/b2b2c` |
++
++Feedback group v1/v2 stay where they were (shown only if `RELEASES.reports` is off; v1 redirects to the UX feedback report).
++
++**Count:** 34 existing items (33 sidebar + the off-menu Buyer agent results) reviewed. **13 renamed** (items 1, 8, 9, 12-19, 29, 35), **all 34 regrouped** into 6 groups (was 9), **3 duplicate pairs flagged** and kept with an "older version" label or a cross-link
++(Therapeutic map ↔ Healing map, Buyer agent results ↔ Buyer agent report, Feedback group ↔ UX feedback), **3 added** (Brand placeholder, two Research links). No route removed.
++
++## The new groups (in order)
++
++| Group | One line (shown under the heading, and as tooltip) | Default |
++|---|---|---|
++| Start here | - (single link) | - |
++| AI brain | What the AI knows: wellness, product, business, brand | Open |
++| Reports & decisions | One report per decision, with its sources | Open |
++| Research | The desk research behind the reports (wiki) | Open |
++| Operations — sample data | CMS modules for a backend that does not exist yet; every figure is made up | Folded, quieter heading |
++| Wiki | - (single link, leaves the shell) | - |
++
++Icons on top-level only (Compass, BrainCircuit, FileChartColumn, BookOpen, Server, BookMarked). No item counts.
++AI brain uses small frame labels (Wellness, Product, Business, Brand) instead of a third level.
++
++## Summary | Detail on every lab and report page
++
++`src/admin/components/PageTabs.tsx`: two tabs, Summary default, `?tab=detail` in the URL (Back works, links
++share), `role=tablist`, arrow keys / Home / End. Summary = "This page is for…", the question, the answer, up to
++three figures, next steps; reports reuse their existing `SummaryBlock`. Detail = everything that was on the page.
++An `#anchor` into Detail opens it.
++
++Applied to: User journey, Personas, StateFlips, Business funnel, Therapeutic map, Healing map, Buyer agent runs,
++Buyer agent, UX feedback, Combination, Cost, B2B2C, Report metrics. Reports overview left as is (it is already
++the summary of the reports).
++
++## Phase 1 quick wins in the same change
++
++- Design-version picker hidden on `/admin` (the staging bar shows environment and build only).
++- One compact 40px header: "Group › Page" trail and a single "Data is mock" chip (was a 56px environment bar).
++- Stat tiles: sentence-case labels at 13px (no uppercase tracking), matching the report tiles.
++- 12px text floor across the admin shell (10-11px utilities raised).
++- User journey and Business funnel tours no longer open by themselves; a "Tour" button opens them.
++- The 14px "open details" glyph on report and StateFlip tiles now reads "Details" beside the icon.
++
++## Not done here (phase 2-3 in the audit)
++
++Merging the duplicate pages, a real "Today" page, one drawer component, a token chart palette, and trimming
++the long report summaries (Buyer agent's Summary is still ~570 words).
+diff --git a/src/admin/AdminLayout.tsx b/src/admin/AdminLayout.tsx
+index 4e624e8..4dc8468 100644
+--- a/src/admin/AdminLayout.tsx
++++ b/src/admin/AdminLayout.tsx
+@@ -1,6 +1,10 @@
+ import {
++  BookMarked,
++  BookOpen,
+   BrainCircuit,
+   ChevronRight,
++  Compass,
++  ExternalLink,
+   FileChartColumn,
+   FileText,
+   FlaskConical,
+@@ -34,10 +38,32 @@ interface NavItem {
+   end?: boolean
+   /** Flag id in the /__demo registry — lets a walkthrough hide this module. */
+   flag: string
++  /** adminNav2: a small frame label shown above this item (AI brain: Wellness, Product, Business, Brand). */
++  sub?: string
++  /** adminNav2: planned, not built; shown greyed with "coming", not a link. */
++  coming?: boolean
++  /** adminNav2: leaves the admin shell (the wiki); shown with an arrow-out icon. */
++  external?: boolean
++  /** adminNav2: one line shown as the link's tooltip. */
++  hint?: string
++}
++
++interface NavGroup {
++  section: string
++  icon: LucideIcon
++  items: NavItem[]
++  /** adminNav2: one line under the group heading (and its tooltip). */
++  description?: string
++  /** adminNav2: open until someone folds it. */
++  defaultOpen?: boolean
++  /** adminNav2: a single link with no heading (Start here). */
++  flat?: boolean
++  /** adminNav2: quieter heading (Operations — sample data). */
++  quiet?: boolean
+ }
+ 
+ /** Since U123 the icons sit on the top-level entries (groups and Dashboard); nested items have none. */
+-const NAV: { section: string; icon: LucideIcon; items: NavItem[] }[] = [
++const NAV: NavGroup[] = [
+   { section: 'Overview', icon: LayoutDashboard, items: [{ to: '/admin', label: 'Dashboard', end: true, flag: 'admin' }] },
+   {
+     section: 'People',
+@@ -144,7 +170,119 @@ const NAV: { section: string; icon: LucideIcon; items: NavItem[] }[] = [
+   },
+ ]
+ 
++/**
++ * adminNav2 (U142, J203): the menu grouped by what the owners do, after the
++ * menu review in docs/briefs/2026-11-27-menu-review.md. Same routes as NAV,
++ * none removed: the sample-data CMS modules fold under Operations, the two
++ * near-duplicates are labelled "older version", and the wiki links leave the
++ * shell. Staging only (RELEASES.adminNav2); production keeps NAV.
++ */
++const NAV2: NavGroup[] = [
++  {
++    section: 'Start here',
++    icon: Compass,
++    flat: true,
++    items: [{ to: '/admin', label: 'Start here', end: true, flag: 'admin', hint: 'Where the work is, and which figures are sample data' }],
++  },
++  {
++    section: 'AI brain',
++    icon: BrainCircuit,
++    description: 'What the AI knows: wellness, product, business, brand',
++    defaultOpen: true,
++    items: [
++      ...(RELEASES.stateFlips ? [{ to: '/admin/stateflips', label: 'StateFlips', flag: 'adminStateFlips', sub: 'Wellness', hint: 'The product: a bad state turned into a good one' }] : []),
++      ...(RELEASES.therapeuticMaps
++        ? [
++            { to: '/admin/healing-map', label: 'Healing map', flag: 'adminHealingMap', sub: 'Wellness', hint: 'Which building blocks help which state, and how it learns' },
++            { to: '/admin/therapeutic-map', label: 'Therapeutic map · older version', flag: 'adminTherapeuticMap', sub: 'Wellness', hint: 'The first state-to-technique map; the Healing map replaces it' },
++          ]
++        : []),
++      { to: '/admin/user-journey', label: 'User journey', flag: 'adminUserJourney', sub: 'Product', hint: 'When people reach for Aurelia, and what serves each moment' },
++      ...(RELEASES.personas ? [{ to: '/admin/personas', label: 'Personas', flag: 'adminPersonas', sub: 'Product', hint: 'Made-up research people the tests run on' }] : []),
++      ...(RELEASES.businessFunnel ? [{ to: '/admin/business-funnel', label: 'Business funnel', flag: 'adminBusinessFunnel', sub: 'Business', hint: 'How many people get from first visit to paying' }] : []),
++      { to: '/admin/brand', label: 'Brand guide', flag: 'admin', sub: 'Brand', coming: true },
++    ],
++  },
++  {
++    section: 'Reports & decisions',
++    icon: FileChartColumn,
++    description: 'One report per decision, with its sources',
++    defaultOpen: true,
++    items: RELEASES.reports
++      ? [
++          { to: '/admin/reports', label: 'All reports', end: true, flag: 'adminReportsOverview', hint: 'Every report, and the loop from sources to decisions' },
++          { to: '/admin/reports/buyer-agent', label: 'Buyer agent', flag: 'adminReportBuyerAgent', hint: 'Would simulated buyers pay, and at what price' },
++          { to: '/admin/reports/ux-feedback', label: 'UX feedback', flag: 'adminReportUxFeedback', hint: 'What the feedback group says about the app' },
++          { to: '/admin/reports/combination', label: 'Combination', flag: 'adminReportCombination', hint: 'Journey, personas and buyers read together' },
++          { to: '/admin/reports/cost', label: 'Cost', flag: 'adminReportCost', hint: 'What one user costs to serve' },
++          { to: '/admin/reports/b2b2c', label: 'B2B2C channels', flag: 'adminReportB2b2c', hint: 'Which partner channels to test first' },
++          ...(RELEASES.reportMetrics ? [{ to: '/admin/reports/metrics', label: 'How numbers are made', flag: 'adminReportMetrics', hint: 'Report metrics: each number traced to its data and formula' }] : []),
++          ...(RELEASES.buyerAgent ? [{ to: '/admin/buyer-agent', label: 'Buyer agent runs · older version', flag: 'adminBuyerAgent', hint: 'Every buyer agent run in full; the Buyer agent report summarises it' }] : []),
++        ]
++      : [],
++  },
++  {
++    section: 'Research',
++    icon: BookOpen,
++    description: 'The desk research behind the reports (wiki)',
++    defaultOpen: true,
++    items: [
++      { to: '/wiki/research', label: 'Research overview', flag: 'admin', external: true },
++      { to: '/wiki/b2b2c', label: 'B2B2C research', flag: 'admin', external: true },
++    ],
++  },
++  {
++    section: 'Operations — sample data',
++    icon: Server,
++    description: 'CMS modules for a backend that does not exist yet; every figure is made up',
++    quiet: true,
++    items: [
++      ...(RELEASES.reports
++        ? []
++        : [
++            { to: '/admin/experimentation', label: 'Feedback group · v1', end: true, flag: 'adminExperimentation' },
++            { to: '/admin/experimentation/v2', label: 'Feedback group · v2', flag: 'adminExperimentation' },
++          ]),
++      { to: '/admin/users', label: 'Users', flag: 'adminUsers' },
++      { to: '/admin/outcomes', label: 'Well-being outcomes', flag: 'adminOutcomes' },
++      { to: '/admin/roles', label: 'Roles & permissions', flag: 'adminRoles' },
++      { to: '/admin/sessions', label: 'Sessions', flag: 'adminSessions' },
++      { to: '/admin/challenges', label: 'Challenges', flag: 'adminChallenges' },
++      { to: '/admin/moderation', label: 'Moderation', flag: 'adminModeration' },
++      { to: '/admin/ai', label: 'AI monitoring', flag: 'adminAi' },
++      { to: '/admin/cockpit-rules', label: 'Cockpit rules', flag: 'adminCockpitRules' },
++      { to: '/admin/revenue', label: 'Revenue', flag: 'adminRevenue' },
++      { to: '/admin/pricing', label: 'Pricing', flag: 'adminPricing' },
++      { to: '/admin/payments', label: 'Payments', flag: 'adminPayments' },
++      { to: '/admin/coins', label: 'Coins & rewards', flag: 'adminCoins' },
++      { to: '/admin/experiments', label: 'A/B experiments', flag: 'adminExperiments' },
++      { to: '/admin/notifications', label: 'Notifications', flag: 'adminNotifications' },
++      { to: '/admin/compliance', label: 'Compliance', flag: 'adminCompliance' },
++      { to: '/admin/signal-sources', label: 'Signal sources', flag: 'adminSignalSources' },
++      { to: '/admin/audit', label: 'Audit log', flag: 'adminAudit' },
++      { to: '/admin/settings', label: 'Settings', flag: 'adminSettings' },
++    ],
++  },
++  {
++    section: 'Wiki',
++    icon: BookMarked,
++    flat: true,
++    items: [{ to: '/wiki/admin', label: 'Team wiki', flag: 'admin', external: true, hint: 'Guides, the PRD, the API contract and research' }],
++  },
++]
++
++const MENU: NavGroup[] = RELEASES.adminNav2 ? NAV2 : NAV
++
++/** The group and item for the current page (the compact header's trail). */
++function trailFor(pathname: string) {
++  for (const group of MENU)
++    for (const item of group.items) if (!item.coming && !item.external && matches(item, pathname)) return { group: group.section, item: item.label }
++  return null
++}
++
+ const OpenSections = z.array(z.string())
++const FoldState = z.record(z.string(), z.boolean())
++const FOLD_KEY = 'aurelia.admin.nav2Open'
+ const OPEN_KEY = 'aurelia.admin.navOpen'
+ 
+ function matches(item: NavItem, pathname: string) {
+@@ -171,12 +309,13 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+   const { pathname } = useLocation()
+   const navigate = useNavigate()
+   const [opened, setOpened] = useState<string[]>(() => readJson(OPEN_KEY, OpenSections, []))
++  const [folds, setFolds] = useState<Record<string, boolean>>(() => readJson(FOLD_KEY, FoldState, {}))
+   const [query, setQuery] = useState('')
+   const inputRef = useRef<HTMLInputElement>(null)
+   const navRef = useRef<HTMLElement>(null)
+   const q = query.trim().toLowerCase()
+-  const groups = NAV.map((group) => {
+-    const enabled = group.items.filter((item) => isEnabled(item.flag))
++  const groups = MENU.map((group) => {
++    const enabled = group.items.filter((item) => isEnabled(item.flag) && (!item.coming || q === ''))
+     const sectionHit = q !== '' && group.section.toLowerCase().includes(q)
+     return {
+       ...group,
+@@ -199,6 +338,12 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+   }, [])
+ 
+   function toggle(section: string, isOpen: boolean) {
++    if (RELEASES.adminNav2) {
++      const nextFolds = { ...folds, [section]: !isOpen }
++      setFolds(nextFolds)
++      writeJson(FOLD_KEY, nextFolds)
++      return
++    }
+     const next = isOpen ? opened.filter((x) => x !== section) : [...opened, section]
+     setOpened(next)
+     writeJson(OPEN_KEY, next)
+@@ -221,7 +366,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+       e.preventDefault()
+       links()[0]?.focus()
+     } else if (e.key === 'Enter' && q) {
+-      const first = groups[0]?.items[0]
++      const first = groups.flatMap((g) => g.items).find((item) => !item.coming)
+       if (first) {
+         e.preventDefault()
+         navigate(first.to)
+@@ -244,13 +389,20 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+     else all[i - 1]?.focus()
+   }
+ 
+-  const link = (item: NavItem, Icon?: LucideIcon) => (
++  const link = (item: NavItem, Icon?: LucideIcon) =>
++    item.coming ? (
++      <span key={item.to} className="flex items-center justify-between gap-10 rounded-8 px-10 py-6 text-13 text-white/40" title="Planned, not built yet">
++        {item.label}
++        <span className="rounded-full border border-white/15 px-6 text-12 text-white/45">coming</span>
++      </span>
++    ) : (
+     <NavLink
+       key={item.to}
+       to={item.to}
+       end={item.end}
+       data-nav-item=""
+       onClick={onPick}
++      title={item.hint}
+       className={({ isActive }) =>
+         `flex items-center gap-10 rounded-8 px-10 py-6 text-13 transition-colors ${
+           isActive ? 'bg-white/12 font-medium text-white' : 'text-white/65 hover:bg-white/6 hover:text-white'
+@@ -258,7 +410,8 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+       }
+     >
+       {Icon && <Icon size={15} aria-hidden="true" />}
+-      {item.label}
++      <span className="min-w-0 flex-1">{item.label}</span>
++      {item.external && <ExternalLink size={12} aria-label="opens the wiki" className="shrink-0 text-white/40" />}
+     </NavLink>
+   )
+ 
+@@ -282,14 +435,14 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+               <X size={13} />
+             </button>
+           ) : (
+-            <kbd className="rounded-4 border border-white/15 px-4 font-sans text-10 text-white/40">/</kbd>
++            <kbd className={`rounded-4 border border-white/15 px-4 font-sans ${RELEASES.adminNav2 ? 'text-12' : 'text-10'} text-white/40`}>/</kbd>
+           )}
+         </label>
+       </div>
+       <nav ref={navRef} onKeyDown={onNavKey} className="flex flex-col gap-2 px-12 py-12">
+         {groups.length === 0 && <p className="px-10 py-6 text-13 text-white/45">No menu matches</p>}
+         {groups.map((group) => {
+-          if (group.section === 'Overview')
++          if (group.section === 'Overview' || group.flat)
+             return (
+               <div key={group.section} className="mb-6 flex flex-col">
+                 {group.items.map((item) => link(item, group.icon))}
+@@ -297,7 +450,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+             )
+           const Icon = group.icon
+           const current = group.items.some((item) => matches(item, pathname))
+-          const isOpen = q !== '' || current || opened.includes(group.section)
++          const isOpen = q !== '' || current || (RELEASES.adminNav2 ? (folds[group.section] ?? !!group.defaultOpen) : opened.includes(group.section))
+           const locked = q !== '' || current
+           return (
+             <div key={group.section} className="flex flex-col">
+@@ -306,19 +459,32 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+                 aria-expanded={isOpen}
+                 disabled={locked}
+                 onClick={() => toggle(group.section, isOpen)}
+-                className="flex items-center justify-between gap-10 rounded-8 px-10 py-6 text-left text-13 font-medium text-white/80 hover:bg-white/6 hover:text-white disabled:cursor-default disabled:hover:bg-transparent disabled:hover:text-white/80"
++                title={group.description}
++                className={`flex items-center justify-between gap-10 rounded-8 px-10 py-6 text-left text-13 font-medium ${group.quiet ? 'text-white/60' : 'text-white/80'} hover:bg-white/6 hover:text-white disabled:cursor-default disabled:hover:bg-transparent disabled:hover:text-white/80`}
+               >
+                 <span className="flex items-center gap-10">
+                   <Icon size={15} aria-hidden="true" />
+                   {group.section}
+                 </span>
+                 <span className="flex items-center gap-6">
+-                  {!isOpen && <span className="text-11 font-medium tabular-nums text-white/30">{group.items.length}</span>}
++                  {!isOpen && !RELEASES.adminNav2 && <span className="text-11 font-medium tabular-nums text-white/30">{group.items.length}</span>}
+                   <ChevronRight size={13} className={`text-white/40 transition-transform ${isOpen ? 'rotate-90' : ''}`} aria-hidden="true" />
+                 </span>
+               </button>
++              {RELEASES.adminNav2 && group.description && isOpen && q === '' && (
++                <p className="mb-4 ml-[35px] pr-8 text-12 leading-snug text-white/45">{group.description}</p>
++              )}
+               {isOpen && (
+-                <div className="mb-6 ml-[17px] flex flex-col gap-1 border-l border-white/10 pl-6">{group.items.map((item) => link(item))}</div>
++                <div className="mb-6 ml-[17px] flex flex-col gap-1 border-l border-white/10 pl-6">
++                  {group.items.map((item, i) => (
++                    <div key={item.to} className="flex flex-col">
++                      {RELEASES.adminNav2 && item.sub && item.sub !== group.items[i - 1]?.sub && (
++                        <span className="px-10 pb-2 pt-6 text-12 font-medium text-white/40">{item.sub}</span>
++                      )}
++                      {link(item)}
++                    </div>
++                  ))}
++                </div>
+               )}
+             </div>
+           )
+@@ -330,9 +496,12 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+ 
+ export function AdminLayout() {
+   const [open, setOpen] = useState(false)
++  const { pathname } = useLocation()
++  const nav2 = RELEASES.adminNav2
++  const trail = nav2 ? trailFor(pathname) : null
+ 
+   return (
+-    <div className="adm-root flex min-h-screen bg-adm-bg">
++    <div className="adm-root flex min-h-screen bg-adm-bg" data-nav2={nav2 ? '' : undefined}>
+       <aside className="sticky top-[var(--staging-bar,0px)] hidden h-[calc(100dvh-var(--staging-bar,0px))] w-[232px] shrink-0 flex-col self-start bg-adm-sidebar lg:flex">
+         <div className="flex h-56 items-center gap-8 border-b border-white/8 px-20">
+           <AureliaLogo iconSize={22} markOnly />
+@@ -368,7 +537,7 @@ export function AdminLayout() {
+       )}
+ 
+       <div className="flex min-w-0 flex-1 flex-col">
+-        <header className="flex h-56 shrink-0 items-center gap-12 border-b border-adm-line bg-adm-surface px-16 lg:px-24">
++        <header className={`flex shrink-0 items-center gap-12 border-b border-adm-line bg-adm-surface px-16 lg:px-24 ${nav2 ? 'h-40' : 'h-56'}`}>
+           <button
+             type="button"
+             aria-label="Open admin menu"
+@@ -377,12 +546,32 @@ export function AdminLayout() {
+           >
+             <Menu size={18} />
+           </button>
+-          <span className="text-12 text-adm-muted">
+-            Environment: <span className="font-medium text-adm-ink">{BUILD.label}</span> · Data is mock
+-          </span>
++          {nav2 ? (
++            <div className="flex min-w-0 flex-1 items-center justify-between gap-8">
++              <span className="truncate text-12 text-adm-muted">
++                {trail && trail.group !== trail.item ? (
++                  <>
++                    {trail.group} <span aria-hidden="true">›</span> <span className="font-medium text-adm-ink">{trail.item}</span>
++                  </>
++                ) : (
++                  <span className="font-medium text-adm-ink">{trail?.item ?? 'Admin'}</span>
++                )}
++              </span>
++              <span
++                className="shrink-0 rounded-full bg-adm-hover px-8 py-2 text-12 font-medium text-adm-ink-2"
++                title={`${BUILD.label}: there is no backend yet, so every figure in the admin is mock or simulated unless a page says it was measured.`}
++              >
++                Data is mock
++              </span>
++            </div>
++          ) : (
++            <span className="text-12 text-adm-muted">
++              Environment: <span className="font-medium text-adm-ink">{BUILD.label}</span> · Data is mock
++            </span>
++          )}
+         </header>
+ 
+-        <main className="flex flex-1 flex-col gap-20 p-16 lg:p-24">
++        <main className={`flex flex-1 flex-col p-16 lg:p-24 ${nav2 ? 'gap-16 lg:pt-20' : 'gap-20'}`}>
+           <AdminDataProvider>
+             <Suspense fallback={<PageSkeleton />}>
+               <Outlet />
+diff --git a/src/admin/admin.css b/src/admin/admin.css
+index 031df8f..b14a367 100644
+--- a/src/admin/admin.css
++++ b/src/admin/admin.css
+@@ -111,3 +111,17 @@
+   cursor: pointer;
+ }
+ .adm-root select:disabled { cursor: not-allowed; opacity: 0.5; }
++
++/* U142 (J203), RELEASES.adminNav2: one stat style and a 12px floor.
++   StatCard labels read in sentence case like the report tiles, and nothing in
++   the admin renders below 12px (the 10-11px utilities were the workhorses).
++   Unlayered, so it wins over Tailwind's utilities layer. */
++.adm-root[data-nav2] [data-stat-label] {
++  text-transform: none;
++  letter-spacing: normal;
++  font-size: 13px;
++}
++.adm-root[data-nav2] :is(.text-10, .text-11) {
++  font-size: 12px;
++  line-height: 16px;
++}
+diff --git a/src/admin/components/PageTabs.tsx b/src/admin/components/PageTabs.tsx
+new file mode 100644
+index 0000000..1937a63
+--- /dev/null
++++ b/src/admin/components/PageTabs.tsx
+@@ -0,0 +1,223 @@
++import { ArrowRight } from 'lucide-react'
++import { useEffect, useId, useRef } from 'react'
++import type { KeyboardEvent, ReactNode } from 'react'
++import { Link } from 'react-router-dom'
++import { RELEASES } from '../../versions/releases'
++import { usePageTab, type PageTab } from './pageTab'
++
++/*
++ * Summary | Detail (U142, J203): every lab and report page opens on a short
++ * Summary (what the page is for, the question, the answer, up to three
++ * figures, the next steps) and keeps everything it had before under Detail.
++ * The tab lives in the URL (`?tab=detail`), so a link or Back lands on the
++ * same tab. Detail stays mounted while hidden, so its state survives a switch
++ * and an in-page `#anchor` into it still resolves (and opens the tab).
++ * Behind RELEASES.adminNav2: with it off, only the Detail content renders,
++ * which is the page exactly as it was.
++ */
++
++const TABS: { id: PageTab; label: string }[] = [
++  { id: 'summary', label: 'Summary' },
++  { id: 'detail', label: 'Detail' },
++]
++
++export function PageTabs({ summary, children }: { summary: ReactNode; children: ReactNode }) {
++  const [tab, setTab] = usePageTab()
++  const id = useId()
++  const detailRef = useRef<HTMLDivElement>(null)
++  const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
++
++  // An #anchor that points into Detail (a "What to do next" link, a shared
++  // URL) opens Detail and scrolls there once it is visible.
++  useEffect(() => {
++    if (!RELEASES.adminNav2) return
++    function follow() {
++      const hash = decodeURIComponent(window.location.hash.slice(1))
++      if (!hash) return
++      const el = document.getElementById(hash)
++      if (!el || !detailRef.current?.contains(el)) return
++      if (detailRef.current.hidden) setTab('detail')
++      const det = el.closest('details') ?? (el instanceof HTMLDetailsElement ? el : null)
++      if (det) det.open = true
++      requestAnimationFrame(() => requestAnimationFrame(() => el.scrollIntoView({ block: 'start' })))
++    }
++    follow()
++    window.addEventListener('hashchange', follow)
++    return () => window.removeEventListener('hashchange', follow)
++  }, [setTab])
++
++  if (!RELEASES.adminNav2) return <>{children}</>
++
++  function onKey(e: KeyboardEvent<HTMLDivElement>) {
++    const i = TABS.findIndex((t) => t.id === tab)
++    let next = -1
++    if (e.key === 'ArrowRight') next = (i + 1) % TABS.length
++    else if (e.key === 'ArrowLeft') next = (i - 1 + TABS.length) % TABS.length
++    else if (e.key === 'Home') next = 0
++    else if (e.key === 'End') next = TABS.length - 1
++    if (next < 0) return
++    e.preventDefault()
++    setTab(TABS[next].id)
++    tabRefs.current[next]?.focus()
++  }
++
++  return (
++    <div className="flex min-w-0 flex-col gap-16">
++      <div role="tablist" aria-label="Page view" onKeyDown={onKey} className="flex gap-4 border-b border-adm-line">
++        {TABS.map((t, i) => {
++          const selected = tab === t.id
++          return (
++            <button
++              key={t.id}
++              ref={(el) => {
++                tabRefs.current[i] = el
++              }}
++              type="button"
++              role="tab"
++              id={`${id}-tab-${t.id}`}
++              aria-selected={selected}
++              aria-controls={`${id}-panel-${t.id}`}
++              tabIndex={selected ? 0 : -1}
++              data-page-tab={t.id}
++              onClick={() => setTab(t.id)}
++              className={`-mb-px border-b-2 px-12 py-8 text-14 font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-adm-accent ${
++                selected ? 'border-adm-ink text-adm-ink' : 'border-transparent text-adm-muted hover:text-adm-ink'
++              }`}
++            >
++              {t.label}
++            </button>
++          )
++        })}
++      </div>
++      <div role="tabpanel" id={`${id}-panel-summary`} aria-labelledby={`${id}-tab-summary`} hidden={tab !== 'summary'} className="min-w-0">
++        {tab === 'summary' && summary}
++      </div>
++      <div
++        ref={detailRef}
++        role="tabpanel"
++        id={`${id}-panel-detail`}
++        aria-labelledby={`${id}-tab-detail`}
++        hidden={tab !== 'detail'}
++        className="flex min-w-0 flex-col gap-16"
++      >
++        {children}
++      </div>
++    </div>
++  )
++}
++
++/* ------------------------------------------------------------ PageSummary */
++
++export interface SummaryStat {
++  label: string
++  value: string
++  note?: string
++}
++
++export interface SummaryStep {
++  text: string
++  /** A route (opens it) or omitted (plain text). */
++  to?: string
++  linkLabel?: string
++}
++
++/**
++ * The Summary tab of a page that has no report summary of its own: what the
++ * page is for, the question it answers, the answer, up to three figures and
++ * the next steps. About one screen; anything longer belongs in Detail.
++ */
++export function PageSummary({
++  purpose,
++  question,
++  answer,
++  stats = [],
++  next = [],
++  note,
++  onDetail,
++}: {
++  purpose: string
++  question: string
++  answer: ReactNode
++  stats?: SummaryStat[]
++  next?: SummaryStep[]
++  /** One line on how far to trust the figures. */
++  note?: string
++  onDetail?: () => void
++}) {
++  return (
++    <section aria-label="Summary" className="flex min-w-0 flex-col gap-16 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20">
++      <PurposeLine purpose={purpose} />
++      <div className="flex flex-col gap-6">
++        <p className="text-13 text-adm-ink-2">
++          <span className="font-semibold text-adm-muted">The question: </span>
++          {question}
++        </p>
++        <p className="max-w-[860px] text-18 font-semibold leading-snug text-adm-ink">{answer}</p>
++      </div>
++      {stats.length > 0 && (
++        <dl className="grid gap-8 sm:grid-cols-3">
++          {stats.slice(0, 3).map((s) => (
++            <div key={s.label} className="flex min-w-0 flex-col gap-4 rounded-8 border border-adm-line bg-adm-bg p-12">
++              <dt className="text-12 font-medium text-adm-muted">{s.label}</dt>
++              <dd className="text-24 font-semibold leading-tight tabular-nums text-adm-ink">{s.value}</dd>
++              {s.note && <dd className="text-12 text-adm-ink-2">{s.note}</dd>}
++            </div>
++          ))}
++        </dl>
++      )}
++      {next.length > 0 && (
++        <div className="flex flex-col gap-6">
++          <h2 className="text-13 font-semibold text-adm-ink">Next steps</h2>
++          <ol className="flex flex-col gap-6">
++            {next.map((n, i) => (
++              <li key={n.text} className="flex flex-col gap-4 text-13 text-adm-ink lg:flex-row lg:items-baseline lg:justify-between lg:gap-12">
++                <span>
++                  <span className="mr-6 font-semibold tabular-nums">{i + 1}.</span>
++                  {n.text}
++                </span>
++                {n.to && (
++                  <Link to={n.to} className="inline-flex shrink-0 items-center gap-4 text-12 font-medium text-adm-ink underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink">
++                    {n.linkLabel ?? 'Open'} <ArrowRight size={12} aria-hidden="true" />
++                  </Link>
++                )}
++              </li>
++            ))}
++          </ol>
++        </div>
++      )}
++      <div className="flex flex-wrap items-center justify-between gap-8 border-t border-adm-line pt-12">
++        {note ? <p className="text-12 text-adm-muted">{note}</p> : <span />}
++        {onDetail && (
++          <button type="button" onClick={onDetail} className="inline-flex items-center gap-4 text-13 font-semibold text-adm-ink underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink">
++            See everything in Detail <ArrowRight size={13} aria-hidden="true" />
++          </button>
++        )}
++      </div>
++    </section>
++  )
++}
++
++/** "This page is for …": one sentence on top of every Summary tab. */
++export function PurposeLine({ purpose }: { purpose: string }) {
++  return (
++    <p className="rounded-8 bg-adm-bg px-12 py-8 text-14 text-adm-ink" data-purpose>
++      <span className="font-semibold">This page is for </span>
++      {purpose}
++    </p>
++  )
++}
++
++/** A report's Summary tab: the purpose line above the report's own summary block. */
++export function ReportSummaryTab({ purpose, children, onDetail }: { purpose: string; children: ReactNode; onDetail?: () => void }) {
++  return (
++    <div className="flex min-w-0 flex-col gap-12">
++      <PurposeLine purpose={purpose} />
++      {children}
++      {onDetail && (
++        <button type="button" onClick={onDetail} className="inline-flex items-center gap-4 self-end text-13 font-semibold text-adm-ink underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink">
++          See everything in Detail <ArrowRight size={13} aria-hidden="true" />
++        </button>
++      )}
++    </div>
++  )
++}
+diff --git a/src/admin/components/pageTab.ts b/src/admin/components/pageTab.ts
+new file mode 100644
+index 0000000..8d8728b
+--- /dev/null
++++ b/src/admin/components/pageTab.ts
+@@ -0,0 +1,34 @@
++import { useCallback } from 'react'
++import { useSearchParams } from 'react-router-dom'
++
++/* The Summary | Detail tab state for PageTabs (U142, J203), kept in the URL as `?tab=detail`. */
++
++export type PageTab = 'summary' | 'detail'
++
++/** The current tab and a setter that keeps every other search param (a page's own `?view=` etc.). */
++export function usePageTab(): [PageTab, (tab: PageTab) => void] {
++  const [params, setParams] = useSearchParams()
++  const tab: PageTab = params.get('tab') === 'detail' ? 'detail' : 'summary'
++  const set = useCallback(
++    (next: PageTab) =>
++      setParams((prev) => {
++        const p = new URLSearchParams(prev)
++        if (next === 'detail') p.set('tab', 'detail')
++        else p.delete('tab')
++        return p
++      }),
++    [setParams],
++  )
++  return [tab, set]
++}
++
++/**
++ * For pages that write their own search params with a fresh object
++ * (`setParams({ view: 'x' })`): carries `tab` over so a click inside Detail
++ * does not throw the reader back to Summary.
++ */
++export function keepTab(prev: URLSearchParams, next: Record<string, string>): Record<string, string> {
++  const tab = prev.get('tab')
++  return tab ? { ...next, tab } : next
++}
++
+diff --git a/src/admin/components/ui.tsx b/src/admin/components/ui.tsx
+index afcdec2..0729773 100644
+--- a/src/admin/components/ui.tsx
++++ b/src/admin/components/ui.tsx
+@@ -56,7 +56,7 @@ export function StatCard({ label, value, delta, inverse, hint }: StatCardProps)
+   const good = inverse ? !rising : rising
+   return (
+     <div className="flex flex-col gap-6 rounded-12 border border-adm-line bg-adm-surface p-14">
+-      <span className="text-11 font-medium uppercase tracking-wider text-adm-muted">{label}</span>
++      <span data-stat-label="" className="text-11 font-medium uppercase tracking-wider text-adm-muted">{label}</span>
+       <span className="text-26 font-semibold tabular-nums leading-none text-adm-ink">{value}</span>
+       <div className="flex items-center gap-6 text-12">
+         {delta !== undefined && (
+diff --git a/src/admin/pages/BusinessFunnelPage.tsx b/src/admin/pages/BusinessFunnelPage.tsx
+index 54effe7..eecfb61 100644
+--- a/src/admin/pages/BusinessFunnelPage.tsx
++++ b/src/admin/pages/BusinessFunnelPage.tsx
+@@ -1,6 +1,9 @@
+ import { ChevronRight, CircleHelp, Download, ExternalLink, MapPin, Plus } from 'lucide-react'
+ import { useState } from 'react'
+ import { Link, useSearchParams } from 'react-router-dom'
++import { keepTab, usePageTab } from '../components/pageTab'
++import { PageSummary, PageTabs } from '../components/PageTabs'
++import { RELEASES } from '../../versions/releases'
+ import { GuideTour, type TourStep } from '../components/GuideTour'
+ import { Modal } from '../components/Modal'
+ import { Badge, Button, FormField, PageHeader, Panel, inputClass, textareaClass } from '../components/ui'
+@@ -50,7 +53,9 @@ export function BusinessFunnelPage() {
+   const [targets, setTargets] = useState<Record<string, number>>(() => readJson(TARGETS_KEY, TargetsSchema, {}))
+   const [decisions, setDecisions] = useState<Decision[]>(() => withNewDefaults(readJson(DECISIONS_KEY, DecisionsSchema, DEFAULT_DECISIONS)))
+   const [adding, setAdding] = useState<StageId | null>(null)
+-  const [guide, setGuide] = useState(() => readString(GUIDE_KEY) !== 'seen')
++  // adminNav2 (U142): no tour over the page on a first visit; the Guide button opens it.
++  const [guide, setGuide] = useState(() => !RELEASES.adminNav2 && readString(GUIDE_KEY) !== 'seen')
++  const [, setPageTab] = usePageTab()
+   const [notice, setNotice] = useState<string | null>(null)
+ 
+   const metrics = funnelMetrics(agent, design, week)
+@@ -60,7 +65,7 @@ export function BusinessFunnelPage() {
+   const targetOf = (m: FunnelMetric) => targets[m.id] ?? m.target
+ 
+   function setSource(a: AgentId, d: DesignId) {
+-    setParams({ agent: String(a), design: String(d) }, { replace: true })
++    setParams((prev) => keepTab(prev, { agent: String(a), design: String(d) }), { replace: true })
+   }
+   function saveTargets(next: Record<string, number>) {
+     setTargets(next)
+@@ -96,8 +101,16 @@ export function BusinessFunnelPage() {
+         description="Two funnels to Aurelia Plus: the app’s five stages and the creator retreat."
+         actions={
+           <div className="flex flex-wrap gap-8">
+-            <Button size="sm" icon={<CircleHelp size={13} />} onClick={() => setGuide(true)} data-tour="guide">
+-              Guide
++            <Button
++              size="sm"
++              icon={<CircleHelp size={13} />}
++              onClick={() => {
++                if (RELEASES.adminNav2) setPageTab('detail')
++                setGuide(true)
++              }}
++              data-tour="guide"
++            >
++              {RELEASES.adminNav2 ? 'Tour' : 'Guide'}
+             </Button>
+             <Button size="sm" icon={<Download size={13} />} onClick={() => downloadJson({ source: { agent: AGENT_RULES[agent].name, design: DESIGNS[design - 1].name, studyWeek: week }, targets, metrics, decisions })}>
+               Export (JSON)
+@@ -106,6 +119,31 @@ export function BusinessFunnelPage() {
+         }
+       />
+ 
++      <PageTabs
++        summary={
++          <PageSummary
++            purpose="seeing how many people get from a first visit to paying for Aurelia Plus, and which stage loses the most."
++            question="Where does the funnel leak most, and what do we fix first?"
++            answer={
++              gapCell
++                ? `${gapCell.title} is furthest below target: ${gapCell.metric} is ${pct(gapCell.value)} against ${pct(gapCell.target)}. ${onTrack} of ${cells.length} stages are on track.`
++                : `All ${cells.length} stages are on track.`
++            }
++            stats={[
++              { label: 'Stages on track', value: `${onTrack} of ${cells.length}` },
++              ...(plus ? [{ label: plus.label, value: plus.value, note: `target ${pct(plus.target)}` }] : []),
++              ...(d30 ? [{ label: d30.label, value: d30.value, note: `target ${pct(d30.target)}` }] : []),
++            ]}
++            next={[
++              ...(gapCell ? [{ text: `Agree one change for ${gapCell.title} and log it as a decision (Detail → the stage).` }] : []),
++              { text: 'Check the targets are the ones the team agreed.' },
++              { text: 'Compare with the creator retreat funnel (Detail → Creator retreat).' },
++            ]}
++            note={`Predicted by the buyer agents (${AGENT_RULES[agent].name}, ${DESIGNS[design - 1].name}); not measured on real users.`}
++            onDetail={() => setPageTab('detail')}
++          />
++        }
++      >
+       <div className="flex flex-wrap items-center justify-between gap-12">
+         <div role="tablist" aria-label="Funnel" className="flex w-fit flex-wrap gap-4 rounded-8 bg-adm-bg p-4">
+           {(
+@@ -119,7 +157,7 @@ export function BusinessFunnelPage() {
+               type="button"
+               role="tab"
+               aria-selected={view === id}
+-              onClick={() => setParams(id === 'retreat' ? { view: 'retreat' } : {}, { replace: true })}
++              onClick={() => setParams((prev) => keepTab(prev, id === 'retreat' ? { view: 'retreat' } : {}), { replace: true })}
+               className={`rounded-8 px-12 py-6 text-13 font-medium ${view === id ? 'bg-adm-surface text-adm-ink shadow-sm' : 'text-adm-ink-2 hover:text-adm-ink'}`}
+             >
+               {label}
+@@ -274,6 +312,7 @@ export function BusinessFunnelPage() {
+           </Details>
+         </>
+       )}
++      </PageTabs>
+ 
+       {adding && <DecisionForm stage={adding} onClose={() => setAdding(null)} onSave={(d) => saveDecisions([...decisions, d], 'Decision added')} />}
+       {guide && view === 'app' && (
+diff --git a/src/admin/pages/BuyerResultsPage.tsx b/src/admin/pages/BuyerResultsPage.tsx
+index 12318dc..6b65375 100644
+--- a/src/admin/pages/BuyerResultsPage.tsx
++++ b/src/admin/pages/BuyerResultsPage.tsx
+@@ -1,6 +1,8 @@
+ import { Copy, Download } from 'lucide-react'
+ import { useState, type ReactNode } from 'react'
+ import { Link, useSearchParams } from 'react-router-dom'
++import { keepTab, usePageTab } from '../components/pageTab'
++import { PageSummary, PageTabs } from '../components/PageTabs'
+ import { DataTable, type Column } from '../components/DataTable'
+ import { PersonaProfile } from '../components/PersonaProfile'
+ import { Finding, HeatLegend, HeatTable, RankBars, VerdictChart } from './buyer/BuyerCharts'
+@@ -94,6 +96,7 @@ function BuyerResults() {
+   const run = BUYER_RUNS.find((r) => String(r.version) === params.get('v')) ?? latest
+   const [open, setOpen] = useState<{ id: string; tab: 'answer' | 'persona' } | null>(null)
+   const [notice, setNotice] = useState('')
++  const [, setPageTab] = usePageTab()
+   const n = run.answers.length
+   const people = personasOf(run)
+   const persona = (id: string) => people.get(id)!
+@@ -216,6 +219,27 @@ function BuyerResults() {
+         }
+       />
+ 
++      <PageTabs
++        summary={
++          <PageSummary
++            purpose="reading every buyer agent run in full: each simulated persona's answer, the price they call fair and the test cases. The Buyer agent report is the short version."
++            question="Would these made-up buyers try Aurelia and pay for it?"
++            answer={`In run v${run.version}, ${tries.yes} of ${n} would try it and ${pays.yes} of ${n} would pay; a fair price reads as ${money(range.low)}–${money(range.high)} against ${money(run.stimulus.priceUsd)} for Plus.`}
++            stats={[
++              { label: 'Would try', value: `${tries.yes} of ${n}`, note: `${tries.maybe} maybe, ${tries.no} no` },
++              { label: 'Would pay', value: `${pays.yes} of ${n}`, note: `${pays.maybe} maybe, ${pays.no} no` },
++              { label: 'Test cases passed', value: `${outcomes.pass}`, note: `${outcomes.risk} at risk, ${outcomes.fail} fail` },
++            ]}
++            next={[
++              { text: 'Read the decision and the price advice in the Buyer agent report.', to: '/admin/reports/buyer-agent', linkLabel: 'Buyer agent report' },
++              { text: 'Open the answers of the people who said no, and what would change their mind (Detail).' },
++              { text: 'Turn the open questions into interview questions for real people.' },
++            ]}
++            note="Older version: kept for the full run log. Synthetic answers are predictions, not evidence of demand."
++            onDetail={() => setPageTab('detail')}
++          />
++        }
++      >
+       <div role="tablist" aria-label="View" className="flex w-fit gap-4 rounded-8 bg-adm-bg p-4">
+         {(
+           [
+@@ -230,7 +254,7 @@ function BuyerResults() {
+             aria-selected={view === id}
+             onClick={() => {
+               setOpen(null)
+-              setParams(id === 'versions' ? { view: 'versions' } : {}, { replace: true })
++              setParams((prev) => keepTab(prev, id === 'versions' ? { view: 'versions' } : {}), { replace: true })
+             }}
+             className={`rounded-8 px-12 py-6 text-12 font-medium ${view === id ? 'bg-adm-surface text-adm-ink shadow-sm' : 'text-adm-ink-2 hover:text-adm-ink'}`}
+           >
+@@ -254,7 +278,7 @@ function BuyerResults() {
+               aria-selected={active}
+               onClick={() => {
+                 setOpen(null)
+-                setParams({ v: String(r.version) }, { replace: true })
++                setParams((prev) => keepTab(prev, { v: String(r.version) }), { replace: true })
+               }}
+               className={`flex flex-col items-start rounded-12 border px-14 py-10 text-left ${active ? 'border-adm-ink bg-adm-surface' : 'border-adm-line bg-adm-bg hover:bg-adm-hover'}`}
+             >
+@@ -558,6 +582,7 @@ function BuyerResults() {
+       )}
+         </>
+       )}
++      </PageTabs>
+     </div>
+   )
+ }
+diff --git a/src/admin/pages/DashboardPage.tsx b/src/admin/pages/DashboardPage.tsx
+index 2815c60..e9e3d34 100644
+--- a/src/admin/pages/DashboardPage.tsx
++++ b/src/admin/pages/DashboardPage.tsx
+@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
+ import { BarChart, LineChart } from '../components/Charts'
+ import { Legend, PageHeader, Panel, StatCard, StatusBadge } from '../components/ui'
+ import { AI_TIMESERIES, AUDIT_LOG, REPORTS, ROLES, SESSIONS, USERS } from '../data/mock'
++import { RELEASES } from '../../versions/releases'
+ 
+ const TRAFFIC_SERIES = [{ key: 'requests', label: 'AI requests', color: 'var(--color-adm-s1)' }]
+ 
+@@ -20,16 +21,26 @@ export function DashboardPage() {
+ 
+   return (
+     <>
+-      <PageHeader
+-        title="Dashboard"
+-        description="Platform health at a glance. Every figure links through to the module that owns it."
+-      />
++      {RELEASES.adminNav2 ? (
++        <>
++          <PageHeader title="Start here" description="Where the team's work lives in this admin, and which figures are sample data." />
++          <StartHere />
++          <h2 className="text-15 font-semibold text-adm-ink">
++            Platform health <span className="font-normal text-adm-muted">· sample data for a backend that does not exist yet</span>
++          </h2>
++        </>
++      ) : (
++        <PageHeader
++          title="Dashboard"
++          description="Platform health at a glance. Every figure links through to the module that owns it."
++        />
++      )}
+ 
+       <div className="grid grid-cols-2 gap-12 lg:grid-cols-3 xl:grid-cols-6">
+         <StatCard label="Users" value={USERS.length.toLocaleString()} delta={6.2} hint="30d" />
+         <StatCard label="Published sessions" value={published.length.toLocaleString()} delta={14.7} />
+         <StatCard label="AI spend (30d)" value={`$${spend30.toLocaleString('en-US', { maximumFractionDigits: 0 })}`} delta={12.4} inverse />
+-        <StatCard label="Open reports" value={openReports.length.toLocaleString()} delta={-8.2} inverse />
++        <StatCard label={RELEASES.adminNav2 ? 'Open moderation reports' : 'Open reports'} value={openReports.length.toLocaleString()} delta={-8.2} inverse />
+         <StatCard label="Staff accounts" value={ROLES.reduce((sum, r) => sum + r.members, 0).toLocaleString()} hint="across 5 roles" />
+         <StatCard label="Audit entries" value={AUDIT_LOG.length.toLocaleString()} hint="30d" />
+       </div>
+@@ -111,3 +122,30 @@ export function DashboardPage() {
+     </>
+   )
+ }
++
++/**
++ * adminNav2 (U142, J203): the first thing on /admin is where the real work is
++ * (the AI brain, the decision reports, the research), not the health figures
++ * of an operation that does not run yet. Those stay below, labelled sample.
++ */
++const START: { title: string; text: string; to: string; link: string }[] = [
++  { title: 'AI brain', text: 'StateFlips, the healing map, the user journey, personas and the business funnel: what the AI knows.', to: RELEASES.stateFlips ? '/admin/stateflips' : '/admin/user-journey', link: RELEASES.stateFlips ? 'Open StateFlips' : 'Open User journey' },
++  { title: 'Reports & decisions', text: 'One report per decision, each with its answer, its next steps and its sources.', to: '/admin/reports', link: 'Open all reports' },
++  { title: 'Research', text: 'The desk research behind the reports, in the team wiki.', to: '/wiki/research', link: 'Open research' },
++]
++
++function StartHere() {
++  return (
++    <section aria-label="Start here" className="grid gap-12 lg:grid-cols-3">
++      {START.map((c) => (
++        <Link key={c.title} to={c.to} className="group flex min-w-0 flex-col gap-6 rounded-12 border border-adm-line bg-adm-surface p-16 hover:border-adm-ink-2 focus-visible:outline-2 focus-visible:outline-adm-accent">
++          <span className="text-15 font-semibold text-adm-ink">{c.title}</span>
++          <span className="text-13 text-adm-ink-2">{c.text}</span>
++          <span className="mt-auto inline-flex items-center gap-4 pt-4 text-13 font-medium text-adm-ink group-hover:underline">
++            {c.link} <ArrowRight size={13} aria-hidden="true" />
++          </span>
++        </Link>
++      ))}
++    </section>
++  )
++}
+diff --git a/src/admin/pages/PersonasPage.tsx b/src/admin/pages/PersonasPage.tsx
+index ff29514..90fbe37 100644
+--- a/src/admin/pages/PersonasPage.tsx
++++ b/src/admin/pages/PersonasPage.tsx
+@@ -7,6 +7,9 @@ import { Badge, Button, PageHeader, Panel, inputClass } from '../components/ui'
+ import { GOAL_LABEL, PERSONA_COUNT, SEED, distribution, drawPanel, generatePersonas, personaPrompt, type Generator, type Persona } from '../data/personas'
+ import { PersonaProfile } from '../components/PersonaProfile'
+ import { PersonasV4View } from './personas/PersonasV4View'
++import { PageSummary, PageTabs } from '../components/PageTabs'
++import { usePageTab } from '../components/pageTab'
++import { SCENARIOS, generatePersonasV4 } from '../data/personasV4'
+ 
+ type SetId = 'v4' | 'v2' | 'v1'
+ const SETS: { id: SetId; label: string }[] = [
+@@ -57,12 +60,47 @@ function download(name: string, text: string, type: string) {
+  */
+ export function PersonasPage() {
+   const [set, setSet] = useState<SetId>('v4')
++  const [, setTab] = usePageTab()
++  // Summary (U142): the facts of set v4, the default.
++  const facts = useMemo(() => {
++    const ps = generatePersonasV4()
++    const scen = new Map<string, number>()
++    for (const p of ps) scen.set(p.scenario, (scen.get(p.scenario) ?? 0) + 1)
++    const top = [...scen.entries()].sort((a, b) => b[1] - a[1])[0]
++    return {
++      count: ps.length,
++      countries: new Set(ps.map((p) => p.country)).size,
++      risk: ps.filter((p) => p.riskFlag).length,
++      top: top ? `${SCENARIOS[top[0] as keyof typeof SCENARIOS].label} (${top[1]})` : '',
++    }
++  }, [])
+   return (
+     <div className="flex flex-col gap-16">
+       <PageHeader
+         title="Personas"
+         description="Made-up people with different lives, goals and doubts, as candidates for research run by AI: interviews in role, concept and copy tests, pricing checks. Use them to form and sharpen ideas before real users are asked, not as evidence."
+       />
++      <PageTabs
++        summary={
++          <PageSummary
++            purpose="choosing made-up people to run AI research on (interviews in role, concept, copy and price tests) before real users are asked."
++            question="Who do our tests run on, and who must never be sold to?"
++            answer={`${facts.count.toLocaleString('en-US')} made-up people from ${facts.countries} countries; ${facts.risk} carry a risk flag and go to the help screen, never a sale.`}
++            stats={[
++              { label: 'People in set v4', value: facts.count.toLocaleString('en-US') },
++              { label: 'Countries', value: String(facts.countries) },
++              { label: 'Risk-flagged', value: String(facts.risk), note: 'routed to help, never sold to' },
++            ]}
++            next={[
++              { text: `Most common life situation: ${facts.top}. Check it matches who we want to reach.` },
++              { text: 'Pick a panel in Detail and copy its role-play prompts into a test.' },
++              { text: 'See what simulated buyers said in the Buyer agent report.', to: '/admin/reports/buyer-agent', linkLabel: 'Buyer agent report' },
++            ]}
++            note="Synthetic people for forming ideas, not evidence. Sets v1 and v2 (300 each) stay for the runs pinned to them."
++            onDetail={() => setTab('detail')}
++          />
++        }
++      >
+       <div role="tablist" aria-label="Persona set" className="flex w-fit max-w-full flex-wrap gap-4 rounded-8 border border-adm-line bg-adm-surface p-4">
+         {SETS.map((x) => (
+           <button
+@@ -78,6 +116,7 @@ export function PersonasPage() {
+         ))}
+       </div>
+       {set === 'v4' ? <PersonasV4View /> : <LegacyPersonas key={set} gen={set === 'v1' ? 1 : 2} />}
++      </PageTabs>
+     </div>
+   )
+ }
+diff --git a/src/admin/pages/UserJourneyPage.tsx b/src/admin/pages/UserJourneyPage.tsx
+index 3bec34f..b055560 100644
+--- a/src/admin/pages/UserJourneyPage.tsx
++++ b/src/admin/pages/UserJourneyPage.tsx
+@@ -1,6 +1,8 @@
+ import { AlertCircle, CircleHelp, Download, ExternalLink, ImagePlus, MoreHorizontal, Pencil, Plus, RotateCcw, Smartphone, Upload, Users } from 'lucide-react'
+ import { useEffect, useMemo, useState, type ChangeEvent, type CSSProperties } from 'react'
+ import { useSearchParams } from 'react-router-dom'
++import { keepTab, usePageTab } from '../components/pageTab'
++import { PageSummary, PageTabs } from '../components/PageTabs'
+ import { GuideTour, type TourStep } from '../components/GuideTour'
+ import { Modal } from '../components/Modal'
+ import { SidePanel } from '../components/SidePanel'
+@@ -110,11 +112,13 @@ function readCompressed(file: File, max: number): Promise<string> {
+ export function UserJourneyPage() {
+   const tagsOn = RELEASES.journeyTags
+   const [params, setParams] = useSearchParams()
++  const [, setTab] = usePageTab()
+   const requested = params.get('view') as View | null
+   const view: View = tagsOn && requested && VIEWS.some((v) => v.id === requested) ? requested : 'map'
+ 
+   const [map, setMap] = useState<JourneyMap>(() => upgradeJourney(readJson(STORAGE_KEY, JourneyMapSchema, INITIAL_JOURNEY)))
+-  const [guide, setGuide] = useState(() => readString(GUIDE_KEY) !== 'seen')
++  // adminNav2 (U142): the tour no longer opens by itself over the page; the Tour button opens it.
++  const [guide, setGuide] = useState(() => !RELEASES.adminNav2 && readString(GUIDE_KEY) !== 'seen')
+   const [tags, setTags] = useState<JourneyTags>(() => readJson(TAGS_STORAGE_KEY, JourneyTagsSchema, INITIAL_TAGS))
+   const [stageFilter, setStageFilter] = useState<string | null>(null)
+   const [tagFilter, setTagFilter] = useState('')
+@@ -155,7 +159,7 @@ export function UserJourneyPage() {
+   const report = (ok: boolean, message = 'Saved in this browser') => setNotice(ok ? message : 'Browser storage is full. Export a backup, or use smaller images.')
+ 
+   function setView(next: View) {
+-    setParams(next === 'map' ? {} : { view: next }, { replace: true })
++    setParams((prev) => keepTab(prev, next === 'map' ? {} : { view: next }), { replace: true })
+   }
+ 
+   function openItem(kind: ItemKind, stageId: string, item: JourneyScreen) {
+@@ -245,6 +249,12 @@ export function UserJourneyPage() {
+   const stages = map.stages.filter((s) => !stageFilter || s.id === stageFilter)
+   const grid: CSSProperties = { gridTemplateColumns: `repeat(${stages.length}, minmax(220px, 1fr))` }
+   const readiness = tags.groups.find((g) => g.id === 'readiness')
++  // Summary (U142): the moment most personas hit that has no screen behind it.
++  const gaps = moments
++    .filter((m) => screensOf(m.id).length === 0)
++    .map((m) => ({ m, demand: DEMAND.get(m.id) ?? 0 }))
++    .sort((a, b) => b.demand - a.demand)
++  const topGap = gaps[0]
+ 
+   return (
+     <div className="flex flex-col gap-16">
+@@ -253,8 +263,16 @@ export function UserJourneyPage() {
+         description="When, where and why people reach for Aurelia, and what serves each moment. Use it to decide what to design or build next: a moment many personas hit, with no screen or only a concept behind it, is the gap. New here? Open the guide."
+         actions={
+           <div className="relative flex gap-8">
+-            <Button size="sm" icon={<CircleHelp size={13} />} onClick={() => setGuide(true)} data-tour="guide">
+-              Guide
++            <Button
++              size="sm"
++              icon={<CircleHelp size={13} />}
++              onClick={() => {
++                if (RELEASES.adminNav2) setTab('detail')
++                setGuide(true)
++              }}
++              data-tour="guide"
++            >
++              {RELEASES.adminNav2 ? 'Tour' : 'Guide'}
+             </Button>
+             <Button size="sm" variant="primary" icon={<Plus size={13} />} onClick={() => openNew('moments', stageFilter ?? map.stages[0].id)}>
+               Add moment
+@@ -318,6 +336,31 @@ export function UserJourneyPage() {
+         }
+       />
+ 
++      <PageTabs
++        summary={
++          <PageSummary
++            purpose="seeing when people reach for Aurelia, and which of those moments still has no screen."
++            question="Which moment should we design or build for next?"
++            answer={
++              topGap
++                ? `“${topGap.m.title}” is the biggest gap: ${topGap.demand} of 300 personas hit it and no screen serves it yet.`
++                : 'Every moment has at least one screen behind it.'
++            }
++            stats={[
++              { label: 'Moments', value: String(counts.moments), note: `in ${map.stages.length} stages` },
++              { label: 'Moments with no screen', value: String(gaps.length) },
++              { label: 'Screens', value: String(counts.screens) },
++            ]}
++            next={[
++              ...(topGap ? [{ text: `Open “${topGap.m.title}” in Detail and decide what should serve it.` }] : []),
++              { text: 'Check the tags and the review status of each moment (Detail → Tags).' },
++              { text: 'Export the journey and share it with the team when it changes.' },
++            ]}
++            note="Demand counts the 300 synthetic personas, not real users. Edits are saved in this browser only."
++            onDetail={() => setTab('detail')}
++          />
++        }
++      >
+       {tagsOn && (
+         <div className="flex flex-wrap items-center justify-between gap-10">
+           <div className="flex flex-wrap gap-2 rounded-12 border border-adm-line bg-adm-surface p-4" role="tablist" aria-label="View" data-tour="views">
+@@ -571,6 +614,7 @@ export function UserJourneyPage() {
+       )}
+       {view === 'coverage' && <CoverageView moments={moments} groups={tags.groups} />}
+       {view === 'setup' && <TagSetupView groups={tags.groups} onEdit={setGroupEditing} onAdd={() => setGroupEditing('new')} />}
++      </PageTabs>
+ 
+       {notice && (
+         <div role="status" className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-8 bg-adm-ink px-14 py-10 text-12 text-adm-surface shadow-lg">
+diff --git a/src/admin/pages/buyer/RerunView.tsx b/src/admin/pages/buyer/RerunView.tsx
+index 1befed4..be9fb2d 100644
+--- a/src/admin/pages/buyer/RerunView.tsx
++++ b/src/admin/pages/buyer/RerunView.tsx
+@@ -1,5 +1,6 @@
+ import { useState } from 'react'
+ import { useSearchParams } from 'react-router-dom'
++import { keepTab } from '../../components/pageTab'
+ import { DataTable, type Column } from '../../components/DataTable'
+ import { PersonaProfile } from '../../components/PersonaProfile'
+ import { SidePanel } from '../../components/SidePanel'
+@@ -35,7 +36,7 @@ export function RerunView() {
+   const [open, setOpen] = useState<{ id: string; tab: 'walk' | 'persona' } | null>(null)
+   const select = (a: AgentId, d: DesignId) => {
+     setOpen(null)
+-    setParams({ view: 'versions', agent: String(a), design: String(d) }, { replace: true })
++    setParams((prev) => keepTab(prev, { view: 'versions', agent: String(a), design: String(d) }), { replace: true })
+   }
+   const r = report(agent, design)
+   const people = personasOf(r.run)
+diff --git a/src/admin/pages/lab/HealingMapPage.tsx b/src/admin/pages/lab/HealingMapPage.tsx
+index ce7b378..d73ca66 100644
+--- a/src/admin/pages/lab/HealingMapPage.tsx
++++ b/src/admin/pages/lab/HealingMapPage.tsx
+@@ -1,4 +1,8 @@
+ import { ExternalLink, Minus, Plus } from 'lucide-react'
++import { PageTabs, PurposeLine } from '../../components/PageTabs'
++import { usePageTab } from '../../components/pageTab'
++import { RELEASES } from '../../../versions/releases'
++import { Link } from 'react-router-dom'
+ import { useState } from 'react'
+ import { Badge, PageHeader, Panel, type Tone } from '../../components/ui'
+ import {
+@@ -139,9 +143,9 @@ function HealingMap() {
+   const chip = (on: boolean) =>
+     `inline-flex items-center gap-6 rounded-full border px-10 py-4 text-12 font-medium ${on ? 'border-adm-ink bg-adm-ink text-adm-surface' : 'border-adm-line bg-adm-surface text-adm-ink-2 hover:bg-adm-hover'}`
+ 
+-  return (
+-    <div className="flex flex-col gap-16">
+-      <PageHeader title="Healing Map" description="Which building blocks of a session tend to help which bad state, and where each link comes from." />
++  const [, setPageTab] = usePageTab()
++  const summaryBlock = (
++    <>
+       <GoalLine goal="Shows which building blocks help which bad state, and how sure we are." />
+ 
+       <section className="flex flex-col gap-10 rounded-12 border border-adm-line bg-adm-surface p-16" data-summary>
+@@ -160,6 +164,27 @@ function HealingMap() {
+           ))}
+         </div>
+       </section>
++    </>
++  )
++
++  return (
++    <div className="flex flex-col gap-16">
++      <PageHeader title="Healing Map" description="Which building blocks of a session tend to help which bad state, and where each link comes from." />
++      {!RELEASES.adminNav2 && summaryBlock}
++      <PageTabs
++        summary={
++          <div className="flex min-w-0 flex-col gap-12">
++            <PurposeLine purpose="seeing which building blocks of a session tend to help which bad state, and how sure we are of each link." />
++            {summaryBlock}
++            <p className="rounded-8 border border-adm-line bg-adm-surface px-12 py-8 text-13 text-adm-ink-2">
++              Next step: replace the design-sample links with cited research or learned results. The <Link to="/admin/therapeutic-map" className="font-semibold text-adm-ink underline">Therapeutic map</Link> is the older version of this idea.
++            </p>
++            <button type="button" onClick={() => setPageTab('detail')} className="self-end text-13 font-semibold text-adm-ink underline decoration-adm-axis underline-offset-2">
++              Open the full map and how it will learn in Detail
++            </button>
++          </div>
++        }
++      >
+ 
+       <Panel title="The map" description="Tap a state or a building block to see its paths and where each link comes from.">
+         <div className="flex flex-col gap-10">
+@@ -344,6 +369,7 @@ function HealingMap() {
+           </div>
+         </div>
+       </Details>
++      </PageTabs>
+     </div>
+   )
+ }
+diff --git a/src/admin/pages/lab/StateFlipsPage.tsx b/src/admin/pages/lab/StateFlipsPage.tsx
+index 8512d15..5edbe26 100644
+--- a/src/admin/pages/lab/StateFlipsPage.tsx
++++ b/src/admin/pages/lab/StateFlipsPage.tsx
+@@ -1,4 +1,8 @@
+ import { PanelRightOpen } from 'lucide-react'
++import { PageTabs, PurposeLine } from '../../components/PageTabs'
++import { usePageTab } from '../../components/pageTab'
++import { RELEASES } from '../../../versions/releases'
++import { DetailsCue } from '../reports/ReportParts'
+ import { useState, type ReactNode } from 'react'
+ import { Badge, PageHeader, Panel, type Tone } from '../../components/ui'
+ import {
+@@ -45,6 +49,8 @@ export function StateFlipsPage() {
+   )
+ }
+ 
++const NAV2 = RELEASES.adminNav2
++
+ const TABS = [
+   { id: 'sleep', label: 'Sleep, in full' },
+   { id: 'all', label: 'All StateFlips' },
+@@ -60,6 +66,8 @@ function StateFlips() {
+   const last = c.rows[c.rows.length - 1]
+   const at42 = c.flippedAt(42)
+   const ex = examplePeople(c)
++  const [, setPageTab] = usePageTab()
++  const goal = <GoalLine goal="Explain, in numbers anyone can check, how chapters add up to the sleep StateFlip (25 → 85) and how “chance it works” is calculated." />
+ 
+   const tiles: { label: string; value: string; vs: string; badge: NumLabel; open: () => void }[] = [
+     {
+@@ -80,23 +88,7 @@ function StateFlips() {
+     },
+   ]
+ 
+-  return (
+-    <div className="flex flex-col gap-16" data-stateflips>
+-      <PageHeader title="StateFlips" description="How Aurelia moves a person from a bad state to a good one: sleep built out in full (what bad and good mean, the steps, how we measure them, who has it, how many chapters), all 125 StateFlips, and the draft catalogue of about 1,000 AKPs." />
+-      <GoalLine goal="Explain, in numbers anyone can check, how chapters add up to the sleep StateFlip (25 → 85) and how “chance it works” is calculated." />
+-
+-      <div className="flex flex-wrap gap-2 self-start rounded-12 border border-adm-line bg-adm-surface p-4" role="tablist" aria-label="View">
+-        {TABS.map((t) => (
+-          <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)} className={`rounded-8 px-12 py-6 text-12 font-medium ${tab === t.id ? 'bg-adm-hover text-adm-ink' : 'text-adm-muted hover:text-adm-ink'}`}>
+-            {t.label}
+-          </button>
+-        ))}
+-      </div>
+-
+-      {tab === 'all' && <AllStateFlips />}
+-      {tab === 'akps' && <AkpCatalogue />}
+-      {tab === 'sleep' && (
+-      <>
++  const summarySection = (
+       <section aria-label="Summary" className="flex min-w-0 flex-col gap-14 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20" data-summary>
+         <p className="max-w-[860px] text-18 font-semibold leading-snug text-adm-ink">
+           {who.cohort.length} of the 1,000 <Term id="simulated">simulated people</Term> have sleep as their main need. Followed chapter by chapter, half would reach good sleep within {c.medianChapters} <Term id="chapter">chapters</Term> if it works for them, and {pct(last.flipped)} of them get there in the end: less than the plan’s flat 54%, because half the group starts with severe sleep problems.
+@@ -111,7 +103,7 @@ function StateFlips() {
+               <dd>
+                 <button type="button" onClick={t.open} aria-label={`${t.label}: ${t.value}. Show details`} className="group inline-flex items-center gap-6 rounded-4 text-left text-24 font-semibold leading-tight tabular-nums text-adm-ink hover:underline hover:decoration-adm-axis">
+                   {t.value}
+-                  <PanelRightOpen size={14} aria-hidden="true" className="shrink-0 text-adm-muted group-hover:text-adm-ink" />
++                  <DetailsCue />
+                 </button>
+               </dd>
+               <dd className="text-11 text-adm-ink-2">{t.vs}</dd>
+@@ -122,6 +114,38 @@ function StateFlips() {
+           Nothing here is measured: there are no real users yet. Each number is labelled <L l="spec" /> (the business owner’s plan), <L l="assumption" /> (our stated choice), <L l="computed" /> (worked out here) or <L l="research" /> (a published sleep scale).
+         </p>
+       </section>
++  )
++
++  return (
++    <div className="flex flex-col gap-16" data-stateflips>
++      <PageHeader title="StateFlips" description="How Aurelia moves a person from a bad state to a good one: sleep built out in full (what bad and good mean, the steps, how we measure them, who has it, how many chapters), all 125 StateFlips, and the draft catalogue of about 1,000 AKPs." />
++      {!NAV2 && goal}
++
++      <PageTabs
++        summary={
++          <div className="flex min-w-0 flex-col gap-12">
++            <PurposeLine purpose="seeing how Aurelia turns a bad state into a good one, starting with sleep, and how likely it is to work." />
++            {goal}
++            {summarySection}
++            <button type="button" onClick={() => setPageTab('detail')} className="self-end text-13 font-semibold text-adm-ink underline decoration-adm-axis underline-offset-2">
++              See the steps, the cohort, all 125 StateFlips and the AKP catalogue in Detail
++            </button>
++          </div>
++        }
++      >
++      <div className="flex flex-wrap gap-2 self-start rounded-12 border border-adm-line bg-adm-surface p-4" role="tablist" aria-label="View">
++        {TABS.map((t) => (
++          <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)} className={`rounded-8 px-12 py-6 text-12 font-medium ${tab === t.id ? 'bg-adm-hover text-adm-ink' : 'text-adm-muted hover:text-adm-ink'}`}>
++            {t.label}
++          </button>
++        ))}
++      </div>
++
++      {tab === 'all' && <AllStateFlips />}
++      {tab === 'akps' && <AkpCatalogue />}
++      {tab === 'sleep' && (
++      <>
++      {!NAV2 && summarySection}
+ 
+       <Panel title="Key terms" description="The words this page and the wiki use, in plain English.">
+         <dl className="grid gap-10 lg:grid-cols-2" data-key-terms>
+@@ -140,6 +164,7 @@ function StateFlips() {
+       <Trajectories examples={ex} />
+       </>
+       )}
++      </PageTabs>
+     </div>
+   )
+ }
+diff --git a/src/admin/pages/lab/TherapeuticMapPage.tsx b/src/admin/pages/lab/TherapeuticMapPage.tsx
+index a0789fc..8f76356 100644
+--- a/src/admin/pages/lab/TherapeuticMapPage.tsx
++++ b/src/admin/pages/lab/TherapeuticMapPage.tsx
+@@ -1,4 +1,8 @@
+ import { ArrowRight } from 'lucide-react'
++import { PageTabs, PurposeLine } from '../../components/PageTabs'
++import { usePageTab } from '../../components/pageTab'
++import { RELEASES } from '../../../versions/releases'
++import { Link } from 'react-router-dom'
+ import { useState } from 'react'
+ import { Badge, PageHeader, Panel, type Tone } from '../../components/ui'
+ import { VALUE_KIND_TEXT, WORLDS, sleepJourney, sleepProcess, triangle, type Corner, type CornerId, type CornerLink, type ValueKind, type World } from '../../data/therapeuticMap'
+@@ -77,9 +81,9 @@ function TherapeuticMap() {
+   const openLink = (l: CornerLink) =>
+     open({ kicker: `${byId[l.from].title} → ${byId[l.to].title}`, title: l.title, summary: l.how })
+ 
+-  return (
+-    <div className="flex flex-col gap-16">
+-      <PageHeader title="Therapeutic map" description="Product, business and wellness as one triangle, and the steps from a bad state to a good one." />
++  const [, setPageTab] = usePageTab()
++  const summaryBlock = (
++    <>
+       <GoalLine goal="Shows how a person moves from a bad state to a good one, and how that ties to the product and the business." />
+ 
+       <section className="flex flex-col gap-10 rounded-12 border border-adm-line bg-adm-surface p-16" data-summary>
+@@ -90,6 +94,27 @@ function TherapeuticMap() {
+           For sleep, the business owner’s stage 1 scenario takes someone from 25 to 85 in {j.chapters} chapters at +{j.uplift.toFixed(2)} points each, with a {Math.round(j.flipProbability * 100)}% chance of getting there. Those are <Term id="assumption">assumptions</Term>; the product numbers are <Term id="simulated">simulated</Term>, and no real person’s result is measured yet.
+         </p>
+       </section>
++    </>
++  )
++
++  return (
++    <div className="flex flex-col gap-16">
++      <PageHeader title="Therapeutic map" description="Product, business and wellness as one triangle, and the steps from a bad state to a good one." />
++      {!RELEASES.adminNav2 && summaryBlock}
++      <PageTabs
++        summary={
++          <div className="flex min-w-0 flex-col gap-12">
++            <PurposeLine purpose="the first picture of how a person moves from a bad state to a good one, and how that ties to the product and the business." />
++            {summaryBlock}
++            <p className="rounded-8 border border-adm-line bg-adm-surface px-12 py-8 text-13 text-adm-ink-2">
++              This is the older version. The <Link to="/admin/healing-map" className="font-semibold text-adm-ink underline">Healing map</Link> is the newer one that learns from results; this page stays for its triangle and the five wellness worlds.
++            </p>
++            <button type="button" onClick={() => setPageTab('detail')} className="self-end text-13 font-semibold text-adm-ink underline decoration-adm-axis underline-offset-2">
++              See the triangle, the sleep steps and the five worlds in Detail
++            </button>
++          </div>
++        }
++      >
+ 
+       <Panel title="The triangle" description="Each corner has its core targets. Tap a corner or a link for details.">
+         <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+@@ -271,6 +296,7 @@ function TherapeuticMap() {
+           <li>“Therapeutic” is only the internal name of this metric line. What the product says to people stays wellness: no claim that anything treats a condition.</li>
+         </ul>
+       </Details>
++      </PageTabs>
+     </div>
+   )
+ }
+diff --git a/src/admin/pages/reports/B2b2cReportPage.tsx b/src/admin/pages/reports/B2b2cReportPage.tsx
+index 19ca062..8efc044 100644
+--- a/src/admin/pages/reports/B2b2cReportPage.tsx
++++ b/src/admin/pages/reports/B2b2cReportPage.tsx
+@@ -1,4 +1,8 @@
+-import { ExternalLink, PanelRightOpen } from 'lucide-react'
++import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
++import { usePageTab } from '../../components/pageTab'
++import { RELEASES } from '../../../versions/releases'
++import { ExternalLink } from 'lucide-react'
++import { DetailsCue } from './ReportParts'
+ import { useMemo, useState } from 'react'
+ import { Badge, PageHeader, Panel, type Tone } from '../../components/ui'
+ import {
+@@ -124,7 +128,7 @@ function ChannelChart() {
+                   <span className="h-full bg-adm-s2" style={{ width: `${(r.sim / 21) * 100}%` }} />
+                 </span>
+                 <span className="w-48 shrink-0 text-right text-13 font-semibold tabular-nums text-adm-ink">{r.base + r.sim}/21</span>
+-                <PanelRightOpen size={14} aria-hidden="true" className="shrink-0 text-adm-muted group-hover:text-adm-ink" />
++                <DetailsCue />
+               </span>
+               <span className="text-11 text-adm-muted lg:w-[180px] lg:shrink-0">{r.round1}</span>
+             </button>
+@@ -199,7 +203,7 @@ function FeatureBoard() {
+                       {f.top && <span className="mr-4 tabular-nums text-adm-muted">#{f.top}</span>}
+                       {f.title}
+                     </span>
+-                    <PanelRightOpen size={14} aria-hidden="true" className="mt-2 shrink-0 text-adm-muted group-hover:text-adm-ink" />
++                    <DetailsCue className="mt-2" />
+                   </span>
+                   <span className="text-12 text-adm-ink-2">{f.problem}</span>
+                   <span className="flex flex-wrap gap-4">
+@@ -245,12 +249,18 @@ export function B2b2cReportPage() {
+   const map = useMemo(() => mapFor(buildIterationMap(1), 'b2b2c'), [])
+   const web = B2B2C_SOURCES.filter((s) => s.url.startsWith('http'))
+   const own = B2B2C_SOURCES.filter((s) => !s.url.startsWith('http'))
++  const [, setPageTab] = usePageTab()
++  const summaryBlock = (
++        <SummaryBlock s={summary} />
++  )
++
+   return (
+     <DetailDrawerProvider>
+       <div className="flex flex-col gap-16">
+         <PageHeader title="B2B2C report" description={plainText(summary.intro ?? '')} />
+ 
+-        <SummaryBlock s={summary} />
++        {!RELEASES.adminNav2 && summaryBlock}
++        <PageTabs summary={<ReportSummaryTab purpose="choosing which partner channel (creators, employers, partners) to test first." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
+ 
+         <section id="b2b2c-how" className="min-w-0 scroll-mt-16">
+           <Panel title="How it works" description="The idea in four pictures: who is involved, each channel step by step, what changed from round 1, and the phases. Click any box for a plain explanation and the features behind it.">
+@@ -285,6 +295,7 @@ export function B2b2cReportPage() {
+             <SourceLinks ids={own.map((s) => s.id)} />
+           </Panel>
+         </Details>
++        </PageTabs>
+       </div>
+     </DetailDrawerProvider>
+   )
+diff --git a/src/admin/pages/reports/BuyerAgentReportPage.tsx b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+index 15722e6..9979c6e 100644
+--- a/src/admin/pages/reports/BuyerAgentReportPage.tsx
++++ b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+@@ -1,3 +1,6 @@
++import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
++import { usePageTab } from '../../components/pageTab'
++import { RELEASES } from '../../../versions/releases'
+ import { ArrowRight, PanelRightOpen } from 'lucide-react'
+ import { useMemo } from 'react'
+ import { Link } from 'react-router-dom'
+@@ -54,6 +57,11 @@ function BuyerAgentReport() {
+   const no7 = objections(t7)[0]
+   const pc = (k: number, n: number) => `${Math.round((k / n) * 100)}%`
+ 
++  const [, setPageTab] = usePageTab()
++  const summaryBlock = (
++      <SummaryBlock s={summary} aside={<LatestChangeAside version={BUYER_RUNS[BUYER_RUNS.length - 1].version} />} />
++  )
++
+   return (
+     <div className="flex flex-col gap-16">
+       <PageHeader
+@@ -66,7 +74,8 @@ function BuyerAgentReport() {
+         }
+       />
+ 
+-      <SummaryBlock s={summary} aside={<LatestChangeAside version={BUYER_RUNS[BUYER_RUNS.length - 1].version} />} />
++      {!RELEASES.adminNav2 && summaryBlock}
++      <PageTabs summary={<ReportSummaryTab purpose="deciding whether simulated buyers would pay for Aurelia, and at what price." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
+ 
+       <p className="text-12 text-adm-muted">
+         <RichText text="Every chart below is about {{simulated|simulated people}}: a prediction, not a measurement." />
+@@ -264,6 +273,7 @@ function BuyerAgentReport() {
+         ]}
+       />
+       </Details>
++      </PageTabs>
+     </div>
+   )
+ }
+diff --git a/src/admin/pages/reports/CombinationReportPage.tsx b/src/admin/pages/reports/CombinationReportPage.tsx
+index e77c10c..97c17ef 100644
+--- a/src/admin/pages/reports/CombinationReportPage.tsx
++++ b/src/admin/pages/reports/CombinationReportPage.tsx
+@@ -1,3 +1,6 @@
++import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
++import { usePageTab } from '../../components/pageTab'
++import { RELEASES } from '../../../versions/releases'
+ import { useState } from 'react'
+ import { Badge, PageHeader, Panel } from '../../components/ui'
+ import { DESIGNS } from '../../data/buyerSim'
+@@ -98,13 +101,8 @@ function CombinationReport() {
+   const [map] = useState(() => mapFor(buildIterationMap(week), 'combination'))
+   const middle = OUTCOMES.find((o) => o.id === 'middle')!
+ 
+-  return (
+-    <div className="flex flex-col gap-16">
+-      <PageHeader
+-        title="Combination report"
+-        description={summary.intro ?? ''}
+-      />
+-
++  const [, setPageTab] = usePageTab()
++  const summaryBlock = (
+       <SummaryBlock
+         s={summary}
+         aside={
+@@ -121,6 +119,17 @@ function CombinationReport() {
+           </div>
+         }
+       />
++  )
++
++  return (
++    <div className="flex flex-col gap-16">
++      <PageHeader
++        title="Combination report"
++        description={summary.intro ?? ''}
++      />
++
++      {!RELEASES.adminNav2 && summaryBlock}
++      <PageTabs summary={<ReportSummaryTab purpose="reading the journey, the personas and the buyer agents together to find the one funnel step to fix first." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
+ 
+       <Details id="stages" title="Stage by stage" hint="what each source says, where they agree and conflict">
+       <Panel title="How to read it" description="The version and rules every stage is read on.">
+@@ -215,6 +224,7 @@ function CombinationReport() {
+         ]}
+       />
+       </Details>
++      </PageTabs>
+     </div>
+   )
+ }
+diff --git a/src/admin/pages/reports/CostReportPage.tsx b/src/admin/pages/reports/CostReportPage.tsx
+index b09d423..b41e896 100644
+--- a/src/admin/pages/reports/CostReportPage.tsx
++++ b/src/admin/pages/reports/CostReportPage.tsx
+@@ -1,3 +1,6 @@
++import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
++import { usePageTab } from '../../components/pageTab'
++import { RELEASES } from '../../../versions/releases'
+ import { AlertTriangle, ExternalLink } from 'lucide-react'
+ import { useState, type ReactNode } from 'react'
+ import { Badge, PageHeader, Panel, inputClass, type Tone } from '../../components/ui'
+@@ -98,6 +101,11 @@ function CostReport() {
+   const values = nodeValues(state)
+   const stages = ([1, 2, 3] as Stage[]).map((st) => ({ st, r: goal({ ...state.goal, stage: st }, state.cost) }))
+ 
++  const [, setPageTab] = usePageTab()
++  const summaryBlock = (
++      <SummaryBlock s={summary} />
++  )
++
+   return (
+     <div className="flex flex-col gap-16">
+       <PageHeader
+@@ -105,7 +113,8 @@ function CostReport() {
+         description={summary.intro ?? ''}
+       />
+ 
+-      <SummaryBlock s={summary} />
++      {!RELEASES.adminNav2 && summaryBlock}
++      <PageTabs summary={<ReportSummaryTab purpose="knowing what one user and one StateFlip cost to serve, and whether the price covers it." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
+ 
+       <section id="cost-function" className="scroll-mt-16">
+         <Panel title="How the cost of helping one person adds up" description="Left: where each number comes from. Middle: the sum. Right: the result. Click a line to see its source.">
+@@ -339,6 +348,7 @@ function CostReport() {
+         ]}
+       />
+       </Details>
++      </PageTabs>
+     </div>
+   )
+ }
+diff --git a/src/admin/pages/reports/ReportMetricsPage.tsx b/src/admin/pages/reports/ReportMetricsPage.tsx
+index 77d4f8f..5a1c032 100644
+--- a/src/admin/pages/reports/ReportMetricsPage.tsx
++++ b/src/admin/pages/reports/ReportMetricsPage.tsx
+@@ -1,3 +1,6 @@
++import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
++import { usePageTab } from '../../components/pageTab'
++import { RELEASES } from '../../../versions/releases'
+ import { ArrowDownRight, ArrowUpRight, Minus, PanelRightOpen } from 'lucide-react'
+ import { useMemo, useState } from 'react'
+ import { Badge, PageHeader, Panel, type Tone } from '../../components/ui'
+@@ -211,10 +214,16 @@ function MetricsView() {
+ 
+   const selectCls = 'h-32 min-w-0 rounded-8 border border-adm-line bg-adm-surface px-8 text-13 text-adm-ink'
+ 
++  const [, setPageTab] = usePageTab()
++  const summaryBlock = (
++      <SummaryBlock s={summary} />
++  )
++
+   return (
+     <div className="flex min-w-0 flex-col gap-16">
+       <PageHeader title="Report metrics" description={plainText(summary.intro ?? '')} />
+-      <SummaryBlock s={summary} />
++      {!RELEASES.adminNav2 && summaryBlock}
++      <PageTabs summary={<ReportSummaryTab purpose="checking where each number in the reports comes from and how it is worked out, before trusting it." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
+ 
+       <Panel title="How to read the quality" description="Each number gets one of three labels, plus checks for things that look wrong.">
+         <dl className="grid gap-8 text-12 lg:grid-cols-3">
+@@ -369,6 +378,7 @@ function MetricsView() {
+       <p className="text-11 text-adm-muted">
+         <RichText text="Every value in the table is read from the report itself, then {{recomputed|worked out again}} here from the answers, personas and prices underneath. Nothing on this page is typed in." />
+       </p>
++      </PageTabs>
+     </div>
+   )
+ }
+diff --git a/src/admin/pages/reports/ReportParts.tsx b/src/admin/pages/reports/ReportParts.tsx
+index fe29fef..d5eeac5 100644
+--- a/src/admin/pages/reports/ReportParts.tsx
++++ b/src/admin/pages/reports/ReportParts.tsx
+@@ -1,4 +1,5 @@
+-import { ExternalLink } from 'lucide-react'
++import { ExternalLink, PanelRightOpen } from 'lucide-react'
++import { RELEASES } from '../../../versions/releases'
+ import type { ReactNode } from 'react'
+ import { Link } from 'react-router-dom'
+ import { BUILD } from '../../../lib/build'
+@@ -104,3 +105,17 @@ export function SourcesSection({ findings, limits, labels = ['measured', 'predic
+     </>
+   )
+ }
++
++/**
++ * The "opens the side panel" cue on a clickable tile or card. With adminNav2
++ * (U142, J203) it says so in words, not only with a 14px glyph.
++ */
++export function DetailsCue({ className = '' }: { className?: string }) {
++  if (!RELEASES.adminNav2) return <PanelRightOpen size={14} aria-hidden="true" className={`shrink-0 text-adm-muted group-hover:text-adm-ink ${className}`} />
++  return (
++    <span title="Open the details panel" className={`inline-flex shrink-0 items-center gap-4 text-12 font-medium leading-none text-adm-muted group-hover:text-adm-ink ${className}`}>
++      Details
++      <PanelRightOpen size={14} aria-hidden="true" />
++    </span>
++  )
++}
+diff --git a/src/admin/pages/reports/ReportSummary.tsx b/src/admin/pages/reports/ReportSummary.tsx
+index 9bcf5de..c45f691 100644
+--- a/src/admin/pages/reports/ReportSummary.tsx
++++ b/src/admin/pages/reports/ReportSummary.tsx
+@@ -1,4 +1,5 @@
+ import { ArrowRight, ChevronRight, PanelRightOpen } from 'lucide-react'
++import { DetailsCue } from './ReportParts'
+ import type { ReactNode } from 'react'
+ import { Badge, type Tone } from '../../components/ui'
+ import { plainText, type TermId } from '../../data/glossary'
+@@ -141,7 +142,7 @@ export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode
+                 className="group inline-flex items-center gap-6 rounded-4 text-left text-24 font-semibold leading-tight tabular-nums text-adm-ink hover:underline hover:decoration-adm-axis focus-visible:outline-2 focus-visible:outline-adm-accent"
+               >
+                 {plainText(t.value)}
+-                <PanelRightOpen size={14} aria-hidden="true" className="shrink-0 text-adm-muted group-hover:text-adm-ink" />
++                <DetailsCue />
+               </button>
+             </dd>
+             {t.delta && (
+diff --git a/src/admin/pages/reports/ReportsOverviewPage.tsx b/src/admin/pages/reports/ReportsOverviewPage.tsx
+index 7e46bc4..97f070b 100644
+--- a/src/admin/pages/reports/ReportsOverviewPage.tsx
++++ b/src/admin/pages/reports/ReportsOverviewPage.tsx
+@@ -1,4 +1,4 @@
+-import { PanelRightOpen } from 'lucide-react'
++import { DetailsCue } from './ReportParts'
+ import { useMemo, useState } from 'react'
+ import { PageHeader, Panel } from '../../components/ui'
+ import { b2b2cSummary } from '../../data/b2b2cReport'
+@@ -68,7 +68,7 @@ function Overview() {
+           >
+             <span className="flex items-center justify-between gap-8">
+               <span className="text-15 font-semibold text-adm-ink">{r.title}</span>
+-              <PanelRightOpen size={14} aria-hidden="true" className="shrink-0 text-adm-muted group-hover:text-adm-ink" />
++              <DetailsCue />
+             </span>
+             <span className="text-12 text-adm-ink">
+               <span className="font-semibold uppercase tracking-wider text-adm-muted">Goal </span>
+diff --git a/src/admin/pages/reports/UxFeedbackReportPage.tsx b/src/admin/pages/reports/UxFeedbackReportPage.tsx
+index 4f26933..68757b7 100644
+--- a/src/admin/pages/reports/UxFeedbackReportPage.tsx
++++ b/src/admin/pages/reports/UxFeedbackReportPage.tsx
+@@ -1,3 +1,6 @@
++import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
++import { usePageTab } from '../../components/pageTab'
++import { RELEASES } from '../../../versions/releases'
+ import { useMemo, useState } from 'react'
+ import { PageHeader, Panel } from '../../components/ui'
+ import { plainText } from '../../data/glossary'
+@@ -23,12 +26,18 @@ export function UxFeedbackReportPage() {
+   const summary = useMemo(() => uxFeedbackSummary(participants, week), [participants, week])
+   const map = useMemo(() => mapFor(buildIterationMap(Math.max(1, week)), 'ux'), [week])
+ 
++  const [, setPageTab] = usePageTab()
++  const summaryBlock = (
++        <SummaryBlock s={summary} />
++  )
++
+   return (
+     <DetailDrawerProvider>
+       <div className="flex flex-col gap-16">
+         <PageHeader title="UX feedback report" description={plainText(summary.intro ?? '')} />
+ 
+-        <SummaryBlock s={summary} />
++        {!RELEASES.adminNav2 && summaryBlock}
++        <PageTabs summary={<ReportSummaryTab purpose="seeing what the feedback group tells us about the app, and what to change next." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
+ 
+         <section id="ux-views" className="flex min-w-0 scroll-mt-16 flex-col gap-16">
+           <FeedbackGroupViews participants={participants} week={week} />
+@@ -48,6 +57,7 @@ export function UxFeedbackReportPage() {
+             ]}
+           />
+         </Details>
++        </PageTabs>
+       </div>
+     </DetailDrawerProvider>
+   )
+diff --git a/src/versions/StagingBar.tsx b/src/versions/StagingBar.tsx
+index 89ac9af..051e665 100644
+--- a/src/versions/StagingBar.tsx
++++ b/src/versions/StagingBar.tsx
+@@ -1,4 +1,6 @@
+ import { useEffect } from 'react'
++import { useLocation } from 'react-router-dom'
++import { RELEASES } from './releases'
+ import { BUILD, BUILD_VERSION } from '../lib/build'
+ import { IS_PRODUCTION } from './versions'
+ import { VersionSwitcher } from './VersionSwitcher'
+@@ -13,6 +15,9 @@ import { VersionSwitcher } from './VersionSwitcher'
+  * and shortens the viewport-height layouts by the same amount.
+  */
+ export function StagingBar() {
++  // U142 (J203): the consumer design versions mean nothing in the admin, so /admin shows the environment and build only.
++  const { pathname } = useLocation()
++  const hidePicker = RELEASES.adminNav2 && (pathname === '/admin' || pathname.startsWith('/admin/'))
+   useEffect(() => {
+     document.documentElement.setAttribute('data-staging-bar', '')
+     return () => document.documentElement.removeAttribute('data-staging-bar')
+@@ -24,10 +29,10 @@ export function StagingBar() {
+         <span className={`rounded-full px-6 py-1 leading-none ${IS_PRODUCTION ? 'bg-white/15 text-white' : 'bg-brand-default text-text-strong'}`}>{BUILD.label}</span>
+         <span className="truncate font-mono text-white/55">{BUILD_VERSION}</span>
+       </p>
+-      <div className="flex shrink-0 items-center gap-6">
++      {!hidePicker && <div className="flex shrink-0 items-center gap-6">
+         <span className="text-style-caption text-white/55">Design</span>
+         <VersionSwitcher dark />
+-      </div>
++      </div>}
+     </div>
+   )
+ }
+diff --git a/src/versions/releases.ts b/src/versions/releases.ts
+index 72dcf74..c651279 100644
+--- a/src/versions/releases.ts
++++ b/src/versions/releases.ts
+@@ -47,4 +47,11 @@ export const RELEASES = {
+   reportMetrics: BUILD.environment !== 'production',
+   /** Admin → Product lab → StateFlips (U140, J202): the sleep StateFlip, transparent chapters and chance, the cohort over time. Staging only. */
+   stateFlips: BUILD.environment !== 'production',
++  /**
++   * Admin menu review (U142, J203): the sidebar regrouped around the owners' work (Start here, AI brain,
++   * Reports & decisions, Research, Operations — sample data, Wiki), a Summary | Detail tab on the lab and
++   * report pages, and the audit's phase 1 quick wins (no design picker on /admin, compact header, sentence-case
++   * stat labels, a 12px text floor, no automatic tour, labelled details buttons). Staging only.
++   */
++  adminNav2: BUILD.environment !== 'production',
+ } as const
