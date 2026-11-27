@@ -73,6 +73,8 @@ const NAV: { section: string; icon: LucideIcon; items: NavItem[] }[] = [
             { to: '/admin/healing-map', label: 'Healing Map', flag: 'adminHealingMap' },
           ]
         : []),
+      // U140 (J202): staging only (RELEASES).
+      ...(RELEASES.stateFlips ? [{ to: '/admin/stateflips', label: 'StateFlips', flag: 'adminStateFlips' }] : []),
       // Buyer agent results (/admin/buyer-agent) is off the menu since U123; the route stays and Reports links to it.
     ],
   },

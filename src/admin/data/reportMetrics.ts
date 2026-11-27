@@ -10,10 +10,12 @@ import { DEFAULT_DECISIONS } from './businessFunnel'
 import { ASSUME, DEFAULT_GOAL, MEASURED_2025, PERSONAL_FACTOR, PRESETS, STAGES, adherenceFactor, chapterCost, conditionFactor, lengthFactor, presetInputs, type Media, type Stage } from './costModel'
 import { generatePersonas, incoherence, type Persona } from './personas'
 import { TARGETS, generatePersonasV4, type PersonaV4 } from './personasV4'
-import { DIMENSIONS, DIMENSION_LABEL, DIMENSION_WEIGHT, conditionForCost, conditionIncoherence, conditionSummary, conditionsV4, populationCost, type Dimension } from './personaConditionV4'
+import { DIMENSIONS, DIMENSION_LABEL, DIMENSION_WEIGHT, conditionForBuyer, perWeekOf, conditionForCost, conditionIncoherence, conditionSummary, conditionsV4, populationCost, type Dimension } from './personaConditionV4'
 import { buyerSummary, combinationSummary, costSummary, uxFeedbackSummary, type ReportSummary } from './reportSummaries'
 import { CARD, OFFERS, OUTCOMES, PLUS_NET_YEAR1, VAT } from './retreatFunnel'
 import { buildParticipants, type Participant } from './study'
+import { CHANCE_CAP, CHANCE_FLOOR, DROPOUT_SHARE, calibrationChapters, chanceOf, chaptersToFlip, sleepCohort } from './stateFlipFormulas'
+import { isSleepNeed, personaSleepScore, severityOf } from './stateFlipSleep'
 
 /**
  * Admin → Reports → Report metrics (U135, J186). Every headline number the
@@ -26,7 +28,7 @@ import { buildParticipants, type Participant } from './study'
  * an assumption. Pure: no React, so it can be tested and reused.
  */
 
-export type MetricReport = 'buyer' | 'personas' | 'combination' | 'cost' | 'b2b2c' | 'retreat' | 'ux'
+export type MetricReport = 'buyer' | 'personas' | 'combination' | 'cost' | 'b2b2c' | 'retreat' | 'ux' | 'stateflips'
 
 export const REPORT_NAME: Record<MetricReport, string> = {
   buyer: 'Buyer agent report',
@@ -36,6 +38,7 @@ export const REPORT_NAME: Record<MetricReport, string> = {
   b2b2c: 'B2B2C report',
   retreat: 'Creator retreat (business funnel)',
   ux: 'UX feedback report',
+  stateflips: 'StateFlips (sleep)',
 }
 
 export const REPORT_LINK: Record<MetricReport, string> = {
@@ -46,6 +49,7 @@ export const REPORT_LINK: Record<MetricReport, string> = {
   b2b2c: '/admin/reports/b2b2c',
   retreat: '/admin/business-funnel',
   ux: '/admin/reports/ux-feedback',
+  stateflips: '/admin/stateflips',
 }
 
 export type Unit = 'share' | 'count' | 'usd' | 'eur' | 'number'
@@ -1150,10 +1154,110 @@ function uxMetrics(week: number): MetricDef[] {
   ]
 }
 
+/* ------------------------------------------------------------ StateFlips */
+
+/**
+ * Product lab → StateFlips (U140, J202). The page's headline numbers, each
+ * worked out again here from the personas with the formulas called one by one,
+ * not read from the cohort object.
+ */
+function stateFlipMetrics(): MetricDef[] {
+  const SRC = 'src/admin/data/stateFlipFormulas.ts; stateFlipSleep.ts'
+  const rows = () => {
+    const ps = generatePersonasV4()
+    const cs = conditionsV4()
+    return ps.filter((p) => isSleepNeed(p, cs.get(p.id)!) && !cs.get(p.id)!.excluded).map((p) => {
+      const c = cs.get(p.id)!
+      const start = personaSleepScore(p)
+      const b = conditionForBuyer(p, c)
+      const chance = chanceOf({ perWeek: perWeekOf(c.minutesPerDay), readiness: b.readiness, severity: severityOf(start), topHelper: c.helpers[0] }).chance
+      return { p, c, start, chapters: chaptersToFlip(start, 1, c.acuity), chance }
+    })
+  }
+  return [
+    {
+      id: 'sf-cohort', report: 'stateflips', label: 'People whose main need is sleep (risk-flagged left out)', unit: 'count', good: 'none',
+      formula: 'v4 personas with poor or very poor sleep, main need physical with a sleep issue (poor sleep, body clock, habits), sleep score under 85, no risk flag.', shownAt: 'StateFlips summary and Who has it', source: SRC,
+      displayed: () => sleepCohort().people.length,
+      compute: () => {
+        const ps = generatePersonasV4()
+        const cs = conditionsV4()
+        const need = ps.filter((p) => isSleepNeed(p, cs.get(p.id)!))
+        const ok = need.filter((p) => !cs.get(p.id)!.excluded)
+        return { value: ok.length, n: ps.length, inputs: [{ label: 'v4 personas', value: `${ps.length}`, source: 'personasV4.ts' }, { label: 'Sleep is the main need', value: `${need.length}`, source: 'personaConditionV4.ts (main need, physical issue)' }, { label: 'Risk-flagged, left out', value: `${need.length - ok.length}`, source: 'personaConditionV4.ts (excluded)', ids: need.filter((p) => cs.get(p.id)!.excluded).map((p) => p.id) }], steps: [`${need.length} with sleep as the main need − ${need.length - ok.length} risk-flagged = ${ok.length}.`] }
+      },
+    },
+    {
+      id: 'sf-calibration', report: 'stateflips', label: 'Chapters from 25 to 85, everything average', unit: 'count', good: 'down',
+      formula: 'Add one chapter at a time: 1.43 × layer speed (mood 1.6 below 45, habit 1.05 to 65, skill 0.72 to 85) until the score passes 85.', shownAt: 'StateFlips, how it is worked out', source: SRC,
+      displayed: () => STAGES[1].specChapters,
+      compute: () => {
+        const v = calibrationChapters()
+        return { value: v, inputs: [{ label: 'Spec uplift', value: `${STAGES[1].uplift}`, source: 'costModel.ts STAGES (spec)' }, { label: 'Layer speeds', value: '1.6 / 1.05 / 0.72', source: 'stateFlipFormulas.ts PHASE_MULT (assumption)' }], steps: [`20 ÷ (1.43 × 1.6) + 20 ÷ (1.43 × 1.05) + 20 ÷ (1.43 × 0.72) ≈ 8.7 + 13.3 + 19.4, stepped chapter by chapter = ${v}.`, `The spec says ${STAGES[1].specChapters}.`] }
+      },
+    },
+    {
+      id: 'sf-median-chapters', report: 'stateflips', label: 'Chapters to flip, middle person', unit: 'count', good: 'down',
+      formula: 'The median, over the sleep group, of each person’s chapters from their own starting score to 85 on the layered curve.', shownAt: 'StateFlips summary tile', source: SRC,
+      displayed: () => sleepCohort().medianChapters,
+      compute: () => {
+        const xs = rows()
+        const v = median(xs.map((r) => r.chapters))
+        return { value: v, n: xs.length, inputs: [{ label: 'People', value: `${xs.length}`, source: 'personasV4.ts + personaConditionV4.ts' }], steps: ['Each person: starting score from their sleep facts; chapters = chaptersToFlip(start, stage 1, acuity).', `Median of ${xs.length} = ${v}.`], breakdown: { title: 'Each person', columns: ['Persona', 'Start', 'Acuity', 'Chapters'], rows: xs.map((r) => ({ id: r.p.id, cells: [r.p.id, `${r.start}`, r.c.acuity, `${r.chapters}`] })) } }
+      },
+    },
+    {
+      id: 'sf-mean-chance', report: 'stateflips', label: 'Chance it works, sleep group average', unit: 'share', good: 'up',
+      formula: `Mean of each person’s 54% × adherence × readiness × severity × fit, kept between ${CHANCE_FLOOR * 100}% and ${CHANCE_CAP * 100}%.`, shownAt: 'StateFlips summary tile', source: SRC,
+      displayed: () => sleepCohort().meanChance,
+      compute: () => {
+        const xs = rows()
+        const v = xs.reduce((t, r) => t + r.chance, 0) / xs.length
+        return { value: v, n: xs.length, inputs: [{ label: 'Base (spec)', value: pctText(STAGES[1].success), source: 'costModel.ts STAGES' }, { label: 'People', value: `${xs.length}`, source: 'personasV4.ts' }], steps: [`Σ chance ÷ ${xs.length} = ${pctText(v)}.`], breakdown: { title: 'Each person', columns: ['Persona', 'Start', 'Chance'], rows: xs.map((r) => ({ id: r.p.id, cells: [r.p.id, `${r.start}`, pctText(r.chance)] })) } }
+      },
+    },
+    {
+      id: 'sf-flipped-42', report: 'stateflips', label: 'Sleeping well by chapter 42 (share of the group)', unit: 'share', good: 'up',
+      formula: 'Mean over people of: chance it works if their chapters to flip ≤ 42, else 0 (a responder flips exactly at their chapters to flip).', shownAt: 'StateFlips summary tile and chart', source: SRC,
+      displayed: () => sleepCohort().flippedAt(42),
+      compute: () => {
+        const xs = rows()
+        const v = xs.reduce((t, r) => t + (r.chapters <= 42 ? r.chance : 0), 0) / xs.length
+        return { value: v, n: xs.length, inputs: [{ label: 'Flip by 42', value: `${xs.filter((r) => r.chapters <= 42).length} people`, source: 'stateFlipFormulas.ts' }], steps: [`Σ chance of those with chapters ≤ 42 ÷ ${xs.length} = ${pctText(v)}.`] }
+      },
+    },
+    {
+      id: 'sf-dropped', report: 'stateflips', label: 'Stopped before the end (share of the group)', unit: 'share', good: 'down',
+      formula: `Mean of ${DROPOUT_SHARE} × (1 − chance it works): the drop-out share of the people it does not help (assumption).`, shownAt: 'StateFlips summary tile and chart', source: SRC,
+      displayed: () => sleepCohort().rows[sleepCohort().rows.length - 1].dropped,
+      compute: () => {
+        const xs = rows()
+        const v = xs.reduce((t, r) => t + DROPOUT_SHARE * (1 - r.chance), 0) / xs.length
+        return { value: v, n: xs.length, inputs: [{ label: 'Drop-out share of failures', value: pctText(DROPOUT_SHARE), source: 'stateFlipFormulas.ts (assumption)' }], steps: [`Σ ${DROPOUT_SHARE} × (1 − chance) ÷ ${xs.length} = ${pctText(v)}.`] }
+      },
+    },
+    {
+      id: 'sf-cost-flip', report: 'stateflips', label: 'Cost per flip, sleep group (stage 1)', unit: 'usd', good: 'down',
+      formula: 'Cost per chapter (middle option, 10 min) × chapters played per person on average ÷ average chance it works.', shownAt: 'StateFlips, under the cohort table', source: SRC,
+      displayed: () => sleepCohort().costPerFlip,
+      compute: () => {
+        const c = sleepCohort()
+        const played = c.people.reduce((t, p) => {
+          let k = 0
+          for (let i = 1; i <= p.chapters; i++) k += (1 - p.hazard) ** i
+          return t + k
+        }, 0) / c.people.length
+        const v = (c.costPerChapter * played) / c.meanChance
+        return { value: v, n: c.people.length, inputs: [{ label: 'Cost per chapter', value: usd(c.costPerChapter), source: 'costModel.ts (balanced, 10 min, stage 1)' }, { label: 'Chapters played', value: played.toFixed(1), source: 'stateFlipFormulas.ts' }, { label: 'Average chance', value: pctText(c.meanChance), source: 'stateFlipFormulas.ts' }], steps: [`${usd(c.costPerChapter)} × ${played.toFixed(1)} ÷ ${pctText(c.meanChance)} = ${usd(v)}.`] }
+      },
+    },
+  ]
+}
+
 /* ------------------------------------------------------------ The registry */
 
 export function metricDefs(week = 1): MetricDef[] {
-  return [...buyerMetrics(), ...typedMetrics(), ...personaV4Metrics(), ...conditionMetrics(), ...combinationMetrics(week), ...costMetrics(), ...b2b2cMetrics(), ...retreatMetrics(), ...uxMetrics(week)]
+  return [...buyerMetrics(), ...typedMetrics(), ...personaV4Metrics(), ...conditionMetrics(), ...combinationMetrics(week), ...costMetrics(), ...b2b2cMetrics(), ...retreatMetrics(), ...uxMetrics(week), ...stateFlipMetrics()]
 }
 
 /** Audits one metric: displayed against recomputed, plus its sanity checks. */

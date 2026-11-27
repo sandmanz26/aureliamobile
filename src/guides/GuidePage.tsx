@@ -1,4 +1,4 @@
-import { Archive, ArrowLeft, BookOpen, FileText, Handshake, Lightbulb, Map as MapIcon, Palette, Search, Server, Telescope, X } from 'lucide-react'
+import { Archive, ArrowLeft, BookOpen, FileText, Handshake, Lightbulb, Map as MapIcon, Palette, Search, Server, Sprout, Telescope, X } from 'lucide-react'
 import { marked } from 'marked'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -18,6 +18,7 @@ import researchRound3 from '../../docs/research/reports/Insight Timer round 3.md
 import prdOverview from '../../docs/PRD-OVERVIEW.md?raw'
 import backendOld from '../../docs/backend-old/BACKEND-OLD.md?raw'
 import artefact from '../../docs/backend-old/ARTEFACT.md?raw'
+import howAureliaHeals from '../../docs/how-aurelia-heals/HOW-AURELIA-HEALS.md?raw'
 import { DS_TOC } from '../designsystem/toc'
 import { API_PAGES, B2B2C_PAGES, pageMarkdown, type DocPage } from './docPages'
 import { filterToc, prepareDoc } from './prepareDoc'
@@ -35,7 +36,7 @@ const DesignSystemContent = lazy(() =>
 /**
  * /wiki (was /guide until U083; old links redirect) — the team's documents,
  * readable on any site (production included) behind the same site password as
- * the app. One shell, nine documents: generated HTML guides, Markdown files
+ * the app. One shell, ten documents: generated HTML guides, Markdown files
  * rendered as they stand in docs/, and the design system, which is a React
  * view read live from the Figma export and the components, so no page can
  * drift from its source.
@@ -120,6 +121,16 @@ const DOCS = [
     icon: Lightbulb,
     source: 'docs/backend-old/ARTEFACT.md',
     html: () => marked.parse(artefact, { async: false }),
+  },
+  {
+    id: 'heals',
+    title: 'How Aurelia heals',
+    blurb: 'The words behind Aurelia’s healing model, and the first example in full: from bad sleep to good sleep, step by step, with how many chapters it takes and how likely it is to work.',
+    audience: 'The business owner, the product owner and anyone explaining how Aurelia helps people',
+    inside: ['Key terms: dimension, StateFlip, universal need, DOJO, AKP, chapter, check-in', 'The sleep StateFlip: bad and good in numbers, the path X → Y → Z', 'How chapters to flip and chance it works are calculated', 'The group of simulated people with a sleep need, over time'],
+    icon: Sprout,
+    source: 'docs/how-aurelia-heals/HOW-AURELIA-HEALS.md',
+    html: () => marked.parse(howAureliaHeals, { async: false }),
   },
   {
     id: 'design-system',
@@ -322,7 +333,7 @@ export function GuideIndexPage() {
             <img src={markSvg} alt="" aria-hidden="true" width={52} height={52} className="gd-hero-mark" />
             <p className="gd-eyebrow">Aurelia · wiki</p>
             <h1>
-              Everything about Aurelia, <span className="gd-grad">in nine documents</span>
+              Everything about Aurelia, <span className="gd-grad">in ten documents</span>
             </h1>
             <p className="gd-lede">
               Aurelia builds personal wellness sessions from one sentence: someone says how they feel, and Aurelia makes a

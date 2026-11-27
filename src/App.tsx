@@ -90,6 +90,7 @@ const UserJourneyPage = lazy(() => import('./admin/pages/UserJourneyPage').then(
 const BusinessFunnelPage = lazy(() => import('./admin/pages/BusinessFunnelPage').then((m) => ({ default: m.BusinessFunnelPage })))
 const BuyerResultsPage = lazy(() => import('./admin/pages/BuyerResultsPage').then((m) => ({ default: m.BuyerResultsPage })))
 const BuyerAgentReportPage = lazy(() => import('./admin/pages/reports/BuyerAgentReportPage').then((m) => ({ default: m.BuyerAgentReportPage })))
+const StateFlipsPage = lazy(() => import('./admin/pages/lab/StateFlipsPage').then((m) => ({ default: m.StateFlipsPage })))
 const TherapeuticMapPage = lazy(() => import('./admin/pages/lab/TherapeuticMapPage').then((m) => ({ default: m.TherapeuticMapPage })))
 const HealingMapPage = lazy(() => import('./admin/pages/lab/HealingMapPage').then((m) => ({ default: m.HealingMapPage })))
 const B2b2cReportPage = lazy(() => import('./admin/pages/reports/B2b2cReportPage').then((m) => ({ default: m.B2b2cReportPage })))
@@ -225,6 +226,14 @@ export default function App() {
               <Route path="healing-map" element={
                 <ModuleGuard module="adminHealingMap">
                   <HealingMapPage />
+                </ModuleGuard>
+              } />
+            )}
+            {/* U140 (J202): staging only (RELEASES). */}
+            {RELEASES.stateFlips && (
+              <Route path="stateflips" element={
+                <ModuleGuard module="adminStateFlips">
+                  <StateFlipsPage />
                 </ModuleGuard>
               } />
             )}

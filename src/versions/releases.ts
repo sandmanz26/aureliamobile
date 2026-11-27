@@ -45,4 +45,6 @@ export const RELEASES = {
   therapeuticMaps: BUILD.environment !== 'production',
   /** Admin → Reports → Report metrics (U135, J186): every report number traced to its data and formula. Staging only. */
   reportMetrics: BUILD.environment !== 'production',
+  /** Admin → Product lab → StateFlips (U140, J202): the sleep StateFlip, transparent chapters and chance, the cohort over time. Staging only. */
+  stateFlips: BUILD.environment !== 'production',
 } as const

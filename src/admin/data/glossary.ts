@@ -51,6 +51,20 @@ export const GLOSSARY = {
   readiness: { term: 'Readiness to change', plain: 'How close a person is to acting: not yet, thinking, preparing, acting or maintaining. From the stages-of-change model.' },
   confidence: { term: 'Confidence to change', plain: 'How sure a person is that they can change things, from 1 to 10. Psychologists call it self-efficacy.' },
   acuity: { term: 'Acute, ongoing or long-standing', plain: 'How long it has been going on. Acute means weeks, ongoing means months, long-standing means a year or more.' },
+  // U140 (J202): the words of Product lab → StateFlips and the wiki's "How Aurelia heals".
+  stateflip: { term: 'StateFlip', plain: 'One concrete change from a bad state to a good one, like bad sleep (25 of 100) to good (85).' },
+  'universal-need': { term: 'Universal need', plain: 'Something every person needs, like restful sleep or feeling connected. Each of the five dimensions holds many.' },
+  dojo: { term: 'DOJO', plain: 'The business owner’s knowledge workbook. It links body areas to concepts, issue-to-wellness pairs, skills, habits and moods.' },
+  akp: { term: 'AKP', plain: 'Atomic knowledge point: one small building block of a session, like a breath pattern, a mood or a story. Goal AKPs say what to reach; strategy AKPs say how.' },
+  tournament: { term: 'Tournament', plain: 'Building blocks compete for a place in a session. The ones that move people further win and are used more.' },
+  session: { term: 'Session', plain: 'A journey towards one goal, like better sleep. It is made of many chapters, one per sitting.' },
+  'check-in': { term: 'Check-in', plain: 'Four short questions the morning after each chapter. The answers give the sleep score.' },
+  'sleep-score': { term: 'Sleep score', plain: 'Our 0–100 sleep measure from the check-in, higher is better. 25 is bad sleep, 85 is good sleep.' },
+  'chance-it-works': { term: 'Chance it works', plain: 'Our prediction of the share of people who reach the good state. It is calculated, not measured yet.' },
+  'cost-per-flip': { term: 'Cost per flip', plain: 'What it costs to make the chapters for one person who reaches the good state. It includes the people it does not help.' },
+  'causal-stage': { term: 'Causal AI stage', plain: 'How much the AI has learned from real use. Stage 1 is under 1,000 sessions; stage 3 is 100,000 or more.' },
+  'causal-layer': { term: 'Causal layer', plain: 'DOJO’s three speeds of change. Moods move in days, habits in weeks, skills in months.' },
+  dropout: { term: 'Stopped', plain: 'People who stop using Aurelia before reaching the good state. Our model assumes most failures look like this.' },
 } satisfies Record<string, GlossaryEntry>
 
 export type TermId = keyof typeof GLOSSARY
