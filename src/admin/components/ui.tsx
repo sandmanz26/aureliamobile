@@ -56,7 +56,7 @@ export function StatCard({ label, value, delta, inverse, hint }: StatCardProps) 
   const good = inverse ? !rising : rising
   return (
     <div className="flex flex-col gap-6 rounded-12 border border-adm-line bg-adm-surface p-14">
-      <span className="text-11 font-medium uppercase tracking-wider text-adm-muted">{label}</span>
+      <span data-stat-label="" className="text-11 font-medium uppercase tracking-wider text-adm-muted">{label}</span>
       <span className="text-26 font-semibold tabular-nums leading-none text-adm-ink">{value}</span>
       <div className="flex items-center gap-6 text-12">
         {delta !== undefined && (

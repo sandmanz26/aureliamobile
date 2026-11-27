@@ -1,4 +1,8 @@
-import { ExternalLink, PanelRightOpen } from 'lucide-react'
+import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
+import { usePageTab } from '../../components/pageTab'
+import { RELEASES } from '../../../versions/releases'
+import { ExternalLink } from 'lucide-react'
+import { DetailsCue } from './ReportParts'
 import { useMemo, useState } from 'react'
 import { Badge, PageHeader, Panel, type Tone } from '../../components/ui'
 import {
@@ -124,7 +128,7 @@ function ChannelChart() {
                   <span className="h-full bg-adm-s2" style={{ width: `${(r.sim / 21) * 100}%` }} />
                 </span>
                 <span className="w-48 shrink-0 text-right text-13 font-semibold tabular-nums text-adm-ink">{r.base + r.sim}/21</span>
-                <PanelRightOpen size={14} aria-hidden="true" className="shrink-0 text-adm-muted group-hover:text-adm-ink" />
+                <DetailsCue />
               </span>
               <span className="text-11 text-adm-muted lg:w-[180px] lg:shrink-0">{r.round1}</span>
             </button>
@@ -199,7 +203,7 @@ function FeatureBoard() {
                       {f.top && <span className="mr-4 tabular-nums text-adm-muted">#{f.top}</span>}
                       {f.title}
                     </span>
-                    <PanelRightOpen size={14} aria-hidden="true" className="mt-2 shrink-0 text-adm-muted group-hover:text-adm-ink" />
+                    <DetailsCue className="mt-2" />
                   </span>
                   <span className="text-12 text-adm-ink-2">{f.problem}</span>
                   <span className="flex flex-wrap gap-4">
@@ -245,12 +249,18 @@ export function B2b2cReportPage() {
   const map = useMemo(() => mapFor(buildIterationMap(1), 'b2b2c'), [])
   const web = B2B2C_SOURCES.filter((s) => s.url.startsWith('http'))
   const own = B2B2C_SOURCES.filter((s) => !s.url.startsWith('http'))
+  const [, setPageTab] = usePageTab()
+  const summaryBlock = (
+        <SummaryBlock s={summary} />
+  )
+
   return (
     <DetailDrawerProvider>
       <div className="flex flex-col gap-16">
         <PageHeader title="B2B2C report" description={plainText(summary.intro ?? '')} />
 
-        <SummaryBlock s={summary} />
+        {!RELEASES.adminNav2 && summaryBlock}
+        <PageTabs summary={<ReportSummaryTab purpose="choosing which partner channel (creators, employers, partners) to test first." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
 
         <section id="b2b2c-how" className="min-w-0 scroll-mt-16">
           <Panel title="How it works" description="The idea in four pictures: who is involved, each channel step by step, what changed from round 1, and the phases. Click any box for a plain explanation and the features behind it.">
@@ -285,6 +295,7 @@ export function B2b2cReportPage() {
             <SourceLinks ids={own.map((s) => s.id)} />
           </Panel>
         </Details>
+        </PageTabs>
       </div>
     </DetailDrawerProvider>
   )

@@ -111,3 +111,17 @@
   cursor: pointer;
 }
 .adm-root select:disabled { cursor: not-allowed; opacity: 0.5; }
+
+/* U142 (J203), RELEASES.adminNav2: one stat style and a 12px floor.
+   StatCard labels read in sentence case like the report tiles, and nothing in
+   the admin renders below 12px (the 10-11px utilities were the workhorses).
+   Unlayered, so it wins over Tailwind's utilities layer. */
+.adm-root[data-nav2] [data-stat-label] {
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 13px;
+}
+.adm-root[data-nav2] :is(.text-10, .text-11) {
+  font-size: 12px;
+  line-height: 16px;
+}

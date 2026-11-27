@@ -1,3 +1,6 @@
+import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
+import { usePageTab } from '../../components/pageTab'
+import { RELEASES } from '../../../versions/releases'
 import { AlertTriangle, ExternalLink } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Badge, PageHeader, Panel, inputClass, type Tone } from '../../components/ui'
@@ -98,6 +101,11 @@ function CostReport() {
   const values = nodeValues(state)
   const stages = ([1, 2, 3] as Stage[]).map((st) => ({ st, r: goal({ ...state.goal, stage: st }, state.cost) }))
 
+  const [, setPageTab] = usePageTab()
+  const summaryBlock = (
+      <SummaryBlock s={summary} />
+  )
+
   return (
     <div className="flex flex-col gap-16">
       <PageHeader
@@ -105,7 +113,8 @@ function CostReport() {
         description={summary.intro ?? ''}
       />
 
-      <SummaryBlock s={summary} />
+      {!RELEASES.adminNav2 && summaryBlock}
+      <PageTabs summary={<ReportSummaryTab purpose="knowing what one user and one StateFlip cost to serve, and whether the price covers it." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
 
       <section id="cost-function" className="scroll-mt-16">
         <Panel title="How the cost of helping one person adds up" description="Left: where each number comes from. Middle: the sum. Right: the result. Click a line to see its source.">
@@ -339,6 +348,7 @@ function CostReport() {
         ]}
       />
       </Details>
+      </PageTabs>
     </div>
   )
 }

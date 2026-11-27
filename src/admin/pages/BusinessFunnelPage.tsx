@@ -1,6 +1,9 @@
 import { ChevronRight, CircleHelp, Download, ExternalLink, MapPin, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { keepTab, usePageTab } from '../components/pageTab'
+import { PageSummary, PageTabs } from '../components/PageTabs'
+import { RELEASES } from '../../versions/releases'
 import { GuideTour, type TourStep } from '../components/GuideTour'
 import { Modal } from '../components/Modal'
 import { Badge, Button, FormField, PageHeader, Panel, inputClass, textareaClass } from '../components/ui'
@@ -50,7 +53,9 @@ export function BusinessFunnelPage() {
   const [targets, setTargets] = useState<Record<string, number>>(() => readJson(TARGETS_KEY, TargetsSchema, {}))
   const [decisions, setDecisions] = useState<Decision[]>(() => withNewDefaults(readJson(DECISIONS_KEY, DecisionsSchema, DEFAULT_DECISIONS)))
   const [adding, setAdding] = useState<StageId | null>(null)
-  const [guide, setGuide] = useState(() => readString(GUIDE_KEY) !== 'seen')
+  // adminNav2 (U142): no tour over the page on a first visit; the Guide button opens it.
+  const [guide, setGuide] = useState(() => !RELEASES.adminNav2 && readString(GUIDE_KEY) !== 'seen')
+  const [, setPageTab] = usePageTab()
   const [notice, setNotice] = useState<string | null>(null)
 
   const metrics = funnelMetrics(agent, design, week)
@@ -60,7 +65,7 @@ export function BusinessFunnelPage() {
   const targetOf = (m: FunnelMetric) => targets[m.id] ?? m.target
 
   function setSource(a: AgentId, d: DesignId) {
-    setParams({ agent: String(a), design: String(d) }, { replace: true })
+    setParams((prev) => keepTab(prev, { agent: String(a), design: String(d) }), { replace: true })
   }
   function saveTargets(next: Record<string, number>) {
     setTargets(next)
@@ -96,8 +101,16 @@ export function BusinessFunnelPage() {
         description="Two funnels to Aurelia Plus: the app’s five stages and the creator retreat."
         actions={
           <div className="flex flex-wrap gap-8">
-            <Button size="sm" icon={<CircleHelp size={13} />} onClick={() => setGuide(true)} data-tour="guide">
-              Guide
+            <Button
+              size="sm"
+              icon={<CircleHelp size={13} />}
+              onClick={() => {
+                if (RELEASES.adminNav2) setPageTab('detail')
+                setGuide(true)
+              }}
+              data-tour="guide"
+            >
+              {RELEASES.adminNav2 ? 'Tour' : 'Guide'}
             </Button>
             <Button size="sm" icon={<Download size={13} />} onClick={() => downloadJson({ source: { agent: AGENT_RULES[agent].name, design: DESIGNS[design - 1].name, studyWeek: week }, targets, metrics, decisions })}>
               Export (JSON)
@@ -106,6 +119,31 @@ export function BusinessFunnelPage() {
         }
       />
 
+      <PageTabs
+        summary={
+          <PageSummary
+            purpose="seeing how many people get from a first visit to paying for Aurelia Plus, and which stage loses the most."
+            question="Where does the funnel leak most, and what do we fix first?"
+            answer={
+              gapCell
+                ? `${gapCell.title} is furthest below target: ${gapCell.metric} is ${pct(gapCell.value)} against ${pct(gapCell.target)}. ${onTrack} of ${cells.length} stages are on track.`
+                : `All ${cells.length} stages are on track.`
+            }
+            stats={[
+              { label: 'Stages on track', value: `${onTrack} of ${cells.length}` },
+              ...(plus ? [{ label: plus.label, value: plus.value, note: `target ${pct(plus.target)}` }] : []),
+              ...(d30 ? [{ label: d30.label, value: d30.value, note: `target ${pct(d30.target)}` }] : []),
+            ]}
+            next={[
+              ...(gapCell ? [{ text: `Agree one change for ${gapCell.title} and log it as a decision (Detail → the stage).` }] : []),
+              { text: 'Check the targets are the ones the team agreed.' },
+              { text: 'Compare with the creator retreat funnel (Detail → Creator retreat).' },
+            ]}
+            note={`Predicted by the buyer agents (${AGENT_RULES[agent].name}, ${DESIGNS[design - 1].name}); not measured on real users.`}
+            onDetail={() => setPageTab('detail')}
+          />
+        }
+      >
       <div className="flex flex-wrap items-center justify-between gap-12">
         <div role="tablist" aria-label="Funnel" className="flex w-fit flex-wrap gap-4 rounded-8 bg-adm-bg p-4">
           {(
@@ -119,7 +157,7 @@ export function BusinessFunnelPage() {
               type="button"
               role="tab"
               aria-selected={view === id}
-              onClick={() => setParams(id === 'retreat' ? { view: 'retreat' } : {}, { replace: true })}
+              onClick={() => setParams((prev) => keepTab(prev, id === 'retreat' ? { view: 'retreat' } : {}), { replace: true })}
               className={`rounded-8 px-12 py-6 text-13 font-medium ${view === id ? 'bg-adm-surface text-adm-ink shadow-sm' : 'text-adm-ink-2 hover:text-adm-ink'}`}
             >
               {label}
@@ -274,6 +312,7 @@ export function BusinessFunnelPage() {
           </Details>
         </>
       )}
+      </PageTabs>
 
       {adding && <DecisionForm stage={adding} onClose={() => setAdding(null)} onSave={(d) => saveDecisions([...decisions, d], 'Decision added')} />}
       {guide && view === 'app' && (

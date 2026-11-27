@@ -1,4 +1,8 @@
 import { ArrowRight } from 'lucide-react'
+import { PageTabs, PurposeLine } from '../../components/PageTabs'
+import { usePageTab } from '../../components/pageTab'
+import { RELEASES } from '../../../versions/releases'
+import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import { Badge, PageHeader, Panel, type Tone } from '../../components/ui'
 import { VALUE_KIND_TEXT, WORLDS, sleepJourney, sleepProcess, triangle, type Corner, type CornerId, type CornerLink, type ValueKind, type World } from '../../data/therapeuticMap'
@@ -77,9 +81,9 @@ function TherapeuticMap() {
   const openLink = (l: CornerLink) =>
     open({ kicker: `${byId[l.from].title} → ${byId[l.to].title}`, title: l.title, summary: l.how })
 
-  return (
-    <div className="flex flex-col gap-16">
-      <PageHeader title="Therapeutic map" description="Product, business and wellness as one triangle, and the steps from a bad state to a good one." />
+  const [, setPageTab] = usePageTab()
+  const summaryBlock = (
+    <>
       <GoalLine goal="Shows how a person moves from a bad state to a good one, and how that ties to the product and the business." />
 
       <section className="flex flex-col gap-10 rounded-12 border border-adm-line bg-adm-surface p-16" data-summary>
@@ -90,6 +94,27 @@ function TherapeuticMap() {
           For sleep, the business owner’s stage 1 scenario takes someone from 25 to 85 in {j.chapters} chapters at +{j.uplift.toFixed(2)} points each, with a {Math.round(j.flipProbability * 100)}% chance of getting there. Those are <Term id="assumption">assumptions</Term>; the product numbers are <Term id="simulated">simulated</Term>, and no real person’s result is measured yet.
         </p>
       </section>
+    </>
+  )
+
+  return (
+    <div className="flex flex-col gap-16">
+      <PageHeader title="Therapeutic map" description="Product, business and wellness as one triangle, and the steps from a bad state to a good one." />
+      {!RELEASES.adminNav2 && summaryBlock}
+      <PageTabs
+        summary={
+          <div className="flex min-w-0 flex-col gap-12">
+            <PurposeLine purpose="the first picture of how a person moves from a bad state to a good one, and how that ties to the product and the business." />
+            {summaryBlock}
+            <p className="rounded-8 border border-adm-line bg-adm-surface px-12 py-8 text-13 text-adm-ink-2">
+              This is the older version. The <Link to="/admin/healing-map" className="font-semibold text-adm-ink underline">Healing map</Link> is the newer one that learns from results; this page stays for its triangle and the five wellness worlds.
+            </p>
+            <button type="button" onClick={() => setPageTab('detail')} className="self-end text-13 font-semibold text-adm-ink underline decoration-adm-axis underline-offset-2">
+              See the triangle, the sleep steps and the five worlds in Detail
+            </button>
+          </div>
+        }
+      >
 
       <Panel title="The triangle" description="Each corner has its core targets. Tap a corner or a link for details.">
         <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
@@ -271,6 +296,7 @@ function TherapeuticMap() {
           <li>“Therapeutic” is only the internal name of this metric line. What the product says to people stays wellness: no claim that anything treats a condition.</li>
         </ul>
       </Details>
+      </PageTabs>
     </div>
   )
 }

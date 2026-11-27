@@ -1,3 +1,6 @@
+import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
+import { usePageTab } from '../../components/pageTab'
+import { RELEASES } from '../../../versions/releases'
 import { useMemo, useState } from 'react'
 import { PageHeader, Panel } from '../../components/ui'
 import { plainText } from '../../data/glossary'
@@ -23,12 +26,18 @@ export function UxFeedbackReportPage() {
   const summary = useMemo(() => uxFeedbackSummary(participants, week), [participants, week])
   const map = useMemo(() => mapFor(buildIterationMap(Math.max(1, week)), 'ux'), [week])
 
+  const [, setPageTab] = usePageTab()
+  const summaryBlock = (
+        <SummaryBlock s={summary} />
+  )
+
   return (
     <DetailDrawerProvider>
       <div className="flex flex-col gap-16">
         <PageHeader title="UX feedback report" description={plainText(summary.intro ?? '')} />
 
-        <SummaryBlock s={summary} />
+        {!RELEASES.adminNav2 && summaryBlock}
+        <PageTabs summary={<ReportSummaryTab purpose="seeing what the feedback group tells us about the app, and what to change next." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
 
         <section id="ux-views" className="flex min-w-0 scroll-mt-16 flex-col gap-16">
           <FeedbackGroupViews participants={participants} week={week} />
@@ -48,6 +57,7 @@ export function UxFeedbackReportPage() {
             ]}
           />
         </Details>
+        </PageTabs>
       </div>
     </DetailDrawerProvider>
   )

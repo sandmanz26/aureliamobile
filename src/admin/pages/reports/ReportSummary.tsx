@@ -1,4 +1,5 @@
 import { ArrowRight, ChevronRight, PanelRightOpen } from 'lucide-react'
+import { DetailsCue } from './ReportParts'
 import type { ReactNode } from 'react'
 import { Badge, type Tone } from '../../components/ui'
 import { plainText, type TermId } from '../../data/glossary'
@@ -141,7 +142,7 @@ export function SummaryBlock({ s, aside }: { s: ReportSummary; aside?: ReactNode
                 className="group inline-flex items-center gap-6 rounded-4 text-left text-24 font-semibold leading-tight tabular-nums text-adm-ink hover:underline hover:decoration-adm-axis focus-visible:outline-2 focus-visible:outline-adm-accent"
               >
                 {plainText(t.value)}
-                <PanelRightOpen size={14} aria-hidden="true" className="shrink-0 text-adm-muted group-hover:text-adm-ink" />
+                <DetailsCue />
               </button>
             </dd>
             {t.delta && (

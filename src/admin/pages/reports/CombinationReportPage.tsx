@@ -1,3 +1,6 @@
+import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
+import { usePageTab } from '../../components/pageTab'
+import { RELEASES } from '../../../versions/releases'
 import { useState } from 'react'
 import { Badge, PageHeader, Panel } from '../../components/ui'
 import { DESIGNS } from '../../data/buyerSim'
@@ -98,13 +101,8 @@ function CombinationReport() {
   const [map] = useState(() => mapFor(buildIterationMap(week), 'combination'))
   const middle = OUTCOMES.find((o) => o.id === 'middle')!
 
-  return (
-    <div className="flex flex-col gap-16">
-      <PageHeader
-        title="Combination report"
-        description={summary.intro ?? ''}
-      />
-
+  const [, setPageTab] = usePageTab()
+  const summaryBlock = (
       <SummaryBlock
         s={summary}
         aside={
@@ -121,6 +119,17 @@ function CombinationReport() {
           </div>
         }
       />
+  )
+
+  return (
+    <div className="flex flex-col gap-16">
+      <PageHeader
+        title="Combination report"
+        description={summary.intro ?? ''}
+      />
+
+      {!RELEASES.adminNav2 && summaryBlock}
+      <PageTabs summary={<ReportSummaryTab purpose="reading the journey, the personas and the buyer agents together to find the one funnel step to fix first." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
 
       <Details id="stages" title="Stage by stage" hint="what each source says, where they agree and conflict">
       <Panel title="How to read it" description="The version and rules every stage is read on.">
@@ -215,6 +224,7 @@ function CombinationReport() {
         ]}
       />
       </Details>
+      </PageTabs>
     </div>
   )
 }

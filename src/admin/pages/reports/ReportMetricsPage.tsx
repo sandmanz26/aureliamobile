@@ -1,3 +1,6 @@
+import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
+import { usePageTab } from '../../components/pageTab'
+import { RELEASES } from '../../../versions/releases'
 import { ArrowDownRight, ArrowUpRight, Minus, PanelRightOpen } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Badge, PageHeader, Panel, type Tone } from '../../components/ui'
@@ -211,10 +214,16 @@ function MetricsView() {
 
   const selectCls = 'h-32 min-w-0 rounded-8 border border-adm-line bg-adm-surface px-8 text-13 text-adm-ink'
 
+  const [, setPageTab] = usePageTab()
+  const summaryBlock = (
+      <SummaryBlock s={summary} />
+  )
+
   return (
     <div className="flex min-w-0 flex-col gap-16">
       <PageHeader title="Report metrics" description={plainText(summary.intro ?? '')} />
-      <SummaryBlock s={summary} />
+      {!RELEASES.adminNav2 && summaryBlock}
+      <PageTabs summary={<ReportSummaryTab purpose="checking where each number in the reports comes from and how it is worked out, before trusting it." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
 
       <Panel title="How to read the quality" description="Each number gets one of three labels, plus checks for things that look wrong.">
         <dl className="grid gap-8 text-12 lg:grid-cols-3">
@@ -369,6 +378,7 @@ function MetricsView() {
       <p className="text-11 text-adm-muted">
         <RichText text="Every value in the table is read from the report itself, then {{recomputed|worked out again}} here from the answers, personas and prices underneath. Nothing on this page is typed in." />
       </p>
+      </PageTabs>
     </div>
   )
 }

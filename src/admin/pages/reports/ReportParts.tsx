@@ -1,4 +1,5 @@
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink, PanelRightOpen } from 'lucide-react'
+import { RELEASES } from '../../../versions/releases'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { BUILD } from '../../../lib/build'
@@ -102,5 +103,19 @@ export function SourcesSection({ findings, limits, labels = ['measured', 'predic
         </Panel>
       </div>
     </>
+  )
+}
+
+/**
+ * The "opens the side panel" cue on a clickable tile or card. With adminNav2
+ * (U142, J203) it says so in words, not only with a 14px glyph.
+ */
+export function DetailsCue({ className = '' }: { className?: string }) {
+  if (!RELEASES.adminNav2) return <PanelRightOpen size={14} aria-hidden="true" className={`shrink-0 text-adm-muted group-hover:text-adm-ink ${className}`} />
+  return (
+    <span title="Open the details panel" className={`inline-flex shrink-0 items-center gap-4 text-12 font-medium leading-none text-adm-muted group-hover:text-adm-ink ${className}`}>
+      Details
+      <PanelRightOpen size={14} aria-hidden="true" />
+    </span>
   )
 }

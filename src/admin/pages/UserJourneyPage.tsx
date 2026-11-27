@@ -1,6 +1,8 @@
 import { AlertCircle, CircleHelp, Download, ExternalLink, ImagePlus, MoreHorizontal, Pencil, Plus, RotateCcw, Smartphone, Upload, Users } from 'lucide-react'
 import { useEffect, useMemo, useState, type ChangeEvent, type CSSProperties } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { keepTab, usePageTab } from '../components/pageTab'
+import { PageSummary, PageTabs } from '../components/PageTabs'
 import { GuideTour, type TourStep } from '../components/GuideTour'
 import { Modal } from '../components/Modal'
 import { SidePanel } from '../components/SidePanel'
@@ -110,11 +112,13 @@ function readCompressed(file: File, max: number): Promise<string> {
 export function UserJourneyPage() {
   const tagsOn = RELEASES.journeyTags
   const [params, setParams] = useSearchParams()
+  const [, setTab] = usePageTab()
   const requested = params.get('view') as View | null
   const view: View = tagsOn && requested && VIEWS.some((v) => v.id === requested) ? requested : 'map'
 
   const [map, setMap] = useState<JourneyMap>(() => upgradeJourney(readJson(STORAGE_KEY, JourneyMapSchema, INITIAL_JOURNEY)))
-  const [guide, setGuide] = useState(() => readString(GUIDE_KEY) !== 'seen')
+  // adminNav2 (U142): the tour no longer opens by itself over the page; the Tour button opens it.
+  const [guide, setGuide] = useState(() => !RELEASES.adminNav2 && readString(GUIDE_KEY) !== 'seen')
   const [tags, setTags] = useState<JourneyTags>(() => readJson(TAGS_STORAGE_KEY, JourneyTagsSchema, INITIAL_TAGS))
   const [stageFilter, setStageFilter] = useState<string | null>(null)
   const [tagFilter, setTagFilter] = useState('')
@@ -155,7 +159,7 @@ export function UserJourneyPage() {
   const report = (ok: boolean, message = 'Saved in this browser') => setNotice(ok ? message : 'Browser storage is full. Export a backup, or use smaller images.')
 
   function setView(next: View) {
-    setParams(next === 'map' ? {} : { view: next }, { replace: true })
+    setParams((prev) => keepTab(prev, next === 'map' ? {} : { view: next }), { replace: true })
   }
 
   function openItem(kind: ItemKind, stageId: string, item: JourneyScreen) {
@@ -245,6 +249,12 @@ export function UserJourneyPage() {
   const stages = map.stages.filter((s) => !stageFilter || s.id === stageFilter)
   const grid: CSSProperties = { gridTemplateColumns: `repeat(${stages.length}, minmax(220px, 1fr))` }
   const readiness = tags.groups.find((g) => g.id === 'readiness')
+  // Summary (U142): the moment most personas hit that has no screen behind it.
+  const gaps = moments
+    .filter((m) => screensOf(m.id).length === 0)
+    .map((m) => ({ m, demand: DEMAND.get(m.id) ?? 0 }))
+    .sort((a, b) => b.demand - a.demand)
+  const topGap = gaps[0]
 
   return (
     <div className="flex flex-col gap-16">
@@ -253,8 +263,16 @@ export function UserJourneyPage() {
         description="When, where and why people reach for Aurelia, and what serves each moment. Use it to decide what to design or build next: a moment many personas hit, with no screen or only a concept behind it, is the gap. New here? Open the guide."
         actions={
           <div className="relative flex gap-8">
-            <Button size="sm" icon={<CircleHelp size={13} />} onClick={() => setGuide(true)} data-tour="guide">
-              Guide
+            <Button
+              size="sm"
+              icon={<CircleHelp size={13} />}
+              onClick={() => {
+                if (RELEASES.adminNav2) setTab('detail')
+                setGuide(true)
+              }}
+              data-tour="guide"
+            >
+              {RELEASES.adminNav2 ? 'Tour' : 'Guide'}
             </Button>
             <Button size="sm" variant="primary" icon={<Plus size={13} />} onClick={() => openNew('moments', stageFilter ?? map.stages[0].id)}>
               Add moment
@@ -318,6 +336,31 @@ export function UserJourneyPage() {
         }
       />
 
+      <PageTabs
+        summary={
+          <PageSummary
+            purpose="seeing when people reach for Aurelia, and which of those moments still has no screen."
+            question="Which moment should we design or build for next?"
+            answer={
+              topGap
+                ? `“${topGap.m.title}” is the biggest gap: ${topGap.demand} of 300 personas hit it and no screen serves it yet.`
+                : 'Every moment has at least one screen behind it.'
+            }
+            stats={[
+              { label: 'Moments', value: String(counts.moments), note: `in ${map.stages.length} stages` },
+              { label: 'Moments with no screen', value: String(gaps.length) },
+              { label: 'Screens', value: String(counts.screens) },
+            ]}
+            next={[
+              ...(topGap ? [{ text: `Open “${topGap.m.title}” in Detail and decide what should serve it.` }] : []),
+              { text: 'Check the tags and the review status of each moment (Detail → Tags).' },
+              { text: 'Export the journey and share it with the team when it changes.' },
+            ]}
+            note="Demand counts the 300 synthetic personas, not real users. Edits are saved in this browser only."
+            onDetail={() => setTab('detail')}
+          />
+        }
+      >
       {tagsOn && (
         <div className="flex flex-wrap items-center justify-between gap-10">
           <div className="flex flex-wrap gap-2 rounded-12 border border-adm-line bg-adm-surface p-4" role="tablist" aria-label="View" data-tour="views">
@@ -571,6 +614,7 @@ export function UserJourneyPage() {
       )}
       {view === 'coverage' && <CoverageView moments={moments} groups={tags.groups} />}
       {view === 'setup' && <TagSetupView groups={tags.groups} onEdit={setGroupEditing} onAdd={() => setGroupEditing('new')} />}
+      </PageTabs>
 
       {notice && (
         <div role="status" className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-8 bg-adm-ink px-14 py-10 text-12 text-adm-surface shadow-lg">

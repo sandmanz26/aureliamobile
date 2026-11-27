@@ -47,4 +47,11 @@ export const RELEASES = {
   reportMetrics: BUILD.environment !== 'production',
   /** Admin → Product lab → StateFlips (U140, J202): the sleep StateFlip, transparent chapters and chance, the cohort over time. Staging only. */
   stateFlips: BUILD.environment !== 'production',
+  /**
+   * Admin menu review (U142, J203): the sidebar regrouped around the owners' work (Start here, AI brain,
+   * Reports & decisions, Research, Operations — sample data, Wiki), a Summary | Detail tab on the lab and
+   * report pages, and the audit's phase 1 quick wins (no design picker on /admin, compact header, sentence-case
+   * stat labels, a 12px text floor, no automatic tour, labelled details buttons). Staging only.
+   */
+  adminNav2: BUILD.environment !== 'production',
 } as const

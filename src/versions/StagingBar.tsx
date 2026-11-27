@@ -1,4 +1,6 @@
 import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
+import { RELEASES } from './releases'
 import { BUILD, BUILD_VERSION } from '../lib/build'
 import { IS_PRODUCTION } from './versions'
 import { VersionSwitcher } from './VersionSwitcher'
@@ -13,6 +15,9 @@ import { VersionSwitcher } from './VersionSwitcher'
  * and shortens the viewport-height layouts by the same amount.
  */
 export function StagingBar() {
+  // U142 (J203): the consumer design versions mean nothing in the admin, so /admin shows the environment and build only.
+  const { pathname } = useLocation()
+  const hidePicker = RELEASES.adminNav2 && (pathname === '/admin' || pathname.startsWith('/admin/'))
   useEffect(() => {
     document.documentElement.setAttribute('data-staging-bar', '')
     return () => document.documentElement.removeAttribute('data-staging-bar')
@@ -24,10 +29,10 @@ export function StagingBar() {
         <span className={`rounded-full px-6 py-1 leading-none ${IS_PRODUCTION ? 'bg-white/15 text-white' : 'bg-brand-default text-text-strong'}`}>{BUILD.label}</span>
         <span className="truncate font-mono text-white/55">{BUILD_VERSION}</span>
       </p>
-      <div className="flex shrink-0 items-center gap-6">
+      {!hidePicker && <div className="flex shrink-0 items-center gap-6">
         <span className="text-style-caption text-white/55">Design</span>
         <VersionSwitcher dark />
-      </div>
+      </div>}
     </div>
   )
 }

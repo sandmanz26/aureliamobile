@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { keepTab } from '../../components/pageTab'
 import { DataTable, type Column } from '../../components/DataTable'
 import { PersonaProfile } from '../../components/PersonaProfile'
 import { SidePanel } from '../../components/SidePanel'
@@ -35,7 +36,7 @@ export function RerunView() {
   const [open, setOpen] = useState<{ id: string; tab: 'walk' | 'persona' } | null>(null)
   const select = (a: AgentId, d: DesignId) => {
     setOpen(null)
-    setParams({ view: 'versions', agent: String(a), design: String(d) }, { replace: true })
+    setParams((prev) => keepTab(prev, { view: 'versions', agent: String(a), design: String(d) }), { replace: true })
   }
   const r = report(agent, design)
   const people = personasOf(r.run)

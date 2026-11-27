@@ -1,4 +1,4 @@
-import { PanelRightOpen } from 'lucide-react'
+import { DetailsCue } from './ReportParts'
 import { useMemo, useState } from 'react'
 import { PageHeader, Panel } from '../../components/ui'
 import { b2b2cSummary } from '../../data/b2b2cReport'
@@ -68,7 +68,7 @@ function Overview() {
           >
             <span className="flex items-center justify-between gap-8">
               <span className="text-15 font-semibold text-adm-ink">{r.title}</span>
-              <PanelRightOpen size={14} aria-hidden="true" className="shrink-0 text-adm-muted group-hover:text-adm-ink" />
+              <DetailsCue />
             </span>
             <span className="text-12 text-adm-ink">
               <span className="font-semibold uppercase tracking-wider text-adm-muted">Goal </span>

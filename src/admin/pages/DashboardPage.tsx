@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { BarChart, LineChart } from '../components/Charts'
 import { Legend, PageHeader, Panel, StatCard, StatusBadge } from '../components/ui'
 import { AI_TIMESERIES, AUDIT_LOG, REPORTS, ROLES, SESSIONS, USERS } from '../data/mock'
+import { RELEASES } from '../../versions/releases'
 
 const TRAFFIC_SERIES = [{ key: 'requests', label: 'AI requests', color: 'var(--color-adm-s1)' }]
 
@@ -20,16 +21,26 @@ export function DashboardPage() {
 
   return (
     <>
-      <PageHeader
-        title="Dashboard"
-        description="Platform health at a glance. Every figure links through to the module that owns it."
-      />
+      {RELEASES.adminNav2 ? (
+        <>
+          <PageHeader title="Start here" description="Where the team's work lives in this admin, and which figures are sample data." />
+          <StartHere />
+          <h2 className="text-15 font-semibold text-adm-ink">
+            Platform health <span className="font-normal text-adm-muted">· sample data for a backend that does not exist yet</span>
+          </h2>
+        </>
+      ) : (
+        <PageHeader
+          title="Dashboard"
+          description="Platform health at a glance. Every figure links through to the module that owns it."
+        />
+      )}
 
       <div className="grid grid-cols-2 gap-12 lg:grid-cols-3 xl:grid-cols-6">
         <StatCard label="Users" value={USERS.length.toLocaleString()} delta={6.2} hint="30d" />
         <StatCard label="Published sessions" value={published.length.toLocaleString()} delta={14.7} />
         <StatCard label="AI spend (30d)" value={`$${spend30.toLocaleString('en-US', { maximumFractionDigits: 0 })}`} delta={12.4} inverse />
-        <StatCard label="Open reports" value={openReports.length.toLocaleString()} delta={-8.2} inverse />
+        <StatCard label={RELEASES.adminNav2 ? 'Open moderation reports' : 'Open reports'} value={openReports.length.toLocaleString()} delta={-8.2} inverse />
         <StatCard label="Staff accounts" value={ROLES.reduce((sum, r) => sum + r.members, 0).toLocaleString()} hint="across 5 roles" />
         <StatCard label="Audit entries" value={AUDIT_LOG.length.toLocaleString()} hint="30d" />
       </div>
@@ -109,5 +120,32 @@ export function DashboardPage() {
         </Panel>
       </div>
     </>
+  )
+}
+
+/**
+ * adminNav2 (U142, J203): the first thing on /admin is where the real work is
+ * (the AI brain, the decision reports, the research), not the health figures
+ * of an operation that does not run yet. Those stay below, labelled sample.
+ */
+const START: { title: string; text: string; to: string; link: string }[] = [
+  { title: 'AI brain', text: 'StateFlips, the healing map, the user journey, personas and the business funnel: what the AI knows.', to: RELEASES.stateFlips ? '/admin/stateflips' : '/admin/user-journey', link: RELEASES.stateFlips ? 'Open StateFlips' : 'Open User journey' },
+  { title: 'Reports & decisions', text: 'One report per decision, each with its answer, its next steps and its sources.', to: '/admin/reports', link: 'Open all reports' },
+  { title: 'Research', text: 'The desk research behind the reports, in the team wiki.', to: '/wiki/research', link: 'Open research' },
+]
+
+function StartHere() {
+  return (
+    <section aria-label="Start here" className="grid gap-12 lg:grid-cols-3">
+      {START.map((c) => (
+        <Link key={c.title} to={c.to} className="group flex min-w-0 flex-col gap-6 rounded-12 border border-adm-line bg-adm-surface p-16 hover:border-adm-ink-2 focus-visible:outline-2 focus-visible:outline-adm-accent">
+          <span className="text-15 font-semibold text-adm-ink">{c.title}</span>
+          <span className="text-13 text-adm-ink-2">{c.text}</span>
+          <span className="mt-auto inline-flex items-center gap-4 pt-4 text-13 font-medium text-adm-ink group-hover:underline">
+            {c.link} <ArrowRight size={13} aria-hidden="true" />
+          </span>
+        </Link>
+      ))}
+    </section>
   )
 }

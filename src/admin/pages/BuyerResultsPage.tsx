@@ -1,6 +1,8 @@
 import { Copy, Download } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { keepTab, usePageTab } from '../components/pageTab'
+import { PageSummary, PageTabs } from '../components/PageTabs'
 import { DataTable, type Column } from '../components/DataTable'
 import { PersonaProfile } from '../components/PersonaProfile'
 import { Finding, HeatLegend, HeatTable, RankBars, VerdictChart } from './buyer/BuyerCharts'
@@ -94,6 +96,7 @@ function BuyerResults() {
   const run = BUYER_RUNS.find((r) => String(r.version) === params.get('v')) ?? latest
   const [open, setOpen] = useState<{ id: string; tab: 'answer' | 'persona' } | null>(null)
   const [notice, setNotice] = useState('')
+  const [, setPageTab] = usePageTab()
   const n = run.answers.length
   const people = personasOf(run)
   const persona = (id: string) => people.get(id)!
@@ -216,6 +219,27 @@ function BuyerResults() {
         }
       />
 
+      <PageTabs
+        summary={
+          <PageSummary
+            purpose="reading every buyer agent run in full: each simulated persona's answer, the price they call fair and the test cases. The Buyer agent report is the short version."
+            question="Would these made-up buyers try Aurelia and pay for it?"
+            answer={`In run v${run.version}, ${tries.yes} of ${n} would try it and ${pays.yes} of ${n} would pay; a fair price reads as ${money(range.low)}–${money(range.high)} against ${money(run.stimulus.priceUsd)} for Plus.`}
+            stats={[
+              { label: 'Would try', value: `${tries.yes} of ${n}`, note: `${tries.maybe} maybe, ${tries.no} no` },
+              { label: 'Would pay', value: `${pays.yes} of ${n}`, note: `${pays.maybe} maybe, ${pays.no} no` },
+              { label: 'Test cases passed', value: `${outcomes.pass}`, note: `${outcomes.risk} at risk, ${outcomes.fail} fail` },
+            ]}
+            next={[
+              { text: 'Read the decision and the price advice in the Buyer agent report.', to: '/admin/reports/buyer-agent', linkLabel: 'Buyer agent report' },
+              { text: 'Open the answers of the people who said no, and what would change their mind (Detail).' },
+              { text: 'Turn the open questions into interview questions for real people.' },
+            ]}
+            note="Older version: kept for the full run log. Synthetic answers are predictions, not evidence of demand."
+            onDetail={() => setPageTab('detail')}
+          />
+        }
+      >
       <div role="tablist" aria-label="View" className="flex w-fit gap-4 rounded-8 bg-adm-bg p-4">
         {(
           [
@@ -230,7 +254,7 @@ function BuyerResults() {
             aria-selected={view === id}
             onClick={() => {
               setOpen(null)
-              setParams(id === 'versions' ? { view: 'versions' } : {}, { replace: true })
+              setParams((prev) => keepTab(prev, id === 'versions' ? { view: 'versions' } : {}), { replace: true })
             }}
             className={`rounded-8 px-12 py-6 text-12 font-medium ${view === id ? 'bg-adm-surface text-adm-ink shadow-sm' : 'text-adm-ink-2 hover:text-adm-ink'}`}
           >
@@ -254,7 +278,7 @@ function BuyerResults() {
               aria-selected={active}
               onClick={() => {
                 setOpen(null)
-                setParams({ v: String(r.version) }, { replace: true })
+                setParams((prev) => keepTab(prev, { v: String(r.version) }), { replace: true })
               }}
               className={`flex flex-col items-start rounded-12 border px-14 py-10 text-left ${active ? 'border-adm-ink bg-adm-surface' : 'border-adm-line bg-adm-bg hover:bg-adm-hover'}`}
             >
@@ -558,6 +582,7 @@ function BuyerResults() {
       )}
         </>
       )}
+      </PageTabs>
     </div>
   )
 }

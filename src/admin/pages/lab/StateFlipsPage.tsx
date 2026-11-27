@@ -1,4 +1,8 @@
 import { PanelRightOpen } from 'lucide-react'
+import { PageTabs, PurposeLine } from '../../components/PageTabs'
+import { usePageTab } from '../../components/pageTab'
+import { RELEASES } from '../../../versions/releases'
+import { DetailsCue } from '../reports/ReportParts'
 import { useState, type ReactNode } from 'react'
 import { Badge, PageHeader, Panel, type Tone } from '../../components/ui'
 import {
@@ -45,6 +49,8 @@ export function StateFlipsPage() {
   )
 }
 
+const NAV2 = RELEASES.adminNav2
+
 const TABS = [
   { id: 'sleep', label: 'Sleep, in full' },
   { id: 'all', label: 'All StateFlips' },
@@ -60,6 +66,8 @@ function StateFlips() {
   const last = c.rows[c.rows.length - 1]
   const at42 = c.flippedAt(42)
   const ex = examplePeople(c)
+  const [, setPageTab] = usePageTab()
+  const goal = <GoalLine goal="Explain, in numbers anyone can check, how chapters add up to the sleep StateFlip (25 → 85) and how “chance it works” is calculated." />
 
   const tiles: { label: string; value: string; vs: string; badge: NumLabel; open: () => void }[] = [
     {
@@ -80,23 +88,7 @@ function StateFlips() {
     },
   ]
 
-  return (
-    <div className="flex flex-col gap-16" data-stateflips>
-      <PageHeader title="StateFlips" description="How Aurelia moves a person from a bad state to a good one: sleep built out in full (what bad and good mean, the steps, how we measure them, who has it, how many chapters), all 125 StateFlips, and the draft catalogue of about 1,000 AKPs." />
-      <GoalLine goal="Explain, in numbers anyone can check, how chapters add up to the sleep StateFlip (25 → 85) and how “chance it works” is calculated." />
-
-      <div className="flex flex-wrap gap-2 self-start rounded-12 border border-adm-line bg-adm-surface p-4" role="tablist" aria-label="View">
-        {TABS.map((t) => (
-          <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)} className={`rounded-8 px-12 py-6 text-12 font-medium ${tab === t.id ? 'bg-adm-hover text-adm-ink' : 'text-adm-muted hover:text-adm-ink'}`}>
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {tab === 'all' && <AllStateFlips />}
-      {tab === 'akps' && <AkpCatalogue />}
-      {tab === 'sleep' && (
-      <>
+  const summarySection = (
       <section aria-label="Summary" className="flex min-w-0 flex-col gap-14 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20" data-summary>
         <p className="max-w-[860px] text-18 font-semibold leading-snug text-adm-ink">
           {who.cohort.length} of the 1,000 <Term id="simulated">simulated people</Term> have sleep as their main need. Followed chapter by chapter, half would reach good sleep within {c.medianChapters} <Term id="chapter">chapters</Term> if it works for them, and {pct(last.flipped)} of them get there in the end: less than the plan’s flat 54%, because half the group starts with severe sleep problems.
@@ -111,7 +103,7 @@ function StateFlips() {
               <dd>
                 <button type="button" onClick={t.open} aria-label={`${t.label}: ${t.value}. Show details`} className="group inline-flex items-center gap-6 rounded-4 text-left text-24 font-semibold leading-tight tabular-nums text-adm-ink hover:underline hover:decoration-adm-axis">
                   {t.value}
-                  <PanelRightOpen size={14} aria-hidden="true" className="shrink-0 text-adm-muted group-hover:text-adm-ink" />
+                  <DetailsCue />
                 </button>
               </dd>
               <dd className="text-11 text-adm-ink-2">{t.vs}</dd>
@@ -122,6 +114,38 @@ function StateFlips() {
           Nothing here is measured: there are no real users yet. Each number is labelled <L l="spec" /> (the business owner’s plan), <L l="assumption" /> (our stated choice), <L l="computed" /> (worked out here) or <L l="research" /> (a published sleep scale).
         </p>
       </section>
+  )
+
+  return (
+    <div className="flex flex-col gap-16" data-stateflips>
+      <PageHeader title="StateFlips" description="How Aurelia moves a person from a bad state to a good one: sleep built out in full (what bad and good mean, the steps, how we measure them, who has it, how many chapters), all 125 StateFlips, and the draft catalogue of about 1,000 AKPs." />
+      {!NAV2 && goal}
+
+      <PageTabs
+        summary={
+          <div className="flex min-w-0 flex-col gap-12">
+            <PurposeLine purpose="seeing how Aurelia turns a bad state into a good one, starting with sleep, and how likely it is to work." />
+            {goal}
+            {summarySection}
+            <button type="button" onClick={() => setPageTab('detail')} className="self-end text-13 font-semibold text-adm-ink underline decoration-adm-axis underline-offset-2">
+              See the steps, the cohort, all 125 StateFlips and the AKP catalogue in Detail
+            </button>
+          </div>
+        }
+      >
+      <div className="flex flex-wrap gap-2 self-start rounded-12 border border-adm-line bg-adm-surface p-4" role="tablist" aria-label="View">
+        {TABS.map((t) => (
+          <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)} className={`rounded-8 px-12 py-6 text-12 font-medium ${tab === t.id ? 'bg-adm-hover text-adm-ink' : 'text-adm-muted hover:text-adm-ink'}`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'all' && <AllStateFlips />}
+      {tab === 'akps' && <AkpCatalogue />}
+      {tab === 'sleep' && (
+      <>
+      {!NAV2 && summarySection}
 
       <Panel title="Key terms" description="The words this page and the wiki use, in plain English.">
         <dl className="grid gap-10 lg:grid-cols-2" data-key-terms>
@@ -140,6 +164,7 @@ function StateFlips() {
       <Trajectories examples={ex} />
       </>
       )}
+      </PageTabs>
     </div>
   )
 }

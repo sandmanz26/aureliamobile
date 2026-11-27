@@ -7,6 +7,9 @@ import { Badge, Button, PageHeader, Panel, inputClass } from '../components/ui'
 import { GOAL_LABEL, PERSONA_COUNT, SEED, distribution, drawPanel, generatePersonas, personaPrompt, type Generator, type Persona } from '../data/personas'
 import { PersonaProfile } from '../components/PersonaProfile'
 import { PersonasV4View } from './personas/PersonasV4View'
+import { PageSummary, PageTabs } from '../components/PageTabs'
+import { usePageTab } from '../components/pageTab'
+import { SCENARIOS, generatePersonasV4 } from '../data/personasV4'
 
 type SetId = 'v4' | 'v2' | 'v1'
 const SETS: { id: SetId; label: string }[] = [
@@ -57,12 +60,47 @@ function download(name: string, text: string, type: string) {
  */
 export function PersonasPage() {
   const [set, setSet] = useState<SetId>('v4')
+  const [, setTab] = usePageTab()
+  // Summary (U142): the facts of set v4, the default.
+  const facts = useMemo(() => {
+    const ps = generatePersonasV4()
+    const scen = new Map<string, number>()
+    for (const p of ps) scen.set(p.scenario, (scen.get(p.scenario) ?? 0) + 1)
+    const top = [...scen.entries()].sort((a, b) => b[1] - a[1])[0]
+    return {
+      count: ps.length,
+      countries: new Set(ps.map((p) => p.country)).size,
+      risk: ps.filter((p) => p.riskFlag).length,
+      top: top ? `${SCENARIOS[top[0] as keyof typeof SCENARIOS].label} (${top[1]})` : '',
+    }
+  }, [])
   return (
     <div className="flex flex-col gap-16">
       <PageHeader
         title="Personas"
         description="Made-up people with different lives, goals and doubts, as candidates for research run by AI: interviews in role, concept and copy tests, pricing checks. Use them to form and sharpen ideas before real users are asked, not as evidence."
       />
+      <PageTabs
+        summary={
+          <PageSummary
+            purpose="choosing made-up people to run AI research on (interviews in role, concept, copy and price tests) before real users are asked."
+            question="Who do our tests run on, and who must never be sold to?"
+            answer={`${facts.count.toLocaleString('en-US')} made-up people from ${facts.countries} countries; ${facts.risk} carry a risk flag and go to the help screen, never a sale.`}
+            stats={[
+              { label: 'People in set v4', value: facts.count.toLocaleString('en-US') },
+              { label: 'Countries', value: String(facts.countries) },
+              { label: 'Risk-flagged', value: String(facts.risk), note: 'routed to help, never sold to' },
+            ]}
+            next={[
+              { text: `Most common life situation: ${facts.top}. Check it matches who we want to reach.` },
+              { text: 'Pick a panel in Detail and copy its role-play prompts into a test.' },
+              { text: 'See what simulated buyers said in the Buyer agent report.', to: '/admin/reports/buyer-agent', linkLabel: 'Buyer agent report' },
+            ]}
+            note="Synthetic people for forming ideas, not evidence. Sets v1 and v2 (300 each) stay for the runs pinned to them."
+            onDetail={() => setTab('detail')}
+          />
+        }
+      >
       <div role="tablist" aria-label="Persona set" className="flex w-fit max-w-full flex-wrap gap-4 rounded-8 border border-adm-line bg-adm-surface p-4">
         {SETS.map((x) => (
           <button
@@ -78,6 +116,7 @@ export function PersonasPage() {
         ))}
       </div>
       {set === 'v4' ? <PersonasV4View /> : <LegacyPersonas key={set} gen={set === 'v1' ? 1 : 2} />}
+      </PageTabs>
     </div>
   )
 }

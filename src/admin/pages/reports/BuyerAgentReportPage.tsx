@@ -1,3 +1,6 @@
+import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
+import { usePageTab } from '../../components/pageTab'
+import { RELEASES } from '../../../versions/releases'
 import { ArrowRight, PanelRightOpen } from 'lucide-react'
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
@@ -54,6 +57,11 @@ function BuyerAgentReport() {
   const no7 = objections(t7)[0]
   const pc = (k: number, n: number) => `${Math.round((k / n) * 100)}%`
 
+  const [, setPageTab] = usePageTab()
+  const summaryBlock = (
+      <SummaryBlock s={summary} aside={<LatestChangeAside version={BUYER_RUNS[BUYER_RUNS.length - 1].version} />} />
+  )
+
   return (
     <div className="flex flex-col gap-16">
       <PageHeader
@@ -66,7 +74,8 @@ function BuyerAgentReport() {
         }
       />
 
-      <SummaryBlock s={summary} aside={<LatestChangeAside version={BUYER_RUNS[BUYER_RUNS.length - 1].version} />} />
+      {!RELEASES.adminNav2 && summaryBlock}
+      <PageTabs summary={<ReportSummaryTab purpose="deciding whether simulated buyers would pay for Aurelia, and at what price." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
 
       <p className="text-12 text-adm-muted">
         <RichText text="Every chart below is about {{simulated|simulated people}}: a prediction, not a measurement." />
@@ -264,6 +273,7 @@ function BuyerAgentReport() {
         ]}
       />
       </Details>
+      </PageTabs>
     </div>
   )
 }
