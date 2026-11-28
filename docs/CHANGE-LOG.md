@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-28 — AKP v2 and buyer test 9 (U150, J208)
+
+The AKP catalogue grows to 3,106 across all five brain functions and can be downloaded as xlsx or CSV; buyer test 9 shows each person their first chapter.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-28 — Editable AKPs and graph map (U149, J207)
 
 Admins can add, edit, link and revert AKPs, with the changes shared across the deployment; the AKP graph zooms, pans and follows a StateFlip's path.

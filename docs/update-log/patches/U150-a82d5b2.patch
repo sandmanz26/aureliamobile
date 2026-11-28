@@ -1,0 +1,2678 @@
+commit a82d5b2052fc771aa8c047c97fdccc7ff9b24f11
+Author: Claude <noreply@anthropic.com>
+Date:   Sat Nov 28 10:31:19 2026 +0000
+
+    AKP v2: roast, 3,106 AKPs across five functions, catalogue export, buyer test 9
+    
+    - Roast v1 and v2 against the business owner's needs (docs/akp/AKP-ROAST.md).
+    - extract.py drafts 1,945 v2 rows: voice family (TTS parameters), more script/music/image/video
+      instances from the Grand 4 layers, identity values, product (13 sheet dimensions + 5 drafted to
+      make 18, sheet AKPs applied to screens), business, brand (his marketing ReadMe types, pending his
+      sheet) and analysis (Maxwell, TheraGPS, a check-in marker per StateFlip). v1 IDs unchanged.
+    - Clean-up passes: unique names, every AKP linked, every StateFlip can assemble a chapter.
+    - akpAssembly.ts: chapter kit per StateFlip and a person's first chapter from their identity.
+    - Export: docs/akp/akps.csv, akp-links.csv, akps.json, akp-v2.xlsx; download box on the AKP tab.
+    - Buyer agent test 9 (buyerRunV9.ts, V9_CHANGE, BuyerTest9, report metrics, data sources, AI brain). (U150, J208)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+
+diff --git a/docs/akp/AKP-ROAST.md b/docs/akp/AKP-ROAST.md
+new file mode 100644
+index 0000000..302b41a
+--- /dev/null
++++ b/docs/akp/AKP-ROAST.md
+@@ -0,0 +1,124 @@
++# AKP roast: v1 (1,046) and v2 (3,106)
++
++U150, J208, 28 Nov 2026. Written for the product owner while the business owner is away. Every count below comes from `src/admin/data/akps.ts` (the generated catalogue, before admin edits) and `docs/akp/akps.json`. All AKPs are status **draft**; nothing here has been reviewed by him.
++
++His needs, read first: EUGENE-CONTEXT §0 A24, A27, A29, A40, A41, A43, A45; the 27 Nov chats on chapters and AKPs, Objective Learning and the AI-brain prototype; the Objective Learning plan (marketing ReadMe types); the six workbooks in `docs/briefs/`.
++
++---
++
++## Part 1. Roast of v1 (the 1,046-AKP draft, U141–U149)
++
++Four critics, one table at the end.
++
++### 1. A sceptical head of product
++
++- **Coverage is upside down against his prototype.** His Figma Make prototype counts Wellness 4,590, Brand 1,847, Product 1,970, Business 1,680 (10,087), plus Analysis (MicroBite "Maxwell" 4,870, TheraGPS "Governor" 10,497). v1 had Wellness 895, Product 104, Brand **0**, Business **0**, Analysis **0**, Identity 47. Two of his five functions (A40) did not exist as AKPs at all, and Product was 5% of his number.
++- **Half the "wellness" count is padding.** 500 of the 895 wellness AKPs are goals: 125 StateFlips and their 375 X / Y / Z steps. The step names were generic: "X: first relief" appeared **124 times**, "Y: a routine that helps" **124 times**. A list where the most common name repeats 124 times is not a catalogue anyone can browse.
++- **The Grand 4 layers sheet was only half read.** Script has nine layers in his sheet; v1 filled Concepts, Skills, Moods, Methods and Frameworks but left **Techniques (his estimate: 300 types), Archetypes (60), Styles & Tones (100) and Settings (80) with zero instances**. Music, image and video had 30–35 instances each against his 1,000+ types per modality.
++- **No product logic layer.** The UI/UX sheet's own "Logic" tab (layer 0 input → 4 render) was not on any product AKP, so "product AKPs write high-precision features" (A45) had nothing to compute with.
++
++### 2. A wellness clinician
++
++- **No voice.** The narrator's voice (timbre, pace, warmth, breath, pause) is the most direct lever on arousal in a guided session, and it was not a family. Sleep chapter 1's four voice nodes were hand-drafted outside the catalogue.
++- **Definitions were mostly sheet fragments.** "Calm", "Healer", "Binaural" with the layer name as description; no plain statement of what the piece *does* to a person, and no contraindication thinking (breath holds with panic, flicker with epilepsy, deep body focus after trauma).
++- **Identity had dimensions, not values.** 12 Grand and 35 Light identity dimensions, but no values to match on ("prefers a low warm voice", "evening owl", "no breath holds"). A planner cannot match a chapter to "Voice Timbre Preference"; it needs the preference.
++- **Duplicates across modalities read as noise:** "Calm" (WM-MES1, WV-ET1), "Healer" (WM-SPA3, WV-VA3), "Guardian", "Minimalist", "Emotional mastery" (three DOJO concepts), "Reflection".
++
++### 3. An ML engineer
++
++- **Not measurable.** No AKP said how its effect would be read. A tournament compares AKPs on a common outcome; without a signal per AKP (check-in delta, completion, HRV change, CTR…) there is nothing to rank on.
++- **Thin, uneven graph.** 653 links over 1,046 AKPs; **393 AKPs had no link at all**; **404 strategy AKPs served no StateFlip**. Music, image and video reached only 12–13 of the 125 StateFlips each, so **113 StateFlips could not assemble a chapter** with music, image and voice.
++- **IDs leak collisions.** Media IDs come from layer initials; "Visual Methods" and "Visual Mechanisms" share the code VM, so `WI-VM1…` cannot tell you its layer. Kept stable (renaming would break his references), but new rows must not repeat it.
++- **No measure kind.** Analysis signals would have been "strategy" AKPs and counted as coverage.
++
++### 4. The business owner himself (reading his own words back)
++
++- "Each function its own AKP universe and causal network" (A40): only Wellness and Product had one.
++- "Product, Business, Wellness, Brand… each need AKP depth like the prototype" (A43): Business and Brand had zero.
++- "AKPs as predefined lego pieces first, AI improves them later" (A41): the pieces were there, but no rule put them together into a chapter for a person.
++- "Use 10,087 AKPs to identify the minimum viable feature set": we could not run a feature or offer test that *used* AKPs.
++
++### v1 against his needs
++
++| His need | v1 | Fix in v2 |
++| --- | --- | --- |
++| A24 understand AKPs, entities and tournaments | partly: catalogue and graph, no measurable signal | a `signal` on every v2 AKP; a `measure` kind for Analysis |
++| A27 5 dimensions → needs → StateFlips (goal AKPs) linked to strategy/tactic AKPs and script building | partly: 404 strategy AKPs linked to no StateFlip, 113 StateFlips without music or image | every wellness strategy AKP serves a StateFlip; every StateFlip has script, voice, music and image |
++| A29 125 StateFlips used to make sessions and chapters | not: no chapter could be assembled from the catalogue | `chapterKit` for all 125; `personalChapter` for a person (used in buyer test 9) |
++| A40 five functions, each its own AKP universe | not: Brand, Business, Analysis empty | Business 304, Brand 400 (pending his sheet), Analysis 205 |
++| A41 predefined lego pieces first | partly: pieces, no assembly | assembly rules written out (`akpAssembly.ts`) |
++| A43 AKP depth like the prototype per function | not: Product 104 vs 1,970; Business and Brand 0 | Product 596 incl. 5 drafted dimensions to make 18; still short (see Part 3) |
++| A45 product AKPs write high-precision features | partly: 104 sheet AKPs, no logic layer, not tied to screens | logic layer 0–4 on every product AKP; 312 sheet AKPs applied to our 8 screens |
++| His prototype's voice / music / image / script chapter (20 AKPs, 30 links) | partly: voice drafted outside the catalogue | voice family (WN-, 114); the sleep chapter graph now uses catalogue voice AKPs only |
++| Marketing ReadMe types (40 goals … 150 knobs) | not | all 13 types drafted (BR-, 400), labelled pending his sheet |
++| No duplicates, stable IDs | not: 124× repeated step names, cross-family duplicates | every name unique (normalised); v1 IDs unchanged (tested) |
++
++---
++
++## Part 2. What v2 did
++
++`scripts/akp/extract.py` now writes a `v2` table into `generated/akpSource.ts` (1,945 rows, each with id, name, family, layer, modality, plain definition, used for, helps, causal role, measurable signal, typed links and source). `akps.ts` turns them into AKPs, skips the 10 whose name a v1 AKP of the same family already has, adds one check-in marker per StateFlip (AN-CK-, 125) and runs four clean-up passes over the whole catalogue: unique names, chapter-assemblable StateFlips, a StateFlip for every wellness strategy AKP, and at least one typed link on every AKP. No v1 ID changed.
++
++| Function | His prototype | v1 | v2 |
++| --- | ---: | ---: | ---: |
++| Wellness (goal, script, voice, music, image, video) | 4,590 | 895 | 1,443 |
++| Product | 1,970 | 104 | 596 |
++| Business | 1,680 | 0 | 304 |
++| Brand | 1,847 | 0 | 400 |
++| Analysis (Maxwell + TheraGPS) | 4,870 + 10,497 | 0 | 205 |
++| Identity (not a prototype function) | — | 47 | 158 |
++| **Total** | 10,087 (+15,367) | **1,046** | **3,106** |
++
++| Family | v1 | v2 | Where the new ones come from |
++| --- | ---: | ---: | --- |
++| goal (WG) | 500 | 500 | unchanged; step names now carry their StateFlip |
++| script (WS) | 300 | 410 | Grand 4 layers' empty Script layers: 71 techniques, 12 archetypes, 12 styles and tones, 15 settings |
++| voice (WN) | 0 | 114 | TTS parameters: timbre, pace, warmth, breath, pause, pitch, dynamics, persona, language, presentation, prosody, structure, TTS controls, 20 presets |
++| music (WM) | 35 | 173 | instances of all ten music layers: tempi 40–120 BPM, instruments, modes, binaural bands, noise colours, techniques, environments |
++| image (WI) | 30 | 138 | instances of the image layers plus 12 colour palettes |
++| video (WV) | 30 | 108 | instances of the video layers |
++| identity (ID) | 47 | 158 | values of 30 Light sub-dimensions (voice, tempo, colour, length, chronotype, regulation, contraindications…) |
++| product (PR) | 104 | 596 | 130 more in the 13 sheet dimensions (sheet IDs continued, e.g. UO9), 50 in five drafted dimensions to make his 18, 312 sheet AKPs applied to our screens (e.g. PR-UM1-PLY) |
++| business (BZ) | 0 | 304 | funnel stages, 20 B2B2C channels, 20 prices, 30 retention levers, 20 unit-economics metrics, 15 B2B features, 15 objection answers, 15 experiments, 160 channel × stage plays |
++| brand (BR) | 0 | 400 | his 13 ReadMe types, 20–60 each |
++| analysis (AN) | 0 | 205 | 40 Maxwell resonance and micro-detail signals, 40 TheraGPS precision signals, 125 per-StateFlip check-in markers |
++
++Links: 653 → 3,266 (feeds 846, drives 755, part-of 644, step-of 375, fed-by 221, measures 205, mirrors 180, supports 40). AKPs with no link: 393 → 0. StateFlips that can assemble a chapter (script, voice, music and image): 0 → 125 (v1 had no voice family; music and image reached about 12 StateFlips).
++
++---
++
++## Part 3. Roast of v2 (honest)
++
++Same four critics, re-scored.
++
++**Head of product.** Better shaped, still not his size. 3,106 is 31% of his 10,087 and 12% if Analysis is counted. Product (596) and Business (304) are a third and a fifth of his prototype. **Half of the Product growth is combinatorial**: 312 of the 492 new product AKPs are "sheet AKP × screen" (e.g. *Progressive Disclosure on Player*). They are concrete, but they are applications, not new knowledge. The same goes for the 160 business "channel × stage plays". His 18 product dimensions: we have 13 from the sheet and **5 named by us** (Accessibility, Trust & Safety, Data & Privacy, Personalisation Engine, Monetisation Surfaces); his list of 18 has not arrived and may differ.
++
++**Clinician.** Voice, techniques and contraindications are now in, and the assembly avoids breath holds for people with worry or panic. But **about 1,400 of the 1,935 new definitions are templated** ("Musical Techniques (music): Reverb bloom.") where the list gave no line of its own. Only the techniques, presets and some voice items have a real one-sentence definition. Nothing carries an evidence level, a dose or a contraindication flag of its own yet; the contraindication values sit in Identity, and only the assembly rules read them.
++
++**ML engineer.** Every v2 AKP has a measurable signal, but the signals are written per family, not per AKP (all music AKPs share one sentence). The graph is complete but **mostly drafted by rule**: of 943 wellness strategy AKPs, only **263 reach a StateFlip by shared words**; the rest were given the least-used StateFlip so every StateFlip has a chapter. That rotation guarantees coverage, not fit; a reviewer should replace it. Median 9 strategy AKPs per StateFlip (sleep has 124), so most StateFlips can assemble one chapter but cannot yet run a tournament with several candidates per slot. Brand and business links come from word overlap with a round-robin fallback. Maxwell has 40 signals against his 4,870, and no learned weights: those need real outcomes.
++
++**Business owner.** Five functions now each have an AKP universe (A40), Brand and Business exist (A43), the lego pieces can be put together for a person (A41) and used in a buyer test. What he asked for and still does not have: his own marketing sheet (Brand is ours, labelled pending), his 120,000 real AKPs (A24), and a tournament that has actually ranked anything.
++
++### v2 re-scored against his needs
++
++| His need | v1 | v2 | Still weak, and why |
++| --- | --- | --- | --- |
++| A24 AKPs, entities, tournaments | partly | partly | Every AKP is measurable on paper; no tournament has run, signals are per family. |
++| A27 needs → StateFlips → strategy AKPs → script | partly | met (draft) | 72% of the wellness links are by rotation, not meaning. |
++| A29 125 StateFlips make chapters | not | met (floor) | One chapter each; few alternatives per slot outside sleep. |
++| A40 five functions, own AKP universe | not | partly | All five exist; Brand drafted from his ReadMe, not his sheet; Analysis 205 vs 15,367. |
++| A41 lego pieces first, assembled by rule | partly | met (draft) | Rules are ours and simple; reviewed by nobody. |
++| A43 depth like the prototype | not | partly | 31% of his total; Product and Business inflated by combinations. |
++| A45 product AKPs write features | partly | partly | Logic layer and screens added; 5 of 18 dimensions are our guess. |
++| Voice / music / image / script per chapter | partly | met | Voice is a full family; the sleep chapter graph is all catalogue. |
++| Marketing ReadMe types | not | partly | All 13 types, at about a quarter of his counts. |
++| No duplicates, stable IDs | not | met | Tested: unique names, v1 IDs present, links valid. |
++
++**Score: v1 met 0, partly 5, not 5. v2 met 5, partly 5, not 0.** "Met" here means met as a draft we can show him, not approved.
++
++### What would move it next
++
++1. His marketing sheet, to replace the 400 drafted Brand AKPs.
++2. His list of 18 product dimensions, to replace our five.
++3. A clinician pass on the 263 word-matched and ~680 rotated wellness links, and per-AKP definitions for the templated 1,400.
++4. Real check-ins from the feedback group, so the per-StateFlip markers (AN-CK) and Maxwell signals score something and a first tournament can run on sleep.
+diff --git a/docs/akp/BUYER-TEST-9.md b/docs/akp/BUYER-TEST-9.md
+new file mode 100644
+index 0000000..3d831b3
+--- /dev/null
++++ b/docs/akp/BUYER-TEST-9.md
+@@ -0,0 +1,70 @@
++# Buyer agent test 9: show people their first chapter
++
++U150, J208, 28 Nov 2026. A prediction from written rules on simulated people, not a measurement. Code: `src/admin/data/buyerRunV9.ts` (rules), `src/admin/data/akpAssembly.ts` (how the chapter is put together), declaration `V9_CHANGE` in `runChanges.ts`. On the admin: Reports → Buyer agent report → Detail → Test 9.
++
++## What was tested
++
++- **Who:** the same 975 people as test 8 (persona set v4, 1,000 minus the 25 risk-flagged, who get "Need help now?" and never an offer).
++- **A:** test 8's winner, unchanged: "A journey for your StateFlip X: free first week, then $10/month". Played by test 8's own rules, so A here is test 8's B person by person.
++- **B:** the same journey and price, but the offer shows the person their own first chapter, assembled from catalogue AKPs matched to their Wellness Identity and condition. For example: *"Your first chapter: 4-7-8 breathing, warm low voice at 110 words a minute, 55 BPM tanpura drone, warm amber colours, 10 min."*
++
++How the chapter is assembled (one AKP per role): the technique from their regulation style (breath first → 4-7-8, or a 4-in-6-out exhale when worry or panic rules out breath holds), the StateFlip's own script AKP, voice timbre from their voice preference, pace and tempo from their tempo preference, the music bed from their main need, colours from their palette preference, and their own session length. 975 people got 316 different previews from 56 catalogue AKPs.
++
++## Headline results
++
++| | A (test 8's journey) | B (with their first chapter) |
++| --- | ---: | ---: |
++| Would try | 321 (33%) | 412 (42%) |
++| Would pay after the free week | 170 (17%) | 245 (25%) |
++| Expected paid plans (yes 1, maybe ½) | 286.5 | 373 |
++
++173 people pay more readily on B; nobody pays less readily, and nobody who would try A drops out on B.
++
++**Why.** Three things change when the promise becomes a chapter you can picture:
++1. **It fits better** (fit 0.8 → 0.9): the journey was already named after their problem; now the voice, tempo, colours and technique are theirs too. Split: +45 expected paid plans.
++2. **It can be judged before it is trusted** (the doubt term shrinks by 20%, 5% for people who distrust AI). Split: +41.5.
++3. **It shows their own length**, which lifts the "a journey asks too much" load for people with under 5 minutes a day. Split: 0: those people were held back by other things too.
++
++The steps add up exactly to B − A (286.5 → 373).
++
++## By dimension and archetype (would pay, A → B)
++
++| Main need | People | A → B |
++| --- | ---: | ---: |
++| Physical | 307 | 63 → 84 |
++| Relational | 265 | 32 → 49 |
++| Mental | 237 | 52 → 78 |
++| Meaning and purpose | 121 | 7 → 12 |
++| Emotional | 45 | 16 → 22 |
++
++| Archetype | People | A → B |
++| --- | ---: | ---: |
++| Achiever | 217 | 45 → 65 |
++| Explorer | 191 | 26 → 39 |
++| Seeker | 183 | 40 → 58 |
++| Guardian | 148 | 26 → 35 |
++| Rebuilder | 126 | 21 → 29 |
++| Caregiver | 110 | 12 → 19 |
++
++Relative to group size, B gains most for emotional needs (+13 points) and Seekers (+10); least for Guardians (+6). Meaning and purpose stays the weakest group: 12 of 121.
++
++## Objections (among those who would not pay)
++
++| Objection | A | B |
++| --- | ---: | ---: |
++| Does it work for me? (doubt) | 544 | 445 |
++| $10 a month is a lot for me | 203 | 222 |
++| Not in my language | 56 | 63 |
++| Not about my problem | 2 | 0 |
++
++Doubt is still the first objection by far; the preview answers about a fifth of it. Price rises as an objection only because people whose doubt was answered now stop at price instead. The "picked for me by an AI" put-off we added for people who distrust AI is never anyone's largest objection.
++
++## Chance to reach the targets (AI brain)
++
++Would pay after the free week: 17.4% → 25.1% against the 15% target. **The business chance does not move (6.7% → 6.7%)**: test 8's journey already met that target, so the business chance is held back by the other funnel stages (the free limit, day 7, day 30), not by paying. The preview is now a candidate feature on the AI brain ("Show each person their first chapter"), with its lift discounted × 0.2 from stated to real.
++
++## Caveats
++
++- The size of the effect is our assumption (fit +0.1, doubt −20%), written in `V9_RULES`. The direction is plausible; the size is not measured.
++- The assembly rules are ours and simple; no clinician has reviewed them, and the catalogue's voice, music and image AKPs are drafted by us.
++- Stated intent from rules overstates real buying. The honest next step is a real split: half the visitors see the preview.
+diff --git a/docs/akp/README.md b/docs/akp/README.md
+new file mode 100644
+index 0000000..185fb47
+--- /dev/null
++++ b/docs/akp/README.md
+@@ -0,0 +1,42 @@
++# The AKP catalogue, as files (v2)
++
++U150, J208, 28 Nov 2026. 3,106 atomic knowledge points (AKPs), all **draft**. These files are the generated catalogue, before any edit made in the admin; the admin's **Download catalogue (xlsx/csv)** box on StateFlips → AKP catalogue gives the same workbook, and CSVs with the edits applied.
++
++| File | What it is |
++| --- | --- |
++| `akp-v2.xlsx` | The workbook. Sheets: **AKPs** (one row per AKP), **Links** (one row per typed link), **Summary** (counts per function, family and layer), **StateFlips x AKPs** (per StateFlip: strategy AKPs per family, whether a chapter can be assembled, and the chapter kit) |
++| `akps.csv` | The AKPs sheet as CSV (UTF-8 with BOM, so Excel shows accents) |
++| `akp-links.csv` | The Links sheet as CSV |
++| `akps.json` | Everything above as JSON, plus the family table; the input of the export script |
++| `AKP-ROAST.md` | What was weak in v1, what v2 fixed, and what is still weak (scored against his needs) |
++| `BUYER-TEST-9.md` | Buyer agent test 9: the first chapter, assembled from AKPs, shown in the offer |
++
++## Columns of the AKPs sheet
++
++| Column | Meaning |
++| --- | --- |
++| `id` | Stable ID. The prefix is the family: WG goal, ID identity, WS script, WN voice, WM music, WI image, WV video, PR product, BZ business, BR brand, AN analysis. Product AKPs keep the UI/UX sheet's own IDs (UO2, SC1…); v2 continues them (UO9…) |
++| `name` | Plain name; unique across the catalogue (normalised: case and punctuation ignored) |
++| `function` | One of his five functions: wellness, product, business, brand, analysis; plus identity (the persona mindspace, not a prototype function) |
++| `family` | goal, identity, script, voice, music, image, video, product, business, brand, analysis |
++| `kind` | goal (what to reach), strategy (how: levers and tactics), measure (how an effect is read) |
++| `layer` | The layer inside the family: a Grand 4 layers layer (e.g. Musical Techniques), a product dimension, a ReadMe marketing type, a funnel stage… |
++| `modality` | Script, Voice, Music, Image or Video for chapter pieces; empty otherwise |
++| `definition` | What it is, in plain words |
++| `used_for` / `helps` | What it is used for, and who or what it helps (v2 rows; v1 rows show a generated line in the admin) |
++| `causal_role` | How it moves the person or the business |
++| `signal` | How its effect would be measured (v2 rows) |
++| `stateflips` | The StateFlips (SF-…) it serves, space-separated |
++| `links` | Typed links `type:target`, space-separated: drives, step-of, feeds, fed-by, part-of, supports, mirrors, measures |
++| `source` | `from <workbook / tab / row>` when it comes from his sheets; `drafted by us — to review` (with what it is an instance of) otherwise. Brand rows say "pending his marketing AKP sheet" |
++| `status` | draft for all; an admin can mark reviewed or approved |
++
++## Rebuilding the files
++
++```bash
++python3 -I scripts/akp/extract.py                                   # workbooks -> src/admin/data/generated/akpSource.ts
++AKP_EXPORT=1 npx vitest run src/admin/data/akpExport.test.ts         # catalogue -> docs/akp/akps.json
++python3 -I scripts/akp/export.py                                    # json -> csv, xlsx (also public/akp/akp-v2.xlsx)
++```
++
++IDs are fixed by position in the lists in `scripts/akp/extract.py`: add to the end of a list, never reorder or delete (retire an AKP in the admin instead).
+diff --git a/scripts/akp/export.py b/scripts/akp/export.py
+new file mode 100644
+index 0000000..e06f1bc
+--- /dev/null
++++ b/scripts/akp/export.py
+@@ -0,0 +1,164 @@
++"""Write the AKP catalogue files for the product owner (U150, J208).
++
++Reads docs/akp/akps.json (written by `AKP_EXPORT=1 npx vitest run
++src/admin/data/akpExport.test.ts`) and writes, stdlib only:
++
++    docs/akp/akps.csv        one row per AKP
++    docs/akp/akp-links.csv   one row per typed link
++    docs/akp/akp-v2.xlsx     sheets AKPs, Links, Summary, StateFlips x AKPs
++    public/akp/akp-v2.xlsx   the same workbook, served for the admin's download button
++
++Run from the repo root: python3 -I scripts/akp/export.py [extra copy path]
++An .xlsx is a zip of XML; this writes the minimum SpreadsheetML Excel,
++Numbers and Google Sheets open (inline strings, one bold header style).
++"""
++import collections
++import csv
++import io
++import json
++import os
++import shutil
++import sys
++import zipfile
++from xml.sax.saxutils import escape
++
++ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
++DOCS = os.path.join(ROOT, 'docs', 'akp')
++COLS = ['id', 'name', 'function', 'family', 'kind', 'layer', 'modality', 'definition', 'used_for', 'helps', 'causal_role', 'signal', 'stateflips', 'links', 'source', 'status']
++
++
++def col(n):
++    s = ''
++    while n:
++        n, r = divmod(n - 1, 26)
++        s = chr(65 + r) + s
++    return s
++
++
++def sheet_xml(rows, widths):
++    out = ['<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',
++           '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">',
++           '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>',
++           '<cols>' + ''.join(f'<col min="{i}" max="{i}" width="{w}" customWidth="1"/>' for i, w in enumerate(widths, 1)) + '</cols>', '<sheetData>']
++    for r, row in enumerate(rows, 1):
++        cells = []
++        for c, v in enumerate(row, 1):
++            ref = f'{col(c)}{r}'
++            style = ' s="1"' if r == 1 else ''
++            if isinstance(v, (int, float)) and not isinstance(v, bool):
++                cells.append(f'<c r="{ref}"{style}><v>{v}</v></c>')
++            else:
++                text = escape(str(v or ''))
++                cells.append(f'<c r="{ref}" t="inlineStr"{style}><is><t xml:space="preserve">{text}</t></is></c>')
++        out.append(f'<row r="{r}">{"".join(cells)}</row>')
++    out.append('</sheetData>')
++    if rows:
++        out.append(f'<autoFilter ref="A1:{col(len(rows[0]))}{len(rows)}"/>')
++    out.append('</worksheet>')
++    return '\n'.join(out)
++
++
++def write_xlsx(path, sheets):
++    names = [n for n, _, _ in sheets]
++    ct = ['<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',
++          '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">',
++          '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>',
++          '<Default Extension="xml" ContentType="application/xml"/>',
++          '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>',
++          '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>']
++    ct += [f'<Override PartName="/xl/worksheets/sheet{i}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' for i in range(1, len(names) + 1)]
++    ct.append('</Types>')
++    rels = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
++            '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>')
++    wb = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
++          'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'
++          + ''.join(f'<sheet name="{escape(n)}" sheetId="{i}" r:id="rId{i}"/>' for i, n in enumerate(names, 1)) + '</sheets></workbook>')
++    wrels = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
++             + ''.join(f'<Relationship Id="rId{i}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet{i}.xml"/>' for i in range(1, len(names) + 1))
++             + f'<Relationship Id="rId{len(names) + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>')
++    styles = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
++              '<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts>'
++              '<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>'
++              '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'
++              '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
++              '<cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs>'
++              '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>')
++    with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:
++        # Fixed timestamps keep the file byte-identical when nothing changed.
++        def put(name, data):
++            info = zipfile.ZipInfo(name, date_time=(2026, 11, 28, 0, 0, 0))
++            info.compress_type = zipfile.ZIP_DEFLATED
++            z.writestr(info, data)
++        put('[Content_Types].xml', '\n'.join(ct))
++        put('_rels/.rels', rels)
++        put('xl/workbook.xml', wb)
++        put('xl/_rels/workbook.xml.rels', wrels)
++        put('xl/styles.xml', styles)
++        for i, (_, rows, widths) in enumerate(sheets, 1):
++            put(f'xl/worksheets/sheet{i}.xml', sheet_xml(rows, widths))
++
++
++def write_csv(path, rows):
++    buf = io.StringIO()
++    csv.writer(buf, lineterminator='\r\n').writerows(rows)
++    with open(path, 'w', encoding='utf-8-sig', newline='') as f:
++        f.write(buf.getvalue())
++
++
++def main():
++    with open(os.path.join(DOCS, 'akps.json'), encoding='utf-8') as f:
++        d = json.load(f)
++    akps = d['akps']
++    name = {a['id']: a['name'] for a in akps}
++    akp_rows = [COLS] + [[a[c] for c in COLS] for a in akps]
++    link_rows = [['from', 'type', 'to', 'from_name', 'to_name']]
++    for a in akps:
++        for l in a['links'].split():
++            t, _, to = l.partition(':')
++            link_rows.append([a['id'], t, to, a['name'], name.get(to, '')])
++    write_csv(os.path.join(DOCS, 'akps.csv'), akp_rows)
++    write_csv(os.path.join(DOCS, 'akp-links.csv'), link_rows)
++
++    # Summary: per function, per family, per layer.
++    summary = [['view', 'group', 'akps', 'from workbooks', 'drafted by us', 'with a StateFlip', 'links out']]
++    for view, key in [('function', lambda a: a['function']), ('family', lambda a: a['family']), ('layer', lambda a: f"{a['family']} · {a['layer']}")]:
++        g = collections.OrderedDict()
++        for a in akps:
++            g.setdefault(key(a), []).append(a)
++        for k, rows in sorted(g.items(), key=lambda kv: (-len(kv[1]), kv[0])):
++            summary.append([view, k, len(rows), sum(r['source'].startswith('from ') for r in rows), sum(not r['source'].startswith('from ') for r in rows),
++                            sum(bool(r['stateflips']) for r in rows), sum(len(r['links'].split()) for r in rows)])
++    summary.append(['total', 'all', len(akps), sum(a['source'].startswith('from ') for a in akps), sum(not a['source'].startswith('from ') for a in akps),
++                    sum(bool(a['stateflips']) for a in akps), len(link_rows) - 1])
++
++    # StateFlips x AKPs: strategy AKPs per family serving each StateFlip, and the chapter kit.
++    fams = [f['id'] for f in d['families'] if f['kind'] != 'goal']
++    per = collections.defaultdict(collections.Counter)
++    for a in akps:
++        if a['kind'] == 'goal':
++            continue
++        for s in a['stateflips'].split():
++            per[s][a['family']] += 1
++    cov = [['stateflip', 'dimension', 'title'] + fams + ['total', 'chapter ready'] + [f'kit: {c}' for c in d['chapterFamilies']]]
++    for s in d['stateflips']:
++        c = per[s['id']]
++        ready = all(s['kit'][x] for x in d['chapterFamilies'])
++        cov.append([s['id'], s['dimension'], s['title']] + [c[f] for f in fams] + [sum(c.values()), 'yes' if ready else 'no'] + [s['kit'][x] for x in d['chapterFamilies']])
++
++    out = os.path.join(DOCS, 'akp-v2.xlsx')
++    write_xlsx(out, [
++        ('AKPs', akp_rows, [14, 34, 11, 11, 9, 26, 9, 60, 30, 30, 40, 50, 30, 40, 50, 8]),
++        ('Links', link_rows, [16, 10, 16, 34, 34]),
++        ('Summary', summary, [10, 44, 8, 14, 14, 16, 10]),
++        ('StateFlips x AKPs', cov, [11, 11, 44] + [9] * len(fams) + [7, 12] + [14] * len(d['chapterFamilies'])),
++    ])
++    pub = os.path.join(ROOT, 'public', 'akp')
++    os.makedirs(pub, exist_ok=True)
++    shutil.copyfile(out, os.path.join(pub, 'akp-v2.xlsx'))
++    for extra in sys.argv[1:]:
++        shutil.copyfile(out, extra)
++    print(f'{len(akps)} AKPs, {len(link_rows) - 1} links, {len(cov) - 1} StateFlips -> {out}', file=sys.stderr)
++
++
++if __name__ == '__main__':
++    main()
+diff --git a/scripts/akp/extract.py b/scripts/akp/extract.py
+index 390593d..f1aa723 100644
+--- a/scripts/akp/extract.py
++++ b/scripts/akp/extract.py
+@@ -85,6 +85,350 @@ def concepts(rows):
+     return unique_ids(out)
+ 
+ 
++# --------------------------------------------------------------------------
++# AKP v2 (U150, J208): more AKPs, drafted by us from the business owner's
++# briefs. Every row below is "drafted by us — to review" unless it names a
++# workbook. Lists are written as "Name" or "Name = plain definition", ";"-
++# separated. IDs are fixed by position inside each list, so appending to a list
++# never renumbers what is already there; never reorder or delete a list item —
++# retire it in the admin instead (soft delete) so IDs stay stable.
++# akps.ts turns each row into an AKP: it adds the StateFlips (by shared words,
++# then by dimension), the typed link to a goal, and skips any row whose
++# normalised name another AKP of the same family already has.
++# --------------------------------------------------------------------------
++
++DRAFT = 'drafted by us — to review'
++PENDING_BRAND = 'drafted by us — to review; pending his marketing AKP sheet (ReadMe types from the 2026-11-27 plan)'
++
++
++def items(text):
++    out = []
++    for part in text.split(';'):
++        part = part.strip()
++        if not part:
++            continue
++        name, _, d = part.partition(' = ')
++        out.append((name.strip(), d.strip()))
++    return out
++
++
++def toks(s):
++    return {w for w in re.findall(r'[a-z]+', s.lower()) if len(w) > 3}
++
++
++def best(cands, text, i):
++    """The candidate id whose name shares most words with text; round-robin when none does."""
++    t = toks(text)
++    scored = sorted(((len(t & toks(n)), -k, cid) for k, (cid, n) in enumerate(cands)), reverse=True)
++    if scored and scored[0][0] > 0:
++        return scored[0][2]
++    return cands[i % len(cands)][0]
++
++
++# ---- Wellness: VOICE (TTS parameters). Links: fed-by an identity Light AKP.
++VOICE = [
++    ('TB', 'Timbre', 'ID-L16', 'Low warm baritone; Soft alto; Breathy close whisper; Clear mid-range; Bright light soprano; Gravelly elder; Smooth velvet; Neutral broadcast; Husky intimate; Resonant chest voice'),
++    ('PC', 'Pace', 'ID-L17', '90 words a minute = very slow, for the last minutes before sleep; 100 words a minute; 110 words a minute = slow, the sleep chapter default; 125 words a minute = calm conversational; 140 words a minute = everyday conversational; 155 words a minute = energising, for mornings; Decelerating 130 to 100 words a minute; Accelerating 100 to 140 words a minute = for wake-up chapters'),
++    ('WA', 'Warmth', 'ID-L16', 'Cool clinical warmth; Neutral kind warmth; Warm friendly; Very warm nurturing; Playful warmth'),
++    ('BR', 'Breath', 'ID-L10', 'Audible soft inhale cues; Silent breath between lines; Breath-matched phrasing 4 in 6 out; Shared audible sigh; Breath counted aloud'),
++    ('PS', 'Pause', 'ID-L17', 'One-second line gaps; Two-second line gaps; Four-second line gaps; Eight-second line gaps; Pauses lengthening from 2 to 8 seconds; Thirty-second silence block; Two-minute silence block; Five-second pause after a question'),
++    ('PI', 'Pitch and intonation', 'ID-L16', 'Downward cadence at line ends; Flat even contour; Gentle rise on questions; Narrow pitch range; Wide expressive pitch range'),
++    ('DY', 'Volume and dynamics', 'ID-L16', 'Soft constant level; Voice fades out at the end; Voice fades in at the start; Close-mic proximity; Room-distance placement'),
++    ('PE', 'Persona', 'ID-L16', 'Healer voice; Coach voice; Sage voice; Friend voice; Guide voice; Elder voice; Scientist voice; Poet voice; Monk voice; Nurse voice'),
++    ('LA', 'Language and accent', 'ID-L30', 'Neutral US English; British English; Australian English; Soft Irish English; Indian English; Spanish-accented English; Spanish narration; German narration; French narration; Hindi narration; Arabic narration; Mandarin narration'),
++    ('GA', 'Gender and age presentation', 'ID-L16', 'Adult female voice; Adult male voice; Androgynous voice; Older female voice; Older male voice; Young adult voice'),
++    ('PR', 'Prosody style', 'ID-L16', 'Hypnotic near-monotone; Storytelling prosody; Crisp instructional prosody; Lullaby sing-song; Emphatic affirming prosody; Relaxed conversational prosody'),
++    ('ST', 'Delivery structure', 'ID-L19', 'Voice stops for the last two minutes; Voice only at transitions; Continuous narration; Call and response; Voice ducks music by 12 dB; Voice placed left and right (binaural)'),
++    ('TT', 'TTS control', 'ID-L17', 'Speaking rate minus 20 percent; Pitch down two semitones; Reduced emphasis; Break tags at every comma; High voice stability; Low style exaggeration; High speaker similarity; Speaker boost off'),
++    ('PZ', 'Preset', 'ID-L16', 'Sleep narrator preset = low warm voice, 105 words a minute, pauses lengthening, fades out; Morning coach preset = bright clear voice, 145 words a minute, short pauses; Anxiety first-aid preset = close warm voice, breath-matched phrasing, 2-second gaps; Grief companion preset = soft alto, slow, long silences; Focus primer preset = neutral broadcast voice, 130 words a minute, crisp; Body scan preset = warm mid-range, 110 words a minute, 4-second gaps; Self-compassion preset = very warm nurturing voice, gentle rise on questions; Breathwork preset = breath counted aloud, call and response; Yoga nidra preset = hypnotic near-monotone, 100 words a minute; Pain relief preset = slow, low, close-mic; Confidence preset = emphatic affirming prosody, 135 words a minute; Relationship repair preset = friend voice, conversational; Spiritual preset = monk voice, long silences; Child-friendly preset = playful warmth, simple words; Walking preset = 140 words a minute, voice only at transitions; Commute preset = clear mid-range, ducked under music; Night-wake preset = whisper-close, 90 words a minute, no music swell; Exam-stress preset = calm conversational, crisp steps; Shift-worker preset = warm voice, light-blocking cues; Elder-friendly preset = slower pace, wider pitch, louder level'),
++]
++
++MUSIC = [
++    ('Rhythm, Instrumentation, Harmony', 'Tempo 40 BPM; Tempo 50 BPM; Tempo 55 BPM; Tempo 60 BPM; Tempo 66 BPM; Tempo 72 BPM; Tempo 80 BPM; Tempo 90 BPM; Tempo 100 BPM; Tempo 110 BPM; Tempo 120 BPM; Felt piano; Solo cello; Handpan; Tibetan singing bowl; Crystal bowl; Shakuhachi flute; Kalimba; Concert harp; Analog pad synth; String ensemble; Fingerpicked acoustic guitar; Native flute; Tanpura drone; Gong; Rain stick; Frame drum; Monochord; Choir pad; Electric piano; Music box; Major pentatonic; Minor pentatonic; Dorian mode; Lydian mode; Aeolian mode; Suspended chords; Open fifths; Drone in D; Drone tuned to 432 Hz; Slow I–IV progression; Static harmony'),
++    ('Compositional Methods', 'Delta binaural beat 2 Hz; Theta binaural beat 6 Hz; Alpha binaural beat 10 Hz; Beta binaural beat 15 Hz; Isochronic tones; Monaural beats; Pink noise; Brown noise; White noise; Solfeggio 528 Hz; Field recording collage; Minimalist loop; Tonal drone; Polyrhythm 3 against 2; Heartbeat pulse at 60'),
++    ('Musical Techniques', 'Tempo deceleration; Volume fade; Low-pass filter sweep; Reverb bloom; Four-bar breath phrases; Sidechain breathing; Stereo widening; Octave drop; Sustain pedal wash; Call and response motif; Delayed resolution; Cadence to the tonic; Silence gap in the music; Eight-second crossfade; Arpeggio slowdown; Key change down a step; Swell to a soft peak; Low dynamic range; Slow pan drift; Slow tremolo'),
++    ('Musical Mechanisms', 'Rhythmic entrainment; Breath-locked phrasing; Predictable repetition; Gradual unpredictability; Harmonic tension and release; Masking of background noise; Arousal down-shift; Arousal up-shift; Familiarity anchor; Novelty spark'),
++    ('Musical Emotions & States', 'Serenity; Awe; Tenderness; Nostalgia; Groundedness; Joy; Courage; Melancholy release; Safety; Spaciousness; Focus; Renewal'),
++    ('Musical Outcomes', 'Sleep onset; Lower heart rate; Focus block; Grief processing; Energy lift; Anxiety relief; Pain distraction; Creative flow'),
++    ('Compositional Frameworks', 'Iso principle; Psychoacoustic masking; Guided imagery and music; Polyvagal-informed scoring; Circadian scoring; Arousal curve design'),
++    ('Sonic Personas (Archetypes)', 'Muse; Mystic; Nurturer; Explorer; Elder; Inner child; Warrior'),
++    ('Sonic Styles & Tones', 'Crisp; Dense; Airy; Lo-fi; Cinematic; Organic; Glassy; Earthy; Shimmering'),
++    ('Sonic Environments', 'Forest glade; Ocean shore; Mountain wind; Desert night; Temple bells; Rainforest; Snowfall hush; Crackling fire; Mountain stream; Distant thunderstorm; Rain on a city window; Cave drips; Meadow birdsong; Night crickets'),
++]
++
++IMAGE = [
++    ('Visual Techniques', 'Soft gradients; Bokeh; Film grain; Long exposure; Tilt-shift; Double exposure; Watercolour wash; Low contrast; Atmospheric haze; Soft vignette; Macro texture; Silhouette; Golden-hour light; Blue-hour light; Mist layers; Water reflections'),
++    ('Visual Methods', 'Chromotherapy; Biophilia; Fractal patterns; Mandala symmetry; Prospect and refuge; Soft fascination; Colour breathing'),
++    ('Visual Mood & Symbolism', 'Lotus; Tree of life; Spiral; Rising sun; Open door; Bridge; Feather; Candle flame; Moon phases; River flow; Mountain peak; Seed sprouting; Enso circle; Butterfly'),
++    ('Visual Environments', 'Temples; Mountain lake; Desert dunes; Zen garden; Aurora sky; Bamboo grove; Lotus pond; Starry night; Meadow at dawn; Snowy pines; Waterfall; Light in a cave; Sea cliff; Rice terraces; Lavender field; Candlelit room'),
++    ('Visual Mechanisms', 'Spatial flow; Single focal point; Negative space; Low horizon line; Leading lines; Depth layering; Repeating rhythm; Colour temperature shift'),
++    ('Visual Frameworks', 'Golden ratio; Rule of thirds; Attention restoration theory; Kaplan preference matrix; Visual hierarchy'),
++    ('Visual Archetypes', 'The Sage; The Mother; The Wanderer; The Guardian; The Child; The Alchemist'),
++    ('Visual Styles & Tones', 'Painterly; Photoreal; Dreamlike; Japandi; Celestial; Botanical illustration; Abstract flow; Nordic calm'),
++    ('Lighting, Framing, Texture, Motion, Symbolism', 'Backlit halo; Candlelight 1800 K; Dappled light; Overcast soft light; Rim light; Slow zoom; Parallax drift; Ken Burns pan; Breathing scale 1.00 to 1.03; Floating particles; Square framing; Wide panorama; Rough paper texture; Linen texture; Silk texture'),
++    ('Visual Outcomes', 'Arousal downshift; Restored attention; Evoked awe; Feeling held; Spark of hope; Less night-time glare'),
++    ('Colour palettes', 'Sage green palette; Dusk lavender palette; Warm amber palette; Ocean teal palette; Terracotta palette; Cream and gold palette; Deep indigo palette; Rose quartz palette; Forest moss palette; Sand beige palette; Charcoal and ember palette; Pale sky palette'),
++]
++
++VIDEO = [
++    ('Cinematic Techniques', 'Half-speed slow motion; Dissolve; Match cut; No jump cuts; Cloud timelapse; Hyperlapse; Rack focus; Slow dolly in; Crane rise; Static long take; Fade to black; Three-second cross dissolve; Speed ramp down; Reverse motion; Underwater shot'),
++    ('Cinematic Methods', 'Nature documentary; First-person walk; Abstract motion graphics; Organic stop-motion'),
++    ('Cinematic Frameworks', 'Kuleshov effect; Three-act calm arc; Micro hero’s journey; Circular structure; Montage of attractions'),
++    ('Emotional Tone', 'Wonder; Intimacy; Hope; Release; Reverence; Playfulness; Solitude'),
++    ('Narrative Dynamics', 'Gradual unveiling; Return home; Seasonal cycle; Light out of darkness; Journey upstream; Descent and rise'),
++    ('Cinematic Environments', 'Mountain ridge; Desert road; Rain on a window; Snowfield; Lake at dawn; Night sky; Walled garden; Waterfall basin; Sea of clouds'),
++    ('Cinematic Styles & Tones', 'Lush; Monochrome; Pastel; High-key; Low-key; Vintage film; Documentary'),
++    ('Camera, Sound, Aspect, Edits', 'Landscape 16:9; Square 1:1; 4K at 24 fps; Smooth 60 fps; Subtle handheld; Gimbal glide; Drone aerial; Macro close-up; Ambient room tone; Foley footsteps; Sound bridge between scenes; Audio-led cuts; Cut on the exhale; Average shot length 8 seconds; Average shot length 20 seconds; Warm colour LUT'),
++    ('Visual Archetypes', 'Wanderer figure; Teacher figure; Mother figure; Trickster figure'),
++    ('Video Outcomes', 'Sleep wind-down; Morning activation; Grounding; Holding grief; Focus priming'),
++]
++
++SCRIPT = [
++    ('TQ', 'Techniques', 'Box breathing 4-4-4-4; 4-7-8 breathing = in for 4, hold for 7, out for 8; Coherent breathing at 5.5 breaths a minute; Physiological sigh = two inhales, one long exhale; Alternate-nostril breathing; Extended exhale 4 in 6 out; Humming bee breath; Body scan feet to head; Progressive muscle relaxation; 5-4-3-2-1 grounding; Safe-place visualisation; Loving-kindness phrases; Cognitive defusion = noticing a thought as a thought; Thought record; Worry postponement; Three good things; Self-compassion break; Butterfly hug; Havening touch; Yoga nidra rotation of awareness; Counting down from ten; Noting practice; Open monitoring; RAIN practice = recognise, allow, investigate, nurture; STOP practice; Urge surfing; Future-self visualisation; Values card sort; If-then implementation intention; Paradoxical intention for sleep; Stimulus control reminder; Cognitive shuffle; Mantra repetition; Affirmation ladder; Inner child dialogue; Forgiveness letter; Boundary script rehearsal; Compassionate letter to self; Decatastrophising; Behavioural activation micro-step; Pendulation; Titration; Orienting to the room; Tense and release hands; Grounding through the feet; Light visualisation; Chakra colour visualisation; Heart-focused breathing; Walking meditation cue; Mindful eating cue; Savouring; Reminiscence; Hope map; Five-step problem solving; Assertive I-statement; Active listening practice; Gratitude letter; Awe walk prompt; Sky gazing; Candle gazing; Sound bath listening; Silent sitting; What-went-well journaling; Unsent letter journaling; Body appreciation; Pain reappraisal; Energy check-in scale; Morning intention; Evening review; Wind-down countdown; Morning light reminder'),
++    ('AR', 'Archetypes', 'Healer narrator; Sage narrator; Guide narrator; Coach narrator; Friend narrator; Elder narrator; Mother narrator; Explorer narrator; Warrior narrator; Mystic narrator; Scientist narrator; Poet narrator'),
++    ('TN', 'Styles & Tones', 'Gentle invitational tone; Direct instructional tone; Poetic imagery tone; Scientific explanatory tone; Playful light tone; Reverent sacred tone; Matter-of-fact tone; Nurturing tone; Encouraging upbeat tone; Minimal sparse tone; Storytelling tone; Second-person present tense'),
++    ('SE', 'Settings', 'Bedroom at night; Morning kitchen; On the commute; Desk break at the office; Hospital waiting room; Park bench; Before an exam; After an argument; Lunch break; In the shower; Before a hard conversation; Night feed with a newborn; Dawn after a night shift; Airplane seat; Cool-down after the gym'),
++]
++
++# ---- Identity: instances of the Light 35 sub-dimensions (index = ID-Lnn).
++IDENTITY = {
++    2: 'Analytical thinker; Intuitive thinker; Visual thinker; Verbal thinker',
++    3: 'Regulates with breath; Regulates through movement; Regulates by talking it through; Regulates by distraction; Suppresses and avoids',
++    4: 'Low baseline arousal; Moderate baseline arousal; High baseline arousal (wired); Fluctuating arousal',
++    5: 'Secure attachment; Anxious attachment; Avoidant attachment; Disorganised attachment',
++    6: 'Morning lark; Evening owl; Intermediate chronotype; Irregular (shift work)',
++    7: 'Secular; Spiritual but not religious; Practising religious; Spiritually curious',
++    8: 'Risk averse; Balanced risk; Novelty seeking',
++    10: 'Breathwork beginner; Practised breather; Advanced breathwork',
++    11: 'Easily distracted; Can hold attention 5 minutes; Can hold attention 20 minutes or more',
++    12: 'Low interoception; Moderate interoception; High interoception',
++    13: 'Reframing novice; Reframing developing; Reframing fluent',
++    14: 'Harsh inner critic; Mixed inner voice; Kind inner voice',
++    16: 'Prefers a low warm voice; Prefers a bright clear voice; Prefers a whisper close voice; Prefers no voice (music only)',
++    17: 'Prefers very slow tempo (50–60 BPM); Prefers moderate tempo (60–80 BPM); Prefers upbeat tempo (90+ BPM)',
++    18: 'Prefers warm earthy colours; Prefers cool blue-green colours; Prefers muted pastels; Prefers high-contrast dark',
++    19: 'Prefers 3–5 minute sessions; Prefers 10 minute sessions; Prefers 20 minute sessions; Prefers 30 minutes or more',
++    20: 'Prefers solo practice; Prefers practising with a partner; Prefers group practice',
++    22: 'Feeling anxious now; Feeling low or flat now; Feeling irritable now; Feeling calm now; Feeling overwhelmed now',
++    23: 'Low cognitive load now; Medium cognitive load now; High cognitive load now',
++    24: 'Within the window of tolerance; Hyperaroused (above the window); Hypoaroused (below the window)',
++    25: 'Trauma history: avoid deep body focus; Respiratory condition: no breath holds; Epilepsy: no flicker or strobe; Psychosis risk: no deep altered states; Pregnancy: no long breath holds',
++    27: 'Goal: sleep better; Goal: less stress; Goal: better focus; Goal: heal a relationship; Goal: more meaning',
++    28: 'Values achievement; Values connection; Values security; Values growth; Values spirituality',
++    29: 'Parent of young children; Shift worker; Student; Caregiver; Remote worker',
++    30: 'Collectivist framing; Individualist framing; Faith language welcome; Secular language only',
++    31: 'Cold start (few signals); Stable profile; Drifting profile',
++    32: 'Engagement utility; Outcome utility; Novelty utility',
++    33: 'Chip: because you like slow music; Chip: because you sleep late; Chip: because you chose breathwork',
++    34: 'Shareable data; Sensitive health data; Never-share data',
++    35: 'Weekly re-estimate; Event-driven update; Manual override by the person',
++}
++
++# ---- Product: the 13 sheet dimensions, ten more each, continuing the sheet's IDs.
++PRODUCT_MORE = [
++    ('UO', 'UX Outcomes', 1, 'Calm Arrival; Felt Progress; Effortless Return; Sense of Agency; Emotional Safety; Quiet Delight; Clarity of Next Step; Felt Belonging; Trust in Guidance; Completion Satisfaction'),
++    ('UM', 'UX Mechanisms', 2, 'Gentle Social Proof; Soft Loss Aversion; Goal Gradient; Variable Reward; Endowed Progress; Commitment Device; Kind Defaults; Peak-End Shaping; Open-Loop Prompt; Reciprocity Gift'),
++    ('IM', 'Interaction Mechanics', 2, 'Breath-Synced Animation; Drag-to-Set Duration; Calm Pull-to-Refresh; Snap Points; Hold-to-Confirm; Shake-to-Undo; Two-Finger Scrub; Tap Anywhere to Pause; Rubber-Band Edges; Weighted Sliders'),
++    ('CS', 'Cognitive User States', 0, 'Mild Anxiety; Physical Fatigue; Light Curiosity; Restlessness; Fresh Grief; Overwhelm; Boredom; Fragile Hope; Self-Doubt; Night Wakefulness'),
++    ('PS', 'Product Usage Skills', 2, 'Session Building; Check-in Habit; Voice Prompting; Favourites Curation; Progress Reading; Reminder Setup; Sharing a Session; Offline Listening; Personalising the Voice; Journal Writing'),
++    ('NM', 'Navigation Methods', 3, 'Bottom Tab Bar; Deep-Link Return; Resume Card; Search by Feeling; Breadcrumb Trail; Contextual Back; Quick Actions Sheet; Swipe Between Chapters; Floating Mini-Player; Notification Entry'),
++    ('IT', 'Interaction Techniques', 3, 'Spoken Brief; Mood Slider; Emoji Check-in; Haptic Breath Pulse; Lock-Screen Controls; Home-Screen Widget Start; Watch Crown Scrub; Sleep Timer; Picture-in-Picture; Desktop Keyboard Shortcuts'),
++    ('FF', 'Flow Frameworks', 1, 'First Session in 60 Seconds; Daily Check-in Loop; Five-Chapter Journey; Win-Back Flow; Upgrade at the Limit; Referral Loop; Reflection After a Session; Crisis Off-Ramp; Bedtime Routine Flow; Weekly Review'),
++    ('SA', 'System Archetypes', 1, 'The Coach (The Trainer); The Nurse (The Carer); The Elder (The Wise One); The Host (The Welcomer); The Witness (The Listener); The Artist (The Maker); The Monk (The Still One); The Navigator (The Planner); The Jester (The Lightener); The Steward (The Keeper)'),
++    ('ST', 'UI Styles & Tones', 4, 'Warm Espresso and Gold; Soft Daylight; Amber Night Mode; Paper Calm; Minimal Line; Organic Shapes; Gentle Motion; High Legibility; Quiet Typography; Photographic Warmth'),
++    ('SC', 'Session Contexts', 0, 'Bedtime in Bed; Lunch Break Reset; Morning Routine; Before a Meeting; After a Workout; Waking at Night; Slow Weekend; In a Waiting Room; Travelling; Before Exams'),
++    ('PE', 'Platform Environments', 4, 'iPhone App; Android App; Apple Watch App; Wear OS App; iPad App; Desktop Web App; Mobile Web App; Smart Speaker Skill; CarPlay Audio; Spatial Audio Headphones'),
++    ('DP', 'Dynamic Parameters', 4, 'Session Length Parameter; Voice Speed Parameter; Music-to-Voice Volume Ratio; Brightness Curve; Haptic Intensity; Reminder Time; Chapter Count; Text Size; Motion Reduction; Pause Length Parameter'),
++]
++LOGIC = {0: 'Layer 0 Input (biological bandwidth)', 1: 'Layer 1 Intent (the causal brain)', 2: 'Layer 2 Logic (the intent engine)', 3: 'Layer 3 Action', 4: 'Layer 4 Render (somatic delivery)'}
++SHEET_LOGIC = {'UX Outcomes': 1, 'UX Mechanisms': 2, 'Interaction Mechanics': 2, 'Cognitive User States': 0, 'Product Usage Skills': 2, 'Navigation Methods': 3, 'Interaction Techniques': 3,
++               'Flow Frameworks': 1, 'System Archetypes': 1, 'UI Styles & Tones': 4, 'Session Contexts': 0, 'Platform Environments': 4, 'Dynamic Parameters': 4}
++# Five dimensions to make his 18 (his list of 18 has not arrived: names drafted by us).
++PRODUCT_EXTRA = [
++    ('AX', 'Accessibility', 4, 'Screen Reader Labels; Dynamic Type; Reduced Motion Mode; Captions for the Voice; AA Colour Contrast; Large Tap Targets; Haptic Alternatives to Sound; One-Handed Reach; Dyslexia-Friendly Text; Audio Descriptions of Images'),
++    ('TS', 'Trust & Safety', 1, 'Crisis Signposting; Risk Keyword Detection; Clinician Escalation; Content Warnings; Age Gate; Medical Disclaimer; Safe Defaults for Breath Holds; Report a Problem; Calm Error States; Human Review Queue'),
++    ('DV', 'Data & Privacy', 0, 'Consent Ledger; Export My Data; Delete My Data; Local-Only Journal; Health Data Opt-In; Anonymised Analytics; Retention Window; Wearable Permissions; Encryption at Rest; Privacy Label'),
++    ('PZ', 'Personalisation Engine', 2, 'Cold-Start Quiz; Preference Learning; Next-Best Chapter; Time-of-Day Adaptation; Mood-Aware Ranking; Explain-Why Chip; Avoid Repeats; Familiarity Mix; Thumbs Feedback; Profile Drift Detection'),
++    ('MS', 'Monetisation Surfaces', 3, 'Free Week Trial; Paywall at the Limit; Annual Discount Offer; Family Plan; Gift a Month; Employer Code Redeem; Coin Balance; Cancel-Flow Save Offer; Restore Purchases; Receipt Screen'),
++]
++SURFACES = [('ONB', 'Onboarding', 'the first-run welcome and questions'), ('CRT', 'Create chat', 'where a person briefs a session'), ('PLY', 'Player', 'where a chapter plays'),
++            ('LIB', 'Library', 'saved and played sessions'), ('PRG', 'Progress', 'check-ins and the journey'), ('ME', 'Me and settings', 'profile, plan and preferences'),
++            ('PAY', 'Checkout', 'trial, plan and payment'), ('CHK', 'Check-in', 'the before and after feeling question')]
++SURFACE_WORDS = {'ONB': 'onboarding first aha trust calibration ease', 'CRT': 'prompt intent conversational voice threading co-pilot scaffolding', 'PLY': 'flow immersion breath haptic somatic pulse audio prosody luminance blur silence',
++                 'LIB': 'navigation object semantic zoom spatial persistence', 'PRG': 'mastery feedback recursive progress wisdom loop', 'ME': 'archetype style tone platform typography',
++                 'PAY': 'friction agency decision fatigue optimistic', 'CHK': 'state stress load skepticism mirroring'}
++
++# ---- Business (from businessFunnel stages, B2B2C channels, pricing, retention).
++BUSINESS = [
++    ('FS', 'Funnel stage', 'Visit = someone lands on the site or store page; Activation = hears a session on the first visit; Aha = finishes their own first session; Felt better = check-in after is above before; Free limit hit = uses the free week fully; Upgrade to Plus = chooses $10/month at the limit; Week-1 return = back after a week; Month-1 retention = still using after a month; Referral = invites someone who signs up'),
++    ('CH', 'B2B2C channel', 'Employer wellbeing benefit; Health insurer member perk; Therapist referral; Clinic waiting-room code; University student services; Gym membership add-on; Yoga studio partner; Employee assistance programme; Pharmacy partnership; Telehealth bundle; Wearable app marketplace; Apple Health listing; App Store organic; Google Play organic; Creator partnerships; Podcast sponsorship; Newsletter swaps; Search via the wiki; Retreat centres (retreat in a box); Hotel in-room wellness'),
++    ('PR', 'Pricing', 'Free week then $10 a month; $79 a year; Lifetime $199; Family plan $14.99 a month; Student $4.99 a month; Employer seat $3 per employee a month; Coin pack of 100; Pay what you can; $1 first month intro; Regional pricing; Win-back 50% off for 3 months; Gift card; Session credit bundle; Clinician licence $49 a month; Retreat in a box $149; Free tier of 3 sessions a week; Plus unlimited; Premium voice add-on; 30% off for annual prepay; Seven-day grace period'),
++    ('RL', 'Retention lever', 'Streak with forgiveness; Weekly progress letter; Chapter cliff-hanger; Bedtime reminder; Calendar reminder file; Personal best; Journey completion badge; Day-3 re-engagement push; Email digest; Check-in insight; Seasonal journey; Friend challenge; Live group session; Coach message; Weekly content drop; Save a favourite; Offline downloads; Home-screen widget; Watch complication; Habit-stacking prompt; Pause the subscription; Downgrade instead of cancel; Renewal reminder 7 days ahead; Surprise gift chapter; Milestone celebration; Very-disappointed survey; You-asked-we-shipped note; Community wall; Progress share card; Smart resume'),
++    ('UE', 'Unit economics metric', 'Customer acquisition cost; Lifetime value; LTV to CAC ratio; Payback months; Average revenue per user; Gross margin; Generation cost per session; Monthly churn; Trial-to-paid rate; Activation rate; Day-7 retention; Day-30 retention; Referral coefficient; Net promoter score; Sean Ellis score; Refund rate; Support tickets per 1,000 users; Audio cost per minute; Employer seat utilisation; Expansion revenue'),
++    ('BF', 'B2B feature', 'Employer admin dashboard; Anonymous aggregate reports; Single sign-on; Bulk access codes; Usage-based billing; Clinician patient assignment; Outcome export; HIPAA readiness; White-label voice; Partner API access; Team challenges; Manager toolkit; Onboarding webinar; Customer success playbook; Renewal health score'),
++    ('OB', 'Objection handler', 'Answer to too expensive; Answer to not sure it works; Answer to AI voice feels fake; Answer to no time; Answer to already use another app; Answer to privacy worries; Answer to wanting a human; Answer to forgetting to use it; Answer to it made me sleepy at work; Answer to too spiritual; Answer to not spiritual enough; Answer to my problem is too big; Answer to I tried meditation and failed; Answer to subscription fatigue; Answer to free alternatives on YouTube'),
++    ('EX', 'Experiment design', 'Price test $8 vs $10 vs $12; Trial length 7 vs 14 days; Paywall before vs after first session; Annual-first vs monthly-first; Onboarding with vs without voice brief; Reminder on vs off; Personalised first chapter vs generic; Social proof on vs off; Referral reward size; Win-back offer depth; Employer pilot 50 seats; Clinician pilot 10 therapists; Retreat-in-a-box pre-sale; Creator code vs paid ads; Headline test on the landing page'),
++]
++STAGES = [('VI', 'visit'), ('AC', 'activation'), ('AH', 'aha'), ('UP', 'upgrade'), ('RE', 'retention'), ('RF', 'referral'), ('WB', 'win-back'), ('EX', 'expansion')]
++
++# ---- Brand / marketing: the ReadMe AKP types (his counts in brackets).
++BRAND = [
++    ('CG', 'Campaign goals', 40, 'Awareness; Trust; Engagement; Consideration; Trial; Conversion; Loyalty; Advocacy; Education; Category creation; Credibility with clinicians; Employer interest; Re-activation; Community growth; Press coverage; Thought leadership; Brand love; Difference from other calm apps; Local launch; Waitlist growth'),
++    ('EL', 'Cognitive / emotional levers', 80, 'Authority; Relatability; Storytelling; Social proof; Scarcity; Curiosity gap; Belonging; Hope; Relief; Pride; Nostalgia; Awe; Humour; Vulnerability; Reciprocity; Consistency; Liking; Fear of missing out; Self-efficacy; Identity signalling; Novelty; Simplicity; Warmth; Competence; Transparency; Empathy; Inspiration; Gratitude; Safety; Control'),
++    ('FL', 'Functional causal levers', 80, 'Pattern interrupt; Timing hacks; Frequency capping; Retargeting window; First-three-seconds hook; Thumb-stopping visual; Captions on; Sound-off design; Loop ending; Comment-bait question; Duet or stitch prompt; Countdown; Price anchor; Free-week framing; Before and after; Demo in the feed; Native creator voice; Search-intent match; Landing message match; Speed to value; Single call to action; Exit-intent offer; Personalised subject line; Send-time optimisation; Lookalike seed'),
++    ('AS', 'Audience affect / cognitive states', 120, 'Curiosity; Scepticism; Overwhelm; Exhaustion; Insomnia frustration; Burnout; Loneliness; Grief; Hopefulness; Restlessness; Self-improvement drive; Price sensitivity; Loyal to another app; Trial fatigue; Distrust of AI; Spiritual seeking; Performance anxiety; New-parent fatigue; Post-breakup; Career transition; Health scare; Seasonal low; New-year motivation; Exam stress; Caregiver strain; Chronic pain; Pre-sleep scrolling; Morning rush; Commute boredom; Weekend reset mood; Ready to buy; Comparing apps; Lapsed user; Champion user; Ready to refer; Clinician-curious; HR buyer; Retreat-goer; Wearable owner; Privacy-conscious'),
++    ('GV', 'Long-term growth vectors', 200, 'Trust consistency; Community; Content library depth; Creator partnerships; Compounding search traffic; Referral loop; Employer channel; Clinical evidence; Word of mouth; Brand voice consistency; Strategic partnerships; Localisation; Press relationships; Ambassador programme; User stories; Podcast presence; Newsletter list; Wearable integrations; App Store ranking; Review velocity; Retention-led growth; Annual plan mix; Price perception; Expert advisory board; Research publications; Events and retreats; Seasonal journeys; Gift economy; Family plans; Student market; Therapist network; Corporate case studies; Cultural relevance; Accessibility leadership; Privacy leadership; Design reputation; Voice library ownership; Music library ownership; Outcome data moat; Product-led virality'),
++    ('MS', 'Macro strategies', 40, 'Educational; Narrative; Testimonial; Scientific proof; Founder-led; Community-led; Creator-led; Product-led demo; Challenge-based; Seasonal; Comparison; Behind the scenes; Clinical partnership; Cause-related; Experiential retreat; Utility content; Interactive quiz; Humour-led; Minimalist premium; Ritual-building'),
++    ('TU', 'Tactical units', 300, 'CTA: start your free week; CTA: hear it now; CTA: build my session; Metaphor: a retreat in your pocket; Meme format: 3am brain; Five-tip carousel; Fifteen-second demo clip; Before and after check-in score; Quote card; Expert stitch; Reply video; Myth versus fact; Day-in-the-life clip; Calm-voice snippet; Voice sample A or B; Breathe-along reel; Countdown sticker; Poll sticker; Welcome email day 1; Nudge email day 3; Trial-ending email day 6; Push: your chapter is ready; Landing hero headline; Social proof bar; Pricing table; FAQ block; Testimonial video; Case study PDF; Webinar; How-to blog post; Wiki article; Sixty-second podcast read; Creator script; User-content brief; Referral card; Gift message; App Store screenshot set; App preview video; Curiosity subject line; Benefit subject line; Hashtag set; Question caption hook; Thread format; Newsletter feature; Press release; Award entry; Partnership one-pager; Sales deck slide; Employer pilot proposal; Clinician handout; QR poster; Retreat flyer; Thank-you card; Sleep diary template; Free mini-course; Quiz result page; Comparison chart; Story highlight; Live session invite; Community AMA'),
++    ('AR', 'Story arcs', 100, 'Hero’s journey; Problem to solution; Case study arc; Before and after arc; Day in the life arc; Overcoming the monster; The return; Rebirth; The quest; Voyage and return; The mentor reveals; Underdog; Confession; Myth busting arc; Origin story; Transformation montage; The small win; The sceptic converted; Letter to my past self; Ritual discovery; Night to morning; Storm to calm; Lost and found; Community rescue; Coming home to the body'),
++    ('PV', 'Persona voices', 60, 'Guide persona; Mentor persona; Rebel persona; Sage persona; Healer persona; Friend persona; Coach persona; Scientist persona; Poet persona; Elder persona; Big-sister persona; Comedian persona; Monk persona; Nurse persona; Explorer persona; Artist persona; Activist persona; Concierge persona; Storyteller persona; Neighbour persona'),
++    ('EA', 'Emotional aesthetics', 100, 'Warm aesthetic; Authoritative aesthetic; Playful aesthetic; Satiric aesthetic; Serene aesthetic; Luxurious aesthetic; Earthy aesthetic; Clinical-clean aesthetic; Dreamy aesthetic; Bold aesthetic; Intimate aesthetic; Nostalgic aesthetic; Minimal aesthetic; Cinematic aesthetic; Handmade aesthetic; Celestial aesthetic; Botanical aesthetic; Urban calm aesthetic; Sunlit aesthetic; Nocturnal aesthetic; Ceremonial aesthetic; Gentle-humour aesthetic; Raw honest aesthetic; Gold premium aesthetic; Soft pastel aesthetic; Monochrome aesthetic; Retro aesthetic; Futuristic aesthetic; Coastal aesthetic; Mountain aesthetic'),
++    ('SA', 'Situational anchors', 80, 'New Year; Exam season; World Mental Health Day; Sleep Awareness Week; Daylight saving change; Black Friday; Holiday stress; Back to school; Summer travel; Ramadan; Diwali; Lunar New Year; Mother’s Day; Father’s Day; Valentine’s Day loneliness; Monday morning; Sunday scaries; Full moon; Winter solstice; Spring equinox; Quarter-end at work; Tax season; Wedding season; Graduation; Heatwave nights'),
++    ('DE', 'Delivery ecosystems', 80, 'LinkedIn; Instagram; TikTok; YouTube; YouTube Shorts; Pinterest; Reddit; X (Twitter); Threads; Facebook groups; WhatsApp channels; Spotify podcasts; Apple Podcasts; Email newsletter; App Store search; Google Search; Product Hunt; Discord; Substack; Medium; Employer intranet; Clinic waiting-room screen; Retreat venues; Meetup events; Out-of-home posters'),
++    ('AK', 'Real-time adaptive knobs', 150, 'Length knob; CTA intensity knob; Persona knob; Tone warmth knob; Humour level knob; Proof density knob; Emoji use knob; Hook type knob; Visual pace knob; Caption length knob; Price mention knob; Urgency level knob; Personalisation depth knob; Reading level knob; Language knob; Music bed knob; Voice gender knob; Thumbnail face or scene knob; Colour temperature knob; Aspect ratio knob; Opening question or statement knob; Number of benefits knob; Testimonial or expert knob; Send time knob; Frequency knob; Offer framing knob; Clinical or spiritual vocabulary knob; Story or list knob; Audience call-out knob; Hashtag count knob; Subtitle style knob; Loop ending knob; Logo timing knob; Discount depth knob; Social proof number knob; Format knob; CTA placement knob; Trust badge knob; Accessibility captions knob; Localisation level knob'),
++]
++# Which type each type feeds (the ReadMe's cascade, drafted by us).
++BRAND_FEEDS = {'EL': 'CG', 'FL': 'TU', 'AS': 'EL', 'GV': 'CG', 'MS': 'CG', 'TU': 'MS', 'AR': 'MS', 'PV': 'MS', 'EA': 'PV', 'SA': 'MS', 'DE': 'TU', 'AK': 'TU'}
++
++# ---- Analysis: Maxwell (resonance and micro-detail) and TheraGPS (therapeutic precision) signals.
++ANALYSIS = [
++    ('MX', 'MicroBite “Maxwell”', 'Resonance and micro-detail', 'Voice timbre resonance; Tempo resonance; Palette resonance; Script tone resonance; Session length fit; Skip rate per chapter; Replay rate; Chapter completion rate; Drop-off second; Volume adjustments; Pause taps; Seek-back taps; Heart-rate change during a chapter; HRV change during a chapter; Breath rate from the microphone (opt-in); Time to sleep onset; Check-in delta before and after; Thumbs feedback; Favourite saves; Share rate; Recreate rate; Time of day played; Speaker or headphones; Pause-length effect; BPM effect; Voice-pace effect; Imagery theme effect; Breath-pattern effect; Novelty decay; Familiarity effect; Tournament win rate; Champion AKP score; Effect size per AKP; Confidence interval per AKP; Uplift against a control chapter; Effect by identity segment; AKP pair interaction; Attribution share inside a chapter; Exposure count; Regression-to-the-mean guard'),
++    ('TG', 'TheraGPS “Governor”', 'Therapeutic precision', 'Starting position score; Distance to the target state; Route chosen; Milestone X reached; Milestone Y reached; Milestone Z reached; Off-route detection; Re-route trigger; Stall detection; Risk flag raised; Crisis escalation; Contraindication check; Window-of-tolerance check; Weekly dose in minutes; Adherence; Readiness-to-change stage; Alliance proxy; Self-efficacy score; Two-item mood screen (opt-in); Two-item anxiety screen (opt-in); Sleep severity item; WHO-5 wellbeing item; Perceived stress item; Loneliness item; Meaning item; Relapse signal; Day-30 maintenance check; Clinician hand-off note; Next-best StateFlip; Plan precision score; Governor veto; Safety rule fired; Evidence level of the route; Personal baseline; Seasonality adjustment; Data sufficiency; Drift alert; Explain-the-route chip; Goal re-confirmation; Progress narrative'),
++]
++
++
++def build_v2(src):
++    rows = []
++
++    def add(**r):
++        r.setdefault('links', [])
++        r.setdefault('dims', [])
++        r.setdefault('source', DRAFT)
++        r.setdefault('words', r['name'])
++        rows.append(r)
++
++    # Voice.
++    for code, layer, ident, text in VOICE:
++        for i, (name, d) in enumerate(items(text), 1):
++            add(id=f'WN-{code}{i:02d}', name=name, family='voice', layer=layer, modality='Voice',
++                definition=d or f'A {layer.lower()} setting for the narrator’s voice: {name.lower()}.',
++                usedFor=f'the voice of a chapter ({layer.lower()})', helps='the words land in the body, not only the head',
++                causal=f'Voice {layer.lower()} sets arousal and trust before any word is understood; it paces breath and attention.',
++                signal='Within-chapter A/B: completion, skips in the first 60 s and check-in delta with this setting against the default voice.',
++                links=[[ident, 'fed-by']], words=f'{name} {d} {layer} voice calm sleep')
++
++    # Music, image, video: layer instances beyond the sheet's own examples.
++    for fam, pre, mod, table, sig in [
++        ('music', 'WM', 'Music', MUSIC, 'Heart-rate and HRV change during the chapter (wearable, opt-in) and check-in delta, against the same chapter with the default music.'),
++        ('image', 'WI', 'Image', IMAGE, 'Screen dwell, skip rate and check-in delta against the same chapter with another picture.'),
++        ('video', 'WV', 'Video', VIDEO, 'Watch-through rate, skips and check-in delta against the same chapter with another clip.'),
++    ]:
++        used = {}
++        for layer, text in table:
++            words = [w for w in re.split(r'[^A-Za-z]+', layer) if w]
++            code = ''.join(w[0].upper() for w in words)[:3]
++            if code in used:  # Visual Methods and Visual Mechanisms are both VM
++                code = (code + words[-1][1].upper())[:4]
++            used[code] = layer
++            g = next((x for x in src['grand4'] if x['modality'] == mod and x['layer'] == layer), None)
++            role = g['role'] if g else f'{layer}: drafted by us (the sheet folds colour into its techniques and frameworks).'
++            source = f"drafted by us — to review; an instance of Grand 4 layers / {mod} / {layer}" if g else DRAFT
++            for i, (name, d) in enumerate(items(text), 101):
++                ident = 'ID-L17' if fam == 'music' and 'BPM' in name else 'ID-L18' if 'palette' in name.lower() else ''
++                add(id=f'{pre}-{code}{i}', name=name, family=fam, layer=layer, modality=mod,
++                    definition=d or f'{layer} ({mod.lower()}): {name}.', usedFor=f'the {mod.lower()} of a chapter ({layer.lower()})',
++                    helps='the senses agree with what the words ask for', causal=role, signal=sig, source=source,
++                    links=[[ident, 'fed-by']] if ident else [], words=f'{name} {d}')
++
++    # Script layers the v1 draft left empty (Techniques, Archetypes, Styles & Tones, Settings).
++    for code, layer, text in SCRIPT:
++        g = next(x for x in src['grand4'] if x['modality'] == 'Script' and x['layer'] == layer)
++        for i, (name, d) in enumerate(items(text), 1):
++            add(id=f'WS-{code}{i:03d}', name=name, family='script', layer=layer, modality='Script',
++                definition=d or f'{layer} (script): {name}.', usedFor=f'the words of a chapter ({layer.lower()})', helps='the person do one concrete thing that shifts the state',
++                causal=g['role'], signal='Check-in score before and after the chapter, and the rate of reaching the linked StateFlip’s next milestone, against chapters without it.',
++                source=f'drafted by us — to review; an instance of Grand 4 layers / Script / {layer}', words=f'{name} {d}')
++
++    # Identity instances.
++    light = src['identityLight']
++    for idx, text in IDENTITY.items():
++        parent = light[idx - 1]['name']
++        for i, (name, d) in enumerate(items(text), 1):
++            add(id=f'ID-L{idx:02d}-{i}', name=name, family='identity', layer=f'Light · {parent}', modality='—',
++                definition=d or f'One value of “{parent}”: {name.lower()}.', usedFor=f'reading who the person is ({parent.lower()})', helps='pick and frame the AKPs that fit this person',
++                causal='A value the planner matches AKPs against; a wrong match should lower the check-in delta.',
++                signal='Holdout test: check-in delta when AKPs are matched on this value against deliberately unmatched AKPs.',
++                links=[[f'ID-L{idx:02d}', 'part-of']], source=f'drafted by us — to review; an instance of Wellness identity workbook / Light / {parent}')
++
++    # Product: ten more per sheet dimension, five extra dimensions, and sheet AKPs applied to our screens.
++    prod_names = [(f"PR-{p['id']}", p['name']) for p in src['product']]
++    for pre, dim, logic, text in PRODUCT_MORE + PRODUCT_EXTRA:
++        start = 9 if any(p['id'].startswith(pre) and p['dimension'] == dim for p in src['product']) else 1
++        sheet = start == 9
++        for i, (name, d) in enumerate(items(text), start):
++            up = best([x for x in prod_names if x[0][3:5] == pre] or prod_names, name, i)
++            add(id=f'PR-{pre}{i}', name=name, family='product', layer=dim, modality='—',
++                definition=d or f'{dim}: {name}, as Aurelia would build it.', usedFor=f'the app experience ({dim.lower()})', helps='every session feel easy and safe',
++                causal=f'{LOGIC[logic]}.', signal='Task success, time to first session and drop-off at this step (click insights), against the build without it.',
++                links=[[up, 'mirrors']], source=DRAFT if sheet else f'{DRAFT}; one of five dimensions we added to reach his 18 (his list not received)')
++    for p in src['product']:
++        lg = SHEET_LOGIC.get(p['dimension'], 2)
++        text = f"{p['name']} {p['role']}".lower()
++        ranked = sorted(SURFACES, key=lambda s: -sum(w in text for w in SURFACE_WORDS[s[0]].split()))
++        k = int(re.sub(r'\D', '', p['id']) or 0)
++        picks = ranked[:1] + [s for s in SURFACES[k % 8:] + SURFACES[: k % 8] if s != ranked[0]][:2]
++        for code, surface, what in picks:
++            add(id=f"PR-{p['id']}-{code}", name=f"{p['name']} on {surface}", family='product', layer=p['dimension'], modality='—',
++                definition=f"{p['role']} Applied to {surface} ({what}).", usedFor=f'the {surface} screen', helps='one feature written precisely from the AKP',
++                causal=f'{LOGIC[lg]}: the sheet AKP made concrete on one screen.', signal=f'On {surface}: task success, time-on-task and drop-off (click insights) against the screen without it.',
++                links=[[f"PR-{p['id']}", 'part-of']], source=f"drafted by us — to review; applies UI/UX product AKPs workbook / {p['dimension']} / {p['id']}")
++
++    # Business.
++    sig = {'FS': 'Stage conversion rate against the businessFunnel target.', 'CH': 'CAC, activation and 30-day retention of sign-ups attributed to this channel.',
++           'PR': 'Trial-to-paid, 30-day churn and revenue per visitor at this price, in a price test.', 'RL': 'Day-7 and day-30 return of exposed people against a holdout.',
++           'UE': 'This is a measure: computed weekly from the funnel and billing data.', 'BF': 'Employer pilot conversion and seat utilisation with the feature.',
++           'OB': 'Buyer-agent and real-buyer conversion among people who raised this objection, with and without the answer.', 'EX': 'The experiment’s primary metric against its control.'}
++    stage_ids = []
++    for code, layer, text in BUSINESS:
++        for i, (name, d) in enumerate(items(text), 1):
++            rid = f'BZ-{code}{i:02d}'
++            if code == 'FS':
++                stage_ids.append((rid, name))
++            links = [] if code == 'FS' else [[best(stage_ids, f'{name} {d}', i), 'feeds']]
++            add(id=rid, name=name, family='business', layer=layer, modality='—', definition=d or f'{layer}: {name}.', usedFor=f'the business ({layer.lower()})',
++                helps='more people reach and keep a session that helps', causal=f'Moves a funnel stage: {layer.lower()}.', signal=sig[code], links=links, words=f'{name} {d} {layer}')
++    chans = [(f'BZ-CH{i:02d}', n) for i, (n, _) in enumerate(items(BUSINESS[1][2]), 1)]
++    stage_for = {'VI': 'BZ-FS01', 'AC': 'BZ-FS02', 'AH': 'BZ-FS03', 'UP': 'BZ-FS06', 'RE': 'BZ-FS08', 'RF': 'BZ-FS09', 'WB': 'BZ-FS07', 'EX': 'BZ-FS06'}
++    for cid, cname in chans:
++        for scode, stage in STAGES:
++            add(id=f'{cid}-{scode}', name=f'{cname}: {stage} play', family='business', layer='Channel × stage play', modality='—',
++                definition=f'What we do in the {cname.lower()} channel to move people through {stage}.', usedFor='a go-to-market play', helps=f'{stage} in one channel',
++                causal=f'Channel-specific lever on the {stage} stage.', signal=f'{stage.capitalize()} rate of people from this channel against the all-channel average.',
++                links=[[cid, 'part-of'], [stage_for[scode], 'feeds']])
++
++    # Brand / marketing.
++    ids_by_type = {}
++    for code, layer, his, text in BRAND:
++        ids_by_type[code] = [(f'BR-{code}{i:03d}', n) for i, (n, _) in enumerate(items(text), 1)]
++    for code, layer, his, text in BRAND:
++        up = BRAND_FEEDS.get(code)
++        for i, (name, d) in enumerate(items(text), 1):
++            links = [[best(ids_by_type[up], name, i), 'feeds']] if up else []
++            add(id=f'BR-{code}{i:03d}', name=name, family='brand', layer=layer, modality='—', definition=d or f'{layer}: {name}.',
++                usedFor=f'marketing ({layer.lower()}; his ReadMe lists {his})', helps='the right person hear about Aurelia in a way they trust',
++                causal=f'Marketing AKP type “{layer}”: shapes who notices, believes and tries.', signal='CTR, cost per install and 7-day activation against a control creative; brand-lift survey for trust goals.',
++                links=links, source=PENDING_BRAND)
++
++    # Analysis signals.
++    for code, owner, layer, text in ANALYSIS:
++        for i, (name, d) in enumerate(items(text), 1):
++            add(id=f'AN-{code}{i:02d}', name=name, family='analysis', layer=f'{owner} · {layer}', modality='—',
++                definition=d or f'{owner}: {name.lower()}.', usedFor=f'measuring ({layer.lower()})', helps='tell which AKPs actually move people',
++                causal='A measurement, not a lever: it scores other AKPs in tournaments and guards the route.',
++                signal='This is a measure: computed from session events, check-ins and (opt-in) wearable data once real users exist.', words=f'{name} {d}')
++    return rows
++
++
+ def main():
+     dojo = load('2026-11-26-dojo-objective-learning.xlsx')
+     deek = load('2026-11-27-deeksha-objective-learning.xlsx')
+@@ -208,8 +552,10 @@ def main():
+     src['frameworks'] = [{'id': r['A'], 'name': clean(r.get('B', ''), 60), 'focus': clean(r.get('C', ''), 60), 'role': clean(r.get('E', ''), 140)}
+                          for r in bar['Frameworks KB ( improve Element'] if re.match(r'^F\d+$', r.get('A', ''))]
+ 
++    src['v2'] = build_v2(src)
++
+     with open(OUT, 'w', encoding='utf-8') as f:
+-        f.write('// GENERATED by scripts/akp/extract.py from docs/briefs/*.xlsx (U141, J203). Do not edit by hand: re-run the script.\n')
++        f.write('// GENERATED by scripts/akp/extract.py from docs/briefs/*.xlsx (U141, J203; v2 rows U150, J208). Do not edit by hand: re-run the script.\n')
+         f.write('export const AKP_SOURCE = ')
+         json.dump(src, f, ensure_ascii=False, indent=0)
+         f.write('\n')
+diff --git a/src/admin/data/aiBrain.test.ts b/src/admin/data/aiBrain.test.ts
+index bbf88b5..996ca8c 100644
+--- a/src/admin/data/aiBrain.test.ts
++++ b/src/admin/data/aiBrain.test.ts
+@@ -1,7 +1,7 @@
+ import { describe, expect, it } from 'vitest'
+ import { CORE_FNS, brainMetrics, functionChance, mvpChance, prototypeMap, rankFeatures, stageChance, topThreeEffect, weeklyReport } from './aiBrain'
+ import { PARTS_A, runV8, v8Change, v8Split, v8Tallies } from './buyerRunV8'
+-import { ALL_RUN_DECLARATIONS, V8_CHANGE } from './runChanges'
++import { ALL_RUN_DECLARATIONS, V8_CHANGE, V9_CHANGE } from './runChanges'
+ import { OWNER_ASKS, parseAsks, statusOf } from './ownerAsks'
+ 
+ describe('buyer agent test 8 (U147)', () => {
+@@ -30,7 +30,8 @@ describe('buyer agent test 8 (U147)', () => {
+     expect(PARTS_A.named).toBe(false)
+   })
+   it('declares its change', () => {
+-    expect(ALL_RUN_DECLARATIONS.at(-1)).toBe(V8_CHANGE)
++    expect(ALL_RUN_DECLARATIONS.at(-2)).toBe(V8_CHANGE)
++    expect(ALL_RUN_DECLARATIONS.at(-1)).toBe(V9_CHANGE)
+     expect(V8_CHANGE.previous).toBe(7)
+     expect(v8Change().lines).toHaveLength(5)
+   })
+@@ -60,7 +61,7 @@ describe('AI brain (U147)', () => {
+   it('maps the prototype numbers and writes a weekly report', () => {
+     const p = prototypeMap()
+     expect(p.filter((r) => r.fn.match(/^(Wellness|Brand|Product|Business)$/)).reduce((s, r) => s + (r.prototype ?? 0), 0)).toBe(10087)
+-    expect(weeklyReport()).toMatch(/Buyer agent test 8/)
++    expect(weeklyReport()).toMatch(/Buyer agent test 9/)
+   })
+ })
+ 
+diff --git a/src/admin/data/aiBrain.ts b/src/admin/data/aiBrain.ts
+index fb5721d..7a8baf9 100644
+--- a/src/admin/data/aiBrain.ts
++++ b/src/admin/data/aiBrain.ts
+@@ -1,6 +1,7 @@
+ import { akpSummary, akps } from './akps'
+ import { funnelMetrics, type FunnelMetric } from './businessFunnel'
+-import { V8_OBJECTION_LABEL, v8Change, v8Findings, v8Tallies } from './buyerRunV8'
++import { V8_OBJECTION_LABEL, v8Tallies } from './buyerRunV8'
++import { v9Change, v9Findings, v9Tallies } from './buyerRunV9'
+ import { ALL_RUN_DECLARATIONS } from './runChanges'
+ import { STAGES } from './costModel'
+ import { sleepCohort } from './stateFlipFormulas'
+@@ -57,14 +58,14 @@ export function brainMetrics(): BrainMetric[] {
+   const c = sleepCohort()
+   const sf = stateFlipSummary()
+   const ak = akpSummary()
+-  const x = v8Tallies()
++  const x9 = v9Tallies()
+   const out: BrainMetric[] = [
+     { id: 'w-chance', fn: 'wellness', label: 'Chance a person reaches their StateFlip (sleep group)', target: 0.54, current: c.meanChance, unit: 'share', better: 'up', source: 'simulated', sourceNote: 'StateFlips formulas on persona set v4; target = the spec’s stage 1 success (54%)' },
+     { id: 'w-cover', fn: 'wellness', label: 'StateFlips with at least one strategy AKP', target: 1, current: ak.flips ? ak.flipsCovered / ak.flips : 0, unit: 'share', better: 'up', source: 'assumed', sourceNote: `akps.ts: ${ak.flipsCovered} of ${sf.total} StateFlips; target: every StateFlip can be built` },
+     { id: 'w-cost', fn: 'wellness', label: 'Cost per flip (sleep, stage 1)', target: STAGES[1].specCostPerFlip, current: c.costPerFlip, unit: 'usd', better: 'down', source: 'assumed', sourceNote: `Cost model; target = the spec’s stage 1 cost per flip ($${STAGES[1].specCostPerFlip}); his $1 floor is a later-stage thesis` },
+   ]
+   for (const m of funnel()) out.push({ id: `f-${m.id}`, fn: FUNNEL_FN[m.id], label: m.label, target: m.target, current: m.agent, unit: 'share', better: 'up', source: 'simulated', sourceNote: 'Business funnel: buyer agent prediction against the funnel target' })
+-  out.push({ id: 'b-paid', fn: 'business', label: 'Would pay after the free week (test 8, StateFlip journey)', target: 0.15, current: x.payB.yes / x.n, unit: 'share', better: 'up', source: 'simulated', sourceNote: `Buyer agent test 8: ${x.payB.yes} of ${x.n}; target = the funnel’s “chooses Plus” 15%` })
++  out.push({ id: 'b-paid', fn: 'business', label: 'Would pay after the free week (test 9, StateFlip journey with their first chapter shown)', target: 0.15, current: x9.payB.yes / x9.n, unit: 'share', better: 'up', source: 'simulated', sourceNote: `Buyer agent test 9: ${x9.payB.yes} of ${x9.n} (test 8’s journey alone: ${x9.payA.yes}); target = the funnel’s “chooses Plus” 15%` })
+   return out
+ }
+ 
+@@ -97,9 +98,12 @@ export const STATED_TO_REAL = 0.2
+ 
+ export function candidateFeatures(): Feature[] {
+   const x = v8Tallies()
++  const x9 = v9Tallies()
++  const v9lift = Math.round(((x9.payB.yes - x9.payA.yes) / x9.n) * STATED_TO_REAL * 100) / 100
+   const v8lift = Math.round(((x.payB.yes - x.payA.yes) / x.n) * STATED_TO_REAL * 100) / 100
+   return [
+     { id: 'sf-journey', name: 'A journey named after their StateFlip, free first week, then $10/month', from: 'Buyer agent test 8 (B)', lifts: [{ metric: 'f-plus', by: v8lift }, { metric: 'b-paid', by: v8lift }], confidence: 0.4, effort: 'M', evidence: `Test 8: would pay ${x.payA.yes} → ${x.payB.yes} of ${x.n}, × ${STATED_TO_REAL} for stated → real = +${Math.round(v8lift * 100)} pts.` },
++    { id: 'chapter-preview', name: 'Show each person their first chapter, built from AKPs matched to them, before the free week', from: 'Buyer agent test 9 (B)', lifts: [{ metric: 'f-plus', by: v9lift }, { metric: 'f-activation', by: v9lift }], confidence: 0.35, effort: 'M', evidence: `Test 9: would pay ${x9.payA.yes} → ${x9.payB.yes} of ${x9.n} against test 8’s journey, × ${STATED_TO_REAL} for stated → real = +${Math.round(v9lift * 100)} pts. Needs the AKP assembly (akpAssembly.ts) in the product.` },
+     { id: 'free-week', name: 'A free first week of every journey, no card', from: 'B2B2C features, top 1', lifts: [{ metric: 'f-activation', by: 0.05 }, { metric: 'f-plus', by: 0.03 }], confidence: 0.5, effort: 'M', evidence: 'Test 6: free app 17.5 expected paid plans against 1 for a ticket; longer trials convert better (RevenueCat 2026).' },
+     { id: 'creator-voice', name: 'The creator’s page with a 60-second sample in their own voice', from: 'B2B2C features, top 2', lifts: [{ metric: 'f-activation', by: 0.06 }], confidence: 0.4, effort: 'M', evidence: 'Test 6: trust was the top objection; the creator’s voice moved 5 answers.' },
+     { id: 'refund', name: 'Full refund until week 4, said before paying', from: 'B2B2C features, top 3', lifts: [{ metric: 'f-plus', by: 0.02 }], confidence: 0.3, effort: 'S', evidence: 'Maven’s guarantee badge; lowers the risk of paying.' },
+@@ -167,17 +171,35 @@ export interface PrototypeRow {
+ export function prototypeMap(): PrototypeRow[] {
+   const s = akpSummary()
+   const product = akps().filter((a) => a.id.startsWith('PR-')).length
++  const as = akps()
++  const maxwell = as.filter((a) => a.id.startsWith('AN-MX')).length
++  const thera = as.filter((a) => a.id.startsWith('AN-TG') || a.id.startsWith('AN-CK')).length
+   return [
+-    { fn: 'Wellness', prototype: 4590, ours: s.byFunction.wellness, oursNote: 'Goal and strategy AKPs (WG, WS, WM, WI, WV)' },
+-    { fn: 'Brand', prototype: 1847, ours: s.byFunction.brand, oursNote: 'Waiting for the marketing AKP sheet' },
+-    { fn: 'Product', prototype: 1970, ours: product, oursNote: 'Product AKPs (PR-)' },
+-    { fn: 'Business', prototype: 1680, ours: 0, oursNote: 'None yet: the business AKP sheet has not come' },
+-    { fn: 'Identity (persona mindspace)', prototype: null, ours: s.byFunction.identity, oursNote: 'Wellness Identity AKPs (ID-); not a prototype function' },
+-    { fn: 'MicroBite “Maxwell”', prototype: 4870, ours: 0, oursNote: 'No learned links yet: needs real outcomes' },
+-    { fn: 'TheraGPS “Governor”', prototype: 10497, ours: 0, oursNote: 'Routing rule live (main need → StateFlip), no AKPs of its own' },
++    { fn: 'Wellness', prototype: 4590, ours: s.byFunction.wellness, oursNote: 'Goal and strategy AKPs (WG, WS, WM, WI, WV, WN voice)' },
++    { fn: 'Brand', prototype: 1847, ours: s.byFunction.brand, oursNote: 'Drafted from his marketing ReadMe types (BR-); pending the marketing sheet' },
++    { fn: 'Product', prototype: 1970, ours: product, oursNote: 'Product AKPs (PR-): 13 sheet dimensions + 5 drafted to make 18, and sheet AKPs applied to our screens' },
++    { fn: 'Business', prototype: 1680, ours: s.byFunction.business, oursNote: 'Business AKPs (BZ-): funnel stages, B2B2C channels, pricing, retention, unit economics, plays; drafted by us' },
++    { fn: 'Identity (persona mindspace)', prototype: null, ours: s.byFunction.identity, oursNote: 'Wellness Identity AKPs (ID-) and their values; not a prototype function' },
++    { fn: 'MicroBite “Maxwell”', prototype: 4870, ours: maxwell, oursNote: 'Resonance and micro-detail signals (AN-MX); no learned links until real outcomes' },
++    { fn: 'TheraGPS “Governor”', prototype: 10497, ours: thera, oursNote: 'Therapeutic-precision signals (AN-TG) and one check-in marker per StateFlip (AN-CK)' },
+   ]
+ }
+ 
++/** Chance-to-target before and after test 9: business and MVP chance with test 8's journey alone vs with the first-chapter preview. */
++export function v9BrainImpact() {
++  const after = brainMetrics()
++  const x9 = v9Tallies()
++  const before = after.map((m) => (m.id === 'b-paid' ? { ...m, current: x9.payA.yes / x9.n } : m))
++  return {
++    paidBefore: x9.payA.yes / x9.n,
++    paidAfter: x9.payB.yes / x9.n,
++    businessBefore: functionChance(before, 'business'),
++    businessAfter: functionChance(after, 'business'),
++    mvpBefore: mvpChance(before),
++    mvpAfter: mvpChance(after),
++  }
++}
++
+ /* ------------------------------------------------------------ Weekly report */
+ 
+ export const pct = (x: number) => (x > 0 && x < 0.1 ? `${(x * 100).toFixed(1)}%` : `${Math.round(x * 100)}%`)
+@@ -185,16 +207,18 @@ export const pct = (x: number) => (x > 0 && x < 0.1 ? `${(x * 100).toFixed(1)}%`
+ export function weeklyReport(): string {
+   const m = brainMetrics()
+   const t3 = topThreeEffect()
+-  const ch = v8Change()
++  const ch = v9Change()
+   const last = ALL_RUN_DECLARATIONS[ALL_RUN_DECLARATIONS.length - 1]
++  const im = v9BrainImpact()
+   const ak = akpSummary()
+   return [
+     'Aurelia weekly report (generated from the admin; every figure is simulated or assumed until real users exist)',
+     '',
+     'This week',
+-    `- Buyer agent test ${last.version}: ${v8Findings()[0]}`,
++    `- Buyer agent test ${last.version}: ${v9Findings()[0]}`,
+     `- What changed against test ${last.previous}: offer — ${last.offer.note} Panel — ${last.panel.note}`,
+     `- ${ch.lines[4]}`,
++    `- Chance to reach the business targets with the first-chapter preview: ${pct(im.businessBefore)} → ${pct(im.businessAfter)}; MVP ${pct(im.mvpBefore)} → ${pct(im.mvpAfter)}.`,
+     `- AKP catalogue: ${ak.total} AKPs (${ak.fromFile} from the sheets, ${ak.drafted} drafted by us); ${ak.flipsCovered} of ${ak.flips} StateFlips have a strategy AKP.`,
+     '',
+     'Chance to reach the MVP targets (product of stage chances)',
+@@ -203,6 +227,6 @@ export function weeklyReport(): string {
+     '',
+     `If the top 3 features ship (${t3.top.map((f) => f.name).join('; ')}): ${pct(t3.mvpBefore)} → ${pct(t3.mvpAfter)}.`,
+     '',
+-    'Waiting on: the marketing AKP sheet (Brand), real users for Analysis, the feature lock for the API.',
++    'Waiting on: the marketing AKP sheet (Brand AKPs are drafted from his ReadMe types), real users for Analysis, the feature lock for the API.',
+   ].join('\n')
+ }
+diff --git a/src/admin/data/akpAssembly.ts b/src/admin/data/akpAssembly.ts
+new file mode 100644
+index 0000000..dd321d5
+--- /dev/null
++++ b/src/admin/data/akpAssembly.ts
+@@ -0,0 +1,117 @@
++/**
++ * Chapters assembled from AKPs (U150, J208): the "lego pieces" the business
++ * owner asked for (A41), put together by written rules, no media generated.
++ *
++ * - chapterKit(flip): one script, voice, music and image AKP that serve a
++ *   StateFlip (CHAPTER_FAMILIES). Every one of the 125 StateFlips has a kit;
++ *   akps.test.ts checks it. This is the floor, not a good chapter.
++ * - personalChapter(flip, prefs): the first chapter for one person, the
++ *   pieces matched to their Wellness Identity (voice, tempo, palette,
++ *   session length, regulation style, risk flags) and their StateFlip. Used
++ *   by buyer agent test 9 as the concrete preview ("your first chapter:
++ *   …"). The matching rules are below and drafted by us — to review.
++ *
++ * Pure data, deterministic; reads the merged catalogue (akps()).
++ */
++
++import { CHAPTER_FAMILIES, akps, akpsForFlip, norm, type Akp, type AkpFamily } from './akps'
++import type { Dimension } from './personaConditionV4'
++
++export interface ChapterKit {
++  flipId: string
++  pieces: Partial<Record<AkpFamily, Akp>>
++  complete: boolean
++}
++
++/** The first AKP of each chapter family that serves the StateFlip. */
++export function chapterKit(flipId: string): ChapterKit {
++  const pool = akpsForFlip(flipId).filter((a) => a.kind === 'strategy')
++  const pieces: Partial<Record<AkpFamily, Akp>> = {}
++  for (const f of CHAPTER_FAMILIES) {
++    const a = pool.find((x) => x.family === f)
++    if (a) pieces[f] = a
++  }
++  return { flipId, pieces, complete: CHAPTER_FAMILIES.every((f) => pieces[f]) }
++}
++
++export type Regulation = 'breath first' | 'voice first' | 'movement first' | 'reflection first' | 'music first'
++
++export interface ChapterPrefs {
++  dimension: Dimension
++  /** "warm and low" or "clear, mid-range" (personaIdentityV4). */
++  voice: string
++  /** "50–60 bpm" or "60–72 bpm". */
++  tempo: string
++  palette: string
++  minutes: number
++  regulation: Regulation
++  noBreathHolds: boolean
++  secularOnly: boolean
++}
++
++export interface PersonalChapter {
++  flipId: string
++  minutes: number
++  /** In order: technique, focus (the StateFlip's own AKP), voice timbre, voice pace, tempo, music bed, image. */
++  pieces: { role: string; akp: Akp; matched: string }[]
++  /** "Your first chapter: …", the line the person sees. */
++  preview: string
++}
++
++let BY_NAME: Map<string, Akp> | undefined
++let BY_NAME_SRC: Akp[] | undefined
++/** An AKP by its exact name (normalised); throws when the catalogue lacks it, so a renamed piece fails the tests. */
++export function byName(name: string): Akp {
++  const all = akps()
++  if (BY_NAME_SRC !== all) {
++    BY_NAME = new Map(all.map((a) => [norm(a.name), a]))
++    BY_NAME_SRC = all
++  }
++  const a = BY_NAME!.get(norm(name))
++  if (!a) throw new Error(`No AKP named “${name}”`)
++  return a
++}
++
++/** The rules, written out, so the page and the report say the same. */
++export const ASSEMBLY_RULES: { label: string; rule: string }[] = [
++  { label: 'Technique', rule: 'Regulation style picks it: breath first → 4-7-8 breathing (extended exhale 4 in 6 out when worry or panic rules out holds); voice first → body scan feet to head; movement first → tense and release hands; reflection first → what-went-well journaling; music first → sound bath listening.' },
++  { label: 'Focus', rule: 'The StateFlip’s own first script AKP (a DOJO concept, skill or mood linked to it).' },
++  { label: 'Voice', rule: 'Timbre from the voice preference (warm and low → low warm baritone; clear → clear mid-range); pace 110 words a minute when the tempo preference is slow, 125 otherwise.' },
++  { label: 'Music', rule: 'Tempo from the tempo preference (50–60 → 55 BPM, 60–72 → 66 BPM); the bed from the main need: physical tanpura drone, mental pink noise, emotional felt piano, relational solo cello, spiritual Tibetan singing bowl, or fingerpicked acoustic guitar when the person wants secular language only.' },
++  { label: 'Image', rule: 'The palette preference: earthy ambers → warm amber, soft blues → pale sky, forest greens → forest moss, dusk violets → dusk lavender.' },
++  { label: 'Length', rule: 'Their own session length (personaConditionV4 sessionMinutesOf), never longer than their daily time.' },
++]
++
++const TECHNIQUE: Record<Regulation, string> = {
++  'breath first': '4-7-8 breathing',
++  'voice first': 'Body scan feet to head',
++  'movement first': 'Tense and release hands',
++  'reflection first': 'What-went-well journaling',
++  'music first': 'Sound bath listening',
++}
++const BED: Record<Dimension, string> = { physical: 'Tanpura drone', mental: 'Pink noise', emotional: 'Felt piano', relational: 'Solo cello', spiritual: 'Tibetan singing bowl' }
++const PALETTE: Record<string, string> = { 'earthy ambers': 'Warm amber palette', 'soft blues': 'Pale sky palette', 'forest greens': 'Forest moss palette', 'dusk violets': 'Dusk lavender palette' }
++
++const short = (a: Akp) => a.name.replace(/ \([^)]*\)$/, '')
++const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1)
++
++export function personalChapter(flipId: string, p: ChapterPrefs): PersonalChapter {
++  const tech = p.regulation === 'breath first' && p.noBreathHolds ? 'Extended exhale 4 in 6 out' : TECHNIQUE[p.regulation]
++  const focus = akpsForFlip(flipId).find((a) => a.family === 'script' && a.kind === 'strategy') ?? chapterKit(flipId).pieces.script!
++  const warm = /warm/.test(p.voice)
++  const slow = /^50/.test(p.tempo)
++  const bed = p.dimension === 'spiritual' && p.secularOnly ? 'Fingerpicked acoustic guitar' : BED[p.dimension]
++  const palette = PALETTE[p.palette] ?? 'Sage green palette'
++  const pieces = [
++    { role: 'Technique', akp: byName(tech), matched: `regulation: ${p.regulation}${p.noBreathHolds && p.regulation === 'breath first' ? ', no breath holds' : ''}` },
++    { role: 'Focus', akp: focus, matched: `StateFlip ${flipId}` },
++    { role: 'Voice', akp: byName(warm ? 'Low warm baritone' : 'Clear mid-range'), matched: `voice preference: ${p.voice}` },
++    { role: 'Pace', akp: byName(slow ? '110 words a minute' : '125 words a minute'), matched: `tempo preference: ${p.tempo}` },
++    { role: 'Tempo', akp: byName(slow ? 'Tempo 55 BPM' : 'Tempo 66 BPM'), matched: `tempo preference: ${p.tempo}` },
++    { role: 'Music bed', akp: byName(bed), matched: `main need: ${p.dimension}${bed !== BED[p.dimension] ? ', secular only' : ''}` },
++    { role: 'Image', akp: byName(palette), matched: `palette preference: ${p.palette}` },
++  ]
++  const voiceWords = `${warm ? 'warm low' : 'clear'} voice at ${slow ? 110 : 125} words a minute`
++  const preview = `Your first chapter: ${lower(short(pieces[0].akp))}, ${voiceWords}, ${slow ? 55 : 66} BPM ${lower(short(pieces[5].akp))}, ${lower(short(pieces[6].akp)).replace(/ palette$/, '')} colours, ${p.minutes} min.`
++  return { flipId, minutes: p.minutes, pieces, preview }
++}
+diff --git a/src/admin/data/akpChapterGraph.test.ts b/src/admin/data/akpChapterGraph.test.ts
+index abfe783..f91024d 100644
+--- a/src/admin/data/akpChapterGraph.test.ts
++++ b/src/admin/data/akpChapterGraph.test.ts
+@@ -1,7 +1,6 @@
+ import { describe, expect, it } from 'vitest'
+ import { CHAPTER_GOAL, CHAPTER_LINKS, CHAPTER_MODALITIES, CHAPTER_PHASES, chapterNodes } from './akpChapterGraph'
+ import { akpById } from './akps'
+-import { DRAFTED } from './stateFlips'
+ 
+ describe('sleep chapter 1 as AKPs (U145)', () => {
+   const nodes = chapterNodes()
+@@ -23,11 +22,12 @@ describe('sleep chapter 1 as AKPs (U145)', () => {
+     expect(akpById(CHAPTER_GOAL.id)).toBeDefined()
+   })
+ 
+-  it('uses catalogue AKPs where they exist and labels the drafted voice ones', () => {
++  it('uses catalogue AKPs only, voice included (U150)', () => {
+     for (const n of nodes) {
+-      if (n.inCatalogue) expect(akpById(n.id), n.id).toBeDefined()
+-      else expect(n.source).toBe(DRAFTED)
++      expect(n.inCatalogue, n.id).toBe(true)
++      expect(akpById(n.id), n.id).toBeDefined()
+     }
++    expect(nodes.filter((n) => n.modality === 'Voice').every((n) => akpById(n.id)?.family === 'voice')).toBe(true)
+   })
+ 
+   it('gives every node a phase it drives and phase shares summing to 1', () => {
+diff --git a/src/admin/data/akpChapterGraph.ts b/src/admin/data/akpChapterGraph.ts
+index ca3cc67..1f1dd73 100644
+--- a/src/admin/data/akpChapterGraph.ts
++++ b/src/admin/data/akpChapterGraph.ts
+@@ -3,9 +3,9 @@
+  * Explorer" in the business owner's screenshot (2026-11-27 brief: about 20
+  * AKPs and 30 connections make one chapter, across script, music, voice and
+  * image). Every node is a strategy AKP that drives the chapter toward the
+- * sleep StateFlip's first step (WG-PHY-01-X). Script, music and image nodes
+- * are catalogue AKPs (akps.ts, from the workbooks); the catalogue has no voice
+- * family yet, so the four voice nodes are drafted by us and labelled draft.
++ * sleep StateFlip's first step (WG-PHY-01-X), and every one is a catalogue AKP
++ * (akps.ts): script, music and image from the workbooks, voice from the v2
++ * voice family (WN-, U150; drafted by us from TTS parameters).
+  * The links, their types and the phase timings are drafted by us — to review.
+  *
+  * Chapter 1 sits in the mood stretch (score under 45) for everyone in the
+@@ -15,7 +15,6 @@
+  */
+ 
+ import { baseAkpById } from './akps'
+-import { DRAFTED } from './stateFlips'
+ 
+ export type ChapterModality = 'Script' | 'Music' | 'Voice' | 'Image'
+ export const CHAPTER_MODALITIES: ChapterModality[] = ['Script', 'Music', 'Voice', 'Image']
+@@ -36,7 +35,7 @@ export interface ChapterNode {
+   layer: string
+   /** What it does in this chapter, in plain words. */
+   role: string
+-  /** True when the AKP is in the catalogue (akps.ts); false for the drafted voice AKPs. */
++  /** True when the AKP is in the catalogue (akps.ts); since U150 every node is (voice came in as a family). */
+   inCatalogue: boolean
+   source: string
+ }
+@@ -67,14 +66,12 @@ const PICK: [string, ChapterModality, string][] = [
+   ['WI-VT3', 'Image', 'Warm colour grading: no blue light.'],
+   ['WI-VMS2', 'Image', 'Still water: a picture with nothing to follow.'],
+   ['WI-LFT3', 'Image', 'Slow drift, paced to the out-breath.'],
++  ['WN-PC03', 'Voice', 'About 110 words a minute, slowing toward the end.'],
++  ['WN-TB01', 'Voice', 'A low, close voice; no bright or sharp tones.'],
++  ['WN-PS05', 'Voice', 'Gaps between lines grow from 2 to 8 seconds.'],
++  ['WN-ST01', 'Voice', 'The voice stops for the last two minutes.'],
+ ]
+ 
+-const VOICE: ChapterNode[] = [
+-  { id: 'VO-01', name: 'Slow pace', modality: 'Voice', layer: 'Delivery', role: 'About 110 words a minute, slowing toward the end.', inCatalogue: false, source: DRAFTED },
+-  { id: 'VO-02', name: 'Low, warm register', modality: 'Voice', layer: 'Timbre', role: 'A low, close voice; no bright or sharp tones.', inCatalogue: false, source: DRAFTED },
+-  { id: 'VO-03', name: 'Lengthening pauses', modality: 'Voice', layer: 'Delivery', role: 'Gaps between lines grow from 2 to 8 seconds.', inCatalogue: false, source: DRAFTED },
+-  { id: 'VO-04', name: 'Voice fades out', modality: 'Voice', layer: 'Structure', role: 'The voice stops for the last two minutes.', inCatalogue: false, source: DRAFTED },
+-]
+ 
+ let NODES: ChapterNode[] | undefined
+ 
+@@ -85,7 +82,7 @@ export function chapterNodes(): ChapterNode[] {
+     const a = baseAkpById(id)!
+     return { id, name: a.name, modality, layer: a.layer, role, inCatalogue: true, source: a.source }
+   })
+-  return (NODES = [...fromCatalogue, ...VOICE])
++  return (NODES = fromCatalogue)
+ }
+ 
+ /** The 30 typed links, drafted by us — to review. */
+@@ -95,7 +92,7 @@ export const CHAPTER_LINKS: ChapterLink[] = [
+   { from: 'WS-LU-02', to: CHAPTER_GOAL.id, type: 'drives' },
+   { from: 'WS-BL-02', to: CHAPTER_GOAL.id, type: 'drives' },
+   { from: 'WM-MM2', to: CHAPTER_GOAL.id, type: 'drives' },
+-  { from: 'VO-03', to: CHAPTER_GOAL.id, type: 'drives' },
++  { from: 'WN-PS05', to: CHAPTER_GOAL.id, type: 'drives' },
+   // Parts.
+   { from: 'WS-H5', to: 'WS-BL-02', type: 'part-of' },
+   { from: 'WS-F11', to: 'WS-LU-02', type: 'part-of' },
+@@ -103,26 +100,26 @@ export const CHAPTER_LINKS: ChapterLink[] = [
+   { from: 'WS-HT-03', to: 'WS-SK9', type: 'part-of' },
+   // Paced together.
+   { from: 'WM-MM4', to: 'WS-LU-02', type: 'syncs' },
+-  { from: 'VO-01', to: 'WM-MM4', type: 'syncs' },
++  { from: 'WN-PC03', to: 'WM-MM4', type: 'syncs' },
+   { from: 'WM-MM2', to: 'WS-F11', type: 'syncs' },
+   { from: 'WI-LFT3', to: 'WM-MM4', type: 'syncs' },
+-  { from: 'VO-03', to: 'WS-F11', type: 'syncs' },
++  { from: 'WN-PS05', to: 'WS-F11', type: 'syncs' },
+   { from: 'WM-CM1', to: 'WM-MM2', type: 'syncs' },
+   // Reinforcing.
+   { from: 'WM-MT1', to: 'WS-M2', type: 'reinforces' },
+   { from: 'WM-SE3', to: 'WS-M2', type: 'reinforces' },
+   { from: 'WI-VMS2', to: 'WS-M2', type: 'reinforces' },
+   { from: 'WI-VT3', to: 'WI-LFT1', type: 'reinforces' },
+-  { from: 'VO-02', to: 'WS-M2', type: 'reinforces' },
++  { from: 'WN-TB01', to: 'WS-M2', type: 'reinforces' },
+   { from: 'WI-LFT1', to: 'WS-HT-03', type: 'reinforces' },
+   { from: 'WM-SE3', to: 'WI-VMS2', type: 'reinforces' },
+-  { from: 'VO-04', to: 'WS-HT-03', type: 'reinforces' },
++  { from: 'WN-ST01', to: 'WS-HT-03', type: 'reinforces' },
+   // Cues.
+-  { from: 'WS-H5', to: 'VO-01', type: 'cues' },
+-  { from: 'WS-HT-03', to: 'VO-04', type: 'cues' },
+-  { from: 'WI-LFT1', to: 'VO-04', type: 'cues' },
++  { from: 'WS-H5', to: 'WN-PC03', type: 'cues' },
++  { from: 'WS-HT-03', to: 'WN-ST01', type: 'cues' },
++  { from: 'WI-LFT1', to: 'WN-ST01', type: 'cues' },
+   { from: 'WM-MT1', to: 'WS-H5', type: 'cues' },
+-  { from: 'VO-02', to: 'WS-H5', type: 'cues' },
++  { from: 'WN-TB01', to: 'WS-H5', type: 'cues' },
+   { from: 'WS-F11', to: 'WI-LFT3', type: 'cues' },
+   { from: 'WI-VMS2', to: 'WS-LU-02', type: 'cues' },
+ ]
+@@ -139,10 +136,10 @@ export interface ChapterPhase {
+ 
+ /** The four phases of the 10-minute chapter and the AKPs that drive each (drafted, shares are an assumption). */
+ export const CHAPTER_PHASES: ChapterPhase[] = [
+-  { id: 'arrive', name: 'Arrive', minutes: [0, 2], what: 'Voice and picture slow the person down and set a calm tone.', share: 0.2, drivers: ['VO-01', 'VO-02', 'WI-VT3', 'WM-SE3', 'WS-M2'] },
++  { id: 'arrive', name: 'Arrive', minutes: [0, 2], what: 'Voice and picture slow the person down and set a calm tone.', share: 0.2, drivers: ['WN-PC03', 'WN-TB01', 'WI-VT3', 'WM-SE3', 'WS-M2'] },
+   { id: 'breathe', name: 'Breathe', minutes: [2, 5], what: 'Breath locks to the music and the drift of the picture.', share: 0.35, drivers: ['WS-F11', 'WS-LU-02', 'WM-MM4', 'WM-MM2', 'WI-LFT3'] },
+   { id: 'release', name: 'Release', minutes: [5, 8], what: 'Muscles let go, one group at a time, over a drone.', share: 0.3, drivers: ['WS-H5', 'WS-BL-02', 'WM-MT1', 'WM-CM1', 'WI-VMS2'] },
+-  { id: 'drift', name: 'Drift', minutes: [8, 10], what: 'The voice thins out and stops; light goes down.', share: 0.15, drivers: ['VO-03', 'VO-04', 'WI-LFT1', 'WS-HT-03', 'WS-SK9'] },
++  { id: 'drift', name: 'Drift', minutes: [8, 10], what: 'The voice thins out and stops; light goes down.', share: 0.15, drivers: ['WN-PS05', 'WN-ST01', 'WI-LFT1', 'WS-HT-03', 'WS-SK9'] },
+ ]
+ 
+ export const chapterNodeById = (id: string) => chapterNodes().find((n) => n.id === id)
+diff --git a/src/admin/data/akpEdits.ts b/src/admin/data/akpEdits.ts
+index f2f3463..b6ea4c3 100644
+--- a/src/admin/data/akpEdits.ts
++++ b/src/admin/data/akpEdits.ts
+@@ -15,10 +15,10 @@
+ import { z } from 'zod'
+ import type { Akp, AkpFamily, AkpFunction, AkpKind, LinkType, Modality } from './akps'
+ 
+-export const AKP_FAMILY_IDS = ['goal', 'identity', 'script', 'music', 'image', 'video', 'product'] as const satisfies readonly AkpFamily[]
+-export const AKP_FUNCTION_IDS = ['wellness', 'product', 'identity', 'brand'] as const satisfies readonly AkpFunction[]
+-export const AKP_MODALITIES = ['Script', 'Music', 'Image', 'Video', '—'] as const satisfies readonly Modality[]
+-export const AKP_LINK_TYPES = ['drives', 'supports', 'part-of', 'step-of', 'feeds', 'fed-by', 'mirrors'] as const satisfies readonly LinkType[]
++export const AKP_FAMILY_IDS = ['goal', 'identity', 'script', 'music', 'image', 'video', 'product', 'voice', 'business', 'brand', 'analysis'] as const satisfies readonly AkpFamily[]
++export const AKP_FUNCTION_IDS = ['wellness', 'product', 'identity', 'brand', 'business', 'analysis'] as const satisfies readonly AkpFunction[]
++export const AKP_MODALITIES = ['Script', 'Music', 'Image', 'Video', 'Voice', '—'] as const satisfies readonly Modality[]
++export const AKP_LINK_TYPES = ['drives', 'supports', 'part-of', 'step-of', 'feeds', 'fed-by', 'mirrors', 'measures'] as const satisfies readonly LinkType[]
+ export const AKP_STATUSES = ['draft', 'reviewed', 'approved'] as const
+ export type AkpStatus = (typeof AKP_STATUSES)[number]
+ 
+@@ -31,6 +31,10 @@ export const FAMILY_KIND: Record<AkpFamily, { kind: AkpKind; fn: AkpFunction; pr
+   image: { kind: 'strategy', fn: 'wellness', prefix: 'WI' },
+   video: { kind: 'strategy', fn: 'wellness', prefix: 'WV' },
+   product: { kind: 'strategy', fn: 'product', prefix: 'PR' },
++  voice: { kind: 'strategy', fn: 'wellness', prefix: 'WN' },
++  business: { kind: 'strategy', fn: 'business', prefix: 'BZ' },
++  brand: { kind: 'strategy', fn: 'brand', prefix: 'BR' },
++  analysis: { kind: 'measure', fn: 'analysis', prefix: 'AN' },
+ }
+ 
+ /* ---------------------------------------------------------------- Schema */
+diff --git a/src/admin/data/akpExport.test.ts b/src/admin/data/akpExport.test.ts
+new file mode 100644
+index 0000000..40e584c
+--- /dev/null
++++ b/src/admin/data/akpExport.test.ts
+@@ -0,0 +1,36 @@
++import { describe, expect, it } from 'vitest'
++import { chapterKit } from './akpAssembly'
++import { AKP_COLUMNS, akpLinksCsv, akpRecord, akpsCsv } from './akpExport'
++import { CHAPTER_FAMILIES, FAMILIES, FAMILY, baseAkps } from './akps'
++import { stateFlips } from './stateFlips'
++
++// Node globals without @types/node in the app's tsconfig: only this test touches the file system.
++declare const process: { env: Record<string, string | undefined> }
++type Fs = { writeFileSync: (path: string, data: string) => void }
++
++describe('AKP export (U150)', () => {
++  const as = baseAkps()
++
++  it('writes one CSV row per AKP and one per link, quoting commas and quotes', () => {
++    const rows = akpsCsv(as).trim().split('\r\n')
++    expect(rows[0]).toBe(AKP_COLUMNS.join(','))
++    expect(akpsCsv([{ ...as[0], name: 'a, "b"' }])).toContain('"a, ""b"""')
++    const links = as.reduce((t, a) => t + a.links.length, 0)
++    expect(akpLinksCsv(as).trim().split('\r\n')).toHaveLength(links + 1)
++    expect(Object.keys(akpRecord(as[0]))).toEqual([...AKP_COLUMNS])
++  })
++
++  // AKP_EXPORT=1 npx vitest run src/admin/data/akpExport.test.ts, then python3 -I scripts/akp/export.py (docs/akp/README.md).
++  it.runIf(process.env.AKP_EXPORT)('dumps the generated catalogue for scripts/akp/export.py', async () => {
++    const { writeFileSync } = (await import(/* @vite-ignore */ ['node', 'fs'].join(':'))) as Fs
++    const fs = stateFlips()
++    const dump = {
++      generated: 'src/admin/data/akpExport.test.ts (AKP_EXPORT=1), U150',
++      families: FAMILIES.map((f) => ({ id: f, ...FAMILY[f] })),
++      chapterFamilies: CHAPTER_FAMILIES,
++      akps: as.map(akpRecord),
++      stateflips: fs.map((f) => ({ id: f.id, dimension: f.dimension, title: f.title, kit: Object.fromEntries(CHAPTER_FAMILIES.map((x) => [x, chapterKit(f.id).pieces[x]?.id ?? ''])) })),
++    }
++    writeFileSync('docs/akp/akps.json', JSON.stringify(dump, null, 1) + '\n')
++  })
++})
+diff --git a/src/admin/data/akpExport.ts b/src/admin/data/akpExport.ts
+new file mode 100644
+index 0000000..dc17b86
+--- /dev/null
++++ b/src/admin/data/akpExport.ts
+@@ -0,0 +1,44 @@
++/**
++ * The AKP catalogue as flat files (U150, J208): one row per AKP and one row
++ * per typed link. Used by the "Download catalogue" buttons (with the admin's
++ * edits applied) and by the export in docs/akp/ (scripts/akp/export.py reads
++ * the JSON that akpExport.test.ts writes). Pure, apart from downloadText.
++ */
++
++import type { Akp } from './akps'
++
++export const AKP_COLUMNS = ['id', 'name', 'function', 'family', 'kind', 'layer', 'modality', 'definition', 'used_for', 'helps', 'causal_role', 'signal', 'stateflips', 'links', 'source', 'status'] as const
++export const LINK_COLUMNS = ['from', 'type', 'to', 'from_name', 'to_name'] as const
++
++/** One AKP as a flat record, in AKP_COLUMNS order. */
++export function akpRecord(a: Akp): Record<(typeof AKP_COLUMNS)[number], string> {
++  return {
++    id: a.id, name: a.name, function: a.fn, family: a.family, kind: a.kind, layer: a.layer, modality: a.modality === '—' ? '' : a.modality,
++    definition: a.description, used_for: a.usedFor ?? '', helps: a.helps ?? '', causal_role: a.causalRole, signal: a.signal ?? '',
++    stateflips: a.flips.join(' '), links: a.links.map((l) => `${l.type}:${l.to}`).join(' '), source: a.source, status: a.status,
++  }
++}
++
++const cell = (v: string) => (/[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v)
++const csv = (rows: string[][]) => rows.map((r) => r.map(cell).join(',')).join('\r\n') + '\r\n'
++
++export function akpsCsv(as: readonly Akp[]): string {
++  return csv([[...AKP_COLUMNS], ...as.map((a) => AKP_COLUMNS.map((k) => akpRecord(a)[k]))])
++}
++
++export function akpLinksCsv(as: readonly Akp[]): string {
++  const name = new Map(as.map((a) => [a.id, a.name]))
++  return csv([[...LINK_COLUMNS], ...as.flatMap((a) => a.links.map((l) => [a.id, l.type, l.to, a.name, name.get(l.to) ?? '']))])
++}
++
++/** Saves text as a file in the browser (UTF-8 with a BOM, so Excel reads the accents). */
++export function downloadText(filename: string, text: string) {
++  const url = URL.createObjectURL(new Blob(['﻿', text], { type: 'text/csv;charset=utf-8' }))
++  const a = document.createElement('a')
++  a.href = url
++  a.download = filename
++  document.body.appendChild(a)
++  a.click()
++  a.remove()
++  setTimeout(() => URL.revokeObjectURL(url), 1000)
++}
+diff --git a/src/admin/data/akps.test.ts b/src/admin/data/akps.test.ts
+index a93f266..ca45a7a 100644
+--- a/src/admin/data/akps.test.ts
++++ b/src/admin/data/akps.test.ts
+@@ -1,15 +1,16 @@
+ import { describe, expect, it } from 'vitest'
+ import { AKP_SOURCE } from './generated/akpSource'
+-import { FAMILIES, FAMILY, akpSummary, akps, akpsForFlip, examplesOf } from './akps'
++import { CHAPTER_FAMILIES, FAMILIES, FAMILY, akpSummary, akps, akpsForFlip, examplesOf, norm } from './akps'
++import { chapterKit } from './akpAssembly'
+ import { DRAFTED, stateFlips } from './stateFlips'
+ 
+ const as = akps()
+ const ids = new Set(as.map((a) => a.id))
+ 
+ describe('the draft AKP catalogue (U141)', () => {
+-  it('has between 950 and 1,100 AKPs, all draft, with unique ids and no repeated source rows', () => {
+-    expect(as.length).toBeGreaterThanOrEqual(950)
+-    expect(as.length).toBeLessThanOrEqual(1100)
++  it('has between 3,000 and 4,000 AKPs (v2, U150), all draft, with unique ids and no repeated source rows', () => {
++    expect(as.length).toBeGreaterThanOrEqual(3000)
++    expect(as.length).toBeLessThanOrEqual(4000)
+     expect(ids.size).toBe(as.length)
+     expect(as.every((a) => a.status === 'draft')).toBe(true)
+     const fileRows = as.filter((a) => a.fromFile && a.family !== 'goal').map((a) => `${a.source}|${a.name}`)
+@@ -23,11 +24,22 @@ describe('the draft AKP catalogue (U141)', () => {
+   it('has the counts per family the sources give', () => {
+     const s = akpSummary()
+     expect(s.byFamily.goal).toBe(125 * 4)
+-    expect(s.byFamily.identity).toBe(AKP_SOURCE.identityGrand.length + AKP_SOURCE.identityLight.length)
+-    expect(s.byFamily.product).toBe(AKP_SOURCE.product.length)
+-    expect(s.byFamily.script).toBe(AKP_SOURCE.dojoC.length + AKP_SOURCE.dojoM.length + 10 + 10 + 10 + AKP_SOURCE.habits.length + AKP_SOURCE.frameworks.length + AKP_SOURCE.bars.length + AKP_SOURCE.elements.length)
++    const v2 = (f: string) => AKP_SOURCE.v2.filter((r) => r.family === f).length
++    const v1 = { identity: AKP_SOURCE.identityGrand.length + AKP_SOURCE.identityLight.length, product: AKP_SOURCE.product.length }
++    // v2 rows are skipped only when a v1 AKP of the same family has the same name.
++    expect(s.byFamily.identity).toBe(v1.identity + v2('identity'))
++    expect(s.byFamily.product).toBe(v1.product + v2('product'))
++    expect(s.byFamily.script).toBeGreaterThan(AKP_SOURCE.dojoC.length + AKP_SOURCE.dojoM.length + 30 + v2('script') - 5)
++    expect(s.byFamily.brand).toBe(v2('brand'))
++    expect(s.byFamily.business).toBe(v2('business'))
++    expect(s.byFamily.voice).toBe(v2('voice'))
++    expect(s.byFamily.analysis).toBe(v2('analysis') + 125)
+     for (const f of FAMILIES) expect(s.byFamily[f], f).toBeGreaterThan(0)
+-    expect(s.byFunction.brand).toBe(0)
++    // Proportioned toward his prototype: wellness the largest function, then product, brand and business.
++    expect(s.byFunction.wellness).toBeGreaterThan(s.byFunction.product)
++    expect(s.byFunction.product).toBeGreaterThan(s.byFunction.business)
++    expect(s.byFunction.brand).toBeGreaterThanOrEqual(400)
++    expect(s.byFunction.business).toBeGreaterThanOrEqual(300)
+     expect(s.fromFile + s.drafted).toBe(s.total)
+   })
+ 
+@@ -36,11 +48,34 @@ describe('the draft AKP catalogue (U141)', () => {
+     for (const a of as) {
+       for (const l of a.links) expect(ids, `${a.id} → ${l.to}`).toContain(l.to)
+       for (const f of a.flips) expect(flips, a.id).toContain(f)
+-      expect(a.source.startsWith('from ') || a.source === DRAFTED, a.id).toBe(true)
++      expect(a.source.startsWith('from ') || a.source.startsWith(DRAFTED), a.id).toBe(true)
+       expect(a.fromFile).toBe(a.source.startsWith('from '))
+     }
+   })
+ 
++  it('has no duplicate names, a definition, a measurable signal and at least one typed link on every AKP (v2)', () => {
++    expect(new Set(as.map((a) => norm(a.name))).size).toBe(as.length)
++    for (const a of as) {
++      expect(a.links.length, a.id).toBeGreaterThan(0)
++      expect(a.description.trim().length, a.id).toBeGreaterThan(3)
++    }
++    const v2 = as.filter((a) => AKP_SOURCE.v2.some((r) => r.id === a.id))
++    expect(v2.length).toBeGreaterThan(1900)
++    for (const a of v2) expect(a.signal && a.usedFor && a.helps && a.causalRole, a.id).toBeTruthy()
++  })
++
++  it('lets every StateFlip assemble a chapter: a script, voice, music and image AKP each', () => {
++    for (const f of stateFlips()) {
++      const k = chapterKit(f.id)
++      expect(k.complete, f.id).toBe(true)
++      for (const fam of CHAPTER_FAMILIES) expect(k.pieces[fam]?.flips, `${f.id} ${fam}`).toContain(f.id)
++    }
++  })
++
++  it('keeps the v1 ids stable', () => {
++    for (const id of ['WG-PHY-01', 'WG-PHY-01-X', 'ID-G01', 'ID-L16', 'PR-UO2', 'WS-SK9', 'WS-LU-02', 'WM-MM4', 'WI-LFT1', 'WV-ET1', 'WS-F11']) expect(ids, id).toContain(id)
++  })
++
+   it('covers every StateFlip with at least one strategy AKP', () => {
+     const s = akpSummary()
+     expect(s.flipsCovered).toBe(125)
+diff --git a/src/admin/data/akps.ts b/src/admin/data/akps.ts
+index f4faed9..cc8f638 100644
+--- a/src/admin/data/akps.ts
++++ b/src/admin/data/akps.ts
+@@ -25,11 +25,12 @@ import { applyAkpEdits, akpEditsSchema, type AkpEdit, type AkpStatus, type AkpVi
+ import { AKP_SOURCE } from './generated/akpSource'
+ import { DRAFTED, conceptId, from, stateFlips, tokens, type StateFlip } from './stateFlips'
+ 
+-export type AkpFamily = 'goal' | 'identity' | 'product' | 'script' | 'music' | 'image' | 'video'
+-export type AkpFunction = 'wellness' | 'product' | 'identity' | 'brand'
+-export type AkpKind = 'goal' | 'strategy'
+-export type Modality = 'Script' | 'Music' | 'Image' | 'Video' | '—'
+-export type LinkType = 'drives' | 'step-of' | 'feeds' | 'part-of' | 'supports' | 'fed-by' | 'mirrors'
++export type AkpFamily = 'goal' | 'identity' | 'product' | 'script' | 'music' | 'image' | 'video' | 'voice' | 'business' | 'brand' | 'analysis'
++export type AkpFunction = 'wellness' | 'product' | 'identity' | 'brand' | 'business' | 'analysis'
++/** goal: what to reach; strategy: how (levers, including tactics); measure: how an effect is read (Analysis). */
++export type AkpKind = 'goal' | 'strategy' | 'measure'
++export type Modality = 'Script' | 'Music' | 'Image' | 'Video' | 'Voice' | '—'
++export type LinkType = 'drives' | 'step-of' | 'feeds' | 'part-of' | 'supports' | 'fed-by' | 'mirrors' | 'measures'
+ 
+ export const FAMILY: Record<AkpFamily, { prefix: string; label: string; fn: AkpFunction; kind: AkpKind }> = {
+   goal: { prefix: 'WG', label: 'Goal', fn: 'wellness', kind: 'goal' },
+@@ -39,11 +40,15 @@ export const FAMILY: Record<AkpFamily, { prefix: string; label: string; fn: AkpF
+   image: { prefix: 'WI', label: 'Image', fn: 'wellness', kind: 'strategy' },
+   video: { prefix: 'WV', label: 'Video', fn: 'wellness', kind: 'strategy' },
+   product: { prefix: 'PR', label: 'Product', fn: 'product', kind: 'strategy' },
++  voice: { prefix: 'WN', label: 'Voice', fn: 'wellness', kind: 'strategy' },
++  business: { prefix: 'BZ', label: 'Business', fn: 'business', kind: 'strategy' },
++  brand: { prefix: 'BR', label: 'Brand', fn: 'brand', kind: 'strategy' },
++  analysis: { prefix: 'AN', label: 'Analysis', fn: 'analysis', kind: 'measure' },
+ }
+ export const FAMILIES = Object.keys(FAMILY) as AkpFamily[]
+-export const FUNCTIONS: AkpFunction[] = ['wellness', 'product', 'identity', 'brand']
++export const FUNCTIONS: AkpFunction[] = ['wellness', 'product', 'business', 'brand', 'analysis', 'identity']
+ export const LINK_TEXT: Record<LinkType, string> = {
+-  drives: 'drives', 'step-of': 'is a step of', feeds: 'feeds', 'part-of': 'is part of', supports: 'supports', 'fed-by': 'is fed by', mirrors: 'mirrors',
++  drives: 'drives', 'step-of': 'is a step of', feeds: 'feeds', 'part-of': 'is part of', supports: 'supports', 'fed-by': 'is fed by', mirrors: 'mirrors', measures: 'measures',
+ }
+ 
+ export interface Akp {
+@@ -66,6 +71,8 @@ export interface Akp {
+   /** Plain-language "used for" and "helps", written by an admin; generated from the fields when absent (akpEdits.ts usedForLine). */
+   usedFor?: string
+   helps?: string
++  /** How its effect would be measured (v2, U150). */
++  signal?: string
+ }
+ 
+ const S = AKP_SOURCE
+@@ -208,9 +215,142 @@ export function baseAkps(): Akp[] {
+       })
+     }
+   }
++
++  /* v2 (U150): the rows scripts/akp/extract.py drafts (voice, more media and script, identity values, product, business, brand, analysis). */
++  const WELLNESS_V2 = new Set<AkpFamily>(['script', 'music', 'image', 'video', 'voice'])
++  const seen = new Set(out.map((a) => `${a.family}|${norm(a.name)}`))
++  for (const r of S.v2) {
++    const family = r.family as AkpFamily
++    const key = `${family}|${norm(r.name)}`
++    if (seen.has(key)) continue // a v1 AKP of the same family already says it
++    seen.add(key)
++    add({
++      id: r.id, name: r.name, family, layer: r.layer, modality: r.modality as Modality, description: r.definition, causalRole: r.causal,
++      usedFor: r.usedFor, helps: r.helps, signal: r.signal, flips: WELLNESS_V2.has(family) ? flipsByWords(fs, r.words, 3) : [],
++      links: r.links.filter(([to]) => to).map(([to, type]) => ({ to, type: type as LinkType })), source: r.source,
++    })
++  }
++  /* Analysis: one check-in marker per StateFlip (TheraGPS reads them to know where a person is on the route). */
++  for (const f of fs) {
++    const wg = f.id.replace(/^SF-/, 'WG-')
++    add({
++      id: `AN-CK-${f.id.slice(3)}`, name: `Check-in marker: ${f.title}`, family: 'analysis', layer: 'TheraGPS “Governor” · Route position', modality: '—',
++      description: `The check-in score (0–100) for “${f.bad}” → “${f.good}”, asked before and after chapters; it says which of X, Y or Z the person has reached.`,
++      causalRole: 'A measurement, not a lever: it places the person on the route and scores the chapter’s AKPs.', usedFor: 'knowing where a person is on their StateFlip', helps: 'route and re-route the journey',
++      signal: `This is a measure: the StateFlip’s check-in questions (${f.measure.markers.length} markers), scored 0–100, before and after each chapter.`,
++      flips: [f.id], links: [{ to: wg, type: 'measures' }], source: DRAFTED,
++    })
++  }
++  finish(out, fs)
+   return (CACHE = out)
+ }
+ 
++/* ------------------------------------------------- v2 clean-up passes (U150) */
++
++/** Normalised name: lower case, letters and digits only, for duplicate checks. */
++export const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
++
++/** The families a chapter needs one of each (the 2026-11-27 brief: script, music, voice, image). */
++export const CHAPTER_FAMILIES: AkpFamily[] = ['script', 'voice', 'music', 'image']
++
++/** Where a product dimension's output goes (the UI/UX sheet's Logic layers 0 → 4, drafted by us). */
++const PRODUCT_DOWNSTREAM: Record<string, string> = {
++  CS: 'UO', SC: 'UO', UO: 'UM', FF: 'UM', SA: 'ST', UM: 'IM', IM: 'NM', PS: 'NM', NM: 'IT', IT: 'DP', ST: 'DP', PE: 'DP', DP: 'CS',
++  AX: 'ST', TS: 'FF', DV: 'CS', PZ: 'UM', MS: 'FF',
++}
++
++function bestByWords(cands: Akp[], text: string): Akp | undefined {
++  const w = tokens(text)
++  let top: Akp | undefined
++  let topScore = 0
++  for (const c of cands) {
++    let n = 0
++    for (const t of tokens(c.name)) if (w.has(t)) n++
++    if (n > topScore) [top, topScore] = [c, n]
++  }
++  return top
++}
++
++/**
++ * The roast's fixes, applied to the whole catalogue (v1 and v2) without
++ * changing any id:
++ * 1. names unique: the X / Y / Z steps carry their StateFlip; any other
++ *    clash gets its layer, then its id, in brackets;
++ * 2. every StateFlip can assemble a chapter: at least one script, voice,
++ *    music and image AKP each (missing ones are given the least-used AKP of
++ *    that family, so the load spreads; to review);
++ * 3. every wellness strategy AKP serves at least one StateFlip (same rule);
++ * 4. every AKP has at least one typed link.
++ */
++function finish(out: Akp[], fs: StateFlip[]) {
++  const flipTitle = new Map(fs.map((f) => [f.id, f.title]))
++  const byId = new Map(out.map((a) => [a.id, a]))
++  // 1. Names.
++  for (const a of out) if (a.family === 'goal' && a.layer.startsWith('Step ')) a.name = `${a.name} (${flipTitle.get(a.flips[0])})`
++  const used = new Set<string>()
++  for (const a of out) {
++    if (used.has(norm(a.name))) a.name = `${a.name} (${a.layer.replace(/^Light · /, '')})`
++    if (used.has(norm(a.name))) a.name = `${a.name.replace(/ \([^)]*\)$/, '')} (${a.id})`
++    used.add(norm(a.name))
++  }
++  // 2 and 3. Flips, spreading the load.
++  const load = new Map<string, number>(out.map((a) => [a.id, a.flips.length]))
++  const give = (a: Akp, flip: string) => {
++    if (a.flips.includes(flip)) return
++    a.flips = [...a.flips, flip]
++    load.set(a.id, (load.get(a.id) ?? 0) + 1)
++  }
++  const strategyOf = (fam: AkpFamily) => out.filter((a) => a.family === fam && a.kind === 'strategy')
++  for (const fam of CHAPTER_FAMILIES) {
++    const pool = strategyOf(fam)
++    for (const f of fs) {
++      if (pool.some((a) => a.flips.includes(f.id))) continue
++      const pick = pool.reduce((m, a) => ((load.get(a.id) ?? 0) < (load.get(m.id) ?? 0) ? a : m), pool[0])
++      give(pick, f.id)
++    }
++  }
++  const flipLoad = new Map<string, number>(fs.map((f) => [f.id, 0]))
++  for (const a of out) if (a.kind === 'strategy') for (const f of a.flips) flipLoad.set(f, (flipLoad.get(f) ?? 0) + 1)
++  for (const a of out) {
++    if (a.kind !== 'strategy' || a.fn !== 'wellness' || a.flips.length) continue
++    const f = fs.reduce((m, x) => ((flipLoad.get(x.id) ?? 0) < (flipLoad.get(m.id) ?? 0) ? x : m), fs[0])
++    give(a, f.id)
++    flipLoad.set(f.id, (flipLoad.get(f.id) ?? 0) + 1)
++  }
++  // 4. Links.
++  const grand = out.filter((a) => a.family === 'identity' && a.layer === 'Grand 12')
++  const lightGroups = out.filter((a) => a.family === 'identity' && a.layer === 'Light (group)')
++  const stages = out.filter((a) => a.layer === 'Funnel stage')
++  for (const a of out) {
++    if (a.links.length) continue
++    if (a.flips.length && a.kind !== 'goal') {
++      a.links = [{ to: a.flips[0].replace(/^SF-/, 'WG-'), type: a.kind === 'measure' ? 'measures' : 'drives' }]
++    } else if (a.family === 'identity' && a.layer === 'Grand 12') {
++      const g = bestByWords(lightGroups, `${a.name} ${a.description}`) ?? lightGroups[0]
++      a.links = [{ to: g.id, type: 'fed-by' }]
++    } else if (a.family === 'identity') {
++      const g = bestByWords(grand, `${a.name} ${a.description}`) ?? grand[0]
++      a.links = [{ to: g.id, type: 'feeds' }]
++    } else if (a.family === 'product') {
++      const code = /^PR-([A-Z]{2})\d/.exec(a.id)?.[1] ?? ''
++      const down = out.filter((b) => b.family === 'product' && b.id !== a.id && new RegExp(`^PR-${PRODUCT_DOWNSTREAM[code] ?? 'UO'}\\d+$`).test(b.id))
++      const t = bestByWords(down, `${a.name} ${a.description}`) ?? down[Number(/\d+/.exec(a.id)?.[0] ?? 1) % Math.max(1, down.length)]
++      if (t) a.links = [{ to: t.id, type: 'feeds' }]
++    } else if (a.layer === 'Funnel stage') {
++      const i = stages.indexOf(a)
++      a.links = [{ to: stages[(i + 1) % stages.length].id, type: 'feeds' }]
++    } else if (a.family === 'brand') {
++      const t = bestByWords(stages, `${a.name} ${a.description}`) ?? stages[0]
++      a.links = [{ to: t.id, type: 'supports' }]
++    } else if (a.family === 'analysis') {
++      const pool = out.filter((b) => WELLNESS_STRATEGY.has(b.family))
++      const t = bestByWords(pool, a.name) ?? byId.get('WG-PHY-01')!
++      a.links = [{ to: t.id, type: 'measures' }]
++    }
++  }
++}
++const WELLNESS_STRATEGY = new Set<AkpFamily>(['script', 'music', 'image', 'video', 'voice'])
++
+ export const baseAkpById = (id: string) => baseAkps().find((a) => a.id === id)
+ 
+ /* ------------------------------------------------- Admin edits (U149) */
+@@ -282,6 +422,8 @@ export interface AkpSummary {
+   flipsCovered: number
+   /** StateFlips served by at least one strategy AKP other than a skill. */
+   flipsCoveredBeyondSkills: number
++  /** StateFlips with at least one script, voice, music and image AKP: a chapter can be assembled (v2, U150). */
++  flipsChapterReady: number
+   flips: number
+ }
+ 
+@@ -290,16 +432,18 @@ export function akpSummary(): AkpSummary {
+   const byFamily = Object.fromEntries(FAMILIES.map((f) => [f, as.filter((a) => a.family === f).length])) as Record<AkpFamily, number>
+   const byFunction = Object.fromEntries(FUNCTIONS.map((f) => [f, as.filter((a) => a.fn === f).length])) as Record<AkpFunction, number>
+   const strategy = as.filter((a) => a.kind === 'strategy')
++  const measure = as.filter((a) => a.kind === 'measure').length
+   const covered = new Set(strategy.flatMap((a) => a.flips))
+   const beyond = new Set(strategy.filter((a) => a.layer !== 'Skills').flatMap((a) => a.flips))
+   return {
+     total: as.length, byFamily, byFunction,
+-    byKind: { goal: as.length - strategy.length, strategy: strategy.length },
++    byKind: { goal: as.length - strategy.length - measure, strategy: strategy.length, measure },
+     fromFile: as.filter((a) => a.fromFile).length,
+     drafted: as.filter((a) => !a.fromFile).length,
+     links: as.reduce((t, a) => t + a.links.filter((l) => akpById(l.to)).length, 0),
+     flipsCovered: covered.size,
+     flipsCoveredBeyondSkills: beyond.size,
++    flipsChapterReady: stateFlips().filter((f) => CHAPTER_FAMILIES.every((fam) => strategy.some((a) => a.family === fam && a.flips.includes(f.id)))).length,
+     flips: stateFlips().length,
+   }
+ }
+diff --git a/src/admin/data/buyerRunV9.test.ts b/src/admin/data/buyerRunV9.test.ts
+new file mode 100644
+index 0000000..cf54cb4
+--- /dev/null
++++ b/src/admin/data/buyerRunV9.test.ts
+@@ -0,0 +1,59 @@
++import { describe, expect, it } from 'vitest'
++import { runV8 } from './buyerRunV8'
++import { V9_PARTS_A, runV9, v9Change, v9Findings, v9Split, v9Tallies } from './buyerRunV9'
++import { v9BrainImpact } from './aiBrain'
++import { akpById } from './akps'
++import { ALL_RUN_DECLARATIONS, V9_CHANGE } from './runChanges'
++
++describe('buyer agent test 9 (U150)', () => {
++  const r = runV9()
++
++  it('plays the same 975 people as test 8, and A is test 8’s B person by person', () => {
++    expect(r.answers).toHaveLength(975)
++    expect(r.excluded).toBe(25)
++    const v8 = new Map(runV8().answers.map((a) => [a.personaId, a]))
++    for (const a of r.answers) {
++      const b8 = v8.get(a.personaId)!.b
++      expect([a.a.tries, a.a.pays, a.a.tryScore, a.a.payScore], a.personaId).toEqual([b8.tries, b8.pays, b8.tryScore, b8.payScore])
++    }
++    expect(V9_PARTS_A.matched).toBe(false)
++  })
++
++  it('shows everyone a first chapter assembled from catalogue AKPs, with their own length', () => {
++    for (const a of r.answers) {
++      expect(a.chapter.preview).toMatch(/^Your first chapter: .+, \d+ min\.$/)
++      expect(a.chapter.pieces).toHaveLength(7)
++      for (const q of a.chapter.pieces) expect(akpById(q.akp.id), q.akp.id).toBeDefined()
++      expect(a.chapter.pieces.map((q) => q.akp.family)).toEqual(expect.arrayContaining(['script', 'voice', 'music', 'image']))
++    }
++    // Worry or panic rules out breath holds: nobody with that flag is given 4-7-8.
++    for (const a of r.answers) if (a.chapter.pieces[0].matched.includes('no breath holds')) expect(a.chapter.pieces[0].akp.name).toBe('Extended exhale 4 in 6 out')
++    expect(r.answers.some((a) => a.chapter.pieces[0].matched.includes('no breath holds'))).toBe(true)
++    expect(v9Tallies().distinctPreviews).toBeGreaterThan(20)
++  })
++
++  it('never pays more surely than it tries; tallies and the split add up', () => {
++    for (const a of r.answers) for (const s of [a.a, a.b]) {
++      if (s.tries === 'no') expect(s.pays).toBe('no')
++      if (s.tries === 'maybe') expect(s.pays).not.toBe('yes')
++    }
++    const x = v9Tallies()
++    expect(x.payB.yes + x.payB.maybe + x.payB.no).toBe(x.n)
++    expect(x.dims.reduce((t, d) => t + d.n, 0)).toBe(x.n)
++    expect(x.archetypes.reduce((t, d) => t + d.n, 0)).toBe(x.n)
++    const s = v9Split()
++    expect(s[0].paid).toBe(x.paidA)
++    expect(s.at(-1)!.paid).toBe(x.paidB)
++    expect(s.reduce((t, q) => t + q.step, 0)).toBeCloseTo(x.paidB - x.paidA, 9)
++  })
++
++  it('declares its change and feeds the AI brain', () => {
++    expect(ALL_RUN_DECLARATIONS.at(-1)).toBe(V9_CHANGE)
++    expect(V9_CHANGE.previous).toBe(8)
++    expect(v9Change().lines).toHaveLength(5)
++    expect(v9Findings()).toHaveLength(5)
++    const im = v9BrainImpact()
++    expect(im.paidAfter).toBeGreaterThanOrEqual(im.paidBefore)
++    expect(im.businessAfter).toBeGreaterThanOrEqual(im.businessBefore)
++  })
++})
+diff --git a/src/admin/data/buyerRunV9.ts b/src/admin/data/buyerRunV9.ts
+new file mode 100644
+index 0000000..ef5a528
+--- /dev/null
++++ b/src/admin/data/buyerRunV9.ts
+@@ -0,0 +1,290 @@
++import { personalChapter, type ChapterPrefs, type PersonalChapter, type Regulation } from './akpAssembly'
++import { V8_K, V8_OBJECTION_LABEL, V8_PRICE, expectedPaid, runV8, type V8Count, type V8Objection, type V8Verdict } from './buyerRunV8'
++import { V9_CHANGE } from './runChanges'
++import { DIMENSIONS, DIMENSION_LABEL, conditionForBuyer, conditionsV4, sessionMinutesOf, type BuyerCondition, type Dimension } from './personaConditionV4'
++import { identitiesV4, type Archetype, type IdentityV4 } from './personaIdentityV4'
++import { generatePersonasV4, type PersonaV4 } from './personasV4'
++
++/**
++ * Buyer agent test 9 (U150, J208): a rules-based run on persona set v4 (the
++ * 975 who are not risk-flagged, as in test 8).
++ *
++ * A = test 8's B: "A journey for your StateFlip X: free first week, then
++ *     $10/month". Played by test 8's own rules, so A here is exactly test 8's
++ *     B, person by person (tested).
++ * B = the same journey, but the offer shows the person their first chapter,
++ *     assembled from AKPs matched to their Wellness Identity and condition
++ *     (akpAssembly.ts personalChapter): "Your first chapter: 4-7-8 breathing,
++ *     warm low voice at 110 words a minute, 55 BPM tanpura drone, warm amber
++ *     colours, 10 min." Same price, same free week.
++ *
++ * What the preview can change, each written out in V9_RULES:
++ * - fit: their StateFlip named (0.8) → named and the chapter matched to them (0.9);
++ * - doubt: a concrete chapter can be judged before it is trusted, so the
++ *   scepticism term shrinks by 20% (5% for people who distrust AI);
++ * - time: the preview states their own length, so the "journey asks too much"
++ *   load for people with under 5 minutes a day falls to a library's (0.05);
++ * - put-off: people who distrust AI read "picked for you" as automation (0.03).
++ * A prediction from written rules, not a measurement.
++ */
++
++export const V9_VERSION = 9 as const
++export const V9_DATE = '2026-11-28'
++export const V9_OFFER_A = 'Test 8’s B: a journey for your StateFlip X, free first week, then $10/month'
++export const V9_OFFER_B_TEMPLATE = 'The same journey, showing your first chapter built for you: “Your first chapter: technique, voice, music, colours, minutes”; free first week, then $10/month'
++
++export type V9Objection = V8Objection | 'style'
++export const V9_OBJECTION_LABEL: Record<V9Objection, string> = { ...V8_OBJECTION_LABEL, style: '“Picked for me by an AI” feels automated' }
++
++export const V9_K = {
++  fitPreview: 0.9,
++  doubtCut: 0.2,
++  doubtCutDistrustful: 0.05,
++  putOff: 0.03,
++} as const
++
++export const V9_RULES: { label: string; formula: string }[] = [
++  { label: 'A', formula: 'Test 8’s B with test 8’s rules, unchanged (buyerRunV8.ts V8_RULES).' },
++  { label: 'Fit (B)', formula: `${V8_K.fitB} → ${V9_K.fitPreview}: the StateFlip is named and the first chapter is matched to their voice, tempo, colour and regulation style.` },
++  { label: 'Doubt (B)', formula: `${V8_K.wDoubt} × scepticism/100 × (1 − ${V9_K.doubtCut}); × (1 − ${V9_K.doubtCutDistrustful}) for people who distrust AI. A concrete chapter can be judged before it is trusted.` },
++  { label: 'Time (B)', formula: `Under ${V8_K.shortDay} minutes a day: ${V8_K.timeB} → ${V8_K.timeA} when the chapter shown is no longer than their daily time (it always is: the length is theirs).` },
++  { label: 'Put-off (B)', formula: `${V9_K.putOff} for people who distrust AI: “picked for you” reads as automation. Counted as the objection “${V9_OBJECTION_LABEL.style}”.` },
++  { label: 'Try, pay, chance, price', formula: 'As test 8: try score, would try at 0.35 / 0.22, pay score = try + 0.2 × chance shown − price load, would pay at 0.45 / 0.3, never surer than would try.' },
++]
++
++/** Which parts of B an offer has: A none, B all three. The split adds them in this order. */
++export interface V9Parts {
++  matched: boolean
++  judged: boolean
++  length: boolean
++}
++export const V9_PARTS_A: V9Parts = { matched: false, judged: false, length: false }
++export const V9_PARTS_B: V9Parts = { matched: true, judged: true, length: true }
++
++export interface V9Side {
++  fit: number
++  tryScore: number
++  tries: V8Verdict
++  chanceShown: number
++  payScore: number
++  pays: V8Verdict
++  objection: V9Objection
++}
++
++export interface V9Answer {
++  personaId: string
++  name: string
++  country: string
++  mainNeed: Dimension
++  archetype: Archetype
++  flipId: string
++  flipTitle: string
++  chapter: PersonalChapter
++  a: V9Side
++  b: V9Side
++  why: string[]
++}
++
++const r2 = (x: number) => Math.round(x * 100) / 100
++const verdict = (s: number, yes: number, maybe: number): V8Verdict => (s >= yes ? 'yes' : s >= maybe ? 'maybe' : 'no')
++
++/** The person's chapter preferences, read from their identity (personaIdentityV4's own words). */
++export function prefsOf(id: IdentityV4, dimension: Dimension, minutes: number): ChapterPrefs {
++  const pref = id.dims.preferences
++  const voice = /chapters, (.+) voice$/.exec(pref.value)?.[1] ?? 'clear, mid-range'
++  const tempo = /Tempo ([^;]+);/.exec(pref.detail)?.[1] ?? '60–72 bpm'
++  const palette = /palette ([^;]+);/.exec(pref.detail)?.[1] ?? ''
++  return {
++    dimension, voice, tempo, palette, minutes, regulation: id.dims.regulation.value as Regulation,
++    noBreathHolds: id.flags.some((f) => f.startsWith('no breath holds')), secularOnly: id.spiritual === 'secular only',
++  }
++}
++
++function side(parts: V9Parts, p: PersonaV4, b: BuyerCondition, minutes: number, chance: number, weeks: number, priceLoad: number): V9Side {
++  const K = V8_K
++  const distrust = p.aiAttitude === 'distrustful'
++  const fit = parts.matched ? V9_K.fitPreview : K.fitB
++  const putOff = parts.matched && distrust ? V9_K.putOff : 0
++  const short = b.timeBudget < K.shortDay
++  const time = short ? (parts.length && minutes <= Math.max(b.timeBudget, 3) ? K.timeA : K.timeB) : 0
++  const lang = p.language !== 'English' && !p.readsEnglish ? K.language : 0
++  const doubt = K.wDoubt * (b.scepticism / 100) * (parts.judged ? 1 - (distrust ? V9_K.doubtCutDistrustful : V9_K.doubtCut) : 1)
++  const tryScore = K.wNeed * (b.needIntensity / 100) + K.wUrgency * (b.urgency / 100) + K.wReady * b.readiness + K.wFit * fit - doubt - time - lang - putOff
++  const tries = verdict(tryScore, K.tryYes, K.tryMaybe)
++  const chanceShown = chance * (1 - b.scepticism / 100) * (weeks <= K.nearWeeks ? 1 : K.farFactor)
++  const payScore = tryScore + K.wChance * chanceShown - priceLoad
++  const raw = verdict(payScore, K.payYes, K.payMaybe)
++  const pays: V8Verdict = tries === 'no' ? 'no' : tries === 'maybe' && raw === 'yes' ? 'maybe' : raw
++  const terms: [V9Objection, number][] = [
++    ['trust', doubt],
++    ['price', priceLoad],
++    ['time', time],
++    ['language', lang],
++    ['fit', 0.25 * (1 - fit)],
++    ['style', putOff],
++  ]
++  const objection = terms.sort((x, y) => y[1] - x[1])[0][0]
++  return { fit, tryScore: r2(tryScore), tries, chanceShown: r2(chanceShown), payScore: r2(payScore), pays, objection }
++}
++
++interface Ctx {
++  p: PersonaV4
++  b: BuyerCondition
++  minutes: number
++  chance: number
++  weeks: number
++  priceLoad: number
++}
++
++let CACHE: { answers: V9Answer[]; ctx: Map<string, Ctx>; excluded: number; total: number } | undefined
++
++/** Plays the same 975 people as test 8 against A (test 8's B) and B (with the first-chapter preview). */
++export function runV9() {
++  if (CACHE) return CACHE
++  const v8 = runV8()
++  const ps = new Map(generatePersonasV4().map((p) => [p.id, p]))
++  const cs = conditionsV4()
++  const ids = identitiesV4()
++  const ctx = new Map<string, Ctx>()
++  const answers = v8.answers.map((r8): V9Answer => {
++    const p = ps.get(r8.personaId)!
++    const c = cs.get(p.id)!
++    const id = ids.get(p.id)!
++    const b = conditionForBuyer(p, c)
++    const minutes = sessionMinutesOf(c.minutesPerDay)
++    const chapter = personalChapter(r8.flipId, prefsOf(id, c.mainNeed, minutes))
++    const x: Ctx = { p, b, minutes, chance: r8.chance, weeks: r8.weeks, priceLoad: r8.priceLoad }
++    ctx.set(p.id, x)
++    const a = side(V9_PARTS_A, p, b, minutes, x.chance, x.weeks, x.priceLoad)
++    const bb = side(V9_PARTS_B, p, b, minutes, x.chance, x.weeks, x.priceLoad)
++    return {
++      personaId: p.id, name: p.name, country: p.country, mainNeed: c.mainNeed, archetype: id.archetype, flipId: r8.flipId, flipTitle: r8.flipTitle, chapter, a, b: bb,
++      why: [
++        `StateFlip ${r8.flipId} (${r8.flipTitle}); own chance ${Math.round(r8.chance * 100)}%, about ${Math.round(r8.weeks)} weeks`,
++        `B shows: ${chapter.preview}`,
++        `Matched on: ${chapter.pieces.map((q) => `${q.role} ${q.akp.id} (${q.matched})`).join('; ')}`,
++        `Try A = ${a.tryScore} (fit ${a.fit}) → ${a.tries}; try B = ${bb.tryScore} (fit ${bb.fit}${p.aiAttitude === 'distrustful' ? `, put-off ${V9_K.putOff}` : ''}) → ${bb.tries}`,
++        `Pay A = ${a.payScore} → ${a.pays}; pay B = ${bb.tryScore} + ${V8_K.wChance} × ${bb.chanceShown} − ${x.priceLoad} = ${bb.payScore} → ${bb.pays}`,
++      ],
++    }
++  })
++  return (CACHE = { answers, ctx, excluded: v8.excluded, total: v8.total })
++}
++
++const count = (xs: V8Verdict[]): V8Count => ({ yes: xs.filter((x) => x === 'yes').length, maybe: xs.filter((x) => x === 'maybe').length, no: xs.filter((x) => x === 'no').length })
++const ORDER: V8Verdict[] = ['no', 'maybe', 'yes']
++
++export interface V9GroupRow {
++  key: string
++  label: string
++  n: number
++  tryA: number
++  tryB: number
++  payA: number
++  payB: number
++  topObjectionB: V9Objection | null
++  topObjectionCount: number
++}
++
++function objectionsOf(rows: V9Answer[], key: 'a' | 'b'): [V9Objection, number][] {
++  const m = new Map<V9Objection, number>()
++  for (const r of rows) if (r[key].pays !== 'yes') m.set(r[key].objection, (m.get(r[key].objection) ?? 0) + 1)
++  return [...m.entries()].sort((x, y) => y[1] - x[1])
++}
++
++function group(rows: V9Answer[], key: string, label: string): V9GroupRow {
++  const top = objectionsOf(rows, 'b')[0]
++  return {
++    key, label, n: rows.length,
++    tryA: rows.filter((x) => x.a.tries === 'yes').length, tryB: rows.filter((x) => x.b.tries === 'yes').length,
++    payA: rows.filter((x) => x.a.pays === 'yes').length, payB: rows.filter((x) => x.b.pays === 'yes').length,
++    topObjectionB: top?.[0] ?? null, topObjectionCount: top?.[1] ?? 0,
++  }
++}
++
++const ARCHETYPES: Archetype[] = ['Explorer', 'Caregiver', 'Achiever', 'Seeker', 'Rebuilder', 'Guardian']
++
++/** Every headline, computed from the answers. */
++export function v9Tallies() {
++  const { answers, excluded, total } = runV9()
++  const n = answers.length
++  const payA = count(answers.map((x) => x.a.pays))
++  const payB = count(answers.map((x) => x.b.pays))
++  const tryA = count(answers.map((x) => x.a.tries))
++  const tryB = count(answers.map((x) => x.b.tries))
++  return {
++    total, excluded, n, tryA, tryB, payA, payB,
++    paidA: expectedPaid(payA), paidB: expectedPaid(payB),
++    dims: DIMENSIONS.map((d) => group(answers.filter((x) => x.mainNeed === d), d, DIMENSION_LABEL[d])),
++    archetypes: ARCHETYPES.map((k) => group(answers.filter((x) => x.archetype === k), k, k)).filter((g) => g.n),
++    objectionsA: objectionsOf(answers, 'a'),
++    objectionsB: objectionsOf(answers, 'b'),
++    payUp: answers.filter((x) => ORDER.indexOf(x.b.pays) > ORDER.indexOf(x.a.pays)),
++    payDown: answers.filter((x) => ORDER.indexOf(x.b.pays) < ORDER.indexOf(x.a.pays)),
++    tryUp: answers.filter((x) => ORDER.indexOf(x.b.tries) > ORDER.indexOf(x.a.tries)),
++    tryDown: answers.filter((x) => ORDER.indexOf(x.b.tries) < ORDER.indexOf(x.a.tries)),
++    distinctPreviews: new Set(answers.map((x) => x.chapter.preview)).size,
++    akpsUsed: new Set(answers.flatMap((x) => x.chapter.pieces.map((q) => q.akp.id))).size,
++  }
++}
++
++/** B's effect split into its parts on the same people: A → + matched → + can be judged → + their own length (= B). */
++export function v9Split(): { label: string; payYes: number; paid: number; step: number }[] {
++  const { answers, ctx } = runV9()
++  const steps: [string, V9Parts][] = [
++    ['A: test 8’s B', V9_PARTS_A],
++    ['+ the chapter is matched to them (fit, and the AI put-off)', { matched: true, judged: false, length: false }],
++    ['+ they can judge it before trusting it (less doubt)', { matched: true, judged: true, length: false }],
++    ['+ it shows their own length (= B)', V9_PARTS_B],
++  ]
++  let prev = 0
++  return steps.map(([label, parts], i) => {
++    const c = count(answers.map((r) => {
++      const x = ctx.get(r.personaId)!
++      return side(parts, x.p, x.b, x.minutes, x.chance, x.weeks, x.priceLoad).pays
++    }))
++    const paid = expectedPaid(c)
++    const step = i === 0 ? 0 : paid - prev
++    prev = paid
++    return { label, payYes: c.yes, paid, step }
++  })
++}
++
++const pct = (k: number, n: number) => `${Math.round((k / Math.max(1, n)) * 100)}%`
++const rate = (g: V9GroupRow) => (g.payB - g.payA) / Math.max(1, g.n)
++
++/** The headline findings, in plain words, from the tallies. */
++export function v9Findings(): string[] {
++  const x = v9Tallies()
++  const bestD = [...x.dims].sort((a, b) => rate(b) - rate(a))[0]
++  const bestA = [...x.archetypes].sort((a, b) => rate(b) - rate(a))[0]
++  const worstA = [...x.archetypes].sort((a, b) => rate(a) - rate(b))[0]
++  const topB = x.objectionsB[0]
++  const style = x.objectionsB.find(([k]) => k === 'style')?.[1] ?? 0
++  return [
++    `Prediction on ${x.n} people (set v4, ${x.excluded} risk-flagged left out): would try A ${x.tryA.yes} (${pct(x.tryA.yes, x.n)}) → B ${x.tryB.yes} (${pct(x.tryB.yes, x.n)}); would pay A ${x.payA.yes} → B ${x.payB.yes}; expected paid plans (yes 1, maybe ½) ${x.paidA} → ${x.paidB}.`,
++    `Why B moves answers: the offer stops being a promise and becomes a chapter they can picture, built from ${x.akpsUsed} catalogue AKPs into ${x.distinctPreviews} different previews. Fit rises (${V8_K.fitB} → ${V9_K.fitPreview}), doubt shrinks by a fifth, and people short of time see their own length. ${x.payUp.length} people pay more readily on B, ${x.payDown.length} less.`,
++    `By dimension, B gains most for ${bestD.label.toLowerCase()} (${bestD.payA} → ${bestD.payB} of ${bestD.n}). By archetype, most for ${bestA.label} (${bestA.payA} → ${bestA.payB} of ${bestA.n}), least for ${worstA.label} (${worstA.payA} → ${worstA.payB} of ${worstA.n}).`,
++    `Top objection to B among those who would not pay: ${topB ? `${V9_OBJECTION_LABEL[topB[0]].toLowerCase()} (${topB[1]})` : 'none'}. ${style ? `${style} people who distrust AI now name “picked for me by an AI” first.` : 'Nobody names the AI put-off first: it is smaller than their other doubts.'} The preview answers part of the doubt; it does nothing about price, which did not change.`,
++    `Stated intent from written rules: the size of the preview's effect is our assumption (fit +0.1, doubt −20%), not a measurement. A real test shows half the visitors the preview.`,
++  ]
++}
++
++/** What changed and why, test 8 → test 9 (V9_CHANGE in runChanges.ts). */
++export function v9Change() {
++  const x = v9Tallies()
++  const split = v9Split()
++  return {
++    declaration: V9_CHANGE,
++    split,
++    lines: [
++      `What was tested: test 8 showed A “v7’s best offer” and B “a journey for your StateFlip X, free first week, then $10/month”; test 9 shows A = test 8’s B and B = the same journey with the person’s own first chapter, assembled from AKPs.`,
++      `Who was asked: ${V9_CHANGE.panel.note}`,
++      `The rules: ${V9_CHANGE.rules.note}`,
++      `Same offer, same people, same rules: A in test 9 is test 8’s B person by person (would pay ${x.payA.yes} of ${x.n} in both), so the whole difference below is the preview.`,
++      `Different offer, same people (measured): expected paid plans ${x.paidA} → ${x.paidB}; ${split.slice(1).map((s) => `${s.label.replace(/^\+ /, '').replace(/ \(.*\)$/, '')} ${s.step >= 0 ? '+' : '−'}${Math.abs(s.step)}`).join(', ')}. The steps add up to the change.`,
++    ],
++  }
++}
++
++export { V8_PRICE as V9_PRICE }
+diff --git a/src/admin/data/dataSources.ts b/src/admin/data/dataSources.ts
+index d6a4b03..4f715e0 100644
+--- a/src/admin/data/dataSources.ts
++++ b/src/admin/data/dataSources.ts
+@@ -38,7 +38,8 @@ export const SOURCE_META: Record<SourceId, { type: DataSourceType; file: string;
+   'buyer-v6': { type: 'simulated', file: 'src/admin/data/buyerRunV6.ts', date: '25 Nov 2026' },
+   'buyer-v7': { type: 'simulated', file: 'src/admin/data/buyerRunV7.ts', date: '25 Nov 2026' },
+   'buyer-v8': { type: 'simulated', file: 'src/admin/data/buyerRunV8.ts', date: '27 Nov 2026' },
+-  akps: { type: 'assumed', file: 'src/admin/data/akps.ts', date: '27 Nov 2026' },
++  'buyer-v9': { type: 'simulated', file: 'src/admin/data/buyerRunV9.ts', date: '28 Nov 2026' },
++  akps: { type: 'assumed', file: 'src/admin/data/akps.ts (v2)', date: '28 Nov 2026' },
+   decisions: { type: 'research', file: 'src/admin/data/businessFunnel.ts (decision log)', date: '24 Nov 2026' },
+   'app-funnel': { type: 'simulated', file: 'src/admin/data/businessFunnel.ts', date: 'U108' },
+   'feedback-group': { type: 'simulated', file: 'src/admin/data/study.ts (sample data)', date: 'Study from 13 Oct 2026' },
+@@ -93,6 +94,7 @@ export const REPORT_DATA_SOURCES: Record<string, ReportDataSources> = {
+     uses: [
+       { id: 'buyer-v5', feeds: 'Would try, would pay, the fair price.' },
+       { id: 'buyer-v7', feeds: 'Trying with and without a free library.' },
++      { id: 'buyer-v9', feeds: 'Test 9: the StateFlip journey against the same journey with their own first chapter built from AKPs.' },
+       { id: 'buyer-v8', feeds: 'Test 8: v7’s best offer against a journey for their own StateFlip.' },
+       { id: 'buyer-v6', feeds: 'Free plan against the creator retreat (Detail).' },
+       { id: 'personas', feeds: 'Who was in each panel.' },
+@@ -141,6 +143,7 @@ export const REPORT_DATA_SOURCES: Record<string, ReportDataSources> = {
+       { id: 'buyer-v6', feeds: 'Retreat figures, worked out again.' },
+       { id: 'buyer-v7', feeds: 'Test 7 figures, worked out again.' },
+       { id: 'buyer-v8', feeds: 'Test 8 figures, worked out again.' },
++      { id: 'buyer-v9', feeds: 'Test 9 figures, worked out again.' },
+       { id: 'personas', feeds: 'Panel sizes and segments.' },
+       { id: 'feedback-group', feeds: 'UX feedback figures.' },
+       { id: 'cost-model', feeds: 'Cost figures.' },
+@@ -153,7 +156,8 @@ export const REPORT_DATA_SOURCES: Record<string, ReportDataSources> = {
+       { id: 'akps', feeds: 'AKP counts per function and StateFlips covered; “ours” in the prototype map.' },
+       { id: 'app-funnel', feeds: 'Product and Business: the funnel metrics and their MVP targets.' },
+       { id: 'buyer-rerun', feeds: 'The predicted value of each funnel metric.' },
+-      { id: 'buyer-v8', feeds: 'Would pay after the free week; the StateFlip journey feature’s lift.' },
++      { id: 'buyer-v8', feeds: 'The StateFlip journey feature’s lift.' },
++      { id: 'buyer-v9', feeds: 'Would pay after the free week; the first-chapter preview’s lift and chance-to-target impact.' },
+       { id: 'cost-model', feeds: 'Cost per flip.' },
+       { id: 'spec-causal', feeds: 'Targets: 54% success and $4.98 per flip at stage 1.' },
+       { id: 'b2b2c', feeds: 'The candidate features.' },
+diff --git a/src/admin/data/reportMetrics.ts b/src/admin/data/reportMetrics.ts
+index cc8ac60..4ccd2eb 100644
+--- a/src/admin/data/reportMetrics.ts
++++ b/src/admin/data/reportMetrics.ts
+@@ -20,6 +20,8 @@ import { akpSummary, akps } from './akps'
+ import { identitiesV4, identityIncoherence, identitySummary } from './personaIdentityV4'
+ import { stateFlipSummary, stateFlips } from './stateFlips'
+ import { V8_K, V8_PRICE, runV8, v8Tallies } from './buyerRunV8'
++import { V9_K, runV9, v9Tallies } from './buyerRunV9'
++import { chapterKit } from './akpAssembly'
+ import { stateFlipCosts } from './stateFlipCosts'
+ 
+ /**
+@@ -1309,13 +1311,13 @@ function stateFlipMetrics(): MetricDef[] {
+     },
+     {
+       id: 'akp-total', report: 'stateflips', label: 'AKPs in the catalogue', unit: 'count', good: 'none',
+-      formula: 'Goal AKPs (125 StateFlips, their 375 steps, 47 identity dimensions) plus strategy and tactic AKPs (script, music, image, video, product), with the edits made in the admin applied (added counted, deleted left out).', shownAt: 'StateFlips, AKP catalogue summary', source: 'src/admin/data/akps.ts',
++      formula: 'Goal AKPs (125 StateFlips, their 375 steps, the identity dimensions and their values) plus strategy and tactic AKPs (script, voice, music, image, video, product, business, brand) and measure AKPs (analysis), with the edits made in the admin applied (added counted, deleted left out).', shownAt: 'StateFlips, AKP catalogue summary', source: 'src/admin/data/akps.ts',
+       displayed: () => akpSummary().total,
+       compute: () => {
+         const as = akps()
+         const goal = as.filter((a) => a.kind === 'goal').length
+         const file = as.filter((a) => a.source.startsWith('from ')).length
+-        return { value: as.length, inputs: [{ label: 'Goal AKPs', value: `${goal}`, source: 'akps.ts' }, { label: 'Strategy and tactic AKPs', value: `${as.length - goal}`, source: 'akps.ts' }, { label: 'From the workbooks', value: `${file}`, source: 'generated/akpSource.ts' }], steps: [`${goal} + ${as.length - goal} = ${as.length}; ${file} from files, ${as.length - file} drafted by us.`] }
++        return { value: as.length, inputs: [{ label: 'Goal AKPs', value: `${goal}`, source: 'akps.ts' }, { label: 'Strategy, tactic and measure AKPs', value: `${as.length - goal}`, source: 'akps.ts' }, { label: 'From the workbooks', value: `${file}`, source: 'generated/akpSource.ts' }], steps: [`${goal} + ${as.length - goal} = ${as.length}; ${file} from files, ${as.length - file} drafted by us.`] }
+       },
+     },
+     {
+@@ -1329,6 +1331,16 @@ function stateFlipMetrics(): MetricDef[] {
+         return { value: v, n: fs.length, inputs: [{ label: 'StateFlips served', value: `${served.size}`, source: 'akps.ts' }], steps: [`${served.size} ÷ ${fs.length} = ${pctText(v)}.`] }
+       },
+     },
++    {
++      id: 'akp-chapter', report: 'stateflips', label: 'StateFlips that can assemble a chapter from AKPs', unit: 'count', good: 'up',
++      formula: 'StateFlips served by at least one script, one voice, one music and one image AKP (akpAssembly.ts chapterKit).', shownAt: 'StateFlips, AKP catalogue summary', source: 'src/admin/data/akpAssembly.ts',
++      displayed: () => akpSummary().flipsChapterReady,
++      compute: () => {
++        const fs = stateFlips()
++        const ok = fs.filter((f) => chapterKit(f.id).complete)
++        return { value: ok.length, n: fs.length, inputs: [{ label: 'StateFlips', value: `${fs.length}`, source: 'stateFlips.ts' }], steps: [`${ok.length} of ${fs.length} have one AKP of each chapter family.`] }
++      },
++    },
+     {
+       id: 'identity-incoherent', report: 'stateflips', label: 'Persona identities that do not hold together', unit: 'count', good: 'down',
+       formula: 'v4 personas whose wellness identity contradicts their profile or condition (risk flag, chapter length, caregiver, spiritual language, StateFlip).', shownAt: 'Personas, Wellness identity in the drawer', source: 'src/admin/data/personaIdentityV4.ts',
+@@ -1373,10 +1385,36 @@ function buyerV8Metrics(): MetricDef[] {
+   ]
+ }
+ 
++/* ---------------------------------------------------------------- Test 9 */
++
++/** Buyer agent test 9 (U150, J208): each headline read from v9Tallies and counted again from each person's answer. */
++function buyerV9Metrics(): MetricDef[] {
++  const SRC = 'src/admin/data/buyerRunV9.ts'
++  const def = (id: string, label: string, side: 'a' | 'b', key: 'tries' | 'pays', shown: () => number): MetricDef => ({
++    id, report: 'buyer', label, unit: 'count', good: 'up',
++    formula: side === 'a'
++      ? `Test 8’s B, by test 8’s rules: people whose ${key === 'tries' ? 'try' : 'pay'} score reaches ${key === 'tries' ? V8_K.tryYes : V8_K.payYes}.`
++      : `As A, with fit ${V9_K.fitPreview}, the doubt term × ${1 - V9_K.doubtCut} (× ${1 - V9_K.doubtCutDistrustful} if they distrust AI), the short-day time load at ${V8_K.timeA} and a ${V9_K.putOff} put-off for people who distrust AI; ${key === 'tries' ? 'try' : 'pay'} score reaches ${key === 'tries' ? V8_K.tryYes : V8_K.payYes}.`,
++    shownAt: 'Buyer agent report, test 9', source: SRC,
++    displayed: shown,
++    compute: () => {
++      const rows = runV9().answers
++      const yes = rows.filter((r) => r[side][key] === 'yes')
++      return { value: yes.length, n: rows.length, inputs: [{ label: 'People in the panel (set v4, risk-flagged left out)', value: `${rows.length}`, source: SRC }, { label: `Answered yes (${side.toUpperCase()})`, value: `${yes.length}`, source: SRC, ids: yes.map((r) => r.personaId) }], steps: [`Each person: ${key === 'tries' ? 'try' : 'pay'} score for offer ${side.toUpperCase()}, compared with the threshold.`, `${yes.length} of ${rows.length} say yes.`], breakdown: { title: 'Each person', columns: ['Persona', 'StateFlip', 'First chapter', 'Pay score', 'Answer'], rows: rows.slice(0, 200).map((r) => ({ id: r.personaId, cells: [r.personaId, r.flipId, r.chapter.preview.replace(/^Your first chapter: /, ''), `${r[side].payScore}`, r[side][key]] })), footer: rows.length > 200 ? [`First 200 of ${rows.length} shown.`] : undefined } }
++    },
++  })
++  return [
++    def('buyer9-try-a', 'Test 9: would try A (test 8’s StateFlip journey)', 'a', 'tries', () => v9Tallies().tryA.yes),
++    def('buyer9-try-b', 'Test 9: would try B (with their first chapter shown)', 'b', 'tries', () => v9Tallies().tryB.yes),
++    def('buyer9-pay-a', 'Test 9: would pay A', 'a', 'pays', () => v9Tallies().payA.yes),
++    def('buyer9-pay-b', 'Test 9: would pay B after the free week', 'b', 'pays', () => v9Tallies().payB.yes),
++  ]
++}
++
+ /* ------------------------------------------------------------ The registry */
+ 
+ export function metricDefs(week = 1): MetricDef[] {
+-  return [...buyerMetrics(), ...typedMetrics(), ...personaV4Metrics(), ...conditionMetrics(), ...combinationMetrics(week), ...costMetrics(), ...b2b2cMetrics(), ...retreatMetrics(), ...uxMetrics(week), ...stateFlipMetrics(), ...buyerV8Metrics()]
++  return [...buyerMetrics(), ...typedMetrics(), ...personaV4Metrics(), ...conditionMetrics(), ...combinationMetrics(week), ...costMetrics(), ...b2b2cMetrics(), ...retreatMetrics(), ...uxMetrics(week), ...stateFlipMetrics(), ...buyerV8Metrics(), ...buyerV9Metrics()]
+ }
+ 
+ /** Audits one metric: displayed against recomputed, plus its sanity checks. */
+diff --git a/src/admin/data/reportSources.ts b/src/admin/data/reportSources.ts
+index 0fde6ec..46f3eee 100644
+--- a/src/admin/data/reportSources.ts
++++ b/src/admin/data/reportSources.ts
+@@ -41,6 +41,7 @@ export type SourceId =
+   | 'buyer-v6'
+   | 'buyer-v7'
+   | 'buyer-v8'
++  | 'buyer-v9'
+   | 'akps'
+   | 'decisions'
+   | 'app-funnel'
+@@ -81,6 +82,15 @@ export interface ReportSource {
+ }
+ 
+ export const SOURCES: Record<SourceId, ReportSource> = {
++  'buyer-v9': {
++    id: 'buyer-v9',
++    name: 'Buyer agent test 9',
++    what: 'The same 975 people as test 8 answering test 8’s StateFlip journey (A) and the same journey with their own first chapter shown, assembled from AKPs matched to their identity and condition (B), by written rules.',
++    version: 'Test 9, 28 Nov 2026, persona set v4, v9 rules (U150)',
++    taken: 'Would try and would pay A → B, by dimension and archetype, the objections, B’s effect split into its parts, and the chance-to-target impact.',
++    link: '/admin/reports/buyer-agent?tab=detail#test-9',
++    label: 'prediction',
++  },
+   'buyer-v8': {
+     id: 'buyer-v8',
+     name: 'Buyer agent test 8',
+@@ -93,8 +103,8 @@ export const SOURCES: Record<SourceId, ReportSource> = {
+   akps: {
+     id: 'akps',
+     name: 'AKP catalogue',
+-    what: 'The draft AKPs (goal, strategy, product, identity) read from the business owner’s sheets, plus those drafted by us, linked to the 125 StateFlips.',
+-    version: 'akps.ts, 27 Nov 2026 (all draft)',
++    what: 'The draft AKPs (goal, strategy, voice, product, business, brand, analysis, identity) read from the business owner’s sheets, plus those drafted by us, linked to the 125 StateFlips.',
++    version: 'akps.ts v2, 28 Nov 2026 (all draft, U150)',
+     taken: 'AKP counts per function and the StateFlips covered.',
+     link: '/admin/stateflips',
+     label: 'prediction',
+@@ -375,6 +385,7 @@ export const SOURCE_KIND: Record<SourceId, SourceKind> = {
+   'buyer-v6': 'Buyer agents',
+   'buyer-v7': 'Buyer agents',
+   'buyer-v8': 'Buyer agents',
++  'buyer-v9': 'Buyer agents',
+   akps: 'Product',
+   personas: 'Buyer agents',
+   'app-funnel': 'Funnels and models',
+diff --git a/src/admin/data/runChanges.ts b/src/admin/data/runChanges.ts
+index 7c810be..8aaf569 100644
+--- a/src/admin/data/runChanges.ts
++++ b/src/admin/data/runChanges.ts
+@@ -138,8 +138,28 @@ export const V8_CHANGE: RunChangeDeclaration = declareRunChange({
+   reproducible: false,
+ })
+ 
+-/** Every declaration, test 8 included. */
+-export const ALL_RUN_DECLARATIONS: RunChangeDeclaration[] = [...RUN_CHANGES, V8_CHANGE]
++/**
++ * Test 9 (U150, J208): A is test 8's B, played by test 8's rules, so A is
++ * like-for-like with test 8 person by person; B adds the person's own first
++ * chapter assembled from AKPs (akpAssembly.ts). buyerRunV9.ts measures B
++ * against A on the same people and splits the effect into its parts.
++ */
++export const V9_CHANGE: RunChangeDeclaration = declareRunChange({
++  version: 9,
++  previous: 8,
++  offers: {
++    a: 'Test 8’s B: a journey for your StateFlip X, free first week, then $10/month',
++    b: 'The same journey, showing the person’s own first chapter built from AKPs matched to their identity and condition (“breath 4-7-8, warm low voice, 55 BPM drone, 10 min”); free first week, then $10/month',
++  },
++  sameAs: { a: 'b' },
++  offer: { changed: true, note: 'A is test 8’s B again, the like-for-like side. B adds one thing: a concrete preview of their first chapter, assembled from catalogue AKPs (technique, StateFlip focus, voice, pace, tempo, music bed, colours, minutes) by written matching rules. Price and free week unchanged.' },
++  panel: { changed: false, note: 'Unchanged: the same 975 of persona set v4 (seed 20264; the 25 risk-flagged get Need help now? and no offer).' },
++  rules: { changed: true, note: 'Test 8’s rules for A, unchanged. For B four written terms are added: fit 0.8 → 0.9, the doubt term × 0.8 (× 0.95 for people who distrust AI), the short-day time load 0.1 → 0.05 when the chapter fits their day, and a 0.03 put-off for people who distrust AI. Every formula is in buyerRunV9.ts.' },
++  reproducible: false,
++})
++
++/** Every declaration, test 9 included. */
++export const ALL_RUN_DECLARATIONS: RunChangeDeclaration[] = [...RUN_CHANGES, V8_CHANGE, V9_CHANGE]
+ 
+ export const offersOf = (version: number): RunOffers => (version === BUYER_RUNS[0].version ? FIRST_RUN_OFFERS : RUN_CHANGES.find((d) => d.version === version)!.offers)
+ 
+diff --git a/src/admin/pages/lab/StateFlipsCatalogue.tsx b/src/admin/pages/lab/StateFlipsCatalogue.tsx
+index d79547b..ef4e5a0 100644
+--- a/src/admin/pages/lab/StateFlipsCatalogue.tsx
++++ b/src/admin/pages/lab/StateFlipsCatalogue.tsx
+@@ -1,8 +1,9 @@
+-import { PanelRightOpen } from 'lucide-react'
++import { Download, PanelRightOpen } from 'lucide-react'
+ import { useMemo, useState, type ReactNode } from 'react'
+ import { Badge, Panel, inputClass } from '../../components/ui'
+ import { FAMILIES, FAMILY, akpById, akpByIdAny, akpSummary, akps, akpsForFlip, akpsWithDeleted, type Akp, type AkpFamily } from '../../data/akps'
+ import { AKP_LINK_TYPES, makeEdit, nextAkpId, usedForLine } from '../../data/akpEdits'
++import { akpLinksCsv, akpsCsv, downloadText } from '../../data/akpExport'
+ import { useAkpEdits } from '../../data/akpEditsSync'
+ import { AkpEditBar, AkpEditPanel, AkpExplainer } from './AkpEditor'
+ import { FAMILY_LOOK, GOAL_LOOK, MODALITY_LOOK } from './akpStyle'
+@@ -17,7 +18,7 @@ import { AkpGraph, Mark, type GraphEditing, type GraphLink, type GraphNode, type
+ /*
+  * Admin → Product lab → StateFlips, tabs "All StateFlips" and "AKP catalogue"
+  * (U141, J203): the 125 StateFlips with filters and a drawer for each, and
+- * the draft catalogue of about 1,000 AKPs with filters, search, counts and a
++ * the draft catalogue of about 3,100 AKPs (v2, U150) with filters, search, counts and a
+  * small view of one StateFlip's AKPs. Data: data/stateFlips.ts, data/akps.ts.
+  */
+ 
+@@ -173,6 +174,20 @@ function AkpDetail({ id }: { id: string }) {
+       </p>
+       <p>{a.description || <span className="text-adm-muted">No description yet.</span>}</p>
+       <p className="text-11 text-adm-muted">Causal role: {a.causalRole || '–'}</p>
++      {a.signal && <p className="text-11 text-adm-muted">How its effect is measured: {a.signal}</p>}
++      {a.links.length > 0 && (
++        <Sub title={`Links (${a.links.length})`}>
++          <ul className="flex flex-wrap gap-4">
++            {a.links.map((l) => (
++              <li key={`${l.type}-${l.to}`}>
++                <button type="button" onClick={() => open(akpItem(l.to))} className="rounded-8 border border-adm-line px-6 py-2 text-11 text-adm-ink hover:bg-adm-hover">
++                  {LINK_STYLES[l.type]?.label ?? l.type} {l.to}
++                </button>
++              </li>
++            ))}
++          </ul>
++        </Sub>
++      )}
+       <p className="text-11 text-adm-muted">
+         Source: {a.source} · status {a.status}
+         {a.edited ? ' · edited in the admin' : ''}
+@@ -207,7 +222,7 @@ function akpItem(id: string) {
+   const a = akpByIdAny(id)
+   if (!a) return { title: id, extra: <AkpDetail id={id} /> }
+   return {
+-    kicker: `${a.id} · ${FAMILY[a.family].label} · ${a.kind === 'goal' ? 'Goal AKP' : 'Strategy / tactic AKP'}${a.deleted ? ' · deleted' : ''}`,
++    kicker: `${a.id} · ${FAMILY[a.family].label} · ${a.kind === 'goal' ? 'Goal AKP' : a.kind === 'measure' ? 'Measure AKP' : 'Strategy / tactic AKP'}${a.deleted ? ' · deleted' : ''}`,
+     title: a.name,
+     numbers: [
+       { label: 'Layer', value: a.layer || '–' },
+@@ -327,11 +342,25 @@ const LINK_STYLES: Record<string, LinkStyle> = {
+   feeds: { label: 'Feeds', cls: 'stroke-adm-muted', width: 1.25 },
+   'fed-by': { label: 'Is fed by', cls: 'stroke-adm-muted', width: 1.25, dash: '6 4' },
+   mirrors: { label: 'Mirrors', cls: 'stroke-adm-axis', width: 1.5, dash: '1 4' },
++  measures: { label: 'Measures', cls: 'stroke-adm-axis', width: 1.25, dash: '4 2' },
+ }
+ 
+ const CHAPTER = 'chapter-1'
+ const MAX_FLIP_NODES = 40
+ 
++/**
++ * At most `max` AKPs, taken round-robin across families (chapter families
++ * first), so a StateFlip with hundreds of AKPs still shows its script, voice,
++ * music and image pieces instead of the first 40 scripts (v2, U150).
++ */
++function capByFamily(as: Akp[], max: number): Akp[] {
++  const order: AkpFamily[] = ['script', 'voice', 'music', 'image', 'video', 'identity', 'product', 'business', 'brand']
++  const queues = order.map((f) => as.filter((a) => a.family === f))
++  const out: Akp[] = []
++  for (let i = 0; out.length < max && queues.some((q) => q.length > i); i++) for (const q of queues) if (q[i] && out.length < max) out.push(q[i])
++  return out
++}
++
+ function chapterItem(id: string) {
+   const n = chapterNodeById(id)!
+   const out = CHAPTER_LINKS.filter((l) => l.from === id)
+@@ -383,12 +412,14 @@ function chapterGraph(): { nodes: GraphNode[]; links: GraphLink[] } {
+   }
+ }
+ 
++const flipStrategyCount = (flipId: string) => akps().filter((a) => a.kind === 'strategy' && a.flips.includes(flipId)).length
++
+ /** `_version` only ties the memo to the edits in force; the data comes from akps(). */
+ function flipGraph(flipId: string, _version = 0): { nodes: GraphNode[]; links: GraphLink[] } {
+   const goalId = flipId.replace(/^SF-/, 'WG-')
+   const goal = akpById(goalId) ?? akpByIdAny(goalId)!
+   const steps = ['X', 'Y', 'Z'].map((m) => akpById(`${goalId}-${m}`)).filter((a) => a !== undefined)
+-  const strategy = akps().filter((a) => a.kind === 'strategy' && a.flips.includes(flipId)).slice(0, MAX_FLIP_NODES)
++  const strategy = capByFamily(akps().filter((a) => a.kind === 'strategy' && a.flips.includes(flipId)), MAX_FLIP_NODES)
+   const set = new Set([goalId, ...steps.map((a) => a.id), ...strategy.map((a) => a.id)])
+   const node = (a: Akp & { edited?: boolean; added?: boolean }, tier: number): GraphNode => ({ id: a.id, label: tier === 0 ? a.id.replace('WG-', '') : a.name, group: `${FAMILY[a.family].label} · ${a.layer || 'no layer'}`, look: FAMILY_LOOK[a.family], goal: tier === 0, draft: !a.fromFile && !a.added, edited: a.edited, tier })
+   const links: GraphLink[] = [
+@@ -519,12 +550,12 @@ function RelationshipGraph() {
+       <p className="text-12 text-adm-ink-2">
+         {isChapter ? (
+           <>
+-            <span className="font-semibold text-adm-ink">Sleep, chapter 1:</span> 20 strategy AKPs and 30 typed links across script, music, voice and image, all driving the first step of {f.id} ({f.title}). Script, music and image AKPs come from the catalogue; the four voice AKPs are drafted (dashed outline). Links and timings are drafted by us — to review.
++            <span className="font-semibold text-adm-ink">Sleep, chapter 1:</span> 20 strategy AKPs and 30 typed links across script, music, voice and image, all driving the first step of {f.id} ({f.title}). Every node is a catalogue AKP; the four voice AKPs come from the new voice family (WN-), drafted by us. Links and timings are drafted by us — to review.
+           </>
+         ) : (
+           <>
+             <span className="font-semibold text-adm-ink">{f.id}</span> {f.title}: its goal AKP, its X / Y / Z steps and the strategy AKPs linked to it by the catalogue
+-            {base.nodes.length - 4 >= MAX_FLIP_NODES ? ` (first ${MAX_FLIP_NODES})` : ''}. Dashed outline: drafted by us; solid ring: edited in the admin. Links made here are saved as edits.
++            {flipStrategyCount(focus) > MAX_FLIP_NODES ? ` (${MAX_FLIP_NODES} of ${flipStrategyCount(focus)}, taken in turn from each family)` : ''}. Dashed outline: drafted by us; solid ring: edited in the admin. Links made here are saved as edits.
+           </>
+         )}
+       </p>
+@@ -540,7 +571,29 @@ function RelationshipGraph() {
+ }
+ 
+ const PAGE = 40
+-const MODALITY_LIST = ['Script', 'Music', 'Image', 'Video', '—'] as const
++const MODALITY_LIST = ['Script', 'Voice', 'Music', 'Image', 'Video', '—'] as const
++
++/** The catalogue as files (U150): the exported workbook from public/, and CSVs made in the browser with the edits applied. */
++function AkpDownloads() {
++  const btn = 'inline-flex items-center gap-6 rounded-8 border border-adm-line bg-adm-surface px-12 py-6 text-12 font-medium text-adm-ink hover:bg-adm-hover'
++  return (
++    <section aria-label="Download catalogue" className="flex min-w-0 flex-col gap-8 rounded-12 border border-adm-line bg-adm-surface p-16" data-akp-download>
++      <h3 className="text-13 font-semibold text-adm-ink">Download catalogue (xlsx/csv)</h3>
++      <p className="text-12 text-adm-ink-2">The workbook has four sheets: AKPs, Links, Summary per function, family and layer, and StateFlips × AKPs coverage; it is the generated v2 catalogue. The CSVs are made now, with every edit made in the admin applied.</p>
++      <div className="flex flex-wrap gap-8">
++        <a href="/akp/akp-v2.xlsx" download className={btn}>
++          <Download size={13} aria-hidden="true" /> Workbook (.xlsx)
++        </a>
++        <button type="button" className={btn} onClick={() => downloadText('akps.csv', akpsCsv(akps()))}>
++          <Download size={13} aria-hidden="true" /> AKPs (.csv)
++        </button>
++        <button type="button" className={btn} onClick={() => downloadText('akp-links.csv', akpLinksCsv(akps()))}>
++          <Download size={13} aria-hidden="true" /> Links (.csv)
++        </button>
++      </div>
++    </section>
++  )
++}
+ 
+ export function AkpCatalogue() {
+   const open = useDetail()
+@@ -583,19 +636,19 @@ export function AkpCatalogue() {
+       <AkpEditBar onNew={() => open(akpItem(addAkp(store)))} />
+       <section aria-label="Summary" className="flex min-w-0 flex-col gap-12 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20">
+         <p className="max-w-[860px] text-16 font-semibold leading-snug text-adm-ink">
+-          {s.total.toLocaleString('en')} AKPs: {s.byKind.goal} goal AKPs (what to reach) and {s.byKind.strategy} strategy and tactic AKPs (how). {s.fromFile} come straight from the workbooks; {s.drafted} are drafted by us, mostly the X / Y / Z steps. {s.flipsCovered} of {s.flips} StateFlips are served by at least one strategy AKP ({s.flipsCoveredBeyondSkills} by more than a skill).
++          {s.total.toLocaleString('en')} AKPs (v2): {s.byKind.goal} goal AKPs (what to reach), {s.byKind.strategy.toLocaleString('en')} strategy and tactic AKPs (how) and {s.byKind.measure} measure AKPs (how an effect is read). {s.fromFile} come straight from the workbooks; {s.drafted.toLocaleString('en')} are drafted by us from his briefs. {s.flipsChapterReady} of {s.flips} StateFlips can assemble a chapter (a script, voice, music and image AKP each).
+         </p>
+         <h3 className="text-12 font-semibold text-adm-ink">By family</h3>
+-        <dl className="grid grid-cols-2 gap-8 lg:grid-cols-7">
++        <dl className="grid grid-cols-2 gap-8 lg:grid-cols-6">
+           {FAMILIES.map((f) => (
+-            <StatCard key={f} dot={<Mark look={FAMILY_LOOK[f]} />} label={`${FAMILY[f].label} (${FAMILY[f].prefix}-)`} value={s.byFamily[f]} sub={FAMILY[f].kind === 'goal' ? 'goal' : 'strategy'} />
++            <StatCard key={f} dot={<Mark look={FAMILY_LOOK[f]} />} label={`${FAMILY[f].label} (${FAMILY[f].prefix}-)`} value={s.byFamily[f]} sub={FAMILY[f].kind} />
+           ))}
+         </dl>
+         <div className="grid min-w-0 gap-12 lg:grid-cols-2">
+           <div className="flex min-w-0 flex-col gap-8">
+             <h3 className="text-12 font-semibold text-adm-ink">By modality (strategy AKPs)</h3>
+-            <dl className="grid grid-cols-2 gap-8 lg:grid-cols-4">
+-              {(['Script', 'Music', 'Image', 'Video'] as const).map((m) => (
++            <dl className="grid grid-cols-2 gap-8 lg:grid-cols-5">
++              {(['Script', 'Voice', 'Music', 'Image', 'Video'] as const).map((m) => (
+                 <StatCard key={m} label={m} value={all.filter((a) => a.modality === m).length} />
+               ))}
+             </dl>
+@@ -618,10 +671,12 @@ export function AkpCatalogue() {
+           </div>
+         </div>
+         <p className="text-12 text-adm-ink-2">
+-          By function: wellness {s.byFunction.wellness}, product {s.byFunction.product}, identity {s.byFunction.identity}, brand {s.byFunction.brand} (waiting for the marketing sheet). {s.links} typed links between AKPs. Status: {all.filter((a) => a.status === 'draft').length} draft, {all.filter((a) => a.status === 'reviewed').length} reviewed, {all.filter((a) => a.status === 'approved').length} approved. Every count here includes the edits made in the admin.
++          By function: wellness {s.byFunction.wellness}, product {s.byFunction.product}, business {s.byFunction.business}, brand {s.byFunction.brand} (drafted from his marketing ReadMe types, pending his sheet), analysis {s.byFunction.analysis}, identity {s.byFunction.identity}. {s.links} typed links between AKPs. Status: {all.filter((a) => a.status === 'draft').length} draft, {all.filter((a) => a.status === 'reviewed').length} reviewed, {all.filter((a) => a.status === 'approved').length} approved. Every count here includes the edits made in the admin.
+         </p>
+       </section>
+ 
++      <AkpDownloads />
++
+       <RelationshipGraph />
+ 
+       <Panel title="All AKPs" description="Search, or narrow by family, layer, modality and source. Open one for its definition, links, the StateFlips it serves and its source.">
+diff --git a/src/admin/pages/lab/StateFlipsPage.tsx b/src/admin/pages/lab/StateFlipsPage.tsx
+index de60cb7..4e7e5e8 100644
+--- a/src/admin/pages/lab/StateFlipsPage.tsx
++++ b/src/admin/pages/lab/StateFlipsPage.tsx
+@@ -119,7 +119,7 @@ function StateFlips() {
+ 
+   return (
+     <div className="flex flex-col gap-16" data-stateflips>
+-      <PageHeader title="StateFlips" description="How Aurelia moves a person from a bad state to a good one: sleep built out in full (what bad and good mean, the steps, how we measure them, who has it, how many chapters), all 125 StateFlips, and the draft catalogue of about 1,000 AKPs." />
++      <PageHeader title="StateFlips" description="How Aurelia moves a person from a bad state to a good one: sleep built out in full (what bad and good mean, the steps, how we measure them, who has it, how many chapters), all 125 StateFlips, and the draft catalogue of about 3,100 AKPs." />
+       {!NAV2 && goal}
+ 
+       <PageTabs
+diff --git a/src/admin/pages/lab/akpStyle.ts b/src/admin/pages/lab/akpStyle.ts
+index 5c2c713..f722b7c 100644
+--- a/src/admin/pages/lab/akpStyle.ts
++++ b/src/admin/pages/lab/akpStyle.ts
+@@ -24,15 +24,19 @@ export const FAMILY_LOOK: Record<AkpFamily, Look> = {
+   image: { bg: 'bg-adm-s6', fill: 'fill-adm-s6', shape: 'diamond' },
+   video: { bg: 'bg-adm-s2', fill: 'fill-adm-s2', shape: 'triangle-down' },
+   product: { bg: 'bg-adm-ink-2', fill: 'fill-adm-ink-2', shape: 'pentagon' },
++  voice: { bg: 'bg-adm-s5', fill: 'fill-adm-s5', shape: 'star' },
++  business: { bg: 'bg-adm-gold', fill: 'fill-adm-gold', shape: 'square' },
++  brand: { bg: 'bg-adm-accent', fill: 'fill-adm-accent', shape: 'diamond' },
++  analysis: { bg: 'bg-adm-muted', fill: 'fill-adm-muted', shape: 'triangle-down' },
+ }
+ 
+-/** Sleep chapter 1's modalities, matched to the family looks (voice has no family yet). */
++/** Sleep chapter 1's modalities, matched to the family looks. */
+ export const MODALITY_LOOK: Record<string, Look> = {
+   Script: FAMILY_LOOK.script,
+   Music: FAMILY_LOOK.music,
+   Image: FAMILY_LOOK.image,
+   Video: FAMILY_LOOK.video,
+-  Voice: { bg: 'bg-adm-s5', fill: 'fill-adm-s5', shape: 'star' },
++  Voice: FAMILY_LOOK.voice,
+ }
+ 
+ export const GOAL_LOOK: Look = { bg: 'bg-adm-ink', fill: 'fill-adm-ink', shape: 'circle' }
+diff --git a/src/admin/pages/reports/BuyerAgentReportPage.tsx b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+index 13fb3be..7b00278 100644
+--- a/src/admin/pages/reports/BuyerAgentReportPage.tsx
++++ b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+@@ -16,6 +16,7 @@ import { LabelBadge, SourcesSection } from './ReportParts'
+ import { Details, SummaryBlock } from './ReportSummary'
+ import { DataSources } from './DataSources'
+ import { BuyerTest8, Test8Line } from './BuyerTest8'
++import { BuyerTest9, Test9Line } from './BuyerTest9'
+ import { LatestChangeAside } from '../buyer/RunChanges'
+ import { BUYER_RUNS } from '../../data/buyerRuns'
+ import { SuccessTrend, WhatMoves } from './SummaryCharts'
+@@ -77,7 +78,7 @@ function BuyerAgentReport() {
+       />
+ 
+       {!RELEASES.adminNav2 && summaryBlock}
+-      <PageTabs summary={<ReportSummaryTab purpose="deciding whether simulated buyers would pay for Aurelia, and at what price." onDetail={() => setPageTab('detail')}>{summaryBlock}<Test8Line /><DataSources route="/admin/reports/buyer-agent" /></ReportSummaryTab>}>
++      <PageTabs summary={<ReportSummaryTab purpose="deciding whether simulated buyers would pay for Aurelia, and at what price." onDetail={() => setPageTab('detail')}>{summaryBlock}<Test9Line /><Test8Line /><DataSources route="/admin/reports/buyer-agent" /></ReportSummaryTab>}>
+       {RELEASES.adminNav2 && (
+         <Details id="full-summary" title="Full summary" hint="each test’s figures, the tile notes and how sure we are">
+           {fullSummary}
+@@ -94,6 +95,8 @@ function BuyerAgentReport() {
+         </Panel>
+       </section>
+ 
++      <BuyerTest9 />
++
+       <BuyerTest8 />
+ 
+       <div className="grid gap-16 lg:grid-cols-2 lg:items-start">
+diff --git a/src/admin/pages/reports/BuyerTest9.tsx b/src/admin/pages/reports/BuyerTest9.tsx
+new file mode 100644
+index 0000000..28398d2
+--- /dev/null
++++ b/src/admin/pages/reports/BuyerTest9.tsx
+@@ -0,0 +1,197 @@
++import { useMemo, useState } from 'react'
++import { Panel } from '../../components/ui'
++import { ASSEMBLY_RULES } from '../../data/akpAssembly'
++import { v9BrainImpact } from '../../data/aiBrain'
++import { V9_OBJECTION_LABEL, V9_OFFER_A, V9_OFFER_B_TEMPLATE, V9_RULES, runV9, v9Change, v9Findings, v9Tallies, type V9GroupRow } from '../../data/buyerRunV9'
++
++/*
++ * Buyer agent report → Test 9 (U150, J208): test 8's StateFlip journey (A)
++ * against the same journey with the person's own first chapter, assembled
++ * from AKPs matched to their identity and condition (B). Every number comes
++ * from data/buyerRunV9.ts and data/akpAssembly.ts.
++ */
++
++/** One line for the report's Summary tab, linking to the test in Detail. */
++export function Test9Line() {
++  const x = useMemo(() => v9Tallies(), [])
++  return (
++    <p className="rounded-8 border border-adm-line bg-adm-surface px-12 py-8 text-13 text-adm-ink">
++      <span className="font-semibold">New, test 9: </span>the same StateFlip journey, but each person sees their own first chapter built from AKPs (“4-7-8 breathing, warm low voice, 55 BPM drone, 10 min”): would pay {x.payA.yes} → {x.payB.yes} of {x.n} simulated people.{' '}
++      <a href="?tab=detail#test-9" className="font-medium underline decoration-adm-axis underline-offset-2">See test 9</a>
++    </p>
++  )
++}
++
++const pc = (k: number, n: number) => `${Math.round((k / Math.max(1, n)) * 100)}%`
++const pct = (x: number) => `${(x * 100).toFixed(x < 0.1 ? 1 : 0)}%`
++
++function GroupTable({ rows, head }: { rows: V9GroupRow[]; head: string }) {
++  return (
++    <div className="overflow-x-auto">
++      <table className="w-full min-w-[480px] text-left text-12">
++        <thead className="text-11 uppercase tracking-wider text-adm-muted">
++          <tr className="border-b border-adm-line">
++            <th className="py-6 pr-12 font-semibold">{head}</th>
++            <th className="py-6 pr-12 font-semibold">People</th>
++            <th className="py-6 pr-12 font-semibold">Try A → B</th>
++            <th className="py-6 pr-12 font-semibold">Pay A → B</th>
++            <th className="py-6 pr-12 font-semibold">Top objection (B)</th>
++          </tr>
++        </thead>
++        <tbody>
++          {rows.map((d) => (
++            <tr key={d.key} className="border-b border-adm-line last:border-0">
++              <td className="py-8 pr-12 font-semibold text-adm-ink">{d.label}</td>
++              <td className="py-8 pr-12 tabular-nums">{d.n}</td>
++              <td className="py-8 pr-12 tabular-nums">{d.tryA} → {d.tryB}</td>
++              <td className="py-8 pr-12 tabular-nums">{d.payA} → {d.payB}</td>
++              <td className="py-8 pr-12 text-adm-ink-2">{d.topObjectionB ? `${V9_OBJECTION_LABEL[d.topObjectionB]} (${d.topObjectionCount})` : '—'}</td>
++            </tr>
++          ))}
++        </tbody>
++      </table>
++    </div>
++  )
++}
++
++export function BuyerTest9() {
++  const x = useMemo(() => v9Tallies(), [])
++  const change = useMemo(() => v9Change(), [])
++  const findings = useMemo(() => v9Findings(), [])
++  const impact = useMemo(() => v9BrainImpact(), [])
++  const [who, setWho] = useState(0)
++  const examples = useMemo(() => {
++    const up = x.payUp.slice(0, 4)
++    const no = runV9().answers.filter((a) => a.b.tries === 'no').slice(0, 2)
++    return [...up, ...no]
++  }, [x])
++  const ex = examples[who]
++
++  return (
++    <section id="test-9" className="flex min-w-0 scroll-mt-16 flex-col gap-16">
++      <Panel
++        title={`Test 9: their own first chapter, built from AKPs, shown before the free week. Would pay ${x.payA.yes} → ${x.payB.yes} of ${x.n}`}
++        description={`Simulated, by written rules, on persona set v4 (${x.total} people, ${x.excluded} risk-flagged left out). A = ${V9_OFFER_A}. B = ${V9_OFFER_B_TEMPLATE}.`}
++      >
++        <dl className="grid grid-cols-2 gap-8 lg:grid-cols-4">
++          {[
++            ['Would try A', `${x.tryA.yes}`, pc(x.tryA.yes, x.n)],
++            ['Would try B', `${x.tryB.yes}`, pc(x.tryB.yes, x.n)],
++            ['Would pay A', `${x.payA.yes}`, `expected paid ${x.paidA}`],
++            ['Would pay B', `${x.payB.yes}`, `expected paid ${x.paidB}`],
++          ].map(([l, v, n]) => (
++            <div key={l} className="flex min-w-0 flex-col gap-2 rounded-8 border border-adm-line bg-adm-bg p-12">
++              <dt className="text-12 text-adm-muted">{l}</dt>
++              <dd className="text-22 font-semibold tabular-nums text-adm-ink">{v}</dd>
++              <dd className="text-12 text-adm-ink-2">{n}</dd>
++            </div>
++          ))}
++        </dl>
++        <ul className="flex list-disc flex-col gap-4 pl-16 text-13 text-adm-ink-2">
++          {findings.map((f) => (
++            <li key={f}>{f}</li>
++          ))}
++        </ul>
++      </Panel>
++
++      <div className="grid gap-16 lg:grid-cols-2">
++        <Panel title="By dimension of the main need" description="Would try and would pay, A → B, and the top objection to B among those who would not pay.">
++          <GroupTable rows={x.dims} head="Main need" />
++        </Panel>
++        <Panel title="By identity archetype" description="The Wellness Identity archetype (personaIdentityV4), from each person’s life situation.">
++          <GroupTable rows={x.archetypes} head="Archetype" />
++        </Panel>
++      </div>
++
++      <div className="grid gap-16 lg:grid-cols-2">
++        <Panel title="What changed against test 8, and why" description="The declaration from runChanges.ts (V9_CHANGE), and B’s effect split into its parts on the same people.">
++          <ul className="flex flex-col gap-6 text-13 text-adm-ink-2">
++            {change.lines.map((l) => (
++              <li key={l}>{l}</li>
++            ))}
++          </ul>
++          <ol className="flex flex-col gap-4 text-12">
++            {change.split.map((s) => (
++              <li key={s.label} className="flex justify-between gap-8 border-t border-adm-line pt-4">
++                <span className="min-w-0 text-adm-ink">{s.label}</span>
++                <span className="shrink-0 tabular-nums text-adm-ink-2">paid {s.paid}{s.step ? ` (+${s.step})` : ''}</span>
++              </li>
++            ))}
++          </ol>
++        </Panel>
++        <Panel title="Objections, and the chance to reach the targets" description="Objections among those who would not pay; the AI brain’s chance with test 8’s journey alone against test 9’s B.">
++          <div className="grid grid-cols-2 gap-12">
++            {(['A', 'B'] as const).map((s) => (
++              <div key={s} className="flex min-w-0 flex-col gap-4">
++                <span className="text-12 font-semibold text-adm-ink">Offer {s}</span>
++                <ul className="flex flex-col gap-2 text-12 text-adm-ink-2">
++                  {(s === 'A' ? x.objectionsA : x.objectionsB).map(([k, c]) => (
++                    <li key={k} className="flex justify-between gap-8">
++                      <span className="min-w-0">{V9_OBJECTION_LABEL[k]}</span>
++                      <span className="tabular-nums">{c}</span>
++                    </li>
++                  ))}
++                </ul>
++              </div>
++            ))}
++          </div>
++          <p className="text-12 text-adm-ink-2">
++            Would pay after the free week: {pct(impact.paidBefore)} → {pct(impact.paidAfter)} (target 15%). Business chance {pct(impact.businessBefore)} → {pct(impact.businessAfter)}; all three functions {pct(impact.mvpBefore)} → {pct(impact.mvpAfter)}.
++            {impact.businessAfter === impact.businessBefore ? ' No change: test 8’s journey already met the 15% target, so the business chance is held back by the other funnel stages (day 7, day 30, the free limit), not by paying.' : ''}
++          </p>
++        </Panel>
++      </div>
++
++      <div className="grid gap-16 lg:grid-cols-2">
++        <Panel title="How the first chapter is assembled" description="akpAssembly.ts: one AKP per role, picked by written rules from the person’s identity and StateFlip. Drafted by us — to review.">
++          <dl className="flex flex-col gap-6 text-12">
++            {ASSEMBLY_RULES.map((r) => (
++              <div key={r.label} className="flex min-w-0 flex-col gap-2">
++                <dt className="font-semibold text-adm-ink">{r.label}</dt>
++                <dd className="break-words text-adm-ink-2">{r.rule}</dd>
++              </div>
++            ))}
++          </dl>
++        </Panel>
++        <Panel title="The rules, written out" description="A is played by test 8’s rules; B adds four written terms.">
++          <dl className="flex flex-col gap-6 text-12">
++            {V9_RULES.map((r) => (
++              <div key={r.label} className="flex min-w-0 flex-col gap-2">
++                <dt className="font-semibold text-adm-ink">{r.label}</dt>
++                <dd className="break-words text-adm-ink-2">{r.formula}</dd>
++              </div>
++            ))}
++          </dl>
++        </Panel>
++      </div>
++
++      {ex && (
++        <Panel title="One person, worked by hand" description="Pick someone: the chapter they were shown, the AKPs in it and why, and their numbers.">
++          <div className="flex flex-wrap gap-6">
++            {examples.map((a, i) => (
++              <button key={a.personaId} type="button" onClick={() => setWho(i)} aria-pressed={i === who} className={`rounded-full border px-10 py-4 text-12 ${i === who ? 'border-adm-ink bg-adm-ink text-adm-surface' : 'border-adm-line text-adm-ink hover:bg-adm-hover'}`}>
++                {a.name.split(' ')[0]} · {a.country}
++              </button>
++            ))}
++          </div>
++          <p className="text-13 text-adm-ink">
++            {ex.name} ({ex.archetype}): StateFlip {ex.flipId} “{ex.flipTitle}”. A: tries {ex.a.tries}, pays {ex.a.pays}. B: tries {ex.b.tries}, pays {ex.b.pays}.
++          </p>
++          <p className="rounded-8 border border-adm-line bg-adm-bg px-12 py-8 text-13 text-adm-ink">{ex.chapter.preview}</p>
++          <ul className="flex flex-col gap-2 text-12 text-adm-ink-2">
++            {ex.chapter.pieces.map((q) => (
++              <li key={q.role} className="break-words">
++                <span className="font-semibold text-adm-ink">{q.role}:</span> {q.akp.name} <span className="font-mono text-11">{q.akp.id}</span> · {q.matched}
++              </li>
++            ))}
++          </ul>
++          <ul className="flex flex-col gap-4 font-mono text-11 text-adm-ink-2">
++            {ex.why.map((w) => (
++              <li key={w} className="break-words">{w}</li>
++            ))}
++          </ul>
++        </Panel>
++      )}
++    </section>
++  )
++}

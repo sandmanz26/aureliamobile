@@ -134,6 +134,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | J181 | 2026-11-25 | Review + code | Review whether the reports are understandable even to a layperson, and fix them | U128 |
 | J182 | 2026-11-25 | Code | UX feedback report from the latest feedback group; drop "what this report says"; a goal on every report; make "many sources → iterations → product" visible; drawers instead of page changes | U129 |
 | J183 | 2026-11-25 | Code + research | Better buyer agent visualisation; therapeutic map and interactive Healing Map; B2B2C research using everything known, with the features to build, in a report | U130, U131, U132 |
+| J208 | 2026-11-28 | Code | Business owner away: give the AKP file, iterate and roast again, more AKPs, buyer report again; check cost after the wellness condition; AKP export; make every report readable (purpose, sources, conclusion) | U150 |
 | J207 | 2026-11-28 | Code | After that, evaluate again against the business owner's needs; AKPs easy to understand and modifiable, with an interactive graph map | U149 |
 | J206 | 2026-11-27 | Code | Point C, AKP list and graph visualisation, clear data sources on every report, B1–B8, push to prod; review every business-owner ask for what else to do, then close the gaps | U145–U148 |
 | J205 | 2026-11-27 | Code | Push to production; are the old menus and reports still there; what else AKPs affect; the detailed remaining tasks; admin design phase 2 dropped | U144 |
@@ -2257,6 +2258,9 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 ### J183 — Visuals, maps, B2B2C round 2
 - **Done:** U130, U131, U132.
 - **Key finding of round 2:** lead with a free first week, then charge. Trust beats price as the barrier, and a self-serve team plan comes second.
+
+### J208 — AKP v2 and test 9
+- **Done (U150), on staging.** Cost answer: spec numbers unchanged by design; condition-based figures sit beside them ($15.13 per person, $16.33 avg per flip, sleep $26.46). Next: report readability standard on every report; production on request.
 
 ### J207 — Editable AKPs, evaluation, production
 - **Done (U149).** Asks tracker statuses refreshed; released to production.

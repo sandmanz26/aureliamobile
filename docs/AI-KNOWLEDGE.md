@@ -1,6 +1,6 @@
 # Aurelia — what an AI working here should know
 
-**Covers up to J207** · updated 25 Nov 2026
+**Covers up to J208** · updated 25 Nov 2026
 
 The working knowledge of the agent that has run this project, written so any
 other AI (or developer) can pick it up and act the same way. It is the short,
@@ -134,6 +134,7 @@ reach that repository yet (O33).
 
 ## 6 · Positions taken (and why), newest first
 
+- **AKP v2 (U150):** rebuild with `python3 -I scripts/akp/extract.py`, then `AKP_EXPORT=1 npx vitest run src/admin/data/akpExport.test.ts`, then `python3 -I scripts/akp/export.py`. Roast in `docs/akp/AKP-ROAST.md`.
 - **AKP edits (U149):** never edit `generated/akpSource.ts`; admin changes live in the overlay (`akpEdits.ts`, `/api/akp-edits`), read through `akps()`.
 - **AI brain (U147, `aiBrain.ts`)** and Your asks (`ownerAsks.ts` parses EUGENE-CONTEXT §0 at build time: keep §0 rows in the same table format).
 - **One dimension list (U145, `dimensions.ts`)**; StateFlip text lives in `stateFlipDetails.ts` (drafted); sleep chapter AKPs in `akpChapterGraph.ts`.
