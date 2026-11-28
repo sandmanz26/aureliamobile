@@ -21,43 +21,43 @@
 
 | # | Ask | From | Status |
 | --- | --- | --- | --- |
-| A22 | Graph over time, cohort view: how each of the 42 chapters adds up to the sleep StateFlip (25 → 85) and what drives each step | row 42 | received, waiting for the rest of his message |
-| A23 | Explain how "chance it works" (54%) is calculated, as a transparent prediction | row 42 | received |
-| A24 | Understand AKPs (about 120,000 building blocks) and entities, the AKP and AI-model tournaments; read the "Grand 4 layers - APK - master knowledge" sheet | row 42 | received; sheet saved (row 43) |
-| A25 | Expand personas into the 12 Wellness Identity dimensions (Grand tab): each persona as its own AI system | row 43 | received; structure came in row 44 |
-| A26 | Five wellness worlds with more depth, using Deeksha pillars (4 + 11) and 151 universal needs | row 43 | received |
-| A27 | Objective Learning knowledge base: 5 dimensions → hundreds/thousands of universal needs → concrete bad-to-good StateFlips (goal AKPs), linked to strategy/tactic AKPs (Grand 4 layers) and to script building (BAR / ELEMENTS). "Everything I sent today is very important to get right" | row 44 | received, more coming |
-| A28 | Admin shows the system logic right: the Meta → Path → Script cascade ("snapshots of our own Causal AI") | row 45 | planned (plan step 2) |
-| A29 | Start with 125 bad-to-good states (25 × 5); used to make sessions and chapters via AKPs and solve them on real humans | row 45 | planned (plan step 1) |
+| A22 | Graph over time, cohort view: how each of the 42 chapters adds up to the sleep StateFlip (25 → 85) and what drives each step | row 42 | done: cohort graph over time per chapter (U140, U145) |
+| A23 | Explain how "chance it works" (54%) is calculated, as a transparent prediction | row 42 | done: transparent chance-it-works and chapters formulas with worked examples (U140) |
+| A24 | Understand AKPs (about 120,000 building blocks) and entities, the AKP and AI-model tournaments; read the "Grand 4 layers - APK - master knowledge" sheet | row 42 | done as draft: 1,046 AKPs, editable, with graph map (U141, U145, U149); the 120,000 real AKPs still to be confirmed by him |
+| A25 | Expand personas into the 12 Wellness Identity dimensions (Grand tab): each persona as its own AI system | row 43 | done: personas with 12 Wellness Identity dimensions (U141) |
+| A26 | Five wellness worlds with more depth, using Deeksha pillars (4 + 11) and 151 universal needs | row 43 | done as draft: 125 StateFlips tied to Deeksha universal needs (U141, U145) |
+| A27 | Objective Learning knowledge base: 5 dimensions → hundreds/thousands of universal needs → concrete bad-to-good StateFlips (goal AKPs), linked to strategy/tactic AKPs (Grand 4 layers) and to script building (BAR / ELEMENTS). "Everything I sent today is very important to get right" | row 44 | done as draft: goal and strategy AKPs linked to StateFlips (U141, U145) |
+| A28 | Admin shows the system logic right: the Meta → Path → Script cascade ("snapshots of our own Causal AI") | row 45 | done: How a session is built, Meta → Path → Script with a worked sleep example (U148) |
+| A29 | Start with 125 bad-to-good states (25 × 5); used to make sessions and chapters via AKPs and solve them on real humans | row 45 | done as draft: 125 StateFlips (U141, U145) |
 | A30 | Marketing AKPs sheet (ReadMe tab: campaign goals, levers, audience states, growth vectors, strategies, tactics, story arcs, voices, aesthetics, anchors, channels, adaptive knobs): read the whole doc to understand AKPs better; same logic for Business | row 46 | waiting for the .xlsx export |
-| A31 | Three metric lines over time (compute cost, Causal AI density and velocity, therapeutic) and top Causal AI drivers | gap check J198 (was missing here) | open |
+| A31 | Three metric lines over time (compute cost, Causal AI density and velocity, therapeutic) and top Causal AI drivers | gap check J198 (was missing here) | done: metric lines over Causal AI stages and top drivers (U146) |
 | A32 | AI speed and quality appendix (30–60 s, Spotify-level quality) (O25) | gap check J198 (was missing here) | open |
-| A33 | 2025 backend wiki: black logo, his diagram, the 2025 → 2026 story (O25) | gap check J198 (was missing here) | open |
-| A34 | Feedback project rewritten as Digital Retreats in the wiki (O43 part 3) | gap check J198 (was missing here) | open |
+| A33 | 2025 backend wiki: black logo, his diagram, the 2025 → 2026 story (O25) | gap check J198 (was missing here) | open: no natural place yet |
+| A34 | Feedback project rewritten as Digital Retreats in the wiki (O43 part 3) | gap check J198 (was missing here) | open: waits on the retreat decision |
 | A35 | Aurelia Pro, corporate wellness exploration (O32) | gap check J198 (was missing here) | open |
 | A36 | Cross-split dialogues as a standing rule | gap check J198 (was missing here) | open |
 | A37 | An admin version of the old AKP Graph Explorer | gap check J198 (was missing here) | open |
 | A38 | Map his entities as gateways to AKPs and the Notion entity model | gap check J198 (was missing here) | open |
-| A39 | His deck's scale claims shown as his thesis, labelled | gap check J198 (was missing here) | open |
-| A40 | One unified admin AI brain with 5 interconnected functions, each its own AKP universe and causal network: Wellness, Brand, Product (18 dimensions), Business, Analysis (MicroBite "Maxwell", TheraGPS "Governor"); move his Figma Make prototype (display only, no logic) into our admin | row 47 | received, more context coming; Figma parked by the product owner |
+| A39 | His deck's scale claims shown as his thesis, labelled | gap check J198 (was missing here) | done: thesis page in the wiki, labelled not measured (U146) |
+| A40 | One unified admin AI brain with 5 interconnected functions, each its own AKP universe and causal network: Wellness, Brand, Product (18 dimensions), Business, Analysis (MicroBite "Maxwell", TheraGPS "Governor"); move his Figma Make prototype (display only, no logic) into our admin | row 47 | partly done: AI brain page (U147); Brand waits for the marketing sheet; Analysis placeholder |
 | A41 | Agreed: define predefined base values (AKPs as lego pieces) first, no media generation; AI improves them later | row 47 | agreed |
-| A42 | **Committed by the product owner, due Monday, then invoice:** define the first 1,000 AKPs as foundation (6h) + graph over time (1.5h), bad-to-good sleep detail (1h), how it is calculated (1h), AKPs in our agent (3h), persona system (2h) | row 48 | **planned, top priority** |
-| A43 | Product, Business, Wellness, Brand in the admin each need AKP depth like the prototype; our triangle = his 4 layers | row 48 | planned |
-| A44 | Each persona gets a mindspace across 4 functions (Wellness, Business, Product, Brand) via Wellness Identity AKPs | row 48 | planned (B4) |
+| A42 | **Committed by the product owner, due Monday, then invoice:** define the first 1,000 AKPs as foundation (6h) + graph over time (1.5h), bad-to-good sleep detail (1h), how it is calculated (1h), AKPs in our agent (3h), persona system (2h) | row 48 | done for Monday: see docs/briefs/2026-11-30-delivery-sheet.md (AKPs draft, agent use partial) |
+| A43 | Product, Business, Wellness, Brand in the admin each need AKP depth like the prototype; our triangle = his 4 layers | row 48 | partly done: Wellness and Product AKPs; Business and Brand AKPs not yet |
+| A44 | Each persona gets a mindspace across 4 functions (Wellness, Business, Product, Brand) via Wellness Identity AKPs | row 48 | done: mindspace across 4 functions per persona (U141) |
 | A45 | UI/UX Product AKPs sheet (13 dimensions, Aurelia OS somatic-causal architecture): product AKPs write high-precision features | row 48 | sheet saved (row 49) |
 | A46 | Think of version updates in Admin and App the way he iterated 1,328 Figma Make versions; extract the Figma Make code and research and run it against our app to see what is useful | row 49 | parked (Figma on hold by the product owner) |
-| A1 | AI brain: Product, Wellness, Business, each with metrics, MVP targets and a prediction model, connected | row 40 | planned (step 3–4) |
-| A2 | 5 dimensions × top 10 issues, cost of bad to good each, baseline then real figures | rows 39–40 | planned (step 1, first) |
-| A3 | Bad-to-good slider dynamics for every scenario, not only sleep | row 40 | planned (step 1) |
-| A4 | Therapeutic funnel in Product lab (next to user journey and business funnel) | rows 39–40 | planned (step 2); Therapeutic map and Healing Map on staging (U131) |
-| A5 | Every feature ranked against MVP targets; buyer agents populate the ranking; "x% chance to reach targets if x,y,z ship" | row 40 | planned (step 4) |
-| A6 | Backend follows product: endpoints derived from the flows | row 40 | planned (step 5); API contract v2 exists |
-| A7 | Weekly summary report to him | row 40 | planned (step 4) |
+| A1 | AI brain: Product, Wellness, Business, each with metrics, MVP targets and a prediction model, connected | row 40 | partly done: AI brain page with 5 functions, chance to target, feature ranking (U147); real prediction needs real data |
+| A2 | 5 dimensions × top 10 issues, cost of bad to good each, baseline then real figures | rows 39–40 | done as draft: 125 StateFlips across 5 dimensions with cost per flip (U141, U145) |
+| A3 | Bad-to-good slider dynamics for every scenario, not only sleep | row 40 | done: chapter-by-chapter cohort for every StateFlip; sleep with AKP drivers (U140, U145) |
+| A4 | Therapeutic funnel in Product lab (next to user journey and business funnel) | rows 39–40 | done: Therapeutic funnel per StateFlip (U148); Therapeutic map and Healing Map in production |
+| A5 | Every feature ranked against MVP targets; buyer agents populate the ranking; "x% chance to reach targets if x,y,z ship" | row 40 | done as model: feature ranking vs MVP targets with test 8 input (U147) |
+| A6 | Backend follows product: endpoints derived from the flows | row 40 | partly done: API contract v2 healing model, 12 endpoints (U146); backend not built |
+| A7 | Weekly summary report to him | row 40 | done: weekly report with Copy on the AI brain page (U147) |
 | A8 | AI retreat as an event: cost it | 26 Nov clarification | waiting on event details |
-| A9 | Cost of moving bad to good across text, voice, music, image, video; cost down vs impact up | row 37 | on staging and production (Cost report) |
-| A10 | Reports with sources, summary first | rows 37–39 | done (Reports, Report metrics on staging) |
+| A9 | Cost of moving bad to good across text, voice, music, image, video; cost down vs impact up | row 37 | done (Cost report, cost per StateFlip U145) |
+| A10 | Reports with sources, summary first | rows 37–39 | done: every report ends with its data sources (U146) |
 | A11 | B2B2C features as an HTML draft with diagrams | J184 | done (artifact, shared by the owner) |
-| A12 | Healing Map ("the math of healing") | row 38 | on staging (U131); citations to verify |
+| A12 | Healing Map ("the math of healing") | row 38 | in production (U131); citations still to verify |
 | A13 | Competitor research Calm, Headspace, Waking Up (G) | row 37 | open |
 | A14 | Google Analytics against our admin (H) | row 38 | open |
 | A15 | Wiki v2 unified knowledge base (I) | row 37 | open |

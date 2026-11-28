@@ -134,6 +134,7 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 | J181 | 2026-11-25 | Review + code | Review whether the reports are understandable even to a layperson, and fix them | U128 |
 | J182 | 2026-11-25 | Code | UX feedback report from the latest feedback group; drop "what this report says"; a goal on every report; make "many sources → iterations → product" visible; drawers instead of page changes | U129 |
 | J183 | 2026-11-25 | Code + research | Better buyer agent visualisation; therapeutic map and interactive Healing Map; B2B2C research using everything known, with the features to build, in a report | U130, U131, U132 |
+| J207 | 2026-11-28 | Code | After that, evaluate again against the business owner's needs; AKPs easy to understand and modifiable, with an interactive graph map | U149 |
 | J206 | 2026-11-27 | Code | Point C, AKP list and graph visualisation, clear data sources on every report, B1–B8, push to prod; review every business-owner ask for what else to do, then close the gaps | U145–U148 |
 | J205 | 2026-11-27 | Code | Push to production; are the old menus and reports still there; what else AKPs affect; the detailed remaining tasks; admin design phase 2 dropped | U144 |
 | J204 | 2026-11-27 | Code | As head of design: the sidebar is messy, tidy it so it is easy to understand | U143 |
@@ -2256,6 +2257,9 @@ See §"Unverified" in `docs/briefs/EUGENE-CONTEXT.md` | J159 | Product owner |
 ### J183 — Visuals, maps, B2B2C round 2
 - **Done:** U130, U131, U132.
 - **Key finding of round 2:** lead with a free first week, then charge. Trust beats price as the barrier, and a self-serve team plan comes second.
+
+### J207 — Editable AKPs, evaluation, production
+- **Done (U149).** Asks tracker statuses refreshed; released to production.
 
 ### J206 — B1–B8, AKP graph, sources, point C, evaluation (in progress)
 - Head-of-product review: `docs/briefs/2026-11-27-product-opportunities.md` (19 forgotten/half-done, 8 confidence, 12 risks, 10 decisions; top 10).

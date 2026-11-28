@@ -1,0 +1,2413 @@
+commit feb5c4eb843f8f5dfc562b760d71b2d9ebf029c6
+Author: Claude <noreply@anthropic.com>
+Date:   Sat Nov 28 04:46:20 2026 +0000
+
+    Editable AKPs with an interactive graph map (U149, J207)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+
+diff --git a/api/_lib/handlers.test.ts b/api/_lib/handlers.test.ts
+index 93d6d4c..819be48 100644
+--- a/api/_lib/handlers.test.ts
++++ b/api/_lib/handlers.test.ts
+@@ -13,7 +13,7 @@ function mockRes() {
+   return { res, api }
+ }
+ 
+-async function load(name: 'config' | 'clicks' | 'annotations', kv: boolean) {
++async function load(name: 'config' | 'clicks' | 'annotations' | 'akp-edits', kv: boolean) {
+   vi.resetModules()
+   if (kv) {
+     vi.stubEnv('KV_REST_API_URL', 'https://kv.example')
+@@ -43,7 +43,7 @@ beforeEach(() => {
+ 
+ describe('serverless endpoints', () => {
+   it('report configured:false without a store, with the scope and no-store', async () => {
+-    for (const name of ['config', 'clicks', 'annotations'] as const) {
++    for (const name of ['config', 'clicks', 'annotations', 'akp-edits'] as const) {
+       const handler = await load(name, false)
+       const { res, api } = mockRes()
+       await handler({ method: 'GET' }, api)
+@@ -54,7 +54,7 @@ describe('serverless endpoints', () => {
+   })
+ 
+   it('answer 400 to a malformed body instead of crashing', async () => {
+-    for (const name of ['config', 'clicks', 'annotations'] as const) {
++    for (const name of ['config', 'clicks', 'annotations', 'akp-edits'] as const) {
+       const handler = await load(name, true)
+       const { res, api } = mockRes()
+       await handler({ method: 'POST', body: '{bad json' }, api)
+@@ -86,4 +86,28 @@ describe('serverless endpoints', () => {
+     await handler({ method: 'DELETE' }, api)
+     expect(res.code).toBe(405)
+   })
++
++  it('akp-edits stores a valid list under the scoped key and refuses an invalid or oversized one', async () => {
++    const handler = await load('akp-edits', true)
++    const edit = { id: 'e1', at: '2026-11-28T10:00:00Z', by: 'admin', akp: 'WS-M2', op: 'update', set: { name: 'Calm', status: 'reviewed' }, prev: { name: 'Old' } }
++    const ok = mockRes()
++    await handler({ method: 'POST', body: { edits: [edit] } }, ok.api)
++    expect(ok.res.code).toBe(200)
++    expect(commands).toContainEqual(['SET', 'aurelia:admin:akp-edits:web_app', JSON.stringify([edit])])
++
++    commands.length = 0
++    for (const body of [{ edits: [{ ...edit, op: 'explode' }] }, { edits: [{ ...edit, set: { evil: 1 } }] }, { edits: 'x' }, { edits: Array.from({ length: 2001 }, () => edit) }]) {
++      const r = mockRes()
++      await handler({ method: 'POST', body }, r.api)
++      expect(r.res.code).toBe(400)
++    }
++    const big = mockRes()
++    await handler({ method: 'POST', body: { edits: Array.from({ length: 1900 }, (_, i) => ({ ...edit, id: `e${i}`, set: { description: 'x'.repeat(1000) } })) } }, big.api)
++    expect(big.res.code).toBe(413)
++    expect(commands).toHaveLength(0)
++
++    const get = mockRes()
++    await handler({ method: 'GET' }, get.api)
++    expect(get.res.body).toMatchObject({ configured: true, edits: [], scope: 'aurelia:admin:akp-edits:web_app' })
++  })
+ })
+diff --git a/api/akp-edits.ts b/api/akp-edits.ts
+new file mode 100644
+index 0000000..d61efc7
+--- /dev/null
++++ b/api/akp-edits.ts
+@@ -0,0 +1,107 @@
++// The admin's edits to the AKP catalogue (U149) — the same KV-backed pattern
++// as api/annotations.ts.
++//
++// GET  /api/akp-edits  -> every edit stored for this deployment
++// POST /api/akp-edits  -> replaces the whole list ({ edits: AkpEdit[] })
++//
++// Last write wins, no merge: the client sends its full ordered list, the
++// same accepted simplification api/annotations.ts makes for a low-traffic
++// internal tool. Scoped per deployment by scopedKey (staging edits never
++// reach production's store), `configured: false` without KV so the client
++// keeps its local copy, noStore on every answer, parseBody for a malformed
++// body (400, not 500).
++//
++// The shape mirrors src/admin/data/akpEdits.ts; this file is a separate
++// deploy target and does not import client code, so the schema is restated.
++// Unlike annotations, an invalid edit rejects the whole POST: the edits are
++// replayed in order, and silently dropping one would change what the others
++// mean.
++
++import { z } from 'zod'
++import { kvConfigured, noStore, parseBody, redis, scopedKey } from './_lib/kv.js'
++import type { Req, Res } from './_lib/kv.js'
++
++const KEY = scopedKey('aurelia:admin:akp-edits')
++
++const MAX_EDITS = 2000
++const MAX_BYTES = 900_000
++
++const id = z.string().min(1).max(64).regex(/^[A-Za-z0-9._-]+$/)
++const linkType = z.enum(['drives', 'supports', 'part-of', 'step-of', 'feeds', 'fed-by', 'mirrors'])
++const fields = z
++  .object({
++    name: z.string().min(1).max(200),
++    family: z.enum(['goal', 'identity', 'script', 'music', 'image', 'video', 'product']),
++    fn: z.enum(['wellness', 'product', 'identity', 'brand']),
++    layer: z.string().max(120),
++    modality: z.enum(['Script', 'Music', 'Image', 'Video', '—']),
++    description: z.string().max(2000),
++    usedFor: z.string().max(300),
++    helps: z.string().max(300),
++    causalRole: z.string().max(1000),
++    flips: z.array(z.string().regex(/^SF-[A-Z]+-\d{2}$/)).max(125),
++    status: z.enum(['draft', 'reviewed', 'approved']),
++  })
++  .partial()
++  .strict()
++const meta = { id: z.string().min(1).max(40), at: z.string().min(1).max(40), by: z.string().min(1).max(60), akp: id }
++const edit = z.discriminatedUnion('op', [
++  z.object({ ...meta, op: z.literal('add'), value: fields.required({ name: true, family: true }) }),
++  z.object({ ...meta, op: z.literal('update'), set: fields, prev: fields }),
++  z.object({ ...meta, op: z.literal('delete') }),
++  z.object({ ...meta, op: z.literal('restore') }),
++  z.object({ ...meta, op: z.literal('link-add'), to: id, type: linkType }),
++  z.object({ ...meta, op: z.literal('link-remove'), to: id, type: linkType }),
++])
++const edits = z.array(edit).max(MAX_EDITS)
++
++export default async function handler(req: Req, res: Res) {
++  noStore(res)
++
++  if (req.method !== 'GET' && req.method !== 'POST') {
++    res.status(405).json({ error: 'Use GET or POST' })
++    return
++  }
++  if (!kvConfigured) {
++    res.status(200).json({ configured: false, scope: KEY, edits: null })
++    return
++  }
++
++  try {
++    if (req.method === 'GET') {
++      const stored = await redis(['GET', KEY])
++      let list: unknown = []
++      if (typeof stored === 'string') {
++        try {
++          list = JSON.parse(stored)
++        } catch {
++          list = []
++        }
++      }
++      res.status(200).json({ configured: true, scope: KEY, edits: Array.isArray(list) ? list : [] })
++      return
++    }
++
++    const body = parseBody(req)
++    if (!body || !Array.isArray(body.edits)) {
++      res.status(400).json({ error: 'Expected { edits: AkpEdit[] }' })
++      return
++    }
++    const parsed = edits.safeParse(body.edits)
++    if (!parsed.success) {
++      const issue = parsed.error.issues[0]
++      res.status(400).json({ error: `Invalid edits${issue?.path.length ? ` at ${issue.path.join('.')}` : ''}: ${issue?.message ?? 'wrong shape'}` })
++      return
++    }
++    const json = JSON.stringify(parsed.data)
++    if (json.length > MAX_BYTES) {
++      res.status(413).json({ error: `Edits larger than ${MAX_BYTES} bytes` })
++      return
++    }
++    await redis(['SET', KEY, json])
++    res.status(200).json({ configured: true, scope: KEY, edits: parsed.data, savedAt: new Date().toISOString() })
++  } catch (error) {
++    console.error('api/akp-edits failed', error)
++    res.status(500).json({ error: 'Request failed' })
++  }
++}
+diff --git a/src/admin/admin.css b/src/admin/admin.css
+index 214f2fc..dd1b501 100644
+--- a/src/admin/admin.css
++++ b/src/admin/admin.css
+@@ -23,6 +23,10 @@
+   --color-adm-s2: #eb6834;
+   --color-adm-s3: #1baf7a;
+   --color-adm-s4: #eda100;
++  /* Two more for the seven AKP families (U149): violet and magenta, so no two
++     families share a hue; each family also has its own shape. */
++  --color-adm-s5: #8a5cd6;
++  --color-adm-s6: #c2418f;
+ 
+   /* Status — reserved, never reused as a series */
+   --color-adm-good: #0ca30c;
+@@ -59,6 +63,8 @@
+     --color-adm-s2: #d95926;
+     --color-adm-s3: #199e70;
+     --color-adm-s4: #c98500;
++    --color-adm-s5: #9d74e6;
++    --color-adm-s6: #d65aa3;
+ 
+     --color-adm-grid: #2c2b28;
+     --color-adm-axis: #3a3833;
+@@ -80,6 +86,8 @@
+   --color-adm-s2: #d95926;
+   --color-adm-s3: #199e70;
+   --color-adm-s4: #c98500;
++  --color-adm-s5: #9d74e6;
++  --color-adm-s6: #d65aa3;
+ 
+   --color-adm-grid: #2c2b28;
+   --color-adm-axis: #3a3833;
+diff --git a/src/admin/data/akpChapterGraph.ts b/src/admin/data/akpChapterGraph.ts
+index 98cb7dc..ca3cc67 100644
+--- a/src/admin/data/akpChapterGraph.ts
++++ b/src/admin/data/akpChapterGraph.ts
+@@ -14,7 +14,7 @@
+  * them labelled assumption.
+  */
+ 
+-import { akpById } from './akps'
++import { baseAkpById } from './akps'
+ import { DRAFTED } from './stateFlips'
+ 
+ export type ChapterModality = 'Script' | 'Music' | 'Voice' | 'Image'
+@@ -82,7 +82,7 @@ let NODES: ChapterNode[] | undefined
+ export function chapterNodes(): ChapterNode[] {
+   if (NODES) return NODES
+   const fromCatalogue = PICK.map(([id, modality, role]) => {
+-    const a = akpById(id)!
++    const a = baseAkpById(id)!
+     return { id, name: a.name, modality, layer: a.layer, role, inCatalogue: true, source: a.source }
+   })
+   return (NODES = [...fromCatalogue, ...VOICE])
+diff --git a/src/admin/data/akpEdits.test.ts b/src/admin/data/akpEdits.test.ts
+new file mode 100644
+index 0000000..3401065
+--- /dev/null
++++ b/src/admin/data/akpEdits.test.ts
+@@ -0,0 +1,105 @@
++import { afterEach, describe, expect, it } from 'vitest'
++import {
++  FAMILY_KIND, akpEditsFile, applyAkpEdits, defaultUsedFor, describeEdit, diffFields, makeEdit, nextAkpId, parseAkpEditsImport, revertAkp, usedForLine, type AkpEdit,
++} from './akpEdits'
++import { FAMILY, akpById, akpSummary, akps, baseAkps, setAkpEdits } from './akps'
++
++const base = baseAkps()
++const t = new Date('2026-11-28T10:00:00Z')
++const by = 'Tess'
++
++afterEach(() => setAkpEdits([]))
++
++describe('applyAkpEdits (U149)', () => {
++  it('returns the catalogue unchanged, and never touches it, with no edits', () => {
++    const out = applyAkpEdits(base, [])
++    expect(out.map((a) => a.id)).toEqual(base.map((a) => a.id))
++    expect(out.every((a) => !a.edited && !a.deleted && !a.added)).toBe(true)
++    expect(out[0]).not.toBe(base[0])
++  })
++
++  it('keeps the family table equal to akps.ts', () => {
++    for (const [f, v] of Object.entries(FAMILY_KIND)) expect([v.kind, v.fn, v.prefix]).toEqual([FAMILY[f as keyof typeof FAMILY].kind, FAMILY[f as keyof typeof FAMILY].fn, FAMILY[f as keyof typeof FAMILY].prefix])
++  })
++
++  it('applies updates, adds, deletes, restores and links in order', () => {
++    const a = base.find((x) => x.id === 'WS-M2')!
++    const before = JSON.stringify(a)
++    const edits: AkpEdit[] = [
++      makeEdit('update', 'WS-M2', by, { set: { name: 'Calm, renamed', status: 'reviewed', family: 'music' }, prev: { name: a.name } }, t),
++      makeEdit('add', 'WS-NEW1', by, { value: { name: 'Box breathing', family: 'script', flips: ['SF-PHY-01'] } }, t),
++      makeEdit('link-add', 'WS-NEW1', by, { to: 'WS-M2', type: 'supports' }, t),
++      makeEdit('link-add', 'WS-NEW1', by, { to: 'WS-M2', type: 'supports' }, t),
++      makeEdit('link-add', 'WS-NEW1', by, { to: 'WS-NEW1', type: 'supports' }, t),
++      makeEdit('delete', 'WS-SK9', by, {}, t),
++      makeEdit('delete', 'WS-H5', by, {}, t),
++      makeEdit('restore', 'WS-H5', by, {}, t),
++      makeEdit('update', 'NOPE-1', by, { set: { name: 'x' }, prev: {} }, t),
++    ]
++    const out = applyAkpEdits(base, edits)
++    const m = new Map(out.map((x) => [x.id, x]))
++    expect(m.get('WS-M2')).toMatchObject({ name: 'Calm, renamed', status: 'reviewed', family: 'music', kind: 'strategy', edited: true })
++    expect(m.get('WS-NEW1')).toMatchObject({ added: true, fromFile: false, fn: 'wellness', kind: 'strategy', flips: ['SF-PHY-01'], links: [{ to: 'WS-M2', type: 'supports' }] })
++    expect(m.get('WS-NEW1')!.source).toContain('Tess')
++    expect(m.get('WS-SK9')!.deleted).toBe(true)
++    expect(m.get('WS-H5')).toMatchObject({ deleted: false, edited: true })
++    expect(out).toHaveLength(base.length + 1)
++    expect(JSON.stringify(a)).toBe(before)
++  })
++
++  it('removes a generated link and ignores an add whose id is taken', () => {
++    const src = base.find((x) => x.links.length)!
++    const l = src.links[0]
++    const out = applyAkpEdits(base, [makeEdit('link-remove', src.id, by, { to: l.to, type: l.type }, t), makeEdit('add', src.id, by, { value: { name: 'dup', family: 'video' } }, t)])
++    const got = out.find((x) => x.id === src.id)!
++    expect(got.links.some((x) => x.to === l.to && x.type === l.type)).toBe(false)
++    expect(got.name).toBe(src.name)
++  })
++
++  it('reverts one AKP and records diffs in plain words', () => {
++    const a = applyAkpEdits(base, []).find((x) => x.id === 'WS-M2')!
++    expect(diffFields(a, { name: a.name, layer: a.layer })).toBeNull()
++    const d = diffFields(a, { name: 'Calm 2', flips: ['SF-PHY-01'] })!
++    expect(Object.keys(d.set).sort()).toEqual(['flips', 'name'])
++    const e = makeEdit('update', 'WS-M2', by, d, t)
++    expect(describeEdit(e)).toContain(`Name: “${a.name}” → “Calm 2”`)
++    const edits = [e, makeEdit('delete', 'WS-SK9', by, {}, t)]
++    expect(revertAkp(edits, 'WS-M2')).toEqual([edits[1]])
++  })
++
++  it('feeds the merged view that akps(), akpById() and the summary read', () => {
++    const total = akpSummary().total
++    setAkpEdits([makeEdit('delete', 'WS-SK9', by, {}, t), makeEdit('add', 'WM-NEW1', by, { value: { name: 'Rain', family: 'music' } }, t), makeEdit('add', 'WM-NEW2', by, { value: { name: 'Wind', family: 'music' } }, t)])
++    expect(akpById('WS-SK9')).toBeUndefined()
++    expect(akpById('WM-NEW1')?.name).toBe('Rain')
++    expect(akps()).toHaveLength(base.length + 1)
++    expect(akpSummary().total).toBe(total + 1)
++    expect(nextAkpId('music', (id) => !!akpById(id))).toBe('WM-NEW3')
++  })
++
++  it('writes a "Used for … · helps …" line, preferring what an admin wrote', () => {
++    const a = applyAkpEdits(base, []).find((x) => x.id === 'WS-M2')!
++    expect(usedForLine(a, () => 'Bad sleep')).toMatch(/^Used for .+ · helps .+/)
++    expect(usedForLine({ ...a, usedFor: 'setting the mood', helps: 'people unwind' }, () => undefined)).toBe('Used for setting the mood · helps people unwind')
++    expect(defaultUsedFor({ family: 'product', layer: 'Onboarding', modality: '—' })).toBe('the app experience (onboarding)')
++  })
++})
++
++describe('importing edits (U149)', () => {
++  const good = [makeEdit('delete', 'WS-SK9', by, {}, t)]
++
++  it('reads an exported file and a bare array', () => {
++    expect(parseAkpEditsImport(JSON.stringify(akpEditsFile(good, t)))).toEqual({ ok: true, edits: good })
++    expect(parseAkpEditsImport(JSON.stringify(good))).toEqual({ ok: true, edits: good })
++  })
++
++  it('refuses malformed, wrongly shaped and oversized files with a reason', () => {
++    expect(parseAkpEditsImport('{nope')).toMatchObject({ ok: false, error: 'This is not a JSON file.' })
++    expect(parseAkpEditsImport(JSON.stringify({ kind: 'other', version: 1, edits: [] }))).toMatchObject({ ok: false })
++    const bad = parseAkpEditsImport(JSON.stringify([{ ...good[0], op: 'explode' }]))
++    expect(bad.ok).toBe(false)
++    expect(parseAkpEditsImport(JSON.stringify([{ ...good[0], akp: 'has spaces!' }])).ok).toBe(false)
++    expect(parseAkpEditsImport(JSON.stringify([makeEdit('update', 'WS-M2', by, { set: { flips: ['not-a-flip'] }, prev: {} }, t)])).ok).toBe(false)
++    expect(parseAkpEditsImport('x'.repeat(1_000_000))).toMatchObject({ ok: false })
++  })
++})
+diff --git a/src/admin/data/akpEdits.ts b/src/admin/data/akpEdits.ts
+new file mode 100644
+index 0000000..f2f3463
+--- /dev/null
++++ b/src/admin/data/akpEdits.ts
+@@ -0,0 +1,270 @@
++/**
++ * Editable AKPs (U149, J207): an overlay of edits on top of the generated
++ * catalogue. The catalogue (akps.ts, built from generated/akpSource.ts) is
++ * never changed; what an admin adds, edits, deletes or links is kept here as
++ * an ordered list of edits, each with who made it, when and what changed.
++ * `applyAkpEdits(base, edits)` replays them into the merged view that the
++ * catalogue list, the graph, the StateFlip links and the report metrics read.
++ *
++ * Pure: no React, no storage, no network. The store (akps.ts) and the sync
++ * (akpEditsSync.ts) sit on top. Only types are imported from akps.ts, so the
++ * two modules do not import each other at runtime; the small family table
++ * below is restated and a test keeps it equal to akps.ts's FAMILY.
++ */
++
++import { z } from 'zod'
++import type { Akp, AkpFamily, AkpFunction, AkpKind, LinkType, Modality } from './akps'
++
++export const AKP_FAMILY_IDS = ['goal', 'identity', 'script', 'music', 'image', 'video', 'product'] as const satisfies readonly AkpFamily[]
++export const AKP_FUNCTION_IDS = ['wellness', 'product', 'identity', 'brand'] as const satisfies readonly AkpFunction[]
++export const AKP_MODALITIES = ['Script', 'Music', 'Image', 'Video', '—'] as const satisfies readonly Modality[]
++export const AKP_LINK_TYPES = ['drives', 'supports', 'part-of', 'step-of', 'feeds', 'fed-by', 'mirrors'] as const satisfies readonly LinkType[]
++export const AKP_STATUSES = ['draft', 'reviewed', 'approved'] as const
++export type AkpStatus = (typeof AKP_STATUSES)[number]
++
++/** Kind and default function per family; equal to FAMILY in akps.ts (tested). */
++export const FAMILY_KIND: Record<AkpFamily, { kind: AkpKind; fn: AkpFunction; prefix: string }> = {
++  goal: { kind: 'goal', fn: 'wellness', prefix: 'WG' },
++  identity: { kind: 'goal', fn: 'identity', prefix: 'ID' },
++  script: { kind: 'strategy', fn: 'wellness', prefix: 'WS' },
++  music: { kind: 'strategy', fn: 'wellness', prefix: 'WM' },
++  image: { kind: 'strategy', fn: 'wellness', prefix: 'WI' },
++  video: { kind: 'strategy', fn: 'wellness', prefix: 'WV' },
++  product: { kind: 'strategy', fn: 'product', prefix: 'PR' },
++}
++
++/* ---------------------------------------------------------------- Schema */
++
++export const MAX_EDITS = 2000
++/** Serialised size cap, the same on the server (api/akp-edits.ts). */
++export const MAX_EDITS_BYTES = 900_000
++
++const akpId = z.string().min(1).max(64).regex(/^[A-Za-z0-9._-]+$/)
++const flipId = z.string().regex(/^SF-[A-Z]+-\d{2}$/)
++
++export const akpFieldsSchema = z
++  .object({
++    name: z.string().min(1).max(200),
++    family: z.enum(AKP_FAMILY_IDS),
++    fn: z.enum(AKP_FUNCTION_IDS),
++    layer: z.string().max(120),
++    modality: z.enum(AKP_MODALITIES),
++    description: z.string().max(2000),
++    usedFor: z.string().max(300),
++    helps: z.string().max(300),
++    causalRole: z.string().max(1000),
++    flips: z.array(flipId).max(125),
++    status: z.enum(AKP_STATUSES),
++  })
++  .partial()
++export type AkpFields = z.infer<typeof akpFieldsSchema>
++export type AkpField = keyof AkpFields
++export const AKP_FIELDS: AkpField[] = ['name', 'family', 'fn', 'layer', 'modality', 'status', 'description', 'usedFor', 'helps', 'causalRole', 'flips']
++export const FIELD_LABEL: Record<AkpField, string> = {
++  name: 'Name', family: 'Family', fn: 'Function', layer: 'Layer', modality: 'Modality', status: 'Status', description: 'Description',
++  usedFor: 'Used for', helps: 'Helps', causalRole: 'Causal role', flips: 'StateFlips served',
++}
++
++const meta = { id: z.string().min(1).max(40), at: z.string().min(1).max(40), by: z.string().min(1).max(60), akp: akpId }
++
++export const akpEditSchema = z.discriminatedUnion('op', [
++  z.object({ ...meta, op: z.literal('add'), value: akpFieldsSchema.required({ name: true, family: true }) }),
++  z.object({ ...meta, op: z.literal('update'), set: akpFieldsSchema, prev: akpFieldsSchema.catch({}) }),
++  z.object({ ...meta, op: z.literal('delete') }),
++  z.object({ ...meta, op: z.literal('restore') }),
++  z.object({ ...meta, op: z.literal('link-add'), to: akpId, type: z.enum(AKP_LINK_TYPES) }),
++  z.object({ ...meta, op: z.literal('link-remove'), to: akpId, type: z.enum(AKP_LINK_TYPES) }),
++])
++export type AkpEdit = z.infer<typeof akpEditSchema>
++
++export const akpEditsSchema = z.array(akpEditSchema).max(MAX_EDITS)
++
++/** The export file: what "Export JSON" writes and "Import JSON" reads. */
++export const akpEditsFileSchema = z.object({ kind: z.literal('aurelia-akp-edits'), version: z.literal(1), exportedAt: z.string().max(40).optional(), edits: akpEditsSchema })
++export type AkpEditsFile = z.infer<typeof akpEditsFileSchema>
++
++export function akpEditsFile(edits: AkpEdit[], now = new Date()): AkpEditsFile {
++  return { kind: 'aurelia-akp-edits', version: 1, exportedAt: now.toISOString(), edits }
++}
++
++/**
++ * Reads an exported file (or a bare array of edits). Anything malformed, too
++ * large or naming a field this version does not know is refused as a whole,
++ * with the first problem in plain words: a partial import would replay edits
++ * out of their order.
++ */
++export function parseAkpEditsImport(text: string): { ok: true; edits: AkpEdit[] } | { ok: false; error: string } {
++  if (text.length > MAX_EDITS_BYTES) return { ok: false, error: `The file is larger than ${Math.round(MAX_EDITS_BYTES / 1000)} kB.` }
++  let raw: unknown
++  try {
++    raw = JSON.parse(text)
++  } catch {
++    return { ok: false, error: 'This is not a JSON file.' }
++  }
++  const parsed = Array.isArray(raw) ? akpEditsSchema.safeParse(raw) : akpEditsFileSchema.safeParse(raw)
++  if (!parsed.success) {
++    const issue = parsed.error.issues[0]
++    const where = issue?.path.length ? ` at ${issue.path.join('.')}` : ''
++    return { ok: false, error: `Not an AKP edits file${where}: ${issue?.message ?? 'wrong shape'}.` }
++  }
++  return { ok: true, edits: Array.isArray(parsed.data) ? parsed.data : parsed.data.edits }
++}
++
++/* ----------------------------------------------------------------- Apply */
++
++export interface AkpView extends Akp {
++  /** Soft-deleted: hidden from the catalogue, the graph and the counts, restorable. */
++  deleted: boolean
++  /** Changed by at least one edit (its own fields, links or deletion). */
++  edited: boolean
++  /** Added in the admin, not in the generated catalogue. */
++  added: boolean
++}
++
++function blank(id: string, v: AkpFields & { name: string; family: AkpFamily }, by: string): AkpView {
++  const fam = FAMILY_KIND[v.family]
++  return {
++    id, name: v.name, family: v.family, fn: v.fn ?? fam.fn, kind: fam.kind, layer: v.layer ?? '', modality: v.modality ?? '—',
++    description: v.description ?? '', causalRole: v.causalRole ?? '', usedFor: v.usedFor, helps: v.helps, flips: v.flips ?? [], links: [],
++    source: `added in the admin by ${by}`, fromFile: false, status: v.status ?? 'draft', deleted: false, edited: true, added: true,
++  }
++}
++
++function setFields(a: AkpView, set: AkpFields): AkpView {
++  const next: AkpView = { ...a, edited: true }
++  for (const k of AKP_FIELDS) {
++    if (set[k] === undefined) continue
++    ;(next as unknown as Record<string, unknown>)[k] = k === 'flips' ? [...(set.flips ?? [])] : set[k]
++  }
++  if (set.family) next.kind = FAMILY_KIND[set.family].kind
++  return next
++}
++
++/**
++ * Replays `edits` over `base`, in order, without touching `base`. An edit that
++ * no longer applies (an update to an AKP that does not exist, an add whose id
++ * is taken, a link to itself) is skipped rather than failing the rest.
++ */
++export function applyAkpEdits(base: readonly Akp[], edits: readonly AkpEdit[]): AkpView[] {
++  const order = base.map((a) => a.id)
++  const map = new Map<string, AkpView>(base.map((a) => [a.id, { ...a, deleted: false, edited: false, added: false }]))
++  for (const e of edits) {
++    const cur = map.get(e.akp)
++    switch (e.op) {
++      case 'add':
++        if (cur) break
++        map.set(e.akp, blank(e.akp, e.value, e.by))
++        order.push(e.akp)
++        break
++      case 'update':
++        if (cur) map.set(e.akp, setFields(cur, e.set))
++        break
++      case 'delete':
++      case 'restore':
++        if (cur) map.set(e.akp, { ...cur, deleted: e.op === 'delete', edited: true })
++        break
++      case 'link-add':
++        if (cur && e.to !== e.akp && !cur.links.some((l) => l.to === e.to && l.type === e.type)) map.set(e.akp, { ...cur, links: [...cur.links, { to: e.to, type: e.type }], edited: true })
++        break
++      case 'link-remove':
++        if (cur && cur.links.some((l) => l.to === e.to && l.type === e.type)) map.set(e.akp, { ...cur, links: cur.links.filter((l) => !(l.to === e.to && l.type === e.type)), edited: true })
++        break
++    }
++  }
++  return order.map((id) => map.get(id)!)
++}
++
++/* --------------------------------------------------------- Edit helpers */
++
++let seq = 0
++/** A short, unique-enough id for one edit (time + counter + random). */
++export function editId(now = Date.now()): string {
++  seq = (seq + 1) % 1296
++  return `${now.toString(36)}${seq.toString(36).padStart(2, '0')}${Math.random().toString(36).slice(2, 6)}`
++}
++
++export function makeEdit<T extends AkpEdit['op']>(op: T, akp: string, by: string, rest: Omit<Extract<AkpEdit, { op: T }>, 'id' | 'at' | 'by' | 'akp' | 'op'>, now = new Date()): Extract<AkpEdit, { op: T }> {
++  return { id: editId(now.getTime()), at: now.toISOString(), by: by.trim().slice(0, 60) || 'admin', akp, op, ...rest } as Extract<AkpEdit, { op: T }>
++}
++
++const same = (a: unknown, b: unknown) => JSON.stringify(a ?? '') === JSON.stringify(b ?? '')
++
++/** The fields of `next` that differ from `a`, as `set` and `prev` for one update edit; null when nothing changed. */
++export function diffFields(a: AkpView, next: AkpFields): { set: AkpFields; prev: AkpFields } | null {
++  const set: Record<string, unknown> = {}
++  const prev: Record<string, unknown> = {}
++  for (const k of AKP_FIELDS) {
++    if (next[k] === undefined) continue
++    const before = (a as unknown as Record<string, unknown>)[k]
++    if (same(before, next[k])) continue
++    set[k] = next[k]
++    prev[k] = before ?? ''
++  }
++  return Object.keys(set).length ? { set: set as AkpFields, prev: akpFieldsSchema.catch({}).parse(prev) } : null
++}
++
++/** Every edit whose subject is `id`, oldest first. */
++export const editsFor = (edits: readonly AkpEdit[], id: string) => edits.filter((e) => e.akp === id)
++/** "Revert to original": drops every edit made to one AKP. */
++export const revertAkp = (edits: readonly AkpEdit[], id: string) => edits.filter((e) => e.akp !== id)
++
++/** The next free id for an AKP added in the admin, e.g. WS-NEW3. */
++export function nextAkpId(family: AkpFamily, taken: (id: string) => boolean): string {
++  const p = FAMILY_KIND[family].prefix
++  for (let i = 1; ; i++) if (!taken(`${p}-NEW${i}`)) return `${p}-NEW${i}`
++}
++
++const show = (v: unknown) => (Array.isArray(v) ? v.join(', ') || 'none' : v === undefined || v === '' ? 'empty' : String(v))
++
++/** One edit in plain words, for the history list: "Name: “A” → “B”". */
++export function describeEdit(e: AkpEdit): string {
++  switch (e.op) {
++    case 'add':
++      return `Added “${e.value.name}”`
++    case 'update':
++      return (Object.keys(e.set) as AkpField[]).map((k) => `${FIELD_LABEL[k]}: “${show(e.prev[k])}” → “${show(e.set[k])}”`).join('; ')
++    case 'delete':
++      return 'Deleted (restorable)'
++    case 'restore':
++      return 'Restored'
++    case 'link-add':
++      return `Link added: ${e.type} ${e.to}`
++    case 'link-remove':
++      return `Link removed: ${e.type} ${e.to}`
++  }
++}
++
++/* ------------------------------------------------- Easy to understand */
++
++const lower = (s: string) => (s ? s.charAt(0).toLowerCase() + s.slice(1) : s)
++
++/** What the AKP is used for, generated from its fields when nobody has written it. */
++export function defaultUsedFor(a: Pick<Akp, 'family' | 'layer' | 'modality'>): string {
++  const layer = lower(a.layer.replace(/\s*\(.*\)$/, '')) || 'a piece'
++  switch (a.family) {
++    case 'goal':
++      return a.layer === 'StateFlip' ? 'the change a session aims at' : `a step on the way (${layer})`
++    case 'identity':
++      return `reading who the person is (${layer})`
++    case 'product':
++      return `the app experience (${layer})`
++    default:
++      return `the ${a.modality === '—' ? a.family : a.modality.toLowerCase()} of a chapter (${layer})`
++  }
++}
++
++/** Who or what it helps, generated from the StateFlips it serves. */
++export function defaultHelps(a: Pick<Akp, 'family' | 'flips' | 'kind'>, flipTitle: (id: string) => string | undefined): string {
++  if (a.flips.length) {
++    const first = flipTitle(a.flips[0]) ?? a.flips[0]
++    return a.flips.length === 1 ? lower(first) : `${lower(first)} and ${a.flips.length - 1} more`
++  }
++  if (a.family === 'product') return 'every session feel easy'
++  if (a.family === 'identity') return 'choose and frame sessions'
++  return a.kind === 'goal' ? 'the person get there' : 'no goal linked yet'
++}
++
++/** The one-line sentence on every AKP: "Used for … · helps …". */
++export function usedForLine(a: Pick<Akp, 'family' | 'layer' | 'modality' | 'flips' | 'kind' | 'usedFor' | 'helps'>, flipTitle: (id: string) => string | undefined): string {
++  return `Used for ${a.usedFor?.trim() || defaultUsedFor(a)} · helps ${a.helps?.trim() || defaultHelps(a, flipTitle)}`
++}
+diff --git a/src/admin/data/akpEditsSync.ts b/src/admin/data/akpEditsSync.ts
+new file mode 100644
+index 0000000..21cc950
+--- /dev/null
++++ b/src/admin/data/akpEditsSync.ts
+@@ -0,0 +1,142 @@
++import { useCallback, useEffect, useSyncExternalStore } from 'react'
++import { fetchAkpEdits, saveAkpEdits } from '../../api/akpEdits'
++import { readString, writeJson, writeString } from '../../lib/storage'
++import type { AkpEdit } from './akpEdits'
++import { AKP_EDITS_KEY, getAkpEdits, setAkpEdits, subscribeAkpEdits } from './akps'
++
++/**
++ * Keeps the AKP edits (akpEdits.ts) in step with /api/akp-edits (U149), the
++ * same contract src/demo/annotations uses for pins:
++ * - every change is written to this browser first (localStorage), then the
++ *   whole list is pushed after a short debounce: last write wins, no merge;
++ * - the server is polled while the editor is open, and what it holds
++ *   replaces the local list unless a push is pending;
++ * - `configured: false` (no KV on this deployment) or no endpoint at all
++ *   (vite dev / preview) leaves the tool on its local copy, "Local only".
++ * Staging and production keep separate lists: the server scopes the key.
++ */
++
++export type AkpSyncState = 'loading' | 'synced' | 'saving' | 'local-only' | 'error'
++
++const POLL_MS = 20_000
++const PUSH_DEBOUNCE_MS = 700
++const WHO_KEY = 'aurelia.admin.akpEditor'
++
++let sync: AkpSyncState = 'loading'
++let scope: string | null = null
++let loaded = false
++let pushTimer: number | undefined
++let lastServer: AkpEdit[] | null = null
++const syncListeners = new Set<() => void>()
++const emit = () => syncListeners.forEach((l) => l())
++const setSync = (s: AkpSyncState) => {
++  if (s === sync) return
++  sync = s
++  emit()
++}
++
++async function pull() {
++  if (pushTimer !== undefined || sync === 'saving') return
++  try {
++    const data = await fetchAkpEdits()
++    scope = data.scope ?? null
++    if (!data.configured || !data.edits) {
++      setSync('local-only')
++      emit()
++      return
++    }
++    if (pushTimer === undefined && (sync as AkpSyncState) !== 'saving') {
++      lastServer = data.edits
++      if (JSON.stringify(data.edits) !== JSON.stringify(getAkpEdits())) {
++        setAkpEdits(data.edits)
++        writeJson(AKP_EDITS_KEY, data.edits)
++      }
++    }
++    setSync('synced')
++    emit()
++  } catch {
++    // No endpoint (vite dev / preview) or offline: the local copy carries the tool.
++    setSync(sync === 'error' ? 'error' : 'local-only')
++  } finally {
++    loaded = true
++  }
++}
++
++async function push() {
++  pushTimer = undefined
++  const edits = getAkpEdits()
++  if (edits === lastServer) return
++  try {
++    setSync('saving')
++    const data = await saveAkpEdits(edits)
++    scope = data.scope ?? scope
++    lastServer = edits
++    setSync(data.configured ? 'synced' : 'local-only')
++  } catch {
++    setSync('error')
++  }
++}
++
++/** Replaces the edits: saved in this browser now, pushed to the shared store shortly after. */
++export function commitAkpEdits(next: AkpEdit[]) {
++  setAkpEdits(next)
++  writeJson(AKP_EDITS_KEY, next)
++  if (!loaded || sync === 'local-only') return
++  if (pushTimer !== undefined) window.clearTimeout(pushTimer)
++  pushTimer = window.setTimeout(() => void push(), PUSH_DEBOUNCE_MS)
++}
++
++let users = 0
++let pollTimer: number | undefined
++function start() {
++  if (users++ > 0) return
++  void pull()
++  pollTimer = window.setInterval(() => void pull(), POLL_MS)
++}
++function stop() {
++  if (--users > 0) return
++  window.clearInterval(pollTimer)
++}
++
++const subscribeSync = (l: () => void) => {
++  syncListeners.add(l)
++  return () => void syncListeners.delete(l)
++}
++
++/** The name an edit is recorded under, kept in this browser. */
++export function editorName(): string {
++  return readString(WHO_KEY)?.trim() || 'admin'
++}
++
++/** The edits, the sync state and the actions; starts polling while mounted. */
++export function useAkpEdits() {
++  const edits = useSyncExternalStore(subscribeAkpEdits, getAkpEdits, getAkpEdits)
++  const state = useSyncExternalStore(subscribeSync, () => sync, () => sync)
++  const key = useSyncExternalStore(subscribeSync, () => scope, () => scope)
++  const who = useSyncExternalStore(subscribeSync, editorName, editorName)
++  useEffect(() => {
++    start()
++    return stop
++  }, [])
++  const setWho = useCallback((name: string) => {
++    writeString(WHO_KEY, name.slice(0, 60))
++    emit()
++  }, [])
++  return { edits, sync: state, scope: key, who, setWho, commit: commitAkpEdits }
++}
++
++/** The status line, in the words the annotations tool uses. */
++export function syncText(state: AkpSyncState, key: string | null): string {
++  switch (state) {
++    case 'loading':
++      return 'Checking the shared store…'
++    case 'synced':
++      return `Synced — every admin on this site sees these edits${key ? ` (${key})` : ''}`
++    case 'saving':
++      return 'Saving…'
++    case 'local-only':
++      return 'Local only — no server configured; edits are saved in this browser'
++    case 'error':
++      return 'Sync error — edits are saved in this browser and will be sent with the next change'
++  }
++}
+diff --git a/src/admin/data/akps.ts b/src/admin/data/akps.ts
+index dfbdedd..f4faed9 100644
+--- a/src/admin/data/akps.ts
++++ b/src/admin/data/akps.ts
+@@ -15,8 +15,13 @@
+  * reads the workbooks) and stateFlips.ts; deterministic, no React. Each AKP's
+  * `source` is "from <workbook / tab / ID>" or "drafted by us — to review".
+  * Brand is a function with no AKPs yet: the marketing sheet has not arrived.
++ *
++ * Since U149 admins can edit the catalogue: akpEdits.ts keeps an overlay of
++ * edits and akps() returns the merged view (baseAkps() is the generated one).
+  */
+ 
++import { readJson } from '../../lib/storage'
++import { applyAkpEdits, akpEditsSchema, type AkpEdit, type AkpStatus, type AkpView } from './akpEdits'
+ import { AKP_SOURCE } from './generated/akpSource'
+ import { DRAFTED, conceptId, from, stateFlips, tokens, type StateFlip } from './stateFlips'
+ 
+@@ -24,7 +29,7 @@ export type AkpFamily = 'goal' | 'identity' | 'product' | 'script' | 'music' | '
+ export type AkpFunction = 'wellness' | 'product' | 'identity' | 'brand'
+ export type AkpKind = 'goal' | 'strategy'
+ export type Modality = 'Script' | 'Music' | 'Image' | 'Video' | '—'
+-export type LinkType = 'step-of' | 'feeds' | 'part-of' | 'supports' | 'fed-by' | 'mirrors'
++export type LinkType = 'drives' | 'step-of' | 'feeds' | 'part-of' | 'supports' | 'fed-by' | 'mirrors'
+ 
+ export const FAMILY: Record<AkpFamily, { prefix: string; label: string; fn: AkpFunction; kind: AkpKind }> = {
+   goal: { prefix: 'WG', label: 'Goal', fn: 'wellness', kind: 'goal' },
+@@ -38,7 +43,7 @@ export const FAMILY: Record<AkpFamily, { prefix: string; label: string; fn: AkpF
+ export const FAMILIES = Object.keys(FAMILY) as AkpFamily[]
+ export const FUNCTIONS: AkpFunction[] = ['wellness', 'product', 'identity', 'brand']
+ export const LINK_TEXT: Record<LinkType, string> = {
+-  'step-of': 'is a step of', feeds: 'feeds', 'part-of': 'is part of', supports: 'supports', 'fed-by': 'is fed by', mirrors: 'mirrors',
++  drives: 'drives', 'step-of': 'is a step of', feeds: 'feeds', 'part-of': 'is part of', supports: 'supports', 'fed-by': 'is fed by', mirrors: 'mirrors',
+ }
+ 
+ export interface Akp {
+@@ -56,7 +61,11 @@ export interface Akp {
+   links: { to: string; type: LinkType }[]
+   source: string
+   fromFile: boolean
+-  status: 'draft'
++  /** Draft from the generator; an admin can mark it reviewed or approved (U149). */
++  status: AkpStatus
++  /** Plain-language "used for" and "helps", written by an admin; generated from the fields when absent (akpEdits.ts usedForLine). */
++  usedFor?: string
++  helps?: string
+ }
+ 
+ const S = AKP_SOURCE
+@@ -125,7 +134,8 @@ function flipsByWords(fs: StateFlip[], text: string, k: number): string[] {
+ 
+ let CACHE: Akp[] | undefined
+ 
+-export function akps(): Akp[] {
++/** The generated catalogue, before any admin edit. */
++export function baseAkps(): Akp[] {
+   if (CACHE) return CACHE
+   const fs = stateFlips()
+   const out: Akp[] = []
+@@ -201,7 +211,62 @@ export function akps(): Akp[] {
+   return (CACHE = out)
+ }
+ 
+-export const akpById = (id: string) => akps().find((a) => a.id === id)
++export const baseAkpById = (id: string) => baseAkps().find((a) => a.id === id)
++
++/* ------------------------------------------------- Admin edits (U149) */
++
++/**
++ * The edits in force, replayed over the generated catalogue by
++ * applyAkpEdits. Seeded from this browser's copy (localStorage) on first
++ * read; akpEditsSync.ts replaces them when the shared store answers and
++ * every change goes through setAkpEdits, so akps(), akpSummary() and the
++ * report metrics always read the same merged view.
++ */
++export const AKP_EDITS_KEY = 'aurelia.admin.akpEdits'
++let EDITS: AkpEdit[] | undefined
++let MERGED: { edits: AkpEdit[]; all: AkpView[]; live: AkpView[]; byId: Map<string, AkpView> } | undefined
++const listeners = new Set<() => void>()
++
++export function getAkpEdits(): AkpEdit[] {
++  return (EDITS ??= readJson(AKP_EDITS_KEY, akpEditsSchema, []))
++}
++
++export function setAkpEdits(next: AkpEdit[]) {
++  if (next === EDITS) return
++  EDITS = next
++  for (const l of listeners) l()
++}
++
++export function subscribeAkpEdits(listener: () => void) {
++  listeners.add(listener)
++  return () => void listeners.delete(listener)
++}
++
++function merged() {
++  const edits = getAkpEdits()
++  if (MERGED?.edits === edits) return MERGED
++  const all = applyAkpEdits(baseAkps(), edits)
++  const live = all.filter((a) => !a.deleted)
++  return (MERGED = { edits, all, live, byId: new Map(all.map((a) => [a.id, a])) })
++}
++
++/** The catalogue with the admin's edits applied, soft-deleted AKPs left out. What every list, graph and count reads. */
++export function akps(): AkpView[] {
++  return merged().live
++}
++
++/** Including soft-deleted ones (flagged `deleted`), for the editor's "show deleted". */
++export function akpsWithDeleted(): AkpView[] {
++  return merged().all
++}
++
++/** An AKP by id in the merged view; undefined when it does not exist or is deleted. */
++export const akpById = (id: string): AkpView | undefined => {
++  const a = merged().byId.get(id)
++  return a && !a.deleted ? a : undefined
++}
++/** Like akpById, but finds soft-deleted AKPs too. */
++export const akpByIdAny = (id: string): AkpView | undefined => merged().byId.get(id)
+ 
+ /* --------------------------------------------------------------- Summary */
+ 
+@@ -232,7 +297,7 @@ export function akpSummary(): AkpSummary {
+     byKind: { goal: as.length - strategy.length, strategy: strategy.length },
+     fromFile: as.filter((a) => a.fromFile).length,
+     drafted: as.filter((a) => !a.fromFile).length,
+-    links: as.reduce((t, a) => t + a.links.length, 0),
++    links: as.reduce((t, a) => t + a.links.filter((l) => akpById(l.to)).length, 0),
+     flipsCovered: covered.size,
+     flipsCoveredBeyondSkills: beyond.size,
+     flips: stateFlips().length,
+diff --git a/src/admin/data/reportMetrics.ts b/src/admin/data/reportMetrics.ts
+index 526a235..cc8ac60 100644
+--- a/src/admin/data/reportMetrics.ts
++++ b/src/admin/data/reportMetrics.ts
+@@ -1308,8 +1308,8 @@ function stateFlipMetrics(): MetricDef[] {
+       },
+     },
+     {
+-      id: 'akp-total', report: 'stateflips', label: 'Draft AKPs in the catalogue', unit: 'count', good: 'none',
+-      formula: 'Goal AKPs (125 StateFlips, their 375 steps, 47 identity dimensions) plus strategy and tactic AKPs (script, music, image, video, product).', shownAt: 'StateFlips, AKP catalogue summary', source: 'src/admin/data/akps.ts',
++      id: 'akp-total', report: 'stateflips', label: 'AKPs in the catalogue', unit: 'count', good: 'none',
++      formula: 'Goal AKPs (125 StateFlips, their 375 steps, 47 identity dimensions) plus strategy and tactic AKPs (script, music, image, video, product), with the edits made in the admin applied (added counted, deleted left out).', shownAt: 'StateFlips, AKP catalogue summary', source: 'src/admin/data/akps.ts',
+       displayed: () => akpSummary().total,
+       compute: () => {
+         const as = akps()
+diff --git a/src/admin/pages/lab/AkpEditor.tsx b/src/admin/pages/lab/AkpEditor.tsx
+new file mode 100644
+index 0000000..2add26e
+--- /dev/null
++++ b/src/admin/pages/lab/AkpEditor.tsx
+@@ -0,0 +1,438 @@
++import { Download, History, Plus, RotateCcw, Trash2, Undo2, Upload, X } from 'lucide-react'
++import { useId, useRef, useState, type ReactNode } from 'react'
++import { inputClass } from '../../components/ui'
++import {
++  AKP_FUNCTION_IDS, AKP_LINK_TYPES, AKP_MODALITIES, AKP_STATUSES, akpEditsFile, defaultHelps, defaultUsedFor, describeEdit, diffFields, editsFor, makeEdit, parseAkpEditsImport, revertAkp,
++  type AkpEdit, type AkpFields, type AkpView,
++} from '../../data/akpEdits'
++import { syncText, useAkpEdits } from '../../data/akpEditsSync'
++import { FAMILIES, FAMILY, LINK_TEXT, akpById, akpByIdAny, akps, type AkpFamily, type LinkType } from '../../data/akps'
++import { stateFlipById } from '../../data/stateFlips'
++import { Mark } from './AkpGraph'
++import { FAMILY_LOOK } from './akpStyle'
++
++/*
++ * Editing AKPs (U149, J207): the explainer at the top of the catalogue tab,
++ * the edit bar (who is editing, the sync line, export / import / reset), and
++ * the editor inside each AKP's drawer (fields, links, history, revert,
++ * delete). Every change is one edit in akpEdits.ts, recorded with who, when
++ * and what; the generated catalogue is never touched.
++ */
++
++const flipTitle = (id: string) => stateFlipById(id)?.title
++const btn = 'inline-flex items-center gap-4 rounded-8 border border-adm-line px-10 py-6 text-12 font-medium text-adm-ink hover:bg-adm-hover disabled:opacity-50'
++const primary = 'inline-flex items-center gap-4 rounded-8 bg-adm-ink px-12 py-6 text-12 font-medium text-adm-surface hover:opacity-90 disabled:opacity-50'
++const when = (iso: string) => new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
++
++/* ------------------------------------------------------------ Explainer */
++
++function Piece({ family, children }: { family: AkpFamily; children: ReactNode }) {
++  return (
++    <li className="inline-flex items-center gap-6 rounded-full border border-adm-line bg-adm-surface px-8 py-2 text-11 text-adm-ink">
++      <Mark look={FAMILY_LOOK[family]} size={12} />
++      {children}
++    </li>
++  )
++}
++
++/** "What is an AKP", with one chapter drawn as its pieces. */
++export function AkpExplainer() {
++  return (
++    <section aria-labelledby="akp-what" className="flex min-w-0 flex-col gap-10 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20" data-akp-explainer>
++      <h2 id="akp-what" className="text-15 font-semibold text-adm-ink">
++        What is an AKP?
++      </h2>
++      <p className="max-w-[860px] text-13 leading-relaxed text-adm-ink-2">
++        An <span className="font-semibold text-adm-ink">atomic knowledge point</span> is the smallest piece of know-how a session is built from: one breathing pattern, one tempo, one picture, one line of script. <span className="font-semibold text-adm-ink">Goal AKPs</span> say what the person wants to reach (a StateFlip and its steps X, Y, Z). <span className="font-semibold text-adm-ink">Strategy AKPs</span> say how to get there. Links say how two pieces work together. Every AKP can be edited here; each change records who made it and can be undone.
++      </p>
++      <figure className="flex min-w-0 flex-col gap-8 rounded-8 border border-adm-line bg-adm-bg p-12" aria-label="One chapter as AKPs">
++        <figcaption className="text-11 font-medium text-adm-muted">One chapter = these pieces (sleep, chapter 1)</figcaption>
++        <div className="flex min-w-0 flex-col gap-8 lg:flex-row lg:items-center">
++          <ul className="flex min-w-0 flex-wrap gap-6">
++            <Piece family="script">Breathe in 4, out 6</Piece>
++            <Piece family="script">Let muscles go</Piece>
++            <Piece family="music">Tempo slows to 55</Piece>
++            <Piece family="music">Night rain</Piece>
++            <Piece family="image">Still water</Piece>
++          </ul>
++          <span className="shrink-0 whitespace-nowrap text-11 text-adm-muted" aria-hidden="true">
++            <span className="lg:hidden">↓</span>
++            <span className="hidden lg:inline">→ drive →</span>
++          </span>
++          <ul className="flex flex-wrap gap-6">
++            <Piece family="goal">Step X: first relief from bad sleep</Piece>
++          </ul>
++          <span className="shrink-0 whitespace-nowrap text-11 text-adm-muted" aria-hidden="true">
++            <span className="lg:hidden">↓</span>
++            <span className="hidden lg:inline">→ toward →</span>
++          </span>
++          <ul className="flex flex-wrap gap-6">
++            <Piece family="goal">StateFlip: bad sleep → rested</Piece>
++          </ul>
++        </div>
++      </figure>
++    </section>
++  )
++}
++
++/* ------------------------------------------------------------- Edit bar */
++
++function download(name: string, text: string) {
++  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }))
++  const a = document.createElement('a')
++  a.href = url
++  a.download = name
++  a.click()
++  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
++}
++
++/** Who is editing, the sync line, and export / import / reset of every edit. */
++export function AkpEditBar({ onNew }: { onNew: () => void }) {
++  const { edits, sync, scope, who, setWho, commit } = useAkpEdits()
++  const [confirmReset, setConfirmReset] = useState(false)
++  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
++  const file = useRef<HTMLInputElement>(null)
++  const nameId = useId()
++  const touched = new Set(edits.map((e) => e.akp)).size
++  return (
++    <section aria-label="Editing" className="flex min-w-0 flex-col gap-10 rounded-12 border border-adm-line bg-adm-surface p-16" data-akp-editbar>
++      <div className="flex min-w-0 flex-col gap-10 lg:flex-row lg:flex-wrap lg:items-end">
++        <label htmlFor={nameId} className="flex min-w-0 flex-col gap-4 text-11 font-medium text-adm-muted lg:w-[200px]">
++          Editing as
++          <input id={nameId} value={who} onChange={(e) => setWho(e.target.value)} maxLength={60} className={inputClass} data-editor-name />
++        </label>
++        <div className="flex flex-wrap gap-6">
++          <button type="button" className={primary} onClick={onNew} data-akp-new>
++            <Plus size={14} aria-hidden="true" /> New AKP
++          </button>
++          <button type="button" className={btn} onClick={() => download(`akp-edits-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(akpEditsFile(edits), null, 2))} data-akp-export>
++            <Download size={14} aria-hidden="true" /> Export JSON
++          </button>
++          <button type="button" className={btn} onClick={() => file.current?.click()} data-akp-import>
++            <Upload size={14} aria-hidden="true" /> Import JSON
++          </button>
++          <input
++            ref={file}
++            type="file"
++            accept="application/json,.json"
++            className="hidden"
++            aria-label="Import AKP edits file"
++            onChange={async (e) => {
++              const f = e.target.files?.[0]
++              e.target.value = ''
++              if (!f) return
++              const r = parseAkpEditsImport(await f.text())
++              if (!r.ok) return setMsg({ ok: false, text: r.error })
++              commit(r.edits)
++              setMsg({ ok: true, text: `Imported ${r.edits.length} edits; they replace the ones that were here.` })
++            }}
++          />
++          {confirmReset ? (
++            <span className="inline-flex flex-wrap items-center gap-6 text-12 text-adm-ink">
++              Undo all {edits.length} edits?
++              <button type="button" className={btn} onClick={() => (commit([]), setConfirmReset(false), setMsg({ ok: true, text: 'Every edit undone; the catalogue is back to the generated draft.' }))} data-akp-reset-yes>
++                Yes, reset all
++              </button>
++              <button type="button" className={btn} onClick={() => setConfirmReset(false)}>
++                Keep them
++              </button>
++            </span>
++          ) : (
++            <button type="button" className={btn} disabled={!edits.length} onClick={() => setConfirmReset(true)} data-akp-reset>
++              <RotateCcw size={14} aria-hidden="true" /> Reset all edits
++            </button>
++          )}
++        </div>
++      </div>
++      <p className="text-12 text-adm-ink-2" aria-live="polite">
++        {edits.length ? `${edits.length} ${edits.length === 1 ? 'edit' : 'edits'} to ${touched} ${touched === 1 ? 'AKP' : 'AKPs'}` : 'No edits yet: this is the generated draft.'}{' '}
++        <span className={`text-11 ${sync === 'error' ? 'text-adm-critical' : 'text-adm-muted'}`} data-akp-sync={sync}>
++          · {syncText(sync, scope)}
++        </span>
++      </p>
++      {msg && (
++        <p role="status" className={`text-12 ${msg.ok ? 'text-adm-ink-2' : 'text-adm-critical'}`}>
++          {msg.text}
++        </p>
++      )}
++    </section>
++  )
++}
++
++/* --------------------------------------------------------------- Editor */
++
++function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
++  return (
++    <label className="flex min-w-0 flex-col gap-4 text-11 font-medium text-adm-muted">
++      {label}
++      {children}
++      {hint && <span className="font-normal">{hint}</span>}
++    </label>
++  )
++}
++
++type Form = Required<Omit<AkpFields, 'flips'>> & { flips: string }
++
++function formOf(a: AkpView): Form {
++  return {
++    name: a.name, family: a.family, fn: a.fn, layer: a.layer, modality: a.modality, status: a.status, description: a.description,
++    usedFor: a.usedFor ?? '', helps: a.helps ?? '', causalRole: a.causalRole, flips: a.flips.join(', '),
++  }
++}
++
++/** The editable fields, the links and the history of one AKP; lives inside its drawer. */
++export function AkpEditPanel({ a, onSaved, onOpenAkp }: { a: AkpView; onSaved: (id: string) => void; onOpenAkp: (id: string) => void }) {
++  const { edits, who, commit } = useAkpEdits()
++  const [form, setForm] = useState(() => formOf(a))
++  const [error, setError] = useState<string | null>(null)
++  const [note, setNote] = useState<string | null>(null)
++  const [confirmRevert, setConfirmRevert] = useState(false)
++  const [linkTo, setLinkTo] = useState('')
++  const [linkType, setLinkType] = useState<LinkType>('supports')
++  const [linkError, setLinkError] = useState<string | null>(null)
++  const listId = useId()
++  const mine = editsFor(edits, a.id)
++  const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => ({ ...f, [k]: v }))
++  const push = (e: AkpEdit) => commit([...edits, e])
++
++  const save = () => {
++    const flips = [...new Set(form.flips.toUpperCase().split(/[\s,;]+/).filter(Boolean))]
++    const unknown = flips.filter((f) => !stateFlipById(f))
++    if (unknown.length) return setError(`Unknown StateFlip ${unknown.join(', ')}. Use ids like SF-PHY-01.`)
++    if (!form.name.trim()) return setError('The name cannot be empty.')
++    const next: AkpFields = { ...form, name: form.name.trim(), flips }
++    const d = diffFields(a, next)
++    setError(null)
++    if (!d) return setNote('Nothing changed.')
++    push(makeEdit('update', a.id, who, d))
++    setNote(`Saved ${Object.keys(d.set).length} ${Object.keys(d.set).length === 1 ? 'change' : 'changes'}.`)
++    onSaved(a.id)
++  }
++
++  const out = a.links
++  const incoming = akps().filter((x) => x.links.some((l) => l.to === a.id))
++  const addLink = () => {
++    const to = linkTo.trim().split(/\s/)[0]
++    if (!akpById(to)) return setLinkError(`No AKP with id “${to || '…'}”.`)
++    if (to === a.id) return setLinkError('An AKP cannot link to itself.')
++    if (out.some((l) => l.to === to && l.type === linkType)) return setLinkError('That link is already there.')
++    setLinkError(null)
++    setLinkTo('')
++    push(makeEdit('link-add', a.id, who, { to, type: linkType }))
++  }
++
++  return (
++    <div className="flex flex-col gap-12" data-akp-editor>
++      {a.deleted && (
++        <p className="rounded-8 border border-adm-critical p-8 text-12 text-adm-critical" role="status">
++          Deleted: hidden from the catalogue, the graph and the counts. Restore it to bring it back.
++        </p>
++      )}
++      <form
++        className="flex flex-col gap-10"
++        onSubmit={(e) => {
++          e.preventDefault()
++          save()
++        }}
++        aria-label={`Edit ${a.id}`}
++      >
++        <Field label="Name">
++          <input value={form.name} onChange={(e) => set('name', e.target.value)} maxLength={200} className={inputClass} data-field="name" />
++        </Field>
++        <div className="grid grid-cols-2 gap-8">
++          <Field label="Family">
++            <select value={form.family} onChange={(e) => set('family', e.target.value as AkpFamily)} className={inputClass} data-field="family">
++              {FAMILIES.map((f) => (
++                <option key={f} value={f}>
++                  {FAMILY[f].label}
++                </option>
++              ))}
++            </select>
++          </Field>
++          <Field label="Function">
++            <select value={form.fn} onChange={(e) => set('fn', e.target.value as Form['fn'])} className={inputClass} data-field="fn">
++              {AKP_FUNCTION_IDS.map((f) => (
++                <option key={f} value={f}>
++                  {f}
++                </option>
++              ))}
++            </select>
++          </Field>
++          <Field label="Layer">
++            <input value={form.layer} onChange={(e) => set('layer', e.target.value)} maxLength={120} className={inputClass} data-field="layer" />
++          </Field>
++          <Field label="Modality">
++            <select value={form.modality} onChange={(e) => set('modality', e.target.value as Form['modality'])} className={inputClass} data-field="modality">
++              {AKP_MODALITIES.map((m) => (
++                <option key={m} value={m}>
++                  {m === '—' ? 'None' : m}
++                </option>
++              ))}
++            </select>
++          </Field>
++          <Field label="Status">
++            <select value={form.status} onChange={(e) => set('status', e.target.value as Form['status'])} className={inputClass} data-field="status">
++              {AKP_STATUSES.map((s) => (
++                <option key={s} value={s}>
++                  {s}
++                </option>
++              ))}
++            </select>
++          </Field>
++        </div>
++        <Field label="Used for (plain words)" hint="Leave empty to use the generated wording shown.">
++          <input value={form.usedFor} onChange={(e) => set('usedFor', e.target.value)} maxLength={300} placeholder={defaultUsedFor({ ...a, family: form.family, layer: form.layer, modality: form.modality })} className={inputClass} data-field="usedFor" />
++        </Field>
++        <Field label="Helps">
++          <input value={form.helps} onChange={(e) => set('helps', e.target.value)} maxLength={300} placeholder={defaultHelps(a, flipTitle)} className={inputClass} data-field="helps" />
++        </Field>
++        <Field label="Description">
++          <textarea value={form.description} onChange={(e) => set('description', e.target.value)} maxLength={2000} rows={3} className={inputClass} data-field="description" />
++        </Field>
++        <Field label="Causal role">
++          <textarea value={form.causalRole} onChange={(e) => set('causalRole', e.target.value)} maxLength={1000} rows={2} className={inputClass} data-field="causalRole" />
++        </Field>
++        <Field label="StateFlips served" hint="Ids separated by commas, e.g. SF-PHY-01, SF-EMO-03.">
++          <input value={form.flips} onChange={(e) => set('flips', e.target.value)} className={inputClass} data-field="flips" />
++        </Field>
++        {error && (
++          <p role="alert" className="text-12 text-adm-critical">
++            {error}
++          </p>
++        )}
++        <div className="flex flex-wrap items-center gap-6">
++          <button type="submit" className={primary} data-akp-save>
++            Save changes
++          </button>
++          <button type="button" className={btn} onClick={() => (setForm(formOf(a)), setError(null), setNote(null))}>
++            Cancel
++          </button>
++          {note && (
++            <span role="status" className="text-12 text-adm-muted">
++              {note}
++            </span>
++          )}
++        </div>
++      </form>
++
++      <section className="flex flex-col gap-6 border-t border-adm-line pt-10" aria-label="Links">
++        <h3 className="text-12 font-semibold text-adm-ink">Links</h3>
++        <ul className="flex flex-col gap-4 text-12 text-adm-ink-2" data-akp-links>
++          {out.map((l) => (
++            <li key={`o${l.type}${l.to}`} className="flex min-w-0 items-start justify-between gap-6">
++              <span className="min-w-0">
++                {LINK_TEXT[l.type]}{' '}
++                <button type="button" className="font-medium text-adm-ink underline-offset-2 hover:underline" onClick={() => onOpenAkp(l.to)}>
++                  {l.to}
++                </button>{' '}
++                {akpByIdAny(l.to)?.name}
++              </span>
++              <button type="button" aria-label={`Remove link: ${LINK_TEXT[l.type]} ${l.to}`} className="shrink-0 rounded-8 p-4 text-adm-muted hover:bg-adm-hover hover:text-adm-critical" onClick={() => push(makeEdit('link-remove', a.id, who, { to: l.to, type: l.type }))} data-link-remove>
++                <X size={14} aria-hidden="true" />
++              </button>
++            </li>
++          ))}
++          {incoming.slice(0, 12).map((x) => {
++            const l = x.links.find((y) => y.to === a.id)!
++            return (
++              <li key={`i${x.id}`} className="flex min-w-0 items-start justify-between gap-6">
++                <span className="min-w-0">
++                  <button type="button" className="font-medium text-adm-ink underline-offset-2 hover:underline" onClick={() => onOpenAkp(x.id)}>
++                    {x.id}
++                  </button>{' '}
++                  {x.name} {LINK_TEXT[l.type]} this
++                </span>
++                <button type="button" aria-label={`Remove link: ${x.id} ${LINK_TEXT[l.type]} this`} className="shrink-0 rounded-8 p-4 text-adm-muted hover:bg-adm-hover hover:text-adm-critical" onClick={() => push(makeEdit('link-remove', x.id, who, { to: a.id, type: l.type }))}>
++                  <X size={14} aria-hidden="true" />
++                </button>
++              </li>
++            )
++          })}
++          {incoming.length > 12 && <li className="text-adm-muted">+ {incoming.length - 12} more linking here</li>}
++          {!out.length && !incoming.length && <li className="text-adm-muted">No typed links yet.</li>}
++        </ul>
++        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-end">
++          <Field label="Add a link to (AKP id)">
++            <input value={linkTo} onChange={(e) => setLinkTo(e.target.value)} list={listId} placeholder="e.g. WS-M2" className={inputClass} data-link-to />
++          </Field>
++          <datalist id={listId}>
++            {akps().slice(0, 1200).map((x) => (
++              <option key={x.id} value={x.id}>
++                {x.name}
++              </option>
++            ))}
++          </datalist>
++          <Field label="Type">
++            <select value={linkType} onChange={(e) => setLinkType(e.target.value as LinkType)} className={inputClass} data-link-type>
++              {AKP_LINK_TYPES.map((t) => (
++                <option key={t} value={t}>
++                  {LINK_TEXT[t]}
++                </option>
++              ))}
++            </select>
++          </Field>
++          <button type="button" className={btn} onClick={addLink} data-link-add>
++            <Plus size={14} aria-hidden="true" /> Add link
++          </button>
++        </div>
++        {linkError && (
++          <p role="alert" className="text-12 text-adm-critical">
++            {linkError}
++          </p>
++        )}
++      </section>
++
++      <section className="flex flex-col gap-6 border-t border-adm-line pt-10" aria-label="History">
++        <h3 className="inline-flex items-center gap-4 text-12 font-semibold text-adm-ink">
++          <History size={14} aria-hidden="true" /> History ({mine.length})
++        </h3>
++        {mine.length ? (
++          <ol className="flex flex-col gap-4 text-11 text-adm-ink-2" data-akp-history>
++            {[...mine].reverse().map((e) => (
++              <li key={e.id}>
++                <span className="font-medium text-adm-ink">{e.by}</span> · {when(e.at)} · {describeEdit(e)}
++              </li>
++            ))}
++          </ol>
++        ) : (
++          <p className="text-11 text-adm-muted">As generated: nobody has edited it.</p>
++        )}
++        <div className="flex flex-wrap items-center gap-6">
++          {a.deleted ? (
++            <button type="button" className={btn} onClick={() => push(makeEdit('restore', a.id, who, {}))} data-akp-restore>
++              <Undo2 size={14} aria-hidden="true" /> Restore
++            </button>
++          ) : (
++            <button type="button" className={btn} onClick={() => push(makeEdit('delete', a.id, who, {}))} data-akp-delete>
++              <Trash2 size={14} aria-hidden="true" /> Delete
++            </button>
++          )}
++          {confirmRevert ? (
++            <span className="inline-flex flex-wrap items-center gap-6 text-12 text-adm-ink">
++              {a.added ? 'Remove this added AKP?' : `Undo its ${mine.length} edits?`}
++              <button
++                type="button"
++                className={btn}
++                onClick={() => {
++                  commit(revertAkp(edits, a.id))
++                  setConfirmRevert(false)
++                  onSaved(a.id)
++                }}
++                data-akp-revert-yes
++              >
++                Yes, revert
++              </button>
++              <button type="button" className={btn} onClick={() => setConfirmRevert(false)}>
++                No
++              </button>
++            </span>
++          ) : (
++            <button type="button" className={btn} disabled={!mine.length} onClick={() => setConfirmRevert(true)} data-akp-revert>
++              <RotateCcw size={14} aria-hidden="true" /> Revert to original
++            </button>
++          )}
++        </div>
++      </section>
++    </div>
++  )
++}
+diff --git a/src/admin/pages/lab/AkpGraph.tsx b/src/admin/pages/lab/AkpGraph.tsx
+index c87dc40..ae8113a 100644
+--- a/src/admin/pages/lab/AkpGraph.tsx
++++ b/src/admin/pages/lab/AkpGraph.tsx
+@@ -1,23 +1,36 @@
+-import { useMemo, useState } from 'react'
++import { Cable, Footprints, Maximize, Minus, Plus } from 'lucide-react'
++import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+ import { forceLayout } from '../../data/forceLayout'
++import { shapePath, type Look } from './akpStyle'
+ 
+ /*
+- * The AKP relationship graph (U145, J206): an SVG force-directed graph, laid
+- * out by data/forceLayout.ts (no dependency). Nodes are coloured by group
+- * (family or modality, from the admin series tokens), links styled by type
+- * (stroke weight and dash, so colour stays for the nodes). Hover or focus a
+- * node to light up its neighbours; click to open its drawer. Below lg the
+- * picture would be too small to read, so the same graph is shown as a list.
++ * The AKP relationship graph (U145, J206; an interactive map since U149,
++ * J207): an SVG force-directed graph, laid out by data/forceLayout.ts (no
++ * dependency). Nodes carry their family's colour *and* shape (akpStyle.ts),
++ * links are styled by type (stroke weight and dash).
++ *
++ * - Zoom with the wheel, a pinch or the buttons; drag the background to pan;
++ *   Fit brings every node back into view.
++ * - "Follow the path" lights the StateFlip, then its goal AKPs, then the
++ *   strategy AKPs that serve it, one tier at a time.
++ * - Editable graphs: click a node to edit it in the drawer; drag from one node
++ *   to another (or Connect, then click the two) to add a link of the chosen
++ *   type; New AKP places a node. Every one of these has a keyboard way in the
++ *   drawer, and nodes are focusable buttons.
++ * Below lg the picture would be too small to read, so the same graph is a
++ * list that opens the same drawer.
+  */
+ 
+ export interface GraphNode {
+   id: string
+   label: string
+   group: string
+-  fill: string
+-  dot: string
++  look: Look
+   goal?: boolean
+   draft?: boolean
++  edited?: boolean
++  /** 0 the StateFlip, 1 goal AKPs, 2 strategy AKPs; worked out from the links when absent. */
++  tier?: number
+ }
+ 
+ export interface GraphLink {
+@@ -33,47 +46,231 @@ export interface LinkStyle {
+   dash?: string
+ }
+ 
++export interface GraphEditing {
++  linkTypes: [string, string][]
++  onLink: (from: string, to: string, type: string) => void
++  onNew?: () => void
++}
++
+ const W = 960
+ const H = 560
++const MIN_K = 0.4
++const MAX_K = 4
++const clampK = (k: number) => Math.min(MAX_K, Math.max(MIN_K, k))
++const TIER_TEXT = ['The StateFlip: the change the person wants', 'Its goal AKPs: the steps X, Y and Z on the way', 'The strategy AKPs: the script, music, image and video pieces that move them']
+ 
+-export function AkpGraph({ nodes, links, linkStyles, legend, onOpen, aria }: {
++/** A family's mark (colour and shape) at legend or list size. */
++export function Mark({ look, size = 10 }: { look: Look; size?: number }) {
++  return (
++    <svg width={size} height={size} viewBox="0 0 12 12" aria-hidden="true" className="shrink-0">
++      <path d={shapePath(look.shape, 6, 6, 4.4)} className={look.fill} />
++    </svg>
++  )
++}
++
++type Pos = Map<string, { x: number; y: number }>
++
++function layout(nodes: GraphNode[], links: GraphLink[], prev: Pos | null): Pos {
++  const single = nodes.filter((n) => n.goal).length === 1
++  return forceLayout(
++    nodes.map((n) => {
++      const p = prev?.get(n.id)
++      return { id: n.id, pin: p ? ([p.x / W, p.y / H] as [number, number]) : n.goal && single ? ([0.5, 0.5] as [number, number]) : undefined }
++    }),
++    links,
++    W,
++    H,
++    prev ? 160 : 320,
++    56,
++  )
++}
++
++function tiers(nodes: GraphNode[], links: GraphLink[]): Map<string, number> {
++  const t = new Map<string, number>()
++  for (const n of nodes) if (n.tier !== undefined) t.set(n.id, n.tier)
++  if (t.size === nodes.length) return t
++  const goals = nodes.filter((n) => n.goal).map((n) => n.id)
++  for (const g of goals) t.set(g, 0)
++  for (const l of links) if (goals.includes(l.to) && !t.has(l.from)) t.set(l.from, 1)
++  for (const n of nodes) if (!t.has(n.id)) t.set(n.id, 2)
++  return t
++}
++
++export function AkpGraph({ nodes, links, linkStyles, legend, onOpen, aria, editing }: {
+   nodes: GraphNode[]
+   links: GraphLink[]
+   linkStyles: Record<string, LinkStyle>
+-  legend: { label: string; dot: string }[]
++  legend: { label: string; look: Look }[]
+   onOpen: (id: string) => void
+   aria: string
++  editing?: GraphEditing
+ }) {
+   const [hover, setHover] = useState<string | null>(null)
+-  const pos = useMemo(
+-    () => forceLayout(nodes.map((n) => ({ id: n.id, pin: n.goal && nodes.filter((x) => x.goal).length === 1 ? ([0.5, 0.5] as [number, number]) : undefined })), links, W, H, 320, 56),
+-    [nodes, links],
+-  )
++  const [view, setView] = useState({ x: 0, y: 0, k: 1 })
++  const [path, setPath] = useState<number | null>(null)
++  const [connect, setConnect] = useState<{ from: string | null } | null>(null)
++  const [newType, setNewType] = useState(editing?.linkTypes[0]?.[0] ?? 'supports')
++  const [drag, setDrag] = useState<{ from: string; x: number; y: number; over: string | null } | null>(null)
++  const svgRef = useRef<SVGSVGElement>(null)
++  const viewRef = useRef(view)
++  const gesture = useRef<{
++    pointers: Map<number, { x: number; y: number }>
++    pan?: { sx: number; sy: number; vx: number; vy: number }
++    pinch?: { d: number; k: number; mx: number; my: number; vx: number; vy: number }
++    node?: { id: string; cx: number; cy: number; moved: boolean }
++  }>({ pointers: new Map() })
++  useEffect(() => {
++    viewRef.current = view
++  })
++
++  // Positions persist across edits: known nodes keep their place, new ones settle around them.
++  const key = `${nodes.map((n) => n.id).join('|')}#${links.map((l) => `${l.from}>${l.to}`).join('|')}`
++  const [laid, setLaid] = useState(() => ({ key, pos: layout(nodes, links, null) }))
++  if (laid.key !== key) setLaid({ key, pos: layout(nodes, links, laid.pos) })
++  const pos = laid.pos
++
++  const tier = useMemo(() => tiers(nodes, links), [nodes, links])
+   const near = useMemo(() => {
+-    if (!hover) return null
+-    const s = new Set([hover])
++    if (path !== null) return new Set(nodes.filter((n) => (tier.get(n.id) ?? 2) <= path).map((n) => n.id))
++    const focus = drag?.from ?? connect?.from ?? hover
++    if (!focus) return null
++    const s = new Set([focus])
+     for (const l of links) {
+-      if (l.from === hover) s.add(l.to)
+-      if (l.to === hover) s.add(l.from)
++      if (l.from === focus) s.add(l.to)
++      if (l.to === focus) s.add(l.from)
+     }
+     return s
+-  }, [hover, links])
++  }, [hover, links, path, tier, nodes, drag, connect])
+   const byId = new Map(nodes.map((n) => [n.id, n]))
+   const usedTypes = [...new Set(links.map((l) => l.type))]
+   const degree = (id: string) => links.filter((l) => l.from === id || l.to === id).length
+ 
++  /** Client point → viewBox point (before the zoom transform). */
++  const toBox = useCallback((cx: number, cy: number) => {
++    const svg = svgRef.current
++    const m = svg?.getScreenCTM()
++    if (!svg || !m) return { x: 0, y: 0 }
++    const p = new DOMPoint(cx, cy).matrixTransform(m.inverse())
++    return { x: p.x, y: p.y }
++  }, [])
++  const toWorld = (cx: number, cy: number) => {
++    const b = toBox(cx, cy)
++    const v = viewRef.current
++    return { x: (b.x - v.x) / v.k, y: (b.y - v.y) / v.k }
++  }
++
++  const zoomAt = useCallback((factor: number, bx = W / 2, by = H / 2) => {
++    setView((v) => {
++      const k = clampK(v.k * factor)
++      return { k, x: bx - ((bx - v.x) * k) / v.k, y: by - ((by - v.y) * k) / v.k }
++    })
++  }, [])
++  const fit = useCallback(() => {
++    const ps = nodes.map((n) => pos.get(n.id)).filter((p): p is { x: number; y: number } => !!p)
++    if (!ps.length) return setView({ x: 0, y: 0, k: 1 })
++    const [x0, x1] = [Math.min(...ps.map((p) => p.x)) - 60, Math.max(...ps.map((p) => p.x)) + 140]
++    const [y0, y1] = [Math.min(...ps.map((p) => p.y)) - 40, Math.max(...ps.map((p) => p.y)) + 40]
++    const k = clampK(Math.min(W / (x1 - x0), H / (y1 - y0), 1.6))
++    setView({ k, x: W / 2 - ((x0 + x1) / 2) * k, y: H / 2 - ((y0 + y1) / 2) * k })
++  }, [nodes, pos])
++
++  useEffect(() => {
++    const svg = svgRef.current
++    if (!svg) return
++    const onWheel = (e: WheelEvent) => {
++      e.preventDefault()
++      const b = toBox(e.clientX, e.clientY)
++      zoomAt(Math.exp(-e.deltaY * 0.0015), b.x, b.y)
++    }
++    svg.addEventListener('wheel', onWheel, { passive: false })
++    return () => svg.removeEventListener('wheel', onWheel)
++  }, [toBox, zoomAt])
++
++  const clickNode = (id: string) => {
++    if (connect && editing) {
++      if (!connect.from) return setConnect({ from: id })
++      if (connect.from !== id) editing.onLink(connect.from, id, newType)
++      return setConnect(null)
++    }
++    onOpen(id)
++  }
++
++  const nodeAt = (cx: number, cy: number) => (document.elementFromPoint(cx, cy)?.closest('[data-node-id]') as SVGElement | null)?.dataset.nodeId ?? null
++
++  const onDown = (e: ReactPointerEvent<SVGSVGElement>) => {
++    const g = gesture.current
++    svgRef.current?.setPointerCapture(e.pointerId)
++    const b = toBox(e.clientX, e.clientY)
++    g.pointers.set(e.pointerId, b)
++    const id = (e.target as Element).closest('[data-node-id]')?.getAttribute('data-node-id')
++    if (g.pointers.size === 2) {
++      const [p, q] = [...g.pointers.values()]
++      const v = viewRef.current
++      g.node = undefined
++      g.pan = undefined
++      setDrag(null)
++      g.pinch = { d: Math.max(1, Math.hypot(p.x - q.x, p.y - q.y)), k: v.k, mx: (p.x + q.x) / 2, my: (p.y + q.y) / 2, vx: v.x, vy: v.y }
++    } else if (id) {
++      g.node = { id, cx: e.clientX, cy: e.clientY, moved: false }
++    } else {
++      const v = viewRef.current
++      g.pan = { sx: b.x, sy: b.y, vx: v.x, vy: v.y }
++    }
++  }
++  const onMove = (e: ReactPointerEvent<SVGSVGElement>) => {
++    const g = gesture.current
++    if (!g.pointers.has(e.pointerId)) return
++    const b = toBox(e.clientX, e.clientY)
++    g.pointers.set(e.pointerId, b)
++    if (g.pinch && g.pointers.size >= 2) {
++      const [p, q] = [...g.pointers.values()]
++      const pi = g.pinch
++      const k = clampK((pi.k * Math.hypot(p.x - q.x, p.y - q.y)) / pi.d)
++      setView({ k, x: pi.mx - ((pi.mx - pi.vx) * k) / pi.k, y: pi.my - ((pi.my - pi.vy) * k) / pi.k })
++    } else if (g.node) {
++      if (!g.node.moved && Math.hypot(e.clientX - g.node.cx, e.clientY - g.node.cy) > 5) g.node.moved = true
++      if (g.node.moved && editing) {
++        const w = toWorld(e.clientX, e.clientY)
++        const over = nodeAt(e.clientX, e.clientY)
++        setDrag({ from: g.node.id, x: w.x, y: w.y, over: over !== g.node.id ? over : null })
++      }
++    } else if (g.pan) {
++      setView((v) => ({ ...v, x: g.pan!.vx + b.x - g.pan!.sx, y: g.pan!.vy + b.y - g.pan!.sy }))
++    }
++  }
++  const onUp = (e: ReactPointerEvent<SVGSVGElement>) => {
++    const g = gesture.current
++    g.pointers.delete(e.pointerId)
++    if (g.node) {
++      const n = g.node
++      if (!n.moved) clickNode(n.id)
++      else if (editing) {
++        const target = nodeAt(e.clientX, e.clientY)
++        if (target && target !== n.id) editing.onLink(n.id, target, newType)
++      }
++    }
++    g.node = undefined
++    g.pan = undefined
++    if (g.pointers.size < 2) g.pinch = undefined
++    setDrag(null)
++  }
++
++  const btn = 'inline-flex items-center gap-4 rounded-8 border border-adm-line px-8 py-4 text-11 font-medium text-adm-ink hover:bg-adm-hover'
++  const on = 'border-adm-ink bg-adm-ink text-adm-surface hover:bg-adm-ink'
++  const dragFrom = drag ? pos.get(drag.from) : undefined
++
+   return (
+     <div className="flex min-w-0 flex-col gap-10" data-akp-graph>
+       <div className="flex flex-wrap items-center gap-x-16 gap-y-6 text-11 text-adm-ink-2" aria-label="Legend">
+         {legend.map((g) => (
+           <span key={g.label} className="inline-flex items-center gap-4">
+-            <span className={`size-10 rounded-full ${g.dot}`} aria-hidden="true" />
++            <Mark look={g.look} size={12} />
+             {g.label}
+           </span>
+         ))}
+         <span className="h-12 w-px bg-adm-line" aria-hidden="true" />
+         {usedTypes.map((t) => {
+-          const s = linkStyles[t]
++          const s = linkStyles[t] ?? linkStyles.supports
+           return (
+             <span key={t} className="inline-flex items-center gap-4">
+               <svg width="28" height="8" aria-hidden="true">
+@@ -83,73 +280,162 @@ export function AkpGraph({ nodes, links, linkStyles, legend, onOpen, aria }: {
+             </span>
+           )
+         })}
++        <span className="inline-flex items-center gap-4">
++          <svg width="14" height="14" aria-hidden="true">
++            <circle cx="7" cy="7" r="5.5" className="fill-none stroke-adm-muted" strokeWidth={1.25} strokeDasharray="2 2" />
++          </svg>
++          Drafted
++        </span>
++        {editing && (
++          <span className="inline-flex items-center gap-4">
++            <svg width="14" height="14" aria-hidden="true">
++              <circle cx="7" cy="7" r="5.5" className="fill-none stroke-adm-accent" strokeWidth={2} />
++            </svg>
++            Edited
++          </span>
++        )}
++      </div>
++
++      <div className="flex flex-wrap items-center gap-6" role="toolbar" aria-label="Graph tools" data-graph-tools>
++        <span className="hidden items-center gap-6 lg:inline-flex">
++          <button type="button" className={btn} onClick={() => zoomAt(1 / 1.25)} aria-label="Zoom out">
++            <Minus size={12} aria-hidden="true" />
++          </button>
++          <span className="w-36 text-center text-11 tabular-nums text-adm-muted" aria-live="polite">
++            {Math.round(view.k * 100)}%
++          </span>
++          <button type="button" className={btn} onClick={() => zoomAt(1.25)} aria-label="Zoom in">
++            <Plus size={12} aria-hidden="true" />
++          </button>
++          <button type="button" className={btn} onClick={fit} data-fit>
++            <Maximize size={12} aria-hidden="true" /> Fit
++          </button>
++          <span className="h-16 w-px bg-adm-line" aria-hidden="true" />
++          <button type="button" aria-pressed={path !== null} className={`${btn} ${path !== null ? on : ''}`} onClick={() => setPath(path === null ? 0 : null)} data-follow-path>
++            <Footprints size={12} aria-hidden="true" /> Follow the path
++          </button>
++        </span>
++        {editing && (
++          <>
++            <span className="hidden h-16 w-px bg-adm-line lg:inline" aria-hidden="true" />
++            <label className="hidden items-center gap-4 text-11 text-adm-muted lg:inline-flex">
++              New links:
++              <select value={newType} onChange={(e) => setNewType(e.target.value)} className="rounded-8 border border-adm-line bg-adm-surface px-6 py-4 text-11 text-adm-ink" data-new-link-type>
++                {editing.linkTypes.map(([v, l]) => (
++                  <option key={v} value={v}>
++                    {l}
++                  </option>
++                ))}
++              </select>
++            </label>
++            <button type="button" aria-pressed={!!connect} className={`${btn} hidden lg:inline-flex ${connect ? on : ''}`} onClick={() => setConnect(connect ? null : { from: null })} data-connect>
++              <Cable size={12} aria-hidden="true" /> Connect
++            </button>
++            {editing.onNew && (
++              <button type="button" className={btn} onClick={editing.onNew} data-graph-new>
++                <Plus size={12} aria-hidden="true" /> New AKP here
++              </button>
++            )}
++          </>
++        )}
+       </div>
++
++      {path !== null && (
++        <div className="hidden flex-wrap items-center gap-6 rounded-8 border border-adm-line bg-adm-bg p-8 text-12 text-adm-ink-2 lg:flex" data-path-steps>
++          {[0, 1, 2].map((t) => (
++            <button key={t} type="button" aria-pressed={path === t} onClick={() => setPath(t)} className={`${btn} ${path === t ? on : ''}`}>
++              {t + 1}. {['StateFlip', 'Goal AKPs', 'Strategy AKPs'][t]}
++            </button>
++          ))}
++          <span aria-live="polite">{TIER_TEXT[path]}.</span>
++          {path < 2 && (
++            <button type="button" className={btn} onClick={() => setPath(path + 1)}>
++              Next →
++            </button>
++          )}
++        </div>
++      )}
++
+       <p className="text-11 text-adm-muted" aria-live="polite">
+         {nodes.filter((n) => !n.goal).length} AKPs around the goal · {links.length} links
++        {editing && <span className="hidden lg:inline">{connect ? (connect.from ? ` · now click the node to link ${connect.from} to (as “${newType}”)` : ' · click the node the link starts from') : ' · click a node to edit it; drag from one node to another to link them; wheel or pinch to zoom, drag the background to pan'}</span>}
+       </p>
+ 
+-      <div className="hidden min-w-0 rounded-12 border border-adm-line bg-adm-bg lg:block">
+-        <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={aria}>
++      <div className="hidden min-w-0 overflow-hidden rounded-12 border border-adm-line bg-adm-bg lg:block">
++        <svg
++          ref={svgRef}
++          viewBox={`0 0 ${W} ${H}`}
++          className={`block h-auto w-full touch-none select-none ${drag ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'}`}
++          role="group"
++          aria-label={aria}
++          onPointerDown={onDown}
++          onPointerMove={onMove}
++          onPointerUp={onUp}
++          onPointerCancel={onUp}
++          data-graph-svg
++        >
+           <defs>
+             <marker id="akp-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+               <path d="M0,0 L8,4 L0,8 z" className="fill-adm-muted" />
+             </marker>
+           </defs>
+-          {links.map((l, i) => {
+-            const a = pos.get(l.from)
+-            const b = pos.get(l.to)
+-            if (!a || !b) return null
+-            const s = linkStyles[l.type]
+-            const r = byId.get(l.to)?.goal ? 20 : 11
+-            const d = Math.max(1, Math.hypot(b.x - a.x, b.y - a.y))
+-            const lit = !near || (near.has(l.from) && near.has(l.to))
+-            return (
+-              <line
+-                key={i}
+-                x1={a.x}
+-                y1={a.y}
+-                x2={b.x - ((b.x - a.x) / d) * r}
+-                y2={b.y - ((b.y - a.y) / d) * r}
+-                className={s.cls}
+-                strokeWidth={s.width}
+-                strokeDasharray={s.dash}
+-                markerEnd="url(#akp-arrow)"
+-                opacity={lit ? 0.9 : 0.12}
+-              >
+-                <title>{`${byId.get(l.from)?.label} ${s.label.toLowerCase()} ${byId.get(l.to)?.label}`}</title>
+-              </line>
+-            )
+-          })}
+-          {nodes.map((n) => {
+-            const p = pos.get(n.id)!
+-            const lit = !near || near.has(n.id)
+-            const r = n.goal ? 18 : 9
+-            const right = p.x >= W / 2 ? p.x < W - 170 : p.x < 200
+-            return (
+-              <g
+-                key={n.id}
+-                role="button"
+-                tabIndex={0}
+-                aria-label={`${n.id} ${n.label}, ${n.group}, ${degree(n.id)} links`}
+-                className="cursor-pointer outline-none"
+-                opacity={lit ? 1 : 0.25}
+-                onMouseEnter={() => setHover(n.id)}
+-                onMouseLeave={() => setHover(null)}
+-                onFocus={() => setHover(n.id)}
+-                onBlur={() => setHover(null)}
+-                onClick={() => onOpen(n.id)}
+-                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onOpen(n.id)}
+-              >
+-                <title>{`${n.id} · ${n.label} (${n.group})${n.draft ? ' · drafted' : ''}`}</title>
+-                <circle cx={p.x} cy={p.y} r={r + 6} className="fill-transparent" />
+-                {n.draft && <circle cx={p.x} cy={p.y} r={r + 4} className="fill-none stroke-adm-muted" strokeWidth={1.25} strokeDasharray="2 2" />}
+-                <circle cx={p.x} cy={p.y} r={r} className={`${n.goal ? 'fill-adm-ink' : n.fill} stroke-adm-surface`} strokeWidth={2} />
+-                <text x={n.goal ? p.x : right ? p.x + r + 5 : p.x - r - 5} y={n.goal ? p.y + r + 16 : p.y + 4} textAnchor={n.goal ? 'middle' : right ? 'start' : 'end'} className={`fill-adm-ink text-11 ${n.goal || hover === n.id ? 'font-semibold' : ''}`} paintOrder="stroke" stroke="var(--color-adm-bg)" strokeWidth={3}>
+-                  {n.goal || n.label.length <= 26 ? n.label : `${n.label.slice(0, 25)}…`}
+-                </text>
+-              </g>
+-            )
+-          })}
++          <rect width={W} height={H} className="fill-transparent" />
++          <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`} data-graph-view>
++            {links.map((l, i) => {
++              const a = pos.get(l.from)
++              const b = pos.get(l.to)
++              if (!a || !b) return null
++              const s = linkStyles[l.type] ?? linkStyles.supports
++              const r = byId.get(l.to)?.goal ? 20 : 12
++              const d = Math.max(1, Math.hypot(b.x - a.x, b.y - a.y))
++              const lit = !near || (near.has(l.from) && near.has(l.to))
++              return (
++                <line key={i} x1={a.x} y1={a.y} x2={b.x - ((b.x - a.x) / d) * r} y2={b.y - ((b.y - a.y) / d) * r} className={s.cls} strokeWidth={s.width} strokeDasharray={s.dash} markerEnd="url(#akp-arrow)" opacity={lit ? 0.9 : 0.1}>
++                  <title>{`${byId.get(l.from)?.label} ${s.label.toLowerCase()} ${byId.get(l.to)?.label}`}</title>
++                </line>
++              )
++            })}
++            {drag && dragFrom && <line x1={dragFrom.x} y1={dragFrom.y} x2={drag.x} y2={drag.y} className="stroke-adm-accent" strokeWidth={2} strokeDasharray="4 3" markerEnd="url(#akp-arrow)" data-drag-line />}
++            {nodes.map((n) => {
++              const p = pos.get(n.id)
++              if (!p) return null
++              const lit = !near || near.has(n.id)
++              const r = n.goal ? 18 : 9
++              const right = p.x >= W / 2 ? p.x < W - 170 : p.x < 200
++              const picked = connect?.from === n.id || drag?.over === n.id
++              const current = path !== null && tier.get(n.id) === path
++              return (
++                <g
++                  key={n.id}
++                  data-node-id={n.id}
++                  role="button"
++                  tabIndex={0}
++                  aria-label={`${n.id} ${n.label}, ${n.group}, ${degree(n.id)} links${n.edited ? ', edited' : ''}`}
++                  className="cursor-pointer outline-none [&:focus-visible>.ring]:stroke-adm-ink"
++                  opacity={lit ? 1 : 0.2}
++                  onMouseEnter={() => setHover(n.id)}
++                  onMouseLeave={() => setHover(null)}
++                  onFocus={() => setHover(n.id)}
++                  onBlur={() => setHover(null)}
++                  onKeyDown={(e) => {
++                    if (e.key === 'Enter' || e.key === ' ') {
++                      e.preventDefault()
++                      clickNode(n.id)
++                    }
++                  }}
++                >
++                  <title>{`${n.id} · ${n.label} (${n.group})${n.draft ? ' · drafted' : ''}${n.edited ? ' · edited' : ''}`}</title>
++                  <circle cx={p.x} cy={p.y} r={r + 8} className="ring fill-transparent stroke-transparent" strokeWidth={2} />
++                  {n.draft && <circle cx={p.x} cy={p.y} r={r + 4} className="fill-none stroke-adm-muted" strokeWidth={1.25} strokeDasharray="2 2" />}
++                  {(n.edited || picked) && <circle cx={p.x} cy={p.y} r={r + 5} className="fill-none stroke-adm-accent" strokeWidth={picked ? 3 : 2} />}
++                  <path d={shapePath(n.goal ? 'circle' : n.look.shape, p.x, p.y, r)} className={`${n.goal ? 'fill-adm-ink' : n.look.fill} stroke-adm-surface`} strokeWidth={2} />
++                  <text x={n.goal ? p.x : right ? p.x + r + 6 : p.x - r - 6} y={n.goal ? p.y + r + 16 : p.y + 4} textAnchor={n.goal ? 'middle' : right ? 'start' : 'end'} className={`pointer-events-none fill-adm-ink text-11 ${n.goal || hover === n.id || current ? 'font-semibold' : ''}`} paintOrder="stroke" stroke="var(--color-adm-bg)" strokeWidth={3}>
++                    {n.goal || n.label.length <= 26 ? n.label : `${n.label.slice(0, 25)}…`}
++                  </text>
++                </g>
++              )
++            })}
++          </g>
+         </svg>
+       </div>
+ 
+@@ -160,18 +446,15 @@ export function AkpGraph({ nodes, links, linkStyles, legend, onOpen, aria }: {
+             <li key={n.id} className="rounded-8 border border-adm-line">
+               <button type="button" onClick={() => onOpen(n.id)} className="flex w-full min-w-0 flex-col gap-4 p-10 text-left">
+                 <span className="inline-flex min-w-0 items-center gap-6 text-12 font-semibold text-adm-ink">
+-                  <span className={`size-10 shrink-0 rounded-full ${n.goal ? 'bg-adm-ink' : n.dot}`} aria-hidden="true" />
++                  <Mark look={n.goal ? { ...n.look, fill: 'fill-adm-ink', shape: 'circle' } : n.look} size={12} />
+                   <span className="min-w-0 truncate">{n.label}</span>
+                 </span>
+                 <span className="text-11 text-adm-muted">
+                   {n.id} · {n.group}
+                   {n.draft ? ' · drafted' : ''}
++                  {n.edited ? ' · edited' : ''}
+                 </span>
+-                {out.length > 0 && (
+-                  <span className="text-11 text-adm-ink-2">
+-                    {out.map((l) => `${linkStyles[l.type].label.toLowerCase()} ${byId.get(l.to)?.label ?? l.to}`).join(' · ')}
+-                  </span>
+-                )}
++                {out.length > 0 && <span className="text-11 text-adm-ink-2">{out.map((l) => `${(linkStyles[l.type] ?? linkStyles.supports).label.toLowerCase()} ${byId.get(l.to)?.label ?? l.to}`).join(' · ')}</span>}
+               </button>
+             </li>
+           )
+diff --git a/src/admin/pages/lab/StateFlipsCatalogue.tsx b/src/admin/pages/lab/StateFlipsCatalogue.tsx
+index 242330d..d79547b 100644
+--- a/src/admin/pages/lab/StateFlipsCatalogue.tsx
++++ b/src/admin/pages/lab/StateFlipsCatalogue.tsx
+@@ -1,14 +1,18 @@
+ import { PanelRightOpen } from 'lucide-react'
+ import { useMemo, useState, type ReactNode } from 'react'
+ import { Badge, Panel, inputClass } from '../../components/ui'
+-import { FAMILIES, FAMILY, LINK_TEXT, akpById, akpSummary, akps, akpsForFlip, type Akp, type AkpFamily } from '../../data/akps'
++import { FAMILIES, FAMILY, akpById, akpByIdAny, akpSummary, akps, akpsForFlip, akpsWithDeleted, type Akp, type AkpFamily } from '../../data/akps'
++import { AKP_LINK_TYPES, makeEdit, nextAkpId, usedForLine } from '../../data/akpEdits'
++import { useAkpEdits } from '../../data/akpEditsSync'
++import { AkpEditBar, AkpEditPanel, AkpExplainer } from './AkpEditor'
++import { FAMILY_LOOK, GOAL_LOOK, MODALITY_LOOK } from './akpStyle'
+ import { DIMENSION_LABEL, type Dimension } from '../../data/personaConditionV4'
+ import { generatePersonasV4 } from '../../data/personasV4'
+ import { DRAFTED, STATEFLIP_DIMENSIONS, flipNumbers, stateFlipById, stateFlipSummary, stateFlips, type StateFlip } from '../../data/stateFlips'
+ import { LAYER_TEXT, type Layer } from '../../data/stateFlipSleep'
+ import { useDetail } from '../reports/DetailDrawer'
+ import { CHAPTER_GOAL, CHAPTER_LINKS, CHAPTER_LINK_TEXT, CHAPTER_MODALITIES, CHAPTER_PHASES, chapterNodeById, chapterNodes, type ChapterModality } from '../../data/akpChapterGraph'
+-import { AkpGraph, type GraphLink, type GraphNode, type LinkStyle } from './AkpGraph'
++import { AkpGraph, Mark, type GraphEditing, type GraphLink, type GraphNode, type LinkStyle } from './AkpGraph'
+ 
+ /*
+  * Admin → Product lab → StateFlips, tabs "All StateFlips" and "AKP catalogue"
+@@ -20,8 +24,7 @@ import { AkpGraph, type GraphLink, type GraphNode, type LinkStyle } from './AkpG
+ const pct = (x: number) => (Number.isFinite(x) ? `${Math.round(x * 100)}%` : '–')
+ const usd = (x: number) => (Number.isFinite(x) ? `$${x.toFixed(2)}` : '–')
+ const num = (x: number) => (Number.isFinite(x) ? `${x}` : '–')
+-const FAMILY_BG: Record<AkpFamily, string> = { goal: 'bg-adm-s1', identity: 'bg-adm-s2', script: 'bg-adm-s3', music: 'bg-adm-s4', image: 'bg-adm-good', video: 'bg-adm-warning', product: 'bg-adm-serious' }
+-const FAMILY_FILL: Record<AkpFamily, string> = { goal: 'fill-adm-s1', identity: 'fill-adm-s2', script: 'fill-adm-s3', music: 'fill-adm-s4', image: 'fill-adm-good', video: 'fill-adm-warning', product: 'fill-adm-serious' }
++const flipTitle = (id: string) => stateFlipById(id)?.title
+ 
+ function SourceBadge({ source }: { source: string }) {
+   const drafted = source === DRAFTED || source.startsWith('drafted')
+@@ -128,8 +131,8 @@ function FlipDetail({ f }: { f: StateFlip }) {
+         <ul className="flex flex-wrap gap-4">
+           {linked.map((a) => (
+             <li key={a.id}>
+-              <button type="button" onClick={() => open(akpItem(a))} className="inline-flex items-center gap-4 rounded-8 border border-adm-line px-6 py-2 text-11 text-adm-ink hover:bg-adm-hover">
+-                <span className={`size-8 rounded-full ${FAMILY_BG[a.family]}`} aria-hidden="true" />
++              <button type="button" onClick={() => open(akpItem(a.id))} className="inline-flex items-center gap-4 rounded-8 border border-adm-line px-6 py-2 text-11 text-adm-ink hover:bg-adm-hover">
++                <Mark look={FAMILY_LOOK[a.family]} />
+                 {a.id} {a.name}
+               </button>
+             </li>
+@@ -158,25 +161,32 @@ function flipItem(f: StateFlip) {
+ 
+ /* ------------------------------------------------------------ AKP drawer */
+ 
+-function AkpDetail({ a }: { a: Akp }) {
++function AkpDetail({ id }: { id: string }) {
+   const open = useDetail()
+-  const incoming = useMemo(() => akps().filter((x) => x.links.some((l) => l.to === a.id)), [a.id])
++  useAkpEdits()
++  const a = akpByIdAny(id)
++  if (!a) return <p className="text-12 text-adm-muted">This AKP no longer exists: it was added in the admin and its edits were reverted.</p>
+   return (
+     <div className="flex flex-col gap-10 text-12 text-adm-ink-2" data-akp-detail>
+-      <p>{a.description}</p>
++      <p className="rounded-8 bg-adm-bg p-8 text-13 text-adm-ink" data-used-for>
++        {usedForLine(a, flipTitle)}
++      </p>
++      <p>{a.description || <span className="text-adm-muted">No description yet.</span>}</p>
+       <p className="text-11 text-adm-muted">Causal role: {a.causalRole || '–'}</p>
+       <p className="text-11 text-adm-muted">
+         Source: {a.source} · status {a.status}
++        {a.edited ? ' · edited in the admin' : ''}
+       </p>
+       <Sub title={`StateFlips it serves (${a.flips.length})`}>
+         {a.flips.length ? (
+           <ul className="flex flex-wrap gap-4">
+-            {a.flips.map((id) => {
+-              const f = stateFlipById(id)!
++            {a.flips.map((fid) => {
++              const f = stateFlipById(fid)
++              if (!f) return null
+               return (
+-                <li key={id}>
++                <li key={fid}>
+                   <button type="button" onClick={() => open(flipItem(f))} className="rounded-8 border border-adm-line px-6 py-2 text-11 text-adm-ink hover:bg-adm-hover">
+-                    {id} {f.title}
++                    {fid} {f.title}
+                   </button>
+                 </li>
+               )
+@@ -186,40 +196,37 @@ function AkpDetail({ a }: { a: Akp }) {
+           <p className="text-adm-muted">None linked yet{a.family === 'product' ? ': product AKPs serve the app, not one goal.' : '.'}</p>
+         )}
+       </Sub>
+-      <Sub title="Links">
+-        <ul className="flex flex-col gap-2">
+-          {a.links.map((l) => (
+-            <li key={`o${l.to}`}>
+-              {LINK_TEXT[l.type]} <span className="font-medium text-adm-ink">{l.to}</span> {akpById(l.to)?.name}
+-            </li>
+-          ))}
+-          {incoming.slice(0, 12).map((x) => (
+-            <li key={`i${x.id}`}>
+-              <span className="font-medium text-adm-ink">{x.id}</span> {x.name} {LINK_TEXT[x.links.find((l) => l.to === a.id)!.type]} this
+-            </li>
+-          ))}
+-          {incoming.length > 12 && <li className="text-adm-muted">+ {incoming.length - 12} more linking here</li>}
+-          {!a.links.length && !incoming.length && <li className="text-adm-muted">No typed links.</li>}
+-        </ul>
++      <Sub title="Edit">
++        <AkpEditPanel key={JSON.stringify(a)} a={a} onSaved={(x) => open(akpItem(x))} onOpenAkp={(x) => open(akpItem(x))} />
+       </Sub>
+     </div>
+   )
+ }
+ 
+-function akpItem(a: Akp) {
++function akpItem(id: string) {
++  const a = akpByIdAny(id)
++  if (!a) return { title: id, extra: <AkpDetail id={id} /> }
+   return {
+-    kicker: `${a.id} · ${FAMILY[a.family].label} · ${a.kind === 'goal' ? 'Goal AKP' : 'Strategy / tactic AKP'}`,
++    kicker: `${a.id} · ${FAMILY[a.family].label} · ${a.kind === 'goal' ? 'Goal AKP' : 'Strategy / tactic AKP'}${a.deleted ? ' · deleted' : ''}`,
+     title: a.name,
+     numbers: [
+-      { label: 'Layer', value: a.layer },
++      { label: 'Layer', value: a.layer || '–' },
+       { label: 'Modality', value: a.modality },
+       { label: 'Function', value: a.fn },
+-      { label: 'Source', value: a.fromFile ? 'From file' : 'Drafted' },
++      { label: 'Source', value: a.added ? 'Added in the admin' : a.fromFile ? 'From file' : 'Drafted' },
+     ],
+-    extra: <AkpDetail a={a} />,
++    extra: <AkpDetail id={id} />,
+   }
+ }
+ 
++/** Adds a blank AKP (serving one StateFlip when given) and returns its id. */
++function addAkp(store: ReturnType<typeof useAkpEdits>, flip?: string): string {
++  const family: AkpFamily = 'script'
++  const id = nextAkpId(family, (x) => !!akpByIdAny(x))
++  store.commit([...store.edits, makeEdit('add', id, store.who, { value: { name: 'New AKP', family, layer: 'Concepts', modality: 'Script', flips: flip ? [flip] : [] } })])
++  return id
++}
++
+ /* ------------------------------------------------------- All StateFlips */
+ 
+ export function AllStateFlips() {
+@@ -306,8 +313,7 @@ export function AllStateFlips() {
+ 
+ /* -------------------------------------------------------- AKP catalogue */
+ 
+-const MOD_BG: Record<ChapterModality, string> = { Script: 'bg-adm-s1', Music: 'bg-adm-s2', Voice: 'bg-adm-s3', Image: 'bg-adm-s4' }
+-const MOD_FILL: Record<ChapterModality, string> = { Script: 'fill-adm-s1', Music: 'fill-adm-s2', Voice: 'fill-adm-s3', Image: 'fill-adm-s4' }
++const MOD_LOOK = MODALITY_LOOK as Record<ChapterModality, (typeof MODALITY_LOOK)[string]>
+ 
+ const LINK_STYLES: Record<string, LinkStyle> = {
+   drives: { label: 'Drives', cls: 'stroke-adm-ink', width: 2 },
+@@ -370,42 +376,43 @@ function chapterItem(id: string) {
+ function chapterGraph(): { nodes: GraphNode[]; links: GraphLink[] } {
+   return {
+     nodes: [
+-      { id: CHAPTER_GOAL.id, label: CHAPTER_GOAL.name, group: 'Goal', fill: 'fill-adm-ink', dot: 'bg-adm-ink', goal: true },
+-      ...chapterNodes().map((n) => ({ id: n.id, label: n.name, group: `${n.modality} · ${n.layer}`, fill: MOD_FILL[n.modality], dot: MOD_BG[n.modality], draft: !n.inCatalogue })),
++      { id: CHAPTER_GOAL.id, label: CHAPTER_GOAL.name, group: 'Goal', look: GOAL_LOOK, goal: true },
++      ...chapterNodes().map((n) => ({ id: n.id, label: n.name, group: `${n.modality} · ${n.layer}`, look: MOD_LOOK[n.modality], draft: !n.inCatalogue })),
+     ],
+     links: CHAPTER_LINKS.map((l) => ({ ...l })),
+   }
+ }
+ 
+-function flipGraph(flipId: string): { nodes: GraphNode[]; links: GraphLink[] } {
++/** `_version` only ties the memo to the edits in force; the data comes from akps(). */
++function flipGraph(flipId: string, _version = 0): { nodes: GraphNode[]; links: GraphLink[] } {
+   const goalId = flipId.replace(/^SF-/, 'WG-')
+-  const goal = akpById(goalId)!
+-  const steps = ['X', 'Y', 'Z'].map((m) => akpById(`${goalId}-${m}`)).filter((a): a is Akp => !!a)
++  const goal = akpById(goalId) ?? akpByIdAny(goalId)!
++  const steps = ['X', 'Y', 'Z'].map((m) => akpById(`${goalId}-${m}`)).filter((a) => a !== undefined)
+   const strategy = akps().filter((a) => a.kind === 'strategy' && a.flips.includes(flipId)).slice(0, MAX_FLIP_NODES)
+   const set = new Set([goalId, ...steps.map((a) => a.id), ...strategy.map((a) => a.id)])
+-  const node = (a: Akp, isGoal = false): GraphNode => ({ id: a.id, label: isGoal ? a.id.replace('WG-', '') : a.name, group: `${FAMILY[a.family].label} · ${a.layer}`, fill: FAMILY_FILL[a.family], dot: FAMILY_BG[a.family], goal: isGoal, draft: !a.fromFile })
++  const node = (a: Akp & { edited?: boolean; added?: boolean }, tier: number): GraphNode => ({ id: a.id, label: tier === 0 ? a.id.replace('WG-', '') : a.name, group: `${FAMILY[a.family].label} · ${a.layer || 'no layer'}`, look: FAMILY_LOOK[a.family], goal: tier === 0, draft: !a.fromFile && !a.added, edited: a.edited, tier })
+   const links: GraphLink[] = [
+     ...steps.map((a) => ({ from: a.id, to: goalId, type: 'step-of' })),
+     ...strategy.map((a) => ({ from: a.id, to: goalId, type: 'serves' })),
+-    ...strategy.flatMap((a) => a.links.filter((l) => set.has(l.to)).map((l) => ({ from: a.id, to: l.to, type: l.type }))),
++    ...[...steps, ...strategy].flatMap((a) => a.links.filter((l) => set.has(l.to) && !(l.to === goalId && l.type === 'step-of')).map((l) => ({ from: a.id, to: l.to, type: l.type }))),
+   ]
+-  return { nodes: [node(goal, true), ...steps.map((a) => node(a)), ...strategy.map((a) => node(a))], links }
++  return { nodes: [node(goal, 0), ...steps.map((a) => node(a, 1)), ...strategy.map((a) => node(a, 2))], links }
+ }
+ 
+-function Chip({ on, onClick, dot, children }: { on: boolean; onClick: () => void; dot?: string; children: ReactNode }) {
++function Chip({ on, onClick, dot, children }: { on: boolean; onClick: () => void; dot?: ReactNode; children: ReactNode }) {
+   return (
+     <button type="button" aria-pressed={on} onClick={onClick} className={`inline-flex items-center gap-4 rounded-full border px-10 py-4 text-11 font-medium ${on ? 'border-adm-ink bg-adm-ink text-adm-surface' : 'border-adm-line text-adm-ink-2 hover:bg-adm-hover'}`}>
+-      {dot && <span className={`size-8 rounded-full ${dot}`} aria-hidden="true" />}
++      {dot}
+       {children}
+     </button>
+   )
+ }
+ 
+-function StatCard({ dot, label, value, sub }: { dot?: string; label: string; value: number; sub?: string }) {
++function StatCard({ dot, label, value, sub }: { dot?: ReactNode; label: string; value: number; sub?: string }) {
+   return (
+     <div className="flex min-w-0 flex-col gap-2 rounded-8 border border-adm-line bg-adm-bg p-10">
+       <dt className="inline-flex min-w-0 items-center gap-4 text-11 text-adm-muted">
+-        {dot && <span className={`size-8 shrink-0 rounded-full ${dot}`} aria-hidden="true" />}
++        {dot}
+         <span className="truncate">{label}</span>
+       </dt>
+       <dd className="text-20 font-semibold tabular-nums text-adm-ink">{value.toLocaleString('en')}</dd>
+@@ -431,7 +438,7 @@ function ChapterPhases() {
+               return (
+                 <li key={id}>
+                   <button type="button" onClick={() => open(chapterItem(id))} className="inline-flex items-center gap-4 rounded-full border border-adm-line px-8 py-2 text-11 text-adm-ink hover:bg-adm-hover">
+-                    <span className={`size-8 rounded-full ${MOD_BG[n.modality]}`} aria-hidden="true" />
++                    <Mark look={MOD_LOOK[n.modality]} />
+                     {n.name}
+                   </button>
+                 </li>
+@@ -446,11 +453,13 @@ function ChapterPhases() {
+ 
+ function RelationshipGraph() {
+   const open = useDetail()
+-  const [focus, setFocus] = useState(CHAPTER)
++  const store = useAkpEdits()
++  const [focus, setFocus] = useState(CHAPTER_GOAL.flip)
+   const [mods, setMods] = useState<string[]>([])
+   const [layer, setLayer] = useState('all')
+   const isChapter = focus === CHAPTER
+-  const base = useMemo(() => (isChapter ? chapterGraph() : flipGraph(focus)), [focus, isChapter])
++  const editsNow = store.edits
++  const base = useMemo(() => (isChapter ? chapterGraph() : flipGraph(focus, editsNow.length)), [focus, isChapter, editsNow])
+   const modOf = (n: GraphNode) => n.group.split(' · ')[0]
+   const layerOf = (n: GraphNode) => n.group.split(' · ').slice(1).join(' · ')
+   const modalities = [...new Set(base.nodes.filter((n) => !n.goal).map(modOf))]
+@@ -460,17 +469,28 @@ function RelationshipGraph() {
+     const ids = new Set(nodes.map((n) => n.id))
+     return { nodes, links: base.links.filter((l) => ids.has(l.from) && ids.has(l.to)) }
+   }, [base, mods, layer])
+-  const legend = isChapter ? CHAPTER_MODALITIES.map((m) => ({ label: m, dot: MOD_BG[m] })) : modalities.map((m) => ({ label: m, dot: FAMILY_BG[FAMILIES.find((f) => FAMILY[f].label === m)!] }))
++  const legend = isChapter ? CHAPTER_MODALITIES.map((m) => ({ label: m, look: MOD_LOOK[m] })) : modalities.map((m) => ({ label: m, look: FAMILY_LOOK[FAMILIES.find((f) => FAMILY[f].label === m) ?? 'script'] }))
+   const onOpen = (id: string) => {
+     if (isChapter && id !== CHAPTER_GOAL.id) return open(chapterItem(id))
+-    const a = akpById(id)
+-    if (a) open(akpItem(a))
++    if (akpByIdAny(id)) open(akpItem(id))
+   }
++  const editing: GraphEditing | undefined = isChapter
++    ? undefined
++    : {
++        linkTypes: AKP_LINK_TYPES.map((t) => [t, LINK_STYLES[t]?.label ?? t]),
++        onLink: (from, to, type) => {
++          const a = akpById(from)
++          const t = AKP_LINK_TYPES.find((x) => x === type)
++          if (!a || !t || a.links.some((l) => l.to === to && l.type === t)) return
++          store.commit([...store.edits, makeEdit('link-add', from, store.who, { to, type: t })])
++        },
++        onNew: () => open(akpItem(addAkp(store, focus))),
++      }
+   const f = isChapter ? stateFlipById(CHAPTER_GOAL.flip)! : stateFlipById(focus)!
+   return (
+     <Panel
+       title="How AKPs relate"
+-      description="Pick a StateFlip, or sleep chapter 1, to see its goal AKP in the middle and the strategy AKPs serving it around it. Hover a dot to light up its links; click it for the definition, links and source."
++      description="Pick a StateFlip to see its goal AKP in the middle and the strategy AKPs serving it around it, or sleep chapter 1 (read only). Zoom and pan; Follow the path walks StateFlip → goal AKPs → strategy AKPs. Click a node to edit it; drag from one node to another to link them."
+     >
+       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,420px)_minmax(0,220px)]">
+         <Select
+@@ -481,7 +501,7 @@ function RelationshipGraph() {
+             setMods([])
+             setLayer('all')
+           }}
+-          options={[[CHAPTER, 'Sleep · chapter 1 (AKP Graph Explorer)'], ...stateFlips().map((x) => [x.id, `${x.id} ${x.title}`] as [string, string])]}
++          options={[...stateFlips().map((x) => [x.id, `${x.id} ${x.title}`] as [string, string]), [CHAPTER, 'Sleep · chapter 1 (AKP Graph Explorer, read only)']]}
+         />
+         <Select label="Layer" value={layer} onChange={setLayer} options={[['all', 'All layers'], ...layers.map((l) => [l, l] as [string, string])]} />
+       </div>
+@@ -491,7 +511,7 @@ function RelationshipGraph() {
+           All
+         </Chip>
+         {modalities.map((m) => (
+-          <Chip key={m} on={mods.includes(m)} dot={legend.find((g) => g.label === m)?.dot} onClick={() => setMods(mods.includes(m) ? mods.filter((x) => x !== m) : [...mods, m])}>
++          <Chip key={m} on={mods.includes(m)} dot={<Mark look={legend.find((g) => g.label === m)?.look ?? FAMILY_LOOK.script} />} onClick={() => setMods(mods.includes(m) ? mods.filter((x) => x !== m) : [...mods, m])}>
+             {m}
+           </Chip>
+         ))}
+@@ -504,11 +524,11 @@ function RelationshipGraph() {
+         ) : (
+           <>
+             <span className="font-semibold text-adm-ink">{f.id}</span> {f.title}: its goal AKP, its X / Y / Z steps and the strategy AKPs linked to it by the catalogue
+-            {base.nodes.length - 4 >= MAX_FLIP_NODES ? ` (first ${MAX_FLIP_NODES})` : ''}. Dashed outline: drafted by us.
++            {base.nodes.length - 4 >= MAX_FLIP_NODES ? ` (first ${MAX_FLIP_NODES})` : ''}. Dashed outline: drafted by us; solid ring: edited in the admin. Links made here are saved as edits.
+           </>
+         )}
+       </p>
+-      <AkpGraph key={focus} nodes={data.nodes} links={data.links} linkStyles={LINK_STYLES} legend={legend} onOpen={onOpen} aria={`Network graph of ${data.nodes.length} AKPs and ${data.links.length} links for ${isChapter ? 'sleep chapter 1' : focus}`} />
++      <AkpGraph key={focus} nodes={data.nodes} links={data.links} linkStyles={LINK_STYLES} legend={legend} onOpen={onOpen} editing={editing} aria={`Network graph of ${data.nodes.length} AKPs and ${data.links.length} links for ${isChapter ? 'sleep chapter 1' : focus}`} />
+       {isChapter && (
+         <>
+           <h3 className="text-13 font-semibold text-adm-ink">Which AKPs drive each phase of the chapter</h3>
+@@ -524,8 +544,10 @@ const MODALITY_LIST = ['Script', 'Music', 'Image', 'Video', '—'] as const
+ 
+ export function AkpCatalogue() {
+   const open = useDetail()
++  const store = useAkpEdits()
+   const all = akps()
+   const s = akpSummary()
++  const [status, setStatus] = useState('all')
+   const [families, setFamilies] = useState<AkpFamily[]>([])
+   const [layer, setLayer] = useState('all')
+   const [modality, setModality] = useState('all')
+@@ -539,8 +561,10 @@ export function AkpCatalogue() {
+     return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8)
+   }, [all])
+   const ql = q.trim().toLowerCase()
+-  const shown = all.filter(
++  const pool = status === 'deleted' ? akpsWithDeleted().filter((a) => a.deleted) : all
++  const shown = pool.filter(
+     (a) =>
++      (status === 'all' || status === 'deleted' || (status === 'edited' ? a.edited : a.status === status)) &&
+       (!families.length || families.includes(a.family)) && (layer === 'all' || a.layer === layer) && (modality === 'all' || a.modality === modality) &&
+       (src === 'all' || (src === 'file') === a.fromFile) && (!ql || `${a.id} ${a.name} ${a.description}`.toLowerCase().includes(ql)),
+   )
+@@ -555,14 +579,16 @@ export function AkpCatalogue() {
+   }
+   return (
+     <div className="flex min-w-0 flex-col gap-16" data-akp-catalogue>
++      <AkpExplainer />
++      <AkpEditBar onNew={() => open(akpItem(addAkp(store)))} />
+       <section aria-label="Summary" className="flex min-w-0 flex-col gap-12 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20">
+         <p className="max-w-[860px] text-16 font-semibold leading-snug text-adm-ink">
+-          {s.total.toLocaleString('en')} draft AKPs: {s.byKind.goal} goal AKPs (what to reach) and {s.byKind.strategy} strategy and tactic AKPs (how). {s.fromFile} come straight from the workbooks; {s.drafted} are drafted by us, mostly the X / Y / Z steps. {s.flipsCovered} of {s.flips} StateFlips are served by at least one strategy AKP ({s.flipsCoveredBeyondSkills} by more than a skill).
++          {s.total.toLocaleString('en')} AKPs: {s.byKind.goal} goal AKPs (what to reach) and {s.byKind.strategy} strategy and tactic AKPs (how). {s.fromFile} come straight from the workbooks; {s.drafted} are drafted by us, mostly the X / Y / Z steps. {s.flipsCovered} of {s.flips} StateFlips are served by at least one strategy AKP ({s.flipsCoveredBeyondSkills} by more than a skill).
+         </p>
+         <h3 className="text-12 font-semibold text-adm-ink">By family</h3>
+         <dl className="grid grid-cols-2 gap-8 lg:grid-cols-7">
+           {FAMILIES.map((f) => (
+-            <StatCard key={f} dot={FAMILY_BG[f]} label={`${FAMILY[f].label} (${FAMILY[f].prefix}-)`} value={s.byFamily[f]} sub={FAMILY[f].kind === 'goal' ? 'goal' : 'strategy'} />
++            <StatCard key={f} dot={<Mark look={FAMILY_LOOK[f]} />} label={`${FAMILY[f].label} (${FAMILY[f].prefix}-)`} value={s.byFamily[f]} sub={FAMILY[f].kind === 'goal' ? 'goal' : 'strategy'} />
+           ))}
+         </dl>
+         <div className="grid min-w-0 gap-12 lg:grid-cols-2">
+@@ -592,7 +618,7 @@ export function AkpCatalogue() {
+           </div>
+         </div>
+         <p className="text-12 text-adm-ink-2">
+-          By function: wellness {s.byFunction.wellness}, product {s.byFunction.product}, identity {s.byFunction.identity}, brand {s.byFunction.brand} (waiting for the marketing sheet). {s.links} typed links between AKPs. All are status “draft”.
++          By function: wellness {s.byFunction.wellness}, product {s.byFunction.product}, identity {s.byFunction.identity}, brand {s.byFunction.brand} (waiting for the marketing sheet). {s.links} typed links between AKPs. Status: {all.filter((a) => a.status === 'draft').length} draft, {all.filter((a) => a.status === 'reviewed').length} reviewed, {all.filter((a) => a.status === 'approved').length} approved. Every count here includes the edits made in the admin.
+         </p>
+       </section>
+ 
+@@ -608,28 +634,32 @@ export function AkpCatalogue() {
+             All families
+           </Chip>
+           {FAMILIES.map((f) => (
+-            <Chip key={f} on={families.includes(f)} dot={FAMILY_BG[f]} onClick={() => toggleFamily(f)}>
++            <Chip key={f} on={families.includes(f)} dot={<Mark look={FAMILY_LOOK[f]} />} onClick={() => toggleFamily(f)}>
+               {FAMILY[f].label}
+             </Chip>
+           ))}
+         </div>
+-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
++        <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
++          <Select label="Status" value={status} onChange={reset(setStatus)} options={[['all', 'All'], ['draft', 'Draft'], ['reviewed', 'Reviewed'], ['approved', 'Approved'], ['edited', 'Edited in the admin'], ['deleted', 'Deleted (restorable)']]} />
+           <Select label="Layer" value={layer} onChange={reset(setLayer)} options={[['all', 'All'], ...layers.map((l) => [l, l] as [string, string])]} />
+           <Select label="Modality" value={modality} onChange={reset(setModality)} options={[['all', 'All'], ...MODALITY_LIST.map((m) => [m, m === '—' ? 'None' : m] as [string, string])]} />
+           <Select label="Source" value={src} onChange={reset(setSrc)} options={[['all', 'All'], ['file', 'From file'], ['drafted', 'Drafted by us']]} />
+         </div>
+         <p className="text-12 text-adm-muted" aria-live="polite">
+-          {shown.length.toLocaleString('en')} of {all.length.toLocaleString('en')}
++          {shown.length.toLocaleString('en')} of {pool.length.toLocaleString('en')}
+         </p>
+         <ul className="flex flex-col divide-y divide-adm-line rounded-8 border border-adm-line" data-akp-list>
+           {shown.slice(0, limit).map((a) => (
+             <li key={a.id}>
+-              <button type="button" onClick={() => open(akpItem(a))} className="flex w-full min-w-0 flex-col gap-6 px-12 py-10 text-left hover:bg-adm-hover lg:flex-row lg:items-center lg:gap-12">
++              <button type="button" onClick={() => open(akpItem(a.id))} className="flex w-full min-w-0 flex-col gap-6 px-12 py-10 text-left hover:bg-adm-hover lg:flex-row lg:items-center lg:gap-12">
+                 <span className="flex min-w-0 flex-1 flex-col gap-2">
+                   <span className="inline-flex min-w-0 items-center gap-6 text-13 font-semibold text-adm-ink">
+-                    <span className={`size-8 shrink-0 rounded-full ${FAMILY_BG[a.family]}`} aria-hidden="true" />
++                    <Mark look={FAMILY_LOOK[a.family]} size={12} />
+                     <span className="min-w-0 truncate">{a.name}</span>
+                   </span>
++                  <span className="text-12 text-adm-ink-2" data-used-for>
++                    {usedForLine(a, flipTitle)}
++                  </span>
+                   <span className="truncate text-11 text-adm-muted">
+                     {a.id} · {a.description}
+                   </span>
+@@ -641,6 +671,8 @@ export function AkpCatalogue() {
+                   </span>
+                   {a.modality !== '—' && <span className="rounded-full bg-adm-hover px-8 py-2 text-11 text-adm-ink-2">{a.modality}</span>}
+                   {a.flips.length > 0 && <span className="rounded-full bg-adm-hover px-8 py-2 text-11 tabular-nums text-adm-ink-2">{a.flips.length} {a.flips.length === 1 ? 'goal' : 'goals'}</span>}
++                  {a.status !== 'draft' && <Badge tone="good">{a.status === 'approved' ? 'Approved' : 'Reviewed'}</Badge>}
++                  {a.deleted ? <Badge tone="critical">Deleted</Badge> : a.edited && <Badge tone="neutral">{a.added ? 'Added' : 'Edited'}</Badge>}
+                   <SourceBadge source={a.source} />
+                 </span>
+               </button>
+diff --git a/src/admin/pages/lab/akpStyle.ts b/src/admin/pages/lab/akpStyle.ts
+new file mode 100644
+index 0000000..5c2c713
+--- /dev/null
++++ b/src/admin/pages/lab/akpStyle.ts
+@@ -0,0 +1,70 @@
++import type { AkpFamily } from '../../data/akps'
++
++/*
++ * How each AKP family looks (U149): its own hue from the admin series tokens
++ * (s1–s6 plus ink-2, so script and image are no longer both green, nor music
++ * and video both amber) and its own shape, so the families stay apart for
++ * colour-blind readers and in greyscale. Used by the list, the legend, the
++ * graph and the explainer alike.
++ */
++
++export type Shape = 'circle' | 'square' | 'triangle' | 'diamond' | 'hexagon' | 'pentagon' | 'triangle-down' | 'star'
++
++export interface Look {
++  bg: string
++  fill: string
++  shape: Shape
++}
++
++export const FAMILY_LOOK: Record<AkpFamily, Look> = {
++  goal: { bg: 'bg-adm-s1', fill: 'fill-adm-s1', shape: 'circle' },
++  identity: { bg: 'bg-adm-s5', fill: 'fill-adm-s5', shape: 'hexagon' },
++  script: { bg: 'bg-adm-s3', fill: 'fill-adm-s3', shape: 'square' },
++  music: { bg: 'bg-adm-s4', fill: 'fill-adm-s4', shape: 'triangle' },
++  image: { bg: 'bg-adm-s6', fill: 'fill-adm-s6', shape: 'diamond' },
++  video: { bg: 'bg-adm-s2', fill: 'fill-adm-s2', shape: 'triangle-down' },
++  product: { bg: 'bg-adm-ink-2', fill: 'fill-adm-ink-2', shape: 'pentagon' },
++}
++
++/** Sleep chapter 1's modalities, matched to the family looks (voice has no family yet). */
++export const MODALITY_LOOK: Record<string, Look> = {
++  Script: FAMILY_LOOK.script,
++  Music: FAMILY_LOOK.music,
++  Image: FAMILY_LOOK.image,
++  Video: FAMILY_LOOK.video,
++  Voice: { bg: 'bg-adm-s5', fill: 'fill-adm-s5', shape: 'star' },
++}
++
++export const GOAL_LOOK: Look = { bg: 'bg-adm-ink', fill: 'fill-adm-ink', shape: 'circle' }
++
++const ring = (cx: number, cy: number, r: number, n: number, rot: number, inner?: number) =>
++  Array.from({ length: n }, (_, i) => {
++    const t = rot + (i / n) * Math.PI * 2
++    const rr = inner !== undefined && i % 2 ? inner : r
++    return `${(cx + Math.cos(t) * rr).toFixed(2)},${(cy + Math.sin(t) * rr).toFixed(2)}`
++  }).join('L')
++
++/** An SVG path for a shape of radius r centred on (cx, cy), area roughly equal across shapes. */
++export function shapePath(shape: Shape, cx: number, cy: number, r: number): string {
++  const up = -Math.PI / 2
++  switch (shape) {
++    case 'circle':
++      return `M${cx - r},${cy}a${r},${r} 0 1,0 ${2 * r},0a${r},${r} 0 1,0 ${-2 * r},0z`
++    case 'square': {
++      const s = r * 0.88
++      return `M${cx - s},${cy - s}h${2 * s}v${2 * s}h${-2 * s}z`
++    }
++    case 'triangle':
++      return `M${ring(cx, cy + r * 0.15, r * 1.25, 3, up)}z`
++    case 'triangle-down':
++      return `M${ring(cx, cy - r * 0.15, r * 1.25, 3, -up)}z`
++    case 'diamond':
++      return `M${ring(cx, cy, r * 1.2, 4, up)}z`
++    case 'hexagon':
++      return `M${ring(cx, cy, r * 1.05, 6, 0)}z`
++    case 'pentagon':
++      return `M${ring(cx, cy, r * 1.1, 5, up)}z`
++    case 'star':
++      return `M${ring(cx, cy, r * 1.3, 10, up, r * 0.55)}z`
++  }
++}
+diff --git a/src/api/akpEdits.ts b/src/api/akpEdits.ts
+new file mode 100644
+index 0000000..b728971
+--- /dev/null
++++ b/src/api/akpEdits.ts
+@@ -0,0 +1,33 @@
++import { z } from 'zod'
++import { akpEditSchema, type AkpEdit } from '../admin/data/akpEdits'
++import { requestJson } from '../lib/http'
++
++/**
++ * /api/akp-edits — the admin's edits to the AKP catalogue (U149; see
++ * api/akp-edits.ts and src/admin/data/akpEdits.ts). The endpoint is
++ * unauthenticated, so what it returns is validated again here and an edit
++ * that does not parse is dropped rather than replayed.
++ */
++const response = z.object({
++  configured: z.boolean(),
++  scope: z.string().optional(),
++  edits: z.array(z.unknown()).nullable().optional(),
++  savedAt: z.string().optional(),
++})
++
++export function validAkpEdits(list: unknown[]): AkpEdit[] {
++  return list.flatMap((item) => {
++    const parsed = akpEditSchema.safeParse(item)
++    return parsed.success ? [parsed.data] : []
++  })
++}
++
++export async function fetchAkpEdits(signal?: AbortSignal) {
++  const data = await requestJson('/api/akp-edits', { schema: response, signal })
++  return { configured: data.configured, scope: data.scope, edits: data.edits ? validAkpEdits(data.edits) : null }
++}
++
++export async function saveAkpEdits(edits: AkpEdit[]) {
++  const data = await requestJson('/api/akp-edits', { schema: response, method: 'POST', body: { edits } })
++  return { configured: data.configured, scope: data.scope }
++}

@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-28 — Editable AKPs and graph map (U149, J207)
+
+Admins can add, edit, link and revert AKPs, with the changes shared across the deployment; the AKP graph zooms, pans and follows a StateFlip's path.
+
+Branches: `web_app`, `admin_cms`, `web_prod`.
+
 ### 2026-11-28 — AI brain, buyer test 8, Your asks (U147, J206)
 
 AI brain shows the five functions with their chance to reach the MVP targets and a ranked feature list; buyer test 8 offers each person a journey for their own StateFlip; Start here lists every ask.

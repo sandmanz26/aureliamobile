@@ -169,6 +169,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U130 | `9a6c520` | 2026-11-25 | Buyer agent report made visual. It has funnels per test (5, 6, 7), a people grid (one mark per simulated person, which opens a drawer), a who-says-yes heat map, a price ladder against $10, ranked reasons for no with quotes, a slope chart of what moved people, and a cleaner trend across tests. | [patch](patches/U130-9a6c520.patch) |
 | U131 | `1634d0c` | 2026-11-25 | Product lab, staging only (`RELEASES.therapeuticMaps`). The **Therapeutic map** shows the Product, Business and Wellness triangle with targets, the 7-step sleep process and five worlds. The **Healing Map** has three rings (9 bad states, 14 building blocks, 9 good states) and 45 links: 36 design samples, 9 research-cited, 0 learned. It has filters, zoom and a drawer. | [patch](patches/U131-1634d0c.patch) |
 | U132 | `542ade2` | 2026-11-25 | B2B2C round 2. It adds 28 new web sources and the buyer tests, and re-ranks the channels: creator journey with a free first week, then a self-serve team plan, then codes and gifting. It lists 22 features (10 Now), on wiki pages round-2 and features and in Reports → B2B2C report (a feature board with a drawer). | [patch](patches/U132-542ade2.patch) |
+| U149 | `feb5c4e` | 2026-11-28 | Editable AKPs: add, edit, delete/restore, link, revert and reset as an edit overlay on the generated catalogue (history per change, export/import JSON), synced via /api/akp-edits (KV, per deployment; local fallback); "What is an AKP?" explainer and "Used for · helps" lines; distinct colour+shape per family; graph map with zoom, pan, fit, follow-the-path, drag-to-link and New AKP here. | [patch](patches/U149-feb5c4e.patch) |
 | U147 | `fb6e490` | 2026-11-28 | Buyer test 8 (975 v4 personas: StateFlip-specific journey with a free week vs v7's best; would try 33% vs 15%, would pay 170 vs 16, split into naming the StateFlip, showing their chance, and an ending free week); AI brain page (/admin/ai-brain: 5 functions, chance to reach MVP targets, feature ranking, interconnections, weekly report, his prototype map); Your asks tracker on Start here (A1–A46). | [patch](patches/U147-fb6e490.patch) |
 | U148 | `620e234` | 2026-11-28 | How a session is built (/admin/session-builder: Meta → Path → Script, 16 steps mapped to today and API v2, sleep chapter 1 worked example); Therapeutic funnel per StateFlip (/admin/therapeutic-funnel); Monday delivery sheet (docs/briefs/2026-11-30-delivery-sheet.md); assumptions ledger and claims policy (/wiki/b2b2c/assumptions, 22 numbers) with a risky-word scan. | [patch](patches/U148-620e234.patch) |
 | U145 | `88996c9` | 2026-11-28 | B1 125 StateFlips each with own X/Y/Z and check-ins, weak links dropped, own cohorts for 11–25; B3 one 5-dimension list (`dimensions.ts`) with Healing/Therapeutic map mapping; B2 sleep chapter 1 as 20 AKPs / 30 links driving the mood stretch; AKP catalogue redesigned with summary cards and an interactive relationship graph (custom force layout, focus on chapter 1 or any StateFlip); B5 cost per StateFlip in the Cost report ($16.33 avg per flip, $15.13 per person). | [patch](patches/U145-88996c9.patch) |
@@ -188,6 +189,13 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U149 — Editable AKPs and the interactive graph map
+
+- **Commit:** `feb5c4e` · 2026-11-28.
+- **Request:** AKPs easy to understand, modifiable, with an interactive graph map.
+- **Caveats:** synced mode not yet run against real KV; server copy wins on first load; /api/akp-edits is unauthenticated like the other endpoints.
+- **Revert:** `git revert --no-commit feb5c4e`.
 
 ### U147 — Buyer test 8, AI brain, Your asks
 
