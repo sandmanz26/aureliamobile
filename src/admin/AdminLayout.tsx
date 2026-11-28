@@ -105,6 +105,12 @@ const NAV: NavGroup[] = [
         : []),
       // U140 (J202): staging only (RELEASES).
       ...(RELEASES.stateFlips ? [{ to: '/admin/stateflips', label: 'StateFlips', flag: 'adminStateFlips' }] : []),
+      ...(RELEASES.stateFlips
+        ? [
+            { to: '/admin/session-builder', label: 'How a session is built', flag: 'adminSessionBuilder' },
+            { to: '/admin/therapeutic-funnel', label: 'Therapeutic funnel', flag: 'adminTherapeuticFunnel' },
+          ]
+        : []),
       // Buyer agent results (/admin/buyer-agent) is off the menu since U123; the route stays and Reports links to it.
     ],
   },
@@ -195,6 +201,13 @@ const NAV2: NavGroup[] = [
     defaultOpen: true,
     items: [
       ...(RELEASES.stateFlips ? [{ to: '/admin/stateflips', label: 'StateFlips', flag: 'adminStateFlips', hint: 'The product: a bad state turned into a good one' }] : []),
+      // U148 (J206): the Meta → Path → Script cascade and the funnel per StateFlip.
+      ...(RELEASES.stateFlips
+        ? [
+            { to: '/admin/session-builder', label: 'How a session is built', flag: 'adminSessionBuilder', hint: 'Meta → Path → Script: 16 steps from goal and person to a script, with a worked sleep example' },
+            { to: '/admin/therapeutic-funnel', label: 'Therapeutic funnel', flag: 'adminTherapeuticFunnel', hint: 'Per StateFlip: has the problem → flip → stays good, with drop-offs and levers' },
+          ]
+        : []),
       ...(RELEASES.personas ? [{ to: '/admin/personas', label: 'Personas', flag: 'adminPersonas', hint: 'Made-up research people the tests run on' }] : []),
       { to: '/admin/user-journey', label: 'User journey', flag: 'adminUserJourney', hint: 'When people reach for Aurelia, and what serves each moment' },
       ...(RELEASES.businessFunnel ? [{ to: '/admin/business-funnel', label: 'Business funnel', flag: 'adminBusinessFunnel', hint: 'How many people get from first visit to paying' }] : []),

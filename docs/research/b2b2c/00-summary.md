@@ -105,7 +105,7 @@ The full table of 15, with the scores per question, is on [Ideation](/wiki/b2b2c
 
 The full plan, with gates, is on [Plan](/wiki/b2b2c/plan).
 
-The business owner's scale claims (120,000 AKPs, 500 billion variations, 5 billion StateFlips, $1 per flip) are recorded as [his thesis, not measured](/wiki/b2b2c/owner-thesis), each with what would make it measurable.
+The business owner's scale claims (120,000 AKPs, 500 billion variations, 5 billion StateFlips, $1 per flip) are recorded as [his thesis, not measured](/wiki/b2b2c/owner-thesis), each with what would make it measurable. Every load-bearing number in the admin, and the words we use and avoid, are on [Assumptions and claims](/wiki/b2b2c/assumptions).
 
 1. **Phase 0, now, no backend.**
    - Buyer agents test the redesigned retreat (€19.99 against €39).

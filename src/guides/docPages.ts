@@ -29,6 +29,7 @@ export const B2B2C_PAGES: DocPage[] = [
   { slug: 'round-2', title: 'Round 2', note: 'What changed, the channels re-ranked, the plan.', file: '10-round-2.md' },
   { slug: 'features', title: 'Features to build', note: 'Per channel: who, why, evidence, priority, effort.', file: '11-features.md' },
   { slug: 'owner-thesis', title: 'His thesis', note: 'The business owner’s scale claims. Not measured.', file: '12-owner-thesis.md' },
+  { slug: 'assumptions', title: 'Assumptions and claims', note: 'Every load-bearing number and its status; the words we use and avoid.', file: '13-assumptions-and-claims.md' },
 ]
 
 /** API contract (U120, J175): v2 split into General, Apps and Admin; v1 kept. */

@@ -5,7 +5,7 @@ import { SOURCES, type SourceId } from './reportSources'
 
 // Every report route, plus the lab pages that show numbers (StateFlips has its own sources panel).
 const reportRoutes = [...appSource.matchAll(/<Route path="(reports[^"]*)"/g)].map((m) => `/admin/${m[1]}`)
-const LAB_ROUTES = ['/admin/personas', '/admin/business-funnel', '/admin/user-journey']
+const LAB_ROUTES = ['/admin/personas', '/admin/business-funnel', '/admin/user-journey', '/admin/session-builder', '/admin/therapeutic-funnel']
 
 describe('data sources per report (U146)', () => {
   it('finds the report routes', () => {

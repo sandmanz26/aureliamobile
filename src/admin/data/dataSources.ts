@@ -58,6 +58,7 @@ export const SOURCE_META: Record<SourceId, { type: DataSourceType; file: string;
   'cost-model': { type: 'assumed', file: 'src/admin/data/costModel.ts', date: '27 Nov 2026' },
   'sleep-cohort': { type: 'simulated', file: 'src/admin/data/stateFlipSleep.ts', date: 'U140 (J202)' },
   'owner-thesis': { type: 'owner', file: 'His deck; chats of 24 and 27 Nov 2026', date: '27 Nov 2026' },
+  'bar-elements': { type: 'owner', file: 'docs/briefs/2026-11-27-bar-elements-operating-model.xlsx', date: '27 Nov 2026' },
 }
 
 export interface DataSourceUse {
@@ -156,6 +157,22 @@ export const REPORT_DATA_SOURCES: Record<string, ReportDataSources> = {
       { id: 'retreat', feeds: 'The creator retreat funnel.' },
       { id: 'b2b2c', feeds: 'Course-platform fees and category retention.' },
       { id: 'decisions', feeds: 'The decision log.' },
+    ],
+  },
+  '/admin/session-builder': {
+    title: 'How a session is built',
+    uses: [
+      { id: 'bar-elements', feeds: 'The 16 steps (inputs, databases, outputs), the context loop, bars, elements and CFAM examples.' },
+      { id: 'sleep-cohort', feeds: 'The person in the worked example and their numbers.' },
+      { id: 'spec-causal', feeds: 'Chance it works (54%) and uplift behind the example’s numbers.' },
+    ],
+  },
+  '/admin/therapeutic-funnel': {
+    title: 'Therapeutic funnel',
+    uses: [
+      { id: 'sleep-cohort', feeds: 'The people per StateFlip and each person’s probabilities.' },
+      { id: 'personas', feeds: 'The v4 personas behind every StateFlip but sleep.' },
+      { id: 'spec-causal', feeds: 'Chance it works (54%) and uplift per chapter.' },
     ],
   },
   '/admin/user-journey': {

@@ -90,6 +90,8 @@ const UserJourneyPage = lazy(() => import('./admin/pages/UserJourneyPage').then(
 const BusinessFunnelPage = lazy(() => import('./admin/pages/BusinessFunnelPage').then((m) => ({ default: m.BusinessFunnelPage })))
 const BuyerResultsPage = lazy(() => import('./admin/pages/BuyerResultsPage').then((m) => ({ default: m.BuyerResultsPage })))
 const BuyerAgentReportPage = lazy(() => import('./admin/pages/reports/BuyerAgentReportPage').then((m) => ({ default: m.BuyerAgentReportPage })))
+const SessionBuilderPage = lazy(() => import('./admin/pages/lab/SessionBuilderPage').then((m) => ({ default: m.SessionBuilderPage })))
+const TherapeuticFunnelPage = lazy(() => import('./admin/pages/lab/TherapeuticFunnelPage').then((m) => ({ default: m.TherapeuticFunnelPage })))
 const StateFlipsPage = lazy(() => import('./admin/pages/lab/StateFlipsPage').then((m) => ({ default: m.StateFlipsPage })))
 const TherapeuticMapPage = lazy(() => import('./admin/pages/lab/TherapeuticMapPage').then((m) => ({ default: m.TherapeuticMapPage })))
 const HealingMapPage = lazy(() => import('./admin/pages/lab/HealingMapPage').then((m) => ({ default: m.HealingMapPage })))
@@ -230,6 +232,21 @@ export default function App() {
               } />
             )}
             {/* U140 (J202): staging only (RELEASES). */}
+            {/* U148 (J206): with StateFlips (RELEASES). */}
+            {RELEASES.stateFlips && (
+              <Route path="session-builder" element={
+                <ModuleGuard module="adminSessionBuilder">
+                  <SessionBuilderPage />
+                </ModuleGuard>
+              } />
+            )}
+            {RELEASES.stateFlips && (
+              <Route path="therapeutic-funnel" element={
+                <ModuleGuard module="adminTherapeuticFunnel">
+                  <TherapeuticFunnelPage />
+                </ModuleGuard>
+              } />
+            )}
             {RELEASES.stateFlips && (
               <Route path="stateflips" element={
                 <ModuleGuard module="adminStateFlips">

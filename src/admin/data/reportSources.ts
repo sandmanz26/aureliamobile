@@ -61,6 +61,7 @@ export type SourceId =
   | 'cost-model'
   | 'sleep-cohort'
   | 'owner-thesis'
+  | 'bar-elements'
 
 export interface ReportSource {
   id: SourceId
@@ -330,6 +331,15 @@ export const SOURCES: Record<SourceId, ReportSource> = {
     link: '/wiki/b2b2c/owner-thesis',
     label: 'scenario',
   },
+  'bar-elements': {
+    id: 'bar-elements',
+    name: 'BAR / ELEMENTS operating model (workbook)',
+    what: 'The business owner’s workbook on how a script is built: the Meta → Path → Script cascade, bars, elements, CFAM metrics and the script assessment framework.',
+    version: 'Workbook of 27 Nov 2026 (27 tabs)',
+    taken: 'The 16 steps and the example values marked “from the workbook”.',
+    link: '/admin/session-builder',
+    label: 'document',
+  },
 }
 
 /** The kind of evidence a source is, for grouping it on a graph (U121). Coarse on purpose: a handful of groups a reader can scan. */
@@ -365,6 +375,7 @@ export const SOURCE_KIND: Record<SourceId, SourceKind> = {
   'cost-model': 'Costs',
   'sleep-cohort': 'Funnels and models',
   'owner-thesis': 'The business owner',
+  'bar-elements': 'The business owner',
 }
 
 export interface Finding {
