@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-28 — AI brain, buyer test 8, Your asks (U147, J206)
+
+AI brain shows the five functions with their chance to reach the MVP targets and a ranked feature list; buyer test 8 offers each person a journey for their own StateFlip; Start here lists every ask.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-28 — Session builder and therapeutic funnel (U148, J206)
 
 AI brain gains How a session is built and the Therapeutic funnel; the wiki gains the assumptions ledger and claims policy.

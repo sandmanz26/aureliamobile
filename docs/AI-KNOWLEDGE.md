@@ -134,6 +134,7 @@ reach that repository yet (O33).
 
 ## 6 · Positions taken (and why), newest first
 
+- **AI brain (U147, `aiBrain.ts`)** and Your asks (`ownerAsks.ts` parses EUGENE-CONTEXT §0 at build time: keep §0 rows in the same table format).
 - **One dimension list (U145, `dimensions.ts`)**; StateFlip text lives in `stateFlipDetails.ts` (drafted); sleep chapter AKPs in `akpChapterGraph.ts`.
 - **Every report registers its sources (U146, `dataSources.ts`)**; a test fails a report route without one.
 - **Production (U144, 27 Nov):** everything through U143 is live; no flag is staging-only now. Admin design phase 2 was dropped by the product owner.

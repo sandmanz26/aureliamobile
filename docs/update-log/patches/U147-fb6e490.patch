@@ -1,0 +1,1653 @@
+commit fb6e490165bff59a0305965956fc5565049655f6
+Author: Claude <noreply@anthropic.com>
+Date:   Sat Nov 28 04:18:42 2026 +0000
+
+    Buyer agent test 8, AI brain page, Your asks tracker (U147, J206)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+
+diff --git a/src/App.tsx b/src/App.tsx
+index e50195f..d9a84da 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -88,6 +88,7 @@ const AuditPage = lazy(() => import('./admin/pages/AuditPage').then((m) => ({ de
+ const SettingsPage = lazy(() => import('./admin/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })))
+ const UserJourneyPage = lazy(() => import('./admin/pages/UserJourneyPage').then((m) => ({ default: m.UserJourneyPage })))
+ const BusinessFunnelPage = lazy(() => import('./admin/pages/BusinessFunnelPage').then((m) => ({ default: m.BusinessFunnelPage })))
++const AiBrainPage = lazy(() => import('./admin/pages/AiBrainPage').then((m) => ({ default: m.AiBrainPage })))
+ const BuyerResultsPage = lazy(() => import('./admin/pages/BuyerResultsPage').then((m) => ({ default: m.BuyerResultsPage })))
+ const BuyerAgentReportPage = lazy(() => import('./admin/pages/reports/BuyerAgentReportPage').then((m) => ({ default: m.BuyerAgentReportPage })))
+ const SessionBuilderPage = lazy(() => import('./admin/pages/lab/SessionBuilderPage').then((m) => ({ default: m.SessionBuilderPage })))
+@@ -247,6 +248,12 @@ export default function App() {
+                 </ModuleGuard>
+               } />
+             )}
++            {/* U147 (J206): the five functions of the AI brain as one model. */}
++            <Route path="ai-brain" element={
++              <ModuleGuard module="adminAiBrain">
++                <AiBrainPage />
++              </ModuleGuard>
++            } />
+             {RELEASES.stateFlips && (
+               <Route path="stateflips" element={
+                 <ModuleGuard module="adminStateFlips">
+diff --git a/src/admin/AdminLayout.tsx b/src/admin/AdminLayout.tsx
+index d6ac375..9dbbe2a 100644
+--- a/src/admin/AdminLayout.tsx
++++ b/src/admin/AdminLayout.tsx
+@@ -200,6 +200,7 @@ const NAV2: NavGroup[] = [
+     description: 'What the AI knows: wellness, product, business and brand',
+     defaultOpen: true,
+     items: [
++      { to: '/admin/ai-brain', label: 'AI brain', flag: 'adminAiBrain', hint: 'The five functions as one model: targets, chances, feature ranking' },
+       ...(RELEASES.stateFlips ? [{ to: '/admin/stateflips', label: 'StateFlips', flag: 'adminStateFlips', hint: 'The product: a bad state turned into a good one' }] : []),
+       // U148 (J206): the Meta → Path → Script cascade and the funnel per StateFlip.
+       ...(RELEASES.stateFlips
+diff --git a/src/admin/data/aiBrain.test.ts b/src/admin/data/aiBrain.test.ts
+new file mode 100644
+index 0000000..bbf88b5
+--- /dev/null
++++ b/src/admin/data/aiBrain.test.ts
+@@ -0,0 +1,79 @@
++import { describe, expect, it } from 'vitest'
++import { CORE_FNS, brainMetrics, functionChance, mvpChance, prototypeMap, rankFeatures, stageChance, topThreeEffect, weeklyReport } from './aiBrain'
++import { PARTS_A, runV8, v8Change, v8Split, v8Tallies } from './buyerRunV8'
++import { ALL_RUN_DECLARATIONS, V8_CHANGE } from './runChanges'
++import { OWNER_ASKS, parseAsks, statusOf } from './ownerAsks'
++
++describe('buyer agent test 8 (U147)', () => {
++  it('plays set v4 without the 25 risk-flagged', () => {
++    const r = runV8()
++    expect(r.total).toBe(1000)
++    expect(r.excluded).toBe(25)
++    expect(r.answers).toHaveLength(975)
++    expect(r.answers.every((a) => /^SF-[A-Z]{3}-\d{2}$/.test(a.flipId))).toBe(true)
++  })
++  it('never pays more surely than it tries, and tallies add up', () => {
++    for (const a of runV8().answers) for (const s of [a.a, a.b]) {
++      if (s.tries === 'no') expect(s.pays).toBe('no')
++      if (s.tries === 'maybe') expect(s.pays).not.toBe('yes')
++    }
++    const x = v8Tallies()
++    expect(x.tryB.yes + x.tryB.maybe + x.tryB.no).toBe(x.n)
++    expect(x.dims.reduce((s, d) => s + d.n, 0)).toBe(x.n)
++  })
++  it('the split adds up to B − A', () => {
++    const s = v8Split()
++    const x = v8Tallies()
++    expect(s[0].paid).toBe(x.paidA)
++    expect(s[s.length - 1].paid).toBe(x.paidB)
++    expect(s.reduce((t, r) => t + r.step, 0)).toBeCloseTo(x.paidB - x.paidA, 9)
++    expect(PARTS_A.named).toBe(false)
++  })
++  it('declares its change', () => {
++    expect(ALL_RUN_DECLARATIONS.at(-1)).toBe(V8_CHANGE)
++    expect(V8_CHANGE.previous).toBe(7)
++    expect(v8Change().lines).toHaveLength(5)
++  })
++})
++
++describe('AI brain (U147)', () => {
++  it('stage chance is capped at 1 and respects direction', () => {
++    expect(stageChance({ target: 0.5, current: 1, better: 'up' })).toBe(1)
++    expect(stageChance({ target: 0.5, current: 0.25, better: 'up' })).toBe(0.5)
++    expect(stageChance({ target: 1, current: 4, better: 'down' })).toBe(0.25)
++  })
++  it('chances are products of stage chances', () => {
++    const m = brainMetrics()
++    for (const f of CORE_FNS) {
++      const p = functionChance(m, f)
++      expect(p).toBeGreaterThanOrEqual(0)
++      expect(p).toBeLessThanOrEqual(1)
++    }
++    expect(mvpChance(m)).toBeCloseTo(CORE_FNS.reduce((p, f) => p * functionChance(m, f), 1), 12)
++  })
++  it('ranks features by impact × confidence ÷ effort, and the top 3 never lower the chance', () => {
++    const r = rankFeatures()
++    for (let i = 1; i < r.length; i++) expect(r[i - 1].score).toBeGreaterThanOrEqual(r[i].score)
++    const t = topThreeEffect()
++    expect(t.mvpAfter).toBeGreaterThanOrEqual(t.mvpBefore)
++  })
++  it('maps the prototype numbers and writes a weekly report', () => {
++    const p = prototypeMap()
++    expect(p.filter((r) => r.fn.match(/^(Wellness|Brand|Product|Business)$/)).reduce((s, r) => s + (r.prototype ?? 0), 0)).toBe(10087)
++    expect(weeklyReport()).toMatch(/Buyer agent test 8/)
++  })
++})
++
++describe('your asks (U147)', () => {
++  it('reads §0 of the brief, with no personal name', () => {
++    expect(OWNER_ASKS.length).toBeGreaterThanOrEqual(40)
++    expect(OWNER_ASKS[0].id).toBe('A1')
++    for (const a of OWNER_ASKS) expect(`${a.ask} ${a.statusText}`).not.toMatch(/Eugene|Hussein/)
++  })
++  it('parses a row and its status', () => {
++    const md = '## 0. List\n| # | Ask | From | Status |\n| --- | --- | --- | --- |\n| A9 | Cost it | row 1 | on staging and production |\n\n## 1. Next'
++    expect(parseAsks(md)).toEqual([expect.objectContaining({ id: 'A9', status: 'live' })])
++    expect(statusOf('waiting on him')).toBe('waiting')
++    expect(statusOf('done')).toBe('done')
++  })
++})
+diff --git a/src/admin/data/aiBrain.ts b/src/admin/data/aiBrain.ts
+new file mode 100644
+index 0000000..fb5721d
+--- /dev/null
++++ b/src/admin/data/aiBrain.ts
+@@ -0,0 +1,208 @@
++import { akpSummary, akps } from './akps'
++import { funnelMetrics, type FunnelMetric } from './businessFunnel'
++import { V8_OBJECTION_LABEL, v8Change, v8Findings, v8Tallies } from './buyerRunV8'
++import { ALL_RUN_DECLARATIONS } from './runChanges'
++import { STAGES } from './costModel'
++import { sleepCohort } from './stateFlipFormulas'
++import { stateFlipSummary } from './stateFlips'
++import type { DataSourceType } from './dataSources'
++
++/*
++ * Admin → AI brain (U147, J206): the business owner's five functions
++ * (Wellness, Product, Business, Brand, Analysis) as one model. Each function
++ * has core metrics with an MVP target, a current value with its source type,
++ * and a transparent prediction "chance to reach the MVP target":
++ *
++ *   stage chance p = min(1, current ÷ target)      (higher is better)
++ *                  = min(1, target ÷ current)      (lower is better, e.g. cost)
++ *   function chance P = Π p over the function's metrics
++ *   MVP chance = P(wellness) × P(product) × P(business)
++ *
++ * p is not a measured probability: it reads "how close the prediction is to
++ * the target" as the chance that stage meets it. Crude on purpose, so that
++ * every step can be checked by hand. Every value is simulated or assumed
++ * until real users exist; the page says which.
++ *
++ * Feature ranking: each candidate feature lifts named metrics by an assumed
++ * amount. impact = the rise in the function chances when that lift is
++ * applied; score = impact × confidence ÷ effort (S 1, M 2, L 4).
++ */
++
++export type FunctionId = 'wellness' | 'product' | 'business' | 'brand' | 'analysis'
++export const FUNCTION_LABEL: Record<FunctionId, string> = { wellness: 'Wellness', product: 'Product', business: 'Business', brand: 'Brand', analysis: 'Analysis' }
++
++export interface BrainMetric {
++  id: string
++  fn: FunctionId
++  label: string
++  target: number
++  current: number
++  unit: 'share' | 'usd' | 'count'
++  better: 'up' | 'down'
++  source: DataSourceType
++  sourceNote: string
++}
++
++export const stageChance = (m: Pick<BrainMetric, 'target' | 'current' | 'better'>) =>
++  m.better === 'up' ? Math.min(1, m.target > 0 ? m.current / m.target : 1) : Math.min(1, m.current > 0 ? m.target / m.current : 1)
++
++/** The funnel's metrics with the default buyer agent and design (as the Business funnel page opens). */
++function funnel(): FunnelMetric[] {
++  return funnelMetrics(3, 3, 1)
++}
++
++const FUNNEL_FN: Record<string, FunctionId> = { activation: 'product', completion: 'product', felt: 'product', cap: 'business', plus: 'business', d7: 'business', d30: 'business', ellis: 'business' }
++
++export function brainMetrics(): BrainMetric[] {
++  const c = sleepCohort()
++  const sf = stateFlipSummary()
++  const ak = akpSummary()
++  const x = v8Tallies()
++  const out: BrainMetric[] = [
++    { id: 'w-chance', fn: 'wellness', label: 'Chance a person reaches their StateFlip (sleep group)', target: 0.54, current: c.meanChance, unit: 'share', better: 'up', source: 'simulated', sourceNote: 'StateFlips formulas on persona set v4; target = the spec’s stage 1 success (54%)' },
++    { id: 'w-cover', fn: 'wellness', label: 'StateFlips with at least one strategy AKP', target: 1, current: ak.flips ? ak.flipsCovered / ak.flips : 0, unit: 'share', better: 'up', source: 'assumed', sourceNote: `akps.ts: ${ak.flipsCovered} of ${sf.total} StateFlips; target: every StateFlip can be built` },
++    { id: 'w-cost', fn: 'wellness', label: 'Cost per flip (sleep, stage 1)', target: STAGES[1].specCostPerFlip, current: c.costPerFlip, unit: 'usd', better: 'down', source: 'assumed', sourceNote: `Cost model; target = the spec’s stage 1 cost per flip ($${STAGES[1].specCostPerFlip}); his $1 floor is a later-stage thesis` },
++  ]
++  for (const m of funnel()) out.push({ id: `f-${m.id}`, fn: FUNNEL_FN[m.id], label: m.label, target: m.target, current: m.agent, unit: 'share', better: 'up', source: 'simulated', sourceNote: 'Business funnel: buyer agent prediction against the funnel target' })
++  out.push({ id: 'b-paid', fn: 'business', label: 'Would pay after the free week (test 8, StateFlip journey)', target: 0.15, current: x.payB.yes / x.n, unit: 'share', better: 'up', source: 'simulated', sourceNote: `Buyer agent test 8: ${x.payB.yes} of ${x.n}; target = the funnel’s “chooses Plus” 15%` })
++  return out
++}
++
++export const CORE_FNS: FunctionId[] = ['wellness', 'product', 'business']
++
++export function functionChance(metrics: BrainMetric[], fn: FunctionId): number {
++  return metrics.filter((m) => m.fn === fn).reduce((p, m) => p * stageChance(m), 1)
++}
++
++export const mvpChance = (metrics: BrainMetric[]) => CORE_FNS.reduce((p, f) => p * functionChance(metrics, f), 1)
++
++/* ---------------------------------------------------------- Feature ranking */
++
++export type Effort = 'S' | 'M' | 'L'
++export const EFFORT_COST: Record<Effort, number> = { S: 1, M: 2, L: 4 }
++
++export interface Feature {
++  id: string
++  name: string
++  from: string
++  /** Assumed lift of named metrics, in the metric's unit (share points as 0.05). */
++  lifts: { metric: string; by: number }[]
++  confidence: number
++  effort: Effort
++  evidence: string
++}
++
++/** Stated intent from synthetic buyers is discounted to a real-world lift by this factor (assumption). */
++export const STATED_TO_REAL = 0.2
++
++export function candidateFeatures(): Feature[] {
++  const x = v8Tallies()
++  const v8lift = Math.round(((x.payB.yes - x.payA.yes) / x.n) * STATED_TO_REAL * 100) / 100
++  return [
++    { id: 'sf-journey', name: 'A journey named after their StateFlip, free first week, then $10/month', from: 'Buyer agent test 8 (B)', lifts: [{ metric: 'f-plus', by: v8lift }, { metric: 'b-paid', by: v8lift }], confidence: 0.4, effort: 'M', evidence: `Test 8: would pay ${x.payA.yes} → ${x.payB.yes} of ${x.n}, × ${STATED_TO_REAL} for stated → real = +${Math.round(v8lift * 100)} pts.` },
++    { id: 'free-week', name: 'A free first week of every journey, no card', from: 'B2B2C features, top 1', lifts: [{ metric: 'f-activation', by: 0.05 }, { metric: 'f-plus', by: 0.03 }], confidence: 0.5, effort: 'M', evidence: 'Test 6: free app 17.5 expected paid plans against 1 for a ticket; longer trials convert better (RevenueCat 2026).' },
++    { id: 'creator-voice', name: 'The creator’s page with a 60-second sample in their own voice', from: 'B2B2C features, top 2', lifts: [{ metric: 'f-activation', by: 0.06 }], confidence: 0.4, effort: 'M', evidence: 'Test 6: trust was the top objection; the creator’s voice moved 5 answers.' },
++    { id: 'refund', name: 'Full refund until week 4, said before paying', from: 'B2B2C features, top 3', lifts: [{ metric: 'f-plus', by: 0.02 }], confidence: 0.3, effort: 'S', evidence: 'Maven’s guarantee badge; lowers the risk of paying.' },
++    { id: 'progress-upgrade', name: 'Upgrade offer that names their own progress', from: 'Business funnel decision d4', lifts: [{ metric: 'f-plus', by: 0.03 }], confidence: 0.4, effort: 'S', evidence: 'The one funnel decision not built; test 8 shows a visible chance moves payers.' },
++    { id: 'persist', name: 'Sign-in that persists for pilot accounts', from: 'Product opportunities 1.13', lifts: [{ metric: 'f-d7', by: 0.05 }, { metric: 'f-d30', by: 0.02 }], confidence: 0.6, effort: 'M', evidence: 'Without it nobody can come back as themselves; day-7 and day-30 cannot be measured.' },
++    { id: 'checkin-once', name: 'One check-in a day at most, never a streak', from: 'Insight Timer quick wins (test 7)', lifts: [{ metric: 'f-d7', by: 0.02 }], confidence: 0.4, effort: 'S', evidence: 'Tests 6 and 7: daily pressure was a deal breaker for many followers.' },
++    { id: 'data-line', name: 'One plain line on what we keep and who sees it', from: 'B2B2C features', lifts: [{ metric: 'f-activation', by: 0.02 }], confidence: 0.4, effort: 'S', evidence: 'Test 7: 8 of 17 very protective people would try; data was still their first question.' },
++    { id: 'bahasa', name: 'Bahasa Indonesia and a rupiah price', from: 'B2B2C features', lifts: [{ metric: 'f-activation', by: 0.03 }], confidence: 0.3, effort: 'L', evidence: `Test 8: “${V8_OBJECTION_LABEL.language}” was the objection of ${x.objectionsB.find(([k]) => k === 'language')?.[1] ?? 0} people.` },
++    { id: 'adaptive', name: 'Chapters that adapt to the milestone reached (X → Y → Z)', from: 'StateFlips, journey items', lifts: [{ metric: 'w-chance', by: 0.05 }, { metric: 'f-felt', by: 0.04 }], confidence: 0.3, effort: 'L', evidence: 'StateFlips: the chance rises with fit and adherence; an assumption until chapters exist.' },
++    { id: 'calendar', name: 'Next-chapter reminder in the calendar', from: 'User journey (v4 journey)', lifts: [{ metric: 'f-d7', by: 0.02 }], confidence: 0.3, effort: 'S', evidence: 'The app already makes .ics reminders; forgetting is a top reason to stop.' },
++    { id: 'need-help', name: '“Need help now?” on every feelings screen', from: 'B2B2C features (safety floor)', lifts: [], confidence: 1, effort: 'M', evidence: 'Moves no target, required regardless: crisis handling is a legal floor in some markets.' },
++  ]
++}
++
++export function applyLifts(metrics: BrainMetric[], features: Feature[]): BrainMetric[] {
++  return metrics.map((m) => {
++    const by = features.flatMap((f) => f.lifts).filter((l) => l.metric === m.id).reduce((s, l) => s + l.by, 0)
++    if (!by) return m
++    const current = m.better === 'up' ? (m.unit === 'share' ? Math.min(1, m.current + by) : m.current + by) : Math.max(0, m.current - by)
++    return { ...m, current }
++  })
++}
++
++export interface RankedFeature extends Feature {
++  impact: Record<FunctionId, number>
++  impactTotal: number
++  score: number
++}
++
++export function rankFeatures(): RankedFeature[] {
++  const base = brainMetrics()
++  return candidateFeatures()
++    .map((f) => {
++      const after = applyLifts(base, [f])
++      const impact = Object.fromEntries((Object.keys(FUNCTION_LABEL) as FunctionId[]).map((fn) => [fn, CORE_FNS.includes(fn) ? functionChance(after, fn) - functionChance(base, fn) : 0])) as Record<FunctionId, number>
++      const impactTotal = CORE_FNS.reduce((s, fn) => s + impact[fn], 0)
++      return { ...f, impact, impactTotal, score: (impactTotal * f.confidence) / EFFORT_COST[f.effort] }
++    })
++    .sort((a, b) => b.score - a.score)
++}
++
++export function topThreeEffect() {
++  const base = brainMetrics()
++  const top = rankFeatures().slice(0, 3)
++  const after = applyLifts(base, top)
++  return {
++    top,
++    before: Object.fromEntries(CORE_FNS.map((f) => [f, functionChance(base, f)])) as Record<FunctionId, number>,
++    after: Object.fromEntries(CORE_FNS.map((f) => [f, functionChance(after, f)])) as Record<FunctionId, number>,
++    mvpBefore: mvpChance(base),
++    mvpAfter: mvpChance(after),
++  }
++}
++
++/* --------------------------------------------------- The prototype, mapped */
++
++export interface PrototypeRow {
++  fn: string
++  prototype: number | null
++  ours: number
++  oursNote: string
++}
++
++/** His Figma Make numbers (display only, no logic) beside our catalogue (akps.ts). */
++export function prototypeMap(): PrototypeRow[] {
++  const s = akpSummary()
++  const product = akps().filter((a) => a.id.startsWith('PR-')).length
++  return [
++    { fn: 'Wellness', prototype: 4590, ours: s.byFunction.wellness, oursNote: 'Goal and strategy AKPs (WG, WS, WM, WI, WV)' },
++    { fn: 'Brand', prototype: 1847, ours: s.byFunction.brand, oursNote: 'Waiting for the marketing AKP sheet' },
++    { fn: 'Product', prototype: 1970, ours: product, oursNote: 'Product AKPs (PR-)' },
++    { fn: 'Business', prototype: 1680, ours: 0, oursNote: 'None yet: the business AKP sheet has not come' },
++    { fn: 'Identity (persona mindspace)', prototype: null, ours: s.byFunction.identity, oursNote: 'Wellness Identity AKPs (ID-); not a prototype function' },
++    { fn: 'MicroBite “Maxwell”', prototype: 4870, ours: 0, oursNote: 'No learned links yet: needs real outcomes' },
++    { fn: 'TheraGPS “Governor”', prototype: 10497, ours: 0, oursNote: 'Routing rule live (main need → StateFlip), no AKPs of its own' },
++  ]
++}
++
++/* ------------------------------------------------------------ Weekly report */
++
++export const pct = (x: number) => (x > 0 && x < 0.1 ? `${(x * 100).toFixed(1)}%` : `${Math.round(x * 100)}%`)
++
++export function weeklyReport(): string {
++  const m = brainMetrics()
++  const t3 = topThreeEffect()
++  const ch = v8Change()
++  const last = ALL_RUN_DECLARATIONS[ALL_RUN_DECLARATIONS.length - 1]
++  const ak = akpSummary()
++  return [
++    'Aurelia weekly report (generated from the admin; every figure is simulated or assumed until real users exist)',
++    '',
++    'This week',
++    `- Buyer agent test ${last.version}: ${v8Findings()[0]}`,
++    `- What changed against test ${last.previous}: offer — ${last.offer.note} Panel — ${last.panel.note}`,
++    `- ${ch.lines[4]}`,
++    `- AKP catalogue: ${ak.total} AKPs (${ak.fromFile} from the sheets, ${ak.drafted} drafted by us); ${ak.flipsCovered} of ${ak.flips} StateFlips have a strategy AKP.`,
++    '',
++    'Chance to reach the MVP targets (product of stage chances)',
++    ...CORE_FNS.map((f) => `- ${FUNCTION_LABEL[f]}: ${pct(functionChance(m, f))}`),
++    `- All three together: ${pct(mvpChance(m))}`,
++    '',
++    `If the top 3 features ship (${t3.top.map((f) => f.name).join('; ')}): ${pct(t3.mvpBefore)} → ${pct(t3.mvpAfter)}.`,
++    '',
++    'Waiting on: the marketing AKP sheet (Brand), real users for Analysis, the feature lock for the API.',
++  ].join('\n')
++}
+diff --git a/src/admin/data/buyerRunV8.ts b/src/admin/data/buyerRunV8.ts
+new file mode 100644
+index 0000000..663428c
+--- /dev/null
++++ b/src/admin/data/buyerRunV8.ts
+@@ -0,0 +1,375 @@
++import { APP_PLUS, withQuickWins } from './buyerPlay'
++import { RUN_V7, v7A } from './buyerRunV7'
++import { V8_CHANGE } from './runChanges'
++import { DIMENSIONS, DIMENSION_LABEL, conditionForBuyer, conditionsV4, type BuyerCondition, type ConditionV4, type Dimension } from './personaConditionV4'
++import { flipForIssue } from './personaIdentityV4'
++import { generatePersonasV4, type PersonaV4 } from './personasV4'
++import { personFlip } from './stateFlipFormulas'
++import { severityOf } from './stateFlipSleep'
++import { stateFlipById } from './stateFlips'
++
++/**
++ * Buyer agent test 8 (U147, J206), the business owner's B4: a rules-based
++ * run on persona set v4 (1,000 people; the 25 risk-flagged left out, they
++ * get "Need help now?" and never an offer). Each person is read through
++ * conditionForBuyer (need, urgency, readiness, scepticism, time) and the
++ * StateFlip matched to their main need (flipForIssue).
++ *
++ * A = v7's best offer: v6's best offer for the person's channel plus the
++ *     Insight-Timer-style quick wins. Everyone in set v4 came organically,
++ *     so A is the same offer for all.
++ * B = "A journey for your StateFlip X: free first week, then $10/month."
++ *
++ * Every formula is written out below (V8_RULES) and every person's answer
++ * carries its own numbers, so a reader can redo any of them by hand.
++ * A prediction from written rules, not a measurement.
++ */
++
++export const V8_VERSION = 8 as const
++export const V8_DATE = '2026-11-27'
++export const V8_PRICE = APP_PLUS.monthly
++
++export const V8_OFFER_A = withQuickWins(v7A('organic'))
++export const V8_OFFER_B_TEMPLATE = 'A journey for your StateFlip “X”: free first week, then $10/month'
++
++export type V8Verdict = 'yes' | 'maybe' | 'no'
++export type V8Objection = 'trust' | 'price' | 'time' | 'language' | 'fit'
++
++export const V8_OBJECTION_LABEL: Record<V8Objection, string> = {
++  trust: 'Does it work for me? (doubt)',
++  price: '$10 a month is a lot for me',
++  time: 'No time for a journey',
++  language: 'Not in my language',
++  fit: 'Not about my problem',
++}
++
++/** The constants of the rules, so the page and the tests read the same numbers. */
++export const V8_K = {
++  wNeed: 0.3,
++  wUrgency: 0.2,
++  wReady: 0.25,
++  wFit: 0.25,
++  wDoubt: 0.35,
++  /** Fit: how well the offer names the person's own problem. */
++  fitA: { physical: 0.45, mental: 0.45, other: 0.3 },
++  fitB: 0.8,
++  /** Under 5 minutes a day: a free library is easy to dip into, a journey asks for three chapters a week. */
++  timeA: 0.05,
++  timeB: 0.1,
++  shortDay: 5,
++  language: 0.1,
++  tryYes: 0.35,
++  tryMaybe: 0.22,
++  /** Weight of the visible chance to reach the flip (B only). */
++  wChance: 0.2,
++  /** The chance counts in full when the flip is 8 weeks away or less, at 0.7 beyond. */
++  nearWeeks: 8,
++  farFactor: 0.7,
++  priceMult: 6,
++  priceCap: 0.3,
++  /** A free core library is enough for some, so they never pay (A only). */
++  freeEnoughA: 0.08,
++  payYes: 0.45,
++  payMaybe: 0.3,
++} as const
++
++export const V8_RULES: { label: string; formula: string }[] = [
++  { label: 'Fit', formula: `A (a general library): ${V8_K.fitA.physical} when the main need is physical or mental, ${V8_K.fitA.other} otherwise. B (names their own StateFlip): ${V8_K.fitB}.` },
++  { label: 'Try score', formula: `${V8_K.wNeed} × need/100 + ${V8_K.wUrgency} × urgency/100 + ${V8_K.wReady} × readiness + ${V8_K.wFit} × fit − ${V8_K.wDoubt} × scepticism/100 − time − language` },
++  { label: 'Time', formula: `Only when they have under ${V8_K.shortDay} minutes a day: A ${V8_K.timeA}, B ${V8_K.timeB} (a journey asks for three chapters a week).` },
++  { label: 'Language', formula: `${V8_K.language} when they need their own language (both offers are English only).` },
++  { label: 'Would try', formula: `yes at ${V8_K.tryYes} or more, maybe at ${V8_K.tryMaybe} or more, otherwise no.` },
++  { label: 'Pay score', formula: `try score + ${V8_K.wChance} × chance shown − price load − free enough (only for those who would try or might)` },
++  { label: 'Chance shown', formula: `B only: their own chance to reach the flip (StateFlips formula: 54% × adherence × readiness × severity × fit) × (1 − scepticism/100), because a doubter discounts a promise; × ${V8_K.farFactor} if the flip is more than ${V8_K.nearWeeks} weeks away. A promises no outcome: 0.` },
++  { label: 'Price load', formula: `min(${V8_K.priceCap}, $${V8_PRICE} ÷ monthly income × ${V8_K.priceMult})` },
++  { label: 'Free enough', formula: `A only: ${V8_K.freeEnoughA} (the free core library is enough for some). B: 0, the free week ends.` },
++  { label: 'Would pay', formula: `yes at ${V8_K.payYes} or more, maybe at ${V8_K.payMaybe} or more, otherwise no; never surer than would try (a maybe-tryer pays at most maybe).` },
++  { label: 'Objection', formula: 'The largest of: doubt (0.35 × scepticism/100), price load, time, language, missing fit (0.25 × (1 − fit)).' },
++]
++
++export interface V8Side {
++  fit: number
++  tryScore: number
++  tries: V8Verdict
++  chanceShown: number
++  payScore: number
++  pays: V8Verdict
++  objection: V8Objection
++}
++
++export interface V8Answer {
++  personaId: string
++  name: string
++  country: string
++  mainNeed: Dimension
++  flipId: string
++  flipTitle: string
++  buyer: BuyerCondition
++  /** Their own chance to reach the flip and the weeks it takes (StateFlips formulas, stage 1). */
++  chance: number
++  weeks: number
++  priceLoad: number
++  a: V8Side
++  b: V8Side
++  /** The numbers, written out. */
++  why: string[]
++}
++
++const r2 = (x: number) => Math.round(x * 100) / 100
++const verdict = (s: number, yes: number, maybe: number): V8Verdict => (s >= yes ? 'yes' : s >= maybe ? 'maybe' : 'no')
++
++/** Which parts of B an offer has: A has none, B all three. Used to split B's effect into its parts. */
++export interface V8Parts {
++  /** Names their own StateFlip (fit B, and a journey's time ask). */
++  named: boolean
++  /** Shows their own chance to reach it. */
++  chance: boolean
++  /** The free part ends after a week (no free library to stay on). */
++  freeWeek: boolean
++}
++export const PARTS_A: V8Parts = { named: false, chance: false, freeWeek: false }
++export const PARTS_B: V8Parts = { named: true, chance: true, freeWeek: true }
++
++function side(offer: 'A' | 'B' | V8Parts, p: PersonaV4, b: BuyerCondition, chance: number, weeks: number, priceLoad: number): V8Side {
++  const K = V8_K
++  const parts0 = offer === 'A' ? PARTS_A : offer === 'B' ? PARTS_B : offer
++  const fit = parts0.named ? K.fitB : b.mainNeed === 'physical' || b.mainNeed === 'mental' ? K.fitA.physical : K.fitA.other
++  const time = b.timeBudget < K.shortDay ? (parts0.named ? K.timeB : K.timeA) : 0
++  const lang = p.language !== 'English' && !p.readsEnglish ? K.language : 0
++  const doubt = K.wDoubt * (b.scepticism / 100)
++  const tryScore = K.wNeed * (b.needIntensity / 100) + K.wUrgency * (b.urgency / 100) + K.wReady * b.readiness + K.wFit * fit - doubt - time - lang
++  const tries = verdict(tryScore, K.tryYes, K.tryMaybe)
++  const chanceShown = parts0.chance ? chance * (1 - b.scepticism / 100) * (weeks <= K.nearWeeks ? 1 : K.farFactor) : 0
++  const free = parts0.freeWeek ? 0 : K.freeEnoughA
++  const payScore = tryScore + K.wChance * chanceShown - priceLoad - free
++  const raw = verdict(payScore, K.payYes, K.payMaybe)
++  // Nobody pays more surely than they try: a maybe-tryer pays at most maybe.
++  const pays: V8Verdict = tries === 'no' ? 'no' : tries === 'maybe' && raw === 'yes' ? 'maybe' : raw
++  const parts: [V8Objection, number][] = [
++    ['trust', doubt],
++    ['price', priceLoad],
++    ['time', time],
++    ['language', lang],
++    ['fit', 0.25 * (1 - fit)],
++  ]
++  const objection = parts.sort((x, y) => y[1] - x[1])[0][0]
++  return { fit, tryScore: r2(tryScore), tries, chanceShown: r2(chanceShown), payScore: r2(payScore), pays, objection }
++}
++
++const priceLoadOf = (p: PersonaV4) => r2(Math.min(V8_K.priceCap, (V8_PRICE / Math.max(1, p.incomeUsdMonth)) * V8_K.priceMult))
++
++function answerOf(p: PersonaV4, c: ConditionV4): V8Answer {
++  const b = conditionForBuyer(p, c)
++  const flipId = flipForIssue(c)
++  const flip = stateFlipById(flipId)
++  const start = c.dims[c.mainNeed].score
++  const pf = personFlip(p, c, start, severityOf(start))
++  const priceLoad = priceLoadOf(p)
++  const chance = r2(pf.chance.chance)
++  const weeks = Math.round(pf.weeks * 10) / 10
++  const a = side('A', p, b, chance, weeks, priceLoad)
++  const bb = side('B', p, b, chance, weeks, priceLoad)
++  return {
++    personaId: p.id,
++    name: p.name,
++    country: p.country,
++    mainNeed: c.mainNeed,
++    flipId,
++    flipTitle: flip?.title ?? flipId,
++    buyer: b,
++    chance,
++    weeks,
++    priceLoad,
++    a,
++    b: bb,
++    why: [
++      ...b.why,
++      `Main need ${DIMENSION_LABEL[c.mainNeed].toLowerCase()} → StateFlip ${flipId}${flip ? ` (${flip.title})` : ''}; own chance ${Math.round(chance * 100)}%, about ${Math.round(weeks)} weeks to the flip`,
++      `Try A = ${a.tryScore} (fit ${a.fit}) → ${a.tries}; try B = ${bb.tryScore} (fit ${bb.fit}) → ${bb.tries}`,
++      `Price load = min(${V8_K.priceCap}, $${V8_PRICE} ÷ $${p.incomeUsdMonth} × ${V8_K.priceMult}) = ${priceLoad}`,
++      `Pay A = ${a.tryScore} − ${priceLoad} − ${V8_K.freeEnoughA} = ${a.payScore} → ${a.pays}; pay B = ${bb.tryScore} + ${V8_K.wChance} × ${bb.chanceShown} (chance after doubt) − ${priceLoad} = ${bb.payScore} → ${bb.pays}`,
++    ],
++  }
++}
++
++/**
++ * B's effect on "would pay" split into its three parts, adding them one at a
++ * time on the same people: A → + names their StateFlip → + shows their chance
++ * → + free week instead of a free library (= B). The steps add up exactly to
++ * B − A. The order is fixed and said, so the split is reproducible.
++ */
++export function v8Split(): { label: string; payYes: number; paid: number; step: number }[] {
++  const ps = new Map(generatePersonasV4().map((p) => [p.id, p]))
++  const cs = conditionsV4()
++  const steps: [string, V8Parts][] = [
++    ['A: v7’s best offer', PARTS_A],
++    ['+ names their own StateFlip', { named: true, chance: false, freeWeek: false }],
++    ['+ shows their own chance to reach it', { named: true, chance: true, freeWeek: false }],
++    ['+ free first week instead of a free library (= B)', PARTS_B],
++  ]
++  const rows = runV8().answers
++  let prev = 0
++  return steps.map(([label, parts], i) => {
++    const sides = rows.map((r) => {
++      const p = ps.get(r.personaId)!
++      return side(parts, p, conditionForBuyer(p, cs.get(p.id)!), r.chance, r.weeks, r.priceLoad)
++    })
++    const c = count(sides.map((x) => x.pays))
++    const paid = expectedPaid(c)
++    const step = i === 0 ? 0 : paid - prev
++    prev = paid
++    return { label, payYes: c.yes, paid, step }
++  })
++}
++
++let CACHE: { answers: V8Answer[]; excluded: number; total: number } | undefined
++
++/** Plays every v4 persona who is not risk-flagged against A and B. */
++export function runV8() {
++  if (CACHE) return CACHE
++  const ps = generatePersonasV4()
++  const cs = conditionsV4()
++  const answers: V8Answer[] = []
++  let excluded = 0
++  for (const p of ps) {
++    const c = cs.get(p.id)!
++    if (c.excluded) {
++      excluded++
++      continue
++    }
++    answers.push(answerOf(p, c))
++  }
++  return (CACHE = { answers, excluded, total: ps.length })
++}
++
++export interface V8Count {
++  yes: number
++  maybe: number
++  no: number
++}
++const count = (xs: V8Verdict[]): V8Count => ({ yes: xs.filter((x) => x === 'yes').length, maybe: xs.filter((x) => x === 'maybe').length, no: xs.filter((x) => x === 'no').length })
++/** Expected paid plans: yes counts 1, maybe ½ (the same rule as tests 5–7). */
++export const expectedPaid = (c: V8Count) => c.yes + c.maybe / 2
++
++export interface V8DimRow {
++  dimension: Dimension
++  label: string
++  n: number
++  tryA: number
++  tryB: number
++  payA: number
++  payB: number
++  topObjectionB: V8Objection | null
++  topObjectionCount: number
++}
++
++function topObjection(rows: V8Answer[], key: 'a' | 'b'): [V8Objection, number] | null {
++  const m = new Map<V8Objection, number>()
++  for (const r of rows) if (r[key].pays !== 'yes') m.set(r[key].objection, (m.get(r[key].objection) ?? 0) + 1)
++  return [...m.entries()].sort((x, y) => y[1] - x[1])[0] ?? null
++}
++
++/** Every headline, computed from the answers (never typed). */
++export function v8Tallies() {
++  const { answers, excluded, total } = runV8()
++  const n = answers.length
++  const tryA = count(answers.map((x) => x.a.tries))
++  const tryB = count(answers.map((x) => x.b.tries))
++  const payA = count(answers.map((x) => x.a.pays))
++  const payB = count(answers.map((x) => x.b.pays))
++  const dims: V8DimRow[] = DIMENSIONS.map((d) => {
++    const rows = answers.filter((x) => x.mainNeed === d)
++    const top = topObjection(rows, 'b')
++    return {
++      dimension: d,
++      label: DIMENSION_LABEL[d],
++      n: rows.length,
++      tryA: rows.filter((x) => x.a.tries === 'yes').length,
++      tryB: rows.filter((x) => x.b.tries === 'yes').length,
++      payA: rows.filter((x) => x.a.pays === 'yes').length,
++      payB: rows.filter((x) => x.b.pays === 'yes').length,
++      topObjectionB: top?.[0] ?? null,
++      topObjectionCount: top?.[1] ?? 0,
++    }
++  })
++  const objections = (key: 'a' | 'b') => {
++    const m = new Map<V8Objection, number>()
++    for (const r of answers) if (r[key].pays !== 'yes') m.set(r[key].objection, (m.get(r[key].objection) ?? 0) + 1)
++    return [...m.entries()].sort((x, y) => y[1] - x[1])
++  }
++  const order: V8Verdict[] = ['no', 'maybe', 'yes']
++  const up = answers.filter((x) => order.indexOf(x.b.pays) > order.indexOf(x.a.pays))
++  const down = answers.filter((x) => order.indexOf(x.b.pays) < order.indexOf(x.a.pays))
++  const tryUp = answers.filter((x) => order.indexOf(x.b.tries) > order.indexOf(x.a.tries))
++  const tryDown = answers.filter((x) => order.indexOf(x.b.tries) < order.indexOf(x.a.tries))
++  const meanChance = answers.reduce((s, x) => s + x.chance, 0) / n
++  const flipsUsed = new Set(answers.map((x) => x.flipId)).size
++  return {
++    total,
++    excluded,
++    n,
++    tryA,
++    tryB,
++    payA,
++    payB,
++    paidA: expectedPaid(payA),
++    paidB: expectedPaid(payB),
++    dims,
++    objectionsA: objections('a'),
++    objectionsB: objections('b'),
++    payUp: up,
++    payDown: down,
++    tryUp,
++    tryDown,
++    meanChance,
++    flipsUsed,
++  }
++}
++
++const pct = (k: number, n: number) => `${Math.round((k / n) * 100)}%`
++
++/** The headline findings, in plain words, from the tallies. */
++export function v8Findings(): string[] {
++  const x = v8Tallies()
++  const best = [...x.dims].sort((a, b) => b.payB / Math.max(1, b.n) - b.payA / Math.max(1, b.n) - (a.payB / Math.max(1, a.n) - a.payA / Math.max(1, a.n)))[0]
++  const topB = x.objectionsB[0]
++  const topA = x.objectionsA[0]
++  return [
++    `Prediction on ${x.n} people (set v4, ${x.excluded} risk-flagged left out): would try A ${x.tryA.yes} (${pct(x.tryA.yes, x.n)}) → B ${x.tryB.yes} (${pct(x.tryB.yes, x.n)}); would pay A ${x.payA.yes} → B ${x.payB.yes} yes; expected paid plans (yes 1, maybe ½) ${x.paidA} → ${x.paidB}.`,
++    `Why B moves answers: it names the person’s own StateFlip (fit ${V8_K.fitA.other}–${V8_K.fitA.physical} → ${V8_K.fitB}) and shows their own chance to reach it (average ${Math.round(x.meanChance * 100)}%), and the free week ends, so the free library no longer replaces paying. ${x.payUp.length} people pay more readily on B, ${x.payDown.length} less.`,
++    `By dimension, B gains most for ${best.label.toLowerCase()} (${best.payA} → ${best.payB} of ${best.n} would pay): a general library fits that need least.`,
++    `Top objection to B among those who would not pay: ${topB ? `${V8_OBJECTION_LABEL[topB[0]].toLowerCase()} (${topB[1]})` : 'none'}; for A it was ${topA ? `${V8_OBJECTION_LABEL[topA[0]].toLowerCase()} (${topA[1]})` : 'none'}. A specific promise does not answer doubt; only a real result does.`,
++    x.tryDown.length
++      ? `B loses ${x.tryDown.length} who would have tried A: people with under ${V8_K.shortDay} minutes a day, for whom a journey of three chapters a week asks too much.`
++      : `Nobody tries B less than A: the extra time a journey asks (${V8_K.timeB} against ${V8_K.timeA}, only under ${V8_K.shortDay} minutes a day) is smaller than what naming their own StateFlip adds. Stated intent from rules, so read the size of the jump with care.`,
++  ]
++}
++
++/* ------------------------------------------- What changed against test 7 */
++
++/**
++ * What changed and why, test 7 → test 8 (the declaration is V8_CHANGE in
++ * runChanges.ts). A is v7's B again, so A is the like-for-like side: its
++ * whole change is the panel and the rules together, which cannot be told
++ * apart (set v4 cannot be played by v7's rules). B against A is on the same
++ * people, so the offer effect is measured, and v8Split breaks it into parts.
++ */
++export function v8Change() {
++  const x = v8Tallies()
++  const v7n = RUN_V7.answers.length
++  const v7try = RUN_V7.answers.filter((a) => a.tries === 'yes').length
++  const v7pay = RUN_V7.answers.filter((a) => a.pays === 'yes').length
++  const split = v8Split()
++  return {
++    declaration: V8_CHANGE,
++    v7: { n: v7n, tries: v7try, pays: v7pay },
++    split,
++    lines: [
++      `What was tested: test 7 showed A “v6’s best offer for each channel” and B “the same + quick wins”; test 8 shows A = test 7’s B, and B “${V8_OFFER_B_TEMPLATE}”.`,
++      `Who was asked: ${V8_CHANGE.panel.note}`,
++      `The rules: ${V8_CHANGE.rules.note}`,
++      `Same offer, different panel and rules: would try ${v7try} of ${v7n} (${pct(v7try, v7n)}) in test 7 → ${x.tryA.yes} of ${x.n} (${pct(x.tryA.yes, x.n)}) for A in test 8. Not separable: the drop is the new people and the new rules together (set v4 reads need, readiness and doubt that generator 2 did not have).`,
++      `Different offer, same people (measured): expected paid plans ${x.paidA} → ${x.paidB}; ${split.slice(1).map((s) => `${s.label.replace(/^\+ /, '')} ${s.step >= 0 ? '+' : '−'}${Math.abs(s.step)}`).join(', ')}. The steps add up to the change.`,
++    ],
++  }
++}
+diff --git a/src/admin/data/dataSources.ts b/src/admin/data/dataSources.ts
+index 0dd6cf0..d6a4b03 100644
+--- a/src/admin/data/dataSources.ts
++++ b/src/admin/data/dataSources.ts
+@@ -37,6 +37,8 @@ export const SOURCE_META: Record<SourceId, { type: DataSourceType; file: string;
+   'buyer-v5': { type: 'simulated', file: 'src/admin/data/buyerRunV5.ts', date: '25 Nov 2026' },
+   'buyer-v6': { type: 'simulated', file: 'src/admin/data/buyerRunV6.ts', date: '25 Nov 2026' },
+   'buyer-v7': { type: 'simulated', file: 'src/admin/data/buyerRunV7.ts', date: '25 Nov 2026' },
++  'buyer-v8': { type: 'simulated', file: 'src/admin/data/buyerRunV8.ts', date: '27 Nov 2026' },
++  akps: { type: 'assumed', file: 'src/admin/data/akps.ts', date: '27 Nov 2026' },
+   decisions: { type: 'research', file: 'src/admin/data/businessFunnel.ts (decision log)', date: '24 Nov 2026' },
+   'app-funnel': { type: 'simulated', file: 'src/admin/data/businessFunnel.ts', date: 'U108' },
+   'feedback-group': { type: 'simulated', file: 'src/admin/data/study.ts (sample data)', date: 'Study from 13 Oct 2026' },
+@@ -91,6 +93,7 @@ export const REPORT_DATA_SOURCES: Record<string, ReportDataSources> = {
+     uses: [
+       { id: 'buyer-v5', feeds: 'Would try, would pay, the fair price.' },
+       { id: 'buyer-v7', feeds: 'Trying with and without a free library.' },
++      { id: 'buyer-v8', feeds: 'Test 8: v7’s best offer against a journey for their own StateFlip.' },
+       { id: 'buyer-v6', feeds: 'Free plan against the creator retreat (Detail).' },
+       { id: 'personas', feeds: 'Who was in each panel.' },
+       { id: 'buyer-prices', feeds: 'The price each test showed.' },
+@@ -136,12 +139,27 @@ export const REPORT_DATA_SOURCES: Record<string, ReportDataSources> = {
+     uses: [
+       { id: 'buyer-v5', feeds: 'Buyer figures, worked out again.' },
+       { id: 'buyer-v6', feeds: 'Retreat figures, worked out again.' },
+-      { id: 'buyer-v7', feeds: 'Latest test figures, worked out again.' },
++      { id: 'buyer-v7', feeds: 'Test 7 figures, worked out again.' },
++      { id: 'buyer-v8', feeds: 'Test 8 figures, worked out again.' },
+       { id: 'personas', feeds: 'Panel sizes and segments.' },
+       { id: 'feedback-group', feeds: 'UX feedback figures.' },
+       { id: 'cost-model', feeds: 'Cost figures.' },
+     ],
+   },
++  '/admin/ai-brain': {
++    title: 'AI brain',
++    uses: [
++      { id: 'sleep-cohort', feeds: 'Wellness: chance to reach the StateFlip and cost per flip.' },
++      { id: 'akps', feeds: 'AKP counts per function and StateFlips covered; “ours” in the prototype map.' },
++      { id: 'app-funnel', feeds: 'Product and Business: the funnel metrics and their MVP targets.' },
++      { id: 'buyer-rerun', feeds: 'The predicted value of each funnel metric.' },
++      { id: 'buyer-v8', feeds: 'Would pay after the free week; the StateFlip journey feature’s lift.' },
++      { id: 'cost-model', feeds: 'Cost per flip.' },
++      { id: 'spec-causal', feeds: 'Targets: 54% success and $4.98 per flip at stage 1.' },
++      { id: 'b2b2c', feeds: 'The candidate features.' },
++      { id: 'owner-thesis', feeds: 'The prototype values (display only).' },
++    ],
++  },
+   '/admin/personas': {
+     title: 'Personas',
+     uses: [
+diff --git a/src/admin/data/ownerAsks.ts b/src/admin/data/ownerAsks.ts
+new file mode 100644
+index 0000000..4580df0
+--- /dev/null
++++ b/src/admin/data/ownerAsks.ts
+@@ -0,0 +1,88 @@
++import contextMd from '../../../docs/briefs/EUGENE-CONTEXT.md?raw'
++
++/*
++ * Start here → "Your asks" (U147, J206): the business owner's list of asks
++ * (§0 of the context brief) read at build time, so the tracker can never
++ * disagree with the document. Personal names are replaced on screen.
++ */
++
++export type AskStatus = 'done' | 'live' | 'planned' | 'waiting' | 'received' | 'open' | 'parked'
++
++export const ASK_STATUS_LABEL: Record<AskStatus, string> = {
++  done: 'Done',
++  live: 'On staging or production',
++  planned: 'Planned',
++  waiting: 'Waiting',
++  received: 'Received',
++  open: 'Open',
++  parked: 'Parked',
++}
++
++export interface Ask {
++  id: string
++  ask: string
++  from: string
++  statusText: string
++  status: AskStatus
++  link?: { to: string; label: string }
++}
++
++/** Pages that answer an ask, where they exist. */
++export const ASK_LINKS: Record<string, { to: string; label: string }> = {
++  A1: { to: '/admin/ai-brain', label: 'AI brain' },
++  A40: { to: '/admin/ai-brain', label: 'AI brain' },
++  A43: { to: '/admin/ai-brain', label: 'AI brain' },
++  A5: { to: '/admin/ai-brain?tab=detail#features', label: 'Feature ranking' },
++  A7: { to: '/admin/ai-brain?tab=detail#weekly', label: 'Weekly report' },
++  A44: { to: '/admin/reports/buyer-agent?tab=detail#test-8', label: 'Buyer agent test 8' },
++  A22: { to: '/admin/stateflips', label: 'StateFlips' },
++  A23: { to: '/admin/stateflips', label: 'StateFlips' },
++  A29: { to: '/admin/stateflips', label: 'StateFlips' },
++  A2: { to: '/admin/stateflips', label: 'StateFlips' },
++  A3: { to: '/admin/stateflips', label: 'StateFlips' },
++  A24: { to: '/admin/stateflips', label: 'StateFlips (AKPs)' },
++  A25: { to: '/admin/personas', label: 'Personas' },
++  A9: { to: '/admin/reports/cost', label: 'Cost report' },
++  A10: { to: '/admin/reports', label: 'Reports' },
++  A12: { to: '/admin/healing-map', label: 'Healing map' },
++  A4: { to: '/admin/healing-map', label: 'Healing map' },
++  A31: { to: '/admin/reports/metrics', label: 'Report metrics' },
++  A39: { to: '/wiki/b2b2c/owner-thesis', label: 'His thesis' },
++  A17: { to: '/wiki/b2b2c/owner-thesis', label: 'His thesis' },
++}
++
++export function statusOf(text: string): AskStatus {
++  const t = text.toLowerCase()
++  if (/^done/.test(t)) return 'done'
++  if (/on staging|production/.test(t)) return 'live'
++  if (/parked/.test(t)) return 'parked'
++  if (/waiting|needs permission/.test(t)) return 'waiting'
++  if (/planned|agreed/.test(t)) return 'planned'
++  if (/received|saved/.test(t)) return 'received'
++  return 'open'
++}
++
++/** No personal names on screen: "Eugene" → "the business owner", "Hussein" → "a designer". */
++export const plain = (s: string) =>
++  s
++    .replace(/\*\*/g, '')
++    .replace(/Eugene['’]s/g, 'the business owner’s')
++    .replace(/Eugene/g, 'the business owner')
++    .replace(/Hussein['’]s/g, 'a designer’s')
++
++export function parseAsks(md: string): Ask[] {
++  const start = md.indexOf('## 0.')
++  if (start < 0) return []
++  const end = md.indexOf('\n## ', start + 5)
++  const section = md.slice(start, end < 0 ? undefined : end)
++  const out: Ask[] = []
++  for (const line of section.split('\n')) {
++    const m = /^\|\s*(A\d+)\s*\|(.*)\|(.*)\|(.*)\|\s*$/.exec(line)
++    if (!m) continue
++    const statusText = plain(m[4].trim())
++    out.push({ id: m[1], ask: plain(m[2].trim()), from: plain(m[3].trim()), statusText, status: statusOf(statusText), link: ASK_LINKS[m[1]] })
++  }
++  return out.sort((a, b) => Number(a.id.slice(1)) - Number(b.id.slice(1)))
++}
++
++export const OWNER_ASKS: Ask[] = parseAsks(contextMd)
+diff --git a/src/admin/data/reportMetrics.ts b/src/admin/data/reportMetrics.ts
+index 1c8bcc4..526a235 100644
+--- a/src/admin/data/reportMetrics.ts
++++ b/src/admin/data/reportMetrics.ts
+@@ -19,6 +19,7 @@ import { isSleepNeed, personaSleepScore, severityOf } from './stateFlipSleep'
+ import { akpSummary, akps } from './akps'
+ import { identitiesV4, identityIncoherence, identitySummary } from './personaIdentityV4'
+ import { stateFlipSummary, stateFlips } from './stateFlips'
++import { V8_K, V8_PRICE, runV8, v8Tallies } from './buyerRunV8'
+ import { stateFlipCosts } from './stateFlipCosts'
+ 
+ /**
+@@ -1343,10 +1344,39 @@ function stateFlipMetrics(): MetricDef[] {
+   ]
+ }
+ 
++/* ---------------------------------------------------------------- Test 8 */
++
++/**
++ * Buyer agent test 8 (U147, J206): each headline read from v8Tallies (what
++ * the report shows) and counted again here from each person's answer.
++ */
++function buyerV8Metrics(): MetricDef[] {
++  const SRC = 'src/admin/data/buyerRunV8.ts'
++  const def = (id: string, label: string, side: 'a' | 'b', key: 'tries' | 'pays', shown: () => number): MetricDef => ({
++    id, report: 'buyer', label, unit: 'count', good: 'up',
++    formula: key === 'tries'
++      ? `People whose try score (${V8_K.wNeed} × need + ${V8_K.wUrgency} × urgency + ${V8_K.wReady} × readiness + ${V8_K.wFit} × fit − ${V8_K.wDoubt} × scepticism − time − language) is ${V8_K.tryYes} or more.`
++      : `People who would try and whose pay score (try score + ${V8_K.wChance} × chance shown − min(${V8_K.priceCap}, $${V8_PRICE} ÷ income × ${V8_K.priceMult}) − free enough) is ${V8_K.payYes} or more.`,
++    shownAt: 'Buyer agent report, test 8', source: SRC,
++    displayed: shown,
++    compute: () => {
++      const rows = runV8().answers
++      const yes = rows.filter((r) => r[side][key] === 'yes')
++      return { value: yes.length, n: rows.length, inputs: [{ label: 'People in the panel (set v4, risk-flagged left out)', value: `${rows.length}`, source: SRC }, { label: `Answered yes (${side.toUpperCase()})`, value: `${yes.length}`, source: SRC, ids: yes.map((r) => r.personaId) }], steps: [`Each person: ${key === 'tries' ? 'try' : 'pay'} score for offer ${side.toUpperCase()}, compared with the threshold.`, `${yes.length} of ${rows.length} say yes.`], breakdown: { title: 'Each person', columns: ['Persona', 'StateFlip', 'Try score', 'Pay score', 'Answer'], rows: rows.slice(0, 200).map((r) => ({ id: r.personaId, cells: [r.personaId, r.flipId, `${r[side].tryScore}`, `${r[side].payScore}`, r[side][key]] })), footer: rows.length > 200 ? [`First 200 of ${rows.length} shown.`] : undefined } }
++    },
++  })
++  return [
++    def('buyer8-try-a', 'Test 8: would try A (v7’s best offer)', 'a', 'tries', () => v8Tallies().tryA.yes),
++    def('buyer8-try-b', 'Test 8: would try B (StateFlip journey)', 'b', 'tries', () => v8Tallies().tryB.yes),
++    def('buyer8-pay-a', 'Test 8: would pay A', 'a', 'pays', () => v8Tallies().payA.yes),
++    def('buyer8-pay-b', 'Test 8: would pay B after the free week', 'b', 'pays', () => v8Tallies().payB.yes),
++  ]
++}
++
+ /* ------------------------------------------------------------ The registry */
+ 
+ export function metricDefs(week = 1): MetricDef[] {
+-  return [...buyerMetrics(), ...typedMetrics(), ...personaV4Metrics(), ...conditionMetrics(), ...combinationMetrics(week), ...costMetrics(), ...b2b2cMetrics(), ...retreatMetrics(), ...uxMetrics(week), ...stateFlipMetrics()]
++  return [...buyerMetrics(), ...typedMetrics(), ...personaV4Metrics(), ...conditionMetrics(), ...combinationMetrics(week), ...costMetrics(), ...b2b2cMetrics(), ...retreatMetrics(), ...uxMetrics(week), ...stateFlipMetrics(), ...buyerV8Metrics()]
+ }
+ 
+ /** Audits one metric: displayed against recomputed, plus its sanity checks. */
+diff --git a/src/admin/data/reportSources.ts b/src/admin/data/reportSources.ts
+index da1fb85..0fde6ec 100644
+--- a/src/admin/data/reportSources.ts
++++ b/src/admin/data/reportSources.ts
+@@ -40,6 +40,8 @@ export type SourceId =
+   | 'buyer-v5'
+   | 'buyer-v6'
+   | 'buyer-v7'
++  | 'buyer-v8'
++  | 'akps'
+   | 'decisions'
+   | 'app-funnel'
+   | 'feedback-group'
+@@ -79,6 +81,24 @@ export interface ReportSource {
+ }
+ 
+ export const SOURCES: Record<SourceId, ReportSource> = {
++  'buyer-v8': {
++    id: 'buyer-v8',
++    name: 'Buyer agent test 8',
++    what: '975 people of persona set v4 (25 risk-flagged left out) answering v7’s best offer and a journey for their own StateFlip with a free first week, by written rules from conditionForBuyer.',
++    version: 'Test 8, 27 Nov 2026, persona set v4, v8 rules (U147)',
++    taken: 'Would try and would pay A → B, by dimension, the objections, and B’s effect split into its parts.',
++    link: '/admin/reports/buyer-agent?tab=detail#test-8',
++    label: 'prediction',
++  },
++  akps: {
++    id: 'akps',
++    name: 'AKP catalogue',
++    what: 'The draft AKPs (goal, strategy, product, identity) read from the business owner’s sheets, plus those drafted by us, linked to the 125 StateFlips.',
++    version: 'akps.ts, 27 Nov 2026 (all draft)',
++    taken: 'AKP counts per function and the StateFlips covered.',
++    link: '/admin/stateflips',
++    label: 'prediction',
++  },
+   'buyer-v1': {
+     id: 'buyer-v1',
+     name: 'Buyer agent run v1',
+@@ -354,6 +374,8 @@ export const SOURCE_KIND: Record<SourceId, SourceKind> = {
+   'buyer-v5': 'Buyer agents',
+   'buyer-v6': 'Buyer agents',
+   'buyer-v7': 'Buyer agents',
++  'buyer-v8': 'Buyer agents',
++  akps: 'Product',
+   personas: 'Buyer agents',
+   'app-funnel': 'Funnels and models',
+   'feedback-group': 'Funnels and models',
+diff --git a/src/admin/data/runChanges.ts b/src/admin/data/runChanges.ts
+index 1525540..7c810be 100644
+--- a/src/admin/data/runChanges.ts
++++ b/src/admin/data/runChanges.ts
+@@ -117,6 +117,30 @@ export const RUN_CHANGES: RunChangeDeclaration[] = [
+   }),
+ ]
+ 
++/**
++ * Test 8 (U147, J206) declares its change here too. It is kept out of
++ * RUN_CHANGES because its panel is persona set v4, which v5–v7's rules
++ * (buyerPlay, persona generator 2) cannot replay, so the headline split
++ * above does not apply; buyerRunV8.ts measures B against A on the same
++ * people instead (v8Split) and says that the step from v7 is not separable.
++ */
++export const V8_CHANGE: RunChangeDeclaration = declareRunChange({
++  version: 8,
++  previous: 7,
++  offers: {
++    a: 'v7’s best offer: v6’s best for the channel + Insight-Timer-style quick wins (everyone in set v4 came organically)',
++    b: 'A journey for your StateFlip X: free first week, then $10/month',
++  },
++  sameAs: { a: 'b' },
++  offer: { changed: true, note: 'A is v7’s B again, the like-for-like side. B is new: one journey named after the person’s own StateFlip (matched to their main need), a free first week, then $10 a month.' },
++  panel: { changed: true, note: '100 people from persona generator 2 (seed 2032) → 975 of persona set v4 (seed 20264): all 1,000 minus the 25 risk-flagged, who get Need help now? and no offer.' },
++  rules: { changed: true, note: 'v5–v7’s written rules (buyerPlay.ts) → v8’s rules from conditionForBuyer: need, urgency, readiness, scepticism and time, plus fit, the chance to reach the StateFlip, price load and language. Every formula is in buyerRunV8.ts.' },
++  reproducible: false,
++})
++
++/** Every declaration, test 8 included. */
++export const ALL_RUN_DECLARATIONS: RunChangeDeclaration[] = [...RUN_CHANGES, V8_CHANGE]
++
+ export const offersOf = (version: number): RunOffers => (version === BUYER_RUNS[0].version ? FIRST_RUN_OFFERS : RUN_CHANGES.find((d) => d.version === version)!.offers)
+ 
+ /* ------------------------------------------------------------- Headlines */
+diff --git a/src/admin/pages/AiBrainPage.tsx b/src/admin/pages/AiBrainPage.tsx
+new file mode 100644
+index 0000000..a6ab8b1
+--- /dev/null
++++ b/src/admin/pages/AiBrainPage.tsx
+@@ -0,0 +1,327 @@
++import { Check, Copy } from 'lucide-react'
++import { useMemo, useState, type ReactNode } from 'react'
++import { Link } from 'react-router-dom'
++import { PageSummary, PageTabs } from '../components/PageTabs'
++import { usePageTab } from '../components/pageTab'
++import { Badge, PageHeader, Panel } from '../components/ui'
++import {
++  CORE_FNS,
++  EFFORT_COST,
++  FUNCTION_LABEL,
++  STATED_TO_REAL,
++  brainMetrics,
++  functionChance,
++  mvpChance,
++  pct,
++  prototypeMap,
++  rankFeatures,
++  stageChance,
++  topThreeEffect,
++  weeklyReport,
++  type BrainMetric,
++  type FunctionId,
++} from '../data/aiBrain'
++import { akpSummary, akps } from '../data/akps'
++import { STAGES } from '../data/businessFunnel'
++import { v8Tallies } from '../data/buyerRunV8'
++import { stateFlipSummary } from '../data/stateFlips'
++import { DataSourceTypeBadge, DataSources } from './reports/DataSources'
++
++/*
++ * Admin → AI brain (U147, J206): the business owner's five functions as one
++ * model. All numbers and formulas come from data/aiBrain.ts.
++ */
++
++const fmt = (m: BrainMetric, v: number) => (m.unit === 'usd' ? `$${v.toFixed(2)}` : m.unit === 'count' ? `${Math.round(v)}` : `${Math.round(v * 100)}%`)
++
++const FN_TEXT: Record<FunctionId, string> = {
++  wellness: 'Solving bad to good: the StateFlips, the AKPs that build them, the cohort’s chance to flip and what a flip costs.',
++  product: 'The experience that gets someone from first visit to feeling better: product AKPs (PR-), the user journey and the features to build next.',
++  business: 'From the usage cap to paying and staying: the business funnel stages, their MVP targets and the buyer agents’ results.',
++  brand: 'Placeholder: waiting for the marketing AKP sheet (campaign goals, audience states, voices, channels). Nothing is computed until it comes.',
++  analysis: 'MicroBite “Maxwell” and TheraGPS “Governor”: the two engines that learn from every person. Placeholder data until real outcomes exist.',
++}
++
++export function AiBrainPage() {
++  const metrics = useMemo(() => brainMetrics(), [])
++  const ranked = useMemo(() => rankFeatures(), [])
++  const top3 = useMemo(() => topThreeEffect(), [])
++  const proto = useMemo(() => prototypeMap(), [])
++  const report = useMemo(() => weeklyReport(), [])
++  const x = useMemo(() => v8Tallies(), [])
++  const [, setTab] = usePageTab()
++  const mvp = mvpChance(metrics)
++  const weakest = [...CORE_FNS].sort((a, b) => functionChance(metrics, a) - functionChance(metrics, b))[0]
++
++  return (
++    <div className="flex flex-col gap-16">
++      <PageHeader title="AI brain" description="Wellness, Product, Business, Brand and Analysis as one model: each function’s metrics, MVP targets, a transparent chance to reach them, and the features that would raise it most." />
++      <PageTabs
++        summary={
++          <div className="flex min-w-0 flex-col gap-12">
++            <PageSummary
++              purpose="seeing, in one place, how close each function of the AI brain is to its MVP target, and which features would move it most."
++              question="What is the chance we reach the MVP targets, and what should ship next to raise it?"
++              answer={`All three core functions together: ${pct(mvp)}. ${FUNCTION_LABEL[weakest]} is furthest from target (${pct(functionChance(metrics, weakest))}). If the top 3 features ship (${top3.top.map((f) => f.name.toLowerCase()).join('; ')}), the chance goes from ${pct(top3.mvpBefore)} to ${pct(top3.mvpAfter)}.`}
++              stats={CORE_FNS.map((f) => ({ label: `${FUNCTION_LABEL[f]}: chance to reach target`, value: pct(functionChance(metrics, f)), note: 'Product of stage chances' }))}
++              next={[
++                { text: 'Read how each chance is worked out, metric by metric.', to: '?tab=detail#functions', linkLabel: 'Functions' },
++                { text: 'See the feature ranking and the top 3’s effect.', to: '?tab=detail#features', linkLabel: 'Feature ranking' },
++                { text: 'Copy this week’s plain-language report.', to: '?tab=detail#weekly', linkLabel: 'Weekly report' },
++              ]}
++              note="Every number is simulated or assumed until real users exist; a stage chance is “how close to target”, not a measured probability."
++              onDetail={() => setTab('detail')}
++            />
++            <DataSources route="/admin/ai-brain" />
++          </div>
++        }
++      >
++        <Panel title="How the chance is worked out" description="Plain formulas, so every number on this page can be redone by hand.">
++          <ul className="flex flex-col gap-6 text-13 text-adm-ink-2">
++            <li><span className="font-semibold text-adm-ink">Stage chance</span> = min(1, current ÷ target); for a cost, min(1, target ÷ current).</li>
++            <li><span className="font-semibold text-adm-ink">Function chance</span> = the product of its stage chances.</li>
++            <li><span className="font-semibold text-adm-ink">MVP chance</span> = Wellness × Product × Business. Brand and Analysis have no target yet.</li>
++            <li><span className="font-semibold text-adm-ink">Feature score</span> = impact × confidence ÷ effort (S {EFFORT_COST.S}, M {EFFORT_COST.M}, L {EFFORT_COST.L}); impact = the rise in the three function chances when the feature’s assumed lift is applied.</li>
++          </ul>
++        </Panel>
++
++        <section id="functions" className="grid min-w-0 scroll-mt-16 gap-16 lg:grid-cols-2">
++          {CORE_FNS.map((fn) => (
++            <FunctionCard key={fn} fn={fn} metrics={metrics.filter((m) => m.fn === fn)} extra={<FunctionExtra fn={fn} paid={`${x.payB.yes} of ${x.n}`} />} />
++          ))}
++          <PlaceholderCard fn="brand" />
++        </section>
++
++        <section id="analysis" className="scroll-mt-16">
++          <Panel title="Analysis: Maxwell and TheraGPS" description={FN_TEXT.analysis}>
++            <div className="grid gap-12 lg:grid-cols-2">
++              <div className="flex min-w-0 flex-col gap-6 rounded-8 border border-adm-line p-12">
++                <span className="text-13 font-semibold text-adm-ink">MicroBite “Maxwell”: resonance dynamics</span>
++                <p className="text-12 text-adm-ink-2">As the business owner describes it: learns which small building blocks (bites of voice, music, image, script) resonate with which person, and makes the next chapter from the ones that worked. In our terms: the learned link strengths of the Healing map, which today are all “learned from users: none yet”.</p>
++                <p className="text-12 text-adm-muted">Prototype: 4,870 AKPs. Ours: 0 learned links (placeholder until check-ins are recorded).</p>
++              </div>
++              <div className="flex min-w-0 flex-col gap-6 rounded-8 border border-adm-line p-12">
++                <span className="text-13 font-semibold text-adm-ink">TheraGPS “Governor”: therapeutic precision</span>
++                <p className="text-12 text-adm-ink-2">Routes each person to their StateFlip and steers chapter by chapter, like a navigation system re-routing. In our terms: main need → StateFlip (used for {x.n} people in test 8, {x.flipsUsed} StateFlips), the chance and weeks to the flip, and the safety route (the {x.excluded} risk-flagged go to Need help now?).</p>
++                <p className="text-12 text-adm-muted">Prototype: 10,497 AKPs. Ours: the routing rule is live; no AKPs of its own yet.</p>
++              </div>
++            </div>
++          </Panel>
++        </section>
++
++        <section id="connections" className="scroll-mt-16">
++          <Panel title="How the functions feed each other" description="When wellness flips more people, they feel better and come back; that feeds paying and revenue, which funds product. Brand brings people in; Analysis learns from all of it.">
++            <BrainDiagram />
++          </Panel>
++        </section>
++
++        <section id="features" className="scroll-mt-16">
++          <Panel title={`Feature ranking: if the top 3 ship, the MVP chance goes from ${pct(top3.mvpBefore)} to ${pct(top3.mvpAfter)}`} description={`Candidate features from the B2B2C features list and the journey. Lifts are assumptions; test 8’s stated lift is multiplied by ${STATED_TO_REAL} to read as a real one. A feature that lifts a metric already on target scores 0.`}>
++            <div className="overflow-x-auto">
++              <table className="w-full min-w-[820px] text-left text-12">
++                <thead className="text-11 uppercase tracking-wider text-adm-muted">
++                  <tr className="border-b border-adm-line">
++                    <th className="py-6 pr-12 font-semibold">#</th>
++                    <th className="py-6 pr-12 font-semibold">Feature</th>
++                    <th className="py-6 pr-12 font-semibold">Lifts (assumed)</th>
++                    <th className="py-6 pr-12 font-semibold">Impact</th>
++                    <th className="py-6 pr-12 font-semibold">Conf.</th>
++                    <th className="py-6 pr-12 font-semibold">Effort</th>
++                    <th className="py-6 pr-12 font-semibold">Score</th>
++                  </tr>
++                </thead>
++                <tbody>
++                  {ranked.map((f, i) => (
++                    <tr key={f.id} className={`border-b border-adm-line align-top last:border-0 ${i < 3 ? 'bg-adm-s2/10' : ''}`}>
++                      <td className="py-8 pr-12 tabular-nums">{i + 1}</td>
++                      <td className="py-8 pr-12">
++                        <span className="font-semibold text-adm-ink">{f.name}</span>
++                        <span className="block text-adm-muted">{f.from} · {f.evidence}</span>
++                      </td>
++                      <td className="py-8 pr-12 text-adm-ink-2">{f.lifts.length ? f.lifts.map((l) => `${metrics.find((m) => m.id === l.metric)?.label ?? l.metric} +${Math.round(l.by * 100)} pts`).join('; ') : 'None (a floor)'}</td>
++                      <td className="py-8 pr-12 tabular-nums">+{(f.impactTotal * 100).toFixed(1)} pts</td>
++                      <td className="py-8 pr-12 tabular-nums">{f.confidence}</td>
++                      <td className="py-8 pr-12">{f.effort}</td>
++                      <td className="py-8 pr-12 font-semibold tabular-nums">{(f.score * 100).toFixed(2)}</td>
++                    </tr>
++                  ))}
++                </tbody>
++              </table>
++            </div>
++            <dl className="grid gap-8 sm:grid-cols-3">
++              {CORE_FNS.map((f) => (
++                <div key={f} className="rounded-8 border border-adm-line bg-adm-bg p-12">
++                  <dt className="text-12 text-adm-muted">{FUNCTION_LABEL[f]} after the top 3</dt>
++                  <dd className="text-18 font-semibold tabular-nums text-adm-ink">{pct(top3.before[f])} → {pct(top3.after[f])}</dd>
++                </div>
++              ))}
++            </dl>
++          </Panel>
++        </section>
++
++        <section id="prototype" className="scroll-mt-16">
++          <Panel title="Map of the business owner’s 5 functions: prototype against ours" description="Prototype values are display only (his Figma Make, no logic behind them). Ours are counted from the AKP catalogue (akps.ts).">
++            <div className="overflow-x-auto">
++              <table className="w-full min-w-[560px] text-left text-12">
++                <thead className="text-11 uppercase tracking-wider text-adm-muted">
++                  <tr className="border-b border-adm-line">
++                    <th className="py-6 pr-12 font-semibold">Function</th>
++                    <th className="py-6 pr-12 font-semibold">Prototype value</th>
++                    <th className="py-6 pr-12 font-semibold">In our catalogue</th>
++                    <th className="py-6 pr-12 font-semibold">Note</th>
++                  </tr>
++                </thead>
++                <tbody>
++                  {proto.map((r) => (
++                    <tr key={r.fn} className="border-b border-adm-line last:border-0">
++                      <td className="py-8 pr-12 font-semibold text-adm-ink">{r.fn}</td>
++                      <td className="py-8 pr-12 tabular-nums">{r.prototype === null ? '—' : r.prototype.toLocaleString('en-US')} {r.prototype !== null && <Badge tone="warning">prototype</Badge>}</td>
++                      <td className="py-8 pr-12 tabular-nums">{r.ours.toLocaleString('en-US')} <Badge tone="info">ours</Badge></td>
++                      <td className="py-8 pr-12 text-adm-ink-2">{r.oursNote}</td>
++                    </tr>
++                  ))}
++                </tbody>
++              </table>
++            </div>
++            <p className="text-12 text-adm-muted">Prototype Command Center total: 10,087 AKPs (4,590 + 1,847 + 1,970 + 1,680). Ours: {akpSummary().total.toLocaleString('en-US')} AKPs, all draft.</p>
++          </Panel>
++        </section>
++
++        <section id="weekly" className="scroll-mt-16">
++          <WeeklyReport text={report} />
++        </section>
++
++        <DataSources route="/admin/ai-brain" full />
++      </PageTabs>
++    </div>
++  )
++}
++
++function FunctionCard({ fn, metrics, extra }: { fn: FunctionId; metrics: BrainMetric[]; extra?: ReactNode }) {
++  const p = metrics.reduce((t, m) => t * stageChance(m), 1)
++  return (
++    <section className="flex min-w-0 flex-col gap-12 rounded-12 border border-adm-line bg-adm-surface p-16">
++      <header className="flex flex-wrap items-baseline justify-between gap-8">
++        <h2 className="text-15 font-semibold text-adm-ink">{FUNCTION_LABEL[fn]}</h2>
++        <span className="text-13 text-adm-ink-2">Chance to reach target <span className="font-semibold tabular-nums text-adm-ink">{pct(p)}</span></span>
++      </header>
++      <p className="text-12 text-adm-ink-2">{FN_TEXT[fn]}</p>
++      <ul className="flex flex-col">
++        {metrics.map((m) => (
++          <li key={m.id} className="flex min-w-0 flex-col gap-4 border-t border-adm-line py-8 first:border-0">
++            <div className="flex flex-wrap items-baseline justify-between gap-8">
++              <span className="text-13 text-adm-ink">{m.label}</span>
++              <DataSourceTypeBadge type={m.source} />
++            </div>
++            <div className="flex flex-wrap gap-x-12 gap-y-2 text-12 tabular-nums text-adm-ink-2">
++              <span>Now <span className="font-semibold text-adm-ink">{fmt(m, m.current)}</span></span>
++              <span>MVP target {fmt(m, m.target)}</span>
++              <span>Stage chance {pct(stageChance(m))}</span>
++            </div>
++            <span className="text-11 text-adm-muted">{m.sourceNote}</span>
++          </li>
++        ))}
++      </ul>
++      <p className="text-12 text-adm-muted">= {metrics.map((m) => stageChance(m).toFixed(2)).join(' × ')} = {pct(p)}</p>
++      {extra}
++    </section>
++  )
++}
++
++function FunctionExtra({ fn, paid }: { fn: FunctionId; paid: string }) {
++  if (fn === 'wellness') {
++    const s = stateFlipSummary()
++    return <p className="text-12 text-adm-ink-2">{s.total} StateFlips across 5 dimensions; {akpSummary().byFunction.wellness} wellness AKPs. <Link className="font-medium underline" to="/admin/stateflips">Open StateFlips</Link></p>
++  }
++  if (fn === 'product') return <p className="text-12 text-adm-ink-2">{akps().filter((a) => a.id.startsWith('PR-')).length} product AKPs (PR-). <Link className="font-medium underline" to="/admin/user-journey">Open the user journey</Link></p>
++  return <p className="text-12 text-adm-ink-2">Stages: {STAGES.map((s) => s.title).join(' → ')}. Test 8 would pay: {paid}. <Link className="font-medium underline" to="/admin/business-funnel">Open the business funnel</Link></p>
++}
++
++function PlaceholderCard({ fn }: { fn: FunctionId }) {
++  return (
++    <section className="flex min-w-0 flex-col gap-8 rounded-12 border border-dashed border-adm-line bg-adm-surface p-16">
++      <header className="flex flex-wrap items-baseline justify-between gap-8">
++        <h2 className="text-15 font-semibold text-adm-ink">{FUNCTION_LABEL[fn]}</h2>
++        <Badge>Waiting for data</Badge>
++      </header>
++      <p className="text-12 text-adm-ink-2">{FN_TEXT[fn]}</p>
++      <p className="text-12 text-adm-muted">Prototype: 1,847 brand AKPs, 43 champions (display only). Ours: {akpSummary().byFunction.brand}. No MVP target and no chance until the sheet arrives.</p>
++    </section>
++  )
++}
++
++const NODES: { id: string; label: string; x: number; y: number }[] = [
++  { id: 'brand', label: 'Brand', x: 80, y: 60 },
++  { id: 'wellness', label: 'Wellness', x: 300, y: 60 },
++  { id: 'product', label: 'Product', x: 520, y: 60 },
++  { id: 'business', label: 'Business', x: 410, y: 200 },
++  { id: 'analysis', label: 'Analysis', x: 190, y: 200 },
++]
++const EDGES: [string, string, string][] = [
++  ['brand', 'wellness', 'brings people in'],
++  ['wellness', 'product', 'flips → felt better'],
++  ['product', 'business', 'comes back → pays'],
++  ['business', 'wellness', 'revenue funds flips'],
++  ['analysis', 'wellness', 'learns what works'],
++  ['business', 'analysis', 'outcomes'],
++]
++
++function BrainDiagram() {
++  const at = (id: string) => NODES.find((n) => n.id === id)!
++  return (
++    <svg viewBox="0 0 600 260" role="img" aria-label="Brand brings people in to Wellness; wellness flips make Product’s felt-better; Product’s returning users pay in Business; revenue funds flips; Analysis learns from outcomes and feeds Wellness." className="h-auto w-full max-w-[720px]">
++      <defs>
++        <marker id="brain-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
++          <path d="M0 0 L10 5 L0 10 z" fill="var(--color-adm-muted)" />
++        </marker>
++      </defs>
++      {EDGES.map(([a, b, label]) => {
++        const p = at(a)
++        const q = at(b)
++        const dx = q.x - p.x
++        const dy = q.y - p.y
++        const d = Math.hypot(dx, dy)
++        const k = 48 / d
++        return (
++          <g key={`${a}-${b}`}>
++            <line x1={p.x + dx * k} y1={p.y + dy * k} x2={q.x - dx * k} y2={q.y - dy * k} stroke="var(--color-adm-muted)" strokeWidth="1.5" markerEnd="url(#brain-arrow)" />
++            <text x={(p.x + q.x) / 2} y={(p.y + q.y) / 2 - 6} textAnchor="middle" fontSize="11" fill="var(--color-adm-ink-2)">{label}</text>
++          </g>
++        )
++      })}
++      {NODES.map((n) => (
++        <g key={n.id}>
++          <rect x={n.x - 46} y={n.y - 18} width="92" height="36" rx="8" fill="var(--color-adm-surface)" stroke="var(--color-adm-ink)" strokeWidth="1.5" strokeDasharray={n.id === 'brand' ? '4 3' : undefined} />
++          <text x={n.x} y={n.y + 4} textAnchor="middle" fontSize="13" fontWeight="600" fill="var(--color-adm-ink)">{n.label}</text>
++        </g>
++      ))}
++    </svg>
++  )
++}
++
++function WeeklyReport({ text }: { text: string }) {
++  const [copied, setCopied] = useState(false)
++  async function copy() {
++    try {
++      await navigator.clipboard.writeText(text)
++      setCopied(true)
++      window.setTimeout(() => setCopied(false), 2000)
++    } catch {
++      setCopied(false)
++    }
++  }
++  return (
++    <Panel
++      title="Weekly report"
++      description="Written from this week’s numbers and the latest run’s change declaration. Copy it into a message."
++      actions={
++        <button type="button" onClick={copy} className="inline-flex items-center gap-6 rounded-8 border border-adm-line bg-adm-surface px-12 py-6 text-12 font-medium text-adm-ink hover:bg-adm-hover">
++          {copied ? <Check size={13} aria-hidden="true" /> : <Copy size={13} aria-hidden="true" />}
++          {copied ? 'Copied' : 'Copy'}
++        </button>
++      }
++    >
++      <pre className="whitespace-pre-wrap break-words rounded-8 bg-adm-bg p-12 font-sans text-12 text-adm-ink">{text}</pre>
++    </Panel>
++  )
++}
+diff --git a/src/admin/pages/DashboardPage.tsx b/src/admin/pages/DashboardPage.tsx
+index e9e3d34..313bd91 100644
+--- a/src/admin/pages/DashboardPage.tsx
++++ b/src/admin/pages/DashboardPage.tsx
+@@ -4,6 +4,7 @@ import { BarChart, LineChart } from '../components/Charts'
+ import { Legend, PageHeader, Panel, StatCard, StatusBadge } from '../components/ui'
+ import { AI_TIMESERIES, AUDIT_LOG, REPORTS, ROLES, SESSIONS, USERS } from '../data/mock'
+ import { RELEASES } from '../../versions/releases'
++import { YourAsks } from './YourAsks'
+ 
+ const TRAFFIC_SERIES = [{ key: 'requests', label: 'AI requests', color: 'var(--color-adm-s1)' }]
+ 
+@@ -25,6 +26,7 @@ export function DashboardPage() {
+         <>
+           <PageHeader title="Start here" description="Where the team's work lives in this admin, and which figures are sample data." />
+           <StartHere />
++          <YourAsks />
+           <h2 className="text-15 font-semibold text-adm-ink">
+             Platform health <span className="font-normal text-adm-muted">· sample data for a backend that does not exist yet</span>
+           </h2>
+@@ -129,7 +131,7 @@ export function DashboardPage() {
+  * of an operation that does not run yet. Those stay below, labelled sample.
+  */
+ const START: { title: string; text: string; to: string; link: string }[] = [
+-  { title: 'AI brain', text: 'StateFlips, the healing map, the user journey, personas and the business funnel: what the AI knows.', to: RELEASES.stateFlips ? '/admin/stateflips' : '/admin/user-journey', link: RELEASES.stateFlips ? 'Open StateFlips' : 'Open User journey' },
++  { title: 'AI brain', text: 'StateFlips, the healing map, the user journey, personas and the business funnel: what the AI knows.', to: '/admin/ai-brain', link: 'Open the AI brain' },
+   { title: 'Reports & decisions', text: 'One report per decision, each with its answer, its next steps and its sources.', to: '/admin/reports', link: 'Open all reports' },
+   { title: 'Research', text: 'The desk research behind the reports, in the team wiki.', to: '/wiki/research', link: 'Open research' },
+ ]
+diff --git a/src/admin/pages/YourAsks.tsx b/src/admin/pages/YourAsks.tsx
+new file mode 100644
+index 0000000..975f328
+--- /dev/null
++++ b/src/admin/pages/YourAsks.tsx
+@@ -0,0 +1,73 @@
++import { ArrowRight } from 'lucide-react'
++import { useMemo, useState } from 'react'
++import { Link } from 'react-router-dom'
++import { Badge, Panel, type Tone } from '../components/ui'
++import { ASK_STATUS_LABEL, OWNER_ASKS, type AskStatus } from '../data/ownerAsks'
++
++/*
++ * Start here → "Your asks" (U147, J206): every ask of the business owner,
++ * read at build time from §0 of docs/briefs/EUGENE-CONTEXT.md, with its
++ * status and the page that answers it where one exists.
++ */
++
++const TONE: Record<AskStatus, Tone> = { done: 'good', live: 'good', planned: 'info', waiting: 'serious', received: 'neutral', open: 'warning', parked: 'neutral' }
++const ORDER: AskStatus[] = ['open', 'received', 'planned', 'waiting', 'live', 'done', 'parked']
++
++export function YourAsks() {
++  const [filter, setFilter] = useState<AskStatus | 'all'>('all')
++  const counts = useMemo(() => Object.fromEntries(ORDER.map((s) => [s, OWNER_ASKS.filter((a) => a.status === s).length])) as Record<AskStatus, number>, [])
++  const rows = filter === 'all' ? OWNER_ASKS : OWNER_ASKS.filter((a) => a.status === filter)
++  const chip = (active: boolean) => `rounded-full border px-10 py-4 text-12 ${active ? 'border-adm-ink bg-adm-ink text-adm-surface' : 'border-adm-line text-adm-ink hover:bg-adm-hover'}`
++
++  return (
++    <section id="your-asks" aria-label="Your asks" className="scroll-mt-16">
++      <Panel title={`Your asks: ${OWNER_ASKS.length} from the business owner, ${counts.open + counts.received} not started`} description="Read from the business owner’s ask list (§0 of the context brief) when the admin is built, so it always matches the document. A link opens the page that answers the ask.">
++        <div className="flex flex-wrap gap-6" role="group" aria-label="Filter by status">
++          <button type="button" aria-pressed={filter === 'all'} onClick={() => setFilter('all')} className={chip(filter === 'all')}>
++            All {OWNER_ASKS.length}
++          </button>
++          {ORDER.filter((s) => counts[s]).map((s) => (
++            <button key={s} type="button" aria-pressed={filter === s} onClick={() => setFilter(s)} className={chip(filter === s)}>
++              {ASK_STATUS_LABEL[s]} {counts[s]}
++            </button>
++          ))}
++        </div>
++        <div className="overflow-x-auto">
++          <table className="w-full min-w-[640px] text-left text-12">
++            <thead className="text-11 uppercase tracking-wider text-adm-muted">
++              <tr className="border-b border-adm-line">
++                <th className="py-6 pr-12 font-semibold">Id</th>
++                <th className="py-6 pr-12 font-semibold">Ask</th>
++                <th className="py-6 pr-12 font-semibold">Status</th>
++                <th className="py-6 pr-12 font-semibold">Page</th>
++              </tr>
++            </thead>
++            <tbody>
++              {rows.map((a) => (
++                <tr key={a.id} className="border-b border-adm-line align-top last:border-0">
++                  <td className="py-8 pr-12 font-semibold tabular-nums text-adm-ink">{a.id}</td>
++                  <td className="py-8 pr-12 text-adm-ink">{a.ask}</td>
++                  <td className="py-8 pr-12">
++                    <span className="flex flex-col items-start gap-4">
++                      <Badge tone={TONE[a.status]}>{ASK_STATUS_LABEL[a.status]}</Badge>
++                      <span className="text-11 text-adm-muted">{a.statusText}</span>
++                    </span>
++                  </td>
++                  <td className="py-8 pr-12">
++                    {a.link ? (
++                      <Link to={a.link.to} className="inline-flex items-center gap-4 font-medium text-adm-ink underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink">
++                        {a.link.label} <ArrowRight size={12} aria-hidden="true" />
++                      </Link>
++                    ) : (
++                      <span className="text-adm-muted">—</span>
++                    )}
++                  </td>
++                </tr>
++              ))}
++            </tbody>
++          </table>
++        </div>
++      </Panel>
++    </section>
++  )
++}
+diff --git a/src/admin/pages/reports/BuyerAgentReportPage.tsx b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+index 2cb9301..13fb3be 100644
+--- a/src/admin/pages/reports/BuyerAgentReportPage.tsx
++++ b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+@@ -15,6 +15,7 @@ import { INPUT_DOT } from './reportColors'
+ import { LabelBadge, SourcesSection } from './ReportParts'
+ import { Details, SummaryBlock } from './ReportSummary'
+ import { DataSources } from './DataSources'
++import { BuyerTest8, Test8Line } from './BuyerTest8'
+ import { LatestChangeAside } from '../buyer/RunChanges'
+ import { BUYER_RUNS } from '../../data/buyerRuns'
+ import { SuccessTrend, WhatMoves } from './SummaryCharts'
+@@ -76,7 +77,7 @@ function BuyerAgentReport() {
+       />
+ 
+       {!RELEASES.adminNav2 && summaryBlock}
+-      <PageTabs summary={<ReportSummaryTab purpose="deciding whether simulated buyers would pay for Aurelia, and at what price." onDetail={() => setPageTab('detail')}>{summaryBlock}<DataSources route="/admin/reports/buyer-agent" /></ReportSummaryTab>}>
++      <PageTabs summary={<ReportSummaryTab purpose="deciding whether simulated buyers would pay for Aurelia, and at what price." onDetail={() => setPageTab('detail')}>{summaryBlock}<Test8Line /><DataSources route="/admin/reports/buyer-agent" /></ReportSummaryTab>}>
+       {RELEASES.adminNav2 && (
+         <Details id="full-summary" title="Full summary" hint="each test’s figures, the tile notes and how sure we are">
+           {fullSummary}
+@@ -93,6 +94,8 @@ function BuyerAgentReport() {
+         </Panel>
+       </section>
+ 
++      <BuyerTest8 />
++
+       <div className="grid gap-16 lg:grid-cols-2 lg:items-start">
+         <section id="people" className="min-w-0 scroll-mt-16">
+           <Panel title="Every simulated person, one mark each" description="Switch the test or the question. Tap a mark to read who that person is and why they answered as they did.">
+diff --git a/src/admin/pages/reports/BuyerTest8.tsx b/src/admin/pages/reports/BuyerTest8.tsx
+new file mode 100644
+index 0000000..af53286
+--- /dev/null
++++ b/src/admin/pages/reports/BuyerTest8.tsx
+@@ -0,0 +1,159 @@
++import { useMemo, useState } from 'react'
++import { Panel } from '../../components/ui'
++import { V8_OBJECTION_LABEL, V8_OFFER_A, V8_OFFER_B_TEMPLATE, V8_RULES, runV8, v8Change, v8Findings, v8Tallies } from '../../data/buyerRunV8'
++
++/*
++ * Buyer agent report → Test 8 (U147, J206): persona set v4 against v7's best
++ * offer (A) and a StateFlip journey with a free first week (B). Every number
++ * comes from data/buyerRunV8.ts.
++ */
++
++/** One line for the report's Summary tab, linking to the test in Detail. */
++export function Test8Line() {
++  const x = useMemo(() => v8Tallies(), [])
++  return (
++    <p className="rounded-8 border border-adm-line bg-adm-surface px-12 py-8 text-13 text-adm-ink">
++      <span className="font-semibold">New, test 8: </span>a journey named after each person’s own StateFlip, free first week, then $10/month: would pay {x.payA.yes} → {x.payB.yes} of {x.n} simulated people, against v7’s best offer.{' '}
++      <a href="?tab=detail#test-8" className="font-medium underline decoration-adm-axis underline-offset-2">See test 8</a>
++    </p>
++  )
++}
++
++const pc = (k: number, n: number) => `${Math.round((k / Math.max(1, n)) * 100)}%`
++
++export function BuyerTest8() {
++  const x = useMemo(() => v8Tallies(), [])
++  const change = useMemo(() => v8Change(), [])
++  const findings = useMemo(() => v8Findings(), [])
++  const [who, setWho] = useState(0)
++  const answers = runV8().answers
++  const examples = useMemo(() => {
++    const up = x.payUp.slice(0, 4)
++    const no = answers.filter((a) => a.b.tries === 'no').slice(0, 2)
++    return [...up, ...no]
++  }, [x, answers])
++  const ex = examples[who]
++
++  return (
++    <section id="test-8" className="flex min-w-0 scroll-mt-16 flex-col gap-16">
++      <Panel
++        title={`Test 8: a journey for their own StateFlip, free first week, then $10/month. Would pay ${x.payA.yes} → ${x.payB.yes} of ${x.n}`}
++        description={`Simulated, by written rules, on persona set v4 (${x.total} people, ${x.excluded} risk-flagged left out: they get Need help now?, never an offer). A = ${V8_OFFER_A.name}. B = “${V8_OFFER_B_TEMPLATE}”, with X their own StateFlip.`}
++      >
++        <dl className="grid grid-cols-2 gap-8 lg:grid-cols-4">
++          {[
++            ['Would try A', `${x.tryA.yes}`, pc(x.tryA.yes, x.n)],
++            ['Would try B', `${x.tryB.yes}`, pc(x.tryB.yes, x.n)],
++            ['Would pay A', `${x.payA.yes}`, `expected paid ${x.paidA}`],
++            ['Would pay B', `${x.payB.yes}`, `expected paid ${x.paidB}`],
++          ].map(([l, v, n]) => (
++            <div key={l} className="flex min-w-0 flex-col gap-2 rounded-8 border border-adm-line bg-adm-bg p-12">
++              <dt className="text-12 text-adm-muted">{l}</dt>
++              <dd className="text-22 font-semibold tabular-nums text-adm-ink">{v}</dd>
++              <dd className="text-12 text-adm-ink-2">{n}</dd>
++            </div>
++          ))}
++        </dl>
++        <ul className="flex list-disc flex-col gap-4 pl-16 text-13 text-adm-ink-2">
++          {findings.map((f) => (
++            <li key={f}>{f}</li>
++          ))}
++        </ul>
++      </Panel>
++
++      <div className="grid gap-16 lg:grid-cols-2">
++        <Panel title="By dimension of the main need" description="Would try and would pay, A → B, and the top objection to B among those who would not pay.">
++          <div className="overflow-x-auto">
++            <table className="w-full min-w-[480px] text-left text-12">
++              <thead className="text-11 uppercase tracking-wider text-adm-muted">
++                <tr className="border-b border-adm-line">
++                  <th className="py-6 pr-12 font-semibold">Main need</th>
++                  <th className="py-6 pr-12 font-semibold">People</th>
++                  <th className="py-6 pr-12 font-semibold">Try A → B</th>
++                  <th className="py-6 pr-12 font-semibold">Pay A → B</th>
++                  <th className="py-6 pr-12 font-semibold">Top objection (B)</th>
++                </tr>
++              </thead>
++              <tbody>
++                {x.dims.map((d) => (
++                  <tr key={d.dimension} className="border-b border-adm-line last:border-0">
++                    <td className="py-8 pr-12 font-semibold text-adm-ink">{d.label}</td>
++                    <td className="py-8 pr-12 tabular-nums">{d.n}</td>
++                    <td className="py-8 pr-12 tabular-nums">{d.tryA} → {d.tryB}</td>
++                    <td className="py-8 pr-12 tabular-nums">{d.payA} → {d.payB}</td>
++                    <td className="py-8 pr-12 text-adm-ink-2">{d.topObjectionB ? `${V8_OBJECTION_LABEL[d.topObjectionB]} (${d.topObjectionCount})` : '—'}</td>
++                  </tr>
++                ))}
++              </tbody>
++            </table>
++          </div>
++        </Panel>
++        <Panel title="Objections, among those who would not pay" description="The largest negative term in each person’s pay score.">
++          <div className="grid grid-cols-2 gap-12">
++            {(['A', 'B'] as const).map((s) => (
++              <div key={s} className="flex min-w-0 flex-col gap-4">
++                <span className="text-12 font-semibold text-adm-ink">Offer {s}</span>
++                <ul className="flex flex-col gap-2 text-12 text-adm-ink-2">
++                  {(s === 'A' ? x.objectionsA : x.objectionsB).map(([k, c]) => (
++                    <li key={k} className="flex justify-between gap-8">
++                      <span>{V8_OBJECTION_LABEL[k]}</span>
++                      <span className="tabular-nums">{c}</span>
++                    </li>
++                  ))}
++                </ul>
++              </div>
++            ))}
++          </div>
++        </Panel>
++      </div>
++
++      <div className="grid gap-16 lg:grid-cols-2">
++        <Panel title="What changed against test 7, and why" description="The declaration (offer, panel, rules) from runChanges.ts, and B’s effect split into its parts on the same people.">
++          <ul className="flex flex-col gap-6 text-13 text-adm-ink-2">
++            {change.lines.map((l) => (
++              <li key={l}>{l}</li>
++            ))}
++          </ul>
++          <ol className="flex flex-col gap-4 text-12">
++            {change.split.map((s) => (
++              <li key={s.label} className="flex justify-between gap-8 border-t border-adm-line pt-4">
++                <span className="text-adm-ink">{s.label}</span>
++                <span className="tabular-nums text-adm-ink-2">expected paid {s.paid}{s.step ? ` (+${s.step})` : ''}</span>
++              </li>
++            ))}
++          </ol>
++        </Panel>
++        <Panel title="The rules, written out" description="Each person is read through conditionForBuyer (need, urgency, readiness, scepticism, time) and their StateFlip’s chance.">
++          <dl className="flex flex-col gap-6 text-12">
++            {V8_RULES.map((r) => (
++              <div key={r.label} className="flex min-w-0 flex-col gap-2">
++                <dt className="font-semibold text-adm-ink">{r.label}</dt>
++                <dd className="break-words text-adm-ink-2">{r.formula}</dd>
++              </div>
++            ))}
++          </dl>
++        </Panel>
++      </div>
++
++      {ex && (
++        <Panel title="One person, worked by hand" description="Pick someone: their numbers, every formula with their values in it.">
++          <div className="flex flex-wrap gap-6">
++            {examples.map((a, i) => (
++              <button key={a.personaId} type="button" onClick={() => setWho(i)} aria-pressed={i === who} className={`rounded-full border px-10 py-4 text-12 ${i === who ? 'border-adm-ink bg-adm-ink text-adm-surface' : 'border-adm-line text-adm-ink hover:bg-adm-hover'}`}>
++                {a.name.split(' ')[0]} · {a.country}
++              </button>
++            ))}
++          </div>
++          <p className="text-13 text-adm-ink">
++            {ex.name}: StateFlip {ex.flipId} “{ex.flipTitle}”. A: tries {ex.a.tries}, pays {ex.a.pays}. B: tries {ex.b.tries}, pays {ex.b.pays}.
++          </p>
++          <ul className="flex flex-col gap-4 font-mono text-11 text-adm-ink-2">
++            {ex.why.map((w) => (
++              <li key={w} className="break-words">{w}</li>
++            ))}
++          </ul>
++        </Panel>
++      )}
++    </section>
++  )
++}
+diff --git a/src/demo/modules.ts b/src/demo/modules.ts
+index ac447e5..2cf2457 100644
+--- a/src/demo/modules.ts
++++ b/src/demo/modules.ts
+@@ -246,6 +246,7 @@ export const DEMO_MODULES: DemoModule[] = [
+   { id: 'adminBusinessFunnel', kind: 'admin', label: 'Business funnel', description: 'The brief’s stages from a free start to Aurelia Plus, with targets, the buyer agents’ prediction, the feedback group and a decision log.', route: '/admin/business-funnel', built: true },
+   { id: 'adminTherapeuticMap', kind: 'admin', label: 'Therapeutic map', description: 'Product, business and wellness as one triangle with each corner’s core targets; the bad-to-good sleep process as the app runs it; the five wellness worlds (scenario).', route: '/admin/therapeutic-map', built: true },
+   { id: 'adminHealingMap', kind: 'admin', label: 'Healing Map', description: 'Rings of bad states, building blocks and good states; every link says where its strength comes from: design sample, cited research, or learned from users (none yet).', route: '/admin/healing-map', built: true },
++  { id: 'adminAiBrain', kind: 'admin', label: 'AI brain', description: 'The five functions (Wellness, Product, Business, Brand, Analysis) as one model: metrics, MVP targets, a transparent chance to reach them, a feature ranking, the prototype mapped against ours and a weekly report.', route: '/admin/ai-brain', built: true },
+   { id: 'adminStateFlips', kind: 'admin', label: 'StateFlips', description: 'The sleep StateFlip from bad (25) to good (85): markers, the path X → Y → Z, how it is measured, who has it, the DOJO links; chapters to flip and chance it works as transparent formulas; the cohort over time. Staging only.', route: '/admin/stateflips', built: true },
+   { id: 'adminSessionBuilder', kind: 'admin', label: 'How a session is built', description: 'The business owner’s Meta → Path → Script cascade (16 steps, BAR / ELEMENTS workbook): purpose, inputs, what feeds each step, what exists today and what is missing; one worked example, sleep chapter 1 (wind-down), labelled draft.', route: '/admin/session-builder', built: true },
+   { id: 'adminTherapeuticFunnel', kind: 'admin', label: 'Therapeutic funnel', description: 'Per StateFlip: has the problem → starts → chapter 1 → X → Y → Z (the flip) → stays good, with counts and drop-off from the simulated cohort, the reason for each drop and the levers (AKPs, features).', route: '/admin/therapeutic-funnel', built: true },
