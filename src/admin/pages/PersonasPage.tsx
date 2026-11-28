@@ -8,8 +8,9 @@ import { Badge, Button, PageHeader, Panel, inputClass } from '../components/ui'
 import { GOAL_LABEL, PERSONA_COUNT, SEED, distribution, drawPanel, generatePersonas, personaPrompt, type Generator, type Persona } from '../data/personas'
 import { PersonaProfile } from '../components/PersonaProfile'
 import { PersonasV4View } from './personas/PersonasV4View'
+import { ReportHeaderCard } from './reports/ReportHeaderCard'
+import { personasBrief } from '../data/reportBriefs'
 import { PageSummary, PageTabs } from '../components/PageTabs'
-import { usePageTab } from '../components/pageTab'
 import { SCENARIOS, generatePersonasV4 } from '../data/personasV4'
 
 type SetId = 'v4' | 'v2' | 'v1'
@@ -61,7 +62,7 @@ function download(name: string, text: string, type: string) {
  */
 export function PersonasPage() {
   const [set, setSet] = useState<SetId>('v4')
-  const [, setTab] = usePageTab()
+  const brief = useMemo(() => personasBrief(), [])
   // Summary (U142): the facts of set v4, the default.
   const facts = useMemo(() => {
     const ps = generatePersonasV4()
@@ -81,10 +82,8 @@ export function PersonasPage() {
         title="Personas"
         description="Made-up people with different lives, goals and doubts, as candidates for research run by AI: interviews in role, concept and copy tests, pricing checks. Use them to form and sharpen ideas before real users are asked, not as evidence."
       />
-      <PageTabs
-        summary={
-          <div className="flex min-w-0 flex-col gap-12">
-          <PageSummary
+      <PageTabs summary={<ReportHeaderCard route="/admin/personas" brief={brief} />}>
+      <PageSummary
             purpose="choosing made-up people to run AI research on (interviews in role, concept, copy and price tests) before real users are asked."
             question="Who do our tests run on, and who must never be sold to?"
             answer={`${facts.count.toLocaleString('en-US')} made-up people from ${facts.countries} countries; ${facts.risk} carry a risk flag and go to the help screen, never a sale.`}
@@ -99,12 +98,7 @@ export function PersonasPage() {
               { text: 'See what simulated buyers said in the Buyer agent report.', to: '/admin/reports/buyer-agent', linkLabel: 'Buyer agent report' },
             ]}
             note="Synthetic people for forming ideas, not evidence. Sets v1 and v2 (300 each) stay for the runs pinned to them."
-            onDetail={() => setTab('detail')}
           />
-            <DataSources route="/admin/personas" />
-          </div>
-        }
-      >
       <div role="tablist" aria-label="Persona set" className="flex w-fit max-w-full flex-wrap gap-4 rounded-8 border border-adm-line bg-adm-surface p-4">
         {SETS.map((x) => (
           <button

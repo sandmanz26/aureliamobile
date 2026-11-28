@@ -1,7 +1,7 @@
-import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
-import { usePageTab } from '../../components/pageTab'
-import { RELEASES } from '../../../versions/releases'
-import { useState } from 'react'
+import { PageTabs } from '../../components/PageTabs'
+import { combinationBrief } from '../../data/reportBriefs'
+import { ReportHeaderCard } from './ReportHeaderCard'
+import { useMemo, useState } from 'react'
 import { Badge, PageHeader, Panel } from '../../components/ui'
 import { DESIGNS } from '../../data/buyerSim'
 import { MATRIX_SEATS, buildComposition, buildMatrix, buildStages, type StageReading } from '../../data/combinationReport'
@@ -102,7 +102,7 @@ function CombinationReport() {
   const [map] = useState(() => mapFor(buildIterationMap(week), 'combination'))
   const middle = OUTCOMES.find((o) => o.id === 'middle')!
 
-  const [, setPageTab] = usePageTab()
+  const brief = useMemo(() => combinationBrief(week), [week])
   const summaryBlock = (
       <SummaryBlock
         s={summary}
@@ -129,8 +129,8 @@ function CombinationReport() {
         description={summary.intro ?? ''}
       />
 
-      {!RELEASES.adminNav2 && summaryBlock}
-      <PageTabs summary={<ReportSummaryTab purpose="reading the journey, the personas and the buyer agents together to find the one funnel step to fix first." onDetail={() => setPageTab('detail')}>{summaryBlock}<DataSources route="/admin/reports/combination" /></ReportSummaryTab>}>
+      <PageTabs summary={<ReportHeaderCard route="/admin/reports/combination" brief={brief} />}>
+      {summaryBlock}
 
       <Details id="stages" title="Stage by stage" hint="what each source says, where they agree and conflict">
       <Panel title="How to read it" description="The version and rules every stage is read on.">

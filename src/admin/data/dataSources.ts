@@ -61,6 +61,8 @@ export const SOURCE_META: Record<SourceId, { type: DataSourceType; file: string;
   'cost-model': { type: 'assumed', file: 'src/admin/data/costModel.ts', date: '27 Nov 2026' },
   'sleep-cohort': { type: 'simulated', file: 'src/admin/data/stateFlipSleep.ts', date: 'U140 (J202)' },
   'owner-thesis': { type: 'owner', file: 'His deck; chats of 24 and 27 Nov 2026', date: '27 Nov 2026' },
+  'healing-map': { type: 'simulated', file: 'src/admin/data/healingMap.ts', date: 'Design sample (U131 onwards)' },
+  'sleep-scales': { type: 'research', file: 'src/admin/data/stateFlipSleep.ts (SCALE_SOURCES)', date: 'Read for U140' },
   'bar-elements': { type: 'owner', file: 'docs/briefs/2026-11-27-bar-elements-operating-model.xlsx', date: '27 Nov 2026' },
 }
 
@@ -195,6 +197,22 @@ export const REPORT_DATA_SOURCES: Record<string, ReportDataSources> = {
       { id: 'sleep-cohort', feeds: 'The people per StateFlip and each person’s probabilities.' },
       { id: 'personas', feeds: 'The v4 personas behind every StateFlip but sleep.' },
       { id: 'spec-causal', feeds: 'Chance it works (54%) and uplift per chapter.' },
+    ],
+  },
+  '/admin/stateflips': {
+    title: 'StateFlips',
+    uses: [
+      { id: 'sleep-cohort', feeds: 'The people with a sleep need, their starting scores and chance it works.' },
+      { id: 'spec-causal', feeds: 'The plan’s 54% chance, 42 chapters and uplift per chapter.' },
+      { id: 'sleep-scales', feeds: 'What bad and good sleep mean.' },
+      { id: 'akps', feeds: 'The AKP catalogue tab.' },
+    ],
+  },
+  '/admin/healing-map': {
+    title: 'Healing map',
+    uses: [
+      { id: 'healing-map', feeds: 'Every state, building block and link, and where each link comes from.' },
+      { id: 'sleep-scales', feeds: 'The sleep states’ meaning.' },
     ],
   },
   '/admin/user-journey': {

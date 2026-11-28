@@ -1,8 +1,9 @@
-import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
-import { usePageTab } from '../../components/pageTab'
+import { PageTabs } from '../../components/PageTabs'
+import { buyerBrief } from '../../data/reportBriefs'
+import { ReportHeaderCard } from './ReportHeaderCard'
 import { RELEASES } from '../../../versions/releases'
 import { ArrowRight, PanelRightOpen } from 'lucide-react'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PageHeader, Panel } from '../../components/ui'
 import { APP_PRICE, INPUT_KINDS, INPUT_LABEL, buildIterations, changedFrom } from '../../data/buyerAgentReport'
@@ -60,10 +61,8 @@ function BuyerAgentReport() {
   const no7 = objections(t7)[0]
   const pc = (k: number, n: number) => `${Math.round((k / n) * 100)}%`
 
-  const [, setPageTab] = usePageTab()
+  const [brief] = useState(buyerBrief)
   const fullSummary = <SummaryBlock s={summary} aside={<LatestChangeAside version={BUYER_RUNS[BUYER_RUNS.length - 1].version} />} />
-  // B6 (U146): the Summary tab stays under 150 words; the full block opens Detail.
-  const summaryBlock = RELEASES.adminNav2 ? <SummaryBlock s={summary} compact /> : fullSummary
 
   return (
     <div className="flex flex-col gap-16">
@@ -77,8 +76,10 @@ function BuyerAgentReport() {
         }
       />
 
-      {!RELEASES.adminNav2 && summaryBlock}
-      <PageTabs summary={<ReportSummaryTab purpose="deciding whether simulated buyers would pay for Aurelia, and at what price." onDetail={() => setPageTab('detail')}>{summaryBlock}<Test9Line /><Test8Line /><DataSources route="/admin/reports/buyer-agent" /></ReportSummaryTab>}>
+      <PageTabs summary={<ReportHeaderCard route="/admin/reports/buyer-agent" brief={brief} />}>
+      {!RELEASES.adminNav2 && fullSummary}
+      <Test9Line />
+      <Test8Line />
       {RELEASES.adminNav2 && (
         <Details id="full-summary" title="Full summary" hint="each test’s figures, the tile notes and how sure we are">
           {fullSummary}

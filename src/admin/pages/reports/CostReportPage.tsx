@@ -1,8 +1,9 @@
-import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
-import { usePageTab } from '../../components/pageTab'
-import { RELEASES } from '../../../versions/releases'
+import { PageTabs } from '../../components/PageTabs'
+import { costBrief } from '../../data/reportBriefs'
+import { ReportHeaderCard } from './ReportHeaderCard'
+import { DataSources } from './DataSources'
 import { AlertTriangle, ExternalLink } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Badge, PageHeader, Panel, inputClass, type Tone } from '../../components/ui'
 import {
   ANCHORS, ASSUME, DEFAULT_GOAL, DEFAULT_WPM, GRAPH_EDGES, GRAPH_NODES, LENGTHS, MEASURED_2025, MEDIA, MEDIA_LABEL,
@@ -103,7 +104,7 @@ function CostReport() {
   const values = nodeValues(state)
   const stages = ([1, 2, 3] as Stage[]).map((st) => ({ st, r: goal({ ...state.goal, stage: st }, state.cost) }))
 
-  const [, setPageTab] = usePageTab()
+  const brief = useMemo(() => costBrief(), [])
   const summaryBlock = (
       <SummaryBlock s={summary} />
   )
@@ -115,8 +116,8 @@ function CostReport() {
         description={summary.intro ?? ''}
       />
 
-      {!RELEASES.adminNav2 && summaryBlock}
-      <PageTabs summary={<ReportSummaryTab purpose="knowing what one user and one StateFlip cost to serve, and whether the price covers it." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
+      <PageTabs summary={<ReportHeaderCard route="/admin/reports/cost" brief={brief} />}>
+      {summaryBlock}
 
       <section id="cost-function" className="scroll-mt-16">
         <Panel title="How the cost of helping one person adds up" description="Left: where each number comes from. Middle: the sum. Right: the result. Click a line to see its source.">
@@ -354,6 +355,7 @@ function CostReport() {
         ]}
       />
       </Details>
+      <DataSources route="/admin/reports/cost" full />
       </PageTabs>
     </div>
   )

@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ReportHeaderCard } from '../reports/ReportHeaderCard'
+import { therapeuticFunnelBrief } from '../../data/reportBriefs'
 import { PageSummary, PageTabs } from '../../components/PageTabs'
-import { usePageTab } from '../../components/pageTab'
 import { Badge, PageHeader, Panel, inputClass, type Tone } from '../../components/ui'
 import { NUM_LABEL_TEXT, type NumLabel } from '../../data/stateFlipSleep'
 import { DEFAULT_FLIP, HOLD_12_WEEKS, funnelOptions, therapeuticFunnel, type FunnelStage } from '../../data/therapeuticFunnel'
@@ -21,7 +22,7 @@ const n0 = (x: number) => (Math.round(x * 10) / 10).toFixed(x < 10 ? 1 : 0)
 
 export function TherapeuticFunnelPage() {
   const [flipId, setFlipId] = useState(DEFAULT_FLIP)
-  const [, setPageTab] = usePageTab()
+  const brief = therapeuticFunnelBrief(flipId)
   const f = therapeuticFunnel(flipId)
   const z = f.stages.find((s) => s.id === 'Z')!
   const hold = f.stages.find((s) => s.id === 'holds')!
@@ -45,10 +46,8 @@ export function TherapeuticFunnelPage() {
         description="For one StateFlip at a time: how many simulated people get from having the problem to a good state that lasts, where they drop off, why, and what moves each stage."
         actions={picker}
       />
-      <PageTabs
-        summary={
-          <div className="flex min-w-0 flex-col gap-12">
-            <PageSummary
+      <PageTabs summary={<ReportHeaderCard route="/admin/therapeutic-funnel" brief={brief} />}>
+      <PageSummary
               purpose="seeing where people drop off on the way from a bad state to a good one, and which levers move each stage."
               question={`For ${f.flip.title.toLowerCase()}, where do we lose the most people?`}
               answer={`Of ${f.stages[0].people.toFixed(0)} simulated people with the problem, about ${n0(z.people)} (${pct(z.ofProblem)}) are expected to flip and ${n0(hold.people)} to stay good. The biggest loss is before “${f.biggestDrop.title}”: about ${n0(f.biggestDrop.lost)} people. ${f.biggestDrop.why}`}
@@ -63,12 +62,7 @@ export function TherapeuticFunnelPage() {
                 { text: 'See how one chapter is built.', to: '/admin/session-builder', linkLabel: 'How a session is built' },
               ]}
               note="Simulated people (persona set v4) and the StateFlips formulas; nothing is measured on real people yet. “Therapeutic” is an internal name; what Aurelia says to people stays wellness."
-              onDetail={() => setPageTab('detail')}
             />
-            <DataSources route={ROUTE} />
-          </div>
-        }
-      >
         <Panel title={`${f.flip.id} · ${f.flip.title}`} description={f.basis}>
           <FunnelBars stages={f.stages} />
         </Panel>

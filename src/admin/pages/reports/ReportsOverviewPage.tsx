@@ -13,6 +13,9 @@ import { buildMetrics, metricsReportSummary } from '../../data/reportMetrics'
 import { RELEASES } from '../../../versions/releases'
 import { DataSources } from './DataSources'
 import { MetricLinesPanel } from './MetricLinesChart'
+import { PageTabs } from '../../components/PageTabs'
+import { overviewBrief } from '../../data/reportBriefs'
+import { ReportHeaderCard } from './ReportHeaderCard'
 
 /**
  * Admin → Reports → Overview (U129, J182). How Aurelia improves, in one
@@ -44,11 +47,14 @@ function Overview() {
       ...(RELEASES.reportMetrics ? [{ title: 'Report metrics', to: '/admin/reports/metrics', s: metricsReportSummary(buildMetrics(week)) }] : []),
     ]
   }, [week])
+  const brief = useMemo(() => overviewBrief(week), [week])
   const count = (c: string) => map.nodes.filter((n) => n.column === c).length
 
   return (
     <div className="flex flex-col gap-16">
       <PageHeader title="Reports" description="Every report in one place, and how they connect. Click anything to see it in a side panel." />
+
+      <PageTabs summary={<ReportHeaderCard route="/admin/reports" brief={brief} />}>
 
       <section aria-labelledby="how-title" className="flex flex-col gap-8 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20">
         <h2 id="how-title" className="text-15 font-semibold text-adm-ink">
@@ -93,6 +99,7 @@ function Overview() {
       </Panel>
 
       <DataSources route="/admin/reports" full />
+      </PageTabs>
     </div>
   )
 }

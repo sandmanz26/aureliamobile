@@ -1,6 +1,8 @@
 import { ExternalLink, Minus, Plus } from 'lucide-react'
-import { PageTabs, PurposeLine } from '../../components/PageTabs'
-import { usePageTab } from '../../components/pageTab'
+import { PageTabs } from '../../components/PageTabs'
+import { healingMapBrief } from '../../data/reportBriefs'
+import { DataSources } from '../reports/DataSources'
+import { ReportHeaderCard } from '../reports/ReportHeaderCard'
 import { RELEASES } from '../../../versions/releases'
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
@@ -144,7 +146,6 @@ function HealingMap() {
   const chip = (on: boolean) =>
     `inline-flex items-center gap-6 rounded-full border px-10 py-4 text-12 font-medium ${on ? 'border-adm-ink bg-adm-ink text-adm-surface' : 'border-adm-line bg-adm-surface text-adm-ink-2 hover:bg-adm-hover'}`
 
-  const [, setPageTab] = usePageTab()
   const summaryBlock = (
     <>
       <GoalLine goal="Shows which building blocks help which bad state, and how sure we are." />
@@ -176,19 +177,12 @@ function HealingMap() {
       </p>
       {!RELEASES.adminNav2 && summaryBlock}
       <PageTabs
-        summary={
-          <div className="flex min-w-0 flex-col gap-12">
-            <PurposeLine purpose="seeing which building blocks of a session tend to help which bad state, and how sure we are of each link." />
-            {summaryBlock}
-            <p className="rounded-8 border border-adm-line bg-adm-surface px-12 py-8 text-13 text-adm-ink-2">
-              Next step: replace the design-sample links with cited research or learned results. The <Link to="/admin/therapeutic-map" className="font-semibold text-adm-ink underline">Therapeutic map</Link> is the older version of this idea.
-            </p>
-            <button type="button" onClick={() => setPageTab('detail')} className="self-end text-13 font-semibold text-adm-ink underline decoration-adm-axis underline-offset-2">
-              Open the full map and how it will learn in Detail
-            </button>
-          </div>
-        }
+        summary={<ReportHeaderCard route="/admin/healing-map" brief={healingMapBrief()} />}
       >
+      {RELEASES.adminNav2 && summaryBlock}
+      <p className="rounded-8 border border-adm-line bg-adm-surface px-12 py-8 text-13 text-adm-ink-2">
+        Next step: replace the design-sample links with cited research or learned results. The <Link to="/admin/therapeutic-map" className="font-semibold text-adm-ink underline">Therapeutic map</Link> is the older version of this idea.
+      </p>
 
       <Panel title="The map" description="Tap a state or a building block to see its paths and where each link comes from.">
         <div className="flex flex-col gap-10">
@@ -373,6 +367,7 @@ function HealingMap() {
           </div>
         </div>
       </Details>
+      <DataSources route="/admin/healing-map" full />
       </PageTabs>
     </div>
   )

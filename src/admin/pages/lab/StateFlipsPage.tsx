@@ -1,6 +1,8 @@
 import { PanelRightOpen } from 'lucide-react'
-import { PageTabs, PurposeLine } from '../../components/PageTabs'
-import { usePageTab } from '../../components/pageTab'
+import { PageTabs } from '../../components/PageTabs'
+import { stateFlipsBrief } from '../../data/reportBriefs'
+import { DataSources } from '../reports/DataSources'
+import { ReportHeaderCard } from '../reports/ReportHeaderCard'
 import { RELEASES } from '../../../versions/releases'
 import { DetailsCue } from '../reports/ReportParts'
 import { useState, type ReactNode } from 'react'
@@ -67,7 +69,6 @@ function StateFlips() {
   const last = c.rows[c.rows.length - 1]
   const at42 = c.flippedAt(42)
   const ex = examplePeople(c)
-  const [, setPageTab] = usePageTab()
   const goal = <GoalLine goal="Explain, in numbers anyone can check, how chapters add up to the sleep StateFlip (25 → 85) and how “chance it works” is calculated." />
 
   const tiles: { label: string; value: string; vs: string; badge: NumLabel; open: () => void }[] = [
@@ -123,17 +124,10 @@ function StateFlips() {
       {!NAV2 && goal}
 
       <PageTabs
-        summary={
-          <div className="flex min-w-0 flex-col gap-12">
-            <PurposeLine purpose="seeing how Aurelia turns a bad state into a good one, starting with sleep, and how likely it is to work." />
-            {goal}
-            {summarySection}
-            <button type="button" onClick={() => setPageTab('detail')} className="self-end text-13 font-semibold text-adm-ink underline decoration-adm-axis underline-offset-2">
-              See the steps, the cohort, all 125 StateFlips and the AKP catalogue in Detail
-            </button>
-          </div>
-        }
+        summary={<ReportHeaderCard route="/admin/stateflips" brief={stateFlipsBrief()} />}
       >
+      {NAV2 && goal}
+      {NAV2 && summarySection}
       <div className="flex flex-wrap gap-2 self-start rounded-12 border border-adm-line bg-adm-surface p-4" role="tablist" aria-label="View">
         {TABS.map((t) => (
           <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)} className={`rounded-8 px-12 py-6 text-12 font-medium ${tab === t.id ? 'bg-adm-hover text-adm-ink' : 'text-adm-muted hover:text-adm-ink'}`}>
@@ -165,6 +159,7 @@ function StateFlips() {
       <Trajectories examples={ex} />
       </>
       )}
+      <DataSources route="/admin/stateflips" full />
       </PageTabs>
     </div>
   )

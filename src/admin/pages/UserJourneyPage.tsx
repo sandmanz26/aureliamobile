@@ -3,6 +3,8 @@ import { AlertCircle, CircleHelp, Download, ExternalLink, ImagePlus, MoreHorizon
 import { useEffect, useMemo, useState, type ChangeEvent, type CSSProperties } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { keepTab, usePageTab } from '../components/pageTab'
+import { ReportHeaderCard } from './reports/ReportHeaderCard'
+import { userJourneyBrief } from '../data/reportBriefs'
 import { PageSummary, PageTabs } from '../components/PageTabs'
 import { GuideTour, type TourStep } from '../components/GuideTour'
 import { Modal } from '../components/Modal'
@@ -256,6 +258,7 @@ export function UserJourneyPage() {
     .map((m) => ({ m, demand: DEMAND.get(m.id) ?? 0 }))
     .sort((a, b) => b.demand - a.demand)
   const topGap = gaps[0]
+  const brief = userJourneyBrief({ moments: counts.moments, screens: counts.screens, gaps: gaps.length, topGap: topGap ? { title: topGap.m.title, demand: topGap.demand } : undefined })
 
   return (
     <div className="flex flex-col gap-16">
@@ -337,10 +340,8 @@ export function UserJourneyPage() {
         }
       />
 
-      <PageTabs
-        summary={
-          <div className="flex min-w-0 flex-col gap-12">
-          <PageSummary
+      <PageTabs summary={<ReportHeaderCard route="/admin/user-journey" brief={brief} />}>
+      <PageSummary
             purpose="seeing when people reach for Aurelia, and which of those moments still has no screen."
             question="Which moment should we design or build for next?"
             answer={
@@ -359,12 +360,7 @@ export function UserJourneyPage() {
               { text: 'Export the journey and share it with the team when it changes.' },
             ]}
             note="Demand counts the 300 synthetic personas, not real users. Edits are saved in this browser only."
-            onDetail={() => setTab('detail')}
           />
-            <DataSources route="/admin/user-journey" />
-          </div>
-        }
-      >
       {tagsOn && (
         <div className="flex flex-wrap items-center justify-between gap-10">
           <div className="flex flex-wrap gap-2 rounded-12 border border-adm-line bg-adm-surface p-4" role="tablist" aria-label="View" data-tour="views">

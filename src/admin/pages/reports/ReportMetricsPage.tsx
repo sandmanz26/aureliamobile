@@ -1,7 +1,7 @@
 import { DataSources } from './DataSources'
-import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
-import { usePageTab } from '../../components/pageTab'
-import { RELEASES } from '../../../versions/releases'
+import { PageTabs } from '../../components/PageTabs'
+import { metricsBrief } from '../../data/reportBriefs'
+import { ReportHeaderCard } from './ReportHeaderCard'
 import { ArrowDownRight, ArrowUpRight, Minus, PanelRightOpen } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Badge, PageHeader, Panel, type Tone } from '../../components/ui'
@@ -215,7 +215,7 @@ function MetricsView() {
 
   const selectCls = 'h-32 min-w-0 rounded-8 border border-adm-line bg-adm-surface px-8 text-13 text-adm-ink'
 
-  const [, setPageTab] = usePageTab()
+  const brief = useMemo(() => metricsBrief(week), [week])
   const summaryBlock = (
       <SummaryBlock s={summary} />
   )
@@ -223,8 +223,8 @@ function MetricsView() {
   return (
     <div className="flex min-w-0 flex-col gap-16">
       <PageHeader title="Report metrics" description={plainText(summary.intro ?? '')} />
-      {!RELEASES.adminNav2 && summaryBlock}
-      <PageTabs summary={<ReportSummaryTab purpose="checking where each number in the reports comes from and how it is worked out, before trusting it." onDetail={() => setPageTab('detail')}>{summaryBlock}<DataSources route="/admin/reports/metrics" /></ReportSummaryTab>}>
+      <PageTabs summary={<ReportHeaderCard route="/admin/reports/metrics" brief={brief} />}>
+      {summaryBlock}
 
       <Panel title="How to read the quality" description="Each number gets one of three labels, plus checks for things that look wrong.">
         <dl className="grid gap-8 text-12 lg:grid-cols-3">

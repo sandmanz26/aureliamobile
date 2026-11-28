@@ -1,8 +1,9 @@
 import { Check, Copy } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { ReportHeaderCard } from './reports/ReportHeaderCard'
+import { aiBrainBrief } from '../data/reportBriefs'
 import { PageSummary, PageTabs } from '../components/PageTabs'
-import { usePageTab } from '../components/pageTab'
 import { Badge, PageHeader, Panel } from '../components/ui'
 import {
   CORE_FNS,
@@ -49,17 +50,15 @@ export function AiBrainPage() {
   const proto = useMemo(() => prototypeMap(), [])
   const report = useMemo(() => weeklyReport(), [])
   const x = useMemo(() => v8Tallies(), [])
-  const [, setTab] = usePageTab()
+  const brief = useMemo(() => aiBrainBrief(), [])
   const mvp = mvpChance(metrics)
   const weakest = [...CORE_FNS].sort((a, b) => functionChance(metrics, a) - functionChance(metrics, b))[0]
 
   return (
     <div className="flex flex-col gap-16">
       <PageHeader title="AI brain" description="Wellness, Product, Business, Brand and Analysis as one model: each function’s metrics, MVP targets, a transparent chance to reach them, and the features that would raise it most." />
-      <PageTabs
-        summary={
-          <div className="flex min-w-0 flex-col gap-12">
-            <PageSummary
+      <PageTabs summary={<ReportHeaderCard route="/admin/ai-brain" brief={brief} />}>
+      <PageSummary
               purpose="seeing, in one place, how close each function of the AI brain is to its MVP target, and which features would move it most."
               question="What is the chance we reach the MVP targets, and what should ship next to raise it?"
               answer={`All three core functions together: ${pct(mvp)}. ${FUNCTION_LABEL[weakest]} is furthest from target (${pct(functionChance(metrics, weakest))}). If the top 3 features ship (${top3.top.map((f) => f.name.toLowerCase()).join('; ')}), the chance goes from ${pct(top3.mvpBefore)} to ${pct(top3.mvpAfter)}.`}
@@ -70,12 +69,7 @@ export function AiBrainPage() {
                 { text: 'Copy this week’s plain-language report.', to: '?tab=detail#weekly', linkLabel: 'Weekly report' },
               ]}
               note="Every number is simulated or assumed until real users exist; a stage chance is “how close to target”, not a measured probability."
-              onDetail={() => setTab('detail')}
             />
-            <DataSources route="/admin/ai-brain" />
-          </div>
-        }
-      >
         <Panel title="How the chance is worked out" description="Plain formulas, so every number on this page can be redone by hand.">
           <ul className="flex flex-col gap-6 text-13 text-adm-ink-2">
             <li><span className="font-semibold text-adm-ink">Stage chance</span> = min(1, current ÷ target); for a cost, min(1, target ÷ current).</li>

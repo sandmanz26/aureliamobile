@@ -3,6 +3,8 @@ import { ChevronRight, CircleHelp, Download, ExternalLink, MapPin, Plus } from '
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { keepTab, usePageTab } from '../components/pageTab'
+import { ReportHeaderCard } from './reports/ReportHeaderCard'
+import { businessFunnelBrief } from '../data/reportBriefs'
 import { PageSummary, PageTabs } from '../components/PageTabs'
 import { RELEASES } from '../../versions/releases'
 import { GuideTour, type TourStep } from '../components/GuideTour'
@@ -92,6 +94,7 @@ export function BusinessFunnelPage() {
     const m = metrics.find((x) => x.id === id)
     return m ? { label: m.label, value: pct(m.agent), target: targetOf(m), good: m.agent >= targetOf(m) } : null
   }
+  const brief = businessFunnelBrief({ metrics, targets })
   const plus = kpi('plus')
   const d30 = kpi('d30')
 
@@ -120,10 +123,8 @@ export function BusinessFunnelPage() {
         }
       />
 
-      <PageTabs
-        summary={
-          <div className="flex min-w-0 flex-col gap-12">
-          <PageSummary
+      <PageTabs summary={<ReportHeaderCard route="/admin/business-funnel" brief={brief} />}>
+      <PageSummary
             purpose="seeing how many people get from a first visit to paying for Aurelia Plus, and which stage loses the most."
             question="Where does the funnel leak most, and what do we fix first?"
             answer={
@@ -142,12 +143,7 @@ export function BusinessFunnelPage() {
               { text: 'Compare with the creator retreat funnel (Detail → Creator retreat).' },
             ]}
             note={`Predicted by the buyer agents (${AGENT_RULES[agent].name}, ${DESIGNS[design - 1].name}); not measured on real users.`}
-            onDetail={() => setPageTab('detail')}
           />
-            <DataSources route="/admin/business-funnel" />
-          </div>
-        }
-      >
       <div className="flex flex-wrap items-center justify-between gap-12">
         <div role="tablist" aria-label="Funnel" className="flex w-fit flex-wrap gap-4 rounded-8 bg-adm-bg p-4">
           {(

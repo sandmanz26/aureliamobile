@@ -1,6 +1,6 @@
-import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
-import { usePageTab } from '../../components/pageTab'
-import { RELEASES } from '../../../versions/releases'
+import { PageTabs } from '../../components/PageTabs'
+import { b2b2cBrief } from '../../data/reportBriefs'
+import { ReportHeaderCard } from './ReportHeaderCard'
 import { ExternalLink } from 'lucide-react'
 import { DetailsCue } from './ReportParts'
 import { useMemo, useState } from 'react'
@@ -250,7 +250,7 @@ export function B2b2cReportPage() {
   const map = useMemo(() => mapFor(buildIterationMap(1), 'b2b2c'), [])
   const web = B2B2C_SOURCES.filter((s) => s.url.startsWith('http'))
   const own = B2B2C_SOURCES.filter((s) => !s.url.startsWith('http'))
-  const [, setPageTab] = usePageTab()
+  const [brief] = useState(b2b2cBrief)
   const summaryBlock = (
         <SummaryBlock s={summary} />
   )
@@ -260,8 +260,8 @@ export function B2b2cReportPage() {
       <div className="flex flex-col gap-16">
         <PageHeader title="B2B2C report" description={plainText(summary.intro ?? '')} />
 
-        {!RELEASES.adminNav2 && summaryBlock}
-        <PageTabs summary={<ReportSummaryTab purpose="choosing which partner channel (creators, employers, partners) to test first." onDetail={() => setPageTab('detail')}>{summaryBlock}<DataSources route="/admin/reports/b2b2c" /></ReportSummaryTab>}>
+        <PageTabs summary={<ReportHeaderCard route="/admin/reports/b2b2c" brief={brief} />}>
+      {summaryBlock}
 
         <section id="b2b2c-how" className="min-w-0 scroll-mt-16">
           <Panel title="How it works" description="The idea in four pictures: who is involved, each channel step by step, what changed from round 1, and the phases. Click any box for a plain explanation and the features behind it.">

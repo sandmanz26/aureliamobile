@@ -7,8 +7,10 @@ import { usePageTab, type PageTab } from './pageTab'
 
 /*
  * Summary | Detail (U142, J203): every lab and report page opens on a short
- * Summary (what the page is for, the question, the answer, up to three
- * figures, the next steps) and keeps everything it had before under Detail.
+ * Summary and keeps everything it had before under Detail. Since U151 (J208)
+ * the Summary of every report and analysis page is one ReportHeaderCard
+ * (pages/reports/ReportHeaderCard.tsx): what it is for, its conclusion and
+ * where it comes from.
  * The tab lives in the URL (`?tab=detail`), so a link or Back lands on the
  * same tab. Detail stays mounted while hidden, so its state survives a switch
  * and an in-page `#anchor` into it still resolves (and opens the tab).
@@ -204,20 +206,5 @@ export function PurposeLine({ purpose }: { purpose: string }) {
       <span className="font-semibold">This page is for </span>
       {purpose}
     </p>
-  )
-}
-
-/** A report's Summary tab: the purpose line above the report's own summary block. */
-export function ReportSummaryTab({ purpose, children, onDetail }: { purpose: string; children: ReactNode; onDetail?: () => void }) {
-  return (
-    <div className="flex min-w-0 flex-col gap-12">
-      <PurposeLine purpose={purpose} />
-      {children}
-      {onDetail && (
-        <button type="button" onClick={onDetail} className="inline-flex items-center gap-4 self-end text-13 font-semibold text-adm-ink underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink">
-          See everything in Detail <ArrowRight size={13} aria-hidden="true" />
-        </button>
-      )}
-    </div>
   )
 }

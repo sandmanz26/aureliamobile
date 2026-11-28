@@ -4,8 +4,9 @@ import { Badge, type Tone } from '../../components/ui'
 import { DATA_SOURCE_TYPE_MEANING, DATA_SOURCE_TYPE_TEXT, dataSourcesFor, type DataSourceType } from '../../data/dataSources'
 
 /*
- * "Data sources" (U146, J206): the one block that closes every report's
- * Summary (compact) and Detail (full). Each source says what kind it is, what
+ * "Data sources" (U146, J206): the full block that closes every report's
+ * Detail. Since U151 the Summary shows its short form in ReportHeaderCard's
+ * "Where it comes from"; the compact mode here stays for other callers. Each source says what kind it is, what
  * it feeds on this page, its file or document, its date and a link.
  */
 

@@ -1,6 +1,6 @@
-import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
-import { usePageTab } from '../../components/pageTab'
-import { RELEASES } from '../../../versions/releases'
+import { PageTabs } from '../../components/PageTabs'
+import { uxBrief } from '../../data/reportBriefs'
+import { ReportHeaderCard } from './ReportHeaderCard'
 import { useMemo, useState } from 'react'
 import { PageHeader, Panel } from '../../components/ui'
 import { plainText } from '../../data/glossary'
@@ -27,7 +27,7 @@ export function UxFeedbackReportPage() {
   const summary = useMemo(() => uxFeedbackSummary(participants, week), [participants, week])
   const map = useMemo(() => mapFor(buildIterationMap(Math.max(1, week)), 'ux'), [week])
 
-  const [, setPageTab] = usePageTab()
+  const brief = useMemo(() => uxBrief(participants, week), [participants, week])
   const summaryBlock = (
         <SummaryBlock s={summary} />
   )
@@ -37,8 +37,8 @@ export function UxFeedbackReportPage() {
       <div className="flex flex-col gap-16">
         <PageHeader title="UX feedback report" description={plainText(summary.intro ?? '')} />
 
-        {!RELEASES.adminNav2 && summaryBlock}
-        <PageTabs summary={<ReportSummaryTab purpose="seeing what the feedback group tells us about the app, and what to change next." onDetail={() => setPageTab('detail')}>{summaryBlock}<DataSources route="/admin/reports/ux-feedback" /></ReportSummaryTab>}>
+        <PageTabs summary={<ReportHeaderCard route="/admin/reports/ux-feedback" brief={brief} />}>
+      {summaryBlock}
 
         <section id="ux-views" className="flex min-w-0 scroll-mt-16 flex-col gap-16">
           <FeedbackGroupViews participants={participants} week={week} />

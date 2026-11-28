@@ -65,6 +65,8 @@ export type SourceId =
   | 'sleep-cohort'
   | 'owner-thesis'
   | 'bar-elements'
+  | 'healing-map'
+  | 'sleep-scales'
 
 export interface ReportSource {
   id: SourceId
@@ -370,6 +372,24 @@ export const SOURCES: Record<SourceId, ReportSource> = {
     link: '/admin/session-builder',
     label: 'document',
   },
+  'healing-map': {
+    id: 'healing-map',
+    name: 'Healing map links',
+    what: 'The bad states, building blocks and good states of the Healing map, and the links between them: a design sample, with some links backed by a cited published review.',
+    version: 'healingMap.ts (U151 reading)',
+    taken: 'Every node and link, and where each link comes from.',
+    link: '/admin/healing-map',
+    label: 'sample',
+  },
+  'sleep-scales': {
+    id: 'sleep-scales',
+    name: 'Published sleep scales',
+    what: 'The published sleep measures the sleep score is set against: PSQI, ISI, the National Sleep Foundation’s quality markers and the AASM’s seven hours.',
+    version: 'Papers of 1989–2017, read for U140',
+    taken: 'What bad and good sleep mean, and the cut-offs behind the check-in.',
+    link: '/admin/stateflips',
+    label: 'third-party',
+  },
 }
 
 /** The kind of evidence a source is, for grouping it on a graph (U121). Coarse on purpose: a handful of groups a reader can scan. */
@@ -409,6 +429,8 @@ export const SOURCE_KIND: Record<SourceId, SourceKind> = {
   'sleep-cohort': 'Funnels and models',
   'owner-thesis': 'The business owner',
   'bar-elements': 'The business owner',
+  'healing-map': 'Product',
+  'sleep-scales': 'Real people',
 }
 
 export interface Finding {

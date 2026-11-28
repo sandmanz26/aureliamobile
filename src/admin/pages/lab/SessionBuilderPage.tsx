@@ -1,8 +1,9 @@
 import { ArrowRight, RotateCcw } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ReportHeaderCard } from '../reports/ReportHeaderCard'
+import { sessionBuilderBrief } from '../../data/reportBriefs'
 import { PageSummary, PageTabs } from '../../components/PageTabs'
-import { usePageTab } from '../../components/pageTab'
 import { Badge, PageHeader, Panel, type Tone } from '../../components/ui'
 import {
   CASCADE, CFAM_TARGETS, CONTEXT_LOOP, DOMAIN_TEXT, PLANNER, STATE_TEXT, VALUE_TEXT, cascadeSummary, workedExample,
@@ -25,7 +26,7 @@ const VALUE_TONE: Record<ValueSource, Tone> = { workbook: 'info', computed: 'goo
 const DOMAIN_BAR: Record<Domain, string> = { META: 'bg-adm-s1', PATH: 'bg-adm-s3', SCRIPT: 'bg-adm-s4' }
 
 export function SessionBuilderPage() {
-  const [, setPageTab] = usePageTab()
+  const brief = sessionBuilderBrief()
   const s = cascadeSummary()
   const ex = workedExample()
   return (
@@ -34,10 +35,8 @@ export function SessionBuilderPage() {
         title="How a session is built"
         description="The business owner’s Meta → Path → Script cascade: 16 steps from “who is this for” to the finished script, what each needs, and what our app and API do today. With one worked example: chapter 1 of the sleep StateFlip."
       />
-      <PageTabs
-        summary={
-          <div className="flex min-w-0 flex-col gap-12">
-            <PageSummary
+      <PageTabs summary={<ReportHeaderCard route="/admin/session-builder" brief={brief} />}>
+      <PageSummary
               purpose="understanding how one chapter is assembled from goals, people and building blocks (AKPs), step by step, and which steps we still have to build."
               question="How does Aurelia turn a StateFlip and a person into a 10-minute script, and how much of that exists?"
               answer={`Three stages: Meta sets length, goal and person; Path picks objective, methods, techniques and a plan of bars and elements, then scores it; Script writes it. Of the ${s.steps} steps, ${s.partial} exist in part and ${s.missing} are missing; none is complete. The worked sleep example is a draft no model has run.`}
@@ -52,12 +51,7 @@ export function SessionBuilderPage() {
                 { text: 'Agree how alignment is scored before any tournament runs (step 9).', to: '/admin/therapeutic-funnel', linkLabel: 'Therapeutic funnel' },
               ]}
               note="Step names, inputs and databases are the workbook’s. Example values are labelled: from the workbook, computed from the sleep cohort, or our draft."
-              onDetail={() => setPageTab('detail')}
             />
-            <DataSources route={ROUTE} />
-          </div>
-        }
-      >
         <CascadeDiagram />
         <WorkedExampleView />
         <StepTable />

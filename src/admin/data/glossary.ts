@@ -64,6 +64,9 @@ export const GLOSSARY = {
   'cost-per-flip': { term: 'Cost per flip', plain: 'What it costs to make the chapters for one person who reaches the good state. It includes the people it does not help.' },
   'causal-stage': { term: 'Causal AI stage', plain: 'How much the AI has learned from real use. Stage 1 is under 1,000 sessions; stage 3 is 100,000 or more.' },
   'causal-layer': { term: 'Causal layer', plain: 'DOJO’s three speeds of change. Moods move in days, habits in weeks, skills in months.' },
+  // U151 (J208): the words of the report summaries' header card.
+  mvp: { term: 'MVP', plain: 'Minimum viable product: the first version good enough to put in front of real paying users. Its goals are the team’s targets.' },
+  persona: { term: 'Persona', plain: 'A made-up person with an age, a country, a life and doubts, used to test ideas before real users. Not evidence.' },
   dropout: { term: 'Stopped', plain: 'People who stop using Aurelia before reaching the good state. Our model assumes most failures look like this.' },
 } satisfies Record<string, GlossaryEntry>
 
