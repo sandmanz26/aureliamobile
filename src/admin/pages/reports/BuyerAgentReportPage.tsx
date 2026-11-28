@@ -16,6 +16,7 @@ import { LabelBadge, SourcesSection } from './ReportParts'
 import { Details, SummaryBlock } from './ReportSummary'
 import { DataSources } from './DataSources'
 import { BuyerTest8, Test8Line } from './BuyerTest8'
+import { BuyerTest9, Test9Line } from './BuyerTest9'
 import { LatestChangeAside } from '../buyer/RunChanges'
 import { BUYER_RUNS } from '../../data/buyerRuns'
 import { SuccessTrend, WhatMoves } from './SummaryCharts'
@@ -77,7 +78,7 @@ function BuyerAgentReport() {
       />
 
       {!RELEASES.adminNav2 && summaryBlock}
-      <PageTabs summary={<ReportSummaryTab purpose="deciding whether simulated buyers would pay for Aurelia, and at what price." onDetail={() => setPageTab('detail')}>{summaryBlock}<Test8Line /><DataSources route="/admin/reports/buyer-agent" /></ReportSummaryTab>}>
+      <PageTabs summary={<ReportSummaryTab purpose="deciding whether simulated buyers would pay for Aurelia, and at what price." onDetail={() => setPageTab('detail')}>{summaryBlock}<Test9Line /><Test8Line /><DataSources route="/admin/reports/buyer-agent" /></ReportSummaryTab>}>
       {RELEASES.adminNav2 && (
         <Details id="full-summary" title="Full summary" hint="each test’s figures, the tile notes and how sure we are">
           {fullSummary}
@@ -93,6 +94,8 @@ function BuyerAgentReport() {
           <TestFunnels tests={tests} />
         </Panel>
       </section>
+
+      <BuyerTest9 />
 
       <BuyerTest8 />
 

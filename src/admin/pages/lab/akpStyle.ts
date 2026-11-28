@@ -24,15 +24,19 @@ export const FAMILY_LOOK: Record<AkpFamily, Look> = {
   image: { bg: 'bg-adm-s6', fill: 'fill-adm-s6', shape: 'diamond' },
   video: { bg: 'bg-adm-s2', fill: 'fill-adm-s2', shape: 'triangle-down' },
   product: { bg: 'bg-adm-ink-2', fill: 'fill-adm-ink-2', shape: 'pentagon' },
+  voice: { bg: 'bg-adm-s5', fill: 'fill-adm-s5', shape: 'star' },
+  business: { bg: 'bg-adm-gold', fill: 'fill-adm-gold', shape: 'square' },
+  brand: { bg: 'bg-adm-accent', fill: 'fill-adm-accent', shape: 'diamond' },
+  analysis: { bg: 'bg-adm-muted', fill: 'fill-adm-muted', shape: 'triangle-down' },
 }
 
-/** Sleep chapter 1's modalities, matched to the family looks (voice has no family yet). */
+/** Sleep chapter 1's modalities, matched to the family looks. */
 export const MODALITY_LOOK: Record<string, Look> = {
   Script: FAMILY_LOOK.script,
   Music: FAMILY_LOOK.music,
   Image: FAMILY_LOOK.image,
   Video: FAMILY_LOOK.video,
-  Voice: { bg: 'bg-adm-s5', fill: 'fill-adm-s5', shape: 'star' },
+  Voice: FAMILY_LOOK.voice,
 }
 
 export const GOAL_LOOK: Look = { bg: 'bg-adm-ink', fill: 'fill-adm-ink', shape: 'circle' }

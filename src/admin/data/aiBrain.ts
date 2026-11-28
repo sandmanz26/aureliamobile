@@ -1,6 +1,7 @@
 import { akpSummary, akps } from './akps'
 import { funnelMetrics, type FunnelMetric } from './businessFunnel'
-import { V8_OBJECTION_LABEL, v8Change, v8Findings, v8Tallies } from './buyerRunV8'
+import { V8_OBJECTION_LABEL, v8Tallies } from './buyerRunV8'
+import { v9Change, v9Findings, v9Tallies } from './buyerRunV9'
 import { ALL_RUN_DECLARATIONS } from './runChanges'
 import { STAGES } from './costModel'
 import { sleepCohort } from './stateFlipFormulas'
@@ -57,14 +58,14 @@ export function brainMetrics(): BrainMetric[] {
   const c = sleepCohort()
   const sf = stateFlipSummary()
   const ak = akpSummary()
-  const x = v8Tallies()
+  const x9 = v9Tallies()
   const out: BrainMetric[] = [
     { id: 'w-chance', fn: 'wellness', label: 'Chance a person reaches their StateFlip (sleep group)', target: 0.54, current: c.meanChance, unit: 'share', better: 'up', source: 'simulated', sourceNote: 'StateFlips formulas on persona set v4; target = the spec’s stage 1 success (54%)' },
     { id: 'w-cover', fn: 'wellness', label: 'StateFlips with at least one strategy AKP', target: 1, current: ak.flips ? ak.flipsCovered / ak.flips : 0, unit: 'share', better: 'up', source: 'assumed', sourceNote: `akps.ts: ${ak.flipsCovered} of ${sf.total} StateFlips; target: every StateFlip can be built` },
     { id: 'w-cost', fn: 'wellness', label: 'Cost per flip (sleep, stage 1)', target: STAGES[1].specCostPerFlip, current: c.costPerFlip, unit: 'usd', better: 'down', source: 'assumed', sourceNote: `Cost model; target = the spec’s stage 1 cost per flip ($${STAGES[1].specCostPerFlip}); his $1 floor is a later-stage thesis` },
   ]
   for (const m of funnel()) out.push({ id: `f-${m.id}`, fn: FUNNEL_FN[m.id], label: m.label, target: m.target, current: m.agent, unit: 'share', better: 'up', source: 'simulated', sourceNote: 'Business funnel: buyer agent prediction against the funnel target' })
-  out.push({ id: 'b-paid', fn: 'business', label: 'Would pay after the free week (test 8, StateFlip journey)', target: 0.15, current: x.payB.yes / x.n, unit: 'share', better: 'up', source: 'simulated', sourceNote: `Buyer agent test 8: ${x.payB.yes} of ${x.n}; target = the funnel’s “chooses Plus” 15%` })
+  out.push({ id: 'b-paid', fn: 'business', label: 'Would pay after the free week (test 9, StateFlip journey with their first chapter shown)', target: 0.15, current: x9.payB.yes / x9.n, unit: 'share', better: 'up', source: 'simulated', sourceNote: `Buyer agent test 9: ${x9.payB.yes} of ${x9.n} (test 8’s journey alone: ${x9.payA.yes}); target = the funnel’s “chooses Plus” 15%` })
   return out
 }
 
@@ -97,9 +98,12 @@ export const STATED_TO_REAL = 0.2
 
 export function candidateFeatures(): Feature[] {
   const x = v8Tallies()
+  const x9 = v9Tallies()
+  const v9lift = Math.round(((x9.payB.yes - x9.payA.yes) / x9.n) * STATED_TO_REAL * 100) / 100
   const v8lift = Math.round(((x.payB.yes - x.payA.yes) / x.n) * STATED_TO_REAL * 100) / 100
   return [
     { id: 'sf-journey', name: 'A journey named after their StateFlip, free first week, then $10/month', from: 'Buyer agent test 8 (B)', lifts: [{ metric: 'f-plus', by: v8lift }, { metric: 'b-paid', by: v8lift }], confidence: 0.4, effort: 'M', evidence: `Test 8: would pay ${x.payA.yes} → ${x.payB.yes} of ${x.n}, × ${STATED_TO_REAL} for stated → real = +${Math.round(v8lift * 100)} pts.` },
+    { id: 'chapter-preview', name: 'Show each person their first chapter, built from AKPs matched to them, before the free week', from: 'Buyer agent test 9 (B)', lifts: [{ metric: 'f-plus', by: v9lift }, { metric: 'f-activation', by: v9lift }], confidence: 0.35, effort: 'M', evidence: `Test 9: would pay ${x9.payA.yes} → ${x9.payB.yes} of ${x9.n} against test 8’s journey, × ${STATED_TO_REAL} for stated → real = +${Math.round(v9lift * 100)} pts. Needs the AKP assembly (akpAssembly.ts) in the product.` },
     { id: 'free-week', name: 'A free first week of every journey, no card', from: 'B2B2C features, top 1', lifts: [{ metric: 'f-activation', by: 0.05 }, { metric: 'f-plus', by: 0.03 }], confidence: 0.5, effort: 'M', evidence: 'Test 6: free app 17.5 expected paid plans against 1 for a ticket; longer trials convert better (RevenueCat 2026).' },
     { id: 'creator-voice', name: 'The creator’s page with a 60-second sample in their own voice', from: 'B2B2C features, top 2', lifts: [{ metric: 'f-activation', by: 0.06 }], confidence: 0.4, effort: 'M', evidence: 'Test 6: trust was the top objection; the creator’s voice moved 5 answers.' },
     { id: 'refund', name: 'Full refund until week 4, said before paying', from: 'B2B2C features, top 3', lifts: [{ metric: 'f-plus', by: 0.02 }], confidence: 0.3, effort: 'S', evidence: 'Maven’s guarantee badge; lowers the risk of paying.' },
@@ -167,15 +171,33 @@ export interface PrototypeRow {
 export function prototypeMap(): PrototypeRow[] {
   const s = akpSummary()
   const product = akps().filter((a) => a.id.startsWith('PR-')).length
+  const as = akps()
+  const maxwell = as.filter((a) => a.id.startsWith('AN-MX')).length
+  const thera = as.filter((a) => a.id.startsWith('AN-TG') || a.id.startsWith('AN-CK')).length
   return [
-    { fn: 'Wellness', prototype: 4590, ours: s.byFunction.wellness, oursNote: 'Goal and strategy AKPs (WG, WS, WM, WI, WV)' },
-    { fn: 'Brand', prototype: 1847, ours: s.byFunction.brand, oursNote: 'Waiting for the marketing AKP sheet' },
-    { fn: 'Product', prototype: 1970, ours: product, oursNote: 'Product AKPs (PR-)' },
-    { fn: 'Business', prototype: 1680, ours: 0, oursNote: 'None yet: the business AKP sheet has not come' },
-    { fn: 'Identity (persona mindspace)', prototype: null, ours: s.byFunction.identity, oursNote: 'Wellness Identity AKPs (ID-); not a prototype function' },
-    { fn: 'MicroBite “Maxwell”', prototype: 4870, ours: 0, oursNote: 'No learned links yet: needs real outcomes' },
-    { fn: 'TheraGPS “Governor”', prototype: 10497, ours: 0, oursNote: 'Routing rule live (main need → StateFlip), no AKPs of its own' },
+    { fn: 'Wellness', prototype: 4590, ours: s.byFunction.wellness, oursNote: 'Goal and strategy AKPs (WG, WS, WM, WI, WV, WN voice)' },
+    { fn: 'Brand', prototype: 1847, ours: s.byFunction.brand, oursNote: 'Drafted from his marketing ReadMe types (BR-); pending the marketing sheet' },
+    { fn: 'Product', prototype: 1970, ours: product, oursNote: 'Product AKPs (PR-): 13 sheet dimensions + 5 drafted to make 18, and sheet AKPs applied to our screens' },
+    { fn: 'Business', prototype: 1680, ours: s.byFunction.business, oursNote: 'Business AKPs (BZ-): funnel stages, B2B2C channels, pricing, retention, unit economics, plays; drafted by us' },
+    { fn: 'Identity (persona mindspace)', prototype: null, ours: s.byFunction.identity, oursNote: 'Wellness Identity AKPs (ID-) and their values; not a prototype function' },
+    { fn: 'MicroBite “Maxwell”', prototype: 4870, ours: maxwell, oursNote: 'Resonance and micro-detail signals (AN-MX); no learned links until real outcomes' },
+    { fn: 'TheraGPS “Governor”', prototype: 10497, ours: thera, oursNote: 'Therapeutic-precision signals (AN-TG) and one check-in marker per StateFlip (AN-CK)' },
   ]
+}
+
+/** Chance-to-target before and after test 9: business and MVP chance with test 8's journey alone vs with the first-chapter preview. */
+export function v9BrainImpact() {
+  const after = brainMetrics()
+  const x9 = v9Tallies()
+  const before = after.map((m) => (m.id === 'b-paid' ? { ...m, current: x9.payA.yes / x9.n } : m))
+  return {
+    paidBefore: x9.payA.yes / x9.n,
+    paidAfter: x9.payB.yes / x9.n,
+    businessBefore: functionChance(before, 'business'),
+    businessAfter: functionChance(after, 'business'),
+    mvpBefore: mvpChance(before),
+    mvpAfter: mvpChance(after),
+  }
 }
 
 /* ------------------------------------------------------------ Weekly report */
@@ -185,16 +207,18 @@ export const pct = (x: number) => (x > 0 && x < 0.1 ? `${(x * 100).toFixed(1)}%`
 export function weeklyReport(): string {
   const m = brainMetrics()
   const t3 = topThreeEffect()
-  const ch = v8Change()
+  const ch = v9Change()
   const last = ALL_RUN_DECLARATIONS[ALL_RUN_DECLARATIONS.length - 1]
+  const im = v9BrainImpact()
   const ak = akpSummary()
   return [
     'Aurelia weekly report (generated from the admin; every figure is simulated or assumed until real users exist)',
     '',
     'This week',
-    `- Buyer agent test ${last.version}: ${v8Findings()[0]}`,
+    `- Buyer agent test ${last.version}: ${v9Findings()[0]}`,
     `- What changed against test ${last.previous}: offer — ${last.offer.note} Panel — ${last.panel.note}`,
     `- ${ch.lines[4]}`,
+    `- Chance to reach the business targets with the first-chapter preview: ${pct(im.businessBefore)} → ${pct(im.businessAfter)}; MVP ${pct(im.mvpBefore)} → ${pct(im.mvpAfter)}.`,
     `- AKP catalogue: ${ak.total} AKPs (${ak.fromFile} from the sheets, ${ak.drafted} drafted by us); ${ak.flipsCovered} of ${ak.flips} StateFlips have a strategy AKP.`,
     '',
     'Chance to reach the MVP targets (product of stage chances)',
@@ -203,6 +227,6 @@ export function weeklyReport(): string {
     '',
     `If the top 3 features ship (${t3.top.map((f) => f.name).join('; ')}): ${pct(t3.mvpBefore)} → ${pct(t3.mvpAfter)}.`,
     '',
-    'Waiting on: the marketing AKP sheet (Brand), real users for Analysis, the feature lock for the API.',
+    'Waiting on: the marketing AKP sheet (Brand AKPs are drafted from his ReadMe types), real users for Analysis, the feature lock for the API.',
   ].join('\n')
 }

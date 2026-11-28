@@ -15,10 +15,10 @@
 import { z } from 'zod'
 import type { Akp, AkpFamily, AkpFunction, AkpKind, LinkType, Modality } from './akps'
 
-export const AKP_FAMILY_IDS = ['goal', 'identity', 'script', 'music', 'image', 'video', 'product'] as const satisfies readonly AkpFamily[]
-export const AKP_FUNCTION_IDS = ['wellness', 'product', 'identity', 'brand'] as const satisfies readonly AkpFunction[]
-export const AKP_MODALITIES = ['Script', 'Music', 'Image', 'Video', '—'] as const satisfies readonly Modality[]
-export const AKP_LINK_TYPES = ['drives', 'supports', 'part-of', 'step-of', 'feeds', 'fed-by', 'mirrors'] as const satisfies readonly LinkType[]
+export const AKP_FAMILY_IDS = ['goal', 'identity', 'script', 'music', 'image', 'video', 'product', 'voice', 'business', 'brand', 'analysis'] as const satisfies readonly AkpFamily[]
+export const AKP_FUNCTION_IDS = ['wellness', 'product', 'identity', 'brand', 'business', 'analysis'] as const satisfies readonly AkpFunction[]
+export const AKP_MODALITIES = ['Script', 'Music', 'Image', 'Video', 'Voice', '—'] as const satisfies readonly Modality[]
+export const AKP_LINK_TYPES = ['drives', 'supports', 'part-of', 'step-of', 'feeds', 'fed-by', 'mirrors', 'measures'] as const satisfies readonly LinkType[]
 export const AKP_STATUSES = ['draft', 'reviewed', 'approved'] as const
 export type AkpStatus = (typeof AKP_STATUSES)[number]
 
@@ -31,6 +31,10 @@ export const FAMILY_KIND: Record<AkpFamily, { kind: AkpKind; fn: AkpFunction; pr
   image: { kind: 'strategy', fn: 'wellness', prefix: 'WI' },
   video: { kind: 'strategy', fn: 'wellness', prefix: 'WV' },
   product: { kind: 'strategy', fn: 'product', prefix: 'PR' },
+  voice: { kind: 'strategy', fn: 'wellness', prefix: 'WN' },
+  business: { kind: 'strategy', fn: 'business', prefix: 'BZ' },
+  brand: { kind: 'strategy', fn: 'brand', prefix: 'BR' },
+  analysis: { kind: 'measure', fn: 'analysis', prefix: 'AN' },
 }
 
 /* ---------------------------------------------------------------- Schema */

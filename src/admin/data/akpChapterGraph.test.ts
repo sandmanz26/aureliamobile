@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { CHAPTER_GOAL, CHAPTER_LINKS, CHAPTER_MODALITIES, CHAPTER_PHASES, chapterNodes } from './akpChapterGraph'
 import { akpById } from './akps'
-import { DRAFTED } from './stateFlips'
 
 describe('sleep chapter 1 as AKPs (U145)', () => {
   const nodes = chapterNodes()
@@ -23,11 +22,12 @@ describe('sleep chapter 1 as AKPs (U145)', () => {
     expect(akpById(CHAPTER_GOAL.id)).toBeDefined()
   })
 
-  it('uses catalogue AKPs where they exist and labels the drafted voice ones', () => {
+  it('uses catalogue AKPs only, voice included (U150)', () => {
     for (const n of nodes) {
-      if (n.inCatalogue) expect(akpById(n.id), n.id).toBeDefined()
-      else expect(n.source).toBe(DRAFTED)
+      expect(n.inCatalogue, n.id).toBe(true)
+      expect(akpById(n.id), n.id).toBeDefined()
     }
+    expect(nodes.filter((n) => n.modality === 'Voice').every((n) => akpById(n.id)?.family === 'voice')).toBe(true)
   })
 
   it('gives every node a phase it drives and phase shares summing to 1', () => {

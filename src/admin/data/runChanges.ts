@@ -138,8 +138,28 @@ export const V8_CHANGE: RunChangeDeclaration = declareRunChange({
   reproducible: false,
 })
 
-/** Every declaration, test 8 included. */
-export const ALL_RUN_DECLARATIONS: RunChangeDeclaration[] = [...RUN_CHANGES, V8_CHANGE]
+/**
+ * Test 9 (U150, J208): A is test 8's B, played by test 8's rules, so A is
+ * like-for-like with test 8 person by person; B adds the person's own first
+ * chapter assembled from AKPs (akpAssembly.ts). buyerRunV9.ts measures B
+ * against A on the same people and splits the effect into its parts.
+ */
+export const V9_CHANGE: RunChangeDeclaration = declareRunChange({
+  version: 9,
+  previous: 8,
+  offers: {
+    a: 'Test 8’s B: a journey for your StateFlip X, free first week, then $10/month',
+    b: 'The same journey, showing the person’s own first chapter built from AKPs matched to their identity and condition (“breath 4-7-8, warm low voice, 55 BPM drone, 10 min”); free first week, then $10/month',
+  },
+  sameAs: { a: 'b' },
+  offer: { changed: true, note: 'A is test 8’s B again, the like-for-like side. B adds one thing: a concrete preview of their first chapter, assembled from catalogue AKPs (technique, StateFlip focus, voice, pace, tempo, music bed, colours, minutes) by written matching rules. Price and free week unchanged.' },
+  panel: { changed: false, note: 'Unchanged: the same 975 of persona set v4 (seed 20264; the 25 risk-flagged get Need help now? and no offer).' },
+  rules: { changed: true, note: 'Test 8’s rules for A, unchanged. For B four written terms are added: fit 0.8 → 0.9, the doubt term × 0.8 (× 0.95 for people who distrust AI), the short-day time load 0.1 → 0.05 when the chapter fits their day, and a 0.03 put-off for people who distrust AI. Every formula is in buyerRunV9.ts.' },
+  reproducible: false,
+})
+
+/** Every declaration, test 9 included. */
+export const ALL_RUN_DECLARATIONS: RunChangeDeclaration[] = [...RUN_CHANGES, V8_CHANGE, V9_CHANGE]
 
 export const offersOf = (version: number): RunOffers => (version === BUYER_RUNS[0].version ? FIRST_RUN_OFFERS : RUN_CHANGES.find((d) => d.version === version)!.offers)
 

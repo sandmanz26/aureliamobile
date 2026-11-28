@@ -1,8 +1,9 @@
-import { PanelRightOpen } from 'lucide-react'
+import { Download, PanelRightOpen } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { Badge, Panel, inputClass } from '../../components/ui'
 import { FAMILIES, FAMILY, akpById, akpByIdAny, akpSummary, akps, akpsForFlip, akpsWithDeleted, type Akp, type AkpFamily } from '../../data/akps'
 import { AKP_LINK_TYPES, makeEdit, nextAkpId, usedForLine } from '../../data/akpEdits'
+import { akpLinksCsv, akpsCsv, downloadText } from '../../data/akpExport'
 import { useAkpEdits } from '../../data/akpEditsSync'
 import { AkpEditBar, AkpEditPanel, AkpExplainer } from './AkpEditor'
 import { FAMILY_LOOK, GOAL_LOOK, MODALITY_LOOK } from './akpStyle'
@@ -17,7 +18,7 @@ import { AkpGraph, Mark, type GraphEditing, type GraphLink, type GraphNode, type
 /*
  * Admin → Product lab → StateFlips, tabs "All StateFlips" and "AKP catalogue"
  * (U141, J203): the 125 StateFlips with filters and a drawer for each, and
- * the draft catalogue of about 1,000 AKPs with filters, search, counts and a
+ * the draft catalogue of about 3,100 AKPs (v2, U150) with filters, search, counts and a
  * small view of one StateFlip's AKPs. Data: data/stateFlips.ts, data/akps.ts.
  */
 
@@ -173,6 +174,20 @@ function AkpDetail({ id }: { id: string }) {
       </p>
       <p>{a.description || <span className="text-adm-muted">No description yet.</span>}</p>
       <p className="text-11 text-adm-muted">Causal role: {a.causalRole || '–'}</p>
+      {a.signal && <p className="text-11 text-adm-muted">How its effect is measured: {a.signal}</p>}
+      {a.links.length > 0 && (
+        <Sub title={`Links (${a.links.length})`}>
+          <ul className="flex flex-wrap gap-4">
+            {a.links.map((l) => (
+              <li key={`${l.type}-${l.to}`}>
+                <button type="button" onClick={() => open(akpItem(l.to))} className="rounded-8 border border-adm-line px-6 py-2 text-11 text-adm-ink hover:bg-adm-hover">
+                  {LINK_STYLES[l.type]?.label ?? l.type} {l.to}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Sub>
+      )}
       <p className="text-11 text-adm-muted">
         Source: {a.source} · status {a.status}
         {a.edited ? ' · edited in the admin' : ''}
@@ -207,7 +222,7 @@ function akpItem(id: string) {
   const a = akpByIdAny(id)
   if (!a) return { title: id, extra: <AkpDetail id={id} /> }
   return {
-    kicker: `${a.id} · ${FAMILY[a.family].label} · ${a.kind === 'goal' ? 'Goal AKP' : 'Strategy / tactic AKP'}${a.deleted ? ' · deleted' : ''}`,
+    kicker: `${a.id} · ${FAMILY[a.family].label} · ${a.kind === 'goal' ? 'Goal AKP' : a.kind === 'measure' ? 'Measure AKP' : 'Strategy / tactic AKP'}${a.deleted ? ' · deleted' : ''}`,
     title: a.name,
     numbers: [
       { label: 'Layer', value: a.layer || '–' },
@@ -327,10 +342,24 @@ const LINK_STYLES: Record<string, LinkStyle> = {
   feeds: { label: 'Feeds', cls: 'stroke-adm-muted', width: 1.25 },
   'fed-by': { label: 'Is fed by', cls: 'stroke-adm-muted', width: 1.25, dash: '6 4' },
   mirrors: { label: 'Mirrors', cls: 'stroke-adm-axis', width: 1.5, dash: '1 4' },
+  measures: { label: 'Measures', cls: 'stroke-adm-axis', width: 1.25, dash: '4 2' },
 }
 
 const CHAPTER = 'chapter-1'
 const MAX_FLIP_NODES = 40
+
+/**
+ * At most `max` AKPs, taken round-robin across families (chapter families
+ * first), so a StateFlip with hundreds of AKPs still shows its script, voice,
+ * music and image pieces instead of the first 40 scripts (v2, U150).
+ */
+function capByFamily(as: Akp[], max: number): Akp[] {
+  const order: AkpFamily[] = ['script', 'voice', 'music', 'image', 'video', 'identity', 'product', 'business', 'brand']
+  const queues = order.map((f) => as.filter((a) => a.family === f))
+  const out: Akp[] = []
+  for (let i = 0; out.length < max && queues.some((q) => q.length > i); i++) for (const q of queues) if (q[i] && out.length < max) out.push(q[i])
+  return out
+}
 
 function chapterItem(id: string) {
   const n = chapterNodeById(id)!
@@ -383,12 +412,14 @@ function chapterGraph(): { nodes: GraphNode[]; links: GraphLink[] } {
   }
 }
 
+const flipStrategyCount = (flipId: string) => akps().filter((a) => a.kind === 'strategy' && a.flips.includes(flipId)).length
+
 /** `_version` only ties the memo to the edits in force; the data comes from akps(). */
 function flipGraph(flipId: string, _version = 0): { nodes: GraphNode[]; links: GraphLink[] } {
   const goalId = flipId.replace(/^SF-/, 'WG-')
   const goal = akpById(goalId) ?? akpByIdAny(goalId)!
   const steps = ['X', 'Y', 'Z'].map((m) => akpById(`${goalId}-${m}`)).filter((a) => a !== undefined)
-  const strategy = akps().filter((a) => a.kind === 'strategy' && a.flips.includes(flipId)).slice(0, MAX_FLIP_NODES)
+  const strategy = capByFamily(akps().filter((a) => a.kind === 'strategy' && a.flips.includes(flipId)), MAX_FLIP_NODES)
   const set = new Set([goalId, ...steps.map((a) => a.id), ...strategy.map((a) => a.id)])
   const node = (a: Akp & { edited?: boolean; added?: boolean }, tier: number): GraphNode => ({ id: a.id, label: tier === 0 ? a.id.replace('WG-', '') : a.name, group: `${FAMILY[a.family].label} · ${a.layer || 'no layer'}`, look: FAMILY_LOOK[a.family], goal: tier === 0, draft: !a.fromFile && !a.added, edited: a.edited, tier })
   const links: GraphLink[] = [
@@ -519,12 +550,12 @@ function RelationshipGraph() {
       <p className="text-12 text-adm-ink-2">
         {isChapter ? (
           <>
-            <span className="font-semibold text-adm-ink">Sleep, chapter 1:</span> 20 strategy AKPs and 30 typed links across script, music, voice and image, all driving the first step of {f.id} ({f.title}). Script, music and image AKPs come from the catalogue; the four voice AKPs are drafted (dashed outline). Links and timings are drafted by us — to review.
+            <span className="font-semibold text-adm-ink">Sleep, chapter 1:</span> 20 strategy AKPs and 30 typed links across script, music, voice and image, all driving the first step of {f.id} ({f.title}). Every node is a catalogue AKP; the four voice AKPs come from the new voice family (WN-), drafted by us. Links and timings are drafted by us — to review.
           </>
         ) : (
           <>
             <span className="font-semibold text-adm-ink">{f.id}</span> {f.title}: its goal AKP, its X / Y / Z steps and the strategy AKPs linked to it by the catalogue
-            {base.nodes.length - 4 >= MAX_FLIP_NODES ? ` (first ${MAX_FLIP_NODES})` : ''}. Dashed outline: drafted by us; solid ring: edited in the admin. Links made here are saved as edits.
+            {flipStrategyCount(focus) > MAX_FLIP_NODES ? ` (${MAX_FLIP_NODES} of ${flipStrategyCount(focus)}, taken in turn from each family)` : ''}. Dashed outline: drafted by us; solid ring: edited in the admin. Links made here are saved as edits.
           </>
         )}
       </p>
@@ -540,7 +571,29 @@ function RelationshipGraph() {
 }
 
 const PAGE = 40
-const MODALITY_LIST = ['Script', 'Music', 'Image', 'Video', '—'] as const
+const MODALITY_LIST = ['Script', 'Voice', 'Music', 'Image', 'Video', '—'] as const
+
+/** The catalogue as files (U150): the exported workbook from public/, and CSVs made in the browser with the edits applied. */
+function AkpDownloads() {
+  const btn = 'inline-flex items-center gap-6 rounded-8 border border-adm-line bg-adm-surface px-12 py-6 text-12 font-medium text-adm-ink hover:bg-adm-hover'
+  return (
+    <section aria-label="Download catalogue" className="flex min-w-0 flex-col gap-8 rounded-12 border border-adm-line bg-adm-surface p-16" data-akp-download>
+      <h3 className="text-13 font-semibold text-adm-ink">Download catalogue (xlsx/csv)</h3>
+      <p className="text-12 text-adm-ink-2">The workbook has four sheets: AKPs, Links, Summary per function, family and layer, and StateFlips × AKPs coverage; it is the generated v2 catalogue. The CSVs are made now, with every edit made in the admin applied.</p>
+      <div className="flex flex-wrap gap-8">
+        <a href="/akp/akp-v2.xlsx" download className={btn}>
+          <Download size={13} aria-hidden="true" /> Workbook (.xlsx)
+        </a>
+        <button type="button" className={btn} onClick={() => downloadText('akps.csv', akpsCsv(akps()))}>
+          <Download size={13} aria-hidden="true" /> AKPs (.csv)
+        </button>
+        <button type="button" className={btn} onClick={() => downloadText('akp-links.csv', akpLinksCsv(akps()))}>
+          <Download size={13} aria-hidden="true" /> Links (.csv)
+        </button>
+      </div>
+    </section>
+  )
+}
 
 export function AkpCatalogue() {
   const open = useDetail()
@@ -583,19 +636,19 @@ export function AkpCatalogue() {
       <AkpEditBar onNew={() => open(akpItem(addAkp(store)))} />
       <section aria-label="Summary" className="flex min-w-0 flex-col gap-12 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20">
         <p className="max-w-[860px] text-16 font-semibold leading-snug text-adm-ink">
-          {s.total.toLocaleString('en')} AKPs: {s.byKind.goal} goal AKPs (what to reach) and {s.byKind.strategy} strategy and tactic AKPs (how). {s.fromFile} come straight from the workbooks; {s.drafted} are drafted by us, mostly the X / Y / Z steps. {s.flipsCovered} of {s.flips} StateFlips are served by at least one strategy AKP ({s.flipsCoveredBeyondSkills} by more than a skill).
+          {s.total.toLocaleString('en')} AKPs (v2): {s.byKind.goal} goal AKPs (what to reach), {s.byKind.strategy.toLocaleString('en')} strategy and tactic AKPs (how) and {s.byKind.measure} measure AKPs (how an effect is read). {s.fromFile} come straight from the workbooks; {s.drafted.toLocaleString('en')} are drafted by us from his briefs. {s.flipsChapterReady} of {s.flips} StateFlips can assemble a chapter (a script, voice, music and image AKP each).
         </p>
         <h3 className="text-12 font-semibold text-adm-ink">By family</h3>
-        <dl className="grid grid-cols-2 gap-8 lg:grid-cols-7">
+        <dl className="grid grid-cols-2 gap-8 lg:grid-cols-6">
           {FAMILIES.map((f) => (
-            <StatCard key={f} dot={<Mark look={FAMILY_LOOK[f]} />} label={`${FAMILY[f].label} (${FAMILY[f].prefix}-)`} value={s.byFamily[f]} sub={FAMILY[f].kind === 'goal' ? 'goal' : 'strategy'} />
+            <StatCard key={f} dot={<Mark look={FAMILY_LOOK[f]} />} label={`${FAMILY[f].label} (${FAMILY[f].prefix}-)`} value={s.byFamily[f]} sub={FAMILY[f].kind} />
           ))}
         </dl>
         <div className="grid min-w-0 gap-12 lg:grid-cols-2">
           <div className="flex min-w-0 flex-col gap-8">
             <h3 className="text-12 font-semibold text-adm-ink">By modality (strategy AKPs)</h3>
-            <dl className="grid grid-cols-2 gap-8 lg:grid-cols-4">
-              {(['Script', 'Music', 'Image', 'Video'] as const).map((m) => (
+            <dl className="grid grid-cols-2 gap-8 lg:grid-cols-5">
+              {(['Script', 'Voice', 'Music', 'Image', 'Video'] as const).map((m) => (
                 <StatCard key={m} label={m} value={all.filter((a) => a.modality === m).length} />
               ))}
             </dl>
@@ -618,9 +671,11 @@ export function AkpCatalogue() {
           </div>
         </div>
         <p className="text-12 text-adm-ink-2">
-          By function: wellness {s.byFunction.wellness}, product {s.byFunction.product}, identity {s.byFunction.identity}, brand {s.byFunction.brand} (waiting for the marketing sheet). {s.links} typed links between AKPs. Status: {all.filter((a) => a.status === 'draft').length} draft, {all.filter((a) => a.status === 'reviewed').length} reviewed, {all.filter((a) => a.status === 'approved').length} approved. Every count here includes the edits made in the admin.
+          By function: wellness {s.byFunction.wellness}, product {s.byFunction.product}, business {s.byFunction.business}, brand {s.byFunction.brand} (drafted from his marketing ReadMe types, pending his sheet), analysis {s.byFunction.analysis}, identity {s.byFunction.identity}. {s.links} typed links between AKPs. Status: {all.filter((a) => a.status === 'draft').length} draft, {all.filter((a) => a.status === 'reviewed').length} reviewed, {all.filter((a) => a.status === 'approved').length} approved. Every count here includes the edits made in the admin.
         </p>
       </section>
+
+      <AkpDownloads />
 
       <RelationshipGraph />
 

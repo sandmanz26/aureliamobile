@@ -20,6 +20,8 @@ import { akpSummary, akps } from './akps'
 import { identitiesV4, identityIncoherence, identitySummary } from './personaIdentityV4'
 import { stateFlipSummary, stateFlips } from './stateFlips'
 import { V8_K, V8_PRICE, runV8, v8Tallies } from './buyerRunV8'
+import { V9_K, runV9, v9Tallies } from './buyerRunV9'
+import { chapterKit } from './akpAssembly'
 import { stateFlipCosts } from './stateFlipCosts'
 
 /**
@@ -1309,13 +1311,13 @@ function stateFlipMetrics(): MetricDef[] {
     },
     {
       id: 'akp-total', report: 'stateflips', label: 'AKPs in the catalogue', unit: 'count', good: 'none',
-      formula: 'Goal AKPs (125 StateFlips, their 375 steps, 47 identity dimensions) plus strategy and tactic AKPs (script, music, image, video, product), with the edits made in the admin applied (added counted, deleted left out).', shownAt: 'StateFlips, AKP catalogue summary', source: 'src/admin/data/akps.ts',
+      formula: 'Goal AKPs (125 StateFlips, their 375 steps, the identity dimensions and their values) plus strategy and tactic AKPs (script, voice, music, image, video, product, business, brand) and measure AKPs (analysis), with the edits made in the admin applied (added counted, deleted left out).', shownAt: 'StateFlips, AKP catalogue summary', source: 'src/admin/data/akps.ts',
       displayed: () => akpSummary().total,
       compute: () => {
         const as = akps()
         const goal = as.filter((a) => a.kind === 'goal').length
         const file = as.filter((a) => a.source.startsWith('from ')).length
-        return { value: as.length, inputs: [{ label: 'Goal AKPs', value: `${goal}`, source: 'akps.ts' }, { label: 'Strategy and tactic AKPs', value: `${as.length - goal}`, source: 'akps.ts' }, { label: 'From the workbooks', value: `${file}`, source: 'generated/akpSource.ts' }], steps: [`${goal} + ${as.length - goal} = ${as.length}; ${file} from files, ${as.length - file} drafted by us.`] }
+        return { value: as.length, inputs: [{ label: 'Goal AKPs', value: `${goal}`, source: 'akps.ts' }, { label: 'Strategy, tactic and measure AKPs', value: `${as.length - goal}`, source: 'akps.ts' }, { label: 'From the workbooks', value: `${file}`, source: 'generated/akpSource.ts' }], steps: [`${goal} + ${as.length - goal} = ${as.length}; ${file} from files, ${as.length - file} drafted by us.`] }
       },
     },
     {
@@ -1327,6 +1329,16 @@ function stateFlipMetrics(): MetricDef[] {
         const served = new Set(akps().filter((a) => a.kind === 'strategy').flatMap((a) => a.flips))
         const v = fs.filter((f) => served.has(f.id)).length / fs.length
         return { value: v, n: fs.length, inputs: [{ label: 'StateFlips served', value: `${served.size}`, source: 'akps.ts' }], steps: [`${served.size} ÷ ${fs.length} = ${pctText(v)}.`] }
+      },
+    },
+    {
+      id: 'akp-chapter', report: 'stateflips', label: 'StateFlips that can assemble a chapter from AKPs', unit: 'count', good: 'up',
+      formula: 'StateFlips served by at least one script, one voice, one music and one image AKP (akpAssembly.ts chapterKit).', shownAt: 'StateFlips, AKP catalogue summary', source: 'src/admin/data/akpAssembly.ts',
+      displayed: () => akpSummary().flipsChapterReady,
+      compute: () => {
+        const fs = stateFlips()
+        const ok = fs.filter((f) => chapterKit(f.id).complete)
+        return { value: ok.length, n: fs.length, inputs: [{ label: 'StateFlips', value: `${fs.length}`, source: 'stateFlips.ts' }], steps: [`${ok.length} of ${fs.length} have one AKP of each chapter family.`] }
       },
     },
     {
@@ -1373,10 +1385,36 @@ function buyerV8Metrics(): MetricDef[] {
   ]
 }
 
+/* ---------------------------------------------------------------- Test 9 */
+
+/** Buyer agent test 9 (U150, J208): each headline read from v9Tallies and counted again from each person's answer. */
+function buyerV9Metrics(): MetricDef[] {
+  const SRC = 'src/admin/data/buyerRunV9.ts'
+  const def = (id: string, label: string, side: 'a' | 'b', key: 'tries' | 'pays', shown: () => number): MetricDef => ({
+    id, report: 'buyer', label, unit: 'count', good: 'up',
+    formula: side === 'a'
+      ? `Test 8’s B, by test 8’s rules: people whose ${key === 'tries' ? 'try' : 'pay'} score reaches ${key === 'tries' ? V8_K.tryYes : V8_K.payYes}.`
+      : `As A, with fit ${V9_K.fitPreview}, the doubt term × ${1 - V9_K.doubtCut} (× ${1 - V9_K.doubtCutDistrustful} if they distrust AI), the short-day time load at ${V8_K.timeA} and a ${V9_K.putOff} put-off for people who distrust AI; ${key === 'tries' ? 'try' : 'pay'} score reaches ${key === 'tries' ? V8_K.tryYes : V8_K.payYes}.`,
+    shownAt: 'Buyer agent report, test 9', source: SRC,
+    displayed: shown,
+    compute: () => {
+      const rows = runV9().answers
+      const yes = rows.filter((r) => r[side][key] === 'yes')
+      return { value: yes.length, n: rows.length, inputs: [{ label: 'People in the panel (set v4, risk-flagged left out)', value: `${rows.length}`, source: SRC }, { label: `Answered yes (${side.toUpperCase()})`, value: `${yes.length}`, source: SRC, ids: yes.map((r) => r.personaId) }], steps: [`Each person: ${key === 'tries' ? 'try' : 'pay'} score for offer ${side.toUpperCase()}, compared with the threshold.`, `${yes.length} of ${rows.length} say yes.`], breakdown: { title: 'Each person', columns: ['Persona', 'StateFlip', 'First chapter', 'Pay score', 'Answer'], rows: rows.slice(0, 200).map((r) => ({ id: r.personaId, cells: [r.personaId, r.flipId, r.chapter.preview.replace(/^Your first chapter: /, ''), `${r[side].payScore}`, r[side][key]] })), footer: rows.length > 200 ? [`First 200 of ${rows.length} shown.`] : undefined } }
+    },
+  })
+  return [
+    def('buyer9-try-a', 'Test 9: would try A (test 8’s StateFlip journey)', 'a', 'tries', () => v9Tallies().tryA.yes),
+    def('buyer9-try-b', 'Test 9: would try B (with their first chapter shown)', 'b', 'tries', () => v9Tallies().tryB.yes),
+    def('buyer9-pay-a', 'Test 9: would pay A', 'a', 'pays', () => v9Tallies().payA.yes),
+    def('buyer9-pay-b', 'Test 9: would pay B after the free week', 'b', 'pays', () => v9Tallies().payB.yes),
+  ]
+}
+
 /* ------------------------------------------------------------ The registry */
 
 export function metricDefs(week = 1): MetricDef[] {
-  return [...buyerMetrics(), ...typedMetrics(), ...personaV4Metrics(), ...conditionMetrics(), ...combinationMetrics(week), ...costMetrics(), ...b2b2cMetrics(), ...retreatMetrics(), ...uxMetrics(week), ...stateFlipMetrics(), ...buyerV8Metrics()]
+  return [...buyerMetrics(), ...typedMetrics(), ...personaV4Metrics(), ...conditionMetrics(), ...combinationMetrics(week), ...costMetrics(), ...b2b2cMetrics(), ...retreatMetrics(), ...uxMetrics(week), ...stateFlipMetrics(), ...buyerV8Metrics(), ...buyerV9Metrics()]
 }
 
 /** Audits one metric: displayed against recomputed, plus its sanity checks. */

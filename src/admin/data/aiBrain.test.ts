@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { CORE_FNS, brainMetrics, functionChance, mvpChance, prototypeMap, rankFeatures, stageChance, topThreeEffect, weeklyReport } from './aiBrain'
 import { PARTS_A, runV8, v8Change, v8Split, v8Tallies } from './buyerRunV8'
-import { ALL_RUN_DECLARATIONS, V8_CHANGE } from './runChanges'
+import { ALL_RUN_DECLARATIONS, V8_CHANGE, V9_CHANGE } from './runChanges'
 import { OWNER_ASKS, parseAsks, statusOf } from './ownerAsks'
 
 describe('buyer agent test 8 (U147)', () => {
@@ -30,7 +30,8 @@ describe('buyer agent test 8 (U147)', () => {
     expect(PARTS_A.named).toBe(false)
   })
   it('declares its change', () => {
-    expect(ALL_RUN_DECLARATIONS.at(-1)).toBe(V8_CHANGE)
+    expect(ALL_RUN_DECLARATIONS.at(-2)).toBe(V8_CHANGE)
+    expect(ALL_RUN_DECLARATIONS.at(-1)).toBe(V9_CHANGE)
     expect(V8_CHANGE.previous).toBe(7)
     expect(v8Change().lines).toHaveLength(5)
   })
@@ -60,7 +61,7 @@ describe('AI brain (U147)', () => {
   it('maps the prototype numbers and writes a weekly report', () => {
     const p = prototypeMap()
     expect(p.filter((r) => r.fn.match(/^(Wellness|Brand|Product|Business)$/)).reduce((s, r) => s + (r.prototype ?? 0), 0)).toBe(10087)
-    expect(weeklyReport()).toMatch(/Buyer agent test 8/)
+    expect(weeklyReport()).toMatch(/Buyer agent test 9/)
   })
 })
 

@@ -41,6 +41,7 @@ export type SourceId =
   | 'buyer-v6'
   | 'buyer-v7'
   | 'buyer-v8'
+  | 'buyer-v9'
   | 'akps'
   | 'decisions'
   | 'app-funnel'
@@ -81,6 +82,15 @@ export interface ReportSource {
 }
 
 export const SOURCES: Record<SourceId, ReportSource> = {
+  'buyer-v9': {
+    id: 'buyer-v9',
+    name: 'Buyer agent test 9',
+    what: 'The same 975 people as test 8 answering test 8’s StateFlip journey (A) and the same journey with their own first chapter shown, assembled from AKPs matched to their identity and condition (B), by written rules.',
+    version: 'Test 9, 28 Nov 2026, persona set v4, v9 rules (U150)',
+    taken: 'Would try and would pay A → B, by dimension and archetype, the objections, B’s effect split into its parts, and the chance-to-target impact.',
+    link: '/admin/reports/buyer-agent?tab=detail#test-9',
+    label: 'prediction',
+  },
   'buyer-v8': {
     id: 'buyer-v8',
     name: 'Buyer agent test 8',
@@ -93,8 +103,8 @@ export const SOURCES: Record<SourceId, ReportSource> = {
   akps: {
     id: 'akps',
     name: 'AKP catalogue',
-    what: 'The draft AKPs (goal, strategy, product, identity) read from the business owner’s sheets, plus those drafted by us, linked to the 125 StateFlips.',
-    version: 'akps.ts, 27 Nov 2026 (all draft)',
+    what: 'The draft AKPs (goal, strategy, voice, product, business, brand, analysis, identity) read from the business owner’s sheets, plus those drafted by us, linked to the 125 StateFlips.',
+    version: 'akps.ts v2, 28 Nov 2026 (all draft, U150)',
     taken: 'AKP counts per function and the StateFlips covered.',
     link: '/admin/stateflips',
     label: 'prediction',
@@ -375,6 +385,7 @@ export const SOURCE_KIND: Record<SourceId, SourceKind> = {
   'buyer-v6': 'Buyer agents',
   'buyer-v7': 'Buyer agents',
   'buyer-v8': 'Buyer agents',
+  'buyer-v9': 'Buyer agents',
   akps: 'Product',
   personas: 'Buyer agents',
   'app-funnel': 'Funnels and models',

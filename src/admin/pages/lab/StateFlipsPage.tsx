@@ -119,7 +119,7 @@ function StateFlips() {
 
   return (
     <div className="flex flex-col gap-16" data-stateflips>
-      <PageHeader title="StateFlips" description="How Aurelia moves a person from a bad state to a good one: sleep built out in full (what bad and good mean, the steps, how we measure them, who has it, how many chapters), all 125 StateFlips, and the draft catalogue of about 1,000 AKPs." />
+      <PageHeader title="StateFlips" description="How Aurelia moves a person from a bad state to a good one: sleep built out in full (what bad and good mean, the steps, how we measure them, who has it, how many chapters), all 125 StateFlips, and the draft catalogue of about 3,100 AKPs." />
       {!NAV2 && goal}
 
       <PageTabs
