@@ -1,0 +1,1952 @@
+commit 88996c9b5f391df7452e8f62e178361cf38a61e0
+Author: Claude <noreply@anthropic.com>
+Date:   Fri Nov 27 23:32:57 2026 +0000
+
+    StateFlips per-flip steps and cohorts, shared five dimensions, sleep chapter 1 AKP graph, AKP catalogue redesign with relationship graph, cost per StateFlip (U145, J206)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+
+diff --git a/src/admin/data/akpChapterGraph.test.ts b/src/admin/data/akpChapterGraph.test.ts
+new file mode 100644
+index 0000000..abfe783
+--- /dev/null
++++ b/src/admin/data/akpChapterGraph.test.ts
+@@ -0,0 +1,38 @@
++import { describe, expect, it } from 'vitest'
++import { CHAPTER_GOAL, CHAPTER_LINKS, CHAPTER_MODALITIES, CHAPTER_PHASES, chapterNodes } from './akpChapterGraph'
++import { akpById } from './akps'
++import { DRAFTED } from './stateFlips'
++
++describe('sleep chapter 1 as AKPs (U145)', () => {
++  const nodes = chapterNodes()
++  const ids = new Set(nodes.map((n) => n.id))
++
++  it('has 20 strategy AKPs across script, music, voice and image, and 30 links', () => {
++    expect(nodes).toHaveLength(20)
++    expect(ids.size).toBe(20)
++    for (const m of CHAPTER_MODALITIES) expect(nodes.some((n) => n.modality === m), m).toBe(true)
++    expect(CHAPTER_LINKS).toHaveLength(30)
++  })
++
++  it('links only nodes that exist, and every node is linked', () => {
++    for (const l of CHAPTER_LINKS) {
++      expect(ids.has(l.from), l.from).toBe(true)
++      expect(ids.has(l.to) || l.to === CHAPTER_GOAL.id, l.to).toBe(true)
++    }
++    for (const n of nodes) expect(CHAPTER_LINKS.some((l) => l.from === n.id || l.to === n.id), n.id).toBe(true)
++    expect(akpById(CHAPTER_GOAL.id)).toBeDefined()
++  })
++
++  it('uses catalogue AKPs where they exist and labels the drafted voice ones', () => {
++    for (const n of nodes) {
++      if (n.inCatalogue) expect(akpById(n.id), n.id).toBeDefined()
++      else expect(n.source).toBe(DRAFTED)
++    }
++  })
++
++  it('gives every node a phase it drives and phase shares summing to 1', () => {
++    const driven = new Set(CHAPTER_PHASES.flatMap((p) => p.drivers))
++    for (const n of nodes) expect(driven.has(n.id), n.id).toBe(true)
++    expect(CHAPTER_PHASES.reduce((t, p) => t + p.share, 0)).toBeCloseTo(1, 10)
++  })
++})
+diff --git a/src/admin/data/akpChapterGraph.ts b/src/admin/data/akpChapterGraph.ts
+new file mode 100644
+index 0000000..98cb7dc
+--- /dev/null
++++ b/src/admin/data/akpChapterGraph.ts
+@@ -0,0 +1,148 @@
++/**
++ * Sleep, chapter 1, as AKPs (U145, J206): our version of the "AKP Graph
++ * Explorer" in the business owner's screenshot (2026-11-27 brief: about 20
++ * AKPs and 30 connections make one chapter, across script, music, voice and
++ * image). Every node is a strategy AKP that drives the chapter toward the
++ * sleep StateFlip's first step (WG-PHY-01-X). Script, music and image nodes
++ * are catalogue AKPs (akps.ts, from the workbooks); the catalogue has no voice
++ * family yet, so the four voice nodes are drafted by us and labelled draft.
++ * The links, their types and the phase timings are drafted by us — to review.
++ *
++ * Chapter 1 sits in the mood stretch (score under 45) for everyone in the
++ * sleep group, so these are the AKPs that drive the mood-layer uplift. The
++ * habit and skill stretches have no AKP drivers defined yet; the page keeps
++ * them labelled assumption.
++ */
++
++import { akpById } from './akps'
++import { DRAFTED } from './stateFlips'
++
++export type ChapterModality = 'Script' | 'Music' | 'Voice' | 'Image'
++export const CHAPTER_MODALITIES: ChapterModality[] = ['Script', 'Music', 'Voice', 'Image']
++export type ChapterLinkType = 'drives' | 'part-of' | 'syncs' | 'reinforces' | 'cues'
++export const CHAPTER_LINK_TYPES: ChapterLinkType[] = ['drives', 'part-of', 'syncs', 'reinforces', 'cues']
++export const CHAPTER_LINK_TEXT: Record<ChapterLinkType, { verb: string; plain: string }> = {
++  drives: { verb: 'drives', plain: 'Moves the person toward the goal directly' },
++  'part-of': { verb: 'is part of', plain: 'A smaller piece of a larger AKP' },
++  syncs: { verb: 'keeps time with', plain: 'Two AKPs paced together (breath, tempo, motion)' },
++  reinforces: { verb: 'reinforces', plain: 'Makes another AKP land more strongly' },
++  cues: { verb: 'cues', plain: 'Signals that the next AKP starts' },
++}
++
++export interface ChapterNode {
++  id: string
++  name: string
++  modality: ChapterModality
++  layer: string
++  /** What it does in this chapter, in plain words. */
++  role: string
++  /** True when the AKP is in the catalogue (akps.ts); false for the drafted voice AKPs. */
++  inCatalogue: boolean
++  source: string
++}
++
++export interface ChapterLink {
++  from: string
++  to: string
++  type: ChapterLinkType
++}
++
++export const CHAPTER_GOAL = { id: 'WG-PHY-01-X', name: 'X: first relief from bad sleep', flip: 'SF-PHY-01' }
++
++/** id, modality, role; name, layer and source come from the catalogue where the AKP is there. */
++const PICK: [string, ChapterModality, string][] = [
++  ['WS-SK9', 'Script', 'The skill the chapter teaches: coming down from the day’s stress.'],
++  ['WS-LU-02', 'Script', 'Breath slowed to the voice and music: the core of the chapter.'],
++  ['WS-BL-02', 'Script', 'A short relaxation routine the person can repeat in bed.'],
++  ['WS-HT-03', 'Script', 'One sleep-hygiene line, said once, at the end.'],
++  ['WS-H5', 'Script', 'Muscle groups tensed and let go, feet to face.'],
++  ['WS-F11', 'Script', 'The breathing pattern: in for 4, out for 6.'],
++  ['WS-M2', 'Script', 'The mood the whole chapter aims for: calm.'],
++  ['WM-MM4', 'Music', 'Tempo eases from about 70 to 55 beats a minute.'],
++  ['WM-MM2', 'Music', 'Rhythm the breath can lock onto.'],
++  ['WM-CM1', 'Music', 'A low binaural bed under the voice.'],
++  ['WM-MT1', 'Music', 'A steady drone the body can rest against.'],
++  ['WM-SE3', 'Music', 'Night rain, so silence never feels empty.'],
++  ['WI-LFT1', 'Image', 'The picture darkens as the chapter goes.'],
++  ['WI-VT3', 'Image', 'Warm colour grading: no blue light.'],
++  ['WI-VMS2', 'Image', 'Still water: a picture with nothing to follow.'],
++  ['WI-LFT3', 'Image', 'Slow drift, paced to the out-breath.'],
++]
++
++const VOICE: ChapterNode[] = [
++  { id: 'VO-01', name: 'Slow pace', modality: 'Voice', layer: 'Delivery', role: 'About 110 words a minute, slowing toward the end.', inCatalogue: false, source: DRAFTED },
++  { id: 'VO-02', name: 'Low, warm register', modality: 'Voice', layer: 'Timbre', role: 'A low, close voice; no bright or sharp tones.', inCatalogue: false, source: DRAFTED },
++  { id: 'VO-03', name: 'Lengthening pauses', modality: 'Voice', layer: 'Delivery', role: 'Gaps between lines grow from 2 to 8 seconds.', inCatalogue: false, source: DRAFTED },
++  { id: 'VO-04', name: 'Voice fades out', modality: 'Voice', layer: 'Structure', role: 'The voice stops for the last two minutes.', inCatalogue: false, source: DRAFTED },
++]
++
++let NODES: ChapterNode[] | undefined
++
++/** The 20 strategy AKPs of sleep chapter 1. */
++export function chapterNodes(): ChapterNode[] {
++  if (NODES) return NODES
++  const fromCatalogue = PICK.map(([id, modality, role]) => {
++    const a = akpById(id)!
++    return { id, name: a.name, modality, layer: a.layer, role, inCatalogue: true, source: a.source }
++  })
++  return (NODES = [...fromCatalogue, ...VOICE])
++}
++
++/** The 30 typed links, drafted by us — to review. */
++export const CHAPTER_LINKS: ChapterLink[] = [
++  // Direct drivers of the step.
++  { from: 'WS-SK9', to: CHAPTER_GOAL.id, type: 'drives' },
++  { from: 'WS-LU-02', to: CHAPTER_GOAL.id, type: 'drives' },
++  { from: 'WS-BL-02', to: CHAPTER_GOAL.id, type: 'drives' },
++  { from: 'WM-MM2', to: CHAPTER_GOAL.id, type: 'drives' },
++  { from: 'VO-03', to: CHAPTER_GOAL.id, type: 'drives' },
++  // Parts.
++  { from: 'WS-H5', to: 'WS-BL-02', type: 'part-of' },
++  { from: 'WS-F11', to: 'WS-LU-02', type: 'part-of' },
++  { from: 'WS-M2', to: 'WS-SK9', type: 'part-of' },
++  { from: 'WS-HT-03', to: 'WS-SK9', type: 'part-of' },
++  // Paced together.
++  { from: 'WM-MM4', to: 'WS-LU-02', type: 'syncs' },
++  { from: 'VO-01', to: 'WM-MM4', type: 'syncs' },
++  { from: 'WM-MM2', to: 'WS-F11', type: 'syncs' },
++  { from: 'WI-LFT3', to: 'WM-MM4', type: 'syncs' },
++  { from: 'VO-03', to: 'WS-F11', type: 'syncs' },
++  { from: 'WM-CM1', to: 'WM-MM2', type: 'syncs' },
++  // Reinforcing.
++  { from: 'WM-MT1', to: 'WS-M2', type: 'reinforces' },
++  { from: 'WM-SE3', to: 'WS-M2', type: 'reinforces' },
++  { from: 'WI-VMS2', to: 'WS-M2', type: 'reinforces' },
++  { from: 'WI-VT3', to: 'WI-LFT1', type: 'reinforces' },
++  { from: 'VO-02', to: 'WS-M2', type: 'reinforces' },
++  { from: 'WI-LFT1', to: 'WS-HT-03', type: 'reinforces' },
++  { from: 'WM-SE3', to: 'WI-VMS2', type: 'reinforces' },
++  { from: 'VO-04', to: 'WS-HT-03', type: 'reinforces' },
++  // Cues.
++  { from: 'WS-H5', to: 'VO-01', type: 'cues' },
++  { from: 'WS-HT-03', to: 'VO-04', type: 'cues' },
++  { from: 'WI-LFT1', to: 'VO-04', type: 'cues' },
++  { from: 'WM-MT1', to: 'WS-H5', type: 'cues' },
++  { from: 'VO-02', to: 'WS-H5', type: 'cues' },
++  { from: 'WS-F11', to: 'WI-LFT3', type: 'cues' },
++  { from: 'WI-VMS2', to: 'WS-LU-02', type: 'cues' },
++]
++
++export interface ChapterPhase {
++  id: string
++  name: string
++  minutes: [number, number]
++  what: string
++  /** Assumption: the share of the chapter's uplift this phase carries. */
++  share: number
++  drivers: string[]
++}
++
++/** The four phases of the 10-minute chapter and the AKPs that drive each (drafted, shares are an assumption). */
++export const CHAPTER_PHASES: ChapterPhase[] = [
++  { id: 'arrive', name: 'Arrive', minutes: [0, 2], what: 'Voice and picture slow the person down and set a calm tone.', share: 0.2, drivers: ['VO-01', 'VO-02', 'WI-VT3', 'WM-SE3', 'WS-M2'] },
++  { id: 'breathe', name: 'Breathe', minutes: [2, 5], what: 'Breath locks to the music and the drift of the picture.', share: 0.35, drivers: ['WS-F11', 'WS-LU-02', 'WM-MM4', 'WM-MM2', 'WI-LFT3'] },
++  { id: 'release', name: 'Release', minutes: [5, 8], what: 'Muscles let go, one group at a time, over a drone.', share: 0.3, drivers: ['WS-H5', 'WS-BL-02', 'WM-MT1', 'WM-CM1', 'WI-VMS2'] },
++  { id: 'drift', name: 'Drift', minutes: [8, 10], what: 'The voice thins out and stops; light goes down.', share: 0.15, drivers: ['VO-03', 'VO-04', 'WI-LFT1', 'WS-HT-03', 'WS-SK9'] },
++]
++
++export const chapterNodeById = (id: string) => chapterNodes().find((n) => n.id === id)
+diff --git a/src/admin/data/dimensions.test.ts b/src/admin/data/dimensions.test.ts
+new file mode 100644
+index 0000000..e68a624
+--- /dev/null
++++ b/src/admin/data/dimensions.test.ts
+@@ -0,0 +1,20 @@
++import { describe, expect, it } from 'vitest'
++import { DIMENSION_IDS, WORLD_TO_DIMENSION, worldMappingLine } from './dimensions'
++import { WORLDS as HEALING_WORLDS } from './healingMap'
++import { DIMENSIONS } from './personaConditionV4'
++import { STATEFLIP_DIMENSIONS } from './stateFlips'
++import { WORLDS as THERAPEUTIC_WORLDS } from './therapeuticMap'
++
++describe('one shared list of five dimensions (U145)', () => {
++  it('is the list personas and StateFlips use', () => {
++    expect(DIMENSIONS).toEqual(DIMENSION_IDS)
++    expect(STATEFLIP_DIMENSIONS.map((d) => d.id)).toEqual(DIMENSION_IDS)
++  })
++
++  it('maps every Healing Map and Therapeutic map world onto exactly the five', () => {
++    for (const worlds of [HEALING_WORLDS, THERAPEUTIC_WORLDS]) {
++      expect(new Set(worlds.map((w) => WORLD_TO_DIMENSION[w.id])).size).toBe(5)
++    }
++    expect(worldMappingLine([{ id: 'sleep', label: 'Sleep' }])).toBe('Sleep → Physical')
++  })
++})
+diff --git a/src/admin/data/dimensions.ts b/src/admin/data/dimensions.ts
+new file mode 100644
+index 0000000..3258d68
+--- /dev/null
++++ b/src/admin/data/dimensions.ts
+@@ -0,0 +1,44 @@
++/**
++ * The one shared list of the five wellness dimensions (U145, J206): mental,
++ * emotional, relational, spiritual, physical. StateFlips, the persona
++ * condition (personaConditionV4), the Healing Map and the Therapeutic map all
++ * read it from here. The two maps keep their own "worlds" (their data is not
++ * renamed): WORLD_TO_DIMENSION says which dimension each world is, and both
++ * map pages show that mapping. The only difference is a name: both maps call
++ * the physical dimension "sleep", because sleep is the physical world they
++ * built first. No imports, so any module can use it without a cycle.
++ */
++
++export type Dimension = 'mental' | 'emotional' | 'relational' | 'spiritual' | 'physical'
++export type DimCode = 'MEN' | 'EMO' | 'REL' | 'SPI' | 'PHY'
++
++export interface DimensionInfo {
++  id: Dimension
++  code: DimCode
++  label: string
++  /** What it covers, in plain words. */
++  plain: string
++}
++
++export const FIVE_DIMENSIONS: readonly DimensionInfo[] = [
++  { id: 'mental', code: 'MEN', label: 'Mental', plain: 'thinking, focus and worry' },
++  { id: 'emotional', code: 'EMO', label: 'Emotional', plain: 'feelings and mood' },
++  { id: 'relational', code: 'REL', label: 'Relational', plain: 'people around them' },
++  { id: 'spiritual', code: 'SPI', label: 'Meaning and purpose', plain: 'what makes life feel worthwhile' },
++  { id: 'physical', code: 'PHY', label: 'Physical', plain: 'sleep, energy and body' },
++]
++
++export const DIMENSION_IDS: Dimension[] = FIVE_DIMENSIONS.map((d) => d.id)
++export const dimensionInfo = (d: Dimension) => FIVE_DIMENSIONS.find((x) => x.id === d)!
++
++/** A world id of the Healing Map or the Therapeutic map. */
++export type MapWorld = 'sleep' | 'mental' | 'emotional' | 'relational' | 'spiritual'
++
++/** Healing Map and Therapeutic map worlds → the shared dimension. */
++export const WORLD_TO_DIMENSION: Record<MapWorld, Dimension> = { sleep: 'physical', mental: 'mental', emotional: 'emotional', relational: 'relational', spiritual: 'spiritual' }
++export const DIMENSION_TO_WORLD: Record<Dimension, MapWorld> = { physical: 'sleep', mental: 'mental', emotional: 'emotional', relational: 'relational', spiritual: 'spiritual' }
++
++/** One line for a map page: "Sleep → Physical · Mental → Mental · …". */
++export function worldMappingLine(worlds: readonly { id: MapWorld; label: string }[]): string {
++  return worlds.map((w) => `${w.label} → ${dimensionInfo(WORLD_TO_DIMENSION[w.id]).label}`).join(' · ')
++}
+diff --git a/src/admin/data/forceLayout.test.ts b/src/admin/data/forceLayout.test.ts
+new file mode 100644
+index 0000000..24a348a
+--- /dev/null
++++ b/src/admin/data/forceLayout.test.ts
+@@ -0,0 +1,25 @@
++import { describe, expect, it } from 'vitest'
++import { forceLayout } from './forceLayout'
++
++describe('forceLayout (U145)', () => {
++  const nodes = [{ id: 'g', pin: [0.5, 0.5] as [number, number] }, ...Array.from({ length: 12 }, (_, i) => ({ id: `n${i}` }))]
++  const links = nodes.slice(1).map((n) => ({ from: n.id, to: 'g' }))
++  const a = forceLayout(nodes, links, 800, 500)
++
++  it('is deterministic, keeps pins and stays inside the box', () => {
++    const b = forceLayout(nodes, links, 800, 500)
++    expect([...a.entries()]).toEqual([...b.entries()])
++    expect(a.get('g')).toEqual({ x: 400, y: 250 })
++    for (const p of a.values()) {
++      expect(p.x).toBeGreaterThanOrEqual(40)
++      expect(p.x).toBeLessThanOrEqual(760)
++      expect(p.y).toBeGreaterThanOrEqual(40)
++      expect(p.y).toBeLessThanOrEqual(460)
++    }
++  })
++
++  it('keeps nodes apart', () => {
++    const ps = [...a.values()]
++    for (let i = 0; i < ps.length; i++) for (let j = i + 1; j < ps.length; j++) expect(Math.hypot(ps[i].x - ps[j].x, ps[i].y - ps[j].y)).toBeGreaterThan(20)
++  })
++})
+diff --git a/src/admin/data/forceLayout.ts b/src/admin/data/forceLayout.ts
+new file mode 100644
+index 0000000..dc24e61
+--- /dev/null
++++ b/src/admin/data/forceLayout.ts
+@@ -0,0 +1,69 @@
++/**
++ * A small force-directed layout (U145): Fruchterman–Reingold with gravity
++ * and cooling, deterministic (nodes start evenly on a circle in input order),
++ * no dependency. Used by the AKP relationship graph; a few dozen nodes lay
++ * out in well under a frame's worth of work per hundred iterations.
++ */
++
++export interface LayoutNode {
++  id: string
++  /** Pinned position (0–1 of width and height), e.g. the focus node at the centre. */
++  pin?: [number, number]
++}
++
++export interface LayoutLink {
++  from: string
++  to: string
++}
++
++export function forceLayout(nodes: readonly LayoutNode[], links: readonly LayoutLink[], w: number, h: number, iterations = 300, pad = 40): Map<string, { x: number; y: number }> {
++  const n = nodes.length
++  const pos = nodes.map((nd, i) => {
++    if (nd.pin) return { x: nd.pin[0] * w, y: nd.pin[1] * h }
++    const t = (i / Math.max(1, n)) * Math.PI * 2
++    return { x: w / 2 + Math.cos(t) * w * 0.3, y: h / 2 + Math.sin(t) * h * 0.3 }
++  })
++  const index = new Map(nodes.map((nd, i) => [nd.id, i]))
++  const edges = links.map((l) => [index.get(l.from), index.get(l.to)]).filter((e): e is [number, number] => e[0] !== undefined && e[1] !== undefined && e[0] !== e[1])
++  const k = Math.sqrt(((w - 2 * pad) * (h - 2 * pad)) / Math.max(1, n)) * 0.85
++  let temp = w / 8
++  for (let it = 0; it < iterations; it++) {
++    const disp = pos.map(() => ({ x: 0, y: 0 }))
++    for (let i = 0; i < n; i++)
++      for (let j = i + 1; j < n; j++) {
++        let dx = pos[i].x - pos[j].x
++        let dy = pos[i].y - pos[j].y
++        let d = Math.hypot(dx, dy)
++        if (d < 0.01) {
++          dx = 0.01 * (i - j)
++          dy = 0.01
++          d = Math.hypot(dx, dy)
++        }
++        const f = (k * k) / d
++        disp[i].x += (dx / d) * f
++        disp[i].y += (dy / d) * f
++        disp[j].x -= (dx / d) * f
++        disp[j].y -= (dy / d) * f
++      }
++    for (const [a, b] of edges) {
++      const dx = pos[a].x - pos[b].x
++      const dy = pos[a].y - pos[b].y
++      const d = Math.max(0.01, Math.hypot(dx, dy))
++      const f = (d * d) / k
++      disp[a].x -= (dx / d) * f
++      disp[a].y -= (dy / d) * f
++      disp[b].x += (dx / d) * f
++      disp[b].y += (dy / d) * f
++    }
++    for (let i = 0; i < n; i++) {
++      if (nodes[i].pin) continue
++      disp[i].x += (w / 2 - pos[i].x) * 0.02 * k
++      disp[i].y += (h / 2 - pos[i].y) * 0.02 * k
++      const d = Math.max(0.01, Math.hypot(disp[i].x, disp[i].y))
++      pos[i].x = Math.min(w - pad, Math.max(pad, pos[i].x + (disp[i].x / d) * Math.min(d, temp)))
++      pos[i].y = Math.min(h - pad, Math.max(pad, pos[i].y + (disp[i].y / d) * Math.min(d, temp)))
++    }
++    temp = Math.max(0.5, temp * 0.985)
++  }
++  return new Map(nodes.map((nd, i) => [nd.id, pos[i]]))
++}
+diff --git a/src/admin/data/personaConditionV4.ts b/src/admin/data/personaConditionV4.ts
+index 1907cad..0faf8b2 100644
+--- a/src/admin/data/personaConditionV4.ts
++++ b/src/admin/data/personaConditionV4.ts
+@@ -17,22 +17,18 @@
+ // Mild 60, Good 85): the cut points sit halfway between them.
+ 
+ import { LENGTHS, PRESETS, clamp, goal, presetInputs, type CostInputs, type Stage } from './costModel'
++import { DIMENSION_IDS, FIVE_DIMENSIONS, type Dimension } from './dimensions'
+ import { SCENARIOS, generatePersonasV4, type PersonaV4, type ScenarioId } from './personasV4'
+ 
+ export const CONDITION_SEED = 20265
+ 
+ /* ----------------------------------------------------------------- Types */
+ 
+-export type Dimension = 'mental' | 'emotional' | 'relational' | 'spiritual' | 'physical'
+-export const DIMENSIONS: Dimension[] = ['mental', 'emotional', 'relational', 'spiritual', 'physical']
+-export const DIMENSION_LABEL: Record<Dimension, string> = { mental: 'Mental', emotional: 'Emotional', relational: 'Relational', spiritual: 'Meaning and purpose', physical: 'Physical' }
+-export const DIMENSION_PLAIN: Record<Dimension, string> = {
+-  mental: 'thinking, focus and worry',
+-  emotional: 'feelings and mood',
+-  relational: 'people around them',
+-  spiritual: 'what makes life feel worthwhile',
+-  physical: 'sleep, energy and body',
+-}
++export type { Dimension }
++/** The shared five (dimensions.ts, U145): one list for StateFlips, personas, the Healing Map and the Therapeutic map. */
++export const DIMENSIONS: Dimension[] = DIMENSION_IDS
++export const DIMENSION_LABEL = Object.fromEntries(FIVE_DIMENSIONS.map((d) => [d.id, d.label])) as Record<Dimension, string>
++export const DIMENSION_PLAIN = Object.fromEntries(FIVE_DIMENSIONS.map((d) => [d.id, d.plain])) as Record<Dimension, string>
+ 
+ export type CondBand = 'severe' | 'moderate' | 'mild' | 'good'
+ export const COND_BANDS: CondBand[] = ['severe', 'moderate', 'mild', 'good']
+diff --git a/src/admin/data/reportMetrics.ts b/src/admin/data/reportMetrics.ts
+index 8b34065..1c8bcc4 100644
+--- a/src/admin/data/reportMetrics.ts
++++ b/src/admin/data/reportMetrics.ts
+@@ -19,6 +19,7 @@ import { isSleepNeed, personaSleepScore, severityOf } from './stateFlipSleep'
+ import { akpSummary, akps } from './akps'
+ import { identitiesV4, identityIncoherence, identitySummary } from './personaIdentityV4'
+ import { stateFlipSummary, stateFlips } from './stateFlips'
++import { stateFlipCosts } from './stateFlipCosts'
+ 
+ /**
+  * Admin → Reports → Report metrics (U135, J186). Every headline number the
+@@ -1023,6 +1024,46 @@ function costMetrics(): MetricDef[] {
+       displayed: () => STAGES[1].success,
+       assumption: 'The plan states 54% success at stage 1. Nobody has measured it: no real person has used Aurelia to sleep better yet.',
+     },
++    // U145 (J206): cost per StateFlip, per dimension, and the population-weighted cost per person.
++    {
++      id: 'cost-sf-flip-avg', report: 'cost', label: 'Average cost per flip, all 125 StateFlips (people-weighted)', unit: 'usd', good: 'down',
++      formula: 'Per StateFlip: cost per chapter × chapters played per person ÷ mean chance it works. Then Σ (group × cost per flip) ÷ Σ group over the 125.', shownAt: 'Cost report, Cost per StateFlip', source: 'src/admin/data/stateFlipCosts.ts',
++      displayed: () => stateFlipCosts().overallCostPerFlip,
++      compute: () => {
++        const c = stateFlipCosts()
++        const n = c.rows.reduce((t, r) => t + r.group, 0)
++        const s = c.rows.reduce((t, r) => t + r.group * r.costPerFlip, 0)
++        return {
++          value: s / n, n: c.rows.length,
++          inputs: [{ label: 'Cost per chapter', value: usd(c.costPerChapter), source: 'costModel.ts (Balanced, 10 min, stage 1)' }, { label: 'StateFlips with a group', value: `${c.rows.length}`, source: 'stateFlips.ts flipNumbers' }, { label: 'People across groups', value: `${n}`, source: 'personasV4.ts + personaConditionV4.ts' }],
++          steps: [`Σ group × cost per flip = ${usd(s)}; ÷ ${n} people = ${usd(s / n)}.`],
++          breakdown: { title: 'Each StateFlip', columns: ['StateFlip', 'People', 'Played', 'Chance', 'Cost per flip'], rows: c.rows.map((r) => ({ id: r.flip.id, cells: [r.flip.id, `${r.group}`, r.chaptersPlayed.toFixed(1), pctText(r.meanChance), usd(r.costPerFlip)] })) },
++        }
++      },
++    },
++    ...DIMENSIONS.map((d): MetricDef => ({
++      id: `cost-sf-dim-${d}`, report: 'cost', label: `Cost per flip · ${DIMENSION_LABEL[d]} StateFlips (people-weighted)`, unit: 'usd', good: 'down',
++      formula: 'Σ (group × cost per flip) ÷ Σ group over the dimension’s 25 StateFlips.', shownAt: 'Cost report, Cost per StateFlip by dimension', source: 'src/admin/data/stateFlipCosts.ts',
++      displayed: () => stateFlipCosts().byDimension.find((x) => x.dimension === d)!.costPerFlip,
++      compute: () => {
++        const rs = stateFlipCosts().rows.filter((r) => r.flip.dimension === d)
++        const n = rs.reduce((t, r) => t + r.group, 0)
++        const s = rs.reduce((t, r) => t + r.group * r.costPerFlip, 0)
++        return { value: s / n, n: rs.length, inputs: [{ label: 'StateFlips', value: `${rs.length}`, source: 'stateFlips.ts' }, { label: 'People across groups', value: `${n}`, source: 'stateFlips.ts flipNumbers' }], steps: [`${usd(s)} ÷ ${n} = ${usd(s / n)}.`] }
++      },
++    })),
++    {
++      id: 'cost-sf-population', report: 'cost', label: 'Average cost per person to reach the target (population-weighted)', unit: 'usd', good: 'down',
++      formula: 'Per person: (main need’s chapters + 0.5 × the other dimensions’) × the Balanced chapter cost, stage 1. Mean over people without a risk flag; the set is drawn from population weights.', shownAt: 'Cost report, Cost per StateFlip', source: 'src/admin/data/personaConditionV4.ts populationCost',
++      displayed: () => stateFlipCosts().population.averageCost, tolerance: 0.01,
++      compute: () => {
++        const ps = generatePersonasV4()
++        const cs = conditionsV4()
++        const xs = ps.map((p) => conditionForCost(p, cs.get(p.id)!)).filter((x) => !x.excluded)
++        const v = xs.reduce((t, x) => t + x.costPerPerson, 0) / xs.length
++        return { value: v, n: xs.length, inputs: [{ label: 'People included', value: `${xs.length}`, source: 'personasV4.ts' }, { label: 'Risk-flagged, left out', value: `${ps.length - xs.length}`, source: 'personaConditionV4.ts' }], steps: [`Σ cost per person ÷ ${xs.length} = ${usd(v)}.`] }
++      },
++    },
+   ]
+ }
+ 
+diff --git a/src/admin/data/stateFlipCosts.test.ts b/src/admin/data/stateFlipCosts.test.ts
+new file mode 100644
+index 0000000..26ced1e
+--- /dev/null
++++ b/src/admin/data/stateFlipCosts.test.ts
+@@ -0,0 +1,24 @@
++import { describe, expect, it } from 'vitest'
++import { populationCost } from './personaConditionV4'
++import { sleepCohort } from './stateFlipFormulas'
++import { stateFlipCosts } from './stateFlipCosts'
++
++describe('cost per StateFlip (U145)', () => {
++  const c = stateFlipCosts()
++
++  it('costs every StateFlip with a group, and sleep matches the sleep cohort', () => {
++    expect(c.rows).toHaveLength(125)
++    const sleep = c.rows.find((r) => r.flip.id === 'SF-PHY-01')!
++    expect(sleep.costPerFlip).toBeCloseTo(sleepCohort().costPerFlip, 10)
++    for (const r of c.rows) expect(r.costPerFlip).toBeCloseTo((r.costPerChapter * r.chaptersPlayed) / r.meanChance, 10)
++  })
++
++  it('weights dimensions by people and reuses the population cost', () => {
++    for (const d of c.byDimension) {
++      const rs = c.rows.filter((r) => r.flip.dimension === d.dimension)
++      expect(d.costPerFlip).toBeCloseTo(rs.reduce((t, r) => t + r.group * r.costPerFlip, 0) / rs.reduce((t, r) => t + r.group, 0), 10)
++      expect(d.cheapest.costPerFlip).toBeLessThanOrEqual(d.dearest.costPerFlip)
++    }
++    expect(c.population.averageCost).toBe(populationCost().averageCost)
++  })
++})
+diff --git a/src/admin/data/stateFlipCosts.ts b/src/admin/data/stateFlipCosts.ts
+new file mode 100644
+index 0000000..1911d71
+--- /dev/null
++++ b/src/admin/data/stateFlipCosts.ts
+@@ -0,0 +1,66 @@
++/**
++ * Cost per StateFlip, for the Cost report (U145, J206). For each of the 125
++ * StateFlips: cost per flip = cost per chapter × chapters played per person
++ * on average ÷ the group's mean chance it works (stateFlipFormulas.summarise,
++ * the sleep formulas generalised). Per dimension: the people-weighted mean of
++ * its StateFlips' cost per flip (Σ group × cost ÷ Σ group). Beside it the
++ * population-weighted average cost per person to reach the target, from
++ * personaConditionV4.populationCost (a different question: one person's whole
++ * journey across dimensions, not one flip). Stage 1, Balanced, 10 minutes.
++ */
++
++import { DIMENSIONS, populationCost, type Dimension } from './personaConditionV4'
++import { flipNumbers, stateFlips, type StateFlip } from './stateFlips'
++
++export interface FlipCostRow {
++  flip: StateFlip
++  group: number
++  medianChapters: number
++  chaptersPlayed: number
++  meanChance: number
++  costPerChapter: number
++  costPerFlip: number
++}
++
++export interface DimensionCost {
++  dimension: Dimension
++  flips: number
++  /** People counted across its StateFlips (a person in two groups counts twice). */
++  people: number
++  /** Σ group × cost per flip ÷ Σ group. */
++  costPerFlip: number
++  cheapest: FlipCostRow
++  dearest: FlipCostRow
++}
++
++export interface StateFlipCosts {
++  rows: FlipCostRow[]
++  byDimension: DimensionCost[]
++  /** People-weighted mean cost per flip over all 125. */
++  overallCostPerFlip: number
++  costPerChapter: number
++  population: ReturnType<typeof populationCost>
++}
++
++const weighted = (rs: FlipCostRow[]) => {
++  const n = rs.reduce((t, r) => t + r.group, 0)
++  return n ? rs.reduce((t, r) => t + r.group * r.costPerFlip, 0) / n : NaN
++}
++
++let CACHE: StateFlipCosts | undefined
++
++export function stateFlipCosts(): StateFlipCosts {
++  if (CACHE) return CACHE
++  const rows: FlipCostRow[] = stateFlips()
++    .map((f) => {
++      const n = flipNumbers(f)
++      return { flip: f, group: n.group, medianChapters: n.medianChapters, chaptersPlayed: n.chaptersPlayed, meanChance: n.meanChance, costPerChapter: n.costPerChapter, costPerFlip: n.costPerFlip }
++    })
++    .filter((r) => r.group > 0)
++  const byDimension = DIMENSIONS.map((d) => {
++    const rs = rows.filter((r) => r.flip.dimension === d)
++    const sorted = [...rs].sort((a, b) => a.costPerFlip - b.costPerFlip)
++    return { dimension: d, flips: rs.length, people: rs.reduce((t, r) => t + r.group, 0), costPerFlip: weighted(rs), cheapest: sorted[0], dearest: sorted[sorted.length - 1] }
++  })
++  return (CACHE = { rows, byDimension, overallCostPerFlip: weighted(rows), costPerChapter: rows[0]?.costPerChapter ?? NaN, population: populationCost() })
++}
+diff --git a/src/admin/data/stateFlipDetails.ts b/src/admin/data/stateFlipDetails.ts
+new file mode 100644
+index 0000000..a212287
+--- /dev/null
++++ b/src/admin/data/stateFlipDetails.ts
+@@ -0,0 +1,199 @@
++/**
++ * Per-StateFlip steps, check-in questions and cohorts (U145, J206), drafted
++ * by us to review. Replaces the one template every StateFlip but sleep used
++ * to share: each StateFlip now says, in its own words,
++ *
++ * - x: what the first relief looks like (milestone X, mood layer),
++ * - y: the routine that keeps it coming (milestone Y, habit layer),
++ * - z: what it looks like when it holds (milestone Z, the flip),
++ * - often: the behaviour the "how often" check-in question counts,
++ * - sign: the closeness question, about a concrete good sign,
++ *
++ * and, for StateFlips 11–25 (which have no population figure of their own),
++ * the cohort: which condition issues of the dimension it serves (`issues`)
++ * and which identity facts a persona must have (`who`), so each one follows
++ * its own people instead of borrowing one related issue.
++ * Sleep (SF-PHY-01) is not here: stateFlipSleep.ts keeps its own, unchanged.
++ */
++
++import type { ConditionV4 } from './personaConditionV4'
++import type { PersonaV4 } from './personasV4'
++
++export interface FlipDetail {
++  x: string
++  y: string
++  z: string
++  often: string
++  sign: string
++  /** 11–25 only: condition issues (this dimension) the cohort is drawn from. */
++  issues?: string[]
++  /** 11–25 only: the identity fact the cohort must also have. */
++  who?: WhoKey
++}
++
++export type WhoKey = 'working' | 'partner' | 'family' | 'parent' | 'midlifeWoman' | 'young' | 'older' | 'student' | 'retired' | 'pain' | 'carer' | 'inactive' | 'highStress' | 'lowMood' | 'anxious' | 'change' | 'lowEnergy'
++
++const has = (p: PersonaV4, re: RegExp) => re.test(p.household)
++
++/** The identity facts, each from persona fields that already exist (personasV4). */
++export const WHO: Record<WhoKey, { label: string; test: (p: PersonaV4, c: ConditionV4) => boolean }> = {
++  working: { label: 'in work (employed or self-employed)', test: (p) => p.work === 'employed' || p.work === 'self-employed' },
++  partner: { label: 'lives with a partner', test: (p) => has(p, /partner/) },
++  family: { label: 'lives with family (partner and children, parents, or extended family)', test: (p) => has(p, /kids|teenagers|baby|parents|extended|adult children|single parent/) },
++  parent: { label: 'has children at home', test: (p) => has(p, /kids|teenagers|baby|single parent|adult children/) },
++  midlifeWoman: { label: 'a woman aged 40–60', test: (p) => p.sex === 'woman' && p.age >= 40 && p.age <= 60 },
++  young: { label: 'aged under 35', test: (p) => p.age < 35 },
++  older: { label: 'aged 55 or over', test: (p) => p.age >= 55 },
++  student: { label: 'a student or under 25', test: (p) => p.work === 'student' || p.age < 25 },
++  retired: { label: 'retired or 60 and over', test: (p) => p.work === 'retired' || p.age >= 60 },
++  pain: { label: 'lives with long-term pain', test: (p) => p.chronicPain },
++  carer: { label: 'gives unpaid care', test: (p) => p.caregiving },
++  inactive: { label: 'moves less than 150 minutes a week', test: (p) => p.wellness.activeMinutesWeek < 150 },
++  highStress: { label: 'reports high stress', test: (p) => p.wellness.stress.band === 'high' },
++  lowMood: { label: 'screens for some low mood', test: (p) => p.wellness.mood !== 'none' },
++  anxious: { label: 'screens for some anxiety', test: (p) => p.wellness.anxiety !== 'none' },
++  change: { label: 'in a big life change (baby, menopause, retiring, moving, illness, job loss, grief)', test: (p) => ['new-parent', 'menopause', 'retirement-lonely', 'moved', 'post-illness', 'job-loss', 'grief'].includes(p.scenario) },
++  lowEnergy: { label: 'rates their energy 1 or 2 of 5', test: (p) => p.wellness.energy <= 2 },
++}
++
++type Row = [x: string, y: string, z: string, often: string, sign: string, issues?: string, who?: WhoKey]
++
++const ROWS: Record<string, Row> = {
++  /* ------------------------------------------------------------ Mental */
++  'MEN-01': ['Notices the first racing thought in bed and settles it with a slow breath on some nights.', 'Writes tomorrow’s list before bed and does a 5-minute wind-down most nights.', 'Lies down with a quiet head and drifts off within 20 minutes, even before a big day.', 'lie awake with your thoughts racing', 'How easily did your mind go quiet when you got into bed?'],
++  'MEN-02': ['Catches a worry loop early and can step out of it for an hour or so.', 'Sets aside 10 minutes of “worry time” a day and parks the rest until then.', 'Meets a new worry, weighs it once and moves on with the day.', 'go over the same worry again and again', 'How sure did you feel that you could handle what you worried about?'],
++  'MEN-03': ['Has one or two evenings a week with some energy left after work.', 'Takes real breaks in the day and keeps one evening a week free of work.', 'Ends most days with something left in the tank, even in a busy month.', 'end the day too drained to think', 'How much did you have left at the end of your working day?'],
++  'MEN-04': ['Gets one clear stretch of focus on a good day.', 'Works in short single-task blocks with the phone in another room.', 'Can hold attention on one thing for an hour when it matters.', 'lose track of what you were doing because your head felt foggy', 'How clearly could you think when you sat down to a task?'],
++  'MEN-05': ['Calms the panic before a revision session with a short breathing break.', 'Studies to a timetable with rest days and a pre-exam routine.', 'Walks into an exam nervous but steady, and thinks clearly once inside.', 'feel the pressure of an exam or a deadline take over', 'How steady did you feel when you thought about the exam or the deadline?'],
++  'MEN-06': ['Notices the harsh inner voice and answers back once in a while.', 'Writes down one thing done well every evening.', 'Speaks to themselves as they would to a friend, even after a mistake.', 'call yourself names or put yourself down in your head', 'How kindly did you treat yourself after something went wrong?'],
++  'MEN-07': ['Breaks a loop of the same thought by changing what they are doing.', 'Uses a short “another way to see it” exercise when stuck.', 'Sees a problem from more than one angle without having to force it.', 'get stuck going round the same thought', 'How easily could you see your situation from a new angle?'],
++  'MEN-08': ['Makes one small decision they had been putting off.', 'Uses a simple pros-and-cons and a set deadline for each decision.', 'Decides with what is known and feels steady while the rest is unclear.', 'put off a decision because you could not settle on it', 'How settled did you feel with the decisions you made?'],
++  'MEN-09': ['Puts the phone down 15 minutes earlier on a couple of nights.', 'Charges the phone outside the bedroom and has a set screen-off time.', 'Goes to bed without scrolling and does not miss it.', 'scroll on your phone after you meant to stop', 'How rested did your mind feel in the hour before sleep?'],
++  'MEN-10': ['Looks forward to one small thing in the week.', 'Plans one thing to enjoy each day and does it.', 'Wakes up with things they want to do, most days.', 'feel flat and unable to get started', 'How much did you look forward to your days?'],
++  'MEN-11': ['Starts one task they had stalled on.', 'Keeps a short daily “one step forward” list for work.', 'Moves their work forward steadily without waiting to feel like it.', 'feel stuck and unable to get going at work', 'How much did you move forward on what matters to you at work?', 'no-drive,exhaustion,stuck-thinking', 'working'],
++  'MEN-12': ['Gets through one tense meeting without carrying it all evening.', 'Prepares for hard work conversations with a short calming routine.', 'Works through disagreements at work and still pulls in the same direction.', 'leave a work conversation feeling at odds with the people in it', 'How well did you and the people you work with pull together?', 'stuck-thinking,worry,exhaustion', 'working'],
++  'MEN-13': ['Finds one part of the work week that still interests them.', 'Spends a little time each week on the part of the job they enjoy most.', 'Feels real interest in their work most weeks.', 'go through the work day without any interest in it', 'How interested did you feel in what you were working on?', 'no-drive,stuck-thinking', 'working'],
++  'MEN-14': ['Names one skill they are not using and one place to use it.', 'Takes one small step a week toward a bigger goal.', 'Is using what they are good at and can see it paying off.', 'feel you were not using what you are capable of', 'How much did your days use what you are good at?', 'self-talk,no-drive,stuck-thinking', 'young'],
++  'MEN-15': ['Picks one thing they want to learn next.', 'Sets aside learning time each week and keeps to it.', 'Can see their own progress over the last months, and the next step.', 'feel you were not growing or getting anywhere', 'How much did you feel you were learning and growing?', 'stuck-thinking,uncertainty,no-drive', 'working'],
++  'MEN-16': ['Feels safe enough to raise one concern at work.', 'Keeps clear boundaries and records of what they agreed at work.', 'Feels secure in their position and speaks up when something is wrong.', 'feel exposed or unsafe in your position', 'How secure did you feel in your work?', 'worry,uncertainty,exam-pressure', 'working'],
++  'MEN-17': ['Has one evening a week where work stays out of their head.', 'Keeps a set finish time and a short ritual to close the working day.', 'Gives work and home each their own time without one eating the other.', 'let work spill into time meant for yourself or others', 'How well did work and the rest of your life fit together?', 'exhaustion,racing-mind,screen-overload', 'working'],
++  'MEN-18': ['Tries one new thing in a dull week.', 'Gives themselves a weekly slot for something new: a walk, a book, a class.', 'Finds ideas and interest coming on their own in ordinary weeks.', 'feel bored by days that all look the same', 'How often did something spark your interest or an idea?', 'no-drive,stuck-thinking,brain-fog'],
++  'MEN-19': ['Gets past a blank page by making something small and rough.', 'Makes something every day for 10 minutes, without judging it.', 'Starts creative work freely and finishes things they care about.', 'feel blocked when you tried to make or write something', 'How freely did ideas come when you sat down to create?', 'stuck-thinking,self-talk', 'young'],
++  'MEN-20': ['Does one thing with full attention for a few minutes.', 'Keeps a short daily practice of doing one thing slowly and fully.', 'Brings full attention to what they do, not just rushes through it.', 'rush through your day without really noticing it', 'How present did you feel in what you were doing?', 'screen-overload,stuck-thinking,brain-fog'],
++  'MEN-21': ['Notices one thing they did well that others valued.', 'Tries something new each fortnight and notes what came easily.', 'Knows their strengths and uses them on purpose.', 'feel you had nothing special to offer', 'How clearly could you name what you are good at?', 'self-talk,no-drive', 'student'],
++  'MEN-22': ['Spends an hour on an old hobby and enjoys part of it.', 'Keeps a regular slot for a hobby each week.', 'Feels their old enthusiasm back for the things they love.', 'skip something you used to enjoy because it felt pointless', 'How much did you enjoy your free time?', 'no-drive,exhaustion', 'lowMood'],
++  'MEN-23': ['Says no to one request to protect time for themselves.', 'Blocks out time for what matters to them in the calendar each week.', 'Protects their own time without guilt, even in a busy week.', 'give away time you had meant to keep for yourself', 'How much of your week did you keep for what matters to you?', 'exhaustion,worry,stuck-thinking', 'parent'],
++  'MEN-24': ['Enjoys one shared activity with someone, a little.', 'Has a regular activity with other people they look forward to.', 'Feels connected through the things they enjoy doing with others.', 'do things alone that you would rather share', 'How connected did you feel through the things you enjoy?', 'no-drive,stuck-thinking', 'older'],
++  'MEN-25': ['Feels a lift after one active or absorbing hour.', 'Fits something absorbing into most days, even if short.', 'Has steady energy for the things that engage them.', 'feel too sluggish to start something you wanted to do', 'How much energy did you have for things you enjoy?', 'brain-fog,no-drive,exhaustion', 'lowEnergy'],
++
++  /* --------------------------------------------------------- Emotional */
++  'EMO-01': ['Has a few hours in the week when they feel more like themselves.', 'Does one small thing a day that lifts their mood: daylight, a call, a walk.', 'Feels like themselves most days, with energy for life.', 'feel low for most of the day', 'How much like yourself did you feel?'],
++  'EMO-02': ['Can bring the on-edge feeling down a notch with slow breathing.', 'Uses a short calming routine morning and evening.', 'Feels safe and settled in their own body most of the time.', 'feel on edge or keyed up', 'How safe and settled did you feel in yourself?'],
++  'EMO-03': ['Catches a flash of temper before it comes out, once or twice.', 'Takes a pause before replying when irritated, as a habit.', 'Stays even-tempered under everyday pressure.', 'snap at someone or feel your temper flare', 'How even did your temper feel this week?'],
++  'EMO-04': ['Has moments of ease between the waves of grief.', 'Sets aside time to remember the person, and time for ordinary life.', 'Carries the loss and still lives a full day.', 'feel the loss stop you from getting through the day', 'How able were you to carry the loss and still live your day?'],
++  'EMO-05': ['Gets through one heavy day feeling it is manageable.', 'Breaks the load into small pieces and asks for help with one.', 'Feels they can cope with what is on their plate.', 'feel there was more on your plate than you could cope with', 'How able did you feel to cope with what you had to do?'],
++  'EMO-06': ['Notices a mood shift and steadies it before it takes over.', 'Tracks mood daily and keeps sleep and meals regular.', 'Moods feel steady, with ups and downs that pass.', 'have your mood swing sharply within a day', 'How steady did your moods feel?'],
++  'EMO-07': ['Feels something clearly, a laugh or a pang, now and again.', 'Checks in with how they feel twice a day and names it.', 'Feels their feelings and is present with people again.', 'feel numb or just go through the motions', 'How much did you feel things, not just get through them?'],
++  'EMO-08': ['Lets go of one piece of self-blame for an evening.', 'Writes what they did enough of each day, not what they missed.', 'Can make a mistake and forgive themselves the same day.', 'blame yourself for not doing enough', 'How fair were you to yourself about what you did?'],
++  'EMO-09': ['Has an hour without dread about what comes next.', 'Plans the next small step and lets the rest wait.', 'Faces the future with trust that they will handle it.', 'dread what might happen next', 'How much did you trust that things would work out?'],
++  'EMO-10': ['Tells one person how they really feel, a little.', 'Writes or says what they feel each day, in a few words.', 'Lets feelings out easily and without a scene.', 'hold in a feeling you wanted to let out', 'How easily could you let your feelings out?'],
++  'EMO-11': ['Gets a calm hour in a stressful day.', 'Has a daily wind-down that brings stress down before the evening.', 'Stays calm through a stressful week.', 'feel stress building with no let-up', 'How calm did you feel by the evening?', 'overwhelm,anxious', 'highStress'],
++  'EMO-12': ['Rides out one anxiety wave with a breathing exercise.', 'Practises a calming technique daily, not only when anxious.', 'Anxiety waves are rare and pass quickly.', 'feel a wave of anxiety come over you', 'How quickly did anxious feelings pass?', 'anxious,future-fear', 'anxious'],
++  'EMO-13': ['Takes one small step toward something they fear.', 'Faces a feared thing in small planned steps each week.', 'Does what they used to avoid, with only mild nerves.', 'avoid something because you were afraid of it', 'How brave did you feel facing what you fear?', 'future-fear,anxious', 'young'],
++  'EMO-14': ['Notices an old pattern from childhood and pauses it once.', 'Uses a short reflection each week on where old patterns show up.', 'Responds as the adult they are now, not the child they were.', 'feel old hurts from growing up shape how you reacted', 'How free did you feel from old patterns?', 'bottled-up,low-mood,guilt', 'young'],
++  'EMO-15': ['Cools down from anger faster than usual, once.', 'Uses a set cool-down routine when anger rises.', 'Feels anger, says what matters calmly, and lets it go.', 'feel anger take over', 'How calmly could you deal with things that made you angry?', 'irritable,bottled-up', 'highStress'],
++  'EMO-16': ['Thinks of someone they resent with less heat, once.', 'Practises a short letting-go exercise each week.', 'Has let go of an old grudge and feels lighter for it.', 'go over an old hurt and feel bitter', 'How much had you let go of old resentments?', 'bottled-up,irritable,grief', 'older'],
++  'EMO-17': ['Names one mixed feeling clearly.', 'Writes three lines about how they feel each evening.', 'Understands what they feel and why, most of the time.', 'feel confused about what you were feeling', 'How clearly did you understand your own feelings?', 'bottled-up,mood-swings,overwhelm'],
++  'EMO-18': ['Adapts to one change of plan without being thrown.', 'Practises small changes to routine on purpose.', 'Rolls with changes and surprises without losing balance.', 'feel thrown when plans changed', 'How easily did you adapt when things changed?', 'bottled-up,irritable', 'change'],
++  'EMO-19': ['Notices a feeling in the body before acting on it.', 'Does a quick feelings check-in at set times each day.', 'Knows what they feel as it happens.', 'realise only later how you had been feeling', 'How aware were you of your feelings as they came?', 'bottled-up,numb', 'working'],
++  'EMO-20': ['Feels present and in their body for a few minutes.', 'Uses a grounding exercise each day.', 'Stays grounded and present, even under pressure.', 'feel detached or far away from yourself', 'How grounded did you feel?', 'numb,overwhelm', 'carer'],
++  'EMO-21': ['Waits calmly through one delay that would usually frustrate them.', 'Uses a slow breath whenever they notice impatience.', 'Stays patient with people and delays most of the time.', 'feel impatient or rushed inside', 'How patient did you feel with people and delays?', 'irritable,overwhelm', 'parent'],
++  'EMO-22': ['Notices a feeling instead of distracting themselves from it, once.', 'Keeps a few minutes of mindful pause in each day.', 'Stays with feelings without reaching for a distraction.', 'reach for a distraction to avoid a feeling', 'How well could you stay with a feeling without distracting yourself?', 'bottled-up,anxious', 'young'],
++  'EMO-23': ['Has a day when the old insecurity is quieter.', 'Keeps a daily practice of steadying self-talk.', 'Feels secure in themselves across different situations.', 'feel unsure of yourself with other people', 'How secure did you feel in yourself?', 'anxious,low-mood', 'anxious'],
++  'EMO-24': ['Thinks about an old hurt and feels it sting a little less.', 'Uses a weekly reflection to tend to old hurts.', 'The old wound no longer runs their reactions.', 'feel an old hurt come back', 'How much had old hurts healed?', 'bottled-up,grief,low-mood', 'lowMood'],
++  'EMO-25': ['Has a few days in a row that feel emotionally even.', 'Keeps steady daily rhythms of sleep, meals and rest.', 'Their feelings are predictable to themselves and others.', 'surprise yourself with how strongly you reacted', 'How consistent did your feelings feel from day to day?', 'mood-swings,irritable', 'midlifeWoman'],
++
++  /* -------------------------------------------------------- Relational */
++  'REL-01': ['Has one good conversation that makes them feel less alone.', 'Reaches out to one person every few days.', 'Feels connected to people and rarely lonely.', 'feel lonely', 'How connected did you feel to other people?'],
++  'REL-02': ['Has one disagreement with their partner that ends calmly.', 'Has a weekly check-in with their partner about how things are.', 'Disagrees with their partner without fighting, and talks things through.', 'argue with your partner', 'How well did you and your partner talk things through?'],
++  'REL-03': ['Gets through a day without going over the break-up.', 'Fills the old shared times with plans of their own.', 'Feels secure on their own and open to what comes next.', 'go over the break-up in your head', 'How settled did you feel in your life on your own?'],
++  'REL-04': ['Spends one hour with someone other than the person they care for.', 'Arranges regular cover so they can see the people they love.', 'Keeps their other relationships alive alongside caring.', 'miss time with people you love because of caring', 'How much support did you have for yourself?'],
++  'REL-05': ['Shares one easy, warm moment with their partner.', 'Has a short daily check-in with their partner, baby asleep or not.', 'Feels like a team with their partner again.', 'feel distant from your partner', 'How much did you feel like a team with your partner?'],
++  'REL-06': ['Talks honestly with one person about something real.', 'Has someone to call each week and does call.', 'Has people to be honest with when it matters.', 'want to talk to someone and have no one to turn to', 'How supported did you feel by the people around you?'],
++  'REL-07': ['Gets through a tense exchange at work without taking it home.', 'Uses a short routine to leave work tension at work.', 'Handles work tension calmly and leaves it there.', 'bring tension from work home with you', 'How calm did you stay with people at work?'],
++  'REL-08': ['Has one honest, calm conversation at home.', 'Holds a short family check-in each week.', 'Home feels calm and people say what they mean.', 'feel tension at home', 'How open and calm did home feel?'],
++  'REL-09': ['Catches up with one friend or relative despite shifts.', 'Plans set times each week with family or friends around the rota.', 'Stays close to their people whatever shift they are on.', 'miss time with family or friends because of your hours', 'How in step did you feel with your family and friends?'],
++  'REL-10': ['Shares something small with someone and it goes well.', 'Lets one person in a little more each week.', 'Trusts the right people and lets them close.', 'hold back from someone because you could not trust them', 'How much did you let people in?'],
++  'REL-11': ['Hands one family task to someone else.', 'Agrees who does what at home and reviews it weekly.', 'Family roles feel fair and home runs steadily.', 'feel overwhelmed by what you have to do for the family', 'How fairly were family jobs shared?', 'family-tension,carer-strain,no-one', 'family'],
++  'REL-12': ['Talks through one unclear expectation with a family member.', 'Sets clear expectations together at a regular family talk.', 'Everyone at home knows what is expected of them.', 'clash with someone over who was meant to do what', 'How clear were the roles at home?', 'family-tension,conflict', 'parent'],
++  'REL-13': ['Gets the family to share one activity they enjoy.', 'Plans one shared family activity each week.', 'The family has things it looks forward to together.', 'feel no one at home cared about doing things together', 'How much did your family look forward to things together?', 'family-tension,no-one', 'parent'],
++  'REL-14': ['Has one moment of trust with a family member.', 'Keeps small promises in the family and notices others keeping theirs.', 'Trusts and is trusted at home.', 'feel you could not rely on someone in your family', 'How much did you trust the people at home?', 'trust,family-tension', 'family'],
++  'REL-15': ['Notices one talent in a family member and says so.', 'Gives each person at home a role that uses what they are good at.', 'Each person at home gets to use their strengths.', 'feel someone at home was overlooked', 'How much did the people at home get to use their strengths?', 'family-tension,carer-strain', 'parent'],
++  'REL-16': ['Tries one new thing with someone close.', 'Sets a shared goal with someone close and checks it monthly.', 'Grows alongside the people they are close to.', 'feel your relationships were standing still', 'How much were you and the people close to you growing together?', 'lonely,no-one,trust', 'older'],
++  'REL-17': ['Gets through one outside pressure as a family, not against each other.', 'Talks as a family when pressure comes, before it builds.', 'The family holds together under pressure.', 'feel outside pressures pulling the family apart', 'How together did your family feel?', 'family-tension,conflict,carer-strain', 'family'],
++  'REL-18': ['Joins one family activity they would usually skip.', 'Takes part in a regular family time each week.', 'Is an active, present part of family life.', 'stay on the edge of family time', 'How involved were you in family life?', 'family-tension,out-of-sync', 'family'],
++  'REL-19': ['Shares one uplifting moment with family.', 'Keeps a regular family ritual that lifts spirits: a meal, a walk.', 'The family feels warm and connected again.', 'feel your family was low or disconnected', 'How warm and connected did your family feel?', 'family-tension,baby-strain,lonely', 'family'],
++  'REL-20': ['Has one close moment with their partner.', 'Sets aside regular time just for the two of them.', 'Feels close to their partner.', 'feel emotionally far from your partner', 'How close did you feel to your partner?', 'conflict,baby-strain', 'partner'],
++  'REL-21': ['Shares out one shared chore more fairly.', 'Reviews the split of shared jobs with their partner each week.', 'Shared responsibilities feel balanced.', 'feel you carried more than your share at home', 'How fair did the split of shared jobs feel?', 'conflict,baby-strain,family-tension', 'partner'],
++  'REL-22': ['Talks about where the relationship is going, once.', 'Has a regular talk about plans and hopes with their partner.', 'Both partners know where they are heading together.', 'feel unsure where your relationship was going', 'How clear did you feel about where you two are heading?', 'conflict,break-up', 'partner'],
++  'REL-23': ['Plans one thing to look forward to together.', 'Has a regular shared activity both enjoy.', 'The relationship feels lively and shared.', 'feel the spark had gone from doing things together', 'How lively did your time together feel?', 'conflict,baby-strain', 'partner'],
++  'REL-24': ['Thinks about an old relationship hurt with less pain.', 'Uses a short weekly reflection on old hurts.', 'Old relationship wounds no longer shape new ones.', 'feel an old relationship hurt shape how you acted', 'How much had old relationship hurts healed?', 'break-up,trust,lonely'],
++  'REL-25': ['Names one thing they could build together with their partner.', 'Works on a shared goal with their partner each week.', 'Both partners bring out the best in each other.', 'feel you two were not making the most of your relationship', 'How much did you bring out the best in each other?', 'conflict,carer-strain,no-one', 'partner'],
++
++  /* ------------------------------------------------- Meaning and purpose */
++  'SPI-01': ['Has one morning with a reason to get up.', 'Does one thing a day that serves a purpose they care about.', 'Knows what gives their life direction and acts on it.', 'feel there was no point to your day', 'How much purpose did your days have?'],
++  'SPI-02': ['Takes 5 minutes for themselves on a busy day.', 'Keeps a daily slot that is just theirs.', 'Has inner quiet even on full days.', 'go through the day on autopilot', 'How much time did you have that was just yours?'],
++  'SPI-03': ['Has a moment of meaning since the loss.', 'Keeps a small ritual that honours what was lost.', 'Has found meaning again and lives by it.', 'feel the loss had taken the meaning out of life', 'How much meaning did you find in your life?'],
++  'SPI-04': ['Notices one day where their actions matched their values.', 'Checks each week whether their time went to what matters.', 'Lives in line with their values most days.', 'do something that went against what matters to you', 'How well did your days match what matters to you?'],
++  'SPI-05': ['Has a moment of hope about the future.', 'Writes one thing they are looking forward to each day.', 'Believes things can get better and acts that way.', 'feel hopeless about the future', 'How hopeful did you feel about the future?'],
++  'SPI-06': ['Feels at home in the new situation for a moment.', 'Builds new routines that fit the new chapter.', 'Feels at home in who they are now.', 'feel you did not know who you are now', 'How at home did you feel in this new chapter?'],
++  'SPI-07': ['Finds a quiet place inside for a minute.', 'Keeps a daily stillness practice.', 'Returns to inner calm easily.', 'feel restless inside with no quiet place', 'How easily could you find calm inside?'],
++  'SPI-08': ['Notices one good thing in the day.', 'Writes three good things each evening.', 'Notices joy and feels grateful most days.', 'go through a day without noticing anything good', 'How much joy did you notice?'],
++  'SPI-09': ['Makes contact with one community or faith group.', 'Joins a regular gathering each week.', 'Feels they belong somewhere.', 'feel you did not belong anywhere', 'How much did you feel you belong?'],
++  'SPI-10': ['Takes one step that feels like moving forward.', 'Sets one small change a week and keeps it.', 'Feels they are moving forward in life.', 'feel stuck in place', 'How much did you feel you were moving forward?'],
++  'SPI-11': ['Sits with a big question without panic for a moment.', 'Reads or reflects on life’s questions a little each week.', 'Has a working answer to “what is it all for” that steadies them.', 'feel shaken by big questions about life', 'How settled did you feel about the big questions?', 'stuck,no-purpose,low-hope', 'change'],
++  'SPI-12': ['Feels a moment of connection with something larger.', 'Keeps a regular practice that connects them to something larger.', 'Feels connected to something beyond themselves.', 'feel cut off from anything larger than yourself', 'How connected did you feel to something larger?', 'disconnected,values-gap,stuck', 'older'],
++  'SPI-13': ['Names one thing that is truly them.', 'Reflects weekly on who they are and what they want.', 'Knows who they are and acts from it.', 'feel unsure who you really are', 'How clearly did you know who you are?', 'identity,stuck', 'young'],
++  'SPI-14': ['Finds one source of guidance in the change.', 'Has someone or something to turn to each week during the change.', 'Moves through the change with a sense of direction.', 'feel lost in the middle of a big change', 'How much direction did you have through the change?', 'identity,stuck,no-purpose', 'change'],
++  'SPI-15': ['Feels a spark of inspiration once.', 'Makes time to create each week.', 'Feels inspired often and acts on it.', 'feel creatively empty', 'How inspired did you feel?', 'stuck,little-joy', 'young'],
++  'SPI-16': ['Notices a hunch and checks it.', 'Pauses quietly before decisions to listen to their gut.', 'Trusts their inner sense and it serves them well.', 'ignore a hunch and regret it', 'How much did you trust your inner sense?', 'stuck,no-calm', 'midlifeWoman'],
++  'SPI-17': ['Lets go of a grudge for an afternoon.', 'Practises forgiveness in a short weekly reflection.', 'Has forgiven what they needed to, and feels lighter.', 'feel stuck holding a grudge', 'How much had you forgiven what you needed to?', 'stuck,meaning-shaken,values-gap', 'older'],
++  'SPI-18': ['Has one restoring morning.', 'Builds rest that restores them into each week.', 'Feels renewed at a deep level.', 'feel worn out deep down', 'How renewed did you feel deep down?', 'autopilot,no-calm,stuck', 'lowEnergy'],
++  'SPI-19': ['Settles one small ethical question for themselves.', 'Writes down the principles they want to live by and checks them weekly.', 'Feels sure of their principles when it counts.', 'feel unsure what the right thing to do was', 'How sure did you feel of your principles?', 'values-gap,stuck', 'working'],
++  'SPI-20': ['Questions one belief that holds them back.', 'Replaces one limiting belief a week with a truer one.', 'Tries things they once thought were not for them.', 'tell yourself you could not do something', 'How open did you feel to what you could do?', 'autopilot,stuck,low-hope', 'young'],
++  'SPI-21': ['Feels sure of themselves in one moment of doubt.', 'Reflects on their strengths each week.', 'Feels assured in who they are.', 'doubt who you are', 'How assured did you feel in yourself?', 'identity,autopilot', 'lowMood'],
++  'SPI-22': ['Feels a flicker of passion for something.', 'Gives time each week to what moves them.', 'Feels passion for life most days.', 'feel indifferent to things that used to move you', 'How much passion did you feel?', 'stuck,little-joy,no-purpose', 'retired'],
++  'SPI-23': ['Names one gap between what they want and what they do.', 'Sets monthly goals that match their aspirations.', 'Their life lines up with what they want for it.', 'feel your life was heading somewhere you did not want', 'How well did your life line up with what you want?', 'values-gap,stuck,no-purpose', 'working'],
++  'SPI-24': ['Talks through one moral conflict with someone.', 'Reflects weekly on choices that test their values.', 'Holds their values in harmony with the people around them.', 'feel torn between your values and what was expected', 'How at peace were you with your choices?', 'values-gap,stuck', 'family'],
++  'SPI-25': ['Does one short spiritual or reflective practice.', 'Keeps a regular practice that fits their beliefs.', 'Their practice is a natural part of life.', 'skip a practice that matters to you', 'How much was your practice part of your life?', 'disconnected,autopilot,no-calm', 'older'],
++
++  /* ---------------------------------------------------------- Physical */
++  'PHY-02': ['Has one afternoon with steady energy.', 'Keeps regular sleep, light movement and meals that sustain energy.', 'Has energy through the day most days.', 'feel tired all day', 'How much energy did you have through the day?'],
++  'PHY-03': ['Lets shoulders drop for a few minutes with a body scan.', 'Does a short release routine twice a day.', 'Body feels relaxed most of the day.', 'notice tension in your shoulders, jaw or back', 'How relaxed did your body feel?'],
++  'PHY-04': ['Has one evening where pain is in the background.', 'Uses gentle movement and a pain-calming routine daily.', 'Pain no longer runs their days or nights.', 'have pain get in the way of what you wanted to do', 'How much were you in charge of your day, not the pain?'],
++  'PHY-05': ['Takes one walk they would usually skip.', 'Moves for 20 minutes most days.', 'Moves 150 minutes a week and feels lively.', 'spend most of the day sitting', 'How lively did your body feel?'],
++  'PHY-06': ['Gets one good sleep after a shift change.', 'Keeps light, meals and sleep anchored to the rota.', 'Sleeps well and feels in rhythm whatever shift they are on.', 'feel out of rhythm because of your hours', 'How in rhythm did your body feel?'],
++  'PHY-07': ['Slows a racing heart with breathing once.', 'Does slow breathing three times a day.', 'Body stays calm, breath slow, most of the time.', 'notice a racing heart or shallow breath', 'How calm did your body feel?'],
++  'PHY-08': ['Gets through one night with fewer wake-ups from sweats.', 'Keeps a cool bedroom and a cooling routine at bedtime.', 'Sleeps through most nights despite flushes.', 'wake up from a hot flush or night sweat', 'How comfortable were your nights?'],
++  'PHY-09': ['Has one day with a bit more strength.', 'Builds up gentle activity a little each week.', 'Has their strength back for daily life.', 'feel too weak to do what you wanted', 'How strong did you feel?'],
++  'PHY-10': ['Skips a late coffee or drink once.', 'Keeps a cut-off for caffeine, alcohol and screens.', 'Habits support their sleep without effort.', 'have caffeine, alcohol or screens late in the day', 'How much did your evening habits help your sleep?'],
++  'PHY-11': ['Puts down one burden for an evening.', 'Shares load with others weekly and takes short rests.', 'Feels physically lighter, not weighed down.', 'feel physically weighed down by everything you carry', 'How light did your body feel?', 'fatigue,tension', 'carer'],
++  'PHY-12': ['Feels energy move after a stretch.', 'Moves or stretches gently every few hours.', 'Energy flows freely through the day.', 'feel stuck or heavy in your body', 'How freely did your energy flow?', 'fatigue,inactive,tension', 'inactive'],
++  'PHY-13': ['Notices one symptom ease after a cooling or calming routine.', 'Keeps steady sleep, meals and movement through the cycle.', 'Body feels balanced most days.', 'feel your hormones throwing your body off', 'How balanced did your body feel?', 'hot-flushes,poor-sleep,fatigue', 'midlifeWoman'],
++  'PHY-14': ['Loosens up after a short stretch.', 'Stretches daily for 10 minutes.', 'Moves freely and easily.', 'feel stiff', 'How freely could you move?', 'tension,pain,inactive', 'older'],
++  'PHY-15': ['Feels steady on their feet after a grounding exercise.', 'Does a balance or grounding exercise each day.', 'Feels steady and grounded in their body.', 'feel unsteady or off-balance', 'How grounded did your body feel?', 'body-clock,fatigue,stress-body', 'older'],
++  'PHY-16': ['Bounces back from one tiring day faster.', 'Balances effort and recovery each week.', 'Recovers quickly from effort.', 'feel tiredness linger after effort', 'How quickly did you recover after effort?', 'fatigue,recovery,poor-sleep', 'working'],
++  'PHY-17': ['Does one movement with more control.', 'Practises strength and balance three times a week.', 'Moves with control and confidence.', 'feel unsure of your body’s strength or balance', 'How confident did you feel in your body?', 'recovery,inactive,fatigue', 'retired'],
++  'PHY-18': ['Gets active once in a still week.', 'Schedules activity on fixed days.', 'Is physically active as a matter of course.', 'go the whole day without being active', 'How active were you?', 'inactive,fatigue', 'working'],
++  'PHY-19': ['Feels a tight area ease after a release exercise.', 'Does a short release routine daily.', 'Body feels at ease.', 'feel tight or constricted in your body', 'How at ease did your body feel?', 'tension,stress-body', 'highStress'],
++  'PHY-20': ['Moves more fluidly after a warm-up.', 'Warms up and moves through a full range daily.', 'Moves fluidly through the day.', 'feel rigid when you moved', 'How fluid did your movement feel?', 'tension,pain,inactive', 'pain'],
++  'PHY-21': ['Calms a stressed body with a short breath practice.', 'Uses a daily practice that brings the body down from alert.', 'Body feels serene, not on alert.', 'feel your body stuck on alert', 'How serene did your body feel?', 'stress-body,tension', 'anxious'],
++  'PHY-22': ['Notices a body signal early, once.', 'Does a daily body check-in.', 'Reads their body’s signals and responds in time.', 'notice discomfort only once it was bad', 'How well did you notice your body’s signals?', 'pain,tension', 'pain'],
++  'PHY-23': ['Enjoys one physical sensation fully.', 'Notes one good body feeling each day.', 'Appreciates their body.', 'take your body for granted or dislike it', 'How much did you appreciate your body?', 'fatigue,inactive', 'lowMood'],
++  'PHY-24': ['Gets curious about a tension instead of fighting it, once.', 'Explores tension with gentle movement each day.', 'Meets body sensations with curiosity.', 'brace against a tension in your body', 'How curious were you about what your body felt?', 'tension,stress-body', 'young'],
++  'PHY-25': ['Feels mind and body together for a moment.', 'Does a short mind-body practice daily.', 'Feels whole and integrated in their body.', 'feel your mind and body pulling apart', 'How integrated did mind and body feel?', 'pain,tension,stress-body', 'pain'],
++}
++
++export const FLIP_DETAILS: Record<string, FlipDetail> = Object.fromEntries(
++  Object.entries(ROWS).map(([k, [x, y, z, often, sign, issues, who]]) => [`SF-${k}`, { x, y, z, often, sign, issues: issues?.split(','), who }]),
++)
+diff --git a/src/admin/data/stateFlips.test.ts b/src/admin/data/stateFlips.test.ts
+index f3d98bd..e5d1783 100644
+--- a/src/admin/data/stateFlips.test.ts
++++ b/src/admin/data/stateFlips.test.ts
+@@ -3,6 +3,7 @@ import { DIMENSIONS, ISSUES } from './personaConditionV4'
+ import { sleepCohort, summarise } from './stateFlipFormulas'
+ import { DOJO_LINKS, MILESTONES } from './stateFlipSleep'
+ import { AKP_SOURCE } from './generated/akpSource'
++import { FLIP_DETAILS, WHO } from './stateFlipDetails'
+ import { DRAFTED, STATEFLIP_DIMENSIONS, flipNumbers, stateFlipById, stateFlipSummary, stateFlips } from './stateFlips'
+ 
+ const fs = stateFlips()
+@@ -89,3 +90,38 @@ describe('the 125 StateFlips (U141)', () => {
+     }
+   })
+ })
++
++describe('per-StateFlip steps, check-ins and cohorts (U145)', () => {
++  it('gives no two StateFlips the same milestone or check-in text', () => {
++    const whats = fs.flatMap((f) => f.milestones.map((m) => m.what))
++    expect(new Set(whats).size).toBe(whats.length)
++    expect(new Set(fs.map((f) => f.measure.markers[0].question)).size).toBe(125)
++    expect(new Set(fs.map((f) => f.measure.markers[3].question)).size).toBe(125)
++  })
++
++  it('has a written detail for every StateFlip but sleep, with cohort issues from its own dimension', () => {
++    for (const f of fs) {
++      if (f.id === 'SF-PHY-01') continue
++      const d = FLIP_DETAILS[f.id]
++      expect(d, f.id).toBeDefined()
++      if (f.n > 10) {
++        expect(d.issues?.length, f.id).toBeGreaterThan(0)
++        for (const i of d.issues!) expect(ISSUES[f.dimension].map((x) => x.id), `${f.id} ${i}`).toContain(i)
++        if (d.who) expect(WHO[d.who]).toBeDefined()
++      }
++    }
++  })
++
++  it('gives StateFlips 11–25 their own cohorts, so their numbers differ', () => {
++    for (const d of DIMENSIONS) {
++      const extra = fs.filter((f) => f.dimension === d && f.n > 10).map((f) => flipNumbers(f))
++      expect(new Set(extra.map((n) => n.ids.join(','))).size, d).toBeGreaterThanOrEqual(13)
++      for (const n of extra) expect(n.group).toBeGreaterThan(4)
++    }
++  })
++
++  it('drops keyword needs that were wrong and fixes shifted labels', () => {
++    expect(stateFlipById('SF-PHY-04')!.need.kind).toBe('none')
++    expect(stateFlipById('SF-PHY-01')!.need.id).toBe('DI003')
++  })
++})
+diff --git a/src/admin/data/stateFlips.ts b/src/admin/data/stateFlips.ts
+index 5cfdd4a..efff50e 100644
+--- a/src/admin/data/stateFlips.ts
++++ b/src/admin/data/stateFlips.ts
+@@ -8,7 +8,8 @@
+  * "from <workbook / tab / ID>" or "drafted by us — to review". The bad and the
+  * good state of 01–10 come from our issue list (which quotes the DOJO duals);
+  * of 11–25 from the workbook row itself. The X → Y → Z steps and the check-in
+- * questions of every StateFlip but sleep are drafted by us from a template.
++ * questions of every StateFlip but sleep are drafted by us, one set per
++ * StateFlip (stateFlipDetails.ts, U145), and 11–25 follow their own cohort.
+  * Sleep (SF-PHY-01) is the one built out in full in stateFlipSleep.ts and keeps
+  * its own markers, steps, DOJO links and numbers, unchanged.
+  *
+@@ -20,6 +21,8 @@
+ import { AKP_SOURCE } from './generated/akpSource'
+ import { DIMENSIONS, DIMENSION_LABEL, DIMENSION_PLAIN, ISSUES, conditionsV4, type ConditionV4, type Dimension } from './personaConditionV4'
+ import { generatePersonasV4, type PersonaV4 } from './personasV4'
++import { FLIP_DETAILS, WHO } from './stateFlipDetails'
++import { FIVE_DIMENSIONS, type DimCode } from './dimensions'
+ import { personFlip, sleepCohort, summarise, type FlipSummary } from './stateFlipFormulas'
+ import { DOJO_LINKS, MARKERS, MILESTONES, SLEEP_ISSUES, STATES, severityOf, whoHasIt, type Layer, type MilestoneId } from './stateFlipSleep'
+ 
+@@ -28,19 +31,15 @@ export const from = (...parts: string[]) => `from ${parts.join(' / ')}`
+ 
+ /* ------------------------------------------------------- The 5 dimensions */
+ 
+-export type DimCode = 'MEN' | 'EMO' | 'REL' | 'SPI' | 'PHY'
++export type { DimCode }
+ 
+ /**
+- * The one shared dimension list for StateFlips, AKPs and personas' identity,
+- * built on personaConditionV4's five. Mapping note (not refactored): the
+- * healing map's worlds are the same five with physical called "sleep"
+- * (healingMap.ts WorldId 'sleep' = physical); the therapeutic map's corners
+- * (product, business, wellness) are functions, not dimensions: all five sit
+- * under its "wellness" corner.
++ * The shared five dimensions (dimensions.ts, U145) with the world each map
++ * calls them: the Healing Map and the Therapeutic map name physical "sleep".
+  */
+ export const STATEFLIP_DIMENSIONS: { id: Dimension; code: DimCode; label: string; plain: string; healingWorld: string }[] = DIMENSIONS.map((d) => ({
+   id: d,
+-  code: ({ mental: 'MEN', emotional: 'EMO', relational: 'REL', spiritual: 'SPI', physical: 'PHY' } as const)[d],
++  code: FIVE_DIMENSIONS.find((x) => x.id === d)!.code,
+   label: DIMENSION_LABEL[d],
+   plain: DIMENSION_PLAIN[d],
+   healingWorld: d === 'physical' ? 'sleep' : d,
+@@ -77,8 +76,10 @@ export interface StateFlip {
+   measure: { scale: string; markers: FlipMarker[]; source: string }
+   /** The persona-condition issues whose people this StateFlip is for. */
+   issues: string[]
+-  /** True when the issues are a related issue, not this StateFlip's own (11–25). */
++  /** True when the issues are related issues, not this StateFlip's own (11–25). */
+   sharedIssue: boolean
++  /** 11–25: the identity fact (stateFlipDetails WHO) its cohort must also have. */
++  who?: keyof typeof WHO
+   prevalence: string
+   prevalenceSource: string
+   layer: Layer
+@@ -103,10 +104,10 @@ const overlap = (a: Set<string>, b: Set<string>) => {
+   return n
+ }
+ /** The best `k` rows by token overlap (ties keep sheet order); rows scoring 0 are dropped. */
+-function best<T>(rows: readonly T[], text: (r: T) => string, want: Set<string>, k: number): T[] {
++function best<T>(rows: readonly T[], text: (r: T) => string, want: Set<string>, k: number, min = 1): T[] {
+   return rows
+     .map((r, i) => ({ r, i, s: overlap(want, tokens(text(r))) }))
+-    .filter((x) => x.s > 0)
++    .filter((x) => x.s >= min)
+     .sort((a, b) => b.s - a.s || a.i - b.i)
+     .slice(0, k)
+     .map((x) => x.r)
+@@ -168,24 +169,38 @@ export function layerFor(d: Dimension, bad: string, good: string): Layer {
+   return LAYER_DEFAULT[d]
+ }
+ 
+-function steps(bad: string, good: string): FlipMilestone[] {
+-  const b = lower(bad)
+-  const g = lower(good)
++const STRENGTH: Record<Dimension, string> = {
++  mental: 'When it happened, how much did it take over your thinking? (0 = not at all, 10 = completely)',
++  emotional: 'When the feeling came, how strong was it? (0 = barely there, 10 = as strong as it gets)',
++  relational: 'When it happened, how much did it hurt or upset you? (0 = not at all, 10 = a great deal)',
++  spiritual: 'How heavily did it weigh on you this week? (0 = not at all, 10 = very heavily)',
++  physical: 'How much did your body feel it? (0 = not at all, 10 = as bad as it gets)',
++}
++const IMPACT: Record<Dimension, string> = {
++  mental: 'How much did it get in the way of work, study or getting things done? (not at all, a little, a lot)',
++  emotional: 'How much did it get in the way of your day and the people in it? (not at all, a little, a lot)',
++  relational: 'How much did it get in the way of time with the people who matter to you? (not at all, a little, a lot)',
++  spiritual: 'How much did it take the meaning out of your week? (not at all, a little, a lot)',
++  physical: 'How much did it stop you doing what you wanted, day or night? (not at all, a little, a lot)',
++}
++
++/** The per-StateFlip X / Y / Z (stateFlipDetails.ts); thresholds and layers are the shared ones. */
++function steps(id: string, good: string): FlipMilestone[] {
++  const d = FLIP_DETAILS[id]
+   return [
+-    { id: 'X', title: 'Feels some relief', threshold: 45, layer: 'mood', what: `Notices ${b} sooner and can ease it for a while; a few better days a week.` },
+-    { id: 'Y', title: 'Has a routine that helps', threshold: 65, layer: 'habit', what: `Keeps a short daily practice that brings ${g} on most days.` },
+-    { id: 'Z', title: `${cap(g)} holds`, threshold: 85, layer: 'skill', what: `${cap(g)} holds without effort, even in a hard week. This is the StateFlip.` },
++    { id: 'X', title: 'First relief', threshold: 45, layer: 'mood', what: d.x },
++    { id: 'Y', title: 'A routine that helps', threshold: 65, layer: 'habit', what: d.y },
++    { id: 'Z', title: `${cap(lower(good))} holds`, threshold: 85, layer: 'skill', what: `${d.z} This is the StateFlip.` },
+   ]
+ }
+ 
+-function markers(bad: string, good: string): FlipMarker[] {
+-  const b = lower(bad)
+-  const g = lower(good)
++function markers(id: string, dim: Dimension): FlipMarker[] {
++  const d = FLIP_DETAILS[id]
+   return [
+-    { label: 'How often', question: `On how many of the last 7 days did you have ${b}?`, bad: '5–7 days', good: '0–1 days' },
+-    { label: 'How strong', question: 'When it came, how strong was it? (0 = not at all, 10 = as bad as it gets)', bad: '7–10', good: '0–2' },
+-    { label: 'Got in the way', question: 'How much did it get in the way of your day? (not at all, a little, a lot)', bad: 'a lot', good: 'not at all' },
+-    { label: `How close to ${g}`, question: `How close did you feel to ${g} this week? (1 = far, 5 = there)`, bad: '1–2', good: '4–5' },
++    { label: 'How often', question: `On how many of the last 7 days did you ${d.often}?`, bad: '5–7 days', good: '0–1 days' },
++    { label: 'How strong', question: STRENGTH[dim], bad: '7–10', good: '0–2' },
++    { label: 'Got in the way', question: IMPACT[dim], bad: 'a lot', good: 'not at all' },
++    { label: 'Good sign', question: `${d.sign} (1 = not at all, 5 = fully)`, bad: '1–2', good: '4–5' },
+   ]
+ }
+ const MEASURE_SCALE = '0–100, higher is better: four questions, 25 points each, after each chapter. X at 45, Y at 65, Z (the flip) at 85.'
+@@ -201,12 +216,31 @@ export const conceptId = (c: { sheet: string; id: string }) => `${c.sheet} ${c.i
+ 
+ function dojoFor(d: Dimension, bad: string, good: string) {
+   const want = tokens(bad, good)
+-  const concepts = best(CONCEPTS, conceptText, want, 2).map(conceptId)
+-  const duals = best(S.duals, (x) => dualText(x, d), want, 2).map((x) => x.id)
++  // Two shared words at least: one shared word linked "tension" to anything with "tension" in it (U145).
++  const concepts = best(CONCEPTS, conceptText, want, 2, 2).map(conceptId)
++  const duals = best(S.duals, (x) => dualText(x, d), want, 2, 2).map((x) => x.id)
+   const skills = best(S.skills, (x) => `${x.name} ${x.role}`, want, 2).map((x) => x.id)
+   return { concepts, duals, skills: skills.length ? skills : [SKILL_FALLBACK[d]] }
+ }
+ 
++/**
++ * Needs checked by hand for StateFlips 01–10 (U145): `null` drops a keyword
++ * match that was wrong (pain matched “Stomach comfort”, low mood “Self-esteem”);
++ * a label fixes a row whose columns are shifted in the sheet. None beats wrong.
++ */
++const NEED_FIX: Record<string, null | { id: string; label: string }> = {
++  'SF-MEN-05': null, 'SF-EMO-01': null, 'SF-EMO-04': null, 'SF-EMO-05': null, 'SF-EMO-07': null,
++  'SF-SPI-03': null, 'SF-SPI-08': null, 'SF-PHY-04': null, 'SF-PHY-05': null, 'SF-PHY-06': null, 'SF-PHY-07': null,
++  'SF-PHY-01': { id: 'DI003', label: 'Improving Sleep Quality (Sleep disturbances, insomnia → Restful sleep)' },
++  'SF-PHY-10': { id: 'DI003', label: 'Improving Sleep Quality (Poor sleep hygiene → Sleep hygiene)' },
++}
++
++function fixedNeed(id: string, need: StateFlip['need'], good: string): StateFlip['need'] {
++  if (!(id in NEED_FIX)) return need
++  const f = NEED_FIX[id]
++  return f ? { id: f.id, kind: 'dual', label: f.label, source: from('DOJO workbook', 'DOJO_C_Duals', f.id) } : { id: '', kind: 'none', label: `${good} (no workbook row matches well enough)`, source: DRAFTED }
++}
++
+ function needFor(d: Dimension, bad: string, good: string): StateFlip['need'] {
+   const want = tokens(good)
+   const un = best(S.un.filter((u) => unDimension(u) === d && !UN_SKIP.has(u.id)), (u) => `${u.wellnessKw} ${u.headline}`, want, 1)[0]
+@@ -224,8 +258,8 @@ function issueFlip(d: Dimension, i: number): StateFlip {
+   const bad = issue.label
+   const good = goodOf(issue.dojo)
+   const base: StateFlip = {
+-    id, n: i + 1, dimension: d, title: `${bad} → ${lower(good)}`, need: needFor(d, bad, good), bad, good,
+-    milestones: steps(bad, good), measure: { scale: MEASURE_SCALE, markers: markers(bad, good), source: DRAFTED },
++    id, n: i + 1, dimension: d, title: `${bad} → ${lower(good)}`, need: fixedNeed(id, needFor(d, bad, good), good), bad, good,
++    milestones: id === 'SF-PHY-01' ? [] : steps(id, good), measure: { scale: MEASURE_SCALE, markers: id === 'SF-PHY-01' ? [] : markers(id, d), source: DRAFTED },
+     issues: [issue.id], sharedIssue: false, prevalence: issue.prevalence, prevalenceSource: issue.kind === 'measured' ? `${issue.source} (measured, personasV4 / personaConditionV4 sources)` : 'assumption (personaConditionV4)',
+     layer: layerFor(d, bad, good), layerSource: DRAFTED, dojo: dojoFor(d, bad, good), origin: 'issue',
+     source: `${from('DOJO workbook', 'DOJO_C_Duals', issue.dojo)}, via the persona condition issue “${issue.id}”`,
+@@ -260,11 +294,16 @@ function extraFlips(d: Dimension, taken: Set<string>): StateFlip[] {
+     if (!key || seen.has(key) || out.length >= 15) return
+     seen.add(key)
+     const n = 11 + out.length
++    const id = `SF-${dimCode(d)}-${n}`
++    const det = FLIP_DETAILS[id]
+     const related = best(ISSUES[d], (i) => `${i.label} ${i.dojo} ${i.goal}`, tokens(bad, good), 1)[0] ?? ISSUES[d].find((i) => i.id === FALLBACK_ISSUE[d])!
++    const issues = det?.issues ?? [related.id]
++    const names = issues.map((x) => ISSUES[d].find((i) => i.id === x)?.label.toLowerCase() ?? x).join(', ')
+     out.push({
+-      id: `SF-${dimCode(d)}-${n}`, n, dimension: d, title: `${bad} → ${good.toLowerCase()}`, need, bad, good,
+-      milestones: steps(bad, good), measure: { scale: MEASURE_SCALE, markers: markers(bad, good), source: DRAFTED },
+-      issues: [related.id], sharedIssue: true, prevalence: `No population figure. Counted here as the people with the related issue “${related.label.toLowerCase()}”.`, prevalenceSource: DRAFTED,
++      id, n, dimension: d, title: `${bad} → ${good.toLowerCase()}`, need, bad, good,
++      milestones: steps(id, good), measure: { scale: MEASURE_SCALE, markers: markers(id, d), source: DRAFTED },
++      issues, sharedIssue: true, who: det?.who,
++      prevalence: `No population figure. Its own cohort: people whose ${DIMENSION_LABEL[d].toLowerCase()} issue is one of ${names}${det?.who ? `, who are ${WHO[det.who].label}` : ''}.`, prevalenceSource: DRAFTED,
+       layer: layerFor(d, bad, good), layerSource: DRAFTED, dojo: dojoFor(d, bad, good), origin: 'workbook', source: src,
+     })
+   }
+@@ -327,10 +366,10 @@ function groupOf(d: Dimension, issues: string[]) {
+ 
+ /** Who has a StateFlip in the 1,000 v4 personas, and its chapters, chance and cost (computed). */
+ export function flipNumbers(f: StateFlip): FlipNumbers {
+-  const key = `${f.dimension}:${f.issues.join(',')}:${f.id === 'SF-PHY-01'}`
++  const key = `${f.dimension}:${f.issues.join(',')}:${f.who ?? ''}:${f.id === 'SF-PHY-01'}`
+   const hit = NUM_CACHE.get(key)
+   if (hit) return hit
+-  const withIssue = groupOf(f.dimension, f.issues)
++  const withIssue = groupOf(f.dimension, f.issues).filter(({ p, c }) => !f.who || WHO[f.who].test(p, c))
+   let out: FlipNumbers
+   if (f.id === 'SF-PHY-01') {
+     const w = whoHasIt()
+@@ -348,7 +387,7 @@ export function flipNumbers(f: StateFlip): FlipNumbers {
+     })
+     out = {
+       ...summarise(people), withIssue: withIssue.length, mainNeed: withIssue.filter(({ c }) => c.mainNeed === f.dimension).length, group: group.length, ids: group.map(({ p }) => p.id),
+-      basis: `v4 personas whose ${DIMENSION_LABEL[f.dimension].toLowerCase()} issue is ${f.issues.join(', ')}, band not good, no risk flag. Start = their ${DIMENSION_LABEL[f.dimension].toLowerCase()} score. Same formulas as sleep.`,
++      basis: `v4 personas whose ${DIMENSION_LABEL[f.dimension].toLowerCase()} issue is ${f.issues.join(', ')}${f.who ? ` and who are ${WHO[f.who].label}` : ''}, band not good, no risk flag. Start = their ${DIMENSION_LABEL[f.dimension].toLowerCase()} score. Same formulas as sleep.`,
+     }
+   }
+   NUM_CACHE.set(key, out)
+diff --git a/src/admin/pages/lab/AkpGraph.tsx b/src/admin/pages/lab/AkpGraph.tsx
+new file mode 100644
+index 0000000..c87dc40
+--- /dev/null
++++ b/src/admin/pages/lab/AkpGraph.tsx
+@@ -0,0 +1,182 @@
++import { useMemo, useState } from 'react'
++import { forceLayout } from '../../data/forceLayout'
++
++/*
++ * The AKP relationship graph (U145, J206): an SVG force-directed graph, laid
++ * out by data/forceLayout.ts (no dependency). Nodes are coloured by group
++ * (family or modality, from the admin series tokens), links styled by type
++ * (stroke weight and dash, so colour stays for the nodes). Hover or focus a
++ * node to light up its neighbours; click to open its drawer. Below lg the
++ * picture would be too small to read, so the same graph is shown as a list.
++ */
++
++export interface GraphNode {
++  id: string
++  label: string
++  group: string
++  fill: string
++  dot: string
++  goal?: boolean
++  draft?: boolean
++}
++
++export interface GraphLink {
++  from: string
++  to: string
++  type: string
++}
++
++export interface LinkStyle {
++  label: string
++  cls: string
++  width: number
++  dash?: string
++}
++
++const W = 960
++const H = 560
++
++export function AkpGraph({ nodes, links, linkStyles, legend, onOpen, aria }: {
++  nodes: GraphNode[]
++  links: GraphLink[]
++  linkStyles: Record<string, LinkStyle>
++  legend: { label: string; dot: string }[]
++  onOpen: (id: string) => void
++  aria: string
++}) {
++  const [hover, setHover] = useState<string | null>(null)
++  const pos = useMemo(
++    () => forceLayout(nodes.map((n) => ({ id: n.id, pin: n.goal && nodes.filter((x) => x.goal).length === 1 ? ([0.5, 0.5] as [number, number]) : undefined })), links, W, H, 320, 56),
++    [nodes, links],
++  )
++  const near = useMemo(() => {
++    if (!hover) return null
++    const s = new Set([hover])
++    for (const l of links) {
++      if (l.from === hover) s.add(l.to)
++      if (l.to === hover) s.add(l.from)
++    }
++    return s
++  }, [hover, links])
++  const byId = new Map(nodes.map((n) => [n.id, n]))
++  const usedTypes = [...new Set(links.map((l) => l.type))]
++  const degree = (id: string) => links.filter((l) => l.from === id || l.to === id).length
++
++  return (
++    <div className="flex min-w-0 flex-col gap-10" data-akp-graph>
++      <div className="flex flex-wrap items-center gap-x-16 gap-y-6 text-11 text-adm-ink-2" aria-label="Legend">
++        {legend.map((g) => (
++          <span key={g.label} className="inline-flex items-center gap-4">
++            <span className={`size-10 rounded-full ${g.dot}`} aria-hidden="true" />
++            {g.label}
++          </span>
++        ))}
++        <span className="h-12 w-px bg-adm-line" aria-hidden="true" />
++        {usedTypes.map((t) => {
++          const s = linkStyles[t]
++          return (
++            <span key={t} className="inline-flex items-center gap-4">
++              <svg width="28" height="8" aria-hidden="true">
++                <line x1="1" x2="27" y1="4" y2="4" className={s.cls} strokeWidth={s.width} strokeDasharray={s.dash} />
++              </svg>
++              {s.label}
++            </span>
++          )
++        })}
++      </div>
++      <p className="text-11 text-adm-muted" aria-live="polite">
++        {nodes.filter((n) => !n.goal).length} AKPs around the goal · {links.length} links
++      </p>
++
++      <div className="hidden min-w-0 rounded-12 border border-adm-line bg-adm-bg lg:block">
++        <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={aria}>
++          <defs>
++            <marker id="akp-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
++              <path d="M0,0 L8,4 L0,8 z" className="fill-adm-muted" />
++            </marker>
++          </defs>
++          {links.map((l, i) => {
++            const a = pos.get(l.from)
++            const b = pos.get(l.to)
++            if (!a || !b) return null
++            const s = linkStyles[l.type]
++            const r = byId.get(l.to)?.goal ? 20 : 11
++            const d = Math.max(1, Math.hypot(b.x - a.x, b.y - a.y))
++            const lit = !near || (near.has(l.from) && near.has(l.to))
++            return (
++              <line
++                key={i}
++                x1={a.x}
++                y1={a.y}
++                x2={b.x - ((b.x - a.x) / d) * r}
++                y2={b.y - ((b.y - a.y) / d) * r}
++                className={s.cls}
++                strokeWidth={s.width}
++                strokeDasharray={s.dash}
++                markerEnd="url(#akp-arrow)"
++                opacity={lit ? 0.9 : 0.12}
++              >
++                <title>{`${byId.get(l.from)?.label} ${s.label.toLowerCase()} ${byId.get(l.to)?.label}`}</title>
++              </line>
++            )
++          })}
++          {nodes.map((n) => {
++            const p = pos.get(n.id)!
++            const lit = !near || near.has(n.id)
++            const r = n.goal ? 18 : 9
++            const right = p.x >= W / 2 ? p.x < W - 170 : p.x < 200
++            return (
++              <g
++                key={n.id}
++                role="button"
++                tabIndex={0}
++                aria-label={`${n.id} ${n.label}, ${n.group}, ${degree(n.id)} links`}
++                className="cursor-pointer outline-none"
++                opacity={lit ? 1 : 0.25}
++                onMouseEnter={() => setHover(n.id)}
++                onMouseLeave={() => setHover(null)}
++                onFocus={() => setHover(n.id)}
++                onBlur={() => setHover(null)}
++                onClick={() => onOpen(n.id)}
++                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onOpen(n.id)}
++              >
++                <title>{`${n.id} · ${n.label} (${n.group})${n.draft ? ' · drafted' : ''}`}</title>
++                <circle cx={p.x} cy={p.y} r={r + 6} className="fill-transparent" />
++                {n.draft && <circle cx={p.x} cy={p.y} r={r + 4} className="fill-none stroke-adm-muted" strokeWidth={1.25} strokeDasharray="2 2" />}
++                <circle cx={p.x} cy={p.y} r={r} className={`${n.goal ? 'fill-adm-ink' : n.fill} stroke-adm-surface`} strokeWidth={2} />
++                <text x={n.goal ? p.x : right ? p.x + r + 5 : p.x - r - 5} y={n.goal ? p.y + r + 16 : p.y + 4} textAnchor={n.goal ? 'middle' : right ? 'start' : 'end'} className={`fill-adm-ink text-11 ${n.goal || hover === n.id ? 'font-semibold' : ''}`} paintOrder="stroke" stroke="var(--color-adm-bg)" strokeWidth={3}>
++                  {n.goal || n.label.length <= 26 ? n.label : `${n.label.slice(0, 25)}…`}
++                </text>
++              </g>
++            )
++          })}
++        </svg>
++      </div>
++
++      <ul className="flex flex-col gap-6 lg:hidden" data-akp-graph-list>
++        {nodes.map((n) => {
++          const out = links.filter((l) => l.from === n.id)
++          return (
++            <li key={n.id} className="rounded-8 border border-adm-line">
++              <button type="button" onClick={() => onOpen(n.id)} className="flex w-full min-w-0 flex-col gap-4 p-10 text-left">
++                <span className="inline-flex min-w-0 items-center gap-6 text-12 font-semibold text-adm-ink">
++                  <span className={`size-10 shrink-0 rounded-full ${n.goal ? 'bg-adm-ink' : n.dot}`} aria-hidden="true" />
++                  <span className="min-w-0 truncate">{n.label}</span>
++                </span>
++                <span className="text-11 text-adm-muted">
++                  {n.id} · {n.group}
++                  {n.draft ? ' · drafted' : ''}
++                </span>
++                {out.length > 0 && (
++                  <span className="text-11 text-adm-ink-2">
++                    {out.map((l) => `${linkStyles[l.type].label.toLowerCase()} ${byId.get(l.to)?.label ?? l.to}`).join(' · ')}
++                  </span>
++                )}
++              </button>
++            </li>
++          )
++        })}
++      </ul>
++    </div>
++  )
++}
+diff --git a/src/admin/pages/lab/HealingMapPage.tsx b/src/admin/pages/lab/HealingMapPage.tsx
+index d73ca66..0032c2b 100644
+--- a/src/admin/pages/lab/HealingMapPage.tsx
++++ b/src/admin/pages/lab/HealingMapPage.tsx
+@@ -4,6 +4,7 @@ import { usePageTab } from '../../components/pageTab'
+ import { RELEASES } from '../../../versions/releases'
+ import { Link } from 'react-router-dom'
+ import { useState } from 'react'
++import { worldMappingLine } from '../../data/dimensions'
+ import { Badge, PageHeader, Panel, type Tone } from '../../components/ui'
+ import {
+   LINKS, MIN_PEOPLE_FOR_LEARNED, NODES, PROVENANCE_MEANING, PROVENANCE_TEXT, RING_LABEL, WORLDS,
+@@ -170,6 +171,9 @@ function HealingMap() {
+   return (
+     <div className="flex flex-col gap-16">
+       <PageHeader title="Healing Map" description="Which building blocks of a session tend to help which bad state, and where each link comes from." />
++      <p className="text-12 text-adm-muted" data-dimension-mapping>
++        Worlds on the shared five dimensions (dimensions.ts): {worldMappingLine(WORLDS.map((w) => ({ id: w.id, label: w.short })))}.
++      </p>
+       {!RELEASES.adminNav2 && summaryBlock}
+       <PageTabs
+         summary={
+diff --git a/src/admin/pages/lab/StateFlipsCatalogue.tsx b/src/admin/pages/lab/StateFlipsCatalogue.tsx
+index e542657..242330d 100644
+--- a/src/admin/pages/lab/StateFlipsCatalogue.tsx
++++ b/src/admin/pages/lab/StateFlipsCatalogue.tsx
+@@ -7,6 +7,8 @@ import { generatePersonasV4 } from '../../data/personasV4'
+ import { DRAFTED, STATEFLIP_DIMENSIONS, flipNumbers, stateFlipById, stateFlipSummary, stateFlips, type StateFlip } from '../../data/stateFlips'
+ import { LAYER_TEXT, type Layer } from '../../data/stateFlipSleep'
+ import { useDetail } from '../reports/DetailDrawer'
++import { CHAPTER_GOAL, CHAPTER_LINKS, CHAPTER_LINK_TEXT, CHAPTER_MODALITIES, CHAPTER_PHASES, chapterNodeById, chapterNodes, type ChapterModality } from '../../data/akpChapterGraph'
++import { AkpGraph, type GraphLink, type GraphNode, type LinkStyle } from './AkpGraph'
+ 
+ /*
+  * Admin → Product lab → StateFlips, tabs "All StateFlips" and "AKP catalogue"
+@@ -304,154 +306,348 @@ export function AllStateFlips() {
+ 
+ /* -------------------------------------------------------- AKP catalogue */
+ 
+-function FlipGraph({ flipId }: { flipId: string }) {
++const MOD_BG: Record<ChapterModality, string> = { Script: 'bg-adm-s1', Music: 'bg-adm-s2', Voice: 'bg-adm-s3', Image: 'bg-adm-s4' }
++const MOD_FILL: Record<ChapterModality, string> = { Script: 'fill-adm-s1', Music: 'fill-adm-s2', Voice: 'fill-adm-s3', Image: 'fill-adm-s4' }
++
++const LINK_STYLES: Record<string, LinkStyle> = {
++  drives: { label: 'Drives', cls: 'stroke-adm-ink', width: 2 },
++  serves: { label: 'Serves', cls: 'stroke-adm-ink', width: 1.5 },
++  'part-of': { label: 'Part of', cls: 'stroke-adm-muted', width: 1.5 },
++  'step-of': { label: 'Step of', cls: 'stroke-adm-muted', width: 1.5 },
++  syncs: { label: 'Keeps time with', cls: 'stroke-adm-muted', width: 1.5, dash: '6 4' },
++  reinforces: { label: 'Reinforces', cls: 'stroke-adm-muted', width: 1.25, dash: '2 3' },
++  cues: { label: 'Cues', cls: 'stroke-adm-axis', width: 1.5, dash: '1 4' },
++  supports: { label: 'Supports', cls: 'stroke-adm-muted', width: 1.25, dash: '2 3' },
++  feeds: { label: 'Feeds', cls: 'stroke-adm-muted', width: 1.25 },
++  'fed-by': { label: 'Is fed by', cls: 'stroke-adm-muted', width: 1.25, dash: '6 4' },
++  mirrors: { label: 'Mirrors', cls: 'stroke-adm-axis', width: 1.5, dash: '1 4' },
++}
++
++const CHAPTER = 'chapter-1'
++const MAX_FLIP_NODES = 40
++
++function chapterItem(id: string) {
++  const n = chapterNodeById(id)!
++  const out = CHAPTER_LINKS.filter((l) => l.from === id)
++  const inc = CHAPTER_LINKS.filter((l) => l.to === id)
++  const phases = CHAPTER_PHASES.filter((p) => p.drivers.includes(id))
++  const name = (x: string) => (x === CHAPTER_GOAL.id ? CHAPTER_GOAL.name : chapterNodeById(x)?.name ?? x)
++  return {
++    kicker: `${n.id} · ${n.modality} · Sleep, chapter 1`,
++    title: n.name,
++    numbers: [
++      { label: 'Layer', value: n.layer },
++      { label: 'Modality', value: n.modality },
++      { label: 'Links', value: `${out.length + inc.length}` },
++      { label: 'Source', value: n.inCatalogue ? 'Catalogue' : 'Drafted' },
++    ],
++    extra: (
++      <div className="flex flex-col gap-10 text-12 text-adm-ink-2" data-chapter-node>
++        <p>{n.role}</p>
++        <p className="text-11 text-adm-muted">Source: {n.source}</p>
++        <Sub title="Drives the uplift in">
++          <p>{phases.map((p) => `${p.name} (minutes ${p.minutes[0]}–${p.minutes[1]})`).join(', ')}</p>
++        </Sub>
++        <Sub title="Links">
++          <ul className="flex flex-col gap-2">
++            {out.map((l) => (
++              <li key={`o${l.to}`}>
++                {CHAPTER_LINK_TEXT[l.type].verb} <span className="font-medium text-adm-ink">{name(l.to)}</span>
++              </li>
++            ))}
++            {inc.map((l) => (
++              <li key={`i${l.from}`}>
++                <span className="font-medium text-adm-ink">{name(l.from)}</span> {CHAPTER_LINK_TEXT[l.type].verb} this
++              </li>
++            ))}
++          </ul>
++        </Sub>
++      </div>
++    ),
++  }
++}
++
++function chapterGraph(): { nodes: GraphNode[]; links: GraphLink[] } {
++  return {
++    nodes: [
++      { id: CHAPTER_GOAL.id, label: CHAPTER_GOAL.name, group: 'Goal', fill: 'fill-adm-ink', dot: 'bg-adm-ink', goal: true },
++      ...chapterNodes().map((n) => ({ id: n.id, label: n.name, group: `${n.modality} · ${n.layer}`, fill: MOD_FILL[n.modality], dot: MOD_BG[n.modality], draft: !n.inCatalogue })),
++    ],
++    links: CHAPTER_LINKS.map((l) => ({ ...l })),
++  }
++}
++
++function flipGraph(flipId: string): { nodes: GraphNode[]; links: GraphLink[] } {
++  const goalId = flipId.replace(/^SF-/, 'WG-')
++  const goal = akpById(goalId)!
++  const steps = ['X', 'Y', 'Z'].map((m) => akpById(`${goalId}-${m}`)).filter((a): a is Akp => !!a)
++  const strategy = akps().filter((a) => a.kind === 'strategy' && a.flips.includes(flipId)).slice(0, MAX_FLIP_NODES)
++  const set = new Set([goalId, ...steps.map((a) => a.id), ...strategy.map((a) => a.id)])
++  const node = (a: Akp, isGoal = false): GraphNode => ({ id: a.id, label: isGoal ? a.id.replace('WG-', '') : a.name, group: `${FAMILY[a.family].label} · ${a.layer}`, fill: FAMILY_FILL[a.family], dot: FAMILY_BG[a.family], goal: isGoal, draft: !a.fromFile })
++  const links: GraphLink[] = [
++    ...steps.map((a) => ({ from: a.id, to: goalId, type: 'step-of' })),
++    ...strategy.map((a) => ({ from: a.id, to: goalId, type: 'serves' })),
++    ...strategy.flatMap((a) => a.links.filter((l) => set.has(l.to)).map((l) => ({ from: a.id, to: l.to, type: l.type }))),
++  ]
++  return { nodes: [node(goal, true), ...steps.map((a) => node(a)), ...strategy.map((a) => node(a))], links }
++}
++
++function Chip({ on, onClick, dot, children }: { on: boolean; onClick: () => void; dot?: string; children: ReactNode }) {
++  return (
++    <button type="button" aria-pressed={on} onClick={onClick} className={`inline-flex items-center gap-4 rounded-full border px-10 py-4 text-11 font-medium ${on ? 'border-adm-ink bg-adm-ink text-adm-surface' : 'border-adm-line text-adm-ink-2 hover:bg-adm-hover'}`}>
++      {dot && <span className={`size-8 rounded-full ${dot}`} aria-hidden="true" />}
++      {children}
++    </button>
++  )
++}
++
++function StatCard({ dot, label, value, sub }: { dot?: string; label: string; value: number; sub?: string }) {
++  return (
++    <div className="flex min-w-0 flex-col gap-2 rounded-8 border border-adm-line bg-adm-bg p-10">
++      <dt className="inline-flex min-w-0 items-center gap-4 text-11 text-adm-muted">
++        {dot && <span className={`size-8 shrink-0 rounded-full ${dot}`} aria-hidden="true" />}
++        <span className="truncate">{label}</span>
++      </dt>
++      <dd className="text-20 font-semibold tabular-nums text-adm-ink">{value.toLocaleString('en')}</dd>
++      {sub && <dd className="text-11 text-adm-muted">{sub}</dd>}
++    </div>
++  )
++}
++
++function ChapterPhases() {
+   const open = useDetail()
+-  const f = stateFlipById(flipId)!
+-  const linked = akpsForFlip(flipId).filter((a) => a.kind === 'strategy' || a.id.startsWith(flipId.replace(/^SF-/, 'WG-') + '-'))
+-  const groups = FAMILIES.map((fam) => ({ fam, items: linked.filter((a) => a.family === fam) })).filter((g) => g.items.length)
+-  const W = 520
+-  const H = 300
+-  const cx = W / 2
+-  const cy = H / 2
+-  const n = linked.length || 1
+-  let k = 0
+-  const nodes = groups.flatMap((g) =>
+-    g.items.map((a) => {
+-      const t = (k++ / n) * Math.PI * 2 - Math.PI / 2
+-      return { a, x: cx + Math.cos(t) * 200, y: cy + Math.sin(t) * 115 }
+-    }),
++  return (
++    <ol className="grid gap-8 lg:grid-cols-4" data-chapter-phases>
++      {CHAPTER_PHASES.map((p) => (
++        <li key={p.id} className="flex min-w-0 flex-col gap-6 rounded-8 border border-adm-line p-12">
++          <span className="text-12 font-semibold text-adm-ink">
++            {p.name} · minutes {p.minutes[0]}–{p.minutes[1]}
++          </span>
++          <span className="text-12 text-adm-ink-2">{p.what}</span>
++          <span className="text-11 text-adm-muted">About {pct(p.share)} of the chapter’s uplift (assumption)</span>
++          <ul className="flex flex-wrap gap-4">
++            {p.drivers.map((id) => {
++              const n = chapterNodeById(id)!
++              return (
++                <li key={id}>
++                  <button type="button" onClick={() => open(chapterItem(id))} className="inline-flex items-center gap-4 rounded-full border border-adm-line px-8 py-2 text-11 text-adm-ink hover:bg-adm-hover">
++                    <span className={`size-8 rounded-full ${MOD_BG[n.modality]}`} aria-hidden="true" />
++                    {n.name}
++                  </button>
++                </li>
++              )
++            })}
++          </ul>
++        </li>
++      ))}
++    </ol>
+   )
++}
++
++function RelationshipGraph() {
++  const open = useDetail()
++  const [focus, setFocus] = useState(CHAPTER)
++  const [mods, setMods] = useState<string[]>([])
++  const [layer, setLayer] = useState('all')
++  const isChapter = focus === CHAPTER
++  const base = useMemo(() => (isChapter ? chapterGraph() : flipGraph(focus)), [focus, isChapter])
++  const modOf = (n: GraphNode) => n.group.split(' · ')[0]
++  const layerOf = (n: GraphNode) => n.group.split(' · ').slice(1).join(' · ')
++  const modalities = [...new Set(base.nodes.filter((n) => !n.goal).map(modOf))]
++  const layers = [...new Set(base.nodes.filter((n) => !n.goal).map(layerOf))].sort()
++  const data = useMemo(() => {
++    const nodes = base.nodes.filter((n) => n.goal || ((!mods.length || mods.includes(modOf(n))) && (layer === 'all' || layerOf(n) === layer)))
++    const ids = new Set(nodes.map((n) => n.id))
++    return { nodes, links: base.links.filter((l) => ids.has(l.from) && ids.has(l.to)) }
++  }, [base, mods, layer])
++  const legend = isChapter ? CHAPTER_MODALITIES.map((m) => ({ label: m, dot: MOD_BG[m] })) : modalities.map((m) => ({ label: m, dot: FAMILY_BG[FAMILIES.find((f) => FAMILY[f].label === m)!] }))
++  const onOpen = (id: string) => {
++    if (isChapter && id !== CHAPTER_GOAL.id) return open(chapterItem(id))
++    const a = akpById(id)
++    if (a) open(akpItem(a))
++  }
++  const f = isChapter ? stateFlipById(CHAPTER_GOAL.flip)! : stateFlipById(focus)!
+   return (
+-    <div className="flex min-w-0 flex-col gap-8" data-flip-graph>
+-      <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full max-w-[640px]" role="img" aria-label={`${linked.length} AKPs linked to ${f.id}, grouped by family`}>
+-        {nodes.map(({ a, x, y }) => (
+-          <line key={`l${a.id}`} x1={cx} y1={cy} x2={x} y2={y} className="stroke-adm-grid" strokeWidth={1} />
+-        ))}
+-        <circle cx={cx} cy={cy} r={30} className="fill-adm-ink" />
+-        <text x={cx} y={cy + 4} textAnchor="middle" className="fill-adm-surface text-11 font-semibold">
+-          {f.id.replace('SF-', '')}
+-        </text>
+-        {nodes.map(({ a, x, y }) => (
+-          <g key={a.id} role="button" tabIndex={0} aria-label={`${a.id} ${a.name}`} className="cursor-pointer" onClick={() => open(akpItem(a))} onKeyDown={(e) => e.key === 'Enter' && open(akpItem(a))}>
+-            <title>{`${a.id} ${a.name}`}</title>
+-            <circle cx={x} cy={y} r={9} className={FAMILY_FILL[a.family]} />
+-          </g>
+-        ))}
+-      </svg>
+-      <ul className="flex flex-wrap gap-8 text-11 text-adm-ink-2">
+-        {groups.map((g) => (
+-          <li key={g.fam} className="inline-flex items-center gap-4">
+-            <span className={`size-8 rounded-full ${FAMILY_BG[g.fam]}`} aria-hidden="true" />
+-            {FAMILY[g.fam].label} {g.items.length}
+-          </li>
++    <Panel
++      title="How AKPs relate"
++      description="Pick a StateFlip, or sleep chapter 1, to see its goal AKP in the middle and the strategy AKPs serving it around it. Hover a dot to light up its links; click it for the definition, links and source."
++    >
++      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,420px)_minmax(0,220px)]">
++        <Select
++          label="Focus"
++          value={focus}
++          onChange={(v) => {
++            setFocus(v)
++            setMods([])
++            setLayer('all')
++          }}
++          options={[[CHAPTER, 'Sleep · chapter 1 (AKP Graph Explorer)'], ...stateFlips().map((x) => [x.id, `${x.id} ${x.title}`] as [string, string])]}
++        />
++        <Select label="Layer" value={layer} onChange={setLayer} options={[['all', 'All layers'], ...layers.map((l) => [l, l] as [string, string])]} />
++      </div>
++      <div className="flex flex-wrap items-center gap-6" role="group" aria-label="Modality">
++        <span className="text-11 font-medium text-adm-muted">{isChapter ? 'Modality' : 'Family'}</span>
++        <Chip on={!mods.length} onClick={() => setMods([])}>
++          All
++        </Chip>
++        {modalities.map((m) => (
++          <Chip key={m} on={mods.includes(m)} dot={legend.find((g) => g.label === m)?.dot} onClick={() => setMods(mods.includes(m) ? mods.filter((x) => x !== m) : [...mods, m])}>
++            {m}
++          </Chip>
+         ))}
+-      </ul>
+-    </div>
++      </div>
++      <p className="text-12 text-adm-ink-2">
++        {isChapter ? (
++          <>
++            <span className="font-semibold text-adm-ink">Sleep, chapter 1:</span> 20 strategy AKPs and 30 typed links across script, music, voice and image, all driving the first step of {f.id} ({f.title}). Script, music and image AKPs come from the catalogue; the four voice AKPs are drafted (dashed outline). Links and timings are drafted by us — to review.
++          </>
++        ) : (
++          <>
++            <span className="font-semibold text-adm-ink">{f.id}</span> {f.title}: its goal AKP, its X / Y / Z steps and the strategy AKPs linked to it by the catalogue
++            {base.nodes.length - 4 >= MAX_FLIP_NODES ? ` (first ${MAX_FLIP_NODES})` : ''}. Dashed outline: drafted by us.
++          </>
++        )}
++      </p>
++      <AkpGraph key={focus} nodes={data.nodes} links={data.links} linkStyles={LINK_STYLES} legend={legend} onOpen={onOpen} aria={`Network graph of ${data.nodes.length} AKPs and ${data.links.length} links for ${isChapter ? 'sleep chapter 1' : focus}`} />
++      {isChapter && (
++        <>
++          <h3 className="text-13 font-semibold text-adm-ink">Which AKPs drive each phase of the chapter</h3>
++          <ChapterPhases />
++        </>
++      )}
++    </Panel>
+   )
+ }
+ 
+-const PAGE = 50
++const PAGE = 40
++const MODALITY_LIST = ['Script', 'Music', 'Image', 'Video', '—'] as const
+ 
+ export function AkpCatalogue() {
+   const open = useDetail()
+   const all = akps()
+   const s = akpSummary()
+-  const [family, setFamily] = useState('all')
++  const [families, setFamilies] = useState<AkpFamily[]>([])
+   const [layer, setLayer] = useState('all')
+   const [modality, setModality] = useState('all')
+   const [src, setSrc] = useState('all')
+   const [q, setQ] = useState('')
+   const [limit, setLimit] = useState(PAGE)
+-  const [flip, setFlip] = useState('SF-PHY-01')
+-  const layers = useMemo(() => [...new Set(all.filter((a) => family === 'all' || a.family === family).map((a) => a.layer))].sort(), [all, family])
++  const layers = useMemo(() => [...new Set(all.filter((a) => !families.length || families.includes(a.family)).map((a) => a.layer))].sort(), [all, families])
++  const topLayers = useMemo(() => {
++    const m = new Map<string, number>()
++    for (const a of all) if (a.kind === 'strategy') m.set(a.layer, (m.get(a.layer) ?? 0) + 1)
++    return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8)
++  }, [all])
++  const ql = q.trim().toLowerCase()
+   const shown = all.filter(
+     (a) =>
+-      (family === 'all' || a.family === family) && (layer === 'all' || a.layer === layer) && (modality === 'all' || a.modality === modality) &&
+-      (src === 'all' || (src === 'file') === a.fromFile) && (!q || `${a.id} ${a.name} ${a.description}`.toLowerCase().includes(q.toLowerCase())),
++      (!families.length || families.includes(a.family)) && (layer === 'all' || a.layer === layer) && (modality === 'all' || a.modality === modality) &&
++      (src === 'all' || (src === 'file') === a.fromFile) && (!ql || `${a.id} ${a.name} ${a.description}`.toLowerCase().includes(ql)),
+   )
+-  const reset = (f: (v: string) => void) => (v: string) => {
++  const reset = <T,>(f: (v: T) => void) => (v: T) => {
+     f(v)
+     setLimit(PAGE)
+   }
++  const toggleFamily = (f: AkpFamily) => {
++    setFamilies(families.includes(f) ? families.filter((x) => x !== f) : [...families, f])
++    setLayer('all')
++    setLimit(PAGE)
++  }
+   return (
+     <div className="flex min-w-0 flex-col gap-16" data-akp-catalogue>
+-      <section aria-label="Summary" className="flex min-w-0 flex-col gap-10 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20">
++      <section aria-label="Summary" className="flex min-w-0 flex-col gap-12 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20">
+         <p className="max-w-[860px] text-16 font-semibold leading-snug text-adm-ink">
+-          {s.total.toLocaleString('en')} draft AKPs: {s.byKind.goal} goal AKPs (what to reach) and {s.byKind.strategy} strategy and tactic AKPs (how). {s.fromFile} come straight from the workbooks; {s.drafted} are drafted by us, mostly the X / Y / Z steps. Every StateFlip is served by at least one strategy AKP ({s.flipsCovered} of {s.flips}; {s.flipsCoveredBeyondSkills} by more than a skill).
++          {s.total.toLocaleString('en')} draft AKPs: {s.byKind.goal} goal AKPs (what to reach) and {s.byKind.strategy} strategy and tactic AKPs (how). {s.fromFile} come straight from the workbooks; {s.drafted} are drafted by us, mostly the X / Y / Z steps. {s.flipsCovered} of {s.flips} StateFlips are served by at least one strategy AKP ({s.flipsCoveredBeyondSkills} by more than a skill).
+         </p>
++        <h3 className="text-12 font-semibold text-adm-ink">By family</h3>
+         <dl className="grid grid-cols-2 gap-8 lg:grid-cols-7">
+           {FAMILIES.map((f) => (
+-            <div key={f} className="flex min-w-0 flex-col gap-2 rounded-8 border border-adm-line bg-adm-bg p-10">
+-              <dt className="inline-flex items-center gap-4 text-11 text-adm-muted">
+-                <span className={`size-8 rounded-full ${FAMILY_BG[f]}`} aria-hidden="true" />
+-                {FAMILY[f].label} ({FAMILY[f].prefix}-)
+-              </dt>
+-              <dd className="text-20 font-semibold tabular-nums text-adm-ink">{s.byFamily[f]}</dd>
+-            </div>
++            <StatCard key={f} dot={FAMILY_BG[f]} label={`${FAMILY[f].label} (${FAMILY[f].prefix}-)`} value={s.byFamily[f]} sub={FAMILY[f].kind === 'goal' ? 'goal' : 'strategy'} />
+           ))}
+         </dl>
++        <div className="grid min-w-0 gap-12 lg:grid-cols-2">
++          <div className="flex min-w-0 flex-col gap-8">
++            <h3 className="text-12 font-semibold text-adm-ink">By modality (strategy AKPs)</h3>
++            <dl className="grid grid-cols-2 gap-8 lg:grid-cols-4">
++              {(['Script', 'Music', 'Image', 'Video'] as const).map((m) => (
++                <StatCard key={m} label={m} value={all.filter((a) => a.modality === m).length} />
++              ))}
++            </dl>
++          </div>
++          <div className="flex min-w-0 flex-col gap-8">
++            <h3 className="text-12 font-semibold text-adm-ink">Biggest strategy layers</h3>
++            <ul className="flex flex-col gap-4" data-layer-bars>
++              {topLayers.map(([l, n]) => (
++                <li key={l} className="grid grid-cols-[minmax(0,140px)_minmax(0,1fr)_36px] items-center gap-8 text-11 text-adm-ink-2">
++                  <span className="truncate" title={l}>
++                    {l}
++                  </span>
++                  <span className="h-8 rounded-full bg-adm-hover">
++                    <span className="block h-8 rounded-full bg-adm-s1" style={{ width: `${(n / topLayers[0][1]) * 100}%` }} />
++                  </span>
++                  <span className="text-right tabular-nums">{n}</span>
++                </li>
++              ))}
++            </ul>
++          </div>
++        </div>
+         <p className="text-12 text-adm-ink-2">
+           By function: wellness {s.byFunction.wellness}, product {s.byFunction.product}, identity {s.byFunction.identity}, brand {s.byFunction.brand} (waiting for the marketing sheet). {s.links} typed links between AKPs. All are status “draft”.
+         </p>
+       </section>
+ 
+-      <Panel title="One StateFlip’s AKPs" description="The strategy AKPs linked to one StateFlip, and its own steps, coloured by family. Tap a dot for its detail.">
+-        <div className="max-w-[420px]">
+-          <Select label="StateFlip" value={flip} onChange={setFlip} options={stateFlips().map((f) => [f.id, `${f.id} ${f.title}`] as [string, string])} />
+-        </div>
+-        <FlipGraph flipId={flip} />
+-      </Panel>
++      <RelationshipGraph />
+ 
+-      <Panel title="AKP catalogue" description="Filter by family, layer, modality and source, or search. Open a row for its links and the StateFlips it serves.">
+-        <div className="grid grid-cols-2 gap-8 lg:grid-cols-5">
+-          <Select label="Family" value={family} onChange={(v) => { reset(setFamily)(v); setLayer('all') }} options={[['all', 'All'], ...FAMILIES.map((f) => [f, FAMILY[f].label] as [string, string])]} />
++      <Panel title="All AKPs" description="Search, or narrow by family, layer, modality and source. Open one for its definition, links, the StateFlips it serves and its source.">
++        <label className="flex min-w-0 flex-col gap-4 text-11 font-medium text-adm-muted">
++          Search
++          <input value={q} onChange={(e) => reset(setQ)(e.target.value)} placeholder="e.g. breath, rain, calm" className={inputClass} />
++        </label>
++        <div className="flex flex-wrap items-center gap-6" role="group" aria-label="Family">
++          <Chip on={!families.length} onClick={() => reset(setFamilies)([])}>
++            All families
++          </Chip>
++          {FAMILIES.map((f) => (
++            <Chip key={f} on={families.includes(f)} dot={FAMILY_BG[f]} onClick={() => toggleFamily(f)}>
++              {FAMILY[f].label}
++            </Chip>
++          ))}
++        </div>
++        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+           <Select label="Layer" value={layer} onChange={reset(setLayer)} options={[['all', 'All'], ...layers.map((l) => [l, l] as [string, string])]} />
+-          <Select label="Modality" value={modality} onChange={reset(setModality)} options={[['all', 'All'], ['Script', 'Script'], ['Music', 'Music'], ['Image', 'Image'], ['Video', 'Video'], ['—', 'None']]} />
++          <Select label="Modality" value={modality} onChange={reset(setModality)} options={[['all', 'All'], ...MODALITY_LIST.map((m) => [m, m === '—' ? 'None' : m] as [string, string])]} />
+           <Select label="Source" value={src} onChange={reset(setSrc)} options={[['all', 'All'], ['file', 'From file'], ['drafted', 'Drafted by us']]} />
+-          <label className="col-span-2 flex min-w-0 flex-col gap-4 text-11 font-medium text-adm-muted lg:col-span-1">
+-            Search
+-            <input value={q} onChange={(e) => reset(setQ)(e.target.value)} placeholder="e.g. breath" className={inputClass} />
+-          </label>
+         </div>
+         <p className="text-12 text-adm-muted" aria-live="polite">
+-          {shown.length} of {all.length}
++          {shown.length.toLocaleString('en')} of {all.length.toLocaleString('en')}
+         </p>
+-        <div className="overflow-x-auto">
+-          <table className="w-full min-w-[680px] text-left text-12" data-akp-table>
+-            <thead>
+-              <tr className="border-b border-adm-line text-11 text-adm-muted">
+-                <th className="py-6 pr-10 font-medium">AKP</th>
+-                <th className="py-6 pr-10 font-medium">Family</th>
+-                <th className="py-6 pr-10 font-medium">Layer</th>
+-                <th className="py-6 pr-10 text-right font-medium">Goals served</th>
+-                <th className="py-6 font-medium">Source</th>
+-              </tr>
+-            </thead>
+-            <tbody>
+-              {shown.slice(0, limit).map((a) => (
+-                <tr key={a.id} className="border-b border-adm-line last:border-0">
+-                  <td className="py-6 pr-10">
+-                    <button type="button" onClick={() => open(akpItem(a))} className="inline-flex items-start gap-6 text-left text-adm-ink hover:underline">
+-                      <span className="shrink-0 tabular-nums text-adm-muted">{a.id}</span>
+-                      <span>{a.name}</span>
+-                    </button>
+-                  </td>
+-                  <td className="py-6 pr-10 text-adm-ink-2">
+-                    <span className="inline-flex items-center gap-4">
+-                      <span className={`size-8 shrink-0 rounded-full ${FAMILY_BG[a.family]}`} aria-hidden="true" />
+-                      {FAMILY[a.family].label}
+-                    </span>
+-                  </td>
+-                  <td className="py-6 pr-10 text-adm-ink-2">{a.layer}</td>
+-                  <td className="py-6 pr-10 text-right tabular-nums">{a.flips.length}</td>
+-                  <td className="py-6">
+-                    <SourceBadge source={a.source} />
+-                  </td>
+-                </tr>
+-              ))}
+-            </tbody>
+-          </table>
+-        </div>
++        <ul className="flex flex-col divide-y divide-adm-line rounded-8 border border-adm-line" data-akp-list>
++          {shown.slice(0, limit).map((a) => (
++            <li key={a.id}>
++              <button type="button" onClick={() => open(akpItem(a))} className="flex w-full min-w-0 flex-col gap-6 px-12 py-10 text-left hover:bg-adm-hover lg:flex-row lg:items-center lg:gap-12">
++                <span className="flex min-w-0 flex-1 flex-col gap-2">
++                  <span className="inline-flex min-w-0 items-center gap-6 text-13 font-semibold text-adm-ink">
++                    <span className={`size-8 shrink-0 rounded-full ${FAMILY_BG[a.family]}`} aria-hidden="true" />
++                    <span className="min-w-0 truncate">{a.name}</span>
++                  </span>
++                  <span className="truncate text-11 text-adm-muted">
++                    {a.id} · {a.description}
++                  </span>
++                </span>
++                <span className="flex flex-wrap items-center gap-4 lg:justify-end">
++                  <span className="rounded-full bg-adm-hover px-8 py-2 text-11 text-adm-ink-2">{FAMILY[a.family].label}</span>
++                  <span className="max-w-[200px] truncate rounded-full bg-adm-hover px-8 py-2 text-11 text-adm-ink-2" title={a.layer}>
++                    {a.layer}
++                  </span>
++                  {a.modality !== '—' && <span className="rounded-full bg-adm-hover px-8 py-2 text-11 text-adm-ink-2">{a.modality}</span>}
++                  {a.flips.length > 0 && <span className="rounded-full bg-adm-hover px-8 py-2 text-11 tabular-nums text-adm-ink-2">{a.flips.length} {a.flips.length === 1 ? 'goal' : 'goals'}</span>}
++                  <SourceBadge source={a.source} />
++                </span>
++              </button>
++            </li>
++          ))}
++          {!shown.length && <li className="px-12 py-10 text-12 text-adm-muted">No AKP matches. Clear a filter or the search.</li>}
++        </ul>
+         {shown.length > limit && (
+           <button type="button" onClick={() => setLimit(limit + PAGE)} className="self-start rounded-8 border border-adm-line px-12 py-6 text-12 font-medium text-adm-ink hover:bg-adm-hover">
+             Show {Math.min(PAGE, shown.length - limit)} more
+diff --git a/src/admin/pages/lab/StateFlipsPage.tsx b/src/admin/pages/lab/StateFlipsPage.tsx
+index 5edbe26..de60cb7 100644
+--- a/src/admin/pages/lab/StateFlipsPage.tsx
++++ b/src/admin/pages/lab/StateFlipsPage.tsx
+@@ -15,6 +15,7 @@ import { DetailDrawerProvider, useDetail } from '../reports/DetailDrawer'
+ import { Details, GoalLine } from '../reports/ReportSummary'
+ import { RichText, Term } from '../reports/Term'
+ import { AkpCatalogue, AllStateFlips } from './StateFlipsCatalogue'
++import { CHAPTER_PHASES, chapterNodeById } from '../../data/akpChapterGraph'
+ 
+ /*
+  * Admin → Product lab → StateFlips (U140, J202), for the business owner:
+@@ -645,6 +646,21 @@ function CohortView() {
+                 {d.metric}
+               </span>
+               <span className="text-11 text-adm-muted">DOJO: {d.dojo.join(', ')}</span>
++              {p.layer === 'mood' ? (
++                <span className="flex flex-col gap-4 text-12 text-adm-ink-2" data-akp-drivers>
++                  <span className="font-medium text-adm-ink">AKP drivers (chapter 1 as the template):</span>
++                  {CHAPTER_PHASES.map((ph) => (
++                    <span key={ph.id}>
++                      <span className="font-medium text-adm-ink">{ph.name}</span> ({pct(ph.share)}): {ph.drivers.map((id) => chapterNodeById(id)!.name).join(', ')}
++                    </span>
++                  ))}
++                  <span className="text-11 text-adm-muted">The 20 AKPs and 30 links are in AKP catalogue → How AKPs relate. Shares per phase: assumption.</span>
++                </span>
++              ) : (
++                <span className="text-11 text-adm-muted">
++                  <L l="assumption" /> No AKP drivers defined for this stretch yet: the curve here is the assumed {LAYER_TEXT[p.layer].name.toLowerCase()}-layer pace.
++                </span>
++              )}
+             </li>
+           )
+         })}
+diff --git a/src/admin/pages/lab/TherapeuticMapPage.tsx b/src/admin/pages/lab/TherapeuticMapPage.tsx
+index 8f76356..2c0212d 100644
+--- a/src/admin/pages/lab/TherapeuticMapPage.tsx
++++ b/src/admin/pages/lab/TherapeuticMapPage.tsx
+@@ -4,6 +4,7 @@ import { usePageTab } from '../../components/pageTab'
+ import { RELEASES } from '../../../versions/releases'
+ import { Link } from 'react-router-dom'
+ import { useState } from 'react'
++import { worldMappingLine } from '../../data/dimensions'
+ import { Badge, PageHeader, Panel, type Tone } from '../../components/ui'
+ import { VALUE_KIND_TEXT, WORLDS, sleepJourney, sleepProcess, triangle, type Corner, type CornerId, type CornerLink, type ValueKind, type World } from '../../data/therapeuticMap'
+ import { DetailDrawerProvider, useDetail } from '../reports/DetailDrawer'
+@@ -100,6 +101,9 @@ function TherapeuticMap() {
+   return (
+     <div className="flex flex-col gap-16">
+       <PageHeader title="Therapeutic map" description="Product, business and wellness as one triangle, and the steps from a bad state to a good one." />
++      <p className="text-12 text-adm-muted" data-dimension-mapping>
++        Worlds on the shared five dimensions (dimensions.ts): {worldMappingLine(WORLDS.map((w) => ({ id: w.id, label: w.title })))}. All five sit under the wellness corner.
++      </p>
+       {!RELEASES.adminNav2 && summaryBlock}
+       <PageTabs
+         summary={
+diff --git a/src/admin/pages/reports/CostReportPage.tsx b/src/admin/pages/reports/CostReportPage.tsx
+index b41e896..667b650 100644
+--- a/src/admin/pages/reports/CostReportPage.tsx
++++ b/src/admin/pages/reports/CostReportPage.tsx
+@@ -11,6 +11,8 @@ import {
+   type Anchor, type CostInputs, type GoalInputs, type Media, type MediaCost, type NodeId, type NumberLabel, type Personalisation, type Stage,
+ } from '../../data/costModel'
+ import { COST_FINDINGS } from '../../data/reportSources'
++import { DIMENSIONS, DIMENSION_LABEL, type Dimension } from '../../data/personaConditionV4'
++import { stateFlipCosts } from '../../data/stateFlipCosts'
+ import { SourcesSection } from './ReportParts'
+ import { buildIterationMap, mapFor } from '../../data/iterationMap'
+ import { DetailDrawerProvider } from './DetailDrawer'
+@@ -312,6 +314,10 @@ function CostReport() {
+         <MetricLines stages={stages} />
+       </section>
+ 
++      <section id="cost-per-stateflip" className="scroll-mt-16">
++        <StateFlipCostSection />
++      </section>
++
+       </Details>
+ 
+       <Details title="Notes, sources and limits">
+@@ -689,3 +695,143 @@ function MetricLines({ stages }: { stages: { st: Stage; r: ReturnType<typeof goa
+     </Panel>
+   )
+ }
++
++/* ------------------------------------------- Cost per StateFlip (U145, J206) */
++
++const FLIP_SOURCES: { what: string; where: string }[] = [
++  { what: 'The 125 StateFlips and who each is for', where: 'src/admin/data/stateFlips.ts and stateFlipDetails.ts (cohorts of StateFlips 11–25)' },
++  { what: 'The 1,000 people and their condition', where: 'src/admin/data/personasV4.ts and personaConditionV4.ts (population-weighted draw)' },
++  { what: 'Chapters, chance it works, drop-out', where: 'src/admin/data/stateFlipFormulas.ts (the sleep formulas, generalised); sleep itself from stateFlipSleep.ts' },
++  { what: 'Population-weighted cost per person', where: 'personaConditionV4.populationCost (main need’s chapters + half of the others’, Balanced, stage 1)' },
++  { what: 'Cost per chapter', where: 'src/admin/data/costModel.ts: Balanced preset, 10 minutes, stage 1, from the supplier catalogue above' },
++  { what: 'Supplier prices', where: 'costModel.ts SUPPLIERS: each price as stated, with its date and link (the Supplier catalogue panel)' },
++  { what: 'Stage uplift, success and cost factor', where: 'The spec PDF (the business owner’s plan, §5): scenario, not measured' },
++  { what: 'StateFlip names, needs and DOJO links', where: 'The business owner’s workbooks in docs/briefs/*.xlsx (DOJO, Deeksha, Grand 4 layers), read by scripts/akp/extract.py' },
++]
++
++function StateFlipCostSection() {
++  const c = stateFlipCosts()
++  const [dim, setDim] = useState<Dimension | 'all'>('all')
++  const [sort, setSort] = useState<'id' | 'cost'>('cost')
++  const rows = c.rows.filter((r) => dim === 'all' || r.flip.dimension === dim).sort((a, b) => (sort === 'cost' ? a.costPerFlip - b.costPerFlip : a.flip.id.localeCompare(b.flip.id)))
++  const max = Math.max(...c.rows.map((r) => r.costPerFlip))
++  const p = c.population
++  return (
++    <Panel title="Cost per StateFlip" description="What it costs to flip one person, for each of the 125 StateFlips, by dimension, and the average cost per person across the population. Stage 1, Balanced, 10-minute chapters. Computed from the persona set; nothing measured.">
++      <dl className="grid grid-cols-2 gap-8 lg:grid-cols-4">
++        <Stat label="Average cost per flip, all 125" value={usd(c.overallCostPerFlip)} note="Weighted by the people in each StateFlip’s group" lab="estimate" />
++        <Stat label="Average cost per person (population)" value={usd(p.averageCost)} note={`${p.people} people, ${p.excluded} risk-flagged left out`} lab="estimate" />
++        <Stat label="Cost per chapter" value={usd(c.costPerChapter)} note="Balanced, 10 minutes, stage 1" lab="estimate" />
++        <Stat label="Cheapest → dearest StateFlip" value={`${usd(Math.min(...c.rows.map((r) => r.costPerFlip)))} → ${usd(max)}`} note="Per flip" lab="estimate" />
++      </dl>
++
++      <h3 className="text-13 font-semibold text-adm-ink">By dimension</h3>
++      <div className="overflow-x-auto">
++        <table className="w-full min-w-[640px] text-left text-12" data-flip-cost-dims>
++          <thead className="text-11 uppercase tracking-wider text-adm-muted">
++            <tr className="border-b border-adm-line">
++              {['Dimension', 'StateFlips', 'People in groups', 'Cost per flip (weighted)', 'Cheapest', 'Dearest', 'Population cost per person, main need here'].map((h) => (
++                <th key={h} className="py-6 pr-12 font-semibold">
++                  {h}
++                </th>
++              ))}
++            </tr>
++          </thead>
++          <tbody>
++            {c.byDimension.map((d) => (
++              <tr key={d.dimension} className="border-b border-adm-line tabular-nums last:border-0">
++                <td className="py-8 pr-12 font-semibold text-adm-ink">{DIMENSION_LABEL[d.dimension]}</td>
++                <td className="py-8 pr-12">{d.flips}</td>
++                <td className="py-8 pr-12">{d.people.toLocaleString('en')}</td>
++                <td className="py-8 pr-12 font-semibold">{usd(d.costPerFlip)}</td>
++                <td className="py-8 pr-12" title={d.cheapest.flip.title}>
++                  {d.cheapest.flip.id} {usd(d.cheapest.costPerFlip)}
++                </td>
++                <td className="py-8 pr-12" title={d.dearest.flip.title}>
++                  {d.dearest.flip.id} {usd(d.dearest.costPerFlip)}
++                </td>
++                <td className="py-8">
++                  {usd(p.byNeed[d.dimension].averageCost)} <span className="text-adm-muted">({p.byNeed[d.dimension].people} people)</span>
++                </td>
++              </tr>
++            ))}
++          </tbody>
++        </table>
++      </div>
++
++      <h3 className="text-13 font-semibold text-adm-ink">Every StateFlip</h3>
++      <div className="flex flex-wrap items-end gap-8">
++        <label className="flex flex-col gap-4 text-11 font-medium text-adm-muted">
++          Dimension
++          <select value={dim} onChange={(e) => setDim(e.target.value as Dimension | 'all')} className={inputClass}>
++            <option value="all">All five</option>
++            {DIMENSIONS.map((d) => (
++              <option key={d} value={d}>
++                {DIMENSION_LABEL[d]}
++              </option>
++            ))}
++          </select>
++        </label>
++        <Segmented<number> options={[{ v: 0, t: 'Cheapest first' }, { v: 1, t: 'By id' }]} value={sort === 'cost' ? 0 : 1} onChange={(v) => setSort(v === 0 ? 'cost' : 'id')} />
++      </div>
++      <div className="max-h-[480px] overflow-auto rounded-8 border border-adm-line">
++        <table className="w-full min-w-[680px] text-left text-12" data-flip-cost-table>
++          <thead className="sticky top-0 bg-adm-surface text-11 text-adm-muted">
++            <tr className="border-b border-adm-line">
++              {['StateFlip', 'People', 'Chapters (middle)', 'Played', 'Chance', 'Cost per flip'].map((h) => (
++                <th key={h} className="px-8 py-6 font-medium">
++                  {h}
++                </th>
++              ))}
++            </tr>
++          </thead>
++          <tbody>
++            {rows.map((r) => (
++              <tr key={r.flip.id} className="border-b border-adm-line tabular-nums last:border-0">
++                <td className="px-8 py-6 text-adm-ink">
++                  <span className="text-adm-muted">{r.flip.id}</span> {r.flip.title}
++                </td>
++                <td className="px-8 py-6">{r.group}</td>
++                <td className="px-8 py-6">{r.medianChapters}</td>
++                <td className="px-8 py-6">{r.chaptersPlayed.toFixed(1)}</td>
++                <td className="px-8 py-6">{pct(r.meanChance)}</td>
++                <td className="px-8 py-6">
++                  <span className="flex items-center gap-6">
++                    <span className="h-6 rounded-full bg-adm-s1" style={{ width: `${Math.max(4, (r.costPerFlip / max) * 80)}px` }} aria-hidden="true" />
++                    <span className="font-semibold">{usd(r.costPerFlip)}</span>
++                  </span>
++                </td>
++              </tr>
++            ))}
++          </tbody>
++        </table>
++      </div>
++
++      <div className="flex flex-col gap-6 rounded-8 border border-adm-line bg-adm-bg p-12 text-12 text-adm-ink-2" data-flip-cost-formulas>
++        <h3 className="text-13 font-semibold text-adm-ink">Formulas</h3>
++        <p>
++          <span className="font-semibold text-adm-ink">Cost per flip</span> = cost per chapter ({usd(c.costPerChapter)}) × chapters played per person on average ÷ the group’s mean chance it works. Chapters played counts each chapter a person is still going at, so people who stop cost what they used.
++        </p>
++        <p>
++          <span className="font-semibold text-adm-ink">Per dimension</span> = Σ (people in a StateFlip’s group × its cost per flip) ÷ Σ people, over its 25 StateFlips. A person in two groups counts in both.
++        </p>
++        <p>
++          <span className="font-semibold text-adm-ink">Average cost per person (population)</span> = Σ each person’s cost to reach their target ÷ {p.people} people (risk-flagged left out). Each person’s cost = (their main need’s chapters + 0.5 × the other dimensions’) × the Balanced chapter cost. The persona set is drawn from population weights, so the plain mean is the population-weighted mean. It answers a different question from cost per flip: one person’s whole journey, without dividing by the chance it works.
++        </p>
++      </div>
++
++      <div className="flex flex-col gap-6" data-flip-cost-sources>
++        <h3 className="text-13 font-semibold text-adm-ink">Where these numbers come from</h3>
++        <ul className="flex flex-col gap-4 text-12 text-adm-ink-2">
++          {FLIP_SOURCES.map((s) => (
++            <li key={s.what} className="grid gap-2 lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)] lg:gap-12">
++              <span className="font-medium text-adm-ink">{s.what}</span>
++              <span>{s.where}</span>
++            </li>
++          ))}
++        </ul>
++        <p className="text-11 text-adm-muted">No real person has used Aurelia yet: chapters and chance are modelled, the stage figures are the spec’s scenario, prices are suppliers’ list prices.</p>
++      </div>
++    </Panel>
++  )
++}
