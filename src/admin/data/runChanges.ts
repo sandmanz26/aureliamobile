@@ -117,6 +117,30 @@ export const RUN_CHANGES: RunChangeDeclaration[] = [
   }),
 ]
 
+/**
+ * Test 8 (U147, J206) declares its change here too. It is kept out of
+ * RUN_CHANGES because its panel is persona set v4, which v5–v7's rules
+ * (buyerPlay, persona generator 2) cannot replay, so the headline split
+ * above does not apply; buyerRunV8.ts measures B against A on the same
+ * people instead (v8Split) and says that the step from v7 is not separable.
+ */
+export const V8_CHANGE: RunChangeDeclaration = declareRunChange({
+  version: 8,
+  previous: 7,
+  offers: {
+    a: 'v7’s best offer: v6’s best for the channel + Insight-Timer-style quick wins (everyone in set v4 came organically)',
+    b: 'A journey for your StateFlip X: free first week, then $10/month',
+  },
+  sameAs: { a: 'b' },
+  offer: { changed: true, note: 'A is v7’s B again, the like-for-like side. B is new: one journey named after the person’s own StateFlip (matched to their main need), a free first week, then $10 a month.' },
+  panel: { changed: true, note: '100 people from persona generator 2 (seed 2032) → 975 of persona set v4 (seed 20264): all 1,000 minus the 25 risk-flagged, who get Need help now? and no offer.' },
+  rules: { changed: true, note: 'v5–v7’s written rules (buyerPlay.ts) → v8’s rules from conditionForBuyer: need, urgency, readiness, scepticism and time, plus fit, the chance to reach the StateFlip, price load and language. Every formula is in buyerRunV8.ts.' },
+  reproducible: false,
+})
+
+/** Every declaration, test 8 included. */
+export const ALL_RUN_DECLARATIONS: RunChangeDeclaration[] = [...RUN_CHANGES, V8_CHANGE]
+
 export const offersOf = (version: number): RunOffers => (version === BUYER_RUNS[0].version ? FIRST_RUN_OFFERS : RUN_CHANGES.find((d) => d.version === version)!.offers)
 
 /* ------------------------------------------------------------- Headlines */

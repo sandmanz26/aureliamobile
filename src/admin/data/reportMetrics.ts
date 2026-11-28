@@ -19,6 +19,7 @@ import { isSleepNeed, personaSleepScore, severityOf } from './stateFlipSleep'
 import { akpSummary, akps } from './akps'
 import { identitiesV4, identityIncoherence, identitySummary } from './personaIdentityV4'
 import { stateFlipSummary, stateFlips } from './stateFlips'
+import { V8_K, V8_PRICE, runV8, v8Tallies } from './buyerRunV8'
 import { stateFlipCosts } from './stateFlipCosts'
 
 /**
@@ -1343,10 +1344,39 @@ function stateFlipMetrics(): MetricDef[] {
   ]
 }
 
+/* ---------------------------------------------------------------- Test 8 */
+
+/**
+ * Buyer agent test 8 (U147, J206): each headline read from v8Tallies (what
+ * the report shows) and counted again here from each person's answer.
+ */
+function buyerV8Metrics(): MetricDef[] {
+  const SRC = 'src/admin/data/buyerRunV8.ts'
+  const def = (id: string, label: string, side: 'a' | 'b', key: 'tries' | 'pays', shown: () => number): MetricDef => ({
+    id, report: 'buyer', label, unit: 'count', good: 'up',
+    formula: key === 'tries'
+      ? `People whose try score (${V8_K.wNeed} × need + ${V8_K.wUrgency} × urgency + ${V8_K.wReady} × readiness + ${V8_K.wFit} × fit − ${V8_K.wDoubt} × scepticism − time − language) is ${V8_K.tryYes} or more.`
+      : `People who would try and whose pay score (try score + ${V8_K.wChance} × chance shown − min(${V8_K.priceCap}, $${V8_PRICE} ÷ income × ${V8_K.priceMult}) − free enough) is ${V8_K.payYes} or more.`,
+    shownAt: 'Buyer agent report, test 8', source: SRC,
+    displayed: shown,
+    compute: () => {
+      const rows = runV8().answers
+      const yes = rows.filter((r) => r[side][key] === 'yes')
+      return { value: yes.length, n: rows.length, inputs: [{ label: 'People in the panel (set v4, risk-flagged left out)', value: `${rows.length}`, source: SRC }, { label: `Answered yes (${side.toUpperCase()})`, value: `${yes.length}`, source: SRC, ids: yes.map((r) => r.personaId) }], steps: [`Each person: ${key === 'tries' ? 'try' : 'pay'} score for offer ${side.toUpperCase()}, compared with the threshold.`, `${yes.length} of ${rows.length} say yes.`], breakdown: { title: 'Each person', columns: ['Persona', 'StateFlip', 'Try score', 'Pay score', 'Answer'], rows: rows.slice(0, 200).map((r) => ({ id: r.personaId, cells: [r.personaId, r.flipId, `${r[side].tryScore}`, `${r[side].payScore}`, r[side][key]] })), footer: rows.length > 200 ? [`First 200 of ${rows.length} shown.`] : undefined } }
+    },
+  })
+  return [
+    def('buyer8-try-a', 'Test 8: would try A (v7’s best offer)', 'a', 'tries', () => v8Tallies().tryA.yes),
+    def('buyer8-try-b', 'Test 8: would try B (StateFlip journey)', 'b', 'tries', () => v8Tallies().tryB.yes),
+    def('buyer8-pay-a', 'Test 8: would pay A', 'a', 'pays', () => v8Tallies().payA.yes),
+    def('buyer8-pay-b', 'Test 8: would pay B after the free week', 'b', 'pays', () => v8Tallies().payB.yes),
+  ]
+}
+
 /* ------------------------------------------------------------ The registry */
 
 export function metricDefs(week = 1): MetricDef[] {
-  return [...buyerMetrics(), ...typedMetrics(), ...personaV4Metrics(), ...conditionMetrics(), ...combinationMetrics(week), ...costMetrics(), ...b2b2cMetrics(), ...retreatMetrics(), ...uxMetrics(week), ...stateFlipMetrics()]
+  return [...buyerMetrics(), ...typedMetrics(), ...personaV4Metrics(), ...conditionMetrics(), ...combinationMetrics(week), ...costMetrics(), ...b2b2cMetrics(), ...retreatMetrics(), ...uxMetrics(week), ...stateFlipMetrics(), ...buyerV8Metrics()]
 }
 
 /** Audits one metric: displayed against recomputed, plus its sanity checks. */

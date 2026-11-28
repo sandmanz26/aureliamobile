@@ -15,6 +15,7 @@ import { INPUT_DOT } from './reportColors'
 import { LabelBadge, SourcesSection } from './ReportParts'
 import { Details, SummaryBlock } from './ReportSummary'
 import { DataSources } from './DataSources'
+import { BuyerTest8, Test8Line } from './BuyerTest8'
 import { LatestChangeAside } from '../buyer/RunChanges'
 import { BUYER_RUNS } from '../../data/buyerRuns'
 import { SuccessTrend, WhatMoves } from './SummaryCharts'
@@ -76,7 +77,7 @@ function BuyerAgentReport() {
       />
 
       {!RELEASES.adminNav2 && summaryBlock}
-      <PageTabs summary={<ReportSummaryTab purpose="deciding whether simulated buyers would pay for Aurelia, and at what price." onDetail={() => setPageTab('detail')}>{summaryBlock}<DataSources route="/admin/reports/buyer-agent" /></ReportSummaryTab>}>
+      <PageTabs summary={<ReportSummaryTab purpose="deciding whether simulated buyers would pay for Aurelia, and at what price." onDetail={() => setPageTab('detail')}>{summaryBlock}<Test8Line /><DataSources route="/admin/reports/buyer-agent" /></ReportSummaryTab>}>
       {RELEASES.adminNav2 && (
         <Details id="full-summary" title="Full summary" hint="each test’s figures, the tile notes and how sure we are">
           {fullSummary}
@@ -92,6 +93,8 @@ function BuyerAgentReport() {
           <TestFunnels tests={tests} />
         </Panel>
       </section>
+
+      <BuyerTest8 />
 
       <div className="grid gap-16 lg:grid-cols-2 lg:items-start">
         <section id="people" className="min-w-0 scroll-mt-16">

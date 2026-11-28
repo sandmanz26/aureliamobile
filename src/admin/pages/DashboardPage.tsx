@@ -4,6 +4,7 @@ import { BarChart, LineChart } from '../components/Charts'
 import { Legend, PageHeader, Panel, StatCard, StatusBadge } from '../components/ui'
 import { AI_TIMESERIES, AUDIT_LOG, REPORTS, ROLES, SESSIONS, USERS } from '../data/mock'
 import { RELEASES } from '../../versions/releases'
+import { YourAsks } from './YourAsks'
 
 const TRAFFIC_SERIES = [{ key: 'requests', label: 'AI requests', color: 'var(--color-adm-s1)' }]
 
@@ -25,6 +26,7 @@ export function DashboardPage() {
         <>
           <PageHeader title="Start here" description="Where the team's work lives in this admin, and which figures are sample data." />
           <StartHere />
+          <YourAsks />
           <h2 className="text-15 font-semibold text-adm-ink">
             Platform health <span className="font-normal text-adm-muted">· sample data for a backend that does not exist yet</span>
           </h2>
@@ -129,7 +131,7 @@ export function DashboardPage() {
  * of an operation that does not run yet. Those stay below, labelled sample.
  */
 const START: { title: string; text: string; to: string; link: string }[] = [
-  { title: 'AI brain', text: 'StateFlips, the healing map, the user journey, personas and the business funnel: what the AI knows.', to: RELEASES.stateFlips ? '/admin/stateflips' : '/admin/user-journey', link: RELEASES.stateFlips ? 'Open StateFlips' : 'Open User journey' },
+  { title: 'AI brain', text: 'StateFlips, the healing map, the user journey, personas and the business funnel: what the AI knows.', to: '/admin/ai-brain', link: 'Open the AI brain' },
   { title: 'Reports & decisions', text: 'One report per decision, each with its answer, its next steps and its sources.', to: '/admin/reports', link: 'Open all reports' },
   { title: 'Research', text: 'The desk research behind the reports, in the team wiki.', to: '/wiki/research', link: 'Open research' },
 ]

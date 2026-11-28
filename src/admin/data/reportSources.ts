@@ -40,6 +40,8 @@ export type SourceId =
   | 'buyer-v5'
   | 'buyer-v6'
   | 'buyer-v7'
+  | 'buyer-v8'
+  | 'akps'
   | 'decisions'
   | 'app-funnel'
   | 'feedback-group'
@@ -79,6 +81,24 @@ export interface ReportSource {
 }
 
 export const SOURCES: Record<SourceId, ReportSource> = {
+  'buyer-v8': {
+    id: 'buyer-v8',
+    name: 'Buyer agent test 8',
+    what: '975 people of persona set v4 (25 risk-flagged left out) answering v7’s best offer and a journey for their own StateFlip with a free first week, by written rules from conditionForBuyer.',
+    version: 'Test 8, 27 Nov 2026, persona set v4, v8 rules (U147)',
+    taken: 'Would try and would pay A → B, by dimension, the objections, and B’s effect split into its parts.',
+    link: '/admin/reports/buyer-agent?tab=detail#test-8',
+    label: 'prediction',
+  },
+  akps: {
+    id: 'akps',
+    name: 'AKP catalogue',
+    what: 'The draft AKPs (goal, strategy, product, identity) read from the business owner’s sheets, plus those drafted by us, linked to the 125 StateFlips.',
+    version: 'akps.ts, 27 Nov 2026 (all draft)',
+    taken: 'AKP counts per function and the StateFlips covered.',
+    link: '/admin/stateflips',
+    label: 'prediction',
+  },
   'buyer-v1': {
     id: 'buyer-v1',
     name: 'Buyer agent run v1',
@@ -354,6 +374,8 @@ export const SOURCE_KIND: Record<SourceId, SourceKind> = {
   'buyer-v5': 'Buyer agents',
   'buyer-v6': 'Buyer agents',
   'buyer-v7': 'Buyer agents',
+  'buyer-v8': 'Buyer agents',
+  akps: 'Product',
   personas: 'Buyer agents',
   'app-funnel': 'Funnels and models',
   'feedback-group': 'Funnels and models',

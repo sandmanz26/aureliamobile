@@ -37,6 +37,8 @@ export const SOURCE_META: Record<SourceId, { type: DataSourceType; file: string;
   'buyer-v5': { type: 'simulated', file: 'src/admin/data/buyerRunV5.ts', date: '25 Nov 2026' },
   'buyer-v6': { type: 'simulated', file: 'src/admin/data/buyerRunV6.ts', date: '25 Nov 2026' },
   'buyer-v7': { type: 'simulated', file: 'src/admin/data/buyerRunV7.ts', date: '25 Nov 2026' },
+  'buyer-v8': { type: 'simulated', file: 'src/admin/data/buyerRunV8.ts', date: '27 Nov 2026' },
+  akps: { type: 'assumed', file: 'src/admin/data/akps.ts', date: '27 Nov 2026' },
   decisions: { type: 'research', file: 'src/admin/data/businessFunnel.ts (decision log)', date: '24 Nov 2026' },
   'app-funnel': { type: 'simulated', file: 'src/admin/data/businessFunnel.ts', date: 'U108' },
   'feedback-group': { type: 'simulated', file: 'src/admin/data/study.ts (sample data)', date: 'Study from 13 Oct 2026' },
@@ -91,6 +93,7 @@ export const REPORT_DATA_SOURCES: Record<string, ReportDataSources> = {
     uses: [
       { id: 'buyer-v5', feeds: 'Would try, would pay, the fair price.' },
       { id: 'buyer-v7', feeds: 'Trying with and without a free library.' },
+      { id: 'buyer-v8', feeds: 'Test 8: v7’s best offer against a journey for their own StateFlip.' },
       { id: 'buyer-v6', feeds: 'Free plan against the creator retreat (Detail).' },
       { id: 'personas', feeds: 'Who was in each panel.' },
       { id: 'buyer-prices', feeds: 'The price each test showed.' },
@@ -136,10 +139,25 @@ export const REPORT_DATA_SOURCES: Record<string, ReportDataSources> = {
     uses: [
       { id: 'buyer-v5', feeds: 'Buyer figures, worked out again.' },
       { id: 'buyer-v6', feeds: 'Retreat figures, worked out again.' },
-      { id: 'buyer-v7', feeds: 'Latest test figures, worked out again.' },
+      { id: 'buyer-v7', feeds: 'Test 7 figures, worked out again.' },
+      { id: 'buyer-v8', feeds: 'Test 8 figures, worked out again.' },
       { id: 'personas', feeds: 'Panel sizes and segments.' },
       { id: 'feedback-group', feeds: 'UX feedback figures.' },
       { id: 'cost-model', feeds: 'Cost figures.' },
+    ],
+  },
+  '/admin/ai-brain': {
+    title: 'AI brain',
+    uses: [
+      { id: 'sleep-cohort', feeds: 'Wellness: chance to reach the StateFlip and cost per flip.' },
+      { id: 'akps', feeds: 'AKP counts per function and StateFlips covered; “ours” in the prototype map.' },
+      { id: 'app-funnel', feeds: 'Product and Business: the funnel metrics and their MVP targets.' },
+      { id: 'buyer-rerun', feeds: 'The predicted value of each funnel metric.' },
+      { id: 'buyer-v8', feeds: 'Would pay after the free week; the StateFlip journey feature’s lift.' },
+      { id: 'cost-model', feeds: 'Cost per flip.' },
+      { id: 'spec-causal', feeds: 'Targets: 54% success and $4.98 per flip at stage 1.' },
+      { id: 'b2b2c', feeds: 'The candidate features.' },
+      { id: 'owner-thesis', feeds: 'The prototype values (display only).' },
     ],
   },
   '/admin/personas': {

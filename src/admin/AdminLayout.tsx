@@ -200,6 +200,7 @@ const NAV2: NavGroup[] = [
     description: 'What the AI knows: wellness, product, business and brand',
     defaultOpen: true,
     items: [
+      { to: '/admin/ai-brain', label: 'AI brain', flag: 'adminAiBrain', hint: 'The five functions as one model: targets, chances, feature ranking' },
       ...(RELEASES.stateFlips ? [{ to: '/admin/stateflips', label: 'StateFlips', flag: 'adminStateFlips', hint: 'The product: a bad state turned into a good one' }] : []),
       // U148 (J206): the Meta → Path → Script cascade and the funnel per StateFlip.
       ...(RELEASES.stateFlips

@@ -88,6 +88,7 @@ const AuditPage = lazy(() => import('./admin/pages/AuditPage').then((m) => ({ de
 const SettingsPage = lazy(() => import('./admin/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })))
 const UserJourneyPage = lazy(() => import('./admin/pages/UserJourneyPage').then((m) => ({ default: m.UserJourneyPage })))
 const BusinessFunnelPage = lazy(() => import('./admin/pages/BusinessFunnelPage').then((m) => ({ default: m.BusinessFunnelPage })))
+const AiBrainPage = lazy(() => import('./admin/pages/AiBrainPage').then((m) => ({ default: m.AiBrainPage })))
 const BuyerResultsPage = lazy(() => import('./admin/pages/BuyerResultsPage').then((m) => ({ default: m.BuyerResultsPage })))
 const BuyerAgentReportPage = lazy(() => import('./admin/pages/reports/BuyerAgentReportPage').then((m) => ({ default: m.BuyerAgentReportPage })))
 const SessionBuilderPage = lazy(() => import('./admin/pages/lab/SessionBuilderPage').then((m) => ({ default: m.SessionBuilderPage })))
@@ -247,6 +248,12 @@ export default function App() {
                 </ModuleGuard>
               } />
             )}
+            {/* U147 (J206): the five functions of the AI brain as one model. */}
+            <Route path="ai-brain" element={
+              <ModuleGuard module="adminAiBrain">
+                <AiBrainPage />
+              </ModuleGuard>
+            } />
             {RELEASES.stateFlips && (
               <Route path="stateflips" element={
                 <ModuleGuard module="adminStateFlips">
