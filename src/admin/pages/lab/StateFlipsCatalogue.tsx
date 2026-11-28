@@ -1,14 +1,18 @@
 import { PanelRightOpen } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { Badge, Panel, inputClass } from '../../components/ui'
-import { FAMILIES, FAMILY, LINK_TEXT, akpById, akpSummary, akps, akpsForFlip, type Akp, type AkpFamily } from '../../data/akps'
+import { FAMILIES, FAMILY, akpById, akpByIdAny, akpSummary, akps, akpsForFlip, akpsWithDeleted, type Akp, type AkpFamily } from '../../data/akps'
+import { AKP_LINK_TYPES, makeEdit, nextAkpId, usedForLine } from '../../data/akpEdits'
+import { useAkpEdits } from '../../data/akpEditsSync'
+import { AkpEditBar, AkpEditPanel, AkpExplainer } from './AkpEditor'
+import { FAMILY_LOOK, GOAL_LOOK, MODALITY_LOOK } from './akpStyle'
 import { DIMENSION_LABEL, type Dimension } from '../../data/personaConditionV4'
 import { generatePersonasV4 } from '../../data/personasV4'
 import { DRAFTED, STATEFLIP_DIMENSIONS, flipNumbers, stateFlipById, stateFlipSummary, stateFlips, type StateFlip } from '../../data/stateFlips'
 import { LAYER_TEXT, type Layer } from '../../data/stateFlipSleep'
 import { useDetail } from '../reports/DetailDrawer'
 import { CHAPTER_GOAL, CHAPTER_LINKS, CHAPTER_LINK_TEXT, CHAPTER_MODALITIES, CHAPTER_PHASES, chapterNodeById, chapterNodes, type ChapterModality } from '../../data/akpChapterGraph'
-import { AkpGraph, type GraphLink, type GraphNode, type LinkStyle } from './AkpGraph'
+import { AkpGraph, Mark, type GraphEditing, type GraphLink, type GraphNode, type LinkStyle } from './AkpGraph'
 
 /*
  * Admin → Product lab → StateFlips, tabs "All StateFlips" and "AKP catalogue"
@@ -20,8 +24,7 @@ import { AkpGraph, type GraphLink, type GraphNode, type LinkStyle } from './AkpG
 const pct = (x: number) => (Number.isFinite(x) ? `${Math.round(x * 100)}%` : '–')
 const usd = (x: number) => (Number.isFinite(x) ? `$${x.toFixed(2)}` : '–')
 const num = (x: number) => (Number.isFinite(x) ? `${x}` : '–')
-const FAMILY_BG: Record<AkpFamily, string> = { goal: 'bg-adm-s1', identity: 'bg-adm-s2', script: 'bg-adm-s3', music: 'bg-adm-s4', image: 'bg-adm-good', video: 'bg-adm-warning', product: 'bg-adm-serious' }
-const FAMILY_FILL: Record<AkpFamily, string> = { goal: 'fill-adm-s1', identity: 'fill-adm-s2', script: 'fill-adm-s3', music: 'fill-adm-s4', image: 'fill-adm-good', video: 'fill-adm-warning', product: 'fill-adm-serious' }
+const flipTitle = (id: string) => stateFlipById(id)?.title
 
 function SourceBadge({ source }: { source: string }) {
   const drafted = source === DRAFTED || source.startsWith('drafted')
@@ -128,8 +131,8 @@ function FlipDetail({ f }: { f: StateFlip }) {
         <ul className="flex flex-wrap gap-4">
           {linked.map((a) => (
             <li key={a.id}>
-              <button type="button" onClick={() => open(akpItem(a))} className="inline-flex items-center gap-4 rounded-8 border border-adm-line px-6 py-2 text-11 text-adm-ink hover:bg-adm-hover">
-                <span className={`size-8 rounded-full ${FAMILY_BG[a.family]}`} aria-hidden="true" />
+              <button type="button" onClick={() => open(akpItem(a.id))} className="inline-flex items-center gap-4 rounded-8 border border-adm-line px-6 py-2 text-11 text-adm-ink hover:bg-adm-hover">
+                <Mark look={FAMILY_LOOK[a.family]} />
                 {a.id} {a.name}
               </button>
             </li>
@@ -158,25 +161,32 @@ function flipItem(f: StateFlip) {
 
 /* ------------------------------------------------------------ AKP drawer */
 
-function AkpDetail({ a }: { a: Akp }) {
+function AkpDetail({ id }: { id: string }) {
   const open = useDetail()
-  const incoming = useMemo(() => akps().filter((x) => x.links.some((l) => l.to === a.id)), [a.id])
+  useAkpEdits()
+  const a = akpByIdAny(id)
+  if (!a) return <p className="text-12 text-adm-muted">This AKP no longer exists: it was added in the admin and its edits were reverted.</p>
   return (
     <div className="flex flex-col gap-10 text-12 text-adm-ink-2" data-akp-detail>
-      <p>{a.description}</p>
+      <p className="rounded-8 bg-adm-bg p-8 text-13 text-adm-ink" data-used-for>
+        {usedForLine(a, flipTitle)}
+      </p>
+      <p>{a.description || <span className="text-adm-muted">No description yet.</span>}</p>
       <p className="text-11 text-adm-muted">Causal role: {a.causalRole || '–'}</p>
       <p className="text-11 text-adm-muted">
         Source: {a.source} · status {a.status}
+        {a.edited ? ' · edited in the admin' : ''}
       </p>
       <Sub title={`StateFlips it serves (${a.flips.length})`}>
         {a.flips.length ? (
           <ul className="flex flex-wrap gap-4">
-            {a.flips.map((id) => {
-              const f = stateFlipById(id)!
+            {a.flips.map((fid) => {
+              const f = stateFlipById(fid)
+              if (!f) return null
               return (
-                <li key={id}>
+                <li key={fid}>
                   <button type="button" onClick={() => open(flipItem(f))} className="rounded-8 border border-adm-line px-6 py-2 text-11 text-adm-ink hover:bg-adm-hover">
-                    {id} {f.title}
+                    {fid} {f.title}
                   </button>
                 </li>
               )
@@ -186,38 +196,35 @@ function AkpDetail({ a }: { a: Akp }) {
           <p className="text-adm-muted">None linked yet{a.family === 'product' ? ': product AKPs serve the app, not one goal.' : '.'}</p>
         )}
       </Sub>
-      <Sub title="Links">
-        <ul className="flex flex-col gap-2">
-          {a.links.map((l) => (
-            <li key={`o${l.to}`}>
-              {LINK_TEXT[l.type]} <span className="font-medium text-adm-ink">{l.to}</span> {akpById(l.to)?.name}
-            </li>
-          ))}
-          {incoming.slice(0, 12).map((x) => (
-            <li key={`i${x.id}`}>
-              <span className="font-medium text-adm-ink">{x.id}</span> {x.name} {LINK_TEXT[x.links.find((l) => l.to === a.id)!.type]} this
-            </li>
-          ))}
-          {incoming.length > 12 && <li className="text-adm-muted">+ {incoming.length - 12} more linking here</li>}
-          {!a.links.length && !incoming.length && <li className="text-adm-muted">No typed links.</li>}
-        </ul>
+      <Sub title="Edit">
+        <AkpEditPanel key={JSON.stringify(a)} a={a} onSaved={(x) => open(akpItem(x))} onOpenAkp={(x) => open(akpItem(x))} />
       </Sub>
     </div>
   )
 }
 
-function akpItem(a: Akp) {
+function akpItem(id: string) {
+  const a = akpByIdAny(id)
+  if (!a) return { title: id, extra: <AkpDetail id={id} /> }
   return {
-    kicker: `${a.id} · ${FAMILY[a.family].label} · ${a.kind === 'goal' ? 'Goal AKP' : 'Strategy / tactic AKP'}`,
+    kicker: `${a.id} · ${FAMILY[a.family].label} · ${a.kind === 'goal' ? 'Goal AKP' : 'Strategy / tactic AKP'}${a.deleted ? ' · deleted' : ''}`,
     title: a.name,
     numbers: [
-      { label: 'Layer', value: a.layer },
+      { label: 'Layer', value: a.layer || '–' },
       { label: 'Modality', value: a.modality },
       { label: 'Function', value: a.fn },
-      { label: 'Source', value: a.fromFile ? 'From file' : 'Drafted' },
+      { label: 'Source', value: a.added ? 'Added in the admin' : a.fromFile ? 'From file' : 'Drafted' },
     ],
-    extra: <AkpDetail a={a} />,
+    extra: <AkpDetail id={id} />,
   }
+}
+
+/** Adds a blank AKP (serving one StateFlip when given) and returns its id. */
+function addAkp(store: ReturnType<typeof useAkpEdits>, flip?: string): string {
+  const family: AkpFamily = 'script'
+  const id = nextAkpId(family, (x) => !!akpByIdAny(x))
+  store.commit([...store.edits, makeEdit('add', id, store.who, { value: { name: 'New AKP', family, layer: 'Concepts', modality: 'Script', flips: flip ? [flip] : [] } })])
+  return id
 }
 
 /* ------------------------------------------------------- All StateFlips */
@@ -306,8 +313,7 @@ export function AllStateFlips() {
 
 /* -------------------------------------------------------- AKP catalogue */
 
-const MOD_BG: Record<ChapterModality, string> = { Script: 'bg-adm-s1', Music: 'bg-adm-s2', Voice: 'bg-adm-s3', Image: 'bg-adm-s4' }
-const MOD_FILL: Record<ChapterModality, string> = { Script: 'fill-adm-s1', Music: 'fill-adm-s2', Voice: 'fill-adm-s3', Image: 'fill-adm-s4' }
+const MOD_LOOK = MODALITY_LOOK as Record<ChapterModality, (typeof MODALITY_LOOK)[string]>
 
 const LINK_STYLES: Record<string, LinkStyle> = {
   drives: { label: 'Drives', cls: 'stroke-adm-ink', width: 2 },
@@ -370,42 +376,43 @@ function chapterItem(id: string) {
 function chapterGraph(): { nodes: GraphNode[]; links: GraphLink[] } {
   return {
     nodes: [
-      { id: CHAPTER_GOAL.id, label: CHAPTER_GOAL.name, group: 'Goal', fill: 'fill-adm-ink', dot: 'bg-adm-ink', goal: true },
-      ...chapterNodes().map((n) => ({ id: n.id, label: n.name, group: `${n.modality} · ${n.layer}`, fill: MOD_FILL[n.modality], dot: MOD_BG[n.modality], draft: !n.inCatalogue })),
+      { id: CHAPTER_GOAL.id, label: CHAPTER_GOAL.name, group: 'Goal', look: GOAL_LOOK, goal: true },
+      ...chapterNodes().map((n) => ({ id: n.id, label: n.name, group: `${n.modality} · ${n.layer}`, look: MOD_LOOK[n.modality], draft: !n.inCatalogue })),
     ],
     links: CHAPTER_LINKS.map((l) => ({ ...l })),
   }
 }
 
-function flipGraph(flipId: string): { nodes: GraphNode[]; links: GraphLink[] } {
+/** `_version` only ties the memo to the edits in force; the data comes from akps(). */
+function flipGraph(flipId: string, _version = 0): { nodes: GraphNode[]; links: GraphLink[] } {
   const goalId = flipId.replace(/^SF-/, 'WG-')
-  const goal = akpById(goalId)!
-  const steps = ['X', 'Y', 'Z'].map((m) => akpById(`${goalId}-${m}`)).filter((a): a is Akp => !!a)
+  const goal = akpById(goalId) ?? akpByIdAny(goalId)!
+  const steps = ['X', 'Y', 'Z'].map((m) => akpById(`${goalId}-${m}`)).filter((a) => a !== undefined)
   const strategy = akps().filter((a) => a.kind === 'strategy' && a.flips.includes(flipId)).slice(0, MAX_FLIP_NODES)
   const set = new Set([goalId, ...steps.map((a) => a.id), ...strategy.map((a) => a.id)])
-  const node = (a: Akp, isGoal = false): GraphNode => ({ id: a.id, label: isGoal ? a.id.replace('WG-', '') : a.name, group: `${FAMILY[a.family].label} · ${a.layer}`, fill: FAMILY_FILL[a.family], dot: FAMILY_BG[a.family], goal: isGoal, draft: !a.fromFile })
+  const node = (a: Akp & { edited?: boolean; added?: boolean }, tier: number): GraphNode => ({ id: a.id, label: tier === 0 ? a.id.replace('WG-', '') : a.name, group: `${FAMILY[a.family].label} · ${a.layer || 'no layer'}`, look: FAMILY_LOOK[a.family], goal: tier === 0, draft: !a.fromFile && !a.added, edited: a.edited, tier })
   const links: GraphLink[] = [
     ...steps.map((a) => ({ from: a.id, to: goalId, type: 'step-of' })),
     ...strategy.map((a) => ({ from: a.id, to: goalId, type: 'serves' })),
-    ...strategy.flatMap((a) => a.links.filter((l) => set.has(l.to)).map((l) => ({ from: a.id, to: l.to, type: l.type }))),
+    ...[...steps, ...strategy].flatMap((a) => a.links.filter((l) => set.has(l.to) && !(l.to === goalId && l.type === 'step-of')).map((l) => ({ from: a.id, to: l.to, type: l.type }))),
   ]
-  return { nodes: [node(goal, true), ...steps.map((a) => node(a)), ...strategy.map((a) => node(a))], links }
+  return { nodes: [node(goal, 0), ...steps.map((a) => node(a, 1)), ...strategy.map((a) => node(a, 2))], links }
 }
 
-function Chip({ on, onClick, dot, children }: { on: boolean; onClick: () => void; dot?: string; children: ReactNode }) {
+function Chip({ on, onClick, dot, children }: { on: boolean; onClick: () => void; dot?: ReactNode; children: ReactNode }) {
   return (
     <button type="button" aria-pressed={on} onClick={onClick} className={`inline-flex items-center gap-4 rounded-full border px-10 py-4 text-11 font-medium ${on ? 'border-adm-ink bg-adm-ink text-adm-surface' : 'border-adm-line text-adm-ink-2 hover:bg-adm-hover'}`}>
-      {dot && <span className={`size-8 rounded-full ${dot}`} aria-hidden="true" />}
+      {dot}
       {children}
     </button>
   )
 }
 
-function StatCard({ dot, label, value, sub }: { dot?: string; label: string; value: number; sub?: string }) {
+function StatCard({ dot, label, value, sub }: { dot?: ReactNode; label: string; value: number; sub?: string }) {
   return (
     <div className="flex min-w-0 flex-col gap-2 rounded-8 border border-adm-line bg-adm-bg p-10">
       <dt className="inline-flex min-w-0 items-center gap-4 text-11 text-adm-muted">
-        {dot && <span className={`size-8 shrink-0 rounded-full ${dot}`} aria-hidden="true" />}
+        {dot}
         <span className="truncate">{label}</span>
       </dt>
       <dd className="text-20 font-semibold tabular-nums text-adm-ink">{value.toLocaleString('en')}</dd>
@@ -431,7 +438,7 @@ function ChapterPhases() {
               return (
                 <li key={id}>
                   <button type="button" onClick={() => open(chapterItem(id))} className="inline-flex items-center gap-4 rounded-full border border-adm-line px-8 py-2 text-11 text-adm-ink hover:bg-adm-hover">
-                    <span className={`size-8 rounded-full ${MOD_BG[n.modality]}`} aria-hidden="true" />
+                    <Mark look={MOD_LOOK[n.modality]} />
                     {n.name}
                   </button>
                 </li>
@@ -446,11 +453,13 @@ function ChapterPhases() {
 
 function RelationshipGraph() {
   const open = useDetail()
-  const [focus, setFocus] = useState(CHAPTER)
+  const store = useAkpEdits()
+  const [focus, setFocus] = useState(CHAPTER_GOAL.flip)
   const [mods, setMods] = useState<string[]>([])
   const [layer, setLayer] = useState('all')
   const isChapter = focus === CHAPTER
-  const base = useMemo(() => (isChapter ? chapterGraph() : flipGraph(focus)), [focus, isChapter])
+  const editsNow = store.edits
+  const base = useMemo(() => (isChapter ? chapterGraph() : flipGraph(focus, editsNow.length)), [focus, isChapter, editsNow])
   const modOf = (n: GraphNode) => n.group.split(' · ')[0]
   const layerOf = (n: GraphNode) => n.group.split(' · ').slice(1).join(' · ')
   const modalities = [...new Set(base.nodes.filter((n) => !n.goal).map(modOf))]
@@ -460,17 +469,28 @@ function RelationshipGraph() {
     const ids = new Set(nodes.map((n) => n.id))
     return { nodes, links: base.links.filter((l) => ids.has(l.from) && ids.has(l.to)) }
   }, [base, mods, layer])
-  const legend = isChapter ? CHAPTER_MODALITIES.map((m) => ({ label: m, dot: MOD_BG[m] })) : modalities.map((m) => ({ label: m, dot: FAMILY_BG[FAMILIES.find((f) => FAMILY[f].label === m)!] }))
+  const legend = isChapter ? CHAPTER_MODALITIES.map((m) => ({ label: m, look: MOD_LOOK[m] })) : modalities.map((m) => ({ label: m, look: FAMILY_LOOK[FAMILIES.find((f) => FAMILY[f].label === m) ?? 'script'] }))
   const onOpen = (id: string) => {
     if (isChapter && id !== CHAPTER_GOAL.id) return open(chapterItem(id))
-    const a = akpById(id)
-    if (a) open(akpItem(a))
+    if (akpByIdAny(id)) open(akpItem(id))
   }
+  const editing: GraphEditing | undefined = isChapter
+    ? undefined
+    : {
+        linkTypes: AKP_LINK_TYPES.map((t) => [t, LINK_STYLES[t]?.label ?? t]),
+        onLink: (from, to, type) => {
+          const a = akpById(from)
+          const t = AKP_LINK_TYPES.find((x) => x === type)
+          if (!a || !t || a.links.some((l) => l.to === to && l.type === t)) return
+          store.commit([...store.edits, makeEdit('link-add', from, store.who, { to, type: t })])
+        },
+        onNew: () => open(akpItem(addAkp(store, focus))),
+      }
   const f = isChapter ? stateFlipById(CHAPTER_GOAL.flip)! : stateFlipById(focus)!
   return (
     <Panel
       title="How AKPs relate"
-      description="Pick a StateFlip, or sleep chapter 1, to see its goal AKP in the middle and the strategy AKPs serving it around it. Hover a dot to light up its links; click it for the definition, links and source."
+      description="Pick a StateFlip to see its goal AKP in the middle and the strategy AKPs serving it around it, or sleep chapter 1 (read only). Zoom and pan; Follow the path walks StateFlip → goal AKPs → strategy AKPs. Click a node to edit it; drag from one node to another to link them."
     >
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,420px)_minmax(0,220px)]">
         <Select
@@ -481,7 +501,7 @@ function RelationshipGraph() {
             setMods([])
             setLayer('all')
           }}
-          options={[[CHAPTER, 'Sleep · chapter 1 (AKP Graph Explorer)'], ...stateFlips().map((x) => [x.id, `${x.id} ${x.title}`] as [string, string])]}
+          options={[...stateFlips().map((x) => [x.id, `${x.id} ${x.title}`] as [string, string]), [CHAPTER, 'Sleep · chapter 1 (AKP Graph Explorer, read only)']]}
         />
         <Select label="Layer" value={layer} onChange={setLayer} options={[['all', 'All layers'], ...layers.map((l) => [l, l] as [string, string])]} />
       </div>
@@ -491,7 +511,7 @@ function RelationshipGraph() {
           All
         </Chip>
         {modalities.map((m) => (
-          <Chip key={m} on={mods.includes(m)} dot={legend.find((g) => g.label === m)?.dot} onClick={() => setMods(mods.includes(m) ? mods.filter((x) => x !== m) : [...mods, m])}>
+          <Chip key={m} on={mods.includes(m)} dot={<Mark look={legend.find((g) => g.label === m)?.look ?? FAMILY_LOOK.script} />} onClick={() => setMods(mods.includes(m) ? mods.filter((x) => x !== m) : [...mods, m])}>
             {m}
           </Chip>
         ))}
@@ -504,11 +524,11 @@ function RelationshipGraph() {
         ) : (
           <>
             <span className="font-semibold text-adm-ink">{f.id}</span> {f.title}: its goal AKP, its X / Y / Z steps and the strategy AKPs linked to it by the catalogue
-            {base.nodes.length - 4 >= MAX_FLIP_NODES ? ` (first ${MAX_FLIP_NODES})` : ''}. Dashed outline: drafted by us.
+            {base.nodes.length - 4 >= MAX_FLIP_NODES ? ` (first ${MAX_FLIP_NODES})` : ''}. Dashed outline: drafted by us; solid ring: edited in the admin. Links made here are saved as edits.
           </>
         )}
       </p>
-      <AkpGraph key={focus} nodes={data.nodes} links={data.links} linkStyles={LINK_STYLES} legend={legend} onOpen={onOpen} aria={`Network graph of ${data.nodes.length} AKPs and ${data.links.length} links for ${isChapter ? 'sleep chapter 1' : focus}`} />
+      <AkpGraph key={focus} nodes={data.nodes} links={data.links} linkStyles={LINK_STYLES} legend={legend} onOpen={onOpen} editing={editing} aria={`Network graph of ${data.nodes.length} AKPs and ${data.links.length} links for ${isChapter ? 'sleep chapter 1' : focus}`} />
       {isChapter && (
         <>
           <h3 className="text-13 font-semibold text-adm-ink">Which AKPs drive each phase of the chapter</h3>
@@ -524,8 +544,10 @@ const MODALITY_LIST = ['Script', 'Music', 'Image', 'Video', '—'] as const
 
 export function AkpCatalogue() {
   const open = useDetail()
+  const store = useAkpEdits()
   const all = akps()
   const s = akpSummary()
+  const [status, setStatus] = useState('all')
   const [families, setFamilies] = useState<AkpFamily[]>([])
   const [layer, setLayer] = useState('all')
   const [modality, setModality] = useState('all')
@@ -539,8 +561,10 @@ export function AkpCatalogue() {
     return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8)
   }, [all])
   const ql = q.trim().toLowerCase()
-  const shown = all.filter(
+  const pool = status === 'deleted' ? akpsWithDeleted().filter((a) => a.deleted) : all
+  const shown = pool.filter(
     (a) =>
+      (status === 'all' || status === 'deleted' || (status === 'edited' ? a.edited : a.status === status)) &&
       (!families.length || families.includes(a.family)) && (layer === 'all' || a.layer === layer) && (modality === 'all' || a.modality === modality) &&
       (src === 'all' || (src === 'file') === a.fromFile) && (!ql || `${a.id} ${a.name} ${a.description}`.toLowerCase().includes(ql)),
   )
@@ -555,14 +579,16 @@ export function AkpCatalogue() {
   }
   return (
     <div className="flex min-w-0 flex-col gap-16" data-akp-catalogue>
+      <AkpExplainer />
+      <AkpEditBar onNew={() => open(akpItem(addAkp(store)))} />
       <section aria-label="Summary" className="flex min-w-0 flex-col gap-12 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20">
         <p className="max-w-[860px] text-16 font-semibold leading-snug text-adm-ink">
-          {s.total.toLocaleString('en')} draft AKPs: {s.byKind.goal} goal AKPs (what to reach) and {s.byKind.strategy} strategy and tactic AKPs (how). {s.fromFile} come straight from the workbooks; {s.drafted} are drafted by us, mostly the X / Y / Z steps. {s.flipsCovered} of {s.flips} StateFlips are served by at least one strategy AKP ({s.flipsCoveredBeyondSkills} by more than a skill).
+          {s.total.toLocaleString('en')} AKPs: {s.byKind.goal} goal AKPs (what to reach) and {s.byKind.strategy} strategy and tactic AKPs (how). {s.fromFile} come straight from the workbooks; {s.drafted} are drafted by us, mostly the X / Y / Z steps. {s.flipsCovered} of {s.flips} StateFlips are served by at least one strategy AKP ({s.flipsCoveredBeyondSkills} by more than a skill).
         </p>
         <h3 className="text-12 font-semibold text-adm-ink">By family</h3>
         <dl className="grid grid-cols-2 gap-8 lg:grid-cols-7">
           {FAMILIES.map((f) => (
-            <StatCard key={f} dot={FAMILY_BG[f]} label={`${FAMILY[f].label} (${FAMILY[f].prefix}-)`} value={s.byFamily[f]} sub={FAMILY[f].kind === 'goal' ? 'goal' : 'strategy'} />
+            <StatCard key={f} dot={<Mark look={FAMILY_LOOK[f]} />} label={`${FAMILY[f].label} (${FAMILY[f].prefix}-)`} value={s.byFamily[f]} sub={FAMILY[f].kind === 'goal' ? 'goal' : 'strategy'} />
           ))}
         </dl>
         <div className="grid min-w-0 gap-12 lg:grid-cols-2">
@@ -592,7 +618,7 @@ export function AkpCatalogue() {
           </div>
         </div>
         <p className="text-12 text-adm-ink-2">
-          By function: wellness {s.byFunction.wellness}, product {s.byFunction.product}, identity {s.byFunction.identity}, brand {s.byFunction.brand} (waiting for the marketing sheet). {s.links} typed links between AKPs. All are status “draft”.
+          By function: wellness {s.byFunction.wellness}, product {s.byFunction.product}, identity {s.byFunction.identity}, brand {s.byFunction.brand} (waiting for the marketing sheet). {s.links} typed links between AKPs. Status: {all.filter((a) => a.status === 'draft').length} draft, {all.filter((a) => a.status === 'reviewed').length} reviewed, {all.filter((a) => a.status === 'approved').length} approved. Every count here includes the edits made in the admin.
         </p>
       </section>
 
@@ -608,27 +634,31 @@ export function AkpCatalogue() {
             All families
           </Chip>
           {FAMILIES.map((f) => (
-            <Chip key={f} on={families.includes(f)} dot={FAMILY_BG[f]} onClick={() => toggleFamily(f)}>
+            <Chip key={f} on={families.includes(f)} dot={<Mark look={FAMILY_LOOK[f]} />} onClick={() => toggleFamily(f)}>
               {FAMILY[f].label}
             </Chip>
           ))}
         </div>
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
+          <Select label="Status" value={status} onChange={reset(setStatus)} options={[['all', 'All'], ['draft', 'Draft'], ['reviewed', 'Reviewed'], ['approved', 'Approved'], ['edited', 'Edited in the admin'], ['deleted', 'Deleted (restorable)']]} />
           <Select label="Layer" value={layer} onChange={reset(setLayer)} options={[['all', 'All'], ...layers.map((l) => [l, l] as [string, string])]} />
           <Select label="Modality" value={modality} onChange={reset(setModality)} options={[['all', 'All'], ...MODALITY_LIST.map((m) => [m, m === '—' ? 'None' : m] as [string, string])]} />
           <Select label="Source" value={src} onChange={reset(setSrc)} options={[['all', 'All'], ['file', 'From file'], ['drafted', 'Drafted by us']]} />
         </div>
         <p className="text-12 text-adm-muted" aria-live="polite">
-          {shown.length.toLocaleString('en')} of {all.length.toLocaleString('en')}
+          {shown.length.toLocaleString('en')} of {pool.length.toLocaleString('en')}
         </p>
         <ul className="flex flex-col divide-y divide-adm-line rounded-8 border border-adm-line" data-akp-list>
           {shown.slice(0, limit).map((a) => (
             <li key={a.id}>
-              <button type="button" onClick={() => open(akpItem(a))} className="flex w-full min-w-0 flex-col gap-6 px-12 py-10 text-left hover:bg-adm-hover lg:flex-row lg:items-center lg:gap-12">
+              <button type="button" onClick={() => open(akpItem(a.id))} className="flex w-full min-w-0 flex-col gap-6 px-12 py-10 text-left hover:bg-adm-hover lg:flex-row lg:items-center lg:gap-12">
                 <span className="flex min-w-0 flex-1 flex-col gap-2">
                   <span className="inline-flex min-w-0 items-center gap-6 text-13 font-semibold text-adm-ink">
-                    <span className={`size-8 shrink-0 rounded-full ${FAMILY_BG[a.family]}`} aria-hidden="true" />
+                    <Mark look={FAMILY_LOOK[a.family]} size={12} />
                     <span className="min-w-0 truncate">{a.name}</span>
+                  </span>
+                  <span className="text-12 text-adm-ink-2" data-used-for>
+                    {usedForLine(a, flipTitle)}
                   </span>
                   <span className="truncate text-11 text-adm-muted">
                     {a.id} · {a.description}
@@ -641,6 +671,8 @@ export function AkpCatalogue() {
                   </span>
                   {a.modality !== '—' && <span className="rounded-full bg-adm-hover px-8 py-2 text-11 text-adm-ink-2">{a.modality}</span>}
                   {a.flips.length > 0 && <span className="rounded-full bg-adm-hover px-8 py-2 text-11 tabular-nums text-adm-ink-2">{a.flips.length} {a.flips.length === 1 ? 'goal' : 'goals'}</span>}
+                  {a.status !== 'draft' && <Badge tone="good">{a.status === 'approved' ? 'Approved' : 'Reviewed'}</Badge>}
+                  {a.deleted ? <Badge tone="critical">Deleted</Badge> : a.edited && <Badge tone="neutral">{a.added ? 'Added' : 'Edited'}</Badge>}
                   <SourceBadge source={a.source} />
                 </span>
               </button>

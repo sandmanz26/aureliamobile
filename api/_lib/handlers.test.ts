@@ -13,7 +13,7 @@ function mockRes() {
   return { res, api }
 }
 
-async function load(name: 'config' | 'clicks' | 'annotations', kv: boolean) {
+async function load(name: 'config' | 'clicks' | 'annotations' | 'akp-edits', kv: boolean) {
   vi.resetModules()
   if (kv) {
     vi.stubEnv('KV_REST_API_URL', 'https://kv.example')
@@ -43,7 +43,7 @@ beforeEach(() => {
 
 describe('serverless endpoints', () => {
   it('report configured:false without a store, with the scope and no-store', async () => {
-    for (const name of ['config', 'clicks', 'annotations'] as const) {
+    for (const name of ['config', 'clicks', 'annotations', 'akp-edits'] as const) {
       const handler = await load(name, false)
       const { res, api } = mockRes()
       await handler({ method: 'GET' }, api)
@@ -54,7 +54,7 @@ describe('serverless endpoints', () => {
   })
 
   it('answer 400 to a malformed body instead of crashing', async () => {
-    for (const name of ['config', 'clicks', 'annotations'] as const) {
+    for (const name of ['config', 'clicks', 'annotations', 'akp-edits'] as const) {
       const handler = await load(name, true)
       const { res, api } = mockRes()
       await handler({ method: 'POST', body: '{bad json' }, api)
@@ -85,5 +85,29 @@ describe('serverless endpoints', () => {
     const { res, api } = mockRes()
     await handler({ method: 'DELETE' }, api)
     expect(res.code).toBe(405)
+  })
+
+  it('akp-edits stores a valid list under the scoped key and refuses an invalid or oversized one', async () => {
+    const handler = await load('akp-edits', true)
+    const edit = { id: 'e1', at: '2026-11-28T10:00:00Z', by: 'admin', akp: 'WS-M2', op: 'update', set: { name: 'Calm', status: 'reviewed' }, prev: { name: 'Old' } }
+    const ok = mockRes()
+    await handler({ method: 'POST', body: { edits: [edit] } }, ok.api)
+    expect(ok.res.code).toBe(200)
+    expect(commands).toContainEqual(['SET', 'aurelia:admin:akp-edits:web_app', JSON.stringify([edit])])
+
+    commands.length = 0
+    for (const body of [{ edits: [{ ...edit, op: 'explode' }] }, { edits: [{ ...edit, set: { evil: 1 } }] }, { edits: 'x' }, { edits: Array.from({ length: 2001 }, () => edit) }]) {
+      const r = mockRes()
+      await handler({ method: 'POST', body }, r.api)
+      expect(r.res.code).toBe(400)
+    }
+    const big = mockRes()
+    await handler({ method: 'POST', body: { edits: Array.from({ length: 1900 }, (_, i) => ({ ...edit, id: `e${i}`, set: { description: 'x'.repeat(1000) } })) } }, big.api)
+    expect(big.res.code).toBe(413)
+    expect(commands).toHaveLength(0)
+
+    const get = mockRes()
+    await handler({ method: 'GET' }, get.api)
+    expect(get.res.body).toMatchObject({ configured: true, edits: [], scope: 'aurelia:admin:akp-edits:web_app' })
   })
 })

@@ -14,7 +14,7 @@
  * them labelled assumption.
  */
 
-import { akpById } from './akps'
+import { baseAkpById } from './akps'
 import { DRAFTED } from './stateFlips'
 
 export type ChapterModality = 'Script' | 'Music' | 'Voice' | 'Image'
@@ -82,7 +82,7 @@ let NODES: ChapterNode[] | undefined
 export function chapterNodes(): ChapterNode[] {
   if (NODES) return NODES
   const fromCatalogue = PICK.map(([id, modality, role]) => {
-    const a = akpById(id)!
+    const a = baseAkpById(id)!
     return { id, name: a.name, modality, layer: a.layer, role, inCatalogue: true, source: a.source }
   })
   return (NODES = [...fromCatalogue, ...VOICE])

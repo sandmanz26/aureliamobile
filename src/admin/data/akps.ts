@@ -15,8 +15,13 @@
  * reads the workbooks) and stateFlips.ts; deterministic, no React. Each AKP's
  * `source` is "from <workbook / tab / ID>" or "drafted by us — to review".
  * Brand is a function with no AKPs yet: the marketing sheet has not arrived.
+ *
+ * Since U149 admins can edit the catalogue: akpEdits.ts keeps an overlay of
+ * edits and akps() returns the merged view (baseAkps() is the generated one).
  */
 
+import { readJson } from '../../lib/storage'
+import { applyAkpEdits, akpEditsSchema, type AkpEdit, type AkpStatus, type AkpView } from './akpEdits'
 import { AKP_SOURCE } from './generated/akpSource'
 import { DRAFTED, conceptId, from, stateFlips, tokens, type StateFlip } from './stateFlips'
 
@@ -24,7 +29,7 @@ export type AkpFamily = 'goal' | 'identity' | 'product' | 'script' | 'music' | '
 export type AkpFunction = 'wellness' | 'product' | 'identity' | 'brand'
 export type AkpKind = 'goal' | 'strategy'
 export type Modality = 'Script' | 'Music' | 'Image' | 'Video' | '—'
-export type LinkType = 'step-of' | 'feeds' | 'part-of' | 'supports' | 'fed-by' | 'mirrors'
+export type LinkType = 'drives' | 'step-of' | 'feeds' | 'part-of' | 'supports' | 'fed-by' | 'mirrors'
 
 export const FAMILY: Record<AkpFamily, { prefix: string; label: string; fn: AkpFunction; kind: AkpKind }> = {
   goal: { prefix: 'WG', label: 'Goal', fn: 'wellness', kind: 'goal' },
@@ -38,7 +43,7 @@ export const FAMILY: Record<AkpFamily, { prefix: string; label: string; fn: AkpF
 export const FAMILIES = Object.keys(FAMILY) as AkpFamily[]
 export const FUNCTIONS: AkpFunction[] = ['wellness', 'product', 'identity', 'brand']
 export const LINK_TEXT: Record<LinkType, string> = {
-  'step-of': 'is a step of', feeds: 'feeds', 'part-of': 'is part of', supports: 'supports', 'fed-by': 'is fed by', mirrors: 'mirrors',
+  drives: 'drives', 'step-of': 'is a step of', feeds: 'feeds', 'part-of': 'is part of', supports: 'supports', 'fed-by': 'is fed by', mirrors: 'mirrors',
 }
 
 export interface Akp {
@@ -56,7 +61,11 @@ export interface Akp {
   links: { to: string; type: LinkType }[]
   source: string
   fromFile: boolean
-  status: 'draft'
+  /** Draft from the generator; an admin can mark it reviewed or approved (U149). */
+  status: AkpStatus
+  /** Plain-language "used for" and "helps", written by an admin; generated from the fields when absent (akpEdits.ts usedForLine). */
+  usedFor?: string
+  helps?: string
 }
 
 const S = AKP_SOURCE
@@ -125,7 +134,8 @@ function flipsByWords(fs: StateFlip[], text: string, k: number): string[] {
 
 let CACHE: Akp[] | undefined
 
-export function akps(): Akp[] {
+/** The generated catalogue, before any admin edit. */
+export function baseAkps(): Akp[] {
   if (CACHE) return CACHE
   const fs = stateFlips()
   const out: Akp[] = []
@@ -201,7 +211,62 @@ export function akps(): Akp[] {
   return (CACHE = out)
 }
 
-export const akpById = (id: string) => akps().find((a) => a.id === id)
+export const baseAkpById = (id: string) => baseAkps().find((a) => a.id === id)
+
+/* ------------------------------------------------- Admin edits (U149) */
+
+/**
+ * The edits in force, replayed over the generated catalogue by
+ * applyAkpEdits. Seeded from this browser's copy (localStorage) on first
+ * read; akpEditsSync.ts replaces them when the shared store answers and
+ * every change goes through setAkpEdits, so akps(), akpSummary() and the
+ * report metrics always read the same merged view.
+ */
+export const AKP_EDITS_KEY = 'aurelia.admin.akpEdits'
+let EDITS: AkpEdit[] | undefined
+let MERGED: { edits: AkpEdit[]; all: AkpView[]; live: AkpView[]; byId: Map<string, AkpView> } | undefined
+const listeners = new Set<() => void>()
+
+export function getAkpEdits(): AkpEdit[] {
+  return (EDITS ??= readJson(AKP_EDITS_KEY, akpEditsSchema, []))
+}
+
+export function setAkpEdits(next: AkpEdit[]) {
+  if (next === EDITS) return
+  EDITS = next
+  for (const l of listeners) l()
+}
+
+export function subscribeAkpEdits(listener: () => void) {
+  listeners.add(listener)
+  return () => void listeners.delete(listener)
+}
+
+function merged() {
+  const edits = getAkpEdits()
+  if (MERGED?.edits === edits) return MERGED
+  const all = applyAkpEdits(baseAkps(), edits)
+  const live = all.filter((a) => !a.deleted)
+  return (MERGED = { edits, all, live, byId: new Map(all.map((a) => [a.id, a])) })
+}
+
+/** The catalogue with the admin's edits applied, soft-deleted AKPs left out. What every list, graph and count reads. */
+export function akps(): AkpView[] {
+  return merged().live
+}
+
+/** Including soft-deleted ones (flagged `deleted`), for the editor's "show deleted". */
+export function akpsWithDeleted(): AkpView[] {
+  return merged().all
+}
+
+/** An AKP by id in the merged view; undefined when it does not exist or is deleted. */
+export const akpById = (id: string): AkpView | undefined => {
+  const a = merged().byId.get(id)
+  return a && !a.deleted ? a : undefined
+}
+/** Like akpById, but finds soft-deleted AKPs too. */
+export const akpByIdAny = (id: string): AkpView | undefined => merged().byId.get(id)
 
 /* --------------------------------------------------------------- Summary */
 
@@ -232,7 +297,7 @@ export function akpSummary(): AkpSummary {
     byKind: { goal: as.length - strategy.length, strategy: strategy.length },
     fromFile: as.filter((a) => a.fromFile).length,
     drafted: as.filter((a) => !a.fromFile).length,
-    links: as.reduce((t, a) => t + a.links.length, 0),
+    links: as.reduce((t, a) => t + a.links.filter((l) => akpById(l.to)).length, 0),
     flipsCovered: covered.size,
     flipsCoveredBeyondSkills: beyond.size,
     flips: stateFlips().length,

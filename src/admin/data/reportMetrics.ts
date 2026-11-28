@@ -1308,8 +1308,8 @@ function stateFlipMetrics(): MetricDef[] {
       },
     },
     {
-      id: 'akp-total', report: 'stateflips', label: 'Draft AKPs in the catalogue', unit: 'count', good: 'none',
-      formula: 'Goal AKPs (125 StateFlips, their 375 steps, 47 identity dimensions) plus strategy and tactic AKPs (script, music, image, video, product).', shownAt: 'StateFlips, AKP catalogue summary', source: 'src/admin/data/akps.ts',
+      id: 'akp-total', report: 'stateflips', label: 'AKPs in the catalogue', unit: 'count', good: 'none',
+      formula: 'Goal AKPs (125 StateFlips, their 375 steps, 47 identity dimensions) plus strategy and tactic AKPs (script, music, image, video, product), with the edits made in the admin applied (added counted, deleted left out).', shownAt: 'StateFlips, AKP catalogue summary', source: 'src/admin/data/akps.ts',
       displayed: () => akpSummary().total,
       compute: () => {
         const as = akps()
