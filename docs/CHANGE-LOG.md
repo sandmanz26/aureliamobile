@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-28 — Session builder and therapeutic funnel (U148, J206)
+
+AI brain gains How a session is built and the Therapeutic funnel; the wiki gains the assumptions ledger and claims policy.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-28 — AKP graph and cost per StateFlip (U145, J206)
 
 StateFlips each have their own steps and people; the AKP catalogue has an interactive relationship graph; the Cost report lists cost per StateFlip.

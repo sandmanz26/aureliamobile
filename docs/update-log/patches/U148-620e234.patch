@@ -1,0 +1,1433 @@
+commit 620e2346fee1f611affcdc7d1374a9e2632948a0
+Author: Claude <noreply@anthropic.com>
+Date:   Sat Nov 28 04:19:03 2026 +0000
+
+    How a session is built (Meta → Path → Script, worked sleep chapter 1), Therapeutic funnel per StateFlip, Monday delivery sheet, assumptions ledger and claims policy (U148, J206)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+
+diff --git a/docs/briefs/2026-11-30-delivery-sheet.md b/docs/briefs/2026-11-30-delivery-sheet.md
+new file mode 100644
+index 0000000..82adddf
+--- /dev/null
++++ b/docs/briefs/2026-11-30-delivery-sheet.md
+@@ -0,0 +1,52 @@
++# Monday delivery sheet (30 Nov 2026)
++
++**For the business owner.** On 27 Nov the product owner committed six items for Monday, then the invoice (EUGENE-CONTEXT §0, A42). Below is each item: where to see it, the commit, its status, what to look at, and the one question we need answered. Everything is in the admin on staging and production (all flags are on). Every number is labelled spec, assumption, computed or measured; nothing is measured on real people yet.
++
++Status words: **Done** = built and shipped. **Draft** = built, waiting for your review of the content. **Partial** = part of the ask is built; the rest is named.
++
++| # | Committed item (hours) | Where | Commits | Status |
++| --- | --- | --- | --- | --- |
++| 1 | The first 1,000 AKPs as the foundation (6h) | Admin → AI brain → StateFlips → **AKP catalogue** tab (`/admin/stateflips`) | `7e6156e` (U141), `88996c9` (U145: catalogue redesign and relationship graph) | Draft |
++| 2 | Graph over time (1.5h) | StateFlips → Sleep → **the cohort over time**; Reports → **three metric lines** over the Causal AI stages (`/admin/reports`) | `cef90fc` (U140), `0d0683d` (U146) | Done |
++| 3 | Bad-to-good sleep in detail (1h) | StateFlips → **Sleep, in full**: bad 25 and good 85 from four check-in questions, steps X → Y → Z, who has it, DOJO links | `cef90fc` (U140), `88996c9` (U145: steps and cohort for every StateFlip) | Done |
++| 4 | How it is calculated (1h) | StateFlips → **chapters to flip** and **chance it works**, each formula filled in per person; Reports → **How numbers are made** | `cef90fc` (U140), `689207d` (U135) | Done |
++| 5 | AKPs in our agent (3h) | StateFlips → **sleep chapter 1 AKP graph**; AI brain → **How a session is built** (`/admin/session-builder`) | `88996c9` (U145), this week's U148 commit | Partial |
++| 6 | Persona system (2h) | AI brain → **Personas** (`/admin/personas`): 1,000 people, current condition in five dimensions, Wellness Identity (12 dimensions), four-function mindspace | `41455ab` (U134), `cdc5ef7` (U138), `7e6156e` (U141) | Done |
++
++## Item by item
++
++**1. The first 1,000 AKPs.** 1,046 AKPs: 547 goals (the 125 StateFlips and their steps) and 499 strategies and tactics, with 653 links. 637 come from your workbooks; 409 were written by us to fill gaps and are marked "drafted by us". Brand AKPs are empty until the marketing sheet arrives.
++*Look at:* the drafted rows; filter by StateFlip "Bad sleep → good sleep" to see one StateFlip's blocks.
++*Question:* do you already have a populated AKP database (the 2025 backend), or is "120,000 AKPs" the authoring target?
++
++**2. Graph over time.** The sleep cohort followed chapter by chapter (still going, stopped, flipped; average score), and three lines (uplift, success, cost per flip) across Causal AI stages 1 → 3 with their top drivers.
++*Look at:* where the cohort's flipped line flattens, and the Stage 1 cost per flip.
++*Question:* is "over time" by chapter and by stage what you meant, or calendar weeks for a pilot cohort?
++
++**3. Sleep in detail.** What bad and good sleep mean in four questions anyone can answer each morning, the three steps (winds down, falls asleep faster, sleeps through), and who in the 1,000 personas has it (92, of whom 90 can start).
++*Look at:* the four check-in questions and the cut-offs.
++*Question:* are 45 / 65 / 85 the right thresholds for X, Y and Z?
++
++**4. How it is calculated.** Chapters to flip = your +1.43 per chapter, faster in the mood stretch and slower in the skill stretch, calibrated to your 42. Chance it works = your 54% × how often they use it × readiness × severity × fit. Every person shows the sum filled in.
++*Look at:* the three worked people (mild, moderate, severe).
++*Question:* are you happy for the layer speeds (1.6 / 1.05 / 0.72) to stay our assumption until the pilot measures them?
++
++**5. AKPs in our agent.** Built: the AKPs that make up sleep chapter 1 as a graph, and your Meta → Path → Script cascade as a page: 16 steps, each with what feeds it and what exists today, plus one fully worked example of chapter 1 (10 minutes, bars and elements E01… from your BAR / ELEMENTS workbook, CFAM targets such as entropy clarity 0.7 → 0.3). Not built: an agent that actually selects AKPs and writes the script; that needs the backend.
++*Look at:* the worked example on How a session is built, step by step.
++*Question:* who sets AKP priority and how it is used in a build (open decision 4.6)? Our default: goal AKPs choose, strategy AKPs ranked by fit to the step's layer.
++
++**6. Persona system.** 1,000 synthetic people from cited age and country distributions, each with a life scenario, a condition score in five dimensions, risk flags, Wellness Identity and a mindspace per function. They drive the buyer agents, the cohorts and the cost model.
++*Look at:* one persona's identity card and its condition.
++*Question:* do the 12 identity dimensions match your Grand list, or should any be renamed?
++
++## Also new this week
++
++- **Therapeutic funnel** (`/admin/therapeutic-funnel`): per StateFlip, has the problem → starts → chapter 1 → X → Y → Z → stays good, with drop-offs, reasons and levers. Sleep: of 92 with the problem, about 44 are expected to flip.
++- **Assumptions ledger and claims policy** (Wiki → B2B2C → Assumptions and claims): every load-bearing number with its source and status, and the words we use and avoid so Aurelia stays a wellness product.
++
++## What we need from you
++
++1. The AKP database question (item 1).
++2. X / Y / Z thresholds (item 3).
++3. AKP priority in a build (item 5).
++4. Sign the one-sentence wellness purpose on the claims page.
+diff --git a/docs/research/b2b2c/00-summary.md b/docs/research/b2b2c/00-summary.md
+index db4e856..44f9f82 100644
+--- a/docs/research/b2b2c/00-summary.md
++++ b/docs/research/b2b2c/00-summary.md
+@@ -105,7 +105,7 @@ The full table of 15, with the scores per question, is on [Ideation](/wiki/b2b2c
+ 
+ The full plan, with gates, is on [Plan](/wiki/b2b2c/plan).
+ 
+-The business owner's scale claims (120,000 AKPs, 500 billion variations, 5 billion StateFlips, $1 per flip) are recorded as [his thesis, not measured](/wiki/b2b2c/owner-thesis), each with what would make it measurable.
++The business owner's scale claims (120,000 AKPs, 500 billion variations, 5 billion StateFlips, $1 per flip) are recorded as [his thesis, not measured](/wiki/b2b2c/owner-thesis), each with what would make it measurable. Every load-bearing number in the admin, and the words we use and avoid, are on [Assumptions and claims](/wiki/b2b2c/assumptions).
+ 
+ 1. **Phase 0, now, no backend.**
+    - Buyer agents test the redesigned retreat (€19.99 against €39).
+diff --git a/docs/research/b2b2c/13-assumptions-and-claims.md b/docs/research/b2b2c/13-assumptions-and-claims.md
+new file mode 100644
+index 0000000..5535f94
+--- /dev/null
++++ b/docs/research/b2b2c/13-assumptions-and-claims.md
+@@ -0,0 +1,88 @@
++# Assumptions ledger and claims policy
++
++*Part of the [B2B2C research](/wiki/b2b2c). Written 28 Nov 2026 (U148, J206). Not legal advice. The regulation behind the policy is on [Claims and regulation](/wiki/b2b2c/regulation); the scale claims are on [His thesis](/wiki/b2b2c/owner-thesis).*
++
++## In one minute
++
++- **No number in the admin is measured on real people yet.** Every figure that drives a decision is a spec value, an assumption, or a computation on those. This page lists each one, where it comes from, and what pilot measurement would replace it.
++- **Aurelia is a wellness product, and its words must keep it one.** Under the EU MDR, the UK MHRA's guidance and the US FDA's general wellness policy, it is the *intended purpose shown in claims* that makes software a medical device, not the technology. Treating, curing or preventing insomnia, anxiety or depression is a medical purpose; "helping you wind down at night" is not.
++- **From 2 August 2026 the EU AI Act requires telling people they are dealing with AI and marking synthetic audio.** Every session is AI-made and voiced.
++- **Internal names stay internal.** "Therapeutic funnel", "Healing map" and "medical range" are the team's working names in the admin. They must not appear in the app, on the site, in creator copy or in a partner deck.
++
++## Status words
++
++| Status | Meaning |
++| --- | --- |
++| **Spec** | From the business owner's MVP, Causal AI and Admin spec, or his deck. His target or belief. |
++| **Assumption** | Chosen by us to make a model run. No source. |
++| **Computed** | Worked out by our code from spec values, assumptions and synthetic personas. Only as good as its inputs. |
++| **Measured** | Counted from real use or real bills. Today only the 2025 test-session costs. |
++
++## The ledger
++
++| # | Assumption | Value | Source | Status | What would measure it |
++| --- | --- | --- | --- | --- | --- |
++| 1 | Chance a journey works (flip probability, Causal AI stage 1) | 54% (74.5% stage 2, 89% stage 3) | Spec PDF; `costModel.ts` STAGES | Spec | Share of pilot journeys whose check-in score reaches 85 and stays there two chapters in a row |
++| 2 | Uplift per chapter (stage 1) | +1.43 points of 100 (1.88, 2.73) | Spec PDF | Spec | Mean change in the check-in score per chapter played, in the pilot |
++| 3 | Chapters to flip, 25 → 85 | 42 (32, 22) | Spec PDF; our layered curve is calibrated to give 42 | Spec | Median chapters from start to flip among people who flip |
++| 4 | Our sleep cohort's chapters and chance | Median 34 chapters; average chance 49% (90 synthetic people) | `stateFlipFormulas.ts` | Computed | As 1 and 3, for real sleepers |
++| 5 | Layer speeds (how fast each stretch moves against the spec's average) | Mood 1.6×, habit 1.05×, skill 0.72× | Ours, from the DOJO time scales (moods days, habits weeks, skills months) | Assumption | Score change per chapter in each stretch (below 45, 45–65, 65–85) |
++| 6 | Milestones X, Y, Z | 45, 65, 85 of 100 | Ours; 85 as "good" from the check-in markers | Assumption (markers: research) | Whether people at 65 and 85 report they sleep well; adjust cut-offs |
++| 7 | Who stops before the end | 60% of those it does not help | `stateFlipFormulas.ts` DROPOUT_SHARE | Assumption | Play and check-in logs: stops per chapter |
++| 8 | Non-responders | Improve at half speed, stall below 64 | `stateFlipFormulas.ts` | Assumption | Score paths of people who play every chapter without flipping |
++| 9 | Stays good after the flip | 80% at 12 weeks | Therapeutic funnel (U148) | Assumption | 4- and 12-week follow-up check-ins after a flip |
++| 10 | Persona rules | 1,000 synthetic people; sleep need, severity, readiness, helpers, minutes a day from cited distributions; risk-flagged excluded | `personasV4.ts`, `personaConditionV4.ts` | Computed (synthetic) | The pilot's intake answers, compared field by field |
++| 11 | Model prices | Per million tokens, characters or minutes, dated | Suppliers' own pages; `costModel.ts` SUPPLIERS | Research (prices); cost per chapter Computed | Real bills per chapter |
++| 12 | Cost per flip | $4.98 → $2.04 → $0.58 by stage | Spec PDF | Spec | Real compute bills ÷ measured flips |
++| 13 | $1 per flip floor | $1 | His deck | Spec (thesis) | As 12, at scale |
++| 14 | Price per flip | $19.99 | Spec PDF | Spec | What paying pilot users pay, and refund rate |
++| 15 | 120,000 AKPs | 120,000 | His chats | Spec (thesis) | An exported AKP table; our catalogue holds 1,046 drafts, 409 written by us |
++| 16 | 500 billion variations | 500B | His deck | Spec (thesis) | Variations actually generated and played |
++| 17 | 5 billion StateFlips a year | 500M people × 10 | His deck | Spec (thesis) | Counted flips |
++| 18 | 125 StateFlips | 25 per dimension | His plan; ours from the persona issues, Deeksha needs and DOJO duals | Spec (count); steps of all but sleep drafted by us | Review by the business owner; usage per StateFlip in the pilot |
++| 19 | Entropy clarity, a grounding session | 0.7 → 0.3 | BAR / ELEMENTS workbook, CFAM tab | Spec (example) | No measure defined yet; proxy: the next morning's check-in |
++| 20 | Words in a 10-minute bedtime chapter | About 405 | [How a session is built](/admin/session-builder) | Assumption | Completion ratio and skips per element |
++| 21 | Buyer agents' "would try", "would pay" | Per run | `buyerRun*.ts` | Computed (synthetic) | Real sign-up and payment rates |
++| 22 | Week-8 completion and funnel targets | 20–50% and per stage | Business funnel; B2B2C research | Research / Assumption | Pilot funnel |
++
++## Claims policy
++
++**One intended purpose, used everywhere:** *Aurelia offers AI-generated audio sessions for everyday wellbeing: relaxation, winding down, sleep habits and managing everyday stress. It is not a medical device and does not diagnose, treat, cure or prevent any condition. If you are struggling, talk to a doctor or a local help line.*
++
++### Words we use and avoid
++
++| Avoid | Use instead | Why |
++| --- | --- | --- |
++| "Heal", "healing" (as a promise to a person) | "Feel better", "wind down", "build a calmer routine" | Healing implies treating a condition: a medical purpose under EU MDR / MDCG 2019-11 and the MHRA guidance |
++| "Therapeutic precision", "therapy", "therapist", "therapeutic" in public copy | "Guided sessions", "personal practice" | Therapy claims make it a device; Illinois HB 1806 and Nevada AB 406 fine AI "therapy" per violation |
++| "Medical foundation", "clinically proven", "evidence-based treatment" | "Built on published sleep research" (only where a citation is shown and true) | Health claims need trial-grade evidence held in advance (FTC Health Products guidance; CAP Code) |
++| "Treats / cures insomnia, anxiety, depression"; "prevents burnout" | "Helps you wind down at night"; "practices for everyday stress" | Naming or preventing a condition is a medical purpose (MHRA worked examples; FDA general wellness: "sleep management" is wellness, "treats insomnia" is not) |
++| "+85.7% better sleep", "stress −50%", "54% chance it works", any number from the admin | No outcome numbers until a study of this product exists | Quantified claims need substantiation; our figures are spec values or simulations |
++| "For people with [a diagnosis]" | "For busy minds and restless evenings" | A diagnosed target group is a medical purpose (MHRA) |
++| A session that sounds like a human wrote or reads it | "Your sessions are made by AI" and marked synthetic audio | EU AI Act Art. 50 from 2 Aug 2026; California SB 243; Utah HB 452 |
++| Mood or feeling data shown to employers or creators per person | Aggregates only | Health data (GDPR art. 9); emotion inference at work is banned under the EU AI Act Art. 5 |
++
++Creators follow the same table; their posts count as Aurelia's claims (MHRA Example 6; FTC Endorsement Guides). The full creator list is on [Claims and regulation](/wiki/b2b2c/regulation).
++
++### Scan of our own copy (28 Nov 2026)
++
++Words counted in `src/admin` (code and labels, tests excluded) and in the wiki's How Aurelia heals and B2B2C pages:
++
++| Word | Admin | Wiki | Verdict |
++| --- | --- | --- | --- |
++| "therapeutic" | 65 | 14 | Internal metric name ("Therapeutic map", "Therapeutic funnel", "therapeutic outcomes"); the pages already say so. Keep in the admin, never public |
++| "heal", "healing" | 39 | 15 | "Healing Map" and the wiki title "How Aurelia heals" are the business owner's names. Internal only; rename before anything is shared outside the team |
++| "therapy", "therapist" | 34 | 55 | Mostly synthetic personas ("sees a therapist") and the regulation pages. Fine |
++| "medical" | 13 | 49 | "Medical range" in the Cost report is labelled internal; the rest is regulation text. Fine |
++| "insomnia" | 36 | 21 | DOJO duals ("insomnia → restful sleep") and research citations. Internal; never in app copy |
++| "treat", "treatment" | 20 | 52 | Regulation text and persona help. Fine |
++| "cure" | 0 in labels | 2 | Only as a word to avoid. Fine |
++| "therapeutic precision", "medical foundation" | 0 | 0 | His phrases from chats; not in our copy |
++
++No admin label was changed: each risky word is either his quoted name or already marked as internal on the page. Public surfaces (the app and the site) were not part of this scan.
++
++## Decisions for the business owner
++
++1. Sign the intended-purpose sentence above, or correct it.
++2. Agree that "Healing Map", "How Aurelia heals" and "therapeutic" stay internal, and pick public names before any external demo.
++3. Agree that no outcome number is shown to buyers until the pilot measures it.
+diff --git a/src/App.tsx b/src/App.tsx
+index 79d811f..e50195f 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -90,6 +90,8 @@ const UserJourneyPage = lazy(() => import('./admin/pages/UserJourneyPage').then(
+ const BusinessFunnelPage = lazy(() => import('./admin/pages/BusinessFunnelPage').then((m) => ({ default: m.BusinessFunnelPage })))
+ const BuyerResultsPage = lazy(() => import('./admin/pages/BuyerResultsPage').then((m) => ({ default: m.BuyerResultsPage })))
+ const BuyerAgentReportPage = lazy(() => import('./admin/pages/reports/BuyerAgentReportPage').then((m) => ({ default: m.BuyerAgentReportPage })))
++const SessionBuilderPage = lazy(() => import('./admin/pages/lab/SessionBuilderPage').then((m) => ({ default: m.SessionBuilderPage })))
++const TherapeuticFunnelPage = lazy(() => import('./admin/pages/lab/TherapeuticFunnelPage').then((m) => ({ default: m.TherapeuticFunnelPage })))
+ const StateFlipsPage = lazy(() => import('./admin/pages/lab/StateFlipsPage').then((m) => ({ default: m.StateFlipsPage })))
+ const TherapeuticMapPage = lazy(() => import('./admin/pages/lab/TherapeuticMapPage').then((m) => ({ default: m.TherapeuticMapPage })))
+ const HealingMapPage = lazy(() => import('./admin/pages/lab/HealingMapPage').then((m) => ({ default: m.HealingMapPage })))
+@@ -230,6 +232,21 @@ export default function App() {
+               } />
+             )}
+             {/* U140 (J202): staging only (RELEASES). */}
++            {/* U148 (J206): with StateFlips (RELEASES). */}
++            {RELEASES.stateFlips && (
++              <Route path="session-builder" element={
++                <ModuleGuard module="adminSessionBuilder">
++                  <SessionBuilderPage />
++                </ModuleGuard>
++              } />
++            )}
++            {RELEASES.stateFlips && (
++              <Route path="therapeutic-funnel" element={
++                <ModuleGuard module="adminTherapeuticFunnel">
++                  <TherapeuticFunnelPage />
++                </ModuleGuard>
++              } />
++            )}
+             {RELEASES.stateFlips && (
+               <Route path="stateflips" element={
+                 <ModuleGuard module="adminStateFlips">
+diff --git a/src/admin/AdminLayout.tsx b/src/admin/AdminLayout.tsx
+index 6541b2a..d6ac375 100644
+--- a/src/admin/AdminLayout.tsx
++++ b/src/admin/AdminLayout.tsx
+@@ -105,6 +105,12 @@ const NAV: NavGroup[] = [
+         : []),
+       // U140 (J202): staging only (RELEASES).
+       ...(RELEASES.stateFlips ? [{ to: '/admin/stateflips', label: 'StateFlips', flag: 'adminStateFlips' }] : []),
++      ...(RELEASES.stateFlips
++        ? [
++            { to: '/admin/session-builder', label: 'How a session is built', flag: 'adminSessionBuilder' },
++            { to: '/admin/therapeutic-funnel', label: 'Therapeutic funnel', flag: 'adminTherapeuticFunnel' },
++          ]
++        : []),
+       // Buyer agent results (/admin/buyer-agent) is off the menu since U123; the route stays and Reports links to it.
+     ],
+   },
+@@ -195,6 +201,13 @@ const NAV2: NavGroup[] = [
+     defaultOpen: true,
+     items: [
+       ...(RELEASES.stateFlips ? [{ to: '/admin/stateflips', label: 'StateFlips', flag: 'adminStateFlips', hint: 'The product: a bad state turned into a good one' }] : []),
++      // U148 (J206): the Meta → Path → Script cascade and the funnel per StateFlip.
++      ...(RELEASES.stateFlips
++        ? [
++            { to: '/admin/session-builder', label: 'How a session is built', flag: 'adminSessionBuilder', hint: 'Meta → Path → Script: 16 steps from goal and person to a script, with a worked sleep example' },
++            { to: '/admin/therapeutic-funnel', label: 'Therapeutic funnel', flag: 'adminTherapeuticFunnel', hint: 'Per StateFlip: has the problem → flip → stays good, with drop-offs and levers' },
++          ]
++        : []),
+       ...(RELEASES.personas ? [{ to: '/admin/personas', label: 'Personas', flag: 'adminPersonas', hint: 'Made-up research people the tests run on' }] : []),
+       { to: '/admin/user-journey', label: 'User journey', flag: 'adminUserJourney', hint: 'When people reach for Aurelia, and what serves each moment' },
+       ...(RELEASES.businessFunnel ? [{ to: '/admin/business-funnel', label: 'Business funnel', flag: 'adminBusinessFunnel', hint: 'How many people get from first visit to paying' }] : []),
+diff --git a/src/admin/data/dataSources.test.ts b/src/admin/data/dataSources.test.ts
+index b452bac..06f2606 100644
+--- a/src/admin/data/dataSources.test.ts
++++ b/src/admin/data/dataSources.test.ts
+@@ -5,7 +5,7 @@ import { SOURCES, type SourceId } from './reportSources'
+ 
+ // Every report route, plus the lab pages that show numbers (StateFlips has its own sources panel).
+ const reportRoutes = [...appSource.matchAll(/<Route path="(reports[^"]*)"/g)].map((m) => `/admin/${m[1]}`)
+-const LAB_ROUTES = ['/admin/personas', '/admin/business-funnel', '/admin/user-journey']
++const LAB_ROUTES = ['/admin/personas', '/admin/business-funnel', '/admin/user-journey', '/admin/session-builder', '/admin/therapeutic-funnel']
+ 
+ describe('data sources per report (U146)', () => {
+   it('finds the report routes', () => {
+diff --git a/src/admin/data/dataSources.ts b/src/admin/data/dataSources.ts
+index 431bcaa..0dd6cf0 100644
+--- a/src/admin/data/dataSources.ts
++++ b/src/admin/data/dataSources.ts
+@@ -58,6 +58,7 @@ export const SOURCE_META: Record<SourceId, { type: DataSourceType; file: string;
+   'cost-model': { type: 'assumed', file: 'src/admin/data/costModel.ts', date: '27 Nov 2026' },
+   'sleep-cohort': { type: 'simulated', file: 'src/admin/data/stateFlipSleep.ts', date: 'U140 (J202)' },
+   'owner-thesis': { type: 'owner', file: 'His deck; chats of 24 and 27 Nov 2026', date: '27 Nov 2026' },
++  'bar-elements': { type: 'owner', file: 'docs/briefs/2026-11-27-bar-elements-operating-model.xlsx', date: '27 Nov 2026' },
+ }
+ 
+ export interface DataSourceUse {
+@@ -158,6 +159,22 @@ export const REPORT_DATA_SOURCES: Record<string, ReportDataSources> = {
+       { id: 'decisions', feeds: 'The decision log.' },
+     ],
+   },
++  '/admin/session-builder': {
++    title: 'How a session is built',
++    uses: [
++      { id: 'bar-elements', feeds: 'The 16 steps (inputs, databases, outputs), the context loop, bars, elements and CFAM examples.' },
++      { id: 'sleep-cohort', feeds: 'The person in the worked example and their numbers.' },
++      { id: 'spec-causal', feeds: 'Chance it works (54%) and uplift behind the example’s numbers.' },
++    ],
++  },
++  '/admin/therapeutic-funnel': {
++    title: 'Therapeutic funnel',
++    uses: [
++      { id: 'sleep-cohort', feeds: 'The people per StateFlip and each person’s probabilities.' },
++      { id: 'personas', feeds: 'The v4 personas behind every StateFlip but sleep.' },
++      { id: 'spec-causal', feeds: 'Chance it works (54%) and uplift per chapter.' },
++    ],
++  },
+   '/admin/user-journey': {
+     title: 'User journey',
+     uses: [
+diff --git a/src/admin/data/reportSources.ts b/src/admin/data/reportSources.ts
+index d9e13cc..da1fb85 100644
+--- a/src/admin/data/reportSources.ts
++++ b/src/admin/data/reportSources.ts
+@@ -61,6 +61,7 @@ export type SourceId =
+   | 'cost-model'
+   | 'sleep-cohort'
+   | 'owner-thesis'
++  | 'bar-elements'
+ 
+ export interface ReportSource {
+   id: SourceId
+@@ -330,6 +331,15 @@ export const SOURCES: Record<SourceId, ReportSource> = {
+     link: '/wiki/b2b2c/owner-thesis',
+     label: 'scenario',
+   },
++  'bar-elements': {
++    id: 'bar-elements',
++    name: 'BAR / ELEMENTS operating model (workbook)',
++    what: 'The business owner’s workbook on how a script is built: the Meta → Path → Script cascade, bars, elements, CFAM metrics and the script assessment framework.',
++    version: 'Workbook of 27 Nov 2026 (27 tabs)',
++    taken: 'The 16 steps and the example values marked “from the workbook”.',
++    link: '/admin/session-builder',
++    label: 'document',
++  },
+ }
+ 
+ /** The kind of evidence a source is, for grouping it on a graph (U121). Coarse on purpose: a handful of groups a reader can scan. */
+@@ -365,6 +375,7 @@ export const SOURCE_KIND: Record<SourceId, SourceKind> = {
+   'cost-model': 'Costs',
+   'sleep-cohort': 'Funnels and models',
+   'owner-thesis': 'The business owner',
++  'bar-elements': 'The business owner',
+ }
+ 
+ export interface Finding {
+diff --git a/src/admin/data/sessionBuilder.test.ts b/src/admin/data/sessionBuilder.test.ts
+new file mode 100644
+index 0000000..e5d858d
+--- /dev/null
++++ b/src/admin/data/sessionBuilder.test.ts
+@@ -0,0 +1,35 @@
++import { describe, expect, it } from 'vitest'
++import { CASCADE, PLANNER, workedExample } from './sessionBuilder'
++import { therapeuticFunnel, funnelOptions } from './therapeuticFunnel'
++import { sleepCohort } from './stateFlipFormulas'
++
++describe('How a session is built (U148)', () => {
++  it('has the 16 workbook steps in order, 3 Meta, 7 Path, 6 Script', () => {
++    expect(CASCADE.map((c) => c.n)).toEqual(Array.from({ length: 16 }, (_, i) => i + 1))
++    expect(CASCADE.filter((c) => c.domain === 'META').length).toBe(3)
++    expect(CASCADE.filter((c) => c.domain === 'PATH').length).toBe(7)
++    expect(CASCADE.filter((c) => c.domain === 'SCRIPT').length).toBe(6)
++  })
++  it('plans exactly 10 minutes and gives a value at every step', () => {
++    expect(PLANNER.reduce((t, r) => t + r.seconds, 0)).toBe(600)
++    const ex = workedExample()
++    expect(ex.values.map((v) => v.n)).toEqual(CASCADE.map((c) => c.n))
++    expect(ex.alignment.score).toBeGreaterThan(0)
++    expect(ex.alignment.score).toBeLessThanOrEqual(1)
++  })
++})
++
++describe('Therapeutic funnel (U148)', () => {
++  it('never grows from one stage to the next', () => {
++    for (const { id } of funnelOptions().slice(0, 30)) {
++      const f = therapeuticFunnel(id)
++      for (let i = 1; i < f.stages.length; i++) expect(f.stages[i].people, `${id} ${f.stages[i].id}`).toBeLessThanOrEqual(f.stages[i - 1].people + 1e-9)
++    }
++  })
++  it('flips the same share as the sleep cohort’s chance it works', () => {
++    const f = therapeuticFunnel('SF-PHY-01')
++    const c = sleepCohort()
++    expect(f.group).toBe(c.people.length)
++    expect(f.stages.find((s) => s.id === 'Z')!.people / f.group).toBeCloseTo(c.meanChance, 6)
++  })
++})
+diff --git a/src/admin/data/sessionBuilder.ts b/src/admin/data/sessionBuilder.ts
+new file mode 100644
+index 0000000..ea2f68a
+--- /dev/null
++++ b/src/admin/data/sessionBuilder.ts
+@@ -0,0 +1,318 @@
++/**
++ * Admin → AI brain → How a session is built (U148, J206). The business
++ * owner's "Cascading logic - Meta, Path, Script" tab of the BAR / ELEMENTS
++ * workbook (docs/briefs/2026-11-27-bar-elements-operating-model.xlsx): 16
++ * steps in three domains, META (1–3) → PATH (4–10) → SCRIPT (11–16), joined by
++ * a context loop. For each step: what it is for, its inputs and databases (the
++ * workbook's words), which of our data and AKPs would feed it, its output, what
++ * exists in our app and API contract v2 today, and what is missing.
++ *
++ * Then one worked example: chapter 1 (wind-down) of the sleep StateFlip for
++ * one person of the sleep cohort, with a value at every step. Values from the
++ * workbook say so (BARS, ELEMENTS, CFAM, Wellness Script Assessment
++ * Framework); the rest is our draft. Nothing here has been run by a model.
++ *
++ * Pure: no React, deterministic.
++ */
++
++import { akpsForFlip } from './akps'
++import { examplePeople, sleepCohort, type PersonFlip } from './stateFlipFormulas'
++import { MARKERS, MILESTONES, layerAt } from './stateFlipSleep'
++
++export type Domain = 'META' | 'PATH' | 'SCRIPT'
++export type BuildState = 'exists' | 'partial' | 'missing'
++export type ValueSource = 'workbook' | 'computed' | 'draft'
++
++export const DOMAIN_TEXT: Record<Domain, { title: string; plain: string }> = {
++  META: { title: 'Meta', plain: 'Who this is for and what it must achieve, in how much time.' },
++  PATH: { title: 'Path', plain: 'How to get there: the objective, the methods, techniques and frameworks, the plan of bars and elements, and a score for how well it all fits.' },
++  SCRIPT: { title: 'Script', plain: 'The words: skeleton, synopsis, tone, outline, voices and setting. Music, voice and image are made after this.' },
++}
++
++export const STATE_TEXT: Record<BuildState, string> = { exists: 'Exists', partial: 'Partly', missing: 'Missing' }
++export const VALUE_TEXT: Record<ValueSource, string> = { workbook: 'From the workbook', computed: 'Computed', draft: 'Our draft' }
++
++export interface CascadeStep {
++  n: number
++  domain: Domain
++  /** The workbook's tab name. */
++  name: string
++  purpose: string
++  /** The workbook's inputs. */
++  inputs: string
++  /** The workbook's connected databases. */
++  databases: string
++  /** Our data and AKPs that would feed it. */
++  feeds: string
++  /** The workbook's output. */
++  output: string
++  today: string
++  missing: string
++  state: BuildState
++}
++
++export const CASCADE: CascadeStep[] = [
++  {
++    n: 1, domain: 'META', name: 'Script duration logic',
++    purpose: 'Fix the length first, because it caps how many words, bars and elements fit and how deep the chapter can go.',
++    inputs: 'Desired duration (short, medium, long); time constraints', databases: 'Script foundations, Duration mapping, Complexity configuration',
++    feeds: 'The person’s minutes a day (persona condition), the chapter length choice', output: 'A time budget split into sub-modules',
++    today: 'POST /builds takes chapterMinutes 3, 5 or 10; the cost model prices a 10-minute chapter.',
++    missing: 'The duration table: minutes → word range, maximum bars and elements, pacing.', state: 'partial',
++  },
++  {
++    n: 2, domain: 'META', name: 'Foundations of wellness goals',
++    purpose: 'Name the primary goal and the secondary outcomes, ranked, so every later step serves the same thing.',
++    inputs: 'Primary goals (relaxation, mindfulness); secondary outcomes (clarity)', databases: 'Goals mapping, Skills and states library',
++    feeds: 'The 125 StateFlips, their milestones X → Y → Z and goal AKPs (WG-…)', output: 'Foundational prompts aligned to the goal',
++    today: 'StateFlips and goal AKPs in the admin; API v2 §4.9 StateFlip and POST /journeys (fromState → toState).',
++    missing: 'Ranking of secondary outcomes; the app’s journey domains are five words (sleep, stress, focus, mood, other), not the 125 StateFlips.', state: 'partial',
++  },
++  {
++    n: 3, domain: 'META', name: 'Personalisation profiles',
++    purpose: 'Bring in who the person is and how they are today, so the same goal gives a different chapter for a different person.',
++    inputs: 'Demographics, psychographics; emotional and situational context', databases: 'Personalisation, Context attributes',
++    feeds: 'Persona v4 condition (severity, acuity, helpers, minutes a day, readiness), Wellness Identity (12 dimensions), the first sentence, check-ins', output: 'User-centred, adaptable prompts',
++    today: 'Synthetic profiles only (persona set v4, GET /admin/personas/{id}/identity). The app keeps the first sentence and onboarding answers in the browser.',
++    missing: 'A real profile store with consent, and a rule for which fields reach the prompt.', state: 'partial',
++  },
++  {
++    n: 4, domain: 'PATH', name: 'Objectives and themes',
++    purpose: 'Turn the goal into this chapter’s objective and a theme that carries it.',
++    inputs: 'High-level objective (e.g. mindfulness meditation); themes (e.g. nature)', databases: 'Objectives library, Theme mapping',
++    feeds: 'The milestone the chapter aims at (X, Y or Z) and its layer (mood, habit, skill)', output: 'Prompts with a clear objective and theme',
++    today: 'API v2 Chapter.milestone says which step a chapter aims at.',
++    missing: 'A theme library.', state: 'partial',
++  },
++  {
++    n: 5, domain: 'PATH', name: 'Methods library',
++    purpose: 'Choose the practice: breathing, body scan, journaling, visualisation.',
++    inputs: 'Preferred methods (journaling, guided breathing)', databases: 'Methods, Techniques library',
++    feeds: 'Strategy AKPs (script concepts) linked to the StateFlip; the person’s top helper', output: 'Modular prompts with the method embedded',
++    today: 'Draft strategy AKPs per StateFlip in the AKP catalogue (concepts, skills).',
++    missing: 'A methods table with instructions and compatibility, as in the workbook’s PathAtlas.', state: 'partial',
++  },
++  {
++    n: 6, domain: 'PATH', name: 'Techniques library',
++    purpose: 'Pick the exact technique and its steps, for example a longer out-breath or a body scan from the feet up.',
++    inputs: 'Specific techniques (4-7-8 breathing, body scanning)', databases: 'Techniques library, Script flow',
++    feeds: 'Technique AKPs (to import), the DOJO concepts on the StateFlip', output: 'Step-by-step guidance prompts',
++    today: '“Change this session” offers Lego bites of kind pace, voice, music, script, image, length.',
++    missing: 'A techniques table with steps, timing and contraindications.', state: 'missing',
++  },
++  {
++    n: 7, domain: 'PATH', name: 'Frameworks library',
++    purpose: 'Give the chapter a structure that holds: a goal frame, emotional scaffolding.',
++    inputs: 'Chosen frameworks (SMART goals, emotional scaffolding)', databases: 'Frameworks library, Alignment',
++    feeds: 'Workbook tab “Frameworks KB (improve ElementID)”', output: 'Framework-guided prompts',
++    today: 'Nothing.', missing: 'The frameworks table, imported from the workbook.', state: 'missing',
++  },
++  {
++    n: 8, domain: 'PATH', name: 'Wellness script planner',
++    purpose: 'Lay out the chapter: which bars (Start, Middle, End) and which elements in each, and how many seconds each gets.',
++    inputs: 'Desired sections (introduction, activity, conclusion)', databases: 'Script planner, Alignment',
++    feeds: 'BARS (OB, SB, TB, QB) and ELEMENTS (E01…) from the workbook, the time budget of step 1', output: 'A blueprint with a clear hierarchy',
++    today: 'A build runs five steps (script, voice, music, image, mix). API v2 §4.9 Chapter.akps is an ordered list of AKPs.',
++    missing: 'Bars and elements as data, and the rule that distributes time across them.', state: 'missing',
++  },
++  {
++    n: 9, domain: 'PATH', name: 'Alignment scoring',
++    purpose: 'Score the plan against the goal before writing, and say what to change.',
++    inputs: 'Draft plans; criteria (coherence, resonance)', databases: 'Alignment scoring algorithms, Objectives library',
++    feeds: 'CFAM metrics (Entropy Clarity Index, Engagement Continuity Rate, Reflection Depth, Element Satisfaction, Utility Score), past check-ins', output: 'Refined prompts with suggested improvements',
++    today: 'The contract defines AKP tournaments with a Causal AI judge (GET /admin/tournaments); nothing scores yet.',
++    missing: 'The scoring itself, and a way to measure entropy clarity. Until then the next morning’s check-in is the only outcome.', state: 'missing',
++  },
++  {
++    n: 10, domain: 'PATH', name: 'Creative insights',
++    purpose: 'Add the metaphor, image or story that makes it feel alive.',
++    inputs: 'Request for metaphors, storytelling', databases: 'Creative insights, Theme library',
++    feeds: 'Music and image AKPs (WM-, WI-), the theme of step 4', output: 'Prompts enriched with creative elements',
++    today: 'The cockpit chat and cover images; music and image AKP families exist in the catalogue.',
++    missing: 'A creative insights library tied to themes.', state: 'partial',
++  },
++  {
++    n: 11, domain: 'SCRIPT', name: 'Foundations',
++    purpose: 'Build the skeleton: main topic and audience, with placeholders.',
++    inputs: 'Main topic, audience', databases: 'Script foundations, Goals mapping',
++    feeds: 'Steps 1–3', output: 'A script skeleton',
++    today: 'The first message of a conversation becomes the session’s title.', missing: 'A skeleton template.', state: 'partial',
++  },
++  {
++    n: 12, domain: 'SCRIPT', name: 'Synopsis',
++    purpose: 'Say in two sentences what this chapter does.',
++    inputs: 'Key ideas or an overview', databases: 'Synopsis, Duration logic',
++    feeds: 'Steps 4–8', output: 'A concise synopsis',
++    today: 'Session.summary in the contract.', missing: 'Synopsis rules tied to objective and duration.', state: 'partial',
++  },
++  {
++    n: 13, domain: 'SCRIPT', name: 'Style',
++    purpose: 'Set tone, pace and language for this person.',
++    inputs: 'Writing style (formal, conversational, poetic)', databases: 'Style attributes, Personalisation',
++    feeds: 'Personalisation (step 3), voice and pace bites', output: 'Style-specific prompts',
++    today: 'Lego bites of kind voice and pace change a built session.', missing: 'Style attributes chosen before writing, from the profile.', state: 'partial',
++  },
++  {
++    n: 14, domain: 'SCRIPT', name: 'Outline',
++    purpose: 'Write the ordered outline, one line per element, ready to expand into words.',
++    inputs: 'Script outline (3-act, problem-solution)', databases: 'Outline mapping, Objectives library',
++    feeds: 'The planner (step 8)', output: 'A detailed, expandable outline',
++    today: 'GET /sessions/{id}/chapters lists chapters, not their inside.', missing: 'The element-level outline.', state: 'missing',
++  },
++  {
++    n: 15, domain: 'SCRIPT', name: 'Characters',
++    purpose: 'Decide who speaks: the guide, the inner self, a creator’s persona.',
++    inputs: 'Character details (personas, archetypes)', databases: 'Character profiles, Theme library',
++    feeds: 'Creator persona (retreat), voice choice', output: 'Character-driven prompts',
++    today: 'A voice is picked at build time.', missing: 'Character profiles.', state: 'missing',
++  },
++  {
++    n: 16, domain: 'SCRIPT', name: 'Worldbuilding',
++    purpose: 'Describe the setting the listener imagines.',
++    inputs: 'Setting (fantasy, realistic, abstract)', databases: 'Worldbuilding, Themes library',
++    feeds: 'Theme (step 4), image AKPs', output: 'Setting prompts',
++    today: 'The image step makes a cover.', missing: 'A worldbuilding library.', state: 'missing',
++  },
++]
++
++/** The workbook's context loop ("Dependencies and Feedback Loops"), and ours. */
++export const CONTEXT_LOOP: { path: string; workbook: string; ours: string }[] = [
++  { path: 'Meta → Path → Script', workbook: 'Baseline metrics (states, skills) guide method selection and script objectives.', ours: 'StateFlip, milestone and persona choose the AKPs and the chapter.' },
++  { path: 'Path → Meta → Script', workbook: 'Feedback on method effectiveness refines skill tracking and state clarity.', ours: 'Tournaments: AKPs that move people further are chosen more (not built).' },
++  { path: 'Script → Path → Meta', workbook: 'Script metrics (CFAM) refine personalisation and entropy targets.', ours: 'The morning check-in updates the score, the milestone and chance it works; the next chapter follows.' },
++]
++
++/* ---------------------------------------------------------- Worked example */
++
++export interface PlannerRow {
++  phase: 'Start' | 'Middle' | 'End'
++  bar: string
++  barName: string
++  element: string
++  elementName: string
++  /** The workbook's example seconds and words. */
++  wbSeconds: number
++  wbWords: number
++  /** Our draft for a 10-minute bedtime chapter. */
++  seconds: number
++  words: number
++  note: string
++}
++
++/**
++ * Bars and elements from the workbook's BARS and ELEMENTS tabs (ids, names,
++ * example times and words as given). The 10-minute seconds and words are our
++ * draft: slower speech and longer pauses at bedtime (about 0.7 words a
++ * second against the workbook's 1.25), and no closing summary, because a
++ * bedtime chapter should end in quiet rather than wake the listener up.
++ */
++export const PLANNER: PlannerRow[] = [
++  { phase: 'Start', bar: 'OB001', barName: 'Introduction', element: 'E12', elementName: 'Warm Welcome', wbSeconds: 5, wbWords: 10, seconds: 20, words: 15, note: 'Soft, by name if known.' },
++  { phase: 'Start', bar: 'OB001', barName: 'Introduction', element: 'E02', elementName: 'Settling In', wbSeconds: 10, wbWords: 25, seconds: 40, words: 30, note: 'Lights low, lie down.' },
++  { phase: 'Start', bar: 'OB001', barName: 'Introduction', element: 'E09', elementName: 'Setting Intentions', wbSeconds: 5, wbWords: 15, seconds: 20, words: 15, note: '“Let the day stay outside the room.”' },
++  { phase: 'Start', bar: 'OB001', barName: 'Introduction', element: 'E06', elementName: 'Deep Breathing Exercise Intro', wbSeconds: 5, wbWords: 15, seconds: 20, words: 15, note: 'Bridges to the breath.' },
++  { phase: 'Middle', bar: 'OB004', barName: 'Awareness', element: 'E01', elementName: 'Introduction to Mindful Breathing', wbSeconds: 10, wbWords: 25, seconds: 30, words: 25, note: 'Out-breath longer than in-breath.' },
++  { phase: 'Middle', bar: 'OB004', barName: 'Awareness', element: 'E02', elementName: 'Guided Mindful Breathing', wbSeconds: 60, wbWords: 150, seconds: 150, words: 110, note: 'Counted, slowing; long pauses.' },
++  { phase: 'Middle', bar: 'OB003', barName: 'Focused Attention', element: 'E01', elementName: 'Introduction to Body Scan', wbSeconds: 10, wbWords: 25, seconds: 20, words: 15, note: '' },
++  { phase: 'Middle', bar: 'OB003', barName: 'Focused Attention', element: 'E02', elementName: 'Guided Body Scan', wbSeconds: 40, wbWords: 100, seconds: 180, words: 130, note: 'Feet to face, releasing.' },
++  { phase: 'Middle', bar: 'TB002', barName: 'Focused Practice', element: 'E01', elementName: 'Brief Visualization', wbSeconds: 20, wbWords: 50, seconds: 60, words: 40, note: 'The setting of step 16.' },
++  { phase: 'Middle', bar: 'TB002', barName: 'Focused Practice', element: 'E05', elementName: 'Brief Silence for Reflection', wbSeconds: 10, wbWords: 10, seconds: 30, words: 0, note: 'Music only.' },
++  { phase: 'End', bar: 'OB005', barName: 'Reflection', element: 'E01', elementName: 'Reflection Text', wbSeconds: 20, wbWords: 50, seconds: 15, words: 10, note: 'One line, no question to answer.' },
++  { phase: 'End', bar: 'OB005', barName: 'Reflection', element: 'E02', elementName: 'Reflective Pause', wbSeconds: 10, wbWords: 10, seconds: 15, words: 0, note: 'Fades out. OB006 Conclusion left out on purpose.' },
++]
++
++export interface CfamTarget {
++  metric: string
++  before: string
++  target: string
++  source: ValueSource
++  how: string
++}
++
++/** CFAM metrics for this chapter. The Entropy Clarity example (0.7 → 0.3) is the workbook’s own, for a grounding session. */
++export const CFAM_TARGETS: CfamTarget[] = [
++  { metric: 'Entropy Clarity Index (SE)', before: '0.7', target: '0.3', source: 'workbook', how: 'Workbook CFAM tab: “Baseline entropy for a grounding session: 0.7, target reduction to 0.3.” No way to measure it yet; proxy: minutes to fall asleep in tomorrow’s check-in.' },
++  { metric: 'Engagement Continuity Rate', before: '—', target: '≥ 0.8 of the chapter played', source: 'draft', how: 'PATCH /plays completionRatio. At bedtime a play that stops because the person fell asleep is a success, so it is read with the check-in.' },
++  { metric: 'Reflection Depth Tag', before: '—', target: 'Light', source: 'draft', how: 'Bedtime: no questions to answer. The workbook ties depth to tone and pacing.' },
++  { metric: 'Element Satisfaction Score', before: '—', target: '≥ 0.85', source: 'workbook', how: 'Workbook: “Affirmations score 0.85, making them central.” Ours would come from Lego-bite changes and quality reports per element.' },
++  { metric: 'Utility Score (UI)', before: '—', target: 'Every element serves milestone X', source: 'draft', how: 'The plan is checked element by element against the objective of step 4.' },
++]
++
++export interface ExampleValue {
++  n: number
++  value: string
++  source: ValueSource
++}
++
++export interface WorkedExample {
++  person: PersonFlip
++  goalAkp: string
++  stepAkp: string
++  concepts: { id: string; name: string }[]
++  values: ExampleValue[]
++  plannedSeconds: number
++  plannedWords: number
++  /** The alignment score of the draft plan, 0–1, and how it is made. */
++  alignment: { score: number; parts: { label: string; value: number }[] }
++}
++
++let cache: WorkedExample | null = null
++
++export function workedExample(): WorkedExample {
++  if (cache) return cache
++  const c = sleepCohort()
++  const person = examplePeople(c).find((e) => e.severity === 'severe')?.person ?? c.people[0]
++  const X = MILESTONES.find((m) => m.id === 'X')!
++  const akps = akpsForFlip('SF-PHY-01')
++  const concepts = akps.filter((a) => a.kind === 'strategy').map((a) => ({ id: a.id, name: a.name }))
++  const name = (id: string) => concepts.find((x) => x.id === id)?.name ?? id
++  const plannedSeconds = PLANNER.reduce((t, r) => t + r.seconds, 0)
++  const plannedWords = PLANNER.reduce((t, r) => t + r.words, 0)
++  const bars = new Set(PLANNER.map((r) => r.bar)).size
++  // Draft alignment score: the share of planned time on elements that serve the objective (breath, body scan,
++  // settling, silence), the fit of the pace to the 10-minute budget, and the method's fit to the top helper.
++  const serving = PLANNER.filter((r) => /Breath|Body Scan|Settling|Silence|Visualization|Pause/.test(r.elementName)).reduce((t, r) => t + r.seconds, 0) / plannedSeconds
++  const pace = Math.min(1, 1 - Math.abs(plannedWords / plannedSeconds - 0.75))
++  const fit = person.topHelper === 'sleep audio' || person.topHelper === 'breath' || person.topHelper === 'voice guidance' ? 1 : 0.8
++  const parts = [
++    { label: 'Time on elements that serve X', value: serving },
++    { label: 'Pace fits a bedtime chapter', value: pace },
++    { label: 'Method fits their top helper', value: fit },
++  ]
++  const score = parts.reduce((t, p) => t + p.value, 0) / parts.length
++  const r = Math.round
++  const values: ExampleValue[] = [
++    { n: 1, value: `10 minutes = ${plannedSeconds} seconds, about ${plannedWords} words (about ${(plannedWords / plannedSeconds).toFixed(2)} a second with pauses), ${bars} bars and ${PLANNER.length} elements. The workbook flags 700 words in 10 minutes as a drop-off risk.`, source: 'draft' },
++    { n: 2, value: `Primary: bad sleep → good sleep (SF-PHY-01, 25 → 85). This chapter: step X, “${X.title}” (score ${X.threshold}). Secondary: calmer evening, fewer minutes to fall asleep.`, source: 'computed' },
++    { n: 3, value: `${person.name}, ${person.age}, ${person.country}, scenario ${person.scenario}. Sleep score ${person.start} (${person.severity}), ${person.acuity}; ${person.perWeek} chapters a week; readiness ${person.readiness.toFixed(2)}; top helper: ${person.topHelper}. Chance it works ${r(person.chance.chance * 100)}%; X in about ${person.reach.X} chapters, the flip in ${person.chapters}.`, source: 'computed' },
++    { n: 4, value: `Objective: relax in the hour before bed instead of carrying the day into it (${layerAt(person.start)} layer). Theme: “closing the day”, a room going quiet.`, source: 'draft' },
++    { n: 5, value: `Guided breathing, then a body scan. From the AKPs: ${name('WS-LU-01')} (WS-LU-01) and ${name('WS-BL-02')} (WS-BL-02).`, source: 'draft' },
++    { n: 6, value: 'Breathing with the out-breath longer than the in-breath (about 4 in, 6 out), slowing over 2½ minutes; body scan feet to face with a release on each out-breath.', source: 'draft' },
++    { n: 7, value: 'Emotional scaffolding: arrive → settle → let go → rest. No goal-setting at bedtime (SMART left out).', source: 'draft' },
++    { n: 8, value: `${PLANNER.length} elements in ${bars} bars, ${plannedSeconds} seconds: OB001 Introduction (E12, E02, E09, E06) → OB004 Awareness (E01, E02) → OB003 Focused Attention (E01, E02) → TB002 Focused Practice (E01, E05) → OB005 Reflection (E01, E02). Table below.`, source: 'workbook' },
++    { n: 9, value: `Draft alignment score ${score.toFixed(2)}. Entropy clarity 0.7 → 0.3 (workbook example). Outcome checked tomorrow morning on ${MARKERS[0].label.toLowerCase()} and morning energy.`, source: 'draft' },
++    { n: 10, value: 'Metaphor: “setting the day down like a bag by the door”. Music: slow ambient, no beat, fading in the last minute.', source: 'draft' },
++    { n: 11, value: `Topic: winding down for sleep. Audience: one adult, ${person.severity} sleep trouble, listening in bed with the lights off.`, source: 'draft' },
++    { n: 12, value: 'Ten quiet minutes to close the day: you settle, slow your breath until the out-breath is longer, let your body go heavy from the feet up, and drift into a still room.', source: 'draft' },
++    { n: 13, value: 'Second person, warm and plain; short sentences; slower in each bar; no questions, no instructions to remember.', source: 'draft' },
++    { n: 14, value: 'Welcome → settle in → intention → into the breath → longer out-breath → body scan → the quiet room → silence → one closing line → fade.', source: 'draft' },
++    { n: 15, value: 'One voice: the Guide. No inner-self dialogue at bedtime.', source: 'draft' },
++    { n: 16, value: 'A dim room at the end of the day, rain on the window, a warm blanket. The cover uses the same scene.', source: 'draft' },
++  ]
++  cache = {
++    person,
++    goalAkp: 'WG-PHY-01',
++    stepAkp: 'WG-PHY-01-X',
++    concepts,
++    values,
++    plannedSeconds,
++    plannedWords,
++    alignment: { score, parts },
++  }
++  return cache
++}
++
++export function cascadeSummary() {
++  const count = (s: BuildState) => CASCADE.filter((c) => c.state === s).length
++  return { steps: CASCADE.length, exists: count('exists'), partial: count('partial'), missing: count('missing') }
++}
+diff --git a/src/admin/data/therapeuticFunnel.ts b/src/admin/data/therapeuticFunnel.ts
+new file mode 100644
+index 0000000..58cf295
+--- /dev/null
++++ b/src/admin/data/therapeuticFunnel.ts
+@@ -0,0 +1,210 @@
++/**
++ * Admin → AI brain → Therapeutic funnel (U148, J206). Per StateFlip, the
++ * stages a person passes on the way from a bad state to a good one that lasts:
++ * has the problem → starts → finishes chapter 1 → reaches X → Y → Z (the flip)
++ * → stays good, with how many people reach each, the drop-off, the reason for
++ * it and the levers (AKPs and features) that move it.
++ *
++ * Read-only on stateFlips.ts and stateFlipFormulas.ts: it rebuilds each
++ * StateFlip's group the way `flipNumbers` does (sleep: `sleepCohort`) and
++ * reads each person's own probabilities (hazard, responder share, milestone
++ * chapters), so the funnel's flip share is the same "chance it works" the
++ * StateFlips page shows. One stage, "stays good", has no model anywhere yet:
++ * it is an assumption, labelled so.
++ *
++ * Pure: no React, deterministic.
++ */
++
++import { akpsForFlip, type Akp } from './akps'
++import { conditionsV4 } from './personaConditionV4'
++import { generatePersonasV4 } from './personasV4'
++import { chapterReaching, personFlip, sleepCohort, type PersonFlip } from './stateFlipFormulas'
++import { stateFlipById, stateFlips, type StateFlip } from './stateFlips'
++import { severityOf, whoHasIt, type MilestoneId, type NumLabel } from './stateFlipSleep'
++
++export const DEFAULT_FLIP = 'SF-PHY-01'
++
++/**
++ * Share of people who flip and are still in the good state 12 weeks later.
++ * Assumption: no source in the spec, the workbooks or our research. It is a
++ * placeholder so the last stage is visible; the 4- and 12-week follow-up
++ * check-ins of the pilot replace it.
++ */
++export const HOLD_12_WEEKS = 0.8
++
++export type StageId = 'problem' | 'starts' | 'chapter1' | 'X' | 'Y' | 'Z' | 'holds'
++
++export interface FunnelStage {
++  id: StageId
++  title: string
++  /** Expected number of people at this stage (sum of per-person probabilities). */
++  people: number
++  /** Share of everyone with the problem. */
++  ofProblem: number
++  /** Share of the stage before (1 for the first stage). */
++  ofPrevious: number
++  /** Expected number lost between the stage before and this one. */
++  lost: number
++  label: NumLabel
++  /** How the number is worked out, in one sentence. */
++  how: string
++  /** Why people are lost before this stage. */
++  why: string
++  /** What moves this stage: features and AKP families. */
++  levers: string[]
++  /** AKP ids from the catalogue that work on this stage. */
++  akps: string[]
++}
++
++export interface Funnel {
++  flip: StateFlip
++  stages: FunnelStage[]
++  /** The stage that loses the most people after the start. */
++  biggestDrop: FunnelStage
++  group: number
++  riskFlagged: number
++  /** How the group was chosen. */
++  basis: string
++}
++
++interface Group {
++  people: PersonFlip[]
++  /** People with the problem who are excluded from the journey for a risk flag. */
++  riskFlagged: number
++  basis: string
++}
++
++function groupFor(f: StateFlip): Group {
++  if (f.id === 'SF-PHY-01') {
++    const w = whoHasIt()
++    return {
++      people: sleepCohort().people,
++      riskFlagged: w.sleepNeedRisk,
++      basis: `The sleep cohort of the StateFlips page: ${w.sleepNeed} of the ${w.personas.toLocaleString('en-GB')} v4 personas have a sleep need; ${w.sleepNeedRisk} carry a risk flag and are not started.`,
++    }
++  }
++  const ps = generatePersonasV4()
++  const cs = conditionsV4()
++  const people: PersonFlip[] = []
++  let risk = 0
++  for (const p of ps) {
++    const c = cs.get(p.id)!
++    const dim = c.dims[f.dimension]
++    if (!f.issues.includes(dim.issue) || dim.band === 'good') continue
++    if (c.excluded) {
++      risk++
++      continue
++    }
++    people.push(personFlip(p, c, dim.score, severityOf(dim.score)))
++  }
++  return {
++    people,
++    riskFlagged: risk,
++    basis: `v4 personas whose ${f.dimension} issue is ${f.issues.join(', ')} and whose band is not good, as on the StateFlips page; ${risk} carry a risk flag and are not started.`,
++  }
++}
++
++/** Probability a person reaches a score at or after chapter 1 (they must finish chapter 1 to count). */
++function reachShare(p: PersonFlip, threshold: number): number {
++  const q = 1 - p.hazard
++  const N = p.chapters
++  const kR = Math.max(1, chapterReaching(p.responderPath, threshold))
++  const kN = Math.max(1, chapterReaching(p.stallPath, threshold))
++  let s = 0
++  if (kR <= N) s += p.responder * q ** kR
++  if (kN <= N && Number.isFinite(kN)) s += (1 - p.responder) * q ** kN
++  return s
++}
++
++const milestoneAkps = (all: Akp[], m: MilestoneId) => all.filter((a) => a.id.endsWith(`-${m}`)).map((a) => a.id)
++const byLayer = (all: Akp[], layer: string) => all.filter((a) => a.kind === 'strategy' && a.layer.toLowerCase().includes(layer)).map((a) => a.id)
++
++const CACHE = new Map<string, Funnel>()
++
++export function therapeuticFunnel(flipId: string = DEFAULT_FLIP): Funnel {
++  const hit = CACHE.get(flipId)
++  if (hit) return hit
++  const flip = stateFlipById(flipId) ?? stateFlipById(DEFAULT_FLIP)!
++  const g = groupFor(flip)
++  const n = g.people.length
++  const sum = (fn: (p: PersonFlip) => number) => g.people.reduce((t, p) => t + fn(p), 0)
++  const ms = Object.fromEntries(flip.milestones.map((m) => [m.id, m])) as Record<MilestoneId, StateFlip['milestones'][number]>
++  const all = akpsForFlip(flip.id)
++  const goal = all.find((a) => a.id === `WG-${flip.id.slice(3)}`)?.id
++  const concepts = byLayer(all, 'concept')
++  const skills = byLayer(all, 'skill')
++
++  const problem = n + g.riskFlagged
++  const chapter1 = sum((p) => (p.chapters >= 1 ? 1 - p.hazard : 1))
++  const X = sum((p) => reachShare(p, ms.X.threshold))
++  const Y = sum((p) => reachShare(p, ms.Y.threshold))
++  const Z = sum((p) => p.chance.chance)
++  const holds = Z * HOLD_12_WEEKS
++
++  const raw: Omit<FunnelStage, 'ofProblem' | 'ofPrevious' | 'lost'>[] = [
++    {
++      id: 'problem', title: 'Has the problem', people: problem, label: 'computed',
++      how: g.basis,
++      why: '—',
++      levers: ['Who it is for: intake asks the StateFlip’s check-in questions', 'The free plan and Quick Start bring people in (Business funnel)'],
++      akps: goal ? [goal] : [],
++    },
++    {
++      id: 'starts', title: 'Starts', people: n, label: 'assumption',
++      how: 'Everyone without a risk flag is counted as starting chapter 1. How many really start is the Business funnel’s question (first visit → first session), not this one.',
++      why: 'A risk flag (for example a crisis signal or a diagnosed condition) means Aurelia points to professional help instead of starting a journey. Wellness only, by design.',
++      levers: ['Safety check on the first sentence, with local help lines', 'Clear wellness-only promise at intake'],
++      akps: [],
++    },
++    {
++      id: 'chapter1', title: 'Finishes chapter 1', people: chapter1, label: 'computed',
++      how: 'Each person stays past a chapter with chance 1 − their per-chapter stop rate (from “still going at the end” = 1 − 60% × (1 − chance it works), spread over their chapters).',
++      why: 'The first chapter does not land: the voice, the length or the timing is wrong, or the person was only curious.',
++      levers: ['A first chapter built from their own sentence', 'Chapter length 3, 5 or 10 minutes', '“Change this session” (Lego bites) after the first play'],
++      akps: concepts.slice(0, 3),
++    },
++    {
++      id: 'X', title: `Reaches X: ${ms.X.title.toLowerCase()}`, people: X, label: 'computed',
++      how: `Responders follow the layered curve and reach ${ms.X.threshold} at their own chapter; non-responders improve at half speed. Each counts with the chance of still being there by that chapter. People who start above ${ms.X.threshold} count once they finish chapter 1.`,
++      why: `Mood layer (${ms.X.layer}): the fastest to move, so most losses here are people who stop, not people it does not help.`,
++      levers: ['Morning check-in that shows the score moving', 'Calendar reminder for the next chapter', `Goal step ${ms.X.id} and the concepts that serve it`],
++      akps: [...milestoneAkps(all, 'X'), ...concepts.slice(0, 2)],
++    },
++    {
++      id: 'Y', title: `Reaches Y: ${ms.Y.title.toLowerCase()}`, people: Y, label: 'computed',
++      how: `As for X, at ${ms.Y.threshold}. Non-responders stall below ${ms.Y.threshold} (their ceiling is 64), so only responders, or people who started high, get here.`,
++      why: `Habit layer: slower. People it does not help stall below ${ms.Y.threshold} and are offered something else; others stop before the habit forms.`,
++      levers: ['Journey chapters that follow the person’s goal', 'Tournaments: the AKPs that move people further are used more', 'Causal AI stage 2 (better uplift per chapter)'],
++      akps: [...milestoneAkps(all, 'Y'), ...concepts.slice(2)],
++    },
++    {
++      id: 'Z', title: 'Reaches Z: the flip', people: Z, label: 'computed',
++      how: 'Equals each person’s chance it works: 54% (spec) × adherence × readiness × severity × fit, kept between 5% and 90%.',
++      why: 'Skill layer: the slowest. Fewer chapters a week and low readiness are the two biggest drags.',
++      levers: ['Chapters a week (adherence)', 'Skill AKPs in the later chapters', 'Progress told in words from their own check-ins'],
++      akps: [...milestoneAkps(all, 'Z'), ...skills],
++    },
++    {
++      id: 'holds', title: 'Stays good (12 weeks)', people: holds, label: 'assumption',
++      how: `${Math.round(HOLD_12_WEEKS * 100)}% of people who flip, assumed. Nothing in the spec, the workbooks or our research gives a figure.`,
++      why: 'Old patterns return after stress, travel or illness. Unknown until measured.',
++      levers: ['Maintenance chapters once a week', 'Check-in at 4 and 12 weeks after the flip', 'A nudge when the score drops below Y'],
++      akps: skills.slice(0, 2),
++    },
++  ]
++  const stages: FunnelStage[] = raw.map((s, i) => {
++    const prev = i ? raw[i - 1].people : s.people
++    return { ...s, ofProblem: problem ? s.people / problem : 0, ofPrevious: prev ? s.people / prev : 0, lost: Math.max(0, prev - s.people) }
++  })
++  const biggestDrop = stages.slice(2).reduce((a, b) => (b.lost > a.lost ? b : a))
++  const out: Funnel = { flip, stages, biggestDrop, group: n, riskFlagged: g.riskFlagged, basis: g.basis }
++  CACHE.set(flipId, out)
++  return out
++}
++
++/** The StateFlips for the selector, sleep first. */
++export function funnelOptions(): { id: string; label: string }[] {
++  const fs = stateFlips()
++  const sleep = fs.find((f) => f.id === DEFAULT_FLIP)
++  return [sleep!, ...fs.filter((f) => f.id !== DEFAULT_FLIP)].map((f) => ({ id: f.id, label: `${f.id} · ${f.title}` }))
++}
+diff --git a/src/admin/pages/lab/SessionBuilderPage.tsx b/src/admin/pages/lab/SessionBuilderPage.tsx
+new file mode 100644
+index 0000000..0c41e08
+--- /dev/null
++++ b/src/admin/pages/lab/SessionBuilderPage.tsx
+@@ -0,0 +1,345 @@
++import { ArrowRight, RotateCcw } from 'lucide-react'
++import { useState } from 'react'
++import { Link } from 'react-router-dom'
++import { PageSummary, PageTabs } from '../../components/PageTabs'
++import { usePageTab } from '../../components/pageTab'
++import { Badge, PageHeader, Panel, type Tone } from '../../components/ui'
++import {
++  CASCADE, CFAM_TARGETS, CONTEXT_LOOP, DOMAIN_TEXT, PLANNER, STATE_TEXT, VALUE_TEXT, cascadeSummary, workedExample,
++  type BuildState, type CascadeStep, type Domain, type ValueSource,
++} from '../../data/sessionBuilder'
++import { DataSources } from '../reports/DataSources'
++
++/*
++ * Admin → AI brain → How a session is built (U148, J206): the business
++ * owner's Meta → Path → Script cascade (16 steps, BAR / ELEMENTS workbook) as
++ * a diagram, each step with purpose, inputs, what feeds it, output, and what
++ * exists today; then one worked example, chapter 1 of the sleep StateFlip.
++ * All content from data/sessionBuilder.ts.
++ */
++
++const ROUTE = '/admin/session-builder'
++const DOMAINS: Domain[] = ['META', 'PATH', 'SCRIPT']
++const STATE_TONE: Record<BuildState, Tone> = { exists: 'good', partial: 'warning', missing: 'critical' }
++const VALUE_TONE: Record<ValueSource, Tone> = { workbook: 'info', computed: 'good', draft: 'serious' }
++const DOMAIN_BAR: Record<Domain, string> = { META: 'bg-adm-s1', PATH: 'bg-adm-s3', SCRIPT: 'bg-adm-s4' }
++
++export function SessionBuilderPage() {
++  const [, setPageTab] = usePageTab()
++  const s = cascadeSummary()
++  const ex = workedExample()
++  return (
++    <div className="flex flex-col gap-20">
++      <PageHeader
++        title="How a session is built"
++        description="The business owner’s Meta → Path → Script cascade: 16 steps from “who is this for” to the finished script, what each needs, and what our app and API do today. With one worked example: chapter 1 of the sleep StateFlip."
++      />
++      <PageTabs
++        summary={
++          <div className="flex min-w-0 flex-col gap-12">
++            <PageSummary
++              purpose="understanding how one chapter is assembled from goals, people and building blocks (AKPs), step by step, and which steps we still have to build."
++              question="How does Aurelia turn a StateFlip and a person into a 10-minute script, and how much of that exists?"
++              answer={`Three stages: Meta sets length, goal and person; Path picks objective, methods, techniques and a plan of bars and elements, then scores it; Script writes it. Of the ${s.steps} steps, ${s.partial} exist in part and ${s.missing} are missing; none is complete. The worked sleep example is a draft no model has run.`}
++              stats={[
++                { label: 'Steps in the cascade', value: `${s.steps}`, note: '3 Meta, 7 Path, 6 Script' },
++                { label: 'Exist in part today', value: `${s.partial} of ${s.steps}`, note: `${s.missing} missing` },
++                { label: 'Worked example, draft alignment', value: ex.alignment.score.toFixed(2), note: 'Our score, not measured' },
++              ]}
++              next={[
++                { text: 'Check the worked example step by step and correct what the cascade should do differently (Detail).' },
++                { text: 'Import BARS, ELEMENTS and the frameworks tab as data: steps 7, 8 and 14 depend on it.' },
++                { text: 'Agree how alignment is scored before any tournament runs (step 9).', to: '/admin/therapeutic-funnel', linkLabel: 'Therapeutic funnel' },
++              ]}
++              note="Step names, inputs and databases are the workbook’s. Example values are labelled: from the workbook, computed from the sleep cohort, or our draft."
++              onDetail={() => setPageTab('detail')}
++            />
++            <DataSources route={ROUTE} />
++          </div>
++        }
++      >
++        <CascadeDiagram />
++        <WorkedExampleView />
++        <StepTable />
++        <DataSources route={ROUTE} full />
++      </PageTabs>
++    </div>
++  )
++}
++
++/* --------------------------------------------------------------- Diagram */
++
++function CascadeDiagram() {
++  const [sel, setSel] = useState<number>(8)
++  const step = CASCADE.find((c) => c.n === sel)!
++  return (
++    <Panel title="The cascade" description="Select a step. Colours show what exists today in our app and API contract v2.">
++      <div className="grid min-w-0 gap-12 lg:grid-cols-[1fr_auto_1.4fr_auto_1.2fr] lg:items-start">
++        {DOMAINS.map((d, i) => (
++          <DomainColumn key={d} domain={d} sel={sel} onSel={setSel} arrow={i < DOMAINS.length - 1} />
++        )).flatMap((col, i) =>
++          i < DOMAINS.length - 1
++            ? [col, <ArrowRight key={`a${i}`} size={18} aria-hidden="true" className="mx-auto hidden text-adm-muted lg:mt-40 lg:block" />]
++            : [col],
++        )}
++      </div>
++      <div className="flex min-w-0 flex-col gap-8 rounded-8 border border-dashed border-adm-axis bg-adm-bg p-12" aria-label="Context loop">
++        <p className="flex items-center gap-6 text-13 font-semibold text-adm-ink">
++          <RotateCcw size={14} aria-hidden="true" /> Context loop: every step reads the ones before, and results flow back
++        </p>
++        <ul className="grid gap-8 lg:grid-cols-3">
++          {CONTEXT_LOOP.map((l) => (
++            <li key={l.path} className="flex min-w-0 flex-col gap-2 text-12">
++              <span className="font-semibold text-adm-ink">{l.path}</span>
++              <span className="text-adm-ink-2">Workbook: {l.workbook}</span>
++              <span className="text-adm-ink-2">Ours: {l.ours}</span>
++            </li>
++          ))}
++        </ul>
++      </div>
++      <StepDetail step={step} />
++      <Legend />
++    </Panel>
++  )
++}
++
++function DomainColumn({ domain, sel, onSel }: { domain: Domain; sel: number; onSel: (n: number) => void; arrow: boolean }) {
++  const steps = CASCADE.filter((c) => c.domain === domain)
++  return (
++    <section className="flex min-w-0 flex-col gap-8" aria-label={DOMAIN_TEXT[domain].title}>
++      <div className="flex flex-col gap-2">
++        <span className="flex items-center gap-6 text-13 font-semibold uppercase tracking-wide text-adm-ink">
++          <span className={`h-10 w-10 rounded-full ${DOMAIN_BAR[domain]}`} aria-hidden="true" />
++          {domain}
++        </span>
++        <span className="text-12 text-adm-muted">{DOMAIN_TEXT[domain].plain}</span>
++      </div>
++      <ol className="flex flex-col gap-6">
++        {steps.map((c) => (
++          <li key={c.n}>
++            <button
++              type="button"
++              onClick={() => onSel(c.n)}
++              aria-pressed={sel === c.n}
++              data-step={c.n}
++              className={`flex w-full min-w-0 items-center gap-8 rounded-8 border px-10 py-8 text-left text-13 transition-colors focus-visible:outline-2 focus-visible:outline-adm-accent ${
++                sel === c.n ? 'border-adm-ink bg-adm-hover' : 'border-adm-line bg-adm-surface hover:bg-adm-hover'
++              }`}
++            >
++              <span className="w-20 shrink-0 font-semibold tabular-nums text-adm-muted">{c.n}</span>
++              <span className="min-w-0 flex-1 font-medium text-adm-ink">{c.name}</span>
++              <StateDot state={c.state} />
++            </button>
++          </li>
++        ))}
++      </ol>
++    </section>
++  )
++}
++
++const DOT: Record<BuildState, string> = { exists: 'bg-adm-good', partial: 'bg-adm-warning', missing: 'bg-adm-critical' }
++
++function StateDot({ state }: { state: BuildState }) {
++  return (
++    <span className="flex shrink-0 items-center gap-4 text-11 text-adm-muted">
++      <span className={`h-8 w-8 rounded-full ${DOT[state]}`} aria-hidden="true" />
++      {STATE_TEXT[state]}
++    </span>
++  )
++}
++
++function Legend() {
++  return (
++    <p className="flex flex-wrap gap-12 text-12 text-adm-muted">
++      <span className="flex items-center gap-4"><span className={`h-8 w-8 rounded-full ${DOT.partial}`} aria-hidden="true" />Partly: something in the app, admin or API contract does part of it</span>
++      <span className="flex items-center gap-4"><span className={`h-8 w-8 rounded-full ${DOT.missing}`} aria-hidden="true" />Missing: nothing does it yet</span>
++    </p>
++  )
++}
++
++function StepDetail({ step }: { step: CascadeStep }) {
++  const ex = workedExample().values.find((v) => v.n === step.n)!
++  return (
++    <article className="flex min-w-0 flex-col gap-10 rounded-8 border border-adm-line p-12" aria-live="polite" data-step-detail={step.n}>
++      <div className="flex flex-wrap items-center gap-8">
++        <h3 className="text-14 font-semibold text-adm-ink">
++          {step.n}. {step.name}
++        </h3>
++        <Badge tone="neutral">{DOMAIN_TEXT[step.domain].title}</Badge>
++        <Badge tone={STATE_TONE[step.state]}>{STATE_TEXT[step.state]}</Badge>
++      </div>
++      <p className="text-13 text-adm-ink">{step.purpose}</p>
++      <dl className="grid min-w-0 gap-x-12 gap-y-6 text-12 lg:grid-cols-[140px_1fr]">
++        <Row k="Inputs (workbook)" v={step.inputs} />
++        <Row k="Databases (workbook)" v={step.databases} />
++        <Row k="Our data and AKPs" v={step.feeds} />
++        <Row k="Output (workbook)" v={step.output} />
++        <Row k="Today" v={step.today} />
++        <Row k="Missing" v={step.missing} />
++        <dt className="text-adm-muted">Sleep chapter 1</dt>
++        <dd className="flex min-w-0 flex-col items-start gap-4 text-adm-ink">
++          <Badge tone={VALUE_TONE[ex.source]}>{VALUE_TEXT[ex.source]}</Badge>
++          {ex.value}
++        </dd>
++      </dl>
++    </article>
++  )
++}
++
++function Row({ k, v }: { k: string; v: string }) {
++  return (
++    <>
++      <dt className="text-adm-muted">{k}</dt>
++      <dd className="min-w-0 text-adm-ink-2">{v}</dd>
++    </>
++  )
++}
++
++/* -------------------------------------------------------- Worked example */
++
++function WorkedExampleView() {
++  const ex = workedExample()
++  const p = ex.person
++  return (
++    <Panel
++      title="Worked example: sleep, chapter 1 (wind-down)"
++      description={`Draft. One person of the sleep cohort, ${p.name}, chapter 1 of the sleep StateFlip, aiming at step X. Each value says where it comes from.`}
++    >
++      <p className="text-12 text-adm-ink-2">
++        Goal AKP <code className="font-mono text-11">{ex.goalAkp}</code>, step AKP <code className="font-mono text-11">{ex.stepAkp}</code>; strategy AKPs on this StateFlip:{' '}
++        {ex.concepts.map((c, i) => (
++          <span key={c.id}>
++            {i > 0 && ', '}
++            {c.name} <code className="font-mono text-11">{c.id}</code>
++          </span>
++        ))}
++        . Person and numbers from the <Link to="/admin/stateflips" className="underline decoration-adm-axis underline-offset-2">StateFlips</Link> page.
++      </p>
++      <ol className="flex flex-col">
++        {ex.values.map((v) => {
++          const step = CASCADE.find((c) => c.n === v.n)!
++          return (
++            <li key={v.n} className="flex min-w-0 flex-col gap-4 border-t border-adm-line py-8 first:border-0 lg:flex-row lg:gap-12">
++              <span className="flex shrink-0 items-center gap-6 text-13 font-semibold text-adm-ink lg:w-[240px]">
++                <span className={`h-8 w-8 shrink-0 rounded-full ${DOMAIN_BAR[step.domain]}`} aria-hidden="true" />
++                <span className="tabular-nums text-adm-muted">{v.n}</span> {step.name}
++              </span>
++              <span className="min-w-0 flex-1 text-13 text-adm-ink-2">{v.value}</span>
++              <span className="shrink-0">
++                <Badge tone={VALUE_TONE[v.source]}>{VALUE_TEXT[v.source]}</Badge>
++              </span>
++            </li>
++          )
++        })}
++      </ol>
++
++      <h3 className="text-14 font-semibold text-adm-ink">Step 8: the planner, bars and elements</h3>
++      <p className="text-12 text-adm-muted">
++        Bar and element ids, names and the example seconds and words are the workbook’s (BARS, ELEMENTS). The 10-minute column is our draft: slower and quieter at bedtime, and it ends in silence instead of the workbook’s summary and conclusion.
++      </p>
++      <div className="min-w-0 overflow-x-auto">
++        <table className="w-full min-w-[640px] text-left text-12">
++          <thead className="text-adm-muted">
++            <tr className="border-b border-adm-line">
++              <th className="py-6 pr-8 font-medium">Phase</th>
++              <th className="py-6 pr-8 font-medium">Bar</th>
++              <th className="py-6 pr-8 font-medium">Element</th>
++              <th className="py-6 pr-8 text-right font-medium">Workbook s / words</th>
++              <th className="py-6 pr-8 text-right font-medium">10 min: s / words</th>
++              <th className="py-6 font-medium">Note</th>
++            </tr>
++          </thead>
++          <tbody>
++            {PLANNER.map((r) => (
++              <tr key={`${r.bar}-${r.element}`} className="border-b border-adm-line align-top">
++                <td className="py-6 pr-8 text-adm-ink-2">{r.phase}</td>
++                <td className="py-6 pr-8 text-adm-ink-2"><code className="font-mono text-11">{r.bar}</code> {r.barName}</td>
++                <td className="py-6 pr-8 text-adm-ink"><code className="font-mono text-11">{r.element}</code> {r.elementName}</td>
++                <td className="py-6 pr-8 text-right tabular-nums text-adm-ink-2">{r.wbSeconds} / {r.wbWords}</td>
++                <td className="py-6 pr-8 text-right tabular-nums text-adm-ink">{r.seconds} / {r.words}</td>
++                <td className="py-6 text-adm-ink-2">{r.note}</td>
++              </tr>
++            ))}
++            <tr className="font-semibold text-adm-ink">
++              <td className="py-6 pr-8" colSpan={3}>Total</td>
++              <td className="py-6 pr-8 text-right tabular-nums">{PLANNER.reduce((t, r) => t + r.wbSeconds, 0)} / {PLANNER.reduce((t, r) => t + r.wbWords, 0)}</td>
++              <td className="py-6 pr-8 text-right tabular-nums">{ex.plannedSeconds} / {ex.plannedWords}</td>
++              <td />
++            </tr>
++          </tbody>
++        </table>
++      </div>
++
++      <h3 className="text-14 font-semibold text-adm-ink">Step 9: alignment score and CFAM metrics</h3>
++      <p className="text-12 text-adm-ink-2">
++        Draft alignment score <span className="font-semibold text-adm-ink">{ex.alignment.score.toFixed(2)}</span> = the average of{' '}
++        {ex.alignment.parts.map((x, i) => (
++          <span key={x.label}>
++            {i > 0 && (i === ex.alignment.parts.length - 1 ? ' and ' : ', ')}
++            {x.label.toLowerCase()} ({x.value.toFixed(2)})
++          </span>
++        ))}
++        . Our own formula, to be replaced by the business owner’s alignment criteria.
++      </p>
++      <div className="min-w-0 overflow-x-auto">
++        <table className="w-full min-w-[640px] text-left text-12">
++          <thead className="text-adm-muted">
++            <tr className="border-b border-adm-line">
++              <th className="py-6 pr-8 font-medium">CFAM metric</th>
++              <th className="py-6 pr-8 font-medium">Before</th>
++              <th className="py-6 pr-8 font-medium">Target</th>
++              <th className="py-6 pr-8 font-medium">Value from</th>
++              <th className="py-6 font-medium">How we would know</th>
++            </tr>
++          </thead>
++          <tbody>
++            {CFAM_TARGETS.map((m) => (
++              <tr key={m.metric} className="border-b border-adm-line align-top">
++                <td className="py-6 pr-8 font-medium text-adm-ink">{m.metric}</td>
++                <td className="py-6 pr-8 tabular-nums text-adm-ink-2">{m.before}</td>
++                <td className="py-6 pr-8 text-adm-ink">{m.target}</td>
++                <td className="py-6 pr-8"><Badge tone={VALUE_TONE[m.source]}>{VALUE_TEXT[m.source]}</Badge></td>
++                <td className="py-6 text-adm-ink-2">{m.how}</td>
++              </tr>
++            ))}
++          </tbody>
++        </table>
++      </div>
++    </Panel>
++  )
++}
++
++/* ------------------------------------------------------------ All steps */
++
++function StepTable() {
++  return (
++    <Panel title="All 16 steps: today and missing" description="What exists in our app, admin and API contract v2 for each step, and what would have to be built.">
++      <div className="min-w-0 overflow-x-auto">
++        <table className="w-full min-w-[860px] text-left text-12">
++          <thead className="text-adm-muted">
++            <tr className="border-b border-adm-line">
++              <th className="py-6 pr-8 font-medium">Step</th>
++              <th className="py-6 pr-8 font-medium">Purpose</th>
++              <th className="py-6 pr-8 font-medium">Fed by (ours)</th>
++              <th className="py-6 pr-8 font-medium">Today</th>
++              <th className="py-6 pr-8 font-medium">Missing</th>
++              <th className="py-6 font-medium">State</th>
++            </tr>
++          </thead>
++          <tbody>
++            {CASCADE.map((c) => (
++              <tr key={c.n} className="border-b border-adm-line align-top">
++                <td className="py-6 pr-8 font-medium text-adm-ink"><span className="tabular-nums text-adm-muted">{c.n}</span> {c.name}<br /><span className="text-11 font-normal text-adm-muted">{c.domain}</span></td>
++                <td className="py-6 pr-8 text-adm-ink-2">{c.purpose}</td>
++                <td className="py-6 pr-8 text-adm-ink-2">{c.feeds}</td>
++                <td className="py-6 pr-8 text-adm-ink-2">{c.today}</td>
++                <td className="py-6 pr-8 text-adm-ink-2">{c.missing}</td>
++                <td className="py-6"><Badge tone={STATE_TONE[c.state]}>{STATE_TEXT[c.state]}</Badge></td>
++              </tr>
++            ))}
++          </tbody>
++        </table>
++      </div>
++    </Panel>
++  )
++}
+diff --git a/src/admin/pages/lab/TherapeuticFunnelPage.tsx b/src/admin/pages/lab/TherapeuticFunnelPage.tsx
+new file mode 100644
+index 0000000..3492de7
+--- /dev/null
++++ b/src/admin/pages/lab/TherapeuticFunnelPage.tsx
+@@ -0,0 +1,146 @@
++import { useState } from 'react'
++import { Link } from 'react-router-dom'
++import { PageSummary, PageTabs } from '../../components/PageTabs'
++import { usePageTab } from '../../components/pageTab'
++import { Badge, PageHeader, Panel, inputClass, type Tone } from '../../components/ui'
++import { NUM_LABEL_TEXT, type NumLabel } from '../../data/stateFlipSleep'
++import { DEFAULT_FLIP, HOLD_12_WEEKS, funnelOptions, therapeuticFunnel, type FunnelStage } from '../../data/therapeuticFunnel'
++import { DataSources } from '../reports/DataSources'
++
++/*
++ * Admin → AI brain → Therapeutic funnel (U148, J206): per StateFlip, from
++ * "has the problem" to "stays good", with counts, drop-off, the reason and the
++ * levers. Numbers from data/therapeuticFunnel.ts (read-only on stateFlips and
++ * stateFlipFormulas).
++ */
++
++const ROUTE = '/admin/therapeutic-funnel'
++const LABEL_TONE: Record<NumLabel, Tone> = { spec: 'critical', assumption: 'serious', computed: 'info', research: 'good' }
++const pct = (x: number) => `${Math.round(x * 100)}%`
++const n0 = (x: number) => (Math.round(x * 10) / 10).toFixed(x < 10 ? 1 : 0)
++
++export function TherapeuticFunnelPage() {
++  const [flipId, setFlipId] = useState(DEFAULT_FLIP)
++  const [, setPageTab] = usePageTab()
++  const f = therapeuticFunnel(flipId)
++  const z = f.stages.find((s) => s.id === 'Z')!
++  const hold = f.stages.find((s) => s.id === 'holds')!
++  const options = funnelOptions()
++
++  const picker = (
++    <label className="flex min-w-0 flex-col gap-4 text-12 font-medium text-adm-ink-2 lg:w-[420px]">
++      StateFlip
++      <select value={flipId} onChange={(e) => setFlipId(e.target.value)} className={`${inputClass} min-w-0`} data-flip-select>
++        {options.map((o) => (
++          <option key={o.id} value={o.id}>{o.label}</option>
++        ))}
++      </select>
++    </label>
++  )
++
++  return (
++    <div className="flex flex-col gap-20">
++      <PageHeader
++        title="Therapeutic funnel"
++        description="For one StateFlip at a time: how many simulated people get from having the problem to a good state that lasts, where they drop off, why, and what moves each stage."
++        actions={picker}
++      />
++      <PageTabs
++        summary={
++          <div className="flex min-w-0 flex-col gap-12">
++            <PageSummary
++              purpose="seeing where people drop off on the way from a bad state to a good one, and which levers move each stage."
++              question={`For ${f.flip.title.toLowerCase()}, where do we lose the most people?`}
++              answer={`Of ${f.stages[0].people.toFixed(0)} simulated people with the problem, about ${n0(z.people)} (${pct(z.ofProblem)}) are expected to flip and ${n0(hold.people)} to stay good. The biggest loss is before “${f.biggestDrop.title}”: about ${n0(f.biggestDrop.lost)} people. ${f.biggestDrop.why}`}
++              stats={[
++                { label: 'Flip (reach Z)', value: pct(z.ofProblem), note: `${n0(z.people)} of ${f.stages[0].people.toFixed(0)}` },
++                { label: 'Biggest drop', value: n0(f.biggestDrop.lost), note: `before ${f.biggestDrop.title}` },
++                { label: 'Stays good, 12 weeks', value: pct(hold.ofProblem), note: `assumes ${pct(HOLD_12_WEEKS)} hold` },
++              ]}
++              next={[
++                { text: `Work on the levers of “${f.biggestDrop.title}” first (Detail).` },
++                { text: 'Replace “stays good” with the pilot’s 4- and 12-week check-ins.' },
++                { text: 'See how one chapter is built.', to: '/admin/session-builder', linkLabel: 'How a session is built' },
++              ]}
++              note="Simulated people (persona set v4) and the StateFlips formulas; nothing is measured on real people yet. “Therapeutic” is an internal name; what Aurelia says to people stays wellness."
++              onDetail={() => setPageTab('detail')}
++            />
++            <DataSources route={ROUTE} />
++          </div>
++        }
++      >
++        <Panel title={`${f.flip.id} · ${f.flip.title}`} description={f.basis}>
++          <FunnelBars stages={f.stages} />
++        </Panel>
++        <Panel title="Each stage: why people drop off, and what moves it" description="Counts are expected values: each person adds their probability of reaching the stage.">
++          <ol className="flex flex-col gap-10">
++            {f.stages.map((s, i) => (
++              <StageCard key={s.id} s={s} i={i} />
++            ))}
++          </ol>
++          <p className="text-12 text-adm-muted">
++            Formulas and people: <Link to="/admin/stateflips" className="underline decoration-adm-axis underline-offset-2">StateFlips</Link>. AKP ids: the AKP catalogue there.
++          </p>
++        </Panel>
++        <DataSources route={ROUTE} full />
++      </PageTabs>
++    </div>
++  )
++}
++
++function FunnelBars({ stages }: { stages: FunnelStage[] }) {
++  return (
++    <ol className="flex flex-col gap-8" aria-label="Funnel">
++      {stages.map((s, i) => (
++        <li key={s.id} className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:gap-12" data-stage={s.id}>
++          <span className="text-13 font-medium text-adm-ink lg:w-[260px] lg:shrink-0">{s.title}</span>
++          <div className="flex min-w-0 flex-1 items-center gap-8">
++            <div className="h-20 min-w-0 flex-1 rounded-4 bg-adm-bg">
++              <div className={`h-20 rounded-4 ${s.label === 'assumption' ? 'bg-adm-s3' : 'bg-adm-s1'}`} style={{ width: `${Math.max(1, s.ofProblem * 100)}%` }} />
++            </div>
++            <span className="w-[120px] shrink-0 text-right text-12 tabular-nums text-adm-ink">
++              {n0(s.people)} · {pct(s.ofProblem)}
++            </span>
++          </div>
++          <span className="text-12 tabular-nums text-adm-muted lg:w-[110px] lg:shrink-0">{i === 0 ? 'start' : `−${n0(s.lost)} (${pct(1 - s.ofPrevious)})`}</span>
++        </li>
++      ))}
++    </ol>
++  )
++}
++
++function StageCard({ s, i }: { s: FunnelStage; i: number }) {
++  return (
++    <li className="flex min-w-0 flex-col gap-8 rounded-8 border border-adm-line p-12">
++      <div className="flex flex-wrap items-center gap-8">
++        <span className="text-13 font-semibold text-adm-ink">{i + 1}. {s.title}</span>
++        <Badge tone={LABEL_TONE[s.label]}>{NUM_LABEL_TEXT[s.label]}</Badge>
++        <span className="text-12 tabular-nums text-adm-ink-2">{n0(s.people)} people{i > 0 && `, ${pct(s.ofPrevious)} of the stage before`}</span>
++      </div>
++      <dl className="grid min-w-0 gap-x-12 gap-y-6 text-12 lg:grid-cols-[120px_1fr]">
++        <dt className="text-adm-muted">How</dt>
++        <dd className="min-w-0 text-adm-ink-2">{s.how}</dd>
++        {i > 0 && (
++          <>
++            <dt className="text-adm-muted">Why they drop</dt>
++            <dd className="min-w-0 text-adm-ink-2">{s.why}</dd>
++          </>
++        )}
++        <dt className="text-adm-muted">Levers</dt>
++        <dd className="min-w-0 text-adm-ink-2">
++          <ul className="list-disc pl-16">
++            {s.levers.map((l) => <li key={l}>{l}</li>)}
++          </ul>
++        </dd>
++        {s.akps.length > 0 && (
++          <>
++            <dt className="text-adm-muted">AKPs</dt>
++            <dd className="flex min-w-0 flex-wrap gap-4">
++              {s.akps.map((a) => <code key={a} className="rounded-4 bg-adm-bg px-4 font-mono text-11 text-adm-ink">{a}</code>)}
++            </dd>
++          </>
++        )}
++      </dl>
++    </li>
++  )
++}
+diff --git a/src/demo/modules.ts b/src/demo/modules.ts
+index d850237..ac447e5 100644
+--- a/src/demo/modules.ts
++++ b/src/demo/modules.ts
+@@ -247,6 +247,8 @@ export const DEMO_MODULES: DemoModule[] = [
+   { id: 'adminTherapeuticMap', kind: 'admin', label: 'Therapeutic map', description: 'Product, business and wellness as one triangle with each corner’s core targets; the bad-to-good sleep process as the app runs it; the five wellness worlds (scenario).', route: '/admin/therapeutic-map', built: true },
+   { id: 'adminHealingMap', kind: 'admin', label: 'Healing Map', description: 'Rings of bad states, building blocks and good states; every link says where its strength comes from: design sample, cited research, or learned from users (none yet).', route: '/admin/healing-map', built: true },
+   { id: 'adminStateFlips', kind: 'admin', label: 'StateFlips', description: 'The sleep StateFlip from bad (25) to good (85): markers, the path X → Y → Z, how it is measured, who has it, the DOJO links; chapters to flip and chance it works as transparent formulas; the cohort over time. Staging only.', route: '/admin/stateflips', built: true },
++  { id: 'adminSessionBuilder', kind: 'admin', label: 'How a session is built', description: 'The business owner’s Meta → Path → Script cascade (16 steps, BAR / ELEMENTS workbook): purpose, inputs, what feeds each step, what exists today and what is missing; one worked example, sleep chapter 1 (wind-down), labelled draft.', route: '/admin/session-builder', built: true },
++  { id: 'adminTherapeuticFunnel', kind: 'admin', label: 'Therapeutic funnel', description: 'Per StateFlip: has the problem → starts → chapter 1 → X → Y → Z (the flip) → stays good, with counts and drop-off from the simulated cohort, the reason for each drop and the levers (AKPs, features).', route: '/admin/therapeutic-funnel', built: true },
+   { id: 'adminBuyerAgent', kind: 'admin', label: 'Buyer agent results', description: 'What a buyer agent answered as each persona in a panel: try, pay, price, objections, test cases. Runs v1–v3 and the re-run by production version.', route: '/admin/buyer-agent', built: true },
+   { id: 'adminReportsOverview', kind: 'admin', label: 'Reports overview', description: 'How Aurelia improves, as one map: the sources we learn from, the reports and tests that read them, and the decisions and versions that came out. Details open in a drawer.', route: '/admin/reports', built: true },
+   { id: 'adminReportUxFeedback', kind: 'admin', label: 'UX feedback report', description: 'The latest feedback group view (was Feedback group · v2) with a summary-first top: goal, headline, key numbers, next steps. Sample data until the study runs.', route: '/admin/reports/ux-feedback', built: true },
+diff --git a/src/guides/docPages.ts b/src/guides/docPages.ts
+index f162352..13e19d5 100644
+--- a/src/guides/docPages.ts
++++ b/src/guides/docPages.ts
+@@ -29,6 +29,7 @@ export const B2B2C_PAGES: DocPage[] = [
+   { slug: 'round-2', title: 'Round 2', note: 'What changed, the channels re-ranked, the plan.', file: '10-round-2.md' },
+   { slug: 'features', title: 'Features to build', note: 'Per channel: who, why, evidence, priority, effort.', file: '11-features.md' },
+   { slug: 'owner-thesis', title: 'His thesis', note: 'The business owner’s scale claims. Not measured.', file: '12-owner-thesis.md' },
++  { slug: 'assumptions', title: 'Assumptions and claims', note: 'Every load-bearing number and its status; the words we use and avoid.', file: '13-assumptions-and-claims.md' },
+ ]
+ 
+ /** API contract (U120, J175): v2 split into General, Apps and Admin; v1 kept. */
