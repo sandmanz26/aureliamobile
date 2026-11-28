@@ -1,0 +1,1507 @@
+commit 2512244e2bdc774e28a85b5cd2411d6f26a092d7
+Author: Claude <noreply@anthropic.com>
+Date:   Sat Nov 28 10:54:46 2026 +0000
+
+    Admin: one readable header on every report and analysis Summary — purpose, conclusion, sources (U151, J208)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01Je1v64McNyB6XEu6gFgM4C
+
+diff --git a/src/admin/components/PageTabs.tsx b/src/admin/components/PageTabs.tsx
+index 1937a63..031ac69 100644
+--- a/src/admin/components/PageTabs.tsx
++++ b/src/admin/components/PageTabs.tsx
+@@ -7,8 +7,10 @@ import { usePageTab, type PageTab } from './pageTab'
+ 
+ /*
+  * Summary | Detail (U142, J203): every lab and report page opens on a short
+- * Summary (what the page is for, the question, the answer, up to three
+- * figures, the next steps) and keeps everything it had before under Detail.
++ * Summary and keeps everything it had before under Detail. Since U151 (J208)
++ * the Summary of every report and analysis page is one ReportHeaderCard
++ * (pages/reports/ReportHeaderCard.tsx): what it is for, its conclusion and
++ * where it comes from.
+  * The tab lives in the URL (`?tab=detail`), so a link or Back lands on the
+  * same tab. Detail stays mounted while hidden, so its state survives a switch
+  * and an in-page `#anchor` into it still resolves (and opens the tab).
+@@ -206,18 +208,3 @@ export function PurposeLine({ purpose }: { purpose: string }) {
+     </p>
+   )
+ }
+-
+-/** A report's Summary tab: the purpose line above the report's own summary block. */
+-export function ReportSummaryTab({ purpose, children, onDetail }: { purpose: string; children: ReactNode; onDetail?: () => void }) {
+-  return (
+-    <div className="flex min-w-0 flex-col gap-12">
+-      <PurposeLine purpose={purpose} />
+-      {children}
+-      {onDetail && (
+-        <button type="button" onClick={onDetail} className="inline-flex items-center gap-4 self-end text-13 font-semibold text-adm-ink underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink">
+-          See everything in Detail <ArrowRight size={13} aria-hidden="true" />
+-        </button>
+-      )}
+-    </div>
+-  )
+-}
+diff --git a/src/admin/data/dataSources.ts b/src/admin/data/dataSources.ts
+index 4f715e0..3aafae4 100644
+--- a/src/admin/data/dataSources.ts
++++ b/src/admin/data/dataSources.ts
+@@ -61,6 +61,8 @@ export const SOURCE_META: Record<SourceId, { type: DataSourceType; file: string;
+   'cost-model': { type: 'assumed', file: 'src/admin/data/costModel.ts', date: '27 Nov 2026' },
+   'sleep-cohort': { type: 'simulated', file: 'src/admin/data/stateFlipSleep.ts', date: 'U140 (J202)' },
+   'owner-thesis': { type: 'owner', file: 'His deck; chats of 24 and 27 Nov 2026', date: '27 Nov 2026' },
++  'healing-map': { type: 'simulated', file: 'src/admin/data/healingMap.ts', date: 'Design sample (U131 onwards)' },
++  'sleep-scales': { type: 'research', file: 'src/admin/data/stateFlipSleep.ts (SCALE_SOURCES)', date: 'Read for U140' },
+   'bar-elements': { type: 'owner', file: 'docs/briefs/2026-11-27-bar-elements-operating-model.xlsx', date: '27 Nov 2026' },
+ }
+ 
+@@ -197,6 +199,22 @@ export const REPORT_DATA_SOURCES: Record<string, ReportDataSources> = {
+       { id: 'spec-causal', feeds: 'Chance it works (54%) and uplift per chapter.' },
+     ],
+   },
++  '/admin/stateflips': {
++    title: 'StateFlips',
++    uses: [
++      { id: 'sleep-cohort', feeds: 'The people with a sleep need, their starting scores and chance it works.' },
++      { id: 'spec-causal', feeds: 'The plan’s 54% chance, 42 chapters and uplift per chapter.' },
++      { id: 'sleep-scales', feeds: 'What bad and good sleep mean.' },
++      { id: 'akps', feeds: 'The AKP catalogue tab.' },
++    ],
++  },
++  '/admin/healing-map': {
++    title: 'Healing map',
++    uses: [
++      { id: 'healing-map', feeds: 'Every state, building block and link, and where each link comes from.' },
++      { id: 'sleep-scales', feeds: 'The sleep states’ meaning.' },
++    ],
++  },
+   '/admin/user-journey': {
+     title: 'User journey',
+     uses: [
+diff --git a/src/admin/data/glossary.ts b/src/admin/data/glossary.ts
+index 48c4da5..2ba8e54 100644
+--- a/src/admin/data/glossary.ts
++++ b/src/admin/data/glossary.ts
+@@ -64,6 +64,9 @@ export const GLOSSARY = {
+   'cost-per-flip': { term: 'Cost per flip', plain: 'What it costs to make the chapters for one person who reaches the good state. It includes the people it does not help.' },
+   'causal-stage': { term: 'Causal AI stage', plain: 'How much the AI has learned from real use. Stage 1 is under 1,000 sessions; stage 3 is 100,000 or more.' },
+   'causal-layer': { term: 'Causal layer', plain: 'DOJO’s three speeds of change. Moods move in days, habits in weeks, skills in months.' },
++  // U151 (J208): the words of the report summaries' header card.
++  mvp: { term: 'MVP', plain: 'Minimum viable product: the first version good enough to put in front of real paying users. Its goals are the team’s targets.' },
++  persona: { term: 'Persona', plain: 'A made-up person with an age, a country, a life and doubts, used to test ideas before real users. Not evidence.' },
+   dropout: { term: 'Stopped', plain: 'People who stop using Aurelia before reaching the good state. Our model assumes most failures look like this.' },
+ } satisfies Record<string, GlossaryEntry>
+ 
+diff --git a/src/admin/data/reportBriefs.test.ts b/src/admin/data/reportBriefs.test.ts
+new file mode 100644
+index 0000000..1278e33
+--- /dev/null
++++ b/src/admin/data/reportBriefs.test.ts
+@@ -0,0 +1,47 @@
++import { describe, expect, it } from 'vitest'
++import appSource from '../../App.tsx?raw'
++import { markedIds, plainText, unmarkedJargon, isTermId } from './glossary'
++import { REPORT_BRIEF_ROUTES, briefSources, reportBrief, therapeuticFunnelBrief } from './reportBriefs'
++import { buyerSummary, costFunction } from './reportSummaries'
++import { funnelOptions } from './therapeuticFunnel'
++
++// U151 (J208): every report and analysis Summary says what it is for, what it concludes and where it comes from.
++const reportRoutes = [...appSource.matchAll(/<Route path="(reports[^"]*)"/g)].map((m) => `/admin/${m[1]}`)
++const texts = (r: (typeof REPORT_BRIEF_ROUTES)[number]) => {
++  const b = reportBrief(r)
++  return [b.purpose, b.answer, b.meaning, ...b.numbers.map((n) => n.label), ...b.next.map((s) => s.text)]
++}
++
++describe('report briefs (U151)', () => {
++  it('covers every report route', () => {
++    for (const r of reportRoutes) expect(REPORT_BRIEF_ROUTES as readonly string[], r).toContain(r)
++  })
++  it.each(REPORT_BRIEF_ROUTES)('%s has a purpose, a conclusion and sources', (r) => {
++    const b = reportBrief(r)
++    expect(b.purpose.trim().length).toBeGreaterThan(20)
++    expect(b.answer.trim().length).toBeGreaterThan(20)
++    expect(b.meaning.trim().length).toBeGreaterThan(20)
++    expect(b.next.length).toBeGreaterThan(0)
++    expect(b.numbers.length).toBeGreaterThan(0)
++    expect(b.numbers.length).toBeLessThanOrEqual(3)
++    for (const n of b.numbers) expect(n.value.trim(), n.label).not.toBe('')
++    expect(briefSources(r).length).toBeGreaterThan(0)
++  })
++  it.each(REPORT_BRIEF_ROUTES)('%s reads as plain English: one-sentence purpose, jargon marked', (r) => {
++    const b = reportBrief(r)
++    expect(plainText(b.purpose).match(/[.?!](\s|$)/g)?.length, b.purpose).toBe(1)
++    expect(plainText(b.meaning).match(/[.?!](\s|$)/g)?.length, b.meaning).toBe(1)
++    for (const t of texts(r)) {
++      expect(unmarkedJargon(t), t).toEqual([])
++      for (const id of markedIds(t)) expect(isTermId(id), `${r}: ${id}`).toBe(true)
++    }
++  })
++  it('works its numbers out from the data, not typed in', () => {
++    expect(reportBrief('/admin/reports/buyer-agent').numbers.map((n) => n.value)).toEqual(buyerSummary().tiles.slice(0, 3).map((t) => t.value))
++    expect(reportBrief('/admin/reports').answer).toContain(`$${costFunction(1).costPerFlip.toFixed(2)}`)
++  })
++  it('follows the StateFlip picked on the therapeutic funnel', () => {
++    const [a, b] = funnelOptions()
++    expect(therapeuticFunnelBrief(a.id).answer).not.toBe(therapeuticFunnelBrief(b.id).answer)
++  })
++})
+diff --git a/src/admin/data/reportBriefs.ts b/src/admin/data/reportBriefs.ts
+new file mode 100644
+index 0000000..55e1e38
+--- /dev/null
++++ b/src/admin/data/reportBriefs.ts
+@@ -0,0 +1,431 @@
++import { CORE_FNS, FUNCTION_LABEL, brainMetrics, functionChance, mvpChance, pct as brainPct, topThreeEffect } from './aiBrain'
++import { b2b2cSummary, CHANNELS, featuresBy } from './b2b2cReport'
++import { STAGES as FUNNEL_STAGES, biggestLeak, funnelMetrics, stageStatus, type FunnelMetric, type StageId } from './businessFunnel'
++import { dataSourcesFor } from './dataSources'
++import { LINKS, linkCounts, nodeCounts } from './healingMap'
++import { generatePersonas } from './personas'
++import { SCENARIOS, generatePersonasV4 } from './personasV4'
++import { buildMetrics, metricsReportSummary } from './reportMetrics'
++import { buyerSummary, costFunction, costSummary, stageShort, stageStrip, uxFeedbackSummary, type Tile } from './reportSummaries'
++import type { SourceLabel } from './reportSources'
++import { cascadeSummary, workedExample } from './sessionBuilder'
++import { sleepCohort, specFlat } from './stateFlipFormulas'
++import { whoHasIt } from './stateFlipSleep'
++import { buildParticipants, studyWeek, type Participant } from './study'
++import { DEFAULT_FLIP, HOLD_12_WEEKS, therapeuticFunnel } from './therapeuticFunnel'
++import { INITIAL_JOURNEY, allMoments, screensFor, type JourneyMap } from './userJourney'
++
++/**
++ * One reading standard for the Summary tab of every report and analysis page
++ * (U151, J208). The business owner asked that each one says, at a glance,
++ * what it is for, what it concludes and where its data comes from. Each
++ * builder below returns those three for one route, in plain English, with
++ * every number worked out from the same data modules the page's Detail reads
++ * (nothing typed in). The sources come from `dataSources.ts`. Text may carry
++ * `{{termId|shown}}` glossary marks. `reportBriefs.test.ts` checks every
++ * route has all three parts, at most three key numbers, no unmarked jargon,
++ * and a Summary of about 180 words or fewer.
++ */
++
++/** How far a key number can be trusted, in the three words the owner reads. */
++export type Confidence = 'measured' | 'simulated' | 'assumed'
++
++export interface BriefNumber {
++  label: string
++  value: string
++  confidence: Confidence
++}
++
++export interface BriefStep {
++  text: string
++  /** A route (opens it) or a `#anchor` in Detail (opens Detail there). */
++  to?: string
++  linkLabel?: string
++}
++
++export interface ReportBrief {
++  /** The question the page answers and the decision it informs, in one sentence. */
++  purpose: string
++  /** The answer, in one or two plain sentences. */
++  answer: string
++  /** Up to three key numbers. */
++  numbers: BriefNumber[]
++  /** What it means for us, in one sentence. */
++  meaning: string
++  /** One or two next steps. */
++  next: BriefStep[]
++}
++
++export const REPORT_BRIEF_ROUTES = [
++  '/admin/reports',
++  '/admin/reports/buyer-agent',
++  '/admin/reports/ux-feedback',
++  '/admin/reports/combination',
++  '/admin/reports/cost',
++  '/admin/reports/b2b2c',
++  '/admin/reports/metrics',
++  '/admin/ai-brain',
++  '/admin/stateflips',
++  '/admin/personas',
++  '/admin/user-journey',
++  '/admin/business-funnel',
++  '/admin/therapeutic-funnel',
++  '/admin/healing-map',
++  '/admin/session-builder',
++] as const
++
++export type BriefRoute = (typeof REPORT_BRIEF_ROUTES)[number]
++
++const pct = (x: number) => `${Math.round(x * 100)}%`
++const usd = (v: number) => `${v < 0 ? '−' : ''}$${Math.abs(v).toFixed(2)}`
++const n0 = (x: number) => (Math.round(x * 10) / 10).toFixed(x < 10 ? 1 : 0)
++const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1)
++
++/** A report tile's label kind, as one of the three confidence words. */
++export function confidenceOf(label: SourceLabel): Confidence {
++  if (label === 'measured') return 'measured'
++  if (label === 'prediction' || label === 'sample') return 'simulated'
++  return 'assumed'
++}
++
++const fromTile = (t: Tile, label = t.label, confidence = confidenceOf(t.badge)): BriefNumber => ({ label, value: t.value, confidence })
++
++const defaultWeek = () => Math.max(1, Math.min(8, studyWeek(Date.now())))
++
++/* ---------------------------------------------------------------- Reports */
++
++export function overviewBrief(week = defaultWeek()): ReportBrief {
++  const buyer = buyerSummary()
++  const cost = costFunction(1)
++  const strip = stageStrip(week)
++  const on = strip.filter((s) => s.status === 'on-track').length
++  return {
++    purpose: 'Shows every report in one place, so you can see what each one answers and decide which to read first.',
++    answer: `Aurelia is not proven yet. ${buyer.tiles[1].value} of {{simulated|simulated people}} would pay $10 a month, helping one person sleep well costs ${usd(cost.costPerFlip)} today, and ${on} of ${strip.length} {{journey|customer journey}} steps reach their {{target}}.`,
++    numbers: [
++      fromTile(buyer.tiles[1]),
++      { label: 'Cost to help one person sleep well, today', value: usd(cost.costPerFlip), confidence: 'assumed' },
++      { label: 'Journey steps that reach their goal', value: `${on} of ${strip.length}`, confidence: 'simulated' },
++    ],
++    meaning: 'Nothing here rests on real users yet, so the reports tell us what to test first, not what will happen.',
++    next: [
++      { text: 'Read the Combination report: it names the one step to fix first.', to: '/admin/reports/combination', linkLabel: 'Combination report' },
++      { text: 'Start the feedback group with real people, so the first numbers become measured.', to: '/admin/reports/ux-feedback', linkLabel: 'UX feedback report' },
++    ],
++  }
++}
++
++export function buyerBrief(): ReportBrief {
++  const s = buyerSummary()
++  const [tries, pays, fair] = s.tiles
++  return {
++    purpose: 'Answers whether people would pay for Aurelia and at what price, so we can set the price and the offer before real users arrive.',
++    answer: `Interest, yes; $10 a month, no. ${tries.value} of {{simulated|simulated people}} would try Aurelia, only ${pays.value} would pay $10 a month, and most call ${fair.value} a month fair.`,
++    numbers: [fromTile(tries), fromTile(pays), fromTile(fair)],
++    meaning: 'At $10 a month most people would not pay, so the price or what it includes has to change before launch.',
++    next: [s.actions[0], s.actions[s.actions.length - 1]].map((a) => ({ text: a.text, to: a.to, linkLabel: a.linkLabel })),
++  }
++}
++
++export function uxBrief(participants?: Participant[], week?: number): ReportBrief {
++  const w = week ?? Math.max(0, Math.min(8, studyWeek(Date.now())))
++  const s = uxFeedbackSummary(participants ?? buildParticipants(w), w)
++  const [healthy, , staying, use] = s.tiles
++  return {
++    purpose: 'Answers whether Aurelia helps the people who use it and whether they keep using it, so we know what to change in the app next.',
++    answer: `Not known yet: the {{feedback-group}} has not started, so every figure is {{sample|sample data}}. In that sample, ${healthy.value} people reached the healthy range and ${staying.value} are still taking part.`,
++    numbers: [fromTile(healthy), fromTile(staying, 'Still taking part'), fromTile(use, 'Use it three times a week or more')],
++    meaning: 'We cannot say Aurelia helps anyone until real people take part; the screens are ready for when they do.',
++    next: s.actions.slice(0, 2).map((a) => ({ text: a.text, to: a.to, linkLabel: a.linkLabel })),
++  }
++}
++
++export function combinationBrief(week = defaultWeek()): ReportBrief {
++  const strip = stageStrip(week)
++  const on = strip.filter((s) => s.status === 'on-track')
++  const gap = strip.find((s) => s.isGap)
++  const metrics = funnelMetrics(3, 3, week)
++  const plus = metrics.find((m) => m.id === 'plus')!
++  return {
++    purpose: 'Joins every source we have to find the step of the customer journey where we lose the most people, so we know which step to fix first.',
++    answer: gap
++      ? `Only ${on.length} of ${strip.length} steps reach their {{target}}. The weakest is “${stageShort(gap.id).toLowerCase()}”: ${pct(gap.value)} ${lower(gap.metric)}, against a goal of ${pct(gap.target)}.`
++      : `All ${strip.length} steps of the {{journey|customer journey}} reach their {{target}}.`,
++    numbers: [
++      { label: 'Steps that reach their goal', value: `${on.length} of ${strip.length}`, confidence: 'simulated' },
++      ...(gap ? [{ label: `${gap.metric} (goal ${pct(gap.target)})`, value: pct(gap.value), confidence: 'simulated' as const }] : []),
++      { label: `Start paying at the free limit (goal ${pct(plus.target)})`, value: pct(plus.agent), confidence: 'simulated' },
++    ],
++    meaning: gap
++      ? `Fix “${stageShort(gap.id).toLowerCase()}” before bringing in more people: otherwise most of them are lost at that step.`
++      : 'Every step is on track, so the next gain comes from bringing in more people.',
++    next: [
++      { text: 'After each session, let people pick the time of the next one and set a reminder.', to: '/admin/business-funnel', linkLabel: 'See the decision' },
++      { text: 'When the free sessions run out, show people their own progress first, then the price.', to: '#stage-upsell', linkLabel: 'Step: Starts paying' },
++    ],
++  }
++}
++
++export function costBrief(): ReportBrief {
++  const s = costSummary()
++  const s1 = costFunction(1)
++  const s3 = costFunction(3)
++  const price = usd(s1.revenue / s1.flip)
++  return {
++    purpose: 'Works out what it costs to help one person sleep well and when we make money, so we can choose AI suppliers and a price.',
++    answer: s1.profitPerFlip < 0
++      ? `Not profitable yet: helping one person sleep well costs ${usd(s1.costPerFlip)} today, so at ${price} per person helped we lose ${usd(-s1.profitPerFlip)} each. Once the AI has learned, it falls to ${usd(s3.costPerFlip)}.`
++      : `Profitable from the start: helping one person sleep well costs ${usd(s1.costPerFlip)} against ${price} paid.`,
++    numbers: [fromTile(s.tiles[0]), fromTile(s.tiles[1]), fromTile(s.tiles[2])],
++    meaning: 'The price only pays once the AI has learned from many sessions, so the first months need money behind them.',
++    next: s.actions.slice(0, 2).map((a) => ({ text: a.text, to: a.to, linkLabel: a.linkLabel })),
++  }
++}
++
++export function b2b2cBrief(): ReportBrief {
++  const s = b2b2cSummary()
++  const best = CHANNELS[0]
++  const now = featuresBy('all', 'Now').length
++  return {
++    purpose: 'Compares partner channels (creators, employers, gifts) to decide which one to build first and what it needs.',
++    answer: `Build the ${lower(best.short)} first, with a free first week: people pay after it has helped, not before. A self-serve team plan comes next.`,
++    numbers: [
++      { label: `${best.short}, score`, value: `${best.score18 + best.sim} of 21`, confidence: 'assumed' },
++      fromTile(s.tiles[2], 'Paying people: free app vs ticket up front'),
++      { label: 'Features needed now', value: String(now), confidence: 'assumed' },
++    ],
++    meaning: 'Creators can bring buyers we cannot reach alone, but only if their followers can try it before they pay.',
++    next: s.actions.slice(0, 2).map((a) => ({ text: a.text, to: a.to, linkLabel: a.linkLabel })),
++  }
++}
++
++export function metricsBrief(week = defaultWeek()): ReportBrief {
++  const s = metricsReportSummary(buildMetrics(week))
++  const [trace, differ, improved] = s.tiles
++  return {
++    purpose: 'Checks where every number in the reports comes from and how it is worked out, so you know which ones to rely on.',
++    answer: `The sums hold: ${trace.value} numbers {{traceable|trace back to data}} and ${differ.value} differ from it. Results are mixed: ${improved.value} comparable numbers improved since the last test.`,
++    numbers: [fromTile(trace), fromTile(differ), fromTile(improved)],
++    meaning: 'The reports add up, but they still rest on made-up people and assumptions, so use them to choose tests, not to spend money.',
++    next: [s.actions[0], s.actions[s.actions.length - 1]].map((a) => ({ text: a.text, to: a.to, linkLabel: a.linkLabel })),
++  }
++}
++
++/* --------------------------------------------------------------- AI brain */
++
++export function aiBrainBrief(): ReportBrief {
++  const m = brainMetrics()
++  const mvp = mvpChance(m)
++  const weakest = [...CORE_FNS].sort((a, b) => functionChance(m, a) - functionChance(m, b))[0]
++  const t3 = topThreeEffect()
++  return {
++    purpose: 'Shows how likely we are to reach the {{mvp|MVP}} goals, and which features would raise that chance most, so we know what to build next.',
++    answer: `Unlikely today: the chance that all three core areas reach their {{target}} is ${brainPct(mvp)}. ${FUNCTION_LABEL[weakest]} is furthest away; the top 3 features would raise the chance to ${brainPct(t3.mvpAfter)}.`,
++    numbers: [
++      { label: 'Chance all three reach their goal', value: brainPct(mvp), confidence: 'simulated' },
++      { label: `${FUNCTION_LABEL[weakest]}: chance to reach its goal`, value: brainPct(functionChance(m, weakest)), confidence: 'simulated' },
++      { label: 'With the top 3 features', value: `${brainPct(t3.mvpBefore)} → ${brainPct(t3.mvpAfter)}`, confidence: 'assumed' },
++    ],
++    meaning: `${FUNCTION_LABEL[weakest]} holds the whole chance down, so features that help it come first.`,
++    next: [
++      { text: `Build the top 3 features first, starting with ${lower(t3.top[0].name)}.`, to: '#features', linkLabel: 'Feature ranking' },
++      { text: 'Replace these numbers with real ones as soon as the pilot starts.' },
++    ],
++  }
++}
++
++export function stateFlipsBrief(): ReportBrief {
++  const who = whoHasIt()
++  const c = sleepCohort()
++  const spec = specFlat()
++  const last = c.rows[c.rows.length - 1]
++  return {
++    purpose: 'Explains how Aurelia turns bad sleep into good sleep and how likely it is to work, to test whether the plan’s promise holds.',
++    answer: `About half: ${pct(last.flipped)} of the ${who.cohort.length} {{simulated|simulated people}} with a sleep need reach good sleep, below the plan’s ${pct(spec.chance)}, because many start with severe sleep problems.`,
++    numbers: [
++      { label: '{{chance-it-works|Chance it works}}, average', value: pct(c.meanChance), confidence: 'simulated' },
++      { label: '{{chapter|Audio sessions}} to good sleep, middle person', value: String(c.medianChapters), confidence: 'simulated' },
++      { label: '{{dropout|Stopped}} before the end', value: pct(last.dropped), confidence: 'assumed' },
++    ],
++    meaning: 'Expect fewer people to succeed than the plan says, and set the price and the support around that.',
++    next: [
++      { text: 'Test the sleep journey with real people and compare their check-ins with this curve.' },
++      { text: 'See where people drop off, stage by stage.', to: '/admin/therapeutic-funnel', linkLabel: 'Therapeutic funnel' },
++    ],
++  }
++}
++
++export function personasBrief(): ReportBrief {
++  const ps = generatePersonasV4()
++  const scen = new Map<string, number>()
++  for (const p of ps) scen.set(p.scenario, (scen.get(p.scenario) ?? 0) + 1)
++  const top = [...scen.entries()].sort((a, b) => b[1] - a[1])[0]
++  const risk = ps.filter((p) => p.riskFlag).length
++  const countries = new Set(ps.map((p) => p.country)).size
++  return {
++    purpose: 'Shows who our AI tests run on and who must never be sold to, so we can choose made-up people for research before real users.',
++    answer: `${ps.length.toLocaleString('en-US')} made-up people from ${countries} countries. ${risk} carry a {{risk-flag}} and are sent to help, never to a sale.`,
++    numbers: [
++      { label: 'Made-up people', value: ps.length.toLocaleString('en-US'), confidence: 'simulated' },
++      { label: 'Countries', value: String(countries), confidence: 'simulated' },
++      { label: 'Risk-flagged', value: String(risk), confidence: 'simulated' },
++    ],
++    meaning: 'They shape ideas quickly and cheaply, but they are not evidence: real people must confirm what we decide.',
++    next: [
++      ...(top ? [{ text: `Check that the most common {{life-situation}}, ${lower(SCENARIOS[top[0] as keyof typeof SCENARIOS].label)} (${top[1]}), matches who we want to reach.` }] : []),
++      { text: 'See what they said as buyers.', to: '/admin/reports/buyer-agent', linkLabel: 'Buyer agent report' },
++    ],
++  }
++}
++
++export interface JourneyFacts {
++  moments: number
++  screens: number
++  gaps: number
++  topGap?: { title: string; demand: number }
++}
++
++/** The stored journey's facts, without the browser's edits or the tags view. */
++export function journeyFacts(map: JourneyMap = INITIAL_JOURNEY): JourneyFacts {
++  const demand = new Map<string, number>()
++  for (const p of generatePersonas()) for (const id of p.moments) demand.set(id, (demand.get(id) ?? 0) + 1)
++  const moments = allMoments(map).map((x) => x.moment)
++  const gaps = moments.filter((m) => screensFor(map, m.id).length === 0).map((m) => ({ title: m.title, demand: demand.get(m.id) ?? 0 })).sort((a, b) => b.demand - a.demand)
++  return { moments: moments.length, screens: map.stages.reduce((n, s) => n + s.screens.length, 0), gaps: gaps.length, topGap: gaps[0] }
++}
++
++export function userJourneyBrief(f: JourneyFacts = journeyFacts()): ReportBrief {
++  return {
++    purpose: 'Maps when people reach for Aurelia and which of those moments has no screen yet, so we know what to design or build next.',
++    answer: f.topGap
++      ? `“${f.topGap.title}” is the biggest gap: ${f.topGap.demand} of 300 {{persona|personas}} have this moment and no screen serves it. ${f.gaps} of ${f.moments} moments have no screen.`
++      : `Every one of the ${f.moments} moments has at least one screen behind it.`,
++    numbers: [
++      { label: 'Moments with no screen', value: `${f.gaps} of ${f.moments}`, confidence: 'assumed' },
++      ...(f.topGap ? [{ label: 'Made-up people who hit the biggest gap', value: `${f.topGap.demand} of 300`, confidence: 'simulated' as const }] : []),
++      { label: 'Screens', value: String(f.screens), confidence: 'assumed' },
++    ],
++    meaning: f.topGap
++      ? 'Designing for the moment most people hit gives more value for the effort than the next feature idea.'
++      : 'There is no gap to fill today, so the next work is checking that each screen really serves its moment.',
++    next: [
++      ...(f.topGap ? [{ text: `Decide what should serve “${f.topGap.title}” (open it in Detail).` }] : []),
++      ...(f.topGap ? [] : [{ text: 'Check the review status of each moment and its screens (Detail → Tags).' }]),
++      { text: 'Export the journey and share it with the team when it changes.' },
++    ],
++  }
++}
++
++export interface FunnelFacts {
++  metrics: FunnelMetric[]
++  targets: Record<string, number>
++}
++
++export function businessFunnelBrief(f: FunnelFacts = { metrics: funnelMetrics(3, 3, defaultWeek()), targets: {} }): ReportBrief {
++  const targetOf = (m: FunnelMetric) => f.targets[m.id] ?? m.target
++  const leak = biggestLeak(f.metrics, f.targets)
++  const onTrack = FUNNEL_STAGES.filter((s) => stageStatus(f.metrics, f.targets, s.id).status === 'on-track').length
++  const worstOf = (stage: StageId) => f.metrics.filter((m) => m.stage === stage).reduce((a, b) => (b.agent / targetOf(b) < a.agent / targetOf(a) ? b : a))
++  const gap = leak ? worstOf(leak) : null
++  const kpi = (id: string, label: string): BriefNumber[] => {
++    const m = f.metrics.find((x) => x.id === id)
++    return m ? [{ label: `${label} (goal ${pct(targetOf(m))})`, value: pct(m.agent), confidence: 'simulated' }] : []
++  }
++  return {
++    purpose: 'Follows people from a first visit to paying for {{paid-plan|Aurelia Plus}} and finds the step that loses the most, so we know what to fix first.',
++    answer: leak && gap
++      ? `“${stageShort(leak)}” loses the most: ${lower(gap.label)} is ${pct(gap.agent)} against a {{target}} of ${pct(targetOf(gap))}. ${onTrack} of ${FUNNEL_STAGES.length} steps are on track.`
++      : `All ${FUNNEL_STAGES.length} steps are on track.`,
++    numbers: [{ label: 'Steps on track', value: `${onTrack} of ${FUNNEL_STAGES.length}`, confidence: 'simulated' }, ...kpi('plus', 'Choose to pay at the free limit'), ...kpi('d30', 'Still using after a month')],
++    meaning: leak ? `Until “${stageShort(leak).toLowerCase()}” improves, more visitors mostly means more people who leave.` : 'The next gain comes from bringing in more people.',
++    next: [
++      ...(leak ? [{ text: `Agree one change for “${stageShort(leak).toLowerCase()}” and log it as a decision (Detail).` }] : []),
++      { text: 'Compare with the creator retreat (Detail → Creator retreat).' },
++    ],
++  }
++}
++
++export function therapeuticFunnelBrief(flipId: string = DEFAULT_FLIP): ReportBrief {
++  const f = therapeuticFunnel(flipId)
++  const z = f.stages.find((s) => s.id === 'Z')!
++  const hold = f.stages.find((s) => s.id === 'holds')!
++  return {
++    purpose: 'Shows, for one bad-to-good change, where people drop off on the way, so we know which stage to improve first.',
++    answer: `For ${lower(f.flip.title)}, about ${pct(z.ofProblem)} of ${f.stages[0].people.toFixed(0)} {{simulated|simulated people}} reach the good state and ${pct(hold.ofProblem)} still feel good after 12 weeks. Most are lost before “${f.biggestDrop.title}”.`,
++    numbers: [
++      { label: 'Reach the good state', value: pct(z.ofProblem), confidence: 'simulated' },
++      { label: 'Lost at the biggest drop', value: n0(f.biggestDrop.lost), confidence: 'simulated' },
++      { label: `Still good after 12 weeks (assumes ${pct(HOLD_12_WEEKS)} hold)`, value: pct(hold.ofProblem), confidence: 'assumed' },
++    ],
++    meaning: `Improving “${f.biggestDrop.title}” would help more people than work on any other stage.`,
++    next: [
++      { text: `Work on the levers of “${f.biggestDrop.title}” first (Detail).` },
++      { text: 'Replace the 12-week figure with the pilot’s real check-ins.' },
++    ],
++  }
++}
++
++export function healingMapBrief(): ReportBrief {
++  const nc = nodeCounts()
++  const lc = linkCounts()
++  const research = lc.research ?? 0
++  const sample = lc.sample ?? 0
++  const learned = lc.learned ?? 0
++  return {
++    purpose: 'Shows which building blocks of a session tend to help which bad state, and how sure we are, so we know which links need evidence first.',
++    answer: `The map links ${nc.bad} bad states to ${nc.good} good ones through ${nc.block} building blocks. ${research} of its ${LINKS.length} links are backed by published research; ${sample} are a {{sample|design sample}}, and none is learned from users yet.`,
++    numbers: [
++      { label: 'Links backed by research', value: `${research} of ${LINKS.length}`, confidence: 'assumed' },
++      { label: 'Design-sample links', value: String(sample), confidence: 'simulated' },
++      { label: 'Links learned from users', value: String(learned), confidence: 'measured' },
++    ],
++    meaning: 'Until real check-ins exist, the map shows ideas to test, not proof that a building block helps.',
++    next: [
++      { text: 'Replace the design-sample links with cited research or learned results.' },
++      { text: 'Compare with the older Therapeutic map.', to: '/admin/therapeutic-map', linkLabel: 'Therapeutic map' },
++    ],
++  }
++}
++
++export function sessionBuilderBrief(): ReportBrief {
++  const s = cascadeSummary()
++  const ex = workedExample()
++  return {
++    purpose: 'Explains how Aurelia turns a goal and a person into a 10-minute script and how much of that exists, so we know what to build next.',
++    answer: `It takes ${s.steps} steps in three stages: set the goal, plan the path, write the script. ${s.partial} steps exist in part, ${s.missing} are missing and none is complete.`,
++    numbers: [
++      { label: 'Steps that exist in part', value: `${s.partial} of ${s.steps}`, confidence: 'assumed' },
++      { label: 'Steps missing', value: String(s.missing), confidence: 'assumed' },
++      { label: 'Worked example, our draft score', value: ex.alignment.score.toFixed(2), confidence: 'assumed' },
++    ],
++    meaning: 'Most of the engine is still to be built, so a script made fully by the AI is some way off.',
++    next: [
++      { text: 'Import the workbook’s bars, elements and frameworks as data: three steps depend on it.' },
++      { text: 'Agree how a script is scored before any {{tournament}} runs.' },
++    ],
++  }
++}
++
++/** Every route's brief with its default inputs (the page passes live ones where it has them). */
++export const REPORT_BRIEFS: Record<BriefRoute, () => ReportBrief> = {
++  '/admin/reports': () => overviewBrief(),
++  '/admin/reports/buyer-agent': buyerBrief,
++  '/admin/reports/ux-feedback': () => uxBrief(),
++  '/admin/reports/combination': () => combinationBrief(),
++  '/admin/reports/cost': costBrief,
++  '/admin/reports/b2b2c': b2b2cBrief,
++  '/admin/reports/metrics': () => metricsBrief(),
++  '/admin/ai-brain': aiBrainBrief,
++  '/admin/stateflips': stateFlipsBrief,
++  '/admin/personas': personasBrief,
++  '/admin/user-journey': () => userJourneyBrief(),
++  '/admin/business-funnel': () => businessFunnelBrief(),
++  '/admin/therapeutic-funnel': () => therapeuticFunnelBrief(),
++  '/admin/healing-map': healingMapBrief,
++  '/admin/session-builder': sessionBuilderBrief,
++}
++
++export const reportBrief = (route: BriefRoute) => REPORT_BRIEFS[route]()
++
++/** The sources block's rows: the page's registered data sources. */
++export const briefSources = (route: string) => dataSourcesFor(route)
+diff --git a/src/admin/data/reportSources.ts b/src/admin/data/reportSources.ts
+index 46f3eee..6d4af87 100644
+--- a/src/admin/data/reportSources.ts
++++ b/src/admin/data/reportSources.ts
+@@ -65,6 +65,8 @@ export type SourceId =
+   | 'sleep-cohort'
+   | 'owner-thesis'
+   | 'bar-elements'
++  | 'healing-map'
++  | 'sleep-scales'
+ 
+ export interface ReportSource {
+   id: SourceId
+@@ -370,6 +372,24 @@ export const SOURCES: Record<SourceId, ReportSource> = {
+     link: '/admin/session-builder',
+     label: 'document',
+   },
++  'healing-map': {
++    id: 'healing-map',
++    name: 'Healing map links',
++    what: 'The bad states, building blocks and good states of the Healing map, and the links between them: a design sample, with some links backed by a cited published review.',
++    version: 'healingMap.ts (U151 reading)',
++    taken: 'Every node and link, and where each link comes from.',
++    link: '/admin/healing-map',
++    label: 'sample',
++  },
++  'sleep-scales': {
++    id: 'sleep-scales',
++    name: 'Published sleep scales',
++    what: 'The published sleep measures the sleep score is set against: PSQI, ISI, the National Sleep Foundation’s quality markers and the AASM’s seven hours.',
++    version: 'Papers of 1989–2017, read for U140',
++    taken: 'What bad and good sleep mean, and the cut-offs behind the check-in.',
++    link: '/admin/stateflips',
++    label: 'third-party',
++  },
+ }
+ 
+ /** The kind of evidence a source is, for grouping it on a graph (U121). Coarse on purpose: a handful of groups a reader can scan. */
+@@ -409,6 +429,8 @@ export const SOURCE_KIND: Record<SourceId, SourceKind> = {
+   'sleep-cohort': 'Funnels and models',
+   'owner-thesis': 'The business owner',
+   'bar-elements': 'The business owner',
++  'healing-map': 'Product',
++  'sleep-scales': 'Real people',
+ }
+ 
+ export interface Finding {
+diff --git a/src/admin/pages/AiBrainPage.tsx b/src/admin/pages/AiBrainPage.tsx
+index a6ab8b1..6cdbca9 100644
+--- a/src/admin/pages/AiBrainPage.tsx
++++ b/src/admin/pages/AiBrainPage.tsx
+@@ -1,8 +1,9 @@
+ import { Check, Copy } from 'lucide-react'
+ import { useMemo, useState, type ReactNode } from 'react'
+ import { Link } from 'react-router-dom'
++import { ReportHeaderCard } from './reports/ReportHeaderCard'
++import { aiBrainBrief } from '../data/reportBriefs'
+ import { PageSummary, PageTabs } from '../components/PageTabs'
+-import { usePageTab } from '../components/pageTab'
+ import { Badge, PageHeader, Panel } from '../components/ui'
+ import {
+   CORE_FNS,
+@@ -49,17 +50,15 @@ export function AiBrainPage() {
+   const proto = useMemo(() => prototypeMap(), [])
+   const report = useMemo(() => weeklyReport(), [])
+   const x = useMemo(() => v8Tallies(), [])
+-  const [, setTab] = usePageTab()
++  const brief = useMemo(() => aiBrainBrief(), [])
+   const mvp = mvpChance(metrics)
+   const weakest = [...CORE_FNS].sort((a, b) => functionChance(metrics, a) - functionChance(metrics, b))[0]
+ 
+   return (
+     <div className="flex flex-col gap-16">
+       <PageHeader title="AI brain" description="Wellness, Product, Business, Brand and Analysis as one model: each function’s metrics, MVP targets, a transparent chance to reach them, and the features that would raise it most." />
+-      <PageTabs
+-        summary={
+-          <div className="flex min-w-0 flex-col gap-12">
+-            <PageSummary
++      <PageTabs summary={<ReportHeaderCard route="/admin/ai-brain" brief={brief} />}>
++      <PageSummary
+               purpose="seeing, in one place, how close each function of the AI brain is to its MVP target, and which features would move it most."
+               question="What is the chance we reach the MVP targets, and what should ship next to raise it?"
+               answer={`All three core functions together: ${pct(mvp)}. ${FUNCTION_LABEL[weakest]} is furthest from target (${pct(functionChance(metrics, weakest))}). If the top 3 features ship (${top3.top.map((f) => f.name.toLowerCase()).join('; ')}), the chance goes from ${pct(top3.mvpBefore)} to ${pct(top3.mvpAfter)}.`}
+@@ -70,12 +69,7 @@ export function AiBrainPage() {
+                 { text: 'Copy this week’s plain-language report.', to: '?tab=detail#weekly', linkLabel: 'Weekly report' },
+               ]}
+               note="Every number is simulated or assumed until real users exist; a stage chance is “how close to target”, not a measured probability."
+-              onDetail={() => setTab('detail')}
+             />
+-            <DataSources route="/admin/ai-brain" />
+-          </div>
+-        }
+-      >
+         <Panel title="How the chance is worked out" description="Plain formulas, so every number on this page can be redone by hand.">
+           <ul className="flex flex-col gap-6 text-13 text-adm-ink-2">
+             <li><span className="font-semibold text-adm-ink">Stage chance</span> = min(1, current ÷ target); for a cost, min(1, target ÷ current).</li>
+diff --git a/src/admin/pages/BusinessFunnelPage.tsx b/src/admin/pages/BusinessFunnelPage.tsx
+index a960965..a47412c 100644
+--- a/src/admin/pages/BusinessFunnelPage.tsx
++++ b/src/admin/pages/BusinessFunnelPage.tsx
+@@ -3,6 +3,8 @@ import { ChevronRight, CircleHelp, Download, ExternalLink, MapPin, Plus } from '
+ import { useState } from 'react'
+ import { Link, useSearchParams } from 'react-router-dom'
+ import { keepTab, usePageTab } from '../components/pageTab'
++import { ReportHeaderCard } from './reports/ReportHeaderCard'
++import { businessFunnelBrief } from '../data/reportBriefs'
+ import { PageSummary, PageTabs } from '../components/PageTabs'
+ import { RELEASES } from '../../versions/releases'
+ import { GuideTour, type TourStep } from '../components/GuideTour'
+@@ -92,6 +94,7 @@ export function BusinessFunnelPage() {
+     const m = metrics.find((x) => x.id === id)
+     return m ? { label: m.label, value: pct(m.agent), target: targetOf(m), good: m.agent >= targetOf(m) } : null
+   }
++  const brief = businessFunnelBrief({ metrics, targets })
+   const plus = kpi('plus')
+   const d30 = kpi('d30')
+ 
+@@ -120,10 +123,8 @@ export function BusinessFunnelPage() {
+         }
+       />
+ 
+-      <PageTabs
+-        summary={
+-          <div className="flex min-w-0 flex-col gap-12">
+-          <PageSummary
++      <PageTabs summary={<ReportHeaderCard route="/admin/business-funnel" brief={brief} />}>
++      <PageSummary
+             purpose="seeing how many people get from a first visit to paying for Aurelia Plus, and which stage loses the most."
+             question="Where does the funnel leak most, and what do we fix first?"
+             answer={
+@@ -142,12 +143,7 @@ export function BusinessFunnelPage() {
+               { text: 'Compare with the creator retreat funnel (Detail → Creator retreat).' },
+             ]}
+             note={`Predicted by the buyer agents (${AGENT_RULES[agent].name}, ${DESIGNS[design - 1].name}); not measured on real users.`}
+-            onDetail={() => setPageTab('detail')}
+           />
+-            <DataSources route="/admin/business-funnel" />
+-          </div>
+-        }
+-      >
+       <div className="flex flex-wrap items-center justify-between gap-12">
+         <div role="tablist" aria-label="Funnel" className="flex w-fit flex-wrap gap-4 rounded-8 bg-adm-bg p-4">
+           {(
+diff --git a/src/admin/pages/PersonasPage.tsx b/src/admin/pages/PersonasPage.tsx
+index 37d0815..ed4b438 100644
+--- a/src/admin/pages/PersonasPage.tsx
++++ b/src/admin/pages/PersonasPage.tsx
+@@ -8,8 +8,9 @@ import { Badge, Button, PageHeader, Panel, inputClass } from '../components/ui'
+ import { GOAL_LABEL, PERSONA_COUNT, SEED, distribution, drawPanel, generatePersonas, personaPrompt, type Generator, type Persona } from '../data/personas'
+ import { PersonaProfile } from '../components/PersonaProfile'
+ import { PersonasV4View } from './personas/PersonasV4View'
++import { ReportHeaderCard } from './reports/ReportHeaderCard'
++import { personasBrief } from '../data/reportBriefs'
+ import { PageSummary, PageTabs } from '../components/PageTabs'
+-import { usePageTab } from '../components/pageTab'
+ import { SCENARIOS, generatePersonasV4 } from '../data/personasV4'
+ 
+ type SetId = 'v4' | 'v2' | 'v1'
+@@ -61,7 +62,7 @@ function download(name: string, text: string, type: string) {
+  */
+ export function PersonasPage() {
+   const [set, setSet] = useState<SetId>('v4')
+-  const [, setTab] = usePageTab()
++  const brief = useMemo(() => personasBrief(), [])
+   // Summary (U142): the facts of set v4, the default.
+   const facts = useMemo(() => {
+     const ps = generatePersonasV4()
+@@ -81,10 +82,8 @@ export function PersonasPage() {
+         title="Personas"
+         description="Made-up people with different lives, goals and doubts, as candidates for research run by AI: interviews in role, concept and copy tests, pricing checks. Use them to form and sharpen ideas before real users are asked, not as evidence."
+       />
+-      <PageTabs
+-        summary={
+-          <div className="flex min-w-0 flex-col gap-12">
+-          <PageSummary
++      <PageTabs summary={<ReportHeaderCard route="/admin/personas" brief={brief} />}>
++      <PageSummary
+             purpose="choosing made-up people to run AI research on (interviews in role, concept, copy and price tests) before real users are asked."
+             question="Who do our tests run on, and who must never be sold to?"
+             answer={`${facts.count.toLocaleString('en-US')} made-up people from ${facts.countries} countries; ${facts.risk} carry a risk flag and go to the help screen, never a sale.`}
+@@ -99,12 +98,7 @@ export function PersonasPage() {
+               { text: 'See what simulated buyers said in the Buyer agent report.', to: '/admin/reports/buyer-agent', linkLabel: 'Buyer agent report' },
+             ]}
+             note="Synthetic people for forming ideas, not evidence. Sets v1 and v2 (300 each) stay for the runs pinned to them."
+-            onDetail={() => setTab('detail')}
+           />
+-            <DataSources route="/admin/personas" />
+-          </div>
+-        }
+-      >
+       <div role="tablist" aria-label="Persona set" className="flex w-fit max-w-full flex-wrap gap-4 rounded-8 border border-adm-line bg-adm-surface p-4">
+         {SETS.map((x) => (
+           <button
+diff --git a/src/admin/pages/UserJourneyPage.tsx b/src/admin/pages/UserJourneyPage.tsx
+index 1be9eca..09f8449 100644
+--- a/src/admin/pages/UserJourneyPage.tsx
++++ b/src/admin/pages/UserJourneyPage.tsx
+@@ -3,6 +3,8 @@ import { AlertCircle, CircleHelp, Download, ExternalLink, ImagePlus, MoreHorizon
+ import { useEffect, useMemo, useState, type ChangeEvent, type CSSProperties } from 'react'
+ import { useSearchParams } from 'react-router-dom'
+ import { keepTab, usePageTab } from '../components/pageTab'
++import { ReportHeaderCard } from './reports/ReportHeaderCard'
++import { userJourneyBrief } from '../data/reportBriefs'
+ import { PageSummary, PageTabs } from '../components/PageTabs'
+ import { GuideTour, type TourStep } from '../components/GuideTour'
+ import { Modal } from '../components/Modal'
+@@ -256,6 +258,7 @@ export function UserJourneyPage() {
+     .map((m) => ({ m, demand: DEMAND.get(m.id) ?? 0 }))
+     .sort((a, b) => b.demand - a.demand)
+   const topGap = gaps[0]
++  const brief = userJourneyBrief({ moments: counts.moments, screens: counts.screens, gaps: gaps.length, topGap: topGap ? { title: topGap.m.title, demand: topGap.demand } : undefined })
+ 
+   return (
+     <div className="flex flex-col gap-16">
+@@ -337,10 +340,8 @@ export function UserJourneyPage() {
+         }
+       />
+ 
+-      <PageTabs
+-        summary={
+-          <div className="flex min-w-0 flex-col gap-12">
+-          <PageSummary
++      <PageTabs summary={<ReportHeaderCard route="/admin/user-journey" brief={brief} />}>
++      <PageSummary
+             purpose="seeing when people reach for Aurelia, and which of those moments still has no screen."
+             question="Which moment should we design or build for next?"
+             answer={
+@@ -359,12 +360,7 @@ export function UserJourneyPage() {
+               { text: 'Export the journey and share it with the team when it changes.' },
+             ]}
+             note="Demand counts the 300 synthetic personas, not real users. Edits are saved in this browser only."
+-            onDetail={() => setTab('detail')}
+           />
+-            <DataSources route="/admin/user-journey" />
+-          </div>
+-        }
+-      >
+       {tagsOn && (
+         <div className="flex flex-wrap items-center justify-between gap-10">
+           <div className="flex flex-wrap gap-2 rounded-12 border border-adm-line bg-adm-surface p-4" role="tablist" aria-label="View" data-tour="views">
+diff --git a/src/admin/pages/lab/HealingMapPage.tsx b/src/admin/pages/lab/HealingMapPage.tsx
+index 0032c2b..fb4a7f3 100644
+--- a/src/admin/pages/lab/HealingMapPage.tsx
++++ b/src/admin/pages/lab/HealingMapPage.tsx
+@@ -1,6 +1,8 @@
+ import { ExternalLink, Minus, Plus } from 'lucide-react'
+-import { PageTabs, PurposeLine } from '../../components/PageTabs'
+-import { usePageTab } from '../../components/pageTab'
++import { PageTabs } from '../../components/PageTabs'
++import { healingMapBrief } from '../../data/reportBriefs'
++import { DataSources } from '../reports/DataSources'
++import { ReportHeaderCard } from '../reports/ReportHeaderCard'
+ import { RELEASES } from '../../../versions/releases'
+ import { Link } from 'react-router-dom'
+ import { useState } from 'react'
+@@ -144,7 +146,6 @@ function HealingMap() {
+   const chip = (on: boolean) =>
+     `inline-flex items-center gap-6 rounded-full border px-10 py-4 text-12 font-medium ${on ? 'border-adm-ink bg-adm-ink text-adm-surface' : 'border-adm-line bg-adm-surface text-adm-ink-2 hover:bg-adm-hover'}`
+ 
+-  const [, setPageTab] = usePageTab()
+   const summaryBlock = (
+     <>
+       <GoalLine goal="Shows which building blocks help which bad state, and how sure we are." />
+@@ -176,19 +177,12 @@ function HealingMap() {
+       </p>
+       {!RELEASES.adminNav2 && summaryBlock}
+       <PageTabs
+-        summary={
+-          <div className="flex min-w-0 flex-col gap-12">
+-            <PurposeLine purpose="seeing which building blocks of a session tend to help which bad state, and how sure we are of each link." />
+-            {summaryBlock}
+-            <p className="rounded-8 border border-adm-line bg-adm-surface px-12 py-8 text-13 text-adm-ink-2">
+-              Next step: replace the design-sample links with cited research or learned results. The <Link to="/admin/therapeutic-map" className="font-semibold text-adm-ink underline">Therapeutic map</Link> is the older version of this idea.
+-            </p>
+-            <button type="button" onClick={() => setPageTab('detail')} className="self-end text-13 font-semibold text-adm-ink underline decoration-adm-axis underline-offset-2">
+-              Open the full map and how it will learn in Detail
+-            </button>
+-          </div>
+-        }
++        summary={<ReportHeaderCard route="/admin/healing-map" brief={healingMapBrief()} />}
+       >
++      {RELEASES.adminNav2 && summaryBlock}
++      <p className="rounded-8 border border-adm-line bg-adm-surface px-12 py-8 text-13 text-adm-ink-2">
++        Next step: replace the design-sample links with cited research or learned results. The <Link to="/admin/therapeutic-map" className="font-semibold text-adm-ink underline">Therapeutic map</Link> is the older version of this idea.
++      </p>
+ 
+       <Panel title="The map" description="Tap a state or a building block to see its paths and where each link comes from.">
+         <div className="flex flex-col gap-10">
+@@ -373,6 +367,7 @@ function HealingMap() {
+           </div>
+         </div>
+       </Details>
++      <DataSources route="/admin/healing-map" full />
+       </PageTabs>
+     </div>
+   )
+diff --git a/src/admin/pages/lab/SessionBuilderPage.tsx b/src/admin/pages/lab/SessionBuilderPage.tsx
+index 0c41e08..1f1de0b 100644
+--- a/src/admin/pages/lab/SessionBuilderPage.tsx
++++ b/src/admin/pages/lab/SessionBuilderPage.tsx
+@@ -1,8 +1,9 @@
+ import { ArrowRight, RotateCcw } from 'lucide-react'
+ import { useState } from 'react'
+ import { Link } from 'react-router-dom'
++import { ReportHeaderCard } from '../reports/ReportHeaderCard'
++import { sessionBuilderBrief } from '../../data/reportBriefs'
+ import { PageSummary, PageTabs } from '../../components/PageTabs'
+-import { usePageTab } from '../../components/pageTab'
+ import { Badge, PageHeader, Panel, type Tone } from '../../components/ui'
+ import {
+   CASCADE, CFAM_TARGETS, CONTEXT_LOOP, DOMAIN_TEXT, PLANNER, STATE_TEXT, VALUE_TEXT, cascadeSummary, workedExample,
+@@ -25,7 +26,7 @@ const VALUE_TONE: Record<ValueSource, Tone> = { workbook: 'info', computed: 'goo
+ const DOMAIN_BAR: Record<Domain, string> = { META: 'bg-adm-s1', PATH: 'bg-adm-s3', SCRIPT: 'bg-adm-s4' }
+ 
+ export function SessionBuilderPage() {
+-  const [, setPageTab] = usePageTab()
++  const brief = sessionBuilderBrief()
+   const s = cascadeSummary()
+   const ex = workedExample()
+   return (
+@@ -34,10 +35,8 @@ export function SessionBuilderPage() {
+         title="How a session is built"
+         description="The business owner’s Meta → Path → Script cascade: 16 steps from “who is this for” to the finished script, what each needs, and what our app and API do today. With one worked example: chapter 1 of the sleep StateFlip."
+       />
+-      <PageTabs
+-        summary={
+-          <div className="flex min-w-0 flex-col gap-12">
+-            <PageSummary
++      <PageTabs summary={<ReportHeaderCard route="/admin/session-builder" brief={brief} />}>
++      <PageSummary
+               purpose="understanding how one chapter is assembled from goals, people and building blocks (AKPs), step by step, and which steps we still have to build."
+               question="How does Aurelia turn a StateFlip and a person into a 10-minute script, and how much of that exists?"
+               answer={`Three stages: Meta sets length, goal and person; Path picks objective, methods, techniques and a plan of bars and elements, then scores it; Script writes it. Of the ${s.steps} steps, ${s.partial} exist in part and ${s.missing} are missing; none is complete. The worked sleep example is a draft no model has run.`}
+@@ -52,12 +51,7 @@ export function SessionBuilderPage() {
+                 { text: 'Agree how alignment is scored before any tournament runs (step 9).', to: '/admin/therapeutic-funnel', linkLabel: 'Therapeutic funnel' },
+               ]}
+               note="Step names, inputs and databases are the workbook’s. Example values are labelled: from the workbook, computed from the sleep cohort, or our draft."
+-              onDetail={() => setPageTab('detail')}
+             />
+-            <DataSources route={ROUTE} />
+-          </div>
+-        }
+-      >
+         <CascadeDiagram />
+         <WorkedExampleView />
+         <StepTable />
+diff --git a/src/admin/pages/lab/StateFlipsPage.tsx b/src/admin/pages/lab/StateFlipsPage.tsx
+index 4e7e5e8..f59c4fc 100644
+--- a/src/admin/pages/lab/StateFlipsPage.tsx
++++ b/src/admin/pages/lab/StateFlipsPage.tsx
+@@ -1,6 +1,8 @@
+ import { PanelRightOpen } from 'lucide-react'
+-import { PageTabs, PurposeLine } from '../../components/PageTabs'
+-import { usePageTab } from '../../components/pageTab'
++import { PageTabs } from '../../components/PageTabs'
++import { stateFlipsBrief } from '../../data/reportBriefs'
++import { DataSources } from '../reports/DataSources'
++import { ReportHeaderCard } from '../reports/ReportHeaderCard'
+ import { RELEASES } from '../../../versions/releases'
+ import { DetailsCue } from '../reports/ReportParts'
+ import { useState, type ReactNode } from 'react'
+@@ -67,7 +69,6 @@ function StateFlips() {
+   const last = c.rows[c.rows.length - 1]
+   const at42 = c.flippedAt(42)
+   const ex = examplePeople(c)
+-  const [, setPageTab] = usePageTab()
+   const goal = <GoalLine goal="Explain, in numbers anyone can check, how chapters add up to the sleep StateFlip (25 → 85) and how “chance it works” is calculated." />
+ 
+   const tiles: { label: string; value: string; vs: string; badge: NumLabel; open: () => void }[] = [
+@@ -123,17 +124,10 @@ function StateFlips() {
+       {!NAV2 && goal}
+ 
+       <PageTabs
+-        summary={
+-          <div className="flex min-w-0 flex-col gap-12">
+-            <PurposeLine purpose="seeing how Aurelia turns a bad state into a good one, starting with sleep, and how likely it is to work." />
+-            {goal}
+-            {summarySection}
+-            <button type="button" onClick={() => setPageTab('detail')} className="self-end text-13 font-semibold text-adm-ink underline decoration-adm-axis underline-offset-2">
+-              See the steps, the cohort, all 125 StateFlips and the AKP catalogue in Detail
+-            </button>
+-          </div>
+-        }
++        summary={<ReportHeaderCard route="/admin/stateflips" brief={stateFlipsBrief()} />}
+       >
++      {NAV2 && goal}
++      {NAV2 && summarySection}
+       <div className="flex flex-wrap gap-2 self-start rounded-12 border border-adm-line bg-adm-surface p-4" role="tablist" aria-label="View">
+         {TABS.map((t) => (
+           <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)} className={`rounded-8 px-12 py-6 text-12 font-medium ${tab === t.id ? 'bg-adm-hover text-adm-ink' : 'text-adm-muted hover:text-adm-ink'}`}>
+@@ -165,6 +159,7 @@ function StateFlips() {
+       <Trajectories examples={ex} />
+       </>
+       )}
++      <DataSources route="/admin/stateflips" full />
+       </PageTabs>
+     </div>
+   )
+diff --git a/src/admin/pages/lab/TherapeuticFunnelPage.tsx b/src/admin/pages/lab/TherapeuticFunnelPage.tsx
+index 3492de7..aa77d11 100644
+--- a/src/admin/pages/lab/TherapeuticFunnelPage.tsx
++++ b/src/admin/pages/lab/TherapeuticFunnelPage.tsx
+@@ -1,7 +1,8 @@
+ import { useState } from 'react'
+ import { Link } from 'react-router-dom'
++import { ReportHeaderCard } from '../reports/ReportHeaderCard'
++import { therapeuticFunnelBrief } from '../../data/reportBriefs'
+ import { PageSummary, PageTabs } from '../../components/PageTabs'
+-import { usePageTab } from '../../components/pageTab'
+ import { Badge, PageHeader, Panel, inputClass, type Tone } from '../../components/ui'
+ import { NUM_LABEL_TEXT, type NumLabel } from '../../data/stateFlipSleep'
+ import { DEFAULT_FLIP, HOLD_12_WEEKS, funnelOptions, therapeuticFunnel, type FunnelStage } from '../../data/therapeuticFunnel'
+@@ -21,7 +22,7 @@ const n0 = (x: number) => (Math.round(x * 10) / 10).toFixed(x < 10 ? 1 : 0)
+ 
+ export function TherapeuticFunnelPage() {
+   const [flipId, setFlipId] = useState(DEFAULT_FLIP)
+-  const [, setPageTab] = usePageTab()
++  const brief = therapeuticFunnelBrief(flipId)
+   const f = therapeuticFunnel(flipId)
+   const z = f.stages.find((s) => s.id === 'Z')!
+   const hold = f.stages.find((s) => s.id === 'holds')!
+@@ -45,10 +46,8 @@ export function TherapeuticFunnelPage() {
+         description="For one StateFlip at a time: how many simulated people get from having the problem to a good state that lasts, where they drop off, why, and what moves each stage."
+         actions={picker}
+       />
+-      <PageTabs
+-        summary={
+-          <div className="flex min-w-0 flex-col gap-12">
+-            <PageSummary
++      <PageTabs summary={<ReportHeaderCard route="/admin/therapeutic-funnel" brief={brief} />}>
++      <PageSummary
+               purpose="seeing where people drop off on the way from a bad state to a good one, and which levers move each stage."
+               question={`For ${f.flip.title.toLowerCase()}, where do we lose the most people?`}
+               answer={`Of ${f.stages[0].people.toFixed(0)} simulated people with the problem, about ${n0(z.people)} (${pct(z.ofProblem)}) are expected to flip and ${n0(hold.people)} to stay good. The biggest loss is before “${f.biggestDrop.title}”: about ${n0(f.biggestDrop.lost)} people. ${f.biggestDrop.why}`}
+@@ -63,12 +62,7 @@ export function TherapeuticFunnelPage() {
+                 { text: 'See how one chapter is built.', to: '/admin/session-builder', linkLabel: 'How a session is built' },
+               ]}
+               note="Simulated people (persona set v4) and the StateFlips formulas; nothing is measured on real people yet. “Therapeutic” is an internal name; what Aurelia says to people stays wellness."
+-              onDetail={() => setPageTab('detail')}
+             />
+-            <DataSources route={ROUTE} />
+-          </div>
+-        }
+-      >
+         <Panel title={`${f.flip.id} · ${f.flip.title}`} description={f.basis}>
+           <FunnelBars stages={f.stages} />
+         </Panel>
+diff --git a/src/admin/pages/reports/B2b2cReportPage.tsx b/src/admin/pages/reports/B2b2cReportPage.tsx
+index 7741e81..e105271 100644
+--- a/src/admin/pages/reports/B2b2cReportPage.tsx
++++ b/src/admin/pages/reports/B2b2cReportPage.tsx
+@@ -1,6 +1,6 @@
+-import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
+-import { usePageTab } from '../../components/pageTab'
+-import { RELEASES } from '../../../versions/releases'
++import { PageTabs } from '../../components/PageTabs'
++import { b2b2cBrief } from '../../data/reportBriefs'
++import { ReportHeaderCard } from './ReportHeaderCard'
+ import { ExternalLink } from 'lucide-react'
+ import { DetailsCue } from './ReportParts'
+ import { useMemo, useState } from 'react'
+@@ -250,7 +250,7 @@ export function B2b2cReportPage() {
+   const map = useMemo(() => mapFor(buildIterationMap(1), 'b2b2c'), [])
+   const web = B2B2C_SOURCES.filter((s) => s.url.startsWith('http'))
+   const own = B2B2C_SOURCES.filter((s) => !s.url.startsWith('http'))
+-  const [, setPageTab] = usePageTab()
++  const [brief] = useState(b2b2cBrief)
+   const summaryBlock = (
+         <SummaryBlock s={summary} />
+   )
+@@ -260,8 +260,8 @@ export function B2b2cReportPage() {
+       <div className="flex flex-col gap-16">
+         <PageHeader title="B2B2C report" description={plainText(summary.intro ?? '')} />
+ 
+-        {!RELEASES.adminNav2 && summaryBlock}
+-        <PageTabs summary={<ReportSummaryTab purpose="choosing which partner channel (creators, employers, partners) to test first." onDetail={() => setPageTab('detail')}>{summaryBlock}<DataSources route="/admin/reports/b2b2c" /></ReportSummaryTab>}>
++        <PageTabs summary={<ReportHeaderCard route="/admin/reports/b2b2c" brief={brief} />}>
++      {summaryBlock}
+ 
+         <section id="b2b2c-how" className="min-w-0 scroll-mt-16">
+           <Panel title="How it works" description="The idea in four pictures: who is involved, each channel step by step, what changed from round 1, and the phases. Click any box for a plain explanation and the features behind it.">
+diff --git a/src/admin/pages/reports/BuyerAgentReportPage.tsx b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+index 7b00278..ea7c705 100644
+--- a/src/admin/pages/reports/BuyerAgentReportPage.tsx
++++ b/src/admin/pages/reports/BuyerAgentReportPage.tsx
+@@ -1,8 +1,9 @@
+-import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
+-import { usePageTab } from '../../components/pageTab'
++import { PageTabs } from '../../components/PageTabs'
++import { buyerBrief } from '../../data/reportBriefs'
++import { ReportHeaderCard } from './ReportHeaderCard'
+ import { RELEASES } from '../../../versions/releases'
+ import { ArrowRight, PanelRightOpen } from 'lucide-react'
+-import { useMemo } from 'react'
++import { useMemo, useState } from 'react'
+ import { Link } from 'react-router-dom'
+ import { PageHeader, Panel } from '../../components/ui'
+ import { APP_PRICE, INPUT_KINDS, INPUT_LABEL, buildIterations, changedFrom } from '../../data/buyerAgentReport'
+@@ -60,10 +61,8 @@ function BuyerAgentReport() {
+   const no7 = objections(t7)[0]
+   const pc = (k: number, n: number) => `${Math.round((k / n) * 100)}%`
+ 
+-  const [, setPageTab] = usePageTab()
++  const [brief] = useState(buyerBrief)
+   const fullSummary = <SummaryBlock s={summary} aside={<LatestChangeAside version={BUYER_RUNS[BUYER_RUNS.length - 1].version} />} />
+-  // B6 (U146): the Summary tab stays under 150 words; the full block opens Detail.
+-  const summaryBlock = RELEASES.adminNav2 ? <SummaryBlock s={summary} compact /> : fullSummary
+ 
+   return (
+     <div className="flex flex-col gap-16">
+@@ -77,8 +76,10 @@ function BuyerAgentReport() {
+         }
+       />
+ 
+-      {!RELEASES.adminNav2 && summaryBlock}
+-      <PageTabs summary={<ReportSummaryTab purpose="deciding whether simulated buyers would pay for Aurelia, and at what price." onDetail={() => setPageTab('detail')}>{summaryBlock}<Test9Line /><Test8Line /><DataSources route="/admin/reports/buyer-agent" /></ReportSummaryTab>}>
++      <PageTabs summary={<ReportHeaderCard route="/admin/reports/buyer-agent" brief={brief} />}>
++      {!RELEASES.adminNav2 && fullSummary}
++      <Test9Line />
++      <Test8Line />
+       {RELEASES.adminNav2 && (
+         <Details id="full-summary" title="Full summary" hint="each test’s figures, the tile notes and how sure we are">
+           {fullSummary}
+diff --git a/src/admin/pages/reports/CombinationReportPage.tsx b/src/admin/pages/reports/CombinationReportPage.tsx
+index 8172da3..a0c0de1 100644
+--- a/src/admin/pages/reports/CombinationReportPage.tsx
++++ b/src/admin/pages/reports/CombinationReportPage.tsx
+@@ -1,7 +1,7 @@
+-import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
+-import { usePageTab } from '../../components/pageTab'
+-import { RELEASES } from '../../../versions/releases'
+-import { useState } from 'react'
++import { PageTabs } from '../../components/PageTabs'
++import { combinationBrief } from '../../data/reportBriefs'
++import { ReportHeaderCard } from './ReportHeaderCard'
++import { useMemo, useState } from 'react'
+ import { Badge, PageHeader, Panel } from '../../components/ui'
+ import { DESIGNS } from '../../data/buyerSim'
+ import { MATRIX_SEATS, buildComposition, buildMatrix, buildStages, type StageReading } from '../../data/combinationReport'
+@@ -102,7 +102,7 @@ function CombinationReport() {
+   const [map] = useState(() => mapFor(buildIterationMap(week), 'combination'))
+   const middle = OUTCOMES.find((o) => o.id === 'middle')!
+ 
+-  const [, setPageTab] = usePageTab()
++  const brief = useMemo(() => combinationBrief(week), [week])
+   const summaryBlock = (
+       <SummaryBlock
+         s={summary}
+@@ -129,8 +129,8 @@ function CombinationReport() {
+         description={summary.intro ?? ''}
+       />
+ 
+-      {!RELEASES.adminNav2 && summaryBlock}
+-      <PageTabs summary={<ReportSummaryTab purpose="reading the journey, the personas and the buyer agents together to find the one funnel step to fix first." onDetail={() => setPageTab('detail')}>{summaryBlock}<DataSources route="/admin/reports/combination" /></ReportSummaryTab>}>
++      <PageTabs summary={<ReportHeaderCard route="/admin/reports/combination" brief={brief} />}>
++      {summaryBlock}
+ 
+       <Details id="stages" title="Stage by stage" hint="what each source says, where they agree and conflict">
+       <Panel title="How to read it" description="The version and rules every stage is read on.">
+diff --git a/src/admin/pages/reports/CostReportPage.tsx b/src/admin/pages/reports/CostReportPage.tsx
+index 667b650..67feec9 100644
+--- a/src/admin/pages/reports/CostReportPage.tsx
++++ b/src/admin/pages/reports/CostReportPage.tsx
+@@ -1,8 +1,9 @@
+-import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
+-import { usePageTab } from '../../components/pageTab'
+-import { RELEASES } from '../../../versions/releases'
++import { PageTabs } from '../../components/PageTabs'
++import { costBrief } from '../../data/reportBriefs'
++import { ReportHeaderCard } from './ReportHeaderCard'
++import { DataSources } from './DataSources'
+ import { AlertTriangle, ExternalLink } from 'lucide-react'
+-import { useState, type ReactNode } from 'react'
++import { useMemo, useState, type ReactNode } from 'react'
+ import { Badge, PageHeader, Panel, inputClass, type Tone } from '../../components/ui'
+ import {
+   ANCHORS, ASSUME, DEFAULT_GOAL, DEFAULT_WPM, GRAPH_EDGES, GRAPH_NODES, LENGTHS, MEASURED_2025, MEDIA, MEDIA_LABEL,
+@@ -103,7 +104,7 @@ function CostReport() {
+   const values = nodeValues(state)
+   const stages = ([1, 2, 3] as Stage[]).map((st) => ({ st, r: goal({ ...state.goal, stage: st }, state.cost) }))
+ 
+-  const [, setPageTab] = usePageTab()
++  const brief = useMemo(() => costBrief(), [])
+   const summaryBlock = (
+       <SummaryBlock s={summary} />
+   )
+@@ -115,8 +116,8 @@ function CostReport() {
+         description={summary.intro ?? ''}
+       />
+ 
+-      {!RELEASES.adminNav2 && summaryBlock}
+-      <PageTabs summary={<ReportSummaryTab purpose="knowing what one user and one StateFlip cost to serve, and whether the price covers it." onDetail={() => setPageTab('detail')}>{summaryBlock}</ReportSummaryTab>}>
++      <PageTabs summary={<ReportHeaderCard route="/admin/reports/cost" brief={brief} />}>
++      {summaryBlock}
+ 
+       <section id="cost-function" className="scroll-mt-16">
+         <Panel title="How the cost of helping one person adds up" description="Left: where each number comes from. Middle: the sum. Right: the result. Click a line to see its source.">
+@@ -354,6 +355,7 @@ function CostReport() {
+         ]}
+       />
+       </Details>
++      <DataSources route="/admin/reports/cost" full />
+       </PageTabs>
+     </div>
+   )
+diff --git a/src/admin/pages/reports/DataSources.tsx b/src/admin/pages/reports/DataSources.tsx
+index 3a045e4..a92065d 100644
+--- a/src/admin/pages/reports/DataSources.tsx
++++ b/src/admin/pages/reports/DataSources.tsx
+@@ -4,8 +4,9 @@ import { Badge, type Tone } from '../../components/ui'
+ import { DATA_SOURCE_TYPE_MEANING, DATA_SOURCE_TYPE_TEXT, dataSourcesFor, type DataSourceType } from '../../data/dataSources'
+ 
+ /*
+- * "Data sources" (U146, J206): the one block that closes every report's
+- * Summary (compact) and Detail (full). Each source says what kind it is, what
++ * "Data sources" (U146, J206): the full block that closes every report's
++ * Detail. Since U151 the Summary shows its short form in ReportHeaderCard's
++ * "Where it comes from"; the compact mode here stays for other callers. Each source says what kind it is, what
+  * it feeds on this page, its file or document, its date and a link.
+  */
+ 
+diff --git a/src/admin/pages/reports/ReportHeaderCard.tsx b/src/admin/pages/reports/ReportHeaderCard.tsx
+new file mode 100644
+index 0000000..e7e905b
+--- /dev/null
++++ b/src/admin/pages/reports/ReportHeaderCard.tsx
+@@ -0,0 +1,159 @@
++import { ArrowRight } from 'lucide-react'
++import type { ReactNode } from 'react'
++import { Link } from 'react-router-dom'
++import { usePageTab } from '../../components/pageTab'
++import { Badge, type Tone } from '../../components/ui'
++import type { TermId } from '../../data/glossary'
++import { briefSources, type BriefStep, type Confidence, type ReportBrief } from '../../data/reportBriefs'
++import { DataSourceTypeBadge } from './DataSources'
++import { RichText, Term } from './Term'
++
++/*
++ * The top of every report and analysis Summary tab (U151, J208), one look
++ * everywhere: 1. what the report is for, 2. its conclusion (the answer, up to
++ * three key numbers with how far to trust each, what it means for us, the
++ * next steps), 3. where it comes from (a compact list of the sources, with a
++ * link to the full Data sources block at the end of Detail). Copy and numbers
++ * come from data/reportBriefs.ts; sources from data/dataSources.ts.
++ */
++
++const CONFIDENCE: Record<Confidence, { text: string; tone: Tone; term: TermId }> = {
++  measured: { text: 'Measured', tone: 'good', term: 'measured' },
++  simulated: { text: 'Simulated', tone: 'info', term: 'simulated' },
++  assumed: { text: 'Assumed', tone: 'serious', term: 'assumption' },
++}
++
++/** How many sources the compact list shows before "and N more". */
++const MAX_SOURCES = 6
++
++const linkCls = 'inline-flex shrink-0 items-center gap-4 text-12 font-medium text-adm-ink underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink'
++
++export function ConfidenceBadge({ c }: { c: Confidence }) {
++  const k = CONFIDENCE[c]
++  return (
++    <Term id={k.term}>
++      <Badge tone={k.tone}>{k.text}</Badge>
++    </Term>
++  )
++}
++
++function BlockLabel({ n, children }: { n: number; children: ReactNode }) {
++  return (
++    <h2 className="flex items-center gap-8 text-12 font-semibold uppercase tracking-wider text-adm-muted">
++      <span aria-hidden="true" className="flex size-20 shrink-0 items-center justify-center rounded-full bg-adm-ink text-11 text-adm-surface tabular-nums">
++        {n}
++      </span>
++      {children}
++    </h2>
++  )
++}
++
++function StepLink({ s }: { s: BriefStep }) {
++  if (!s.to) return null
++  const label = s.linkLabel ?? 'Open'
++  if (s.to.startsWith('#')) {
++    return (
++      <a href={s.to} className={linkCls}>
++        {label} <ArrowRight size={12} aria-hidden="true" />
++      </a>
++    )
++  }
++  return (
++    <Link to={s.to} className={linkCls}>
++      {label} <ArrowRight size={12} aria-hidden="true" />
++    </Link>
++  )
++}
++
++export function ReportHeaderCard({ route, brief }: { route: string; brief: ReportBrief }) {
++  const [, setTab] = usePageTab()
++  const sources = briefSources(route)
++  const shown = sources.slice(0, MAX_SOURCES)
++  const more = sources.length - shown.length
++
++  function toDetail(selector?: string) {
++    setTab('detail')
++    if (!selector) return
++    // Detail un-hides after the URL change renders; wait for it, then scroll.
++    let tries = 0
++    const go = () => {
++      const el = document.querySelector<HTMLElement>(selector)
++      if (el?.offsetParent) el.scrollIntoView({ block: 'start' })
++      else if (tries++ < 30) requestAnimationFrame(go)
++    }
++    requestAnimationFrame(go)
++  }
++
++  return (
++    <section aria-label="Summary" data-report-header={route} className="flex min-w-0 flex-col rounded-12 border border-adm-line bg-adm-surface">
++      <div data-block="purpose" className="flex flex-col gap-6 border-b border-adm-line p-16 lg:px-20">
++        <BlockLabel n={1}>What this report is for</BlockLabel>
++        <p className="max-w-[920px] text-15 font-medium leading-snug text-adm-ink">
++          <RichText text={brief.purpose} />
++        </p>
++      </div>
++
++      <div className="grid min-w-0 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
++        <div data-block="conclusion" className="flex min-w-0 flex-col gap-12 border-b border-adm-line p-16 lg:border-r lg:border-b-0 lg:px-20">
++          <BlockLabel n={2}>Conclusion</BlockLabel>
++          <p className="text-16 font-semibold leading-snug text-adm-ink">
++            <RichText text={brief.answer} />
++          </p>
++          <dl className="grid gap-8 sm:grid-cols-3">
++            {brief.numbers.slice(0, 3).map((x) => (
++              <div key={x.label} data-key-number className="flex min-w-0 flex-col gap-4 rounded-8 border border-adm-line bg-adm-bg p-10">
++                <dt className="text-12 leading-snug text-adm-muted">
++                  <RichText text={x.label} />
++                </dt>
++                <dd className="text-20 font-semibold leading-tight tabular-nums text-adm-ink">{x.value}</dd>
++                <dd>
++                  <ConfidenceBadge c={x.confidence} />
++                </dd>
++              </div>
++            ))}
++          </dl>
++          <p className="rounded-8 border-l-4 border-adm-ink bg-adm-bg px-12 py-8 text-13 text-adm-ink" data-meaning>
++            <span className="font-semibold">What it means for us: </span>
++            <RichText text={brief.meaning} />
++          </p>
++          <div className="flex flex-col gap-6">
++            <h3 className="text-13 font-semibold text-adm-ink">Next steps</h3>
++            <ol className="flex flex-col gap-6">
++              {brief.next.slice(0, 2).map((s, i) => (
++                <li key={s.text} className="flex flex-col gap-4 text-13 text-adm-ink lg:flex-row lg:items-baseline lg:justify-between lg:gap-12">
++                  <span>
++                    <span className="mr-6 font-semibold tabular-nums">{i + 1}.</span>
++                    <RichText text={s.text} />
++                  </span>
++                  <StepLink s={s} />
++                </li>
++              ))}
++            </ol>
++          </div>
++        </div>
++
++        <div data-block="sources" className="flex min-w-0 flex-col gap-10 p-16 lg:px-20">
++          <BlockLabel n={3}>Where it comes from</BlockLabel>
++          <ul className="flex flex-col">
++            {shown.map((s) => (
++              <li key={s.id} data-brief-source={s.id} className="flex min-w-0 flex-wrap items-center justify-between gap-x-8 gap-y-4 border-t border-adm-line py-6 first:border-0 first:pt-0">
++                <span className="min-w-0 text-13 text-adm-ink">{s.source.name}</span>
++                <DataSourceTypeBadge type={s.type} />
++              </li>
++            ))}
++          </ul>
++          {more > 0 && <p className="text-12 text-adm-muted">and {more} more</p>}
++          <button type="button" onClick={() => toDetail('[data-sources="full"]')} className={`${linkCls} self-start`}>
++            All sources, with files and dates <ArrowRight size={12} aria-hidden="true" />
++          </button>
++        </div>
++      </div>
++
++      <div className="flex justify-end border-t border-adm-line px-16 py-10 lg:px-20">
++        <button type="button" onClick={() => toDetail()} className="inline-flex items-center gap-4 text-13 font-semibold text-adm-ink underline decoration-adm-axis underline-offset-2 hover:decoration-adm-ink">
++          See everything in Detail <ArrowRight size={13} aria-hidden="true" />
++        </button>
++      </div>
++    </section>
++  )
++}
+diff --git a/src/admin/pages/reports/ReportMetricsPage.tsx b/src/admin/pages/reports/ReportMetricsPage.tsx
+index ba477d1..6b82b5c 100644
+--- a/src/admin/pages/reports/ReportMetricsPage.tsx
++++ b/src/admin/pages/reports/ReportMetricsPage.tsx
+@@ -1,7 +1,7 @@
+ import { DataSources } from './DataSources'
+-import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
+-import { usePageTab } from '../../components/pageTab'
+-import { RELEASES } from '../../../versions/releases'
++import { PageTabs } from '../../components/PageTabs'
++import { metricsBrief } from '../../data/reportBriefs'
++import { ReportHeaderCard } from './ReportHeaderCard'
+ import { ArrowDownRight, ArrowUpRight, Minus, PanelRightOpen } from 'lucide-react'
+ import { useMemo, useState } from 'react'
+ import { Badge, PageHeader, Panel, type Tone } from '../../components/ui'
+@@ -215,7 +215,7 @@ function MetricsView() {
+ 
+   const selectCls = 'h-32 min-w-0 rounded-8 border border-adm-line bg-adm-surface px-8 text-13 text-adm-ink'
+ 
+-  const [, setPageTab] = usePageTab()
++  const brief = useMemo(() => metricsBrief(week), [week])
+   const summaryBlock = (
+       <SummaryBlock s={summary} />
+   )
+@@ -223,8 +223,8 @@ function MetricsView() {
+   return (
+     <div className="flex min-w-0 flex-col gap-16">
+       <PageHeader title="Report metrics" description={plainText(summary.intro ?? '')} />
+-      {!RELEASES.adminNav2 && summaryBlock}
+-      <PageTabs summary={<ReportSummaryTab purpose="checking where each number in the reports comes from and how it is worked out, before trusting it." onDetail={() => setPageTab('detail')}>{summaryBlock}<DataSources route="/admin/reports/metrics" /></ReportSummaryTab>}>
++      <PageTabs summary={<ReportHeaderCard route="/admin/reports/metrics" brief={brief} />}>
++      {summaryBlock}
+ 
+       <Panel title="How to read the quality" description="Each number gets one of three labels, plus checks for things that look wrong.">
+         <dl className="grid gap-8 text-12 lg:grid-cols-3">
+diff --git a/src/admin/pages/reports/ReportsOverviewPage.tsx b/src/admin/pages/reports/ReportsOverviewPage.tsx
+index 0209a87..f2cf17f 100644
+--- a/src/admin/pages/reports/ReportsOverviewPage.tsx
++++ b/src/admin/pages/reports/ReportsOverviewPage.tsx
+@@ -13,6 +13,9 @@ import { buildMetrics, metricsReportSummary } from '../../data/reportMetrics'
+ import { RELEASES } from '../../../versions/releases'
+ import { DataSources } from './DataSources'
+ import { MetricLinesPanel } from './MetricLinesChart'
++import { PageTabs } from '../../components/PageTabs'
++import { overviewBrief } from '../../data/reportBriefs'
++import { ReportHeaderCard } from './ReportHeaderCard'
+ 
+ /**
+  * Admin → Reports → Overview (U129, J182). How Aurelia improves, in one
+@@ -44,12 +47,15 @@ function Overview() {
+       ...(RELEASES.reportMetrics ? [{ title: 'Report metrics', to: '/admin/reports/metrics', s: metricsReportSummary(buildMetrics(week)) }] : []),
+     ]
+   }, [week])
++  const brief = useMemo(() => overviewBrief(week), [week])
+   const count = (c: string) => map.nodes.filter((n) => n.column === c).length
+ 
+   return (
+     <div className="flex flex-col gap-16">
+       <PageHeader title="Reports" description="Every report in one place, and how they connect. Click anything to see it in a side panel." />
+ 
++      <PageTabs summary={<ReportHeaderCard route="/admin/reports" brief={brief} />}>
++
+       <section aria-labelledby="how-title" className="flex flex-col gap-8 rounded-12 border border-adm-line bg-adm-surface p-16 lg:p-20">
+         <h2 id="how-title" className="text-15 font-semibold text-adm-ink">
+           How Aurelia improves: sources → tests → decisions → a new version
+@@ -93,6 +99,7 @@ function Overview() {
+       </Panel>
+ 
+       <DataSources route="/admin/reports" full />
++      </PageTabs>
+     </div>
+   )
+ }
+diff --git a/src/admin/pages/reports/UxFeedbackReportPage.tsx b/src/admin/pages/reports/UxFeedbackReportPage.tsx
+index bfd96d5..2a0d2fb 100644
+--- a/src/admin/pages/reports/UxFeedbackReportPage.tsx
++++ b/src/admin/pages/reports/UxFeedbackReportPage.tsx
+@@ -1,6 +1,6 @@
+-import { PageTabs, ReportSummaryTab } from '../../components/PageTabs'
+-import { usePageTab } from '../../components/pageTab'
+-import { RELEASES } from '../../../versions/releases'
++import { PageTabs } from '../../components/PageTabs'
++import { uxBrief } from '../../data/reportBriefs'
++import { ReportHeaderCard } from './ReportHeaderCard'
+ import { useMemo, useState } from 'react'
+ import { PageHeader, Panel } from '../../components/ui'
+ import { plainText } from '../../data/glossary'
+@@ -27,7 +27,7 @@ export function UxFeedbackReportPage() {
+   const summary = useMemo(() => uxFeedbackSummary(participants, week), [participants, week])
+   const map = useMemo(() => mapFor(buildIterationMap(Math.max(1, week)), 'ux'), [week])
+ 
+-  const [, setPageTab] = usePageTab()
++  const brief = useMemo(() => uxBrief(participants, week), [participants, week])
+   const summaryBlock = (
+         <SummaryBlock s={summary} />
+   )
+@@ -37,8 +37,8 @@ export function UxFeedbackReportPage() {
+       <div className="flex flex-col gap-16">
+         <PageHeader title="UX feedback report" description={plainText(summary.intro ?? '')} />
+ 
+-        {!RELEASES.adminNav2 && summaryBlock}
+-        <PageTabs summary={<ReportSummaryTab purpose="seeing what the feedback group tells us about the app, and what to change next." onDetail={() => setPageTab('detail')}>{summaryBlock}<DataSources route="/admin/reports/ux-feedback" /></ReportSummaryTab>}>
++        <PageTabs summary={<ReportHeaderCard route="/admin/reports/ux-feedback" brief={brief} />}>
++      {summaryBlock}
+ 
+         <section id="ux-views" className="flex min-w-0 scroll-mt-16 flex-col gap-16">
+           <FeedbackGroupViews participants={participants} week={week} />
+diff --git a/src/admin/pages/reports/reportHeaderLength.test.tsx b/src/admin/pages/reports/reportHeaderLength.test.tsx
+new file mode 100644
+index 0000000..3638ec8
+--- /dev/null
++++ b/src/admin/pages/reports/reportHeaderLength.test.tsx
+@@ -0,0 +1,23 @@
++import { render } from '@testing-library/react'
++import { MemoryRouter } from 'react-router-dom'
++import { describe, expect, it } from 'vitest'
++import { REPORT_BRIEF_ROUTES, reportBrief } from '../../data/reportBriefs'
++import { ReportHeaderCard } from './ReportHeaderCard'
++
++// U151 (J208): every report and analysis Summary tab is one header card of about 180 words or fewer.
++describe('report header card', () => {
++  it.each(REPORT_BRIEF_ROUTES)('%s: three labelled blocks, 180 words or fewer', (route) => {
++    const { container } = render(
++      <MemoryRouter>
++        <ReportHeaderCard route={route} brief={reportBrief(route)} />
++      </MemoryRouter>,
++    )
++    for (const block of ['purpose', 'conclusion', 'sources']) expect(container.querySelector(`[data-block="${block}"]`), block).not.toBeNull()
++    expect(container.textContent).toContain('What this report is for')
++    expect(container.textContent).toContain('Conclusion')
++    expect(container.textContent).toContain('Where it comes from')
++    expect(container.querySelectorAll('[data-key-number]').length).toBeLessThanOrEqual(3)
++    const words = (container.textContent ?? '').replace(/([a-z?%)])([A-Z0-9])/g, '$1 $2').split(/\s+/).filter(Boolean)
++    expect(words.length, words.join(' ')).toBeLessThanOrEqual(180)
++  })
++})

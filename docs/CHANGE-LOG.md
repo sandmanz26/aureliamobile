@@ -19,6 +19,12 @@ every time — that is the whole point of it existing.
 ## Entry format
 
 ```
+### 2026-11-28 — Every report readable (U151, J208)
+
+Every report and analysis page opens on what it is for, its conclusion and its sources.
+
+Branches: `web_app`, `admin_cms`.
+
 ### 2026-11-28 — AKP v2 and buyer test 9 (U150, J208)
 
 The AKP catalogue grows to 3,106 across all five brain functions and can be downloaded as xlsx or CSV; buyer test 9 shows each person their first chapter.

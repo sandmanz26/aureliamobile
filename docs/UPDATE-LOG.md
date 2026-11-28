@@ -169,6 +169,7 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U130 | `9a6c520` | 2026-11-25 | Buyer agent report made visual. It has funnels per test (5, 6, 7), a people grid (one mark per simulated person, which opens a drawer), a who-says-yes heat map, a price ladder against $10, ranked reasons for no with quotes, a slope chart of what moved people, and a cleaner trend across tests. | [patch](patches/U130-9a6c520.patch) |
 | U131 | `1634d0c` | 2026-11-25 | Product lab, staging only (`RELEASES.therapeuticMaps`). The **Therapeutic map** shows the Product, Business and Wellness triangle with targets, the 7-step sleep process and five worlds. The **Healing Map** has three rings (9 bad states, 14 building blocks, 9 good states) and 45 links: 36 design samples, 9 research-cited, 0 learned. It has filters, zoom and a drawer. | [patch](patches/U131-1634d0c.patch) |
 | U132 | `542ade2` | 2026-11-25 | B2B2C round 2. It adds 28 new web sources and the buyer tests, and re-ranks the channels: creator journey with a free first week, then a self-serve team plan, then codes and gifting. It lists 22 features (10 Now), on wiki pages round-2 and features and in Reports → B2B2C report (a feature board with a drawer). | [patch](patches/U132-542ade2.patch) |
+| U151 | `2512244` | 2026-11-28 | One readable standard on 15 report and analysis pages: Summary opens on a card with What this report is for, Conclusion (≤3 numbers with Measured/Simulated/Assumed, what it means, next steps) and Where it comes from (sources with type, link to full list); copy from live data (`reportBriefs.ts`); tests keep each card complete and ≤180 words; old summaries moved to the top of Detail. | [patch](patches/U151-2512244.patch) |
 | U150 | `a82d5b2` | 2026-11-28 | AKP v2: roast v1 → iterate → roast v2 (docs/akp/AKP-ROAST.md); catalogue 1,046 → 3,106 (wellness 1,443 incl. a new voice family, product 596, business 304, brand 400 drafted from his ReadMe types, analysis 205, identity 158), 3,266 links, every StateFlip can assemble a chapter; export as xlsx/csv/json (docs/akp/, download on the catalogue tab); buyer test 9: first chapter preview built from AKPs per person (would pay 170 → 245). Patch excludes generated data. | [patch](patches/U150-a82d5b2.patch) |
 | U149 | `feb5c4e` | 2026-11-28 | Editable AKPs: add, edit, delete/restore, link, revert and reset as an edit overlay on the generated catalogue (history per change, export/import JSON), synced via /api/akp-edits (KV, per deployment; local fallback); "What is an AKP?" explainer and "Used for · helps" lines; distinct colour+shape per family; graph map with zoom, pan, fit, follow-the-path, drag-to-link and New AKP here. | [patch](patches/U149-feb5c4e.patch) |
 | U147 | `fb6e490` | 2026-11-28 | Buyer test 8 (975 v4 personas: StateFlip-specific journey with a free week vs v7's best; would try 33% vs 15%, would pay 170 vs 16, split into naming the StateFlip, showing their chance, and an ending free week); AI brain page (/admin/ai-brain: 5 functions, chance to reach MVP targets, feature ranking, interconnections, weekly report, his prototype map); Your asks tracker on Start here (A1–A46). | [patch](patches/U147-fb6e490.patch) |
@@ -190,6 +191,12 @@ Production (`web_prod`) is never touched by these updates unless asked.
 | U082 | `68d7b21` | 2026-11-16 | /guide typography for comfortable reading: no faked bold, larger body text and leading, a reading measure, one spacing rhythm, calmer headings, clearer links, lists and tables. Staging and production. | [patch](patches/U082-68d7b21.patch) |
 
 ## Entries
+
+### U151 — Every report readable
+
+- **Commit:** `2512244` · 2026-11-28.
+- **Request:** every report easy to read: what it is for, where it comes from, what it concludes.
+- **Revert:** `git revert --no-commit 2512244`.
 
 ### U150 — AKP v2, export, buyer test 9
 
